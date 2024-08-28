@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for card in traffic_cards %}
+      <li><a href="{% url 'trafficcard_detail' card.pk %}">{{ card.registration_number }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

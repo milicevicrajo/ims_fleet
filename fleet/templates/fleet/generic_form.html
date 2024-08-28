@@ -1,0 +1,58 @@
+<!-- equipment_form.html -->
+{% extends 'base.html' %}
+{% load form_filters %}
+{% block title %}Forma{% endblock %}
+{% block content %}
+  <div class="pagetitle">
+    <h1>{{ title }}</h1>
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-6">
+    
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Popuniti formu</h5>
+              
+              <!-- Horizontal Form -->
+              <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="row mb-3">
+                    <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
+                    <div class="col-sm-7">
+                        {{ field|add_class:'form-control' }}
+                        {% if field.errors %}
+                        <div class="invalid-feedback" style="display: block;">
+                          {% for error in field.errors %}
+                              {{ error }}
+                          {% endfor %}
+                      </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">{{ submit_button_label }}</button>
+                </div>
+              </form>
+              <!-- End Horizontal Form -->
+    
+            </div>
+          </div>
+    
+        </div>
+        {% if manual %}
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-body">
+
+            </div>
+          </div>
+        </div>
+        {%else%}
+        {%endif%}
+      </div>
+    </section>
+
+{% endblock %}
+

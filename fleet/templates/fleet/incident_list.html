@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for incident in incidents %}
+      <li><a href="{% url 'incident_detail' incident.pk %}">{{ incident.date }} - {{ incident.employee.name }} - {{ incident.vehicle.chassis_number }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

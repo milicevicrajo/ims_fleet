@@ -20,7 +20,8 @@ class Vehicle(models.Model):
     maximum_permissible_weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Maksimalna dozvoljena masa"))
     fuel_type = models.CharField(max_length=20, verbose_name=_("Tip goriva"))
     number_of_seats = models.IntegerField(verbose_name=_("Broj sedišta"))
-    purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Vrednost vozila"))
+    purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Nabavna vrednost vozila"))
+    otpis = models.BooleanField(_("Otpis"), default=False, editable=False)
 
     def __str__(self):
         return f"{self.brand} {self.model} ({self.chassis_number})"
@@ -61,6 +62,7 @@ class Lease(models.Model):
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
     job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
     contract_number = models.CharField(max_length=50, verbose_name=_("Broj ugovora"))
+    current_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Trenutna vrednost otplate"))
     start_date = models.DateField(verbose_name=_("Datum početka"))
     end_date = models.DateField(verbose_name=_("Datum završetka"))
     note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
@@ -72,7 +74,7 @@ class Policy(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='policies', verbose_name=_("Vozilo"))
     partner_pib = models.CharField(max_length=20, verbose_name=_("PIB partnera"))
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
-    invoice_id = models.IntegerField(verbose_name=_("ID fakture"))
+    invoice_id = models.IntegerField(verbose_name=_("ID fakture"), unique=True)
     invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"))
     issue_date = models.DateField(verbose_name=_("Datum izdavanja"))
     insurance_type = models.CharField(max_length=50, verbose_name=_("Tip osiguranja"))
@@ -92,6 +94,8 @@ class FuelConsumption(models.Model):
     date = models.DateField(verbose_name=_("Datum"))
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina"))
     fuel_type = models.CharField(max_length=20, verbose_name=_("Tip goriva"))
+    cost_bruto = models.CharField(max_length=20, verbose_name=_("Iznos - Bruto"))
+    cost_neto = models.CharField(max_length=20, verbose_name=_("Iznos - Neto"))
     supplier = models.CharField(max_length=50, verbose_name=_("Dobavljač"))
 
     def __str__(self):

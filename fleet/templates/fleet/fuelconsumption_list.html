@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for consumption in fuel_consumptions %}
+      <li><a href="{% url 'fuelconsumption_detail' consumption.pk %}">{{ consumption.date }} - {{ consumption.vehicle.chassis_number }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

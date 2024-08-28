@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for lease in leases %}
+      <li><a href="{% url 'lease_detail' lease.pk %}">{{ lease.partner_name }} - {{ lease.vehicle.chassis_number }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

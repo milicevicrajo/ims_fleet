@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for servicetype in service_types %}
+      <li><a href="{% url 'servicetype_detail' servicetype.pk %}">{{ servicetype.name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

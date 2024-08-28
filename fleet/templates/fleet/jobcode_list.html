@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for code in job_codes %}
+      <li><a href="{% url 'jobcode_detail' code.pk %}">{{ code.job_code }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for policy in policies %}
+      <li><a href="{% url 'policy_detail' policy.pk %}">{{ policy.policy_number }} - {{ policy.partner_name }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

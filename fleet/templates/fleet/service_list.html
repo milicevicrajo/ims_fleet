@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>{{ title }}</h2>
+  <ul>
+    {% for service in services %}
+      <li><a href="{% url 'service_detail' service.pk %}">{{ service.service_date }} - {{ service.vehicle.chassis_number }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}
