@@ -1,10 +1,69 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>{{ title }}</h2>
-  <ul>
-    {% for consumption in fuel_consumptions %}
-      <li><a href="{% url 'fuelconsumption_detail' consumption.pk %}">{{ consumption.date }} - {{ consumption.vehicle.chassis_number }}</a></li>
-    {% endfor %}
-  </ul>
+<h2>{{ title }}</h2>
+<div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Basic Datatable</h5>
+      <form method="get" style="display: flex; align-items: left;">
+        <div style="margin-right: 10px;">
+            <label for="id_start_date" style="margin-right: 5px;">Od datuma:</label>
+            {{ filter.form.start_date }}
+        </div>
+        <div style="margin-right: 10px;">
+            <label for="id_end_date" style="margin-right: 5px;">Do datuma:</label>
+            {{ filter.form.end_date }}
+        </div>
+        <button type="submit" class="btn btn-primary">Filtriraj</button>
+    </form>
+      <div class="table-responsive">
+          <table id="DatatableFuel" class="display compact">
+              <thead>
+                  <tr>
+                    <th>Vozilo</th>
+                    <th>Registracija</th>
+                    <th>Datum</th>
+                    <th>Količina</th>
+                    <th>Tip goriva</th>
+                    <th>Iznos - Bruto</th>
+                    <th>Iznos - Neto</th>
+                    <th>Dobavljač</th>
+                  </tr>
+              </thead>
+              <tbody>
+                {% for consumption in filter.qs %}
+                  <tr>                        
+                      <td>{{ consumption.vehicle }}</td>   
+                      <td>{{ consumption.registration_number}}</td>                    
+                      <td>{{ consumption.date }}</td>
+                      <td>{{ consumption.amount }}</td>
+                      <td>{{ consumption.fuel_type }}</td>
+                      <td>{{ consumption.cost_bruto }}</td>
+                      <td>{{ consumption.cost_neto}}</td>
+                      <td>{{ consumption.supplier }}</td>
+
+                  </tr>
+              {% empty %}
+                  <tr>
+                      <td colspan="5">Nema podataka</td>
+                  </tr>
+              {% endfor %}
+              <tfoot>
+                  <tr>
+                    <th>Vozilo</th>
+                    <th>Registracija</th>
+                    <th>Datum</th>
+                    <th>Količina</th>
+                    <th>Tip goriva</th>
+                    <th>Iznos - Bruto</th>
+                    <th>Iznos - Neto</th>
+                    <th>Dobavljač</th>
+                  </tr>
+              </tfoot>
+          </table>
+      </div>
+
+  </div>
+</div>
+
 {% endblock %}

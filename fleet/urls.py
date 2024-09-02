@@ -1,5 +1,7 @@
 from django.urls import path
 from .views import *
+from fleet import views
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('vozila/', VehicleListView.as_view(), name='vehicle_list'),
@@ -67,4 +69,8 @@ urlpatterns = [
     path('servisi/izmeni/<int:pk>/', ServiceUpdateView.as_view(), name='service_update'),
     path('servisi/<int:pk>/', ServiceDetailView.as_view(), name='service_detail'),
     path('servisi/obrisi/<int:pk>/', ServiceDeleteView.as_view(), name='service_delete'),
+
+    path('', views.dashboard, name='dashboard'),
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]

@@ -1,10 +1,51 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>{{ title }}</h2>
-  <ul>
-    {% for service in services %}
-      <li><a href="{% url 'service_detail' service.pk %}">{{ service.service_date }} - {{ service.vehicle.chassis_number }}</a></li>
-    {% endfor %}
-  </ul>
+<h2>{{ title }}</h2>
+<div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Basic Datatable</h5>
+      <div class="table-responsive">
+          <table id="DatatableServisi" class="display compact">
+              <thead>
+                  <tr>
+                    <th>Vozilo</th>
+                    <th>Tip servisa</th>
+                    <th>Datum servisa</th>
+                    <th>Trošak</th>
+                    <th>Dobavljač</th>
+                    <th>Opis</th>
+                  </tr>
+              </thead>
+              <tbody>
+                {% for service in services %}
+                  <tr>                        
+                    <td>{{ service.vehicle }}</td>
+                    <td>{{ service.service_type.name }}</td>
+                    <td>{{ service.service_date }}</td>
+                    <td>{{ service.cost }}</td>
+                    <td>{{ service.provider }}</td>
+                    <td>{{ service.description }}</td>
+
+                  </tr>
+              {% empty %}
+                  <tr>
+                      <td colspan="5">Nema podataka</td>
+                  </tr>
+              {% endfor %}
+              <tfoot>
+                  <tr>
+                    <th>Vozilo</th>
+                    <th>Tip servisa</th>
+                    <th>Datum servisa</th>
+                    <th>Trošak</th>
+                    <th>Dobavljač</th>
+                    <th>Opis</th>
+                  </tr>
+              </tfoot>
+          </table>
+      </div>
+
+  </div>
+</div>
 {% endblock %}

@@ -2,9 +2,16 @@ from django.shortcuts import render
 
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .models import *
 from .forms import *
+from .filters import *
+from django.db.models import OuterRef, Subquery
+from django_filters.views import FilterView
+
+def dashboard(request):    
+    context = {}
+    return render(request, 'fleet/dashboard.html', context)
 
 # ListView
 class VehicleListView(LoginRequiredMixin, ListView):
@@ -12,6 +19,25 @@ class VehicleListView(LoginRequiredMixin, ListView):
     template_name = 'fleet/vehicle_list.html'
     context_object_name = 'vehicles'
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Subquery to get the latest JobCode for each Vehicle
+        latest_job_code_subquery = JobCode.objects.filter(
+            vehicle_id=OuterRef('pk')
+        ).order_by('-assigned_date').values('job_code')[:1]
+        
+        # Subquery to get the latest TrafficCard for each Vehicle
+        latest_traffic_card_subquery = TrafficCard.objects.filter(
+            vehicle_id=OuterRef('pk')
+        ).order_by('-issue_date').values('registration_number')[:1]
+
+        queryset = queryset.annotate(
+            latest_job_code=Subquery(latest_job_code_subquery),
+            registration_number=Subquery(latest_traffic_card_subquery)
+        )
+        return queryset
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista vozila'
@@ -194,11 +220,13 @@ class JobCodeDeleteView(LoginRequiredMixin, DeleteView):
         return super().get_object(queryset)
     
 
-class LeaseListView(LoginRequiredMixin, ListView):
+class LeaseListView(PermissionRequiredMixin, ListView):
     model = Lease
     template_name = 'fleet/lease_list.html'
     context_object_name = 'leases'
-
+    # Dodajte permission_required atribut
+    permission_required = 'fleet.view_lease'
+    raise_exception = True
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista zakupa vozila'
@@ -321,14 +349,29 @@ class PolicyDeleteView(LoginRequiredMixin, DeleteView):
 
 
 # ListView
-class FuelConsumptionListView(LoginRequiredMixin, ListView):
+class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     model = FuelConsumption
+    filterset_class = FuelFilterForm
     template_name = 'fleet/fuelconsumption_list.html'
     context_object_name = 'fuel_consumptions'
+
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Subquery to get the latest TrafficCard for each Vehicle
+        latest_traffic_card_subquery = TrafficCard.objects.filter(
+            vehicle_id=OuterRef('vehicle_id')
+        ).order_by('-issue_date').values('registration_number')[:1]
+
+        queryset = queryset.annotate(
+            registration_number=Subquery(latest_traffic_card_subquery)
+        )
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista potrošnje goriva'
+
         return context
 
 # CreateView

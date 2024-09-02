@@ -70,6 +70,9 @@ TEMPLATES = [
     },
 ]
 
+DATE_FORMAT = 'd/m/Y'
+DATE_INPUT_FORMATS = ['%d/%m/%Y']
+
 WSGI_APPLICATION = 'ims_fleet.wsgi.application'
 
 
@@ -106,12 +109,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'sr'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
+LANGUAGE_CODE = 'srp'
+TIME_ZONE = 'CET'
 USE_L10N = True
+USE_I18N = False
 USE_TZ = True
 
 
@@ -130,3 +131,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRONJOBS = [
     ('0 0 1,16 * *', 'fleet.utils.OMVCommand.handle')
 ]
+
+LOGIN_URL = '/login/'
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'

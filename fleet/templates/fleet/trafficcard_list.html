@@ -2,9 +2,51 @@
 
 {% block content %}
   <h2>{{ title }}</h2>
-  <ul>
-    {% for card in traffic_cards %}
-      <li><a href="{% url 'trafficcard_detail' card.pk %}">{{ card.registration_number }}</a></li>
-    {% endfor %}
-  </ul>
+  <div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Basic Datatable</h5>
+        <div class="table-responsive">
+            <table id="DatatableSaobracajne" class="display">
+              <thead>
+                  <tr>
+                      <th>Vozilo</th>
+                      <th>Registracija</th>
+                      <th>Datum izdavanja</th>
+                      <th>Vazi do</th>
+                      <th>Broj dozvole</th>
+                      <th>Vlasnik</th>
+                      <th>Homologacijski br.</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {% for card in traffic_cards %}
+                  <tr>                        
+                      <td>{{ card.vehicle }}</td>                      
+                      <td>{{ card.registration_number }}</td>
+                      <td>{{ card.issue_date }}</td>
+                      <td>{{ card.valid_until }}</td>
+                      <td>{{ card.traffic_card_number }}</td>
+                      <td>{{ card.owner }}</td>
+                      <td>{{ card.homologation_number }}</td>
+                  </tr>
+              {% empty %}
+                  <tr>
+                      <td colspan="5">Nema opreme..</td>
+                  </tr>
+              {% endfor %}
+              <tfoot>
+                  <tr>
+                    <th>Vozilo</th>
+                    <th>Registracija</th>
+                    <th>Datum izdavanja</th>
+                    <th>Vazi do</th>
+                    <th>Broj dozvole</th>
+                    <th>Vlasnik</th>
+                    <th>Homologacijski br.</th>
+                  </tr>
+              </tfoot>
+          </table>
+        </div>
+      </div>
+  </div>
 {% endblock %}

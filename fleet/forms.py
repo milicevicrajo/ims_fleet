@@ -1,6 +1,6 @@
 from django import forms
 from .models import *
-
+import django_filters
 class VehicleForm(forms.ModelForm):
     class Meta:
         model = Vehicle
@@ -35,6 +35,7 @@ class FuelConsumptionForm(forms.ModelForm):
     class Meta:
         model = FuelConsumption
         fields = '__all__'
+
 
 class IncidentForm(forms.ModelForm):
     class Meta:

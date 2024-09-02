@@ -12,18 +12,16 @@
     <meta name="description"
         content="Matrix Admin Lite Free Version is powerful and clean admin dashboard template, inpired from Bootstrap Framework">
     <meta name="robots" content="noindex,nofollow">
-    <title>{% block title %} Pocetna {% endblock %}</title>
+    <title>{% block title %} IMS - Flota {% endblock %}</title>
     <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/favicon.png">
     <!-- Custom CSS -->
     <link href="{% static 'fleet/dist/css/style.css' %}" rel="stylesheet">
     <link src="{% static 'fleet/dist/js/script.js' %}" rel="stylesheet">
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-<![endif]-->
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.4/css/dataTables.dataTables.min.css">
+
 </head>
 
 <body>
@@ -67,102 +65,13 @@
                 <!-- ============================================================== -->
                 <!-- Sales Cards  -->
                 <!-- ============================================================== -->
+
+
+                
                 {% block content %}
                 {% endblock %}
-                <div class="row">
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-cyan text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-car"></i></h1>
-                                <h6 class="text-white">Dashboard</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-4 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-success text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-gas-station"></i></h1>
-                                <h6 class="text-white">Charts</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-warning text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-road-variant"></i></h1>
-                                <h6 class="text-white">Widgets</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-danger text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-wrench"></i></h1>
-                                <h6 class="text-white">Tables</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-info text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-arrow-all"></i></h1>
-                                <h6 class="text-white">Full Width</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-4 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-danger text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-receipt"></i></h1>
-                                <h6 class="text-white">Forms</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-info text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-relative-scale"></i></h1>
-                                <h6 class="text-white">Buttons</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-cyan text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-pencil"></i></h1>
-                                <h6 class="text-white">Elements</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-success text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-calendar-check"></i></h1>
-                                <h6 class="text-white">Calnedar</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                    <div class="col-md-6 col-lg-2 col-xlg-3">
-                        <div class="card card-hover">
-                            <div class="box bg-warning text-center">
-                                <h1 class="font-light text-white"><i class="mdi mdi-alert"></i></h1>
-                                <h6 class="text-white">Errors</h6>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Column -->
-                </div>
+
+
             </div>
             <!-- ============================================================== -->
             <!-- End Container fluid  -->
@@ -189,19 +98,32 @@
     <!-- All Jquery -->
     <!-- ============================================================== -->
     
-    <script src="{% static 'fleet/assets/libs/jquery/dist/jquery.min.js' %}"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/2.1.4/js/dataTables.min.js"></script>
+
+    <!-- Moment.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
+
+    <!-- datetime-moment.js -->
+    <script src="https://cdn.datatables.net/plug-ins/2.1.4/sorting/datetime-moment.js"></script>
+
     <!-- Bootstrap tether Core JavaScript -->
     <script src="{% static 'fleet/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js' %}"></script>
     <script src="{% static 'fleet/assets/extra-libs/sparkline/sparkline.js' %}"></script>
+
     <!--Wave Effects -->
     <script src="{% static 'fleet/dist/js/waves.js' %}"></script>
+
     <!--Menu sidebar -->
     <script src="{% static 'fleet/dist/js/sidebarmenu.js' %}"></script>
+
     <!--Custom JavaScript -->
     <script src="{% static 'fleet/dist/js/custom.min.js' %}"></script>
-    <!--This page JavaScript -->
-    <!-- <script src="{% static 'fleet/dist/js/pages/dashboards/dashboard1.js' %}"></script> -->
+
     <!-- Charts js Files -->
     <script src="{% static 'fleet/assets/libs/flot/excanvas.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/flot/jquery.flot.js' %}"></script>
@@ -210,8 +132,10 @@
     <script src="{% static 'fleet/assets/libs/flot/jquery.flot.stack.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/flot/jquery.flot.crosshair.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/flot.tooltip/js/jquery.flot.tooltip.min.js' %}"></script>
+
     <script src="{% static 'fleet/dist/js/pages/chart/chart-page-init.js' %}"></script>
-    <script src="{% static 'fleet/assets/extra-libs/multicheck/datatable-checkbox-init.js' %}"></script>
+
+    {% comment %} <script src="{% static 'fleet/assets/extra-libs/multicheck/datatable-checkbox-init.js' %}"></script>
     <script src="{% static 'fleet/assets/extra-libs/multicheck/jquery.multicheck.js' %}"></script>
     <script src="{% static 'fleet/assets/extra-libs/DataTables/datatables.min.js' %}"></script>
     <script>
@@ -221,7 +145,156 @@
         $(document).ready(function() {
             $('#zero_config').DataTable();
         });
-    </script>
+    </script> {% endcomment %}
+    <!-- DataTables initialization script -->
+    {% comment %} <script>
+        $(document).ready(function() {
+            // Postavljanje lokalizacije na srpski
+            moment.locale('sr');
 
+            // Ručna implementacija sortiranja datuma
+            $.fn.dataTable.ext.type.order['date-custom-pre'] = function(date) {
+                return moment(date, 'DD. MMMM YYYY.').toDate();
+            };
+
+            // Inicijalizacija DataTables sa prilagođenim sortiranjem
+            $('#example').DataTable({
+                "columnDefs": [
+                    { "type": "date-custom", "targets": 2 }
+                ]
+            });
+        });
+    </script> {% endcomment %}
+    <script>
+        $(document).ready(function() {
+            // Postavljanje lokalizacije na srpski
+
+
+            // Ručna implementacija sortiranja datuma
+            $.fn.dataTable.ext.type.order['date-custom-pre'] = function(date) {
+                return moment(date, 'DD/MM/YYYY').toDate();
+            };
+    
+            var languageSettings = {
+                "decimal": ",",
+                "thousands": ".",
+                "search": "Pretraga:",
+                "lengthMenu": "Prikaži _MENU_ stavki po strani",
+                "info": "Prikazano _START_ do _END_ od _TOTAL_ stavki",
+                "infoEmpty": "Prikazano 0 do 0 od 0 stavki",
+                "infoFiltered": "(filtrirano od ukupno _MAX_ stavki)",
+                "loadingRecords": "Učitavanje...",
+                "zeroRecords": "Nema pronađenih podataka",
+                "emptyTable": "Nema podataka u tabeli",
+                "paginate": {
+                    "first": "Prva",
+                    "previous": "Prethodna",
+                    "next": "Sledeća",
+                    "last": "Poslednja"
+                },
+                "aria": {
+                    "sortAscending": ": aktiviraj za sortiranje kolone uzlazno",
+                    "sortDescending": ": aktiviraj za sortiranje kolone silazno"
+                }
+            };
+    
+            // Inicijalizacija DataTables sa prilagođenim formatom datuma
+            var table = $('#Datatable').DataTable({
+                "language": languageSettings,
+                "columnDefs": [
+                { "type": "date-custom", "targets": [2,3] }
+            ]
+            });
+            var table = $('#DatatableVozila').DataTable({
+                "language": languageSettings,
+                "columnDefs": [
+                { "type": "date-custom", "targets": 6 }
+            ]
+            });
+            var table = $('#DatatableSaobracajne').DataTable({
+                "language": languageSettings,
+                "columnDefs": [
+                { "type": "date-custom", "targets": [2,3] }
+            ]
+            });
+            var table = $('#DatatableLease').DataTable({
+                "language": languageSettings,
+                "columnDefs": [
+                { "type": "date-custom", "targets": [6,7] }
+            ]
+            });
+            var table = $('#DatatablePolicy').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [9,10,13] }
+            ]
+            });
+            var table = $('#DatatableFuel').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [2] }
+                        ],
+
+            });
+            var table = $('#DatatableEmployee').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [5,6] }
+                        ],
+
+            });
+            var table = $('#DatatableIncident').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [3] }
+                        ],
+
+            });
+            var table = $('#DatatableNalozi').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [5] }
+                        ],
+
+            });
+            var table = $('#DatatableServisi').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [2] }
+                        ],
+
+            });
+        });      
+    </script>
+        <!-- Custom CSS for No Word Wrap -->
+        <style>
+            /* Compact styling for DataTables with class "display compact" */
+            table.display.compact th, 
+            table.display.compact td {
+                padding: 4px 8px;  /* Adjust padding */
+                font-size: 14px;   /* Adjust font size */
+            }
+            
+            /* Ensure horizontal scrolling is handled */
+            .dataTables_wrapper {
+                overflow-x: auto;  /* Enable horizontal scrolling for wrappers */
+            }
+
+            table.display.compact tbody td {
+                white-space: nowrap; /* Prevent word wrap */
+            }
+            </style>
 </body>
-</html> 
+</html>

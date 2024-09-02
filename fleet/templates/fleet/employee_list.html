@@ -1,10 +1,57 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>{{ title }}</h2>
-  <ul>
-    {% for employee in employees %}
-      <li><a href="{% url 'employee_detail' employee.pk %}">{{ employee.name }} - {{ employee.position }}</a></li>
-    {% endfor %}
-  </ul>
+<h2>{{ title }}</h2>
+<div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Basic Datatable</h5>
+      <div class="table-responsive">
+          <table id="DatatableEmployee" class="display compact">
+              <thead>
+                <tr>
+                  <th>Šifra zaposlenog</th>
+                  <th>Ime i prezime</th>
+                  <th>Pozicija</th>
+                  <th>Šifra odeljenja</th>
+                  <th>Pol</th>
+                  <th>Datum rođenja</th>
+                  <th>Datum zapošljavanja</th>
+                  <th>Broj telefona</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for employee in employees %}
+                  <tr>                        
+                    <td>{{ employee.employee_code }}</td>
+                    <td>{{ employee.name }}</td>
+                    <td>{{ employee.position }}</td>
+                    <td>{{ employee.department_code }}</td>
+                    <td>{{ employee.gender }}</td>
+                    <td>{{ employee.date_of_birth }}</td>
+                    <td>{{ employee.date_of_joining }}</td>
+                    <td>{{ employee.phone_number }}</td>
+
+                  </tr>
+              {% empty %}
+                  <tr>
+                      <td colspan="5">Nema podataka</td>
+                  </tr>
+              {% endfor %}
+              <tfoot>
+                <tr>
+                  <th>Šifra zaposlenog</th>
+                  <th>Ime i prezime</th>
+                  <th>Pozicija</th>
+                  <th>Šifra odeljenja</th>
+                  <th>Pol</th>
+                  <th>Datum rođenja</th>
+                  <th>Datum zapošljavanja</th>
+                  <th>Broj telefona</th>
+                </tr>
+              </tfoot>
+          </table>
+      </div>
+
+  </div>
+</div>
 {% endblock %}

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class Vehicle(models.Model):
     inventory_number = models.CharField(max_length=20, unique=True, verbose_name=_("Inventarni broj"))
@@ -24,7 +25,12 @@ class Vehicle(models.Model):
     otpis = models.BooleanField(_("Otpis"), default=False, editable=False)
 
     def __str__(self):
-        return f"{self.brand} {self.model} ({self.chassis_number})"
+        # Pronađi registraciju vozila iz TrafficCard modela, ako postoji
+        traffic_card = self.traffic_cards.first()
+        if traffic_card:
+            return f"{self.brand} {self.model} - {traffic_card.registration_number}"
+        else:
+            return f"{self.brand} {self.model}"
 
 class TrafficCard(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='traffic_cards', verbose_name=_("Vozilo"))
@@ -99,7 +105,7 @@ class FuelConsumption(models.Model):
     supplier = models.CharField(max_length=50, verbose_name=_("Dobavljač"))
 
     def __str__(self):
-        return f"Fuel consumption for {self.vehicle.chassis_number} on {self.date}"
+        return f"Potrosnja goriva {self.vehicle.chassis_number} na {self.date}"
 
 class Employee(models.Model):
     GENDER_CHOICES = [
@@ -163,3 +169,20 @@ class Service(models.Model):
 
     def __str__(self):
         return f"{self.service_type.name} for {self.vehicle.chassis_number} on {self.service_date}"
+
+class CustomUser(AbstractUser):
+    USER_TYPE_CHOICES = (
+        ('dashboard', 'Dashboard and Analytics'),
+        ('data_entry', 'Data Entry and Reports'),
+        ('admin', 'Administrator'),
+    )
+
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='data_entry')
+    job_code = models.CharField(max_length=20, verbose_name="Šifra posla")
+    
+    # Override related names to avoid conflicts
+    groups = models.ManyToManyField(Group, related_name='customuser_groups')
+    user_permissions = models.ManyToManyField(Permission, related_name='customuser_permissions')
+
+    def __str__(self):
+        return self.username

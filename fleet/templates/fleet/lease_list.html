@@ -1,10 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>{{ title }}</h2>
-  <ul>
-    {% for lease in leases %}
-      <li><a href="{% url 'lease_detail' lease.pk %}">{{ lease.partner_name }} - {{ lease.vehicle.chassis_number }}</a></li>
-    {% endfor %}
-  </ul>
+<h2>{{ title }}</h2>
+<div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Basic Datatable</h5>
+      <div class="table-responsive">
+          <table id="DatatableLease" class="display">
+              <thead>
+                  <tr>
+                      <th>Vozilo</th>
+                      <th>Partner-kod</th>
+                      <th>Partner</th>
+                      <th>Šifra posla</th>
+                      <th>Broj ugovora</th>
+                      <th>Trenutna vrednost otplate</th>
+                      <th>Datum početka</th>
+                      <th>Datum završetka</th>
+                      <th>Napomena</th>
+                  </tr>
+              </thead>
+              <tbody>
+                {% for lease in leases %}
+                  <tr>                        
+                      <td>{{ lease.vehicle }}</td>                      
+                      <td>{{ lease.partner_code }}</td>
+                      <td>{{ lease.partner_name }}</td>
+                      <td>{{ lease.job_code }}</td>
+                      <td>{{ lease.contract_number }}</td>
+                      <td>{{ lease.current_payment_amount}}</td>
+                      <td>{{ lease.start_date }}</td>
+                      <td>{{ lease.end_date }}</td>
+                      <td>
+                          {% if lease.note %}
+                            {{ lease.note }}
+                          {% else %}
+                            Nema napomena
+                          {%endif%}
+                      </td>
+                  </tr>
+              {% empty %}
+                  <tr>
+                      <td colspan="5">Nema opreme..</td>
+                  </tr>
+              {% endfor %}
+              <tfoot>
+                  <tr>
+                    <th>Vozilo</th>
+                    <th>Partner-kod</th>
+                    <th>Partner</th>
+                    <th>Šifra posla</th>
+                    <th>Broj ugovora</th>
+                    <th>Trenutna vrednost otplate</th>
+                    <th>Datum početka</th>
+                    <th>Datum završetka</th>
+                    <th>Napomena</th>
+                  </tr>
+              </tfoot>
+          </table>
+      </div>
+
+  </div>
+</div>
+
 {% endblock %}

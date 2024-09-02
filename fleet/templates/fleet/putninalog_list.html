@@ -1,10 +1,62 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>{{ title }}</h2>
-  <ul>
-    {% for nalog in putni_nalozi %}
-      <li><a href="{% url 'putninalog_detail' nalog.pk %}">{{ nalog.travel_date }} - {{ nalog.employee.name }}</a></li>
-    {% endfor %}
-  </ul>
+<h2>{{ title }}</h2>
+<div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Basic Datatable</h5>
+      <div class="table-responsive">
+          <table id="DatatableNalozi" class="display compact">
+              <thead>
+                  <tr>
+                    <th>Zaposleni</th>
+                    <th>Šifra posla</th>
+                    <th>Mesto putovanja</th>
+                    <th>Ugovor/ponuda</th>
+                    <th>Vozilo</th>
+                    <th>Datum putovanja</th>
+                    <th>Broj dana</th>
+                    <th>Avans</th>
+                    <th>Troškovi putovanja</th>
+                    <th>Datum likvidacije</th>
+                  </tr>
+              </thead>
+              <tbody>
+                {% for putni_nalog in putni_nalozi %}
+                  <tr>                        
+                    <td>{{ putni_nalog.employee.name }}</td>
+                    <td>{{ putni_nalog.job_code }}</td>
+                    <td>{{ putni_nalog.travel_location }}</td>
+                    <td>{{ putni_nalog.contract_offer }}</td>
+                    <td>{{ putni_nalog.vehicle.chassis_number }}</td> <!-- Ili drugo odgovarajuće polje iz Vehicle modela -->
+                    <td>{{ putni_nalog.travel_date }}</td>
+                    <td>{{ putni_nalog.number_of_days }}</td>
+                    <td>{{ putni_nalog.advance_payment }}</td>
+                    <td>{{ putni_nalog.travel_expenses }}</td>
+                    <td>{{ putni_nalog.settlement_date }}</td>
+                  </tr>
+              {% empty %}
+                  <tr>
+                      <td colspan="5">Nema podataka</td>
+                  </tr>
+              {% endfor %}
+              <tfoot>
+                  <tr>
+                    <th>Zaposleni</th>
+                    <th>Šifra posla</th>
+                    <th>Mesto putovanja</th>
+                    <th>Ugovor/ponuda</th>
+                    <th>Vozilo</th>
+                    <th>Datum putovanja</th>
+                    <th>Broj dana</th>
+                    <th>Avans</th>
+                    <th>Troškovi putovanja</th>
+                    <th>Datum likvidacije</th>
+                  </tr>
+              </tfoot>
+          </table>
+      </div>
+
+  </div>
+</div>
 {% endblock %}
