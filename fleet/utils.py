@@ -514,3 +514,33 @@ def import_employee_data_from_excel(file_path):
         
         except Exception as e:
             print(f"Error importing row {index}: {e}")
+
+def populate_service_types():
+    from fleet.models import ServiceType 
+
+# Podaci koje želiš da ubaciš u bazu
+    service_types = [
+        {"name": "Redovan servis van IMS", "description": "Motorno ulje, Filteri ulja, vazduha, klime I goriva, svecice, wd sprej"},
+        {"name": "Redovan servis u IMS", "description": "Motorno ulje, Filteri ulja, vazduha, klime I goriva, svecice, wd sprej"},
+        {"name": "Veliki servis u IMS", "description": "Motorno ulje, filteri ulja, vazduha i klime, vodena pumpa, pk kais komplet, PK kais i set zupcastog kaisa, G-12, diht masa, wd sprej, svecice, antifriz"},
+        {"name": "Veliki servis van IMS", "description": "Motorno ulje, filteri ulja, vazduha i klime, vodena pumpa, pk kais komplet, PK kais i set zupcastog kaisa, G-12, diht masa, wd sprej, svecice, antifriz"},
+        {"name": "Popravka u IMS", "description": "Set kvacila (lamela, korpa, druk lezaj), Migavac, Metlice, Gumice balans stangle, zamena Akumulatora, Amortizeri, Bobina, kablovi za svecice, Dobosi zadnjeg tocka, zadnji kocioni cilindri, sajla rucne kocnice, paknovi, plocice, menjacko ulje, plasticne vezice, Hladnjak motora, kais ventilatora, bobina, grejaci, termostat, lager, lamela, lezajevi, retrovizori"},
+        {"name": "Popravka van IMS", "description": None},
+        {"name": "Potrosni materijal", "description": "Komplet sijalica, Nalepnice ogranicenja brzine, PP aparat, Lanci za sneg, Prva pomoc, Florescentni prsluk, Sajla za vucu, Trougao, Antifriz, ATF ulje, Motorno ulje, Zimska tecnost, AD blue, G-12, Tecnost za brisace"},
+        {"name": "Dopuna taga, tag, putarina", "description": None},
+        {"name": "Tehnicki pregled, registracija", "description": None},
+        {"name": "Odjava vozila", "description": None},
+        {"name": "Gorivo", "description": None},
+        {"name": "Gume - zamena", "description": None},
+        {"name": "Gume - kupovina", "description": None},
+        {"name": "Pranje vozila", "description": None},
+    ]
+
+    # Popuni bazu podataka
+    for service_type_data in service_types:
+        ServiceType.objects.create(
+            name=service_type_data["name"],
+            description=service_type_data["description"]
+        )
+
+    print("Podaci su uspešno uneti u bazu.")

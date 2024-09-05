@@ -22,10 +22,10 @@ class VehicleListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # Subquery to get the latest JobCode for each Vehicle
-        latest_job_code_subquery = JobCode.objects.filter(
-            vehicle_id=OuterRef('pk')
-        ).order_by('-assigned_date').values('job_code')[:1]
+        # # Subquery to get the latest JobCode for each Vehicle
+        # latest_job_code_subquery = JobCode.objects.filter(
+        #     vehicle_id=OuterRef('pk')
+        # ).order_by('-assigned_date').values('job_code')[:1]
         
         # Subquery to get the latest TrafficCard for each Vehicle
         latest_traffic_card_subquery = TrafficCard.objects.filter(
@@ -33,7 +33,7 @@ class VehicleListView(LoginRequiredMixin, ListView):
         ).order_by('-issue_date').values('registration_number')[:1]
 
         queryset = queryset.annotate(
-            latest_job_code=Subquery(latest_job_code_subquery),
+            # latest_job_code=Subquery(latest_job_code_subquery),
             registration_number=Subquery(latest_traffic_card_subquery)
         )
         return queryset

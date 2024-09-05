@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Vehicle, TrafficCard, JobCode, Lease, Policy, FuelConsumption, Employee, Incident, PutniNalog, ServiceType, Service
+from .models import *
 
 admin.site.register(Vehicle)
 admin.site.register(TrafficCard)
