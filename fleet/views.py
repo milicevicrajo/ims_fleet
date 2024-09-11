@@ -1,5 +1,5 @@
-from django.shortcuts import render
-
+from django.shortcuts import render, redirect
+from django.db import connections, IntegrityError
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -8,6 +8,8 @@ from .forms import *
 from .filters import *
 from django.db.models import OuterRef, Subquery
 from django_filters.views import FilterView
+from django.contrib import messages
+import logging
 
 def dashboard(request):    
     context = {}
@@ -22,19 +24,19 @@ class VehicleListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         
-        # # Subquery to get the latest JobCode for each Vehicle
-        # latest_job_code_subquery = JobCode.objects.filter(
-        #     vehicle_id=OuterRef('pk')
-        # ).order_by('-assigned_date').values('job_code')[:1]
-        
+        # Subquery to get the latest org_unit for each Vehicle
+        latest_org_unit_subquery = JobCode.objects.filter(
+            vehicle_id=OuterRef('pk')
+        ).order_by('-assigned_date').values('organizational_unit__code')[:1]
+
         # Subquery to get the latest TrafficCard for each Vehicle
         latest_traffic_card_subquery = TrafficCard.objects.filter(
             vehicle_id=OuterRef('pk')
         ).order_by('-issue_date').values('registration_number')[:1]
 
         queryset = queryset.annotate(
-            # latest_job_code=Subquery(latest_job_code_subquery),
-            registration_number=Subquery(latest_traffic_card_subquery)
+            latest_org_unit=Subquery(latest_org_unit_subquery),
+            registration_number=Subquery(latest_traffic_card_subquery),
         )
         return queryset
     
@@ -157,6 +159,17 @@ class TrafficCardDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
     
+class OrganizationalUnitListView(ListView):
+    model = OrganizationalUnit
+    template_name = 'organizational_unit_list.html'
+    context_object_name = 'organizational_units'
+
+class OrganizationalUnitCreateView(CreateView):
+    model = OrganizationalUnit
+    form_class = OrganizationalUnitForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('organizational_unit-list')  
+
 class JobCodeListView(LoginRequiredMixin, ListView):
     model = JobCode
     template_name = 'fleet/jobcode_list.html'
@@ -167,7 +180,6 @@ class JobCodeListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista šifara poslova'
         return context
 
-# CreateView
 class JobCodeCreateView(LoginRequiredMixin, CreateView):
     model = JobCode
     form_class = JobCodeForm
@@ -179,8 +191,7 @@ class JobCodeCreateView(LoginRequiredMixin, CreateView):
         context['title'] = 'Kreiraj novu šifru posla'
         context['submit_button_label'] = 'Dodaj šifru posla'
         return context
-
-# UpdateView
+    
 class JobCodeUpdateView(LoginRequiredMixin, UpdateView):
     model = JobCode
     form_class = JobCodeForm
@@ -193,7 +204,6 @@ class JobCodeUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class JobCodeDetailView(LoginRequiredMixin, DetailView):
     model = JobCode
     template_name = 'fleet/jobcode_detail.html'
@@ -204,7 +214,6 @@ class JobCodeDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji šifre posla {self.object.job_code}"
         return context
 
-# DeleteView
 class JobCodeDeleteView(LoginRequiredMixin, DeleteView):
     model = JobCode
     success_url = reverse_lazy('jobcode_list')
@@ -219,7 +228,6 @@ class JobCodeDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
     
-
 class LeaseListView(PermissionRequiredMixin, ListView):
     model = Lease
     template_name = 'fleet/lease_list.html'
@@ -232,7 +240,6 @@ class LeaseListView(PermissionRequiredMixin, ListView):
         context['title'] = 'Lista zakupa vozila'
         return context
 
-# CreateView
 class LeaseCreateView(LoginRequiredMixin, CreateView):
     model = Lease
     form_class = LeaseForm
@@ -245,7 +252,6 @@ class LeaseCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj zakup'
         return context
 
-# UpdateView
 class LeaseUpdateView(LoginRequiredMixin, UpdateView):
     model = Lease
     form_class = LeaseForm
@@ -258,7 +264,6 @@ class LeaseUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class LeaseDetailView(LoginRequiredMixin, DetailView):
     model = Lease
     template_name = 'fleet/lease_detail.html'
@@ -269,7 +274,6 @@ class LeaseDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji zakupa {self.object.partner_name}"
         return context
 
-# DeleteView
 class LeaseDeleteView(LoginRequiredMixin, DeleteView):
     model = Lease
     success_url = reverse_lazy('lease_list')
@@ -284,7 +288,6 @@ class LeaseDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
 
-# ListView
 class PolicyListView(LoginRequiredMixin, ListView):
     model = Policy
     template_name = 'fleet/policy_list.html'
@@ -295,7 +298,6 @@ class PolicyListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista polisa osiguranja'
         return context
 
-# CreateView
 class PolicyCreateView(LoginRequiredMixin, CreateView):
     model = Policy
     form_class = PolicyForm
@@ -308,7 +310,6 @@ class PolicyCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj polisu'
         return context
 
-# UpdateView
 class PolicyUpdateView(LoginRequiredMixin, UpdateView):
     model = Policy
     form_class = PolicyForm
@@ -321,7 +322,6 @@ class PolicyUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class PolicyDetailView(LoginRequiredMixin, DetailView):
     model = Policy
     template_name = 'fleet/policy_detail.html'
@@ -332,7 +332,6 @@ class PolicyDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji polise {self.object.policy_number}"
         return context
 
-# DeleteView
 class PolicyDeleteView(LoginRequiredMixin, DeleteView):
     model = Policy
     success_url = reverse_lazy('policy_list')
@@ -348,7 +347,40 @@ class PolicyDeleteView(LoginRequiredMixin, DeleteView):
         return super().get_object(queryset)
 
 
-# ListView
+def fetch_policies_view(request):
+    if request.method == 'POST':
+        # Povlačenje podataka iz view-a u drugoj bazi
+        with connections['test_db'].cursor() as cursor:
+            cursor.execute("SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, VrstaOsiguranja, BrojPolise, IznosPremije FROM dbo.v_polise")
+            rows = cursor.fetchall()
+
+        for row in rows:
+            # Kreiraj Policy objekte sa povučenim podacima
+            try:
+                policy = Policy(
+                    vehicle=None,  # Ostavljaš vehicle prazno da ga korisnik kasnije doda
+                    partner_pib=row[0],
+                    partner_name=row[1],
+                    invoice_id=row[2],  # Ovo polje je unique
+                    invoice_number=row[3],
+                    issue_date=row[4],
+                    insurance_type=row[5],
+                    policy_number=row[6],
+                    premium_amount=row[7],
+                )
+                policy.save()
+            except IntegrityError:
+                # Ako postoji prekršeni unique constraint, preskoči unos
+                continue
+        
+        # Poruka o uspehu
+        messages.success(request, "Podaci su uspešno povučeni i sačuvani.")
+
+        # Preusmeravanje posle uspešnog povlačenja podataka
+        return redirect('policy_list')  # Ovde postavi URL na koji želiš da korisnika preusmeriš posle uspeha
+
+    return render(request, 'fleet/fetch_policies.html')
+
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     model = FuelConsumption
     filterset_class = FuelFilterForm
@@ -675,7 +707,63 @@ class ServiceTypeDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
     
-# ListView
+logger = logging.getLogger(__name__)  
+def fetch_service_data_view(request):
+    if request.method == 'POST':
+        # Povlačenje podataka iz view-a u drugoj bazi
+        with connections['test_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje, sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila FROM dbo.v_servisi
+            """)
+            rows = cursor.fetchall()
+
+        for row in rows:
+            try:
+                # Kreiranje ili ažuriranje modela `Service`
+                service = Service(
+                    vehicle=None,
+                    service_type=None,
+                    service_date=row[3],  # Datum servisa
+                    cost=row[8],  # Potražuje
+                    provider=row[2],  # Naziv partnera (naz_par_pl)
+                    description=None  # Napomena
+                )
+                service.save()
+
+                # Kreiranje ili ažuriranje modela `ServiceTransaction`
+                service_transaction = ServiceTransaction(
+                    vehicle=None,
+                    god=row[0],
+                    sif_par_pl=row[1],
+                    naz_par_pl=row[2],
+                    datum=row[3],  # Datum transakcije
+                    sif_vrs=row[4],
+                    br_naloga=row[5],
+                    vez_dok=row[6],
+                    knt_pl=row[7],
+                    potrazuje=row[8],
+                    sif_par_npl=row[9],
+                    knt_npl=row[10],
+                    duguje=row[11],
+                    konto_vozila=row[13],
+                    kom=None,
+                    popravka_kategorija=None,  # Kategorija poptavke
+                    napomena=None
+                )
+                service_transaction.save()
+
+            except Exception as e:
+                logger.error(f"Greška: {e}")
+                messages.error(request, "Došlo je do greške prilikom povlačenja podataka.")
+                return redirect('fetch_policies')
+
+        # Poruka o uspehu
+        messages.success(request, "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati.")
+
+        # Preusmeravanje posle uspešnog povlačenja podataka
+        return redirect('service_list')  # Postavi URL na koji želiš da preusmeriš korisnika
+
+    return render(request, 'fleet/fetch_policies.html')
 class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
     template_name = 'fleet/service_list.html'
@@ -737,3 +825,83 @@ class ServiceDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
+    
+
+def fetch_requisition_data_view(request):
+    if request.method == 'POST':
+        try:
+            # Povlačenje podataka iz view-a u drugoj bazi
+            with connections['test_db'].cursor() as cursor:
+                cursor.execute("""
+                    SELECT sif_pred, god, oj, sif_dok, sif_vrsart, br_dok, stavka, sif_art, naz_art, kol, cena, vrednost_nab
+                    FROM dbo.v_trebovanja
+                """)
+                rows = cursor.fetchall()
+
+            for row in rows:
+                try:
+                    # Kreiranje ili ažuriranje modela `Requisition`
+                    requisition = Requisition(
+                        vehicle=None,
+                        sif_pred=row[0],  # Šifra predmeta
+                        god=row[1],  # Godina
+                        br_dok=row[5],  # Broj dokumenta
+                        sif_vrsart=row[4],  # Šifra vrste artikla
+                        stavka=row[6],  # Stavka
+                        sif_art=row[7],  # Šifra artikla
+                        naz_art=row[8],  # Naziv artikla
+                        kol=row[9],  # Količina
+                        cena=row[10],  # Cena
+                        vrednost_nab=row[11],  # Vrednost nabavke
+                        mesec_unosa=None,  # Mesec unosa
+                        datum_trebovanja=None,  # Datum trebovanja
+                        napomena=None,  # Napomena
+                    )
+                    requisition.save()
+
+                except IntegrityError as e:
+                    # Ako postoji greška zbog unique constraint-a, preskoči unos
+                    print(f"Greška prilikom čuvanja dokumenta {row[5]}: {e}")
+                    continue
+
+            # Poruka o uspehu
+            messages.success(request, "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati.")
+
+            # Preusmeravanje posle uspešnog povlačenja podataka
+            return redirect('requisition_list')  # Postavi URL na koji želiš da preusmeriš korisnika
+
+        except Exception as e:
+            print(f"Greška prilikom povlačenja podataka: {e}")
+            messages.error(request, "Došlo je do greške prilikom povlačenja podataka.")
+            return redirect('error_page')
+
+    return render(request, 'fleet\fetch_policies.html')
+
+# List View (Prikaz liste)
+class RequisitionListView(ListView):
+    model = Requisition
+    template_name = 'requisition/requisition_list.html'
+    context_object_name = 'requisitions'
+
+# Create View (Kreiranje)
+class RequisitionCreateView(CreateView):
+    model = Requisition
+    form_class = RequisitionForm
+    template_name = 'requisition/requisition_form.html'
+    success_url = reverse_lazy('requisition_list')
+    success_message = "Requisition successfully created."
+
+# Update View (Ažuriranje)
+class RequisitionUpdateView(UpdateView):
+    model = Requisition
+    form_class = RequisitionForm
+    template_name = 'requisition/requisition_form.html'
+    success_url = reverse_lazy('requisition_list')
+    success_message = "Requisition successfully updated."
+
+# Delete View (Brisanje)
+class RequisitionDeleteView(DeleteView):
+    model = Requisition
+    template_name = 'requisition/requisition_confirm_delete.html'
+    success_url = reverse_lazy('requisition_list')
+    success_message = "Requisition successfully deleted."

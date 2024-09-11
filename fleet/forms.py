@@ -11,6 +11,12 @@ class TrafficCardForm(forms.ModelForm):
         model = TrafficCard
         fields = '__all__'
 
+
+
+class OrganizationalUnitForm(forms.ModelForm):
+    class Meta:
+        model = OrganizationalUnit
+        fields = '__all__'
 class JobCodeForm(forms.ModelForm):
     class Meta:
         model = JobCode
@@ -57,4 +63,7 @@ class ServiceForm(forms.ModelForm):
         model = Service
         fields = '__all__'
 
-
+class RequisitionForm(forms.ModelForm):
+    class Meta:
+        model = Requisition
+        fields = '__all__'

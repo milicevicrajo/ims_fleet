@@ -276,6 +276,15 @@
                         ],
 
             });
+            var table = $('#DatatableTrebovanja').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [2] }
+                        ],
+
+            });
         });      
     </script>
         <!-- Custom CSS for No Word Wrap -->

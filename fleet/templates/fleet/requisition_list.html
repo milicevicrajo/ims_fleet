@@ -1,0 +1,48 @@
+<!-- requisition_list.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Basic Datatable</h5>
+        <div class="table-responsive">
+            <table id="DatatableTrebovanja" class="display">
+                <thead>
+                    <tr>
+                        <th>Godina</th>
+                        <th>Broj Dokumenta</th>
+                        <th>Datum trebovanja</th>
+                        <th>Naziv Artikla</th>
+                        <th>Količina</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for requisition in requisitions %}
+                    <tr>
+                      <td>{{ requisition.god }}</td>
+                      <td>{{ requisition.br_dok }}</td>
+                      <td>{{ requisition.datum_trebovanja }}</td>
+                      <td>{{ requisition.naz_art }}</td>
+                      <td>{{ requisition.kol }}</td>
+                      <td>
+                        <a href="{% url 'requisition_update' requisition.pk %}">Edit</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                <tfoot>
+                    <tr>
+                        <th>Godina</th>
+                        <th>Broj Dokumenta</th>
+                        <th>Datum trebovanja</th>
+                        <th>Naziv Artikla</th>
+                        <th>Količina</th>
+                        <th>Akcije</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

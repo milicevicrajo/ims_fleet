@@ -16,6 +16,9 @@ urlpatterns = [
     path('saobracajne-dozvole/<int:pk>/', TrafficCardDetailView.as_view(), name='trafficcard_detail'),
     path('saobracajne-dozvole/obrisi/<int:pk>/', TrafficCardDeleteView.as_view(), name='trafficcard_delete'),
 
+    path('organizacione_jedinice/', OrganizationalUnitListView.as_view(), name='organizational_unit-list'),
+    path('organizacione_jedinice/novo/', OrganizationalUnitCreateView.as_view(), name='organizational_unit-create'),
+
     path('sifre-poslova/', JobCodeListView.as_view(), name='jobcode_list'),
     path('sifre-poslova/novo/', JobCodeCreateView.as_view(), name='jobcode_create'),
     path('sifre-poslova/izmeni/<int:pk>/', JobCodeUpdateView.as_view(), name='jobcode_update'),
@@ -28,6 +31,7 @@ urlpatterns = [
     path('zakupi/<int:pk>/', LeaseDetailView.as_view(), name='lease_detail'),
     path('zakupi/obrisi/<int:pk>/', LeaseDeleteView.as_view(), name='lease_delete'),
 
+    path('fetch-policies/', views.fetch_policies_view, name='fetch_policies'),
     path('polise/', PolicyListView.as_view(), name='policy_list'),
     path('polise/novo/', PolicyCreateView.as_view(), name='policy_create'),
     path('polise/izmeni/<int:pk>/', PolicyUpdateView.as_view(), name='policy_update'),
@@ -63,13 +67,20 @@ urlpatterns = [
     path('tipovi-servisa/izmeni/<int:pk>/', ServiceTypeUpdateView.as_view(), name='servicetype_update'),
     path('tipovi-servisa/<int:pk>/', ServiceTypeDetailView.as_view(), name='servicetype_detail'),
     path('tipovi-servisa/obrisi/<int:pk>/', ServiceTypeDeleteView.as_view(), name='servicetype_delete'),
-    
+
+    path('fetch-services/', views.fetch_service_data_view, name='fetch_services'),
     path('servisi/', ServiceListView.as_view(), name='service_list'),
     path('servisi/novo/', ServiceCreateView.as_view(), name='service_create'),
     path('servisi/izmeni/<int:pk>/', ServiceUpdateView.as_view(), name='service_update'),
     path('servisi/<int:pk>/', ServiceDetailView.as_view(), name='service_detail'),
     path('servisi/obrisi/<int:pk>/', ServiceDeleteView.as_view(), name='service_delete'),
 
+    path('fetch-requisitions/', fetch_requisition_data_view, name='fetch_requisitions'),
+    path('requisitions/', RequisitionListView.as_view(), name='requisition_list'),
+    path('requisitions/create/', RequisitionCreateView.as_view(), name='requisition_create'),
+    path('requisitions/<int:pk>/edit/', RequisitionUpdateView.as_view(), name='requisition_update'),
+    path('requisitions/<int:pk>/delete/', RequisitionDeleteView.as_view(), name='requisition_delete'),
+    
     path('', views.dashboard, name='dashboard'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

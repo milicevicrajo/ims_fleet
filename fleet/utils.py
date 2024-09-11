@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
-from .models import FuelConsumption, Vehicle, TrafficCard, JobCode, TrafficCard, Lease, Policy,Employee
+from .models import TransactionNIS, TransactionOMV, FuelConsumption, Vehicle, TrafficCard, JobCode, TrafficCard, Lease, Policy,Employee, OrganizationalUnit, Requisition
 import re
 import os
 import time
@@ -12,6 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 from django.core.exceptions import ObjectDoesNotExist
+import pytz
+from django.conf import settings
 
 def get_latest_download_file(download_path):
 
@@ -36,6 +38,60 @@ def format_license_plate(plate):
     # Ako nije moguće preoblikovati tablicu, vrati originalnu vrednost (ili baci grešku)
     return plate  # Ili podigni grešku ako je to potrebno
 
+import pandas as pd
+from django.utils.dateparse import parse_date
+from fleet.models import Vehicle  # Update 'your_app' with the actual app name
+
+def import_vehicles_from_excel(excel_file_path):
+    try:
+        # Load data from both sheets
+        df1 = pd.read_excel(excel_file_path, sheet_name=0)  # Adjust if there are specific sheet names
+        df2 = pd.read_excel(excel_file_path, sheet_name=1)
+
+        print("Sheets loaded successfully.")
+
+        # Merge the data on 'broj_sasije' or another appropriate key
+        df = pd.merge(df1, df2, on='broj_sasije')
+        print(f"Data merged successfully. Total records: {len(df)}")
+
+        # Iterate through the merged DataFrame
+        for index, row in df.iterrows():
+            try:
+                vehicle, created = Vehicle.objects.update_or_create(
+                    chassis_number=row['broj_sasije'],
+                    defaults={
+                        'inventory_number': row['sif_osn'],
+                        'brand': row['Marka'].strip(),
+                        'model': row['Model'].strip(),
+                        'year_of_manufacture': int(row['GodinaProizvodnje']),
+                        'first_registration_date': parse_date(row['DatumPrveRegistracije']),
+                        'color': row['Boja'],
+                        'number_of_axles': int(row['BrojOsovina']),
+                        'engine_volume': float(row['ZapreminaMotora']),
+                        'engine_number': row['BrojMotora'],
+                        'weight': float(row['Masa']),
+                        'engine_power': float(row['SnagaMotora']),
+                        'load_capacity': float(row['Nosivost']),
+                        'category': row['Kategorija'],
+                        'maximum_permissible_weight': float(row['NajvecaDozvoljenaMasa']),
+                        'fuel_type': row['PogonskoGorivo'],
+                        'number_of_seats': int(row['BrojMestaZaSedenje']),
+                        'purchase_value': float(row['nab_vred']),
+                        'purchase_date': parse_date(row['dat_stavlj']),
+                        'center_code': str(row['oj']),
+                        'partner_code': str(row['sif_par']),
+                        'partner_name': row['naz_par'].strip(),
+                        'invoice_number': row['br_fakture'].strip(),
+                        'description': row['opis'].strip(),
+                        'otpis': bool(int(row['otpis']))
+                    }
+                )
+                print(f"Processed vehicle {vehicle.inventory_number}: {'Created' if created else 'Updated'}")
+            except Exception as e:
+                print(f"Error processing record {index}: {e}")
+    except Exception as e:
+        print(f"Failed to load or process Excel file: {e}")
+
 
 def import_omv_fuel_consumption_from_csv(csv_file_path):
     with open(csv_file_path, newline='', encoding='utf-8') as csvfile:
@@ -55,7 +111,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
 
                 # Ispravna konverzija troška
                 cost_bruto = row['Gross CC'].replace(',', '')
-                cost_neto = row['Amount other'].replace(',', '')
+                cost_neto = cost_bruto - row['VAT'].replace(',', '')
 
                 # Kreiraj FuelConsumption instancu i sačuvaj je u bazi
                 FuelConsumption.objects.create(
@@ -74,173 +130,96 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
             except Exception as e:
                 print(f"Error importing row: {row}. Error: {str(e)}")
 
+def import_omv_transactions_from_csv(csv_file_path):
+    timezone = pytz.timezone(settings.TIME_ZONE)
 
-#python manage.py crontab add
-class OMVCommand(BaseCommand):
-    help = 'Downloads a report from OMV website and imports data into the database'
+    with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=';')  # Pazi na delimiter ';'
+        for row in reader:
+            try:
+                # Formatiraj tablice
+                formatted_plate = format_license_plate(row['License plate No'])
+                
+                # Konverzija datuma sa vremenskom zonom
+                def to_aware_datetime(value, format='%Y-%m-%d %H:%M:%S'):
+                    if value:
+                        naive_datetime = datetime.strptime(value, format)
+                        return timezone.localize(naive_datetime)
+                    return None
 
-    def handle(self, *args, **kwargs):
-        # Define the URLs and credentials
-        login_url = "https://fleet.omv.com/FleetServicesProduction/Login.jsp"
-        username = "710111107258"
-        password = "OMV-107258"
+                # Konverzija numeričkih vrednosti, ostavi kao None ako je prazno
+                def to_float(value):
+                    return float(value.replace(',', '')) if value else None
 
-        # Set up Chrome options to download files to a specific location
-        download_path = r"C:\Users\Rajo\Downloads"
-        chrome_options = webdriver.ChromeOptions()
-        prefs = {"download.default_directory": download_path}
-        chrome_options.add_experimental_option("prefs", prefs)
+                quantity = to_float(row['Quantity'])
+                gross_cc = to_float(row['Gross CC'])
+                vat = to_float(row['VAT'])
+                discount = to_float(row['Discount'])
+                surcharge = to_float(row['Surcharge'])
+                cost_1 = to_float(row['Cost 1'])
+                cost_2 = to_float(row['Cost 2'])
+                amount_other = to_float(row['Amount other'])
+                unit_price = to_float(row['Unitprice'])
+                amount = to_float(row['Amount'])
+                mileage = to_float(row['Mileage'])
+                corrected_mileage = to_float(row['Corrected mileage'])
 
-        # Initialize WebDriver
-        driver = webdriver.Chrome(options=chrome_options)
-
-        try:
-            # Open the login page
-            driver.get(login_url)
-            print("Opened login page")
-
-            # Enter username
-            username_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.ID, "username"))
-            )
-            username_input.send_keys(username)
-            print("Entered username")
-
-            # Enter password
-            password_input = driver.find_element(By.NAME, "password")
-            password_input.send_keys(password)
-            print("Entered password")
-
-            # Select language
-            language_select = driver.find_element(By.NAME, "language")
-            for option in language_select.find_elements(By.TAG_NAME, 'option'):
-                if option.text == 'English':
-                    option.click()
-                    break
-            print("Selected language")
-
-            # Click the login button
-            login_button = driver.find_element(By.XPATH, "//input[@type='submit']")
-            login_button.click()
-            print("Clicked login button")
-
-            # Wait for some time to ensure the page loads completely
-            time.sleep(1)
-
-            # Switch to the header frame to find the 'Transaction information' link
-            driver.switch_to.default_content()
-            WebDriverWait(driver, 20).until(
-                EC.frame_to_be_available_and_switch_to_it((By.NAME, "header"))
-            )
-            print("Switched to header frame")
-
-            # Click on 'Transaction information'
-            transaction_information_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@href='header.do?selectModule=transactioninformation']"))
-            )
-            transaction_information_link.click()
-            print("Clicked on 'Transaction information'")
-
-            # Switch back to default content
-            driver.switch_to.default_content()
-
-            # Switch to the functionnavigation frame to proceed
-            WebDriverWait(driver, 20).until(
-                EC.frame_to_be_available_and_switch_to_it((By.NAME, "functionnavigation"))
-            )
-            print("Switched to functionnavigation")
-
-            # Click on 'Reports'
-            reports_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@href='functionNavigation.do?openFunction=transactioninformation.report.overview']"))
-            )
-            reports_link.click()
-            print("Clicked on 'Reports'")
-
-            # Click on 'Transactions'
-            transactions_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@href='genSearchCriteria.do?activateFunction=transactioninformation.report.transaction&openFunction=transactioninformation.report.overview']"))
-            )
-            transactions_link.click()
-            print("Clicked on 'Transactions'")
-
-            # Switch back to default content
-            driver.switch_to.default_content()
-
-            # Switch to the searchcriteria frame
-            WebDriverWait(driver, 20).until(
-                EC.frame_to_be_available_and_switch_to_it((By.NAME, "searchcriteria"))
-            )
-            print("Switched to searchcriteria frame")
-
-            # Wait for the date inputs to be present
-            date_from_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.NAME, "Transactiondatefrom"))
-            )
-            print("Date from input found")
-
-            # Clear and set the 'date from' input
-            date_from_input.clear()
-            date_from_input.send_keys("2024-05-11")
-            print("Entered date from")
-
-            # Clear and set the 'date to' input
-            date_to_input = driver.find_element(By.NAME, "Transactiondate1")
-            date_to_input.clear()
-            date_to_input.send_keys("2024-07-11")
-            print("Entered date to")
-
-            # Click the 'Result' link using JavaScript
-            driver.execute_script("goContent()")
-            print("Clicked 'Result' link")
-
-            # Switch back to default content
-            driver.switch_to.default_content()
+                # Polja koja zahtevaju datetime konverziju
+                transaction_date = to_aware_datetime(row['Transactiondate'])  # 'Transactiondate'
+                invoice_date = to_aware_datetime(row['Invoice date'], format='%Y-%m-%d') if row['Invoice date'] else None  # 'Invoice date'
+                date_to = to_aware_datetime(row['Date to'], format='%Y-%m-%d') if row['Date to'] else None  # 'Date to'
+                
+                # Kreiraj instancu TransactionOMV modela i sačuvaj je u bazi
+                TransactionOMV.objects.create(
+                    issuer=row['Issuer'].strip(),
+                    customer=row['Customer'],
+                    card=row['Card'],
+                    license_plate_no=formatted_plate,
+                    transaction_date=transaction_date,
+                    product_inv=row['Product INV'],
+                    quantity=quantity,
+                    gross_cc=gross_cc,
+                    vat=vat,
+                    voucher=row['Voucher'],
+                    mileage=mileage,
+                    corrected_mileage=corrected_mileage,
+                    additional_info=row['Additional info'],
+                    supply_country=row['Supply country'],
+                    site_town=row['Site Town'],
+                    product_del=row['Product DEL'],
+                    unit_price=unit_price,
+                    amount=amount,
+                    discount=discount,
+                    surcharge=surcharge,
+                    vat_2010=row['VAT2010'],
+                    supplier_currency=row['Suppliercurrency'],
+                    invoice_no=row['Invoice No'],
+                    invoice_date=invoice_date,
+                    invoiced=True if row['Invoiced?'] == 'Yes' else False,
+                    state=row['State'],
+                    supplier=row['Supplier'],
+                    cost_1=cost_1,
+                    cost_2=cost_2,
+                    reference_no=row['Reference No'],
+                    record_type=row['Recordtype'],
+                    amount_other=amount_other,
+                    is_list_price=True if row['is listprice ?'] == 'Yes' else False,
+                    approval_code=row['Approval code'],
+                    date_to=date_to,
+                    final_trx=row['Final Trx.'],
+                    lpi=row['LPI']
+                )
+                print(f"Successfully imported transaction for vehicle {formatted_plate}")
             
-            # Switch to the content frame
-            WebDriverWait(driver, 20).until(
-                EC.frame_to_be_available_and_switch_to_it((By.NAME, "content"))
-            )
+            except ObjectDoesNotExist:
+                print(f"Vehicle with license plate {row['License plate No']} not found.")
+            except Exception as e:
+                print(f"Error importing row: {row}. Error: {str(e)}")
 
-            # Wait for the download link to appear
-            download_link = WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@href=\"javascript:openURL_Loading('browseTransactionList.do?event=CsvFileRequest');\"]"))
-            )
-            print("Download link found")
-
-            # Click the download link
-            download_link.click()
-            print("Clicked download link")
-            time.sleep(5)  # Očekuj da se preuzimanje završi
-
-            print("Report downloaded successfully")
-
-            # Pronađi najnovije preuzeti fajl
-            csv_file_path = get_latest_download_file(download_path)
-
-            # Importuj podatke u bazu
-            import_omv_fuel_consumption_from_csv(csv_file_path)
-            print(f"Data imported successfully from {csv_file_path}")
-
-        finally:
-            # Close the browser
-            driver.quit()
-            print("Browser closed")
-
-def format_license_plate(plate):
-    # Ukloni sve beline i crtice iz registracionog broja
-    plate = plate.replace(" ", "").replace("-", "").upper()
-
-    # Dodaj crtu na odgovarajuće mesto da dobiješ format AA999-AA ili AA9999-AA
-    match = re.match(r'^([A-Z]{2})(\d{3,4})([A-Z]{2})$', plate)
-    if match:
-        return f"{match.group(1)}{match.group(2)}-{match.group(3)}"
-    
-    # Ako nije moguće preoblikovati tablicu, vrati originalnu vrednost (ili baci grešku)
-    return plate  # Ili podigni grešku ako je to potrebno
 
 def import_nis_fuel_consumption(file_path):
-
+    # Preuzmi vremensku zonu iz Django podešavanja
+    timezone = pytz.timezone(settings.TIME_ZONE)
     # Učitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1)  # Koristi prvi sheet i drugi red kao zaglavlje
 
@@ -248,14 +227,15 @@ def import_nis_fuel_consumption(file_path):
     for index, row in df.iterrows():
         try:
             # Formatiraj registarski broj pre nego što ga upotrebiš
-            formatted_plate = format_license_plate(row['Br. tablica'].strip().upper())
+            formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
             # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
             traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
-
-            transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S').date()
+            # Konverzija datuma transakcije sa vremenskom zonom
+            naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
+            transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
 
            
             FuelConsumption.objects.create(
@@ -263,145 +243,122 @@ def import_nis_fuel_consumption(file_path):
                 date=transaction_date,
                 amount=row['Količina'],
                 fuel_type=row['Naziv proizvoda'],
-                cost_bruto=row['Total sa kase'],
-                cost_neto=row['Total'],
+                cost_bruto=row['Total'],
+                cost_neto=row['Total']*5/6,
                 supplier="NIS"
             )
             print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
         
         except ObjectDoesNotExist:
-            print(f"Vehicle with registration number {row['Br. tablica']} (formatted as {formatted_plate}) not found.")
+            print(f"Vehicle with registration number {formatted_plate} not found.")
         except Exception as e:
             print(f"Error importing row {index}: {e}")
-            
-class NISCommand(BaseCommand):
-    help = 'Downloads a report from NIS website and imports data into the database'
 
-    def handle(self, *args, **kwargs):
-        # Define the URLs and credentials
-        login_url = "https://cards.nis.rs"
-        username = "zoran.institutims"
-        password = "3RrrvvVg"
 
-        # Set up Chrome options to download files to a specific location
-        download_path = r"C:\Users\Rajo\Downloads"
-        chrome_options = webdriver.ChromeOptions()
-        prefs = {"download.default_directory": download_path}
-        chrome_options.add_experimental_option("prefs", prefs)
+def import_nis_transactions(file_path):
+    # Preuzmi vremensku zonu iz Django podešavanja
+    timezone = pytz.timezone(settings.TIME_ZONE)
+    # Učitaj Excel fajl
+    df = pd.read_excel(file_path, sheet_name=0, header=1)  # Koristi prvi sheet i drugi red kao zaglavlje
 
-        # Initialize WebDriver
-        driver = webdriver.Chrome(options=chrome_options)
-
+    for index, row in df.iterrows():
         try:
-            # Open the login page
-            driver.get(login_url)
-            print("Opened login page")
+            # Formatiraj registarski broj pre nego što ga upotrebiš
+            formatted_plate = format_license_plate(row['Registarska oznaka vozila'])
 
-            # Locate the element by its placeholder attribute and enter the username
-            username_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Korisničko ime']"))
+            # Konverzija datuma transakcije sa vremenskom zonom
+            naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
+            transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
+
+            # Konverzija numeričkih vrednosti gde je potrebno
+            kolicina = row['Količina']
+            popust = row['Popust']
+            total = row['Total']
+            cena_sa_kase = row['Cena sa kase']
+
+            # Postavi kilometražu na None ako nije dostupna
+            kilometraza = int(row['Kilometraža']) if pd.notna(row['Kilometraža']) else None
+
+            # Kreiraj instancu TransactionIMS modela
+            TransactionNIS.objects.create(
+                kupac=row['Kupac'],
+                sifra_kupca=row['Šifra kupca'],
+                broj_kartice=row['Broj kartice'],
+                kompanijski_kod_kupca=row['Kompanijski kod kupca'],
+                zemlja_sipanja=row['Zemlja sipanja'],
+                benzinska_stanica=row['Benzinska stanica'],
+                id_transakcije=row['ID transakcije'],
+                app_kod=row['App kod'],
+                datum_transakcije=transaction_date,
+                tociono_mesto=row['Točiono mesto'],
+                naziv_kartice=row['Naziv kartice'],
+                licenca=row.get('Licenca', ''),
+                broj_gazdinstva=row.get('Broj gazdinstva', ''),
+                registarska_oznaka_vozila=formatted_plate,
+                broj_racuna=row['Broj računa'],
+                kilometraza=kilometraza,
+                sipanje_van_rezervoara=row['Sipanje van rezervoara'],
+                naziv_proizvoda=row['Naziv proizvoda'],
+                kolicina=kolicina,
+                kolicina_kg=row.get('Količina KG', None),
+                popust=popust,
+                primenjen_popust=row['Primenjen popust'],
+                cena_sa_kase=cena_sa_kase,
+                cena=row['Cena'],
+                total_sa_kase=row['Total sa kase'],
+                total=total,
+                valuta=row['Valuta'],
+                aktivirano_prekoracenje=row['Aktivirano prekoračenje'],
+                kolicinsko_prekoracenje=row['Količinsko prekoračenje'],
+                finansijsko_prekoracenje=row['Finansijsko prekoračenje'],
+                nacin_ocitavanja_kartice=row['Način očitavanja kartice']
             )
-            username_input.send_keys(username)
-            print("Entered username")
-
-            # Locate the password input element by its placeholder attribute and enter the password
-            password_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Lozinka']"))
-            )
-            password_input.send_keys(password)
-            print("Entered password")
-
-            # Locate and click the submit button
-            login_button = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
-            )
-            login_button.click()
-            print("Clicked submit button")
-
-            # Wait for some time to ensure the page loads completely
-            time.sleep(1)
-
-            # Click on the 'Izveštaji' link
-            reports_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[contains(text(),'Izveštaji')]"))
-            )
-            reports_link.click()
-            print("Clicked on 'Izveštaji' link")
-
-            # Click on 'Transakcije po klijentima'
-            client_transactions_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po klijentima')]"))
-            )
-            client_transactions_link.click()
-            print("Clicked on 'Transakcije po klijentima' link")
-
-            # Locate and click the 'Prikaži izveštaj' button
-            show_report_button = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
-            )
-            show_report_button.click()
-            print("Clicked 'Prikaži izveštaj' button")
-
-            # Click on the download dropdown and select 'CSV'
-            dropdown_button = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'download-button')]"))
-            )
-            dropdown_button.click()
-            print("Clicked on download dropdown")
-
-            csv_option = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//li[@class='option']//button[contains(., 'CSV')]"))
-            )
-            csv_option.click()
-            print("Clicked on CSV option")
-
-            # Wait for the download to complete
-            time.sleep(5)
-            print("CSV file downloaded successfully")
-
-            # Pronađi najnovije preuzeti fajl
-            csv_file_path = get_latest_download_file(download_path)
-            print(csv_file_path)
-
-            # Importuj podatke u bazu
-            import_nis_fuel_consumption(csv_file_path)
-            print(f"Data imported successfully from {csv_file_path}")
-
-        finally:
-            # Close the browser
-            driver.quit()
-            print("Browser closed")
+            print(f"Successfully imported transaction for vehicle {formatted_plate}")
+        
+        except ObjectDoesNotExist:
+            print(f"Vehicle with registration number {row['Registarska oznaka vozila']} (formatted as {formatted_plate}) not found.")
+        except Exception as e:
+            print(f"Error importing row {index}: {e}")
 
 
 def import_job_codes_from_excel(file_path):
-    # Učitaj Excel sheet
+    # Load the Excel sheet
     df = pd.read_excel(file_path, sheet_name='sif_pos_dodeljeno')
 
-    # Prođi kroz svaki red u DataFrame-u
+    # Iterate over each row in the DataFrame
     for index, row in df.iterrows():
         try:
-            # Formatiraj registracioni broj
-            reg_br = row['RegBr'].strip().upper()
+            # Format the registration number (convert from AA0000AA to AA0000-AA)
+            reg_br_raw = row['RegBr'].strip().upper()
+            reg_br = format_license_plate(reg_br_raw)
 
-            # Pronađi TrafficCard prema registracionom broju
+            # Find the TrafficCard by the formatted registration number
             traffic_card = TrafficCard.objects.get(registration_number=reg_br)
-            vehicle = traffic_card.vehicle  # Pronađi povezano vozilo
+            vehicle = traffic_card.vehicle  # Find the associated vehicle
 
-            # Pravilno učitaj datum
+            # Convert the 'assigned_date' to the proper date format
             assigned_date = pd.to_datetime(row['od'], format='%d/%m/%Y').date()
 
-            # Kreiraj novi JobCode zapis
+            # Find the OrganizationalUnit by job code ('SifPos')
+            job_code_str = str(row['SifPos'])
+            organizational_unit = OrganizationalUnit.objects.get(code=job_code_str)
+
+            # Create a new JobCode record
             JobCode.objects.create(
                 vehicle=vehicle,
-                job_code=str(row['SifPos']),
+                organizational_unit=organizational_unit,
                 assigned_date=assigned_date
             )
-            print(f"Successfully imported job code {row['SifPos']} for vehicle with registration number {reg_br}")
+            print(f"Successfully imported job code {job_code_str} for vehicle with registration number {reg_br}")
         
-        except ObjectDoesNotExist:
+        except TrafficCard.DoesNotExist:
             print(f"Traffic card with registration number {reg_br} not found.")
+        except OrganizationalUnit.DoesNotExist:
+            print(f"Organizational unit with job code {job_code_str} not found.")
         except Exception as e:
             print(f"Error importing row {index}: {e}")
+
+
 
 def import_lease_data_from_excel(file_path):
     # Učitaj Excel sheet
@@ -485,6 +442,117 @@ def import_policy_data_from_excel(file_path):
         except Exception as e:
             print(f"Error importing row {index}: {e}")
 
+
+import pandas as pd
+from django.utils.dateparse import parse_datetime
+from datetime import datetime
+from django.core.exceptions import ObjectDoesNotExist
+from .models import Service, ServiceTransaction, Vehicle, ServiceType
+
+def import_services_from_excel(file_path):
+    # Load the Excel file
+    df = pd.read_excel(file_path, sheet_name='servisi')
+
+    # Iterate over each row in the DataFrame
+    for index, row in df.iterrows():
+        try:
+            # Handle the registration number format
+            reg_br = format_license_plate(row['RegOzn'])
+            # Find the TrafficCard by the formatted registration number
+            traffic_card = TrafficCard.objects.get(registration_number=reg_br)
+            vehicle = traffic_card.vehicle  # Find the associated vehicle
+
+            # Create or update ServiceTransaction
+            service_transaction = ServiceTransaction.objects.update_or_create(
+                vehicle=vehicle,
+                god=row['god'],
+                sif_par_pl=row['sif_par_pl'],
+                naz_par_pl=row['naz_par_pl'].strip(),
+                datum=pd.to_datetime(row['datum'], format='%d/%m/%Y').date(),
+                sif_vrs=row['sif_vrs'].strip(),
+                br_naloga=row['br_naloga'],
+                vez_dok=row['vez_dok'].strip() if pd.notna(row['vez_dok']) else None,
+                knt_pl=row['knt_pl'],
+                potrazuje=float(row['potrazuje']),
+                sif_par_npl=row['sif_par_npl'],
+                knt_npl=row['knt_npl'],
+                duguje=float(row['duguje']),
+                konto_vozila=row['konto_vozila'].strip(),
+                kom=row['kom'] if pd.notna(row['kom']) else None,
+                popravka_kategorija=row['popravka_kategorija'].strip() if pd.notna(row['popravka_kategorija']) else None,
+                napomena=row['napomena'].strip() if pd.notna(row['napomena']) else None,
+            )[0]
+
+            # Handle the service type, ensuring the name is not empty
+            service_type_name = row['popravka_kategorija'].strip()
+            print(service_type_name)
+            if service_type_name:
+                service_type, created = ServiceType.objects.get_or_create(
+                    name=service_type_name,
+                    defaults={'description': 'Automatically created from import'}
+                )
+            else:
+                continue  # Skip this entry if no service type name is provided
+
+            # Create or update Service
+            service = Service.objects.update_or_create(
+                vehicle=vehicle,
+                service_type=service_type,
+                service_date=pd.to_datetime(row['datum'], format='%d/%m/%Y').date(),
+                cost=float(row['duguje']),  # Assuming 'duguje' is the cost
+                provider=row['naz_par_pl'].strip(),
+                description=row['napomena'].strip() if pd.notna(row['napomena']) else ""
+            )[0]
+
+            print(f"Successfully imported service for vehicle {reg_br}")
+
+        except Vehicle.DoesNotExist:
+            print(f"Vehicle with registration number {reg_br} not found.")
+        except Exception as e:
+            print(f"Error importing row {index}: {e}")
+
+
+def import_requisitions_from_excel(file_path):
+    # Load the Excel file
+    df = pd.read_excel(file_path, sheet_name='trebovanja1')  # Adjust the sheet name as necessary
+
+    # Iterate over each row in the DataFrame
+    for index, row in df.iterrows():
+        try:
+            # Format and find the associated Vehicle by registration number
+            reg_br = format_license_plate(row['RegOzn'])
+            
+            # Find the TrafficCard by the formatted registration number
+            traffic_card = TrafficCard.objects.get(registration_number=reg_br)
+            print(traffic_card)
+            vehicle = traffic_card.vehicle  # Find the associated vehicle
+
+            # Create or update Requisition instance
+            requisition, created = Requisition.objects.update_or_create(
+                vehicle=vehicle,
+                sif_pred=row['sif_pred'],
+                god=row['god'],
+                br_dok=row['br_dok'],
+                sif_vrsart=row['sif_vrsart'].strip(),
+                stavka=row['stavka'],
+                sif_art=row['sif_art'],
+                naz_art=row['naz_art'].strip(),
+                kol=row['kol'],
+                cena=row['cena'],
+                vrednost_nab=row['vrednost_nab'],
+                mesec_unosa=row['mesec_unosa'],
+                datum_trebovanja=pd.to_datetime(row['datum_trebovanja'], format='%d/%m/%Y').date(),
+                napomena=row.get('napomena', '').strip() if pd.notna(row['napomena']) else None
+            )
+
+            print(f"Successfully imported requisition {requisition.br_dok} for {vehicle}")
+
+        except Vehicle.DoesNotExist:
+            print(f"Vehicle with registration number {reg_br} not found.")
+        except Exception as e:
+            print(f"Error importing row {index}: {e}")
+
+
 def import_employee_data_from_excel(file_path):
     # Učitaj Excel sheet
     df = pd.read_excel(file_path, sheet_name='zaposleni')  # Ako se sheet zove drugačije, promeni naziv
@@ -544,3 +612,53 @@ def populate_service_types():
         )
 
     print("Podaci su uspešno uneti u bazu.")
+
+def formiranje_org_jedinica():
+    import django
+    django.setup()  # Inicijalizacija Django okruženja
+
+    from fleet.models import OrganizationalUnit  
+    # Lista organizacionih jedinica i njihovih kodova
+    units = [
+        ('Geotehnička ispitivanja i projektovanje', '436111', '43'),
+        ('Superkontrola na izgradnji gasovoda', '425002', '42'),
+        ('Građevinska keramika', '412111', '41'),
+        ('Laboratorijsko ispitivanje betona', '413111', '41'),
+        ('Ispitivanja opreme i konstrukcija', '421114', '42'),
+        ('Poslovi u garazi', '832111', '83'),
+        ('Pravni i kadrovski poslovi', '821001', '82'),
+        ('Organizacija i poslovanje', '209001', '2'),
+        ('Kamen i agregat', '411111', '41'),
+        ('HE Đerdap', '421111', '42'),
+        ('Veziva, hemije i malteri', '414111', '41'),
+        ('Etaloniranje', '422111', '42'),
+        ('Poslovi magacina', '811002', '81'),
+        ('Stručni nadzor', '436222', '43'),
+        ('Istražni radovi na proj.sanac.', '442112', '44'),
+        ('Asfaltna ispitivanja', '437222', '43'),
+        ('Prednaprezanje', '441111', '44'),
+        ('Geomehanička ispitivanja', '437111', '43'),
+        ('Stručni nadzor i ter.ispitivanja', '431111', '43'),
+        ('Projektovanje saobraćajnica', '439111', '43'),
+        ('Mehan.-tehn.ispit.metala', '421116', '42'),
+        ('Ispitivanja konstrukcija', '443111', '44'),
+        ('PP zaštita, zaštita na radu', '825003', '82'),
+        ('Toplotna tehnika', '415113', '41'),
+        ('Drvo i sintetički materijali', '416111', '41'),
+        ('Poslovi nabavke', '811001', '81')
+    ]
+
+    # Unos podataka u bazu
+    for name, code, center_code in units:
+        unit, created = OrganizationalUnit.objects.get_or_create(
+            code=code,
+            defaults={'name': name, 'center': center_code}
+        )
+        if not created:
+            print(f"Jedinica sa kodom {code} već postoji.")
+        else:
+            print(f"Uspješno dodata jedinica: {name} sa kodom {code} i šifrom centra {center_code}.")
+
+    print("Proces unosa je završen.")
+
+

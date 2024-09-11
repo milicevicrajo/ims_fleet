@@ -1,4 +1,4 @@
-from ...utils import get_latest_download_file, import_omv_fuel_consumption_from_csv
+from ...utils import get_latest_download_file, import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
 import time
 from django.core.management.base import BaseCommand
 from selenium import webdriver
@@ -16,7 +16,7 @@ class Command(BaseCommand):
         password = "OMV-107258"
 
         # Set up Chrome options to download files to a specific location
-        download_path = r"C:\Users\Rajo\Downloads"
+        download_path = r"C:\omv_repo"
         chrome_options = webdriver.ChromeOptions()
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
@@ -111,13 +111,13 @@ class Command(BaseCommand):
 
             # Clear and set the 'date from' input
             date_from_input.clear()
-            date_from_input.send_keys("2024-05-11")
+            date_from_input.send_keys("2024-01-01")
             print("Entered date from")
 
             # Clear and set the 'date to' input
             date_to_input = driver.find_element(By.NAME, "Transactiondate1")
             date_to_input.clear()
-            date_to_input.send_keys("2024-08-30")
+            date_to_input.send_keys("2024-09-07")
             print("Entered date to")
 
             # Click the 'Result' link using JavaScript
@@ -149,7 +149,8 @@ class Command(BaseCommand):
             csv_file_path = get_latest_download_file(download_path)
 
             # Importuj podatke u bazu
-            import_omv_fuel_consumption_from_csv(csv_file_path)
+            import_omv_fuel_consumption_from_csv(csv_file_path)            
+            import_omv_transactions_from_csv(csv_file_path)            
             print(f"Data imported successfully from {csv_file_path}")
 
         finally:

@@ -4,7 +4,12 @@
   <h2>{{ title }}</h2>
   <div class="card">
     <div class="card-body">
-        <h5 class="card-title">Basic Datatable</h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title">Tabela</h5>
+            <a href={% url 'trafficcard_create'%} class="text-success" style="font-size: 1.15em;">
+                <i class="mdi mdi-plus-box"></i></i> Dodaj saobraćajnu dozvolu
+            </a>
+        </div>
         <div class="table-responsive">
             <table id="DatatableSaobracajne" class="display">
               <thead>

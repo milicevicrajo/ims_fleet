@@ -1,4 +1,4 @@
-from ...utils import get_latest_download_file, import_nis_fuel_consumption
+from ...utils import get_latest_download_file, import_nis_fuel_consumption, import_nis_transactions
 import time
 from django.core.management.base import BaseCommand
 from selenium import webdriver
@@ -67,6 +67,18 @@ class Command(BaseCommand):
             client_transactions_link.click()
             print("Clicked on 'Transakcije po klijentima' link")
 
+            # # Interact with the date picker
+            # date_input = WebDriverWait(driver, 20).until(
+            #     EC.presence_of_element_located((By.CSS_SELECTOR, "input.read-only-normal"))
+            # )
+            # date_input.click()  # Click to open the date picker
+
+            # # Select the date from the date picker, e.g., September 6, 2024
+            # date_to_select = WebDriverWait(driver, 20).until(
+            #     EC.element_to_be_clickable((By.XPATH, "//td[@data-value='6' and @class='rdtDay rdtToday']"))
+            # )
+            # date_to_select.click()  # Click the specific day
+
             # Locate and click the 'Prikaži izveštaj' button
             show_report_button = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
@@ -97,6 +109,7 @@ class Command(BaseCommand):
 
             # Importuj podatke u bazu
             import_nis_fuel_consumption(csv_file_path)
+            import_nis_transactions(csv_file_path)
             print(f"Data imported successfully from {csv_file_path}")
 
         finally:
