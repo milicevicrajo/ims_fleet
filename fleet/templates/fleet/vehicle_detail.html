@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Detalji vozila {{ vehicle }}</h2>
+
+<!-- Status svetlo -->
+<div class="status">
+    <p>Status: 
+        <span style="color: 
+            {% if status_light == 'green' %}
+                green
+            {% else %}
+                red
+            {% endif %}
+        ;">
+            {{ status_light }}
+        </span>
+    </p>
+</div>
+
+
+<!-- 1. Leasing Information -->
+{% if lease_info %}
+    <h3>Informacije o lizingu</h3>
+
+    <p>Broj ugovora: {{ lease_info.contract_number }}</p>
+    <p>Trenutna vrednost otplate: {{ lease_info.current_payment_amount }}</p>
+    <p>Datum početka: {{ lease_info.start_date }}</p>
+    <p>Datum završetka: {{ lease_info.end_date }}</p>
+{% endif %}
+
+<!-- 2. NIS i OMV kartice -->
+<h3>Informacije o gorivu</h3>
+<p><strong>NIS kartica:</strong> {% if nis_card %} {{ nis_card.broj_kartice }} {% else %} Nema podataka {% endif %}</p>
+<p><strong>OMV kartica (putnička vozila):</strong> {% if omv_card_passenger %} {{ omv_card_passenger.card }} {% else %} Nema podataka {% endif %}</p>
+<p><strong>OMV kartica (teretna vozila):</strong> {% if omv_card_cargo %} {{ omv_card_cargo.card }} {% else %} Nema podataka {% endif %}</p>
+
+<!-- 3. Kilometraža -->
+<h3>Kilometraža</h3>
+{% if mileage %}
+    <p>Najnovija kilometraža: {{ mileage.mileage }} km na dan {{ mileage.transaction_date|date:"d.m.Y" }}</p>
+{% else %}
+    <p>Nema podataka o kilometraži.</p>
+{% endif %}
+
+<!-- 4. Aktivne polise osiguranja -->
+<h3>Aktivne polise osiguranja</h3>
+{% if active_policies %}
+    <ul>
+        {% for policy in active_policies %}
+            <li>Broj polise: {{ policy.policy_number }} ({{ policy.insurance_type }}) - važi do {{ policy.end_date|date:"d.m.Y" }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Nema aktivnih polisa.</p>
+{% endif %}
+
+<!-- 5. Knjigovodstvena vrednost -->
+<h3>Knjigovodstvena vrednost</h3>
+<p>Vrednost vozila: {{ book_value }}</p>
+
+<!-- 6. Prosečna potrošnja goriva -->
+<h3>Prosečna potrošnja goriva</h3>
+<p>Prosečna potrošnja: {{ average_consumption }} litara na 100 km</p>
+
+<!-- 7. Trenutna šifra posla -->
+<h3>Trenutna šifra posla</h3>
+{% if current_job_code %}
+    <p>Šifra posla: {{ current_job_code.organizational_unit.code }}</p>
+{% else %}
+    <p>Nema podataka o trenutnoj šifri posla.</p>
+{% endif %}
+
+<!-- 8. Trenutna šifra posla -->
+<h3>Popravke</h3>
+{{ repair_costs }}
+
+{% endblock %}

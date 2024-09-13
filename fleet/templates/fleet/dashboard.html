@@ -1,6 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container-fluid">
+    <div class="row">
+        {% if services_without_vehicle > 0 or policies_without_vehicle > 0 or requisitions_without_vehicle > 0 %}
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">
+                    <i class="mdi mdi-alert-outline"></i> UPOZORENJE !
+                </h4>                    
+                {% if policies_without_vehicle > 0 %}
+                    <a href="{% url 'policy_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
+                        <p style="font-size: 1.3em;">
+                            <i class="mdi mdi-update"></i>
+                            Imate {{ policies_without_vehicle }} polisa koje moraju da se dopune!
+                        </p>
+                    </a>
+                {% endif %}
+
+                {% if services_without_vehicle > 0 %}
+                    <a href="{% url 'service_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
+                        <p style="font-size: 1.3em;">
+                            <i class="mdi mdi-update"></i>
+                            Imate {{ services_without_vehicle }} servisa koje moraju da se dopune!
+                        </p>
+                    </a>
+                {% endif %}
+
+                {% if requisitions_without_vehicle > 0 %}
+                    <a href="{% url 'requisition_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
+                        <p style="font-size: 1.3em;">
+                            <i class="mdi mdi-update"></i>
+                            Imate {{ requisitions_without_vehicle }} trebovanja koje moraju da se dopune!
+                        </p>
+                    </a>
+                {% endif %}
+
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div> 
+<div class="container-fluid">
+    <div class="row">
+        {% if expiring_policies %}
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">
+                    <i class="mdi mdi-alert-outline"></i> UPOZORENJE !
+                </h4>
+                    {% for policy in expiring_policies %}
+             
+                        <p style="font-size: 1.3em;">
+                            <i class="mdi mdi-update"></i>
+                            {{policy}} za {{ policy.vehicle}} istice {{ policy.end_date}}
+                        </p>
+                    {% endfor %} 
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div> 
 <div class="row">
     <!-- Column -->
     <div class="col-md-6 col-lg-2 col-xlg-3">

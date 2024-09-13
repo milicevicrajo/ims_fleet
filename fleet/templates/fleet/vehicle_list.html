@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+
 {% block content %}
+{% load humanize %} 
 <h2>{{ title }}</h2>
 <div class="card">
     <div class="card-body">
@@ -14,6 +16,7 @@
                 <thead>
                     <tr>
                         <th>Marka</th>
+                        <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>
                         <th>Br. Sasije</th>
@@ -25,12 +28,13 @@
                 </thead>
                 <tbody>
                     {% for vehicle in vehicles %}
-                    <tr>                        
+                    <tr>  
+                        <td><a href="{% url 'vehicle_detail' vehicle.pk %}">Detalj vozila</a></td>                     
                         <td>{{ vehicle.brand }}</td>                      
                         <td>{{ vehicle.model }}</td>
                         <td>{{ vehicle.year_of_manufacture }}</td>
                         <td>{{ vehicle.chassis_number }}</td>
-                        <td>{{ vehicle.color }}</td>
+                        <td>{{ vehicle.total_repairs|default:0|floatformat:0|intcomma }}</td>
                         <td>{{ vehicle.registration_number }}</td>
                         <td>{{ vehicle.first_registration_date}}</td>
                         <td>{{ vehicle.latest_org_unit }}</td>
@@ -42,6 +46,7 @@
                 {% endfor %}
                 <tfoot>
                     <tr>
+                        <th>Marka</th>
                         <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>

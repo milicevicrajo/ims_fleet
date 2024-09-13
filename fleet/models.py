@@ -113,7 +113,7 @@ class Policy(models.Model):
     number_of_installments = models.IntegerField(verbose_name=_("Broj rata"),blank=True, null=True)
 
     def __str__(self):
-        return f"Policy {self.policy_number} for {self.vehicle.chassis_number} with {self.partner_name}"
+        return f"Polisa {self.policy_number} sa {self.partner_name}"
 
 
 class FuelConsumption(models.Model):
@@ -167,9 +167,8 @@ class PutniNalog(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='travel_orders', verbose_name=_("Vozilo"))
     travel_date = models.DateField(verbose_name=_("Datum putovanja"))
     return_date = models.DateField(verbose_name=_("Datum povratka"))
-    number_of_days = models.IntegerField(verbose_name=_("Broj dana"))
     advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Avans"))
-    settlement_date = models.DateField(verbose_name=_("Datum likvidacije"))
+
 
     def __str__(self):
         return f"Travel Order for {self.employee.name} on {self.travel_date}"
@@ -193,11 +192,11 @@ class Service(models.Model):
         return f"{self.service_type.name} for {self.vehicle.chassis_number} on {self.service_date}"
 
 class ServiceTransaction(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, verbose_name=_("Vozilo"), blank=True, null=True)  # Dodata veza na Vehicle
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='service_transactions', verbose_name=_("Vozilo"), blank=True, null=True)  # Dodata veza na Vehicle
     god = models.IntegerField(verbose_name=_("Godina"))
     sif_par_pl = models.CharField(max_length=20, verbose_name=_("Šifra partnera (pl)"))
     naz_par_pl = models.CharField(max_length=255, verbose_name=_("Naziv partnera (pl)"))
-    datum = models.DateTimeField(verbose_name=_("Datum"))
+    datum = models.DateField(verbose_name=_("Datum"))
     sif_vrs = models.CharField(max_length=10, verbose_name=_("Šifra vrste"))
     br_naloga = models.CharField(max_length=50, verbose_name=_("Broj naloga"))
     vez_dok = models.CharField(max_length=50, verbose_name=_("Vezani dokument"), blank=True, null=True)
@@ -212,7 +211,7 @@ class ServiceTransaction(models.Model):
     napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
 
     def __str__(self):
-        return f"{self.br_naloga} - {self.naz_par_pl} ({self.datum.strftime('%Y-%m-%d')})"
+        return f"{self.br_naloga} - {self.naz_par_pl} ({self.datum})"
 
 class Requisition(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, verbose_name=_("Vozilo"), blank=True, null=True)
@@ -324,3 +323,9 @@ class TransactionNIS(models.Model):
     def __str__(self):
         return f"Transakcija za {self.registarska_oznaka_vozila} na dan {self.datum_transakcije}"
 
+class CustomUser(AbstractUser):
+    # Add a new field for allowed centers (you can customize the field as needed)
+    allowed_centers = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.username

@@ -10,12 +10,40 @@ from django.db.models import OuterRef, Subquery
 from django_filters.views import FilterView
 from django.contrib import messages
 import logging
+from django.http import HttpResponseForbidden
+from django.db.models import Sum, Avg
+import datetime 
+from datetime import date, timedelta
+from django.db.models import F
 
 def dashboard(request):    
-    context = {}
+    # Count the number of objects where vehicle is None
+    services_without_vehicle = Service.objects.filter(vehicle__isnull=True).count()
+    policies_without_vehicle = Policy.objects.filter(vehicle__isnull=True).count()
+    requisitions_without_vehicle = Requisition.objects.filter(vehicle__isnull=True).count()
+    
+    # Get today's date
+    today = date.today()
+
+    # Calculate the date 30 days from today
+    thirty_days_from_now = today + timedelta(days=30)
+
+    # Filter policies expiring within the next 30 days
+    expiring_policies = Policy.objects.filter(end_date__gte=today, end_date__lte=thirty_days_from_now)
+    context = {
+        'services_without_vehicle': services_without_vehicle,
+        'policies_without_vehicle': policies_without_vehicle,
+        'requisitions_without_vehicle': requisitions_without_vehicle,
+        'expiring_policies': expiring_policies,
+    }
+    
     return render(request, 'fleet/dashboard.html', context)
 
-# ListView
+
+
+# <!-- ======================================================================= -->
+#                           <!-- VEHICLE -->
+# <!-- ======================================================================= -->
 class VehicleListView(LoginRequiredMixin, ListView):
     model = Vehicle
     template_name = 'fleet/vehicle_list.html'
@@ -33,10 +61,11 @@ class VehicleListView(LoginRequiredMixin, ListView):
         latest_traffic_card_subquery = TrafficCard.objects.filter(
             vehicle_id=OuterRef('pk')
         ).order_by('-issue_date').values('registration_number')[:1]
-
+        
         queryset = queryset.annotate(
             latest_org_unit=Subquery(latest_org_unit_subquery),
             registration_number=Subquery(latest_traffic_card_subquery),
+            total_repairs=Sum('service_transactions__potrazuje')
         )
         return queryset
     
@@ -44,8 +73,92 @@ class VehicleListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista vozila'
         return context
+    
+# DETALJI VOZILA
+class VehicleDetailView(LoginRequiredMixin, DetailView):
+    model = Vehicle
+    template_name = 'fleet/vehicle_detail.html'
+    context_object_name = 'vehicle'
 
-# CreateView
+    def get(self, request, *args, **kwargs):
+        print("VehicleDetailView get() method called")  # This should print first
+        vehicle = self.get_object()  # Get the vehicle object based on the primary key
+        print(vehicle)  # This should print the vehicle object
+        
+        # Subquery to get the latest org_unit for each Vehicle
+        latest_org_unit_subquery = JobCode.objects.filter(
+            vehicle_id=OuterRef('pk')
+        ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+        
+        # Annotate the vehicle queryset with the latest org_unit code
+        vehicle_with_latest_org_unit = Vehicle.objects.annotate(
+            latest_org_unit=Subquery(latest_org_unit_subquery)
+        ).get(pk=vehicle.pk)
+
+        # Print the latest org_unit
+        print("AUTO",vehicle_with_latest_org_unit.latest_org_unit)
+        # Perform additional logic with allowed_centers or other fields if needed
+        allowed_centers = request.user.allowed_centers
+        print("USER",allowed_centers)
+
+        if allowed_centers:
+            allowed_centers_list = allowed_centers.split(',')
+            if vehicle_with_latest_org_unit.latest_org_unit not in allowed_centers_list:
+                return HttpResponseForbidden("Nemate dozvolu za pristup ovom vozilu.")
+
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        vehicle = self.get_object()
+
+        # 1. Leasing data
+        lease_info = Lease.objects.filter(vehicle=vehicle).order_by('-start_date').first()
+
+        # 2. NIS and OMV cards
+        nis_card = vehicle.fuel_consumptions.filter(supplier='NIS').first()
+        omv_card_passenger = vehicle.fuel_consumptions.filter(supplier='OMV', vehicle__category='passenger').first()
+        omv_card_cargo = vehicle.fuel_consumptions.filter(supplier='OMV', vehicle__category='cargo').first()
+
+        # 3. Mileage (use latest FuelConsumption)
+        mileage = vehicle.fuel_consumptions.order_by('-date').first()
+
+        # 4. Active Policies
+        active_policies = Policy.objects.filter(vehicle=vehicle, end_date__gte=datetime.date.today())
+
+        # 5. Book value (assuming you calculate this from external source or additional logic)
+        book_value = vehicle.purchase_value  # Simplified for now
+
+        # 6. Average Fuel Consumption
+        average_consumption = vehicle.fuel_consumptions.aggregate(Avg('amount'))
+
+        # 7. Current Job Code
+        current_job_code = JobCode.objects.filter(vehicle=vehicle).order_by('-assigned_date').first()
+
+        # 8. General status (red/green light based on repair costs)
+        repair_costs = vehicle.service_transactions.aggregate(total_repairs=Sum('potrazuje'))['total_repairs'] or 0
+        status_light = 'green' if repair_costs < vehicle.purchase_value else 'red'
+
+        # Add all data to context
+        context.update({
+            'lease_info': lease_info,
+            'nis_card': nis_card,
+            'omv_card_passenger': omv_card_passenger,
+            'omv_card_cargo': omv_card_cargo,
+            'mileage': mileage,
+            'active_policies': active_policies,
+            'book_value': book_value,
+            'average_consumption': average_consumption['amount__avg'],
+            'current_job_code': current_job_code,
+            'status_light': status_light,
+            'repair_costs': repair_costs,
+            'status_light': status_light,
+            'title':f"Detalji vozila {self.object.brand} {self.object.model}"
+        })
+
+        return context
+
 class VehicleCreateView(LoginRequiredMixin, CreateView):
     model = Vehicle
     form_class = VehicleForm
@@ -58,11 +171,10 @@ class VehicleCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj vozilo'
         return context
 
-# UpdateView
 class VehicleUpdateView(LoginRequiredMixin, UpdateView):
     model = Vehicle
     form_class = VehicleForm
-    template_name = 'ims/generic_form.html'
+    template_name = 'fleet/generic_form.html'
     success_url = reverse_lazy('vehicle_list')
 
     def get_context_data(self, **kwargs):
@@ -71,22 +183,10 @@ class VehicleUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
-class VehicleDetailView(LoginRequiredMixin, DetailView):
-    model = Vehicle
-    template_name = 'ims/vehicle_detail.html'
-    context_object_name = 'vehicle'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = f"Detalji vozila {self.object.brand} {self.object.model}"
-        return context
-
-# DeleteView
 class VehicleDeleteView(LoginRequiredMixin, DeleteView):
     model = Vehicle
     success_url = reverse_lazy('vehicle_list')
-    template_name = 'ims/vehicle_confirm_delete.html'
+    template_name = 'fleet/vehicle_confirm_delete.html'
     context_object_name = 'vehicle'
 
     def get_context_data(self, **kwargs):
@@ -97,6 +197,11 @@ class VehicleDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
 
+
+
+# <!-- ======================================================================= -->
+#                           <!-- TRAFIC CARD -->
+# <!-- ======================================================================= -->
 class TrafficCardListView(LoginRequiredMixin, ListView):
     model = TrafficCard
     template_name = 'fleet/trafficcard_list.html'
@@ -107,7 +212,6 @@ class TrafficCardListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista saobraćajnih dozvola'
         return context
 
-# CreateView
 class TrafficCardCreateView(LoginRequiredMixin, CreateView):
     model = TrafficCard
     form_class = TrafficCardForm
@@ -120,7 +224,6 @@ class TrafficCardCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj saobraćajnu dozvolu'
         return context
 
-# UpdateView
 class TrafficCardUpdateView(LoginRequiredMixin, UpdateView):
     model = TrafficCard
     form_class = TrafficCardForm
@@ -133,7 +236,6 @@ class TrafficCardUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class TrafficCardDetailView(LoginRequiredMixin, DetailView):
     model = TrafficCard
     template_name = 'fleet/trafficcard_detail.html'
@@ -144,7 +246,6 @@ class TrafficCardDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji saobraćajne dozvole {self.object.registration_number}"
         return context
 
-# DeleteView
 class TrafficCardDeleteView(LoginRequiredMixin, DeleteView):
     model = TrafficCard
     success_url = reverse_lazy('trafficcard_list')
@@ -158,18 +259,12 @@ class TrafficCardDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
-    
-class OrganizationalUnitListView(ListView):
-    model = OrganizationalUnit
-    template_name = 'organizational_unit_list.html'
-    context_object_name = 'organizational_units'
 
-class OrganizationalUnitCreateView(CreateView):
-    model = OrganizationalUnit
-    form_class = OrganizationalUnitForm
-    template_name = 'fleet/generic_form.html'
-    success_url = reverse_lazy('organizational_unit-list')  
 
+
+# <!-- ======================================================================= -->
+#                           <!-- JOB CODE -->
+# <!-- ======================================================================= -->
 class JobCodeListView(LoginRequiredMixin, ListView):
     model = JobCode
     template_name = 'fleet/jobcode_list.html'
@@ -227,8 +322,13 @@ class JobCodeDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
-    
-class LeaseListView(PermissionRequiredMixin, ListView):
+
+
+
+# <!-- ======================================================================= -->
+#                           <!-- LEASE -->
+# <!-- ======================================================================= -->
+class LeaseListView(LoginRequiredMixin, ListView):
     model = Lease
     template_name = 'fleet/lease_list.html'
     context_object_name = 'leases'
@@ -288,6 +388,11 @@ class LeaseDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
 
+
+
+# <!-- ======================================================================= -->
+#                           <!-- LEASE -->
+# <!-- ======================================================================= -->
 class PolicyListView(LoginRequiredMixin, ListView):
     model = Policy
     template_name = 'fleet/policy_list.html'
@@ -297,6 +402,21 @@ class PolicyListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista polisa osiguranja'
         return context
+
+class PolicyFixingListView(LoginRequiredMixin, ListView):
+    model = Policy
+    template_name = 'fleet/policy_list.html'
+    context_object_name = 'policies'
+
+    def get_queryset(self):
+        # Filter policies where the vehicle is None
+        return Policy.objects.filter(vehicle__isnull=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Lista polisa osiguranja koje morate dopuniti'
+        return context
+
 
 class PolicyCreateView(LoginRequiredMixin, CreateView):
     model = Policy
@@ -381,6 +501,12 @@ def fetch_policies_view(request):
 
     return render(request, 'fleet/fetch_policies.html')
 
+
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- FUEL CONSUMPTION -->
+# <!-- ======================================================================================== -->
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     model = FuelConsumption
     filterset_class = FuelFilterForm
@@ -406,7 +532,6 @@ class FuelConsumptionListView(LoginRequiredMixin, FilterView):
 
         return context
 
-# CreateView
 class FuelConsumptionCreateView(LoginRequiredMixin, CreateView):
     model = FuelConsumption
     form_class = FuelConsumptionForm
@@ -419,7 +544,6 @@ class FuelConsumptionCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-# UpdateView
 class FuelConsumptionUpdateView(LoginRequiredMixin, UpdateView):
     model = FuelConsumption
     form_class = FuelConsumptionForm
@@ -432,7 +556,6 @@ class FuelConsumptionUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class FuelConsumptionDetailView(LoginRequiredMixin, DetailView):
     model = FuelConsumption
     template_name = 'fleet/fuelconsumption_detail.html'
@@ -443,7 +566,6 @@ class FuelConsumptionDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji potrošnje goriva {self.object.date}"
         return context
 
-# DeleteView
 class FuelConsumptionDeleteView(LoginRequiredMixin, DeleteView):
     model = FuelConsumption
     success_url = reverse_lazy('fuelconsumption_list')
@@ -459,6 +581,12 @@ class FuelConsumptionDeleteView(LoginRequiredMixin, DeleteView):
         return super().get_object(queryset)
 
 
+
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- EMPLOYEES -->
+# <!-- ======================================================================================== -->
 class EmployeeListView(LoginRequiredMixin, ListView):
     model = Employee
     template_name = 'fleet/employee_list.html'
@@ -469,7 +597,6 @@ class EmployeeListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista zaposlenih'
         return context
 
-# CreateView
 class EmployeeCreateView(LoginRequiredMixin, CreateView):
     model = Employee
     form_class = EmployeeForm
@@ -482,7 +609,6 @@ class EmployeeCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj zaposlenog'
         return context
 
-# UpdateView
 class EmployeeUpdateView(LoginRequiredMixin, UpdateView):
     model = Employee
     form_class = EmployeeForm
@@ -495,7 +621,6 @@ class EmployeeUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class EmployeeDetailView(LoginRequiredMixin, DetailView):
     model = Employee
     template_name = 'fleet/employee_detail.html'
@@ -506,7 +631,6 @@ class EmployeeDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji zaposlenog {self.object.name}"
         return context
 
-# DeleteView
 class EmployeeDeleteView(LoginRequiredMixin, DeleteView):
     model = Employee
     success_url = reverse_lazy('employee_list')
@@ -520,7 +644,13 @@ class EmployeeDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
-    
+
+
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- FUEL CONSUMPTION -->
+# <!-- ======================================================================================== -->
 class IncidentListView(LoginRequiredMixin, ListView):
     model = Incident
     template_name = 'fleet/incident_list.html'
@@ -531,7 +661,6 @@ class IncidentListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista incidenata'
         return context
 
-# CreateView
 class IncidentCreateView(LoginRequiredMixin, CreateView):
     model = Incident
     form_class = IncidentForm
@@ -544,7 +673,6 @@ class IncidentCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-# UpdateView
 class IncidentUpdateView(LoginRequiredMixin, UpdateView):
     model = Incident
     form_class = IncidentForm
@@ -557,7 +685,6 @@ class IncidentUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class IncidentDetailView(LoginRequiredMixin, DetailView):
     model = Incident
     template_name = 'fleet/incident_detail.html'
@@ -568,7 +695,6 @@ class IncidentDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji incidenta {self.object.date}"
         return context
 
-# DeleteView
 class IncidentDeleteView(LoginRequiredMixin, DeleteView):
     model = Incident
     success_url = reverse_lazy('incident_list')
@@ -582,7 +708,13 @@ class IncidentDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
-    
+
+
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- PUTNI NALOG -->
+# <!-- ======================================================================================== -->
 class PutniNalogListView(LoginRequiredMixin, ListView):
     model = PutniNalog
     template_name = 'fleet/putninalog_list.html'
@@ -593,7 +725,6 @@ class PutniNalogListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista putnih naloga'
         return context
 
-# CreateView
 class PutniNalogCreateView(LoginRequiredMixin, CreateView):
     model = PutniNalog
     form_class = PutniNalogForm
@@ -606,7 +737,6 @@ class PutniNalogCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-# UpdateView
 class PutniNalogUpdateView(LoginRequiredMixin, UpdateView):
     model = PutniNalog
     form_class = PutniNalogForm
@@ -619,7 +749,6 @@ class PutniNalogUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class PutniNalogDetailView(LoginRequiredMixin, DetailView):
     model = PutniNalog
     template_name = 'fleet/putninalog_detail.html'
@@ -630,7 +759,6 @@ class PutniNalogDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji putnog naloga {self.object.travel_date}"
         return context
 
-# DeleteView
 class PutniNalogDeleteView(LoginRequiredMixin, DeleteView):
     model = PutniNalog
     success_url = reverse_lazy('putninalog_list')
@@ -644,7 +772,13 @@ class PutniNalogDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
-    
+
+
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- SERVICE TYPES -->
+# <!-- ======================================================================================== -->
 class ServiceTypeListView(LoginRequiredMixin, ListView):
     model = ServiceType
     template_name = 'fleet/servicetype_list.html'
@@ -655,7 +789,6 @@ class ServiceTypeListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista tipova servisa'
         return context
 
-# CreateView
 class ServiceTypeCreateView(LoginRequiredMixin, CreateView):
     model = ServiceType
     form_class = ServiceTypeForm
@@ -668,7 +801,6 @@ class ServiceTypeCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-# UpdateView
 class ServiceTypeUpdateView(LoginRequiredMixin, UpdateView):
     model = ServiceType
     form_class = ServiceTypeForm
@@ -681,7 +813,6 @@ class ServiceTypeUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class ServiceTypeDetailView(LoginRequiredMixin, DetailView):
     model = ServiceType
     template_name = 'fleet/servicetype_detail.html'
@@ -692,7 +823,6 @@ class ServiceTypeDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji tipa servisa {self.object.name}"
         return context
 
-# DeleteView
 class ServiceTypeDeleteView(LoginRequiredMixin, DeleteView):
     model = ServiceType
     success_url = reverse_lazy('servicetype_list')
@@ -706,7 +836,14 @@ class ServiceTypeDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
-    
+
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- SERVICES -->
+# <!-- ======================================================================================== -->
+
+# POVLACENJE PODATAKA IZ DRUGE BAZE
 logger = logging.getLogger(__name__)  
 def fetch_service_data_view(request):
     if request.method == 'POST':
@@ -774,7 +911,21 @@ class ServiceListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista servisa'
         return context
 
-# CreateView
+class ServiceFixingListView(LoginRequiredMixin, ListView):
+    model = Service
+    template_name = 'fleet/service_list.html'
+    context_object_name = 'services'
+
+    def get_queryset(self):
+        # Filter policies where the vehicle is None
+        return Service.objects.filter(vehicle__isnull=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Lista servisa koje morate dopuniti'
+        return context
+
+
 class ServiceCreateView(LoginRequiredMixin, CreateView):
     model = Service
     form_class = ServiceForm
@@ -787,7 +938,6 @@ class ServiceCreateView(LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-# UpdateView
 class ServiceUpdateView(LoginRequiredMixin, UpdateView):
     model = Service
     form_class = ServiceForm
@@ -800,7 +950,6 @@ class ServiceUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-# DetailView
 class ServiceDetailView(LoginRequiredMixin, DetailView):
     model = Service
     template_name = 'fleet/service_detail.html'
@@ -811,7 +960,6 @@ class ServiceDetailView(LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji servisa {self.object.service_date}"
         return context
 
-# DeleteView
 class ServiceDeleteView(LoginRequiredMixin, DeleteView):
     model = Service
     success_url = reverse_lazy('service_list')
@@ -827,6 +975,63 @@ class ServiceDeleteView(LoginRequiredMixin, DeleteView):
         return super().get_object(queryset)
     
 
+
+# <!-- ======================================================================================== -->
+#                           <!-- SERVICE TRANSACTIONS -->
+# <!-- ======================================================================================== -->
+class ServiceTransactionListView(ListView):
+    model = ServiceTransaction
+    template_name = 'fleet/service_transactions_list.html'
+    context_object_name = 'service_transactions'
+
+class ServiceTransactionFixingListView(LoginRequiredMixin, ListView):
+    model = ServiceTransaction
+    template_name = 'fleet/service_transactions_list.html'
+    context_object_name = 'service_transactions'
+
+    def get_queryset(self):
+        # Filter policies where the vehicle is None
+        return ServiceTransaction.objects.filter(vehicle__isnull=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Lista servisa koje morate dopuniti'
+        return context
+
+class ServiceTransactionCreateView(CreateView):
+    model = ServiceTransaction
+    form_class = ServiceTransactionForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('service_transaction_list')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Kreiranje servisa'
+        context['submit_button_label'] = 'Sačuvaj insformacije o servisu'
+        return context
+class ServiceTransactionUpdateView(UpdateView):
+    model = ServiceTransaction
+    form_class = ServiceTransactionForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('service_transaction_list')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Izmena servisa'
+        context['submit_button_label'] = 'Sačuvaj izmene'
+        return context
+
+class ServiceTransactionDeleteView(DeleteView):
+    model = ServiceTransaction
+    template_name = 'service_transaction_confirm_delete.html'
+    success_url = reverse_lazy('service_transaction_list')
+
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- REQUISTION - TREBOVANJA -->
+# <!-- ======================================================================================== -->
+
+# Povlačenje podataka iz view-a u drugoj bazi
 def fetch_requisition_data_view(request):
     if request.method == 'POST':
         try:
@@ -877,31 +1082,67 @@ def fetch_requisition_data_view(request):
 
     return render(request, 'fleet\fetch_policies.html')
 
-# List View (Prikaz liste)
 class RequisitionListView(ListView):
     model = Requisition
-    template_name = 'requisition/requisition_list.html'
+    template_name = 'fleet/requisition_list.html'
     context_object_name = 'requisitions'
-
-# Create View (Kreiranje)
+   
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Trebovanja'
+        return context
+    
+class RequisitionFixingListView(ListView):
+    model = Requisition
+    template_name = 'fleet/requisition_list.html'
+    context_object_name = 'requisitions'
+    
+    def get_queryset(self):
+        # Filter policies where the vehicle is None
+        return Requisition.objects.filter(vehicle__isnull=True)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Trebovanja koja je potrebno dopuniti'
+        return context
+    
 class RequisitionCreateView(CreateView):
     model = Requisition
     form_class = RequisitionForm
-    template_name = 'requisition/requisition_form.html'
+    template_name = 'fleet/generic_form.html'
     success_url = reverse_lazy('requisition_list')
     success_message = "Requisition successfully created."
 
-# Update View (Ažuriranje)
 class RequisitionUpdateView(UpdateView):
     model = Requisition
     form_class = RequisitionForm
-    template_name = 'requisition/requisition_form.html'
+    template_name = 'fleet/generic_form.html'
     success_url = reverse_lazy('requisition_list')
-    success_message = "Requisition successfully updated."
+    success_message = "Trebovanje uspešno izmenjeno!"
 
-# Delete View (Brisanje)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Izmena trebovanja'
+        context['submit_button_label'] = 'Sačuvaj izmene'
+        return context
+
 class RequisitionDeleteView(DeleteView):
     model = Requisition
     template_name = 'requisition/requisition_confirm_delete.html'
     success_url = reverse_lazy('requisition_list')
     success_message = "Requisition successfully deleted."
+
+
+# <!-- ======================================================================================== -->
+#                           <!-- REQUISTION - TREBOVANJA -->
+# <!-- ======================================================================================== -->
+
+class UserListView(ListView):
+    model = CustomUser
+    template_name = 'fleet/user_list.html'  # Specify your template
+    context_object_name = 'users'     # The name of the variable to use in the template
+
+    # Optionally, you can override get_queryset to filter users if needed
+    def get_queryset(self):
+        # You can apply any filters if needed, otherwise return all users
+        return CustomUser.objects.all()

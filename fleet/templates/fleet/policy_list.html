@@ -23,6 +23,7 @@
                       <th>Iznos prve rate</th>
                       <th>Iznos ostalih rata</th>
                       <th>Broj rata</th>
+                      <th>Akcije</th>
                   </tr>
               </thead>
               <tbody>
@@ -42,6 +43,9 @@
                       <td>{{ policy.first_installment_amount }}</td>
                       <td>{{ policy.other_installments_amount}}</td>
                       <td>{{ policy.number_of_installments }}</td>
+                      <td>
+                        <a href="{% url 'policy_update' policy.pk %}">Edit</a>
+                      </td>
                   </tr>
               {% empty %}
                   <tr>
@@ -64,6 +68,7 @@
                     <th>Iznos prve rate</th>
                     <th>Iznos ostalih rata</th>
                     <th>Broj rata</th>
+                    <th>Akcije</th>
                   </tr>
               </tfoot>
           </table>

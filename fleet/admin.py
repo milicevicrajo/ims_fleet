@@ -1,6 +1,16 @@
 from django.contrib import admin
 from .models import *
+from django.contrib.auth.admin import UserAdmin
+from .models import CustomUser
+from django.utils.translation import gettext_lazy as _
 
+class CustomUserAdmin(UserAdmin):
+    # Add the allowed_centers field to the admin form
+    fieldsets = UserAdmin.fieldsets + (
+        (None, {'fields': ('allowed_centers',)}),
+    )
+
+admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Vehicle)
 admin.site.register(TrafficCard)
 admin.site.register(JobCode)
