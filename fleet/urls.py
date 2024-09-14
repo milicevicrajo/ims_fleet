@@ -29,7 +29,7 @@ urlpatterns = [
     path('zakupi/<int:pk>/', LeaseDetailView.as_view(), name='lease_detail'),
     path('zakupi/obrisi/<int:pk>/', LeaseDeleteView.as_view(), name='lease_delete'),
 
-    path('fetch-policies/', views.fetch_policies_view, name='fetch_policies'),
+    
     path('polise/', PolicyListView.as_view(), name='policy_list'),
     path('policies/nedovrseno/', PolicyFixingListView.as_view(), name='policy_fixing_list'),
     path('polise/novo/', PolicyCreateView.as_view(), name='policy_create'),
@@ -67,7 +67,7 @@ urlpatterns = [
     path('tipovi-servisa/<int:pk>/', ServiceTypeDetailView.as_view(), name='servicetype_detail'),
     path('tipovi-servisa/obrisi/<int:pk>/', ServiceTypeDeleteView.as_view(), name='servicetype_delete'),
 
-    path('fetch-services/', views.fetch_service_data_view, name='fetch_services'),
+    
     path('servisi/', ServiceListView.as_view(), name='service_list'),
     
     # path('servisi/novo/', ServiceCreateView.as_view(), name='service_create'),
@@ -80,7 +80,12 @@ urlpatterns = [
     path('service-transactions/add/', ServiceTransactionCreateView.as_view(), name='service_transaction_add'),
     path('service-transactions/<int:pk>/edit/', ServiceTransactionUpdateView.as_view(), name='service_transaction_update'),
     path('service-transactions/<int:pk>/delete/', ServiceTransactionDeleteView.as_view(), name='service_transaction_delete'),
+
+    # FETCHING
+    path('fetch-policies/', views.fetch_policies_view, name='fetch_policies'),
+    path('fetch-services/', views.fetch_service_data_view, name='fetch_services'),
     path('fetch-requisitions/', fetch_requisition_data_view, name='fetch_requisitions'),
+    path('fetch-vehicle-value/', fetch_vehicle_value_view, name='fetch_vehicle_value'),
 
     path('requisitions/', RequisitionListView.as_view(), name='requisition_list'),
     path('requisitions/nedovrseno/', RequisitionFixingListView.as_view(), name='requisition_fixing_list'),

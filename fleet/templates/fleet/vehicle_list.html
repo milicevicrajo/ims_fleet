@@ -20,10 +20,10 @@
                         <th>Tip</th>
                         <th>Godiste</th>
                         <th>Br. Sasije</th>
-                        <th>Boja</th>
+                        <th>Servisi cena</th>
                         <th>Registracija</th>
-                        <th>Datum prve reg</th>
-                        <th>Sifra posla</th>
+                        <th>Vrednost nabavna</th>
+                        <th>Vrednost trenutna</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -36,8 +36,8 @@
                         <td>{{ vehicle.chassis_number }}</td>
                         <td>{{ vehicle.total_repairs|default:0|floatformat:0|intcomma }}</td>
                         <td>{{ vehicle.registration_number }}</td>
-                        <td>{{ vehicle.first_registration_date}}</td>
-                        <td>{{ vehicle.latest_org_unit }}</td>
+                        <td>{{ vehicle.purchase_value }}</td>
+                        <td>{{ vehicle.value }}</td>
                     </tr>
                 {% empty %}
                     <tr>
@@ -51,9 +51,10 @@
                         <th>Tip</th>
                         <th>Godiste</th>
                         <th>Br. Sasije</th>
-                        <th>Boja</th>
-                        <th>Datum prve reg</th>
-                        <th>Sifra posla</th>
+                        <th>Servisi cena</th>
+                        <th>Registracija</th>
+                        <th>Vrednost nabavna</th>
+                        <th>Vrednost trenutna</th>
                     </tr>
                 </tfoot>
             </table>

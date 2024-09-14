@@ -20,3 +20,8 @@
     {% csrf_token %}
     <button type="submit" class="btn btn-primary">Povuci podatke trebovanja </button>
   </form>
+
+  <form method="POST" action="{% url 'fetch_vehicle_value' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Povuci Vrednosti vozila </button>
+  </form>

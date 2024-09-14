@@ -18,7 +18,7 @@ from django.db.models import F
 
 def dashboard(request):    
     # Count the number of objects where vehicle is None
-    services_without_vehicle = Service.objects.filter(vehicle__isnull=True).count()
+    services_without_vehicle = ServiceTransaction.objects.filter(vehicle__isnull=True).count()
     policies_without_vehicle = Policy.objects.filter(vehicle__isnull=True).count()
     requisitions_without_vehicle = Requisition.objects.filter(vehicle__isnull=True).count()
     
@@ -158,6 +158,54 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
         })
 
         return context
+
+# POVLACENJE PODATAKA IZ DRUGE BAZE
+logger = logging.getLogger(__name__)  
+def fetch_vehicle_value_view(request):
+    if request.method == 'POST':
+        # Povlačenje podataka iz druge baze
+        with connections['test_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT sif_osn, vrednost FROM dbo.vrednost_vozila
+            """)
+            rows = cursor.fetchall()
+
+        # Broj ažuriranih vozila
+        updated_vehicles_count = 0
+
+        for row in rows:
+            sif_osn = row[0].strip()  # Polje 'sif_osn' iz druge baze (odgovara 'inventory_number' u modelu Vehicle)
+            vrednost = row[1]  # Polje 'vrednost' iz druge baze (odgovara polju 'value' u modelu Vehicle)
+
+            try:
+                # Pronađi vozilo po inventory_number (sif_osn)
+                print(sif_osn)
+                vehicle = Vehicle.objects.get(inventory_number=sif_osn)
+                #print(vehicle)
+                # Ažuriraj polje 'value' sa novom vrednošću
+                vehicle.value = vrednost
+                vehicle.save()
+                updated_vehicles_count += 1
+
+            except Vehicle.DoesNotExist:
+                # Ako vozilo sa datim 'sif_osn' ne postoji, preskoči i zapiši grešku
+                logger.warning(f"Vozilo sa inventory_number (sif_osn) {sif_osn} nije pronađeno.")
+                continue
+
+            except Exception as e:
+                # U slučaju bilo koje druge greške
+                logger.error(f"Greška prilikom ažuriranja vozila sa inventory_number {sif_osn}: {e}")
+                messages.error(request, "Došlo je do greške prilikom ažuriranja podataka o vozilu.")
+                return redirect('fetch_vehicle_value')
+
+        # Poruka o uspešnom ažuriranju
+        messages.success(request, f"Uspešno ažurirano {updated_vehicles_count} vozila.")
+
+        # Preusmeravanje nakon uspešnog povlačenja podataka
+        return redirect('vehicle_list')  # Postavi URL na koji želiš da preusmeriš korisnika
+
+    return render(request, 'fleet/fetch_vehicle_value.html')
+
 
 class VehicleCreateView(LoginRequiredMixin, CreateView):
     model = Vehicle
@@ -847,7 +895,7 @@ class ServiceTypeDeleteView(LoginRequiredMixin, DeleteView):
 logger = logging.getLogger(__name__)  
 def fetch_service_data_view(request):
     if request.method == 'POST':
-        # Povlačenje podataka iz view-a u drugoj bazi
+        # Povlačenje podataka iz druge baze
         with connections['test_db'].cursor() as cursor:
             cursor.execute("""
                 SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje, sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila FROM dbo.v_servisi
@@ -856,38 +904,33 @@ def fetch_service_data_view(request):
 
         for row in rows:
             try:
-                # Kreiranje ili ažuriranje modela `Service`
-                service = Service(
-                    vehicle=None,
-                    service_type=None,
-                    service_date=row[3],  # Datum servisa
-                    cost=row[8],  # Potražuje
-                    provider=row[2],  # Naziv partnera (naz_par_pl)
-                    description=None  # Napomena
-                )
-                service.save()
+                # Provera jedinstvenosti na osnovu kombinacije datum, duguje, vez_dok
+                if not ServiceTransaction.objects.filter(datum=row[3], duguje=row[11], vez_dok=row[6]).exists():
+                    # Kreiranje novog zapisa ako ne postoji duplikat
+                    service_transaction = ServiceTransaction(
+                        vehicle=None,
+                        god=row[0],
+                        sif_par_pl=row[1],
+                        naz_par_pl=row[2],
+                        datum=row[3],  # Datum transakcije
+                        sif_vrs=row[4],
+                        br_naloga=row[5],
+                        vez_dok=row[6],
+                        knt_pl=row[7],
+                        potrazuje=row[8],
+                        sif_par_npl=row[9],
+                        knt_npl=row[10],
+                        duguje=row[11],
+                        konto_vozila=row[13],
+                        kom=None,
+                        popravka_kategorija=None,  # Kategorija popravke
+                        napomena=None
+                    )
+                    service_transaction.save()
 
-                # Kreiranje ili ažuriranje modela `ServiceTransaction`
-                service_transaction = ServiceTransaction(
-                    vehicle=None,
-                    god=row[0],
-                    sif_par_pl=row[1],
-                    naz_par_pl=row[2],
-                    datum=row[3],  # Datum transakcije
-                    sif_vrs=row[4],
-                    br_naloga=row[5],
-                    vez_dok=row[6],
-                    knt_pl=row[7],
-                    potrazuje=row[8],
-                    sif_par_npl=row[9],
-                    knt_npl=row[10],
-                    duguje=row[11],
-                    konto_vozila=row[13],
-                    kom=None,
-                    popravka_kategorija=None,  # Kategorija poptavke
-                    napomena=None
-                )
-                service_transaction.save()
+            except IntegrityError:
+                logger.warning(f"Duplikat: Datum: {row[3]}, Duguje: {row[11]}, Vezani dokument: {row[6]}")
+                continue  # Preskače zapis ako postoji duplikat
 
             except Exception as e:
                 logger.error(f"Greška: {e}")
@@ -898,9 +941,10 @@ def fetch_service_data_view(request):
         messages.success(request, "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati.")
 
         # Preusmeravanje posle uspešnog povlačenja podataka
-        return redirect('service_list')  # Postavi URL na koji želiš da preusmeriš korisnika
+        return redirect('service_fixing_list')  # Postavi URL na koji želiš da preusmeriš korisnika
 
     return render(request, 'fleet/fetch_policies.html')
+
 class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
     template_name = 'fleet/service_list.html'

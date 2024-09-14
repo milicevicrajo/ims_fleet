@@ -140,6 +140,10 @@ def import_omv_transactions_from_csv(csv_file_path):
                 # Formatiraj tablice
                 formatted_plate = format_license_plate(row['License plate No'])
                 
+                # Pronađi vozilo prema formatiranoj tablici u TrafficCard
+                traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
+                vehicle = traffic_card.vehicle
+
                 # Konverzija datuma sa vremenskom zonom
                 def to_aware_datetime(value, format='%Y-%m-%d %H:%M:%S'):
                     if value:
@@ -171,6 +175,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                 
                 # Kreiraj instancu TransactionOMV modela i sačuvaj je u bazi
                 TransactionOMV.objects.create(
+                    vehicle = vehicle,
                     issuer=row['Issuer'].strip(),
                     customer=row['Customer'],
                     card=row['Card'],
@@ -266,6 +271,10 @@ def import_nis_transactions(file_path):
             # Formatiraj registarski broj pre nego što ga upotrebiš
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'])
 
+            # Pronađi vozilo prema formatiranoj tablici u TrafficCard
+            traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
+            vehicle = traffic_card.vehicle
+
             # Konverzija datuma transakcije sa vremenskom zonom
             naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
             transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
@@ -281,6 +290,7 @@ def import_nis_transactions(file_path):
 
             # Kreiraj instancu TransactionIMS modela
             TransactionNIS.objects.create(
+                vehicle=vehicle,
                 kupac=row['Kupac'],
                 sifra_kupca=row['Šifra kupca'],
                 broj_kartice=row['Broj kartice'],

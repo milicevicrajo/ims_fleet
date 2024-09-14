@@ -22,7 +22,8 @@ class Vehicle(models.Model):
     fuel_type = models.CharField(max_length=20, verbose_name=_("Tip goriva"))
     number_of_seats = models.IntegerField(verbose_name=_("Broj sedišta"))
     purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Nabavna vrednost vozila"))
-
+    value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Knjigovodstvena vrednost vozila"), null=True)
+    service_interval = models.IntegerField(verbose_name=_("Servisni interval"))
     # Nova polja
     purchase_date = models.DateField(verbose_name=_("Datum nabavke"), null=True)  # Ovo je datum kada je vozilo nabavljeno
     center_code = models.CharField(max_length=20, verbose_name=_("Šifra centra (OJ)"), null=True)  # Ovo je šifra centra (oj)
@@ -124,6 +125,7 @@ class FuelConsumption(models.Model):
     cost_bruto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos - Bruto"))
     cost_neto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos - Neto"))
     supplier = models.CharField(max_length=50, verbose_name=_("Dobavljač"))
+    job_code = models.CharField(max_length=50, verbose_name=_("Šifra posla"),blank=True, null=True)
 
     def __str__(self):
         return f"Potrosnja goriva {self.vehicle.chassis_number} na {self.date}"
@@ -141,7 +143,7 @@ class Employee(models.Model):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name=_("Pol"))
     date_of_birth = models.DateField(verbose_name=_("Datum rođenja"))
     date_of_joining = models.DateField(verbose_name=_("Datum zapošljavanja"))
-    phone_number = models.CharField(max_length=20, verbose_name=_("Broj telefona"))
+    phone_number = models.CharField(max_length=20, verbose_name=_("Broj telefona"), blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -209,6 +211,11 @@ class ServiceTransaction(models.Model):
     kom = models.TextField(verbose_name=_("Komada"), blank=True, null=True)      
     popravka_kategorija = models.CharField(max_length=100, verbose_name=_("Kategorija poptavke"), blank=True, null=True)
     napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['datum', 'duguje', 'vez_dok', 'br_naloga'], name='unique_service_transaction')
+        ]
 
     def __str__(self):
         return f"{self.br_naloga} - {self.naz_par_pl} ({self.datum})"
@@ -233,6 +240,7 @@ class Requisition(models.Model):
         return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
 
 class TransactionOMV(models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='omv_transactions', verbose_name=_("Vozilo"), blank=True, null=True)
     issuer = models.CharField(max_length=255, verbose_name=_("Issuer"))
     customer = models.CharField(max_length=255, verbose_name=_("Customer"))
     card = models.CharField(max_length=255, verbose_name=_("Card"))
@@ -280,6 +288,7 @@ class TransactionOMV(models.Model):
         return f"Transakcija za {self.license_plate_no} na dan  {self.transaction_date}"
 
 class TransactionNIS(models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='nis_transactions', verbose_name=_("Vozilo"), blank=True, null=True)
     kupac = models.CharField(max_length=255, verbose_name=_("Kupac"))
     sifra_kupca = models.CharField(max_length=50, verbose_name=_("Šifra kupca"))
     broj_kartice = models.CharField(max_length=50, verbose_name=_("Broj kartice"))
