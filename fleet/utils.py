@@ -27,8 +27,11 @@ def get_latest_download_file(download_path):
     return latest_file
 
 def format_license_plate(plate):
-    # Uklanjanje svih belina i crtice iz tablice
-    plate = plate.replace(" ", "").replace("-", "").upper()
+    # Zameni sve vrste crtica (– ili -) standardnom crticom
+    plate = plate.replace("–", "-").replace("-", "").replace(" ", "").upper()  # Uklanja sve beline i crtice
+
+    # Zadrži samo brojeve i slova
+    plate = re.sub(r'[^A-Za-z0-9]', '', plate)
 
     # Proba da preoblikuje tablicu, na primer BG1461DX -> BG1461-DX
     match = re.match(r'^([A-Z]{2})(\d{3,4})([A-Z]{2})$', plate)
@@ -36,7 +39,7 @@ def format_license_plate(plate):
         return f"{match.group(1)}{match.group(2)}-{match.group(3)}"
 
     # Ako nije moguće preoblikovati tablicu, vrati originalnu vrednost (ili baci grešku)
-    return plate  # Ili podigni grešku ako je to potrebno
+    return plate
 
 import pandas as pd
 from django.utils.dateparse import parse_date
@@ -94,24 +97,28 @@ def import_vehicles_from_excel(excel_file_path):
 
 
 def import_omv_fuel_consumption_from_csv(csv_file_path):
-    with open(csv_file_path, newline='', encoding='utf-8') as csvfile:
+    with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
             try:
-                # Formatiraj tablice
+                # Formatiraj registarske tablice
                 formatted_plate = format_license_plate(row['License plate No'])
 
-                # Pronađi vozilo prema formatiranoj tablici u TrafficCard
+                # Pronađi vozilo prema formatiranoj tablici u TrafficCard modelu
                 traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
                 vehicle = traffic_card.vehicle
 
-                # Konvertuj vrednosti i pripremi ih za unos u bazu
+                # Konvertuj datume i druge vrednosti
                 transaction_date = datetime.strptime(row['Transactiondate'], '%Y-%m-%d %H:%M:%S').date()
                 amount = float(row['Quantity'].replace(',', '.'))
 
-                # Ispravna konverzija troška
-                cost_bruto = row['Gross CC'].replace(',', '')
-                cost_neto = cost_bruto - row['VAT'].replace(',', '')
+                # Konvertuj bruto trošak i PDV u decimalne vrednosti
+                cost_bruto = float(row['Gross CC'].replace(',', '').strip())
+                vat = float(row['VAT'].replace(',', '').strip())
+
+                job_code = vehicle.job_codes.first().organizational_unit.code
+                # Izračunaj neto trošak
+                cost_neto = cost_bruto - vat
 
                 # Kreiraj FuelConsumption instancu i sačuvaj je u bazi
                 FuelConsumption.objects.create(
@@ -121,7 +128,9 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                     fuel_type=row['Product INV'],
                     cost_bruto=cost_bruto,
                     cost_neto=cost_neto,
-                    supplier="OMV"
+                    supplier="OMV",
+                    job_code=job_code,
+                    mileage=row['Mileage'],
                 )
                 print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
             
@@ -129,6 +138,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 print(f"Vehicle with license plate {row['License plate No']} not found.")
             except Exception as e:
                 print(f"Error importing row: {row}. Error: {str(e)}")
+
 
 def import_omv_transactions_from_csv(csv_file_path):
     timezone = pytz.timezone(settings.TIME_ZONE)
@@ -241,7 +251,8 @@ def import_nis_fuel_consumption(file_path):
             # Konverzija datuma transakcije sa vremenskom zonom
             naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
             transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
-
+            
+            job_code = vehicle.job_codes.first().organizational_unit.code
            
             FuelConsumption.objects.create(
                 vehicle=vehicle,
@@ -249,8 +260,10 @@ def import_nis_fuel_consumption(file_path):
                 amount=row['Količina'],
                 fuel_type=row['Naziv proizvoda'],
                 cost_bruto=row['Total'],
-                cost_neto=row['Total']*5/6,
-                supplier="NIS"
+                cost_neto=round(row['Total']*5/6,2),
+                supplier="NIS",
+                job_code=job_code,
+                mileage=row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
             )
             print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
         
@@ -269,9 +282,9 @@ def import_nis_transactions(file_path):
     for index, row in df.iterrows():
         try:
             # Formatiraj registarski broj pre nego što ga upotrebiš
-            formatted_plate = format_license_plate(row['Registarska oznaka vozila'])
+            formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
-            # Pronađi vozilo prema formatiranoj tablici u TrafficCard
+            # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
             traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
@@ -672,3 +685,76 @@ def formiranje_org_jedinica():
     print("Proces unosa je završen.")
 
 
+def calculate_average_fuel_consumption(vehicle):
+    # poslednjih 10 tocenja
+    last_10_consumptions = vehicle.fuel_consumptions.order_by('-date')[:10]
+    
+    if len(last_10_consumptions) < 10:
+        return None
+    
+    first_entry = last_10_consumptions[0]
+    start_entry = None
+    # Pronađi prvi validan unos
+    for i in range(9):
+        if last_10_consumptions[i].mileage > 0:
+            first_entry = last_10_consumptions[9 - i]
+            start_entry = 9 - i
+            break
+
+    last_entry = last_10_consumptions[9]
+    end_entry = None
+    # Pronađi poslednji validan unos
+    for i in range(9):
+        if last_10_consumptions[i].mileage > 0:
+            last_entry = last_10_consumptions[i]
+            end_entry = i
+            break
+
+    # Računanje prosečne potrošnje goriva
+    if start_entry is not None and end_entry is not None and start_entry >= end_entry:
+        total_amount = sum(c.amount for c in last_10_consumptions[end_entry:start_entry + 1])
+        total_mileage = last_entry.mileage - first_entry.mileage
+
+        if total_mileage > 0:
+            return total_amount / total_mileage * 100
+        else:
+            return None
+    else:
+        return None
+    
+def calculate_average_fuel_consumption_ever(vehicle):
+        # Broj tocenja goriva
+    fueling_count = vehicle.fuel_consumptions.count()
+
+    if fueling_count < 2:
+        return None
+
+    # Sva tocenja goriva, poređana po datumu
+    fuel_consumptions = vehicle.fuel_consumptions.order_by('-date')
+
+    first_entry = None
+    last_entry = None
+
+    # Pronađi prvi validan unos (najranije točenje s validnim kilometražama)
+    for i in range(fueling_count):
+        if fuel_consumptions[i].mileage > 0:
+            first_entry = fuel_consumptions[i]
+            break
+
+    # Pronađi poslednji validan unos (najkasnije točenje s validnim kilometražama)
+    for i in range(fueling_count):
+        if fuel_consumptions[fueling_count - i - 1].mileage > 0:
+            last_entry = fuel_consumptions[fueling_count - i - 1]
+            break
+
+    # Proveri da li su oba unosa validna
+    if first_entry is not None and last_entry is not None and first_entry != last_entry:
+        total_amount = sum(c.amount for c in fuel_consumptions if c.date <= first_entry.date and c.date >= last_entry.date)
+        total_mileage = first_entry.mileage - last_entry.mileage
+
+        if total_mileage > 0:
+            return total_amount / total_mileage * 100
+        else:
+            return None
+    else:
+        return None

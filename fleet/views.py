@@ -15,6 +15,9 @@ from django.db.models import Sum, Avg
 import datetime 
 from datetime import date, timedelta
 from django.db.models import F
+from django.utils import timezone
+from datetime import timedelta
+from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
 
 def dashboard(request):    
     # Count the number of objects where vehicle is None
@@ -48,10 +51,16 @@ class VehicleListView(LoginRequiredMixin, ListView):
     model = Vehicle
     template_name = 'fleet/vehicle_list.html'
     context_object_name = 'vehicles'
+    form_class = VehicleFilterForm  # Dodajemo formu za filtriranje
 
     def get_queryset(self):
         queryset = super().get_queryset()
         
+        # Dohvati vrednosti iz GET parametara
+        org_unit = self.request.GET.get('org_unit')
+        fuel_in_last_6_months = self.request.GET.get('fuel_in_last_6_months')
+        center_code = self.request.GET.get('center_code')
+
         # Subquery to get the latest org_unit for each Vehicle
         latest_org_unit_subquery = JobCode.objects.filter(
             vehicle_id=OuterRef('pk')
@@ -67,10 +76,42 @@ class VehicleListView(LoginRequiredMixin, ListView):
             registration_number=Subquery(latest_traffic_card_subquery),
             total_repairs=Sum('service_transactions__potrazuje')
         )
+
+
+        
+        # Filter za šifru posla (JobCode)
+        if org_unit:
+            queryset = queryset.filter(job_codes__organizational_unit=org_unit)
+
+        # Filter za šifru centra (center_code)
+        if center_code:
+            queryset = queryset.filter(job_codes__organizational_unit__center=center_code)
+
+        # Filter za gorivo u poslednjih 6 meseci
+        if fuel_in_last_6_months == 'yes':
+            six_months_ago = timezone.now() - timedelta(days=180)
+            queryset = queryset.filter(
+                fuel_consumptions__date__gte=six_months_ago
+            ).distinct()  # Da ne vraća duplikate ako postoji više sipanja
+        elif fuel_in_last_6_months == 'no':
+            six_months_ago = timezone.now() - timedelta(days=180)
+            queryset = queryset.exclude(
+                fuel_consumptions__date__gte=six_months_ago
+            ).distinct()  # Da ne vraća duplikate ako postoji više sipanja
+        
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        vehicles = context['vehicles']
+        vehicle_consumption_data = {}
+
+        for vehicle in vehicles:
+            vehicle_consumption_data[vehicle.id] = calculate_average_fuel_consumption(vehicle)
+
+        form = VehicleFilterForm(self.request.GET or None)
+        context['vehicle_consumption_data'] = vehicle_consumption_data
+        context['form'] = form
         context['title'] = 'Lista vozila'
         return context
     
@@ -95,11 +136,8 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
             latest_org_unit=Subquery(latest_org_unit_subquery)
         ).get(pk=vehicle.pk)
 
-        # Print the latest org_unit
-        print("AUTO",vehicle_with_latest_org_unit.latest_org_unit)
         # Perform additional logic with allowed_centers or other fields if needed
         allowed_centers = request.user.allowed_centers
-        print("USER",allowed_centers)
 
         if allowed_centers:
             allowed_centers_list = allowed_centers.split(',')
@@ -117,12 +155,13 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
         lease_info = Lease.objects.filter(vehicle=vehicle).order_by('-start_date').first()
 
         # 2. NIS and OMV cards
-        nis_card = vehicle.fuel_consumptions.filter(supplier='NIS').first()
-        omv_card_passenger = vehicle.fuel_consumptions.filter(supplier='OMV', vehicle__category='passenger').first()
-        omv_card_cargo = vehicle.fuel_consumptions.filter(supplier='OMV', vehicle__category='cargo').first()
+        nis_card = vehicle.nis_transactions.filter().first()
+        omv_card = vehicle.omv_transactions.filter().first()
+        consumptions = vehicle.fuel_consumptions.all()
 
         # 3. Mileage (use latest FuelConsumption)
-        mileage = vehicle.fuel_consumptions.order_by('-date').first()
+        mileage = vehicle.fuel_consumptions.order_by('-mileage').values_list('mileage', flat=True).first()
+        print(mileage)
 
         # 4. Active Policies
         active_policies = Policy.objects.filter(vehicle=vehicle, end_date__gte=datetime.date.today())
@@ -139,23 +178,27 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
         # 8. General status (red/green light based on repair costs)
         repair_costs = vehicle.service_transactions.aggregate(total_repairs=Sum('potrazuje'))['total_repairs'] or 0
         status_light = 'green' if repair_costs < vehicle.purchase_value else 'red'
-
-        # Add all data to context
+        
+        average_consumption = calculate_average_fuel_consumption(vehicle)
+        average_consumption_ever = calculate_average_fuel_consumption_ever(vehicle)
         context.update({
             'lease_info': lease_info,
             'nis_card': nis_card,
-            'omv_card_passenger': omv_card_passenger,
-            'omv_card_cargo': omv_card_cargo,
+            'omv_card': omv_card,
             'mileage': mileage,
             'active_policies': active_policies,
             'book_value': book_value,
-            'average_consumption': average_consumption['amount__avg'],
+            'average_consumption': average_consumption,
+            'average_consumption_ever': average_consumption_ever,
             'current_job_code': current_job_code,
             'status_light': status_light,
             'repair_costs': repair_costs,
             'status_light': status_light,
+            'consumptions': consumptions,
             'title':f"Detalji vozila {self.object.brand} {self.object.model}"
         })
+
+        
 
         return context
 
@@ -435,8 +478,48 @@ class LeaseDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_object(self, queryset=None):
         return super().get_object(queryset)
+    
+# LEASE KAMATE FETCH
+logger = logging.getLogger(__name__)
 
+def fetch_lease_interest_data(request):
+    if request.method == 'POST':
+        # Povlačenje podataka iz view-a u bazi
+        with connections['test_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT god, ugovor, iznos FROM dbo.lizing_kamate
+            """)
+            rows = cursor.fetchall()
 
+        for row in rows:
+            year = row[0]
+            contract_number = row[1].strip()
+            interest_amount = row[2]
+
+            try:
+                # Pronađi ugovor lizinga po broju ugovora
+                lease = Lease.objects.get(contract_number=contract_number)
+
+                # Proveri da li već postoji zapis za tu godinu i lizing ugovor
+                lease_interest, created = LeaseInterest.objects.get_or_create(
+                    lease=lease,
+                    year=year,
+                    defaults={'interest_amount': interest_amount}
+                )
+
+                if not created:
+                    # Ako zapis već postoji, možeš ga ažurirati ako je potrebno
+                    lease_interest.interest_amount = interest_amount
+                    lease_interest.save()
+
+            except Lease.DoesNotExist:
+                logger.warning(f"Lizing ugovor sa brojem {contract_number} nije pronađen.")
+                continue
+
+        # Nakon uspešne obrade, preusmeravanje ili prikaz poruke
+        return redirect('fetch_policies')  # Preusmeri na odgovarajući URL za prikaz lizing kamata
+
+    return render(request, 'fleet/fetch_policies.html')
 
 # <!-- ======================================================================= -->
 #                           <!-- LEASE -->

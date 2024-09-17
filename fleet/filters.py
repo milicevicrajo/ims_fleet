@@ -1,7 +1,27 @@
 import django_filters
-from .models import FuelConsumption
+from .models import FuelConsumption, JobCode, OrganizationalUnit
 from django import forms
 
+class VehicleFilterForm(forms.Form):
+    org_unit = forms.ModelChoiceField(
+        queryset=OrganizationalUnit.objects.all().order_by('code'),  # Uzimamo sve JobCode sortirane po šifri
+        required=False,
+        label='Organizaciona jedinica'
+    )
+    fuel_in_last_6_months = forms.ChoiceField(
+        choices=[
+            ('', '----'),  # Ovo predstavlja opciju da filter nije primenjen
+            ('yes', 'Da'),
+            ('no', 'Ne')
+        ],
+        required=False,
+        label='Sipano gorivo u poslednjih 6 meseci'
+    )
+    center_code = forms.ModelChoiceField(
+        queryset=OrganizationalUnit.objects.values_list('center', flat=True).distinct().order_by('center'),  # Distinktne šifre centara
+        required=False,
+        label='Centar'
+    )
 class FuelFilterForm(django_filters.FilterSet):
     start_date = django_filters.DateFilter(
         field_name='date', 

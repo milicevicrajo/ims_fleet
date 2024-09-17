@@ -86,6 +86,7 @@ urlpatterns = [
     path('fetch-services/', views.fetch_service_data_view, name='fetch_services'),
     path('fetch-requisitions/', fetch_requisition_data_view, name='fetch_requisitions'),
     path('fetch-vehicle-value/', fetch_vehicle_value_view, name='fetch_vehicle_value'),
+    path('fetch-lease-interest/', fetch_lease_interest_data, name='fetch_lease_interest'),
 
     path('requisitions/', RequisitionListView.as_view(), name='requisition_list'),
     path('requisitions/nedovrseno/', RequisitionFixingListView.as_view(), name='requisition_fixing_list'),

@@ -25,3 +25,8 @@
     {% csrf_token %}
     <button type="submit" class="btn btn-primary">Povuci Vrednosti vozila </button>
   </form>
+
+  <form method="POST" action="{% url 'fetch_lease_interest' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Povuci lizing kamate vozila </button>
+  </form>

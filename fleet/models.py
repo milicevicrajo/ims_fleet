@@ -80,7 +80,7 @@ class JobCode(models.Model):
     assigned_date = models.DateField(verbose_name=_("Datum dodele"))
 
     def __str__(self):
-        return f"{self.vehicle} -> {self.organizational_unit} (Assigned on {self.date_assigned})"
+        return f"{self.vehicle} -> {self.organizational_unit} (Assigned on {self.assigned_date})"
 
 
 class Lease(models.Model):
@@ -96,6 +96,17 @@ class Lease(models.Model):
 
     def __str__(self):
         return f"Lease for {self.vehicle.chassis_number} with {self.partner_name} from {self.start_date} to {self.end_date}"
+
+class LeaseInterest(models.Model):
+    lease = models.ForeignKey(Lease, on_delete=models.CASCADE, related_name='lease_interests', verbose_name=_("Lizing"))
+    year = models.IntegerField(verbose_name=_("Godina"))
+    interest_amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Iznos kamate"))
+
+    class Meta:
+        unique_together = ('year', 'lease')  # Kombinacija godina i broj ugovora mora biti jedinstvena
+
+    def __str__(self):
+        return f"Kamata za ugovor {self.lesae.contract_number} za godinu {self.year}"
 
 class Policy(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='policies', verbose_name=_("Vozilo"),null=True)
@@ -119,14 +130,18 @@ class Policy(models.Model):
 
 class FuelConsumption(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='fuel_consumptions', verbose_name=_("Vozilo"))
-    date = models.DateField(verbose_name=_("Datum"))
+    date = models.DateTimeField(verbose_name=_("Datum"))
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina"))
     fuel_type = models.CharField(max_length=20, verbose_name=_("Tip goriva"))
     cost_bruto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos - Bruto"))
     cost_neto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos - Neto"))
     supplier = models.CharField(max_length=50, verbose_name=_("Dobavljač"))
     job_code = models.CharField(max_length=50, verbose_name=_("Šifra posla"),blank=True, null=True)
-
+    mileage = models.IntegerField(verbose_name=_("Kilometraža"))
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['date', 'cost_bruto', 'amount'], name='unique_fuel_consumption')
+        ]
     def __str__(self):
         return f"Potrosnja goriva {self.vehicle.chassis_number} na {self.date}"
 
@@ -136,8 +151,9 @@ class Employee(models.Model):
         ('F', 'Ženski'),
     ]
 
-    employee_code = models.CharField(max_length=20, unique=True, verbose_name=_("Šifra zaposlenog"))
-    name = models.CharField(max_length=100, verbose_name=_("Ime i prezime"))
+    employee_code = models.IntegerField(unique=True, verbose_name=_("Šifra zaposlenog"))
+    first_name = models.CharField(max_length=50, verbose_name=_("Ime"),blank=True, null=True)
+    last_name = models.CharField(max_length=50, verbose_name=_("Preziime"),blank=True, null=True)
     position = models.CharField(max_length=100, verbose_name=_("Pozicija"))
     department_code = models.IntegerField(verbose_name=_("Šifra odeljenja"))
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name=_("Pol"))
@@ -146,7 +162,7 @@ class Employee(models.Model):
     phone_number = models.CharField(max_length=20, verbose_name=_("Broj telefona"), blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.last_name} {self.first_name}"
 
 class Incident(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='incidents', verbose_name=_("Zaposleni"))

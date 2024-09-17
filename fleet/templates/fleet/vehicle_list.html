@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-
+{% load form_filters %}
+{% load ims_tags %}
 {% block content %}
 {% load humanize %} 
 <h2>{{ title }}</h2>
@@ -11,17 +12,45 @@
                 <i class="mdi mdi-plus-box"></i><i class="mdi mdi-car"></i> Dodaj vozilo
             </a>
         </div>
+        <form method="get" class="row g-3 align-items-end pb-3">
+            <div class="col-auto">
+                <label for="id_fuel_in_last_6_months" class="col-form-label">{{ form.fuel_in_last_6_months.label }}:</label>
+                <div>
+                    {{ form.fuel_in_last_6_months|add_class:'form-control' }}
+                </div>
+            </div>
+            
+            <div class="col-auto">
+                <label for="id_org_unit" class="col-form-label">{{ form.org_unit.label }}:</label>
+                <div>
+                    {{ form.org_unit|add_class:'form-control' }}
+                </div>
+            </div>
+        
+            <div class="col-auto">
+                <label for="id_center_code" class="col-form-label">{{ form.center_code.label }}:</label>
+                <div>
+                    {{ form.center_code|add_class:'form-control' }}
+                </div>
+            </div>
+        
+            <!-- Dugme je sada poravnato sa poljima -->
+            <div class="col-auto d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Filtriraj</button>
+            </div>
+        </form>
+        
+
         <div class="table-responsive">
             <table id="DatatableVozila" class="display">
                 <thead>
                     <tr>
-                        <th>Marka</th>
+                        <th>Registracija</th>
                         <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>
-                        <th>Br. Sasije</th>
-                        <th>Servisi cena</th>
-                        <th>Registracija</th>
+                        <th>Potrošnja</th>
+                        <th>Servisi cena</th>                        
                         <th>Vrednost nabavna</th>
                         <th>Vrednost trenutna</th>
                     </tr>
@@ -29,13 +58,18 @@
                 <tbody>
                     {% for vehicle in vehicles %}
                     <tr>  
-                        <td><a href="{% url 'vehicle_detail' vehicle.pk %}">Detalj vozila</a></td>                     
+                        <td><a href="{% url 'vehicle_detail' vehicle.pk %}">{{ vehicle.registration_number }}</a></td>                   
                         <td>{{ vehicle.brand }}</td>                      
                         <td>{{ vehicle.model }}</td>
                         <td>{{ vehicle.year_of_manufacture }}</td>
-                        <td>{{ vehicle.chassis_number }}</td>
+                        <td>
+                            {% if vehicle_consumption_data|dict_get:vehicle.id %}
+                                {{ vehicle_consumption_data|dict_get:vehicle.id|floatformat:2 }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </td>
                         <td>{{ vehicle.total_repairs|default:0|floatformat:0|intcomma }}</td>
-                        <td>{{ vehicle.registration_number }}</td>
                         <td>{{ vehicle.purchase_value }}</td>
                         <td>{{ vehicle.value }}</td>
                     </tr>
@@ -46,13 +80,12 @@
                 {% endfor %}
                 <tfoot>
                     <tr>
-                        <th>Marka</th>
+                        <th>Registracija</th>
                         <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>
                         <th>Br. Sasije</th>
-                        <th>Servisi cena</th>
-                        <th>Registracija</th>
+                        <th>Servisi cena</th>                        
                         <th>Vrednost nabavna</th>
                         <th>Vrednost trenutna</th>
                     </tr>

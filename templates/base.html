@@ -183,9 +183,7 @@
             });
             var table = $('#DatatableVozila').DataTable({
                 "language": languageSettings,
-                "columnDefs": [
-                { "type": "date-custom", "targets": 6 }
-            ]
+
             });
             var table = $('#DatatableSaobracajne').DataTable({
                 "language": languageSettings,
@@ -261,6 +259,15 @@
                         ],
 
             });
+            var table = $('#DatatableFuelDetail').DataTable({
+                "language": languageSettings,
+                "scrollX": true,  // Enable horizontal scrolling
+                "autoWidth": false,  // Disable automatic column width calculation
+                "columnDefs": [
+                { "type": "date-custom", "targets": [0] }
+                        ],
+
+            });
         });      
     </script>
 
@@ -290,6 +297,26 @@
 
         table.display.compact tbody td {
             white-space: nowrap; /* Prevent word wrap */
+        }
+        .custom-font-table {
+            font-family: 'Arial', sans-serif; /* Menjaš font za celu tabelu */
+        }
+        
+        .custom-font-table td {
+            font-size: 15px; /* Postavi veličinu fonta */
+            font-family: 'Roboto', sans-serif; /* Ovde možeš promeniti font na drugi */
+        }
+        
+        {% comment %} .custom-font-table td:first-child {
+            font-weight: bold; /* Prvi stupac u tabeli (naslovi) je podebljan */
+        } {% endcomment %}
+        
+        .custom-font-table td:last-child {
+            font-style: italic; /* Poslednji stupac u tabeli je italik */
+        }
+        .custom-font-table td, .custom-font-table th {
+            padding: 5px 10px; /* Manji padding smanjuje visinu reda */
+            line-height: 1.8; /* Smanji visinu linije za dodatno smanjenje razmaka između redova */
         }
         </style>
         

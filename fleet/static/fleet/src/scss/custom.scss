@@ -1,1 +1,18 @@
 // In this scss you can overwrite all our scss, we suggested you to add your scss into this, so whenever the update comes it will not affect your code.
+
+.custom-font-table {
+    font-family: 'Arial', sans-serif; /* Menjaš font za celu tabelu */
+}
+
+.custom-font-table td {
+    font-size: 20px; /* Postavi veličinu fonta */
+    font-family: 'Roboto', sans-serif; /* Ovde možeš promeniti font na drugi */
+}
+
+.custom-font-table td:first-child {
+    font-weight: bold; /* Prvi stupac u tabeli (naslovi) je podebljan */
+}
+
+.custom-font-table td:last-child {
+    font-style: italic; /* Poslednji stupac u tabeli je italik */
+}

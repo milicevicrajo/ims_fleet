@@ -35,7 +35,7 @@
                   <tr>                        
                       <td>{{ consumption.vehicle }}</td>   
                       <td>{{ consumption.registration_number}}</td>                    
-                      <td>{{ consumption.date }}</td>
+                      <td>{{ consumption.date|date:"d.m.Y H:i:s"  }}</td>
                       <td>{{ consumption.amount }}</td>
                       <td>{{ consumption.fuel_type }}</td>
                       <td>{{ consumption.cost_bruto }}</td>

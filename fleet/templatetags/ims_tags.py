@@ -16,3 +16,8 @@ def get_field_value(instance, field_name):
     Returns the value of a model field.
     """
     return getattr(instance, field_name)
+
+@register.filter
+def dict_get(dictionary, key):
+    """Vraća vrednost iz rečnika po ključu."""
+    return dictionary.get(key)

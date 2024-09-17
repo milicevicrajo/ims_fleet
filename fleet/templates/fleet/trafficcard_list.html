@@ -28,8 +28,8 @@
                   <tr>                        
                       <td>{{ card.vehicle }}</td>                      
                       <td>{{ card.registration_number }}</td>
-                      <td>{{ card.issue_date }}</td>
-                      <td>{{ card.valid_until }}</td>
+                      <td>{{ card.issue_date|date:"d.m.Y"  }}</td>
+                      <td>{{ card.valid_until|date:"d.m.Y"}}</td>
                       <td>{{ card.traffic_card_number }}</td>
                       <td>{{ card.owner }}</td>
                       <td>{{ card.homologation_number }}</td>

@@ -117,7 +117,7 @@ class Command(BaseCommand):
             # Clear and set the 'date to' input
             date_to_input = driver.find_element(By.NAME, "Transactiondate1")
             date_to_input.clear()
-            date_to_input.send_keys("2024-09-07")
+            date_to_input.send_keys("2024-09-14")
             print("Entered date to")
 
             # Click the 'Result' link using JavaScript
@@ -150,7 +150,7 @@ class Command(BaseCommand):
 
             # Importuj podatke u bazu
             import_omv_fuel_consumption_from_csv(csv_file_path)            
-            import_omv_transactions_from_csv(csv_file_path)            
+            # import_omv_transactions_from_csv(csv_file_path)            
             print(f"Data imported successfully from {csv_file_path}")
 
         finally:
