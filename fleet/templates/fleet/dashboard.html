@@ -1,8 +1,132 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
+<h1 class="my-4">Trenutno Stanje Flote - Opšti Pregled</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+        <!------- CARD ------>
+        <div class="card">
+            <div class="card-body">
+                 <!-- Number of Vehicles -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Ukupan broj vozila</h5>
+                                <p class="card-text">{{ total_vehicles|intcomma  }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Putnička vozila</h5>
+                                <p class="card-text">{{ passenger_vehicles }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Transportna vozila</h5>
+                                <p class="card-text">{{ transport_vehicles }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vehicles by Center -->
+                <h3>Broj Vozila po Centrima</h3>
+                <table class="table table-striped mb-4">
+                    <thead>
+                        <tr>
+                            <th>Centar</th>
+                            <th>Broj Vozila</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for center in vehicles_by_center %}
+                        <tr>
+                            <td>{{ center.center_code }}</td>
+                            <td>{{ center.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Average Vehicle Age and Book Value -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Prosečna starost vozila</h5>
+                                <p class="card-text">{{ average_age|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Knjigovodstvena vrednost</h5>
+                                <p class="card-text">{{ book_value|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yearly Costs -->
+                <h3>Troškovi Po Kategorijama za Godinu</h3>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Ukupni troškovi goriva</h5>
+                                <p class="card-text">{{ yearly_fuel_costs|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Ukupni troškovi servisa</h5>
+                                <p class="card-text">{{ yearly_service_costs|floatformat:2 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vehicles in Red Zone -->
+                <h3>Vozila u Crvenoj Zoni</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Vozilo</th>
+                            <th>Marka</th>
+                            <th>Model</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vehicle in red_zone_vehicles %}
+                        <tr>
+                            <td>{{ vehicle }}</td>
+                            <td>{{ vehicle.brand }}</td>
+                            <td>{{ vehicle.model }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>      
+        </div>
+        <!------- CARD END ------>
+    </div>
+
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-4">
         {% if services_without_vehicle > 0 or policies_without_vehicle > 0 or requisitions_without_vehicle > 0 %}
         <div class="col-12">
             <div class="alert alert-danger" role="alert">
@@ -36,31 +160,36 @@
                     </a>
                 {% endif %}
 
+                {% if expiring_policies_count > 0 %}
+                <a href="{% url 'expiring_and_not_renewed_policies' %}" style="color: inherit; text-decoration: none;">                    
+                    <p style="font-size: 1.3em;">
+                        <i class="mdi mdi-update"></i>
+                        Imate {{ expiring_policies_count }} polisa koje ističu u narednih 30 dana!
+                    </p>
+                </a>
+                {% endif %}
+
+                {% if expired_unrenewed_policies_count > 0 %}
+                <a href="{% url 'expiring_and_not_renewed_policies' %}" style="color: inherit; text-decoration: none;">                    
+                    <p style="font-size: 1.3em;">
+                        <i class="mdi mdi-update"></i>
+                        Imate {{ expired_unrenewed_policies_count }} polisa koje nisu obnovljene!
+                    </p>
+                </a>
+                {% endif %}
+
             </div>
         </div>
         {% endif %}
     </div>
-</div> 
+</div>
+
 <div class="container-fluid">
     <div class="row">
-        {% if expiring_policies %}
-        <div class="col-12">
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">
-                    <i class="mdi mdi-alert-outline"></i> UPOZORENJE !
-                </h4>
-                    {% for policy in expiring_policies %}
-             
-                        <p style="font-size: 1.3em;">
-                            <i class="mdi mdi-update"></i>
-                            {{policy}} za {{ policy.vehicle}} istice {{ policy.end_date}}
-                        </p>
-                    {% endfor %} 
-            </div>
-        </div>
-        {% endif %}
+        
     </div>
 </div> 
+ 
 <div class="row">
     <!-- Column -->
     <div class="col-md-6 col-lg-2 col-xlg-3">

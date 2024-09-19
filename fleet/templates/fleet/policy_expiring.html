@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ title }}</h2>
+<div class="card">
+    <div class="card-body">
+        {% if expiring_policies %}
+        <h5 class="card-title">Ističu za 30 dana</h5>      
+        <div class="table-responsive">
+            <table id="DatatableServiceDetail" class="display compact">
+                <thead>
+                    <tr>
+                        <th>Vozilo</th>
+                        <th>Partner</th>
+                        <th>Broj ugovora</th>
+                        <th>Datum izdavanja</th>
+                        <th>Tip osiguranja</th>
+                        <th>Broj polise</th>
+                        <th>Datum početka</th>
+                        <th>Datum završetka</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for policy in expiring_policies %}
+                    <tr>                        
+                          <td>{{ policy.vehicle }}</td>                      
+                        <td>{{ policy.partner_name }}</td>
+                        <td>{{ policy.invoice_number }}</td>
+                        <td>{{ policy.issue_date|date:"d.m.Y"}}</td>
+                        <td>{{ policy.insurance_type }}</td>
+                        <td>{{ policy.policy_number }}</td>
+                        <td>{{ policy.start_date|date:"d.m.Y" }}</td>
+                        <td>{{ policy.end_date|date:"d.m.Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">Nema podataka..</td>
+                    </tr>
+                {% endfor %}
+                <tfoot>
+                    <tr>
+                        <th>Vozilo</th>
+                        <th>Partner</th>
+                        <th>Broj ugovora</th>
+                        <th>Datum izdavanja</th>
+                        <th>Tip osiguranja</th>
+                        <th>Broj polise</th>
+                        <th>Datum početka</th>
+                        <th>Datum završetka</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% endif %}
+        <hr/>
+
+        {% if expired_unrenewed_policies %}
+        <h5 class="card-title">Istiekle polise</h5>
+        <div class="table-responsive">
+            <table id="DatatablePolicyExpired" class="display compact">
+                <thead>
+                    <tr>
+                        <th>Vozilo</th>
+                        <th>Partner</th>
+                        <th>Broj ugovora</th>
+                        <th>Datum izdavanja</th>
+                        <th>Tip osiguranja</th>
+                        <th>Broj polise</th>
+                        <th>Datum početka</th>
+                        <th>Datum završetka</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for policy in expired_unrenewed_policies %}
+                    <tr>                        
+                        <td>{{ policy.vehicle }}</td>                      
+                        <td>{{ policy.partner_name }}</td>
+                        <td>{{ policy.invoice_number }}</td>
+                        <td>{{ policy.issue_date|date:"d.m.Y"}}</td>
+                        <td>{{ policy.insurance_type }}</td>
+                        <td>{{ policy.policy_number }}</td>
+                        <td>{{ policy.start_date|date:"d.m.Y" }}</td>
+                        <td>{{ policy.end_date|date:"d.m.Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">Nema podataka..</td>
+                    </tr>
+                {% endfor %}
+                <tfoot>
+                    <tr>
+                    <th>Vozilo</th>
+                    <th>Partner</th>
+                    <th>Broj ugovora</th>
+                    <th>Datum izdavanja</th>
+                    <th>Tip osiguranja</th>
+                    <th>Broj polise</th>
+                    <th>Datum početka</th>
+                    <th>Datum završetka</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

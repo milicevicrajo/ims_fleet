@@ -11,13 +11,15 @@ from django_filters.views import FilterView
 from django.contrib import messages
 import logging
 from django.http import HttpResponseForbidden
-from django.db.models import Sum, Avg
+from django.db.models import Sum, Exists,Count,Avg
 import datetime 
 from datetime import date, timedelta
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
 from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
+from django.db.models.functions import TruncMonth, TruncYear
+from django.contrib.humanize.templatetags.humanize import intcomma
 
 def dashboard(request):    
     # Count the number of objects where vehicle is None
@@ -30,16 +32,95 @@ def dashboard(request):
 
     # Calculate the date 30 days from today
     thirty_days_from_now = today + timedelta(days=30)
-
+    newest_policy = Policy.objects.filter(
+        vehicle=OuterRef('vehicle'),
+        insurance_type=OuterRef('insurance_type')
+    ).order_by('-end_date').values('end_date')[:1]
+    
     # Filter policies expiring within the next 30 days
-    expiring_policies = Policy.objects.filter(end_date__gte=today, end_date__lte=thirty_days_from_now)
+    # Filter policies expiring between today and thirty days from now, but exclude older policies if a newer one exists
+    expiring_policies = Policy.objects.annotate(
+        latest_end_date=Subquery(newest_policy)
+    ).filter(
+        end_date__gte=today,
+        end_date__lte=thirty_days_from_now,
+        end_date=F('latest_end_date')
+    )
+    expiring_policies_count = expiring_policies.count()
+        # Subquery to check if there is a newer policy for the same vehicle and insurance type
+    newer_policy_exists = Policy.objects.filter(
+        vehicle=OuterRef('vehicle'),
+        insurance_type=OuterRef('insurance_type'),
+        start_date__gt=OuterRef('start_date') 
+    )
+
+    # Filter policies that have expired but haven't been renewed
+    expired_unrenewed_policies = Policy.objects.annotate(
+        has_newer_policy=Exists(newer_policy_exists)
+    ).filter(
+        end_date__lt=today,  # Policies that have already expired
+        has_newer_policy=False  # Ensure there is no newer policy
+    )
+    expired_unrenewed_policies_count = expired_unrenewed_policies.count()
+
+    # Current year and last day of the previous month
+    current_year = datetime.datetime.now().year
+    first_day_of_current_month = date.today().replace(day=1)
+    last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
+    start_of_year = date.today().replace(month=1, day=1)
+
+    # Number of vehicles
+    total_vehicles = Vehicle.objects.count()
+    passenger_vehicles = Vehicle.objects.filter(category='PUTNICKO VOZILO').count()
+    transport_vehicles = Vehicle.objects.filter(category='TERETNO VOZILO').count()
+
+    # Vehicles by center
+    vehicles_by_center = Vehicle.objects.values('center_code').annotate(count=Count('id'))
+
+    # Average vehicle age
+    average_age = Vehicle.objects.aggregate(avg_age=(current_year - Avg('year_of_manufacture')))
+
+    # Book value as of the last day of the previous month
+    book_value = Vehicle.objects.filter(purchase_date__lte=last_day_of_previous_month).aggregate(total_value=Sum('value'))
+
+    # Yearly costs
+    yearly_fuel_costs = FuelConsumption.objects.filter(date__gte=start_of_year).aggregate(total_fuel_cost=Sum('cost_bruto'))
+    yearly_service_costs = ServiceTransaction.objects.filter(datum__gte=start_of_year).aggregate(total_service_cost=Sum('potrazuje'))
+
+    # Vehicles in red zone
+    red_zone_vehicles = Vehicle.objects.filter(otpis=True)  # or any other criteria
+    
+    test = 999999999999
+    test_small = 1234567
+
+    test_intcomma = intcomma(test)
+    test_intcomma_small = intcomma(test_small)
+
+    print("Large Number:", test_intcomma)        # Očekuje se '999,999,999,999'
+    print("Small Number:", test_intcomma_small)  # Očekuje se '1,234,567'
+    print(type(test))                # Trebalo bi da bude <class 'int'>
+    print(type(test_intcomma))        # Trebalo bi da bude <class 'str'>
+    
     context = {
         'services_without_vehicle': services_without_vehicle,
         'policies_without_vehicle': policies_without_vehicle,
         'requisitions_without_vehicle': requisitions_without_vehicle,
         'expiring_policies': expiring_policies,
+        'expiring_policies_count': expiring_policies_count,
+        'expired_unrenewed_policies': expired_unrenewed_policies,
+        'expired_unrenewed_policies_count': expired_unrenewed_policies_count,
+        'total_vehicles': total_vehicles,
+        'passenger_vehicles': passenger_vehicles,
+        'transport_vehicles': transport_vehicles,
+        'vehicles_by_center': vehicles_by_center,
+        'average_age': average_age['avg_age'],
+        'book_value': book_value['total_value'],
+        'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
+        'yearly_service_costs': yearly_service_costs['total_service_cost'],
+        'red_zone_vehicles': red_zone_vehicles,
+        'test':test
     }
-    
+
     return render(request, 'fleet/dashboard.html', context)
 
 
@@ -151,50 +232,74 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
 
         vehicle = self.get_object()
 
-        # 1. Leasing data
-        lease_info = Lease.objects.filter(vehicle=vehicle).order_by('-start_date').first()
-
-        # 2. NIS and OMV cards
-        nis_card = vehicle.nis_transactions.filter().first()
-        omv_card = vehicle.omv_transactions.filter().first()
-        consumptions = vehicle.fuel_consumptions.all()
-
-        # 3. Mileage (use latest FuelConsumption)
-        mileage = vehicle.fuel_consumptions.order_by('-mileage').values_list('mileage', flat=True).first()
-        print(mileage)
-
-        # 4. Active Policies
+        # 1. Aktivne polise osiguranja
         active_policies = Policy.objects.filter(vehicle=vehicle, end_date__gte=datetime.date.today())
 
-        # 5. Book value (assuming you calculate this from external source or additional logic)
-        book_value = vehicle.purchase_value  # Simplified for now
-
-        # 6. Average Fuel Consumption
-        average_consumption = vehicle.fuel_consumptions.aggregate(Avg('amount'))
-
-        # 7. Current Job Code
+        # 2. Job Code
         current_job_code = JobCode.objects.filter(vehicle=vehicle).order_by('-assigned_date').first()
+        job_codes = JobCode.objects.filter(vehicle=vehicle).order_by('-assigned_date')
 
-        # 8. General status (red/green light based on repair costs)
-        repair_costs = vehicle.service_transactions.aggregate(total_repairs=Sum('potrazuje'))['total_repairs'] or 0
-        status_light = 'green' if repair_costs < vehicle.purchase_value else 'red'
+        test = int(9999999999999)
+        # 3. Gorivo, kilometraza i kartice
+        nis_card = vehicle.nis_transactions.filter().first()
+        omv_card = vehicle.omv_transactions.filter().first()
+
+        mileage = vehicle.fuel_consumptions.order_by('-mileage').values_list('mileage', flat=True).first()
+
+        consumptions = vehicle.fuel_consumptions.all() # Za tabelu potrosnje
+        average_consumption = calculate_average_fuel_consumption(vehicle) # poslednjih 10
+        average_consumption_ever = calculate_average_fuel_consumption_ever(vehicle) # Sva tocenja
         
-        average_consumption = calculate_average_fuel_consumption(vehicle)
-        average_consumption_ever = calculate_average_fuel_consumption_ever(vehicle)
+        # Grupisanje po mesecima i godinama uz dobavljača, agregiranje količine i bruto cene
+        fuel_data = FuelConsumption.objects.filter(vehicle=vehicle).annotate(
+            month=TruncMonth('date'),
+            year=TruncYear('date')
+        ).values('month', 'year', 'supplier').annotate(
+            total_liters=Sum('amount'),
+            total_cost_bruto=Sum('cost_bruto')
+        ).order_by('year', 'month', 'supplier')
+
+        # Razdvajanje podataka za OMV i NIS
+        omv_data = fuel_data.filter(supplier='OMV')
+        nis_data = fuel_data.filter(supplier='NIS')
+
+        # 4. Leasing data
+        lease_info = Lease.objects.filter(vehicle=vehicle).order_by('-start_date').first()
+        lease_intrests = LeaseInterest.objects.filter(lease=lease_info).order_by('-year')
+
+        # 5. General status (red/green light based on repair costs)
+        repair_costs = vehicle.service_transactions.aggregate(total_repairs=Sum('potrazuje'))['total_repairs'] or 0
+        requisition_costs = vehicle.requisitions.aggregate(total_requisitions=Sum('vrednost_nab'))['total_requisitions'] or 0
+
+        service_list = vehicle.service_transactions.order_by('-datum')
+        requisition_list = vehicle.requisitions.order_by('-datum_trebovanja')
+        
+        # 6. Saobracajna dozvol i istorija
+        trafic_cards = TrafficCard.objects.filter(vehicle=vehicle).order_by('-issue_date')
+
+        status_light = 'green' if repair_costs < vehicle.purchase_value else 'red'
+
+        
         context.update({
             'lease_info': lease_info,
+            'lease_intrests':lease_intrests,
             'nis_card': nis_card,
             'omv_card': omv_card,
             'mileage': mileage,
             'active_policies': active_policies,
-            'book_value': book_value,
             'average_consumption': average_consumption,
             'average_consumption_ever': average_consumption_ever,
+            'omv_data':omv_data,
+            'nis_data':nis_data,
             'current_job_code': current_job_code,
+            'job_codes': job_codes,
             'status_light': status_light,
             'repair_costs': repair_costs,
-            'status_light': status_light,
+            'requisition_costs':requisition_costs,
+            'service_list':service_list,
+            'requisition_list':requisition_list,
             'consumptions': consumptions,
+            'trafic_cards':trafic_cards,
             'title':f"Detalji vozila {self.object.brand} {self.object.model}"
         })
 
@@ -522,7 +627,7 @@ def fetch_lease_interest_data(request):
     return render(request, 'fleet/fetch_policies.html')
 
 # <!-- ======================================================================= -->
-#                           <!-- LEASE -->
+#                           <!-- POLICY -->
 # <!-- ======================================================================= -->
 class PolicyListView(LoginRequiredMixin, ListView):
     model = Policy
@@ -548,6 +653,46 @@ class PolicyFixingListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista polisa osiguranja koje morate dopuniti'
         return context
 
+class ExpiringAndNotRenewedPolicyView(LoginRequiredMixin, ListView):
+    template_name = 'fleet/policy_expiring.html'
+    model = Policy
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        thirty_days_from_now = today + timedelta(days=30)
+        
+        newest_policy = Policy.objects.filter(
+        vehicle=OuterRef('vehicle'),
+        insurance_type=OuterRef('insurance_type')
+        ).order_by('-end_date').values('end_date')[:1]
+
+        expiring_policies = Policy.objects.annotate(
+            latest_end_date=Subquery(newest_policy)
+        ).filter(
+            end_date__gte=today,
+            end_date__lte=thirty_days_from_now,
+            end_date=F('latest_end_date')
+        )
+
+        newer_policy_exists = Policy.objects.filter(
+            vehicle=OuterRef('vehicle'),
+            insurance_type=OuterRef('insurance_type'),
+            start_date__gt=OuterRef('start_date') 
+        )
+
+        # Filter policies that have expired but haven't been renewed
+        expired_unrenewed_policies = Policy.objects.annotate(
+            has_newer_policy=Exists(newer_policy_exists)
+        ).filter(
+            end_date__lt=today,  # Policies that have already expired
+            has_newer_policy=False  # Ensure there is no newer policy
+        )
+
+        context['expiring_policies'] = expiring_policies
+        context['expired_unrenewed_policies'] = expired_unrenewed_policies
+        context['title'] = 'Liste polisa koje ističu i koje su istekle i nisu obnovljene'
+        return context
 
 class PolicyCreateView(LoginRequiredMixin, CreateView):
     model = Policy

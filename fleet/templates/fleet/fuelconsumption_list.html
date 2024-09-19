@@ -1,21 +1,25 @@
 {% extends "base.html" %}
-
+{% load form_filters %}
 {% block content %}
 <h2>{{ title }}</h2>
 <div class="card">
   <div class="card-body">
       <h5 class="card-title">Basic Datatable</h5>
-      <form method="get" style="display: flex; align-items: left;">
-        <div style="margin-right: 10px;">
-            <label for="id_start_date" style="margin-right: 5px;">Od datuma:</label>
-            {{ filter.form.start_date }}
+      <form method="get" class="row g-3 align-items-end pb-3">
+        <div class="col-auto">
+            <label for="id_fuel_in_last_6_months" class="col-form-label">Od datuma::</label>
+            <div>
+                {{ filter.form.start_date|add_class:'form-control' }}
+            </div>
         </div>
-        <div style="margin-right: 10px;">
-            <label for="id_end_date" style="margin-right: 5px;">Do datuma:</label>
-            {{ filter.form.end_date }}
+        <div class="col-auto">
+            <label for="id_fuel_in_last_6_months" class="col-form-label">Od datuma::</label>
+            <div>
+                {{ filter.form.start_date|add_class:'form-control' }}
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Filtriraj</button>
-    </form>
+    
       <div class="table-responsive">
           <table id="DatatableFuel" class="display compact">
               <thead>

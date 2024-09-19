@@ -23,7 +23,7 @@
                   <tr>                        
                     <td>{{ service_transaction.vehicle }}</td>
                     <td>{{ service_transaction.popravka_kategorija }}</td>
-                    <td>{{ service_transaction.datum }}</td>
+                    <td>{{ service_transaction.datum|date:"d.m.Y." }}</td>
                     <td>{{ service_transaction.potrazuje }}</td>
                     <td>{{ service_transaction.naz_par_pl }}</td>
                     <td>{{ service_transaction.napomena }}</td>

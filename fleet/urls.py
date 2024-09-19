@@ -36,6 +36,7 @@ urlpatterns = [
     path('polise/izmeni/<int:pk>/', PolicyUpdateView.as_view(), name='policy_update'),
     path('polise/<int:pk>/', PolicyDetailView.as_view(), name='policy_detail'),
     path('polise/obrisi/<int:pk>/', PolicyDeleteView.as_view(), name='policy_delete'),
+    path('polise/istek/', ExpiringAndNotRenewedPolicyView.as_view(), name='expiring_and_not_renewed_policies'),
 
     path('potrosnja-goriva/', FuelConsumptionListView.as_view(), name='fuelconsumption_list'),
     path('potrosnja-goriva/novo/', FuelConsumptionCreateView.as_view(), name='fuelconsumption_create'),

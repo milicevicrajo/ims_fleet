@@ -20,8 +20,8 @@
     <link src="{% static 'fleet/dist/js/script.js' %}" rel="stylesheet">
 
     <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.4/css/dataTables.dataTables.min.css">
-    
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.6/css/dataTables.dataTables.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.1.2/css/buttons.dataTables.min.css">
     <!-- Select2 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
@@ -105,13 +105,17 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/2.1.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.6/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.1.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.1.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.1.2/js/buttons.print.min.js"></script>
 
     <!-- Moment.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
 
     <!-- datetime-moment.js -->
-    <script src="https://cdn.datatables.net/plug-ins/2.1.4/sorting/datetime-moment.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/2.1.6/sorting/datetime-moment.js"></script>
     
     <!-- Select2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
@@ -248,7 +252,15 @@
                 "columnDefs": [
                 { "type": "date-custom", "targets": [2] }
                         ],
-
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 50,  // Postavlja podrazumevani broj redova
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
             });
             var table = $('#DatatableTrebovanja').DataTable({
                 "language": languageSettings,
@@ -266,9 +278,117 @@
                 "columnDefs": [
                 { "type": "date-custom", "targets": [0] }
                         ],
-
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 10,  // Postavlja podrazumevani broj redova
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
             });
-        });      
+
+            var table = $('#DatatableFuelMonth').DataTable({
+                "language": languageSettings,
+
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 10,  // Postavlja podrazumevani broj redova
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
+            });
+            var table = $('#DatatableFuelMonth2').DataTable({
+                "language": languageSettings,
+
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 10,  // Postavlja podrazumevani broj redova
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
+            });
+            var table = $('#DatatableServiceDetail').DataTable({
+                "language": languageSettings,
+
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 10,  // Postavlja podrazumevani broj redova
+                "columnDefs": [
+                { "type": "date-custom", "targets": [0] }
+                        ],
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
+            });
+            var table = $('#DatatableRequisitionDetail').DataTable({
+                "language": languageSettings,
+
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 10,  // Postavlja podrazumevani broj redova
+                "columnDefs": [
+                { "type": "date-custom", "targets": [0] }
+                        ],
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
+            });
+
+            var table = $('#DatatablePolicyExpiring').DataTable({
+                "language": languageSettings,
+
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 25,  // Postavlja podrazumevani broj redova
+                "columnDefs": [
+                { "type": "date-custom", "targets": [2,6,7] }
+                        ],
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
+            });
+
+            var table = $('#DatatablePolicyExpired').DataTable({
+                "language": languageSettings,
+
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 25,  // Postavlja podrazumevani broj redova
+                "columnDefs": [
+                { "type": "date-custom", "targets": [0] }
+                        ],
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
+            });
+        });  
+          
     </script>
 
     <script type="text/javascript">

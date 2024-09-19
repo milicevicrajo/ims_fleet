@@ -237,7 +237,7 @@ class ServiceTransaction(models.Model):
         return f"{self.br_naloga} - {self.naz_par_pl} ({self.datum})"
 
 class Requisition(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, verbose_name=_("Vozilo"), blank=True, null=True)
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='requisitions', verbose_name=_("Vozilo"), blank=True, null=True)
     sif_pred = models.IntegerField(verbose_name=_("Šifra predmeta"), blank=True, null=True)
     god = models.IntegerField(verbose_name=_("Godina"))
     br_dok = models.CharField(max_length=50, verbose_name=_("Broj dokumenta"))

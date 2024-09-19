@@ -20,4 +20,15 @@ DATABASES = {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
     },
+    'server_db': {
+        'ENGINE': 'mssql',
+        'NAME': 'Vozila_Django',  # Naziv baze na serveru
+        'USER': 'Rajo Milicevic',
+        'PASSWORD': 'Rajo123',
+        'HOST': 'SMS-SERVER',
+        'PORT': '',  # Ostavite prazno ako koristite podrazumevani port
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+        },
+    },
 }
