@@ -10,7 +10,8 @@
               <thead>
                 <tr>
                   <th>Šifra zaposlenog</th>
-                  <th>Ime i prezime</th>
+                  <th>Ime</th>
+                  <th>Prezime</th>
                   <th>Pozicija</th>
                   <th>Šifra odeljenja</th>
                   <th>Pol</th>
@@ -23,12 +24,13 @@
                 {% for employee in employees %}
                   <tr>                        
                     <td>{{ employee.employee_code }}</td>
-                    <td>{{ employee.name }}</td>
+                    <td>{{ employee.first_name }}</td>
+                    <td>{{ employee.last_name }}</td>
                     <td>{{ employee.position }}</td>
                     <td>{{ employee.department_code }}</td>
                     <td>{{ employee.gender }}</td>
-                    <td>{{ employee.date_of_birth }}</td>
-                    <td>{{ employee.date_of_joining }}</td>
+                    <td>{{ employee.date_of_birth|date:"d.m.Y" }}</td>
+                    <td>{{ employee.date_of_joining|date:"d.m.Y" }}</td>
                     <td>{{ employee.phone_number }}</td>
 
                   </tr>

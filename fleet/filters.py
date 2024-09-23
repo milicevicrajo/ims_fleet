@@ -1,6 +1,8 @@
 import django_filters
 from .models import FuelConsumption, JobCode, OrganizationalUnit
 from django import forms
+from datetime import timedelta
+from django.utils import timezone
 
 class VehicleFilterForm(forms.Form):
     org_unit = forms.ModelChoiceField(
@@ -27,14 +29,28 @@ class FuelFilterForm(django_filters.FilterSet):
         field_name='date', 
         lookup_expr='gte', 
         label='Od datuma',
-        widget=forms.DateInput(format='%d/%m/%Y',attrs={'type': 'date', 'placeholder': 'Od datuma'}),
+        widget=forms.DateInput(
+            format='%d/%m/%Y',
+            attrs={
+                'type': 'date',
+                'placeholder': 'Od datuma',
+                'value': (timezone.now() - timedelta(days=40)).strftime('%Y-%m-%d')  # 40 dana pre
+            }
+        ),
         input_formats=['%Y-%m-%d'],
     )
     end_date = django_filters.DateFilter(
         field_name='date', 
         lookup_expr='lte', 
         label='Do datuma',
-        widget=forms.DateInput(format='%d/%m/%Y',attrs={'type': 'date', 'placeholder': 'Do datuma'}),
+        widget=forms.DateInput(
+            format='%d/%m/%Y',
+            attrs={
+                'type': 'date',
+                'placeholder': 'Do datuma',
+                'value': timezone.now().strftime('%Y-%m-%d')  # Današnji datum
+            }
+        ),
         input_formats=['%Y-%m-%d'],
     )
 

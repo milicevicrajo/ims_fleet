@@ -96,7 +96,8 @@ urlpatterns = [
     path('requisitions/<int:pk>/delete/', RequisitionDeleteView.as_view(), name='requisition_delete'),
     
     path('', views.dashboard, name='dashboard'),
-
+    path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),
+    
     path('users/', UserListView.as_view(), name='user_list'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

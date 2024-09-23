@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Trenutno Stanje Flote - Opšti Pregled za Centar {{center_code}}</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+        <!------- CARD ------>
+        <div class="card">
+            <div class="card-body">            
+                <div class="table-responsive">
+                    <table id="DatatableCenterStat" class="display compact">
+                        <thead>
+                            <tr>
+                                <th>Godina</th>
+                                <th>Mesec</th>
+                                <th>Ukupna Potrošnja Goriva (Litara)</th>
+                                <th>Ukupni Troškovi Goriva (Din)</th>
+                                <th>Trošak Gume (Din)</th>
+                                <th>Trošak Redovan Servis (Din)</th>
+                                <th>Trošak Registracija (Din)</th>
+                                <th>Trošak Polisa Osiguranja (Din)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for year_month, data in consolidated_data.items %}
+                            <tr>
+                                <td>{{ year_month.0  }}</td>
+                                <td>{{ year_month.1 }}</td>
+                                <td>{{ data.total_fuel_quantity|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
+                                <td>{{ data.total_fuel_cost|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
+                                <td>{{ data.total_cost_gume|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
+                                <td>{{ data.total_cost_redovan_servis|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
+                                <td>{{ data.total_cost_registracija|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
+                                <td>{{ data.total_registration_cost|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>      
+        </div>
+        <!------- CARD END ------>
+    </div>
+
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-4">
+        {% if services_without_vehicle > 0 or policies_without_vehicle > 0 or requisitions_without_vehicle > 0 %}
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">
+                    <i class="mdi mdi-alert-outline"></i> UPOZORENJE !
+                </h4>                    
+                {% if policies_without_vehicle > 0 %}
+                    <a href="{% url 'policy_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
+                        <p style="font-size: 1.3em;">
+                            <i class="mdi mdi-update"></i>
+                            Imate {{ policies_without_vehicle }} polisa koje moraju da se dopune!
+                        </p>
+                    </a>
+                {% endif %}
+
+                {% if services_without_vehicle > 0 %}
+                    <a href="{% url 'service_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
+                        <p style="font-size: 1.3em;">
+                            <i class="mdi mdi-update"></i>
+                            Imate {{ services_without_vehicle }} servisa koje moraju da se dopune!
+                        </p>
+                    </a>
+                {% endif %}
+
+                {% if requisitions_without_vehicle > 0 %}
+                    <a href="{% url 'requisition_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
+                        <p style="font-size: 1.3em;">
+                            <i class="mdi mdi-update"></i>
+                            Imate {{ requisitions_without_vehicle }} trebovanja koje moraju da se dopune!
+                        </p>
+                    </a>
+                {% endif %}
+
+                {% if expiring_policies_count > 0 %}
+                <a href="{% url 'expiring_and_not_renewed_policies' %}" style="color: inherit; text-decoration: none;">                    
+                    <p style="font-size: 1.3em;">
+                        <i class="mdi mdi-update"></i>
+                        Imate {{ expiring_policies_count }} polisa koje ističu u narednih 30 dana!
+                    </p>
+                </a>
+                {% endif %}
+
+                {% if expired_unrenewed_policies_count > 0 %}
+                <a href="{% url 'expiring_and_not_renewed_policies' %}" style="color: inherit; text-decoration: none;">                    
+                    <p style="font-size: 1.3em;">
+                        <i class="mdi mdi-update"></i>
+                        Imate {{ expired_unrenewed_policies_count }} polisa koje nisu obnovljene!
+                    </p>
+                </a>
+                {% endif %}
+
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

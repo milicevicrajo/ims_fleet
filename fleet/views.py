@@ -20,7 +20,12 @@ from datetime import timedelta
 from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
 from django.db.models.functions import TruncMonth, TruncYear
 from django.contrib.humanize.templatetags.humanize import intcomma
+from django.db.models import Q
 
+
+# <!-- ======================================================================= -->
+#                           <!-- DASHBOARD I ANALITIKA -->
+# <!-- ======================================================================= -->
 def dashboard(request):    
     # Count the number of objects where vehicle is None
     services_without_vehicle = ServiceTransaction.objects.filter(vehicle__isnull=True).count()
@@ -90,17 +95,17 @@ def dashboard(request):
     # Vehicles in red zone
     red_zone_vehicles = Vehicle.objects.filter(otpis=True)  # or any other criteria
     
-    test = 999999999999
-    test_small = 1234567
+    # Vehicle count, average vehicle age, total value, and average vehicle value per center
+    center_data = Vehicle.objects.values('center_code').annotate(
+        vehicle_count=Count('id', distinct=True),  # Number of vehicles per center
+        avg_age=(current_year - Avg('year_of_manufacture')),  # Average age per center
+        total_value=Sum('value', distinct=True),  # Total vehicle value per center
+        avg_value=Avg('value'),  # Average vehicle value per center
+        total_fuel_quantity=Sum('fuel_consumptions__amount'),  # Total fuel quantity per center
+        total_fuel_price=Sum('fuel_consumptions__cost_bruto') 
+    )
 
-    test_intcomma = intcomma(test)
-    test_intcomma_small = intcomma(test_small)
 
-    print("Large Number:", test_intcomma)        # Očekuje se '999,999,999,999'
-    print("Small Number:", test_intcomma_small)  # Očekuje se '1,234,567'
-    print(type(test))                # Trebalo bi da bude <class 'int'>
-    print(type(test_intcomma))        # Trebalo bi da bude <class 'str'>
-    
     context = {
         'services_without_vehicle': services_without_vehicle,
         'policies_without_vehicle': policies_without_vehicle,
@@ -118,11 +123,109 @@ def dashboard(request):
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
         'yearly_service_costs': yearly_service_costs['total_service_cost'],
         'red_zone_vehicles': red_zone_vehicles,
-        'test':test
+        'centers': center_data
     }
 
     return render(request, 'fleet/dashboard.html', context)
 
+def center_statistics(request, center_code):
+    # Check if the user has access to this center
+    if request.user.allowed_centers:
+        if center_code not in request.user.allowed_centers('code', flat=True):
+            return HttpResponseForbidden("Nemati pristup ovim podacima.")
+
+    # Fuel consumption statistics (grouped by month and year, filtered by center)
+    fuel_data = FuelConsumption.objects.filter(vehicle__center_code=center_code).annotate(
+        year=TruncYear('date'),
+        month=TruncMonth('date')
+    ).values('year', 'month').annotate(
+        total_fuel_quantity=Sum('amount'),
+        total_fuel_cost=Sum('cost_bruto')
+    ).order_by('year', 'month')
+
+    # Service costs statistics (grouped by service type, month, and year, filtered by center)
+    service_data = ServiceTransaction.objects.filter(vehicle__center_code=center_code).annotate(
+        year=TruncYear('datum'),
+        month=TruncMonth('datum')
+    ).values('year', 'month').annotate(
+        total_cost_gume=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='gume')),
+        total_cost_redovan_servis=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='redovan servis')),
+        total_cost_tehnicki_pregled=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='tehnicki pregled')),
+        total_cost_registracija=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='registracija'))
+    ).order_by('year', 'month')
+    print(service_data)
+    # Registration costs statistics (grouped by month and year, filtered by center)
+    insurance_data = Policy.objects.filter(vehicle__center_code=center_code).annotate(
+        year=TruncYear('issue_date'),
+        month=TruncMonth('issue_date')
+    ).values('year', 'month').annotate(
+        total_registration_cost=Sum('premium_amount')
+    ).order_by('year', 'month')
+
+    # Combine all data based on year and month
+    consolidated_data = {}
+    
+    # Consolidating fuel data
+    for fuel in fuel_data:
+        year = fuel['year'].year
+        month = fuel['month'].month
+        consolidated_data[(year, month)] = {
+            'total_fuel_quantity': fuel['total_fuel_quantity'],
+            'total_fuel_cost': fuel['total_fuel_cost'],
+            'total_cost_gume': 0,
+            'total_cost_redovan_servis': 0,
+            'total_cost_tehnicki_pregled': 0,
+            'total_cost_registracija': 0,
+            'total_registration_cost': 0
+        }
+
+    # Consolidating service data
+    for service in service_data:
+        year = service['year'].year
+        month = service['month'].month
+        if (year, month) not in consolidated_data:
+            consolidated_data[(year, month)] = {
+                'total_fuel_quantity': 0,
+                'total_fuel_cost': 0,
+                'total_cost_gume': service['total_cost_gume'],
+                'total_cost_redovan_servis': service['total_cost_redovan_servis'],
+                'total_cost_tehnicki_pregled': service['total_cost_tehnicki_pregled'],
+                'total_cost_registracija': service['total_cost_registracija'],
+                'total_registration_cost': 0
+            }
+        else:
+            consolidated_data[(year, month)].update({
+                'total_cost_gume': service['total_cost_gume'],
+                'total_cost_redovan_servis': service['total_cost_redovan_servis'],
+                'total_cost_tehnicki_pregled': service['total_cost_tehnicki_pregled'],
+                'total_cost_registracija': service['total_cost_registracija']
+            })
+
+    # Consolidating insurance data
+    for insurance in insurance_data:
+        year = insurance['year'].year
+        month = insurance['month'].month
+        if (year, month) not in consolidated_data:
+            consolidated_data[(year, month)] = {
+                'total_fuel_quantity': 0,
+                'total_fuel_cost': 0,
+                'total_cost_gume': 0,
+                'total_cost_redovan_servis': 0,
+                'total_cost_tehnicki_pregled': 0,
+                'total_cost_registracija': 0,
+                'total_registration_cost': insurance['total_registration_cost']
+            }
+        else:
+            consolidated_data[(year, month)].update({
+                'total_registration_cost': insurance['total_registration_cost']
+            })
+
+    context = {
+        'consolidated_data': consolidated_data,
+        'center_code': center_code,
+    }
+
+    return render(request, 'fleet/dashboard_center.html', context)
 
 
 # <!-- ======================================================================= -->
@@ -239,7 +342,7 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
         current_job_code = JobCode.objects.filter(vehicle=vehicle).order_by('-assigned_date').first()
         job_codes = JobCode.objects.filter(vehicle=vehicle).order_by('-assigned_date')
 
-        test = int(9999999999999)
+        
         # 3. Gorivo, kilometraza i kartice
         nis_card = vehicle.nis_transactions.filter().first()
         omv_card = vehicle.omv_transactions.filter().first()
@@ -276,7 +379,7 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
         
         # 6. Saobracajna dozvol i istorija
         trafic_cards = TrafficCard.objects.filter(vehicle=vehicle).order_by('-issue_date')
-
+        trafic_card = trafic_cards.first()
         status_light = 'green' if repair_costs < vehicle.purchase_value else 'red'
 
         
@@ -300,11 +403,9 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
             'requisition_list':requisition_list,
             'consumptions': consumptions,
             'trafic_cards':trafic_cards,
+            'trafic_card':trafic_card,
             'title':f"Detalji vozila {self.object.brand} {self.object.model}"
         })
-
-        
-
         return context
 
 # POVLACENJE PODATAKA IZ DRUGE BAZE
@@ -800,6 +901,20 @@ class FuelConsumptionListView(LoginRequiredMixin, FilterView):
         queryset = queryset.annotate(
             registration_number=Subquery(latest_traffic_card_subquery)
         )
+                # Postavi podrazumevani period na poslednjih 40 dana
+        today = timezone.now().date()
+        forty_days_ago = today - timedelta(days=30)
+
+        # Ako nema GET zahteva, koristi podrazumevane datume za filtriranje
+        if not self.request.GET:
+            queryset = FuelConsumption.objects.filter(date__gte=forty_days_ago, date__lte=today)
+        else:
+            form = FuelFilterForm(self.request.GET)
+            if form.is_valid():
+                queryset = form.qs
+            else:
+                # Ako forma nije validna, prikazi podrazumevane filtrirane podatke
+                queryset = FuelConsumption.objects.filter(date__gte=forty_days_ago, date__lte=today)
         return queryset
 
     def get_context_data(self, **kwargs):
