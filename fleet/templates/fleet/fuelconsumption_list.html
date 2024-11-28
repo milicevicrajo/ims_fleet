@@ -24,7 +24,6 @@
           <table id="DatatableFuel" class="display compact">
               <thead>
                   <tr>
-                    <th>Vozilo</th>
                     <th>Registracija</th>
                     <th>Datum</th>
                     <th>Količina</th>
@@ -36,9 +35,8 @@
               </thead>
               <tbody>
                 {% for consumption in filter.qs %}
-                  <tr>                        
-                      <td>{{ consumption.vehicle }}</td>   
-                      <td>{{ consumption.registration_number}}</td>                    
+                  <tr>                         
+                      <td>{{ consumption.registration_number|default:"N/A" }}</td>                    
                       <td>{{ consumption.date|date:"d.m.Y H:i:s"  }}</td>
                       <td>{{ consumption.amount }}</td>
                       <td>{{ consumption.fuel_type }}</td>
@@ -54,7 +52,6 @@
               {% endfor %}
               <tfoot>
                   <tr>
-                    <th>Vozilo</th>
                     <th>Registracija</th>
                     <th>Datum</th>
                     <th>Količina</th>

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django_crontab',
     'django_select2',
+    'django_cron',
 ]
 
 MIDDLEWARE = [
@@ -102,7 +103,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'sr'
+LANGUAGE_CODE = 'en'
 TIME_ZONE = 'CET'
 USE_L10N = False
 USE_I18N = True
@@ -126,3 +127,12 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 AUTH_USER_MODEL = 'fleet.CustomUser' 
+
+CRON_CLASSES = [
+    "fleet.tasks.NisCommandCron",
+    "fleet.tasks.OmvPutnickaCommandCron",
+    "fleet.tasks.OmvTeretnaCommandCron",
+    "fleet.tasks.FetchPolicyDataCron",
+    "fleet.tasks.FetchServiceDataCron",
+    "fleet.tasks.FetchRequisitionDataCron",
+]

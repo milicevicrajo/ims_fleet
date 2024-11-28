@@ -14,6 +14,14 @@ import pandas as pd
 from django.core.exceptions import ObjectDoesNotExist
 import pytz
 from django.conf import settings
+from django.db import transaction
+from .models import DraftRequisition
+from .models import ServiceTransaction, DraftServiceTransaction
+from django.db import connections, IntegrityError
+from .models import Policy, DraftPolicy
+from django.db.models import F, Value, CharField
+from django.db.models import Subquery, OuterRef, F, Value, CharField
+
 
 def get_latest_download_file(download_path):
 
@@ -758,3 +766,492 @@ def calculate_average_fuel_consumption_ever(vehicle):
             return None
     else:
         return None
+
+
+
+from django.db import IntegrityError
+from django.db import connections
+from .models import Policy, DraftPolicy, Vehicle
+
+def fetch_policy_data(last_24_hours=True, days=None):
+    """
+    Funkcija za povlačenje podataka o polisama osiguranja.
+    Ako je last_24_hours=True, povlače se podaci u poslednjih 24 sata.
+    Ako je days != None, povlače se podaci za prethodni broj dana.
+    Ako su oba parametra False/None, povlače se svi podaci.
+    """
+    try:
+        print("Pokrećem funkciju za povlačenje podataka...")
+        
+        # SQL upit za povlačenje podataka iz view-a `dbo.polise`
+        query = """
+            SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, VrstaOsiguranja, BrojPolise,
+                   IznosPremije, RegistraskaOznaka, PeriodOd, PeriodDo, IznosPrveRate, IznosOstalihRata, BrojRata
+            FROM dbo.v_polise
+        """
+        
+        # Dodaj WHERE klauzulu u zavisnosti od parametara
+        if days is not None:
+            query += f" WHERE issuedate > DATEADD(day, -{days}, GETDATE())"
+            print(f"Filtriram podatke za poslednjih {days} dana.")
+        elif last_24_hours:
+            query += " WHERE issuedate > DATEADD(day, -1, GETDATE())"
+            print("Filtriram podatke za poslednja 24 sata.")
+
+        # Izvrši upit i preuzmi podatke
+        with connections['test_db'].cursor() as cursor:
+            print("Izvršavam SQL upit za preuzimanje podataka...")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            print(f"Broj povučenih redova: {len(rows)}")
+
+        # Iteriranje kroz povučene redove
+        for index, row in enumerate(rows):
+            invoice_id = row[2]
+            print(f"Obrađujem red {index+1} sa ID fakture: {invoice_id}")
+
+            # Provera postojanja zapisa u glavnoj i draft tabeli
+            policy_exists = Policy.objects.filter(invoice_id=invoice_id).exists()
+            draft_exists = DraftPolicy.objects.filter(invoice_id=invoice_id).exists()
+
+            # Ako zapis ne postoji ni u jednoj tabeli, dodaj novi zapis
+            if not policy_exists and not draft_exists:
+                print("Zapis ne postoji ni u glavnoj ni u draft tabeli. Dodajem novi zapis.")
+                
+                # Pretraži `Vehicle` model po registraskoj oznaci ako je vezan za polisu
+                vehicle = Vehicle.objects.filter(registration_number=row[8]).first() if row[8] else None
+                print(f"Vozilo pronađeno: {vehicle}")
+
+                # Konverzija datuma
+                issue_date = datetime.strptime(row[4], "%Y-%m-%d").date() if row[4] else None
+                start_date = datetime.strptime(row[9], "%Y-%m-%d").date() if row[9] else None
+                end_date = datetime.strptime(row[10], "%Y-%m-%d").date() if row[10] else None
+
+                try:
+                    # Pokušaj konverzije vrednosti u decimalni broj
+                    premium_amount = float(row[7]) if row[7] else None
+                    first_installment_amount = float(row[11]) if row[11] else None
+                    other_installments_amount = float(row[12]) if row[12] else None
+                except ValueError:
+                    # Ako dođe do greške, ispiši red sa greškom i nastavi dalje
+                    print(f"Problematičan red {index+1}: {row}")
+                    continue  # Preskoči ovaj red i nastavi sa sledećim
+
+                # Proveravamo da li su svi potrebni podaci prisutni
+                is_complete = all([
+                    row[0], row[1], row[2], row[3], issue_date, row[5], row[6],
+                    row[7], start_date, end_date, row[11], row[12], row[13]
+                ])
+
+                if is_complete:
+                    print("Podaci su kompletni. Dodajem zapis u glavnu tabelu Policy.")
+                    # Kreiraj zapis u glavnoj tabeli
+                    policy = Policy(
+                        vehicle=vehicle,
+                        partner_pib=row[0],
+                        partner_name=row[1],
+                        invoice_id=row[2],
+                        invoice_number=row[3],
+                        issue_date=issue_date,
+                        insurance_type=row[5],
+                        policy_number=row[6],
+                        premium_amount=premium_amount,
+                        start_date=start_date,
+                        end_date=end_date,
+                        first_installment_amount=first_installment_amount,
+                        other_installments_amount=other_installments_amount,
+                        number_of_installments=row[13]
+                    )
+                    policy.save()
+                    print(f"Zapis sa ID fakture {invoice_id} je uspešno sačuvan u glavnoj tabeli.")
+                else:
+                    print("Podaci nisu kompletni. Dodajem zapis u draft tabelu DraftPolicy.")
+                    # Ako podaci nisu kompletni, unesi u draft tabelu
+                    draft_policy = DraftPolicy(
+                        partner_pib=row[0],
+                        partner_name=row[1],
+                        invoice_id=row[2],
+                        invoice_number=row[3],
+                        issue_date=issue_date,
+                        insurance_type=row[5],
+                        policy_number=row[6],
+                        premium_amount=premium_amount,
+                        start_date=start_date,
+                        end_date=end_date,
+                        first_installment_amount=first_installment_amount,
+                        other_installments_amount=other_installments_amount,
+                        number_of_installments=row[13] if row[13] else None 
+                    )
+                    draft_policy.save()
+                    print(f"Zapis sa ID fakture {invoice_id} je sačuvan u draft tabeli.")
+            else:
+                print(f"Polisa sa ID fakture {invoice_id} već postoji u sistemu, preskačem unos.")
+
+        return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
+
+    except Exception as e:
+        print(f"Došlo je do greške prilikom povlačenja podataka: {e}")
+        return f"Došlo je do greške prilikom povlačenja podataka: {e}"
+    
+
+def fetch_service_data(last_24_hours=True, days=None):
+    """
+    Funkcija za povlačenje podataka o servisnim transakcijama.
+    Ako je last_24_hours=True, povlače se podaci u poslednjih 24 sata.
+    Ako je days != None, povlače se podaci za prethodni broj dana.
+    Ako su oba parametra False/None, povlače se svi podaci.
+    """
+    try:
+        print("Pokrećem funkciju za povlačenje podataka o servisnim transakcijama...")
+        
+        # SQL upit za povlačenje svih 18 kolona iz view-a `dbo.v_servisi`
+        query = """
+            SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje, 
+                   sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila, kom, RegOzn, poptavka_kategorija, napomena
+            FROM dbo.v_servisi
+        """
+        
+        # Dodaj WHERE klauzulu u zavisnosti od parametara
+        if days is not None:
+            query += f" WHERE datum > DATEADD(day, -{days}, GETDATE())"
+            print(f"Filtriram podatke za poslednjih {days} dana.")
+        elif last_24_hours:
+            query += " WHERE datum > DATEADD(day, -1, GETDATE())"
+            print("Filtriram podatke za poslednja 24 sata.")
+
+        # Izvrši upit i preuzmi podatke
+        with connections['test_db'].cursor() as cursor:
+            print("Izvršavam SQL upit za preuzimanje podataka...")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            print(f"Broj povučenih redova: {len(rows)}")
+
+        # Iteracija kroz povučene redove
+        for index, row in enumerate(rows):
+            print(f"Obrađujem red {index+1} sa {len(row)} kolona.")
+
+            # Proveri da li red ima očekivani broj kolona
+            if len(row) < 18:
+                print(f"Red {index+1} ima manje od 18 kolona: {row}")
+                continue  # Preskoči red sa nedostatkom kolona
+
+            try:
+                # Provera postojanja zapisa u glavnoj i draft tabeli
+                transaction_exists = ServiceTransaction.objects.filter(
+                    datum=row[3], duguje=row[11], vez_dok=row[6], br_naloga=row[5]
+                ).exists()
+                draft_exists = DraftServiceTransaction.objects.filter(
+                    datum=row[3], duguje=row[11], vez_dok=row[6], br_naloga=row[5]
+                ).exists()
+
+                if not transaction_exists and not draft_exists:
+                    print("Zapis ne postoji ni u glavnoj ni u draft tabeli. Dodajem novi zapis.")
+
+                    # Pronađi povezano vozilo preko registracionog broja iz TrafficCard modela
+                    vehicle = Vehicle.objects.filter(traffic_cards__registration_number=row[15]).first() if row[15] else None
+                    print(f"Vozilo pronađeno: {vehicle}")
+
+                    # Konverzija vrednosti u decimalni broj za polja koja mogu biti prazna
+                    potrazuje = float(row[8]) if row[8] else None
+                    duguje = float(row[11]) if row[11] else None
+
+                    # Proveravamo da li su svi potrebni podaci prisutni osim `kom` i `napomena`
+                    is_complete = all([
+                        row[0],  # god
+                        row[1],  # sif_par_pl
+                        row[2],  # naz_par_pl
+                        row[3],  # datum
+                        row[4],  # sif_vrs
+                        row[5],  # br_naloga
+                        row[6],  # vez_dok
+                        row[7],  # knt_pl
+                        potrazuje,  # vrednost potražuje
+                        row[9],  # sif_par_npl
+                        row[10], # knt_npl
+                        duguje,  # vrednost duguje
+                        row[12], # sif_pos
+                        row[13], # konto_vozila
+                        row[15], # RegOzn
+                        row[16]  # poptavka_kategorija
+                    ])
+
+                    if is_complete:
+                        print("Podaci su kompletni. Dodajem zapis u glavnu tabelu ServiceTransaction.")
+                        # Kreiraj zapis u glavnoj tabeli
+                        service_transaction = ServiceTransaction(
+                            vehicle=vehicle,
+                            god=row[0],
+                            sif_par_pl=row[1],
+                            naz_par_pl=row[2],
+                            datum=row[3],
+                            sif_vrs=row[4],
+                            br_naloga=row[5],
+                            vez_dok=row[6],
+                            knt_pl=row[7],
+                            potrazuje=potrazuje,
+                            sif_par_npl=row[9],
+                            knt_npl=row[10],
+                            duguje=duguje,
+                            konto_vozila=row[13],
+                            kom=row[14],  # Dodato kom
+                            popravka_kategorija=row[16],  # Dodato popravka_kategorija
+                            napomena=row[17]  # Dodato napomena
+                        )
+                        service_transaction.save()
+                        print(f"Zapis sa brojem naloga {row[5]} je uspešno sačuvan u glavnoj tabeli.")
+                    else:
+                        print("Podaci nisu kompletni. Dodajem zapis u draft tabelu DraftServiceTransaction.")
+                        # Ako podaci nisu kompletni, unesi u draft tabelu
+                        draft_transaction = DraftServiceTransaction(
+                            god=row[0],
+                            sif_par_pl=row[1],
+                            naz_par_pl=row[2],
+                            datum=row[3],
+                            sif_vrs=row[4],
+                            br_naloga=row[5],
+                            vez_dok=row[6],
+                            knt_pl=row[7],
+                            potrazuje=potrazuje,
+                            sif_par_npl=row[9],
+                            knt_npl=row[10],
+                            duguje=duguje,
+                            konto_vozila=row[13],
+                            kom=row[14],
+                            popravka_kategorija=row[16],
+                            napomena=row[17]
+                        )
+                        draft_transaction.save()
+                        print(f"Zapis sa brojem naloga {row[5]} je sačuvan u draft tabeli.")
+                else:
+                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu, preskačem unos.")
+
+            except ValueError as ve:
+                print(f"Greška pri konverziji podataka u redu {index+1}: {ve}")
+            except Exception as e:
+                print(f"Neprikazana greška u redu {index+1}: {e}")
+
+        return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
+
+    except Exception as e:
+        print(f"Došlo je do greške prilikom povlačenja podataka: {e}")
+        return f"Došlo je do greške prilikom povlačenja podataka: {e}"
+
+
+
+def migrate_draft_to_service_transaction(draft_id, vehicle_id=None):
+    """
+    Funkcija za migraciju zapisa iz DraftServiceTransaction u ServiceTransaction.
+    Ako podaci u draftu zadovoljavaju sve uslove za unos, oni se prebacuju u glavnu tabelu.
+    """
+    try:
+        draft = DraftServiceTransaction.objects.get(id=draft_id)
+
+        # Provera da li su svi podaci dostupni
+        if draft.is_complete():
+            with transaction.atomic():
+                service_transaction = ServiceTransaction.objects.create(
+                    vehicle_id=vehicle_id,
+                    god=draft.god,
+                    sif_par_pl=draft.sif_par_pl,
+                    naz_par_pl=draft.naz_par_pl,
+                    datum=draft.datum,
+                    sif_vrs=draft.sif_vrs,
+                    br_naloga=draft.br_naloga,
+                    vez_dok=draft.vez_dok,
+                    knt_pl=draft.knt_pl,
+                    potrazuje=draft.potrazuje,
+                    sif_par_npl=draft.sif_par_npl,
+                    knt_npl=draft.knt_npl,
+                    duguje=draft.duguje,
+                    konto_vozila=draft.konto_vozila,
+                    kom=draft.kom,
+                    popravka_kategorija=draft.popravka_kategorija,
+                    napomena=draft.napomena
+                )
+                # Brisanje iz draft tabele nakon uspešnog migriranja
+                draft.delete()
+            return service_transaction
+        else:
+            raise ValueError("Podaci nisu kompletni za migraciju")
+
+    except DraftServiceTransaction.DoesNotExist:
+        raise ValueError("Nepotpuni zapis ne postoji ili nije validan")
+
+
+def fetch_requisition_data(last_24_hours=True, days=None):
+    """
+    Funkcija za povlačenje podataka o trebovanjima sa proverom opcionalnih polja.
+    """
+    try:
+        print("Pokrećem funkciju za povlačenje podataka o trebovanjima...")
+
+        # SQL upit za povlačenje podataka
+        query = """
+            SELECT sif_pred, god, br_dok, sif_vrsart, stavka, sif_art, naz_art, kol, cena, vrednost_nab, napomena
+            FROM dbo.v_trebovanja
+        """
+        
+        # Dodaj WHERE klauzulu u zavisnosti od parametara (ako je potrebno vremensko filtriranje)
+        if days is not None:
+            query += f" WHERE GETDATE() - {days} > '2000-01-01'"  # Dummy condition since no date filtering
+            print(f"Filtriram podatke za poslednjih {days} dana.")
+        elif last_24_hours:
+            print("Napomena: Nema vremenskog filtriranja jer nema dostupnog datuma.")
+
+        # Izvrši upit i preuzmi podatke
+        with connections['test_db'].cursor() as cursor:
+            print("Izvršavam SQL upit za preuzimanje podataka...")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            print(f"Broj povučenih redova: {len(rows)}")
+
+        # Iteracija kroz povučene redove
+        for index, row in enumerate(rows):
+            print(f"Obrađujem red {index+1} sa {len(row)} kolona.")
+
+            # Provera broja kolona
+            if len(row) < 11:
+                print(f"Red {index+1} ima manje od očekivanih 11 kolona: {row}")
+                continue
+
+            try:
+                br_dok = row[2]  # Broj dokumenta
+                sif_art = row[5]  # Šifra artikla
+                stavka = row[4] 
+
+                # Provera postojanja zapisa u glavnoj i draft tabeli
+                requisition_exists = Requisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
+                draft_exists = DraftRequisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
+
+                if not requisition_exists and not draft_exists:
+                    print(f"Zapis {br_dok} - {sif_art} ne postoji. Dodajem u draft tabelu.")
+
+                    # Konverzija vrednosti za validaciju
+                    kol = float(row[7]) if row[7] else None
+                    cena = float(row[8]) if row[8] else None
+                    vrednost_nab = float(row[9]) if row[9] else None
+
+                    # Kreiraj zapis u draft tabeli
+                    draft = DraftRequisition(
+                        sif_pred=row[0] if row[0] else None,
+                        god=row[1] if row[1] else None,
+                        br_dok=br_dok,
+                        sif_vrsart=row[3] if row[3] else None,
+                        stavka=row[4] if row[4] else None,
+                        sif_art=sif_art,
+                        naz_art=row[6] if row[6] else None,
+                        kol=kol,
+                        cena=cena,
+                        vrednost_nab=vrednost_nab,
+                        napomena=row[10] if row[10] else None
+                    )
+                    draft.save()
+                    print(f"Zapis {br_dok} - {sif_art} je uspešno sačuvan u draft tabeli.")
+                else:
+                    print(f"Zapis {br_dok} - {sif_art} već postoji. Preskačem unos.")
+
+            except ValueError as ve:
+                print(f"Greška pri konverziji podataka u redu {index+1}: {ve}")
+            except Exception as e:
+                print(f"Neprikazana greška u redu {index+1}: {e}")
+
+        return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
+
+    except Exception as e:
+        print(f"Došlo je do greške prilikom povlačenja podataka: {e}")
+        return f"Došlo je do greške prilikom povlačenja podataka: {e}"
+
+
+
+
+def migrate_draft_to_requisition(draft_id, vehicle_id):
+    try:
+        draft = DraftRequisition.objects.get(id=draft_id)
+        
+        if draft.is_complete() and vehicle_id:
+            with transaction.atomic():
+                requisition = Requisition.objects.create(
+                    vehicle_id=vehicle_id,
+                    sif_pred=draft.sif_pred,
+                    god=draft.god,
+                    br_dok=draft.br_dok,
+                    sif_vrsart=draft.sif_vrsart,
+                    stavka=draft.stavka,
+                    sif_art=draft.sif_art,
+                    naz_art=draft.naz_art,
+                    kol=draft.kol,
+                    cena=draft.cena,
+                    vrednost_nab=draft.vrednost_nab,
+                    datum_trebovanja=draft.datum_trebovanja,
+                    napomena=draft.napomena
+                )
+                draft.delete()
+            return requisition
+
+    except DraftRequisition.DoesNotExist:
+        raise ValueError("Nepotpuni zapis ne postoji ili nije validan")
+
+
+def get_fuel_consumption_queryset(start_date=None, end_date=None):
+    # Subquery to get the latest TrafficCard for each Vehicle
+    latest_traffic_card_subquery = TrafficCard.objects.filter(
+        vehicle=OuterRef('vehicle')
+    ).order_by('-issue_date').values('registration_number')[:1]
+
+    # Filtriranje datuma za OMV
+    omv_queryset = TransactionOMV.objects.annotate(
+        registration_number=Subquery(latest_traffic_card_subquery),
+        annotated_transaction_date=F('transaction_date'),
+        annotated_receipt_number=F('invoice_no'),
+        annotated_quantity=F('quantity'),
+        price_per_liter=F('unit_price'),
+        total_net=F('amount'),
+        total_gross=F('gross_cc'),
+        annotated_supplier=Value('OMV', output_field=CharField()),
+        annotated_mileage=F('mileage')
+    )
+
+    if start_date:
+        omv_queryset = omv_queryset.filter(transaction_date__gte=start_date)
+    if end_date:
+        omv_queryset = omv_queryset.filter(transaction_date__lte=end_date)
+
+    omv_queryset = omv_queryset.values(
+        'registration_number', 'annotated_transaction_date', 'annotated_receipt_number',
+        'annotated_quantity', 'price_per_liter', 'total_net', 'total_gross',
+        'annotated_supplier', 'annotated_mileage'
+    )
+
+    # Filtriranje datuma za NIS
+    nis_queryset = TransactionNIS.objects.annotate(
+        registration_number=Subquery(latest_traffic_card_subquery),
+        annotated_transaction_date=F('datum_transakcije'),
+        annotated_receipt_number=F('broj_racuna'),
+        annotated_quantity=F('kolicina'),
+        price_per_liter=F('cena'),
+        total_net=F('total'),
+        total_gross=F('total_sa_kase'),
+        annotated_supplier=Value('NIS', output_field=CharField()),
+        annotated_mileage=F('kilometraza')
+    )
+
+    if start_date:
+        nis_queryset = nis_queryset.filter(datum_transakcije__gte=start_date)
+    if end_date:
+        nis_queryset = nis_queryset.filter(datum_transakcije__lte=end_date)
+
+    nis_queryset = nis_queryset.values(
+        'registration_number', 'annotated_transaction_date', 'annotated_receipt_number',
+        'annotated_quantity', 'price_per_liter', 'total_net', 'total_gross',
+        'annotated_supplier', 'annotated_mileage'
+    )
+
+    # Combine both querysets
+    combined_queryset = omv_queryset.union(nis_queryset)
+
+    return combined_queryset
+
+
+
+
+

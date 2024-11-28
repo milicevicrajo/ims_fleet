@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load form_filters %}
+{% block content %}
+<h2>{{ title }}</h2>
+<div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Basic Datatable</h5>
+      <form method="get" class="row g-3 align-items-end pb-3">
+        <div class="col-auto">
+            <label for="id_start_date" class="col-form-label">Od datuma:</label>
+            <div>
+                {{ filter_form.start_date|add_class:'form-control' }}
+            </div>
+        </div>
+        <div class="col-auto">
+            <label for="id_end_date" class="col-form-label">Do datuma:</label>
+            <div>
+                {{ filter_form.end_date|add_class:'form-control' }}
+            </div>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filtriraj</button>
+        </div>
+    </form>
+    
+      <div class="table-responsive">
+          <table id="DatatableFuel" class="display compact">
+            <thead>
+                <tr>
+                    <th>Registarska oznaka</th>
+                    <th>Datum</th>
+                    <th>Broj računa</th>
+                    <th>Količina (L)</th>
+                    <th>Cena po litru (RSD)</th>
+                    <th>Iznos neto (RSD)</th>
+                    <th>Iznos bruto (RSD)</th>
+                    <th>Dobavljač</th>
+                    <th>Kilometraža</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in fuel_transactions %}
+                <tr>
+                    <td>{{ transaction.registration_number|default:"N/A" }}</td>
+                    <td>{{ transaction.annotated_transaction_date|date:"d.m.Y H:i:s" }}</td>
+                    <td>{{ transaction.annotated_receipt_number }}</td>
+                    <td>{{ transaction.annotated_quantity }}</td>
+                    <td>{{ transaction.price_per_liter }}</td>
+                    <td>{{ transaction.total_net }}</td>
+                    <td>{{ transaction.total_gross }}</td>
+                    <td>{{ transaction.annotated_supplier }}</td>
+                    <td>{{ transaction.annotated_mileage }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">Nema podataka</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+          </table>
+      </div>
+
+  </div>
+</div>
+
+{% endblock %}

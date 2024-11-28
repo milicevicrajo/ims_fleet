@@ -49,6 +49,7 @@
                         <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>
+                        <th>Km</th>
                         <th>Potrošnja</th>
                         <th>Servisi cena</th>                        
                         <th>Vrednost nabavna</th>
@@ -62,6 +63,7 @@
                         <td>{{ vehicle.brand }}</td>                      
                         <td>{{ vehicle.model }}</td>
                         <td>{{ vehicle.year_of_manufacture }}</td>
+                        <td>{{ vehicle.mileage }}</td>
                         <td>
                             {% if vehicle_consumption_data|dict_get:vehicle.id %}
                                 {{ vehicle_consumption_data|dict_get:vehicle.id|floatformat:2 }}
@@ -84,6 +86,7 @@
                         <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>
+                        <th>Km</th>
                         <th>Br. Sasije</th>
                         <th>Servisi cena</th>                        
                         <th>Vrednost nabavna</th>

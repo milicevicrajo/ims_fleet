@@ -79,6 +79,7 @@ class PolicyForm(forms.ModelForm):
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
             field.required = True
+            
 class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee

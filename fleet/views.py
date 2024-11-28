@@ -19,18 +19,20 @@ from django.utils import timezone
 from datetime import timedelta
 from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
 from django.db.models.functions import TruncMonth, TruncYear
-from django.contrib.humanize.templatetags.humanize import intcomma
 from django.db.models import Q
+from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data
+from .models import DraftServiceTransaction
 
+from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset
 
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
 # <!-- ======================================================================= -->
 def dashboard(request):    
     # Count the number of objects where vehicle is None
-    services_without_vehicle = ServiceTransaction.objects.filter(vehicle__isnull=True).count()
-    policies_without_vehicle = Policy.objects.filter(vehicle__isnull=True).count()
-    requisitions_without_vehicle = Requisition.objects.filter(vehicle__isnull=True).count()
+    services_without_vehicle = DraftServiceTransaction.objects.count()
+    policies_without_vehicle = DraftPolicy.objects.count()
+    requisitions_without_vehicle = DraftRequisition.objects.count()
     
     # Get today's date
     today = date.today()
@@ -255,14 +257,21 @@ class VehicleListView(LoginRequiredMixin, ListView):
             vehicle_id=OuterRef('pk')
         ).order_by('-issue_date').values('registration_number')[:1]
         
+        last_mileage_subquery = FuelConsumption.objects.filter(
+            vehicle=OuterRef('pk')
+        ).order_by('-mileage').values('mileage')[:1]
+
         queryset = queryset.annotate(
             latest_org_unit=Subquery(latest_org_unit_subquery),
             registration_number=Subquery(latest_traffic_card_subquery),
-            total_repairs=Sum('service_transactions__potrazuje')
+            total_repairs=Sum('service_transactions__potrazuje'),
+            mileage=Subquery(last_mileage_subquery),
         )
 
 
-        
+
+
+
         # Filter za šifru posla (JobCode)
         if org_unit:
             queryset = queryset.filter(job_codes__organizational_unit=org_unit)
@@ -296,7 +305,7 @@ class VehicleListView(LoginRequiredMixin, ListView):
         form = VehicleFilterForm(self.request.GET or None)
         context['vehicle_consumption_data'] = vehicle_consumption_data
         context['form'] = form
-        context['title'] = 'Lista vozila'
+
         return context
     
 # DETALJI VOZILA
@@ -408,52 +417,6 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
         })
         return context
 
-# POVLACENJE PODATAKA IZ DRUGE BAZE
-logger = logging.getLogger(__name__)  
-def fetch_vehicle_value_view(request):
-    if request.method == 'POST':
-        # Povlačenje podataka iz druge baze
-        with connections['test_db'].cursor() as cursor:
-            cursor.execute("""
-                SELECT sif_osn, vrednost FROM dbo.vrednost_vozila
-            """)
-            rows = cursor.fetchall()
-
-        # Broj ažuriranih vozila
-        updated_vehicles_count = 0
-
-        for row in rows:
-            sif_osn = row[0].strip()  # Polje 'sif_osn' iz druge baze (odgovara 'inventory_number' u modelu Vehicle)
-            vrednost = row[1]  # Polje 'vrednost' iz druge baze (odgovara polju 'value' u modelu Vehicle)
-
-            try:
-                # Pronađi vozilo po inventory_number (sif_osn)
-                print(sif_osn)
-                vehicle = Vehicle.objects.get(inventory_number=sif_osn)
-                #print(vehicle)
-                # Ažuriraj polje 'value' sa novom vrednošću
-                vehicle.value = vrednost
-                vehicle.save()
-                updated_vehicles_count += 1
-
-            except Vehicle.DoesNotExist:
-                # Ako vozilo sa datim 'sif_osn' ne postoji, preskoči i zapiši grešku
-                logger.warning(f"Vozilo sa inventory_number (sif_osn) {sif_osn} nije pronađeno.")
-                continue
-
-            except Exception as e:
-                # U slučaju bilo koje druge greške
-                logger.error(f"Greška prilikom ažuriranja vozila sa inventory_number {sif_osn}: {e}")
-                messages.error(request, "Došlo je do greške prilikom ažuriranja podataka o vozilu.")
-                return redirect('fetch_vehicle_value')
-
-        # Poruka o uspešnom ažuriranju
-        messages.success(request, f"Uspešno ažurirano {updated_vehicles_count} vozila.")
-
-        # Preusmeravanje nakon uspešnog povlačenja podataka
-        return redirect('vehicle_list')  # Postavi URL na koji želiš da preusmeriš korisnika
-
-    return render(request, 'fleet/fetch_vehicle_value.html')
 
 
 class VehicleCreateView(LoginRequiredMixin, CreateView):
@@ -685,47 +648,7 @@ class LeaseDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
     
-# LEASE KAMATE FETCH
-logger = logging.getLogger(__name__)
 
-def fetch_lease_interest_data(request):
-    if request.method == 'POST':
-        # Povlačenje podataka iz view-a u bazi
-        with connections['test_db'].cursor() as cursor:
-            cursor.execute("""
-                SELECT god, ugovor, iznos FROM dbo.lizing_kamate
-            """)
-            rows = cursor.fetchall()
-
-        for row in rows:
-            year = row[0]
-            contract_number = row[1].strip()
-            interest_amount = row[2]
-
-            try:
-                # Pronađi ugovor lizinga po broju ugovora
-                lease = Lease.objects.get(contract_number=contract_number)
-
-                # Proveri da li već postoji zapis za tu godinu i lizing ugovor
-                lease_interest, created = LeaseInterest.objects.get_or_create(
-                    lease=lease,
-                    year=year,
-                    defaults={'interest_amount': interest_amount}
-                )
-
-                if not created:
-                    # Ako zapis već postoji, možeš ga ažurirati ako je potrebno
-                    lease_interest.interest_amount = interest_amount
-                    lease_interest.save()
-
-            except Lease.DoesNotExist:
-                logger.warning(f"Lizing ugovor sa brojem {contract_number} nije pronađen.")
-                continue
-
-        # Nakon uspešne obrade, preusmeravanje ili prikaz poruke
-        return redirect('fetch_policies')  # Preusmeri na odgovarajući URL za prikaz lizing kamata
-
-    return render(request, 'fleet/fetch_policies.html')
 
 # <!-- ======================================================================= -->
 #                           <!-- POLICY -->
@@ -742,12 +665,12 @@ class PolicyListView(LoginRequiredMixin, ListView):
 
 class PolicyFixingListView(LoginRequiredMixin, ListView):
     model = Policy
-    template_name = 'fleet/policy_list.html'
+    template_name = 'fleet/draft_policy_list.html'
     context_object_name = 'policies'
 
     def get_queryset(self):
         # Filter policies where the vehicle is None
-        return Policy.objects.filter(vehicle__isnull=True)
+        return DraftPolicy.objects.all
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -843,85 +766,141 @@ class PolicyDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
 
+class DraftPolicyUpdateView(UpdateView):
+    model = DraftPolicy
+    form_class = PolicyForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('policy_list')  # Preusmeravanje nakon uspešne izmene
 
-def fetch_policies_view(request):
-    if request.method == 'POST':
-        # Povlačenje podataka iz view-a u drugoj bazi
-        with connections['test_db'].cursor() as cursor:
-            cursor.execute("SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, VrstaOsiguranja, BrojPolise, IznosPremije FROM dbo.v_polise")
-            rows = cursor.fetchall()
+    def form_valid(self, form):
+        # Sačuvaj izmene u draft tabeli
+        draft = form.save(commit=False)
+        print("Izmene sačuvane u draft tabeli.")
 
-        for row in rows:
-            # Kreiraj Policy objekte sa povučenim podacima
-            try:
-                policy = Policy(
-                    vehicle=None,  # Ostavljaš vehicle prazno da ga korisnik kasnije doda
-                    partner_pib=row[0],
-                    partner_name=row[1],
-                    invoice_id=row[2],  # Ovo polje je unique
-                    invoice_number=row[3],
-                    issue_date=row[4],
-                    insurance_type=row[5],
-                    policy_number=row[6],
-                    premium_amount=row[7],
-                )
-                policy.save()
-            except IntegrityError:
-                # Ako postoji prekršeni unique constraint, preskoči unos
-                continue
-        
-        # Poruka o uspehu
-        messages.success(request, "Podaci su uspešno povučeni i sačuvani.")
+        # Provera da li su svi potrebni podaci sada prisutni osim opcionalnih polja
+        is_complete = all([
+            draft.partner_pib,
+            draft.partner_name,
+            draft.invoice_id,
+            draft.invoice_number,
+            draft.issue_date,
+            draft.insurance_type,
+            draft.policy_number,
+            draft.premium_amount,
+            draft.start_date,
+            draft.end_date,
+            draft.first_installment_amount,
+            draft.other_installments_amount,
+            draft.number_of_installments
+        ])
 
-        # Preusmeravanje posle uspešnog povlačenja podataka
-        return redirect('policy_list')  # Ovde postavi URL na koji želiš da korisnika preusmeriš posle uspeha
+        if is_complete:
+            # Ako su podaci kompletni, prebacujemo ih u glavni model
+            policy = Policy(
+                vehicle=draft.vehicle,
+                partner_pib=draft.partner_pib,
+                partner_name=draft.partner_name,
+                invoice_id=draft.invoice_id,
+                invoice_number=draft.invoice_number,
+                issue_date=draft.issue_date,
+                insurance_type=draft.insurance_type,
+                policy_number=draft.policy_number,
+                premium_amount=draft.premium_amount,
+                start_date=draft.start_date,
+                end_date=draft.end_date,
+                first_installment_amount=draft.first_installment_amount,
+                other_installments_amount=draft.other_installments_amount,
+                number_of_installments=draft.number_of_installments
+            )
+            policy.save()
+            print("Podaci migrirani u glavnu tabelu Policy.")
+            draft.delete()  # Obrisan unos iz draft tabele
+            return redirect(self.success_url)
 
-    return render(request, 'fleet/fetch_policies.html')
+        # Ako podaci nisu kompletni, sačuvaj ih samo u draft tabeli
+        else:
+            draft.save()  # Sačuvaj izmene u draft tabeli
+            print("Podaci nisu kompletni, ostaju u draft tabeli.")
+            return super().form_valid(form)
 
 
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Dopuni polisu'
+        context['submit_button_label'] = 'Sačuvaj'
+        return context
 
 # <!-- ======================================================================================== -->
 #                           <!-- FUEL CONSUMPTION -->
 # <!-- ======================================================================================== -->
+from django_filters.views import FilterView
+
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     model = FuelConsumption
     filterset_class = FuelFilterForm
     template_name = 'fleet/fuelconsumption_list.html'
     context_object_name = 'fuel_consumptions'
 
-
     def get_queryset(self):
-        queryset = super().get_queryset()
         # Subquery to get the latest TrafficCard for each Vehicle
         latest_traffic_card_subquery = TrafficCard.objects.filter(
-            vehicle_id=OuterRef('vehicle_id')
+            vehicle=OuterRef('vehicle')
         ).order_by('-issue_date').values('registration_number')[:1]
 
-        queryset = queryset.annotate(
+        # Base queryset with annotation
+        queryset = super().get_queryset().annotate(
             registration_number=Subquery(latest_traffic_card_subquery)
         )
-                # Postavi podrazumevani period na poslednjih 40 dana
-        today = timezone.now().date()
-        forty_days_ago = today - timedelta(days=30)
 
-        # Ako nema GET zahteva, koristi podrazumevane datume za filtriranje
-        if not self.request.GET:
-            queryset = FuelConsumption.objects.filter(date__gte=forty_days_ago, date__lte=today)
-        else:
-            form = FuelFilterForm(self.request.GET)
-            if form.is_valid():
-                queryset = form.qs
-            else:
-                # Ako forma nije validna, prikazi podrazumevane filtrirane podatke
-                queryset = FuelConsumption.objects.filter(date__gte=forty_days_ago, date__lte=today)
+        # Default filtering logic
+        if not self.request.GET:  # If there are no GET parameters
+            today = timezone.now().date()
+            forty_days_ago = today - timedelta(days=40)
+            return queryset.filter(date__gte=forty_days_ago, date__lte=today)
+
+        # Apply filter if GET parameters are present
+        form = self.filterset_class(self.request.GET, queryset=queryset)
+        if form.is_valid():
+            return form.qs
         return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = self.filterset_class(self.request.GET, queryset=self.get_queryset())
+        context.update({
+            'filter': form,
+            'title': 'Lista potrošnje goriva',
+        })
+        return context
+
+class FuelTransactionsListView(LoginRequiredMixin, ListView):
+    template_name = 'fleet/fuel_transactions_list.html'
+    context_object_name = 'fuel_transactions'
+
+    def get_queryset(self):
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+
+        # Postavi podrazumevane vrednosti ako GET parametri nisu prisutni
+        if not start_date:
+            start_date = date.today() - timedelta(days=40)
+        if not end_date:
+            end_date = date.today()
+
+        return get_fuel_consumption_queryset(start_date=start_date, end_date=end_date)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Lista potrošnje goriva'
+
+        # Inicijalizacija forme sa trenutnim GET vrednostima ili podrazumevanim datumima
+        context['filter_form'] = FuelTransactionFilterForm(self.request.GET or {
+            'start_date': (date.today() - timedelta(days=40)).strftime('%Y-%m-%d'),
+            'end_date': date.today().strftime('%Y-%m-%d')
+        })
 
         return context
+
+
 
 class FuelConsumptionCreateView(LoginRequiredMixin, CreateView):
     model = FuelConsumption
@@ -1234,59 +1213,7 @@ class ServiceTypeDeleteView(LoginRequiredMixin, DeleteView):
 #                           <!-- SERVICES -->
 # <!-- ======================================================================================== -->
 
-# POVLACENJE PODATAKA IZ DRUGE BAZE
-logger = logging.getLogger(__name__)  
-def fetch_service_data_view(request):
-    if request.method == 'POST':
-        # Povlačenje podataka iz druge baze
-        with connections['test_db'].cursor() as cursor:
-            cursor.execute("""
-                SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje, sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila FROM dbo.v_servisi
-            """)
-            rows = cursor.fetchall()
 
-        for row in rows:
-            try:
-                # Provera jedinstvenosti na osnovu kombinacije datum, duguje, vez_dok
-                if not ServiceTransaction.objects.filter(datum=row[3], duguje=row[11], vez_dok=row[6]).exists():
-                    # Kreiranje novog zapisa ako ne postoji duplikat
-                    service_transaction = ServiceTransaction(
-                        vehicle=None,
-                        god=row[0],
-                        sif_par_pl=row[1],
-                        naz_par_pl=row[2],
-                        datum=row[3],  # Datum transakcije
-                        sif_vrs=row[4],
-                        br_naloga=row[5],
-                        vez_dok=row[6],
-                        knt_pl=row[7],
-                        potrazuje=row[8],
-                        sif_par_npl=row[9],
-                        knt_npl=row[10],
-                        duguje=row[11],
-                        konto_vozila=row[13],
-                        kom=None,
-                        popravka_kategorija=None,  # Kategorija popravke
-                        napomena=None
-                    )
-                    service_transaction.save()
-
-            except IntegrityError:
-                logger.warning(f"Duplikat: Datum: {row[3]}, Duguje: {row[11]}, Vezani dokument: {row[6]}")
-                continue  # Preskače zapis ako postoji duplikat
-
-            except Exception as e:
-                logger.error(f"Greška: {e}")
-                messages.error(request, "Došlo je do greške prilikom povlačenja podataka.")
-                return redirect('fetch_policies')
-
-        # Poruka o uspehu
-        messages.success(request, "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati.")
-
-        # Preusmeravanje posle uspešnog povlačenja podataka
-        return redirect('service_fixing_list')  # Postavi URL na koji želiš da preusmeriš korisnika
-
-    return render(request, 'fleet/fetch_policies.html')
 
 class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
@@ -1299,13 +1226,13 @@ class ServiceListView(LoginRequiredMixin, ListView):
         return context
 
 class ServiceFixingListView(LoginRequiredMixin, ListView):
-    model = Service
-    template_name = 'fleet/service_list.html'
-    context_object_name = 'services'
+    model = DraftServiceTransaction
+    template_name = 'fleet/draft_service_transactions_list.html'
+    context_object_name = 'service_transactions'
 
     def get_queryset(self):
-        # Filter policies where the vehicle is None
-        return Service.objects.filter(vehicle__isnull=True)
+        print(DraftServiceTransaction.objects.all())
+        return DraftServiceTransaction.objects.all
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1372,13 +1299,13 @@ class ServiceTransactionListView(ListView):
     context_object_name = 'service_transactions'
 
 class ServiceTransactionFixingListView(LoginRequiredMixin, ListView):
-    model = ServiceTransaction
-    template_name = 'fleet/service_transactions_list.html'
+    model = DraftServiceTransaction
+    template_name = 'fleet/draft_service_transactions_list.html'
     context_object_name = 'service_transactions'
 
     def get_queryset(self):
         # Filter policies where the vehicle is None
-        return ServiceTransaction.objects.filter(vehicle__isnull=True)
+        return DraftServiceTransaction.objects.all
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1395,6 +1322,7 @@ class ServiceTransactionCreateView(CreateView):
         context['title'] = 'Kreiranje servisa'
         context['submit_button_label'] = 'Sačuvaj insformacije o servisu'
         return context
+    
 class ServiceTransactionUpdateView(UpdateView):
     model = ServiceTransaction
     form_class = ServiceTransactionForm
@@ -1412,62 +1340,58 @@ class ServiceTransactionDeleteView(DeleteView):
     template_name = 'service_transaction_confirm_delete.html'
     success_url = reverse_lazy('service_transaction_list')
 
+class DraftServiceTransactionUpdateView(UpdateView):
+    model = DraftServiceTransaction
+    form_class = ServiceTransactionForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('service_transaction_success')  # Preusmeri nakon uspešne migracije
 
+    def form_valid(self, form):
+        # Sačuvaj izmene u draft tabeli
+        draft = form.save(commit=False)
+        print("Izmene sačuvane u draft tabeli.")
+
+        # Proveri da li su svi potrebni podaci sada prisutni osim `kom` i `napomena`
+        is_complete = all([
+            draft.god, 
+            draft.sif_par_pl, 
+            draft.naz_par_pl, 
+            draft.datum, 
+            draft.sif_vrs, 
+            draft.br_naloga, 
+            draft.vez_dok, 
+            draft.knt_pl, 
+            draft.potrazuje, 
+            draft.sif_par_npl, 
+            draft.knt_npl, 
+            draft.duguje, 
+            draft.sif_pos, 
+            draft.konto_vozila, 
+            draft.RegOzn, 
+            draft.poptavka_kategorija
+        ])
+
+        # Ako su svi potrebni podaci prisutni, pokreni migraciju u glavnu tabelu
+        if is_complete:
+            migrate_draft_to_service_transaction(draft)
+            print("Podaci migrirani u glavnu tabelu.")
+            return redirect(self.success_url)
+        
+        # Ako podaci nisu kompletni, sačuvaj samo u draft tabeli
+        else:
+            print("Podaci nisu kompletni, ostaju u draft tabeli.")
+            draft.save()  # Sačuvaj bez migracije
+            return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Dopunite informacije o servisu'
+        context['submit_button_label'] = 'Sačuvaj insformacije o servisu'
+        return context
 
 # <!-- ======================================================================================== -->
 #                           <!-- REQUISTION - TREBOVANJA -->
 # <!-- ======================================================================================== -->
-
-# Povlačenje podataka iz view-a u drugoj bazi
-def fetch_requisition_data_view(request):
-    if request.method == 'POST':
-        try:
-            # Povlačenje podataka iz view-a u drugoj bazi
-            with connections['test_db'].cursor() as cursor:
-                cursor.execute("""
-                    SELECT sif_pred, god, oj, sif_dok, sif_vrsart, br_dok, stavka, sif_art, naz_art, kol, cena, vrednost_nab
-                    FROM dbo.v_trebovanja
-                """)
-                rows = cursor.fetchall()
-
-            for row in rows:
-                try:
-                    # Kreiranje ili ažuriranje modela `Requisition`
-                    requisition = Requisition(
-                        vehicle=None,
-                        sif_pred=row[0],  # Šifra predmeta
-                        god=row[1],  # Godina
-                        br_dok=row[5],  # Broj dokumenta
-                        sif_vrsart=row[4],  # Šifra vrste artikla
-                        stavka=row[6],  # Stavka
-                        sif_art=row[7],  # Šifra artikla
-                        naz_art=row[8],  # Naziv artikla
-                        kol=row[9],  # Količina
-                        cena=row[10],  # Cena
-                        vrednost_nab=row[11],  # Vrednost nabavke
-                        mesec_unosa=None,  # Mesec unosa
-                        datum_trebovanja=None,  # Datum trebovanja
-                        napomena=None,  # Napomena
-                    )
-                    requisition.save()
-
-                except IntegrityError as e:
-                    # Ako postoji greška zbog unique constraint-a, preskoči unos
-                    print(f"Greška prilikom čuvanja dokumenta {row[5]}: {e}")
-                    continue
-
-            # Poruka o uspehu
-            messages.success(request, "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati.")
-
-            # Preusmeravanje posle uspešnog povlačenja podataka
-            return redirect('requisition_list')  # Postavi URL na koji želiš da preusmeriš korisnika
-
-        except Exception as e:
-            print(f"Greška prilikom povlačenja podataka: {e}")
-            messages.error(request, "Došlo je do greške prilikom povlačenja podataka.")
-            return redirect('error_page')
-
-    return render(request, 'fleet\fetch_policies.html')
 
 class RequisitionListView(ListView):
     model = Requisition
@@ -1480,13 +1404,13 @@ class RequisitionListView(ListView):
         return context
     
 class RequisitionFixingListView(ListView):
-    model = Requisition
-    template_name = 'fleet/requisition_list.html'
+    model = DraftRequisition
+    template_name = 'fleet/draft_requisition_list.html'
     context_object_name = 'requisitions'
     
     def get_queryset(self):
         # Filter policies where the vehicle is None
-        return Requisition.objects.filter(vehicle__isnull=True)
+        return DraftRequisition.objects.filter(vehicle__isnull=True)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1513,6 +1437,19 @@ class RequisitionUpdateView(UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
+class DraftRequisitionUpdateView(UpdateView):
+    model = DraftRequisition
+    form_class = RequisitionForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('requisition_list')
+    success_message = "Trebovanje uspešno izmenjeno!"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Izmena trebovanja'
+        context['submit_button_label'] = 'Sačuvaj izmene'
+        return context
+
 class RequisitionDeleteView(DeleteView):
     model = Requisition
     template_name = 'requisition/requisition_confirm_delete.html'
@@ -1521,7 +1458,7 @@ class RequisitionDeleteView(DeleteView):
 
 
 # <!-- ======================================================================================== -->
-#                           <!-- REQUISTION - TREBOVANJA -->
+#                                     <!-- USERS -->
 # <!-- ======================================================================================== -->
 
 class UserListView(ListView):
@@ -1533,3 +1470,193 @@ class UserListView(ListView):
     def get_queryset(self):
         # You can apply any filters if needed, otherwise return all users
         return CustomUser.objects.all()
+    
+
+    
+# <!-- ======================================================================================== -->
+#                           <!-- FETCHING FUNCTIONS -->
+# <!-- ======================================================================================== -->
+
+from django.shortcuts import render, redirect
+
+from django.core.management import call_command
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required
+def fetch_data_view(request):
+    """
+    View za prikaz HTML stranice koja sadrži sve fetching forme.
+    """
+    if request.method == 'POST':
+        command = request.POST.get('command')
+        try:
+            # Provera i pokretanje komande
+            if command == 'nis_command':
+                call_command('nis_command')
+            elif command == 'omv_command_putnicka':
+                call_command('omv_command_putnicka')
+            elif command == 'omv_command_teretna':
+                call_command('omv_command_teretna')
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Nepoznata komanda.'}, status=400)
+            
+            return JsonResponse({'status': 'success', 'message': f'Komanda {command} uspešno izvršena.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    # Prikaz stranice sa svim fetching formama
+    return render(request, 'fleet/fetch_data.html')
+
+
+# POVLACENJE PODATAKA IZ DRUGE BAZE
+logger = logging.getLogger(__name__)  
+def fetch_vehicle_value_view(request):
+    if request.method == 'POST':
+        # Povlačenje podataka iz druge baze
+        with connections['test_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT sif_osn, vrednost FROM dbo.vrednost_vozila
+            """)
+            rows = cursor.fetchall()
+
+        # Broj ažuriranih vozila
+        updated_vehicles_count = 0
+
+        for row in rows:
+            sif_osn = row[0].strip()  # Polje 'sif_osn' iz druge baze (odgovara 'inventory_number' u modelu Vehicle)
+            vrednost = row[1]  # Polje 'vrednost' iz druge baze (odgovara polju 'value' u modelu Vehicle)
+
+            try:
+                # Pronađi vozilo po inventory_number (sif_osn)
+                print(sif_osn)
+                vehicle = Vehicle.objects.get(inventory_number=sif_osn)
+                #print(vehicle)
+                # Ažuriraj polje 'value' sa novom vrednošću
+                vehicle.value = vrednost
+                vehicle.save()
+                updated_vehicles_count += 1
+
+            except Vehicle.DoesNotExist:
+                # Ako vozilo sa datim 'sif_osn' ne postoji, preskoči i zapiši grešku
+                logger.warning(f"Vozilo sa inventory_number (sif_osn) {sif_osn} nije pronađeno.")
+                continue
+
+            except Exception as e:
+                # U slučaju bilo koje druge greške
+                logger.error(f"Greška prilikom ažuriranja vozila sa inventory_number {sif_osn}: {e}")
+                messages.error(request, "Došlo je do greške prilikom ažuriranja podataka o vozilu.")
+                return redirect('fetch_policies')
+
+        # Poruka o uspešnom ažuriranju
+        messages.success(request, f"Uspešno ažurirano {updated_vehicles_count} vozila.")
+
+        # Preusmeravanje nakon uspešnog povlačenja podataka
+        return redirect('fetch_policies')  # Postavi URL na koji želiš da preusmeriš korisnika
+
+    return render(request, 'fleet/fetch_data.html')
+
+
+# LEASE KAMATE FETCH
+def fetch_lease_interest_data(request):
+    if request.method == 'POST':
+        # Povlačenje podataka iz view-a u bazi
+        with connections['test_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT god, ugovor, iznos FROM dbo.lizing_kamate
+            """)
+            rows = cursor.fetchall()
+
+        for row in rows:
+            year = row[0]
+            contract_number = row[1].strip()
+            interest_amount = row[2]
+
+            try:
+                # Pronađi ugovor lizinga po broju ugovora
+                lease = Lease.objects.get(contract_number=contract_number)
+
+                # Proveri da li već postoji zapis za tu godinu i lizing ugovor
+                lease_interest, created = LeaseInterest.objects.get_or_create(
+                    lease=lease,
+                    year=year,
+                    defaults={'interest_amount': interest_amount}
+                )
+
+                if not created:
+                    # Ako zapis već postoji, možeš ga ažurirati ako je potrebno
+                    lease_interest.interest_amount = interest_amount
+                    lease_interest.save()
+
+            except Lease.DoesNotExist:
+                logger.warning(f"Lizing ugovor sa brojem {contract_number} nije pronađen.")
+                continue
+
+        # Nakon uspešne obrade, preusmeravanje ili prikaz poruke
+        return redirect('fetch_policies')  # Preusmeri na odgovarajući URL za prikaz lizing kamata
+
+    return render(request, 'fleet/fetch_data.html')
+
+def fetch_policy_data_view(request):
+    if request.method == 'POST':
+        # Preuzmi broj dana iz POST zahteva (opciono)
+        days = request.POST.get('days', None)
+        
+        # Ako korisnik unese broj dana, pretvori ga u integer
+        if days:
+            try:
+                days = int(days)
+            except ValueError:
+                messages.error(request, "Uneta vrednost za broj dana nije validna.")
+                return redirect('fetch_policy_data')  # Vrati korisnika na stranicu sa greškom
+
+        # Pozovi funkciju za povlačenje podataka sa odgovarajućim parametrima
+        result = fetch_policy_data(last_24_hours=False, days=days)
+        messages.success(request, result)
+        return redirect('policy_list')
+
+    # Prikaz forme za unos broja dana
+    return render(request, 'fleet/fetch_policy_data.html')
+
+
+# POVLACENJE PODATAKA IZ DRUGE BAZE
+def fetch_service_data_view(request):
+    if request.method == 'POST':
+        # Preuzmi broj dana iz POST zahteva (opciono)
+        days = request.POST.get('days', None)
+        
+        # Ako korisnik unese broj dana, pretvori ga u integer
+        if days:
+            try:
+                days = int(days)
+            except ValueError:
+                messages.error(request, "Uneta vrednost za broj dana nije validna.")
+                return redirect('fetch_service_data')  # Vrati korisnika na stranicu sa greškom
+
+        # Pozovi funkciju za povlačenje podataka sa odgovarajućim parametrima
+        result = fetch_service_data(last_24_hours=False, days=days)
+        messages.success(request, result)
+        return redirect('service_transaction_list')
+
+    # Prikaz forme za unos broja dana
+    return render(request, 'fleet/fetch_service_data.html')
+
+
+def fetch_requisition_data_view(request):
+    if request.method == 'POST':
+        days = request.POST.get('days', None)
+        if days:
+            try:
+                days = int(days)
+            except ValueError:
+                messages.error(request, "Uneta vrednost za broj dana nije validna.")
+                return redirect('fetch_policies')
+
+        result = fetch_requisition_data(last_24_hours=False, days=days)
+        messages.success(request, result)
+        return redirect('requisition_list')
+
+    return render(request, 'fleet/fetch_data.html')
+
+

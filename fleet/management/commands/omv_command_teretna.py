@@ -5,6 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime, timedelta
 
 class Command(BaseCommand):
     help = 'Downloads a report from OMV website and imports data into the database'
@@ -14,6 +15,14 @@ class Command(BaseCommand):
         login_url = "https://fleet.omv.com/FleetServicesProduction/Login.jsp"
         username = "710111107258"
         password = "OMV-107258"
+
+        # Definišite datume
+        today = datetime.now().strftime("%Y-%m-%d")  # Današnji datum
+        default_date_from = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")  # Podrazumevani datum "od"
+
+        # Proverite da li je "date from" unesen
+        date_from = kwargs.get('date_from', default_date_from)  # Koristi uneseni datum ili podrazumevani
+        date_to = today  # Zadaje se današnji datum za "date to"
 
         # Set up Chrome options to download files to a specific location
         download_path = r"C:\omv_repo"
@@ -111,14 +120,14 @@ class Command(BaseCommand):
 
             # Clear and set the 'date from' input
             date_from_input.clear()
-            date_from_input.send_keys("2024-01-01")
-            print("Entered date from")
+            date_from_input.send_keys(date_from)
+            print(f"Entered 'date from': {date_from}")
 
             # Clear and set the 'date to' input
             date_to_input = driver.find_element(By.NAME, "Transactiondate1")
             date_to_input.clear()
-            date_to_input.send_keys("2024-09-14")
-            print("Entered date to")
+            date_to_input.send_keys(date_to)
+            print(f"Entered 'date to': {date_to}")
 
             # Click the 'Result' link using JavaScript
             driver.execute_script("goContent()")
@@ -150,7 +159,7 @@ class Command(BaseCommand):
 
             # Importuj podatke u bazu
             import_omv_fuel_consumption_from_csv(csv_file_path)            
-            # import_omv_transactions_from_csv(csv_file_path)            
+            import_omv_transactions_from_csv(csv_file_path)            
             print(f"Data imported successfully from {csv_file_path}")
 
         finally:

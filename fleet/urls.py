@@ -29,9 +29,11 @@ urlpatterns = [
     path('zakupi/<int:pk>/', LeaseDetailView.as_view(), name='lease_detail'),
     path('zakupi/obrisi/<int:pk>/', LeaseDeleteView.as_view(), name='lease_delete'),
 
+    path('azuriranje', fetch_vehicle_value_view, name='fetch_vehicle_value'),
     
     path('polise/', PolicyListView.as_view(), name='policy_list'),
-    path('policies/nedovrseno/', PolicyFixingListView.as_view(), name='policy_fixing_list'),
+    path('polise/nedovrseno/', PolicyFixingListView.as_view(), name='policy_fixing_list'),
+    path('dopuna-polise/<int:pk>/', DraftPolicyUpdateView.as_view(), name='draft_policy_update'),
     path('polise/novo/', PolicyCreateView.as_view(), name='policy_create'),
     path('polise/izmeni/<int:pk>/', PolicyUpdateView.as_view(), name='policy_update'),
     path('polise/<int:pk>/', PolicyDetailView.as_view(), name='policy_detail'),
@@ -39,6 +41,7 @@ urlpatterns = [
     path('polise/istek/', ExpiringAndNotRenewedPolicyView.as_view(), name='expiring_and_not_renewed_policies'),
 
     path('potrosnja-goriva/', FuelConsumptionListView.as_view(), name='fuelconsumption_list'),
+    path('fuel-transactions/', FuelTransactionsListView.as_view(), name='fuel_transactions_list'),
     path('potrosnja-goriva/novo/', FuelConsumptionCreateView.as_view(), name='fuelconsumption_create'),
     path('potrosnja-goriva/izmeni/<int:pk>/', FuelConsumptionUpdateView.as_view(), name='fuelconsumption_update'),
     path('potrosnja-goriva/<int:pk>/', FuelConsumptionDetailView.as_view(), name='fuelconsumption_detail'),
@@ -78,19 +81,22 @@ urlpatterns = [
 
     path('service-transactions/', ServiceTransactionListView.as_view(), name='service_transaction_list'),
     path('servisi/nedovrseno/', ServiceTransactionFixingListView.as_view(), name='service_fixing_list'),
+    path('servisi-nedovrseno/<int:pk>/edit/', DraftServiceTransactionUpdateView.as_view(), name='draft_service_transaction_update'),
     path('service-transactions/add/', ServiceTransactionCreateView.as_view(), name='service_transaction_add'),
     path('service-transactions/<int:pk>/edit/', ServiceTransactionUpdateView.as_view(), name='service_transaction_update'),
     path('service-transactions/<int:pk>/delete/', ServiceTransactionDeleteView.as_view(), name='service_transaction_delete'),
 
     # FETCHING
-    path('fetch-policies/', views.fetch_policies_view, name='fetch_policies'),
+    path('fetch-data/', views.fetch_data_view, name='fetch_data'),
+    path('fetch-policies/', views.fetch_policy_data_view, name='fetch_policies'),
     path('fetch-services/', views.fetch_service_data_view, name='fetch_services'),
-    path('fetch-requisitions/', fetch_requisition_data_view, name='fetch_requisitions'),
-    path('fetch-vehicle-value/', fetch_vehicle_value_view, name='fetch_vehicle_value'),
-    path('fetch-lease-interest/', fetch_lease_interest_data, name='fetch_lease_interest'),
+    path('fetch-requisitions/', views.fetch_requisition_data_view, name='fetch_requisitions'),
+    path('fetch-vehicle-value/', views.fetch_vehicle_value_view, name='fetch_vehicle_value'),
+    path('fetch-lease-interest/', views.fetch_lease_interest_data, name='fetch_lease_interest'),
 
     path('requisitions/', RequisitionListView.as_view(), name='requisition_list'),
     path('requisitions/nedovrseno/', RequisitionFixingListView.as_view(), name='requisition_fixing_list'),
+    path('requisitions-nedovrseno/<int:pk>/edit/', DraftRequisitionUpdateView.as_view(), name='draft_requisition_update'),
     path('requisitions/create/', RequisitionCreateView.as_view(), name='requisition_create'),
     path('requisitions/<int:pk>/edit/', RequisitionUpdateView.as_view(), name='requisition_update'),
     path('requisitions/<int:pk>/delete/', RequisitionDeleteView.as_view(), name='requisition_delete'),

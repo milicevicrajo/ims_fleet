@@ -33,7 +33,7 @@
                         <td>{{ requisition.naz_art }}</td>
                         <td>{{ requisition.kol }}</td>
                         <td>
-                        <a href="{% url 'requisition_update' requisition.pk %}">Edit</a>
+                        <a href="{% url 'draft_requisition_update' requisition.pk %}">Edit</a>
                       </td>
                     </tr>
                   {% endfor %}

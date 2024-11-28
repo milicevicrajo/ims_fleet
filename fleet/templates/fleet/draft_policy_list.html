@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ title }}</h2>
+<div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Basic Datatable</h5>
+      <div class="table-responsive">
+          <table id="DatatablePolicy" class="display compact">
+              <thead>
+                  <tr>
+                      <th>Vozilo</th>
+                      <th>Partner-pib</th>
+                      <th>Partner</th>
+                      <th>ID ugovora</th>
+                      <th>Broj ugovora</th>
+                      <th>Datum izdavanja</th>
+                      <th>Tip osiguranja</th>
+                      <th>Broj polise</th>
+                      <th>Iznos premije</th>
+                      <th>Datum početka</th>
+                      <th>Datum završetka</th>
+                      <th>Iznos prve rate</th>
+                      <th>Iznos ostalih rata</th>
+                      <th>Broj rata</th>
+                      <th>Akcije</th>
+                  </tr>
+              </thead>
+              <tbody>
+                {% for policy in policies %}
+                  <tr>                        
+                      <td>{{ policy.vehicle }}</td>                      
+                      <td>{{ policy.partner_pib }}</td>
+                      <td>{{ policy.partner_name }}</td>
+                      <td>{{ policy.invoice_id }}</td>
+                      <td>{{ policy.invoice_number }}</td>
+                      <td>{{ policy.issue_date|date:"d.m.Y"}}</td>
+                      <td>{{ policy.insurance_type }}</td>
+                      <td>{{ policy.policy_number }}</td>
+                      <td>{{ policy.premium_amount}}</td>
+                      <td>{{ policy.start_date|date:"d.m.Y" }}</td>
+                      <td>{{ policy.end_date|date:"d.m.Y" }}</td>
+                      <td>{{ policy.first_installment_amount }}</td>
+                      <td>{{ policy.other_installments_amount}}</td>
+                      <td>{{ policy.number_of_installments }}</td>
+                      <td>
+                        <a href="{% url 'draft_policy_update' policy.pk %}">Edit</a>
+                      </td>
+                  </tr>
+              {% empty %}
+                  <tr>
+                      <td colspan="5">Nema opreme..</td>
+                  </tr>
+              {% endfor %}
+              <tfoot>
+                  <tr>
+                    <th>Vozilo</th>
+                    <th>Partner-pib</th>
+                    <th>Partner</th>
+                    <th>ID ugovora</th>
+                    <th>Broj ugovora</th>
+                    <th>Datum izdavanja</th>
+                    <th>Tip osiguranja</th>
+                    <th>Broj polise</th>
+                    <th>Iznos premije</th>
+                    <th>Datum početka</th>
+                    <th>Datum završetka</th>
+                    <th>Iznos prve rate</th>
+                    <th>Iznos ostalih rata</th>
+                    <th>Broj rata</th>
+                    <th>Akcije</th>
+                  </tr>
+              </tfoot>
+          </table>
+      </div>
+
+  </div>
+</div>
+{% endblock %}

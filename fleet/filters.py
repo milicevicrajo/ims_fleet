@@ -3,7 +3,7 @@ from .models import FuelConsumption, JobCode, OrganizationalUnit
 from django import forms
 from datetime import timedelta
 from django.utils import timezone
-
+from datetime import date, timedelta
 class VehicleFilterForm(forms.Form):
     org_unit = forms.ModelChoiceField(
         queryset=OrganizationalUnit.objects.all().order_by('code'),  # Uzimamo sve JobCode sortirane po šifri
@@ -57,3 +57,47 @@ class FuelFilterForm(django_filters.FilterSet):
     class Meta:
         model = FuelConsumption
         fields = ['start_date', 'end_date',]
+
+
+class FuelTransactionFilterForm(forms.Form):
+    start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        label="Od datuma"
+    )
+    end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        label="Do datuma"
+    )
+
+class FuelTransactionFilterForm(forms.Form):
+    start_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'placeholder': 'Od datuma'
+            }
+        ),
+        label="Od datuma"
+    )
+    end_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'placeholder': 'Do datuma'
+            }
+        ),
+        label="Do datuma"
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.data.get('start_date'):
+            self.initial['start_date'] = date.today() - timedelta(days=40)
+        if not self.data.get('end_date'):
+            self.initial['end_date'] = date.today()
