@@ -68,16 +68,7 @@ class Command(BaseCommand):
             print("Clicked on 'Transakcije po klijentima' link")
 
             # # Interact with the date picker
-            # date_input = WebDriverWait(driver, 20).until(
-            #     EC.presence_of_element_located((By.CSS_SELECTOR, "input.read-only-normal"))
-            # )
-            # date_input.click()  # Click to open the date picker
 
-            # # Select the date from the date picker, e.g., September 6, 2024
-            # date_to_select = WebDriverWait(driver, 20).until(
-            #     EC.element_to_be_clickable((By.XPATH, "//td[@data-value='6' and @class='rdtDay rdtToday']"))
-            # )
-            # date_to_select.click()  # Click the specific day
 
             # Locate and click the 'Prikaži izveštaj' button
             show_report_button = WebDriverWait(driver, 20).until(
