@@ -88,6 +88,7 @@ urlpatterns = [
 
     # FETCHING
     path('fetch-data/', views.fetch_data_view, name='fetch_data'),
+    path('run-nis-command/', run_nis_command_view, name='run_nis_command'),
     path('fetch-policies/', views.fetch_policy_data_view, name='fetch_policies'),
     path('fetch-services/', views.fetch_service_data_view, name='fetch_services'),
     path('fetch-requisitions/', views.fetch_requisition_data_view, name='fetch_requisitions'),

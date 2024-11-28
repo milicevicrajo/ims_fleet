@@ -22,8 +22,8 @@ from django.db.models.functions import TruncMonth, TruncYear
 from django.db.models import Q
 from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data
 from .models import DraftServiceTransaction
-
-from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset
+import threading
+from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset, execute_nis_command
 
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
@@ -1509,6 +1509,18 @@ def fetch_data_view(request):
     # Prikaz stranice sa svim fetching formama
     return render(request, 'fleet/fetch_data.html')
 
+@staff_member_required
+def run_nis_command_view(request):
+    if request.method == "POST":
+        def run_command_in_background():
+            execute_nis_command()
+        
+        # Pokreće komandu u pozadini
+        thread = threading.Thread(target=run_command_in_background)
+        thread.start()
+        
+        return JsonResponse({"status": "success", "message": "Komanda pokrenuta u pozadini."})
+    return JsonResponse({"status": "error", "message": "Nevalidan zahtev."})
 
 # POVLACENJE PODATAKA IZ DRUGE BAZE
 logger = logging.getLogger(__name__)  

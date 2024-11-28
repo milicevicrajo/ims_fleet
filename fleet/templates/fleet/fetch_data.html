@@ -36,50 +36,12 @@
 </form>
 
 <hr>
-<h2>Fetching Podataka za GORIVO</h2>
-<p>Izaberite komandu za fetching podataka i pokrenite je:</p>
-<form method="post" id="commandForm">
+<!-- Forma za pokretanje komande za NIS -->
+<h2>Povlačenje podataka za GORIVO (NIS)</h2>
+<form method="post" action="{% url 'run_nis_command' %}">
     {% csrf_token %}
-    <div class="mb-3">
-        <label for="command" class="form-label">Izaberite komandu:</label>
-        <select id="command" name="command" class="form-select">
-            <option value="nis_command">NIS Komanda</option>
-            <option value="omv_command_putnicka">OMV Putnička Komanda</option>
-            <option value="omv_command_teretna">OMV Teretna Komanda</option>
-        </select>
-    </div>
-    <button type="submit" class="btn btn-primary">Pokreni</button>
+    <label for="nis_date">Unesite datum (opciono):</label>
+    <input type="date" id="nis_date" name="date" placeholder="Izaberite datum">
+    <button type="submit">Pokreni komandu za NIS</button>
 </form>
-
-<div id="responseMessage" class="mt-3"></div>
-
-
-<script>
-    document.getElementById('commandForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // Sprečava reload stranice
-        const form = e.target;
-        const formData = new FormData(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            const messageDiv = document.getElementById('responseMessage');
-            if (data.status === 'success') {
-                messageDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-            } else {
-                messageDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
-            }
-        })
-        .catch(error => {
-            document.getElementById('responseMessage').innerHTML = 
-                `<div class="alert alert-danger">Greška prilikom izvršavanja komande.</div>`;
-        });
-    });
-</script>
 {% endblock %}
