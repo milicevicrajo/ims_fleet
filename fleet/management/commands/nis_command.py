@@ -85,14 +85,14 @@ class Command(BaseCommand):
             )
             show_report_button.click()
             print("Clicked 'Prikaži izveštaj' button")
-
+            time.sleep(1)
             # Click on the download dropdown and select 'CSV'
             dropdown_button = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'download-button')]"))
             )
             dropdown_button.click()
             print("Clicked on download dropdown")
-
+            time.sleep(1)
             csv_option = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//li[@class='option']//button[contains(., 'CSV')]"))
             )

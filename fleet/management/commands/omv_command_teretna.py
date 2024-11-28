@@ -88,14 +88,14 @@ class Command(BaseCommand):
                 EC.frame_to_be_available_and_switch_to_it((By.NAME, "functionnavigation"))
             )
             print("Switched to functionnavigation")
-
+            time.sleep(2)
             # Click on 'Reports'
             reports_link = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//a[@href='functionNavigation.do?openFunction=transactioninformation.report.overview']"))
             )
             reports_link.click()
             print("Clicked on 'Reports'")
-
+            time.sleep(2)
             # Click on 'Transactions'
             transactions_link = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//a[@href='genSearchCriteria.do?activateFunction=transactioninformation.report.transaction&openFunction=transactioninformation.report.overview']"))
@@ -111,13 +111,13 @@ class Command(BaseCommand):
                 EC.frame_to_be_available_and_switch_to_it((By.NAME, "searchcriteria"))
             )
             print("Switched to searchcriteria frame")
-
+            time.sleep(2)
             # Wait for the date inputs to be present
             date_from_input = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.NAME, "Transactiondatefrom"))
             )
             print("Date from input found")
-
+            time.sleep(2)
             # Clear and set the 'date from' input
             date_from_input.clear()
             date_from_input.send_keys(date_from)
@@ -132,7 +132,7 @@ class Command(BaseCommand):
             # Click the 'Result' link using JavaScript
             driver.execute_script("goContent()")
             print("Clicked 'Result' link")
-
+            time.sleep(2)
             # Switch back to default content
             driver.switch_to.default_content()
             
