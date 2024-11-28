@@ -16,7 +16,7 @@ class Command(BaseCommand):
         password = "3RrrvvVg"
 
         # Set up Chrome options to download files to a specific location
-        download_path = r"C:\Users\Rajo\Downloads"
+        download_path = r"C:\nis_repo"
         chrome_options = webdriver.ChromeOptions()
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)

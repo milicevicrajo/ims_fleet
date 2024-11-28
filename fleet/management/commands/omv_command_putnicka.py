@@ -117,7 +117,7 @@ class Command(BaseCommand):
                 EC.presence_of_element_located((By.NAME, "Transactiondatefrom"))
             )
             print("Date from input found")
-
+            time.sleep(2)
             # Clear and set the 'date from' input
             date_from_input.clear()
             date_from_input.send_keys(date_from)
@@ -128,7 +128,7 @@ class Command(BaseCommand):
             date_to_input.clear()
             date_to_input.send_keys(date_to)
             print(f"Entered 'date to': {date_to}")
-
+            time.sleep(2)
             # Click the 'Result' link using JavaScript
             driver.execute_script("goContent()")
             print("Clicked 'Result' link")
