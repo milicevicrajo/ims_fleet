@@ -40,9 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'django_crontab',
     'django_select2',
-    'django_cron',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -128,11 +127,10 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 AUTH_USER_MODEL = 'fleet.CustomUser' 
 
-CRON_CLASSES = [
-    "fleet.tasks.NisCommandCron",
-    "fleet.tasks.OmvPutnickaCommandCron",
-    "fleet.tasks.OmvTeretnaCommandCron",
-    "fleet.tasks.FetchPolicyDataCron",
-    "fleet.tasks.FetchServiceDataCron",
-    "fleet.tasks.FetchRequisitionDataCron",
-]
+
+# Celery postavke
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL Redis brokera
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'

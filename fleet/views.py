@@ -23,7 +23,7 @@ from django.db.models import Q
 from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data
 from .models import DraftServiceTransaction
 import threading
-from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset, execute_nis_command
+from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset
 
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
@@ -1509,18 +1509,18 @@ def fetch_data_view(request):
     # Prikaz stranice sa svim fetching formama
     return render(request, 'fleet/fetch_data.html')
 
-@staff_member_required
-def run_nis_command_view(request):
-    if request.method == "POST":
-        def run_command_in_background():
-            execute_nis_command()
+# @staff_member_required
+# def run_nis_command_view(request):
+#     if request.method == "POST":
+#         def run_command_in_background():
+#             execute_nis_command()
         
-        # Pokreće komandu u pozadini
-        thread = threading.Thread(target=run_command_in_background)
-        thread.start()
+#         # Pokreće komandu u pozadini
+#         thread = threading.Thread(target=run_command_in_background)
+#         thread.start()
         
-        return JsonResponse({"status": "success", "message": "Komanda pokrenuta u pozadini."})
-    return JsonResponse({"status": "error", "message": "Nevalidan zahtev."})
+#         return JsonResponse({"status": "success", "message": "Komanda pokrenuta u pozadini."})
+#     return JsonResponse({"status": "error", "message": "Nevalidan zahtev."})
 
 # POVLACENJE PODATAKA IZ DRUGE BAZE
 logger = logging.getLogger(__name__)  
@@ -1672,3 +1672,12 @@ def fetch_requisition_data_view(request):
     return render(request, 'fleet/fetch_data.html')
 
 
+# <!-- ======================================================================================== -->
+#                           <!-- IZVESTAJI -->
+# <!-- ======================================================================================== -->
+
+def kasko_rate_list(request):
+    # Query the data from the second database
+    kasko_rates = KaskoRate.objects.using('test_db').all()
+
+    return render(request, 'fleet/kasko_rate_list.html', {'kasko_rates': kasko_rates})			

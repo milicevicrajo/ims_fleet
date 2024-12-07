@@ -3,6 +3,13 @@
 
 
 <h1>Povlačenje podataka za sve funkcije</h1>
+<!-- Forma za povlačenje podataka za Policy -->
+<form method="post" action="{% url 'trigger_chrome_task' %}">
+    {% csrf_token %}
+    <button type="submit">CELERY TEST</button>
+</form>
+
+<hr>
 
 <!-- Forma za povlačenje podataka za Policy -->
 <form method="post" action="{% url 'fetch_policies' %}">

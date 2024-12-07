@@ -5,6 +5,6 @@ class Command(BaseCommand):
     help = 'Učitavanje transakcija NIS iz Excel fajla'
     
     def handle(self, *args, **kwargs):
-        file_path = 'Transakcije po klijentima - 2024-10-03_10-30.csv'  # Zamenite putanju do vaše Excel datoteke
+        file_path = 'Transakcije po klijentima - 2024-12-07_13-34.csv'  # Zamenite putanju do vaše Excel datoteke
         import_nis_transactions(file_path)
         import_nis_fuel_consumption(file_path)

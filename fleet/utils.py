@@ -433,7 +433,7 @@ def import_policy_data_from_excel(file_path):
     for index, row in df.iterrows():
         try:
             # Formatiraj registarsku oznaku
-            reg_br = row['RegistraskaOznaka'].strip().upper()
+            reg_br = format_license_plate(str(row['RegistraskaOznaka']))
 
             # Pronađi TrafficCard prema registracionom broju
             traffic_card = TrafficCard.objects.get(registration_number=reg_br)
@@ -482,63 +482,81 @@ from .models import Service, ServiceTransaction, Vehicle, ServiceType
 
 def import_services_from_excel(file_path):
     # Load the Excel file
-    df = pd.read_excel(file_path, sheet_name='servisi')
+    df = pd.read_excel(file_path, sheet_name='servisi1')
 
     # Iterate over each row in the DataFrame
     for index, row in df.iterrows():
         try:
-            # Handle the registration number format
-            reg_br = format_license_plate(row['RegOzn'])
-            # Find the TrafficCard by the formatted registration number
-            traffic_card = TrafficCard.objects.get(registration_number=reg_br)
-            vehicle = traffic_card.vehicle  # Find the associated vehicle
+            
+            vehicle = None
+
+            try:
+                # Provera da li postoji i validno je polje RegOzn
+                if pd.notna(row.get('RegOzn')) and row['RegOzn']:
+                    reg_br = format_license_plate(str(row['RegOzn']))
+                    traffic_card = TrafficCard.objects.get(registration_number=reg_br)
+                    vehicle = traffic_card.vehicle  # Povezuje vozilo
+            except TrafficCard.DoesNotExist:
+                print(f"TrafficCard with registration number {reg_br} not found. Proceeding with vehicle=None.")
+
+
+            # Check required fields
+            required_fields = [
+                'god', 'sif_par_pl', 'naz_par_pl', 'datum', 'sif_vrs', 'br_naloga',
+                'vez_dok', 'knt_pl', 'potrazuje', 'sif_par_npl', 'knt_npl', 'duguje', 'konto_vozila','popravka_kategorija','kilometraza'
+            ]
+            missing_fields = [field for field in required_fields if pd.isna(row.get(field))]
+
+            if missing_fields or not vehicle:
+                # Save as DraftServiceTransaction
+                DraftServiceTransaction.objects.create(
+                    vehicle=vehicle,
+                    god=int(row['god']) if pd.notna(row['god']) else None,
+                    sif_par_pl=str(row['sif_par_pl']).strip() if pd.notna(row['sif_par_pl']) else None,
+                    naz_par_pl=str(row['naz_par_pl']).strip() if pd.notna(row['naz_par_pl']) else None,
+                    datum=pd.to_datetime(row['datum'], format='%d/%m/%Y').date() if pd.notna(row['datum']) else None,
+                    sif_vrs=str(row['sif_vrs']).strip() if pd.notna(row['sif_vrs']) else None,
+                    br_naloga=str(row['br_naloga']).strip() if pd.notna(row['br_naloga']) else None,
+                    vez_dok=str(row['vez_dok']).strip() if pd.notna(row['vez_dok']) else None,
+                    knt_pl=str(row['knt_pl']).strip() if pd.notna(row['knt_pl']) else None,
+                    potrazuje=float(row['potrazuje']) if pd.notna(row['potrazuje']) else None,
+                    sif_par_npl=str(row['sif_par_npl']).strip() if pd.notna(row['sif_par_npl']) else None,
+                    knt_npl=str(row['knt_npl']).strip() if pd.notna(row['knt_npl']) else None,
+                    duguje=float(row['duguje']) if pd.notna(row['duguje']) else None,
+                    konto_vozila=str(row['konto_vozila']).strip() if pd.notna(row['konto_vozila']) else None,
+                    kom=row['kom'] if pd.notna(row['kom']) else None,
+                    popravka_kategorija=str(row['popravka_kategorija']).strip() if pd.notna(row['popravka_kategorija']) else None,
+                    kilometraza=int(row['kilometraza']) if pd.notna(row['kilometraza']) else None,
+                    napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
+                    nije_garaza=row.get('nije_garaza') if pd.notna(row.get('nije_garaza')) else None,
+                )
+                print(f"Row {index} saved as draft due to missing fields: {missing_fields}")
+                continue
 
             # Create or update ServiceTransaction
-            service_transaction = ServiceTransaction.objects.update_or_create(
+            ServiceTransaction.objects.update_or_create(
                 vehicle=vehicle,
-                god=row['god'],
-                sif_par_pl=row['sif_par_pl'],
-                naz_par_pl=row['naz_par_pl'].strip(),
+                god=int(row['god']),
+                sif_par_pl=str(row['sif_par_pl']).strip(),
+                naz_par_pl=str(row['naz_par_pl']).strip(),
                 datum=pd.to_datetime(row['datum'], format='%d/%m/%Y').date(),
-                sif_vrs=row['sif_vrs'].strip(),
-                br_naloga=row['br_naloga'],
-                vez_dok=row['vez_dok'].strip() if pd.notna(row['vez_dok']) else None,
-                knt_pl=row['knt_pl'],
+                sif_vrs=str(row['sif_vrs']).strip(),
+                br_naloga=str(row['br_naloga']).strip(),
+                vez_dok=str(row['vez_dok']).strip() if pd.notna(row['vez_dok']) else None,
+                knt_pl=str(row['knt_pl']).strip(),
                 potrazuje=float(row['potrazuje']),
-                sif_par_npl=row['sif_par_npl'],
-                knt_npl=row['knt_npl'],
+                sif_par_npl=str(row['sif_par_npl']).strip(),
+                knt_npl=str(row['knt_npl']).strip(),
                 duguje=float(row['duguje']),
-                konto_vozila=row['konto_vozila'].strip(),
+                konto_vozila=str(row['konto_vozila']).strip(),
                 kom=row['kom'] if pd.notna(row['kom']) else None,
-                popravka_kategorija=row['popravka_kategorija'].strip() if pd.notna(row['popravka_kategorija']) else None,
-                napomena=row['napomena'].strip() if pd.notna(row['napomena']) else None,
-            )[0]
-
-            # Handle the service type, ensuring the name is not empty
-            service_type_name = row['popravka_kategorija'].strip()
-            print(service_type_name)
-            if service_type_name:
-                service_type, created = ServiceType.objects.get_or_create(
-                    name=service_type_name,
-                    defaults={'description': 'Automatically created from import'}
-                )
-            else:
-                continue  # Skip this entry if no service type name is provided
-
-            # Create or update Service
-            service = Service.objects.update_or_create(
-                vehicle=vehicle,
-                service_type=service_type,
-                service_date=pd.to_datetime(row['datum'], format='%d/%m/%Y').date(),
-                cost=float(row['duguje']),  # Assuming 'duguje' is the cost
-                provider=row['naz_par_pl'].strip(),
-                description=row['napomena'].strip() if pd.notna(row['napomena']) else ""
-            )[0]
-
+                popravka_kategorija=str(row['popravka_kategorija']).strip() if pd.notna(row['popravka_kategorija']) else None,
+                kilometraza=int(row['kilometraza']),
+                napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
+                nije_garaza=row['nije_garaza'],
+            )
             print(f"Successfully imported service for vehicle {reg_br}")
 
-        except Vehicle.DoesNotExist:
-            print(f"Vehicle with registration number {reg_br} not found.")
         except Exception as e:
             print(f"Error importing row {index}: {e}")
 
@@ -550,38 +568,74 @@ def import_requisitions_from_excel(file_path):
     # Iterate over each row in the DataFrame
     for index, row in df.iterrows():
         try:
-            # Format and find the associated Vehicle by registration number
-            reg_br = format_license_plate(row['RegOzn'])
-            
-            # Find the TrafficCard by the formatted registration number
-            traffic_card = TrafficCard.objects.get(registration_number=reg_br)
-            print(traffic_card)
-            vehicle = traffic_card.vehicle  # Find the associated vehicle
+            vehicle = None  # Initialize vehicle as None
 
-            # Create or update Requisition instance
-            requisition, created = Requisition.objects.update_or_create(
+            try:
+                # Check if RegOzn is valid
+                if pd.notna(row.get('RegOzn')) and row['RegOzn']:
+                    reg_br = format_license_plate(str(row['RegOzn']))
+                    traffic_card = TrafficCard.objects.get(registration_number=reg_br)
+                    vehicle = traffic_card.vehicle
+            except TrafficCard.DoesNotExist:
+                print(f"TrafficCard with registration number {reg_br} not found. Proceeding with vehicle=None.")
+
+            # Check required fields
+            required_fields = [
+                'sif_pred', 'god', 'br_dok', 'sif_vrsart', 'stavka',
+                'sif_art', 'naz_art', 'kol', 'cena', 'vrednost_nab',
+                'mesec_unosa', 'datum_trebovanja','kilometraza','nije_garaza'
+            ]
+            missing_fields = [field for field in required_fields if pd.isna(row.get(field))]
+
+            if missing_fields or not vehicle:
+                # Save as DraftRequisition
+                DraftRequisition.objects.create(
+                    vehicle=vehicle,
+                    sif_pred=int(row['sif_pred']) if pd.notna(row['sif_pred']) else None,
+                    god=int(row['god']) if pd.notna(row['god']) else None,
+                    br_dok=str(row['br_dok']).strip() if pd.notna(row['br_dok']) else None,
+                    sif_vrsart=str(row['sif_vrsart']).strip() if pd.notna(row['sif_vrsart']) else None,
+                    stavka=int(row['stavka']) if pd.notna(row['stavka']) else None,
+                    sif_art=str(row['sif_art']).strip() if pd.notna(row['sif_art']) else None,
+                    naz_art=str(row['naz_art']).strip() if pd.notna(row['naz_art']) else None,
+                    kol=float(row['kol']) if pd.notna(row['kol']) else None,
+                    cena=float(row['cena']) if pd.notna(row['cena']) else None,
+                    vrednost_nab=float(row['vrednost_nab']) if pd.notna(row['vrednost_nab']) else None,
+                    mesec_unosa=int(row['mesec_unosa']) if pd.notna(row['mesec_unosa']) else None,
+                    datum_trebovanja=pd.to_datetime(row['datum_trebovanja'], format='%d/%m/%Y').date() if pd.notna(row['datum_trebovanja']) else None,
+                    popravka_kategorija=str(row['popravka_kategorija']).strip() if pd.notna(row['popravka_kategorija']) else None,
+                    kilometraza=int(row['kilometraza']) if pd.notna(row['kilometraza']) else None,
+                    nije_garaza=int(row['nije_garaza']) if pd.notna(row['kilometraza']) else None,
+                    napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
+                )
+                print(f"Row {index} saved as draft due to missing fields: {missing_fields}")
+                continue
+
+            # Create or update Requisition
+            Requisition.objects.update_or_create(
                 vehicle=vehicle,
-                sif_pred=row['sif_pred'],
-                god=row['god'],
-                br_dok=row['br_dok'],
-                sif_vrsart=row['sif_vrsart'].strip(),
-                stavka=row['stavka'],
-                sif_art=row['sif_art'],
-                naz_art=row['naz_art'].strip(),
-                kol=row['kol'],
-                cena=row['cena'],
-                vrednost_nab=row['vrednost_nab'],
-                mesec_unosa=row['mesec_unosa'],
+                sif_pred=int(row['sif_pred']),
+                god=int(row['god']),
+                br_dok=str(row['br_dok']).strip(),
+                sif_vrsart=str(row['sif_vrsart']).strip(),
+                stavka=int(row['stavka']),
+                sif_art=str(row['sif_art']).strip(),
+                naz_art=str(row['naz_art']).strip(),
+                kol=float(row['kol']),
+                cena=float(row['cena']),
+                vrednost_nab=float(row['vrednost_nab']),
+                mesec_unosa=int(row['mesec_unosa']),
                 datum_trebovanja=pd.to_datetime(row['datum_trebovanja'], format='%d/%m/%Y').date(),
-                napomena=row.get('napomena', '').strip() if pd.notna(row['napomena']) else None
+                popravka_kategorija=str(row['popravka_kategorija']).strip(),
+                kilometraza=int(row['kilometraza']),
+                nije_garaza=int(row['nije_garaza']),
+                napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
             )
+            print(f"Successfully imported requisition {row['br_dok']} for vehicle {vehicle}")
 
-            print(f"Successfully imported requisition {requisition.br_dok} for {vehicle}")
-
-        except Vehicle.DoesNotExist:
-            print(f"Vehicle with registration number {reg_br} not found.")
         except Exception as e:
             print(f"Error importing row {index}: {e}")
+
 
 
 def import_employee_data_from_excel(file_path):
@@ -617,7 +671,7 @@ def import_employee_data_from_excel(file_path):
 def populate_service_types():
     from fleet.models import ServiceType 
 
-# Podaci koje želiš da ubaciš u bazu
+    # Podaci koje želiš da ubaciš u bazu
     service_types = [
         {"name": "Redovan servis van IMS", "description": "Motorno ulje, Filteri ulja, vazduha, klime I goriva, svecice, wd sprej"},
         {"name": "Redovan servis u IMS", "description": "Motorno ulje, Filteri ulja, vazduha, klime I goriva, svecice, wd sprej"},
@@ -1252,16 +1306,23 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     return combined_queryset
 
 
-def execute_nis_command():
+def nis_data_import():
     try:
         # Define the URLs and credentials
         login_url = "https://cards.nis.rs"
         username = "zoran.institutims"
         password = "3RrrvvVg"
 
+        # Opcije za Chrome
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+
         # Set up Chrome options to download files to a specific location
         download_path = r"C:\nis_repo"
-        chrome_options = webdriver.ChromeOptions()
+
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
 
@@ -1346,6 +1407,7 @@ def execute_nis_command():
             import_nis_fuel_consumption(csv_file_path)
             import_nis_transactions(csv_file_path)
             print(f"Data imported successfully from {csv_file_path}")
+            return f"Funkciaj NIS Data Import je uspesno izvrsena"
 
         finally:
             # Close the browser
@@ -1356,5 +1418,338 @@ def execute_nis_command():
         print(f"Error: {str(e)}")
         return f"Error: {str(e)}"
 
+import time
+from datetime import datetime, timedelta
+
+def omv_putnicka_data_import(self, *args, **kwargs):
+    # Logika iz `omv_command_putnicka`
+    print("OMV Putnička komanda se izvršava...")
+    # Define the URLs and credentials
+    login_url = "https://fleet.omv.com/FleetServicesProduction/Login.jsp"
+    username = "710111107248"
+    password = "OMV-107248"
+
+    # Definišite datume
+    today = datetime.now().strftime("%Y-%m-%d")  # Današnji datum
+    # default_date_from = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")  # Podrazumevani datum "od"
+    default_date_from = datetime(2024, 1, 1).strftime("%Y-%m-%d")
+
+    # Proverite da li je "date from" unesen
+    date_from = kwargs.get('date_from', default_date_from)  # Koristi uneseni datum ili podrazumevani
+    date_to = today  # Zadaje se današnji datum za "date to"
+
+    # Opcije za Chrome
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Set up Chrome options to download files to a specific location
+    download_path = r"C:\omv_repo"
+    prefs = {"download.default_directory": download_path}
+    chrome_options.add_experimental_option("prefs", prefs)
+
+    # Initialize WebDriver
+    driver = webdriver.Chrome(options=chrome_options)
+
+    try:
+        # Open the login page
+        driver.get(login_url)
+        print("Opened login page")
+
+        # Enter username
+        username_input = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.ID, "username"))
+        )
+        username_input.send_keys(username)
+        print("Entered username")
+
+        # Enter password
+        password_input = driver.find_element(By.NAME, "password")
+        password_input.send_keys(password)
+        print("Entered password")
+
+        # Select language
+        language_select = driver.find_element(By.NAME, "language")
+        for option in language_select.find_elements(By.TAG_NAME, 'option'):
+            if option.text == 'English':
+                option.click()
+                break
+        print("Selected language")
+
+        # Click the login button
+        login_button = driver.find_element(By.XPATH, "//input[@type='submit']")
+        login_button.click()
+        print("Clicked login button")
+
+        # Wait for some time to ensure the page loads completely
+        time.sleep(1)
+
+        # Switch to the header frame to find the 'Transaction information' link
+        driver.switch_to.default_content()
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "header"))
+        )
+        print("Switched to header frame")
+
+        # Click on 'Transaction information'
+        transaction_information_link = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='header.do?selectModule=transactioninformation']"))
+        )
+        transaction_information_link.click()
+        print("Clicked on 'Transaction information'")
+
+        # Switch back to default content
+        driver.switch_to.default_content()
+
+        # Switch to the functionnavigation frame to proceed
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "functionnavigation"))
+        )
+        print("Switched to functionnavigation")
+
+        # Click on 'Reports'
+        reports_link = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='functionNavigation.do?openFunction=transactioninformation.report.overview']"))
+        )
+        reports_link.click()
+        print("Clicked on 'Reports'")
+
+        # Click on 'Transactions'
+        transactions_link = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='genSearchCriteria.do?activateFunction=transactioninformation.report.transaction&openFunction=transactioninformation.report.overview']"))
+        )
+        transactions_link.click()
+        print("Clicked on 'Transactions'")
+
+        # Switch back to default content
+        driver.switch_to.default_content()
+
+        # Switch to the searchcriteria frame
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "searchcriteria"))
+        )
+        print("Switched to searchcriteria frame")
+
+        # Wait for the date inputs to be present
+        date_from_input = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.NAME, "Transactiondatefrom"))
+        )
+        print("Date from input found")
+        time.sleep(2)
+        # Clear and set the 'date from' input
+        date_from_input.clear()
+        date_from_input.send_keys(date_from)
+        print(f"Entered 'date from': {date_from}")
+
+        # Clear and set the 'date to' input
+        date_to_input = driver.find_element(By.NAME, "Transactiondate1")
+        date_to_input.clear()
+        date_to_input.send_keys(date_to)
+        print(f"Entered 'date to': {date_to}")
+        time.sleep(2)
+        # Click the 'Result' link using JavaScript
+        driver.execute_script("goContent()")
+        print("Clicked 'Result' link")
+
+        # Switch back to default content
+        driver.switch_to.default_content()
+        
+        # Switch to the content frame
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "content"))
+        )
+
+        # Wait for the download link to appear
+        download_link = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href=\"javascript:openURL_Loading('browseTransactionList.do?event=CsvFileRequest');\"]"))
+        )
+        print("Download link found")
+
+        # Click the download link
+        download_link.click()
+        print("Clicked download link")
+        time.sleep(5)  # Očekuj da se preuzimanje završi
+
+        print("Report downloaded successfully")
+
+        # Pronađi najnovije preuzeti fajl
+        csv_file_path = get_latest_download_file(download_path)
+
+        # Importuj podatke u bazu
+        import_omv_fuel_consumption_from_csv(csv_file_path)            
+        import_omv_transactions_from_csv(csv_file_path)            
+        print(f"Data imported successfully from {csv_file_path}")
+
+    finally:
+        # Close the browser
+        driver.quit()
+        print("Browser closed")
+
+    return "OMV Putnička komanda uspešno završena."
+
+def omv_teretna_data_import(self, *args, **kwargs):
+    # Define the URLs and credentials
+    login_url = "https://fleet.omv.com/FleetServicesProduction/Login.jsp"
+    username = "710111107258"
+    password = "OMV-107258"
+
+    # Definišite datume
+    today = datetime.now().strftime("%Y-%m-%d")  # Današnji datum
+    # default_date_from = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")  # Podrazumevani datum "od"
+    default_date_from = datetime(2024, 1, 1).strftime("%Y-%m-%d")
 
 
+    # Proverite da li je "date from" unesen
+    date_from = kwargs.get('date_from', default_date_from)  # Koristi uneseni datum ili podrazumevani
+    date_to = today  # Zadaje se današnji datum za "date to"
+
+    # Opcije za Chrome
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Set up Chrome options to download files to a specific location
+    download_path = r"C:\omv_repo"
+    prefs = {"download.default_directory": download_path}
+    chrome_options.add_experimental_option("prefs", prefs)
+
+    # Initialize WebDriver
+    driver = webdriver.Chrome(options=chrome_options)
+
+    try:
+        # Open the login page
+        driver.get(login_url)
+        print("Opened login page")
+
+        # Enter username
+        username_input = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.ID, "username"))
+        )
+        username_input.send_keys(username)
+        print("Entered username")
+
+        # Enter password
+        password_input = driver.find_element(By.NAME, "password")
+        password_input.send_keys(password)
+        print("Entered password")
+
+        # Select language
+        language_select = driver.find_element(By.NAME, "language")
+        for option in language_select.find_elements(By.TAG_NAME, 'option'):
+            if option.text == 'English':
+                option.click()
+                break
+        print("Selected language")
+
+        # Click the login button
+        login_button = driver.find_element(By.XPATH, "//input[@type='submit']")
+        login_button.click()
+        print("Clicked login button")
+
+        # Wait for some time to ensure the page loads completely
+        time.sleep(1)
+
+        # Switch to the header frame to find the 'Transaction information' link
+        driver.switch_to.default_content()
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "header"))
+        )
+        print("Switched to header frame")
+
+        # Click on 'Transaction information'
+        transaction_information_link = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='header.do?selectModule=transactioninformation']"))
+        )
+        transaction_information_link.click()
+        print("Clicked on 'Transaction information'")
+
+        # Switch back to default content
+        driver.switch_to.default_content()
+
+        # Switch to the functionnavigation frame to proceed
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "functionnavigation"))
+        )
+        print("Switched to functionnavigation")
+        time.sleep(2)
+        # Click on 'Reports'
+        reports_link = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='functionNavigation.do?openFunction=transactioninformation.report.overview']"))
+        )
+        reports_link.click()
+        print("Clicked on 'Reports'")
+        time.sleep(2)
+        # Click on 'Transactions'
+        transactions_link = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href='genSearchCriteria.do?activateFunction=transactioninformation.report.transaction&openFunction=transactioninformation.report.overview']"))
+        )
+        transactions_link.click()
+        print("Clicked on 'Transactions'")
+
+        # Switch back to default content
+        driver.switch_to.default_content()
+
+        # Switch to the searchcriteria frame
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "searchcriteria"))
+        )
+        print("Switched to searchcriteria frame")
+        time.sleep(2)
+        # Wait for the date inputs to be present
+        date_from_input = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.NAME, "Transactiondatefrom"))
+        )
+        print("Date from input found")
+        time.sleep(2)
+        # Clear and set the 'date from' input
+        date_from_input.clear()
+        date_from_input.send_keys(date_from)
+        print(f"Entered 'date from': {date_from}")
+
+        # Clear and set the 'date to' input
+        date_to_input = driver.find_element(By.NAME, "Transactiondate1")
+        date_to_input.clear()
+        date_to_input.send_keys(date_to)
+        print(f"Entered 'date to': {date_to}")
+
+        # Click the 'Result' link using JavaScript
+        driver.execute_script("goContent()")
+        print("Clicked 'Result' link")
+        time.sleep(2)
+        # Switch back to default content
+        driver.switch_to.default_content()
+        
+        # Switch to the content frame
+        WebDriverWait(driver, 20).until(
+            EC.frame_to_be_available_and_switch_to_it((By.NAME, "content"))
+        )
+
+        # Wait for the download link to appear
+        download_link = WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, "//a[@href=\"javascript:openURL_Loading('browseTransactionList.do?event=CsvFileRequest');\"]"))
+        )
+        print("Download link found")
+
+        # Click the download link
+        download_link.click()
+        print("Clicked download link")
+        time.sleep(5)  # Očekuj da se preuzimanje završi
+
+        print("Report downloaded successfully")
+
+        # Pronađi najnovije preuzeti fajl
+        csv_file_path = get_latest_download_file(download_path)
+
+        # Importuj podatke u bazu
+        import_omv_fuel_consumption_from_csv(csv_file_path)            
+        import_omv_transactions_from_csv(csv_file_path)            
+        print(f"Data imported successfully from {csv_file_path}")
+
+    finally:
+        # Close the browser
+        driver.quit()
+        print("Browser closed")

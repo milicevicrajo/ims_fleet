@@ -23,7 +23,7 @@ class Vehicle(models.Model):
     number_of_seats = models.IntegerField(verbose_name=_("Broj sedišta"))
     purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Nabavna vrednost vozila"))
     value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Knjigovodstvena vrednost vozila"), null=True)
-    service_interval = models.IntegerField(verbose_name=_("Servisni interval"))
+    service_interval = models.IntegerField(verbose_name=_("Servisni interval"),default=15000)
     # Nova polja
     purchase_date = models.DateField(verbose_name=_("Datum nabavke"), null=True)  # Ovo je datum kada je vozilo nabavljeno
     center_code = models.CharField(max_length=20, verbose_name=_("Šifra centra (OJ)"), null=True)  # Ovo je šifra centra (oj)
@@ -230,7 +230,7 @@ class Service(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
 
     def __str__(self):
-        return f"{self.service_type.name} for {self.vehicle.chassis_number} on {self.service_date}"
+        return f"{self.service_type.name} za {self.vehicle.chassis_number} Na datum: {self.service_date}"
 
 class ServiceTransaction(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='service_transactions', verbose_name=_("Vozilo"))  # Dodata veza na Vehicle
@@ -249,6 +249,8 @@ class ServiceTransaction(models.Model):
     konto_vozila = models.CharField(max_length=20, verbose_name=_("Konto vozila"))
     kom = models.TextField(verbose_name=_("Komada"), blank=True, null=True)      
     popravka_kategorija = models.CharField(max_length=100, verbose_name=_("Kategorija poptavke"))
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"))
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"))
     napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
     
     class Meta:
@@ -276,6 +278,8 @@ class DraftServiceTransaction(models.Model):
     konto_vozila = models.CharField(max_length=20, verbose_name="Konto vozila", null=True, blank=True)
     kom = models.TextField(verbose_name="Komada", blank=True, null=True)      
     popravka_kategorija = models.CharField(max_length=100, verbose_name="Kategorija popravke", blank=True, null=True)
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), null=True, blank=True)
     napomena = models.TextField(blank=True, null=True, verbose_name="Napomena")
 
     def is_complete(self):
@@ -299,6 +303,9 @@ class Requisition(models.Model):
     vrednost_nab = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Vrednost nabavke")) 
     mesec_unosa = models.IntegerField(verbose_name=_("Mesec unosa"))
     datum_trebovanja = models.DateField(verbose_name=_("Datum trebovanja"))
+    popravka_kategorija = models.CharField(max_length=100, verbose_name="Kategorija popravke", blank=True, null=True)
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"))
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"))
     napomena = models.TextField(verbose_name=_("Napomena"),blank=True, null=True )
 
     def __str__(self):
@@ -316,6 +323,10 @@ class DraftRequisition(models.Model):
     kol = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     cena = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     vrednost_nab = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    popravka_kategorija = models.CharField(max_length=100, verbose_name="Kategorija popravke", blank=True, null=True)
+    mesec_unosa = models.IntegerField(verbose_name=_("Mesec unosa"), null=True, blank=True)
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), null=True, blank=True)
     datum_trebovanja = models.DateField(null=True, blank=True)
     napomena = models.TextField(null=True, blank=True)
 
@@ -418,6 +429,18 @@ class TransactionNIS(models.Model):
 
     def __str__(self):
         return f"Transakcija za {self.registarska_oznaka_vozila} na dan {self.datum_transakcije}"
+
+class KaskoRate(models.Model):
+    contract_number = models.CharField(max_length=255)
+    year = models.IntegerField()
+    rate = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        managed = False  # Django won't try to create or manage this table
+        db_table = '[dbo].[kasko_rate]'  # Exact name of the view in the database
+        app_label = 'your_app_name'
+
+
 
 class CustomUser(AbstractUser):
     # Add a new field for allowed centers (you can customize the field as needed)
