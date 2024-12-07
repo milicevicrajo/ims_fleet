@@ -4,7 +4,7 @@ from celery import Celery
 
 				
 # Postavi default Django postavke za Celery					
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ims_fleet.settings.development')					
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ims_fleet.settings.local')					
 					
 app = Celery('ims_fleet')					
 print("Celery broker URL:", app.conf.broker_url)
