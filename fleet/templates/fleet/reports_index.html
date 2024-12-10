@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Izveštaji</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+        <ul>
+            {% for section, reports in sections.items %}
+                <li>
+                    <h2>{{ section }}</h2>
+                    <ul>
+                        {% for report in reports %}
+                            <li><a href="{% url report.url %}">{{ report.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+
+    </div>
+
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        
+    </div>
+</div> 
+ 
+{% endblock %}

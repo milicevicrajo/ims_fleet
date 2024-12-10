@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled OMV Teretnih Vozila</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>Tip Vozila</th>
+                <th>Šifra Posla</th>
+                <th>Godina</th>
+                <th>Mesec</th>
+                <th>Polovina</th>
+                <th>Bruto</th>
+                <th>Neto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.tipvozila }}</td>
+                    <td>{{ row.sifpos }}</td>
+                    <td>{{ row.godina }}</td>
+                    <td>{{ row.mesec }}</td>
+                    <td>{{ row.polovina }}</td>
+                    <td>{{ row.bruto }}</td>
+                    <td>{{ row.neto }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}

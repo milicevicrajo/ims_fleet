@@ -24,6 +24,8 @@ from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data
 from .models import DraftServiceTransaction
 import threading
 from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset
+from django.shortcuts import render
+from django.db import connection
 
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
@@ -1676,8 +1678,83 @@ def fetch_requisition_data_view(request):
 #                           <!-- IZVESTAJI -->
 # <!-- ======================================================================================== -->
 
-def kasko_rate_list(request):
-    # Query the data from the second database
-    kasko_rates = KaskoRate.objects.using('test_db').all()
+def reports_index(request):
+    """Početna stranica za izveštaje sa linkovima."""
+    sections = {
+        "Finansije": [
+            {"name": "Spisak vozila po šiframa posla", "url": "vehicle_list"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - OMV putnicka", "url": "omv_putnicka"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - OMV teretna", "url": "omv_teretna"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - NIS putnicka", "url": "nis_putnicka"},
+            {"name": "Pregled Plaćenih Rata po Aktivnim Polisama Kasko Osiguranja", "url": "kasko_rate"},
+        ],
+        # "Centri": [
+        #     {"name": "Pregled putnih naloga po godinama", "url": "kasko_rate"},
+        #     {"name": "Zatvoreni putni nalozi", "url": "closed_travel_orders"},
+        # ],
+        # "Garaža": [
+        #     {"name": "Polise koje ističu sledećeg meseca", "url": "expiring_policies"},
+        #     {"name": "Vozila za redovan servis", "url": "regular_service"},
+        #     {"name": "Trenutno stanje u magacinu", "url": "garage_inventory"},
+        # ],
+        # "Uprava": [
+        #     {"name": "Promet goriva po mesecima", "url": "fuel_turnover"},
+        #     {"name": "Pregled troškova po kontima i centrima", "url": "costs_by_center"},
+        # ],
+    }
 
-    return render(request, 'fleet/kasko_rate_list.html', {'kasko_rates': kasko_rates})			
+    return render(request, 'fleet/reports_index.html', {"sections": sections})
+
+def omv_putnicka_view(request):
+    """
+    View za prikaz podataka iz OMV_putnicka_sp u test_db.
+    """
+    query = """
+        SELECT sifpos, godina, mesec, tipvozila, polovina, bruto, neto
+        FROM OMV_putnicka_sp
+    """
+    data = get_data_from_secondary_db(query, 'test_db')
+    
+    return render(request, 'fleet/reports/omv_putnicka.html', {'data': data})
+
+def nis_putnicka_view(request):
+    """
+    View za prikaz podataka iz dbo.NIS_putnicka_sp.
+    """
+    query = """
+        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
+        FROM dbo.NIS_putnicka_sp
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias sekundarne baze
+    return render(request, 'fleet/reports/nis_putnicka.html', {'data': data})
+
+def omv_teretna_view(request):
+    """
+    View za prikaz podataka iz dbo.OMV_teretna_sp.
+    """
+    query = """
+        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
+        FROM dbo.OMV_teretna_sp
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za drugu bazu
+    return render(request, 'fleet/reports/omv_teretna.html', {'data': data})
+
+
+def get_data_from_secondary_db(query, db_alias, params=None):
+    """
+    Izvršava SQL upit na drugoj bazi i vraća rezultat kao listu rečnika.
+    """
+    with connections[db_alias].cursor() as cursor:
+        cursor.execute(query, params or [])
+        columns = [col[0] for col in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+def kasko_rate_view(request):
+    """
+    View za prikaz podataka iz dbo.kasko_rate.
+    """
+    query = "SELECT * FROM dbo.kasko_rate"
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/kasko_rate.html', {'data': data})
+
+	

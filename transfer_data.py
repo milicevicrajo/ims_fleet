@@ -21,7 +21,23 @@ def transfer_all_data():
     models_to_transfer_first = [Vehicle, OrganizationalUnit, ServiceType, Employee]
 
     # Zatim prebacujemo tabele koje zavise od prethodnih
-    models_to_transfer_second = [TrafficCard, JobCode, Lease, LeaseInterest, Policy, FuelConsumption, Incident, PutniNalog, Service, ServiceTransaction, Requisition, TransactionOMV, TransactionNIS, DraftRequisition,DraftServiceTransaction]
+    models_to_transfer_second = [
+        TrafficCard, 
+        JobCode, 
+        Lease, 
+        LeaseInterest, 
+        Policy, 
+        FuelConsumption, 
+        Incident, 
+        PutniNalog, 
+        Service, 
+        ServiceTransaction, 
+        Requisition, 
+        TransactionOMV, 
+        TransactionNIS, 
+        DraftRequisition,
+        DraftServiceTransaction,
+        CustomUser]
 
     # Prebacivanje prvog seta modela (bez zavisnosti)
     for model in models_to_transfer_first:

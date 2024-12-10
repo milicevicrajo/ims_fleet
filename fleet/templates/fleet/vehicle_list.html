@@ -54,6 +54,7 @@
                         <th>Servisi cena</th>                        
                         <th>Vrednost nabavna</th>
                         <th>Vrednost trenutna</th>
+                        <th>Izmeni</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -74,6 +75,9 @@
                         <td>{{ vehicle.total_repairs|default:0|floatformat:0|intcomma }}</td>
                         <td>{{ vehicle.purchase_value }}</td>
                         <td>{{ vehicle.value }}</td>
+                        <td>
+                            <a href="{% url 'vehicle_update' vehicle.pk %}">Izmeni</a>
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
@@ -91,6 +95,7 @@
                         <th>Servisi cena</th>                        
                         <th>Vrednost nabavna</th>
                         <th>Vrednost trenutna</th>
+                        <th>Izmeni</th>
                     </tr>
                 </tfoot>
             </table>

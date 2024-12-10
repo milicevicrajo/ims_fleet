@@ -55,6 +55,10 @@
                 <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                     href="{% url 'user_list'%}" aria-expanded="false"><i class="mdi mdi-account"></i><span
                             class="hide-menu">Korisnici</span></a></li>
+                <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                    href="{% url 'reports_index'%}" aria-expanded="false"><i class="mdi mdi-account"></i><span
+                            class="hide-menu">Izveštaji</span></a>
+                </li>
                 {% if user.is_superuser %}
                 <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                     href="{% url 'fetch_data'%}" aria-expanded="false"><i class="mdi mdi-account"></i><span
