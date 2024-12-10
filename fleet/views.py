@@ -17,7 +17,7 @@ from datetime import date, timedelta
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
-from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
+from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever, update_vehicle_values
 from django.db.models.functions import TruncMonth, TruncYear
 from django.db.models import Q
 from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data
@@ -241,8 +241,15 @@ class VehicleListView(LoginRequiredMixin, ListView):
     context_object_name = 'vehicles'
     form_class = VehicleFilterForm  # Dodajemo formu za filtriranje
 
+ 
+
     def get_queryset(self):
         queryset = super().get_queryset()
+        """
+        Ažurira vrednosti vozila pre povlačenja podataka za prikaz.
+        """
+        updated_count = update_vehicle_values()  # Poziva funkciju iz utils.py
+        messages.success(self.request, f"Uspešno ažurirano {updated_count} vozila.")
         
         # Dohvati vrednosti iz GET parametara
         org_unit = self.request.GET.get('org_unit')

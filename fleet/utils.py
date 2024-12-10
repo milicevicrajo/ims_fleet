@@ -21,7 +21,7 @@ from django.db import connections, IntegrityError
 from .models import Policy, DraftPolicy
 from django.db.models import F, Value, CharField
 from django.db.models import Subquery, OuterRef, F, Value, CharField
-
+import logging
 
 def get_latest_download_file(download_path):
 
@@ -1753,3 +1753,44 @@ def omv_teretna_data_import(self, *args, **kwargs):
         # Close the browser
         driver.quit()
         print("Browser closed")
+
+
+logger = logging.getLogger(__name__)
+
+def update_vehicle_values():
+    """
+    Povlači vrednosti vozila iz eksterne baze i ažurira model Vehicle.
+    """
+    updated_vehicles_count = 0
+
+    try:
+        # Povlačenje podataka iz druge baze
+        with connections['test_db'].cursor() as cursor:
+            cursor.execute("""
+                SELECT sif_osn, sad_vrednost FROM dbo.vrednost_vozila
+            """)
+            rows = cursor.fetchall()
+
+        # Iteracija kroz redove i ažuriranje vozila
+        vehicles_to_update = []
+        for row in rows:
+            sif_osn = row[0].strip()
+            vrednost = row[1]
+
+            try:
+                vehicle = Vehicle.objects.get(inventory_number=sif_osn)
+                vehicle.value = vrednost
+                vehicles_to_update.append(vehicle)
+            except Vehicle.DoesNotExist:
+                logger.warning(f"Vozilo sa inventory_number {sif_osn} nije pronađeno.")
+            except Exception as e:
+                logger.error(f"Greška prilikom ažuriranja vozila {sif_osn}: {e}")
+
+        # Grupno ažuriranje vozila radi optimizacije
+        Vehicle.objects.bulk_update(vehicles_to_update, ['value'])
+        updated_vehicles_count = len(vehicles_to_update)
+
+    except Exception as e:
+        logger.error(f"Greška prilikom povlačenja podataka iz baze: {e}")
+
+    return updated_vehicles_count
