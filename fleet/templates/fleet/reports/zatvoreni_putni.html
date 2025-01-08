@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled Zatvorenih Putnih Naloga</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>Godina</th>
+                <th>Vezani Dokument</th>
+                <th>Šifra Partnera</th>
+                <th>Šifra Posla</th>
+                <th>Datum</th>
+                <th>Iznos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.god }}</td>
+                    <td>{{ row.vez_dok }}</td>
+                    <td>{{ row.sif_par }}</td>
+                    <td>{{ row.sif_pos }}</td>
+                    <td>{{ row.datum }}</td>
+                    <td>{{ row.iznos }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}

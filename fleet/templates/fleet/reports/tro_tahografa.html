@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled troškova tahografa </h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>Partner PIB</th>
+                <th>Ime Partnera</th>
+                <th>ID</th>
+                <th>Broj Fakture</th>
+                <th>Datum Izdavanja</th>
+                <th>Naziv</th>
+                <th>Iznos za Plaćanje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.PartnerPIB }}</td>
+                    <td>{{ row.PartnerIme }}</td>
+                    <td>{{ row.ID }}</td>
+                    <td>{{ row.BrojFakture }}</td>
+                    <td>{{ row.issuedate }}</td>
+                    <td>{{ row.NAZIV }}</td>
+                    <td>{{ row.ZaPlacanje }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}
+
+
+
+ 

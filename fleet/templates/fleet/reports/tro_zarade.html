@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled troškova plata</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>OJ</th>
+                <th>Godina</th>
+                <th>Mesec</th>
+                <th>Šifra Raspona</th>
+                <th>Radnik Naziv</th>
+                <th>Neto</th>
+                <th>Bruto</th>
+                <th>Bruto2</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.oj }}</td>
+                    <td>{{ row.god }}</td>
+                    <td>{{ row.mesec }}</td>
+                    <td>{{ row.rasif }}</td>
+                    <td>{{ row.ranaz }}</td>
+                    <td>{{ row.neto }}</td>
+                    <td>{{ row.bruto }}</td>
+                    <td>{{ row.bruto2 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}
+
+
+
+ 

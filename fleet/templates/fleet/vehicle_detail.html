@@ -42,7 +42,12 @@
         <!------- CARD ------>
         <div class="card">
             <div class="card-body">
-                <h3 class="card-title">Trenutna šifra posla</h3>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Trenutna šifra posla</h3>
+                    <a href={% url 'jobcode_create'%} class="text-success" style="font-size: 1.15em;">
+                        <i class="mdi mdi-plus-box"></i></i> Promeni šifru posla
+                    </a>
+                </div>
                 {% if current_job_code %}
                     <p style="font-size: 1.2em;">Šifra posla: {{ current_job_code.organizational_unit.code }}</p>
                 {% else %}

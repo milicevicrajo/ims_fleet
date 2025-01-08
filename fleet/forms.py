@@ -186,6 +186,45 @@ class RequisitionForm(forms.ModelForm):
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.datum_trebovanja:
                 self.initial['datum_trebovanja'] = self.instance.datum_trebovanja.strftime('%Y-%m-%d')
-        # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
+        # Prolazi kroz sva polja u formi i postavlja ih kao obavezna osim Boolean polja
         for field_name, field in self.fields.items():
-            field.required = True
+            if not isinstance(field, forms.BooleanField):  # Ignoriše Boolean polja
+                field.required = True
+
+class DraftRequisitionForm(forms.ModelForm):
+    vehicle = forms.ModelChoiceField(
+        queryset=Vehicle.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label="Vozilo"
+    )
+    datum_trebovanja = forms.DateField(
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum"
+    )
+    mesec_unosa = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Mesec unosa"
+    )
+    popravka_kategorija = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        label="Kategorija popravke"
+    )
+    kilometraza = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Kilometraža"
+    )
+    nije_garaza = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        label="Nije garaža"
+    )
+    napomena = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        label="Napomena"
+    )
+
+    class Meta:
+        model = DraftRequisition
+        fields = ['vehicle','datum_trebovanja', 'mesec_unosa', 'popravka_kategorija', 'kilometraza', 'nije_garaza', 'napomena']

@@ -1794,3 +1794,18 @@ def update_vehicle_values():
         logger.error(f"Greška prilikom povlačenja podataka iz baze: {e}")
 
     return updated_vehicles_count
+
+
+def delete_complete_drafts():
+    """
+    Briše sve `DraftRequisition` zapise koji su kompletni (`is_complete()` vraća True).
+    """
+    # Dohvati sve zapise iz `DraftRequisition`
+    drafts = DraftRequisition.objects.all()
+
+    # Prođi kroz sve zapise i obriši one koji su kompletni
+    for draft in drafts:
+        if draft.is_complete():
+            draft.delete()
+
+

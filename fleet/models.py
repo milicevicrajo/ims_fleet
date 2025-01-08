@@ -62,6 +62,14 @@ class TrafficCard(models.Model):
     owner = models.CharField(max_length=100, verbose_name=_("Vlasnik"))
     homologation_number = models.CharField(max_length=50, verbose_name=_("Homologacioni broj"))
 
+    # Polje za kačenje PDF-a saobraćajne dozvole
+    traffic_card_pdf = models.FileField(
+        upload_to='traffic_cards/',  # Folder gde će se čuvati datoteke
+        verbose_name=_("PDF Saobraćajne dozvole"),
+        null=True,
+        blank=True
+    )
+
     def __str__(self):
         return f"{self.registration_number} valid until {self.valid_until}"
 
@@ -335,7 +343,7 @@ class DraftRequisition(models.Model):
     
     def is_complete(self):
         # Definiši pravila koja određuju da li su svi podaci dostupni
-        return all([self.sif_pred, self.god, self.kol, self.cena, self.vrednost_nab])
+        return all([self.vehicle, self.popravka_kategorija, self.mesec_unosa, self.kilometraza, self.datum_trebovanja])
     
 class TransactionOMV(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='omv_transactions', verbose_name=_("Vozilo"), blank=True, null=True)

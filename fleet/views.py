@@ -17,7 +17,7 @@ from datetime import date, timedelta
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
-from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever, update_vehicle_values
+from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever, update_vehicle_values, delete_complete_drafts
 from django.db.models.functions import TruncMonth, TruncYear
 from django.db.models import Q
 from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data
@@ -1411,15 +1411,16 @@ class RequisitionListView(ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Trebovanja'
         return context
-    
-class RequisitionFixingListView(ListView):
+
+# Draft    
+class RequisitionFixingListView(ListView): 
     model = DraftRequisition
     template_name = 'fleet/draft_requisition_list.html'
     context_object_name = 'requisitions'
     
     def get_queryset(self):
         # Filter policies where the vehicle is None
-        return DraftRequisition.objects.filter(vehicle__isnull=True)
+        return DraftRequisition.objects.all()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1448,16 +1449,74 @@ class RequisitionUpdateView(UpdateView):
 
 class DraftRequisitionUpdateView(UpdateView):
     model = DraftRequisition
-    form_class = RequisitionForm
-    template_name = 'fleet/generic_form.html'
-    success_url = reverse_lazy('requisition_list')
+    form_class = DraftRequisitionForm
+    template_name = 'fleet/generic_form_draft.html'
+    success_url = reverse_lazy('requisition_list')  # Preusmerenje nakon uspešne izmene
     success_message = "Trebovanje uspešno izmenjeno!"
+
+    def form_valid(self, form):
+        # Sačuvaj trenutnu instancu
+        current_instance = form.save()
+
+        # Ažuriraj sve instance sa istim `br_dok` i `god`
+        DraftRequisition.objects.filter(
+            br_dok=current_instance.br_dok,
+            god=current_instance.god
+        ).exclude(id=current_instance.id).update(
+            vehicle=current_instance.vehicle,
+            datum_trebovanja=current_instance.datum_trebovanja,
+            mesec_unosa=current_instance.mesec_unosa,
+            popravka_kategorija=current_instance.popravka_kategorija,
+            kilometraza=current_instance.kilometraza,
+            nije_garaza=current_instance.nije_garaza,
+            napomena=current_instance.napomena
+        )
+
+        # Prođi kroz sve zapise i obriši one koji su kompletni
+        draft_requisitions = DraftRequisition.objects.filter(
+            br_dok=current_instance.br_dok,
+            god=current_instance.god
+        )
+        for draft in draft_requisitions:
+            if draft.is_complete():
+                # Premeštanje u Requisition pre brisanja
+                Requisition.objects.create(
+                    vehicle=draft.vehicle,
+                    sif_pred=draft.sif_pred,
+                    god=draft.god,
+                    br_dok=draft.br_dok,
+                    sif_vrsart=draft.sif_vrsart,
+                    stavka=draft.stavka,
+                    sif_art=draft.sif_art,
+                    naz_art=draft.naz_art,
+                    kol=draft.kol,
+                    cena=draft.cena,
+                    vrednost_nab=draft.vrednost_nab,
+                    popravka_kategorija=draft.popravka_kategorija,
+                    mesec_unosa=draft.mesec_unosa,
+                    kilometraza=draft.kilometraza,
+                    nije_garaza=draft.nije_garaza,
+                    datum_trebovanja=draft.datum_trebovanja,
+                    napomena=draft.napomena
+                )
+                # Obriši zapis
+                draft.delete()
+
+        # Preusmeri na success_url
+        response = super().form_valid(form)
+
+        # Pozovi funkciju za brisanje kompletnih zapisa
+        delete_complete_drafts()
+
+        return response
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Izmena trebovanja'
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
+
 
 class RequisitionDeleteView(DeleteView):
     model = Requisition
@@ -1695,19 +1754,26 @@ def reports_index(request):
             {"name": "Pregled potrošnje goriva po šiframa posla - NIS putnicka", "url": "nis_putnicka"},
             {"name": "Pregled Plaćenih Rata po Aktivnim Polisama Kasko Osiguranja", "url": "kasko_rate"},
         ],
-        # "Centri": [
-        #     {"name": "Pregled putnih naloga po godinama", "url": "kasko_rate"},
-        #     {"name": "Zatvoreni putni nalozi", "url": "closed_travel_orders"},
-        # ],
-        # "Garaža": [
-        #     {"name": "Polise koje ističu sledećeg meseca", "url": "expiring_policies"},
-        #     {"name": "Vozila za redovan servis", "url": "regular_service"},
-        #     {"name": "Trenutno stanje u magacinu", "url": "garage_inventory"},
-        # ],
-        # "Uprava": [
-        #     {"name": "Promet goriva po mesecima", "url": "fuel_turnover"},
-        #     {"name": "Pregled troškova po kontima i centrima", "url": "costs_by_center"},
-        # ],
+        "Centri": [
+            # {"name": "Pregled putnih naloga po godinama", "url": "kasko_rate"},
+            {"name": "Zatvoreni putni nalozi", "url": "zatvoreni_putni"},
+        ],
+        "Garaža": [
+            {"name": "Trenutno stanje u magacinu", "url": "magacin"},
+            {"name": "Spisak otpisanih vozila", "url": "otpis"},
+            # {"name": "Trenutno stanje u magacinu", "url": "tro_gorivo_mesec"},
+        ],
+        "Uprava": [
+            {"name": "Promet goriva po mesecima", "url": "tro_gorivo_mesec"},
+            {"name": "Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima ", "url": "troskovi_svi"},
+            {"name": "Troškovi praćenja vozila", "url": "tro_pracenja_vozila"},
+            {"name": "Troškovi tahografa ", "url": "troskovi_tahograf"},
+            {"name": "Troškovi zarada", "url": "tro_zarade"},
+            {"name": "Troškovi parkinga", "url": "tro_parking"},
+            {"name": "Pregled Potraživanja od osiguranja", "url": "potrazivanje_ddor"},
+            {"name": "Pregled Najvećih Dobavljača Usluga", "url": "po_dobavljacima"},
+            
+        ],
     }
 
     return render(request, 'fleet/reports_index.html', {"sections": sections})
@@ -1765,3 +1831,129 @@ def kasko_rate_view(request):
     return render(request, 'fleet/reports/kasko_rate.html', {'data': data})
 
 	
+def zatvoren_putni_view(request):
+    """
+    View za prikaz podataka iz dbo.zatvoren_putni.
+    """
+    query = "SELECT * FROM dbo.zatvoren_putni"
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/zatvoreni_putni.html', {'data': data})
+
+
+def magacin_view(request):
+    """
+    View za prikaz podataka iz dbo.magacin_garaza.
+    """
+    query = """
+        SELECT sif_pred, god, oj, sif_mag, sif_art, kolul, koliz, popkol, vrulnab, vriznab,
+               vrulvp, vrizvp, revalzal, razliz, mag_cena, kolpon, cenapon, naz_art,
+               sif_vrsart, naz_vrsart
+        FROM dbo.magacin_garaza
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/magacin.html', {'data': data})
+
+
+def otpis_view(request):
+    """
+    View za prikaz podataka iz dbo.otpis.
+    """
+    query = """
+        SELECT sif_pred, god, sif_osn, rb, naz_osn, inv_br, kol, jed_mere, sif_par, knt, oj, sif_lok,
+               sif_amort, sif_reval, stopa_dogam, dat_stavlj, dat_prest, iznos_val, skr_naz, poreklo,
+               nab_vred, osnovica, otpis, status, br_fakture, zemljiste_ar, zemljiste_m, u_gramima,
+               sif_amortP, sif_revalP, otpisP, otudjena_vrednost, ind_trosak, opis, osnovicaP,
+               ind_manjak, ind_amort, knt_ispravka, sif_kor, stopa_amort
+        FROM dbo.otpis
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/otpis.html', {'data': data})
+
+def tro_gorivo_mesec_view(request):
+    """
+    View za prikaz podataka iz dbo.TroGorivoMesec.
+    """
+    query = """
+        SELECT god, mesec, kategorija, iznos
+        FROM dbo.TroGorivoMesec
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/tro_gorivo_mesec.html', {'data': data})
+
+def troskovi_svi_view(request):
+    """
+    View za prikaz podataka iz dbo.Troskovi_svi.
+    """
+    query = """
+        SELECT god, sif_vrs, datum, br_naloga, stavka, oj, knt, naz_knt, duguje, sif_pos
+        FROM dbo.Troskovi_svi
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/troskovi_svi.html', {'data': data})
+
+def tro_pracenja_vozila_view(request):
+    """
+    View za prikaz podataka iz dbo.TroPracenjaVozila.
+    """
+    query = """
+        SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, ZaPlacanje, Konto_tro
+        FROM dbo.TroPracenjaVozila
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/tro_pracenja_vozila.html', {'data': data})
+
+def tahograf_partneri_view(request):
+    """
+    View za prikaz podataka iz dbo.TroTahografa.
+    """
+    query = """
+        SELECT *
+        FROM dbo.TroTahografa
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/tro_tahografa.html', {'data': data})
+
+def tro_zarade_view(request):
+    """
+    View za prikaz podataka iz dbo.tro_zarade.
+    """
+    query = """
+        SELECT oj, god, mesec, rasif, ranaz, neto, bruto, bruto2
+        FROM dbo.tro_zarade
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/tro_zarade.html', {'data': data})
+
+def tro_parking_view(request):
+    """
+    View za prikaz podataka iz dbo.tro_parking.
+    """
+    query = """
+        SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, note, naziv, ZaPlacanje
+        FROM dbo.tro_parking
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/tro_parking.html', {'data': data})
+
+def po_dobavljacima_view(request):
+    """
+    View za prikaz podataka iz dbo.po_dobavljacima.
+    """
+    query = """
+        SELECT naz_par, sif_pred, god, sif_vrs, br_naloga, stavka, oj, knt, grupa, sif_par, datum, vez_dok,
+               duguje, potrazuje, skr_naz, deviza, kom, stavka_k, dpo, promena, sif_pos, dat_naloga, d_p, placeno
+        FROM dbo.po_dobavljacima
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/po_dobavljacima.html', {'data': data})
+
+def potrazivanje_ddor_view(request):
+    """
+    View za prikaz podataka iz dbo.potrazivanje_ddor.
+    """
+    query = """
+        SELECT god, sif_vrs, br_naloga, stavka, oj, knt, datum, vez_dok, potrazuje
+        FROM dbo.potrazivanje_ddor
+    """
+    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    return render(request, 'fleet/reports/potrazivanje_ddor.html', {'data': data})

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled Zatvorenih Putnih Naloga</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>Šifra Predmeta</th>
+                <th>Godina</th>
+                <th>Šifra Osnovnog Sredstva</th>
+                <th>RB</th>
+                <th>Naziv Osnovnog Sredstva</th>
+                <th>Inventarski Broj</th>
+                <th>Količina</th>
+                <th>Jedinica Mere</th>
+                <th>Šifra Partnera</th>
+                <th>Konto</th>
+                <th>OJ</th>
+                <th>Šifra Lokacije</th>
+                <th>Šifra Amortizacije</th>
+                <th>Šifra Revalorizacije</th>
+                <th>Stopa Dogam</th>
+                <th>Datum Stavljanja</th>
+                <th>Datum Prestanak</th>
+                <th>Iznos Val</th>
+                <th>Skraceni Naziv</th>
+                <th>Poreklo</th>
+                <th>Nabavna Vrednost</th>
+                <th>Osnovica</th>
+                <th>Otpis</th>
+                <th>Status</th>
+                <th>Broj Fakture</th>
+                <th>Zemljište Ar</th>
+                <th>Zemljište M</th>
+                <th>U Gramima</th>
+                <th>Šifra Amortizacije P</th>
+                <th>Šifra Revalorizacije P</th>
+                <th>Otpis P</th>
+                <th>Otudjena Vrednost</th>
+                <th>Indikator Trošak</th>
+                <th>Opis</th>
+                <th>Osnovica P</th>
+                <th>Indikator Manjak</th>
+                <th>Indikator Amortizacija</th>
+                <th>Konto Ispravka</th>
+                <th>Šifra Korisnika</th>
+                <th>Stopa Amortizacije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.sif_pred }}</td>
+                    <td>{{ row.god }}</td>
+                    <td>{{ row.sif_osn }}</td>
+                    <td>{{ row.rb }}</td>
+                    <td>{{ row.naz_osn }}</td>
+                    <td>{{ row.inv_br }}</td>
+                    <td>{{ row.kol }}</td>
+                    <td>{{ row.jed_mere }}</td>
+                    <td>{{ row.sif_par }}</td>
+                    <td>{{ row.knt }}</td>
+                    <td>{{ row.oj }}</td>
+                    <td>{{ row.sif_lok }}</td>
+                    <td>{{ row.sif_amort }}</td>
+                    <td>{{ row.sif_reval }}</td>
+                    <td>{{ row.stopa_dogam }}</td>
+                    <td>{{ row.dat_stavlj }}</td>
+                    <td>{{ row.dat_prest }}</td>
+                    <td>{{ row.iznos_val }}</td>
+                    <td>{{ row.skr_naz }}</td>
+                    <td>{{ row.poreklo }}</td>
+                    <td>{{ row.nab_vred }}</td>
+                    <td>{{ row.osnovica }}</td>
+                    <td>{{ row.otpis }}</td>
+                    <td>{{ row.status }}</td>
+                    <td>{{ row.br_fakture }}</td>
+                    <td>{{ row.zemljiste_ar }}</td>
+                    <td>{{ row.zemljiste_m }}</td>
+                    <td>{{ row.u_gramima }}</td>
+                    <td>{{ row.sif_amortP }}</td>
+                    <td>{{ row.sif_revalP }}</td>
+                    <td>{{ row.otpisP }}</td>
+                    <td>{{ row.otudjena_vrednost }}</td>
+                    <td>{{ row.ind_trosak }}</td>
+                    <td>{{ row.opis }}</td>
+                    <td>{{ row.osnovicaP }}</td>
+                    <td>{{ row.ind_manjak }}</td>
+                    <td>{{ row.ind_amort }}</td>
+                    <td>{{ row.knt_ispravka }}</td>
+                    <td>{{ row.sif_kor }}</td>
+                    <td>{{ row.stopa_amort }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}
+
+
+
+ 

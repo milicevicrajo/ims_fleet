@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled Zatvorenih Putnih Naloga</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>Šifra Predmeta</th>
+                <th>Godina</th>
+                <th>OJ</th>
+                <th>Šifra Magacina</th>
+                <th>Šifra Artikla</th>
+                <th>Količina Ulaza</th>
+                <th>Količina Izlaza</th>
+                <th>Popunjavanje Količine</th>
+                <th>Vrednost Ulaza Nabavne</th>
+                <th>Vrednost Izlaza Nabavne</th>
+                <th>Vrednost Ulaza VP</th>
+                <th>Vrednost Izlaza VP</th>
+                <th>Revalorizacija Zaliha</th>
+                <th>Razlike Izlaza</th>
+                <th>Magacinska Cena</th>
+                <th>Količina Ponude</th>
+                <th>Cena Ponude</th>
+                <th>Naziv Artikla</th>
+                <th>Šifra Vrste Artikla</th>
+                <th>Naziv Vrste Artikla</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.sif_pred }}</td>
+                    <td>{{ row.god }}</td>
+                    <td>{{ row.oj }}</td>
+                    <td>{{ row.sif_mag }}</td>
+                    <td>{{ row.sif_art }}</td>
+                    <td>{{ row.kolul }}</td>
+                    <td>{{ row.koliz }}</td>
+                    <td>{{ row.popkol }}</td>
+                    <td>{{ row.vrulnab }}</td>
+                    <td>{{ row.vriznab }}</td>
+                    <td>{{ row.vrulvp }}</td>
+                    <td>{{ row.vrizvp }}</td>
+                    <td>{{ row.revalzal }}</td>
+                    <td>{{ row.razliz }}</td>
+                    <td>{{ row.mag_cena }}</td>
+                    <td>{{ row.kolpon }}</td>
+                    <td>{{ row.cenapon }}</td>
+                    <td>{{ row.naz_art }}</td>
+                    <td>{{ row.sif_vrsart }}</td>
+                    <td>{{ row.naz_vrsart }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}
+
+
+
+ 

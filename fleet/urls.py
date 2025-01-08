@@ -2,6 +2,8 @@ from django.urls import path
 from .views import *
 from fleet import views
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('vozila/', VehicleListView.as_view(), name='vehicle_list'),
@@ -100,14 +102,25 @@ urlpatterns = [
     path('requisitions/create/', RequisitionCreateView.as_view(), name='requisition_create'),
     path('requisitions/<int:pk>/edit/', RequisitionUpdateView.as_view(), name='requisition_update'),
     path('requisitions/<int:pk>/delete/', RequisitionDeleteView.as_view(), name='requisition_delete'),
-
+    
+    # IZVESTAJI
     path('izvestaji/', views.reports_index, name='reports_index'),
     path('izvestaji/omv_putnicka/', views.omv_putnicka_view, name='omv_putnicka'),
     path('izvestaji/nis_putnicka/', views.nis_putnicka_view, name='nis_putnicka'),
     path('izvestaji/omv_teretna/', views.omv_teretna_view, name='omv_teretna'),
     path('izvestaji/kasko_rate/', views.kasko_rate_view, name='kasko_rate'),
-    # path('izvestaji/travel_orders/', views.travel_orders, name='travel_orders'),
-    # path('izvestaji/closed_travel_orders/', views.closed_travel_orders, name='closed_travel_orders'),
+    path('izvestaji/zatvoreni_putni/', views.zatvoren_putni_view, name='zatvoreni_putni'),
+    path('izvestaji/magacin/', views.magacin_view, name='magacin'),
+    path('izvestaji/otpis/', views.otpis_view, name='otpis'),
+    path('izvestaji/tro_gorivo_mesec/', views.tro_gorivo_mesec_view, name='tro_gorivo_mesec'),
+    path('izvestaji/troskovi_svi/', views.troskovi_svi_view, name='troskovi_svi'),
+    path('izvestaji/tro_pracenja_vozila/', views.tro_pracenja_vozila_view, name='tro_pracenja_vozila'),
+    path('izvestaji/troskovi_tahograf/', views.tahograf_partneri_view, name='troskovi_tahograf'),
+    path('izvestaji/tro_zarade/', views.tro_zarade_view, name='tro_zarade'),
+    path('izvestaji/tro_parking/', views.tro_parking_view, name='tro_parking'),
+    path('izvestaji/potrazivanje_ddor/', views.potrazivanje_ddor_view, name='potrazivanje_ddor'),
+    path('izvestaji/po_dobavljacima/', views.po_dobavljacima_view, name='po_dobavljacima'),
+
     
     path('', views.dashboard, name='dashboard'),
     path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),
@@ -116,3 +129,7 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]
+
+# Dodavanje URL pravila za medijske fajlove tokom razvoja
+if settings.DEBUG:  # Ovo će raditi samo dok je DEBUG=True
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

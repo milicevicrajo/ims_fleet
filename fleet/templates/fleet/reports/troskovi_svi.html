@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima </h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>Godina</th>
+                <th>Šifra Vrste</th>
+                <th>Datum</th>
+                <th>Broj Naloga</th>
+                <th>Stavka</th>
+                <th>OJ</th>
+                <th>Konto</th>
+                <th>Naziv Konta</th>
+                <th>Duguje</th>
+                <th>Šifra Posla</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.god }}</td>
+                    <td>{{ row.sif_vrs }}</td>
+                    <td>{{ row.datum }}</td>
+                    <td>{{ row.br_naloga }}</td>
+                    <td>{{ row.stavka }}</td>
+                    <td>{{ row.oj }}</td>
+                    <td>{{ row.knt }}</td>
+                    <td>{{ row.naz_knt }}</td>
+                    <td>{{ row.duguje }}</td>
+                    <td>{{ row.sif_pos }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}
+
+
+
+ 

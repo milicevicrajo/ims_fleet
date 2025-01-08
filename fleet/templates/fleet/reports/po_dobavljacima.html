@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+<h1 class="my-4">Pregled Najvećih Dobavljača Usluga</h1>
+<div class="row align-items-top">
+    <!--==========================================================-->
+    <!-------                  COLUMN START                   ------>
+    <!--==========================================================-->
+    <div class="col-lg-8">
+
+    <table id="Datatable" class="display compact">
+        <thead>
+            <tr>
+                <th>Naziv Partnera</th>
+                <th>Šifra Predmeta</th>
+                <th>Godina</th>
+                <th>Šifra Vrste</th>
+                <th>Broj Naloga</th>
+                <th>Stavka</th>
+                <th>OJ</th>
+                <th>Konto</th>
+                <th>Grupa</th>
+                <th>Šifra Partnera</th>
+                <th>Datum</th>
+                <th>Vezani Dokument</th>
+                <th>Duguje</th>
+                <th>Potražuje</th>
+                <th>Skraćeni Naziv</th>
+                <th>Deviza</th>
+                <th>Kom</th>
+                <th>Stavka K</th>
+                <th>DPO</th>
+                <th>Promena</th>
+                <th>Šifra Posla</th>
+                <th>Datum Naloga</th>
+                <th>D/P</th>
+                <th>Plaćeno</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.naz_par }}</td>
+                    <td>{{ row.sif_pred }}</td>
+                    <td>{{ row.god }}</td>
+                    <td>{{ row.sif_vrs }}</td>
+                    <td>{{ row.br_naloga }}</td>
+                    <td>{{ row.stavka }}</td>
+                    <td>{{ row.oj }}</td>
+                    <td>{{ row.knt }}</td>
+                    <td>{{ row.grupa }}</td>
+                    <td>{{ row.sif_par }}</td>
+                    <td>{{ row.datum }}</td>
+                    <td>{{ row.vez_dok }}</td>
+                    <td>{{ row.duguje }}</td>
+                    <td>{{ row.potrazuje }}</td>
+                    <td>{{ row.skr_naz }}</td>
+                    <td>{{ row.deviza }}</td>
+                    <td>{{ row.kom }}</td>
+                    <td>{{ row.stavka_k }}</td>
+                    <td>{{ row.dpo }}</td>
+                    <td>{{ row.promena }}</td>
+                    <td>{{ row.sif_pos }}</td>
+                    <td>{{ row.dat_naloga }}</td>
+                    <td>{{ row.d_p }}</td>
+                    <td>{{ row.placeno }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </table>
+    </div>
+</div>
+{% endblock %}
+
+
+
+ 
