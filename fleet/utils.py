@@ -1,27 +1,24 @@
 import csv
-from datetime import datetime
-from django.core.exceptions import ObjectDoesNotExist
-from .models import TransactionNIS, TransactionOMV, FuelConsumption, Vehicle, TrafficCard, JobCode, TrafficCard, Lease, Policy,Employee, OrganizationalUnit, Requisition
 import re
 import os
 import time
-from django.core.management.base import BaseCommand
+import logging
+import pytz
+from datetime import datetime
+from openpyxl import load_workbook
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import pandas as pd
+
+from .models import TransactionNIS, TransactionOMV, FuelConsumption, Vehicle, TrafficCard, JobCode, TrafficCard, Lease, Policy,Employee, OrganizationalUnit, Requisition,DraftRequisition, ServiceTransaction, DraftServiceTransaction, Policy, DraftPolicy
+
 from django.core.exceptions import ObjectDoesNotExist
-import pytz
 from django.conf import settings
-from django.db import transaction
-from .models import DraftRequisition
-from .models import ServiceTransaction, DraftServiceTransaction
-from django.db import connections, IntegrityError
-from .models import Policy, DraftPolicy
-from django.db.models import F, Value, CharField
-from django.db.models import Subquery, OuterRef, F, Value, CharField
-import logging
+from django.db import connections, transaction
+from django.db.models import F, Value, CharField, Subquery, OuterRef
+from django.http import FileResponse
 
 def get_latest_download_file(download_path):
 
@@ -243,8 +240,9 @@ def import_omv_transactions_from_csv(csv_file_path):
 def import_nis_fuel_consumption(file_path):
     # Preuzmi vremensku zonu iz Django podešavanja
     timezone = pytz.timezone(settings.TIME_ZONE)
+    
     # Učitaj Excel fajl
-    df = pd.read_excel(file_path, sheet_name=0, header=1)  # Koristi prvi sheet i drugi red kao zaglavlje
+    df = pd.read_excel(file_path, sheet_name=0, header=1, engine="openpyxl")
 
     # Ostatak funkcije ostaje isti...
     for index, row in df.iterrows():
@@ -315,8 +313,8 @@ def import_nis_transactions(file_path):
                 kupac=row['Kupac'],
                 sifra_kupca=row['Šifra kupca'],
                 broj_kartice=row['Broj kartice'],
-                kompanijski_kod_kupca=row['Kompanijski kod kupca'],
-                zemlja_sipanja=row['Zemlja sipanja'],
+                kompanijski_kod_kupca=row['Šifra kupca'],
+                zemlja_sipanja=row['Država sipanja'],
                 benzinska_stanica=row['Benzinska stanica'],
                 id_transakcije=row['ID transakcije'],
                 app_kod=row['App kod'],
@@ -1356,7 +1354,7 @@ def nis_data_import():
             print("Clicked submit button")
 
             # Wait for some time to ensure the page loads completely
-            time.sleep(1)
+            time.sleep(5)
 
             # Click on the 'Izveštaji' link
             reports_link = WebDriverWait(driver, 20).until(
@@ -1367,7 +1365,7 @@ def nis_data_import():
 
             # Click on 'Transakcije po klijentima'
             client_transactions_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po klijentima')]"))
+                EC.presence_of_element_located((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po kupcima')]"))
             )
             client_transactions_link.click()
             print("Clicked on 'Transakcije po klijentima' link")
@@ -1390,7 +1388,7 @@ def nis_data_import():
             print("Clicked on download dropdown")
             time.sleep(1)
             csv_option = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//li[@class='option']//button[contains(., 'CSV')]"))
+                EC.presence_of_element_located((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
             )
             csv_option.click()
             print("Clicked on CSV option")
@@ -1421,7 +1419,7 @@ def nis_data_import():
 import time
 from datetime import datetime, timedelta
 
-def omv_putnicka_data_import(self, *args, **kwargs):
+def omv_putnicka_data_import(*args, **kwargs):
     # Logika iz `omv_command_putnicka`
     print("OMV Putnička komanda se izvršava...")
     # Define the URLs and credentials
@@ -1589,7 +1587,7 @@ def omv_putnicka_data_import(self, *args, **kwargs):
 
     return "OMV Putnička komanda uspešno završena."
 
-def omv_teretna_data_import(self, *args, **kwargs):
+def omv_teretna_data_import(*args, **kwargs):
     # Define the URLs and credentials
     login_url = "https://fleet.omv.com/FleetServicesProduction/Login.jsp"
     username = "710111107258"
@@ -1809,3 +1807,47 @@ def delete_complete_drafts():
             draft.delete()
 
 
+def populate_putni_nalog_template(putni_nalog):
+    """
+    Populate an Excel template with the details of a travel order in both Sheet1 and Sheet2.
+    """
+    import os
+    from openpyxl import load_workbook
+    from django.http import FileResponse
+    from django.conf import settings
+
+    # Path to the template
+    template_path = os.path.join(settings.BASE_DIR, "dokumenta", "iz077.xlsx")
+
+    # Load the workbook
+    workbook = load_workbook(template_path)
+
+    # Populate Sheet1
+    sheet1 = workbook["zadnja strana"]  # Replace "Sheet1" with the actual name of the first sheet
+    sheet1["O6"] = str(putni_nalog.employee)  # Zaposleni
+    sheet1["R7"] = putni_nalog.job_code       # Šifra posla
+    sheet1["R9"] = putni_nalog.travel_location  # Mesto putovanja
+    sheet1["R15"] = str(putni_nalog.vehicle)    # Prevozno sredstvo
+    sheet1["O9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
+    sheet1["R18"] = putni_nalog.return_date.strftime("%d.%m.%Y")  # Datum povratka
+    sheet1["R22"] = float(putni_nalog.advance_payment)  # Avans
+
+    # Populate Sheet2
+    sheet2 = workbook["prednja strana"]  # Replace "Sheet2" with the actual name of the second sheet
+    sheet2["O6"] = str(putni_nalog.employee)  # Zaposleni
+    sheet2["R7"] = putni_nalog.job_code       # Šifra posla
+    sheet2["R9"] = putni_nalog.travel_location  # Mesto putovanja
+    sheet2["R15"] = str(putni_nalog.vehicle)    # Prevozno sredstvo
+    sheet2["O9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
+    sheet2["R18"] = putni_nalog.return_date.strftime("%d.%m.%Y")  # Datum povratka
+    sheet2["R22"] = float(putni_nalog.advance_payment)  # Avans
+
+    # Save the file to a temporary location
+    output_dir = os.path.join(settings.MEDIA_ROOT, "travel_orders")
+    os.makedirs(output_dir, exist_ok=True)
+
+    file_path = os.path.join(output_dir, f"PutniNalog_{putni_nalog.id}.xlsx")
+    workbook.save(file_path)
+
+    # Return the file as a response
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{putni_nalog.id}.xlsx")

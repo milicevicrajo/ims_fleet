@@ -1,0 +1,85 @@
+<!-- equipment_form.html -->
+{% extends 'base.html' %}
+{% load form_filters %}
+{% block title %}Forma{% endblock %}
+{% block content %}
+  <div class="pagetitle">
+    <h1>{{ title }}</h1>
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-6">
+    
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Popuniti formu</h5>
+              
+              <!-- Horizontal Form -->
+              <form id="putni-nalog-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="row mb-3">
+                    <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
+                    <div class="col-sm-7">
+                        {{ field|add_class:'form-control' }}
+                        {% if field.errors %}
+                        <div class="invalid-feedback" style="display: block;">
+                          {% for error in field.errors %}
+                              {{ error }}
+                          {% endfor %}
+                      </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">{{ submit_button_label }}</button>
+                </div>
+              </form>
+              <!-- End Horizontal Form -->
+    
+            </div>
+          </div>
+    
+        </div>
+        {% if manual %}
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-body">
+
+            </div>
+          </div>
+        </div>
+        {%else%}
+        {%endif%}
+      </div>
+    </section>
+
+    <script>
+        document.getElementById('putni-nalog-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Sprečava klasično slanje forme
+    
+            const form = event.target;
+            const formData = new FormData(form);
+    
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Automatski preuzmi fajl
+                const a = document.createElement('a');
+                a.href = data.file_url;
+                a.download = ''; // Opcionalno postavi ime fajla
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+    
+                // Preusmeri na listu putnih naloga
+                window.location.href = data.redirect_url;
+            })
+            .catch(error => console.error('Greška prilikom obrade zahteva:', error));
+        });
+      </script>
+{% endblock %}
+

@@ -20,13 +20,16 @@ from datetime import timedelta
 from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever, update_vehicle_values, delete_complete_drafts
 from django.db.models.functions import TruncMonth, TruncYear
 from django.db.models import Q
-from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data
+from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data, populate_putni_nalog_template
 from .models import DraftServiceTransaction
 import threading
 from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset
 from django.shortcuts import render
 from django.db import connection
-
+from django.http import FileResponse
+import os
+from django.urls import reverse
+from django.conf import settings
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
 # <!-- ======================================================================= -->
@@ -1104,10 +1107,18 @@ class PutniNalogListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista putnih naloga'
         return context
 
+def download_travel_order_excel(request, pk):
+    """
+    Preuzmi generisani Excel fajl za dati PutniNalog.
+    """
+    putni_nalog = PutniNalog.objects.get(pk=pk)
+    file_path = os.path.join(settings.MEDIA_ROOT, "travel_orders", f"PutniNalog_{putni_nalog.id}.xlsx")
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{putni_nalog.id}.xlsx")
+
 class PutniNalogCreateView(LoginRequiredMixin, CreateView):
     model = PutniNalog
     form_class = PutniNalogForm
-    template_name = 'fleet/generic_form.html'
+    template_name = 'fleet/putni_nalog_form.html'
     success_url = reverse_lazy('putninalog_list')
 
     def get_context_data(self, **kwargs):
@@ -1115,6 +1126,20 @@ class PutniNalogCreateView(LoginRequiredMixin, CreateView):
         context['title'] = 'Dodaj putni nalog'
         context['submit_button_label'] = 'Dodaj'
         return context
+    
+    def form_valid(self, form):
+        # Sačuvaj objekat
+        self.object = form.save()
+
+        # Generiši Excel fajl
+        file_path = populate_putni_nalog_template(self.object)
+
+        # Vrati URL za preuzimanje i preusmeravanje
+        return JsonResponse({
+            'file_url': reverse('download_travel_order_excel', args=[self.object.id]),
+            'redirect_url': reverse('putninalog_list')
+        })
+
 
 class PutniNalogUpdateView(LoginRequiredMixin, UpdateView):
     model = PutniNalog
@@ -1127,7 +1152,17 @@ class PutniNalogUpdateView(LoginRequiredMixin, UpdateView):
         context['title'] = 'Izmeni putni nalog'
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
+    
+    def form_valid(self, form):
+        # Save the object
+        self.object = form.save()
 
+        # Generate the Excel file
+        file_path = populate_putni_nalog_template(self.object)
+
+        # Serve the file as a response
+        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{self.object.id}.xlsx")
+        return response
 class PutniNalogDetailView(LoginRequiredMixin, DetailView):
     model = PutniNalog
     template_name = 'fleet/putninalog_detail.html'
@@ -1957,3 +1992,4 @@ def potrazivanje_ddor_view(request):
     """
     data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/potrazivanje_ddor.html', {'data': data})
+

@@ -22,23 +22,19 @@
                     <th>Datum putovanja</th>
                     <th>Broj dana</th>
                     <th>Avans</th>
-                    <th>Troškovi putovanja</th>
-                    <th>Datum likvidacije</th>
                   </tr>
               </thead>
               <tbody>
                 {% for putni_nalog in putni_nalozi %}
                   <tr>                        
-                    <td>{{ putni_nalog.employee.name }}</td>
+                    <td>{{ putni_nalog.employee }}</td>
                     <td>{{ putni_nalog.job_code }}</td>
                     <td>{{ putni_nalog.travel_location }}</td>
                     <td>{{ putni_nalog.contract_offer }}</td>
                     <td>{{ putni_nalog.vehicle.chassis_number }}</td> <!-- Ili drugo odgovarajuće polje iz Vehicle modela -->
-                    <td>{{ putni_nalog.travel_date }}</td>
+                    <td>{{ putni_nalog.travel_date|date:"d.m.Y"}}</td>
                     <td>{{ putni_nalog.number_of_days }}</td>
                     <td>{{ putni_nalog.advance_payment }}</td>
-                    <td>{{ putni_nalog.travel_expenses }}</td>
-                    <td>{{ putni_nalog.settlement_date }}</td>
                   </tr>
               {% empty %}
                   <tr>
@@ -55,8 +51,7 @@
                     <th>Datum putovanja</th>
                     <th>Broj dana</th>
                     <th>Avans</th>
-                    <th>Troškovi putovanja</th>
-                    <th>Datum likvidacije</th>
+
                   </tr>
               </tfoot>
           </table>

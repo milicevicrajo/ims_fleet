@@ -251,6 +251,7 @@
                 { "type": "date-custom", "targets": [3] }
                         ],
 
+
             });
             var table = $('#DatatableNalozi').DataTable({
                 "language": languageSettings,
@@ -259,7 +260,7 @@
                 "columnDefs": [
                 { "type": "date-custom", "targets": [5] }
                         ],
-
+                "order": [[5, "desc"]],  // Sort by column 1 in descending order
             });
             var table = $('#DatatableServisi').DataTable({
                 "language": languageSettings,

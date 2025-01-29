@@ -30,5 +30,8 @@ def fetch_requisition_data_task():
     result = fetch_requisition_data(last_24_hours=True)
     return f"Fetch Requisition Data: {result}"
 
-					
+@shared_task
+def periodic_task():
+    print("Ovo je periodični zadatak koji se izvršava automatski!")
+    return "Zadatak izvršen!"					
 			
