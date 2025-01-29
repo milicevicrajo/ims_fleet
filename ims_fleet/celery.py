@@ -1,8 +1,11 @@
 from __future__ import absolute_import, unicode_literals					
 import os					
-from celery import Celery					
+from celery import Celery		
+import sys			
 
-				
+# Rešenje za 'isatty' grešku
+sys.stdin = None	
+
 # Postavi default Django postavke za Celery					
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ims_fleet.settings.production')					
 					
