@@ -4,7 +4,8 @@ from celery import Celery
 import sys			
 
 # Rešenje za 'isatty' grešku
-sys.stdin = None	
+if sys.stdin is None:
+    sys.stdin = open(os.devnull)	
 
 # Postavi default Django postavke za Celery					
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ims_fleet.settings.production')					
