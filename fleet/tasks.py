@@ -1,4 +1,4 @@
-from fleet.utils import fetch_policy_data, fetch_service_data, fetch_requisition_data, nis_data_import, omv_putnicka_data_import, omv_teretna_data_import, cerio_login
+from fleet.utils import fetch_policy_data, fetch_service_data, fetch_requisition_data, nis_data_import, omv_putnicka_data_import, omv_teretna_data_import, kerio_login
 from celery import shared_task
 
 @shared_task
@@ -31,7 +31,7 @@ def fetch_requisition_data_task():
     return f"Fetch Requisition Data: {result}"
 
 @shared_task
-def cerio_login_task():
-    result = cerio_login()
+def kerio_login_task():
+    result = kerio_login()
     return "Logovan"			
 			
