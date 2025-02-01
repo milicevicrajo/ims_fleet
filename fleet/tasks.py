@@ -31,7 +31,7 @@ def fetch_requisition_data_task():
     return f"Fetch Requisition Data: {result}"
 
 @shared_task
-def cerio_login():
+def cerio_login_task():
     result = cerio_login()
     return "Logovan"			
 			
