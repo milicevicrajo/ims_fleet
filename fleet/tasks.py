@@ -1,4 +1,4 @@
-from fleet.utils import fetch_policy_data, fetch_service_data, fetch_requisition_data, nis_data_import, omv_putnicka_data_import, omv_teretna_data_import
+from fleet.utils import fetch_policy_data, fetch_service_data, fetch_requisition_data, nis_data_import, omv_putnicka_data_import, omv_teretna_data_import, cerio_login
 from celery import shared_task
 
 @shared_task
@@ -31,7 +31,7 @@ def fetch_requisition_data_task():
     return f"Fetch Requisition Data: {result}"
 
 @shared_task
-def periodic_task():
-    print("Ovo je periodični zadatak koji se izvršava automatski!")
-    return "Zadatak izvršen!"					
+def cerio_login():
+    result = cerio_login()
+    return "Logovan"			
 			

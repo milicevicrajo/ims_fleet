@@ -1851,3 +1851,51 @@ def populate_putni_nalog_template(putni_nalog):
 
     # Return the file as a response
     return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{putni_nalog.id}.xlsx")
+
+
+def cerio_login(*args, **kwargs):
+    # Define the URLs and credentials
+    login_url = "https://control.ims.rs:4081/login/?NTLM=0&orig=Y29udHJvbC5pbXMucnM=&dest=aHR0cDovL3d3dy5nc3RhdGljLmNvbS9nZW5lcmF0ZV8yMDQ=&host=MTkyLjE2OC42LjcgMWYzYTA5ODgyYzIxYWJjNjM2Y2FlNzAzZjQ1YjRmZGU="
+    username = "tatko"
+    password = "Abacus236"
+
+    # Opcije za Chrome
+    chrome_options = webdriver.ChromeOptions()
+    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    # Initialize WebDriver
+    driver = webdriver.Chrome(options=chrome_options)
+
+    try:
+        # Open the login page
+        driver.get(login_url)
+        print("Opened login page")
+
+        # Enter username
+        username_input = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.ID, "username"))
+        )
+        username_input.send_keys(username)
+        print("Entered username")
+
+        # Enter password
+        password_input = driver.find_element(By.ID, "password")
+        password_input.send_keys(password)
+        print("Entered password")
+
+        # Click the login button
+        login_button = driver.find_element(By.ID, "login-button")
+        login_button.click()
+        print("Clicked login button")
+
+        # Wait for some time to ensure the page loads completely
+        time.sleep(1)
+
+
+    finally:
+        # Close the browser
+        driver.quit()
+        print("Browser closed")
