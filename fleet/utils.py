@@ -1861,33 +1861,40 @@ def kerio_login(*args, **kwargs):
 
     # Opcije za Chrome
     chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument("--headless")
-    # chrome_options.add_argument("--disable-gpu")
-    # chrome_options.add_argument("--no-sandbox")
-    # chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--ignore-certificate-errors")  # Ignoriši SSL greške
+    chrome_options.add_argument("--allow-insecure-localhost")   # Dozvoli nebezbedne lokalne veze
+    chrome_options.add_argument("--disable-web-security")       # Onemogući web bezbednost
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
     # Initialize WebDriver
     driver = webdriver.Chrome(options=chrome_options)
-
+    time.sleep(1)
     try:
         # Open the login page
         driver.get(login_url)
         print("Opened login page")
-
+        time.sleep(1)
         # Ukloni readonly atribut iz polja za korisničko ime
         username_input = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.ID, "username"))
         )
+        time.sleep(1)
         driver.execute_script("arguments[0].removeAttribute('readonly')", username_input)
-
+        username_input.clear()
         # Unesi korisničko ime
+        time.sleep(1)
         username_input.send_keys(username)
+       
         print("Entered username")
-
+        time.sleep(1)
         # Unesi lozinku
         password_input = driver.find_element(By.ID, "password")
         password_input.send_keys(password)
         print("Entered password")
+        time.sleep(1)
 
         # Klikni na dugme za prijavu
         login_button = driver.find_element(By.ID, "login-button")
