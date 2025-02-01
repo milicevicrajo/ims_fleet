@@ -32,6 +32,6 @@ def fetch_requisition_data_task():
 
 @shared_task
 def kerio_login_task():
-    result = kerio_login()
-    return "Logovan"			
+    kerio_login()
+			
 			
