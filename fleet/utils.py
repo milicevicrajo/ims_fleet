@@ -1874,27 +1874,31 @@ def kerio_login(*args, **kwargs):
         driver.get(login_url)
         print("Opened login page")
 
-        # Enter username
+        # Ukloni readonly atribut iz polja za korisničko ime
         username_input = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.ID, "username"))
         )
+        driver.execute_script("arguments[0].removeAttribute('readonly')", username_input)
+
+        # Unesi korisničko ime
         username_input.send_keys(username)
         print("Entered username")
 
-        # Enter password
+        # Unesi lozinku
         password_input = driver.find_element(By.ID, "password")
         password_input.send_keys(password)
         print("Entered password")
 
-        # Click the login button
+        # Klikni na dugme za prijavu
         login_button = driver.find_element(By.ID, "login-button")
         login_button.click()
         print("Clicked login button")
 
-        # Wait for some time to ensure the page loads completely
-        time.sleep(1)
+        # Sačekaj da se stranica učita
+        time.sleep(5)  # Povećajte vreme ako je potrebno
 
-
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
         # Close the browser
         driver.quit()
