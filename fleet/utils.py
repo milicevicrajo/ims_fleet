@@ -1870,7 +1870,9 @@ def kerio_login(*args, **kwargs):
     chrome_options.add_argument("--disable-dev-shm-usage")
 
     # Initialize WebDriver
+    print("pokusavam da pokrenem driver = webdriver.Chrome")
     driver = webdriver.Chrome(options=chrome_options)
+    print("Pokrenut...")
     time.sleep(1)
     try:
         # Open the login page
