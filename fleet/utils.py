@@ -1853,62 +1853,79 @@ def populate_putni_nalog_template(putni_nalog):
     return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{putni_nalog.id}.xlsx")
 
 
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+
 def kerio_login():
     # Define the URLs and credentials
     login_url = "https://control.ims.rs:4081/login/?NTLM=0&orig=Y29udHJvbC5pbXMucnM=&dest=aHR0cDovL3d3dy5nc3RhdGljLmNvbS9nZW5lcmF0ZV8yMDQ=&host=MTkyLjE2OC42LjcgMWYzYTA5ODgyYzIxYWJjNjM2Y2FlNzAzZjQ1YjRmZGU="
     username = "tatko"
     password = "Abacus236"
 
-    # Opcije za Chrome
+    # Chrome options
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("--ignore-certificate-errors")  # Ignoriši SSL greške
-    chrome_options.add_argument("--allow-insecure-localhost")   # Dozvoli nebezbedne lokalne veze
-    chrome_options.add_argument("--disable-web-security")       # Onemogući web bezbednost
+    chrome_options.add_argument("--ignore-certificate-errors")
+    chrome_options.add_argument("--allow-insecure-localhost")
+    chrome_options.add_argument("--disable-web-security")
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
     # Initialize WebDriver
-    print("pokusavam da pokrenem driver = webdriver.Chrome")
+    print("Starting WebDriver...")
     driver = webdriver.Chrome(options=chrome_options)
-    print("Pokrenut...")
-    time.sleep(1)
+    print("WebDriver started.")
+    
     try:
-        # Open the login page
         driver.get(login_url)
         print("Opened login page")
-        time.sleep(1)
-        # Ukloni readonly atribut iz polja za korisničko ime
+        
+        # Wait until username field is present
         username_input = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.ID, "username"))
         )
-        time.sleep(1)
         driver.execute_script("arguments[0].removeAttribute('readonly')", username_input)
         username_input.clear()
-        # Unesi korisničko ime
-        time.sleep(1)
         username_input.send_keys(username)
-       
         print("Entered username")
-        time.sleep(1)
-        # Unesi lozinku
-        password_input = driver.find_element(By.ID, "password")
+
+        # Enter password
+        password_input = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.ID, "password"))
+        )
         password_input.send_keys(password)
         print("Entered password")
-        time.sleep(1)
 
-        # Klikni na dugme za prijavu
-        login_button = driver.find_element(By.ID, "login-button")
-        login_button.click()
-        print("Clicked login button")
+        # Wait until the login button is clickable
+        login_button = WebDriverWait(driver, 20).until(
+            EC.element_to_be_clickable((By.ID, "login-button"))
+        )
+        
+        # Scroll into view if hidden
+        driver.execute_script("arguments[0].scrollIntoView(true);", login_button)
 
-        # Sačekaj da se stranica učita
-        time.sleep(5)  # Povećajte vreme ako je potrebno
+        try:
+            login_button.click()
+            print("Clicked login button")
+        except Exception as click_error:
+            print("Standard click failed. Using JavaScript click.")
+            driver.execute_script("arguments[0].click();", login_button)
+
+        # Wait for a successful login indicator (adjust selector accordingly)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        print("Logged in successfully.")
 
     except Exception as e:
         print(f"Error: {e}")
     finally:
-        # Close the browser
         driver.quit()
         print("Browser closed")
+
+# Run the function
+kerio_login()
