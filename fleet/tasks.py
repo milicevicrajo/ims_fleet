@@ -3,8 +3,8 @@ from celery import shared_task
 
 @shared_task
 def run_nis_command():
-    nis_data_import()
-    return "NIS komanda uspešno završena"
+    return nis_data_import()
+
 
 @shared_task
 def run_omv_putnicka_command():
