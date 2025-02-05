@@ -1376,10 +1376,9 @@ def nis_data_import():
 
             time.sleep(2)
 
-
-            # Locate and click the 'Prikaži izveštaj' button
+            # Sačekaj da dugme postane klikabilno
             show_report_button = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
             )
             show_report_button.click()
             print("Clicked 'Prikaži izveštaj' button")
