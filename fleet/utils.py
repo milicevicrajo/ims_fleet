@@ -1307,6 +1307,8 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
 
 def nis_data_import():
     try:
+
+        logger.info("Pokretanje NIS Data Import funkcije.")
         # Define the URLs and credentials
         login_url = "https://cards.nis.rs"
         username = "zoran.institutims"
