@@ -11,6 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver import ActionChains
 
 from .models import TransactionNIS, TransactionOMV, FuelConsumption, Vehicle, TrafficCard, JobCode, TrafficCard, Lease, Policy,Employee, OrganizationalUnit, Requisition,DraftRequisition, ServiceTransaction, DraftServiceTransaction, Policy, DraftPolicy
 
@@ -1321,100 +1322,116 @@ def nis_data_import():
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
 
-        # Set up Chrome options to download files to a specific location
+        # Podesavanje lokacije za preuzimanje fajlova
         download_path = r"C:\nis_repo"
-
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
 
-        # Initialize WebDriver
+        # Inicijalizacija WebDriver-a
         driver = webdriver.Chrome(options=chrome_options)
+        driver.set_window_size(1920, 1080)  # Povećanje veličine prozora
 
         try:
-            # Open the login page
+            # Otvori login stranicu
             driver.get(login_url)
             print("Opened login page")
 
-            # Locate the element by its placeholder attribute and enter the username
+            # Unesi korisničko ime
             username_input = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Korisničko ime']"))
             )
             username_input.send_keys(username)
             print("Entered username")
 
-            # Locate the password input element by its placeholder attribute and enter the password
+            # Unesi lozinku
             password_input = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Lozinka']"))
             )
             password_input.send_keys(password)
             print("Entered password")
 
-            # Locate and click the submit button
+            # Klik na dugme za prijavu
             login_button = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
             )
             login_button.click()
             print("Clicked submit button")
 
-            # Wait for some time to ensure the page loads completely
+            # Sačekaj učitavanje stranice
             time.sleep(5)
 
-            # Click on the 'Izveštaji' link
+            # Klik na link "Izveštaji"
             reports_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[contains(text(),'Izveštaji')]"))
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Izveštaji')]"))
             )
             reports_link.click()
             print("Clicked on 'Izveštaji' link")
 
             time.sleep(2)
-            # Click on 'Transakcije po klijentima'
+
+            # Klik na "Transakcije po klijentima"
             client_transactions_link = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po kupcima')]"))
+                EC.element_to_be_clickable((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po kupcima')]"))
             )
             client_transactions_link.click()
             print("Clicked on 'Transakcije po klijentima' link")
 
             time.sleep(2)
 
-            # Sačekaj da dugme postane klikabilno
+            # Sačekaj da se loader završi pre nego što klikneš
+            try:
+                WebDriverWait(driver, 10).until(
+                    EC.invisibility_of_element_located((By.CLASS_NAME, "loader"))
+                )
+            except:
+                pass  # Ako loader ne postoji, nastavi dalje
+
+            # Klik na dugme "Prikaži izveštaj"
             show_report_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
             )
-            show_report_button.click()
+            driver.execute_script("arguments[0].scrollIntoView(true);", show_report_button)
+            ActionChains(driver).move_to_element(show_report_button).click().perform()
             print("Clicked 'Prikaži izveštaj' button")
-            time.sleep(1)
-            # Click on the download dropdown and select 'CSV'
+
+            time.sleep(2)
+
+            # Klik na dugme za preuzimanje
             dropdown_button = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'download-button')]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'download-button')]"))
             )
             dropdown_button.click()
             print("Clicked on download dropdown")
-            time.sleep(1)
-            csv_option = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
-            )
-            csv_option.click()
-            print("Clicked on CSV option")
 
-            # Wait for the download to complete
+            time.sleep(1)
+
+            # Izaberi opciju "XLSX"
+            xlsx_option = WebDriverWait(driver, 20).until(
+                EC.element_to_be_clickable((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
+            )
+            driver.execute_script("arguments[0].scrollIntoView(true);", xlsx_option)
+            ActionChains(driver).move_to_element(xlsx_option).click().perform()
+            print("Clicked on XLSX option")
+
+            # Sačekaj da se fajl preuzme
             time.sleep(5)
-            print("CSV file downloaded successfully")
+            print("XLSX file downloaded successfully")
 
             # Pronađi najnovije preuzeti fajl
-            csv_file_path = get_latest_download_file(download_path)
-            print(csv_file_path)
+            xlsx_file_path = get_latest_download_file(download_path)
+            print(xlsx_file_path)
 
-            # Importuj podatke u bazu
-            import_nis_fuel_consumption(csv_file_path)
-            import_nis_transactions(csv_file_path)
-            print(f"Data imported successfully from {csv_file_path}")
-            return f"Funkciaj NIS Data Import je uspesno izvrsena"
+            # Import podataka
+            import_nis_fuel_consumption(xlsx_file_path)
+            import_nis_transactions(xlsx_file_path)
+            print(f"Data imported successfully from {xlsx_file_path}")
+            return f"Funkcija NIS Data Import je uspešno izvršena"
 
         finally:
-            # Close the browser
+            # Zatvori browser
             driver.quit()
             print("Browser closed")
-            
+
     except Exception as e:
         print(f"Error: {str(e)}")
         return f"Error: {str(e)}"
