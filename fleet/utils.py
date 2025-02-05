@@ -1308,7 +1308,12 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
 def nis_data_import():
     try:
 
-        logger.info("Pokretanje NIS Data Import funkcije.")
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+        handler = logging.FileHandler(r"C:\djangoapps\ims_fleet\nis_debug.log")
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
         # Define the URLs and credentials
         login_url = "https://cards.nis.rs"
         username = "zoran.institutims"
@@ -1337,6 +1342,7 @@ def nis_data_import():
             # Otvori login stranicu
             driver.get(login_url)
             print("Opened login page")
+            logger.info("Opened login page") 
 
             # Unesi korisničko ime
             username_input = WebDriverWait(driver, 20).until(
@@ -1344,6 +1350,7 @@ def nis_data_import():
             )
             username_input.send_keys(username)
             print("Entered username")
+            logger.info("Entered username")  
 
             # Unesi lozinku
             password_input = WebDriverWait(driver, 20).until(
@@ -1351,6 +1358,7 @@ def nis_data_import():
             )
             password_input.send_keys(password)
             print("Entered password")
+            logger.info("Entered password")
 
             # Klik na dugme za prijavu
             login_button = WebDriverWait(driver, 20).until(
@@ -1358,6 +1366,7 @@ def nis_data_import():
             )
             login_button.click()
             print("Clicked submit button")
+            logger.info("Clicked submit button")
 
             # Sačekaj učitavanje stranice
             time.sleep(5)
