@@ -21,7 +21,7 @@ from django.db.models import F, Value, CharField, Subquery, OuterRef
 from django.http import FileResponse
 
 def get_latest_download_file(download_path):
-
+    
     # Dobij sve fajlove iz direktorijuma za preuzimanje
     files = os.listdir(download_path)
     
@@ -1313,6 +1313,9 @@ def nis_data_import():
 
         # Opcije za Chrome
         chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument("--allow-insecure-localhost")
+        chrome_options.add_argument("--disable-web-security")
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
@@ -1363,6 +1366,7 @@ def nis_data_import():
             reports_link.click()
             print("Clicked on 'Izveštaji' link")
 
+            time.sleep(2)
             # Click on 'Transakcije po klijentima'
             client_transactions_link = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po kupcima')]"))
@@ -1370,7 +1374,7 @@ def nis_data_import():
             client_transactions_link.click()
             print("Clicked on 'Transakcije po klijentima' link")
 
-            # # Interact with the date picker
+            time.sleep(2)
 
 
             # Locate and click the 'Prikaži izveštaj' button
@@ -1927,5 +1931,3 @@ def kerio_login():
         driver.quit()
         print("Browser closed")
 
-# Run the function
-kerio_login()

@@ -39,40 +39,45 @@ def dashboard(request):
     policies_without_vehicle = DraftPolicy.objects.count()
     requisitions_without_vehicle = DraftRequisition.objects.count()
     
-    # Get today's date
     today = date.today()
-
-    # Calculate the date 30 days from today
     thirty_days_from_now = today + timedelta(days=30)
+
+    # Subquery za pronalaženje najnovijeg datuma završetka za isti automobil i tip osiguranja
     newest_policy = Policy.objects.filter(
         vehicle=OuterRef('vehicle'),
-        insurance_type=OuterRef('insurance_type')
+        insurance_type=OuterRef('insurance_type'),
+        is_renewable=True  # Dodato da se uzimaju u obzir samo polise koje se obnavljaju
     ).order_by('-end_date').values('end_date')[:1]
-    
-    # Filter policies expiring within the next 30 days
-    # Filter policies expiring between today and thirty days from now, but exclude older policies if a newer one exists
+
+    # Filtriranje polisa koje uskoro ističu i koje se obnavljaju
     expiring_policies = Policy.objects.annotate(
         latest_end_date=Subquery(newest_policy)
     ).filter(
         end_date__gte=today,
         end_date__lte=thirty_days_from_now,
-        end_date=F('latest_end_date')
+        end_date=F('latest_end_date'),
+        is_renewable=True  # Dodato da filtrira samo polise koje se obnavljaju
     )
+
     expiring_policies_count = expiring_policies.count()
-        # Subquery to check if there is a newer policy for the same vehicle and insurance type
+
+    # Subquery da proveri da li postoji nova polisa za isto vozilo i tip osiguranja
     newer_policy_exists = Policy.objects.filter(
         vehicle=OuterRef('vehicle'),
         insurance_type=OuterRef('insurance_type'),
-        start_date__gt=OuterRef('start_date') 
+        start_date__gt=OuterRef('start_date'),
+        is_renewable=True  # Dodato da proveri samo polise koje se obnavljaju
     )
 
-    # Filter policies that have expired but haven't been renewed
+    # Filtriranje polisa koje su istekle i nisu obnovljene
     expired_unrenewed_policies = Policy.objects.annotate(
         has_newer_policy=Exists(newer_policy_exists)
     ).filter(
-        end_date__lt=today,  # Policies that have already expired
-        has_newer_policy=False  # Ensure there is no newer policy
+        end_date__lt=today,           # Polise koje su već istekle
+        has_newer_policy=False,       # Proveri da li nema novije polise
+        is_renewable=True             # Dodato da proveri samo polise koje se obnavljaju
     )
+
     expired_unrenewed_policies_count = expired_unrenewed_policies.count()
 
     # Current year and last day of the previous month

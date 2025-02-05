@@ -117,6 +117,12 @@ class LeaseInterest(models.Model):
         return f"Kamata za ugovor {self.lesae.contract_number} za godinu {self.year}"
 
 class Policy(models.Model):
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
+
+
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='policies', verbose_name=_("Vozilo"))
     partner_pib = models.CharField(max_length=20, verbose_name=_("PIB partnera"))
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
@@ -131,7 +137,11 @@ class Policy(models.Model):
     first_installment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos prve rate"))
     other_installments_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos ostalih rata"))
     number_of_installments = models.IntegerField(verbose_name=_("Broj rata"))
-
+    is_renewable = models.BooleanField(
+        default=True,
+        choices=YES_NO_CHOICES,  # Dodato choices
+        verbose_name=_("Da li se polisa obnavlja?")
+    )
     def __str__(self):
         return f"Polisa {self.policy_number} sa {self.partner_name}"
 

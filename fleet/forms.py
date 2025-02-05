@@ -2,7 +2,7 @@ from django import forms
 from .models import *
 import django_filters
 from django_select2.forms import Select2Widget
-
+from django.utils.translation import gettext_lazy as _
 class VehicleForm(forms.ModelForm):
     class Meta:
         model = Vehicle
@@ -43,6 +43,11 @@ class LeaseForm(forms.ModelForm):
         fields = '__all__'
 
 class PolicyForm(forms.ModelForm):
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
+
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
@@ -62,6 +67,11 @@ class PolicyForm(forms.ModelForm):
         widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
         input_formats=['%d/%m/%Y', '%Y-%m-%d'],
         label="Datum završetka"
+    )
+    is_renewable = models.BooleanField(
+        default=True,
+        choices=YES_NO_CHOICES,  # Dodato choices
+        verbose_name=_("Da li se polisa obnavlja?")
     )
     class Meta:
         model = Policy
