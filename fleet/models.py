@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser, Group, Permission
-
+import datetime
 class Vehicle(models.Model):
     inventory_number = models.CharField(max_length=20, unique=True, verbose_name=_("Inventarni broj"))
     chassis_number = models.CharField(max_length=17, unique=True, verbose_name=_("Broj šasije"))
@@ -87,6 +87,11 @@ class JobCode(models.Model):
     organizational_unit = models.ForeignKey(OrganizationalUnit, verbose_name=_("Organizaciona jedinica"), on_delete=models.SET_NULL, related_name='vehicle_assignments', null=True)
     assigned_date = models.DateField(verbose_name=_("Datum dodele"))
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['vehicle', 'assigned_date'], name='unique_vehicle_assigned_date')
+        ]
+
     def __str__(self):
         return f"{self.vehicle} -> {self.organizational_unit} (Assigned on {self.assigned_date})"
 
@@ -124,7 +129,7 @@ class Policy(models.Model):
 
 
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='policies', verbose_name=_("Vozilo"))
-    partner_pib = models.CharField(max_length=20, verbose_name=_("PIB partnera"))
+    partner_pib = models.IntegerField(verbose_name=_("PIB partnera"))
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
     invoice_id = models.IntegerField(verbose_name=_("ID fakture"), unique=True)
     invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"))
@@ -147,7 +152,7 @@ class Policy(models.Model):
 
 class DraftPolicy(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='draft_policies', verbose_name=_("Vozilo"), null=True, blank=True)
-    partner_pib = models.CharField(max_length=20, verbose_name="PIB partnera", null=True, blank=True)
+    partner_pib = models.IntegerField(verbose_name="PIB partnera", null=True, blank=True)
     partner_name = models.CharField(max_length=100, verbose_name="Naziv partnera", null=True, blank=True)
     invoice_id = models.IntegerField(verbose_name="ID fakture", unique=True, null=True, blank=True)
     invoice_number = models.CharField(max_length=50, verbose_name="Broj fakture", null=True, blank=True)
@@ -218,19 +223,36 @@ class Incident(models.Model):
         return f"Incident for {self.employee.name} with vehicle {self.vehicle.chassis_number} on {self.date}"
 
 class PutniNalog(models.Model):
-    year = models.IntegerField(verbose_name=_("Godina"))
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='travel_orders', verbose_name=_("Zaposleni"))
-    job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
+    order_number = models.CharField(max_length=20, verbose_name=_("Broj naloga"), unique=True)
+    order_date = models.DateField(verbose_name=_("Datum izdavanja naloga"), auto_now_add=True)
+
+    employee = models.ForeignKey(
+        Employee, on_delete=models.CASCADE, related_name='travel_orders', verbose_name=_("Zaposleni")
+    )
+    job_code = models.ForeignKey(
+        OrganizationalUnit, on_delete=models.CASCADE, related_name='travel_order_job_code', verbose_name=_("Troškovi idu na teret"))
     travel_location = models.CharField(max_length=100, verbose_name=_("Mesto putovanja"))
+    task = models.TextField(verbose_name=_("Zadatak"))
     contract_offer = models.CharField(max_length=50, verbose_name=_("Ugovor/ponuda"))
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='travel_orders', verbose_name=_("Vozilo"))
+    vehicle = models.ForeignKey(
+        Vehicle, on_delete=models.CASCADE, related_name='travel_orders', verbose_name=_("Vozilo")
+    )
     travel_date = models.DateField(verbose_name=_("Datum putovanja"))
-    return_date = models.DateField(verbose_name=_("Datum povratka"))
-    advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Avans"))
+    number_of_days = models.PositiveIntegerField(verbose_name=_("Broj dana"))
+    advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Isplata"))
+
+    daily_allowance = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name=_("Dnevnica"), default=2600
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = self.generate_order_number()
+        super().save(*args, **kwargs)
 
 
     def __str__(self):
-        return f"Travel Order for {self.employee.name} on {self.travel_date}"
+        return f"Nalog {self.order_number} - {self.employee.name} ({self.travel_date})"
 
 class ServiceType(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name=_("Naziv tipa servisa"))
@@ -251,6 +273,10 @@ class Service(models.Model):
         return f"{self.service_type.name} za {self.vehicle.chassis_number} Na datum: {self.service_date}"
 
 class ServiceTransaction(models.Model):
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='service_transactions', verbose_name=_("Vozilo"))  # Dodata veza na Vehicle
     god = models.IntegerField(verbose_name=_("Godina"))
     sif_par_pl = models.CharField(max_length=20, verbose_name=_("Šifra partnera (pl)"))
@@ -268,7 +294,11 @@ class ServiceTransaction(models.Model):
     kom = models.TextField(verbose_name=_("Komada"), blank=True, null=True)      
     popravka_kategorija = models.CharField(max_length=100, verbose_name=_("Kategorija poptavke"))
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"))
-    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"))
+    nije_garaza =     nije_garaza = models.BooleanField(
+        default=False,
+        choices=YES_NO_CHOICES,  # Dodato choices
+        verbose_name=_("Nije garaža")
+    )
     napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
     
     class Meta:
@@ -280,6 +310,10 @@ class ServiceTransaction(models.Model):
         return f"{self.br_naloga} - {self.naz_par_pl} ({self.datum})"
     
 class DraftServiceTransaction(models.Model):
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='draft_service_transactions', verbose_name=_("Vozilo"), null=True, blank=True)  # Dodata veza na Vehicle
     god = models.IntegerField(verbose_name="Godina", null=True, blank=True)
     sif_par_pl = models.CharField(max_length=20, verbose_name="Šifra partnera (pl)", null=True, blank=True)
@@ -297,7 +331,11 @@ class DraftServiceTransaction(models.Model):
     kom = models.TextField(verbose_name="Komada", blank=True, null=True)      
     popravka_kategorija = models.CharField(max_length=100, verbose_name="Kategorija popravke", blank=True, null=True)
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
-    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), null=True, blank=True)
+    nije_garaza = models.BooleanField(
+        default=False,
+        choices=YES_NO_CHOICES,  # Dodato choices
+        verbose_name=_("Da li se ovaj servis ne pripada garaži?")
+    )
     napomena = models.TextField(blank=True, null=True, verbose_name="Napomena")
 
     def is_complete(self):

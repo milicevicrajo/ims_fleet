@@ -89,10 +89,10 @@
                             <th>Datum</th>
                             <th>Količina</th>
                             <th>Tip goriva</th>
-                            <th>Iznos - Bruto</th>
                             <th>Iznos - Neto</th>
                             <th>Kilometraža</th>
                             <th>Dobavljač</th>
+                            <th>Izmene</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -101,11 +101,12 @@
                                 <td>{{ consumption.date|date:"d.m.Y H:i:s"  }}</td>
                                 <td>{{ consumption.amount }}</td>
                                 <td>{{ consumption.fuel_type }}</td>
-                                <td>{{ consumption.cost_bruto }}</td>
                                 <td>{{ consumption.cost_neto}}</td>
                                 <td>{{ consumption.mileage}}</td>
                                 <td>{{ consumption.supplier }}</td>
-        
+                                <td>
+                                    <a href="{% url 'fuelconsumption_update' consumption.pk %}">Izmeni</a>
+                                </td>
                             </tr>
                         {% empty %}
                             <tr>
@@ -117,10 +118,10 @@
                                 <th>Datum</th>
                                 <th>Količina</th>
                                 <th>Tip goriva</th>
-                                <th>Iznos - Bruto</th>
                                 <th>Iznos - Neto</th>
                                 <th>Kilometraža</th>
                                 <th>Dobavljač</th>
+                                <th>Izmene</th>
                             </tr>
                         </tfoot>
                     </table>

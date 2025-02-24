@@ -4,7 +4,6 @@
 <h2>{{ title }}</h2>
 <div class="card">
   <div class="card-body">
-      <h5 class="card-title">Basic Datatable</h5>
       <div class="table-responsive">
           <table id="DatatablePolicy" class="display compact">
               <thead>
@@ -44,7 +43,7 @@
                       <td>{{ policy.other_installments_amount}}</td>
                       <td>{{ policy.number_of_installments }}</td>
                       <td>
-                        <a href="{% url 'draft_policy_update' policy.pk %}">Edit</a>
+                        <a href="{% url 'draft_policy_update' policy.pk %}">Dopuni</a>
                       </td>
                   </tr>
               {% empty %}

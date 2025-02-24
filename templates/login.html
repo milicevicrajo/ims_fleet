@@ -1,16 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-</head>
+{% extends "base.html" %}
+
+{% block content %}
 <body>
-    <h2>Login</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
-    </form>
+    <div class="main-wrapper">
+        <div class="auth-wrapper d-flex no-block justify-content-center align-items-center bg-dark">
+            <div class="auth-box bg-dark border-top border-secondary">
+                <div id="loginform">
+
+
+                    <!-- Django Login Form -->
+                    <form class="form-horizontal mt-3" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row pb-4">
+                            <div class="col-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-success text-white h-100"><i class="ti-user"></i></span>
+                                    </div>
+                                    {{ form.username }}
+                                </div>
+
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-warning text-white h-100"><i class="ti-pencil"></i></span>
+                                    </div>
+                                    {{ form.password }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row border-top border-secondary">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <div class="pt-3">
+                                        <button class="btn btn-success float-end text-white" type="submit">Login</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Required JS -->
+    <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
+    <script src="../../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    $(".preloader").fadeOut();
+    $('#to-recover').on("click", function() {
+        $("#loginform").slideUp();
+        $("#recoverform").fadeIn();
+    });
+    $('#to-login').click(function(){
+        $("#recoverform").hide();
+        $("#loginform").fadeIn();
+    });
+    </script>
+
 </body>
 </html>
+{% endblock %}

@@ -117,32 +117,37 @@ class PutniNalogForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Zaposleni"
     )
+    job_code = forms.ModelChoiceField(
+        queryset=OrganizationalUnit.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label="Troškovi idu na teret"
+    )
     travel_date = forms.DateField(
         widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
         input_formats=['%d/%m/%Y', '%Y-%m-%d'],
         label="Datum putovanja"
     )
-    return_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum povratka"
-    )
 
     class Meta:
         model = PutniNalog
         fields = '__all__'
+        widgets = {
+            'order_date': forms.HiddenInput(),  # Sakriva polje od korisnika
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:  # Check if instance is being updated
-            if self.instance.travel_date:
-                self.initial['travel_date'] = self.instance.travel_date.strftime('%Y-%m-%d')
-            if self.instance.return_date:
-                self.initial['return_date'] = self.instance.return_date.strftime('%Y-%m-%d')
+        
+        # Automatski postavlja današnji datum za order_date ako se kreira novi nalog
+        if not self.instance.pk:
+            self.initial['order_date'] = datetime.date.today()
 
-        # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
+
+        # Sva polja su obavezna osim 'order_date' koji je automatski
         for field_name, field in self.fields.items():
-            field.required = True
+            if field_name != 'order_date':
+                field.required = True
+
 class ServiceTypeForm(forms.ModelForm):
     class Meta:
         model = ServiceType
@@ -154,6 +159,11 @@ class ServiceForm(forms.ModelForm):
         fields = '__all__'
 
 class ServiceTransactionForm(forms.ModelForm):
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
+
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
@@ -164,6 +174,11 @@ class ServiceTransactionForm(forms.ModelForm):
         input_formats=['%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
+    nije_garaza = models.BooleanField(
+        default=True,
+        choices=YES_NO_CHOICES,  # Dodato choices
+        verbose_name=_("Da li se polisa obnavlja?")
+    )
     class Meta:
         model = ServiceTransaction
         fields = '__all__'
@@ -173,9 +188,47 @@ class ServiceTransactionForm(forms.ModelForm):
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.datum:
                 self.initial['datum'] = self.instance.datum.strftime('%Y-%m-%d')
+
+        # # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
+        # for field_name, field in self.fields.items():
+        #     field.required = True
+
+
+class DraftServiceTransactionForm(forms.ModelForm):
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
+
+    vehicle = forms.ModelChoiceField(
+        queryset=Vehicle.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label="Vozilo"
+    )
+    datum = forms.DateField(
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum"
+    )
+    nije_garaza = models.BooleanField(
+        default=True,
+        choices=YES_NO_CHOICES,  # Dodato choices
+        verbose_name=_("Da li se polisa obnavlja?")
+    )
+    class Meta:
+        model = DraftServiceTransaction
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:  # Check if instance is being updated
+            if self.instance.datum:
+                self.initial['datum'] = self.instance.datum.strftime('%Y-%m-%d')
+
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
-            field.required = True
+            field.required = False
+
 class RequisitionForm(forms.ModelForm):
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),

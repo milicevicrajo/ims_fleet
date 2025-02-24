@@ -17,7 +17,7 @@ from datetime import date, timedelta
 from django.db.models import F
 from django.utils import timezone
 from datetime import timedelta
-from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever, update_vehicle_values, delete_complete_drafts
+from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever, update_vehicle_values, delete_complete_drafts, sanitize_filename
 from django.db.models.functions import TruncMonth, TruncYear
 from django.db.models import Q
 from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data, populate_putni_nalog_template
@@ -30,6 +30,7 @@ from django.http import FileResponse
 import os
 from django.urls import reverse
 from django.conf import settings
+from django.http import HttpResponseRedirect
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
 # <!-- ======================================================================= -->
@@ -703,32 +704,40 @@ class ExpiringAndNotRenewedPolicyView(LoginRequiredMixin, ListView):
         today = timezone.now().date()
         thirty_days_from_now = today + timedelta(days=30)
         
+        # Pronađi najnoviju polisu po vozilu i tipu osiguranja
         newest_policy = Policy.objects.filter(
-        vehicle=OuterRef('vehicle'),
-        insurance_type=OuterRef('insurance_type')
-        ).order_by('-end_date').values('end_date')[:1]
+            vehicle=OuterRef('vehicle'),
+            insurance_type=OuterRef('insurance_type')
+        ).order_by('-end_date').values('end_date', 'is_renewable')[:1]
 
+        # Dodaj anotaciju sa datumom i informacijom da li je polisa obnovljiva
         expiring_policies = Policy.objects.annotate(
-            latest_end_date=Subquery(newest_policy)
+            latest_end_date=Subquery(newest_policy.values('end_date')[:1]),
+            latest_is_renewable=Subquery(newest_policy.values('is_renewable')[:1])
         ).filter(
             end_date__gte=today,
             end_date__lte=thirty_days_from_now,
-            end_date=F('latest_end_date')
+            end_date=F('latest_end_date'),
+            latest_is_renewable=True  # Prikazuj samo ako je obnovljiva
         )
 
+        # Proveri da li postoji novija polisa
         newer_policy_exists = Policy.objects.filter(
             vehicle=OuterRef('vehicle'),
             insurance_type=OuterRef('insurance_type'),
-            start_date__gt=OuterRef('start_date') 
+            start_date__gt=OuterRef('start_date')
         )
 
-        # Filter policies that have expired but haven't been renewed
+        # Pronađi istekle polise koje nisu obnovljene
         expired_unrenewed_policies = Policy.objects.annotate(
-            has_newer_policy=Exists(newer_policy_exists)
+            has_newer_policy=Subquery(newer_policy_exists.values('id')[:1]),
+            latest_is_renewable=Subquery(newest_policy.values('is_renewable')[:1])
         ).filter(
-            end_date__lt=today,  # Policies that have already expired
-            has_newer_policy=False  # Ensure there is no newer policy
+            end_date__lt=today,
+            has_newer_policy__isnull=True,   # Nema novije polise
+            latest_is_renewable=True         # Prikazuj samo ako je obnovljiva
         )
+
 
         context['expiring_policies'] = expiring_policies
         context['expired_unrenewed_policies'] = expired_unrenewed_policies
@@ -758,6 +767,19 @@ class PolicyUpdateView(LoginRequiredMixin, UpdateView):
         context['title'] = 'Izmeni polisu osiguranja'
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
+    
+    def form_valid(self, form):
+        # Prvo sačuvaj izmene
+        response = super().form_valid(form)
+        next_url = self.request.GET.get('next')
+
+        # Zatim preusmeri korisnika nazad ako postoji 'next' parametar
+        next_url = self.request.GET.get('next')
+        if next_url:
+            return HttpResponseRedirect(next_url)
+        
+        return response
+
 
 class PolicyDetailView(LoginRequiredMixin, DetailView):
     model = Policy
@@ -1112,13 +1134,35 @@ class PutniNalogListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista putnih naloga'
         return context
 
+from django.http import FileResponse, HttpResponse
+import os
+from django.conf import settings
+
 def download_travel_order_excel(request, pk):
     """
     Preuzmi generisani Excel fajl za dati PutniNalog.
     """
-    putni_nalog = PutniNalog.objects.get(pk=pk)
-    file_path = os.path.join(settings.MEDIA_ROOT, "travel_orders", f"PutniNalog_{putni_nalog.id}.xlsx")
-    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{putni_nalog.id}.xlsx")
+    try:
+        # Dobavi putni nalog
+        putni_nalog = PutniNalog.objects.get(pk=pk)
+
+        # Generiši tačno ime fajla kao u `populate_putni_nalog_template()`
+        sanitized_order_number = sanitize_filename(putni_nalog.order_number)
+        file_name = f"PutniNalog_{sanitized_order_number}.xlsx"
+        file_path = os.path.join(settings.MEDIA_ROOT, "travel_orders", file_name)
+
+        # ✅ Proveri da li fajl postoji pre preuzimanja
+        if not os.path.exists(file_path):
+            return HttpResponse(f"Greška: Fajl nije pronađen {file_path}", status=404)
+
+        # ✅ Vraćanje fajla kao odgovor
+        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_name)
+
+    except PutniNalog.DoesNotExist:
+        return HttpResponse("Greška: Putni nalog ne postoji.", status=404)
+    except Exception as e:
+        return HttpResponse(f"Greška: {str(e)}", status=500)
+
 
 class PutniNalogCreateView(LoginRequiredMixin, CreateView):
     model = PutniNalog
@@ -1346,6 +1390,11 @@ class ServiceTransactionListView(ListView):
     model = ServiceTransaction
     template_name = 'fleet/service_transactions_list.html'
     context_object_name = 'service_transactions'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Lista servisa - popravke van IMS-a'
+        return context
 
 class ServiceTransactionFixingListView(LoginRequiredMixin, ListView):
     model = DraftServiceTransaction
@@ -1391,9 +1440,9 @@ class ServiceTransactionDeleteView(DeleteView):
 
 class DraftServiceTransactionUpdateView(UpdateView):
     model = DraftServiceTransaction
-    form_class = ServiceTransactionForm
+    form_class = DraftServiceTransactionForm
     template_name = 'fleet/generic_form.html'
-    success_url = reverse_lazy('service_transaction_success')  # Preusmeri nakon uspešne migracije
+    success_url = reverse_lazy('service_fixing_list')  # Preusmeri nakon uspešne migracije
 
     def form_valid(self, form):
         # Sačuvaj izmene u draft tabeli
@@ -1402,33 +1451,36 @@ class DraftServiceTransactionUpdateView(UpdateView):
 
         # Proveri da li su svi potrebni podaci sada prisutni osim `kom` i `napomena`
         is_complete = all([
-            draft.god, 
-            draft.sif_par_pl, 
-            draft.naz_par_pl, 
-            draft.datum, 
-            draft.sif_vrs, 
-            draft.br_naloga, 
-            draft.vez_dok, 
-            draft.knt_pl, 
-            draft.potrazuje, 
-            draft.sif_par_npl, 
-            draft.knt_npl, 
-            draft.duguje, 
-            draft.sif_pos, 
-            draft.konto_vozila, 
-            draft.RegOzn, 
-            draft.poptavka_kategorija
+            draft.vehicle_id is not None,
+            draft.god is not None,
+            draft.sif_par_pl not in [None, ''],
+            draft.naz_par_pl not in [None, ''],
+            draft.datum is not None,
+            draft.sif_vrs not in [None, ''],
+            draft.br_naloga not in [None, ''],
+            draft.vez_dok not in [None, ''],
+            draft.knt_pl not in [None, ''],
+            draft.potrazuje is not None,
+            draft.sif_par_npl not in [None, ''],
+            draft.knt_npl not in [None, ''],
+            draft.duguje is not None,
+            draft.konto_vozila not in [None, ''],
+            draft.popravka_kategorija not in [None, '']
         ])
+
 
         # Ako su svi potrebni podaci prisutni, pokreni migraciju u glavnu tabelu
         if is_complete:
-            migrate_draft_to_service_transaction(draft)
+            draft.save()
+            migrate_draft_to_service_transaction(draft.id)
             print("Podaci migrirani u glavnu tabelu.")
+            messages.success(self.request, "✅ Podaci su uspešno migrirani u glavnu tabelu.")
             return redirect(self.success_url)
         
         # Ako podaci nisu kompletni, sačuvaj samo u draft tabeli
         else:
             print("Podaci nisu kompletni, ostaju u draft tabeli.")
+            messages.warning(self.request, "⚠️ Podaci nisu kompletni, ostaju u draft tabeli.")
             draft.save()  # Sačuvaj bez migracije
             return super().form_valid(form)
     
@@ -1720,23 +1772,28 @@ def fetch_lease_interest_data(request):
 
 def fetch_policy_data_view(request):
     if request.method == 'POST':
-        # Preuzmi broj dana iz POST zahteva (opciono)
-        days = request.POST.get('days', None)
+        days = request.POST.get('days')
+        result = None
         
-        # Ako korisnik unese broj dana, pretvori ga u integer
-        if days:
-            try:
+        try:
+            if days:
                 days = int(days)
-            except ValueError:
-                messages.error(request, "Uneta vrednost za broj dana nije validna.")
-                return redirect('fetch_policy_data')  # Vrati korisnika na stranicu sa greškom
-
-        # Pozovi funkciju za povlačenje podataka sa odgovarajućim parametrima
-        result = fetch_policy_data(last_24_hours=False, days=days)
-        messages.success(request, result)
+                if days < 0:
+                    raise ValueError
+                result = fetch_policy_data(last_24_hours=False, days=days)
+            else:
+                result = fetch_policy_data()
+            
+            if result.startswith('Critical error'):
+                messages.error(request, result)
+            else:
+                messages.success(request, result)
+                
+        except ValueError:
+            messages.error(request, "Invalid number of days")
+        
         return redirect('policy_list')
 
-    # Prikaz forme za unos broja dana
     return render(request, 'fleet/fetch_policy_data.html')
 
 

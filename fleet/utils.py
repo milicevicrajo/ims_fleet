@@ -19,7 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.db import connections, transaction
 from django.db.models import F, Value, CharField, Subquery, OuterRef
-from django.http import FileResponse
+from django.http import JsonResponse
 
 def get_latest_download_file(download_path):
     
@@ -828,123 +828,108 @@ from .models import Policy, DraftPolicy, Vehicle
 
 def fetch_policy_data(last_24_hours=True, days=None):
     """
-    Funkcija za povlačenje podataka o polisama osiguranja.
-    Ako je last_24_hours=True, povlače se podaci u poslednjih 24 sata.
-    Ako je days != None, povlače se podaci za prethodni broj dana.
-    Ako su oba parametra False/None, povlače se svi podaci.
+    Improved function to fetch insurance policy data with better security and error handling
     """
     try:
-        print("Pokrećem funkciju za povlačenje podataka...")
+        logger.info("Starting data fetching process...")
         
-        # SQL upit za povlačenje podataka iz view-a `dbo.polise`
-        query = """
-            SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, VrstaOsiguranja, BrojPolise,
-                   IznosPremije, RegistraskaOznaka, PeriodOd, PeriodDo, IznosPrveRate, IznosOstalihRata, BrojRata
+        base_query = """
+            SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, 
+                   VrstaOsiguranja, BrojPolise, IznosPremije, RegistraskaOznaka,
+                   PeriodOd, PeriodDo, IznosPrveRate, IznosOstalihRata, BrojRata
             FROM dbo.v_polise
         """
-        
-        # Dodaj WHERE klauzulu u zavisnosti od parametara
+        params = []
+        where_clauses = []
+
+        # Build WHERE clause safely
         if days is not None:
-            query += f" WHERE issuedate > DATEADD(day, -{days}, GETDATE())"
-            print(f"Filtriram podatke za poslednjih {days} dana.")
+            where_clauses.append("issuedate > DATEADD(day, -%s, GETDATE())")
+            params.append(days)
+            logger.info(f"Filtering data for last {days} days")
         elif last_24_hours:
-            query += " WHERE issuedate > DATEADD(day, -1, GETDATE())"
-            print("Filtriram podatke za poslednja 24 sata.")
+            where_clauses.append("issuedate > DATEADD(day, -1, GETDATE())")
+            logger.info("Filtering data for last 24 hours")
 
-        # Izvrši upit i preuzmi podatke
+        query = base_query
+        if where_clauses:
+            query += " WHERE " + " AND ".join(where_clauses)
+
         with connections['test_db'].cursor() as cursor:
-            print("Izvršavam SQL upit za preuzimanje podataka...")
-            cursor.execute(query)
+            logger.info("Executing SQL query...")
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
             rows = cursor.fetchall()
-            print(f"Broj povučenih redova: {len(rows)}")
 
-        # Iteriranje kroz povučene redove
-        for index, row in enumerate(rows):
-            invoice_id = row[2]
-            print(f"Obrađujem red {index+1} sa ID fakture: {invoice_id}")
+            logger.info(f"Fetched {len(rows)} rows")
+            if not rows:
+                return "No new data found"
 
-            # Provera postojanja zapisa u glavnoj i draft tabeli
-            policy_exists = Policy.objects.filter(invoice_id=invoice_id).exists()
-            draft_exists = DraftPolicy.objects.filter(invoice_id=invoice_id).exists()
+        new_policies = 0
+        new_drafts = 0
+        errors = 0
 
-            # Ako zapis ne postoji ni u jednoj tabeli, dodaj novi zapis
-            if not policy_exists and not draft_exists:
-                print("Zapis ne postoji ni u glavnoj ni u draft tabeli. Dodajem novi zapis.")
+        with transaction.atomic():
+            for row in rows:
+                row_data = dict(zip(columns, row))
+                invoice_id = row_data['ID']
                 
-                # Pretraži `Vehicle` model po registraskoj oznaci ako je vezan za polisu
-                vehicle = Vehicle.objects.filter(registration_number=row[8]).first() if row[8] else None
-                print(f"Vozilo pronađeno: {vehicle}")
-
-                # Konverzija datuma
-                issue_date = datetime.strptime(row[4], "%Y-%m-%d").date() if row[4] else None
-                start_date = datetime.strptime(row[9], "%Y-%m-%d").date() if row[9] else None
-                end_date = datetime.strptime(row[10], "%Y-%m-%d").date() if row[10] else None
-
                 try:
-                    # Pokušaj konverzije vrednosti u decimalni broj
-                    premium_amount = float(row[7]) if row[7] else None
-                    first_installment_amount = float(row[11]) if row[11] else None
-                    other_installments_amount = float(row[12]) if row[12] else None
-                except ValueError:
-                    # Ako dođe do greške, ispiši red sa greškom i nastavi dalje
-                    print(f"Problematičan red {index+1}: {row}")
-                    continue  # Preskoči ovaj red i nastavi sa sledećim
+                    # Check existing records
+                    exists = (Policy.objects.filter(invoice_id=invoice_id).exists() or 
+                             DraftPolicy.objects.filter(invoice_id=invoice_id).exists())
+                    if exists:
+                        logger.debug(f"Skipping existing invoice {invoice_id}")
+                        continue
 
-                # Proveravamo da li su svi potrebni podaci prisutni
-                is_complete = all([
-                    row[0], row[1], row[2], row[3], issue_date, row[5], row[6],
-                    row[7], start_date, end_date, row[11], row[12], row[13]
-                ])
+                    # Process vehicle
+                    vehicle = None
+                    if reg_plate := row_data.get('RegistraskaOznaka'):
+                        vehicle = Vehicle.objects.filter(
+                            registration_number=reg_plate
+                        ).first()
 
-                if is_complete:
-                    print("Podaci su kompletni. Dodajem zapis u glavnu tabelu Policy.")
-                    # Kreiraj zapis u glavnoj tabeli
-                    policy = Policy(
-                        vehicle=vehicle,
-                        partner_pib=row[0],
-                        partner_name=row[1],
-                        invoice_id=row[2],
-                        invoice_number=row[3],
-                        issue_date=issue_date,
-                        insurance_type=row[5],
-                        policy_number=row[6],
-                        premium_amount=premium_amount,
-                        start_date=start_date,
-                        end_date=end_date,
-                        first_installment_amount=first_installment_amount,
-                        other_installments_amount=other_installments_amount,
-                        number_of_installments=row[13]
-                    )
-                    policy.save()
-                    print(f"Zapis sa ID fakture {invoice_id} je uspešno sačuvan u glavnoj tabeli.")
-                else:
-                    print("Podaci nisu kompletni. Dodajem zapis u draft tabelu DraftPolicy.")
-                    # Ako podaci nisu kompletni, unesi u draft tabelu
-                    draft_policy = DraftPolicy(
-                        partner_pib=row[0],
-                        partner_name=row[1],
-                        invoice_id=row[2],
-                        invoice_number=row[3],
-                        issue_date=issue_date,
-                        insurance_type=row[5],
-                        policy_number=row[6],
-                        premium_amount=premium_amount,
-                        start_date=start_date,
-                        end_date=end_date,
-                        first_installment_amount=first_installment_amount,
-                        other_installments_amount=other_installments_amount,
-                        number_of_installments=row[13] if row[13] else None 
-                    )
-                    draft_policy.save()
-                    print(f"Zapis sa ID fakture {invoice_id} je sačuvan u draft tabeli.")
-            else:
-                print(f"Polisa sa ID fakture {invoice_id} već postoji u sistemu, preskačem unos.")
+                    # Convert dates directly (assuming DB returns date objects)
+                    dates = ['issuedate', 'PeriodOd', 'PeriodDo']
+                    for date_field in dates:
+                        if row_data.get(date_field) and isinstance(row_data[date_field], str):
+                            row_data[date_field] = datetime.strptime(
+                                row_data[date_field], "%Y-%m-%d"
+                            ).date()
 
-        return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
+                    # Validate required fields
+                    required_fields = [
+                        'PartnerPIB', 'PartnerIme', 'ID', 'BrojFakture',
+                        'issuedate', 'VrstaOsiguranja', 'BrojPolise', 'IznosPremije',
+                        'PeriodOd', 'PeriodDo', 'IznosPrveRate', 'IznosOstalihRata'
+                    ]
+                    
+                    if not all(row_data.get(field) for field in required_fields):
+                        DraftPolicy.objects.create(
+                            vehicle=vehicle,
+                            **{k: row_data.get(k) for k in DraftPolicy._meta.fields}
+                        )
+                        new_drafts += 1
+                    else:
+                        Policy.objects.create(
+                            vehicle=vehicle,
+                            **{k: row_data.get(k) for k in Policy._meta.fields}
+                        )
+                        new_policies += 1
+
+                except Exception as e:
+                    logger.error(f"Error processing invoice {invoice_id}: {str(e)}")
+                    errors += 1
+                    continue
+
+        msg = (f"Successfully processed {new_policies} policies, "
+               f"{new_drafts} drafts. Errors: {errors}")
+        logger.info(msg)
+        return msg
 
     except Exception as e:
-        print(f"Došlo je do greške prilikom povlačenja podataka: {e}")
-        return f"Došlo je do greške prilikom povlačenja podataka: {e}"
+        logger.error(f"Critical error in data fetch: {str(e)}", exc_info=True)
+        return f"Critical error: {str(e)}"
     
 
 def fetch_service_data(last_24_hours=True, days=None):
@@ -1091,7 +1076,7 @@ def fetch_service_data(last_24_hours=True, days=None):
 
 
 
-def migrate_draft_to_service_transaction(draft_id, vehicle_id=None):
+def migrate_draft_to_service_transaction(draft_id):
     """
     Funkcija za migraciju zapisa iz DraftServiceTransaction u ServiceTransaction.
     Ako podaci u draftu zadovoljavaju sve uslove za unos, oni se prebacuju u glavnu tabelu.
@@ -1103,7 +1088,7 @@ def migrate_draft_to_service_transaction(draft_id, vehicle_id=None):
         if draft.is_complete():
             with transaction.atomic():
                 service_transaction = ServiceTransaction.objects.create(
-                    vehicle_id=vehicle_id,
+                    vehicle_id=draft.vehicle_id,
                     god=draft.god,
                     sif_par_pl=draft.sif_par_pl,
                     naz_par_pl=draft.naz_par_pl,
@@ -1119,7 +1104,8 @@ def migrate_draft_to_service_transaction(draft_id, vehicle_id=None):
                     konto_vozila=draft.konto_vozila,
                     kom=draft.kom,
                     popravka_kategorija=draft.popravka_kategorija,
-                    napomena=draft.napomena
+                    napomena=draft.napomena,
+                    kilometraza=draft.kilometraza
                 )
                 # Brisanje iz draft tabele nakon uspešnog migriranja
                 draft.delete()
@@ -1837,51 +1823,87 @@ def delete_complete_drafts():
         if draft.is_complete():
             draft.delete()
 
+def sanitize_filename(filename):
+    """
+    Uklanja nedozvoljene znakove iz naziva fajla.
+    Dozvoljeni znakovi: slova, brojevi, crtice i donje crte.
+    """
+    return re.sub(r'[^a-zA-Z0-9_\-]', '_', filename)
 
 def populate_putni_nalog_template(putni_nalog):
     """
-    Populate an Excel template with the details of a travel order in both Sheet1 and Sheet2.
+    Popunjava Excel šablon sa podacima putnog naloga i vraća generisani fajl.
     """
-    import os
-    from openpyxl import load_workbook
-    from django.http import FileResponse
-    from django.conf import settings
-
-    # Path to the template
+    # Proveri postojanje fajla pre otvaranja
     template_path = os.path.join(settings.BASE_DIR, "dokumenta", "iz077.xlsx")
+    
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"Šablon ne postoji: {template_path}")
 
-    # Load the workbook
+    # Učitavanje Excel fajla
     workbook = load_workbook(template_path)
 
-    # Populate Sheet1
-    sheet1 = workbook["zadnja strana"]  # Replace "Sheet1" with the actual name of the first sheet
-    sheet1["O6"] = str(putni_nalog.employee)  # Zaposleni
-    sheet1["R7"] = putni_nalog.job_code       # Šifra posla
-    sheet1["R9"] = putni_nalog.travel_location  # Mesto putovanja
-    sheet1["R15"] = str(putni_nalog.vehicle)    # Prevozno sredstvo
-    sheet1["O9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
-    sheet1["R18"] = putni_nalog.return_date.strftime("%d.%m.%Y")  # Datum povratka
-    sheet1["R22"] = float(putni_nalog.advance_payment)  # Avans
+    # Popunjavanje prvog radnog lista - "zadnja strana"
+    if "zadnja strana" in workbook.sheetnames:
+        sheet1 = workbook["zadnja strana"]
+        sheet1["P1"] = str(putni_nalog.job_code.name)  # Organizacija
+        sheet1["N2"] = str(putni_nalog.order_number)  # Broj naloga
+        sheet1["M3"] = str(putni_nalog.order_date.strftime("%d.%m.%Y"))  # Datum naloga
+        sheet1["O6"] = str(putni_nalog.employee)  # Zaposleni
+        sheet1["M8"] = str(putni_nalog.employee.position)  # Pozicija radnika
+        sheet1["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
+        sheet1["N10"] = putni_nalog.travel_location
+        sheet1["M12"] = putni_nalog.task
+        sheet1["M16"] = str(putni_nalog.vehicle)  # Prevozno sredstvo
+        sheet1["S17"] = putni_nalog.daily_allowance
+        sheet1["R18"] = putni_nalog.number_of_days
+        sheet1["R22"] = float(putni_nalog.advance_payment)  # Avans
+        sheet1["R23"] = putni_nalog.job_code.code  # Šifra posla
+    else:
+        raise ValueError("Nema radnog lista 'zadnja strana' u šablonu.")
 
-    # Populate Sheet2
-    sheet2 = workbook["prednja strana"]  # Replace "Sheet2" with the actual name of the second sheet
-    sheet2["O6"] = str(putni_nalog.employee)  # Zaposleni
-    sheet2["R7"] = putni_nalog.job_code       # Šifra posla
-    sheet2["R9"] = putni_nalog.travel_location  # Mesto putovanja
-    sheet2["R15"] = str(putni_nalog.vehicle)    # Prevozno sredstvo
-    sheet2["O9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
-    sheet2["R18"] = putni_nalog.return_date.strftime("%d.%m.%Y")  # Datum povratka
-    sheet2["R22"] = float(putni_nalog.advance_payment)  # Avans
+    # Popunjavanje drugog radnog lista - "prednja strana"
+    if "prednja strana" in workbook.sheetnames:
+        sheet2 = workbook["prednja strana"]
+        sheet2["P1"] = str(putni_nalog.job_code.name)  # Organizacija
+        sheet2["N2"] = str(putni_nalog.order_number)  # Broj naloga
+        sheet2["M3"] = str(putni_nalog.order_date.strftime("%d.%m.%Y"))  # Datum naloga
+        sheet2["O6"] = str(putni_nalog.employee)  # Zaposleni
+        sheet2["M8"] = str(putni_nalog.employee.position)  # Pozicija radnika
+        sheet2["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
+        sheet2["N10"] = putni_nalog.travel_location
+        sheet2["M12"] = putni_nalog.task
+        sheet2["M16"] = str(putni_nalog.vehicle)  # Prevozno sredstvo
+        sheet2["S17"] = putni_nalog.daily_allowance
+        sheet2["R18"] = putni_nalog.number_of_days
+        sheet2["R22"] = float(putni_nalog.advance_payment)  # Avans
+        sheet2["R23"] = putni_nalog.job_code.code  # Šifra posla
+    else:
+        raise ValueError("Nema radnog lista 'prednja strana' u šablonu.")
 
-    # Save the file to a temporary location
+    # Kreiranje foldera ako ne postoji
     output_dir = os.path.join(settings.MEDIA_ROOT, "travel_orders")
     os.makedirs(output_dir, exist_ok=True)
 
-    file_path = os.path.join(output_dir, f"PutniNalog_{putni_nalog.id}.xlsx")
-    workbook.save(file_path)
+    # Sanitizacija naziva fajla
+    sanitized_order_number = sanitize_filename(putni_nalog.order_number)
+    file_name = f"PutniNalog_{sanitized_order_number}.xlsx"
+    file_path = os.path.join(output_dir, file_name)
 
-    # Return the file as a response
-    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{putni_nalog.id}.xlsx")
+     # ✅ Čuvanje fajla
+    try:
+        workbook.save(file_path)
+    except Exception as e:
+        return JsonResponse({"error": f"Greška pri čuvanju fajla: {str(e)}"}, status=500)
+
+    # ✅ Proveri da li fajl postoji
+    if not os.path.exists(file_path):
+        return JsonResponse({"error": f"Fajl nije pronađen nakon čuvanja: {file_path}"}, status=500)
+
+    # ✅ Kreiranje URL-a za preuzimanje
+    file_url = os.path.join(settings.MEDIA_URL, "travel_orders", file_name)
+
+    return JsonResponse({"file_url": file_url})
 
 
 from selenium import webdriver

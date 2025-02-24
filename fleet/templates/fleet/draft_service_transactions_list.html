@@ -4,7 +4,7 @@
 <h2>{{ title }}</h2>
 <div class="card">
   <div class="card-body">
-      <h5 class="card-title">Basic Datatable</h5>
+      <h5 class="card-title">Da bi se informacije o servisu registrovale u aplikaciji potrebno je popuniti sva polja osim napomene</h5>
       <div class="table-responsive">
           <table id="DatatableServisi" class="display compact">
               <thead>
@@ -28,7 +28,7 @@
                     <td>{{ service_transaction.naz_par_pl }}</td>
                     <td>{{ service_transaction.napomena }}</td>
                     <td>
-                      <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}">Edit</a>
+                      <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}">Dopuni</a>
                     </td>
                   </tr>
               {% empty %}
