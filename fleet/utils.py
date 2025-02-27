@@ -1854,6 +1854,7 @@ def populate_putni_nalog_template(putni_nalog):
         sheet1["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
         sheet1["N10"] = putni_nalog.travel_location
         sheet1["M12"] = putni_nalog.task
+        sheet1["M12"] = putni_nalog.contract_offer
         sheet1["M16"] = str(putni_nalog.vehicle)  # Prevozno sredstvo
         sheet1["S17"] = putni_nalog.daily_allowance
         sheet1["R18"] = putni_nalog.number_of_days
@@ -1873,6 +1874,7 @@ def populate_putni_nalog_template(putni_nalog):
         sheet2["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
         sheet2["N10"] = putni_nalog.travel_location
         sheet2["M12"] = putni_nalog.task
+        sheet1["M12"] = putni_nalog.contract_offer
         sheet2["M16"] = str(putni_nalog.vehicle)  # Prevozno sredstvo
         sheet2["S17"] = putni_nalog.daily_allowance
         sheet2["R18"] = putni_nalog.number_of_days

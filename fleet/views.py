@@ -2055,3 +2055,44 @@ def potrazivanje_ddor_view(request):
     data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/potrazivanje_ddor.html', {'data': data})
 
+
+
+# <!-- ======================================================================= -->
+#                           <!-- NAPLATA -->
+# <!-- ======================================================================= -->
+
+
+from django.db import connections
+from django.shortcuts import render
+
+def lista_dugovanja(request):
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("SELECT sif_par, naz_par, dug, pot FROM dbo.baza ORDER BY dug DESC")
+        dugovanja = cursor.fetchall()
+
+    return render(request, 'fleet/naplata/dugovanja.html', {'dugovanja': dugovanja})
+
+from django.shortcuts import render
+from django.db import connections
+
+def lista_dugovanja_po_bucketima(request):
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                sif_par, 
+                naz_par, 
+                SUM(CASE WHEN baket = 0.1 THEN saldo ELSE 0 END) AS Nedospelo,
+                SUM(CASE WHEN baket = 30 THEN saldo ELSE 0 END) AS "Dospelo - baket 1",
+                SUM(CASE WHEN baket = 45 THEN saldo ELSE 0 END) AS "Dospelo - baket 2",
+                SUM(CASE WHEN baket = 60 THEN saldo ELSE 0 END) AS "Dospelo - baket 3",
+                SUM(CASE WHEN baket = 90 THEN saldo ELSE 0 END) AS "Dospelo - baket 4",
+                SUM(CASE WHEN baket = 180 THEN saldo ELSE 0 END) AS "Dospelo - baket 5",
+                SUM(CASE WHEN baket = 181 THEN saldo ELSE 0 END) AS "Dospelo - baket 6",
+                SUM(saldo) AS Ukupno
+            FROM dodela_baketa
+            GROUP BY sif_par, naz_par
+            ORDER BY Ukupno DESC
+        """)
+        dugovanja = cursor.fetchall()
+
+    return render(request, 'fleet/naplata/dugovanja_bucketi.html', {'dugovanja': dugovanja})

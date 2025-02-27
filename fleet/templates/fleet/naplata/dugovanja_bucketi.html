@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Lista dugovanja po bucketima</h2>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="DugovanjaBuketi" class="display compact">
+                <thead>
+                    <tr>
+                        <th>Šifra partnera</th>
+                        <th>Partner</th>
+                        <th>Nedospelo</th>
+                        <th>Dospelo - baket 1</th>
+                        <th>Dospelo - baket 2</th>
+                        <th>Dospelo - baket 3</th>
+                        <th>Dospelo - baket 4</th>
+                        <th>Dospelo - baket 5</th>
+                        <th>Dospelo - baket 6</th>
+                        <th>Ukupno</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dug in dugovanja %}
+                        <tr>
+                            <td>{{ dug.0 }}</td> <!-- sif_par -->
+                            <td>{{ dug.1 }}</td> <!-- naz_par -->
+                            <td>{{ dug.2 }}</td> <!-- Nedospelo -->
+                            <td>{{ dug.3 }}</td> <!-- Dospelo - baket 1 -->
+                            <td>{{ dug.4 }}</td> <!-- Dospelo - baket 2 -->
+                            <td>{{ dug.5 }}</td> <!-- Dospelo - baket 3 -->
+                            <td>{{ dug.6 }}</td> <!-- Dospelo - baket 4 -->
+                            <td>{{ dug.7 }}</td> <!-- Dospelo - baket 5 -->
+                            <td>{{ dug.8 }}</td> <!-- Dospelo - baket 6 -->
+                            <td>{{ dug.9 }}</td> <!-- Ukupno -->
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

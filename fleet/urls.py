@@ -122,6 +122,10 @@ urlpatterns = [
     path('izvestaji/potrazivanje_ddor/', views.potrazivanje_ddor_view, name='potrazivanje_ddor'),
     path('izvestaji/po_dobavljacima/', views.po_dobavljacima_view, name='po_dobavljacima'),
 
+    path('dugovanja/', lista_dugovanja, name='lista_dugovanja'),
+    path('dugovanja_po_bucketima/', lista_dugovanja_po_bucketima, name='lista_dugovanja_po_bucketima'),
+    # path('dugovanje/<int:sif_par>/', detalji_dugovanja, name='detalji_dugovanja'),
+
     
     path('', views.dashboard, name='dashboard'),
     path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),

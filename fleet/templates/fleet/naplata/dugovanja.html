@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Lista dugovanja</h2>
+<table border="1">
+    <tr>
+        <th>Šifra partnera</th>
+        <th>Partner</th>
+        <th>Dug</th>
+        <th>Potražuje</th>
+    </tr>
+    {% for dug in dugovanja %}
+    <tr>
+        <td>{{ dug.0 }}</td> <!-- sif_par -->
+        <td>{{ dug.1 }}</td> <!-- naz_par -->
+        <td>{{ dug.2 }}</td> <!-- dug -->
+        <td>{{ dug.3 }}</td> <!-- pot -->
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -442,6 +442,15 @@
                     }
                 },
             });
+            var table = $('#DugovanjaBuketi').DataTable({
+                "language": languageSettings,
+
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 100,  // Postavlja podrazumevani broj redova
+
+            });
+
         });  
           
     </script>
