@@ -30,4 +30,15 @@ DATABASES = {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
     },
+    'naplata_db': {  # Dodajemo novu bazu
+        'ENGINE': 'mssql',
+        'NAME': 'Naplata',
+        'USER': 'Rajo Milicevic',
+        'PASSWORD': 'Rajo123',
+        'HOST': 'SMS-SERVER',  # Npr. 192.168.1.100 ili localhost
+        'PORT': '',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+        },
+    },
 }
