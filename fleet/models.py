@@ -516,7 +516,7 @@ class CustomUser(AbstractUser):
 # <!-- ======================================================================= -->
 
 class Kontakti(models.Model):
-    sif_par = models.FloatField(blank=True, null=True)
+    sif_par = models.IntegerField(primary_key=True)  # Postavljamo kao primarni ključ
     nazpar = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     kontakt = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     email = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
@@ -528,55 +528,62 @@ class Kontakti(models.Model):
 
 
 class Napomene(models.Model):
-    ova_tabela_se_popunjava_kroz_aplikaciju_sifra_partnera_mora_da_field = models.FloatField(db_column='ova tabela se popunjava kroz aplikaciju, sifra partnera mora da ', blank=True, null=True)  # Field renamed to remove unsuitable characters. Field renamed because it ended with '_'.
-    f2 = models.CharField(db_column='F2', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)  # Field name made lowercase.
-    f3 = models.CharField(db_column='F3', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)  # Field name made lowercase.
-    f4 = models.CharField(db_column='F4', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)  # Field name made lowercase.
+    id = models.AutoField(primary_key=True)  # Primarni ključ
+    sif_par = models.FloatField(db_column='sif_par', blank=True, null=True)  # Šifra partnera
+    naziv = models.CharField(db_column='naziv', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
+    napomene = models.CharField(db_column='napomene', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
+    veliki = models.CharField(db_column='veliki', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True  # Pošto sada tabela ima ID, Django može upravljati podacima
         db_table = 'napomene'
 
 
 class Opomene(models.Model):
-    sif_par = models.FloatField(blank=True, null=True)
+    id = models.AutoField(primary_key=True)  # Primarni ključ
+    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
-    god = models.FloatField(blank=True, null=True)
-    br_opomene = models.FloatField(blank=True, null=True)
+    god = models.IntegerField(blank=True, null=True)
+    br_opomene = models.IntegerField(blank=True, null=True)
     datum = models.DateTimeField(blank=True, null=True)
     iznos = models.FloatField(blank=True, null=True)
     fakture = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     napomene = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True  # Django sada može da upravlja tabelom
         db_table = 'opomene'
 
 
+
 class PozivPismo(models.Model):
-    sif_par = models.FloatField(blank=True, null=True)
+    id = models.AutoField(primary_key=True)  # Primarni ključ
+    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
-    god = models.FloatField(blank=True, null=True)
-    br_pisma = models.FloatField(blank=True, null=True)
+    god = models.IntegerField(blank=True, null=True)
+    br_pisma = models.IntegerField(blank=True, null=True)
     datum = models.DateTimeField(blank=True, null=True)
     iznos = models.FloatField(blank=True, null=True)
     fakture = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     napomene = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True  # Omogućava Django-u da menja tabelu
         db_table = 'poziv_pismo'
 
 
+
 class PoziviTel(models.Model):
-    sif_par = models.FloatField(blank=True, null=True)
+    id = models.AutoField(primary_key=True)  # Primarni ključ
+    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     datum = models.DateTimeField(blank=True, null=True)
     napomena = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True  # Omogućava Django-u da menja tabelu
         db_table = 'pozivi_tel'
+
 
 
 class SifBaket(models.Model):
@@ -601,18 +608,20 @@ class SifKategorija(models.Model):
 
 
 class Tuzbe(models.Model):
-    sif_par = models.FloatField(blank=True, null=True)
+    id = models.AutoField(primary_key=True)  # Primarni ključ
+    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
-    god = models.FloatField(blank=True, null=True)
-    br_opomene = models.FloatField(blank=True, null=True)
+    god = models.IntegerField(blank=True, null=True)
+    br_opomene = models.IntegerField(blank=True, null=True)
     datum = models.DateTimeField(blank=True, null=True)
     iznos = models.FloatField(blank=True, null=True)
     fature = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     napomene = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True  # Omogućava Django-u da menja tabelu
         db_table = 'tuzbe'
+
 
 # <!-- ======================================================================= -->
 #                            <!-- VIEWS IZ BAZA NAPLATA -->
@@ -670,42 +679,64 @@ class DodelaBucketa(models.Model):
 
 # View za ispravke
 class Ispravke(models.Model):
-    sif_pred = models.IntegerField()
-    grupa = models.IntegerField()
+    god = models.IntegerField()
     sif_par = models.IntegerField()
     naz_par = models.CharField(max_length=255)
-    ulica_par = models.CharField(max_length=255, blank=True, null=True)
-    p_b_par = models.IntegerField()
-    mesto_par = models.CharField(max_length=255, blank=True, null=True)
-    zr = models.CharField(max_length=255, blank=True, null=True)
-    mb = models.CharField(max_length=255, blank=True, null=True)
-    telefon = models.CharField(max_length=255, blank=True, null=True)
-    fax = models.CharField(max_length=255, blank=True, null=True)
-    email = models.CharField(max_length=255, blank=True, null=True)
-    lice = models.CharField(max_length=255, blank=True, null=True)
-    web = models.CharField(max_length=255, blank=True, null=True)
-    proc_rabata = models.DecimalField(max_digits=5, decimal_places=2)
-    br_dana = models.IntegerField()
-    vlasnik = models.CharField(max_length=255, blank=True, null=True)
-    pib = models.CharField(max_length=50, blank=True, null=True)
-    zemlja = models.CharField(max_length=50, blank=True, null=True)
-    proc_rabata1 = models.DecimalField(max_digits=5, decimal_places=2)
-    proc_rabata2 = models.DecimalField(max_digits=5, decimal_places=2)
-    pdv_obveznik = models.CharField(max_length=50, blank=True, null=True)
-    sif_ter = models.CharField(max_length=255, blank=True, null=True)
-    jbkjs = models.CharField(max_length=255, blank=True, null=True)
-    crf = models.CharField(max_length=255, blank=True, null=True)
+    sif_vrs = models.CharField(max_length=50, blank=True, null=True)
+    br_naloga = models.IntegerField()
+    dat_naloga = models.DateTimeField()
+    stavka = models.IntegerField()
+    vez_dok = models.CharField(max_length=255, blank=True, null=True)
+    datum = models.DateTimeField()
+    oj = models.IntegerField()
+    dpo = models.DateTimeField()
+    kom = models.CharField(max_length=255, blank=True, null=True)
+    skr_naz = models.CharField(max_length=255, blank=True, null=True)
+    deviza = models.CharField(max_length=50, blank=True, null=True)
+    promena = models.DecimalField(max_digits=15, decimal_places=2)
+    stavka_k = models.CharField(max_length=255, blank=True, null=True)
+    d_p = models.CharField(max_length=10, blank=True, null=True)
+    knt = models.CharField(max_length=255, blank=True, null=True)
+    naz_knt = models.CharField(max_length=255, blank=True, null=True)
+    dug = models.DecimalField(max_digits=15, decimal_places=2)
+    pot = models.DecimalField(max_digits=15, decimal_places=2)
+    sif_pos = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'ispravke'
 
 
+
 # View za partnere
 class Partneri(models.Model):
+    sif_pred = models.IntegerField()
+    grupa = models.IntegerField()
     sif_par = models.IntegerField()
     naz_par = models.CharField(max_length=255)
+    ulica_par = models.CharField(max_length=255, blank=True, null=True)
+    p_b_par = models.CharField(max_length=50, blank=True, null=True)  # Poštanski broj
+    mesto_par = models.CharField(max_length=255, blank=True, null=True)
+    zr = models.CharField(max_length=255, blank=True, null=True)  # Žiro račun
+    mb = models.CharField(max_length=255, blank=True, null=True)  # Matični broj
+    telefon = models.CharField(max_length=255, blank=True, null=True)
+    fax = models.CharField(max_length=255, blank=True, null=True)
+    email = models.CharField(max_length=255, blank=True, null=True)
+    lice = models.CharField(max_length=255, blank=True, null=True)  # Kontakt osoba
+    web = models.CharField(max_length=255, blank=True, null=True)
+    proc_rabata = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    br_dana = models.IntegerField(blank=True, null=True)
+    vlasnik = models.CharField(max_length=255, blank=True, null=True)
+    pib = models.CharField(max_length=50, blank=True, null=True)
+    zemlja = models.CharField(max_length=50, blank=True, null=True)
+    proc_rabata1 = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    proc_rabata2 = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    pdv_obveznik = models.CharField(max_length=50, blank=True, null=True)
+    sif_ter = models.CharField(max_length=255, blank=True, null=True)
+    JBKJS = models.CharField(max_length=255, blank=True, null=True)
+    CRF = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'partneri'
+

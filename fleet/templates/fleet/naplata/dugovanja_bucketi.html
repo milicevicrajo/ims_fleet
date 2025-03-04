@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load humanize %} 
 {% block content %}
 <h2>Lista dugovanja po bucketima</h2>
 <div class="card">
@@ -18,24 +18,51 @@
                         <th>Dospelo - baket 5</th>
                         <th>Dospelo - baket 6</th>
                         <th>Ukupno</th>
+                        <th>Veliki</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for dug in dugovanja %}
                         <tr>
                             <td>{{ dug.0 }}</td> <!-- sif_par -->
-                            <td>{{ dug.1 }}</td> <!-- naz_par -->
-                            <td>{{ dug.2 }}</td> <!-- Nedospelo -->
-                            <td>{{ dug.3 }}</td> <!-- Dospelo - baket 1 -->
-                            <td>{{ dug.4 }}</td> <!-- Dospelo - baket 2 -->
-                            <td>{{ dug.5 }}</td> <!-- Dospelo - baket 3 -->
-                            <td>{{ dug.6 }}</td> <!-- Dospelo - baket 4 -->
-                            <td>{{ dug.7 }}</td> <!-- Dospelo - baket 5 -->
-                            <td>{{ dug.8 }}</td> <!-- Dospelo - baket 6 -->
-                            <td>{{ dug.9 }}</td> <!-- Ukupno -->
+                            <td>
+                                <a href="{% url 'detalji_partner' dug.0 %}">
+                                    {{ dug.1 }}
+                                </a>
+                            </td>  <!-- naz_par -->
+                            <td>{{ dug.2|floatformat:0}}</td> <!-- Nedospelo -->
+                            <td>{{ dug.3|floatformat:0}}</td> <!-- Dospelo - baket 1 -->
+                            <td>{{ dug.4|floatformat:0}}</td> <!-- Dospelo - baket 2 -->
+                            <td>{{ dug.5|floatformat:0}}</td> <!-- Dospelo - baket 3 -->
+                            <td>{{ dug.6|floatformat:0}}</td> <!-- Dospelo - baket 4 -->
+                            <td>{{ dug.7|floatformat:0}}</td> <!-- Dospelo - baket 5 -->
+                            <td>{{ dug.8|floatformat:0}}</td> <!-- Dospelo - baket 6 -->
+                            <td>{{ dug.9|floatformat:0}}</td> <!-- Ukupno -->
+                            <td>
+                                {% if dug.10 == 'da' %}
+                                    Da
+                                {% else %}
+                                    Ne
+                                {% endif %}
+                            </td>
+                            
                         </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2">Ukupno:</th>
+                        <th id="total_nedospelo"></th>
+                        <th id="total_30"></th>
+                        <th id="total_45"></th>
+                        <th id="total_60"></th>
+                        <th id="total_90"></th>
+                        <th id="total_180"></th>
+                        <th id="total_181"></th>
+                        <th id="total_ukupno"></th>
+                        <th></th> <!-- Veliki ne sumiramo -->
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>

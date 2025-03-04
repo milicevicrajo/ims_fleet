@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Detalji partnera</h5>
+                {% if partner %}
+                <ul class="list-unstyled">
+                    <li><strong>Šifra partnera:</strong> {{ partner.2 }}</li>
+                    <li><strong>Naziv:</strong> {{ partner.3 }}</li>
+                    <li><strong>Ulica:</strong> {{ partner.4 }}</li>
+                    <li><strong>Poštanski broj:</strong> {{ partner.5 }}</li>
+                    <li><strong>Mesto:</strong> {{ partner.6 }}</li>
+                    <li><strong>Žiro račun:</strong> {{ partner.7 }}</li>
+                    <li><strong>Matični broj:</strong> {{ partner.8 }}</li>
+                    <li><strong>Telefon:</strong> {{ partner.9 }}</li>
+                    <li><strong>Fax:</strong> {{ partner.10 }}</li>
+                    <li><strong>Email:</strong> {{ partner.11 }}</li>
+                    <li><strong>Kontakt osoba:</strong> {{ partner.12 }}</li>
+                    <li><strong>Web:</strong> <a href="{{ partner.13 }}" target="_blank">{{ partner.13 }}</a></li>
+                    <li><strong>Procenat rabata:</strong> {{ partner.14 }}%</li>
+                    <li><strong>Broj dana plaćanja:</strong> {{ partner.15 }}</li>
+                    <li><strong>Vlasnik:</strong> {{ partner.16 }}</li>
+                    <li><strong>PIB:</strong> {{ partner.17 }}</li>
+                    <li><strong>Zemlja:</strong> {{ partner.18 }}</li>
+                    <li><strong>PDV obveznik:</strong> {{ partner.21 }}</li>
+                </ul>
+                {% else %}
+                <p class="text-danger">Nema podataka za ovog partnera.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<h2>Dugovanja partnera</h2>
+
+{% if dugovanja %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="DugovanjaDetalj" class="display compact">
+                <thead>
+                    <tr>
+                        <th>Godina</th>
+                        <th>Šifra vrste</th>
+                        <th>Broj naloga</th>
+                        <th>Datum naloga</th>
+                        <th>Stavka</th>
+                        <th>Veza dok.</th>
+                        <th>Datum</th>
+                        <th>Odeljenje</th>
+                        <th>Promena</th>
+                        <th>Duguje</th>
+                        <th>Potražuje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dug in dugovanja %}
+                    <tr>
+                        <td>{{ dug.0 }}</td> <!-- god -->            
+                        <td>{{ dug.3 }}</td> <!-- sif_vrs -->
+                        <td>{{ dug.4 }}</td> <!-- br_naloga -->
+                        <td>{{ dug.5|date:"d.m.Y" }}</td> <!-- dat_naloga -->
+                        <td>{{ dug.6 }}</td> <!-- stavka -->
+                        <td>{{ dug.7 }}</td> <!-- vez_dok -->
+                        <td>{{ dug.8|date:"d.m.Y" }}</td> <!-- datum -->
+                        <td>{{ dug.9 }}</td> <!-- oj -->
+                        <td>{{ dug.14 }}</td> <!-- promena -->
+                        <td>{{ dug.18|floatformat:0 }}</td> <!-- dug -->
+                        <td>{{ dug.19|floatformat:0 }}</td> <!-- pot -->
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<p>Ovaj partner nema dugovanja.</p>
+{% endif %}
+
+
+<h2>Pregled otpisanih potraživanja</h2>
+
+{% if ispravke %}
+<table border="1">
+    <tr>
+        <th>Godina</th>
+        <th>Šifra partnera</th>
+        <th>Naziv</th>
+        <th>Šifra vrste</th>
+        <th>Broj naloga</th>
+        <th>Datum naloga</th>
+        <th>Stavka</th>
+        <th>Veza dok.</th>
+        <th>Datum</th>
+        <th>Odeljenje</th>
+        <th>Promena</th>
+        <th>Duguje</th>
+        <th>Potražuje</th>
+    </tr>
+    {% for row in ispravke %}
+    <tr>
+        <td>{{ row.0 }}</td> <!-- god -->
+        <td>{{ row.1 }}</td> <!-- sif_par -->
+        <td>{{ row.2 }}</td> <!-- naz_par -->
+        <td>{{ row.3 }}</td> <!-- sif_vrs -->
+        <td>{{ row.4 }}</td> <!-- br_naloga -->
+        <td>{{ row.5 }}</td> <!-- dat_naloga -->
+        <td>{{ row.6 }}</td> <!-- stavka -->
+        <td>{{ row.7 }}</td> <!-- vez_dok -->
+        <td>{{ row.8 }}</td> <!-- datum -->
+        <td>{{ row.9 }}</td> <!-- oj -->
+        <td>{{ row.14 }}</td> <!-- promena -->
+        <td>{{ row.18 }}</td> <!-- dug -->
+        <td>{{ row.19 }}</td> <!-- pot -->
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>Ovaj partner nema otpisanih potraživanja.</p>
+{% endif %}
+
+<a href="{% url 'dodaj_napomenu' partner.2 partner.3 %}" class="btn btn-success">
+    Dodaj napomenu
+</a>
+<a href="{% url 'dodaj_opomenu' partner.2 partner.3 %}" class="btn btn-warning">
+    Dodaj opomenu
+</a>
+<a href="{% url 'dodaj_poziv_pismo' partner.2 partner.3 %}" class="btn btn-info">
+    Dodaj poziv/pismo
+</a>
+<a href="{% url 'dodaj_poziv' partner.2 partner.3 %}" class="btn btn-primary">
+    Dodaj poziv
+</a>
+
+<a href="{% url 'dodaj_tuzbu' partner.2 partner.3 %}" class="btn btn-danger">
+    Dodaj tužbu
+</a>
+
+
+<ul class="nav nav-tabs mt-3" id="partnerTabs">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#podaci">Osnovni podaci</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#kontakti">Kontakti</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link " data-bs-toggle="tab" href="#napomene">Napomene</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#opomene">Opomene</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#pozivna_pisma">Pozivna pisma</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tuzbe">Tužbe</a>
+    </li>
+</ul>
+
+
+
+<div class="tab-content mt-3">
+
+    <!-- Osnovni podaci -->
+    <div class="tab-pane fade show active" id="podaci">
+        <h4>Osnovni podaci</h4>
+            {% if partner %}
+            <table class="table table-striped">
+                <tbody>
+                    <tr><th>Šifra partnera</th><td>{{ partner.2 }}</td></tr>
+                    <tr><th>Naziv</th><td>{{ partner.3 }}</td></tr>
+                    <tr><th>Ulica</th><td>{{ partner.4 }}</td></tr>
+                    <tr><th>Poštanski broj</th><td>{{ partner.5 }}</td></tr>
+                    <tr><th>Mesto</th><td>{{ partner.6 }}</td></tr>
+                    <tr><th>Žiro račun</th><td>{{ partner.7 }}</td></tr>
+                    <tr><th>Matični broj</th><td>{{ partner.8 }}</td></tr>
+                    <tr><th>Telefon</th><td>{{ partner.9 }}</td></tr>
+                    <tr><th>Fax</th><td>{{ partner.10 }}</td></tr>
+                    <tr><th>Email</th><td>{{ partner.11 }}</td></tr>
+                    <tr><th>Kontakt osoba</th><td>{{ partner.12 }}</td></tr>
+                    <tr><th>Web</th><td>{{ partner.13 }}</td></tr>
+                    <tr><th>Procenat rabata</th><td>{{ partner.14 }}</td></tr>
+                    <tr><th>Broj dana plaćanja</th><td>{{ partner.15 }}</td></tr>
+                    <tr><th>Vlasnik</th><td>{{ partner.16 }}</td></tr>
+                    <tr><th>PIB</th><td>{{ partner.17 }}</td></tr>
+                    <tr><th>Zemlja</th><td>{{ partner.18 }}</td></tr>
+                    <tr><th>PDV obveznik</th><td>{{ partner.21 }}</td></tr>
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-danger">Nema podataka za ovog partnera.</p>
+            {% endif %}
+        </table>
+    </div>
+
+    <!-- Kontakti -->
+    <div class="tab-pane fade show" id="kontakti">
+        <h4>Kontakti</h4>
+        {% comment %} <a href="{% url 'dodaj_kontakt' partner.2 partner.3%}" class="btn btn-success mb-3">Dodaj napomenu</a> {% endcomment %}
+
+        <table class="table table-striped">
+            <tr>
+                <th>Kontakt</th>
+                <th>Email</th>
+                <th>Napomena</th>
+            </tr>
+            {% for kontakt in kontakti %}
+            <tr>
+                <td>{{ kontakt.kontakt }}</td>
+                <td>{{ kontakt.email }}</td>
+                <td>{{ kontakt.napomena }}</td>
+                <td>
+                    <a href="{% url 'izmeni_kontakt' kontakt.pk %}" class="btn btn-warning btn-sm">Izmeni</a>
+                    <form action="{% url 'obrisi_kontakt' kontakt.pk %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Obriši</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Napomene -->
+    <div class="tab-pane fade" id="napomene">
+        <h4>Napomene</h4>
+        <a href="{% url 'dodaj_napomenu' partner.2 partner.3%}" class="btn btn-success mb-3">Dodaj napomenu</a>
+        <table class="table table-striped">
+            <tr>
+                <th>Napomena</th>
+                <th>Veliki</th>
+                <th>Akcije</th>
+            </tr>
+            {% for napomena in napomene %}
+            <tr>
+                <td>{{ napomena.napomene }}</td>
+                <td>{{ napomena.veliki }}</td>
+                <td>
+                    <a href="{% url 'izmeni_napomenu' napomena.id %}" class="btn btn-warning btn-sm">Izmeni</a>
+                    <form action="{% url 'obrisi_napomenu' napomena.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Obriši</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Opomene -->
+    <div class="tab-pane fade" id="opomene">
+        <h4>Opomene</h4>
+        <a href="{% url 'dodaj_opomenu' partner.2 partner.3 %}" class="btn btn-success mb-3">Dodaj opomenu</a>
+        <table class="table table-striped">
+            <tr>
+                <th>Godina</th>
+                <th>Broj opomene</th>
+                <th>Iznos</th>
+                <th>Akcije</th>
+            </tr>
+            {% for opomena in opomene %}
+            <tr>
+                <td>{{ opomena.god }}</td>
+                <td>{{ opomena.br_opomene }}</td>
+                <td>{{ opomena.iznos }}</td>
+                <td>
+                    <a href="{% url 'izmeni_opomenu' opomena.id %}" class="btn btn-warning btn-sm">Izmeni</a>
+                    <form action="{% url 'obrisi_opomenu' opomena.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Obriši</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Pozivna pisma -->
+    <div class="tab-pane fade" id="pozivna_pisma">
+        <h4>Pozivna pisma</h4>
+        <a href="{% url 'dodaj_poziv_pismo' partner.2 partner.3 %}" class="btn btn-success mb-3">Dodaj pozivno pismo</a>
+        <table class="table table-striped">
+            <tr>
+                <th>Godina</th>
+                <th>Broj pisma</th>
+                <th>Iznos</th>
+            </tr>
+            {% for pismo in pozivna_pisma %}
+            <tr>
+                <td>{{ pismo.god }}</td>
+                <td>{{ pismo.br_pisma }}</td>
+                <td>{{ pismo.iznos }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Tužbe -->
+    <div class="tab-pane fade" id="tuzbe">
+        <h4>Tužbe</h4>
+        <a href="{% url 'dodaj_tuzbu' partner.2 partner.3 %}" class="btn btn-success mb-3">
+            Dodaj tužbu
+        </a>
+        <table class="table table-striped">
+            <tr>
+                <th>Godina</th>
+                <th>Broj opomene</th>
+                <th>Iznos</th>
+            </tr>
+            {% for tuzba in tuzbe %}
+            <tr>
+                <td>{{ tuzba.god }}</td>
+                <td>{{ tuzba.br_opomene }}</td>
+                <td>{{ tuzba.iznos }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+
+
+{% endblock %}

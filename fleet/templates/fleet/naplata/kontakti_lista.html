@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Lista kontakata</h2>
+<a href="{% url 'dodaj_kontakt' %}">Dodaj novi kontakt</a>
+<table border="1">
+    <tr>
+        <th>Šifra partnera</th>
+        <th>Naziv</th>
+        <th>Kontakt</th>
+        <th>Email</th>
+        <th>Napomena</th>
+        <th>Akcije</th>
+    </tr>
+    {% for kontakt in kontakti %}
+    <tr>
+        <td>{{ kontakt.sif_par }}</td>
+        <td>{{ kontakt.nazpar }}</td>
+        <td>{{ kontakt.kontakt }}</td>
+        <td>{{ kontakt.email }}</td>
+        <td>{{ kontakt.napomena }}</td>
+        <td>
+            {% comment %} <a href="{% url 'izmeni_kontakt' kontakt.sif_par %}">Izmeni</a> |
+            <a href="{% url 'obrisi_kontakt' kontakt.sif_par %}">Obriši</a> {% endcomment %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

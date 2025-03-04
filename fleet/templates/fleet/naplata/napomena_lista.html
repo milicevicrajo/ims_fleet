@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Lista napomena</h2>
+<div class="card">
+    <div class="card-body">
+
+        <div class="table-responsive">
+            <table id="Datatable" class="display">
+                <thead>
+                    <tr>
+                        <th>Šifra partnera</th>
+                        <th>Naziv</th>
+                        <th>Napomena</th>
+                        <th>Veliki</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for napomena in napomene %}
+                    <tr>
+                        <td>{{ napomena.sif_par }}</td>
+                        <td>{{ napomena.naziv }}</td>
+                        <td>{{ napomena.napomene }}</td>
+                        <td>
+                            {% if napomena.veliki == 'da' %}
+                                Da
+                            {% else %}
+                                Ne
+                            {% endif %}
+                        </td>
+                        <td style="width: 20px;">
+                            <div class="d-flex flex-column">
+                                <!-- Link za izmenu -->
+                                <a href="{% url 'izmeni_napomenu' napomena.id %}" class="text-success d-flex align-items-center mb-1">
+                                    <i class="mdi mdi-lead-pencil me-1"></i> Izmeni
+                                </a>
+                        
+                                <!-- Forma za brisanje -->
+                                <form action="{% url 'obrisi_napomenu' napomena.id %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
+                                            onclick="return confirm('Da li ste sigurni da želite da uklonite ovu NAPOMENU?');">
+                                        <i class="mdi mdi-delete-forever me-1"></i> Obriši
+                                    </button>
+                                </form>
+                            </div>
+                        </td>                        
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

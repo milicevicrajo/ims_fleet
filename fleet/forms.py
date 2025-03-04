@@ -291,3 +291,62 @@ class DraftRequisitionForm(forms.ModelForm):
     class Meta:
         model = DraftRequisition
         fields = ['vehicle','datum_trebovanja', 'mesec_unosa', 'popravka_kategorija', 'kilometraza', 'nije_garaza', 'napomena']
+
+
+class KontaktiForm(forms.ModelForm):
+    class Meta:
+        model = Kontakti
+        fields = ['sif_par', 'nazpar', 'kontakt', 'email', 'napomena']
+
+
+class NapomeneForm(forms.ModelForm):
+    class Meta:
+        model = Napomene
+        fields = ['sif_par', 'naziv', 'napomene', 'veliki']
+    
+    def __init__(self, *args, **kwargs):
+        super(NapomeneForm, self).__init__(*args, **kwargs)
+        self.fields['sif_par'].widget.attrs['readonly'] = True  # Ne može se menjati
+        self.fields['naziv'].widget.attrs['readonly'] = True  # Ne može se menjati
+
+
+class OpomeneForm(forms.ModelForm):
+    class Meta:
+        model = Opomene
+        fields = ['sif_par', 'naz_par', 'god', 'br_opomene', 'datum', 'iznos', 'fakture', 'napomene']
+    
+    def __init__(self, *args, **kwargs):
+        super(OpomeneForm, self).__init__(*args, **kwargs)
+        self.fields['sif_par'].widget.attrs['readonly'] = True
+        self.fields['naz_par'].widget.attrs['readonly'] = True
+
+class PozivPismoForm(forms.ModelForm):
+    class Meta:
+        model = PozivPismo
+        fields = ['sif_par', 'naz_par', 'god', 'br_pisma', 'datum', 'iznos', 'fakture', 'napomene']
+    
+    def __init__(self, *args, **kwargs):
+        super(PozivPismoForm, self).__init__(*args, **kwargs)
+        self.fields['sif_par'].widget.attrs['readonly'] = True
+        self.fields['naz_par'].widget.attrs['readonly'] = True
+
+class PoziviTelForm(forms.ModelForm):
+    class Meta:
+        model = PoziviTel
+        fields = ['sif_par', 'naz_par', 'datum', 'napomena']
+    
+    def __init__(self, *args, **kwargs):
+        super(PoziviTelForm, self).__init__(*args, **kwargs)
+        self.fields['sif_par'].widget.attrs['readonly'] = True
+        self.fields['naz_par'].widget.attrs['readonly'] = True
+
+
+class TuzbeForm(forms.ModelForm):
+    class Meta:
+        model = Tuzbe
+        fields = ['sif_par', 'naz_par', 'god', 'br_opomene', 'datum', 'iznos', 'fature', 'napomene']
+    
+    def __init__(self, *args, **kwargs):
+        super(TuzbeForm, self).__init__(*args, **kwargs)
+        self.fields['sif_par'].widget.attrs['readonly'] = True
+        self.fields['naz_par'].widget.attrs['readonly'] = True

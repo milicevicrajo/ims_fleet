@@ -444,10 +444,82 @@
             });
             var table = $('#DugovanjaBuketi').DataTable({
                 "language": languageSettings,
+                "autoWidth": false,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 100,
+                "columnDefs": [
+                        { 
+                            targets: 1,  // Kolona broj 2
+                            width: "400px" // Postavi širinu kolone (možeš promeniti vrednost)
+                        },
+                        {
+                            targets: [2, 3, 4, 5, 6, 7, 8, 9], // Indeksi kolona koje formatiramo
+                            render: function (data, type, row) {
+                                if (type === 'display') {
+                                    return new Intl.NumberFormat('sr-RS').format(data);
+                                }
+                                return data;
+                            }
+                        }
+                    ],
+                "footerCallback": function(row, data, start, end, display) {
+                    var api = this.api();
+                    
+                    // Funkcija za sumiranje
+                    var sumColumn = function(index) {
+                        return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
+                            return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                        }, 0).toLocaleString('sr-RS'); // Formatiranje broja
+                    };
+        
+                    // Upisivanje suma u tfoot
+                    $('#total_nedospelo').html(sumColumn(2));
+                    $('#total_30').html(sumColumn(3));
+                    $('#total_45').html(sumColumn(4));
+                    $('#total_60').html(sumColumn(5));
+                    $('#total_90').html(sumColumn(6));
+                    $('#total_180').html(sumColumn(7));
+                    $('#total_181').html(sumColumn(8));
+                    $('#total_ukupno').html(sumColumn(9));
+                }
+            });
 
-                "autoWidth": false,  // Disable automatic column width calculation
-                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
-                "pageLength": 100,  // Postavlja podrazumevani broj redova
+            var table = $('#DugovanjaDetalj').DataTable({
+                "language": languageSettings,
+                "autoWidth": false,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 100,
+                "columnDefs": [
+                        {
+                            targets: [9,10], // Indeksi kolona koje formatiramo
+                            render: function (data, type, row) {
+                                if (type === 'display') {
+                                    return new Intl.NumberFormat('sr-RS').format(data);
+                                }
+                                return data;
+                            }
+                        }
+                    ],
+                "footerCallback": function(row, data, start, end, display) {
+                    var api = this.api();
+                    
+                    // Funkcija za sumiranje
+                    var sumColumn = function(index) {
+                        return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
+                            return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                        }, 0).toLocaleString('sr-RS'); // Formatiranje broja
+                    };
+        
+                    // Upisivanje suma u tfoot
+                    $('#total_nedospelo').html(sumColumn(2));
+                    $('#total_30').html(sumColumn(3));
+                    $('#total_45').html(sumColumn(4));
+                    $('#total_60').html(sumColumn(5));
+                    $('#total_90').html(sumColumn(6));
+                    $('#total_180').html(sumColumn(7));
+                    $('#total_181').html(sumColumn(8));
+                    $('#total_ukupno').html(sumColumn(9));
+                }
 
             });
 
@@ -478,8 +550,24 @@
     </script>
 
 
+
     <!-- Custom CSS for No Word Wrap -->
     <style>
+
+        #DugovanjaBuketi {
+            table-layout: fixed !important; /* Sprečava automatsko prilagođavanje */
+            width: 100% !important; /* Osigurava da tabela koristi celu širinu */
+        }
+        
+        #DugovanjaBuketi td:nth-child(2), 
+        #DugovanjaBuketi th:nth-child(2) {
+            width: 100px !important; /* Fiksna širina za 2. kolonu (3. indeks u CSS) */
+            white-space: nowrap; /* Sprečava prelamanje teksta */
+            overflow: hidden;
+            text-overflow: ellipsis; /* Skraćuje dugačak tekst sa "..." */
+        }
+
+        
         /* Compact styling for DataTables with class "display compact" */
         table.display.compact th, 
         table.display.compact td {
