@@ -137,9 +137,9 @@ urlpatterns = [
     # path('dugovanje/<int:sif_par>/', detalji_dugovanja, name='detalji_dugovanja'),
 
     path('kontakti/', lista_kontakata, name='lista_kontakata'),
-    path('kontakti/dodaj/', dodaj_kontakt, name='dodaj_kontakt'),
-    path('kontakti/izmeni/<float:sif_par>/', izmeni_kontakt, name='izmeni_kontakt'),
-    path('kontakti/obrisi/<float:sif_par>/', obrisi_kontakt, name='obrisi_kontakt'),
+    path('kontakti/dodaj/<int:sif_par>/<str:naz_par>/', dodaj_kontakt, name='dodaj_kontakt'),
+    path('kontakti/izmeni/<int:id>/', izmeni_kontakt, name='izmeni_kontakt'),
+    path('kontakti/obrisi/<int:id>/', obrisi_kontakt, name='obrisi_kontakt'),
 
     path('napomene/', lista_napomena, name='lista_napomena'),
     path('napomene/dodaj/<int:sif_par>/<str:naz_par>/', dodaj_napomenu, name='dodaj_napomenu'),

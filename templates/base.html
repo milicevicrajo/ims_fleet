@@ -488,7 +488,7 @@
                 "language": languageSettings,
                 "autoWidth": false,
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
-                "pageLength": 100,
+                "pageLength": 10,
                 "columnDefs": [
                         {
                             targets: [9,10], // Indeksi kolona koje formatiramo
@@ -508,19 +508,36 @@
                         return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
                             return (parseFloat(a) || 0) + (parseFloat(b) || 0);
                         }, 0).toLocaleString('sr-RS'); // Formatiranje broja
-                    };
-        
-                    // Upisivanje suma u tfoot
-                    $('#total_nedospelo').html(sumColumn(2));
-                    $('#total_30').html(sumColumn(3));
-                    $('#total_45').html(sumColumn(4));
-                    $('#total_60').html(sumColumn(5));
-                    $('#total_90').html(sumColumn(6));
-                    $('#total_180').html(sumColumn(7));
-                    $('#total_181').html(sumColumn(8));
-                    $('#total_ukupno').html(sumColumn(9));
+                    };        
                 }
+            });
 
+            var table = $('#DugovanjaDetaljFakture').DataTable({
+                "language": languageSettings,
+                "autoWidth": false,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "columnDefs": [
+                        {
+                            targets: [3,4,5], // Indeksi kolona koje formatiramo
+                            render: function (data, type, row) {
+                                if (type === 'display') {
+                                    return new Intl.NumberFormat('sr-RS').format(data);
+                                }
+                                return data;
+                            }
+                        }
+                    ],
+                "footerCallback": function(row, data, start, end, display) {
+                    var api = this.api();
+                    
+                    // Funkcija za sumiranje
+                    var sumColumn = function(index) {
+                        return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
+                            return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                        }, 0).toLocaleString('sr-RS'); // Formatiranje broja
+                    };        
+                }
             });
 
         });  
@@ -549,7 +566,41 @@
         });
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <script>
+        function obrisiKontakt(kontaktId) {
+            Swal.fire({
+                title: "Da li ste sigurni?",
+                text: "Ovaj kontakt će biti trajno obrisan!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Da, obriši!",
+                cancelButtonText: "Otkaži"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/obrisi_kontakt/${kontaktId}/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": "{{ csrf_token }}",
+                            "Content-Type": "application/json"
+                        }
+                    }).then(response => response.json())
+                      .then(data => {
+                          if (data.success) {
+                              Swal.fire("Obrisano!", "Kontakt je uspešno obrisan.", "success")
+                              .then(() => location.reload());  // Osveži stranicu
+                          } else {
+                              Swal.fire("Greška!", "Kontakt nije obrisan.", "error");
+                          }
+                      });
+                }
+            });
+        }
+    </script>
+    
 
     <!-- Custom CSS for No Word Wrap -->
     <style>

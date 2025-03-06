@@ -50,24 +50,21 @@
                     href="{% url 'service_transaction_list'%}" aria-expanded="false"><i class="mdi mdi-wrench"></i><span
                             class="hide-menu">Popravke van IMS </span></a></li>
                 <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                    href="{% url 'requisition_list'%}" aria-expanded="false"><i class="mdi mdi-file-document-box"></i><span
+                    href="{% url 'requisition_list'%}" aria-expanded="false"><i class="mdi mdi-wrench"></i><span
                             class="hide-menu">Popravke u IMS</span></a></li>
+                <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                    href="{% url 'reports_index'%}" aria-expanded="false"><i class="mdi mdi-file-document"></i><span
+                            class="hide-menu">Izveštaji sa servera</span></a></li>
+                <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                    href="{% url 'lista_dugovanja_po_bucketima'%}" aria-expanded="false"><i class="mdi mdi-cash-multiple"></i><span
+                            class="hide-menu">Lista dugovanja</span></a></li>
+                {% if user.is_superuser %}
+                <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+                    href="{% url 'fetch_data'%}" aria-expanded="false"><i class="mdi mdi-source-pull"></i><span
+                            class="hide-menu">Povlacenje podataka</span></a></li>
                 <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                     href="{% url 'user_list'%}" aria-expanded="false"><i class="mdi mdi-account"></i><span
                             class="hide-menu">Korisnici</span></a></li>
-                <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                    href="{% url 'reports_index'%}" aria-expanded="false"><i class="mdi mdi-account"></i><span
-                            class="hide-menu">Izveštaji</span></a>
-                </li>
-                <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                    href="{% url 'lista_dugovanja_po_bucketima'%}" aria-expanded="false"><i class="mdi mdi-account"></i><span
-                            class="hide-menu">Lista dugovanja</span></a>
-                </li>
-                {% if user.is_superuser %}
-                <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                    href="{% url 'fetch_data'%}" aria-expanded="false"><i class="mdi mdi-account"></i><span
-                            class="hide-menu">Povlacenje podataka</span></a>
-                </li>
                 {% endif %}
             </ul>
         </nav>

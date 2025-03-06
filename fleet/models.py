@@ -516,21 +516,23 @@ class CustomUser(AbstractUser):
 # <!-- ======================================================================= -->
 
 class Kontakti(models.Model):
-    sif_par = models.IntegerField(primary_key=True)  # Postavljamo kao primarni ključ
-    nazpar = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
+    id = models.AutoField(primary_key=True)  # Automatski ID
+    sif_par = models.IntegerField()  # Više kontakata može imati istu šifru partnera
+    naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     kontakt = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     email = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     napomena = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'kontakti'
+
 
 
 class Napomene(models.Model):
     id = models.AutoField(primary_key=True)  # Primarni ključ
     sif_par = models.FloatField(db_column='sif_par', blank=True, null=True)  # Šifra partnera
-    naziv = models.CharField(db_column='naziv', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
+    naz_par = models.CharField(db_column='naz_par', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     napomene = models.CharField(db_column='napomene', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     veliki = models.CharField(db_column='veliki', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
@@ -541,7 +543,7 @@ class Napomene(models.Model):
 
 class Opomene(models.Model):
     id = models.AutoField(primary_key=True)  # Primarni ključ
-    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
+    sif_par = models.FloatField(db_column='sif_par', blank=True, null=True)  # Šifra partnera
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     god = models.IntegerField(blank=True, null=True)
     br_opomene = models.IntegerField(blank=True, null=True)
@@ -558,7 +560,7 @@ class Opomene(models.Model):
 
 class PozivPismo(models.Model):
     id = models.AutoField(primary_key=True)  # Primarni ključ
-    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
+    sif_par = models.FloatField(db_column='sif_par', blank=True, null=True)  # Šifra partnera
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     god = models.IntegerField(blank=True, null=True)
     br_pisma = models.IntegerField(blank=True, null=True)
@@ -572,10 +574,9 @@ class PozivPismo(models.Model):
         db_table = 'poziv_pismo'
 
 
-
 class PoziviTel(models.Model):
     id = models.AutoField(primary_key=True)  # Primarni ključ
-    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
+    sif_par = models.FloatField(db_column='sif_par', blank=True, null=True)  # Šifra partnera
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     datum = models.DateTimeField(blank=True, null=True)
     napomena = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
@@ -583,7 +584,6 @@ class PoziviTel(models.Model):
     class Meta:
         managed = True  # Omogućava Django-u da menja tabelu
         db_table = 'pozivi_tel'
-
 
 
 class SifBaket(models.Model):
@@ -609,13 +609,13 @@ class SifKategorija(models.Model):
 
 class Tuzbe(models.Model):
     id = models.AutoField(primary_key=True)  # Primarni ključ
-    sif_par = models.ForeignKey('Partneri', on_delete=models.CASCADE, db_column='sif_par')
+    sif_par = models.FloatField(db_column='sif_par', blank=True, null=True)  # Šifra partnera
     naz_par = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     god = models.IntegerField(blank=True, null=True)
     br_opomene = models.IntegerField(blank=True, null=True)
     datum = models.DateTimeField(blank=True, null=True)
     iznos = models.FloatField(blank=True, null=True)
-    fature = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
+    fakture = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
     napomene = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:

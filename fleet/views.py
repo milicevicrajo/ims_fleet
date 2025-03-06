@@ -2116,7 +2116,7 @@ def detalji_partner(request, sif_par):
         partner = cursor.fetchone()
 
 
-    # 2. Dugovanja (view baza)
+    # 2.1 Dugovanja (view baza)
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
             SELECT god, sif_par, naz_par, sif_vrs, br_naloga, dat_naloga, stavka, vez_dok, datum, oj, dpo,
@@ -2126,6 +2126,48 @@ def detalji_partner(request, sif_par):
             ORDER BY datum DESC
         """, [sif_par])
         dugovanja = cursor.fetchall()
+
+    # 2.2 Dugovanja baketi (view baza)
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                db.sif_par, 
+                db.naz_par, 
+                SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
+                SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
+                SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
+                SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
+                SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
+                SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
+                SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
+                SUM(db.saldo) AS Ukupno,
+                n.veliki
+            FROM dodela_baketa db
+            LEFT JOIN napomene n ON db.sif_par = n.sif_par
+            WHERE db.sif_par = %s
+            GROUP BY db.sif_par, db.naz_par, n.veliki
+        """, [sif_par])  # Prosleđujemo sif_par kao parametar da izbegnemo SQL injection
+        dugovanja_baket = cursor.fetchall()
+        
+    # 2.3 Dugovanja po fakturama
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                br_naloga, 
+                sif_par, 
+                naz_par, 
+                sif_vrs, 
+                MAX(dat_naloga) AS poslednji_datum,  
+                SUM(dug) AS ukupno_duguje, 
+                SUM(pot) AS ukupno_potrazuje, 
+                SUM(dug) - SUM(pot) AS saldo
+            FROM baza
+            WHERE sif_par = %s
+            GROUP BY br_naloga, sif_par, naz_par, sif_vrs
+            ORDER BY poslednji_datum DESC
+        """, [sif_par])
+        dugovanja_sumarno = cursor.fetchall()
+
 
     # 3. Dospela potraživanja po bucketima (view dodela_bucketa)
     with connections['naplata_db'].cursor() as cursor:
@@ -2171,26 +2213,35 @@ def detalji_partner(request, sif_par):
         'opomene': opomene,
         'poziv_pismo': poziv_pismo,
         'tuzbe': tuzbe,
-        'napomene': napomene
+        'napomene': napomene,
+        'dugovanja_baket':dugovanja_baket,
+        'dugovanja_sumarno':dugovanja_sumarno
     })
 
 
-
+# <!-- ======================================================================= -->
+#                           <!-- KONTAKTI -->
+# <!-- ======================================================================= -->
 
 def lista_kontakata(request):
     kontakti = Kontakti.objects.using('naplata_db').all()
     return render(request, 'fleet/naplata/kontakti_lista.html', {'kontakti': kontakti})
 
-def dodaj_kontakt(request):
+
+def dodaj_kontakt(request, sif_par, naz_par):
     if request.method == "POST":
         form = KontaktiForm(request.POST)
         if form.is_valid():
             kontakt = form.save(commit=False)
+            kontakt.sif_par = sif_par  # Automatski dodeljujemo šifru partnera
+            kontakt.naz_par = naz_par
             kontakt.save(using='naplata_db')  # Upisujemo u eksternu bazu
-            return redirect('lista_kontakata')
+            return redirect('detalji_partner', sif_par = sif_par)
     else:
-        form = KontaktiForm()
-    return render(request, 'fleet/generic_form.html', {'form': form})
+        form = KontaktiForm(initial={'sif_par': sif_par, 'naz_par': naz_par})
+
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+
 
 def izmeni_kontakt(request, sif_par):
     kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), sif_par=sif_par)
@@ -2198,25 +2249,26 @@ def izmeni_kontakt(request, sif_par):
         form = KontaktiForm(request.POST, instance=kontakt)
         if form.is_valid():
             kontakt = form.save(commit=False)
+
             kontakt.save(using='naplata_db')
-            return redirect('lista_kontakata')
+            return redirect('detalji_partner', sif_par = sif_par)
     else:
         form = KontaktiForm(instance=kontakt)
-    return render(request, 'kontakti/izmeni.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
-def obrisi_kontakt(request, sif_par):
-    kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), sif_par=sif_par)
+def obrisi_kontakt(request, id):
+    kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), id=id)
     if request.method == "POST":
         kontakt.delete(using='naplata_db')
-        return redirect('lista_kontakata')
-    return render(request, 'kontakti/obrisi.html', {'kontakt': kontakt})
+    return redirect(request.META.get('HTTP_REFERER', 'lista_kontakata'))  # Ostaje na istoj stranici
 
 
+# <!-- ======================================================================= -->
+#                           <!-- NAPOMENE -->
+# <!-- ======================================================================= -->
 def lista_napomena(request):
     napomene = Napomene.objects.using('naplata_db').all()
     return render(request, 'fleet/naplata/napomena_lista.html', {'napomene': napomene})
-
-
 
 def dodaj_napomenu(request, sif_par, naz_par):
     if request.method == "POST":
@@ -2224,13 +2276,13 @@ def dodaj_napomenu(request, sif_par, naz_par):
         if form.is_valid():
             napomena = form.save(commit=False)
             napomena.sif_par = sif_par  # Postavljamo partnera automatski
-            napomena.naziv = naz_par
+            napomena.naz_par = naz_par
             napomena.save(using='naplata_db')
-            return redirect('lista_napomena')
+            return redirect('detalji_partner', sif_par = sif_par)
     else:
-        form = NapomeneForm(initial={'sif_par': sif_par, 'naziv': naz_par})  # Automatsko popunjavanje
+        form = NapomeneForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  # Automatsko popunjavanje
 
-    return render(request, 'fleet/naplata/form_napomena.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def izmeni_napomenu(request, id):
     napomena = get_object_or_404(Napomene.objects.using('naplata_db'), id=id)
@@ -2239,21 +2291,21 @@ def izmeni_napomenu(request, id):
         if form.is_valid():
             napomena = form.save(commit=False)
             napomena.save(using='naplata_db')
-            return redirect('lista_napomena')
+            return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     else:
         form = NapomeneForm(instance=napomena)
-    return render(request, 'fleet/naplata/form_napomena.html', {'form': form})
-
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def obrisi_napomenu(request, id):
     napomena = get_object_or_404(Napomene.objects.using('naplata_db'), id=id)
     if request.method == "POST":
         napomena.delete(using='naplata_db')
-    return redirect('lista_napomena')  # Preusmerava nazad na listu
+    return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
 
 
-
-
+# <!-- ======================================================================= -->
+#                           <!-- OPOMENE -->
+# <!-- ======================================================================= -->
 def lista_opomena(request):
     opomene = Opomene.objects.using('naplata_db').all()
     return render(request, 'opomene/lista.html', {'opomene': opomene})
@@ -2263,14 +2315,16 @@ def dodaj_opomenu(request, sif_par, naz_par):
         form = OpomeneForm(request.POST)
         if form.is_valid():
             opomena = form.save(commit=False)
-            opomena.sif_par = sif_par  # Automatski postavljamo vrednost
+            opomena.sif_par = sif_par  
             opomena.naz_par = naz_par
             opomena.save(using='naplata_db')
-            return redirect('lista_opomena')
+            return redirect('detalji_partner', sif_par = sif_par)
+        else:
+            print("Forma nije validna!", form.errors)  # Ispis grešaka u konzoli
     else:
         form = OpomeneForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
-    return render(request, 'fleet/naplata/form_opomena.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def izmeni_opomenu(request, id):
     opomena = get_object_or_404(Opomene.objects.using('naplata_db'), id=id)
@@ -2281,56 +2335,20 @@ def izmeni_opomenu(request, id):
             return redirect('lista_opomena')
     else:
         form = OpomeneForm(instance=opomena)
-    return render(request, 'opomene/izmeni.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def obrisi_opomenu(request, id):
     opomena = get_object_or_404(Opomene.objects.using('naplata_db'), id=id)
     if request.method == "POST":
         opomena.delete(using='naplata_db')
-        return redirect('lista_opomena')
-    return render(request, 'opomene/obrisi.html', {'opomena': opomena})
+        return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
+
+    return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
 
 
-
-def lista_pozivnih_pisma(request):
-    pozivi = PozivPismo.objects.using('naplata_db').all()
-    return render(request, 'poziv_pismo/lista.html', {'pozivi': pozivi})
-
-def dodaj_poziv_pismo(request, sif_par, naz_par):
-    if request.method == "POST":
-        form = PozivPismoForm(request.POST)
-        if form.is_valid():
-            poziv = form.save(commit=False)
-            poziv.sif_par = sif_par  # Automatski postavljamo vrednost
-            poziv.naz_par = naz_par
-            poziv.save(using='naplata_db')
-            return redirect('lista_pozivnih_pisma')
-    else:
-        form = PozivPismoForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
-
-    return render(request, 'fleet/naplata/form_opomena.html', {'form': form})
-
-def izmeni_poziv_pismo(request, id):
-    poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
-    if request.method == "POST":
-        form = PozivPismoForm(request.POST, instance=poziv)
-        if form.is_valid():
-            form.save(using='naplata_db')
-            return redirect('lista_pozivnih_pisma')
-    else:
-        form = PozivPismoForm(instance=poziv)
-    return render(request, 'poziv_pismo/izmeni.html', {'form': form})
-
-def obrisi_poziv_pismo(request, id):
-    poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
-    if request.method == "POST":
-        poziv.delete(using='naplata_db')
-        return redirect('lista_pozivnih_pisma')
-    return render(request, 'poziv_pismo/obrisi.html', {'poziv': poziv})
-
-
-
-
+# <!-- ======================================================================= -->
+#                           <!-- POZIVI -->
+# <!-- ======================================================================= -->
 def lista_poziva(request):
     pozivi = PoziviTel.objects.using('naplata_db').all()
     return render(request, 'pozivi_tel/lista.html', {'pozivi': pozivi})
@@ -2343,11 +2361,12 @@ def dodaj_poziv(request, sif_par, naz_par):
             poziv.sif_par = sif_par  # Automatski postavljamo vrednost
             poziv.naz_par = naz_par
             poziv.save(using='naplata_db')
-            return redirect('lista_poziva')
+            return redirect('detalji_partner', sif_par = sif_par)
+
     else:
         form = PoziviTelForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
-    return render(request, 'fleet/naplata/form_opomena.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def izmeni_poziv(request, id):
     poziv = get_object_or_404(PoziviTel.objects.using('naplata_db'), id=id)
@@ -2358,17 +2377,59 @@ def izmeni_poziv(request, id):
             return redirect('lista_poziva')
     else:
         form = PoziviTelForm(instance=poziv)
-    return render(request, 'fleet/naplata/form_opomena.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def obrisi_poziv(request, id):
     poziv = get_object_or_404(PoziviTel.objects.using('naplata_db'), id=id)
     if request.method == "POST":
         poziv.delete(using='naplata_db')
-        return redirect('lista_poziva')
-    return render(request, 'pozivi_tel/obrisi.html', {'poziv': poziv})
+        return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
+    return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
 
 
+# <!-- ======================================================================= -->
+#                           <!-- POZIVI/PISMA -->
+# <!-- ======================================================================= -->
+def lista_pozivnih_pisma(request):
+    pozivi = PozivPismo.objects.using('naplata_db').all()
+    return render(request, 'poziv_pismo/lista.html', {'pozivi': pozivi})
 
+def dodaj_poziv_pismo(request, sif_par, naz_par):
+    if request.method == "POST":
+        form = PozivPismoForm(request.POST)
+        if form.is_valid():
+            poziv = form.save(commit=False)
+            poziv.sif_par = sif_par  # Automatski postavljamo vrednost
+            poziv.naz_par = naz_par
+            poziv.save(using='naplata_db')
+            return redirect('detalji_partner', sif_par = sif_par)
+    else:
+        form = PozivPismoForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
+
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+
+def izmeni_poziv_pismo(request, id):
+    poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
+    if request.method == "POST":
+        form = PozivPismoForm(request.POST, instance=poziv)
+        if form.is_valid():
+            form.save(using='naplata_db')
+            return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
+    else:
+        form = PozivPismoForm(instance=poziv)
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+
+def obrisi_poziv_pismo(request, id):
+    poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
+    if request.method == "POST":
+        poziv.delete(using='naplata_db')
+        return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
+    return render(request, 'poziv_pismo/obrisi.html', {'poziv': poziv})
+
+
+# <!-- ======================================================================= -->
+#                           <!-- TUZBE -->
+# <!-- ======================================================================= -->
 def lista_tuzbi(request):
     tuzbe = Tuzbe.objects.using('naplata_db').all()
     return render(request, 'tuzbe/lista.html', {'tuzbe': tuzbe})
@@ -2381,11 +2442,11 @@ def dodaj_tuzbu(request, sif_par, naz_par):
             tuzba.sif_par = sif_par  # Automatski postavljamo vrednost
             tuzba.naz_par = naz_par
             tuzba.save(using='naplata_db')
-            return redirect('lista_tuzbi')
+            return redirect('detalji_partner', sif_par = sif_par)
     else:
         form = TuzbeForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
-    return render(request, 'fleet/naplata/form_opomena.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def izmeni_tuzbu(request, id):
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
@@ -2393,14 +2454,14 @@ def izmeni_tuzbu(request, id):
         form = TuzbeForm(request.POST, instance=tuzba)
         if form.is_valid():
             form.save(using='naplata_db')
-            return redirect('lista_tuzbi')
+        return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     else:
         form = TuzbeForm(instance=tuzba)
-    return render(request, 'tuzbe/izmeni.html', {'form': form})
+    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
 
 def obrisi_tuzbu(request, id):
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
     if request.method == "POST":
         tuzba.delete(using='naplata_db')
-        return redirect('lista_tuzbi')
-    return render(request, 'tuzbe/obrisi.html', {'tuzba': tuzba})
+        return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
+    return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
