@@ -134,7 +134,11 @@ urlpatterns = [
     path('dugovanja/', lista_dugovanja, name='lista_dugovanja'),
     path('partner/<int:sif_par>/', detalji_partner, name='detalji_partner'),
     path('dugovanja_po_bucketima/', lista_dugovanja_po_bucketima, name='lista_dugovanja_po_bucketima'),
-    # path('dugovanje/<int:sif_par>/', detalji_dugovanja, name='detalji_dugovanja'),
+    path('naplata/export-excel/', export_dugovanja_bucketi_excel, name='export_dugovanja_excel'),
+    path('naplata/utuzene/<int:sif_par>', export_utuzene_fakture_excel, name='export_utuzene_fakture'),
+    path('naplata/opomene/<int:sif_par>', export_opomene_excel, name='export_opomene_fakture'),
+    path('naplata/baket90/<int:sif_par>/', views.export_baket_90_excel, name='export_baket_90_excel'),
+    path('naplata/baket60/<int:sif_par>/', views.export_baket_60_excel, name='export_baket_60_excel'),
 
     path('kontakti/', lista_kontakata, name='lista_kontakata'),
     path('kontakti/dodaj/<int:sif_par>/<str:naz_par>/', dodaj_kontakt, name='dodaj_kontakt'),

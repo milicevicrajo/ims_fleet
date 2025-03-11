@@ -31,6 +31,8 @@ import os
 from django.urls import reverse
 from django.conf import settings
 from django.http import HttpResponseRedirect
+from openpyxl import Workbook
+
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
 # <!-- ======================================================================= -->
@@ -2078,26 +2080,76 @@ from django.db import connections
 def lista_dugovanja_po_bucketima(request):
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
-            SELECT 
-                db.sif_par, 
-                db.naz_par, 
-                SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
-                SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
-                SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
-                SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
-                SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
-                SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
-                SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
-                SUM(db.saldo) AS Ukupno,
-                n.veliki
-            FROM dodela_baketa db
-            LEFT JOIN napomene n ON db.sif_par = n.sif_par
-            GROUP BY db.sif_par, db.naz_par, n.veliki
-            ORDER BY Ukupno DESC
-        """)
+                SELECT 
+                    db.sif_par, 
+                    db.naz_par, 
+                    SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
+                    SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
+                    SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
+                    SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
+                    SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
+                    SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
+                    SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
+                    -- Nova kolona: DOSPELO (sve osim 0.1)
+                    SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
+                    SUM(db.saldo) AS Ukupno,
+                    n.veliki,
+                    db.ino
+                FROM dodela_baketa db
+                LEFT JOIN napomene n ON db.sif_par = n.sif_par
+                GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
+                ORDER BY Ukupno DESC
+            """)
         dugovanja = cursor.fetchall()
 
     return render(request, 'fleet/naplata/dugovanja_bucketi.html', {'dugovanja': dugovanja})
+
+
+def export_dugovanja_bucketi_excel(request):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Dugovanja po baketima"
+
+    # Header
+    headers = [
+        "Šifra partnera", "Naziv partnera", "Nedospelo", "Dospelo - baket 1", "Dospelo - baket 2",
+        "Dospelo - baket 3", "Dospelo - baket 4", "Dospelo - baket 5", "Dospelo - baket 6",
+        "Ukupno", "Veliki", "INO"
+    ]
+    ws.append(headers)
+
+    # SQL data
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+                SELECT 
+                    db.sif_par, 
+                    db.naz_par, 
+                    SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
+                    SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
+                    SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
+                    SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
+                    SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
+                    SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
+                    SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
+                    -- Nova kolona: DOSPELO (sve osim 0.1)
+                    SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
+                    SUM(db.saldo) AS Ukupno,
+                    n.veliki,
+                    db.ino
+                FROM dodela_baketa db
+                LEFT JOIN napomene n ON db.sif_par = n.sif_par
+                GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
+                ORDER BY Ukupno DESC
+            """)
+        rows = cursor.fetchall()
+        for row in rows:
+            ws.append(row)
+
+    # Response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=dugovanja_po_baketima.xlsx'
+    wb.save(response)
+    return response
 
 
 from django.shortcuts import render, get_object_or_404
@@ -2119,35 +2171,44 @@ def detalji_partner(request, sif_par):
     # 2.1 Dugovanja (view baza)
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
-            SELECT god, sif_par, naz_par, sif_vrs, br_naloga, dat_naloga, stavka, vez_dok, datum, oj, dpo,
-                   kom, skr_naz, deviza, promena, stavka_k, d_p, knt, dug, pot, sif_pos
+            SELECT 
+                god AS Godina,
+                oj AS OJ,
+                sif_pos AS [šifra posla],
+                sif_vrs AS vrsta,
+                datum,
+                vez_dok AS veza,
+                dpo,
+                skr_naz AS valuta,
+                dug AS duguje,
+                pot AS potražuje
             FROM baza
             WHERE sif_par = %s
-            ORDER BY datum DESC
+            ORDER BY datum
         """, [sif_par])
         dugovanja = cursor.fetchall()
+
 
     # 2.2 Dugovanja baketi (view baza)
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
             SELECT 
-                db.sif_par, 
-                db.naz_par, 
-                SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
-                SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
-                SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
-                SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
-                SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
-                SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
-                SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
-                SUM(db.saldo) AS Ukupno,
-                n.veliki
-            FROM dodela_baketa db
-            LEFT JOIN napomene n ON db.sif_par = n.sif_par
-            WHERE db.sif_par = %s
-            GROUP BY db.sif_par, db.naz_par, n.veliki
-        """, [sif_par])  # Prosleđujemo sif_par kao parametar da izbegnemo SQL injection
+                sb.opis,
+                b.baket,
+                b.sif_pos,
+                b.vez_dok,
+                b.dpo,
+                b.duguje,
+                b.potrazuje,
+                b.saldo,
+                sb.akcija
+            FROM dodela_baketa b
+            LEFT JOIN sif_baket sb ON b.baket = sb.baket
+            WHERE b.sif_par = %s
+            ORDER BY b.baket
+        """, [sif_par])
         dugovanja_baket = cursor.fetchall()
+
         
     # 2.3 Dugovanja po fakturama
     with connections['naplata_db'].cursor() as cursor:
@@ -2183,13 +2244,23 @@ def detalji_partner(request, sif_par):
     # 4. Otpisana potraživanja (view ispravke)
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
-            SELECT god, sif_par, naz_par, sif_vrs, br_naloga, dat_naloga, stavka, vez_dok, datum, oj, dpo,
-                kom, skr_naz, deviza, promena, stavka_k, d_p, knt, naz_knt, dug, pot, sif_pos
+            SELECT 
+                god,
+                oj,
+                sif_pos AS [šifra posla],
+                sif_vrs,
+                datum,
+                dpo,
+                knt,
+                naz_knt,
+                dug,
+                pot
             FROM ispravke
             WHERE sif_par = %s
             ORDER BY datum DESC
         """, [sif_par])
         ispravke = cursor.fetchall()
+
 
 
 
@@ -2200,7 +2271,60 @@ def detalji_partner(request, sif_par):
     poziv_pismo = PozivPismo.objects.using('naplata_db').filter(sif_par=sif_par)
     pozivi_tel = PoziviTel.objects.using('naplata_db').filter(sif_par=sif_par)
     tuzbe = Tuzbe.objects.using('naplata_db').filter(sif_par=sif_par)
+    
 
+    # 6. Spisak faktura iz baketa 6
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par as Naziv, TRIM(vez_dok) AS veza, sif_pos as [šifra posla], 
+                    SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, SUM(saldo) AS saldo
+            FROM dodela_baketa
+            WHERE baket = 181 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """,[sif_par])
+        spisak_utuzenje = cursor.fetchall()
+
+    # 7. Spisak faktura iz baketa 5
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par, TRIM(vez_dok) AS veza, sif_pos, 
+                SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, 
+                SUM(saldo) AS saldo
+            FROM dodela_baketa
+            WHERE baket = 180 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """, [sif_par])
+        opomene_fakture = cursor.fetchall()
+
+    # 8. Spisak faktura iz baketa 4
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par, LTRIM(RTRIM(vez_dok)) AS veza, sif_pos,
+                SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, SUM(saldo) AS saldo
+            FROM dodela_baketa
+            WHERE baket = 90 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """, [sif_par])
+        fakture_baket_90 = cursor.fetchall()
+
+    # 9. Spisak faktura iz baketa 3
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par as Naziv, 
+                   LTRIM(RTRIM(vez_dok)) AS veza, 
+                   sif_pos AS [šifra posla], 
+                   SUM(duguje) AS duguje, 
+                   SUM(potrazuje) AS potrazuje, 
+                   SUM(saldo) AS saldo
+            FROM dodela_baketa
+            WHERE baket = 60 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """,[sif_par])
+        fakture_baket_60 = cursor.fetchall()
 
     # Slanje svih podataka u template
     return render(request, 'fleet/naplata/detalji_partner.html', {
@@ -2215,9 +2339,153 @@ def detalji_partner(request, sif_par):
         'tuzbe': tuzbe,
         'napomene': napomene,
         'dugovanja_baket':dugovanja_baket,
-        'dugovanja_sumarno':dugovanja_sumarno
+        'dugovanja_sumarno':dugovanja_sumarno,
+        'spisak_utuzenje': spisak_utuzenje,
+        'opomene_fakture': opomene_fakture,
+        'fakture_baket_90': fakture_baket_90,
+        'fakture_baket_60':fakture_baket_60
     })
 
+from django.http import HttpResponse
+from django.db import connections
+import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font
+
+def export_utuzene_fakture_excel(request, sif_par):
+    # 1. Izvrši upit
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par as Naziv, TRIM(vez_dok) AS veza, sif_pos as [šifra posla], 
+                   SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, SUM(saldo) AS saldo
+            FROM dodela_baketa
+            WHERE baket = 181 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """, [sif_par])
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+
+    # 2. Kreiraj Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Za utuženje"
+
+    # 3. Naslovi kolona
+    header_font = Font(bold=True)
+    for col_num, column_title in enumerate(columns, 1):
+        cell = ws.cell(row=1, column=col_num, value=column_title)
+        cell.font = header_font
+        ws.column_dimensions[get_column_letter(col_num)].width = 18
+
+    # 4. Dodaj redove
+    for row_index, row in enumerate(rows, 2):
+        for col_index, value in enumerate(row, 1):
+            ws.cell(row=row_index, column=col_index, value=value)
+
+    # 5. Pripremi fajl za slanje kao response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=utuzene_fakture.xlsx'
+    wb.save(response)
+    return response
+
+def export_opomene_excel(request,sif_par):
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par as Naziv, TRIM(vez_dok) AS veza, sif_pos as [šifra posla], 
+                   SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, SUM(saldo) AS saldo
+            FROM dodela_baketa
+            WHERE baket = 180 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """, [sif_par])
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]
+
+    # Kreiraj Excel fajl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Za opomene"
+
+    # Zaglavlje
+    header_font = Font(bold=True)
+    for col_num, column_title in enumerate(columns, 1):
+        cell = ws.cell(row=1, column=col_num, value=column_title)
+        cell.font = header_font
+        ws.column_dimensions[get_column_letter(col_num)].width = 18
+
+    # Podaci
+    for row_index, row in enumerate(rows, 2):
+        for col_index, value in enumerate(row, 1):
+            ws.cell(row=row_index, column=col_index, value=value)
+
+    # Response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=opomene_fakture.xlsx'
+    wb.save(response)
+    return response
+
+
+def export_baket_90_excel(request, sif_par):
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par, LTRIM(RTRIM(vez_dok)), sif_pos,
+                   SUM(duguje), SUM(potrazuje), SUM(saldo)
+            FROM dodela_baketa
+            WHERE baket = 90 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """, [sif_par])
+        data = cursor.fetchall()
+
+    # Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Baket 90"
+
+    headers = ['Šifra partnera', 'Naziv', 'Veza', 'Šifra posla', 'Duguje', 'Potražuje', 'Saldo']
+    ws.append(headers)
+
+    for row in data:
+        ws.append(row)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=baket_90.xlsx'
+    wb.save(response)
+    return response
+
+def export_baket_60_excel(request, sif_par):
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT sif_par, naz_par, LTRIM(RTRIM(vez_dok)), sif_pos,
+                   SUM(duguje), SUM(potrazuje), SUM(saldo)
+            FROM dodela_baketa
+            WHERE baket = 60 AND sif_par = %s
+            GROUP BY sif_par, naz_par, vez_dok, sif_pos
+            ORDER BY sif_par
+        """, [sif_par])
+        data = cursor.fetchall()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Baket 60"
+
+    headers = ['Šifra partnera', 'Naziv', 'Veza', 'Šifra posla', 'Duguje', 'Potražuje', 'Saldo']
+    ws.append(headers)
+
+    for row in data:
+        ws.append(row)
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=baket_60_sifpar_{sif_par}.xlsx'
+    wb.save(response)
+    return response
 
 # <!-- ======================================================================= -->
 #                           <!-- KONTAKTI -->
@@ -2465,3 +2733,6 @@ def obrisi_tuzbu(request, id):
         tuzba.delete(using='naplata_db')
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
+
+
+

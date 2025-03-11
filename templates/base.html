@@ -453,7 +453,7 @@
                             width: "400px" // Postavi širinu kolone (možeš promeniti vrednost)
                         },
                         {
-                            targets: [2, 3, 4, 5, 6, 7, 8, 9], // Indeksi kolona koje formatiramo
+                            targets: [2, 3, 4, 5, 6, 7, 8, 9,10], // Indeksi kolona koje formatiramo
                             render: function (data, type, row) {
                                 if (type === 'display') {
                                     return new Intl.NumberFormat('sr-RS').format(data);
@@ -464,14 +464,14 @@
                     ],
                 "footerCallback": function(row, data, start, end, display) {
                     var api = this.api();
-                    
+
                     // Funkcija za sumiranje
                     var sumColumn = function(index) {
                         return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
                             return (parseFloat(a) || 0) + (parseFloat(b) || 0);
-                        }, 0).toLocaleString('sr-RS'); // Formatiranje broja
+                        }, 0).toLocaleString('sr-RS');
                     };
-        
+
                     // Upisivanje suma u tfoot
                     $('#total_nedospelo').html(sumColumn(2));
                     $('#total_30').html(sumColumn(3));
@@ -480,7 +480,8 @@
                     $('#total_90').html(sumColumn(6));
                     $('#total_180').html(sumColumn(7));
                     $('#total_181').html(sumColumn(8));
-                    $('#total_ukupno').html(sumColumn(9));
+                    $('#total_dospelo').html(sumColumn(9));   // Novo: DOSPELO
+                    $('#total_ukupno').html(sumColumn(10));   // Pomerena kolona UKUPNO
                 }
             });
 
@@ -491,7 +492,7 @@
                 "pageLength": 10,
                 "columnDefs": [
                         {
-                            targets: [9,10], // Indeksi kolona koje formatiramo
+                            targets: [8,9], // Indeksi kolona koje formatiramo
                             render: function (data, type, row) {
                                 if (type === 'display') {
                                     return new Intl.NumberFormat('sr-RS').format(data);
@@ -512,14 +513,77 @@
                 }
             });
 
-            var table = $('#DugovanjaDetaljFakture').DataTable({
+            var table = $('#DugovanjaBaketiDetalj').DataTable({
+                "language": languageSettings,
+                "autoWidth": false,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "columnDefs": [
+                    {
+                        targets: [5, 6, 7], // Indeksi kolona: duguje, potražuje, saldo
+                        render: function (data, type, row) {
+                            if (type === 'display' && data !== null) {
+                                return new Intl.NumberFormat('sr-RS').format(data);
+                            }
+                            return data;
+                        }
+                    },
+                    { "type": "date-custom", "targets": [4] }  // Ako je dpo u 5. koloni
+                ],
+
+                "footerCallback": function (row, data, start, end, display) {
+                    var api = this.api();
+            
+                    // Funkcija za sumu i zaobljavanje
+                    var sumColumn = function(index) {
+                        return api.column(index, { page: 'all' }).data().reduce(function (a, b) {
+                            return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                        }, 0);
+                    };
+            
+                    // Postavi sume u footer
+                    $(api.column(5).footer()).html(new Intl.NumberFormat('sr-RS').format(sumColumn(5))); // Duguje
+                    $(api.column(6).footer()).html(new Intl.NumberFormat('sr-RS').format(sumColumn(6))); // Potražuje
+                    $(api.column(7).footer()).html(new Intl.NumberFormat('sr-RS').format(sumColumn(7))); // Saldo
+                }
+            });
+            
+
+            var table = $('#DugovanjaDetaljFaktureTuzbe').DataTable({
                 "language": languageSettings,
                 "autoWidth": false,
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "pageLength": 10,
                 "columnDefs": [
                         {
-                            targets: [3,4,5], // Indeksi kolona koje formatiramo
+                            targets: [3,4,5,6], // Indeksi kolona koje formatiramo
+                            render: function (data, type, row) {
+                                if (type === 'display') {
+                                    return new Intl.NumberFormat('sr-RS').format(data);
+                                }
+                                return data;
+                            }
+                        }
+                    ],
+                "footerCallback": function(row, data, start, end, display) {
+                    var api = this.api();
+                    
+                    // Funkcija za sumiranje
+                    var sumColumn = function(index) {
+                        return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
+                            return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                        }, 0).toLocaleString('sr-RS'); // Formatiranje broja
+                    };        
+                }
+            });
+            var table = $('#DugovanjaDetaljFaktureOpomene').DataTable({
+                "language": languageSettings,
+                "autoWidth": false,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "columnDefs": [
+                        {
+                            targets: [3,4,5,6], // Indeksi kolona koje formatiramo
                             render: function (data, type, row) {
                                 if (type === 'display') {
                                     return new Intl.NumberFormat('sr-RS').format(data);
@@ -540,7 +604,67 @@
                 }
             });
 
-        });  
+            var table = $('#DugovanjaDetaljFaktureBaket90').DataTable({
+                "language": languageSettings,
+                "autoWidth": false,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "columnDefs": [
+                        {
+                            targets: [3,4,5,6], // Indeksi kolona koje formatiramo
+                            render: function (data, type, row) {
+                                if (type === 'display') {
+                                    return new Intl.NumberFormat('sr-RS').format(data);
+                                }
+                                return data;
+                            }
+                        }
+                    ],
+                "footerCallback": function(row, data, start, end, display) {
+                    var api = this.api();
+                    
+                    // Funkcija za sumiranje
+                    var sumColumn = function(index) {
+                        return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
+                            return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                        }, 0).toLocaleString('sr-RS'); // Formatiranje broja
+                    };        
+                }
+            });
+
+            var table = $('#DugovanjaDetaljFaktureBaket60').DataTable({
+                "language": languageSettings,
+                "autoWidth": false,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "columnDefs": [
+                        {
+                            targets: [3,4,5,6], // Indeksi kolona koje formatiramo
+                            render: function (data, type, row) {
+                                if (type === 'display') {
+                                    return new Intl.NumberFormat('sr-RS').format(data);
+                                }
+                                return data;
+                            }
+                        }
+                    ],
+                "footerCallback": function(row, data, start, end, display) {
+                    var api = this.api();
+                    
+                    // Funkcija za sumiranje
+                    var sumColumn = function(index) {
+                        return api.column(index, { page: 'all' }).data().reduce(function(a, b) {
+                            return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                        }, 0).toLocaleString('sr-RS'); // Formatiranje broja
+                    };        
+                }
+            });
+
+        }); 
+
+
+
+
           
     </script>
 
