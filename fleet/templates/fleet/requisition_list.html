@@ -28,7 +28,9 @@
                     <tr>
                         <td>{{ requisition.vehicle }}</td>
                         <td>{{ requisition.god }}</td>
-                        <td>{{ requisition.br_dok }}</td>
+                        <td><a href="{% url 'requisition_detail' god=requisition.god br_dok=requisition.br_dok %}">
+                            {{ requisition.br_dok }}
+                        </a></td>
                         <td>{{ requisition.datum_trebovanja|date:"d.m.Y" }}</td>
                         <td>{{ requisition.naz_art }}</td>
                         <td>{{ requisition.kol }}</td>
@@ -37,16 +39,6 @@
                       </td>
                     </tr>
                   {% endfor %}
-                <tfoot>
-                    <tr>
-                        <th>Godina</th>
-                        <th>Broj Dokumenta</th>
-                        <th>Datum trebovanja</th>
-                        <th>Naziv Artikla</th>
-                        <th>Količina</th>
-                        <th>Akcije</th>
-                    </tr>
-                </tfoot>
             </table>
         </div>
 

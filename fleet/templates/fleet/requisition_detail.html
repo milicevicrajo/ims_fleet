@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Trebovanje {{ br_dok }} ({{ god }})</h2>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Stavka</th>
+        <th>Šifra artikla</th>
+        <th>Naziv artikla</th>
+        <th>Količina</th>
+        <th>Cena</th>
+        <th>Vrednost</th>
+        <th>Napomena</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for stavka in stavke %}
+      <tr>
+        <td>{{ stavka.stavka }}</td>
+        <td>{{ stavka.sif_art }}</td>
+        <td>{{ stavka.naz_art }}</td>
+        <td>{{ stavka.kol }}</td>
+        <td>{{ stavka.cena }}</td>
+        <td>{{ stavka.vrednost_nab }}</td>
+        <td>{{ stavka.napomena }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a href="{% url 'requisition_list' %}" class="btn btn-secondary">Nazad na listu</a>
+{% endblock %}

@@ -1506,6 +1506,23 @@ class RequisitionListView(ListView):
         context['title'] = 'Trebovanja'
         return context
 
+class RequisitionDetailView(ListView):
+    model = Requisition
+    template_name = 'fleet/requisition_detail.html'
+    context_object_name = 'stavke'
+
+    def get_queryset(self):
+        return Requisition.objects.filter(
+            br_dok=self.kwargs['br_dok'],
+            god=self.kwargs['god']
+        ).order_by('stavka')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['br_dok'] = self.kwargs['br_dok']
+        context['god'] = self.kwargs['god']
+        return context
+
 # Draft    
 class RequisitionFixingListView(ListView): 
     model = DraftRequisition
@@ -1541,18 +1558,18 @@ class RequisitionUpdateView(UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
+from django.urls import reverse
+
 class DraftRequisitionUpdateView(UpdateView):
     model = DraftRequisition
     form_class = DraftRequisitionForm
     template_name = 'fleet/generic_form_draft.html'
-    success_url = reverse_lazy('requisition_list')  # Preusmerenje nakon uspešne izmene
     success_message = "Trebovanje uspešno izmenjeno!"
 
     def form_valid(self, form):
-        # Sačuvaj trenutnu instancu
         current_instance = form.save()
 
-        # Ažuriraj sve instance sa istim `br_dok` i `god`
+        # Ažuriraj ostale redove
         DraftRequisition.objects.filter(
             br_dok=current_instance.br_dok,
             god=current_instance.god
@@ -1566,11 +1583,12 @@ class DraftRequisitionUpdateView(UpdateView):
             napomena=current_instance.napomena
         )
 
-        # Prođi kroz sve zapise i obriši one koji su kompletni
+        # Obradi zapise i premesti one koji su kompletni
         draft_requisitions = DraftRequisition.objects.filter(
             br_dok=current_instance.br_dok,
             god=current_instance.god
         )
+
         for draft in draft_requisitions:
             print(f"Obrada: {draft}, kompletan: {draft.is_complete()}")
             if draft.is_complete():
@@ -1594,23 +1612,22 @@ class DraftRequisitionUpdateView(UpdateView):
                     datum_trebovanja=draft.datum_trebovanja,
                     napomena=draft.napomena
                 )
-                # Obriši zapis
                 draft.delete()
 
-        # Preusmeri na success_url
-        response = super().form_valid(form)
+        # Proveri da li još uvek ima nedovršenih zapisa
+        ostali_draftovi = DraftRequisition.objects.filter(
+            br_dok=current_instance.br_dok,
+            god=current_instance.god
+        ).exists()
 
         # Pozovi funkciju za brisanje kompletnih zapisa
         delete_complete_drafts()
 
-        return response
+        if ostali_draftovi:
+            return redirect('draft_requisition_list')  # zameni sa stvarnim imenom URL-a
+        else:
+            return redirect('requisition_detail', god=current_instance.god, br_dok=current_instance.br_dok)
 
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Izmena trebovanja'
-        context['submit_button_label'] = 'Sačuvaj izmene'
-        return context
 
 
 class RequisitionDeleteView(DeleteView):

@@ -107,6 +107,7 @@ urlpatterns = [
     path('fetch-lease-interest/', views.fetch_lease_interest_data, name='fetch_lease_interest'),
 
     path('requisitions/', RequisitionListView.as_view(), name='requisition_list'),
+    path('requisition/<int:god>/<str:br_dok>/', RequisitionDetailView.as_view(), name='requisition_detail'),
     path('requisitions/nedovrseno/', RequisitionFixingListView.as_view(), name='requisition_fixing_list'),
     path('requisitions-nedovrseno/<int:pk>/edit/', DraftRequisitionUpdateView.as_view(), name='draft_requisition_update'),
     path('requisitions/create/', RequisitionCreateView.as_view(), name='requisition_create'),

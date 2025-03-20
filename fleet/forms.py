@@ -259,7 +259,8 @@ class DraftRequisitionForm(forms.ModelForm):
         (True, _("Da")),
         (False, _("Ne")),
     )
-    nije_garaza = forms.BooleanField(required=False)
+
+
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
@@ -274,19 +275,25 @@ class DraftRequisitionForm(forms.ModelForm):
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
         label="Mesec unosa"
     )
-    popravka_kategorija = forms.CharField(
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    popravka_kategorija = forms.ModelChoiceField(
+        queryset=ServiceType.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Kategorija popravke"
     )
+    
     kilometraza = forms.IntegerField(
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
         label="Kilometraža"
     )
-    nije_garaza = models.BooleanField(
-        default=True,
-        choices=YES_NO_CHOICES,  # Dodato choices
-        verbose_name=_("Da li pripada garaži?")
+
+    nije_garaza = forms.ChoiceField(
+        choices=YES_NO_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text="Izaberite opciju: 'Da' ako se odnosi na važnu napomenu, ili ostavite prazno.",
+
     )
+
     napomena = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
