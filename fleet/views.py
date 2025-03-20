@@ -1572,8 +1572,9 @@ class DraftRequisitionUpdateView(UpdateView):
             god=current_instance.god
         )
         for draft in draft_requisitions:
+            print(f"Obrada: {draft}, kompletan: {draft.is_complete()}")
             if draft.is_complete():
-                # Premeštanje u Requisition pre brisanja
+                print("→ Premeštam u Requisition")
                 Requisition.objects.create(
                     vehicle=draft.vehicle,
                     sif_pred=draft.sif_pred,

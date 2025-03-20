@@ -255,6 +255,11 @@ class RequisitionForm(forms.ModelForm):
                 field.required = True
 
 class DraftRequisitionForm(forms.ModelForm):
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
+    nije_garaza = forms.BooleanField(required=False)
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
@@ -277,10 +282,10 @@ class DraftRequisitionForm(forms.ModelForm):
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
         label="Kilometraža"
     )
-    nije_garaza = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        label="Nije garaža"
+    nije_garaza = models.BooleanField(
+        default=True,
+        choices=YES_NO_CHOICES,  # Dodato choices
+        verbose_name=_("Da li pripada garaži?")
     )
     napomena = forms.CharField(
         required=False,
@@ -291,7 +296,16 @@ class DraftRequisitionForm(forms.ModelForm):
     class Meta:
         model = DraftRequisition
         fields = ['vehicle','datum_trebovanja', 'mesec_unosa', 'popravka_kategorija', 'kilometraza', 'nije_garaza', 'napomena']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:  # Check if instance is being updated
+            if self.instance.datum_trebovanja:
+                self.initial['datum_trebovanja'] = self.instance.datum_trebovanja.strftime('%Y-%m-%d')
 
+        # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
+        for field_name, field in self.fields.items():
+            field.required = False
 
 class KontaktiForm(forms.ModelForm):
     class Meta:

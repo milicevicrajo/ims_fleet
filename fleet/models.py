@@ -297,6 +297,13 @@ class ServiceTransaction(models.Model):
     konto_vozila = models.CharField(max_length=20, verbose_name=_("Konto vozila"))
     kom = models.TextField(verbose_name=_("Komada"), blank=True, null=True)      
     popravka_kategorija = models.CharField(max_length=100, verbose_name=_("Kategorija poptavke"))
+    popravka_kategorija_fk = models.ForeignKey(
+        ServiceType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Kategorija popravke (povezana)"
+    )
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"))
     nije_garaza =     nije_garaza = models.BooleanField(
         default=False,
@@ -334,6 +341,14 @@ class DraftServiceTransaction(models.Model):
     konto_vozila = models.CharField(max_length=20, verbose_name="Konto vozila", null=True, blank=True)
     kom = models.TextField(verbose_name="Komada", blank=True, null=True)      
     popravka_kategorija = models.CharField(max_length=100, verbose_name="Kategorija popravke", blank=True, null=True)
+    popravka_kategorija_fk = models.ForeignKey(
+        ServiceType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Kategorija popravke (povezana)"
+    )
+
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
     nije_garaza = models.BooleanField(
         default=False,
@@ -364,6 +379,13 @@ class Requisition(models.Model):
     mesec_unosa = models.IntegerField(verbose_name=_("Mesec unosa"))
     datum_trebovanja = models.DateField(verbose_name=_("Datum trebovanja"))
     popravka_kategorija = models.CharField(max_length=100, verbose_name="Kategorija popravke", blank=True, null=True)
+    popravka_kategorija_fk = models.ForeignKey(
+        ServiceType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Kategorija popravke (povezana)"
+    )
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"))
     nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"))
     napomena = models.TextField(verbose_name=_("Napomena"),blank=True, null=True )
@@ -384,9 +406,16 @@ class DraftRequisition(models.Model):
     cena = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     vrednost_nab = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     popravka_kategorija = models.CharField(max_length=100, verbose_name="Kategorija popravke", blank=True, null=True)
+    popravka_kategorija_fk = models.ForeignKey(
+        ServiceType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Kategorija popravke (povezana)"
+    )
     mesec_unosa = models.IntegerField(verbose_name=_("Mesec unosa"), null=True, blank=True)
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
-    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), null=True, blank=True)
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), default=False)
     datum_trebovanja = models.DateField(null=True, blank=True)
     napomena = models.TextField(null=True, blank=True)
 
@@ -394,8 +423,13 @@ class DraftRequisition(models.Model):
         return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
     
     def is_complete(self):
-        # Definiši pravila koja određuju da li su svi podaci dostupni
-        return all([self.vehicle, self.popravka_kategorija, self.mesec_unosa, self.kilometraza, self.datum_trebovanja])
+        return all([
+            self.vehicle is not None,
+            bool(self.popravka_kategorija),  # nije None i nije ""
+            self.mesec_unosa is not None,
+            self.kilometraza is not None,
+            self.datum_trebovanja is not None
+        ])
     
 class TransactionOMV(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='omv_transactions', verbose_name=_("Vozilo"), blank=True, null=True)
@@ -524,7 +558,7 @@ class Kontakti(models.Model):
     napomena = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'kontakti'
 
 
@@ -537,7 +571,7 @@ class Napomene(models.Model):
     veliki = models.CharField(db_column='veliki', max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = True  # Pošto sada tabela ima ID, Django može upravljati podacima
+        managed = False
         db_table = 'napomene'
 
 
@@ -553,7 +587,7 @@ class Opomene(models.Model):
     napomene = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = True  # Django sada može da upravlja tabelom
+        managed = False
         db_table = 'opomene'
 
 
@@ -570,7 +604,7 @@ class PozivPismo(models.Model):
     napomene = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = True  # Omogućava Django-u da menja tabelu
+        managed = False
         db_table = 'poziv_pismo'
 
 
@@ -582,7 +616,7 @@ class PoziviTel(models.Model):
     napomena = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = True  # Omogućava Django-u da menja tabelu
+        managed = False
         db_table = 'pozivi_tel'
 
 
@@ -619,7 +653,7 @@ class Tuzbe(models.Model):
     napomene = models.CharField(max_length=255, db_collation='Latin1_General_CI_AI', blank=True, null=True)
 
     class Meta:
-        managed = True  # Omogućava Django-u da menja tabelu
+        managed = False
         db_table = 'tuzbe'
 
 
