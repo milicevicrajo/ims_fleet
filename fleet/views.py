@@ -1628,7 +1628,12 @@ class DraftRequisitionUpdateView(UpdateView):
         else:
             return redirect('requisition_detail', god=current_instance.god, br_dok=current_instance.br_dok)
 
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Izmena trebovanja {self.object.br_dok}'
+        context['submit_button_label'] = 'Sačuvaj izmene'
+        context['manual'] = 'Kilometražu je požebljno uneti uvek, ali nije obavezno. Kada se radi o redovnim servisima, kilometraža je obavezna.'
+        return context
 
 class RequisitionDeleteView(DeleteView):
     model = Requisition
