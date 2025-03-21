@@ -120,11 +120,16 @@ def dashboard(request):
         center_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1]),
         avg_year=Avg('year_of_manufacture')
     )
-
-    # Grupisanje po centru
-    vehicles_by_center = vehicles_with_center.values('center_code').annotate(
-        vehicle_count=Count('id')
-    )
+    
+    vehicles_by_center = Vehicle.objects.annotate(
+        center_code=Subquery(
+            JobCode.objects.filter(vehicle=OuterRef('pk'))
+            .order_by('-assigned_date')
+            .values('organizational_unit__center')[:1]
+        )
+    ).values('center_code').annotate(
+        vehicle_count=Count('center_code')
+    ).order_by('center_code')
 
     center_data = vehicles_with_center.values('center_code').annotate(
         vehicle_count=Count('id', distinct=True),
