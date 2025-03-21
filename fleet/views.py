@@ -114,16 +114,11 @@ def dashboard(request):
         vehicle=OuterRef('pk')
     ).order_by('-assigned_date')
 
-    # Anotiraj vozila sa poslednjom jedinicom
-    vehicles_with_units = Vehicle.objects.annotate(
-        org_unit_id=Subquery(latest_jobcode.values('organizational_unit__id')[:1]),
-        org_unit_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1]),
-    )
-    # Izvuci center kod kroz povezanost
+    # Anotiraj svako vozilo sa šifrom i imenom centra
     vehicles_with_center = Vehicle.objects.annotate(
-        center_code=Subquery(
-            latest_jobcode.values('organizational_unit__center')[:1]
-        )
+        center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1]),
+        center_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1]),
+        avg_year=Avg('year_of_manufacture')
     )
 
     # Grupisanje po centru
@@ -131,15 +126,21 @@ def dashboard(request):
         vehicle_count=Count('id')
     )
 
-    # Grupisanje po centru
     center_data = vehicles_with_center.values('center_code').annotate(
         vehicle_count=Count('id', distinct=True),
-        avg_age=current_year - Avg('year_of_manufacture'),
+        avg_year_of_manufacture=Avg('year_of_manufacture'),
         total_value=Sum('value', distinct=True),
         avg_value=Avg('value'),
         total_fuel_quantity=Sum('fuel_consumptions__amount'),
         total_fuel_price=Sum('fuel_consumptions__cost_bruto')
     ).order_by('center_code')
+
+    for center in center_data:
+        if center['avg_year_of_manufacture']:
+            center['avg_age'] = current_year - center['avg_year_of_manufacture']
+        else:
+            center['avg_age'] = None
+
 
     context = {
         'services_without_vehicle': services_without_vehicle,
