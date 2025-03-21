@@ -97,7 +97,6 @@ def dashboard(request):
 
 
     # Average vehicle age
-    average_age = Vehicle.objects.aggregate(avg_age=(current_year - Avg('year_of_manufacture')))
 
     # Book value as of the last day of the previous month
     book_value = Vehicle.objects.filter(purchase_date__lte=last_day_of_previous_month).aggregate(total_value=Sum('value'))
@@ -133,14 +132,21 @@ def dashboard(request):
 
     center_data = vehicles_with_center.values('center_code').annotate(
         vehicle_count=Count('center_code'),
-        avg_age=current_year - Avg('year_of_manufacture'),
+        avg_year_of_manufacture=Avg('year_of_manufacture'),
         total_value=Sum('value'),
         avg_value=Avg('value'),
         total_fuel_quantity=Sum('fuel_consumptions__amount'),
         total_fuel_price=Sum('fuel_consumptions__cost_bruto')
     ).order_by('center_code')
 
-
+    # Izračunaj prosečnu starost u Pythonu
+    for center in center_data:
+        if center['avg_year_of_manufacture']:
+            center['avg_age'] = current_year - center['avg_year_of_manufacture']
+        else:
+            center['avg_age'] = None
+    avg_year = Vehicle.objects.aggregate(avg_year=Avg('year_of_manufacture'))
+    avg_age = current_year - avg_year['avg_year'] if avg_year['avg_year'] else None
     context = {
         'services_without_vehicle': services_without_vehicle,
         'policies_without_vehicle': policies_without_vehicle,
@@ -153,7 +159,7 @@ def dashboard(request):
         'passenger_vehicles': passenger_vehicles,
         'transport_vehicles': transport_vehicles,
         'vehicles_by_center': vehicles_by_center,
-        'average_age': average_age['avg_age'],
+        'average_age': avg_age,
         'book_value': book_value['total_value'],
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
         'yearly_service_costs': yearly_service_costs['total_service_cost'],
