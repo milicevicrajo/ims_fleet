@@ -131,15 +131,15 @@ def dashboard(request):
         vehicle_count=Count('id')
     )
 
-    # Grupisanje po centru
     center_data = vehicles_with_center.values('center_code').annotate(
-        vehicle_count=Count('id', distinct=True),
+        vehicle_count=Count('center_code'),
         avg_age=current_year - Avg('year_of_manufacture'),
-        total_value=Sum('value', distinct=True),
+        total_value=Sum('value'),
         avg_value=Avg('value'),
         total_fuel_quantity=Sum('fuel_consumptions__amount'),
         total_fuel_price=Sum('fuel_consumptions__cost_bruto')
     ).order_by('center_code')
+
 
     context = {
         'services_without_vehicle': services_without_vehicle,
