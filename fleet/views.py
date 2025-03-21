@@ -113,25 +113,13 @@ def dashboard(request):
         vehicle=OuterRef('pk')
     ).order_by('-assigned_date')
 
-    # Anotiraj vozila sa poslednjom jedinicom
-    vehicles_with_units = Vehicle.objects.annotate(
-        org_unit_id=Subquery(latest_jobcode.values('organizational_unit__id')[:1]),
-        org_unit_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1]),
-    )
-    # Izvuci center kod kroz povezanost
     vehicles_with_center = Vehicle.objects.annotate(
-        center_code=Subquery(
-            latest_jobcode.values('organizational_unit__center')[:1]
-        )
-    )
-
-    # Grupisanje po centru
-    vehicles_by_center = vehicles_with_center.values('center_code').annotate(
-        vehicle_count=Count('id')
+        center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1]),
+        center_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1])
     )
 
     center_data = vehicles_with_center.values('center_code').annotate(
-        vehicle_count=Count('center_code'),
+        vehicle_count=Count('id'),
         avg_year_of_manufacture=Avg('year_of_manufacture'),
         total_value=Sum('value'),
         avg_value=Avg('value'),
@@ -139,14 +127,6 @@ def dashboard(request):
         total_fuel_price=Sum('fuel_consumptions__cost_bruto')
     ).order_by('center_code')
 
-    # Izračunaj prosečnu starost u Pythonu
-    for center in center_data:
-        if center['avg_year_of_manufacture']:
-            center['avg_age'] = current_year - center['avg_year_of_manufacture']
-        else:
-            center['avg_age'] = None
-    avg_year = Vehicle.objects.aggregate(avg_year=Avg('year_of_manufacture'))
-    avg_age = current_year - avg_year['avg_year'] if avg_year['avg_year'] else None
     context = {
         'services_without_vehicle': services_without_vehicle,
         'policies_without_vehicle': policies_without_vehicle,
@@ -158,8 +138,7 @@ def dashboard(request):
         'total_vehicles': total_vehicles,
         'passenger_vehicles': passenger_vehicles,
         'transport_vehicles': transport_vehicles,
-        'vehicles_by_center': vehicles_by_center,
-        'average_age': avg_age,
+
         'book_value': book_value['total_value'],
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
         'yearly_service_costs': yearly_service_costs['total_service_cost'],

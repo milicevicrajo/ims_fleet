@@ -82,7 +82,7 @@
                     <tbody>
                         {% for center in centers %}
                         <tr>
-                            <td>{{ center.center_code }}</td>
+                            <td>{{ center.center_name|default:center.center_code }}</td>
                             <td>{{ center.vehicle_count }}</td>
                             <td>{{ center.avg_age|default_if_none:"N/A"|floatformat:2 }}</td>
                             <td>{{ center.total_value|default_if_none:"N/A"|floatformat:2|intcomma }}</td>
