@@ -30,7 +30,6 @@ class Vehicle(models.Model):
     service_interval = models.IntegerField(verbose_name=_("Servisni interval"),default=15000)
     # Nova polja
     purchase_date = models.DateField(verbose_name=_("Datum nabavke"), null=True)  # Ovo je datum kada je vozilo nabavljeno
-    center_code = models.CharField(max_length=20, verbose_name=_("Šifra centra (OJ)"), null=True)  # Ovo je šifra centra (oj)
     partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"), null=True)  # Šifra partnera
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True)  # Naziv partnera
     invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True)  # Broj fakture
@@ -44,7 +43,7 @@ class Vehicle(models.Model):
         if traffic_card:
             return f"{traffic_card.registration_number} - {self.brand} {self.model}"
         else:
-            return f"{self.brand} {self.model}"
+            return f"{self.chassis_number} - {self.brand} {self.model}"
 
 class TrafficCard(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='traffic_cards', verbose_name=_("Vozilo"))

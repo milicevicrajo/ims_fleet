@@ -4,6 +4,16 @@ import django_filters
 from django_select2.forms import Select2Widget
 from django.utils.translation import gettext_lazy as _
 class VehicleForm(forms.ModelForm):
+    first_registration_date = forms.DateField(
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum prve registracije"
+    )
+    purchase_date = forms.DateField(
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum kupovine"
+    )
     class Meta:
         model = Vehicle
         fields = '__all__'
@@ -28,11 +38,33 @@ class TrafficCardForm(forms.ModelForm):
         model = TrafficCard
         fields = '__all__'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:  # Check if instance is being updated
+            if self.instance.issue_date:
+                self.initial['issue_date'] = self.instance.issue_date.strftime('%Y-%m-%d')
+            if self.instance.valid_until:
+                self.initial['valid_until'] = self.instance.valid_until.strftime('%Y-%m-%d')
+
+        # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
+        for field_name, field in self.fields.items():
+            field.required = True
 class OrganizationalUnitForm(forms.ModelForm):
     class Meta:
         model = OrganizationalUnit
         fields = '__all__'
 class JobCodeForm(forms.ModelForm):
+
+    organizational_unit = forms.ModelChoiceField(
+        queryset=OrganizationalUnit.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label="Organizaciona jedinica"
+    )
+    assigned_date = forms.DateField(
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum dodele"
+    )
     class Meta:
         model = JobCode
         fields = '__all__'
@@ -256,8 +288,8 @@ class RequisitionForm(forms.ModelForm):
 
 class DraftRequisitionForm(forms.ModelForm):
     YES_NO_CHOICES = (
-        (True, _("Da")),
-        (False, _("Ne")),
+        (True, _("Ne")),
+        (False, _("Da")),
     )
 
 
@@ -291,7 +323,7 @@ class DraftRequisitionForm(forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'}),
         help_text="Izaberite opciju: 'Da' ako se odnosi na važnu napomenu, ili ostavite prazno.",
-
+        label="Garaža"
     )
 
     napomena = forms.CharField(

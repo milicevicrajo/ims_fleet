@@ -16,20 +16,21 @@ register_converter(FloatConverter, 'float')
 
 urlpatterns = [
     path('vozila/', VehicleListView.as_view(), name='vehicle_list'),
-    path('vehicle/<int:pk>/', VehicleDetailView.as_view(), name='vehicle_detail'),
     path('vozila/novo/', VehicleCreateView.as_view(), name='vehicle_create'),
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
     path('vozila/<int:pk>/', VehicleDetailView.as_view(), name='vehicle_detail'),
     path('vozila/obrisi/<int:pk>/', VehicleDeleteView.as_view(), name='vehicle_delete'),
 
     path('saobracajne-dozvole/', TrafficCardListView.as_view(), name='trafficcard_list'),
-    path('saobracajne-dozvole/novo/', TrafficCardCreateView.as_view(), name='trafficcard_create'),
+    path('saobracajne-dozvole/novo/', TrafficCardCreateView.as_view(), name='trafficcard_create_manual'),
+    path('saobracajne-dozvole/novo/<int:vehicle_id>/', TrafficCardCreateView.as_view(), name='trafficcard_create'),
     path('saobracajne-dozvole/izmeni/<int:pk>/', TrafficCardUpdateView.as_view(), name='trafficcard_update'),
     path('saobracajne-dozvole/<int:pk>/', TrafficCardDetailView.as_view(), name='trafficcard_detail'),
     path('saobracajne-dozvole/obrisi/<int:pk>/', TrafficCardDeleteView.as_view(), name='trafficcard_delete'),
 
     path('sifre-poslova/', JobCodeListView.as_view(), name='jobcode_list'),
-    path('sifre-poslova/novo/', JobCodeCreateView.as_view(), name='jobcode_create'),
+    # path('sifre-poslova/novo/', JobCodeCreateView.as_view(), name='jobcode_create'),
+    path('sifre-poslova/novo/<int:vehicle_id>/', JobCodeCreateView.as_view(), name='jobcode_create'),
     path('sifre-poslova/izmeni/<int:pk>/', JobCodeUpdateView.as_view(), name='jobcode_update'),
     path('sifre-poslova/<int:pk>/', JobCodeDetailView.as_view(), name='jobcode_detail'),
     path('sifre-poslova/obrisi/<int:pk>/', JobCodeDeleteView.as_view(), name='jobcode_delete'),

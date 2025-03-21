@@ -94,8 +94,7 @@ def dashboard(request):
     passenger_vehicles = Vehicle.objects.filter(category='PUTNICKO VOZILO').count()
     transport_vehicles = Vehicle.objects.filter(category='TERETNO VOZILO').count()
 
-    # Vehicles by center
-    vehicles_by_center = Vehicle.objects.values('center_code').annotate(count=Count('id'))
+
 
     # Average vehicle age
     average_age = Vehicle.objects.aggregate(avg_age=(current_year - Avg('year_of_manufacture')))
@@ -109,17 +108,38 @@ def dashboard(request):
 
     # Vehicles in red zone
     red_zone_vehicles = Vehicle.objects.filter(otpis=True)  # or any other criteria
-    
-    # Vehicle count, average vehicle age, total value, and average vehicle value per center
-    center_data = Vehicle.objects.values('center_code').annotate(
-        vehicle_count=Count('id', distinct=True),  # Number of vehicles per center
-        avg_age=(current_year - Avg('year_of_manufacture')),  # Average age per center
-        total_value=Sum('value', distinct=True),  # Total vehicle value per center
-        avg_value=Avg('value'),  # Average vehicle value per center
-        total_fuel_quantity=Sum('fuel_consumptions__amount'),  # Total fuel quantity per center
-        total_fuel_price=Sum('fuel_consumptions__cost_bruto') 
+   
+    # Podupit za poslednju dodelu jedinice po vozilu
+    latest_jobcode = JobCode.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-assigned_date')
+
+    # Anotiraj vozila sa poslednjom jedinicom
+    vehicles_with_units = Vehicle.objects.annotate(
+        org_unit_id=Subquery(latest_jobcode.values('organizational_unit__id')[:1]),
+        org_unit_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1]),
+    )
+    # Izvuci center kod kroz povezanost
+    vehicles_with_center = Vehicle.objects.annotate(
+        center_code=Subquery(
+            latest_jobcode.values('organizational_unit__center')[:1]
+        )
     )
 
+    # Grupisanje po centru
+    vehicles_by_center = vehicles_with_center.values('center_code').annotate(
+        vehicle_count=Count('id')
+    )
+
+    # Grupisanje po centru
+    center_data = vehicles_with_center.values('center_code').annotate(
+        vehicle_count=Count('id', distinct=True),
+        avg_age=current_year - Avg('year_of_manufacture'),
+        total_value=Sum('value', distinct=True),
+        avg_value=Avg('value'),
+        total_fuel_quantity=Sum('fuel_consumptions__amount'),
+        total_fuel_price=Sum('fuel_consumptions__cost_bruto')
+    ).order_by('center_code')
 
     context = {
         'services_without_vehicle': services_without_vehicle,
@@ -147,7 +167,7 @@ def center_statistics(request, center_code):
     # Check if the user has access to this center
     if request.user.allowed_centers:
         if center_code not in request.user.allowed_centers('code', flat=True):
-            return HttpResponseForbidden("Nemati pristup ovim podacima.")
+            return HttpResponseForbidden("Nemate pristup ovim podacima.")
 
     # Fuel consumption statistics (grouped by month and year, filtered by center)
     fuel_data = FuelConsumption.objects.filter(vehicle__center_code=center_code).annotate(
@@ -250,17 +270,15 @@ class VehicleListView(LoginRequiredMixin, ListView):
     model = Vehicle
     template_name = 'fleet/vehicle_list.html'
     context_object_name = 'vehicles'
-    form_class = VehicleFilterForm  # Dodajemo formu za filtriranje
-
- 
+    form_class = VehicleFilterForm  # Dodajemo formu za filtriranje 
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        """
-        Ažurira vrednosti vozila pre povlačenja podataka za prikaz.
-        """
-        updated_count = update_vehicle_values()  # Poziva funkciju iz utils.py
-        messages.success(self.request, f"Uspešno ažurirano {updated_count} vozila.")
+
+        # ✔️ Ako korisnik NIJE tražio otpisana, filtriraj ih
+        show_archived = self.request.GET.get('show_archived')
+        if show_archived != 'yes':
+            queryset = queryset.filter(otpis=False)
         
         # Dohvati vrednosti iz GET parametara
         org_unit = self.request.GET.get('org_unit')
@@ -287,10 +305,6 @@ class VehicleListView(LoginRequiredMixin, ListView):
             total_repairs=Sum('service_transactions__potrazuje'),
             mileage=Subquery(last_mileage_subquery),
         )
-
-
-
-
 
         # Filter za šifru posla (JobCode)
         if org_unit:
@@ -444,7 +458,11 @@ class VehicleCreateView(LoginRequiredMixin, CreateView):
     form_class = VehicleForm
     template_name = 'fleet/generic_form.html'
     success_url = reverse_lazy('vehicle_list')
-
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        return redirect('trafficcard_create', vehicle_id=self.object.id)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Kreiraj novo vozilo'
@@ -497,7 +515,15 @@ class TrafficCardCreateView(LoginRequiredMixin, CreateView):
     form_class = TrafficCardForm
     template_name = 'fleet/generic_form.html'
     success_url = reverse_lazy('trafficcard_list')
+   
+    def get_initial(self):
+        vehicle_id = self.kwargs.get('vehicle_id')
+        return {'vehicle': vehicle_id}
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        return redirect('jobcode_create', vehicle_id = self.object.vehicle.id)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Kreiraj novu saobraćajnu dozvolu'
@@ -561,6 +587,15 @@ class JobCodeCreateView(LoginRequiredMixin, CreateView):
     template_name = 'fleet/generic_form.html'
     success_url = reverse_lazy('jobcode_list')
 
+    def get_initial(self):
+        return {
+            'vehicle': self.kwargs.get('vehicle_id')
+        }
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        return redirect('vehicle_detail', pk = self.object.vehicle.id)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Kreiraj novu šifru posla'
@@ -1530,8 +1565,7 @@ class RequisitionFixingListView(ListView):
     context_object_name = 'requisitions'
     
     def get_queryset(self):
-        # Filter policies where the vehicle is None
-        return DraftRequisition.objects.all()
+        return DraftRequisition.objects.filter(nije_garaza=False)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1624,7 +1658,7 @@ class DraftRequisitionUpdateView(UpdateView):
         delete_complete_drafts()
 
         if ostali_draftovi:
-            return redirect('draft_requisition_list')  # zameni sa stvarnim imenom URL-a
+            return redirect('requisition_fixing_list')  # zameni sa stvarnim imenom URL-a
         else:
             return redirect('requisition_detail', god=current_instance.god, br_dok=current_instance.br_dok)
 
@@ -1632,7 +1666,8 @@ class DraftRequisitionUpdateView(UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Izmena trebovanja {self.object.br_dok}'
         context['submit_button_label'] = 'Sačuvaj izmene'
-        context['manual'] = 'Kilometražu je požebljno uneti uvek, ali nije obavezno. Kada se radi o redovnim servisima, kilometraža je obavezna.'
+        context['manual'] = 'Kilometražu je poželjno uneti uvek, ali nije obavezno. ' \
+        'Kada se radi o redovnim servisima, kilometraža je obavezna.'
         return context
 
 class RequisitionDeleteView(DeleteView):

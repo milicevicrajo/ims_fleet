@@ -33,11 +33,23 @@
                     {{ form.center_code|add_class:'form-control' }}
                 </div>
             </div>
+            <div class="col-auto">
+                <label for="id_show_archived" class="col-form-label">Otpisana vozila:</label>
+                <div>
+                    <select name="show_archived" id="id_show_archived" class="form-control">
+                        <option value="">Ne prikazuj</option>
+                        <option value="yes" {% if request.GET.show_archived == 'yes' %}selected{% endif %}>Prikaži</option>
+                    </select>
+                </div>
+            </div>
+            
         
             <!-- Dugme je sada poravnato sa poljima -->
             <div class="col-auto d-flex align-items-end">
                 <button type="submit" class="btn btn-primary">Filtriraj</button>
             </div>
+
+
         </form>
         
 
@@ -49,12 +61,12 @@
                         <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>
-                        <th>Km</th>
+                        <th>Kilometraža</th>
                         <th>Potrošnja</th>
-                        <th>Servisi cena</th>                        
-                        <th>Vrednost nabavna</th>
-                        <th>Vrednost trenutna</th>
-                        <th>Izmeni</th>
+                        <th>Kategorija</th>                        
+                        <th>Centar</th>
+                        <th>Kubikaža</th>
+                        <th>Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,16 +84,16 @@
                                 0
                             {% endif %}
                         </td>
-                        <td>{{ vehicle.total_repairs|default:0|floatformat:0 }}</td>
-                        <td>{{ vehicle.purchase_value }}</td>
-                        <td>{{ vehicle.value }}</td>
+                        <td>{{ vehicle.category }}</td>
+                        <td>{{ vehicle.latest_org_unit }}</td>
+                        <td>{{ vehicle.engine_volume|floatformat:0 }}</td>
                         <td>
                             <a href="{% url 'vehicle_update' vehicle.pk %}">Izmeni</a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5">Nema opreme..</td>
+                        <td colspan="5">Nema vozila...</td>
                     </tr>
                 {% endfor %}
                 <tfoot>
@@ -90,12 +102,12 @@
                         <th>Marka</th>
                         <th>Tip</th>
                         <th>Godiste</th>
-                        <th>Km</th>
-                        <th>Br. Sasije</th>
-                        <th>Servisi cena</th>                        
-                        <th>Vrednost nabavna</th>
-                        <th>Vrednost trenutna</th>
-                        <th>Izmeni</th>
+                        <th>Kilometraža</th>
+                        <th>Potrošnja</th>
+                        <th>Kategorija</th>                        
+                        <th>Centar</th>
+                        <th>Kubikaža</th>
+                        <th>Akcije</th>
                     </tr>
                 </tfoot>
             </table>
