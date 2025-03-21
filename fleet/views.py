@@ -109,37 +109,27 @@ def dashboard(request):
     # Vehicles in red zone
     red_zone_vehicles = Vehicle.objects.filter(otpis=True)  # or any other criteria
    
-    # Podupit za poslednju dodelu jedinice po vozilu
+   # Podupit za poslednju dodelu jedinice po vozilu
     latest_jobcode = JobCode.objects.filter(
         vehicle=OuterRef('pk')
     ).order_by('-assigned_date')
 
-    # Anotiraj svako vozilo sa šifrom i imenom centra
+    # Anotiraj samo centar
     vehicles_with_center = Vehicle.objects.annotate(
-        center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1]),
-        center_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1]),
-        avg_year=Avg('year_of_manufacture')
+        center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1])
     )
-    
-    vehicles_by_center = Vehicle.objects.annotate(
-        center_code=Subquery(
-            JobCode.objects.filter(vehicle=OuterRef('pk'))
-            .order_by('-assigned_date')
-            .values('organizational_unit__center')[:1]
-        )
-    ).values('center_code').annotate(
-        vehicle_count=Count('center_code')
-    ).order_by('center_code')
 
+    # Grupisanje po centru i agregacije
     center_data = vehicles_with_center.values('center_code').annotate(
-        vehicle_count=Count('id', distinct=True),
+        vehicle_count=Count('center_code'),
         avg_year_of_manufacture=Avg('year_of_manufacture'),
-        total_value=Sum('value', distinct=True),
+        total_value=Sum('value'),
         avg_value=Avg('value'),
         total_fuel_quantity=Sum('fuel_consumptions__amount'),
         total_fuel_price=Sum('fuel_consumptions__cost_bruto')
     ).order_by('center_code')
 
+    # Prosečna starost
     for center in center_data:
         if center['avg_year_of_manufacture']:
             center['avg_age'] = current_year - center['avg_year_of_manufacture']
@@ -158,7 +148,7 @@ def dashboard(request):
         'total_vehicles': total_vehicles,
         'passenger_vehicles': passenger_vehicles,
         'transport_vehicles': transport_vehicles,
-        'vehicles_by_center': vehicles_by_center,
+        # 'vehicles_by_center': vehicles_by_center,
         'average_age': average_age['avg_age'],
         'book_value': book_value['total_value'],
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
