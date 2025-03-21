@@ -109,32 +109,57 @@ def dashboard(request):
     # Vehicles in red zone
     red_zone_vehicles = Vehicle.objects.filter(otpis=True)  # or any other criteria
    
-   # Podupit za poslednju dodelu jedinice po vozilu
+    # Podupit za poslednju dodelu jedinice po vozilu
     latest_jobcode = JobCode.objects.filter(
         vehicle=OuterRef('pk')
     ).order_by('-assigned_date')
 
-    # Anotiraj samo centar
-    vehicles_with_center = Vehicle.objects.annotate(
-        center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1])
+    # Dohvati sva vozila sa podacima, bez grupisanja
+    vehicles = Vehicle.objects.annotate(
+        center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1]),
+        manufacture_year=F('year_of_manufacture'),
+        current_value=F('value'),  # promenjeno ime!
+        fuel_amount=Subquery(
+            FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
+            .values('vehicle')
+            .annotate(total=Sum('amount'))
+            .values('total')[:1]
+        ),
+        fuel_cost=Subquery(
+            FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
+            .values('vehicle')
+            .annotate(total=Sum('cost_bruto'))
+            .values('total')[:1]
+        )
     )
+    # Grupisanje u Pythonu
+    from collections import defaultdict
+    grouped = defaultdict(list)
 
-    # Grupisanje po centru i agregacije
-    center_data = vehicles_with_center.values('center_code').annotate(
-        vehicle_count=Count('center_code'),
-        avg_year_of_manufacture=Avg('year_of_manufacture'),
-        total_value=Sum('value'),
-        avg_value=Avg('value'),
-        total_fuel_quantity=Sum('fuel_consumptions__amount'),
-        total_fuel_price=Sum('fuel_consumptions__cost_bruto')
-    ).order_by('center_code')
+    for v in vehicles:
+        grouped[v.center_code].append(v)
 
-    # Prosečna starost
-    for center in center_data:
-        if center['avg_year_of_manufacture']:
-            center['avg_age'] = current_year - center['avg_year_of_manufacture']
-        else:
-            center['avg_age'] = None
+    # Napravi center_data ručno
+    center_data = []
+    for center, vehicle_list in grouped.items():
+        count = len(vehicle_list)
+        total_value = sum([v.current_value or 0 for v in vehicle_list])
+        avg_value = total_value / count if count else 0
+        total_fuel_quantity = sum([v.fuel_amount or 0 for v in vehicle_list])
+        total_fuel_price = sum([v.fuel_cost or 0 for v in vehicle_list])
+        avg_year = sum([v.year_of_manufacture or 0 for v in vehicle_list]) / count if count else 0
+        avg_age = current_year - avg_year if avg_year else None
+
+        center_data.append({
+            'center_code': center,
+            'vehicle_count': count,
+            'avg_age': avg_age,
+            'total_value': total_value,
+            'avg_value': avg_value,
+            'total_fuel_quantity': total_fuel_quantity,
+            'total_fuel_price': total_fuel_price,
+        })
+
 
 
     context = {
