@@ -97,6 +97,7 @@ def dashboard(request):
 
 
     # Average vehicle age
+    average_age = Vehicle.objects.aggregate(avg_age=(current_year - Avg('year_of_manufacture')))
 
     # Book value as of the last day of the previous month
     book_value = Vehicle.objects.filter(purchase_date__lte=last_day_of_previous_month).aggregate(total_value=Sum('value'))
@@ -113,15 +114,28 @@ def dashboard(request):
         vehicle=OuterRef('pk')
     ).order_by('-assigned_date')
 
+    # Anotiraj vozila sa poslednjom jedinicom
+    vehicles_with_units = Vehicle.objects.annotate(
+        org_unit_id=Subquery(latest_jobcode.values('organizational_unit__id')[:1]),
+        org_unit_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1]),
+    )
+    # Izvuci center kod kroz povezanost
     vehicles_with_center = Vehicle.objects.annotate(
-        center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1]),
-        center_name=Subquery(latest_jobcode.values('organizational_unit__name')[:1])
+        center_code=Subquery(
+            latest_jobcode.values('organizational_unit__center')[:1]
+        )
     )
 
+    # Grupisanje po centru
+    vehicles_by_center = vehicles_with_center.values('center_code').annotate(
+        vehicle_count=Count('id')
+    )
+
+    # Grupisanje po centru
     center_data = vehicles_with_center.values('center_code').annotate(
-        vehicle_count=Count('id'),
-        avg_year_of_manufacture=Avg('year_of_manufacture'),
-        total_value=Sum('value'),
+        vehicle_count=Count('id', distinct=True),
+        avg_age=current_year - Avg('year_of_manufacture'),
+        total_value=Sum('value', distinct=True),
         avg_value=Avg('value'),
         total_fuel_quantity=Sum('fuel_consumptions__amount'),
         total_fuel_price=Sum('fuel_consumptions__cost_bruto')
@@ -138,7 +152,8 @@ def dashboard(request):
         'total_vehicles': total_vehicles,
         'passenger_vehicles': passenger_vehicles,
         'transport_vehicles': transport_vehicles,
-
+        'vehicles_by_center': vehicles_by_center,
+        'average_age': average_age['avg_age'],
         'book_value': book_value['total_value'],
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
         'yearly_service_costs': yearly_service_costs['total_service_cost'],
