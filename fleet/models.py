@@ -170,12 +170,25 @@ class DraftPolicy(models.Model):
     number_of_installments = models.IntegerField(verbose_name="Broj rata", null=True, blank=True)
 
     def is_complete(self):
-        return all([
-            self.partner_pib, self.partner_name, self.invoice_id, self.invoice_number,
-            self.issue_date, self.insurance_type, self.policy_number, self.premium_amount,
-            self.start_date, self.end_date, self.first_installment_amount,
-            self.other_installments_amount, self.number_of_installments
-        ])
+        return all(
+            getattr(self, field_name) is not None and getattr(self, field_name) != ''
+            for field_name in [
+                'partner_pib',
+                'partner_name',
+                'invoice_id',
+                'invoice_number',
+                'issue_date',
+                'insurance_type',
+                'policy_number',
+                'premium_amount',
+                'start_date',
+                'end_date',
+                'first_installment_amount',
+                'other_installments_amount',
+                'number_of_installments'
+            ]
+        )
+
 
 class FuelConsumption(models.Model):
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='fuel_consumptions', verbose_name=_("Vozilo"))

@@ -875,21 +875,25 @@ class DraftPolicyUpdateView(UpdateView):
         print("Izmene sačuvane u draft tabeli.")
 
         # Provera da li su svi potrebni podaci sada prisutni osim opcionalnih polja
-        is_complete = all([
-            draft.partner_pib,
-            draft.partner_name,
-            draft.invoice_id,
-            draft.invoice_number,
-            draft.issue_date,
-            draft.insurance_type,
-            draft.policy_number,
-            draft.premium_amount,
-            draft.start_date,
-            draft.end_date,
-            draft.first_installment_amount,
-            draft.other_installments_amount,
-            draft.number_of_installments
-        ])
+        required_fields = [
+            'partner_pib',
+            'partner_name',
+            'invoice_id',
+            'invoice_number',
+            'issue_date',
+            'insurance_type',
+            'policy_number',
+            'premium_amount',
+            'start_date',
+            'end_date',
+            'first_installment_amount',
+            'other_installments_amount',
+            'number_of_installments'
+        ]
+        is_complete = all(
+            getattr(draft, field) is not None and getattr(draft, field) != ''
+            for field in required_fields
+        )
 
         if is_complete:
             # Ako su podaci kompletni, prebacujemo ih u glavni model
