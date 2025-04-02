@@ -231,8 +231,16 @@
                 "scrollX": true,  // Enable horizontal scrolling
 
                 "pageLength": 100, 
+                layout: {
+                    topStart: {
+                        buttons: [
+                            'copy', 'excel', 'pdf'
+                        ]
+                    }
+                },
                 "columnDefs": [
-                { "type": "date-custom", "targets": [9,10,13] }
+                { "type": "date-custom", "targets": [9,10,13] },
+
                 
             ]
             });

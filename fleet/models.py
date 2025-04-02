@@ -100,18 +100,35 @@ class JobCode(models.Model):
 
 
 class Lease(models.Model):
+    LEASE_TYPE_CHOICES = [
+        ('finansijski', 'Finansijski'),
+        ('operativni', 'Operativni'),
+        ('dugorocni', 'Dugoročni najam'),
+    ]
+
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='leases', verbose_name=_("Vozilo"))
     partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"))
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
     job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
     contract_number = models.CharField(max_length=50, verbose_name=_("Broj ugovora"))
     current_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Trenutna vrednost otplate"))
+
+    lease_type = models.CharField(
+        max_length=20,
+        choices=LEASE_TYPE_CHOICES,
+        default='finansijski',
+        verbose_name=_("Vrsta lizinga")
+    )
+
     start_date = models.DateField(verbose_name=_("Datum početka"))
     end_date = models.DateField(verbose_name=_("Datum završetka"))
     note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
 
     def __str__(self):
-        return f"Lease for {self.vehicle.chassis_number} with {self.partner_name} from {self.start_date} to {self.end_date}"
+        return f"Lizing za {self.vehicle.chassis_number} ({self.lease_type}) sa {self.partner_name} od {self.start_date} do {self.end_date}"
+
+
+
 
 class LeaseInterest(models.Model):
     lease = models.ForeignKey(Lease, on_delete=models.CASCADE, related_name='lease_interests', verbose_name=_("Lizing"))

@@ -24,6 +24,28 @@ class VehicleFilterForm(forms.Form):
         required=False,
         label='Centar'
     )
+
+
+class TrafficCardFilterForm(forms.Form):
+    organizational_unit = forms.ModelChoiceField(
+        queryset=OrganizationalUnit.objects.all().order_by('name'),
+        required=False,
+        label='Organizaciona jedinica',
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    center = forms.ChoiceField(
+        choices=[],
+        required=False,
+        label='Centar',
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        centers = OrganizationalUnit.objects.values_list('center', flat=True).distinct().order_by('center')
+        self.fields['center'].choices = [('', '--- Svi centri ---')] + [(c, c) for c in centers]
+
 class FuelFilterForm(django_filters.FilterSet):
     start_date = django_filters.DateFilter(
         field_name='date', 

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.db import connections, IntegrityError
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from .models import *
@@ -90,9 +91,9 @@ def dashboard(request):
     start_of_year = date.today().replace(month=1, day=1)
 
     # Number of vehicles
-    total_vehicles = Vehicle.objects.count()
-    passenger_vehicles = Vehicle.objects.filter(category='PUTNICKO VOZILO').count()
-    transport_vehicles = Vehicle.objects.filter(category='TERETNO VOZILO').count()
+    total_vehicles = Vehicle.objects.filter(otpis=False).count()
+    passenger_vehicles = Vehicle.objects.filter(category='PUTNICKO VOZILO').filter(otpis=False).count()
+    transport_vehicles = Vehicle.objects.filter(category='TERETNO VOZILO').filter(otpis=False).count()
 
 
 
@@ -360,6 +361,7 @@ class VehicleListView(LoginRequiredMixin, ListView):
         form = VehicleFilterForm(self.request.GET or None)
         context['vehicle_consumption_data'] = vehicle_consumption_data
         context['form'] = form
+        context['title'] = 'Lista vozila'
 
         return context
     
@@ -502,6 +504,16 @@ class VehicleUpdateView(LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
+class VehicleTogleStatusView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        vehicle = get_object_or_404(Vehicle, pk=pk)
+        vehicle.otpis = not vehicle.otpis
+        vehicle.save()
+        status = "aktivano" if vehicle.otpis else "otpisano"
+        messages.success(request, f"Vozilo je uspešno {status}.")
+        return redirect('vehicle_detail', pk=pk)
+
+
 class VehicleDeleteView(LoginRequiredMixin, DeleteView):
     model = Vehicle
     success_url = reverse_lazy('vehicle_list')
@@ -525,12 +537,42 @@ class TrafficCardListView(LoginRequiredMixin, ListView):
     model = TrafficCard
     template_name = 'fleet/trafficcard_list.html'
     context_object_name = 'traffic_cards'
+    form_class = TrafficCardFilterForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('vehicle')
+        self.filter_form = self.form_class(self.request.GET or None)
+
+        # Subquery: poslednji JobCode po datumu
+        latest_org_unit_subquery = JobCode.objects.filter(
+            vehicle_id=OuterRef('vehicle_id')
+        ).order_by('-assigned_date').values('organizational_unit__code')[:1]
+
+        latest_center_subquery = JobCode.objects.filter(
+            vehicle_id=OuterRef('vehicle_id')
+        ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+
+        queryset = queryset.annotate(
+            latest_org_unit=Subquery(latest_org_unit_subquery),
+            latest_center=Subquery(latest_center_subquery),
+        )
+
+        if self.filter_form.is_valid():
+            org_unit = self.filter_form.cleaned_data.get('organizational_unit')
+            center = self.filter_form.cleaned_data.get('center')
+
+            if org_unit:
+                queryset = queryset.filter(latest_org_unit=org_unit.code)
+
+            if center:
+                queryset = queryset.filter(latest_center=center)
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Lista saobraćajnih dozvola'
+        context['filter_form'] = self.filter_form
         return context
-
 class TrafficCardCreateView(LoginRequiredMixin, CreateView):
     model = TrafficCard
     form_class = TrafficCardForm

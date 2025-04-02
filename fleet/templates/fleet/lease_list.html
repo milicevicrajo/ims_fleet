@@ -6,46 +6,55 @@
   <div class="card-body">
       <h5 class="card-title">Basic Datatable</h5>
       <div class="table-responsive">
-          <table id="DatatableLease" class="display">
-              <thead>
-                  <tr>
-                      <th>Vozilo</th>
-                      <th>Partner-kod</th>
-                      <th>Partner</th>
-                      <th>Šifra posla</th>
-                      <th>Broj ugovora</th>
-                      <th>Trenutna vrednost otplate</th>
-                      <th>Datum početka</th>
-                      <th>Datum završetka</th>
-                      <th>Napomena</th>
-                  </tr>
-              </thead>
-              <tbody>
+        <table id="DatatableLease" class="display">
+            <thead>
+                <tr>
+                    <th>Vozilo</th>
+                    <th>Partner-kod</th>
+                    <th>Partner</th>
+                    <th>Šifra posla</th>
+                    <th>Broj ugovora</th>
+                    <th>Tip lizinga</th>
+                    <th>Trenutna vrednost otplate</th>
+                    <th>Datum početka</th>
+                    <th>Datum završetka</th>
+                    <th>Napomena</th>
+                    <th>Akcija</th> <!-- Nova kolona za izmenu -->
+                </tr>
+            </thead>
+            <tbody>
                 {% for lease in leases %}
-                  <tr>                        
-                      <td>{{ lease.vehicle }}</td>                      
-                      <td>{{ lease.partner_code }}</td>
-                      <td>{{ lease.partner_name }}</td>
-                      <td>{{ lease.job_code }}</td>
-                      <td>{{ lease.contract_number }}</td>
-                      <td>{{ lease.current_payment_amount}}</td>
-                      <td>{{ lease.start_date }}</td>
-                      <td>{{ lease.end_date }}</td>
-                      <td>
-                          {% if lease.note %}
-                            {{ lease.note }}
-                          {% else %}
-                            Nema napomena
-                          {%endif%}
-                      </td>
-                  </tr>
-              {% empty %}
-                  <tr>
-                      <td colspan="5">Nema opreme..</td>
-                  </tr>
-              {% endfor %}
-              <tfoot>
-                  <tr>
+                    <tr>
+                        <td>{{ lease.vehicle }}</td>
+                        <td>{{ lease.partner_code }}</td>
+                        <td>{{ lease.partner_name }}</td>
+                        <td>{{ lease.job_code }}</td>
+                        <td>{{ lease.contract_number }}</td>
+                        <td>{{ lease.lease_type }}</td>
+                        <td>{{ lease.current_payment_amount }}</td>
+                        <td>{{ lease.start_date }}</td>
+                        <td>{{ lease.end_date }}</td>
+                        <td>
+                            {% if lease.note %}
+                                {{ lease.note }}
+                            {% else %}
+                                Nema napomena
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'lease_update' lease.pk %}" class="btn btn-sm btn-primary" title="Izmeni lizing">
+                                <i class="fas fa-edit"></i>Izmeni
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="10">Nema lizinga...</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
                     <th>Vozilo</th>
                     <th>Partner-kod</th>
                     <th>Partner</th>
@@ -55,9 +64,11 @@
                     <th>Datum početka</th>
                     <th>Datum završetka</th>
                     <th>Napomena</th>
-                  </tr>
-              </tfoot>
-          </table>
+                    <th>Akcija</th> <!-- Futer kolona -->
+                </tr>
+            </tfoot>
+        </table>
+        
       </div>
 
   </div>

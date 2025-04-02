@@ -88,8 +88,20 @@
                         <td>{{ vehicle.latest_org_unit }}</td>
                         <td>{{ vehicle.engine_volume|floatformat:0 }}</td>
                         <td>
-                            <a href="{% url 'vehicle_update' vehicle.pk %}">Izmeni</a>
-                        </td>
+                            <!-- Izmeni dugme -->
+                            <a href="{% url 'vehicle_update' vehicle.pk %}" class="btn btn-sm btn-primary">
+                              <i class="fas fa-edit"></i> Izmeni
+                            </a>
+                          
+                            <!-- Otpiši dugme -->
+                            <form action="{% url 'vehicle_toggle_status' vehicle.pk %}" method="post" class="d-inline-block ms-2" style="margin: 0; padding: 0;">
+                              {% csrf_token %}
+                              <button type="submit" class="btn btn-sm btn-danger"
+                                      onclick="return confirm('Da li ste sigurni da želite da otpišete ovo vozilo?');">
+                                <i class="fas fa-trash-alt"></i> Otpiši
+                              </button>
+                            </form>
+                        </td>                       
                     </tr>
                 {% empty %}
                     <tr>

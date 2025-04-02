@@ -70,9 +70,30 @@ class JobCodeForm(forms.ModelForm):
         fields = '__all__'
 
 class LeaseForm(forms.ModelForm):
+    start_date = forms.DateField(
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum početka"
+    )
+    end_date = forms.DateField(
+        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum završetka"
+    )
     class Meta:
         model = Lease
         fields = '__all__'
+        widgets = {
+            'lease_type': forms.Select(attrs={'class': 'form-control'}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:  # Check if instance is being updated
+            if self.instance.start_date:
+                self.initial['start_date'] = self.instance.start_date.strftime('%Y-%m-%d')
+            if self.instance.end_date:
+                self.initial['end_date'] = self.instance.end_date.strftime('%Y-%m-%d')
 
 class PolicyForm(forms.ModelForm):
     YES_NO_CHOICES = (

@@ -20,6 +20,7 @@ urlpatterns = [
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
     path('vozila/<int:pk>/', VehicleDetailView.as_view(), name='vehicle_detail'),
     path('vozila/obrisi/<int:pk>/', VehicleDeleteView.as_view(), name='vehicle_delete'),
+    path('vozila/<int:pk>/toggle-status', VehicleTogleStatusView.as_view(), name='vehicle_toggle_status'),
 
     path('saobracajne-dozvole/', TrafficCardListView.as_view(), name='trafficcard_list'),
     path('saobracajne-dozvole/novo/', TrafficCardCreateView.as_view(), name='trafficcard_create_manual'),

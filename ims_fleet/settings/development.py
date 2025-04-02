@@ -10,7 +10,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     },
     'test_db': {
-        'ENGINE': 'mssql',
+        'ENGINE': 'sql_server.pyodbc',
         'NAME': 'Vozila',  # Naziv baze na serveru
         'USER': 'Rajo Milicevic',
         'PASSWORD': 'Rajo123',
@@ -21,7 +21,7 @@ DATABASES = {
         },
     },
     'server_db': {
-        'ENGINE': 'mssql',
+        'ENGINE': 'sql_server.pyodbc',
         'NAME': 'Vozila_Django',  # Naziv baze na serveru
         'USER': 'Rajo Milicevic',
         'PASSWORD': 'Rajo123',
@@ -32,7 +32,7 @@ DATABASES = {
         },
     },
         'naplata_db': {  # Dodajemo novu bazu
-        'ENGINE': 'mssql',
+        'ENGINE': 'sql_server.pyodbc',
         'NAME': 'Naplata',
         'USER': 'Rajo Milicevic',
         'PASSWORD': 'Rajo123',
