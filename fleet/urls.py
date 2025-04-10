@@ -116,11 +116,14 @@ urlpatterns = [
     path('requisitions/<int:pk>/edit/', RequisitionUpdateView.as_view(), name='requisition_update'),
     path('requisitions/<int:pk>/delete/', RequisitionDeleteView.as_view(), name='requisition_delete'),
     
-    # IZVESTAJI
+    # IZVESTAJI 
     path('izvestaji/', views.reports_index, name='reports_index'),
     path('izvestaji/omv_putnicka/', views.omv_putnicka_view, name='omv_putnicka'),
+    path('izvestaji/omv_putnicka/export', views.export_omv_putnicka_excel, name='export_omv_putnicka_excel'),
     path('izvestaji/nis_putnicka/', views.nis_putnicka_view, name='nis_putnicka'),
+    path('izvestaji/nis_putnicka/export', views.export_nis_putnicka_excel, name='export_nis_putnicka_excel'),
     path('izvestaji/omv_teretna/', views.omv_teretna_view, name='omv_teretna'),
+    path('izvestaji/omv_teretna/export', views.export_omv_teretna_excel, name='export_omv_teretna_excel'),
     path('izvestaji/kasko_rate/', views.kasko_rate_view, name='kasko_rate'),
     path('izvestaji/zatvoreni_putni/', views.zatvoren_putni_view, name='zatvoreni_putni'),
     path('izvestaji/magacin/', views.magacin_view, name='magacin'),

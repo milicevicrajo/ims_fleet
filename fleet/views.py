@@ -33,7 +33,8 @@ from django.urls import reverse
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from openpyxl import Workbook
-
+import pandas as pd
+from .forms import PutnickaFilterForm
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
 # <!-- ======================================================================= -->
@@ -2003,39 +2004,328 @@ def reports_index(request):
     return render(request, 'fleet/reports_index.html', {"sections": sections})
 
 def omv_putnicka_view(request):
-    """
-    View za prikaz podataka iz OMV_putnicka_sp u test_db.
-    """
+    form = OMVPutnickaFilterForm(request.GET or None)
+
     query = """
         SELECT sifpos, godina, mesec, tipvozila, polovina, bruto, neto
         FROM OMV_putnicka_sp
+        WHERE 1=1
     """
-    data = get_data_from_secondary_db(query, 'test_db')
-    
-    return render(request, 'fleet/reports/omv_putnicka.html', {'data': data})
+
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND godina = %s")
+            params.append(godina)
+
+        if mesec:
+            filters.append("AND mesec = %s")
+            params.append(mesec)
+
+        if polovina:
+            filters.append("AND polovina = %s")
+            params.append(polovina)
+
+    query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    # Excel export
+    if 'export' in request.GET:
+        import pandas as pd
+        from django.http import HttpResponse
+
+        df = pd.DataFrame(data)
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=omv_putnicka.xlsx'
+        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='OMV Putnicka')
+        return response
+
+    return render(request, 'fleet/reports/omv_putnicka.html', {
+        'data': data,
+        'form': form,
+        'title': 'OMV Putnička vozila'
+    })
+
+
+def export_omv_putnicka_excel(request):
+    form = PutnickaFilterForm(request.GET or None)
+
+    query = """
+        SELECT sifpos, godina, mesec, tipvozila, polovina, bruto, neto
+        FROM OMV_putnicka_sp
+        WHERE 1=1
+    """
+
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND godina = %s")
+            params.append(int(godina))
+
+        if mesec:
+            filters.append("AND mesec = %s")
+            params.append(int(mesec))
+
+        if polovina:
+            filters.append("AND polovina = %s")
+            params.append(int(polovina))
+
+    if filters:
+        query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "OMV Putnička"
+
+    # Header
+    headers = ["Šifra pos", "Godina", "Mesec", "Tip vozila", "Polovina", "Bruto", "Neto"]
+    ws.append(headers)
+
+    # Rows
+    for row in data:
+        ws.append([
+            row['sifpos'],
+            row['godina'],
+            row['mesec'],
+            row['tipvozila'],
+            row['polovina'],
+            row['bruto'],
+            row['neto']
+        ])
+
+    # Response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=omv_putnicka.xlsx'
+    wb.save(response)
+    return response
 
 def nis_putnicka_view(request):
-    """
-    View za prikaz podataka iz dbo.NIS_putnicka_sp.
-    """
+    form = PutnickaFilterForm(request.GET or None)
+
     query = """
         SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
         FROM dbo.NIS_putnicka_sp
+        WHERE 1=1
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias sekundarne baze
-    return render(request, 'fleet/reports/nis_putnicka.html', {'data': data})
+
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND godina = %s")
+            params.append(godina)
+
+        if mesec:
+            filters.append("AND mesec = %s")
+            params.append(mesec)
+
+        if polovina:
+            filters.append("AND polovina = %s")
+            params.append(polovina)
+
+    if filters:
+        query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    # Excel export
+    if 'export' in request.GET:
+        df = pd.DataFrame(data)
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=nis_putnicka.xlsx'
+        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='NIS Putnicka')
+        return response
+
+    return render(request, 'fleet/reports/nis_putnicka.html', {
+        'data': data,
+        'form': form,
+        'title': 'NIS Putnička vozila'
+    })
+
+def export_nis_putnicka_excel(request):
+    form = PutnickaFilterForm(request.GET or None)
+
+    query = """
+        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
+        FROM dbo.NIS_putnicka_sp
+        WHERE 1=1
+    """
+
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND godina = %s")
+            params.append(int(godina))
+
+        if mesec:
+            filters.append("AND mesec = %s")
+            params.append(int(mesec))
+
+        if polovina:
+            filters.append("AND polovina = %s")
+            params.append(int(polovina))
+
+    if filters:
+        query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "NIS Putnička"
+
+    headers = ["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"]
+    ws.append(headers)
+
+    for row in data:
+        ws.append([
+            row['tipvozila'],
+            row['sifpos'],
+            row['godina'],
+            row['mesec'],
+            row['polovina'],
+            row['bruto'],
+            row['neto']
+        ])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=nis_putnicka.xlsx'
+    wb.save(response)
+    return response
 
 def omv_teretna_view(request):
-    """
-    View za prikaz podataka iz dbo.OMV_teretna_sp.
-    """
+    form = PutnickaFilterForm(request.GET or None)
+
     query = """
         SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
         FROM dbo.OMV_teretna_sp
+        WHERE 1=1
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za drugu bazu
-    return render(request, 'fleet/reports/omv_teretna.html', {'data': data})
 
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND godina = %s")
+            params.append(godina)
+
+        if mesec:
+            filters.append("AND mesec = %s")
+            params.append(mesec)
+
+        if polovina:
+            filters.append("AND polovina = %s")
+            params.append(polovina)
+
+    if filters:
+        query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    # Excel export
+    if 'export' in request.GET:
+        df = pd.DataFrame(data)
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=omv_teretna.xlsx'
+        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='OMV Teretna')
+        return response
+
+    return render(request, 'fleet/reports/omv_teretna.html', {
+        'data': data,
+        'form': form,
+        'title': 'OMV Teretna vozila'
+    })
+
+def export_omv_teretna_excel(request):
+    form = PutnickaFilterForm(request.GET or None)
+
+    query = """
+        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
+        FROM dbo.OMV_teretna_sp
+        WHERE 1=1
+    """
+
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND godina = %s")
+            params.append(int(godina))
+
+        if mesec:
+            filters.append("AND mesec = %s")
+            params.append(int(mesec))
+
+        if polovina:
+            filters.append("AND polovina = %s")
+            params.append(int(polovina))
+
+    if filters:
+        query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "OMV Teretna"
+
+    headers = ["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"]
+    ws.append(headers)
+
+    for row in data:
+        ws.append([
+            row['tipvozila'],
+            row['sifpos'],
+            row['godina'],
+            row['mesec'],
+            row['polovina'],
+            row['bruto'],
+            row['neto']
+        ])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=omv_teretna.xlsx'
+    wb.save(response)
+    return response
 
 def get_data_from_secondary_db(query, db_alias, params=None):
     """
@@ -2221,7 +2511,11 @@ def lista_dugovanja_po_bucketima(request):
                     n.veliki,
                     db.ino
                 FROM dodela_baketa db
-                LEFT JOIN napomene n ON db.sif_par = n.sif_par
+                LEFT JOIN (
+                    SELECT sif_par, MAX(veliki) AS veliki
+                    FROM napomene
+                    GROUP BY sif_par
+                ) n ON db.sif_par = n.sif_par
                 GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
                 ORDER BY Ukupno DESC
             """)

@@ -483,3 +483,31 @@ class TuzbeForm(forms.ModelForm):
         super(TuzbeForm, self).__init__(*args, **kwargs)
         self.fields['sif_par'].widget.attrs['readonly'] = True
         self.fields['naz_par'].widget.attrs['readonly'] = True
+
+
+from django import forms
+
+class OMVPutnickaFilterForm(forms.Form):
+    GODINA_CHOICES = [(str(y), str(y)) for y in range(2020, 2031)]
+    MESEC_CHOICES = [(str(m), str(m)) for m in range(1, 13)]
+    POLOVINA_CHOICES = [
+        ('1', 'Prva polovina'),
+        ('2', 'Druga polovina'),
+    ]
+
+    godina = forms.ChoiceField(choices=GODINA_CHOICES, required=False, label='Godina')
+    mesec = forms.ChoiceField(choices=MESEC_CHOICES, required=False, label='Mesec')
+    polovina = forms.ChoiceField(choices=POLOVINA_CHOICES, required=False, label='Polovina meseca')
+
+
+class PutnickaFilterForm(forms.Form):
+    GODINA_CHOICES = [(str(y), str(y)) for y in range(2020, 2031)]
+    MESEC_CHOICES = [(str(m), str(m)) for m in range(1, 13)]
+    POLOVINA_CHOICES = [
+        ('1', 'Prva polovina'),
+        ('2', 'Druga polovina'),
+    ]
+
+    godina = forms.ChoiceField(choices=GODINA_CHOICES, required=False, label='Godina')
+    mesec = forms.ChoiceField(choices=MESEC_CHOICES, required=False, label='Mesec')
+    polovina = forms.ChoiceField(choices=POLOVINA_CHOICES, required=False, label='Polovina meseca')
