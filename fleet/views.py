@@ -2532,7 +2532,7 @@ def export_dugovanja_bucketi_excel(request):
     # Header
     headers = [
         "Šifra partnera", "Naziv partnera", "Nedospelo", "Dospelo - baket 1", "Dospelo - baket 2",
-        "Dospelo - baket 3", "Dospelo - baket 4", "Dospelo - baket 5", "Dospelo - baket 6",
+        "Dospelo - baket 3", "Dospelo - baket 4", "Dospelo - baket 5", "Dospelo - baket 6", "Ukupno - Dospelo",
         "Ukupno", "Veliki", "INO"
     ]
     ws.append(headers)
@@ -2556,7 +2556,11 @@ def export_dugovanja_bucketi_excel(request):
                     n.veliki,
                     db.ino
                 FROM dodela_baketa db
-                LEFT JOIN napomene n ON db.sif_par = n.sif_par
+                LEFT JOIN (
+                    SELECT sif_par, MAX(veliki) AS veliki
+                    FROM napomene
+                    GROUP BY sif_par
+                ) n ON db.sif_par = n.sif_par
                 GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
                 ORDER BY Ukupno DESC
             """)

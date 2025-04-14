@@ -1,3 +1,114 @@
-# Ignore Python bytecode
-*.pyc
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.env
+*.venv
+venv/
+env/
+ENV/
+env.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Django specific
+db.sqlite3
+*.sqlite3
+media/
+staticfiles/
+static_root/
+local_settings.py
+.env
+.env.*    # ako imaš više environment fajlova (.env.dev, .env.prod itd.)
+
+# VSCode
+.vscode/
+
+# IDE specific
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Logs
+*.log
+logs/
+*.pid
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis dump (ako koristiš lokalno za Celery ili testiranje)
+dump.rdb
+
+# SQL dumps
+*.sql
+*.bak
+*.dump
+
+# Migrations (ako želiš da izbegneš commite nefinalnih migracija u ranoj fazi refaktora)
+**/migrations/
+!**/migrations/__init__.py
+
+# JetBrains (PyCharm)
+.idea/
+
+# System files
+.DS_Store
+*.swp
+*.swo
+
+# Backup files
+*~
+*.bak
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Node modules (ako kasnije uvedeš build za JS frontend)
+node_modules/
+
+# Env files (important!)
+.env
+.env.*.local
+
+# Optional: Excel / CSV import/export temp files (ako ne želiš da ih prati git)
+*.csv
+*.xlsx
+imports/
+exports/

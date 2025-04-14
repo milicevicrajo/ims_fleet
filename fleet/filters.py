@@ -4,6 +4,7 @@ from django import forms
 from datetime import timedelta
 from django.utils import timezone
 from datetime import date, timedelta
+
 class VehicleFilterForm(forms.Form):
     org_unit = forms.ModelChoiceField(
         queryset=OrganizationalUnit.objects.all().order_by('code'),  # Uzimamo sve JobCode sortirane po šifri
