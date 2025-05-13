@@ -31,6 +31,13 @@
 </head>
 
 <body>
+        <!-- Preloader -->
+    <div class="preloader">
+        <div class="lds-ripple">
+            <div class="lds-pos"></div>
+            <div class="lds-pos"></div>
+        </div>
+    </div>
 <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
@@ -732,6 +739,43 @@
             });
         }
     </script>
+    <script>
+        function hidePreloader() {
+            const preloader = document.querySelector(".preloader");
+            if (preloader) preloader.style.display = "none";
+        }
+
+        // Sakrij preloader kad se stranica normalno učita
+        window.addEventListener("load", hidePreloader);
+
+        // Sakrij i kad se stranica učita iz cache-a (back/forward dugme)
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) {
+                // Dodajte malo kašnjenje kako biste bili sigurni da se izvršava nakon što preglednik obnovi stanje
+                setTimeout(hidePreloader, 50); // Kašnjenje od 50 milisekundi, možete prilagoditi ako je potrebno
+            }
+        });
+
+        // Prikaži preloader na klik na linkove (osim target _blank, anchor, ili sa data-no-preloader)
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll("a").forEach(function (el) {
+                el.addEventListener("click", function (e) {
+                    if (
+                        el.target === "_blank" ||
+                        (el.getAttribute("href") && el.getAttribute("href").startsWith("#")) || // Dodata provera da li href postoji
+                        el.hasAttribute("data-no-preloader") ||
+                        el.hostname !== window.location.hostname // Ignoriši eksterne linkove
+                    ) {
+                        return;
+                    }
+                    const preloader = document.querySelector(".preloader");
+                    if (preloader) preloader.style.display = "flex";
+                });
+            });
+        });
+    </script>
+
+
     
 
     <!-- Custom CSS for No Word Wrap -->

@@ -188,12 +188,20 @@ def dashboard(request):
 
 def center_statistics(request, center_code):
     # Check if the user has access to this center
-    if request.user.allowed_centers:
-        if center_code not in request.user.allowed_centers('code', flat=True):
-            return HttpResponseForbidden("Nemate pristup ovim podacima.")
+    if not request.user.allowed_centers.filter(center=center_code).exists():
+        return HttpResponseForbidden("Nemate pristup ovim podacima.")
+    
+    # Podupit za poslednju OU (tj. centar) za vozilo
+    latest_center_code = JobCode.objects.filter(
+        vehicle=OuterRef('vehicle')
+    ).order_by('-assigned_date').values('organizational_unit__center')[:1]
 
-    # Fuel consumption statistics (grouped by month and year, filtered by center)
-    fuel_data = FuelConsumption.objects.filter(vehicle__center_code=center_code).annotate(
+    # Filtriranje FuelConsumption po centru
+    fuel_data = FuelConsumption.objects.annotate(
+        vehicle_center_code=Subquery(latest_center_code)
+    ).filter(
+        vehicle_center_code=center_code
+    ).annotate(
         year=TruncYear('date'),
         month=TruncMonth('date')
     ).values('year', 'month').annotate(
@@ -202,18 +210,26 @@ def center_statistics(request, center_code):
     ).order_by('year', 'month')
 
     # Service costs statistics (grouped by service type, month, and year, filtered by center)
-    service_data = ServiceTransaction.objects.filter(vehicle__center_code=center_code).annotate(
+    service_data = ServiceTransaction.objects.annotate(
+        vehicle_center_code=Subquery(latest_center_code)
+    ).filter(
+        vehicle_center_code=center_code
+    ).annotate(
         year=TruncYear('datum'),
         month=TruncMonth('datum')
     ).values('year', 'month').annotate(
-        total_cost_gume=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='gume')),
-        total_cost_redovan_servis=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='redovan servis')),
-        total_cost_tehnicki_pregled=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='tehnicki pregled')),
-        total_cost_registracija=Sum('potrazuje', filter=Q(popravka_kategorija__icontains='registracija'))
+    total_cost_gume=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='gume')),
+    total_cost_redovan_servis=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='redovan servis')),
+    total_cost_tehnicki_pregled=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='tehnicki pregled')),
+    total_cost_registracija=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='registracija'))
     ).order_by('year', 'month')
-    print(service_data)
-    # Registration costs statistics (grouped by month and year, filtered by center)
-    insurance_data = Policy.objects.filter(vehicle__center_code=center_code).annotate(
+
+    # Ispravljen upit za registracije
+    insurance_data = Policy.objects.annotate(
+        vehicle_center_code=Subquery(latest_center_code)
+    ).filter(
+        vehicle_center_code=center_code
+    ).annotate(
         year=TruncYear('issue_date'),
         month=TruncMonth('issue_date')
     ).values('year', 'month').annotate(

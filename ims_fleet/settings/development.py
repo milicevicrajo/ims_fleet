@@ -10,7 +10,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     },
     'test_db': {
-        'ENGINE': 'sql_server.pyodbc',
+        'ENGINE': 'mssql',
         'NAME': 'Vozila',  # Naziv baze na serveru
         'USER': 'Rajo Milicevic',
         'PASSWORD': 'Rajo123',
@@ -21,7 +21,7 @@ DATABASES = {
         },
     },
     'server_db': {
-        'ENGINE': 'sql_server.pyodbc',
+        'ENGINE': 'mssql',
         'NAME': 'Vozila_Django',  # Naziv baze na serveru
         'USER': 'Rajo Milicevic',
         'PASSWORD': 'Rajo123',
@@ -32,14 +32,15 @@ DATABASES = {
         },
     },
         'naplata_db': {  # Dodajemo novu bazu
-        'ENGINE': 'sql_server.pyodbc',
-        'NAME': 'Naplata',
-        'USER': 'Rajo Milicevic',
-        'PASSWORD': 'Rajo123',
-        'HOST': 'SMS-SERVER',  # Npr. 192.168.1.100 ili localhost
-        'PORT': '',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            'ENGINE': 'mssql',
+            'NAME': 'Naplata',
+            'USER': 'Rajo Milicevic',
+            'PASSWORD': 'Rajo123',
+            'HOST': 'SMS-SERVER',  # Npr. 192.168.1.100 ili localhost
+            'PORT': '',
+            'OPTIONS': {
+                'driver': 'ODBC Driver 17 for SQL Server',
+                'extra_params': 'TrustServerCertificate=yes;',
+            },
         },
-    },
 }

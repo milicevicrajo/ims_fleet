@@ -97,67 +97,81 @@
                 <h3>Detaljna statistika po centrima</h3>
                 <div class="row">
 
-                    <!-- Column -->
-                    
+                    <!-- Column: Centar za meterijale-->                    
                     <div class="col-md-6 col-lg-3 col-xlg-3">
                         <a href="{% url 'center_statistics' center_code='41' %}">
-                            <div class="card card-hover">
-                                <div class="box bg-cyan text-center" style="height: 300px;">
+                            <div class="card card-hover h-100">
+                                <div class="box bg-cyan text-center d-flex flex-column justify-content-center align-items-center" style="height: 300px; overflow: hidden;">
                                     <h5 class="text-white">Centar za</h5>
                                     <h5 class="text-white">materijale</h5>
-                                    <div >
-                                        <img src="{% static 'fleet\assets\images\meterijali.webp' %}" alt="Icon for Centar materijale" class="img-fluid"/>
-                                    </div>                                
+                                    <div class="w-100" style="max-width: 220px; flex-shrink: 0;">
+                                        <img src="{% static 'fleet/assets/images/meterijali.webp' %}" 
+                                            alt="Icon for Centar materijale" 
+                                            class="img-fluid"
+                                            style="width: 100%; height: auto;" />
+                                    </div>
                                 </div>
                             </div>
                         </a>
                     </div>
-                    
-                    <!-- Column -->
+
+
+                                        
+                    <!-- Column: Metali i energetika -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
                         <a href="{% url 'center_statistics' center_code='42' %}">
-                            <div class="card card-hover">
-                                <div class="box bg-cyan text-center" style="height: 300px;">
+                            <div class="card card-hover h-100">
+                                <div class="box bg-cyan text-center d-flex flex-column justify-content-center align-items-center" style="height: 300px; overflow: hidden;">
                                     <h5 class="text-white">Centar za</h5>
                                     <h5 class="text-white">metale i energetiku</h5>
-                                    <div >
-                                        <img src="{% static 'fleet\assets\images\metali.webp' %}" alt="Icon for Centar za puteve i geotehniku" class="img-fluid"/>
-                                    </div>                                
+                                    <div class="w-100" style="max-width: 220px; flex-shrink: 0;">
+                                        <img src="{% static 'fleet/assets/images/metali.webp' %}" 
+                                            alt="Icon for Centar za metale i energetiku"
+                                            class="img-fluid"
+                                            style="width: 100%; height: auto;" />
+                                    </div>
                                 </div>
                             </div>
                         </a>
                     </div>
 
-                    <!-- Column -->
+                    <!-- Column: Putevi i geotehnika -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
                         <a href="{% url 'center_statistics' center_code='43' %}">
-                            <div class="card card-hover">
-                                <div class="box bg-cyan text-center" style="height: 300px;">
+                            <div class="card card-hover h-100">
+                                <div class="box bg-cyan text-center d-flex flex-column justify-content-center align-items-center" style="height: 300px; overflow: hidden;">
                                     <h5 class="text-white">Centar za</h5>
                                     <h5 class="text-white">puteve i geotehniku</h5>
-                                    <div >
-                                        <img src="{% static 'fleet\assets\images\geotehnika.webp' %}" alt="Icon for Centar za puteve i geotehniku" class="img-fluid"/>
-                                    </div>                                
+                                    <div class="w-100" style="max-width: 220px; flex-shrink: 0;">
+                                        <img src="{% static 'fleet/assets/images/geotehnika.webp' %}" 
+                                            alt="Icon for Centar za puteve i geotehniku"
+                                            class="img-fluid"
+                                            style="width: 100%; height: auto;" />
+                                    </div>
                                 </div>
                             </div>
                         </a>
                     </div>
 
-                    <!-- Column -->
+                    <!-- Column: Konstrukcije i prednaprezanje -->
                     <div class="col-md-6 col-lg-3 col-xlg-3">
                         <a href="{% url 'center_statistics' center_code='44' %}">
-                            <div class="card card-hover">
-                                <div class="box bg-cyan text-center" style="height: 300px;">
+                            <div class="card card-hover h-100">
+                                <div class="box bg-cyan text-center d-flex flex-column justify-content-center align-items-center" style="height: 300px; overflow: hidden;">
                                     <h5 class="text-white">Centar za</h5>
                                     <h6 class="text-white">Konstrukcije i prednaprezanje</h6>
-                                    <div >
-                                        <img src="{% static 'fleet\assets\images\konstrukcije.webp' %}" alt="Icon for Centar za puteve i geotehniku" class="img-fluid"/>
-                                    </div>                                
+                                    <div class="w-100" style="max-width: 220px; flex-shrink: 0;">
+                                        <img src="{% static 'fleet/assets/images/konstrukcije.webp' %}" 
+                                            alt="Icon for Centar za konstrukcije i prednaprezanje"
+                                            class="img-fluid"
+                                            style="width: 100%; height: auto;" />
+                                    </div>
                                 </div>
                             </div>
                         </a>
                     </div>
                 </div>
+
 
                 <!-- Vehicles in Red Zone -->
                 <h3>Vozila u Crvenoj Zoni</h3>

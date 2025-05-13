@@ -561,8 +561,7 @@ class KaskoRate(models.Model):
 
 
 class CustomUser(AbstractUser):
-    # Add a new field for allowed centers (you can customize the field as needed)
-    allowed_centers = models.CharField(max_length=255, blank=True, null=True)
+    allowed_centers = models.ManyToManyField('OrganizationalUnit', blank=True)
 
     def __str__(self):
         return self.username
