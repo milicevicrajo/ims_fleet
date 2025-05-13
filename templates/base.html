@@ -31,14 +31,14 @@
 </head>
 
 <body>
-        <!-- Preloader -->
+    <!-- Preloader -->
     <div class="preloader">
         <div class="lds-ripple">
             <div class="lds-pos"></div>
             <div class="lds-pos"></div>
         </div>
     </div>
-<!-- ============================================================== -->
+    <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
     <div id="main-wrapper" data-layout="vertical" data-navbarbg="skin5" data-sidebartype="full"
@@ -739,42 +739,176 @@
             });
         }
     </script>
-    <script>
-        function hidePreloader() {
-            const preloader = document.querySelector(".preloader");
-            if (preloader) preloader.style.display = "none";
-        }
+<script>
+    // Funkcija za postepeno nestajanje (fade out) elementa
+    function fadeOut(element, duration = 500, onComplete) {
+        // Proveri da li element postoji
+        if (!element) {
+            if (onComplete && typeof onComplete === 'function') {
+                onComplete(); // Pozovi callback čak i ako element ne postoji
+            }
+            return;
+        }
 
-        // Sakrij preloader kad se stranica normalno učita
-        window.addEventListener("load", hidePreloader);
+        // Osiguraj da je element vidljiv pre početka animacije nestajanja
+        // Podesi display na originalnu vrednost ako je bio none
+        if (element.style.display === 'none' || element.style.display === '') {
+             // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
+             // Prilagodite ovo ako vaš preloader koristi display: block ili grid
+             element.style.display = 'flex';
+        }
 
-        // Sakrij i kad se stranica učita iz cache-a (back/forward dugme)
-        window.addEventListener("pageshow", function (event) {
-            if (event.persisted) {
-                // Dodajte malo kašnjenje kako biste bili sigurni da se izvršava nakon što preglednik obnovi stanje
-                setTimeout(hidePreloader, 50); // Kašnjenje od 50 milisekundi, možete prilagoditi ako je potrebno
-            }
-        });
+        // Postavi početnu opacity vrednost ako nije već postavljena ili je 0
+        let startOpacity = parseFloat(element.style.opacity);
+        if (isNaN(startOpacity) || startOpacity <= 0) {
+             element.style.opacity = 1; // Počni od pune vidljivosti ako nije definisano ili je 0
+             startOpacity = 1;
+        }
 
-        // Prikaži preloader na klik na linkove (osim target _blank, anchor, ili sa data-no-preloader)
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll("a").forEach(function (el) {
-                el.addEventListener("click", function (e) {
-                    if (
-                        el.target === "_blank" ||
-                        (el.getAttribute("href") && el.getAttribute("href").startsWith("#")) || // Dodata provera da li href postoji
-                        el.hasAttribute("data-no-preloader") ||
-                        el.hostname !== window.location.hostname // Ignoriši eksterne linkove
-                    ) {
-                        return;
-                    }
-                    const preloader = document.querySelector(".preloader");
-                    if (preloader) preloader.style.display = "flex";
-                });
-            });
-        });
-    </script>
 
+        let start = null;
+
+        function animate(timestamp) {
+            if (!start) start = timestamp;
+            const elapsed = timestamp - start;
+            const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
+
+            // Smanjuj opacity od početne vrednosti ka 0
+            element.style.opacity = startOpacity * (1 - progress);
+
+            if (progress < 1) {
+                // Nastavi animaciju
+                requestAnimationFrame(animate);
+            } else {
+                // Animacija završena
+                element.style.display = 'none'; // Potpuno sakrij element
+                element.style.opacity = 0; // Osiguraj da je finalna opacity 0
+                if (onComplete && typeof onComplete === 'function') {
+                    onComplete(); // Pozovi callback funkciju
+                }
+            }
+        }
+
+        // Pokreni animaciju
+        requestAnimationFrame(animate);
+    }
+
+    // Funkcija za postepeno pojavljivanje (fade in) elementa
+    function fadeIn(element, duration = 200, onComplete) {
+        // Proveri da li element postoji
+         if (!element) {
+             if (onComplete && typeof onComplete === 'function') {
+                 onComplete(); // Pozovi callback čak i ako element ne postoji
+             }
+             return;
+         }
+
+        // Postavi element na vidljiv display pre početka animacije
+        // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
+        // Prilagodite ovo ako vaš preloader koristi display: block ili grid
+         element.style.display = 'flex';
+
+        // Osiguraj da je element nevidljiv na početku animacije
+        let startOpacity = parseFloat(element.style.opacity);
+         if (isNaN(startOpacity) || startOpacity < 0) {
+              element.style.opacity = 0; // Počni od nevidljivosti ako nije definisano ili je negativno
+              startOpacity = 0;
+         } else if (startOpacity === 1) {
+             // Ako je element već potpuno vidljiv, nema potrebe za fade-in
+             if (onComplete && typeof onComplete === 'function') {
+                  onComplete();
+             }
+             return;
+         }
+
+
+         let start = null;
+
+         function animate(timestamp) {
+             if (!start) start = timestamp;
+             const elapsed = timestamp - start;
+             const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
+
+             // Povećavaj opacity od početne vrednosti ka 1
+             element.style.opacity = startOpacity + (1 - startOpacity) * progress;
+
+
+             if (progress < 1) {
+                 // Nastavi animaciju
+                 requestAnimationFrame(animate);
+             } else {
+                 // Animacija završena
+                 element.style.opacity = 1; // Osiguraj da je finalna opacity 1
+                 if (onComplete && typeof onComplete === 'function') {
+                     onComplete(); // Pozovi callback funkciju
+                 }
+             }
+         }
+
+         // Pokreni animaciju
+         requestAnimationFrame(animate);
+     }
+
+
+    // Modifikovana hidePreloader funkcija - sada koristi fadeOut
+    function hidePreloader() {
+        const preloader = document.querySelector(".preloader");
+        if (preloader) {
+            // Pozovi fadeOut funkciju za postepeno sakrivanje
+            // 500ms je trajanje animacije, prilagodite po želji
+            fadeOut(preloader, 500);
+        }
+    }
+
+     // Nova showPreloader funkcija - koristi fadeIn
+     function showPreloader() {
+         const preloader = document.querySelector(".preloader");
+         if (preloader) {
+             // Pozovi fadeIn funkciju za postepeno pojavljivanje
+             // 200ms je trajanje animacije, prilagodite po želji
+             fadeIn(preloader, 200);
+         }
+     }
+
+
+    // Sakrij preloader kad se stranica normalno učita (sa fade efektom)
+    window.addEventListener("load", hidePreloader);
+
+    // Sakrij i kad se stranica učita iz cache-a (back/forward dugme) - sa fade efektom
+    window.addEventListener("pageshow", function (event) {
+        if (event.persisted) {
+            // Zadržavamo kašnjenje, a nakon kašnjenja pozivamo funkciju za postepeno sakrivanje
+            setTimeout(hidePreloader, 50);
+        }
+    });
+
+    // Prikaži preloader na klik na linkove (sa fade efektom)
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("a").forEach(function (el) {
+            el.addEventListener("click", function (e) {
+                const href = el.getAttribute("href"); // Uzmite href atribut
+
+                // Provera uslova kada NE treba prikazati preloader
+                if (
+                    el.target === "_blank" ||
+                    (href && href.startsWith("#")) ||         // Isključi # linkove
+                    (href && href.startsWith("javascript:")) || // <-- DODAJTE OVAJ USLOV: Isključi javascript: linkove
+                    el.hasAttribute("data-no-preloader") || // Isključi linkove sa data-no-preloader atributom
+                    (el.hostname && el.hostname !== window.location.hostname) // Isključi eksterne linkove
+                ) {
+                    return; // Nemoj prikazivati preloader za ove linkove
+                }
+
+                // Ako link nije isključen, prikaži preloader
+                showPreloader();
+
+                // Napomena: Ako koristite JS-only fade out, showPreloader() poziva fadeIn().
+                // Ako koristite CSS fade out, showPreloader() dodaje klasu i postavlja display.
+                // Logika showPreloader() je ispravna za oba slučaja.
+            });
+        });
+    });
+</script>
 
     
 

@@ -32,8 +32,8 @@
                         <td>{{ lease.contract_number }}</td>
                         <td>{{ lease.lease_type }}</td>
                         <td>{{ lease.current_payment_amount }}</td>
-                        <td>{{ lease.start_date }}</td>
-                        <td>{{ lease.end_date }}</td>
+                        <td>{{ lease.start_date|date:"d.m.Y" }}</td>
+                        <td>{{ lease.end_date|date:"d.m.Y" }}</td>
                         <td>
                             {% if lease.note %}
                                 {{ lease.note }}

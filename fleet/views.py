@@ -389,27 +389,48 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'vehicle'
 
     def get(self, request, *args, **kwargs):
-        print("VehicleDetailView get() method called")  # This should print first
-        vehicle = self.get_object()  # Get the vehicle object based on the primary key
-        print(vehicle)  # This should print the vehicle object
-        
+        print("VehicleDetailView get() method called")
+        vehicle = self.get_object()
+        print(vehicle)
+
         # Subquery to get the latest org_unit for each Vehicle
+        # Ovo vam vraća kod centra iz JobCode-a, bazirano na 'organizational_unit__center'
         latest_org_unit_subquery = JobCode.objects.filter(
             vehicle_id=OuterRef('pk')
         ).order_by('-assigned_date').values('organizational_unit__center')[:1]
-        
+
         # Annotate the vehicle queryset with the latest org_unit code
         vehicle_with_latest_org_unit = Vehicle.objects.annotate(
             latest_org_unit=Subquery(latest_org_unit_subquery)
         ).get(pk=vehicle.pk)
 
-        # Perform additional logic with allowed_centers or other fields if needed
-        allowed_centers = request.user.allowed_centers
+        # --- Modifikovana logika za proveru dozvola ---
+        user_allowed_centers_manager = request.user.allowed_centers # Dobijamo ManyRelatedManager
 
-        if allowed_centers:
-            allowed_centers_list = allowed_centers.split(',')
-            if vehicle_with_latest_org_unit.latest_org_unit not in allowed_centers_list:
-                return HttpResponseForbidden("Nemate dozvolu za pristup ovom vozilu.")
+        # Proveravamo da li korisnik uopšte ima definisane dozvoljene centre
+        # Prazan manager (kada korisnik nema dodeljene centre) se u if uslovu ponaša kao False
+        if user_allowed_centers_manager.exists(): # Proverava da li manager sadrži ijedan srodni objekat
+             # Iz managers dobijamo listu kodova dozvoljenih centara.
+             # *** VAŽNO: Zamenite 'center' u values_list('center', flat=True)
+             # *** sa STVARNIM IMENOM POLJA na modelu na koji ukazuje
+             # *** request.user.allowed_centers, a koje sadrži kod centra.
+             # *** Na osnovu vašeg subquery-a 'organizational_unit__center',
+             # *** verovatno se to polje zove 'center' ili 'code'.
+             allowed_centers_codes = user_allowed_centers_manager.values_list('center', flat=True) # Vraća QuerySet sa listom vrednosti, flat=True daje Python listu
+
+
+             # Sada proveravamo da li kod poslednjeg organizacione jedinice vozila
+             # NIJE u listi dozvoljenih kodova za korisnika.
+             # Dodata provera da li latest_org_unit nije None (ako vozilo nema JobCode)
+             if vehicle_with_latest_org_unit.latest_org_unit is not None and \
+                vehicle_with_latest_org_unit.latest_org_unit not in allowed_centers_codes:
+                 return HttpResponseForbidden("Nemate dozvolu za pristup ovom vozilu.")
+        # else: Ako user_allowed_centers_manager.exists() vrati False, to znači da korisnik
+        # nema eksplicitno definisane centre kojima može da pristupi. Ako je željeno ponašanje
+        # da takav korisnik ima pristup svim vozilima, onda ova if struktura to omogućava
+        # jer se provera dozvole preskače.
+        # --- Kraj modifikovane logike ---
+
 
         return super().get(request, *args, **kwargs)
 
