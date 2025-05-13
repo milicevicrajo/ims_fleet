@@ -1982,3 +1982,37 @@ def kerio_login():
         driver.quit()
         print("Browser closed")
 
+
+from datetime import date
+
+def update_job_codes_from_view():
+    today = date.today()
+    updated = 0
+
+    with connections['test_db'].cursor() as cursor:
+        cursor.execute("SELECT regbr, sifpos FROM dbo.sif_pos_trenutno")
+        rows = cursor.fetchall()
+
+    for regbr, sifpos in rows:
+        try:
+            traffic_card = TrafficCard.objects.select_related('vehicle').get(registration_number=regbr)
+            vehicle = traffic_card.vehicle
+        except TrafficCard.DoesNotExist:
+            continue
+
+        try:
+            org_unit = OrganizationalUnit.objects.get(code=sifpos)
+        except OrganizationalUnit.DoesNotExist:
+            continue
+
+        latest_job = vehicle.job_codes.order_by('-assigned_date').first()
+
+        if not latest_job or latest_job.organizational_unit != org_unit:
+            JobCode.objects.create(
+                vehicle=vehicle,
+                organizational_unit=org_unit,
+                assigned_date=today
+            )
+            updated += 1
+
+    return updated

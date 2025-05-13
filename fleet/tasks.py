@@ -34,4 +34,7 @@ def fetch_requisition_data_task():
 def kerio_login_task():
     return kerio_login()
 			
-			
+@shared_task	
+def provera_sifre_posla_task():
+    from fleet.utils import update_job_codes_from_view
+    return update_job_codes_from_view()	
