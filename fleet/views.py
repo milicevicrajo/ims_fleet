@@ -301,6 +301,44 @@ def center_statistics(request, center_code):
 
     return render(request, 'fleet/dashboard_center.html', context)
 
+# <!-- ======================================================================= -->
+#                           <!-- ORGANIZATIONAL UNITS -->
+# <!-- ======================================================================= -->
+
+class OrganizationalUnitListView(ListView):
+    model = OrganizationalUnit
+    template_name = 'fleet/organizational_units_list.html'
+    context_object_name = 'units'
+
+
+class OrganizationalUnitCreateView(CreateView):
+    model = OrganizationalUnit
+    form_class = OrganizationalUnitForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('organizational_unit_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Kreiraj novu organizacionu jedinicu'
+        context['submit_button_label'] = 'Sačuvaj'
+        return context
+
+
+class OrganizationalUnitUpdateView(UpdateView):
+    model = OrganizationalUnit
+    form_class = OrganizationalUnitForm
+    template_name = 'fleet/generic_form.html'
+    success_url = reverse_lazy('organizational_unit_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Izmeni organizacionu jedinicu'
+        context['submit_button_label'] = 'Sačuvaj izmene'
+        return context
+    
+# class OrganizationalUnitDeleteView(DeleteView):
+#     model = OrganizationalUnit
+#     success_url = reverse_lazy('organizational_unit_list')
 
 # <!-- ======================================================================= -->
 #                           <!-- VEHICLE -->

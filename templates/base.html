@@ -319,7 +319,7 @@
                 "scrollX": true,  // Enable horizontal scrolling
                 "autoWidth": false,  // Disable automatic column width calculation
                 "columnDefs": [
-                { "type": "date-custom", "targets": [2] }
+                { "type": "date-custom", "targets": [3] }
                         ],
                 "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
                 "pageLength": 50,  // Postavlja podrazumevani broj redova
@@ -457,6 +457,14 @@
                     }
                 },
             });
+
+            var table = $('#DatatableOrgUnits').DataTable({
+                "language": languageSettings,
+                "autoWidth": false,  // Disable automatic column width calculation
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                "pageLength": 25,  // Postavlja podrazumevani broj redova
+            });
+
             var table = $('#DugovanjaBuketi').DataTable({
                 "language": languageSettings,
                 "autoWidth": false,

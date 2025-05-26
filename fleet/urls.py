@@ -99,6 +99,12 @@ urlpatterns = [
     path('service-transactions/add/', ServiceTransactionCreateView.as_view(), name='service_transaction_add'),
     path('service-transactions/<int:pk>/edit/', ServiceTransactionUpdateView.as_view(), name='service_transaction_update'),
     path('service-transactions/<int:pk>/delete/', ServiceTransactionDeleteView.as_view(), name='service_transaction_delete'),
+    
+    # ORGANIZACIJA
+    path('organizacione-jedinice', OrganizationalUnitListView.as_view(), name='organizational_unit_list'),
+    path('organizacione-jedinice/novo/', OrganizationalUnitCreateView.as_view(), name='organizational_unit_create'),
+    path('organizacione-jedinice/<int:pk>/izmeni/', OrganizationalUnitUpdateView.as_view(), name='organizational_unit_update'),
+    # path('<int:pk>/delete/', OrganizationalUnitDeleteView.as_view(), name='organizational_unit_delete'),
 
     # FETCHING
     path('fetch-data/', views.fetch_data_view, name='fetch_data'),

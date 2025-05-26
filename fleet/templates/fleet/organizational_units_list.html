@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+{% load ims_tags %}
+{% block content %}
+{% load humanize %}
+
+<h2>Organizacione jedinice</h2>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title">Tabela</h5>
+            <a href="{% url 'organizational_unit_create' %}" class="text-success" style="font-size: 1.15em;">
+                <i class="mdi mdi-plus-box"></i> Dodaj organizacionu jedinicu
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table id="DatatableOrgUnits" class="display">
+                <thead>
+                    <tr>
+                        <th>Šifra</th>
+                        <th>Naziv</th>
+                        <th>Centar</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for unit in units %}
+                    <tr>
+                        <td>{{ unit.code }}</td>
+                        <td>{{ unit.name }}</td>
+                        <td>{{ unit.center }}</td>
+                        <td>
+                            <a href="{% url 'organizational_unit_update' unit.pk %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i> Izmeni
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">Nema organizacionih jedinica...</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Šifra</th>
+                        <th>Naziv</th>
+                        <th>Centar</th>
+                        <th>Akcije</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
