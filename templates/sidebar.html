@@ -58,13 +58,6 @@
                 <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
                     href="{% url 'lista_dugovanja_po_bucketima'%}" aria-expanded="false"><i class="mdi mdi-cash-multiple"></i><span
                             class="hide-menu">Lista dugovanja</span></a></li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                    href="{% url 'organizational_unit_list' %}" aria-expanded="false">
-                        <i class="mdi mdi-vector-polygon"></i>
-                        <span class="hide-menu">Organizacione jedinice</span>
-                    </a>
-                </li>
 
                 {% if user.is_superuser %}
                 <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"

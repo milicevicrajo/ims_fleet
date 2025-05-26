@@ -2016,3 +2016,27 @@ def update_job_codes_from_view():
             updated += 1
 
     return updated
+
+
+def sync_organizational_units_from_view():
+    with connections['test_db'].cursor() as cursor:  # zameni 'external' imenom tvoje konekcije
+        cursor.execute("SELECT sif_pos, naz_pos, blok FROM dbo.v_sifre_posla")
+        rows = cursor.fetchall()
+
+    created = 0
+    updated = 0
+
+    for sif_pos, naz_pos, blok in rows:
+        obj, created_flag = OrganizationalUnit.objects.update_or_create(
+            code=sif_pos,
+            defaults={
+                'name': naz_pos,
+                'center': blok
+            }
+        )
+        if created_flag:
+            created += 1
+        else:
+            updated += 1
+
+    print(f"Organizacione jedinice: {created} dodatih, {updated} ažuriranih.")
