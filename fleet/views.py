@@ -366,6 +366,11 @@ class VehicleListView(LoginRequiredMixin, ListView):
         latest_org_unit_subquery = JobCode.objects.filter(
             vehicle_id=OuterRef('pk')
         ).order_by('-assigned_date').values('organizational_unit__code')[:1]
+        
+        # Subquery to get the latest org_unit for each Vehicle
+        latest_job_code_subquery = JobCode.objects.filter(
+            vehicle_id=OuterRef('pk')
+        ).order_by('-assigned_date').values('organizational_unit__center')[:1]
 
         # Subquery to get the latest TrafficCard for each Vehicle
         latest_traffic_card_subquery = TrafficCard.objects.filter(
@@ -376,21 +381,61 @@ class VehicleListView(LoginRequiredMixin, ListView):
             vehicle=OuterRef('pk')
         ).order_by('-mileage').values('mileage')[:1]
 
+        # Get values from GET parameters
+        org_unit_id = self.request.GET.get('org_unit') # This will be the ID of the OrganizationalUnit
+        center_code = self.request.GET.get('center_code') # This will be the string value of the center
+
+        # Subquery to get the ID of the latest JobCode for each Vehicle.
+        # This is crucial for ensuring filters target ONLY the most recent assignment.
+        latest_job_code_id_subquery = JobCode.objects.filter(
+            vehicle=OuterRef('pk')
+        ).order_by('-assigned_date').values('id')[:1] # Get the ID of the latest JobCode
+
+        # Subquery to get the latest org_unit code for annotation (for display if needed)
+        latest_org_unit_code_subquery = JobCode.objects.filter(
+            vehicle=OuterRef('pk')
+        ).order_by('-assigned_date').values('organizational_unit__code')[:1]
+
+        # Subquery to get the latest org_unit center for annotation (for display if needed)
+        latest_org_unit_center_subquery = JobCode.objects.filter(
+            vehicle=OuterRef('pk')
+        ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+        
         queryset = queryset.annotate(
-            latest_org_unit=Subquery(latest_org_unit_subquery),
+            latest_job_code_id=Subquery(latest_job_code_id_subquery),
+            latest_org_unit_code=Subquery(latest_org_unit_code_subquery), # For display or other purposes
+            latest_org_unit_center=Subquery(latest_org_unit_center_subquery), # For display or other purposes
             registration_number=Subquery(latest_traffic_card_subquery),
             total_repairs=Sum('service_transactions__potrazuje'),
             mileage=Subquery(last_mileage_subquery),
         )
 
-        # Filter za šifru posla (JobCode)
-        if org_unit:
-            queryset = queryset.filter(job_codes__organizational_unit=org_unit)
+        if org_unit_id:
+            # Create a subquery that identifies the IDs of JobCode objects
+            # which are the LATEST for their vehicle AND match the org_unit_id
+            matching_latest_job_codes = JobCode.objects.filter(
+                id=OuterRef('latest_job_code_id'), # Match the ID of the latest JobCode from the outer Vehicle query
+                organizational_unit_id=org_unit_id # Filter by the selected org unit ID
+            ).values('vehicle_id') # Get the vehicle ID for these matching JobCodes
 
-        # Filter za šifru centra (center_code)
+            # Filter the main queryset to include only vehicles whose PK is in the list
+            # of vehicle_ids derived from the matching latest job codes.
+            queryset = queryset.filter(pk__in=Subquery(matching_latest_job_codes))
+
+
+        # Filter for Center Code (center_code)
         if center_code:
-            queryset = queryset.filter(job_codes__organizational_unit__center=center_code)
+            # Create a subquery that identifies the IDs of JobCode objects
+            # which are the LATEST for their vehicle AND match the center_code
+            matching_latest_job_codes_by_center = JobCode.objects.filter(
+                id=OuterRef('latest_job_code_id'), # Match the ID of the latest JobCode from the outer Vehicle query
+                organizational_unit__center=center_code # Filter by the selected center code string
+            ).values('vehicle_id')
 
+            # Filter the main queryset to include only vehicles whose PK is in the list
+            # of vehicle_ids derived from the matching latest job codes by center.
+            queryset = queryset.filter(pk__in=Subquery(matching_latest_job_codes_by_center))
+            
         # Filter za gorivo u poslednjih 6 meseci
         if fuel_in_last_6_months == 'yes':
             six_months_ago = timezone.now() - timedelta(days=180)
