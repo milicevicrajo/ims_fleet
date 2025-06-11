@@ -83,7 +83,7 @@ class OrganizationalUnit(models.Model):
 
     
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        return f"{self.code}- {self.name}"
 
 class JobCode(models.Model):
     vehicle = models.ForeignKey(Vehicle, verbose_name=_("Vozilo"), on_delete=models.SET_NULL, related_name='job_codes', null=True)
@@ -333,7 +333,7 @@ class ServiceTransaction(models.Model):
         verbose_name="Kategorija popravke (povezana)"
     )
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"))
-    nije_garaza =     nije_garaza = models.BooleanField(
+    nije_garaza = models.BooleanField(
         default=False,
         choices=YES_NO_CHOICES,  # Dodato choices
         verbose_name=_("Nije garaža")

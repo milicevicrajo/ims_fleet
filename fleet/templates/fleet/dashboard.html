@@ -203,58 +203,97 @@
     <!--==========================================================-->
     <div class="col-lg-4">
         {% comment %} {% if services_without_vehicle > 0 or policies_without_vehicle > 0 or requisitions_without_vehicle > 0 %} {% endcomment %}
-        <div class="col-12">
-            <div class="alert alert-danger" role="alert">
-                <h4 class="alert-heading">
-                    <i class="mdi mdi-alert-outline"></i> UPOZORENJE !
-                </h4>                    
-                {% if policies_without_vehicle > 0 %}
-                    <a href="{% url 'policy_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
-                        <p style="font-size: 1.3em;">
-                            <i class="mdi mdi-update"></i>
-                            Imate {{ policies_without_vehicle }} polisa koje moraju da se dopune!
-                        </p>
-                    </a>
-                {% endif %}
+<div class="col-12">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">
+                <i class="mdi mdi-alert-outline"></i> UPOZORENJE!
+            </h4>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <tbody>
+                        {% if policies_without_vehicle > 0 %}
+                        <tr>
+                            <td class="text-danger">
+                                <a href="{% url 'policy_fixing_list' %}" class="d-flex align-items-center text-danger text-decoration-none py-2">
+                                    <i class="mdi mdi-link-variant-off mdi-24px me-3"></i> {# Ikona za prekinutu vezu ili nedostajući podatak #}
+                                    <span style="font-size: 1.1em;">
+                                        **Imate {{ policies_without_vehicle }} polisa** koje moraju da se dopune.
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
 
-                {% if services_without_vehicle > 0 %}
-                    <a href="{% url 'service_fixing_list' %}" style="color: inherit; text-decoration: none;">                    
-                        <p style="font-size: 1.3em;">
-                            <i class="mdi mdi-update"></i>
-                            Imate {{ services_without_vehicle }} servisa koje moraju da se dopune!
-                        </p>
-                    </a>
-                {% endif %}
+                        {% if services_without_vehicle > 0 %}
+                        <tr>
+                            <td class="text-danger">
+                                <a href="{% url 'service_fixing_list' %}" class="d-flex align-items-center text-danger text-decoration-none py-2">
+                                    <i class="mdi mdi-link-variant-off mdi-24px me-3"></i> {# Ikona za prekinutu vezu ili nedostajući podatak #}
+                                    <span style="font-size: 1.1em;">
+                                        **Imate {{ services_without_vehicle }} servisa** koje moraju da se dopune.
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
 
-                {% if requisitions_without_vehicle > 0 %}
-                    <a href="{% url 'requisition_fixing_list' %}" onMouseOver="this.style.color='red'" onMouseOut="this.style.color='inherit'" style="color: inherit; text-decoration: none; ">                    
-                        <p style="font-size: 1.3em;">
-                            <i class="mdi mdi-update"></i>
-                            Imate {{ requisitions_without_vehicle }} trebovanja koje moraju da se dopune!
-                        </p>
-                    </a>
-                {% endif %}
+                        {% if requisitions_without_vehicle > 0 %}
+                        <tr>
+                            <td class="text-danger">
+                                <a href="{% url 'requisition_fixing_list' %}" class="d-flex align-items-center text-danger text-decoration-none py-2"
+                                   onMouseOver="this.style.color='red'" onMouseOut="this.style.color='inherit'">
+                                    <i class="mdi mdi-link-variant-off mdi-24px me-3"></i> {# Ikona za prekinutu vezu ili nedostajući podatak #}
+                                    <span style="font-size: 1.1em;">
+                                        **Imate {{ requisitions_without_vehicle }} trebovanja** koje moraju da se dopune.
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
 
-                {% if expiring_policies_count > 0 %}
-                <a href="{% url 'expiring_and_not_renewed_policies' %}" style="color: inherit; text-decoration: none;">                    
-                    <p style="font-size: 1.3em;">
-                        <i class="mdi mdi-update"></i>
-                        Imate {{ expiring_policies_count }} polisa koje ističu u narednih 30 dana!
-                    </p>
-                </a>
-                {% endif %}
+                        {% if expiring_policies_count > 0 %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'expiring_and_not_renewed_policies' %}" class="d-flex align-items-center text-warning text-decoration-none py-2">
+                                    <i class="mdi mdi-calendar-alert mdi-24px me-3"></i> {# Ikona za upozorenje kalendar #}
+                                    <span style="font-size: 1.1em;">
+                                        **Imate {{ expiring_policies_count }} polisa** koje ističu u narednih 30 dana!
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
 
-                {% if expired_unrenewed_policies_count > 0 %}
-                <a href="{% url 'expiring_and_not_renewed_policies' %}" style="color: inherit; text-decoration: none;">                    
-                    <p style="font-size: 1.3em;">
-                        <i class="mdi mdi-update"></i>
-                        Imate {{ expired_unrenewed_policies_count }} polisa koje nisu obnovljene!
-                    </p>
-                </a>
-                {% endif %}
+                        {% if expired_unrenewed_policies_count > 0 %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'expiring_and_not_renewed_policies' %}" class="d-flex align-items-center text-danger text-decoration-none py-2">
+                                    <i class="mdi mdi-calendar-remove mdi-24px me-3"></i> {# Ikona za uklonjen kalendar/isteklo #}
+                                    <span style="font-size: 1.1em;">
+                                        **Imate {{ expired_unrenewed_policies_count }} polisa** koje nisu obnovljene!
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
 
+                        {% if not policies_without_vehicle and not services_without_vehicle and not requisitions_without_vehicle and not expiring_policies_count and not expired_unrenewed_policies_count %}
+                        <tr>
+                            <td class="text-success text-center py-3">
+                                <i class="mdi mdi-check-circle mdi-24px me-2"></i>
+                                <span style="font-size: 1.1em;">Nema aktivnih upozorenja.</span>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
+</div>
         {% comment %} {% endif %} {% endcomment %}
     </div>
 </div>

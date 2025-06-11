@@ -15,6 +15,8 @@
                     <th>Trošak</th>
                     <th>Dobavljač</th>
                     <th>Opis</th>
+                    <th>Sifra vrste</th>
+                    <th>Br. naloga</th>
                     <th>Akcije</th>
                   </tr>
               </thead>
@@ -27,6 +29,8 @@
                     <td>{{ service_transaction.potrazuje }}</td>
                     <td>{{ service_transaction.naz_par_pl }}</td>
                     <td>{{ service_transaction.napomena }}</td>
+                    <td>{{ service_transaction.sif_vrs }}</td>
+                    <td>{{ service_transaction.br_naloga }}</td>
                     <td>
                       <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}">Dopuni</a>
                     </td>
@@ -44,6 +48,8 @@
                     <th>Trošak</th>
                     <th>Dobavljač</th>
                     <th>Opis</th>
+                    <th>Sifra vrste</th>
+                    <th>Br. naloga</th>
                     <th>Akcije</th>
                   </tr>
               </tfoot>

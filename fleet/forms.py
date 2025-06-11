@@ -3,6 +3,7 @@ from .models import *
 import django_filters
 from django_select2.forms import Select2Widget
 from django.utils.translation import gettext_lazy as _
+from datetime import date
 class VehicleForm(forms.ModelForm):
     first_registration_date = forms.DateField(
         widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
@@ -193,7 +194,7 @@ class PutniNalogForm(forms.ModelForm):
         
         # Automatski postavlja današnji datum za order_date ako se kreira novi nalog
         if not self.instance.pk:
-            self.initial['order_date'] = datetime.date.today()
+            self.initial['order_date'] = date.today()
 
 
         # Sva polja su obavezna osim 'order_date' koji je automatski

@@ -826,15 +826,45 @@ from django.db import IntegrityError
 from django.db import connections
 from .models import Policy, DraftPolicy, Vehicle
 
+import logging
+from django.db import connections, transaction
+from datetime import datetime # Make sure datetime is imported, not just date
+
+# Assuming these models are defined and imported correctly
+# from .models import Policy, DraftPolicy, Vehicle
+
+logger = logging.getLogger(__name__)
+
+import logging
+from django.db import connections, transaction
+from datetime import datetime
+from decimal import Decimal # Import Decimal for number conversion if needed
+
+# Assuming these models are defined and imported correctly
+# from .models import Policy, DraftPolicy, Vehicle
+
+logger = logging.getLogger(__name__)
+
+import logging
+from django.db import connections, transaction
+from datetime import datetime
+from decimal import Decimal # Import Decimal for number conversion if needed
+
+# Assuming these models are defined and imported correctly
+# from .models import Policy, DraftPolicy, Vehicle
+
+logger = logging.getLogger(__name__)
+
 def fetch_policy_data(last_24_hours=True, days=None):
     """
-    Improved function to fetch insurance policy data with better security and error handling
+    Improved function to fetch insurance policy data with better security and error handling.
+    Maps SQL view columns to specific DraftPolicy model field names.
     """
     try:
         logger.info("Starting data fetching process...")
-        
+
         base_query = """
-            SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, 
+            SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate,
                    VrstaOsiguranja, BrojPolise, IznosPremije, RegistraskaOznaka,
                    PeriodOd, PeriodDo, IznosPrveRate, IznosOstalihRata, BrojRata
             FROM dbo.v_polise
@@ -872,55 +902,127 @@ def fetch_policy_data(last_24_hours=True, days=None):
         with transaction.atomic():
             for row in rows:
                 row_data = dict(zip(columns, row))
-                invoice_id = row_data['ID']
-                
+                invoice_id_from_db = row_data['ID'] # Get the ID from the database row
+
                 try:
-                    # Check existing records
-                    exists = (Policy.objects.filter(invoice_id=invoice_id).exists() or 
-                             DraftPolicy.objects.filter(invoice_id=invoice_id).exists())
+                    # Check existing records using the actual invoice_id from the DB
+                    exists = (Policy.objects.filter(invoice_id=invoice_id_from_db).exists() or
+                              DraftPolicy.objects.filter(invoice_id=invoice_id_from_db).exists())
                     if exists:
-                        logger.debug(f"Skipping existing invoice {invoice_id}")
+                        logger.debug(f"Skipping existing invoice {invoice_id_from_db}")
                         continue
 
-                    # Process vehicle
+                    # Process vehicle using RegistraskaOznaka
                     vehicle = None
                     if reg_plate := row_data.get('RegistraskaOznaka'):
                         vehicle = Vehicle.objects.filter(
                             registration_number=reg_plate
                         ).first()
 
-                    # Convert dates directly (assuming DB returns date objects)
-                    dates = ['issuedate', 'PeriodOd', 'PeriodDo']
-                    for date_field in dates:
-                        if row_data.get(date_field) and isinstance(row_data[date_field], str):
-                            row_data[date_field] = datetime.strptime(
-                                row_data[date_field], "%Y-%m-%d"
-                            ).date()
+                    # Define the mapping from SQL View Column Names to Django Model Field Names
+                    model_field_map = {
+                        'PartnerPIB': 'partner_pib',
+                        'PartnerIme': 'partner_name',
+                        'ID': 'invoice_id',
+                        'BrojFakture': 'invoice_number',
+                        'issuedate': 'issue_date',
+                        'VrstaOsiguranja': 'insurance_type',
+                        'BrojPolise': 'policy_number',
+                        'IznosPremije': 'premium_amount',
+                        'PeriodOd': 'start_date',
+                        'PeriodDo': 'end_date',
+                        'IznosPrveRate': 'first_installment_amount',
+                        'IznosOstalihRata': 'other_installments_amount',
+                        'BrojRata': 'number_of_installments',
+                    }
 
-                    # Validate required fields
-                    required_fields = [
-                        'PartnerPIB', 'PartnerIme', 'ID', 'BrojFakture',
-                        'issuedate', 'VrstaOsiguranja', 'BrojPolise', 'IznosPremije',
-                        'PeriodOd', 'PeriodDo', 'IznosPrveRate', 'IznosOstalihRata'
-                    ]
-                    
-                    if not all(row_data.get(field) for field in required_fields):
-                        DraftPolicy.objects.create(
-                            vehicle=vehicle,
-                            **{k: row_data.get(k) for k in DraftPolicy._meta.fields}
-                        )
-                        new_drafts += 1
-                    else:
-                        Policy.objects.create(
-                            vehicle=vehicle,
-                            **{k: row_data.get(k) for k in Policy._meta.fields}
-                        )
+                    # Prepare the data dictionary for model creation
+                    policy_data_to_save = {}
+                    for sql_col, model_field in model_field_map.items():
+                        value = row_data.get(sql_col)
+
+                        # --- REVISED TYPE CONVERSIONS ---
+                        if model_field in ['issue_date', 'start_date', 'end_date']:
+                            if value is None:
+                                value = None # Already None, keep it
+                            elif isinstance(value, str):
+                                if not value.strip(): # Handle empty string
+                                    value = None
+                                else:
+                                    try:
+                                        value = datetime.strptime(value, "%Y-%m-%d").date()
+                                    except ValueError:
+                                        logger.warning(f"Invalid date format for {model_field}: '{value}'. Setting to None for invoice {invoice_id_from_db}.")
+                                        value = None
+                            elif not isinstance(value, datetime.date):
+                                # If it's not None, not a string, and not already a datetime.date
+                                logger.warning(f"Unexpected date type for {model_field}: {type(value)}. Setting to None for invoice {invoice_id_from_db}.")
+                                value = None
+
+                        elif model_field in ['premium_amount', 'first_installment_amount', 'other_installments_amount']:
+                            if value is None:
+                                value = None
+                            elif isinstance(value, str):
+                                if not value.strip(): # Handle empty string
+                                    value = None
+                                else:
+                                    try:
+                                        value = Decimal(value)
+                                    except Exception: # Catch broader exceptions for conversion (e.g., non-numeric string)
+                                        logger.warning(f"Invalid decimal format for {model_field}: '{value}'. Setting to None for invoice {invoice_id_from_db}.")
+                                        value = None
+                            elif not isinstance(value, (Decimal, int, float)): # Check for Decimal, int, or float
+                                logger.warning(f"Unexpected numeric type for {model_field}: {type(value)}. Setting to None for invoice {invoice_id_from_db}.")
+                                value = None
+                            else: # If it's already int or float, convert to Decimal
+                                try:
+                                    value = Decimal(value)
+                                except Exception:
+                                    logger.warning(f"Could not convert {model_field} {value} to Decimal. Setting to None for invoice {invoice_id_from_db}.")
+                                    value = None
+
+
+                        elif model_field in ['partner_pib', 'invoice_id', 'number_of_installments']:
+                            if value is None:
+                                value = None
+                            elif isinstance(value, str):
+                                if not value.strip(): # Handle empty string
+                                    value = None
+                                else:
+                                    try:
+                                        value = int(value)
+                                    except ValueError:
+                                        logger.warning(f"Invalid integer format for {model_field}: '{value}'. Setting to None for invoice {invoice_id_from_db}.")
+                                        value = None
+                            elif not isinstance(value, int): # Only accept int or None
+                                logger.warning(f"Unexpected integer type for {model_field}: {type(value)}. Setting to None for invoice {invoice_id_from_db}.")
+                                value = None
+                        # --- END REVISED TYPE CONVERSIONS ---
+
+                        policy_data_to_save[model_field] = value
+
+                    # Add the 'vehicle' foreign key
+                    policy_data_to_save['vehicle'] = vehicle
+
+
+                    # Determine if it's complete for Policy or DraftPolicy
+                    # Create a temporary object to use is_complete method
+                    temp_draft_policy = DraftPolicy(**policy_data_to_save)
+                    if temp_draft_policy.is_complete():
+                        # Create a full Policy instance
+                        Policy.objects.create(**policy_data_to_save)
                         new_policies += 1
+                        logger.info(f"Created complete Policy for invoice {invoice_id_from_db}.")
+                    else:
+                        # Create a DraftPolicy instance
+                        DraftPolicy.objects.create(**policy_data_to_save)
+                        new_drafts += 1
+                        logger.info(f"Created DraftPolicy for invoice {invoice_id_from_db} (incomplete).")
 
                 except Exception as e:
-                    logger.error(f"Error processing invoice {invoice_id}: {str(e)}")
+                    logger.error(f"Error processing invoice {invoice_id_from_db}: {str(e)}", exc_info=True)
                     errors += 1
-                    continue
+                    # Continue to the next row even if one fails
 
         msg = (f"Successfully processed {new_policies} policies, "
                f"{new_drafts} drafts. Errors: {errors}")
@@ -932,24 +1034,33 @@ def fetch_policy_data(last_24_hours=True, days=None):
         return f"Critical error: {str(e)}"
     
 
+from django.db import connections
+from datetime import datetime
+# Uverite se da su ovi modeli definisani i uvezeni
+from .models import ServiceTransaction, DraftServiceTransaction, Vehicle, TrafficCard, ServiceType
+
+
 def fetch_service_data(last_24_hours=True, days=None):
     """
     Funkcija za povlačenje podataka o servisnim transakcijama.
-    Ako je last_24_hours=True, povlače se podaci u poslednjih 24 sata.
-    Ako je days != None, povlače se podaci za prethodni broj dana.
-    Ako su oba parametra False/None, povlače se svi podaci.
+    Svi novi podaci se čuvaju u DraftServiceTransaction tabeli,
+    dok se duplikati preskaču.
+    Polje 'popravka_kategorija' će biti postavljeno na None ako je vrednost iz baze prazna ili nevalidna.
     """
     try:
         print("Pokrećem funkciju za povlačenje podataka o servisnim transakcijama...")
-        
-        # SQL upit za povlačenje svih 18 kolona iz view-a `dbo.v_servisi`
+
+        # SQL upit za povlačenje svih kolona iz view-a `dbo.v_servisi`
+        # VAŽNO: Redosled kolona ovde mora TAČNO odgovarati redosledu u vašem SQL Server View-u.
+        # Kolone sif_pos i RegOzn (registracija) se povlače, ali se neće direktno koristiti za kreiranje modela
         query = """
-            SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje, 
-                   sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila, kom, RegOzn, poptavka_kategorija, napomena
+            SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje,
+                   sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila, kom, RegOzn, kilometraza,
+                   poptavka_kategorija, nije_garaza, napomena
             FROM dbo.v_servisi
         """
-        
-        # Dodaj WHERE klauzulu u zavisnosti od parametara
+
+        # Dodajte WHERE klauzulu u zavisnosti od parametara
         if days is not None:
             query += f" WHERE datum > DATEADD(day, -{days}, GETDATE())"
             print(f"Filtriram podatke za poslednjih {days} dana.")
@@ -957,122 +1068,106 @@ def fetch_service_data(last_24_hours=True, days=None):
             query += " WHERE datum > DATEADD(day, -1, GETDATE())"
             print("Filtriram podatke za poslednja 24 sata.")
 
-        # Izvrši upit i preuzmi podatke
+        # Izvršite upit i preuzmite podatke
         with connections['test_db'].cursor() as cursor:
-            print("Izvršavam SQL upit za preuzimanje podataka...")
+            print(f"Izvršavam SQL upit za preuzimanje podataka: {query}")
             cursor.execute(query)
             rows = cursor.fetchall()
             print(f"Broj povučenih redova: {len(rows)}")
 
-        # Iteracija kroz povučene redove
-        for index, row in enumerate(rows):
-            print(f"Obrađujem red {index+1} sa {len(row)} kolona.")
+        expected_columns = 20
 
-            # Proveri da li red ima očekivani broj kolona
-            if len(row) < 18:
-                print(f"Red {index+1} ima manje od 18 kolona: {row}")
-                continue  # Preskoči red sa nedostatkom kolona
+        for index, row in enumerate(rows):
+            if len(row) != expected_columns:
+                print(f"UPOZORENJE: Red {index+1} ima {len(row)} kolona, očekivano je {expected_columns}. Preskačem red: {row}")
+                continue
 
             try:
-                # Provera postojanja zapisa u glavnoj i draft tabeli
-                transaction_exists = ServiceTransaction.objects.filter(
-                    datum=row[3], duguje=row[11], vez_dok=row[6], br_naloga=row[5]
-                ).exists()
-                draft_exists = DraftServiceTransaction.objects.filter(
-                    datum=row[3], duguje=row[11], vez_dok=row[6], br_naloga=row[5]
-                ).exists()
+                unique_fields = {
+                    'datum': row[3],
+                    'duguje': row[11],
+                    'vez_dok': row[6],
+                    'br_naloga': row[5]
+                }
 
-                if not transaction_exists and not draft_exists:
-                    print("Zapis ne postoji ni u glavnoj ni u draft tabeli. Dodajem novi zapis.")
+                transaction_exists = ServiceTransaction.objects.filter(**unique_fields).exists()
+                draft_exists = DraftServiceTransaction.objects.filter(**unique_fields).exists()
 
-                    # Pronađi povezano vozilo preko registracionog broja iz TrafficCard modela
-                    vehicle = Vehicle.objects.filter(traffic_cards__registration_number=row[15]).first() if row[15] else None
-                    print(f"Vozilo pronađeno: {vehicle}")
+                if transaction_exists or draft_exists:
+                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu (u glavnoj ili draft tabeli), preskačem unos.")
+                    continue
 
-                    # Konverzija vrednosti u decimalni broj za polja koja mogu biti prazna
-                    potrazuje = float(row[8]) if row[8] else None
-                    duguje = float(row[11]) if row[11] else None
+                # Konverzija vrednosti za 'potrazuje' i 'duguje'
+                potrazuje = float(row[8]) if row[8] is not None and str(row[8]).strip() != '' else None
+                duguje = float(row[11]) if row[11] is not None and str(row[11]).strip() != '' else None
 
-                    # Proveravamo da li su svi potrebni podaci prisutni osim `kom` i `napomena`
-                    is_complete = all([
-                        row[0],  # god
-                        row[1],  # sif_par_pl
-                        row[2],  # naz_par_pl
-                        row[3],  # datum
-                        row[4],  # sif_vrs
-                        row[5],  # br_naloga
-                        row[6],  # vez_dok
-                        row[7],  # knt_pl
-                        potrazuje,  # vrednost potražuje
-                        row[9],  # sif_par_npl
-                        row[10], # knt_npl
-                        duguje,  # vrednost duguje
-                        row[12], # sif_pos
-                        row[13], # konto_vozila
-                        row[15], # RegOzn
-                        row[16]  # poptavka_kategorija
-                    ])
+                # Konverzija za 'kilometraza'
+                kilometraza = int(row[16]) if row[16] is not None and str(row[16]).strip() != '' else 0
 
-                    if is_complete:
-                        print("Podaci su kompletni. Dodajem zapis u glavnu tabelu ServiceTransaction.")
-                        # Kreiraj zapis u glavnoj tabeli
-                        service_transaction = ServiceTransaction(
-                            vehicle=vehicle,
-                            god=row[0],
-                            sif_par_pl=row[1],
-                            naz_par_pl=row[2],
-                            datum=row[3],
-                            sif_vrs=row[4],
-                            br_naloga=row[5],
-                            vez_dok=row[6],
-                            knt_pl=row[7],
-                            potrazuje=potrazuje,
-                            sif_par_npl=row[9],
-                            knt_npl=row[10],
-                            duguje=duguje,
-                            konto_vozila=row[13],
-                            kom=row[14],  # Dodato kom
-                            popravka_kategorija=row[16],  # Dodato popravka_kategorija
-                            napomena=row[17]  # Dodato napomena
-                        )
-                        service_transaction.save()
-                        print(f"Zapis sa brojem naloga {row[5]} je uspešno sačuvan u glavnoj tabeli.")
-                    else:
-                        print("Podaci nisu kompletni. Dodajem zapis u draft tabelu DraftServiceTransaction.")
-                        # Ako podaci nisu kompletni, unesi u draft tabelu
-                        draft_transaction = DraftServiceTransaction(
-                            god=row[0],
-                            sif_par_pl=row[1],
-                            naz_par_pl=row[2],
-                            datum=row[3],
-                            sif_vrs=row[4],
-                            br_naloga=row[5],
-                            vez_dok=row[6],
-                            knt_pl=row[7],
-                            potrazuje=potrazuje,
-                            sif_par_npl=row[9],
-                            knt_npl=row[10],
-                            duguje=duguje,
-                            konto_vozila=row[13],
-                            kom=row[14],
-                            popravka_kategorija=row[16],
-                            napomena=row[17]
-                        )
-                        draft_transaction.save()
-                        print(f"Zapis sa brojem naloga {row[5]} je sačuvan u draft tabeli.")
-                else:
-                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu, preskačem unos.")
+                # Konverzija za 'nije_garaza'
+                nije_garaza_val = False
+                if isinstance(row[18], bool):
+                    nije_garaza_val = row[18]
+                elif isinstance(row[18], str):
+                    nije_garaza_val = (row[18].strip().upper() == 'DA')
+                elif row[18] is not None:
+                    try:
+                        nije_garaza_val = bool(int(row[18]))
+                    except (ValueError, TypeError):
+                        pass
+
+                # Obrada popravka_kategorija
+                service_type_value = row[17]
+                service_type_instance = None
+                if service_type_value is not None and str(service_type_value).strip() != '':
+                    try:
+                        service_type_instance = ServiceType.objects.get(name=str(service_type_value).strip())
+                    except ServiceType.DoesNotExist:
+                        print(f"UPOZORENJE: ServiceType '{service_type_value}' ne postoji u bazi. Polje 'popravka_kategorija' će biti postavljeno na None.")
+                    except Exception as st_e:
+                        print(f"Greška pri traženju ServiceType '{service_type_value}': {st_e}. Polje 'popravka_kategorija' će biti postavljeno na None.")
+
+                # Pokušaj pronalaženja vozila. RegOzn je na row[15], ali se NE prosleđuje modelu kao 'registracija' polje.
+                vehicle = Vehicle.objects.filter(traffic_cards__registration_number=row[15]).first() if row[15] else None
+
+                print(f"Novi zapis za br_naloga {row[5]} se dodaje u draft tabelu DraftServiceTransaction.")
+
+                # Kreiraj zapis u draft tabeli
+                draft_transaction = DraftServiceTransaction(
+                    vehicle=vehicle, # Ostaje povezano ako vozilo postoji
+                    god=row[0],
+                    sif_par_pl=row[1],
+                    naz_par_pl=row[2],
+                    datum=row[3],
+                    sif_vrs=row[4],
+                    br_naloga=row[5],
+                    vez_dok=row[6],
+                    knt_pl=row[7],
+                    potrazuje=potrazuje,
+                    sif_par_npl=row[9],
+                    knt_npl=row[10],
+                    duguje=duguje,
+                    # OVDJE SE NE PROSLEĐUJU `sif_pos` (row[12]) i `registracija` (row[15])
+                    konto_vozila=row[13], # Ovo polje ti je definisano u modelu
+                    kom=row[14],
+                    kilometraza=kilometraza,
+                    popravka_kategorija=service_type_instance,
+                    nije_garaza=nije_garaza_val,
+                    napomena=row[19]
+                )
+                draft_transaction.save()
+                print(f"Zapis sa brojem naloga {row[5]} je uspešno sačuvan u draft tabeli.")
 
             except ValueError as ve:
-                print(f"Greška pri konverziji podataka u redu {index+1}: {ve}")
+                print(f"Greška pri konverziji podataka u redu {index+1} (nalog: {row[5]}): {ve}. Cela kolona: {row}")
             except Exception as e:
-                print(f"Neprikazana greška u redu {index+1}: {e}")
+                print(f"Nepredviđena greška pri obradi reda {index+1} (nalog: {row[5]}): {e}. Cela kolona: {row}")
 
-        return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
+        return "Podaci su uspešno povučeni i sačuvani u draft tabeli, preskočeni su duplikati."
 
     except Exception as e:
-        print(f"Došlo je do greške prilikom povlačenja podataka: {e}")
-        return f"Došlo je do greške prilikom povlačenja podataka: {e}"
+        print(f"Došlo je do opšte greške prilikom povlačenja podataka: {e}")
+        return f"Došlo je do opšte greške prilikom povlačenja podataka: {e}"
 
 
 
