@@ -332,7 +332,7 @@ class ServiceTransaction(models.Model):
         blank=True,
         verbose_name="Kategorija popravke (povezana)"
     )
-    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"))
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), blank=True, null=True)
     nije_garaza = models.BooleanField(
         default=False,
         choices=YES_NO_CHOICES,  # Dodato choices

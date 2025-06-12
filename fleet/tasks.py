@@ -1,4 +1,4 @@
-from fleet.utils import fetch_policy_data, fetch_service_data, fetch_requisition_data, nis_data_import, omv_putnicka_data_import, omv_teretna_data_import, kerio_login
+from fleet.utils import fetch_policy_data, fetch_service_data, fetch_requisition_data, nis_data_import, omv_putnicka_data_import, omv_teretna_data_import, kerio_login, process_vehicle_retirements
 from celery import shared_task
 
 @shared_task
@@ -43,3 +43,7 @@ def provera_sifre_posla_task():
 def fetch_job_codes():
     from fleet.utils import sync_organizational_units_from_view
     return sync_organizational_units_from_view()
+
+@shared_task
+def proveri_otpis():
+    return process_vehicle_retirements()

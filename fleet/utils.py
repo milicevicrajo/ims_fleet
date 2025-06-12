@@ -1169,6 +1169,81 @@ def fetch_service_data(last_24_hours=True, days=None):
         print(f"Došlo je do opšte greške prilikom povlačenja podataka: {e}")
         return f"Došlo je do opšte greške prilikom povlačenja podataka: {e}"
 
+import logging
+from django.db import connections, transaction
+from django.utils.translation import gettext_lazy as _
+
+logger = logging.getLogger(__name__)
+
+def process_vehicle_retirements():
+    """
+    Funkcija za obradu otpisanih vozila iz dbo.otpis view-a.
+    Ako vozilo postoji u view-u (po inv_br), postavlja 'otpis' polje na True.
+    """
+    try:
+        logger.info("Pokrećem funkciju za obradu otpisanih vozila...")
+
+        # SQL upit za povlačenje SAMO inventarnih brojeva iz view-a dbo.otpis
+        # Bez ikakvih dodatnih WHERE uslova za 'otpis' kolonu.
+        query = """
+            SELECT inv_br
+            FROM dbo.otpis;
+        """
+
+        retired_vehicles_from_db = []
+        with connections['test_db'].cursor() as cursor:
+            logger.info(f"Izvršavam SQL upit za preuzimanje otpisanih vozila: {query}")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            logger.info(f"Broj povučenih redova iz dbo.otpis: {len(rows)}")
+
+            for row in rows:
+                if row[0] is not None:
+                    # Očisti inv_br od potencijalnih belina ako je CHAR ili NVARCHAR
+                    retired_vehicles_from_db.append(str(row[0]).strip())
+        
+        if not retired_vehicles_from_db:
+            logger.info("Nema inventarnih brojeva u dbo.otpis za obradu.")
+            return "Nema otpisanih vozila za obradu."
+
+        updated_count = 0
+        skipped_count = 0
+
+        # Koristimo transakciju kako bi se osigurala konzistentnost baze
+        with transaction.atomic():
+            for inv_br_from_db in retired_vehicles_from_db:
+                try:
+                    # Pokušaj pronaći vozilo po inventory_number
+                    # Koristimo __iexact za case-insensitive poređenje
+                    vehicle = Vehicle.objects.get(inventory_number__iexact=inv_br_from_db)
+
+                    # Ako je vozilo već otpisano, preskoči
+                    if vehicle.otpis:
+                        logger.debug(f"Vozilo sa inventarnim brojem '{inv_br_from_db}' je već otpisano. Preskačem.")
+                        skipped_count += 1
+                        continue
+                    
+                    # Postavi 'otpis' na True i sačuvaj
+                    vehicle.otpis = True
+                    vehicle.save(update_fields=['otpis'])
+                    updated_count += 1
+                    logger.info(f"Uspešno otpisano vozilo: {vehicle.inventory_number} - {vehicle.brand} {vehicle.model}.")
+
+                except Vehicle.DoesNotExist:
+                    logger.warning(f"Vozilo sa inventarnim brojem '{inv_br_from_db}' iz dbo.otpis nije pronađeno u Django bazi.")
+                except Exception as e:
+                    logger.error(f"Greška pri obradi vozila '{inv_br_from_db}': {e}", exc_info=True)
+        
+        message = (f"Proces otpisa završen: "
+                   f"Ažurirano vozila: {updated_count}, "
+                   f"Već otpisana (preskočena): {skipped_count}, "
+                   f"Nije pronađeno u Django bazi: {len(retired_vehicles_from_db) - updated_count - skipped_count}")
+        logger.info(message)
+        return message
+
+    except Exception as e:
+        logger.critical(f"Kritična greška u funkciji 'process_vehicle_retirements': {e}", exc_info=True)
+        return f"Kritična greška prilikom obrade otpisanih vozila: {e}"
 
 
 def migrate_draft_to_service_transaction(draft_id):
