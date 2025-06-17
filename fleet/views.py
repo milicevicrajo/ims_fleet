@@ -828,6 +828,54 @@ class LeaseCreateView(LoginRequiredMixin, CreateView):
         context['title'] = 'Kreiraj novi zakup'
         context['submit_button_label'] = 'Dodaj zakup'
         return context
+from django.http import HttpResponse
+from openpyxl import Workbook
+from .models import Lease
+
+def export_leases_to_excel(request):
+    # Kreiranje novog Excel fajla
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Lizing ugovori"
+
+    # Naslovi kolona
+    headers = [
+        "Vozilo (šasija)",
+        "Šifra partnera",
+        "Naziv partnera",
+        "Šifra posla",
+        "Broj ugovora",
+        "Trenutna vrednost otplate",
+        "Vrsta lizinga",
+        "Datum početka",
+        "Datum završetka",
+        "Napomena"
+    ]
+    ws.append(headers)
+
+    # Podaci iz baze
+    leases = Lease.objects.select_related('vehicle').all()
+    for lease in leases:
+        ws.append([
+            lease.vehicle.chassis_number if lease.vehicle else '',
+            lease.partner_code,
+            lease.partner_name,
+            lease.job_code,
+            lease.contract_number,
+            float(lease.current_payment_amount),
+            lease.get_lease_type_display(),
+            lease.start_date.strftime('%d.%m.%Y'),
+            lease.end_date.strftime('%d.%m.%Y'),
+            lease.note or ''
+        ])
+
+    # Odgovor kao Excel fajl
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="lizing_ugovori.xlsx"'
+    wb.save(response)
+    return response
 
 class LeaseUpdateView(LoginRequiredMixin, UpdateView):
     model = Lease
@@ -1527,12 +1575,31 @@ class ServiceFixingListView(LoginRequiredMixin, ListView):
     context_object_name = 'service_transactions'
 
     def get_queryset(self):
-        print(DraftServiceTransaction.objects.all())
-        return DraftServiceTransaction.objects.all
-    
+        queryset = DraftServiceTransaction.objects.select_related('vehicle').all()
+        self.form = ServiceFixingFilterForm(self.request.GET)
+
+        if self.form.is_valid():
+            datum_od = self.form.cleaned_data.get('datum_od')
+            datum_do = self.form.cleaned_data.get('datum_do')
+            vozilo = self.form.cleaned_data.get('vozilo')
+            partner = self.form.cleaned_data.get('partner')
+            nije_garaza = self.form.cleaned_data.get('nije_garaza')
+
+            if datum_od:
+                queryset = queryset.filter(datum__gte=datum_od)
+            if datum_do:
+                queryset = queryset.filter(datum__lte=datum_do)
+            if partner:
+                queryset = queryset.filter(naz_par_pl__icontains=partner)
+            if nije_garaza:
+                queryset = queryset.filter(nije_garaza=True)
+
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista servisa koje morate dopuniti'
+        context['form'] = self.form
         return context
 
 
@@ -1605,12 +1672,33 @@ class ServiceTransactionFixingListView(LoginRequiredMixin, ListView):
     context_object_name = 'service_transactions'
 
     def get_queryset(self):
-        # Filter policies where the vehicle is None
-        return DraftServiceTransaction.objects.all
-    
+            queryset = DraftServiceTransaction.objects.select_related('vehicle').all()
+            self.form = ServiceFixingFilterForm(self.request.GET)
+
+            if self.form.is_valid():
+                datum_od = self.form.cleaned_data.get('datum_od')
+                datum_do = self.form.cleaned_data.get('datum_do')
+                vozilo = self.form.cleaned_data.get('vozilo')
+                partner = self.form.cleaned_data.get('partner')
+                nije_garaza = self.form.cleaned_data.get('nije_garaza')
+
+                if datum_od:
+                    queryset = queryset.filter(datum__gte=datum_od)
+                if datum_do:
+                    queryset = queryset.filter(datum__lte=datum_do)
+                if vozilo:
+                    queryset = queryset.filter(vehicle__registration_number__icontains=vozilo)
+                if partner:
+                    queryset = queryset.filter(naz_par_pl__icontains=partner)
+                if nije_garaza:
+                    queryset = queryset.filter(nije_garaza=True)
+
+            return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista servisa koje morate dopuniti'
+        context['form'] = self.form
         return context
 
 class ServiceTransactionCreateView(CreateView):
@@ -2075,7 +2163,7 @@ def reports_index(request):
             {"name": "Pregled potrošnje goriva po šiframa posla - OMV putnicka", "url": "omv_putnicka"},
             {"name": "Pregled potrošnje goriva po šiframa posla - OMV teretna", "url": "omv_teretna"},
             {"name": "Pregled potrošnje goriva po šiframa posla - NIS putnicka", "url": "nis_putnicka"},
-            {"name": "Pregled Plaćenih Rata po Aktivnim Polisama Kasko Osiguranja", "url": "kasko_rate"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - NIS teretna", "url": "nis_teretna"},
         ],
         "Centri": [
             # {"name": "Pregled putnih naloga po godinama", "url": "kasko_rate"},
@@ -2091,7 +2179,6 @@ def reports_index(request):
             {"name": "Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima ", "url": "troskovi_svi"},
             {"name": "Troškovi praćenja vozila", "url": "tro_pracenja_vozila"},
             {"name": "Troškovi tahografa ", "url": "troskovi_tahograf"},
-            {"name": "Troškovi zarada", "url": "tro_zarade"},
             {"name": "Troškovi parkinga", "url": "tro_parking"},
             {"name": "Pregled Potraživanja od osiguranja", "url": "potrazivanje_ddor"},
             {"name": "Pregled Najvećih Dobavljača Usluga", "url": "po_dobavljacima"},
@@ -2318,6 +2405,122 @@ def export_nis_putnicka_excel(request):
     response['Content-Disposition'] = 'attachment; filename=nis_putnicka.xlsx'
     wb.save(response)
     return response
+
+def nis_teretna_view(request):
+    form = PutnickaFilterForm(request.GET or None)
+
+    query = """
+        SELECT tipvozila, sifpos, regozn, kartica, datum, proizvod, kolicina, cena, bruto, neto
+        FROM dbo.nis_teretna
+        WHERE 1=1
+    """
+
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND YEAR(datum) = %s")
+            params.append(godina)
+
+        if mesec:
+            filters.append("AND MONTH(datum) = %s")
+            params.append(mesec)
+
+        if polovina:
+            if polovina == 1:
+                filters.append("AND DAY(datum) <= 15")
+            elif polovina == 2:
+                filters.append("AND DAY(datum) > 15")
+
+    if filters:
+        query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    # Excel export
+    if 'export' in request.GET:
+        df = pd.DataFrame(data)
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=nis_teretna.xlsx'
+        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='NIS Teretna')
+        return response
+
+    return render(request, 'fleet/reports/nis_teretna.html', {
+        'data': data,
+        'form': form,
+        'title': 'NIS Teretna vozila'
+    })
+
+
+
+def export_nis_teretna_excel(request):
+    form = PutnickaFilterForm(request.GET or None)
+
+    query = """
+        SELECT tipvozila, sifpos, regozn, kartica, datum, proizvod, kolicina, cena, bruto, neto
+        FROM dbo.nis_teretna
+        WHERE 1=1
+    """
+
+    filters = []
+    params = []
+
+    if form.is_valid():
+        godina = form.cleaned_data.get('godina')
+        mesec = form.cleaned_data.get('mesec')
+        polovina = form.cleaned_data.get('polovina')
+
+        if godina:
+            filters.append("AND YEAR(datum) = %s")
+            params.append(int(godina))
+
+        if mesec:
+            filters.append("AND MONTH(datum) = %s")
+            params.append(int(mesec))
+
+        if polovina:
+            if int(polovina) == 1:
+                filters.append("AND DAY(datum) <= 15")
+            elif int(polovina) == 2:
+                filters.append("AND DAY(datum) > 15")
+
+    if filters:
+        query += " " + " ".join(filters)
+
+    data = get_data_from_secondary_db(query, 'test_db', params=params)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "NIS Teretna"
+
+    headers = ["Tip vozila", "Šifra posla", "Reg oznaka", "Kartica", "Datum", "Proizvod", "Količina", "Cena", "Bruto", "Neto"]
+    ws.append(headers)
+
+    for row in data:
+        ws.append([
+            row['tipvozila'],
+            row['sifpos'],
+            row['regozn'],
+            row['kartica'],
+            row['datum'].strftime("%d.%m.%Y %H:%M") if row['datum'] else '',
+            row['proizvod'],
+            row['kolicina'],
+            row['cena'],
+            row['bruto'],
+            row['neto']
+        ])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=nis_teretna.xlsx'
+    wb.save(response)
+    return response
+
 
 def omv_teretna_view(request):
     form = PutnickaFilterForm(request.GET or None)

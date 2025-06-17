@@ -1,10 +1,41 @@
 {% extends "base.html" %}
-
+{% load widget_tweaks %}
 {% block content %}
 <h2>{{ title }}</h2>
 <div class="card">
   <div class="card-body">
       <h5 class="card-title">Da bi se informacije o servisu registrovale u aplikaciji potrebno je popuniti sva polja osim napomene</h5>
+            <form method="get" class="row g-3 align-items-end pb-3">
+
+                <div class="col-auto">
+                    <label for="id_datum_od" class="form-label">{{ form.datum_od.label }}:</label>
+                    {{ form.datum_od|add_class:"form-control" }}
+                </div>
+
+                <div class="col-auto">
+                    <label for="id_datum_do" class="form-label">{{ form.datum_do.label }}:</label>
+                    {{ form.datum_do|add_class:"form-control" }}
+                </div>
+
+
+
+                <div class="col-auto">
+                    <label for="id_partner" class="form-label">{{ form.partner.label }}:</label>
+                    {{ form.partner|add_class:"form-control" }}
+                </div>
+
+                <div class="col-auto mt-4 form-check">
+                    {{ form.nije_garaza|add_class:"form-check-input" }}
+                    <label for="id_nije_garaza" class="form-check-label">{{ form.nije_garaza.label }}</label>
+                </div>
+
+                <div class="col-auto mt-4">
+                    <button type="submit" class="btn btn-primary">Filtriraj</button>
+                    <a href="{% url 'service_fixing_list' %}" class="btn btn-secondary">Resetuj</a>
+                </div>
+            </form>
+
+
       <div class="table-responsive">
           <table id="DatatableServisi" class="display compact">
               <thead>
@@ -16,6 +47,7 @@
                     <th>Dobavljač</th>
                     <th>Sifra vrste</th>
                     <th>Br. naloga</th>
+                    <th>Garaža</th>
                     <th>Akcije</th>
                   </tr>
               </thead>
@@ -30,7 +62,18 @@
                     <td>{{ service_transaction.sif_vrs }}</td>
                     <td>{{ service_transaction.br_naloga }}</td>
                     <td>
-                      <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}">Dopuni</a>
+                    {% if service_transaction.nije_garaza %}
+                        Nije garaža
+                    {% else %}
+                        Garaža
+                    {% endif %}
+                    </td>
+
+                    <td>
+                    <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}" 
+                        class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+                        <i class="mdi mdi-pencil"></i> Dopuni
+                    </a>
                     </td>
                   </tr>
               {% empty %}
@@ -47,6 +90,7 @@
                     <th>Dobavljač</th>
                     <th>Sifra vrste</th>
                     <th>Br. naloga</th>
+                    <th>Garaža</th>
                     <th>Akcije</th>
                   </tr>
               </tfoot>

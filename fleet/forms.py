@@ -283,6 +283,28 @@ class DraftServiceTransactionForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.required = False
 
+
+class ServiceFixingFilterForm(forms.Form):
+    datum_od = forms.DateField(
+        required=False,
+        label="Datum od",
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    datum_do = forms.DateField(
+        required=False,
+        label="Datum do",
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    partner = forms.CharField(
+        required=False,
+        label="Naziv partnera"
+    )
+    nije_garaza = forms.BooleanField(
+        required=False,
+        label="Samo servisi van garaže"
+    )
+
+
 class RequisitionForm(forms.ModelForm):
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),

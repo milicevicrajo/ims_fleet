@@ -41,6 +41,7 @@ urlpatterns = [
     path('zakupi/izmeni/<int:pk>/', LeaseUpdateView.as_view(), name='lease_update'),
     path('zakupi/<int:pk>/', LeaseDetailView.as_view(), name='lease_detail'),
     path('zakupi/obrisi/<int:pk>/', LeaseDeleteView.as_view(), name='lease_delete'),
+    path('export-leases/', export_leases_to_excel, name='export_leases'),
 
     path('azuriranje', fetch_vehicle_value_view, name='fetch_vehicle_value'),
     
@@ -130,6 +131,8 @@ urlpatterns = [
     path('izvestaji/nis_putnicka/export', views.export_nis_putnicka_excel, name='export_nis_putnicka_excel'),
     path('izvestaji/omv_teretna/', views.omv_teretna_view, name='omv_teretna'),
     path('izvestaji/omv_teretna/export', views.export_omv_teretna_excel, name='export_omv_teretna_excel'),
+    path('export-nis-teretna/', export_nis_teretna_excel, name='export_nis_teretna'),
+    path('izvestaji/nis_teretna/', views.nis_teretna_view, name='nis_teretna'),
     path('izvestaji/kasko_rate/', views.kasko_rate_view, name='kasko_rate'),
     path('izvestaji/zatvoreni_putni/', views.zatvoren_putni_view, name='zatvoreni_putni'),
     path('izvestaji/magacin/', views.magacin_view, name='magacin'),
