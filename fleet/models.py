@@ -357,7 +357,7 @@ class DraftServiceTransaction(models.Model):
     god = models.IntegerField(verbose_name="Godina", null=True, blank=True)
     sif_par_pl = models.CharField(max_length=20, verbose_name="Šifra partnera (pl)", null=True, blank=True)
     naz_par_pl = models.CharField(max_length=255, verbose_name="Naziv partnera (pl)", null=True, blank=True)
-    datum = models.DateField(verbose_name="Datum")
+    datum = models.DateField(verbose_name=_("Datum"))
     sif_vrs = models.CharField(max_length=10, verbose_name="Šifra vrste", null=True, blank=True)
     br_naloga = models.CharField(max_length=50, verbose_name="Broj naloga")
     vez_dok = models.CharField(max_length=50, verbose_name="Vezani dokument", blank=True, null=True)
@@ -383,6 +383,10 @@ class DraftServiceTransaction(models.Model):
         verbose_name=_("Da li se ovaj servis ne pripada garaži?")
     )
     napomena = models.TextField(blank=True, null=True, verbose_name="Napomena")
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['datum', 'duguje', 'vez_dok', 'br_naloga'], name='unique_draft_service_transaction')
+        ]
 
     def is_complete(self):
         # Polja `kom` i `napomena` se ne uzimaju u obzir za `is_complete` proveru

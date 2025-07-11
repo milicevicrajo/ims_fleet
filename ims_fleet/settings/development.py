@@ -22,7 +22,7 @@ DATABASES = {
     },
     'server_db': {
         'ENGINE': 'mssql',
-        'NAME': 'Vozila_Django',  # Naziv baze na serveru
+        'NAME': 'IMS_ERP',  # Naziv baze na serveru
         'USER': 'Rajo Milicevic',
         'PASSWORD': 'Rajo123',
         'HOST': 'SMS-SERVER',

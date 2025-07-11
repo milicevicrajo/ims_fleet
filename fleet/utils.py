@@ -1038,7 +1038,12 @@ from django.db import connections
 from datetime import datetime
 # Uverite se da su ovi modeli definisani i uvezeni
 from .models import ServiceTransaction, DraftServiceTransaction, Vehicle, TrafficCard, ServiceType
-
+from decimal import Decimal, ROUND_HALF_UP
+def normalize_decimal(value):
+    try:
+        return Decimal(str(value).strip()).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    except:
+        return None
 
 def fetch_service_data(last_24_hours=True, days=None):
     """
@@ -1083,20 +1088,42 @@ def fetch_service_data(last_24_hours=True, days=None):
                 continue
 
             try:
+                god = str(row[0]).strip() if row[0] else None
+                vez_dok = str(row[6]).strip() if row[6] else None
+                br_naloga = str(row[5]).strip() if row[5] else None
+                sif_vrs = str(row[4]).strip() if row[4] else None
+
+                transaction_exists = ServiceTransaction.objects.filter(
+                    god=god,
+                    vez_dok__iexact=vez_dok,
+                    br_naloga__iexact=br_naloga,
+                    sif_vrs=sif_vrs
+                ).exists()
+
                 unique_fields = {
-                    'datum': row[3],
-                    'duguje': row[11],
+                    'god': row[0],
+                    'sif_vrs': row[4],
                     'vez_dok': row[6],
                     'br_naloga': row[5]
                 }
-
-                transaction_exists = ServiceTransaction.objects.filter(**unique_fields).exists()
+                print(unique_fields)
+                
+                #transaction_exists = ServiceTransaction.objects.filter(**unique_fields).exists()
                 draft_exists = DraftServiceTransaction.objects.filter(**unique_fields).exists()
+                # draft_exists = DraftServiceTransaction.objects.filter(
+                #     god=god,
+                #     vez_dok__iexact=vez_dok,
+                #     br_naloga__iexact=br_naloga,
+                #     sif_vrs=sif_vrs
+                # ).exists()
 
-                if transaction_exists or draft_exists:
-                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu (u glavnoj ili draft tabeli), preskačem unos.")
+                if transaction_exists:
+                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Finalnoj tabeli, preskačem unos.")
                     continue
-
+                if draft_exists:
+                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Draft tabeli, preskačem unos.")
+                    continue
+                
                 # Konverzija vrednosti za 'potrazuje' i 'duguje'
                 potrazuje = float(row[8]) if row[8] is not None and str(row[8]).strip() != '' else None
                 duguje = float(row[11]) if row[11] is not None and str(row[11]).strip() != '' else None
