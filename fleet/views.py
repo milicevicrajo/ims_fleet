@@ -2115,19 +2115,23 @@ def fetch_policy_data_view(request):
 # POVLACENJE PODATAKA IZ DRUGE BAZE
 def fetch_service_data_view(request):
     if request.method == 'POST':
-        # Preuzmi broj dana iz POST zahteva (opciono)
-        days = request.POST.get('days', None)
-        
-        # Ako korisnik unese broj dana, pretvori ga u integer
-        if days:
+        days_str = request.POST.get('days', '').strip() # Preuzmi string i ukloni whitespace
+
+        days = None # Podrazumevano postavi na None
+        if days_str: # Proveri da li string nije prazan
             try:
-                days = int(days)
+                days = int(days_str)
+                if days <= 0: # Dodatna validacija: broj dana mora biti pozitivan
+                    messages.error(request, "Broj dana mora biti pozitivan broj.")
+                    return redirect('fetch_service_data')
             except ValueError:
                 messages.error(request, "Uneta vrednost za broj dana nije validna.")
-                return redirect('fetch_service_data')  # Vrati korisnika na stranicu sa greškom
+                return redirect('fetch_service_data')
 
-        # Pozovi funkciju za povlačenje podataka sa odgovarajućim parametrima
-        result = fetch_service_data(last_24_hours=False, days=days)
+        # Pozovi funkciju za povlačenje podataka.
+        # Ako je 'days' None, 'last_24_hours' će kontrolisati.
+        # Ako je 'days' int, 'last_24_hours' će biti pregaženo 'days' parametrom.
+        result = fetch_service_data(last_24_hours=(days is None), days=days)
         messages.success(request, result)
         return redirect('service_transaction_list')
 
