@@ -160,13 +160,10 @@ def import_omv_transactions_from_csv(csv_file_path):
                 traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
                 vehicle = traffic_card.vehicle
 
-                # Konverzija datuma sa vremenskom zonom
                 def to_aware_datetime(value, format='%Y-%m-%d %H:%M:%S'):
                     if value:
                         naive_datetime = datetime.strptime(value, format)
-                        if timezone.is_naive(naive_datetime):
-                            return timezone.make_aware(naive_datetime, timezone.get_current_timezone())
-                        return naive_datetime
+                        return timezone.localize(naive_datetime)
                     return None
 
                 # Konverzija numeričkih vrednosti, ostavi kao None ako je prazno
