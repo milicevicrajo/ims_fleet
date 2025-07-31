@@ -275,7 +275,7 @@ def detalji_partner(request, sif_par):
         'partner': partner,
         'dugovanja': dugovanja,
         'baketi': baketi,
-        # 'ispravke': ispravke,
+        'ispravke': ispravke,
         'kontakti': kontakti,
         'pozivi_tel': pozivi_tel,
         'opomene': opomene,
