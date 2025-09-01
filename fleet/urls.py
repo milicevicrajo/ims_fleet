@@ -122,6 +122,11 @@ urlpatterns = [
     path('requisitions/create/', RequisitionCreateView.as_view(), name='requisition_create'),
     path('requisitions/<int:pk>/edit/', RequisitionUpdateView.as_view(), name='requisition_update'),
     path('requisitions/<int:pk>/delete/', RequisitionDeleteView.as_view(), name='requisition_delete'),
+
+    path("konta/", KontoListView.as_view(), name="konta_list"),
+    path("konta/novo/", KontoCreateView.as_view(), name="konta_create"),
+    path("konta/<str:pk>/izmena/", KontoUpdateView.as_view(), name="konta_update"),
+    path("konta/<str:pk>/brisanje/", KontoDeleteView.as_view(), name="konta_delete"),
     
     # IZVESTAJI 
     path('izvestaji/', views.reports_index, name='reports_index'),
@@ -145,6 +150,7 @@ urlpatterns = [
     path('izvestaji/tro_parking/', views.tro_parking_view, name='tro_parking'),
     path('izvestaji/potrazivanje_ddor/', views.potrazivanje_ddor_view, name='potrazivanje_ddor'),
     path('izvestaji/po_dobavljacima/', views.po_dobavljacima_view, name='po_dobavljacima'),    
+
     
     path('', views.dashboard, name='dashboard'),
     path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),

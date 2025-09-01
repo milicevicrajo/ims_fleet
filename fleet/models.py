@@ -563,6 +563,19 @@ class KaskoRate(models.Model):
         app_label = 'your_app_name'
 
 
+class FleetKontoVozila(models.Model):
+    knt = models.CharField(_("Konto"), max_length=10, primary_key=True)
+    naz_knt = models.CharField(_("Naziv konta"), max_length=200)
+
+    class Meta:
+        verbose_name = "Konto vozila"
+        verbose_name_plural = "Konta vozila"
+
+    def __str__(self):
+        return f"{self.knt} - {self.naz_knt}"
+
+
+
 
 class CustomUser(AbstractUser):
     allowed_centers = models.ManyToManyField('OrganizationalUnit', blank=True)

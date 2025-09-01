@@ -810,13 +810,19 @@ class LeaseListView(LoginRequiredMixin, ListView):
     model = Lease
     template_name = 'fleet/lease_list.html'
     context_object_name = 'leases'
-    # Dodajte permission_required atribut
-    permission_required = 'fleet.view_lease'
-    raise_exception = True
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related('vehicle')
+        tip = self.request.GET.get('tip')
+        if tip in {'finansijski', 'operativni', 'dugorocni'}:
+            qs = qs.filter(lease_type=tip)
+        return qs
+
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Lista zakupa vozila'
-        return context
+        ctx = super().get_context_data(**kwargs)
+        ctx['title'] = 'Lizing i najam ugovori'
+        return ctx
+
 
 class LeaseCreateView(LoginRequiredMixin, CreateView):
     model = Lease
@@ -834,6 +840,12 @@ from openpyxl import Workbook
 from .models import Lease
 
 def export_leases_to_excel(request):
+    # Filter po tipu lizinga (opciono)
+    tip = request.GET.get("tip")
+    leases = Lease.objects.select_related("vehicle").all()
+    if tip in {"finansijski", "operativni", "dugorocni"}:
+        leases = leases.filter(lease_type=tip)
+
     # Kreiranje novog Excel fajla
     wb = Workbook()
     ws = wb.active
@@ -850,31 +862,31 @@ def export_leases_to_excel(request):
         "Vrsta lizinga",
         "Datum početka",
         "Datum završetka",
-        "Napomena"
+        "Napomena",
     ]
     ws.append(headers)
 
     # Podaci iz baze
-    leases = Lease.objects.select_related('vehicle').all()
     for lease in leases:
         ws.append([
-            lease.vehicle.chassis_number if lease.vehicle else '',
+            lease.vehicle.chassis_number if lease.vehicle else "",
             lease.partner_code,
             lease.partner_name,
             lease.job_code,
             lease.contract_number,
-            float(lease.current_payment_amount),
+            float(lease.current_payment_amount or 0),
             lease.get_lease_type_display(),
-            lease.start_date.strftime('%d.%m.%Y'),
-            lease.end_date.strftime('%d.%m.%Y'),
-            lease.note or ''
+            lease.start_date.strftime("%d.%m.%Y") if lease.start_date else "",
+            lease.end_date.strftime("%d.%m.%Y") if lease.end_date else "",
+            lease.note or "",
         ])
 
     # Odgovor kao Excel fajl
     response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response['Content-Disposition'] = 'attachment; filename="lizing_ugovori.xlsx"'
+    fname = f"lizing_ugovori_{tip or 'svi'}.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{fname}"'
     wb.save(response)
     return response
 
@@ -2155,6 +2167,36 @@ def fetch_requisition_data_view(request):
 
     return render(request, 'fleet/fetch_data.html')
 
+class KontoListView(LoginRequiredMixin, ListView):
+    permission_required = "fleet.view_fleetkontavozila"
+    model = FleetKontoVozila
+    template_name = "fleet/konta_list.html"
+    context_object_name = "konta"
+    paginate_by = 50
+    ordering = ("knt",)
+
+class KontoCreateView(LoginRequiredMixin, CreateView):
+    permission_required = "fleet.add_fleetkontavozila"
+    model = FleetKontoVozila
+    fields = ["knt", "naz_knt"]
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("konta_list")
+    success_message = "Konto %(knt)s je dodat."
+
+class KontoUpdateView(LoginRequiredMixin, UpdateView):
+    permission_required = "fleet.change_fleetkontavozila"
+    model = FleetKontoVozila
+    fields = ["naz_knt"]
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("konta_list")
+    success_message = "Konto %(knt)s je izmenjen."
+
+class KontoDeleteView(LoginRequiredMixin, DeleteView):
+    permission_required = "fleet.delete_fleetkontavozila"
+    model = FleetKontoVozila
+    template_name = "fleet/konta_confirm_delete.html"
+    success_url = reverse_lazy("konta_list")
+    success_message = "Konto je obrisan."
 
 # <!-- ======================================================================================== -->
 #                           <!-- IZVESTAJI -->

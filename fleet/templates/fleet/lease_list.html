@@ -1,79 +1,100 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ title }}</h2>
-<div class="card">
-  <div class="card-body">
-        <a href="{% url 'export_leases' %}" target="_blank" class="btn btn-success mb-3">
-            <i class="fas fa-file-excel"></i> Exportuj u Excel
-        </a>
-      <div class="table-responsive">
-        <table id="DatatableLease" class="display">
-            <thead>
-                <tr>
-                    <th>Vozilo</th>
-                    <th>Partner-kod</th>
-                    <th>Partner</th>
-                    <th>Šifra posla</th>
-                    <th>Broj ugovora</th>
-                    <th>Tip lizinga</th>
-                    <th>Trenutna vrednost otplate</th>
-                    <th>Datum početka</th>
-                    <th>Datum završetka</th>
-                    <th>Napomena</th>
-                    <th>Akcija</th> <!-- Nova kolona za izmenu -->
-                </tr>
-            </thead>
-            <tbody>
-                {% for lease in leases %}
-                    <tr>
-                        <td>{{ lease.vehicle }}</td>
-                        <td>{{ lease.partner_code }}</td>
-                        <td>{{ lease.partner_name }}</td>
-                        <td>{{ lease.job_code }}</td>
-                        <td>{{ lease.contract_number }}</td>
-                        <td>{{ lease.lease_type }}</td>
-                        <td>{{ lease.current_payment_amount }}</td>
-                        <td>{{ lease.start_date|date:"d.m.Y" }}</td>
-                        <td>{{ lease.end_date|date:"d.m.Y" }}</td>
-                        <td>
-                            {% if lease.note %}
-                                {{ lease.note }}
-                            {% else %}
-                                Nema napomena
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="card-title mb-0">{{ title }}</h2>
+                <a href="{% url 'lease_create' %}" class="btn btn-primary btn-sm ms-auto">
+                    <i class="fas fa-plus-circle me-1"></i> Nova stavka
+                </a>
+            </div>
+            <div class="card-body">
+                
+                <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-4">
+                    <div class="btn-group" role="group" aria-label="Export grupe">
+                        <a href="{% url 'export_leases' %}" class="btn btn-outline-success">
+                            <i class="fas fa-file-excel me-1"></i> Svi
+                        </a>
+                        <a href="{% url 'export_leases' %}?tip=finansijski" class="btn btn-outline-success {% if request.GET.tip == 'finansijski' %}active{% endif %}">
+                            Finansijski
+                        </a>
+                        <a href="{% url 'export_leases' %}?tip=operativni" class="btn btn-outline-success {% if request.GET.tip == 'operativni' %}active{% endif %}">
+                            Operativni
+                        </a>
+                        <a href="{% url 'export_leases' %}?tip=dugorocni" class="btn btn-outline-success {% if request.GET.tip == 'dugorocni' %}active{% endif %}">
+                            Dugoročni najam
+                        </a>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <form method="get" class="d-flex align-items-center gap-2">
+                            <label for="tip" class="me-1 mb-0">Vrsta:</label>
+                            <select id="tip" name="tip" class="form-select form-select-sm">
+                                <option value="">Sve</option>
+                                <option value="finansijski" {% if request.GET.tip == 'finansijski' %}selected{% endif %}>Finansijski</option>
+                                <option value="operativni" {% if request.GET.tip == 'operativni' %}selected{% endif %}>Operativni</option>
+                                <option value="dugorocni" {% if request.GET.tip == 'dugorocni' %}selected{% endif %}>Dugoročni najam</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm">Primeni</button>
+                            {% if request.GET.tip %}
+                            <a class="btn btn-secondary btn-sm" href="{% url 'lease_list' %}">Reset</a>
                             {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <a href="{% url 'lease_update' lease.pk %}" class="btn btn-sm btn-primary" title="Izmeni lizing">
-                                <i class="fas fa-edit"></i>Izmeni
-                            </a>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="10">Nema lizinga...</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th>Vozilo</th>
-                    <th>Partner-kod</th>
-                    <th>Partner</th>
-                    <th>Šifra posla</th>
-                    <th>Broj ugovora</th>
-                    <th>Trenutna vrednost otplate</th>
-                    <th>Datum početka</th>
-                    <th>Datum završetka</th>
-                    <th>Napomena</th>
-                    <th>Akcija</th> <!-- Futer kolona -->
-                </tr>
-            </tfoot>
-        </table>
-        
-      </div>
+                        </form>
+                    </div>
+                </div>
 
-  </div>
+                <div class="table-responsive">
+                    <table id="DatatableLease" class="display table table-hover table-striped table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vozilo</th>
+                                <th>Partner</th>
+                                <th>Broj ugovora</th>
+                                <th>Vrsta</th>
+                                <th>Trenutna vrednost otplate</th>
+                                <th>Datum početka</th>
+                                <th>Datum završetka</th>
+                                <th>Napomena</th>
+                                <th class="text-center">Akcija</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lease in leases %}
+                            <tr>
+                                <td>{{ lease.vehicle }}</td>
+                                <td>{{ lease.partner_name }} <small class="text-muted d-block">{{ lease.partner_code }}</small></td>
+                                <td>{{ lease.contract_number }} <small class="text-muted d-block">{{ lease.job_code }}</small></td>
+                                <td>
+                                    {% if lease.lease_type == 'finansijski' %}<span class="badge bg-primary">Finansijski</span>
+                                    {% elif lease.lease_type == 'operativni' %}<span class="badge bg-info text-dark">Operativni</span>
+                                    {% elif lease.lease_type == 'dugorocni' %}<span class="badge bg-warning text-dark">Dugoročni najam</span>
+                                    {% else %}—
+                                    {% endif %}
+                                </td>
+                                <td>{{ lease.current_payment_amount }}</td>
+                                <td>{{ lease.start_date|date:"d.m.Y" }}</td>
+                                <td>{{ lease.end_date|date:"d.m.Y" }}</td>
+                                <td>{{ lease.note|default:"Nema napomena" }}</td>
+                                <td class="text-center text-nowrap">
+                                    <a href="{% url 'lease_update' lease.pk %}" class="btn btn-warning btn-sm" title="Izmeni">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'lease_delete' lease.pk %}"
+                                       class="btn btn-danger btn-sm"
+                                       title="Obriši"
+                                       onclick="return confirm('Da li sigurno želiš da obrišeš ugovor {{ lease.contract_number }} za {{ lease.vehicle }}?');">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
 {% endblock %}
