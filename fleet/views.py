@@ -2168,32 +2168,29 @@ def fetch_requisition_data_view(request):
     return render(request, 'fleet/fetch_data.html')
 
 class KontoListView(LoginRequiredMixin, ListView):
-    permission_required = "fleet.view_fleetkontavozila"
-    model = FleetKontoVozila
+    model = KontaVozila
     template_name = "fleet/konta_list.html"
     context_object_name = "konta"
     paginate_by = 50
     ordering = ("knt",)
 
 class KontoCreateView(LoginRequiredMixin, CreateView):
-    permission_required = "fleet.add_fleetkontavozila"
-    model = FleetKontoVozila
+    model = KontaVozila
     fields = ["knt", "naz_knt"]
     template_name = "fleet/generic_form.html"
     success_url = reverse_lazy("konta_list")
     success_message = "Konto %(knt)s je dodat."
 
 class KontoUpdateView(LoginRequiredMixin, UpdateView):
-    permission_required = "fleet.change_fleetkontavozila"
-    model = FleetKontoVozila
+
+    model = KontaVozila
     fields = ["naz_knt"]
     template_name = "fleet/generic_form.html"
     success_url = reverse_lazy("konta_list")
     success_message = "Konto %(knt)s je izmenjen."
 
 class KontoDeleteView(LoginRequiredMixin, DeleteView):
-    permission_required = "fleet.delete_fleetkontavozila"
-    model = FleetKontoVozila
+    model = KontaVozila
     template_name = "fleet/konta_confirm_delete.html"
     success_url = reverse_lazy("konta_list")
     success_message = "Konto je obrisan."

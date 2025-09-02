@@ -560,10 +560,10 @@ class KaskoRate(models.Model):
     class Meta:
         managed = False  # Django won't try to create or manage this table
         db_table = '[dbo].[kasko_rate]'  # Exact name of the view in the database
-        app_label = 'your_app_name'
+        app_label = 'fleet'
 
 
-class FleetKontoVozila(models.Model):
+class KontaVozila(models.Model):
     knt = models.CharField(_("Konto"), max_length=10, primary_key=True)
     naz_knt = models.CharField(_("Naziv konta"), max_length=200)
 
