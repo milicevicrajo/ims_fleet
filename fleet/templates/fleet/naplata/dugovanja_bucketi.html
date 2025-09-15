@@ -4,7 +4,7 @@
 <h2>Lista dugovanja po bucketima</h2>
 <div class="card">
     <div class="card-body">
-        <a href="{% url 'export_dugovanja_excel' %}" target="_blank" class="btn btn-success mb-3">
+        <a href="{% url 'naplata:export_dugovanja_excel' %}" target="_blank" class="btn btn-success mb-3">
             <i class="fas fa-file-excel"></i> Exportuj u Excel
         </a>
         <div class="table-responsive">
@@ -31,7 +31,7 @@
                         <tr>
                             <td>{{ dug.0 }}</td> <!-- sif_par -->
                             <td>
-                                <a href="{% url 'detalji_partner' dug.0 %}">
+                                <a href="{% url 'naplata:detalji_partner' dug.0 %}">
                                     {{ dug.1 }}
                                 </a>
                             </td>  <!-- naz_par -->

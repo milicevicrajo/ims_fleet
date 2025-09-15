@@ -44,8 +44,11 @@
     <div id="main-wrapper" data-layout="vertical" data-navbarbg="skin5" data-sidebartype="full"
         data-sidebar-position="absolute" data-header-position="absolute" data-boxed-layout="full">
         <!-- ============================================================== -->
-        {% include "header.html" %}
-        {% include "sidebar.html" %}
+            {% include "header.html" %}
+            <!-- dbg: sidebar='{{ sidebar_template|default:"<none>" }}' -->
+            {% include sidebar_template|default:"sidebar_fleet.html" %}
+
+            {% include sidebar_template|default:"sidebar_fleet.html" %}
         <!-- ============================================================== -->
         <!-- Page wrapper  -->
         <!-- ============================================================== -->
@@ -206,10 +209,9 @@
             // Inicijalizacija DataTables sa prilagođenim formatom datuma
             var table = $('#Datatable').DataTable({
                 "language": languageSettings,
-                "columnDefs": [
 
-            ]
             });
+            
             var table = $('#DatatableVozila').DataTable({
                 "language": languageSettings,
                 "pageLength": 200,  // Postavlja podrazumevani broj redova
@@ -225,32 +227,33 @@
                 "language": languageSettings,
                 "columnDefs": [
                 { "type": "date-custom", "targets": [2,3] }
-            ]
+                ]
             });
             var table = $('#DatatableLease').DataTable({
                 "language": languageSettings,
                 "columnDefs": [
                 { "type": "date-custom", "targets": [6,7] }
-            ]
+                ]
             });
+
             var table = $('#DatatablePolicy').DataTable({
                 "language": languageSettings,
-                "scrollX": true,  // Enable horizontal scrolling
-
                 "pageLength": 100, 
-                layout: {
-                    topStart: {
-                        buttons: [
-                            'copy', 'excel', 'pdf'
-                        ]
-                    }
-                },
+                autoWidth: false,     // DataTables da ne postavlja inline širine
+                responsive: true,     // automatski prelama kolone ako je usko
                 "columnDefs": [
-                { "type": "date-custom", "targets": [9,10,13] },
-
-                
-            ]
+                { "type": "date-custom", "targets": [] },
+                ]
             });
+
+            var table = $('#DatatablePolicyAgregat').DataTable({
+                "language": languageSettings,
+                "pageLength": 25, 
+                autoWidth: false,     // DataTables da ne postavlja inline širine
+                responsive: true,
+                "order": [[0, "desc"]], 
+            });
+
             var table = $('#DatatableFuel').DataTable({
                 "language": languageSettings,
                 "scrollX": true,  // Enable horizontal scrolling

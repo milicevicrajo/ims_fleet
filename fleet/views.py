@@ -35,6 +35,13 @@ from django.http import HttpResponseRedirect
 from openpyxl import Workbook
 import pandas as pd
 from .forms import PutnickaFilterForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
+from django_filters.views import FilterView
+
+from .models import DraftServiceTransaction
+from .filters import ServiceFixingFilter
 
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
@@ -1502,7 +1509,6 @@ class PutniNalogDeleteView(LoginRequiredMixin, DeleteView):
 
 
 
-
 # <!-- ======================================================================================== -->
 #                           <!-- SERVICE TYPES -->
 # <!-- ======================================================================================== -->
@@ -1582,38 +1588,23 @@ class ServiceListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista servisa'
         return context
 
-class ServiceFixingListView(LoginRequiredMixin, ListView):
+class ServiceFixingListView(LoginRequiredMixin, FilterView):
     model = DraftServiceTransaction
     template_name = 'fleet/draft_service_transactions_list.html'
     context_object_name = 'service_transactions'
+    filterset_class = ServiceFixingFilter
+    paginate_by = 100  # po želji
 
     def get_queryset(self):
-        queryset = DraftServiceTransaction.objects.select_related('vehicle').all()
-        self.form = ServiceFixingFilterForm(self.request.GET)
-
-        if self.form.is_valid():
-            datum_od = self.form.cleaned_data.get('datum_od')
-            datum_do = self.form.cleaned_data.get('datum_do')
-            vozilo = self.form.cleaned_data.get('vozilo')
-            partner = self.form.cleaned_data.get('partner')
-            nije_garaza = self.form.cleaned_data.get('nije_garaza')
-
-            if datum_od:
-                queryset = queryset.filter(datum__gte=datum_od)
-            if datum_do:
-                queryset = queryset.filter(datum__lte=datum_do)
-            if partner:
-                queryset = queryset.filter(naz_par_pl__icontains=partner)
-            if nije_garaza:
-                queryset = queryset.filter(nije_garaza=True)
-
-        return queryset
-
+        return (DraftServiceTransaction.objects
+                .select_related('vehicle', 'popravka_kategorija')
+                .order_by('-datum', '-id'))
+    
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Lista servisa koje morate dopuniti'
-        context['form'] = self.form
-        return context
+        ctx = super().get_context_data(**kwargs)
+        # >>> ključno: da bi {{ form.* }} radio kao ranije
+        ctx['form'] = ctx['filter'].form
+        return ctx
 
 
 class ServiceCreateView(LoginRequiredMixin, CreateView):
@@ -1679,40 +1670,25 @@ class ServiceTransactionListView(ListView):
         context['title'] = 'Lista servisa - popravke van IMS-a'
         return context
 
-class ServiceTransactionFixingListView(LoginRequiredMixin, ListView):
+@method_decorator(never_cache, name="dispatch")
+class ServiceTransactionFixingListView(LoginRequiredMixin, FilterView):
     model = DraftServiceTransaction
     template_name = 'fleet/draft_service_transactions_list.html'
     context_object_name = 'service_transactions'
+    filterset_class = ServiceFixingFilter
+    paginate_by = 100
 
     def get_queryset(self):
-            queryset = DraftServiceTransaction.objects.select_related('vehicle').all()
-            self.form = ServiceFixingFilterForm(self.request.GET)
-
-            if self.form.is_valid():
-                datum_od = self.form.cleaned_data.get('datum_od')
-                datum_do = self.form.cleaned_data.get('datum_do')
-                vozilo = self.form.cleaned_data.get('vozilo')
-                partner = self.form.cleaned_data.get('partner')
-                nije_garaza = self.form.cleaned_data.get('nije_garaza')
-
-                if datum_od:
-                    queryset = queryset.filter(datum__gte=datum_od)
-                if datum_do:
-                    queryset = queryset.filter(datum__lte=datum_do)
-                if vozilo:
-                    queryset = queryset.filter(vehicle__registration_number__icontains=vozilo)
-                if partner:
-                    queryset = queryset.filter(naz_par_pl__icontains=partner)
-                if nije_garaza:
-                    queryset = queryset.filter(nije_garaza=True)
-
-            return queryset
+        return (DraftServiceTransaction.objects
+                .select_related('vehicle', 'popravka_kategorija')
+                .order_by('-datum', '-id'))
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Lista servisa koje morate dopuniti'
-        context['form'] = self.form
-        return context
+        ctx = super().get_context_data(**kwargs)
+        ctx['title'] = 'Lista servisa koje morate dopuniti'
+        # Ako želiš da u templatu i dalje koristiš {{ form.* }}
+        ctx['form'] = ctx['filter'].form
+        return ctx
 
 class ServiceTransactionCreateView(CreateView):
     model = ServiceTransaction
@@ -1889,6 +1865,8 @@ class DraftRequisitionUpdateView(UpdateView):
             br_dok=current_instance.br_dok,
             god=current_instance.god
         )
+
+       
 
         for draft in draft_requisitions:
             print(f"Obrada: {draft}, kompletan: {draft.is_complete()}")
@@ -2704,7 +2682,7 @@ def magacin_view(request):
     View za prikaz podataka iz dbo.magacin_garaza.
     """
     query = """
-        SELECT sif_pred, god, oj, sif_mag, sif_art, kolul, koliz, popkol, vrulnab, vriznab,
+        SELECT sif_pred, god, oj, sif_mag, sif_art, kolul, koliz, popravka_kategorija, vrulnab, vriznab,
                vrulvp, vrizvp, revalzal, razliz, mag_cena, kolpon, cenapon, naz_art,
                sif_vrsart, naz_vrsart
         FROM dbo.magacin_garaza
@@ -2817,3 +2795,183 @@ def potrazivanje_ddor_view(request):
     data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/potrazivanje_ddor.html', {'data': data})
 
+
+
+
+# ========================================================================================
+from .queries import policies_monthly_costs_qs
+from .models import Policy  # putanja do Policy modela
+from django.utils.timezone import now
+import csv
+
+
+
+
+
+
+from .filters import PoliciesMonthlyCostsFilter
+class PoliciesMonthlyCostsView(FilterView, ListView):
+    """
+    FilterView + ListView:
+    - koristi django-filter formu za filtere
+    - prikazuje listu (agregiranih) redova
+    """
+    template_name = "fleet/reports/policies_monthly_costs.html"
+    context_object_name = "rows"
+    filterset_class = PoliciesMonthlyCostsFilter
+
+
+    def get_queryset(self):
+        # Annotirani i agregirani QS nad Policy
+        return policies_monthly_costs_qs(Policy.objects.all()).order_by(
+            'year', 'month', 'center', 'oj_id', 'job_code', 'vrsta'
+        )
+
+def _filtered_qs(request):
+    qs = policies_monthly_costs_qs()
+
+    # SVI filteri su opcioni — ako ih nema, dobićeš SVE GODINE
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    center = request.GET.get('center')
+    oj_id = request.GET.get('oj')
+    vrsta = request.GET.get('vrsta')
+
+    if year:
+        qs = qs.filter(year=year)
+    if month:
+        qs = qs.filter(month=month)
+    if center:
+        qs = qs.filter(center=center)
+    if oj_id:
+        qs = qs.filter(oj_id=oj_id)
+    if vrsta:
+        qs = qs.filter(vrsta__iexact=vrsta)
+
+    # po želji: stabilan redosled
+    return qs.order_by('year', 'month', 'center', 'oj_id', 'job_code', 'vrsta')
+
+def policies_monthly_costs_csv(request):
+    qs = _filtered_qs(request)
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="polise_mesecni_troskovi_sve_godine.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['god', 'mesec', 'centar', 'oj_id', 'oj_naziv', 'sifra_posla', 'vrsta', 'iznos'])
+    for r in qs:
+        writer.writerow([
+            r['year'], r['month'], r['center'] or '', r['oj_id'] or '',
+            r['oj_name'] or '', r.get('job_code') or '', r['vrsta'] or '',
+            f"{(r['iznos'] or 0):.2f}",
+        ])
+    return response
+
+def lease_monthly_costs_rows(request):
+    """
+    Grupa lizinga po godini/mesecu/centar/oj/job_code/vrsti i računa prateće troškove
+    (servisi + gorivo) za vozila koja su u toj organizacionoj jedinici u tom trenutku.
+    """
+    # Subqueryi za poslednju OU za vozilo
+    latest_center_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__center')[:1]
+    latest_oj_id_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__id')[:1]
+    latest_oj_name_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__name')[:1]
+
+    # Agregacija lizinga po datumu početka (year/month) i OU
+    leases_agg = Lease.objects.annotate(
+        year=TruncYear('start_date'),
+        month=TruncMonth('start_date'),
+        center=Subquery(latest_center_subq),
+        oj_id=Subquery(latest_oj_id_subq),
+        oj_name=Subquery(latest_oj_name_subq),
+    ).values(
+        'year','month','center','oj_id','oj_name','job_code','lease_type'
+    ).annotate(
+        total_lease_amount=Sum('current_payment_amount')
+    )
+
+    # primeni GET filtere (opcionalno)
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    center = request.GET.get('center')
+    oj_id_filter = request.GET.get('oj')
+    lease_type = request.GET.get('vrsta')  # očekuje 'finansijski'|'operativni'|'dugorocni'
+
+    if year:
+        leases_agg = [r for r in leases_agg if r['year'] and r['year'].year == int(year)]
+    if month:
+        leases_agg = [r for r in leases_agg if r['month'] and r['month'].month == int(month)]
+    if center:
+        leases_agg = [r for r in leases_agg if (r.get('center') or '') == center]
+    if oj_id_filter:
+        leases_agg = [r for r in leases_agg if str(r.get('oj_id') or '') == str(oj_id_filter)]
+    if lease_type:
+        leases_agg = [r for r in leases_agg if (r.get('lease_type') or '').lower() == lease_type.lower()]
+
+    rows = []
+    # subquery za poslednju OU kod Vehicle (koristi se za pronalazak vozila u OU)
+    latest_ou_for_vehicle = JobCode.objects.filter(vehicle=OuterRef('pk')).order_by('-assigned_date').values('organizational_unit__id')[:1]
+
+    for r in leases_agg:
+        # izvuci year/month kao int
+        y = r['year'].year if r['year'] else None
+        m = r['month'].month if r['month'] else None
+        oj_id = r.get('oj_id')
+
+        # nađi vozila koja trenutno pripadaju toj OU (ako postoji oj_id)
+        if oj_id:
+            vehicle_ids = list(Vehicle.objects.annotate(
+                latest_ou_id=Subquery(latest_ou_for_vehicle)
+            ).filter(latest_ou_id=oj_id).values_list('pk', flat=True))
+        else:
+            vehicle_ids = []
+
+        num_vehicles = len(vehicle_ids)
+
+        # prateci troskovi = servisi + gorivo za te vehicle_ids i za dati year/month
+        service_sum = 0
+        fuel_sum = 0
+        if num_vehicles and y and m:
+            service_sum = ServiceTransaction.objects.filter(
+                vehicle_id__in=vehicle_ids,
+                datum__year=y,
+                datum__month=m
+            ).aggregate(total=Sum('potrazuje'))['total'] or 0
+
+            fuel_sum = FuelConsumption.objects.filter(
+                vehicle_id__in=vehicle_ids,
+                date__year=y,
+                date__month=m
+            ).aggregate(total=Sum('cost_bruto'))['total'] or 0
+
+        accompanying_total = (service_sum or 0) + (fuel_sum or 0)
+        accompanying_per_vehicle = (accompanying_total / num_vehicles) if num_vehicles else None
+
+        rows.append({
+            'year': y,
+            'month': m,
+            'center': r.get('center'),
+            'oj_id': oj_id,
+            'oj_name': r.get('oj_name'),
+            'job_code': r.get('job_code'),
+            'lease_type': r.get('lease_type'),
+            'lease_amount': r.get('total_lease_amount') or 0,
+            'accompanying_total': accompanying_total,
+            'accompanying_per_vehicle': accompanying_per_vehicle,
+            'vehicle_count': num_vehicles,
+        })
+
+    # opcionalno sortiranje
+    rows = sorted(rows, key=lambda x: (x['year'] or 0, x['month'] or 0, x.get('center') or '', x.get('oj_id') or ''))
+    return rows
+
+class LeaseMonthlyCostsView(ListView):
+    """
+    Prikaz mjesečnih troškova po vrstama lizinga.
+    Vraća rows sa poljima: year, month, center, oj_id, oj_name, job_code, lease_type,
+    lease_amount, accompanying_total, accompanying_per_vehicle, vehicle_count
+    """
+    template_name = "fleet/reports/lease_monthly_costs.html"
+    context_object_name = "rows"
+    paginate_by = 200
+
+    def get_queryset(self):
+        return lease_monthly_costs_rows(self.request)

@@ -12,38 +12,48 @@
             </div>
             <div class="card-body">
                 
-                <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-4">
-                    <div class="btn-group" role="group" aria-label="Export grupe">
-                        <a href="{% url 'export_leases' %}" class="btn btn-outline-success">
-                            <i class="fas fa-file-excel me-1"></i> Svi
-                        </a>
-                        <a href="{% url 'export_leases' %}?tip=finansijski" class="btn btn-outline-success {% if request.GET.tip == 'finansijski' %}active{% endif %}">
-                            Finansijski
-                        </a>
-                        <a href="{% url 'export_leases' %}?tip=operativni" class="btn btn-outline-success {% if request.GET.tip == 'operativni' %}active{% endif %}">
-                            Operativni
-                        </a>
-                        <a href="{% url 'export_leases' %}?tip=dugorocni" class="btn btn-outline-success {% if request.GET.tip == 'dugorocni' %}active{% endif %}">
-                            Dugoročni najam
-                        </a>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                    <div class="btn-toolbar" role="toolbar" aria-label="Export toolbar">
+                        <div class="btn-group" role="group" aria-label="Export grupe">
+                            <a href="{% url 'export_leases' %}" class="btn btn-outline-success">
+                                <i class="mdi mdi-file-excel me-1"></i> Izvezi sve
+                            </a>
+                            <a href="{% url 'export_leases' %}?tip=finansijski"
+                                class="btn btn-outline-success {% if request.GET.tip == 'finansijski' %}active{% endif %}">
+                                Finansijski
+                            </a>
+                            <a href="{% url 'export_leases' %}?tip=operativni"
+                                class="btn btn-outline-success {% if request.GET.tip == 'operativni' %}active{% endif %}">
+                                Operativni
+                            </a>
+                            <a href="{% url 'export_leases' %}?tip=dugorocni"
+                                class="btn btn-outline-success {% if request.GET.tip == 'dugorocni' %}active{% endif %}">
+                                Dugoročni najam
+                            </a>
+                        </div>
                     </div>
-                    
-                    <div class="d-flex align-items-center gap-2">
-                        <form method="get" class="d-flex align-items-center gap-2">
-                            <label for="tip" class="me-1 mb-0">Vrsta:</label>
-                            <select id="tip" name="tip" class="form-select form-select-sm">
-                                <option value="">Sve</option>
-                                <option value="finansijski" {% if request.GET.tip == 'finansijski' %}selected{% endif %}>Finansijski</option>
-                                <option value="operativni" {% if request.GET.tip == 'operativni' %}selected{% endif %}>Operativni</option>
-                                <option value="dugorocni" {% if request.GET.tip == 'dugorocni' %}selected{% endif %}>Dugoročni najam</option>
-                            </select>
-                            <button class="btn btn-primary btn-sm">Primeni</button>
-                            {% if request.GET.tip %}
-                            <a class="btn btn-secondary btn-sm" href="{% url 'lease_list' %}">Reset</a>
-                            {% endif %}
-                        </form>
+
+                    <div class="btn-toolbar" role="toolbar" aria-label="Filter toolbar">
+                        <div class="btn-group" role="group" aria-label="Filter grupe">
+                            <a href="{% url 'lease_list' %}" class="btn btn-outline-primary {% if not request.GET.tip %}active{% endif %}">
+                                <i class="mdi mdi-filter-variant me-1"></i> Svi
+                            </a>
+                            <a href="{% url 'lease_list' %}?tip=finansijski"
+                                class="btn btn-outline-primary {% if request.GET.tip == 'finansijski' %}active{% endif %}">
+                                Finansijski
+                            </a>
+                            <a href="{% url 'lease_list' %}?tip=operativni"
+                                class="btn btn-outline-primary {% if request.GET.tip == 'operativni' %}active{% endif %}">
+                                Operativni
+                            </a>
+                            <a href="{% url 'lease_list' %}?tip=dugorocni"
+                                class="btn btn-outline-primary {% if request.GET.tip == 'dugorocni' %}active{% endif %}">
+                                Dugoročni najam
+                            </a>
+                        </div>
                     </div>
                 </div>
+
 
                 <div class="table-responsive">
                     <table id="DatatableLease" class="display table table-hover table-striped table-bordered align-middle">
@@ -67,11 +77,15 @@
                                 <td>{{ lease.partner_name }} <small class="text-muted d-block">{{ lease.partner_code }}</small></td>
                                 <td>{{ lease.contract_number }} <small class="text-muted d-block">{{ lease.job_code }}</small></td>
                                 <td>
-                                    {% if lease.lease_type == 'finansijski' %}<span class="badge bg-primary">Finansijski</span>
-                                    {% elif lease.lease_type == 'operativni' %}<span class="badge bg-info text-dark">Operativni</span>
-                                    {% elif lease.lease_type == 'dugorocni' %}<span class="badge bg-warning text-dark">Dugoročni najam</span>
-                                    {% else %}—
-                                    {% endif %}
+                                {% if lease.lease_type == 'finansijski' %}
+                                    <span class="badge bg-primary text-white">Finansijski</span>
+                                {% elif lease.lease_type == 'operativni' %}
+                                    <span class="badge bg-info text-white">Operativni</span>
+                                {% elif lease.lease_type == 'dugorocni' %}
+                                    <span class="badge bg-warning text-white">Dugoročni najam</span>
+                                {% else %}
+                                    —
+                                {% endif %}
                                 </td>
                                 <td>{{ lease.current_payment_amount }}</td>
                                 <td>{{ lease.start_date|date:"d.m.Y" }}</td>

@@ -1,78 +1,83 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ title }}</h2>
-<div class="card">
-  <div class="card-body">
-      <div class="table-responsive">
-          <table id="DatatablePolicy" class="display compact">
-              <thead>
-                  <tr>
-                      <th>Vozilo</th>
-                      <th>Partner-pib</th>
-                      <th>Partner</th>
-                      <th>ID ugovora</th>
-                      <th>Broj ugovora</th>
-                      <th>Datum izdavanja</th>
-                      <th>Tip osiguranja</th>
-                      <th>Broj polise</th>
-                      <th>Iznos premije</th>
-                      <th>Datum početka</th>
-                      <th>Datum završetka</th>
-                      <th>Iznos prve rate</th>
-                      <th>Iznos ostalih rata</th>
-                      <th>Broj rata</th>
-                      <th>Akcije</th>
-                  </tr>
-              </thead>
-              <tbody>
-                {% for policy in policies %}
-                  <tr>                        
-                      <td>{{ policy.vehicle }}</td>                      
-                      <td>{{ policy.partner_pib }}</td>
-                      <td>{{ policy.partner_name }}</td>
-                      <td>{{ policy.invoice_id }}</td>
-                      <td>{{ policy.invoice_number }}</td>
-                      <td>{{ policy.issue_date|date:"d.m.Y"}}</td>
-                      <td>{{ policy.insurance_type }}</td>
-                      <td>{{ policy.policy_number }}</td>
-                      <td>{{ policy.premium_amount}}</td>
-                      <td>{{ policy.start_date|date:"d.m.Y" }}</td>
-                      <td>{{ policy.end_date|date:"d.m.Y" }}</td>
-                      <td>{{ policy.first_installment_amount }}</td>
-                      <td>{{ policy.other_installments_amount}}</td>
-                      <td>{{ policy.number_of_installments }}</td>
-                      <td>
-                        <a href="{% url 'policy_update' policy.pk %}">Edit</a>
-                      </td>
-                  </tr>
-              {% empty %}
-                  <tr>
-                      <td colspan="5">Nema opreme..</td>
-                  </tr>
-              {% endfor %}
-              <tfoot>
-                  <tr>
-                    <th>Vozilo</th>
-                    <th>Partner-pib</th>
-                    <th>Partner</th>
-                    <th>ID ugovora</th>
-                    <th>Broj ugovora</th>
-                    <th>Datum izdavanja</th>
-                    <th>Tip osiguranja</th>
-                    <th>Broj polise</th>
-                    <th>Iznos premije</th>
-                    <th>Datum početka</th>
-                    <th>Datum završetka</th>
-                    <th>Iznos prve rate</th>
-                    <th>Iznos ostalih rata</th>
-                    <th>Broj rata</th>
-                    <th>Akcije</th>
-                  </tr>
-              </tfoot>
-          </table>
-      </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>{{ title }}</h2>
+    <div class="btn-group">
+        <a href="{% url 'policy_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Dodaj novu polisu
+        </a>
+        <a href="{% url 'policies_monthly_costs' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-chart-line"></i> Izveštaj troškova
+        </a>
+        <a href="{% url 'policies_monthly_costs_csv' %}" class="btn btn-outline-success">
+            <i class="fas fa-file-csv"></i> Preuzmi CSV
+        </a>
+    </div>
+</div>
 
-  </div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="DatatablePolicy" class="display compact table table-hover">
+                <thead>
+                    <tr>
+                        <th>Vozilo</th>
+                        <th>Partner</th>
+                        <th>Broj ugovora</th>
+                        <th>Datum izdavanja</th>
+                        <th>Tip osiguranja</th>
+                        <th>Broj polise</th>
+                        <th>Iznos premije</th>
+                        <th>Datum početka</th>
+                        <th>Datum završetka</th>
+                        <th class="text-center">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for policy in policies %}
+                    <tr>
+                        <td>{{ policy.vehicle }}</td>
+                        <td>
+                            {{ policy.partner_name }}
+                            {% if policy.partner_pib %}
+                            <small class="text-muted d-block">{{ policy.partner_pib }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ policy.invoice_number }}
+                            {% if policy.invoice_id %}
+                            <small class="text-muted d-block">{{ policy.invoice_id }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ policy.issue_date|date:"d.m.Y" }}</td>
+                        <td>{{ policy.insurance_type }}</td>
+                        <td>{{ policy.policy_number }}</td>
+                        <td>{{ policy.premium_amount|floatformat:2 }}</td>
+                        <td>{{ policy.start_date|date:"d.m.Y" }}</td>
+                        <td>{{ policy.end_date|date:"d.m.Y" }}</td>
+
+                        <td class="text-center">
+                            <a href="{% url 'policy_detail' policy.pk %}" class="btn btn-sm btn-info" title="Detalji">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'policy_update' policy.pk %}" class="btn btn-sm btn-warning" title="Uredi">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'policy_delete' policy.pk %}" class="btn btn-sm btn-danger" title="Obriši">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="14" class="text-center">Trenutno nema polisa.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

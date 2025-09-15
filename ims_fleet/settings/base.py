@@ -32,8 +32,10 @@ DEBUG = True
 # Application definition
 
 INSTALLED_APPS = [
+    "core", 
     'fleet',
     'naplata',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -59,17 +61,21 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'ims_fleet.urls'
 
+
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        # Gleda prvo u PROJECT/templates (globalno), zatim u app/templates (APP_DIRS=True)
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                # >>> DODAJ OVO:
+                "core.context_processors.current_app",
             ],
         },
     },

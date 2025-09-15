@@ -2,7 +2,7 @@ from django.urls import path
 from .views import *
 from django.conf import settings
 from django.urls import path
-
+app_name = "naplata"
 urlpatterns = [
     path('dugovanja/', lista_dugovanja, name='lista_dugovanja'),
     path('partner/<int:sif_par>/', detalji_partner, name='detalji_partner'),

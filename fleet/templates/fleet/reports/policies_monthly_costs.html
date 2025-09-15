@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block content %}
+{% load widget_tweaks %}
+<h2>Polise osiguranja — mesečni troškovi (agregat)</h2>
+
+<form method="get" class="row g-3 align-items-end pb-3">
+  <!-- NOVI: Godina -->
+  <div class="col-auto">
+    <label for="{{ filter.form.year.id_for_label }}" class="col-form-label">
+      {{ filter.form.year.label }}:
+    </label>
+    <div>
+      {{ filter.form.year|add_class:'form-control' }}
+    </div>
+  </div>
+
+  <!-- NOVI: Mesec (imenovan, sortiran) -->
+  <div class="col-auto">
+    <label for="{{ filter.form.month.id_for_label }}" class="col-form-label">
+      {{ filter.form.month.label }}:
+    </label>
+    <div>
+      {{ filter.form.month|add_class:'form-control' }}
+    </div>
+  </div>
+
+  <!-- NOVI: Centar (sortiran) -->
+  <div class="col-auto">
+    <label for="{{ filter.form.center.id_for_label }}" class="col-form-label">
+      {{ filter.form.center.label }}:
+    </label>
+    <div>
+      {{ filter.form.center|add_class:'form-control' }}
+    </div>
+  </div>
+
+  <!-- NOVI: OJ -->
+  <div class="col-auto">
+    <label for="{{ filter.form.oj.id_for_label }}" class="col-form-label">
+      {{ filter.form.oj.label }}:
+    </label>
+    <div>
+      {{ filter.form.oj|add_class:'form-control' }}
+    </div>
+  </div>
+
+  <!-- NOVI: Vrsta (kasko/autoodgovornost/…) -->
+  <div class="col-auto">
+    <label for="{{ filter.form.vrsta.id_for_label }}" class="col-form-label">
+      {{ filter.form.vrsta.label }}:
+    </label>
+    <div>
+      {{ filter.form.vrsta|add_class:'form-control' }}
+    </div>
+  </div>
+
+  <!-- NOVI: Šifra posla (partial match) -->
+  <div class="col-auto">
+    <label for="{{ filter.form.job_code.id_for_label }}" class="col-form-label">
+      {{ filter.form.job_code.label }}:
+    </label>
+    <div>
+      {{ filter.form.job_code|add_class:'form-control' }}
+    </div>
+  </div>
+
+
+
+  <!-- Dugme -->
+  <div class="col-auto d-flex align-items-end">
+    <button type="submit" class="btn btn-primary">Filtriraj</button>
+    <a class="btn btn-secondary ms-2" href="{% url 'policies_monthly_costs' %}">Reset</a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="DatatablePolicyAgregat" class="display">
+        <thead>
+          <tr>
+            <th>Godina</th>
+            <th>Mesec</th>
+            <th>Centar</th>
+            <th>Šifra posla</th>
+            <th>Vrsta</th>
+            <th class="text-end">Iznos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td>{{ r.year }}</td>
+            <td>{{ r.month }}</td>
+            <td>{{ r.center }}</td>
+            <td>{{ r.job_code }}</td>
+            <td>{{ r.vrsta }}</td>
+            <td class="text-end">{{ r.iznos|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted">Nema podataka za dati filter.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {# NEMA tfoot ovde! #}
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.jQuery && $('#DatatablePolicyAgg').length) {
+    $('#DatatablePolicyAgg').DataTable({
+      paging: false,
+      searching: true,
+      order: [[0,'desc'], [1,'asc'], [2,'asc']],
+      columnDefs: [
+        { targets: 5, className: 'text-end' } // poslednja kolona = index 5
+      ],
+      language: { emptyTable: 'Nema podataka za dati filter.' }
+    });
+  }
+});
+</script>
+
+
+{% endblock %}

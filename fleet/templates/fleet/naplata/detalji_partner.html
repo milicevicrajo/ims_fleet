@@ -82,7 +82,7 @@
             <div class="tab-pane fade show" id="kontakti">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Kontakti</h4>
-                    <a href="{% url 'dodaj_kontakt' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
+                    <a href="{% url 'naplata:dodaj_kontakt' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj kontakt
                     </a>
                 </div> 
@@ -100,7 +100,7 @@
                         <td>{{ kontakt.napomena }}</td>
                         <td class="d-flex align-items-center">
                             <!-- Izmena kontakta -->
-                            <a href="{% url 'izmeni_kontakt' kontakt.id %}" class="text-success d-flex align-items-center me-3">
+                            <a href="{% url 'naplata:izmeni_kontakt' kontakt.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
                         
@@ -108,7 +108,7 @@
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
                         
                             <!-- Brisanje kontakta -->
-                            <form action="{% url 'obrisi_kontakt' kontakt.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
+                            <form action="{% url 'naplata:obrisi_kontakt' kontakt.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
                                         style="border: none; background: none;"
@@ -127,7 +127,7 @@
             <div class="tab-pane fade" id="napomene">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Napomene</h4>
-                    <a href="{% url 'dodaj_napomenu' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
+                    <a href="{% url 'naplata:dodaj_napomenu' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj napomenu
                     </a>
                 </div>
@@ -143,7 +143,7 @@
                         <td>{{ napomena.veliki }}</td>
                         <td class="d-flex justify-content-end align-items-center">
                             <!-- Izmena napomene -->
-                            <a href="{% url 'izmeni_napomenu' napomena.id %}" class="text-success d-flex align-items-center me-3">
+                            <a href="{% url 'naplata:izmeni_napomenu' napomena.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
                         
@@ -151,7 +151,7 @@
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
                         
                             <!-- Brisanje napomene -->
-                            <form action="{% url 'obrisi_napomenu' napomena.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
+                            <form action="{% url 'naplata:obrisi_napomenu' napomena.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
                                         style="border: none; background: none;"
@@ -169,7 +169,7 @@
             <div class="tab-pane fade" id="opomene">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Opomene</h4>
-                    <a href="{% url 'dodaj_opomenu' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
+                    <a href="{% url 'naplata:dodaj_opomenu' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj opomenu
                     </a>
                 </div>
@@ -191,7 +191,7 @@
                         <td>{{ opomena.napomene }}</td>
                         <td class="d-flex justify-content-end align-items-center">
                             <!-- Izmena opomene -->
-                            <a href="{% url 'izmeni_opomenu' opomena.id %}" class="text-success d-flex align-items-center me-3">
+                            <a href="{% url 'naplata:izmeni_opomenu' opomena.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
                         
@@ -199,7 +199,7 @@
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
                         
                             <!-- Brisanje opomene -->
-                            <form action="{% url 'obrisi_opomenu' opomena.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
+                            <form action="{% url 'naplata:obrisi_opomenu' opomena.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
                                         style="border: none; background: none;"
@@ -218,7 +218,7 @@
             <div class="tab-pane fade" id="pozivi">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Pozivi</h4>
-                    <a href="{% url 'dodaj_poziv' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
+                    <a href="{% url 'naplata:dodaj_poziv' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj poziv
                     </a>
                 </div>
@@ -234,7 +234,7 @@
                         <td>{{ poziv.napomena }}</td>
                         <td class="d-flex justify-content-end align-items-center">
                             <!-- Izmena poziva/pisma -->
-                            <a href="{% url 'izmeni_poziv' poziv.id %}" class="text-success d-flex align-items-center me-3">
+                            <a href="{% url 'naplata:izmeni_poziv' poziv.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
                         
@@ -242,7 +242,7 @@
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
                         
                             <!-- Brisanje poziva/pisma -->
-                            <form action="{% url 'obrisi_poziv' poziv.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
+                            <form action="{% url 'naplata:obrisi_poziv' poziv.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
                                         style="border: none; background: none;"
@@ -261,7 +261,7 @@
             <div class="tab-pane fade" id="pozivna_pisma">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Pozivi/pisma</h4>
-                    <a href="{% url 'dodaj_poziv_pismo' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
+                    <a href="{% url 'naplata:dodaj_poziv_pismo' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj poziv/pismo
                     </a>
                 </div>
@@ -285,7 +285,7 @@
                         <td>{{ pismo.napomene|floatformat:0}}</td>
                         <td class="d-flex justify-content-end align-items-center">
                             <!-- Izmena poziva/pisma -->
-                            <a href="{% url 'izmeni_poziv_pismo' pismo.id %}" class="text-success d-flex align-items-center me-3">
+                            <a href="{% url 'naplata:izmeni_poziv_pismo' pismo.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
                         
@@ -293,7 +293,7 @@
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
                         
                             <!-- Brisanje poziva/pisma -->
-                            <form action="{% url 'obrisi_poziv_pismo' pismo.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
+                            <form action="{% url 'naplata:obrisi_poziv_pismo' pismo.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
                                         style="border: none; background: none;"
@@ -312,7 +312,7 @@
             <div class="tab-pane fade" id="tuzbe">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Tužbe</h4>
-                    <a href="{% url 'dodaj_tuzbu' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
+                    <a href="{% url 'naplata:dodaj_tuzbu' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj tužbu
                     </a>
                 </div>
@@ -336,7 +336,7 @@
                         <td>{{ tuzba.napomene }}</td>
                         <td class="d-flex justify-content-end align-items-center">
                             <!-- Izmena tužbe -->
-                            <a href="{% url 'izmeni_tuzbu' tuzba.id %}" class="text-success d-flex align-items-center me-3">
+                            <a href="{% url 'naplata:izmeni_tuzbu' tuzba.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
                         
@@ -344,7 +344,7 @@
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
                         
                             <!-- Brisanje tužbe -->
-                            <form action="{% url 'obrisi_tuzbu' tuzba.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
+                            <form action="{% url 'naplata:obrisi_tuzbu' tuzba.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
                                         style="border: none; background: none;"
@@ -458,7 +458,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h4>Za utuženje - Sve fakture po partneru iz baketa 6</h4>
-                                <a href="{% url 'export_utuzene_fakture' partner.2 %}" class="btn btn-outline-primary mb-3">
+                                <a href="{% url 'naplata:export_utuzene_fakture' partner.2 %}" class="btn btn-outline-primary mb-3">
                                     <i class="mdi mdi-download"></i> Preuzmi u Excel
                                 </a>
                             </div>
@@ -510,7 +510,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h4>Za utuženje - Sve fakture po partneru iz baketa 5</h4>
-                                <a href="{% url 'export_opomene_fakture' partner.2 %}" class="btn btn-outline-primary mb-3">
+                                <a href="{% url 'naplata:export_opomene_fakture' partner.2 %}" class="btn btn-outline-primary mb-3">
                                     <i class="mdi mdi-download"></i> Preuzmi u Excel
                                 </a>
                             </div>
@@ -553,7 +553,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h4>Za utuženje - Sve fakture po partneru iz baketa 4</h4>
-                                <a href="{% url 'export_baket_90_excel' partner.2 %}" class="btn btn-outline-primary mb-3">
+                                <a href="{% url 'naplata:export_baket_90_excel' partner.2 %}" class="btn btn-outline-primary mb-3">
                                     <i class="mdi mdi-download"></i> Preuzmi Excel
                                 </a>
                             </div>
@@ -596,7 +596,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h4>Za utuženje - Sve fakture po partneru iz baketa 3</h4>
-                                <a href="{% url 'export_baket_60_excel' partner.2 %}" class="btn btn-outline-primary mb-3">
+                                <a href="{% url 'naplata:export_baket_60_excel' partner.2 %}" class="btn btn-outline-primary mb-3">
                                     <i class="mdi mdi-download"></i> Preuzmi Excel
                                 </a>
                             </div>

@@ -350,8 +350,8 @@ class ServiceTransaction(models.Model):
     
 class DraftServiceTransaction(models.Model):
     YES_NO_CHOICES = (
-        (True, _("Da")),
-        (False, _("Ne")),
+        (True, _("Ne")),
+        (False, _("Da")),
     )
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='draft_service_transactions', verbose_name=_("Vozilo"), null=True, blank=True)  # Dodata veza na Vehicle
     god = models.IntegerField(verbose_name="Godina", null=True, blank=True)
@@ -380,7 +380,7 @@ class DraftServiceTransaction(models.Model):
     nije_garaza = models.BooleanField(
         default=False,
         choices=YES_NO_CHOICES,  # Dodato choices
-        verbose_name=_("Da li se ovaj servis ne pripada garaži?")
+        verbose_name=_("Da li se ovaj servis pripada garaži?")
     )
     napomena = models.TextField(blank=True, null=True, verbose_name="Napomena")
     class Meta:

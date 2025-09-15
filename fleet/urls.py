@@ -150,6 +150,11 @@ urlpatterns = [
     path('izvestaji/tro_parking/', views.tro_parking_view, name='tro_parking'),
     path('izvestaji/potrazivanje_ddor/', views.potrazivanje_ddor_view, name='potrazivanje_ddor'),
     path('izvestaji/po_dobavljacima/', views.po_dobavljacima_view, name='po_dobavljacima'),    
+    path('izvestaji/policies-monthly-costs/', PoliciesMonthlyCostsView.as_view(), name='policies_monthly_costs'),
+    path('izvestaji/policies-monthly-costs.csv', policies_monthly_costs_csv, name='policies_monthly_costs_csv'),
+
+    # Dodan URL za mesečne troškove lizinga (LeaseMonthlyCostsView)
+    path('izvestaji/lease-monthly-costs/', LeaseMonthlyCostsView.as_view(), name='lease_monthly_costs'),
 
     
     path('', views.dashboard, name='dashboard'),
