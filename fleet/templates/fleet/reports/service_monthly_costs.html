@@ -1,0 +1,61 @@
+{# templates/fleet/reports/service_monthly_costs.html #}
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">{{ title }}</h2>
+        <div class="d-flex align-items-center gap-2">
+          {# Dodaj CSV kad bude spremno: href="{% url 'reports_service_monthly_costs_csv' %}" #}
+          <a href="#" class="btn btn-success btn-sm disabled" tabindex="-1" aria-disabled="true" title="CSV (uskoro)">
+            <i class="mdi mdi-file-excel me-1"></i> Preuzmi CSV
+          </a>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="Datatable" class="display table table-hover table-striped table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Godina</th>
+                <th>Mesec</th>
+                <th>OJ</th>
+                <th>Šifra posla</th>
+                <th class="text-end">Iznos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rows %}
+                <tr>
+                  <td>{{ r.year }}</td>
+                  <td>{{ r.month }}</td>
+                  <td>{{ r.oj_code_txt|default:"—" }}</td>
+                  <td>{{ r.center_code_txt|default:"—" }}</td>
+                  <td class="text-end">{{ r.iznos|floatformat:2|intcomma }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Nema podataka…</td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th>Godina</th>
+                <th>Mesec</th>
+                <th>OJ</th>
+                <th>Šifra posla</th>
+                <th class="text-end">Iznos</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

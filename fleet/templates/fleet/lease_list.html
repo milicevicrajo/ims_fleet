@@ -92,8 +92,8 @@
                                 <td>{{ lease.end_date|date:"d.m.Y" }}</td>
                                 <td>{{ lease.note|default:"Nema napomena" }}</td>
                                 <td class="text-center text-nowrap">
-                                    <a href="{% url 'lease_update' lease.pk %}" class="btn btn-warning btn-sm" title="Izmeni">
-                                        <i class="fas fa-edit"></i>
+                                    <a href="{% url 'lease_update' lease.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
+                                        <i class="fas fa-edit"></i>Izmeni
                                     </a>
                                     <a href="{% url 'lease_delete' lease.pk %}"
                                        class="btn btn-danger btn-sm"

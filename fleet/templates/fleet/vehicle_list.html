@@ -1,131 +1,159 @@
-{% extends 'base.html' %}
-{% load form_filters %}
+{% extends "base.html" %}
+{% load widget_tweaks %}
 {% load ims_tags %}
+{% load humanize %}
+
 {% block content %}
-{% load humanize %} 
-<h2>{{ title }}</h2>
-<div class="card">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="card-title">Tabela</h5>
-            <a href={% url 'vehicle_create'%} class="text-success" style="font-size: 1.15em;">
-                <i class="mdi mdi-plus-box"></i><i class="mdi mdi-car"></i> Dodaj vozilo
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+
+        <!-- Header: naslov + dugmad (Export CSV + Novo vozilo) -->
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0">{{ title }}</h2>
+            <div class="d-flex align-items-center gap-2">
+            {# Kad povežeš URL, zameni href="#" sa {% url 'vehicle_export_csv' %} i ukloni 'disabled' #}
+            <a href="#"
+                class="btn btn-success btn-sm disabled"
+                tabindex="-1" aria-disabled="true" data-no-preloader
+                title="Export u CSV (uskoro)">
+                <i class="mdi mdi-file-excel me-1"></i> Export CSV
             </a>
+            <a href="{% url 'vehicle_create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus-circle me-1"></i> Novo vozilo
+            </a>
+            </div>
         </div>
-        <form method="get" class="row g-3 align-items-end pb-3">
-            <div class="col-auto">
-                <label for="id_fuel_in_last_6_months" class="col-form-label">{{ form.fuel_in_last_6_months.label }}:</label>
-                <div>
-                    {{ form.fuel_in_last_6_months|add_class:'form-control' }}
-                </div>
-            </div>
-            
-            <div class="col-auto">
-                <label for="id_org_unit" class="col-form-label">{{ form.org_unit.label }}:</label>
-                <div>
-                    {{ form.org_unit|add_class:'form-control' }}
-                </div>
-            </div>
-        
-            <div class="col-auto">
-                <label for="id_center_code" class="col-form-label">{{ form.center_code.label }}:</label>
-                <div>
-                    {{ form.center_code|add_class:'form-control' }}
-                </div>
-            </div>
-            <div class="col-auto">
-                <label for="id_show_archived" class="col-form-label">Otpisana vozila:</label>
-                <div>
-                    <select name="show_archived" id="id_show_archived" class="form-control">
-                        <option value="">Ne prikazuj</option>
-                        <option value="yes" {% if request.GET.show_archived == 'yes' %}selected{% endif %}>Prikaži</option>
-                    </select>
-                </div>
-            </div>
-            
-        
-            <!-- Dugme je sada poravnato sa poljima -->
-            <div class="col-auto d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Filtriraj</button>
-            </div>
 
+        <div class="card-body">
+            <form method="get" class="pb-3">
+                {# RED 1 — select polja, ceo red #}
+                <div class="row g-3 align-items-end mb-2">
+                    <div class="col-12 col-md-6 col-lg-2">
+                    <label for="{{ filter.form.status.id_for_label }}" class="form-label mb-0">{{ filter.form.status.label }}</label>
+                    {{ filter.form.status|add_class:"form-select select2-method" }}
+                    </div>
 
-        </form>
-        
+                    <div class="col-12 col-md-6 col-lg-2">
+                    <label for="{{ filter.form.org_unit.id_for_label }}" class="form-label mb-0">{{ filter.form.org_unit.label }}</label>
+                    {{ filter.form.org_unit|add_class:"form-select select2-method" }}
+                    </div>
 
+                    <div class="col-12 col-md-6 col-lg-2">
+                    <label for="{{ filter.form.center_code.id_for_label }}" class="form-label mb-0">{{ filter.form.center_code.label }}</label>
+                    {{ filter.form.center_code|add_class:"form-select select2-method" }}
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-2">
+                    <label for="{{ filter.form.fuel_in_last_6_months.id_for_label }}" class="form-label mb-0">{{ filter.form.fuel_in_last_6_months.label }}</label>
+                    {# USKLAĐENO: isti stil kao ostali selectovi #}
+                    {{ filter.form.fuel_in_last_6_months|add_class:"form-select select2-method" }}
+                    </div>
+
+                    <div class="col">
+                    <label for="{{ filter.form.category.id_for_label }}" class="form-label mb-0">{{ filter.form.category.label }}</label>
+                    {{ filter.form.category|add_class:"form-select select2-method" }}
+                    </div>
+                </div>
+
+                {# RED 2 — brojčana polja + dugmad, sve u jednom redu i CELOM širinom #}
+                <div class="row g-3 align-items-end">
+                    <div class="col-6 col-md-3 col-lg-2">
+                    <label for="{{ filter.form.engine_volume_min.id_for_label }}" class="form-label mb-0">{{ filter.form.engine_volume_min.label }}</label>
+                    {{ filter.form.engine_volume_min|add_class:"form-control" }}
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                    <label for="{{ filter.form.engine_volume_max.id_for_label }}" class="form-label mb-0">{{ filter.form.engine_volume_max.label }}</label>
+                    {{ filter.form.engine_volume_max|add_class:"form-control" }}
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                    <label for="{{ filter.form.year_min.id_for_label }}" class="form-label mb-0">{{ filter.form.year_min.label }}</label>
+                    {{ filter.form.year_min|add_class:"form-control" }}
+                    </div>
+
+                    <div class="col-6 col-md-3 col-lg-2">
+                    <label for="{{ filter.form.year_max.id_for_label }}" class="form-label mb-0">{{ filter.form.year_max.label }}</label>
+                    {{ filter.form.year_max|add_class:"form-control" }}
+                    </div>
+
+                    {# DUGMAD — “kao u tvom primeru”: zauzimaju kolonu, w-100 na mobilu, razmak preko gap-2 #}
+                    <div class="col">
+
+                            <button type="submit" class="btn btn-primary">Filtriraj</button>                        
+
+                            <button type="submit" class="btn btn-outline-secondary" href="{% url 'vehicle_list' %}">Reset</button>
+
+                    </div>
+                </div>
+            </form>
+
+        <!-- Tabela -->
         <div class="table-responsive">
-            <table id="DatatableVozila" class="display">
-                <thead>
-                    <tr>
-                        <th>Registracija</th>
-                        <th>Marka</th>
-                        <th>Tip</th>
-                        <th>Godiste</th>
-                        <th>Kilometraža</th>
-                        <th>Potrošnja</th>
-                        <th>Kategorija</th>                        
-                        <th>Centar</th>
-                        <th>Kubikaža</th>
-                        <th>Akcije</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for vehicle in vehicles %}
-                    <tr>  
-                        <td><a href="{% url 'vehicle_detail' vehicle.pk %}">{{ vehicle.registration_number }}</a></td>                   
-                        <td>{{ vehicle.brand }}</td>                      
-                        <td>{{ vehicle.model }}</td>
-                        <td>{{ vehicle.year_of_manufacture }}</td>
-                        <td>{{ vehicle.mileage }}</td>
-                        <td>
-                            {% if vehicle_consumption_data|dict_get:vehicle.id %}
-                                {{ vehicle_consumption_data|dict_get:vehicle.id|floatformat:2 }}
-                            {% else %}
-                                0
-                            {% endif %}
-                        </td>
-                        <td>{{ vehicle.category }}</td>
-                        <td>{{ vehicle.latest_org_unit }}</td>
-                        <td>{{ vehicle.engine_volume|floatformat:0 }}</td>
-                        <td>
-                            <!-- Izmeni dugme -->
-                            <a href="{% url 'vehicle_update' vehicle.pk %}" class="btn btn-sm btn-primary">
-                              <i class="fas fa-edit"></i> Izmeni
-                            </a>
-                          
-                            <!-- Otpiši dugme -->
-                            <form action="{% url 'vehicle_toggle_status' vehicle.pk %}" method="post" class="d-inline-block ms-2" style="margin: 0; padding: 0;">
-                              {% csrf_token %}
-                              <button type="submit" class="btn btn-sm btn-danger"
-                                      onclick="return confirm('Da li ste sigurni da želite da otpišete ovo vozilo?');">
-                                <i class="fas fa-trash-alt"></i> Otpiši
-                              </button>
-                            </form>
-                        </td>                       
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5">Nema vozila...</td>
-                    </tr>
-                {% endfor %}
-                <tfoot>
-                    <tr>
-                        <th>Registracija</th>
-                        <th>Marka</th>
-                        <th>Tip</th>
-                        <th>Godiste</th>
-                        <th>Kilometraža</th>
-                        <th>Potrošnja</th>
-                        <th>Kategorija</th>                        
-                        <th>Centar</th>
-                        <th>Kubikaža</th>
-                        <th>Akcije</th>
-                    </tr>
-                </tfoot>
-            </table>
+          <table id="DatatableVozila" class="display table table-hover table-striped table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Registracija</th>
+                <th>Marka</th>
+                <th>Tip</th>
+                <th>Godište</th>
+                <th>Kilometraža</th>
+                <th>Potrošnja</th>
+                <th>Kategorija</th>
+                <th>Centar</th>
+                <th>Kubikaža</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for vehicle in vehicles %}
+              <tr>
+                <td>
+                  <a href="{% url 'vehicle_detail' vehicle.pk %}">{{ vehicle.registration_number }}</a>
+                </td>
+                <td>{{ vehicle.brand }}</td>
+                <td>{{ vehicle.model }}</td>
+                <td>{{ vehicle.year_of_manufacture }}</td>
+                <td>{{ vehicle.mileage }}</td>
+                <td>
+                  {% if vehicle_consumption_data|dict_get:vehicle.id %}
+                    {{ vehicle_consumption_data|dict_get:vehicle.id|floatformat:2 }}
+                  {% else %}
+                    0
+                  {% endif %}
+                </td>
+                <td>{{ vehicle.category }}</td>
+                <td>{{ vehicle.latest_org_unit }}</td>
+                <td>{{ vehicle.engine_volume|floatformat:0 }}</td>
+                <td class="text-center text-nowrap">
+                  <a href="{% url 'vehicle_update' vehicle.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
+                    <i class="fas fa-edit"></i>Izmeni
+                  </a>
+                  <form action="{% url 'vehicle_toggle_status' vehicle.pk %}"
+                        method="post"
+                        class="d-inline-block ms-1"
+                        style="margin:0; padding:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            onclick="return confirm('Da li ste sigurni da želite da otpišete ovo vozilo?');"
+                            title="Otpiši">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="10" class="text-center text-muted">Nema vozila…</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
 
+      </div>
     </div>
+  </div>
 </div>
-
 {% endblock %}

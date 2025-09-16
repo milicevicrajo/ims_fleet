@@ -1,34 +1,51 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% load static %}
+
 {% block content %}
-<h1 class="my-4">Izveštaji</h1>
-<div class="row align-items-top">
-    <!--==========================================================-->
-    <!-------                  COLUMN START                   ------>
-    <!--==========================================================-->
-    <div class="col-lg-8">
-        <ul>
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">Izveštaji</h2>
+        {# mesto za eventualne globalne akcije npr. export svih, help, sl. #}
+      </div>
+
+      <div class="card-body">
+        {% if sections %}
+          <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
             {% for section, reports in sections.items %}
-                <li>
-                    <h2>{{ section }}</h2>
-                    <ul>
-                        {% for report in reports %}
-                            <li><a href="{% url report.url %}">{{ report.name }}</a></li>
-                        {% endfor %}
+              <div class="col">
+                <div class="card h-100 border-0 bg-light">
+                  <div class="card-header bg-white border-0 fw-semibold">
+                    <i class="mdi mdi-folder-outline me-1"></i> {{ section }}
+                  </div>
+
+                  {% if reports %}
+                    <ul class="list-group list-group-flush">
+                      {% for report in reports %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          <a href="{% url report.url %}" class="stretched-link text-decoration-none">
+                            <i class="mdi mdi-file-chart-outline me-2"></i>{{ report.name }}
+                          </a>
+                          <i class="mdi mdi-chevron-right text-muted"></i>
+                        </li>
+                      {% endfor %}
                     </ul>
-                </li>
+                  {% else %}
+                    <div class="p-3 text-muted">Nema dostupnih izveštaja u ovoj sekciji.</div>
+                  {% endif %}
+                </div>
+              </div>
             {% endfor %}
-        </ul>
-
+          </div>
+        {% else %}
+          <div class="alert alert-info mb-0">
+            Trenutno nema definisanih izveštaja.
+          </div>
+        {% endif %}
+      </div>
     </div>
-
+  </div>
 </div>
-
-<div class="container-fluid">
-    <div class="row">
-        
-    </div>
-</div> 
- 
 {% endblock %}

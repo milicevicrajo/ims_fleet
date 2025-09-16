@@ -214,14 +214,8 @@
             
             var table = $('#DatatableVozila').DataTable({
                 "language": languageSettings,
-                "pageLength": 200,  // Postavlja podrazumevani broj redova
-                layout: {
-                    topStart: {
-                        buttons: [
-                            'copy', 'excel', 'pdf'
-                        ]
-                    }
-                },
+                "pageLength": 50,  // Postavlja podrazumevani broj redova
+
             });
             var table = $('#DatatableSaobracajne').DataTable({
                 "language": languageSettings,

@@ -1,7 +1,10 @@
 # reports/queries.py
 from django.db.models import F, Value, CharField, Case, When, Sum, OuterRef, Subquery
 from django.db.models.functions import ExtractYear, ExtractMonth
-from .models import Policy, JobCode  # prilagodi import ako treba
+from .models import Policy, JobCode, Lease, ServiceTransaction, FuelConsumption, Vehicle
+from django.http import HttpResponse
+import csv
+from django.db.models.functions import TruncYear, TruncMonth
 
 # "Važeći" JobCode na dan izdavanja polise
 _latest_jc = JobCode.objects.filter(
@@ -38,3 +41,191 @@ def policies_monthly_costs_qs(base_qs=None):
         'year', 'month', 'center', 'oj_id', 'job_code', 'vrsta'
     )
     return qs
+
+def _filtered_qs(request):
+    qs = policies_monthly_costs_qs()
+
+    # SVI filteri su opcioni — ako ih nema, dobićeš SVE GODINE
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    center = request.GET.get('center')
+    oj_id = request.GET.get('oj')
+    vrsta = request.GET.get('vrsta')
+
+    if year:
+        qs = qs.filter(year=year)
+    if month:
+        qs = qs.filter(month=month)
+    if center:
+        qs = qs.filter(center=center)
+    if oj_id:
+        qs = qs.filter(oj_id=oj_id)
+    if vrsta:
+        qs = qs.filter(vrsta__iexact=vrsta)
+
+    # po želji: stabilan redosled
+    return qs.order_by('year', 'month', 'center', 'oj_id', 'job_code', 'vrsta')
+
+
+
+def lease_monthly_costs_rows(request):
+    """
+    Grupa lizinga po godini/mesecu/centar/oj/job_code/vrsti i računa prateće troškove
+    (servisi + gorivo) za vozila koja su u toj organizacionoj jedinici u tom trenutku.
+    """
+    # Subqueryi za poslednju OU za vozilo
+    latest_center_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__center')[:1]
+    latest_oj_id_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__id')[:1]
+    latest_oj_name_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__name')[:1]
+
+    # Agregacija lizinga po datumu početka (year/month) i OU
+    leases_agg = Lease.objects.annotate(
+        year=TruncYear('start_date'),
+        month=TruncMonth('start_date'),
+        center=Subquery(latest_center_subq),
+        oj_id=Subquery(latest_oj_id_subq),
+        oj_name=Subquery(latest_oj_name_subq),
+    ).values(
+        'year','month','center','oj_id','oj_name','job_code','lease_type'
+    ).annotate(
+        total_lease_amount=Sum('current_payment_amount')
+    )
+
+    # primeni GET filtere (opcionalno)
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    center = request.GET.get('center')
+    oj_id_filter = request.GET.get('oj')
+    lease_type = request.GET.get('vrsta')  # očekuje 'finansijski'|'operativni'|'dugorocni'
+
+    if year:
+        leases_agg = [r for r in leases_agg if r['year'] and r['year'].year == int(year)]
+    if month:
+        leases_agg = [r for r in leases_agg if r['month'] and r['month'].month == int(month)]
+    if center:
+        leases_agg = [r for r in leases_agg if (r.get('center') or '') == center]
+    if oj_id_filter:
+        leases_agg = [r for r in leases_agg if str(r.get('oj_id') or '') == str(oj_id_filter)]
+    if lease_type:
+        leases_agg = [r for r in leases_agg if (r.get('lease_type') or '').lower() == lease_type.lower()]
+
+    rows = []
+    # subquery za poslednju OU kod Vehicle (koristi se za pronalazak vozila u OU)
+    latest_ou_for_vehicle = JobCode.objects.filter(vehicle=OuterRef('pk')).order_by('-assigned_date').values('organizational_unit__id')[:1]
+
+    for r in leases_agg:
+        # izvuci year/month kao int
+        y = r['year'].year if r['year'] else None
+        m = r['month'].month if r['month'] else None
+        oj_id = r.get('oj_id')
+
+        # nađi vozila koja trenutno pripadaju toj OU (ako postoji oj_id)
+        if oj_id:
+            vehicle_ids = list(Vehicle.objects.annotate(
+                latest_ou_id=Subquery(latest_ou_for_vehicle)
+            ).filter(latest_ou_id=oj_id).values_list('pk', flat=True))
+        else:
+            vehicle_ids = []
+
+        num_vehicles = len(vehicle_ids)
+
+        # prateci troskovi = servisi + gorivo za te vehicle_ids i za dati year/month
+        service_sum = 0
+        fuel_sum = 0
+        if num_vehicles and y and m:
+            service_sum = ServiceTransaction.objects.filter(
+                vehicle_id__in=vehicle_ids,
+                datum__year=y,
+                datum__month=m
+            ).aggregate(total=Sum('potrazuje'))['total'] or 0
+
+            fuel_sum = FuelConsumption.objects.filter(
+                vehicle_id__in=vehicle_ids,
+                date__year=y,
+                date__month=m
+            ).aggregate(total=Sum('cost_bruto'))['total'] or 0
+
+        accompanying_total = (service_sum or 0) + (fuel_sum or 0)
+        accompanying_per_vehicle = (accompanying_total / num_vehicles) if num_vehicles else None
+
+        rows.append({
+            'year': y,
+            'month': m,
+            'center': r.get('center'),
+            'oj_id': oj_id,
+            'oj_name': r.get('oj_name'),
+            'job_code': r.get('job_code'),
+            'lease_type': r.get('lease_type'),
+            'lease_amount': r.get('total_lease_amount') or 0,
+            'accompanying_total': accompanying_total,
+            'accompanying_per_vehicle': accompanying_per_vehicle,
+            'vehicle_count': num_vehicles,
+        })
+
+    # opcionalno sortiranje
+    rows = sorted(rows, key=lambda x: (x['year'] or 0, x['month'] or 0, x.get('center') or '', x.get('oj_id') or ''))
+    return rows
+
+# fleet/reports_queries.py
+from django.db.models import OuterRef, Subquery, Value, CharField, Sum
+from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce, Cast
+
+from .models import ServiceTransaction, JobCode
+
+# imports na vrhu modula
+from decimal import Decimal
+from django.db.models import (
+    OuterRef, Subquery, Value, CharField, DecimalField, Sum
+)
+from django.db.models.functions import (
+    ExtractYear, ExtractMonth, Coalesce, Cast
+)
+
+def _service_base_qs():
+    """
+    Osnovni QS za servise, anotira: year, month, oj_code, center_code (+ txt).
+    OJ i centar se određuju po stanju na datum servisa (<= datum).
+    """
+    latest_jc = JobCode.objects.filter(
+        vehicle_id=OuterRef('vehicle_id'),
+        assigned_date__lte=OuterRef('datum')
+    ).order_by('-assigned_date')
+
+    oj_code_sq     = latest_jc.values('organizational_unit__code')[:1]
+    center_code_sq = latest_jc.values('organizational_unit__center')[:1]
+
+    return (
+        ServiceTransaction.objects
+        .annotate(
+            year=ExtractYear('datum'),
+            month=ExtractMonth('datum'),
+            oj_code=Subquery(oj_code_sq),
+            center_code=Subquery(center_code_sq),
+        )
+        .annotate(
+            oj_code_txt=Coalesce(Cast('oj_code', CharField()), Value('')),
+            center_code_txt=Coalesce(Cast('center_code', CharField()), Value('')),
+        )
+    )
+
+def service_monthly_costs_rows(request):
+    """
+    Vraća agregirane redove: year, month, oj_code_txt, center_code_txt, iznos
+    (iznos = sum(potrazuje) kao Decimal).
+    """
+    qs = _service_base_qs()
+
+    # >>> KLJUČNO: eksplicitno definiši Decimal output <<<
+    dec_out = DecimalField(max_digits=18, decimal_places=2)
+
+    return (
+        qs.values('year', 'month', 'oj_code_txt', 'center_code_txt')
+          .annotate(
+              iznos=Coalesce(
+                  Sum('potrazuje', output_field=dec_out),
+                  Value(Decimal('0.00')),
+                  output_field=dec_out
+              )
+          )
+          .order_by('-year', '-month', 'center_code_txt', 'oj_code_txt')
+    )

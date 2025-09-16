@@ -23,7 +23,6 @@ from django.db.models.functions import TruncMonth, TruncYear
 from django.db.models import Q
 from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data, populate_putni_nalog_template
 from .models import DraftServiceTransaction
-import threading
 from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset
 from django.shortcuts import render
 from django.db import connection
@@ -42,6 +41,11 @@ from django_filters.views import FilterView
 
 from .models import DraftServiceTransaction
 from .filters import ServiceFixingFilter
+
+from django.db.models import OuterRef, Subquery, Value, CharField, Sum
+from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce, Cast
+
+from .models import ServiceTransaction, JobCode
 
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
@@ -351,44 +355,34 @@ class OrganizationalUnitUpdateView(UpdateView):
 # <!-- ======================================================================= -->
 #                           <!-- VEHICLE -->
 # <!-- ======================================================================= -->
-class VehicleListView(LoginRequiredMixin, ListView):
+class VehicleListView(LoginRequiredMixin, FilterView):
     model = Vehicle
     template_name = 'fleet/vehicle_list.html'
     context_object_name = 'vehicles'
-    form_class = VehicleFilterForm  # Dodajemo formu za filtriranje 
+    filterset_class = VehicleFilter
+
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        qs = Vehicle.objects.all()
 
-        # ✔️ Ako korisnik NIJE tražio otpisana, filtriraj ih
-        show_archived = self.request.GET.get('show_archived')
-        if show_archived != 'yes':
-            queryset = queryset.filter(otpis=False)
-        
-        # Dohvati vrednosti iz GET parametara
-        org_unit = self.request.GET.get('org_unit')
-        fuel_in_last_6_months = self.request.GET.get('fuel_in_last_6_months')
-        center_code = self.request.GET.get('center_code')
-
-        # Subquery to get the latest org_unit for each Vehicle
-        latest_org_unit_subquery = JobCode.objects.filter(
-            vehicle_id=OuterRef('pk')
-        ).order_by('-assigned_date').values('organizational_unit__code')[:1]
-
-        # Subquery to get the latest TrafficCard for each Vehicle
-        latest_traffic_card_subquery = TrafficCard.objects.filter(
-            vehicle_id=OuterRef('pk')
-        ).order_by('-issue_date').values('registration_number')[:1]
-        
-        last_mileage_subquery = FuelConsumption.objects.filter(
-            vehicle=OuterRef('pk')
-        ).order_by('-mileage').values('mileage')[:1]
-
+        # Subqueries / annotate — kao u tvojoj postojećoj logici
         latest_job_code_id_subquery = JobCode.objects.filter(
             vehicle=OuterRef('pk')
         ).order_by('-assigned_date').values('id')[:1]
 
-        queryset = queryset.annotate(
+        latest_org_unit_subquery = JobCode.objects.filter(
+            vehicle=OuterRef('pk')
+        ).order_by('-assigned_date').values('organizational_unit__code')[:1]
+
+        latest_traffic_card_subquery = TrafficCard.objects.filter(
+            vehicle=OuterRef('pk')
+        ).order_by('-issue_date').values('registration_number')[:1]
+
+        last_mileage_subquery = FuelConsumption.objects.filter(
+            vehicle=OuterRef('pk')
+        ).order_by('-mileage').values('mileage')[:1]
+
+        qs = qs.annotate(
             latest_job_code_id=Subquery(latest_job_code_id_subquery),
             latest_org_unit=Subquery(latest_org_unit_subquery),
             registration_number=Subquery(latest_traffic_card_subquery),
@@ -396,60 +390,28 @@ class VehicleListView(LoginRequiredMixin, ListView):
             mileage=Subquery(last_mileage_subquery),
         )
 
-        if org_unit:
-            # Create a subquery that identifies the IDs of JobCode objects
-            # which are the LATEST for their vehicle AND match the org_unit_id
-            matching_latest_job_codes = JobCode.objects.filter(
-                id=OuterRef('latest_job_code_id'), # Match the ID of the latest JobCode from the outer Vehicle query
-                organizational_unit_id=org_unit # Filter by the selected org unit ID
-            ).values('vehicle_id') # Get the vehicle ID for these matching JobCodes
+        # DEFAULT: ako korisnik NIJE eksplicitno izabrao status / show_archived,
+        # prikaži samo aktivna (otpis=False)
+        get = self.request.GET
+        if "status" not in get and "show_archived" not in get:
+            qs = qs.filter(otpis=False)
 
-            # Filter the main queryset to include only vehicles whose PK is in the list
-            # of vehicle_ids derived from the matching latest job codes.
-            queryset = queryset.filter(pk__in=Subquery(matching_latest_job_codes))
+        return qs
 
-
-        # Filter for Center Code (center_code)
-        if center_code:
-            # Create a subquery that identifies the IDs of JobCode objects
-            # which are the LATEST for their vehicle AND match the center_code
-            matching_latest_job_codes_by_center = JobCode.objects.filter(
-                id=OuterRef('latest_job_code_id'), # Match the ID of the latest JobCode from the outer Vehicle query
-                organizational_unit__center=center_code # Filter by the selected center code string
-            ).values('vehicle_id')
-
-            # Filter the main queryset to include only vehicles whose PK is in the list
-            # of vehicle_ids derived from the matching latest job codes by center.
-            queryset = queryset.filter(pk__in=Subquery(matching_latest_job_codes_by_center))
-
-        # Filter za gorivo u poslednjih 6 meseci
-        if fuel_in_last_6_months == 'yes':
-            six_months_ago = timezone.now() - timedelta(days=180)
-            queryset = queryset.filter(
-                fuel_consumptions__date__gte=six_months_ago
-            ).distinct()  # Da ne vraća duplikate ako postoji više sipanja
-        elif fuel_in_last_6_months == 'no':
-            six_months_ago = timezone.now() - timedelta(days=180)
-            queryset = queryset.exclude(
-                fuel_consumptions__date__gte=six_months_ago
-            ).distinct()  # Da ne vraća duplikate ako postoji više sipanja
-        
-        return queryset
-    
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        vehicles = context['vehicles']
+        ctx = super().get_context_data(**kwargs)
+
+        # Prosečna potrošnja (isti princip kao kod tebe)
+        vehicles = ctx.get('vehicles') or ctx.get('object_list')  # safety
         vehicle_consumption_data = {}
+        for v in vehicles:
+            vehicle_consumption_data[v.id] = calculate_average_fuel_consumption(v)
 
-        for vehicle in vehicles:
-            vehicle_consumption_data[vehicle.id] = calculate_average_fuel_consumption(vehicle)
-
-        form = VehicleFilterForm(self.request.GET or None)
-        context['vehicle_consumption_data'] = vehicle_consumption_data
-        context['form'] = form
-        context['title'] = 'Lista vozila'
-
-        return context
+        ctx['vehicle_consumption_data'] = vehicle_consumption_data
+        ctx['title'] = 'Lista vozila'
+        # Ako želiš globalni indikator aktivne aplikacije:
+        ctx.setdefault('current_app', 'fleet')
+        return ctx
     
 # DETALJI VOZILA
 class VehicleDetailView(LoginRequiredMixin, DetailView):
@@ -679,6 +641,7 @@ class TrafficCardListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['filter_form'] = self.filter_form
+        context['title'] = 'Lista saobraćajnih dozvola'
         return context
 class TrafficCardCreateView(LoginRequiredMixin, CreateView):
     model = TrafficCard
@@ -1593,7 +1556,7 @@ class ServiceFixingListView(LoginRequiredMixin, FilterView):
     template_name = 'fleet/draft_service_transactions_list.html'
     context_object_name = 'service_transactions'
     filterset_class = ServiceFixingFilter
-    paginate_by = 100  # po želji
+
 
     def get_queryset(self):
         return (DraftServiceTransaction.objects
@@ -1676,7 +1639,7 @@ class ServiceTransactionFixingListView(LoginRequiredMixin, FilterView):
     template_name = 'fleet/draft_service_transactions_list.html'
     context_object_name = 'service_transactions'
     filterset_class = ServiceFixingFilter
-    paginate_by = 100
+
 
     def get_queryset(self):
         return (DraftServiceTransaction.objects
@@ -1974,18 +1937,7 @@ def fetch_data_view(request):
     # Prikaz stranice sa svim fetching formama
     return render(request, 'fleet/fetch_data.html')
 
-# @staff_member_required
-# def run_nis_command_view(request):
-#     if request.method == "POST":
-#         def run_command_in_background():
-#             execute_nis_command()
-        
-#         # Pokreće komandu u pozadini
-#         thread = threading.Thread(target=run_command_in_background)
-#         thread.start()
-        
-#         return JsonResponse({"status": "success", "message": "Komanda pokrenuta u pozadini."})
-#     return JsonResponse({"status": "error", "message": "Nevalidan zahtev."})
+
 
 # POVLACENJE PODATAKA IZ DRUGE BAZE
 logger = logging.getLogger(__name__)  
@@ -2172,6 +2124,7 @@ class KontoDeleteView(LoginRequiredMixin, DeleteView):
     template_name = "fleet/konta_confirm_delete.html"
     success_url = reverse_lazy("konta_list")
     success_message = "Konto je obrisan."
+
 
 # <!-- ======================================================================================== -->
 #                           <!-- IZVESTAJI -->
@@ -2810,6 +2763,7 @@ import csv
 
 
 from .filters import PoliciesMonthlyCostsFilter
+from .queries import policies_monthly_costs_qs, _filtered_qs
 class PoliciesMonthlyCostsView(FilterView, ListView):
     """
     FilterView + ListView:
@@ -2826,31 +2780,7 @@ class PoliciesMonthlyCostsView(FilterView, ListView):
         return policies_monthly_costs_qs(Policy.objects.all()).order_by(
             'year', 'month', 'center', 'oj_id', 'job_code', 'vrsta'
         )
-
-def _filtered_qs(request):
-    qs = policies_monthly_costs_qs()
-
-    # SVI filteri su opcioni — ako ih nema, dobićeš SVE GODINE
-    year = request.GET.get('year')
-    month = request.GET.get('month')
-    center = request.GET.get('center')
-    oj_id = request.GET.get('oj')
-    vrsta = request.GET.get('vrsta')
-
-    if year:
-        qs = qs.filter(year=year)
-    if month:
-        qs = qs.filter(month=month)
-    if center:
-        qs = qs.filter(center=center)
-    if oj_id:
-        qs = qs.filter(oj_id=oj_id)
-    if vrsta:
-        qs = qs.filter(vrsta__iexact=vrsta)
-
-    # po želji: stabilan redosled
-    return qs.order_by('year', 'month', 'center', 'oj_id', 'job_code', 'vrsta')
-
+    
 def policies_monthly_costs_csv(request):
     qs = _filtered_qs(request)
     response = HttpResponse(content_type='text/csv; charset=utf-8')
@@ -2865,103 +2795,7 @@ def policies_monthly_costs_csv(request):
         ])
     return response
 
-def lease_monthly_costs_rows(request):
-    """
-    Grupa lizinga po godini/mesecu/centar/oj/job_code/vrsti i računa prateće troškove
-    (servisi + gorivo) za vozila koja su u toj organizacionoj jedinici u tom trenutku.
-    """
-    # Subqueryi za poslednju OU za vozilo
-    latest_center_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__center')[:1]
-    latest_oj_id_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__id')[:1]
-    latest_oj_name_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__name')[:1]
-
-    # Agregacija lizinga po datumu početka (year/month) i OU
-    leases_agg = Lease.objects.annotate(
-        year=TruncYear('start_date'),
-        month=TruncMonth('start_date'),
-        center=Subquery(latest_center_subq),
-        oj_id=Subquery(latest_oj_id_subq),
-        oj_name=Subquery(latest_oj_name_subq),
-    ).values(
-        'year','month','center','oj_id','oj_name','job_code','lease_type'
-    ).annotate(
-        total_lease_amount=Sum('current_payment_amount')
-    )
-
-    # primeni GET filtere (opcionalno)
-    year = request.GET.get('year')
-    month = request.GET.get('month')
-    center = request.GET.get('center')
-    oj_id_filter = request.GET.get('oj')
-    lease_type = request.GET.get('vrsta')  # očekuje 'finansijski'|'operativni'|'dugorocni'
-
-    if year:
-        leases_agg = [r for r in leases_agg if r['year'] and r['year'].year == int(year)]
-    if month:
-        leases_agg = [r for r in leases_agg if r['month'] and r['month'].month == int(month)]
-    if center:
-        leases_agg = [r for r in leases_agg if (r.get('center') or '') == center]
-    if oj_id_filter:
-        leases_agg = [r for r in leases_agg if str(r.get('oj_id') or '') == str(oj_id_filter)]
-    if lease_type:
-        leases_agg = [r for r in leases_agg if (r.get('lease_type') or '').lower() == lease_type.lower()]
-
-    rows = []
-    # subquery za poslednju OU kod Vehicle (koristi se za pronalazak vozila u OU)
-    latest_ou_for_vehicle = JobCode.objects.filter(vehicle=OuterRef('pk')).order_by('-assigned_date').values('organizational_unit__id')[:1]
-
-    for r in leases_agg:
-        # izvuci year/month kao int
-        y = r['year'].year if r['year'] else None
-        m = r['month'].month if r['month'] else None
-        oj_id = r.get('oj_id')
-
-        # nađi vozila koja trenutno pripadaju toj OU (ako postoji oj_id)
-        if oj_id:
-            vehicle_ids = list(Vehicle.objects.annotate(
-                latest_ou_id=Subquery(latest_ou_for_vehicle)
-            ).filter(latest_ou_id=oj_id).values_list('pk', flat=True))
-        else:
-            vehicle_ids = []
-
-        num_vehicles = len(vehicle_ids)
-
-        # prateci troskovi = servisi + gorivo za te vehicle_ids i za dati year/month
-        service_sum = 0
-        fuel_sum = 0
-        if num_vehicles and y and m:
-            service_sum = ServiceTransaction.objects.filter(
-                vehicle_id__in=vehicle_ids,
-                datum__year=y,
-                datum__month=m
-            ).aggregate(total=Sum('potrazuje'))['total'] or 0
-
-            fuel_sum = FuelConsumption.objects.filter(
-                vehicle_id__in=vehicle_ids,
-                date__year=y,
-                date__month=m
-            ).aggregate(total=Sum('cost_bruto'))['total'] or 0
-
-        accompanying_total = (service_sum or 0) + (fuel_sum or 0)
-        accompanying_per_vehicle = (accompanying_total / num_vehicles) if num_vehicles else None
-
-        rows.append({
-            'year': y,
-            'month': m,
-            'center': r.get('center'),
-            'oj_id': oj_id,
-            'oj_name': r.get('oj_name'),
-            'job_code': r.get('job_code'),
-            'lease_type': r.get('lease_type'),
-            'lease_amount': r.get('total_lease_amount') or 0,
-            'accompanying_total': accompanying_total,
-            'accompanying_per_vehicle': accompanying_per_vehicle,
-            'vehicle_count': num_vehicles,
-        })
-
-    # opcionalno sortiranje
-    rows = sorted(rows, key=lambda x: (x['year'] or 0, x['month'] or 0, x.get('center') or '', x.get('oj_id') or ''))
-    return rows
+from .queries import lease_monthly_costs_rows
 
 class LeaseMonthlyCostsView(ListView):
     """
@@ -2975,3 +2809,116 @@ class LeaseMonthlyCostsView(ListView):
 
     def get_queryset(self):
         return lease_monthly_costs_rows(self.request)
+    
+
+
+def _service_base_qs():
+    """
+    Osnovni QS za servise, anotira: year, month, oj_code, center_code (+ txt varijante).
+    OJ i centar se određuju po stanju na datum servisa (<= datum).
+    """
+    latest_jc = JobCode.objects.filter(
+        vehicle_id=OuterRef('vehicle_id'),
+        assigned_date__lte=OuterRef('datum')
+    ).order_by('-assigned_date')
+
+    oj_code_sq    = latest_jc.values('organizational_unit__code')[:1]
+    center_code_sq = latest_jc.values('organizational_unit__center')[:1]
+
+    return (
+        ServiceTransaction.objects
+        .annotate(
+            year=ExtractYear('datum'),
+            month=ExtractMonth('datum'),
+            oj_code=Subquery(oj_code_sq),
+            center_code=Subquery(center_code_sq),
+        )
+        .annotate(
+            oj_code_txt=Coalesce(Cast('oj_code', CharField()), Value('')),
+            center_code_txt=Coalesce(Cast('center_code', CharField()), Value('')),
+        )
+    )
+
+
+def _apply_service_filters(qs, params):
+    """
+    Opcioni filteri preko GET parametara:
+      - year, month (int)
+      - oj (šifra OJ), center (šifra posla/centra)
+      - category (id ServiceType), nije_garaza ('True'/'False')
+    """
+    year = params.get('year')
+    if year:
+        qs = qs.filter(datum__year=year)
+
+    month = params.get('month')
+    if month:
+        qs = qs.filter(datum__month=month)
+
+    oj = params.get('oj')
+    if oj:
+        qs = qs.filter(oj_code=oj)
+
+    center = params.get('center')
+    if center:
+        qs = qs.filter(center_code=center)
+
+    category = params.get('category')
+    if category:
+        qs = qs.filter(popravka_kategorija_id=category)
+
+    nije_garaza = params.get('nije_garaza')
+    if nije_garaza in ('True', 'False'):
+        qs = qs.filter(nije_garaza=(nije_garaza == 'True'))
+
+    return qs
+
+
+
+
+# fleet/views_reports.py  (ili u postojeći views.py ako tamo držiš report CBV-e)
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView
+
+from .queries import service_monthly_costs_rows
+
+class ServiceMonthlyCostsView(LoginRequiredMixin, FilterView):
+    """
+    Mesečni troškovi servisa po centru/OJ.
+    rows: year, month, oj_code_txt, center_code_txt, iznos
+    """
+    template_name = "fleet/reports/service_monthly_costs.html"
+    context_object_name = "rows"
+    filterset_class = ServiceMonthlyCostsFilter
+
+    def get_queryset(self):
+        # vraća QS sa anotacijama: year, month, oj_code_txt, center_code_txt, iznos
+        return service_monthly_costs_rows(self.request)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Mesečni troškovi servisa po centru"
+        return ctx
+
+from django.contrib.auth.decorators import login_required
+@login_required
+def service_monthly_costs_csv(request):
+    rows = service_monthly_costs_rows(request)
+
+    resp = HttpResponse(content_type='text/csv; charset=utf-8')
+    resp['Content-Disposition'] = 'attachment; filename="service_monthly_costs.csv"'
+
+    w = csv.writer(resp)
+    # zaglavlje koje odgovara poljima iz service_monthly_costs_rows
+    w.writerow(['Godina', 'Mesec', 'OJ', 'Centar', 'Ukupan trošak'])
+
+    for r in rows:
+        w.writerow([
+            r['year'],
+            r['month'],
+            r.get('oj_code_txt') or '',
+            r.get('center_code_txt') or '',
+            f"{r['iznos']:.2f}",
+        ])
+
+    return resp

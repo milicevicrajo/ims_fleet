@@ -5,26 +5,145 @@ from datetime import timedelta
 from django.utils import timezone
 from datetime import date, timedelta
 
-class VehicleFilterForm(forms.Form):
-    org_unit = forms.ModelChoiceField(
-        queryset=OrganizationalUnit.objects.all().order_by('code'),  # Uzimamo sve JobCode sortirane po šifri
-        required=False,
-        label='Organizaciona jedinica'
+# fleet/filters.py
+import django_filters
+from django import forms
+from django.utils import timezone
+from datetime import timedelta
+
+from .models import Vehicle, JobCode, FuelConsumption, TrafficCard
+# pretpostavka da OrganizationalUnit postoji:
+from .models import OrganizationalUnit
+
+
+class VehicleFilter(django_filters.FilterSet):
+    # --- Osnovni filteri ---
+    category = django_filters.CharFilter(
+        label="Kategorija", lookup_expr="icontains"
     )
-    fuel_in_last_6_months = forms.ChoiceField(
-        choices=[
-            ('', '----'),  # Ovo predstavlja opciju da filter nije primenjen
-            ('yes', 'Da'),
-            ('no', 'Ne')
-        ],
-        required=False,
-        label='Sipano gorivo u poslednjih 6 meseci'
+
+    engine_volume_min = django_filters.NumberFilter(
+        field_name="engine_volume", lookup_expr="gte", label="Kubikaža od"
     )
-    center_code = forms.ModelChoiceField(
-        queryset=OrganizationalUnit.objects.values_list('center', flat=True).distinct().order_by('center'),  # Distinktne šifre centara
-        required=False,
-        label='Centar'
+    engine_volume_max = django_filters.NumberFilter(
+        field_name="engine_volume", lookup_expr="lte", label="Kubikaža do"
     )
+
+    year_min = django_filters.NumberFilter(
+        field_name="year_of_manufacture", lookup_expr="gte", label="Godište od"
+    )
+    year_max = django_filters.NumberFilter(
+        field_name="year_of_manufacture", lookup_expr="lte", label="Godište do"
+    )
+
+    # --- Status: aktivna / otpisana / sva ---
+    STATUS_CHOICES = (
+        ("active", "Aktivna"),
+        ("archived", "Otpisana"),
+
+    )
+    status = django_filters.ChoiceFilter(
+        label="Status", choices=STATUS_CHOICES, method="filter_status"
+    )
+
+    # Back-compat za stari parametar show_archived=yes
+    show_archived = django_filters.CharFilter(method="filter_show_archived")
+
+    # --- Gorivo u poslednjih 6 meseci ---
+    YES_NO_CHOICES = (("yes","Da"), ("no","Ne"))
+    fuel_in_last_6_months = django_filters.ChoiceFilter(
+        label="Gorivo u 6m", choices=YES_NO_CHOICES, method="filter_fuel_6m"
+    )
+
+    # --- OJ & Centar (po NAJNOVIJEM JobCode) ---
+    org_unit = django_filters.ModelChoiceFilter(
+        label="OJ", queryset=OrganizationalUnit.objects.none(), method="filter_org_unit"
+    )
+    center_code = django_filters.ChoiceFilter(
+        label="Centar", choices=[], method="filter_center_code"
+    )
+
+    class Meta:
+        model = Vehicle
+        fields = [
+            "category",
+            "engine_volume_min", "engine_volume_max",
+            "year_min", "year_max",
+            "status", "fuel_in_last_6_months",
+            "org_unit", "center_code",
+        ]
+
+    # Dinamičke choice liste + inicijalni status na formi
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # OJ queryset (sortirano po šifri / nazivu kako želiš)
+        self.filters["org_unit"].queryset = OrganizationalUnit.objects.all().order_by("code")
+
+        # CENTRI kao choices (distinct, sortirano)
+        centers = (OrganizationalUnit.objects
+                   .exclude(center__isnull=True).exclude(center="")
+                   .values_list("center", flat=True)
+                   .distinct().order_by("center"))
+        self.filters["center_code"].extra["choices"] = [(c, c) for c in centers]
+
+        # KATEGORIJE kao select (prijatnije nego plain text)
+        cats = (Vehicle.objects
+                .exclude(category__isnull=True).exclude(category="")
+                .values_list("category", flat=True)
+                .distinct().order_by("category"))
+        # ako želiš select umesto text:
+        self.form.fields["category"].widget = forms.Select(
+            choices=[("", "— sve —")] + [(c, c) for c in cats]
+        )
+
+        # Ako korisnik NIJE poslao status, prikaži 'Aktivna' kao default u UI
+        if not self.data.get("status"):
+            self.form.fields["status"].initial = "active"
+
+    # --- Metode filtera ---
+
+    def filter_status(self, qs, name, value):
+        if value == "active":
+            return qs.filter(otpis=False)
+        elif value == "archived":
+            return qs.filter(otpis=True)
+        # "all" -> bez ograničenja
+        return qs
+
+    def filter_show_archived(self, qs, name, value):
+        # za kompatibilnost sa starim ?show_archived=yes
+        if value == "yes":
+            return qs.filter(otpis=True)
+        return qs
+
+    def filter_fuel_6m(self, qs, name, value):
+        six_months_ago = timezone.now().date() - timedelta(days=180)
+        if value == "yes":
+            return qs.filter(fuel_consumptions__date__gte=six_months_ago).distinct()
+        elif value == "no":
+            return qs.exclude(fuel_consumptions__date__gte=six_months_ago).distinct()
+        return qs
+
+    def filter_org_unit(self, qs, name, value):
+        if not value:
+            return qs
+        # vozila čiji NAJNOVIJI job_code pripada zadatoj OJ
+        matching_latest_job_codes = JobCode.objects.filter(
+            id=django_filters.fields.OuterRef("latest_job_code_id"),
+            organizational_unit_id=value.pk
+        ).values("vehicle_id")
+        return qs.filter(pk__in=django_filters.fields.Subquery(matching_latest_job_codes))
+
+    def filter_center_code(self, qs, name, value):
+        if not value:
+            return qs
+        matching_latest_job_codes = JobCode.objects.filter(
+            id=django_filters.fields.OuterRef("latest_job_code_id"),
+            organizational_unit__center=value
+        ).values("vehicle_id")
+        return qs.filter(pk__in=django_filters.fields.Subquery(matching_latest_job_codes))
+
 
 
 class TrafficCardFilterForm(forms.Form):
@@ -223,16 +342,15 @@ class ServiceFixingFilter(django_filters.FilterSet):
     partner = django_filters.CharFilter(
         field_name="naz_par_pl", lookup_expr="icontains",
         label="Partner (sadrži)",
-        widget=forms.TextInput(attrs={"placeholder": "npr. NIS, DDOR..."})
+        widget=forms.TextInput(attrs={"placeholder": "npr. Auto Deki, Beoguma..."})
     )
 
     VAN_GARAZE_CHOICES = (
-        ("", "— svi —"),  # bez filtriranja
-        ("True", "Da"),
-        ("False", "Ne"),
+        ("True", "Ne"),
+        ("False", "Da"),
     )
     nije_garaza = django_filters.ChoiceFilter(
-        label="Van garaže",
+        label="Garaza",
         choices=VAN_GARAZE_CHOICES,
         method="filter_nije_garaza",
     )
@@ -247,6 +365,8 @@ class ServiceFixingFilter(django_filters.FilterSet):
             data = data.copy()         # QueryDict → mutable
             data["nije_garaza"] = "False"
         super().__init__(data, *args, **kwargs)
+        # (opciono) postavi i initial, čisto da bude konzistentno
+        self.form.fields["nije_garaza"].initial = "False"
 
     def filter_nije_garaza(self, qs, name, value):
         if value == "True":
@@ -265,3 +385,20 @@ class ServiceFixingFilter(django_filters.FilterSet):
             Q(vehicle__inventory_number__icontains=value) |
             Q(vehicle__traffic_cards__registration_number__icontains=value)
         ).distinct()
+
+
+MONTH_CHOICES = [(i, f"{i:02d}") for i in range(1, 13)]
+
+class ServiceMonthlyCostsFilter(django_filters.FilterSet):
+    year  = django_filters.NumberFilter(field_name="year")
+    month = django_filters.ChoiceFilter(field_name="month", choices=MONTH_CHOICES)
+
+    # Text filteri nad anotacijama
+    oj     = django_filters.CharFilter(field_name="oj_code_txt", lookup_expr="icontains", label="OJ")
+    center = django_filters.CharFilter(field_name="center_code_txt", lookup_expr="icontains", label="Šifra posla")
+
+    class Meta:
+        # Model nije obavezan kad radiš nad agregiranim queryset-om,
+        # ali django-filter ga traži; stavićemo None i ručno navesti polja.
+        model = None
+        fields = ["year", "month", "oj", "center"]

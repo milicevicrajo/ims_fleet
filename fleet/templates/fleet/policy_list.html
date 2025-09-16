@@ -1,22 +1,25 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>{{ title }}</h2>
-    <div class="btn-group">
-        <a href="{% url 'policy_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus-circle"></i> Dodaj novu polisu
-        </a>
-        <a href="{% url 'policies_monthly_costs' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-chart-line"></i> Izveštaj troškova
-        </a>
-        <a href="{% url 'policies_monthly_costs_csv' %}" class="btn btn-outline-success">
-            <i class="fas fa-file-csv"></i> Preuzmi CSV
-        </a>
-    </div>
-</div>
 
-<div class="card">
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+        <!-- Header: naslov + dugmad (Export CSV + Novo) -->
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="card-title mb-0">{{ title }}</h2>
+            <div class="btn-group">
+                <a href="{% url 'policy_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Dodaj novu polisu
+                </a>
+                <a href="{% url 'policies_monthly_costs' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-chart-line"></i> Izveštaj troškova
+                </a>
+                <a href="{% url 'policies_monthly_costs_csv' %}" class="btn btn-outline-success">
+                    <i class="fas fa-file-csv"></i> Preuzmi CSV
+                </a>
+            </div>
+        </div>
     <div class="card-body">
         <div class="table-responsive">
             <table id="DatatablePolicy" class="display compact table table-hover">
@@ -58,11 +61,8 @@
                         <td>{{ policy.end_date|date:"d.m.Y" }}</td>
 
                         <td class="text-center">
-                            <a href="{% url 'policy_detail' policy.pk %}" class="btn btn-sm btn-info" title="Detalji">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{% url 'policy_update' policy.pk %}" class="btn btn-sm btn-warning" title="Uredi">
-                                <i class="fas fa-edit"></i>
+                            <a href="{% url 'policy_update' policy.pk %}"class="btn btn-primary btn-sm" title="Izmeni">
+                                <i class="fas fa-edit"></i>Izmeni
                             </a>
                             <a href="{% url 'policy_delete' policy.pk %}" class="btn btn-sm btn-danger" title="Obriši">
                                 <i class="fas fa-trash-alt"></i>

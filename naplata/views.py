@@ -14,7 +14,7 @@ def lista_dugovanja(request):
         cursor.execute("SELECT sif_par, naz_par, dug, pot FROM dbo.baza ORDER BY dug DESC")
         dugovanja = cursor.fetchall()
 
-    return render(request, 'fleet/naplata/dugovanja.html', {'dugovanja': dugovanja})
+    return render(request, 'naplata/dugovanja.html', {'dugovanja': dugovanja})
 
 def lista_dugovanja_po_bucketima(request):
     with connections['naplata_db'].cursor() as cursor:
@@ -45,7 +45,7 @@ def lista_dugovanja_po_bucketima(request):
             """)
         dugovanja = cursor.fetchall()
 
-    return render(request, 'fleet/naplata/dugovanja_bucketi.html', {'dugovanja': dugovanja})
+    return render(request, 'naplata/dugovanja_bucketi.html', {'dugovanja': dugovanja})
 
 
 def export_dugovanja_bucketi_excel(request):
@@ -271,7 +271,7 @@ def detalji_partner(request, sif_par):
         fakture_baket_60 = cursor.fetchall()
 
     # Slanje svih podataka u template
-    return render(request, 'fleet/naplata/detalji_partner.html', {
+    return render(request, 'naplata/detalji_partner.html', {
         'partner': partner,
         'dugovanja': dugovanja,
         'baketi': baketi,
@@ -431,7 +431,7 @@ def export_baket_60_excel(request, sif_par):
 
 def lista_kontakata(request):
     kontakti = Kontakti.objects.using('naplata_db').all()
-    return render(request, 'fleet/naplata/kontakti_lista.html', {'kontakti': kontakti})
+    return render(request, 'naplata/kontakti_lista.html', {'kontakti': kontakti})
 
 
 def dodaj_kontakt(request, sif_par, naz_par):
@@ -446,7 +446,7 @@ def dodaj_kontakt(request, sif_par, naz_par):
     else:
         form = KontaktiForm(initial={'sif_par': sif_par, 'naz_par': naz_par})
 
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 
 def izmeni_kontakt(request, sif_par):
@@ -460,7 +460,7 @@ def izmeni_kontakt(request, sif_par):
             return redirect('detalji_partner', sif_par = sif_par)
     else:
         form = KontaktiForm(instance=kontakt)
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def obrisi_kontakt(request, id):
     kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), id=id)
@@ -474,7 +474,7 @@ def obrisi_kontakt(request, id):
 # <!-- ======================================================================= -->
 def lista_napomena(request):
     napomene = Napomene.objects.using('naplata_db').all()
-    return render(request, 'fleet/naplata/napomena_lista.html', {'napomene': napomene})
+    return render(request, 'naplata/napomena_lista.html', {'napomene': napomene})
 
 def dodaj_napomenu(request, sif_par, naz_par):
     if request.method == "POST":
@@ -488,7 +488,7 @@ def dodaj_napomenu(request, sif_par, naz_par):
     else:
         form = NapomeneForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  # Automatsko popunjavanje
 
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def izmeni_napomenu(request, id):
     napomena = get_object_or_404(Napomene.objects.using('naplata_db'), id=id)
@@ -500,7 +500,7 @@ def izmeni_napomenu(request, id):
             return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     else:
         form = NapomeneForm(instance=napomena)
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def obrisi_napomenu(request, id):
     napomena = get_object_or_404(Napomene.objects.using('naplata_db'), id=id)
@@ -514,7 +514,7 @@ def obrisi_napomenu(request, id):
 # <!-- ======================================================================= -->
 def lista_opomena(request):
     opomene = Opomene.objects.using('naplata_db').all()
-    return render(request, 'opomene/lista.html', {'opomene': opomene})
+    return render(request, 'naplata/opomene/lista.html', {'opomene': opomene})
 
 def dodaj_opomenu(request, sif_par, naz_par):
     if request.method == "POST":
@@ -530,7 +530,7 @@ def dodaj_opomenu(request, sif_par, naz_par):
     else:
         form = OpomeneForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def izmeni_opomenu(request, id):
     opomena = get_object_or_404(Opomene.objects.using('naplata_db'), id=id)
@@ -541,7 +541,7 @@ def izmeni_opomenu(request, id):
             return redirect('lista_opomena')
     else:
         form = OpomeneForm(instance=opomena)
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def obrisi_opomenu(request, id):
     opomena = get_object_or_404(Opomene.objects.using('naplata_db'), id=id)
@@ -557,7 +557,7 @@ def obrisi_opomenu(request, id):
 # <!-- ======================================================================= -->
 def lista_poziva(request):
     pozivi = PoziviTel.objects.using('naplata_db').all()
-    return render(request, 'pozivi_tel/lista.html', {'pozivi': pozivi})
+    return render(request, 'naplata/pozivi_tel/lista.html', {'pozivi': pozivi})
 
 def dodaj_poziv(request, sif_par, naz_par):
     if request.method == "POST":
@@ -572,7 +572,7 @@ def dodaj_poziv(request, sif_par, naz_par):
     else:
         form = PoziviTelForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def izmeni_poziv(request, id):
     poziv = get_object_or_404(PoziviTel.objects.using('naplata_db'), id=id)
@@ -583,7 +583,7 @@ def izmeni_poziv(request, id):
             return redirect('lista_poziva')
     else:
         form = PoziviTelForm(instance=poziv)
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def obrisi_poziv(request, id):
     poziv = get_object_or_404(PoziviTel.objects.using('naplata_db'), id=id)
@@ -598,7 +598,7 @@ def obrisi_poziv(request, id):
 # <!-- ======================================================================= -->
 def lista_pozivnih_pisma(request):
     pozivi = PozivPismo.objects.using('naplata_db').all()
-    return render(request, 'poziv_pismo/lista.html', {'pozivi': pozivi})
+    return render(request, 'naplata/poziv_pismo/lista.html', {'pozivi': pozivi})
 
 def dodaj_poziv_pismo(request, sif_par, naz_par):
     if request.method == "POST":
@@ -612,7 +612,7 @@ def dodaj_poziv_pismo(request, sif_par, naz_par):
     else:
         form = PozivPismoForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def izmeni_poziv_pismo(request, id):
     poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
@@ -623,14 +623,14 @@ def izmeni_poziv_pismo(request, id):
             return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     else:
         form = PozivPismoForm(instance=poziv)
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def obrisi_poziv_pismo(request, id):
     poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
     if request.method == "POST":
         poziv.delete(using='naplata_db')
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
-    return render(request, 'poziv_pismo/obrisi.html', {'poziv': poziv})
+    return render(request, 'naplata/poziv_pismo/obrisi.html', {'poziv': poziv})
 
 
 # <!-- ======================================================================= -->
@@ -638,7 +638,7 @@ def obrisi_poziv_pismo(request, id):
 # <!-- ======================================================================= -->
 def lista_tuzbi(request):
     tuzbe = Tuzbe.objects.using('naplata_db').all()
-    return render(request, 'tuzbe/lista.html', {'tuzbe': tuzbe})
+    return render(request, 'naplata/tuzbe/lista.html', {'tuzbe': tuzbe})
 
 def dodaj_tuzbu(request, sif_par, naz_par):
     if request.method == "POST":
@@ -652,7 +652,7 @@ def dodaj_tuzbu(request, sif_par, naz_par):
     else:
         form = TuzbeForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def izmeni_tuzbu(request, id):
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
@@ -663,7 +663,7 @@ def izmeni_tuzbu(request, id):
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     else:
         form = TuzbeForm(instance=tuzba)
-    return render(request, 'fleet/naplata/form_naplata.html', {'form': form})
+    return render(request, 'naplata/form_naplata.html', {'form': form})
 
 def obrisi_tuzbu(request, id):
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)

@@ -1,31 +1,63 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% load form_filters %}
 {% load ims_tags %}
-{% block content %}
-  <h2>{{ title }}</h2>
-  <div class="card">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="card-title">Tabela</h5>
-            <a href={% url 'trafficcard_create_manual'%} class="text-success" style="font-size: 1.15em;">
-                <i class="mdi mdi-plus-box"></i></i> Dodaj saobraćajnu dozvolu
-            </a>
-        </div>
 
-        <form method="get" class="row g-3 align-items-end pb-3">
-          <div class="col-md-4">
-            {{ filter_form.center.label_tag }}
-            {{ filter_form.center }}
-          </div>
-          <div class="col-md-4">
-            {{ filter_form.organizational_unit.label_tag }}
-            {{ filter_form.organizational_unit }}
-          </div>
-          <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Filtriraj</button>
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+
+      <!-- Header: naslov + dugmad (Export CSV + Dodaj saobraćajnu dozvolu) -->
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">{{ title }}</h2>
+        <div class="d-flex align-items-center gap-2">
+          {# Kad povežeš URL, zameni href="#" sa {% url 'trafficcard_export_csv' %} i ukloni 'disabled' #}
+          <a href="#"
+             class="btn btn-success btn-sm disabled"
+             tabindex="-1" aria-disabled="true" data-no-preloader
+             title="Export u CSV (uskoro)">
+            <i class="mdi mdi-file-excel me-1"></i> Export CSV
+          </a>
+
+          <a href="{% url 'trafficcard_create_manual' %}" class="btn btn-primary btn-sm">
+            <i class="mdi mdi-plus-box me-1"></i> Dodaj saobraćajnu dozvolu
+          </a>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <form method="get" class="mb-4">
+          <div class="row g-3 align-items-end">
+
+            <!-- Centar -->
+            <div class="col-12 col-md-4 col-lg-3">
+              <label for="{{ filter_form.center.id_for_label }}" class="form-label mb-0">
+                {{ filter_form.center.label }}
+              </label>
+              {{ filter_form.center|add_class:"form-select select2-method" }}
+            </div>
+
+            <!-- OJ -->
+            <div class="col-12 col-md-4 col-lg-3">
+              <label for="{{ filter_form.organizational_unit.id_for_label }}" class="form-label mb-0">
+                {{ filter_form.organizational_unit.label }}
+              </label>
+              {{ filter_form.organizational_unit|add_class:"form-select select2-method" }}
+            </div>
+
+            <!-- Dugmad desno, u istom redu -->
+            <div class="col">
+              <button type="submit" class="btn btn-primary">
+                <i class="mdi mdi-filter-variant me-1"></i> Filtriraj
+              </button>
+              <button type="submit" class="btn btn-outline-secondary" href="{% url 'trafficcard_list' %}"> Reset
+
+              </button>
+            </div>
+
           </div>
         </form>
-
         <div class="table-responsive">
             <table id="DatatableSaobracajne" class="display">
               <thead>
@@ -64,10 +96,6 @@
                         {% endif %}
                       </td>
                       
-                  </tr>
-              {% empty %}
-                  <tr>
-                      <td colspan="5">Nema opreme..</td>
                   </tr>
               {% endfor %}
               <tfoot>

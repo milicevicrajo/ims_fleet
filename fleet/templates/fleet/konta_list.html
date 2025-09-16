@@ -16,8 +16,10 @@
           <td>{{ k.knt }}</td>
           <td>{{ k.naz_knt }}</td>
           <td class="text-end">
-            <a class="btn btn-warning btn-sm" href="{% url 'konta_update' k.pk %}">Izmeni</a>
-            <a class="btn btn-outline-danger btn-sm" href="{% url 'konta_delete' k.pk %}">Obriši</a>
+            <a class="btn btn-primary btn-sm" href="{% url 'konta_update' k.pk %}">
+              <i class="fas fa-edit"></i>Izmeni</a>
+            <a class="btn btn-outline-danger btn-sm" href="{% url 'konta_delete' k.pk %}">
+              <i class="fas fa-trash-alt"></i>Obriši</a>
           </td>
         </tr>
         {% empty %}

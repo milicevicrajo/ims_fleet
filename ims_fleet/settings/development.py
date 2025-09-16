@@ -9,6 +9,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
+
     'test_db': {
         'ENGINE': 'mssql',
         'NAME': 'Vozila',  # Naziv baze na serveru
@@ -20,6 +21,7 @@ DATABASES = {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
     },
+
     'server_db': {
         'ENGINE': 'mssql',
         'NAME': 'IMS_ERP',  # Naziv baze na serveru
@@ -31,16 +33,18 @@ DATABASES = {
             'driver': 'ODBC Driver 17 for SQL Server',
         },
     },
-        'naplata_db': {  # Dodajemo novu bazu
-            'ENGINE': 'mssql',
-            'NAME': 'Naplata',
-            'USER': 'Rajo Milicevic',
-            'PASSWORD': 'Rajo123',
-            'HOST': 'SMS-SERVER',  # Npr. 192.168.1.100 ili localhost
-            'PORT': '',
-            'OPTIONS': {
-                'driver': 'ODBC Driver 17 for SQL Server',
-                'extra_params': 'TrustServerCertificate=yes;',
-            },
+    
+    'naplata_db': {  # Dodajemo novu bazu
+        'ENGINE': 'mssql',
+        'NAME': 'Naplata',
+        'USER': 'Rajo Milicevic',
+        'PASSWORD': 'Rajo123',
+        'HOST': 'SMS-SERVER',  # Npr. 192.168.1.100 ili localhost
+        'PORT': '',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'extra_params': 'TrustServerCertificate=yes;',
         },
+    },
+    
 }

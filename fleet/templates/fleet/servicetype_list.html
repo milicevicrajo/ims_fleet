@@ -1,49 +1,70 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="container my-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">{{ title }}</h2>
-    <a href="{% url 'servicetype_create' %}" class="btn btn-primary">
-      + Novi tip
-    </a>
-  </div>
 
-  <table class="table table-striped table-bordered align-middle">
-    <thead class="table-light">
-      <tr>
-        <th style="width: 25%;">Naziv tipa servisa</th>
-        <th>Opis</th>
-        <th style="width: 20%;" class="text-center">Akcije</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for servicetype in service_types %}
-        <tr>
-          <td>
-            <a href="{% url 'servicetype_detail' servicetype.pk %}">
-              {{ servicetype.name }}
-            </a>
-          </td>
-          <td>{{ servicetype.description|default:"—" }}</td>
-          <td class="text-center">
-            <a href="{% url 'servicetype_update' servicetype.pk %}" class="btn btn-sm btn-warning">
-              <i class="bi bi-pencil-square"></i> Izmeni
-            </a>
-            <a href="{% url 'servicetype_delete' servicetype.pk %}" 
-               class="btn btn-sm btn-danger"
-               onclick="return confirm('Da li ste sigurni da želite da obrišete tip: {{ servicetype.name }}?');">
-              <i class="bi bi-trash"></i> Obriši
-            </a>
-          </td>
-        </tr>
-      {% empty %}
-        <tr>
-          <td colspan="3" class="text-center text-muted">
-            Nema unetih tipova servisa.
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <!-- Header: naslov + dugme "Novi tip" -->
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">{{ title }}</h2>
+        <a href="{% url 'servicetype_create' %}" class="btn btn-primary btn-sm">
+          <i class="mdi mdi-plus me-1"></i> Novi tip
+        </a>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped table-bordered align-middle w-100">
+            <thead class="table-light">
+              <tr>
+                <th class="text-nowrap">Naziv tipa servisa</th>
+                <th>Opis</th>
+                <th class="text-center text-nowrap">Akcije</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for servicetype in service_types %}
+                <tr>
+                  <td class="fw-semibold">
+                    <i class="mdi mdi-wrench me-1 text-muted"></i>{{ servicetype.name }}
+                  </td>
+                  <td>{{ servicetype.description|default:"—" }}</td>
+                  <td class="text-center text-nowrap">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Akcije">
+                      <a href="{% url 'servicetype_update' servicetype.pk %}" class="btn btn-warning">
+                        <i class="mdi mdi-pencil me-1"></i> Izmeni
+                      </a>
+                      <a href="{% url 'servicetype_delete' servicetype.pk %}"
+                         class="btn btn-danger"
+                         onclick="return confirm('Da li ste sigurni da želite da obrišete tip: {{ servicetype.name }}?');">
+                        <i class="mdi mdi-delete me-1"></i> Obriši
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center text-muted py-4">
+                    <i class="mdi mdi-information-outline me-1"></i>
+                    Nema unetih tipova servisa.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+
+            <tfoot class="table-light">
+              <tr>
+                <th>Naziv tipa servisa</th>
+                <th>Opis</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -1,55 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>{{ title }}</h2>
-<div class="card">
-  <div class="card-body">
+<div class="row">
+  <div class="col-12">
+    <div class="card">
 
-      <div class="table-responsive">
-          <table id="DatatableServisi" class="display compact">
-              <thead>
-                  <tr>
-                    <th>Vozilo</th>
-                    <th>Tip servisa</th>
-                    <th>Datum servisa</th>
-                    <th>Trošak</th>
-                    <th>Dobavljač</th>
-                    <th>Opis</th>
-                    <th>Akcije</th>
-                  </tr>
-              </thead>
-              <tbody>
-                {% for service_transaction in service_transactions %}
-                  <tr>                        
-                    <td>{{ service_transaction.vehicle }}</td>
-                    <td>{{ service_transaction.popravka_kategorija }}</td>
-                    <td>{{ service_transaction.datum|date:"d.m.Y." }}</td>
-                    <td>{{ service_transaction.potrazuje }}</td>
-                    <td>{{ service_transaction.naz_par_pl }}</td>
-                    <td>{{ service_transaction.napomena }}</td>
-                    <td>
-                      <a href="{% url 'service_transaction_update' service_transaction.pk %}">Edit</a>
-                    </td>
-                  </tr>
-              {% empty %}
-                  <tr>
-                      <td colspan="5">Nema podataka</td>
-                  </tr>
-              {% endfor %}
-              <tfoot>
-                  <tr>
-                    <th>Vozilo</th>
-                    <th>Tip servisa</th>
-                    <th>Datum servisa</th>
-                    <th>Trošak</th>
-                    <th>Dobavljač</th>
-                    <th>Opis</th>
-                    <th>Akcije</th>
-                  </tr>
-              </tfoot>
-          </table>
+      <!-- Header: naslov + dugmad (Izveštaj + CSV) -->
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">{{ title }}</h2>
+        <div class="btn-group">
+          <a href="{% url 'reports_service_monthly_costs' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-chart-line"></i> Izveštaj troškova
+          </a>
+          <a href="{% url 'reports_service_monthly_costs_csv' %}" {% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+            class="btn btn-outline-success"
+            target="_blank" rel="noopener" data-no-preloader download>
+            <i class="mdi mdi-file-excel me-1"></i> Preuzmi CSV
+          </a>
+        </div>
       </div>
 
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="DatatableServisi" class="display table table-hover table-striped table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Vozilo</th>
+                <th>Tip servisa</th>
+                <th>Datum servisa</th>
+                <th>Trošak</th>
+                <th>Dobavljač</th>
+                <th>Opis</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for service_transaction in service_transactions %}
+                <tr>
+                  <td>{{ service_transaction.vehicle }}</td>
+                  <td>{{ service_transaction.popravka_kategorija }}</td>
+                  <td>{{ service_transaction.datum|date:"d.m.Y." }}</td>
+                  <td>{{ service_transaction.potrazuje }}</td>
+                  <td>{{ service_transaction.naz_par_pl }}</td>
+                  <td>{{ service_transaction.napomena }}</td>
+                  <td class="text-center text-nowrap">
+                    <a href="{% url 'service_transaction_update' service_transaction.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
+                        <i class="fas fa-edit"></i>Izmeni
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted">Nema podataka</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th>Vozilo</th>
+                <th>Tip servisa</th>
+                <th>Datum servisa</th>
+                <th>Trošak</th>
+                <th>Dobavljač</th>
+                <th>Opis</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 {% endblock %}
