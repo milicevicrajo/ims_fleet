@@ -1,51 +1,96 @@
-from django.shortcuts import get_object_or_404, render, redirect
-from django.db import connections, IntegrityError
-from django.urls import reverse_lazy
-from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView, DetailView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from .models import *
-from .forms import *
-from .filters import *
-from django.db.models import OuterRef, Subquery
-from django_filters.views import FilterView
-from django.contrib import messages
-import logging
-from django.http import HttpResponseForbidden
-from django.db.models import Sum, Exists,Count,Avg
-import datetime 
+﻿from collections import defaultdict
+import csv
+import datetime
 from datetime import date, timedelta
-from django.db.models import F
-from django.utils import timezone
-from datetime import timedelta
-from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever, update_vehicle_values, delete_complete_drafts, sanitize_filename
-from django.db.models.functions import TruncMonth, TruncYear
-from django.db.models import Q
-from .utils import fetch_requisition_data, fetch_service_data, fetch_policy_data, populate_putni_nalog_template
-from .models import DraftServiceTransaction
-from .utils import migrate_draft_to_service_transaction, get_fuel_consumption_queryset
-from django.shortcuts import render
-from django.db import connection
-from django.http import FileResponse
+import logging
 import os
-from django.urls import reverse
-from django.conf import settings
-from django.http import HttpResponseRedirect
+
 from openpyxl import Workbook
 import pandas as pd
-from .forms import PutnickaFilterForm
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.management import call_command
+from django.db import connections
+from django.db.models import Avg, Exists, F, OuterRef, Q, Subquery, Sum
+from django.db.models.functions import TruncMonth, TruncYear
+from django.http import FileResponse, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.cache import never_cache
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_filters.views import FilterView
 
-from .models import DraftServiceTransaction
-from .filters import ServiceFixingFilter
-
-from django.db.models import OuterRef, Subquery, Value, CharField, Sum
-from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce, Cast
-
-from .models import ServiceTransaction, JobCode
+from .filters import (
+    FuelFilterForm,
+    FuelTransactionFilterForm,
+    PoliciesMonthlyCostsFilter,
+    ServiceFixingFilter,
+    ServiceMonthlyCostsFilter,
+    TrafficCardFilterForm,
+    VehicleFilter,
+)
+from .forms import (
+    DraftRequisitionForm,
+    DraftServiceTransactionForm,
+    EmployeeForm,
+    FuelConsumptionForm,
+    IncidentForm,
+    JobCodeForm,
+    LeaseForm,
+    OMVPutnickaFilterForm,
+    OrganizationalUnitForm,
+    PolicyForm,
+    PutniNalogForm,
+    PutnickaFilterForm,
+    RequisitionForm,
+    ServiceForm,
+    ServiceTransactionForm,
+    ServiceTypeForm,
+    TrafficCardForm,
+    VehicleForm,
+)
+from .models import (
+    CustomUser,
+    DraftPolicy,
+    DraftRequisition,
+    DraftServiceTransaction,
+    Employee,
+    FuelConsumption,
+    Incident,
+    JobCode,
+    KontaVozila,
+    Lease,
+    LeaseInterest,
+    OrganizationalUnit,
+    Policy,
+    PutniNalog,
+    Requisition,
+    Service,
+    ServiceTransaction,
+    ServiceType,
+    TrafficCard,
+    Vehicle,
+)
+from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
+from .utils import (
+    calculate_average_fuel_consumption,
+    calculate_average_fuel_consumption_ever,
+    delete_complete_drafts,
+    fetch_policy_data,
+    fetch_requisition_data,
+    fetch_service_data,
+    get_fuel_consumption_queryset,
+    migrate_draft_to_service_transaction,
+    populate_putni_nalog_template,
+    sanitize_filename,
+)
 
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
@@ -147,7 +192,6 @@ def dashboard(request):
         )
     )
     # Grupisanje u Pythonu
-    from collections import defaultdict
     grouped = defaultdict(list)
 
     for v in vehicles:
@@ -805,9 +849,6 @@ class LeaseCreateView(LoginRequiredMixin, CreateView):
         context['title'] = 'Kreiraj novi zakup'
         context['submit_button_label'] = 'Dodaj zakup'
         return context
-from django.http import HttpResponse
-from openpyxl import Workbook
-from .models import Lease
 
 def export_leases_to_excel(request):
     # Filter po tipu lizinga (opciono)
@@ -1106,7 +1147,6 @@ class DraftPolicyUpdateView(UpdateView):
 # <!-- ======================================================================================== -->
 #                           <!-- FUEL CONSUMPTION -->
 # <!-- ======================================================================================== -->
-from django_filters.views import FilterView
 
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     model = FuelConsumption
@@ -1368,9 +1408,6 @@ class PutniNalogListView(LoginRequiredMixin, ListView):
         context['title'] = 'Lista putnih naloga'
         return context
 
-from django.http import FileResponse, HttpResponse
-import os
-from django.conf import settings
 
 def download_travel_order_excel(request, pk):
     """
@@ -1798,7 +1835,6 @@ class RequisitionUpdateView(UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-from django.urls import reverse
 
 class DraftRequisitionUpdateView(UpdateView):
     model = DraftRequisition
@@ -1905,12 +1941,7 @@ class UserListView(ListView):
 #                           <!-- FETCHING FUNCTIONS -->
 # <!-- ======================================================================================== -->
 
-from django.shortcuts import render, redirect
 
-from django.core.management import call_command
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.contrib.admin.views.decorators import staff_member_required
 
 @staff_member_required
 def fetch_data_view(request):
@@ -2198,8 +2229,6 @@ def omv_putnicka_view(request):
 
     # Excel export
     if 'export' in request.GET:
-        import pandas as pd
-        from django.http import HttpResponse
 
         df = pd.DataFrame(data)
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -2750,20 +2779,6 @@ def potrazivanje_ddor_view(request):
 
 
 
-
-# ========================================================================================
-from .queries import policies_monthly_costs_qs
-from .models import Policy  # putanja do Policy modela
-from django.utils.timezone import now
-import csv
-
-
-
-
-
-
-from .filters import PoliciesMonthlyCostsFilter
-from .queries import policies_monthly_costs_qs, _filtered_qs
 class PoliciesMonthlyCostsView(FilterView, ListView):
     """
     FilterView + ListView:
@@ -2795,7 +2810,6 @@ def policies_monthly_costs_csv(request):
         ])
     return response
 
-from .queries import lease_monthly_costs_rows
 
 class LeaseMonthlyCostsView(ListView):
     """
@@ -2810,77 +2824,6 @@ class LeaseMonthlyCostsView(ListView):
     def get_queryset(self):
         return lease_monthly_costs_rows(self.request)
     
-
-
-def _service_base_qs():
-    """
-    Osnovni QS za servise, anotira: year, month, oj_code, center_code (+ txt varijante).
-    OJ i centar se određuju po stanju na datum servisa (<= datum).
-    """
-    latest_jc = JobCode.objects.filter(
-        vehicle_id=OuterRef('vehicle_id'),
-        assigned_date__lte=OuterRef('datum')
-    ).order_by('-assigned_date')
-
-    oj_code_sq    = latest_jc.values('organizational_unit__code')[:1]
-    center_code_sq = latest_jc.values('organizational_unit__center')[:1]
-
-    return (
-        ServiceTransaction.objects
-        .annotate(
-            year=ExtractYear('datum'),
-            month=ExtractMonth('datum'),
-            oj_code=Subquery(oj_code_sq),
-            center_code=Subquery(center_code_sq),
-        )
-        .annotate(
-            oj_code_txt=Coalesce(Cast('oj_code', CharField()), Value('')),
-            center_code_txt=Coalesce(Cast('center_code', CharField()), Value('')),
-        )
-    )
-
-
-def _apply_service_filters(qs, params):
-    """
-    Opcioni filteri preko GET parametara:
-      - year, month (int)
-      - oj (šifra OJ), center (šifra posla/centra)
-      - category (id ServiceType), nije_garaza ('True'/'False')
-    """
-    year = params.get('year')
-    if year:
-        qs = qs.filter(datum__year=year)
-
-    month = params.get('month')
-    if month:
-        qs = qs.filter(datum__month=month)
-
-    oj = params.get('oj')
-    if oj:
-        qs = qs.filter(oj_code=oj)
-
-    center = params.get('center')
-    if center:
-        qs = qs.filter(center_code=center)
-
-    category = params.get('category')
-    if category:
-        qs = qs.filter(popravka_kategorija_id=category)
-
-    nije_garaza = params.get('nije_garaza')
-    if nije_garaza in ('True', 'False'):
-        qs = qs.filter(nije_garaza=(nije_garaza == 'True'))
-
-    return qs
-
-
-
-
-# fleet/views_reports.py  (ili u postojeći views.py ako tamo držiš report CBV-e)
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import ListView
-
-from .queries import service_monthly_costs_rows
 
 class ServiceMonthlyCostsView(LoginRequiredMixin, FilterView):
     """
@@ -2900,7 +2843,6 @@ class ServiceMonthlyCostsView(LoginRequiredMixin, FilterView):
         ctx["title"] = "Mesečni troškovi servisa po centru"
         return ctx
 
-from django.contrib.auth.decorators import login_required
 @login_required
 def service_monthly_costs_csv(request):
     rows = service_monthly_costs_rows(request)
