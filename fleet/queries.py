@@ -17,13 +17,13 @@ def policies_monthly_costs_qs(base_qs=None):
         year=ExtractYear('issue_date'),
         month=ExtractMonth('issue_date'),
 
-        # OJ važeća na dan izdavanja
+        # OJ vaÅ¾eÄ‡a na dan izdavanja
         oj_id=Subquery(_latest_jc.values('organizational_unit_id')[:1]),
         oj_name=Subquery(
             _latest_jc.annotate(naziv=F('organizational_unit__name')).values('naziv')[:1]
         ),
 
-        # >>> OVDE JE KLJUČNA IZMJENA <<<
+        # >>> OVDE JE KLJUÄŒNA IZMJENA <<<
         job_code=Subquery(_latest_jc.values('organizational_unit__code')[:1]),
         center=Subquery(_latest_jc.values('organizational_unit__center')[:1]),
 
@@ -45,7 +45,7 @@ def policies_monthly_costs_qs(base_qs=None):
 def _filtered_qs(request):
     qs = policies_monthly_costs_qs()
 
-    # SVI filteri su opcioni — ako ih nema, dobićeš SVE GODINE
+    # SVI filteri su opcioni â€” ako ih nema, dobiÄ‡eÅ¡ SVE GODINE
     year = request.GET.get('year')
     month = request.GET.get('month')
     center = request.GET.get('center')
@@ -63,14 +63,14 @@ def _filtered_qs(request):
     if vrsta:
         qs = qs.filter(vrsta__iexact=vrsta)
 
-    # po želji: stabilan redosled
+    # po Å¾elji: stabilan redosled
     return qs.order_by('year', 'month', 'center', 'oj_id', 'job_code', 'vrsta')
 
 
 
 def lease_monthly_costs_rows(request):
     """
-    Grupa lizinga po godini/mesecu/centar/oj/job_code/vrsti i računa prateće troškove
+    Grupa lizinga po godini/mesecu/centar/oj/job_code/vrsti i raÄuna prateÄ‡e troÅ¡kove
     (servisi + gorivo) za vozila koja su u toj organizacionoj jedinici u tom trenutku.
     """
     # Subqueryi za poslednju OU za vozilo
@@ -78,7 +78,7 @@ def lease_monthly_costs_rows(request):
     latest_oj_id_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__id')[:1]
     latest_oj_name_subq = JobCode.objects.filter(vehicle=OuterRef('vehicle')).order_by('-assigned_date').values('organizational_unit__name')[:1]
 
-    # Agregacija lizinga po datumu početka (year/month) i OU
+    # Agregacija lizinga po datumu poÄetka (year/month) i OU
     leases_agg = Lease.objects.annotate(
         year=TruncYear('start_date'),
         month=TruncMonth('start_date'),
@@ -96,7 +96,7 @@ def lease_monthly_costs_rows(request):
     month = request.GET.get('month')
     center = request.GET.get('center')
     oj_id_filter = request.GET.get('oj')
-    lease_type = request.GET.get('vrsta')  # očekuje 'finansijski'|'operativni'|'dugorocni'
+    lease_type = request.GET.get('vrsta')  # oÄekuje 'finansijski'|'operativni'|'dugorocni'
 
     if year:
         leases_agg = [r for r in leases_agg if r['year'] and r['year'].year == int(year)]
@@ -119,7 +119,7 @@ def lease_monthly_costs_rows(request):
         m = r['month'].month if r['month'] else None
         oj_id = r.get('oj_id')
 
-        # nađi vozila koja trenutno pripadaju toj OU (ako postoji oj_id)
+        # nađ vozila koja trenutno pripadaju toj OU (ako postoji oj_id)
         if oj_id:
             vehicle_ids = list(Vehicle.objects.annotate(
                 latest_ou_id=Subquery(latest_ou_for_vehicle)
@@ -188,8 +188,8 @@ def _service_base_qs():
     """
     latest_jc = JobCode.objects.filter(
         vehicle_id=OuterRef('vehicle_id'),
-        assigned_date__lte=OuterRef('datum')
-    ).order_by('-assigned_date')
+        assigned_date__lte=OuterRef('datum'),
+    ).order_by('-assigned_date', '-pk')
 
     oj_code_sq     = latest_jc.values('organizational_unit__code')[:1]
     center_code_sq = latest_jc.values('organizational_unit__center')[:1]
@@ -197,14 +197,14 @@ def _service_base_qs():
     return (
         ServiceTransaction.objects
         .annotate(
-            year=ExtractYear('datum'),
-            month=ExtractMonth('datum'),
-            oj_code=Subquery(oj_code_sq),
-            center_code=Subquery(center_code_sq),
+            service_year=ExtractYear('datum'),
+            service_month=ExtractMonth('datum'),
+            raw_oj_code=Subquery(oj_code_sq),
+            raw_center_code=Subquery(center_code_sq),
         )
         .annotate(
-            oj_code_txt=Coalesce(Cast('oj_code', CharField()), Value('')),
-            center_code_txt=Coalesce(Cast('center_code', CharField()), Value('')),
+            oj_code_txt_calc=Coalesce(Cast('raw_oj_code', CharField()), Value('')),
+            center_code_txt_calc=Coalesce(Cast('raw_center_code', CharField()), Value('')),
         )
     )
 
@@ -215,17 +215,32 @@ def service_monthly_costs_rows(request):
     """
     qs = _service_base_qs()
 
-    # >>> KLJUČNO: eksplicitno definiši Decimal output <<<
     dec_out = DecimalField(max_digits=18, decimal_places=2)
 
-    return (
-        qs.values('year', 'month', 'oj_code_txt', 'center_code_txt')
+    aggregated = (
+        qs.values('service_year', 'service_month', 'oj_code_txt_calc', 'center_code_txt_calc')
           .annotate(
               iznos=Coalesce(
                   Sum('potrazuje', output_field=dec_out),
                   Value(Decimal('0.00')),
-                  output_field=dec_out
+                  output_field=dec_out,
               )
           )
-          .order_by('-year', '-month', 'center_code_txt', 'oj_code_txt')
     )
+
+    return (
+        aggregated.values(
+            year=F('service_year'),
+            month=F('service_month'),
+            oj_code_txt=F('oj_code_txt_calc'),
+            center_code_txt=F('center_code_txt_calc'),
+            iznos=F('iznos'),
+        )
+        .order_by('-year', '-month', 'center_code_txt', 'oj_code_txt')
+    )
+
+
+
+
+
+

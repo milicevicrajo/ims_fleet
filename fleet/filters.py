@@ -13,7 +13,7 @@ from datetime import timedelta
 
 from .models import Vehicle, JobCode, FuelConsumption, TrafficCard
 # pretpostavka da OrganizationalUnit postoji:
-from .models import OrganizationalUnit
+from .models import OrganizationalUnit, ServiceTransaction
 
 
 class VehicleFilter(django_filters.FilterSet):
@@ -57,7 +57,7 @@ class VehicleFilter(django_filters.FilterSet):
 
     # --- OJ & Centar (po NAJNOVIJEM JobCode) ---
     org_unit = django_filters.ModelChoiceFilter(
-        label="OJ", queryset=OrganizationalUnit.objects.none(), method="filter_org_unit"
+        label="Organizaciona Jedinica", queryset=OrganizationalUnit.objects.none(), method="filter_org_unit"
     )
     center_code = django_filters.ChoiceFilter(
         label="Centar", choices=[], method="filter_center_code"
@@ -387,18 +387,24 @@ class ServiceFixingFilter(django_filters.FilterSet):
         ).distinct()
 
 
-MONTH_CHOICES = [(i, f"{i:02d}") for i in range(1, 13)]
+# Ako baš želiš dropdown za mesece, koristi TypedChoiceFilter sa coerce=int
+# Opcije za mesec: prazna vrednost + 1-12
+MONTH_CHOICES = [('', 'Svi meseci')] + [(str(i), f'{i:02d}') for i in range(1, 13)]
 
 class ServiceMonthlyCostsFilter(django_filters.FilterSet):
-    year  = django_filters.NumberFilter(field_name="year")
-    month = django_filters.ChoiceFilter(field_name="month", choices=MONTH_CHOICES)
+    year = django_filters.NumberFilter(field_name="year", label="Godina")
+    month = django_filters.TypedChoiceFilter(
+        field_name="month",
+        choices=MONTH_CHOICES,
+        coerce=lambda value: int(value) if value not in (None, '') else None,
+        empty_value=None,
+        required=False,
+        label="Mesec",
+    )
 
-    # Text filteri nad anotacijama
-    oj     = django_filters.CharFilter(field_name="oj_code_txt", lookup_expr="icontains", label="OJ")
-    center = django_filters.CharFilter(field_name="center_code_txt", lookup_expr="icontains", label="Šifra posla")
+    oj = django_filters.CharFilter(field_name="oj_code_txt", lookup_expr="icontains", label="OJ")
+    center = django_filters.CharFilter(field_name="center_code_txt", lookup_expr="icontains", label="Sifra posla")
 
     class Meta:
-        # Model nije obavezan kad radiš nad agregiranim queryset-om,
-        # ali django-filter ga traži; stavićemo None i ručno navesti polja.
-        model = None
+        model = ServiceTransaction
         fields = ["year", "month", "oj", "center"]

@@ -1,7 +1,7 @@
 {# templates/fleet/reports/service_monthly_costs.html #}
 {% extends "base.html" %}
 {% load humanize %}
-
+{% load widget_tweaks %}
 {% block content %}
 <div class="row">
   <div class="col-12">
@@ -11,13 +11,37 @@
         <h2 class="card-title mb-0">{{ title }}</h2>
         <div class="d-flex align-items-center gap-2">
           {# Dodaj CSV kad bude spremno: href="{% url 'reports_service_monthly_costs_csv' %}" #}
-          <a href="#" class="btn btn-success btn-sm disabled" tabindex="-1" aria-disabled="true" title="CSV (uskoro)">
+          <a href="{% url 'reports_service_monthly_costs_csv' %}" {% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+            class="btn btn-outline-success"
+            target="_blank" rel="noopener" data-no-preloader download>
             <i class="mdi mdi-file-excel me-1"></i> Preuzmi CSV
           </a>
         </div>
       </div>
 
       <div class="card-body">
+        <form method="get" class="row g-3 align-items-end pb-3">
+          <div class="col-sm-6 col-md-3">
+            <label for="{{ filter.form.year.id_for_label }}" class="form-label">{{ filter.form.year.label }}:</label>
+            {{ filter.form.year|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label for="{{ filter.form.month.id_for_label }}" class="form-label">{{ filter.form.month.label }}:</label>
+            {{ filter.form.month|add_class:"form-select select2-method"  }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label for="{{ filter.form.oj.id_for_label }}" class="form-label">{{ filter.form.oj.label }}:</label>
+            {{ filter.form.oj|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label for="{{ filter.form.center.id_for_label }}" class="form-label">{{ filter.form.center.label }}:</label>
+            {{ filter.form.center|add_class:"form-control" }}
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filtriraj</button>
+            <a href="." class="btn btn-outline-secondary">Resetuj</a>
+          </div>
+        </form>
         <div class="table-responsive">
           <table id="Datatable" class="display table table-hover table-striped table-bordered align-middle">
             <thead class="table-light">

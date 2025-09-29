@@ -19,7 +19,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-    'test_db': {
+
+    'server_db': {
         'ENGINE': 'mssql',
         'NAME': 'Vozila',  # Naziv baze na serveru
         'USER': 'Rajo Milicevic',

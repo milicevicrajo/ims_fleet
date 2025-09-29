@@ -2757,30 +2757,30 @@ def kasko_rate_view(request):
 	
 def zatvoren_putni_view(request):
     """
-    View za prikaz podataka iz dbo.zatvoren_putni.
+    View za prikaz podataka iz dbo.fleet_zatvoren_putni.
     """
-    query = "SELECT * FROM dbo.zatvoren_putni"
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    query = "SELECT * FROM dbo.fleet_zatvoren_putni"
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/zatvoreni_putni.html', {'data': data})
 
 
 def magacin_view(request):
     """
-    View za prikaz podataka iz dbo.magacin_garaza.
+    View za prikaz podataka iz dbo.fleet_magacin_rez.
     """
     query = """
-        SELECT sif_pred, god, oj, sif_mag, sif_art, kolul, koliz, popravka_kategorija, vrulnab, vriznab,
+        SELECT sif_pred, god, oj, sif_mag, sif_art, kolul, koliz, popkol, vrulnab, vriznab,
                vrulvp, vrizvp, revalzal, razliz, mag_cena, kolpon, cenapon, naz_art,
                sif_vrsart, naz_vrsart
-        FROM dbo.magacin_garaza
+        FROM dbo.fleet_magacin_rez
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/magacin.html', {'data': data})
 
 
 def otpis_view(request):
     """
-    View za prikaz podataka iz dbo.otpis.
+    View za prikaz podataka iz fleet_otpis
     """
     query = """
         SELECT sif_pred, god, sif_osn, rb, naz_osn, inv_br, kol, jed_mere, sif_par, knt, oj, sif_lok,
@@ -2788,20 +2788,20 @@ def otpis_view(request):
                nab_vred, osnovica, otpis, status, br_fakture, zemljiste_ar, zemljiste_m, u_gramima,
                sif_amortP, sif_revalP, otpisP, otudjena_vrednost, ind_trosak, opis, osnovicaP,
                ind_manjak, ind_amort, knt_ispravka, sif_kor, stopa_amort
-        FROM dbo.otpis
+        FROM dbo.fleet_otpis
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/otpis.html', {'data': data})
 
 def tro_gorivo_mesec_view(request):
     """
-    View za prikaz podataka iz dbo.TroGorivoMesec.
+    View za prikaz podataka iz dbo.fleet_tro_goriva_m.
     """
     query = """
         SELECT god, mesec, kategorija, iznos
-        FROM dbo.TroGorivoMesec
+        FROM dbo.fleet_tro_goriva_m
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/tro_gorivo_mesec.html', {'data': data})
 
 def troskovi_svi_view(request):
@@ -2810,9 +2810,9 @@ def troskovi_svi_view(request):
     """
     query = """
         SELECT god, sif_vrs, datum, br_naloga, stavka, oj, knt, naz_knt, duguje, sif_pos
-        FROM dbo.Troskovi_svi
+        FROM dbo.fleet_tro_svi
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/troskovi_svi.html', {'data': data})
 
 def tro_pracenja_vozila_view(request):
@@ -2821,9 +2821,9 @@ def tro_pracenja_vozila_view(request):
     """
     query = """
         SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, ZaPlacanje, Konto_tro
-        FROM dbo.TroPracenjaVozila
+        FROM dbo.fleet_tro_pracenje
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/tro_pracenja_vozila.html', {'data': data})
 
 def tahograf_partneri_view(request):
@@ -2832,9 +2832,9 @@ def tahograf_partneri_view(request):
     """
     query = """
         SELECT *
-        FROM dbo.TroTahografa
+        FROM dbo.fleet_tro_taho
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/tro_tahografa.html', {'data': data})
 
 def tro_zarade_view(request):
@@ -2845,7 +2845,7 @@ def tro_zarade_view(request):
         SELECT oj, god, mesec, rasif, ranaz, neto, bruto, bruto2
         FROM dbo.tro_zarade
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/tro_zarade.html', {'data': data})
 
 def tro_parking_view(request):
@@ -2854,9 +2854,9 @@ def tro_parking_view(request):
     """
     query = """
         SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, note, naziv, ZaPlacanje
-        FROM dbo.tro_parking
+        FROM dbo.fleet_tro_parking
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/tro_parking.html', {'data': data})
 
 def po_dobavljacima_view(request):
@@ -2866,9 +2866,9 @@ def po_dobavljacima_view(request):
     query = """
         SELECT naz_par, sif_pred, god, sif_vrs, br_naloga, stavka, oj, knt, grupa, sif_par, datum, vez_dok,
                duguje, potrazuje, skr_naz, deviza, kom, stavka_k, dpo, promena, sif_pos, dat_naloga, d_p, placeno
-        FROM dbo.po_dobavljacima
+        FROM dbo.fleet_dobavljaci
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/po_dobavljacima.html', {'data': data})
 
 def potrazivanje_ddor_view(request):
@@ -2877,9 +2877,9 @@ def potrazivanje_ddor_view(request):
     """
     query = """
         SELECT god, sif_vrs, br_naloga, stavka, oj, knt, datum, vez_dok, potrazuje
-        FROM dbo.potrazivanje_ddor
+        FROM dbo.fleet_potrazivanje_ddor
     """
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
+    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
     return render(request, 'fleet/reports/potrazivanje_ddor.html', {'data': data})
 
 
@@ -2931,33 +2931,28 @@ class LeaseMonthlyCostsView(ListView):
     
 
 class ServiceMonthlyCostsView(LoginRequiredMixin, FilterView):
-    """
-    Mesečni troškovi servisa po centru/OJ.
-    rows: year, month, oj_code_txt, center_code_txt, iznos
-    """
     template_name = "fleet/reports/service_monthly_costs.html"
     context_object_name = "rows"
-    filterset_class = ServiceMonthlyCostsFilter
+    filterset_class = ServiceMonthlyCostsFilter  # <-- bez navodnika!
 
     def get_queryset(self):
-        # vraća QS sa anotacijama: year, month, oj_code_txt, center_code_txt, iznos
         return service_monthly_costs_rows(self.request)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Mesečni troškovi servisa po centru"
         return ctx
-
+    
 @login_required
 def service_monthly_costs_csv(request):
     rows = service_monthly_costs_rows(request)
 
-    resp = HttpResponse(content_type='text/csv; charset=utf-8')
+    resp = HttpResponse(content_type='text/csv')
     resp['Content-Disposition'] = 'attachment; filename="service_monthly_costs.csv"'
 
     w = csv.writer(resp)
     # zaglavlje koje odgovara poljima iz service_monthly_costs_rows
-    w.writerow(['Godina', 'Mesec', 'OJ', 'Centar', 'Ukupan trošak'])
+    w.writerow(['Godina', 'Mesec', 'OJ', 'Centar', 'Ukupan trosak'])
 
     for r in rows:
         w.writerow([
