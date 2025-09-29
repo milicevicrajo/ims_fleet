@@ -1,0 +1,101 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">{{ title }}</h2>
+        <div class="d-flex align-items-center gap-2">
+          <a href="{% url 'vehicle_tender_document_create' %}" class="btn btn-primary btn-sm">
+            <i class="mdi mdi-plus-box me-1"></i> Dodaj dokument
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="get" class="row g-3 align-items-end mb-4">
+          <div class="col-12 col-md-4 col-lg-3">
+            <label for="vehicle-filter" class="form-label mb-0">Vozilo</label>
+            <select name="vehicle" id="vehicle-filter" class="form-select select2-method">
+              <option value="">Sva vozila</option>
+              {% for option in vehicles %}
+                <option value="{{ option.id }}" {% if option.id|stringformat:'s' == selected_vehicle_id %}selected{% endif %}>
+                  {{ option }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-3 col-lg-2 form-check mt-4 pt-2">
+            <input class="form-check-input" type="checkbox" value="1" id="only-active" name="only_active" {% if only_active %}checked{% endif %}>
+            <label class="form-check-label" for="only-active">Samo aktivni</label>
+          </div>
+          <div class="col-12 col-md-5 col-lg-3">
+            <button type="submit" class="btn btn-primary me-2">
+              <i class="mdi mdi-filter-variant me-1"></i> Primeni filter
+            </button>
+            <a href="{% url 'vehicle_tender_document_list' %}" class="btn btn-outline-secondary">Reset</a>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-striped align-middle">
+            <thead>
+              <tr>
+                <th>Vozilo</th>
+                <th>Tip</th>
+                <th>Naziv</th>
+                <th>Datum fotografisanja</th>
+                <th>Status</th>
+                <th>Slika</th>
+                <th>Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for document in documents %}
+                <tr>
+                  <td>{{ document.vehicle }}</td>
+                  <td>{{ document.get_document_type_display }}</td>
+                  <td>{{ document.title }}</td>
+                  <td>{% if document.taken_at %}{{ document.taken_at|date:"d.m.Y" }}{% else %}-{% endif %}</td>
+                  <td>
+                    {% if document.is_active %}
+                      <span class="badge bg-success">Aktivan</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Neaktivan</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if document.image %}
+                      <a href="{% url 'vehicle_tender_document_detail' document.pk %}" class="d-inline-block">
+                        <img src="{{ document.image.url }}" alt="{{ document.title }}" style="max-width: 120px; max-height: 80px; object-fit: cover;">
+                      </a>
+                    {% else %}
+                      <span class="text-muted">Nema slike</span>
+                    {% endif %}
+                  </td>
+                  <td class="d-flex gap-2">
+                    <a href="{% url 'vehicle_tender_document_detail' document.pk %}" class="btn btn-sm btn-outline-secondary" title="Pregled">
+                      <i class="mdi mdi-eye"></i>
+                    </a>
+                    <a href="{% url 'vehicle_tender_document_update' document.pk %}" class="btn btn-sm btn-primary" title="Izmeni">
+                      <i class="mdi mdi-pencil"></i>
+                    </a>
+                    <a href="{% url 'vehicle_tender_document_delete' document.pk %}" class="btn btn-sm btn-danger" title="Obrisi">
+                      <i class="mdi mdi-trash-can"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted">Nema sacuvanih tender dokumenata.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

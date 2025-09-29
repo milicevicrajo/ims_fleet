@@ -50,6 +50,34 @@ class TrafficCardForm(forms.ModelForm):
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
             field.required = True
+
+class VehicleTenderDocumentForm(forms.ModelForm):
+    vehicle = forms.ModelChoiceField(
+        queryset=Vehicle.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label=_("Vozilo")
+    )
+    taken_at = forms.DateField(
+        required=False,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%Y-%m-%d', '%d/%m/%Y'],
+        label=_("Datum fotografisanja")
+    )
+
+    class Meta:
+        model = VehicleTenderDocument
+        fields = ['vehicle', 'document_type', 'title', 'image', 'description', 'taken_at', 'is_active']
+        widgets = {
+            'document_type': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.taken_at:
+            self.initial['taken_at'] = self.instance.taken_at.strftime('%Y-%m-%d')
+
 class OrganizationalUnitForm(forms.ModelForm):
     class Meta:
         model = OrganizationalUnit

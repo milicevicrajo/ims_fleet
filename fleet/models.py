@@ -76,6 +76,42 @@ class TrafficCard(models.Model):
     def __str__(self):
         return f"{self.registration_number} valid until {self.valid_until}"
 
+class VehicleTenderDocument(models.Model):
+    class DocumentType(models.TextChoices):
+        LICENSE_PLATE = 'license_plate', _("Slika tablica")
+        STICKER = 'sticker', _("Slika nalepnice")
+        OTHER = 'other', _("Drugo")
+
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='tender_documents',
+        verbose_name=_("Vozilo"),
+    )
+    document_type = models.CharField(
+        max_length=20,
+        choices=DocumentType.choices,
+        default=DocumentType.LICENSE_PLATE,
+        verbose_name=_("Tip dokumenta"),
+    )
+    title = models.CharField(max_length=255, verbose_name=_("Naziv"))
+    image = models.ImageField(upload_to='vehicle_tender_documents/%Y/%m/', verbose_name=_("Slika"))
+    description = models.TextField(blank=True, verbose_name=_("Opis"))
+    taken_at = models.DateField(null=True, blank=True, verbose_name=_("Datum fotografisanja"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Aktivan"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _("Tender dokument vozila")
+        verbose_name_plural = _("Tender dokumenti vozila")
+
+    def __str__(self):
+        return f"{self.get_document_type_display()} - {self.title}"
+
+
+
 class OrganizationalUnit(models.Model):
     name = models.CharField(verbose_name=_("Naziv"), max_length=100)
     code = models.CharField(verbose_name=_("Šifra organizacione jedinice"), max_length=10, unique=True)

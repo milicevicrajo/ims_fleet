@@ -54,6 +54,7 @@ from .forms import (
     ServiceTransactionForm,
     ServiceTypeForm,
     TrafficCardForm,
+    VehicleTenderDocumentForm,
     VehicleForm,
 )
 from .models import (
@@ -76,6 +77,7 @@ from .models import (
     ServiceTransaction,
     ServiceType,
     TrafficCard,
+    VehicleTenderDocument,
     Vehicle,
 )
 from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
@@ -583,6 +585,8 @@ class VehicleDetailView(LoginRequiredMixin, DetailView):
             'consumptions': consumptions,
             'trafic_cards':trafic_cards,
             'trafic_card':trafic_card,
+            'tender_documents': vehicle.tender_documents.order_by('-created_at'),
+            'tender_document_create_url': reverse('vehicle_tender_document_create_for_vehicle', kwargs={'vehicle_id': vehicle.pk}),
             'title':f"Detalji vozila {self.object.brand} {self.object.model}"
         })
         return context
@@ -642,7 +646,108 @@ class VehicleDeleteView(LoginRequiredMixin, DeleteView):
         return super().get_object(queryset)
 
 
+# <!-- ======================================================================= -->
+#                   <!-- VEHICLE TENDER DOCUMENTS -->
+# <!-- ======================================================================= -->
+class VehicleTenderDocumentListView(LoginRequiredMixin, ListView):
+    model = VehicleTenderDocument
+    template_name = 'fleet/vehicle_tender_document_list.html'
+    context_object_name = 'documents'
 
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('vehicle')
+        vehicle_id = self.request.GET.get('vehicle')
+        if vehicle_id:
+            queryset = queryset.filter(vehicle_id=vehicle_id)
+        only_active = self.request.GET.get('only_active')
+        if only_active == '1':
+            queryset = queryset.filter(is_active=True)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Tender dokumenti vozila'
+        context['vehicles'] = Vehicle.objects.all().order_by('brand', 'model')
+        context['selected_vehicle_id'] = self.request.GET.get('vehicle')
+        context['only_active'] = self.request.GET.get('only_active') == '1'
+        context['document_type_choices'] = VehicleTenderDocument.DocumentType.choices
+        return context
+
+
+class VehicleTenderDocumentCreateView(LoginRequiredMixin, CreateView):
+    model = VehicleTenderDocument
+    form_class = VehicleTenderDocumentForm
+    template_name = 'fleet/generic_form.html'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        vehicle_id = self.kwargs.get('vehicle_id') or self.request.GET.get('vehicle')
+        if vehicle_id:
+            initial['vehicle'] = Vehicle.objects.filter(pk=vehicle_id).first()
+        return initial
+
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, 'Dokument je uspešno dodat.')
+        return redirect('vehicle_detail', pk=self.object.vehicle_id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Dodaj tender dokument'
+        context['submit_button_label'] = 'Sačuvaj dokument'
+        return context
+
+
+class VehicleTenderDocumentUpdateView(LoginRequiredMixin, UpdateView):
+    model = VehicleTenderDocument
+    form_class = VehicleTenderDocumentForm
+    template_name = 'fleet/generic_form.html'
+
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, 'Dokument je uspešno izmenjen.')
+        return redirect('vehicle_detail', pk=self.object.vehicle_id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Izmeni tender dokument {self.object.title}'
+        context['submit_button_label'] = 'Sačuvaj izmene'
+        return context
+
+
+class VehicleTenderDocumentDetailView(LoginRequiredMixin, DetailView):
+    model = VehicleTenderDocument
+    template_name = 'fleet/vehicle_tender_document_detail.html'
+    context_object_name = 'document'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Tender dokument {self.object.title}'
+        return context
+
+
+class VehicleTenderDocumentDeleteView(LoginRequiredMixin, DeleteView):
+    model = VehicleTenderDocument
+    template_name = 'fleet/vehicle_tender_document_confirm_delete.html'
+    context_object_name = 'document'
+    success_url = reverse_lazy('vehicle_tender_document_list')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        vehicle_id = self.object.vehicle_id
+        messages.success(request, 'Dokument je uspešno obrisan.')
+        self.success_url = reverse('vehicle_detail', kwargs={'pk': vehicle_id})
+        return super().delete(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Obriši tender dokument {self.object.title}'
+        return context
+
+
+# <!-- ======================================================================= -->
+#                           <!-- TRAFIC CARD -->
+# <!-- ======================================================================= -->
 # <!-- ======================================================================= -->
 #                           <!-- TRAFIC CARD -->
 # <!-- ======================================================================= -->

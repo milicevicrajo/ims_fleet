@@ -19,6 +19,12 @@ urlpatterns = [
     path('vozila/novo/', VehicleCreateView.as_view(), name='vehicle_create'),
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
     path('vozila/<int:pk>/', VehicleDetailView.as_view(), name='vehicle_detail'),
+    path('vozila/tender-dokumenti/', VehicleTenderDocumentListView.as_view(), name='vehicle_tender_document_list'),
+    path('vozila/tender-dokumenti/novo/<int:vehicle_id>/', VehicleTenderDocumentCreateView.as_view(), name='vehicle_tender_document_create_for_vehicle'),
+    path('vozila/tender-dokumenti/novo/', VehicleTenderDocumentCreateView.as_view(), name='vehicle_tender_document_create'),
+    path('vozila/tender-dokumenti/izmeni/<int:pk>/', VehicleTenderDocumentUpdateView.as_view(), name='vehicle_tender_document_update'),
+    path('vozila/tender-dokumenti/obrisi/<int:pk>/', VehicleTenderDocumentDeleteView.as_view(), name='vehicle_tender_document_delete'),
+    path('vozila/tender-dokumenti/<int:pk>/', VehicleTenderDocumentDetailView.as_view(), name='vehicle_tender_document_detail'),
     path('vozila/obrisi/<int:pk>/', VehicleDeleteView.as_view(), name='vehicle_delete'),
     path('vozila/<int:pk>/toggle-status', VehicleTogleStatusView.as_view(), name='vehicle_toggle_status'),
 

@@ -13,6 +13,7 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Vehicle)
 admin.site.register(TrafficCard)
+admin.site.register(VehicleTenderDocument)
 admin.site.register(JobCode)
 admin.site.register(Lease)
 admin.site.register(Policy)
