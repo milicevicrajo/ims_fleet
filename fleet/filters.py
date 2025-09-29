@@ -304,8 +304,6 @@ class PoliciesMonthlyCostsFilter(django_filters.FilterSet):
         self.filters["center"].extra["choices"] = center_choices
         self.filters["vrsta"].extra["choices"]  = vrsta_choices
 
-        # Prazna vrednost za OJ (ModelChoiceFilter)
-        self.filters["oj"].extra.setdefault("empty_label", "— sve —")
 
 
     def filter_simple(self, queryset, name, value):

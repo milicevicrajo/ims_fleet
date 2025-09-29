@@ -1,10 +1,20 @@
-<!-- core/templates/sidebar_naplata.html -->
+{% load static %}
+<!-- ============================================================== -->
+<!-- Left Sidebar for Kadrovi -->
+<!-- ============================================================== -->
 <aside class="left-sidebar" data-sidebarbg="skin5">
   <div class="scroll-sidebar">
     <nav class="sidebar-nav">
-      <ul id="sidebarnav">
-        <li class="sidebar-item"><a class="sidebar-link" href="#">Naplata — stavka 1</a></li>
+      <ul id="sidebarnav" class="pt-4">
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'employee_list' %}" aria-expanded="false">
+            <i class="mdi mdi-account-group"></i>
+            <span class="hide-menu">Spisak zaposlenih</span>
+          </a>
+        </li>
       </ul>
     </nav>
   </div>
 </aside>
+

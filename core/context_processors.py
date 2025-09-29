@@ -3,6 +3,7 @@ def current_app(request):
     sidebar_map = {
         "fleet": "sidebar_fleet.html",
         "naplata": "sidebar_naplata.html",
+        "kadrovi": "sidebar_kadrovi.html",
         "administracija": "sidebar_administracija.html",
     }
     return {
