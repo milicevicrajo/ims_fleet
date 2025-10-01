@@ -446,3 +446,45 @@ class PutnickaFilterForm(forms.Form):
     godina = forms.ChoiceField(choices=GODINA_CHOICES, required=False, label='Godina')
     mesec = forms.ChoiceField(choices=MESEC_CHOICES, required=False, label='Mesec')
     polovina = forms.ChoiceField(choices=POLOVINA_CHOICES, required=False, label='Polovina meseca')
+
+
+
+from django import forms
+from .models import Insurance, DraftInsurance
+
+class InsuranceForm(forms.ModelForm):
+    class Meta:
+        model = Insurance
+        fields = [
+            "vehicle",
+            "god", "sif_vrs", "br_naloga", "stavka", "oj", "knt",
+            "datum", "vez_dok", "potrazuje", "kola",
+        ]
+
+class DraftInsuranceForm(forms.ModelForm):
+    KOLO_CHOICES = [
+        ("", "---------"),  # prazno = None
+        ("True", "Da"),
+        ("False", "Ne"),
+    ]
+    kola = forms.ChoiceField(
+        choices=KOLO_CHOICES,
+        required=False,
+        label="Odnosi se na auto"
+    )
+
+    class Meta:
+        model = DraftInsurance
+        fields = [
+            "vehicle",
+            "god", "sif_vrs", "br_naloga", "stavka", "oj", "knt",
+            "datum", "vez_dok", "potrazuje", "kola",
+        ]
+
+    def clean_kola(self):
+        value = self.cleaned_data["kola"]
+        if value == "True":
+            return True
+        elif value == "False":
+            return False
+        return None

@@ -2236,3 +2236,136 @@ def sync_organizational_units_from_view():
             updated += 1
 
     print(f"Organizacione jedinice: {created} dodatih, {updated} ažuriranih.")
+# services.py
+from django.db import connections, transaction
+from django.utils.dateparse import parse_datetime
+from .models import DraftInsurance, Insurance
+
+INS_VIEW = "dbo.fleet_potrazivanje_ddor"   # naziv SQL view-a
+DB_ALIAS = "server_db"                        # promeni ako koristiš drugi alias
+
+# Stabilni ključ za detekciju duplikata (isti u draft/final)
+KEY_FIELDS = ("god", "sif_vrs", "br_naloga", "stavka", "knt")
+
+
+def fetch_ddor_insurance_data():
+    """
+    Povlači podatke iz [dbo.fleet_potrazivanje_ddor] u DraftInsurance.
+    Nema vremenskog filtera (view ga ne podržava).
+    Preskače zapise koji već postoje u final/draft po ključu KEY_FIELDS.
+    """
+    try:
+        print("Pokrećem fetch_ddor_insurance_data...")
+
+        query = f"""
+            SELECT
+                god, sif_vrs, br_naloga, stavka, oj, knt, datum, vez_dok, potrazuje, kola
+            FROM {INS_VIEW}
+        """
+
+        with connections[DB_ALIAS].cursor() as cursor:
+            print("Izvršavam SQL upit...")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            print(f"Preuzeto redova: {len(rows)}")
+
+        for i, row in enumerate(rows, start=1):
+            try:
+                god, sif_vrs, br_naloga, stavka, oj, knt, datum_dt, vez_dok, potrazuje, kola = row
+
+                # datum u view-u može biti datetime → pretvori u date
+                if datum_dt is not None:
+                    if hasattr(datum_dt, "date"):
+                        datum = datum_dt.date()
+                    else:
+                        dt = parse_datetime(str(datum_dt))
+                        datum = dt.date() if dt else None
+                else:
+                    datum = None
+
+                # Priprema vrednosti (string-stripping, tipovi)
+                god = int(god) if god is not None else None
+                sif_vrs = str(sif_vrs).strip() if sif_vrs is not None else None
+                br_naloga = str(br_naloga).strip() if br_naloga is not None else ""
+                stavka = str(stavka).strip() if stavka is not None else None
+                oj = str(oj).strip() if oj is not None else None
+                knt = str(knt).strip() if knt is not None else None
+                vez_dok = str(vez_dok).strip() if vez_dok is not None else None
+                kola = str(kola).strip() if kola is not None else None
+                potrazuje = None if potrazuje in (None, "") else float(potrazuje)
+
+                # duplikat čuvar
+                key_filter = dict(god=god, sif_vrs=sif_vrs, br_naloga=br_naloga, stavka=stavka, knt=knt)
+                if Insurance.objects.filter(**key_filter).exists() or DraftInsurance.objects.filter(**key_filter).exists():
+                    print(f"[{i}] Postoji (final/draft): {key_filter} — preskačem.")
+                    continue
+
+                DraftInsurance.objects.create(
+                    god=god, sif_vrs=sif_vrs, br_naloga=br_naloga, stavka=stavka,
+                    oj=oj, knt=knt, datum=datum, vez_dok=vez_dok, potrazuje=potrazuje, kola=kola
+                )
+                print(f"[{i}] Sačuvan draft: {br_naloga}/{stavka} ({god})")
+
+            except Exception as e:
+                print(f"[{i}] Greška u obradi reda: {e}")
+
+        return "DDOR: podaci uspešno povučeni u draft; duplikati preskočeni."
+
+    except Exception as e:
+        print(f"Greška u fetch_ddor_insurance_data: {e}")
+        return f"Greška u fetch_ddor_insurance_data: {e}"
+
+
+def migrate_draft_to_insurance_single(draft_id: int, vehicle_id: int):
+    """
+    Migrira jedan (single) draft zapis u final Insurance.
+    Nema propagacije/sibling-a — pretpostavka je da je stavka jedina.
+    """
+    try:
+        draft = DraftInsurance.objects.get(id=draft_id)
+
+        if not vehicle_id:
+            raise ValueError("Nedostaje vehicle_id.")
+
+        # minimalni kriterijumi (po tvom DraftInsurance.is_complete):
+        if not (draft.vehicle or vehicle_id) or draft.datum is None:
+            raise ValueError("Draft nije kompletan (potrebni: vehicle i datum).")
+
+        with transaction.atomic():
+            # koristi stabilni ključ
+            key_kwargs = dict(
+                god=draft.god,
+                sif_vrs=draft.sif_vrs,
+                br_naloga=draft.br_naloga,
+                stavka=draft.stavka,
+                knt=draft.knt,
+            )
+
+            ins, created = Insurance.objects.get_or_create(
+                **key_kwargs,
+                defaults=dict(
+                    vehicle_id=vehicle_id,
+                    oj=draft.oj,
+                    datum=draft.datum,
+                    vez_dok=draft.vez_dok,
+                    potrazuje=draft.potrazuje,
+                    kola=draft.kola,
+                ),
+            )
+
+            if not created:
+                # Meko ažuriranje postojećeg final zapisa
+                ins.vehicle_id = vehicle_id
+                ins.oj = draft.oj
+                ins.datum = draft.datum
+                ins.vez_dok = draft.vez_dok
+                ins.potrazuje = draft.potrazuje
+                ins.kola = draft.kola
+                ins.save()
+
+            draft.delete()
+
+        return ins
+
+    except DraftInsurance.DoesNotExist:
+        raise ValueError("Draft zapis ne postoji.")

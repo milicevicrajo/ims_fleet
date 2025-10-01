@@ -170,6 +170,20 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user_list'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
+    # Final
+    path("insurance/", InsuranceListView.as_view(), name="insurance_list"),
+    path("insurance/<int:god>/<str:br_naloga>/", InsuranceDetailView.as_view(), name="insurance_detail"),
+    path("insurance/new/", InsuranceCreateView.as_view(), name="insurance_create"),
+    path("insurance/<int:pk>/edit/", InsuranceUpdateView.as_view(), name="insurance_update"),
+    path("insurance/<int:pk>/delete/", InsuranceDeleteView.as_view(), name="insurance_delete"),
+
+    # Draft
+    path("insurance/drafts/", InsuranceFixingListView.as_view(), name="insurance_fixing_list"),
+    path("insurance/drafts/<int:pk>/edit/", DraftInsuranceUpdateView.as_view(), name="draft_insurance_update"),
+    path("insurance/fetch-ddor/", insurance_fetch_ddor_view, name="insurance_fetch_ddor"),
+    path("fetch-ddor/", fetch_ddor_data_view, name="fetch_ddor"),
+    path("insurance/migrate-one/<int:draft_id>/<int:vehicle_id>/", insurance_migrate_one_view, name="insurance_migrate_one"),
 ]
 
 # Dodavanje URL pravila za medijske fajlove tokom razvoja

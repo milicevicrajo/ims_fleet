@@ -280,6 +280,19 @@
                         </tr>
                         {% endif %}
 
+                        {% if draft_insurance_count > 0 %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'insurance_fixing_list' %}" class="d-flex align-items-center text-danger text-decoration-none py-2"
+                                   onMouseOver="this.style.color='red'" onMouseOut="this.style.color='inherit'">
+                                    <i class="mdi mdi-link-variant-off mdi-24px me-3"></i> {# Ikona za prekinutu vezu ili nedostajući podatak #}
+                                        **Imate {{ draft_insurance_count }} ddor potraživanja** koja treba da se dopune!
+                                    </span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endif %}
+
                         {% if not policies_without_vehicle and not services_without_vehicle and not requisitions_without_vehicle and not expiring_policies_count and not expired_unrenewed_policies_count %}
                         <tr>
                             <td class="text-success text-center py-3">

@@ -102,6 +102,7 @@ def dashboard(request):
     services_without_vehicle = DraftServiceTransaction.objects.count()
     policies_without_vehicle = DraftPolicy.objects.count()
     requisitions_without_vehicle = DraftRequisition.objects.count()
+    draft_insurance_count = DraftInsurance.objects.count()
     
     today = date.today()
     thirty_days_from_now = today + timedelta(days=30)
@@ -225,6 +226,7 @@ def dashboard(request):
     context = {
         'services_without_vehicle': services_without_vehicle,
         'policies_without_vehicle': policies_without_vehicle,
+        'draft_insurance_count': draft_insurance_count,
         'requisitions_without_vehicle': requisitions_without_vehicle,
         'expiring_policies': expiring_policies,
         'expiring_policies_count': expiring_policies_count,
@@ -2233,6 +2235,21 @@ def fetch_requisition_data_view(request):
 
     return render(request, 'fleet/fetch_data.html')
 
+def fetch_ddor_data_view(request):
+    if request.method == 'POST':
+        days = request.POST.get('days', None)
+        if days:
+            try:
+                days = int(days)
+            except ValueError:
+                messages.error(request, "Uneta vrednost za broj dana nije validna.")
+                return redirect('fetch_policies')  # ili gde god želiš da vratiš usera
+
+        # poziv util funkcije
+        result = fetch_ddor_insurance_data()
+        messages.success(request, result)
+        return redirect('insurance_fixing_list')  # ili 'insurance_list' ako hoćeš pregled finalnih
+
 class KontoListView(LoginRequiredMixin, ListView):
     model = KontaVozila
     template_name = "fleet/konta_list.html"
@@ -2964,3 +2981,252 @@ def service_monthly_costs_csv(request):
         ])
 
     return resp
+
+
+from django.db import transaction
+from django.urls import reverse_lazy, reverse
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.shortcuts import redirect
+from django.contrib import messages
+
+from .models import Insurance, DraftInsurance
+from .forms import InsuranceForm, DraftInsuranceForm
+
+
+# ----------------------------
+# FINAL: LIST & DETAIL (po dokumentu)
+# ----------------------------
+
+class InsuranceListView(ListView):
+    model = Insurance
+    template_name = "fleet/insurance_list.html"
+    context_object_name = "insurances"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Osiguranja"
+        return ctx
+
+
+class InsuranceDetailView(ListView):
+    """
+    Prikaz svih stavki jednog naloga (br_naloga, god) — analogno RequisitionDetailView.
+    """
+    model = Insurance
+    template_name = "fleet/insurance_detail.html"
+    context_object_name = "stavke"
+
+    def get_queryset(self):
+        return (
+            Insurance.objects
+            .filter(br_naloga=self.kwargs["br_naloga"], god=self.kwargs["god"])
+            .order_by("stavka")
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["br_naloga"] = self.kwargs["br_naloga"]
+        ctx["god"] = self.kwargs["god"]
+        ctx["title"] = f"Osiguranje {ctx['br_naloga']} ({ctx['god']})"
+        return ctx
+
+
+# ----------------------------
+# DRAFT: LIST ZA DOPUNU
+# ----------------------------
+
+class InsuranceFixingListView(ListView):
+    """
+    Draft zapisi kojima nedostaju ključni podaci (npr. vehicle ili datum) i koje treba dopuniti.
+    """
+    model = DraftInsurance
+    template_name = "fleet/draft_insurance_list.html"
+    context_object_name = "insurances"
+
+    def get_queryset(self):
+        return (
+            DraftInsurance.objects
+            .filter(~Q(kola=False))  # sve osim False (dakle True ili NULL)
+            .order_by("god", "br_naloga", "stavka")
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Potrayivanja od osiguranja koja je potrebno dodeliti automobilu"
+        return ctx
+
+
+# ----------------------------
+# FINAL: CREATE / UPDATE / DELETE
+# ----------------------------
+
+class InsuranceCreateView(CreateView):
+    model = Insurance
+    form_class = InsuranceForm
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("insurance_list")
+    success_message = "Osiguranje uspešno kreirano."
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Novo osiguranje"
+        ctx["submit_button_label"] = "Sačuvaj"
+        return ctx
+
+
+class InsuranceUpdateView(UpdateView):
+    model = Insurance
+    form_class = InsuranceForm
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("insurance_list")
+    success_message = "Osiguranje uspešno izmenjeno."
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Izmena osiguranja"
+        ctx["submit_button_label"] = "Sačuvaj izmene"
+        return ctx
+
+
+class InsuranceDeleteView(DeleteView):
+    model = Insurance
+    template_name = "fleet/insurance_confirm_delete.html"
+    success_url = reverse_lazy("insurance_list")
+
+
+# ----------------------------
+# DRAFT: UPDATE sa PROPAGACIJOM + MIGRACIJA
+# ----------------------------
+
+def _migrate_one_draft_insurance(draft: DraftInsurance):
+    """
+    Jedan draft → final Insurance (transactional).
+    Kriterijum kompletiranja je definisan u draft.is_complete().
+    Ako već postoji final sa istim ključem, ažurira ga.
+    """
+    if not draft.is_complete():
+        return None
+
+    with transaction.atomic():
+        ins, created = Insurance.objects.get_or_create(
+            god=draft.god,
+            sif_vrs=draft.sif_vrs,
+            br_naloga=draft.br_naloga,
+            stavka=draft.stavka,
+            knt=draft.knt,
+            defaults=dict(
+                vehicle=draft.vehicle,
+                oj=draft.oj,
+                datum=draft.datum,
+                vez_dok=draft.vez_dok,
+                potrazuje=draft.potrazuje,
+                kola=draft.kola,
+            ),
+        )
+        if not created:
+            # Ažuriraj podatke (meko prepisivanje)
+            ins.vehicle = draft.vehicle
+            ins.oj = draft.oj
+            ins.datum = draft.datum
+            ins.vez_dok = draft.vez_dok
+            ins.potrazuje = draft.potrazuje
+            ins.kola = draft.kola
+            ins.save()
+
+        draft.delete()
+        return ins
+
+
+def delete_complete_draft_insurances():
+    """
+    Opciono: očisti draft zapise koji su postali “prazni” scenario (ako se nešto eksterno promeni).
+    Ovde jednostavno ne radimo ništa – ostavljeno za simetriju sa Trebovanjem.
+    """
+    return
+
+
+class DraftInsuranceUpdateView(UpdateView):
+    """
+    Analogno DraftRequisitionUpdateView:
+    - Sačuva izmenjeni draft red (jedna stavka),
+    - Propagira izmenjene ključne vrednosti na sve stavke istog dokumenta (br_naloga, god),
+    - Pokuša migraciju svakog reda u final ako je kompletan,
+    - Ako ostane nedovršenih → vrati na fixing listu; inače → na detail tog dokumenta.
+    """
+    model = DraftInsurance
+    form_class = DraftInsuranceForm
+    template_name = "fleet/generic_form_draft.html"
+    success_message = "Osiguranje uspešno izmenjeno."
+
+    def form_valid(self, form):
+        current = form.save()
+
+        # Ponovo skup svih draftova za ovaj dokument (uklj. trenutni)
+        all_drafts = DraftInsurance.objects.filter(
+            br_naloga=current.br_naloga, god=current.god
+        ).order_by("stavka")
+
+        # Pokušaj migracije svih koji su kompletni
+        migrated = 0
+        for d in list(all_drafts):
+            ins = _migrate_one_draft_insurance(d)
+            if ins:
+                migrated += 1
+
+        # Opciono: očisti kompletne draftove (nema potrebe, već ih brišemo pri migraciji)
+        delete_complete_draft_insurances()
+
+        # Ako su ostali neki draftovi → vrati na fixing listu, inače na detail
+        still_exists = DraftInsurance.objects.filter(
+            br_naloga=current.br_naloga, god=current.god
+        ).exists()
+
+        if still_exists:
+            messages.info(self.request, f"Delimično premešteno ({migrated}). Dovršite preostale stavke.")
+            return redirect("insurance_fixing_list")
+        else:
+            messages.success(self.request, f"Premešteno u final ({migrated}).")
+            return redirect("insurance_detail", god=current.god, br_naloga=current.br_naloga)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = f"Izmena osiguranja {self.object.br_naloga}"
+        ctx["submit_button_label"] = "Sačuvaj izmene"
+        # Po želji: kratko uputstvo
+        ctx["manual"] = (
+            "Unesite vozilo, ako se potraživanje ne odnosi na vozilo polje 'Odnosi se na vozilo' postavite NE"
+        )
+        return ctx
+
+from .utils import fetch_ddor_insurance_data, migrate_draft_to_insurance_single
+from .models import DraftInsurance
+def insurance_fetch_ddor_view(request):
+    """
+    POST /insurance/fetch-ddor/
+    Povuče podatke iz view-a u DraftInsurance.
+    """
+    msg = fetch_ddor_insurance_data()
+    messages.info(request, msg)
+    # Preusmeri na listu draftova za dopunu (ili gde želiš)
+    return redirect("insurance_fixing_list")
+
+
+
+def insurance_migrate_one_view(request, draft_id, vehicle_id):
+    """
+    POST /insurance/migrate-one/<draft_id>/<vehicle_id>/
+    Migrira jedan draft zapis u final Insurance.
+    """
+    try:
+        ins = migrate_draft_to_insurance_single(draft_id, vehicle_id)
+        messages.success(request, f"Premešteno u final: {ins}")
+        # ako želiš nazad na detail dokumenta:
+        return redirect("insurance_detail", god=ins.god, br_naloga=ins.br_naloga)
+    except Exception as e:
+        messages.error(request, f"Greška: {e}")
+        # vrati na edit tog draft-a ili na fixing list
+        try:
+            d = DraftInsurance.objects.get(id=draft_id)
+            return redirect("draft_insurance_update", pk=d.id)
+        except Exception:
+            return redirect("insurance_fixing_list")

@@ -1,0 +1,69 @@
+<!-- draft_insurance_list.html -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ title }}</h2>
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <a href="{% url 'insurance_create' %}" class="text-success" style="font-size: 1.15em;">
+                <i class="mdi mdi-plus-box"></i> Dodaj polisu
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table id="DatatableDraftInsurance" class="display">
+                <thead>
+                    <tr>
+                        <th>Vozilo</th>
+                        <th>Godina</th>
+                        <th>Šifra vrste</th>
+                        <th>Broj naloga</th>
+                        <th>Stavka</th>
+                        <th>Konto</th>
+                        <th>Datum</th>
+                        <th>Vezani dokument</th>
+                        <th>Potražuje</th>
+                        <th>Napomena</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for insurance in insurances %}
+                    <tr>
+                        <td>{{ insurance.vehicle }}</td>
+                        <td>{{ insurance.god }}</td>
+                        <td>{{ insurance.sif_vrs }}</td>
+                        <td>{{ insurance.br_naloga }}</td>
+                        <td>{{ insurance.stavka }}</td>
+                        <td>{{ insurance.knt }}</td>
+                        <td>{{ insurance.datum|date:"d.m.Y" }}</td>
+                        <td>{{ insurance.vez_dok }}</td>
+                        <td>{{ insurance.potrazuje }}</td>
+                        <td>{{ insurance.napomena }}</td>
+                        <td>
+                            <a href="{% url 'draft_insurance_update' insurance.pk %}">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Vozilo</th>
+                        <th>Godina</th>
+                        <th>Šifra vrste</th>
+                        <th>Broj naloga</th>
+                        <th>Stavka</th>
+                        <th>Konto</th>
+                        <th>Datum</th>
+                        <th>Vezani dokument</th>
+                        <th>Potražuje</th>
+                        <th>Napomena</th>
+                        <th>Akcije</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

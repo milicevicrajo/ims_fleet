@@ -611,6 +611,90 @@ class KontaVozila(models.Model):
         return f"{self.knt} - {self.naz_knt}"
 
 
+class DraftInsurance(models.Model):
+    vehicle = models.ForeignKey(
+        "fleet.Vehicle",
+        on_delete=models.CASCADE,
+        related_name="draft_insurances",
+        verbose_name=_("Vozilo"),
+        blank=True, null=True
+    )
+
+    god = models.IntegerField(_("Godina"), null=True, blank=True)
+    sif_vrs = models.CharField(_("Šifra vrste"), max_length=20, null=True, blank=True)
+    br_naloga = models.CharField(_("Broj naloga"), max_length=50)
+    stavka = models.CharField(_("Stavka"), max_length=50, null=True, blank=True)
+    oj = models.CharField(_("OJ"), max_length=50, null=True, blank=True)
+    knt = models.CharField(_("Konto"), max_length=50, null=True, blank=True)
+    datum = models.DateField(_("Datum"), null=True, blank=True)
+    vez_dok = models.CharField(_("Vezni dokument"), max_length=50, null=True, blank=True)
+    potrazuje = models.DecimalField(_("Potražuje"), max_digits=15, decimal_places=2, null=True, blank=True)
+    kola = models.BooleanField(
+        _("Odnosi se na auto"),
+        default=True,
+        null=True,  # dozvoli NULL
+        blank=True
+    )
+
+
+    class Meta:
+        verbose_name = "Draft osiguranje"
+        verbose_name_plural = "Draft osiguranja"
+        indexes = [
+            models.Index(fields=["god", "sif_vrs", "br_naloga", "stavka", "knt"]),
+            models.Index(fields=["br_naloga"]),
+        ]
+
+    def __str__(self):
+        return f"DraftInsurance {self.br_naloga}/{self.stavka} ({self.god})"
+
+    def is_complete(self) -> bool:
+        return all([
+            self.vehicle is not None,
+            self.datum is not None,
+        ])
+
+
+class Insurance(models.Model):
+    vehicle = models.ForeignKey(
+        "fleet.Vehicle",
+        on_delete=models.PROTECT,
+        related_name="insurances",
+        verbose_name=_("Vozilo")
+    )
+
+    god = models.IntegerField(_("Godina"), null=True, blank=True)
+    sif_vrs = models.CharField(_("Šifra vrste"), max_length=20, null=True, blank=True)
+    br_naloga = models.CharField(_("Broj naloga"), max_length=50)
+    stavka = models.CharField(_("Stavka"), max_length=50, null=True, blank=True)
+    oj = models.CharField(_("OJ"), max_length=50, null=True, blank=True)
+    knt = models.CharField(_("Konto"), max_length=50, null=True, blank=True)
+    datum = models.DateField(_("Datum"), null=True, blank=True)
+    vez_dok = models.CharField(_("Vezni dokument"), max_length=50, null=True, blank=True)
+    potrazuje = models.DecimalField(_("Potražuje"), max_digits=15, decimal_places=2, null=True, blank=True)
+    kola = models.BooleanField(
+        _("Odnosi se na auto"),
+        default=True
+    )
+
+    class Meta:
+        verbose_name = "Osiguranje"
+        verbose_name_plural = "Osiguranja"
+        indexes = [
+            models.Index(fields=["god", "sif_vrs", "br_naloga", "stavka", "knt"]),
+            models.Index(fields=["br_naloga"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["god", "sif_vrs", "br_naloga", "stavka", "knt"],
+                name="uniq_insurance_key"
+            )
+        ]
+
+    def __str__(self):
+        return f"Insurance {self.br_naloga}/{self.stavka} ({self.god})"
+
+
 
 
 class CustomUser(AbstractUser):

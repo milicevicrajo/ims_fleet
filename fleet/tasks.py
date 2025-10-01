@@ -1,4 +1,11 @@
-from fleet.utils import fetch_policy_data, fetch_service_data, fetch_requisition_data, nis_data_import, omv_putnicka_data_import, omv_teretna_data_import, kerio_login, process_vehicle_retirements
+from fleet.utils import (
+    fetch_policy_data, 
+    fetch_service_data, 
+    fetch_requisition_data,
+    fetch_ddor_insurance_data,   # ← NOVO dodaj import
+    nis_data_import, omv_putnicka_data_import, omv_teretna_data_import,
+    kerio_login, process_vehicle_retirements
+)
 from celery import shared_task
 
 @shared_task
@@ -47,3 +54,8 @@ def fetch_job_codes():
 @shared_task
 def proveri_otpis():
     return process_vehicle_retirements()
+
+@shared_task
+def fetch_ddor_data_task():   # ← NOVI Celery task
+    result = fetch_ddor_insurance_data()
+    return f"Fetch DDOR Insurance Data: {result}"

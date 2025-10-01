@@ -33,4 +33,11 @@
     <button type="submit">Povuci podatke za Trebovanja</button>
 </form>
 
+<!-- Forma za povlačenje podataka za DDOR Insurance -->
+<form method="post" action="{% url 'fetch_ddor' %}">
+    {% csrf_token %}
+    <h2>Povlačenje podataka iz DDOR osiguranja</h2>
+    <button type="submit">Povuci podatke za DDOR</button>
+</form>
+
 {% endblock %}
