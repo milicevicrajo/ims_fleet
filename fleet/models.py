@@ -126,10 +126,15 @@ class JobCode(models.Model):
     organizational_unit = models.ForeignKey(OrganizationalUnit, verbose_name=_("Organizaciona jedinica"), on_delete=models.SET_NULL, related_name='vehicle_assignments', null=True)
     assigned_date = models.DateField(verbose_name=_("Datum dodele"))
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['vehicle', 'assigned_date'], name='unique_vehicle_assigned_date')
-        ]
+class Meta:
+    constraints = [
+        models.UniqueConstraint(fields=["vehicle", "assigned_date"], name="unique_vehicle_assigned_date"),
+    ]
+    indexes = [
+        models.Index(fields=["vehicle", "-assigned_date", "-id"]),
+        models.Index(fields=["organizational_unit"]),
+    ]
+
 
     def __str__(self):
         return f"{self.vehicle} -> {self.organizational_unit} (Assigned on {self.assigned_date})"

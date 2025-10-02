@@ -414,13 +414,14 @@ class VehicleListView(LoginRequiredMixin, FilterView):
         qs = Vehicle.objects.all()
 
         # Subqueries / annotate — kao u tvojoj postojećoj logici
-        latest_job_code_id_subquery = JobCode.objects.filter(
+        latest_job_code_qs = JobCode.objects.filter(
             vehicle=OuterRef('pk')
-        ).order_by('-assigned_date').values('id')[:1]
+        ).order_by('-assigned_date', '-pk')
 
-        latest_org_unit_subquery = JobCode.objects.filter(
-            vehicle=OuterRef('pk')
-        ).order_by('-assigned_date').values('organizational_unit__code')[:1]
+        latest_job_code_id_subquery = latest_job_code_qs.values('id')[:1]
+        latest_org_unit_id_subquery = latest_job_code_qs.values('organizational_unit_id')[:1]
+        latest_org_unit_code_subquery = latest_job_code_qs.values('organizational_unit__code')[:1]
+        latest_center_subquery = latest_job_code_qs.values('organizational_unit__center')[:1]
 
         latest_traffic_card_subquery = TrafficCard.objects.filter(
             vehicle=OuterRef('pk')
@@ -430,9 +431,14 @@ class VehicleListView(LoginRequiredMixin, FilterView):
             vehicle=OuterRef('pk')
         ).order_by('-mileage').values('mileage')[:1]
 
+        qs = Vehicle.objects.annotate(
+            current_ou_id=Subquery(latest_org_unit_id_subquery)
+        )
+
         qs = qs.annotate(
             latest_job_code_id=Subquery(latest_job_code_id_subquery),
-            latest_org_unit=Subquery(latest_org_unit_subquery),
+            latest_org_unit=Subquery(latest_center_subquery),
+            latest_org_unit_code=Subquery(latest_org_unit_code_subquery),
             registration_number=Subquery(latest_traffic_card_subquery),
             total_repairs=Sum('service_transactions__potrazuje'),
             mileage=Subquery(last_mileage_subquery),
@@ -3230,3 +3236,4 @@ def insurance_migrate_one_view(request, draft_id, vehicle_id):
             return redirect("draft_insurance_update", pk=d.id)
         except Exception:
             return redirect("insurance_fixing_list")
+

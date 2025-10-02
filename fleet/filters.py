@@ -10,6 +10,8 @@ import django_filters
 from django import forms
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import OuterRef, Subquery, Exists, F
+from django.db.models.functions import Trim
 
 from .models import Vehicle, JobCode, FuelConsumption, TrafficCard
 # pretpostavka da OrganizationalUnit postoji:
@@ -17,6 +19,10 @@ from .models import OrganizationalUnit, ServiceTransaction
 
 
 class VehicleFilter(django_filters.FilterSet):
+    latest_jobcode_qs = JobCode.objects.filter(vehicle=OuterRef('pk')).order_by('-assigned_date', '-pk')
+    latest_org_unit_id_sq = Subquery(latest_jobcode_qs.values('organizational_unit_id')[:1])
+    latest_center_code_sq = Subquery(latest_jobcode_qs.values('organizational_unit__center')[:1])
+
     # --- Osnovni filteri ---
     category = django_filters.CharFilter(
         label="Kategorija", lookup_expr="icontains"
@@ -77,15 +83,58 @@ class VehicleFilter(django_filters.FilterSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # OJ queryset (sortirano po šifri / nazivu kako želiš)
-        self.filters["org_unit"].queryset = OrganizationalUnit.objects.all().order_by("code")
+        qs = self.queryset
+
+        # -- osiguraj da imamo iste anotacije kao u view-u (fallback ako view nije anotirao) --
+        if "current_ou_id" not in getattr(qs.query, "annotations", {}):
+            qs = qs.annotate(current_ou_id=self.latest_org_unit_id_sq)
+        if "latest_center" not in getattr(qs.query, "annotations", {}):
+            qs = qs.annotate(latest_center=self.latest_center_code_sq)
+
+        # ---- OJ choices: samo OJ koje su *trenutno* dodeljene (distinct) ----
+        current_ou_ids = (
+            qs.exclude(current_ou_id__isnull=True)
+            .order_by()  # reset default ordering da DISTINCT radi čisto
+            .values_list("current_ou_id", flat=True)
+            .distinct()
+        )
+        self.filters["org_unit"].queryset = (
+            OrganizationalUnit.objects
+            .filter(pk__in=current_ou_ids)
+            .only("id", "code", "name")
+            .order_by("code")
+        )
+
+        # ---- Centri: samo oni koji zaista postoje u *trenutnim* dodelama ----
+        centers = (
+            qs.exclude(latest_center__isnull=True)
+            .annotate(_center=Trim(F("latest_center")))  # skini eventualne razmake
+            .order_by()
+            .values_list("_center", flat=True)
+            .distinct()
+        )
+        center_choices = [("", "— Svi centri —")] + [(c, c) for c in sorted(centers)]
+        self.filters["center_code"].extra["choices"] = center_choices
+        self.form.fields["center_code"].choices = center_choices
+
+        # Kategorije kao select (kao što si već radio)
+        cats = (Vehicle.objects
+                .exclude(category__isnull=True).exclude(category="")
+                .values_list("category", flat=True)
+                .distinct().order_by("category"))
+        self.form.fields["category"].widget = forms.Select(
+            choices=[("", "— sve —")] + [(c, c) for c in cats]
+        )
+
+        if not self.data.get("status"):
+            self.form.fields["status"].initial = "active"
 
         # CENTRI kao choices (distinct, sortirano)
-        centers = (OrganizationalUnit.objects
-                   .exclude(center__isnull=True).exclude(center="")
-                   .values_list("center", flat=True)
-                   .distinct().order_by("center"))
-        self.filters["center_code"].extra["choices"] = [(c, c) for c in centers]
+        centers_qs = OrganizationalUnit.objects.exclude(center__isnull=True).values_list("center", flat=True)
+        centers_clean = sorted({c.strip() for c in centers_qs if c and c.strip()})
+        center_choices = [("", "--- Svi centri ---")] + [(c, c) for c in centers_clean]
+        self.filters["center_code"].extra["choices"] = center_choices
+        self.form.fields["center_code"].choices = center_choices
 
         # KATEGORIJE kao select (prijatnije nego plain text)
         cats = (Vehicle.objects
@@ -125,24 +174,28 @@ class VehicleFilter(django_filters.FilterSet):
             return qs.exclude(fuel_consumptions__date__gte=six_months_ago).distinct()
         return qs
 
+
+    def _ensure_current_ou(self, qs):
+        return qs if "current_ou_id" in getattr(qs.query, "annotations", {}) else qs.annotate(current_ou_id=self.latest_org_unit_id_sq)
+
+    def _ensure_latest_center(self, qs):
+        return qs if "latest_center" in getattr(qs.query, "annotations", {}) else qs.annotate(latest_center=self.latest_center_code_sq)
+
     def filter_org_unit(self, qs, name, value):
         if not value:
             return qs
-        # vozila čiji NAJNOVIJI job_code pripada zadatoj OJ
-        matching_latest_job_codes = JobCode.objects.filter(
-            id=django_filters.fields.OuterRef("latest_job_code_id"),
-            organizational_unit_id=value.pk
-        ).values("vehicle_id")
-        return qs.filter(pk__in=django_filters.fields.Subquery(matching_latest_job_codes))
+        ou_id = getattr(value, "pk", value)
+        qs = self._ensure_current_ou(qs)
+        return qs.filter(current_ou_id=ou_id)
 
     def filter_center_code(self, qs, name, value):
         if not value:
             return qs
-        matching_latest_job_codes = JobCode.objects.filter(
-            id=django_filters.fields.OuterRef("latest_job_code_id"),
-            organizational_unit__center=value
-        ).values("vehicle_id")
-        return qs.filter(pk__in=django_filters.fields.Subquery(matching_latest_job_codes))
+        center = value.strip()
+        if not center:
+            return qs
+        qs = self._ensure_latest_center(qs).annotate(_center_trim=Trim(F("latest_center")))
+        return qs.filter(_center_trim=center)
 
 
 

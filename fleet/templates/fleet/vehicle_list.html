@@ -124,7 +124,7 @@
                   {% endif %}
                 </td>
                 <td>{{ vehicle.category }}</td>
-                <td>{{ vehicle.latest_org_unit }}</td>
+                <td>{{ vehicle.latest_org_unit_code|default:"-" }}</td>
                 <td>{{ vehicle.engine_volume|floatformat:0 }}</td>
                 <td class="text-center text-nowrap">
                   <a href="{% url 'vehicle_update' vehicle.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
