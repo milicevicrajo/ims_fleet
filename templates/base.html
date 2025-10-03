@@ -1,7 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
 <html dir="ltr" lang="sr">
-
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -13,21 +12,26 @@
         content="Matrix Admin Lite Free Version is powerful and clean admin dashboard template, inpired from Bootstrap Framework">
     <meta name="robots" content="noindex,nofollow">
     <title>{% block title %} IMS - Flota {% endblock %}</title>
+
     <!-- Favicon icon -->
     <link rel="icon" type="image/png" sizes="16x16" href="../../assets/images/favicon.png">
+
     <!-- Custom CSS -->
     <link href="{% static 'fleet/dist/css/style.css' %}" rel="stylesheet">
-    <link src="{% static 'fleet/dist/js/script.js' %}" rel="stylesheet">
+    <!-- (ispravljeno) ne linkuj JS kao CSS -->
+    {# <link src="{% static 'fleet/dist/js/script.js' %}" rel="stylesheet"> #}
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.6/css/dataTables.dataTables.css">
+
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.1.2/css/buttons.dataTables.min.css">
+
     <!-- Select2 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-
 </head>
 
 <body>
@@ -38,69 +42,33 @@
             <div class="lds-pos"></div>
         </div>
     </div>
+
     <!-- ============================================================== -->
-    <!-- Main wrapper - style you can find in pages.scss -->
+    <!-- Main wrapper -->
     <!-- ============================================================== -->
     <div id="main-wrapper" data-layout="vertical" data-navbarbg="skin5" data-sidebartype="full"
-        data-sidebar-position="absolute" data-header-position="absolute" data-boxed-layout="full">
-        <!-- ============================================================== -->
-            {% include "header.html" %}
-            <!-- dbg: sidebar='{{ sidebar_template|default:"<none>" }}' -->
-            {% include sidebar_template|default:"sidebar_fleet.html" %}
+         data-sidebar-position="absolute" data-header-position="absolute" data-boxed-layout="full">
 
-            {% include sidebar_template|default:"sidebar_fleet.html" %}
+        {% include "header.html" %}
+
+        <!-- dbg: sidebar='{{ sidebar_template|default:"<none>" }}' -->
+        {% include sidebar_template|default:"sidebar_fleet.html" %}
+        {# (ispravljeno) izbačen dupli include sidebara #}
+
         <!-- ============================================================== -->
-        <!-- Page wrapper  -->
+        <!-- Page wrapper -->
         <!-- ============================================================== -->
         <div class="page-wrapper">
-            {% comment %} {% if messages %}
-            <div id="messages">
-                {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %} {% endcomment %}
             <!-- ============================================================== -->
-            <!-- Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
-            {% comment %} <div class="page-breadcrumb">
-                <div class="row">
-                    <div class="col-12 d-flex no-block align-items-center">
-                        <h4 class="page-title">Dashboard</h4>
-                        <div class="ms-auto text-end">
-                            <nav aria-label="breadcrumb">
-                                <ol class="breadcrumb">
-                                    <li class="breadcrumb-item"><a href="#">Home</a></li>
-                                    <li class="breadcrumb-item active" aria-current="page">Library</li>
-                                </ol>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div> {% endcomment %}
-            <!-- ============================================================== -->
-            <!-- End Bread crumb and right sidebar toggle -->
-            <!-- ============================================================== -->
-            <!-- ============================================================== -->
-            <!-- Container fluid  -->
+            <!-- Container fluid -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-                <!-- ============================================================== -->
-                <!-- Sales Cards  -->
-                <!-- ============================================================== -->
-
-
-                
-                {% block content %}
-                {% endblock %}
-
-
+                {% block content %}{% endblock %}
             </div>
             <!-- ============================================================== -->
-            <!-- End Container fluid  -->
+            <!-- End Container fluid -->
             <!-- ============================================================== -->
+
             <!-- ============================================================== -->
             <!-- footer -->
             <!-- ============================================================== -->
@@ -112,7 +80,7 @@
             <!-- ============================================================== -->
         </div>
         <!-- ============================================================== -->
-        <!-- End Page wrapper  -->
+        <!-- End Page wrapper -->
         <!-- ============================================================== -->
     </div>
     <!-- ============================================================== -->
@@ -120,35 +88,55 @@
     <!-- ============================================================== -->
 
     <!-- ============================================================== -->
-    <!-- All Jquery -->
+    <!-- Skripte (isti CDN-ovi, složen redosled, bez duplikata) -->
     <!-- ============================================================== -->
 
-    <!-- jQuery (potreban za Toastr) -->
+    <!-- jQuery (potreban za Toastr, Select2 i DataTables jQuery API) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <!-- Toastr JavaScript -->
+
+    <!-- Toastr -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- DataTables JS -->
+    <!-- DataTables core 2.1.6 -->
     <script src="https://cdn.datatables.net/2.1.6/js/dataTables.min.js"></script>
+
+    <!-- DataTables Buttons 3.1.2 -->
     <script src="https://cdn.datatables.net/buttons/3.1.2/js/dataTables.buttons.min.js"></script>
+
+    <!-- JSZip (isti CDN, potrebna za Excel export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+
+    <!-- SIGURAN shim: ne referencira nedefinisanu varijablu -->
+    <script>
+    (function () {
+        var g = window;
+        if (!g.JSZip && g.jszip) {
+        g.JSZip = g.jszip; // neki buildovi izlažu 'jszip' umesto 'JSZip'
+        }
+        // ako ni jedno ne postoji, ne diramo ništa (bez bacanja greške)
+    })();
+    </script>
+
+    <!-- HTML5 export + Print dugmad -->
     <script src="https://cdn.datatables.net/buttons/3.1.2/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/3.1.2/js/buttons.print.min.js"></script>
 
-    <!-- Moment.js -->
+    <!-- Moment.js (ostaje tvoja verzija) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
 
-    <!-- datetime-moment.js -->
+    <!-- DataTables datetime-moment plugin -->
     <script src="https://cdn.datatables.net/plug-ins/2.1.6/sorting/datetime-moment.js"></script>
-    
-    <!-- Select2 JS -->
+    <script>
+      // registruj format datuma koji koristiš (npr. 31.12.2025)
+      if ($.fn.dataTable && $.fn.dataTable.moment) {
+        $.fn.dataTable.moment('DD.MM.YYYY');
+      }
+    </script>
+
+    <!-- Select2 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-    
-    <!-- Bootstrap tether Core JavaScript -->
+
+    <!-- Bootstrap i ostalo -->
     <script src="{% static 'fleet/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js' %}"></script>
     <script src="{% static 'fleet/assets/extra-libs/sparkline/sparkline.js' %}"></script>
@@ -162,7 +150,7 @@
     <!--Custom JavaScript -->
     <script src="{% static 'fleet/dist/js/custom.min.js' %}"></script>
 
-    <!-- Charts js Files -->
+    <!-- Flot Charts (po potrebi) -->
     <script src="{% static 'fleet/assets/libs/flot/excanvas.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/flot/jquery.flot.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/flot/jquery.flot.pie.js' %}"></script>
@@ -179,9 +167,17 @@
 
 
             // Ručna implementacija sortiranja datuma
+            // Ako koristiš datetime-moment plugin, registruj format:
+            if ($.fn.dataTable.moment) {
+            $.fn.dataTable.moment('DD.MM.YYYY');
+            }
+
+            // Fallback custom tip (ako želiš eksplicitno da ga koristiš kroz "type":"date-custom")
             $.fn.dataTable.ext.type.order['date-custom-pre'] = function(date) {
-                return moment(date, 'DD/MM/YYYY').toDate();
+            const m = moment(date, 'DD.MM.YYYY', true);
+            return m.isValid() ? +m.toDate() : 0;
             };
+
     
             var languageSettings = {
                 "decimal": ",",
@@ -478,6 +474,106 @@
                 "pageLength": 25,  // Postavlja podrazumevani broj redova
             });
 
+
+
+            //**************************************************************************************
+            // Tabele za izvestaje sa servera sa js filterima            
+            //**************************************************************************************
+            // napravi listu svih kolona iz PRVOG header reda
+            const exportCols = (function () {
+            const count = $('#TroskoviPoKontima thead tr:first th').length;
+            return Array.from({ length: count }, (_, i) => i);
+            })();
+
+            // 1. "1.234,56" -> 1234.56  (za Excel numerički format)
+            function parseSerbianNumberForExcel(str) {
+            if (str == null) return '';
+            const s = String(str).replace(/\./g, '').replace(',', '.').replace(/\s/g,'').trim();
+            const n = parseFloat(s);
+            return isNaN(n) ? '' : n;
+            }
+
+           var table = $('#TroskoviPoKontima').DataTable({
+            language: languageSettings,
+            pageLength: 50,
+            layout: {
+                topStart: {
+                buttons: [
+                    {
+                    extend: 'csvHtml5',
+                    text: 'CSV',
+                    title: 'Troskovi',
+                    filename: 'troskovi_' + new Date().toISOString().slice(0,10),
+                    exportOptions: {
+                        columns: ':visible',
+                        format: {
+                        body: function (data, row, col) {
+                            const val = (data == null) ? '' : String(data).replace(/<[^>]*>/g, '').trim();
+                            if (col === 8) { // npr. "Duguje"
+                            return val.replace(/\./g,'').replace(',','.');
+                            }
+                            return val;
+                        }
+                        }
+                    }
+                    },
+                    'print'
+                ]
+                }
+            }
+            });
+
+            // --------- PER-KOLONA FILTERI za #TroskoviPoKontima ---------
+            (function setupColumnFilters() {
+            const api = $('#TroskoviPoKontima').DataTable();
+
+            const thead = $('#TroskoviPoKontima thead');
+            if (!thead.find('tr.filters').length) {
+                const filterRow = $('<tr class="filters"></tr>');
+                api.columns().every(function() { filterRow.append('<th></th>'); });
+                thead.append(filterRow);
+            }
+
+            const dropdownCols = [1, 5, 6, 7, 9]; // prilagodi po svojoj tabeli
+            const skipCols = [2, 8]; // Datum, Duguje (ako filtriraš globalno)
+
+            api.columns().every(function(colIdx) {
+                const th = thead.find('tr.filters th').eq(colIdx).empty();
+
+                if (dropdownCols.indexOf(colIdx) !== -1) {
+                const select = $('<select class="form-select form-select-sm"><option value="">Sve</option></select>')
+                    .appendTo(th)
+                    .on('change', function () {
+                    const val = $.fn.dataTable.util.escapeRegex($(this).val());
+                    api.column(colIdx).search(val ? '^' + val + '$' : '', true, false).draw();
+                    });
+
+                api.column(colIdx).data().unique().sort().each(function (d) {
+                    const text = (d == null) ? '' : String(d).trim();
+                    if (text) select.append($('<option/>').val(text).text(text));
+                });
+
+                } else if (skipCols.indexOf(colIdx) !== -1) {
+                th.html('');
+
+                } else {
+                $('<input type="text" class="form-control form-control-sm" placeholder="Filter...">')
+                    .appendTo(th)
+                    .on('keyup change clear', function () {
+                    api.column(colIdx).search(this.value).draw();
+                    });
+                }
+            });
+            })();
+
+
+
+
+
+
+            //**************************************************************************************
+            // Tabele za izvestaje NAPLATE sa servera sa sumama u footer-u
+            //**************************************************************************************
             var table = $('#DugovanjaBuketi').DataTable({
                 "language": languageSettings,
                 "autoWidth": false,
@@ -696,12 +792,7 @@
                 }
             });
 
-        }); 
-
-
-
-
-          
+        });           
     </script>
 
     {% for message in messages %}
@@ -760,176 +851,176 @@
             });
         }
     </script>
-<script>
-    // Funkcija za postepeno nestajanje (fade out) elementa
-    function fadeOut(element, duration = 500, onComplete) {
-        // Proveri da li element postoji
-        if (!element) {
-            if (onComplete && typeof onComplete === 'function') {
-                onComplete(); // Pozovi callback čak i ako element ne postoji
-            }
-            return;
-        }
-
-        // Osiguraj da je element vidljiv pre početka animacije nestajanja
-        // Podesi display na originalnu vrednost ako je bio none
-        if (element.style.display === 'none' || element.style.display === '') {
-             // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
-             // Prilagodite ovo ako vaš preloader koristi display: block ili grid
-             element.style.display = 'flex';
-        }
-
-        // Postavi početnu opacity vrednost ako nije već postavljena ili je 0
-        let startOpacity = parseFloat(element.style.opacity);
-        if (isNaN(startOpacity) || startOpacity <= 0) {
-             element.style.opacity = 1; // Počni od pune vidljivosti ako nije definisano ili je 0
-             startOpacity = 1;
-        }
-
-
-        let start = null;
-
-        function animate(timestamp) {
-            if (!start) start = timestamp;
-            const elapsed = timestamp - start;
-            const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
-
-            // Smanjuj opacity od početne vrednosti ka 0
-            element.style.opacity = startOpacity * (1 - progress);
-
-            if (progress < 1) {
-                // Nastavi animaciju
-                requestAnimationFrame(animate);
-            } else {
-                // Animacija završena
-                element.style.display = 'none'; // Potpuno sakrij element
-                element.style.opacity = 0; // Osiguraj da je finalna opacity 0
+    <script>
+        // Funkcija za postepeno nestajanje (fade out) elementa
+        function fadeOut(element, duration = 500, onComplete) {
+            // Proveri da li element postoji
+            if (!element) {
                 if (onComplete && typeof onComplete === 'function') {
-                    onComplete(); // Pozovi callback funkciju
+                    onComplete(); // Pozovi callback čak i ako element ne postoji
                 }
+                return;
+            }
+
+            // Osiguraj da je element vidljiv pre početka animacije nestajanja
+            // Podesi display na originalnu vrednost ako je bio none
+            if (element.style.display === 'none' || element.style.display === '') {
+                // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
+                // Prilagodite ovo ako vaš preloader koristi display: block ili grid
+                element.style.display = 'flex';
+            }
+
+            // Postavi početnu opacity vrednost ako nije već postavljena ili je 0
+            let startOpacity = parseFloat(element.style.opacity);
+            if (isNaN(startOpacity) || startOpacity <= 0) {
+                element.style.opacity = 1; // Počni od pune vidljivosti ako nije definisano ili je 0
+                startOpacity = 1;
+            }
+
+
+            let start = null;
+
+            function animate(timestamp) {
+                if (!start) start = timestamp;
+                const elapsed = timestamp - start;
+                const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
+
+                // Smanjuj opacity od početne vrednosti ka 0
+                element.style.opacity = startOpacity * (1 - progress);
+
+                if (progress < 1) {
+                    // Nastavi animaciju
+                    requestAnimationFrame(animate);
+                } else {
+                    // Animacija završena
+                    element.style.display = 'none'; // Potpuno sakrij element
+                    element.style.opacity = 0; // Osiguraj da je finalna opacity 0
+                    if (onComplete && typeof onComplete === 'function') {
+                        onComplete(); // Pozovi callback funkciju
+                    }
+                }
+            }
+
+            // Pokreni animaciju
+            requestAnimationFrame(animate);
+        }
+
+        // Funkcija za postepeno pojavljivanje (fade in) elementa
+        function fadeIn(element, duration = 200, onComplete) {
+            // Proveri da li element postoji
+            if (!element) {
+                if (onComplete && typeof onComplete === 'function') {
+                    onComplete(); // Pozovi callback čak i ako element ne postoji
+                }
+                return;
+            }
+
+            // Postavi element na vidljiv display pre početka animacije
+            // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
+            // Prilagodite ovo ako vaš preloader koristi display: block ili grid
+            element.style.display = 'flex';
+
+            // Osiguraj da je element nevidljiv na početku animacije
+            let startOpacity = parseFloat(element.style.opacity);
+            if (isNaN(startOpacity) || startOpacity < 0) {
+                element.style.opacity = 0; // Počni od nevidljivosti ako nije definisano ili je negativno
+                startOpacity = 0;
+            } else if (startOpacity === 1) {
+                // Ako je element već potpuno vidljiv, nema potrebe za fade-in
+                if (onComplete && typeof onComplete === 'function') {
+                    onComplete();
+                }
+                return;
+            }
+
+
+            let start = null;
+
+            function animate(timestamp) {
+                if (!start) start = timestamp;
+                const elapsed = timestamp - start;
+                const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
+
+                // Povećavaj opacity od početne vrednosti ka 1
+                element.style.opacity = startOpacity + (1 - startOpacity) * progress;
+
+
+                if (progress < 1) {
+                    // Nastavi animaciju
+                    requestAnimationFrame(animate);
+                } else {
+                    // Animacija završena
+                    element.style.opacity = 1; // Osiguraj da je finalna opacity 1
+                    if (onComplete && typeof onComplete === 'function') {
+                        onComplete(); // Pozovi callback funkciju
+                    }
+                }
+            }
+
+            // Pokreni animaciju
+            requestAnimationFrame(animate);
+        }
+
+
+        // Modifikovana hidePreloader funkcija - sada koristi fadeOut
+        function hidePreloader() {
+            const preloader = document.querySelector(".preloader");
+            if (preloader) {
+                // Pozovi fadeOut funkciju za postepeno sakrivanje
+                // 500ms je trajanje animacije, prilagodite po želji
+                fadeOut(preloader, 500);
             }
         }
 
-        // Pokreni animaciju
-        requestAnimationFrame(animate);
-    }
-
-    // Funkcija za postepeno pojavljivanje (fade in) elementa
-    function fadeIn(element, duration = 200, onComplete) {
-        // Proveri da li element postoji
-         if (!element) {
-             if (onComplete && typeof onComplete === 'function') {
-                 onComplete(); // Pozovi callback čak i ako element ne postoji
-             }
-             return;
-         }
-
-        // Postavi element na vidljiv display pre početka animacije
-        // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
-        // Prilagodite ovo ako vaš preloader koristi display: block ili grid
-         element.style.display = 'flex';
-
-        // Osiguraj da je element nevidljiv na početku animacije
-        let startOpacity = parseFloat(element.style.opacity);
-         if (isNaN(startOpacity) || startOpacity < 0) {
-              element.style.opacity = 0; // Počni od nevidljivosti ako nije definisano ili je negativno
-              startOpacity = 0;
-         } else if (startOpacity === 1) {
-             // Ako je element već potpuno vidljiv, nema potrebe za fade-in
-             if (onComplete && typeof onComplete === 'function') {
-                  onComplete();
-             }
-             return;
-         }
-
-
-         let start = null;
-
-         function animate(timestamp) {
-             if (!start) start = timestamp;
-             const elapsed = timestamp - start;
-             const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
-
-             // Povećavaj opacity od početne vrednosti ka 1
-             element.style.opacity = startOpacity + (1 - startOpacity) * progress;
-
-
-             if (progress < 1) {
-                 // Nastavi animaciju
-                 requestAnimationFrame(animate);
-             } else {
-                 // Animacija završena
-                 element.style.opacity = 1; // Osiguraj da je finalna opacity 1
-                 if (onComplete && typeof onComplete === 'function') {
-                     onComplete(); // Pozovi callback funkciju
-                 }
-             }
-         }
-
-         // Pokreni animaciju
-         requestAnimationFrame(animate);
-     }
-
-
-    // Modifikovana hidePreloader funkcija - sada koristi fadeOut
-    function hidePreloader() {
-        const preloader = document.querySelector(".preloader");
-        if (preloader) {
-            // Pozovi fadeOut funkciju za postepeno sakrivanje
-            // 500ms je trajanje animacije, prilagodite po želji
-            fadeOut(preloader, 500);
+        // Nova showPreloader funkcija - koristi fadeIn
+        function showPreloader() {
+            const preloader = document.querySelector(".preloader");
+            if (preloader) {
+                // Pozovi fadeIn funkciju za postepeno pojavljivanje
+                // 200ms je trajanje animacije, prilagodite po želji
+                fadeIn(preloader, 200);
+            }
         }
-    }
-
-     // Nova showPreloader funkcija - koristi fadeIn
-     function showPreloader() {
-         const preloader = document.querySelector(".preloader");
-         if (preloader) {
-             // Pozovi fadeIn funkciju za postepeno pojavljivanje
-             // 200ms je trajanje animacije, prilagodite po želji
-             fadeIn(preloader, 200);
-         }
-     }
 
 
-    // Sakrij preloader kad se stranica normalno učita (sa fade efektom)
-    window.addEventListener("load", hidePreloader);
+        // Sakrij preloader kad se stranica normalno učita (sa fade efektom)
+        window.addEventListener("load", hidePreloader);
 
-    // Sakrij i kad se stranica učita iz cache-a (back/forward dugme) - sa fade efektom
-    window.addEventListener("pageshow", function (event) {
-        if (event.persisted) {
-            // Zadržavamo kašnjenje, a nakon kašnjenja pozivamo funkciju za postepeno sakrivanje
-            setTimeout(hidePreloader, 50);
-        }
-    });
-
-    // Prikaži preloader na klik na linkove (sa fade efektom)
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll("a").forEach(function (el) {
-            el.addEventListener("click", function (e) {
-                const href = el.getAttribute("href"); // Uzmite href atribut
-
-                // Provera uslova kada NE treba prikazati preloader
-                if (
-                    el.target === "_blank" ||
-                    (href && href.startsWith("#")) ||         // Isključi # linkove
-                    (href && href.startsWith("javascript:")) || // <-- DODAJTE OVAJ USLOV: Isključi javascript: linkove
-                    el.hasAttribute("data-no-preloader") || // Isključi linkove sa data-no-preloader atributom
-                    (el.hostname && el.hostname !== window.location.hostname) // Isključi eksterne linkove
-                ) {
-                    return; // Nemoj prikazivati preloader za ove linkove
-                }
-
-                // Ako link nije isključen, prikaži preloader
-                showPreloader();
-
-                // Napomena: Ako koristite JS-only fade out, showPreloader() poziva fadeIn().
-                // Ako koristite CSS fade out, showPreloader() dodaje klasu i postavlja display.
-                // Logika showPreloader() je ispravna za oba slučaja.
-            });
+        // Sakrij i kad se stranica učita iz cache-a (back/forward dugme) - sa fade efektom
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) {
+                // Zadržavamo kašnjenje, a nakon kašnjenja pozivamo funkciju za postepeno sakrivanje
+                setTimeout(hidePreloader, 50);
+            }
         });
-    });
-</script>
+
+        // Prikaži preloader na klik na linkove (sa fade efektom)
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll("a").forEach(function (el) {
+                el.addEventListener("click", function (e) {
+                    const href = el.getAttribute("href"); // Uzmite href atribut
+
+                    // Provera uslova kada NE treba prikazati preloader
+                    if (
+                        el.target === "_blank" ||
+                        (href && href.startsWith("#")) ||         // Isključi # linkove
+                        (href && href.startsWith("javascript:")) || // <-- DODAJTE OVAJ USLOV: Isključi javascript: linkove
+                        el.hasAttribute("data-no-preloader") || // Isključi linkove sa data-no-preloader atributom
+                        (el.hostname && el.hostname !== window.location.hostname) // Isključi eksterne linkove
+                    ) {
+                        return; // Nemoj prikazivati preloader za ove linkove
+                    }
+
+                    // Ako link nije isključen, prikaži preloader
+                    showPreloader();
+
+                    // Napomena: Ako koristite JS-only fade out, showPreloader() poziva fadeIn().
+                    // Ako koristite CSS fade out, showPreloader() dodaje klasu i postavlja display.
+                    // Logika showPreloader() je ispravna za oba slučaja.
+                    });
+                });
+            });
+        </script>
 
     
 

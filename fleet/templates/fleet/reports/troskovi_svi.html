@@ -1,51 +1,198 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor/datatables/datatables.min.css' %}">
+<style>
+  thead .filters th { padding: 4px 8px; }
+  thead .filters input, thead .filters select { width: 100%; font-size: 0.9rem; }
+</style>
+{% endblock %}
+
 {% block content %}
-<h1 class="my-4">Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima </h1>
-<div class="row align-items-top">
-    <!--==========================================================-->
-    <!-------                  COLUMN START                   ------>
-    <!--==========================================================-->
-    <div class="card">
-        <div class="card-body">
-            <table id="Datatable" class="display compact">
-                <thead>
-                    <tr>
-                        <th>Godina</th>
-                        <th>Šifra Vrste</th>
-                        <th>Datum</th>
-                        <th>Broj Naloga</th>
-                        <th>Stavka</th>
-                        <th>OJ</th>
-                        <th>Konto</th>
-                        <th>Naziv Konta</th>
-                        <th>Duguje</th>
-                        <th>Šifra Posla</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in data %}
-                        <tr>
-                            <td>{{ row.god }}</td>
-                            <td>{{ row.sif_vrs }}</td>
-                            <td>{{ row.datum|date:"d.m.Y"}}</td>
-                            <td>{{ row.br_naloga }}</td>
-                            <td>{{ row.stavka }}</td>
-                            <td>{{ row.oj }}</td>
-                            <td>{{ row.knt }}</td>
-                            <td>{{ row.naz_knt }}</td>
-                            <td>{{ row.duguje }}</td>
-                            <td>{{ row.sif_pos }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<h1 class="my-4">Pregled ukupnih troškova, pa po kontima, pa po centrima, po mesecima</h1>
+
+<div class="row g-2 mb-3">
+  <!-- Globalni filteri sa widgetima -->
+  <div class="col-auto">
+    <label class="form-label mb-1" for="minDate">Datum od</label>
+    <input type="date" id="minDate" class="form-control">
+  </div>
+  <div class="col-auto">
+    <label class="form-label mb-1" for="maxDate">Datum do</label>
+    <input type="date" id="maxDate" class="form-control">
+  </div>
+  <div class="col-auto">
+    <label class="form-label mb-1" for="minDuguje">Duguje ≥</label>
+    <input type="number" id="minDuguje" class="form-control" step="0.01" inputmode="decimal" placeholder="npr. 1000,00">
+  </div>
+  <div class="col-auto">
+    <label class="form-label mb-1" for="maxDuguje">Duguje ≤</label>
+    <input type="number" id="maxDuguje" class="form-control" step="0.01" inputmode="decimal" placeholder="npr. 50000,00">
+  </div>
+</div>
+
+
+<div class="card">
+  <div class="card-body">
+    <table id="TroskoviPoKontima" class="display compact" style="width:100%">
+      <thead>
+        <tr>
+          <th>Godina</th>
+          <th>Šifra Vrste</th>
+          <th>Datum</th>
+          <th>Broj Naloga</th>
+          <th>Stavka</th>
+          <th>OJ</th>
+          <th>Konto</th>
+          <th>Naziv Konta</th>
+          <th>Duguje</th>
+          <th>Šifra Posla</th>
+        </tr>
+        <!-- Drugi red za filtere po koloni -->
+        <tr class="filters">
+          <th><input type="text" placeholder="Godina"></th>
+          <th><!-- auto dropdown --></th>
+          <th><!-- opseg preko min/max gore --></th>
+          <th><input type="text" placeholder="Br. naloga"></th>
+          <th><input type="text" placeholder="Stavka"></th>
+          <th><!-- auto dropdown --></th>
+          <th><!-- auto dropdown --></th>
+          <th><!-- auto dropdown --></th>
+          <th><!-- opseg preko min/max gore --></th>
+          <th><!-- auto dropdown --></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in data %}
+        <tr>
+          <td>{{ row.god }}</td>
+          <td>{{ row.sif_vrs }}</td>
+          <td>{{ row.datum|date:"d.m.Y" }}</td>
+          <td>{{ row.br_naloga }}</td>
+          <td>{{ row.stavka }}</td>
+          <td>{{ row.oj }}</td>
+          <td>{{ row.knt }}</td>
+          <td>{{ row.naz_knt }}</td>
+          <td>{{ row.duguje }}</td>
+          <td>{{ row.sif_pos }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
 
+(function() {
+  // Kolone koje će imati dropdown selektor
+  const dropdownCols = [1, 5, 6, 7, 9]; // Šifra vrste, OJ, Konto, Naziv konta, Šifra posla
 
- 
+  // --- Pomoćne funkcije za parsiranje ---
+
+  // Čita vrednosti iz INPUTA (gore)
+  function getDateFromInput(el) {
+    // input[type=date] vraća 'YYYY-MM-DD' ili '' ako je prazno
+    const v = el && el.value ? el.value : '';
+    if (!v) return null;
+    const d = new Date(v + 'T00:00:00'); // ISO safe
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function parseSerbianNumber(str) {
+    if (str == null || str === '') return NaN;
+    // dozvoli i sr-RS i eng format iz inputa
+    const s = String(str).replace(/\./g, '').replace(',', '.').replace(/\s/g,'').trim();
+    const n = parseFloat(s);
+    return isNaN(n) ? NaN : n;
+  }
+  // Datum u tabeli je renderovan kao dd.mm.yyyy
+  function parseSerbianDateCell(str) {
+    if (!str) return null;
+    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(str).trim());
+    if (!m) return null;
+    const d = new Date(+m[3], +m[2]-1, +m[1]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // --- Globalni custom filter za min/max datum i duguje ---
+  $.fn.dataTable.ext.search.push(function(settings, data) {
+    // radi samo za ovu tabelu
+    if (settings.nTable && settings.nTable.id !== 'TroskoviPoKontima') return true;
+
+    // Kolona 2 = Datum, kolona 8 = Duguje (0-based index)
+    const datumStr = data[2];
+    const dugujeStr = data[8];
+
+    const minDate = getDateFromInput(document.getElementById('minDate'));
+    const maxDate = getDateFromInput(document.getElementById('maxDate'));
+    const valDate = parseSerbianDateCell(datumStr);
+
+    const minD = parseSerbianNumber(document.getElementById('minDuguje').value);
+    const maxD = parseSerbianNumber(document.getElementById('maxDuguje').value);
+    const valD = parseSerbianNumber(dugujeStr);
+
+    // Datum provera
+    if (minDate && valDate && valDate < minDate) return false;
+    if (maxDate && valDate && valDate > maxDate) return false;
+
+    // Duguje provera (ako su min/max brojevi validni)
+    if (!isNaN(minD) && !isNaN(valD) && valD < minD) return false;
+    if (!isNaN(maxD) && !isNaN(valD) && valD > maxD) return false;
+
+    return true;
+  });
+
+  // --- Inicijalizacija DataTables ---
+  const table = $('#TroskoviPoKontima').DataTable({
+    pageLength: 50,
+    order: [[2, 'desc']], // sort po datumu opadajuće
+    dom: 'lftip', // minimalistički; dodaj 'B' ako koristiš Buttons
+    initComplete: function() {
+      const api = this.api();
+
+      // Postavi text input/dropdown filtere (već su u <thead> .filters)
+      api.columns().every(function(colIdx) {
+        const $cell = $(api.column(colIdx).header()).closest('thead').find('tr.filters th').eq(colIdx);
+
+        if (dropdownCols.includes(colIdx)) {
+          // Napravi dropdown sa distinct vrednostima
+          const $select = $('<select class="form-select form-select-sm"><option value="">Sve</option></select>')
+            .appendTo($cell.empty())
+            .on('change', function() {
+              const val = $.fn.dataTable.util.escapeRegex($(this).val());
+              api.column(colIdx).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
+
+          api.column(colIdx).data().unique().sort().each(function(d) {
+            const text = (d === null || d === undefined) ? '' : String(d).trim();
+            if (text.length) {
+              $select.append('<option value="' + text.replace(/"/g,'&quot;') + '">' + text + '</option>');
+            }
+          });
+        } else {
+          // Ako postoji input (po template-u), zakači listener
+          const $input = $('input', $cell);
+          if ($input.length) {
+            $input.on('keyup change clear', function() {
+              api.column(colIdx).search(this.value).draw();
+            });
+          }
+        }
+      });
+
+      // Re-draw pri promeni globalnih range filtera (widgeti gore)
+      ['minDate','maxDate','minDuguje','maxDuguje'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => api.draw());  // 'input' hvata i promene spinnera i datuma
+          el.addEventListener('change', () => api.draw());
+        }
+      });
+    }
+  });
+})();
+</script>
+{% endblock %}

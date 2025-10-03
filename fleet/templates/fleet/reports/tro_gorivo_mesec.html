@@ -9,7 +9,7 @@
     <!--==========================================================-->
     <div class="col-lg-8">
 
-    <table id="Datatable" class="display compact">
+    <table id="GorivoMesec" class="display compact">
         <thead>
             <tr>
                 <th>Godina</th>
@@ -34,5 +34,67 @@
 {% endblock %}
 
 
+<!-- samo za ovu stranicu -->
+<script>
+(function () {
+  // Lokalna fallback lokalizacija (ako nema globalnog window.languageSettings)
+  const srLang = window.languageSettings || {
+    decimal: ",",
+    thousands: ".",
+    search: "Pretraga:",
+    lengthMenu: "Prikaži _MENU_ stavki po strani",
+    info: "Prikazano _START_ do _END_ od _TOTAL_ stavki",
+    infoEmpty: "Prikazano 0 do 0 od 0 stavki",
+    infoFiltered: "(filtrirano od ukupno _MAX_ stavki)",
+    loadingRecords: "Učitavanje...",
+    zeroRecords: "Nema pronađenih podataka",
+    emptyTable: "Nema podataka u tabeli",
+    paginate: { first: "Prva", previous: "Prethodna", next: "Sledeća", last: "Poslednja" },
+    aria: { sortAscending: ": aktiviraj za sortiranje uzlazno", sortDescending: ": aktiviraj za sortiranje silazno" }
+  };
+
+  // Bezbedno čekanje da se sve skripte iz base.html učitaju
+  function initWhenReady() {
+    if (!(window.jQuery && $.fn && $.fn.dataTable)) {
+      return setTimeout(initWhenReady, 50);
+    }
+
+    // Ako je tabela već inicijalizovana (npr. zbog ponovnog ulaska preko Turbolinks/htmx)
+    if ($.fn.dataTable.isDataTable('#GorivoMesec')) return;
+
+    $('#GorivoMesec').DataTable({
+      language: srLang,
+      pageLength: 25,
+      autoWidth: false,
+      // Godina ↓, pa Mesec ↓
+      order: [[0, 'desc'], [1, 'desc']],
+      // Render za iznos: lepo prikaz na ekranu, ali numeričko sortiranje/export ostaje broj
+      columnDefs: [
+        {
+          targets: 3,            // 4. kolona: "Iznos"
+          className: "text-end", // desno poravnanje
+          render: function (data, type) {
+            // U slučaju da backend već šalje broj kao string
+            const num = (typeof data === 'number') ? data : parseFloat(String(data).replace(/\./g,'').replace(',', '.'));
+            if (type === 'display') {
+              return isNaN(num) ? data : new Intl.NumberFormat('sr-RS').format(num);
+            }
+            // Za sort/export vrati sirovu numeriku
+            return isNaN(num) ? data : num;
+          }
+        }
+      ],
+      layout: {
+        topStart: {
+          buttons: ['copy', 'excel', 'csv', 'print']
+        }
+      }
+    });
+  }
+
+  // Pokreni kad se SVE učita (uključujući DataTables iz base.html)
+  window.addEventListener('load', initWhenReady);
+})();
+</script>
 
  
