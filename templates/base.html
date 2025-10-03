@@ -476,99 +476,7 @@
 
 
 
-            //**************************************************************************************
-            // Tabele za izvestaje sa servera sa js filterima            
-            //**************************************************************************************
-            // napravi listu svih kolona iz PRVOG header reda
-            const exportCols = (function () {
-            const count = $('#TroskoviPoKontima thead tr:first th').length;
-            return Array.from({ length: count }, (_, i) => i);
-            })();
-
-            // 1. "1.234,56" -> 1234.56  (za Excel numerički format)
-            function parseSerbianNumberForExcel(str) {
-            if (str == null) return '';
-            const s = String(str).replace(/\./g, '').replace(',', '.').replace(/\s/g,'').trim();
-            const n = parseFloat(s);
-            return isNaN(n) ? '' : n;
-            }
-
-           var table = $('#TroskoviPoKontima').DataTable({
-            language: languageSettings,
-            pageLength: 50,
-            layout: {
-                topStart: {
-                buttons: [
-                    {
-                    extend: 'csvHtml5',
-                    text: 'CSV',
-                    title: 'Troskovi',
-                    filename: 'troskovi_' + new Date().toISOString().slice(0,10),
-                    exportOptions: {
-                        columns: ':visible',
-                        format: {
-                        body: function (data, row, col) {
-                            const val = (data == null) ? '' : String(data).replace(/<[^>]*>/g, '').trim();
-                            if (col === 8) { // npr. "Duguje"
-                            return val.replace(/\./g,'').replace(',','.');
-                            }
-                            return val;
-                        }
-                        }
-                    }
-                    },
-                    'print'
-                ]
-                }
-            }
-            });
-
-            // --------- PER-KOLONA FILTERI za #TroskoviPoKontima ---------
-            (function setupColumnFilters() {
-            const api = $('#TroskoviPoKontima').DataTable();
-
-            const thead = $('#TroskoviPoKontima thead');
-            if (!thead.find('tr.filters').length) {
-                const filterRow = $('<tr class="filters"></tr>');
-                api.columns().every(function() { filterRow.append('<th></th>'); });
-                thead.append(filterRow);
-            }
-
-            const dropdownCols = [1, 5, 6, 7, 9]; // prilagodi po svojoj tabeli
-            const skipCols = [2, 8]; // Datum, Duguje (ako filtriraš globalno)
-
-            api.columns().every(function(colIdx) {
-                const th = thead.find('tr.filters th').eq(colIdx).empty();
-
-                if (dropdownCols.indexOf(colIdx) !== -1) {
-                const select = $('<select class="form-select form-select-sm"><option value="">Sve</option></select>')
-                    .appendTo(th)
-                    .on('change', function () {
-                    const val = $.fn.dataTable.util.escapeRegex($(this).val());
-                    api.column(colIdx).search(val ? '^' + val + '$' : '', true, false).draw();
-                    });
-
-                api.column(colIdx).data().unique().sort().each(function (d) {
-                    const text = (d == null) ? '' : String(d).trim();
-                    if (text) select.append($('<option/>').val(text).text(text));
-                });
-
-                } else if (skipCols.indexOf(colIdx) !== -1) {
-                th.html('');
-
-                } else {
-                $('<input type="text" class="form-control form-control-sm" placeholder="Filter...">')
-                    .appendTo(th)
-                    .on('keyup change clear', function () {
-                    api.column(colIdx).search(this.value).draw();
-                    });
-                }
-            });
-            })();
-
-
-
-
+            
 
 
             //**************************************************************************************
@@ -1077,6 +985,5 @@
             line-height: 1.8; /* Smanji visinu linije za dodatno smanjenje razmaka između redova */
         }
         </style>
-        
 </body>
 </html>

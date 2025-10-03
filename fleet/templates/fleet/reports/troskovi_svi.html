@@ -82,117 +82,209 @@
     </table>
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
+(function () {
+  const srLang = window.languageSettings || {
+    decimal: ",", thousands: ".",
+    search: "Pretraga:",
+    lengthMenu: "Prikaži _MENU_ stavki po strani",
+    info: "Prikazano _START_ do _END_ od _TOTAL_ stavki",
+    infoEmpty: "Prikazano 0 do 0 od 0 stavki",
+    infoFiltered: "(filtrirano od ukupno _MAX_ stavki)",
+    loadingRecords: "Učitavanje...", zeroRecords: "Nema pronađenih podataka",
+    emptyTable: "Nema podataka u tabeli",
+    paginate: { first:"Prva", previous:"Prethodna", next:"Sledeća", last:"Poslednja" },
+    aria: { sortAscending:": aktiviraj za sortiranje uzlazno", sortDescending:": aktiviraj za sortiranje silazno" }
+  };
 
-(function() {
-  // Kolone koje će imati dropdown selektor
-  const dropdownCols = [1, 5, 6, 7, 9]; // Šifra vrste, OJ, Konto, Naziv konta, Šifra posla
-
-  // --- Pomoćne funkcije za parsiranje ---
-
-  // Čita vrednosti iz INPUTA (gore)
-  function getDateFromInput(el) {
-    // input[type=date] vraća 'YYYY-MM-DD' ili '' ako je prazno
-    const v = el && el.value ? el.value : '';
-    if (!v) return null;
-    const d = new Date(v + 'T00:00:00'); // ISO safe
-    return isNaN(d.getTime()) ? null : d;
-  }
-  function parseSerbianNumber(str) {
-    if (str == null || str === '') return NaN;
-    // dozvoli i sr-RS i eng format iz inputa
-    const s = String(str).replace(/\./g, '').replace(',', '.').replace(/\s/g,'').trim();
-    const n = parseFloat(s);
+  function parseSrNumber(val){
+    if (val == null) return NaN;
+    const n = parseFloat(String(val).replace(/\./g,'').replace(',','.').trim());
     return isNaN(n) ? NaN : n;
   }
-  // Datum u tabeli je renderovan kao dd.mm.yyyy
-  function parseSerbianDateCell(str) {
-    if (!str) return null;
-    const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(str).trim());
+  function parseDMY(s){
+    if (!s) return null;
+    const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
     if (!m) return null;
     const d = new Date(+m[3], +m[2]-1, +m[1]);
     return isNaN(d.getTime()) ? null : d;
   }
+  function escRe(s){
+    const util = (window.DataTable && DataTable.util && DataTable.util.escapeRegex) || null;
+    return util ? util(s) : String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 
-  // --- Globalni custom filter za min/max datum i duguje ---
-  $.fn.dataTable.ext.search.push(function(settings, data) {
-    // radi samo za ovu tabelu
-    if (settings.nTable && settings.nTable.id !== 'TroskoviPoKontima') return true;
+  function init(){
+    if (typeof DataTable === 'undefined') return setTimeout(init, 50);
+    const sel = '#TroskoviPoKontima';
+    const el  = document.querySelector(sel);
+    if (!el) return;
 
-    // Kolona 2 = Datum, kolona 8 = Duguje (0-based index)
-    const datumStr = data[2];
-    const dugujeStr = data[8];
+    // Ako je već inicijalizovan negde (ne bi trebalo), samo spoji filtere
+    if (DataTable.isDataTable && DataTable.isDataTable(sel)) {
+      const dt = $(sel).DataTable();
+      setupFilters(dt, el);
+      return;
+    }
 
-    const minDate = getDateFromInput(document.getElementById('minDate'));
-    const maxDate = getDateFromInput(document.getElementById('maxDate'));
-    const valDate = parseSerbianDateCell(datumStr);
+    const hasButtons = !!DataTable.Buttons;
 
-    const minD = parseSerbianNumber(document.getElementById('minDuguje').value);
-    const maxD = parseSerbianNumber(document.getElementById('maxDuguje').value);
-    const valD = parseSerbianNumber(dugujeStr);
-
-    // Datum provera
-    if (minDate && valDate && valDate < minDate) return false;
-    if (maxDate && valDate && valDate > maxDate) return false;
-
-    // Duguje provera (ako su min/max brojevi validni)
-    if (!isNaN(minD) && !isNaN(valD) && valD < minD) return false;
-    if (!isNaN(maxD) && !isNaN(valD) && valD > maxD) return false;
-
-    return true;
-  });
-
-  // --- Inicijalizacija DataTables ---
-  const table = $('#TroskoviPoKontima').DataTable({
-    pageLength: 50,
-    order: [[2, 'desc']], // sort po datumu opadajuće
-    dom: 'lftip', // minimalistički; dodaj 'B' ako koristiš Buttons
-    initComplete: function() {
-      const api = this.api();
-
-      // Postavi text input/dropdown filtere (već su u <thead> .filters)
-      api.columns().every(function(colIdx) {
-        const $cell = $(api.column(colIdx).header()).closest('thead').find('tr.filters th').eq(colIdx);
-
-        if (dropdownCols.includes(colIdx)) {
-          // Napravi dropdown sa distinct vrednostima
-          const $select = $('<select class="form-select form-select-sm"><option value="">Sve</option></select>')
-            .appendTo($cell.empty())
-            .on('change', function() {
-              const val = $.fn.dataTable.util.escapeRegex($(this).val());
-              api.column(colIdx).search(val ? '^' + val + '$' : '', true, false).draw();
-            });
-
-          api.column(colIdx).data().unique().sort().each(function(d) {
-            const text = (d === null || d === undefined) ? '' : String(d).trim();
-            if (text.length) {
-              $select.append('<option value="' + text.replace(/"/g,'&quot;') + '">' + text + '</option>');
-            }
-          });
-        } else {
-          // Ako postoji input (po template-u), zakači listener
-          const $input = $('input', $cell);
-          if ($input.length) {
-            $input.on('keyup change clear', function() {
-              api.column(colIdx).search(this.value).draw();
-            });
+    const dt = new DataTable(sel, {
+      language: srLang,
+      pageLength: 50,
+      autoWidth: false,
+      order: [[0,'desc'], [2,'desc']], // Godina ↓ pa Datum ↓
+      columnDefs: [
+        {
+          targets: 8, // Duguje
+          className: 'text-end',
+          render: function(data, type){
+            const num = (typeof data === 'number') ? data : parseSrNumber(data);
+            if (type === 'display') return isNaN(num) ? (data ?? '') : new Intl.NumberFormat('sr-RS').format(num);
+            return isNaN(num) ? data : num; // sort/export numerički
           }
         }
+      ],
+      layout: hasButtons ? {
+        topStart: {
+          buttons: [
+            {
+              extend: 'csvHtml5',
+              text: 'CSV',
+              title: 'Troskovi',
+              filename: 'troskovi_' + new Date().toISOString().slice(0,10),
+              exportOptions: {
+                columns: ':visible',
+                format: { body: function (data, row, col) {
+                  const val = (data == null) ? '' : String(data).replace(/<[^>]*>/g, '').trim();
+                  if (col === 8) return val.replace(/\./g,'').replace(',','.');
+                  return val;
+                }}
+              }
+            },
+            'excel', 'print', 'colvis'
+          ]
+        }
+      } : undefined
+    });
+
+    setupFilters(dt, el);
+  }
+
+  function setupFilters(dt, tableEl){
+    // GLOBAL: datum & duguje
+    const minDate = document.getElementById('minDate');
+    const maxDate = document.getElementById('maxDate');
+    const minDug  = document.getElementById('minDuguje');
+    const maxDug  = document.getElementById('maxDuguje');
+
+    const tableNode = tableEl;
+    const filterFn = function(settings, data){
+      if (settings.nTable !== tableNode) return true; // važi samo za ovu tabelu
+
+      const d   = parseDMY(data[2]);     // Datum (kol. 2)
+      const amt = parseSrNumber(data[8]); // Duguje (kol. 8)
+
+      // datum od
+      if (minDate && minDate.value){
+        const md = new Date(minDate.value + 'T00:00:00');
+        if (!d || d < md) return false;
+      }
+      // datum do
+      if (maxDate && maxDate.value){
+        const xd = new Date(maxDate.value + 'T23:59:59');
+        if (!d || d > xd) return false;
+      }
+      // duguje >=
+      if (minDug && minDug.value !== ''){
+        const m = parseSrNumber(minDug.value);
+        if (isFinite(m) && (!isFinite(amt) || amt < m)) return false;
+      }
+      // duguje <=
+      if (maxDug && maxDug.value !== ''){
+        const x = parseSrNumber(maxDug.value);
+        if (isFinite(x) && (!isFinite(amt) || amt > x)) return false;
+      }
+      return true;
+    };
+    if (!dt._globalFiltersRegistered) {
+      DataTable.ext.search.push(filterFn);
+      dt._globalFiltersRegistered = true;
+    }
+    ['change','input'].forEach(ev=>{
+      if (minDate) minDate.addEventListener(ev, ()=>dt.draw());
+      if (maxDate) maxDate.addEventListener(ev, ()=>dt.draw());
+      if (minDug)  minDug.addEventListener(ev,  ()=>dt.draw());
+      if (maxDug)  maxDug.addEventListener(ev,  ()=>dt.draw());
+    });
+
+    // PER-KOLONA: popuni dropdown-e u drugom header redu (kolone 1,5,6,7,9)
+    const head = tableEl.querySelector('thead');
+    const filterRow = head && head.querySelector('tr.filters');
+    if (filterRow) {
+      [1,5,6,7,9].forEach(colIdx=>{
+        const th = filterRow.children[colIdx];
+        if (!th) return;
+        th.innerHTML = '';
+        const select = document.createElement('select');
+        select.className = 'form-select form-select-sm';
+        select.innerHTML = '<option value="">Sve</option>';
+        th.appendChild(select);
+
+        const vals = dt.column(colIdx).data().toArray()
+          .map(v=>String(v).trim()).filter(Boolean);
+        [...new Set(vals)].sort((a,b)=> a.localeCompare(b,'sr')).forEach(v=>{
+          const opt = document.createElement('option');
+          opt.value = v; opt.textContent = v; select.appendChild(opt);
+        });
+
+        select.addEventListener('change', function(){
+          const val = this.value;
+          dt.column(colIdx).search(val ? '^'+escRe(val)+'$' : '', true, false).draw();
+        });
       });
 
-      // Re-draw pri promeni globalnih range filtera (widgeti gore)
-      ['minDate','maxDate','minDuguje','maxDuguje'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener('input', () => api.draw());  // 'input' hvata i promene spinnera i datuma
-          el.addEventListener('change', () => api.draw());
-        }
+      // Text filteri za kolone 0,3,4 (već imaš <input> u templatu)
+      [[0],[3],[4]].forEach(([colIdx])=>{
+        const th = filterRow.children[colIdx];
+        if (!th) return;
+        const input = th.querySelector('input');
+        if (!input) return;
+        ['keyup','change','input','clear'].forEach(ev=>{
+          input.addEventListener(ev, function(){
+            dt.column(colIdx).search(this.value).draw();
+          });
+        });
       });
     }
-  });
+
+    // Reset dugme
+    (function(){
+      const topStart = dt.container().querySelector('.dt-layout-row:first-child .dt-layout-cell:first-child');
+      const btn = document.createElement('button');
+      btn.type='button'; btn.className='btn btn-sm btn-outline-secondary ms-2';
+      btn.textContent='Reset filtera';
+      btn.addEventListener('click', ()=>{
+        if (minDate) minDate.value='';
+        if (maxDate) maxDate.value='';
+        if (minDug)  minDug.value='';
+        if (maxDug)  maxDug.value='';
+        if (filterRow){
+          filterRow.querySelectorAll('select').forEach(s=>{ s.value=''; s.dispatchEvent(new Event('change')); });
+          filterRow.querySelectorAll('input').forEach(i=>{ i.value=''; i.dispatchEvent(new Event('input')); });
+        }
+        dt.columns().search('');
+        dt.draw();
+      });
+      (topStart || dt.container()).appendChild(btn);
+    })();
+  }
+
+  if (document.readyState !== 'loading') init();
+  else document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
+
 {% endblock %}
+
