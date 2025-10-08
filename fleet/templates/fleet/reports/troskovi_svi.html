@@ -33,9 +33,10 @@
 </div>
 
 
-<div class="card">
+<div class="card shadow-sm">
   <div class="card-body">
-    <table id="TroskoviPoKontima" class="display compact" style="width:100%">
+    <div class="table-responsive">
+    <table id="TroskoviPoKontima" class="display compact w-100">
       <thead>
         <tr>
           <th>Godina</th>
@@ -80,6 +81,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 
@@ -132,7 +134,7 @@
 
     const dt = new DataTable(sel, {
       language: srLang,
-      pageLength: 50,
+      pageLength: 25,
       autoWidth: false,
       order: [[0,'desc'], [2,'desc']], // Godina ↓ pa Datum ↓
       columnDefs: [
@@ -223,6 +225,16 @@
     const head = tableEl.querySelector('thead');
     const filterRow = head && head.querySelector('tr.filters');
     if (filterRow) {
+      const stopSortPropagation = function(node){
+        if (!node) return;
+        ['click','mousedown','touchstart'].forEach(function(ev){
+          node.addEventListener(ev, function(e){
+            e.stopPropagation();
+          });
+        });
+      };
+      stopSortPropagation(filterRow);
+
       [1,5,6,7,9].forEach(colIdx=>{
         const th = filterRow.children[colIdx];
         if (!th) return;
@@ -231,6 +243,8 @@
         select.className = 'form-select form-select-sm';
         select.innerHTML = '<option value="">Sve</option>';
         th.appendChild(select);
+        stopSortPropagation(th);
+        stopSortPropagation(select);
 
         const vals = dt.column(colIdx).data().toArray()
           .map(v=>String(v).trim()).filter(Boolean);
@@ -251,6 +265,8 @@
         if (!th) return;
         const input = th.querySelector('input');
         if (!input) return;
+        stopSortPropagation(th);
+        stopSortPropagation(input);
         ['keyup','change','input','clear'].forEach(ev=>{
           input.addEventListener(ev, function(){
             dt.column(colIdx).search(this.value).draw();

@@ -1321,9 +1321,10 @@ class FuelTransactionsListView(LoginRequiredMixin, ListView):
         # Inicijalizacija forme sa trenutnim GET vrednostima ili podrazumevanim datumima
         context['filter_form'] = FuelTransactionFilterForm(self.request.GET or {
             'start_date': (date.today() - timedelta(days=40)).strftime('%Y-%m-%d'),
-            'end_date': date.today().strftime('%Y-%m-%d')
-        })
+            'end_date': date.today().strftime('%Y-%m-%d'),
 
+        })
+        context['title'] = 'Izveštaj o potrošnji goriva'
         return context
 
 

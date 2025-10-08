@@ -29,7 +29,7 @@
   };
 
   const DEFAULT_OPTIONS = {
-    pageLength: 50,
+    pageLength: 25,
     exportTitle: document.title || 'Izveštaj',
     autoSelectThreshold: 25,
     language: DEFAULT_LANGUAGE,
