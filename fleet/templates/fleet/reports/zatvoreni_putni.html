@@ -9,7 +9,7 @@
     <!--==========================================================-->
     <div class="col-lg-8">
 
-    <table id="Datatable" class="display compact">
+    <table id="Datatable" class="display compact" data-reports-dt="true">
         <thead>
             <tr>
                 <th>Godina</th>
@@ -33,6 +33,17 @@
             {% endfor %}
         </tbody>
     </table>
-    </div>
 </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#Datatable', {
+        exportTitle: 'Zatvoreni putni nalozi',
+        order: [[0, 'desc'], [4, 'desc']],
+        numericColumns: [0, 5]
+      });
+    }
+  });
+</script>
 {% endblock %}

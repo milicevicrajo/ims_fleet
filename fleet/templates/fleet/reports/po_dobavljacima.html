@@ -9,7 +9,7 @@
     <!--==========================================================-->
     <div class="col-lg-8">
 
-    <table id="Datatable" class="display compact">
+    <table id="Datatable" class="display compact" data-reports-dt="true">
         <thead>
             <tr>
                 <th>Naziv Partnera</th>
@@ -72,6 +72,17 @@
     </table>
     </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#Datatable', {
+        exportTitle: 'Troskovi po dobavljacima',
+        order: [[2, 'desc'], [10, 'desc']],
+        numericColumns: [2, 12, 13, 16, 23]
+      });
+    }
+  });
+</script>
 {% endblock %}
 
 

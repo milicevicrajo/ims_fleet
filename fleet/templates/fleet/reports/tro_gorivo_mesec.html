@@ -9,7 +9,7 @@
     <!--==========================================================-->
     <div class="col-lg-8">
 
-    <table id="GorivoMesec" class="display compact">
+    <table id="GorivoMesec" class="display compact" data-reports-dt="true">
         <thead>
             <tr>
                 <th>Godina</th>
@@ -33,55 +33,18 @@
 </div>
 
 <script>
-(function () {
-  const srLang = window.languageSettings || {
-    decimal: ",", thousands: ".",
-    search: "Pretraga:",
-    lengthMenu: "Prikaži _MENU_ stavki po strani",
-    info: "Prikazano _START_ do _END_ od _TOTAL_ stavki",
-    infoEmpty: "Prikazano 0 do 0 od 0 stavki",
-    infoFiltered: "(filtrirano od ukupno _MAX_ stavki)",
-    loadingRecords: "Učitavanje...", zeroRecords: "Nema pronađenih podataka",
-    emptyTable: "Nema podataka u tabeli",
-    paginate: { first:"Prva", previous:"Prethodna", next:"Sledeća", last:"Poslednja" },
-    aria: { sortAscending:": aktiviraj za sortiranje uzlazno", sortDescending:": aktiviraj za sortiranje silazno" }
-  };
-
-  function parseSrNumber(val){
-    if (val == null) return NaN;
-    const n = parseFloat(String(val).replace(/\./g,'').replace(',','.').trim());
-    return isNaN(n) ? NaN : n;
-  }
-
-  function init(){
-    if (typeof DataTable === 'undefined') return setTimeout(init, 50); // sačekaj lib
-    if (!document.querySelector('#GorivoMesec')) return;
-    if (DataTable.isDataTable && DataTable.isDataTable('#GorivoMesec')) return;
-
-    const hasButtons = !!DataTable.Buttons;
-
-    new DataTable('#GorivoMesec', {
-      language: srLang,
-      pageLength: 25,
-      autoWidth: false,
-      order: [[0,'desc'],[1,'desc']], // godina↓, mesec↓
-      columnDefs: [{
-        targets: 3,                // Iznos
-        className: 'text-end',
-        render: function (data, type) {
-          const num = (typeof data === 'number') ? data : parseSrNumber(data);
-          if (type === 'display') return isNaN(num) ? (data ?? '') : new Intl.NumberFormat('sr-RS').format(num);
-          return isNaN(num) ? data : num; // sort/export = broj
-        }
-      }],
-      layout: hasButtons ? { topStart: { buttons: ['copy','excel','csv','print'] } } : undefined
-    });
-  }
-
-  if (document.readyState !== 'loading') init();
-  else document.addEventListener('DOMContentLoaded', init);
-})();
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#GorivoMesec', {
+        exportTitle: 'Promet goriva po mesecima',
+        order: [[0, 'desc'], [1, 'desc']],
+        pageLength: 25,
+        numericColumns: [3]
+      });
+    }
+  });
 </script>
+
 {% endblock %}
 
 

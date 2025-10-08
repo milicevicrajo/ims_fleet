@@ -9,7 +9,7 @@
     <!--==========================================================-->
     <div class="col-lg-8">
 
-    <table id="Datatable" class="display compact">
+    <table id="Datatable" class="display compact" data-reports-dt="true">
         <thead>
             <tr>
                 <th>Šifra Predmeta</th>
@@ -61,8 +61,19 @@
             {% endfor %}
         </tbody>
     </table>
-    </div>
 </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#Datatable', {
+        exportTitle: 'Magacin - stanje',
+        order: [[1, 'desc']],
+        numericColumns: [1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+      });
+    }
+  });
+</script>
 {% endblock %}
 
 
