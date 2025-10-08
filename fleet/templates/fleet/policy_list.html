@@ -22,7 +22,7 @@
         </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table id="DatatablePolicy" class="display compact table table-hover">
+            <table id="PolicyTable" class="display compact table table-hover w-100" data-reports-dt="true">
                 <thead>
                     <tr>
                         <th>Vozilo</th>
@@ -31,10 +31,10 @@
                         <th>Datum izdavanja</th>
                         <th>Tip osiguranja</th>
                         <th>Broj polise</th>
-                        <th>Iznos premije</th>
+                        <th data-type="numeric">Iznos premije</th>
                         <th>Datum početka</th>
                         <th>Datum završetka</th>
-                        <th class="text-center">Akcije</th>
+                        <th class="text-center" data-filter="none">Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -79,5 +79,19 @@
             </table>
         </div>
     </div>
+  </div>
 </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#PolicyTable', {
+        exportTitle: 'Polise osiguranja',
+        order: [[8, 'desc']],
+        numericColumns: [6],
+        autoSelectThreshold: 15
+      });
+    }
+  });
+</script>
 {% endblock %}

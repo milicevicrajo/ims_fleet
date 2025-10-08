@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="card">
+    <div class="card shadow-sm">
 
       <!-- Header: naslov + dugmad (Izveštaj + CSV) -->
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -22,16 +22,16 @@
 
       <div class="card-body">
         <div class="table-responsive">
-          <table id="DatatableServisi" class="display table table-hover table-striped table-bordered align-middle">
+          <table id="ServiceTransactionsTable" class="display compact table table-hover table-striped table-bordered align-middle w-100" data-reports-dt="true">
             <thead class="table-light">
               <tr>
                 <th>Vozilo</th>
                 <th>Tip servisa</th>
                 <th>Datum servisa</th>
-                <th>Trošak</th>
+                <th data-type="numeric">Trošak</th>
                 <th>Dobavljač</th>
                 <th>Opis</th>
-                <th class="text-center">Akcije</th>
+                <th class="text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
             <tbody>
@@ -73,4 +73,16 @@
     </div>
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#ServiceTransactionsTable', {
+        exportTitle: 'Servisne intervencije',
+        order: [[2, 'desc']],
+        numericColumns: [3],
+        autoSelectThreshold: 20
+      });
+    }
+  });
+</script>
 {% endblock %}

@@ -2,7 +2,7 @@
 {% load form_filters %}
 {% block content %}
 <h2>{{ title }}</h2>
-<div class="card">
+<div class="card shadow-sm">
   <div class="card-body">
       <form method="get" class="row g-3 align-items-end pb-3">
         <div class="col-auto">
@@ -23,18 +23,18 @@
     </form>
     
       <div class="table-responsive">
-          <table id="DatatableFuel" class="display compact">
+          <table id="FuelTransactionsTable" class="display compact w-100" data-reports-dt="true">
             <thead>
                 <tr>
                     <th>Registarska oznaka</th>
                     <th>Datum</th>
                     <th>Broj računa</th>
-                    <th>Količina (L)</th>
-                    <th>Cena po litru (RSD)</th>
-                    <th>Iznos neto (RSD)</th>
-                    <th>Iznos bruto (RSD)</th>
+                    <th data-type="numeric">Količina (L)</th>
+                    <th data-type="numeric">Cena po litru (RSD)</th>
+                    <th data-type="numeric">Iznos neto (RSD)</th>
+                    <th data-type="numeric">Iznos bruto (RSD)</th>
                     <th>Dobavljač</th>
-                    <th>Kilometraža</th>
+                    <th data-type="numeric">Kilometraža</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,5 +58,17 @@
 
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#FuelTransactionsTable', {
+        exportTitle: 'Promet goriva',
+        order: [[1, 'desc']],
+        numericColumns: [3, 4, 5, 6, 8],
+        autoSelectThreshold: 20
+      });
+    }
+  });
+</script>
 
 {% endblock %}

@@ -2,7 +2,7 @@
 {% load form_filters %}
 {% block content %}
 <h2>{{ title }}</h2>
-<div class="card">
+<div class="card shadow-sm">
   <div class="card-body">
       <form method="get" class="row g-3 align-items-end pb-3">
         <div class="col-auto">
@@ -18,17 +18,17 @@
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Filtriraj</button>
-    
+</form>
       <div class="table-responsive">
-          <table id="DatatableFuel" class="display compact">
+          <table id="FuelConsumptionTable" class="display compact w-100" data-reports-dt="true">
               <thead>
                   <tr>
                     <th>Registracija</th>
                     <th>Datum</th>
-                    <th>Količina</th>
+                    <th data-type="numeric">Količina</th>
                     <th>Tip goriva</th>
-                    <th>Iznos - Bruto</th>
-                    <th>Iznos - Neto</th>
+                    <th data-type="numeric">Iznos - Bruto</th>
+                    <th data-type="numeric">Iznos - Neto</th>
                     <th>Dobavljač</th>
                   </tr>
               </thead>
@@ -62,5 +62,17 @@
 
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#FuelConsumptionTable', {
+        exportTitle: 'Potrošnja goriva',
+        order: [[1, 'desc']],
+        numericColumns: [2, 4, 5],
+        autoSelectThreshold: 20
+      });
+    }
+  });
+</script>
 
 {% endblock %}

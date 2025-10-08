@@ -2,7 +2,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>{{ title }}</h2>
-<div class="card">
+<div class="card shadow-sm">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="card-title">Tabela</h5>
@@ -11,16 +11,16 @@
             </a>
         </div>
         <div class="table-responsive">
-            <table id="DatatableTrebovanja" class="display">
+            <table id="RequisitionTable" class="display compact w-100" data-reports-dt="true">
                 <thead>
                     <tr>
                         <th>Vozilo </th>
-                        <th>Godina</th>
+                        <th data-type="numeric">Godina</th>
                         <th>Broj Dokumenta</th>
                         <th>Datum trebovanja</th>
                         <th>Naziv Artikla</th>
-                        <th>Količina</th>
-                        <th>Akcije</th>
+                        <th data-type="numeric">Količina</th>
+                        <th data-filter="none">Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,9 +39,22 @@
                       </td>
                     </tr>
                   {% endfor %}
+                </tbody>
             </table>
         </div>
 
     </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#RequisitionTable', {
+        exportTitle: 'Trebovanja',
+        order: [[3, 'desc']],
+        numericColumns: [1, 5],
+        autoSelectThreshold: 20
+      });
+    }
+  });
+</script>
 {% endblock %}
