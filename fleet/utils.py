@@ -866,7 +866,7 @@ def fetch_policy_data(last_24_hours=True, days=None):
             SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate,
                    VrstaOsiguranja, BrojPolise, IznosPremije, RegistraskaOznaka,
                    PeriodOd, PeriodDo, IznosPrveRate, IznosOstalihRata, BrojRata
-            FROM dbo.v_polise
+            FROM dbo.fleet_polise
         """
         params = []
         where_clauses = []
@@ -1054,14 +1054,14 @@ def fetch_service_data(last_24_hours=True, days=None):
     try:
         print("Pokrećem funkciju za povlačenje podataka o servisnim transakcijama...")
 
-        # SQL upit za povlačenje svih kolona iz view-a `dbo.v_servisi`
+        # SQL upit za povlačenje svih kolona iz view-a `dbo.fleet_servisi`
         # VAŽNO: Redosled kolona ovde mora TAČNO odgovarati redosledu u vašem SQL Server View-u.
         # Kolone sif_pos i RegOzn (registracija) se povlače, ali se neće direktno koristiti za kreiranje modela
         query = """
             SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje,
                    sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila, kom, RegOzn, kilometraza,
                    poptavka_kategorija, nije_garaza, napomena
-            FROM dbo.v_servisi
+            FROM dbo.fleet_servisi
         """
 
         # Dodajte WHERE klauzulu u zavisnosti od parametara
@@ -1323,7 +1323,7 @@ def fetch_requisition_data(last_24_hours=True, days=None):
         # SQL upit za povlačenje podataka
         query = """
             SELECT sif_pred, god, br_dok, sif_vrsart, stavka, sif_art, naz_art, kol, cena, vrednost_nab, napomena
-            FROM dbo.v_trebovanja
+            FROM dbo.fleet_trebovanja
         """
         
         # Dodaj WHERE klauzulu u zavisnosti od parametara (ako je potrebno vremensko filtriranje)
