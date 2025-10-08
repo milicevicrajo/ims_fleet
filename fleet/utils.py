@@ -250,8 +250,8 @@ def import_nis_fuel_consumption(file_path):
             # Formatiraj registarski broj pre nego što ga upotrebiš
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
-            # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
-            traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
+            # Pronađi vozilo prema formatiranom registracionom brcoju u TrafficCard modelu
+            traffic_card = TrafficCard.objects.using("server_db").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
             # Konverzija datuma transakcije sa vremenskom zonom
@@ -260,7 +260,7 @@ def import_nis_fuel_consumption(file_path):
             
             job_code = vehicle.job_codes.first().organizational_unit.code
            
-            FuelConsumption.objects.create(
+            FuelConsumption.objects.using("server_db").create(
                 vehicle=vehicle,
                 date=transaction_date,
                 amount=row['Količina'],
@@ -291,7 +291,7 @@ def import_nis_transactions(file_path):
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
             # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
-            traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
+            traffic_card = TrafficCard.objects.using("server_db").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
             # Konverzija datuma transakcije sa vremenskom zonom
@@ -308,7 +308,7 @@ def import_nis_transactions(file_path):
             kilometraza = int(row['Kilometraža']) if pd.notna(row['Kilometraža']) else None
 
             # Kreiraj instancu TransactionIMS modela
-            TransactionNIS.objects.create(
+            TransactionNIS.objects.using("server_db").create(
                 vehicle=vehicle,
                 kupac=row['Kupac'],
                 sifra_kupca=row['Šifra kupca'],
@@ -884,7 +884,7 @@ def fetch_policy_data(last_24_hours=True, days=None):
         if where_clauses:
             query += " WHERE " + " AND ".join(where_clauses)
 
-        with connections['test_db'].cursor() as cursor:
+        with connections['server_db'].cursor() as cursor:
             logger.info("Executing SQL query...")
             cursor.execute(query, params)
             columns = [col[0] for col in cursor.description]
@@ -1073,7 +1073,7 @@ def fetch_service_data(last_24_hours=True, days=None):
             print("Filtriram podatke za poslednja 24 sata.")
 
         # Izvršite upit i preuzmite podatke
-        with connections['test_db'].cursor() as cursor:
+        with connections['server_db'].cursor() as cursor:
             print(f"Izvršavam SQL upit za preuzimanje podataka: {query}")
             cursor.execute(query)
             rows = cursor.fetchall()
@@ -1217,7 +1217,7 @@ def process_vehicle_retirements():
         """
 
         retired_vehicles_from_db = []
-        with connections['test_db'].cursor() as cursor:
+        with connections['server_db'].cursor() as cursor:
             logger.info(f"Izvršavam SQL upit za preuzimanje otpisanih vozila: {query}")
             cursor.execute(query)
             rows = cursor.fetchall()
@@ -1334,7 +1334,7 @@ def fetch_requisition_data(last_24_hours=True, days=None):
             print("Napomena: Nema vremenskog filtriranja jer nema dostupnog datuma.")
 
         # Izvrši upit i preuzmi podatke
-        with connections['test_db'].cursor() as cursor:
+        with connections['server_db'].cursor() as cursor:
             print("Izvršavam SQL upit za preuzimanje podataka...")
             cursor.execute(query)
             rows = cursor.fetchall()
@@ -1976,7 +1976,7 @@ def update_vehicle_values():
 
     try:
         # Povlačenje podataka iz druge baze
-        with connections['test_db'].cursor() as cursor:
+        with connections['server_db'].cursor() as cursor:
             cursor.execute("""
                 SELECT sif_osn, sad_vrednost FROM dbo.vrednost_vozila
             """)
@@ -2185,7 +2185,7 @@ def update_job_codes_from_view():
     today = date.today()
     updated = 0
 
-    with connections['test_db'].cursor() as cursor:
+    with connections['server_db'].cursor() as cursor:
         cursor.execute("SELECT regbr, sifpos FROM dbo.sif_pos_trenutno")
         rows = cursor.fetchall()
 
@@ -2215,7 +2215,7 @@ def update_job_codes_from_view():
 
 
 def sync_organizational_units_from_view():
-    with connections['test_db'].cursor() as cursor:  # zameni 'external' imenom tvoje konekcije
+    with connections['server_db'].cursor() as cursor:  # zameni 'external' imenom tvoje konekcije
         cursor.execute("SELECT sif_pos, naz_pos, blok FROM dbo.v_sifre_posla")
         rows = cursor.fetchall()
 
