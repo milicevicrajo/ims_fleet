@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>Prijava kvara vozila</title>
+  <style>
+    {% include "fleet/css/a4.css" %}
+  </style>
+  <style>
+    body{margin:0;padding:0;background:#f3f3f3;}
+    .print-toolbar{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      padding:10px 0;
+    }
+    .print-btn, .back-btn{
+      font-family: "Times New Roman", serif;
+      font-size:12pt;
+      padding:6px 10px;
+      border:1px solid #000;
+      background:#fafafa;
+      cursor:pointer;
+    }
+    .back-btn{text-decoration:none; color:#000; display:inline-block;}
+    .a4-page{padding:8mm 12mm 10mm 12mm;}
+    .sheet-grid{width:100%; border-collapse:collapse; font-family:"Times New Roman", serif; font-size:12pt;}
+    .sheet-grid td{border:1px solid #000; padding:3mm 3.5mm; vertical-align:top;}
+    .sheet-grid .label{width:35mm; font-weight:600;}
+    .sheet-grid .label-wide{width:45mm; font-weight:600;}
+    .sheet-grid .value{border-left:0; }
+    .title-box{border:1px solid #000; display:grid; grid-template-columns:1fr 1.5fr 0.8fr; align-items:stretch;}
+    .title-cell{border-right:1px solid #000; padding:5mm 4mm; text-align:center;}
+    .title-cell:last-child{border-right:0;}
+    .org-name{font-weight:700; font-size:13pt;}
+    .org-info{font-size:11pt; line-height:1.2;}
+    .form-title{font-weight:700; font-size:14pt;}
+    .prilog{font-weight:700; text-align:right;}
+    .prilog small{display:block; font-weight:400;}
+    .top-meta{display:flex; justify-content:space-between; font-size:11pt; margin-bottom:4mm;}
+    .top-meta span{display:inline-block; min-width:30mm; border-bottom:1px solid #000; padding:0 4mm;}
+    .spacer-row td{border:0; padding:2mm 0;}
+    .sign-row td{height:18mm;}
+    .signature-line{display:inline-block; width:60mm; border-top:1px solid #000; margin-top:6mm;}
+    .muted{font-size:10pt;}
+  </style>
+</head>
+<body>
+  <div class="a4-host">
+    <div class="a4-viewport">
+      <div class="print-toolbar">
+        <button class="print-btn" onclick="window.print()">Štampaj</button>
+        <a class="back-btn" href="{{ next_url|default:'/' }}">Nazad na listu</a>
+      </div>
+      <section class="a4-page">
+
+        <div class="top-meta">
+          <div>IU 05</div>
+          <div>2/8</div>
+        </div>
+
+        <div class="title-box">
+          <div class="title-cell" style="text-align:left;">
+            <div style="text-align:left;">
+              <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo" style="height:24mm; width:auto; display:block; margin-bottom:4mm;">
+              <div class="org-name">Institut IMS</div>
+              <div class="org-info">
+                Bulevar vojvode Mišića 43<br>
+                Beograd
+              </div>
+            </div>
+          </div>
+          <div class="title-cell" style="display:flex; align-items:center; justify-content:center;">
+            <div class="form-title">PRIJAVA KVARA VOZILA</div>
+          </div>
+          <div class="title-cell" style="text-align:left;">
+            <div class="prilog">Prilog 1</div>
+            <div style="margin-top:6mm;">
+              <div>Oznaka:</div>
+              <div style="font-weight:700;">IZ 053</div>
+              <div style="margin-top:5mm;">R.b.z.: {{ kvar.rbz|default:"__________________" }}</div>
+            </div>
+          </div>
+        </div>
+
+        <table class="sheet-grid" style="margin-top:5mm;">
+          <tr>
+            <td class="label">Datum prijave:</td>
+            <td class="value" colspan="5">{{ kvar.created_at|date:"d.m.Y - H:i" }}</td>
+          </tr>
+          <tr>
+            <td class="label">Vozilo:</td>
+            <td class="value" colspan="5">{{ vehicle.brand }} {{ vehicle.model }}</td>
+          </tr>
+          <tr>
+            <td class="label">Registracija:</td>
+            <td class="value" colspan="5">{{ registration_number }}</td>
+          </tr>
+          <tr>
+            <td class="label">Šifra troškova (OJ):</td>
+            <td class="value" colspan="5">
+              {% if organizational_unit %}
+                {{ organizational_unit.code }} - {{ organizational_unit.name }}
+              {% else %}
+                {{ center }}
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Stanje brojila (km):</td>
+            <td class="value" colspan="5">{{ kvar.kilometraza }}</td>
+          </tr>
+          <tr>
+            <td class="label-wide"><em>Primedba na vozilo:</em></td>
+            <td class="value" colspan="5" style="height:60mm;">{{ kvar.opis }}</td>
+          </tr>
+          <tr>
+            <td class="label-wide"><em>Napomena:</em></td>
+            <td class="value" colspan="5" style="height:40mm;">{{ kvar.napomena|default:"" }}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:6mm; display:flex; justify-content:space-between; gap:10mm;">
+          <div style="flex:1; text-align:center;">
+            <div>Prijavu podneo:</div>
+            <div class="signature-line"></div>
+          </div>
+          <div style="flex:1; text-align:center;">
+            <div>Prijavu primio:</div>
+            <div class="signature-line"></div>
+          </div>
+        </div>
+
+        <div class="muted" style="margin-top:auto; display:flex; gap:10mm; font-size:10pt;">
+          <div>Izdanje: treće</div>
+          <div>Datum odobrenja: 22.07.2009.</div>
+          <div>Datum revizije:</div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+  <script>
+    (function(){
+      const autoPrint = {{ auto_print|yesno:"true,false" }};
+      const nextUrl = "{{ next_url|default:'' }}";
+      if (autoPrint) {
+        window.print();
+        window.onafterprint = function(){
+          if (nextUrl) { window.location.href = nextUrl; }
+        };
+      }
+    })();
+  </script>
+</body>
+</html>

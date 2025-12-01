@@ -90,6 +90,9 @@
                     <a href="{% url 'kvar_update' kvar.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
                       <i class="fas fa-edit"></i> Izmeni
                     </a>
+                    <a href="{% url 'kvar_print' kvar.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Prijava kvara (A4)">
+                      <i class="mdi mdi-printer"></i> Prijava
+                    </a>
                     <form method="post" action="{% url 'kvar_delete' kvar.pk %}"
                           class="d-inline"
                           onsubmit="return confirm('Da li sigurno zelite da obrisete ovaj kvar?');">
