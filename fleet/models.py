@@ -126,15 +126,14 @@ class JobCode(models.Model):
     organizational_unit = models.ForeignKey(OrganizationalUnit, verbose_name=_("Organizaciona jedinica"), on_delete=models.SET_NULL, related_name='vehicle_assignments', null=True)
     assigned_date = models.DateField(verbose_name=_("Datum dodele"))
 
-class Meta:
-    constraints = [
-        models.UniqueConstraint(fields=["vehicle", "assigned_date"], name="unique_vehicle_assigned_date"),
-    ]
-    indexes = [
-        models.Index(fields=["vehicle", "-assigned_date", "-id"]),
-        models.Index(fields=["organizational_unit"]),
-    ]
-
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["vehicle", "assigned_date"], name="unique_vehicle_assigned_date"),
+        ]
+        indexes = [
+            models.Index(fields=["vehicle", "-assigned_date", "-id"]),
+            models.Index(fields=["organizational_unit"]),
+        ]
 
     def __str__(self):
         return f"{self.vehicle} -> {self.organizational_unit} (Assigned on {self.assigned_date})"
@@ -388,6 +387,39 @@ class ServiceTransaction(models.Model):
 
     def __str__(self):
         return f"{self.br_naloga} - {self.naz_par_pl} ({self.datum})"
+
+
+class Kvar(models.Model):
+    """Prijava kvara na vozilu (garaža)."""
+    YES_NO_CHOICES = (
+        (True, _("Da")),
+        (False, _("Ne")),
+    )
+
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name="kvarovi",
+        verbose_name=_("Vozilo"),
+    )
+    kilometraza = models.PositiveIntegerField(verbose_name=_("Kilometraza"))
+    opis = models.TextField(verbose_name=_("Opis kvara"))
+    napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+    van_ims = models.BooleanField(
+        default=False,
+        choices=YES_NO_CHOICES,
+        verbose_name=_("Popravka van IMS-a"),
+        help_text=_("Oznaci 'Da' ako se kvar resava van IMS garaze."),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Datum i vreme prijave"))
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("Kvar vozila")
+        verbose_name_plural = _("Kvarovi vozila")
+
+    def __str__(self):
+        return f"Kvar {self.vehicle} ({self.created_at:%d.%m.%Y %H:%M})"
     
 class DraftServiceTransaction(models.Model):
     YES_NO_CHOICES = (

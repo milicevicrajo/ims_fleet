@@ -240,6 +240,48 @@ class ServiceForm(forms.ModelForm):
         model = Service
         fields = '__all__'
 
+class KvarForm(forms.ModelForm):
+    VAN_IMS_CHOICES = [
+        ("False", "IMS garaza"),
+        ("True", "Van IMS-a"),
+    ]
+
+    vehicle = forms.ModelChoiceField(
+        queryset=Vehicle.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label="Vozilo"
+    )
+    kilometraza = forms.IntegerField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label="Kilometraza"
+    )
+    opis = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        label="Opis kvara"
+    )
+    napomena = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        label="Napomena"
+    )
+    van_ims = forms.TypedChoiceField(
+        choices=VAN_IMS_CHOICES,
+        coerce=lambda val: val == "True",
+        empty_value=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Popravka van IMS-a"
+    )
+
+    class Meta:
+        model = Kvar
+        fields = ["vehicle", "kilometraza", "opis", "napomena", "van_ims"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Default na "False" (IMS gara�a) ako nije zadato
+        if self.initial.get("van_ims") is None:
+            self.initial["van_ims"] = "False"
+
 class ServiceTransactionForm(forms.ModelForm):
     YES_NO_CHOICES = (
         (True, _("Da")),

@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from .views_garaza import GarazaHomeView, KvarCreateView, KvarDeleteView, KvarListView, KvarUpdateView
 from fleet import views
 from django.contrib.auth import views as auth_views
 from django.conf import settings
@@ -78,6 +79,12 @@ urlpatterns = [
     path('incidenti/izmeni/<int:pk>/', IncidentUpdateView.as_view(), name='incident_update'),
     path('incidenti/<int:pk>/', IncidentDetailView.as_view(), name='incident_detail'),
     path('incidenti/obrisi/<int:pk>/', IncidentDeleteView.as_view(), name='incident_delete'),
+
+    path('garaza/', GarazaHomeView.as_view(), name='garaza_home'),
+    path('garaza/kvarovi/', KvarListView.as_view(), name='kvar_list'),
+    path('garaza/kvarovi/novo/', KvarCreateView.as_view(), name='kvar_create'),
+    path('garaza/kvarovi/izmena/<int:pk>/', KvarUpdateView.as_view(), name='kvar_update'),
+    path('garaza/kvarovi/obrisi/<int:pk>/', KvarDeleteView.as_view(), name='kvar_delete'),
 
     path('putni-nalozi/', PutniNalogListView.as_view(), name='putninalog_list'),
     path('putni-nalozi/novo/', PutniNalogCreateView.as_view(), name='putninalog_create'),

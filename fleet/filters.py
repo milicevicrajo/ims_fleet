@@ -1,5 +1,5 @@
 import django_filters
-from .models import FuelConsumption, JobCode, OrganizationalUnit
+from .models import FuelConsumption, JobCode, OrganizationalUnit, Kvar
 from django import forms
 from datetime import timedelta
 from django.utils import timezone
@@ -10,10 +10,10 @@ import django_filters
 from django import forms
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import OuterRef, Subquery, Exists, F
+from django.db.models import OuterRef, Subquery, Exists, F, Q
 from django.db.models.functions import Trim
 
-from .models import Vehicle, JobCode, FuelConsumption, TrafficCard
+from .models import Vehicle, JobCode, FuelConsumption, TrafficCard, Kvar
 # pretpostavka da OrganizationalUnit postoji:
 from .models import OrganizationalUnit, ServiceTransaction
 
@@ -198,6 +198,68 @@ class VehicleFilter(django_filters.FilterSet):
         return qs.filter(_center_trim=center)
 
 
+class KvarFilter(django_filters.FilterSet):
+    datum_od = django_filters.DateTimeFilter(
+        field_name="created_at",
+        lookup_expr="gte",
+        label="Prijavljeno od",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
+    datum_do = django_filters.DateTimeFilter(
+        field_name="created_at",
+        lookup_expr="lte",
+        label="Prijavljeno do",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
+    vozilo = django_filters.CharFilter(
+        label="Vozilo (brend/model/reg.)",
+        method="filter_vozilo",
+        widget=forms.TextInput(attrs={"placeholder": "npr. Fiat / BG-123-AB / 12345"}),
+    )
+    kilometraza_od = django_filters.NumberFilter(
+        field_name="kilometraza", lookup_expr="gte", label="Kilometraza od"
+    )
+    kilometraza_do = django_filters.NumberFilter(
+        field_name="kilometraza", lookup_expr="lte", label="Kilometraza do"
+    )
+    opis = django_filters.CharFilter(
+        field_name="opis", lookup_expr="icontains", label="Opis sadrzi"
+    )
+    napomena = django_filters.CharFilter(
+        field_name="napomena", lookup_expr="icontains", label="Napomena sadrzi"
+    )
+    van_ims = django_filters.ChoiceFilter(
+        choices=[
+            ("", "Sve"),
+            ("True", "Van IMS-a"),
+            ("False", "IMS garaza"),
+        ],
+        label="Van IMS-a?",
+        method="filter_van_ims",
+    )
+
+    class Meta:
+        model = Kvar
+        fields = []
+
+    def filter_van_ims(self, qs, name, value):
+        if value == "True":
+            return qs.filter(van_ims=True)
+        if value == "False":
+            return qs.filter(van_ims=False)
+        return qs
+
+    def filter_vozilo(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.filter(
+            Q(vehicle__brand__icontains=value)
+            | Q(vehicle__model__icontains=value)
+            | Q(vehicle__inventory_number__icontains=value)
+            | Q(vehicle__traffic_cards__registration_number__icontains=value)
+        ).distinct()
+
+
 
 class TrafficCardFilterForm(forms.Form):
     organizational_unit = forms.ModelChoiceField(
@@ -370,7 +432,6 @@ from .models import DraftServiceTransaction, Vehicle, ServiceType
 # fleet/filters.py
 import django_filters
 from django import forms
-from django.db.models import Q
 from .models import DraftServiceTransaction
 
 class ServiceFixingFilter(django_filters.FilterSet):

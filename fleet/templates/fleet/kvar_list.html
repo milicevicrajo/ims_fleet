@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title mb-0">{{ title }}</h2>
+        <div class="btn-group">
+          <a href="{% url 'kvar_create' %}" class="btn btn-primary btn-sm">
+            <i class="mdi mdi-plus"></i> Novi kvar
+          </a>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <form method="get" class="row g-3 align-items-end mb-4">
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_datum_od">{{ form.datum_od.label }}</label>
+            {{ form.datum_od|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_datum_do">{{ form.datum_do.label }}</label>
+            {{ form.datum_do|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_vozilo">{{ form.vozilo.label }}</label>
+            {{ form.vozilo|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_van_ims">{{ form.van_ims.label }}</label>
+            {{ form.van_ims|add_class:"form-select" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_kilometraza_od">{{ form.kilometraza_od.label }}</label>
+            {{ form.kilometraza_od|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_kilometraza_do">{{ form.kilometraza_do.label }}</label>
+            {{ form.kilometraza_do|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_opis">{{ form.opis.label }}</label>
+            {{ form.opis|add_class:"form-control" }}
+          </div>
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="id_napomena">{{ form.napomena.label }}</label>
+            {{ form.napomena|add_class:"form-control" }}
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary">
+              <i class="mdi mdi-filter"></i> Filtriraj
+            </button>
+            <a href="{% url 'kvar_list' %}" class="btn btn-outline-secondary">
+              <i class="mdi mdi-restore"></i> Resetuj
+            </a>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table id="GarageFaultsTable" class="display compact table table-hover table-striped table-bordered align-middle w-100">
+            <thead class="table-light">
+              <tr>
+                <th>Vozilo</th>
+                <th>Kilometraza</th>
+                <th>Opis kvara</th>
+                <th>Napomena</th>
+                <th>Van IMS-a</th>
+                <th>Prijavljeno</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for kvar in kvarovi %}
+                <tr>
+                  <td>{{ kvar.vehicle }}</td>
+                  <td>{{ kvar.kilometraza }}</td>
+                  <td>{{ kvar.opis }}</td>
+                  <td>{{ kvar.napomena|default:"/" }}</td>
+                  <td>
+                    {% if kvar.van_ims %}
+                      Van IMS-a
+                    {% else %}
+                      IMS garaza
+                    {% endif %}
+                  </td>
+                  <td>{{ kvar.created_at|date:"d.m.Y H:i" }}</td>
+                  <td class="text-center text-nowrap">
+                    <a href="{% url 'kvar_update' kvar.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
+                      <i class="fas fa-edit"></i> Izmeni
+                    </a>
+                    <form method="post" action="{% url 'kvar_delete' kvar.pk %}"
+                          class="d-inline"
+                          onsubmit="return confirm('Da li sigurno zelite da obrisete ovaj kvar?');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-danger btn-sm" title="Obrisi">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted">Nema podataka</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th>Vozilo</th>
+                <th>Kilometraza</th>
+                <th>Opis kvara</th>
+                <th>Napomena</th>
+                <th>Van IMS-a</th>
+                <th>Prijavljeno</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#GarageFaultsTable', {
+        exportTitle: 'Kvarovi garaza',
+        order: [[5, 'desc']],
+        autoSelectThreshold: 25
+      });
+    }
+  });
+</script>
+{% endblock %}
