@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>Radni nalog</title>
+  <style>
+    {% include "fleet/css/a4.css" %}
+  </style>
+  <style>
+    body{margin:0;padding:0;background:#f3f3f3;}
+    .print-toolbar{
+      display:flex; justify-content:flex-end; gap:8px; padding:10px 0;
+    }
+    .print-btn, .back-btn{
+      font-family:"Times New Roman", serif; font-size:12pt; padding:6px 10px;
+      border:1px solid #000; background:#fafafa; cursor:pointer;
+    }
+    .back-btn{text-decoration:none; color:#000; display:inline-block;}
+    .a4-page{padding:5mm 7mm;}
+    .sheet-grid{width:100%; border-collapse:collapse; font-family:"Times New Roman", serif; font-size:10.5pt;}
+    .sheet-grid td{border:1px solid #000; padding:1.8mm 2mm; vertical-align:top;}
+    .label{width:30mm; font-weight:600;}
+    .label-wide{width:40mm; font-weight:600;}
+    .title-box{border:1px solid #000; display:grid; grid-template-columns:1fr 1.3fr 0.9fr;}
+    .title-cell{border-right:1px solid #000; padding:3.5mm 3mm; text-align:center;}
+    .title-cell:last-child{border-right:0;}
+    .org-name{font-weight:700; font-size:12pt;}
+    .org-info{font-size:10.5pt; line-height:1.2;}
+    .form-title{font-weight:700; font-size:13.5pt;}
+    .signature-line{display:inline-block; width:55mm; border-top:1px solid #000; margin-top:6mm;}
+  </style>
+</head>
+<body>
+  <div class="a4-host">
+    <div class="a4-viewport">
+      <div class="print-toolbar">
+        <button class="print-btn" onclick="window.print()">Štampaj</button>
+        <a class="back-btn" href="{{ next_url|default:'/' }}">Nazad na listu</a>
+      </div>
+      <section class="a4-page">
+        <div class="title-box">
+          <div class="title-cell" style="text-align:left;">
+            <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo" style="height:20mm; width:auto; display:block; margin-bottom:3mm;">
+            <div class="org-name">Institut IMS</div>
+            <div class="org-info">
+              Bulevar vojvode Mišića 43<br>Beograd
+            </div>
+          </div>
+          <div class="title-cell" style="display:flex; align-items:center; justify-content:center;">
+            <div class="form-title">
+              {% if is_van_ims %}SERVIS VAN INSTITUTA IMS{% else %}RADNI NALOG ZA POPRAVKU VOZILA{% endif %}
+            </div>
+          </div>
+          <div class="title-cell" style="text-align:left;">
+            <div style="font-weight:700; text-align:right;">Prilog 2</div>
+            <div style="margin-top:6mm;">
+              <div>Oznaka:</div>
+              <div style="font-weight:700;">IZ 053</div>
+              <div style="margin-top:5mm;">R.b.z.: {{ kvar.rbz|default:"__________________" }}</div>
+            </div>
+          </div>
+        </div>
+
+        <table class="sheet-grid" style="margin-top:3mm;">
+          <tr>
+            <td class="label">Datum prijave:</td>
+            <td class="value" colspan="5">{{ kvar.created_at|date:"d.m.Y - H:i" }}</td>
+          </tr>
+          <tr>
+            <td class="label">Vozilo:</td>
+            <td class="value" colspan="5">{{ vehicle.brand }} {{ vehicle.model }}</td>
+          </tr>
+          <tr>
+            <td class="label">Registracija:</td>
+            <td class="value" colspan="5">{{ registration_number }}</td>
+          </tr>
+          <tr>
+            <td class="label">Vrsta intervencije:</td>
+            <td class="value" colspan="5">{{ kvar.get_work_type_display }}</td>
+          </tr>
+          <tr>
+            <td class="label">Šifra troškova (OJ):</td>
+            <td class="value" colspan="5">
+              {% if organizational_unit %}
+                {{ organizational_unit.code }} - {{ organizational_unit.name }}
+              {% else %}
+                {{ center }}
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td class="label">Stanje brojila (km):</td>
+            <td class="value" colspan="5">{{ kvar.kilometraza }}</td>
+          </tr>
+          <tr>
+            <td class="label-wide"><em>Primedba na vozilo:</em></td>
+            <td class="value" colspan="5" style="height:22mm;">{{ kvar.opis }}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:2mm; border:1px solid #000; border-collapse:collapse;">
+          <div style="padding:3mm; font-weight:700; border-bottom:1px solid #000;">
+            {% if is_van_ims %}Zahtev za uslugu{% else %}Spisak potrebnih delova{% endif %}
+          </div>
+          <table style="width:100%; border-collapse:collapse; font-size:10pt;">
+            {% if is_van_ims %}
+              <colgroup><col style="width:10%"><col style="width:52%"><col style="width:14%"><col style="width:24%"></colgroup>
+            {% else %}
+              <colgroup><col style="width:10%"><col style="width:58%"><col style="width:16%"><col style="width:16%"></colgroup>
+            {% endif %}
+            <thead>
+              <tr>
+                <td style="border:1px solid #000; padding:1.2mm; text-align:center;">R.br</td>
+                <td style="border:1px solid #000; padding:1.2mm; text-align:left;">{% if is_van_ims %}Naziv usluge{% else %}Naziv/Opis dela{% endif %}</td>
+                <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{% if is_van_ims %}J.m.{% else %}Količina{% endif %}</td>
+                <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{% if is_van_ims %}Količina / Napomena{% else %}J.m.{% endif %}</td>
+              </tr>
+            </thead>
+            <tbody>
+              {% if parts %}
+                {% for part in parts %}
+                  <tr>
+                    <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ forloop.counter }}</td>
+                    <td style="border:1px solid #000; padding:1.2mm;">{{ part.name }}</td>
+                    {% if is_van_ims %}
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.uom }}</td>
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.quantity }}</td>
+                    {% else %}
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.quantity }}</td>
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.uom }}</td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              {% elif auto_parts %}
+                {% for part in auto_parts %}
+                  <tr>
+                    <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ forloop.counter }}</td>
+                    <td style="border:1px solid #000; padding:1.2mm;">{{ part.name }}</td>
+                    {% if is_van_ims %}
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.uom }}</td>
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.quantity }}</td>
+                    {% else %}
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.quantity }}</td>
+                      <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ part.uom }}</td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              {% else %}
+                {% for i in '123456' %}
+                  <tr>
+                    <td style="border:1px solid #000; padding:1.2mm; text-align:center;">{{ forloop.counter }}</td>
+                    <td style="border:1px solid #000; padding:1.2mm; height:6mm;"></td>
+                    <td style="border:1px solid #000; padding:1.2mm;"></td>
+                    <td style="border:1px solid #000; padding:1.2mm;"></td>
+                  </tr>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <table class="sheet-grid" style="margin-top:2mm;">
+          <tr>
+            <td class="label-wide"><em>Napomena:</em></td>
+            <td class="value" colspan="5" style="height:12mm;">{{ kvar.napomena|default:"" }}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:5mm; display:flex; justify-content:space-between; gap:10mm;">
+          <div style="flex:1; text-align:center;">
+            <div>Vozilo primio:</div>
+            <div class="signature-line"></div>
+          </div>
+          <div style="flex:1; text-align:center;">
+            <div>Ovlašćeno lice:</div>
+            <div class="signature-line"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script>
+    (function(){
+      const autoPrint = {{ auto_print|yesno:"true,false" }};
+      const nextUrl = "{{ next_url|default:'' }}";
+      if (autoPrint) {
+        window.print();
+        window.onafterprint = function(){
+          if (nextUrl) { window.location.href = nextUrl; }
+        };
+      }
+    })();
+  </script>
+</body>
+</html>

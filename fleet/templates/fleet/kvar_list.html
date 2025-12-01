@@ -62,7 +62,9 @@
           <table id="GarageFaultsTable" class="display compact table table-hover table-striped table-bordered align-middle w-100">
             <thead class="table-light">
               <tr>
+                <th>Detalj</th>
                 <th>Vozilo</th>
+                <th>Vrsta</th>
                 <th>Kilometraza</th>
                 <th>Opis kvara</th>
                 <th>Napomena</th>
@@ -74,7 +76,9 @@
             <tbody>
               {% for kvar in kvarovi %}
                 <tr>
-                  <td>{{ kvar.vehicle }}</td>
+                  <td><a href="{% url 'kvar_detail' kvar.pk %}" class="btn btn-outline-info btn-sm">Otvori</a></td>
+                  <td><a href="{% url 'vehicle_detail' kvar.vehicle.id %}">{{ kvar.vehicle }}</a></td>
+                  <td>{{ kvar.get_work_type_display }}</td>
                   <td>{{ kvar.kilometraza }}</td>
                   <td>{{ kvar.opis }}</td>
                   <td>{{ kvar.napomena|default:"/" }}</td>
@@ -93,6 +97,12 @@
                     <a href="{% url 'kvar_print' kvar.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Prijava kvara (A4)">
                       <i class="mdi mdi-printer"></i> Prijava
                     </a>
+                    <a href="{% url 'kvar_workorder' kvar.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Radni nalog">
+                      <i class="mdi mdi-clipboard-text"></i> Radni nalog
+                    </a>
+                    <a href="{% url 'kvar_trebovanje' kvar.pk %}" class="btn btn-outline-secondary btn-sm" style="min-width:110px;" target="_blank" title="{% if kvar.van_ims %}Zahtev za uslugu{% else %}Trebovanje{% endif %}">
+                      <i class="mdi mdi-file-document"></i> {% if kvar.van_ims %}Zahtev{% else %}Trebovanje{% endif %}
+                    </a>
                     <form method="post" action="{% url 'kvar_delete' kvar.pk %}"
                           class="d-inline"
                           onsubmit="return confirm('Da li sigurno zelite da obrisete ovaj kvar?');">
@@ -105,13 +115,15 @@
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="7" class="text-center text-muted">Nema podataka</td>
+                  <td colspan="9" class="text-center text-muted">Nema podataka</td>
                 </tr>
               {% endfor %}
             </tbody>
             <tfoot class="table-light">
               <tr>
+                <th>Detalj</th>
                 <th>Vozilo</th>
+                <th>Vrsta</th>
                 <th>Kilometraza</th>
                 <th>Opis kvara</th>
                 <th>Napomena</th>

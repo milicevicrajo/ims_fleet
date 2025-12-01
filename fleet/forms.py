@@ -245,11 +245,22 @@ class KvarForm(forms.ModelForm):
         ("False", "IMS garaza"),
         ("True", "Van IMS-a"),
     ]
+    WORK_TYPE_CHOICES = [
+        ("mali_servis", "Mali servis"),
+        ("veliki_servis", "Veliki servis"),
+        ("popravka", "Popravka"),
+    ]
 
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
+    )
+    work_type = forms.ChoiceField(
+        choices=WORK_TYPE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label="Vrsta intervencije",
+        initial="popravka"
     )
     kilometraza = forms.IntegerField(
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
@@ -274,13 +285,24 @@ class KvarForm(forms.ModelForm):
 
     class Meta:
         model = Kvar
-        fields = ["vehicle", "kilometraza", "opis", "napomena", "van_ims"]
+        fields = ["vehicle", "work_type", "kilometraza", "opis", "napomena", "van_ims"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Default na "False" (IMS gara�a) ako nije zadato
         if self.initial.get("van_ims") is None:
             self.initial["van_ims"] = "False"
+
+
+class KvarPartForm(forms.ModelForm):
+    class Meta:
+        model = KvarPart
+        fields = ["name", "quantity", "uom"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Naziv dela"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "uom": forms.TextInput(attrs={"class": "form-control", "placeholder": "kom/l/kg"}),
+        }
 
 class ServiceTransactionForm(forms.ModelForm):
     YES_NO_CHOICES = (

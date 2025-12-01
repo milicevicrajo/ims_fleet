@@ -7,6 +7,11 @@ from .views_garaza import (
     KvarListView,
     KvarUpdateView,
     KvarPrintView,
+    KvarWorkOrderView,
+    KvarDetailView,
+    KvarIMSListView,
+    KvarVanIMSListView,
+    KvarTrebovanjeView,
 )
 from fleet import views
 from django.contrib.auth import views as auth_views
@@ -91,8 +96,13 @@ urlpatterns = [
     path('garaza/kvarovi/', KvarListView.as_view(), name='kvar_list'),
     path('garaza/kvarovi/novo/', KvarCreateView.as_view(), name='kvar_create'),
     path('garaza/kvarovi/izmena/<int:pk>/', KvarUpdateView.as_view(), name='kvar_update'),
+    path('garaza/kvarovi/<int:pk>/', KvarDetailView.as_view(), name='kvar_detail'),
     path('garaza/kvarovi/obrisi/<int:pk>/', KvarDeleteView.as_view(), name='kvar_delete'),
     path('garaza/kvarovi/<int:pk>/prijava/', KvarPrintView.as_view(), name='kvar_print'),
+    path('garaza/kvarovi/<int:pk>/radni-nalog/', KvarWorkOrderView.as_view(), name='kvar_workorder'),
+    path('garaza/kvarovi/ims/', KvarIMSListView.as_view(), name='kvar_list_ims'),
+    path('garaza/kvarovi/van-ims/', KvarVanIMSListView.as_view(), name='kvar_list_van_ims'),
+    path('garaza/kvarovi/<int:pk>/trebovanje/', KvarTrebovanjeView.as_view(), name='kvar_trebovanje'),
 
     path('putni-nalozi/', PutniNalogListView.as_view(), name='putninalog_list'),
     path('putni-nalozi/novo/', PutniNalogCreateView.as_view(), name='putninalog_create'),

@@ -37,5 +37,53 @@
       </div>
     </div>
   </div>
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <span class="badge bg-success me-2"><i class="mdi mdi-garage"></i></span>
+          <h4 class="mb-0">Kvarovi u IMS</h4>
+        </div>
+        <p class="text-muted flex-grow-1">Spisak kvarova koji se rešavaju u IMS garaži.</p>
+        <a href="{% url 'kvar_list_ims' %}" class="btn btn-outline-success mt-2">Otvori listu</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <span class="badge bg-warning text-dark me-2"><i class="mdi mdi-truck"></i></span>
+          <h4 class="mb-0">Kvarovi van IMS</h4>
+        </div>
+        <p class="text-muted flex-grow-1">Spisak kvarova koji se rešavaju van IMS.</p>
+        <a href="{% url 'kvar_list_van_ims' %}" class="btn btn-outline-warning mt-2">Otvori listu</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <span class="badge bg-info text-dark me-2"><i class="mdi mdi-clipboard-check"></i></span>
+          <h4 class="mb-0">Zahtev za putni nalog</h4>
+        </div>
+        <p class="text-muted flex-grow-1">Placeholder za izdavanje putnog naloga.</p>
+        <a href="#" class="btn btn-outline-info mt-2" data-no-preloader>Otvoriti kasnije</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex align-items-center mb-3">
+          <span class="badge bg-dark me-2"><i class="mdi mdi-road"></i></span>
+          <h4 class="mb-0">Spisak putnih naloga</h4>
+        </div>
+        <p class="text-muted flex-grow-1">Placeholder za pregled putnih naloga.</p>
+        <a href="#" class="btn btn-outline-dark mt-2" data-no-preloader>Otvoriti kasnije</a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

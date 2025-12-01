@@ -3,13 +3,61 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from urllib.parse import quote
+from decimal import Decimal
 from django_filters.views import FilterView
 from django.views import View
 from django.views.generic import CreateView, UpdateView, TemplateView
 
 from .filters import KvarFilter
-from .forms import KvarForm
-from .models import Kvar, JobCode
+from .forms import KvarForm, KvarPartForm
+from .models import Kvar, JobCode, KvarPart
+
+
+def ensure_auto_parts(kvar: Kvar):
+    """Autofill parts for mali/veliki servis ako nisu uneti."""
+    if kvar.van_ims or kvar.parts.exists():
+        return list(kvar.parts.all())
+
+    parts_map = {
+        Kvar.WorkType.MALI_SERVIS: [
+            {"name": "Motorno ulje", "quantity": "5.0", "uom": "l"},
+            {"name": "Filter ulja", "quantity": "1", "uom": "kom"},
+            {"name": "Filter vazduha", "quantity": "1", "uom": "kom"},
+            {"name": "Filter klime", "quantity": "1", "uom": "kom"},
+            {"name": "Filter goriva", "quantity": "1", "uom": "kom"},
+            {"name": "Svećice", "quantity": "4", "uom": "kom"},
+            {"name": "WD sprej", "quantity": "1", "uom": "kom"},
+        ],
+        Kvar.WorkType.VELIKI_SERVIS: [
+            {"name": "Motorno ulje", "quantity": "6.0", "uom": "l"},
+            {"name": "Filter ulja", "quantity": "1", "uom": "kom"},
+            {"name": "Filter vazduha", "quantity": "1", "uom": "kom"},
+            {"name": "Filter klime", "quantity": "1", "uom": "kom"},
+            {"name": "Vodena pumpa", "quantity": "1", "uom": "kom"},
+            {"name": "PK kaiš komplet", "quantity": "1", "uom": "kom"},
+            {"name": "PK kaiš i set zupčastog kaiša", "quantity": "1", "uom": "kom"},
+            {"name": "G-12", "quantity": "2.0", "uom": "l"},
+            {"name": "Diht masa", "quantity": "1", "uom": "kom"},
+            {"name": "WD sprej", "quantity": "1", "uom": "kom"},
+            {"name": "Svećice", "quantity": "4", "uom": "kom"},
+            {"name": "Antifriz", "quantity": "2.0", "uom": "l"},
+        ],
+    }
+    defaults = parts_map.get(kvar.work_type)
+    if not defaults:
+        return list(kvar.parts.all())
+
+    objs = [
+        KvarPart(
+            kvar=kvar,
+            name=item["name"],
+            quantity=Decimal(str(item["quantity"])),
+            uom=item["uom"],
+        )
+        for item in defaults
+    ]
+    KvarPart.objects.bulk_create(objs)
+    return list(kvar.parts.all())
 
 
 class KvarListView(LoginRequiredMixin, FilterView):
@@ -29,6 +77,36 @@ class KvarListView(LoginRequiredMixin, FilterView):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Kvarovi (garaza)"
         ctx["form"] = ctx["filter"].form
+        return ctx
+
+
+class KvarIMSListView(LoginRequiredMixin, TemplateView):
+    template_name = "fleet/kvar_list_simple.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Kvarovi u IMS (bez filtera)"
+        ctx["kvarovi"] = (
+            Kvar.objects.select_related("vehicle")
+            .prefetch_related("vehicle__traffic_cards")
+            .filter(van_ims=False)
+            .order_by("-created_at")
+        )
+        return ctx
+
+
+class KvarVanIMSListView(LoginRequiredMixin, TemplateView):
+    template_name = "fleet/kvar_list_simple.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Kvarovi van IMS (bez filtera)"
+        ctx["kvarovi"] = (
+            Kvar.objects.select_related("vehicle")
+            .prefetch_related("vehicle__traffic_cards")
+            .filter(van_ims=True)
+            .order_by("-created_at")
+        )
         return ctx
 
 
@@ -75,6 +153,135 @@ class KvarPrintView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
+class KvarWorkOrderView(LoginRequiredMixin, TemplateView):
+    template_name = "fleet/kvar_workorder.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.kvar_obj = get_object_or_404(Kvar, pk=kwargs.get("pk"))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        kvar = (
+            Kvar.objects.select_related("vehicle")
+            .get(pk=self.kvar_obj.pk)
+        )
+        vehicle = kvar.vehicle
+        traffic_card = vehicle.traffic_cards.order_by("-issue_date", "-id").first()
+        latest_jobcode = (
+            JobCode.objects.select_related("organizational_unit")
+            .filter(vehicle=vehicle)
+            .order_by("-assigned_date", "-id")
+            .first()
+        )
+        parts_qs = ensure_auto_parts(kvar) if not kvar.van_ims else list(kvar.parts.all())
+        auto_parts = [] if kvar.van_ims else []
+
+        ctx.update(
+            {
+                "kvar": kvar,
+                "vehicle": vehicle,
+                "registration_number": getattr(traffic_card, "registration_number", ""),
+                "center": getattr(latest_jobcode.organizational_unit, "center", "")
+                if latest_jobcode and latest_jobcode.organizational_unit
+                else "",
+                "organizational_unit": getattr(latest_jobcode, "organizational_unit", None),
+                "next_url": self.request.GET.get("next") or reverse("kvar_list"),
+                "auto_print": self.request.GET.get("auto") == "1",
+                "parts": parts_qs,
+                "auto_parts": auto_parts,
+                "part_form": KvarPartForm(),
+                "is_van_ims": kvar.van_ims,
+            }
+        )
+        return ctx
+
+
+class KvarTrebovanjeView(LoginRequiredMixin, TemplateView):
+    template_name = "fleet/kvar_trebovanje.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        kvar = get_object_or_404(Kvar.objects.select_related("vehicle"), pk=kwargs.get("pk"))
+        vehicle = kvar.vehicle
+        traffic_card = vehicle.traffic_cards.order_by("-issue_date", "-id").first()
+        latest_jobcode = (
+            JobCode.objects.select_related("organizational_unit")
+            .filter(vehicle=vehicle)
+            .order_by("-assigned_date", "-id")
+            .first()
+        )
+        MAX_ROWS = 12
+        parts_qs = ensure_auto_parts(kvar) if not kvar.van_ims else list(kvar.parts.all())
+        parts_display = list(parts_qs)[:MAX_ROWS]
+        rows = parts_display + [None] * max(0, MAX_ROWS - len(parts_display))
+
+        ctx.update(
+            {
+                "kvar": kvar,
+                "vehicle": vehicle,
+                "registration_number": getattr(traffic_card, "registration_number", ""),
+                "organizational_unit": getattr(latest_jobcode, "organizational_unit", None),
+                "center": getattr(latest_jobcode.organizational_unit, "center", "") if latest_jobcode and latest_jobcode.organizational_unit else "",
+                "rows": rows,
+                "is_van_ims": kvar.van_ims,
+                "auto_print": self.request.GET.get("auto") == "1",
+                "next_url": self.request.GET.get("next") or reverse("kvar_list"),
+            }
+        )
+        return ctx
+
+
+class KvarDetailView(LoginRequiredMixin, TemplateView):
+    template_name = "fleet/kvar_detail.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.kvar = get_object_or_404(
+            Kvar.objects.select_related("vehicle"), pk=kwargs.get("pk")
+        )
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        # Dozvoli unos stavki ako je IMS popravka ili servis van IMS-a (zahtev za uslugu)
+        if not self.kvar.van_ims and self.kvar.work_type != Kvar.WorkType.POPRAVKA:
+            messages.warning(request, "Stavke mozes dodavati samo za IMS popravke ili servis van IMS-a.")
+            return redirect("kvar_detail", pk=self.kvar.pk)
+        form = KvarPartForm(request.POST)
+        if form.is_valid():
+            part = form.save(commit=False)
+            part.kvar = self.kvar
+            part.save()
+            messages.success(request, "Deo je dodat.")
+        else:
+            messages.error(request, "Proveri unete podatke za deo.")
+        return redirect("kvar_detail", pk=self.kvar.pk)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        vehicle = self.kvar.vehicle
+        traffic_card = vehicle.traffic_cards.order_by("-issue_date", "-id").first()
+        latest_jobcode = (
+            JobCode.objects.select_related("organizational_unit")
+            .filter(vehicle=vehicle)
+            .order_by("-assigned_date", "-id")
+            .first()
+        )
+
+        parts = ensure_auto_parts(self.kvar)
+
+        ctx.update(
+            {
+                "kvar": self.kvar,
+                "vehicle": vehicle,
+                "registration_number": getattr(traffic_card, "registration_number", ""),
+                "organizational_unit": getattr(latest_jobcode, "organizational_unit", None),
+                "parts": parts,
+                "part_form": KvarPartForm(),
+            }
+        )
+        return ctx
+
+
 class KvarCreateView(LoginRequiredMixin, CreateView):
     model = Kvar
     form_class = KvarForm
@@ -89,9 +296,7 @@ class KvarCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        print_url = reverse("kvar_print", args=[self.object.pk])
-        next_url = quote(str(reverse("kvar_list")))
-        return redirect(f"{print_url}?auto=1&next={next_url}")
+        return redirect("kvar_detail", pk=self.object.pk)
 
 
 class KvarUpdateView(LoginRequiredMixin, UpdateView):

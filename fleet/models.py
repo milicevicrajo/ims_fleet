@@ -25,7 +25,7 @@ class Vehicle(models.Model):
     category = models.CharField(max_length=50, verbose_name=_("Kategorija"))
     maximum_permissible_weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Maksimalna dozvoljena masa"))
     fuel_type = models.CharField(max_length=20, verbose_name=_("Tip goriva"))
-    number_of_seats = models.IntegerField(verbose_name=_("Broj sedi┼íta"))
+    number_of_seats = models.IntegerField(verbose_name=_("Broj sedišta"))
     purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Nabavna vrednost vozila"))
     value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Knjigovodstvena vrednost vozila"), null=True)
     service_interval = models.IntegerField(verbose_name=_("Servisni interval"),default=15000)
@@ -391,11 +391,16 @@ class ServiceTransaction(models.Model):
 
 
 class Kvar(models.Model):
-    """Prijava kvara na vozilu (gara┼╛a)."""
+    """Prijava kvara na vozilu (garaza)."""
     YES_NO_CHOICES = (
         (True, _("Da")),
         (False, _("Ne")),
     )
+
+    class WorkType(models.TextChoices):
+        MALI_SERVIS = ("mali_servis", _("Mali servis"))
+        VELIKI_SERVIS = ("veliki_servis", _("Veliki servis"))
+        POPRAVKA = ("popravka", _("Popravka"))
 
     vehicle = models.ForeignKey(
         Vehicle,
@@ -403,14 +408,20 @@ class Kvar(models.Model):
         related_name="kvarovi",
         verbose_name=_("Vozilo"),
     )
-    kilometraza = models.PositiveIntegerField(verbose_name=_("Kilometraza"))
+    work_type = models.CharField(
+        max_length=20,
+        choices=WorkType.choices,
+        default=WorkType.POPRAVKA,
+        verbose_name=_("Vrsta intervencije"),
+    )
+    kilometraza = models.PositiveIntegerField(verbose_name=_("Kilometraža"))
     opis = models.TextField(verbose_name=_("Opis kvara"))
     napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
     van_ims = models.BooleanField(
         default=False,
         choices=YES_NO_CHOICES,
         verbose_name=_("Popravka van IMS-a"),
-        help_text=_("Oznaci 'Da' ako se kvar resava van IMS garaze."),
+        help_text=_("Označi 'Da' ako se kvar rešava van IMS garaže."),
     )
     rbz = models.CharField(max_length=32, verbose_name=_("R.b.z."), blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Datum i vreme prijave"))
@@ -428,6 +439,21 @@ class Kvar(models.Model):
         if not self.rbz and self.pk:
             self.rbz = f"PK-{self.pk}/{timezone.now().year}"
             super().save(update_fields=["rbz"])
+
+
+class KvarPart(models.Model):
+    """Stavke delova vezane za prijavu kvara (radni nalog)."""
+    kvar = models.ForeignKey(Kvar, on_delete=models.CASCADE, related_name="parts", verbose_name=_("Kvar"))
+    name = models.CharField(max_length=255, verbose_name=_("Naziv dela"))
+    quantity = models.DecimalField(max_digits=8, decimal_places=2, default=1, verbose_name=_("Količina"))
+    uom = models.CharField(max_length=30, default="kom", verbose_name=_("Jedinica mere"))
+
+    class Meta:
+        verbose_name = _("Deo za kvar")
+        verbose_name_plural = _("Delovi za kvar")
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity})"
     
 class DraftServiceTransaction(models.Model):
     YES_NO_CHOICES = (
@@ -747,6 +773,11 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+
+
+
 
 
 

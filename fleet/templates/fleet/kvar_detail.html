@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <h3 class="mb-0">Detalj kvara</h3>
+          <small class="text-muted">{{ kvar.rbz }}</small>
+        </div>
+        <div class="btn-group">
+          <a class="btn btn-outline-secondary btn-sm" href="{% url 'kvar_print' kvar.pk %}" target="_blank">Prijava</a>
+          <a class="btn btn-outline-secondary btn-sm" href="{% url 'kvar_workorder' kvar.pk %}" target="_blank">Radni nalog</a>
+          <a class="btn btn-primary btn-sm" href="{% url 'kvar_list' %}">Nazad</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Vozilo</dt><dd class="col-sm-7">{{ vehicle }}</dd>
+              <dt class="col-sm-5">Registracija</dt><dd class="col-sm-7">{{ registration_number|default:"/" }}</dd>
+              <dt class="col-sm-5">Vrsta intervencije</dt><dd class="col-sm-7">{{ kvar.get_work_type_display }}</dd>
+              <dt class="col-sm-5">Šifra troškova (OJ)</dt>
+              <dd class="col-sm-7">
+                {% if organizational_unit %}
+                  {{ organizational_unit.code }} - {{ organizational_unit.name }}
+                {% else %}
+                  /
+                {% endif %}
+              </dd>
+              <dt class="col-sm-5">Stanje brojila (km)</dt><dd class="col-sm-7">{{ kvar.kilometraza }}</dd>
+            </dl>
+          </div>
+          <div class="col-md-6">
+            <dl class="row mb-0">
+              <dt class="col-sm-5">Datum prijave</dt><dd class="col-sm-7">{{ kvar.created_at|date:"d.m.Y H:i" }}</dd>
+              <dt class="col-sm-5">Popravka van IMS</dt><dd class="col-sm-7">{{ kvar.van_ims|yesno:"Da,Ne" }}</dd>
+              <dt class="col-sm-5">Opis kvara</dt><dd class="col-sm-7">{{ kvar.opis }}</dd>
+              <dt class="col-sm-5">Napomena</dt><dd class="col-sm-7">{{ kvar.napomena|default:"/" }}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">{% if kvar.van_ims %}Zahtevi za uslugu{% else %}Trebovani delovi{% endif %}</h5>
+          {% if kvar.van_ims or kvar.work_type == kvar.WorkType.POPRAVKA %}
+            <small class="text-muted">Dodaj stavke kroz formu ispod</small>
+          {% endif %}
+        </div>
+        <div class="table-responsive mb-3">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width:60px;">R.br</th>
+                <th>{% if kvar.van_ims %}Naziv usluge{% else %}Naziv dela{% endif %}</th>
+                <th style="width:120px;">{% if kvar.van_ims %}Količina/Napomena{% else %}Količina{% endif %}</th>
+                <th style="width:120px;">J.m.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for part in parts %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ part.name }}</td>
+                  <td>{{ part.quantity }}</td>
+                  <td>{{ part.uom }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">Nema delova</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if kvar.van_ims or kvar.work_type == kvar.WorkType.POPRAVKA %}
+        <form method="post" class="card card-body border">
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-md-6">
+              {{ part_form.name|add_class:"form-control" }}
+            </div>
+            <div class="col-md-3">
+              {{ part_form.quantity|add_class:"form-control" }}
+            </div>
+            <div class="col-md-3">
+              {{ part_form.uom|add_class:"form-control" }}
+            </div>
+          </div>
+          <div class="mt-2">
+            <button type="submit" class="btn btn-success btn-sm">Dodaj deo</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="alert alert-info">Delovi se automatski generišu za servis ili je kvar van IMS-a.</div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
