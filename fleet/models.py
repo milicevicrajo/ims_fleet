@@ -9,73 +9,80 @@ import datetime
 #                 <!-- MODELI SAMOSTALNE APLIKACIJE -->
 # <!-- ======================================================================= -->
 class Vehicle(models.Model):
-    inventory_number = models.CharField(max_length=20, unique=True, verbose_name=_("Inventarni broj"))
-    chassis_number = models.CharField(max_length=17, unique=True, verbose_name=_("Broj ┼íasije"))
+    inventory_number = models.CharField(max_length=20, unique=True, verbose_name=_("Inventarski broj"))
+    chassis_number = models.CharField(max_length=17, unique=True, verbose_name=_("Broj šasije"))
     brand = models.CharField(max_length=50, verbose_name=_("Marka"))
     model = models.CharField(max_length=50, verbose_name=_("Model"))
     year_of_manufacture = models.IntegerField(verbose_name=_("Godina proizvodnje"))
     first_registration_date = models.DateField(verbose_name=_("Datum prve registracije"))
     color = models.CharField(max_length=30, verbose_name=_("Boja"))
     number_of_axles = models.IntegerField(verbose_name=_("Broj osovina"))
-    engine_volume = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_("Zapremina motora"))
+    engine_volume = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_("Zapremina motora (cm³)"))
     engine_number = models.CharField(max_length=50, unique=True, verbose_name=_("Broj motora"))
-    weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Masa"))
-    engine_power = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_("Snaga motora"))
-    load_capacity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Nosivost"))
-    category = models.CharField(max_length=50, verbose_name=_("Kategorija"))
-    maximum_permissible_weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Maksimalna dozvoljena masa"))
-    fuel_type = models.CharField(max_length=20, verbose_name=_("Tip goriva"))
+    weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Masa (kg)"))
+    engine_power = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_("Snaga motora (kW)"))
+    load_capacity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Nosivost (kg)"))
+    category = models.CharField(max_length=50, verbose_name=_("Kategorija vozila"))
+    maximum_permissible_weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Maksimalna dozvoljena masa (kg)"))
+    fuel_type = models.CharField(max_length=20, verbose_name=_("Vrsta goriva"))
     number_of_seats = models.IntegerField(verbose_name=_("Broj sedišta"))
-    purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Nabavna vrednost vozila"))
-    value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Knjigovodstvena vrednost vozila"), null=True)
-    service_interval = models.IntegerField(verbose_name=_("Servisni interval"),default=15000)
-    # Nova polja
-    purchase_date = models.DateField(verbose_name=_("Datum nabavke"), null=True)  # Ovo je datum kada je vozilo nabavljeno
-    partner_code = models.CharField(max_length=20, verbose_name=_("┼áifra partnera"), null=True)  # ┼áifra partnera
-    partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True)  # Naziv partnera
-    invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True)  # Broj fakture
-    description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))  # Opis
+    purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Nabavna vrednost"))
+    value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Knjigovodstvena vrednost"), null=True)
+    service_interval = models.IntegerField(verbose_name=_("Servisni interval (km)"), default=15000)
     
+    # Nova polja
+    purchase_date = models.DateField(verbose_name=_("Datum nabavke"), null=True)
+    partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"), null=True)
+    partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True)
+    invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True)
+    description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
+
     otpis = models.BooleanField(_("Otpis"), default=False, editable=False)
 
     def __str__(self):
-        # Prona─æi registraciju vozila iz TrafficCard modela, ako postoji
         traffic_card = self.traffic_cards.first()
         if traffic_card:
             return f"{traffic_card.registration_number} - {self.brand} {self.model}"
-        else:
-            return f"{self.chassis_number} - {self.brand} {self.model}"
+        return f"{self.chassis_number} - {self.brand} {self.model}"
+
 
 class TrafficCard(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='traffic_cards', verbose_name=_("Vozilo"))
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='traffic_cards',
+        verbose_name=_("Vozilo")
+    )
+
     registration_number = models.CharField(
-        max_length=10,  # Pove─çajte maksimalnu du┼╛inu za dodatni karakter crtice
+        max_length=10,
         validators=[
             RegexValidator(
                 regex=r'^[A-Z]{2}\d{3,4}-[A-Z]{2}$',
-                message=_('Registracioni broj mora biti u formatu AA999-AA ili AA9999-AA')
+                message=_("Registracioni broj mora biti u formatu AA999-AA ili AA9999-AA")
             )
         ],
         verbose_name=_("Registracioni broj"),
         unique=True
     )
+
     issue_date = models.DateField(verbose_name=_("Datum izdavanja"))
-    valid_until = models.DateField(verbose_name=_("Va┼╛i do"))
-    traffic_card_number = models.CharField(max_length=50, verbose_name=_("Broj saobra─çajne dozvole"))
+    valid_until = models.DateField(verbose_name=_("Važi do"))
+    traffic_card_number = models.CharField(max_length=50, verbose_name=_("Broj saobraćajne dozvole"))
     serial_number = models.CharField(max_length=50, verbose_name=_("Serijski broj"))
     owner = models.CharField(max_length=100, verbose_name=_("Vlasnik"))
     homologation_number = models.CharField(max_length=50, verbose_name=_("Homologacioni broj"))
 
-    # Polje za ka─ìenje PDF-a saobra─çajne dozvole
     traffic_card_pdf = models.FileField(
-        upload_to='traffic_cards/',  # Folder gde ─çe se ─ìuvati datoteke
-        verbose_name=_("PDF Saobra─çajne dozvole"),
+        upload_to='traffic_cards/',
+        verbose_name=_("PDF saobraćajne dozvole"),
         null=True,
         blank=True
     )
 
     def __str__(self):
         return f"{self.registration_number} valid until {self.valid_until}"
+
 
 class VehicleTenderDocument(models.Model):
     class DocumentType(models.TextChoices):
@@ -89,19 +96,21 @@ class VehicleTenderDocument(models.Model):
         related_name='tender_documents',
         verbose_name=_("Vozilo"),
     )
+
     document_type = models.CharField(
         max_length=20,
         choices=DocumentType.choices,
         default=DocumentType.LICENSE_PLATE,
         verbose_name=_("Tip dokumenta"),
     )
+
     title = models.CharField(max_length=255, verbose_name=_("Naziv"))
     image = models.ImageField(upload_to='vehicle_tender_documents/%Y/%m/', verbose_name=_("Slika"))
     description = models.TextField(blank=True, verbose_name=_("Opis"))
     taken_at = models.DateField(null=True, blank=True, verbose_name=_("Datum fotografisanja"))
     is_active = models.BooleanField(default=True, verbose_name=_("Aktivan"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Ažurirano"))
 
     class Meta:
         ordering = ['-created_at']
@@ -113,18 +122,33 @@ class VehicleTenderDocument(models.Model):
 
 
 
+
 class OrganizationalUnit(models.Model):
     name = models.CharField(verbose_name=_("Naziv"), max_length=100)
-    code = models.CharField(verbose_name=_("┼áifra organizacione jedinice"), max_length=10, unique=True)
-    center = models.CharField(verbose_name=_("┼áifra centra"), max_length=10)
+    code = models.CharField(verbose_name=_("Šifra organizacione jedinice"), max_length=10, unique=True)
+    center = models.CharField(verbose_name=_("Šifra centra"), max_length=10)
 
-    
     def __str__(self):
-        return f"{self.code}- {self.name}"
+        return f"{self.code} - {self.name}"
+
 
 class JobCode(models.Model):
-    vehicle = models.ForeignKey(Vehicle, verbose_name=_("Vozilo"), on_delete=models.SET_NULL, related_name='job_codes', null=True)
-    organizational_unit = models.ForeignKey(OrganizationalUnit, verbose_name=_("Organizaciona jedinica"), on_delete=models.SET_NULL, related_name='vehicle_assignments', null=True)
+    vehicle = models.ForeignKey(
+        Vehicle,
+        verbose_name=_("Vozilo"),
+        on_delete=models.SET_NULL,
+        related_name='job_codes',
+        null=True
+    )
+
+    organizational_unit = models.ForeignKey(
+        OrganizationalUnit,
+        verbose_name=_("Organizaciona jedinica"),
+        on_delete=models.SET_NULL,
+        related_name='vehicle_assignments',
+        null=True
+    )
+
     assigned_date = models.DateField(verbose_name=_("Datum dodele"))
 
     class Meta:
@@ -137,22 +161,29 @@ class JobCode(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.vehicle} -> {self.organizational_unit} (Assigned on {self.assigned_date})"
+        return f"{self.vehicle} -> {self.organizational_unit} (Datum dodele: {self.assigned_date})"
+
 
 
 class Lease(models.Model):
     LEASE_TYPE_CHOICES = [
         ('finansijski', 'Finansijski'),
         ('operativni', 'Operativni'),
-        ('dugorocni', 'Dugoro─ìni najam'),
+        ('dugoročnI', 'Dugoročni najam'),
     ]
 
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='leases', verbose_name=_("Vozilo"))
-    partner_code = models.CharField(max_length=20, verbose_name=_("┼áifra partnera"))
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='leases',
+        verbose_name=_("Vozilo")
+    )
+
+    partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"))
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
-    job_code = models.CharField(max_length=20, verbose_name=_("┼áifra posla"))
+    job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
     contract_number = models.CharField(max_length=50, verbose_name=_("Broj ugovora"))
-    current_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Trenutna vrednost otplate"))
+    current_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Trenutna rata / iznos otplate"))
 
     lease_type = models.CharField(
         max_length=20,
@@ -161,26 +192,30 @@ class Lease(models.Model):
         verbose_name=_("Vrsta lizinga")
     )
 
-    start_date = models.DateField(verbose_name=_("Datum po─ìetka"))
-    end_date = models.DateField(verbose_name=_("Datum zavr┼íetka"))
+    start_date = models.DateField(verbose_name=_("Datum početka"))
+    end_date = models.DateField(verbose_name=_("Datum završetka"))
     note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
 
     def __str__(self):
-        return f"Lizing za {self.vehicle.chassis_number} ({self.lease_type}) sa {self.partner_name} od {self.start_date} do {self.end_date}"
-
-
+        return f"Lizing za {self.vehicle.chassis_number} ({self.lease_type}) – {self.partner_name}"
 
 
 class LeaseInterest(models.Model):
-    lease = models.ForeignKey(Lease, on_delete=models.CASCADE, related_name='lease_interests', verbose_name=_("Lizing"))
+    lease = models.ForeignKey(
+        Lease,
+        on_delete=models.CASCADE,
+        related_name='lease_interests',
+        verbose_name=_("Lizing")
+    )
     year = models.IntegerField(verbose_name=_("Godina"))
     interest_amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Iznos kamate"))
 
     class Meta:
-        unique_together = ('year', 'lease')  # Kombinacija godina i broj ugovora mora biti jedinstvena
+        unique_together = ('year', 'lease')
 
     def __str__(self):
-        return f"Kamata za ugovor {self.lesae.contract_number} za godinu {self.year}"
+        return f"Kamata za ugovor {self.lease.contract_number} za godinu {self.year}"
+
 
 class Policy(models.Model):
     YES_NO_CHOICES = (
@@ -188,8 +223,12 @@ class Policy(models.Model):
         (False, _("Ne")),
     )
 
-
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='policies', verbose_name=_("Vozilo"))
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='policies',
+        verbose_name=_("Vozilo")
+    )
     partner_pib = models.IntegerField(verbose_name=_("PIB partnera"))
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
     invoice_id = models.IntegerField(verbose_name=_("ID fakture"), unique=True)
@@ -198,38 +237,46 @@ class Policy(models.Model):
     insurance_type = models.CharField(max_length=50, verbose_name=_("Tip osiguranja"))
     policy_number = models.CharField(max_length=50, verbose_name=_("Broj polise"))
     premium_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos premije"))
-    start_date = models.DateField(verbose_name=_("Datum po─ìetka"))
-    end_date = models.DateField(verbose_name=_("Datum zavr┼íetka"))
+    start_date = models.DateField(verbose_name=_("Datum početka"))
+    end_date = models.DateField(verbose_name=_("Datum završetka"))
     first_installment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos prve rate"))
     other_installments_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos ostalih rata"))
     number_of_installments = models.IntegerField(verbose_name=_("Broj rata"))
     is_renewable = models.BooleanField(
         default=True,
-        choices=YES_NO_CHOICES,  # Dodato choices
+        choices=YES_NO_CHOICES,
         verbose_name=_("Da li se polisa obnavlja?")
     )
+
     def __str__(self):
-        return f"Polisa {self.policy_number} sa {self.partner_name}"
+        return f"Polisa {self.policy_number} – {self.partner_name}"
+
 
 class DraftPolicy(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='draft_policies', verbose_name=_("Vozilo"), null=True, blank=True)
-    partner_pib = models.IntegerField(verbose_name="PIB partnera", null=True, blank=True)
-    partner_name = models.CharField(max_length=100, verbose_name="Naziv partnera", null=True, blank=True)
-    invoice_id = models.IntegerField(verbose_name="ID fakture", unique=True, null=True, blank=True)
-    invoice_number = models.CharField(max_length=50, verbose_name="Broj fakture", null=True, blank=True)
-    issue_date = models.DateField(verbose_name="Datum izdavanja", null=True, blank=True)
-    insurance_type = models.CharField(max_length=50, verbose_name="Tip osiguranja", null=True, blank=True)
-    policy_number = models.CharField(max_length=50, verbose_name="Broj polise", null=True, blank=True)
-    premium_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Iznos premije", null=True, blank=True)
-    start_date = models.DateField(verbose_name="Datum po─ìetka", null=True, blank=True)
-    end_date = models.DateField(verbose_name="Datum zavr┼íetka", null=True, blank=True)
-    first_installment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Iznos prve rate", null=True, blank=True)
-    other_installments_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Iznos ostalih rata", null=True, blank=True)
-    number_of_installments = models.IntegerField(verbose_name="Broj rata", null=True, blank=True)
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.SET_NULL,
+        related_name='draft_policies',
+        verbose_name=_("Vozilo"),
+        null=True, blank=True
+    )
+    partner_pib = models.IntegerField(verbose_name=_("PIB partnera"), null=True, blank=True)
+    partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True, blank=True)
+    invoice_id = models.IntegerField(verbose_name=_("ID fakture"), unique=True, null=True, blank=True)
+    invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True, blank=True)
+    issue_date = models.DateField(verbose_name=_("Datum izdavanja"), null=True, blank=True)
+    insurance_type = models.CharField(max_length=50, verbose_name=_("Tip osiguranja"), null=True, blank=True)
+    policy_number = models.CharField(max_length=50, verbose_name=_("Broj polise"), null=True, blank=True)
+    premium_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos premije"), null=True, blank=True)
+    start_date = models.DateField(verbose_name=_("Datum početka"), null=True, blank=True)
+    end_date = models.DateField(verbose_name=_("Datum završetka"), null=True, blank=True)
+    first_installment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos prve rate"), null=True, blank=True)
+    other_installments_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos ostalih rata"), null=True, blank=True)
+    number_of_installments = models.IntegerField(verbose_name=_("Broj rata"), null=True, blank=True)
 
     def is_complete(self):
         return all(
-            getattr(self, field_name) is not None and getattr(self, field_name) != ''
+            getattr(self, field_name)
             for field_name in [
                 'partner_pib',
                 'partner_name',
@@ -247,76 +294,116 @@ class DraftPolicy(models.Model):
             ]
         )
 
-
 class FuelConsumption(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='fuel_consumptions', verbose_name=_("Vozilo"))
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='fuel_consumptions',
+        verbose_name=_("Vozilo")
+    )
     date = models.DateTimeField(verbose_name=_("Datum"))
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Koli─ìina"))
-    fuel_type = models.CharField(max_length=20, verbose_name=_("Tip goriva"))
-    cost_bruto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos - Bruto"))
-    cost_neto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos - Neto"))
-    supplier = models.CharField(max_length=50, verbose_name=_("Dobavlja─ì"))
-    job_code = models.CharField(max_length=50, verbose_name=_("┼áifra posla"),blank=True, null=True)
-    mileage = models.IntegerField(verbose_name=_("Kilometra┼╛a"))
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina"))
+    fuel_type = models.CharField(max_length=20, verbose_name=_("Vrsta goriva"))
+    cost_bruto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos – bruto"))
+    cost_neto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos – neto"))
+    supplier = models.CharField(max_length=50, verbose_name=_("Dobavljač"))
+    job_code = models.CharField(max_length=50, verbose_name=_("Šifra posla"), blank=True, null=True)
+    mileage = models.IntegerField(verbose_name=_("Kilometraža"))
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['date', 'cost_bruto', 'amount'], name='unique_fuel_consumption')
         ]
+
     def __str__(self):
-        return f"Potrosnja goriva {self.vehicle.chassis_number} na {self.date}"
+        return f"Potrošnja goriva {self.vehicle.chassis_number} – {self.date}"
+
 
 class Employee(models.Model):
     GENDER_CHOICES = [
-        ('M', 'Mu┼íki'),
-        ('F', '┼╜enski'),
+        ('M', 'Muški'),
+        ('F', 'Ženski'),
     ]
 
-    employee_code = models.IntegerField(unique=True, verbose_name=_("┼áifra zaposlenog"))
-    first_name = models.CharField(max_length=50, verbose_name=_("Ime"),blank=True, null=True)
-    last_name = models.CharField(max_length=50, verbose_name=_("Preziime"),blank=True, null=True)
+    employee_code = models.IntegerField(unique=True, verbose_name=_("Šifra zaposlenog"))
+    first_name = models.CharField(max_length=50, verbose_name=_("Ime"), blank=True, null=True)
+    last_name = models.CharField(max_length=50, verbose_name=_("Prezime"), blank=True, null=True)
     position = models.CharField(max_length=100, verbose_name=_("Pozicija"))
-    department_code = models.IntegerField(verbose_name=_("┼áifra odeljenja"))
+    department_code = models.IntegerField(verbose_name=_("Šifra odeljenja"))
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name=_("Pol"))
-    date_of_birth = models.DateField(verbose_name=_("Datum ro─æenja"))
-    date_of_joining = models.DateField(verbose_name=_("Datum zapo┼íljavanja"))
+    date_of_birth = models.DateField(verbose_name=_("Datum rođenja"))
+    date_of_joining = models.DateField(verbose_name=_("Datum zapošljavanja"))
     phone_number = models.CharField(max_length=20, verbose_name=_("Broj telefona"), blank=True, null=True)
 
     def __str__(self):
         return f"{self.last_name} {self.first_name}"
 
+
 class Incident(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='incidents', verbose_name=_("Zaposleni"))
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='incidents', verbose_name=_("Vozilo"))
-    violation = models.TextField(verbose_name=_("Prekr┼íaj"))
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='incidents',
+        verbose_name=_("Zaposleni")
+    )
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='incidents',
+        verbose_name=_("Vozilo")
+    )
+    violation = models.TextField(verbose_name=_("Prekršaj"))
     date = models.DateField(verbose_name=_("Datum"))
     location = models.CharField(max_length=100, verbose_name=_("Lokacija"))
     fine_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos kazne"))
     note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
 
     def __str__(self):
-        return f"Incident for {self.employee.name} with vehicle {self.vehicle.chassis_number} on {self.date}"
+        # Employee nema polje `name`, pa koristimo __str__ iz Employee
+        return f"Incident – {self.employee} / {self.vehicle.chassis_number} ({self.date})"
+
 
 class PutniNalog(models.Model):
-    order_number = models.CharField(max_length=20, verbose_name=_("Broj naloga"), unique=True)
-    order_date = models.DateField(verbose_name=_("Datum izdavanja naloga"), auto_now_add=True)
+    order_number = models.CharField(
+        max_length=20,
+        verbose_name=_("Broj naloga"),
+        unique=True
+    )
+    order_date = models.DateField(
+        verbose_name=_("Datum izdavanja naloga"),
+        auto_now_add=True
+    )
 
     employee = models.ForeignKey(
-        Employee, on_delete=models.CASCADE, related_name='travel_orders', verbose_name=_("Zaposleni")
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='travel_orders',
+        verbose_name=_("Zaposleni")
     )
     job_code = models.ForeignKey(
-        OrganizationalUnit, on_delete=models.CASCADE, related_name='travel_order_job_code', verbose_name=_("Tro┼íkovi idu na teret"))
+        OrganizationalUnit,
+        on_delete=models.CASCADE,
+        related_name='travel_order_job_code',
+        verbose_name=_("Troškovi idu na teret")
+    )
     travel_location = models.CharField(max_length=100, verbose_name=_("Mesto putovanja"))
     task = models.TextField(verbose_name=_("Zadatak"))
-    contract_offer = models.CharField(max_length=50, verbose_name=_("Ugovor/ponuda"))
+    contract_offer = models.CharField(max_length=50, verbose_name=_("Ugovor / ponuda"))
     vehicle = models.ForeignKey(
-        Vehicle, on_delete=models.CASCADE, related_name='travel_orders', verbose_name=_("Vozilo")
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='travel_orders',
+        verbose_name=_("Vozilo")
     )
     travel_date = models.DateField(verbose_name=_("Datum putovanja"))
     number_of_days = models.PositiveIntegerField(verbose_name=_("Broj dana"))
     advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Isplata"))
 
     daily_allowance = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name=_("Dnevnica"), default=2600
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Dnevnica"),
+        default=2600
     )
 
     def save(self, *args, **kwargs):
@@ -324,9 +411,9 @@ class PutniNalog(models.Model):
             self.order_number = self.generate_order_number()
         super().save(*args, **kwargs)
 
-
     def __str__(self):
-        return f"Nalog {self.order_number} - {self.employee.name} ({self.travel_date})"
+        return f"Nalog {self.order_number} – {self.employee} ({self.travel_date})"
+
 
 class ServiceType(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name=_("Naziv tipa servisa"))
@@ -335,59 +422,91 @@ class ServiceType(models.Model):
     def __str__(self):
         return self.name
 
+
 class Service(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='services', verbose_name=_("Vozilo"), blank=True, null=True)
-    service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE, related_name='services', verbose_name=_("Tip servisa"),null=True)
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.SET_NULL,
+        related_name='services',
+        verbose_name=_("Vozilo"),
+        blank=True,
+        null=True
+    )
+    service_type = models.ForeignKey(
+        ServiceType,
+        on_delete=models.CASCADE,
+        related_name='services',
+        verbose_name=_("Tip servisa"),
+        null=True
+    )
     service_date = models.DateField(verbose_name=_("Datum servisa"), null=True)
-    cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Tro┼íak"))
-    provider = models.CharField(max_length=100, verbose_name=_("Dobavlja─ì"))
+    cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Trošak"))
+    provider = models.CharField(max_length=100, verbose_name=_("Dobavljač"))
     description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
 
     def __str__(self):
-        return f"{self.service_type.name} za {self.vehicle.chassis_number} Na datum: {self.service_date}"
+        return f"{self.service_type.name} za {self.vehicle.chassis_number} na datum: {self.service_date}"
+
 
 class ServiceTransaction(models.Model):
     YES_NO_CHOICES = (
         (True, _("Da")),
         (False, _("Ne")),
     )
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='service_transactions', verbose_name=_("Vozilo"))  # Dodata veza na Vehicle
+
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='service_transactions',
+        verbose_name=_("Vozilo")
+    )
     god = models.IntegerField(verbose_name=_("Godina"))
-    sif_par_pl = models.CharField(max_length=20, verbose_name=_("┼áifra partnera (pl)"))
-    naz_par_pl = models.CharField(max_length=255, verbose_name=_("Naziv partnera (pl)"))
+
+    sif_par_pl = models.CharField(max_length=20, verbose_name=_("Šifra partnera (PL)"))
+    naz_par_pl = models.CharField(max_length=255, verbose_name=_("Naziv partnera (PL)"))
     datum = models.DateField(verbose_name=_("Datum"))
-    sif_vrs = models.CharField(max_length=10, verbose_name=_("┼áifra vrste"))
+    sif_vrs = models.CharField(max_length=10, verbose_name=_("Šifra vrste"))
     br_naloga = models.CharField(max_length=50, verbose_name=_("Broj naloga"))
     vez_dok = models.CharField(max_length=50, verbose_name=_("Vezani dokument"))
-    knt_pl = models.CharField(max_length=20, verbose_name=_("Konto pl"))
-    potrazuje = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Potra┼╛uje"))
-    sif_par_npl = models.CharField(max_length=20, verbose_name=_("┼áifra partnera (npl)"))
-    knt_npl = models.CharField(max_length=20, verbose_name=_("Konto npl"))
+    knt_pl = models.CharField(max_length=20, verbose_name=_("Konto PL"))
+    potrazuje = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Potražuje"))
+
+    sif_par_npl = models.CharField(max_length=20, verbose_name=_("Šifra partnera (NPL)"))
+    knt_npl = models.CharField(max_length=20, verbose_name=_("Konto NPL"))
     duguje = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Duguje"))
+
     konto_vozila = models.CharField(max_length=20, verbose_name=_("Konto vozila"))
-    kom = models.TextField(verbose_name=_("Komada"), blank=True, null=True)      
+    kom = models.TextField(verbose_name=_("Komada"), blank=True, null=True)
+
     popravka_kategorija = models.ForeignKey(
         ServiceType,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name="Kategorija popravke (povezana)"
+        verbose_name=_("Kategorija popravke (povezana)")
     )
-    kilometraza = models.IntegerField(verbose_name=_("Kilometra┼╛a"), blank=True, null=True)
+
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), blank=True, null=True)
+
     nije_garaza = models.BooleanField(
         default=False,
-        choices=YES_NO_CHOICES,  # Dodato choices
-        verbose_name=_("Nije gara┼╛a")
+        choices=YES_NO_CHOICES,
+        verbose_name=_("Nije garaža")
     )
+
     napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
-    
+
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['datum', 'duguje', 'vez_dok', 'br_naloga'], name='unique_service_transaction')
+            models.UniqueConstraint(
+                fields=['datum', 'duguje', 'vez_dok', 'br_naloga'],
+                name='unique_service_transaction'
+            )
         ]
 
     def __str__(self):
         return f"{self.br_naloga} - {self.naz_par_pl} ({self.datum})"
+
 
 
 class Kvar(models.Model):
@@ -454,66 +573,101 @@ class KvarPart(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.quantity})"
-    
+
+
 class DraftServiceTransaction(models.Model):
     YES_NO_CHOICES = (
-        (True, _("Ne")),
-        (False, _("Da")),
+        (True, _("Da")),
+        (False, _("Ne")),
     )
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='draft_service_transactions', verbose_name=_("Vozilo"), null=True, blank=True)  # Dodata veza na Vehicle
-    god = models.IntegerField(verbose_name="Godina", null=True, blank=True)
-    sif_par_pl = models.CharField(max_length=20, verbose_name="┼áifra partnera (pl)", null=True, blank=True)
-    naz_par_pl = models.CharField(max_length=255, verbose_name="Naziv partnera (pl)", null=True, blank=True)
+
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.SET_NULL,
+        related_name='draft_service_transactions',
+        verbose_name=_("Vozilo"),
+        null=True,
+        blank=True
+    )
+
+    god = models.IntegerField(verbose_name=_("Godina"), null=True, blank=True)
+    sif_par_pl = models.CharField(max_length=20, verbose_name=_("Šifra partnera (PL)"), null=True, blank=True)
+    naz_par_pl = models.CharField(max_length=255, verbose_name=_("Naziv partnera (PL)"), null=True, blank=True)
+
     datum = models.DateField(verbose_name=_("Datum"))
-    sif_vrs = models.CharField(max_length=10, verbose_name="┼áifra vrste", null=True, blank=True)
-    br_naloga = models.CharField(max_length=50, verbose_name="Broj naloga")
-    vez_dok = models.CharField(max_length=50, verbose_name="Vezani dokument", blank=True, null=True)
-    knt_pl = models.CharField(max_length=20, verbose_name="Konto pl", null=True, blank=True)
-    potrazuje = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Potra┼╛uje", null=True, blank=True)
-    sif_par_npl = models.CharField(max_length=20, verbose_name="┼áifra partnera (npl)", blank=True, null=True)
-    knt_npl = models.CharField(max_length=20, verbose_name="Konto npl", null=True, blank=True)
-    duguje = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Duguje", null=True, blank=True)
-    konto_vozila = models.CharField(max_length=20, verbose_name="Konto vozila", null=True, blank=True)
-    kom = models.TextField(verbose_name="Komada", blank=True, null=True)      
+    sif_vrs = models.CharField(max_length=10, verbose_name=_("Šifra vrste"), null=True, blank=True)
+    br_naloga = models.CharField(max_length=50, verbose_name=_("Broj naloga"))
+
+    vez_dok = models.CharField(max_length=50, verbose_name=_("Vezani dokument"), blank=True, null=True)
+
+    knt_pl = models.CharField(max_length=20, verbose_name=_("Konto PL"), null=True, blank=True)
+    potrazuje = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Potražuje"), null=True, blank=True)
+
+    sif_par_npl = models.CharField(max_length=20, verbose_name=_("Šifra partnera (NPL)"), null=True, blank=True)
+    knt_npl = models.CharField(max_length=20, verbose_name=_("Konto NPL"), null=True, blank=True)
+    duguje = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Duguje"), null=True, blank=True)
+
+    konto_vozila = models.CharField(max_length=20, verbose_name=_("Konto vozila"), null=True, blank=True)
+
+    kom = models.TextField(verbose_name=_("Komada"), blank=True, null=True)
+
     popravka_kategorija = models.ForeignKey(
         ServiceType,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name="Kategorija popravke (povezana)"
+        verbose_name=_("Kategorija popravke (povezana)")
     )
 
-    kilometraza = models.IntegerField(verbose_name=_("Kilometra┼╛a"), null=True, blank=True)
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
+
     nije_garaza = models.BooleanField(
         default=False,
-        choices=YES_NO_CHOICES,  # Dodato choices
-        verbose_name=_("Da li se ovaj servis pripada gara┼╛i?")
+        choices=YES_NO_CHOICES,
+        verbose_name=_("Da li ovaj servis pripada garaži?")
     )
-    napomena = models.TextField(blank=True, null=True, verbose_name="Napomena")
+
+    napomena = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['datum', 'duguje', 'vez_dok', 'br_naloga'], name='unique_draft_service_transaction')
+            models.UniqueConstraint(
+                fields=['datum', 'duguje', 'vez_dok', 'br_naloga'],
+                name='unique_draft_service_transaction'
+            )
         ]
 
     def is_complete(self):
-        # Polja `kom` i `napomena` se ne uzimaju u obzir za `is_complete` proveru
+        # Polja kom i napomena se ne uzimaju u obzir
         return all([
-            self.god, self.sif_par_pl, self.naz_par_pl, self.knt_pl, self.potrazuje, 
-            self.knt_npl, self.duguje, self.konto_vozila
+            self.god,
+            self.sif_par_pl,
+            self.naz_par_pl,
+            self.knt_pl,
+            self.potrazuje,
+            self.knt_npl,
+            self.duguje,
+            self.konto_vozila,
         ])
 
+
 class Requisition(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='requisitions', verbose_name=_("Vozilo"))
-    sif_pred = models.IntegerField(verbose_name=_("┼áifra predmeta"))
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='requisitions',
+        verbose_name=_("Vozilo")
+    )
+    sif_pred = models.IntegerField(verbose_name=_("Šifra predmeta"))
     god = models.IntegerField(verbose_name=_("Godina"))
     br_dok = models.CharField(max_length=50, verbose_name=_("Broj dokumenta"))
-    sif_vrsart = models.CharField(max_length=20, verbose_name=_("┼áifra vrste artikla"))
+    sif_vrsart = models.CharField(max_length=20, verbose_name=_("Šifra vrste artikla"))
     stavka = models.IntegerField(verbose_name=_("Stavka"))
-    sif_art = models.CharField(max_length=20, verbose_name=_("┼áifra artikla"))
+    sif_art = models.CharField(max_length=20, verbose_name=_("Šifra artikla"))
     naz_art = models.CharField(max_length=255, verbose_name=_("Naziv artikla"))
-    kol = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Koli─ìina"))
+    kol = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina"))
     cena = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Cena"))
-    vrednost_nab = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Vrednost nabavke")) 
+    vrednost_nab = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Vrednost nabavke"))
     mesec_unosa = models.IntegerField(verbose_name=_("Mesec unosa"))
     datum_trebovanja = models.DateField(verbose_name=_("Datum trebovanja"))
     popravka_kategorija = models.ForeignKey(
@@ -521,53 +675,69 @@ class Requisition(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name="Kategorija popravke (povezana)"
+        verbose_name=_("Kategorija popravke (povezana)")
     )
-    kilometraza = models.IntegerField(verbose_name=_("Kilometra┼╛a"), null=True, blank=True)
-    nije_garaza = models.BooleanField(verbose_name=_("Nije gara┼╛a"))
-    napomena = models.TextField(verbose_name=_("Napomena"),blank=True, null=True )
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"))
+    napomena = models.TextField(verbose_name=_("Napomena"), blank=True, null=True)
 
     def __str__(self):
         return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
 
+
 class DraftRequisition(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='draft_requisitions', verbose_name=_("Vozilo"), blank=True, null=True)
-    sif_pred = models.IntegerField(verbose_name=_("┼áifra predmeta"), blank=True, null=True)
-    god = models.IntegerField(null=True, blank=True)
-    br_dok = models.CharField(max_length=50)
-    sif_vrsart = models.CharField(max_length=50, null=True, blank=True)
-    stavka = models.CharField(max_length=50, null=True, blank=True)
-    sif_art = models.CharField(max_length=50, null=True, blank=True)
-    naz_art = models.CharField(max_length=255, null=True, blank=True)
-    kol = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    cena = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    vrednost_nab = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name='draft_requisitions',
+        verbose_name=_("Vozilo"),
+        blank=True,
+        null=True
+    )
+    sif_pred = models.IntegerField(verbose_name=_("Šifra predmeta"), blank=True, null=True)
+    god = models.IntegerField(verbose_name=_("Godina"), null=True, blank=True)
+    br_dok = models.CharField(max_length=50, verbose_name=_("Broj dokumenta"))
+    sif_vrsart = models.CharField(max_length=50, verbose_name=_("Šifra vrste artikla"), null=True, blank=True)
+    stavka = models.CharField(max_length=50, verbose_name=_("Stavka"), null=True, blank=True)
+    sif_art = models.CharField(max_length=50, verbose_name=_("Šifra artikla"), null=True, blank=True)
+    naz_art = models.CharField(max_length=255, verbose_name=_("Naziv artikla"), null=True, blank=True)
+    kol = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina"), null=True, blank=True)
+    cena = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Cena"), null=True, blank=True)
+    vrednost_nab = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_("Vrednost nabavke"), null=True, blank=True)
     popravka_kategorija = models.ForeignKey(
         ServiceType,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name="Kategorija popravke (povezana)"
+        verbose_name=_("Kategorija popravke (povezana)")
     )
     mesec_unosa = models.IntegerField(verbose_name=_("Mesec unosa"), null=True, blank=True)
-    kilometraza = models.IntegerField(verbose_name=_("Kilometra┼╛a"), null=True, blank=True)
-    nije_garaza = models.BooleanField(verbose_name=_("Nije gara┼╛a"), default=False)
-    datum_trebovanja = models.DateField(null=True, blank=True)
-    napomena = models.TextField(null=True, blank=True)
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), default=False)
+    datum_trebovanja = models.DateField(verbose_name=_("Datum trebovanja"), null=True, blank=True)
+    napomena = models.TextField(verbose_name=_("Napomena"), null=True, blank=True)
 
     def __str__(self):
         return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
-    
+
     def is_complete(self):
         return all([
             self.vehicle is not None,
-            bool(self.popravka_kategorija),  # nije None i nije ""
+            bool(self.popravka_kategorija),
             self.mesec_unosa is not None,
-            self.datum_trebovanja is not None
+            self.datum_trebovanja is not None,
         ])
+
     
 class TransactionOMV(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='omv_transactions', verbose_name=_("Vozilo"), blank=True, null=True)
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.SET_NULL,
+        related_name='omv_transactions',
+        verbose_name=_("Vozilo"),
+        blank=True,
+        null=True
+    )
     issuer = models.CharField(max_length=255, verbose_name=_("Issuer"))
     customer = models.CharField(max_length=255, verbose_name=_("Customer"))
     card = models.CharField(max_length=255, verbose_name=_("Card"))
@@ -605,19 +775,30 @@ class TransactionOMV(models.Model):
     date_to = models.DateField(verbose_name=_("Date to"), blank=True, null=True)
     final_trx = models.CharField(max_length=50, verbose_name=_("Final Trx"), blank=True, null=True)
     lpi = models.CharField(max_length=50, verbose_name=_("LPI"), blank=True, null=True)
-    
+
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['license_plate_no', 'transaction_date', 'product_inv'], name='unique_license_plate_transaction')
+            models.UniqueConstraint(
+                fields=['license_plate_no', 'transaction_date', 'product_inv'],
+                name='unique_license_plate_transaction'
+            )
         ]
 
     def __str__(self):
-        return f"Transakcija za {self.license_plate_no} na dan  {self.transaction_date}"
+        return f"Transakcija za {self.license_plate_no} na dan {self.transaction_date}"
+
 
 class TransactionNIS(models.Model):
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, related_name='nis_transactions', verbose_name=_("Vozilo"), blank=True, null=True)
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.SET_NULL,
+        related_name='nis_transactions',
+        verbose_name=_("Vozilo"),
+        blank=True,
+        null=True
+    )
     kupac = models.CharField(max_length=255, verbose_name=_("Kupac"))
-    sifra_kupca = models.CharField(max_length=50, verbose_name=_("┼áifra kupca"))
+    sifra_kupca = models.CharField(max_length=50, verbose_name=_("Šifra kupca"))
     broj_kartice = models.CharField(max_length=50, verbose_name=_("Broj kartice"))
     kompanijski_kod_kupca = models.CharField(max_length=50, verbose_name=_("Kompanijski kod kupca"))
     zemlja_sipanja = models.CharField(max_length=50, verbose_name=_("Zemlja sipanja"))
@@ -625,17 +806,17 @@ class TransactionNIS(models.Model):
     id_transakcije = models.CharField(max_length=100, verbose_name=_("ID transakcije"))
     app_kod = models.CharField(max_length=50, verbose_name=_("App kod"))
     datum_transakcije = models.DateTimeField(verbose_name=_("Datum transakcije"))
-    tociono_mesto = models.CharField(max_length=50, verbose_name=_("To─ìiono mesto"))
+    tociono_mesto = models.CharField(max_length=50, verbose_name=_("Točeno mesto"))
     naziv_kartice = models.CharField(max_length=100, verbose_name=_("Naziv kartice"), blank=True, null=True)
     licenca = models.CharField(max_length=50, verbose_name=_("Licenca"), blank=True, null=True)
     broj_gazdinstva = models.CharField(max_length=50, verbose_name=_("Broj gazdinstva"), blank=True, null=True)
     registarska_oznaka_vozila = models.CharField(max_length=50, verbose_name=_("Registarska oznaka vozila"))
-    broj_racuna = models.CharField(max_length=50, verbose_name=_("Broj ra─ìuna"))
-    kilometraza = models.IntegerField(verbose_name=_("Kilometra┼╛a"), blank=True, null=True)
+    broj_racuna = models.CharField(max_length=50, verbose_name=_("Broj računa"))
+    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), blank=True, null=True)
     sipanje_van_rezervoara = models.BooleanField(verbose_name=_("Sipanje van rezervoara"))
     naziv_proizvoda = models.CharField(max_length=255, verbose_name=_("Naziv proizvoda"))
-    kolicina = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Koli─ìina"))
-    kolicina_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Koli─ìina KG"), blank=True, null=True)
+    kolicina = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina"))
+    kolicina_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina (kg)"), blank=True, null=True)
     popust = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Popust"))
     primenjen_popust = models.CharField(max_length=255, verbose_name=_("Primenjen popust"))
     cena_sa_kase = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Cena sa kase"))
@@ -643,10 +824,10 @@ class TransactionNIS(models.Model):
     total_sa_kase = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Total sa kase"))
     total = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Total"))
     valuta = models.CharField(max_length=10, verbose_name=_("Valuta"))
-    aktivirano_prekoracenje = models.BooleanField(verbose_name=_("Aktivirano prekora─ìenje"))
-    kolicinsko_prekoracenje = models.BooleanField(verbose_name=_("Koli─ìinsko prekora─ìenje"))
-    finansijsko_prekoracenje = models.BooleanField(verbose_name=_("Finansijsko prekora─ìenje"))
-    nacin_ocitavanja_kartice = models.CharField(max_length=50, verbose_name=_("Na─ìin o─ìitavanja kartice"))
+    aktivirano_prekoracenje = models.BooleanField(verbose_name=_("Aktivirano prekoračenje"))
+    kolicinsko_prekoracenje = models.BooleanField(verbose_name=_("Količinsko prekoračenje"))
+    finansijsko_prekoracenje = models.BooleanField(verbose_name=_("Finansijsko prekoračenje"))
+    nacin_ocitavanja_kartice = models.CharField(max_length=50, verbose_name=_("Način očitavanja kartice"))
 
     class Meta:
         constraints = [
@@ -659,15 +840,17 @@ class TransactionNIS(models.Model):
     def __str__(self):
         return f"Transakcija za {self.registarska_oznaka_vozila} na dan {self.datum_transakcije}"
 
+
 class KaskoRate(models.Model):
     contract_number = models.CharField(max_length=255)
     year = models.IntegerField()
     rate = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        managed = False  # Django won't try to create or manage this table
-        db_table = '[dbo].[kasko_rate]'  # Exact name of the view in the database
+        managed = False
+        db_table = '[dbo].[kasko_rate]'
         app_label = 'fleet'
+
 
 
 class KontaVozila(models.Model):
@@ -688,29 +871,35 @@ class DraftInsurance(models.Model):
         on_delete=models.CASCADE,
         related_name="draft_insurances",
         verbose_name=_("Vozilo"),
-        blank=True, null=True
+        blank=True,
+        null=True,
     )
 
     god = models.IntegerField(_("Godina"), null=True, blank=True)
-    sif_vrs = models.CharField(_("┼áifra vrste"), max_length=20, null=True, blank=True)
+    sif_vrs = models.CharField(_("Šifra vrste"), max_length=20, null=True, blank=True)
     br_naloga = models.CharField(_("Broj naloga"), max_length=50)
     stavka = models.CharField(_("Stavka"), max_length=50, null=True, blank=True)
     oj = models.CharField(_("OJ"), max_length=50, null=True, blank=True)
     knt = models.CharField(_("Konto"), max_length=50, null=True, blank=True)
     datum = models.DateField(_("Datum"), null=True, blank=True)
-    vez_dok = models.CharField(_("Vezni dokument"), max_length=50, null=True, blank=True)
-    potrazuje = models.DecimalField(_("Potra┼╛uje"), max_digits=15, decimal_places=2, null=True, blank=True)
+    vez_dok = models.CharField(_("Vezani dokument"), max_length=50, null=True, blank=True)
+    potrazuje = models.DecimalField(
+        _("Potražuje"),
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     kola = models.BooleanField(
         _("Odnosi se na auto"),
         default=True,
-        null=True,  # dozvoli NULL
-        blank=True
+        null=True,
+        blank=True,
     )
 
-
     class Meta:
-        verbose_name = "Draft osiguranje"
-        verbose_name_plural = "Draft osiguranja"
+        verbose_name = _("Draft osiguranje")
+        verbose_name_plural = _("Draft osiguranja")
         indexes = [
             models.Index(fields=["god", "sif_vrs", "br_naloga", "stavka", "knt"]),
             models.Index(fields=["br_naloga"]),
@@ -731,26 +920,32 @@ class Insurance(models.Model):
         "fleet.Vehicle",
         on_delete=models.PROTECT,
         related_name="insurances",
-        verbose_name=_("Vozilo")
+        verbose_name=_("Vozilo"),
     )
 
     god = models.IntegerField(_("Godina"), null=True, blank=True)
-    sif_vrs = models.CharField(_("┼áifra vrste"), max_length=20, null=True, blank=True)
+    sif_vrs = models.CharField(_("Šifra vrste"), max_length=20, null=True, blank=True)
     br_naloga = models.CharField(_("Broj naloga"), max_length=50)
     stavka = models.CharField(_("Stavka"), max_length=50, null=True, blank=True)
     oj = models.CharField(_("OJ"), max_length=50, null=True, blank=True)
     knt = models.CharField(_("Konto"), max_length=50, null=True, blank=True)
     datum = models.DateField(_("Datum"), null=True, blank=True)
-    vez_dok = models.CharField(_("Vezni dokument"), max_length=50, null=True, blank=True)
-    potrazuje = models.DecimalField(_("Potra┼╛uje"), max_digits=15, decimal_places=2, null=True, blank=True)
+    vez_dok = models.CharField(_("Vezani dokument"), max_length=50, null=True, blank=True)
+    potrazuje = models.DecimalField(
+        _("Potražuje"),
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     kola = models.BooleanField(
         _("Odnosi se na auto"),
-        default=True
+        default=True,
     )
 
     class Meta:
-        verbose_name = "Osiguranje"
-        verbose_name_plural = "Osiguranja"
+        verbose_name = _("Osiguranje")
+        verbose_name_plural = _("Osiguranja")
         indexes = [
             models.Index(fields=["god", "sif_vrs", "br_naloga", "stavka", "knt"]),
             models.Index(fields=["br_naloga"]),
@@ -758,7 +953,7 @@ class Insurance(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["god", "sif_vrs", "br_naloga", "stavka", "knt"],
-                name="uniq_insurance_key"
+                name="uniq_insurance_key",
             )
         ]
 
@@ -767,12 +962,16 @@ class Insurance(models.Model):
 
 
 
-
 class CustomUser(AbstractUser):
-    allowed_centers = models.ManyToManyField('OrganizationalUnit', blank=True)
+    allowed_centers = models.ManyToManyField(
+        'OrganizationalUnit',
+        blank=True,
+        verbose_name=_("Dozvoljene organizacione jedinice"),
+    )
 
     def __str__(self):
         return self.username
+
 
 
 
