@@ -32,7 +32,7 @@
           <span class="badge bg-secondary me-2"><i class="mdi mdi-format-list-bulleted"></i></span>
           <h4 class="mb-0">Spisak prijavljenih kvarova</h4>
         </div>
-        <p class="text-muted flex-grow-1">Pregled i filtriranje svih prijavljenih kvarova u gara\u017ei.</p>
+        <p class="text-muted flex-grow-1">Pregled i filtriranje svih prijavljenih kvarova u garaži.</p>
         <a href="{% url 'kvar_list' %}" class="btn btn-outline-secondary mt-2">Otvori listu</a>
       </div>
     </div>
@@ -68,8 +68,8 @@
           <span class="badge bg-info text-dark me-2"><i class="mdi mdi-clipboard-check"></i></span>
           <h4 class="mb-0">Zahtev za putni nalog</h4>
         </div>
-        <p class="text-muted flex-grow-1">Placeholder za izdavanje putnog naloga.</p>
-        <a href="#" class="btn btn-outline-info mt-2" data-no-preloader>Otvoriti kasnije</a>
+        <p class="text-muted flex-grow-1">Otvori novi putni nalog za vozilo i dodeli vozacu.</p>
+        <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-outline-info mt-2" data-no-preloader>Otvori putni nalog</a>
       </div>
     </div>
   </div>
@@ -80,8 +80,11 @@
           <span class="badge bg-dark me-2"><i class="mdi mdi-road"></i></span>
           <h4 class="mb-0">Spisak putnih naloga</h4>
         </div>
-        <p class="text-muted flex-grow-1">Placeholder za pregled putnih naloga.</p>
-        <a href="#" class="btn btn-outline-dark mt-2" data-no-preloader>Otvoriti kasnije</a>
+        <p class="text-muted flex-grow-1">Pregled otvorenih i zatvorenih putnih naloga za vozila.</p>
+        <div class="d-flex gap-2">
+          <a href="{% url 'vehicle_travel_order_open_list' %}" class="btn btn-outline-dark mt-2" data-no-preloader>Otvoreni</a>
+          <a href="{% url 'vehicle_travel_order_closed_list' %}" class="btn btn-outline-secondary mt-2" data-no-preloader>Zatvoreni</a>
+        </div>
       </div>
     </div>
   </div>

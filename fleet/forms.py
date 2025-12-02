@@ -230,6 +230,51 @@ class PutniNalogForm(forms.ModelForm):
             if field_name != 'order_date':
                 field.required = True
 
+
+class VehicleTravelOrderForm(forms.ModelForm):
+    pn_number = forms.IntegerField(
+        label="PN broj",
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+    )
+    vehicle = forms.ModelChoiceField(
+        queryset=Vehicle.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label="Vozilo",
+    )
+    employee = forms.ModelChoiceField(
+        queryset=Employee.objects.all(),
+        widget=Select2Widget(attrs={'class': 'select2-method'}),
+        label="Zaposleni",
+    )
+    class Meta:
+        model = VehicleTravelOrder
+        fields = ['pn_number', 'employee', 'vehicle']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            last_number = (
+                VehicleTravelOrder.objects.order_by('-pn_number')
+                .values_list('pn_number', flat=True)
+                .first()
+                or 0
+            )
+            self.initial.setdefault('pn_number', last_number + 1)
+        self.fields['pn_number'].disabled = True
+
+
+class VehicleTravelOrderCloseForm(forms.ModelForm):
+    closed_at = forms.DateField(
+        required=True,
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+        input_formats=['%Y-%m-%d', '%d/%m/%Y'],
+        label="Datum zatvaranja",
+    )
+
+    class Meta:
+        model = VehicleTravelOrder
+        fields = ['closed_at']
 class ServiceTypeForm(forms.ModelForm):
     class Meta:
         model = ServiceType

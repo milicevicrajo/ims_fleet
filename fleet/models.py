@@ -1,5 +1,6 @@
 ﻿from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.db import transaction
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractUser, Group, Permission
@@ -412,7 +413,70 @@ class PutniNalog(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Nalog {self.order_number} – {self.employee} ({self.travel_date})"
+        return f"Nalog {self.order_number} - {self.employee} ({self.travel_date})"
+
+
+class VehicleTravelOrder(models.Model):
+    pn_number = models.PositiveIntegerField(
+        verbose_name=_("PN broj"),
+        unique=True,
+        blank=True,
+        null=True,
+    )
+    created_at = models.DateField(
+        auto_now_add=True,
+        verbose_name=_("Datum otvaranja naloga"),
+    )
+    closed_at = models.DateField(
+        verbose_name=_("Datum zatvaranja naloga"),
+        blank=True,
+        null=True,
+    )
+    rbz = models.CharField(
+        max_length=32,
+        verbose_name=_("R.b.z."),
+        unique=True,
+        blank=True,
+        null=True,
+    )
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="vehicle_travel_orders",
+        verbose_name=_("Zaposleni"),
+    )
+    vehicle = models.ForeignKey(
+        Vehicle,
+        on_delete=models.CASCADE,
+        related_name="vehicle_travel_orders",
+        verbose_name=_("Vozilo"),
+    )
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        verbose_name = _("Putni nalog vozila")
+        verbose_name_plural = _("Putni nalozi vozila")
+
+    def __str__(self):
+        return f"PN {self.pn_number} - {self.vehicle}"
+
+    def save(self, *args, **kwargs):
+        if not self.pn_number:
+            with transaction.atomic():
+                last_number = (
+                    VehicleTravelOrder.objects.select_for_update()
+                    .order_by("-pn_number")
+                    .values_list("pn_number", flat=True)
+                    .first()
+                    or 0
+                )
+                self.pn_number = last_number + 1
+                if not self.rbz:
+                    self.rbz = f"PN-{self.pn_number}"
+                return super().save(*args, **kwargs)
+        if not self.rbz:
+            self.rbz = f"PN-{self.pn_number}"
+        return super().save(*args, **kwargs)
 
 
 class ServiceType(models.Model):

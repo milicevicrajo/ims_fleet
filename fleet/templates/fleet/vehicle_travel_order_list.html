@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="card-title mb-0">{{ title }}</h2>
+          <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-primary btn-sm">
+            <i class="mdi mdi-plus"></i> Novi putni nalog
+          </a>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <a href="{% url 'vehicle_travel_order_open_list' %}" class="btn w-100 {% if status == 'open' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+              Otvoreni
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{% url 'vehicle_travel_order_closed_list' %}" class="btn w-100 {% if status == 'closed' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+              Zatvoreni
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="VehicleTravelOrdersTable" class="display compact table table-hover table-striped table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>PN broj</th>
+                <th>R.b.z.</th>
+                <th>Vozilo</th>
+                <th>Zaposleni</th>
+                <th>Otvoren</th>
+                <th>Zatvoren</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in travel_orders %}
+              <tr>
+                <td>{{ order.pn_number }}</td>
+                <td>{{ order.rbz|default:"/" }}</td>
+                <td>{{ order.vehicle }}</td>
+                <td>{{ order.employee }}</td>
+                <td>{{ order.created_at|date:"d.m.Y" }}</td>
+                <td>
+                  {% if order.closed_at %}
+                    {{ order.closed_at|date:"d.m.Y" }}
+                  {% else %}
+                    <span class="badge bg-success text-white">Otvoren</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <a href="{% url 'vehicle_travel_order_update' order.pk %}" class="btn btn-outline-primary btn-sm">Izmeni</a>
+                  {% if not order.closed_at %}
+                  <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-outline-success btn-sm">Zatvori</a>
+                  {% endif %}
+                  <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info btn-sm" target="_blank">Zahtev</a>
+                  <a href="{% url 'vehicle_travel_order_delete' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-danger btn-sm">Obrisi</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>PN broj</th>
+                <th>R.b.z.</th>
+                <th>Vozilo</th>
+                <th>Zaposleni</th>
+                <th>Otvoren</th>
+                <th>Zatvoren</th>
+                <th>Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#VehicleTravelOrdersTable', {
+        exportTitle: '{{ title }}',
+        order: [[4, 'desc']],
+        autoSelectThreshold: 25
+      });
+    }
+  });
+</script>
+{% endblock %}

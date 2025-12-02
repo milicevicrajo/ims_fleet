@@ -6,11 +6,11 @@ from urllib.parse import quote
 from decimal import Decimal
 from django_filters.views import FilterView
 from django.views import View
-from django.views.generic import CreateView, UpdateView, TemplateView
+from django.views.generic import CreateView, UpdateView, TemplateView, ListView, DeleteView
 
 from .filters import KvarFilter
-from .forms import KvarForm, KvarPartForm
-from .models import Kvar, JobCode, KvarPart
+from .forms import KvarForm, KvarPartForm, VehicleTravelOrderForm, VehicleTravelOrderCloseForm
+from .models import Kvar, JobCode, KvarPart, VehicleTravelOrder
 
 
 def ensure_auto_parts(kvar: Kvar):
@@ -323,3 +323,112 @@ class KvarDeleteView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         return redirect(self.success_url)
+
+
+# <!-- ======================================================================================== -->
+#                           PUTNI NALOZI ZA VOZILA
+# <!-- ======================================================================================== -->
+class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
+    model = VehicleTravelOrder
+    template_name = "fleet/vehicle_travel_order_list.html"
+    context_object_name = "travel_orders"
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("vehicle", "employee")
+            .order_by("-created_at", "-pn_number")
+        )
+        status = self.kwargs.get("status")
+        if status == "open":
+            queryset = queryset.filter(closed_at__isnull=True)
+        elif status == "closed":
+            queryset = queryset.filter(closed_at__isnull=False)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        status = self.kwargs.get("status")
+        ctx["title"] = "Otvoreni putni nalozi za vozila" if status == "open" else "Zatvoreni putni nalozi za vozila"
+        ctx["status"] = status
+        return ctx
+
+
+class VehicleTravelOrderCreateView(LoginRequiredMixin, CreateView):
+    model = VehicleTravelOrder
+    form_class = VehicleTravelOrderForm
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("vehicle_travel_order_list")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Novi putni nalog (vozilo)"
+        ctx["submit_button_label"] = "Sacuvaj"
+        return ctx
+
+
+class VehicleTravelOrderUpdateView(LoginRequiredMixin, UpdateView):
+    model = VehicleTravelOrder
+    form_class = VehicleTravelOrderForm
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("vehicle_travel_order_list")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Izmena putnog naloga (vozilo)"
+        ctx["submit_button_label"] = "Sacuvaj izmene"
+        return ctx
+
+
+class VehicleTravelOrderCloseView(LoginRequiredMixin, UpdateView):
+    model = VehicleTravelOrder
+    form_class = VehicleTravelOrderCloseForm
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("vehicle_travel_order_open_list")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Zatvori putni nalog (vozilo)"
+        ctx["submit_button_label"] = "Zatvori"
+        return ctx
+
+
+class VehicleTravelOrderDeleteView(LoginRequiredMixin, DeleteView):
+    model = VehicleTravelOrder
+    template_name = "fleet/vehicle_travel_order_confirm_delete.html"
+    success_url = reverse_lazy("vehicle_travel_order_open_list")
+    context_object_name = "travel_order"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Obrisi putni nalog"
+        ctx["next"] = self.request.GET.get("next") or self.request.META.get("HTTP_REFERER")
+        return ctx
+
+    def get_success_url(self):
+        next_url = self.request.POST.get("next") or self.request.GET.get("next")
+        return next_url or super().get_success_url()
+
+
+class VehicleTravelOrderRequestView(LoginRequiredMixin, TemplateView):
+    template_name = "fleet/vehicle_travel_order_request.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        order = get_object_or_404(
+            VehicleTravelOrder.objects.select_related("vehicle", "employee"),
+            pk=kwargs.get("pk"),
+        )
+        vehicle = order.vehicle
+        traffic_card = vehicle.traffic_cards.order_by("-issue_date", "-id").first()
+        ctx.update(
+            {
+                "order": order,
+                "vehicle": vehicle,
+                "employee": order.employee,
+                "registration_number": getattr(traffic_card, "registration_number", ""),
+                "next_url": self.request.GET.get("next") or reverse("vehicle_travel_order_open_list"),
+            }
+        )
+        return ctx

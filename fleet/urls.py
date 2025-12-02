@@ -12,6 +12,12 @@ from .views_garaza import (
     KvarIMSListView,
     KvarVanIMSListView,
     KvarTrebovanjeView,
+    VehicleTravelOrderCreateView,
+    VehicleTravelOrderDeleteView,
+    VehicleTravelOrderListView,
+    VehicleTravelOrderCloseView,
+    VehicleTravelOrderUpdateView,
+    VehicleTravelOrderRequestView,
 )
 from fleet import views
 from django.contrib.auth import views as auth_views
@@ -103,6 +109,14 @@ urlpatterns = [
     path('garaza/kvarovi/ims/', KvarIMSListView.as_view(), name='kvar_list_ims'),
     path('garaza/kvarovi/van-ims/', KvarVanIMSListView.as_view(), name='kvar_list_van_ims'),
     path('garaza/kvarovi/<int:pk>/trebovanje/', KvarTrebovanjeView.as_view(), name='kvar_trebovanje'),
+
+    path('garaza/putni-nalozi-vozila/otvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'open'}, name='vehicle_travel_order_open_list'),
+    path('garaza/putni-nalozi-vozila/zatvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'closed'}, name='vehicle_travel_order_closed_list'),
+    path('garaza/putni-nalozi-vozila/novo/', VehicleTravelOrderCreateView.as_view(), name='vehicle_travel_order_create'),
+    path('garaza/putni-nalozi-vozila/<int:pk>/izmena/', VehicleTravelOrderUpdateView.as_view(), name='vehicle_travel_order_update'),
+    path('garaza/putni-nalozi-vozila/<int:pk>/zatvori/', VehicleTravelOrderCloseView.as_view(), name='vehicle_travel_order_close'),
+    path('garaza/putni-nalozi-vozila/<int:pk>/zahtev/', VehicleTravelOrderRequestView.as_view(), name='vehicle_travel_order_request'),
+    path('garaza/putni-nalozi-vozila/<int:pk>/brisanje/', VehicleTravelOrderDeleteView.as_view(), name='vehicle_travel_order_delete'),
 
     path('putni-nalozi/', PutniNalogListView.as_view(), name='putninalog_list'),
     path('putni-nalozi/novo/', PutniNalogCreateView.as_view(), name='putninalog_create'),

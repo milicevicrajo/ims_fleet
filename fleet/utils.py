@@ -1300,7 +1300,7 @@ def migrate_draft_to_service_transaction(draft_id):
                     konto_vozila=draft.konto_vozila,
                     kom=draft.kom,
                     popravka_kategorija=draft.popravka_kategorija,
-                    napomena=draft.napomena,
+                    # napomena=draft.napomena,
                     kilometraza=draft.kilometraza
                 )
                 # Brisanje iz draft tabele nakon uspešnog migriranja
