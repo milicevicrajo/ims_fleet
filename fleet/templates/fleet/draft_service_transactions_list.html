@@ -37,18 +37,18 @@
         </div>
         </form>
       <div class="table-responsive">
-          <table id="DatatableServisi" class="display compact">
-              <thead>
+          <table id="DraftServiceTransactionsTable" class="display compact table table-hover table-striped table-bordered align-middle w-100" data-reports-dt="true">
+              <thead class="table-light">
                   <tr>
                     <th>Vozilo</th>
                     <th>Tip servisa</th>
                     <th>Datum servisa</th>
-                    <th>Trošak</th>
+                    <th data-type="numeric">Trošak</th>
                     <th>Dobavljač</th>
                     <th>Sifra vrste</th>
                     <th>Br. naloga</th>
                     <th>Garaža</th>
-                    <th>Akcije</th>
+                    <th class="text-center" data-filter="none">Akcije</th>
                   </tr>
               </thead>
               <tbody>
@@ -69,7 +69,7 @@
                     {% endif %}
                     </td>
 
-                    <td>
+                    <td class="text-center text-nowrap">
                     <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}" 
                         class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
                         <i class="mdi mdi-pencil"></i> Dopuni
@@ -78,10 +78,10 @@
                   </tr>
               {% empty %}
                   <tr>
-                      <td colspan="5">Nema podataka</td>
+                      <td colspan="9">Nema podataka</td>
                   </tr>
               {% endfor %}
-              <tfoot>
+              <tfoot class="table-light">
                   <tr>
                     <th>Vozilo</th>
                     <th>Tip servisa</th>
@@ -91,7 +91,7 @@
                     <th>Sifra vrste</th>
                     <th>Br. naloga</th>
                     <th>Garaža</th>
-                    <th>Akcije</th>
+                    <th class="text-center">Akcije</th>
                   </tr>
               </tfoot>
           </table>
@@ -99,4 +99,16 @@
 
   </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#DraftServiceTransactionsTable', {
+        exportTitle: 'Nedovršeni servisi',
+        order: [[2, 'desc']],
+        numericColumns: [3],
+        autoSelectThreshold: 20
+      });
+    }
+  });
+</script>
 {% endblock %}
