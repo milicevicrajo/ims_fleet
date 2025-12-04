@@ -498,6 +498,10 @@ class VehicleTravelOrderCreateView(LoginRequiredMixin, CreateView):
         ctx["submit_button_label"] = "Sacuvaj"
         return ctx
 
+    def get_success_url(self):
+        # Posle kreiranja otvori detalj novog naloga.
+        return reverse("vehicle_travel_order_detail", args=[self.object.pk])
+
 
 class VehicleTravelOrderUpdateView(LoginRequiredMixin, UpdateView):
     model = VehicleTravelOrder
