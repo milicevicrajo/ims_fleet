@@ -1,0 +1,137 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>Obracun utroska goriva</title>
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+    body{margin:0;padding:0;background:#f3f3f3; font-family:"Times New Roman", serif; font-size:10pt;}
+    .a4-host{width:100%; height:100%;}
+    .a4-viewport{width:210mm; margin:0 auto;}
+    .a4-page{
+      width:210mm; height:297mm;
+      background:#fff; color:#000;
+      box-sizing:border-box;
+      padding:5mm 15mm;
+      display:flex; flex-direction:column; gap:0;
+      border:1px solid #000;
+    }
+    @media print{
+      body *{ visibility:hidden; }
+      .a4-page, .a4-page *{ visibility:visible; }
+      .a4-page{ position:absolute; left:0; top:0; border:none; }
+    }
+    .print-toolbar{display:flex; justify-content:flex-end; gap:6px; padding:6px 0;}
+    .print-btn, .back-btn{font-size:10pt; padding:4px 8px; border:1px solid #000; background:#fafafa; cursor:pointer; text-decoration:none; color:#000;}
+    .title-box{border:1px solid #000; display:grid; grid-template-columns:1fr 1.2fr 0.9fr; align-items:stretch; margin-bottom:3mm;}
+    .title-cell{border-right:1px solid #000; padding:3mm 3mm; text-align:center;}
+    .title-cell:last-child{border-right:0;}
+    .org-name{font-weight:700; font-size:11pt;}
+    .org-info{font-size:9pt; line-height:1.2;}
+    .form-title{font-weight:700; font-size:12pt;}
+    .top-meta{display:flex; justify-content:space-between; font-size:9pt; margin-bottom:2mm;}
+    .top-meta span{display:inline-block; min-width:26mm; border-bottom:1px solid #000; padding:0 3mm;}
+    .info-line{margin:0.5mm 0; font-size:10pt;}
+    .info-line strong{display:inline-block; min-width:30mm;}
+    .table-box{margin-top:3mm;}
+    table.data{width:100%; border-collapse:collapse; font-size:9pt;}
+    table.data th, table.data td{border:1px solid #000; padding:0.8mm 1.5mm; vertical-align:middle;}
+    table.data th{background:#f2f2f2; font-weight:700; text-align:center;}
+    table.data td.text-end{text-align:right;}
+    .summary{margin-top:3mm; display:flex; flex-wrap:wrap; gap:5mm; font-size:9.5pt;}
+    .summary div{border-bottom:1px solid #000; padding:1.2mm 2mm 0.8mm 2mm; min-width:34mm;}
+    .signature-block{margin-top:10mm; display:flex; justify-content:flex-end; gap:10mm; font-size:10pt;}
+    .signature-line{display:inline-block; width:55mm; border-top:1px solid #000; text-align:center; padding-top:2.5mm;}
+    .footer-note{font-size:9pt; margin-top:8mm;}
+  </style>
+</head>
+<body>
+  <div class="a4-host">
+    <div class="a4-viewport">
+      <div class="print-toolbar">
+        <button class="print-btn" onclick="window.print()">Stampaj</button>
+        <a class="back-btn" href="{{ next_url|default:'/' }}">Nazad</a>
+      </div>
+      <section class="a4-page">
+        <div class="top-meta">
+          <span>IU 05</span>
+          <span></span>
+        </div>
+        <div class="title-box">
+          <div class="title-cell" style="text-align:left;">
+            <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo" style="height:16mm; width:auto; display:block; margin-bottom:2mm;">
+            <div class="org-name">Institut IMS</div>
+            <div class="org-info">
+              Bulevar vojvode Misica 43<br>Beograd
+            </div>
+          </div>
+          <div class="title-cell" style="display:flex; align-items:center; justify-content:center;">
+            <div class="form-title">OBRACUN UTROSKA GORIVA</div>
+          </div>
+          <div class="title-cell" style="text-align:left;">
+            <div class="prilog" style="text-align:right; font-weight:700;">Prilog 2</div>
+            <div style="margin-top:4mm; text-align:left;">
+              <div>Oznaka:</div>
+              <div style="font-weight:700;">IZ 064</div>
+              <div style="margin-top:4mm;">R.b.z.: {{ order.rbz|default:"__________________" }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-line"><strong>Vozilo:</strong> {{ order.vehicle }}</div>
+        <div class="info-line"><strong>Zaposleni:</strong> {{ order.employee }}</div>
+        <div class="info-line"><strong>Period:</strong> {{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</div>
+
+        {% if fuel_pages %}
+          {% for page in fuel_pages %}
+          <div class="table-box" style="margin-top:{% if forloop.first %}3mm{% else %}10mm{% endif %};">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>Datum</th>
+                  <th>Broj racuna</th>
+                  <th>Kolicina (L)</th>
+                  <th>Cena / L</th>
+                  <th>Ukupan iznos</th>
+                  <th>Kilometraza</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in page %}
+                <tr>
+                  <td>{{ row.date|date:"d.m.Y" }}</td>
+                  <td>{{ row.invoice|default:"/" }}</td>
+                  <td class="text-end">{{ row.quantity|default_if_none:"0"|floatformat:2 }}</td>
+                  <td class="text-end">{% if row.unit_price %}{{ row.unit_price|floatformat:2 }}{% else %}/{% endif %}</td>
+                  <td class="text-end">{{ row.amount|default_if_none:"0"|floatformat:2 }}</td>
+                  <td class="text-end">{{ row.mileage|default:"/" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endfor %}
+        <div class="summary">
+          <div>Ukupno litara: {{ total_liters|floatformat:2 }}</div>
+          <div>Ukupan iznos: {{ total_amount|default_if_none:"0"|floatformat:2 }}</div>
+          <div>Pređenih km: {% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div>
+          <div>Potrosnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
+        </div>
+        {% else %}
+        <p style="margin-top:5mm; font-size:10pt;">Nema podataka o potrosnji goriva za navedeni period.</p>
+        {% endif %}
+
+        <div class="signature-block">
+          <div class="signature-line">Obracun podneo</div>
+          <div class="signature-line">Direktor centra</div>
+        </div>
+
+        <div class="footer-note">
+          izdanje peto - datum odobrenja 01.12.2025.
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

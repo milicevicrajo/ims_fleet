@@ -1,16 +1,28 @@
+import datetime
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from urllib.parse import quote
-from decimal import Decimal
 from django_filters.views import FilterView
 from django.views import View
 from django.views.generic import CreateView, UpdateView, TemplateView, ListView, DeleteView
+from django.views.generic.detail import DetailView
+from django.utils import timezone
 
 from .filters import KvarFilter
 from .forms import KvarForm, KvarPartForm, VehicleTravelOrderForm, VehicleTravelOrderCloseForm
-from .models import Kvar, JobCode, KvarPart, VehicleTravelOrder
+from .models import (
+    Kvar,
+    JobCode,
+    KvarPart,
+    VehicleTravelOrder,
+    TransactionOMV,
+    TransactionNIS,
+)
 
 
 def ensure_auto_parts(kvar: Kvar):
@@ -355,6 +367,113 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
         return ctx
 
 
+class VehicleTravelOrderDetailView(LoginRequiredMixin, DetailView):
+    model = VehicleTravelOrder
+    template_name = "fleet/vehicle_travel_order_detail.html"
+    context_object_name = "order"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        order = self.object
+        period_start = order.created_at
+        period_end = order.closed_at or timezone.localdate()
+        start_dt = datetime.datetime.combine(period_start, datetime.time.min)
+        end_dt = datetime.datetime.combine(period_end, datetime.time.max)
+
+        registration_number = (
+            order.vehicle.traffic_cards.order_by("-issue_date")
+            .values_list("registration_number", flat=True)
+            .first()
+        )
+
+        omv_filter = Q(transaction_date__range=(start_dt, end_dt))
+        nis_filter = Q(datum_transakcije__range=(start_dt, end_dt))
+
+        if order.vehicle_id:
+            omv_filter &= Q(vehicle=order.vehicle) | Q(license_plate_no=registration_number)
+            nis_filter &= Q(vehicle=order.vehicle) | Q(registarska_oznaka_vozila=registration_number)
+        elif registration_number:
+            omv_filter &= Q(license_plate_no=registration_number)
+            nis_filter &= Q(registarska_oznaka_vozila=registration_number)
+
+        omv_qs = TransactionOMV.objects.filter(omv_filter).order_by("-transaction_date")
+        nis_qs = TransactionNIS.objects.filter(nis_filter).order_by("-datum_transakcije")
+
+        omv_liters = omv_qs.aggregate(total=Sum("quantity"))["total"] or Decimal("0")
+        nis_liters = nis_qs.aggregate(total=Sum("kolicina"))["total"] or Decimal("0")
+        total_liters = omv_liters + nis_liters
+        omv_amount = omv_qs.aggregate(total=Sum("amount"))["total"] or Decimal("0")
+        nis_amount = nis_qs.aggregate(total=Sum("total"))["total"] or Decimal("0")
+        total_amount = omv_amount + nis_amount
+
+        distance = None
+        consumption = None
+        if order.start_mileage is not None and order.end_mileage is not None:
+            distance = order.end_mileage - order.start_mileage
+            if distance > 0:
+                consumption = ((total_liters or Decimal("0")) / Decimal(distance)) * Decimal("100")
+
+        fuel_rows = []
+        for trx in omv_qs:
+            qty = trx.quantity or Decimal("0")
+            amt = trx.amount or Decimal("0")
+            unit_price = trx.unit_price or (amt / qty if qty else None)
+            fuel_rows.append(
+                {
+                    "date": trx.transaction_date,
+                    "invoice": trx.invoice_no,
+                    "card": trx.card,
+                    "supplier": "OMV",
+                    "quantity": qty,
+                    "unit_price": unit_price,
+                    "amount": amt,
+                    "mileage": trx.mileage,
+                }
+            )
+        for trx in nis_qs:
+            qty = trx.kolicina or Decimal("0")
+            amt = trx.total or Decimal("0")
+            unit_price = trx.cena or (amt / qty if qty else None)
+            fuel_rows.append(
+                {
+                    "date": trx.datum_transakcije,
+                    "invoice": trx.broj_racuna,
+                    "card": trx.broj_kartice,
+                    "supplier": "NIS",
+                    "quantity": qty,
+                    "unit_price": unit_price,
+                    "amount": amt,
+                    "mileage": trx.kilometraza,
+                }
+            )
+        fuel_rows.sort(key=lambda x: x["date"] or datetime.datetime.min)
+
+        ctx.update(
+            {
+                "period_start": period_start,
+                "period_end": period_end,
+                "registration_number": registration_number,
+                "omv_transactions": omv_qs,
+                "nis_transactions": nis_qs,
+                "total_liters": total_liters,
+                "total_amount": total_amount,
+                "distance": distance,
+                "consumption": consumption,
+                "fuel_rows": fuel_rows,
+            }
+        )
+        return ctx
+
+
+class VehicleTravelOrderFuelReportView(VehicleTravelOrderDetailView):
+    template_name = "fleet/vehicle_travel_order_fuel_report.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["next_url"] = self.request.GET.get("next") or reverse("vehicle_travel_order_detail", args=[self.object.pk])
+        return ctx
+
+
 class VehicleTravelOrderCreateView(LoginRequiredMixin, CreateView):
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderForm
@@ -385,13 +504,15 @@ class VehicleTravelOrderCloseView(LoginRequiredMixin, UpdateView):
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderCloseForm
     template_name = "fleet/generic_form.html"
-    success_url = reverse_lazy("vehicle_travel_order_open_list")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Zatvori putni nalog (vozilo)"
         ctx["submit_button_label"] = "Zatvori"
         return ctx
+
+    def get_success_url(self):
+        return reverse("vehicle_travel_order_detail", args=[self.object.pk])
 
 
 class VehicleTravelOrderDeleteView(LoginRequiredMixin, DeleteView):
