@@ -5,22 +5,18 @@
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="card-title">Tabela</h5>
-            <a href={% url 'requisition_create'%} class="text-success" style="font-size: 1.15em;">
-                <i class="mdi mdi-plus-box"></i> Dodaj trebovanje
-            </a>
         </div>
         <div class="table-responsive">
-            <table id="DatatableTrebovanja" class="display">
+            <table id="DatatableTrebovanjaDraft" class="display compact table table-striped table-bordered align-middle w-100" data-reports-dt="true">
                 <thead>
                     <tr>
-                        <th>Vozilo </th>
+                        <th>Vozilo</th>
                         <th>Godina</th>
-                        <th>Broj Dokumenta</th>
+                        <th>Broj dokumenta</th>
                         <th>Datum trebovanja</th>
-                        <th>Naziv Artikla</th>
-                        <th>Količina</th>
-                        <th>Akcije</th>
+                        <th>Naziv artikla</th>
+                        <th data-type="numeric">Kolicina</th>
+                        <th class="text-center" data-filter="none">Akcije</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -32,18 +28,20 @@
                         <td>{{ requisition.datum_trebovanja|date:"d.m.Y" }}</td>
                         <td>{{ requisition.naz_art }}</td>
                         <td>{{ requisition.kol }}</td>
-                        <td>
-                        <a href="{% url 'draft_requisition_update' requisition.pk %}">Edit</a>
-                      </td>
+                        <td class="text-center">
+                          <a href="{% url 'draft_requisition_update' requisition.pk %}">Edit</a>
+                        </td>
                     </tr>
                   {% endfor %}
+                </tbody>
                 <tfoot>
                     <tr>
+                        <th>Vozilo</th>
                         <th>Godina</th>
-                        <th>Broj Dokumenta</th>
+                        <th>Broj dokumenta</th>
                         <th>Datum trebovanja</th>
-                        <th>Naziv Artikla</th>
-                        <th>Količina</th>
+                        <th>Naziv artikla</th>
+                        <th>Kolicina</th>
                         <th>Akcije</th>
                     </tr>
                 </tfoot>
@@ -52,4 +50,16 @@
 
     </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#DatatableTrebovanjaDraft', {
+        exportTitle: 'Nedovrsena trebovanja',
+        order: [[3, 'desc']],
+        numericColumns: [5],
+        autoSelectThreshold: 20
+      });
+    }
+  });
+</script>
 {% endblock %}

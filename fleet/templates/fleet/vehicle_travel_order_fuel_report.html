@@ -10,7 +10,7 @@
     .a4-host{width:100%; height:100%;}
     .a4-viewport{width:210mm; margin:0 auto;}
     .a4-page{
-      width:210mm; height:297mm;
+      width:210mm;
       background:#fff; color:#000;
       box-sizing:border-box;
       padding:5mm 15mm;
@@ -20,7 +20,18 @@
     @media print{
       body *{ visibility:hidden; }
       .a4-page, .a4-page *{ visibility:visible; }
-      .a4-page{ position:absolute; left:0; top:0; border:none; }
+      .a4-page{
+        position:static;
+        border:none;
+        margin:0 auto;
+        height:auto;
+        min-height:0;
+        page-break-after:auto;
+      }
+      .a4-page.break-after{
+        page-break-after:always;
+      }
+      .print-toolbar{display:none !important;}
     }
     .print-toolbar{display:flex; justify-content:flex-end; gap:6px; padding:6px 0;}
     .print-btn, .back-btn{font-size:10pt; padding:4px 8px; border:1px solid #000; background:#fafafa; cursor:pointer; text-decoration:none; color:#000;}
@@ -54,7 +65,7 @@
         <a class="back-btn" href="{{ next_url|default:'/' }}">Nazad</a>
       </div>
 
-      <section class="a4-page" style="page-break-after:{% if second_fuel_page %}always{% else %}auto{% endif %};">
+      <section class="a4-page {% if second_fuel_page %}break-after{% endif %}">
         <div class="top-meta">
           <span>IU 05</span>
           <span></span>

@@ -1418,7 +1418,8 @@ def migrate_draft_to_requisition(draft_id, vehicle_id):
                     cena=draft.cena,
                     vrednost_nab=draft.vrednost_nab,
                     datum_trebovanja=draft.datum_trebovanja,
-                    napomena=draft.napomena
+                    napomena=draft.napomena,
+                    kvar=draft.kvar,
                 )
                 draft.delete()
             return requisition

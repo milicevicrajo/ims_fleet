@@ -41,7 +41,11 @@
             <tbody>
               {% for order in travel_orders %}
               <tr>
-                <td><a href="{% url 'vehicle_travel_order_detail' order.pk %}">{{ order.pn_number }}</a></td>
+                <td>
+                  <a href="{% url 'vehicle_travel_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">
+                    PN {{ order.pn_number }}
+                  </a>
+                </td>
                 <td>{{ order.rbz|default:"/" }}</td>
                 <td>{{ order.vehicle }}</td>
                 <td>{{ order.employee }}</td>
@@ -57,6 +61,10 @@
                   <a href="{% url 'vehicle_travel_order_update' order.pk %}" class="btn btn-outline-primary btn-sm">Izmeni</a>
                   {% if not order.closed_at %}
                   <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-outline-success btn-sm">Zatvori</a>
+                  {% else %}
+                  <a href="{% url 'vehicle_travel_order_fuel_report' order.pk %}" class="btn btn-outline-secondary btn-sm" title="Obračun goriva" target="_blank">
+                    <i class="mdi mdi-gas-station"></i> Obracun
+                  </a>
                   {% endif %}
                   <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info btn-sm" target="_blank">Zahtev</a>
                   <a href="{% url 'vehicle_travel_order_delete' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-danger btn-sm">Obrisi</a>

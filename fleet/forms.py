@@ -459,6 +459,12 @@ class RequisitionForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
     )
+    kvar = forms.ModelChoiceField(
+        queryset=Kvar.objects.filter(van_ims=False),
+        required=False,
+        widget=Select2Widget(attrs={'class': 'select2-method', 'data-placeholder': 'Izaberi IMS kvar'}),
+        label="Kvar (IMS)"
+    )
     datum_trebovanja = forms.DateField(
         widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
         input_formats=['%d/%m/%Y', '%Y-%m-%d'],
@@ -504,6 +510,12 @@ class DraftRequisitionForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Kategorija popravke"
     )
+    kvar = forms.ModelChoiceField(
+        queryset=Kvar.objects.filter(van_ims=False),
+        required=False,
+        widget=Select2Widget(attrs={'class': 'select2-method', 'data-placeholder': 'Izaberi IMS kvar'}),
+        label="Kvar (IMS)"
+    )
     
     kilometraza = forms.IntegerField(
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
@@ -526,7 +538,7 @@ class DraftRequisitionForm(forms.ModelForm):
 
     class Meta:
         model = DraftRequisition
-        fields = ['vehicle','datum_trebovanja', 'mesec_unosa', 'popravka_kategorija', 'kilometraza', 'nije_garaza', 'napomena']
+        fields = ['vehicle','datum_trebovanja', 'mesec_unosa', 'popravka_kategorija', 'kilometraza', 'nije_garaza', 'napomena', 'kvar']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

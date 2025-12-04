@@ -754,6 +754,14 @@ class Requisition(models.Model):
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
     nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"))
     napomena = models.TextField(verbose_name=_("Napomena"), blank=True, null=True)
+    kvar = models.ForeignKey(
+        Kvar,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requisitions",
+        verbose_name=_("Kvar (IMS)")
+    )
 
     def __str__(self):
         return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
@@ -790,6 +798,14 @@ class DraftRequisition(models.Model):
     nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), default=False)
     datum_trebovanja = models.DateField(verbose_name=_("Datum trebovanja"), null=True, blank=True)
     napomena = models.TextField(verbose_name=_("Napomena"), null=True, blank=True)
+    kvar = models.ForeignKey(
+        Kvar,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="draft_requisitions",
+        verbose_name=_("Kvar (IMS)")
+    )
 
     def __str__(self):
         return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
@@ -800,6 +816,7 @@ class DraftRequisition(models.Model):
             bool(self.popravka_kategorija),
             self.mesec_unosa is not None,
             self.datum_trebovanja is not None,
+            self.kvar is not None,
         ])
 
     
