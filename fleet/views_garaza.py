@@ -447,6 +447,16 @@ class VehicleTravelOrderDetailView(LoginRequiredMixin, DetailView):
                 }
             )
         fuel_rows.sort(key=lambda x: x["date"] or datetime.datetime.min)
+        first_fuel_page = []
+        second_fuel_page = []
+        if fuel_rows:
+            first_fuel_page = fuel_rows[:30]
+            while len(first_fuel_page) < 30:
+                first_fuel_page.append(None)
+            if len(fuel_rows) > 30:
+                second_fuel_page = fuel_rows[30:60]
+                while len(second_fuel_page) < 30:
+                    second_fuel_page.append(None)
 
         ctx.update(
             {
@@ -460,6 +470,8 @@ class VehicleTravelOrderDetailView(LoginRequiredMixin, DetailView):
                 "distance": distance,
                 "consumption": consumption,
                 "fuel_rows": fuel_rows,
+                "first_fuel_page": first_fuel_page,
+                "second_fuel_page": second_fuel_page,
             }
         )
         return ctx

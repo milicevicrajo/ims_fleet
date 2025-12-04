@@ -322,6 +322,39 @@
     return defs;
   }
 
+  function captureColumnWidths(dt) {
+    const widths = [];
+    dt.columns().every(function (idx) {
+      const header = dt.column(idx).header();
+      if (header && header.getBoundingClientRect) {
+        widths[idx] = header.getBoundingClientRect().width;
+      }
+    });
+    return widths;
+  }
+
+  function applyColumnWidths(dt, widths) {
+    if (!widths || !widths.length) {
+      return;
+    }
+    dt.columns().every(function (idx) {
+      const w = widths[idx];
+      if (!w) {
+        return;
+      }
+      const header = dt.column(idx).header();
+      if (header) {
+        header.style.width = w + 'px';
+      }
+      const nodes = dt.column(idx).nodes().toArray();
+      nodes.forEach(function (node) {
+        if (node && node.style) {
+          node.style.width = w + 'px';
+        }
+      });
+    });
+  }
+
   function initFleetReportTable(selector, userOptions) {
     const table =
       typeof selector === 'string'
@@ -345,7 +378,10 @@
       const options = mergeOptions(DEFAULT_OPTIONS, userOptions || {});
       const filterRow = ensureFilterRow(table);
       const layout = createButtonsConfig(options);
-      const columnDefs = buildColumnDefs(table, filterRow, options);
+      let columnDefs = buildColumnDefs(table, filterRow, options);
+      if (Array.isArray(options.columnDefs) && options.columnDefs.length) {
+        columnDefs = columnDefs.concat(options.columnDefs);
+      }
 
       const dt = new DataTable(table, {
         language: options.language,
@@ -361,6 +397,42 @@
       });
 
       applyFilters(dt, filterRow, options);
+      let fixedWidths = null;
+      const refreshWidths = function (capture) {
+        if (dt.columns && dt.columns.adjust) {
+          dt.columns.adjust();
+        }
+        setTimeout(function () {
+          if (!fixedWidths || capture) {
+            fixedWidths = captureColumnWidths(dt);
+          }
+          applyColumnWidths(dt, fixedWidths);
+        }, 0);
+      };
+
+      dt.on('draw', function () {
+        refreshWidths(false);
+      });
+      dt.on('page', function () {
+        refreshWidths(false);
+      });
+      dt.on('column-visibility', function () {
+        fixedWidths = null;
+        refreshWidths(true);
+      });
+      dt.on('responsive-resize', function () {
+        fixedWidths = null;
+        refreshWidths(true);
+      });
+      dt.on('columns-reorder', function () {
+        fixedWidths = null;
+        refreshWidths(true);
+      });
+      window.addEventListener('resize', function () {
+        fixedWidths = null;
+        refreshWidths(true);
+      });
+      refreshWidths(true);
     };
 
     if (document.readyState === 'loading') {

@@ -432,6 +432,16 @@ class VehicleTravelOrder(models.Model):
         blank=True,
         null=True,
     )
+    start_mileage = models.IntegerField(
+        verbose_name=_("Početna kilometraža"),
+        blank=True,
+        null=True,
+    )
+    end_mileage = models.IntegerField(
+        verbose_name=_("Krajnja kilometraža"),
+        blank=True,
+        null=True,
+    )
     rbz = models.CharField(
         max_length=32,
         verbose_name=_("R.b.z."),

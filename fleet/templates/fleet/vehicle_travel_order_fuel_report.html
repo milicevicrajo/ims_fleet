@@ -53,6 +53,89 @@
         <button class="print-btn" onclick="window.print()">Stampaj</button>
         <a class="back-btn" href="{{ next_url|default:'/' }}">Nazad</a>
       </div>
+
+      <section class="a4-page" style="page-break-after:{% if second_fuel_page %}always{% else %}auto{% endif %};">
+        <div class="top-meta">
+          <span>IU 05</span>
+          <span></span>
+        </div>
+        <div class="title-box">
+          <div class="title-cell" style="text-align:left;">
+            <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo" style="height:16mm; width:auto; display:block; margin-bottom:2mm;">
+            <div class="org-name">Institut IMS</div>
+            <div class="org-info">Bulevar vojvode Misica 43<br>Beograd</div>
+          </div>
+          <div class="title-cell" style="display:flex; align-items:center; justify-content:center;">
+            <div class="form-title">OBRACUN UTROSKA GORIVA</div>
+          </div>
+          <div class="title-cell" style="text-align:left;">
+            <div class="prilog" style="text-align:right; font-weight:700;">Prilog 2</div>
+              <div style="margin-top:4mm; text-align:left;">
+                <div>Oznaka:</div>
+                <div style="font-weight:700;">IZ 064</div>
+                <div style="margin-top:4mm;">R.b.z.: {{ order.rbz|default:"__________________" }}</div>
+                {% if second_fuel_page %}
+                <div style="margin-top:2mm; font-weight:700;">List 1 od 2</div>
+                {% endif %}
+              </div>
+          </div>
+        </div>
+
+        <div class="info-line"><strong>Vozilo:</strong> {{ order.vehicle }}</div>
+        <div class="info-line"><strong>Zaposleni:</strong> {{ order.employee }}</div>
+        <div class="info-line"><strong>Period:</strong> {{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</div>
+
+        {% if first_fuel_page %}
+        <div class="table-box">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Broj racuna</th>
+                <th>Kolicina (L)</th>
+                <th>Cena / L</th>
+                <th>Ukupan iznos</th>
+                <th>Kilometraza</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in first_fuel_page %}
+              <tr>
+                {% if row %}
+                <td>{{ row.date|date:"d.m.Y" }}</td>
+                <td>{{ row.invoice|default:"/" }}</td>
+                <td class="text-end">{{ row.quantity|default_if_none:"0"|floatformat:2 }}</td>
+                <td class="text-end">{% if row.unit_price %}{{ row.unit_price|floatformat:2 }}{% else %}/{% endif %}</td>
+                <td class="text-end">{{ row.amount|default_if_none:"0"|floatformat:2 }}</td>
+                <td class="text-end">{{ row.mileage|default:"/" }}</td>
+                {% else %}
+                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="margin-top:5mm; font-size:10pt;">Nema podataka o potrosnji goriva za navedeni period.</p>
+        {% endif %}
+
+        {% if not second_fuel_page %}
+        <div class="summary">
+          <div>Ukupno litara: {{ total_liters|floatformat:2 }}</div>
+          <div>Ukupan iznos: {{ total_amount|default_if_none:"0"|floatformat:2 }}</div>
+          <div>Pređenih km: {% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div>
+          <div>Potrosnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
+        </div>
+        <div class="signature-block">
+          <div class="signature-line">Obracun podneo</div>
+          <div class="signature-line">Direktor centra</div>
+        </div>
+        <div class="footer-note">izdanje peto - datum odobrenja 01.12.2025.</div>
+        {% endif %}
+      </section>
+
+      {% if second_fuel_page %}
       <section class="a4-page">
         <div class="top-meta">
           <span>IU 05</span>
@@ -62,19 +145,18 @@
           <div class="title-cell" style="text-align:left;">
             <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo" style="height:16mm; width:auto; display:block; margin-bottom:2mm;">
             <div class="org-name">Institut IMS</div>
-            <div class="org-info">
-              Bulevar vojvode Misica 43<br>Beograd
-            </div>
+            <div class="org-info">Bulevar vojvode Misica 43<br>Beograd</div>
           </div>
           <div class="title-cell" style="display:flex; align-items:center; justify-content:center;">
             <div class="form-title">OBRACUN UTROSKA GORIVA</div>
           </div>
           <div class="title-cell" style="text-align:left;">
             <div class="prilog" style="text-align:right; font-weight:700;">Prilog 2</div>
-            <div style="margin-top:4mm; text-align:left;">
+              <div style="margin-top:4mm; text-align:left;">
               <div>Oznaka:</div>
               <div style="font-weight:700;">IZ 064</div>
               <div style="margin-top:4mm;">R.b.z.: {{ order.rbz|default:"__________________" }}</div>
+              <div style="margin-top:2mm; font-weight:700;">List 2 od 2</div>
             </div>
           </div>
         </div>
@@ -83,54 +165,51 @@
         <div class="info-line"><strong>Zaposleni:</strong> {{ order.employee }}</div>
         <div class="info-line"><strong>Period:</strong> {{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</div>
 
-        {% if fuel_pages %}
-          {% for page in fuel_pages %}
-          <div class="table-box" style="margin-top:{% if forloop.first %}3mm{% else %}10mm{% endif %};">
-            <table class="data">
-              <thead>
-                <tr>
-                  <th>Datum</th>
-                  <th>Broj racuna</th>
-                  <th>Kolicina (L)</th>
-                  <th>Cena / L</th>
-                  <th>Ukupan iznos</th>
-                  <th>Kilometraza</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in page %}
-                <tr>
-                  <td>{{ row.date|date:"d.m.Y" }}</td>
-                  <td>{{ row.invoice|default:"/" }}</td>
-                  <td class="text-end">{{ row.quantity|default_if_none:"0"|floatformat:2 }}</td>
-                  <td class="text-end">{% if row.unit_price %}{{ row.unit_price|floatformat:2 }}{% else %}/{% endif %}</td>
-                  <td class="text-end">{{ row.amount|default_if_none:"0"|floatformat:2 }}</td>
-                  <td class="text-end">{{ row.mileage|default:"/" }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endfor %}
+        <div class="table-box">
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Broj racuna</th>
+                <th>Kolicina (L)</th>
+                <th>Cena / L</th>
+                <th>Ukupan iznos</th>
+                <th>Kilometraza</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in second_fuel_page %}
+              <tr>
+                {% if row %}
+                <td>{{ row.date|date:"d.m.Y" }}</td>
+                <td>{{ row.invoice|default:"/" }}</td>
+                <td class="text-end">{{ row.quantity|default_if_none:"0"|floatformat:2 }}</td>
+                <td class="text-end">{% if row.unit_price %}{{ row.unit_price|floatformat:2 }}{% else %}/{% endif %}</td>
+                <td class="text-end">{{ row.amount|default_if_none:"0"|floatformat:2 }}</td>
+                <td class="text-end">{{ row.mileage|default:"/" }}</td>
+                {% else %}
+                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
         <div class="summary">
           <div>Ukupno litara: {{ total_liters|floatformat:2 }}</div>
           <div>Ukupan iznos: {{ total_amount|default_if_none:"0"|floatformat:2 }}</div>
           <div>Pređenih km: {% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div>
           <div>Potrosnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
         </div>
-        {% else %}
-        <p style="margin-top:5mm; font-size:10pt;">Nema podataka o potrosnji goriva za navedeni period.</p>
-        {% endif %}
-
         <div class="signature-block">
           <div class="signature-line">Obracun podneo</div>
           <div class="signature-line">Direktor centra</div>
         </div>
-
-        <div class="footer-note">
-          izdanje peto - datum odobrenja 01.12.2025.
-        </div>
+        <div class="footer-note">izdanje peto - datum odobrenja 01.12.2025.</div>
       </section>
+      {% endif %}
+
     </div>
   </div>
 </body>

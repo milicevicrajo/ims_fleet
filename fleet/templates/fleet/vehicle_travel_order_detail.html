@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <h2 class="mb-0">Putni nalog #{{ order.pn_number }}</h2>
+          <small class="text-muted">Vozilo: {{ order.vehicle }} · Zaposleni: {{ order.employee }}</small>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'vehicle_travel_order_fuel_report' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-dark btn-sm" target="_blank">Obračun utroška</a>
+          {% if not order.closed_at %}
+          <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-success btn-sm">Zatvori nalog</a>
+          {% endif %}
+          <a href="{% url 'vehicle_travel_order_open_list' %}" class="btn btn-outline-secondary btn-sm">Nazad</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">R.b.z.</div><div class="fw-semibold">{{ order.rbz|default:"/" }}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Registracija</div><div class="fw-semibold">{{ registration_number|default:"/" }}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Otvoren</div><div class="fw-semibold">{{ period_start|date:"d.m.Y" }}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Zatvoren</div><div class="fw-semibold">{% if order.closed_at %}{{ period_end|date:"d.m.Y" }}{% else %}<span class="badge bg-success text-white">Otvoren</span>{% endif %}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Početna km</div><div class="fw-semibold">{{ order.start_mileage|default:"/" }}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Krajnja km</div><div class="fw-semibold">{{ order.end_mileage|default:"/" }}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Pređenih km</div><div class="fw-semibold">{% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Ukupno l</div><div class="fw-semibold">{{ total_liters|floatformat:2 }}</div></div></div>
+          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Prosek l/100km</div><div class="fw-semibold">{% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    {% if omv_transactions %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header"><h4 class="mb-0">OMV računi ({{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }})</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Datum</th>
+                <th>Račun</th>
+                <th>Kartica</th>
+                <th>Količina (L)</th>
+                <th>Kilometraža</th>
+                <th>Iznos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for trx in omv_transactions %}
+              <tr>
+                <td>{{ trx.transaction_date|date:"d.m.Y H:i" }}</td>
+                <td>{{ trx.invoice_no|default:"/" }}</td>
+                <td>{{ trx.card|default:"/" }}</td>
+                <td class="text-end">{{ trx.quantity|default_if_none:"0"|floatformat:2 }}</td>
+                <td class="text-end">{{ trx.mileage|default_if_none:"/" }}</td>
+                <td class="text-end">{{ trx.amount|default_if_none:"0"|floatformat:2 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if nis_transactions %}
+    <div class="card shadow-sm">
+      <div class="card-header"><h4 class="mb-0">NIS računi ({{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }})</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Datum</th>
+                <th>Račun</th>
+                <th>Kartica</th>
+                <th>Količina (L)</th>
+                <th>Kilometraža</th>
+                <th>Iznos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for trx in nis_transactions %}
+              <tr>
+                <td>{{ trx.datum_transakcije|date:"d.m.Y H:i" }}</td>
+                <td>{{ trx.broj_racuna|default:"/" }}</td>
+                <td>{{ trx.broj_kartice|default:"/" }}</td>
+                <td class="text-end">{{ trx.kolicina|default_if_none:"0"|floatformat:2 }}</td>
+                <td class="text-end">{{ trx.kilometraza|default_if_none:"/" }}</td>
+                <td class="text-end">{{ trx.total|default_if_none:"0"|floatformat:2 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

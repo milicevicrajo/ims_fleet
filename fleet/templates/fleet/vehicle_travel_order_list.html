@@ -41,7 +41,7 @@
             <tbody>
               {% for order in travel_orders %}
               <tr>
-                <td>{{ order.pn_number }}</td>
+                <td><a href="{% url 'vehicle_travel_order_detail' order.pk %}">{{ order.pn_number }}</a></td>
                 <td>{{ order.rbz|default:"/" }}</td>
                 <td>{{ order.vehicle }}</td>
                 <td>{{ order.employee }}</td>

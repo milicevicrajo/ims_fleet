@@ -247,9 +247,15 @@ class VehicleTravelOrderForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Zaposleni",
     )
+    start_mileage = forms.IntegerField(
+        required=False,
+        label="Početna kilometraža",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'km'}),
+    )
+
     class Meta:
         model = VehicleTravelOrder
-        fields = ['pn_number', 'employee', 'vehicle']
+        fields = ['pn_number', 'employee', 'vehicle', 'start_mileage']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -271,10 +277,15 @@ class VehicleTravelOrderCloseForm(forms.ModelForm):
         input_formats=['%Y-%m-%d', '%d/%m/%Y'],
         label="Datum zatvaranja",
     )
+    end_mileage = forms.IntegerField(
+        required=False,
+        label="Krajnja kilometraža",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'km'}),
+    )
 
     class Meta:
         model = VehicleTravelOrder
-        fields = ['closed_at']
+        fields = ['closed_at', 'end_mileage']
 class ServiceTypeForm(forms.ModelForm):
     class Meta:
         model = ServiceType
