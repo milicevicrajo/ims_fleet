@@ -5,15 +5,17 @@
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm">
-      <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
         <div>
-          <h3 class="mb-0">Detalj kvara</h3>
-          <small class="text-muted">{{ kvar.rbz }}</small>
+          <h3 class="mb-0 text-white">Detalj kvara</h3>
+          <small class="text-white-50">{{ kvar.rbz }}</small>
         </div>
         <div class="btn-group">
-          <a class="btn btn-outline-secondary btn-sm" href="{% url 'kvar_print' kvar.pk %}" target="_blank">Prijava</a>
-          <a class="btn btn-outline-secondary btn-sm" href="{% url 'kvar_workorder' kvar.pk %}" target="_blank">Radni nalog</a>
-          <a class="btn btn-primary btn-sm" href="{% url 'kvar_list' %}">Nazad</a>
+          <a class="btn btn-light btn-sm" href="{% url 'kvar_print' kvar.pk %}" target="_blank">Prijava kvara</a>
+          <a class="btn btn-light btn-sm" href="{% url 'kvar_workorder' kvar.pk %}" target="_blank">Radni nalog</a>
+          <a class="btn btn-light btn-sm" href="{% url 'kvar_trebovanje' kvar.pk %}" target="_blank">Trebovanje</a>
+          
+          <a class="btn btn-outline-light btn-sm" href="{% url 'kvar_list' %}">Nazad</a>
         </div>
       </div>
       <div class="card-body">
@@ -23,7 +25,7 @@
               <dt class="col-sm-5">Vozilo</dt><dd class="col-sm-7">{{ vehicle }}</dd>
               <dt class="col-sm-5">Registracija</dt><dd class="col-sm-7">{{ registration_number|default:"/" }}</dd>
               <dt class="col-sm-5">Vrsta intervencije</dt><dd class="col-sm-7">{{ kvar.get_work_type_display }}</dd>
-              <dt class="col-sm-5">Šifra troškova (OJ)</dt>
+              <dt class="col-sm-5">Sifra troskova (OJ)</dt>
               <dd class="col-sm-7">
                 {% if organizational_unit %}
                   {{ organizational_unit.code }} - {{ organizational_unit.name }}
@@ -44,61 +46,183 @@
           </div>
         </div>
 
-        <div class="mb-3 d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">{% if kvar.van_ims %}Zahtevi za uslugu{% else %}Trebovani delovi{% endif %}</h5>
-          {% if kvar.van_ims or kvar.work_type == kvar.WorkType.POPRAVKA %}
-            <small class="text-muted">Dodaj stavke kroz formu ispod</small>
-          {% endif %}
-        </div>
-        <div class="table-responsive mb-3">
-          <table class="table table-sm table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width:60px;">R.br</th>
-                <th>{% if kvar.van_ims %}Naziv usluge{% else %}Naziv dela{% endif %}</th>
-                <th style="width:120px;">{% if kvar.van_ims %}Količina/Napomena{% else %}Količina{% endif %}</th>
-                <th style="width:120px;">J.m.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for part in parts %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ part.name }}</td>
-                  <td>{{ part.quantity }}</td>
-                  <td>{{ part.uom }}</td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="4" class="text-center text-muted">Nema delova</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+<div class="card mt-3 border border-2">
+
+          <div class="card-header border-1 bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0 text-white">{% if kvar.van_ims %}Zahtev za uslugu{% else %}Trebovanje delova{% endif %}</h5>
+              <small class="text-white-50">Pregled, izmeni, dodaj ili obrisi stavke</small>
+            </div>
+          </div>
+          <div class="card-body" id="tabPartsSection">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0">Stavke</h6>
+
+            </div>
+            <div class="table-responsive mb-3">
+              <table class="table table-sm table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:60px;">R.br</th>
+                    <th>{% if kvar.van_ims %}Naziv usluge{% else %}Naziv dela{% endif %}</th>
+                    <th style="width:140px;">Jedinica mere</th>
+                    <th style="width:140px;">Kolicina</th>
+                    <th style="width:180px;" class="text-center">Akcije</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for part in parts %}
+                    <tr data-part-id="{{ part.id }}"
+                        data-part-name="{{ part.name }}"
+                        data-part-uom="{{ part.uom }}"
+                        data-part-qty="{{ part.quantity }}">
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ part.name }}</td>
+                      <td>{{ part.uom }}</td>
+                      <td>{{ part.quantity }}</td>
+                      <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                          <button type="button" class="btn btn-outline-primary" data-edit-part="{{ part.id }}">
+                            <i class="mdi mdi-pencil"></i> Izmeni
+                          </button>
+                          <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="part_id" value="{{ part.id }}">
+                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Obrisi stavku?');">
+                              <i class="mdi mdi-delete"></i> Obrisi
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">Nema stavki</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div id="partFormSection">
+              <h6 class="mb-2">Izmeni / dodaj stavku</h6>
+              <form method="post" class="card card-body border-0 p-3 bg-light" id="partForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" id="partAction" value="add">
+                <input type="hidden" name="part_id" id="partId" value="">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    {{ part_form.name|add_class:"form-control"|attr:"placeholder:Naziv dela / usluge"|attr:"id:partNameInput" }}
+                  </div>
+                  <div class="col-md-3">
+                    {{ part_form.uom|add_class:"form-control"|attr:"placeholder:Jedinica mere"|attr:"id:partUomInput" }}
+                  </div>
+                  <div class="col-md-3">
+                    {{ part_form.quantity|add_class:"form-control"|attr:"placeholder:Kolicina"|attr:"id:partQtyInput" }}
+                  </div>
+                </div>
+                <div class="mt-2 d-flex gap-2">
+                  <button type="submit" class="btn btn-success btn-sm" id="partSubmitBtn">
+                    <i class="mdi mdi-content-save"></i> Sacuvaj stavku
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-edit-reset>
+                    <i class="mdi mdi-backup-restore"></i> Resetuj formu
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
 
-        {% if kvar.van_ims or kvar.work_type == kvar.WorkType.POPRAVKA %}
-        <form method="post" class="card card-body border">
-          {% csrf_token %}
-          <div class="row g-2">
-            <div class="col-md-6">
-              {{ part_form.name|add_class:"form-control" }}
-            </div>
-            <div class="col-md-3">
-              {{ part_form.quantity|add_class:"form-control" }}
-            </div>
-            <div class="col-md-3">
-              {{ part_form.uom|add_class:"form-control" }}
-            </div>
-          </div>
-          <div class="mt-2">
-            <button type="submit" class="btn btn-success btn-sm">Dodaj deo</button>
-          </div>
-        </form>
-        {% else %}
-        <div class="alert alert-info">Delovi se automatski generišu za servis ili je kvar van IMS-a.</div>
-        {% endif %}
+        <div class="mt-4 d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-secondary btn-lg" href="{% url 'kvar_print' kvar.pk %}" target="_blank">
+            <i class="mdi mdi-printer"></i> Prijava kvara
+          </a>
+          <a class="btn btn-outline-secondary btn-lg" href="{% url 'kvar_workorder' kvar.pk %}" target="_blank">
+            <i class="mdi mdi-clipboard-text"></i> Radni nalog
+          <a class="btn btn-outline-secondary btn-lg" href="{% url 'kvar_trebovanje' kvar.pk %}" target="_blank">
+            <i class="mdi mdi-file-document"></i> {% if kvar.van_ims %}Zahtev{% else %}Trebovanje{% endif %}
+          </a>
+        </div>
 
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var form = document.getElementById("partForm");
+    var actionInput = document.getElementById("partAction");
+    var partIdInput = document.getElementById("partId");
+    var nameInput = document.getElementById("partNameInput");
+    var uomInput = document.getElementById("partUomInput");
+    var qtyInput = document.getElementById("partQtyInput");
+    var submitBtn = document.getElementById("partSubmitBtn");
+
+    function resetForm() {
+      actionInput.value = "add";
+      partIdInput.value = "";
+      submitBtn.innerHTML = '<i class="mdi mdi-content-save"></i> Sacuvaj stavku';
+      if (form) {
+        form.reset();
+      }
+    }
+
+    document.querySelectorAll("[data-edit-reset]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        resetForm();
+        if (nameInput) nameInput.focus();
+      });
+    });
+
+    document.querySelectorAll("[data-edit-part]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var row = btn.closest("tr");
+        if (!row) return;
+        var pid = row.getAttribute("data-part-id");
+        var pname = row.getAttribute("data-part-name");
+        var puom = row.getAttribute("data-part-uom");
+        var pqty = row.getAttribute("data-part-qty");
+
+        actionInput.value = "update";
+        partIdInput.value = pid || "";
+        if (nameInput) nameInput.value = pname || "";
+        if (uomInput) uomInput.value = puom || "";
+        if (qtyInput) qtyInput.value = pqty || "";
+        submitBtn.innerHTML = '<i class="mdi mdi-content-save"></i> Sacuvaj izmene';
+        nameInput && nameInput.focus();
+      });
+    });
+  });
+</script>
+
+{% if auto_print %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete("auto");
+    window.history.replaceState({}, document.title, currentUrl.toString());
+
+    var printUrl = "{% url 'kvar_print' kvar.pk %}";
+    var printWindow = window.open(printUrl, "_blank");
+
+    if (printWindow) {
+      var printed = false;
+      var triggerPrint = function () {
+        if (printed) {
+          return;
+        }
+        printed = true;
+        printWindow.focus();
+        printWindow.print();
+      };
+
+      printWindow.addEventListener("load", triggerPrint);
+      setTimeout(triggerPrint, 1000);
+    } else {
+      window.location.href = printUrl;
+    }
+  });
+</script>
+{% endif %}
 {% endblock %}

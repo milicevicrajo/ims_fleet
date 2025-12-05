@@ -8,10 +8,14 @@
     Oznaka<br><strong>{% if is_van_ims %}IZ 052{% else %}IZ 051{% endif %}</strong>
   </div>
 </div>
-<div class="top-line" style="gap:1.5mm; margin:0.3mm 0 0.3mm 0; font-size:7.5pt;">
-  <div>O.J.: <strong>{{ organizational_unit.code|default:"" }}</strong></div>
-  <div>Šifra posla: <strong>{{ center }}</strong></div>
-  <div>Datum: <strong>{{ kvar.created_at|date:"d.m.Y" }}</strong></div>
+<div class="top-line" style="gap:1.5mm; margin:0.3mm 0 0.3mm 0; font-size:10pt; display:flex; flex-wrap:wrap; row-gap:1mm;">
+  <div style="min-width:45mm;">O.J.: <strong>{{ organizational_unit.code|default:"" }}</strong></div>
+  <div style="min-width:45mm;">Sifra posla: <strong>{{ center }}</strong></div>
+  <div style="min-width:35mm;">Datum: <strong>{{ kvar.created_at|date:"d.m.Y" }}</strong></div>
+  <div style="min-width:45mm;">Vozilo: <strong>{{ vehicle }}</strong></div>
+
+  <div style="min-width:35mm;">Kilometraza: <strong>{{ kvar.kilometraza }}</strong></div>
+  <div style="min-width:35mm;">Tip vozila: <strong>{{ vehicle_type }}</strong></div>
 </div>
 <div class="treb-title" style="margin:0.2mm 0 0.2mm 0; font-size:11pt;">{% if is_van_ims %}ZAHTEV ZA USLUGU BR. {{ kvar.rbz }}{% else %}TREBOVANJE MATERIJALA BR. {{ kvar.rbz }}{% endif %}</div>
 
@@ -30,10 +34,10 @@
       <td>Red. broj</td>
       <td>Magacin</td>
       <td>Grupa</td>
-      <td>Šifra materijala</td>
+      <td>Sifra materijala</td>
       <td>Naziv materijala</td>
       <td>Jedinica mere</td>
-      <td>Količina</td>
+      <td>Kolicina</td>
     </tr>
   </thead>
   <tbody>

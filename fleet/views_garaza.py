@@ -239,6 +239,11 @@ class KvarTrebovanjeView(LoginRequiredMixin, TemplateView):
                 "is_van_ims": kvar.van_ims,
                 "auto_print": self.request.GET.get("auto") == "1",
                 "next_url": self.request.GET.get("next") or reverse("kvar_list"),
+                "vehicle_type": (
+                    "Teretno"
+                    if (getattr(vehicle, "category", "") or "").lower().find("teret") != -1
+                    else "Putnicko"
+                ),
             }
         )
         return ctx
@@ -254,18 +259,27 @@ class KvarDetailView(LoginRequiredMixin, TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        # Dozvoli unos stavki ako je IMS popravka ili servis van IMS-a (zahtev za uslugu)
-        if not self.kvar.van_ims and self.kvar.work_type != Kvar.WorkType.POPRAVKA:
-            messages.warning(request, "Stavke mozes dodavati samo za IMS popravke ili servis van IMS-a.")
+        action = request.POST.get("action") or "add"
+        part_id = request.POST.get("part_id")
+
+        if action == "delete" and part_id:
+            part = get_object_or_404(KvarPart, pk=part_id, kvar=self.kvar)
+            part.delete()
+            messages.success(request, "Stavka je obrisana.")
             return redirect("kvar_detail", pk=self.kvar.pk)
-        form = KvarPartForm(request.POST)
+
+        instance = None
+        if action == "update" and part_id:
+            instance = get_object_or_404(KvarPart, pk=part_id, kvar=self.kvar)
+
+        form = KvarPartForm(request.POST, instance=instance)
         if form.is_valid():
             part = form.save(commit=False)
             part.kvar = self.kvar
             part.save()
-            messages.success(request, "Deo je dodat.")
+            messages.success(request, "Stavka je sacuvana.")
         else:
-            messages.error(request, "Proveri unete podatke za deo.")
+            messages.error(request, "Proveri unete podatke za stavku.")
         return redirect("kvar_detail", pk=self.kvar.pk)
 
     def get_context_data(self, **kwargs):
