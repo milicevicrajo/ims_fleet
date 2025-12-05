@@ -41,12 +41,29 @@
 <body>
   <div class="a4-host">
     <div class="a4-viewport">
-      <div class="print-toolbar" style="display:flex; justify-content:flex-end; gap:8px; padding:8px 0;">
-        <a href="{{ next_url|default:'/' }}" class="btn btn-sm btn-outline-secondary">Nazad</a>
-        <button class="btn btn-sm btn-primary" onclick="window.print()">Štampaj</button>
+      {% with total_pages=rows_pages|length %}
+      <div class="print-toolbar" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0;">
+        <span class="text-muted" style="font-size:13px;">
+          {% if total_pages|default:1 > 1 %}
+            Štampa svih lista ({{ total_pages }} strana)
+          {% else %}
+            Štampa liste
+          {% endif %}
+        </span>
+        <div class="btn-group" style="gap:6px;">
+          <a href="{{ next_url|default:'/' }}" class="btn btn-outline-secondary shadow-sm" style="border-radius:8px; padding:8px 14px;">
+            ← Nazad
+          </a>
+          <button class="btn btn-primary shadow-sm" style="border-radius:8px; padding:8px 16px;" onclick="window.print()">
+            {% if total_pages|default:1 > 1 %}Štampaj sve liste{% else %}Štampaj{% endif %}
+          </button>
+        </div>
       </div>
+      {% endwith %}
       {% for rows in rows_pages %}
       <section class="a4-page">
+        {% include "fleet/kvar_trebovanje_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}
+        <div style="margin:16mm 0; border-top:1px dashed #666;"></div>
         {% include "fleet/kvar_trebovanje_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}
       </section>
       {% endfor %}
