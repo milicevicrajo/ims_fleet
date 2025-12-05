@@ -225,8 +225,16 @@ class KvarTrebovanjeView(LoginRequiredMixin, TemplateView):
         )
         MAX_ROWS = 12
         parts_qs = ensure_auto_parts(kvar) if not kvar.van_ims else list(kvar.parts.all())
-        parts_display = list(parts_qs)[:MAX_ROWS]
-        rows = parts_display + [None] * max(0, MAX_ROWS - len(parts_display))
+        parts_list = list(parts_qs)
+
+        rows_pages = []
+        if not parts_list:
+            rows_pages.append([None] * MAX_ROWS)
+        else:
+            for i in range(0, len(parts_list), MAX_ROWS):
+                chunk = parts_list[i : i + MAX_ROWS]
+                padded = chunk + [None] * max(0, MAX_ROWS - len(chunk))
+                rows_pages.append(padded)
 
         ctx.update(
             {
@@ -235,7 +243,7 @@ class KvarTrebovanjeView(LoginRequiredMixin, TemplateView):
                 "registration_number": getattr(traffic_card, "registration_number", ""),
                 "organizational_unit": getattr(latest_jobcode, "organizational_unit", None),
                 "center": getattr(latest_jobcode.organizational_unit, "center", "") if latest_jobcode and latest_jobcode.organizational_unit else "",
-                "rows": rows,
+                "rows_pages": rows_pages,
                 "is_van_ims": kvar.van_ims,
                 "auto_print": self.request.GET.get("auto") == "1",
                 "next_url": self.request.GET.get("next") or reverse("kvar_list"),

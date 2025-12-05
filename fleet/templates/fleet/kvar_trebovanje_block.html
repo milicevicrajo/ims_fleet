@@ -17,7 +17,10 @@
   <div style="min-width:35mm;">Kilometraza: <strong>{{ kvar.kilometraza }}</strong></div>
   <div style="min-width:35mm;">Tip vozila: <strong>{{ vehicle_type }}</strong></div>
 </div>
-<div class="treb-title" style="margin:0.2mm 0 0.2mm 0; font-size:11pt;">{% if is_van_ims %}ZAHTEV ZA USLUGU BR. {{ kvar.rbz }}{% else %}TREBOVANJE MATERIJALA BR. {{ kvar.rbz }}{% endif %}</div>
+<div class="treb-title" style="margin:0.2mm 0 0.2mm 0; font-size:11pt; display:flex; justify-content:space-between; align-items:center;">
+  <span>{% if is_van_ims %}ZAHTEV ZA USLUGU BR. {{ kvar.rbz }}{% else %}TREBOVANJE MATERIJALA BR. {{ kvar.rbz }}{% endif %}</span>
+  <span style="font-size:9pt;">Lista {{ page_number|default:1 }} od {{ total_pages|default:1 }}</span>
+</div>
 
 <table class="list-table">
   <colgroup>
