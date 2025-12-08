@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Zahtevi za nabavku (GZN)</h2>
+        <a href="{% url 'gzn_create' %}" class="btn btn-success btn-sm">Novi zahtev</a>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Broj</th>
+                <th>OJ</th>
+                <th>Datum</th>
+                <th>Napomena</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for req in requests %}
+              <tr>
+                <td>{{ req.number|default:"(u toku)" }}</td>
+                <td>{{ req.job_code.code|default:"/" }} - {{ req.job_code.name|default:"/" }}</td>
+                <td>{{ req.created_at|date:"d.m.Y H:i" }}</td>
+                <td>{{ req.note|default:"/" }}</td>
+                <td class="text-center d-flex gap-1 justify-content-center">
+                  <a href="{% url 'gzn_detail' req.pk %}" class="btn btn-outline-primary btn-sm">Otvori</a>
+                  <a href="{% url 'gzn_print' req.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                    <i class="mdi mdi-printer"></i> Štampa
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">Nema zahteva</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

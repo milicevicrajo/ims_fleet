@@ -1,0 +1,55 @@
+{% load static %}
+<div class="treb-header" style="align-items:center;">
+  <div style="display:flex; align-items:center; gap:2mm;">
+    <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo" style="height:15mm; width:auto;">
+    <div style="font-weight:700; font-size:8pt;">INSTITUT IMS AD</div>
+  </div>
+  <div class="block" style="border:1px solid #000; padding:1mm 1.5mm; min-width:26mm; text-align:center; font-size:8pt;">
+    Oznaka<br><strong>IZ 050</strong>
+  </div>
+</div>
+<div class="top-line" style="gap:4mm; margin:2mm 0 1mm 0; font-size:11pt; display:flex; flex-wrap:wrap; row-gap:1.2mm;">
+  <div style="min-width:50mm;">Šifra posla: <strong>{{ center }}</strong></div>
+  <div style="min-width:45mm;">O.J.: <strong>{{ job_code.code|default:"" }}</strong></div>
+  <div style="min-width:35mm;">Datum: <strong>{{ gzn.created_at|date:"d.m.Y" }}</strong></div>
+</div>
+<div class="treb-title" style="margin:1mm 0 0.2mm 0; font-size:11pt; display:flex; justify-content:space-between; align-items:center;">
+  <span>ZAHTEV ZA NABAVKU BR. {{ gzn.number|default:"(u toku)" }}</span>
+  <span style="font-size:9pt;">Lista {{ page_number|default:1 }} od {{ total_pages|default:1 }}</span>
+</div>
+
+<table class="list-table">
+  <colgroup>
+    <col style="width:10%">
+    <col style="width:45%">
+    <col style="width:15%">
+    <col style="width:15%">
+    <col style="width:15%">
+  </colgroup>
+  <thead>
+    <tr>
+      <td>Red. broj</td>
+      <td>Naziv materijala / usluge</td>
+      <td>Jedinica mere</td>
+      <td>Kolicina</td>
+      <td>Napomena</td>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td style="text-align:center;">{{ forloop.counter }}</td>
+      <td>{% if row %}{{ row.name }}{% endif %}</td>
+      <td style="text-align:center;">{% if row %}{{ row.uom }}{% endif %}</td>
+      <td style="text-align:center;">{% if row %}{{ row.quantity }}{% endif %}</td>
+      <td>{% if row %}{{ row.note|default:"/" }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="footer-sign">
+  <div class="signature">Zahtev izdao<span class="line"></span></div>
+  <div class="signature">Odobrio<span class="line"></span></div>
+  <div class="signature">Primio<span class="line"></span></div>
+</div>

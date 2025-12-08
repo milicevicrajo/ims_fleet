@@ -20,6 +20,10 @@ from .views_garaza import (
     VehicleTravelOrderRequestView,
     VehicleTravelOrderDetailView,
     VehicleTravelOrderFuelReportView,
+    ProcurementRequestListView,
+    ProcurementRequestCreateView,
+    ProcurementRequestDetailView,
+    ProcurementRequestPrintView,
 )
 from fleet import views
 from django.contrib.auth import views as auth_views
@@ -111,6 +115,12 @@ urlpatterns = [
     path('garaza/kvarovi/ims/', KvarIMSListView.as_view(), name='kvar_list_ims'),
     path('garaza/kvarovi/van-ims/', KvarVanIMSListView.as_view(), name='kvar_list_van_ims'),
     path('garaza/kvarovi/<int:pk>/trebovanje/', KvarTrebovanjeView.as_view(), name='kvar_trebovanje'),
+
+    # Zahtevi za nabavku (GZN)
+    path('garaza/gzn/', ProcurementRequestListView.as_view(), name='gzn_list'),
+    path('garaza/gzn/novo/', ProcurementRequestCreateView.as_view(), name='gzn_create'),
+    path('garaza/gzn/<int:pk>/', ProcurementRequestDetailView.as_view(), name='gzn_detail'),
+    path('garaza/gzn/<int:pk>/stampaj/', ProcurementRequestPrintView.as_view(), name='gzn_print'),
 
     path('garaza/putni-nalozi-vozila/otvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'open'}, name='vehicle_travel_order_open_list'),
     path('garaza/putni-nalozi-vozila/zatvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'closed'}, name='vehicle_travel_order_closed_list'),

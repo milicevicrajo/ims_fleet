@@ -649,6 +649,56 @@ class KvarPart(models.Model):
         return f"{self.name} ({self.quantity})"
 
 
+class ProcurementRequest(models.Model):
+    """Zahtev za nabavku (GZN)."""
+
+    job_code = models.ForeignKey(
+        OrganizationalUnit,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="procurement_requests",
+        verbose_name=_("Sifra posla (OJ)"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Datum kreiranja"))
+    number = models.CharField(max_length=32, verbose_name=_("Broj GZN"), unique=True, blank=True, null=True)
+    note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        verbose_name = _("Zahtev za nabavku")
+        verbose_name_plural = _("Zahtevi za nabavku")
+
+    def __str__(self):
+        return self.number or f"GZN - {self.pk}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.number and self.pk:
+            self.number = f"GZN-{self.pk}/{timezone.now().year}"
+            super().save(update_fields=["number"])
+
+
+class ProcurementItem(models.Model):
+    request = models.ForeignKey(
+        ProcurementRequest,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name=_("Zahtev za nabavku"),
+    )
+    name = models.CharField(max_length=255, verbose_name=_("Naziv materijala / usluge"))
+    uom = models.CharField(max_length=30, verbose_name=_("Jedinica mere"))
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Kolicina"))
+    note = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Napomena"))
+
+    class Meta:
+        verbose_name = _("Stavka zahteva za nabavku")
+        verbose_name_plural = _("Stavke zahteva za nabavku")
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity} {self.uom})"
+
+
 class DraftServiceTransaction(models.Model):
     YES_NO_CHOICES = (
         (True, _("Da")),
