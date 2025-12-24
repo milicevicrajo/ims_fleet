@@ -59,7 +59,11 @@
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'reports_index'%}" aria-expanded="false"><i class="mdi mdi-file-chart"></i><span
                 class="hide-menu">Izvestaji sa servera</span></a>
-    </li>   
+    </li>  
+    <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+        href="{% url 'putninalog_list'%}" aria-expanded="false"><i class="mdi mdi-road-variant"></i><span
+                class="hide-menu">Putni nalozi</span></a>
+    </li> 
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'garaza_home'%}" aria-expanded="false"><i class="mdi mdi-garage"></i><span
                 class="hide-menu">Garaza IMS</span></a>
@@ -75,12 +79,6 @@
 <!-- End Left Sidebar - style you can find in sidebar.scss  -->
 <!-- ============================================================== -->
 
-
-
-                {% comment %} <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                    href="{% url 'incident_list'%}" aria-expanded="false"><i class="mdi mdi-alert"></i><span
-                            class="hide-menu">Incidenti</span></a></li> {% endcomment %}
-                {% comment %} <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-                    href="{% url 'putninalog_list'%}" aria-expanded="false"><i class="mdi mdi-road-variant"></i><span
-                            class="hide-menu">Putni nalozi</span></a>
-                </li> {% endcomment %}
+{% comment %} <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+    href="{% url 'incident_list'%}" aria-expanded="false"><i class="mdi mdi-alert"></i><span
+class="hide-menu">Incidenti</span></a></li> {% endcomment %}
