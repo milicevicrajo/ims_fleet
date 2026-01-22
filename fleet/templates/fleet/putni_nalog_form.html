@@ -17,19 +17,23 @@
               <form id="putni-nalog-form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% for field in form %}
-                <div class="row mb-3">
-                    <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
-                    <div class="col-sm-7">
-                        {{ field|add_class:'form-control' }}
-                        {% if field.errors %}
-                        <div class="invalid-feedback" style="display: block;">
-                          {% for error in field.errors %}
-                              {{ error }}
-                          {% endfor %}
-                      </div>
-                        {% endif %}
+                  {% if field.is_hidden %}
+                    {{ field }}
+                  {% else %}
+                    <div class="row mb-3">
+                        <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
+                        <div class="col-sm-7">
+                            {{ field|add_class:'form-control' }}
+                            {% if field.errors %}
+                            <div class="invalid-feedback" style="display: block;">
+                              {% for error in field.errors %}
+                                  {{ error }}
+                              {% endfor %}
+                          </div>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
+                  {% endif %}
                 {% endfor %}
                 <div class="text-center">
                   <button type="submit" class="btn btn-primary">{{ submit_button_label }}</button>
@@ -62,24 +66,57 @@
             const formData = new FormData(form);
     
             fetch(form.action, {
-                method: 'POST',
-                body: formData,
+              method: 'POST',
+              body: formData,
             })
-            .then(response => response.json())
-            .then(data => {
-                // Automatski preuzmi fajl
-                const a = document.createElement('a');
-                a.href = data.file_url;
-                a.download = ''; // Opcionalno postavi ime fajla
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-    
-                // Preusmeri na listu putnih naloga
-                window.location.href = data.redirect_url;
+            .then(response => {
+              const contentType = response.headers.get('content-type') || '';
+              if (contentType.includes('application/json')) {
+                return response.json().then(data => ({ ok: true, data }));
+              }
+              return response.text().then(html => ({ ok: false, html }));
+            })
+            .then(result => {
+              if (!result.ok) {
+                document.open();
+                document.write(result.html);
+                document.close();
+                return;
+              }
+              const data = result.data;
+              const a = document.createElement('a');
+              a.href = data.file_url;
+              a.download = '';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+
+              window.location.href = data.redirect_url;
             })
             .catch(error => console.error('Greška prilikom obrade zahteva:', error));
         });
       </script>
+          {% if form.start_sequence.errors %}
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const form = document.getElementById('putni-nalog-form');
+              const input = form.querySelector('[name="start_sequence"]');
+              if (!input) return;
+
+              const alreadyPrompted = sessionStorage.getItem('putniNalogStartSequencePrompted');
+              if (alreadyPrompted) {
+                sessionStorage.removeItem('putniNalogStartSequencePrompted');
+                return;
+              }
+
+              const val = prompt('Unesi početni broj naloga za izabrani centar/godinu:');
+              if (val !== null && String(val).trim() !== '') {
+                input.value = String(val).trim();
+                sessionStorage.setItem('putniNalogStartSequencePrompted', '1');
+                form.requestSubmit();
+              }
+            });
+          </script>
+          {% endif %}
 {% endblock %}
 

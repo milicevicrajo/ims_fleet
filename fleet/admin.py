@@ -22,6 +22,7 @@ class RoleAdmin(admin.ModelAdmin):
 
 admin.site.register(Role, RoleAdmin)
 admin.site.register(PermissionCode)
+admin.site.register(PutniNalogSequence)
 admin.site.register(Vehicle)
 admin.site.register(TrafficCard)
 admin.site.register(VehicleTenderDocument)

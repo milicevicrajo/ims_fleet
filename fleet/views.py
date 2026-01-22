@@ -1609,6 +1609,18 @@ class PutniNalogDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Deta
         context['title'] = f"Detalji putnog naloga {self.object.travel_date}"
         return context
 
+
+class PutniNalogPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
+    model = PutniNalog
+    template_name = 'fleet/putni_nalog_print.html'
+    context_object_name = 'putni_nalog'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f"Štampa putnog naloga {self.object.order_number}"
+        context['auto_print'] = self.request.GET.get('auto') == '1'
+        return context
+
 class PutniNalogDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = PutniNalog
     success_url = reverse_lazy('putninalog_list')

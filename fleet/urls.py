@@ -137,6 +137,7 @@ urlpatterns = [
     path('putni-nalozi/izmeni/<int:pk>/', PutniNalogUpdateView.as_view(), name='putninalog_update'),
     path('putni-nalozi/<int:pk>/', PutniNalogDetailView.as_view(), name='putninalog_detail'),
     path('putni-nalozi/obrisi/<int:pk>/', PutniNalogDeleteView.as_view(), name='putninalog_delete'),
+    path('putni-nalozi/<int:pk>/print/', PutniNalogPrintView.as_view(), name='putninalog_print'),
     path('putni-nalog/<int:pk>/download/', download_travel_order_excel, name='download_travel_order_excel'),
 
     path('tipovi-servisa/', ServiceTypeListView.as_view(), name='servicetype_list'),

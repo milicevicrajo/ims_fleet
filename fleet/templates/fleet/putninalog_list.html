@@ -14,6 +14,7 @@
           <table id="DatatableNalozi" class="display compact">
               <thead>
                   <tr>
+                    <th>Broj naloga</th>
                     <th>Zaposleni</th>
                     <th>Šifra posla</th>
                     <th>Mesto putovanja</th>
@@ -22,11 +23,13 @@
                     <th>Datum putovanja</th>
                     <th>Broj dana</th>
                     <th>Avans</th>
+                    <th>Štampa</th>
                   </tr>
               </thead>
               <tbody>
                 {% for putni_nalog in putni_nalozi %}
                   <tr>                        
+                    <td>{{ putni_nalog.order_number }}</td>
                     <td>{{ putni_nalog.employee }}</td>
                     <td>{{ putni_nalog.job_code }}</td>
                     <td>{{ putni_nalog.travel_location }}</td>
@@ -35,14 +38,20 @@
                     <td>{{ putni_nalog.travel_date|date:"d.m.Y"}}</td>
                     <td>{{ putni_nalog.number_of_days }}</td>
                     <td>{{ putni_nalog.advance_payment }}</td>
+                    <td>
+                      <a href="{% url 'putninalog_print' putni_nalog.pk %}?auto=1" target="_blank" class="text-primary">
+                        Štampaj
+                      </a>
+                    </td>
                   </tr>
               {% empty %}
                   <tr>
-                      <td colspan="5">Nema podataka</td>
+                      <td colspan="10">Nema podataka</td>
                   </tr>
               {% endfor %}
               <tfoot>
                   <tr>
+                    <th>Broj naloga</th>
                     <th>Zaposleni</th>
                     <th>Šifra posla</th>
                     <th>Mesto putovanja</th>
@@ -51,6 +60,7 @@
                     <th>Datum putovanja</th>
                     <th>Broj dana</th>
                     <th>Avans</th>
+                    <th>Štampa</th>
 
                   </tr>
               </tfoot>

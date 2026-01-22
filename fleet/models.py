@@ -407,6 +407,28 @@ class PutniNalog(models.Model):
         default=2600
     )
 
+    def generate_order_number(self):
+        center_code = getattr(self.job_code, "center", None)
+        if not center_code:
+            raise ValueError("Nedostaje centar za putni nalog.")
+
+        center_code = str(center_code).strip()
+
+        year = (self.travel_date or datetime.date.today()).year
+        with transaction.atomic():
+            seq = (
+                PutniNalogSequence.objects.select_for_update()
+                .filter(center_code=center_code, year=year)
+                .first()
+            )
+            if not seq:
+                raise ValueError("Nedostaje početni broj za izabrani centar/godinu.")
+            current_number = seq.next_number
+            seq.next_number = current_number + 1
+            seq.save(update_fields=["next_number"])
+
+        return f"{center_code}/{year}-{current_number}"
+
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = self.generate_order_number()
@@ -414,6 +436,20 @@ class PutniNalog(models.Model):
 
     def __str__(self):
         return f"Nalog {self.order_number} - {self.employee} ({self.travel_date})"
+
+
+class PutniNalogSequence(models.Model):
+    center_code = models.CharField(max_length=10, verbose_name=_("Šifra centra"))
+    year = models.PositiveIntegerField(verbose_name=_("Godina"))
+    next_number = models.PositiveIntegerField(verbose_name=_("Sledeći broj"), default=1)
+
+    class Meta:
+        verbose_name = _("Brojač putnih naloga")
+        verbose_name_plural = _("Brojači putnih naloga")
+        unique_together = ("center_code", "year")
+
+    def __str__(self):
+        return f"{self.center_code}/{self.year} -> {self.next_number}"
 
 
 class VehicleTravelOrder(models.Model):

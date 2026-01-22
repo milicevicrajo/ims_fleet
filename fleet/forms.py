@@ -1,4 +1,5 @@
 from django import forms
+from django.db import transaction
 from .models import *
 import django_filters
 from django_select2.forms import Select2Widget
@@ -189,6 +190,17 @@ class IncidentForm(forms.ModelForm):
         fields = '__all__'
 
 class PutniNalogForm(forms.ModelForm):
+    order_number = forms.CharField(
+        label="Broj naloga",
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+    )
+    start_sequence = forms.IntegerField(
+        label="Početni broj naloga",
+        required=False,
+        widget=forms.HiddenInput(),
+        help_text="Unesi samo prvi broj za centar/godinu ako ne postoji prethodni.",
+    )
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
@@ -227,8 +239,51 @@ class PutniNalogForm(forms.ModelForm):
 
         # Sva polja su obavezna osim 'order_date' koji je automatski
         for field_name, field in self.fields.items():
-            if field_name != 'order_date':
+            if field_name not in {'order_date', 'order_number', 'start_sequence'}:
                 field.required = True
+
+    def clean(self):
+        cleaned = super().clean()
+        job_code = cleaned.get('job_code')
+        travel_date = cleaned.get('travel_date')
+        start_sequence = cleaned.get('start_sequence')
+
+        if job_code and travel_date:
+            center_code = getattr(job_code, 'center', None)
+            year = travel_date.year
+            if center_code:
+                exists = PutniNalogSequence.objects.filter(
+                    center_code=center_code,
+                    year=year,
+                ).exists()
+                if not exists and not start_sequence:
+                    self.add_error(
+                        'start_sequence',
+                        "Unesi početni broj za ovaj centar/godinu (ne postoji prethodni broj)."
+                    )
+        return cleaned
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        job_code = self.cleaned_data.get('job_code')
+        travel_date = self.cleaned_data.get('travel_date')
+        start_sequence = self.cleaned_data.get('start_sequence')
+
+        if job_code and travel_date:
+            center_code = getattr(job_code, 'center', None)
+            year = travel_date.year
+            if center_code and start_sequence:
+                with transaction.atomic():
+                    PutniNalogSequence.objects.get_or_create(
+                        center_code=center_code,
+                        year=year,
+                        defaults={"next_number": start_sequence},
+                    )
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class VehicleTravelOrderForm(forms.ModelForm):

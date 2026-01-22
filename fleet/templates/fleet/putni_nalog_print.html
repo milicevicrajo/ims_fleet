@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+	<meta charset="utf-8">
+	<title>Putni nalog štampa</title>
+	<style>
+		@page { size: A4 landscape; margin: 0; }
+		body { margin: 0; padding: 0; background: #f3f3f3; }
+		.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; }
+		.page {
+			width: 297mm; height: 210mm; background: #fff; color: #000;
+			box-sizing: border-box; padding: 5mm;
+			border: 1px solid #000; position: relative;
+		}
+		.sheet { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; height: 100%; }
+		.box { border: 1px solid #000; padding: 6mm; box-sizing: border-box; height: 100%; }
+		.title { text-align: center; font-weight: 700; font-size: 11pt; margin: 3mm 0; }
+		.row { display: flex; gap: 6mm; justify-content: space-between; margin-bottom: 3mm; font-size: 9pt; }
+		.label { font-weight: 600; }
+		.line { border-bottom: 1px dotted #666; flex: 1; margin-left: 4mm; }
+		.note { text-align: center; font-size: 8pt; margin-bottom: 2mm; }
+		.sign-row { display: flex; justify-content: space-between; margin-top: 10mm; font-size: 9pt; }
+		.sign { width: 45%; text-align: center; }
+		.sign-line { border-top: 1px solid #000; margin-top: 8mm; }
+		.report-lines { margin-top: 4mm; }
+		.report-line { border-bottom: 1px dotted #666; height: 6mm; }
+
+		.putni-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+		.putni-table th, .putni-table td { border: 1px solid #b5b5b5; padding: 2px; text-align: center; }
+		.putni-table .left { text-align: left; padding-left: 4mm; }
+		.putni-table .head { height: 8mm; }
+		.putni-table .rowh { height: 7mm; }
+		.putni-table .rowh-sm { height: 6mm; }
+		.vlabel { writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 600; font-size: 8pt; width: 6mm; }
+		.totals-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-top: 2mm; }
+		.totals-table td { border: 1px solid #b5b5b5; padding: 2px; text-align: center; height: 6mm; }
+		.right { text-align: right; padding-right: 4mm; }
+		.small { font-size: 8pt; }
+		.line-fill { border-bottom: 1px dotted #666; display: inline-block; min-width: 30mm; }
+		.signature-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; font-size: 8pt; margin-top: 6mm; }
+		.signature-box { text-align: center; }
+		.signature-line { border-bottom: 1px dotted #666; margin-top: 10mm; }
+
+		@media print {
+			body * { visibility: hidden; }
+			.page, .page * { visibility: visible; }
+			.page { position: absolute; left: 0; top: 0; border: none; }
+			.page + .page { top: 210mm; }
+			.toolbar { display: none; }
+		}
+	</style>
+</head>
+<body>
+	<div class="toolbar">
+		<span>Štampa putnog naloga</span>
+		<div style="display:flex; gap:6px;">
+			<a href="{% url 'putninalog_list' %}" class="btn btn-outline-secondary">← Nazad</a>
+			<button class="btn btn-primary" onclick="window.print()">Štampaj</button>
+		</div>
+	</div>
+
+	<!-- STRANA 1 -->
+	<section class="page">
+		<div class="sheet">
+			<div class="box">
+				<div class="title">IZVEŠTAJ SA SLUŽBENOG PUTA</div>
+				<div class="report-lines">
+					{% for i in "123456789012345" %}
+						<div class="report-line"></div>
+					{% endfor %}
+				</div>
+			</div>
+
+			<div class="box">
+				<div class="row">
+					<div><span class="label">Naziv organizacije</span></div>
+					<div>{{ putni_nalog.job_code.name }}</div>
+				</div>
+				<div class="row">
+					<div><span class="label">Broj</span> {{ putni_nalog.order_number }}</div>
+					<div><span class="label">Datum</span> {{ putni_nalog.order_date|date:"d.m.Y" }}</div>
+				</div>
+
+				<div class="title">NALOG ZA SLUŽBENO PUTOVANJE</div>
+
+				<div class="row"><div class="label">Radnik-ca*</div><div class="line">{{ putni_nalog.employee }}</div></div>
+				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{{ putni_nalog.employee.position }}</div></div>
+				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
+				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
+				<div class="row"><div class="label">Sa zadatkom</div><div class="line">{{ putni_nalog.task }}</div></div>
+				<div class="row"><div class="label">Na službenom putu koristi prevozno sredstvo</div><div class="line">{{ putni_nalog.vehicle }}</div></div>
+				<div class="row"><div class="label">Dnevnica za ovo službeno putovanje pripada u iznosu od din.</div><div class="line">{{ putni_nalog.daily_allowance }}</div></div>
+				<div class="row"><div class="label">Na službenom putu će se zadržati najduže do</div><div class="line">{{ putni_nalog.number_of_days }} dana</div></div>
+				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line">{{ putni_nalog.advance_payment }}</div></div>
+				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line">{{ putni_nalog.job_code.code }}</div></div>
+
+				<div class="sign-row">
+					<div class="sign">(M.P.)<div class="sign-line"></div></div>
+					<div class="sign">Nalogodavac<div class="sign-line"></div></div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- STRANA 2 -->
+	<section class="page">
+		<div class="sheet">
+			<div class="box">
+				<div class="note">Na osnovu prednjeg naloga izvršio sam službeno putovanje i podnosim sledeći</div>
+				<div class="title">PUTNI RAČUN</div>
+
+				<table class="putni-table">
+					<colgroup>
+						<col style="width:6mm;">
+						<col style="width:30mm;">
+						<col style="width:30mm;">
+						<col style="width:15mm;">
+						<col style="width:14mm;">
+						<col style="width:14mm;">
+						<col style="width:25mm;">
+					</colgroup>
+					<tbody>
+						<tr class="head">
+							<th rowspan="2" class="vlabel">DNEVNICE</th>
+							<th class="left" colspan="2">Dan odlaska............ u........čas.</th>
+							<th>Broj čas.</th>
+							<th>Broj dne.</th>
+							<th colspan="2">Po dinara</th>
+							<th>SVEGA DINARA</th>
+						</tr>
+						<tr class="head">
+							<td class="left" colspan="2"> Dan povratka........ y........čas.</td>
+							<td>&nbsp;</td>
+							<td>&nbsp;</td>
+							<td colspan="2">&nbsp;</td>
+							<td>&nbsp;</td>
+						</tr>
+
+						<tr class="head">
+							<th rowspan="7" class="vlabel">PREVOZNI TROŠKOVI</th>
+							<th>od</th>
+							<th>do</th>
+							<th colspan="2">Vrsta prevoza</th>
+							<th>kl.</th>
+							<th>dinara</th>
+						</tr>
+						{% for i in "123456" %}
+						<tr class="rowh">
+							<td>&nbsp;</td>
+							<td>&nbsp;</td>
+							<td colspan="2">&nbsp;</td>
+							<td>&nbsp;</td>
+							<td>&nbsp;</td>
+						</tr>
+						{% endfor %}
+
+						<tr class="head">
+							<th rowspan="3" class="vlabel">OSTALO</th>
+							<td colspan="5">&nbsp;</td>
+							<td>&nbsp;</td>
+						</tr>
+						<tr class="rowh-sm">
+							<td colspan="5">&nbsp;</td>
+							<td>&nbsp;</td>
+						</tr>
+						<tr class="rowh-sm">
+							<td colspan="5">&nbsp;</td>
+							<td>&nbsp;</td>
+						</tr>
+
+						<tr class="rowh-sm">
+							<td colspan="6" class="left"><strong>S v e g a</strong></td>
+							<td>&nbsp;</td>
+						</tr>
+						<tr class="rowh-sm">
+							<td colspan="6" class="left">Primljena akontacija</td>
+							<td>&nbsp;</td>
+						</tr>
+						<tr class="rowh-sm">
+							<td colspan="6" class="left">Ostaje za isplatu-uplatu</td>
+							<td>&nbsp;</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<div class="row small" style="margin-top:4mm;">
+					<div>Broj priloga <span class="line-fill"></span></div>
+					<div>U <span class="line-fill"></span> dana <span class="line-fill"></span> 200__</div>
+				</div>
+				<div class="row small" style="justify-content:flex-end; margin-top:2mm;">
+					<div style="text-align:center; width:45%;">
+						(podnosilac računa)
+						<div class="signature-line"></div>
+					</div>
+				</div>
+
+				<div class="small" style="margin-top:4mm;">
+					Potvrđujem da je putovanje izvršeno prema ovom nalogu i odobravam isplatu računa od dinara
+					<span class="line-fill" style="min-width:40mm;"></span>
+					slovima <span class="line-fill" style="min-width:50mm;"></span>
+				</div>
+				<div class="small" style="margin-top:3mm;">na teret <span class="line-fill" style="min-width:60mm;"></span></div>
+				<div class="small" style="margin-top:3mm;">U <span class="line-fill" style="min-width:30mm;"></span> dana <span class="line-fill" style="min-width:30mm;"></span> 200__</div>
+
+				<div class="signature-grid">
+					<div class="signature-box">Likvidirao<div class="signature-line"></div></div>
+					<div class="signature-box">Rukovodilac računovodstva<div class="signature-line"></div></div>
+					<div class="signature-box">Nalogodavac<div class="signature-line"></div></div>
+				</div>
+
+				<div class="signature-grid" style="margin-top:4mm;">
+					<div class="signature-box">Isplatio<div class="signature-line"></div></div>
+					<div class="signature-box">Primio<div class="signature-line"></div></div>
+					<div class="signature-box">Vratio<div class="signature-line"></div></div>
+				</div>
+			</div>
+
+			<div class="box">
+				<div class="row">
+					<div><span class="label">Naziv organizacije</span></div>
+					<div>{{ putni_nalog.job_code.name }}</div>
+				</div>
+				<div class="row">
+					<div><span class="label">Broj</span> {{ putni_nalog.order_number }}</div>
+					<div><span class="label">Datum</span> {{ putni_nalog.order_date|date:"d.m.Y" }}</div>
+				</div>
+
+				<div class="title">NALOG ZA SLUŽBENO PUTOVANJE</div>
+
+				<div class="row"><div class="label">Radnik-ca*</div><div class="line">{{ putni_nalog.employee }}</div></div>
+				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{{ putni_nalog.employee.position }}</div></div>
+				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
+				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
+				<div class="row"><div class="label">Sa zadatkom</div><div class="line">{{ putni_nalog.task }}</div></div>
+				<div class="row"><div class="label">Na službenom putu koristi prevozno sredstvo</div><div class="line">{{ putni_nalog.vehicle }}</div></div>
+				<div class="row"><div class="label">Dnevnica za ovo službeno putovanje pripada u iznosu od din.</div><div class="line">{{ putni_nalog.daily_allowance }}</div></div>
+				<div class="row"><div class="label">Na službenom putu će se zadržati najduže do</div><div class="line">{{ putni_nalog.number_of_days }} dana</div></div>
+				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line">{{ putni_nalog.advance_payment }}</div></div>
+				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line">{{ putni_nalog.job_code.code }}</div></div>
+
+				<div class="sign-row">
+					<div class="sign">(M.P.)<div class="sign-line"></div></div>
+					<div class="sign">Nalogodavac<div class="sign-line"></div></div>
+				</div>
+			</div>
+		</div>
+	</section>
+</body>
+</html>
