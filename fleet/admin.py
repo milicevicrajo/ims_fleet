@@ -7,10 +7,21 @@ from django.utils.translation import gettext_lazy as _
 class CustomUserAdmin(UserAdmin):
     # Add the allowed_centers field to the admin form
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('allowed_centers', 'allowed_center_codes')}),
+        (None, {'fields': ('allowed_centers', 'allowed_center_codes', 'roles')}),
     )
 
 admin.site.register(CustomUser, CustomUserAdmin)
+class RolePermissionInline(admin.TabularInline):
+    model = RolePermission
+    extra = 1
+
+
+class RoleAdmin(admin.ModelAdmin):
+    inlines = [RolePermissionInline]
+
+
+admin.site.register(Role, RoleAdmin)
+admin.site.register(PermissionCode)
 admin.site.register(Vehicle)
 admin.site.register(TrafficCard)
 admin.site.register(VehicleTenderDocument)

@@ -32,6 +32,7 @@ from .models import (
     ProcurementRequest,
     ProcurementItem,
 )
+from .mixins import RolePermissionRequiredMixin
 
 
 def ensure_auto_parts(kvar: Kvar):
@@ -101,7 +102,7 @@ class KvarListView(LoginRequiredMixin, FilterView):
         return ctx
 
 
-class KvarIMSListView(LoginRequiredMixin, TemplateView):
+class KvarIMSListView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/kvar_list_simple.html"
 
     def get_context_data(self, **kwargs):
@@ -116,7 +117,7 @@ class KvarIMSListView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class KvarVanIMSListView(LoginRequiredMixin, TemplateView):
+class KvarVanIMSListView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/kvar_list_simple.html"
 
     def get_context_data(self, **kwargs):
@@ -131,7 +132,7 @@ class KvarVanIMSListView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class GarazaHomeView(LoginRequiredMixin, TemplateView):
+class GarazaHomeView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/garaza_home.html"
 
     def get_context_data(self, **kwargs):
@@ -140,7 +141,7 @@ class GarazaHomeView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class KvarPrintView(LoginRequiredMixin, TemplateView):
+class KvarPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/kvar_print.html"
 
     def get_context_data(self, **kwargs):
@@ -174,7 +175,7 @@ class KvarPrintView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class KvarWorkOrderView(LoginRequiredMixin, TemplateView):
+class KvarWorkOrderView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/kvar_workorder.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -218,7 +219,7 @@ class KvarWorkOrderView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class KvarTrebovanjeView(LoginRequiredMixin, TemplateView):
+class KvarTrebovanjeView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/kvar_trebovanje.html"
 
     def get_context_data(self, **kwargs):
@@ -266,7 +267,7 @@ class KvarTrebovanjeView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class KvarDetailView(LoginRequiredMixin, TemplateView):
+class KvarDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/kvar_detail.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -325,7 +326,7 @@ class KvarDetailView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class KvarCreateView(LoginRequiredMixin, CreateView):
+class KvarCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Kvar
     form_class = KvarForm
     template_name = "fleet/generic_form.html"
@@ -342,7 +343,7 @@ class KvarCreateView(LoginRequiredMixin, CreateView):
         return redirect("kvar_detail", pk=self.object.pk)
 
 
-class KvarUpdateView(LoginRequiredMixin, UpdateView):
+class KvarUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Kvar
     form_class = KvarForm
     template_name = "fleet/generic_form.html"
@@ -355,7 +356,7 @@ class KvarUpdateView(LoginRequiredMixin, UpdateView):
         return ctx
 
 
-class KvarDeleteView(LoginRequiredMixin, View):
+class KvarDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     success_url = reverse_lazy("kvar_list")
 
     def post(self, request, *args, **kwargs):
@@ -372,7 +373,7 @@ class ProcurementRequestListView(LoginRequiredMixin, ListView):
     paginate_by = 50
 
 
-class ProcurementRequestCreateView(LoginRequiredMixin, CreateView):
+class ProcurementRequestCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = ProcurementRequest
     form_class = ProcurementRequestForm
     template_name = "fleet/generic_form.html"
@@ -389,7 +390,7 @@ class ProcurementRequestCreateView(LoginRequiredMixin, CreateView):
         return redirect("gzn_detail", pk=self.object.pk)
 
 
-class ProcurementRequestDetailView(LoginRequiredMixin, TemplateView):
+class ProcurementRequestDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/gzn_detail.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -434,7 +435,7 @@ class ProcurementRequestDetailView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class ProcurementRequestPrintView(LoginRequiredMixin, TemplateView):
+class ProcurementRequestPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/gzn_print.html"
 
     def dispatch(self, request, *args, **kwargs):
@@ -502,7 +503,7 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class VehicleTravelOrderDetailView(LoginRequiredMixin, DetailView):
+class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = VehicleTravelOrder
     template_name = "fleet/vehicle_travel_order_detail.html"
     context_object_name = "order"
@@ -621,7 +622,7 @@ class VehicleTravelOrderFuelReportView(VehicleTravelOrderDetailView):
         return ctx
 
 
-class VehicleTravelOrderCreateView(LoginRequiredMixin, CreateView):
+class VehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderForm
     template_name = "fleet/generic_form.html"
@@ -638,7 +639,7 @@ class VehicleTravelOrderCreateView(LoginRequiredMixin, CreateView):
         return reverse("vehicle_travel_order_detail", args=[self.object.pk])
 
 
-class VehicleTravelOrderUpdateView(LoginRequiredMixin, UpdateView):
+class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderForm
     template_name = "fleet/generic_form.html"
@@ -651,7 +652,7 @@ class VehicleTravelOrderUpdateView(LoginRequiredMixin, UpdateView):
         return ctx
 
 
-class VehicleTravelOrderCloseView(LoginRequiredMixin, UpdateView):
+class VehicleTravelOrderCloseView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderCloseForm
     template_name = "fleet/generic_form.html"
@@ -666,7 +667,7 @@ class VehicleTravelOrderCloseView(LoginRequiredMixin, UpdateView):
         return reverse("vehicle_travel_order_detail", args=[self.object.pk])
 
 
-class VehicleTravelOrderDeleteView(LoginRequiredMixin, DeleteView):
+class VehicleTravelOrderDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = VehicleTravelOrder
     template_name = "fleet/vehicle_travel_order_confirm_delete.html"
     success_url = reverse_lazy("vehicle_travel_order_open_list")
@@ -683,7 +684,7 @@ class VehicleTravelOrderDeleteView(LoginRequiredMixin, DeleteView):
         return next_url or super().get_success_url()
 
 
-class VehicleTravelOrderRequestView(LoginRequiredMixin, TemplateView):
+class VehicleTravelOrderRequestView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/vehicle_travel_order_request.html"
 
     def get_context_data(self, **kwargs):

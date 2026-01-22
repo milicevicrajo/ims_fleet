@@ -80,7 +80,7 @@ from .models import (
     VehicleTenderDocument,
     Vehicle,
 )
-from .mixins import RoleRequiredMixin
+from .mixins import RolePermissionRequiredMixin, role_permission_required
 from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
 from .utils import (
     calculate_average_fuel_consumption,
@@ -366,13 +366,13 @@ def center_statistics(request, center_code):
 #                           <!-- ORGANIZATIONAL UNITS -->
 # <!-- ======================================================================= -->
 
-class OrganizationalUnitListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class OrganizationalUnitListView(LoginRequiredMixin, ListView):
     model = OrganizationalUnit
     template_name = 'fleet/organizational_units_list.html'
     context_object_name = 'units'
 
 
-class OrganizationalUnitCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class OrganizationalUnitCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = OrganizationalUnit
     form_class = OrganizationalUnitForm
     template_name = 'fleet/generic_form.html'
@@ -385,7 +385,7 @@ class OrganizationalUnitCreateView(RoleRequiredMixin, LoginRequiredMixin, Create
         return context
 
 
-class OrganizationalUnitUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class OrganizationalUnitUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = OrganizationalUnit
     form_class = OrganizationalUnitForm
     template_name = 'fleet/generic_form.html'
@@ -404,7 +404,7 @@ class OrganizationalUnitUpdateView(RoleRequiredMixin, LoginRequiredMixin, Update
 # <!-- ======================================================================= -->
 #                           <!-- VEHICLE -->
 # <!-- ======================================================================= -->
-class VehicleListView(RoleRequiredMixin, LoginRequiredMixin, FilterView):
+class VehicleListView(LoginRequiredMixin, FilterView):
     model = Vehicle
     template_name = 'fleet/vehicle_list.html'
     context_object_name = 'vehicles'
@@ -469,7 +469,7 @@ class VehicleListView(RoleRequiredMixin, LoginRequiredMixin, FilterView):
         return ctx
     
 # DETALJI VOZILA
-class VehicleDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Vehicle
     template_name = 'fleet/vehicle_detail.html'
     context_object_name = 'vehicle'
@@ -602,7 +602,7 @@ class VehicleDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
 
 
 
-class VehicleCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class VehicleCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Vehicle
     form_class = VehicleForm
     template_name = 'fleet/generic_form.html'
@@ -618,7 +618,7 @@ class VehicleCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj vozilo'
         return context
 
-class VehicleUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class VehicleUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Vehicle
     form_class = VehicleForm
     template_name = 'fleet/generic_form.html'
@@ -630,7 +630,7 @@ class VehicleUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class VehicleTogleStatusView(RoleRequiredMixin, LoginRequiredMixin, View):
+class VehicleTogleStatusView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, pk):
         vehicle = get_object_or_404(Vehicle, pk=pk)
         vehicle.otpis = not vehicle.otpis
@@ -640,7 +640,7 @@ class VehicleTogleStatusView(RoleRequiredMixin, LoginRequiredMixin, View):
         return redirect('vehicle_detail', pk=pk)
 
 
-class VehicleDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class VehicleDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Vehicle
     success_url = reverse_lazy('vehicle_list')
     template_name = 'fleet/vehicle_confirm_delete.html'
@@ -658,7 +658,7 @@ class VehicleDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================= -->
 #                   <!-- VEHICLE TENDER DOCUMENTS -->
 # <!-- ======================================================================= -->
-class VehicleTenderDocumentListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class VehicleTenderDocumentListView(LoginRequiredMixin, ListView):
     model = VehicleTenderDocument
     template_name = 'fleet/vehicle_tender_document_list.html'
     context_object_name = 'documents'
@@ -683,7 +683,7 @@ class VehicleTenderDocumentListView(RoleRequiredMixin, LoginRequiredMixin, ListV
         return context
 
 
-class VehicleTenderDocumentCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class VehicleTenderDocumentCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = VehicleTenderDocument
     form_class = VehicleTenderDocumentForm
     template_name = 'fleet/generic_form.html'
@@ -707,7 +707,7 @@ class VehicleTenderDocumentCreateView(RoleRequiredMixin, LoginRequiredMixin, Cre
         return context
 
 
-class VehicleTenderDocumentUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class VehicleTenderDocumentUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = VehicleTenderDocument
     form_class = VehicleTenderDocumentForm
     template_name = 'fleet/generic_form.html'
@@ -724,7 +724,7 @@ class VehicleTenderDocumentUpdateView(RoleRequiredMixin, LoginRequiredMixin, Upd
         return context
 
 
-class VehicleTenderDocumentDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class VehicleTenderDocumentDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = VehicleTenderDocument
     template_name = 'fleet/vehicle_tender_document_detail.html'
     context_object_name = 'document'
@@ -735,7 +735,7 @@ class VehicleTenderDocumentDetailView(RoleRequiredMixin, LoginRequiredMixin, Det
         return context
 
 
-class VehicleTenderDocumentDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class VehicleTenderDocumentDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = VehicleTenderDocument
     template_name = 'fleet/vehicle_tender_document_confirm_delete.html'
     context_object_name = 'document'
@@ -760,7 +760,7 @@ class VehicleTenderDocumentDeleteView(RoleRequiredMixin, LoginRequiredMixin, Del
 # <!-- ======================================================================= -->
 #                           <!-- TRAFIC CARD -->
 # <!-- ======================================================================= -->
-class TrafficCardListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class TrafficCardListView(LoginRequiredMixin, ListView):
     model = TrafficCard
     template_name = 'fleet/trafficcard_list.html'
     context_object_name = 'traffic_cards'
@@ -801,7 +801,7 @@ class TrafficCardListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['filter_form'] = self.filter_form
         context['title'] = 'Lista saobraćajnih dozvola'
         return context
-class TrafficCardCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class TrafficCardCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = TrafficCard
     form_class = TrafficCardForm
     template_name = 'fleet/generic_form.html'
@@ -821,7 +821,7 @@ class TrafficCardCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj saobraćajnu dozvolu'
         return context
 
-class TrafficCardUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class TrafficCardUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = TrafficCard
     form_class = TrafficCardForm
     template_name = 'fleet/generic_form.html'
@@ -833,7 +833,7 @@ class TrafficCardUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class TrafficCardDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class TrafficCardDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = TrafficCard
     template_name = 'fleet/trafficcard_detail.html'
     context_object_name = 'traffic_card'
@@ -843,7 +843,7 @@ class TrafficCardDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji saobraćajne dozvole {self.object.registration_number}"
         return context
 
-class TrafficCardDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class TrafficCardDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = TrafficCard
     success_url = reverse_lazy('trafficcard_list')
     template_name = 'fleet/trafficcard_confirm_delete.html'
@@ -862,7 +862,7 @@ class TrafficCardDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================= -->
 #                           <!-- JOB CODE -->
 # <!-- ======================================================================= -->
-class JobCodeListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class JobCodeListView(LoginRequiredMixin, ListView):
     model = JobCode
     template_name = 'fleet/jobcode_list.html'
     context_object_name = 'job_codes'
@@ -872,7 +872,7 @@ class JobCodeListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Lista šifara poslova'
         return context
 
-class JobCodeCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class JobCodeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = JobCode
     form_class = JobCodeForm
     template_name = 'fleet/generic_form.html'
@@ -893,7 +893,7 @@ class JobCodeCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj šifru posla'
         return context
     
-class JobCodeUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class JobCodeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = JobCode
     form_class = JobCodeForm
     template_name = 'fleet/generic_form.html'
@@ -905,7 +905,7 @@ class JobCodeUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class JobCodeDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class JobCodeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = JobCode
     template_name = 'fleet/jobcode_detail.html'
     context_object_name = 'job_code'
@@ -915,7 +915,7 @@ class JobCodeDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji šifre posla {self.object.job_code}"
         return context
 
-class JobCodeDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class JobCodeDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = JobCode
     success_url = reverse_lazy('jobcode_list')
     template_name = 'fleet/jobcode_confirm_delete.html'
@@ -934,7 +934,7 @@ class JobCodeDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================= -->
 #                           <!-- LEASE -->
 # <!-- ======================================================================= -->
-class LeaseListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class LeaseListView(LoginRequiredMixin, ListView):
     model = Lease
     template_name = 'fleet/lease_list.html'
     context_object_name = 'leases'
@@ -952,7 +952,7 @@ class LeaseListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         return ctx
 
 
-class LeaseCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class LeaseCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Lease
     form_class = LeaseForm
     template_name = 'fleet/generic_form.html'
@@ -1015,7 +1015,7 @@ def export_leases_to_excel(request):
     wb.save(response)
     return response
 
-class LeaseUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class LeaseUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Lease
     form_class = LeaseForm
     template_name = 'fleet/generic_form.html'
@@ -1027,7 +1027,7 @@ class LeaseUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class LeaseDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class LeaseDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Lease
     template_name = 'fleet/lease_detail.html'
     context_object_name = 'lease'
@@ -1037,7 +1037,7 @@ class LeaseDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji zakupa {self.object.partner_name}"
         return context
 
-class LeaseDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class LeaseDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Lease
     success_url = reverse_lazy('lease_list')
     template_name = 'fleet/lease_confirm_delete.html'
@@ -1056,7 +1056,7 @@ class LeaseDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================= -->
 #                           <!-- POLICY -->
 # <!-- ======================================================================= -->
-class PolicyListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class PolicyListView(LoginRequiredMixin, ListView):
     model = Policy
     template_name = 'fleet/policy_list.html'
     context_object_name = 'policies'
@@ -1066,7 +1066,7 @@ class PolicyListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Lista polisa osiguranja'
         return context
 
-class PolicyFixingListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class PolicyFixingListView(LoginRequiredMixin, ListView):
     model = Policy
     template_name = 'fleet/draft_policy_list.html'
     context_object_name = 'policies'
@@ -1080,7 +1080,7 @@ class PolicyFixingListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Lista polisa osiguranja koje morate dopuniti'
         return context
 
-class ExpiringAndNotRenewedPolicyView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class ExpiringAndNotRenewedPolicyView(LoginRequiredMixin, ListView):
     template_name = 'fleet/policy_expiring.html'
     model = Policy
 
@@ -1129,7 +1129,7 @@ class ExpiringAndNotRenewedPolicyView(RoleRequiredMixin, LoginRequiredMixin, Lis
         context['title'] = 'Liste polisa koje ističu i koje su istekle i nisu obnovljene'
         return context
 
-class PolicyCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class PolicyCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Policy
     form_class = PolicyForm
     template_name = 'fleet/generic_form.html'
@@ -1141,7 +1141,7 @@ class PolicyCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj polisu'
         return context
 
-class PolicyUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class PolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Policy
     form_class = PolicyForm
     template_name = 'fleet/generic_form.html'
@@ -1166,7 +1166,7 @@ class PolicyUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         return response
 
 
-class PolicyDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class PolicyDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Policy
     template_name = 'fleet/policy_detail.html'
     context_object_name = 'policy'
@@ -1176,7 +1176,7 @@ class PolicyDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji polise {self.object.policy_number}"
         return context
 
-class PolicyDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class PolicyDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Policy
     success_url = reverse_lazy('policy_list')
     template_name = 'fleet/policy_confirm_delete.html'
@@ -1190,7 +1190,7 @@ class PolicyDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return super().get_object(queryset)
 
-class DraftPolicyUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class DraftPolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = DraftPolicy
     form_class = PolicyForm
     template_name = 'fleet/generic_form.html'
@@ -1262,7 +1262,7 @@ class DraftPolicyUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
 #                           <!-- FUEL CONSUMPTION -->
 # <!-- ======================================================================================== -->
 
-class FuelConsumptionListView(RoleRequiredMixin, LoginRequiredMixin, FilterView):
+class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     model = FuelConsumption
     filterset_class = FuelFilterForm
     template_name = 'fleet/fuelconsumption_list.html'
@@ -1300,7 +1300,7 @@ class FuelConsumptionListView(RoleRequiredMixin, LoginRequiredMixin, FilterView)
         })
         return context
 
-class FuelTransactionsListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class FuelTransactionsListView(LoginRequiredMixin, ListView):
     template_name = 'fleet/fuel_transactions_list.html'
     context_object_name = 'fuel_transactions'
 
@@ -1330,7 +1330,7 @@ class FuelTransactionsListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
 
 
 
-class FuelConsumptionCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class FuelConsumptionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = FuelConsumption
     form_class = FuelConsumptionForm
     template_name = 'fleet/generic_form.html'
@@ -1342,7 +1342,7 @@ class FuelConsumptionCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateVie
         context['submit_button_label'] = 'Dodaj'
         return context
 
-class FuelConsumptionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class FuelConsumptionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = FuelConsumption
     form_class = FuelConsumptionForm
     template_name = 'fleet/generic_form.html'
@@ -1354,7 +1354,7 @@ class FuelConsumptionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateVie
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class FuelConsumptionDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class FuelConsumptionDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = FuelConsumption
     template_name = 'fleet/fuelconsumption_detail.html'
     context_object_name = 'fuel_consumption'
@@ -1364,7 +1364,7 @@ class FuelConsumptionDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailVie
         context['title'] = f"Detalji potrošnje goriva {self.object.date}"
         return context
 
-class FuelConsumptionDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class FuelConsumptionDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = FuelConsumption
     success_url = reverse_lazy('fuelconsumption_list')
     template_name = 'fleet/fuelconsumption_confirm_delete.html'
@@ -1385,7 +1385,7 @@ class FuelConsumptionDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteVie
 # <!-- ======================================================================================== -->
 #                           <!-- EMPLOYEES -->
 # <!-- ======================================================================================== -->
-class EmployeeListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class EmployeeListView(LoginRequiredMixin, ListView):
     model = Employee
     template_name = 'fleet/employee_list.html'
     context_object_name = 'employees'
@@ -1395,7 +1395,7 @@ class EmployeeListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Lista zaposlenih'
         return context
 
-class EmployeeCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class EmployeeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Employee
     form_class = EmployeeForm
     template_name = 'fleet/generic_form.html'
@@ -1407,7 +1407,7 @@ class EmployeeCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj zaposlenog'
         return context
 
-class EmployeeUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class EmployeeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Employee
     form_class = EmployeeForm
     template_name = 'fleet/generic_form.html'
@@ -1419,7 +1419,7 @@ class EmployeeUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class EmployeeDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class EmployeeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Employee
     template_name = 'fleet/employee_detail.html'
     context_object_name = 'employee'
@@ -1429,7 +1429,7 @@ class EmployeeDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji zaposlenog {self.object.name}"
         return context
 
-class EmployeeDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class EmployeeDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Employee
     success_url = reverse_lazy('employee_list')
     template_name = 'fleet/employee_confirm_delete.html'
@@ -1449,7 +1449,7 @@ class EmployeeDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================================== -->
 #                           <!-- FUEL CONSUMPTION -->
 # <!-- ======================================================================================== -->
-class IncidentListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class IncidentListView(LoginRequiredMixin, ListView):
     model = Incident
     template_name = 'fleet/incident_list.html'
     context_object_name = 'incidents'
@@ -1459,7 +1459,7 @@ class IncidentListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Lista incidenata'
         return context
 
-class IncidentCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class IncidentCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Incident
     form_class = IncidentForm
     template_name = 'fleet/generic_form.html'
@@ -1471,7 +1471,7 @@ class IncidentCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-class IncidentUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class IncidentUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Incident
     form_class = IncidentForm
     template_name = 'fleet/generic_form.html'
@@ -1483,7 +1483,7 @@ class IncidentUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class IncidentDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class IncidentDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Incident
     template_name = 'fleet/incident_detail.html'
     context_object_name = 'incident'
@@ -1493,7 +1493,7 @@ class IncidentDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji incidenta {self.object.date}"
         return context
 
-class IncidentDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class IncidentDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Incident
     success_url = reverse_lazy('incident_list')
     template_name = 'fleet/incident_confirm_delete.html'
@@ -1513,7 +1513,7 @@ class IncidentDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================================== -->
 #                           <!-- PUTNI NALOG -->
 # <!-- ======================================================================================== -->
-class PutniNalogListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class PutniNalogListView(LoginRequiredMixin, ListView):
     model = PutniNalog
     template_name = 'fleet/putninalog_list.html'
     context_object_name = 'putni_nalozi'
@@ -1524,6 +1524,7 @@ class PutniNalogListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         return context
 
 
+@role_permission_required()
 def download_travel_order_excel(request, pk):
     """
     Preuzmi generisani Excel fajl za dati PutniNalog.
@@ -1550,7 +1551,7 @@ def download_travel_order_excel(request, pk):
         return HttpResponse(f"Greška: {str(e)}", status=500)
 
 
-class PutniNalogCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = PutniNalog
     form_class = PutniNalogForm
     template_name = 'fleet/putni_nalog_form.html'
@@ -1576,7 +1577,7 @@ class PutniNalogCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         })
 
 
-class PutniNalogUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class PutniNalogUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = PutniNalog
     form_class = PutniNalogForm
     template_name = 'fleet/generic_form.html'
@@ -1598,7 +1599,7 @@ class PutniNalogUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         # Serve the file as a response
         response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{self.object.id}.xlsx")
         return response
-class PutniNalogDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class PutniNalogDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = PutniNalog
     template_name = 'fleet/putninalog_detail.html'
     context_object_name = 'putni_nalog'
@@ -1608,7 +1609,7 @@ class PutniNalogDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji putnog naloga {self.object.travel_date}"
         return context
 
-class PutniNalogDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class PutniNalogDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = PutniNalog
     success_url = reverse_lazy('putninalog_list')
     template_name = 'fleet/putninalog_confirm_delete.html'
@@ -1627,7 +1628,7 @@ class PutniNalogDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================================== -->
 #                           <!-- SERVICE TYPES -->
 # <!-- ======================================================================================== -->
-class ServiceTypeListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class ServiceTypeListView(LoginRequiredMixin, ListView):
     model = ServiceType
     template_name = 'fleet/servicetype_list.html'
     context_object_name = 'service_types'
@@ -1637,7 +1638,7 @@ class ServiceTypeListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Lista tipova servisa'
         return context
 
-class ServiceTypeCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class ServiceTypeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = ServiceType
     form_class = ServiceTypeForm
     template_name = 'fleet/generic_form.html'
@@ -1649,7 +1650,7 @@ class ServiceTypeCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-class ServiceTypeUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class ServiceTypeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = ServiceType
     form_class = ServiceTypeForm
     template_name = 'fleet/generic_form.html'
@@ -1661,7 +1662,7 @@ class ServiceTypeUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class ServiceTypeDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class ServiceTypeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = ServiceType
     template_name = 'fleet/servicetype_detail.html'
     context_object_name = 'service_type'
@@ -1671,7 +1672,7 @@ class ServiceTypeDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji tipa servisa {self.object.name}"
         return context
 
-class ServiceTypeDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class ServiceTypeDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = ServiceType
     success_url = reverse_lazy('servicetype_list')
     template_name = 'fleet/servicetype_confirm_delete.html'
@@ -1693,7 +1694,7 @@ class ServiceTypeDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 
 
 
-class ServiceListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
     template_name = 'fleet/service_list.html'
     context_object_name = 'services'
@@ -1703,7 +1704,7 @@ class ServiceListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Lista servisa'
         return context
 
-class ServiceFixingListView(RoleRequiredMixin, LoginRequiredMixin, FilterView):
+class ServiceFixingListView(LoginRequiredMixin, FilterView):
     model = DraftServiceTransaction
     template_name = 'fleet/draft_service_transactions_list.html'
     context_object_name = 'service_transactions'
@@ -1722,7 +1723,7 @@ class ServiceFixingListView(RoleRequiredMixin, LoginRequiredMixin, FilterView):
         return ctx
 
 
-class ServiceCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class ServiceCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Service
     form_class = ServiceForm
     template_name = 'fleet/generic_form.html'
@@ -1734,7 +1735,7 @@ class ServiceCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         context['submit_button_label'] = 'Dodaj'
         return context
 
-class ServiceUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class ServiceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Service
     form_class = ServiceForm
     template_name = 'fleet/generic_form.html'
@@ -1746,7 +1747,7 @@ class ServiceUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class ServiceDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
+class ServiceDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Service
     template_name = 'fleet/service_detail.html'
     context_object_name = 'service'
@@ -1756,7 +1757,7 @@ class ServiceDetailView(RoleRequiredMixin, LoginRequiredMixin, DetailView):
         context['title'] = f"Detalji servisa {self.object.service_date}"
         return context
 
-class ServiceDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class ServiceDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Service
     success_url = reverse_lazy('service_list')
     template_name = 'fleet/service_confirm_delete.html'
@@ -1775,7 +1776,7 @@ class ServiceDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 # <!-- ======================================================================================== -->
 #                           <!-- SERVICE TRANSACTIONS -->
 # <!-- ======================================================================================== -->
-class ServiceTransactionListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class ServiceTransactionListView(LoginRequiredMixin, ListView):
     model = ServiceTransaction
     template_name = 'fleet/service_transactions_list.html'
     context_object_name = 'service_transactions'
@@ -1786,7 +1787,7 @@ class ServiceTransactionListView(RoleRequiredMixin, LoginRequiredMixin, ListView
         return context
 
 @method_decorator(never_cache, name="dispatch")
-class ServiceTransactionFixingListView(RoleRequiredMixin, LoginRequiredMixin, FilterView):
+class ServiceTransactionFixingListView(LoginRequiredMixin, FilterView):
     model = DraftServiceTransaction
     template_name = 'fleet/draft_service_transactions_list.html'
     context_object_name = 'service_transactions'
@@ -1805,7 +1806,7 @@ class ServiceTransactionFixingListView(RoleRequiredMixin, LoginRequiredMixin, Fi
         ctx['form'] = ctx['filter'].form
         return ctx
 
-class ServiceTransactionCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class ServiceTransactionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = ServiceTransaction
     form_class = ServiceTransactionForm
     template_name = 'fleet/generic_form.html'
@@ -1816,7 +1817,7 @@ class ServiceTransactionCreateView(RoleRequiredMixin, LoginRequiredMixin, Create
         context['submit_button_label'] = 'Sačuvaj insformacije o servisu'
         return context
     
-class ServiceTransactionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class ServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = ServiceTransaction
     form_class = ServiceTransactionForm
     template_name = 'fleet/generic_form.html'
@@ -1828,12 +1829,12 @@ class ServiceTransactionUpdateView(RoleRequiredMixin, LoginRequiredMixin, Update
         context['submit_button_label'] = 'Sačuvaj izmene'
         return context
 
-class ServiceTransactionDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class ServiceTransactionDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = ServiceTransaction
     template_name = 'service_transaction_confirm_delete.html'
     success_url = reverse_lazy('service_transaction_list')
 
-class DraftServiceTransactionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class DraftServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = DraftServiceTransaction
     form_class = DraftServiceTransactionForm
     template_name = 'fleet/generic_form.html'
@@ -1889,7 +1890,7 @@ class DraftServiceTransactionUpdateView(RoleRequiredMixin, LoginRequiredMixin, U
 #                           <!-- REQUISTION - TREBOVANJA -->
 # <!-- ======================================================================================== -->
 
-class RequisitionListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class RequisitionListView(LoginRequiredMixin, ListView):
     model = Requisition
     template_name = 'fleet/requisition_list.html'
     context_object_name = 'requisitions'
@@ -1899,7 +1900,7 @@ class RequisitionListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         context['title'] = 'Trebovanja'
         return context
 
-class RequisitionDetailView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class RequisitionDetailView(LoginRequiredMixin, ListView):
     model = Requisition
     template_name = 'fleet/requisition_detail.html'
     context_object_name = 'stavke'
@@ -1917,7 +1918,7 @@ class RequisitionDetailView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         return context
 
 # Draft    
-class RequisitionFixingListView(RoleRequiredMixin, LoginRequiredMixin, ListView): 
+class RequisitionFixingListView(LoginRequiredMixin, ListView): 
     model = DraftRequisition
     template_name = 'fleet/draft_requisition_list.html'
     context_object_name = 'requisitions'
@@ -1930,14 +1931,14 @@ class RequisitionFixingListView(RoleRequiredMixin, LoginRequiredMixin, ListView)
         context['title'] = 'Trebovanja koja je potrebno dopuniti'
         return context
     
-class RequisitionCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class RequisitionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Requisition
     form_class = RequisitionForm
     template_name = 'fleet/generic_form.html'
     success_url = reverse_lazy('requisition_list')
     success_message = "Requisition successfully created."
 
-class RequisitionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class RequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Requisition
     form_class = RequisitionForm
     template_name = 'fleet/generic_form.html'
@@ -1951,7 +1952,7 @@ class RequisitionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         return context
 
 
-class DraftRequisitionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class DraftRequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = DraftRequisition
     form_class = DraftRequisitionForm
     template_name = 'fleet/generic_form_draft.html'
@@ -2029,7 +2030,7 @@ class DraftRequisitionUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateVi
         'Kada se radi o redovnim servisima, kilometraža je obavezna.'
         return context
 
-class RequisitionDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class RequisitionDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Requisition
     template_name = 'requisition/requisition_confirm_delete.html'
     success_url = reverse_lazy('requisition_list')
@@ -2040,7 +2041,7 @@ class RequisitionDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
 #                                     <!-- USERS -->
 # <!-- ======================================================================================== -->
 
-class UserListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class UserListView(LoginRequiredMixin, ListView):
     model = CustomUser
     template_name = 'fleet/user_list.html'  # Specify your template
     context_object_name = 'users'     # The name of the variable to use in the template
@@ -2258,21 +2259,21 @@ def fetch_ddor_data_view(request):
         messages.success(request, result)
         return redirect('insurance_fixing_list')  # ili 'insurance_list' ako hoćeš pregled finalnih
 
-class KontoListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class KontoListView(LoginRequiredMixin, ListView):
     model = KontaVozila
     template_name = "fleet/konta_list.html"
     context_object_name = "konta"
     paginate_by = 50
     ordering = ("knt",)
 
-class KontoCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class KontoCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = KontaVozila
     fields = ["knt", "naz_knt"]
     template_name = "fleet/generic_form.html"
     success_url = reverse_lazy("konta_list")
     success_message = "Konto %(knt)s je dodat."
 
-class KontoUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class KontoUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
 
     model = KontaVozila
     fields = ["naz_knt"]
@@ -2280,7 +2281,7 @@ class KontoUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy("konta_list")
     success_message = "Konto %(knt)s je izmenjen."
 
-class KontoDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class KontoDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = KontaVozila
     template_name = "fleet/konta_confirm_delete.html"
     success_url = reverse_lazy("konta_list")
@@ -2909,7 +2910,7 @@ def potrazivanje_ddor_view(request):
 
 
 
-class PoliciesMonthlyCostsView(RoleRequiredMixin, LoginRequiredMixin, FilterView, ListView):
+class PoliciesMonthlyCostsView(LoginRequiredMixin, FilterView, ListView):
     """
     FilterView + ListView:
     - koristi django-filter formu za filtere
@@ -2941,7 +2942,7 @@ def policies_monthly_costs_csv(request):
     return response
 
 
-class LeaseMonthlyCostsView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class LeaseMonthlyCostsView(LoginRequiredMixin, ListView):
     """
     Prikaz mjesečnih troškova po vrstama lizinga.
     Vraća rows sa poljima: year, month, center, oj_id, oj_name, job_code, lease_type,
@@ -2955,7 +2956,7 @@ class LeaseMonthlyCostsView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         return lease_monthly_costs_rows(self.request)
     
 
-class ServiceMonthlyCostsView(RoleRequiredMixin, LoginRequiredMixin, FilterView):
+class ServiceMonthlyCostsView(LoginRequiredMixin, FilterView):
     template_name = "fleet/reports/service_monthly_costs.html"
     context_object_name = "rows"
     filterset_class = ServiceMonthlyCostsFilter  # <-- bez navodnika!
@@ -3005,7 +3006,7 @@ from .forms import InsuranceForm, DraftInsuranceForm
 # FINAL: LIST & DETAIL (po dokumentu)
 # ----------------------------
 
-class InsuranceListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class InsuranceListView(LoginRequiredMixin, ListView):
     model = Insurance
     template_name = "fleet/insurance_list.html"
     context_object_name = "insurances"
@@ -3016,7 +3017,7 @@ class InsuranceListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
         return ctx
 
 
-class InsuranceDetailView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class InsuranceDetailView(LoginRequiredMixin, ListView):
     """
     Prikaz svih stavki jednog naloga (br_naloga, god) — analogno RequisitionDetailView.
     """
@@ -3043,7 +3044,7 @@ class InsuranceDetailView(RoleRequiredMixin, LoginRequiredMixin, ListView):
 # DRAFT: LIST ZA DOPUNU
 # ----------------------------
 
-class InsuranceFixingListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
+class InsuranceFixingListView(LoginRequiredMixin, ListView):
     """
     Draft zapisi kojima nedostaju ključni podaci (npr. vehicle ili datum) i koje treba dopuniti.
     """
@@ -3068,7 +3069,7 @@ class InsuranceFixingListView(RoleRequiredMixin, LoginRequiredMixin, ListView):
 # FINAL: CREATE / UPDATE / DELETE
 # ----------------------------
 
-class InsuranceCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
+class InsuranceCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Insurance
     form_class = InsuranceForm
     template_name = "fleet/generic_form.html"
@@ -3082,7 +3083,7 @@ class InsuranceCreateView(RoleRequiredMixin, LoginRequiredMixin, CreateView):
         return ctx
 
 
-class InsuranceUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class InsuranceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Insurance
     form_class = InsuranceForm
     template_name = "fleet/generic_form.html"
@@ -3096,7 +3097,7 @@ class InsuranceUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
         return ctx
 
 
-class InsuranceDeleteView(RoleRequiredMixin, LoginRequiredMixin, DeleteView):
+class InsuranceDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Insurance
     template_name = "fleet/insurance_confirm_delete.html"
     success_url = reverse_lazy("insurance_list")
@@ -3153,7 +3154,7 @@ def delete_complete_draft_insurances():
     return
 
 
-class DraftInsuranceUpdateView(RoleRequiredMixin, LoginRequiredMixin, UpdateView):
+class DraftInsuranceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     """
     Analogno DraftRequisitionUpdateView:
     - Sačuva izmenjeni draft red (jedna stavka),
