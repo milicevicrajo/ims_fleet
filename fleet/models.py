@@ -1110,6 +1110,14 @@ class CustomUser(AbstractUser):
         verbose_name=_("Dozvoljene organizacione jedinice"),
     )
 
+    allowed_center_codes = models.CharField(
+        _("Dozvoljeni centri (šifre)"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Unesi šifre centara odvojene zarezom, npr: 43, 12, 77"),
+    )
+
     def __str__(self):
         return self.username
 

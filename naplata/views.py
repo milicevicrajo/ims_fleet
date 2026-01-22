@@ -442,7 +442,7 @@ def dodaj_kontakt(request, sif_par, naz_par):
             kontakt.sif_par = sif_par  # Automatski dodeljujemo šifru partnera
             kontakt.naz_par = naz_par
             kontakt.save(using='naplata_db')  # Upisujemo u eksternu bazu
-            return redirect('detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par = sif_par)
     else:
         form = KontaktiForm(initial={'sif_par': sif_par, 'naz_par': naz_par})
 
@@ -457,7 +457,7 @@ def izmeni_kontakt(request, sif_par):
             kontakt = form.save(commit=False)
 
             kontakt.save(using='naplata_db')
-            return redirect('detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par = sif_par)
     else:
         form = KontaktiForm(instance=kontakt)
     return render(request, 'naplata/form_naplata.html', {'form': form})
@@ -484,7 +484,7 @@ def dodaj_napomenu(request, sif_par, naz_par):
             napomena.sif_par = sif_par  # Postavljamo partnera automatski
             napomena.naz_par = naz_par
             napomena.save(using='naplata_db')
-            return redirect('detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par = sif_par)
     else:
         form = NapomeneForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  # Automatsko popunjavanje
 
@@ -524,7 +524,7 @@ def dodaj_opomenu(request, sif_par, naz_par):
             opomena.sif_par = sif_par  
             opomena.naz_par = naz_par
             opomena.save(using='naplata_db')
-            return redirect('detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par = sif_par)
         else:
             print("Forma nije validna!", form.errors)  # Ispis grešaka u konzoli
     else:
@@ -567,7 +567,7 @@ def dodaj_poziv(request, sif_par, naz_par):
             poziv.sif_par = sif_par  # Automatski postavljamo vrednost
             poziv.naz_par = naz_par
             poziv.save(using='naplata_db')
-            return redirect('detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par = sif_par)
 
     else:
         form = PoziviTelForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
@@ -608,7 +608,7 @@ def dodaj_poziv_pismo(request, sif_par, naz_par):
             poziv.sif_par = sif_par  # Automatski postavljamo vrednost
             poziv.naz_par = naz_par
             poziv.save(using='naplata_db')
-            return redirect('detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par = sif_par)
     else:
         form = PozivPismoForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
@@ -648,7 +648,7 @@ def dodaj_tuzbu(request, sif_par, naz_par):
             tuzba.sif_par = sif_par  # Automatski postavljamo vrednost
             tuzba.naz_par = naz_par
             tuzba.save(using='naplata_db')
-            return redirect('detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par = sif_par)
     else:
         form = TuzbeForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
