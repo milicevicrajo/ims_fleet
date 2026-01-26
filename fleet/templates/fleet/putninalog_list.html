@@ -24,6 +24,7 @@
                 <th>Datum putovanja</th>
                 <th>Broj dana</th>
                 <th>Avans</th>
+                <th class="text-center">Izmeni</th>
                 <th class="text-center">Štampa</th>
               </tr>
             </thead>
@@ -35,10 +36,21 @@
                 <td>{{ putni_nalog.job_code.code }}</td>
                 <td>{{ putni_nalog.travel_location }}</td>
                 <td>{{ putni_nalog.contract_offer }}</td>
-                <td>{{ putni_nalog.vehicle.traffic_cards.first.registration_number|default:putni_nalog.vehicle.chassis_number }}</td>
+                <td>
+                  {% if putni_nalog.vehicle %}
+                    {{ putni_nalog.vehicle.traffic_cards.first.registration_number|default:putni_nalog.vehicle.chassis_number }}
+                  {% else %}
+                    {{ putni_nalog.other_vehicle }}
+                  {% endif %}
+                </td>
                 <td>{{ putni_nalog.travel_date|date:"d.m.Y" }}</td>
                 <td>{{ putni_nalog.number_of_days }}</td>
                 <td>{{ putni_nalog.advance_payment }}</td>
+                <td class="text-center">
+                  <a href="{% url 'putninalog_update' putni_nalog.pk %}" class="btn btn-outline-primary btn-sm">
+                    <i class="mdi mdi-pencil"></i> Izmeni
+                  </a>
+                </td>
                 <td class="text-center">
                   <a href="{% url 'putninalog_print' putni_nalog.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
                     <i class="mdi mdi-printer"></i> Štampa

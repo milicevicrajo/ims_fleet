@@ -3,6 +3,46 @@
 {% load form_filters %}
 {% block title %}Forma{% endblock %}
 {% block content %}
+  <style>
+    .transport-boxes {
+      display: grid;
+      gap: 8px;
+    }
+    .transport-boxes ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 8px;
+    }
+    .transport-boxes li {
+      margin: 0;
+    }
+    .transport-boxes label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 10px;
+      background: #f8f9fa;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .transport-boxes input[type="radio"] {
+      margin: 0;
+    }
+    .transport-boxes input[type="radio"]:checked + span,
+    .transport-boxes label:has(input[type="radio"]:checked) {
+      border-color: #0d6efd;
+      background: #eaf2ff;
+    }
+    .transport-card {
+      border: 1px solid #d0d7de;
+      border-radius: 12px;
+      background: #fff;
+    }
+  </style>
   <div class="pagetitle">
     <h1>{{ title }}</h1>
     <section class="section">
@@ -19,6 +59,71 @@
                 {% for field in form %}
                   {% if field.is_hidden %}
                     {{ field }}
+                  {% elif field.name == 'travel_location' %}
+                    <div class="card mb-3 transport-card">
+                      <div class="card-body">
+                        <h6 class="card-title mb-3">Prevozno sredstvo</h6>
+
+                        <div class="row mb-3">
+                          <label class="col-sm-5 col-form-label">{{ form.transport_type.label }}:</label>
+                          <div class="col-sm-7">
+                            <div class="transport-boxes">
+                              {{ form.transport_type }}
+                            </div>
+                            {% if form.transport_type.errors %}
+                              <div class="invalid-feedback" style="display: block;">
+                                {% for error in form.transport_type.errors %}
+                                  {{ error }}
+                                {% endfor %}
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="row mb-3" id="vehicle-field-row">
+                          <label for="{{ form.vehicle.id_for_label }}" class="col-sm-5 col-form-label">{{ form.vehicle.label }}:</label>
+                          <div class="col-sm-7">
+                            {{ form.vehicle|add_class:'form-control' }}
+                            {% if form.vehicle.errors %}
+                              <div class="invalid-feedback" style="display: block;">
+                                {% for error in form.vehicle.errors %}
+                                  {{ error }}
+                                {% endfor %}
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="row mb-3" id="other-vehicle-field-row">
+                          <label for="{{ form.other_vehicle.id_for_label }}" class="col-sm-5 col-form-label">{{ form.other_vehicle.label }}:</label>
+                          <div class="col-sm-7">
+                            {{ form.other_vehicle|add_class:'form-control' }}
+                            {% if form.other_vehicle.errors %}
+                              <div class="invalid-feedback" style="display: block;">
+                                {% for error in form.other_vehicle.errors %}
+                                  {{ error }}
+                                {% endfor %}
+                              </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
+                        <div class="col-sm-7">
+                            {{ field|add_class:'form-control' }}
+                            {% if field.errors %}
+                            <div class="invalid-feedback" style="display: block;">
+                              {% for error in field.errors %}
+                                  {{ error }}
+                              {% endfor %}
+                          </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                  {% elif field.name == 'transport_type' or field.name == 'vehicle' or field.name == 'other_vehicle' %}
                   {% else %}
                     <div class="row mb-3">
                         <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
@@ -94,6 +199,39 @@
               window.location.href = data.redirect_url;
             })
             .catch(error => console.error('Greška prilikom obrade zahteva:', error));
+        });
+        function toggleTransportFields() {
+          const imsRadio = document.querySelector('input[name="transport_type"][value="ims"]');
+          const otherRadio = document.querySelector('input[name="transport_type"][value="other"]');
+          const vehicleRow = document.getElementById('vehicle-field-row');
+          const otherRow = document.getElementById('other-vehicle-field-row');
+          const vehicleInput = document.getElementById('{{ form.vehicle.id_for_label }}');
+          const otherInput = document.getElementById('{{ form.other_vehicle.id_for_label }}');
+
+          if (imsRadio && imsRadio.checked) {
+            vehicleRow.style.display = '';
+            otherRow.style.display = 'none';
+            if (otherInput) otherInput.value = '';
+          } else if (otherRadio && otherRadio.checked) {
+            vehicleRow.style.display = 'none';
+            otherRow.style.display = '';
+            if (vehicleInput) {
+              if (vehicleInput.tagName === 'SELECT') {
+                vehicleInput.value = '';
+              } else {
+                vehicleInput.value = '';
+              }
+            }
+          } else {
+            vehicleRow.style.display = '';
+            otherRow.style.display = '';
+          }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+          const radios = document.querySelectorAll('input[name="transport_type"]');
+          radios.forEach(r => r.addEventListener('change', toggleTransportFields));
+          toggleTransportFields();
         });
       </script>
           {% if form.start_sequence.errors %}

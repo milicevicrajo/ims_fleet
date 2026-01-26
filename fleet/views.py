@@ -14,6 +14,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
+from django.core.exceptions import PermissionDenied
 from django.db import connections
 from django.db.models import Avg, Exists, F, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import TruncMonth, TruncYear
@@ -80,7 +81,7 @@ from .models import (
     VehicleTenderDocument,
     Vehicle,
 )
-from .mixins import RolePermissionRequiredMixin, role_permission_required
+from .mixins import CenterMixin, RolePermissionRequiredMixin, role_permission_required
 from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
 from .utils import (
     calculate_average_fuel_consumption,
@@ -1564,24 +1565,26 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
         return context
     
     def form_valid(self, form):
-        # Sačuvaj objekat
-        self.object = form.save()
-
-        # Generiši Excel fajl
-        file_path = populate_putni_nalog_template(self.object)
+        try:
+            # Sačuvaj objekat
+            self.object = form.save()
+        except ValueError as exc:
+            form.add_error('start_sequence', str(exc))
+            return self.form_invalid(form)
 
         # Vrati URL za preuzimanje i preusmeravanje
         return JsonResponse({
-            'file_url': reverse('download_travel_order_excel', args=[self.object.id]),
             'redirect_url': reverse('putninalog_list')
         })
 
 
-class PutniNalogUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = PutniNalog
     form_class = PutniNalogForm
-    template_name = 'fleet/generic_form.html'
+    template_name = 'fleet/putni_nalog_form.html'
     success_url = reverse_lazy('putninalog_list')
+    org_unit_field = "job_code"
+    allow_if_no_scope = False
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1592,13 +1595,31 @@ class PutniNalogUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upda
     def form_valid(self, form):
         # Save the object
         self.object = form.save()
+        return JsonResponse({
+            'redirect_url': reverse('putninalog_list')
+        })
 
-        # Generate the Excel file
-        file_path = populate_putni_nalog_template(self.object)
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        user = self.request.user
+        if user.is_superuser:
+            return obj
 
-        # Serve the file as a response
-        response = FileResponse(open(file_path, 'rb'), as_attachment=True, filename=f"PutniNalog_{self.object.id}.xlsx")
-        return response
+        center_code = getattr(obj.job_code, "center", None)
+        if not center_code:
+            raise PermissionDenied("Ne možete menjati naloge iz ovog centra.")
+
+        center_code = str(center_code).strip()
+        allowed_center_codes = set(self.get_user_allowed_center_codes())
+        if allowed_center_codes and center_code in allowed_center_codes:
+            return obj
+
+        allowed_units = self.get_user_allowed_units()
+        if allowed_units.filter(center=center_code).exists():
+            return obj
+
+        raise PermissionDenied("Ne možete menjati naloge iz ovog centra.")
+
 class PutniNalogDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = PutniNalog
     template_name = 'fleet/putninalog_detail.html'

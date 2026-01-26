@@ -128,22 +128,26 @@
 				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{{ putni_nalog.employee.position }}</div></div>
 				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
 				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
+								<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+
 				<div class="row"><div class="label">Sa zadatkom</div><div class="line">{{ putni_nalog.task }}</div></div>
-				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+				{% if putni_nalog.contract_offer %}
+				<div class="row"><div class="label">Ponuda/Ugovor/Br</div><div class="line">{{ putni_nalog.contract_offer }}</div></div>
+				{% endif %}
+
 				<div class="row"><div class="label">Na službenom putu koristi prevozno sredstvo</div><div class="line"></div></div>
-				<div class="row"><div class="label">&nbsp;</div><div class="line">{{ putni_nalog.vehicle }}</div></div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">{% if putni_nalog.vehicle %}{{ putni_nalog.vehicle }}{% else %}{{ putni_nalog.other_vehicle }}{% endif %}</div></div>
 				<div class="row"><div class="label">Dnevnica za ovo službeno putovanje pripada u iznosu od din.</div><div class="line">{{ putni_nalog.daily_allowance }}</div></div>
 				<div class="row"><div class="label">Na službenom putu će se zadržati najduže do</div><div class="line">{{ putni_nalog.number_of_days }} dana</div></div>
 				<div class="row">a u roku od 48 časova po povratku sa službenog puta i dolasku na posao, podneće pismeni izveštaj o obavljenom službenom poslu.</div>
                 <div class="row">Račun o učinjenim putnim troškovima podneti u roku od 3 dana.</div>
 				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line">{{ putni_nalog.advance_payment }}</div></div>
 				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line">{{ putni_nalog.job_code.code }}</div></div>
-                <div class="row">&nbsp;</div>
-                <div class="row">&nbsp;</div>
-                <div class="row">&nbsp;</div>
-                <div class="row">&nbsp;</div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 
-                
+
 				<div class="nalog-footer">
 					<div class="left">IZ 077</div>
 					<div class="center">(M.P.)</div>
@@ -310,18 +314,21 @@
 				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
 				<div class="row"><div class="label">Sa zadatkom</div><div class="line">{{ putni_nalog.task }}</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+
+				{% if putni_nalog.contract_offer %}
+				<div class="row"><div class="label">Ponuda/Ugovor/Br</div><div class="line">{{ putni_nalog.contract_offer }}</div></div>
+				{% endif %}
 				<div class="row"><div class="label">Na službenom putu koristi prevozno sredstvo</div><div class="line"></div></div>
-				<div class="row"><div class="label">&nbsp;</div><div class="line">{{ putni_nalog.vehicle }}</div></div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">{% if putni_nalog.vehicle %}{{ putni_nalog.vehicle }}{% else %}{{ putni_nalog.other_vehicle }}{% endif %}</div></div>
 				<div class="row"><div class="label">Dnevnica za ovo službeno putovanje pripada u iznosu od din.</div><div class="line">{{ putni_nalog.daily_allowance }}</div></div>
 				<div class="row"><div class="label">Na službenom putu će se zadržati najduže do</div><div class="line">{{ putni_nalog.number_of_days }} dana</div></div>
 				<div class="row">a u roku od 48 časova po povratku sa službenog puta i dolasku na posao, podneće pismeni izveštaj o obavljenom službenom poslu.</div>
                 <div class="row">Račun o učinjenim putnim troškovima podneti u roku od 3 dana.</div>
 				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line">{{ putni_nalog.advance_payment }}</div></div>
 				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line">{{ putni_nalog.job_code.code }}</div></div>
-                <div class="row">&nbsp;</div>
-                <div class="row">&nbsp;</div>
-                <div class="row">&nbsp;</div>
-                <div class="row">&nbsp;</div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 
 
 				<div class="nalog-footer">

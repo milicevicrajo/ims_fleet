@@ -7,13 +7,13 @@ from django.utils.translation import gettext_lazy as _
 from datetime import date
 class VehicleForm(forms.ModelForm):
     first_registration_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum prve registracije"
     )
     purchase_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum kupovine"
     )
     class Meta:
@@ -24,16 +24,17 @@ class TrafficCardForm(forms.ModelForm):
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
-        label="Vozilo"
+        label="Vozilo",
+        required=False
     )
     issue_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum izdavanja"
     )
     valid_until = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Važi do"
     )
     class Meta:
@@ -44,9 +45,9 @@ class TrafficCardForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.issue_date:
-                self.initial['issue_date'] = self.instance.issue_date.strftime('%Y-%m-%d')
+                self.initial['issue_date'] = self.instance.issue_date.strftime('%d.%m.%Y')
             if self.instance.valid_until:
-                self.initial['valid_until'] = self.instance.valid_until.strftime('%Y-%m-%d')
+                self.initial['valid_until'] = self.instance.valid_until.strftime('%d.%m.%Y')
 
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
@@ -60,8 +61,8 @@ class VehicleTenderDocumentForm(forms.ModelForm):
     )
     taken_at = forms.DateField(
         required=False,
-        widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%Y-%m-%d', '%d/%m/%Y'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label=_("Datum fotografisanja")
     )
 
@@ -77,7 +78,7 @@ class VehicleTenderDocumentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.taken_at:
-            self.initial['taken_at'] = self.instance.taken_at.strftime('%Y-%m-%d')
+            self.initial['taken_at'] = self.instance.taken_at.strftime('%d.%m.%Y')
 
 class OrganizationalUnitForm(forms.ModelForm):
     class Meta:
@@ -91,8 +92,8 @@ class JobCodeForm(forms.ModelForm):
         label="Organizaciona jedinica"
     )
     assigned_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum dodele"
     )
     class Meta:
@@ -101,13 +102,13 @@ class JobCodeForm(forms.ModelForm):
 
 class LeaseForm(forms.ModelForm):
     start_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum početka"
     )
     end_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum završetka"
     )
     class Meta:
@@ -121,9 +122,9 @@ class LeaseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.start_date:
-                self.initial['start_date'] = self.instance.start_date.strftime('%Y-%m-%d')
+                self.initial['start_date'] = self.instance.start_date.strftime('%d.%m.%Y')
             if self.instance.end_date:
-                self.initial['end_date'] = self.instance.end_date.strftime('%Y-%m-%d')
+                self.initial['end_date'] = self.instance.end_date.strftime('%d.%m.%Y')
 
 class PolicyForm(forms.ModelForm):
     YES_NO_CHOICES = (
@@ -137,18 +138,18 @@ class PolicyForm(forms.ModelForm):
         label="Vozilo"
     )
     issue_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum izdavanja"
     )
     start_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum početka"
     )
     end_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum završetka"
     )
     is_renewable = models.BooleanField(
@@ -164,11 +165,11 @@ class PolicyForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.issue_date:
-                self.initial['issue_date'] = self.instance.issue_date.strftime('%Y-%m-%d')
+                self.initial['issue_date'] = self.instance.issue_date.strftime('%d.%m.%Y')
             if self.instance.start_date:
-                self.initial['start_date'] = self.instance.start_date.strftime('%Y-%m-%d')
+                self.initial['start_date'] = self.instance.start_date.strftime('%d.%m.%Y')
             if self.instance.end_date:
-                self.initial['end_date'] = self.instance.end_date.strftime('%Y-%m-%d')
+                self.initial['end_date'] = self.instance.end_date.strftime('%d.%m.%Y')
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
             field.required = True
@@ -190,6 +191,21 @@ class IncidentForm(forms.ModelForm):
         fields = '__all__'
 
 class PutniNalogForm(forms.ModelForm):
+    order_date = forms.DateField(
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum izdavanja naloga"
+    )
+
+    transport_type = forms.ChoiceField(
+        label="Odaberi prevozno sredstvo",
+        required=False,
+        choices=(
+            ("ims", "Auto IMS"),
+            ("other", "Ostalo"),
+        ),
+        widget=forms.RadioSelect()
+    )
     order_number = forms.CharField(
         label="Broj naloga",
         required=False,
@@ -204,7 +220,13 @@ class PutniNalogForm(forms.ModelForm):
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
-        label="Vozilo"
+        label="Vozilo",
+        required=False
+    )
+    other_vehicle = forms.CharField(
+        label="Prevozno sredstvo (ostalo)",
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     employee = forms.ModelChoiceField(
         queryset=Employee.objects.all(),
@@ -217,8 +239,8 @@ class PutniNalogForm(forms.ModelForm):
         label="Troškovi idu na teret"
     )
     travel_date = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum putovanja"
     )
 
@@ -232,29 +254,62 @@ class PutniNalogForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Automatski postavlja današnji datum za order_date ako se kreira novi nalog
-        if not self.instance.pk:
-            self.initial['order_date'] = date.today()
+        # Automatski postavlja datum za order_date (novo ili iz postojećeg naloga)
+        if self.instance and self.instance.pk:
+            if self.instance.order_date:
+                self.initial['order_date'] = self.instance.order_date.strftime('%d.%m.%Y')
+            if self.instance.travel_date:
+                self.initial['travel_date'] = self.instance.travel_date.strftime('%d.%m.%Y')
+        elif not self.is_bound:
+            self.initial.setdefault('order_date', date.today().strftime('%d.%m.%Y'))
 
 
         # Sva polja su obavezna osim 'order_date' koji je automatski
         for field_name, field in self.fields.items():
-            if field_name not in {'order_date', 'order_number', 'start_sequence'}:
+            if field_name not in {'order_date', 'order_number', 'start_sequence', 'vehicle', 'other_vehicle', 'transport_type'}:
                 field.required = True
+
+        if self.instance and self.instance.pk:
+            if self.instance.vehicle:
+                self.initial['transport_type'] = 'ims'
+            elif self.instance.other_vehicle:
+                self.initial['transport_type'] = 'other'
+        elif not self.is_bound:
+            self.initial.setdefault('transport_type', 'ims')
 
     def clean(self):
         cleaned = super().clean()
+        if not cleaned.get('order_date'):
+            if self.instance and self.instance.pk and self.instance.order_date:
+                cleaned['order_date'] = self.instance.order_date
+            else:
+                cleaned['order_date'] = date.today()
         job_code = cleaned.get('job_code')
         travel_date = cleaned.get('travel_date')
         start_sequence = cleaned.get('start_sequence')
+        vehicle = cleaned.get('vehicle')
+        other_vehicle = cleaned.get('other_vehicle')
+        transport_type = cleaned.get('transport_type')
+
+        if vehicle and other_vehicle:
+            self.add_error('vehicle', "Možeš izabrati samo jedno prevozno sredstvo.")
+            self.add_error('other_vehicle', "Možeš uneti samo jedno prevozno sredstvo.")
+        elif not vehicle and not other_vehicle:
+            self.add_error('vehicle', "Obavezno je uneti vozilo (Auto IMS) ili ostalo prevozno sredstvo.")
+            self.add_error('other_vehicle', "Obavezno je uneti vozilo (Auto IMS) ili ostalo prevozno sredstvo.")
+
+        if transport_type == 'ims' and other_vehicle:
+            self.add_error('other_vehicle', "Kada je izabrano Auto IMS, polje 'Ostalo' mora biti prazno.")
+        if transport_type == 'other' and vehicle:
+            self.add_error('vehicle', "Kada je izabrano Ostalo, polje 'Vozilo' mora biti prazno.")
 
         if job_code and travel_date:
             center_code = getattr(job_code, 'center', None)
             year = travel_date.year
             if center_code:
-                exists = PutniNalogSequence.objects.filter(
-                    center_code=center_code,
-                    year=year,
+                prefix = f"{center_code}/{year}-"
+                exists = PutniNalog.objects.filter(
+                    order_number__startswith=prefix
                 ).exists()
                 if not exists and not start_sequence:
                     self.add_error(
@@ -268,17 +323,8 @@ class PutniNalogForm(forms.ModelForm):
         job_code = self.cleaned_data.get('job_code')
         travel_date = self.cleaned_data.get('travel_date')
         start_sequence = self.cleaned_data.get('start_sequence')
-
-        if job_code and travel_date:
-            center_code = getattr(job_code, 'center', None)
-            year = travel_date.year
-            if center_code and start_sequence:
-                with transaction.atomic():
-                    PutniNalogSequence.objects.get_or_create(
-                        center_code=center_code,
-                        year=year,
-                        defaults={"next_number": start_sequence},
-                    )
+        if start_sequence:
+            instance._start_sequence = start_sequence
 
         if commit:
             instance.save()
@@ -328,8 +374,8 @@ class VehicleTravelOrderForm(forms.ModelForm):
 class VehicleTravelOrderCloseForm(forms.ModelForm):
     closed_at = forms.DateField(
         required=True,
-        widget=forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%Y-%m-%d', '%d/%m/%Y'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum zatvaranja",
     )
     end_mileage = forms.IntegerField(
@@ -458,8 +504,8 @@ class ServiceTransactionForm(forms.ModelForm):
         label="Vozilo"
     )
     datum = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     nije_garaza = models.BooleanField(
@@ -475,7 +521,7 @@ class ServiceTransactionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.datum:
-                self.initial['datum'] = self.instance.datum.strftime('%Y-%m-%d')
+                self.initial['datum'] = self.instance.datum.strftime('%d.%m.%Y')
 
         # # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         # for field_name, field in self.fields.items():
@@ -494,8 +540,8 @@ class DraftServiceTransactionForm(forms.ModelForm):
         label="Vozilo"
     )
     datum = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     nije_garaza = models.BooleanField(
@@ -511,7 +557,7 @@ class DraftServiceTransactionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.datum:
-                self.initial['datum'] = self.instance.datum.strftime('%Y-%m-%d')
+                self.initial['datum'] = self.instance.datum.strftime('%d.%m.%Y')
 
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
@@ -522,12 +568,14 @@ class ServiceFixingFilterForm(forms.Form):
     datum_od = forms.DateField(
         required=False,
         label="Datum od",
-        widget=forms.DateInput(attrs={'type': 'date'})
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d']
     )
     datum_do = forms.DateField(
         required=False,
         label="Datum do",
-        widget=forms.DateInput(attrs={'type': 'date'})
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d']
     )
     partner = forms.CharField(
         required=False,
@@ -552,8 +600,8 @@ class RequisitionForm(forms.ModelForm):
         label="Kvar (IMS)"
     )
     datum_trebovanja = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     class Meta:
@@ -564,7 +612,7 @@ class RequisitionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.datum_trebovanja:
-                self.initial['datum_trebovanja'] = self.instance.datum_trebovanja.strftime('%Y-%m-%d')
+                self.initial['datum_trebovanja'] = self.instance.datum_trebovanja.strftime('%d.%m.%Y')
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna osim Boolean polja
         for field_name, field in self.fields.items():
             if not isinstance(field, forms.BooleanField):  # Ignoriše Boolean polja
@@ -583,8 +631,8 @@ class DraftRequisitionForm(forms.ModelForm):
         label="Vozilo"
     )
     datum_trebovanja = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     mesec_unosa = forms.IntegerField(
@@ -630,7 +678,7 @@ class DraftRequisitionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:  # Check if instance is being updated
             if self.instance.datum_trebovanja:
-                self.initial['datum_trebovanja'] = self.instance.datum_trebovanja.strftime('%Y-%m-%d')
+                self.initial['datum_trebovanja'] = self.instance.datum_trebovanja.strftime('%d.%m.%Y')
 
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():

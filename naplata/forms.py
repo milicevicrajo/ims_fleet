@@ -43,8 +43,8 @@ from datetime import datetime  # Ispravan import
 
 class OpomeneForm(forms.ModelForm):
     datum = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     class Meta:
@@ -62,8 +62,8 @@ class OpomeneForm(forms.ModelForm):
 
 class PozivPismoForm(forms.ModelForm):
     datum = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     class Meta:
@@ -81,8 +81,8 @@ class PozivPismoForm(forms.ModelForm):
 
 class PoziviTelForm(forms.ModelForm):
     datum = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     class Meta:
@@ -101,8 +101,8 @@ class PoziviTelForm(forms.ModelForm):
 
 class TuzbeForm(forms.ModelForm):
     datum = forms.DateField(
-        widget=forms.DateInput(format='%d/%m/%Y', attrs={'class': 'form-control', 'type': 'date'}),
-        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum"
     )
     class Meta:

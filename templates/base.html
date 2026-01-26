@@ -32,6 +32,8 @@
 
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <body>
@@ -129,6 +131,20 @@
 
     <!-- Select2 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+        <!-- Flatpickr -->
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/sr.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (window.flatpickr) {
+                    flatpickr('.js-date', {
+                        dateFormat: 'd.m.Y',
+                        locale: 'sr'
+                    });
+                }
+            });
+        </script>
 
     <!-- Bootstrap i ostalo -->
     <script src="{% static 'fleet/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>

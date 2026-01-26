@@ -24,7 +24,7 @@ class CenterMixin:
         if not raw:
             return []
         parts = [p.strip() for p in raw.replace(";", ",").split(",")]
-        return [p for p in parts if p]
+        return [p.strip() for p in parts if p and p.strip()]
 
     def get_user_allowed_units(self):
         return self.request.user.allowed_centers.all()
@@ -41,15 +41,17 @@ class CenterMixin:
             return qs if self.allow_if_no_scope else qs.none()
 
         if self.org_unit_field:
+            allowed_unit_ids = allowed_units.values_list("pk", flat=True)
             if allowed_center_codes:
                 units_from_centers = OrganizationalUnit.objects.filter(
                     center__in=allowed_center_codes
-                )
-                allowed_units = units_from_centers.union(allowed_units)
-            return qs.filter(**{f"{self.org_unit_field}__in": allowed_units}).distinct()
+                ).values_list("pk", flat=True)
+                allowed_unit_ids = units_from_centers.union(allowed_unit_ids)
+            return qs.filter(**{f"{self.org_unit_field}__in": allowed_unit_ids}).distinct()
 
         if self.center_field:
-            return qs.filter(**{f"{self.center_field}__in": allowed_center_codes}).distinct()
+            trimmed_codes = [c.strip() for c in allowed_center_codes if c and c.strip()]
+            return qs.filter(**{f"{self.center_field}__in": trimmed_codes}).distinct()
 
         return qs
 

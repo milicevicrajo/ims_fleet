@@ -2217,7 +2217,7 @@ def update_job_codes_from_view():
 
 def sync_organizational_units_from_view():
     with connections['server_db'].cursor() as cursor:  # zameni 'external' imenom tvoje konekcije
-        cursor.execute("SELECT sif_pos, naz_pos, blok FROM dbo.v_sifre_posla")
+        cursor.execute("SELECT sif_pos, naz_pos, blok FROM dbo.v_organizationalunit")
         rows = cursor.fetchall()
 
     created = 0
@@ -2237,6 +2237,8 @@ def sync_organizational_units_from_view():
             updated += 1
 
     print(f"Organizacione jedinice: {created} dodatih, {updated} ažuriranih.")
+
+
 # services.py
 from django.db import connections, transaction
 from django.utils.dateparse import parse_datetime

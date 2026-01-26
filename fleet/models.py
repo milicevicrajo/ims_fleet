@@ -372,7 +372,7 @@ class PutniNalog(models.Model):
     )
     order_date = models.DateField(
         verbose_name=_("Datum izdavanja naloga"),
-        auto_now_add=True
+        default=timezone.now
     )
 
     employee = models.ForeignKey(
@@ -389,16 +389,26 @@ class PutniNalog(models.Model):
     )
     travel_location = models.CharField(max_length=100, verbose_name=_("Mesto putovanja"))
     task = models.TextField(verbose_name=_("Zadatak"))
-    contract_offer = models.CharField(max_length=50, verbose_name=_("Ugovor / ponuda"))
+    contract_offer = models.CharField(max_length=50, verbose_name=_("Ugovor / ponuda"), blank=True, null=True)
+
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
         related_name='travel_orders',
-        verbose_name=_("Vozilo")
+        verbose_name=_("Vozilo"),
+        null=True,
+        blank=True
     )
+    other_vehicle = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name=_("Prevozno sredstvo (ostalo)")
+    )
+    
     travel_date = models.DateField(verbose_name=_("Datum putovanja"))
     number_of_days = models.PositiveIntegerField(verbose_name=_("Broj dana"))
-    advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Isplata"))
+    advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Isplata/Akontacija"))
 
     daily_allowance = models.DecimalField(
         max_digits=10,
@@ -415,17 +425,25 @@ class PutniNalog(models.Model):
         center_code = str(center_code).strip()
 
         year = (self.travel_date or datetime.date.today()).year
-        with transaction.atomic():
-            seq = (
-                PutniNalogSequence.objects.select_for_update()
-                .filter(center_code=center_code, year=year)
-                .first()
-            )
-            if not seq:
+        prefix = f"{center_code}/{year}-"
+        existing = PutniNalog.objects.filter(order_number__startswith=prefix).values_list(
+            "order_number", flat=True
+        )
+        max_number = 0
+        for order_number in existing:
+            try:
+                num_part = order_number.split(prefix, 1)[1]
+                max_number = max(max_number, int(num_part))
+            except Exception:
+                continue
+
+        start_sequence = getattr(self, "_start_sequence", None)
+        if max_number == 0:
+            if not start_sequence:
                 raise ValueError("Nedostaje početni broj za izabrani centar/godinu.")
-            current_number = seq.next_number
-            seq.next_number = current_number + 1
-            seq.save(update_fields=["next_number"])
+            current_number = int(start_sequence)
+        else:
+            current_number = max_number + 1
 
         return f"{center_code}/{year}-{current_number}"
 
