@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .filter-select {
+    min-width: 220px;
+  }
+</style>
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm">
@@ -11,6 +23,34 @@
         </a>
       </div>
       <div class="card-body">
+        <form method="get" class="row g-2 align-items-end mb-3">
+          <div class="col-md-3">
+            <label class="form-label filter-label">Centar</label>
+            <select name="center" class="form-select filter-select js-filter-select">
+              <option value="">Svi centri</option>
+              {% for c in centers %}
+                <option value="{{ c }}" {% if c == selected_center %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label filter-label">Šifra posla</label>
+            <select name="job_code" class="form-select filter-select js-filter-select">
+              <option value="">Sve šifre</option>
+              {% for unit in job_codes %}
+                <option value="{{ unit.code }}" {% if unit.code == selected_job_code %}selected{% endif %}>
+                  {{ unit.code }} - {{ unit.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Filtriraj</button>
+          </div>
+          <div class="col-md-2">
+            <a href="{% url 'putninalog_list' %}" class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+        </form>
         <div class="table-responsive">
           <table id="DatatablePutniNalozi" class="table table-striped table-bordered align-middle">
             <thead class="table-light">
@@ -65,6 +105,19 @@
       </div>
     </div>
   </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.jQuery && jQuery.fn.select2) {
+      jQuery('.js-filter-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        allowClear: true,
+        placeholder: 'Izaberi'
+      });
+    }
+  });
+</script>
 </div>
 
 <script>

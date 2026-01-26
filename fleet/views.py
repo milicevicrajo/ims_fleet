@@ -1519,9 +1519,65 @@ class PutniNalogListView(LoginRequiredMixin, ListView):
     template_name = 'fleet/putninalog_list.html'
     context_object_name = 'putni_nalozi'
 
+    def _is_uprava(self, user):
+        return user.roles.filter(slug="uprava").exists()
+
+    def _get_allowed_centers(self, user):
+        codes = []
+        raw = (user.allowed_center_codes or "").strip()
+        if raw:
+            parts = [p.strip() for p in raw.replace(";", ",").split(",")]
+            codes.extend([p for p in parts if p])
+        unit_centers = list(
+            user.allowed_centers.values_list("center", flat=True)
+        )
+        codes.extend([c for c in unit_centers if c])
+        # unique + trim
+        return sorted({c.strip() for c in codes if str(c).strip()})
+
+    def get_queryset(self):
+        qs = PutniNalog.objects.select_related("job_code", "employee", "vehicle")
+        user = self.request.user
+
+        if not user.is_superuser and not self._is_uprava(user):
+            allowed_centers = self._get_allowed_centers(user)
+            if allowed_centers:
+                qs = qs.filter(job_code__center__in=allowed_centers)
+            else:
+                return qs.none()
+
+        center = (self.request.GET.get("center") or "").strip()
+        job_code = (self.request.GET.get("job_code") or "").strip()
+
+        if center:
+            qs = qs.filter(job_code__center=center)
+        if job_code:
+            qs = qs.filter(job_code__code=job_code)
+
+        return qs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista putnih naloga'
+        user = self.request.user
+        selected_center = (self.request.GET.get("center") or "").strip()
+        selected_job_code = (self.request.GET.get("job_code") or "").strip()
+
+        if user.is_superuser or self._is_uprava(user):
+            centers_qs = OrganizationalUnit.objects.values_list("center", flat=True).distinct().order_by("center")
+            job_codes_qs = OrganizationalUnit.objects.all().order_by("code")
+        else:
+            allowed_centers = self._get_allowed_centers(user)
+            centers_qs = OrganizationalUnit.objects.filter(center__in=allowed_centers).values_list("center", flat=True).distinct().order_by("center")
+            job_codes_qs = OrganizationalUnit.objects.filter(center__in=allowed_centers).order_by("code")
+
+        if selected_center:
+            job_codes_qs = job_codes_qs.filter(center=selected_center)
+
+        context["centers"] = centers_qs
+        context["job_codes"] = job_codes_qs
+        context["selected_center"] = selected_center
+        context["selected_job_code"] = selected_job_code
         return context
 
 
@@ -1598,6 +1654,9 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         return JsonResponse({
             'redirect_url': reverse('putninalog_list')
         })
+
+    def get_queryset(self):
+        return PutniNalog.objects.all()
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
