@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from decimal import Decimal
 from django.db import connections
 import openpyxl
 from openpyxl.workbook import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 from django.shortcuts import render, get_object_or_404
+from django.views.decorators.cache import never_cache
 from .forms import KontaktiForm, NapomeneForm, OpomeneForm, PoziviTelForm, PozivPismoForm, TuzbeForm
 from .models import Kontakti, Napomene, Opomene, PozivPismo, PoziviTel, Tuzbe
 
@@ -13,9 +15,16 @@ def lista_dugovanja(request):
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("SELECT sif_par, naz_par, dug, pot FROM dbo.baza ORDER BY dug DESC")
         dugovanja = cursor.fetchall()
+    total_dug = sum((Decimal(row[2] or 0) for row in dugovanja), Decimal("0"))
+    total_pot = sum((Decimal(row[3] or 0) for row in dugovanja), Decimal("0"))
 
-    return render(request, 'naplata/dugovanja.html', {'dugovanja': dugovanja})
+    return render(request, 'naplata/dugovanja.html', {
+        'dugovanja': dugovanja,
+        'total_dug': total_dug,
+        'total_pot': total_pot,
+    })
 
+@never_cache
 def lista_dugovanja_po_bucketima(request):
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
@@ -99,6 +108,7 @@ def export_dugovanja_bucketi_excel(request):
     return response
 
 
+@never_cache
 def detalji_partner(request, sif_par):
     # 1. Osnovne informacije o partneru (view partneri)
     with connections['naplata_db'].cursor() as cursor:
