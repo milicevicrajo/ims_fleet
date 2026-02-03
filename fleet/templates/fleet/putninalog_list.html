@@ -18,36 +18,50 @@
     <div class="card shadow-sm">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h2 class="mb-0">{{ title }}</h2>
-        <a href="{% url 'putninalog_create' %}" class="btn btn-primary btn-sm">
-          <i class="mdi mdi-plus-box"></i> Dodaj putni nalog
-        </a>
+        <div class="d-flex gap-2">
+          <a href="{% url 'putninalog_print_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary btn-sm" target="_blank">
+            <i class="mdi mdi-printer"></i> Štampa liste
+          </a>
+          <a href="{% url 'putninalog_create' %}" class="btn btn-primary btn-sm">
+            <i class="mdi mdi-plus-box"></i> Dodaj putni nalog
+          </a>
+        </div>
       </div>
       <div class="card-body">
         <form method="get" class="row g-2 align-items-end mb-3">
+          <div class="col-12">
+            <div class="mb-2"></div>
+          </div>
           <div class="col-md-3">
-            <label class="form-label filter-label">Centar</label>
-            <select name="center" class="form-select filter-select js-filter-select">
-              <option value="">Svi centri</option>
-              {% for c in centers %}
-                <option value="{{ c }}" {% if c == selected_center %}selected{% endif %}>{{ c }}</option>
-              {% endfor %}
-            </select>
+            <label class="form-label filter-label">{{ filter.form.center.label }}</label>
+            {{ filter.form.center }}
           </div>
-          <div class="col-md-4">
-            <label class="form-label filter-label">Šifra posla</label>
-            <select name="job_code" class="form-select filter-select js-filter-select">
-              <option value="">Sve šifre</option>
-              {% for unit in job_codes %}
-                <option value="{{ unit.code }}" {% if unit.code == selected_job_code %}selected{% endif %}>
-                  {{ unit.code }} - {{ unit.name }}
-                </option>
-              {% endfor %}
-            </select>
+          <div class="col-md-3">
+            <label class="form-label filter-label">{{ filter.form.job_code.label }}</label>
+            {{ filter.form.job_code }}
           </div>
-          <div class="col-md-2">
+          <div class="col-md-3">
+            <label class="form-label filter-label">{{ filter.form.year.label }}</label>
+            {{ filter.form.year }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label filter-label">{{ filter.form.month.label }}</label>
+            {{ filter.form.month }}
+          </div>
+
+          <div class="w-100"></div>
+          <div class="col-md-4 mt-2">
+            <label class="form-label filter-label">{{ filter.form.vehicle.label }}</label>
+            {{ filter.form.vehicle }}
+          </div>
+          <div class="col-md-4 mt-2">
+            <label class="form-label filter-label">{{ filter.form.employee.label }}</label>
+            {{ filter.form.employee }}
+          </div>
+          <div class="col-md-2 mt-2 d-grid">
             <button type="submit" class="btn btn-primary w-100">Filtriraj</button>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-2 mt-2 d-grid">
             <a href="{% url 'putninalog_list' %}" class="btn btn-outline-secondary w-100">Reset</a>
           </div>
         </form>

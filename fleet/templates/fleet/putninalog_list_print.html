@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  /* Hide chrome/sidebar for print and on-screen */
+  .left-sidebar,
+  .app-sidebar,
+  .sidebar-nav,
+  .topbar,
+  .page-breadcrumb,
+  .navbar,
+  .footer,
+  .sidebar,
+  .nav-header {
+    display: none !important;
+  }
+  .page-wrapper,
+  .page-content,
+  .container-fluid {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+  @media print {
+    .no-print { display: none !important; }
+  }
+  .print-table th, .print-table td {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+</style>
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+  <h2 class="mb-0">{{ title }}</h2>
+  <div class="d-flex gap-2">
+    <a href="javascript:window.print()" class="btn btn-primary btn-sm">
+      <i class="mdi mdi-printer"></i> Print
+    </a>
+    <a href="{% url 'putninalog_list' %}" class="btn btn-outline-secondary btn-sm">Nazad</a>
+  </div>
+</div>
+
+<div class="table-responsive" id="print-list">
+  <table class="table table-bordered table-striped align-middle print-table">
+    <thead class="table-light">
+      <tr>
+        <th>Broj naloga</th>
+        <th>Zaposleni</th>
+        <th>Šifra posla</th>
+        <th>Mesto putovanja</th>
+        <th>Ugovor/ponuda</th>
+        <th>Vozilo (reg)</th>
+        <th>Datum putovanja</th>
+        <th>Broj dana</th>
+        <th>Avans</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for putni_nalog in putni_nalozi %}
+      <tr>
+        <td>{{ putni_nalog.order_number }}</td>
+        <td>{{ putni_nalog.employee }}</td>
+        <td>{{ putni_nalog.job_code.code }}</td>
+        <td>{{ putni_nalog.travel_location }}</td>
+        <td>{{ putni_nalog.contract_offer }}</td>
+        <td>
+          {% if putni_nalog.vehicle %}
+            {{ putni_nalog.vehicle.traffic_cards.first.registration_number|default:putni_nalog.vehicle.chassis_number }}
+          {% else %}
+            {{ putni_nalog.other_vehicle }}
+          {% endif %}
+        </td>
+        <td>{{ putni_nalog.travel_date|date:"d.m.Y" }}</td>
+        <td>{{ putni_nalog.number_of_days }}</td>
+        <td>{{ putni_nalog.advance_payment }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" class="text-center text-muted">Nema podataka.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  window.addEventListener('load', function () {
+    var el = document.getElementById('print-list');
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+  });
+</script>
+{% endblock %}

@@ -13,7 +13,7 @@ from datetime import timedelta
 from django.db.models import OuterRef, Subquery, Exists, F, Q
 from django.db.models.functions import Trim
 
-from .models import Vehicle, JobCode, FuelConsumption, TrafficCard, Kvar
+from .models import Vehicle, JobCode, FuelConsumption, TrafficCard, Kvar, PutniNalog, Employee
 # pretpostavka da OrganizationalUnit postoji:
 from .models import OrganizationalUnit, ServiceTransaction
 
@@ -196,6 +196,112 @@ class VehicleFilter(django_filters.FilterSet):
             return qs
         qs = self._ensure_latest_center(qs).annotate(_center_trim=Trim(F("latest_center")))
         return qs.filter(_center_trim=center)
+
+
+class PutniNalogFilter(django_filters.FilterSet):
+    center = django_filters.ChoiceFilter(
+        label="Centar", method="filter_center"
+    )
+    job_code = django_filters.ChoiceFilter(
+        label="Šifra posla", method="filter_job_code"
+    )
+    year = django_filters.ChoiceFilter(
+        label="Godina", method="filter_year"
+    )
+    month = django_filters.ChoiceFilter(
+        label="Mesec", method="filter_month"
+    )
+    employee = django_filters.ModelChoiceFilter(
+        label="Zaposleni", queryset=Employee.objects.none(), method="filter_employee"
+    )
+    vehicle = django_filters.ModelChoiceFilter(
+        label="Vozilo", queryset=Vehicle.objects.none(), method="filter_vehicle"
+    )
+
+    class Meta:
+        model = PutniNalog
+        fields = ["center", "job_code", "year", "month", "employee", "vehicle"]
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        qs = self.queryset
+
+        centers = (
+            qs.exclude(job_code__center__isnull=True)
+            .values_list("job_code__center", flat=True)
+            .distinct()
+            .order_by("job_code__center")
+        )
+        self.filters["center"].extra["choices"] = [("", "Svi centri")] + [(c, c) for c in centers]
+
+        job_codes = (
+            OrganizationalUnit.objects
+            .filter(travel_order_job_code__in=qs)
+            .distinct()
+            .order_by("code")
+        )
+        self.filters["job_code"].extra["choices"] = [("", "Sve šifre")] + [
+            (u.code, f"{u.code} - {u.name}") for u in job_codes
+        ]
+
+        years = (
+            qs.exclude(travel_date__isnull=True)
+            .values_list("travel_date__year", flat=True)
+            .distinct()
+            .order_by("-travel_date__year")
+        )
+        self.filters["year"].extra["choices"] = [("", "Sve godine")] + [(y, y) for y in years]
+        self.filters["month"].extra["choices"] = [("", "Svi meseci")] + [(m, m) for m in range(1, 13)]
+
+        self.filters["employee"].queryset = (
+            Employee.objects.filter(travel_orders__in=qs)
+            .distinct()
+            .order_by("last_name", "first_name")
+        )
+        self.filters["vehicle"].queryset = (
+            Vehicle.objects.filter(travel_orders__in=qs)
+            .distinct()
+            .order_by("brand", "model")
+        )
+
+        for field_name in ["center", "job_code", "year", "month", "employee", "vehicle"]:
+            field = self.form.fields.get(field_name)
+            if field:
+                field.widget.attrs.update({
+                    "class": "form-select filter-select js-filter-select w-100",
+                })
+
+    def filter_center(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.filter(job_code__center=value)
+
+    def filter_job_code(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.filter(job_code__code=value)
+
+    def filter_year(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.filter(travel_date__year=value)
+
+    def filter_month(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.filter(travel_date__month=value)
+
+    def filter_employee(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.filter(employee=value)
+
+    def filter_vehicle(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.filter(vehicle=value)
 
 
 class KvarFilter(django_filters.FilterSet):

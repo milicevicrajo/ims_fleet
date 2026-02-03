@@ -36,6 +36,7 @@ from .filters import (
     ServiceMonthlyCostsFilter,
     TrafficCardFilterForm,
     VehicleFilter,
+    PutniNalogFilter,
 )
 from .forms import (
     DraftRequisitionForm,
@@ -1594,98 +1595,69 @@ class IncidentDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, Delete
 # <!-- ======================================================================================== -->
 #                           <!-- PUTNI NALOG -->
 # <!-- ======================================================================================== -->
-class PutniNalogListView(LoginRequiredMixin, ListView):
+def _is_uprava(user):
+    return user.roles.filter(slug="uprava").exists()
+
+
+def _get_allowed_centers(user):
+    codes = []
+    raw = (user.allowed_center_codes or "").strip()
+    if raw:
+        parts = [p.strip() for p in raw.replace(";", ",").split(",")]
+        codes.extend([p for p in parts if p])
+    unit_centers = list(
+        user.allowed_centers.values_list("center", flat=True)
+    )
+    codes.extend([c for c in unit_centers if c])
+    return sorted({c.strip() for c in codes if str(c).strip()})
+
+
+def _putninalog_base_qs(request):
+    qs = PutniNalog.objects.select_related("job_code", "employee", "vehicle")
+    user = request.user
+
+    if not user.is_superuser and not _is_uprava(user):
+        allowed_centers = _get_allowed_centers(user)
+        if allowed_centers:
+            qs = qs.filter(job_code__center__in=allowed_centers)
+        else:
+            return qs.none()
+
+    return qs
+
+
+class PutniNalogListView(LoginRequiredMixin, FilterView):
     model = PutniNalog
     template_name = 'fleet/putninalog_list.html'
     context_object_name = 'putni_nalozi'
-
-    def _is_uprava(self, user):
-        return user.roles.filter(slug="uprava").exists()
-
-    def _get_allowed_centers(self, user):
-        codes = []
-        raw = (user.allowed_center_codes or "").strip()
-        if raw:
-            parts = [p.strip() for p in raw.replace(";", ",").split(",")]
-            codes.extend([p for p in parts if p])
-        unit_centers = list(
-            user.allowed_centers.values_list("center", flat=True)
-        )
-        codes.extend([c for c in unit_centers if c])
-        # unique + trim
-        return sorted({c.strip() for c in codes if str(c).strip()})
+    filterset_class = PutniNalogFilter
 
     def get_queryset(self):
-        qs = PutniNalog.objects.select_related("job_code", "employee", "vehicle")
-        user = self.request.user
+        return _putninalog_base_qs(self.request)
 
-        if not user.is_superuser and not self._is_uprava(user):
-            allowed_centers = self._get_allowed_centers(user)
-            if allowed_centers:
-                qs = qs.filter(job_code__center__in=allowed_centers)
-            else:
-                return qs.none()
-
-        center = (self.request.GET.get("center") or "").strip()
-        job_code = (self.request.GET.get("job_code") or "").strip()
-
-        if center:
-            qs = qs.filter(job_code__center=center)
-        if job_code:
-            qs = qs.filter(job_code__code=job_code)
-
-        return qs
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super().get_filterset_kwargs(filterset_class)
+        kwargs['request'] = self.request
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista putnih naloga'
-        user = self.request.user
-        selected_center = (self.request.GET.get("center") or "").strip()
-        selected_job_code = (self.request.GET.get("job_code") or "").strip()
-
-        if user.is_superuser or self._is_uprava(user):
-            centers_qs = OrganizationalUnit.objects.values_list("center", flat=True).distinct().order_by("center")
-            job_codes_qs = OrganizationalUnit.objects.all().order_by("code")
-        else:
-            allowed_centers = self._get_allowed_centers(user)
-            centers_qs = OrganizationalUnit.objects.filter(center__in=allowed_centers).values_list("center", flat=True).distinct().order_by("center")
-            job_codes_qs = OrganizationalUnit.objects.filter(center__in=allowed_centers).order_by("code")
-
-        if selected_center:
-            job_codes_qs = job_codes_qs.filter(center=selected_center)
-
-        context["centers"] = centers_qs
-        context["job_codes"] = job_codes_qs
-        context["selected_center"] = selected_center
-        context["selected_job_code"] = selected_job_code
         return context
 
 
 @role_permission_required()
-def download_travel_order_excel(request, pk):
-    """
-    Preuzmi generisani Excel fajl za dati PutniNalog.
-    """
-    try:
-        # Dobavi putni nalog
-        putni_nalog = PutniNalog.objects.get(pk=pk)
+def putninalog_print_list(request):
+    base_qs = _putninalog_base_qs(request)
+    filterset = PutniNalogFilter(request.GET, queryset=base_qs, request=request)
+    putni_nalozi = filterset.qs
+    return render(request, 'fleet/putninalog_list_print.html', {
+        'title': 'Štampa liste putnih naloga',
+        'putni_nalozi': putni_nalozi,
+    })
 
-        # Generiši tačno ime fajla kao u `populate_putni_nalog_template()`
-        sanitized_order_number = sanitize_filename(putni_nalog.order_number)
-        file_name = f"PutniNalog_{sanitized_order_number}.xlsx"
-        file_path = os.path.join(settings.MEDIA_ROOT, "travel_orders", file_name)
 
-        # ✅ Proveri da li fajl postoji pre preuzimanja
-        if not os.path.exists(file_path):
-            return HttpResponse(f"Greška: Fajl nije pronađen {file_path}", status=404)
 
-        # ✅ Vraćanje fajla kao odgovor
-        return FileResponse(open(file_path, 'rb'), as_attachment=True, filename=file_name)
-
-    except PutniNalog.DoesNotExist:
-        return HttpResponse("Greška: Putni nalog ne postoji.", status=404)
-    except Exception as e:
-        return HttpResponse(f"Greška: {str(e)}", status=500)
 
 
 class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
