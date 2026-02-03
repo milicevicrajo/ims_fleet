@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 # Create your models here.
 class Kontakti(models.Model):
@@ -225,4 +226,21 @@ class Partneri(models.Model):
     class Meta:
         managed = False
         db_table = 'partneri'
+
+
+class AvansKlijent(models.Model):
+    sif_par = models.IntegerField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    note = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        db_table = 'avans_klijent'
+        verbose_name = 'Avans klijent'
+        verbose_name_plural = 'Avans klijenti'
 

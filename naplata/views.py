@@ -8,9 +8,12 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
+from fleet.mixins import role_permission_required
 from .forms import KontaktiForm, NapomeneForm, OpomeneForm, PoziviTelForm, PozivPismoForm, TuzbeForm
-from .models import Kontakti, Napomene, Opomene, PozivPismo, PoziviTel, Tuzbe
+from .models import Kontakti, Napomene, Opomene, PozivPismo, PoziviTel, Tuzbe, AvansKlijent
 
+@role_permission_required()
 def lista_dugovanja(request):
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("SELECT sif_par, naz_par, dug, pot FROM dbo.baza ORDER BY dug DESC")
@@ -25,7 +28,9 @@ def lista_dugovanja(request):
     })
 
 @never_cache
+@role_permission_required()
 def lista_dugovanja_po_bucketima(request):
+    marked_ids = set(AvansKlijent.objects.values_list('sif_par', flat=True))
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
                 SELECT 
@@ -54,9 +59,78 @@ def lista_dugovanja_po_bucketima(request):
             """)
         dugovanja = cursor.fetchall()
 
-    return render(request, 'naplata/dugovanja_bucketi.html', {'dugovanja': dugovanja})
+    return render(request, 'naplata/dugovanja_bucketi.html', {
+        'dugovanja': dugovanja,
+        'marked_ids': marked_ids,
+        'title': 'Lista dugovanja po bucketima',
+    })
 
 
+@never_cache
+def lista_avans_klijenti(request):
+    marked_ids = list(AvansKlijent.objects.values_list('sif_par', flat=True))
+    if not marked_ids:
+        dugovanja = []
+    else:
+        placeholders = ",".join(["%s"] * len(marked_ids))
+        with connections['naplata_db'].cursor() as cursor:
+            cursor.execute(f"""
+                    SELECT 
+                        db.sif_par, 
+                        db.naz_par, 
+                        SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
+                        SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
+                        SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
+                        SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
+                        SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
+                        SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
+                        SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
+                        SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
+                        SUM(db.saldo) AS Ukupno,
+                        n.veliki,
+                        db.ino
+                    FROM dodela_baketa db
+                    LEFT JOIN (
+                        SELECT sif_par, MAX(veliki) AS veliki
+                        FROM napomene
+                        GROUP BY sif_par
+                    ) n ON db.sif_par = n.sif_par
+                    WHERE db.sif_par IN ({placeholders})
+                    GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
+                    ORDER BY Ukupno DESC
+                """, marked_ids)
+            dugovanja = cursor.fetchall()
+
+    return render(request, 'naplata/dugovanja_bucketi_avans.html', {
+        'dugovanja': dugovanja,
+        'marked_ids': set(marked_ids),
+        'title': 'Nova lista',
+    })
+
+
+@require_POST
+@role_permission_required()
+def toggle_avans_klijent(request):
+    sif_par = request.POST.get('sif_par')
+    if not sif_par:
+        return redirect(request.META.get('HTTP_REFERER', 'naplata:lista_dugovanja_po_bucketima'))
+
+    try:
+        sif_par_int = int(sif_par)
+    except (TypeError, ValueError):
+        return redirect(request.META.get('HTTP_REFERER', 'naplata:lista_dugovanja_po_bucketima'))
+
+    obj, created = AvansKlijent.objects.get_or_create(
+        sif_par=sif_par_int,
+        defaults={'created_by': request.user if request.user.is_authenticated else None},
+    )
+    if not created:
+        obj.delete()
+
+    return redirect(request.META.get('HTTP_REFERER', 'naplata:lista_dugovanja_po_bucketima'))
+
+
+@role_permission_required()
 def export_dugovanja_bucketi_excel(request):
     wb = Workbook()
     ws = wb.active
@@ -109,6 +183,7 @@ def export_dugovanja_bucketi_excel(request):
 
 
 @never_cache
+@role_permission_required()
 def detalji_partner(request, sif_par):
     # 1. Osnovne informacije o partneru (view partneri)
     with connections['naplata_db'].cursor() as cursor:
@@ -300,6 +375,7 @@ def detalji_partner(request, sif_par):
         'fakture_baket_60':fakture_baket_60
     })
 
+@role_permission_required()
 def export_utuzene_fakture_excel(request, sif_par):
     # 1. Izvrši upit
     with connections['naplata_db'].cursor() as cursor:
@@ -339,6 +415,7 @@ def export_utuzene_fakture_excel(request, sif_par):
     wb.save(response)
     return response
 
+@role_permission_required()
 def export_opomene_excel(request,sif_par):
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
@@ -378,6 +455,7 @@ def export_opomene_excel(request,sif_par):
     return response
 
 
+@role_permission_required()
 def export_baket_90_excel(request, sif_par):
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
@@ -406,6 +484,7 @@ def export_baket_90_excel(request, sif_par):
     wb.save(response)
     return response
 
+@role_permission_required()
 def export_baket_60_excel(request, sif_par):
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
@@ -439,11 +518,13 @@ def export_baket_60_excel(request, sif_par):
 #                           <!-- KONTAKTI -->
 # <!-- ======================================================================= -->
 
+@role_permission_required()
 def lista_kontakata(request):
     kontakti = Kontakti.objects.using('naplata_db').all()
     return render(request, 'naplata/kontakti_lista.html', {'kontakti': kontakti})
 
 
+@role_permission_required()
 def dodaj_kontakt(request, sif_par, naz_par):
     if request.method == "POST":
         form = KontaktiForm(request.POST)
@@ -459,6 +540,7 @@ def dodaj_kontakt(request, sif_par, naz_par):
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
 
+@role_permission_required()
 def izmeni_kontakt(request, sif_par):
     kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), sif_par=sif_par)
     if request.method == "POST":
@@ -472,6 +554,7 @@ def izmeni_kontakt(request, sif_par):
         form = KontaktiForm(instance=kontakt)
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def obrisi_kontakt(request, id):
     kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -482,10 +565,12 @@ def obrisi_kontakt(request, id):
 # <!-- ======================================================================= -->
 #                           <!-- NAPOMENE -->
 # <!-- ======================================================================= -->
+@role_permission_required()
 def lista_napomena(request):
     napomene = Napomene.objects.using('naplata_db').all()
     return render(request, 'naplata/napomena_lista.html', {'napomene': napomene})
 
+@role_permission_required()
 def dodaj_napomenu(request, sif_par, naz_par):
     if request.method == "POST":
         form = NapomeneForm(request.POST)
@@ -500,6 +585,7 @@ def dodaj_napomenu(request, sif_par, naz_par):
 
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def izmeni_napomenu(request, id):
     napomena = get_object_or_404(Napomene.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -512,6 +598,7 @@ def izmeni_napomenu(request, id):
         form = NapomeneForm(instance=napomena)
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def obrisi_napomenu(request, id):
     napomena = get_object_or_404(Napomene.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -522,10 +609,12 @@ def obrisi_napomenu(request, id):
 # <!-- ======================================================================= -->
 #                           <!-- OPOMENE -->
 # <!-- ======================================================================= -->
+@role_permission_required()
 def lista_opomena(request):
     opomene = Opomene.objects.using('naplata_db').all()
     return render(request, 'naplata/opomene/lista.html', {'opomene': opomene})
 
+@role_permission_required()
 def dodaj_opomenu(request, sif_par, naz_par):
     if request.method == "POST":
         form = OpomeneForm(request.POST)
@@ -542,6 +631,7 @@ def dodaj_opomenu(request, sif_par, naz_par):
 
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def izmeni_opomenu(request, id):
     opomena = get_object_or_404(Opomene.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -553,6 +643,7 @@ def izmeni_opomenu(request, id):
         form = OpomeneForm(instance=opomena)
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def obrisi_opomenu(request, id):
     opomena = get_object_or_404(Opomene.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -565,10 +656,12 @@ def obrisi_opomenu(request, id):
 # <!-- ======================================================================= -->
 #                           <!-- POZIVI -->
 # <!-- ======================================================================= -->
+@role_permission_required()
 def lista_poziva(request):
     pozivi = PoziviTel.objects.using('naplata_db').all()
     return render(request, 'naplata/pozivi_tel/lista.html', {'pozivi': pozivi})
 
+@role_permission_required()
 def dodaj_poziv(request, sif_par, naz_par):
     if request.method == "POST":
         form = PoziviTelForm(request.POST)
@@ -584,6 +677,7 @@ def dodaj_poziv(request, sif_par, naz_par):
 
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def izmeni_poziv(request, id):
     poziv = get_object_or_404(PoziviTel.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -595,6 +689,7 @@ def izmeni_poziv(request, id):
         form = PoziviTelForm(instance=poziv)
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def obrisi_poziv(request, id):
     poziv = get_object_or_404(PoziviTel.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -606,10 +701,12 @@ def obrisi_poziv(request, id):
 # <!-- ======================================================================= -->
 #                           <!-- POZIVI/PISMA -->
 # <!-- ======================================================================= -->
+@role_permission_required()
 def lista_pozivnih_pisma(request):
     pozivi = PozivPismo.objects.using('naplata_db').all()
     return render(request, 'naplata/poziv_pismo/lista.html', {'pozivi': pozivi})
 
+@role_permission_required()
 def dodaj_poziv_pismo(request, sif_par, naz_par):
     if request.method == "POST":
         form = PozivPismoForm(request.POST)
@@ -624,6 +721,7 @@ def dodaj_poziv_pismo(request, sif_par, naz_par):
 
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def izmeni_poziv_pismo(request, id):
     poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -635,6 +733,7 @@ def izmeni_poziv_pismo(request, id):
         form = PozivPismoForm(instance=poziv)
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def obrisi_poziv_pismo(request, id):
     poziv = get_object_or_404(PozivPismo.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -646,10 +745,12 @@ def obrisi_poziv_pismo(request, id):
 # <!-- ======================================================================= -->
 #                           <!-- TUZBE -->
 # <!-- ======================================================================= -->
+@role_permission_required()
 def lista_tuzbi(request):
     tuzbe = Tuzbe.objects.using('naplata_db').all()
     return render(request, 'naplata/tuzbe/lista.html', {'tuzbe': tuzbe})
 
+@role_permission_required()
 def dodaj_tuzbu(request, sif_par, naz_par):
     if request.method == "POST":
         form = TuzbeForm(request.POST)
@@ -664,6 +765,7 @@ def dodaj_tuzbu(request, sif_par, naz_par):
 
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def izmeni_tuzbu(request, id):
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -675,6 +777,7 @@ def izmeni_tuzbu(request, id):
         form = TuzbeForm(instance=tuzba)
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
+@role_permission_required()
 def obrisi_tuzbu(request, id):
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
     if request.method == "POST":
@@ -682,6 +785,7 @@ def obrisi_tuzbu(request, id):
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
 
+@role_permission_required()
 def obrisi_tuzbu(request, id):
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
     if request.method == "POST":

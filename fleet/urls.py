@@ -41,6 +41,7 @@ register_converter(FloatConverter, 'float')
 
 urlpatterns = [
     path('vozila/', VehicleListView.as_view(), name='vehicle_list'),
+    path('vozila/export/csv/', vehicle_export_csv, name='vehicle_export_csv'),
     path('vozila/novo/', VehicleCreateView.as_view(), name='vehicle_create'),
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
     path('vozila/<int:pk>/', VehicleDetailView.as_view(), name='vehicle_detail'),

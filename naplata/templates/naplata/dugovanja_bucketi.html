@@ -1,12 +1,42 @@
 {% extends 'base.html' %}
 {% load humanize %} 
 {% block content %}
-<h2>Lista dugovanja po bucketima</h2>
+<h2>{{ title|default:'Lista dugovanja po bucketima' }}</h2>
+<style>
+    .avans-cell {
+        text-align: center;
+        vertical-align: middle;
+        padding: 0.25rem 0.5rem;
+    }
+    .avans-form {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        height: 100%;
+    }
+    .avans-checkbox {
+        width: 20px;
+        height: 20px;
+        transform: translateY(0);
+        accent-color: #198754;
+        cursor: pointer;
+    }
+</style>
 <div class="card">
     <div class="card-body">
         <a href="{% url 'naplata:export_dugovanja_excel' %}" target="_blank" class="btn btn-success mb-3">
             <i class="fas fa-file-excel"></i> Exportuj u Excel
         </a>
+        {% if is_avans_list %}
+            <a href="{% url 'naplata:lista_dugovanja_po_bucketima' %}" class="btn btn-secondary mb-3">
+                Nazad na punu listu
+            </a>
+        {% else %}
+            <a href="{% url 'naplata:lista_avans_klijenti' %}" class="btn btn-primary mb-3">
+                Nova lista
+            </a>
+        {% endif %}
         <div class="table-responsive">
             <table id="DugovanjaBuketi" class="display compact">
                 <thead>
@@ -24,6 +54,7 @@
                         <th>Ukupno</th>
                         <th>Veliki</th>
                         <th>INO</th>  <!-- nova kolona -->
+                        <th>Avans</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -58,6 +89,14 @@
                                     Ino
                                 {% endif %}
                             </td>
+                            <td class="avans-cell">
+                                <form method="post" action="{% url 'naplata:toggle_avans_klijent' %}" class="avans-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="sif_par" value="{{ dug.0 }}">
+                                    <input type="checkbox" class="form-check-input avans-checkbox" onchange="this.form.submit();"
+                                           {% if dug.0 in marked_ids %}checked{% endif %}>
+                                </form>
+                            </td>
                             
                         </tr>
                     {% endfor %}
@@ -76,6 +115,7 @@
                         <th id="total_ukupno"></th>
                         <th></th> <!-- Veliki ne sumiramo -->
                         <th></th> <!-- INO ne sumiramo -->
+                        <th></th> <!-- Avans ne sumiramo -->
                     </tr>
                 </tfoot>
             </table>

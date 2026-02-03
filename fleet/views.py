@@ -468,6 +468,86 @@ class VehicleListView(LoginRequiredMixin, FilterView):
         # Ako želiš globalni indikator aktivne aplikacije:
         ctx.setdefault('current_app', 'fleet')
         return ctx
+
+
+def _vehicle_list_base_queryset(request):
+    qs = Vehicle.objects.all()
+
+    latest_job_code_qs = JobCode.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-assigned_date', '-pk')
+
+    latest_job_code_id_subquery = latest_job_code_qs.values('id')[:1]
+    latest_org_unit_id_subquery = latest_job_code_qs.values('organizational_unit_id')[:1]
+    latest_org_unit_code_subquery = latest_job_code_qs.values('organizational_unit__code')[:1]
+    latest_center_subquery = latest_job_code_qs.values('organizational_unit__center')[:1]
+
+    latest_traffic_card_subquery = TrafficCard.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-issue_date').values('registration_number')[:1]
+
+    last_mileage_subquery = FuelConsumption.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-mileage').values('mileage')[:1]
+
+    qs = Vehicle.objects.annotate(
+        current_ou_id=Subquery(latest_org_unit_id_subquery)
+    )
+
+    qs = qs.annotate(
+        latest_job_code_id=Subquery(latest_job_code_id_subquery),
+        latest_org_unit=Subquery(latest_center_subquery),
+        latest_org_unit_code=Subquery(latest_org_unit_code_subquery),
+        registration_number=Subquery(latest_traffic_card_subquery),
+        total_repairs=Sum('service_transactions__potrazuje'),
+        mileage=Subquery(last_mileage_subquery),
+    )
+
+    get = request.GET
+    if "status" not in get and "show_archived" not in get:
+        qs = qs.filter(otpis=False)
+
+    return qs
+
+
+@role_permission_required()
+def vehicle_export_csv(request):
+    base_qs = _vehicle_list_base_queryset(request)
+    vehicle_filter = VehicleFilter(request.GET, queryset=base_qs)
+    qs = vehicle_filter.qs
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="vozila.csv"'
+    response.write('\ufeff')
+
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow([
+        'Registracija',
+        'Marka',
+        'Tip',
+        'Godište',
+        'Kilometraža',
+        'Potrošnja',
+        'Kategorija',
+        'Centar',
+        'Kubikaža',
+    ])
+
+    for vehicle in qs:
+        avg_consumption = calculate_average_fuel_consumption(vehicle)
+        writer.writerow([
+            vehicle.registration_number or '',
+            vehicle.brand or '',
+            vehicle.model or '',
+            vehicle.year_of_manufacture or '',
+            vehicle.mileage or '',
+            f"{avg_consumption:.2f}" if avg_consumption is not None else '0',
+            vehicle.category or '',
+            vehicle.latest_org_unit_code or '',
+            f"{vehicle.engine_volume:.0f}" if vehicle.engine_volume is not None else '',
+        ])
+
+    return response
     
 # DETALJI VOZILA
 class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
