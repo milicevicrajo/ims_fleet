@@ -307,6 +307,7 @@ class PutniNalogForm(forms.ModelForm):
             center_code = getattr(job_code, 'center', None)
             year = travel_date.year
             if center_code:
+                center_code = str(center_code).strip()
                 prefix = f"{center_code}/{year}-"
                 exists = PutniNalog.objects.filter(
                     order_number__startswith=prefix
