@@ -445,8 +445,14 @@ class PutniNalog(models.Model):
         start_sequence = getattr(self, "_start_sequence", None)
         if max_number == 0:
             if not start_sequence:
-                raise ValueError("Nedostaje početni broj za izabrani centar/godinu.")
-            current_number = int(start_sequence)
+                has_any_for_center = PutniNalog.objects.filter(
+                    order_number__startswith=f"{center_code}/"
+                ).exists()
+                if not has_any_for_center:
+                    raise ValueError("Nedostaje početni broj za izabrani centar/godinu.")
+                current_number = 1
+            else:
+                current_number = int(start_sequence)
         else:
             current_number = max_number + 1
 

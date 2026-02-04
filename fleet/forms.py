@@ -311,7 +311,10 @@ class PutniNalogForm(forms.ModelForm):
                 exists = PutniNalog.objects.filter(
                     order_number__startswith=prefix
                 ).exists()
-                if not exists and not start_sequence:
+                has_any_for_center = PutniNalog.objects.filter(
+                    order_number__startswith=f"{center_code}/"
+                ).exists()
+                if not exists and not start_sequence and not has_any_for_center:
                     self.add_error(
                         'start_sequence',
                         "Unesi početni broj za ovaj centar/godinu (ne postoji prethodni broj)."
