@@ -417,6 +417,11 @@ class PutniNalog(models.Model):
         default=2600
     )
 
+    is_weekly = models.BooleanField(
+        default=False,
+        verbose_name=_("Nedeljni nalog")
+    )
+
     def generate_order_number(self):
         center_code = getattr(self.job_code, "center", None)
         if not center_code:

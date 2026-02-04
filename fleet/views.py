@@ -1666,6 +1666,32 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
     template_name = 'fleet/putni_nalog_form.html'
     success_url = reverse_lazy('putninalog_list')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        copy_pk = self.request.GET.get("copy")
+        if copy_pk:
+            base_qs = _putninalog_base_qs(self.request)
+            source = base_qs.filter(pk=copy_pk).first()
+            if source:
+                initial.update({
+                    "employee": source.employee,
+                    "job_code": source.job_code,
+                    "travel_location": source.travel_location,
+                    "task": source.task,
+                    "contract_offer": source.contract_offer,
+                    "vehicle": source.vehicle,
+                    "other_vehicle": source.other_vehicle,
+                    "number_of_days": source.number_of_days,
+                    "advance_payment": source.advance_payment,
+                    "daily_allowance": source.daily_allowance,
+                    "is_weekly": source.is_weekly,
+                })
+                if source.vehicle:
+                    initial["transport_type"] = "ims"
+                elif source.other_vehicle:
+                    initial["transport_type"] = "other"
+        return initial
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Dodaj putni nalog'

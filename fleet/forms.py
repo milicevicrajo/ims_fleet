@@ -266,7 +266,7 @@ class PutniNalogForm(forms.ModelForm):
 
         # Sva polja su obavezna osim 'order_date' koji je automatski
         for field_name, field in self.fields.items():
-            if field_name not in {'order_date', 'order_number', 'start_sequence', 'vehicle', 'other_vehicle', 'transport_type'}:
+            if field_name not in {'order_date', 'order_number', 'start_sequence', 'vehicle', 'other_vehicle', 'transport_type', 'is_weekly'}:
                 field.required = True
 
         if self.instance and self.instance.pk:

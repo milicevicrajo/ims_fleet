@@ -79,13 +79,15 @@
                 <th>Datum putovanja</th>
                 <th>Broj dana</th>
                 <th>Avans</th>
+                <th class="text-center">Nedeljni</th>
                 <th class="text-center">Izmeni</th>
                 <th class="text-center">Štampa</th>
+                <th class="text-center">Ponovi</th>
               </tr>
             </thead>
             <tbody>
               {% for putni_nalog in putni_nalozi %}
-              <tr>
+              <tr{% if putni_nalog.is_weekly %} class="table-warning"{% endif %}>
                 <td>{{ putni_nalog.order_number }}</td>
                 <td>{{ putni_nalog.employee }}</td>
                 <td>{{ putni_nalog.job_code.code }}</td>
@@ -102,6 +104,13 @@
                 <td>{{ putni_nalog.number_of_days }}</td>
                 <td>{{ putni_nalog.advance_payment }}</td>
                 <td class="text-center">
+                  {% if putni_nalog.is_weekly %}
+                    <span class="badge bg-warning text-dark">Da</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">Ne</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
                   <a href="{% url 'putninalog_update' putni_nalog.pk %}" class="btn btn-outline-primary btn-sm">
                     <i class="mdi mdi-pencil"></i> Izmeni
                   </a>
@@ -109,6 +118,11 @@
                 <td class="text-center">
                   <a href="{% url 'putninalog_print' putni_nalog.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
                     <i class="mdi mdi-printer"></i> Štampa
+                  </a>
+                </td>
+                <td class="text-center">
+                  <a href="{% url 'putninalog_create' %}?copy={{ putni_nalog.pk }}" class="btn btn-outline-info btn-sm">
+                    <i class="mdi mdi-content-copy"></i> Ponovi
                   </a>
                 </td>
               </tr>
