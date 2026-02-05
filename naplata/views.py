@@ -27,6 +27,36 @@ def lista_dugovanja(request):
         'total_pot': total_pot,
     })
 
+
+@never_cache
+@role_permission_required()
+def lista_tuzenih(request):
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT
+                god,
+                sif_par,
+                naz_par,
+                datum,
+                knt,
+                naz_knt,
+                duguju,
+                platili
+            FROM dbo.v_tuzeni
+            ORDER BY god DESC, duguju DESC
+        """)
+        tuzeni = cursor.fetchall()
+
+    total_duguju = sum((Decimal(row[6] or 0) for row in tuzeni), Decimal("0"))
+    total_platili = sum((Decimal(row[7] or 0) for row in tuzeni), Decimal("0"))
+
+    return render(request, 'naplata/tuzeni_list.html', {
+        'tuzeni': tuzeni,
+        'total_duguju': total_duguju,
+        'total_platili': total_platili,
+        'title': 'Utuženi Klijenti',
+    })
+
 @never_cache
 @role_permission_required()
 def lista_dugovanja_po_bucketima(request):
@@ -611,8 +641,26 @@ def obrisi_napomenu(request, id):
 # <!-- ======================================================================= -->
 @role_permission_required()
 def lista_opomena(request):
-    opomene = Opomene.objects.using('naplata_db').all()
-    return render(request, 'naplata/opomene/lista.html', {'opomene': opomene})
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT
+                sif_par,
+                naz_par,
+                god,
+                br_opomene,
+                datum,
+                iznos,
+                fakture,
+                napomene,
+                id
+            FROM opomene
+            ORDER BY god DESC, datum DESC
+        """)
+        opomene = cursor.fetchall()
+    return render(request, 'naplata/opomene_list.html', {
+        'opomene': opomene,
+        'title': 'Lista opomena',
+    })
 
 @role_permission_required()
 def dodaj_opomenu(request, sif_par, naz_par):

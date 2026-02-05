@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ title|default:'Lista opomena' }}</h2>
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="DatatableOpomene" class="display compact">
+        <thead>
+          <tr>
+            <th>Šifra partnera</th>
+            <th>Partner</th>
+            <th>Godina</th>
+            <th>Broj opomene</th>
+            <th>Datum</th>
+            <th>Iznos</th>
+            <th>Fakture</th>
+            <th>Napomene</th>
+            <th>ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in opomene %}
+          <tr>
+            <td>{{ row.0 }}</td>
+            <td>{{ row.1 }}</td>
+            <td>{{ row.2 }}</td>
+            <td>{{ row.3 }}</td>
+            <td>{{ row.4|date:"d.m.Y" }}</td>
+            <td>{{ row.5|floatformat:2 }}</td>
+            <td>{{ row.6 }}</td>
+            <td>{{ row.7 }}</td>
+            <td>{{ row.8 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9">Nema podataka</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('DatatableOpomene');
+    if (!table || !window.initFleetReportTable) {
+      return;
+    }
+    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) {
+      return;
+    }
+    window.initFleetReportTable(table, { pageLength: 100, order: [[2, 'desc'], [4, 'desc']] });
+  });
+</script>
+{% endblock %}

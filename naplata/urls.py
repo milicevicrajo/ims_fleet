@@ -5,6 +5,7 @@ from django.urls import path
 app_name = "naplata"
 urlpatterns = [
     path('dugovanja/', lista_dugovanja, name='lista_dugovanja'),
+    path('tuzeni/', lista_tuzenih, name='lista_tuzenih'),
     path('partner/<int:sif_par>/', detalji_partner, name='detalji_partner'),
     path('dugovanja_po_bucketima/', lista_dugovanja_po_bucketima, name='lista_dugovanja_po_bucketima'),
     path('dugovanja_po_bucketima/nova-lista/', lista_avans_klijenti, name='lista_avans_klijenti'),

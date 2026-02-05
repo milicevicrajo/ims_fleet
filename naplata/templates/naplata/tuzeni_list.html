@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<h2>{{ title|default:'Utuženi klijenti' }}</h2>
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="DatatableTuzeni" class="display compact">
+        <thead>
+          <tr>
+            <th>Godina</th>
+            <th>Šifra partnera</th>
+            <th>Partner</th>
+            <th>Datum</th>
+            <th>Konto</th>
+            <th>Naziv konta</th>
+            <th>Duguju</th>
+            <th>Platili</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in tuzeni %}
+          <tr>
+            <td>{{ row.0 }}</td>
+            <td>{{ row.1 }}</td>
+            <td>{{ row.2 }}</td>
+            <td>{{ row.3|date:"d.m.Y" }}</td>
+            <td>{{ row.4 }}</td>
+            <td>{{ row.5 }}</td>
+            <td>{{ row.6|floatformat:2 }}</td>
+            <td>{{ row.7|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8">Nema podataka</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="6">Ukupno:</th>
+            <th>{{ total_duguju|floatformat:2 }}</th>
+            <th>{{ total_platili|floatformat:2 }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('DatatableTuzeni');
+    if (!table || !window.initFleetReportTable) {
+      return;
+    }
+    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) {
+      return;
+    }
+    window.initFleetReportTable(table, { pageLength: 100, order: [[0, 'desc'], [6, 'desc']] });
+  });
+</script>
+{% endblock %}
