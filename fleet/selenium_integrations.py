@@ -15,9 +15,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
-from webdriver_manager.chrome import ChromeDriverManager
-
-os.environ.setdefault("WDM_LOG_LEVEL", "0")
 
 from fleet.models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
 from fleet.utils import (
@@ -27,7 +24,8 @@ from fleet.utils import (
 
 
 def create_chrome_driver(options):
-    service = Service(ChromeDriverManager(log_level=0).install())
+    driver_path = r"C:\ProgramData\chocolatey\bin\chromedriver.exe"
+    service = Service(driver_path)
     return webdriver.Chrome(service=service, options=options)
 
 def get_latest_download_file(download_path):
