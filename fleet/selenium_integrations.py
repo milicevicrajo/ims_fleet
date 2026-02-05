@@ -9,6 +9,8 @@ import pytz
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
+from django.utils import timezone as dj_timezone
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -34,6 +36,17 @@ def create_chrome_driver(options):
         raise FileNotFoundError("Nije pronađen kompatibilan chromedriver. Proveri putanju/instalaciju.")
     service = Service(driver_path)
     return webdriver.Chrome(service=service, options=options)
+
+
+def dismiss_disclaimer_overlay(driver):
+    try:
+        overlays = driver.find_elements(By.CLASS_NAME, "disclaimer-component")
+        if overlays:
+            driver.execute_script(
+                "document.querySelectorAll('.disclaimer-component').forEach(el => el.style.display='none');"
+            )
+    except Exception:
+        pass
 
 def get_latest_download_file(download_path):
     files = os.listdir(download_path)
@@ -143,10 +156,11 @@ def nis_data_import():
 
             time.sleep(5)
 
+            dismiss_disclaimer_overlay(driver)
             reports_link = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Izveštaji')]"))
             )
-            reports_link.click()
+            driver.execute_script("arguments[0].click();", reports_link)
 
             time.sleep(2)
 
@@ -428,7 +442,8 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 vehicle = traffic_card.vehicle
 
                 # Konvertuj datume i druge vrednosti
-                transaction_date = datetime.strptime(row['Transactiondate'], '%Y-%m-%d %H:%M:%S').date()
+                naive_dt = datetime.strptime(row['Transactiondate'], '%Y-%m-%d %H:%M:%S')
+                transaction_date = dj_timezone.make_aware(naive_dt, dj_timezone.get_current_timezone()) if dj_timezone.is_naive(naive_dt) else naive_dt
                 amount = float(row['Quantity'].replace(',', '.'))
 
                 # Konvertuj bruto trošak i PDV u decimalne vrednosti
@@ -439,19 +454,21 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 # Izračunaj neto trošak
                 cost_neto = cost_bruto - vat
 
-                # Kreiraj FuelConsumption instancu i sačuvaj je u bazi
-                FuelConsumption.objects.create(
-                    vehicle=vehicle,
-                    date=transaction_date,
-                    amount=amount,
-                    fuel_type=row['Product INV'],
-                    cost_bruto=cost_bruto,
-                    cost_neto=cost_neto,
-                    supplier="OMV",
-                    job_code=job_code,
-                    mileage=row['Mileage'],
-                )
-                print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
+                try:
+                    FuelConsumption.objects.create(
+                        vehicle=vehicle,
+                        date=transaction_date,
+                        amount=amount,
+                        fuel_type=row['Product INV'],
+                        cost_bruto=cost_bruto,
+                        cost_neto=cost_neto,
+                        supplier="OMV",
+                        job_code=job_code,
+                        mileage=row['Mileage'],
+                    )
+                    print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
+                except IntegrityError:
+                    print(f"Duplicate fuel consumption skipped for {formatted_plate} {transaction_date} {cost_bruto} {amount}.")
             
             except ObjectDoesNotExist:
                 print(f"Vehicle with license plate {row['License plate No']} not found.")
@@ -564,7 +581,8 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 vehicle = traffic_card.vehicle
 
                 # Konvertuj datume i druge vrednosti
-                transaction_date = datetime.strptime(row['Transactiondate'], '%Y-%m-%d %H:%M:%S').date()
+                naive_dt = datetime.strptime(row['Transactiondate'], '%Y-%m-%d %H:%M:%S')
+                transaction_date = dj_timezone.make_aware(naive_dt, dj_timezone.get_current_timezone()) if dj_timezone.is_naive(naive_dt) else naive_dt
                 amount = float(row['Quantity'].replace(',', '.'))
 
                 # Konvertuj bruto trošak i PDV u decimalne vrednosti
@@ -575,19 +593,21 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 # Izračunaj neto trošak
                 cost_neto = cost_bruto - vat
 
-                # Kreiraj FuelConsumption instancu i sačuvaj je u bazi
-                FuelConsumption.objects.create(
-                    vehicle=vehicle,
-                    date=transaction_date,
-                    amount=amount,
-                    fuel_type=row['Product INV'],
-                    cost_bruto=cost_bruto,
-                    cost_neto=cost_neto,
-                    supplier="OMV",
-                    job_code=job_code,
-                    mileage=row['Mileage'],
-                )
-                print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
+                try:
+                    FuelConsumption.objects.create(
+                        vehicle=vehicle,
+                        date=transaction_date,
+                        amount=amount,
+                        fuel_type=row['Product INV'],
+                        cost_bruto=cost_bruto,
+                        cost_neto=cost_neto,
+                        supplier="OMV",
+                        job_code=job_code,
+                        mileage=row['Mileage'],
+                    )
+                    print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
+                except IntegrityError:
+                    print(f"Duplicate fuel consumption skipped for {formatted_plate} {transaction_date} {cost_bruto} {amount}.")
             
             except ObjectDoesNotExist:
                 print(f"Vehicle with license plate {row['License plate No']} not found.")
