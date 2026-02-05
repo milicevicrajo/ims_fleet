@@ -216,6 +216,16 @@
                 document.body.removeChild(a);
               }
 
+              if (data && data.print_url) {
+                const printLink = document.createElement('a');
+                printLink.href = data.print_url;
+                printLink.target = '_blank';
+                printLink.rel = 'noopener';
+                document.body.appendChild(printLink);
+                printLink.click();
+                document.body.removeChild(printLink);
+              }
+
               window.location.href = data.redirect_url;
             })
             .catch(error => {

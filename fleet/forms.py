@@ -229,7 +229,7 @@ class PutniNalogForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     employee = forms.ModelChoiceField(
-        queryset=Employee.objects.all(),
+        queryset=Employee.objects.filter(is_active=True),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Zaposleni"
     )
@@ -253,6 +253,15 @@ class PutniNalogForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance and getattr(self.instance, "employee", None):
+            inactive_employee = Employee.objects.filter(
+                pk=self.instance.employee_id,
+                is_active=False
+            )
+            if inactive_employee.exists():
+                self.fields['employee'].queryset = (
+                    self.fields['employee'].queryset | inactive_employee
+                )
         
         # Automatski postavlja datum za order_date (novo ili iz postojećeg naloga)
         if self.instance and self.instance.pk:
@@ -348,7 +357,7 @@ class VehicleTravelOrderForm(forms.ModelForm):
         label="Vozilo",
     )
     employee = forms.ModelChoiceField(
-        queryset=Employee.objects.all(),
+        queryset=Employee.objects.filter(is_active=True),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Zaposleni",
     )
@@ -364,6 +373,15 @@ class VehicleTravelOrderForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance and getattr(self.instance, "employee", None):
+            inactive_employee = Employee.objects.filter(
+                pk=self.instance.employee_id,
+                is_active=False
+            )
+            if inactive_employee.exists():
+                self.fields['employee'].queryset = (
+                    self.fields['employee'].queryset | inactive_employee
+                )
         if not self.instance.pk:
             last_number = (
                 VehicleTravelOrder.objects.order_by('-pn_number')

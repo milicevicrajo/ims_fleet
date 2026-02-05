@@ -6,6 +6,7 @@ from fleet.utils import (
     nis_data_import, omv_putnicka_data_import, omv_teretna_data_import,
     kerio_login, process_vehicle_retirements
 )
+from fleet.sync.hr import sync_employees_from_hr_view
 from celery import shared_task
 
 @shared_task
@@ -59,3 +60,16 @@ def proveri_otpis():
 def fetch_ddor_data_task():   # ← NOVI Celery task
     result = fetch_ddor_insurance_data()
     return f"Fetch DDOR Insurance Data: {result}"
+
+
+@shared_task
+def sync_hr_employees_task():
+    result = sync_employees_from_hr_view()
+    return (
+        "Sync HR Employees: "
+        f"ukupno={result['total']}, "
+        f"kreirano={result['created']}, "
+        f"azurirano={result['updated']}, "
+        f"azurirano_neaktivni={result['updated_inactive']}, "
+        f"preskoceno_neaktivni={result['skipped_inactive']}"
+    )

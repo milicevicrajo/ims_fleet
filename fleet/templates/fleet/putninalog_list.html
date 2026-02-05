@@ -88,7 +88,7 @@
             <tbody>
               {% for putni_nalog in putni_nalozi %}
               <tr{% if putni_nalog.is_weekly %} class="table-warning"{% endif %}>
-                <td>{{ putni_nalog.order_number }}</td>
+                <td data-order="{{ putni_nalog.pn_sort_key }}">{{ putni_nalog.order_number }}</td>
                 <td>{{ putni_nalog.employee }}</td>
                 <td>{{ putni_nalog.job_code.code }}</td>
                 <td>{{ putni_nalog.travel_location }}</td>
@@ -158,7 +158,7 @@
     if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) {
       return;
     }
-    window.initFleetReportTable(table, { pageLength: 50 });
+    window.initFleetReportTable(table, { pageLength: 50, order: [[0, 'desc']] });
   });
 </script>
 {% endblock %}

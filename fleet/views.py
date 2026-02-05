@@ -16,8 +16,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
 from django.core.exceptions import PermissionDenied
 from django.db import connections
-from django.db.models import Avg, Exists, F, OuterRef, Q, Subquery, Sum
-from django.db.models.functions import TruncMonth, TruncYear
+from django.db.models import Avg, Exists, F, OuterRef, Q, Subquery, Sum, IntegerField, ExpressionWrapper, Value
+from django.db.models.functions import Cast, StrIndex, Substr, TruncMonth, TruncYear
 from django.http import FileResponse, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -508,7 +508,29 @@ def _vehicle_list_base_queryset(request):
     if "status" not in get and "show_archived" not in get:
         qs = qs.filter(otpis=False)
 
-    return qs
+    qs = qs.annotate(
+        _pn_dash_pos=StrIndex("order_number", "-"),
+        _pn_slash_pos=StrIndex("order_number", "/"),
+    ).annotate(
+        _pn_year=Cast(
+            Substr(
+                "order_number",
+                F("_pn_slash_pos") + 1,
+                F("_pn_dash_pos") - F("_pn_slash_pos") - 1,
+            ),
+            IntegerField(),
+        ),
+        _pn_seq=Cast(
+            Substr("order_number", F("_pn_dash_pos") + 1),
+            IntegerField(),
+        ),
+        pn_sort_key=ExpressionWrapper(
+            F("_pn_year") * Value(1000000) + F("_pn_seq"),
+            output_field=IntegerField(),
+        ),
+    )
+
+    return qs.order_by("-_pn_year", "-_pn_seq", "-id")
 
 
 @role_permission_required()
@@ -1472,9 +1494,15 @@ class EmployeeListView(LoginRequiredMixin, ListView):
     template_name = 'fleet/employee_list.html'
     context_object_name = 'employees'
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        show_inactive = self.request.GET.get("inactive") == "1"
+        return qs.filter(is_active=not show_inactive)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Lista zaposlenih'
+        context['show_inactive'] = self.request.GET.get("inactive") == "1"
         return context
 
 class EmployeeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
@@ -1508,7 +1536,7 @@ class EmployeeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Detail
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = f"Detalji zaposlenog {self.object.name}"
+        context['title'] = f"Detalji zaposlenog {self.object.last_name} {self.object.first_name}"
         return context
 
 class EmployeeDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
@@ -1708,7 +1736,8 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
 
         # Vrati URL za preuzimanje i preusmeravanje
         return JsonResponse({
-            'redirect_url': reverse('putninalog_list')
+            'redirect_url': reverse('putninalog_list'),
+            'print_url': f"{reverse('putninalog_print', args=[self.object.pk])}?auto=1",
         })
 
 
@@ -1730,7 +1759,8 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         # Save the object
         self.object = form.save()
         return JsonResponse({
-            'redirect_url': reverse('putninalog_list')
+            'redirect_url': reverse('putninalog_list'),
+            'print_url': f"{reverse('putninalog_print', args=[self.object.pk])}?auto=1",
         })
 
     def get_queryset(self):
