@@ -1,4 +1,4 @@
-from ...utils import omv_teretna_data_import
+from ...selenium_integrations import omv_teretna_data_import
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):

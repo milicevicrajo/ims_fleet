@@ -2,9 +2,14 @@ from fleet.utils import (
     fetch_policy_data, 
     fetch_service_data, 
     fetch_requisition_data,
-    fetch_ddor_insurance_data,   # ← NOVO dodaj import
-    nis_data_import, omv_putnicka_data_import, omv_teretna_data_import,
-    kerio_login, process_vehicle_retirements
+    fetch_ddor_insurance_data,  
+    process_vehicle_retirements
+)
+from fleet.selenium_integrations import (
+    nis_data_import,
+    omv_putnicka_data_import,
+    omv_teretna_data_import,
+    kerio_login,
 )
 from fleet.sync.hr import sync_employees_from_hr_view
 from celery import shared_task

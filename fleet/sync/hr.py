@@ -26,13 +26,25 @@ def _normalize_full_name(full_name: str):
     if not full_name:
         return None, "", ""
     cleaned = " ".join(str(full_name).split())
-    tokens = cleaned.split(" ")
 
     title = None
-    if tokens:
-        first_token = tokens[0].rstrip(".").lower()
-        if first_token in TITLE_TOKENS:
-            title = tokens.pop(0).rstrip(".")
+    title_match = re.match(r"^(dr|mr|prof|ing|msc|phd)\.?\s*", cleaned, flags=re.IGNORECASE)
+    if title_match:
+        title = title_match.group(1)
+        cleaned = cleaned[title_match.end():].strip()
+
+    raw_tokens = [t for t in cleaned.split(" ") if t]
+    if title is None:
+        for raw in raw_tokens:
+            token_key = raw.rstrip(".").lower()
+            if token_key in TITLE_TOKENS:
+                title = token_key
+                break
+
+    tokens = [
+        t for t in raw_tokens
+        if t and t.rstrip(".").lower() not in TITLE_TOKENS
+    ]
 
     if not tokens:
         return title, "", ""
@@ -45,8 +57,10 @@ def _normalize_full_name(full_name: str):
         last_name = " ".join(tokens[:-1])
 
     first_name = " ".join(_normalize_part(p) for p in first_name.split())
-    last_name = " ".join(_normalize_part(p) for p in last_name.split())
-    title = _normalize_part(title) if title else None
+    last_name = " ".join(
+        _normalize_part(p) for p in last_name.replace("-", " ").split()
+    )
+    title = title.lower() if title else None
 
     return title, first_name, last_name
 

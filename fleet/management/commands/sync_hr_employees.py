@@ -10,7 +10,7 @@ class Command(BaseCommand):
         parser.add_argument(
                 "--db",
                 dest="db",
-                default=None,
+                default="server_db",
                 help="Naziv baze iz settings.DATABASES",
             )
 
