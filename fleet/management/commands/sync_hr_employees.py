@@ -8,11 +8,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--db",
-            dest="db",
-            default="server_db",
-            help="Naziv baze iz settings.DATABASES",
-        )
+                "--db",
+                dest="db",
+                default=None,
+                help="Naziv baze iz settings.DATABASES",
+            )
 
     def handle(self, *args, **options):
         db = options.get("db")

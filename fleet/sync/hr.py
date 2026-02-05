@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import date, datetime
 
+from django.conf import settings
 from django.db import connections
 
 from fleet.models import Employee
@@ -76,7 +77,19 @@ def _as_str(value):
     return value or None
 
 
-def sync_employees_from_hr_view(using="test_db"):
+def _resolve_hr_db_alias(preferred=None):
+    if preferred:
+        return preferred
+    configured = set(getattr(settings, "DATABASES", {}).keys())
+    if "test_db" in configured:
+        return "test_db"
+    if "server_db" in configured:
+        return "server_db"
+    return "default"
+
+
+def sync_employees_from_hr_view(using=None):
+    using = _resolve_hr_db_alias(using)
     query = """
         SELECT
             rasif,
