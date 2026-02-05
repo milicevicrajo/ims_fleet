@@ -17,6 +17,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
+from selenium.common.exceptions import TimeoutException
 
 from fleet.models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
 from fleet.utils import (
@@ -53,6 +54,20 @@ def get_latest_download_file(download_path):
     paths = [os.path.join(download_path, basename) for basename in files]
     latest_file = max(paths, key=os.path.getctime)
     return latest_file
+
+
+def wait_for_download_file(download_path, timeout=60):
+    start = time.time()
+    while time.time() - start < timeout:
+        files = [
+            f for f in os.listdir(download_path)
+            if not f.endswith(".crdownload") and not f.endswith(".tmp")
+        ]
+        if files:
+            paths = [os.path.join(download_path, basename) for basename in files]
+            return max(paths, key=os.path.getctime)
+        time.sleep(1)
+    raise TimeoutException("Download file not found within timeout.")
 
 
 def kerio_login():
@@ -130,24 +145,31 @@ def nis_data_import():
         chrome_options.add_experimental_option("prefs", prefs)
 
         driver = create_chrome_driver(chrome_options)
+        driver.set_page_load_timeout(60)
+        driver.set_script_timeout(30)
+        driver.implicitly_wait(5)
         driver.set_window_size(1920, 1080)
 
         try:
+            logger.info("NIS: opening login page")
             driver.get(login_url)
             logger.info("Opened login page")
 
+            logger.info("NIS: waiting for username input")
             username_input = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Korisničko ime']"))
             )
             username_input.send_keys(username)
             logger.info("Entered username")
 
+            logger.info("NIS: waiting for password input")
             password_input = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Lozinka']"))
             )
             password_input.send_keys(password)
             logger.info("Entered password")
 
+            logger.info("NIS: waiting for login button")
             login_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
             )
@@ -157,6 +179,7 @@ def nis_data_import():
             time.sleep(5)
 
             dismiss_disclaimer_overlay(driver)
+            logger.info("NIS: waiting for reports link")
             reports_link = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Izveštaji')]"))
             )
@@ -164,6 +187,7 @@ def nis_data_import():
 
             time.sleep(2)
 
+            logger.info("NIS: waiting for client transactions link")
             client_transactions_link = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po kupcima')]"))
             )
@@ -178,6 +202,7 @@ def nis_data_import():
             except Exception:
                 pass
 
+            logger.info("NIS: waiting for show report button")
             show_report_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
             )
@@ -186,6 +211,7 @@ def nis_data_import():
 
             time.sleep(2)
 
+            logger.info("NIS: waiting for download dropdown")
             dropdown_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'download-button')]"))
             )
@@ -193,15 +219,17 @@ def nis_data_import():
 
             time.sleep(1)
 
+            logger.info("NIS: waiting for XLSX option")
             xlsx_option = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", xlsx_option)
             ActionChains(driver).move_to_element(xlsx_option).click().perform()
 
-            time.sleep(5)
+            time.sleep(2)
 
-            xlsx_file_path = get_latest_download_file(download_path)
+            logger.info("NIS: waiting for download file")
+            xlsx_file_path = wait_for_download_file(download_path, timeout=90)
             import_nis_fuel_consumption(xlsx_file_path)
             import_nis_transactions(xlsx_file_path)
             return "Funkcija NIS Data Import je uspešno izvršena"
