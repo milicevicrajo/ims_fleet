@@ -24,7 +24,14 @@ from fleet.utils import (
 
 
 def create_chrome_driver(options):
-    driver_path = r"C:\ProgramData\chocolatey\bin\chromedriver.exe"
+    chocolatey_dir = r"C:\ProgramData\chocolatey\bin"
+    driver_candidates = [
+        os.path.join(chocolatey_dir, "chromedriver.exe"),
+        r"C:\Windows\system32\config\systemprofile\.wdm\drivers\chromedriver\win64\144.0.7559.133\chromedriver.exe",
+    ]
+    driver_path = next((p for p in driver_candidates if os.path.exists(p)), None)
+    if not driver_path:
+        raise FileNotFoundError("Nije pronađen kompatibilan chromedriver. Proveri putanju/instalaciju.")
     service = Service(driver_path)
     return webdriver.Chrome(service=service, options=options)
 
