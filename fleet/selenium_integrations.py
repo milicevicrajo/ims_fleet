@@ -17,6 +17,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 
+os.environ.setdefault("WDM_LOG_LEVEL", "0")
+
 from fleet.models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
 from fleet.utils import (
     format_license_plate,
@@ -25,7 +27,7 @@ from fleet.utils import (
 
 
 def create_chrome_driver(options):
-    service = Service(ChromeDriverManager().install())
+    service = Service(ChromeDriverManager(log_level=0).install())
     return webdriver.Chrome(service=service, options=options)
 
 def get_latest_download_file(download_path):
