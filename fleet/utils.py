@@ -1324,8 +1324,8 @@ def populate_putni_nalog_template(putni_nalog):
         sheet1["P1"] = str(putni_nalog.job_code.name)  # Organizacija
         sheet1["N2"] = str(putni_nalog.order_number)  # Broj naloga
         sheet1["M3"] = str(putni_nalog.order_date.strftime("%d.%m.%Y"))  # Datum naloga
-        sheet1["O6"] = str(putni_nalog.employee)  # Zaposleni
-        sheet1["M8"] = str(putni_nalog.employee.position)  # Pozicija radnika
+        sheet1["O6"] = str(putni_nalog.employee) if putni_nalog.employee else str(putni_nalog.other_employee_name or "")  # Zaposleni
+        sheet1["M8"] = str(putni_nalog.employee.position) if putni_nalog.employee else ""  # Pozicija radnika
         sheet1["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
         sheet1["N10"] = putni_nalog.travel_location
         sheet1["M12"] = putni_nalog.task
@@ -1344,8 +1344,8 @@ def populate_putni_nalog_template(putni_nalog):
         sheet2["P1"] = str(putni_nalog.job_code.name)  # Organizacija
         sheet2["N2"] = str(putni_nalog.order_number)  # Broj naloga
         sheet2["M3"] = str(putni_nalog.order_date.strftime("%d.%m.%Y"))  # Datum naloga
-        sheet2["O6"] = str(putni_nalog.employee)  # Zaposleni
-        sheet2["M8"] = str(putni_nalog.employee.position)  # Pozicija radnika
+        sheet2["O6"] = str(putni_nalog.employee) if putni_nalog.employee else str(putni_nalog.other_employee_name or "")  # Zaposleni
+        sheet2["M8"] = str(putni_nalog.employee.position) if putni_nalog.employee else ""  # Pozicija radnika
         sheet2["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
         sheet2["N10"] = putni_nalog.travel_location
         sheet2["M12"] = putni_nalog.task

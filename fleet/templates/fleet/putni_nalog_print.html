@@ -34,8 +34,14 @@
 		.row { display: flex; gap: 6mm; justify-content: space-between; margin-bottom: 3mm; font-size: 9pt; }
 		.label { font-weight: 400; }
 		.line { border-bottom: 1px dotted #666; flex: 1; margin-left: 4mm; }
+		.line.line-center { text-align: center; }
+		.line.line-right { display: flex; justify-content: flex-end; gap: 3mm; }
+		.value-strong { font-weight: 700; font-size: 12pt; }
+		.value-strong.sm { font-size: 11pt; }
 		.header-stack { display: grid; grid-template-columns: 1fr; gap: 1mm; font-size: 9pt; margin-bottom: 3mm; }
 		.header-line { border-bottom: 1px solid #000; display: inline-block; padding-bottom: 1mm; }
+		.header-line.big { font-weight: 700; font-size: 12pt; }
+		.header-line.big.xl { font-size: 13pt; }
 		.note { text-align: center; font-size: 8pt; margin-bottom: 2mm; }
 		.sign-row { display: flex; justify-content: space-between; margin-top: 10mm; font-size: 9pt; }
 		.sign { width: 45%; text-align: center; }
@@ -45,39 +51,41 @@
 		.nalog-footer .center { text-align: center; }
 		.nalog-footer .right { text-align: right; }
 		.report-lines { margin-top: 4mm; }
-		.report-line { border-bottom: 1px dotted #666; height: 6mm; }
+		.report-line { border-bottom: 1px dotted #666; height: 7mm; }
 
 		.putni-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
 		.putni-table th, .putni-table td { border: 1px solid #9a9a9a; padding: 2px; text-align: center; font-weight: 400; }
 		.putni-table td.right, .putni-table th.right { text-align: right; padding-right: 4mm; }
 		.putni-table .left { text-align: left; padding-left: 4mm; }
 		.putni-table .head { height: 8mm; }
-		.putni-table .rowh { height: 7mm; }
-		.putni-table .rowh-sm { height: 6mm; }
+		.putni-table .head-tall { height: 14mm; }
+		.putni-table .rowh { height: 6mm; }
+		.putni-table .rowh-sm { height: 5mm; }
 		.vlabel { writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 400; font-size: 8pt; width: 6mm; }
 		.totals-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-top: 2mm; }
 		.totals-table td { border: 1px solid #9a9a9a; padding: 2px; text-align: center; height: 6mm; }
 		.right { text-align: right; padding-right: 4mm; }
 		.small { font-size: 8pt; }
-		.line-fill { border-bottom: 1px dotted #666; display: inline-block; min-width: 30mm; }
+		.line-fill { border-bottom: 1px dotted #666; display: inline-block; min-width: 30mm; height: 6mm; line-height: 6mm; vertical-align: middle; }
 		.sig-block { display: inline-block; text-align: center; vertical-align: middle; line-height: 1; }
 		.sig-block .line-fill { position: relative; top: 2mm; }
 		.sig-block .line-fill { min-width: 35mm; }
 		.sig-caption { display: block; font-size: 7pt; margin-top: 2mm; font-weight: 400; color: #555; }
 		.signature-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; font-size: 8pt; margin-top: 6mm; }
 		.signature-box { text-align: center; }
-		.signature-line { border-bottom: 1px dotted #666; margin-top: 10mm; }
-		.footer-block { margin-top: 4mm; font-size: 8pt; }
+		.signature-line { border-bottom: 1px dotted #666; margin-top: 12mm; }
+		.footer-block { margin-top: 3mm; font-size: 8pt; }
 		.page-second .box.left-col { display: flex; flex-direction: column; }
 		.page-second .box.left-col .left-content { flex: 1 1 auto; }
 		.page-second .box.left-col .footer-block { margin-top: auto; }
 		.nalog-footer .signature-line { margin-top: 6mm; }
 		.footer-line { margin-top: 2mm; }
+		.footer-line.tall { min-height: 5mm; }
 		.footer-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; margin-top: 4mm; }
 		.footer-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 4mm; }
 		.footer-sign { text-align: center; }
 		.footer-sign.single-line { white-space: nowrap; }
-		.footer-sign .signature-line { margin-top: 6mm; }
+		.footer-sign .signature-line { margin-top: 8mm; }
 
 		@media print {
 			body * { visibility: hidden; }
@@ -115,7 +123,7 @@
 					<div>{{ putni_nalog.job_code.name }}</div>
 				</div>
 				<div class="header-stack">
-					<div><span class="label">Broj</span> <span class="header-line">{{ putni_nalog.order_number }}</span></div>
+					<div><span class="label">Broj</span> <span class="header-line big xl">{{ putni_nalog.order_number }}</span></div>
 					<div><span class="label">Datum</span> <span class="header-line">{{ putni_nalog.order_date|date:"d.m.Y" }}</span></div>
 				</div>
                 <div class="row">&nbsp;</div>
@@ -124,8 +132,8 @@
                 <div class="row">&nbsp;</div>
 
 
-				<div class="row"><div class="label">Radnik-ca*</div><div class="line">{{ putni_nalog.employee }}</div></div>
-				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{{ putni_nalog.employee.position }}</div></div>
+				<div class="row"><div class="label">Radnik-ca*</div><div class="line line-center"><span class="value-strong">{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %}</span></div></div>
+				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{% if putni_nalog.employee %}{{ putni_nalog.employee.position }}{% endif %}</div></div>
 				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
 				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
 								<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
@@ -141,8 +149,8 @@
 				<div class="row"><div class="label">Na službenom putu će se zadržati najduže do</div><div class="line">{{ putni_nalog.number_of_days }} dana</div></div>
 				<div class="row">a u roku od 48 časova po povratku sa službenog puta i dolasku na posao, podneće pismeni izveštaj o obavljenom službenom poslu.</div>
                 <div class="row">Račun o učinjenim putnim troškovima podneti u roku od 3 dana.</div>
-				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line">{{ putni_nalog.advance_payment }}</div></div>
-				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line">{{ putni_nalog.job_code.code }}</div></div>
+				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line line-right"><span class="value-strong">{{ putni_nalog.advance_payment }}</span><span class="value-strong sm">{{ putni_nalog.advance_payment_currency }}</span></div></div>
+				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line line-center"><span class="value-strong">{{ putni_nalog.job_code.code }}</span></div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
@@ -170,11 +178,11 @@
 						<col style="width:6mm;">
 						<col style="width:30mm;">
 						<col style="width:30mm;">
-						<col style="width:15mm;">
-						<col style="width:15mm;">
-						<col style="width:15mm;">
-						<col style="width:20mm;">
-                        <col style="width:20mm;">
+						<col style="width:12mm;">
+						<col style="width:12mm;">
+						<col style="width:12mm;">
+						<col style="width:18mm;">
+                        <col style="width:28mm;">
 					</colgroup>
 					<tbody>
 						<tr class="head">
@@ -246,7 +254,7 @@
 							<td>&nbsp;</td>
 						</tr>
 
-						<tr class="head" style="height:12mm;">
+						<tr class="head head-tall">
 							<th colspan="8">
 								<span>
 									U <span class="line-fill"></span> dana <span class="line-fill"></span> 20___,
@@ -268,7 +276,7 @@
 						slovima <span class="line-fill" style="min-width:50mm;"></span></div> 
 					</div>
 					<div class="footer-line">na teret <span class="line-fill" style="min-width:70mm;"></span></div>
-					<div class="footer-line">U <span class="line-fill" style="min-width:30mm;"></span> dana <span class="line-fill" style="min-width:30mm;"></span> 20___. godine</div>
+					<div class="footer-line tall">U <span class="line-fill" style="min-width:30mm;"></span> dana <span class="line-fill" style="min-width:30mm;"></span> 20___. godine</div>
 
 					<div class="footer-3col">
 						<div class="footer-sign">Likvidirao<div class="signature-line"></div></div>
@@ -300,7 +308,7 @@
 					<div>{{ putni_nalog.job_code.name }}</div>
 				</div>
 				<div class="header-stack">
-					<div><span class="label">Broj</span> <span class="header-line">{{ putni_nalog.order_number }}</span></div>
+					<div><span class="label">Broj</span> <span class="header-line big xl">{{ putni_nalog.order_number }}</span></div>
 					<div><span class="label">Datum</span> <span class="header-line">{{ putni_nalog.order_date|date:"d.m.Y" }}</span></div>
 				</div>
                 <div class="row">&nbsp;</div>
@@ -308,8 +316,8 @@
 				<div class="title">NALOG ZA SLUŽBENO PUTOVANJE</div>
                                 <div class="row">&nbsp;</div>
 
-				<div class="row"><div class="label">Radnik-ca*</div><div class="line">{{ putni_nalog.employee }}</div></div>
-				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{{ putni_nalog.employee.position }}</div></div>
+				<div class="row"><div class="label">Radnik-ca*</div><div class="line line-center"><span class="value-strong">{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %}</span></div></div>
+				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{% if putni_nalog.employee %}{{ putni_nalog.employee.position }}{% endif %}</div></div>
 				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
 				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
 				<div class="row"><div class="label">Sa zadatkom</div><div class="line">{{ putni_nalog.task }}</div></div>
@@ -324,8 +332,8 @@
 				<div class="row"><div class="label">Na službenom putu će se zadržati najduže do</div><div class="line">{{ putni_nalog.number_of_days }} dana</div></div>
 				<div class="row">a u roku od 48 časova po povratku sa službenog puta i dolasku na posao, podneće pismeni izveštaj o obavljenom službenom poslu.</div>
                 <div class="row">Račun o učinjenim putnim troškovima podneti u roku od 3 dana.</div>
-				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line">{{ putni_nalog.advance_payment }}</div></div>
-				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line">{{ putni_nalog.job_code.code }}</div></div>
+				<div class="row"><div class="label">Odobravam isplatu akontacije u iznosu od dinara</div><div class="line line-right"><span class="value-strong">{{ putni_nalog.advance_payment }}</span><span class="value-strong sm">{{ putni_nalog.advance_payment_currency }}</span></div></div>
+				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line line-center"><span class="value-strong">{{ putni_nalog.job_code.code }}</span></div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>

@@ -380,6 +380,11 @@ class Incident(models.Model):
 
 
 class PutniNalog(models.Model):
+    CURRENCY_CHOICES = [
+        ("RSD", "RSD"),
+        ("USD", "USD"),
+        ("EUR", "EUR"),
+    ]
     order_number = models.CharField(
         max_length=20,
         verbose_name=_("Broj naloga"),
@@ -394,7 +399,15 @@ class PutniNalog(models.Model):
         Employee,
         on_delete=models.CASCADE,
         related_name='travel_orders',
-        verbose_name=_("Zaposleni")
+        verbose_name=_ ("Zaposleni"),
+        null=True,
+        blank=True
+    )
+    other_employee_name = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        verbose_name=_ ("Zaposleni (ostalo)")
     )
     job_code = models.ForeignKey(
         OrganizationalUnit,
@@ -424,6 +437,12 @@ class PutniNalog(models.Model):
     travel_date = models.DateField(verbose_name=_("Datum putovanja"))
     number_of_days = models.PositiveIntegerField(verbose_name=_("Broj dana"))
     advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Isplata/Akontacija"))
+    advance_payment_currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default="RSD",
+        verbose_name=_ ("Valuta akontacije")
+    )
 
     daily_allowance = models.DecimalField(
         max_digits=10,

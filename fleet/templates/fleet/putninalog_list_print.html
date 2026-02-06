@@ -57,7 +57,7 @@
       {% for putni_nalog in putni_nalozi %}
       <tr>
         <td>{{ putni_nalog.order_number }}</td>
-        <td>{{ putni_nalog.employee }}</td>
+        <td>{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %}</td>
         <td>{{ putni_nalog.job_code.code }}</td>
         <td>{{ putni_nalog.travel_location }}</td>
         <td>{{ putni_nalog.contract_offer }}</td>

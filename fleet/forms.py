@@ -206,6 +206,15 @@ class PutniNalogForm(forms.ModelForm):
         ),
         widget=forms.RadioSelect()
     )
+    employee_type = forms.ChoiceField(
+        label="Odaberi zaposlenog",
+        required=False,
+        choices=(
+            ("ims", "Zaposleni IMS"),
+            ("other", "Ostali"),
+        ),
+        widget=forms.RadioSelect()
+    )
     order_number = forms.CharField(
         label="Broj naloga",
         required=False,
@@ -231,7 +240,13 @@ class PutniNalogForm(forms.ModelForm):
     employee = forms.ModelChoiceField(
         queryset=Employee.objects.filter(is_active=True),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
-        label="Zaposleni"
+        label="Zaposleni",
+        required=False
+    )
+    other_employee_name = forms.CharField(
+        label="Zaposleni (ostalo)",
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     job_code = forms.ModelChoiceField(
         queryset=OrganizationalUnit.objects.all(),
@@ -273,9 +288,13 @@ class PutniNalogForm(forms.ModelForm):
             self.initial.setdefault('order_date', date.today().strftime('%d.%m.%Y'))
 
 
-        # Sva polja su obavezna osim 'order_date' koji je automatski
+        # Sva polja su obavezna osim eksplicitno izuzetih
+        optional_fields = {
+            'order_date', 'order_number', 'start_sequence', 'vehicle', 'other_vehicle',
+            'transport_type', 'is_weekly', 'employee', 'other_employee_name', 'employee_type'
+        }
         for field_name, field in self.fields.items():
-            if field_name not in {'order_date', 'order_number', 'start_sequence', 'vehicle', 'other_vehicle', 'transport_type', 'is_weekly'}:
+            if field_name not in optional_fields:
                 field.required = True
 
         if self.instance and self.instance.pk:
@@ -285,6 +304,13 @@ class PutniNalogForm(forms.ModelForm):
                 self.initial['transport_type'] = 'other'
         elif not self.is_bound:
             self.initial.setdefault('transport_type', 'ims')
+
+        if self.instance and getattr(self.instance, 'employee', None):
+            self.initial.setdefault('employee_type', 'ims')
+        elif self.instance and getattr(self.instance, 'other_employee_name', None):
+            self.initial.setdefault('employee_type', 'other')
+        elif not self.is_bound:
+            self.initial.setdefault('employee_type', 'ims')
 
     def clean(self):
         cleaned = super().clean()
@@ -311,6 +337,19 @@ class PutniNalogForm(forms.ModelForm):
             self.add_error('other_vehicle', "Kada je izabrano Auto IMS, polje 'Ostalo' mora biti prazno.")
         if transport_type == 'other' and vehicle:
             self.add_error('vehicle', "Kada je izabrano Ostalo, polje 'Vozilo' mora biti prazno.")
+
+        employee_type = cleaned.get('employee_type') or 'ims'
+        employee = cleaned.get('employee')
+        other_employee_name = cleaned.get('other_employee_name')
+
+        if employee_type == 'ims':
+            if not employee:
+                self.add_error('employee', "Obavezno izaberi zaposlenog iz IMS.")
+            cleaned['other_employee_name'] = None
+        elif employee_type == 'other':
+            if not other_employee_name:
+                self.add_error('other_employee_name', "Unesi ime zaposlenog.")
+            cleaned['employee'] = None
 
         if job_code and travel_date:
             center_code = getattr(job_code, 'center', None)

@@ -1703,6 +1703,7 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
             if source:
                 initial.update({
                     "employee": source.employee,
+                    "other_employee_name": source.other_employee_name,
                     "job_code": source.job_code,
                     "travel_location": source.travel_location,
                     "task": source.task,
@@ -1711,6 +1712,7 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
                     "other_vehicle": source.other_vehicle,
                     "number_of_days": source.number_of_days,
                     "advance_payment": source.advance_payment,
+                    "advance_payment_currency": source.advance_payment_currency,
                     "daily_allowance": source.daily_allowance,
                     "is_weekly": source.is_weekly,
                 })
@@ -1718,6 +1720,10 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
                     initial["transport_type"] = "ims"
                 elif source.other_vehicle:
                     initial["transport_type"] = "other"
+                if source.employee:
+                    initial["employee_type"] = "ims"
+                elif source.other_employee_name:
+                    initial["employee_type"] = "other"
         return initial
 
     def get_context_data(self, **kwargs):
