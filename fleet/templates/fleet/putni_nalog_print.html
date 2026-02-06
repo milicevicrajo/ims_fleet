@@ -82,12 +82,17 @@
 		.footer-line { margin-top: 2mm; }
 		.footer-line.tall { min-height: 5mm; }
 		.footer-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; margin-top: 4mm; }
-		.footer-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 4mm; }
+		.footer-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 4mm; }
 		.footer-sign { text-align: center; }
 		.footer-sign.single-line { white-space: nowrap; }
-		.footer-sign .signature-line { margin-top: 8mm; }
+		.footer-sign .signature-line { margin-top: 6mm; }
 
 		@media print {
+			.page { padding-top: 1mm; }
+			.page-second { padding-top: 1mm; }
+			.footer-2col .signature-line { margin-top: 5mm; }
+			.footer-2col { margin-bottom: 20mm; }
+			.footer-block { margin-top: -4mm; }
 			body * { visibility: hidden; }
 			.page, .page * { visibility: visible; }
 			.page { position: relative; border: none; page-break-after: always; page-break-inside: avoid; overflow: hidden; }
@@ -153,7 +158,7 @@
 				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line line-center"><span class="value-strong">{{ putni_nalog.job_code.code }}</span></div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
-				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+
 
 
 				<div class="nalog-footer">
@@ -336,7 +341,7 @@
 				<div class="row"><div class="label">Putni troškovi padaju na teret / izveštaj:</div><div class="line line-center"><span class="value-strong">{{ putni_nalog.job_code.code }}</span></div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
-				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
+
 
 
 				<div class="nalog-footer">
