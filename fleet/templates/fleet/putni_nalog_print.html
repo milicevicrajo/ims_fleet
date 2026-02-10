@@ -36,12 +36,14 @@
 		.line { border-bottom: 1px dotted #666; flex: 1; margin-left: 4mm; }
 		.line.line-center { text-align: center; }
 		.line.line-right { display: flex; justify-content: flex-end; gap: 3mm; }
+		.line.line-center.strong { font-size: 10pt; font-weight: 700; }
 		.value-strong { font-weight: 700; font-size: 12pt; }
 		.value-strong.sm { font-size: 11pt; }
 		.header-stack { display: grid; grid-template-columns: 1fr; gap: 1mm; font-size: 9pt; margin-bottom: 3mm; }
 		.header-line { border-bottom: 1px solid #000; display: inline-block; padding-bottom: 1mm; }
 		.header-line.big { font-weight: 700; font-size: 12pt; }
 		.header-line.big.xl { font-size: 13pt; }
+		.header-line.date { font-size: 10pt; text-align: center; min-width: 28mm; }
 		.note { text-align: center; font-size: 8pt; margin-bottom: 2mm; }
 		.sign-row { display: flex; justify-content: space-between; margin-top: 10mm; font-size: 9pt; }
 		.sign { width: 45%; text-align: center; }
@@ -58,9 +60,10 @@
 		.putni-table td.right, .putni-table th.right { text-align: right; padding-right: 4mm; }
 		.putni-table .left { text-align: left; padding-left: 4mm; }
 		.putni-table .head { height: 8mm; }
-		.putni-table .head-tall { height: 14mm; }
+		.putni-table .head-tall { height: 10mm; }
 		.putni-table .rowh { height: 6mm; }
-		.putni-table .rowh-sm { height: 5mm; }
+		.putni-table .rowh-sm { height: 6mm; }
+		.putni-table .rowh-ostalo { height: 4.5mm; }
 		.vlabel { writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 400; font-size: 8pt; width: 6mm; }
 		.totals-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-top: 2mm; }
 		.totals-table td { border: 1px solid #9a9a9a; padding: 2px; text-align: center; height: 6mm; }
@@ -125,11 +128,14 @@
 			<div class="box">
 				<div class="row">
 					<div><span class="label">Naziv organizacije</span></div>
-					<div>{{ putni_nalog.job_code.name }}</div>
+					<div>
+						<div>Centar {{ putni_nalog.job_code.center }}</div>
+						<div>{{ putni_nalog.job_code.name }}</div>
+					</div>
 				</div>
 				<div class="header-stack">
 					<div><span class="label">Broj</span> <span class="header-line big xl">{{ putni_nalog.order_number }}</span></div>
-					<div><span class="label">Datum</span> <span class="header-line">{{ putni_nalog.order_date|date:"d.m.Y" }}</span></div>
+					<div><span class="label">Datum</span> <span class="header-line date">{{ putni_nalog.order_date|date:"d.m.Y" }}</span></div>
 				</div>
                 <div class="row">&nbsp;</div>
 
@@ -139,7 +145,7 @@
 
 				<div class="row"><div class="label">Radnik-ca*</div><div class="line line-center"><span class="value-strong">{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %}</span></div></div>
 				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{% if putni_nalog.employee %}{{ putni_nalog.employee.position }}{% endif %}</div></div>
-				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
+				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line line-center strong">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
 				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
 								<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
 
@@ -234,12 +240,12 @@
                             <td>&nbsp;</td>
                             
 						</tr>
-						<tr class="rowh-sm">
+						<tr class="rowh-ostalo">
 							<td colspan="5">&nbsp;</td>
 							<td>&nbsp;</td>
                             <td>&nbsp;</td>
 						</tr>
-						<tr class="rowh-sm">
+						<tr class="rowh-ostalo">
 							<td colspan="5">&nbsp;</td>
 							<td>&nbsp;</td>
                             <td>&nbsp;</td>
@@ -310,11 +316,14 @@
 			<div class="box">
 				<div class="row">
 					<div><span class="label">Naziv organizacije</span></div>
-					<div>{{ putni_nalog.job_code.name }}</div>
+					<div>
+						<div>Centar {{ putni_nalog.job_code.center }}</div>
+						<div>{{ putni_nalog.job_code.name }}</div>
+					</div>
 				</div>
 				<div class="header-stack">
 					<div><span class="label">Broj</span> <span class="header-line big xl">{{ putni_nalog.order_number }}</span></div>
-					<div><span class="label">Datum</span> <span class="header-line">{{ putni_nalog.order_date|date:"d.m.Y" }}</span></div>
+					<div><span class="label">Datum</span> <span class="header-line date">{{ putni_nalog.order_date|date:"d.m.Y" }}</span></div>
 				</div>
                 <div class="row">&nbsp;</div>
 
@@ -323,7 +332,7 @@
 
 				<div class="row"><div class="label">Radnik-ca*</div><div class="line line-center"><span class="value-strong">{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %}</span></div></div>
 				<div class="row"><div class="label">Raspoređen-na* poslove radnog mesta</div><div class="line">{% if putni_nalog.employee %}{{ putni_nalog.employee.position }}{% endif %}</div></div>
-				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
+				<div class="row"><div class="label">Upućuje se na službeni put dana</div><div class="line line-center strong">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div></div>
 				<div class="row"><div class="label">U</div><div class="line">{{ putni_nalog.travel_location }}</div></div>
 				<div class="row"><div class="label">Sa zadatkom</div><div class="line">{{ putni_nalog.task }}</div></div>
 				<div class="row"><div class="label">&nbsp;</div><div class="line">&nbsp;</div></div>
