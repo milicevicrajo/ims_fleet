@@ -27,6 +27,11 @@
         </div>
 
         <div class="col-auto">
+          <label for="id_sifra_vrste" class="form-label">{{ form.sifra_vrste.label }}:</label>
+          {{ form.sifra_vrste|add_class:"form-control" }}
+        </div>
+
+        <div class="col-auto">
             <label for="id_nije_garaza" class="form-label">{{ form.nije_garaza.label }}:</label>
             {{ form.nije_garaza|add_class:"form-control" }}
         </div>
@@ -43,7 +48,7 @@
                     <th>Vozilo</th>
                     <th>Tip servisa</th>
                     <th>Datum servisa</th>
-                    <th data-type="numeric">Trošak</th>
+                    <th>Trošak</th>
                     <th>Dobavljač</th>
                     <th>Sifra vrste</th>
                     <th>Br. naloga</th>
@@ -57,7 +62,7 @@
                     <td>{{ service_transaction.vehicle }}</td>
                     <td>{{ service_transaction.popravka_kategorija }}</td>
                     <td>{{ service_transaction.datum|date:"d.m.Y." }}</td>
-                    <td>{{ service_transaction.potrazuje }}</td>
+                    <td>{{ service_transaction.potrazuje|default_if_none:"0" }}</td>
                     <td>{{ service_transaction.naz_par_pl }}</td>
                     <td>{{ service_transaction.sif_vrs }}</td>
                     <td>{{ service_transaction.br_naloga }}</td>
@@ -70,15 +75,23 @@
                     </td>
 
                     <td class="text-center text-nowrap">
-                    <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}" 
-                        class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+                    <a href="{% url 'draft_service_transaction_update' service_transaction.pk %}?next={{ request.get_full_path|urlencode }}" 
+                      class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
                         <i class="mdi mdi-pencil"></i> Dopuni
                     </a>
                     </td>
                   </tr>
               {% empty %}
                   <tr>
-                      <td colspan="9">Nema podataka</td>
+                    <td>Nema podataka</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
                   </tr>
               {% endfor %}
               <tfoot class="table-light">
@@ -99,16 +112,4 @@
 
   </div>
 </div>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#DraftServiceTransactionsTable', {
-        exportTitle: 'Nedovršeni servisi',
-        order: [[2, 'desc']],
-        numericColumns: [3],
-        autoSelectThreshold: 20
-      });
-    }
-  });
-</script>
 {% endblock %}

@@ -21,6 +21,7 @@ from django.db.models.functions import Cast, StrIndex, Substr, TruncMonth, Trunc
 from django.http import FileResponse, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -1298,7 +1299,17 @@ class DraftPolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
     model = DraftPolicy
     form_class = PolicyForm
     template_name = 'fleet/generic_form.html'
-    success_url = reverse_lazy('policy_list')  # Preusmeravanje nakon uspešne izmene
+    success_url = reverse_lazy('policy_fixing_list')
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return str(self.success_url)
 
     def form_valid(self, form):
         # Sačuvaj izmene u draft tabeli
@@ -1347,13 +1358,13 @@ class DraftPolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
             policy.save()
             print("Podaci migrirani u glavnu tabelu Policy.")
             draft.delete()  # Obrisan unos iz draft tabele
-            return redirect(self.success_url)
+            return redirect(self.get_success_url())
 
         # Ako podaci nisu kompletni, sačuvaj ih samo u draft tabeli
         else:
             draft.save()  # Sačuvaj izmene u draft tabeli
             print("Podaci nisu kompletni, ostaju u draft tabeli.")
-            return super().form_valid(form)
+            return redirect(self.get_success_url())
 
 
     def get_context_data(self, **kwargs):
@@ -2067,7 +2078,17 @@ class DraftServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequir
     model = DraftServiceTransaction
     form_class = DraftServiceTransactionForm
     template_name = 'fleet/generic_form.html'
-    success_url = reverse_lazy('service_fixing_list')  # Preusmeri nakon uspešne migracije
+    success_url = reverse_lazy('service_fixing_list')
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return str(self.success_url)
 
     def form_valid(self, form):
         # Sačuvaj izmene u draft tabeli
@@ -2100,14 +2121,14 @@ class DraftServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequir
             migrate_draft_to_service_transaction(draft.id)
             print("Podaci migrirani u glavnu tabelu.")
             messages.success(self.request, "✅ Podaci su uspešno migrirani u glavnu tabelu.")
-            return redirect(self.success_url)
+            return redirect(self.get_success_url())
         
         # Ako podaci nisu kompletni, sačuvaj samo u draft tabeli
         else:
             print("Podaci nisu kompletni, ostaju u draft tabeli.")
             messages.warning(self.request, "⚠️ Podaci nisu kompletni, ostaju u draft tabeli.")
             draft.save()  # Sačuvaj bez migracije
-            return super().form_valid(form)
+            return redirect(self.get_success_url())
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2186,6 +2207,17 @@ class DraftRequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin
     form_class = DraftRequisitionForm
     template_name = 'fleet/generic_form_draft.html'
     success_message = "Trebovanje uspešno izmenjeno!"
+    success_url = reverse_lazy('requisition_fixing_list')
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return str(self.success_url)
 
     def form_valid(self, form):
         current_instance = form.save()
@@ -2245,11 +2277,7 @@ class DraftRequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin
 
         # Pozovi funkciju za brisanje kompletnih zapisa
         delete_complete_drafts()
-
-        if ostali_draftovi:
-            return redirect('requisition_fixing_list')  # zameni sa stvarnim imenom URL-a
-        else:
-            return redirect('requisition_detail', god=current_instance.god, br_dok=current_instance.br_dok)
+        return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -3395,6 +3423,17 @@ class DraftInsuranceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, 
     form_class = DraftInsuranceForm
     template_name = "fleet/generic_form_draft.html"
     success_message = "Osiguranje uspešno izmenjeno."
+    success_url = reverse_lazy("insurance_fixing_list")
+
+    def get_success_url(self):
+        next_url = self.request.GET.get("next")
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={self.request.get_host()},
+            require_https=self.request.is_secure(),
+        ):
+            return next_url
+        return str(self.success_url)
 
     def form_valid(self, form):
         current = form.save()
@@ -3421,10 +3460,10 @@ class DraftInsuranceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, 
 
         if still_exists:
             messages.info(self.request, f"Delimično premešteno ({migrated}). Dovršite preostale stavke.")
-            return redirect("insurance_fixing_list")
+            return redirect(self.get_success_url())
         else:
             messages.success(self.request, f"Premešteno u final ({migrated}).")
-            return redirect("insurance_detail", god=current.god, br_naloga=current.br_naloga)
+            return redirect(self.get_success_url())
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

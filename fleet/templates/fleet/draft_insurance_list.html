@@ -11,7 +11,7 @@
             </a>
         </div>
         <div class="table-responsive">
-            <table id="DatatableDraftInsurance" class="display">
+            <table id="DraftInsuranceTable" class="display" data-reports-dt="true">
                 <thead>
                     <tr>
                         <th>Vozilo</th>
@@ -40,8 +40,11 @@
                         <td>{{ insurance.vez_dok }}</td>
                         <td>{{ insurance.potrazuje }}</td>
                         <td>{{ insurance.napomena }}</td>
-                        <td>
-                            <a href="{% url 'draft_insurance_update' insurance.pk %}">Edit</a>
+                        <td class="text-center text-nowrap">
+                            <a href="{% url 'draft_insurance_update' insurance.pk %}?next={{ request.get_full_path|urlencode }}"
+                               class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                                <i class="mdi mdi-pencil"></i> Dopuni
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}

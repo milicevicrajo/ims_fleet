@@ -563,6 +563,17 @@ class ServiceFixingFilter(django_filters.FilterSet):
         widget=forms.TextInput(attrs={"placeholder": "npr. Auto Deki, Beoguma..."})
     )
 
+    SIFRA_VRSTE_CHOICES = (
+        ("", "Sve"),
+        ("UF", "UF"),
+        ("EUF", "EUF"),
+    )
+    sifra_vrste = django_filters.ChoiceFilter(
+        label="Šifra vrste",
+        choices=SIFRA_VRSTE_CHOICES,
+        method="filter_sifra_vrste",
+    )
+
     VAN_GARAZE_CHOICES = (
         ("True", "Ne"),
         ("False", "Da"),
@@ -578,13 +589,17 @@ class ServiceFixingFilter(django_filters.FilterSet):
         fields = []
 
     def __init__(self, data=None, *args, **kwargs):
-        # ako nema parametra u GET-u → default "False" (Ne)
-        if data is not None and "nije_garaza" not in data:
+        # ako nema parametara u GET-u → default nije_garaza=False i sifra_vrste=EUF
+        if data is not None:
             data = data.copy()         # QueryDict → mutable
-            data["nije_garaza"] = "False"
+            if "nije_garaza" not in data:
+                data["nije_garaza"] = "False"
+            if "sifra_vrste" not in data:
+                data["sifra_vrste"] = "EUF"
         super().__init__(data, *args, **kwargs)
         # (opciono) postavi i initial, čisto da bude konzistentno
         self.form.fields["nije_garaza"].initial = "False"
+        self.form.fields["sifra_vrste"].initial = "EUF"
 
     def filter_nije_garaza(self, qs, name, value):
         if value == "True":
@@ -592,6 +607,11 @@ class ServiceFixingFilter(django_filters.FilterSet):
         if value == "False":
             return qs.filter(nije_garaza=False)
         return qs
+
+    def filter_sifra_vrste(self, qs, name, value):
+        if not value:
+            return qs
+        return qs.annotate(_sif_vrs_trim=Trim("sif_vrs")).filter(_sif_vrs_trim__iexact=value)
 
     def filter_vozilo(self, qs, name, value):
         if not value:

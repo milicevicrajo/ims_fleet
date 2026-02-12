@@ -621,6 +621,9 @@ class DraftServiceTransactionForm(forms.ModelForm):
             if self.instance.datum:
                 self.initial['datum'] = self.instance.datum.strftime('%d.%m.%Y')
 
+        if not self.initial.get('sif_vrs') and not getattr(self.instance, 'sif_vrs', None):
+            self.initial['sif_vrs'] = 'EUF'
+
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
             field.required = False

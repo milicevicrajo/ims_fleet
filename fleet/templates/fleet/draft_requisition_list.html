@@ -28,8 +28,11 @@
                         <td>{{ requisition.datum_trebovanja|date:"d.m.Y" }}</td>
                         <td>{{ requisition.naz_art }}</td>
                         <td>{{ requisition.kol }}</td>
-                        <td class="text-center">
-                          <a href="{% url 'draft_requisition_update' requisition.pk %}">Edit</a>
+                                                <td class="text-center text-nowrap">
+                                                    <a href="{% url 'draft_requisition_update' requisition.pk %}?next={{ request.get_full_path|urlencode }}"
+                                                         class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                                                        <i class="mdi mdi-pencil"></i> Dopuni
+                                                    </a>
                         </td>
                     </tr>
                   {% endfor %}
@@ -50,16 +53,4 @@
 
     </div>
 </div>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#DatatableTrebovanjaDraft', {
-        exportTitle: 'Nedovrsena trebovanja',
-        order: [[3, 'desc']],
-        numericColumns: [5],
-        autoSelectThreshold: 20
-      });
-    }
-  });
-</script>
 {% endblock %}

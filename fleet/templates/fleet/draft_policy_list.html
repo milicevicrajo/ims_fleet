@@ -5,7 +5,7 @@
 <div class="card">
   <div class="card-body">
       <div class="table-responsive">
-          <table id="DatatablePolicy" class="display compact">
+          <table id="DraftPolicyTable" class="display compact" data-reports-dt="true">
               <thead>
                   <tr>
                       <th>Vozilo</th>
@@ -42,8 +42,11 @@
                       <td>{{ policy.first_installment_amount }}</td>
                       <td>{{ policy.other_installments_amount}}</td>
                       <td>{{ policy.number_of_installments }}</td>
-                      <td>
-                        <a href="{% url 'draft_policy_update' policy.pk %}">Dopuni</a>
+                                            <td class="text-center text-nowrap">
+                                                <a href="{% url 'draft_policy_update' policy.pk %}?next={{ request.get_full_path|urlencode }}"
+                                                     class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                                                    <i class="mdi mdi-pencil"></i> Dopuni
+                                                </a>
                       </td>
                   </tr>
               {% empty %}
