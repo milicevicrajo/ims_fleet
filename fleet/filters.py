@@ -12,6 +12,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import OuterRef, Subquery, Exists, F, Q
 from django.db.models.functions import Trim
+from django.http import QueryDict
 
 from .models import Vehicle, JobCode, FuelConsumption, TrafficCard, Kvar, PutniNalog, Employee
 # pretpostavka da OrganizationalUnit postoji:
@@ -590,12 +591,17 @@ class ServiceFixingFilter(django_filters.FilterSet):
 
     def __init__(self, data=None, *args, **kwargs):
         # ako nema parametara u GET-u → default nije_garaza=False i sifra_vrste=EUF
-        if data is not None:
+        # bitno: i kada je data=None, filter mora biti bound da bi se default ZAISTA primenio
+        if data is None:
+            data = QueryDict('', mutable=True)
+        else:
             data = data.copy()         # QueryDict → mutable
-            if "nije_garaza" not in data:
-                data["nije_garaza"] = "False"
-            if "sifra_vrste" not in data:
-                data["sifra_vrste"] = "EUF"
+
+        if "nije_garaza" not in data:
+            data["nije_garaza"] = "False"
+        if "sifra_vrste" not in data:
+            data["sifra_vrste"] = "EUF"
+
         super().__init__(data, *args, **kwargs)
         # (opciono) postavi i initial, čisto da bude konzistentno
         self.form.fields["nije_garaza"].initial = "False"
