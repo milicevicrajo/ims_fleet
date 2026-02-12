@@ -1685,6 +1685,20 @@ def putninalog_print_list(request):
     })
 
 
+@role_permission_required()
+def putninalog_set_opravdan(request, pk):
+    if request.method != "POST":
+        return HttpResponseForbidden("Neispravan zahtev.")
+
+    base_qs = _putninalog_base_qs(request)
+    putni_nalog = get_object_or_404(base_qs, pk=pk)
+    if not putni_nalog.opravdan:
+        putni_nalog.opravdan = True
+        putni_nalog.save(update_fields=["opravdan"])
+
+    return redirect(request.META.get("HTTP_REFERER", reverse("putninalog_list")))
+
+
 
 
 
@@ -1776,6 +1790,8 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         obj = super().get_object(queryset)
         user = self.request.user
         if user.is_superuser:
+            if obj.opravdan:
+                raise PermissionDenied("Nalog je opravdan i zakljucan za izmene.")
             return obj
 
         center_code = getattr(obj.job_code, "center", None)
@@ -1785,10 +1801,14 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         center_code = str(center_code).strip()
         allowed_center_codes = set(self.get_user_allowed_center_codes())
         if allowed_center_codes and center_code in allowed_center_codes:
+            if obj.opravdan:
+                raise PermissionDenied("Nalog je opravdan i zakljucan za izmene.")
             return obj
 
         allowed_units = self.get_user_allowed_units()
         if allowed_units.filter(center=center_code).exists():
+            if obj.opravdan:
+                raise PermissionDenied("Nalog je opravdan i zakljucan za izmene.")
             return obj
 
         raise PermissionDenied("Ne možete menjati naloge iz ovog centra.")
@@ -1827,7 +1847,10 @@ class PutniNalogDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, Dele
         return context
 
     def get_object(self, queryset=None):
-        return super().get_object(queryset)
+        obj = super().get_object(queryset)
+        if obj.opravdan:
+            raise PermissionDenied("Nalog je opravdan i zakljucan za izmene.")
+        return obj
 
 
 

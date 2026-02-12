@@ -80,6 +80,7 @@
                 <th>Broj dana</th>
                 <th>Avans</th>
                 <th class="text-center">Nedeljni</th>
+                <th class="text-center">Opravdan</th>
                 <th class="text-center">Izmeni</th>
                 <th class="text-center">Štampa</th>
                 <th class="text-center">Ponovi</th>
@@ -111,9 +112,27 @@
                   {% endif %}
                 </td>
                 <td class="text-center">
-                  <a href="{% url 'putninalog_update' putni_nalog.pk %}" class="btn btn-outline-primary btn-sm">
-                    <i class="mdi mdi-pencil"></i> Izmeni
-                  </a>
+                  {% if putni_nalog.opravdan %}
+                    <span class="badge bg-success">Opravdan</span>
+                  {% else %}
+                    <form method="post" action="{% url 'putninalog_set_opravdan' putni_nalog.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-outline-success btn-sm">
+                        <i class="mdi mdi-check"></i> Opravdaj
+                      </button>
+                    </form>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if putni_nalog.opravdan %}
+                    <span class="btn btn-outline-secondary btn-sm disabled">
+                      <i class="mdi mdi-lock"></i> Zaključan
+                    </span>
+                  {% else %}
+                    <a href="{% url 'putninalog_update' putni_nalog.pk %}" class="btn btn-outline-primary btn-sm">
+                      <i class="mdi mdi-pencil"></i> Izmeni
+                    </a>
+                  {% endif %}
                 </td>
                 <td class="text-center">
                   <a href="{% url 'putninalog_print' putni_nalog.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
