@@ -244,3 +244,4 @@ class AvansKlijent(models.Model):
         verbose_name = 'Avans klijent'
         verbose_name_plural = 'Avans klijenti'
 
+

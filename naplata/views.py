@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from decimal import Decimal
+from datetime import datetime, date, time
 from django.db import connections
 from django.core.exceptions import PermissionDenied
+from django.contrib import messages
 import openpyxl
 from openpyxl.workbook import Workbook
 from openpyxl.utils import get_column_letter
@@ -11,8 +13,23 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from fleet.mixins import role_permission_required
-from .forms import KontaktiForm, NapomeneForm, OpomeneForm, PoziviTelForm, PozivPismoForm, TuzbeForm
-from .models import Kontakti, Napomene, Opomene, PozivPismo, PoziviTel, Tuzbe, AvansKlijent
+from .forms import (
+    KontaktiForm,
+    NapomeneForm,
+    OpomeneForm,
+    PoziviTelForm,
+    PozivPismoForm,
+    TuzbeForm,
+)
+from .models import (
+    Kontakti,
+    Napomene,
+    Opomene,
+    PozivPismo,
+    PoziviTel,
+    Tuzbe,
+    AvansKlijent,
+)
 
 
 def _allowed_sif_pos_from_user(user):
@@ -837,26 +854,204 @@ def obrisi_napomenu(request, id):
 # <!-- ======================================================================= -->
 @role_permission_required()
 def lista_opomena(request):
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        excel_file = request.FILES['excel_file']
+        try:
+            wb = openpyxl.load_workbook(excel_file, data_only=True)
+            ws = wb.active
+
+            rows = list(ws.iter_rows(values_only=True))
+            if not rows:
+                messages.error(request, 'Excel je prazan.')
+                return redirect('naplata:lista_opomena')
+
+            def _normalize_header(value):
+                return str(value or '').strip().lower().replace(' ', '_')
+
+            aliases = {
+                'sif_par': {'sif_par', 'sifra', 'sifra_partnera', 'sifrapartnera'},
+                'naz_par': {'naz_par', 'partner_naziv', 'partner', 'naziv_partnera'},
+                'god': {'god', 'godina'},
+                'br_opomene': {'br_opomene', 'broj_opomene', 'br_opomena', 'broj_opomena'},
+                'datum': {'datum', 'na_dan', 'na_datum'},
+                'iznos': {'iznos', 'ukupno'},
+                'fakture': {'fakture', 'faktura'},
+                'napomene': {'napomene', 'napomena'},
+            }
+
+            header_row = rows[0]
+            header_map = {}
+            for index, raw_name in enumerate(header_row):
+                normalized = _normalize_header(raw_name)
+                for target, names in aliases.items():
+                    if normalized in names and target not in header_map:
+                        header_map[target] = index
+
+            required_fields = {'sif_par', 'naz_par', 'datum', 'iznos'}
+            if not required_fields.issubset(set(header_map.keys())):
+                missing = ', '.join(sorted(required_fields - set(header_map.keys())))
+                messages.error(request, f'Nedostaju obavezne kolone u Excel fajlu: {missing}')
+                return redirect('naplata:lista_opomena')
+
+            def _cell_value(row, field_name):
+                column_index = header_map.get(field_name)
+                if column_index is None or column_index >= len(row):
+                    return None
+                return row[column_index]
+
+            def _to_int(value):
+                if value in (None, ''):
+                    return None
+                if isinstance(value, (int, float)):
+                    return int(value)
+                text = str(value).strip()
+                if not text:
+                    return None
+                return int(float(text))
+
+            def _to_decimal(value):
+                if value in (None, ''):
+                    return None
+                if isinstance(value, Decimal):
+                    return value
+                if isinstance(value, (int, float)):
+                    return Decimal(str(value))
+                text = str(value).strip()
+                if not text:
+                    return None
+                if ',' in text and '.' in text:
+                    if text.rfind(',') > text.rfind('.'):
+                        text = text.replace('.', '').replace(',', '.')
+                    else:
+                        text = text.replace(',', '')
+                elif ',' in text:
+                    text = text.replace(',', '.')
+                return Decimal(text)
+
+            def _to_datetime(value):
+                if value in (None, ''):
+                    return None
+                if isinstance(value, datetime):
+                    return value
+                if isinstance(value, date):
+                    return datetime.combine(value, time.min)
+                text = str(value).strip()
+                if not text:
+                    return None
+                formats = (
+                    '%Y-%m-%d %H:%M:%S.%f',
+                    '%Y-%m-%d %H:%M:%S',
+                    '%Y-%m-%d',
+                    '%d.%m.%Y',
+                    '%d.%m.%Y %H:%M:%S',
+                    '%d/%m/%Y',
+                    '%d/%m/%Y %H:%M:%S',
+                )
+                for fmt in formats:
+                    try:
+                        parsed = datetime.strptime(text, fmt)
+                        if fmt in ('%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y'):
+                            return datetime.combine(parsed.date(), time.min)
+                        return parsed
+                    except ValueError:
+                        continue
+                raise ValueError(f'Neispravan datum: {text}')
+
+            insert_rows = []
+            skipped_rows = 0
+
+            for row in rows[1:]:
+                if not row or all(value in (None, '') for value in row):
+                    continue
+
+                try:
+                    sif_par = _to_int(_cell_value(row, 'sif_par'))
+                    naz_par = str(_cell_value(row, 'naz_par') or '').strip() or None
+                    datum = _to_datetime(_cell_value(row, 'datum'))
+                    iznos = _to_decimal(_cell_value(row, 'iznos'))
+
+                    if sif_par is None or not naz_par or datum is None or iznos is None:
+                        skipped_rows += 1
+                        continue
+
+                    god_value = int(_to_int(_cell_value(row, 'god')) or datum.year)
+                    br_opomene_value = _to_int(_cell_value(row, 'br_opomene'))
+                    fakture_value = _cell_value(row, 'fakture')
+                    napomene_value = _cell_value(row, 'napomene')
+
+                    insert_rows.append((
+                        sif_par,
+                        naz_par,
+                        god_value,
+                        br_opomene_value,
+                        datum,
+                        float(iznos),
+                        str(fakture_value).strip() if fakture_value not in (None, '') else None,
+                        str(napomene_value).strip() if napomene_value not in (None, '') else None,
+                    ))
+                except Exception:
+                    skipped_rows += 1
+
+            if insert_rows:
+                with connections['naplata_db'].cursor() as cursor:
+                    cursor.executemany(
+                        """
+                        INSERT INTO opomene (sif_par, naz_par, god, br_opomene, datum, iznos, fakture, napomene)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        insert_rows,
+                    )
+
+                messages.success(
+                    request,
+                    f'Učitano redova: {len(insert_rows)}. Preskočeno redova: {skipped_rows}.',
+                )
+            else:
+                messages.warning(request, 'Nijedan red nije učitan. Proverite format Excel fajla.')
+
+            return redirect('naplata:lista_opomena')
+        except Exception as exc:
+            messages.error(request, f'Greška pri učitavanju Excel fajla: {exc}')
+            return redirect('naplata:lista_opomena')
+
+    selected_year = request.GET.get('god')
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
-            SELECT
-                sif_par,
-                naz_par,
-                god,
-                br_opomene,
-                datum,
-                iznos,
-                fakture,
-                napomene,
-                id
-            FROM opomene
-            WHERE god = 2024
-            ORDER BY god DESC, datum DESC
-        """)
+        if selected_year:
+            cursor.execute("""
+                SELECT
+                    sif_par,
+                    naz_par,
+                    CAST(god AS INT) AS god,
+                    br_opomene,
+                    datum,
+                    iznos,
+                    fakture,
+                    napomene,
+                    id
+                FROM opomene
+                WHERE god = %s
+                ORDER BY god DESC, datum DESC
+            """, [selected_year])
+        else:
+            cursor.execute("""
+                SELECT
+                    sif_par,
+                    naz_par,
+                    CAST(god AS INT) AS god,
+                    br_opomene,
+                    datum,
+                    iznos,
+                    fakture,
+                    napomene,
+                    id
+                FROM opomene
+                ORDER BY god DESC, datum DESC
+            """)
         opomene = cursor.fetchall()
     return render(request, 'naplata/opomene_list.html', {
         'opomene': opomene,
         'title': 'Lista opomena',
+        'selected_year': selected_year,
     })
 
 @role_permission_required()
@@ -1030,13 +1225,42 @@ def obrisi_tuzbu(request, id):
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
 
+
+PRAVNA_CASE_TYPES = {
+    'tuzeni': 'Tuženi',
+    'tuzili': 'Tužili',
+    'stecaj': 'Stečaj',
+    'uppr': 'UPPR',
+}
+
+
+def _get_pravna_title(case_type):
+    return PRAVNA_CASE_TYPES.get(case_type)
+
+
 @role_permission_required()
+def pravna_cases_list(request, case_type):
+    title = _get_pravna_title(case_type)
+    if not title:
+        raise PermissionDenied('Nepoznat tip pravnog slučaja.')
+
+    if case_type == 'tuzeni':
+        return lista_tuzenih(request)
+
+    if case_type in {
+        'tuzili',
+        'stecaj',
+        'uppr',
+    }:
+        return render(request, 'naplata/pravna_placeholder.html', {
+            'title': f'Pravna služba - {title}',
+            'section_name': title,
+        })
+
+    raise PermissionDenied('Nepoznat tip pravnog slučaja.')
+@role_permission_required()
+
 def obrisi_tuzbu(request, id):
+
     tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
-    if request.method == "POST":
-        tuzba.delete(using='naplata_db')
-        return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
-    return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
-
-
 

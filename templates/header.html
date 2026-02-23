@@ -29,6 +29,7 @@
             <i class="mdi mdi-apps me-1"></i>
             {% if current_app == "fleet" %}Flota
             {% elif current_app == "naplata" %}Naplata
+            {% elif current_app == "pravna" %}Pravna služba
             {% elif current_app == "kadrovi" %}Kadrovi
             {% elif current_app == "administracija" %}Administracija
             {% else %}Aplikacije{% endif %}
@@ -47,6 +48,13 @@
                 Naplata
                 {% if current_app == "naplata" %}<span class="badge bg-success">aktivno</span>{% endif %}
                 </a>
+            </li>
+            <li>
+              <a class="dropdown-item d-flex justify-content-between align-items-center"
+              href="{% url 'switch_app' 'pravna' %}?next={% url 'naplata:pravna_cases_list' case_type='tuzeni' %}">
+              Pravna služba
+              {% if current_app == "pravna" %}<span class="badge bg-success">aktivno</span>{% endif %}
+              </a>
             </li>
             <li>
                 <a class="dropdown-item d-flex justify-content-between align-items-center"

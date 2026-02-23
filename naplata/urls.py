@@ -47,4 +47,6 @@ urlpatterns = [
     path('tuzbe/dodaj/<int:sif_par>/<str:naz_par>/', dodaj_tuzbu, name='dodaj_tuzbu'),
     path('tuzbe/izmeni/<int:id>/', izmeni_tuzbu, name='izmeni_tuzbu'),
     path('tuzbe/obrisi/<int:id>/', obrisi_tuzbu, name='obrisi_tuzbu'),
+
+    path('pravna-sluzba/<str:case_type>/', pravna_cases_list, name='pravna_cases_list'),
 ]

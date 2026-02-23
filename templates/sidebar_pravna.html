@@ -1,0 +1,34 @@
+{% load static %}
+<aside class="left-sidebar" data-sidebarbg="skin5">
+  <div class="scroll-sidebar">
+    <nav class="sidebar-nav">
+      <ul id="sidebarnav" class="pt-4">
+
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:pravna_cases_list' case_type='tuzeni' %}">
+            <i class="mdi mdi-gavel"></i><span class="hide-menu">Tuženi</span>
+          </a>
+        </li>
+
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:pravna_cases_list' case_type='tuzili' %}">
+            <i class="mdi mdi-file-document-box"></i><span class="hide-menu">Tužili</span>
+          </a>
+        </li>
+
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:pravna_cases_list' case_type='stecaj' %}">
+            <i class="mdi mdi-briefcase-check"></i><span class="hide-menu">Stečaj</span>
+          </a>
+        </li>
+
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:pravna_cases_list' case_type='uppr' %}">
+            <i class="mdi mdi-file-tree"></i><span class="hide-menu">UPPR</span>
+          </a>
+        </li>
+
+      </ul>
+    </nav>
+  </div>
+</aside>

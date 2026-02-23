@@ -4,6 +4,12 @@
 <h2>{{ title|default:'Lista opomena' }}</h2>
 <div class="card">
   <div class="card-body">
+    <form method="post" enctype="multipart/form-data" class="mb-3 d-flex align-items-center" style="gap: 10px;">
+      {% csrf_token %}
+      <input type="file" name="excel_file" accept=".xlsx,.xls" class="form-control" style="max-width: 420px;" required>
+      <button type="submit" class="btn btn-primary">Učitaj Excel</button>
+    </form>
+
     <div class="table-responsive">
       <table id="DatatableOpomene" class="display compact">
         <thead>
@@ -28,7 +34,9 @@
             <td>{{ row.3 }}</td>
             <td>{{ row.4|date:"d.m.Y" }}</td>
             <td>{{ row.5|floatformat:2 }}</td>
-            <td>{{ row.6 }}</td>
+            <td title="{{ row.6|default_if_none:'' }}">
+              {{ row.6|default_if_none:''|slice:":50" }}{% if row.6 and row.6|length > 50 %}...{% endif %}
+            </td>
             <td>{{ row.7 }}</td>
             <td>{{ row.8 }}</td>
           </tr>
