@@ -1,12 +1,35 @@
 {% extends 'base.html' %}
-{% load humanize %} 
+{% load humanize %}
+
 {% block content %}
-<h2>{{ title|default:'Spisak za proveru' }}</h2>
+<h2>{{ title|default:'Lista dugovanja po bucketima' }}</h2>
+<style>
+    .avans-cell {
+        text-align: center;
+        vertical-align: middle;
+        padding: 0.25rem 0.5rem;
+    }
+    .avans-form {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        height: 100%;
+    }
+    .avans-checkbox {
+        width: 20px;
+        height: 20px;
+        transform: translateY(0);
+        accent-color: #198754;
+        cursor: pointer;
+    }
+</style>
 <div class="card">
     <div class="card-body">
         <a href="{% url 'naplata:export_dugovanja_excel' %}" target="_blank" class="btn btn-success mb-3">
             <i class="fas fa-file-excel"></i> Exportuj u Excel
         </a>
+
         <div class="table-responsive">
             <table id="DugovanjaBuketi" class="display compact">
                 <thead>
@@ -23,27 +46,27 @@
                         <th>Ukupno Dospelo</th>
                         <th>Ukupno</th>
                         <th>Veliki</th>
-                        <th>INO</th>
+                        <th>INO</th>  <!-- nova kolona -->
                     </tr>
                 </thead>
                 <tbody>
                     {% for dug in dugovanja %}
                         <tr>
-                            <td>{{ dug.0 }}</td>
+                            <td>{{ dug.0 }}</td> <!-- sif_par -->
                             <td>
-                                <a href="{% url 'naplata:detalji_partner' dug.0 %}">
+                                <a href="{% url 'naplata:detalji_partner' dug.0 %}?report=1">
                                     {{ dug.1 }}
                                 </a>
-                            </td>
-                            <td>{{ dug.2|floatformat:0}}</td>
-                            <td>{{ dug.3|floatformat:0}}</td>
-                            <td>{{ dug.4|floatformat:0}}</td>
-                            <td>{{ dug.5|floatformat:0}}</td>
-                            <td>{{ dug.6|floatformat:0}}</td>
-                            <td>{{ dug.7|floatformat:0}}</td>
-                            <td>{{ dug.8|floatformat:0}}</td>
-                            <td>{{ dug.9|floatformat:0}}</td>
-                            <td>{{ dug.10|floatformat:0}}</td>
+                            </td>  <!-- naz_par -->
+                            <td>{{ dug.2|floatformat:0}}</td> <!-- Nedospelo -->
+                            <td>{{ dug.3|floatformat:0}}</td> <!-- Dospelo - baket 1 -->
+                            <td>{{ dug.4|floatformat:0}}</td> <!-- Dospelo - baket 2 -->
+                            <td>{{ dug.5|floatformat:0}}</td> <!-- Dospelo - baket 3 -->
+                            <td>{{ dug.6|floatformat:0}}</td> <!-- Dospelo - baket 4 -->
+                            <td>{{ dug.7|floatformat:0}}</td> <!-- Dospelo - baket 5 -->
+                            <td>{{ dug.8|floatformat:0}}</td> <!-- Dospelo - baket 6 -->
+                            <td>{{ dug.9|floatformat:0}}</td> <!-- Ukupno Dospelo-->
+                            <td>{{ dug.10|floatformat:0}}</td> <!-- Ukupno -->
                             <td>
                                 {% if dug.11 == 'da' %}
                                     Da
@@ -58,6 +81,7 @@
                                     Ino
                                 {% endif %}
                             </td>
+
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -73,8 +97,8 @@
                         <th id="total_181"></th>
                         <th id="total_dospelo"></th>
                         <th id="total_ukupno"></th>
-                        <th></th>
-                        <th></th>
+                        <th></th> <!-- Veliki ne sumiramo -->
+                        <th></th> <!-- INO ne sumiramo -->
                     </tr>
                 </tfoot>
             </table>

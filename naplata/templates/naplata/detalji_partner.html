@@ -9,6 +9,7 @@
             <li class="nav-item">
                 <a class="nav-link active" data-bs-toggle="tab" href="#podaci">Osnovni podaci</a>
             </li>
+            {% if not report_mode %}
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#kontakti">Kontakti</a>
             </li>
@@ -27,6 +28,7 @@
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#tuzbe">Tužbe</a>
             </li>
+            {% endif %}
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#dugovanja">Dugovanja</a>
             </li>
@@ -36,9 +38,11 @@
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#dugovanja_fakture">Dugovanja po fakturama</a>
             </li>
+            {% if not report_mode %}
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#ispravke">Otpisana potraživanja</a>
             </li>
+            {% endif %}
         </ul>
 
 
@@ -78,6 +82,7 @@
                 </div>
             </div>
 
+            {% if not report_mode %}
             <!-- Kontakti -->
             <div class="tab-pane fade show" id="kontakti">
                 <div class="d-flex justify-content-between align-items-center">
@@ -357,6 +362,7 @@
                     {% endfor %}
                 </table>
             </div>
+            {% endif %}
 
             <!-- Dugovanja -->
             <div class="tab-pane fade" id="dugovanja">
@@ -408,7 +414,12 @@
 
             <!-- Dugovanja -->
             <div class="tab-pane fade" id="dugovanja_baketi">
-                <h4>Dugovanja - Baketi</h4>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4>Dugovanja - Baketi</h4>
+                    <a href="{% url 'naplata:export_partner_baketi_excel' partner.2 %}{% if report_mode %}?report=1{% endif %}" class="btn btn-outline-primary mb-3">
+                        <i class="mdi mdi-download"></i> Preuzmi u Excel
+                    </a>
+                </div>
                 <table id="DugovanjaBaketiDetalj" class="display compact">
                     <thead>
                         <tr>
@@ -636,6 +647,7 @@
             </div>
 
 
+            {% if not report_mode %}
             <!-- Otpisana potraživanja -->
             <div class="tab-pane fade" id="ispravke">
                 <h4>Otpisana potraživanja</h4>
@@ -676,6 +688,7 @@
                     <p>Ovaj partner nema otpisanih potraživanja.</p>
                 {% endif %}
             </div>            
+            {% endif %}
         </div>
     </div>
 </div>

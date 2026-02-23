@@ -13,6 +13,8 @@ from fleet.selenium_integrations import (
 )
 from fleet.sync.hr import sync_employees_from_hr_view
 from celery import shared_task
+from django.core.management import call_command
+from io import StringIO
 
 @shared_task
 def run_nis_command():
@@ -78,3 +80,10 @@ def sync_hr_employees_task():
         f"azurirano_neaktivni={result['updated_inactive']}, "
         f"preskoceno_neaktivni={result['skipped_inactive']}"
     )
+
+
+@shared_task
+def sync_permission_codes_task():
+    output = StringIO()
+    call_command("sync_permission_codes", stdout=output)
+    return output.getvalue().strip()

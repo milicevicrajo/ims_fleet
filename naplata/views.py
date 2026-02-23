@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from decimal import Decimal
 from django.db import connections
+from django.core.exceptions import PermissionDenied
 import openpyxl
 from openpyxl.workbook import Workbook
 from openpyxl.utils import get_column_letter
@@ -12,6 +13,14 @@ from django.views.decorators.http import require_POST
 from fleet.mixins import role_permission_required
 from .forms import KontaktiForm, NapomeneForm, OpomeneForm, PoziviTelForm, PozivPismoForm, TuzbeForm
 from .models import Kontakti, Napomene, Opomene, PozivPismo, PoziviTel, Tuzbe, AvansKlijent
+
+
+def _allowed_sif_pos_from_user(user):
+    if user.is_superuser:
+        return []
+
+    codes = user.allowed_centers.values_list('code', flat=True)
+    return sorted({str(code).strip() for code in codes if str(code).strip()})
 
 @role_permission_required()
 def lista_dugovanja(request):
@@ -134,7 +143,60 @@ def lista_avans_klijenti(request):
     return render(request, 'naplata/dugovanja_bucketi_avans.html', {
         'dugovanja': dugovanja,
         'marked_ids': set(marked_ids),
-        'title': 'Nova lista',
+        'title': 'Spisak za proveru',
+    })
+
+
+@never_cache
+@role_permission_required()
+def izvestaj_po_siframa_posla(request):
+    allowed_sif_pos = _allowed_sif_pos_from_user(request.user)
+    dugovanja = []
+    marked_ids = set(AvansKlijent.objects.values_list('sif_par', flat=True))
+
+    if request.user.is_superuser or allowed_sif_pos:
+        with connections['naplata_db'].cursor() as cursor:
+            sql = """
+                    SELECT
+                        db.sif_par,
+                        db.naz_par,
+                        SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
+                        SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 1],
+                        SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 2],
+                        SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 3],
+                        SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 4],
+                        SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 5],
+                        SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 6],
+                        SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
+                        SUM(db.saldo) AS Ukupno,
+                        n.veliki,
+                        db.ino
+                    FROM dodela_baketa db
+                    LEFT JOIN (
+                        SELECT sif_par, MAX(veliki) AS veliki
+                        FROM napomene
+                        GROUP BY sif_par
+                    ) n ON db.sif_par = n.sif_par
+            """
+            params = []
+            if not request.user.is_superuser:
+                placeholders = ",".join(["%s"] * len(allowed_sif_pos))
+                sql += f" WHERE db.sif_pos IN ({placeholders})"
+                params.extend(allowed_sif_pos)
+
+            sql += """
+                    GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
+                    ORDER BY Ukupno DESC
+                """
+            cursor.execute(sql, params)
+            dugovanja = cursor.fetchall()
+
+    return render(request, 'naplata/izvestaj_sifra_posla.html', {
+        'dugovanja': dugovanja,
+        'marked_ids': marked_ids,
+        'title': 'Izveštaj po šiframa posla',
+        'report_mode': True,
+        'report_allowed_sif_pos': allowed_sif_pos,
     })
 
 
@@ -215,6 +277,23 @@ def export_dugovanja_bucketi_excel(request):
 @never_cache
 @role_permission_required()
 def detalji_partner(request, sif_par):
+    report_mode = request.GET.get('report') == '1'
+    report_allowed_sif_pos = _allowed_sif_pos_from_user(request.user) if report_mode else []
+
+    if report_mode and not request.user.is_superuser and not report_allowed_sif_pos:
+        raise PermissionDenied('Nije definisana šifra posla za korisnika.')
+
+    if report_mode and not request.user.is_superuser:
+        with connections['naplata_db'].cursor() as cursor:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            cursor.execute(f"""
+                SELECT TOP 1 1
+                FROM dodela_baketa
+                WHERE sif_par = %s AND sif_pos IN ({placeholders})
+            """, [sif_par, *report_allowed_sif_pos])
+            if cursor.fetchone() is None:
+                raise PermissionDenied('Nemate pristup ovom partneru za vašu šifru posla.')
+
     # 1. Osnovne informacije o partneru (view partneri)
     with connections['naplata_db'].cursor() as cursor:
         cursor.execute("""
@@ -229,7 +308,7 @@ def detalji_partner(request, sif_par):
 
     # 2.1 Dugovanja (view baza)
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT 
                 god AS Godina,
                 oj AS OJ,
@@ -243,14 +322,22 @@ def detalji_partner(request, sif_par):
                 pot AS potražuje
             FROM baza
             WHERE sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             ORDER BY datum
-        """, [sif_par])
+        """
+        cursor.execute(sql, params)
         dugovanja = cursor.fetchall()
 
 
     # 2.2 Dugovanja baketi (view baza)
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT 
                 sb.opis,
                 b.baket,
@@ -264,14 +351,22 @@ def detalji_partner(request, sif_par):
             FROM dodela_baketa b
             LEFT JOIN sif_baket sb ON b.baket = sb.baket
             WHERE b.sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND b.sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             ORDER BY b.baket
-        """, [sif_par])
+        """
+        cursor.execute(sql, params)
         dugovanja_baket = cursor.fetchall()
 
         
     # 2.3 Dugovanja po fakturama
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT 
                 br_naloga, 
                 sif_par, 
@@ -283,21 +378,37 @@ def detalji_partner(request, sif_par):
                 SUM(dug) - SUM(pot) AS saldo
             FROM baza
             WHERE sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             GROUP BY br_naloga, sif_par, naz_par, sif_vrs
             ORDER BY poslednji_datum DESC
-        """, [sif_par])
+        """
+        cursor.execute(sql, params)
         dugovanja_sumarno = cursor.fetchall()
 
 
     # 3. Dospela potraživanja po bucketima (view dodela_bucketa)
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT sif_par, naz_par, vez_dok, sif_pos, duguje, potražuje, saldo,
                    dpo, danasnji_datum, broj_dana, baket, kategorija
             FROM dodela_baketa
             WHERE sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             ORDER BY baket
-        """, [sif_par])
+        """
+        cursor.execute(sql, params)
         baketi = cursor.fetchall()
 
     # 4. Otpisana potraživanja (view ispravke)
@@ -334,44 +445,68 @@ def detalji_partner(request, sif_par):
 
     # 6. Spisak faktura iz baketa 6
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT sif_par, naz_par as Naziv, TRIM(vez_dok) AS veza, sif_pos as [šifra posla], 
                     SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, SUM(saldo) AS saldo
             FROM dodela_baketa
             WHERE baket = 181 AND sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             GROUP BY sif_par, naz_par, vez_dok, sif_pos
             ORDER BY sif_par
-        """,[sif_par])
+        """
+        cursor.execute(sql, params)
         spisak_utuzenje = cursor.fetchall()
 
     # 7. Spisak faktura iz baketa 5
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT sif_par, naz_par, TRIM(vez_dok) AS veza, sif_pos, 
                 SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, 
                 SUM(saldo) AS saldo
             FROM dodela_baketa
             WHERE baket = 180 AND sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             GROUP BY sif_par, naz_par, vez_dok, sif_pos
             ORDER BY sif_par
-        """, [sif_par])
+        """
+        cursor.execute(sql, params)
         opomene_fakture = cursor.fetchall()
 
     # 8. Spisak faktura iz baketa 4
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT sif_par, naz_par, LTRIM(RTRIM(vez_dok)) AS veza, sif_pos,
                 SUM(duguje) AS duguje, SUM(potrazuje) AS potrazuje, SUM(saldo) AS saldo
             FROM dodela_baketa
             WHERE baket = 90 AND sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             GROUP BY sif_par, naz_par, vez_dok, sif_pos
             ORDER BY sif_par
-        """, [sif_par])
+        """
+        cursor.execute(sql, params)
         fakture_baket_90 = cursor.fetchall()
 
     # 9. Spisak faktura iz baketa 3
     with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
+        sql = """
             SELECT sif_par, naz_par as Naziv, 
                    LTRIM(RTRIM(vez_dok)) AS veza, 
                    sif_pos AS [šifra posla], 
@@ -380,9 +515,17 @@ def detalji_partner(request, sif_par):
                    SUM(saldo) AS saldo
             FROM dodela_baketa
             WHERE baket = 60 AND sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += """
             GROUP BY sif_par, naz_par, vez_dok, sif_pos
             ORDER BY sif_par
-        """,[sif_par])
+        """
+        cursor.execute(sql, params)
         fakture_baket_60 = cursor.fetchall()
 
     # Slanje svih podataka u template
@@ -402,8 +545,61 @@ def detalji_partner(request, sif_par):
         'spisak_utuzenje': spisak_utuzenje,
         'opomene_fakture': opomene_fakture,
         'fakture_baket_90': fakture_baket_90,
-        'fakture_baket_60':fakture_baket_60
+        'fakture_baket_60':fakture_baket_60,
+        'report_mode': report_mode,
+        'report_allowed_sif_pos': report_allowed_sif_pos,
     })
+
+
+@role_permission_required()
+def export_partner_baketi_excel(request, sif_par):
+    report_mode = request.GET.get('report') == '1'
+    report_allowed_sif_pos = _allowed_sif_pos_from_user(request.user) if report_mode else []
+
+    if report_mode and not request.user.is_superuser and not report_allowed_sif_pos:
+        raise PermissionDenied('Nije definisana šifra posla za korisnika.')
+
+    with connections['naplata_db'].cursor() as cursor:
+        sql = """
+            SELECT
+                sb.opis,
+                b.baket,
+                b.sif_pos,
+                b.vez_dok,
+                b.dpo,
+                b.duguje,
+                b.potrazuje,
+                b.saldo,
+                sb.akcija
+            FROM dodela_baketa b
+            LEFT JOIN sif_baket sb ON b.baket = sb.baket
+            WHERE b.sif_par = %s
+        """
+        params = [sif_par]
+        if report_mode and not request.user.is_superuser:
+            placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
+            sql += f" AND b.sif_pos IN ({placeholders})"
+            params.extend(report_allowed_sif_pos)
+        sql += " ORDER BY b.baket"
+
+        cursor.execute(sql, params)
+        rows = cursor.fetchall()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Dugovanja baketi"
+
+    headers = [
+        "Opis", "Baketi", "Šifra posla", "Veza", "DPO", "Duguje", "Potražuje", "Saldo", "Akcija"
+    ]
+    ws.append(headers)
+    for row in rows:
+        ws.append(row)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=dugovanja_baketi_partner_{sif_par}.xlsx'
+    wb.save(response)
+    return response
 
 @role_permission_required()
 def export_utuzene_fakture_excel(request, sif_par):
@@ -654,6 +850,7 @@ def lista_opomena(request):
                 napomene,
                 id
             FROM opomene
+            WHERE god = 2024
             ORDER BY god DESC, datum DESC
         """)
         opomene = cursor.fetchall()
