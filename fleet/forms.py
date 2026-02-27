@@ -269,6 +269,7 @@ class PutniNalogForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields.pop('opravdan', None)
+        self.fields.pop('storniran', None)
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(
                 pk=self.instance.employee_id,

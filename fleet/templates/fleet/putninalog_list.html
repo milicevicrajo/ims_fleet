@@ -84,6 +84,7 @@
                 <th class="text-center">Izmeni</th>
                 <th class="text-center">Štampa</th>
                 <th class="text-center">Ponovi</th>
+                <th class="text-center" data-filter="none">Storniraj</th>
               </tr>
             </thead>
             <tbody>
@@ -143,6 +144,39 @@
                   <a href="{% url 'putninalog_create' %}?copy={{ putni_nalog.pk }}" class="btn btn-outline-info btn-sm">
                     <i class="mdi mdi-content-copy"></i> Ponovi
                   </a>
+                </td>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#stornoModal{{ putni_nalog.pk }}"
+                  >
+                    <i class="mdi mdi-close-circle"></i> Storniraj
+                  </button>
+
+                  <div class="modal fade" id="stornoModal{{ putni_nalog.pk }}" tabindex="-1" aria-labelledby="stornoModalLabel{{ putni_nalog.pk }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="stornoModalLabel{{ putni_nalog.pk }}">Potvrda storniranja</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+                        </div>
+                        <div class="modal-body text-start">
+                          Da li ste sigurni da stornirate ovaj nalog <strong>{{ putni_nalog.order_number }}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Otkaži</button>
+                          <form method="post" action="{% url 'putninalog_storniraj' putni_nalog.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">
+                              <i class="mdi mdi-alert-circle"></i> Da, storniraj
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </td>
               </tr>
 

@@ -1651,8 +1651,10 @@ def _get_allowed_centers(user):
     return sorted({c.strip() for c in codes if str(c).strip()})
 
 
-def _putninalog_base_qs(request):
+def _putninalog_base_qs(request, include_stornirani=False):
     qs = PutniNalog.objects.select_related("job_code", "employee", "vehicle")
+    if not include_stornirani:
+        qs = qs.filter(storniran=False)
     user = request.user
 
     if not user.is_superuser and not _is_uprava(user):
@@ -1706,6 +1708,20 @@ def putninalog_set_opravdan(request, pk):
     if not putni_nalog.opravdan:
         putni_nalog.opravdan = True
         putni_nalog.save(update_fields=["opravdan"])
+
+    return redirect(request.META.get("HTTP_REFERER", reverse("putninalog_list")))
+
+
+@role_permission_required()
+def putninalog_storniraj(request, pk):
+    if request.method != "POST":
+        return HttpResponseForbidden("Neispravan zahtev.")
+
+    base_qs = _putninalog_base_qs(request, include_stornirani=True)
+    putni_nalog = get_object_or_404(base_qs, pk=pk)
+    if not putni_nalog.storniran:
+        putni_nalog.storniran = True
+        putni_nalog.save(update_fields=["storniran"])
 
     return redirect(request.META.get("HTTP_REFERER", reverse("putninalog_list")))
 
@@ -1799,6 +1815,8 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
+        if obj.storniran:
+            raise PermissionDenied("Nalog je storniran i zakljucan za izmene.")
         user = self.request.user
         if user.is_superuser:
             if obj.opravdan:
@@ -1859,6 +1877,8 @@ class PutniNalogDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, Dele
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
+        if obj.storniran:
+            raise PermissionDenied("Nalog je storniran i zakljucan za izmene.")
         if obj.opravdan:
             raise PermissionDenied("Nalog je opravdan i zakljucan za izmene.")
         return obj

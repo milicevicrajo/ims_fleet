@@ -461,6 +461,11 @@ class PutniNalog(models.Model):
         verbose_name=_("Opravdan")
     )
 
+    storniran = models.BooleanField(
+        default=False,
+        verbose_name=_("Storniran")
+    )
+
     def generate_order_number(self):
         center_code = getattr(self.job_code, "center", None)
         if not center_code:

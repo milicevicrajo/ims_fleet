@@ -138,6 +138,7 @@ urlpatterns = [
     path('putni-nalozi/novo/', PutniNalogCreateView.as_view(), name='putninalog_create'),
     path('putni-nalozi/izmeni/<int:pk>/', PutniNalogUpdateView.as_view(), name='putninalog_update'),
     path('putni-nalozi/<int:pk>/opravdan/', putninalog_set_opravdan, name='putninalog_set_opravdan'),
+    path('putni-nalozi/<int:pk>/storniraj/', putninalog_storniraj, name='putninalog_storniraj'),
     path('putni-nalozi/<int:pk>/', PutniNalogDetailView.as_view(), name='putninalog_detail'),
     path('putni-nalozi/obrisi/<int:pk>/', PutniNalogDeleteView.as_view(), name='putninalog_delete'),
     path('putni-nalozi/<int:pk>/print/', PutniNalogPrintView.as_view(), name='putninalog_print'),
