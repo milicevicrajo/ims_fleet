@@ -17,6 +17,8 @@
               <!-- Horizontal Form -->
               <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                {% if form.sif_par %}{{ form.sif_par.as_hidden }}{% endif %}
+                {% if form.naz_par %}{{ form.naz_par.as_hidden }}{% endif %}
                 
                 <!-- Šifra partnera (Read-only) -->
                 <div class="row mb-3">

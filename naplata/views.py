@@ -769,34 +769,39 @@ def lista_kontakata(request):
 
 @role_permission_required()
 def dodaj_kontakt(request, sif_par, naz_par):
+    cleaned_naz_par = (naz_par or "").strip()
+
     if request.method == "POST":
-        form = KontaktiForm(request.POST)
+        post_data = request.POST.copy()
+        post_data["sif_par"] = str(sif_par)
+        post_data["naz_par"] = cleaned_naz_par
+        form = KontaktiForm(post_data)
         if form.is_valid():
             kontakt = form.save(commit=False)
-            kontakt.sif_par = sif_par  # Automatski dodeljujemo šifru partnera
-            kontakt.naz_par = naz_par
+            kontakt.sif_par = sif_par  # Automatski dodeljujemo sifru partnera
+            kontakt.naz_par = cleaned_naz_par
             kontakt.save(using='naplata_db')  # Upisujemo u eksternu bazu
-            return redirect('naplata:detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par=sif_par)
     else:
-        form = KontaktiForm(initial={'sif_par': sif_par, 'naz_par': naz_par})
+        form = KontaktiForm(initial={'sif_par': sif_par, 'naz_par': cleaned_naz_par})
 
     return render(request, 'naplata/form_naplata.html', {'form': form})
 
-
 @role_permission_required()
-def izmeni_kontakt(request, sif_par):
-    kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), sif_par=sif_par)
+def izmeni_kontakt(request, id):
+    kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), id=id)
     if request.method == "POST":
-        form = KontaktiForm(request.POST, instance=kontakt)
+        post_data = request.POST.copy()
+        post_data["sif_par"] = str(kontakt.sif_par)
+        post_data["naz_par"] = (kontakt.naz_par or "").strip()
+        form = KontaktiForm(post_data, instance=kontakt)
         if form.is_valid():
             kontakt = form.save(commit=False)
-
             kontakt.save(using='naplata_db')
-            return redirect('naplata:detalji_partner', sif_par = sif_par)
+            return redirect('naplata:detalji_partner', sif_par=kontakt.sif_par)
     else:
         form = KontaktiForm(instance=kontakt)
     return render(request, 'naplata/form_naplata.html', {'form': form})
-
 @role_permission_required()
 def obrisi_kontakt(request, id):
     kontakt = get_object_or_404(Kontakti.objects.using('naplata_db'), id=id)
