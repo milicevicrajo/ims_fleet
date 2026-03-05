@@ -13,6 +13,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from fleet.mixins import role_permission_required
+from fleet.models import OrganizationalUnit
 from .forms import (
     KontaktiForm,
     NapomeneForm,
@@ -32,12 +33,33 @@ from .models import (
 )
 
 
+def _allowed_centers_from_user(user):
+    codes = []
+    raw = (user.allowed_center_codes or "").strip()
+    if raw:
+        parts = [p.strip() for p in raw.replace(";", ",").split(",")]
+        codes.extend([p for p in parts if p])
+
+    unit_centers = user.allowed_centers.values_list("center", flat=True)
+    codes.extend([str(center).strip() for center in unit_centers if str(center).strip()])
+    return sorted({str(code).strip() for code in codes if str(code).strip()})
+
+
 def _allowed_sif_pos_from_user(user):
     if user.is_superuser:
         return []
 
-    codes = user.allowed_centers.values_list('code', flat=True)
-    return sorted({str(code).strip() for code in codes if str(code).strip()})
+    allowed_centers = _allowed_centers_from_user(user)
+    explicit_codes = user.allowed_centers.values_list("code", flat=True)
+    codes = {str(code).strip() for code in explicit_codes if str(code).strip()}
+
+    if allowed_centers:
+        center_codes = OrganizationalUnit.objects.filter(
+            center__in=allowed_centers
+        ).values_list("code", flat=True)
+        codes.update({str(code).strip() for code in center_codes if str(code).strip()})
+
+    return sorted(codes)
 
 @role_permission_required()
 def lista_dugovanja(request):
@@ -168,11 +190,26 @@ def lista_avans_klijenti(request):
 @role_permission_required()
 def izvestaj_po_siframa_posla(request):
     allowed_sif_pos = _allowed_sif_pos_from_user(request.user)
+    selected_sif_pos = (request.GET.get("sif_pos") or "").strip()
     dugovanja = []
+    sif_pos_options = []
     marked_ids = set(AvansKlijent.objects.values_list('sif_par', flat=True))
+
+    if selected_sif_pos and not request.user.is_superuser and selected_sif_pos not in allowed_sif_pos:
+        raise PermissionDenied('Nemate pristup izabranoj šifri posla.')
 
     if request.user.is_superuser or allowed_sif_pos:
         with connections['naplata_db'].cursor() as cursor:
+            options_sql = "SELECT DISTINCT db.sif_pos FROM dodela_baketa db"
+            options_params = []
+            if not request.user.is_superuser:
+                option_placeholders = ",".join(["%s"] * len(allowed_sif_pos))
+                options_sql += f" WHERE db.sif_pos IN ({option_placeholders})"
+                options_params.extend(allowed_sif_pos)
+            options_sql += " ORDER BY db.sif_pos"
+            cursor.execute(options_sql, options_params)
+            sif_pos_options = [str(row[0]).strip() for row in cursor.fetchall() if row and row[0] is not None]
+
             sql = """
                     SELECT
                         db.sif_par,
@@ -196,10 +233,18 @@ def izvestaj_po_siframa_posla(request):
                     ) n ON db.sif_par = n.sif_par
             """
             params = []
+            where_clauses = []
             if not request.user.is_superuser:
                 placeholders = ",".join(["%s"] * len(allowed_sif_pos))
-                sql += f" WHERE db.sif_pos IN ({placeholders})"
+                where_clauses.append(f"db.sif_pos IN ({placeholders})")
                 params.extend(allowed_sif_pos)
+
+            if selected_sif_pos:
+                where_clauses.append("db.sif_pos = %s")
+                params.append(selected_sif_pos)
+
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
 
             sql += """
                     GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
@@ -214,6 +259,8 @@ def izvestaj_po_siframa_posla(request):
         'title': 'Izveštaj po šiframa posla',
         'report_mode': True,
         'report_allowed_sif_pos': allowed_sif_pos,
+        'sif_pos_options': sif_pos_options,
+        'selected_sif_pos': selected_sif_pos,
     })
 
 

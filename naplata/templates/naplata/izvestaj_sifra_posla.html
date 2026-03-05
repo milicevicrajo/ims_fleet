@@ -26,6 +26,26 @@
 </style>
 <div class="card">
     <div class="card-body">
+        <form method="get" class="pb-3">
+            <div class="row g-3 align-items-end mb-2">
+                <div class="col-12 col-md-6 col-lg-3">
+                <label for="id_sif_pos" class="form-label mb-0">&#352;ifra posla</label>
+                <select id="id_sif_pos" name="sif_pos" class="form-select select2-method">
+                    <option value="">Sve &#353;ifre</option>
+                    {% for sif_pos in sif_pos_options %}
+                        <option value="{{ sif_pos }}" {% if selected_sif_pos == sif_pos %}selected{% endif %}>{{ sif_pos }}</option>
+                    {% endfor %}
+                </select>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                    <button type="submit" class="btn btn-primary">Filtriraj</button>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                    <a href="{% url 'naplata:izvestaj_po_siframa_posla' %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
+
         <a href="{% url 'naplata:export_dugovanja_excel' %}" target="_blank" class="btn btn-success mb-3">
             <i class="fas fa-file-excel"></i> Exportuj u Excel
         </a>
