@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load humanize form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+  <div>
+    <a href="{% url 'naplata:pravna_izmeni' pk=postupak.pk %}" class="btn btn-warning">
+      <i class="mdi mdi-pencil"></i> Izmeni
+    </a>
+    <a href="{% url 'naplata:pravna_cases_list' case_type=postupak.tip %}" class="btn btn-secondary">
+      <i class="mdi mdi-arrow-left"></i> Nazad
+    </a>
+  </div>
+</div>
+
+<!-- ── Podaci o postupku ─────────────────────────────────────── -->
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">Podaci o postupku</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0">
+        <tbody>
+          {% for col_key, col_label in columns %}
+          <tr>
+            <th style="width:250px">{{ col_label }}</th>
+            <td>
+              {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
+                {{ postupak|get_attr:col_key|date:"d.m.Y"|default:"-" }}
+              {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
+                {{ postupak|get_attr:col_key|floatformat:2|default:"-" }}
+              {% else %}
+                {{ postupak|get_attr:col_key|default:"-" }}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <th>Arhivirano</th>
+            <td>{% if postupak.arhivirano %}<span class="badge bg-secondary">Da</span>{% else %}Ne{% endif %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Partner iz baze ───────────────────────────────────────── -->
+{% if partner %}
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">Partner iz baze (automatski)</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0">
+        <tbody>
+          <tr><th style="width:250px">Naziv u bazi</th><td>{{ partner.naziv_u_bazi|default:"-" }}</td></tr>
+          <tr><th>Mesto</th><td>{{ partner.mesto|default:"-" }}</td></tr>
+          <tr><th>PIB</th><td>{{ partner.pib|default:"-" }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Istorija promena (faze) ────────────────────────────────── -->
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title">Istorija promena</h5>
+
+    <div class="table-responsive">
+      <table id="DatatablePromene" class="display compact">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Promena</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pr in promene %}
+          <tr>
+            <td>{{ pr.datum|date:"d.m.Y" }}</td>
+            <td>{{ pr.promena }}</td>
+            <td>
+              <form method="post" action="{% url 'naplata:pravna_obrisi_promenu' pk=pr.pk %}"
+                    onsubmit="return confirm('Obrisati ovu promenu?');" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger" title="Obriši">
+                  <i class="mdi mdi-delete"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center">Nema promena.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Forma za dodavanje nove promene -->
+    <hr>
+    <h6>Dodaj promenu</h6>
+    <form method="post" action="{% url 'naplata:pravna_dodaj_promenu' pk=postupak.pk %}" class="row g-2 align-items-end">
+      {% csrf_token %}
+      <div class="col-md-3">
+        <label class="form-label">Datum</label>
+        <input type="text" name="datum" class="form-control js-date" autocomplete="off" required>
+      </div>
+      <div class="col-md-7">
+        <label class="form-label">Promena</label>
+        <textarea name="promena" class="form-control" rows="1" required></textarea>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="mdi mdi-plus"></i> Dodaj
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Arhiviranje postupka ─────────────────────────────────── -->
+<div class="card border-warning mb-3">
+  <div class="card-body">
+    <form method="post" action="{% url 'naplata:pravna_arhiviraj' pk=postupak.pk %}"
+          onsubmit="return confirm('Potvrdi izmenu statusa arhive za ovaj postupak.');">
+      {% csrf_token %}
+      {% if postupak.arhivirano %}
+      <button type="submit" class="btn btn-outline-success">
+        <i class="mdi mdi-backup-restore"></i> Vrati iz arhive
+      </button>
+      {% else %}
+      <button type="submit" class="btn btn-outline-warning">
+        <i class="mdi mdi-archive"></i> Arhiviraj postupak
+      </button>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -78,35 +78,6 @@ def lista_dugovanja(request):
 
 @never_cache
 @role_permission_required()
-def lista_tuzenih(request):
-    with connections['naplata_db'].cursor() as cursor:
-        cursor.execute("""
-            SELECT
-                god,
-                sif_par,
-                naz_par,
-                datum,
-                knt,
-                naz_knt,
-                duguju,
-                platili
-            FROM dbo.v_tuzeni
-            ORDER BY god DESC, duguju DESC
-        """)
-        tuzeni = cursor.fetchall()
-
-    total_duguju = sum((Decimal(row[6] or 0) for row in tuzeni), Decimal("0"))
-    total_platili = sum((Decimal(row[7] or 0) for row in tuzeni), Decimal("0"))
-
-    return render(request, 'naplata/tuzeni_list.html', {
-        'tuzeni': tuzeni,
-        'total_duguju': total_duguju,
-        'total_platili': total_platili,
-        'title': 'Utuženi Klijenti',
-    })
-
-@never_cache
-@role_permission_required()
 def lista_dugovanja_po_bucketima(request):
     marked_ids = set(AvansKlijent.objects.values_list('sif_par', flat=True))
     with connections['naplata_db'].cursor() as cursor:
@@ -1276,43 +1247,4 @@ def obrisi_tuzbu(request, id):
         tuzba.delete(using='naplata_db')
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
-
-
-PRAVNA_CASE_TYPES = {
-    'tuzeni': 'Tuženi',
-    'tuzili': 'Tužili',
-    'stecaj': 'Stečaj',
-    'uppr': 'UPPR',
-}
-
-
-def _get_pravna_title(case_type):
-    return PRAVNA_CASE_TYPES.get(case_type)
-
-
-@role_permission_required()
-def pravna_cases_list(request, case_type):
-    title = _get_pravna_title(case_type)
-    if not title:
-        raise PermissionDenied('Nepoznat tip pravnog slučaja.')
-
-    if case_type == 'tuzeni':
-        return lista_tuzenih(request)
-
-    if case_type in {
-        'tuzili',
-        'stecaj',
-        'uppr',
-    }:
-        return render(request, 'naplata/pravna_placeholder.html', {
-            'title': f'Pravna služba - {title}',
-            'section_name': title,
-        })
-
-    raise PermissionDenied('Nepoznat tip pravnog slučaja.')
-@role_permission_required()
-
-def obrisi_tuzbu(request, id):
-
-    tuzba = get_object_or_404(Tuzbe.objects.using('naplata_db'), id=id)
 

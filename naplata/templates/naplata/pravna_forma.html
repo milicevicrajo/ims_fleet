@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="pagetitle">
+  <h1>{{ title }}</h1>
+</div>
+
+<section class="section">
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Popuniti formu</h5>
+
+          <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="row mb-3">
+              <label for="{{ field.id_for_label }}" class="col-sm-4 col-form-label">{{ field.label }}:</label>
+              <div class="col-sm-8">
+                {{ field|add_class:'form-control' }}
+                {% if field.errors %}
+                <div class="invalid-feedback" style="display: block;">
+                  {% for error in field.errors %}
+                    {{ error }}
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+
+            <div class="text-center mt-3">
+              <button type="submit" class="btn btn-primary">Sačuvaj</button>
+              <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}" class="btn btn-secondary ms-2">Otkaži</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

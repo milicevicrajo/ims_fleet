@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load humanize form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+  <div>
+    <a href="{% url 'naplata:pravna_izvestaj' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
+       target="_blank" class="btn btn-outline-dark me-2">
+      <i class="mdi mdi-printer"></i> Generiši izveštaj
+    </a>
+    <a href="{% url 'naplata:pravna_dodaj' case_type=case_type %}" class="btn btn-primary">
+      <i class="mdi mdi-plus"></i> Novi postupak
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+
+    <form method="get" class="mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Šifra partnera</label>
+          <select name="sifra_partnera" class="form-select select2-method">
+            <option value="">Sve šifre</option>
+            {% for opt in partner_options %}
+              <option value="{{ opt.sifra }}" {% if selected_sifra == opt.sifra|stringformat:"s" %}selected{% endif %}>
+                {{ opt.sifra }}{% if opt.naziv %} - {{ opt.naziv }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Naziv partnera</label>
+          <select name="naziv_partnera" class="form-select select2-method">
+            <option value="">Svi nazivi</option>
+            {% for naziv in naziv_options %}
+              <option value="{{ naziv }}" {% if selected_naziv == naziv %}selected{% endif %}>{{ naziv }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input type="hidden" name="arhivirano" value="{% if show_archived %}1{% else %}0{% endif %}">
+          <button type="submit" class="btn btn-primary">Filtriraj</button>
+          <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}{% if show_archived %}?arhivirano=1{% endif %}" class="btn btn-outline-secondary ms-1">Reset</a>
+        </div>
+      </div>
+    </form>
+
+    <div class="mb-3">
+      {% if show_archived %}
+        <a href="?arhivirano=0{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary">Sakrij arhivirane</a>
+      {% else %}
+        <a href="?arhivirano=1{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary">Prikaži arhivirane</a>
+      {% endif %}
+    </div>
+
+    <div class="table-responsive">
+      <table id="DatatablePostupci" class="display compact">
+        <thead>
+          <tr>
+            {% for col_key, col_label in columns %}
+              <th>{{ col_label }}</th>
+            {% endfor %}
+            <th>Arh.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in postupci %}
+          <tr>
+            {% for col_key, col_label in columns %}
+              <td>
+                {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
+                  {{ p|get_attr:col_key|date:"d.m.Y" }}
+                {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
+                  {{ p|get_attr:col_key|floatformat:2 }}
+                {% else %}
+                  {{ p|get_attr:col_key|default:"-" }}
+                {% endif %}
+              </td>
+            {% endfor %}
+            <td>{% if p.arhivirano %}<span class="badge bg-secondary">Da</span>{% endif %}</td>
+            <td>
+              <a href="{% url 'naplata:pravna_detalj' pk=p.pk %}" class="btn btn-sm btn-info" title="Detalji">
+                <i class="mdi mdi-eye"></i>
+              </a>
+            </td>
+          </tr>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('DatatablePostupci');
+    if (!table || !window.initFleetReportTable) return;
+    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
+    window.initFleetReportTable(table, { pageLength: 50, order: [[0, 'asc']] });
+  });
+</script>
+{% endblock %}

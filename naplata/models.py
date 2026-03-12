@@ -245,3 +245,111 @@ class AvansKlijent(models.Model):
         verbose_name_plural = 'Avans klijenti'
 
 
+# <!-- ======================================================================= -->
+#                            <!-- PRAVNA SLUŽBA -->
+# <!-- ======================================================================= -->
+
+class Postupak(models.Model):
+    """
+    Univerzalni model za pravne postupke.
+    Različiti tipovi koriste različite podskupove polja.
+    Polja partnera (naziv u bazi, mesto, PIB) se vuku dinamički iz Partneri tabele.
+    """
+
+    TIP_CHOICES = [
+        ('tuzeni', 'Tuženi'),
+        ('tuzili', 'Tužili'),
+        ('stecaj', 'Stečaj'),
+        ('uppr', 'UPPR'),
+    ]
+
+    VALUTA_CHOICES = [
+        ('RSD', 'RSD'),
+        ('EUR', 'EUR'),
+        ('USD', 'USD'),
+    ]
+
+    tip = models.CharField(max_length=20, choices=TIP_CHOICES, default='tuzeni', db_index=True)
+
+    # --- Zajednička polja ---
+    sud = models.CharField(max_length=255, blank=True, null=True, verbose_name='Sud')
+    broj_predmeta = models.CharField(max_length=100, blank=True, null=True, verbose_name='Broj predmeta')
+    sifra_partnera = models.IntegerField(blank=True, null=True, db_index=True, verbose_name='Šifra partnera')
+    naziv_partnera = models.CharField(max_length=255, blank=True, null=True, verbose_name='Naziv partnera')
+    valuta = models.CharField(max_length=10, choices=VALUTA_CHOICES, default='RSD', verbose_name='Valuta')
+    osnovni_dug = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True, verbose_name='Osnovni dug (glavnica)')
+    arhivirano = models.BooleanField(default=False, verbose_name='Arhivirano')
+
+    # --- Tuženi ---
+    izvrsiteljski_broj = models.CharField(max_length=100, blank=True, null=True, verbose_name='Izvršiteljski broj')
+    datum_pokretanja = models.DateField(blank=True, null=True, verbose_name='Datum pokretanja postupka')
+    predmet_spora = models.TextField(blank=True, null=True, verbose_name='Predmet spora')
+
+    # --- Tužili ---
+    tuzilac = models.CharField(max_length=255, blank=True, null=True, verbose_name='Tužilac')
+    vrednost_spora = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True, verbose_name='Vrednost spora')
+    datum_podnosenja_tuzbe = models.DateField(blank=True, null=True, verbose_name='Datum podnošenja tužbe')
+
+    # --- Stečaj ---
+    vece = models.CharField(max_length=100, blank=True, null=True, verbose_name='Veće')
+    kamata = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True, verbose_name='Kamata')
+    troskovi = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True, verbose_name='Troškovi')
+    ukupan_dug = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True, verbose_name='Ukupan dug')
+    datum_otvaranja_stecaja = models.DateField(blank=True, null=True, verbose_name='Datum otvaranja stečajnog postupka')
+    prijava_potrazivanja = models.TextField(blank=True, null=True, verbose_name='Prijava potraživanja')
+
+    # --- UPPR ---
+    novi_broj = models.CharField(max_length=100, blank=True, null=True, verbose_name='Novi broj')
+    pib = models.CharField(max_length=20, blank=True, null=True, verbose_name='PIB')
+
+    # --- Meta ---
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='postupci_kreirani',
+    )
+
+    class Meta:
+        db_table = 'postupak'
+        verbose_name = 'Postupak'
+        verbose_name_plural = 'Postupci'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.get_tip_display()} - {self.naziv_partnera or self.sifra_partnera} ({self.broj_predmeta or 'bez broja'})"
+
+
+class PromenaPostupka(models.Model):
+    """Istorija promena za postupak"""
+    
+    postupak = models.ForeignKey(
+        Postupak,
+        on_delete=models.CASCADE,
+        related_name='promene',
+        verbose_name='Postupak',
+    )
+    datum = models.DateField(verbose_name='Datum')
+    promena = models.TextField(verbose_name='Promena')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='promene_postupaka',
+    )
+
+    class Meta:
+        db_table = 'promena_postupka'
+        verbose_name = 'Promena postupka'
+        verbose_name_plural = 'Promene postupaka'
+        ordering = ['-datum', '-created_at']
+
+    def __str__(self):
+        return f"{self.datum} - {self.promena[:50]}..."
+

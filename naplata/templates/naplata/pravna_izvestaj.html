@@ -1,0 +1,106 @@
+{% load form_filters %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #111; margin: 24px; }
+    h1, h2, h3 { margin: 0 0 8px; }
+    .muted { color: #666; font-size: 13px; }
+    .chip { display: inline-block; border: 1px solid #999; border-radius: 14px; padding: 3px 10px; margin-right: 6px; margin-bottom: 6px; font-size: 12px; }
+    .partner-block { margin-top: 24px; page-break-inside: avoid; }
+    .case-card { border: 1px solid #ccc; border-radius: 6px; padding: 10px; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #ddd; padding: 6px 8px; vertical-align: top; font-size: 13px; }
+    th { background: #f4f4f4; text-align: left; }
+    .no-phase { color: #777; font-style: italic; margin-top: 8px; }
+    @media print {
+      body { margin: 12mm; }
+      .no-print { display: none !important; }
+      a { color: #111; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="text-align:right; margin-bottom:10px;">
+    <button onclick="window.print()">Štampaj</button>
+  </div>
+
+  <h1>{{ title }}</h1>
+  <p class="muted">Generisano: {{ report_date|date:"d.m.Y H:i" }}</p>
+  <p class="muted">Ukupan broj slučajeva: {{ total_postupci }}</p>
+
+  <div>
+    {% for f in filter_badges %}
+      <span class="chip">{{ f }}</span>
+    {% endfor %}
+  </div>
+
+  {% for group in groups %}
+    <div class="partner-block">
+      <h2>
+        Partner: {{ group.naziv_partnera }}
+        {% if group.sifra_partnera %}
+          (Šifra: {{ group.sifra_partnera }})
+        {% endif %}
+      </h2>
+
+      {% for item in group.postupci %}
+        <div class="case-card">
+          <h3>
+            Predmet: {{ item.postupak.broj_predmeta|default:"-" }}
+            {% if item.postupak.arhivirano %}
+              <span class="chip">Arhivirano</span>
+            {% endif %}
+          </h3>
+
+          <table>
+            <tbody>
+              {% for col_key, col_label in columns %}
+                <tr>
+                  <th style="width:260px">{{ col_label }}</th>
+                  <td>
+                    {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
+                      {{ item.postupak|get_attr:col_key|date:"d.m.Y"|default:"-" }}
+                    {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
+                      {{ item.postupak|get_attr:col_key|floatformat:2|default:"-" }}
+                    {% else %}
+                      {{ item.postupak|get_attr:col_key|default:"-" }}
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <h4 style="margin-top:10px;">Faze postupka</h4>
+          {% if item.promene %}
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px">Datum</th>
+                  <th>Promena</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pr in item.promene %}
+                  <tr>
+                    <td>{{ pr.datum|date:"d.m.Y" }}</td>
+                    <td>{{ pr.promena }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="no-phase">Nema unetih faza postupka.</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% empty %}
+    <p>Nema slučajeva za izabrane filtere.</p>
+  {% endfor %}
+</body>
+</html>
