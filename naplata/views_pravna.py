@@ -1,11 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
 from django.db import connections
 from django.views.decorators.cache import never_cache
 from datetime import datetime
 from decimal import Decimal
+import openpyxl
+from openpyxl.styles import Font, Alignment
+from openpyxl.utils import get_column_letter
 
 from fleet.mixins import role_permission_required
+from .db_users import resolve_user_pk_for_db
 from .models import Postupak, PromenaPostupka
 from .forms_pravna import PostupakForm, PromenaPostupkaForm, COLUMNS_BY_TIP
 
@@ -188,6 +193,118 @@ def pravna_izvestaj(request, case_type):
     })
 
 
+@never_cache
+@role_permission_required()
+def pravna_izvestaj_excel(request, case_type):
+    title = _get_pravna_title(case_type)
+    if not title:
+        raise PermissionDenied('Nepoznat tip pravnog slucaja.')
+
+    ctx = _build_pravna_filtered_context(request, case_type)
+    postupci = list(ctx['qs'].order_by('sud', 'broj_predmeta', 'naziv_partnera', 'id'))
+    postupak_ids = [p.id for p in postupci]
+
+    promene_map = {pid: [] for pid in postupak_ids}
+    if postupak_ids:
+        promene = PromenaPostupka.objects.using('naplata_db').filter(
+            postupak_id__in=postupak_ids
+        ).order_by('datum', 'created_at')
+        for pr in promene:
+            promene_map.setdefault(pr.postupak_id, []).append(pr)
+
+    def _format_date(value):
+        return value.strftime('%d.%m.%Y') if value else '-'
+
+    def _duznik_tuzeni(postupak):
+        return (
+            (postupak.naziv_partnera or '').strip()
+            or (postupak.tuzilac or '').strip()
+            or (str(postupak.sifra_partnera) if postupak.sifra_partnera else '-')
+        )
+
+    def _datum_pokretanja(postupak):
+        return (
+            postupak.datum_pokretanja
+            or postupak.datum_podnosenja_tuzbe
+            or postupak.datum_otvaranja_stecaja
+        )
+
+    def _predmet_spora(postupak):
+        return (
+            (postupak.predmet_spora or '').strip()
+            or (postupak.prijava_potrazivanja or '').strip()
+            or '-'
+        )
+
+    def _vrednost_spora(postupak):
+        if postupak.vrednost_spora is not None:
+            return postupak.vrednost_spora
+        if postupak.osnovni_dug is not None:
+            return postupak.osnovni_dug
+        if postupak.ukupan_dug is not None:
+            return postupak.ukupan_dug
+        return '-'
+
+    def _faze_postupka(postupak_id):
+        promene = promene_map.get(postupak_id, [])
+        if not promene:
+            return 'Nema unetih faza.'
+        lines = []
+        for idx, pr in enumerate(promene, start=1):
+            datum = _format_date(pr.datum)
+            promena = (pr.promena or '').strip()
+            if promena:
+                lines.append(f'{idx}. {datum} - {promena}')
+            else:
+                lines.append(f'{idx}. {datum}')
+        return '\n'.join(lines)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Pregled sudskih postupaka'
+
+    headers = [
+        'Sud i broj postupka',
+        'Duznik - tuzeni',
+        'Datum pokretanja postupka',
+        'Predmet spora',
+        'Vrednost spora',
+        'Faze postupka',
+    ]
+    header_font = Font(bold=True)
+    for col_num, column_title in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=column_title)
+        cell.font = header_font
+
+    widths = [38, 34, 24, 48, 18, 70]
+    for col_num, width in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(col_num)].width = width
+
+    for row_num, postupak in enumerate(postupci, 2):
+        sud = (postupak.sud or '').strip()
+        broj = (postupak.broj_predmeta or '').strip()
+        sud_i_broj = f'{sud} / {broj}' if sud and broj else (sud or broj or '-')
+
+        ws.cell(row=row_num, column=1, value=sud_i_broj)
+        ws.cell(row=row_num, column=2, value=_duznik_tuzeni(postupak))
+        ws.cell(row=row_num, column=3, value=_format_date(_datum_pokretanja(postupak)))
+        ws.cell(row=row_num, column=4, value=_predmet_spora(postupak))
+        ws.cell(row=row_num, column=5, value=_vrednost_spora(postupak))
+        ws.cell(row=row_num, column=6, value=_faze_postupka(postupak.id))
+
+        ws.cell(row=row_num, column=4).alignment = Alignment(wrap_text=True, vertical='top')
+        ws.cell(row=row_num, column=6).alignment = Alignment(wrap_text=True, vertical='top')
+
+    filename = f'pravna_{case_type}_pregled_postupaka_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    wb.save(response)
+    response.set_cookie('excel_download', '1', max_age=120, path='/', samesite='Lax')
+    return response
+
+
 # ─── Detalj + faze ───────────────────────────────────────────────
 
 @never_cache
@@ -238,7 +355,7 @@ def pravna_dodaj(request, case_type):
         if form.is_valid():
             obj = form.save(commit=False)
             obj.tip = case_type
-            obj.created_by = request.user
+            obj.created_by_id = resolve_user_pk_for_db(request.user, 'naplata_db')
             obj.save(using='naplata_db')
             return redirect('naplata:pravna_cases_list', case_type=case_type)
     else:
@@ -305,7 +422,7 @@ def pravna_dodaj_promenu(request, pk):
         if form.is_valid():
             promena = form.save(commit=False)
             promena.postupak = postupak
-            promena.created_by = request.user
+            promena.created_by_id = resolve_user_pk_for_db(request.user, 'naplata_db')
             promena.save(using='naplata_db')
     return redirect('naplata:pravna_detalj', pk=pk)
 

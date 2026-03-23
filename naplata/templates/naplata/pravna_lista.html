@@ -11,6 +11,14 @@
        target="_blank" class="btn btn-outline-dark me-2">
       <i class="mdi mdi-printer"></i> Generiši izveštaj
     </a>
+    {% if case_type == 'tuzeni' %}
+      <a href="{% url 'naplata:pravna_izvestaj_excel' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
+         id="tuzeni-export-excel"
+         class="btn btn-success me-2"
+         data-no-preloader>
+        <i class="mdi mdi-file-excel"></i> Export Excel
+      </a>
+    {% endif %}
     <a href="{% url 'naplata:pravna_dodaj' case_type=case_type %}" class="btn btn-primary">
       <i class="mdi mdi-plus"></i> Novi postupak
     </a>
@@ -104,6 +112,49 @@
     if (!table || !window.initFleetReportTable) return;
     if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
     window.initFleetReportTable(table, { pageLength: 50, order: [[0, 'asc']] });
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var exportBtn = document.getElementById('tuzeni-export-excel');
+    if (!exportBtn) return;
+
+    var downloadPoller = null;
+    exportBtn.addEventListener('click', function () {
+      document.cookie = 'excel_download=; Max-Age=0; path=/';
+
+      if (typeof showPreloader === 'function') {
+        showPreloader();
+      }
+
+      if (downloadPoller) {
+        clearInterval(downloadPoller);
+      }
+
+      var startedAt = Date.now();
+      downloadPoller = setInterval(function () {
+        var hasCookie = document.cookie.split('; ').some(function (entry) {
+          return entry.indexOf('excel_download=1') === 0;
+        });
+
+        if (hasCookie) {
+          clearInterval(downloadPoller);
+          downloadPoller = null;
+          document.cookie = 'excel_download=; Max-Age=0; path=/';
+          if (typeof hidePreloader === 'function') {
+            hidePreloader();
+          }
+          return;
+        }
+
+        if (Date.now() - startedAt > 120000) {
+          clearInterval(downloadPoller);
+          downloadPoller = null;
+          if (typeof hidePreloader === 'function') {
+            hidePreloader();
+          }
+        }
+      }, 400);
+    });
   });
 </script>
 {% endblock %}

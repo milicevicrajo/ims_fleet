@@ -14,6 +14,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from fleet.mixins import role_permission_required
 from fleet.models import OrganizationalUnit
+from .db_users import resolve_user_pk_for_db
 from .forms import (
     KontaktiForm,
     NapomeneForm,
@@ -249,7 +250,7 @@ def toggle_avans_klijent(request):
 
     obj, created = AvansKlijent.objects.get_or_create(
         sif_par=sif_par_int,
-        defaults={'created_by': request.user if request.user.is_authenticated else None},
+        defaults={'created_by_id': resolve_user_pk_for_db(request.user, AvansKlijent.objects.db)},
     )
     if not created:
         obj.delete()

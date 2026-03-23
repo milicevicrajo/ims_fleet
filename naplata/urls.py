@@ -4,6 +4,7 @@ from .views_pravna import (
     lista_tuzenih,
     pravna_cases_list,
     pravna_izvestaj,
+    pravna_izvestaj_excel,
     pravna_detalj,
     pravna_dodaj,
     pravna_izmeni,
@@ -62,6 +63,7 @@ urlpatterns = [
 
     path('pravna-sluzba/<str:case_type>/', pravna_cases_list, name='pravna_cases_list'),
     path('pravna-sluzba/<str:case_type>/izvestaj/', pravna_izvestaj, name='pravna_izvestaj'),
+    path('pravna-sluzba/<str:case_type>/izvestaj/excel/', pravna_izvestaj_excel, name='pravna_izvestaj_excel'),
     path('pravna-sluzba/<str:case_type>/dodaj/', pravna_dodaj, name='pravna_dodaj'),
     path('pravna-sluzba/postupak/<int:pk>/', pravna_detalj, name='pravna_detalj'),
     path('pravna-sluzba/postupak/<int:pk>/izmeni/', pravna_izmeni, name='pravna_izmeni'),
