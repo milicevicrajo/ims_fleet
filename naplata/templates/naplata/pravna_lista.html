@@ -93,15 +93,53 @@
             {% endfor %}
             <td>{% if p.arhivirano %}<span class="badge bg-secondary">Da</span>{% endif %}</td>
             <td>
-              <a href="{% url 'naplata:pravna_detalj' pk=p.pk %}" class="btn btn-sm btn-info" title="Detalji">
-                <i class="mdi mdi-eye"></i>
-              </a>
+              <div class="d-flex gap-1">
+                <a href="{% url 'naplata:pravna_detalj' pk=p.pk %}" class="btn btn-sm btn-info" title="Detalji">
+                  <i class="mdi mdi-eye"></i>
+                </a>
+                <form id="delete-postupak-{{ p.pk }}" method="post" action="{% url 'naplata:pravna_obrisi' pk=p.pk %}" class="m-0">
+                  {% csrf_token %}
+                  {% if p.promene_count %}
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-danger js-delete-with-entries"
+                      title="Obriši"
+                      data-form-id="delete-postupak-{{ p.pk }}"
+                      data-promene-count="{{ p.promene_count }}">
+                      <i class="mdi mdi-delete"></i>
+                    </button>
+                  {% else %}
+                    <button type="submit" class="btn btn-sm btn-danger" title="Obriši">
+                      <i class="mdi mdi-delete"></i>
+                    </button>
+                  {% endif %}
+                </form>
+              </div>
             </td>
           </tr>
 
           {% endfor %}
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteWithEntriesModal" tabindex="-1" aria-labelledby="deleteWithEntriesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteWithEntriesModalLabel">Potvrda brisanja</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-1">Ovaj slučaj ima <strong id="deletePromeneCount">0</strong> unosa.</p>
+        <p class="mb-0">Da li ste sigurni da želite da obrišete slučaj?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkaži</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteWithEntriesBtn">Obriši</button>
+      </div>
     </div>
   </div>
 </div>
@@ -154,6 +192,43 @@
           }
         }
       }, 400);
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalElement = document.getElementById('deleteWithEntriesModal');
+    var confirmBtn = document.getElementById('confirmDeleteWithEntriesBtn');
+    var countLabel = document.getElementById('deletePromeneCount');
+    if (!modalElement || !confirmBtn || !countLabel) return;
+
+    var targetForm = null;
+    var modalInstance = null;
+    if (window.bootstrap && bootstrap.Modal) {
+      modalInstance = new bootstrap.Modal(modalElement);
+    }
+
+    document.querySelectorAll('.js-delete-with-entries').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var formId = btn.getAttribute('data-form-id');
+        var promeneCount = btn.getAttribute('data-promene-count') || '0';
+        targetForm = document.getElementById(formId);
+        countLabel.textContent = promeneCount;
+
+        if (modalInstance) {
+          modalInstance.show();
+          return;
+        }
+
+        var fallbackMessage = 'Ovaj slučaj ima ' + promeneCount + ' unosa. Da li ste sigurni da želite da obrišete slučaj?';
+        if (targetForm && window.confirm(fallbackMessage)) {
+          targetForm.submit();
+        }
+      });
+    });
+
+    confirmBtn.addEventListener('click', function () {
+      if (!targetForm) return;
+      targetForm.submit();
     });
   });
 </script>

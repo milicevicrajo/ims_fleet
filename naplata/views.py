@@ -1101,7 +1101,8 @@ def izmeni_opomenu(request, id):
     if request.method == "POST":
         form = OpomeneForm(request.POST, instance=opomena)
         if form.is_valid():
-            form.save(using='naplata_db')
+            obj = form.save(commit=False)
+            obj.save(using='naplata_db')
             return redirect('lista_opomena')
     else:
         form = OpomeneForm(instance=opomena)
@@ -1147,7 +1148,8 @@ def izmeni_poziv(request, id):
     if request.method == "POST":
         form = PoziviTelForm(request.POST, instance=poziv)
         if form.is_valid():
-            form.save(using='naplata_db')
+            obj = form.save(commit=False)
+            obj.save(using='naplata_db')
             return redirect('lista_poziva')
     else:
         form = PoziviTelForm(instance=poziv)
@@ -1191,7 +1193,8 @@ def izmeni_poziv_pismo(request, id):
     if request.method == "POST":
         form = PozivPismoForm(request.POST, instance=poziv)
         if form.is_valid():
-            form.save(using='naplata_db')
+            obj = form.save(commit=False)
+            obj.save(using='naplata_db')
             return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     else:
         form = PozivPismoForm(instance=poziv)
@@ -1235,7 +1238,8 @@ def izmeni_tuzbu(request, id):
     if request.method == "POST":
         form = TuzbeForm(request.POST, instance=tuzba)
         if form.is_valid():
-            form.save(using='naplata_db')
+            obj = form.save(commit=False)
+            obj.save(using='naplata_db')
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     else:
         form = TuzbeForm(instance=tuzba)

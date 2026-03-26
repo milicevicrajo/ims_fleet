@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
 from django.db import connections
+from django.db.models import Count
 from django.views.decorators.cache import never_cache
 from datetime import datetime
 from decimal import Decimal
@@ -117,7 +118,7 @@ def pravna_cases_list(request, case_type):
         raise PermissionDenied('Nepoznat tip pravnog slučaja.')
 
     ctx = _build_pravna_filtered_context(request, case_type)
-    qs = ctx['qs']
+    qs = ctx['qs'].annotate(promene_count=Count('promene'))
 
     columns = COLUMNS_BY_TIP.get(case_type, [])
 
@@ -377,7 +378,8 @@ def pravna_izmeni(request, pk):
     if request.method == 'POST':
         form = PostupakForm(request.POST, instance=postupak, tip=postupak.tip)
         if form.is_valid():
-            form.save(using='naplata_db')
+            obj = form.save(commit=False)
+            obj.save(using='naplata_db')
             return redirect('naplata:pravna_detalj', pk=pk)
     else:
         form = PostupakForm(instance=postupak, tip=postupak.tip)
