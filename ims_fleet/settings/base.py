@@ -141,10 +141,41 @@ AUTH_USER_MODEL = 'fleet.CustomUser'
 
 
 # Celery postavke
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL Redis brokera
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', CELERY_BROKER_URL)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_RESULT_SERIALIZER = 'json'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
 CELERY_ENABLE_UTC = False
+CELERY_TIMEZONE = TIME_ZONE
+
+# Windows-friendly defaulti: niska paralelizacija i ograničen prefetch.
+CELERY_WORKER_CONCURRENCY = int(os.getenv('CELERY_WORKER_CONCURRENCY', '2'))
+CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.getenv('CELERY_WORKER_PREFETCH_MULTIPLIER', '1'))
+CELERY_BROKER_POOL_LIMIT = int(os.getenv('CELERY_BROKER_POOL_LIMIT', '5'))
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Smanjuje pritisak na Redis backend (rezultati taskova nisu kritični u ovom projektu).
+CELERY_TASK_IGNORE_RESULT = os.getenv('CELERY_TASK_IGNORE_RESULT', '1') == '1'
+CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
+CELERY_RESULT_EXPIRES = int(os.getenv('CELERY_RESULT_EXPIRES', '3600'))
+
+# Routing po queue-ovima da teški Selenium taskovi ne blokiraju lake sync taskove.
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TASK_ROUTES = {
+    'fleet.tasks.run_nis_command': {'queue': 'selenium'},
+    'fleet.tasks.run_omv_putnicka_command': {'queue': 'selenium'},
+    'fleet.tasks.run_omv_teretna_command': {'queue': 'selenium'},
+    'fleet.tasks.kerio_login_task': {'queue': 'selenium'},
+    'fleet.tasks.fetch_policy_data_task': {'queue': 'sync'},
+    'fleet.tasks.fetch_service_data_task': {'queue': 'sync'},
+    'fleet.tasks.fetch_requisition_data_task': {'queue': 'sync'},
+    'fleet.tasks.fetch_ddor_data_task': {'queue': 'sync'},
+    'fleet.tasks.fetch_job_codes': {'queue': 'sync'},
+    'fleet.tasks.proveri_otpis': {'queue': 'sync'},
+    'fleet.tasks.sync_hr_employees_task': {'queue': 'sync'},
+    'fleet.tasks.sync_permission_codes_task': {'queue': 'sync'},
+}
+
 CELERY_WORKER_REDIRECT_STDOUTS = False
