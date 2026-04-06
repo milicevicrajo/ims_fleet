@@ -94,6 +94,8 @@
 
         <div class="info-line"><strong>Vozilo:</strong> {{ order.vehicle }}</div>
         <div class="info-line"><strong>Zaposleni:</strong> {{ order.employee }}</div>
+        <div class="info-line"><strong>Sifra centra:</strong> {{ center_code|default:"/" }}</div>
+        <div class="info-line"><strong>Pocetna kilometraza:</strong> {{ order.start_mileage|default:"/" }}</div>
         <div class="info-line"><strong>Period:</strong> {{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</div>
 
         {% if first_fuel_page %}
@@ -174,6 +176,8 @@
 
         <div class="info-line"><strong>Vozilo:</strong> {{ order.vehicle }}</div>
         <div class="info-line"><strong>Zaposleni:</strong> {{ order.employee }}</div>
+        <div class="info-line"><strong>Sifra centra:</strong> {{ center_code|default:"/" }}</div>
+        <div class="info-line"><strong>Pocetna kilometraza:</strong> {{ order.start_mileage|default:"/" }}</div>
         <div class="info-line"><strong>Period:</strong> {{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</div>
 
         <div class="table-box">

@@ -82,6 +82,23 @@ def ensure_auto_parts(kvar: Kvar):
     return list(kvar.parts.all())
 
 
+def _get_vehicle_latest_organizational_unit(vehicle):
+    latest_jobcode = (
+        JobCode.objects.select_related("organizational_unit")
+        .filter(vehicle=vehicle)
+        .order_by("-assigned_date", "-id")
+        .first()
+    )
+    return getattr(latest_jobcode, "organizational_unit", None)
+
+
+def _get_vehicle_center_code(vehicle):
+    organizational_unit = _get_vehicle_latest_organizational_unit(vehicle)
+    if organizational_unit:
+        return (getattr(organizational_unit, "center", "") or "").strip()
+    return ""
+
+
 class KvarListView(LoginRequiredMixin, FilterView):
     model = Kvar
     template_name = "fleet/kvar_list.html"
@@ -511,6 +528,7 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         order = self.object
+        center_code = _get_vehicle_center_code(order.vehicle)
         period_start = order.created_at
         period_end = order.closed_at or timezone.localdate()
         start_dt = datetime.datetime.combine(period_start, datetime.time.min)
@@ -599,6 +617,7 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
                 "period_start": period_start,
                 "period_end": period_end,
                 "registration_number": registration_number,
+                "center_code": center_code,
                 "omv_transactions": omv_qs,
                 "nis_transactions": nis_qs,
                 "total_liters": total_liters,
@@ -694,12 +713,15 @@ class VehicleTravelOrderRequestView(RolePermissionRequiredMixin, LoginRequiredMi
             pk=kwargs.get("pk"),
         )
         vehicle = order.vehicle
+        organizational_unit = _get_vehicle_latest_organizational_unit(vehicle)
         traffic_card = vehicle.traffic_cards.order_by("-issue_date", "-id").first()
         ctx.update(
             {
                 "order": order,
                 "vehicle": vehicle,
                 "employee": order.employee,
+                "organizational_unit_code": getattr(organizational_unit, "code", ""),
+                "organizational_unit_name": getattr(organizational_unit, "name", ""),
                 "registration_number": getattr(traffic_card, "registration_number", ""),
                 "next_url": self.request.GET.get("next") or reverse("vehicle_travel_order_open_list"),
             }

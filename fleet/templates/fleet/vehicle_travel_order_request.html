@@ -76,6 +76,14 @@
             <td class="value" colspan="3">{{ registration_number|default:"/" }}</td>
           </tr>
           <tr>
+            <td class="label">Sifra org. jedinice:</td>
+            <td class="value" colspan="3">{{ organizational_unit_code|default:"/" }}, {{ organizational_unit_name|default:"/" }}</td>
+          </tr>
+          <tr>
+            <td class="label">Pocetna kilometraza:</td>
+            <td class="value" colspan="3">{{ order.start_mileage|default:"/" }}</td>
+          </tr>
+          <tr>
             <td class="label">Datum zahteva:</td>
             <td class="value" colspan="3">{{ order.created_at|date:"d.m.Y" }}</td>
           </tr>
@@ -92,7 +100,7 @@
         </div>
         <div style="height:12mm;"></div>
         
-        <div style="margin-top:60mm; font-family:'Times New Roman', serif; font-size:10pt;" class="muted">
+        <div style="margin-top:30mm; font-family:'Times New Roman', serif; font-size:10pt;" class="muted">
           Napomena:
           Ovlašćeno lice organizacione celine u smislu popunjavanja ovog zapisa može biti rukovodeći kadar Instituta IMS (na nivou direktora poslovno razvojnih centara).
         </div>
