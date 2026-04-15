@@ -43,3 +43,5 @@ DATABASES = {
         },
     },
 }
+
+DATABASES = apply_mssql_connection_defaults(DATABASES)

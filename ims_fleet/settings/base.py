@@ -16,6 +16,52 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# SQL Server connection defaults used by environment-specific DATABASES blocks.
+MSSQL_DRIVER = os.getenv('MSSQL_DRIVER', 'ODBC Driver 17 for SQL Server')
+MSSQL_CONN_MAX_AGE = int(os.getenv('MSSQL_CONN_MAX_AGE', '300'))
+MSSQL_CONN_HEALTH_CHECKS = os.getenv('MSSQL_CONN_HEALTH_CHECKS', '1') == '1'
+MSSQL_CONNECTION_TIMEOUT = int(os.getenv('MSSQL_CONNECTION_TIMEOUT', '10'))
+MSSQL_QUERY_TIMEOUT = int(os.getenv('MSSQL_QUERY_TIMEOUT', '90'))
+MSSQL_CONNECTION_RETRIES = int(os.getenv('MSSQL_CONNECTION_RETRIES', '3'))
+MSSQL_CONNECTION_RETRY_BACKOFF_TIME = int(
+    os.getenv('MSSQL_CONNECTION_RETRY_BACKOFF_TIME', '5')
+)
+MSSQL_TRUST_SERVER_CERTIFICATE = os.getenv(
+    'MSSQL_TRUST_SERVER_CERTIFICATE', '1'
+) == '1'
+
+
+def apply_mssql_connection_defaults(databases):
+    """
+    Apply conservative defaults for mssql-django connections to reduce
+    short-lived reconnect churn in long-running Celery processes.
+    """
+    for db_config in databases.values():
+        if db_config.get('ENGINE') != 'mssql':
+            continue
+
+        db_config.setdefault('CONN_MAX_AGE', MSSQL_CONN_MAX_AGE)
+        db_config.setdefault('CONN_HEALTH_CHECKS', MSSQL_CONN_HEALTH_CHECKS)
+
+        options = db_config.setdefault('OPTIONS', {})
+        options.setdefault('driver', MSSQL_DRIVER)
+        options.setdefault('connection_timeout', MSSQL_CONNECTION_TIMEOUT)
+        options.setdefault('query_timeout', MSSQL_QUERY_TIMEOUT)
+        options.setdefault('connection_retries', MSSQL_CONNECTION_RETRIES)
+        options.setdefault(
+            'connection_retry_backoff_time',
+            MSSQL_CONNECTION_RETRY_BACKOFF_TIME,
+        )
+
+        if MSSQL_TRUST_SERVER_CERTIFICATE:
+            extra_params = options.get('extra_params', '')
+            if 'TrustServerCertificate=' not in extra_params:
+                if extra_params and not extra_params.endswith(';'):
+                    extra_params = f'{extra_params};'
+                options['extra_params'] = f'{extra_params}TrustServerCertificate=yes;'
+
+    return databases
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -155,6 +201,8 @@ CELERY_WORKER_CONCURRENCY = int(os.getenv('CELERY_WORKER_CONCURRENCY', '2'))
 CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.getenv('CELERY_WORKER_PREFETCH_MULTIPLIER', '1'))
 CELERY_BROKER_POOL_LIMIT = int(os.getenv('CELERY_BROKER_POOL_LIMIT', '5'))
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv('CELERY_WORKER_MAX_TASKS_PER_CHILD', '100'))
+CELERY_BEAT_MAX_LOOP_INTERVAL = int(os.getenv('CELERY_BEAT_MAX_LOOP_INTERVAL', '30'))
 
 # Smanjuje pritisak na Redis backend (rezultati taskova nisu kritični u ovom projektu).
 CELERY_TASK_IGNORE_RESULT = os.getenv('CELERY_TASK_IGNORE_RESULT', '1') == '1'
