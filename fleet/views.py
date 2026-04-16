@@ -2403,6 +2403,57 @@ def import_nis_excel_view(request):
     return redirect("fetch_data")
 
 
+def _handle_omv_csv_import(request, category_label):
+    csv_file = request.FILES.get("omv_csv_file")
+    if not csv_file:
+        messages.error(request, "Nije izabran OMV CSV fajl.")
+        return redirect("fetch_data")
+
+    extension = (os.path.splitext(csv_file.name or "")[1] or ".csv").lower()
+    if extension != ".csv":
+        messages.error(request, "OMV ručni import podržava samo CSV fajl.")
+        return redirect("fetch_data")
+
+    temp_file_path = None
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+            for chunk in csv_file.chunks():
+                tmp_file.write(chunk)
+            temp_file_path = tmp_file.name
+
+        from .selenium_integrations import import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
+
+        import_omv_fuel_consumption_from_csv(temp_file_path)
+        import_omv_transactions_from_csv(temp_file_path)
+        messages.success(request, f"OMV {category_label} CSV import je uspešno završen.")
+    except Exception as exc:
+        logger.exception("Greška prilikom ručnog OMV %s CSV importa.", category_label)
+        messages.error(request, f"Greška prilikom OMV {category_label} importa: {exc}")
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except OSError:
+                logger.warning("Nije moguće obrisati privremeni fajl: %s", temp_file_path)
+
+    return redirect("fetch_data")
+
+
+@staff_member_required
+def import_omv_putnicka_csv_view(request):
+    if request.method != "POST":
+        return redirect("fetch_data")
+    return _handle_omv_csv_import(request, "putnicka")
+
+
+@staff_member_required
+def import_omv_teretna_csv_view(request):
+    if request.method != "POST":
+        return redirect("fetch_data")
+    return _handle_omv_csv_import(request, "teretna")
+
+
 
 # POVLACENJE PODATAKA IZ DRUGE BAZE
 logger = logging.getLogger(__name__)  

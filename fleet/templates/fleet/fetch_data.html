@@ -12,6 +12,28 @@
 
 <hr>
 
+<!-- Forma za rucni import OMV putnicka CSV fajla -->
+<form method="post" action="{% url 'import_omv_putnicka_csv' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <h2>Rucni import OMV putnicka CSV fajla</h2>
+    <label for="omv_putnicka_csv_file">CSV fajl:</label>
+    <input type="file" id="omv_putnicka_csv_file" name="omv_csv_file" accept=".csv" required>
+    <button type="submit">Importuj OMV putnicka CSV</button>
+</form>
+
+<hr>
+
+<!-- Forma za rucni import OMV teretna CSV fajla -->
+<form method="post" action="{% url 'import_omv_teretna_csv' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <h2>Rucni import OMV teretna CSV fajla</h2>
+    <label for="omv_teretna_csv_file">CSV fajl:</label>
+    <input type="file" id="omv_teretna_csv_file" name="omv_csv_file" accept=".csv" required>
+    <button type="submit">Importuj OMV teretna CSV</button>
+</form>
+
+<hr>
+
 <!-- Forma za povlacenje podataka za Policy -->
 <form method="post" action="{% url 'fetch_policies' %}">
     {% csrf_token %}
