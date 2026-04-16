@@ -173,6 +173,7 @@ urlpatterns = [
 
     # FETCHING
     path('fetch-data/', views.fetch_data_view, name='fetch_data'),
+    path('import-nis-excel/', views.import_nis_excel_view, name='import_nis_excel'),
     path('fetch-policies/', views.fetch_policy_data_view, name='fetch_policies'),
     path('fetch-services/', views.fetch_service_data_view, name='fetch_services'),
     path('fetch-requisitions/', views.fetch_requisition_data_view, name='fetch_requisitions'),

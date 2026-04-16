@@ -4,6 +4,7 @@ import datetime
 from datetime import date, timedelta
 import logging
 import os
+import tempfile
 
 from openpyxl import Workbook
 import pandas as pd
@@ -2360,6 +2361,46 @@ def fetch_data_view(request):
 
     # Prikaz stranice sa svim fetching formama
     return render(request, 'fleet/fetch_data.html')
+
+
+@staff_member_required
+def import_nis_excel_view(request):
+    """
+    Ručni import NIS transakcija i potrošnje goriva iz odabranog Excel fajla.
+    """
+    if request.method != "POST":
+        return redirect("fetch_data")
+
+    excel_file = request.FILES.get("excel_file")
+    if not excel_file:
+        messages.error(request, "Nije izabran Excel fajl.")
+        return redirect("fetch_data")
+
+    extension = os.path.splitext(excel_file.name or "")[1] or ".xlsx"
+    temp_file_path = None
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
+            for chunk in excel_file.chunks():
+                tmp_file.write(chunk)
+            temp_file_path = tmp_file.name
+
+        from .selenium_integrations import import_nis_fuel_consumption, import_nis_transactions
+
+        import_nis_fuel_consumption(temp_file_path)
+        import_nis_transactions(temp_file_path)
+        messages.success(request, "NIS Excel import je uspešno završen.")
+    except Exception as exc:
+        logger.exception("Greška prilikom ručnog NIS Excel importa.")
+        messages.error(request, f"Greška prilikom importa: {exc}")
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except OSError:
+                logger.warning("Nije moguće obrisati privremeni fajl: %s", temp_file_path)
+
+    return redirect("fetch_data")
 
 
 

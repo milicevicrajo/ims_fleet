@@ -1,11 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
 
+<!-- Forma za rucni import NIS Excel fajla -->
+<form method="post" action="{% url 'import_nis_excel' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <h2>Rucni import NIS Excel fajla</h2>
+    <label for="nis_excel_file">Excel fajl:</label>
+    <input type="file" id="nis_excel_file" name="excel_file" accept=".xlsx,.xls,.xlsm" required>
+    <button type="submit">Importuj NIS Excel</button>
+</form>
 
-<!-- Forma za povlačenje podataka za Policy -->
+<hr>
+
+<!-- Forma za povlacenje podataka za Policy -->
 <form method="post" action="{% url 'fetch_policies' %}">
     {% csrf_token %}
-    <h2>Povlačenje podataka o polisama osiguranja</h2>
+    <h2>Povlacenje podataka o polisama osiguranja</h2>
     <label for="days_policy">Broj dana (opciono):</label>
     <input type="text" id="days_policy" name="days" placeholder="Unesite broj dana">
     <button type="submit">Povuci podatke za Polise osiguranja</button>
@@ -13,10 +23,10 @@
 
 <hr>
 
-<!-- Forma za povlačenje podataka za ServiceTransaction -->
+<!-- Forma za povlacenje podataka za ServiceTransaction -->
 <form method="post" action="{% url 'fetch_services' %}">
     {% csrf_token %}
-    <h2>Povlačenje podataka o servisnim transakcijama</h2>
+    <h2>Povlacenje podataka o servisnim transakcijama</h2>
     <label for="days_service">Broj dana (opciono):</label>
     <input type="text" id="days_service" name="days" placeholder="Unesite broj dana">
     <button type="submit">Povuci podatke za Servise</button>
@@ -24,19 +34,19 @@
 
 <hr>
 
-<!-- Forma za povlačenje podataka za Requisition -->
+<!-- Forma za povlacenje podataka za Requisition -->
 <form method="post" action="{% url 'fetch_requisitions' %}">
     {% csrf_token %}
-    <h2>Povlačenje podataka o trebovanjima/zahtevima</h2>
+    <h2>Povlacenje podataka o trebovanjima/zahtevima</h2>
     <label for="days_requisition">Broj dana (opciono):</label>
     <input type="text" id="days_requisition" name="days" placeholder="Unesite broj dana">
     <button type="submit">Povuci podatke za Trebovanja</button>
 </form>
 
-<!-- Forma za povlačenje podataka za DDOR Insurance -->
+<!-- Forma za povlacenje podataka za DDOR Insurance -->
 <form method="post" action="{% url 'fetch_ddor' %}">
     {% csrf_token %}
-    <h2>Povlačenje podataka iz DDOR osiguranja</h2>
+    <h2>Povlacenje podataka iz DDOR osiguranja</h2>
     <button type="submit">Povuci podatke za DDOR</button>
 </form>
 
