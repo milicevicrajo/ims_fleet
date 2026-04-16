@@ -5,6 +5,7 @@ from datetime import date, timedelta
 import logging
 import os
 import tempfile
+import textwrap
 
 from openpyxl import Workbook
 import pandas as pd
@@ -509,30 +510,7 @@ def _vehicle_list_base_queryset(request):
     get = request.GET
     if "status" not in get and "show_archived" not in get:
         qs = qs.filter(otpis=False)
-
-    qs = qs.annotate(
-        _pn_dash_pos=StrIndex("order_number", "-"),
-        _pn_slash_pos=StrIndex("order_number", "/"),
-    ).annotate(
-        _pn_year=Cast(
-            Substr(
-                "order_number",
-                F("_pn_slash_pos") + 1,
-                F("_pn_dash_pos") - F("_pn_slash_pos") - 1,
-            ),
-            IntegerField(),
-        ),
-        _pn_seq=Cast(
-            Substr("order_number", F("_pn_dash_pos") + 1),
-            IntegerField(),
-        ),
-        pn_sort_key=ExpressionWrapper(
-            F("_pn_year") * Value(1000000) + F("_pn_seq"),
-            output_field=IntegerField(),
-        ),
-    )
-
-    return qs.order_by("-_pn_year", "-_pn_seq", "-id")
+    return qs
 
 
 @role_permission_required()
@@ -1652,6 +1630,32 @@ def _get_allowed_centers(user):
     return sorted({c.strip() for c in codes if str(c).strip()})
 
 
+def _split_putni_nalog_note_lines(note, max_lines=2, width=70):
+    if not note:
+        return [""] * max_lines
+
+    wrapped_lines = []
+    for raw_line in str(note).splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        wrapped = textwrap.wrap(
+            line,
+            width=width,
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
+        wrapped_lines.extend(wrapped or [""])
+
+    if not wrapped_lines:
+        wrapped_lines = [""]
+
+    result = wrapped_lines[:max_lines]
+    while len(result) < max_lines:
+        result.append("")
+    return result
+
+
 def _putninalog_base_qs(request, include_stornirani=False):
     qs = PutniNalog.objects.select_related("job_code", "employee", "vehicle")
     if not include_stornirani:
@@ -1665,7 +1669,29 @@ def _putninalog_base_qs(request, include_stornirani=False):
         else:
             return qs.none()
 
-    return qs
+    qs = qs.annotate(
+        _pn_dash_pos=StrIndex("order_number", Value("-")),
+        _pn_slash_pos=StrIndex("order_number", Value("/")),
+    ).annotate(
+        _pn_year=Cast(
+            Substr(
+                "order_number",
+                F("_pn_slash_pos") + 1,
+                F("_pn_dash_pos") - F("_pn_slash_pos") - 1,
+            ),
+            IntegerField(),
+        ),
+        _pn_seq=Cast(
+            Substr("order_number", F("_pn_dash_pos") + 1),
+            IntegerField(),
+        ),
+        pn_sort_key=ExpressionWrapper(
+            F("_pn_year") * Value(1000000) + F("_pn_seq"),
+            output_field=IntegerField(),
+        ),
+    )
+
+    return qs.order_by("-_pn_year", "-_pn_seq", "-id")
 
 
 class PutniNalogListView(LoginRequiredMixin, FilterView):
@@ -1749,6 +1775,7 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
                     "job_code": source.job_code,
                     "travel_location": source.travel_location,
                     "task": source.task,
+                    "napomena": source.napomena,
                     "contract_offer": source.contract_offer,
                     "vehicle": source.vehicle,
                     "other_vehicle": source.other_vehicle,
@@ -1863,6 +1890,7 @@ class PutniNalogPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, Detai
         context = super().get_context_data(**kwargs)
         context['title'] = f"Štampa putnog naloga {self.object.order_number}"
         context['auto_print'] = self.request.GET.get('auto') == '1'
+        context["napomena_lines"] = _split_putni_nalog_note_lines(self.object.napomena)
         return context
 
 class PutniNalogDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):

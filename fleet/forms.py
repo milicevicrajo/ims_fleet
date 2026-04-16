@@ -258,6 +258,11 @@ class PutniNalogForm(forms.ModelForm):
         input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum putovanja"
     )
+    napomena = forms.CharField(
+        label="Napomena",
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+    )
 
     class Meta:
         model = PutniNalog
@@ -293,7 +298,8 @@ class PutniNalogForm(forms.ModelForm):
         # Sva polja su obavezna osim eksplicitno izuzetih
         optional_fields = {
             'order_date', 'order_number', 'start_sequence', 'vehicle', 'other_vehicle',
-            'transport_type', 'is_weekly', 'employee', 'other_employee_name', 'employee_type'
+            'transport_type', 'is_weekly', 'employee', 'other_employee_name', 'employee_type',
+            'napomena'
         }
         for field_name, field in self.fields.items():
             if field_name not in optional_fields:

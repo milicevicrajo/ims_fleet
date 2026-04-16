@@ -417,6 +417,7 @@ class PutniNalog(models.Model):
     )
     travel_location = models.CharField(max_length=100, verbose_name=_("Mesto putovanja"))
     task = models.TextField(verbose_name=_("Zadatak"))
+    napomena = models.TextField(verbose_name=_("Napomena"), blank=True, null=True)
     contract_offer = models.CharField(max_length=50, verbose_name=_("Ugovor / ponuda"), blank=True, null=True)
 
     vehicle = models.ForeignKey(
