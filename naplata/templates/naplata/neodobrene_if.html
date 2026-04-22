@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">{{ title|default:'Neodobrene IF' }}</h2>
+    <a
+        href="{% url 'naplata:export_neodobrene_if_excel' %}{% if query_string %}?{{ query_string }}{% endif %}"
+        target="_blank"
+        class="btn btn-success"
+    >
+        <i class="fas fa-file-excel"></i> Exportuj u Excel
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="mb-3">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label for="id_god" class="form-label">Godina</label>
+                    <select id="id_god" name="god" class="form-select select2-method">
+                        <option value="">Sve godine</option>
+                        {% for god in god_options %}
+                        <option value="{{ god }}" {% if filters.god == god %}selected{% endif %}>{{ god }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-2">
+                    <label for="id_sifra_partnera" class="form-label">Sifra partnera</label>
+                    <select id="id_sifra_partnera" name="sifra_partnera" class="form-select select2-method">
+                        <option value="">Sve sifre</option>
+                        {% for opt in partner_options %}
+                        <option value="{{ opt.sifra }}" {% if filters.sifra_partnera == opt.sifra %}selected{% endif %}>
+                            {{ opt.sifra }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label for="id_naziv_partnera" class="form-label">Naziv partnera</label>
+                    <select id="id_naziv_partnera" name="naziv_partnera" class="form-select select2-method">
+                        <option value="">Svi nazivi</option>
+                        {% for naziv in naziv_options %}
+                        <option value="{{ naziv }}" title="{{ naziv }}" {% if filters.naziv_partnera == naziv %}selected{% endif %}>{{ naziv|truncatechars:35 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label for="id_status_na_sefu" class="form-label">Status na sefu</label>
+                    <select id="id_status_na_sefu" name="status_na_sefu" class="form-select select2-method">
+                        <option value="">Svi statusi</option>
+                        {% for status in status_options %}
+                        <option value="{{ status }}" {% if filters.status_na_sefu == status %}selected{% endif %}>{{ status }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <button type="submit" class="btn btn-primary w-100 px-2">
+                        <i class="mdi mdi-filter"></i> Filtriraj
+                    </button>
+                </div>
+                <div class="col-6 col-md-3 col-lg-1">
+                    <a href="{% url 'naplata:neodobrene_if_izvestaj' %}" class="btn btn-outline-secondary w-100">Reset</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="text-muted mb-2">Ukupno stavki: <strong>{{ rows_count }}</strong></div>
+
+        <div class="table-responsive">
+            <table id="DatatableNeodobreneIF" class="display compact">
+                <thead>
+                    <tr>
+                        <th>OJ</th>
+                        <th>God</th>
+                        <th>Datum</th>
+                        <th>Sifra partnera</th>
+                        <th>Naziv partnera</th>
+                        <th>Faktura</th>
+                        <th>Status na sefu</th>
+                        <th>Vreme statusa</th>
+                        <th>Komentar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>{{ row.0 }}</td>
+                            <td>{{ row.1 }}</td>
+                            <td data-order="{% if row.2 %}{{ row.2|date:'Y-m-d H:i:s' }}{% endif %}">
+                                {% if row.2 %}{{ row.2|date:"d.m.Y" }}{% else %}-{% endif %}
+                            </td>
+                            <td class="text-nowrap">{{ row.3 }}</td>
+                            <td>
+                                <a href="{% url 'naplata:detalji_partner' row.3 %}">
+                                    <span title="{{ row.4 }}">{{ row.4|truncatechars:35 }}</span>
+                                </a>
+                            </td>
+                            <td class="text-nowrap">{{ row.5 }}</td>
+                            <td>
+                                {% if row.6 %}
+                                {% if row.6|lower == 'rejected' %}
+                                    <span class="badge bg-danger">{{ row.6 }}</span>
+                                {% elif row.6|lower == 'sent' %}
+                                    <span class="badge bg-warning text-dark">{{ row.6 }}</span>
+                                {% elif row.6|lower == 'storno' %}
+                                    <span class="badge bg-secondary">{{ row.6 }}</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">{{ row.6 }}</span>
+                                {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td data-order="{% if row.7 %}{{ row.7|date:'Y-m-d H:i:s' }}{% endif %}">
+                                {% if row.7 %}{{ row.7|date:"d.m.Y H:i:s" }}{% else %}-{% endif %}
+                            </td>
+                            <td title="{{ row.8|default_if_none:'' }}">
+                                {% if row.8 %}
+                                    <span title="{{ row.8 }}">{{ row.8|truncatechars:20 }}</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center">Nema podataka za izabrane filtere.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('DatatableNeodobreneIF');
+    if (!table || !window.initFleetReportTable) {
+      return;
+    }
+    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) {
+      return;
+    }
+    window.initFleetReportTable(table, {
+      pageLength: 100,
+      scrollX: false,
+      order: [[7, 'desc'], [2, 'desc']]
+    });
+  });
+</script>
+{% endblock %}

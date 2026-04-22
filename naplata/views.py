@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from decimal import Decimal
 from datetime import datetime, date, time
+from urllib.parse import urlencode
 from django.db import connections
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
@@ -234,6 +235,180 @@ def izvestaj_po_siframa_posla(request):
         'sif_pos_options': sif_pos_options,
         'selected_sif_pos': selected_sif_pos,
     })
+
+
+def _neodobrene_if_filters_from_request(request):
+    return {
+        'god': (request.GET.get('god') or '').strip(),
+        'sifra_partnera': (request.GET.get('sifra_partnera') or '').strip(),
+        'naziv_partnera': (request.GET.get('naziv_partnera') or '').strip(),
+        'status_na_sefu': (request.GET.get('status_na_sefu') or '').strip(),
+    }
+
+
+def _neodobrene_if_options():
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT DISTINCT CAST(god AS NVARCHAR(10)) AS god
+            FROM v_neodobreneIF
+            WHERE god IS NOT NULL
+            ORDER BY CAST(god AS NVARCHAR(10)) DESC
+        """)
+        god_options = [
+            str(row[0]).strip()
+            for row in cursor.fetchall()
+            if row and row[0] is not None and str(row[0]).strip()
+        ]
+
+        cursor.execute("""
+            SELECT DISTINCT LTRIM(RTRIM([Status na sefu])) AS status_na_sefu
+            FROM v_neodobreneIF
+            WHERE [Status na sefu] IS NOT NULL
+              AND LTRIM(RTRIM([Status na sefu])) <> ''
+            ORDER BY LTRIM(RTRIM([Status na sefu]))
+        """)
+        status_options = [
+            str(row[0]).strip()
+            for row in cursor.fetchall()
+            if row and row[0] is not None and str(row[0]).strip()
+        ]
+
+        cursor.execute("""
+            SELECT DISTINCT
+                CAST([sifra partnera] AS NVARCHAR(50)) AS sifra_partnera,
+                LTRIM(RTRIM([naziv partnera])) AS naziv_partnera
+            FROM v_neodobreneIF
+            WHERE [sifra partnera] IS NOT NULL
+            ORDER BY CAST([sifra partnera] AS NVARCHAR(50))
+        """)
+        partner_options = [
+            {
+                'sifra': str(row[0]).strip(),
+                'naziv': str(row[1]).strip() if row[1] is not None else '',
+            }
+            for row in cursor.fetchall()
+            if row and row[0] is not None and str(row[0]).strip()
+        ]
+
+        cursor.execute("""
+            SELECT DISTINCT LTRIM(RTRIM([naziv partnera])) AS naziv_partnera
+            FROM v_neodobreneIF
+            WHERE [naziv partnera] IS NOT NULL
+              AND LTRIM(RTRIM([naziv partnera])) <> ''
+            ORDER BY LTRIM(RTRIM([naziv partnera]))
+        """)
+        naziv_options = [
+            str(row[0]).strip()
+            for row in cursor.fetchall()
+            if row and row[0] is not None and str(row[0]).strip()
+        ]
+
+    return god_options, status_options, partner_options, naziv_options
+
+
+def _neodobrene_if_rows(filters):
+    sql = """
+        SELECT
+            oj,
+            CAST(god AS NVARCHAR(10)) AS god,
+            datum,
+            [sifra partnera] AS sifra_partnera,
+            LTRIM(RTRIM([naziv partnera])) AS naziv_partnera,
+            LTRIM(RTRIM(faktura)) AS faktura,
+            LTRIM(RTRIM([Status na sefu])) AS status_na_sefu,
+            [vreme statusa] AS vreme_statusa,
+            komentar
+        FROM v_neodobreneIF
+    """
+    params = []
+    where_clauses = []
+
+    if filters.get('god'):
+        where_clauses.append("CAST(god AS NVARCHAR(10)) = %s")
+        params.append(filters['god'])
+
+    if filters.get('sifra_partnera'):
+        where_clauses.append("CAST([sifra partnera] AS NVARCHAR(50)) = %s")
+        params.append(filters['sifra_partnera'])
+
+    if filters.get('naziv_partnera'):
+        where_clauses.append("LTRIM(RTRIM([naziv partnera])) = %s")
+        params.append(filters['naziv_partnera'])
+
+    if filters.get('status_na_sefu'):
+        where_clauses.append("LTRIM(RTRIM([Status na sefu])) = %s")
+        params.append(filters['status_na_sefu'])
+
+    if where_clauses:
+        sql += " WHERE " + " AND ".join(where_clauses)
+
+    sql += " ORDER BY [vreme statusa] DESC, datum DESC, [sifra partnera] ASC"
+
+    with connections['naplata_db'].cursor() as cursor:
+        cursor.execute(sql, params)
+        return cursor.fetchall()
+
+
+@never_cache
+@role_permission_required()
+def neodobrene_if_izvestaj(request):
+    filters = _neodobrene_if_filters_from_request(request)
+    rows = _neodobrene_if_rows(filters)
+    god_options, status_options, partner_options, naziv_options = _neodobrene_if_options()
+    query_string = urlencode({k: v for k, v in filters.items() if v})
+
+    return render(request, 'naplata/neodobrene_if.html', {
+        'title': 'Neodobrene IF',
+        'rows': rows,
+        'filters': filters,
+        'god_options': god_options,
+        'status_options': status_options,
+        'partner_options': partner_options,
+        'naziv_options': naziv_options,
+        'rows_count': len(rows),
+        'query_string': query_string,
+    })
+
+
+@role_permission_required()
+def export_neodobrene_if_excel(request):
+    filters = _neodobrene_if_filters_from_request(request)
+    rows = _neodobrene_if_rows(filters)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Neodobrene IF"
+
+    headers = [
+        "OJ",
+        "God",
+        "Datum",
+        "Sifra partnera",
+        "Naziv partnera",
+        "Faktura",
+        "Status na sefu",
+        "Vreme statusa",
+        "Komentar",
+    ]
+    ws.append(headers)
+
+    for row in rows:
+        ws.append(row)
+
+    header_font = Font(bold=True)
+    for cell in ws[1]:
+        cell.font = header_font
+
+    for col_num, column_cells in enumerate(ws.columns, start=1):
+        max_len = max((len(str(cell.value)) if cell.value is not None else 0) for cell in column_cells)
+        ws.column_dimensions[get_column_letter(col_num)].width = min(max(max_len + 2, 10), 70)
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=neodobrene_if.xlsx'
+    wb.save(response)
+    return response
 
 
 @require_POST

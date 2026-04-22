@@ -222,3 +222,29 @@ def sync_permission_codes_task():
         lock_ttl_seconds=30 * 60,
         fn=_runner,
     )
+
+
+@shared_task
+def create_garaza_group_task(usernames=None, clear_existing=True, dry_run=False):
+    def _runner():
+        output = StringIO()
+        command_args = []
+
+        if not clear_existing:
+            command_args.append("--no-clear-existing")
+
+        if dry_run:
+            command_args.append("--dry-run")
+
+        if usernames:
+            command_args.append("--users")
+            command_args.extend(list(usernames))
+
+        call_command("create_garaza_group", *command_args, stdout=output)
+        return output.getvalue().strip()
+
+    return _run_with_singleton_lock(
+        task_name="create_garaza_group_task",
+        lock_ttl_seconds=30 * 60,
+        fn=_runner,
+    )
