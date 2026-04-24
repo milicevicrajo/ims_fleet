@@ -534,6 +534,10 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
         period_end = order.closed_at or timezone.localdate()
         start_dt = datetime.datetime.combine(period_start, datetime.time.min)
         end_dt = datetime.datetime.combine(period_end, datetime.time.max)
+        if timezone.is_naive(start_dt):
+            start_dt = timezone.make_aware(start_dt)
+        if timezone.is_naive(end_dt):
+            end_dt = timezone.make_aware(end_dt)
 
         registration_number = (
             order.vehicle.traffic_cards.order_by("-issue_date")

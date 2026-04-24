@@ -2,13 +2,14 @@ import datetime
 from decimal import Decimal
 
 from django.test import TestCase
+from django.test import RequestFactory
 from django.utils import timezone
 
 from .forms import VehicleTravelOrderForm
 from .models import TransactionNIS, TransactionOMV
 from .models import Employee, Vehicle, VehicleTravelOrder
 from .utils import filter_nis_fuel_queryset, filter_omv_fuel_queryset
-from .views_garaza import VehicleTravelOrderCreateView
+from .views_garaza import VehicleTravelOrderCreateView, VehicleTravelOrderDetailView
 
 
 class FuelProductFilterTests(TestCase):
@@ -194,3 +195,77 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 		self.assertEqual(response.status_code, 302)
 		self.assertEqual(previous_order.closed_at, new_order.created_at)
 		self.assertEqual(previous_order.end_mileage, new_order.start_mileage)
+
+
+class VehicleTravelOrderConsumptionTests(TestCase):
+	def setUp(self):
+		self.factory = RequestFactory()
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="INV-2",
+			chassis_number="WF0XXXTEST0000002",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="ENG-2",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category="TERETNO VOZILO",
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		self.employee = Employee.objects.create(
+			employee_code=2,
+			first_name="Mika",
+			last_name="Mikic",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1991, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+
+	def test_consumption_is_total_liters_per_100_kilometers(self):
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 20),
+			closed_at=datetime.date(2026, 4, 21),
+			start_mileage=1000,
+			end_mileage=1100,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="OMV",
+			customer="IMS",
+			card="123",
+			license_plate_no="BG000-AA",
+			transaction_date=timezone.make_aware(datetime.datetime(2026, 4, 20, 10, 0)),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("20.00"),
+			gross_cc=Decimal("4000.00"),
+			vat=Decimal("666.67"),
+			voucher="R1",
+			mileage=Decimal("1050"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("4000.00"),
+		)
+
+		request = self.factory.get("/")
+		view = VehicleTravelOrderDetailView()
+		view.request = request
+		view.object = order
+
+		context = view.get_context_data()
+
+		self.assertEqual(context["distance"], 100)
+		self.assertEqual(context["total_liters"], Decimal("20"))
+		self.assertEqual(context["consumption"], Decimal("20"))
