@@ -534,7 +534,7 @@ class VehicleTravelOrder(models.Model):
         null=True,
     )
     created_at = models.DateField(
-        auto_now_add=True,
+        default=timezone.localdate,
         verbose_name=_("Datum otvaranja naloga"),
     )
     closed_at = models.DateField(

@@ -14,12 +14,12 @@
         <div class="row g-2">
           <div class="col-6">
             <a href="{% url 'vehicle_travel_order_open_list' %}" class="btn w-100 {% if status == 'open' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
-              Otvoreni
+              <i class="mdi mdi-folder-open"></i> Otvoreni
             </a>
           </div>
           <div class="col-6">
             <a href="{% url 'vehicle_travel_order_closed_list' %}" class="btn w-100 {% if status == 'closed' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
-              Zatvoreni
+              <i class="mdi mdi-folder-lock"></i> Zatvoreni
             </a>
           </div>
         </div>
@@ -43,7 +43,7 @@
               <tr>
                 <td>
                   <a href="{% url 'vehicle_travel_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">
-                    PN {{ order.pn_number }}
+                    <i class="mdi mdi-eye"></i> PN {{ order.pn_number }}
                   </a>
                 </td>
                 <td>{{ order.rbz|default:"/" }}</td>
@@ -58,16 +58,16 @@
                   {% endif %}
                 </td>
                 <td class="text-center">
-                  <a href="{% url 'vehicle_travel_order_update' order.pk %}" class="btn btn-outline-primary btn-sm">Izmeni</a>
+                  <a href="{% url 'vehicle_travel_order_update' order.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
                   {% if not order.closed_at %}
-                  <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-outline-success btn-sm">Zatvori</a>
+                  <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-outline-success btn-sm"><i class="mdi mdi-lock"></i> Zatvori</a>
                   {% else %}
                   <a href="{% url 'vehicle_travel_order_fuel_report' order.pk %}" class="btn btn-outline-secondary btn-sm" title="Obračun goriva" target="_blank">
-                    <i class="mdi mdi-gas-station"></i> Obracun
+                    <i class="mdi mdi-printer"></i> Obracun
                   </a>
                   {% endif %}
-                  <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info btn-sm" target="_blank">Zahtev</a>
-                  <a href="{% url 'vehicle_travel_order_delete' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-danger btn-sm">Obrisi</a>
+                  <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info btn-sm" target="_blank"><i class="mdi mdi-printer"></i> Zahtev</a>
+                  <a href="{% url 'vehicle_travel_order_delete' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i> Obrisi</a>
                 </td>
               </tr>
               {% endfor %}

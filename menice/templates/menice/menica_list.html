@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+  {% if tip == "izlazna" %}
+    <form method="post" action="{% url 'menice:izlazne_sync' %}" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">
+        <i class="mdi mdi-sync"></i> Azuriraj iz NBS
+      </button>
+    </form>
+  {% else %}
+    <a class="btn btn-primary" href="{% url 'menice:menica_create' tip=tip %}">
+      <i class="mdi mdi-plus"></i> Nova menica
+    </a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="DatatableMenice" class="display compact">
+        <thead>
+          <tr>
+            <th>Redni broj</th>
+            <th>Osnov izdavanja</th>
+            <th>Datum registracije</th>
+            <th>Naziv banke</th>
+            <th>Broj ugovora</th>
+            <th>Datum ugovora</th>
+            <th>OJ</th>
+            <th>Napomena</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for menica in menice %}
+          <tr>
+            <td>{{ menica.redni_broj|default_if_none:"" }}</td>
+            <td>{{ menica.osnov_izdavanja|default_if_none:"" }}</td>
+            <td>{{ menica.datum_registracije|date:"d.m.Y" }}</td>
+            <td>{{ menica.naziv_banke|default_if_none:"" }}</td>
+            <td>{{ menica.broj_ugovora|default_if_none:"" }}</td>
+            <td>{{ menica.datum_ugovora|date:"d.m.Y" }}</td>
+            <td>{{ menica.oj|default_if_none:"" }}</td>
+            <td title="{{ menica.napomena|default_if_none:'' }}">
+              {{ menica.napomena|default_if_none:""|truncatechars:80 }}
+            </td>
+            <td>{{ menica.get_interni_status_display }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a class="btn btn-sm btn-info" href="{% url 'menice:menica_detail' tip=tip pk=menica.pk %}" title="Detalj">
+                  <i class="mdi mdi-eye"></i>
+                </a>
+                <a class="btn btn-sm btn-primary" href="{% url 'menice:menica_update' tip=tip pk=menica.pk %}" title="Izmeni">
+                  <i class="mdi mdi-pencil"></i>
+                </a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'menice:menica_delete' tip=tip pk=menica.pk %}" title="Obrisi">
+                  <i class="mdi mdi-delete"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('DatatableMenice');
+    if (!table || !window.initFleetReportTable) return;
+    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
+    window.initFleetReportTable(table, {
+      pageLength: 50,
+      order: [[3, 'desc']],
+      scrollX: true
+    });
+  });
+</script>
+{% endblock %}

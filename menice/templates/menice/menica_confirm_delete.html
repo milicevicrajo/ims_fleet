@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <h2 class="mb-3">{{ title }}</h2>
+    <p>Da li ste sigurni da zelite da obrisete menicu {{ object }}?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Obrisi</button>
+      <a class="btn btn-outline-secondary" href="{{ object.get_absolute_url }}">Odustani</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

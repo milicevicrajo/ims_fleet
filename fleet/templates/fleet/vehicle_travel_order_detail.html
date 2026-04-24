@@ -10,11 +10,20 @@
           <small class="text-muted">Vozilo: {{ order.vehicle }} · Zaposleni: {{ order.employee }}</small>
         </div>
         <div class="d-flex gap-2">
-          <a href="{% url 'vehicle_travel_order_fuel_report' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-dark btn-sm" target="_blank">Obračun utroška</a>
+          <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info btn-sm" target="_blank">
+            <i class="mdi mdi-printer"></i> Nalog
+          </a>
+          <a href="{% url 'vehicle_travel_order_fuel_report' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-dark btn-sm" target="_blank">
+            <i class="mdi mdi-printer"></i> Obracun utroska
+          </a>
           {% if not order.closed_at %}
-          <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-success btn-sm">Zatvori nalog</a>
+          <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-success btn-sm">
+            <i class="mdi mdi-lock"></i> Zatvori nalog
+          </a>
           {% endif %}
-          <a href="{% url 'vehicle_travel_order_open_list' %}" class="btn btn-outline-secondary btn-sm">Nazad</a>
+          <a href="{% url 'vehicle_travel_order_open_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="mdi mdi-arrow-left"></i> Nazad
+          </a>
         </div>
       </div>
       <div class="card-body">

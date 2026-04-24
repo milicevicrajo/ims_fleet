@@ -1,0 +1,31 @@
+{% load static %}
+<aside class="left-sidebar" data-sidebarbg="skin5">
+  <div class="scroll-sidebar">
+    <nav class="sidebar-nav">
+      <ul id="sidebarnav" class="pt-4">
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'menice:menica_list' tip='izlazna' %}">
+            <i class="mdi mdi-file-export"></i><span class="hide-menu">Izlazne menice</span>
+          </a>
+        </li>
+
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'menice:ulazna_menica_list' %}">
+            <i class="mdi mdi-file-import"></i><span class="hide-menu">Ulazne menice</span>
+          </a>
+        </li>
+
+        <li class="sidebar-item">
+          <a
+            class="sidebar-link waves-effect waves-dark sidebar-link"
+            href="https://webappcenter.nbs.rs/PnWebApp/BondMandate/Bond/Index?isSearchExecuted=false"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <i class="mdi mdi-link-variant"></i><span class="hide-menu">Registar menica</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>

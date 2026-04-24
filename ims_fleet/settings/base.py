@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "core", 
     'fleet',
     'naplata',
+    'menice',
 
     'django.contrib.admin',
     'django.contrib.auth',

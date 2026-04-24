@@ -393,6 +393,12 @@ class PutniNalogForm(forms.ModelForm):
 
 
 class VehicleTravelOrderForm(forms.ModelForm):
+    created_at = forms.DateField(
+        required=True,
+        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
+        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
+        label="Datum otvaranja",
+    )
     pn_number = forms.IntegerField(
         label="PN broj",
         required=False,
@@ -416,7 +422,7 @@ class VehicleTravelOrderForm(forms.ModelForm):
 
     class Meta:
         model = VehicleTravelOrder
-        fields = ['pn_number', 'employee', 'vehicle', 'start_mileage']
+        fields = ['pn_number', 'created_at', 'employee', 'vehicle', 'start_mileage']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

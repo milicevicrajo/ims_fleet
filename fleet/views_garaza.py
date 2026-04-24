@@ -653,6 +653,14 @@ class VehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMix
         ctx["submit_button_label"] = "Sacuvaj"
         return ctx
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        VehicleTravelOrder.objects.filter(
+            vehicle=self.object.vehicle,
+            closed_at__isnull=True,
+        ).exclude(pk=self.object.pk).update(closed_at=self.object.created_at)
+        return response
+
     def get_success_url(self):
         # Posle kreiranja otvori detalj novog naloga.
         return reverse("vehicle_travel_order_detail", args=[self.object.pk])

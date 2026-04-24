@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+  <div>
+    <a class="btn btn-primary" href="{% url 'menice:menica_update' tip=tip pk=menica.pk %}">
+      <i class="mdi mdi-pencil"></i> Izmeni
+    </a>
+    <a class="btn btn-outline-secondary" href="{% url 'menice:menica_list' tip=tip %}">
+      Nazad
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm table-striped">
+        <tbody>
+          {% for label, value, value_type in fields %}
+          <tr>
+            <th style="width: 280px;">{{ label }}</th>
+            <td>
+              {% if value and value_type == "date" %}
+                {{ value|date:"d.m.Y" }}
+              {% elif value and value_type == "datetime" %}
+                {{ value|date:"d.m.Y H:i" }}
+              {% elif value %}
+                {{ value }}
+              {% elif value == 0 %}
+                0
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

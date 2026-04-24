@@ -30,6 +30,7 @@
             {% if current_app == "fleet" %}Flota
             {% elif current_app == "naplata" %}Naplata
             {% elif current_app == "pravna" %}Pravna služba
+            {% elif current_app == "menice" %}Menice
             {% elif current_app == "kadrovi" %}Kadrovi
             {% elif current_app == "administracija" %}Administracija
             {% else %}Aplikacije{% endif %}
@@ -54,6 +55,13 @@
               href="{% url 'switch_app' 'pravna' %}?next={% url 'naplata:pravna_cases_list' case_type='tuzeni' %}">
               Pravna služba
               {% if current_app == "pravna" %}<span class="badge bg-success">aktivno</span>{% endif %}
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item d-flex justify-content-between align-items-center"
+              href="{% url 'switch_app' 'menice' %}?next={% url 'menice:menica_list' tip='izlazna' %}">
+              Menice
+              {% if current_app == "menice" %}<span class="badge bg-success">aktivno</span>{% endif %}
               </a>
             </li>
             <li>

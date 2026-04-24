@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+  <a class="btn btn-primary" href="{% url 'menice:ulazna_menica_create' %}">
+    <i class="mdi mdi-plus"></i> Nova menica
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="DatatableUlazneMenice" class="display compact">
+        <thead>
+          <tr>
+            <th>Serijski broj menice</th>
+            <th>Osnov izdavanja</th>
+            <th>Datum prijema menice</th>
+            <th>Procenat - iznos</th>
+            <th>Sifra poslovnog partnera</th>
+            <th>Naziv pravnog lica</th>
+            <th>Broj naseg ugovora</th>
+            <th>Datum ugovora</th>
+            <th>Ugovor vazi do</th>
+            <th>Lokacija menice</th>
+            <th>Sifra centra</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for menica in menice %}
+          <tr>
+            <td>{{ menica.serijski_broj_menice }}</td>
+            <td>{{ menica.osnov_izdavanja|default_if_none:"" }}</td>
+            <td>{{ menica.datum_prijema_menice|date:"d.m.Y" }}</td>
+            <td>{{ menica.procenat_iznos|default_if_none:"" }}</td>
+            <td>{{ menica.sifra_poslovnog_partnera|default_if_none:"" }}</td>
+            <td>{{ menica.naziv_pravnog_lica|default_if_none:"" }}</td>
+            <td>{{ menica.broj_naseg_ugovora|default_if_none:"" }}</td>
+            <td>{{ menica.datum_ugovora|date:"d.m.Y" }}</td>
+            <td>{{ menica.ugovor_vazi_do|date:"d.m.Y" }}</td>
+            <td>{{ menica.lokacija_menice|default_if_none:"" }}</td>
+            <td>{{ menica.sifra_centra|default_if_none:"" }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a class="btn btn-sm btn-primary" href="{% url 'menice:ulazna_menica_update' pk=menica.pk %}" title="Izmeni">
+                  <i class="mdi mdi-pencil"></i>
+                </a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'menice:ulazna_menica_delete' pk=menica.pk %}" title="Obrisi">
+                  <i class="mdi mdi-delete"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var table = document.getElementById('DatatableUlazneMenice');
+    if (!table || !window.initFleetReportTable) return;
+    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
+    window.initFleetReportTable(table, {
+      pageLength: 50,
+      order: [[2, 'desc']],
+      scrollX: true
+    });
+  });
+</script>
+{% endblock %}
