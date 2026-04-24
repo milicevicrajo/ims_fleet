@@ -575,7 +575,7 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             fuel_rows.append(
                 {
                     "date": trx.transaction_date,
-                    "invoice": trx.invoice_no,
+                    "invoice": trx.voucher,
                     "card": trx.card,
                     "supplier": "OMV",
                     "quantity": qty,

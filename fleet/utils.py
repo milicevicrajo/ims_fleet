@@ -1190,7 +1190,7 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     omv_queryset = TransactionOMV.objects.annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
         annotated_transaction_date=F('transaction_date'),
-        annotated_receipt_number=F('invoice_no'),
+        annotated_receipt_number=F('voucher'),
         annotated_quantity=F('quantity'),
         price_per_liter=F('unit_price'),
         total_net=F('amount'),
