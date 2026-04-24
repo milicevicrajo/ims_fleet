@@ -33,6 +33,7 @@ from .models import (
     ProcurementItem,
 )
 from .mixins import RolePermissionRequiredMixin
+from .utils import filter_nis_fuel_queryset, filter_omv_fuel_queryset
 
 
 def ensure_auto_parts(kvar: Kvar):
@@ -550,8 +551,12 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             omv_filter &= Q(license_plate_no=registration_number)
             nis_filter &= Q(registarska_oznaka_vozila=registration_number)
 
-        omv_qs = TransactionOMV.objects.filter(omv_filter).order_by("-transaction_date")
-        nis_qs = TransactionNIS.objects.filter(nis_filter).order_by("-datum_transakcije")
+        omv_qs = filter_omv_fuel_queryset(
+            TransactionOMV.objects.filter(omv_filter)
+        ).order_by("-transaction_date")
+        nis_qs = filter_nis_fuel_queryset(
+            TransactionNIS.objects.filter(nis_filter)
+        ).order_by("-datum_transakcije")
 
         omv_liters = omv_qs.aggregate(total=Sum("quantity"))["total"] or Decimal("0")
         nis_liters = nis_qs.aggregate(total=Sum("kolicina"))["total"] or Decimal("0")
@@ -655,10 +660,14 @@ class VehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMix
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        VehicleTravelOrder.objects.filter(
+        previous_orders = VehicleTravelOrder.objects.filter(
             vehicle=self.object.vehicle,
             closed_at__isnull=True,
-        ).exclude(pk=self.object.pk).update(closed_at=self.object.created_at)
+        ).exclude(pk=self.object.pk)
+        update_fields = {"closed_at": self.object.created_at}
+        if self.object.start_mileage is not None:
+            update_fields["end_mileage"] = self.object.start_mileage
+        previous_orders.update(**update_fields)
         return response
 
     def get_success_url(self):

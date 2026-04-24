@@ -18,8 +18,39 @@ from .models import TransactionNIS, TransactionOMV, FuelConsumption, Vehicle, Tr
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.db import connections, transaction
-from django.db.models import F, Value, CharField, Subquery, OuterRef
+from django.db.models import F, Value, CharField, Subquery, OuterRef, Q
 from django.http import JsonResponse
+
+
+FUEL_PRODUCT_KEYWORDS = (
+    "dizel",
+    "diesel",
+    "benzin",
+    "petrol",
+    "maxxmotion",
+    "maxxm",
+    "bmb",
+    "lpg",
+    "autogas",
+    "cng",
+    "tng",
+    "ngv",
+)
+
+
+def _fuel_product_filter(field_name):
+    product_filter = Q()
+    for keyword in FUEL_PRODUCT_KEYWORDS:
+        product_filter |= Q(**{f"{field_name}__icontains": keyword})
+    return product_filter
+
+
+def filter_omv_fuel_queryset(queryset):
+    return queryset.filter(_fuel_product_filter("product_inv"))
+
+
+def filter_nis_fuel_queryset(queryset):
+    return queryset.filter(_fuel_product_filter("naziv_proizvoda"))
 
 def get_latest_download_file(download_path):
     
@@ -1187,7 +1218,7 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     ).order_by('-issue_date').values('registration_number')[:1]
 
     # Filtriranje datuma za OMV
-    omv_queryset = TransactionOMV.objects.annotate(
+    omv_queryset = filter_omv_fuel_queryset(TransactionOMV.objects.all()).annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
         annotated_transaction_date=F('transaction_date'),
         annotated_receipt_number=F('voucher'),
@@ -1211,7 +1242,7 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     )
 
     # Filtriranje datuma za NIS
-    nis_queryset = TransactionNIS.objects.annotate(
+    nis_queryset = filter_nis_fuel_queryset(TransactionNIS.objects.all()).annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
         annotated_transaction_date=F('datum_transakcije'),
         annotated_receipt_number=F('broj_racuna'),
