@@ -91,6 +91,7 @@ from .utils import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
     delete_complete_drafts,
+    date_range_for_datetime_field,
     fetch_policy_data,
     fetch_requisition_data,
     fetch_service_data,
@@ -156,6 +157,7 @@ def dashboard(request):
     first_day_of_current_month = date.today().replace(day=1)
     last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
     start_of_year = date.today().replace(month=1, day=1)
+    start_of_year_dt, _ = date_range_for_datetime_field(start_of_year)
 
     # Number of vehicles
     total_vehicles = Vehicle.objects.filter(otpis=False).count()
@@ -171,7 +173,7 @@ def dashboard(request):
     book_value = Vehicle.objects.filter(purchase_date__lte=last_day_of_previous_month).aggregate(total_value=Sum('value'))
 
     # Yearly costs
-    yearly_fuel_costs = FuelConsumption.objects.filter(date__gte=start_of_year).aggregate(total_fuel_cost=Sum('cost_bruto'))
+    yearly_fuel_costs = FuelConsumption.objects.filter(date__gte=start_of_year_dt).aggregate(total_fuel_cost=Sum('cost_bruto'))
     yearly_service_costs = ServiceTransaction.objects.filter(datum__gte=start_of_year).aggregate(total_service_cost=Sum('potrazuje'))
 
     # Vehicles in red zone
@@ -1377,7 +1379,8 @@ class FuelConsumptionListView(LoginRequiredMixin, FilterView):
         if not self.request.GET:  # If there are no GET parameters
             today = timezone.now().date()
             forty_days_ago = today - timedelta(days=40)
-            return queryset.filter(date__gte=forty_days_ago, date__lte=today)
+            start_dt, end_dt = date_range_for_datetime_field(forty_days_ago, today)
+            return queryset.filter(date__gte=start_dt, date__lte=end_dt)
 
         # Apply filter if GET parameters are present
         form = self.filterset_class(self.request.GET, queryset=queryset)

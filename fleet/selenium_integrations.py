@@ -11,8 +11,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.utils import timezone as dj_timezone
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -20,21 +18,11 @@ from selenium.webdriver import ActionChains
 from selenium.common.exceptions import TimeoutException
 
 from fleet.models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
+from fleet.selenium_utils import create_chrome_driver, create_chrome_options
 from fleet.utils import (
     format_license_plate,
 
 )
-
-
-def create_chrome_driver(options):
-    driver_path = os.getenv("CHROMEDRIVER_PATH")
-    if driver_path:
-        if not os.path.exists(driver_path):
-            raise FileNotFoundError(f"CHROMEDRIVER_PATH ne postoji: {driver_path}")
-        return webdriver.Chrome(service=Service(driver_path), options=options)
-
-    # Selenium Manager bira/downloaduje driver koji odgovara instaliranom Chrome-u.
-    return webdriver.Chrome(options=options)
 
 
 def dismiss_disclaimer_overlay(driver):
@@ -73,7 +61,7 @@ def kerio_login():
     username = "tatko"
     password = "Abacus236"
 
-    chrome_options = webdriver.ChromeOptions()
+    chrome_options = create_chrome_options()
     chrome_options.add_argument("--ignore-certificate-errors")
     chrome_options.add_argument("--allow-insecure-localhost")
     chrome_options.add_argument("--disable-web-security")
@@ -129,7 +117,7 @@ def nis_data_import():
         username = "zoran.institutims"
         password = "3RrrvvVg"
 
-        chrome_options = webdriver.ChromeOptions()
+        chrome_options = create_chrome_options()
         chrome_options.add_argument("--ignore-certificate-errors")
         chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-web-security")
@@ -249,7 +237,7 @@ def omv_putnicka_data_import(*args, **kwargs):
     date_from = kwargs.get('date_from', default_date_from)
     date_to = today
 
-    chrome_options = webdriver.ChromeOptions()
+    chrome_options = create_chrome_options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
@@ -357,7 +345,7 @@ def omv_teretna_data_import(*args, **kwargs):
     date_from = kwargs.get('date_from', default_date_from)
     date_to = today
 
-    chrome_options = webdriver.ChromeOptions()
+    chrome_options = create_chrome_options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")

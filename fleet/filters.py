@@ -17,6 +17,7 @@ from django.http import QueryDict
 from .models import Vehicle, JobCode, FuelConsumption, TrafficCard, Kvar, PutniNalog, Employee
 # pretpostavka da OrganizationalUnit postoji:
 from .models import OrganizationalUnit, ServiceTransaction
+from .utils import date_range_for_datetime_field
 
 
 class VehicleFilter(django_filters.FilterSet):
@@ -390,8 +391,7 @@ class TrafficCardFilterForm(forms.Form):
 
 class FuelFilterForm(django_filters.FilterSet):
     start_date = django_filters.DateFilter(
-        field_name='date', 
-        lookup_expr='gte', 
+        method='filter_start_date',
         label='Od datuma',
         widget=forms.DateInput(
             format='%d/%m/%Y',
@@ -404,8 +404,7 @@ class FuelFilterForm(django_filters.FilterSet):
         input_formats=['%Y-%m-%d'],
     )
     end_date = django_filters.DateFilter(
-        field_name='date', 
-        lookup_expr='lte', 
+        method='filter_end_date',
         label='Do datuma',
         widget=forms.DateInput(
             format='%d/%m/%Y',
@@ -421,6 +420,14 @@ class FuelFilterForm(django_filters.FilterSet):
     class Meta:
         model = FuelConsumption
         fields = ['start_date', 'end_date',]
+
+    def filter_start_date(self, queryset, name, value):
+        start_dt, _ = date_range_for_datetime_field(value)
+        return queryset.filter(date__gte=start_dt) if start_dt else queryset
+
+    def filter_end_date(self, queryset, name, value):
+        _, end_dt = date_range_for_datetime_field(None, value)
+        return queryset.filter(date__lte=end_dt) if end_dt else queryset
 
 
 class FuelTransactionFilterForm(forms.Form):

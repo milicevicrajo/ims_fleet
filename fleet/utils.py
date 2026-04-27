@@ -4,14 +4,8 @@ import os
 import time
 import logging
 import pytz
-from datetime import datetime
+from datetime import date, datetime, time as datetime_time
 from openpyxl import load_workbook
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver import ActionChains
 
 from .models import TransactionNIS, TransactionOMV, FuelConsumption, Vehicle, TrafficCard, JobCode, TrafficCard, Lease, Policy,Employee, OrganizationalUnit, Requisition,DraftRequisition, ServiceTransaction, DraftServiceTransaction, Policy, DraftPolicy
 
@@ -20,6 +14,7 @@ from django.conf import settings
 from django.db import connections, transaction
 from django.db.models import F, Value, CharField, Subquery, OuterRef, Q
 from django.http import JsonResponse
+from django.utils import timezone as django_timezone
 
 
 FUEL_PRODUCT_KEYWORDS = (
@@ -51,6 +46,34 @@ def filter_omv_fuel_queryset(queryset):
 
 def filter_nis_fuel_queryset(queryset):
     return queryset.filter(_fuel_product_filter("naziv_proizvoda"))
+
+
+def date_range_for_datetime_field(start_date=None, end_date=None):
+    """
+    Convert date-only filter values to timezone-aware datetime bounds.
+    DateTimeField filters with plain dates produce naive datetime warnings when
+    USE_TZ is enabled.
+    """
+    def _to_date(value):
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str) and value:
+            try:
+                return datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                return None
+        return None
+
+    def _aware(value, bound):
+        value = _to_date(value)
+        if value is None:
+            return None
+        dt = datetime.combine(value, datetime_time.min if bound == "start" else datetime_time.max)
+        return django_timezone.make_aware(dt) if django_timezone.is_naive(dt) else dt
+
+    return _aware(start_date, "start"), _aware(end_date, "end")
 
 def get_latest_download_file(download_path):
     
@@ -1212,6 +1235,8 @@ def migrate_draft_to_requisition(draft_id, vehicle_id):
 
 
 def get_fuel_consumption_queryset(start_date=None, end_date=None):
+    start_dt, end_dt = date_range_for_datetime_field(start_date, end_date)
+
     # Subquery to get the latest TrafficCard for each Vehicle
     latest_traffic_card_subquery = TrafficCard.objects.filter(
         vehicle=OuterRef('vehicle')
@@ -1230,10 +1255,10 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
         annotated_mileage=F('mileage')
     )
 
-    if start_date:
-        omv_queryset = omv_queryset.filter(transaction_date__gte=start_date)
-    if end_date:
-        omv_queryset = omv_queryset.filter(transaction_date__lte=end_date)
+    if start_dt:
+        omv_queryset = omv_queryset.filter(transaction_date__gte=start_dt)
+    if end_dt:
+        omv_queryset = omv_queryset.filter(transaction_date__lte=end_dt)
 
     omv_queryset = omv_queryset.values(
         'registration_number', 'annotated_transaction_date', 'annotated_receipt_number',
@@ -1254,10 +1279,10 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
         annotated_mileage=F('kilometraza')
     )
 
-    if start_date:
-        nis_queryset = nis_queryset.filter(datum_transakcije__gte=start_date)
-    if end_date:
-        nis_queryset = nis_queryset.filter(datum_transakcije__lte=end_date)
+    if start_dt:
+        nis_queryset = nis_queryset.filter(datum_transakcije__gte=start_dt)
+    if end_dt:
+        nis_queryset = nis_queryset.filter(datum_transakcije__lte=end_dt)
 
     nis_queryset = nis_queryset.values(
         'registration_number', 'annotated_transaction_date', 'annotated_receipt_number',
@@ -1414,10 +1439,6 @@ def populate_putni_nalog_template(putni_nalog):
     return JsonResponse({"file_url": file_url})
 
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
