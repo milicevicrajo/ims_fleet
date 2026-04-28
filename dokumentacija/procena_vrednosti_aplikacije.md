@@ -1,6 +1,6 @@
 # Procena tehničke i poslovne vrednosti IMS aplikacije
 
-Datum procene: 24.04.2026.
+Datum procene: 28.04.2026.
 
 Ovaj dokument je interna procena vrednosti, složenosti i obima IMS aplikacije. Procena nije formalna knjigovodstvena ili sudska procena vrednosti softvera, već inženjersko-poslovna procena zasnovana na stanju koda, poznatim modulima, produkcionoj upotrebi i poslovnim informacijama iz firme.
 
@@ -16,7 +16,7 @@ Na osnovu trenutnog obima, realna eksterno naručena vrednost aplikacije je:
 | Realna cena eksterne izrade sa analizom, QA, deployem i stabilizacijom | 120.000 - 220.000 EUR |
 | Cena enterprise verzije sa jačim auditom, testovima, SLA, dokumentacijom i formalnom podrškom | 180.000 - 300.000 EUR |
 | Interna tehnička vrednost postojeće aplikacije kao operativnog sredstva | 80.000 - 140.000 EUR |
-| Godišnja poslovna vrednost u uštedama, kontroli i smanjenju rizika | 70.000 - 160.000 EUR godišnje |
+| Godišnja poslovna vrednost u uštedama, kontroli i smanjenju rizika | 90.000 - 220.000 EUR godišnje |
 | Procena složenosti | srednje-visoka do visoka |
 
 Najrealnija jedinstvena procena za eksternu kuću, ako bi se danas naručila aplikacija ovog obima sa postojećom funkcionalnošću, jeste oko 150.000 EUR, uz očekivani raspon 120.000 - 220.000 EUR.
@@ -30,7 +30,9 @@ Poslovni podaci:
 | Broj vozila u evidenciji | oko 150 |
 | Aktivni korisnici | preko 20 |
 | Sektori / funkcije | uprava, flota, garaža, naplata, pravna služba, administracija; planirano širenje po sektorima |
-| Potrošnja goriva | oko 100.000 EUR godišnje |
+| Potrošnja goriva | oko 500.000 EUR u poslednjih 12 meseci |
+| Kataloška vrednost flote | oko 650.000 EUR |
+| Obučena osoba za rad u aplikaciji | prati i ažurira podatke vezane za flotu, gorivo, vozila, dokumenta i operativne promene |
 | NIS/OMV podaci | svakodnevno ažuriranje |
 | Putni nalozi | oko 20 unosa dnevno |
 | Istorijski podaci | poslednje 3 godine |
@@ -70,7 +72,9 @@ Vrednost ovog dela je u standardizaciji procesa koji bi inače bio papirni, spor
 
 Aplikacija uvozi i obrađuje potrošnju goriva iz NIS i OMV izvora. To uključuje Excel/CSV uvoze, mapiranje vozila, transakcije, izveštaje i povezivanje potrošnje sa vozilima i putnim nalozima.
 
-Godišnji trošak goriva je oko 100.000 EUR. Čak i mala poboljšanja u kontroli, validaciji i izveštavanju imaju konkretnu finansijsku vrednost. Realan direktan efekat kontrole goriva može biti 2% - 7% godišnje, odnosno 2.000 - 7.000 EUR godišnje, dok je šira vrednost u automatizaciji obračuna i smanjenju ručnog rada znatno veća.
+Trošak goriva u poslednjih 12 meseci iznosi oko 500.000 EUR. Čak i mala poboljšanja u kontroli, validaciji i izveštavanju imaju konkretnu finansijsku vrednost. Realan direktan efekat kontrole goriva može biti 2% - 7% godišnje, odnosno 10.000 - 35.000 EUR godišnje, dok je šira vrednost u automatizaciji obračuna, smanjenju ručnog rada i bržem uočavanju odstupanja dodatno značajna.
+
+Kataloška vrednost flote je oko 650.000 EUR. Kada se vrednost osnovnih sredstava posmatra zajedno sa godišnjim troškom goriva, jasno je da aplikacija ne prati sporednu administraciju, već upravlja imovinom i troškovima ukupne vrednosti preko 1.000.000 EUR godišnje posmatrano kroz vrednost flote i godišnji tok troška goriva.
 
 ### 3.4. Naplata
 
@@ -169,7 +173,7 @@ Razlozi:
 - podaci se svakodnevno ažuriraju,
 - postoji 3 godine istorije,
 - naplata i pravna služba imaju poslovne posledice i rokove,
-- flota i gorivo imaju direktan troškovni uticaj.
+- flota, vozila i gorivo imaju direktan troškovni i imovinski uticaj.
 
 Kod ovakvih sistema poslovna složenost često nadmašuje tehničku. Ekrani i tabele se mogu napraviti relativno brzo, ali tačno definisanje šta znači status, rok, dug, postupak, putni nalog, menica, trošak i vozilo zahteva dubinsko poznavanje firme.
 
@@ -202,9 +206,9 @@ Realnija vrednost je viša jer se ne štedi samo vreme administracije, već se d
 
 ### 7.2. Kontrola goriva
 
-Godišnji trošak goriva je oko 100.000 EUR. Ako sistem kroz bolju kontrolu, usklađivanje i izveštavanje spreči samo 2% - 7% nepravilnosti, grešaka ili neoptimizovanih troškova, efekat je 2.000 - 7.000 EUR godišnje.
+Trošak goriva u poslednjih 12 meseci je oko 500.000 EUR. Ako sistem kroz bolju kontrolu, usklađivanje i izveštavanje spreči samo 2% - 7% nepravilnosti, grešaka ili neoptimizovanih troškova, efekat je 10.000 - 35.000 EUR godišnje.
 
-Ovo je direktno merljiv deo. Indirektno, modul goriva je važniji jer obezbeđuje poverenje u podatke po vozilu, putnom nalogu i organizacionoj jedinici.
+Ovo je direktno merljiv deo. Indirektno, modul goriva je važniji jer obezbeđuje poverenje u podatke po vozilu, putnom nalogu i organizacionoj jedinici. Kod flote kataloške vrednosti oko 650.000 EUR, precizno vezivanje troškova za vozila pomaže i kod odluka o zadržavanju, zameni, otpisu, servisiranju i realnom ukupnom trošku vlasništva.
 
 ### 7.3. Naplata i pravna služba
 
@@ -222,11 +226,11 @@ Ovo povećava vrednost aplikacije jer sistem utiče na odluke, kontrolu i odgovo
 
 | Scenario | Godišnja vrednost |
 |---|---:|
-| Konzervativno | 40.000 - 70.000 EUR |
-| Realno za trenutnu upotrebu | 70.000 - 160.000 EUR |
-| Visok efekat uz punu upotrebu naplate, pravne službe, flote i uprave | 160.000 - 250.000+ EUR |
+| Konzervativno | 60.000 - 90.000 EUR |
+| Realno za trenutnu upotrebu | 90.000 - 220.000 EUR |
+| Visok efekat uz punu upotrebu naplate, pravne službe, flote i uprave | 220.000 - 350.000+ EUR |
 
-Najrealnija procena trenutne godišnje poslovne vrednosti je 90.000 - 130.000 EUR, sa rastom kako se flota, kadrovi, ugovori i menice budu više koristili.
+Najrealnija procena trenutne godišnje poslovne vrednosti je 120.000 - 180.000 EUR, sa rastom kako se flota, kadrovi, ugovori i menice budu više koristili. Sam modul goriva, zbog obima od oko 500.000 EUR za poslednjih 12 meseci, opravdava ozbiljniji nivo kontrole, automatizacije i infrastrukture.
 
 ## 8. Procena vremena razvoja od nule
 
@@ -313,9 +317,104 @@ U ovom slučaju veliki deo vrednosti je nastao kroz rad jednog programera i kole
 
 Eksterna kuća bi te uloge naplatila odvojeno. Zato aplikaciju ne treba vrednovati samo kao "Django kod", već kao operativni sistem koji sadrži poslovno znanje firme.
 
-## 11. Zaključak
+### 10.1. Vrednost obučene osobe za operativno održavanje flote
 
-IMS aplikacija ima visoku internu vrednost jer rešava realne operativne probleme firme sa 150 vozila, preko 20 korisnika, svakodnevnim unosima, godišnjom potrošnjom goriva od oko 100.000 EUR i više sektora koji zavise od tačnih podataka.
+Posebna poslovna vrednost nastaje kada postoji obučena osoba koja svakodnevno radi u aplikaciji i prati sve što je potrebno za flotu. Ta osoba nije samo korisnik softvera, već operativni čuvar kvaliteta podataka.
+
+Njena uloga obuhvata:
+
+- ažuriranje podataka o vozilima, karticama, dokumentima, polisama, registracijama i statusima,
+- praćenje potrošnje goriva i povezivanje transakcija sa vozilima,
+- kontrolu kilometraže, putnih naloga, servisa, kvarova i troškova,
+- proveru da li su podaci kompletni, tačni i upotrebljivi za izveštaje,
+- komunikaciju sa korisnicima, garažom, administracijom i upravom,
+- rano uočavanje nelogičnosti, kašnjenja i grešaka u evidenciji.
+
+Bez takve osobe aplikacija bi i dalje imala tehničku vrednost, ali bi poslovna vrednost bila niža jer bi kvalitet podataka zavisio od povremenih i nepovezanih unosa. Sa obučenom osobom sistem postaje živa operativna baza: podaci se ne samo čuvaju, već se aktivno održavaju, proveravaju i koriste.
+
+Ova uloga je praktično interna kombinacija fleet administratora, data steward-a i prvog nivoa aplikativne podrške. Kod flote od oko 150 vozila, kataloške vrednosti oko 650.000 EUR i godišnjeg troška goriva od oko 500.000 EUR, takva osoba direktno povećava vrednost aplikacije jer obezbeđuje da izveštaji, kontrole i odluke budu zasnovani na ažurnim podacima.
+
+## 11. Opravdanost kupovine servera
+
+Kupovina zasebnog servera za IMS aplikaciju je poslovno opravdana jer aplikacija više nije pomoćni alat, već operativni sistem koji čuva i obrađuje podatke o floti, gorivu, putnim nalozima, naplati, pravnim predmetima, menicama i pravima korisnika.
+
+Najvažnije činjenice za opravdanje:
+
+| Stavka | Poslovni značaj |
+|---|---|
+| Trošak goriva | oko 500.000 EUR u poslednjih 12 meseci |
+| Kataloška vrednost flote | oko 650.000 EUR |
+| Broj vozila | oko 150 |
+| Broj korisnika | preko 20, uz planirano širenje |
+| Procesi | flota, garaža, putni nalozi, gorivo, naplata, pravna služba, menice, prava |
+| Podaci | istorijski, operativni i finansijski relevantni podaci |
+
+U takvom kontekstu server nije samo IT trošak. Server je infrastruktura za kontrolu imovine i troškova. Ako aplikacija pomogne da se samo 1% troška goriva bolje kontroliše, to je oko 5.000 EUR godišnje. Ako efekat bude 2% - 7%, vrednost je 10.000 - 35.000 EUR godišnje samo na gorivu, bez uračunavanja uštede vremena, manje grešaka i bolje naplate.
+
+### 11.1. Zašto je potreban namenski server
+
+Namenski server je opravdan iz sledećih razloga:
+
+- aplikacija se koristi svakodnevno i treba da bude dostupna više sektora,
+- baza podataka sadrži poslovno kritične podatke,
+- Celery worker-i i beat pokreću automatske zadatke, uvoze i sinhronizacije,
+- Selenium importi za NIS/OMV i drugi sync procesi mogu biti teži od običnih web zahteva,
+- SQL Server, Django aplikacija, Redis, logovi i backup treba da rade stabilno i odvojeno od korisničkih računara,
+- server omogućava kontrolisan backup, monitoring, pristupna prava i lakši oporavak u slučaju problema.
+
+Korišćenje običnog desktop računara ili slabog deljenog servera povećava rizik prekida rada, gubitka automatizacije, sporih izveštaja i problema sa backup-om. Kod sistema koji prati flotu od oko 650.000 EUR i godišnji trošak goriva od oko 500.000 EUR, takav rizik nije proporcionalan uštedi na hardveru.
+
+### 11.2. Preporučena serverska konfiguracija
+
+Za trenutni obim aplikacije preporučuje se manji poslovni server, ali sa ECC memorijom, RAID skladištem i prostorom za rast.
+
+Minimalno prihvatljivo:
+
+| Komponenta | Preporuka |
+|---|---|
+| CPU | 6 - 8 jezgara, server/workstation klasa |
+| RAM | 32 GB ECC |
+| Disk za sistem i aplikaciju | 2 x NVMe SSD u mirror/RAID 1 režimu, najmanje 1 TB |
+| Backup disk / storage | odvojeni disk ili NAS za dnevni backup |
+| Mreža | 1 GbE minimalno, poželjno 2.5/10 GbE ako postoji infrastruktura |
+| OS | Windows Server ako se zadržava postojeći SQL Server/Windows način rada |
+| UPS | obavezan, zbog baze i rizika od korupcije podataka |
+
+Preporučeno za mirniji rad i rast:
+
+| Komponenta | Preporuka |
+|---|---|
+| CPU | 8 - 12 jezgara |
+| RAM | 64 GB ECC |
+| Disk | 2 x enterprise NVMe SSD 1 - 2 TB u mirror/RAID 1 režimu |
+| Backup | lokalni backup + eksterni/NAS/offsite backup |
+| Garancija | 3 - 5 godina poslovne garancije, poželjno next business day |
+
+Primer odgovarajuće klase servera:
+
+- Dell PowerEdge T350/T360 ili sličan tower server,
+- HPE ProLiant ML30/ML110 klasa,
+- Lenovo ThinkSystem ST50/ST250 klasa,
+- ekvivalentan poslovni server sa ECC memorijom, redundantnim diskovima i garancijom.
+
+Za ovu aplikaciju nije neophodan skup enterprise rack server, ali nije preporučljiv ni običan kancelarijski PC. Najrazumniji izbor je tower server srednje klase sa 64 GB ECC RAM-a, RAID 1 NVMe diskovima, UPS-om i uređenim backup-om. Takva investicija je mala u odnosu na vrednost podataka, vrednost flote i godišnji trošak goriva koji aplikacija kontroliše.
+
+### 11.3. Finansijsko opravdanje servera
+
+Ako server sa UPS-om, diskovima, licencama i osnovnim podešavanjem košta okvirno 3.000 - 8.000 EUR, njegova vrednost se opravdava već kroz:
+
+- smanjenje rizika prekida rada i gubitka podataka,
+- stabilnije automatske uvoze i sinhronizacije,
+- pouzdanije izveštaje za upravu,
+- bolju zaštitu podataka i kontrolu pristupa,
+- manji rizik ručnog rada kada automatizacija zakaže,
+- čak i veoma mali procenat bolje kontrole goriva.
+
+Kod godišnjeg troška goriva od oko 500.000 EUR, server od 5.000 EUR odgovara približno 1% godišnjeg troška goriva. Ako server omogući stabilan rad sistema koji spreči samo deo grešaka, kašnjenja ili nepravilnosti, investicija je racionalna.
+
+## 12. Zaključak
+
+IMS aplikacija ima visoku internu vrednost jer rešava realne operativne probleme firme sa 150 vozila, preko 20 korisnika, svakodnevnim unosima, godišnjom potrošnjom goriva od oko 500.000 EUR, kataloškom vrednošću flote od oko 650.000 EUR i više sektora koji zavise od tačnih podataka. Dodatnu vrednost daje obučena osoba koja kroz aplikaciju prati i ažurira operativno stanje flote, čime sistem ostaje živ, tačan i upotrebljiv za odluke.
 
 Tehnički gledano, aplikacija je srednje-visokog obima i složenosti. Poslovno gledano, složenost je još veća jer je sistem nastao u firmi koja ranije nije imala centralizovan ERP i gde su mnogi procesi bili papirni ili rasuti.
 
@@ -325,12 +424,12 @@ Najkraća procena:
 - poslovna složenost: 8/10,
 - interna tehnička vrednost: 80.000 - 140.000 EUR,
 - realna eksterna cena izrade: 120.000 - 220.000 EUR,
-- godišnja poslovna vrednost: 70.000 - 160.000 EUR,
+- godišnja poslovna vrednost: 90.000 - 220.000 EUR,
 - vreme razvoja od nule: 9 - 15 meseci za mali eksterni tim, odnosno 12 - 24 meseca za jednog programera uz internu poslovnu podršku.
 
-Ako se aplikacija nastavi širiti na kadrove, ugovore, menice i sektorsku upotrebu, njena poslovna vrednost će rasti brže od tehničke vrednosti, jer će sve više poslovnih odluka i procesa zavisiti od jedinstvene baze podataka.
+Ako se aplikacija nastavi širiti na kadrove, ugovore, menice i sektorsku upotrebu, njena poslovna vrednost će rasti brže od tehničke vrednosti, jer će sve više poslovnih odluka i procesa zavisiti od jedinstvene baze podataka. Iz istog razloga je opravdano ulaganje u stabilan namenski server, backup i automatizaciju, jer infrastruktura direktno štiti sistem koji kontroliše imovinu i troškove velikog obima.
 
-## 12. Izvori za tržišne pretpostavke
+## 13. Izvori za tržišne pretpostavke
 
 Korišćeni su javno dostupni izvori za okvirne cene razvoja softvera u 2026. godini:
 
@@ -340,4 +439,10 @@ Korišćeni su javno dostupni izvori za okvirne cene razvoja softvera u 2026. go
 - Keyhole Software: https://keyholesoftware.com/cost-custom-software-development/
 - GoodFirms: https://www.goodfirms.co/resources/custom-software-development-cost-survey
 
-Ovi izvori se koriste samo kao tržišni okvir za satnice i budžetske opsege. Konkretna procena u ovom dokumentu je prilagođena stvarnom obimu IMS aplikacije i poslovnim informacijama firme.
+Za serversku preporuku korišćene su zvanične stranice proizvođača za aktuelne tower server klase:
+
+- Dell PowerEdge T360: https://www.dell.com/en-us/shop/cty/pdp/spd/poweredge-t360/pe_t360_15330_os_vi_vp
+- HPE ProLiant ML30 Gen11: https://www.hpe.com/us/en/compute/hpe-proliant-compute/ml30-gen11.html
+- Lenovo ThinkSystem ST250 V3: https://www.lenovo.com/us/en/p/servers-storage/servers/towers/thinksystem-st250-v3-tower-server/len21ts0025
+
+Ovi izvori se koriste samo kao tržišni okvir za satnice, budžetske opsege i klasu serverske opreme. Konkretna procena u ovom dokumentu je prilagođena stvarnom obimu IMS aplikacije i poslovnim informacijama firme.

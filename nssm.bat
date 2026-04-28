@@ -41,7 +41,7 @@ echo Installing Celery worker service...
 echo Installing Celery beat service...
 "%NSSM%" install %BEAT_SERVICE% "%VENV_DIR%\Scripts\celery.exe"
 "%NSSM%" set %BEAT_SERVICE% AppDirectory "%PROJECT_DIR%"
-"%NSSM%" set %BEAT_SERVICE% AppParameters -A ims_fleet beat -l info
+"%NSSM%" set %BEAT_SERVICE% AppParameters -A ims_fleet beat --scheduler django_celery_beat.schedulers:DatabaseScheduler -l info
 "%NSSM%" set %BEAT_SERVICE% AppEnvironmentExtra DJANGO_SETTINGS_MODULE=%DJANGO_SETTINGS_MODULE% PYTHONPATH=%PYTHONPATH%
 "%NSSM%" set %BEAT_SERVICE% AppStdout "%LOG_DIR%\celery-beat.stdout.log"
 "%NSSM%" set %BEAT_SERVICE% AppStderr "%LOG_DIR%\celery-beat.stderr.log"
