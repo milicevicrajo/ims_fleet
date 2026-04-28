@@ -3,7 +3,7 @@ from .models import *
 
 
 class NaplataAdmin(admin.ModelAdmin):
-    using = "naplata_db"
+    using = "server_db"
 
     def get_queryset(self, request):
         return super().get_queryset(request).using(self.using)

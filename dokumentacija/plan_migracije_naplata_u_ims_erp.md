@@ -7,14 +7,14 @@ Prebaciti aplikaciju `naplata` iz zasebne SQL Server baze `Naplata` u glavnu ERP
 Glavni cilj nije samo promena konekcije, nego smanjenje tehnickog duga:
 
 - jedna produkciona baza za IMS aplikaciju,
-- manje posebnih `.using("naplata_db")` i `connections["naplata_db"]` poziva,
+- manje posebnih `.using(...)` i `connections[...]` poziva za naplatu,
 - lakse migracije i backup,
 - jednostavniji odnosi sa korisnicima, pravima i ostalim ERP tabelama,
 - lakse odrzavanje SQL view-eva.
 
 ## Trenutno stanje
 
-Produkcioni `default` pokazuje na bazu `IMS_ERP`, dok `naplata_db` pokazuje na bazu `Naplata`.
+Produkcioni `default` i `server_db` pokazuju na bazu `IMS_ERP`; poseban alias za staru bazu `Naplata` je uklonjen iz koda.
 
 Aplikacija `naplata` trenutno radi dve stvari:
 
@@ -149,12 +149,12 @@ Posle prebacivanja proveriti:
 
 ## Faza 4: Kratkotrajan prelaz bez velikog refaktora
 
-Najmanje rizican prvi korak je promeniti `naplata_db` alias da pokazuje na `IMS_ERP`.
+Ova faza je preskocena u korist direktnog ciscenja koda: aplikacija naplate sada koristi eksplicitnu `server_db` konekciju, koja pokazuje na `IMS_ERP`.
 
-Time kod moze privremeno da ostane skoro isti:
+Za produkciju je bitno da `server_db` baza ostane:
 
 ```python
-'naplata_db': {
+'server_db': {
     'ENGINE': 'mssql',
     'NAME': 'IMS_ERP',
     ...
@@ -167,20 +167,18 @@ Prednost:
 - brzo se vidi da li aplikacija radi nad novom bazom,
 - lak rollback ako nesto nije dobro.
 
-Mana:
-
-- tehnicki dug ostaje, jer kod i dalje izgleda kao da koristi posebnu bazu.
+Time se izbegava tehnicki dug u kome kod izgleda kao da naplata koristi posebnu bazu.
 
 ## Faza 5: Ciscenje koda
 
-Kada se potvrdi da aplikacija radi u `IMS_ERP`, postepeno uklanjati eksplicitne reference na `naplata_db`.
+Kada se potvrdi da aplikacija radi u `IMS_ERP`, postepeno uklanjati preostale eksplicitne reference na posebne baze.
 
 Zameniti:
 
-- `connections["naplata_db"]`
-- `.using("naplata_db")`
-- `save(using="naplata_db")`
-- `delete(using="naplata_db")`
+- `connections[...]` za posebnu naplata konekciju
+- `.using(...)` za posebnu naplata konekciju
+- `save(using=...)`
+- `delete(using=...)`
 
 sa default konekcijom gde god je moguce.
 
@@ -210,11 +208,11 @@ Obavezno proveriti ove ekrane:
 2. Napraviti test kopiju `IMS_ERP` ili raditi u posebnoj test bazi.
 3. Napraviti tabele i view-eve u test bazi.
 4. Prebaciti podatke.
-5. Preusmeriti `naplata_db` alias na test `IMS_ERP`.
+5. Podesiti `server_db` konekciju na test `IMS_ERP`.
 6. Testirati aplikaciju.
 7. Ispraviti razlike u nazivima view-eva i kolona.
 8. Ponoviti proces u produkciji uz backup i kratak period bez unosa.
-9. Nakon stabilizacije ukloniti `naplata_db` iz koda.
+9. Nakon stabilizacije ukloniti posebne naplata konekcije iz koda.
 
 ## Kratak odgovor na pitanje
 

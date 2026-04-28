@@ -11,7 +11,7 @@ def get_partner_choices():
     choices = [(PARTNER_SELECT_EMPTY, "Rucni unos / bez izbora partnera")]
     partner_lookup = {}
     try:
-        with connections["naplata_db"].cursor() as cursor:
+        with connections["server_db"].cursor() as cursor:
             cursor.execute("""
                 SELECT
                     sif_par,

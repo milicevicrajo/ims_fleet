@@ -122,7 +122,7 @@ def _postupak_lookup(tip, data):
 
 
 class Command(BaseCommand):
-    help = "Uvoz kompletnog Excel fajla pravne sluzbe (lista + faze) u naplata_db."
+    help = "Uvoz kompletnog Excel fajla pravne sluzbe (lista + faze) u server_db."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -132,8 +132,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--database",
-            default="naplata_db",
-            help="DB alias iz settings.DATABASES (podrazumevano: naplata_db).",
+            default="server_db",
+            help="DB alias iz settings.DATABASES (podrazumevano: server_db).",
         )
         parser.add_argument(
             "--dry-run",

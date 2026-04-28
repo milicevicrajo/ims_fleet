@@ -30,7 +30,7 @@ def _get_pravna_title(case_type):
 
 def _build_pravna_filtered_context(request, case_type):
     show_archived = request.GET.get('arhivirano') == '1'
-    base_qs = Postupak.objects.using('naplata_db').filter(tip=case_type)
+    base_qs = Postupak.objects.using('server_db').filter(tip=case_type)
     if not show_archived:
         base_qs = base_qs.filter(arhivirano=False)
 
@@ -46,7 +46,7 @@ def _build_pravna_filtered_context(request, case_type):
     partner_meta = {}
     if sifre:
         placeholders = ','.join(['%s'] * len(sifre))
-        with connections['naplata_db'].cursor() as cursor:
+        with connections['server_db'].cursor() as cursor:
             cursor.execute(
                 f"SELECT sif_par, naz_par, grupa FROM partneri WHERE sif_par IN ({placeholders})",
                 sifre,
@@ -148,7 +148,7 @@ def pravna_izvestaj(request, case_type):
 
     promene_map = {pid: [] for pid in postupak_ids}
     if postupak_ids:
-        promene = PromenaPostupka.objects.using('naplata_db').filter(
+        promene = PromenaPostupka.objects.using('server_db').filter(
             postupak_id__in=postupak_ids
         ).order_by('datum', 'created_at')
         for pr in promene:
@@ -207,7 +207,7 @@ def pravna_izvestaj_excel(request, case_type):
 
     promene_map = {pid: [] for pid in postupak_ids}
     if postupak_ids:
-        promene = PromenaPostupka.objects.using('naplata_db').filter(
+        promene = PromenaPostupka.objects.using('server_db').filter(
             postupak_id__in=postupak_ids
         ).order_by('datum', 'created_at')
         for pr in promene:
@@ -311,14 +311,14 @@ def pravna_izvestaj_excel(request, case_type):
 @never_cache
 @role_permission_required()
 def pravna_detalj(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('naplata_db'), pk=pk)
-    promene = PromenaPostupka.objects.using('naplata_db').filter(postupak=postupak)
+    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
+    promene = PromenaPostupka.objects.using('server_db').filter(postupak=postupak)
     columns = COLUMNS_BY_TIP.get(postupak.tip, [])
 
     # Partner iz baze
     partner = None
     if postupak.sifra_partnera:
-        with connections['naplata_db'].cursor() as cursor:
+        with connections['server_db'].cursor() as cursor:
             cursor.execute(
                 "SELECT naz_par, mesto_par, pib FROM partneri WHERE sif_par = %s",
                 [postupak.sifra_partnera],
@@ -356,8 +356,8 @@ def pravna_dodaj(request, case_type):
         if form.is_valid():
             obj = form.save(commit=False)
             obj.tip = case_type
-            obj.created_by_id = resolve_user_pk_for_db(request.user, 'naplata_db')
-            obj.save(using='naplata_db')
+            obj.created_by_id = resolve_user_pk_for_db(request.user, 'server_db')
+            obj.save(using='server_db')
             return redirect('naplata:pravna_cases_list', case_type=case_type)
     else:
         form = PostupakForm(tip=case_type)
@@ -373,13 +373,13 @@ def pravna_dodaj(request, case_type):
 
 @role_permission_required()
 def pravna_izmeni(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('naplata_db'), pk=pk)
+    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
 
     if request.method == 'POST':
         form = PostupakForm(request.POST, instance=postupak, tip=postupak.tip)
         if form.is_valid():
             obj = form.save(commit=False)
-            obj.save(using='naplata_db')
+            obj.save(using='server_db')
             return redirect('naplata:pravna_detalj', pk=pk)
     else:
         form = PostupakForm(instance=postupak, tip=postupak.tip)
@@ -396,20 +396,20 @@ def pravna_izmeni(request, pk):
 
 @role_permission_required()
 def pravna_obrisi(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('naplata_db'), pk=pk)
+    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
     case_type = postupak.tip
     if request.method == 'POST':
-        postupak.delete(using='naplata_db')
+        postupak.delete(using='server_db')
         return redirect('naplata:pravna_cases_list', case_type=case_type)
     return redirect('naplata:pravna_detalj', pk=pk)
 
 
 @role_permission_required()
 def pravna_arhiviraj(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('naplata_db'), pk=pk)
+    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
     if request.method == 'POST':
         postupak.arhivirano = not postupak.arhivirano
-        postupak.save(using='naplata_db', update_fields=['arhivirano'])
+        postupak.save(using='server_db', update_fields=['arhivirano'])
     return redirect('naplata:pravna_detalj', pk=pk)
 
 
@@ -417,15 +417,15 @@ def pravna_arhiviraj(request, pk):
 
 @role_permission_required()
 def pravna_dodaj_promenu(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('naplata_db'), pk=pk)
+    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
 
     if request.method == 'POST':
         form = PromenaPostupkaForm(request.POST)
         if form.is_valid():
             promena = form.save(commit=False)
             promena.postupak = postupak
-            promena.created_by_id = resolve_user_pk_for_db(request.user, 'naplata_db')
-            promena.save(using='naplata_db')
+            promena.created_by_id = resolve_user_pk_for_db(request.user, 'server_db')
+            promena.save(using='server_db')
     return redirect('naplata:pravna_detalj', pk=pk)
 
 
@@ -433,10 +433,10 @@ def pravna_dodaj_promenu(request, pk):
 
 @role_permission_required()
 def pravna_obrisi_promenu(request, pk):
-    promena = get_object_or_404(PromenaPostupka.objects.using('naplata_db'), pk=pk)
+    promena = get_object_or_404(PromenaPostupka.objects.using('server_db'), pk=pk)
     postupak_pk = promena.postupak_id
     if request.method == 'POST':
-        promena.delete(using='naplata_db')
+        promena.delete(using='server_db')
     return redirect('naplata:pravna_detalj', pk=postupak_pk)
 
 
@@ -445,7 +445,7 @@ def pravna_obrisi_promenu(request, pk):
 @never_cache
 @role_permission_required()
 def lista_tuzenih(request):
-    with connections['naplata_db'].cursor() as cursor:
+    with connections['server_db'].cursor() as cursor:
         cursor.execute("""
             SELECT
                 god,

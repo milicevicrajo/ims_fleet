@@ -15,8 +15,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--database",
-            default="naplata_db",
-            help="DB alias iz settings.DATABASES (podrazumevano: naplata_db).",
+            default="server_db",
+            help="DB alias iz settings.DATABASES (podrazumevano: server_db).",
         )
         parser.add_argument(
             "--dry-run",
