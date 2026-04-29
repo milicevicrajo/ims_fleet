@@ -42,7 +42,19 @@
                                 <td class="text-end">{{ center_analysis.total_service_cost|floatformat:0|intcomma }} RSD</td>
                             </tr>
                             <tr>
-                                <td>Servis i održavanje u odnosu na vrednost vozila</td>
+                                <td>IMS trebovanja</td>
+                                <td class="text-end">{{ center_analysis.total_requisition_cost|floatformat:0|intcomma }} RSD</td>
+                            </tr>
+                            <tr>
+                                <td>Naplata osiguranja</td>
+                                <td class="text-end">{{ center_analysis.total_insurance_recovery|floatformat:0|intcomma }} RSD</td>
+                            </tr>
+                            <tr>
+                                <td>Neto održavanje za crvenu zonu</td>
+                                <td class="text-end">{{ center_analysis.total_net_maintenance_cost|floatformat:0|intcomma }} RSD</td>
+                            </tr>
+                            <tr>
+                                <td>Neto održavanje u odnosu na vrednost vozila</td>
                                 <td class="text-end">{{ center_analysis.service_value_ratio|floatformat:0 }}%</td>
                             </tr>
                             <tr>
@@ -114,8 +126,11 @@
                                 <th>Model</th>
                                 <th>Kataloška vrednost</th>
                                 <th>Servis i održavanje</th>
+                                <th>IMS trebovanja</th>
+                                <th>Naplata osiguranja</th>
+                                <th>Neto održavanje</th>
                                 <th>Prekoračenje</th>
-                                <th>Servis / vrednost</th>
+                                <th>Neto održavanje / vrednost</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -126,12 +141,15 @@
                                 <td>{{ vehicle.model }}</td>
                                 <td>{{ vehicle.value|floatformat:0|intcomma }}</td>
                                 <td>{{ vehicle.service_cost_total|floatformat:0|intcomma }}</td>
+                                <td>{{ vehicle.requisition_cost_total|floatformat:0|intcomma }}</td>
+                                <td>{{ vehicle.insurance_recovery_total|floatformat:0|intcomma }}</td>
+                                <td>{{ vehicle.net_maintenance_cost|floatformat:0|intcomma }}</td>
                                 <td>{{ vehicle.value_gap|floatformat:0|intcomma }}</td>
                                 <td>{{ vehicle.service_value_ratio|floatformat:0 }}%</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Nema vozila kojima su servis i održavanje prešli katalošku vrednost.</td>
+                                <td colspan="10" class="text-center text-muted">Nema vozila kojima je neto održavanje prešlo katalošku vrednost.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

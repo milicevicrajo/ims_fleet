@@ -70,6 +70,7 @@ from .models import (
     Employee,
     FuelConsumption,
     Incident,
+    Insurance,
     JobCode,
     KontaVozila,
     Lease,
@@ -86,6 +87,8 @@ from .models import (
     VehicleTravelOrder,
     Vehicle,
 )
+
+LONG_TERM_LEASE_TYPES = {'dugorocni', 'dugoročni', 'dugoročnI'}
 from .mixins import CenterMixin, RolePermissionRequiredMixin, role_permission_required
 from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
 from .utils import (
@@ -105,6 +108,10 @@ from .utils import (
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
 # <!-- ======================================================================= -->
+def net_maintenance_cost(service_cost, requisition_cost=0, insurance_recovery=0):
+    return (service_cost or 0) + (requisition_cost or 0) - (insurance_recovery or 0)
+
+
 def dashboard(request):    
     # Count the number of objects where vehicle is None
     services_without_vehicle = DraftServiceTransaction.objects.count()
@@ -205,6 +212,21 @@ def dashboard(request):
             .values('vehicle')
             .annotate(total=Sum('potrazuje'))
             .values('total')[:1]
+        ),
+        requisition_cost=Subquery(
+            Requisition.objects.filter(vehicle=OuterRef('pk'))
+            .values('vehicle')
+            .annotate(total=Sum('vrednost_nab'))
+            .values('total')[:1]
+        ),
+        insurance_recovery=Subquery(
+            Insurance.objects.filter(vehicle=OuterRef('pk'), kola=True)
+            .values('vehicle')
+            .annotate(total=Sum('potrazuje'))
+            .values('total')[:1]
+        ),
+        long_term_rental=Exists(
+            Lease.objects.filter(vehicle=OuterRef('pk'), lease_type__in=LONG_TERM_LEASE_TYPES)
         )
     )
     # Grupisanje u Pythonu
@@ -222,10 +244,18 @@ def dashboard(request):
         total_fuel_quantity = sum([v.fuel_amount or 0 for v in vehicle_list])
         total_fuel_price = sum([v.fuel_cost or 0 for v in vehicle_list])
         total_service_cost = sum([v.service_cost or 0 for v in vehicle_list])
+        total_requisition_cost = sum([v.requisition_cost or 0 for v in vehicle_list])
+        total_insurance_recovery = sum([v.insurance_recovery or 0 for v in vehicle_list])
+        total_net_maintenance_cost = sum([
+            net_maintenance_cost(v.service_cost, v.requisition_cost, v.insurance_recovery)
+            for v in vehicle_list
+        ])
         red_zone_count = sum(
             1
             for v in vehicle_list
-            if (v.current_value or 0) > 0 and (v.service_cost or 0) > (v.current_value or 0)
+            if not v.long_term_rental
+            and (v.current_value or 0) > 0
+            and net_maintenance_cost(v.service_cost, v.requisition_cost, v.insurance_recovery) > (v.current_value or 0)
         )
         avg_year = sum([v.year_of_manufacture or 0 for v in vehicle_list]) / count if count else 0
         avg_age = current_year - avg_year if avg_year else None
@@ -240,7 +270,10 @@ def dashboard(request):
             'total_fuel_quantity': total_fuel_quantity,
             'total_fuel_price': total_fuel_price,
             'total_service_cost': total_service_cost,
-            'service_value_ratio': (total_service_cost / total_value * 100) if total_value else 0,
+            'total_requisition_cost': total_requisition_cost,
+            'total_insurance_recovery': total_insurance_recovery,
+            'total_net_maintenance_cost': total_net_maintenance_cost,
+            'service_value_ratio': (total_net_maintenance_cost / total_value * 100) if total_value else 0,
             'red_zone_count': red_zone_count,
         })
 
@@ -250,6 +283,9 @@ def dashboard(request):
         'total_fuel_quantity': sum(center['total_fuel_quantity'] or 0 for center in center_data),
         'total_fuel_price': sum(center['total_fuel_price'] or 0 for center in center_data),
         'total_service_cost': sum(center['total_service_cost'] or 0 for center in center_data),
+        'total_requisition_cost': sum(center['total_requisition_cost'] or 0 for center in center_data),
+        'total_insurance_recovery': sum(center['total_insurance_recovery'] or 0 for center in center_data),
+        'total_net_maintenance_cost': sum(center['total_net_maintenance_cost'] or 0 for center in center_data),
         'red_zone_count': sum(center['red_zone_count'] or 0 for center in center_data),
     }
     dashboard_averages = {
@@ -270,7 +306,7 @@ def dashboard(request):
             else 0
         ),
         'service_value_ratio': (
-            dashboard_totals['total_service_cost'] / dashboard_totals['total_value'] * 100
+            dashboard_totals['total_net_maintenance_cost'] / dashboard_totals['total_value'] * 100
             if dashboard_totals['total_value']
             else 0
         ),
@@ -278,18 +314,26 @@ def dashboard(request):
 
     red_zone_vehicles = []
     for vehicle in vehicles:
+        if vehicle.long_term_rental:
+            continue
         vehicle_value = vehicle.current_value or 0
-        service_cost = vehicle.service_cost or 0
-        if vehicle_value > 0 and service_cost > vehicle_value:
-            vehicle.service_cost_total = service_cost
-            vehicle.value_gap = service_cost - vehicle_value
-            vehicle.service_value_ratio = service_cost / vehicle_value * 100
+        net_cost = net_maintenance_cost(vehicle.service_cost, vehicle.requisition_cost, vehicle.insurance_recovery)
+        if vehicle_value > 0 and net_cost > vehicle_value:
+            vehicle.service_cost_total = vehicle.service_cost or 0
+            vehicle.requisition_cost_total = vehicle.requisition_cost or 0
+            vehicle.insurance_recovery_total = vehicle.insurance_recovery or 0
+            vehicle.net_maintenance_cost = net_cost
+            vehicle.value_gap = net_cost - vehicle_value
+            vehicle.service_value_ratio = net_cost / vehicle_value * 100
             red_zone_vehicles.append(vehicle)
     red_zone_vehicles.sort(key=lambda vehicle: vehicle.value_gap, reverse=True)
 
     fleet_analysis = {
         'total_value': dashboard_totals['total_value'],
         'total_service_cost': dashboard_totals['total_service_cost'],
+        'total_requisition_cost': dashboard_totals['total_requisition_cost'],
+        'total_insurance_recovery': dashboard_totals['total_insurance_recovery'],
+        'total_net_maintenance_cost': dashboard_totals['total_net_maintenance_cost'],
         'service_value_ratio': dashboard_averages['service_value_ratio'],
         'total_fuel_quantity': dashboard_totals['total_fuel_quantity'],
         'total_fuel_price': dashboard_totals['total_fuel_price'],
@@ -402,6 +446,12 @@ def fleet_analytics(request):
                 .annotate(total=Sum('potrazuje'))
                 .values('total')[:1]
             ),
+            requisition_cost=Subquery(
+                Requisition.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('vrednost_nab'))
+                .values('total')[:1]
+            ),
             fuel_cost=Subquery(
                 FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
                 .values('vehicle')
@@ -414,6 +464,15 @@ def fleet_analytics(request):
                 .annotate(total=Sum('amount'))
                 .values('total')[:1]
             ),
+            insurance_recovery=Subquery(
+                Insurance.objects.filter(vehicle=OuterRef('pk'), kola=True)
+                .values('vehicle')
+                .annotate(total=Sum('potrazuje'))
+                .values('total')[:1]
+            ),
+            long_term_rental=Exists(
+                Lease.objects.filter(vehicle=OuterRef('pk'), lease_type__in=LONG_TERM_LEASE_TYPES)
+            )
         )
     )
 
@@ -421,9 +480,12 @@ def fleet_analytics(request):
     for vehicle in vehicles:
         value = number(vehicle.value)
         service_cost = number(vehicle.service_cost)
+        requisition_cost = number(vehicle.requisition_cost)
         fuel_cost = number(vehicle.fuel_cost)
-        total_cost = service_cost + fuel_cost
-        ratio = service_cost / value * 100 if value else 0
+        insurance_recovery = number(vehicle.insurance_recovery)
+        net_cost = number(net_maintenance_cost(service_cost, requisition_cost, insurance_recovery))
+        total_cost = service_cost + requisition_cost + fuel_cost
+        ratio = net_cost / value * 100 if value else 0
         vehicle_rows.append({
             'label': vehicle.registration_number or f'{vehicle.brand} {vehicle.model}',
             'brand': vehicle.brand,
@@ -431,11 +493,15 @@ def fleet_analytics(request):
             'center': vehicle.center_code or 'Bez centra',
             'value': value,
             'service_cost': service_cost,
+            'requisition_cost': requisition_cost,
+            'insurance_recovery': insurance_recovery,
+            'net_maintenance_cost': net_cost,
             'fuel_cost': fuel_cost,
             'fuel_liters': number(vehicle.fuel_liters),
             'total_cost': total_cost,
             'service_value_ratio': ratio,
-            'red_zone': value > 0 and service_cost > value,
+            'long_term_rental': vehicle.long_term_rental,
+            'red_zone': not vehicle.long_term_rental and value > 0 and net_cost > value,
         })
 
     top_cost_vehicles = sorted(vehicle_rows, key=lambda row: row['total_cost'], reverse=True)[:10]
@@ -450,6 +516,9 @@ def fleet_analytics(request):
         'vehicle_count': 0,
         'value': 0,
         'service_cost': 0,
+        'requisition_cost': 0,
+        'insurance_recovery': 0,
+        'net_maintenance_cost': 0,
         'fuel_cost': 0,
         'fuel_liters': 0,
         'red_zone_count': 0,
@@ -459,6 +528,9 @@ def fleet_analytics(request):
         center['vehicle_count'] += 1
         center['value'] += row['value']
         center['service_cost'] += row['service_cost']
+        center['requisition_cost'] += row['requisition_cost']
+        center['insurance_recovery'] += row['insurance_recovery']
+        center['net_maintenance_cost'] += row['net_maintenance_cost']
         center['fuel_cost'] += row['fuel_cost']
         center['fuel_liters'] += row['fuel_liters']
         center['red_zone_count'] += 1 if row['red_zone'] else 0
@@ -470,10 +542,13 @@ def fleet_analytics(request):
             'vehicle_count': row['vehicle_count'],
             'value': row['value'],
             'service_cost': row['service_cost'],
+            'requisition_cost': row['requisition_cost'],
+            'insurance_recovery': row['insurance_recovery'],
+            'net_maintenance_cost': row['net_maintenance_cost'],
             'fuel_cost': row['fuel_cost'],
             'fuel_liters': row['fuel_liters'],
-            'service_value_ratio': row['service_cost'] / row['value'] * 100 if row['value'] else 0,
-            'cost_per_vehicle': (row['service_cost'] + row['fuel_cost']) / row['vehicle_count'] if row['vehicle_count'] else 0,
+            'service_value_ratio': row['net_maintenance_cost'] / row['value'] * 100 if row['value'] else 0,
+            'cost_per_vehicle': (row['service_cost'] + row['requisition_cost'] + row['fuel_cost']) / row['vehicle_count'] if row['vehicle_count'] else 0,
             'red_zone_count': row['red_zone_count'],
         })
     center_rows.sort(key=lambda row: row['cost_per_vehicle'], reverse=True)
@@ -500,16 +575,22 @@ def fleet_analytics(request):
 
     total_fleet_value = sum(row['value'] for row in vehicle_rows)
     total_service_cost = sum(row['service_cost'] for row in vehicle_rows)
+    total_requisition_cost = sum(row['requisition_cost'] for row in vehicle_rows)
+    total_insurance_recovery = sum(row['insurance_recovery'] for row in vehicle_rows)
+    total_net_maintenance_cost = sum(row['net_maintenance_cost'] for row in vehicle_rows)
     total_fuel_cost = sum(row['fuel_cost'] for row in vehicle_rows)
     total_fuel_liters = sum(row['fuel_liters'] for row in vehicle_rows)
     analytics_summary = {
         'vehicle_count': len(vehicle_rows),
         'total_fleet_value': total_fleet_value,
         'total_service_cost': total_service_cost,
+        'total_requisition_cost': total_requisition_cost,
+        'total_insurance_recovery': total_insurance_recovery,
+        'total_net_maintenance_cost': total_net_maintenance_cost,
         'total_fuel_cost': total_fuel_cost,
         'total_fuel_liters': total_fuel_liters,
         'red_zone_count': sum(1 for row in vehicle_rows if row['red_zone']),
-        'service_value_ratio': total_service_cost / total_fleet_value * 100 if total_fleet_value else 0,
+        'service_value_ratio': total_net_maintenance_cost / total_fleet_value * 100 if total_fleet_value else 0,
         'projected_fuel_cost': avg_monthly_fuel * 12,
         'projected_service_cost': avg_monthly_service * 12,
         'projected_fuel_liters': avg_monthly_liters * 12,
@@ -551,6 +632,12 @@ def center_statistics(request, center_code):
                 .annotate(total=Sum('potrazuje'))
                 .values('total')[:1]
             ),
+            requisition_cost=Subquery(
+                Requisition.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('vrednost_nab'))
+                .values('total')[:1]
+            ),
             fuel_amount=Subquery(
                 FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
                 .values('vehicle')
@@ -563,12 +650,27 @@ def center_statistics(request, center_code):
                 .annotate(total=Sum('cost_bruto'))
                 .values('total')[:1]
             ),
+            insurance_recovery=Subquery(
+                Insurance.objects.filter(vehicle=OuterRef('pk'), kola=True)
+                .values('vehicle')
+                .annotate(total=Sum('potrazuje'))
+                .values('total')[:1]
+            ),
+            long_term_rental=Exists(
+                Lease.objects.filter(vehicle=OuterRef('pk'), lease_type__in=LONG_TERM_LEASE_TYPES)
+            ),
         ).filter(center_code=center_code)
     )
 
     center_vehicle_count = len(center_vehicles)
     center_total_value = sum((vehicle.value or 0) for vehicle in center_vehicles)
     center_total_service_cost = sum((vehicle.service_cost or 0) for vehicle in center_vehicles)
+    center_total_requisition_cost = sum((vehicle.requisition_cost or 0) for vehicle in center_vehicles)
+    center_total_insurance_recovery = sum((vehicle.insurance_recovery or 0) for vehicle in center_vehicles)
+    center_total_net_maintenance_cost = sum(
+        net_maintenance_cost(vehicle.service_cost, vehicle.requisition_cost, vehicle.insurance_recovery)
+        for vehicle in center_vehicles
+    )
     center_total_fuel_quantity = sum((vehicle.fuel_amount or 0) for vehicle in center_vehicles)
     center_total_fuel_cost = sum((vehicle.fuel_cost or 0) for vehicle in center_vehicles)
     center_avg_year = (
@@ -580,10 +682,16 @@ def center_statistics(request, center_code):
     for vehicle in center_vehicles:
         vehicle_value = vehicle.value or 0
         service_cost = vehicle.service_cost or 0
+        requisition_cost = vehicle.requisition_cost or 0
+        insurance_recovery = vehicle.insurance_recovery or 0
+        net_cost = net_maintenance_cost(service_cost, requisition_cost, insurance_recovery)
         vehicle.service_cost_total = service_cost
-        vehicle.service_value_ratio = service_cost / vehicle_value * 100 if vehicle_value else 0
-        vehicle.value_gap = service_cost - vehicle_value
-        if vehicle_value > 0 and service_cost > vehicle_value:
+        vehicle.requisition_cost_total = requisition_cost
+        vehicle.insurance_recovery_total = insurance_recovery
+        vehicle.net_maintenance_cost = net_cost
+        vehicle.service_value_ratio = net_cost / vehicle_value * 100 if vehicle_value else 0
+        vehicle.value_gap = net_cost - vehicle_value
+        if not vehicle.long_term_rental and vehicle_value > 0 and net_cost > vehicle_value:
             center_red_zone_vehicles.append(vehicle)
     center_red_zone_vehicles.sort(key=lambda vehicle: vehicle.value_gap, reverse=True)
 
@@ -593,7 +701,10 @@ def center_statistics(request, center_code):
         'avg_value': center_total_value / center_vehicle_count if center_vehicle_count else 0,
         'avg_age': datetime.datetime.now().year - center_avg_year if center_avg_year else 0,
         'total_service_cost': center_total_service_cost,
-        'service_value_ratio': center_total_service_cost / center_total_value * 100 if center_total_value else 0,
+        'total_requisition_cost': center_total_requisition_cost,
+        'total_insurance_recovery': center_total_insurance_recovery,
+        'total_net_maintenance_cost': center_total_net_maintenance_cost,
+        'service_value_ratio': center_total_net_maintenance_cost / center_total_value * 100 if center_total_value else 0,
         'total_fuel_quantity': center_total_fuel_quantity,
         'total_fuel_cost': center_total_fuel_cost,
         'red_zone_count': len(center_red_zone_vehicles),
@@ -1001,11 +1112,13 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
 
         # 4. Leasing data
         lease_info = Lease.objects.filter(vehicle=vehicle).order_by('-start_date').first()
+        long_term_rental = Lease.objects.filter(vehicle=vehicle, lease_type__in=LONG_TERM_LEASE_TYPES).exists()
         lease_intrests = LeaseInterest.objects.filter(lease=lease_info).order_by('-year')
 
         # 5. General status (red/green light based on repair costs)
         repair_costs = vehicle.service_transactions.aggregate(total_repairs=Sum('potrazuje'))['total_repairs'] or 0
         requisition_costs = vehicle.requisitions.aggregate(total_requisitions=Sum('vrednost_nab'))['total_requisitions'] or 0
+        insurance_recovery = vehicle.insurances.filter(kola=True).aggregate(total=Sum('potrazuje'))['total'] or 0
 
         service_list = vehicle.service_transactions.order_by('-datum')
         requisition_list = vehicle.requisitions.order_by('-datum_trebovanja')
@@ -1020,10 +1133,11 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         vehicle_value = vehicle.value or vehicle.purchase_value or 0
         total_fuel_cost = vehicle.fuel_consumptions.aggregate(total=Sum('cost_bruto'))['total'] or 0
         total_fuel_liters = vehicle.fuel_consumptions.aggregate(total=Sum('amount'))['total'] or 0
-        total_maintenance_cost = repair_costs + requisition_costs
+        gross_maintenance_cost = repair_costs + requisition_costs
+        total_maintenance_cost = net_maintenance_cost(repair_costs, requisition_costs, insurance_recovery)
         maintenance_value_ratio = (total_maintenance_cost / vehicle_value * 100) if vehicle_value else 0
         remaining_value_after_maintenance = vehicle_value - total_maintenance_cost
-        red_zone = vehicle_value > 0 and total_maintenance_cost > vehicle_value
+        red_zone = not long_term_rental and vehicle_value > 0 and total_maintenance_cost > vehicle_value
 
         def month_date(value):
             return value.date() if hasattr(value, 'date') else value
@@ -1053,12 +1167,15 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         vehicle_analysis = {
             'total_fuel_cost': total_fuel_cost,
             'total_fuel_liters': total_fuel_liters,
+            'gross_maintenance_cost': gross_maintenance_cost,
+            'insurance_recovery': insurance_recovery,
             'total_maintenance_cost': total_maintenance_cost,
             'maintenance_value_ratio': maintenance_value_ratio,
             'remaining_value_after_maintenance': remaining_value_after_maintenance,
             'red_zone': red_zone,
             'vehicle_value': vehicle_value,
             'fuel_cost_per_liter': total_fuel_cost / total_fuel_liters if total_fuel_liters else 0,
+            'long_term_rental': long_term_rental,
         }
 
         
@@ -1078,6 +1195,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
             'status_light': status_light,
             'repair_costs': repair_costs,
             'requisition_costs':requisition_costs,
+            'insurance_recovery': insurance_recovery,
             'service_list':service_list,
             'requisition_list':requisition_list,
             'putni_nalozi': putni_nalozi,

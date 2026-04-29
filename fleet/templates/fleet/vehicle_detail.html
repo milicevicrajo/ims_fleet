@@ -129,6 +129,8 @@
     <div class="text-end">
       {% if vehicle_analysis.red_zone %}
         <span class="vehicle-status vehicle-status-risk">Crvena zona</span>
+      {% elif vehicle_analysis.long_term_rental %}
+        <span class="vehicle-status vehicle-status-ok">Dugoročni najam</span>
       {% else %}
         <span class="vehicle-status vehicle-status-ok">Operativno stabilno</span>
       {% endif %}
@@ -149,7 +151,7 @@
     <strong>{{ vehicle_analysis.vehicle_value|floatformat:0|intcomma }} RSD</strong>
   </div>
   <div class="vehicle-kpi">
-    <small>Servis i održavanje</small>
+    <small>Neto održavanje</small>
     <strong>{{ vehicle_analysis.total_maintenance_cost|floatformat:0|intcomma }} RSD</strong>
   </div>
   <div class="vehicle-kpi">
@@ -427,6 +429,8 @@
         <div class="mb-3">
           <span class="me-3"><strong>Van IMS:</strong> {{ repair_costs|floatformat:0|intcomma }} RSD</span>
           <span><strong>IMS trebovanja:</strong> {{ requisition_costs|floatformat:0|intcomma }} RSD</span>
+          <span class="me-3"><strong>Naplata osiguranja:</strong> {{ insurance_recovery|floatformat:0|intcomma }} RSD</span>
+          <span><strong>Neto održavanje:</strong> {{ vehicle_analysis.total_maintenance_cost|floatformat:0|intcomma }} RSD</span>
         </div>
         <div class="table-responsive">
           <table id="DatatableServiceDetail" class="display compact">
