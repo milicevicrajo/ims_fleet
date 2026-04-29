@@ -1,537 +1,581 @@
 {% extends "base.html" %}
-{% load static %}
+{% load humanize %}
 {% block content %}
-<h2>{{ trafic_card.registration_number }}  : {{ vehicle.brand }} {{ vehicle.model }}</h2>
+<style>
+  .vehicle-hero {
+    background: #263238;
+    color: #fff;
+    border-radius: 6px;
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+  .vehicle-plate {
+    display: inline-block;
+    background: #fff;
+    color: #111;
+    border: 2px solid #111;
+    border-radius: 4px;
+    padding: 7px 14px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .vehicle-meta {
+    color: rgba(255, 255, 255, .76);
+  }
+  .vehicle-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .vehicle-kpi {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .vehicle-kpi small {
+    display: block;
+    color: #6c757d;
+    margin-bottom: 5px;
+  }
+  .vehicle-kpi strong {
+    font-size: 18px;
+  }
+  .vehicle-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .vehicle-status-ok {
+    background: #e8f5e9;
+    color: #1b5e20;
+  }
+  .vehicle-status-risk {
+    background: #ffebee;
+    color: #b71c1c;
+  }
+  .vehicle-chart {
+    height: 280px;
+    width: 100%;
+  }
+  .detail-table td:first-child {
+    width: 42%;
+    color: #607d8b;
+    font-weight: 600;
+  }
+  .vehicle-info-row {
+    align-items: stretch;
+  }
+  .vehicle-info-row > [class*="col-"] {
+    display: flex;
+    margin-bottom: 1rem;
+  }
+  .vehicle-info-row > [class*="col-"] > .card {
+    width: 100%;
+    margin-bottom: 0;
+  }
+  .vehicle-info-row .card-body {
+    display: flex;
+    flex-direction: column;
+  }
+  .vehicle-info-row .table {
+    margin-bottom: 0;
+  }
+  .vehicle-fixed-card {
+    height: 300px;
+  }
+  .vehicle-fixed-card .card-body {
+    height: 100%;
+    overflow-y: auto;
+  }
+  .vehicle-document-card {
+    height: 360px;
+  }
+  .vehicle-document-card .card-body {
+    height: 100%;
+    overflow-y: auto;
+  }
+  .vehicle-tabs-card {
+    height: 520px;
+  }
+  .vehicle-tabs-card .card-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .vehicle-tabs-card .tab-content {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
+  }
+</style>
 
-<div class="row align-items-top">
-    <!--==========================================================-->
-    <!-------                  COLUMN START                   ------>
-    <!--==========================================================-->
-    <div class="col-lg-12">
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-
-            </div>        
-        </div>
-        <!------- CARD END ------>
+<div class="vehicle-hero">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="vehicle-plate">
+        {% if trafic_card %}{{ trafic_card.registration_number }}{% else %}Bez registracije{% endif %}
+      </div>
+      <h1 class="mt-3 mb-1">{{ vehicle.brand }} {{ vehicle.model }}</h1>
+      <div class="vehicle-meta">
+        {{ vehicle.category }} · {{ vehicle.year_of_manufacture }} · {{ vehicle.fuel_type }} · inventar {{ vehicle.inventory_number }}
+      </div>
     </div>
-
-    <!--==========================================================-->
-    <!-------                  COLUMN START                   ------>
-    <!--==========================================================-->
-    <div class="col-lg-6">
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Aktivne polise osiguranja</h3>
-                {% if active_policies %}
-                    <ul>
-                        {% for policy in active_policies %}
-                            <li>Broj polise: {{ policy.policy_number }} ({{ policy.insurance_type }}) - važi do {{ policy.end_date|date:"d.m.Y" }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>Nema aktivnih polisa.</p>
-                {% endif %}
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">Trenutna šifra posla</h3>
-                    <a href={% url 'jobcode_create' vehicle_id=object.id %} class="text-success" style="font-size: 1.15em;">
-                        <i class="mdi mdi-plus-box"></i></i> Promeni šifru posla
-                    </a>
-                </div>
-                {% if current_job_code %}
-                    <p style="font-size: 1.2em;">Šifra posla: {{ current_job_code.organizational_unit.code }}</p>
-                {% else %}
-                    <p>Nema podataka o trenutnoj šifri posla.</p>
-                {% endif %}
-
-                <h4 class="card-title">Promene šifre posla</h4>
-                {% if job_codes %}
-                    <ul>
-                        {% for job_code in job_codes %}
-                            <li>Šifra posla: {{ job_code.organizational_unit }} dodeljena {{ job_code.assigned_date|date:"d.m.Y" }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                {% endif %}
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">Tender dokumenti</h3>
-                    <a href="{{ tender_document_create_url }}" class="text-success" style="font-size: 1.15em;">
-                        <i class="mdi mdi-plus-box"></i> Dodaj dokument
-                    </a>
-                </div>
-                {% if tender_documents %}
-                    <div class="row g-3">
-                        {% for doc in tender_documents %}
-                        <div class="col-12 col-md-6">
-                            <div class="border rounded p-2 h-100 d-flex flex-column">
-                                <strong>{{ doc.get_document_type_display }}</strong>
-                                <span class="text-muted small">{% if doc.taken_at %}{{ doc.taken_at|date:"d.m.Y" }}{% else %}-{% endif %}</span>
-                                <a href="{% url 'vehicle_tender_document_detail' doc.pk %}" class="mt-2">
-                                    {% if doc.image %}
-                                        <img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="img-fluid rounded" style="max-height: 140px; object-fit: cover;">
-                                    {% else %}
-                                        <span class="text-muted">Nema slike</span>
-                                    {% endif %}
-                                </a>
-                                <div class="mt-2 d-flex gap-2">
-                                    <a href="{% url 'vehicle_tender_document_detail' doc.pk %}" class="btn btn-sm btn-outline-secondary">Pregled</a>
-                                    <a href="{% url 'vehicle_tender_document_update' doc.pk %}" class="btn btn-sm btn-primary">Izmeni</a>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted mb-0">Nema dodatih tender dokumenata.</p>
-                {% endif %}
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Gorivo</h3>
-
-                <div style="font-size: 15px">
-                    <p><strong>NIS kartica:</strong> {% if nis_card %} {{ nis_card.broj_kartice|floatformat:0 }} {% else %} Nema podataka {% endif %}</p>
-                    <p><strong>OMV kartica:</strong> {% if omv_card %} {{ omv_card.card }} {% else %} Nema podataka {% endif %}</p>
-                    <p><strong>Kilometraža:</strong> {{ mileage }} Km</p>
-                    <p><strong>Potrošnja:</strong> {% if average_consumption %} {{ average_consumption|floatformat:2 }} l/100km (poslednjih 10 točenja) {% else %} Podaci nisu validni {% endif %} </p>
-                    <p><strong>Potrošnja:</strong> {% if average_consumption %} {{ average_consumption_ever|floatformat:2 }} l/100km (oduvek){% else %} Podaci nisu validni {% endif %} </p>
-                </div>
-                <hr />
-                <!------- TABLE ------>
-                <h3>Lista svih točenja</h3>
-                <div class="table-responsive">
-                    <table id="DatatableFuelDetail" class="display compact">
-                        <thead>
-                            <tr>
-                                <th>Datum</th>
-                                <th>Količina</th>
-                                <th>Tip goriva</th>
-                                <th>Iznos - Neto</th>
-                                <th>Kilometraža</th>
-                                <th>Dobavljač</th>
-                                <th>Izmene</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for consumption in consumptions %}
-                            <tr>                                         
-                                <td>{{ consumption.date|date:"d.m.Y H:i:s"  }}</td>
-                                <td>{{ consumption.amount }}</td>
-                                <td>{{ consumption.fuel_type }}</td>
-                                <td>{{ consumption.cost_neto}}</td>
-                                <td>{{ consumption.mileage}}</td>
-                                <td>{{ consumption.supplier }}</td>
-                                <td>
-                                    <a href="{% url 'fuelconsumption_update' consumption.pk %}">Izmeni</a>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="5">Nema podataka</td>
-                            </tr>
-                        {% endfor %}
-                        <tfoot>
-                            <tr>
-                                <th>Datum</th>
-                                <th>Količina</th>
-                                <th>Tip goriva</th>
-                                <th>Iznos - Neto</th>
-                                <th>Kilometraža</th>
-                                <th>Dobavljač</th>
-                                <th>Izmene</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                <hr />
-
-                <h3>OMV Potrošnja goriva po mesecima</h3>
-                <div class="table-responsive">
-                    <table id="DatatableFuelMonth" class="display compact">
-                        <thead>
-                            <tr>
-                                <th>Mesec</th>
-                                <th>Godina</th>
-                                <th>Ukupna količina (L)</th>
-                                <th>Ukupna cena (Bruto)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for entry in omv_data %}
-                            <tr>
-                                <td>{{ entry.month|date:"m" }}</td> <!-- Mesec -->
-                                <td>{{ entry.year|date:"Y" }}</td>  <!-- Godina -->
-                                <td>{{ entry.total_liters|floatformat:2 }}</td>
-                                <td>{{ entry.total_cost_bruto|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <hr />
-
-                <h3>NIS Potrošnja goriva po mesecima</h3>
-                <div class="table-responsive">
-                    <table id="DatatableFuelMonth2" class="display compact">
-                        <thead>
-                            <tr>
-                                <th>Mesec</th>
-                                <th>Godina</th>
-                                <th>Ukupna količina (L)</th>
-                                <th>Ukupna cena (Bruto)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for entry in nis_data %}
-                            <tr>
-                                <td>{{ entry.month|date:"m" }}</td> <!-- Mesec -->
-                                <td>{{ entry.year|date:"Y" }}</td>  <!-- Godina -->
-                                <td>{{ entry.total_liters|floatformat:2 }}</td>
-                                <td>{{ entry.total_cost_bruto|floatformat:2 }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <hr />
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        {% if lease_info %}
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Informacije o lizingu</h3>
-                <p>Broj ugovora: {{ lease_info.contract_number }}</p>
-                <p>Trenutna vrednost otplate: {{ lease_info.current_payment_amount }}</p>
-                <p>Datum početka: {{ lease_info.start_date|date:"d.m.Y" }}</p>
-                <p>Datum završetka: {{ lease_info.end_date|date:"d.m.Y" }}</p>
-
-                <h3 class="card-title">Informacije o kamatama</h3>
-                <ul>
-                    {% for lease_intrest in lease_intrests %}
-                        <li>Iznos kamate za {{ lease_intrest.year }} godinu: {{ lease_intrest.interest_amount }} RSD </li>
-                    {% endfor %}
-                </ul>
-            </div>        
-        </div>
+    <div class="text-end">
+      {% if vehicle_analysis.red_zone %}
+        <span class="vehicle-status vehicle-status-risk">Crvena zona</span>
+      {% else %}
+        <span class="vehicle-status vehicle-status-ok">Operativno stabilno</span>
+      {% endif %}
+      <div class="vehicle-meta mt-2">
+        {% if current_job_code %}
+          {{ current_job_code.organizational_unit }}
+        {% else %}
+          Bez trenutne šifre posla
         {% endif %}
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
+      </div>
     </div>
-    <!------- COLUMN END------>
-
-    <!--==========================================================-->
-    <!-------                  COLUMN START                   ------>
-    <!--==========================================================-->
-    <div class="col-lg-6">
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Osnovni podaci</h3>
-                <table class="table table-striped custom-font-table">
-                    <tr>
-                        <td>Inventarni broj:</td>
-                        <td>{{ vehicle.inventory_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Broj šasije:</td>
-                        <td>{{ vehicle.chassis_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Marka:</td>
-                        <td>{{ vehicle.brand }}</td>
-                    </tr>
-                    <tr>
-                        <td>Model:</td>
-                        <td>{{ vehicle.model }}</td>
-                    </tr>
-                    <tr>
-                        <td>Godina proizvodnje:</td>
-                        <td>{{ vehicle.year_of_manufacture }}</td>
-                    </tr>
-                    <tr>
-                        <td>Datum prve registracije:</td>
-                        <td>{{ vehicle.first_registration_date|date:"d.m.Y" }}</td>
-                    </tr>
-                    <tr>
-                        <td>Boja:</td>
-                        <td>{{ vehicle.color }}</td>
-                    </tr>
-                    <tr>
-                        <td>Broj osovina:</td>
-                        <td>{{ vehicle.number_of_axles }}</td>
-                    </tr>
-                    <tr>
-                        <td>Zapremina motora:</td>
-                        <td>{{ vehicle.engine_volume }}</td>
-                    </tr>
-                    <tr>
-                        <td>Broj motora:</td>
-                        <td>{{ vehicle.engine_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Masa:</td>
-                        <td>{{ vehicle.weight }}</td>
-                    </tr>
-                    <tr>
-                        <td>Snaga motora:</td>
-                        <td>{{ vehicle.engine_power }}</td>
-                    </tr>
-                    <tr>
-                        <td>Nosivost:</td>
-                        <td>{{ vehicle.load_capacity }}</td>
-                    </tr>
-                    <tr>
-                        <td>Kategorija:</td>
-                        <td>{{ vehicle.category }}</td>
-                    </tr>
-                    <tr>
-                        <td>Maksimalna dozvoljena masa:</td>
-                        <td>{{ vehicle.maximum_permissible_weight }}</td>
-                    </tr>
-                    <tr>
-                        <td>Tip goriva:</td>
-                        <td>{{ vehicle.fuel_type }}</td>
-                    </tr>
-                    <tr>
-                        <td>Broj sedišta:</td>
-                        <td>{{ vehicle.number_of_seats }}</td>
-                    </tr>
-                    <tr>
-                        <td>Nabavna vrednost vozila:</td>
-                        <td>{{ vehicle.purchase_value }}</td>
-                    </tr>
-                    <tr>
-                        <td>Knjigovodstvena vrednost vozila:</td>
-                        <td>{{ vehicle.value }}</td>
-                    </tr>
-                    <tr>
-                        <td>Servisni interval:</td>
-                        <td>{{ vehicle.service_interval }}</td>
-                    </tr>
-                    <tr>
-                        <td>Datum nabavke:</td>
-                        <td>{{ vehicle.purchase_date|date:"d.m.Y" }}</td>
-                    </tr>
-                    <tr>
-                        <td>Šifra centra (OJ):</td>
-                        <td>{{ vehicle.center_code }}</td>
-                    </tr>
-                    <tr>
-                        <td>Šifra partnera:</td>
-                        <td>{{ vehicle.partner_code }}</td>
-                    </tr>
-                    <tr>
-                        <td>Naziv partnera:</td>
-                        <td>{{ vehicle.partner_name }}</td>
-                    </tr>
-                    <tr>
-                        <td>Broj fakture:</td>
-                        <td>{{ vehicle.invoice_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Opis:</td>
-                        <td>{{ vehicle.description }}</td>
-                    </tr>
-                    <tr>
-                        <td>Otpis:</td>
-                        <td>{{ vehicle.otpis|yesno:"Da,Ne" }}</td>
-                    </tr>
-                </table>
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Saobraćajne dozvole</h3>
-                {% if trafic_cards %}
-                    <ul>
-                        {% for trafic_card in trafic_cards %}
-                            <li>Saobracajna dozvola sa reg.: {{ trafic_card.registration_number }} dodeljena {{ trafic_card.issue_date|date:"d.m.Y." }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                {% endif %}
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-        <!------- CARD ------>
-        <div class="card">
-            <div class="card-body">
-                <h3 class="card-title">Odrzavanje</h3>
-
-                <div style="font-size: 15px">
-                    <p><strong>Odrzavanje van IMS: </strong>{{ repair_costs|floatformat:2 }} RSD</p>
-                    <p><strong>Odrzavanje unutar IMS: </strong> {{ requisition_costs|floatformat:2 }} RSD</p>
-                    <p><strong>Kilometraža:</strong> {{ mileage }} Km</p>
-                </div>
-                <hr />
-                <h3>Spisak popravki</h3>
-                <div class="table-responsive">
-                    <table id="DatatableServiceDetail" class="display compact">
-                        <thead>
-                            <tr>
-                                <th>Datum</th>
-                                <th>Cena</th>
-                                <th>Kategorija</th>
-                                <th>Partner</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for service in service_list %}
-                            <tr>
-                                <td>{{ service.datum|date:"d.m.Y." }}</td>
-                                <td>{{ service.potrazuje|floatformat:2  }}</td>  
-                                <td>{{ service.popravka_kategorija}}</td>
-                                <td>{{ service.naz_par_pl }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <hr />
-                <h3>Spisak trebovanja</h3>
-                <div class="table-responsive">
-                    <table id="DatatableRequisitionDetail" class="display compact">
-                        <thead>
-                            <tr>
-                                <th>Datum</th>
-                                <th>Naziv artikla</th>
-                                <th>Kolicina</th>
-                                <th>Vrednost nabavke</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for requisition in requisition_list %}
-                            <tr>
-                                <td>{{ requisition.datum_trebovanja }}</td>
-                                <td>{{ requisition.naz_art }}</td> 
-                                <td>{{ requisition.kol }}</td> 
-                                <td>{{ requisition.vrednost_nab}}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <hr />
-            </div>        
-        </div>
-        <!------- CARD END ------>
-
-    </div>
-
+  </div>
 </div>
-    
-{% comment %} <!-- 1. Leasing Information -->
-{% if lease_info %}
-    <h3>Informacije o lizingu</h3>
 
-    <p>Broj ugovora: {{ lease_info.contract_number }}</p>
-    <p>Trenutna vrednost otplate: {{ lease_info.current_payment_amount }}</p>
-    <p>Datum početka: {{ lease_info.start_date }}</p>
-    <p>Datum završetka: {{ lease_info.end_date }}</p>
-{% endif %}
+<div class="vehicle-kpis">
+  <div class="vehicle-kpi">
+    <small>Knjigovodstvena vrednost</small>
+    <strong>{{ vehicle_analysis.vehicle_value|floatformat:0|intcomma }} RSD</strong>
+  </div>
+  <div class="vehicle-kpi">
+    <small>Servis i održavanje</small>
+    <strong>{{ vehicle_analysis.total_maintenance_cost|floatformat:0|intcomma }} RSD</strong>
+  </div>
+  <div class="vehicle-kpi">
+    <small>Održavanje / vrednost</small>
+    <strong>{{ vehicle_analysis.maintenance_value_ratio|floatformat:0 }}%</strong>
+  </div>
+  <div class="vehicle-kpi">
+    <small>Gorivo ukupno</small>
+    <strong>{{ vehicle_analysis.total_fuel_cost|floatformat:0|intcomma }} RSD</strong>
+  </div>
+  <div class="vehicle-kpi">
+    <small>Potrošeno gorivo</small>
+    <strong>{{ vehicle_analysis.total_fuel_liters|floatformat:0|intcomma }} l</strong>
+  </div>
+  <div class="vehicle-kpi">
+    <small>Kilometraža</small>
+    <strong>{% if mileage %}{{ mileage|floatformat:0|intcomma }} km{% else %}-{% endif %}</strong>
+  </div>
+</div>
 
-<!-- 2. NIS i OMV kartice -->
-<h3>Informacije o gorivu</h3>
-<p><strong>NIS kartica:</strong> {% if nis_card %} {{ nis_card.broj_kartice }} {% else %} Nema podataka {% endif %}</p>
-<p><strong>OMV kartica (putnička vozila):</strong> {% if omv_card_passenger %} {{ omv_card_passenger.card }} {% else %} Nema podataka {% endif %}</p>
-<p><strong>OMV kartica (teretna vozila):</strong> {% if omv_card_cargo %} {{ omv_card_cargo.card }} {% else %} Nema podataka {% endif %}</p>
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">Trošak vozila po mesecima</h3>
+        <div id="vehicleCostChart" class="vehicle-chart"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">Troškovi servisa po tipu popravke</h3>
+        <div id="vehicleServiceCategoryChart" class="vehicle-chart"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- 3. Kilometraža -->
-<h3>Kilometraža</h3>
-{% if mileage %}
-    <p>Najnovija kilometraža: {{ mileage.mileage }} km na dan {{ mileage.transaction_date|date:"d.m.Y" }}</p>
-{% else %}
-    <p>Nema podataka o kilometraži.</p>
-{% endif %}
+<div class="row vehicle-info-row">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">Identitet vozila</h3>
+        <table class="table table-sm detail-table">
+          <tbody>
+            <tr><td>Broj šasije</td><td>{{ vehicle.chassis_number }}</td></tr>
+            <tr><td>Broj motora</td><td>{{ vehicle.engine_number }}</td></tr>
+            <tr><td>Prva registracija</td><td>{{ vehicle.first_registration_date|date:"d.m.Y" }}</td></tr>
+            <tr><td>Datum nabavke</td><td>{{ vehicle.purchase_date|date:"d.m.Y" }}</td></tr>
+            <tr><td>Nabavna vrednost</td><td>{{ vehicle.purchase_value|floatformat:0|intcomma }} RSD</td></tr>
+            <tr><td>Knjigovodstvena vrednost</td><td>{{ vehicle.value|floatformat:0|intcomma }} RSD</td></tr>
+            <tr><td>Partner</td><td>{{ vehicle.partner_name|default:"-" }}</td></tr>
+            <tr><td>Faktura</td><td>{{ vehicle.invoice_number|default:"-" }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<!-- 4. Aktivne polise osiguranja -->
-<h3>Aktivne polise osiguranja</h3>
-{% if active_policies %}
-    <ul>
-        {% for policy in active_policies %}
-            <li>Broj polise: {{ policy.policy_number }} ({{ policy.insurance_type }}) - važi do {{ policy.end_date|date:"d.m.Y" }}</li>
-        {% endfor %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">Gorivo</h3>
+        <table class="table table-sm detail-table">
+          <tbody>
+            <tr><td>NIS kartica</td><td>{% if nis_card %}{{ nis_card.broj_kartice|floatformat:0 }}{% else %}-{% endif %}</td></tr>
+            <tr><td>OMV kartica</td><td>{% if omv_card %}{{ omv_card.card }}{% else %}-{% endif %}</td></tr>
+            <tr><td>Prosek poslednjih 10 točenja</td><td>{% if average_consumption %}{{ average_consumption|floatformat:2 }} l/100km{% else %}-{% endif %}</td></tr>
+            <tr><td>Prosek ukupno</td><td>{% if average_consumption_ever %}{{ average_consumption_ever|floatformat:2 }} l/100km{% else %}-{% endif %}</td></tr>
+            <tr><td>Prosečna cena po litru</td><td>{{ vehicle_analysis.fuel_cost_per_liter|floatformat:2 }} RSD</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">Tehnički podaci</h3>
+        <table class="table table-sm detail-table">
+          <tbody>
+            <tr><td>Zapremina motora</td><td>{{ vehicle.engine_volume|floatformat:0 }} cm³</td></tr>
+            <tr><td>Snaga motora</td><td>{{ vehicle.engine_power|floatformat:0 }} kW</td></tr>
+            <tr><td>Masa</td><td>{{ vehicle.weight|floatformat:0|intcomma }} kg</td></tr>
+            <tr><td>Nosivost</td><td>{{ vehicle.load_capacity|floatformat:0|intcomma }} kg</td></tr>
+            <tr><td>Max dozvoljena masa</td><td>{{ vehicle.maximum_permissible_weight|floatformat:0|intcomma }} kg</td></tr>
+            <tr><td>Broj osovina</td><td>{{ vehicle.number_of_axles }}</td></tr>
+            <tr><td>Broj sedišta</td><td>{{ vehicle.number_of_seats }}</td></tr>
+            <tr><td>Servisni interval</td><td>{{ vehicle.service_interval|floatformat:0|intcomma }} km</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card vehicle-fixed-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="card-title mb-0">Šifra posla</h3>
+          <a href="{% url 'jobcode_create' vehicle_id=vehicle.id %}" class="btn btn-sm btn-outline-success">Promeni</a>
+        </div>
+        {% if current_job_code %}
+          <p class="mt-3 mb-2"><strong>{{ current_job_code.organizational_unit }}</strong></p>
+        {% else %}
+          <p class="text-muted mt-3 mb-2">Nema trenutne šifre posla.</p>
+        {% endif %}
+        {% if job_codes %}
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <tbody>
+                {% for job_code in job_codes|slice:":6" %}
+                <tr>
+                  <td>{{ job_code.assigned_date|date:"d.m.Y" }}</td>
+                  <td>{{ job_code.organizational_unit }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card vehicle-document-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="card-title mb-0">Tender dokumenti</h3>
+          <a href="{{ tender_document_create_url }}" class="btn btn-sm btn-outline-success">Dodaj dokument</a>
+        </div>
+        {% if tender_documents %}
+          <div class="row g-3">
+            {% for doc in tender_documents %}
+            <div class="col-12 col-md-6">
+              <div class="border rounded p-2 h-100">
+                <strong>{{ doc.get_document_type_display }}</strong>
+                <div class="text-muted small">{% if doc.taken_at %}{{ doc.taken_at|date:"d.m.Y" }}{% else %}-{% endif %}</div>
+                <a href="{% url 'vehicle_tender_document_detail' doc.pk %}">
+                  {% if doc.image %}
+                    <img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="img-fluid rounded mt-2" style="max-height: 150px; object-fit: cover;">
+                  {% else %}
+                    <span class="text-muted">Nema slike</span>
+                  {% endif %}
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">Nema dodatih tender dokumenata.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card vehicle-fixed-card">
+      <div class="card-body">
+        <h3 class="card-title">Aktivne polise</h3>
+        {% if active_policies %}
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <tbody>
+                {% for policy in active_policies %}
+                <tr>
+                  <td>{{ policy.insurance_type }}</td>
+                  <td>{{ policy.policy_number }}</td>
+                  <td>{{ policy.end_date|date:"d.m.Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">Nema aktivnih polisa.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card vehicle-document-card">
+      <div class="card-body">
+        <h3 class="card-title">Saobraćajne dozvole</h3>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Registracija</th>
+                <th>Broj dozvole</th>
+                <th>Važi do</th>
+                <th>PDF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for card in trafic_cards %}
+              <tr>
+                <td>{{ card.registration_number }}</td>
+                <td>{{ card.traffic_card_number }}</td>
+                <td>{{ card.valid_until|date:"d.m.Y" }}</td>
+                <td>
+                  {% if card.traffic_card_pdf %}
+                    <a href="{{ card.traffic_card_pdf.url }}" target="_blank" rel="noopener">PDF</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-muted">Nema saobraćajnih dozvola.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card vehicle-tabs-card">
+  <div class="card-body">
+    <ul class="nav nav-tabs" id="vehicleDetailTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="fuel-tab" data-bs-toggle="tab" data-bs-target="#fuel-pane" type="button" role="tab" aria-controls="fuel-pane" aria-selected="true">Gorivo</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance-pane" type="button" role="tab" aria-controls="maintenance-pane" aria-selected="false">Servis i održavanje</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="travel-tab" data-bs-toggle="tab" data-bs-target="#travel-pane" type="button" role="tab" aria-controls="travel-pane" aria-selected="false">Putni nalozi</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="vehicle-orders-tab" data-bs-toggle="tab" data-bs-target="#vehicle-orders-pane" type="button" role="tab" aria-controls="vehicle-orders-pane" aria-selected="false">Nalozi za auto</button>
+      </li>
     </ul>
-{% else %}
-    <p>Nema aktivnih polisa.</p>
-{% endif %}
 
-<!-- 5. Knjigovodstvena vrednost -->
-<h3>Knjigovodstvena vrednost</h3>
-<p>Vrednost vozila: {{ book_value }}</p>
+    <div class="tab-content pt-3" id="vehicleDetailTabsContent">
+      <div class="tab-pane fade show active" id="fuel-pane" role="tabpanel" aria-labelledby="fuel-tab">
+        <h3 class="card-title">Gorivo</h3>
+        <div class="table-responsive">
+          <table id="DatatableFuelDetail" class="display compact">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Količina</th>
+                <th>Iznos neto</th>
+                <th>Kilometraža</th>
+                <th>Dobavljač</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for consumption in consumptions|slice:":80" %}
+              <tr>
+                <td>{{ consumption.date|date:"d.m.Y H:i" }}</td>
+                <td>{{ consumption.amount|floatformat:2 }}</td>
+                <td>{{ consumption.cost_neto|floatformat:2 }}</td>
+                <td>{{ consumption.mileage|floatformat:0 }}</td>
+                <td>{{ consumption.supplier }}</td>
+                <td><a href="{% url 'fuelconsumption_update' consumption.pk %}">Izmeni</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-<!-- 6. Prosečna potrošnja goriva -->
-<h3>Prosečna potrošnja goriva</h3>
-<p>Prosečna potrošnja: {{ average_consumption }} litara na 100 km</p>
+      <div class="tab-pane fade" id="maintenance-pane" role="tabpanel" aria-labelledby="maintenance-tab">
+        <h3 class="card-title">Servis i održavanje</h3>
+        <div class="mb-3">
+          <span class="me-3"><strong>Van IMS:</strong> {{ repair_costs|floatformat:0|intcomma }} RSD</span>
+          <span><strong>IMS trebovanja:</strong> {{ requisition_costs|floatformat:0|intcomma }} RSD</span>
+        </div>
+        <div class="table-responsive">
+          <table id="DatatableServiceDetail" class="display compact">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Cena</th>
+                <th>Kategorija</th>
+                <th>Partner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for service in service_list|slice:":80" %}
+              <tr>
+                <td>{{ service.datum|date:"d.m.Y" }}</td>
+                <td>{{ service.potrazuje|floatformat:2 }}</td>
+                <td>{{ service.popravka_kategorija|default:"-" }}</td>
+                <td>{{ service.naz_par_pl }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-<!-- 7. Trenutna šifra posla -->
-<h3>Trenutna šifra posla</h3>
-{% if current_job_code %}
-    <p>Šifra posla: {{ current_job_code.organizational_unit.code }}</p>
-{% else %}
-    <p>Nema podataka o trenutnoj šifri posla.</p>
-{% endif %}
+      <div class="tab-pane fade" id="travel-pane" role="tabpanel" aria-labelledby="travel-tab">
+        <h3 class="card-title">Putni nalozi</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Broj</th>
+                <th>Datum puta</th>
+                <th>Zaposleni</th>
+                <th>Lokacija</th>
+                <th>Šifra posla</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in putni_nalozi %}
+              <tr>
+                <td>{{ order.order_number }}</td>
+                <td>{{ order.travel_date|date:"d.m.Y" }}</td>
+                <td>{% if order.employee %}{{ order.employee }}{% else %}{{ order.other_employee_name|default:"-" }}{% endif %}</td>
+                <td>{{ order.travel_location }}</td>
+                <td>{{ order.job_code.code }}</td>
+                <td>{% if order.storniran %}Storniran{% elif order.opravdan %}Opravdan{% else %}Otvoren{% endif %}</td>
+                <td><a href="{% url 'putninalog_detail' order.pk %}">Detalji</a></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="7" class="text-center text-muted">Nema putnih naloga za ovo vozilo.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-<!-- 8. Trenutna šifra posla -->
-<h3>Popravke</h3>
-{{ repair_costs }}
-<!-- Status svetlo -->
-<div class="status">
-    <p>Status: 
-        <span style="color: 
-            {% if status_light == 'green' %}
-                green
-            {% else %}
-                red
-            {% endif %}
-        ;">
-            {{ status_light }}
-        </span>
-    </p>
-</div> {% endcomment %}
+      <div class="tab-pane fade" id="vehicle-orders-pane" role="tabpanel" aria-labelledby="vehicle-orders-tab">
+        <h3 class="card-title">Nalozi za auto</h3>
+        <div class="table-responsive">
+          <table class="table table-striped table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>PN</th>
+                <th>R.b.z.</th>
+                <th>Otvoren</th>
+                <th>Zatvoren</th>
+                <th>Zaposleni</th>
+                <th>Km početak</th>
+                <th>Km kraj</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in vehicle_travel_orders %}
+              <tr>
+                <td>{{ order.pn_number }}</td>
+                <td>{{ order.rbz }}</td>
+                <td>{{ order.created_at|date:"d.m.Y" }}</td>
+                <td>{% if order.closed_at %}{{ order.closed_at|date:"d.m.Y" }}{% else %}-{% endif %}</td>
+                <td>{{ order.employee }}</td>
+                <td>{{ order.start_mileage|default:"-" }}</td>
+                <td>{{ order.end_mileage|default:"-" }}</td>
+                <td><a href="{% url 'vehicle_travel_order_detail' order.pk %}">Detalji</a></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="8" class="text-center text-muted">Nema naloga za auto.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ monthly_vehicle_costs|json_script:"vehicle-monthly-costs" }}
+{{ service_category_rows|json_script:"vehicle-service-categories" }}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('#vehicleDetailTabs button[data-bs-toggle="tab"]').forEach(function (button) {
+      button.addEventListener('shown.bs.tab', function () {
+        if (window.DataTable && DataTable.tables) {
+          DataTable.tables({ visible: true, api: true }).columns.adjust();
+        }
+      });
+    });
+
+    if (!window.jQuery || !jQuery.plot) {
+      return;
+    }
+
+    const srNumber = new Intl.NumberFormat('sr-RS', { maximumFractionDigits: 0 });
+    const monthly = JSON.parse(document.getElementById('vehicle-monthly-costs').textContent);
+    const categories = JSON.parse(document.getElementById('vehicle-service-categories').textContent);
+
+    const ticks = monthly.map(function (row, index) {
+      return [index, row.label];
+    });
+    const fuelSeries = monthly.map(function (row, index) {
+      return [index - 0.18, row.fuel];
+    });
+    const serviceSeries = monthly.map(function (row, index) {
+      return [index + 0.18, row.service];
+    });
+
+    jQuery.plot(jQuery('#vehicleCostChart'), [
+      { label: 'Gorivo', data: fuelSeries, bars: { show: true, barWidth: 0.32, align: 'center' } },
+      { label: 'Servis', data: serviceSeries, bars: { show: true, barWidth: 0.32, align: 'center' } }
+    ], {
+      xaxis: { ticks: ticks },
+      yaxis: { tickFormatter: function (value) { return srNumber.format(value); } },
+      grid: { hoverable: true, borderWidth: 1 },
+      legend: { position: 'nw' },
+      tooltip: true,
+      tooltipOpts: { content: '%s: %y RSD' }
+    });
+
+    jQuery.plot(jQuery('#vehicleServiceCategoryChart'), categories.map(function (row) {
+      return { label: row.label, data: row.value };
+    }), {
+      series: { pie: { show: true, radius: 1, label: { show: true, radius: 0.75 } } },
+      legend: { show: true },
+      grid: { hoverable: true },
+      tooltip: true,
+      tooltipOpts: { content: '%s: %p.0%' }
+    });
+  });
+</script>
 {% endblock %}

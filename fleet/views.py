@@ -83,6 +83,7 @@ from .models import (
     ServiceType,
     TrafficCard,
     VehicleTenderDocument,
+    VehicleTravelOrder,
     Vehicle,
 )
 from .mixins import CenterMixin, RolePermissionRequiredMixin, role_permission_required
@@ -1008,11 +1009,54 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
 
         service_list = vehicle.service_transactions.order_by('-datum')
         requisition_list = vehicle.requisitions.order_by('-datum_trebovanja')
+        putni_nalozi = PutniNalog.objects.filter(vehicle=vehicle).select_related('employee', 'job_code').order_by('-travel_date', '-id')
+        vehicle_travel_orders = VehicleTravelOrder.objects.filter(vehicle=vehicle).select_related('employee').order_by('-created_at', '-id')
         
         # 6. Saobracajna dozvol i istorija
         trafic_cards = TrafficCard.objects.filter(vehicle=vehicle).order_by('-issue_date')
         trafic_card = trafic_cards.first()
         status_light = 'green' if repair_costs < vehicle.purchase_value else 'red'
+
+        vehicle_value = vehicle.value or vehicle.purchase_value or 0
+        total_fuel_cost = vehicle.fuel_consumptions.aggregate(total=Sum('cost_bruto'))['total'] or 0
+        total_fuel_liters = vehicle.fuel_consumptions.aggregate(total=Sum('amount'))['total'] or 0
+        total_maintenance_cost = repair_costs + requisition_costs
+        maintenance_value_ratio = (total_maintenance_cost / vehicle_value * 100) if vehicle_value else 0
+        remaining_value_after_maintenance = vehicle_value - total_maintenance_cost
+        red_zone = vehicle_value > 0 and total_maintenance_cost > vehicle_value
+
+        monthly_costs = defaultdict(lambda: {'fuel': 0, 'service': 0})
+        for row in vehicle.fuel_consumptions.annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('cost_bruto')).order_by('month'):
+            if row['month']:
+                monthly_costs[row['month'].date()]['fuel'] = float(row['total'] or 0)
+        for row in vehicle.service_transactions.annotate(month=TruncMonth('datum')).values('month').annotate(total=Sum('potrazuje')).order_by('month'):
+            if row['month']:
+                monthly_costs[row['month'].date()]['service'] = float(row['total'] or 0)
+        monthly_vehicle_costs = [
+            {'label': month.strftime('%m.%Y'), 'fuel': values['fuel'], 'service': values['service']}
+            for month, values in sorted(monthly_costs.items())
+        ][-12:]
+
+        service_category_rows = [
+            {
+                'label': row['popravka_kategorija__name'] or 'Nerazvrstano',
+                'value': float(row['total'] or 0),
+            }
+            for row in vehicle.service_transactions.values('popravka_kategorija__name')
+            .annotate(total=Sum('potrazuje'))
+            .order_by('-total')[:8]
+        ]
+
+        vehicle_analysis = {
+            'total_fuel_cost': total_fuel_cost,
+            'total_fuel_liters': total_fuel_liters,
+            'total_maintenance_cost': total_maintenance_cost,
+            'maintenance_value_ratio': maintenance_value_ratio,
+            'remaining_value_after_maintenance': remaining_value_after_maintenance,
+            'red_zone': red_zone,
+            'vehicle_value': vehicle_value,
+            'fuel_cost_per_liter': total_fuel_cost / total_fuel_liters if total_fuel_liters else 0,
+        }
 
         
         context.update({
@@ -1033,9 +1077,14 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
             'requisition_costs':requisition_costs,
             'service_list':service_list,
             'requisition_list':requisition_list,
+            'putni_nalozi': putni_nalozi,
+            'vehicle_travel_orders': vehicle_travel_orders,
             'consumptions': consumptions,
             'trafic_cards':trafic_cards,
             'trafic_card':trafic_card,
+            'vehicle_analysis': vehicle_analysis,
+            'monthly_vehicle_costs': monthly_vehicle_costs,
+            'service_category_rows': service_category_rows,
             'tender_documents': vehicle.tender_documents.order_by('-created_at'),
             'tender_document_create_url': reverse('vehicle_tender_document_create_for_vehicle', kwargs={'vehicle_id': vehicle.pk}),
             'title':f"Detalji vozila {self.object.brand} {self.object.model}"
