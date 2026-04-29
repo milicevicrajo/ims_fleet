@@ -1025,13 +1025,16 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         remaining_value_after_maintenance = vehicle_value - total_maintenance_cost
         red_zone = vehicle_value > 0 and total_maintenance_cost > vehicle_value
 
+        def month_date(value):
+            return value.date() if hasattr(value, 'date') else value
+
         monthly_costs = defaultdict(lambda: {'fuel': 0, 'service': 0})
         for row in vehicle.fuel_consumptions.annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('cost_bruto')).order_by('month'):
             if row['month']:
-                monthly_costs[row['month'].date()]['fuel'] = float(row['total'] or 0)
+                monthly_costs[month_date(row['month'])]['fuel'] = float(row['total'] or 0)
         for row in vehicle.service_transactions.annotate(month=TruncMonth('datum')).values('month').annotate(total=Sum('potrazuje')).order_by('month'):
             if row['month']:
-                monthly_costs[row['month'].date()]['service'] = float(row['total'] or 0)
+                monthly_costs[month_date(row['month'])]['service'] = float(row['total'] or 0)
         monthly_vehicle_costs = [
             {'label': month.strftime('%m.%Y'), 'fuel': values['fuel'], 'service': values['service']}
             for month, values in sorted(monthly_costs.items())
