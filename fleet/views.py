@@ -88,7 +88,7 @@ from .models import (
     Vehicle,
 )
 
-LONG_TERM_LEASE_TYPES = {'dugorocni', 'dugoročni', 'dugoročnI'}
+LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 from .mixins import CenterMixin, RolePermissionRequiredMixin, role_permission_required
 from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
 from .utils import (
@@ -1554,7 +1554,9 @@ class LeaseListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         qs = super().get_queryset().select_related('vehicle')
         tip = self.request.GET.get('tip')
-        if tip in {'finansijski', 'operativni', 'dugorocni'}:
+        if tip == 'dugorocni':
+            qs = qs.filter(lease_type__in=LONG_TERM_LEASE_TYPES)
+        elif tip in {'finansijski', 'operativni'}:
             qs = qs.filter(lease_type=tip)
         return qs
 
@@ -1580,7 +1582,9 @@ def export_leases_to_excel(request):
     # Filter po tipu lizinga (opciono)
     tip = request.GET.get("tip")
     leases = Lease.objects.select_related("vehicle").all()
-    if tip in {"finansijski", "operativni", "dugorocni"}:
+    if tip == "dugorocni":
+        leases = leases.filter(lease_type__in=LONG_TERM_LEASE_TYPES)
+    elif tip in {"finansijski", "operativni"}:
         leases = leases.filter(lease_type=tip)
 
     # Kreiranje novog Excel fajla
@@ -1612,7 +1616,7 @@ def export_leases_to_excel(request):
             lease.job_code,
             lease.contract_number,
             float(lease.current_payment_amount or 0),
-            lease.get_lease_type_display(),
+            lease.lease_type_label,
             lease.start_date.strftime("%d.%m.%Y") if lease.start_date else "",
             lease.end_date.strftime("%d.%m.%Y") if lease.end_date else "",
             lease.note or "",

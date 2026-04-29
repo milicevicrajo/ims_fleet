@@ -167,10 +167,11 @@ class JobCode(models.Model):
 
 
 class Lease(models.Model):
+    LONG_TERM_LEASE_TYPE_VALUES = ('dugorocni', 'dugoročni', 'dugoročnI')
     LEASE_TYPE_CHOICES = [
         ('finansijski', 'Finansijski'),
         ('operativni', 'Operativni'),
-        ('dugoročnI', 'Dugoročni najam'),
+        ('dugorocni', 'Dugoročni najam'),
     ]
 
     vehicle = models.ForeignKey(
@@ -199,6 +200,16 @@ class Lease(models.Model):
 
     def __str__(self):
         return f"Lizing za {self.vehicle.chassis_number} ({self.lease_type}) – {self.partner_name}"
+
+    @property
+    def is_long_term_rental(self):
+        return self.lease_type in self.LONG_TERM_LEASE_TYPE_VALUES
+
+    @property
+    def lease_type_label(self):
+        if self.is_long_term_rental:
+            return "Dugoročni najam"
+        return self.get_lease_type_display()
 
 
 class LeaseInterest(models.Model):

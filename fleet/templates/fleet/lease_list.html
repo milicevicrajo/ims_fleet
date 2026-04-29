@@ -81,10 +81,10 @@
                                     <span class="badge bg-primary text-white">Finansijski</span>
                                 {% elif lease.lease_type == 'operativni' %}
                                     <span class="badge bg-info text-white">Operativni</span>
-                                {% elif lease.lease_type == 'dugorocni' %}
+                                {% elif lease.is_long_term_rental %}
                                     <span class="badge bg-warning text-white">Dugoročni najam</span>
                                 {% else %}
-                                    —
+                                    {{ lease.lease_type_label|default:"—" }}
                                 {% endif %}
                                 </td>
                                 <td>{{ lease.current_payment_amount }}</td>
