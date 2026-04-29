@@ -112,6 +112,10 @@ def net_maintenance_cost(service_cost, requisition_cost=0, insurance_recovery=0)
     return (service_cost or 0) + (requisition_cost or 0) - (insurance_recovery or 0)
 
 
+def is_red_zone(long_term_rental, value, net_cost):
+    return not long_term_rental and (value or 0) > 0 and (net_cost or 0) > (value or 0)
+
+
 def dashboard(request):    
     # Count the number of objects where vehicle is None
     services_without_vehicle = DraftServiceTransaction.objects.count()
@@ -253,9 +257,11 @@ def dashboard(request):
         red_zone_count = sum(
             1
             for v in vehicle_list
-            if not v.long_term_rental
-            and (v.current_value or 0) > 0
-            and net_maintenance_cost(v.service_cost, v.requisition_cost, v.insurance_recovery) > (v.current_value or 0)
+            if is_red_zone(
+                v.long_term_rental,
+                v.current_value,
+                net_maintenance_cost(v.service_cost, v.requisition_cost, v.insurance_recovery),
+            )
         )
         avg_year = sum([v.year_of_manufacture or 0 for v in vehicle_list]) / count if count else 0
         avg_age = current_year - avg_year if avg_year else None
@@ -314,11 +320,9 @@ def dashboard(request):
 
     red_zone_vehicles = []
     for vehicle in vehicles:
-        if vehicle.long_term_rental:
-            continue
         vehicle_value = vehicle.current_value or 0
         net_cost = net_maintenance_cost(vehicle.service_cost, vehicle.requisition_cost, vehicle.insurance_recovery)
-        if vehicle_value > 0 and net_cost > vehicle_value:
+        if is_red_zone(vehicle.long_term_rental, vehicle_value, net_cost):
             vehicle.service_cost_total = vehicle.service_cost or 0
             vehicle.requisition_cost_total = vehicle.requisition_cost or 0
             vehicle.insurance_recovery_total = vehicle.insurance_recovery or 0
@@ -501,7 +505,7 @@ def fleet_analytics(request):
             'total_cost': total_cost,
             'service_value_ratio': ratio,
             'long_term_rental': vehicle.long_term_rental,
-            'red_zone': not vehicle.long_term_rental and value > 0 and net_cost > value,
+            'red_zone': is_red_zone(vehicle.long_term_rental, value, net_cost),
         })
 
     top_cost_vehicles = sorted(vehicle_rows, key=lambda row: row['total_cost'], reverse=True)[:10]
@@ -691,7 +695,7 @@ def center_statistics(request, center_code):
         vehicle.net_maintenance_cost = net_cost
         vehicle.service_value_ratio = net_cost / vehicle_value * 100 if vehicle_value else 0
         vehicle.value_gap = net_cost - vehicle_value
-        if not vehicle.long_term_rental and vehicle_value > 0 and net_cost > vehicle_value:
+        if is_red_zone(vehicle.long_term_rental, vehicle_value, net_cost):
             center_red_zone_vehicles.append(vehicle)
     center_red_zone_vehicles.sort(key=lambda vehicle: vehicle.value_gap, reverse=True)
 
@@ -1137,7 +1141,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         total_maintenance_cost = net_maintenance_cost(repair_costs, requisition_costs, insurance_recovery)
         maintenance_value_ratio = (total_maintenance_cost / vehicle_value * 100) if vehicle_value else 0
         remaining_value_after_maintenance = vehicle_value - total_maintenance_cost
-        red_zone = not long_term_rental and vehicle_value > 0 and total_maintenance_cost > vehicle_value
+        red_zone = is_red_zone(long_term_rental, vehicle_value, total_maintenance_cost)
 
         def month_date(value):
             return value.date() if hasattr(value, 'date') else value

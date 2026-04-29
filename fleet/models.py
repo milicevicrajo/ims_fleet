@@ -1187,6 +1187,7 @@ class Insurance(models.Model):
     )
 
     god = models.IntegerField(_("Godina"), null=True, blank=True)
+    goddada = models.IntegerField(_("Godina"), null=True, blank=True)
     sif_vrs = models.CharField(_("Šifra vrste"), max_length=20, null=True, blank=True)
     br_naloga = models.CharField(_("Broj naloga"), max_length=50)
     stavka = models.CharField(_("Stavka"), max_length=50, null=True, blank=True)
