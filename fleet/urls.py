@@ -226,6 +226,7 @@ urlpatterns = [
     path('reports/services/monthly.csv', service_monthly_costs_csv, name='reports_service_monthly_costs_csv'),
     
     path('', views.dashboard, name='dashboard'),
+    path('analitika/', views.fleet_analytics, name='fleet_analytics'),
     path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),
     
     path('users/', UserListView.as_view(), name='user_list'),

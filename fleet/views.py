@@ -157,7 +157,8 @@ def dashboard(request):
     first_day_of_current_month = date.today().replace(day=1)
     last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
     start_of_year = date.today().replace(month=1, day=1)
-    start_of_year_dt, _ = date_range_for_datetime_field(start_of_year)
+    start_of_last_12_months = date.today() - timedelta(days=365)
+    start_of_last_12_months_dt, _ = date_range_for_datetime_field(start_of_last_12_months)
 
     # Number of vehicles
     total_vehicles = Vehicle.objects.filter(otpis=False).count()
@@ -172,13 +173,10 @@ def dashboard(request):
     # Book value as of the last day of the previous month
     book_value = Vehicle.objects.filter(purchase_date__lte=last_day_of_previous_month).aggregate(total_value=Sum('value'))
 
-    # Yearly costs
-    yearly_fuel_costs = FuelConsumption.objects.filter(date__gte=start_of_year_dt).aggregate(total_fuel_cost=Sum('cost_bruto'))
+    # Costs for the last 12 months
+    yearly_fuel_costs = FuelConsumption.objects.filter(date__gte=start_of_last_12_months_dt).aggregate(total_fuel_cost=Sum('cost_bruto'))
     yearly_service_costs = ServiceTransaction.objects.filter(datum__gte=start_of_year).aggregate(total_service_cost=Sum('potrazuje'))
 
-    # Vehicles in red zone
-    red_zone_vehicles = Vehicle.objects.filter(otpis=True)  # or any other criteria
-   
     # Podupit za poslednju dodelu jedinice po vozilu
     latest_jobcode = JobCode.objects.filter(
         vehicle=OuterRef('pk')
@@ -200,6 +198,12 @@ def dashboard(request):
             .values('vehicle')
             .annotate(total=Sum('cost_bruto'))
             .values('total')[:1]
+        ),
+        service_cost=Subquery(
+            ServiceTransaction.objects.filter(vehicle=OuterRef('pk'))
+            .values('vehicle')
+            .annotate(total=Sum('potrazuje'))
+            .values('total')[:1]
         )
     )
     # Grupisanje u Pythonu
@@ -216,17 +220,27 @@ def dashboard(request):
         avg_value = total_value / count if count else 0
         total_fuel_quantity = sum([v.fuel_amount or 0 for v in vehicle_list])
         total_fuel_price = sum([v.fuel_cost or 0 for v in vehicle_list])
+        total_service_cost = sum([v.service_cost or 0 for v in vehicle_list])
+        red_zone_count = sum(
+            1
+            for v in vehicle_list
+            if (v.current_value or 0) > 0 and (v.service_cost or 0) > (v.current_value or 0)
+        )
         avg_year = sum([v.year_of_manufacture or 0 for v in vehicle_list]) / count if count else 0
         avg_age = current_year - avg_year if avg_year else None
 
         center_data.append({
             'center_code': center,
+            'center_name': f'Centar {center}' if center else 'Bez centra',
             'vehicle_count': count,
             'avg_age': avg_age,
             'total_value': total_value,
             'avg_value': avg_value,
             'total_fuel_quantity': total_fuel_quantity,
             'total_fuel_price': total_fuel_price,
+            'total_service_cost': total_service_cost,
+            'service_value_ratio': (total_service_cost / total_value * 100) if total_value else 0,
+            'red_zone_count': red_zone_count,
         })
 
     dashboard_totals = {
@@ -234,6 +248,8 @@ def dashboard(request):
         'total_value': sum(center['total_value'] or 0 for center in center_data),
         'total_fuel_quantity': sum(center['total_fuel_quantity'] or 0 for center in center_data),
         'total_fuel_price': sum(center['total_fuel_price'] or 0 for center in center_data),
+        'total_service_cost': sum(center['total_service_cost'] or 0 for center in center_data),
+        'red_zone_count': sum(center['red_zone_count'] or 0 for center in center_data),
     }
     dashboard_averages = {
         'avg_age': average_age['avg_age'],
@@ -252,6 +268,33 @@ def dashboard(request):
             if dashboard_totals['vehicle_count']
             else 0
         ),
+        'service_value_ratio': (
+            dashboard_totals['total_service_cost'] / dashboard_totals['total_value'] * 100
+            if dashboard_totals['total_value']
+            else 0
+        ),
+    }
+
+    red_zone_vehicles = []
+    for vehicle in vehicles:
+        vehicle_value = vehicle.current_value or 0
+        service_cost = vehicle.service_cost or 0
+        if vehicle_value > 0 and service_cost > vehicle_value:
+            vehicle.service_cost_total = service_cost
+            vehicle.value_gap = service_cost - vehicle_value
+            vehicle.service_value_ratio = service_cost / vehicle_value * 100
+            red_zone_vehicles.append(vehicle)
+    red_zone_vehicles.sort(key=lambda vehicle: vehicle.value_gap, reverse=True)
+
+    fleet_analysis = {
+        'total_value': dashboard_totals['total_value'],
+        'total_service_cost': dashboard_totals['total_service_cost'],
+        'service_value_ratio': dashboard_averages['service_value_ratio'],
+        'total_fuel_quantity': dashboard_totals['total_fuel_quantity'],
+        'total_fuel_price': dashboard_totals['total_fuel_price'],
+        'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'] or 0,
+        'red_zone_count': dashboard_totals['red_zone_count'],
+        'center_count': len(center_data),
     }
 
 
@@ -277,9 +320,212 @@ def dashboard(request):
         'centers': center_data,
         'dashboard_totals': dashboard_totals,
         'dashboard_averages': dashboard_averages,
+        'fleet_analysis': fleet_analysis,
     }
 
     return render(request, 'fleet/dashboard.html', context)
+
+@login_required
+def fleet_analytics(request):
+    today = date.today()
+    first_month = today.replace(day=1)
+    month_starts = []
+    for offset in range(11, -1, -1):
+        year = first_month.year
+        month = first_month.month - offset
+        while month <= 0:
+            month += 12
+            year -= 1
+        month_starts.append(date(year, month, 1))
+
+    start_dt, _ = date_range_for_datetime_field(month_starts[0])
+
+    def number(value):
+        return float(value or 0)
+
+    def month_key(value):
+        return value.strftime('%Y-%m')
+
+    month_labels = [month.strftime('%m.%Y') for month in month_starts]
+    month_keys = [month_key(month) for month in month_starts]
+
+    fuel_by_month = {
+        month_key(row['month']): number(row['total'])
+        for row in FuelConsumption.objects.filter(date__gte=start_dt)
+        .annotate(month=TruncMonth('date'))
+        .values('month')
+        .annotate(total=Sum('cost_bruto'))
+        .order_by('month')
+    }
+    service_by_month = {
+        month_key(row['month']): number(row['total'])
+        for row in ServiceTransaction.objects.filter(datum__gte=month_starts[0])
+        .annotate(month=TruncMonth('datum'))
+        .values('month')
+        .annotate(total=Sum('potrazuje'))
+        .order_by('month')
+    }
+    fuel_liters_by_month = {
+        month_key(row['month']): number(row['total'])
+        for row in FuelConsumption.objects.filter(date__gte=start_dt)
+        .annotate(month=TruncMonth('date'))
+        .values('month')
+        .annotate(total=Sum('amount'))
+        .order_by('month')
+    }
+
+    monthly_cost_chart = [
+        {
+            'label': label,
+            'fuel': fuel_by_month.get(key, 0),
+            'service': service_by_month.get(key, 0),
+            'liters': fuel_liters_by_month.get(key, 0),
+        }
+        for key, label in zip(month_keys, month_labels)
+    ]
+
+    latest_center = JobCode.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+    latest_registration = TrafficCard.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-issue_date').values('registration_number')[:1]
+
+    vehicles = list(
+        Vehicle.objects.filter(otpis=False).annotate(
+            center_code=Subquery(latest_center),
+            registration_number=Subquery(latest_registration),
+            service_cost=Subquery(
+                ServiceTransaction.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('potrazuje'))
+                .values('total')[:1]
+            ),
+            fuel_cost=Subquery(
+                FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('cost_bruto'))
+                .values('total')[:1]
+            ),
+            fuel_liters=Subquery(
+                FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('amount'))
+                .values('total')[:1]
+            ),
+        )
+    )
+
+    vehicle_rows = []
+    for vehicle in vehicles:
+        value = number(vehicle.value)
+        service_cost = number(vehicle.service_cost)
+        fuel_cost = number(vehicle.fuel_cost)
+        total_cost = service_cost + fuel_cost
+        ratio = service_cost / value * 100 if value else 0
+        vehicle_rows.append({
+            'label': vehicle.registration_number or f'{vehicle.brand} {vehicle.model}',
+            'brand': vehicle.brand,
+            'model': vehicle.model,
+            'center': vehicle.center_code or 'Bez centra',
+            'value': value,
+            'service_cost': service_cost,
+            'fuel_cost': fuel_cost,
+            'fuel_liters': number(vehicle.fuel_liters),
+            'total_cost': total_cost,
+            'service_value_ratio': ratio,
+            'red_zone': value > 0 and service_cost > value,
+        })
+
+    top_cost_vehicles = sorted(vehicle_rows, key=lambda row: row['total_cost'], reverse=True)[:10]
+    top_service_ratio = sorted(
+        [row for row in vehicle_rows if row['value'] > 0],
+        key=lambda row: row['service_value_ratio'],
+        reverse=True
+    )[:10]
+    red_zone_rows = [row for row in top_service_ratio if row['red_zone']]
+
+    center_map = defaultdict(lambda: {
+        'vehicle_count': 0,
+        'value': 0,
+        'service_cost': 0,
+        'fuel_cost': 0,
+        'fuel_liters': 0,
+        'red_zone_count': 0,
+    })
+    for row in vehicle_rows:
+        center = center_map[row['center']]
+        center['vehicle_count'] += 1
+        center['value'] += row['value']
+        center['service_cost'] += row['service_cost']
+        center['fuel_cost'] += row['fuel_cost']
+        center['fuel_liters'] += row['fuel_liters']
+        center['red_zone_count'] += 1 if row['red_zone'] else 0
+
+    center_rows = []
+    for center_code, row in center_map.items():
+        center_rows.append({
+            'center': center_code,
+            'vehicle_count': row['vehicle_count'],
+            'value': row['value'],
+            'service_cost': row['service_cost'],
+            'fuel_cost': row['fuel_cost'],
+            'fuel_liters': row['fuel_liters'],
+            'service_value_ratio': row['service_cost'] / row['value'] * 100 if row['value'] else 0,
+            'cost_per_vehicle': (row['service_cost'] + row['fuel_cost']) / row['vehicle_count'] if row['vehicle_count'] else 0,
+            'red_zone_count': row['red_zone_count'],
+        })
+    center_rows.sort(key=lambda row: row['cost_per_vehicle'], reverse=True)
+
+    fuel_supplier_rows = [
+        {'label': row['supplier'] or 'Nepoznato', 'value': number(row['total'])}
+        for row in FuelConsumption.objects.filter(date__gte=start_dt)
+        .values('supplier')
+        .annotate(total=Sum('cost_bruto'))
+        .order_by('-total')[:8]
+    ]
+    service_category_rows = [
+        {'label': row['popravka_kategorija__name'] or 'Nerazvrstano', 'value': number(row['total'])}
+        for row in ServiceTransaction.objects.filter(datum__gte=month_starts[0])
+        .values('popravka_kategorija__name')
+        .annotate(total=Sum('potrazuje'))
+        .order_by('-total')[:8]
+    ]
+
+    last_6_months = monthly_cost_chart[-6:]
+    avg_monthly_fuel = sum(row['fuel'] for row in last_6_months) / len(last_6_months) if last_6_months else 0
+    avg_monthly_service = sum(row['service'] for row in last_6_months) / len(last_6_months) if last_6_months else 0
+    avg_monthly_liters = sum(row['liters'] for row in last_6_months) / len(last_6_months) if last_6_months else 0
+
+    total_fleet_value = sum(row['value'] for row in vehicle_rows)
+    total_service_cost = sum(row['service_cost'] for row in vehicle_rows)
+    total_fuel_cost = sum(row['fuel_cost'] for row in vehicle_rows)
+    total_fuel_liters = sum(row['fuel_liters'] for row in vehicle_rows)
+    analytics_summary = {
+        'vehicle_count': len(vehicle_rows),
+        'total_fleet_value': total_fleet_value,
+        'total_service_cost': total_service_cost,
+        'total_fuel_cost': total_fuel_cost,
+        'total_fuel_liters': total_fuel_liters,
+        'red_zone_count': sum(1 for row in vehicle_rows if row['red_zone']),
+        'service_value_ratio': total_service_cost / total_fleet_value * 100 if total_fleet_value else 0,
+        'projected_fuel_cost': avg_monthly_fuel * 12,
+        'projected_service_cost': avg_monthly_service * 12,
+        'projected_fuel_liters': avg_monthly_liters * 12,
+    }
+
+    context = {
+        'title': 'Analitika voznog parka',
+        'analytics_summary': analytics_summary,
+        'monthly_cost_chart': monthly_cost_chart,
+        'top_cost_vehicles': top_cost_vehicles,
+        'top_service_ratio': top_service_ratio,
+        'red_zone_rows': red_zone_rows,
+        'center_rows': center_rows,
+        'fuel_supplier_rows': fuel_supplier_rows,
+        'service_category_rows': service_category_rows,
+    }
+    return render(request, 'fleet/analytics.html', context)
 
 def center_statistics(request, center_code):
     # Check if the user has access to this center
@@ -290,6 +536,67 @@ def center_statistics(request, center_code):
     latest_center_code = JobCode.objects.filter(
         vehicle=OuterRef('vehicle')
     ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+
+    latest_vehicle_center_code = JobCode.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+
+    center_vehicles = list(
+        Vehicle.objects.annotate(
+            center_code=Subquery(latest_vehicle_center_code),
+            service_cost=Subquery(
+                ServiceTransaction.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('potrazuje'))
+                .values('total')[:1]
+            ),
+            fuel_amount=Subquery(
+                FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('amount'))
+                .values('total')[:1]
+            ),
+            fuel_cost=Subquery(
+                FuelConsumption.objects.filter(vehicle=OuterRef('pk'))
+                .values('vehicle')
+                .annotate(total=Sum('cost_bruto'))
+                .values('total')[:1]
+            ),
+        ).filter(center_code=center_code)
+    )
+
+    center_vehicle_count = len(center_vehicles)
+    center_total_value = sum((vehicle.value or 0) for vehicle in center_vehicles)
+    center_total_service_cost = sum((vehicle.service_cost or 0) for vehicle in center_vehicles)
+    center_total_fuel_quantity = sum((vehicle.fuel_amount or 0) for vehicle in center_vehicles)
+    center_total_fuel_cost = sum((vehicle.fuel_cost or 0) for vehicle in center_vehicles)
+    center_avg_year = (
+        sum((vehicle.year_of_manufacture or 0) for vehicle in center_vehicles) / center_vehicle_count
+        if center_vehicle_count
+        else 0
+    )
+    center_red_zone_vehicles = []
+    for vehicle in center_vehicles:
+        vehicle_value = vehicle.value or 0
+        service_cost = vehicle.service_cost or 0
+        vehicle.service_cost_total = service_cost
+        vehicle.service_value_ratio = service_cost / vehicle_value * 100 if vehicle_value else 0
+        vehicle.value_gap = service_cost - vehicle_value
+        if vehicle_value > 0 and service_cost > vehicle_value:
+            center_red_zone_vehicles.append(vehicle)
+    center_red_zone_vehicles.sort(key=lambda vehicle: vehicle.value_gap, reverse=True)
+
+    center_analysis = {
+        'vehicle_count': center_vehicle_count,
+        'total_value': center_total_value,
+        'avg_value': center_total_value / center_vehicle_count if center_vehicle_count else 0,
+        'avg_age': datetime.datetime.now().year - center_avg_year if center_avg_year else 0,
+        'total_service_cost': center_total_service_cost,
+        'service_value_ratio': center_total_service_cost / center_total_value * 100 if center_total_value else 0,
+        'total_fuel_quantity': center_total_fuel_quantity,
+        'total_fuel_cost': center_total_fuel_cost,
+        'red_zone_count': len(center_red_zone_vehicles),
+    }
 
     # Filtriranje FuelConsumption po centru
     fuel_data = FuelConsumption.objects.annotate(
@@ -412,6 +719,8 @@ def center_statistics(request, center_code):
         'center_code': center_code,
         'center_totals': center_totals,
         'center_averages': center_averages,
+        'center_analysis': center_analysis,
+        'center_red_zone_vehicles': center_red_zone_vehicles,
     }
 
     return render(request, 'fleet/dashboard_center.html', context)

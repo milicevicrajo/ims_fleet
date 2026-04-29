@@ -404,10 +404,11 @@
       return row;
     }
 
-    if (hasSums) {
+    if (hasSums && hasAverages) {
+      createRow(options.summaryLabel || 'Sumarno / prosek');
+    } else if (hasSums) {
       createRow(options.sumLabel || 'Sumarno');
-    }
-    if (hasAverages) {
+    } else if (hasAverages) {
       createRow(options.avgLabel || 'Prosek');
     }
     return footer;
@@ -423,6 +424,7 @@
     const sumColumns = Array.isArray(options.sumColumns) ? options.sumColumns : [];
     const avgColumns = Array.isArray(options.avgColumns) ? options.avgColumns : [];
     const rows = dt.rows({ search: 'applied' }).data().toArray();
+    const combinedSummary = sumColumns.length && avgColumns.length;
 
     function getStats(columnIndex) {
       let sum = 0;
@@ -452,7 +454,9 @@
         }
         cell.textContent = formatSrNumber(getStats(columnIndex).sum, decimalsFor(columnIndex));
       });
-      rowIndex += 1;
+      if (!combinedSummary) {
+        rowIndex += 1;
+      }
     }
     if (avgColumns.length && footerRows[rowIndex]) {
       avgColumns.forEach(function (columnIndex) {
@@ -462,7 +466,10 @@
         }
         const stats = getStats(columnIndex);
         const avg = stats.count ? stats.sum / stats.count : 0;
-        cell.textContent = formatSrNumber(avg, decimalsFor(columnIndex));
+        const formattedAvg = formatSrNumber(avg, decimalsFor(columnIndex));
+        cell.textContent = combinedSummary && sumColumns.indexOf(columnIndex) !== -1
+          ? cell.textContent + ' / ' + formattedAvg
+          : formattedAvg;
       });
     }
   }
