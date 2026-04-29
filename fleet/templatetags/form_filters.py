@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from django import template, forms
 register = template.Library()
 
@@ -15,3 +17,19 @@ def add_class(value, css_class):
 def get_attr(obj, attr_name):
     """Vraća vrednost atributa iz objekta."""
     return getattr(obj, attr_name, None)
+
+@register.filter
+def receipt_number(value):
+    """Prikazuje broj računa kao identifikator, bez decimalnog dela."""
+    if value is None:
+        return ''
+    text = str(value).strip()
+    if not text:
+        return ''
+    try:
+        decimal_value = Decimal(text.replace(',', '.'))
+    except (InvalidOperation, ValueError):
+        return text
+    if decimal_value == decimal_value.to_integral_value():
+        return str(decimal_value.to_integral_value())
+    return text

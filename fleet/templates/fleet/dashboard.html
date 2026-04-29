@@ -39,7 +39,7 @@
                     <div class="col-md-3">
                         <div class="bg-dark p-15 text-white text-center">
                             <i class="mdi mdi-clock mb-1 font-16"></i>
-                            <h5 class="mb-0 mt-1">{{ average_age|floatformat:2 }} godina</h5>
+                            <h5 class="mb-0 mt-1">{{ average_age|floatformat:0 }} godina</h5>
                             <small class="font-light">Prosečna starost</small>
                         </div>
                     </div>
@@ -60,7 +60,7 @@
                     <div class="col-md-3">
                         <div class="bg-dark p-15 text-white text-center">
                             <i class="mdi mdi-wrench mb-1 font-16"></i>
-                            <h5 class="mb-0 mt-1">{{ yearly_service_costs|floatformat:0  }}</h5>
+                            <h5 class="mb-0 mt-1">{{ yearly_service_costs|floatformat:0|intcomma }} RSD</h5>
                             <small class="font-light">Godišnji troškovi servisa</small>
                         </div>
                     </div>
@@ -84,14 +84,34 @@
                         <tr>
                             <td>{{ center.center_name|default:center.center_code }}</td>
                             <td>{{ center.vehicle_count }}</td>
-                            <td>{{ center.avg_age|default_if_none:"N/A"|floatformat:2 }}</td>
-                            <td>{{ center.total_value|default_if_none:"N/A"|floatformat:2|intcomma }}</td>
-                            <td>{{ center.avg_value|default_if_none:"N/A"|floatformat:2|intcomma }}</td>
-                            <td>{{ center.total_fuel_quantity|default_if_none:"N/A"|floatformat:2|intcomma }}</td>
-                            <td>{{ center.total_fuel_price|default_if_none:"N/A"|floatformat:2|intcomma }}</td>
+                            <td>{{ center.avg_age|default_if_none:"N/A"|floatformat:0 }}</td>
+                            <td>{{ center.total_value|default_if_none:"N/A"|floatformat:0|intcomma }}</td>
+                            <td>{{ center.avg_value|default_if_none:"N/A"|floatformat:0|intcomma }}</td>
+                            <td>{{ center.total_fuel_quantity|default_if_none:"N/A"|floatformat:0|intcomma }}</td>
+                            <td>{{ center.total_fuel_price|default_if_none:"N/A"|floatformat:0|intcomma }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th>Sumarno</th>
+                            <th>{{ dashboard_totals.vehicle_count|floatformat:0|intcomma }}</th>
+                            <th>-</th>
+                            <th>{{ dashboard_totals.total_value|floatformat:0|intcomma }}</th>
+                            <th>-</th>
+                            <th>{{ dashboard_totals.total_fuel_quantity|floatformat:0|intcomma }}</th>
+                            <th>{{ dashboard_totals.total_fuel_price|floatformat:0|intcomma }}</th>
+                        </tr>
+                        <tr>
+                            <th>Prosek</th>
+                            <th>-</th>
+                            <th>{{ dashboard_averages.avg_age|floatformat:0 }}</th>
+                            <th>-</th>
+                            <th>{{ dashboard_averages.avg_value|floatformat:0|intcomma }}</th>
+                            <th>{{ dashboard_averages.avg_fuel_quantity|floatformat:0|intcomma }}</th>
+                            <th>{{ dashboard_averages.avg_fuel_price|floatformat:0|intcomma }}</th>
+                        </tr>
+                    </tfoot>
                 </table>
 
                 <h3>Detaljna statistika po centrima</h3>

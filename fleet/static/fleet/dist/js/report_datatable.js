@@ -55,15 +55,30 @@
     if (val == null || val === '') {
       return NaN;
     }
-    const normalized = String(val)
+    let normalized = stripHtml(val)
       .replace(/\u00a0/g, ' ')
       .replace(/\s+/g, '')
-      .replace(/\./g, '')
-      .replace(',', '.')
+      .replace(/[^\d,.-]/g, '')
       .trim();
-    if (normalized === '') {
+    if (normalized === '' || normalized === '-') {
       return NaN;
     }
+
+    const lastComma = normalized.lastIndexOf(',');
+    const lastDot = normalized.lastIndexOf('.');
+
+    if (lastComma !== -1 && lastDot !== -1) {
+      const decimalSeparator = lastComma > lastDot ? ',' : '.';
+      const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
+      normalized = normalized
+        .replace(new RegExp('\\' + thousandsSeparator, 'g'), '')
+        .replace(decimalSeparator, '.');
+    } else if (lastComma !== -1) {
+      normalized = normalized.replace(/\./g, '').replace(',', '.');
+    } else if (lastDot !== -1 && /^-?\d{1,3}(?:\.\d{3})+$/.test(normalized)) {
+      normalized = normalized.replace(/\./g, '');
+    }
+
     const num = Number(normalized);
     return Number.isFinite(num) ? num : NaN;
   }
@@ -89,6 +104,29 @@
       return false;
     }
     return /^-?\d+(?:[.,]\d+)?$/.test(value) || /^-?\d{1,3}(?:\.\d{3})*(?:,\d+)?$/.test(value);
+  }
+
+  function getColumnDecimals(headerCell) {
+    if (!headerCell) {
+      return null;
+    }
+    const value = headerCell.getAttribute('data-decimals');
+    if (value == null || value === '') {
+      return null;
+    }
+    const decimals = Number(value);
+    return Number.isInteger(decimals) && decimals >= 0 ? decimals : null;
+  }
+
+  function formatSrNumber(num, decimals) {
+    const formatOptions =
+      Number.isInteger(decimals)
+        ? {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+          }
+        : {};
+    return new Intl.NumberFormat('sr-RS', formatOptions).format(num);
   }
 
   function ensureFilterRow(table) {
@@ -284,6 +322,7 @@
     }
     const defs = [];
     const numericSet = new Set();
+    const decimalMap = new Map();
 
     if (options.numericColumns && Array.isArray(options.numericColumns)) {
       options.numericColumns.forEach(function (idx) {
@@ -300,6 +339,10 @@
         if (typeAttr === 'numeric' || typeAttr === 'number') {
           numericSet.add(idx);
         }
+        const decimals = getColumnDecimals(th);
+        if (decimals !== null) {
+          decimalMap.set(idx, decimals);
+        }
       });
     }
 
@@ -313,13 +356,115 @@
             if (Number.isNaN(num)) {
               return data == null ? '' : stripHtml(data);
             }
-            return new Intl.NumberFormat('sr-RS').format(num);
+            return formatSrNumber(num, decimalMap.get(idx));
           }
           return Number.isNaN(num) ? (data == null ? '' : stripHtml(data)) : num;
         }
       });
     });
     return defs;
+  }
+
+  function getHeaderCells(table) {
+    const headerRow = table.querySelector('thead tr');
+    return headerRow ? Array.from(headerRow.querySelectorAll('th')) : [];
+  }
+
+  function ensureSummaryFooter(table, options) {
+    const hasSums = Array.isArray(options.sumColumns) && options.sumColumns.length;
+    const hasAverages = Array.isArray(options.avgColumns) && options.avgColumns.length;
+    if (!hasSums && !hasAverages) {
+      return null;
+    }
+
+    const headerCells = getHeaderCells(table);
+    if (!headerCells.length) {
+      return null;
+    }
+
+    let footer = table.querySelector('tfoot[data-summary-footer="true"]');
+    if (!footer) {
+      footer = table.querySelector('tfoot') || document.createElement('tfoot');
+      footer.innerHTML = '';
+      footer.setAttribute('data-summary-footer', 'true');
+      table.appendChild(footer);
+    }
+
+    function createRow(label) {
+      const row = document.createElement('tr');
+      for (let idx = 0; idx < headerCells.length; idx += 1) {
+        const cell = document.createElement(idx === 0 ? 'th' : 'td');
+        cell.textContent = idx === 0 ? label : '';
+        if (idx > 0) {
+          cell.className = 'text-end';
+        }
+        row.appendChild(cell);
+      }
+      footer.appendChild(row);
+      return row;
+    }
+
+    if (hasSums) {
+      createRow(options.sumLabel || 'Sumarno');
+    }
+    if (hasAverages) {
+      createRow(options.avgLabel || 'Prosek');
+    }
+    return footer;
+  }
+
+  function updateSummaryFooter(dt, table, options) {
+    const footer = table.querySelector('tfoot[data-summary-footer="true"]');
+    if (!footer) {
+      return;
+    }
+
+    const headerCells = getHeaderCells(table);
+    const sumColumns = Array.isArray(options.sumColumns) ? options.sumColumns : [];
+    const avgColumns = Array.isArray(options.avgColumns) ? options.avgColumns : [];
+    const rows = dt.rows({ search: 'applied' }).data().toArray();
+
+    function getStats(columnIndex) {
+      let sum = 0;
+      let count = 0;
+      rows.forEach(function (row) {
+        const value = Array.isArray(row) ? row[columnIndex] : row[columnIndex];
+        const num = parseSrNumber(value);
+        if (!Number.isNaN(num)) {
+          sum += num;
+          count += 1;
+        }
+      });
+      return { sum: sum, count: count };
+    }
+
+    function decimalsFor(columnIndex) {
+      return getColumnDecimals(headerCells[columnIndex]);
+    }
+
+    const footerRows = Array.from(footer.querySelectorAll('tr'));
+    let rowIndex = 0;
+    if (sumColumns.length && footerRows[rowIndex]) {
+      sumColumns.forEach(function (columnIndex) {
+        const cell = footerRows[rowIndex].children[columnIndex];
+        if (!cell) {
+          return;
+        }
+        cell.textContent = formatSrNumber(getStats(columnIndex).sum, decimalsFor(columnIndex));
+      });
+      rowIndex += 1;
+    }
+    if (avgColumns.length && footerRows[rowIndex]) {
+      avgColumns.forEach(function (columnIndex) {
+        const cell = footerRows[rowIndex].children[columnIndex];
+        if (!cell) {
+          return;
+        }
+        const stats = getStats(columnIndex);
+        const avg = stats.count ? stats.sum / stats.count : 0;
+        cell.textContent = formatSrNumber(avg, decimalsFor(columnIndex));
+      });
+    }
   }
 
   function captureColumnWidths(dt) {
@@ -377,6 +522,7 @@
 
       const options = mergeOptions(DEFAULT_OPTIONS, userOptions || {});
       const filterRow = ensureFilterRow(table);
+      ensureSummaryFooter(table, options);
       const layout = createButtonsConfig(options);
       let columnDefs = buildColumnDefs(table, filterRow, options);
       if (Array.isArray(options.columnDefs) && options.columnDefs.length) {
@@ -397,6 +543,7 @@
       });
 
       applyFilters(dt, filterRow, options);
+      updateSummaryFooter(dt, table, options);
       let fixedWidths = null;
       const refreshWidths = function (capture) {
         if (dt.columns && dt.columns.adjust) {
@@ -411,6 +558,7 @@
       };
 
       dt.on('draw', function () {
+        updateSummaryFooter(dt, table, options);
         refreshWidths(false);
       });
       dt.on('page', function () {

@@ -25,10 +25,10 @@
                   <tr>
                     <th>Registracija</th>
                     <th>Datum</th>
-                    <th data-type="numeric">Količina</th>
+                    <th data-type="numeric" data-decimals="2">Količina</th>
                     <th>Tip goriva</th>
-                    <th data-type="numeric">Iznos - Bruto</th>
-                    <th data-type="numeric">Iznos - Neto</th>
+                    <th data-type="numeric" data-decimals="2">Iznos - Bruto</th>
+                    <th data-type="numeric" data-decimals="2">Iznos - Neto</th>
                     <th>Dobavljač</th>
                   </tr>
               </thead>
@@ -37,15 +37,16 @@
                   <tr>                         
                       <td>{{ consumption.registration_number|default:"N/A" }}</td>                    
                       <td>{{ consumption.date|date:"d.m.Y H:i:s"  }}</td>
-                      <td>{{ consumption.amount }}</td>
+                      <td data-order="{{ consumption.amount|default_if_none:'0' }}">{{ consumption.amount|default_if_none:"0"|floatformat:2 }}</td>
                       <td>{{ consumption.fuel_type }}</td>
-                      <td>{{ consumption.cost_bruto }}</td>
-                      <td>{{ consumption.cost_neto}}</td>
+                      <td data-order="{{ consumption.cost_bruto|default_if_none:'0' }}">{{ consumption.cost_bruto|default_if_none:"0"|floatformat:2 }}</td>
+                      <td data-order="{{ consumption.cost_neto|default_if_none:'0' }}">{{ consumption.cost_neto|default_if_none:"0"|floatformat:2 }}</td>
                       <td>{{ consumption.supplier }}</td>
 
                   </tr>
 
               {% endfor %}
+              </tbody>
               <tfoot>
                   <tr>
                     <th>Registracija</th>
@@ -69,6 +70,7 @@
         exportTitle: 'Potrošnja goriva',
         order: [[1, 'desc']],
         numericColumns: [2, 4, 5],
+        sumColumns: [2, 4, 5],
         autoSelectThreshold: 20
       });
     }

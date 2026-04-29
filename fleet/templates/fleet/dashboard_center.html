@@ -30,15 +30,35 @@
                             <tr>
                                 <td>{{ year_month.0  }}</td>
                                 <td>{{ year_month.1 }}</td>
-                                <td>{{ data.total_fuel_quantity|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
-                                <td>{{ data.total_fuel_cost|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
-                                <td>{{ data.total_cost_gume|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
-                                <td>{{ data.total_cost_redovan_servis|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
-                                <td>{{ data.total_cost_registracija|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
-                                <td>{{ data.total_registration_cost|default_if_none:"0.00"|floatformat:2|intcomma }}</td>
+                                <td>{{ data.total_fuel_quantity|default_if_none:"0"|floatformat:0|intcomma }}</td>
+                                <td>{{ data.total_fuel_cost|default_if_none:"0"|floatformat:0|intcomma }}</td>
+                                <td>{{ data.total_cost_gume|default_if_none:"0"|floatformat:0|intcomma }}</td>
+                                <td>{{ data.total_cost_redovan_servis|default_if_none:"0"|floatformat:0|intcomma }}</td>
+                                <td>{{ data.total_cost_registracija|default_if_none:"0"|floatformat:0|intcomma }}</td>
+                                <td>{{ data.total_registration_cost|default_if_none:"0"|floatformat:0|intcomma }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="2">Sumarno</th>
+                                <th>{{ center_totals.total_fuel_quantity|floatformat:0|intcomma }}</th>
+                                <th>{{ center_totals.total_fuel_cost|floatformat:0|intcomma }}</th>
+                                <th>{{ center_totals.total_cost_gume|floatformat:0|intcomma }}</th>
+                                <th>{{ center_totals.total_cost_redovan_servis|floatformat:0|intcomma }}</th>
+                                <th>{{ center_totals.total_cost_registracija|floatformat:0|intcomma }}</th>
+                                <th>{{ center_totals.total_registration_cost|floatformat:0|intcomma }}</th>
+                            </tr>
+                            <tr>
+                                <th colspan="2">Prosek mesečno</th>
+                                <th>{{ center_averages.total_fuel_quantity|floatformat:0|intcomma }}</th>
+                                <th>{{ center_averages.total_fuel_cost|floatformat:0|intcomma }}</th>
+                                <th>{{ center_averages.total_cost_gume|floatformat:0|intcomma }}</th>
+                                <th>{{ center_averages.total_cost_redovan_servis|floatformat:0|intcomma }}</th>
+                                <th>{{ center_averages.total_cost_registracija|floatformat:0|intcomma }}</th>
+                                <th>{{ center_averages.total_registration_cost|floatformat:0|intcomma }}</th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>      

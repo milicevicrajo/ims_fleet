@@ -229,6 +229,31 @@ def dashboard(request):
             'total_fuel_price': total_fuel_price,
         })
 
+    dashboard_totals = {
+        'vehicle_count': sum(center['vehicle_count'] for center in center_data),
+        'total_value': sum(center['total_value'] or 0 for center in center_data),
+        'total_fuel_quantity': sum(center['total_fuel_quantity'] or 0 for center in center_data),
+        'total_fuel_price': sum(center['total_fuel_price'] or 0 for center in center_data),
+    }
+    dashboard_averages = {
+        'avg_age': average_age['avg_age'],
+        'avg_value': (
+            dashboard_totals['total_value'] / dashboard_totals['vehicle_count']
+            if dashboard_totals['vehicle_count']
+            else 0
+        ),
+        'avg_fuel_quantity': (
+            dashboard_totals['total_fuel_quantity'] / dashboard_totals['vehicle_count']
+            if dashboard_totals['vehicle_count']
+            else 0
+        ),
+        'avg_fuel_price': (
+            dashboard_totals['total_fuel_price'] / dashboard_totals['vehicle_count']
+            if dashboard_totals['vehicle_count']
+            else 0
+        ),
+    }
+
 
 
     context = {
@@ -249,7 +274,9 @@ def dashboard(request):
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
         'yearly_service_costs': yearly_service_costs['total_service_cost'],
         'red_zone_vehicles': red_zone_vehicles,
-        'centers': center_data
+        'centers': center_data,
+        'dashboard_totals': dashboard_totals,
+        'dashboard_averages': dashboard_averages,
     }
 
     return render(request, 'fleet/dashboard.html', context)
@@ -362,9 +389,29 @@ def center_statistics(request, center_code):
                 'total_registration_cost': insurance['total_registration_cost']
             })
 
+    numeric_fields = [
+        'total_fuel_quantity',
+        'total_fuel_cost',
+        'total_cost_gume',
+        'total_cost_redovan_servis',
+        'total_cost_registracija',
+        'total_registration_cost',
+    ]
+    center_totals = {
+        field: sum((row.get(field) or 0) for row in consolidated_data.values())
+        for field in numeric_fields
+    }
+    month_count = len(consolidated_data)
+    center_averages = {
+        field: (center_totals[field] / month_count if month_count else 0)
+        for field in numeric_fields
+    }
+
     context = {
         'consolidated_data': consolidated_data,
         'center_code': center_code,
+        'center_totals': center_totals,
+        'center_averages': center_averages,
     }
 
     return render(request, 'fleet/dashboard_center.html', context)

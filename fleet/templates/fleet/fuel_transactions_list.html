@@ -29,12 +29,12 @@
                     <th>Registarska oznaka</th>
                     <th>Datum</th>
                     <th>Broj računa</th>
-                    <th data-type="numeric">Količina (L)</th>
-                    <th data-type="numeric">Cena po litru (RSD)</th>
-                    <th data-type="numeric">Iznos neto (RSD)</th>
-                    <th data-type="numeric">Iznos bruto (RSD)</th>
+                    <th data-type="numeric" data-decimals="2">Količina (L)</th>
+                    <th data-type="numeric" data-decimals="2">Cena po litru (RSD)</th>
+                    <th data-type="numeric" data-decimals="2">Iznos neto (RSD)</th>
+                    <th data-type="numeric" data-decimals="2">Iznos bruto (RSD)</th>
                     <th>Dobavljač</th>
-                    <th data-type="numeric">Kilometraža</th>
+                    <th data-type="numeric" data-decimals="0">Kilometraža</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,13 +42,13 @@
                 <tr>
                     <td>{{ transaction.registration_number|default:"N/A" }}</td>
                     <td>{{ transaction.annotated_transaction_date|date:"d.m.Y H:i:s" }}</td>
-                    <td>{{ transaction.annotated_receipt_number }}</td>
-                    <td>{{ transaction.annotated_quantity }}</td>
-                    <td>{{ transaction.price_per_liter }}</td>
-                    <td>{{ transaction.total_net }}</td>
-                    <td>{{ transaction.total_gross }}</td>
+                    <td>{{ transaction.annotated_receipt_number|receipt_number }}</td>
+                    <td data-order="{{ transaction.annotated_quantity|default_if_none:'0' }}">{{ transaction.annotated_quantity|default_if_none:"0"|floatformat:2 }}</td>
+                    <td data-order="{{ transaction.price_per_liter|default_if_none:'0' }}">{{ transaction.price_per_liter|default_if_none:"0"|floatformat:2 }}</td>
+                    <td data-order="{{ transaction.total_net|default_if_none:'0' }}">{{ transaction.total_net|default_if_none:"0"|floatformat:2 }}</td>
+                    <td data-order="{{ transaction.total_gross|default_if_none:'0' }}">{{ transaction.total_gross|default_if_none:"0"|floatformat:2 }}</td>
                     <td>{{ transaction.annotated_supplier }}</td>
-                    <td>{{ transaction.annotated_mileage }}</td>
+                    <td data-order="{{ transaction.annotated_mileage|default_if_none:'0' }}">{{ transaction.annotated_mileage|default_if_none:"0"|floatformat:0 }}</td>
                 </tr>
 
                 {% endfor %}
@@ -65,6 +65,8 @@
         exportTitle: 'Promet goriva',
         order: [[1, 'desc']],
         numericColumns: [3, 4, 5, 6, 8],
+        sumColumns: [3, 5, 6],
+        avgColumns: [4],
         autoSelectThreshold: 20
       });
     }
