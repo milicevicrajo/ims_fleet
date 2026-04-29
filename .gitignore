@@ -35,10 +35,6 @@ media/
 staticfiles/
 static_root/
 
-# Local/generated migrations
-**/migrations/*
-!fleet/migrations/0062_normalize_long_term_lease_type.py
-
 # Logs / process files
 *.log
 *.err.log
