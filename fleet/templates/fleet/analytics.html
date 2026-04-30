@@ -105,6 +105,9 @@
             <th class="text-end">Gorivo</th>
             <th class="text-end">Servis</th>
             <th class="text-end">IMS trebovanja</th>
+            <th class="text-end">Polise</th>
+            <th class="text-end">Amortizacija</th>
+            <th class="text-end">Lizing/zakup</th>
             <th class="text-end">Naplata osiguranja</th>
             <th class="text-end">Ukupno</th>
             <th class="text-end">RSD/km</th>
@@ -120,13 +123,16 @@
             <td class="text-end">{{ row.fuel_cost|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.service_cost|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.requisition_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end">{{ row.policy_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end">{{ row.annual_depreciation|floatformat:0|intcomma }}</td>
+            <td class="text-end">{{ row.lease_annual_cost|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.insurance_recovery|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.total_cost|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="10" class="text-center text-muted">Nema dovoljno kilometražnih podataka za obračun troška po km.</td>
+            <td colspan="13" class="text-center text-muted">Nema dovoljno kilometražnih podataka za obračun troška po km.</td>
           </tr>
           {% endfor %}
         </tbody>
