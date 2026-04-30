@@ -286,6 +286,103 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
     return rows[:limit] if limit else rows
 
 
+def percentile(values, percent):
+    values = sorted(values)
+    if not values:
+        return 0
+    if len(values) == 1:
+        return values[0]
+    position = (len(values) - 1) * percent / 100
+    lower = int(position)
+    upper = min(lower + 1, len(values) - 1)
+    fraction = position - lower
+    return values[lower] + (values[upper] - values[lower]) * fraction
+
+
+def cost_per_km_thresholds(rows):
+    grouped = defaultdict(list)
+    for row in rows:
+        grouped[row['category']].append(row['cost_per_km'])
+
+    thresholds = {}
+    for category, values in grouped.items():
+        thresholds[category] = {
+            'category': category,
+            'vehicle_count': len(values),
+            'median': percentile(values, 50),
+            'p75': percentile(values, 75),
+            'p90': percentile(values, 90),
+            'average': sum(values) / len(values) if values else 0,
+        }
+    return thresholds
+
+
+def cost_per_km_status(value, threshold):
+    if not threshold:
+        return 'Nema praga'
+    if value <= threshold['median']:
+        return 'Dobro'
+    if value <= threshold['p75']:
+        return 'Za praćenje'
+    if value <= threshold['p90']:
+        return 'Rizično'
+    return 'Neisplativo'
+
+
+def annual_cost_per_km_analysis(years):
+    annual_rows = []
+    thresholds_by_year = {}
+
+    for year in years:
+        rows = vehicle_cost_per_km_rows(date(year, 1, 1), date(year, 12, 31))
+        thresholds = cost_per_km_thresholds(rows)
+        thresholds_by_year[year] = list(thresholds.values())
+        for row in rows:
+            row['year'] = year
+            row['status'] = cost_per_km_status(row['cost_per_km'], thresholds.get(row['category']))
+            annual_rows.append(row)
+
+    rows_by_vehicle = defaultdict(list)
+    for row in annual_rows:
+        rows_by_vehicle[row['vehicle_id']].append(row)
+
+    persistent_unprofitable = []
+    for rows in rows_by_vehicle.values():
+        rows.sort(key=lambda item: item['year'])
+        if len(rows) < 2:
+            continue
+        last_two = rows[-2:]
+        if all(row['status'] == 'Neisplativo' for row in last_two):
+            latest = last_two[-1].copy()
+            previous = last_two[0]
+            latest['previous_year'] = previous['year']
+            latest['previous_cost_per_km'] = previous['cost_per_km']
+            latest['change_percent'] = (
+                (latest['cost_per_km'] - previous['cost_per_km']) / previous['cost_per_km'] * 100
+                if previous['cost_per_km']
+                else 0
+            )
+            persistent_unprofitable.append(latest)
+
+    persistent_unprofitable.sort(key=lambda row: row['cost_per_km'], reverse=True)
+    return annual_rows, thresholds_by_year, persistent_unprofitable
+
+
+def cost_per_km_analysis_years():
+    years = [
+        year.year
+        for year in FuelConsumption.objects.annotate(year=TruncYear('date'))
+        .values_list('year', flat=True)
+        .distinct()
+        .order_by('-year')[:2]
+        if year
+    ]
+    if len(years) < 2:
+        current_year = date.today().year
+        years = [current_year - 1, current_year]
+    return sorted(years)
+
+
 def dashboard(request):    
     # Count the number of objects where vehicle is None
     services_without_vehicle = DraftServiceTransaction.objects.count()
@@ -342,6 +439,8 @@ def dashboard(request):
     start_of_last_12_months = date.today() - timedelta(days=365)
     start_of_last_12_months_dt, _ = date_range_for_datetime_field(start_of_last_12_months)
     top_cost_per_km_vehicles = vehicle_cost_per_km_rows(start_of_last_12_months, limit=10)
+    analysis_years = cost_per_km_analysis_years()
+    _, _, persistent_unprofitable_vehicles = annual_cost_per_km_analysis(analysis_years)
 
     # Number of vehicles
     total_vehicles = Vehicle.objects.filter(otpis=False).count()
@@ -538,6 +637,7 @@ def dashboard(request):
         'yearly_service_costs': yearly_service_costs['total_service_cost'],
         'red_zone_vehicles': red_zone_vehicles,
         'top_cost_per_km_vehicles': top_cost_per_km_vehicles,
+        'persistent_unprofitable_vehicles': persistent_unprofitable_vehicles[:10],
         'centers': center_data,
         'dashboard_totals': dashboard_totals,
         'dashboard_averages': dashboard_averages,
@@ -571,6 +671,13 @@ def fleet_analytics(request):
     month_keys = [month_key(month) for month in month_starts]
     cost_per_km_rows = vehicle_cost_per_km_rows(month_starts[0])
     top_cost_per_km_vehicles = cost_per_km_rows[:10]
+    analysis_years = cost_per_km_analysis_years()
+    annual_cost_per_km_rows, cost_per_km_thresholds_by_year, persistent_unprofitable_vehicles = annual_cost_per_km_analysis(analysis_years)
+    annual_top_cost_per_km_rows = sorted(
+        annual_cost_per_km_rows,
+        key=lambda row: (row['year'], row['cost_per_km']),
+        reverse=True,
+    )[:20]
 
     fuel_by_month = {
         month_key(row['month']): number(row['total'])
@@ -785,6 +892,9 @@ def fleet_analytics(request):
         'monthly_cost_chart': monthly_cost_chart,
         'top_cost_vehicles': top_cost_vehicles,
         'top_cost_per_km_vehicles': top_cost_per_km_vehicles,
+        'annual_top_cost_per_km_rows': annual_top_cost_per_km_rows,
+        'cost_per_km_thresholds_by_year': cost_per_km_thresholds_by_year,
+        'persistent_unprofitable_vehicles': persistent_unprofitable_vehicles[:20],
         'top_service_ratio': top_service_ratio,
         'red_zone_rows': red_zone_rows,
         'center_rows': center_rows,

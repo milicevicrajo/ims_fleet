@@ -72,6 +72,125 @@
   </div>
 </div>
 
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Granice isplativosti po godini i kategoriji</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Godina</th>
+            <th>Kategorija</th>
+            <th class="text-end">Vozila</th>
+            <th class="text-end">Prosek</th>
+            <th class="text-end">Medijana</th>
+            <th class="text-end">75. percentil</th>
+            <th class="text-end">90. percentil</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for year, thresholds in cost_per_km_thresholds_by_year.items %}
+            {% for row in thresholds %}
+            <tr>
+              <td>{{ year }}</td>
+              <td>{{ row.category }}</td>
+              <td class="text-end">{{ row.vehicle_count|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ row.average|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end">{{ row.median|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end">{{ row.p75|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end">{{ row.p90|floatformat:2|intcomma }} RSD/km</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td>{{ year }}</td>
+              <td colspan="6" class="text-center text-muted">Nema dovoljno podataka za obračun.</td>
+            </tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Godišnji status vozila po trošku po kilometru</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Godina</th>
+            <th>Vozilo</th>
+            <th>Kategorija</th>
+            <th>Centar</th>
+            <th class="text-end">Km</th>
+            <th class="text-end">Ukupan trošak</th>
+            <th class="text-end">RSD/km</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in annual_top_cost_per_km_rows %}
+          <tr>
+            <td>{{ row.year }}</td>
+            <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.center }}</td>
+            <td class="text-end">{{ row.annual_km|floatformat:0|intcomma }}</td>
+            <td class="text-end">{{ row.total_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
+            <td>{{ row.status }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted">Nema dovoljno podataka za godišnju analizu.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Neisplativa vozila dve godine zaredom</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Vozilo</th>
+            <th>Kategorija</th>
+            <th>Centar</th>
+            <th class="text-end">Prethodna godina</th>
+            <th class="text-end">Tekuća godina</th>
+            <th class="text-end">Promena</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in persistent_unprofitable_vehicles %}
+          <tr>
+            <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.center }}</td>
+            <td class="text-end">{{ row.previous_cost_per_km|floatformat:2|intcomma }} RSD/km</td>
+            <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }} RSD/km</td>
+            <td class="text-end">{{ row.change_percent|floatformat:0 }}%</td>
+            <td>{{ row.status }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted">Nema vozila koja su neisplativa dve godine zaredom.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-lg-8">
     <div class="card">
