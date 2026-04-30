@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
 from django.core.exceptions import PermissionDenied
 from django.db import connections
-from django.db.models import Avg, Exists, F, OuterRef, Q, Subquery, Sum, IntegerField, ExpressionWrapper, Value
+from django.db.models import Avg, Exists, F, Max, Min, OuterRef, Q, Subquery, Sum, IntegerField, ExpressionWrapper, Value
 from django.db.models.functions import Cast, StrIndex, Substr, TruncMonth, TruncYear
 from django.http import FileResponse, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -116,6 +116,103 @@ def is_red_zone(long_term_rental, value, net_cost):
     return not long_term_rental and (value or 0) > 0 and (net_cost or 0) > (value or 0)
 
 
+def vehicle_cost_per_km_rows(period_start_date, limit=None):
+    period_start_dt, _ = date_range_for_datetime_field(period_start_date)
+
+    def number(value):
+        return float(value or 0)
+
+    latest_center = JobCode.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+    latest_registration = TrafficCard.objects.filter(
+        vehicle=OuterRef('pk')
+    ).order_by('-issue_date').values('registration_number')[:1]
+
+    vehicles = Vehicle.objects.filter(
+        otpis=False,
+        category__in=['PUTNICKO VOZILO', 'TERETNO VOZILO'],
+    ).annotate(
+        center_code=Subquery(latest_center),
+        registration_number=Subquery(latest_registration),
+        fuel_cost_period=Subquery(
+            FuelConsumption.objects.filter(vehicle=OuterRef('pk'), date__gte=period_start_dt)
+            .values('vehicle')
+            .annotate(total=Sum('cost_bruto'))
+            .values('total')[:1]
+        ),
+        fuel_liters_period=Subquery(
+            FuelConsumption.objects.filter(vehicle=OuterRef('pk'), date__gte=period_start_dt)
+            .values('vehicle')
+            .annotate(total=Sum('amount'))
+            .values('total')[:1]
+        ),
+        min_fuel_mileage_period=Subquery(
+            FuelConsumption.objects.filter(vehicle=OuterRef('pk'), date__gte=period_start_dt)
+            .values('vehicle')
+            .annotate(total=Min('mileage'))
+            .values('total')[:1]
+        ),
+        max_fuel_mileage_period=Subquery(
+            FuelConsumption.objects.filter(vehicle=OuterRef('pk'), date__gte=period_start_dt)
+            .values('vehicle')
+            .annotate(total=Max('mileage'))
+            .values('total')[:1]
+        ),
+        service_cost_period=Subquery(
+            ServiceTransaction.objects.filter(vehicle=OuterRef('pk'), datum__gte=period_start_date)
+            .values('vehicle')
+            .annotate(total=Sum('potrazuje'))
+            .values('total')[:1]
+        ),
+        requisition_cost_period=Subquery(
+            Requisition.objects.filter(vehicle=OuterRef('pk'), datum_trebovanja__gte=period_start_date)
+            .values('vehicle')
+            .annotate(total=Sum('vrednost_nab'))
+            .values('total')[:1]
+        ),
+        insurance_recovery_period=Subquery(
+            Insurance.objects.filter(vehicle=OuterRef('pk'), kola=True, datum__gte=period_start_date)
+            .values('vehicle')
+            .annotate(total=Sum('potrazuje'))
+            .values('total')[:1]
+        ),
+    )
+
+    rows = []
+    for vehicle in vehicles:
+        annual_km = number(vehicle.max_fuel_mileage_period) - number(vehicle.min_fuel_mileage_period)
+        if annual_km <= 0:
+            continue
+
+        fuel_cost = number(vehicle.fuel_cost_period)
+        service_cost = number(vehicle.service_cost_period)
+        requisition_cost = number(vehicle.requisition_cost_period)
+        insurance_recovery = number(vehicle.insurance_recovery_period)
+        total_cost = fuel_cost + service_cost + requisition_cost - insurance_recovery
+        if total_cost <= 0:
+            continue
+
+        rows.append({
+            'label': vehicle.registration_number or str(vehicle),
+            'brand': vehicle.brand,
+            'model': vehicle.model,
+            'category': vehicle.category,
+            'center': vehicle.center_code or 'Bez centra',
+            'annual_km': annual_km,
+            'fuel_cost': fuel_cost,
+            'fuel_liters': number(vehicle.fuel_liters_period),
+            'service_cost': service_cost,
+            'requisition_cost': requisition_cost,
+            'insurance_recovery': insurance_recovery,
+            'total_cost': total_cost,
+            'cost_per_km': total_cost / annual_km,
+        })
+
+    rows.sort(key=lambda row: row['cost_per_km'], reverse=True)
+    return rows[:limit] if limit else rows
+
+
 def dashboard(request):    
     # Count the number of objects where vehicle is None
     services_without_vehicle = DraftServiceTransaction.objects.count()
@@ -171,6 +268,7 @@ def dashboard(request):
     start_of_year = date.today().replace(month=1, day=1)
     start_of_last_12_months = date.today() - timedelta(days=365)
     start_of_last_12_months_dt, _ = date_range_for_datetime_field(start_of_last_12_months)
+    top_cost_per_km_vehicles = vehicle_cost_per_km_rows(start_of_last_12_months, limit=10)
 
     # Number of vehicles
     total_vehicles = Vehicle.objects.filter(otpis=False).count()
@@ -366,6 +464,7 @@ def dashboard(request):
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
         'yearly_service_costs': yearly_service_costs['total_service_cost'],
         'red_zone_vehicles': red_zone_vehicles,
+        'top_cost_per_km_vehicles': top_cost_per_km_vehicles,
         'centers': center_data,
         'dashboard_totals': dashboard_totals,
         'dashboard_averages': dashboard_averages,
@@ -397,6 +496,8 @@ def fleet_analytics(request):
 
     month_labels = [month.strftime('%m.%Y') for month in month_starts]
     month_keys = [month_key(month) for month in month_starts]
+    cost_per_km_rows = vehicle_cost_per_km_rows(month_starts[0])
+    top_cost_per_km_vehicles = cost_per_km_rows[:10]
 
     fuel_by_month = {
         month_key(row['month']): number(row['total'])
@@ -584,8 +685,11 @@ def fleet_analytics(request):
     total_net_maintenance_cost = sum(row['net_maintenance_cost'] for row in vehicle_rows)
     total_fuel_cost = sum(row['fuel_cost'] for row in vehicle_rows)
     total_fuel_liters = sum(row['fuel_liters'] for row in vehicle_rows)
+    total_cost_per_km_cost = sum(row['total_cost'] for row in cost_per_km_rows)
+    total_cost_per_km_mileage = sum(row['annual_km'] for row in cost_per_km_rows)
     analytics_summary = {
         'vehicle_count': len(vehicle_rows),
+        'cost_per_km_vehicle_count': len(cost_per_km_rows),
         'total_fleet_value': total_fleet_value,
         'total_service_cost': total_service_cost,
         'total_requisition_cost': total_requisition_cost,
@@ -593,6 +697,8 @@ def fleet_analytics(request):
         'total_net_maintenance_cost': total_net_maintenance_cost,
         'total_fuel_cost': total_fuel_cost,
         'total_fuel_liters': total_fuel_liters,
+        'total_cost_per_km_mileage': total_cost_per_km_mileage,
+        'avg_cost_per_km': total_cost_per_km_cost / total_cost_per_km_mileage if total_cost_per_km_mileage else 0,
         'red_zone_count': sum(1 for row in vehicle_rows if row['red_zone']),
         'service_value_ratio': total_net_maintenance_cost / total_fleet_value * 100 if total_fleet_value else 0,
         'projected_fuel_cost': avg_monthly_fuel * 12,
@@ -605,6 +711,7 @@ def fleet_analytics(request):
         'analytics_summary': analytics_summary,
         'monthly_cost_chart': monthly_cost_chart,
         'top_cost_vehicles': top_cost_vehicles,
+        'top_cost_per_km_vehicles': top_cost_per_km_vehicles,
         'top_service_ratio': top_service_ratio,
         'red_zone_rows': red_zone_rows,
         'center_rows': center_rows,
