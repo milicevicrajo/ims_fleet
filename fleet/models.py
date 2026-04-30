@@ -39,7 +39,7 @@ class Vehicle(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
 
     otpis = models.BooleanField(_("Otpis"), default=False, editable=False)
-    current_mileage = models.IntegerField(verbose_name=_("Trenutna kilometraža"), null=True, blank=True)
+
 
     def __str__(self):
         traffic_card = self.traffic_cards.first()

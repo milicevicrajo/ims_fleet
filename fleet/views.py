@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
 from django.core.exceptions import PermissionDenied
 from django.db import connections
-from django.db.models import Avg, Exists, F, Max, Min, OuterRef, Q, Subquery, Sum, IntegerField, ExpressionWrapper, Value
+from django.db.models import Avg, Count, Exists, F, Max, Min, OuterRef, Q, Subquery, Sum, IntegerField, ExpressionWrapper, Value
 from django.db.models.functions import Cast, StrIndex, Substr, TruncMonth, TruncYear
 from django.http import FileResponse, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -177,6 +177,32 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             .annotate(total=Max('mileage'))
             .values('total')[:1]
         ),
+        fuel_entry_count_period=Subquery(
+            FuelConsumption.objects.filter(
+                vehicle=OuterRef('pk'),
+                date__gte=period_start_dt,
+                date__lt=period_end_exclusive_dt,
+            )
+            .values('vehicle')
+            .annotate(total=Count('id'))
+            .values('total')[:1]
+        ),
+        travel_order_km_period=Subquery(
+            VehicleTravelOrder.objects.filter(
+                vehicle=OuterRef('pk'),
+                created_at__lte=period_end_date,
+                closed_at__gte=period_start_date,
+                start_mileage__isnull=False,
+                end_mileage__isnull=False,
+                start_mileage__gt=0,
+                end_mileage__gt=F('start_mileage'),
+            )
+            .annotate(distance=ExpressionWrapper(F('end_mileage') - F('start_mileage'), output_field=IntegerField()))
+            .order_by()
+            .values('vehicle')
+            .annotate(total=Sum('distance'))
+            .values('total')[:1]
+        ),
         service_cost_period=Subquery(
             ServiceTransaction.objects.filter(
                 vehicle=OuterRef('pk'),
@@ -232,9 +258,34 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
 
     rows = []
     for vehicle in vehicles:
-        annual_km = number(vehicle.max_fuel_mileage_period) - number(vehicle.min_fuel_mileage_period)
-        if annual_km <= 0:
-            continue
+        fuel_entry_count = number(vehicle.fuel_entry_count_period)
+        fuel_km = number(vehicle.max_fuel_mileage_period) - number(vehicle.min_fuel_mileage_period)
+        travel_order_km = number(vehicle.travel_order_km_period)
+        mileage_source = 'Gorivo'
+        mileage_issue = ''
+        requires_driver_warning = False
+
+        suspicious_fuel_mileage = fuel_entry_count > 0 and fuel_km < 10
+
+        if fuel_entry_count >= 2 and fuel_km >= 10:
+            annual_km = fuel_km
+        elif travel_order_km > 0:
+            annual_km = travel_order_km
+            mileage_source = 'Putni nalozi'
+            if suspicious_fuel_mileage:
+                mileage_issue = 'Kilometraža pri točenju je manja od 10 km; korišćeni su putni nalozi.'
+            elif fuel_entry_count < 2:
+                mileage_issue = 'Nema dovoljno kilometraže pri točenju; korišćeni su putni nalozi.'
+            else:
+                mileage_issue = 'Sumnjiva kilometraža pri točenju; korišćeni su putni nalozi.'
+        else:
+            annual_km = 0
+            mileage_source = 'Nema podatka'
+            requires_driver_warning = True
+            if suspicious_fuel_mileage:
+                mileage_issue = 'Kilometraža pri točenju je manja od 10 km. Opomenuti vozače da unose stvarnu kilometražu pri sipanju goriva.'
+            else:
+                mileage_issue = 'Opomenuti vozače da unose kilometražu pri točenju goriva.'
 
         fuel_cost = number(vehicle.fuel_cost_period)
         service_cost = number(vehicle.service_cost_period)
@@ -262,6 +313,8 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
         if total_cost <= 0:
             continue
 
+        cost_per_km = total_cost / annual_km if annual_km > 0 else None
+
         rows.append({
             'label': vehicle.registration_number or str(vehicle),
             'vehicle_id': vehicle.id,
@@ -270,6 +323,9 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'category': vehicle.category,
             'center': vehicle.center_code or 'Bez centra',
             'annual_km': annual_km,
+            'mileage_source': mileage_source,
+            'mileage_issue': mileage_issue,
+            'requires_driver_warning': requires_driver_warning,
             'fuel_cost': fuel_cost,
             'fuel_liters': number(vehicle.fuel_liters_period),
             'service_cost': service_cost,
@@ -279,10 +335,10 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'lease_annual_cost': lease_annual_cost,
             'insurance_recovery': insurance_recovery,
             'total_cost': total_cost,
-            'cost_per_km': total_cost / annual_km,
+            'cost_per_km': cost_per_km,
         })
 
-    rows.sort(key=lambda row: row['cost_per_km'], reverse=True)
+    rows.sort(key=lambda row: row['cost_per_km'] or 0, reverse=True)
     return rows[:limit] if limit else rows
 
 
@@ -302,7 +358,8 @@ def percentile(values, percent):
 def cost_per_km_thresholds(rows):
     grouped = defaultdict(list)
     for row in rows:
-        grouped[row['category']].append(row['cost_per_km'])
+        if row['cost_per_km'] is not None:
+            grouped[row['category']].append(row['cost_per_km'])
 
     thresholds = {}
     for category, values in grouped.items():
@@ -318,6 +375,8 @@ def cost_per_km_thresholds(rows):
 
 
 def cost_per_km_status(value, threshold):
+    if value is None:
+        return 'Opomena'
     if not threshold:
         return 'Nema praga'
     if value <= threshold['median']:
@@ -329,58 +388,47 @@ def cost_per_km_status(value, threshold):
     return 'Neisplativo'
 
 
-def annual_cost_per_km_analysis(years):
-    annual_rows = []
-    thresholds_by_year = {}
-
-    for year in years:
-        rows = vehicle_cost_per_km_rows(date(year, 1, 1), date(year, 12, 31))
-        thresholds = cost_per_km_thresholds(rows)
-        thresholds_by_year[year] = list(thresholds.values())
-        for row in rows:
-            row['year'] = year
-            row['status'] = cost_per_km_status(row['cost_per_km'], thresholds.get(row['category']))
-            annual_rows.append(row)
-
+def cost_per_km_period_analysis(periods):
+    period_rows = []
+    thresholds_by_period = []
     rows_by_vehicle = defaultdict(list)
-    for row in annual_rows:
-        rows_by_vehicle[row['vehicle_id']].append(row)
+
+    for period in periods:
+        rows = vehicle_cost_per_km_rows(period['start'], period['end'])
+        thresholds = cost_per_km_thresholds(rows)
+        for threshold in thresholds.values():
+            threshold['period_label'] = period['label']
+            thresholds_by_period.append(threshold)
+
+        for row in rows:
+            row['period_key'] = period['key']
+            row['period_label'] = period['label']
+            row['status'] = cost_per_km_status(row['cost_per_km'], thresholds.get(row['category']))
+            period_rows.append(row)
+            rows_by_vehicle[row['vehicle_id']].append(row)
 
     persistent_unprofitable = []
+    required_periods = {period['key'] for period in periods}
     for rows in rows_by_vehicle.values():
-        rows.sort(key=lambda item: item['year'])
-        if len(rows) < 2:
+        rows_by_period = {row['period_key']: row for row in rows}
+        if not required_periods.issubset(rows_by_period):
             continue
-        last_two = rows[-2:]
-        if all(row['status'] == 'Neisplativo' for row in last_two):
-            latest = last_two[-1].copy()
-            previous = last_two[0]
-            latest['previous_year'] = previous['year']
-            latest['previous_cost_per_km'] = previous['cost_per_km']
-            latest['change_percent'] = (
-                (latest['cost_per_km'] - previous['cost_per_km']) / previous['cost_per_km'] * 100
-                if previous['cost_per_km']
-                else 0
-            )
-            persistent_unprofitable.append(latest)
+        if not all(rows_by_period[key]['status'] == 'Neisplativo' for key in required_periods):
+            continue
+
+        primary = rows_by_period[periods[0]['key']].copy()
+        comparison = rows_by_period[periods[1]['key']]
+        primary['comparison_period_label'] = comparison['period_label']
+        primary['comparison_cost_per_km'] = comparison['cost_per_km']
+        primary['change_percent'] = (
+            (primary['cost_per_km'] - comparison['cost_per_km']) / comparison['cost_per_km'] * 100
+            if comparison['cost_per_km']
+            else 0
+        )
+        persistent_unprofitable.append(primary)
 
     persistent_unprofitable.sort(key=lambda row: row['cost_per_km'], reverse=True)
-    return annual_rows, thresholds_by_year, persistent_unprofitable
-
-
-def cost_per_km_analysis_years():
-    years = [
-        year.year
-        for year in FuelConsumption.objects.annotate(year=TruncYear('date'))
-        .values_list('year', flat=True)
-        .distinct()
-        .order_by('-year')[:2]
-        if year
-    ]
-    if len(years) < 2:
-        current_year = date.today().year
-        years = [current_year - 1, current_year]
-    return sorted(years)
+    return period_rows, thresholds_by_period, persistent_unprofitable
 
 
 def dashboard(request):    
@@ -438,9 +486,6 @@ def dashboard(request):
     start_of_year = date.today().replace(month=1, day=1)
     start_of_last_12_months = date.today() - timedelta(days=365)
     start_of_last_12_months_dt, _ = date_range_for_datetime_field(start_of_last_12_months)
-    top_cost_per_km_vehicles = vehicle_cost_per_km_rows(start_of_last_12_months, limit=10)
-    analysis_years = cost_per_km_analysis_years()
-    _, _, persistent_unprofitable_vehicles = annual_cost_per_km_analysis(analysis_years)
 
     # Number of vehicles
     total_vehicles = Vehicle.objects.filter(otpis=False).count()
@@ -636,8 +681,6 @@ def dashboard(request):
         'yearly_fuel_costs': yearly_fuel_costs['total_fuel_cost'],
         'yearly_service_costs': yearly_service_costs['total_service_cost'],
         'red_zone_vehicles': red_zone_vehicles,
-        'top_cost_per_km_vehicles': top_cost_per_km_vehicles,
-        'persistent_unprofitable_vehicles': persistent_unprofitable_vehicles[:10],
         'centers': center_data,
         'dashboard_totals': dashboard_totals,
         'dashboard_averages': dashboard_averages,
@@ -669,15 +712,48 @@ def fleet_analytics(request):
 
     month_labels = [month.strftime('%m.%Y') for month in month_starts]
     month_keys = [month_key(month) for month in month_starts]
-    cost_per_km_rows = vehicle_cost_per_km_rows(month_starts[0])
-    top_cost_per_km_vehicles = cost_per_km_rows[:10]
-    analysis_years = cost_per_km_analysis_years()
-    annual_cost_per_km_rows, cost_per_km_thresholds_by_year, persistent_unprofitable_vehicles = annual_cost_per_km_analysis(analysis_years)
-    annual_top_cost_per_km_rows = sorted(
-        annual_cost_per_km_rows,
-        key=lambda row: (row['year'], row['cost_per_km']),
-        reverse=True,
-    )[:20]
+    start_of_last_12_months = today - timedelta(days=365)
+    start_of_last_24_months = today - timedelta(days=730)
+    cost_per_km_rows = vehicle_cost_per_km_rows(start_of_last_12_months)
+    top_cost_per_km_vehicles = [row for row in cost_per_km_rows if row['cost_per_km'] is not None][:10]
+    cost_per_km_periods = [
+        {
+            'key': '12m',
+            'label': 'Poslednjih 12 meseci',
+            'start': start_of_last_12_months,
+            'end': today,
+        },
+        {
+            'key': '24m',
+            'label': 'Poslednja 24 meseca',
+            'start': start_of_last_24_months,
+            'end': today,
+        },
+    ]
+    period_cost_per_km_rows, cost_per_km_thresholds_by_period, persistent_unprofitable_vehicles = cost_per_km_period_analysis(cost_per_km_periods)
+    mileage_warning_rows = [row for row in period_cost_per_km_rows if row['requires_driver_warning']]
+    suspicious_fuel_mileage_rows = [
+        row
+        for row in mileage_warning_rows
+        if 'manja od 10 km' in row['mileage_issue']
+    ]
+    missing_mileage_rows = [
+        row
+        for row in mileage_warning_rows
+        if 'manja od 10 km' not in row['mileage_issue']
+    ]
+    status_cost_per_km_by_period = {}
+    for period in cost_per_km_periods:
+        status_cost_per_km_by_period[period['key']] = [
+            row
+            for row in period_cost_per_km_rows
+            if (
+                row['period_key'] == period['key']
+                and row['cost_per_km'] is not None
+                and row['status'] in ('Rizično', 'Neisplativo')
+            )
+        ]
+    status_cost_per_km_rows = status_cost_per_km_by_period['12m'] + status_cost_per_km_by_period['24m']
 
     fuel_by_month = {
         month_key(row['month']): number(row['total'])
@@ -773,6 +849,7 @@ def fleet_analytics(request):
         ratio = net_cost / value * 100 if value else 0
         vehicle_rows.append({
             'label': vehicle.registration_number or f'{vehicle.brand} {vehicle.model}',
+            'vehicle_id': vehicle.id,
             'brand': vehicle.brand,
             'model': vehicle.model,
             'center': vehicle.center_code or 'Bez centra',
@@ -865,8 +942,9 @@ def fleet_analytics(request):
     total_net_maintenance_cost = sum(row['net_maintenance_cost'] for row in vehicle_rows)
     total_fuel_cost = sum(row['fuel_cost'] for row in vehicle_rows)
     total_fuel_liters = sum(row['fuel_liters'] for row in vehicle_rows)
-    total_cost_per_km_cost = sum(row['total_cost'] for row in cost_per_km_rows)
-    total_cost_per_km_mileage = sum(row['annual_km'] for row in cost_per_km_rows)
+    priced_cost_per_km_rows = [row for row in cost_per_km_rows if row['cost_per_km'] is not None]
+    total_cost_per_km_cost = sum(row['total_cost'] for row in priced_cost_per_km_rows)
+    total_cost_per_km_mileage = sum(row['annual_km'] for row in priced_cost_per_km_rows)
     analytics_summary = {
         'vehicle_count': len(vehicle_rows),
         'cost_per_km_vehicle_count': len(cost_per_km_rows),
@@ -892,9 +970,13 @@ def fleet_analytics(request):
         'monthly_cost_chart': monthly_cost_chart,
         'top_cost_vehicles': top_cost_vehicles,
         'top_cost_per_km_vehicles': top_cost_per_km_vehicles,
-        'annual_top_cost_per_km_rows': annual_top_cost_per_km_rows,
-        'cost_per_km_thresholds_by_year': cost_per_km_thresholds_by_year,
+        'status_cost_per_km_12m_rows': status_cost_per_km_by_period['12m'],
+        'status_cost_per_km_24m_rows': status_cost_per_km_by_period['24m'],
+        'status_cost_per_km_rows': status_cost_per_km_rows,
+        'cost_per_km_thresholds_by_period': cost_per_km_thresholds_by_period,
         'persistent_unprofitable_vehicles': persistent_unprofitable_vehicles[:20],
+        'suspicious_fuel_mileage_rows': suspicious_fuel_mileage_rows[:50],
+        'missing_mileage_rows': missing_mileage_rows[:50],
         'top_service_ratio': top_service_ratio,
         'red_zone_rows': red_zone_rows,
         'center_rows': center_rows,

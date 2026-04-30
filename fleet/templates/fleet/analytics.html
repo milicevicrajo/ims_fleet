@@ -72,125 +72,6 @@
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body">
-    <h4 class="card-title">Granice isplativosti po godini i kategoriji</h4>
-    <div class="table-responsive">
-      <table class="table table-striped table-sm align-middle">
-        <thead>
-          <tr>
-            <th>Godina</th>
-            <th>Kategorija</th>
-            <th class="text-end">Vozila</th>
-            <th class="text-end">Prosek</th>
-            <th class="text-end">Medijana</th>
-            <th class="text-end">75. percentil</th>
-            <th class="text-end">90. percentil</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for year, thresholds in cost_per_km_thresholds_by_year.items %}
-            {% for row in thresholds %}
-            <tr>
-              <td>{{ year }}</td>
-              <td>{{ row.category }}</td>
-              <td class="text-end">{{ row.vehicle_count|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ row.average|floatformat:2|intcomma }} RSD/km</td>
-              <td class="text-end">{{ row.median|floatformat:2|intcomma }} RSD/km</td>
-              <td class="text-end">{{ row.p75|floatformat:2|intcomma }} RSD/km</td>
-              <td class="text-end">{{ row.p90|floatformat:2|intcomma }} RSD/km</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td>{{ year }}</td>
-              <td colspan="6" class="text-center text-muted">Nema dovoljno podataka za obračun.</td>
-            </tr>
-            {% endfor %}
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-body">
-    <h4 class="card-title">Godišnji status vozila po trošku po kilometru</h4>
-    <div class="table-responsive">
-      <table class="table table-striped table-sm align-middle">
-        <thead>
-          <tr>
-            <th>Godina</th>
-            <th>Vozilo</th>
-            <th>Kategorija</th>
-            <th>Centar</th>
-            <th class="text-end">Km</th>
-            <th class="text-end">Ukupan trošak</th>
-            <th class="text-end">RSD/km</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in annual_top_cost_per_km_rows %}
-          <tr>
-            <td>{{ row.year }}</td>
-            <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
-            <td>{{ row.category }}</td>
-            <td>{{ row.center }}</td>
-            <td class="text-end">{{ row.annual_km|floatformat:0|intcomma }}</td>
-            <td class="text-end">{{ row.total_cost|floatformat:0|intcomma }}</td>
-            <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
-            <td>{{ row.status }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="8" class="text-center text-muted">Nema dovoljno podataka za godišnju analizu.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-body">
-    <h4 class="card-title">Neisplativa vozila dve godine zaredom</h4>
-    <div class="table-responsive">
-      <table class="table table-striped table-sm align-middle">
-        <thead>
-          <tr>
-            <th>Vozilo</th>
-            <th>Kategorija</th>
-            <th>Centar</th>
-            <th class="text-end">Prethodna godina</th>
-            <th class="text-end">Tekuća godina</th>
-            <th class="text-end">Promena</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in persistent_unprofitable_vehicles %}
-          <tr>
-            <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
-            <td>{{ row.category }}</td>
-            <td>{{ row.center }}</td>
-            <td class="text-end">{{ row.previous_cost_per_km|floatformat:2|intcomma }} RSD/km</td>
-            <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }} RSD/km</td>
-            <td class="text-end">{{ row.change_percent|floatformat:0 }}%</td>
-            <td>{{ row.status }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7" class="text-center text-muted">Nema vozila koja su neisplativa dve godine zaredom.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
 <div class="row">
   <div class="col-lg-8">
     <div class="card">
@@ -212,6 +93,375 @@
 
 <div class="card">
   <div class="card-body">
+    <h4 class="card-title">Granice isplativosti po periodu i kategoriji</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Kategorija</th>
+            <th class="text-end">Vozila</th>
+            <th class="text-end">Prosek</th>
+            <th class="text-end">Medijana</th>
+            <th class="text-end">75. percentil</th>
+            <th class="text-end">90. percentil</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in cost_per_km_thresholds_by_period %}
+            <tr>
+              <td>{{ row.period_label }}</td>
+              <td>{{ row.category }}</td>
+              <td class="text-end">{{ row.vehicle_count|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ row.average|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end">{{ row.median|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end">{{ row.p75|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end">{{ row.p90|floatformat:2|intcomma }} RSD/km</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted">Nema dovoljno podataka za obračun.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Rizična i neisplativa vozila - poslednjih 12 meseci</h4>
+    <div class="table-responsive">
+      <table id="DatatableCost12" class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Vozilo</th>
+            <th>Kategorija</th>
+            <th>Centar</th>
+            <th class="text-end">Km</th>
+            <th>Izvor km</th>
+            <th class="text-end">Ukupan trošak</th>
+            <th class="text-end">RSD/km</th>
+            <th>Status</th>
+            <th class="text-end">Detalji</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in status_cost_per_km_12m_rows %}
+          <tr>
+            <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.center }}</td>
+            <td class="text-end" data-order="{{ row.annual_km }}">{{ row.annual_km|floatformat:0|intcomma }}</td>
+            <td>{{ row.mileage_source }}</td>
+            <td class="text-end" data-order="{{ row.total_cost }}">{{ row.total_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
+            <td>{{ row.status }}</td>
+            <td class="text-end">
+              <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#costDetails{{ row.period_key }}{{ row.vehicle_id }}">
+                Detalji
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td class="text-center text-muted">Nema rizičnih ili neisplativih vozila u poslednjih 12 meseci.</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Rizična i neisplativa vozila - poslednja 24 meseca</h4>
+    <div class="table-responsive">
+      <table id="DatatableCost24" class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Vozilo</th>
+            <th>Kategorija</th>
+            <th>Centar</th>
+            <th class="text-end">Km</th>
+            <th>Izvor km</th>
+            <th class="text-end">Ukupan trošak</th>
+            <th class="text-end">RSD/km</th>
+            <th>Status</th>
+            <th class="text-end">Detalji</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in status_cost_per_km_24m_rows %}
+          <tr>
+            <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.center }}</td>
+            <td class="text-end" data-order="{{ row.annual_km }}">{{ row.annual_km|floatformat:0|intcomma }}</td>
+            <td>{{ row.mileage_source }}</td>
+            <td class="text-end" data-order="{{ row.total_cost }}">{{ row.total_cost|floatformat:0|intcomma }}</td>
+            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
+            <td>{{ row.status }}</td>
+            <td class="text-end">
+              <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#costDetails{{ row.period_key }}{{ row.vehicle_id }}">
+                Detalji
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td class="text-center text-muted">Nema rizičnih ili neisplativih vozila u poslednja 24 meseca.</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% for row in status_cost_per_km_rows %}
+<div class="modal fade" id="costDetails{{ row.period_key }}{{ row.vehicle_id }}" tabindex="-1" aria-labelledby="costDetailsLabel{{ row.period_key }}{{ row.vehicle_id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content text-start">
+      <div class="modal-header">
+        <h5 class="modal-title" id="costDetailsLabel{{ row.period_key }}{{ row.vehicle_id }}">
+          Detalji troška - {{ row.label }} - {{ row.period_label }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-sm mb-3">
+            <tbody>
+              <tr>
+                <th>Vozilo</th>
+                <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
+              </tr>
+              <tr>
+                <th>Kategorija</th>
+                <td>{{ row.category }}</td>
+              </tr>
+              <tr>
+                <th>Centar</th>
+                <td>{{ row.center }}</td>
+              </tr>
+              <tr>
+                <th>Period</th>
+                <td>{{ row.period_label }}</td>
+              </tr>
+              <tr>
+                <th>Pređena kilometraža</th>
+                <td>{{ row.annual_km|floatformat:0|intcomma }} km ({{ row.mileage_source }})</td>
+              </tr>
+              {% if row.mileage_issue %}
+              <tr>
+                <th>Napomena za kilometražu</th>
+                <td>{{ row.mileage_issue }}</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-striped table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Stavka</th>
+                <th class="text-end">Iznos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Gorivo</td>
+                <td class="text-end">{{ row.fuel_cost|floatformat:0|intcomma }} RSD</td>
+              </tr>
+              <tr>
+                <td>Servis</td>
+                <td class="text-end">{{ row.service_cost|floatformat:0|intcomma }} RSD</td>
+              </tr>
+              <tr>
+                <td>IMS trebovanja</td>
+                <td class="text-end">{{ row.requisition_cost|floatformat:0|intcomma }} RSD</td>
+              </tr>
+              <tr>
+                <td>Polise</td>
+                <td class="text-end">{{ row.policy_cost|floatformat:0|intcomma }} RSD</td>
+              </tr>
+              <tr>
+                <td>
+                  Amortizacija
+                  <small class="d-block text-muted">
+                    Aproksimacija: (nabavna vrednost - knjigovodstvena vrednost) / dani korišćenja * 365.
+                  </small>
+                </td>
+                <td class="text-end">{{ row.annual_depreciation|floatformat:0|intcomma }} RSD</td>
+              </tr>
+              <tr>
+                <td>Lizing / zakup</td>
+                <td class="text-end">{{ row.lease_annual_cost|floatformat:0|intcomma }} RSD</td>
+              </tr>
+              <tr>
+                <td>Naplata osiguranja</td>
+                <td class="text-end">-{{ row.insurance_recovery|floatformat:0|intcomma }} RSD</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Ukupan trošak</th>
+                <th class="text-end">{{ row.total_cost|floatformat:0|intcomma }} RSD</th>
+              </tr>
+              <tr>
+                <th>Trošak po km</th>
+                <th class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }} RSD/km</th>
+              </tr>
+              <tr>
+                <th>Status</th>
+                <th class="text-end">{{ row.status }}</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="{% url 'vehicle_detail' pk=row.vehicle_id %}" class="btn btn-outline-primary btn-sm">Detalj vozila</a>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Zatvori</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Neisplativa vozila u periodu 12 i 24 meseca</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Vozilo</th>
+            <th>Kategorija</th>
+            <th>Centar</th>
+            <th class="text-end">Poslednja 24 meseca</th>
+            <th class="text-end">Poslednjih 12 meseci</th>
+            <th class="text-end">Promena</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in persistent_unprofitable_vehicles %}
+          <tr>
+            <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.center }}</td>
+            <td class="text-end">{{ row.comparison_cost_per_km|floatformat:2|intcomma }} RSD/km</td>
+            <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }} RSD/km</td>
+            <td class="text-end">{{ row.change_percent|floatformat:0 }}%</td>
+            <td>{{ row.status }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted">Nema vozila koja su neisplativa u oba perioda.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Sumnjiva kilometraža pri sipanju goriva</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Vozilo</th>
+            <th>Kategorija</th>
+            <th>Centar</th>
+            <th class="text-end">Trošak bez RSD/km</th>
+            <th>Napomena</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in suspicious_fuel_mileage_rows %}
+          <tr>
+            <td>{{ row.period_label }}</td>
+            <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.center }}</td>
+            <td class="text-end">{{ row.total_cost|floatformat:0|intcomma }}</td>
+            <td>{{ row.mileage_issue }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted">Nema vozila sa kilometražom manjom od 10 km pri sipanju goriva.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">Vozila bez kilometraže za obračun</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>Vozilo</th>
+            <th>Kategorija</th>
+            <th>Centar</th>
+            <th class="text-end">Trošak bez RSD/km</th>
+            <th>Napomena</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in missing_mileage_rows %}
+          <tr>
+            <td>{{ row.period_label }}</td>
+            <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
+            <td>{{ row.category }}</td>
+            <td>{{ row.center }}</td>
+            <td class="text-end">{{ row.total_cost|floatformat:0|intcomma }}</td>
+            <td>{{ row.mileage_issue }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted">Nema vozila bez kilometraže za obračun.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
     <h4 class="card-title">Top 10 vozila po trošku po kilometru</h4>
     <div class="table-responsive">
       <table class="table table-striped table-sm align-middle">
@@ -221,6 +471,7 @@
             <th>Kategorija</th>
             <th>Centar</th>
             <th class="text-end">Km / 12 meseci</th>
+            <th>Izvor km</th>
             <th class="text-end">Gorivo</th>
             <th class="text-end">Servis</th>
             <th class="text-end">IMS trebovanja</th>
@@ -235,10 +486,11 @@
         <tbody>
           {% for row in top_cost_per_km_vehicles %}
           <tr>
-            <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
+            <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
             <td>{{ row.category }}</td>
             <td>{{ row.center }}</td>
             <td class="text-end">{{ row.annual_km|floatformat:0|intcomma }}</td>
+            <td>{{ row.mileage_source }}</td>
             <td class="text-end">{{ row.fuel_cost|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.service_cost|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.requisition_cost|floatformat:0|intcomma }}</td>
@@ -251,7 +503,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="13" class="text-center text-muted">Nema dovoljno kilometražnih podataka za obračun troška po km.</td>
+            <td colspan="14" class="text-center text-muted">Nema dovoljno kilometražnih podataka za obračun troška po km.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -301,7 +553,7 @@
             <tbody>
               {% for row in top_cost_vehicles %}
               <tr>
-                <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
+                <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
                 <td>{{ row.center }}</td>
                 <td class="text-end">{{ row.fuel_cost|floatformat:0|intcomma }}</td>
                 <td class="text-end">{{ row.service_cost|floatformat:0|intcomma }}</td>
@@ -336,7 +588,7 @@
             <tbody>
               {% for row in top_service_ratio %}
               <tr>
-                <td>{{ row.label }} - {{ row.brand }} {{ row.model }}</td>
+                <td><a href="{% url 'vehicle_detail' pk=row.vehicle_id %}">{{ row.label }} - {{ row.brand }} {{ row.model }}</a></td>
                 <td>{{ row.center }}</td>
                 <td class="text-end">{{ row.value|floatformat:0|intcomma }}</td>
                 <td class="text-end">{{ row.net_maintenance_cost|floatformat:0|intcomma }}</td>
@@ -400,7 +652,47 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (!window.jQuery || !jQuery.plot) {
+    if (!window.jQuery) {
+      return;
+    }
+
+    if (jQuery.fn && jQuery.fn.DataTable) {
+      const analyticsTableLanguage = {
+        decimal: ',',
+        thousands: '.',
+        search: 'Pretraga:',
+        lengthMenu: 'Prikaži _MENU_ stavki po strani',
+        info: 'Prikazano _START_ do _END_ od _TOTAL_ stavki',
+        infoEmpty: 'Prikazano 0 do 0 od 0 stavki',
+        infoFiltered: '(filtrirano od ukupno _MAX_ stavki)',
+        zeroRecords: 'Nema pronađenih podataka',
+        emptyTable: 'Nema podataka u tabeli',
+        paginate: {
+          first: 'Prva',
+          previous: 'Prethodna',
+          next: 'Sledeća',
+          last: 'Poslednja'
+        }
+      };
+
+      ['#DatatableCost12', '#DatatableCost24'].forEach(function (selector) {
+        const table = jQuery(selector);
+        if (table.length && !jQuery.fn.DataTable.isDataTable(selector)) {
+          table.DataTable({
+            language: analyticsTableLanguage,
+            pageLength: 10,
+            order: [[6, 'desc']],
+            autoWidth: false,
+            columnDefs: [
+              { targets: [3, 5, 6], type: 'num' },
+              { targets: [8], orderable: false, searchable: false }
+            ]
+          });
+        }
+      });
+    }
+
+    if (!jQuery.plot) {
       return;
     }
 
