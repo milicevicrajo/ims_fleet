@@ -93,9 +93,6 @@ class VehicleFilter(django_filters.FilterSet):
         # -- osiguraj da imamo iste anotacije kao u view-u (fallback ako view nije anotirao) --
         if "current_ou_id" not in getattr(qs.query, "annotations", {}):
             qs = qs.annotate(current_ou_id=self.latest_org_unit_id_sq)
-        if "latest_center" not in getattr(qs.query, "annotations", {}):
-            qs = qs.annotate(latest_center=self.latest_center_code_sq)
-
         # ---- OJ choices: samo OJ koje su *trenutno* dodeljene (distinct) ----
         current_ou_ids = (
             qs.exclude(current_ou_id__isnull=True)
@@ -109,30 +106,6 @@ class VehicleFilter(django_filters.FilterSet):
             .only("id", "code", "name")
             .order_by("code")
         )
-
-        # ---- Centri: samo oni koji zaista postoje u *trenutnim* dodelama ----
-        centers = (
-            qs.exclude(latest_center__isnull=True)
-            .annotate(_center=Trim(F("latest_center")))  # skini eventualne razmake
-            .order_by()
-            .values_list("_center", flat=True)
-            .distinct()
-        )
-        center_choices = [("", "— Svi centri —")] + [(c, c) for c in sorted(centers)]
-        self.filters["center_code"].extra["choices"] = center_choices
-        self.form.fields["center_code"].choices = center_choices
-
-        # Kategorije kao select (kao što si već radio)
-        cats = (Vehicle.objects
-                .exclude(category__isnull=True).exclude(category="")
-                .values_list("category", flat=True)
-                .distinct().order_by("category"))
-        self.form.fields["category"].widget = forms.Select(
-            choices=[("", "— sve —")] + [(c, c) for c in cats]
-        )
-
-        if not self.data.get("status"):
-            self.form.fields["status"].initial = "active"
 
         # CENTRI kao choices (distinct, sortirano)
         centers_qs = OrganizationalUnit.objects.exclude(center__isnull=True).values_list("center", flat=True)

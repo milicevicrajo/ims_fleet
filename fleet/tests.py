@@ -1,15 +1,130 @@
 import datetime
 from decimal import Decimal
 
-from django.test import TestCase
-from django.test import RequestFactory
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.utils import timezone
 
-from .forms import VehicleTravelOrderForm
+from .forms import OMVPutnickaFilterForm, PutnickaFilterForm, VehicleTravelOrderForm
 from .models import TransactionNIS, TransactionOMV
 from .models import Employee, Vehicle, VehicleTravelOrder
+from .queries import date_period_filtered_query, report_period_filtered_query
+from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .utils import filter_nis_fuel_queryset, filter_omv_fuel_queryset
 from .views_garaza import VehicleTravelOrderCreateView, VehicleTravelOrderDetailView
+
+
+class ReportExportRowsTests(SimpleTestCase):
+	def test_report_export_rows_uses_spec_field_order(self):
+		data = [
+			{
+				"sifpos": "832111",
+				"godina": 2026,
+				"mesec": 4,
+				"tipvozila": "PUTNICKO",
+				"polovina": 2,
+				"bruto": Decimal("1200.00"),
+				"neto": Decimal("1000.00"),
+			}
+		]
+
+		rows = list(report_export_rows(data, OMV_PUTNICKA_EXPORT))
+
+		self.assertEqual(
+			rows,
+			[["832111", 2026, 4, "PUTNICKO", 2, Decimal("1200.00"), Decimal("1000.00")]],
+		)
+
+	def test_report_export_rows_formats_nis_teretna_datetime(self):
+		data = [
+			{
+				"tipvozila": "TERETNO",
+				"sifpos": "832111",
+				"regozn": "BG123-AA",
+				"kartica": "1234",
+				"datum": datetime.datetime(2026, 4, 24, 13, 45),
+				"proizvod": "Dizel",
+				"kolicina": Decimal("42.00"),
+				"cena": Decimal("200.00"),
+				"bruto": Decimal("8400.00"),
+				"neto": Decimal("7000.00"),
+			}
+		]
+
+		rows = list(report_export_rows(data, NIS_TERETNA_EXPORT))
+
+		self.assertEqual(
+			rows,
+			[[
+				"TERETNO",
+				"832111",
+				"BG123-AA",
+				"1234",
+				"24.04.2026 13:45",
+				"Dizel",
+				Decimal("42.00"),
+				Decimal("200.00"),
+				Decimal("8400.00"),
+				Decimal("7000.00"),
+			]],
+		)
+
+
+class ReportPeriodFilterHelperTests(SimpleTestCase):
+	base_query = "SELECT * FROM report WHERE 1=1"
+
+	def test_report_period_filter_appends_column_conditions_with_string_params(self):
+		form = PutnickaFilterForm({"godina": "2026", "mesec": "4", "polovina": "2"})
+
+		query, params = report_period_filtered_query(self.base_query, form)
+
+		self.assertEqual(
+			query,
+			self.base_query + " AND godina = %s AND mesec = %s AND polovina = %s",
+		)
+		self.assertEqual(params, ["2026", "4", "2"])
+
+	def test_report_period_filter_casts_export_params_to_int(self):
+		form = PutnickaFilterForm({"godina": "2026", "mesec": "4", "polovina": "2"})
+
+		query, params = report_period_filtered_query(self.base_query, form, cast_params=True)
+
+		self.assertEqual(
+			query,
+			self.base_query + " AND godina = %s AND mesec = %s AND polovina = %s",
+		)
+		self.assertEqual(params, [2026, 4, 2])
+
+	def test_date_period_filter_applies_view_polovina_condition(self):
+		form = PutnickaFilterForm({"godina": "2026", "mesec": "4", "polovina": "2"})
+
+		query, params = date_period_filtered_query(self.base_query, form)
+
+		self.assertEqual(
+			query,
+			self.base_query + " AND YEAR(datum) = %s AND MONTH(datum) = %s AND DAY(datum) > 15",
+		)
+		self.assertEqual(params, ["2026", "4"])
+
+	def test_omv_and_putnicka_period_forms_share_fields(self):
+		omv_form = OMVPutnickaFilterForm()
+		putnicka_form = PutnickaFilterForm()
+
+		self.assertEqual(list(omv_form.fields), list(putnicka_form.fields))
+		self.assertEqual(
+			list(omv_form.fields["polovina"].choices),
+			list(putnicka_form.fields["polovina"].choices),
+		)
+
+	def test_date_period_filter_casts_export_polovina_to_day_condition(self):
+		form = PutnickaFilterForm({"godina": "2026", "mesec": "4", "polovina": "2"})
+
+		query, params = date_period_filtered_query(self.base_query, form, cast_params=True)
+
+		self.assertEqual(
+			query,
+			self.base_query + " AND YEAR(datum) = %s AND MONTH(datum) = %s AND DAY(datum) > 15",
+		)
+		self.assertEqual(params, [2026, 4])
 
 
 class FuelProductFilterTests(TestCase):

@@ -93,7 +93,22 @@ from .models import (
     Vehicle,
 )
 from .mixins import CenterMixin, RolePermissionRequiredMixin, role_permission_required
-from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
+from .queries import (
+    _filtered_qs,
+    date_period_filtered_query,
+    get_data_from_secondary_db,
+    lease_monthly_costs_rows,
+    policies_monthly_costs_qs,
+    report_period_filtered_query,
+    service_monthly_costs_rows,
+)
+from .report_exports import (
+    NIS_PUTNICKA_EXPORT,
+    NIS_TERETNA_EXPORT,
+    OMV_PUTNICKA_EXPORT,
+    OMV_TERETNA_EXPORT,
+    report_xlsx_response,
+)
 from .utils import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
@@ -3570,6 +3585,7 @@ def reports_index(request):
 
     return render(request, 'fleet/reports_index.html', {"sections": sections})
 
+
 def omv_putnicka_view(request):
     form = OMVPutnickaFilterForm(request.GET or None)
 
@@ -3579,27 +3595,7 @@ def omv_putnicka_view(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND godina = %s")
-            params.append(godina)
-
-        if mesec:
-            filters.append("AND mesec = %s")
-            params.append(mesec)
-
-        if polovina:
-            filters.append("AND polovina = %s")
-            params.append(polovina)
-
-    query += " " + " ".join(filters)
+    query, params = report_period_filtered_query(query, form)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
@@ -3624,49 +3620,11 @@ def export_omv_putnicka_excel(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND godina = %s")
-            params.append(int(godina))
-
-        if mesec:
-            filters.append("AND mesec = %s")
-            params.append(int(mesec))
-
-        if polovina:
-            filters.append("AND polovina = %s")
-            params.append(int(polovina))
-
-    if filters:
-        query += " " + " ".join(filters)
+    query, params = report_period_filtered_query(query, form, cast_params=True)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    # Header
-    headers = ["Šifra pos", "Godina", "Mesec", "Tip vozila", "Polovina", "Bruto", "Neto"]
-
-    # Rows
-    rows = (
-        [
-            row['sifpos'],
-            row['godina'],
-            row['mesec'],
-            row['tipvozila'],
-            row['polovina'],
-            row['bruto'],
-            row['neto']
-        ]
-        for row in data
-    )
-
-    return rows_to_xlsx_response("omv_putnicka.xlsx", "OMV Putnička", headers, rows)
+    return report_xlsx_response(OMV_PUTNICKA_EXPORT, data)
 
 def nis_putnicka_view(request):
     form = PutnickaFilterForm(request.GET or None)
@@ -3677,28 +3635,7 @@ def nis_putnicka_view(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND godina = %s")
-            params.append(godina)
-
-        if mesec:
-            filters.append("AND mesec = %s")
-            params.append(mesec)
-
-        if polovina:
-            filters.append("AND polovina = %s")
-            params.append(polovina)
-
-    if filters:
-        query += " " + " ".join(filters)
+    query, params = report_period_filtered_query(query, form)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
@@ -3721,47 +3658,11 @@ def export_nis_putnicka_excel(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND godina = %s")
-            params.append(int(godina))
-
-        if mesec:
-            filters.append("AND mesec = %s")
-            params.append(int(mesec))
-
-        if polovina:
-            filters.append("AND polovina = %s")
-            params.append(int(polovina))
-
-    if filters:
-        query += " " + " ".join(filters)
+    query, params = report_period_filtered_query(query, form, cast_params=True)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    headers = ["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"]
-
-    rows = (
-        [
-            row['tipvozila'],
-            row['sifpos'],
-            row['godina'],
-            row['mesec'],
-            row['polovina'],
-            row['bruto'],
-            row['neto']
-        ]
-        for row in data
-    )
-
-    return rows_to_xlsx_response("nis_putnicka.xlsx", "NIS Putnička", headers, rows)
+    return report_xlsx_response(NIS_PUTNICKA_EXPORT, data)
 
 def nis_teretna_view(request):
     form = PutnickaFilterForm(request.GET or None)
@@ -3772,30 +3673,7 @@ def nis_teretna_view(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND YEAR(datum) = %s")
-            params.append(godina)
-
-        if mesec:
-            filters.append("AND MONTH(datum) = %s")
-            params.append(mesec)
-
-        if polovina:
-            if polovina == 1:
-                filters.append("AND DAY(datum) <= 15")
-            elif polovina == 2:
-                filters.append("AND DAY(datum) > 15")
-
-    if filters:
-        query += " " + " ".join(filters)
+    query, params = date_period_filtered_query(query, form)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
@@ -3820,52 +3698,11 @@ def export_nis_teretna_excel(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND YEAR(datum) = %s")
-            params.append(int(godina))
-
-        if mesec:
-            filters.append("AND MONTH(datum) = %s")
-            params.append(int(mesec))
-
-        if polovina:
-            if int(polovina) == 1:
-                filters.append("AND DAY(datum) <= 15")
-            elif int(polovina) == 2:
-                filters.append("AND DAY(datum) > 15")
-
-    if filters:
-        query += " " + " ".join(filters)
+    query, params = date_period_filtered_query(query, form, cast_params=True)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    headers = ["Tip vozila", "Šifra posla", "Reg oznaka", "Kartica", "Datum", "Proizvod", "Količina", "Cena", "Bruto", "Neto"]
-
-    rows = (
-        [
-            row['tipvozila'],
-            row['sifpos'],
-            row['regozn'],
-            row['kartica'],
-            row['datum'].strftime("%d.%m.%Y %H:%M") if row['datum'] else '',
-            row['proizvod'],
-            row['kolicina'],
-            row['cena'],
-            row['bruto'],
-            row['neto']
-        ]
-        for row in data
-    )
-
-    return rows_to_xlsx_response("nis_teretna.xlsx", "NIS Teretna", headers, rows)
+    return report_xlsx_response(NIS_TERETNA_EXPORT, data)
 
 
 def omv_teretna_view(request):
@@ -3877,28 +3714,7 @@ def omv_teretna_view(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND godina = %s")
-            params.append(godina)
-
-        if mesec:
-            filters.append("AND mesec = %s")
-            params.append(mesec)
-
-        if polovina:
-            filters.append("AND polovina = %s")
-            params.append(polovina)
-
-    if filters:
-        query += " " + " ".join(filters)
+    query, params = report_period_filtered_query(query, form)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
@@ -3921,56 +3737,11 @@ def export_omv_teretna_excel(request):
         WHERE 1=1
     """
 
-    filters = []
-    params = []
-
-    if form.is_valid():
-        godina = form.cleaned_data.get('godina')
-        mesec = form.cleaned_data.get('mesec')
-        polovina = form.cleaned_data.get('polovina')
-
-        if godina:
-            filters.append("AND godina = %s")
-            params.append(int(godina))
-
-        if mesec:
-            filters.append("AND mesec = %s")
-            params.append(int(mesec))
-
-        if polovina:
-            filters.append("AND polovina = %s")
-            params.append(int(polovina))
-
-    if filters:
-        query += " " + " ".join(filters)
+    query, params = report_period_filtered_query(query, form, cast_params=True)
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    headers = ["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"]
-
-    rows = (
-        [
-            row['tipvozila'],
-            row['sifpos'],
-            row['godina'],
-            row['mesec'],
-            row['polovina'],
-            row['bruto'],
-            row['neto']
-        ]
-        for row in data
-    )
-
-    return rows_to_xlsx_response("omv_teretna.xlsx", "OMV Teretna", headers, rows)
-
-def get_data_from_secondary_db(query, db_alias, params=None):
-    """
-    Izvršava SQL upit na drugoj bazi i vraća rezultat kao listu rečnika.
-    """
-    with connections[db_alias].cursor() as cursor:
-        cursor.execute(query, params or [])
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return report_xlsx_response(OMV_TERETNA_EXPORT, data)
 
 def kasko_rate_view(request):
     """

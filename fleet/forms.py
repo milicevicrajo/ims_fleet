@@ -1,10 +1,37 @@
-from django import forms
-from .models import *
-from django_select2.forms import Select2Widget
-from django.utils.translation import gettext_lazy as _
 from datetime import date
 
+from django import forms
+from django.utils.translation import gettext_lazy as _
+from django_select2.forms import Select2Widget
+
 from core.form_fields import localized_date_field
+
+from .models import (
+    DraftInsurance,
+    DraftRequisition,
+    DraftServiceTransaction,
+    Employee,
+    FuelConsumption,
+    Incident,
+    Insurance,
+    JobCode,
+    Kvar,
+    KvarPart,
+    Lease,
+    OrganizationalUnit,
+    Policy,
+    ProcurementItem,
+    ProcurementRequest,
+    PutniNalog,
+    Requisition,
+    Service,
+    ServiceTransaction,
+    ServiceType,
+    TrafficCard,
+    Vehicle,
+    VehicleTenderDocument,
+    VehicleTravelOrder,
+)
 
 class VehicleForm(forms.ModelForm):
     first_registration_date = localized_date_field(label="Datum prve registracije")
@@ -98,11 +125,6 @@ class LeaseForm(forms.ModelForm):
                 self.initial['end_date'] = self.instance.end_date.strftime('%d.%m.%Y')
 
 class PolicyForm(forms.ModelForm):
-    YES_NO_CHOICES = (
-        (True, _("Da")),
-        (False, _("Ne")),
-    )
-
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
@@ -111,11 +133,6 @@ class PolicyForm(forms.ModelForm):
     issue_date = localized_date_field(label="Datum izdavanja")
     start_date = localized_date_field(label="Datum početka")
     end_date = localized_date_field(label="Datum završetka")
-    is_renewable = models.BooleanField(
-        default=True,
-        choices=YES_NO_CHOICES,  # Dodato choices
-        verbose_name=_("Da li se polisa obnavlja?")
-    )
     class Meta:
         model = Policy
         fields = '__all__'
@@ -515,22 +532,12 @@ class ProcurementItemForm(forms.ModelForm):
         }
 
 class ServiceTransactionForm(forms.ModelForm):
-    YES_NO_CHOICES = (
-        (True, _("Da")),
-        (False, _("Ne")),
-    )
-
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
     )
     datum = localized_date_field(label="Datum")
-    nije_garaza = models.BooleanField(
-        default=True,
-        choices=YES_NO_CHOICES,  # Dodato choices
-        verbose_name=_("Da li se polisa obnavlja?")
-    )
     class Meta:
         model = ServiceTransaction
         fields = '__all__'
@@ -547,22 +554,12 @@ class ServiceTransactionForm(forms.ModelForm):
 
 
 class DraftServiceTransactionForm(forms.ModelForm):
-    YES_NO_CHOICES = (
-        (True, _("Da")),
-        (False, _("Ne")),
-    )
-
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
     )
     datum = localized_date_field(label="Datum")
-    nije_garaza = models.BooleanField(
-        default=True,
-        choices=YES_NO_CHOICES,  # Dodato choices
-        verbose_name=_("Da li se polisa obnavlja?")
-    )
     class Meta:
         model = DraftServiceTransaction
         fields = '__all__'
@@ -688,7 +685,7 @@ class DraftRequisitionForm(forms.ModelForm):
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
             field.required = False
-class OMVPutnickaFilterForm(forms.Form):
+class ReportPeriodFilterForm(forms.Form):
     GODINA_CHOICES = [(str(y), str(y)) for y in range(2020, 2031)]
     MESEC_CHOICES = [(str(m), str(m)) for m in range(1, 13)]
     POLOVINA_CHOICES = [
@@ -701,17 +698,14 @@ class OMVPutnickaFilterForm(forms.Form):
     polovina = forms.ChoiceField(choices=POLOVINA_CHOICES, required=False, label='Polovina meseca')
 
 
-class PutnickaFilterForm(forms.Form):
-    GODINA_CHOICES = [(str(y), str(y)) for y in range(2020, 2031)]
-    MESEC_CHOICES = [(str(m), str(m)) for m in range(1, 13)]
-    POLOVINA_CHOICES = [
-        ('1', 'Prva polovina'),
-        ('2', 'Druga polovina'),
-    ]
+class OMVPutnickaFilterForm(ReportPeriodFilterForm):
+    pass
 
-    godina = forms.ChoiceField(choices=GODINA_CHOICES, required=False, label='Godina')
-    mesec = forms.ChoiceField(choices=MESEC_CHOICES, required=False, label='Mesec')
-    polovina = forms.ChoiceField(choices=POLOVINA_CHOICES, required=False, label='Polovina meseca')
+
+class PutnickaFilterForm(ReportPeriodFilterForm):
+    pass
+
+
 class InsuranceForm(forms.ModelForm):
     class Meta:
         model = Insurance
