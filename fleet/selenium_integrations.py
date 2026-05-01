@@ -24,6 +24,8 @@ from fleet.utils import (
 
 )
 
+logger = logging.getLogger(__name__)
+
 
 def dismiss_disclaimer_overlay(driver):
     try:
@@ -480,14 +482,14 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                         job_code=job_code,
                         mileage=row['Mileage'],
                     )
-                    print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
+                    logger.info(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
                 except IntegrityError:
-                    print(f"Duplicate fuel consumption skipped for {formatted_plate} {transaction_date} {cost_bruto} {amount}.")
+                    logger.warning(f"Duplicate fuel consumption skipped for {formatted_plate} {transaction_date} {cost_bruto} {amount}.")
             
             except ObjectDoesNotExist:
-                print(f"Vehicle with license plate {row['License plate No']} not found.")
+                logger.warning(f"Vehicle with license plate {row['License plate No']} not found.")
             except Exception as e:
-                print(f"Error importing row: {row}. Error: {str(e)}")
+                logger.error(f"Error importing row: {row}. Error: {str(e)}")
 
 
 def import_omv_transactions_from_csv(csv_file_path):
@@ -573,12 +575,12 @@ def import_omv_transactions_from_csv(csv_file_path):
                     final_trx=row['Final Trx.'],
                     lpi=row['LPI']
                 )
-                print(f"Successfully imported transaction for vehicle {formatted_plate}")
+                logger.info(f"Successfully imported transaction for vehicle {formatted_plate}")
             
             except ObjectDoesNotExist:
-                print(f"Vehicle with license plate {row['License plate No']} not found.")
+                logger.warning(f"Vehicle with license plate {row['License plate No']} not found.")
             except Exception as e:
-                print(f"Error importing row: {row}. Error: {str(e)}")
+                logger.error(f"Error importing row: {row}. Error: {str(e)}")
 
 def import_nis_fuel_consumption(file_path):
     # Preuzmi vremensku zonu iz Django podešavanja
@@ -614,12 +616,12 @@ def import_nis_fuel_consumption(file_path):
                 job_code=job_code,
                 mileage=row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
             )
-            print(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
+            logger.info(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
         
         except ObjectDoesNotExist:
-            print(f"Vehicle with registration number {formatted_plate} not found.")
+            logger.warning(f"Vehicle with registration number {formatted_plate} not found.")
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")
 
 
 def import_nis_transactions(file_path):
@@ -685,9 +687,9 @@ def import_nis_transactions(file_path):
                 finansijsko_prekoracenje=row['Finansijsko prekoračenje'],
                 nacin_ocitavanja_kartice=row['Način očitavanja kartice']
             )
-            print(f"Successfully imported transaction for vehicle {formatted_plate}")
+            logger.info(f"Successfully imported transaction for vehicle {formatted_plate}")
         
         except ObjectDoesNotExist:
-            print(f"Vehicle with registration number {row['Registarska oznaka vozila']} (formatted as {formatted_plate}) not found.")
+            logger.warning(f"Vehicle with registration number {row['Registarska oznaka vozila']} (formatted as {formatted_plate}) not found.")
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")

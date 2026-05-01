@@ -130,11 +130,11 @@ def import_vehicles_from_excel(excel_file_path):
         df1 = pd.read_excel(excel_file_path, sheet_name=0)  # Adjust if there are specific sheet names
         df2 = pd.read_excel(excel_file_path, sheet_name=1)
 
-        print("Sheets loaded successfully.")
+        logger.info("Sheets loaded successfully.")
 
         # Merge the data on 'broj_sasije' or another appropriate key
         df = pd.merge(df1, df2, on='broj_sasije')
-        print(f"Data merged successfully. Total records: {len(df)}")
+        logger.info(f"Data merged successfully. Total records: {len(df)}")
 
         # Iterate through the merged DataFrame
         for index, row in df.iterrows():
@@ -168,11 +168,11 @@ def import_vehicles_from_excel(excel_file_path):
                         'otpis': bool(int(row['otpis']))
                     }
                 )
-                print(f"Processed vehicle {vehicle.inventory_number}: {'Created' if created else 'Updated'}")
+                logger.info(f"Processed vehicle {vehicle.inventory_number}: {'Created' if created else 'Updated'}")
             except Exception as e:
-                print(f"Error processing record {index}: {e}")
+                logger.error(f"Error processing record {index}: {e}")
     except Exception as e:
-        print(f"Failed to load or process Excel file: {e}")
+        logger.error(f"Failed to load or process Excel file: {e}")
 
 
 def import_job_codes_from_excel(file_path):
@@ -203,14 +203,14 @@ def import_job_codes_from_excel(file_path):
                 organizational_unit=organizational_unit,
                 assigned_date=assigned_date
             )
-            print(f"Successfully imported job code {job_code_str} for vehicle with registration number {reg_br}")
+            logger.info(f"Successfully imported job code {job_code_str} for vehicle with registration number {reg_br}")
         
         except TrafficCard.DoesNotExist:
-            print(f"Traffic card with registration number {reg_br} not found.")
+            logger.warning(f"Traffic card with registration number {reg_br} not found.")
         except OrganizationalUnit.DoesNotExist:
-            print(f"Organizational unit with job code {job_code_str} not found.")
+            logger.warning(f"Organizational unit with job code {job_code_str} not found.")
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")
 
 
 
@@ -241,12 +241,12 @@ def import_lease_data_from_excel(file_path):
                 end_date=end_date,
                 note=row.get('napomena', '')  # Ako postoji napomena
             )
-            print(f"Successfully imported lease for vehicle {vehicle.chassis_number}")
+            logger.info(f"Successfully imported lease for vehicle {vehicle.chassis_number}")
         
         except ObjectDoesNotExist:
-            print(f"Vehicle with chassis number {row['Inv. Broj']} not found.")
+            logger.warning(f"Vehicle with chassis number {row['Inv. Broj']} not found.")
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")
 
 def import_policy_data_from_excel(file_path):
     # Učitaj Excel sheet
@@ -289,12 +289,12 @@ def import_policy_data_from_excel(file_path):
                 other_installments_amount=other_installments_amount,
                 number_of_installments=number_of_installments
             )
-            print(f"Successfully imported policy {row['BrojPolise']} for vehicle with registration number {reg_br}")
+            logger.info(f"Successfully imported policy {row['BrojPolise']} for vehicle with registration number {reg_br}")
         
         except ObjectDoesNotExist:
-            print(f"Vehicle with registration number {reg_br} not found.")
+            logger.warning(f"Vehicle with registration number {reg_br} not found.")
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")
 
 
 def import_services_from_excel(file_path):
@@ -314,7 +314,7 @@ def import_services_from_excel(file_path):
                     traffic_card = TrafficCard.objects.get(registration_number=reg_br)
                     vehicle = traffic_card.vehicle  # Povezuje vozilo
             except TrafficCard.DoesNotExist:
-                print(f"TrafficCard with registration number {reg_br} not found. Proceeding with vehicle=None.")
+                logger.warning(f"TrafficCard with registration number {reg_br} not found. Proceeding with vehicle=None.")
 
 
             # Check required fields
@@ -347,7 +347,7 @@ def import_services_from_excel(file_path):
                     napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
                     nije_garaza=row.get('nije_garaza') if pd.notna(row.get('nije_garaza')) else None,
                 )
-                print(f"Row {index} saved as draft due to missing fields: {missing_fields}")
+                logger.info(f"Row {index} saved as draft due to missing fields: {missing_fields}")
                 continue
 
             # Create or update ServiceTransaction
@@ -372,10 +372,10 @@ def import_services_from_excel(file_path):
                 napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
                 nije_garaza=row['nije_garaza'],
             )
-            print(f"Successfully imported service for vehicle {reg_br}")
+            logger.info(f"Successfully imported service for vehicle {reg_br}")
 
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")
 
 
 def import_requisitions_from_excel(file_path):
@@ -394,7 +394,7 @@ def import_requisitions_from_excel(file_path):
                     traffic_card = TrafficCard.objects.get(registration_number=reg_br)
                     vehicle = traffic_card.vehicle
             except TrafficCard.DoesNotExist:
-                print(f"TrafficCard with registration number {reg_br} not found. Proceeding with vehicle=None.")
+                logger.warning(f"TrafficCard with registration number {reg_br} not found. Proceeding with vehicle=None.")
 
             # Check required fields
             required_fields = [
@@ -425,7 +425,7 @@ def import_requisitions_from_excel(file_path):
                     nije_garaza=int(row['nije_garaza']) if pd.notna(row['kilometraza']) else None,
                     napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
                 )
-                print(f"Row {index} saved as draft due to missing fields: {missing_fields}")
+                logger.info(f"Row {index} saved as draft due to missing fields: {missing_fields}")
                 continue
 
             # Create or update Requisition
@@ -448,10 +448,10 @@ def import_requisitions_from_excel(file_path):
                 nije_garaza=int(row['nije_garaza']),
                 napomena=str(row['napomena']).strip() if pd.notna(row['napomena']) else None,
             )
-            print(f"Successfully imported requisition {row['br_dok']} for vehicle {vehicle}")
+            logger.info(f"Successfully imported requisition {row['br_dok']} for vehicle {vehicle}")
 
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")
 
 
 
@@ -480,10 +480,10 @@ def import_employee_data_from_excel(file_path):
                 date_of_joining=date_of_joining,
                 phone_number=phone_number
             )
-            print(f"Successfully imported employee {row['ranaz']}")
+            logger.info(f"Successfully imported employee {row['ranaz']}")
         
         except Exception as e:
-            print(f"Error importing row {index}: {e}")
+            logger.error(f"Error importing row {index}: {e}")
 
 def populate_service_types():
     # Podaci koje želiš da ubaciš u bazu
@@ -511,7 +511,7 @@ def populate_service_types():
             description=service_type_data["description"]
         )
 
-    print("Podaci su uspešno uneti u bazu.")
+    logger.info("Podaci su uspešno uneti u bazu.")
 
 def formiranje_org_jedinica():
     import django
@@ -554,11 +554,11 @@ def formiranje_org_jedinica():
             defaults={'name': name, 'center': center_code}
         )
         if not created:
-            print(f"Jedinica sa kodom {code} već postoji.")
+            logger.info(f"Jedinica sa kodom {code} već postoji.")
         else:
-            print(f"Uspješno dodata jedinica: {name} sa kodom {code} i šifrom centra {center_code}.")
+            logger.info(f"Uspješno dodata jedinica: {name} sa kodom {code} i šifrom centra {center_code}.")
 
-    print("Proces unosa je završen.")
+    logger.info("Proces unosa je završen.")
 
 
 def calculate_average_fuel_consumption(vehicle):
@@ -827,7 +827,7 @@ def fetch_service_data(last_24_hours=True, days=None):
     Polje 'popravka_kategorija' će biti postavljeno na None ako je vrednost iz baze prazna ili nevalidna.
     """
     try:
-        print("Pokrećem funkciju za povlačenje podataka o servisnim transakcijama...")
+        logger.info("Pokrećem funkciju za povlačenje podataka o servisnim transakcijama...")
 
         # SQL upit za povlačenje svih kolona iz view-a `dbo.fleet_servisi`
         # VAŽNO: Redosled kolona ovde mora TAČNO odgovarati redosledu u vašem SQL Server View-u.
@@ -842,23 +842,23 @@ def fetch_service_data(last_24_hours=True, days=None):
         # Dodajte WHERE klauzulu u zavisnosti od parametara
         if days is not None:
             query += f" WHERE datum > DATEADD(day, -{days}, GETDATE())"
-            print(f"Filtriram podatke za poslednjih {days} dana.")
+            logger.info(f"Filtriram podatke za poslednjih {days} dana.")
         elif last_24_hours:
             query += " WHERE datum > DATEADD(day, -1, GETDATE())"
-            print("Filtriram podatke za poslednja 24 sata.")
+            logger.info("Filtriram podatke za poslednja 24 sata.")
 
         # Izvršite upit i preuzmite podatke
         with connections['server_db'].cursor() as cursor:
-            print(f"Izvršavam SQL upit za preuzimanje podataka: {query}")
+            logger.info(f"Izvršavam SQL upit za preuzimanje podataka: {query}")
             cursor.execute(query)
             rows = cursor.fetchall()
-            print(f"Broj povučenih redova: {len(rows)}")
+            logger.info(f"Broj povučenih redova: {len(rows)}")
 
         expected_columns = 20
 
         for index, row in enumerate(rows):
             if len(row) != expected_columns:
-                print(f"UPOZORENJE: Red {index+1} ima {len(row)} kolona, očekivano je {expected_columns}. Preskačem red: {row}")
+                logger.warning(f"UPOZORENJE: Red {index+1} ima {len(row)} kolona, očekivano je {expected_columns}. Preskačem red: {row}")
                 continue
 
             try:
@@ -880,7 +880,7 @@ def fetch_service_data(last_24_hours=True, days=None):
                     'vez_dok': row[6],
                     'br_naloga': row[5]
                 }
-                print(unique_fields)
+                logger.debug(unique_fields)
                 
                 #transaction_exists = ServiceTransaction.objects.filter(**unique_fields).exists()
                 draft_exists = DraftServiceTransaction.objects.filter(**unique_fields).exists()
@@ -892,10 +892,10 @@ def fetch_service_data(last_24_hours=True, days=None):
                 # ).exists()
 
                 if transaction_exists:
-                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Finalnoj tabeli, preskačem unos.")
+                    logger.warning(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Finalnoj tabeli, preskačem unos.")
                     continue
                 if draft_exists:
-                    print(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Draft tabeli, preskačem unos.")
+                    logger.warning(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Draft tabeli, preskačem unos.")
                     continue
                 
                 # Konverzija vrednosti za 'potrazuje' i 'duguje'
@@ -924,14 +924,14 @@ def fetch_service_data(last_24_hours=True, days=None):
                     try:
                         service_type_instance = ServiceType.objects.get(name=str(service_type_value).strip())
                     except ServiceType.DoesNotExist:
-                        print(f"UPOZORENJE: ServiceType '{service_type_value}' ne postoji u bazi. Polje 'popravka_kategorija' će biti postavljeno na None.")
+                        logger.warning(f"UPOZORENJE: ServiceType '{service_type_value}' ne postoji u bazi. Polje 'popravka_kategorija' će biti postavljeno na None.")
                     except Exception as st_e:
-                        print(f"Greška pri traženju ServiceType '{service_type_value}': {st_e}. Polje 'popravka_kategorija' će biti postavljeno na None.")
+                        logger.info(f"Greška pri traženju ServiceType '{service_type_value}': {st_e}. Polje 'popravka_kategorija' će biti postavljeno na None.")
 
                 # Pokušaj pronalaženja vozila. RegOzn je na row[15], ali se NE prosleđuje modelu kao 'registracija' polje.
                 vehicle = Vehicle.objects.filter(traffic_cards__registration_number=row[15]).first() if row[15] else None
 
-                print(f"Novi zapis za br_naloga {row[5]} se dodaje u draft tabelu DraftServiceTransaction.")
+                logger.info(f"Novi zapis za br_naloga {row[5]} se dodaje u draft tabelu DraftServiceTransaction.")
 
                 # Kreiraj zapis u draft tabeli
                 draft_transaction = DraftServiceTransaction(
@@ -957,17 +957,17 @@ def fetch_service_data(last_24_hours=True, days=None):
                     napomena=row[19]
                 )
                 draft_transaction.save()
-                print(f"Zapis sa brojem naloga {row[5]} je uspešno sačuvan u draft tabeli.")
+                logger.info(f"Zapis sa brojem naloga {row[5]} je uspešno sačuvan u draft tabeli.")
 
             except ValueError as ve:
-                print(f"Greška pri konverziji podataka u redu {index+1} (nalog: {row[5]}): {ve}. Cela kolona: {row}")
+                logger.info(f"Greška pri konverziji podataka u redu {index+1} (nalog: {row[5]}): {ve}. Cela kolona: {row}")
             except Exception as e:
-                print(f"Nepredviđena greška pri obradi reda {index+1} (nalog: {row[5]}): {e}. Cela kolona: {row}")
+                logger.error(f"Nepredviđena greška pri obradi reda {index+1} (nalog: {row[5]}): {e}. Cela kolona: {row}")
 
         return "Podaci su uspešno povučeni i sačuvani u draft tabeli, preskočeni su duplikati."
 
     except Exception as e:
-        print(f"Došlo je do opšte greške prilikom povlačenja podataka: {e}")
+        logger.info(f"Došlo je do opšte greške prilikom povlačenja podataka: {e}")
         return f"Došlo je do opšte greške prilikom povlačenja podataka: {e}"
 
 def process_vehicle_retirements():
@@ -1087,7 +1087,7 @@ def fetch_requisition_data(last_24_hours=True, days=None):
     Funkcija za povlačenje podataka o trebovanjima sa proverom opcionalnih polja.
     """
     try:
-        print("Pokrećem funkciju za povlačenje podataka o trebovanjima...")
+        logger.info("Pokrećem funkciju za povlačenje podataka o trebovanjima...")
 
         # SQL upit za povlačenje podataka
         query = """
@@ -1098,24 +1098,24 @@ def fetch_requisition_data(last_24_hours=True, days=None):
         # Dodaj WHERE klauzulu u zavisnosti od parametara (ako je potrebno vremensko filtriranje)
         if days is not None:
             query += f" WHERE GETDATE() - {days} > '2000-01-01'"  # Dummy condition since no date filtering
-            print(f"Filtriram podatke za poslednjih {days} dana.")
+            logger.info(f"Filtriram podatke za poslednjih {days} dana.")
         elif last_24_hours:
-            print("Napomena: Nema vremenskog filtriranja jer nema dostupnog datuma.")
+            logger.warning("Napomena: Nema vremenskog filtriranja jer nema dostupnog datuma.")
 
         # Izvrši upit i preuzmi podatke
         with connections['server_db'].cursor() as cursor:
-            print("Izvršavam SQL upit za preuzimanje podataka...")
+            logger.info("Izvršavam SQL upit za preuzimanje podataka...")
             cursor.execute(query)
             rows = cursor.fetchall()
-            print(f"Broj povučenih redova: {len(rows)}")
+            logger.info(f"Broj povučenih redova: {len(rows)}")
 
         # Iteracija kroz povučene redove
         for index, row in enumerate(rows):
-            print(f"Obrađujem red {index+1} sa {len(row)} kolona.")
+            logger.info(f"Obrađujem red {index+1} sa {len(row)} kolona.")
 
             # Provera broja kolona
             if len(row) < 11:
-                print(f"Red {index+1} ima manje od očekivanih 11 kolona: {row}")
+                logger.info(f"Red {index+1} ima manje od očekivanih 11 kolona: {row}")
                 continue
 
             try:
@@ -1128,7 +1128,7 @@ def fetch_requisition_data(last_24_hours=True, days=None):
                 draft_exists = DraftRequisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
 
                 if not requisition_exists and not draft_exists:
-                    print(f"Zapis {br_dok} - {sif_art} ne postoji. Dodajem u draft tabelu.")
+                    logger.warning(f"Zapis {br_dok} - {sif_art} ne postoji. Dodajem u draft tabelu.")
 
                     # Konverzija vrednosti za validaciju
                     kol = float(row[7]) if row[7] else None
@@ -1150,19 +1150,19 @@ def fetch_requisition_data(last_24_hours=True, days=None):
                         napomena=row[10] if row[10] else None
                     )
                     draft.save()
-                    print(f"Zapis {br_dok} - {sif_art} je uspešno sačuvan u draft tabeli.")
+                    logger.info(f"Zapis {br_dok} - {sif_art} je uspešno sačuvan u draft tabeli.")
                 else:
-                    print(f"Zapis {br_dok} - {sif_art} već postoji. Preskačem unos.")
+                    logger.info(f"Zapis {br_dok} - {sif_art} već postoji. Preskačem unos.")
 
             except ValueError as ve:
-                print(f"Greška pri konverziji podataka u redu {index+1}: {ve}")
+                logger.info(f"Greška pri konverziji podataka u redu {index+1}: {ve}")
             except Exception as e:
-                print(f"Neprikazana greška u redu {index+1}: {e}")
+                logger.error(f"Neprikazana greška u redu {index+1}: {e}")
 
         return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
 
     except Exception as e:
-        print(f"Došlo je do greške prilikom povlačenja podataka: {e}")
+        logger.info(f"Došlo je do greške prilikom povlačenja podataka: {e}")
         return f"Došlo je do greške prilikom povlačenja podataka: {e}"
 
 
@@ -1450,7 +1450,7 @@ def sync_organizational_units_from_view():
         else:
             updated += 1
 
-    print(f"Organizacione jedinice: {created} dodatih, {updated} ažuriranih.")
+    logger.info(f"Organizacione jedinice: {created} dodatih, {updated} ažuriranih.")
 
 
 INS_VIEW = "dbo.fleet_potrazivanje_ddor"   # naziv SQL view-a
@@ -1467,7 +1467,7 @@ def fetch_ddor_insurance_data():
     Preskače zapise koji već postoje u final/draft po ključu KEY_FIELDS.
     """
     try:
-        print("Pokrećem fetch_ddor_insurance_data...")
+        logger.info("Pokrećem fetch_ddor_insurance_data...")
 
         query = f"""
             SELECT
@@ -1476,10 +1476,10 @@ def fetch_ddor_insurance_data():
         """
 
         with connections[DB_ALIAS].cursor() as cursor:
-            print("Izvršavam SQL upit...")
+            logger.info("Izvršavam SQL upit...")
             cursor.execute(query)
             rows = cursor.fetchall()
-            print(f"Preuzeto redova: {len(rows)}")
+            logger.info(f"Preuzeto redova: {len(rows)}")
 
         for i, row in enumerate(rows, start=1):
             try:
@@ -1509,22 +1509,22 @@ def fetch_ddor_insurance_data():
                 # duplikat čuvar
                 key_filter = dict(god=god, sif_vrs=sif_vrs, br_naloga=br_naloga, stavka=stavka, knt=knt)
                 if Insurance.objects.filter(**key_filter).exists() or DraftInsurance.objects.filter(**key_filter).exists():
-                    print(f"[{i}] Postoji (final/draft): {key_filter} — preskačem.")
+                    logger.warning(f"[{i}] Postoji (final/draft): {key_filter} — preskačem.")
                     continue
 
                 DraftInsurance.objects.create(
                     god=god, sif_vrs=sif_vrs, br_naloga=br_naloga, stavka=stavka,
                     oj=oj, knt=knt, datum=datum, vez_dok=vez_dok, potrazuje=potrazuje, kola=kola
                 )
-                print(f"[{i}] Sačuvan draft: {br_naloga}/{stavka} ({god})")
+                logger.info(f"[{i}] Sačuvan draft: {br_naloga}/{stavka} ({god})")
 
             except Exception as e:
-                print(f"[{i}] Greška u obradi reda: {e}")
+                logger.info(f"[{i}] Greška u obradi reda: {e}")
 
         return "DDOR: podaci uspešno povučeni u draft; duplikati preskočeni."
 
     except Exception as e:
-        print(f"Greška u fetch_ddor_insurance_data: {e}")
+        logger.info(f"Greška u fetch_ddor_insurance_data: {e}")
         return f"Greška u fetch_ddor_insurance_data: {e}"
 
 

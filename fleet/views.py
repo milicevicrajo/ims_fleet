@@ -31,6 +31,14 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_filters.views import FilterView
 
+from core.exporting import csv_attachment_response, xlsx_attachment_response
+
+from .analytics_helpers import (
+    cost_per_km_status,
+    cost_per_km_thresholds,
+    is_red_zone,
+    net_maintenance_cost,
+)
 from .filters import (
     FuelFilterForm,
     FuelTransactionFilterForm,
@@ -87,8 +95,6 @@ from .models import (
     VehicleTravelOrder,
     Vehicle,
 )
-
-LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 from .mixins import CenterMixin, RolePermissionRequiredMixin, role_permission_required
 from .queries import _filtered_qs, lease_monthly_costs_rows, policies_monthly_costs_qs, service_monthly_costs_rows
 from .utils import (
@@ -105,17 +111,12 @@ from .utils import (
     sanitize_filename,
 )
 
+logger = logging.getLogger(__name__)
+LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
+
 # <!-- ======================================================================= -->
 #                           <!-- DASHBOARD I ANALITIKA -->
 # <!-- ======================================================================= -->
-def net_maintenance_cost(service_cost, requisition_cost=0, insurance_recovery=0):
-    return (service_cost or 0) + (requisition_cost or 0) - (insurance_recovery or 0)
-
-
-def is_red_zone(long_term_rental, value, net_cost):
-    return not long_term_rental and (value or 0) > 0 and (net_cost or 0) > (value or 0)
-
-
 def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None):
     period_end_date = period_end_date or date.today()
     period_start_dt, _ = date_range_for_datetime_field(period_start_date)
@@ -340,52 +341,6 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
 
     rows.sort(key=lambda row: row['cost_per_km'] or 0, reverse=True)
     return rows[:limit] if limit else rows
-
-
-def percentile(values, percent):
-    values = sorted(values)
-    if not values:
-        return 0
-    if len(values) == 1:
-        return values[0]
-    position = (len(values) - 1) * percent / 100
-    lower = int(position)
-    upper = min(lower + 1, len(values) - 1)
-    fraction = position - lower
-    return values[lower] + (values[upper] - values[lower]) * fraction
-
-
-def cost_per_km_thresholds(rows):
-    grouped = defaultdict(list)
-    for row in rows:
-        if row['cost_per_km'] is not None:
-            grouped[row['category']].append(row['cost_per_km'])
-
-    thresholds = {}
-    for category, values in grouped.items():
-        thresholds[category] = {
-            'category': category,
-            'vehicle_count': len(values),
-            'median': percentile(values, 50),
-            'p75': percentile(values, 75),
-            'p90': percentile(values, 90),
-            'average': sum(values) / len(values) if values else 0,
-        }
-    return thresholds
-
-
-def cost_per_km_status(value, threshold):
-    if value is None:
-        return 'Opomena'
-    if not threshold:
-        return 'Nema praga'
-    if value <= threshold['median']:
-        return 'Dobro'
-    if value <= threshold['p75']:
-        return 'Za praćenje'
-    if value <= threshold['p90']:
-        return 'Rizično'
-    return 'Neisplativo'
 
 
 def cost_per_km_period_analysis(periods):
@@ -1365,8 +1320,7 @@ def vehicle_export_csv(request):
     vehicle_filter = VehicleFilter(request.GET, queryset=base_qs)
     qs = vehicle_filter.qs
 
-    response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="vozila.csv"'
+    response = csv_attachment_response("vozila.csv", quoted=True)
     response.write('\ufeff')
 
     writer = csv.writer(response, delimiter=';')
@@ -1405,9 +1359,9 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
     context_object_name = 'vehicle'
 
     def get(self, request, *args, **kwargs):
-        print("VehicleDetailView get() method called")
+        logger.info("VehicleDetailView get() method called")
         vehicle = self.get_object()
-        print(vehicle)
+        logger.info(vehicle)
 
         # Subquery to get the latest org_unit for each Vehicle
         # Ovo vam vraća kod centra iz JobCode-a, bazirano na 'organizational_unit__center'
@@ -1998,12 +1952,8 @@ def export_leases_to_excel(request):
             lease.note or "",
         ])
 
-    # Odgovor kao Excel fajl
-    response = HttpResponse(
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
     fname = f"lizing_ugovori_{tip or 'svi'}.xlsx"
-    response["Content-Disposition"] = f'attachment; filename="{fname}"'
+    response = xlsx_attachment_response(fname, quoted=True)
     wb.save(response)
     return response
 
@@ -2201,7 +2151,7 @@ class DraftPolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
     def form_valid(self, form):
         # Sačuvaj izmene u draft tabeli
         draft = form.save(commit=False)
-        print("Izmene sačuvane u draft tabeli.")
+        logger.info("Izmene sačuvane u draft tabeli.")
 
         # Provera da li su svi potrebni podaci sada prisutni osim opcionalnih polja
         required_fields = [
@@ -2243,14 +2193,14 @@ class DraftPolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
                 number_of_installments=draft.number_of_installments
             )
             policy.save()
-            print("Podaci migrirani u glavnu tabelu Policy.")
+            logger.info("Podaci migrirani u glavnu tabelu Policy.")
             draft.delete()  # Obrisan unos iz draft tabele
             return redirect(self.get_success_url())
 
         # Ako podaci nisu kompletni, sačuvaj ih samo u draft tabeli
         else:
             draft.save()  # Sačuvaj izmene u draft tabeli
-            print("Podaci nisu kompletni, ostaju u draft tabeli.")
+            logger.info("Podaci nisu kompletni, ostaju u draft tabeli.")
             return redirect(self.get_success_url())
 
 
@@ -3051,7 +3001,7 @@ class DraftServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequir
     def form_valid(self, form):
         # Sačuvaj izmene u draft tabeli
         draft = form.save(commit=False)
-        print("Izmene sačuvane u draft tabeli.")
+        logger.info("Izmene sačuvane u draft tabeli.")
 
         # Proveri da li su svi potrebni podaci sada prisutni osim `kom` i `napomena`
         is_complete = all([
@@ -3077,13 +3027,13 @@ class DraftServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequir
         if is_complete:
             draft.save()
             migrate_draft_to_service_transaction(draft.id)
-            print("Podaci migrirani u glavnu tabelu.")
+            logger.info("Podaci migrirani u glavnu tabelu.")
             messages.success(self.request, "✅ Podaci su uspešno migrirani u glavnu tabelu.")
             return redirect(self.get_success_url())
         
         # Ako podaci nisu kompletni, sačuvaj samo u draft tabeli
         else:
-            print("Podaci nisu kompletni, ostaju u draft tabeli.")
+            logger.info("Podaci nisu kompletni, ostaju u draft tabeli.")
             messages.warning(self.request, "⚠️ Podaci nisu kompletni, ostaju u draft tabeli.")
             draft.save()  # Sačuvaj bez migracije
             return redirect(self.get_success_url())
@@ -3203,9 +3153,9 @@ class DraftRequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin
        
 
         for draft in draft_requisitions:
-            print(f"Obrada: {draft}, kompletan: {draft.is_complete()}")
+            logger.info(f"Obrada: {draft}, kompletan: {draft.is_complete()}")
             if draft.is_complete():
-                print("→ Premeštam u Requisition")
+                logger.info("→ Premeštam u Requisition")
                 Requisition.objects.create(
                     vehicle=draft.vehicle,
                     sif_pred=draft.sif_pred,
@@ -3393,7 +3343,6 @@ def import_omv_teretna_csv_view(request):
 
 
 # POVLACENJE PODATAKA IZ DRUGE BAZE
-logger = logging.getLogger(__name__)  
 def fetch_vehicle_value_view(request):
     if request.method == 'POST':
         # Povlačenje podataka iz druge baze
@@ -3412,9 +3361,8 @@ def fetch_vehicle_value_view(request):
 
             try:
                 # Pronađi vozilo po inventory_number (sif_osn)
-                print(sif_osn)
+                logger.info(sif_osn)
                 vehicle = Vehicle.objects.get(inventory_number=sif_osn)
-                #print(vehicle)
                 # Ažuriraj polje 'value' sa novom vrednošću
                 vehicle.value = vrednost
                 vehicle.save()
@@ -3668,8 +3616,7 @@ def omv_putnicka_view(request):
     if 'export' in request.GET:
 
         df = pd.DataFrame(data)
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename=omv_putnicka.xlsx'
+        response = xlsx_attachment_response("omv_putnicka.xlsx")
         with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='OMV Putnicka')
         return response
@@ -3736,8 +3683,7 @@ def export_omv_putnicka_excel(request):
         ])
 
     # Response
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=omv_putnicka.xlsx'
+    response = xlsx_attachment_response("omv_putnicka.xlsx")
     wb.save(response)
     return response
 
@@ -3778,8 +3724,7 @@ def nis_putnicka_view(request):
     # Excel export
     if 'export' in request.GET:
         df = pd.DataFrame(data)
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename=nis_putnicka.xlsx'
+        response = xlsx_attachment_response("nis_putnicka.xlsx")
         with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='NIS Putnicka')
         return response
@@ -3842,8 +3787,7 @@ def export_nis_putnicka_excel(request):
             row['neto']
         ])
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=nis_putnicka.xlsx'
+    response = xlsx_attachment_response("nis_putnicka.xlsx")
     wb.save(response)
     return response
 
@@ -3886,8 +3830,7 @@ def nis_teretna_view(request):
     # Excel export
     if 'export' in request.GET:
         df = pd.DataFrame(data)
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename=nis_teretna.xlsx'
+        response = xlsx_attachment_response("nis_teretna.xlsx")
         with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='NIS Teretna')
         return response
@@ -3957,8 +3900,7 @@ def export_nis_teretna_excel(request):
             row['neto']
         ])
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=nis_teretna.xlsx'
+    response = xlsx_attachment_response("nis_teretna.xlsx")
     wb.save(response)
     return response
 
@@ -4000,8 +3942,7 @@ def omv_teretna_view(request):
     # Excel export
     if 'export' in request.GET:
         df = pd.DataFrame(data)
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename=omv_teretna.xlsx'
+        response = xlsx_attachment_response("omv_teretna.xlsx")
         with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='OMV Teretna')
         return response
@@ -4064,8 +4005,7 @@ def export_omv_teretna_excel(request):
             row['neto']
         ])
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=omv_teretna.xlsx'
+    response = xlsx_attachment_response("omv_teretna.xlsx")
     wb.save(response)
     return response
 
@@ -4235,8 +4175,7 @@ class PoliciesMonthlyCostsView(LoginRequiredMixin, FilterView, ListView):
     
 def policies_monthly_costs_csv(request):
     qs = _filtered_qs(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="polise_mesecni_troskovi_sve_godine.csv"'
+    response = csv_attachment_response("polise_mesecni_troskovi_sve_godine.csv", quoted=True)
     writer = csv.writer(response)
     writer.writerow(['god', 'mesec', 'centar', 'oj_id', 'oj_naziv', 'sifra_posla', 'vrsta', 'iznos'])
     for r in qs:
@@ -4279,8 +4218,7 @@ class ServiceMonthlyCostsView(LoginRequiredMixin, FilterView):
 def service_monthly_costs_csv(request):
     rows = service_monthly_costs_rows(request)
 
-    resp = HttpResponse(content_type='text/csv')
-    resp['Content-Disposition'] = 'attachment; filename="service_monthly_costs.csv"'
+    resp = csv_attachment_response("service_monthly_costs.csv", charset=None, quoted=True)
 
     w = csv.writer(resp)
     # zaglavlje koje odgovara poljima iz service_monthly_costs_rows

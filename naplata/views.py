@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
 from decimal import Decimal
 from datetime import datetime, date, time
+import logging
 from urllib.parse import urlencode
 from django.db import connections
 from django.core.exceptions import PermissionDenied
@@ -15,6 +15,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from fleet.mixins import role_permission_required
 from fleet.models import OrganizationalUnit
+from core.exporting import xlsx_attachment_response
 from .db_users import resolve_user_pk_for_db
 from .forms import (
     KontaktiForm,
@@ -33,6 +34,8 @@ from .models import (
     Tuzbe,
     AvansKlijent,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _allowed_centers_from_user(user):
@@ -403,10 +406,7 @@ def export_neodobrene_if_excel(request):
         max_len = max((len(str(cell.value)) if cell.value is not None else 0) for cell in column_cells)
         ws.column_dimensions[get_column_letter(col_num)].width = min(max(max_len + 2, 10), 70)
 
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename=neodobrene_if.xlsx'
+    response = xlsx_attachment_response("neodobrene_if.xlsx")
     wb.save(response)
     return response
 
@@ -479,8 +479,7 @@ def export_dugovanja_bucketi_excel(request):
             ws.append(row)
 
     # Response
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=dugovanja_po_baketima.xlsx'
+    response = xlsx_attachment_response("dugovanja_po_baketima.xlsx")
     wb.save(response)
     return response
 
@@ -807,8 +806,7 @@ def export_partner_baketi_excel(request, sif_par):
     for row in rows:
         ws.append(row)
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename=dugovanja_baketi_partner_{sif_par}.xlsx'
+    response = xlsx_attachment_response(f"dugovanja_baketi_partner_{sif_par}.xlsx")
     wb.save(response)
     return response
 
@@ -845,10 +843,7 @@ def export_utuzene_fakture_excel(request, sif_par):
             ws.cell(row=row_index, column=col_index, value=value)
 
     # 5. Pripremi fajl za slanje kao response
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename=utuzene_fakture.xlsx'
+    response = xlsx_attachment_response("utuzene_fakture.xlsx")
     wb.save(response)
     return response
 
@@ -884,10 +879,7 @@ def export_opomene_excel(request,sif_par):
             ws.cell(row=row_index, column=col_index, value=value)
 
     # Response
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename=opomene_fakture.xlsx'
+    response = xlsx_attachment_response("opomene_fakture.xlsx")
     wb.save(response)
     return response
 
@@ -916,8 +908,7 @@ def export_baket_90_excel(request, sif_par):
     for row in data:
         ws.append(row)
 
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=baket_90.xlsx'
+    response = xlsx_attachment_response("baket_90.xlsx")
     wb.save(response)
     return response
 
@@ -944,10 +935,7 @@ def export_baket_60_excel(request, sif_par):
     for row in data:
         ws.append(row)
 
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = f'attachment; filename=baket_60_sifpar_{sif_par}.xlsx'
+    response = xlsx_attachment_response(f"baket_60_sifpar_{sif_par}.xlsx")
     wb.save(response)
     return response
 
@@ -1264,7 +1252,7 @@ def dodaj_opomenu(request, sif_par, naz_par):
             opomena.save(using='server_db')
             return redirect('naplata:detalji_partner', sif_par = sif_par)
         else:
-            print("Forma nije validna!", form.errors)  # Ispis grešaka u konzoli
+            logger.warning("Forma nije validna! %s", form.errors)
     else:
         form = OpomeneForm(initial={'sif_par': sif_par, 'naz_par': naz_par})  
 
