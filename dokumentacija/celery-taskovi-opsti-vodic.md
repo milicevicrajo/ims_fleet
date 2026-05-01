@@ -94,17 +94,17 @@ Pokrenuti odvojene procese:
 
 1. Worker za sync taskove:
 ```powershell
-celery -A ims_fleet worker -n sync@%COMPUTERNAME% -Q sync,default --pool=threads --concurrency=2 --prefetch-multiplier=1 --without-gossip --without-mingle -l INFO
+celery -A ims_erp worker -n sync@%COMPUTERNAME% -Q sync,default --pool=threads --concurrency=2 --prefetch-multiplier=1 --without-gossip --without-mingle -l INFO
 ```
 
 2. Worker za selenium taskove:
 ```powershell
-celery -A ims_fleet worker -n selenium@%COMPUTERNAME% -Q selenium --pool=solo --concurrency=1 --prefetch-multiplier=1 --without-gossip --without-mingle -l INFO
+celery -A ims_erp worker -n selenium@%COMPUTERNAME% -Q selenium --pool=solo --concurrency=1 --prefetch-multiplier=1 --without-gossip --without-mingle -l INFO
 ```
 
 3. Beat scheduler:
 ```powershell
-celery -A ims_fleet beat --scheduler django_celery_beat.schedulers:DatabaseScheduler -l INFO
+celery -A ims_erp beat --scheduler django_celery_beat.schedulers:DatabaseScheduler -l INFO
 ```
 
 Servis menadzer:

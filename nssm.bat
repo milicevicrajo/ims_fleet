@@ -2,10 +2,10 @@
 setlocal
 
 set NSSM=C:\nssm\nssm.exe
-set PROJECT_DIR=C:\DjangoApps\ims_fleet
+set PROJECT_DIR=C:\DjangoApps\ims_erp
 set VENV_DIR=C:\DjangoApps\venv
-set PYTHONPATH=C:\DjangoApps\ims_fleet
-set DJANGO_SETTINGS_MODULE=ims_fleet.settings.production
+set PYTHONPATH=C:\DjangoApps\ims_erp
+set DJANGO_SETTINGS_MODULE=ims_erp.settings.production
 
 set REDIS_EXE=C:\Redis\redis-server.exe
 set REDIS_CONF=C:\Redis\redis.windows.conf
@@ -28,7 +28,7 @@ echo Installing Redis service...
 echo Installing Celery worker service...
 "%NSSM%" install %WORKER_SERVICE% "%VENV_DIR%\Scripts\celery.exe"
 "%NSSM%" set %WORKER_SERVICE% AppDirectory "%PROJECT_DIR%"
-"%NSSM%" set %WORKER_SERVICE% AppParameters -A ims_fleet worker -l info -P solo -Q default,sync,selenium
+"%NSSM%" set %WORKER_SERVICE% AppParameters -A ims_erp worker -l info -P solo -Q default,sync,selenium
 "%NSSM%" set %WORKER_SERVICE% AppEnvironmentExtra DJANGO_SETTINGS_MODULE=%DJANGO_SETTINGS_MODULE% PYTHONPATH=%PYTHONPATH%
 "%NSSM%" set %WORKER_SERVICE% AppStdout "%LOG_DIR%\celery-worker.stdout.log"
 "%NSSM%" set %WORKER_SERVICE% AppStderr "%LOG_DIR%\celery-worker.stderr.log"
@@ -41,7 +41,7 @@ echo Installing Celery worker service...
 echo Installing Celery beat service...
 "%NSSM%" install %BEAT_SERVICE% "%VENV_DIR%\Scripts\celery.exe"
 "%NSSM%" set %BEAT_SERVICE% AppDirectory "%PROJECT_DIR%"
-"%NSSM%" set %BEAT_SERVICE% AppParameters -A ims_fleet beat --scheduler django_celery_beat.schedulers:DatabaseScheduler -l info
+"%NSSM%" set %BEAT_SERVICE% AppParameters -A ims_erp beat --scheduler django_celery_beat.schedulers:DatabaseScheduler -l info
 "%NSSM%" set %BEAT_SERVICE% AppEnvironmentExtra DJANGO_SETTINGS_MODULE=%DJANGO_SETTINGS_MODULE% PYTHONPATH=%PYTHONPATH%
 "%NSSM%" set %BEAT_SERVICE% AppStdout "%LOG_DIR%\celery-beat.stdout.log"
 "%NSSM%" set %BEAT_SERVICE% AppStderr "%LOG_DIR%\celery-beat.stderr.log"

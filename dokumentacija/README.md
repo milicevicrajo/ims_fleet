@@ -1,6 +1,6 @@
 # Dokumentacija
 
-Ovaj folder sadrzi dokumentaciju vezanu za Celery u projektu `ims_fleet`.
+Ovaj folder sadrzi dokumentaciju vezanu za Celery u projektu `ims_erp`.
 
 ## Sadrzaj
 

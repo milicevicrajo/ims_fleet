@@ -24,7 +24,7 @@ import time
 
 
 logger = logging.getLogger(__name__)
-LOCK_PREFIX = "ims_fleet:task-lock"
+LOCK_PREFIX = "ims_erp:task-lock"
 
 
 def _run_with_singleton_lock(task_name, lock_ttl_seconds, fn):

@@ -1,7 +1,7 @@
 # Celery - sta je uradjeno
 
 Datum: 2026-04-06
-Projekat: `ims_fleet`
+Projekat: `ims_erp`
 
 ## Cilj
 
@@ -14,7 +14,7 @@ Stabilizacija Celery taskova na Windows serveru, sa fokusom na:
 
 ## Uradjene izmene u kodu
 
-## 1) `ims_fleet/celery.py`
+## 1) `ims_erp/celery.py`
 
 Uklonjeni su debug `print` pozivi pri inicijalizaciji Celery aplikacije.
 
@@ -22,7 +22,7 @@ Pre:
 - stampanje broker URL-a i liste registrovanih taskova na import.
 
 Posle:
-- `app = Celery('ims_fleet')`
+- `app = Celery('ims_erp')`
 - `app.config_from_object(...)`
 - `app.autodiscover_tasks()`
 - bez automatskog printovanja pri svakom startu procesa.
@@ -31,7 +31,7 @@ Efekat:
 - cistiji logovi.
 - manje suma pri restartu servisa.
 
-## 2) `ims_fleet/settings/base.py`
+## 2) `ims_erp/settings/base.py`
 
 Dodata su produkciona Celery podesavanja za stabilniji rad na Windows-u.
 

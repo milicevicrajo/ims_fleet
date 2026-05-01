@@ -108,7 +108,7 @@ def nis_data_import():
     try:
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
-        handler = logging.FileHandler(r"C:\djangoapps\ims_fleet\nis_debug.log")
+        handler = logging.FileHandler(r"C:\djangoapps\ims_erp\nis_debug.log")
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)

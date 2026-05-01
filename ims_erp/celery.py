@@ -8,9 +8,9 @@ if sys.stdin is None:
     sys.stdin = open(os.devnull)	
 
 # Postavi default Django postavke za Celery					
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ims_fleet.settings.production')					
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ims_erp.settings.production')					
 					
-app = Celery('ims_fleet')					
+app = Celery('ims_erp')					
 
 # Konfiguracija Celery iz Django postavki, koristi namespace "CELERY_"					
 app.config_from_object('django.conf:settings', namespace='CELERY')					
