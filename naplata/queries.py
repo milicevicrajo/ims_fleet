@@ -1,6 +1,112 @@
 from django.db import connections
 
 
+def dugovanja_po_bucketima_rows(sif_par_values=None):
+    params = []
+    where_clause = ""
+    if sif_par_values is not None:
+        sif_par_values = list(sif_par_values)
+        if not sif_par_values:
+            return []
+        placeholders = ",".join(["%s"] * len(sif_par_values))
+        where_clause = f"WHERE db.sif_par IN ({placeholders})"
+        params.extend(sif_par_values)
+
+    with connections['server_db'].cursor() as cursor:
+        cursor.execute(f"""
+                SELECT
+                    db.sif_par,
+                    db.naz_par,
+                    SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
+                    SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
+                    SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
+                    SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
+                    SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
+                    SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
+                    SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
+                    -- Nova kolona: DOSPELO (sve osim 0.1)
+                    SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
+                    SUM(db.saldo) AS Ukupno,
+                    n.veliki,
+                    db.ino
+                FROM dodela_baketa db
+                LEFT JOIN (
+                    SELECT sif_par, MAX(veliki) AS veliki
+                    FROM napomene
+                    GROUP BY sif_par
+                ) n ON db.sif_par = n.sif_par
+                {where_clause}
+                GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
+                ORDER BY Ukupno DESC
+            """, params)
+        return cursor.fetchall()
+
+
+def izvestaj_po_siframa_posla_data(is_superuser, allowed_sif_pos, selected_sif_pos):
+    if not is_superuser and not allowed_sif_pos:
+        return [], []
+
+    with connections['server_db'].cursor() as cursor:
+        options_sql = "SELECT DISTINCT db.sif_pos FROM dodela_baketa db"
+        options_params = []
+        if not is_superuser:
+            option_placeholders = ",".join(["%s"] * len(allowed_sif_pos))
+            options_sql += f" WHERE db.sif_pos IN ({option_placeholders})"
+            options_params.extend(allowed_sif_pos)
+        options_sql += " ORDER BY db.sif_pos"
+        cursor.execute(options_sql, options_params)
+        sif_pos_options = [
+            str(row[0]).strip()
+            for row in cursor.fetchall()
+            if row and row[0] is not None
+        ]
+
+        sql = """
+                SELECT
+                    db.sif_par,
+                    db.naz_par,
+                    SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
+                    SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 1],
+                    SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 2],
+                    SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 3],
+                    SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 4],
+                    SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 5],
+                    SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 6],
+                    SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
+                    SUM(db.saldo) AS Ukupno,
+                    n.veliki,
+                    db.ino
+                FROM dodela_baketa db
+                LEFT JOIN (
+                    SELECT sif_par, MAX(veliki) AS veliki
+                    FROM napomene
+                    GROUP BY sif_par
+                ) n ON db.sif_par = n.sif_par
+        """
+        params = []
+        where_clauses = []
+        if not is_superuser:
+            placeholders = ",".join(["%s"] * len(allowed_sif_pos))
+            where_clauses.append(f"db.sif_pos IN ({placeholders})")
+            params.extend(allowed_sif_pos)
+
+        if selected_sif_pos:
+            where_clauses.append("db.sif_pos = %s")
+            params.append(selected_sif_pos)
+
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
+
+        sql += """
+                GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
+                ORDER BY Ukupno DESC
+            """
+        cursor.execute(sql, params)
+        dugovanja = cursor.fetchall()
+
+    return dugovanja, sif_pos_options
+
+
 def neodobrene_if_filters_from_request(request):
     return {
         'god': (request.GET.get('god') or '').strip(),

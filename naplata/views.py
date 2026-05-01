@@ -35,6 +35,8 @@ from .models import (
     Tuzbe,
 )
 from .queries import (
+    dugovanja_po_bucketima_rows,
+    izvestaj_po_siframa_posla_data,
     neodobrene_if_filters_from_request,
     neodobrene_if_options,
     neodobrene_if_rows,
@@ -90,33 +92,7 @@ def lista_dugovanja(request):
 @role_permission_required()
 def lista_dugovanja_po_bucketima(request):
     marked_ids = set(AvansKlijent.objects.values_list('sif_par', flat=True))
-    with connections['server_db'].cursor() as cursor:
-        cursor.execute("""
-                SELECT 
-                    db.sif_par, 
-                    db.naz_par, 
-                    SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
-                    SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
-                    SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
-                    SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
-                    SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
-                    SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
-                    SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
-                    -- Nova kolona: DOSPELO (sve osim 0.1)
-                    SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
-                    SUM(db.saldo) AS Ukupno,
-                    n.veliki,
-                    db.ino
-                FROM dodela_baketa db
-                LEFT JOIN (
-                    SELECT sif_par, MAX(veliki) AS veliki
-                    FROM napomene
-                    GROUP BY sif_par
-                ) n ON db.sif_par = n.sif_par
-                GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
-                ORDER BY Ukupno DESC
-            """)
-        dugovanja = cursor.fetchall()
+    dugovanja = dugovanja_po_bucketima_rows()
 
     return render(request, 'naplata/dugovanja_bucketi.html', {
         'dugovanja': dugovanja,
@@ -128,37 +104,7 @@ def lista_dugovanja_po_bucketima(request):
 @never_cache
 def lista_avans_klijenti(request):
     marked_ids = list(AvansKlijent.objects.values_list('sif_par', flat=True))
-    if not marked_ids:
-        dugovanja = []
-    else:
-        placeholders = ",".join(["%s"] * len(marked_ids))
-        with connections['server_db'].cursor() as cursor:
-            cursor.execute(f"""
-                    SELECT 
-                        db.sif_par, 
-                        db.naz_par, 
-                        SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
-                        SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
-                        SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
-                        SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
-                        SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
-                        SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
-                        SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
-                        SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
-                        SUM(db.saldo) AS Ukupno,
-                        n.veliki,
-                        db.ino
-                    FROM dodela_baketa db
-                    LEFT JOIN (
-                        SELECT sif_par, MAX(veliki) AS veliki
-                        FROM napomene
-                        GROUP BY sif_par
-                    ) n ON db.sif_par = n.sif_par
-                    WHERE db.sif_par IN ({placeholders})
-                    GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
-                    ORDER BY Ukupno DESC
-                """, marked_ids)
-            dugovanja = cursor.fetchall()
+    dugovanja = dugovanja_po_bucketima_rows(marked_ids)
 
     return render(request, 'naplata/dugovanja_bucketi_avans.html', {
         'dugovanja': dugovanja,
@@ -172,68 +118,16 @@ def lista_avans_klijenti(request):
 def izvestaj_po_siframa_posla(request):
     allowed_sif_pos = _allowed_sif_pos_from_user(request.user)
     selected_sif_pos = (request.GET.get("sif_pos") or "").strip()
-    dugovanja = []
-    sif_pos_options = []
     marked_ids = set(AvansKlijent.objects.values_list('sif_par', flat=True))
 
     if selected_sif_pos and not request.user.is_superuser and selected_sif_pos not in allowed_sif_pos:
         raise PermissionDenied('Nemate pristup izabranoj šifri posla.')
 
-    if request.user.is_superuser or allowed_sif_pos:
-        with connections['server_db'].cursor() as cursor:
-            options_sql = "SELECT DISTINCT db.sif_pos FROM dodela_baketa db"
-            options_params = []
-            if not request.user.is_superuser:
-                option_placeholders = ",".join(["%s"] * len(allowed_sif_pos))
-                options_sql += f" WHERE db.sif_pos IN ({option_placeholders})"
-                options_params.extend(allowed_sif_pos)
-            options_sql += " ORDER BY db.sif_pos"
-            cursor.execute(options_sql, options_params)
-            sif_pos_options = [str(row[0]).strip() for row in cursor.fetchall() if row and row[0] is not None]
-
-            sql = """
-                    SELECT
-                        db.sif_par,
-                        db.naz_par,
-                        SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
-                        SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 1],
-                        SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 2],
-                        SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 3],
-                        SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 4],
-                        SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 5],
-                        SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS [Dospelo - baket 6],
-                        SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
-                        SUM(db.saldo) AS Ukupno,
-                        n.veliki,
-                        db.ino
-                    FROM dodela_baketa db
-                    LEFT JOIN (
-                        SELECT sif_par, MAX(veliki) AS veliki
-                        FROM napomene
-                        GROUP BY sif_par
-                    ) n ON db.sif_par = n.sif_par
-            """
-            params = []
-            where_clauses = []
-            if not request.user.is_superuser:
-                placeholders = ",".join(["%s"] * len(allowed_sif_pos))
-                where_clauses.append(f"db.sif_pos IN ({placeholders})")
-                params.extend(allowed_sif_pos)
-
-            if selected_sif_pos:
-                where_clauses.append("db.sif_pos = %s")
-                params.append(selected_sif_pos)
-
-            if where_clauses:
-                sql += " WHERE " + " AND ".join(where_clauses)
-
-            sql += """
-                    GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
-                    ORDER BY Ukupno DESC
-                """
-            cursor.execute(sql, params)
-            dugovanja = cursor.fetchall()
-
+    dugovanja, sif_pos_options = izvestaj_po_siframa_posla_data(
+        request.user.is_superuser,
+        allowed_sif_pos,
+        selected_sif_pos,
+    )
     return render(request, 'naplata/izvestaj_sifra_posla.html', {
         'dugovanja': dugovanja,
         'marked_ids': marked_ids,
@@ -323,34 +217,7 @@ def export_dugovanja_bucketi_excel(request):
         "Dospelo - baket 3", "Dospelo - baket 4", "Dospelo - baket 5", "Dospelo - baket 6", "Ukupno - Dospelo",
         "Ukupno", "Veliki", "INO"
     ]
-    # SQL data
-    with connections['server_db'].cursor() as cursor:
-        cursor.execute("""
-                SELECT 
-                    db.sif_par, 
-                    db.naz_par, 
-                    SUM(CASE WHEN db.baket = 0.1 THEN db.saldo ELSE 0 END) AS Nedospelo,
-                    SUM(CASE WHEN db.baket = 30 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 1",
-                    SUM(CASE WHEN db.baket = 45 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 2",
-                    SUM(CASE WHEN db.baket = 60 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 3",
-                    SUM(CASE WHEN db.baket = 90 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 4",
-                    SUM(CASE WHEN db.baket = 180 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 5",
-                    SUM(CASE WHEN db.baket = 181 THEN db.saldo ELSE 0 END) AS "Dospelo - baket 6",
-                    -- Nova kolona: DOSPELO (sve osim 0.1)
-                    SUM(CASE WHEN db.baket != 0.1 THEN db.saldo ELSE 0 END) AS Dospelo,
-                    SUM(db.saldo) AS Ukupno,
-                    n.veliki,
-                    db.ino
-                FROM dodela_baketa db
-                LEFT JOIN (
-                    SELECT sif_par, MAX(veliki) AS veliki
-                    FROM napomene
-                    GROUP BY sif_par
-                ) n ON db.sif_par = n.sif_par
-                GROUP BY db.sif_par, db.naz_par, n.veliki, db.ino
-                ORDER BY Ukupno DESC
-            """)
-        rows = cursor.fetchall()
+    rows = dugovanja_po_bucketima_rows()
 
     return rows_to_xlsx_response("dugovanja_po_baketima.xlsx", "Dugovanja po baketima", headers, rows)
 
