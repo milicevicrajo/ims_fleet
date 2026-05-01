@@ -109,6 +109,12 @@ from .report_exports import (
     OMV_TERETNA_EXPORT,
     report_xlsx_response,
 )
+from .report_queries import (
+    NIS_PUTNICKA_SQL,
+    NIS_TERETNA_SQL,
+    OMV_PUTNICKA_SQL,
+    OMV_TERETNA_SQL,
+)
 from .utils import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
@@ -3589,11 +3595,7 @@ def reports_index(request):
 def omv_putnicka_view(request):
     form = OMVPutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT sifpos, godina, mesec, tipvozila, polovina, bruto, neto
-        FROM OMV_putnicka_sp
-        WHERE 1=1
-    """
+    query = OMV_PUTNICKA_SQL
 
     query, params = report_period_filtered_query(query, form)
 
@@ -3614,11 +3616,7 @@ def omv_putnicka_view(request):
 def export_omv_putnicka_excel(request):
     form = PutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT sifpos, godina, mesec, tipvozila, polovina, bruto, neto
-        FROM OMV_putnicka_sp
-        WHERE 1=1
-    """
+    query = OMV_PUTNICKA_SQL
 
     query, params = report_period_filtered_query(query, form, cast_params=True)
 
@@ -3629,11 +3627,7 @@ def export_omv_putnicka_excel(request):
 def nis_putnicka_view(request):
     form = PutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
-        FROM dbo.NIS_putnicka_sp
-        WHERE 1=1
-    """
+    query = NIS_PUTNICKA_SQL
 
     query, params = report_period_filtered_query(query, form)
 
@@ -3652,11 +3646,7 @@ def nis_putnicka_view(request):
 def export_nis_putnicka_excel(request):
     form = PutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
-        FROM dbo.NIS_putnicka_sp
-        WHERE 1=1
-    """
+    query = NIS_PUTNICKA_SQL
 
     query, params = report_period_filtered_query(query, form, cast_params=True)
 
@@ -3667,11 +3657,7 @@ def export_nis_putnicka_excel(request):
 def nis_teretna_view(request):
     form = PutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT tipvozila, sifpos, regozn, kartica, datum, proizvod, kolicina, cena, bruto, neto
-        FROM dbo.nis_teretna
-        WHERE 1=1
-    """
+    query = NIS_TERETNA_SQL
 
     query, params = date_period_filtered_query(query, form)
 
@@ -3692,11 +3678,7 @@ def nis_teretna_view(request):
 def export_nis_teretna_excel(request):
     form = PutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT tipvozila, sifpos, regozn, kartica, datum, proizvod, kolicina, cena, bruto, neto
-        FROM dbo.nis_teretna
-        WHERE 1=1
-    """
+    query = NIS_TERETNA_SQL
 
     query, params = date_period_filtered_query(query, form, cast_params=True)
 
@@ -3708,11 +3690,7 @@ def export_nis_teretna_excel(request):
 def omv_teretna_view(request):
     form = PutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
-        FROM dbo.OMV_teretna_sp
-        WHERE 1=1
-    """
+    query = OMV_TERETNA_SQL
 
     query, params = report_period_filtered_query(query, form)
 
@@ -3731,11 +3709,7 @@ def omv_teretna_view(request):
 def export_omv_teretna_excel(request):
     form = PutnickaFilterForm(request.GET or None)
 
-    query = """
-        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
-        FROM dbo.OMV_teretna_sp
-        WHERE 1=1
-    """
+    query = OMV_TERETNA_SQL
 
     query, params = report_period_filtered_query(query, form, cast_params=True)
 
