@@ -1,22 +1,25 @@
-import django_filters
-from .models import FuelConsumption, JobCode, OrganizationalUnit, Kvar
-from django import forms
-from datetime import timedelta
-from django.utils import timezone
 from datetime import date, timedelta
 
-# fleet/filters.py
 import django_filters
 from django import forms
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import OuterRef, Subquery, Exists, F, Q
+from django.db.models import F, OuterRef, Q, Subquery
 from django.db.models.functions import Trim
 from django.http import QueryDict
+from django.utils import timezone
 
-from .models import Vehicle, JobCode, FuelConsumption, TrafficCard, Kvar, PutniNalog, Employee
-# pretpostavka da OrganizationalUnit postoji:
-from .models import OrganizationalUnit, ServiceTransaction
+from .models import (
+    DraftServiceTransaction,
+    Employee,
+    FuelConsumption,
+    JobCode,
+    Kvar,
+    OrganizationalUnit,
+    Policy,
+    PutniNalog,
+    ServiceTransaction,
+    Vehicle,
+)
+from .queries import policies_monthly_costs_qs
 from .utils import date_range_for_datetime_field
 
 
@@ -433,18 +436,6 @@ class FuelFilterForm(django_filters.FilterSet):
 class FuelTransactionFilterForm(forms.Form):
     start_date = forms.DateField(
         required=False,
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        label="Od datuma"
-    )
-    end_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        label="Do datuma"
-    )
-
-class FuelTransactionFilterForm(forms.Form):
-    start_date = forms.DateField(
-        required=False,
         widget=forms.DateInput(
             attrs={
                 'type': 'date',
@@ -472,12 +463,6 @@ class FuelTransactionFilterForm(forms.Form):
             self.initial['start_date'] = date.today() - timedelta(days=40)
         if not self.data.get('end_date'):
             self.initial['end_date'] = date.today()
-
-
-import django_filters
-from django import forms
-from .models import OrganizationalUnit, Policy
-from .queries import policies_monthly_costs_qs  # ili gde već živi tvoja funkcija
 
 class PoliciesMonthlyCostsFilter(django_filters.FilterSet):
     # ChoiceFilter -> lep dropdown; vrednosti ćemo dinamički popuniti u __init__
@@ -540,13 +525,6 @@ class PoliciesMonthlyCostsFilter(django_filters.FilterSet):
         if value in (None, ""):
             return queryset
         return queryset.filter(**{name: value})
-
-from .models import DraftServiceTransaction, Vehicle, ServiceType
-
-# fleet/filters.py
-import django_filters
-from django import forms
-from .models import DraftServiceTransaction
 
 class ServiceFixingFilter(django_filters.FilterSet):
     datum_od = django_filters.DateFilter(

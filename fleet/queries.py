@@ -1,10 +1,9 @@
-# reports/queries.py
-from django.db.models import F, Value, CharField, Case, When, Sum, OuterRef, Subquery
-from django.db.models.functions import ExtractYear, ExtractMonth
-from .models import Policy, JobCode, Lease, ServiceTransaction, FuelConsumption, Vehicle
-from django.http import HttpResponse
-import csv
-from django.db.models.functions import TruncYear, TruncMonth
+from decimal import Decimal
+
+from django.db.models import Case, CharField, DecimalField, F, OuterRef, Subquery, Sum, Value, When
+from django.db.models.functions import Cast, Coalesce, ExtractMonth, ExtractYear, TruncMonth, TruncYear
+
+from .models import FuelConsumption, JobCode, Lease, Policy, ServiceTransaction, Vehicle
 
 # "Važeći" JobCode na dan izdavanja polise
 _latest_jc = JobCode.objects.filter(
@@ -165,21 +164,6 @@ def lease_monthly_costs_rows(request):
     # opcionalno sortiranje
     rows = sorted(rows, key=lambda x: (x['year'] or 0, x['month'] or 0, x.get('center') or '', x.get('oj_id') or ''))
     return rows
-
-# fleet/reports_queries.py
-from django.db.models import OuterRef, Subquery, Value, CharField, Sum
-from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce, Cast
-
-from .models import ServiceTransaction, JobCode
-
-# imports na vrhu modula
-from decimal import Decimal
-from django.db.models import (
-    OuterRef, Subquery, Value, CharField, DecimalField, Sum
-)
-from django.db.models.functions import (
-    ExtractYear, ExtractMonth, Coalesce, Cast
-)
 
 def _service_base_qs():
     """

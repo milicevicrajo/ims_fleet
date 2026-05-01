@@ -1,9 +1,28 @@
 from django.contrib import admin
 from django.contrib import messages
-from .models import *
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
-from django.utils.translation import gettext_lazy as _
+
+from .models import (
+    CustomUser,
+    Employee,
+    FuelConsumption,
+    Incident,
+    JobCode,
+    Kvar,
+    Lease,
+    PermissionCode,
+    Policy,
+    PutniNalog,
+    PutniNalogSequence,
+    Role,
+    RolePermission,
+    Service,
+    ServiceType,
+    TrafficCard,
+    Vehicle,
+    VehicleTenderDocument,
+    VehicleTravelOrder,
+)
 from .tasks import sync_permission_codes_task
 
 class CustomUserAdmin(UserAdmin):

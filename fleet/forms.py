@@ -1,7 +1,5 @@
 from django import forms
-from django.db import transaction
 from .models import *
-import django_filters
 from django_select2.forms import Select2Widget
 from django.utils.translation import gettext_lazy as _
 from datetime import date
@@ -761,11 +759,6 @@ class DraftRequisitionForm(forms.ModelForm):
         # Prolazi kroz sva polja u formi i postavlja ih kao obavezna
         for field_name, field in self.fields.items():
             field.required = False
-
-
-
-from django import forms
-
 class OMVPutnickaFilterForm(forms.Form):
     GODINA_CHOICES = [(str(y), str(y)) for y in range(2020, 2031)]
     MESEC_CHOICES = [(str(m), str(m)) for m in range(1, 13)]
@@ -790,12 +783,6 @@ class PutnickaFilterForm(forms.Form):
     godina = forms.ChoiceField(choices=GODINA_CHOICES, required=False, label='Godina')
     mesec = forms.ChoiceField(choices=MESEC_CHOICES, required=False, label='Mesec')
     polovina = forms.ChoiceField(choices=POLOVINA_CHOICES, required=False, label='Polovina meseca')
-
-
-
-from django import forms
-from .models import Insurance, DraftInsurance
-
 class InsuranceForm(forms.ModelForm):
     class Meta:
         model = Insurance

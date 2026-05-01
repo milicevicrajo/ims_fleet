@@ -1,20 +1,43 @@
-import csv
-import re
-import os
-import time
 import logging
-import pytz
-from datetime import date, datetime, time as datetime_time
-from openpyxl import load_workbook
+import os
+import re
+import time
+from datetime import date, datetime, timedelta, time as datetime_time
+from decimal import Decimal, ROUND_HALF_UP
 
-from .models import TransactionNIS, TransactionOMV, FuelConsumption, Vehicle, TrafficCard, JobCode, TrafficCard, Lease, Policy,Employee, OrganizationalUnit, Requisition,DraftRequisition, ServiceTransaction, DraftServiceTransaction, Policy, DraftPolicy
-
-from django.core.exceptions import ObjectDoesNotExist
+import pandas as pd
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import connections, transaction
 from django.db.models import F, Value, CharField, Subquery, OuterRef, Q
 from django.http import JsonResponse
 from django.utils import timezone as django_timezone
+from django.utils.dateparse import parse_date, parse_datetime
+from django.utils.translation import gettext_lazy as _
+from openpyxl import load_workbook
+
+from .models import (
+    DraftInsurance,
+    DraftPolicy,
+    DraftRequisition,
+    DraftServiceTransaction,
+    Employee,
+    FuelConsumption,
+    Insurance,
+    JobCode,
+    Lease,
+    OrganizationalUnit,
+    Policy,
+    Requisition,
+    ServiceTransaction,
+    ServiceType,
+    TrafficCard,
+    TransactionNIS,
+    TransactionOMV,
+    Vehicle,
+)
+
+logger = logging.getLogger(__name__)
 
 
 FUEL_PRODUCT_KEYWORDS = (
@@ -100,10 +123,6 @@ def format_license_plate(plate):
 
     # Ako nije moguće preoblikovati tablicu, vrati originalnu vrednost (ili baci grešku)
     return plate
-
-import pandas as pd
-from django.utils.dateparse import parse_date
-from fleet.models import Vehicle  # Update 'your_app' with the actual app name
 
 def import_vehicles_from_excel(excel_file_path):
     try:
@@ -277,12 +296,6 @@ def import_policy_data_from_excel(file_path):
         except Exception as e:
             print(f"Error importing row {index}: {e}")
 
-
-import pandas as pd
-from django.utils.dateparse import parse_datetime
-from datetime import datetime
-from django.core.exceptions import ObjectDoesNotExist
-from .models import Service, ServiceTransaction, Vehicle, ServiceType
 
 def import_services_from_excel(file_path):
     # Load the Excel file
@@ -473,8 +486,6 @@ def import_employee_data_from_excel(file_path):
             print(f"Error importing row {index}: {e}")
 
 def populate_service_types():
-    from fleet.models import ServiceType 
-
     # Podaci koje želiš da ubaciš u bazu
     service_types = [
         {"name": "Redovan servis van IMS", "description": "Motorno ulje, Filteri ulja, vazduha, klime I goriva, svecice, wd sprej"},
@@ -506,7 +517,6 @@ def formiranje_org_jedinica():
     import django
     django.setup()  # Inicijalizacija Django okruženja
 
-    from fleet.models import OrganizationalUnit  
     # Lista organizacionih jedinica i njihovih kodova
     units = [
         ('Geotehnička ispitivanja i projektovanje', '436111', '43'),
@@ -624,42 +634,6 @@ def calculate_average_fuel_consumption_ever(vehicle):
             return None
     else:
         return None
-
-
-
-from django.db import IntegrityError
-from django.db import connections
-from .models import Policy, DraftPolicy, Vehicle
-
-import logging
-from django.db import connections, transaction
-from datetime import datetime # Make sure datetime is imported, not just date
-
-# Assuming these models are defined and imported correctly
-# from .models import Policy, DraftPolicy, Vehicle
-
-logger = logging.getLogger(__name__)
-
-import logging
-from django.db import connections, transaction
-from datetime import datetime
-from decimal import Decimal # Import Decimal for number conversion if needed
-
-# Assuming these models are defined and imported correctly
-# from .models import Policy, DraftPolicy, Vehicle
-
-logger = logging.getLogger(__name__)
-
-import logging
-from django.db import connections, transaction
-from datetime import datetime
-from decimal import Decimal # Import Decimal for number conversion if needed
-
-# Assuming these models are defined and imported correctly
-# from .models import Policy, DraftPolicy, Vehicle
-
-logger = logging.getLogger(__name__)
-
 def fetch_policy_data(last_24_hours=True, days=None):
     """
     Improved function to fetch insurance policy data with better security and error handling.
@@ -839,11 +813,6 @@ def fetch_policy_data(last_24_hours=True, days=None):
         return f"Critical error: {str(e)}"
     
 
-from django.db import connections
-from datetime import datetime
-# Uverite se da su ovi modeli definisani i uvezeni
-from .models import ServiceTransaction, DraftServiceTransaction, Vehicle, TrafficCard, ServiceType
-from decimal import Decimal, ROUND_HALF_UP
 def normalize_decimal(value):
     try:
         return Decimal(str(value).strip()).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -1000,12 +969,6 @@ def fetch_service_data(last_24_hours=True, days=None):
     except Exception as e:
         print(f"Došlo je do opšte greške prilikom povlačenja podataka: {e}")
         return f"Došlo je do opšte greške prilikom povlačenja podataka: {e}"
-
-import logging
-from django.db import connections, transaction
-from django.utils.translation import gettext_lazy as _
-
-logger = logging.getLogger(__name__)
 
 def process_vehicle_retirements():
     """
@@ -1297,12 +1260,6 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
 
 
 
-import time
-from datetime import datetime, timedelta
-
-
-logger = logging.getLogger(__name__)
-
 def update_vehicle_values():
     """
     Povlači vrednosti vozila iz eksterne baze i ažurira model Vehicle.
@@ -1439,12 +1396,6 @@ def populate_putni_nalog_template(putni_nalog):
     return JsonResponse({"file_url": file_url})
 
 
-import time
-
-
-
-from datetime import date
-
 def update_job_codes_from_view():
     today = date.today()
     updated = 0
@@ -1501,11 +1452,6 @@ def sync_organizational_units_from_view():
 
     print(f"Organizacione jedinice: {created} dodatih, {updated} ažuriranih.")
 
-
-# services.py
-from django.db import connections, transaction
-from django.utils.dateparse import parse_datetime
-from .models import DraftInsurance, Insurance
 
 INS_VIEW = "dbo.fleet_potrazivanje_ddor"   # naziv SQL view-a
 DB_ALIAS = "server_db"                        # promeni ako koristiš drugi alias
