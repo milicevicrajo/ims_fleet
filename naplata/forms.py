@@ -1,4 +1,8 @@
+from datetime import datetime
+
 from django import forms
+
+from core.form_fields import localized_date_field
 from .models import Kontakti, Napomene, Opomene, PozivPismo, PoziviTel, Tuzbe
 
 class KontaktiForm(forms.ModelForm):
@@ -10,10 +14,6 @@ class KontaktiForm(forms.ModelForm):
         super(KontaktiForm, self).__init__(*args, **kwargs)
         self.fields['sif_par'].widget.attrs['readonly'] = True  # Ne može se menjati
         self.fields['naz_par'].widget.attrs['readonly'] = True  # Ne može se menjati
-
-
-from django import forms
-from .models import Napomene
 
 class NapomeneForm(forms.ModelForm):
     VELIKI_CHOICES = [
@@ -37,16 +37,8 @@ class NapomeneForm(forms.ModelForm):
         self.fields['sif_par'].widget.attrs['readonly'] = True  # Ne može se menjati
         self.fields['naz_par'].widget.attrs['readonly'] = True  # Ne može se menjati
 
-
-
-from datetime import datetime  # Ispravan import
-
 class OpomeneForm(forms.ModelForm):
-    datum = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum = localized_date_field(label="Datum")
     class Meta:
         model = Opomene
         fields = ['sif_par', 'naz_par', 'god', 'br_opomene', 'datum', 'iznos', 'fakture', 'napomene']
@@ -61,11 +53,7 @@ class OpomeneForm(forms.ModelForm):
         self.fields['naz_par'].widget.attrs['readonly'] = True
 
 class PozivPismoForm(forms.ModelForm):
-    datum = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum = localized_date_field(label="Datum")
     class Meta:
         model = PozivPismo
         fields = ['sif_par', 'naz_par', 'god', 'br_pisma', 'datum', 'iznos', 'fakture', 'napomene']
@@ -80,11 +68,7 @@ class PozivPismoForm(forms.ModelForm):
         self.fields['naz_par'].widget.attrs['readonly'] = True
 
 class PoziviTelForm(forms.ModelForm):
-    datum = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum = localized_date_field(label="Datum")
     class Meta:
         model = PoziviTel
         fields = ['sif_par', 'naz_par', 'datum', 'napomena']
@@ -100,11 +84,7 @@ class PoziviTelForm(forms.ModelForm):
 
 
 class TuzbeForm(forms.ModelForm):
-    datum = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum = localized_date_field(label="Datum")
     class Meta:
         model = Tuzbe
         fields = ['sif_par', 'naz_par', 'god', 'br_opomene', 'datum', 'iznos', 'fakture', 'napomene']
@@ -117,9 +97,6 @@ class TuzbeForm(forms.ModelForm):
         super(TuzbeForm, self).__init__(*args, **kwargs)
         self.fields['sif_par'].widget.attrs['readonly'] = True
         self.fields['naz_par'].widget.attrs['readonly'] = True
-
-
-from django import forms
 
 class OMVPutnickaFilterForm(forms.Form):
     GODINA_CHOICES = [(str(y), str(y)) for y in range(2020, 2031)]

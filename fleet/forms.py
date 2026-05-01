@@ -3,17 +3,12 @@ from .models import *
 from django_select2.forms import Select2Widget
 from django.utils.translation import gettext_lazy as _
 from datetime import date
+
+from core.form_fields import localized_date_field
+
 class VehicleForm(forms.ModelForm):
-    first_registration_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum prve registracije"
-    )
-    purchase_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum kupovine"
-    )
+    first_registration_date = localized_date_field(label="Datum prve registracije")
+    purchase_date = localized_date_field(label="Datum kupovine")
     class Meta:
         model = Vehicle
         fields = '__all__'
@@ -25,16 +20,8 @@ class TrafficCardForm(forms.ModelForm):
         label="Vozilo",
         required=False
     )
-    issue_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum izdavanja"
-    )
-    valid_until = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Važi do"
-    )
+    issue_date = localized_date_field(label="Datum izdavanja")
+    valid_until = localized_date_field(label="Važi do")
     class Meta:
         model = TrafficCard
         fields = '__all__'
@@ -57,10 +44,8 @@ class VehicleTenderDocumentForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label=_("Vozilo")
     )
-    taken_at = forms.DateField(
+    taken_at = localized_date_field(
         required=False,
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label=_("Datum fotografisanja")
     )
 
@@ -89,26 +74,14 @@ class JobCodeForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Organizaciona jedinica"
     )
-    assigned_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum dodele"
-    )
+    assigned_date = localized_date_field(label="Datum dodele")
     class Meta:
         model = JobCode
         fields = '__all__'
 
 class LeaseForm(forms.ModelForm):
-    start_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum početka"
-    )
-    end_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum završetka"
-    )
+    start_date = localized_date_field(label="Datum početka")
+    end_date = localized_date_field(label="Datum završetka")
     class Meta:
         model = Lease
         fields = '__all__'
@@ -135,21 +108,9 @@ class PolicyForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
     )
-    issue_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum izdavanja"
-    )
-    start_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum početka"
-    )
-    end_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum završetka"
-    )
+    issue_date = localized_date_field(label="Datum izdavanja")
+    start_date = localized_date_field(label="Datum početka")
+    end_date = localized_date_field(label="Datum završetka")
     is_renewable = models.BooleanField(
         default=True,
         choices=YES_NO_CHOICES,  # Dodato choices
@@ -189,11 +150,7 @@ class IncidentForm(forms.ModelForm):
         fields = '__all__'
 
 class PutniNalogForm(forms.ModelForm):
-    order_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum izdavanja naloga"
-    )
+    order_date = localized_date_field(label="Datum izdavanja naloga")
 
     transport_type = forms.ChoiceField(
         label="Odaberi prevozno sredstvo",
@@ -251,11 +208,7 @@ class PutniNalogForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Troškovi idu na teret"
     )
-    travel_date = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum putovanja"
-    )
+    travel_date = localized_date_field(label="Datum putovanja")
     napomena = forms.CharField(
         label="Napomena",
         required=False,
@@ -391,10 +344,8 @@ class PutniNalogForm(forms.ModelForm):
 
 
 class VehicleTravelOrderForm(forms.ModelForm):
-    created_at = forms.DateField(
+    created_at = localized_date_field(
         required=True,
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum otvaranja",
     )
     pn_number = forms.IntegerField(
@@ -445,10 +396,8 @@ class VehicleTravelOrderForm(forms.ModelForm):
 
 
 class VehicleTravelOrderCloseForm(forms.ModelForm):
-    closed_at = forms.DateField(
+    closed_at = localized_date_field(
         required=True,
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
         label="Datum zatvaranja",
     )
     end_mileage = forms.IntegerField(
@@ -576,11 +525,7 @@ class ServiceTransactionForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
     )
-    datum = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum = localized_date_field(label="Datum")
     nije_garaza = models.BooleanField(
         default=True,
         choices=YES_NO_CHOICES,  # Dodato choices
@@ -612,11 +557,7 @@ class DraftServiceTransactionForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
     )
-    datum = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum = localized_date_field(label="Datum")
     nije_garaza = models.BooleanField(
         default=True,
         choices=YES_NO_CHOICES,  # Dodato choices
@@ -641,17 +582,13 @@ class DraftServiceTransactionForm(forms.ModelForm):
 
 
 class ServiceFixingFilterForm(forms.Form):
-    datum_od = forms.DateField(
+    datum_od = localized_date_field(
         required=False,
         label="Datum od",
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d']
     )
-    datum_do = forms.DateField(
+    datum_do = localized_date_field(
         required=False,
         label="Datum do",
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d']
     )
     partner = forms.CharField(
         required=False,
@@ -675,11 +612,7 @@ class RequisitionForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method', 'data-placeholder': 'Izaberi IMS kvar'}),
         label="Kvar (IMS)"
     )
-    datum_trebovanja = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum_trebovanja = localized_date_field(label="Datum")
     class Meta:
         model = Requisition
         fields = '__all__'
@@ -706,11 +639,7 @@ class DraftRequisitionForm(forms.ModelForm):
         widget=Select2Widget(attrs={'class': 'select2-method'}),
         label="Vozilo"
     )
-    datum_trebovanja = forms.DateField(
-        widget=forms.DateInput(format='%d.%m.%Y', attrs={'class': 'form-control js-date'}),
-        input_formats=['%d.%m.%Y', '%d/%m/%Y', '%Y-%m-%d'],
-        label="Datum"
-    )
+    datum_trebovanja = localized_date_field(label="Datum")
     mesec_unosa = forms.IntegerField(
         widget=forms.NumberInput(attrs={'class': 'form-control'}),
         label="Mesec unosa"
