@@ -1,0 +1,40 @@
+            <!-- Otpisana potraživanja -->
+            <div class="tab-pane fade" id="ispravke">
+                <h4>Otpisana potraživanja</h4>
+                {% if ispravke %}
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Godina</th>
+                                <th>Odeljenje</th>
+                                <th>Šifra posla</th>
+                                <th>Šifra vrste</th>
+                                <th>Datum</th>
+                                <th>DPO</th>
+                                <th>Konto</th>
+                                <th>Naziv konta</th>
+                                <th>Duguje</th>
+                                <th>Potražuje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in ispravke %}
+                            <tr>
+                                <td>{{ row.0 }}</td> <!-- god -->
+                                <td>{{ row.1 }}</td> <!-- oj -->
+                                <td>{{ row.2 }}</td> <!-- šifra posla -->
+                                <td>{{ row.3 }}</td> <!-- sif_vrs -->
+                                <td>{{ row.4|date:"d.m.Y" }}</td> <!-- datum -->
+                                <td>{{ row.5|date:"d.m.Y" }}</td> <!-- dpo -->
+                                <td>{{ row.6 }}</td> <!-- knt -->
+                                <td>{{ row.7 }}</td> <!-- naz_knt -->
+                                <td>{{ row.8|floatformat:0 }}</td> <!-- dug -->
+                                <td>{{ row.9|floatformat:0 }}</td> <!-- pot -->
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>Ovaj partner nema otpisanih potraživanja.</p>
+                {% endif %}
+            </div>            

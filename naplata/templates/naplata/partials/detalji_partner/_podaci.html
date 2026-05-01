@@ -1,0 +1,33 @@
+            <!-- Osnovni podaci -->
+            <div class="tab-pane fade show active" id="podaci">
+                <div class="col-lg-6">
+                    <h4>Osnovni podaci</h4>
+                        {% if partner %}
+                        <table class="table table-striped table-sm">
+                            <tbody>
+                                <tr><th>Šifra partnera</th><td>{{ partner.2 }}</td></tr>
+                                <tr><th>Naziv</th><td>{{ partner.3 }}</td></tr>
+                                <tr><th>Ulica</th><td>{{ partner.4 }}</td></tr>
+                                <tr><th>Poštanski broj</th><td>{{ partner.5 }}</td></tr>
+                                <tr><th>Mesto</th><td>{{ partner.6 }}</td></tr>
+                                <tr><th>Žiro račun</th><td>{{ partner.7 }}</td></tr>
+                                <tr><th>Matični broj</th><td>{{ partner.8 }}</td></tr>
+                                <tr><th>Telefon</th><td>{{ partner.9 }}</td></tr>
+                                <tr><th>Fax</th><td>{{ partner.10 }}</td></tr>
+                                <tr><th>Email</th><td>{{ partner.11 }}</td></tr>
+                                <tr><th>Kontakt osoba</th><td>{{ partner.12 }}</td></tr>
+                                <tr><th>Web</th><td>{{ partner.13 }}</td></tr>
+                                <tr><th>Procenat rabata</th><td>{{ partner.14 }}</td></tr>
+                                <tr><th>Broj dana plaćanja</th><td>{{ partner.15 }}</td></tr>
+                                <tr><th>Vlasnik</th><td>{{ partner.16 }}</td></tr>
+                                <tr><th>PIB</th><td>{{ partner.17 }}</td></tr>
+                                <tr><th>Zemlja</th><td>{{ partner.18 }}</td></tr>
+                                <tr><th>PDV obveznik</th><td>{{ partner.21 }}</td></tr>
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-danger">Nema podataka za ovog partnera.</p>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
