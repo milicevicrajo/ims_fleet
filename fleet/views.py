@@ -7,9 +7,6 @@ import os
 import tempfile
 import textwrap
 
-from openpyxl import Workbook
-import pandas as pd
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -31,7 +28,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_filters.views import FilterView
 
-from core.exporting import csv_attachment_response, xlsx_attachment_response
+from core.exporting import csv_attachment_response, dataframe_xlsx_response, rows_to_xlsx_response
 
 from .analytics_helpers import (
     cost_per_km_status,
@@ -1917,11 +1914,6 @@ def export_leases_to_excel(request):
     elif tip in {"finansijski", "operativni"}:
         leases = leases.filter(lease_type=tip)
 
-    # Kreiranje novog Excel fajla
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Lizing ugovori"
-
     # Naslovi kolona
     headers = [
         "Vozilo (šasija)",
@@ -1935,11 +1927,10 @@ def export_leases_to_excel(request):
         "Datum završetka",
         "Napomena",
     ]
-    ws.append(headers)
 
     # Podaci iz baze
-    for lease in leases:
-        ws.append([
+    rows = (
+        [
             lease.vehicle.chassis_number if lease.vehicle else "",
             lease.partner_code,
             lease.partner_name,
@@ -1950,12 +1941,12 @@ def export_leases_to_excel(request):
             lease.start_date.strftime("%d.%m.%Y") if lease.start_date else "",
             lease.end_date.strftime("%d.%m.%Y") if lease.end_date else "",
             lease.note or "",
-        ])
+        ]
+        for lease in leases
+    )
 
     fname = f"lizing_ugovori_{tip or 'svi'}.xlsx"
-    response = xlsx_attachment_response(fname, quoted=True)
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response(fname, "Lizing ugovori", headers, rows, quoted=True)
 
 class LeaseUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Lease
@@ -3615,11 +3606,7 @@ def omv_putnicka_view(request):
     # Excel export
     if 'export' in request.GET:
 
-        df = pd.DataFrame(data)
-        response = xlsx_attachment_response("omv_putnicka.xlsx")
-        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='OMV Putnicka')
-        return response
+        return dataframe_xlsx_response(data, "omv_putnicka.xlsx", "OMV Putnicka")
 
     return render(request, 'fleet/reports/omv_putnicka.html', {
         'data': data,
@@ -3662,17 +3649,12 @@ def export_omv_putnicka_excel(request):
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "OMV Putnička"
-
     # Header
     headers = ["Šifra pos", "Godina", "Mesec", "Tip vozila", "Polovina", "Bruto", "Neto"]
-    ws.append(headers)
 
     # Rows
-    for row in data:
-        ws.append([
+    rows = (
+        [
             row['sifpos'],
             row['godina'],
             row['mesec'],
@@ -3680,12 +3662,11 @@ def export_omv_putnicka_excel(request):
             row['polovina'],
             row['bruto'],
             row['neto']
-        ])
+        ]
+        for row in data
+    )
 
-    # Response
-    response = xlsx_attachment_response("omv_putnicka.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response("omv_putnicka.xlsx", "OMV Putnička", headers, rows)
 
 def nis_putnicka_view(request):
     form = PutnickaFilterForm(request.GET or None)
@@ -3723,11 +3704,7 @@ def nis_putnicka_view(request):
 
     # Excel export
     if 'export' in request.GET:
-        df = pd.DataFrame(data)
-        response = xlsx_attachment_response("nis_putnicka.xlsx")
-        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='NIS Putnicka')
-        return response
+        return dataframe_xlsx_response(data, "nis_putnicka.xlsx", "NIS Putnicka")
 
     return render(request, 'fleet/reports/nis_putnicka.html', {
         'data': data,
@@ -3769,15 +3746,10 @@ def export_nis_putnicka_excel(request):
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "NIS Putnička"
-
     headers = ["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"]
-    ws.append(headers)
 
-    for row in data:
-        ws.append([
+    rows = (
+        [
             row['tipvozila'],
             row['sifpos'],
             row['godina'],
@@ -3785,11 +3757,11 @@ def export_nis_putnicka_excel(request):
             row['polovina'],
             row['bruto'],
             row['neto']
-        ])
+        ]
+        for row in data
+    )
 
-    response = xlsx_attachment_response("nis_putnicka.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response("nis_putnicka.xlsx", "NIS Putnička", headers, rows)
 
 def nis_teretna_view(request):
     form = PutnickaFilterForm(request.GET or None)
@@ -3829,11 +3801,7 @@ def nis_teretna_view(request):
 
     # Excel export
     if 'export' in request.GET:
-        df = pd.DataFrame(data)
-        response = xlsx_attachment_response("nis_teretna.xlsx")
-        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='NIS Teretna')
-        return response
+        return dataframe_xlsx_response(data, "nis_teretna.xlsx", "NIS Teretna")
 
     return render(request, 'fleet/reports/nis_teretna.html', {
         'data': data,
@@ -3879,15 +3847,10 @@ def export_nis_teretna_excel(request):
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "NIS Teretna"
-
     headers = ["Tip vozila", "Šifra posla", "Reg oznaka", "Kartica", "Datum", "Proizvod", "Količina", "Cena", "Bruto", "Neto"]
-    ws.append(headers)
 
-    for row in data:
-        ws.append([
+    rows = (
+        [
             row['tipvozila'],
             row['sifpos'],
             row['regozn'],
@@ -3898,11 +3861,11 @@ def export_nis_teretna_excel(request):
             row['cena'],
             row['bruto'],
             row['neto']
-        ])
+        ]
+        for row in data
+    )
 
-    response = xlsx_attachment_response("nis_teretna.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response("nis_teretna.xlsx", "NIS Teretna", headers, rows)
 
 
 def omv_teretna_view(request):
@@ -3941,11 +3904,7 @@ def omv_teretna_view(request):
 
     # Excel export
     if 'export' in request.GET:
-        df = pd.DataFrame(data)
-        response = xlsx_attachment_response("omv_teretna.xlsx")
-        with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='OMV Teretna')
-        return response
+        return dataframe_xlsx_response(data, "omv_teretna.xlsx", "OMV Teretna")
 
     return render(request, 'fleet/reports/omv_teretna.html', {
         'data': data,
@@ -3987,15 +3946,10 @@ def export_omv_teretna_excel(request):
 
     data = get_data_from_secondary_db(query, 'test_db', params=params)
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "OMV Teretna"
-
     headers = ["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"]
-    ws.append(headers)
 
-    for row in data:
-        ws.append([
+    rows = (
+        [
             row['tipvozila'],
             row['sifpos'],
             row['godina'],
@@ -4003,11 +3957,11 @@ def export_omv_teretna_excel(request):
             row['polovina'],
             row['bruto'],
             row['neto']
-        ])
+        ]
+        for row in data
+    )
 
-    response = xlsx_attachment_response("omv_teretna.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response("omv_teretna.xlsx", "OMV Teretna", headers, rows)
 
 def get_data_from_secondary_db(query, db_alias, params=None):
     """

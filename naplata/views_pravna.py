@@ -1,15 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
 from django.core.exceptions import PermissionDenied
 from django.db import connections
 from django.db.models import Count
 from django.views.decorators.cache import never_cache
 from datetime import datetime
 from decimal import Decimal
-import openpyxl
-from openpyxl.styles import Font, Alignment
-from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment
 
+from core.exporting import create_xlsx_workbook, set_column_widths, style_header_row, workbook_response
 from fleet.mixins import role_permission_required
 from .db_users import resolve_user_pk_for_db
 from .models import Postupak, PromenaPostupka
@@ -260,9 +258,7 @@ def pravna_izvestaj_excel(request, case_type):
                 lines.append(f'{idx}. {datum}')
         return '\n'.join(lines)
 
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = 'Pregled sudskih postupaka'
+    wb, ws = create_xlsx_workbook('Pregled sudskih postupaka')
 
     headers = [
         'Sud i broj postupka',
@@ -272,14 +268,11 @@ def pravna_izvestaj_excel(request, case_type):
         'Vrednost spora',
         'Faze postupka',
     ]
-    header_font = Font(bold=True)
-    for col_num, column_title in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num, value=column_title)
-        cell.font = header_font
+    ws.append(headers)
+    style_header_row(ws)
 
     widths = [38, 34, 24, 48, 18, 70]
-    for col_num, width in enumerate(widths, 1):
-        ws.column_dimensions[get_column_letter(col_num)].width = width
+    set_column_widths(ws, widths)
 
     for row_num, postupak in enumerate(postupci, 2):
         sud = (postupak.sud or '').strip()
@@ -297,11 +290,7 @@ def pravna_izvestaj_excel(request, case_type):
         ws.cell(row=row_num, column=6).alignment = Alignment(wrap_text=True, vertical='top')
 
     filename = f'pravna_{case_type}_pregled_postupaka_{datetime.now().strftime("%Y%m%d")}.xlsx'
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = f'attachment; filename={filename}'
-    wb.save(response)
+    response = workbook_response(wb, filename)
     response.set_cookie('excel_download', '1', max_age=120, path='/', samesite='Lax')
     return response
 

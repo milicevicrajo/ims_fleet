@@ -1,38 +1,38 @@
-from django.shortcuts import render, redirect
-from decimal import Decimal
-from datetime import datetime, date, time
 import logging
+from datetime import date, datetime, time
+from decimal import Decimal
 from urllib.parse import urlencode
-from django.db import connections
-from django.core.exceptions import PermissionDenied
+
+from openpyxl import load_workbook
+
 from django.contrib import messages
-import openpyxl
-from openpyxl.workbook import Workbook
-from openpyxl.utils import get_column_letter
-from openpyxl.styles import Font
-from django.shortcuts import render, get_object_or_404
+from django.core.exceptions import PermissionDenied
+from django.db import connections
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
+
+from core.exporting import rows_to_xlsx_response
 from fleet.mixins import role_permission_required
 from fleet.models import OrganizationalUnit
-from core.exporting import xlsx_attachment_response
+
 from .db_users import resolve_user_pk_for_db
 from .forms import (
     KontaktiForm,
     NapomeneForm,
     OpomeneForm,
-    PoziviTelForm,
     PozivPismoForm,
+    PoziviTelForm,
     TuzbeForm,
 )
 from .models import (
+    AvansKlijent,
     Kontakti,
     Napomene,
     Opomene,
     PozivPismo,
     PoziviTel,
     Tuzbe,
-    AvansKlijent,
 )
 
 logger = logging.getLogger(__name__)
@@ -378,10 +378,6 @@ def export_neodobrene_if_excel(request):
     filters = _neodobrene_if_filters_from_request(request)
     rows = _neodobrene_if_rows(filters)
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Neodobrene IF"
-
     headers = [
         "OJ",
         "God",
@@ -393,22 +389,15 @@ def export_neodobrene_if_excel(request):
         "Vreme statusa",
         "Komentar",
     ]
-    ws.append(headers)
 
-    for row in rows:
-        ws.append(row)
-
-    header_font = Font(bold=True)
-    for cell in ws[1]:
-        cell.font = header_font
-
-    for col_num, column_cells in enumerate(ws.columns, start=1):
-        max_len = max((len(str(cell.value)) if cell.value is not None else 0) for cell in column_cells)
-        ws.column_dimensions[get_column_letter(col_num)].width = min(max(max_len + 2, 10), 70)
-
-    response = xlsx_attachment_response("neodobrene_if.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response(
+        "neodobrene_if.xlsx",
+        "Neodobrene IF",
+        headers,
+        rows,
+        bold_header=True,
+        auto_width=True,
+    )
 
 
 @require_POST
@@ -435,18 +424,12 @@ def toggle_avans_klijent(request):
 
 @role_permission_required()
 def export_dugovanja_bucketi_excel(request):
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Dugovanja po baketima"
-
     # Header
     headers = [
         "Šifra partnera", "Naziv partnera", "Nedospelo", "Dospelo - baket 1", "Dospelo - baket 2",
         "Dospelo - baket 3", "Dospelo - baket 4", "Dospelo - baket 5", "Dospelo - baket 6", "Ukupno - Dospelo",
         "Ukupno", "Veliki", "INO"
     ]
-    ws.append(headers)
-
     # SQL data
     with connections['server_db'].cursor() as cursor:
         cursor.execute("""
@@ -475,13 +458,8 @@ def export_dugovanja_bucketi_excel(request):
                 ORDER BY Ukupno DESC
             """)
         rows = cursor.fetchall()
-        for row in rows:
-            ws.append(row)
 
-    # Response
-    response = xlsx_attachment_response("dugovanja_po_baketima.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response("dugovanja_po_baketima.xlsx", "Dugovanja po baketima", headers, rows)
 
 
 @never_cache
@@ -795,20 +773,15 @@ def export_partner_baketi_excel(request, sif_par):
         cursor.execute(sql, params)
         rows = cursor.fetchall()
 
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Dugovanja baketi"
-
     headers = [
         "Opis", "Baketi", "Šifra posla", "Veza", "DPO", "Duguje", "Potražuje", "Saldo", "Akcija"
     ]
-    ws.append(headers)
-    for row in rows:
-        ws.append(row)
-
-    response = xlsx_attachment_response(f"dugovanja_baketi_partner_{sif_par}.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response(
+        f"dugovanja_baketi_partner_{sif_par}.xlsx",
+        "Dugovanja baketi",
+        headers,
+        rows,
+    )
 
 @role_permission_required()
 def export_utuzene_fakture_excel(request, sif_par):
@@ -825,27 +798,14 @@ def export_utuzene_fakture_excel(request, sif_par):
         rows = cursor.fetchall()
         columns = [col[0] for col in cursor.description]
 
-    # 2. Kreiraj Excel workbook
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Za utuženje"
-
-    # 3. Naslovi kolona
-    header_font = Font(bold=True)
-    for col_num, column_title in enumerate(columns, 1):
-        cell = ws.cell(row=1, column=col_num, value=column_title)
-        cell.font = header_font
-        ws.column_dimensions[get_column_letter(col_num)].width = 18
-
-    # 4. Dodaj redove
-    for row_index, row in enumerate(rows, 2):
-        for col_index, value in enumerate(row, 1):
-            ws.cell(row=row_index, column=col_index, value=value)
-
-    # 5. Pripremi fajl za slanje kao response
-    response = xlsx_attachment_response("utuzene_fakture.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response(
+        "utuzene_fakture.xlsx",
+        "Za utuÅ¾enje",
+        columns,
+        rows,
+        bold_header=True,
+        fixed_column_width=18,
+    )
 
 @role_permission_required()
 def export_opomene_excel(request,sif_par):
@@ -861,27 +821,14 @@ def export_opomene_excel(request,sif_par):
         rows = cursor.fetchall()
         columns = [col[0] for col in cursor.description]
 
-    # Kreiraj Excel fajl
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Za opomene"
-
-    # Zaglavlje
-    header_font = Font(bold=True)
-    for col_num, column_title in enumerate(columns, 1):
-        cell = ws.cell(row=1, column=col_num, value=column_title)
-        cell.font = header_font
-        ws.column_dimensions[get_column_letter(col_num)].width = 18
-
-    # Podaci
-    for row_index, row in enumerate(rows, 2):
-        for col_index, value in enumerate(row, 1):
-            ws.cell(row=row_index, column=col_index, value=value)
-
-    # Response
-    response = xlsx_attachment_response("opomene_fakture.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response(
+        "opomene_fakture.xlsx",
+        "Za opomene",
+        columns,
+        rows,
+        bold_header=True,
+        fixed_column_width=18,
+    )
 
 
 @role_permission_required()
@@ -897,20 +844,8 @@ def export_baket_90_excel(request, sif_par):
         """, [sif_par])
         data = cursor.fetchall()
 
-    # Excel
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Baket 90"
-
     headers = ['Šifra partnera', 'Naziv', 'Veza', 'Šifra posla', 'Duguje', 'Potražuje', 'Saldo']
-    ws.append(headers)
-
-    for row in data:
-        ws.append(row)
-
-    response = xlsx_attachment_response("baket_90.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response("baket_90.xlsx", "Baket 90", headers, data)
 
 @role_permission_required()
 def export_baket_60_excel(request, sif_par):
@@ -925,19 +860,8 @@ def export_baket_60_excel(request, sif_par):
         """, [sif_par])
         data = cursor.fetchall()
 
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Baket 60"
-
     headers = ['Šifra partnera', 'Naziv', 'Veza', 'Šifra posla', 'Duguje', 'Potražuje', 'Saldo']
-    ws.append(headers)
-
-    for row in data:
-        ws.append(row)
-
-    response = xlsx_attachment_response(f"baket_60_sifpar_{sif_par}.xlsx")
-    wb.save(response)
-    return response
+    return rows_to_xlsx_response(f"baket_60_sifpar_{sif_par}.xlsx", "Baket 60", headers, data)
 
 # <!-- ======================================================================= -->
 #                           <!-- KONTAKTI -->
@@ -1044,7 +968,7 @@ def lista_opomena(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
         try:
-            wb = openpyxl.load_workbook(excel_file, data_only=True)
+            wb = load_workbook(excel_file, data_only=True)
             ws = wb.active
 
             rows = list(ws.iter_rows(values_only=True))
