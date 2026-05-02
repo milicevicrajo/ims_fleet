@@ -6,12 +6,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
-from urllib.parse import quote
-from django_filters.views import FilterView
-from django.views import View
-from django.views.generic import CreateView, UpdateView, TemplateView, ListView, DeleteView
-from django.views.generic.detail import DetailView
 from django.utils import timezone
+from django.views import View
+from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
+from django.views.generic.detail import DetailView
+from django_filters.views import FilterView
+
 from core.mixins import RolePermissionRequiredMixin
 
 from .filters import KvarFilter
