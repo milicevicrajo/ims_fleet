@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from fleet.models import PermissionCode, Role, RolePermission
+from core.models import PermissionCode, Role, RolePermission
 from fleet.permissions import collect_fleet_permission_codes
 from naplata.permissions import collect_naplata_permission_codes
 

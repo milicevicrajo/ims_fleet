@@ -1,5 +1,8 @@
 from io import BytesIO
+from types import SimpleNamespace
+from unittest.mock import Mock
 
+from django.core.exceptions import PermissionDenied
 from django.test import SimpleTestCase
 from openpyxl import load_workbook
 
@@ -9,6 +12,8 @@ from .exporting import (
     rows_to_xlsx_response,
     xlsx_attachment_response,
 )
+from .mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
+from .models import CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission
 
 
 class ExportingTests(SimpleTestCase):
@@ -60,3 +65,94 @@ class ExportingTests(SimpleTestCase):
         self.assertEqual(worksheet["A1"].value, "Name")
         self.assertEqual(worksheet["A2"].value, "Alpha")
         self.assertEqual(worksheet["B2"].value, 12)
+
+
+class RolePermissionMixinTests(SimpleTestCase):
+    def test_user_has_role_permission_returns_false_without_code(self):
+        user = SimpleNamespace(is_superuser=False, roles=Mock())
+
+        self.assertFalse(user_has_role_permission(user, None))
+        user.roles.filter.assert_not_called()
+
+    def test_user_has_role_permission_uses_active_role_filter(self):
+        filter_mock = Mock()
+        filter_mock.exists.return_value = True
+        roles = Mock()
+        roles.filter.return_value = filter_mock
+        user = SimpleNamespace(is_superuser=False, roles=roles)
+
+        self.assertTrue(user_has_role_permission(user, "fleet:vehicle_list"))
+        roles.filter.assert_called_once_with(
+            permissions__code="fleet:vehicle_list",
+            is_active=True,
+        )
+
+    def test_role_permission_mixin_uses_resolver_match_view_name(self):
+        filter_mock = Mock()
+        filter_mock.exists.return_value = True
+        roles = Mock()
+        roles.filter.return_value = filter_mock
+        user = SimpleNamespace(is_superuser=False, roles=roles)
+        request = SimpleNamespace(
+            user=user,
+            resolver_match=SimpleNamespace(view_name="naplata:lista_dugovanja"),
+        )
+
+        class TestMixin(RolePermissionRequiredMixin):
+            def __init__(self, request):
+                self.request = request
+
+        self.assertTrue(TestMixin(request).test_func())
+        roles.filter.assert_called_once_with(
+            permissions__code="naplata:lista_dugovanja",
+            is_active=True,
+        )
+
+    def test_role_permission_required_decorator_raises_without_permission(self):
+        filter_mock = Mock()
+        filter_mock.exists.return_value = False
+        roles = Mock()
+        roles.filter.return_value = filter_mock
+        user = SimpleNamespace(is_superuser=False, roles=roles)
+        request = SimpleNamespace(
+            user=user,
+            resolver_match=SimpleNamespace(view_name="fleet:vehicle_list"),
+        )
+
+        @role_permission_required()
+        def protected_view(request):
+            return "ok"
+
+        with self.assertRaises(PermissionDenied):
+            protected_view(request)
+
+
+class OrganizationalUnitLocationTests(SimpleTestCase):
+    def test_organizational_unit_keeps_fleet_app_label(self):
+        self.assertEqual(OrganizationalUnit._meta.app_label, "fleet")
+
+    def test_organizational_unit_is_reexported_from_fleet_models(self):
+        from fleet.models import OrganizationalUnit as FleetOrganizationalUnit
+
+        self.assertIs(FleetOrganizationalUnit, OrganizationalUnit)
+
+
+class FleetAuthModelLocationTests(SimpleTestCase):
+    def test_fleet_auth_models_keep_fleet_app_label(self):
+        self.assertEqual(CustomUser._meta.app_label, "fleet")
+        self.assertEqual(Role._meta.app_label, "fleet")
+        self.assertEqual(PermissionCode._meta.app_label, "fleet")
+        self.assertEqual(RolePermission._meta.app_label, "fleet")
+
+    def test_fleet_auth_models_are_reexported_from_fleet_models(self):
+        from fleet.models import (
+            CustomUser as FleetCustomUser,
+            PermissionCode as FleetPermissionCode,
+            Role as FleetRole,
+            RolePermission as FleetRolePermission,
+        )
+
+        self.assertIs(FleetCustomUser, CustomUser)
+        self.assertIs(FleetRole, Role)
+        self.assertIs(FleetPermissionCode, PermissionCode)
+        self.assertIs(FleetRolePermission, RolePermission)

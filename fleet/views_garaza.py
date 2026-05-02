@@ -12,6 +12,7 @@ from django.views import View
 from django.views.generic import CreateView, UpdateView, TemplateView, ListView, DeleteView
 from django.views.generic.detail import DetailView
 from django.utils import timezone
+from core.mixins import RolePermissionRequiredMixin
 
 from .filters import KvarFilter
 from .forms import (
@@ -32,7 +33,6 @@ from .models import (
     ProcurementRequest,
     ProcurementItem,
 )
-from .mixins import RolePermissionRequiredMixin
 from .utils import filter_nis_fuel_queryset, filter_omv_fuel_queryset
 
 

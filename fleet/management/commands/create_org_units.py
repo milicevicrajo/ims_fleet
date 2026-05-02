@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from fleet.models import OrganizationalUnit
+from core.models import OrganizationalUnit
 
 class Command(BaseCommand):
     help = 'Učitavanje podataka o vozilima iz Excel fajla'

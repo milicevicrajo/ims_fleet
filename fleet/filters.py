@@ -7,13 +7,14 @@ from django.db.models.functions import Trim
 from django.http import QueryDict
 from django.utils import timezone
 
+from core.models import OrganizationalUnit
+
 from .models import (
     DraftServiceTransaction,
     Employee,
     FuelConsumption,
     JobCode,
     Kvar,
-    OrganizationalUnit,
     Policy,
     PutniNalog,
     ServiceTransaction,

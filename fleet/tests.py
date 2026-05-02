@@ -10,8 +10,8 @@ from .models import TransactionNIS, TransactionOMV
 from .models import Employee, Vehicle, VehicleTravelOrder
 from .queries import date_period_filtered_query, report_period_filtered_query
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
+from .report_views import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
 from .utils import filter_nis_fuel_queryset, filter_omv_fuel_queryset
-from .views import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
 from .views_garaza import VehicleTravelOrderCreateView, VehicleTravelOrderDetailView
 
 
@@ -19,8 +19,8 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 	def setUp(self):
 		self.factory = RequestFactory()
 
-	@patch("fleet.views.render")
-	@patch("fleet.views.get_data_from_secondary_db")
+	@patch("fleet.report_views.render")
+	@patch("fleet.report_views.get_data_from_secondary_db")
 	def test_render_secondary_report_renders_template_with_context(self, get_data_mock, render_mock):
 		request = self.factory.get("/fleet/report/")
 		form = PutnickaFilterForm()
@@ -42,8 +42,8 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 		render_mock.assert_called_once()
 		get_data_mock.assert_called_once()
 
-	@patch("fleet.views.report_xlsx_response")
-	@patch("fleet.views.get_data_from_secondary_db")
+	@patch("fleet.report_views.report_xlsx_response")
+	@patch("fleet.report_views.get_data_from_secondary_db")
 	def test_export_secondary_report_returns_xlsx_response(self, get_data_mock, export_mock):
 		form = PutnickaFilterForm({"godina": "2026"})
 		get_data_mock.return_value = [{"sifpos": "832111"}]
@@ -60,8 +60,8 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 		export_mock.assert_called_once()
 		get_data_mock.assert_called_once()
 
-	@patch("fleet.views.render")
-	@patch("fleet.views.get_data_from_secondary_db")
+	@patch("fleet.report_views.render")
+	@patch("fleet.report_views.get_data_from_secondary_db")
 	def test_render_simple_secondary_report_uses_given_db_alias_and_template(self, get_data_mock, render_mock):
 		request = self.factory.get("/fleet/simple-report/")
 		get_data_mock.return_value = [{"id": 1}]

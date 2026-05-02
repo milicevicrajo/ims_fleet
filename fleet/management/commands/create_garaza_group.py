@@ -8,19 +8,17 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.urls import URLPattern, URLResolver
 
+from core.models import CustomUser, PermissionCode, Role
 from fleet import urls as fleet_urls
 from fleet.models import (
-    CustomUser,
     FuelConsumption,
     Insurance,
     JobCode,
     Kvar,
     Lease,
-    PermissionCode,
     Policy,
     ProcurementRequest,
     Requisition,
-    Role,
     ServiceTransaction,
     ServiceType,
     TrafficCard,

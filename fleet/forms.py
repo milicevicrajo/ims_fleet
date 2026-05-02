@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
+from core.models import OrganizationalUnit
 
 from .models import (
     DraftInsurance,
@@ -18,7 +19,6 @@ from .models import (
     Kvar,
     KvarPart,
     Lease,
-    OrganizationalUnit,
     Policy,
     ProcurementItem,
     ProcurementRequest,

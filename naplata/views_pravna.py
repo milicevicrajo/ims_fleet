@@ -8,7 +8,7 @@ from decimal import Decimal
 from openpyxl.styles import Alignment
 
 from core.exporting import create_xlsx_workbook, set_column_widths, style_header_row, workbook_response
-from fleet.mixins import role_permission_required
+from core.mixins import role_permission_required
 from .db_users import resolve_user_pk_for_db
 from .models import Postupak, PromenaPostupka
 from .forms_pravna import PostupakForm, PromenaPostupkaForm, COLUMNS_BY_TIP

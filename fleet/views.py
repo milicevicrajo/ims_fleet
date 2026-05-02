@@ -28,7 +28,9 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_filters.views import FilterView
 
-from core.exporting import csv_attachment_response, dataframe_xlsx_response, rows_to_xlsx_response
+from core.exporting import csv_attachment_response, rows_to_xlsx_response
+from core.mixins import RolePermissionRequiredMixin, role_permission_required
+from core.models import CustomUser, OrganizationalUnit
 
 from .analytics_helpers import (
     cost_per_km_status,
@@ -54,11 +56,9 @@ from .forms import (
     IncidentForm,
     JobCodeForm,
     LeaseForm,
-    OMVPutnickaFilterForm,
     OrganizationalUnitForm,
     PolicyForm,
     PutniNalogForm,
-    PutnickaFilterForm,
     RequisitionForm,
     ServiceForm,
     ServiceTransactionForm,
@@ -68,7 +68,6 @@ from .forms import (
     VehicleForm,
 )
 from .models import (
-    CustomUser,
     DraftPolicy,
     DraftRequisition,
     DraftServiceTransaction,
@@ -80,7 +79,6 @@ from .models import (
     KontaVozila,
     Lease,
     LeaseInterest,
-    OrganizationalUnit,
     Policy,
     PutniNalog,
     Requisition,
@@ -92,28 +90,38 @@ from .models import (
     VehicleTravelOrder,
     Vehicle,
 )
-from .mixins import CenterMixin, RolePermissionRequiredMixin, role_permission_required
+from .mixins import CenterMixin
 from .queries import (
     _filtered_qs,
-    date_period_filtered_query,
-    get_data_from_secondary_db,
     lease_monthly_costs_rows,
     policies_monthly_costs_qs,
-    report_period_filtered_query,
     service_monthly_costs_rows,
 )
-from .report_exports import (
-    NIS_PUTNICKA_EXPORT,
-    NIS_TERETNA_EXPORT,
-    OMV_PUTNICKA_EXPORT,
-    OMV_TERETNA_EXPORT,
-    report_xlsx_response,
-)
-from .report_queries import (
-    NIS_PUTNICKA_SQL,
-    NIS_TERETNA_SQL,
-    OMV_PUTNICKA_SQL,
-    OMV_TERETNA_SQL,
+from .report_views import (
+    _export_secondary_report,
+    _render_secondary_report,
+    _render_simple_secondary_report,
+    export_nis_putnicka_excel,
+    export_nis_teretna_excel,
+    export_omv_putnicka_excel,
+    export_omv_teretna_excel,
+    kasko_rate_view,
+    magacin_view,
+    nis_putnicka_view,
+    nis_teretna_view,
+    omv_putnicka_view,
+    omv_teretna_view,
+    otpis_view,
+    po_dobavljacima_view,
+    potrazivanje_ddor_view,
+    reports_index,
+    tahograf_partneri_view,
+    tro_gorivo_mesec_view,
+    tro_parking_view,
+    tro_pracenja_vozila_view,
+    tro_zarade_view,
+    troskovi_svi_view,
+    zatvoren_putni_view,
 )
 from .utils import (
     calculate_average_fuel_consumption,
@@ -3552,350 +3560,6 @@ class KontoDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteVie
     template_name = "fleet/konta_confirm_delete.html"
     success_url = reverse_lazy("konta_list")
     success_message = "Konto je obrisan."
-
-
-# <!-- ======================================================================================== -->
-#                           <!-- IZVESTAJI -->
-# <!-- ======================================================================================== -->
-
-def reports_index(request):
-    """Početna stranica za izveštaje sa linkovima."""
-    sections = {
-        "Finansije": [
-            {"name": "Spisak vozila po šiframa posla", "url": "vehicle_list"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - OMV putnicka", "url": "omv_putnicka"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - OMV teretna", "url": "omv_teretna"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - NIS putnicka", "url": "nis_putnicka"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - NIS teretna", "url": "nis_teretna"},
-        ],
-        "Centri": [
-            # {"name": "Pregled putnih naloga po godinama", "url": "kasko_rate"},
-            {"name": "Zatvoreni putni nalozi", "url": "zatvoreni_putni"},
-        ],
-        "Garaža": [
-            {"name": "Trenutno stanje u magacinu", "url": "magacin"},
-            {"name": "Spisak otpisanih vozila", "url": "otpis"},
-            # {"name": "Trenutno stanje u magacinu", "url": "tro_gorivo_mesec"},
-        ],
-        "Uprava": [
-            {"name": "Promet goriva po mesecima", "url": "tro_gorivo_mesec"},
-            {"name": "Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima ", "url": "troskovi_svi"},
-            {"name": "Troškovi praćenja vozila", "url": "tro_pracenja_vozila"},
-            {"name": "Troškovi tahografa ", "url": "troskovi_tahograf"},
-            {"name": "Troškovi parkinga", "url": "tro_parking"},
-            {"name": "Pregled Potraživanja od osiguranja", "url": "potrazivanje_ddor"},
-            {"name": "Pregled Najvećih Dobavljača Usluga", "url": "po_dobavljacima"},
-            
-        ],
-    }
-
-    return render(request, 'fleet/reports_index.html', {"sections": sections})
-
-
-def _secondary_report_data(query, form, filter_query, cast_params=False):
-    query, params = filter_query(query, form, cast_params=cast_params)
-    return get_data_from_secondary_db(query, "test_db", params=params)
-
-
-def _render_secondary_report(request, *, form, query, filter_query, template_name, title, export_filename, export_sheet):
-    data = _secondary_report_data(query, form, filter_query)
-
-    if "export" in request.GET:
-        return dataframe_xlsx_response(data, export_filename, export_sheet)
-
-    return render(request, template_name, {
-        "data": data,
-        "form": form,
-        "title": title,
-    })
-
-
-def _export_secondary_report(*, form, query, filter_query, export_spec):
-    data = _secondary_report_data(query, form, filter_query, cast_params=True)
-    return report_xlsx_response(export_spec, data)
-
-
-def _render_simple_secondary_report(request, *, query, db_alias, template_name):
-    data = get_data_from_secondary_db(query, db_alias)
-    return render(request, template_name, {"data": data})
-
-
-def omv_putnicka_view(request):
-    form = OMVPutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=OMV_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        template_name="fleet/reports/omv_putnicka.html",
-        title="OMV Putnička vozila",
-        export_filename="omv_putnicka.xlsx",
-        export_sheet="OMV Putnicka",
-    )
-
-
-def export_omv_putnicka_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=OMV_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        export_spec=OMV_PUTNICKA_EXPORT,
-    )
-
-def nis_putnicka_view(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=NIS_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        template_name="fleet/reports/nis_putnicka.html",
-        title="NIS Putnička vozila",
-        export_filename="nis_putnicka.xlsx",
-        export_sheet="NIS Putnicka",
-    )
-
-def export_nis_putnicka_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=NIS_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        export_spec=NIS_PUTNICKA_EXPORT,
-    )
-
-def nis_teretna_view(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=NIS_TERETNA_SQL,
-        filter_query=date_period_filtered_query,
-        template_name="fleet/reports/nis_teretna.html",
-        title="NIS Teretna vozila",
-        export_filename="nis_teretna.xlsx",
-        export_sheet="NIS Teretna",
-    )
-
-
-
-def export_nis_teretna_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=NIS_TERETNA_SQL,
-        filter_query=date_period_filtered_query,
-        export_spec=NIS_TERETNA_EXPORT,
-    )
-
-
-def omv_teretna_view(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=OMV_TERETNA_SQL,
-        filter_query=report_period_filtered_query,
-        template_name="fleet/reports/omv_teretna.html",
-        title="OMV Teretna vozila",
-        export_filename="omv_teretna.xlsx",
-        export_sheet="OMV Teretna",
-    )
-
-def export_omv_teretna_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=OMV_TERETNA_SQL,
-        filter_query=report_period_filtered_query,
-        export_spec=OMV_TERETNA_EXPORT,
-    )
-
-def kasko_rate_view(request):
-    """
-    View za prikaz podataka iz dbo.kasko_rate.
-    """
-    query = "SELECT * FROM dbo.kasko_rate"
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="test_db",
-        template_name="fleet/reports/kasko_rate.html",
-    )
-
-	
-def zatvoren_putni_view(request):
-    """
-    View za prikaz podataka iz dbo.fleet_zatvoren_putni.
-    """
-    query = "SELECT * FROM dbo.fleet_zatvoren_putni"
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/zatvoreni_putni.html",
-    )
-
-
-def magacin_view(request):
-    """
-    View za prikaz podataka iz dbo.fleet_magacin_rez.
-    """
-    query = """
-        SELECT sif_pred, god, oj, sif_mag, sif_art, kolul, koliz, popkol, vrulnab, vriznab,
-               vrulvp, vrizvp, revalzal, razliz, mag_cena, kolpon, cenapon, naz_art,
-               sif_vrsart, naz_vrsart
-        FROM dbo.fleet_magacin_rez
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/magacin.html",
-    )
-
-
-def otpis_view(request):
-    """
-    View za prikaz podataka iz fleet_otpis
-    """
-    query = """
-        SELECT sif_pred, god, sif_osn, rb, naz_osn, inv_br, kol, jed_mere, sif_par, knt, oj, sif_lok,
-               sif_amort, sif_reval, stopa_dogam, dat_stavlj, dat_prest, iznos_val, skr_naz, poreklo,
-               nab_vred, osnovica, otpis, status, br_fakture, zemljiste_ar, zemljiste_m, u_gramima,
-               sif_amortP, sif_revalP, otpisP, otudjena_vrednost, ind_trosak, opis, osnovicaP,
-               ind_manjak, ind_amort, knt_ispravka, sif_kor, stopa_amort
-        FROM dbo.fleet_otpis
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/otpis.html",
-    )
-
-def tro_gorivo_mesec_view(request):
-    """
-    View za prikaz podataka iz dbo.fleet_tro_goriva_m.
-    """
-    query = """
-        SELECT god, mesec, kategorija, iznos
-        FROM dbo.fleet_tro_goriva_m
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/tro_gorivo_mesec.html",
-    )
-
-def troskovi_svi_view(request):
-    """
-    View za prikaz podataka iz dbo.Troskovi_svi.
-    """
-    query = """
-        SELECT god, sif_vrs, datum, br_naloga, stavka, oj, knt, naz_knt, duguje, sif_pos
-        FROM dbo.fleet_tro_svi
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/troskovi_svi.html",
-    )
-
-def tro_pracenja_vozila_view(request):
-    """
-    View za prikaz podataka iz dbo.TroPracenjaVozila.
-    """
-    query = """
-        SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, ZaPlacanje, Konto_tro
-        FROM dbo.fleet_tro_pracenje
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/tro_pracenja_vozila.html",
-    )
-
-def tahograf_partneri_view(request):
-    """
-    View za prikaz podataka iz dbo.TroTahografa.
-    """
-    query = """
-        SELECT *
-        FROM dbo.fleet_tro_taho
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/tro_tahografa.html",
-    )
-
-def tro_zarade_view(request):
-    """
-    View za prikaz podataka iz dbo.tro_zarade.
-    """
-    query = """
-        SELECT oj, god, mesec, rasif, ranaz, neto, bruto, bruto2
-        FROM dbo.tro_zarade
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/tro_zarade.html",
-    )
-
-def tro_parking_view(request):
-    """
-    View za prikaz podataka iz dbo.tro_parking.
-    """
-    query = """
-        SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, note, naziv, ZaPlacanje
-        FROM dbo.fleet_tro_parking
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/tro_parking.html",
-    )
-
-def po_dobavljacima_view(request):
-    """
-    View za prikaz podataka iz dbo.po_dobavljacima.
-    """
-    query = """
-        SELECT naz_par, sif_pred, god, sif_vrs, br_naloga, stavka, oj, knt, grupa, sif_par, datum, vez_dok,
-               duguje, potrazuje, skr_naz, deviza, kom, stavka_k, dpo, promena, sif_pos, dat_naloga, d_p, placeno
-        FROM dbo.fleet_dobavljaci
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/po_dobavljacima.html",
-    )
-
-def potrazivanje_ddor_view(request):
-    """
-    View za prikaz podataka iz dbo.potrazivanje_ddor.
-    """
-    query = """
-        SELECT god, sif_vrs, br_naloga, stavka, oj, knt, datum, vez_dok, potrazuje
-        FROM dbo.fleet_potrazivanje_ddor
-    """
-    return _render_simple_secondary_report(
-        request,
-        query=query,
-        db_alias="server_db",
-        template_name="fleet/reports/potrazivanje_ddor.html",
-    )
-
 
 
 class PoliciesMonthlyCostsView(LoginRequiredMixin, FilterView, ListView):

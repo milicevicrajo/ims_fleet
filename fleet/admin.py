@@ -2,20 +2,18 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 
+from core.models import CustomUser, PermissionCode, Role, RolePermission
+
 from .models import (
-    CustomUser,
     Employee,
     FuelConsumption,
     Incident,
     JobCode,
     Kvar,
     Lease,
-    PermissionCode,
     Policy,
     PutniNalog,
     PutniNalogSequence,
-    Role,
-    RolePermission,
     Service,
     ServiceType,
     TrafficCard,

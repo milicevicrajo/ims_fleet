@@ -15,6 +15,7 @@ from django.utils import timezone as django_timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.translation import gettext_lazy as _
 from openpyxl import load_workbook
+from core.models import OrganizationalUnit
 
 from .models import (
     DraftInsurance,
@@ -26,7 +27,6 @@ from .models import (
     Insurance,
     JobCode,
     Lease,
-    OrganizationalUnit,
     Policy,
     Requisition,
     ServiceTransaction,

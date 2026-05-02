@@ -13,8 +13,8 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from core.exporting import rows_to_xlsx_response
-from fleet.mixins import role_permission_required
-from fleet.models import OrganizationalUnit
+from core.mixins import role_permission_required
+from core.models import OrganizationalUnit
 
 from .db_users import resolve_user_pk_for_db
 from .forms import (
