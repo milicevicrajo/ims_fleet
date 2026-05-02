@@ -455,36 +455,6 @@ def import_requisitions_from_excel(file_path):
 
 
 
-def import_employee_data_from_excel(file_path):
-    # Učitaj Excel sheet
-    df = pd.read_excel(file_path, sheet_name='zaposleni')  # Ako se sheet zove drugačije, promeni naziv
-
-    # Prođi kroz svaki red u DataFrame-u
-    for index, row in df.iterrows():
-        try:
-            # Pravilno učitaj i formatiraj datume
-            date_of_birth = pd.to_datetime(row['dat_rodj']).date()
-            date_of_joining = pd.to_datetime(row['dat_dolaska']).date()
-
-            # Proveri da li je phone_number `null` ili prazan
-            phone_number = row['mob_br'].strip() if pd.notnull(row['mob_br']) else None
-
-            # Kreiraj novi Employee zapis
-            Employee.objects.create(
-                employee_code=str(row['rasif']),
-                name=row['ranaz'].strip(),
-                position=row['naz_sis'].strip(),
-                department_code=int(row['oj']),
-                gender=row['pol'].strip(),
-                date_of_birth=date_of_birth,
-                date_of_joining=date_of_joining,
-                phone_number=phone_number
-            )
-            logger.info(f"Successfully imported employee {row['ranaz']}")
-        
-        except Exception as e:
-            logger.error(f"Error importing row {index}: {e}")
-
 def populate_service_types():
     # Podaci koje želiš da ubaciš u bazu
     service_types = [

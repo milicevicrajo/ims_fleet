@@ -11,7 +11,7 @@ from fleet.selenium_integrations import (
     omv_teretna_data_import,
     kerio_login,
 )
-from fleet.sync.hr import sync_employees_from_hr_view
+from hr.sync import sync_employees_from_hr_view
 from celery import shared_task
 from django.core.management import call_command
 from django.conf import settings

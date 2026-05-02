@@ -2,6 +2,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from django.urls import path, register_converter
+from hr.views import (
+    EmployeeCreateView,
+    EmployeeDeleteView,
+    EmployeeDetailView,
+    EmployeeListView,
+    EmployeeUpdateView,
+)
 
 from . import views
 from .views import (
@@ -9,11 +16,6 @@ from .views import (
     DraftPolicyUpdateView,
     DraftRequisitionUpdateView,
     DraftServiceTransactionUpdateView,
-    EmployeeCreateView,
-    EmployeeDeleteView,
-    EmployeeDetailView,
-    EmployeeListView,
-    EmployeeUpdateView,
     ExpiringAndNotRenewedPolicyView,
     FuelConsumptionCreateView,
     FuelConsumptionDeleteView,
@@ -21,11 +23,6 @@ from .views import (
     FuelConsumptionListView,
     FuelConsumptionUpdateView,
     FuelTransactionsListView,
-    IncidentCreateView,
-    IncidentDeleteView,
-    IncidentDetailView,
-    IncidentListView,
-    IncidentUpdateView,
     InsuranceCreateView,
     InsuranceDeleteView,
     InsuranceDetailView,
@@ -207,12 +204,6 @@ urlpatterns = [
     path('zaposleni/izmeni/<int:pk>/', EmployeeUpdateView.as_view(), name='employee_update'),
     path('zaposleni/<int:pk>/', EmployeeDetailView.as_view(), name='employee_detail'),
     path('zaposleni/obrisi/<int:pk>/', EmployeeDeleteView.as_view(), name='employee_delete'),
-
-    path('incidenti/', IncidentListView.as_view(), name='incident_list'),
-    path('incidenti/novo/', IncidentCreateView.as_view(), name='incident_create'),
-    path('incidenti/izmeni/<int:pk>/', IncidentUpdateView.as_view(), name='incident_update'),
-    path('incidenti/<int:pk>/', IncidentDetailView.as_view(), name='incident_detail'),
-    path('incidenti/obrisi/<int:pk>/', IncidentDeleteView.as_view(), name='incident_delete'),
 
     path('garaza/', GarazaHomeView.as_view(), name='garaza_home'),
     path('garaza/kvarovi/', KvarListView.as_view(), name='kvar_list'),

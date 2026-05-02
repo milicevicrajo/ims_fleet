@@ -7,7 +7,6 @@ from core.models import CustomUser, PermissionCode, Role, RolePermission
 from .models import (
     Employee,
     FuelConsumption,
-    Incident,
     JobCode,
     Kvar,
     Lease,
@@ -66,7 +65,6 @@ admin.site.register(Lease)
 admin.site.register(Policy)
 admin.site.register(FuelConsumption)
 admin.site.register(Employee)
-admin.site.register(Incident)
 admin.site.register(PutniNalog)
 admin.site.register(VehicleTravelOrder)
 admin.site.register(ServiceType)

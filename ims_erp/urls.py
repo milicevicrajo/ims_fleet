@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('fleet.urls')),  # Ovo povezuje URLs iz fleet aplikacije
+    path("hr/", include(("hr.urls", "hr"), namespace="hr")),
     path("naplata/", include(("naplata.urls", "naplata"), namespace="naplata")),
     path("menice/", include(("menice.urls", "menice"), namespace="menice")),
     path("", include("core.urls")),

@@ -8,6 +8,7 @@ from django.http import QueryDict
 from django.utils import timezone
 
 from core.models import OrganizationalUnit
+from hr.querysets import employees_for_travel_orders
 
 from .models import (
     DraftServiceTransaction,
@@ -234,11 +235,7 @@ class PutniNalogFilter(django_filters.FilterSet):
         self.filters["year"].extra["choices"] = [("", "Sve godine")] + [(y, y) for y in years]
         self.filters["month"].extra["choices"] = [("", "Svi meseci")] + [(m, m) for m in range(1, 13)]
 
-        self.filters["employee"].queryset = (
-            Employee.objects.filter(travel_orders__in=qs)
-            .distinct()
-            .order_by("last_name", "first_name")
-        )
+        self.filters["employee"].queryset = employees_for_travel_orders(qs)
         self.filters["vehicle"].queryset = (
             Vehicle.objects.filter(travel_orders__in=qs)
             .distinct()

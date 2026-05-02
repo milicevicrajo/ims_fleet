@@ -80,6 +80,7 @@ DEBUG = True
 INSTALLED_APPS = [
     "core", 
     'fleet',
+    'hr',
     'naplata',
     'menice',
 

@@ -24,13 +24,13 @@
             <div class="card border">
               <div class="card-body">
                 <h5 class="card-title">Osnovni podaci</h5>
-                <p><strong>Šifra zaposlenog:</strong> {{ employee.employee_code }}</p>
+                <p><strong>Sifra zaposlenog:</strong> {{ employee.employee_code }}</p>
                 <p><strong>Titula:</strong> {{ employee.title|default:"-" }}</p>
                 <p><strong>Ime:</strong> {{ employee.first_name|default:"-" }}</p>
                 <p><strong>Prezime:</strong> {{ employee.last_name|default:"-" }}</p>
                 <p><strong>Pol:</strong> {{ employee.gender|default:"-" }}</p>
-                <p><strong>Datum rođenja:</strong> {{ employee.date_of_birth|date:"d.m.Y" }}</p>
-                <p><strong>Datum zapošljavanja:</strong> {{ employee.date_of_joining|date:"d.m.Y" }}</p>
+                <p><strong>Datum rodjenja:</strong> {{ employee.date_of_birth|date:"d.m.Y" }}</p>
+                <p><strong>Datum zaposljavanja:</strong> {{ employee.date_of_joining|date:"d.m.Y" }}</p>
                 <p><strong>Aktivan:</strong> {% if employee.is_active %}Da{% else %}Ne{% endif %}</p>
               </div>
             </div>
@@ -41,13 +41,13 @@
               <div class="card-body">
                 <h5 class="card-title">Radni podaci</h5>
                 <p><strong>Pozicija:</strong> {{ employee.position|default:"-" }}</p>
-                <p><strong>Šifra odeljenja:</strong> {{ employee.department_code|default:"-" }}</p>
+                <p><strong>Sifra odeljenja:</strong> {{ employee.department_code|default:"-" }}</p>
                 <p><strong>OJ:</strong> {{ employee.org_unit_code|default:"-" }}</p>
-                <p><strong>Šifra sistema:</strong> {{ employee.system_code|default:"-" }}</p>
+                <p><strong>Sifra sistema:</strong> {{ employee.system_code|default:"-" }}</p>
                 <p><strong>Naziv sistema:</strong> {{ employee.system_name|default:"-" }}</p>
-                <p><strong>Šifra zanimanja:</strong> {{ employee.job_code|default:"-" }}</p>
+                <p><strong>Sifra zanimanja:</strong> {{ employee.job_code|default:"-" }}</p>
                 <p><strong>Naziv zanimanja:</strong> {{ employee.job_title|default:"-" }}</p>
-                <p><strong>Šifra statusa:</strong> {{ employee.status_code|default:"-" }}</p>
+                <p><strong>Sifra statusa:</strong> {{ employee.status_code|default:"-" }}</p>
                 <p><strong>Naziv statusa:</strong> {{ employee.status_name|default:"-" }}</p>
               </div>
             </div>
@@ -68,9 +68,9 @@
             <div class="card border">
               <div class="card-body">
                 <h5 class="card-title">Dodatno</h5>
-                <p><strong>Matični broj:</strong> {{ employee.personal_number|default:"-" }}</p>
+                <p><strong>Maticni broj:</strong> {{ employee.personal_number|default:"-" }}</p>
                 <p><strong>Partija:</strong> {{ employee.account_number|default:"-" }}</p>
-                <p><strong>Škola:</strong> {{ employee.education|default:"-" }}</p>
+                <p><strong>Skola:</strong> {{ employee.education|default:"-" }}</p>
                 <p><strong>Slava:</strong> {{ employee.slava|default:"-" }}</p>
               </div>
             </div>

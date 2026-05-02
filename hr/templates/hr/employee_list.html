@@ -9,11 +9,11 @@
         <div class="d-flex gap-2">
           {% if show_inactive %}
             <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary btn-sm">
-              Prikaži aktivne
+              Prikazi aktivne
             </a>
           {% else %}
             <a href="{% url 'employee_list' %}?inactive=1" class="btn btn-outline-secondary btn-sm">
-              Prikaži neaktivne
+              Prikazi neaktivne
             </a>
           {% endif %}
         </div>
@@ -23,14 +23,14 @@
           <table id="DatatableEmployee" class="table table-striped table-bordered align-middle">
             <thead class="table-light">
               <tr>
-                <th>Šifra zaposlenog</th>
+                <th>Sifra zaposlenog</th>
                 <th>Prezime</th>
                 <th>Ime</th>
                 <th>Pozicija</th>
                 <th>OJ</th>
                 <th>Pol</th>
-                <th>Datum rođenja</th>
-                <th>Datum zapošljavanja</th>
+                <th>Datum rodjenja</th>
+                <th>Datum zaposljavanja</th>
                 <th>Broj telefona</th>
                 <th class="text-center">Detalji</th>
               </tr>
@@ -61,5 +61,4 @@
     </div>
   </div>
 </div>
-
 {% endblock %}

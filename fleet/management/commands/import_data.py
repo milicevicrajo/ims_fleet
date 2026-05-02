@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ...utils import import_job_codes_from_excel, import_lease_data_from_excel,import_policy_data_from_excel, populate_service_types,import_employee_data_from_excel,import_requisitions_from_excel
+from ...utils import import_job_codes_from_excel, import_lease_data_from_excel,import_policy_data_from_excel, populate_service_types,import_requisitions_from_excel
 
 class Command(BaseCommand):
     help = 'Učitavanje podataka o vozilima iz Excel fajla'

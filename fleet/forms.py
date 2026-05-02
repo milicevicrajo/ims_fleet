@@ -13,7 +13,6 @@ from .models import (
     DraftServiceTransaction,
     Employee,
     FuelConsumption,
-    Incident,
     Insurance,
     JobCode,
     Kvar,
@@ -150,21 +149,11 @@ class PolicyForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.required = True
             
-class EmployeeForm(forms.ModelForm):
-    class Meta:
-        model = Employee
-        fields = '__all__'
-
 class FuelConsumptionForm(forms.ModelForm):
     class Meta:
         model = FuelConsumption
         fields = '__all__'
 
-
-class IncidentForm(forms.ModelForm):
-    class Meta:
-        model = Incident
-        fields = '__all__'
 
 class PutniNalogForm(forms.ModelForm):
     order_date = localized_date_field(label="Datum izdavanja naloga")
