@@ -151,11 +151,7 @@ def kerio_login_task():
         lock_ttl_seconds=30 * 60,
         fn=kerio_login,
     )
-			
-# @shared_task	
-# def provera_sifre_posla_task():
-#     from fleet.utils import update_job_codes_from_view
-#     return update_job_codes_from_view()	
+				
 
 @shared_task
 def fetch_job_codes():

@@ -3592,138 +3592,137 @@ def reports_index(request):
     return render(request, 'fleet/reports_index.html', {"sections": sections})
 
 
+def _secondary_report_data(query, form, filter_query, cast_params=False):
+    query, params = filter_query(query, form, cast_params=cast_params)
+    return get_data_from_secondary_db(query, "test_db", params=params)
+
+
+def _render_secondary_report(request, *, form, query, filter_query, template_name, title, export_filename, export_sheet):
+    data = _secondary_report_data(query, form, filter_query)
+
+    if "export" in request.GET:
+        return dataframe_xlsx_response(data, export_filename, export_sheet)
+
+    return render(request, template_name, {
+        "data": data,
+        "form": form,
+        "title": title,
+    })
+
+
+def _export_secondary_report(*, form, query, filter_query, export_spec):
+    data = _secondary_report_data(query, form, filter_query, cast_params=True)
+    return report_xlsx_response(export_spec, data)
+
+
+def _render_simple_secondary_report(request, *, query, db_alias, template_name):
+    data = get_data_from_secondary_db(query, db_alias)
+    return render(request, template_name, {"data": data})
+
+
 def omv_putnicka_view(request):
     form = OMVPutnickaFilterForm(request.GET or None)
-
-    query = OMV_PUTNICKA_SQL
-
-    query, params = report_period_filtered_query(query, form)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    # Excel export
-    if 'export' in request.GET:
-
-        return dataframe_xlsx_response(data, "omv_putnicka.xlsx", "OMV Putnicka")
-
-    return render(request, 'fleet/reports/omv_putnicka.html', {
-        'data': data,
-        'form': form,
-        'title': 'OMV Putnička vozila'
-    })
+    return _render_secondary_report(
+        request,
+        form=form,
+        query=OMV_PUTNICKA_SQL,
+        filter_query=report_period_filtered_query,
+        template_name="fleet/reports/omv_putnicka.html",
+        title="OMV Putnička vozila",
+        export_filename="omv_putnicka.xlsx",
+        export_sheet="OMV Putnicka",
+    )
 
 
 def export_omv_putnicka_excel(request):
     form = PutnickaFilterForm(request.GET or None)
-
-    query = OMV_PUTNICKA_SQL
-
-    query, params = report_period_filtered_query(query, form, cast_params=True)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    return report_xlsx_response(OMV_PUTNICKA_EXPORT, data)
+    return _export_secondary_report(
+        form=form,
+        query=OMV_PUTNICKA_SQL,
+        filter_query=report_period_filtered_query,
+        export_spec=OMV_PUTNICKA_EXPORT,
+    )
 
 def nis_putnicka_view(request):
     form = PutnickaFilterForm(request.GET or None)
-
-    query = NIS_PUTNICKA_SQL
-
-    query, params = report_period_filtered_query(query, form)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    # Excel export
-    if 'export' in request.GET:
-        return dataframe_xlsx_response(data, "nis_putnicka.xlsx", "NIS Putnicka")
-
-    return render(request, 'fleet/reports/nis_putnicka.html', {
-        'data': data,
-        'form': form,
-        'title': 'NIS Putnička vozila'
-    })
+    return _render_secondary_report(
+        request,
+        form=form,
+        query=NIS_PUTNICKA_SQL,
+        filter_query=report_period_filtered_query,
+        template_name="fleet/reports/nis_putnicka.html",
+        title="NIS Putnička vozila",
+        export_filename="nis_putnicka.xlsx",
+        export_sheet="NIS Putnicka",
+    )
 
 def export_nis_putnicka_excel(request):
     form = PutnickaFilterForm(request.GET or None)
-
-    query = NIS_PUTNICKA_SQL
-
-    query, params = report_period_filtered_query(query, form, cast_params=True)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    return report_xlsx_response(NIS_PUTNICKA_EXPORT, data)
+    return _export_secondary_report(
+        form=form,
+        query=NIS_PUTNICKA_SQL,
+        filter_query=report_period_filtered_query,
+        export_spec=NIS_PUTNICKA_EXPORT,
+    )
 
 def nis_teretna_view(request):
     form = PutnickaFilterForm(request.GET or None)
-
-    query = NIS_TERETNA_SQL
-
-    query, params = date_period_filtered_query(query, form)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    # Excel export
-    if 'export' in request.GET:
-        return dataframe_xlsx_response(data, "nis_teretna.xlsx", "NIS Teretna")
-
-    return render(request, 'fleet/reports/nis_teretna.html', {
-        'data': data,
-        'form': form,
-        'title': 'NIS Teretna vozila'
-    })
+    return _render_secondary_report(
+        request,
+        form=form,
+        query=NIS_TERETNA_SQL,
+        filter_query=date_period_filtered_query,
+        template_name="fleet/reports/nis_teretna.html",
+        title="NIS Teretna vozila",
+        export_filename="nis_teretna.xlsx",
+        export_sheet="NIS Teretna",
+    )
 
 
 
 def export_nis_teretna_excel(request):
     form = PutnickaFilterForm(request.GET or None)
-
-    query = NIS_TERETNA_SQL
-
-    query, params = date_period_filtered_query(query, form, cast_params=True)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    return report_xlsx_response(NIS_TERETNA_EXPORT, data)
+    return _export_secondary_report(
+        form=form,
+        query=NIS_TERETNA_SQL,
+        filter_query=date_period_filtered_query,
+        export_spec=NIS_TERETNA_EXPORT,
+    )
 
 
 def omv_teretna_view(request):
     form = PutnickaFilterForm(request.GET or None)
-
-    query = OMV_TERETNA_SQL
-
-    query, params = report_period_filtered_query(query, form)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    # Excel export
-    if 'export' in request.GET:
-        return dataframe_xlsx_response(data, "omv_teretna.xlsx", "OMV Teretna")
-
-    return render(request, 'fleet/reports/omv_teretna.html', {
-        'data': data,
-        'form': form,
-        'title': 'OMV Teretna vozila'
-    })
+    return _render_secondary_report(
+        request,
+        form=form,
+        query=OMV_TERETNA_SQL,
+        filter_query=report_period_filtered_query,
+        template_name="fleet/reports/omv_teretna.html",
+        title="OMV Teretna vozila",
+        export_filename="omv_teretna.xlsx",
+        export_sheet="OMV Teretna",
+    )
 
 def export_omv_teretna_excel(request):
     form = PutnickaFilterForm(request.GET or None)
-
-    query = OMV_TERETNA_SQL
-
-    query, params = report_period_filtered_query(query, form, cast_params=True)
-
-    data = get_data_from_secondary_db(query, 'test_db', params=params)
-
-    return report_xlsx_response(OMV_TERETNA_EXPORT, data)
+    return _export_secondary_report(
+        form=form,
+        query=OMV_TERETNA_SQL,
+        filter_query=report_period_filtered_query,
+        export_spec=OMV_TERETNA_EXPORT,
+    )
 
 def kasko_rate_view(request):
     """
     View za prikaz podataka iz dbo.kasko_rate.
     """
     query = "SELECT * FROM dbo.kasko_rate"
-    data = get_data_from_secondary_db(query, 'test_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/kasko_rate.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="test_db",
+        template_name="fleet/reports/kasko_rate.html",
+    )
 
 	
 def zatvoren_putni_view(request):
@@ -3731,8 +3730,12 @@ def zatvoren_putni_view(request):
     View za prikaz podataka iz dbo.fleet_zatvoren_putni.
     """
     query = "SELECT * FROM dbo.fleet_zatvoren_putni"
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/zatvoreni_putni.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/zatvoreni_putni.html",
+    )
 
 
 def magacin_view(request):
@@ -3745,8 +3748,12 @@ def magacin_view(request):
                sif_vrsart, naz_vrsart
         FROM dbo.fleet_magacin_rez
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/magacin.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/magacin.html",
+    )
 
 
 def otpis_view(request):
@@ -3761,8 +3768,12 @@ def otpis_view(request):
                ind_manjak, ind_amort, knt_ispravka, sif_kor, stopa_amort
         FROM dbo.fleet_otpis
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/otpis.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/otpis.html",
+    )
 
 def tro_gorivo_mesec_view(request):
     """
@@ -3772,8 +3783,12 @@ def tro_gorivo_mesec_view(request):
         SELECT god, mesec, kategorija, iznos
         FROM dbo.fleet_tro_goriva_m
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/tro_gorivo_mesec.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/tro_gorivo_mesec.html",
+    )
 
 def troskovi_svi_view(request):
     """
@@ -3783,8 +3798,12 @@ def troskovi_svi_view(request):
         SELECT god, sif_vrs, datum, br_naloga, stavka, oj, knt, naz_knt, duguje, sif_pos
         FROM dbo.fleet_tro_svi
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/troskovi_svi.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/troskovi_svi.html",
+    )
 
 def tro_pracenja_vozila_view(request):
     """
@@ -3794,8 +3813,12 @@ def tro_pracenja_vozila_view(request):
         SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, ZaPlacanje, Konto_tro
         FROM dbo.fleet_tro_pracenje
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/tro_pracenja_vozila.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/tro_pracenja_vozila.html",
+    )
 
 def tahograf_partneri_view(request):
     """
@@ -3805,8 +3828,12 @@ def tahograf_partneri_view(request):
         SELECT *
         FROM dbo.fleet_tro_taho
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/tro_tahografa.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/tro_tahografa.html",
+    )
 
 def tro_zarade_view(request):
     """
@@ -3816,8 +3843,12 @@ def tro_zarade_view(request):
         SELECT oj, god, mesec, rasif, ranaz, neto, bruto, bruto2
         FROM dbo.tro_zarade
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/tro_zarade.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/tro_zarade.html",
+    )
 
 def tro_parking_view(request):
     """
@@ -3827,8 +3858,12 @@ def tro_parking_view(request):
         SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate, note, naziv, ZaPlacanje
         FROM dbo.fleet_tro_parking
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/tro_parking.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/tro_parking.html",
+    )
 
 def po_dobavljacima_view(request):
     """
@@ -3839,8 +3874,12 @@ def po_dobavljacima_view(request):
                duguje, potrazuje, skr_naz, deviza, kom, stavka_k, dpo, promena, sif_pos, dat_naloga, d_p, placeno
         FROM dbo.fleet_dobavljaci
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/po_dobavljacima.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/po_dobavljacima.html",
+    )
 
 def potrazivanje_ddor_view(request):
     """
@@ -3850,8 +3889,12 @@ def potrazivanje_ddor_view(request):
         SELECT god, sif_vrs, br_naloga, stavka, oj, knt, datum, vez_dok, potrazuje
         FROM dbo.fleet_potrazivanje_ddor
     """
-    data = get_data_from_secondary_db(query, 'server_db')  # test_db je alias za sekundarnu bazu
-    return render(request, 'fleet/reports/potrazivanje_ddor.html', {'data': data})
+    return _render_simple_secondary_report(
+        request,
+        query=query,
+        db_alias="server_db",
+        template_name="fleet/reports/potrazivanje_ddor.html",
+    )
 
 
 
