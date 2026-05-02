@@ -9,15 +9,20 @@ class HrAppTests(SimpleTestCase):
 
     def test_employee_form_and_views_import(self):
         from .forms import EmployeeForm
+        from .models import Employee
         from .views import EmployeeListView
 
+        self.assertIsNotNone(Employee)
         self.assertIsNotNone(EmployeeForm)
         self.assertIsNotNone(EmployeeListView)
 
     def test_hr_sync_backward_compatible_import(self):
+        from fleet.models import Employee as FleetEmployee
         from fleet.sync.hr import sync_employees_from_hr_view as fleet_sync
+        from .models import Employee as HrEmployee
         from .sync import sync_employees_from_hr_view as hr_sync
 
+        self.assertIs(FleetEmployee, HrEmployee)
         self.assertIs(fleet_sync, hr_sync)
 
     def test_employee_command_aliases_are_available(self):

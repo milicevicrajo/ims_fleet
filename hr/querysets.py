@@ -1,4 +1,4 @@
-from fleet.models import Employee
+from .models import Employee
 
 
 def employee_list_queryset(show_inactive=False):

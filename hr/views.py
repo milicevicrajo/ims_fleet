@@ -3,9 +3,9 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from core.mixins import RolePermissionRequiredMixin
-from fleet.models import Employee
 
 from .forms import EmployeeForm
+from .models import Employee
 from .querysets import employee_list_queryset
 
 

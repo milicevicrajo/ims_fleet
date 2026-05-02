@@ -5,7 +5,7 @@ from datetime import date, datetime
 from django.conf import settings
 from django.db import connections
 
-from fleet.models import Employee
+from .models import Employee
 
 logger = logging.getLogger(__name__)
 
