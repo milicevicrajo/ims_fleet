@@ -1,4 +1,4 @@
-from ...selenium_integrations import nis_data_import
+from ...sync import nis_data_import
 from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = "Izvršava NIS komandu"

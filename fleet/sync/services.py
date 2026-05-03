@@ -2,7 +2,7 @@ import logging
 
 from django.db import connections, transaction
 
-from .models import (
+from fleet.models import (
     DraftRequisition,
     DraftServiceTransaction,
     Requisition,
@@ -70,7 +70,6 @@ def fetch_service_data(last_24_hours=True, days=None):
                     "vez_dok": row[6],
                     "br_naloga": row[5],
                 }
-                logger.debug(unique_fields)
                 draft_exists = DraftServiceTransaction.objects.filter(**unique_fields).exists()
 
                 if transaction_exists:
@@ -282,43 +281,30 @@ def delete_complete_drafts():
             draft.delete()
 
 
-def fetch_policy_data(last_24_hours=True, days=None):
-    from .utils import fetch_policy_data as legacy_fetch_policy_data
+def migrate_draft_to_requisition(draft_id, vehicle_id):
+    try:
+        draft = DraftRequisition.objects.get(id=draft_id)
 
-    return legacy_fetch_policy_data(last_24_hours=last_24_hours, days=days)
+        if draft.is_complete() and vehicle_id:
+            with transaction.atomic():
+                requisition = Requisition.objects.create(
+                    vehicle_id=vehicle_id,
+                    sif_pred=draft.sif_pred,
+                    god=draft.god,
+                    br_dok=draft.br_dok,
+                    sif_vrsart=draft.sif_vrsart,
+                    stavka=draft.stavka,
+                    sif_art=draft.sif_art,
+                    naz_art=draft.naz_art,
+                    kol=draft.kol,
+                    cena=draft.cena,
+                    vrednost_nab=draft.vrednost_nab,
+                    datum_trebovanja=draft.datum_trebovanja,
+                    napomena=draft.napomena,
+                    kvar=draft.kvar,
+                )
+                draft.delete()
+            return requisition
 
-
-def process_vehicle_retirements():
-    from .utils import process_vehicle_retirements as legacy_process_vehicle_retirements
-
-    return legacy_process_vehicle_retirements()
-
-
-def update_vehicle_values():
-    from .utils import update_vehicle_values as legacy_update_vehicle_values
-
-    return legacy_update_vehicle_values()
-
-
-def update_job_codes_from_view():
-    from .utils import update_job_codes_from_view as legacy_update_job_codes_from_view
-
-    return legacy_update_job_codes_from_view()
-
-
-def sync_organizational_units_from_view():
-    from .utils import sync_organizational_units_from_view as legacy_sync_organizational_units_from_view
-
-    return legacy_sync_organizational_units_from_view()
-
-
-def fetch_ddor_insurance_data():
-    from .utils import fetch_ddor_insurance_data as legacy_fetch_ddor_insurance_data
-
-    return legacy_fetch_ddor_insurance_data()
-
-
-def migrate_draft_to_insurance_single(draft_id: int, vehicle_id: int):
-    from .utils import migrate_draft_to_insurance_single as legacy_migrate_draft_to_insurance_single
-
-    return legacy_migrate_draft_to_insurance_single(draft_id, vehicle_id)
+    except DraftRequisition.DoesNotExist:
+        raise ValueError("Nepotpuni zapis ne postoji ili nije validan")

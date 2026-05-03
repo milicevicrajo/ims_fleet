@@ -2,20 +2,20 @@ from django.shortcuts import render
 
 from core.exporting import dataframe_xlsx_response
 
-from .forms import OMVPutnickaFilterForm, PutnickaFilterForm
-from .queries import (
+from ..forms import OMVPutnickaFilterForm, PutnickaFilterForm
+from ..report_helpers import (
     date_period_filtered_query,
     get_data_from_secondary_db,
     report_period_filtered_query,
 )
-from .report_exports import (
+from ..report_exports import (
     NIS_PUTNICKA_EXPORT,
     NIS_TERETNA_EXPORT,
     OMV_PUTNICKA_EXPORT,
     OMV_TERETNA_EXPORT,
     report_xlsx_response,
 )
-from .report_queries import (
+from ..report_queries import (
     KASKO_RATE_SQL,
     MAGACIN_SQL,
     NIS_PUTNICKA_SQL,

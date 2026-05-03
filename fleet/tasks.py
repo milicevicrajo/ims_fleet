@@ -1,18 +1,16 @@
-from fleet.sync_services import (
+from fleet.sync import (
     fetch_ddor_insurance_data,
     fetch_policy_data,
     fetch_requisition_data,
     fetch_service_data,
-    process_vehicle_retirements,
-    sync_organizational_units_from_view,
-)
-from fleet.selenium_integrations import (
+    kerio_login,
     nis_data_import,
     omv_putnicka_data_import,
     omv_teretna_data_import,
-    kerio_login,
+    process_vehicle_retirements,
+    sync_employees_from_hr_view,
+    sync_organizational_units_from_view,
 )
-from hr.sync import sync_employees_from_hr_view
 from celery import shared_task
 from django.core.management import call_command
 from django.conf import settings
@@ -204,4 +202,3 @@ def sync_hr_employees_task():
         lock_ttl_seconds=90 * 60,
         fn=_runner,
     )
-

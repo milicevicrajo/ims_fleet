@@ -21,7 +21,7 @@ from .models import (
     ServiceTransaction,
     Vehicle,
 )
-from .queries import policies_monthly_costs_qs
+from .policy_queries import policies_monthly_costs_qs
 from .fuel_helpers import date_range_for_datetime_field
 
 

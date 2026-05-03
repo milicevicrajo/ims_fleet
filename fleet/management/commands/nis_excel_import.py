@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ...selenium_integrations import import_nis_fuel_consumption, import_nis_transactions
+from ...sync import import_nis_fuel_consumption, import_nis_transactions
 
 class Command(BaseCommand):
     help = 'Učitavanje transakcija NIS iz Excel fajla'

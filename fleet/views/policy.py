@@ -17,7 +17,7 @@ from core.mixins import RolePermissionRequiredMixin
 from ..filters import PoliciesMonthlyCostsFilter
 from ..models import DraftPolicy, Policy
 from ..forms.policy import PolicyForm
-from ..queries import _filtered_qs, policies_monthly_costs_qs
+from ..policy_queries import _filtered_qs, policies_monthly_costs_qs
 
 
 class PolicyListView(LoginRequiredMixin, ListView):

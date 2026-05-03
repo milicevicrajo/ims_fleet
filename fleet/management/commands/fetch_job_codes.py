@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from ...sync_services import sync_organizational_units_from_view
+from ...sync import sync_organizational_units_from_view
 class Command(BaseCommand):
     help = 'Učitavanje podataka o vozilima iz Excel fajla'
     

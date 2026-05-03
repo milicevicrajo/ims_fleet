@@ -32,8 +32,8 @@ from ..models import (
     ServiceTransaction,
     ServiceType,
 )
-from ..queries import service_monthly_costs_rows
-from ..sync_services import (
+from ..service_queries import service_monthly_costs_rows
+from ..sync import (
     delete_complete_drafts,
     fetch_requisition_data,
     fetch_service_data,

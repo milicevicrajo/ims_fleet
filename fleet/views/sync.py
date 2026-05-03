@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from ..models import Lease, LeaseInterest, Vehicle
-from ..sync_services import fetch_policy_data
+from ..sync import fetch_policy_data
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def import_nis_excel_view(request):
                 tmp_file.write(chunk)
             temp_file_path = tmp_file.name
 
-        from ..selenium_integrations import import_nis_fuel_consumption, import_nis_transactions
+        from ..sync import import_nis_fuel_consumption, import_nis_transactions
 
         import_nis_fuel_consumption(temp_file_path)
         import_nis_transactions(temp_file_path)
@@ -97,7 +97,7 @@ def _handle_omv_csv_import(request, category_label):
                 tmp_file.write(chunk)
             temp_file_path = tmp_file.name
 
-        from ..selenium_integrations import import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
+        from ..sync import import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
 
         import_omv_fuel_consumption_from_csv(temp_file_path)
         import_omv_transactions_from_csv(temp_file_path)

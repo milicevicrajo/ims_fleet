@@ -12,7 +12,7 @@ from core.mixins import RolePermissionRequiredMixin
 
 from ..forms import DraftInsuranceForm, InsuranceForm
 from ..models import DraftInsurance, Insurance
-from ..sync_services import fetch_ddor_insurance_data, migrate_draft_to_insurance_single
+from ..sync import fetch_ddor_insurance_data, migrate_draft_to_insurance_single
 
 
 class InsuranceListView(LoginRequiredMixin, ListView):

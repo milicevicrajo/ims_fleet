@@ -154,7 +154,7 @@ from .views.garaza import (
     VehicleTravelOrderRequestView,
     VehicleTravelOrderUpdateView,
 )
-from .report_views import (
+from .views.reports import (
     export_nis_putnicka_excel,
     export_nis_teretna_excel,
     export_omv_putnicka_excel,
