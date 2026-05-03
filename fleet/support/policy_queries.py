@@ -1,7 +1,7 @@
 from django.db.models import Case, CharField, F, OuterRef, Subquery, Sum, Value, When
 from django.db.models.functions import ExtractMonth, ExtractYear
 
-from .models import JobCode, Policy
+from ..models import JobCode, Policy
 
 
 _latest_jc = JobCode.objects.filter(

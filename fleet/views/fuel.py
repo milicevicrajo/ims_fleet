@@ -12,7 +12,7 @@ from core.mixins import RolePermissionRequiredMixin
 from ..filters import FuelFilterForm, FuelTransactionFilterForm
 from ..forms.fuel import FuelConsumptionForm
 from ..models import FuelConsumption, TrafficCard
-from ..fuel_helpers import date_range_for_datetime_field, get_fuel_consumption_queryset
+from ..support.fuel import date_range_for_datetime_field, get_fuel_consumption_queryset
 
 
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):

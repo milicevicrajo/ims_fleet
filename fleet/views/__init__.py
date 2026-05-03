@@ -21,7 +21,7 @@ from django_filters.views import FilterView
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 from core.models import CustomUser, OrganizationalUnit
 
-from ..analytics_helpers import (
+from ..support.analytics import (
     cost_per_km_status,
     cost_per_km_thresholds,
     is_red_zone,
@@ -217,8 +217,9 @@ from .policy import (
     PolicyUpdateView,
     policies_monthly_costs_csv,
 )
+from .users import UserListView
 # Compatibility re-exports for fleet.urls and existing imports/tests.
-from ..fuel_helpers import (
+from ..support.fuel import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
     date_range_for_datetime_field,
@@ -1281,19 +1282,3 @@ def center_statistics(request, center_code):
 
     return render(request, 'fleet/dashboard_center.html', context)
 
-# <!-- ======================================================================================== -->
-#                                     <!-- USERS -->
-# <!-- ======================================================================================== -->
-
-class UserListView(LoginRequiredMixin, ListView):
-    model = CustomUser
-    template_name = 'fleet/user_list.html'  # Specify your template
-    context_object_name = 'users'     # The name of the variable to use in the template
-
-    # Optionally, you can override get_queryset to filter users if needed
-    def get_queryset(self):
-        # You can apply any filters if needed, otherwise return all users
-        return CustomUser.objects.all()
-    
-
-    

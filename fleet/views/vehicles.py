@@ -16,7 +16,7 @@ from django_filters.views import FilterView
 from core.exporting import csv_attachment_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
-from ..analytics_helpers import is_red_zone, net_maintenance_cost
+from ..support.analytics import is_red_zone, net_maintenance_cost
 from ..filters import VehicleFilter
 from ..models import (
     FuelConsumption,
@@ -30,7 +30,7 @@ from ..models import (
     Vehicle,
     VehicleTravelOrder,
 )
-from ..fuel_helpers import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
+from ..support.fuel import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
 from ..forms.vehicles import VehicleForm
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)

@@ -3,7 +3,7 @@ from django.shortcuts import render
 from core.exporting import dataframe_xlsx_response
 
 from ..forms import OMVPutnickaFilterForm, PutnickaFilterForm
-from ..report_helpers import (
+from ..support.report_helpers import (
     date_period_filtered_query,
     get_data_from_secondary_db,
     report_period_filtered_query,
@@ -15,7 +15,7 @@ from ..report_exports import (
     OMV_TERETNA_EXPORT,
     report_xlsx_response,
 )
-from ..report_queries import (
+from ..support.report_queries import (
     KASKO_RATE_SQL,
     MAGACIN_SQL,
     NIS_PUTNICKA_SQL,

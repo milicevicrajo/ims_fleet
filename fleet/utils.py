@@ -2,7 +2,7 @@ import os
 import re
 from decimal import Decimal, ROUND_HALF_UP
 
-from .fuel_helpers import (
+from .support.fuel import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
     date_range_for_datetime_field,
@@ -10,7 +10,7 @@ from .fuel_helpers import (
     filter_omv_fuel_queryset,
     get_fuel_consumption_queryset,
 )
-from .vehicle_helpers import format_license_plate
+from .support.vehicle import format_license_plate
 
 
 def get_latest_download_file(download_path):

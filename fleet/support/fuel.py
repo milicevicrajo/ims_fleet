@@ -3,7 +3,7 @@ from datetime import date, datetime, time as datetime_time
 from django.db.models import CharField, F, OuterRef, Q, Subquery, Value
 from django.utils import timezone as django_timezone
 
-from .models import TrafficCard, TransactionNIS, TransactionOMV
+from ..models import TrafficCard, TransactionNIS, TransactionOMV
 
 
 FUEL_PRODUCT_KEYWORDS = (
@@ -38,12 +38,6 @@ def filter_nis_fuel_queryset(queryset):
 
 
 def date_range_for_datetime_field(start_date=None, end_date=None):
-    """
-    Convert date-only filter values to timezone-aware datetime bounds.
-    DateTimeField filters with plain dates produce naive datetime warnings when
-    USE_TZ is enabled.
-    """
-
     def _to_date(value):
         if isinstance(value, datetime):
             return value.date()

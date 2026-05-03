@@ -25,31 +25,31 @@ def percentile(values, percent):
 def cost_per_km_thresholds(rows):
     grouped = defaultdict(list)
     for row in rows:
-        if row['cost_per_km'] is not None:
-            grouped[row['category']].append(row['cost_per_km'])
+        if row["cost_per_km"] is not None:
+            grouped[row["category"]].append(row["cost_per_km"])
 
     thresholds = {}
     for category, values in grouped.items():
         thresholds[category] = {
-            'category': category,
-            'vehicle_count': len(values),
-            'median': percentile(values, 50),
-            'p75': percentile(values, 75),
-            'p90': percentile(values, 90),
-            'average': sum(values) / len(values) if values else 0,
+            "category": category,
+            "vehicle_count": len(values),
+            "median": percentile(values, 50),
+            "p75": percentile(values, 75),
+            "p90": percentile(values, 90),
+            "average": sum(values) / len(values) if values else 0,
         }
     return thresholds
 
 
 def cost_per_km_status(value, threshold):
     if value is None:
-        return 'Opomena'
+        return "Opomena"
     if not threshold:
-        return 'Nema praga'
-    if value <= threshold['median']:
-        return 'Dobro'
-    if value <= threshold['p75']:
-        return 'Za praćenje'
-    if value <= threshold['p90']:
-        return 'Rizično'
-    return 'Neisplativo'
+        return "Nema praga"
+    if value <= threshold["median"]:
+        return "Dobro"
+    if value <= threshold["p75"]:
+        return "Za pracenje"
+    if value <= threshold["p90"]:
+        return "Rizicno"
+    return "Neisplativo"

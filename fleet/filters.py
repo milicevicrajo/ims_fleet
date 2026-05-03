@@ -21,8 +21,8 @@ from .models import (
     ServiceTransaction,
     Vehicle,
 )
-from .policy_queries import policies_monthly_costs_qs
-from .fuel_helpers import date_range_for_datetime_field
+from .support.fuel import date_range_for_datetime_field
+from .support.policy_queries import policies_monthly_costs_qs
 
 
 class VehicleFilter(django_filters.FilterSet):

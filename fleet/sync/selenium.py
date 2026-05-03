@@ -19,7 +19,7 @@ from selenium.common.exceptions import TimeoutException
 
 from fleet.models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
 from fleet.sync.browser import create_chrome_driver, create_chrome_options
-from fleet.vehicle_helpers import (
+from fleet.support.vehicle import (
     format_license_plate,
 
 )

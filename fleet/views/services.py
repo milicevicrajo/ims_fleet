@@ -32,7 +32,7 @@ from ..models import (
     ServiceTransaction,
     ServiceType,
 )
-from ..service_queries import service_monthly_costs_rows
+from ..support.service_queries import service_monthly_costs_rows
 from ..sync import (
     delete_complete_drafts,
     fetch_requisition_data,

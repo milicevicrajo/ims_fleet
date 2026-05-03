@@ -154,6 +154,7 @@ from .views.garaza import (
     VehicleTravelOrderRequestView,
     VehicleTravelOrderUpdateView,
 )
+from .views.users import UserListView
 from .views.reports import (
     export_nis_putnicka_excel,
     export_nis_teretna_excel,
@@ -177,12 +178,7 @@ from .views.reports import (
     troskovi_svi_view,
     zatvoren_putni_view,
 )
-from .views import (
-    UserListView,
-    center_statistics,
-    dashboard,
-    fleet_analytics,
-)
+from .views import center_statistics, dashboard, fleet_analytics
 
 
 class FloatConverter:

@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db.models import CharField, DecimalField, F, OuterRef, Subquery, Sum, Value
 from django.db.models.functions import Cast, Coalesce, ExtractMonth, ExtractYear
 
-from .models import JobCode, ServiceTransaction
+from ..models import JobCode, ServiceTransaction
 
 
 def _service_base_qs():

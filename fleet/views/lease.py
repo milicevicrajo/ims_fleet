@@ -7,7 +7,7 @@ from core.mixins import RolePermissionRequiredMixin
 
 from ..forms.lease import LeaseForm
 from ..models import Lease
-from ..lease_queries import lease_monthly_costs_rows
+from ..support.lease_queries import lease_monthly_costs_rows
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 

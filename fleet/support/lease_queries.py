@@ -1,7 +1,7 @@
 from django.db.models import OuterRef, Subquery, Sum
 from django.db.models.functions import TruncMonth, TruncYear
 
-from .models import FuelConsumption, JobCode, Lease, ServiceTransaction, Vehicle
+from ..models import FuelConsumption, JobCode, Lease, ServiceTransaction, Vehicle
 
 
 def lease_monthly_costs_rows(request):
