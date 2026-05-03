@@ -13,7 +13,7 @@ from .queries import date_period_filtered_query, report_period_filtered_query
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .report_views import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
 from .utils import filter_nis_fuel_queryset, filter_omv_fuel_queryset
-from .views_garaza import VehicleTravelOrderCreateView, VehicleTravelOrderDetailView
+from .views.garaza import VehicleTravelOrderCreateView, VehicleTravelOrderDetailView
 
 
 class SecondaryReportViewHelperTests(SimpleTestCase):
