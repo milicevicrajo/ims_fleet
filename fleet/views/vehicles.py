@@ -31,7 +31,7 @@ from ..models import (
     VehicleTravelOrder,
 )
 from ..utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
-from ..vehicle_forms import VehicleForm
+from ..forms.vehicles import VehicleForm
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 

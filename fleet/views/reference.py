@@ -11,7 +11,7 @@ from core.models import OrganizationalUnit
 from ..filters import TrafficCardFilterForm
 from ..forms import OrganizationalUnitForm
 from ..models import JobCode, KontaVozila, TrafficCard, Vehicle, VehicleTenderDocument
-from ..vehicle_forms import JobCodeForm, TrafficCardForm, VehicleTenderDocumentForm
+from ..forms.vehicles import JobCodeForm, TrafficCardForm, VehicleTenderDocumentForm
 
 
 class OrganizationalUnitListView(LoginRequiredMixin, ListView):

@@ -25,7 +25,7 @@ from fleet.models import (
     Vehicle,
     VehicleTravelOrder,
 )
-from fleet.permissions import collect_fleet_permission_codes
+from core.permissions import collect_fleet_permission_codes
 
 
 READ_ONLY_PREFIXES = (

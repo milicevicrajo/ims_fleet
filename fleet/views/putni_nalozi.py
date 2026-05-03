@@ -15,7 +15,7 @@ from core.mixins import RolePermissionRequiredMixin, role_permission_required
 from ..filters import PutniNalogFilter
 from ..mixins import CenterMixin
 from ..models import PutniNalog
-from ..putni_nalozi_forms import PutniNalogForm
+from ..forms.putni_nalozi import PutniNalogForm
 
 
 def _is_uprava(user):

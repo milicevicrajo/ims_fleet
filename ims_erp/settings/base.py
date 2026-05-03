@@ -225,7 +225,7 @@ CELERY_TASK_ROUTES = {
     'fleet.tasks.fetch_job_codes': {'queue': 'sync'},
     'fleet.tasks.proveri_otpis': {'queue': 'sync'},
     'fleet.tasks.sync_hr_employees_task': {'queue': 'sync'},
-    'fleet.tasks.sync_permission_codes_task': {'queue': 'sync'},
+    'core.tasks.sync_permission_codes_task': {'queue': 'sync'},
 }
 
 CELERY_WORKER_REDIRECT_STDOUTS = False

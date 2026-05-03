@@ -5,7 +5,7 @@ from django_select2.forms import Select2Widget
 from core.form_fields import localized_date_field
 from core.models import OrganizationalUnit
 
-from .models import JobCode, TrafficCard, Vehicle, VehicleTenderDocument
+from ..models import JobCode, TrafficCard, Vehicle, VehicleTenderDocument
 
 
 class VehicleForm(forms.ModelForm):

@@ -6,7 +6,7 @@ from core.models import OrganizationalUnit
 
 from hr.models import Employee
 
-from .models import (
+from ..models import (
     Kvar,
     KvarPart,
     ProcurementItem,

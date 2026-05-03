@@ -8,7 +8,7 @@ from core.models import OrganizationalUnit
 
 from hr.models import Employee
 
-from .models import PutniNalog, Vehicle
+from ..models import PutniNalog, Vehicle
 
 
 class PutniNalogForm(forms.ModelForm):

@@ -2,7 +2,7 @@ from django import forms
 
 from core.form_fields import localized_date_field
 
-from .models import Lease
+from ..models import Lease
 
 
 class LeaseForm(forms.ModelForm):

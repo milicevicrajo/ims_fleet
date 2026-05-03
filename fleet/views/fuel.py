@@ -10,7 +10,7 @@ from django_filters.views import FilterView
 from core.mixins import RolePermissionRequiredMixin
 
 from ..filters import FuelFilterForm, FuelTransactionFilterForm
-from ..fuel_forms import FuelConsumptionForm
+from ..forms.fuel import FuelConsumptionForm
 from ..models import FuelConsumption, TrafficCard
 from ..utils import date_range_for_datetime_field, get_fuel_consumption_queryset
 

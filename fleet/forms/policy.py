@@ -3,7 +3,7 @@ from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
 
-from .models import Policy, Vehicle
+from ..models import Policy, Vehicle
 
 
 class PolicyForm(forms.ModelForm):

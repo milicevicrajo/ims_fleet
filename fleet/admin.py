@@ -20,7 +20,7 @@ from .models import (
     VehicleTenderDocument,
     VehicleTravelOrder,
 )
-from .tasks import sync_permission_codes_task
+from core.tasks import sync_permission_codes_task
 
 class CustomUserAdmin(UserAdmin):
     # Add the allowed_centers field to the admin form

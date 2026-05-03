@@ -202,20 +202,6 @@ def sync_hr_employees_task():
 
 
 @shared_task
-def sync_permission_codes_task():
-    def _runner():
-        output = StringIO()
-        call_command("sync_permission_codes", stdout=output)
-        return output.getvalue().strip()
-
-    return _run_with_singleton_lock(
-        task_name="sync_permission_codes_task",
-        lock_ttl_seconds=30 * 60,
-        fn=_runner,
-    )
-
-
-@shared_task
 def create_garaza_group_task(usernames=None, clear_existing=True, dry_run=False):
     def _runner():
         output = StringIO()

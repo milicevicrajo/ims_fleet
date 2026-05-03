@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import FuelConsumption
+from ..models import FuelConsumption
 
 
 class FuelConsumptionForm(forms.ModelForm):

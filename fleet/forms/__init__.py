@@ -7,8 +7,8 @@ from django_select2.forms import Select2Widget
 from core.form_fields import localized_date_field
 from core.models import OrganizationalUnit
 
-from .fuel_forms import FuelConsumptionForm
-from .garaza_forms import (
+from .fuel import FuelConsumptionForm
+from .garaza import (
     KvarForm,
     KvarPartForm,
     ProcurementItemForm,
@@ -16,15 +16,15 @@ from .garaza_forms import (
     VehicleTravelOrderCloseForm,
     VehicleTravelOrderForm,
 )
-from .lease_forms import LeaseForm
-from .putni_nalozi_forms import PutniNalogForm
-from .models import (
+from .lease import LeaseForm
+from .putni_nalozi import PutniNalogForm
+from ..models import (
     DraftInsurance,
     Insurance,
 )
-from .policy_forms import PolicyForm
-from .vehicle_forms import JobCodeForm, TrafficCardForm, VehicleForm, VehicleTenderDocumentForm
-from .service_forms import (
+from .policy import PolicyForm
+from .vehicles import JobCodeForm, TrafficCardForm, VehicleForm, VehicleTenderDocumentForm
+from .services import (
     DraftRequisitionForm,
     DraftServiceTransactionForm,
     RequisitionForm,

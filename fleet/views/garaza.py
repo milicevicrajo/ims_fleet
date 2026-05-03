@@ -15,7 +15,7 @@ from django_filters.views import FilterView
 from core.mixins import RolePermissionRequiredMixin
 
 from ..filters import KvarFilter
-from ..garaza_forms import (
+from ..forms.garaza import (
     KvarForm,
     KvarPartForm,
     ProcurementRequestForm,

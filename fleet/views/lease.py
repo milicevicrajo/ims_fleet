@@ -5,7 +5,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from core.exporting import rows_to_xlsx_response
 from core.mixins import RolePermissionRequiredMixin
 
-from ..lease_forms import LeaseForm
+from ..forms.lease import LeaseForm
 from ..models import Lease
 from ..queries import lease_monthly_costs_rows
 
