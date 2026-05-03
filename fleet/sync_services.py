@@ -280,3 +280,45 @@ def delete_complete_drafts():
     for draft in DraftRequisition.objects.all():
         if draft.is_complete():
             draft.delete()
+
+
+def fetch_policy_data(last_24_hours=True, days=None):
+    from .utils import fetch_policy_data as legacy_fetch_policy_data
+
+    return legacy_fetch_policy_data(last_24_hours=last_24_hours, days=days)
+
+
+def process_vehicle_retirements():
+    from .utils import process_vehicle_retirements as legacy_process_vehicle_retirements
+
+    return legacy_process_vehicle_retirements()
+
+
+def update_vehicle_values():
+    from .utils import update_vehicle_values as legacy_update_vehicle_values
+
+    return legacy_update_vehicle_values()
+
+
+def update_job_codes_from_view():
+    from .utils import update_job_codes_from_view as legacy_update_job_codes_from_view
+
+    return legacy_update_job_codes_from_view()
+
+
+def sync_organizational_units_from_view():
+    from .utils import sync_organizational_units_from_view as legacy_sync_organizational_units_from_view
+
+    return legacy_sync_organizational_units_from_view()
+
+
+def fetch_ddor_insurance_data():
+    from .utils import fetch_ddor_insurance_data as legacy_fetch_ddor_insurance_data
+
+    return legacy_fetch_ddor_insurance_data()
+
+
+def migrate_draft_to_insurance_single(draft_id: int, vehicle_id: int):
+    from .utils import migrate_draft_to_insurance_single as legacy_migrate_draft_to_insurance_single
+
+    return legacy_migrate_draft_to_insurance_single(draft_id, vehicle_id)

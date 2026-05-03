@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 from contextlib import nullcontext
-from fleet.utils import format_license_plate
+from fleet.vehicle_helpers import format_license_plate
 
 def norm_reg(reg: str) -> str:
     return (reg or "").strip().upper().replace(" ", "")

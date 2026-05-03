@@ -33,7 +33,7 @@ from ..models import (
     ProcurementRequest,
     ProcurementItem,
 )
-from ..utils import filter_nis_fuel_queryset, filter_omv_fuel_queryset
+from ..fuel_helpers import filter_nis_fuel_queryset, filter_omv_fuel_queryset
 
 
 def ensure_auto_parts(kvar: Kvar):

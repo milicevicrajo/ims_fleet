@@ -218,7 +218,7 @@ from .policy import (
     policies_monthly_costs_csv,
 )
 # Compatibility re-exports for fleet.urls and existing imports/tests.
-from ..utils import (
+from ..fuel_helpers import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
     date_range_for_datetime_field,

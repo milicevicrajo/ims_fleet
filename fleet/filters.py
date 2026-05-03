@@ -22,7 +22,7 @@ from .models import (
     Vehicle,
 )
 from .queries import policies_monthly_costs_qs
-from .utils import date_range_for_datetime_field
+from .fuel_helpers import date_range_for_datetime_field
 
 
 class VehicleFilter(django_filters.FilterSet):

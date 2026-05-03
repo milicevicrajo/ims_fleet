@@ -1,4 +1,4 @@
-from ...utils import process_vehicle_retirements
+from ...sync_services import process_vehicle_retirements
 from django.core.management.base import BaseCommand
 class Command(BaseCommand):
     help = "Izvršava otpis komandu"

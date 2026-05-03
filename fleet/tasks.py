@@ -1,5 +1,11 @@
-from fleet.sync_services import fetch_requisition_data, fetch_service_data
-from fleet.utils import fetch_ddor_insurance_data, fetch_policy_data, process_vehicle_retirements
+from fleet.sync_services import (
+    fetch_ddor_insurance_data,
+    fetch_policy_data,
+    fetch_requisition_data,
+    fetch_service_data,
+    process_vehicle_retirements,
+    sync_organizational_units_from_view,
+)
 from fleet.selenium_integrations import (
     nis_data_import,
     omv_putnicka_data_import,
@@ -151,7 +157,6 @@ def kerio_login_task():
 @shared_task
 def fetch_job_codes():
     def _runner():
-        from fleet.utils import sync_organizational_units_from_view
         return sync_organizational_units_from_view()
 
     return _run_with_singleton_lock(
@@ -169,7 +174,7 @@ def proveri_otpis():
     )
 
 @shared_task
-def fetch_ddor_data_task():   # ← NOVI Celery task
+def fetch_ddor_data_task():   
     def _runner():
         result = fetch_ddor_insurance_data()
         return f"Fetch DDOR Insurance Data: {result}"
@@ -200,28 +205,3 @@ def sync_hr_employees_task():
         fn=_runner,
     )
 
-
-@shared_task
-def create_garaza_group_task(usernames=None, clear_existing=True, dry_run=False):
-    def _runner():
-        output = StringIO()
-        command_args = []
-
-        if not clear_existing:
-            command_args.append("--no-clear-existing")
-
-        if dry_run:
-            command_args.append("--dry-run")
-
-        if usernames:
-            command_args.append("--users")
-            command_args.extend(list(usernames))
-
-        call_command("create_garaza_group", *command_args, stdout=output)
-        return output.getvalue().strip()
-
-    return _run_with_singleton_lock(
-        task_name="create_garaza_group_task",
-        lock_ttl_seconds=30 * 60,
-        fn=_runner,
-    )
