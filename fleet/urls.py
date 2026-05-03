@@ -111,7 +111,7 @@ from .views.services import (
     fetch_service_data_view,
     service_monthly_costs_csv,
 )
-from .views.sync import (
+from .sync.views import (
     fetch_data_view,
     fetch_lease_interest_data,
     fetch_policy_data_view,
@@ -178,7 +178,9 @@ from .views.reports import (
     troskovi_svi_view,
     zatvoren_putni_view,
 )
-from .views import center_statistics, dashboard, fleet_analytics
+from .views.dashboard import dashboard
+from .views.analytics import fleet_analytics
+from .views.center_statistics import center_statistics
 
 
 class FloatConverter:

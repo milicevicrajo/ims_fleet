@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from ..models import Lease, LeaseInterest, Vehicle
-from ..sync import fetch_policy_data
+from . import fetch_policy_data
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def fetch_data_view(request):
                 )
 
             return JsonResponse(
-                {"status": "success", "message": f"Komanda {command} uspešno izvršena."}
+                {"status": "success", "message": f"Komanda {command} uspeÅ¡no izvrÅ¡ena."}
             )
         except Exception as exc:
             return JsonResponse({"status": "error", "message": str(exc)}, status=500)
@@ -60,20 +60,20 @@ def import_nis_excel_view(request):
                 tmp_file.write(chunk)
             temp_file_path = tmp_file.name
 
-        from ..sync import import_nis_fuel_consumption, import_nis_transactions
+        from . import import_nis_fuel_consumption, import_nis_transactions
 
         import_nis_fuel_consumption(temp_file_path)
         import_nis_transactions(temp_file_path)
-        messages.success(request, "NIS Excel import je uspešno završen.")
+        messages.success(request, "NIS Excel import je uspeÅ¡no zavrÅ¡en.")
     except Exception as exc:
-        logger.exception("Greška prilikom ručnog NIS Excel importa.")
-        messages.error(request, f"Greška prilikom importa: {exc}")
+        logger.exception("GreÅ¡ka prilikom ruÄnog NIS Excel importa.")
+        messages.error(request, f"GreÅ¡ka prilikom importa: {exc}")
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.remove(temp_file_path)
             except OSError:
-                logger.warning("Nije moguće obrisati privremeni fajl: %s", temp_file_path)
+                logger.warning("Nije moguÄ‡e obrisati privremeni fajl: %s", temp_file_path)
 
     return redirect("fetch_data")
 
@@ -86,7 +86,7 @@ def _handle_omv_csv_import(request, category_label):
 
     extension = (os.path.splitext(csv_file.name or "")[1] or ".csv").lower()
     if extension != ".csv":
-        messages.error(request, "OMV ručni import podržava samo CSV fajl.")
+        messages.error(request, "OMV ruÄni import podrÅ¾ava samo CSV fajl.")
         return redirect("fetch_data")
 
     temp_file_path = None
@@ -97,20 +97,20 @@ def _handle_omv_csv_import(request, category_label):
                 tmp_file.write(chunk)
             temp_file_path = tmp_file.name
 
-        from ..sync import import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
+        from . import import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
 
         import_omv_fuel_consumption_from_csv(temp_file_path)
         import_omv_transactions_from_csv(temp_file_path)
-        messages.success(request, f"OMV {category_label} CSV import je uspešno završen.")
+        messages.success(request, f"OMV {category_label} CSV import je uspeÅ¡no zavrÅ¡en.")
     except Exception as exc:
-        logger.exception("Greška prilikom ručnog OMV %s CSV importa.", category_label)
-        messages.error(request, f"Greška prilikom OMV {category_label} importa: {exc}")
+        logger.exception("GreÅ¡ka prilikom ruÄnog OMV %s CSV importa.", category_label)
+        messages.error(request, f"GreÅ¡ka prilikom OMV {category_label} importa: {exc}")
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.remove(temp_file_path)
             except OSError:
-                logger.warning("Nije moguće obrisati privremeni fajl: %s", temp_file_path)
+                logger.warning("Nije moguÄ‡e obrisati privremeni fajl: %s", temp_file_path)
 
     return redirect("fetch_data")
 
@@ -154,24 +154,24 @@ def fetch_vehicle_value_view(request):
 
             except Vehicle.DoesNotExist:
                 logger.warning(
-                    "Vozilo sa inventory_number (sif_osn) %s nije pronađeno.",
+                    "Vozilo sa inventory_number (sif_osn) %s nije pronaÄ‘eno.",
                     sif_osn,
                 )
                 continue
 
             except Exception as exc:
                 logger.error(
-                    "Greška prilikom ažuriranja vozila sa inventory_number %s: %s",
+                    "GreÅ¡ka prilikom aÅ¾uriranja vozila sa inventory_number %s: %s",
                     sif_osn,
                     exc,
                 )
                 messages.error(
                     request,
-                    "Došlo je do greške prilikom ažuriranja podataka o vozilu.",
+                    "DoÅ¡lo je do greÅ¡ke prilikom aÅ¾uriranja podataka o vozilu.",
                 )
                 return redirect("fetch_policies")
 
-        messages.success(request, f"Uspešno ažurirano {updated_vehicles_count} vozila.")
+        messages.success(request, f"UspeÅ¡no aÅ¾urirano {updated_vehicles_count} vozila.")
         return redirect("fetch_policies")
 
     return render(request, "fleet/fetch_data.html")
@@ -205,7 +205,7 @@ def fetch_lease_interest_data(request):
                     lease_interest.save()
 
             except Lease.DoesNotExist:
-                logger.warning("Lizing ugovor sa brojem %s nije pronađen.", contract_number)
+                logger.warning("Lizing ugovor sa brojem %s nije pronaÄ‘en.", contract_number)
                 continue
 
         return redirect("fetch_policies")
