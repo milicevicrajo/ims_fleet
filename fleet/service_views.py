@@ -13,7 +13,7 @@ from django_filters.views import FilterView
 from core.mixins import RolePermissionRequiredMixin
 
 from .filters import ServiceFixingFilter
-from .forms import (
+from .service_forms import (
     DraftRequisitionForm,
     DraftServiceTransactionForm,
     RequisitionForm,
@@ -29,7 +29,7 @@ from .models import (
     ServiceTransaction,
     ServiceType,
 )
-from .utils import (
+from .sync_services import (
     delete_complete_drafts,
     fetch_requisition_data,
     fetch_service_data,

@@ -6,8 +6,9 @@ from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.utils import timezone
 
 from .forms import OMVPutnickaFilterForm, PutnickaFilterForm, VehicleTravelOrderForm
+from hr.models import Employee
 from .models import TransactionNIS, TransactionOMV
-from .models import Employee, Vehicle, VehicleTravelOrder
+from .models import Vehicle, VehicleTravelOrder
 from .queries import date_period_filtered_query, report_period_filtered_query
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .report_views import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report

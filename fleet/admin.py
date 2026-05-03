@@ -3,9 +3,9 @@ from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 
 from core.models import CustomUser, PermissionCode, Role, RolePermission
+from hr.models import Employee
 
 from .models import (
-    Employee,
     FuelConsumption,
     JobCode,
     Kvar,

@@ -15,13 +15,13 @@ from django_filters.views import FilterView
 from core.mixins import RolePermissionRequiredMixin
 
 from .filters import KvarFilter
-from .forms import (
+from .garaza_forms import (
     KvarForm,
     KvarPartForm,
-    VehicleTravelOrderForm,
-    VehicleTravelOrderCloseForm,
     ProcurementRequestForm,
     ProcurementItemForm,
+    VehicleTravelOrderCloseForm,
+    VehicleTravelOrderForm,
 )
 from .models import (
     Kvar,

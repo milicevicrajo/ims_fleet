@@ -18,7 +18,6 @@ from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
 from .analytics_helpers import is_red_zone, net_maintenance_cost
 from .filters import VehicleFilter
-from .forms import VehicleForm
 from .models import (
     FuelConsumption,
     Insurance,
@@ -32,6 +31,7 @@ from .models import (
     VehicleTravelOrder,
 )
 from .utils import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
+from .vehicle_forms import VehicleForm
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 

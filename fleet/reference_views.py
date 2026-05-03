@@ -9,8 +9,9 @@ from core.mixins import RolePermissionRequiredMixin
 from core.models import OrganizationalUnit
 
 from .filters import TrafficCardFilterForm
-from .forms import JobCodeForm, OrganizationalUnitForm, TrafficCardForm, VehicleTenderDocumentForm
+from .forms import OrganizationalUnitForm
 from .models import JobCode, KontaVozila, TrafficCard, Vehicle, VehicleTenderDocument
+from .vehicle_forms import JobCodeForm, TrafficCardForm, VehicleTenderDocumentForm
 
 
 class OrganizationalUnitListView(LoginRequiredMixin, ListView):

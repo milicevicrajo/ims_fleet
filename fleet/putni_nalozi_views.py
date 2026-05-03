@@ -13,9 +13,9 @@ from django_filters.views import FilterView
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
 from .filters import PutniNalogFilter
-from .forms import PutniNalogForm
 from .mixins import CenterMixin
 from .models import PutniNalog
+from .putni_nalozi_forms import PutniNalogForm
 
 
 def _is_uprava(user):

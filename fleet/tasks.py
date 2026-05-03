@@ -1,10 +1,5 @@
-from fleet.utils import (
-    fetch_policy_data, 
-    fetch_service_data, 
-    fetch_requisition_data,
-    fetch_ddor_insurance_data,  
-    process_vehicle_retirements
-)
+from fleet.sync_services import fetch_requisition_data, fetch_service_data
+from fleet.utils import fetch_ddor_insurance_data, fetch_policy_data, process_vehicle_retirements
 from fleet.selenium_integrations import (
     nis_data_import,
     omv_putnicka_data_import,
