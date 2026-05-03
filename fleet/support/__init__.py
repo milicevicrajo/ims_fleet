@@ -18,6 +18,11 @@ from fleet.support.fuel import (
     filter_omv_fuel_queryset,
     get_fuel_consumption_queryset,
 )
+from fleet.support.garaza import (
+    ensure_auto_parts,
+    get_vehicle_center_code,
+    get_vehicle_latest_organizational_unit,
+)
 from fleet.support.lease_queries import lease_monthly_costs_rows
 from fleet.support.policy_queries import _filtered_qs, policies_monthly_costs_qs
 from fleet.support.report_helpers import (
@@ -72,9 +77,12 @@ __all__ = [
     "cost_per_km_period_analysis",
     "date_period_filtered_query",
     "date_range_for_datetime_field",
+    "ensure_auto_parts",
     "filter_nis_fuel_queryset",
     "filter_omv_fuel_queryset",
     "format_license_plate",
+    "get_vehicle_center_code",
+    "get_vehicle_latest_organizational_unit",
     "get_data_from_secondary_db",
     "get_fuel_consumption_queryset",
     "is_red_zone",

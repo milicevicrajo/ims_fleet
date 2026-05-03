@@ -129,7 +129,7 @@ from .views.vehicles import (
     VehicleUpdateView,
     vehicle_export_csv,
 )
-from .views.garaza import (
+from .views.kvar import (
     GarazaHomeView,
     KvarCreateView,
     KvarDeleteView,
@@ -141,10 +141,14 @@ from .views.garaza import (
     KvarUpdateView,
     KvarVanIMSListView,
     KvarWorkOrderView,
+)
+from .views.procurement import (
     ProcurementRequestCreateView,
     ProcurementRequestDetailView,
     ProcurementRequestListView,
     ProcurementRequestPrintView,
+)
+from .views.vehicle_travel_orders import (
     VehicleTravelOrderCloseView,
     VehicleTravelOrderCreateView,
     VehicleTravelOrderDeleteView,
@@ -228,7 +232,7 @@ urlpatterns = [
     path('zakupi/obrisi/<int:pk>/', LeaseDeleteView.as_view(), name='lease_delete'),
     path('export-leases/', export_leases_to_excel, name='export_leases'),
 
-    path('azuriranje', fetch_vehicle_value_view, name='fetch_vehicle_value'),
+    path('azuriranje', fetch_vehicle_value_view, name='fetch_vehicle_value_legacy'),
     
     path('polise/', PolicyListView.as_view(), name='policy_list'),
     path('polise/nedovrseno/', PolicyFixingListView.as_view(), name='policy_fixing_list'),

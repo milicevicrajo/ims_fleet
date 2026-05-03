@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 from core.exporting import dataframe_xlsx_response
 
-from ..forms import OMVPutnickaFilterForm, PutnickaFilterForm
+from ..forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from ..support.report_helpers import (
     date_period_filtered_query,
     get_data_from_secondary_db,

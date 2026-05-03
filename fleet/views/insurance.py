@@ -10,7 +10,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from core.mixins import RolePermissionRequiredMixin
 
-from ..forms import DraftInsuranceForm, InsuranceForm
+from ..forms.insurance import DraftInsuranceForm, InsuranceForm
 from ..models import DraftInsurance, Insurance
 from ..sync import fetch_ddor_insurance_data, migrate_draft_to_insurance_single
 

@@ -9,7 +9,7 @@ from core.mixins import RolePermissionRequiredMixin
 from core.models import OrganizationalUnit
 
 from ..filters import TrafficCardFilterForm
-from ..forms import OrganizationalUnitForm
+from ..forms.reference import OrganizationalUnitForm
 from ..models import JobCode, KontaVozila, TrafficCard, Vehicle, VehicleTenderDocument
 from ..forms.vehicles import JobCodeForm, TrafficCardForm, VehicleTenderDocumentForm
 

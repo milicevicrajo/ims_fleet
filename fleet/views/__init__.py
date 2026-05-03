@@ -17,7 +17,7 @@ from .fuel import (
     FuelConsumptionUpdateView,
     FuelTransactionsListView,
 )
-from .garaza import (
+from .kvar import (
     GarazaHomeView,
     KvarCreateView,
     KvarDeleteView,
@@ -29,10 +29,14 @@ from .garaza import (
     KvarUpdateView,
     KvarVanIMSListView,
     KvarWorkOrderView,
+)
+from .procurement import (
     ProcurementRequestCreateView,
     ProcurementRequestDetailView,
     ProcurementRequestListView,
     ProcurementRequestPrintView,
+)
+from .vehicle_travel_orders import (
     VehicleTravelOrderCloseView,
     VehicleTravelOrderCreateView,
     VehicleTravelOrderDeleteView,
