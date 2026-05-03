@@ -6,8 +6,8 @@ from ..models import Lease
 
 
 class LeaseForm(forms.ModelForm):
-    start_date = localized_date_field(label="Datum poÄetka")
-    end_date = localized_date_field(label="Datum zavrÅ¡etka")
+    start_date = localized_date_field(label="Datum početka")
+    end_date = localized_date_field(label="Datum završetka")
 
     class Meta:
         model = Lease

@@ -26,7 +26,7 @@ class ProcurementRequestCreateView(RolePermissionRequiredMixin, LoginRequiredMix
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Novi zahtev za nabavku"
-        ctx["submit_button_label"] = "SaÄuvaj"
+        ctx["submit_button_label"] = "Sačuvaj"
         return ctx
 
     def form_valid(self, form):
@@ -62,7 +62,7 @@ class ProcurementRequestDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             item = form.save(commit=False)
             item.request = self.request_obj
             item.save()
-            messages.success(request, "Stavka je saÄuvana.")
+            messages.success(request, "Stavka je sačuvana.")
         else:
             messages.error(request, "Proveri unete podatke.")
         return redirect("gzn_detail", pk=self.request_obj.pk)

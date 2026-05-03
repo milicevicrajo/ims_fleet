@@ -38,7 +38,7 @@ class PutniNalogForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"class": "form-control", "readonly": "readonly"}),
     )
     start_sequence = forms.IntegerField(
-        label="PoÄetni broj naloga",
+        label="Početni broj naloga",
         required=False,
         widget=forms.HiddenInput(),
         help_text="Unesi samo prvi broj za centar/godinu ako ne postoji prethodni.",
@@ -68,7 +68,7 @@ class PutniNalogForm(forms.ModelForm):
     job_code = forms.ModelChoiceField(
         queryset=OrganizationalUnit.objects.all(),
         widget=Select2Widget(attrs={"class": "select2-method"}),
-        label="TroÅ¡kovi idu na teret",
+        label="Troškovi idu na teret",
     )
     travel_date = localized_date_field(label="Datum putovanja")
     napomena = forms.CharField(
@@ -149,8 +149,8 @@ class PutniNalogForm(forms.ModelForm):
         transport_type = cleaned.get("transport_type")
 
         if vehicle and other_vehicle:
-            self.add_error("vehicle", "MoÅ¾eÅ¡ izabrati samo jedno prevozno sredstvo.")
-            self.add_error("other_vehicle", "MoÅ¾eÅ¡ uneti samo jedno prevozno sredstvo.")
+            self.add_error("vehicle", "Možeš izabrati samo jedno prevozno sredstvo.")
+            self.add_error("other_vehicle", "Možeš uneti samo jedno prevozno sredstvo.")
         elif not vehicle and not other_vehicle:
             self.add_error("vehicle", "Obavezno je uneti vozilo (Auto IMS) ili ostalo prevozno sredstvo.")
             self.add_error("other_vehicle", "Obavezno je uneti vozilo (Auto IMS) ili ostalo prevozno sredstvo.")
@@ -184,7 +184,7 @@ class PutniNalogForm(forms.ModelForm):
                 if not exists and not start_sequence and not has_any_for_center:
                     self.add_error(
                         "start_sequence",
-                        "Unesi poÄetni broj za ovaj centar/godinu (ne postoji prethodni broj).",
+                        "Unesi početni broj za ovaj centar/godinu (ne postoji prethodni broj).",
                     )
         return cleaned
 

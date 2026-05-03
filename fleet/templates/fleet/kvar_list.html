@@ -65,7 +65,7 @@
                 <th>Detalj</th>
                 <th>Vozilo</th>
                 <th>Vrsta</th>
-                <th>Kilometraza</th>
+                <th>Kilometraža</th>
                 <th>Opis kvara</th>
                 <th>Napomena</th>
                 <th>Van IMS-a</th>
@@ -86,7 +86,7 @@
                     {% if kvar.van_ims %}
                       Van IMS-a
                     {% else %}
-                      IMS garaza
+                      IMS garaža
                     {% endif %}
                   </td>
                   <td>{{ kvar.created_at|date:"d.m.Y H:i" }}</td>
@@ -105,9 +105,9 @@
                     </a>
                     <form method="post" action="{% url 'kvar_delete' kvar.pk %}"
                           class="d-inline"
-                          onsubmit="return confirm('Da li sigurno zelite da obrisete ovaj kvar?');">
+                        onsubmit="return confirm('Da li sigurno želite da obrišete ovaj kvar?');">
                       {% csrf_token %}
-                      <button type="submit" class="btn btn-outline-danger btn-sm" title="Obrisi">
+                      <button type="submit" class="btn btn-outline-danger btn-sm" title="Obriši">
                         <i class="fas fa-trash-alt"></i>
                       </button>
                     </form>
@@ -124,7 +124,7 @@
                 <th>Detalj</th>
                 <th>Vozilo</th>
                 <th>Vrsta</th>
-                <th>Kilometraza</th>
+                <th>Kilometraža</th>
                 <th>Opis kvara</th>
                 <th>Napomena</th>
                 <th>Van IMS-a</th>
@@ -143,7 +143,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (window.ReportsDT) {
       ReportsDT('#GarageFaultsTable', {
-        exportTitle: 'Kvarovi garaza',
+        exportTitle: 'Kvarovi garaža',
         order: [[5, 'desc']],
         autoSelectThreshold: 25
       });

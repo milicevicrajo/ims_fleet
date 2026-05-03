@@ -94,8 +94,8 @@
 
         <div class="info-line"><strong>Vozilo:</strong> {{ order.vehicle }}</div>
         <div class="info-line"><strong>Zaposleni:</strong> {{ order.employee }}</div>
-        <div class="info-line"><strong>Sifra centra:</strong> {{ center_code|default:"/" }}</div>
-        <div class="info-line"><strong>Pocetna kilometraza:</strong> {{ order.start_mileage|default:"/" }}</div>
+        <div class="info-line"><strong>Šifra centra:</strong> {{ center_code|default:"/" }}</div>
+        <div class="info-line"><strong>Početna kilometraža:</strong> {{ order.start_mileage|default:"/" }}</div>
         <div class="info-line"><strong>Period:</strong> {{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</div>
 
         {% if first_fuel_page %}
@@ -104,11 +104,11 @@
             <thead>
               <tr>
                 <th>Datum</th>
-                <th>Broj racuna</th>
-                <th>Kolicina (L)</th>
+                <th>Broj računa</th>
+                <th>Količina (L)</th>
                 <th>Cena / L</th>
                 <th>Ukupan iznos</th>
-                <th>Kilometraza</th>
+                <th>Kilometraža</th>
               </tr>
             </thead>
             <tbody>
@@ -138,10 +138,10 @@
           <div>Ukupno litara: {{ total_liters|floatformat:2 }}</div>
           <div>Ukupan iznos: {{ total_amount|default_if_none:"0"|floatformat:2 }}</div>
           <div>Pređenih km: {% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div>
-          <div>Potrosnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
+          <div>Potrošnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
         </div>
         <div class="signature-block">
-          <div class="signature-line">Obracun podneo</div>
+          <div class="signature-line">Obračun podneo</div>
           <div class="signature-line">Direktor centra</div>
         </div>
         <div class="footer-note">izdanje peto - datum odobrenja 01.12.2025.</div>
@@ -176,8 +176,8 @@
 
         <div class="info-line"><strong>Vozilo:</strong> {{ order.vehicle }}</div>
         <div class="info-line"><strong>Zaposleni:</strong> {{ order.employee }}</div>
-        <div class="info-line"><strong>Sifra centra:</strong> {{ center_code|default:"/" }}</div>
-        <div class="info-line"><strong>Pocetna kilometraza:</strong> {{ order.start_mileage|default:"/" }}</div>
+        <div class="info-line"><strong>Šifra centra:</strong> {{ center_code|default:"/" }}</div>
+        <div class="info-line"><strong>Početna kilometraža:</strong> {{ order.start_mileage|default:"/" }}</div>
         <div class="info-line"><strong>Period:</strong> {{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</div>
 
         <div class="table-box">
@@ -185,11 +185,11 @@
             <thead>
               <tr>
                 <th>Datum</th>
-                <th>Broj racuna</th>
-                <th>Kolicina (L)</th>
+                <th>Broj računa</th>
+                <th>Količina (L)</th>
                 <th>Cena / L</th>
                 <th>Ukupan iznos</th>
-                <th>Kilometraza</th>
+                <th>Kilometraža</th>
               </tr>
             </thead>
             <tbody>
@@ -215,10 +215,10 @@
           <div>Ukupno litara: {{ total_liters|floatformat:2 }}</div>
           <div>Ukupan iznos: {{ total_amount|default_if_none:"0"|floatformat:2 }}</div>
           <div>Pređenih km: {% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div>
-          <div>Potrosnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
+          <div>Potrošnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
         </div>
         <div class="signature-block">
-          <div class="signature-line">Obracun podneo</div>
+          <div class="signature-line">Obračun podneo</div>
           <div class="signature-line">Direktor centra</div>
         </div>
         <div class="footer-note">izdanje peto - datum odobrenja 01.12.2025.</div>

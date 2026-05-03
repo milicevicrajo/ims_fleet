@@ -299,22 +299,22 @@ class KvarFilter(django_filters.FilterSet):
         widget=forms.TextInput(attrs={"placeholder": "npr. Fiat / BG-123-AB / 12345"}),
     )
     kilometraza_od = django_filters.NumberFilter(
-        field_name="kilometraza", lookup_expr="gte", label="Kilometraza od"
+        field_name="kilometraza", lookup_expr="gte", label="Kilometraža od"
     )
     kilometraza_do = django_filters.NumberFilter(
-        field_name="kilometraza", lookup_expr="lte", label="Kilometraza do"
+        field_name="kilometraza", lookup_expr="lte", label="Kilometraža do"
     )
     opis = django_filters.CharFilter(
-        field_name="opis", lookup_expr="icontains", label="Opis sadrzi"
+        field_name="opis", lookup_expr="icontains", label="Opis sadrži"
     )
     napomena = django_filters.CharFilter(
-        field_name="napomena", lookup_expr="icontains", label="Napomena sadrzi"
+        field_name="napomena", lookup_expr="icontains", label="Napomena sadrži"
     )
     van_ims = django_filters.ChoiceFilter(
         choices=[
             ("", "Sve"),
             ("True", "Van IMS-a"),
-            ("False", "IMS garaza"),
+            ("False", "IMS garaža"),
         ],
         label="Van IMS-a?",
         method="filter_van_ims",
@@ -536,7 +536,7 @@ class ServiceFixingFilter(django_filters.FilterSet):
         ("False", "Da"),
     )
     nije_garaza = django_filters.ChoiceFilter(
-        label="Garaza",
+        label="Garaža",
         choices=VAN_GARAZE_CHOICES,
         method="filter_nije_garaza",
     )
@@ -603,7 +603,7 @@ class ServiceMonthlyCostsFilter(django_filters.FilterSet):
     )
 
     oj = django_filters.CharFilter(field_name="oj_code_txt", lookup_expr="icontains", label="OJ")
-    center = django_filters.CharFilter(field_name="center_code_txt", lookup_expr="icontains", label="Sifra posla")
+    center = django_filters.CharFilter(field_name="center_code_txt", lookup_expr="icontains", label="Šifra posla")
 
     class Meta:
         model = ServiceTransaction

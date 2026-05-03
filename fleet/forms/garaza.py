@@ -38,7 +38,7 @@ class VehicleTravelOrderForm(forms.ModelForm):
     )
     start_mileage = forms.IntegerField(
         required=False,
-        label="PoÄetna kilometraÅ¾a",
+        label="Početna kilometraža",
         widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "km"}),
     )
 
@@ -67,7 +67,7 @@ class VehicleTravelOrderCloseForm(forms.ModelForm):
     )
     end_mileage = forms.IntegerField(
         required=False,
-        label="Krajnja kilometraÅ¾a",
+        label="Krajnja kilometraža",
         widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "km"}),
     )
 
@@ -78,7 +78,7 @@ class VehicleTravelOrderCloseForm(forms.ModelForm):
 
 class KvarForm(forms.ModelForm):
     VAN_IMS_CHOICES = [
-        ("False", "IMS garaza"),
+        ("False", "IMS garaža"),
         ("True", "Van IMS-a"),
     ]
     WORK_TYPE_CHOICES = [
@@ -100,7 +100,7 @@ class KvarForm(forms.ModelForm):
     )
     kilometraza = forms.IntegerField(
         widget=forms.NumberInput(attrs={"class": "form-control"}),
-        label="Kilometraza",
+        label="Kilometraža",
     )
     opis = forms.CharField(
         widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}),

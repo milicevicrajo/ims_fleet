@@ -25,7 +25,7 @@
               <dt class="col-sm-5">Vozilo</dt><dd class="col-sm-7">{{ vehicle }}</dd>
               <dt class="col-sm-5">Registracija</dt><dd class="col-sm-7">{{ registration_number|default:"/" }}</dd>
               <dt class="col-sm-5">Vrsta intervencije</dt><dd class="col-sm-7">{{ kvar.get_work_type_display }}</dd>
-              <dt class="col-sm-5">Sifra troskova (OJ)</dt>
+              <dt class="col-sm-5">Šifra troškova (OJ)</dt>
               <dd class="col-sm-7">
                 {% if organizational_unit %}
                   {{ organizational_unit.code }} - {{ organizational_unit.name }}
@@ -51,7 +51,7 @@
           <div class="card-header border-1 bg-primary text-white d-flex justify-content-between align-items-center">
             <div>
               <h5 class="mb-0 text-white">{% if kvar.van_ims %}Zahtev za uslugu{% else %}Trebovanje delova{% endif %}</h5>
-              <small class="text-white-50">Pregled, izmeni, dodaj ili obrisi stavke</small>
+              <small class="text-white-50">Pregled, izmeni, dodaj ili obriši stavke</small>
             </div>
           </div>
           <div class="card-body" id="tabPartsSection">
@@ -66,7 +66,7 @@
                     <th style="width:60px;">R.br</th>
                     <th>{% if kvar.van_ims %}Naziv usluge{% else %}Naziv dela{% endif %}</th>
                     <th style="width:140px;">Jedinica mere</th>
-                    <th style="width:140px;">Kolicina</th>
+                    <th style="width:140px;">Količina</th>
                     <th style="width:180px;" class="text-center">Akcije</th>
                   </tr>
                 </thead>
@@ -89,8 +89,8 @@
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="part_id" value="{{ part.id }}">
-                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Obrisi stavku?');">
-                              <i class="mdi mdi-delete"></i> Obrisi
+                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Obriši stavku?');">
+                              <i class="mdi mdi-delete"></i> Obriši
                             </button>
                           </form>
                         </div>
@@ -117,7 +117,7 @@
                     {{ part_form.uom|add_class:"form-control"|attr:"placeholder:Jedinica mere"|attr:"id:partUomInput" }}
                   </div>
                   <div class="col-md-3">
-                    {{ part_form.quantity|add_class:"form-control"|attr:"placeholder:Kolicina"|attr:"id:partQtyInput" }}
+                    {{ part_form.quantity|add_class:"form-control"|attr:"placeholder:Količina"|attr:"id:partQtyInput" }}
                   </div>
                 </div>
                 <div class="mt-2 d-flex gap-2">

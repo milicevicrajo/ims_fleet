@@ -36,30 +36,30 @@ from ..support.report_queries import (
 
 
 def reports_index(request):
-    """Pocetna stranica za izvestaje sa linkovima."""
+    """Početna stranica za izveštaje sa linkovima."""
     sections = {
         "Finansije": [
-            {"name": "Spisak vozila po siframa posla", "url": "vehicle_list"},
-            {"name": "Pregled potrosnje goriva po siframa posla - OMV putnicka", "url": "omv_putnicka"},
-            {"name": "Pregled potrosnje goriva po siframa posla - OMV teretna", "url": "omv_teretna"},
-            {"name": "Pregled potrosnje goriva po siframa posla - NIS putnicka", "url": "nis_putnicka"},
-            {"name": "Pregled potrosnje goriva po siframa posla - NIS teretna", "url": "nis_teretna"},
+            {"name": "Spisak vozila po šiframa posla", "url": "vehicle_list"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - OMV putnička", "url": "omv_putnicka"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - OMV teretna", "url": "omv_teretna"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - NIS putnička", "url": "nis_putnicka"},
+            {"name": "Pregled potrošnje goriva po šiframa posla - NIS teretna", "url": "nis_teretna"},
         ],
         "Centri": [
             {"name": "Zatvoreni putni nalozi", "url": "zatvoreni_putni"},
         ],
-        "Garaza": [
+        "Garaža": [
             {"name": "Trenutno stanje u magacinu", "url": "magacin"},
             {"name": "Spisak otpisanih vozila", "url": "otpis"},
         ],
         "Uprava": [
             {"name": "Promet goriva po mesecima", "url": "tro_gorivo_mesec"},
-            {"name": "Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima ", "url": "troskovi_svi"},
-            {"name": "Troskovi pracenja vozila", "url": "tro_pracenja_vozila"},
-            {"name": "Troskovi tahografa ", "url": "troskovi_tahograf"},
-            {"name": "Troskovi parkinga", "url": "tro_parking"},
-            {"name": "Pregled Potrazivanja od osiguranja", "url": "potrazivanje_ddor"},
-            {"name": "Pregled Najvecih Dobavljaca Usluga", "url": "po_dobavljacima"},
+            {"name": "Pregled ukupnih troškova, pa po kontima, pa po centrima, po mesecima", "url": "troskovi_svi"},
+            {"name": "Troškovi praćenja vozila", "url": "tro_pracenja_vozila"},
+            {"name": "Troškovi tahografa", "url": "troskovi_tahograf"},
+            {"name": "Troškovi parkinga", "url": "tro_parking"},
+            {"name": "Pregled potraživanja od osiguranja", "url": "potrazivanje_ddor"},
+            {"name": "Pregled najvećih dobavljača usluga", "url": "po_dobavljacima"},
         ],
     }
 

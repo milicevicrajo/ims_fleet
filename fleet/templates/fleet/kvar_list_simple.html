@@ -16,7 +16,7 @@
                 <th>Detalj</th>
                 <th>Vozilo</th>
                 <th>Vrsta</th>
-                <th>Kilometraza</th>
+                <th>Kilometraža</th>
                 <th>Opis kvara</th>
                 <th>Napomena</th>
                 <th>Van IMS-a</th>
@@ -32,7 +32,7 @@
                 <td>{{ kvar.kilometraza }}</td>
                 <td>{{ kvar.opis }}</td>
                 <td>{{ kvar.napomena|default:"/" }}</td>
-                <td>{% if kvar.van_ims %}Van IMS-a{% else %}IMS garaza{% endif %}</td>
+                <td>{% if kvar.van_ims %}Van IMS-a{% else %}IMS garaža{% endif %}</td>
                 <td>{{ kvar.created_at|date:"d.m.Y H:i" }}</td>
               </tr>
               {% empty %}

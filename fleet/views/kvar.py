@@ -29,7 +29,7 @@ class KvarListView(LoginRequiredMixin, FilterView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Kvarovi (garaza)"
+        ctx["title"] = "Kvarovi (garaža)"
         ctx["form"] = ctx["filter"].form
         return ctx
 
@@ -69,7 +69,7 @@ class GarazaHomeView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateVi
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Poslovi garaze IMS"
+        ctx["title"] = "Poslovi garaže IMS"
         return ctx
 
 

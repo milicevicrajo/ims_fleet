@@ -85,7 +85,7 @@ class ServiceFixingFilterForm(forms.Form):
     )
     nije_garaza = forms.BooleanField(
         required=False,
-        label="Samo servisi van garaÅ¾e",
+        label="Samo servisi van garaže",
     )
 
 
@@ -146,14 +146,14 @@ class DraftRequisitionForm(forms.ModelForm):
     )
     kilometraza = forms.IntegerField(
         widget=forms.NumberInput(attrs={"class": "form-control"}),
-        label="KilometraÅ¾a",
+        label="Kilometraža",
     )
     nije_garaza = forms.ChoiceField(
         choices=YES_NO_CHOICES,
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
-        help_text="Izaberite opciju: 'Da' ako se odnosi na vaÅ¾nu napomenu, ili ostavite prazno.",
-        label="GaraÅ¾a",
+        help_text="Izaberite opciju: 'Da' ako se odnosi na važnu napomenu, ili ostavite prazno.",
+        label="Garaža",
     )
     napomena = forms.CharField(
         required=False,

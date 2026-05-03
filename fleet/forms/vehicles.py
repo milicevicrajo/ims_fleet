@@ -25,7 +25,7 @@ class TrafficCardForm(forms.ModelForm):
         required=False,
     )
     issue_date = localized_date_field(label="Datum izdavanja")
-    valid_until = localized_date_field(label="VaÅ¾i do")
+    valid_until = localized_date_field(label="Važi do")
 
     class Meta:
         model = TrafficCard

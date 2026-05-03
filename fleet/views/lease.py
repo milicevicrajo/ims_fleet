@@ -55,14 +55,14 @@ def export_leases_to_excel(request):
 
     headers = [
         "Vozilo (sasija)",
-        "Sifra partnera",
+        "Šifra partnera",
         "Naziv partnera",
-        "Sifra posla",
+        "Šifra posla",
         "Broj ugovora",
         "Trenutna vrednost otplate",
         "Vrsta lizinga",
-        "Datum pocetka",
-        "Datum zavrsetka",
+        "Datum početka",
+        "Datum završetka",
         "Napomena",
     ]
     rows = [

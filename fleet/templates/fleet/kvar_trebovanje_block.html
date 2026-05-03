@@ -10,11 +10,11 @@
 </div>
 <div class="top-line" style="gap:1.5mm; margin:0.3mm 0 0.3mm 0; font-size:11pt; display:flex; flex-wrap:wrap; row-gap:1mm;">
   <div style="min-width:45mm;">O.J.: <strong>{{ organizational_unit.code|default:"" }}</strong></div>
-  <div style="min-width:45mm;">Sifra posla: <strong>{{ center }}</strong></div>
+  <div style="min-width:45mm;">Šifra posla: <strong>{{ center }}</strong></div>
   <div style="min-width:35mm;">Datum: <strong>{{ kvar.created_at|date:"d.m.Y" }}</strong></div>
   <div style="min-width:45mm;">Vozilo: <strong>{{ vehicle }}</strong></div>
 
-  <div style="min-width:35mm;">Kilometraza: <strong>{{ kvar.kilometraza }}</strong></div>
+  <div style="min-width:35mm;">Kilometraža: <strong>{{ kvar.kilometraza }}</strong></div>
   <div style="min-width:35mm;">Tip vozila: <strong>{{ vehicle_type }}</strong></div>
 </div>
 <div class="treb-title" style="margin:0.2mm 0 0.2mm 0; font-size:11pt; display:flex; justify-content:space-between; align-items:center;">
@@ -36,7 +36,7 @@
       <td>Red. broj</td>
       <td>Naziv usluge</td>
       <td>Jedinica mere</td>
-      <td>Kolicina</td>
+      <td>Količina</td>
       <td>Napomena</td>
     </tr>
   </thead>
@@ -66,10 +66,10 @@
       <td>Red. broj</td>
       <td>Magacin</td>
       <td>Grupa</td>
-      <td>Sifra materijala</td>
+      <td>Šifra materijala</td>
       <td>Naziv materijala</td>
       <td>Jedinica mere</td>
-      <td>Kolicina</td>
+      <td>Količina</td>
     </tr>
   </thead>
   <tbody>

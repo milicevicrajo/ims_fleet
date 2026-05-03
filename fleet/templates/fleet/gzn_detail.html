@@ -18,7 +18,7 @@
             <dl class="row mb-0">
               <dt class="col-sm-5">Broj GZN</dt><dd class="col-sm-7">{{ gzn.number|default:"(dodeljuje se)" }}</dd>
               <dt class="col-sm-5">Datum</dt><dd class="col-sm-7">{{ gzn.created_at|date:"d.m.Y H:i" }}</dd>
-              <dt class="col-sm-5">OJ / Sifra posla</dt>
+              <dt class="col-sm-5">OJ / Šifra posla</dt>
               <dd class="col-sm-7">
                 {% if gzn.job_code %}{{ gzn.job_code.code }} - {{ gzn.job_code.name }}{% else %}/ {% endif %}
               </dd>
@@ -57,7 +57,7 @@
                     <th style="width:60px;">R.br</th>
                     <th>Naziv</th>
                     <th style="width:140px;">Jedinica mere</th>
-                    <th style="width:140px;">Kolicina</th>
+                    <th style="width:140px;">Količina</th>
                     <th style="width:180px;" class="text-center">Akcije</th>
                   </tr>
                 </thead>
@@ -81,8 +81,8 @@
                           {% csrf_token %}
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="item_id" value="{{ item.id }}">
-                          <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Obrisi stavku?');">
-                            <i class="mdi mdi-delete"></i> Obrisi
+                          <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Obriši stavku?');">
+                            <i class="mdi mdi-delete"></i> Obriši
                           </button>
                         </form>
                       </div>
@@ -109,7 +109,7 @@
                     {{ item_form.uom|add_class:"form-control"|attr:"placeholder:Jedinica mere"|attr:"id:gznUomInput" }}
                   </div>
                   <div class="col-md-2">
-                    {{ item_form.quantity|add_class:"form-control"|attr:"placeholder:Kolicina"|attr:"id:gznQtyInput" }}
+                    {{ item_form.quantity|add_class:"form-control"|attr:"placeholder:Količina"|attr:"id:gznQtyInput" }}
                   </div>
                   <div class="col-md-3">
                     {{ item_form.note|add_class:"form-control"|attr:"placeholder:Napomena"|attr:"id:gznNoteInput" }}
