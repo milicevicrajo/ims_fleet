@@ -39,14 +39,6 @@ from .models import (
 
 logger = logging.getLogger(__name__)
 
-from .sync_services import (
-    delete_complete_drafts,
-    fetch_requisition_data,
-    fetch_service_data,
-    migrate_draft_to_service_transaction,
-)
-from .travel_order_documents import populate_putni_nalog_template, sanitize_filename
-
 
 FUEL_PRODUCT_KEYWORDS = (
     "dizel",
@@ -612,6 +604,7 @@ def calculate_average_fuel_consumption_ever(vehicle):
             return None
     else:
         return None
+    
 def fetch_policy_data(last_24_hours=True, days=None):
     """
     Improved function to fetch insurance policy data with better security and error handling.
@@ -797,6 +790,157 @@ def normalize_decimal(value):
     except:
         return None
 
+def fetch_service_data(last_24_hours=True, days=None):
+    """
+    Funkcija za povlačenje podataka o servisnim transakcijama.
+    Svi novi podaci se čuvaju u DraftServiceTransaction tabeli,
+    dok se duplikati preskaču.
+    Polje 'popravka_kategorija' će biti postavljeno na None ako je vrednost iz baze prazna ili nevalidna.
+    """
+    try:
+        logger.info("Pokrećem funkciju za povlačenje podataka o servisnim transakcijama...")
+
+        # SQL upit za povlačenje svih kolona iz view-a `dbo.fleet_servisi`
+        # VAŽNO: Redosled kolona ovde mora TAČNO odgovarati redosledu u vašem SQL Server View-u.
+        # Kolone sif_pos i RegOzn (registracija) se povlače, ali se neće direktno koristiti za kreiranje modela
+        query = """
+            SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje,
+                   sif_par_npl, knt_npl, duguje, sif_pos, konto_vozila, kom, RegOzn, kilometraza,
+                   poptavka_kategorija, nije_garaza, napomena
+            FROM dbo.fleet_servisi
+        """
+
+        # Dodajte WHERE klauzulu u zavisnosti od parametara
+        if days is not None:
+            query += f" WHERE datum > DATEADD(day, -{days}, GETDATE())"
+            logger.info(f"Filtriram podatke za poslednjih {days} dana.")
+        elif last_24_hours:
+            query += " WHERE datum > DATEADD(day, -1, GETDATE())"
+            logger.info("Filtriram podatke za poslednja 24 sata.")
+
+        # Izvršite upit i preuzmite podatke
+        with connections['server_db'].cursor() as cursor:
+            logger.info(f"Izvršavam SQL upit za preuzimanje podataka: {query}")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            logger.info(f"Broj povučenih redova: {len(rows)}")
+
+        expected_columns = 20
+
+        for index, row in enumerate(rows):
+            if len(row) != expected_columns:
+                logger.warning(f"UPOZORENJE: Red {index+1} ima {len(row)} kolona, očekivano je {expected_columns}. Preskačem red: {row}")
+                continue
+
+            try:
+                god = str(row[0]).strip() if row[0] else None
+                vez_dok = str(row[6]).strip() if row[6] else None
+                br_naloga = str(row[5]).strip() if row[5] else None
+                sif_vrs = str(row[4]).strip() if row[4] else None
+
+                transaction_exists = ServiceTransaction.objects.filter(
+                    god=god,
+                    vez_dok__iexact=vez_dok,
+                    br_naloga__iexact=br_naloga,
+                    sif_vrs=sif_vrs
+                ).exists()
+
+                unique_fields = {
+                    'god': row[0],
+                    'sif_vrs': row[4],
+                    'vez_dok': row[6],
+                    'br_naloga': row[5]
+                }
+                logger.debug(unique_fields)
+                
+                #transaction_exists = ServiceTransaction.objects.filter(**unique_fields).exists()
+                draft_exists = DraftServiceTransaction.objects.filter(**unique_fields).exists()
+                # draft_exists = DraftServiceTransaction.objects.filter(
+                #     god=god,
+                #     vez_dok__iexact=vez_dok,
+                #     br_naloga__iexact=br_naloga,
+                #     sif_vrs=sif_vrs
+                # ).exists()
+
+                if transaction_exists:
+                    logger.warning(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Finalnoj tabeli, preskačem unos.")
+                    continue
+                if draft_exists:
+                    logger.warning(f"Transakcija sa brojem naloga {row[5]} već postoji u sistemu u Draft tabeli, preskačem unos.")
+                    continue
+                
+                # Konverzija vrednosti za 'potrazuje' i 'duguje'
+                potrazuje = float(row[8]) if row[8] is not None and str(row[8]).strip() != '' else None
+                duguje = float(row[11]) if row[11] is not None and str(row[11]).strip() != '' else None
+
+                # Konverzija za 'kilometraza'
+                kilometraza = int(row[16]) if row[16] is not None and str(row[16]).strip() != '' else 0
+
+                # Konverzija za 'nije_garaza'
+                nije_garaza_val = False
+                if isinstance(row[18], bool):
+                    nije_garaza_val = row[18]
+                elif isinstance(row[18], str):
+                    nije_garaza_val = (row[18].strip().upper() == 'DA')
+                elif row[18] is not None:
+                    try:
+                        nije_garaza_val = bool(int(row[18]))
+                    except (ValueError, TypeError):
+                        pass
+
+                # Obrada popravka_kategorija
+                service_type_value = row[17]
+                service_type_instance = None
+                if service_type_value is not None and str(service_type_value).strip() != '':
+                    try:
+                        service_type_instance = ServiceType.objects.get(name=str(service_type_value).strip())
+                    except ServiceType.DoesNotExist:
+                        logger.warning(f"UPOZORENJE: ServiceType '{service_type_value}' ne postoji u bazi. Polje 'popravka_kategorija' će biti postavljeno na None.")
+                    except Exception as st_e:
+                        logger.info(f"Greška pri traženju ServiceType '{service_type_value}': {st_e}. Polje 'popravka_kategorija' će biti postavljeno na None.")
+
+                # Pokušaj pronalaženja vozila. RegOzn je na row[15], ali se NE prosleđuje modelu kao 'registracija' polje.
+                vehicle = Vehicle.objects.filter(traffic_cards__registration_number=row[15]).first() if row[15] else None
+
+                logger.info(f"Novi zapis za br_naloga {row[5]} se dodaje u draft tabelu DraftServiceTransaction.")
+
+                # Kreiraj zapis u draft tabeli
+                draft_transaction = DraftServiceTransaction(
+                    vehicle=vehicle, # Ostaje povezano ako vozilo postoji
+                    god=row[0],
+                    sif_par_pl=row[1],
+                    naz_par_pl=row[2],
+                    datum=row[3],
+                    sif_vrs=row[4],
+                    br_naloga=row[5],
+                    vez_dok=row[6],
+                    knt_pl=row[7],
+                    potrazuje=potrazuje,
+                    sif_par_npl=row[9],
+                    knt_npl=row[10],
+                    duguje=duguje,
+                    # OVDJE SE NE PROSLEĐUJU `sif_pos` (row[12]) i `registracija` (row[15])
+                    konto_vozila=row[13], # Ovo polje ti je definisano u modelu
+                    kom=row[14],
+                    kilometraza=kilometraza,
+                    popravka_kategorija=service_type_instance,
+                    nije_garaza=nije_garaza_val,
+                    napomena=row[19]
+                )
+                draft_transaction.save()
+                logger.info(f"Zapis sa brojem naloga {row[5]} je uspešno sačuvan u draft tabeli.")
+
+            except ValueError as ve:
+                logger.info(f"Greška pri konverziji podataka u redu {index+1} (nalog: {row[5]}): {ve}. Cela kolona: {row}")
+            except Exception as e:
+                logger.error(f"Nepredviđena greška pri obradi reda {index+1} (nalog: {row[5]}): {e}. Cela kolona: {row}")
+
+        return "Podaci su uspešno povučeni i sačuvani u draft tabeli, preskočeni su duplikati."
+
+    except Exception as e:
+        logger.info(f"Došlo je do opšte greške prilikom povlačenja podataka: {e}")
+        return f"Došlo je do opšte greške prilikom povlačenja podataka: {e}"
+
 def process_vehicle_retirements():
     """
     Funkcija za obradu otpisanih vozila iz dbo.otpis view-a.
@@ -866,6 +1010,133 @@ def process_vehicle_retirements():
     except Exception as e:
         logger.critical(f"Kritična greška u funkciji 'process_vehicle_retirements': {e}", exc_info=True)
         return f"Kritična greška prilikom obrade otpisanih vozila: {e}"
+
+
+def migrate_draft_to_service_transaction(draft_id):
+    """
+    Funkcija za migraciju zapisa iz DraftServiceTransaction u ServiceTransaction.
+    Ako podaci u draftu zadovoljavaju sve uslove za unos, oni se prebacuju u glavnu tabelu.
+    """
+    try:
+        draft = DraftServiceTransaction.objects.get(id=draft_id)
+
+        # Provera da li su svi podaci dostupni
+        if draft.is_complete():
+            with transaction.atomic():
+                service_transaction = ServiceTransaction.objects.create(
+                    vehicle_id=draft.vehicle_id,
+                    god=draft.god,
+                    sif_par_pl=draft.sif_par_pl,
+                    naz_par_pl=draft.naz_par_pl,
+                    datum=draft.datum,
+                    sif_vrs=draft.sif_vrs,
+                    br_naloga=draft.br_naloga,
+                    vez_dok=draft.vez_dok,
+                    knt_pl=draft.knt_pl,
+                    potrazuje=draft.potrazuje,
+                    sif_par_npl=draft.sif_par_npl,
+                    knt_npl=draft.knt_npl,
+                    duguje=draft.duguje,
+                    konto_vozila=draft.konto_vozila,
+                    kom=draft.kom,
+                    popravka_kategorija=draft.popravka_kategorija,
+                    # napomena=draft.napomena,
+                    kilometraza=draft.kilometraza
+                )
+                # Brisanje iz draft tabele nakon uspešnog migriranja
+                draft.delete()
+            return service_transaction
+        else:
+            raise ValueError("Podaci nisu kompletni za migraciju")
+
+    except DraftServiceTransaction.DoesNotExist:
+        raise ValueError("Nepotpuni zapis ne postoji ili nije validan")
+
+
+def fetch_requisition_data(last_24_hours=True, days=None):
+    """
+    Funkcija za povlačenje podataka o trebovanjima sa proverom opcionalnih polja.
+    """
+    try:
+        logger.info("Pokrećem funkciju za povlačenje podataka o trebovanjima...")
+
+        # SQL upit za povlačenje podataka
+        query = """
+            SELECT sif_pred, god, br_dok, sif_vrsart, stavka, sif_art, naz_art, kol, cena, vrednost_nab, napomena
+            FROM dbo.fleet_trebovanja
+        """
+        
+        # Dodaj WHERE klauzulu u zavisnosti od parametara (ako je potrebno vremensko filtriranje)
+        if days is not None:
+            query += f" WHERE GETDATE() - {days} > '2000-01-01'"  # Dummy condition since no date filtering
+            logger.info(f"Filtriram podatke za poslednjih {days} dana.")
+        elif last_24_hours:
+            logger.warning("Napomena: Nema vremenskog filtriranja jer nema dostupnog datuma.")
+
+        # Izvrši upit i preuzmi podatke
+        with connections['server_db'].cursor() as cursor:
+            logger.info("Izvršavam SQL upit za preuzimanje podataka...")
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            logger.info(f"Broj povučenih redova: {len(rows)}")
+
+        # Iteracija kroz povučene redove
+        for index, row in enumerate(rows):
+            logger.info(f"Obrađujem red {index+1} sa {len(row)} kolona.")
+
+            # Provera broja kolona
+            if len(row) < 11:
+                logger.info(f"Red {index+1} ima manje od očekivanih 11 kolona: {row}")
+                continue
+
+            try:
+                br_dok = row[2]  # Broj dokumenta
+                sif_art = row[5]  # Šifra artikla
+                stavka = row[4] 
+
+                # Provera postojanja zapisa u glavnoj i draft tabeli
+                requisition_exists = Requisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
+                draft_exists = DraftRequisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
+
+                if not requisition_exists and not draft_exists:
+                    logger.warning(f"Zapis {br_dok} - {sif_art} ne postoji. Dodajem u draft tabelu.")
+
+                    # Konverzija vrednosti za validaciju
+                    kol = float(row[7]) if row[7] else None
+                    cena = float(row[8]) if row[8] else None
+                    vrednost_nab = float(row[9]) if row[9] else None
+
+                    # Kreiraj zapis u draft tabeli
+                    draft = DraftRequisition(
+                        sif_pred=row[0] if row[0] else None,
+                        god=row[1] if row[1] else None,
+                        br_dok=br_dok,
+                        sif_vrsart=row[3] if row[3] else None,
+                        stavka=row[4] if row[4] else None,
+                        sif_art=sif_art,
+                        naz_art=row[6] if row[6] else None,
+                        kol=kol,
+                        cena=cena,
+                        vrednost_nab=vrednost_nab,
+                        napomena=row[10] if row[10] else None
+                    )
+                    draft.save()
+                    logger.info(f"Zapis {br_dok} - {sif_art} je uspešno sačuvan u draft tabeli.")
+                else:
+                    logger.info(f"Zapis {br_dok} - {sif_art} već postoji. Preskačem unos.")
+
+            except ValueError as ve:
+                logger.info(f"Greška pri konverziji podataka u redu {index+1}: {ve}")
+            except Exception as e:
+                logger.error(f"Neprikazana greška u redu {index+1}: {e}")
+
+        return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
+
+    except Exception as e:
+        logger.info(f"Došlo je do greške prilikom povlačenja podataka: {e}")
+        return f"Došlo je do greške prilikom povlačenja podataka: {e}"
+
+
 
 
 def migrate_draft_to_requisition(draft_id, vehicle_id):
@@ -997,6 +1268,103 @@ def update_vehicle_values():
         logger.error(f"Greška prilikom povlačenja podataka iz baze: {e}")
 
     return updated_vehicles_count
+
+
+def delete_complete_drafts():
+    """
+    Briše sve `DraftRequisition` zapise koji su kompletni (`is_complete()` vraća True).
+    """
+    # Dohvati sve zapise iz `DraftRequisition`
+    drafts = DraftRequisition.objects.all()
+
+    # Prođi kroz sve zapise i obriši one koji su kompletni
+    for draft in drafts:
+        if draft.is_complete():
+            draft.delete()
+
+def sanitize_filename(filename):
+    """
+    Uklanja nedozvoljene znakove iz naziva fajla.
+    Dozvoljeni znakovi: slova, brojevi, crtice i donje crte.
+    """
+    return re.sub(r'[^a-zA-Z0-9_\-]', '_', filename)
+
+def populate_putni_nalog_template(putni_nalog):
+    """
+    Popunjava Excel šablon sa podacima putnog naloga i vraća generisani fajl.
+    """
+    # Proveri postojanje fajla pre otvaranja
+    template_path = os.path.join(settings.BASE_DIR, "dokumenta", "iz077.xlsx")
+    
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"Šablon ne postoji: {template_path}")
+
+    # Učitavanje Excel fajla
+    workbook = load_workbook(template_path)
+
+    # Popunjavanje prvog radnog lista - "zadnja strana"
+    if "zadnja strana" in workbook.sheetnames:
+        sheet1 = workbook["zadnja strana"]
+        sheet1["P1"] = str(putni_nalog.job_code.name)  # Organizacija
+        sheet1["N2"] = str(putni_nalog.order_number)  # Broj naloga
+        sheet1["M3"] = str(putni_nalog.order_date.strftime("%d.%m.%Y"))  # Datum naloga
+        sheet1["O6"] = str(putni_nalog.employee) if putni_nalog.employee else str(putni_nalog.other_employee_name or "")  # Zaposleni
+        sheet1["M8"] = str(putni_nalog.employee.position) if putni_nalog.employee else ""  # Pozicija radnika
+        sheet1["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
+        sheet1["N10"] = putni_nalog.travel_location
+        sheet1["M12"] = putni_nalog.task
+        sheet1["M12"] = putni_nalog.contract_offer
+        sheet1["M16"] = str(putni_nalog.vehicle)  # Prevozno sredstvo
+        sheet1["S17"] = putni_nalog.daily_allowance
+        sheet1["R18"] = putni_nalog.number_of_days
+        sheet1["R22"] = float(putni_nalog.advance_payment)  # Avans
+        sheet1["R23"] = putni_nalog.job_code.code  # Šifra posla
+    else:
+        raise ValueError("Nema radnog lista 'zadnja strana' u šablonu.")
+
+    # Popunjavanje drugog radnog lista - "prednja strana"
+    if "prednja strana" in workbook.sheetnames:
+        sheet2 = workbook["prednja strana"]
+        sheet2["P1"] = str(putni_nalog.job_code.name)  # Organizacija
+        sheet2["N2"] = str(putni_nalog.order_number)  # Broj naloga
+        sheet2["M3"] = str(putni_nalog.order_date.strftime("%d.%m.%Y"))  # Datum naloga
+        sheet2["O6"] = str(putni_nalog.employee) if putni_nalog.employee else str(putni_nalog.other_employee_name or "")  # Zaposleni
+        sheet2["M8"] = str(putni_nalog.employee.position) if putni_nalog.employee else ""  # Pozicija radnika
+        sheet2["R9"] = putni_nalog.travel_date.strftime("%d.%m.%Y")  # Datum polaska
+        sheet2["N10"] = putni_nalog.travel_location
+        sheet2["M12"] = putni_nalog.task
+        sheet1["M12"] = putni_nalog.contract_offer
+        sheet2["M16"] = str(putni_nalog.vehicle)  # Prevozno sredstvo
+        sheet2["S17"] = putni_nalog.daily_allowance
+        sheet2["R18"] = putni_nalog.number_of_days
+        sheet2["R22"] = float(putni_nalog.advance_payment)  # Avans
+        sheet2["R23"] = putni_nalog.job_code.code  # Šifra posla
+    else:
+        raise ValueError("Nema radnog lista 'prednja strana' u šablonu.")
+
+    # Kreiranje foldera ako ne postoji
+    output_dir = os.path.join(settings.MEDIA_ROOT, "travel_orders")
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Sanitizacija naziva fajla
+    sanitized_order_number = sanitize_filename(putni_nalog.order_number)
+    file_name = f"PutniNalog_{sanitized_order_number}.xlsx"
+    file_path = os.path.join(output_dir, file_name)
+
+     # ✅ Čuvanje fajla
+    try:
+        workbook.save(file_path)
+    except Exception as e:
+        return JsonResponse({"error": f"Greška pri čuvanju fajla: {str(e)}"}, status=500)
+
+    # ✅ Proveri da li fajl postoji
+    if not os.path.exists(file_path):
+        return JsonResponse({"error": f"Fajl nije pronađen nakon čuvanja: {file_path}"}, status=500)
+
+    # ✅ Kreiranje URL-a za preuzimanje
+    file_url = os.path.join(settings.MEDIA_URL, "travel_orders", file_name)
+
+    return JsonResponse({"file_url": file_url})
 
 
 def update_job_codes_from_view():

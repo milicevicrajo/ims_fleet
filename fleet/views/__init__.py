@@ -1,5 +1,4 @@
 ﻿from collections import defaultdict
-import csv
 import datetime
 from datetime import date, timedelta
 import logging
@@ -19,24 +18,22 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_filters.views import FilterView
 
-from core.exporting import csv_attachment_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 from core.models import CustomUser, OrganizationalUnit
 
-from .analytics_helpers import (
+from ..analytics_helpers import (
     cost_per_km_status,
     cost_per_km_thresholds,
     is_red_zone,
     net_maintenance_cost,
 )
-from .filters import (
+from ..filters import (
     ServiceFixingFilter,
-    ServiceMonthlyCostsFilter,
     TrafficCardFilterForm,
     VehicleFilter,
     PutniNalogFilter,
 )
-from .forms import (
+from ..forms import (
     DraftRequisitionForm,
     DraftServiceTransactionForm,
     JobCodeForm,
@@ -50,7 +47,7 @@ from .forms import (
     VehicleTenderDocumentForm,
     VehicleForm,
 )
-from .models import (
+from ..models import (
     DraftInsurance,
     DraftPolicy,
     DraftRequisition,
@@ -71,10 +68,9 @@ from .models import (
     VehicleTravelOrder,
     Vehicle,
 )
-from .mixins import CenterMixin
-from .queries import service_monthly_costs_rows
+from ..mixins import CenterMixin
 # Compatibility re-exports for fleet.urls and existing imports.
-from .insurance_views import (
+from .insurance import (
     DraftInsuranceUpdateView,
     InsuranceCreateView,
     InsuranceDeleteView,
@@ -86,7 +82,7 @@ from .insurance_views import (
     insurance_fetch_ddor_view,
     insurance_migrate_one_view,
 )
-from .vehicle_views import (
+from .vehicles import (
     VehicleCreateView,
     VehicleDeleteView,
     VehicleDetailView,
@@ -95,7 +91,7 @@ from .vehicle_views import (
     VehicleUpdateView,
     vehicle_export_csv,
 )
-from .reference_views import (
+from .reference import (
     JobCodeCreateView,
     JobCodeDeleteView,
     JobCodeDetailView,
@@ -119,7 +115,7 @@ from .reference_views import (
     VehicleTenderDocumentListView,
     VehicleTenderDocumentUpdateView,
 )
-from .service_views import (
+from .services import (
     DraftRequisitionUpdateView,
     DraftServiceTransactionUpdateView,
     RequisitionCreateView,
@@ -147,7 +143,7 @@ from .service_views import (
     fetch_requisition_data_view,
     fetch_service_data_view,
 )
-from .putni_nalozi_views import (
+from .putni_nalozi import (
     PutniNalogCreateView,
     PutniNalogDeleteView,
     PutniNalogDetailView,
@@ -158,34 +154,71 @@ from .putni_nalozi_views import (
     putninalog_set_opravdan,
     putninalog_storniraj,
 )
-# Compatibility re-exports for fleet.urls and existing imports/tests.
-from .report_views import (
-    _export_secondary_report,
-    _render_secondary_report,
-    _render_simple_secondary_report,
-    export_nis_putnicka_excel,
-    export_nis_teretna_excel,
-    export_omv_putnicka_excel,
-    export_omv_teretna_excel,
-    kasko_rate_view,
-    magacin_view,
-    nis_putnicka_view,
-    nis_teretna_view,
-    omv_putnicka_view,
-    omv_teretna_view,
-    otpis_view,
-    po_dobavljacima_view,
-    potrazivanje_ddor_view,
-    reports_index,
-    tahograf_partneri_view,
-    tro_gorivo_mesec_view,
-    tro_parking_view,
-    tro_pracenja_vozila_view,
-    tro_zarade_view,
-    troskovi_svi_view,
-    zatvoren_putni_view,
+from .sync import (
+    fetch_data_view,
+    fetch_lease_interest_data,
+    fetch_policy_data_view,
+    fetch_vehicle_value_view,
+    import_nis_excel_view,
+    import_omv_putnicka_csv_view,
+    import_omv_teretna_csv_view,
 )
-from .utils import (
+from .garaza import (
+    GarazaHomeView,
+    KvarCreateView,
+    KvarDeleteView,
+    KvarDetailView,
+    KvarIMSListView,
+    KvarListView,
+    KvarPrintView,
+    KvarTrebovanjeView,
+    KvarUpdateView,
+    KvarVanIMSListView,
+    KvarWorkOrderView,
+    ProcurementRequestCreateView,
+    ProcurementRequestDetailView,
+    ProcurementRequestListView,
+    ProcurementRequestPrintView,
+    VehicleTravelOrderCloseView,
+    VehicleTravelOrderCreateView,
+    VehicleTravelOrderDeleteView,
+    VehicleTravelOrderDetailView,
+    VehicleTravelOrderFuelReportView,
+    VehicleTravelOrderListView,
+    VehicleTravelOrderRequestView,
+    VehicleTravelOrderUpdateView,
+)
+from .fuel import (
+    FuelConsumptionCreateView,
+    FuelConsumptionDeleteView,
+    FuelConsumptionDetailView,
+    FuelConsumptionListView,
+    FuelConsumptionUpdateView,
+    FuelTransactionsListView,
+)
+from .lease import (
+    LeaseCreateView,
+    LeaseDeleteView,
+    LeaseDetailView,
+    LeaseListView,
+    LeaseMonthlyCostsView,
+    LeaseUpdateView,
+    export_leases_to_excel,
+)
+from .policy import (
+    DraftPolicyUpdateView,
+    ExpiringAndNotRenewedPolicyView,
+    PoliciesMonthlyCostsView,
+    PolicyCreateView,
+    PolicyDeleteView,
+    PolicyDetailView,
+    PolicyFixingListView,
+    PolicyListView,
+    PolicyUpdateView,
+    policies_monthly_costs_csv,
+)
+# Compatibility re-exports for fleet.urls and existing imports/tests.
+from ..utils import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
     date_range_for_datetime_field,
@@ -1264,38 +1297,3 @@ class UserListView(LoginRequiredMixin, ListView):
     
 
     
-class ServiceMonthlyCostsView(LoginRequiredMixin, FilterView):
-    template_name = "fleet/reports/service_monthly_costs.html"
-    context_object_name = "rows"
-    filterset_class = ServiceMonthlyCostsFilter  # <-- bez navodnika!
-
-    def get_queryset(self):
-        return service_monthly_costs_rows(self.request)
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Mesečni troškovi servisa po centru"
-        return ctx
-    
-@login_required
-def service_monthly_costs_csv(request):
-    rows = service_monthly_costs_rows(request)
-
-    resp = csv_attachment_response("service_monthly_costs.csv", charset=None, quoted=True)
-
-    w = csv.writer(resp)
-    # zaglavlje koje odgovara poljima iz service_monthly_costs_rows
-    w.writerow(['Godina', 'Mesec', 'OJ', 'Centar', 'Ukupan trosak'])
-
-    for r in rows:
-        w.writerow([
-            r['year'],
-            r['month'],
-            r.get('oj_code_txt') or '',
-            r.get('center_code_txt') or '',
-            f"{r['iznos']:.2f}",
-        ])
-
-    return resp
-
-
