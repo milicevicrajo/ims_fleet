@@ -19,6 +19,23 @@ _WEIGHT_CLASS_THRESHOLDS = [
 ]
 
 
+def fixed_cost_per_km_ranges():
+    """Fiksni opsezi granica po klasi mase, nezavisno od perioda analize."""
+    ranges = []
+    prev_max = 0
+    for max_w, label, ok, watch, risky in _WEIGHT_CLASS_THRESHOLDS:
+        ranges.append({
+            'weight_class_label': label,
+            'from_weight_kg': prev_max,
+            'to_weight_kg': None if max_w == float('inf') else max_w,
+            'ok': ok,
+            'watch': watch,
+            'risky': risky,
+        })
+        prev_max = max_w
+    return ranges
+
+
 def fixed_cost_per_km_threshold(max_weight_kg):
     """Vraća fiksne pragove (ok/watch/risky) za datu max dozvoljenu masu vozila."""
     weight = float(max_weight_kg or 0)

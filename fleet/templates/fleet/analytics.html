@@ -93,16 +93,14 @@
 
 <div class="card">
   <div class="card-body">
-    <h4 class="card-title">Granice isplativosti po periodu i klasi mase</h4>
+    <h4 class="card-title">Granice isplativosti po klasi mase</h4>
     <p class="text-muted small mb-2">Pragovi su fiksni prema maksimalnoj dozvoljenoj masi vozila (RSD/km).</p>
     <div class="table-responsive">
       <table class="table table-striped table-sm align-middle">
         <thead>
           <tr>
-            <th>Period</th>
             <th>Klasa vozila</th>
-            <th class="text-end">Vozila</th>
-            <th class="text-end">Prosek</th>
+            <th class="text-end">Masa (kg)</th>
             <th class="text-end text-success">Dobro (≤)</th>
             <th class="text-end text-warning">Za praćenje (≤)</th>
             <th class="text-end text-danger">Rizično (≤)</th>
@@ -110,12 +108,16 @@
           </tr>
         </thead>
         <tbody>
-          {% for row in cost_per_km_thresholds_by_period %}
+          {% for row in cost_per_km_ranges %}
             <tr>
-              <td>{{ row.period_label }}</td>
               <td>{{ row.weight_class_label }}</td>
-              <td class="text-end">{{ row.vehicle_count|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ row.average|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end">
+                {% if row.to_weight_kg %}
+                  {{ row.from_weight_kg|floatformat:0|intcomma }} - {{ row.to_weight_kg|floatformat:0|intcomma }}
+                {% else %}
+                  &gt; {{ row.from_weight_kg|floatformat:0|intcomma }}
+                {% endif %}
+              </td>
               <td class="text-end text-success">{{ row.ok }} RSD/km</td>
               <td class="text-end text-warning">{{ row.watch }} RSD/km</td>
               <td class="text-end text-danger">{{ row.risky }} RSD/km</td>
@@ -123,7 +125,7 @@
             </tr>
           {% empty %}
             <tr>
-              <td colspan="8" class="text-center text-muted">Nema dovoljno podataka za obračun.</td>
+              <td colspan="6" class="text-center text-muted">Nema definisanih granica.</td>
             </tr>
           {% endfor %}
         </tbody>

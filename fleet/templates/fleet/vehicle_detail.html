@@ -334,6 +334,8 @@
             <th class="text-end">Naplata osig.</th>
             <th class="text-end">Ukupan trošak</th>
             <th class="text-end">RSD/km</th>
+            <th>Test granice</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -358,16 +360,35 @@
                   -
                 {% endif %}
               </td>
+              <td class="small text-muted">
+                {{ item.threshold.weight_class_label }}:
+                dobro ≤ {{ item.threshold.ok }},
+                praćenje ≤ {{ item.threshold.watch }},
+                rizično ≤ {{ item.threshold.risky }} RSD/km
+              </td>
+              <td>
+                {% if item.status == 'Dobro' %}
+                  <span class="badge text-bg-success">{{ item.status }}</span>
+                {% elif item.status == 'Za praćenje' %}
+                  <span class="badge text-bg-warning">{{ item.status }}</span>
+                {% elif item.status == 'Rizično' %}
+                  <span class="badge text-bg-danger">{{ item.status }}</span>
+                {% elif item.status == 'Neisplativo' %}
+                  <span class="badge text-bg-dark">{{ item.status }}</span>
+                {% else %}
+                  <span class="badge text-bg-secondary">{{ item.status }}</span>
+                {% endif %}
+              </td>
             </tr>
             {% if item.row.mileage_issue %}
             <tr>
-              <td colspan="12" class="text-muted small">Napomena: {{ item.row.mileage_issue }}</td>
+              <td colspan="14" class="text-muted small">Napomena: {{ item.row.mileage_issue }}</td>
             </tr>
             {% endif %}
             {% else %}
             <tr>
               <td>{{ item.period_label }}</td>
-              <td colspan="11" class="text-muted">Nema dovoljno podataka za obračun cene po kilometru.</td>
+              <td colspan="13" class="text-muted">Nema dovoljno podataka za obračun cene po kilometru.</td>
             </tr>
             {% endif %}
           {% endfor %}

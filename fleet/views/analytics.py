@@ -17,7 +17,7 @@ from ..models import (
     TrafficCard,
     Vehicle,
 )
-from ..support.analytics import is_red_zone, net_maintenance_cost
+from ..support.analytics import fixed_cost_per_km_ranges, is_red_zone, net_maintenance_cost
 from ..support.dashboard import LONG_TERM_LEASE_TYPES, cost_per_km_period_analysis, vehicle_cost_per_km_rows
 from ..support.fuel import date_range_for_datetime_field
 
@@ -63,7 +63,7 @@ def fleet_analytics(request):
             'end': today,
         },
     ]
-    period_cost_per_km_rows, cost_per_km_thresholds_by_period, persistent_unprofitable_vehicles = cost_per_km_period_analysis(cost_per_km_periods)
+    period_cost_per_km_rows, _, persistent_unprofitable_vehicles = cost_per_km_period_analysis(cost_per_km_periods)
     mileage_warning_rows = [row for row in period_cost_per_km_rows if row['requires_driver_warning']]
     suspicious_fuel_mileage_rows = [
         row
@@ -306,7 +306,7 @@ def fleet_analytics(request):
         'status_cost_per_km_12m_rows': status_cost_per_km_by_period['12m'],
         'status_cost_per_km_24m_rows': status_cost_per_km_by_period['24m'],
         'status_cost_per_km_rows': status_cost_per_km_rows,
-        'cost_per_km_thresholds_by_period': cost_per_km_thresholds_by_period,
+        'cost_per_km_ranges': fixed_cost_per_km_ranges(),
         'persistent_unprofitable_vehicles': persistent_unprofitable_vehicles[:20],
         'suspicious_fuel_mileage_rows': suspicious_fuel_mileage_rows[:50],
         'missing_mileage_rows': missing_mileage_rows[:50],

@@ -17,7 +17,7 @@ from django_filters.views import FilterView
 from core.exporting import csv_attachment_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
-from ..support.analytics import is_red_zone, net_maintenance_cost
+from ..support.analytics import cost_per_km_status, fixed_cost_per_km_threshold, is_red_zone, net_maintenance_cost
 from ..support.dashboard import vehicle_cost_per_km_rows
 from ..filters import VehicleFilter
 from ..models import (
@@ -309,10 +309,14 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
                 ),
                 None,
             )
+            threshold = fixed_cost_per_km_threshold((row or {}).get("maximum_permissible_weight", vehicle.maximum_permissible_weight))
+            status = cost_per_km_status((row or {}).get("cost_per_km"), threshold)
             vehicle_cost_per_km_details.append(
                 {
                     "period_label": period["label"],
                     "row": row,
+                    "threshold": threshold,
+                    "status": status,
                 }
             )
 
