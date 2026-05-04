@@ -8,6 +8,7 @@ from ..models import (
     Insurance,
     JobCode,
     Lease,
+    LeaseInterest,
     Policy,
     Requisition,
     ServiceTransaction,
@@ -15,7 +16,7 @@ from ..models import (
     Vehicle,
     VehicleTravelOrder,
 )
-from .analytics import cost_per_km_status, cost_per_km_thresholds
+from .analytics import cost_per_km_status, cost_per_km_thresholds, fixed_cost_per_km_threshold
 from .fuel import date_range_for_datetime_field
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
@@ -156,17 +157,43 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             .annotate(total=Sum('premium_amount'))
             .values('total')[:1]
         ),
-        lease_payment_period=Subquery(
-            Lease.objects.filter(
-                vehicle=OuterRef('pk'),
-                start_date__lte=period_end_date,
-                end_date__gte=period_start_date,
+        financial_lease_interest_period=Subquery(
+            LeaseInterest.objects.filter(
+                lease__vehicle=OuterRef('pk'),
+                lease__lease_type='finansijski',
+                lease__end_date__gte=period_start_date,
+                year__in=range(period_start_date.year, period_end_date.year + 1),
             )
-            .values('vehicle')
-            .annotate(total=Sum('current_payment_amount'))
+            .values('lease__vehicle')
+            .annotate(total=Sum('interest_amount'))
             .values('total')[:1]
         ),
     )
+
+    period_days = (period_end_date - period_start_date).days or 1
+
+    # Fetch non-financial leases that are active (not expired before period start)
+    # and compute proportional cost per vehicle based on overlap days / total lease days
+    vehicle_ids_in_query = list(vehicles.values_list('pk', flat=True))
+    non_financial_leases = Lease.objects.filter(
+        vehicle_id__in=vehicle_ids_in_query,
+        start_date__lte=period_end_date,
+        end_date__gte=period_start_date,
+    ).exclude(lease_type='finansijski').values(
+        'vehicle_id', 'current_payment_amount', 'start_date', 'end_date'
+    )
+    non_financial_lease_cost_by_vehicle = {}
+    for lease in non_financial_leases:
+        total_lease_days = (lease['end_date'] - lease['start_date']).days or 1
+        overlap_start = max(lease['start_date'], period_start_date)
+        overlap_end = min(lease['end_date'], period_end_date)
+        overlap_days = (overlap_end - overlap_start).days
+        if overlap_days <= 0:
+            continue
+        cost = float(lease['current_payment_amount'] or 0) * overlap_days / total_lease_days
+        non_financial_lease_cost_by_vehicle[lease['vehicle_id']] = (
+            non_financial_lease_cost_by_vehicle.get(lease['vehicle_id'], 0) + cost
+        )
 
     rows = []
     for vehicle in vehicles:
@@ -203,7 +230,12 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
         service_cost = number(vehicle.service_cost_period)
         requisition_cost = number(vehicle.requisition_cost_period)
         policy_cost = number(vehicle.policy_cost_period)
-        lease_annual_cost = number(vehicle.lease_payment_period) * 12
+        # Operativni/dugorocni: current_payment_amount raspodeljeno proporcionalno na preklapajuce dane
+        # Finansijski: koristimo kamatu iz LeaseInterest (principal je vec u amortizaciji)
+        lease_annual_cost = (
+            non_financial_lease_cost_by_vehicle.get(vehicle.pk, 0)
+            + number(vehicle.financial_lease_interest_period)
+        )
         insurance_recovery = number(vehicle.insurance_recovery_period)
 
         depreciation_base_date = vehicle.purchase_date or vehicle.first_registration_date
@@ -211,7 +243,7 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
         if vehicle.purchase_value and vehicle.value is not None and depreciation_base_date:
             days_in_use = max((period_end_date - depreciation_base_date).days, 365)
             total_depreciation = max(number(vehicle.purchase_value) - number(vehicle.value), 0)
-            annual_depreciation = total_depreciation / days_in_use * 365
+            annual_depreciation = total_depreciation / days_in_use * period_days
 
         total_cost = (
             fuel_cost
@@ -248,6 +280,7 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'insurance_recovery': insurance_recovery,
             'total_cost': total_cost,
             'cost_per_km': cost_per_km,
+            'maximum_permissible_weight': float(vehicle.maximum_permissible_weight or 0),
         })
 
     rows.sort(key=lambda row: row['cost_per_km'] or 0, reverse=True)
@@ -269,7 +302,8 @@ def cost_per_km_period_analysis(periods):
         for row in rows:
             row['period_key'] = period['key']
             row['period_label'] = period['label']
-            row['status'] = cost_per_km_status(row['cost_per_km'], thresholds.get(row['category']))
+            vehicle_threshold = fixed_cost_per_km_threshold(row.get('maximum_permissible_weight', 0))
+            row['status'] = cost_per_km_status(row['cost_per_km'], vehicle_threshold)
             period_rows.append(row)
             rows_by_vehicle[row['vehicle_id']].append(row)
 

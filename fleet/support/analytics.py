@@ -9,34 +9,48 @@ def is_red_zone(long_term_rental, value, net_cost):
     return not long_term_rental and (value or 0) > 0 and (net_cost or 0) > (value or 0)
 
 
-def percentile(values, percent):
-    values = sorted(values)
-    if not values:
-        return 0
-    if len(values) == 1:
-        return values[0]
-    position = (len(values) - 1) * percent / 100
-    lower = int(position)
-    upper = min(lower + 1, len(values) - 1)
-    fraction = position - lower
-    return values[lower] + (values[upper] - values[lower]) * fraction
+# Fiksni pragovi troška po km prema maksimalnoj dozvoljenoj masi vozila (RSD/km)
+# (max_masa_kg, oznaka, dobro, za_pracenje, rizicno)  — iznad "rizicno" = Neisplativo
+_WEIGHT_CLASS_THRESHOLDS = [
+    (3500,        'Putnička vozila (do 3.5t)',        25,  40,  60),
+    (7500,        'Laka teretna (3.5t – 7.5t)',       45,  70, 100),
+    (12000,       'Srednja teretna (7.5t – 12t)',     70, 110, 140),
+    (float('inf'), 'Teška teretna (preko 12t)',      120, 150, 175),
+]
+
+
+def fixed_cost_per_km_threshold(max_weight_kg):
+    """Vraća fiksne pragove (ok/watch/risky) za datu max dozvoljenu masu vozila."""
+    weight = float(max_weight_kg or 0)
+    for max_w, label, ok, watch, risky in _WEIGHT_CLASS_THRESHOLDS:
+        if weight <= max_w:
+            return {'weight_class_label': label, 'ok': ok, 'watch': watch, 'risky': risky}
+    return {'weight_class_label': 'Nepoznato', 'ok': 60, 'watch': 100, 'risky': 150}
 
 
 def cost_per_km_thresholds(rows):
-    grouped = defaultdict(list)
+    """Grupna statistika po klasama mase sa fiksnim pragovima za prikaz u tabeli."""
+    grouped = defaultdict(lambda: {'values': [], 'threshold': None, 'weight_class_label': ''})
     for row in rows:
         if row["cost_per_km"] is not None:
-            grouped[row["category"]].append(row["cost_per_km"])
+            t = fixed_cost_per_km_threshold(row.get("maximum_permissible_weight", 0))
+            key = t['weight_class_label']
+            grouped[key]['values'].append(row["cost_per_km"])
+            grouped[key]['threshold'] = t
+            grouped[key]['weight_class_label'] = key
 
     thresholds = {}
-    for category, values in grouped.items():
-        thresholds[category] = {
-            "category": category,
+    for key, data in grouped.items():
+        values = data['values']
+        t = data['threshold']
+        thresholds[key] = {
+            "category": key,
+            "weight_class_label": key,
             "vehicle_count": len(values),
-            "median": percentile(values, 50),
-            "p75": percentile(values, 75),
-            "p90": percentile(values, 90),
             "average": sum(values) / len(values) if values else 0,
+            "ok": t['ok'],
+            "watch": t['watch'],
+            "risky": t['risky'],
         }
     return thresholds
 
@@ -46,10 +60,10 @@ def cost_per_km_status(value, threshold):
         return "Opomena"
     if not threshold:
         return "Nema praga"
-    if value <= threshold["median"]:
+    if value <= threshold["ok"]:
         return "Dobro"
-    if value <= threshold["p75"]:
-        return "Za pracenje"
-    if value <= threshold["p90"]:
-        return "Rizicno"
+    if value <= threshold["watch"]:
+        return "Za praćenje"
+    if value <= threshold["risky"]:
+        return "Rizično"
     return "Neisplativo"

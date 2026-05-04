@@ -3,7 +3,6 @@ from fleet.support.analytics import (
     cost_per_km_thresholds,
     is_red_zone,
     net_maintenance_cost,
-    percentile,
 )
 from fleet.support.dashboard import (
     LONG_TERM_LEASE_TYPES,
@@ -88,7 +87,6 @@ __all__ = [
     "is_red_zone",
     "lease_monthly_costs_rows",
     "net_maintenance_cost",
-    "percentile",
     "policies_monthly_costs_qs",
     "report_period_filtered_query",
     "service_monthly_costs_rows",

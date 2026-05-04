@@ -93,34 +93,37 @@
 
 <div class="card">
   <div class="card-body">
-    <h4 class="card-title">Granice isplativosti po periodu i kategoriji</h4>
+    <h4 class="card-title">Granice isplativosti po periodu i klasi mase</h4>
+    <p class="text-muted small mb-2">Pragovi su fiksni prema maksimalnoj dozvoljenoj masi vozila (RSD/km).</p>
     <div class="table-responsive">
       <table class="table table-striped table-sm align-middle">
         <thead>
           <tr>
             <th>Period</th>
-            <th>Kategorija</th>
+            <th>Klasa vozila</th>
             <th class="text-end">Vozila</th>
             <th class="text-end">Prosek</th>
-            <th class="text-end">Medijana</th>
-            <th class="text-end">75. percentil</th>
-            <th class="text-end">90. percentil</th>
+            <th class="text-end text-success">Dobro (≤)</th>
+            <th class="text-end text-warning">Za praćenje (≤)</th>
+            <th class="text-end text-danger">Rizično (≤)</th>
+            <th class="text-end">Iznad = Neisplativo</th>
           </tr>
         </thead>
         <tbody>
           {% for row in cost_per_km_thresholds_by_period %}
             <tr>
               <td>{{ row.period_label }}</td>
-              <td>{{ row.category }}</td>
+              <td>{{ row.weight_class_label }}</td>
               <td class="text-end">{{ row.vehicle_count|floatformat:0|intcomma }}</td>
               <td class="text-end">{{ row.average|floatformat:2|intcomma }} RSD/km</td>
-              <td class="text-end">{{ row.median|floatformat:2|intcomma }} RSD/km</td>
-              <td class="text-end">{{ row.p75|floatformat:2|intcomma }} RSD/km</td>
-              <td class="text-end">{{ row.p90|floatformat:2|intcomma }} RSD/km</td>
+              <td class="text-end text-success">{{ row.ok }} RSD/km</td>
+              <td class="text-end text-warning">{{ row.watch }} RSD/km</td>
+              <td class="text-end text-danger">{{ row.risky }} RSD/km</td>
+              <td class="text-end">{{ row.risky }}+ RSD/km</td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="7" class="text-center text-muted">Nema dovoljno podataka za obračun.</td>
+              <td colspan="8" class="text-center text-muted">Nema dovoljno podataka za obračun.</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -310,7 +313,7 @@
                 <td>
                   Amortizacija
                   <small class="d-block text-muted">
-                    Aproksimacija: (nabavna vrednost - knjigovodstvena vrednost) / dani korišćenja * 365.
+                    Aproksimacija: (nabavna vrednost - knjigovodstvena vrednost) / dani korišćenja * dani perioda.
                   </small>
                 </td>
                 <td class="text-end">{{ row.annual_depreciation|floatformat:0|intcomma }} RSD</td>
