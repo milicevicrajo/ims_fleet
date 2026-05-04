@@ -133,6 +133,7 @@
                         class="d-inline-block ms-1"
                         style="margin:0; padding:0;">
                     {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
                     <button type="submit" class="btn btn-danger btn-sm"
                             onclick="return confirm('Da li ste sigurni da želite da otpišete ovo vozilo?');"
                             title="Otpiši">

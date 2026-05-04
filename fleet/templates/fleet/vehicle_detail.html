@@ -283,35 +283,6 @@
       </div>
     </div>
 
-    <div class="card vehicle-document-card">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h3 class="card-title mb-0">Tender dokumenti</h3>
-          <a href="{{ tender_document_create_url }}" class="btn btn-sm btn-outline-success">Dodaj dokument</a>
-        </div>
-        {% if tender_documents %}
-          <div class="row g-3">
-            {% for doc in tender_documents %}
-            <div class="col-12 col-md-6">
-              <div class="border rounded p-2 h-100">
-                <strong>{{ doc.get_document_type_display }}</strong>
-                <div class="text-muted small">{% if doc.taken_at %}{{ doc.taken_at|date:"d.m.Y" }}{% else %}-{% endif %}</div>
-                <a href="{% url 'vehicle_tender_document_detail' doc.pk %}">
-                  {% if doc.image %}
-                    <img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="img-fluid rounded mt-2" style="max-height: 150px; object-fit: cover;">
-                  {% else %}
-                    <span class="text-muted">Nema slike</span>
-                  {% endif %}
-                </a>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">Nema dodatih tender dokumenata.</p>
-        {% endif %}
-      </div>
-    </div>
   </div>
 
   <div class="col-lg-6">
@@ -338,40 +309,70 @@
       </div>
     </div>
 
-    <div class="card vehicle-document-card">
-      <div class="card-body">
-        <h3 class="card-title">Saobraćajne dozvole</h3>
-        <div class="table-responsive">
-          <table class="table table-sm mb-0">
-            <thead>
-              <tr>
-                <th>Registracija</th>
-                <th>Broj dozvole</th>
-                <th>Važi do</th>
-                <th>PDF</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for card in trafic_cards %}
-              <tr>
-                <td>{{ card.registration_number }}</td>
-                <td>{{ card.traffic_card_number }}</td>
-                <td>{{ card.valid_until|date:"d.m.Y" }}</td>
-                <td>
-                  {% if card.traffic_card_pdf %}
-                    <a href="{{ card.traffic_card_pdf.url }}" target="_blank" rel="noopener">PDF</a>
-                  {% else %}
-                    -
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="4" class="text-muted">Nema saobraćajnih dozvola.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-body">
+    <h3 class="card-title">Proračun isplativosti (cena po kilometru)</h3>
+    <p class="text-muted mb-3">
+      Formula: (Gorivo + Servis + IMS trebovanja + Polise + Godišnja amortizacija + Godišnji lizing/zakup - Naplata osiguranja) / Pređena kilometraža.
+    </p>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th class="text-end">Km</th>
+            <th>Izvor km</th>
+            <th class="text-end">Gorivo</th>
+            <th class="text-end">Servis</th>
+            <th class="text-end">IMS</th>
+            <th class="text-end">Polise</th>
+            <th class="text-end">Amortizacija</th>
+            <th class="text-end">Lizing/Zakup</th>
+            <th class="text-end">Naplata osig.</th>
+            <th class="text-end">Ukupan trošak</th>
+            <th class="text-end">RSD/km</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in vehicle_cost_per_km_details %}
+            {% if item.row %}
+            <tr>
+              <td>{{ item.period_label }}</td>
+              <td class="text-end">{{ item.row.annual_km|floatformat:0|intcomma }}</td>
+              <td>{{ item.row.mileage_source }}</td>
+              <td class="text-end">{{ item.row.fuel_cost|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ item.row.service_cost|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ item.row.requisition_cost|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ item.row.policy_cost|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ item.row.annual_depreciation|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ item.row.lease_annual_cost|floatformat:0|intcomma }}</td>
+              <td class="text-end">-{{ item.row.insurance_recovery|floatformat:0|intcomma }}</td>
+              <td class="text-end">{{ item.row.total_cost|floatformat:0|intcomma }}</td>
+              <td class="text-end">
+                {% if item.row.cost_per_km %}
+                  {{ item.row.cost_per_km|floatformat:2|intcomma }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+            {% if item.row.mileage_issue %}
+            <tr>
+              <td colspan="12" class="text-muted small">Napomena: {{ item.row.mileage_issue }}</td>
+            </tr>
+            {% endif %}
+            {% else %}
+            <tr>
+              <td>{{ item.period_label }}</td>
+              <td colspan="11" class="text-muted">Nema dovoljno podataka za obračun cene po kilometru.</td>
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -390,6 +391,12 @@
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="vehicle-orders-tab" data-bs-toggle="tab" data-bs-target="#vehicle-orders-pane" type="button" role="tab" aria-controls="vehicle-orders-pane" aria-selected="false">Nalozi za auto</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tender-docs-tab" data-bs-toggle="tab" data-bs-target="#tender-docs-pane" type="button" role="tab" aria-controls="tender-docs-pane" aria-selected="false">Tender dokumenti</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="traffic-cards-tab" data-bs-toggle="tab" data-bs-target="#traffic-cards-pane" type="button" role="tab" aria-controls="traffic-cards-pane" aria-selected="false">Saobraćajne dozvole</button>
       </li>
     </ul>
 
@@ -520,6 +527,68 @@
               </tr>
               {% empty %}
               <tr><td colspan="8" class="text-center text-muted">Nema naloga za auto.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tender-docs-pane" role="tabpanel" aria-labelledby="tender-docs-tab">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="card-title mb-0">Tender dokumenti</h3>
+          <a href="{{ tender_document_create_url }}" class="btn btn-sm btn-outline-success">Dodaj dokument</a>
+        </div>
+        {% if tender_documents %}
+          <div class="row g-3">
+            {% for doc in tender_documents %}
+            <div class="col-12 col-md-6">
+              <div class="border rounded p-2 h-100">
+                <strong>{{ doc.get_document_type_display }}</strong>
+                <div class="text-muted small">{% if doc.taken_at %}{{ doc.taken_at|date:"d.m.Y" }}{% else %}-{% endif %}</div>
+                <a href="{% url 'vehicle_tender_document_detail' doc.pk %}">
+                  {% if doc.image %}
+                    <img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="img-fluid rounded mt-2" style="max-height: 150px; object-fit: cover;">
+                  {% else %}
+                    <span class="text-muted">Nema slike</span>
+                  {% endif %}
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">Nema dodatih tender dokumenata.</p>
+        {% endif %}
+      </div>
+
+      <div class="tab-pane fade" id="traffic-cards-pane" role="tabpanel" aria-labelledby="traffic-cards-tab">
+        <h3 class="card-title">Saobraćajne dozvole</h3>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Registracija</th>
+                <th>Broj dozvole</th>
+                <th>Važi do</th>
+                <th>PDF</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for card in trafic_cards %}
+              <tr>
+                <td>{{ card.registration_number }}</td>
+                <td>{{ card.traffic_card_number }}</td>
+                <td>{{ card.valid_until|date:"d.m.Y" }}</td>
+                <td>
+                  {% if card.traffic_card_pdf %}
+                    <a href="{{ card.traffic_card_pdf.url }}" target="_blank" rel="noopener">PDF</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-muted">Nema saobraćajnih dozvola.</td></tr>
               {% endfor %}
             </tbody>
           </table>

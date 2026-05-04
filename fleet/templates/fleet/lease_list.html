@@ -15,40 +15,39 @@
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
                     <div class="btn-toolbar" role="toolbar" aria-label="Export toolbar">
                         <div class="btn-group" role="group" aria-label="Export grupe">
-                            <a href="{% url 'export_leases' %}" class="btn btn-outline-success">
-                                <i class="mdi mdi-file-excel me-1"></i> Izvezi sve
-                            </a>
-                            <a href="{% url 'export_leases' %}?tip=finansijski"
-                                class="btn btn-outline-success {% if request.GET.tip == 'finansijski' %}active{% endif %}">
-                                Finansijski
-                            </a>
-                            <a href="{% url 'export_leases' %}?tip=operativni"
-                                class="btn btn-outline-success {% if request.GET.tip == 'operativni' %}active{% endif %}">
-                                Operativni
-                            </a>
-                            <a href="{% url 'export_leases' %}?tip=dugorocni"
-                                class="btn btn-outline-success {% if request.GET.tip == 'dugorocni' %}active{% endif %}">
-                                Dugoročni najam
+                            <a href="{{ export_url }}" class="btn btn-outline-success">
+                                <i class="mdi mdi-file-excel me-1"></i> Izvezi prikaz
                             </a>
                         </div>
                     </div>
 
                     <div class="btn-toolbar" role="toolbar" aria-label="Filter toolbar">
                         <div class="btn-group" role="group" aria-label="Filter grupe">
-                            <a href="{% url 'lease_list' %}" class="btn btn-outline-primary {% if not request.GET.tip %}active{% endif %}">
+                            <a href="{{ lease_filter_links.all }}" class="btn btn-outline-primary {% if not active_tip %}active{% endif %}">
                                 <i class="mdi mdi-filter-variant me-1"></i> Svi
                             </a>
-                            <a href="{% url 'lease_list' %}?tip=finansijski"
-                                class="btn btn-outline-primary {% if request.GET.tip == 'finansijski' %}active{% endif %}">
+                            <a href="{{ lease_filter_links.finansijski }}"
+                                class="btn btn-outline-primary {% if active_tip == 'finansijski' %}active{% endif %}">
                                 Finansijski
                             </a>
-                            <a href="{% url 'lease_list' %}?tip=operativni"
-                                class="btn btn-outline-primary {% if request.GET.tip == 'operativni' %}active{% endif %}">
+                            <a href="{{ lease_filter_links.operativni }}"
+                                class="btn btn-outline-primary {% if active_tip == 'operativni' %}active{% endif %}">
                                 Operativni
                             </a>
-                            <a href="{% url 'lease_list' %}?tip=dugorocni"
-                                class="btn btn-outline-primary {% if request.GET.tip == 'dugorocni' %}active{% endif %}">
+                            <a href="{{ lease_filter_links.dugorocni }}"
+                                class="btn btn-outline-primary {% if active_tip == 'dugorocni' %}active{% endif %}">
                                 Dugoročni najam
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="btn-toolbar" role="toolbar" aria-label="Status toolbar">
+                        <div class="btn-group" role="group" aria-label="Filter po isteku">
+                            <a href="{{ only_active_url }}" class="btn btn-outline-secondary {% if not show_expired %}active{% endif %}">
+                                Aktivni
+                            </a>
+                            <a href="{{ show_expired_url }}" class="btn btn-outline-secondary {% if show_expired %}active{% endif %}">
+                                Neaktivni (istekli)
                             </a>
                         </div>
                     </div>

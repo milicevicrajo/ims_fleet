@@ -21,7 +21,7 @@ from .fuel import date_range_for_datetime_field
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 
 
-def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None):
+def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None, vehicle_ids=None):
     period_end_date = period_end_date or date.today()
     period_start_dt, _ = date_range_for_datetime_field(period_start_date)
     period_end_exclusive_dt, _ = date_range_for_datetime_field(period_end_date + timedelta(days=1))
@@ -39,7 +39,14 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
     vehicles = Vehicle.objects.filter(
         otpis=False,
         category__in=['PUTNICKO VOZILO', 'TERETNO VOZILO'],
-    ).annotate(
+    )
+    if vehicle_ids is not None:
+        if isinstance(vehicle_ids, (list, tuple, set)):
+            vehicles = vehicles.filter(pk__in=list(vehicle_ids))
+        else:
+            vehicles = vehicles.filter(pk=vehicle_ids)
+
+    vehicles = vehicles.annotate(
         center_code=Subquery(latest_center),
         registration_number=Subquery(latest_registration),
         fuel_cost_period=Subquery(

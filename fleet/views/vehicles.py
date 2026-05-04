@@ -9,6 +9,7 @@ from django.db.models.functions import TruncMonth, TruncYear
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 from django_filters.views import FilterView
@@ -17,6 +18,7 @@ from core.exporting import csv_attachment_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
 from ..support.analytics import is_red_zone, net_maintenance_cost
+from ..support.dashboard import vehicle_cost_per_km_rows
 from ..filters import VehicleFilter
 from ..models import (
     FuelConsumption,
@@ -36,6 +38,31 @@ from ..forms.vehicles import VehicleForm
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 
 
+def _safe_next_url(request, next_url):
+    if not next_url:
+        return None
+    if not url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return None
+    if next_url == request.path:
+        return None
+    return next_url
+
+
+def _mark_vehicles_with_expired_lease_as_retired():
+    today = datetime.date.today()
+    vehicles_with_active_lease = Vehicle.objects.filter(leases__end_date__gte=today).values("pk")
+    vehicles_with_only_expired_leases = (
+        Vehicle.objects.filter(leases__isnull=False)
+        .exclude(pk__in=vehicles_with_active_lease)
+        .values("pk")
+    )
+    Vehicle.objects.filter(pk__in=vehicles_with_only_expired_leases, otpis=False).update(otpis=True)
+
+
 class VehicleListView(LoginRequiredMixin, FilterView):
     model = Vehicle
     template_name = "fleet/vehicle_list.html"
@@ -43,6 +70,8 @@ class VehicleListView(LoginRequiredMixin, FilterView):
     filterset_class = VehicleFilter
 
     def get_queryset(self):
+        _mark_vehicles_with_expired_lease_as_retired()
+
         qs = Vehicle.objects.all()
 
         latest_job_code_qs = JobCode.objects.filter(vehicle=OuterRef("pk")).order_by("-assigned_date", "-pk")
@@ -87,6 +116,8 @@ class VehicleListView(LoginRequiredMixin, FilterView):
 
 
 def _vehicle_list_base_queryset(request):
+    _mark_vehicles_with_expired_lease_as_retired()
+
     qs = Vehicle.objects.all()
 
     latest_job_code_qs = JobCode.objects.filter(vehicle=OuterRef("pk")).order_by("-assigned_date", "-pk")
@@ -254,6 +285,37 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
             for month, values in sorted(monthly_costs.items())
         ][-12:]
 
+        cost_per_km_periods = [
+            {
+                "label": "Poslednjih 12 meseci",
+                "start": datetime.date.today() - datetime.timedelta(days=365),
+                "end": datetime.date.today(),
+            },
+            {
+                "label": "Poslednja 24 meseca",
+                "start": datetime.date.today() - datetime.timedelta(days=730),
+                "end": datetime.date.today(),
+            },
+        ]
+        vehicle_cost_per_km_details = []
+        for period in cost_per_km_periods:
+            row = next(
+                iter(
+                    vehicle_cost_per_km_rows(
+                        period_start_date=period["start"],
+                        period_end_date=period["end"],
+                        vehicle_ids=[vehicle.id],
+                    )
+                ),
+                None,
+            )
+            vehicle_cost_per_km_details.append(
+                {
+                    "period_label": period["label"],
+                    "row": row,
+                }
+            )
+
         service_category_rows = [
             {
                 "label": row["popravka_kategorija__name"] or "Nerazvrstano",
@@ -306,6 +368,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
                 "vehicle_analysis": vehicle_analysis,
                 "monthly_vehicle_costs": monthly_vehicle_costs,
                 "service_category_rows": service_category_rows,
+                "vehicle_cost_per_km_details": vehicle_cost_per_km_details,
                 "tender_documents": vehicle.tender_documents.order_by("-created_at"),
                 "tender_document_create_url": reverse("vehicle_tender_document_create_for_vehicle", kwargs={"vehicle_id": vehicle.pk}),
                 "title": f"Detalji vozila {self.object.brand} {self.object.model}",
@@ -349,8 +412,17 @@ class VehicleTogleStatusView(RolePermissionRequiredMixin, LoginRequiredMixin, Vi
         vehicle = get_object_or_404(Vehicle, pk=pk)
         vehicle.otpis = not vehicle.otpis
         vehicle.save()
-        status = "aktivano" if vehicle.otpis else "otpisano"
+
+        status = "otpisano" if vehicle.otpis else "aktivirano"
         messages.success(request, f"Vozilo je uspešno {status}.")
+
+        next_url = _safe_next_url(
+            request,
+            request.POST.get("next") or request.GET.get("next") or request.META.get("HTTP_REFERER"),
+        )
+        if next_url:
+            return redirect(next_url)
+
         return redirect("vehicle_detail", pk=pk)
 
 
@@ -360,7 +432,17 @@ class VehicleDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteV
     template_name = "fleet/vehicle_confirm_delete.html"
     context_object_name = "vehicle"
 
+    def _next_url(self):
+        return _safe_next_url(
+            self.request,
+            self.request.POST.get("next") or self.request.GET.get("next") or self.request.META.get("HTTP_REFERER"),
+        )
+
+    def get_success_url(self):
+        return self._next_url() or str(self.success_url)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Obriši vozilo"
+        context["next_url"] = self._next_url() or reverse("vehicle_list")
         return context

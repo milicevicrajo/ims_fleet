@@ -76,11 +76,17 @@ def dashboard(request):
     start_of_last_12_months = date.today() - timedelta(days=365)
     start_of_last_12_months_dt, _ = date_range_for_datetime_field(start_of_last_12_months)
 
-    total_vehicles = Vehicle.objects.filter(otpis=False).count()
-    passenger_vehicles = Vehicle.objects.filter(category='PUTNICKO VOZILO').filter(otpis=False).count()
-    transport_vehicles = Vehicle.objects.filter(category='TERETNO VOZILO').filter(otpis=False).count()
+    active_vehicles_qs = Vehicle.objects.filter(otpis=False)
+    age_eligible_vehicles_qs = active_vehicles_qs.filter(
+        year_of_manufacture__gte=1900,
+        year_of_manufacture__lte=current_year,
+    )
 
-    average_age = Vehicle.objects.aggregate(avg_age=(current_year - Avg('year_of_manufacture')))
+    total_vehicles = active_vehicles_qs.count()
+    passenger_vehicles = active_vehicles_qs.filter(category='PUTNICKO VOZILO').count()
+    transport_vehicles = active_vehicles_qs.filter(category='TERETNO VOZILO').count()
+
+    average_age = age_eligible_vehicles_qs.aggregate(avg_age=(current_year - Avg('year_of_manufacture')))
     book_value = Vehicle.objects.filter(purchase_date__lte=last_day_of_previous_month).aggregate(total_value=Sum('value'))
     yearly_fuel_costs = FuelConsumption.objects.filter(date__gte=start_of_last_12_months_dt).aggregate(total_fuel_cost=Sum('cost_bruto'))
     yearly_service_costs = ServiceTransaction.objects.filter(datum__gte=start_of_year).aggregate(total_service_cost=Sum('potrazuje'))
@@ -89,7 +95,7 @@ def dashboard(request):
         vehicle=OuterRef('pk')
     ).order_by('-assigned_date')
 
-    vehicles = Vehicle.objects.annotate(
+    vehicles = active_vehicles_qs.annotate(
         center_code=Subquery(latest_jobcode.values('organizational_unit__center')[:1]),
         manufacture_year=F('year_of_manufacture'),
         current_value=F('value'),
@@ -155,7 +161,12 @@ def dashboard(request):
                 net_maintenance_cost(vehicle.service_cost, vehicle.requisition_cost, vehicle.insurance_recovery),
             )
         )
-        avg_year = sum([vehicle.year_of_manufacture or 0 for vehicle in vehicle_list]) / count if count else 0
+        valid_years = [
+            vehicle.year_of_manufacture
+            for vehicle in vehicle_list
+            if vehicle.year_of_manufacture and 1900 <= vehicle.year_of_manufacture <= current_year
+        ]
+        avg_year = (sum(valid_years) / len(valid_years)) if valid_years else 0
         avg_age = current_year - avg_year if avg_year else None
 
         center_data.append({

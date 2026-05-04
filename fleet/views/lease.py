@@ -1,5 +1,9 @@
+from urllib.parse import urlencode
+
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from core.exporting import rows_to_xlsx_response
@@ -17,6 +21,27 @@ class LeaseListView(LoginRequiredMixin, ListView):
     template_name = "fleet/lease_list.html"
     context_object_name = "leases"
 
+    @staticmethod
+    def _is_truthy(value):
+        return str(value).lower() in {"1", "true", "yes", "on", "da"}
+
+    def _show_expired(self):
+        return self._is_truthy(self.request.GET.get("prikazi_istekle"))
+
+    def _build_url(self, url_name, tip=None, show_expired=None):
+        params = {}
+        if tip:
+            params["tip"] = tip
+        if show_expired is None:
+            show_expired = self._show_expired()
+        if show_expired:
+            params["prikazi_istekle"] = "1"
+
+        url = reverse(url_name)
+        if params:
+            return f"{url}?{urlencode(params)}"
+        return url
+
     def get_queryset(self):
         qs = super().get_queryset().select_related("vehicle")
         tip = self.request.GET.get("tip")
@@ -24,11 +49,27 @@ class LeaseListView(LoginRequiredMixin, ListView):
             qs = qs.filter(lease_type__in=LONG_TERM_LEASE_TYPES)
         elif tip in {"finansijski", "operativni"}:
             qs = qs.filter(lease_type=tip)
+
+        if not self._show_expired():
+            qs = qs.filter(end_date__gte=timezone.localdate())
         return qs
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Lizing i najam ugovori"
+        active_tip = self.request.GET.get("tip")
+        show_expired = self._show_expired()
+        ctx["active_tip"] = active_tip
+        ctx["show_expired"] = show_expired
+        ctx["export_url"] = self._build_url("export_leases")
+        ctx["lease_filter_links"] = {
+            "all": self._build_url("lease_list"),
+            "finansijski": self._build_url("lease_list", "finansijski"),
+            "operativni": self._build_url("lease_list", "operativni"),
+            "dugorocni": self._build_url("lease_list", "dugorocni"),
+        }
+        ctx["only_active_url"] = self._build_url("lease_list", tip=active_tip, show_expired=False)
+        ctx["show_expired_url"] = self._build_url("lease_list", tip=active_tip, show_expired=True)
         return ctx
 
 
@@ -47,11 +88,15 @@ class LeaseCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateVie
 
 def export_leases_to_excel(request):
     tip = request.GET.get("tip")
+    show_expired = LeaseListView._is_truthy(request.GET.get("prikazi_istekle"))
     leases = Lease.objects.select_related("vehicle").all()
     if tip == "dugorocni":
         leases = leases.filter(lease_type__in=LONG_TERM_LEASE_TYPES)
     elif tip in {"finansijski", "operativni"}:
         leases = leases.filter(lease_type=tip)
+
+    if not show_expired:
+        leases = leases.filter(end_date__gte=timezone.localdate())
 
     headers = [
         "Vozilo (sasija)",

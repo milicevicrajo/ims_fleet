@@ -277,13 +277,10 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
 
 class PutniNalogDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = PutniNalog
-    template_name = "fleet/putninalog_detail.html"
-    context_object_name = "putni_nalog"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = f"Detalji putnog naloga {self.object.travel_date}"
-        return context
+    def get(self, request, *args, **kwargs):
+        putni_nalog = self.get_object()
+        return redirect("putninalog_print", pk=putni_nalog.pk)
 
 
 class PutniNalogPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
