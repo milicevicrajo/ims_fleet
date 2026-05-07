@@ -75,6 +75,19 @@ class VehicleTravelOrderCloseForm(forms.ModelForm):
         model = VehicleTravelOrder
         fields = ["closed_at", "end_mileage"]
 
+    def clean(self):
+        cleaned_data = super().clean()
+        closed_at = cleaned_data.get("closed_at")
+        created_at = getattr(self.instance, "created_at", None)
+
+        if closed_at and created_at and closed_at < created_at:
+            self.add_error(
+                "closed_at",
+                "Datum zatvaranja ne može biti raniji od datuma otvaranja naloga.",
+            )
+
+        return cleaned_data
+
 
 class KvarForm(forms.ModelForm):
     VAN_IMS_CHOICES = [

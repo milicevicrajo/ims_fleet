@@ -3,9 +3,10 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.urls import reverse
 from django.utils import timezone
 
-from .forms import VehicleTravelOrderForm
+from .forms import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
 from .models import TransactionNIS, TransactionOMV
@@ -14,7 +15,11 @@ from .support.report_helpers import date_period_filtered_query, report_period_fi
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
 from .support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset
-from .views.vehicle_travel_orders import VehicleTravelOrderCreateView, VehicleTravelOrderDetailView
+from .views.vehicle_travel_orders import (
+	VehicleTravelOrderCreateView,
+	VehicleTravelOrderDetailView,
+	VehicleTravelOrderUpdateView,
+)
 
 
 class SecondaryReportViewHelperTests(SimpleTestCase):
@@ -378,6 +383,134 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 		self.assertEqual(response.status_code, 302)
 		self.assertEqual(previous_order.closed_at, new_order.created_at)
 		self.assertEqual(previous_order.end_mileage, new_order.start_mileage)
+
+	def test_new_travel_order_does_not_close_later_open_order(self):
+		later_open_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 25),
+			start_mileage=70000,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+
+		form = VehicleTravelOrderForm(
+			data={
+				"created_at": "24.04.2026",
+				"employee": self.employee.pk,
+				"vehicle": self.vehicle.pk,
+				"start_mileage": 70100,
+			}
+		)
+		self.assertTrue(form.is_valid(), form.errors)
+
+		view = VehicleTravelOrderCreateView()
+		response = view.form_valid(form)
+
+		later_open_order.refresh_from_db()
+
+		self.assertEqual(response.status_code, 302)
+		self.assertIsNone(later_open_order.closed_at)
+		self.assertIsNone(later_open_order.end_mileage)
+
+
+class VehicleTravelOrderCloseFormTests(TestCase):
+	def setUp(self):
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="INV-3",
+			chassis_number="WF0XXXTEST0000003",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="ENG-3",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category="TERETNO VOZILO",
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		self.employee = Employee.objects.create(
+			employee_code=3,
+			first_name="Zika",
+			last_name="Zikic",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1992, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+		self.order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+
+	def test_close_form_rejects_date_before_open_date(self):
+		form = VehicleTravelOrderCloseForm(
+			instance=self.order,
+			data={
+				"closed_at": "23.04.2026",
+				"end_mileage": 70500,
+			},
+		)
+
+		self.assertFalse(form.is_valid())
+		self.assertIn("closed_at", form.errors)
+
+
+class VehicleTravelOrderUpdateViewTests(TestCase):
+	def test_get_success_url_redirects_to_order_detail(self):
+		vehicle = Vehicle.objects.create(
+			inventory_number="INV-4",
+			chassis_number="WF0XXXTEST0000004",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="ENG-4",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category="TERETNO VOZILO",
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		employee = Employee.objects.create(
+			employee_code=4,
+			first_name="Laza",
+			last_name="Lazic",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1993, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=employee,
+			vehicle=vehicle,
+		)
+
+		request = RequestFactory().post("/")
+		view = VehicleTravelOrderUpdateView()
+		view.request = request
+		view.object = order
+
+		self.assertEqual(view.get_success_url(), reverse("vehicle_travel_order_detail", args=[order.pk]))
 
 
 class VehicleTravelOrderConsumptionTests(TestCase):

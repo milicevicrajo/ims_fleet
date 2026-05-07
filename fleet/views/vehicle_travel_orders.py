@@ -189,6 +189,7 @@ class VehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMix
         previous_orders = VehicleTravelOrder.objects.filter(
             vehicle=self.object.vehicle,
             closed_at__isnull=True,
+            created_at__lt=self.object.created_at,
         ).exclude(pk=self.object.pk)
         update_fields = {"closed_at": self.object.created_at}
         if self.object.start_mileage is not None:
@@ -204,13 +205,16 @@ class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMix
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderForm
     template_name = "fleet/generic_form.html"
-    success_url = reverse_lazy("vehicle_travel_order_list")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Izmena putnog naloga (vozilo)"
         ctx["submit_button_label"] = "Sacuvaj izmene"
         return ctx
+
+    def get_success_url(self):
+        next_url = self.request.POST.get("next") or self.request.GET.get("next")
+        return next_url or reverse("vehicle_travel_order_detail", args=[self.object.pk])
 
 
 class VehicleTravelOrderCloseView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
