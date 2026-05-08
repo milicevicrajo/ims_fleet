@@ -81,6 +81,64 @@
     <!-- End Wrapper -->
     <!-- ============================================================== -->
 
+    {% if user.is_authenticated %}
+    <div class="modal fade" id="appNewsModal" tabindex="-1" aria-labelledby="appNewsModalLabel" aria-hidden="true" data-release-version="2026-05-08-03">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content app-news-modal">
+                <div class="modal-header">
+                    <div>
+                        <div class="text-muted small">IMS Fleet</div>
+                        <h5 class="modal-title mb-0" id="appNewsModalLabel">Novosti u aplikaciji</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="app-news-section">
+                        <h6>Šta je novo</h6>
+                        <ul>
+                            <li>U sekciji Garaža IMS uveden je operativni rad sa putnim nalozima za automobile.</li>
+                            <li>Sekretarijat sada može da otvara putni nalog za vozilo, prati korišćenje i zatvara nalog.</li>
+                            <li>Zatvaranjem naloga sistem automatski priprema obračun goriva za period korišćenja vozila.</li>
+                            <li>Podaci iz naloga ostaju vezani za vozilo, vozača i period, pa se kasnije mogu proveravati kroz preglede.</li>
+                        </ul>
+                    </div>
+                    <div class="app-news-section">
+                        <h6>Uputstvo za sekretarijat</h6>
+                        <ul>
+                            <li>U meniju otvoriti Garaža IMS i izabrati putne naloge za automobile.</li>
+                            <li>Za novi nalog izabrati vozilo koje se izdaje i uneti korisnika/vozača, datum i početnu kilometražu.</li>
+                            <li>Otvaranjem nloga automatski se generiše zahtev za otvaranje putnog naloga.</li>
+                            <li>Nalog ostaje otvoren dok se ne zatvori ručno ili dok se ne otvori novi nalog</li>
+                            <li>Kada je nalog zatvoren, aplikacija automatski priprema obračun goriva za period korišćenja vozila.</li>
+                        </ul>
+                    </div>
+                    <div class="app-news-section">
+                        <h6>Zatvaranje i obračun</h6>
+                        <ul>
+                            <li>Pre zatvaranja proveriti da li su vozilo, vozač i datumi ispravni.</li>
+                            <li>Kada se nalog zatvori, aplikacija automatski računa gorivo za period naloga.</li>
+                            <li>Obračun koristi evidentirane transakcije goriva za izabrano vozilo i period putnog naloga.</li>
+                            <li>Ako obračun ne prikaže očekivane stavke, proveriti registraciju vozila i da li su transakcije goriva već učitane.</li>
+                            <li>Zatvoren nalog predstavlja osnov za pregled korišćenja vozila i kontrolu troška goriva.</li>
+                        </ul>
+                    </div>
+                    <div class="app-news-section">
+                        <h6>Napomena</h6>
+                        <p class="mb-0">
+                            Ovo je operativni tok rada za sekretarijat. Najvažnije je da se nalog otvori pre korišćenja vozila
+                            i zatvori odmah po povratku, jer se tada formira obračun goriva.
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
+                    <button type="button" class="btn btn-primary" id="appNewsConfirmBtn">Razumem</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ============================================================== -->
     <!-- Skripte (lokalno/offline, složen redosled, bez duplikata) -->
     <!-- ============================================================== -->
@@ -149,6 +207,46 @@
 
     <!-- Bootstrap i ostalo -->
     <script src="{% static 'fleet/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+    {% if user.is_authenticated %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var modalElement = document.getElementById("appNewsModal");
+            if (!modalElement || !window.bootstrap || !bootstrap.Modal) {
+                return;
+            }
+
+            var releaseVersion = modalElement.getAttribute("data-release-version") || "default";
+            var storageKey = "imsFleetAppNewsSeen:" + releaseVersion;
+            var modal = new bootstrap.Modal(modalElement);
+            var confirmButton = document.getElementById("appNewsConfirmBtn");
+
+            function markAsSeen() {
+                try {
+                    window.localStorage.setItem(storageKey, "1");
+                } catch (error) {
+                    return;
+                }
+            }
+
+            if (confirmButton) {
+                confirmButton.addEventListener("click", function () {
+                    markAsSeen();
+                    modal.hide();
+                });
+            }
+
+            modalElement.addEventListener("hidden.bs.modal", markAsSeen);
+
+            try {
+                if (window.localStorage.getItem(storageKey) !== "1") {
+                    modal.show();
+                }
+            } catch (error) {
+                modal.show();
+            }
+        });
+    </script>
+    {% endif %}
     <script src="{% static 'fleet/assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js' %}"></script>
     <script src="{% static 'fleet/assets/extra-libs/sparkline/sparkline.js' %}"></script>
 
@@ -462,6 +560,30 @@
         table.display thead tr.filters select {
             width: 100%;
             font-size: 0.9rem;
+        }
+        .app-news-modal .modal-header {
+            border-bottom: 1px solid #eef1f5;
+        }
+        .app-news-modal .modal-body {
+            padding-top: 1rem;
+        }
+        .app-news-section {
+            border: 1px solid #eef1f5;
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .app-news-section h6 {
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .app-news-section ul {
+            margin-bottom: 0;
+            padding-left: 18px;
+        }
+        .app-news-section li + li {
+            margin-top: 5px;
         }
         </style>
 </body>
