@@ -1,8 +1,10 @@
 import csv
 import logging
 import os
+import re
 import time
-from datetime import datetime, timedelta
+import unicodedata
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 import pytz
@@ -58,6 +60,186 @@ def wait_for_download_file(download_path, timeout=60):
     raise TimeoutException("Download file not found within timeout.")
 
 
+def get_vehicle_job_code(vehicle):
+    job_code = vehicle.job_codes.select_related("organizational_unit").first()
+    if job_code and job_code.organizational_unit:
+        return job_code.organizational_unit.code
+    return None
+
+
+def previous_month_range(reference_date=None):
+    reference_date = reference_date or date.today()
+    first_this_month = reference_date.replace(day=1)
+    last_previous_month = first_this_month - timedelta(days=1)
+    first_previous_month = last_previous_month.replace(day=1)
+    return first_previous_month, last_previous_month
+
+
+def nis_date_prefix(value):
+    return f"{value.day:02d}.{value.month:02d}.{value.year}."
+
+
+def normalized(value):
+    value = unicodedata.normalize("NFKD", str(value or ""))
+    value = "".join(char for char in value if not unicodedata.combining(char))
+    replacements = {
+        "Ä": "c",
+        "Ä‡": "c",
+        "Ä‘": "dj",
+        "Å¡": "s",
+        "Å¾": "z",
+        "Å ": "s",
+        "č": "c",
+        "ć": "c",
+        "đ": "dj",
+        "š": "s",
+        "ž": "z",
+    }
+    for source, target in replacements.items():
+        value = value.replace(source, target)
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+
+def visible_nis_picker(driver):
+    for picker in driver.find_elements(By.CSS_SELECTOR, ".rdtPicker"):
+        if picker.is_displayed():
+            return picker
+    return None
+
+
+def active_nis_picker_month(driver):
+    picker = visible_nis_picker(driver)
+    if picker is None:
+        return None
+    return picker.find_element(By.CSS_SELECTOR, ".rdtSwitch").text.strip().lower()
+
+
+def parse_nis_picker_month(value):
+    if not value:
+        return None
+
+    value = normalized(value)
+    months = {
+        "jan": 1, "januar": 1, "january": 1,
+        "feb": 2, "februar": 2, "february": 2,
+        "mar": 3, "mart": 3, "march": 3,
+        "apr": 4, "april": 4,
+        "maj": 5, "may": 5,
+        "jun": 6, "june": 6,
+        "jul": 7, "july": 7,
+        "avg": 8, "avgust": 8, "aug": 8, "august": 8,
+        "sep": 9, "sept": 9, "septembar": 9, "september": 9,
+        "okt": 10, "oktobar": 10, "oct": 10, "october": 10,
+        "nov": 11, "novembar": 11, "november": 11,
+        "dec": 12, "decembar": 12, "december": 12,
+    }
+
+    year_match = re.search(r"(20\d{2}|19\d{2})", value)
+    if not year_match:
+        return None
+    year = int(year_match.group(1))
+    month_text = value[:year_match.start()]
+    for month_name, month_number in months.items():
+        if month_name in month_text:
+            return year, month_number
+    return None
+
+
+def open_nis_datetime_picker(driver, label):
+    input_element = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((
+            By.XPATH,
+            "//div[contains(@class,'form-field-wrapper')][.//label[contains(normalize-space(.),"
+            f"'{label}')]]//input[@type='text']",
+        ))
+    )
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element)
+    time.sleep(0.5)
+    input_element.click()
+    time.sleep(0.2)
+    input_element.click()
+    WebDriverWait(driver, 10).until(lambda current_driver: visible_nis_picker(current_driver) is not None)
+    return True
+
+
+def click_active_nis_picker_nav(driver, direction):
+    picker = visible_nis_picker(driver)
+    if picker is None:
+        return False
+    selector = ".rdtPrev" if direction < 0 else ".rdtNext"
+    picker.find_element(By.CSS_SELECTOR, selector).click()
+    return True
+
+
+def select_day_in_active_nis_picker(driver, target_date):
+    picker = visible_nis_picker(driver)
+    if picker is None:
+        return False
+    cells = picker.find_elements(By.CSS_SELECTOR, "td.rdtDay:not(.rdtOld):not(.rdtNew)")
+    for cell in cells:
+        if cell.get_attribute("data-value") == str(target_date.day):
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", cell)
+            time.sleep(0.2)
+            cell.click()
+            return True
+    return False
+
+
+def get_nis_datetime_field_value(driver, label):
+    script = """
+    const labelText = arguments[0];
+    const wrappers = Array.from(document.querySelectorAll('.form-field-wrapper'));
+    const wrapper = wrappers.find((item) => {
+      const label = item.querySelector('label.key');
+      return label && label.textContent.replace(/\\s+/g, ' ').trim().includes(labelText);
+    });
+    const input = wrapper && wrapper.querySelector('input[type="text"]');
+    return input ? input.value : null;
+    """
+    return driver.execute_script(script, label)
+
+
+def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0):
+    if not open_nis_datetime_picker(driver, label):
+        return "field_not_found"
+
+    for _ in range(20):
+        if active_nis_picker_month(driver):
+            break
+        time.sleep(0.25)
+    else:
+        return "picker_not_open"
+
+    if fixed_prev_clicks:
+        for _ in range(fixed_prev_clicks):
+            if not click_active_nis_picker_nav(driver, -1):
+                return "nav_not_found"
+            time.sleep(0.5)
+    else:
+        target_month_index = target_date.year * 12 + target_date.month
+        for _ in range(36):
+            current = parse_nis_picker_month(active_nis_picker_month(driver))
+            if not current:
+                return "month_not_read"
+            current_month_index = current[0] * 12 + current[1]
+            if current_month_index == target_month_index:
+                break
+            if not click_active_nis_picker_nav(driver, -1 if current_month_index > target_month_index else 1):
+                return "nav_not_found"
+            time.sleep(0.5)
+        else:
+            return "month_not_reached"
+
+    if not select_day_in_active_nis_picker(driver, target_date):
+        return "day_not_found"
+    time.sleep(1)
+
+    value = get_nis_datetime_field_value(driver, label) or ""
+    if not value.startswith(nis_date_prefix(target_date)):
+        return f"value_not_changed:{value}"
+    return "ok"
+
+
 def kerio_login():
     login_url = "https://control.ims.rs:4081/login/?NTLM=0&orig=Y29udHJvbC5pbXMucnM=&dest=aHR0cDovL3d3dy5nc3RhdGljLmNvbS9nZW5lcmF0ZV8yMDQ=&host=MTkyLjE2OC42LjcgMWYzYTA5ODgyYzIxYWJjNjM2Y2FlNzAzZjQ1YjRmZGU="
     username = "tatko"
@@ -110,14 +292,19 @@ def nis_data_import():
     try:
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
-        handler = logging.FileHandler(r"C:\djangoapps\ims_erp\nis_debug.log")
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        log_dir = os.path.join(settings.BASE_DIR, "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, "nis_debug.log")
+        if not any(isinstance(handler, logging.FileHandler) and handler.baseFilename == log_path for handler in logger.handlers):
+            handler = logging.FileHandler(log_path, encoding="utf-8")
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
 
         login_url = "https://cards.nis.rs"
-        username = "zoran.institutims"
-        password = "3RrrvvVg"
+        username = os.getenv("NIS_USERNAME", "rajko")
+        password = os.getenv("NIS_PASSWORD", "22017059")
+        date_from, date_to = previous_month_range()
 
         chrome_options = create_chrome_options()
         chrome_options.add_argument("--ignore-certificate-errors")
@@ -129,6 +316,7 @@ def nis_data_import():
         chrome_options.add_argument("--disable-dev-shm-usage")
 
         download_path = r"C:\nis_repo"
+        os.makedirs(download_path, exist_ok=True)
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
 
@@ -183,6 +371,32 @@ def nis_data_import():
 
             time.sleep(2)
 
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, "//label[contains(., 'Datum od')]"))
+            )
+            logger.info("NIS: setting Datum od to previous month start: %s", date_from)
+            date_from_result = select_nis_date_with_widget(driver, "Datum od", date_from, fixed_prev_clicks=2)
+            if date_from_result != "ok":
+                raise RuntimeError(f"NIS sync nije uspeo da postavi Datum od: {date_from_result}.")
+            time.sleep(2)
+
+            try:
+                logger.info("NIS: setting Datum do to previous month end: %s", date_to)
+                date_to_result = select_nis_date_with_widget(driver, "Datum do", date_to)
+                if date_to_result != "ok":
+                    logger.warning("NIS sync nije uspeo da postavi Datum do: %s", date_to_result)
+                time.sleep(2)
+            except Exception:
+                logger.exception("NIS: Datum do nije postavljen, nastavljam sa podrazumevanim datumom na portalu.")
+
+            actual_from = get_nis_datetime_field_value(driver, "Datum od")
+            expected_from = nis_date_prefix(date_from)
+            if not (actual_from or "").startswith(expected_from):
+                raise RuntimeError(
+                    "NIS datum nije prihvacen. "
+                    f"Ocekivano Datum od: {expected_from}; na stranici: {actual_from}."
+                )
+
             try:
                 WebDriverWait(driver, 10).until(
                     EC.invisibility_of_element_located((By.CLASS_NAME, "loader"))
@@ -195,6 +409,7 @@ def nis_data_import():
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", show_report_button)
+            time.sleep(2)
             ActionChains(driver).move_to_element(show_report_button).click().perform()
 
             time.sleep(2)
@@ -203,15 +418,18 @@ def nis_data_import():
             dropdown_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'download-button')]"))
             )
+            driver.execute_script("arguments[0].scrollIntoView(true);", dropdown_button)
+            time.sleep(2)
             dropdown_button.click()
 
-            time.sleep(1)
+            time.sleep(2)
 
             logger.info("NIS: waiting for XLSX option")
             xlsx_option = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", xlsx_option)
+            time.sleep(2)
             ActionChains(driver).move_to_element(xlsx_option).click().perform()
 
             time.sleep(2)
@@ -466,7 +684,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 cost_bruto = float(row['Gross CC'].replace(',', '').strip())
                 vat = float(row['VAT'].replace(',', '').strip())
 
-                job_code = vehicle.job_codes.first().organizational_unit.code
+                job_code = get_vehicle_job_code(vehicle)
                 # Izračunaj neto trošak
                 cost_neto = cost_bruto - vat
 
@@ -603,7 +821,7 @@ def import_nis_fuel_consumption(file_path):
             naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
             transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
             
-            job_code = vehicle.job_codes.first().organizational_unit.code
+            job_code = get_vehicle_job_code(vehicle)
            
             FuelConsumption.objects.using("server_db").create(
                 vehicle=vehicle,
