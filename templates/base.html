@@ -196,11 +196,71 @@
         <script src="{% static 'fleet/assets/libs/flatpickr/dist/l10n/sr.js' %}"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                if (window.flatpickr) {
-                    flatpickr('.js-date', {
-                        dateFormat: 'd.m.Y',
-                        locale: 'sr'
+                function hideFreeTextFilterInputs() {
+                    var filterFormSelector = 'form:not([method]), form[method="get" i]';
+                    var selectors = [
+                        filterFormSelector + ' input[name="q"]',
+                        filterFormSelector + ' input[type="search"]',
+                        filterFormSelector + ' input[name="search"]'
+                    ];
+
+                    document.querySelectorAll(selectors.join(',')).forEach(function(input) {
+                        input.value = '';
+                        input.disabled = true;
+                        var wrapper = input.closest('div');
+                        if (wrapper) {
+                            wrapper.style.display = 'none';
+                        } else {
+                            input.style.display = 'none';
+                        }
                     });
+                }
+
+                function initFilterFlatpickr() {
+                    if (!window.flatpickr) {
+                        return;
+                    }
+
+                    var dateOptions = {
+                        dateFormat: 'd.m.Y',
+                        locale: 'sr',
+                        allowInput: true,
+                        disableMobile: true,
+                    };
+
+                    var monthOptions = {
+                        dateFormat: 'Y-m',
+                        altInput: true,
+                        altFormat: 'm.Y',
+                        locale: 'sr',
+                        allowInput: true,
+                        disableMobile: true,
+                    };
+
+                    flatpickr('.js-date', dateOptions);
+
+                    document.querySelectorAll('form:not([method]) input[type="date"], form[method="get" i] input[type="date"]').forEach(function(input) {
+                        if (input.classList.contains('flatpickr-input')) {
+                            return;
+                        }
+                        flatpickr(input, dateOptions);
+                    });
+
+                    document.querySelectorAll('form:not([method]) input[type="month"], form[method="get" i] input[type="month"]').forEach(function(input) {
+                        if (input.classList.contains('flatpickr-input')) {
+                            return;
+                        }
+                        var currentValue = input.value;
+                        input.setAttribute('type', 'text');
+                        flatpickr(input, Object.assign({}, monthOptions, {
+                            defaultDate: currentValue || null,
+                        }));
+                    });
+                }
+
+                hideFreeTextFilterInputs();
+                if (window.flatpickr) {
+                    initFilterFlatpickr();
                 }
             });
         </script>

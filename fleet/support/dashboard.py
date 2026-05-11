@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import date, timedelta
+import calendar
 
 from django.db.models import Count, ExpressionWrapper, F, IntegerField, Max, Min, OuterRef, Subquery, Sum
 
@@ -172,28 +173,53 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
 
     period_days = (period_end_date - period_start_date).days or 1
 
-    # Fetch non-financial leases that are active (not expired before period start)
-    # and compute proportional cost per vehicle based on overlap days / total lease days
+    def monthly_cost_for_overlap(monthly_amount, overlap_start, overlap_end):
+        if overlap_end <= overlap_start:
+            return 0.0
+
+        total = 0.0
+        cursor = overlap_start
+        while cursor < overlap_end:
+            month_last_day = calendar.monthrange(cursor.year, cursor.month)[1]
+            month_end = date(cursor.year, cursor.month, month_last_day) + timedelta(days=1)
+            segment_end = min(month_end, overlap_end)
+            days_in_segment = (segment_end - cursor).days
+            if days_in_segment > 0:
+                total += float(monthly_amount or 0) * days_in_segment / month_last_day
+            cursor = segment_end
+        return total
+
+    # Dugorocni najam: current_payment_amount je mesecna rata.
+    # Operativni lizing: zadrzavamo postojecu proporcionalnu raspodelu.
+    # Finansijski lizing: i dalje ulazi kroz LeaseInterest.
     vehicle_ids_in_query = list(vehicles.values_list('pk', flat=True))
-    non_financial_leases = Lease.objects.filter(
+    lease_contracts = Lease.objects.filter(
         vehicle_id__in=vehicle_ids_in_query,
         start_date__lte=period_end_date,
         end_date__gte=period_start_date,
     ).exclude(lease_type='finansijski').values(
-        'vehicle_id', 'current_payment_amount', 'start_date', 'end_date'
+        'vehicle_id', 'lease_type', 'current_payment_amount', 'start_date', 'end_date'
     )
-    non_financial_lease_cost_by_vehicle = {}
-    for lease in non_financial_leases:
-        total_lease_days = (lease['end_date'] - lease['start_date']).days or 1
+
+    non_financial_lease_cost_by_vehicle = defaultdict(float)
+    for lease in lease_contracts:
         overlap_start = max(lease['start_date'], period_start_date)
         overlap_end = min(lease['end_date'], period_end_date)
+        if overlap_end <= overlap_start:
+            continue
+
+        if lease['lease_type'] in LONG_TERM_LEASE_TYPES:
+            # Pretvaramo u ekskluzivni kraj samo za obracun mesecne rate najma.
+            cost = monthly_cost_for_overlap(lease['current_payment_amount'], overlap_start, overlap_end + timedelta(days=1))
+            non_financial_lease_cost_by_vehicle[lease['vehicle_id']] += cost
+            continue
+
+        total_lease_days = (lease['end_date'] - lease['start_date']).days or 1
         overlap_days = (overlap_end - overlap_start).days
         if overlap_days <= 0:
             continue
         cost = float(lease['current_payment_amount'] or 0) * overlap_days / total_lease_days
-        non_financial_lease_cost_by_vehicle[lease['vehicle_id']] = (
-            non_financial_lease_cost_by_vehicle.get(lease['vehicle_id'], 0) + cost
-        )
+        non_financial_lease_cost_by_vehicle[lease['vehicle_id']] += cost
 
     rows = []
     for vehicle in vehicles:
