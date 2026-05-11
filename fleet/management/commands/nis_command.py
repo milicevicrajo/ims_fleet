@@ -5,4 +5,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         rezultat = nis_data_import()
-        self.stdout.write(self.style.SUCCESS(rezultat))
+        self.stdout.write(self.style.SUCCESS(str(rezultat)))

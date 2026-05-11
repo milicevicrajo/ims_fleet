@@ -2,6 +2,7 @@
 import logging
 import os
 import re
+import sys
 import time
 import unicodedata
 from datetime import date, datetime, timedelta
@@ -31,6 +32,18 @@ from fleet.support.vehicle import (
 logger = logging.getLogger(__name__)
 
 
+def ensure_nis_console_logging(logger):
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    if not any(getattr(handler, "_nis_console_handler", False) for handler in logger.handlers):
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.DEBUG)
+        console_handler.setFormatter(formatter)
+        console_handler._nis_console_handler = True
+        logger.addHandler(console_handler)
+    return formatter
+
+
 def dismiss_disclaimer_overlay(driver):
     try:
         driver.execute_script(
@@ -48,6 +61,8 @@ def get_latest_download_file(download_path):
 
 def wait_for_download_file(download_path, timeout=60):
     start = time.time()
+    last_log_second = -1
+    logger.info("NIS download: cekam fajl u folderu %s, timeout=%ss", download_path, timeout)
     while time.time() - start < timeout:
         files = [
             f for f in os.listdir(download_path)
@@ -55,7 +70,13 @@ def wait_for_download_file(download_path, timeout=60):
         ]
         if files:
             paths = [os.path.join(download_path, basename) for basename in files]
-            return max(paths, key=os.path.getctime)
+            latest_file = max(paths, key=os.path.getctime)
+            logger.info("NIS download: pronadjen fajl %s", latest_file)
+            return latest_file
+        elapsed = int(time.time() - start)
+        if elapsed and elapsed % 5 == 0 and elapsed != last_log_second:
+            last_log_second = elapsed
+            logger.info("NIS download: jos cekam fajl, proslo %ss", elapsed)
         time.sleep(1)
     raise TimeoutException("Download file not found within timeout.")
 
@@ -65,6 +86,10 @@ def get_vehicle_job_code(vehicle):
     if job_code and job_code.organizational_unit:
         return job_code.organizational_unit.code
     return None
+
+
+def nis_import_db_alias():
+    return getattr(settings, "NIS_IMPORT_DB_ALIAS", "default")
 
 
 def previous_month_range(reference_date=None):
@@ -148,6 +173,7 @@ def parse_nis_picker_month(value):
 
 
 def open_nis_datetime_picker(driver, label):
+    logger.info("NIS datepicker: otvaram polje '%s'", label)
     input_element = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((
             By.XPATH,
@@ -159,6 +185,7 @@ def open_nis_datetime_picker(driver, label):
     input_element.click()
     input_element.click()
     WebDriverWait(driver, 10).until(lambda current_driver: visible_nis_picker(current_driver) is not None)
+    logger.info("NIS datepicker: otvoren za '%s', mesec=%s", label, active_nis_picker_month(driver))
     return True
 
 
@@ -167,6 +194,7 @@ def click_active_nis_picker_nav(driver, direction):
     if picker is None:
         return False
     selector = ".rdtPrev" if direction < 0 else ".rdtNext"
+    logger.info("NIS datepicker: klik navigacija %s", "prethodni" if direction < 0 else "sledeci")
     picker.find_element(By.CSS_SELECTOR, selector).click()
     return True
 
@@ -179,6 +207,7 @@ def select_day_in_active_nis_picker(driver, target_date):
     for cell in cells:
         if cell.get_attribute("data-value") == str(target_date.day):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", cell)
+            logger.info("NIS datepicker: klik na dan %s", target_date.day)
             cell.click()
             return True
     return False
@@ -192,6 +221,7 @@ def select_different_day_in_active_nis_picker(driver, target_date):
     for cell in cells:
         classes = cell.get_attribute("class") or ""
         if cell.get_attribute("data-value") != str(target_date.day) and "rdtDisabled" not in classes:
+            logger.info("NIS datepicker: fallback klik na drugi dan %s", cell.get_attribute("data-value"))
             cell.click()
             return True
     return False
@@ -212,6 +242,12 @@ def get_nis_datetime_field_value(driver, label):
 
 
 def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0):
+    logger.info(
+        "NIS datepicker: pocinjem izbor datuma label=%s target=%s fixed_prev_clicks=%s",
+        label,
+        target_date,
+        fixed_prev_clicks,
+    )
     if not open_nis_datetime_picker(driver, label):
         return "field_not_found"
 
@@ -223,10 +259,16 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
         return "picker_not_open"
 
     if fixed_prev_clicks:
-        for _ in range(fixed_prev_clicks):
+        for click_index in range(fixed_prev_clicks):
             if not click_active_nis_picker_nav(driver, -1):
                 return "nav_not_found"
             time.sleep(0.2)
+            logger.info(
+                "NIS datepicker: posle klika nazad %s/%s mesec=%s",
+                click_index + 1,
+                fixed_prev_clicks,
+                active_nis_picker_month(driver),
+            )
     else:
         target_month_index = target_date.year * 12 + target_date.month
         for _ in range(36):
@@ -248,7 +290,9 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
         return "day_not_found"
     time.sleep(0.5)
     value = get_nis_datetime_field_value(driver, label) or ""
+    logger.info("NIS datepicker: vrednost posle prvog izbora '%s' = %s", label, value)
     if not value.startswith(nis_date_prefix(target_date)):
+        logger.warning("NIS datepicker: vrednost nije prihvacena, pokrecem fallback. Trenutno=%s", value)
         if not open_nis_datetime_picker(driver, label):
             return f"value_not_changed:{value}"
         time.sleep(0.2)
@@ -277,6 +321,7 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
             return f"value_not_changed:{value}"
         time.sleep(0.5)
         value = get_nis_datetime_field_value(driver, label) or ""
+        logger.info("NIS datepicker: vrednost posle fallback-a '%s' = %s", label, value)
     if not value.startswith(nis_date_prefix(target_date)):
         return f"value_not_changed:{value}"
     return "ok"
@@ -347,15 +392,15 @@ def nis_data_import():
     step = "start"
     driver = None
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    formatter = ensure_nis_console_logging(logger)
     log_dir = os.path.join(settings.BASE_DIR, "logs")
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, "nis_debug.log")
     if not any(isinstance(handler, logging.FileHandler) and handler.baseFilename == log_path for handler in logger.handlers):
         handler = logging.FileHandler(log_path, encoding="utf-8")
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
+    logger.info("NIS sync: start")
 
     try:
         config = {
@@ -364,18 +409,28 @@ def nis_data_import():
             "password": "3RrrvvVg",
             "download_dir": r"C:\nis_repo",
             "chrome_binary": CHROME_BINARY_PATH,
-            "headless": False,
-            "keep_browser_open": True,
+            "headless": True,
+            "keep_browser_open": False,
         }
         date_from, date_to = previous_month_range()
+        logger.info(
+            "NIS sync: config base_url=%s download_dir=%s chrome_binary=%s headless=%s keep_browser_open=%s",
+            config["base_url"],
+            config["download_dir"],
+            config["chrome_binary"],
+            config["headless"],
+            config["keep_browser_open"],
+        )
+        logger.info("NIS sync: period date_from=%s date_to=%s", date_from, date_to)
 
         os.makedirs(config["download_dir"], exist_ok=True)
+        logger.info("NIS sync: download folder spreman: %s", config["download_dir"])
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--ignore-certificate-errors")
         chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-web-security")
-        # Debug rezim: NIS sync se pokrece vidljivo da moze da se isprati sta se desava.
-        # Ako kasnije zelis automatski/headless rad, vrati uslov na config["headless"].
+        if config["headless"]:
+            chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
@@ -384,11 +439,13 @@ def nis_data_import():
             chrome_options.binary_location = config["chrome_binary"]
 
         service = Service(log_output=os.devnull)
+        logger.info("NIS sync: pokrecem Chrome webdriver")
         driver = webdriver.Chrome(options=chrome_options, service=service)
         driver.set_page_load_timeout(60)
         driver.set_script_timeout(30)
         driver.implicitly_wait(5)
         driver.set_window_size(1920, 1080)
+        logger.info("NIS sync: Chrome webdriver pokrenut")
 
         try:
             step = "login_page"
@@ -412,13 +469,16 @@ def nis_data_import():
             WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
             ).click()
+            logger.info("NIS sync: login kliknut")
 
             time.sleep(5)
+            logger.info("NIS sync: posle login pauze url=%s title=%s", driver.current_url, driver.title)
             step = "client_transactions_page"
             logger.info("NIS sync: otvaram izvestaj Transakcije po kupcima.")
             dismiss_disclaimer_overlay(driver)
             driver.get(config["base_url"].rstrip("/") + "/reports/client-transactions")
             time.sleep(2)
+            logger.info("NIS sync: transakcije otvorene url=%s title=%s", driver.current_url, driver.title)
 
             step = "report_form_loaded"
             logger.info("NIS sync: cekam formu izvestaja.")
@@ -441,6 +501,7 @@ def nis_data_import():
                     f"Ocekivano Datum od: {expected_from}; "
                     f"na stranici: {actual_from}."
                 )
+            logger.info("NIS sync: datum prihvacen, Datum od=%s", actual_from)
 
             step = "show_report_button"
             logger.info("NIS sync: klik na Prikazi izvestaj.")
@@ -469,20 +530,42 @@ def nis_data_import():
             step = "download_file"
             logger.info("NIS sync: cekam preuzimanje fajla.")
             xlsx_file_path = wait_for_download_file(config["download_dir"], timeout=90)
-            import_nis_fuel_consumption(xlsx_file_path)
-            import_nis_transactions(xlsx_file_path)
-            return "Funkcija NIS Data Import je uspesno izvrsena"
+            try:
+                logger.info("NIS sync: Excel preuzet %s velicina=%s bytes", xlsx_file_path, os.path.getsize(xlsx_file_path))
+            except OSError:
+                logger.info("NIS sync: Excel preuzet %s", xlsx_file_path)
+            logger.info("NIS sync: start import goriva")
+            fuel_result = import_nis_fuel_consumption(xlsx_file_path)
+            logger.info("NIS sync: kraj import goriva result=%s", fuel_result)
+            logger.info("NIS sync: start import transakcija")
+            transactions_result = import_nis_transactions(xlsx_file_path)
+            logger.info("NIS sync: kraj import transakcija result=%s", transactions_result)
+            missing_vehicles = sorted(set(
+                fuel_result.get("missing_vehicles", []) + transactions_result.get("missing_vehicles", [])
+            ))
+            result = {
+                "status": "ok",
+                "source": xlsx_file_path,
+                "fuel": fuel_result,
+                "transactions": transactions_result,
+                "missing_vehicles": missing_vehicles,
+            }
+            logger.info("NIS sync: zavrsen result=%s", result)
+            return result
 
         except Exception:
-            logger.exception("NIS sync je stao na koraku '%s'. Chrome ostaje otvoren za pregled.", step)
+            logger.exception("NIS sync je stao na koraku '%s'.", step)
             if config["keep_browser_open"]:
                 time.sleep(300)
             raise
         finally:
-            # U debug rezimu ne zatvaramo Chrome automatski, da moze da se vidi stanje.
-            pass
+            if not config["keep_browser_open"] and driver:
+                logger.info("NIS sync: zatvaram Chrome")
+                driver.quit()
+                logger.info("NIS sync: Chrome zatvoren")
 
     except Exception as e:
+        logger.exception("NIS sync: neuspesan na koraku '%s'.", step)
         raise RuntimeError(f"NIS data import failed at step '{step}': {e}") from e
 
 
@@ -841,20 +924,29 @@ def import_omv_transactions_from_csv(csv_file_path):
                 logger.error(f"Error importing row: {row}. Error: {str(e)}")
 
 def import_nis_fuel_consumption(file_path):
+    logger.info("NIS fuel import: ucitavam Excel %s", file_path)
+    db_alias = nis_import_db_alias()
+    logger.info("NIS fuel import: koristim bazu alias=%s", db_alias)
     # Preuzmi vremensku zonu iz Django podeÅ¡avanja
     timezone = pytz.timezone(settings.TIME_ZONE)
     
     # UÄitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1, engine="openpyxl")
+    logger.info("NIS fuel import: ucitano redova=%s kolone=%s", len(df), list(df.columns))
+    created = 0
+    skipped = 0
+    missing_vehicles = set()
 
     # Ostatak funkcije ostaje isti...
     for index, row in df.iterrows():
+        formatted_plate = ""
         try:
+            logger.info("NIS fuel import: red=%s", index)
             # Formatiraj registarski broj pre nego Å¡to ga upotrebiÅ¡
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
             # PronaÄ‘i vozilo prema formatiranom registracionom brcoju u TrafficCard modelu
-            traffic_card = TrafficCard.objects.using("server_db").get(registration_number=formatted_plate)
+            traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
             # Konverzija datuma transakcije sa vremenskom zonom
@@ -863,7 +955,7 @@ def import_nis_fuel_consumption(file_path):
             
             job_code = get_vehicle_job_code(vehicle)
            
-            FuelConsumption.objects.using("server_db").create(
+            FuelConsumption.objects.using(db_alias).create(
                 vehicle=vehicle,
                 date=transaction_date,
                 amount=row['KoliÄina'],
@@ -874,27 +966,53 @@ def import_nis_fuel_consumption(file_path):
                 job_code=job_code,
                 mileage=row['KilometraÅ¾a'] if isinstance(row['KilometraÅ¾a'], (int, float)) and not pd.isna(row['KilometraÅ¾a']) else 0,
             )
+            created += 1
             logger.info(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
         
         except ObjectDoesNotExist:
+            skipped += 1
+            missing_vehicles.add(formatted_plate)
             logger.warning(f"Vehicle with registration number {formatted_plate} not found.")
+        except IntegrityError:
+            skipped += 1
+            logger.warning("Duplicate NIS fuel consumption skipped for row %s.", index)
         except Exception as e:
+            skipped += 1
             logger.error(f"Error importing row {index}: {e}")
+
+    result = {
+        "status": "ok",
+        "rows": len(df),
+        "created": created,
+        "skipped": skipped,
+        "missing_vehicles": sorted(missing_vehicles),
+    }
+    logger.info("NIS fuel import: zavrsen result=%s", result)
+    return result
 
 
 def import_nis_transactions(file_path):
+    logger.info("NIS transactions import: ucitavam Excel %s", file_path)
+    db_alias = nis_import_db_alias()
+    logger.info("NIS transactions import: koristim bazu alias=%s", db_alias)
     # Preuzmi vremensku zonu iz Django podeÅ¡avanja
     timezone = pytz.timezone(settings.TIME_ZONE)
     # UÄitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1)  # Koristi prvi sheet i drugi red kao zaglavlje
+    logger.info("NIS transactions import: ucitano redova=%s kolone=%s", len(df), list(df.columns))
+    created = 0
+    skipped = 0
+    missing_vehicles = set()
 
     for index, row in df.iterrows():
+        formatted_plate = ""
         try:
+            logger.info("NIS transactions import: red=%s", index)
             # Formatiraj registarski broj pre nego Å¡to ga upotrebiÅ¡
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
             # PronaÄ‘i vozilo prema formatiranom registracionom broju u TrafficCard modelu
-            traffic_card = TrafficCard.objects.using("server_db").get(registration_number=formatted_plate)
+            traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
             # Konverzija datuma transakcije sa vremenskom zonom
@@ -911,7 +1029,7 @@ def import_nis_transactions(file_path):
             kilometraza = int(row['KilometraÅ¾a']) if pd.notna(row['KilometraÅ¾a']) else None
 
             # Kreiraj instancu TransactionIMS modela
-            TransactionNIS.objects.using("server_db").create(
+            TransactionNIS.objects.using(db_alias).create(
                 vehicle=vehicle,
                 kupac=row['Kupac'],
                 sifra_kupca=row['Å ifra kupca'],
@@ -945,10 +1063,27 @@ def import_nis_transactions(file_path):
                 finansijsko_prekoracenje=row['Finansijsko prekoraÄenje'],
                 nacin_ocitavanja_kartice=row['NaÄin oÄitavanja kartice']
             )
+            created += 1
             logger.info(f"Successfully imported transaction for vehicle {formatted_plate}")
         
         except ObjectDoesNotExist:
+            skipped += 1
+            missing_vehicles.add(formatted_plate)
             logger.warning(f"Vehicle with registration number {row['Registarska oznaka vozila']} (formatted as {formatted_plate}) not found.")
+        except IntegrityError:
+            skipped += 1
+            logger.warning("Duplicate NIS transaction skipped for row %s.", index)
         except Exception as e:
+            skipped += 1
             logger.error(f"Error importing row {index}: {e}")
+
+    result = {
+        "status": "ok",
+        "rows": len(df),
+        "created": created,
+        "skipped": skipped,
+        "missing_vehicles": sorted(missing_vehicles),
+    }
+    logger.info("NIS transactions import: zavrsen result=%s", result)
+    return result
 

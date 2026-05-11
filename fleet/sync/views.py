@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import tempfile
 
 from django.contrib import messages
@@ -10,23 +11,66 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from ..models import Lease, LeaseInterest, Vehicle
-from . import fetch_policy_data
+from . import fetch_policy_data, nis_data_import
 
 logger = logging.getLogger(__name__)
 
 
+def _ensure_console_logging():
+    logger.setLevel(logging.DEBUG)
+    if not any(getattr(handler, "_sync_console_handler", False) for handler in logger.handlers):
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        handler._sync_console_handler = True
+        logger.addHandler(handler)
+
+
+def _format_nis_sync_message(result):
+    if not isinstance(result, dict):
+        return str(result)
+    if result.get("status") != "ok":
+        return f"NIS sync rezultat: {result}"
+
+    fuel = result.get("fuel", {}) or {}
+    transactions = result.get("transactions", {}) or {}
+    missing = result.get("missing_vehicles") or []
+    missing_note = f" Vozila bez poklapanja: {', '.join(missing[:10])}." if missing else ""
+    return (
+        "NIS sync zavrsen. "
+        "Gorivo: redova {fuel_rows}, upisano {fuel_created}, preskoceno {fuel_skipped}. "
+        "Transakcije: redova {trx_rows}, upisano {trx_created}, preskoceno {trx_skipped}. "
+        "Fajl: {source}.{missing_note}"
+    ).format(
+        fuel_rows=fuel.get("rows", 0),
+        fuel_created=fuel.get("created", 0),
+        fuel_skipped=fuel.get("skipped", 0),
+        trx_rows=transactions.get("rows", 0),
+        trx_created=transactions.get("created", 0),
+        trx_skipped=transactions.get("skipped", 0),
+        source=result.get("source", "-"),
+        missing_note=missing_note,
+    )
+
+
 @staff_member_required
 def fetch_data_view(request):
+    _ensure_console_logging()
     if request.method == "POST":
         command = request.POST.get("command")
+        logger.info("Administracija sync: primljena komanda=%s user=%s", command, request.user)
         try:
             if command == "nis_command":
-                call_command("nis_command")
-                message = "NIS Selenium import je pokrenut i zavrsen."
+                logger.info("Administracija sync: pokrecem NIS sync")
+                result = nis_data_import()
+                message = _format_nis_sync_message(result)
+                logger.info("Administracija sync: NIS sync zavrsen message=%s", message)
             elif command == "omv_command_putnicka":
+                logger.info("Administracija sync: pokrecem OMV putnicka")
                 call_command("omv_command_putnicka")
                 message = "OMV putnicka komanda je uspesno izvrsena."
             elif command == "omv_command_teretna":
+                logger.info("Administracija sync: pokrecem OMV teretna")
                 call_command("omv_command_teretna")
                 message = "OMV teretna komanda je uspesno izvrsena."
             else:
@@ -39,10 +83,9 @@ def fetch_data_view(request):
                 messages.success(request, message)
                 return redirect("fetch_data")
 
-            return JsonResponse(
-                {"status": "success", "message": f"Komanda {command} uspešno izvršena."}
-            )
+            return JsonResponse({"status": "success", "message": message})
         except Exception as exc:
+            logger.exception("Administracija sync: komanda nije uspela command=%s", command)
             if request.headers.get("x-requested-with") != "XMLHttpRequest":
                 messages.error(request, f"Greska prilikom izvrsavanja komande: {exc}")
                 return redirect("fetch_data")
