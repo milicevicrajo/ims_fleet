@@ -240,25 +240,6 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
     return "ok"
 
 
-def dump_selenium_debug(driver, prefix, logger):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_dir = os.path.join(settings.BASE_DIR, "logs")
-    os.makedirs(log_dir, exist_ok=True)
-    screenshot_path = os.path.join(log_dir, f"{prefix}_{timestamp}.png")
-    html_path = os.path.join(log_dir, f"{prefix}_{timestamp}.html")
-    try:
-        driver.save_screenshot(screenshot_path)
-        logger.error("Selenium screenshot sacuvan: %s", screenshot_path)
-    except Exception:
-        logger.exception("Selenium screenshot nije sacuvan.")
-    try:
-        with open(html_path, "w", encoding="utf-8") as html_file:
-            html_file.write(driver.page_source)
-        logger.error("Selenium HTML sacuvan: %s", html_path)
-    except Exception:
-        logger.exception("Selenium HTML nije sacuvan.")
-
-
 def kerio_login():
     step_pause_seconds = 2
     login_url = "https://control.ims.rs:4081/login/?NTLM=0&orig=Y29udHJvbC5pbXMucnM=&dest=aHR0cDovL3d3dy5nc3RhdGljLmNvbS9nZW5lcmF0ZV8yMDQ=&host=MTkyLjE2OC42LjcgMWYzYTA5ODgyYzIxYWJjNjM2Y2FlNzAzZjQ1YjRmZGU="
@@ -336,8 +317,8 @@ def nis_data_import():
 
     try:
         login_url = "https://cards.nis.rs"
-        username = "zoranims"
-        password = "22017059"
+        username = "zoran.institutims"
+        password = "3RrrvvVg"
         date_from, date_to = previous_month_range()
 
         chrome_options = create_chrome_options()
@@ -484,7 +465,6 @@ def nis_data_import():
         except Exception:
             logger.exception("NIS data import failed at step '%s'.", step)
             if driver:
-                dump_selenium_debug(driver, f"nis_error_{step}", logger)
                 logger.error("NIS browser ostaje otvoren 5 minuta za pregled.")
                 time.sleep(300)
             raise
