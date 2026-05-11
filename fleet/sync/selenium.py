@@ -336,8 +336,8 @@ def nis_data_import():
 
     try:
         login_url = "https://cards.nis.rs"
-        username = os.getenv("NIS_USERNAME", "rajko")
-        password = os.getenv("NIS_PASSWORD", "22017059")
+        username = "zoranims"
+        password = "22017059"
         date_from, date_to = previous_month_range()
 
         chrome_options = create_chrome_options()
@@ -395,22 +395,10 @@ def nis_data_import():
 
             time.sleep(5)
 
-            step = "reports_link"
+            step = "client_transactions_page"
             dismiss_disclaimer_overlay(driver)
-            logger.info("NIS: waiting for reports link")
-            reports_link = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/reports') or contains(normalize-space(.), 'Izve')]"))
-            )
-            driver.execute_script("arguments[0].click();", reports_link)
-
-            time.sleep(2)
-
-            step = "client_transactions_link"
-            logger.info("NIS: waiting for client transactions link")
-            client_transactions_link = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/reports/client-transactions') or contains(normalize-space(.), 'Transakcije po kupcima')]"))
-            )
-            client_transactions_link.click()
+            logger.info("NIS: opening client transactions page")
+            driver.get(login_url.rstrip("/") + "/reports/client-transactions")
 
             time.sleep(2)
 
@@ -502,6 +490,8 @@ def nis_data_import():
 
     except Exception as e:
         raise RuntimeError(f"NIS data import failed at step '{step}': {e}") from e
+
+
 def omv_putnicka_data_import(*args, **kwargs):
     login_url = "https://fleet.omv.com/FleetServicesProduction/Login.jsp"
     username = "710111107248"
