@@ -344,7 +344,8 @@ def nis_data_import():
         chrome_options.add_argument("--ignore-certificate-errors")
         chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-web-security")
-        chrome_options.add_argument("--headless")
+        # NIS se namerno pokrece vidljivo dok stabilizujemo Selenium tok.
+        # Kada zavrsimo debug, ovo moze nazad na "--headless".
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
@@ -484,6 +485,8 @@ def nis_data_import():
             logger.exception("NIS data import failed at step '%s'.", step)
             if driver:
                 dump_selenium_debug(driver, f"nis_error_{step}", logger)
+                logger.error("NIS browser ostaje otvoren 5 minuta za pregled.")
+                time.sleep(300)
             raise
         finally:
             driver.quit()
