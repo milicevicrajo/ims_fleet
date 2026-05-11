@@ -374,8 +374,8 @@ def nis_data_import():
             )
             login_button.click()
             logger.info("Clicked submit button")
-
-            time.sleep(5)
+            time.sleep(1)
+            logger.info("NIS: after login url=%s title=%s", driver.current_url, driver.title)
 
             step = "client_transactions_page"
             dismiss_disclaimer_overlay(driver)
