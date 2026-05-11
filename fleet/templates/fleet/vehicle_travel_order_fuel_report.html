@@ -109,7 +109,6 @@
                 <th>Cena / L</th>
                 <th>Ukupan iznos</th>
                 <th>Kilometraža</th>
-                <th>Napomena</th>
               </tr>
             </thead>
             <tbody>
@@ -122,9 +121,8 @@
                 <td class="text-end">{% if row.unit_price %}{{ row.unit_price|floatformat:2 }}{% else %}/{% endif %}</td>
                 <td class="text-end">{{ row.amount|default_if_none:"0"|floatformat:2 }}</td>
                 <td class="text-end">{{ row.mileage|default:"/" }}</td>
-                <td>{{ row.note|default:"" }}</td>
                 {% else %}
-                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                 {% endif %}
               </tr>
               {% endfor %}
@@ -142,9 +140,6 @@
           <div>Pređenih km: {% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div>
           <div>Potrošnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
         </div>
-        {% if excluded_last_fuel_row %}
-        <div class="footer-note">Poslednje tocenje u periodu ({{ excluded_last_fuel_row.date|date:"d.m.Y" }}) nije ukljuceno i prenosi se u sledeci obracun.</div>
-        {% endif %}
         <div class="signature-block">
           <div class="signature-line">Obračun podneo</div>
           <div class="signature-line">Direktor centra</div>
@@ -195,7 +190,6 @@
                 <th>Cena / L</th>
                 <th>Ukupan iznos</th>
                 <th>Kilometraža</th>
-                <th>Napomena</th>
               </tr>
             </thead>
             <tbody>
@@ -208,9 +202,8 @@
                 <td class="text-end">{% if row.unit_price %}{{ row.unit_price|floatformat:2 }}{% else %}/{% endif %}</td>
                 <td class="text-end">{{ row.amount|default_if_none:"0"|floatformat:2 }}</td>
                 <td class="text-end">{{ row.mileage|default:"/" }}</td>
-                <td>{{ row.note|default:"" }}</td>
                 {% else %}
-                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td>
+                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td>
                 {% endif %}
               </tr>
               {% endfor %}
@@ -224,9 +217,6 @@
           <div>Pređenih km: {% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div>
           <div>Potrošnja l/100km: {% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div>
         </div>
-        {% if excluded_last_fuel_row %}
-        <div class="footer-note">Poslednje tocenje u periodu ({{ excluded_last_fuel_row.date|date:"d.m.Y" }}) nije ukljuceno i prenosi se u sledeci obracun.</div>
-        {% endif %}
         <div class="signature-block">
           <div class="signature-line">Obračun podneo</div>
           <div class="signature-line">Direktor centra</div>

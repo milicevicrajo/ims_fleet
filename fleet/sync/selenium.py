@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import logging
 import os
 import re
@@ -83,17 +83,17 @@ def normalized(value):
     value = unicodedata.normalize("NFKD", str(value or ""))
     value = "".join(char for char in value if not unicodedata.combining(char))
     replacements = {
+        "Ã„Â": "c",
+        "Ã„â€¡": "c",
+        "Ã„â€˜": "dj",
+        "Ã…Â¡": "s",
+        "Ã…Â¾": "z",
+        "Ã…Â ": "s",
         "Ä": "c",
         "Ä‡": "c",
         "Ä‘": "dj",
         "Å¡": "s",
         "Å¾": "z",
-        "Å ": "s",
-        "č": "c",
-        "ć": "c",
-        "đ": "dj",
-        "š": "s",
-        "ž": "z",
     }
     for source, target in replacements.items():
         value = value.replace(source, target)
@@ -240,6 +240,25 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
     return "ok"
 
 
+def dump_selenium_debug(driver, prefix, logger):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_dir = os.path.join(settings.BASE_DIR, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    screenshot_path = os.path.join(log_dir, f"{prefix}_{timestamp}.png")
+    html_path = os.path.join(log_dir, f"{prefix}_{timestamp}.html")
+    try:
+        driver.save_screenshot(screenshot_path)
+        logger.error("Selenium screenshot sacuvan: %s", screenshot_path)
+    except Exception:
+        logger.exception("Selenium screenshot nije sacuvan.")
+    try:
+        with open(html_path, "w", encoding="utf-8") as html_file:
+            html_file.write(driver.page_source)
+        logger.error("Selenium HTML sacuvan: %s", html_path)
+    except Exception:
+        logger.exception("Selenium HTML nije sacuvan.")
+
+
 def kerio_login():
     step_pause_seconds = 2
     login_url = "https://control.ims.rs:4081/login/?NTLM=0&orig=Y29udHJvbC5pbXMucnM=&dest=aHR0cDovL3d3dy5nc3RhdGljLmNvbS9nZW5lcmF0ZV8yMDQ=&host=MTkyLjE2OC42LjcgMWYzYTA5ODgyYzIxYWJjNjM2Y2FlNzAzZjQ1YjRmZGU="
@@ -302,18 +321,20 @@ def kerio_login():
         driver.quit()
 
 def nis_data_import():
-    try:
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)
-        log_dir = os.path.join(settings.BASE_DIR, "logs")
-        os.makedirs(log_dir, exist_ok=True)
-        log_path = os.path.join(log_dir, "nis_debug.log")
-        if not any(isinstance(handler, logging.FileHandler) and handler.baseFilename == log_path for handler in logger.handlers):
-            handler = logging.FileHandler(log_path, encoding="utf-8")
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
+    step = "start"
+    driver = None
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    log_dir = os.path.join(settings.BASE_DIR, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, "nis_debug.log")
+    if not any(isinstance(handler, logging.FileHandler) and handler.baseFilename == log_path for handler in logger.handlers):
+        handler = logging.FileHandler(log_path, encoding="utf-8")
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
+    try:
         login_url = "https://cards.nis.rs"
         username = os.getenv("NIS_USERNAME", "rajko")
         password = os.getenv("NIS_PASSWORD", "22017059")
@@ -333,6 +354,7 @@ def nis_data_import():
         prefs = {"download.default_directory": download_path}
         chrome_options.add_experimental_option("prefs", prefs)
 
+        step = "create_chrome_driver"
         driver = create_chrome_driver(chrome_options)
         driver.set_page_load_timeout(60)
         driver.set_script_timeout(30)
@@ -340,24 +362,30 @@ def nis_data_import():
         driver.set_window_size(1920, 1080)
 
         try:
+            step = "open_login_page"
             logger.info("NIS: opening login page")
             driver.get(login_url)
             logger.info("Opened login page")
 
+            step = "username_input"
             logger.info("NIS: waiting for username input")
             username_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Korisničko ime']"))
+                EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Koris') or @name='username' or @type='text']"))
             )
+            username_input.clear()
             username_input.send_keys(username)
             logger.info("Entered username")
 
+            step = "password_input"
             logger.info("NIS: waiting for password input")
             password_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Lozinka']"))
+                EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Lozinka') or @name='password' or @type='password']"))
             )
+            password_input.clear()
             password_input.send_keys(password)
             logger.info("Entered password")
 
+            step = "login_button"
             logger.info("NIS: waiting for login button")
             login_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
@@ -367,26 +395,31 @@ def nis_data_import():
 
             time.sleep(5)
 
+            step = "reports_link"
             dismiss_disclaimer_overlay(driver)
             logger.info("NIS: waiting for reports link")
             reports_link = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Izveštaji')]"))
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/reports') or contains(normalize-space(.), 'Izve')]"))
             )
             driver.execute_script("arguments[0].click();", reports_link)
 
             time.sleep(2)
 
+            step = "client_transactions_link"
             logger.info("NIS: waiting for client transactions link")
             client_transactions_link = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[@href='/reports/client-transactions' and contains(text(),'Transakcije po kupcima')]"))
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/reports/client-transactions') or contains(normalize-space(.), 'Transakcije po kupcima')]"))
             )
             client_transactions_link.click()
 
             time.sleep(2)
 
+            step = "report_form_loaded"
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//label[contains(., 'Datum od')]"))
             )
+
+            step = "date_from"
             logger.info("NIS: setting Datum od to previous month start: %s", date_from)
             date_from_result = select_nis_date_with_widget(driver, "Datum od", date_from, fixed_prev_clicks=2)
             if date_from_result != "ok":
@@ -394,6 +427,7 @@ def nis_data_import():
             time.sleep(2)
 
             try:
+                step = "date_to"
                 logger.info("NIS: setting Datum do to previous month end: %s", date_to)
                 date_to_result = select_nis_date_with_widget(driver, "Datum do", date_to)
                 if date_to_result != "ok":
@@ -402,6 +436,7 @@ def nis_data_import():
             except Exception:
                 logger.exception("NIS: Datum do nije postavljen, nastavljam sa podrazumevanim datumom na portalu.")
 
+            step = "date_validation"
             actual_from = get_nis_datetime_field_value(driver, "Datum od")
             expected_from = nis_date_prefix(date_from)
             if not (actual_from or "").startswith(expected_from):
@@ -417,9 +452,10 @@ def nis_data_import():
             except Exception:
                 pass
 
+            step = "show_report_button"
             logger.info("NIS: waiting for show report button")
             show_report_button = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and contains(., 'Prikaži izveštaj')]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and (contains(normalize-space(.), 'Prika') or contains(normalize-space(.), 'izve'))]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", show_report_button)
             time.sleep(2)
@@ -427,6 +463,7 @@ def nis_data_import():
 
             time.sleep(2)
 
+            step = "download_dropdown"
             logger.info("NIS: waiting for download dropdown")
             dropdown_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'download-button')]"))
@@ -437,6 +474,7 @@ def nis_data_import():
 
             time.sleep(2)
 
+            step = "xlsx_option"
             logger.info("NIS: waiting for XLSX option")
             xlsx_option = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
@@ -447,18 +485,23 @@ def nis_data_import():
 
             time.sleep(2)
 
+            step = "download_file"
             logger.info("NIS: waiting for download file")
             xlsx_file_path = wait_for_download_file(download_path, timeout=90)
             import_nis_fuel_consumption(xlsx_file_path)
             import_nis_transactions(xlsx_file_path)
-            return "Funkcija NIS Data Import je uspešno izvršena"
+            return "Funkcija NIS Data Import je uspesno izvrsena"
 
+        except Exception:
+            logger.exception("NIS data import failed at step '%s'.", step)
+            if driver:
+                dump_selenium_debug(driver, f"nis_error_{step}", logger)
+            raise
         finally:
             driver.quit()
 
     except Exception as e:
-        return f"Error: {str(e)}"
-
+        raise RuntimeError(f"NIS data import failed at step '{step}': {e}") from e
 def omv_putnicka_data_import(*args, **kwargs):
     login_url = "https://fleet.omv.com/FleetServicesProduction/Login.jsp"
     username = "710111107248"
@@ -564,7 +607,7 @@ def omv_putnicka_data_import(*args, **kwargs):
     finally:
         driver.quit()
 
-    return "OMV Putnička komanda uspešno završena."
+    return "OMV PutniÄka komanda uspeÅ¡no zavrÅ¡ena."
 
 
 def omv_teretna_data_import(*args, **kwargs):
@@ -684,7 +727,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 # Formatiraj registarske tablice
                 formatted_plate = format_license_plate(row['License plate No'])
 
-                # Pronađi vozilo prema formatiranoj tablici u TrafficCard modelu
+                # PronaÄ‘i vozilo prema formatiranoj tablici u TrafficCard modelu
                 traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
                 vehicle = traffic_card.vehicle
 
@@ -693,12 +736,12 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 transaction_date = dj_timezone.make_aware(naive_dt, dj_timezone.get_current_timezone()) if dj_timezone.is_naive(naive_dt) else naive_dt
                 amount = float(row['Quantity'].replace(',', '.'))
 
-                # Konvertuj bruto trošak i PDV u decimalne vrednosti
+                # Konvertuj bruto troÅ¡ak i PDV u decimalne vrednosti
                 cost_bruto = float(row['Gross CC'].replace(',', '').strip())
                 vat = float(row['VAT'].replace(',', '').strip())
 
                 job_code = get_vehicle_job_code(vehicle)
-                # Izračunaj neto trošak
+                # IzraÄunaj neto troÅ¡ak
                 cost_neto = cost_bruto - vat
 
                 try:
@@ -733,7 +776,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                 # Formatiraj tablice
                 formatted_plate = format_license_plate(row['License plate No'])
                 
-                # Pronađi vozilo prema formatiranoj tablici u TrafficCard
+                # PronaÄ‘i vozilo prema formatiranoj tablici u TrafficCard
                 traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
                 vehicle = traffic_card.vehicle
 
@@ -743,7 +786,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                         return timezone.localize(naive_datetime)
                     return None
 
-                # Konverzija numeričkih vrednosti, ostavi kao None ako je prazno
+                # Konverzija numeriÄkih vrednosti, ostavi kao None ako je prazno
                 def to_float(value):
                     return float(value.replace(',', '')) if value else None
 
@@ -765,7 +808,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                 invoice_date = to_aware_datetime(row['Invoice date'], format='%Y-%m-%d') if row['Invoice date'] else None  # 'Invoice date'
                 date_to = to_aware_datetime(row['Date to'], format='%Y-%m-%d') if row['Date to'] else None  # 'Date to'
                 
-                # Kreiraj instancu TransactionOMV modela i sačuvaj je u bazi
+                # Kreiraj instancu TransactionOMV modela i saÄuvaj je u bazi
                 TransactionOMV.objects.create(
                     vehicle = vehicle,
                     issuer=row['Issuer'].strip(),
@@ -814,19 +857,19 @@ def import_omv_transactions_from_csv(csv_file_path):
                 logger.error(f"Error importing row: {row}. Error: {str(e)}")
 
 def import_nis_fuel_consumption(file_path):
-    # Preuzmi vremensku zonu iz Django podešavanja
+    # Preuzmi vremensku zonu iz Django podeÅ¡avanja
     timezone = pytz.timezone(settings.TIME_ZONE)
     
-    # Učitaj Excel fajl
+    # UÄitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1, engine="openpyxl")
 
     # Ostatak funkcije ostaje isti...
     for index, row in df.iterrows():
         try:
-            # Formatiraj registarski broj pre nego što ga upotrebiš
+            # Formatiraj registarski broj pre nego Å¡to ga upotrebiÅ¡
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
-            # Pronađi vozilo prema formatiranom registracionom brcoju u TrafficCard modelu
+            # PronaÄ‘i vozilo prema formatiranom registracionom brcoju u TrafficCard modelu
             traffic_card = TrafficCard.objects.using("server_db").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
@@ -839,13 +882,13 @@ def import_nis_fuel_consumption(file_path):
             FuelConsumption.objects.using("server_db").create(
                 vehicle=vehicle,
                 date=transaction_date,
-                amount=row['Količina'],
+                amount=row['KoliÄina'],
                 fuel_type=row['Naziv proizvoda'],
                 cost_bruto=row['Total'],
                 cost_neto=round(row['Total']*5/6,2),
                 supplier="NIS",
                 job_code=job_code,
-                mileage=row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
+                mileage=row['KilometraÅ¾a'] if isinstance(row['KilometraÅ¾a'], (int, float)) and not pd.isna(row['KilometraÅ¾a']) else 0,
             )
             logger.info(f"Successfully imported fuel consumption for vehicle {vehicle.chassis_number}")
         
@@ -856,17 +899,17 @@ def import_nis_fuel_consumption(file_path):
 
 
 def import_nis_transactions(file_path):
-    # Preuzmi vremensku zonu iz Django podešavanja
+    # Preuzmi vremensku zonu iz Django podeÅ¡avanja
     timezone = pytz.timezone(settings.TIME_ZONE)
-    # Učitaj Excel fajl
+    # UÄitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1)  # Koristi prvi sheet i drugi red kao zaglavlje
 
     for index, row in df.iterrows():
         try:
-            # Formatiraj registarski broj pre nego što ga upotrebiš
+            # Formatiraj registarski broj pre nego Å¡to ga upotrebiÅ¡
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
-            # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
+            # PronaÄ‘i vozilo prema formatiranom registracionom broju u TrafficCard modelu
             traffic_card = TrafficCard.objects.using("server_db").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
@@ -874,38 +917,38 @@ def import_nis_transactions(file_path):
             naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
             transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
 
-            # Konverzija numeričkih vrednosti gde je potrebno
-            kolicina = row['Količina']
+            # Konverzija numeriÄkih vrednosti gde je potrebno
+            kolicina = row['KoliÄina']
             popust = row['Popust']
             total = row['Total']
             cena_sa_kase = row['Cena sa kase']
 
-            # Postavi kilometražu na None ako nije dostupna
-            kilometraza = int(row['Kilometraža']) if pd.notna(row['Kilometraža']) else None
+            # Postavi kilometraÅ¾u na None ako nije dostupna
+            kilometraza = int(row['KilometraÅ¾a']) if pd.notna(row['KilometraÅ¾a']) else None
 
             # Kreiraj instancu TransactionIMS modela
             TransactionNIS.objects.using("server_db").create(
                 vehicle=vehicle,
                 kupac=row['Kupac'],
-                sifra_kupca=row['Šifra kupca'],
+                sifra_kupca=row['Å ifra kupca'],
                 broj_kartice=row['Broj kartice'],
-                kompanijski_kod_kupca=row['Šifra kupca'],
-                zemlja_sipanja=row['Država sipanja'],
+                kompanijski_kod_kupca=row['Å ifra kupca'],
+                zemlja_sipanja=row['DrÅ¾ava sipanja'],
                 benzinska_stanica=row['Benzinska stanica'],
                 id_transakcije=row['ID transakcije'],
                 app_kod=row['App kod'],
                 datum_transakcije=transaction_date,
-                tociono_mesto=row['Točiono mesto'],
+                tociono_mesto=row['ToÄiono mesto'],
                 naziv_kartice=row['Naziv kartice'],
                 licenca=row.get('Licenca', ''),
                 broj_gazdinstva=row.get('Broj gazdinstva', ''),
                 registarska_oznaka_vozila=formatted_plate,
-                broj_racuna=row['Broj računa'],
+                broj_racuna=row['Broj raÄuna'],
                 kilometraza=kilometraza,
                 sipanje_van_rezervoara=row['Sipanje van rezervoara'],
                 naziv_proizvoda=row['Naziv proizvoda'],
                 kolicina=kolicina,
-                kolicina_kg=row.get('Količina KG', None),
+                kolicina_kg=row.get('KoliÄina KG', None),
                 popust=popust,
                 primenjen_popust=row['Primenjen popust'],
                 cena_sa_kase=cena_sa_kase,
@@ -913,10 +956,10 @@ def import_nis_transactions(file_path):
                 total_sa_kase=row['Total sa kase'],
                 total=total,
                 valuta=row['Valuta'],
-                aktivirano_prekoracenje=row['Aktivirano prekoračenje'],
-                kolicinsko_prekoracenje=row['Količinsko prekoračenje'],
-                finansijsko_prekoracenje=row['Finansijsko prekoračenje'],
-                nacin_ocitavanja_kartice=row['Način očitavanja kartice']
+                aktivirano_prekoracenje=row['Aktivirano prekoraÄenje'],
+                kolicinsko_prekoracenje=row['KoliÄinsko prekoraÄenje'],
+                finansijsko_prekoracenje=row['Finansijsko prekoraÄenje'],
+                nacin_ocitavanja_kartice=row['NaÄin oÄitavanja kartice']
             )
             logger.info(f"Successfully imported transaction for vehicle {formatted_plate}")
         
@@ -924,3 +967,4 @@ def import_nis_transactions(file_path):
             logger.warning(f"Vehicle with registration number {row['Registarska oznaka vozila']} (formatted as {formatted_plate}) not found.")
         except Exception as e:
             logger.error(f"Error importing row {index}: {e}")
+

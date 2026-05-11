@@ -38,9 +38,6 @@
           <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Ukupno l</div><div class="fw-semibold">{{ total_liters|floatformat:2 }}</div></div></div>
           <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Prosek l/100km</div><div class="fw-semibold">{% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div></div></div>
         </div>
-        <div class="alert alert-info mt-3 mb-0">
-          Obracun ukljucuje poslednje tocenje pre perioda, a poslednje tocenje u ovom periodu prenosi se u sledeci obracun.
-        </div>
       </div>
     </div>
 

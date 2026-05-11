@@ -93,7 +93,7 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
     template_name = "fleet/vehicle_travel_order_detail.html"
     context_object_name = "order"
 
-    def _row_from_omv(self, trx, note=""):
+    def _row_from_omv(self, trx):
         qty = trx.quantity or Decimal("0")
         amt = trx.amount or Decimal("0")
         return {
@@ -106,10 +106,9 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             "amount": amt,
             "mileage": trx.mileage,
             "object": trx,
-            "note": note,
         }
 
-    def _row_from_nis(self, trx, note=""):
+    def _row_from_nis(self, trx):
         qty = trx.kolicina or Decimal("0")
         amt = trx.total or Decimal("0")
         return {
@@ -122,7 +121,6 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             "amount": amt,
             "mileage": trx.kilometraza,
             "object": trx,
-            "note": note,
         }
 
     def get_context_data(self, **kwargs):
@@ -161,27 +159,9 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             TransactionNIS.objects.filter(nis_vehicle_filter, datum_transakcije__range=(start_dt, end_dt))
         ).order_by("datum_transakcije", "id"))
 
-        period_rows = [self._row_from_omv(trx) for trx in omv_period]
-        period_rows += [self._row_from_nis(trx) for trx in nis_period]
-        period_rows.sort(key=lambda row: row["date"] or datetime.datetime.min.replace(tzinfo=timezone.get_current_timezone()))
-
-        excluded_last_fuel_row = period_rows.pop() if period_rows else None
-
-        previous_rows = []
-        previous_omv = filter_omv_fuel_queryset(
-            TransactionOMV.objects.filter(omv_vehicle_filter, transaction_date__lt=start_dt)
-        ).order_by("-transaction_date", "-id").first()
-        previous_nis = filter_nis_fuel_queryset(
-            TransactionNIS.objects.filter(nis_vehicle_filter, datum_transakcije__lt=start_dt)
-        ).order_by("-datum_transakcije", "-id").first()
-        if previous_omv:
-            previous_rows.append(self._row_from_omv(previous_omv, "Preneto iz prethodnog perioda"))
-        if previous_nis:
-            previous_rows.append(self._row_from_nis(previous_nis, "Preneto iz prethodnog perioda"))
-        previous_rows.sort(key=lambda row: row["date"] or datetime.datetime.min.replace(tzinfo=timezone.get_current_timezone()))
-        previous_last_fuel_row = previous_rows[-1] if previous_rows else None
-
-        fuel_rows = ([previous_last_fuel_row] if previous_last_fuel_row else []) + period_rows
+        fuel_rows = [self._row_from_omv(trx) for trx in omv_period]
+        fuel_rows += [self._row_from_nis(trx) for trx in nis_period]
+        fuel_rows.sort(key=lambda row: row["date"] or datetime.datetime.min.replace(tzinfo=timezone.get_current_timezone()))
         total_liters = sum((row["quantity"] or Decimal("0")) for row in fuel_rows)
         total_amount = sum((row["amount"] or Decimal("0")) for row in fuel_rows)
 
@@ -219,8 +199,6 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
                 "fuel_rows": fuel_rows,
                 "first_fuel_page": first_fuel_page,
                 "second_fuel_page": second_fuel_page,
-                "previous_last_fuel_row": previous_last_fuel_row,
-                "excluded_last_fuel_row": excluded_last_fuel_row,
             }
         )
         return ctx

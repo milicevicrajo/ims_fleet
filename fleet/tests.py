@@ -650,7 +650,7 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 			is_active=True,
 		)
 
-	def test_consumption_uses_previous_last_fuel_and_excludes_period_last_fuel(self):
+	def test_consumption_uses_fuel_transactions_inside_period(self):
 		order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 20),
 			closed_at=datetime.date(2026, 4, 21),
@@ -716,7 +716,6 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 		context = view.get_context_data()
 
 		self.assertEqual(context["distance"], 100)
-		self.assertEqual(context["total_liters"], Decimal("30"))
-		self.assertEqual(context["consumption"], Decimal("30"))
-		self.assertEqual(context["previous_last_fuel_row"]["invoice"], "R0")
-		self.assertEqual(context["excluded_last_fuel_row"]["invoice"], "R2")
+		self.assertEqual(context["total_liters"], Decimal("50"))
+		self.assertEqual(context["consumption"], Decimal("50"))
+		self.assertEqual([row["invoice"] for row in context["fuel_rows"]], ["R1", "R2"])
