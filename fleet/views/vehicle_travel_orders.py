@@ -1,19 +1,36 @@
 import datetime
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Sum
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from core.mixins import RolePermissionRequiredMixin
+from hr.models import Employee
 
 from ..forms.garaza import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
-from ..models import TransactionNIS, TransactionOMV, VehicleTravelOrder
+from ..models import TransactionNIS, TransactionOMV, Vehicle, VehicleTravelOrder
 from ..support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset
 from ..support.garaza import get_vehicle_center_code, get_vehicle_latest_organizational_unit
+
+
+def get_previous_vehicle_travel_order(order):
+    if not order or not order.vehicle_id or not order.created_at:
+        return None
+    return (
+        VehicleTravelOrder.objects.filter(
+            vehicle=order.vehicle,
+            created_at__lt=order.created_at,
+            closed_at__isnull=False,
+        )
+        .order_by("-created_at", "-id")
+        .first()
+    )
 
 
 class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
@@ -33,13 +50,41 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(closed_at__isnull=True)
         elif status == "closed":
             queryset = queryset.filter(closed_at__isnull=False)
+
+        vehicle_id = self.request.GET.get("vehicle")
+        employee_id = self.request.GET.get("employee")
+        status_filter = self.request.GET.get("status")
+
+        if vehicle_id:
+            queryset = queryset.filter(vehicle_id=vehicle_id)
+        if employee_id:
+            queryset = queryset.filter(employee_id=employee_id)
+        if not status and status_filter == "open":
+            queryset = queryset.filter(closed_at__isnull=True)
+        elif not status and status_filter == "closed":
+            queryset = queryset.filter(closed_at__isnull=False)
         return queryset
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         status = self.kwargs.get("status")
-        ctx["title"] = "Otvoreni putni nalozi za vozila" if status == "open" else "Zatvoreni putni nalozi za vozila"
+        if status == "open":
+            title = "Otvorena zaduzenja vozila"
+        elif status == "closed":
+            title = "Zatvorena zaduzenja vozila"
+        else:
+            title = "Zaduzenja vozila"
+        ctx["title"] = title
         ctx["status"] = status
+        ctx["selected_status"] = self.request.GET.get("status", "")
+        ctx["selected_vehicle"] = self.request.GET.get("vehicle", "")
+        ctx["selected_employee"] = self.request.GET.get("employee", "")
+        ctx["vehicles"] = Vehicle.objects.order_by("brand", "model", "inventory_number")
+        ctx["employees"] = Employee.objects.filter(
+            vehicle_travel_orders__isnull=False
+        ).distinct().order_by("last_name", "first_name")
+        for order in ctx["travel_orders"]:
+            order.previous_period_order = get_previous_vehicle_travel_order(order)
         return ctx
 
 
@@ -47,6 +92,38 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
     model = VehicleTravelOrder
     template_name = "fleet/vehicle_travel_order_detail.html"
     context_object_name = "order"
+
+    def _row_from_omv(self, trx, note=""):
+        qty = trx.quantity or Decimal("0")
+        amt = trx.amount or Decimal("0")
+        return {
+            "date": trx.transaction_date,
+            "invoice": trx.voucher,
+            "card": trx.card,
+            "supplier": "OMV",
+            "quantity": qty,
+            "unit_price": trx.unit_price or (amt / qty if qty else None),
+            "amount": amt,
+            "mileage": trx.mileage,
+            "object": trx,
+            "note": note,
+        }
+
+    def _row_from_nis(self, trx, note=""):
+        qty = trx.kolicina or Decimal("0")
+        amt = trx.total or Decimal("0")
+        return {
+            "date": trx.datum_transakcije,
+            "invoice": trx.broj_racuna,
+            "card": trx.broj_kartice,
+            "supplier": "NIS",
+            "quantity": qty,
+            "unit_price": trx.cena or (amt / qty if qty else None),
+            "amount": amt,
+            "mileage": trx.kilometraza,
+            "object": trx,
+            "note": note,
+        }
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -67,29 +144,46 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             .first()
         )
 
-        omv_filter = Q(transaction_date__range=(start_dt, end_dt))
-        nis_filter = Q(datum_transakcije__range=(start_dt, end_dt))
+        omv_vehicle_filter = Q()
+        nis_vehicle_filter = Q()
 
         if order.vehicle_id:
-            omv_filter &= Q(vehicle=order.vehicle) | Q(license_plate_no=registration_number)
-            nis_filter &= Q(vehicle=order.vehicle) | Q(registarska_oznaka_vozila=registration_number)
+            omv_vehicle_filter &= Q(vehicle=order.vehicle) | Q(license_plate_no=registration_number)
+            nis_vehicle_filter &= Q(vehicle=order.vehicle) | Q(registarska_oznaka_vozila=registration_number)
         elif registration_number:
-            omv_filter &= Q(license_plate_no=registration_number)
-            nis_filter &= Q(registarska_oznaka_vozila=registration_number)
+            omv_vehicle_filter &= Q(license_plate_no=registration_number)
+            nis_vehicle_filter &= Q(registarska_oznaka_vozila=registration_number)
 
-        omv_qs = filter_omv_fuel_queryset(
-            TransactionOMV.objects.filter(omv_filter)
-        ).order_by("-transaction_date")
-        nis_qs = filter_nis_fuel_queryset(
-            TransactionNIS.objects.filter(nis_filter)
-        ).order_by("-datum_transakcije")
+        omv_period = list(filter_omv_fuel_queryset(
+            TransactionOMV.objects.filter(omv_vehicle_filter, transaction_date__range=(start_dt, end_dt))
+        ).order_by("transaction_date", "id"))
+        nis_period = list(filter_nis_fuel_queryset(
+            TransactionNIS.objects.filter(nis_vehicle_filter, datum_transakcije__range=(start_dt, end_dt))
+        ).order_by("datum_transakcije", "id"))
 
-        omv_liters = omv_qs.aggregate(total=Sum("quantity"))["total"] or Decimal("0")
-        nis_liters = nis_qs.aggregate(total=Sum("kolicina"))["total"] or Decimal("0")
-        total_liters = omv_liters + nis_liters
-        omv_amount = omv_qs.aggregate(total=Sum("amount"))["total"] or Decimal("0")
-        nis_amount = nis_qs.aggregate(total=Sum("total"))["total"] or Decimal("0")
-        total_amount = omv_amount + nis_amount
+        period_rows = [self._row_from_omv(trx) for trx in omv_period]
+        period_rows += [self._row_from_nis(trx) for trx in nis_period]
+        period_rows.sort(key=lambda row: row["date"] or datetime.datetime.min.replace(tzinfo=timezone.get_current_timezone()))
+
+        excluded_last_fuel_row = period_rows.pop() if period_rows else None
+
+        previous_rows = []
+        previous_omv = filter_omv_fuel_queryset(
+            TransactionOMV.objects.filter(omv_vehicle_filter, transaction_date__lt=start_dt)
+        ).order_by("-transaction_date", "-id").first()
+        previous_nis = filter_nis_fuel_queryset(
+            TransactionNIS.objects.filter(nis_vehicle_filter, datum_transakcije__lt=start_dt)
+        ).order_by("-datum_transakcije", "-id").first()
+        if previous_omv:
+            previous_rows.append(self._row_from_omv(previous_omv, "Preneto iz prethodnog perioda"))
+        if previous_nis:
+            previous_rows.append(self._row_from_nis(previous_nis, "Preneto iz prethodnog perioda"))
+        previous_rows.sort(key=lambda row: row["date"] or datetime.datetime.min.replace(tzinfo=timezone.get_current_timezone()))
+        previous_last_fuel_row = previous_rows[-1] if previous_rows else None
+
+        fuel_rows = ([previous_last_fuel_row] if previous_last_fuel_row else []) + period_rows
+        total_liters = sum((row["quantity"] or Decimal("0")) for row in fuel_rows)
+        total_amount = sum((row["amount"] or Decimal("0")) for row in fuel_rows)
 
         distance = None
         consumption = None
@@ -98,40 +192,7 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             if distance > 0:
                 consumption = ((total_liters or Decimal("0")) / Decimal(distance)) * Decimal("100")
 
-        fuel_rows = []
-        for trx in omv_qs:
-            qty = trx.quantity or Decimal("0")
-            amt = trx.amount or Decimal("0")
-            unit_price = trx.unit_price or (amt / qty if qty else None)
-            fuel_rows.append(
-                {
-                    "date": trx.transaction_date,
-                    "invoice": trx.voucher,
-                    "card": trx.card,
-                    "supplier": "OMV",
-                    "quantity": qty,
-                    "unit_price": unit_price,
-                    "amount": amt,
-                    "mileage": trx.mileage,
-                }
-            )
-        for trx in nis_qs:
-            qty = trx.kolicina or Decimal("0")
-            amt = trx.total or Decimal("0")
-            unit_price = trx.cena or (amt / qty if qty else None)
-            fuel_rows.append(
-                {
-                    "date": trx.datum_transakcije,
-                    "invoice": trx.broj_racuna,
-                    "card": trx.broj_kartice,
-                    "supplier": "NIS",
-                    "quantity": qty,
-                    "unit_price": unit_price,
-                    "amount": amt,
-                    "mileage": trx.kilometraza,
-                }
-            )
-        fuel_rows.sort(key=lambda row: row["date"] or datetime.datetime.min)
+        fuel_rows.sort(key=lambda row: row["date"])
         first_fuel_page = []
         second_fuel_page = []
         if fuel_rows:
@@ -149,8 +210,8 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
                 "period_end": period_end,
                 "registration_number": registration_number,
                 "center_code": center_code,
-                "omv_transactions": omv_qs,
-                "nis_transactions": nis_qs,
+                "omv_transactions": [row["object"] for row in fuel_rows if row["supplier"] == "OMV"],
+                "nis_transactions": [row["object"] for row in fuel_rows if row["supplier"] == "NIS"],
                 "total_liters": total_liters,
                 "total_amount": total_amount,
                 "distance": distance,
@@ -158,6 +219,8 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
                 "fuel_rows": fuel_rows,
                 "first_fuel_page": first_fuel_page,
                 "second_fuel_page": second_fuel_page,
+                "previous_last_fuel_row": previous_last_fuel_row,
+                "excluded_last_fuel_row": excluded_last_fuel_row,
             }
         )
         return ctx
@@ -186,25 +249,40 @@ class VehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMix
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        previous_orders = VehicleTravelOrder.objects.filter(
+        previous_orders = list(VehicleTravelOrder.objects.filter(
             vehicle=self.object.vehicle,
             closed_at__isnull=True,
             created_at__lt=self.object.created_at,
-        ).exclude(pk=self.object.pk)
+        ).exclude(pk=self.object.pk).order_by("-created_at", "-id"))
         update_fields = {"closed_at": self.object.created_at}
         if self.object.start_mileage is not None:
             update_fields["end_mileage"] = self.object.start_mileage
-        previous_orders.update(**update_fields)
+        if previous_orders:
+            VehicleTravelOrder.objects.filter(pk__in=[order.pk for order in previous_orders]).update(**update_fields)
+            self.closed_previous_order_id = previous_orders[0].pk
         return response
 
     def get_success_url(self):
-        return reverse("vehicle_travel_order_detail", args=[self.object.pk])
+        next_url = reverse("vehicle_travel_order_detail", args=[self.object.pk])
+        query = {"next": next_url}
+        previous_order_id = getattr(self, "closed_previous_order_id", None)
+        if previous_order_id:
+            query["previous_report"] = reverse("vehicle_travel_order_fuel_report", args=[previous_order_id])
+        return f"{reverse('vehicle_travel_order_request', args=[self.object.pk])}?{urlencode(query)}"
 
 
 class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderForm
     template_name = "fleet/generic_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.object = self.get_object()
+        if self.object.closed_at and not request.user.is_superuser:
+            raise PermissionDenied("Zatvoren putni nalog moze da menja samo superuser.")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -238,6 +316,14 @@ class VehicleTravelOrderDeleteView(RolePermissionRequiredMixin, LoginRequiredMix
     success_url = reverse_lazy("vehicle_travel_order_open_list")
     context_object_name = "travel_order"
 
+    def dispatch(self, request, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.object = self.get_object()
+        if self.object.closed_at and not request.user.is_superuser:
+            raise PermissionDenied("Zatvoren putni nalog moze da brise samo superuser.")
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Obrisi putni nalog"
@@ -270,6 +356,7 @@ class VehicleTravelOrderRequestView(RolePermissionRequiredMixin, LoginRequiredMi
                 "organizational_unit_name": getattr(organizational_unit, "name", ""),
                 "registration_number": getattr(traffic_card, "registration_number", ""),
                 "next_url": self.request.GET.get("next") or reverse("vehicle_travel_order_open_list"),
+                "previous_report_url": self.request.GET.get("previous_report"),
             }
         )
         return ctx

@@ -2,6 +2,8 @@ import datetime
 from decimal import Decimal
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -17,6 +19,7 @@ from .views.reports import _export_secondary_report, _render_secondary_report, _
 from .support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset
 from .views.vehicle_travel_orders import (
 	VehicleTravelOrderCreateView,
+	VehicleTravelOrderDeleteView,
 	VehicleTravelOrderDetailView,
 	VehicleTravelOrderUpdateView,
 )
@@ -512,6 +515,104 @@ class VehicleTravelOrderUpdateViewTests(TestCase):
 
 		self.assertEqual(view.get_success_url(), reverse("vehicle_travel_order_detail", args=[order.pk]))
 
+	def test_closed_order_update_is_allowed_only_for_superuser(self):
+		vehicle = Vehicle.objects.create(
+			inventory_number="INV-40",
+			chassis_number="WF0XXXTEST0000040",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="ENG-40",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category="TERETNO VOZILO",
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		employee = Employee.objects.create(
+			employee_code=40,
+			first_name="Marko",
+			last_name="Markovic",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1993, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			closed_at=datetime.date(2026, 4, 25),
+			employee=employee,
+			vehicle=vehicle,
+		)
+		user = get_user_model().objects.create_user(username="regular", password="x")
+		request = RequestFactory().get("/")
+		request.user = user
+
+		view = VehicleTravelOrderUpdateView()
+
+		with self.assertRaises(PermissionDenied):
+			view.dispatch(request, pk=order.pk)
+
+
+class VehicleTravelOrderDeleteViewTests(TestCase):
+	def test_closed_order_delete_is_allowed_only_for_superuser(self):
+		vehicle = Vehicle.objects.create(
+			inventory_number="INV-41",
+			chassis_number="WF0XXXTEST0000041",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="ENG-41",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category="TERETNO VOZILO",
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		employee = Employee.objects.create(
+			employee_code=41,
+			first_name="Jovan",
+			last_name="Jovanovic",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1993, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			closed_at=datetime.date(2026, 4, 25),
+			employee=employee,
+			vehicle=vehicle,
+		)
+		user = get_user_model().objects.create_user(username="regular-delete", password="x")
+		request = RequestFactory().get("/")
+		request.user = user
+
+		view = VehicleTravelOrderDeleteView()
+
+		with self.assertRaises(PermissionDenied):
+			view.dispatch(request, pk=order.pk)
+
 
 class VehicleTravelOrderConsumptionTests(TestCase):
 	def setUp(self):
@@ -549,7 +650,7 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 			is_active=True,
 		)
 
-	def test_consumption_is_total_liters_per_100_kilometers(self):
+	def test_consumption_uses_previous_last_fuel_and_excludes_period_last_fuel(self):
 		order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 20),
 			closed_at=datetime.date(2026, 4, 21),
@@ -574,6 +675,38 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 			unit_price=Decimal("200.00"),
 			amount=Decimal("4000.00"),
 		)
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="OMV",
+			customer="IMS",
+			card="123",
+			license_plate_no="BG000-AA",
+			transaction_date=timezone.make_aware(datetime.datetime(2026, 4, 19, 10, 0)),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("10.00"),
+			gross_cc=Decimal("2000.00"),
+			vat=Decimal("333.33"),
+			voucher="R0",
+			mileage=Decimal("990"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("2000.00"),
+		)
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="OMV",
+			customer="IMS",
+			card="123",
+			license_plate_no="BG000-AA",
+			transaction_date=timezone.make_aware(datetime.datetime(2026, 4, 21, 10, 0)),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("30.00"),
+			gross_cc=Decimal("6000.00"),
+			vat=Decimal("1000.00"),
+			voucher="R2",
+			mileage=Decimal("1100"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("6000.00"),
+		)
 
 		request = self.factory.get("/")
 		view = VehicleTravelOrderDetailView()
@@ -583,5 +716,7 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 		context = view.get_context_data()
 
 		self.assertEqual(context["distance"], 100)
-		self.assertEqual(context["total_liters"], Decimal("20"))
-		self.assertEqual(context["consumption"], Decimal("20"))
+		self.assertEqual(context["total_liters"], Decimal("30"))
+		self.assertEqual(context["consumption"], Decimal("30"))
+		self.assertEqual(context["previous_last_fuel_row"]["invoice"], "R0")
+		self.assertEqual(context["excluded_last_fuel_row"]["invoice"], "R2")

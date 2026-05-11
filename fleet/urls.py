@@ -274,6 +274,7 @@ urlpatterns = [
     path('garaza/gzn/<int:pk>/', ProcurementRequestDetailView.as_view(), name='gzn_detail'),
     path('garaza/gzn/<int:pk>/stampaj/', ProcurementRequestPrintView.as_view(), name='gzn_print'),
 
+    path('garaza/putni-nalozi-vozila/', VehicleTravelOrderListView.as_view(), name='vehicle_travel_order_list'),
     path('garaza/putni-nalozi-vozila/otvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'open'}, name='vehicle_travel_order_open_list'),
     path('garaza/putni-nalozi-vozila/zatvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'closed'}, name='vehicle_travel_order_closed_list'),
     path('garaza/putni-nalozi-vozila/novo/', VehicleTravelOrderCreateView.as_view(), name='vehicle_travel_order_create'),

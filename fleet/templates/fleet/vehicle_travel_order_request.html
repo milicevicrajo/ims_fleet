@@ -112,5 +112,12 @@
       </section>
     </div>
   </div>
+  {% if previous_report_url %}
+  <script>
+    window.addEventListener('load', function () {
+      window.open('{{ previous_report_url|escapejs }}?next={{ next_url|urlencode }}', '_blank');
+    });
+  </script>
+  {% endif %}
 </body>
 </html>
