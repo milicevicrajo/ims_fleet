@@ -33,11 +33,9 @@ logger = logging.getLogger(__name__)
 
 def dismiss_disclaimer_overlay(driver):
     try:
-        overlays = driver.find_elements(By.CLASS_NAME, "disclaimer-component")
-        if overlays:
-            driver.execute_script(
-                "document.querySelectorAll('.disclaimer-component').forEach(el => el.style.display='none');"
-            )
+        driver.execute_script(
+            "document.querySelectorAll('.disclaimer-component').forEach(el => el.style.display='none');"
+        )
     except Exception:
         pass
 
@@ -120,6 +118,7 @@ def parse_nis_picker_month(value):
     if not value:
         return None
 
+    raw_value = value
     value = normalized(value)
     months = {
         "jan": 1, "januar": 1, "january": 1,
@@ -144,6 +143,7 @@ def parse_nis_picker_month(value):
     for month_name, month_number in months.items():
         if month_name in month_text:
             return year, month_number
+    logger.warning("NIS picker month nije prepoznat: %s", raw_value)
     return None
 
 
@@ -156,9 +156,7 @@ def open_nis_datetime_picker(driver, label):
         ))
     )
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", input_element)
-    time.sleep(0.5)
     input_element.click()
-    time.sleep(0.2)
     input_element.click()
     WebDriverWait(driver, 10).until(lambda current_driver: visible_nis_picker(current_driver) is not None)
     return True
@@ -181,7 +179,19 @@ def select_day_in_active_nis_picker(driver, target_date):
     for cell in cells:
         if cell.get_attribute("data-value") == str(target_date.day):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", cell)
-            time.sleep(0.2)
+            cell.click()
+            return True
+    return False
+
+
+def select_different_day_in_active_nis_picker(driver, target_date):
+    picker = visible_nis_picker(driver)
+    if picker is None:
+        return False
+    cells = picker.find_elements(By.CSS_SELECTOR, "td.rdtDay:not(.rdtOld):not(.rdtNew)")
+    for cell in cells:
+        classes = cell.get_attribute("class") or ""
+        if cell.get_attribute("data-value") != str(target_date.day) and "rdtDisabled" not in classes:
             cell.click()
             return True
     return False
@@ -216,27 +226,57 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
         for _ in range(fixed_prev_clicks):
             if not click_active_nis_picker_nav(driver, -1):
                 return "nav_not_found"
-            time.sleep(0.5)
+            time.sleep(0.2)
     else:
         target_month_index = target_date.year * 12 + target_date.month
         for _ in range(36):
-            current = parse_nis_picker_month(active_nis_picker_month(driver))
+            raw_month = active_nis_picker_month(driver)
+            current = parse_nis_picker_month(raw_month)
             if not current:
-                return "month_not_read"
-            current_month_index = current[0] * 12 + current[1]
+                return f"month_not_read:{raw_month}"
+            current_year, current_month = current
+            current_month_index = current_year * 12 + current_month
             if current_month_index == target_month_index:
                 break
             if not click_active_nis_picker_nav(driver, -1 if current_month_index > target_month_index else 1):
                 return "nav_not_found"
-            time.sleep(0.5)
+            time.sleep(0.2)
         else:
             return "month_not_reached"
 
     if not select_day_in_active_nis_picker(driver, target_date):
         return "day_not_found"
-    time.sleep(1)
-
+    time.sleep(0.5)
     value = get_nis_datetime_field_value(driver, label) or ""
+    if not value.startswith(nis_date_prefix(target_date)):
+        if not open_nis_datetime_picker(driver, label):
+            return f"value_not_changed:{value}"
+        time.sleep(0.2)
+        if not select_different_day_in_active_nis_picker(driver, target_date):
+            return f"value_not_changed:{value}"
+        time.sleep(0.5)
+        if not open_nis_datetime_picker(driver, label):
+            return f"value_not_changed:{value}"
+        for _ in range(20):
+            if active_nis_picker_month(driver):
+                break
+            time.sleep(0.25)
+        target_month_index = target_date.year * 12 + target_date.month
+        for _ in range(36):
+            current = parse_nis_picker_month(active_nis_picker_month(driver))
+            if not current:
+                return f"value_not_changed:{value}"
+            current_year, current_month = current
+            current_month_index = current_year * 12 + current_month
+            if current_month_index == target_month_index:
+                break
+            if not click_active_nis_picker_nav(driver, -1 if current_month_index > target_month_index else 1):
+                return f"value_not_changed:{value}"
+            time.sleep(0.2)
+        if not select_day_in_active_nis_picker(driver, target_date):
+            return f"value_not_changed:{value}"
+        time.sleep(0.5)
+        value = get_nis_datetime_field_value(driver, label) or ""
     if not value.startswith(nis_date_prefix(target_date)):
         return f"value_not_changed:{value}"
     return "ok"
