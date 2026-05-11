@@ -13,6 +13,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.utils import timezone as dj_timezone
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -20,7 +22,7 @@ from selenium.webdriver import ActionChains
 from selenium.common.exceptions import TimeoutException
 
 from fleet.models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
-from fleet.sync.browser import create_chrome_driver, create_chrome_options
+from fleet.sync.browser import CHROME_BINARY_PATH, create_chrome_driver, create_chrome_options
 from fleet.support.vehicle import (
     format_license_plate,
 
@@ -316,160 +318,129 @@ def nis_data_import():
         logger.addHandler(handler)
 
     try:
-        login_url = "https://cards.nis.rs"
-        username = "zoran.institutims"
-        password = "3RrrvvVg"
+        config = {
+            "base_url": "https://cards.nis.rs",
+            "username": "zoran.institutims",
+            "password": "3RrrvvVg",
+            "download_dir": r"C:\nis_repo",
+            "chrome_binary": CHROME_BINARY_PATH,
+            "headless": False,
+            "keep_browser_open": True,
+        }
         date_from, date_to = previous_month_range()
 
-        chrome_options = create_chrome_options()
+        os.makedirs(config["download_dir"], exist_ok=True)
+        chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--ignore-certificate-errors")
         chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-web-security")
-        # NIS se namerno pokrece vidljivo dok stabilizujemo Selenium tok.
-        # Kada zavrsimo debug, ovo moze nazad na "--headless".
+        # Debug rezim: NIS sync se pokrece vidljivo da moze da se isprati sta se desava.
+        # Ako kasnije zelis automatski/headless rad, vrati uslov na config["headless"].
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_experimental_option("prefs", {"download.default_directory": config["download_dir"]})
+        if config["chrome_binary"]:
+            chrome_options.binary_location = config["chrome_binary"]
 
-        download_path = r"C:\nis_repo"
-        os.makedirs(download_path, exist_ok=True)
-        prefs = {"download.default_directory": download_path}
-        chrome_options.add_experimental_option("prefs", prefs)
-
-        step = "create_chrome_driver"
-        driver = create_chrome_driver(chrome_options)
+        service = Service(log_output=os.devnull)
+        driver = webdriver.Chrome(options=chrome_options, service=service)
         driver.set_page_load_timeout(60)
         driver.set_script_timeout(30)
         driver.implicitly_wait(5)
         driver.set_window_size(1920, 1080)
 
         try:
-            step = "open_login_page"
-            logger.info("NIS: opening login page")
-            driver.get(login_url)
-            logger.info("Opened login page")
+            step = "login_page"
+            logger.info("NIS sync: otvaram login stranicu.")
+            driver.get(config["base_url"])
 
             step = "username_input"
-            logger.info("NIS: waiting for username input")
-            username_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Koris') or @name='username' or @type='text']"))
-            )
-            username_input.clear()
-            username_input.send_keys(username)
-            logger.info("Entered username")
+            logger.info("NIS sync: cekam polje za korisnicko ime.")
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@type='text' or @name='username' or contains(@placeholder,'ime')]"))
+            ).send_keys(config["username"])
 
             step = "password_input"
-            logger.info("NIS: waiting for password input")
-            password_input = WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "//input[contains(@placeholder, 'Lozinka') or @name='password' or @type='password']"))
-            )
-            password_input.clear()
-            password_input.send_keys(password)
-            logger.info("Entered password")
+            logger.info("NIS sync: cekam polje za lozinku.")
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@type='password' or @name='password' or contains(@placeholder,'Lozinka')]"))
+            ).send_keys(config["password"])
 
             step = "login_button"
-            logger.info("NIS: waiting for login button")
-            login_button = WebDriverWait(driver, 20).until(
+            logger.info("NIS sync: klik na login.")
+            WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
-            )
-            login_button.click()
-            logger.info("Clicked submit button")
-            time.sleep(1)
-            logger.info("NIS: after login url=%s title=%s", driver.current_url, driver.title)
+            ).click()
 
+            time.sleep(5)
             step = "client_transactions_page"
+            logger.info("NIS sync: otvaram izvestaj Transakcije po kupcima.")
             dismiss_disclaimer_overlay(driver)
-            logger.info("NIS: opening client transactions page")
-            driver.get(login_url.rstrip("/") + "/reports/client-transactions")
-
+            driver.get(config["base_url"].rstrip("/") + "/reports/client-transactions")
             time.sleep(2)
 
             step = "report_form_loaded"
+            logger.info("NIS sync: cekam formu izvestaja.")
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//label[contains(., 'Datum od')]"))
             )
-
             step = "date_from"
-            logger.info("NIS: setting Datum od to previous month start: %s", date_from)
+            logger.info("NIS sync: postavljam Datum od: %s", date_from)
             date_from_result = select_nis_date_with_widget(driver, "Datum od", date_from, fixed_prev_clicks=2)
             if date_from_result != "ok":
-                raise RuntimeError(f"NIS sync nije uspeo da postavi Datum od: {date_from_result}.")
+                raise RuntimeError(f"NIS sync nije uspeo da postavi polje Datum od preko widgeta: {date_from_result}.")
             time.sleep(2)
-
-            try:
-                step = "date_to"
-                logger.info("NIS: setting Datum do to previous month end: %s", date_to)
-                date_to_result = select_nis_date_with_widget(driver, "Datum do", date_to)
-                if date_to_result != "ok":
-                    logger.warning("NIS sync nije uspeo da postavi Datum do: %s", date_to_result)
-                time.sleep(2)
-            except Exception:
-                logger.exception("NIS: Datum do nije postavljen, nastavljam sa podrazumevanim datumom na portalu.")
 
             step = "date_validation"
             actual_from = get_nis_datetime_field_value(driver, "Datum od")
             expected_from = nis_date_prefix(date_from)
             if not (actual_from or "").startswith(expected_from):
                 raise RuntimeError(
-                    "NIS datum nije prihvacen. "
-                    f"Ocekivano Datum od: {expected_from}; na stranici: {actual_from}."
+                    "NIS datumi nisu prihvaceni. "
+                    f"Ocekivano Datum od: {expected_from}; "
+                    f"na stranici: {actual_from}."
                 )
-
-            try:
-                WebDriverWait(driver, 10).until(
-                    EC.invisibility_of_element_located((By.CLASS_NAME, "loader"))
-                )
-            except Exception:
-                pass
 
             step = "show_report_button"
-            logger.info("NIS: waiting for show report button")
+            logger.info("NIS sync: klik na Prikazi izvestaj.")
             show_report_button = WebDriverWait(driver, 20).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and (contains(normalize-space(.), 'Prika') or contains(normalize-space(.), 'izve'))]"))
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and (contains(., 'Prika') or contains(., 'Show'))]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", show_report_button)
             time.sleep(2)
             ActionChains(driver).move_to_element(show_report_button).click().perform()
-
             time.sleep(2)
-
             step = "download_dropdown"
-            logger.info("NIS: waiting for download dropdown")
-            dropdown_button = WebDriverWait(driver, 20).until(
+            logger.info("NIS sync: otvaram download meni.")
+            WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'download-button')]"))
-            )
-            driver.execute_script("arguments[0].scrollIntoView(true);", dropdown_button)
+            ).click()
             time.sleep(2)
-            dropdown_button.click()
-
-            time.sleep(2)
-
             step = "xlsx_option"
-            logger.info("NIS: waiting for XLSX option")
+            logger.info("NIS sync: biram XLSX.")
             xlsx_option = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", xlsx_option)
             time.sleep(2)
             ActionChains(driver).move_to_element(xlsx_option).click().perform()
-
             time.sleep(2)
-
             step = "download_file"
-            logger.info("NIS: waiting for download file")
-            xlsx_file_path = wait_for_download_file(download_path, timeout=90)
+            logger.info("NIS sync: cekam preuzimanje fajla.")
+            xlsx_file_path = wait_for_download_file(config["download_dir"], timeout=90)
             import_nis_fuel_consumption(xlsx_file_path)
             import_nis_transactions(xlsx_file_path)
             return "Funkcija NIS Data Import je uspesno izvrsena"
 
         except Exception:
-            logger.exception("NIS data import failed at step '%s'.", step)
-            if driver:
-                logger.error("NIS browser ostaje otvoren 5 minuta za pregled.")
+            logger.exception("NIS sync je stao na koraku '%s'. Chrome ostaje otvoren za pregled.", step)
+            if config["keep_browser_open"]:
                 time.sleep(300)
             raise
         finally:
-            driver.quit()
+            # U debug rezimu ne zatvaramo Chrome automatski, da moze da se vidi stanje.
+            pass
 
     except Exception as e:
         raise RuntimeError(f"NIS data import failed at step '{step}': {e}") from e

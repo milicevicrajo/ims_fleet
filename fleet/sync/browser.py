@@ -1,11 +1,20 @@
 import os
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 
 
-CHROME_BINARY_PATH = r"C:\DjangoApps\chrome-for-testing\current\chrome-win64\chrome.exe"
-CHROMEDRIVER_PATH = r"C:\DjangoApps\chrome-for-testing\current\chromedriver-win64\chromedriver.exe"
+BASE_DIR = Path(__file__).resolve().parents[2]
+CHROME_FOR_TESTING_DIR = BASE_DIR / "chrome-for-testing" / "current"
+CHROME_BINARY_PATH = os.getenv(
+    "CHROME_BINARY_PATH",
+    str(CHROME_FOR_TESTING_DIR / "chrome-win64" / "chrome.exe"),
+)
+CHROMEDRIVER_PATH = os.getenv(
+    "CHROMEDRIVER_PATH",
+    str(CHROME_FOR_TESTING_DIR / "chromedriver-win64" / "chromedriver.exe"),
+)
 
 
 def _validate_chrome_for_testing_paths():

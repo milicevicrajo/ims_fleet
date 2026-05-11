@@ -22,20 +22,30 @@ def fetch_data_view(request):
         try:
             if command == "nis_command":
                 call_command("nis_command")
+                message = "NIS Selenium import je pokrenut i zavrsen."
             elif command == "omv_command_putnicka":
                 call_command("omv_command_putnicka")
+                message = "OMV putnicka komanda je uspesno izvrsena."
             elif command == "omv_command_teretna":
                 call_command("omv_command_teretna")
+                message = "OMV teretna komanda je uspesno izvrsena."
             else:
                 return JsonResponse(
                     {"status": "error", "message": "Nepoznata komanda."},
                     status=400,
                 )
 
+            if request.headers.get("x-requested-with") != "XMLHttpRequest":
+                messages.success(request, message)
+                return redirect("fetch_data")
+
             return JsonResponse(
                 {"status": "success", "message": f"Komanda {command} uspešno izvršena."}
             )
         except Exception as exc:
+            if request.headers.get("x-requested-with") != "XMLHttpRequest":
+                messages.error(request, f"Greska prilikom izvrsavanja komande: {exc}")
+                return redirect("fetch_data")
             return JsonResponse({"status": "error", "message": str(exc)}, status=500)
 
     return render(request, "fleet/fetch_data.html")

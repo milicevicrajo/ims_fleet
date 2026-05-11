@@ -91,3 +91,5 @@ imports/
 exports/
 *.crdownload
 *.tmp
+
+chrome-for-testing/
