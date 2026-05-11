@@ -241,6 +241,7 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
 
 
 def kerio_login():
+    step_pause_seconds = 2
     login_url = "https://control.ims.rs:4081/login/?NTLM=0&orig=Y29udHJvbC5pbXMucnM=&dest=aHR0cDovL3d3dy5nc3RhdGljLmNvbS9nZW5lcmF0ZV8yMDQ=&host=MTkyLjE2OC42LjcgMWYzYTA5ODgyYzIxYWJjNjM2Y2FlNzAzZjQ1YjRmZGU="
     username = "tatko"
     password = "Abacus236"
@@ -255,35 +256,47 @@ def kerio_login():
     chrome_options.add_argument("--disable-dev-shm-usage")
 
     driver = create_chrome_driver(chrome_options)
+    time.sleep(step_pause_seconds)
 
     try:
         driver.get(login_url)
+        time.sleep(step_pause_seconds)
 
         username_input = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.ID, "username"))
         )
+        time.sleep(step_pause_seconds)
         driver.execute_script("arguments[0].removeAttribute('readonly')", username_input)
+        time.sleep(step_pause_seconds)
         username_input.clear()
+        time.sleep(step_pause_seconds)
         username_input.send_keys(username)
+        time.sleep(step_pause_seconds)
 
         password_input = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.ID, "password"))
         )
+        time.sleep(step_pause_seconds)
         password_input.send_keys(password)
+        time.sleep(step_pause_seconds)
 
         login_button = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.ID, "login-button"))
         )
+        time.sleep(step_pause_seconds)
         driver.execute_script("arguments[0].scrollIntoView(true);", login_button)
+        time.sleep(step_pause_seconds)
 
         try:
             login_button.click()
         except Exception:
             driver.execute_script("arguments[0].click();", login_button)
+        time.sleep(step_pause_seconds)
 
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.TAG_NAME, "body"))
         )
+        time.sleep(step_pause_seconds)
 
     finally:
         driver.quit()
