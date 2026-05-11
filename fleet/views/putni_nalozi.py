@@ -1,5 +1,6 @@
 import textwrap
 
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import ExpressionWrapper, F, IntegerField, Q, Value
@@ -174,7 +175,7 @@ def _putninalog_actions_html(request, putni_nalog):
     return justified_html, update_html, print_html, copy_html, storno_html
 
 
-@role_permission_required("putninalog_list")
+@login_required
 def putninalog_datatable_data(request):
     base_qs = _putninalog_base_qs(request)
     records_total = base_qs.count()
