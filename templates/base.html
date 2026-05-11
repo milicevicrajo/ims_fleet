@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html dir="ltr" lang="sr">
 <head>
@@ -55,7 +55,7 @@
 
         <!-- dbg: sidebar='{{ sidebar_template|default:"<none>" }}' -->
         {% include sidebar_template|default:"sidebar_fleet.html" %}
-        {# (ispravljeno) izbačen dupli include sidebara #}
+        {# (ispravljeno) izbaÄen dupli include sidebara #}
 
         <!-- ============================================================== -->
         <!-- Page wrapper -->
@@ -82,7 +82,7 @@
     <!-- ============================================================== -->
 
     {% if user.is_authenticated %}
-    <div class="modal fade" id="appNewsModal" tabindex="-1" aria-labelledby="appNewsModalLabel" aria-hidden="true" data-release-version="2026-05-08-03">
+    <div class="modal fade" id="appNewsModal" tabindex="-1" aria-labelledby="appNewsModalLabel" aria-hidden="true" data-release-version="2026-05-11-01">
         <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content app-news-modal">
                 <div class="modal-header">
@@ -94,39 +94,39 @@
                 </div>
                 <div class="modal-body">
                     <div class="app-news-section">
-                        <h6>Šta je novo</h6>
+                        <h6>Sta je novo</h6>
                         <ul>
-                            <li>U sekciji Garaža IMS uveden je operativni rad sa putnim nalozima za automobile.</li>
-                            <li>Sekretarijat sada može da otvara putni nalog za vozilo, prati korišćenje i zatvara nalog.</li>
-                            <li>Zatvaranjem naloga sistem automatski priprema obračun goriva za period korišćenja vozila.</li>
-                            <li>Podaci iz naloga ostaju vezani za vozilo, vozača i period, pa se kasnije mogu proveravati kroz preglede.</li>
+                            <li>Dodana je posebna lista Zaduzenja vozila sa filterima za auto, zaposlenog i status naloga.</li>
+                            <li>Otvoreni i zatvoreni nalozi su sada na jednom mestu, a zatvoreni nalozi su jasno obelezeni.</li>
+                            <li>Kod otvaranja novog naloga sistem automatski zatvara prethodni otvoreni period za isto vozilo.</li>
+                            <li>Posle otvaranja novog naloga otvara se zahtev za stampu, a prethodni obracun se otvara automatski ako postoji.</li>
                         </ul>
                     </div>
                     <div class="app-news-section">
                         <h6>Uputstvo za sekretarijat</h6>
                         <ul>
-                            <li>U meniju otvoriti Garaža IMS i izabrati putne naloge za automobile.</li>
-                            <li>Za novi nalog izabrati vozilo koje se izdaje i uneti korisnika/vozača, datum i početnu kilometražu.</li>
-                            <li>Otvaranjem nloga automatski se generiše zahtev za otvaranje putnog naloga.</li>
-                            <li>Nalog ostaje otvoren dok se ne zatvori ručno ili dok se ne otvori novi nalog</li>
-                            <li>Kada je nalog zatvoren, aplikacija automatski priprema obračun goriva za period korišćenja vozila.</li>
+                            <li>U meniju otvoriti Zaduzenja vozila.</li>
+                            <li>Za novi nalog kliknuti Otvori novi putni nalog i uneti vozilo, zaposlenog, datum i pocetnu kilometrazu.</li>
+                            <li>Ako za isto vozilo postoji prethodni otvoren nalog, sistem ga zatvara datumom novog naloga.</li>
+                            <li>Nakon cuvanja otvara se zahtev za izdavanje putnog naloga spreman za stampu.</li>
+                            <li>Ako postoji prethodni period, u novom tabu se otvara i obracun prethodnog perioda.</li>
                         </ul>
                     </div>
                     <div class="app-news-section">
-                        <h6>Zatvaranje i obračun</h6>
+                        <h6>Obracun i zakljucavanje</h6>
                         <ul>
-                            <li>Pre zatvaranja proveriti da li su vozilo, vozač i datumi ispravni.</li>
-                            <li>Kada se nalog zatvori, aplikacija automatski računa gorivo za period naloga.</li>
-                            <li>Obračun koristi evidentirane transakcije goriva za izabrano vozilo i period putnog naloga.</li>
-                            <li>Ako obračun ne prikaže očekivane stavke, proveriti registraciju vozila i da li su transakcije goriva već učitane.</li>
-                            <li>Zatvoren nalog predstavlja osnov za pregled korišćenja vozila i kontrolu troška goriva.</li>
+                            <li>Obracun goriva ukljucuje poslednje tocenje iz prethodnog perioda.</li>
+                            <li>Poslednje tocenje u tekucem periodu se ne racuna u taj period, vec se prenosi u sledeci obracun.</li>
+                            <li>Za otvoreni nalog na listi se prikazuje dugme Prethodni obracun kada postoji prethodni zatvoren period.</li>
+                            <li>Zatvoren nalog obican korisnik vise ne moze da menja ili brise; to moze samo superuser.</li>
+                            <li>Ako obracun ne prikaze ocekivane stavke, proveriti registraciju vozila i ucitane transakcije goriva.</li>
                         </ul>
                     </div>
                     <div class="app-news-section">
                         <h6>Napomena</h6>
                         <p class="mb-0">
-                            Ovo je operativni tok rada za sekretarijat. Najvažnije je da se nalog otvori pre korišćenja vozila
-                            i zatvori odmah po povratku, jer se tada formira obračun goriva.
+                            Novi tok je namenjen sekretarijatu: nalog se otvara pre izdavanja vozila, prethodni period se
+                            automatski zatvara kada se otvori novi nalog za isto vozilo, a dokumenta za stampu se odmah prikazuju.
                         </p>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
     {% endif %}
 
     <!-- ============================================================== -->
-    <!-- Skripte (lokalno/offline, složen redosled, bez duplikata) -->
+    <!-- Skripte (lokalno/offline, sloÅ¾en redosled, bez duplikata) -->
     <!-- ============================================================== -->
 
     <!-- jQuery (lokalno, offline) -->
@@ -163,9 +163,9 @@
     (function () {
         var g = window;
         if (!g.JSZip && g.jszip) {
-        g.JSZip = g.jszip; // neki buildovi izlažu 'jszip' umesto 'JSZip'
+        g.JSZip = g.jszip; // neki buildovi izlaÅ¾u 'jszip' umesto 'JSZip'
         }
-        // ako ni jedno ne postoji, ne diramo ništa (bez bacanja greške)
+        // ako ni jedno ne postoji, ne diramo niÅ¡ta (bez bacanja greÅ¡ke)
     })();
     </script>
 
@@ -181,7 +181,7 @@
     <!-- DataTables datetime-moment plugin (lokalno, offline) -->
     <script src="{% static 'fleet/assets/libs/offline/datetime-moment/datetime-moment.js' %}"></script>
     <script>
-      // registruj format datuma koji koristiš (npr. 31.12.2025)
+      // registruj format datuma koji koristiÅ¡ (npr. 31.12.2025)
       if ($.fn.dataTable && $.fn.dataTable.moment) {
         $.fn.dataTable.moment('DD.MM.YYYY');
         $.fn.dataTable.moment('DD.MM.YYYY HH:mm:ss');
@@ -360,13 +360,13 @@
         function obrisiKontakt(kontaktId) {
             Swal.fire({
                 title: "Da li ste sigurni?",
-                text: "Ovaj kontakt će biti trajno obrisan!",
+                text: "Ovaj kontakt Ä‡e biti trajno obrisan!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#d33",
                 cancelButtonColor: "#3085d6",
-                confirmButtonText: "Da, obriši!",
-                cancelButtonText: "Otkaži"
+                confirmButtonText: "Da, obriÅ¡i!",
+                cancelButtonText: "OtkaÅ¾i"
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch(`/obrisi_kontakt/${kontaktId}/`, {
@@ -378,10 +378,10 @@
                     }).then(response => response.json())
                       .then(data => {
                           if (data.success) {
-                              Swal.fire("Obrisano!", "Kontakt je uspešno obrisan.", "success")
-                              .then(() => location.reload());  // Osveži stranicu
+                              Swal.fire("Obrisano!", "Kontakt je uspeÅ¡no obrisan.", "success")
+                              .then(() => location.reload());  // OsveÅ¾i stranicu
                           } else {
-                              Swal.fire("Greška!", "Kontakt nije obrisan.", "error");
+                              Swal.fire("GreÅ¡ka!", "Kontakt nije obrisan.", "error");
                           }
                       });
                 }
@@ -394,23 +394,23 @@
             // Proveri da li element postoji
             if (!element) {
                 if (onComplete && typeof onComplete === 'function') {
-                    onComplete(); // Pozovi callback čak i ako element ne postoji
+                    onComplete(); // Pozovi callback Äak i ako element ne postoji
                 }
                 return;
             }
 
-            // Osiguraj da je element vidljiv pre početka animacije nestajanja
+            // Osiguraj da je element vidljiv pre poÄetka animacije nestajanja
             // Podesi display na originalnu vrednost ako je bio none
             if (element.style.display === 'none' || element.style.display === '') {
                 // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
-                // Prilagodite ovo ako vaš preloader koristi display: block ili grid
+                // Prilagodite ovo ako vaÅ¡ preloader koristi display: block ili grid
                 element.style.display = 'flex';
             }
 
-            // Postavi početnu opacity vrednost ako nije već postavljena ili je 0
+            // Postavi poÄetnu opacity vrednost ako nije veÄ‡ postavljena ili je 0
             let startOpacity = parseFloat(element.style.opacity);
             if (isNaN(startOpacity) || startOpacity <= 0) {
-                element.style.opacity = 1; // Počni od pune vidljivosti ako nije definisano ili je 0
+                element.style.opacity = 1; // PoÄni od pune vidljivosti ako nije definisano ili je 0
                 startOpacity = 1;
             }
 
@@ -422,14 +422,14 @@
                 const elapsed = timestamp - start;
                 const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
 
-                // Smanjuj opacity od početne vrednosti ka 0
+                // Smanjuj opacity od poÄetne vrednosti ka 0
                 element.style.opacity = startOpacity * (1 - progress);
 
                 if (progress < 1) {
                     // Nastavi animaciju
                     requestAnimationFrame(animate);
                 } else {
-                    // Animacija završena
+                    // Animacija zavrÅ¡ena
                     element.style.display = 'none'; // Potpuno sakrij element
                     element.style.opacity = 0; // Osiguraj da je finalna opacity 0
                     if (onComplete && typeof onComplete === 'function') {
@@ -447,23 +447,23 @@
             // Proveri da li element postoji
             if (!element) {
                 if (onComplete && typeof onComplete === 'function') {
-                    onComplete(); // Pozovi callback čak i ako element ne postoji
+                    onComplete(); // Pozovi callback Äak i ako element ne postoji
                 }
                 return;
             }
 
-            // Postavi element na vidljiv display pre početka animacije
+            // Postavi element na vidljiv display pre poÄetka animacije
             // Pretpostavljamo da preloader treba da bude display: flex kada je vidljiv
-            // Prilagodite ovo ako vaš preloader koristi display: block ili grid
+            // Prilagodite ovo ako vaÅ¡ preloader koristi display: block ili grid
             element.style.display = 'flex';
 
-            // Osiguraj da je element nevidljiv na početku animacije
+            // Osiguraj da je element nevidljiv na poÄetku animacije
             let startOpacity = parseFloat(element.style.opacity);
             if (isNaN(startOpacity) || startOpacity < 0) {
-                element.style.opacity = 0; // Počni od nevidljivosti ako nije definisano ili je negativno
+                element.style.opacity = 0; // PoÄni od nevidljivosti ako nije definisano ili je negativno
                 startOpacity = 0;
             } else if (startOpacity === 1) {
-                // Ako je element već potpuno vidljiv, nema potrebe za fade-in
+                // Ako je element veÄ‡ potpuno vidljiv, nema potrebe za fade-in
                 if (onComplete && typeof onComplete === 'function') {
                     onComplete();
                 }
@@ -478,7 +478,7 @@
                 const elapsed = timestamp - start;
                 const progress = Math.min(elapsed / duration, 1); // Napredak od 0 do 1
 
-                // Povećavaj opacity od početne vrednosti ka 1
+                // PoveÄ‡avaj opacity od poÄetne vrednosti ka 1
                 element.style.opacity = startOpacity + (1 - startOpacity) * progress;
 
 
@@ -486,7 +486,7 @@
                     // Nastavi animaciju
                     requestAnimationFrame(animate);
                 } else {
-                    // Animacija završena
+                    // Animacija zavrÅ¡ena
                     element.style.opacity = 1; // Osiguraj da je finalna opacity 1
                     if (onComplete && typeof onComplete === 'function') {
                         onComplete(); // Pozovi callback funkciju
@@ -504,7 +504,7 @@
             const preloader = document.querySelector(".preloader");
             if (preloader) {
                 // Pozovi fadeOut funkciju za postepeno sakrivanje
-                // 500ms je trajanje animacije, prilagodite po želji
+                // 500ms je trajanje animacije, prilagodite po Å¾elji
                 fadeOut(preloader, 500);
             }
         }
@@ -514,24 +514,24 @@
             const preloader = document.querySelector(".preloader");
             if (preloader) {
                 // Pozovi fadeIn funkciju za postepeno pojavljivanje
-                // 200ms je trajanje animacije, prilagodite po želji
+                // 200ms je trajanje animacije, prilagodite po Å¾elji
                 fadeIn(preloader, 200);
             }
         }
 
 
-        // Sakrij preloader kad se stranica normalno učita (sa fade efektom)
+        // Sakrij preloader kad se stranica normalno uÄita (sa fade efektom)
         window.addEventListener("load", hidePreloader);
 
-        // Sakrij i kad se stranica učita iz cache-a (back/forward dugme) - sa fade efektom
+        // Sakrij i kad se stranica uÄita iz cache-a (back/forward dugme) - sa fade efektom
         window.addEventListener("pageshow", function (event) {
             if (event.persisted) {
-                // Zadržavamo kašnjenje, a nakon kašnjenja pozivamo funkciju za postepeno sakrivanje
+                // ZadrÅ¾avamo kaÅ¡njenje, a nakon kaÅ¡njenja pozivamo funkciju za postepeno sakrivanje
                 setTimeout(hidePreloader, 50);
             }
         });
 
-        // Prikaži preloader na klik na linkove (sa fade efektom)
+        // PrikaÅ¾i preloader na klik na linkove (sa fade efektom)
         document.addEventListener("DOMContentLoaded", function () {
             document.querySelectorAll("a").forEach(function (el) {
                 el.addEventListener("click", function (e) {
@@ -540,20 +540,20 @@
                     // Provera uslova kada NE treba prikazati preloader
                     if (
                         el.target === "_blank" ||
-                        (href && href.startsWith("#")) ||         // Isključi # linkove
-                        (href && href.startsWith("javascript:")) || // <-- DODAJTE OVAJ USLOV: Isključi javascript: linkove
-                        el.hasAttribute("data-no-preloader") || // Isključi linkove sa data-no-preloader atributom
-                        (el.hostname && el.hostname !== window.location.hostname) // Isključi eksterne linkove
+                        (href && href.startsWith("#")) ||         // IskljuÄi # linkove
+                        (href && href.startsWith("javascript:")) || // <-- DODAJTE OVAJ USLOV: IskljuÄi javascript: linkove
+                        el.hasAttribute("data-no-preloader") || // IskljuÄi linkove sa data-no-preloader atributom
+                        (el.hostname && el.hostname !== window.location.hostname) // IskljuÄi eksterne linkove
                     ) {
                         return; // Nemoj prikazivati preloader za ove linkove
                     }
 
-                    // Ako link nije isključen, prikaži preloader
+                    // Ako link nije iskljuÄen, prikaÅ¾i preloader
                     showPreloader();
 
                     // Napomena: Ako koristite JS-only fade out, showPreloader() poziva fadeIn().
                     // Ako koristite CSS fade out, showPreloader() dodaje klasu i postavlja display.
-                    // Logika showPreloader() je ispravna za oba slučaja.
+                    // Logika showPreloader() je ispravna za oba sluÄaja.
                     });
                 });
             });
@@ -565,16 +565,16 @@
     <style>
 
         #DugovanjaBuketi {
-            table-layout: fixed !important; /* Sprečava automatsko prilagođavanje */
-            width: 100% !important; /* Osigurava da tabela koristi celu širinu */
+            table-layout: fixed !important; /* SpreÄava automatsko prilagoÄ‘avanje */
+            width: 100% !important; /* Osigurava da tabela koristi celu Å¡irinu */
         }
         
         #DugovanjaBuketi td:nth-child(2), 
         #DugovanjaBuketi th:nth-child(2) {
-            width: 100px !important; /* Fiksna širina za 2. kolonu (3. indeks u CSS) */
-            white-space: nowrap; /* Sprečava prelamanje teksta */
+            width: 100px !important; /* Fiksna Å¡irina za 2. kolonu (3. indeks u CSS) */
+            white-space: nowrap; /* SpreÄava prelamanje teksta */
             overflow: hidden;
-            text-overflow: ellipsis; /* Skraćuje dugačak tekst sa "..." */
+            text-overflow: ellipsis; /* SkraÄ‡uje dugaÄak tekst sa "..." */
         }
 
         
@@ -594,12 +594,12 @@
             white-space: nowrap; /* Prevent word wrap */
         }
         .custom-font-table {
-            font-family: 'Arial', sans-serif; /* Menjaš font za celu tabelu */
+            font-family: 'Arial', sans-serif; /* MenjaÅ¡ font za celu tabelu */
         }
         
         .custom-font-table td {
-            font-size: 15px; /* Postavi veličinu fonta */
-            font-family: 'Roboto', sans-serif; /* Ovde možeš promeniti font na drugi */
+            font-size: 15px; /* Postavi veliÄinu fonta */
+            font-family: 'Roboto', sans-serif; /* Ovde moÅ¾eÅ¡ promeniti font na drugi */
         }
         
         {% comment %} .custom-font-table td:first-child {
@@ -611,7 +611,7 @@
         }
         .custom-font-table td, .custom-font-table th {
             padding: 5px 10px; /* Manji padding smanjuje visinu reda */
-            line-height: 1.8; /* Smanji visinu linije za dodatno smanjenje razmaka između redova */
+            line-height: 1.8; /* Smanji visinu linije za dodatno smanjenje razmaka izmeÄ‘u redova */
         }
         table.display thead tr.filters th {
             padding: 4px 8px;
@@ -648,3 +648,5 @@
         </style>
 </body>
 </html>
+
+

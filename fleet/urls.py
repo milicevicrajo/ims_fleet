@@ -82,6 +82,7 @@ from .views.putni_nalozi import (
     PutniNalogListView,
     PutniNalogPrintView,
     PutniNalogUpdateView,
+    putninalog_datatable_data,
     putninalog_print_list,
     putninalog_set_opravdan,
     putninalog_storniraj,
@@ -286,6 +287,7 @@ urlpatterns = [
     path('garaza/putni-nalozi-vozila/<int:pk>/brisanje/', VehicleTravelOrderDeleteView.as_view(), name='vehicle_travel_order_delete'),
 
     path('putni-nalozi/', PutniNalogListView.as_view(), name='putninalog_list'),
+    path('putni-nalozi/data/', putninalog_datatable_data, name='putninalog_data'),
     path('putni-nalozi/print-list/', putninalog_print_list, name='putninalog_print_list'),
     path('putni-nalozi/novo/', PutniNalogCreateView.as_view(), name='putninalog_create'),
     path('putni-nalozi/izmeni/<int:pk>/', PutniNalogUpdateView.as_view(), name='putninalog_update'),

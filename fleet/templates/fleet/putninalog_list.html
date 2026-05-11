@@ -12,7 +12,11 @@
   .filter-select {
     min-width: 220px;
   }
+  #DatatablePutniNalozi td {
+    vertical-align: middle;
+  }
 </style>
+
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm">
@@ -20,7 +24,7 @@
         <h2 class="mb-0">{{ title }}</h2>
         <div class="d-flex gap-2">
           <a href="{% url 'putninalog_print_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary btn-sm" target="_blank">
-            <i class="mdi mdi-printer"></i> Štampa liste
+            <i class="mdi mdi-printer"></i> Stampa liste
           </a>
           <a href="{% url 'putninalog_create' %}" class="btn btn-primary btn-sm">
             <i class="mdi mdi-plus-box"></i> Dodaj putni nalog
@@ -65,14 +69,16 @@
             <a href="{% url 'putninalog_list' %}" class="btn btn-outline-secondary w-100">Reset</a>
           </div>
         </form>
+
         <hr>
+
         <div class="table-responsive">
-          <table id="DatatablePutniNalozi" class="table table-striped table-bordered align-middle">
+          <table id="DatatablePutniNalozi" class="table table-striped table-bordered align-middle w-100">
             <thead class="table-light">
               <tr>
                 <th>Broj naloga</th>
                 <th>Zaposleni</th>
-                <th>Šifra posla</th>
+                <th>Sifra posla</th>
                 <th>Mesto putovanja</th>
                 <th>Ugovor/ponuda</th>
                 <th>Vozilo (reg)</th>
@@ -82,111 +88,18 @@
                 <th class="text-center">Nedeljni</th>
                 <th class="text-center">Opravdan</th>
                 <th class="text-center">Izmeni</th>
-                <th class="text-center">Štampa</th>
+                <th class="text-center">Stampa</th>
                 <th class="text-center">Ponovi</th>
                 <th class="text-center" data-filter="none">Storniraj</th>
               </tr>
             </thead>
-            <tbody>
-              {% for putni_nalog in putni_nalozi %}
-              <tr{% if putni_nalog.is_weekly %} class="table-warning"{% endif %}>
-                <td data-order="{{ putni_nalog.pn_sort_key }}">{{ putni_nalog.order_number }}</td>
-                <td>{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %}</td>
-                <td>{{ putni_nalog.job_code.code }}</td>
-                <td>{{ putni_nalog.travel_location }}</td>
-                <td>{{ putni_nalog.contract_offer }}</td>
-                <td>
-                  {% if putni_nalog.vehicle %}
-                    {{ putni_nalog.vehicle.traffic_cards.first.registration_number|default:putni_nalog.vehicle.chassis_number }}
-                  {% else %}
-                    {{ putni_nalog.other_vehicle }}
-                  {% endif %}
-                </td>
-                <td>{{ putni_nalog.travel_date|date:"d.m.Y" }}</td>
-                <td>{{ putni_nalog.number_of_days }}</td>
-                <td>{{ putni_nalog.advance_payment }}</td>
-                <td class="text-center">
-                  {% if putni_nalog.is_weekly %}
-                    <span class="badge bg-warning text-dark">Da</span>
-                  {% else %}
-                    <span class="badge bg-light text-dark">Ne</span>
-                  {% endif %}
-                </td>
-                <td class="text-center">
-                  {% if putni_nalog.opravdan %}
-                    <span class="badge bg-success">Opravdan</span>
-                  {% else %}
-                    <form method="post" action="{% url 'putninalog_set_opravdan' putni_nalog.pk %}">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-outline-success btn-sm">
-                        <i class="mdi mdi-check"></i> Opravdaj
-                      </button>
-                    </form>
-                  {% endif %}
-                </td>
-                <td class="text-center">
-                  {% if putni_nalog.opravdan %}
-                    <span class="btn btn-outline-secondary btn-sm disabled">
-                      <i class="mdi mdi-lock"></i> Zaključan
-                    </span>
-                  {% else %}
-                    <a href="{% url 'putninalog_update' putni_nalog.pk %}" class="btn btn-outline-primary btn-sm">
-                      <i class="mdi mdi-pencil"></i> Izmeni
-                    </a>
-                  {% endif %}
-                </td>
-                <td class="text-center">
-                  <a href="{% url 'putninalog_print' putni_nalog.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank">
-                    <i class="mdi mdi-printer"></i> Štampa
-                  </a>
-                </td>
-                <td class="text-center">
-                  <a href="{% url 'putninalog_create' %}?copy={{ putni_nalog.pk }}" class="btn btn-outline-info btn-sm">
-                    <i class="mdi mdi-content-copy"></i> Ponovi
-                  </a>
-                </td>
-                <td class="text-center">
-                  <button
-                    type="button"
-                    class="btn btn-danger btn-sm"
-                    data-bs-toggle="modal"
-                    data-bs-target="#stornoModal{{ putni_nalog.pk }}"
-                  >
-                    <i class="mdi mdi-close-circle"></i> Storniraj
-                  </button>
-
-                  <div class="modal fade" id="stornoModal{{ putni_nalog.pk }}" tabindex="-1" aria-labelledby="stornoModalLabel{{ putni_nalog.pk }}" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="stornoModalLabel{{ putni_nalog.pk }}">Potvrda storniranja</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-                        </div>
-                        <div class="modal-body text-start">
-                          Da li ste sigurni da stornirate ovaj nalog <strong>{{ putni_nalog.order_number }}</strong>?
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Otkaži</button>
-                          <form method="post" action="{% url 'putninalog_storniraj' putni_nalog.pk %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm">
-                              <i class="mdi mdi-alert-circle"></i> Da, storniraj
-                            </button>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-
-              {% endfor %}
-            </tbody>
+            <tbody></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
+</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
@@ -198,20 +111,59 @@
         placeholder: 'Izaberi'
       });
     }
-  });
-</script>
-</div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var table = document.getElementById('DatatablePutniNalozi');
-    if (!table || !window.initFleetReportTable) {
+    if (!window.jQuery || !jQuery.fn.DataTable) {
       return;
     }
-    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) {
+
+    var table = jQuery('#DatatablePutniNalozi');
+    if (!table.length || jQuery.fn.DataTable.isDataTable(table)) {
       return;
     }
-    window.initFleetReportTable(table, { pageLength: 50, order: [[0, 'desc']] });
+
+    table.DataTable({
+      serverSide: true,
+      processing: true,
+      pageLength: 50,
+      lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+      order: [[0, 'desc']],
+      ajax: {
+        url: "{% url 'putninalog_data' %}" + window.location.search,
+        type: "GET"
+      },
+      columns: [
+        { data: 'order_number' },
+        { data: 'employee' },
+        { data: 'job_code' },
+        { data: 'travel_location' },
+        { data: 'contract_offer' },
+        { data: 'vehicle' },
+        { data: 'travel_date' },
+        { data: 'number_of_days' },
+        { data: 'advance_payment' },
+        { data: 'is_weekly', searchable: false, className: 'text-center' },
+        { data: 'opravdan', searchable: false, className: 'text-center' },
+        { data: 'update', orderable: false, searchable: false, className: 'text-center' },
+        { data: 'print', orderable: false, searchable: false, className: 'text-center' },
+        { data: 'copy', orderable: false, searchable: false, className: 'text-center' },
+        { data: 'storno', orderable: false, searchable: false, className: 'text-center' }
+      ],
+      language: {
+        processing: 'Ucitavanje...',
+        search: 'Pretraga:',
+        lengthMenu: 'Prikazi _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ naloga',
+        infoEmpty: 'Nema naloga',
+        infoFiltered: '(filtrirano od _MAX_ ukupno)',
+        zeroRecords: 'Nema rezultata',
+        paginate: {
+          first: 'Prva',
+          last: 'Poslednja',
+          next: 'Sledeca',
+          previous: 'Prethodna'
+        }
+      }
+    });
   });
 </script>
 {% endblock %}

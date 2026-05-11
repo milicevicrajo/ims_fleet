@@ -2,11 +2,13 @@ import textwrap
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import ExpressionWrapper, F, IntegerField, Value
+from django.db.models import ExpressionWrapper, F, IntegerField, Q, Value
 from django.db.models.functions import Cast, StrIndex, Substr
+from django.middleware.csrf import get_token
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.html import escape
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 from django_filters.views import FilterView
 
@@ -60,7 +62,7 @@ def _split_putni_nalog_note_lines(note, max_lines=2, width=70):
 
 
 def _putninalog_base_qs(request, include_stornirani=False):
-    qs = PutniNalog.objects.select_related("job_code", "employee", "vehicle")
+    qs = PutniNalog.objects.select_related("job_code", "employee", "vehicle").prefetch_related("vehicle__traffic_cards")
     if not include_stornirani:
         qs = qs.filter(storniran=False)
     user = request.user
@@ -92,6 +94,180 @@ def _putninalog_base_qs(request, include_stornirani=False):
     )
 
     return qs.order_by("-_pn_year", "-_pn_seq", "-id")
+
+
+def _putninalog_employee_label(putni_nalog):
+    return str(putni_nalog.employee) if putni_nalog.employee else (putni_nalog.other_employee_name or "")
+
+
+def _putninalog_vehicle_label(putni_nalog):
+    if putni_nalog.vehicle:
+        traffic_card = putni_nalog.vehicle.traffic_cards.first()
+        return str(getattr(traffic_card, "registration_number", "") or putni_nalog.vehicle.chassis_number or "")
+    return putni_nalog.other_vehicle or ""
+
+
+def _putninalog_actions_html(request, putni_nalog):
+    csrf_token = get_token(request)
+    update_url = reverse("putninalog_update", args=[putni_nalog.pk])
+    print_url = reverse("putninalog_print", args=[putni_nalog.pk])
+    copy_url = f"{reverse('putninalog_create')}?copy={putni_nalog.pk}"
+    justify_url = reverse("putninalog_set_opravdan", args=[putni_nalog.pk])
+    storno_url = reverse("putninalog_storniraj", args=[putni_nalog.pk])
+    modal_id = f"stornoModal{putni_nalog.pk}"
+    modal_label_id = f"stornoModalLabel{putni_nalog.pk}"
+    order_number = escape(putni_nalog.order_number or "")
+
+    if putni_nalog.opravdan:
+        justified_html = '<span class="badge bg-success">Opravdan</span>'
+        update_html = (
+            '<span class="btn btn-outline-secondary btn-sm disabled">'
+            '<i class="mdi mdi-lock"></i> Zakljucan</span>'
+        )
+    else:
+        justified_html = (
+            f'<form method="post" action="{justify_url}">'
+            f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">'
+            '<button type="submit" class="btn btn-outline-success btn-sm">'
+            '<i class="mdi mdi-check"></i> Opravdaj</button></form>'
+        )
+        update_html = (
+            f'<a href="{update_url}" class="btn btn-outline-primary btn-sm">'
+            '<i class="mdi mdi-pencil"></i> Izmeni</a>'
+        )
+
+    print_html = (
+        f'<a href="{print_url}" class="btn btn-outline-secondary btn-sm" target="_blank">'
+        '<i class="mdi mdi-printer"></i> Stampa</a>'
+    )
+    copy_html = (
+        f'<a href="{copy_url}" class="btn btn-outline-info btn-sm">'
+        '<i class="mdi mdi-content-copy"></i> Ponovi</a>'
+    )
+    storno_html = f"""
+        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#{modal_id}">
+          <i class="mdi mdi-close-circle"></i> Storniraj
+        </button>
+        <div class="modal fade" id="{modal_id}" tabindex="-1" aria-labelledby="{modal_label_id}" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="{modal_label_id}">Potvrda storniranja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+              </div>
+              <div class="modal-body text-start">
+                Da li ste sigurni da stornirate ovaj nalog <strong>{order_number}</strong>?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Otkazi</button>
+                <form method="post" action="{storno_url}">
+                  <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="mdi mdi-alert-circle"></i> Da, storniraj
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+    """
+    return justified_html, update_html, print_html, copy_html, storno_html
+
+
+@role_permission_required("putninalog_list")
+def putninalog_datatable_data(request):
+    base_qs = _putninalog_base_qs(request)
+    records_total = base_qs.count()
+    filterset = PutniNalogFilter(request.GET, queryset=base_qs, request=request)
+    qs = filterset.qs
+
+    search_value = request.GET.get("search[value]", "").strip()
+    if search_value:
+        qs = qs.filter(
+            Q(order_number__icontains=search_value)
+            | Q(employee__first_name__icontains=search_value)
+            | Q(employee__last_name__icontains=search_value)
+            | Q(other_employee_name__icontains=search_value)
+            | Q(job_code__code__icontains=search_value)
+            | Q(travel_location__icontains=search_value)
+            | Q(contract_offer__icontains=search_value)
+            | Q(vehicle__brand__icontains=search_value)
+            | Q(vehicle__model__icontains=search_value)
+            | Q(vehicle__chassis_number__icontains=search_value)
+            | Q(vehicle__traffic_cards__registration_number__icontains=search_value)
+            | Q(other_vehicle__icontains=search_value)
+        ).distinct()
+
+    records_filtered = qs.count()
+
+    order_column = request.GET.get("order[0][column]", "0")
+    order_dir = request.GET.get("order[0][dir]", "desc")
+    order_map = {
+        "0": "pn_sort_key",
+        "1": "employee__last_name",
+        "2": "job_code__code",
+        "3": "travel_location",
+        "4": "contract_offer",
+        "5": "vehicle__brand",
+        "6": "travel_date",
+        "7": "number_of_days",
+        "8": "advance_payment",
+        "9": "is_weekly",
+        "10": "opravdan",
+    }
+    order_field = order_map.get(order_column, "pn_sort_key")
+    if order_dir == "desc":
+        order_field = f"-{order_field}"
+    qs = qs.order_by(order_field, "-id")
+
+    try:
+        start = max(int(request.GET.get("start", 0)), 0)
+    except (TypeError, ValueError):
+        start = 0
+    try:
+        length = int(request.GET.get("length", 50))
+    except (TypeError, ValueError):
+        length = 50
+    if length < 0:
+        length = 50
+    length = min(length, 200)
+
+    rows = []
+    for putni_nalog in qs[start:start + length]:
+        justified_html, update_html, print_html, copy_html, storno_html = _putninalog_actions_html(request, putni_nalog)
+        rows.append({
+            "DT_RowClass": "table-warning" if putni_nalog.is_weekly else "",
+            "order_number": escape(putni_nalog.order_number or ""),
+            "employee": escape(_putninalog_employee_label(putni_nalog)),
+            "job_code": escape(getattr(putni_nalog.job_code, "code", "") or ""),
+            "travel_location": escape(putni_nalog.travel_location or ""),
+            "contract_offer": escape(putni_nalog.contract_offer or ""),
+            "vehicle": escape(_putninalog_vehicle_label(putni_nalog)),
+            "travel_date": putni_nalog.travel_date.strftime("%d.%m.%Y") if putni_nalog.travel_date else "",
+            "number_of_days": putni_nalog.number_of_days or "",
+            "advance_payment": str(putni_nalog.advance_payment or ""),
+            "is_weekly": (
+                '<span class="badge bg-warning text-dark">Da</span>'
+                if putni_nalog.is_weekly else '<span class="badge bg-light text-dark">Ne</span>'
+            ),
+            "opravdan": justified_html,
+            "update": update_html,
+            "print": print_html,
+            "copy": copy_html,
+            "storno": storno_html,
+        })
+
+    try:
+        draw = int(request.GET.get("draw", 0))
+    except (TypeError, ValueError):
+        draw = 0
+
+    return JsonResponse({
+        "draw": draw,
+        "recordsTotal": records_total,
+        "recordsFiltered": records_filtered,
+        "data": rows,
+    })
 
 
 class PutniNalogListView(LoginRequiredMixin, FilterView):
