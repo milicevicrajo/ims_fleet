@@ -436,7 +436,7 @@ def nis_data_import():
             "password": "3RrrvvVg",
             "download_dir": r"C:\nis_repo",
             "chrome_binary": CHROME_BINARY_PATH,
-            "headless": True,
+            "headless": False,
             "keep_browser_open": False,
         }
         date_from, date_to = previous_month_range()
