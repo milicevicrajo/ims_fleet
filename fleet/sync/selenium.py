@@ -92,6 +92,33 @@ def nis_import_db_alias():
     return getattr(settings, "NIS_IMPORT_DB_ALIAS", "default")
 
 
+def format_nis_sync_result(result):
+    if not isinstance(result, dict):
+        return str(result)
+    if result.get("status") != "ok":
+        return f"NIS sync rezultat: {result}"
+
+    fuel = result.get("fuel", {}) or {}
+    transactions = result.get("transactions", {}) or {}
+    missing = result.get("missing_vehicles") or []
+    missing_note = f" Vozila bez poklapanja: {', '.join(missing[:10])}." if missing else ""
+    return (
+        "NIS sync zavrsen. "
+        "Gorivo: redova {fuel_rows}, upisano {fuel_created}, preskoceno {fuel_skipped}. "
+        "Transakcije: redova {trx_rows}, upisano {trx_created}, preskoceno {trx_skipped}. "
+        "Fajl: {source}.{missing_note}"
+    ).format(
+        fuel_rows=fuel.get("rows", 0),
+        fuel_created=fuel.get("created", 0),
+        fuel_skipped=fuel.get("skipped", 0),
+        trx_rows=transactions.get("rows", 0),
+        trx_created=transactions.get("created", 0),
+        trx_skipped=transactions.get("skipped", 0),
+        source=result.get("source", "-"),
+        missing_note=missing_note,
+    )
+
+
 def previous_month_range(reference_date=None):
     reference_date = reference_date or date.today()
     first_this_month = reference_date.replace(day=1)

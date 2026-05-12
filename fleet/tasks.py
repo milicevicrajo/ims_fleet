@@ -3,6 +3,7 @@ from fleet.sync import (
     fetch_policy_data,
     fetch_requisition_data,
     fetch_service_data,
+    format_nis_sync_result,
     kerio_login,
     nis_data_import,
     omv_putnicka_data_import,
@@ -24,6 +25,13 @@ import time
 
 logger = logging.getLogger(__name__)
 LOCK_PREFIX = "ims_erp:task-lock"
+
+
+def _run_nis_data_import_with_report():
+    result = nis_data_import()
+    message = format_nis_sync_result(result)
+    logger.info("NIS task report: %s", message)
+    return message
 
 
 def _run_with_singleton_lock(task_name, lock_ttl_seconds, fn):
@@ -86,7 +94,7 @@ def run_nis_command():
     return _run_with_singleton_lock(
         task_name="run_nis_command",
         lock_ttl_seconds=4 * 60 * 60,
-        fn=nis_data_import,
+        fn=_run_nis_data_import_with_report,
     )
 
 
