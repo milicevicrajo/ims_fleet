@@ -839,14 +839,31 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
                 vehicle = traffic_card.vehicle
 
+                def parse_decimal(value, default=0.0):
+                    value = str(value or "").strip()
+                    if not value:
+                        return default
+                    normalized = value.replace(" ", "")
+                    if "," in normalized and "." in normalized:
+                        if normalized.rfind(",") > normalized.rfind("."):
+                            normalized = normalized.replace(".", "").replace(",", ".")
+                        else:
+                            normalized = normalized.replace(",", "")
+                    elif "," in normalized:
+                        normalized = normalized.replace(",", ".")
+                    return float(normalized)
+
                 # Konvertuj datume i druge vrednosti
                 naive_dt = datetime.strptime(row['Transactiondate'], '%Y-%m-%d %H:%M:%S')
                 transaction_date = dj_timezone.make_aware(naive_dt, dj_timezone.get_current_timezone()) if dj_timezone.is_naive(naive_dt) else naive_dt
-                amount = float(row['Quantity'].replace(',', '.'))
+                amount = parse_decimal(row.get('Quantity'))
 
                 # Konvertuj bruto troÅ¡ak i PDV u decimalne vrednosti
-                cost_bruto = float(row['Gross CC'].replace(',', '').strip())
-                vat = float(row['VAT'].replace(',', '').strip())
+                cost_bruto = parse_decimal(row.get('Gross CC'))
+                vat = parse_decimal(row.get('VAT'), default=0.0)
+
+                mileage_value = row.get('Mileage')
+                mileage = int(parse_decimal(mileage_value, default=0.0))
 
                 job_code = get_vehicle_job_code(vehicle)
                 # IzraÄunaj neto troÅ¡ak
@@ -862,7 +879,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                         cost_neto=cost_neto,
                         supplier="OMV",
                         job_code=job_code,
-                        mileage=row['Mileage'],
+                        mileage=mileage,
                     )
                     created += 1
                     logger.info(
