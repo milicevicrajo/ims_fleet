@@ -1,4 +1,81 @@
 {% load static %}
+<style>
+  .topbar .app-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .topbar .navbar-collapse,
+  .topbar .navbar-nav.me-auto,
+  .topbar .app-nav-wrap {
+    min-width: 0;
+  }
+  .topbar .navbar-collapse {
+    align-items: stretch;
+  }
+  .topbar .navbar-nav.me-auto {
+    height: 64px;
+    align-items: flex-end;
+  }
+  .topbar .navbar-nav.me-auto,
+  .topbar .app-nav-wrap {
+    flex: 1 1 auto;
+  }
+  .topbar .app-nav-wrap {
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 6px;
+  }
+  .topbar .top-navbar .navbar-nav > .app-nav-wrap:hover {
+    background: transparent;
+  }
+  .topbar .top-navbar .navbar-nav .app-nav .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px !important;
+    min-height: 36px;
+    padding: 7px 11px !important;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 600;
+    line-height: 1 !important;
+    white-space: nowrap;
+  }
+  .topbar .top-navbar .navbar-nav .app-nav .nav-link i {
+    font-size: 18px;
+    line-height: 1;
+  }
+  .topbar .top-navbar .navbar-nav .app-nav .nav-link:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.10);
+  }
+  .topbar .top-navbar .navbar-nav .app-nav .nav-link.active {
+    color: #fff;
+    background: rgba(47, 143, 111, 0.95);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+  }
+  .topbar .top-navbar .navbar-nav .app-nav .nav-link.disabled {
+    color: rgba(255, 255, 255, 0.42);
+    cursor: not-allowed;
+  }
+  @media (max-width: 991.98px) {
+    .topbar .app-nav .app-label {
+      display: none;
+    }
+    .topbar .top-navbar .navbar-nav .app-nav .nav-link {
+      min-width: 38px;
+      justify-content: center;
+      padding-left: 9px !important;
+      padding-right: 9px !important;
+    }
+  }
+</style>
 <header class="topbar" data-navbarbg="skin5">
   <nav class="navbar top-navbar navbar-expand-md navbar-dark">
 
@@ -22,81 +99,52 @@
             </a>
         </li>
 
-        <!-- App switcher -->
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle text-white" href="#" id="appsDropdown"
-            role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="mdi mdi-apps me-1"></i>
-            {% if current_app == "fleet" %}Flota
-            {% elif current_app == "naplata" %}Naplata
-            {% elif current_app == "pravna" %}Pravna služba
-            {% elif current_app == "menice" %}Menice
-            {% elif current_app == "kadrovi" %}Kadrovi
-            {% elif current_app == "administracija" %}Administracija
-            {% else %}Aplikacije{% endif %}
+        <li class="nav-item app-nav-wrap">
+          <div class="app-nav" aria-label="Aplikacije">
+            <a class="nav-link {% if current_app == 'fleet' %}active{% endif %}"
+               href="{% url 'switch_app' 'fleet' %}?next={% url 'dashboard' %}"
+               title="Flota">
+              <i class="mdi mdi-car"></i><span class="app-label">Flota</span>
             </a>
-            <ul class="dropdown-menu" aria-labelledby="appsDropdown">
-            <li>
-                <a class="dropdown-item d-flex justify-content-between align-items-center"
-                href="{% url 'switch_app' 'fleet' %}?next={% url 'dashboard' %}">
-                Flota
-                {% if current_app == "fleet" %}<span class="badge bg-success">aktivno</span>{% endif %}
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item d-flex justify-content-between align-items-center"
-                href="{% url 'switch_app' 'naplata' %}?next={% url 'naplata:lista_dugovanja_po_bucketima' %}">
-                Naplata
-                {% if current_app == "naplata" %}<span class="badge bg-success">aktivno</span>{% endif %}
-                </a>
-            </li>
-            <li>
-              <a class="dropdown-item d-flex justify-content-between align-items-center"
-              href="{% url 'switch_app' 'pravna' %}?next={% url 'naplata:pravna_cases_list' case_type='tuzeni' %}">
-              Pravna služba
-              {% if current_app == "pravna" %}<span class="badge bg-success">aktivno</span>{% endif %}
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item d-flex justify-content-between align-items-center"
-              href="{% url 'switch_app' 'menice' %}?next={% url 'menice:menica_list' tip='izlazna' %}">
-              Menice
-              {% if current_app == "menice" %}<span class="badge bg-success">aktivno</span>{% endif %}
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item d-flex justify-content-between align-items-center"
-              href="{% url 'switch_app' 'ugovori' %}?next={% url 'ugovori:contract_list' %}">
-              Ugovori
-              {% if current_app == "ugovori" %}<span class="badge bg-success">aktivno</span>{% endif %}
-              </a>
-            </li>
-            <li>
-                <a class="dropdown-item d-flex justify-content-between align-items-center"
-                href="{% url 'switch_app' 'kadrovi' %}?next={% url 'employee_list' %}">
-                Kadrovi
-                {% if current_app == "kadrovi" %}<span class="badge bg-success">aktivno</span>{% endif %}
-                </a>
-            </li>
-            <li>
+            <a class="nav-link {% if current_app == 'naplata' %}active{% endif %}"
+               href="{% url 'switch_app' 'naplata' %}?next={% url 'naplata:lista_dugovanja_po_bucketima' %}"
+               title="Naplata">
+              <i class="mdi mdi-cash-multiple"></i><span class="app-label">Naplata</span>
+            </a>
+            <a class="nav-link {% if current_app == 'pravna' %}active{% endif %}"
+               href="{% url 'switch_app' 'pravna' %}?next={% url 'naplata:pravna_cases_list' case_type='tuzeni' %}"
+               title="Pravna sluzba">
+              <i class="mdi mdi-gavel"></i><span class="app-label">Pravna</span>
+            </a>
+            <a class="nav-link {% if current_app == 'menice' %}active{% endif %}"
+               href="{% url 'switch_app' 'menice' %}?next={% url 'menice:menica_list' tip='izlazna' %}"
+               title="Menice">
+              <i class="mdi mdi-file-document"></i><span class="app-label">Menice</span>
+            </a>
+            <a class="nav-link {% if current_app == 'ugovori' %}active{% endif %}"
+               href="{% url 'switch_app' 'ugovori' %}?next={% url 'ugovori:contract_list' %}"
+               title="Ugovori">
+              <i class="mdi mdi-file-document-multiple"></i><span class="app-label">Ugovori</span>
+            </a>
+            <a class="nav-link {% if current_app == 'kadrovi' %}active{% endif %}"
+               href="{% url 'switch_app' 'kadrovi' %}?next={% url 'employee_list' %}"
+               title="Kadrovi">
+              <i class="mdi mdi-account-group"></i><span class="app-label">Kadrovi</span>
+            </a>
             {% if user.is_superuser %}
-                <a class="dropdown-item d-flex justify-content-between align-items-center"
-                href="{% url 'switch_app' 'administracija' %}?next={% url 'dashboard' %}">
-                Administracija
-                {% if current_app == "administracija" %}
-                    <span class="badge bg-success">aktivno</span>
-                {% endif %}
-                </a>
+              <a class="nav-link {% if current_app == 'administracija' %}active{% endif %}"
+                 href="{% url 'switch_app' 'administracija' %}?next={% url 'dashboard' %}"
+                 title="Administracija">
+                <i class="mdi mdi-shield-account"></i><span class="app-label">Admin</span>
+              </a>
             {% else %}
-                <a class="dropdown-item disabled d-flex justify-content-between align-items-center"
-                href="#" tabindex="-1" aria-disabled="true" data-no-preloader title="Samo za administratore">
-                Administracija <i class="mdi mdi-lock ms-2"></i>
-                </a>
+              <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true" data-no-preloader title="Samo za administratore">
+                <i class="mdi mdi-lock"></i><span class="app-label">Admin</span>
+              </a>
             {% endif %}
-            </li>
-
-            </ul>
+          </div>
         </li>
+
         </ul>
 
       <!-- DESNA STRANA: Logout -->

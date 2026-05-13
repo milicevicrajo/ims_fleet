@@ -29,11 +29,43 @@
     color: #14395b;
     font-weight: 700;
   }
-  .form-check-card {
+  .active-check-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
     background: #f8fafc;
     border: 1px solid #e6ebf1;
     border-radius: 8px;
     padding: 10px 12px;
+    box-shadow: 0 1px 2px rgba(20, 57, 91, 0.04);
+  }
+  .active-check-card input[type="checkbox"],
+  .active-check-card .form-check-input {
+    float: none !important;
+    position: static;
+    width: 18px;
+    height: 18px;
+    margin: 0 !important;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .active-check-card input[type="checkbox"]:checked,
+  .active-check-card .form-check-input:checked {
+    background-color: #2f8f6f;
+    border-color: #2f8f6f;
+  }
+  .active-check-card input[type="checkbox"]:focus,
+  .active-check-card .form-check-input:focus {
+    border-color: #1f6f8b;
+    box-shadow: 0 0 0 0.18rem rgba(31, 111, 139, 0.14);
+  }
+  .active-check-card .form-check-label {
+    margin: 0;
+    color: #14395b;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1.2;
   }
   .dynamic-field[hidden] { display: none !important; }
 </style>
@@ -170,9 +202,9 @@
             {% if form.note.errors %}<div class="invalid-feedback d-block">{{ form.note.errors.0 }}</div>{% endif %}
           </div>
           <div class="col-12 col-lg-4 mb-3 d-flex align-items-end">
-            <div class="form-check form-check-card w-100">
+            <div class="active-check-card w-100">
               {{ form.is_active }}
-              <label class="form-check-label ms-1" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+              <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
               {% if form.is_active.errors %}<div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>{% endif %}
             </div>
           </div>

@@ -3,16 +3,165 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>{{ title }}</h2>
-  <div class="d-flex gap-2">
-    <a class="btn btn-primary" href="{% url 'ugovori:partner_update' pk=partner.pk %}">
+<style>
+  .partner-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .partner-hero h1 {
+    font-size: 1.45rem;
+    margin: 0;
+    letter-spacing: 0;
+  }
+  .partner-hero p {
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, .86);
+  }
+  .partner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .partner-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .partner-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-weight: 700;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .partner-chip.active { background: #e7f7ef; color: #147044; }
+  .partner-chip.inactive { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .partner-chip.legal { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .partner-chip.person { background: #fff4db; color: #7a4d00; border: 1px solid #f1d38a; }
+  .partner-chip.domestic { background: #e7f7ef; color: #147044; border: 1px solid #bfe6cf; }
+  .partner-chip.foreign { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+  .partner-section {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .partner-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+    background: #f8fafc;
+    color: #14395b;
+    font-weight: 700;
+  }
+  .partner-section-body {
+    padding: 16px;
+  }
+  .partner-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .partner-meta {
+    border: 1px solid #eef2f6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fff;
+  }
+  .partner-meta-label {
+    color: #6c7f90;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .partner-meta-value {
+    color: #243746;
+    font-weight: 700;
+    margin-top: 3px;
+    word-break: break-word;
+  }
+  .partner-note {
+    border-left: 3px solid #1f6f8b;
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: #3e5569;
+  }
+  .contract-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 700;
+    font-size: .8rem;
+  }
+  .contract-status.active { background: #e7f7ef; color: #147044; }
+  .contract-status.draft { background: #fff4db; color: #7a4d00; }
+  .contract-status.expired { background: #fde8e8; color: #9b1c1c; }
+  .contract-status.closed { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .side-card {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .side-card-body {
+    padding: 14px;
+  }
+  .partner-contract-table th,
+  .partner-contract-table td {
+    vertical-align: middle;
+  }
+  @media (max-width: 767.98px) {
+    .partner-meta-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="partner-hero d-flex flex-wrap justify-content-between align-items-start gap-3">
+  <div>
+    <div class="partner-hero-chips">
+      {% if partner.is_active %}
+        <span class="partner-chip active"><i class="mdi mdi-check-circle"></i> Aktivan</span>
+      {% else %}
+        <span class="partner-chip inactive"><i class="mdi mdi-close-circle"></i> Neaktivan</span>
+      {% endif %}
+
+      {% if partner.partner_type == "legal_entity" %}
+        <span class="partner-chip legal"><i class="mdi mdi-domain"></i> {{ partner.get_partner_type_display }}</span>
+      {% else %}
+        <span class="partner-chip person"><i class="mdi mdi-account"></i> {{ partner.get_partner_type_display }}</span>
+      {% endif %}
+
+      {% if partner.residency == "domestic" %}
+        <span class="partner-chip domestic"><i class="mdi mdi-map-marker-check"></i> {{ partner.get_residency_display }}</span>
+      {% else %}
+        <span class="partner-chip foreign"><i class="mdi mdi-earth"></i> {{ partner.get_residency_display }}</span>
+      {% endif %}
+    </div>
+    <h1>{{ partner.name }}</h1>
+    <p>Partner u evidenciji ugovora{% if partner.city %} - {{ partner.city }}{% endif %}</p>
+  </div>
+  <div class="partner-actions">
+    <a class="btn btn-light btn-sm" href="{% url 'ugovori:partner_update' pk=partner.pk %}">
       <i class="mdi mdi-pencil"></i> Izmeni
     </a>
-    <a class="btn btn-outline-danger" href="{% url 'ugovori:partner_delete' pk=partner.pk %}">
-      <i class="mdi mdi-delete"></i> Obriši
-    </a>
-    <a class="btn btn-outline-secondary" href="{% url 'ugovori:partner_list' %}">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'ugovori:partner_list' %}">
       <i class="mdi mdi-arrow-left"></i> Nazad
     </a>
   </div>
@@ -28,81 +177,105 @@
 {% endif %}
 
 <div class="row">
-  <div class="col-lg-5">
-    <div class="card mb-3">
-      <div class="card-header"><h5 class="mb-0">Podaci o partneru</h5></div>
-      <div class="card-body p-0">
-        <table class="table table-sm table-striped mb-0">
-          <tbody>
-            <tr><th style="width:180px">Naziv</th><td>{{ partner.name }}</td></tr>
-            <tr><th>Tip partnera</th><td>{{ partner.get_partner_type_display }}</td></tr>
-            <tr><th>Rezidentnost</th><td>{{ partner.get_residency_display }}</td></tr>
-            <tr>
-              <th>Status</th>
-              <td>
-                {% if partner.is_active %}
-                  <span class="badge bg-success">Aktivan</span>
-                {% else %}
-                  <span class="badge bg-secondary">Neaktivan</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% if partner.pib %}
-            <tr><th>PIB</th><td>{{ partner.pib }}</td></tr>
-            {% endif %}
-            {% if partner.maticni_broj %}
-            <tr><th>Matični broj</th><td>{{ partner.maticni_broj }}</td></tr>
-            {% endif %}
-            {% if partner.jmbg %}
-            <tr><th>JMBG</th><td>{{ partner.jmbg }}</td></tr>
-            {% endif %}
-            {% if partner.passport_number %}
-            <tr><th>Broj pasoša</th><td>{{ partner.passport_number }}</td></tr>
-            {% endif %}
-            {% if partner.foreign_tax_id %}
-            <tr><th>Strani poreski ID</th><td>{{ partner.foreign_tax_id }}</td></tr>
-            {% endif %}
-            {% if partner.country %}
-            <tr><th>Zemlja</th><td>{{ partner.country }}</td></tr>
-            {% endif %}
-            {% if partner.city %}
-            <tr><th>Grad / Mesto</th><td>{{ partner.city }}</td></tr>
-            {% endif %}
-            {% if partner.address %}
-            <tr><th>Adresa</th><td>{{ partner.address }}</td></tr>
-            {% endif %}
-            {% if partner.email %}
-            <tr><th>Email</th><td><a href="mailto:{{ partner.email }}">{{ partner.email }}</a></td></tr>
-            {% endif %}
-            {% if partner.phone %}
-            <tr><th>Telefon</th><td>{{ partner.phone }}</td></tr>
-            {% endif %}
-            {% if partner.contact_person %}
-            <tr><th>Kontakt osoba</th><td>{{ partner.contact_person }}</td></tr>
-            {% endif %}
-            {% if partner.external_sif_par %}
-            <tr><th>Šifra (stari sistem)</th><td>{{ partner.external_sif_par }}</td></tr>
-            {% endif %}
-            {% if partner.note %}
-            <tr><th>Napomena</th><td>{{ partner.note|linebreaksbr }}</td></tr>
-            {% endif %}
-            <tr><th>Kreirao</th><td>{{ partner.created_by|default:"-" }} — {{ partner.created_at|date:"d.m.Y H:i" }}</td></tr>
-          </tbody>
-        </table>
+  <div class="col-lg-8">
+    <div class="partner-section">
+      <div class="partner-section-header">
+        <span><i class="mdi mdi-account-card-details"></i> Podaci o partneru</span>
+      </div>
+      <div class="partner-section-body">
+        <div class="partner-meta-grid">
+          {% if partner.external_sif_par %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Sifra starog sistema</div>
+              <div class="partner-meta-value">{{ partner.external_sif_par }}</div>
+            </div>
+          {% endif %}
+          {% if partner.pib %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">PIB</div>
+              <div class="partner-meta-value">{{ partner.pib }}</div>
+            </div>
+          {% endif %}
+          {% if partner.maticni_broj %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Maticni broj</div>
+              <div class="partner-meta-value">{{ partner.maticni_broj }}</div>
+            </div>
+          {% endif %}
+          {% if partner.jmbg %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">JMBG</div>
+              <div class="partner-meta-value">{{ partner.jmbg }}</div>
+            </div>
+          {% endif %}
+          {% if partner.passport_number %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Broj pasosa</div>
+              <div class="partner-meta-value">{{ partner.passport_number }}</div>
+            </div>
+          {% endif %}
+          {% if partner.foreign_tax_id %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Strani poreski ID</div>
+              <div class="partner-meta-value">{{ partner.foreign_tax_id }}</div>
+            </div>
+          {% endif %}
+          {% if partner.country %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Zemlja</div>
+              <div class="partner-meta-value">{{ partner.country }}</div>
+            </div>
+          {% endif %}
+          {% if partner.city %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Grad / mesto</div>
+              <div class="partner-meta-value">{{ partner.city }}</div>
+            </div>
+          {% endif %}
+          {% if partner.address %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Adresa</div>
+              <div class="partner-meta-value">{{ partner.address }}</div>
+            </div>
+          {% endif %}
+          {% if partner.contact_person %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Kontakt osoba</div>
+              <div class="partner-meta-value">{{ partner.contact_person }}</div>
+            </div>
+          {% endif %}
+          {% if partner.email %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Email</div>
+              <div class="partner-meta-value"><a href="mailto:{{ partner.email }}">{{ partner.email }}</a></div>
+            </div>
+          {% endif %}
+          {% if partner.phone %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Telefon</div>
+              <div class="partner-meta-value">{{ partner.phone }}</div>
+            </div>
+          {% endif %}
+        </div>
+
+        {% if partner.note %}
+          <div class="mt-3">
+            <div class="partner-meta-label mb-1">Napomena</div>
+            <div class="partner-note">{{ partner.note|linebreaksbr }}</div>
+          </div>
+        {% endif %}
       </div>
     </div>
-  </div>
 
-  <div class="col-lg-7">
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Ugovori ({{ contracts.count }})</h5>
+    <div class="partner-section">
+      <div class="partner-section-header">
+        <span><i class="mdi mdi-file-document"></i> Ugovori ({{ contracts.count }})</span>
         <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:contract_create' %}">
           <i class="mdi mdi-plus"></i> Novi ugovor
         </a>
       </div>
-      <div class="card-body p-0">
-        <table class="table table-sm mb-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 partner-contract-table">
           <thead>
             <tr>
               <th>Broj ugovora</th>
@@ -110,37 +283,68 @@
               <th>Tip</th>
               <th>Status</th>
               <th>Aneksa</th>
-              <th></th>
+              <th class="text-end">Akcije</th>
             </tr>
           </thead>
           <tbody>
             {% for ugovor in contracts %}
-            <tr>
-              <td>
-                <a href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}">{{ ugovor.contract_number }}</a>
-              </td>
-              <td>{{ ugovor.title }}</td>
-              <td>{{ ugovor.contract_type.name }}</td>
-              <td>
-                {% if ugovor.status == "active" %}<span class="badge bg-success">Aktivan</span>
-                {% elif ugovor.status == "draft" %}<span class="badge bg-warning text-dark">Nacrt</span>
-                {% elif ugovor.status == "expired" %}<span class="badge bg-danger">Istekao</span>
-                {% elif ugovor.status == "terminated" %}<span class="badge bg-dark">Raskinut</span>
-                {% else %}<span class="badge bg-secondary">{{ ugovor.get_status_display }}</span>
-                {% endif %}
-              </td>
-              <td>{{ ugovor.annexes.count }}</td>
-              <td>
-                <a class="btn btn-sm btn-info" href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}" title="Detalj">
-                  <i class="mdi mdi-eye"></i>
-                </a>
-              </td>
-            </tr>
+              <tr>
+                <td>
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}">
+                    <i class="mdi mdi-eye"></i> {{ ugovor.contract_number }}
+                  </a>
+                </td>
+                <td>{{ ugovor.title }}</td>
+                <td>{{ ugovor.contract_type.name }}</td>
+                <td>
+                  {% if ugovor.status == "active" %}<span class="contract-status active">Aktivan</span>
+                  {% elif ugovor.status == "draft" %}<span class="contract-status draft">Nacrt</span>
+                  {% elif ugovor.status == "expired" %}<span class="contract-status expired">Istekao</span>
+                  {% else %}<span class="contract-status closed">{{ ugovor.get_status_display }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ ugovor.annexes.count }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:contract_update' pk=ugovor.pk %}">
+                    <i class="mdi mdi-pencil"></i> Izmeni
+                  </a>
+                </td>
+              </tr>
             {% empty %}
-            <tr><td colspan="6" class="text-center text-muted py-2">Nema ugovora za ovog partnera.</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-3">Nema ugovora za ovog partnera.</td></tr>
             {% endfor %}
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="side-card">
+      <div class="partner-section-header">
+        <span><i class="mdi mdi-information-outline"></i> Evidencija</span>
+      </div>
+      <div class="side-card-body">
+        <div class="partner-meta mb-2">
+          <div class="partner-meta-label">Kreirao</div>
+          <div class="partner-meta-value">{{ partner.created_by|default:"-" }}</div>
+        </div>
+        <div class="partner-meta mb-2">
+          <div class="partner-meta-label">Kreirano</div>
+          <div class="partner-meta-value">{{ partner.created_at|date:"d.m.Y H:i" }}</div>
+        </div>
+        <div class="partner-meta">
+          <div class="partner-meta-label">Poslednja izmena</div>
+          <div class="partner-meta-value">{{ partner.updated_at|date:"d.m.Y H:i" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="side-card-body">
+        <a class="btn btn-outline-danger w-100" href="{% url 'ugovori:partner_delete' pk=partner.pk %}">
+          <i class="mdi mdi-delete"></i> Obrisi partnera
+        </a>
       </div>
     </div>
   </div>

@@ -36,6 +36,35 @@
     border-radius: 8px;
     padding: 12px;
   }
+  .party-role-field .form-label {
+    color: #14395b;
+    font-weight: 600;
+  }
+  .contract-party-role-select {
+    height: 38px;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    color: #3e5569;
+    background-color: #fff;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #607d8b 50%),
+      linear-gradient(135deg, #607d8b 50%, transparent 50%);
+    background-position:
+      calc(100% - 17px) 16px,
+      calc(100% - 12px) 16px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding: 6px 34px 6px 12px;
+    box-shadow: 0 1px 2px rgba(20, 57, 91, 0.04);
+    appearance: none;
+  }
+  .contract-party-role-select:focus {
+    border-color: #1f6f8b;
+    box-shadow: 0 0 0 0.18rem rgba(31, 111, 139, 0.14);
+  }
+  .contract-party-role-select:hover {
+    border-color: #9fb1c1;
+  }
   .dynamic-field[hidden] { display: none !important; }
 </style>
 
@@ -189,8 +218,10 @@
               {{ party_form.partner }}
               {% if party_form.partner.errors %}<div class="invalid-feedback d-block">{{ party_form.partner.errors.0 }}</div>{% endif %}
             </div>
-            <div class="col-12 col-md-5 col-lg-3">
-              <label class="form-label">Uloga</label>
+            <div class="col-12 col-md-5 col-lg-3 party-role-field">
+              <label class="form-label" for="{{ party_form.role.id_for_label }}">
+                <i class="mdi mdi-account-switch-outline"></i> Uloga
+              </label>
               {{ party_form.role }}
               {% if party_form.role.errors %}<div class="invalid-feedback d-block">{{ party_form.role.errors.0 }}</div>{% endif %}
             </div>

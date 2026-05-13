@@ -144,7 +144,7 @@ class ContractPartyForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["partner"].widget = Select2Widget(attrs={"class": "select2-method"})
         self.fields["partner"].queryset = Partner.objects.filter(is_active=True)
-        self.fields["role"].widget.attrs.setdefault("class", "form-select")
+        self.fields["role"].widget.attrs.setdefault("class", "form-select contract-party-role-select")
         self.fields["note"].widget.attrs.setdefault("class", "form-control")
         self.fields["note"].required = False
 
