@@ -6,5 +6,5 @@ class Command(BaseCommand):
     
     def handle(self, *args, **kwargs):
         file_path = 'Transakcije po kupcima (2025-10-03).xlsx'  # Zamenite putanju do vaše Excel datoteke
-        # import_nis_transactions(file_path)
         import_nis_fuel_consumption(file_path)
+        import_nis_transactions(file_path)

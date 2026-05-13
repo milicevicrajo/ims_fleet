@@ -929,9 +929,49 @@ def import_omv_transactions_from_csv(csv_file_path):
     errors = 0
     missing_vehicles = set()
 
+    def parse_decimal(value, default=None):
+        value = str(value or "").strip()
+        if not value:
+            return default
+        normalized = value.replace(" ", "")
+        if "," in normalized and "." in normalized:
+            if normalized.rfind(",") > normalized.rfind("."):
+                normalized = normalized.replace(".", "").replace(",", ".")
+            else:
+                normalized = normalized.replace(",", "")
+        elif "," in normalized:
+            normalized = normalized.replace(",", ".")
+        return float(normalized)
+
+    def parse_datetime(value):
+        value = str(value or "").strip()
+        if not value:
+            return None
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%d.%m.%Y %H:%M:%S", "%Y-%m-%d %H:%M", "%d.%m.%Y %H:%M"):
+            try:
+                return timezone.localize(datetime.strptime(value, fmt))
+            except ValueError:
+                continue
+        raise ValueError(f"Unsupported datetime format: {value}")
+
+    def parse_date(value):
+        value = str(value or "").strip()
+        if not value:
+            return None
+        for fmt in ("%Y-%m-%d", "%d.%m.%Y"):
+            try:
+                return datetime.strptime(value, fmt).date()
+            except ValueError:
+                continue
+        raise ValueError(f"Unsupported date format: {value}")
+
+    def parse_bool(value):
+        value = str(value or "").strip().lower()
+        return value in {"yes", "da", "true", "1"}
+
     with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')  # Pazi na delimiter ';'
-        for row in reader:
+        for index, row in enumerate(reader, start=1):
             try:
                 # Formatiraj tablice
                 formatted_plate = format_license_plate(row['License plate No'])
@@ -940,83 +980,88 @@ def import_omv_transactions_from_csv(csv_file_path):
                 traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
                 vehicle = traffic_card.vehicle
 
-                def to_aware_datetime(value, format='%Y-%m-%d %H:%M:%S'):
-                    if value:
-                        naive_datetime = datetime.strptime(value, format)
-                        return timezone.localize(naive_datetime)
-                    return None
+                quantity = parse_decimal(row.get('Quantity'))
+                gross_cc = parse_decimal(row.get('Gross CC'))
+                vat = parse_decimal(row.get('VAT'))
+                discount = parse_decimal(row.get('Discount'))
+                surcharge = parse_decimal(row.get('Surcharge'))
+                cost_1 = parse_decimal(row.get('Cost 1'))
+                cost_2 = parse_decimal(row.get('Cost 2'))
+                amount_other = parse_decimal(row.get('Amount other'))
+                unit_price = parse_decimal(row.get('Unitprice'))
+                amount = parse_decimal(row.get('Amount'))
+                mileage = parse_decimal(row.get('Mileage'))
+                corrected_mileage = parse_decimal(row.get('Corrected mileage'))
 
-                # Konverzija numeričkih vrednosti, ostavi kao None ako je prazno
-                def to_float(value):
-                    return float(value.replace(',', '')) if value else None
-
-                quantity = to_float(row['Quantity'])
-                gross_cc = to_float(row['Gross CC'])
-                vat = to_float(row['VAT'])
-                discount = to_float(row['Discount'])
-                surcharge = to_float(row['Surcharge'])
-                cost_1 = to_float(row['Cost 1'])
-                cost_2 = to_float(row['Cost 2'])
-                amount_other = to_float(row['Amount other'])
-                unit_price = to_float(row['Unitprice'])
-                amount = to_float(row['Amount'])
-                mileage = to_float(row['Mileage'])
-                corrected_mileage = to_float(row['Corrected mileage'])
-
-                # Polja koja zahtevaju datetime konverziju
-                transaction_date = to_aware_datetime(row['Transactiondate'])  # 'Transactiondate'
-                invoice_date = to_aware_datetime(row['Invoice date'], format='%Y-%m-%d') if row['Invoice date'] else None  # 'Invoice date'
-                date_to = to_aware_datetime(row['Date to'], format='%Y-%m-%d') if row['Date to'] else None  # 'Date to'
+                transaction_date = parse_datetime(row.get('Transactiondate'))
+                invoice_date = parse_date(row.get('Invoice date'))
+                date_to = parse_date(row.get('Date to'))
                 
                 # Kreiraj instancu TransactionOMV modela i sačuvaj je u bazi
-                TransactionOMV.objects.create(
-                    vehicle = vehicle,
-                    issuer=row['Issuer'].strip(),
-                    customer=row['Customer'],
-                    card=row['Card'],
+                _, was_created = TransactionOMV.objects.get_or_create(
                     license_plate_no=formatted_plate,
                     transaction_date=transaction_date,
-                    product_inv=row['Product INV'],
-                    quantity=quantity,
-                    gross_cc=gross_cc,
-                    vat=vat,
-                    voucher=row['Voucher'],
-                    mileage=mileage,
-                    corrected_mileage=corrected_mileage,
-                    additional_info=row['Additional info'],
-                    supply_country=row['Supply country'],
-                    site_town=row['Site Town'],
-                    product_del=row['Product DEL'],
-                    unit_price=unit_price,
-                    amount=amount,
-                    discount=discount,
-                    surcharge=surcharge,
-                    vat_2010=row['VAT2010'],
-                    supplier_currency=row['Suppliercurrency'],
-                    invoice_no=row['Voucher'],
-                    invoice_date=invoice_date,
-                    invoiced=True if row['Invoiced?'] == 'Yes' else False,
-                    state=row['State'],
-                    supplier=row['Supplier'],
-                    cost_1=cost_1,
-                    cost_2=cost_2,
-                    reference_no=row['Reference No'],
-                    record_type=row['Recordtype'],
-                    amount_other=amount_other,
-                    is_list_price=True if row['is listprice ?'] == 'Yes' else False,
-                    approval_code=row['Approval code'],
-                    date_to=date_to,
-                    final_trx=row['Final Trx.'],
-                    lpi=row['LPI']
+                    product_inv=row.get('Product INV'),
+                    defaults={
+                        "vehicle": vehicle,
+                        "issuer": row['Issuer'].strip(),
+                        "customer": row['Customer'],
+                        "card": row['Card'],
+                        "quantity": quantity,
+                        "gross_cc": gross_cc,
+                        "vat": vat,
+                        "voucher": row.get('Voucher'),
+                        "mileage": mileage,
+                        "corrected_mileage": corrected_mileage,
+                        "additional_info": row.get('Additional info'),
+                        "supply_country": row.get('Supply country'),
+                        "site_town": row.get('Site Town'),
+                        "product_del": row.get('Product DEL'),
+                        "unit_price": unit_price,
+                        "amount": amount,
+                        "discount": discount,
+                        "surcharge": surcharge,
+                        "vat_2010": row.get('VAT2010'),
+                        "supplier_currency": row.get('Suppliercurrency'),
+                        "invoice_no": row.get('Voucher'),
+                        "invoice_date": invoice_date,
+                        "invoiced": parse_bool(row.get('Invoiced?')),
+                        "state": row.get('State'),
+                        "supplier": row.get('Supplier'),
+                        "cost_1": cost_1,
+                        "cost_2": cost_2,
+                        "reference_no": row.get('Reference No'),
+                        "record_type": row.get('Recordtype'),
+                        "amount_other": amount_other,
+                        "is_list_price": 1 if parse_bool(row.get('is listprice ?')) else 0,
+                        "approval_code": row.get('Approval code'),
+                        "date_to": date_to,
+                        "final_trx": row.get('Final Trx.'),
+                        "lpi": row.get('LPI'),
+                    }
                 )
-                created += 1
+                if was_created:
+                    created += 1
+                else:
+                    skipped += 1
             
             except ObjectDoesNotExist:
                 skipped += 1
                 missing_vehicles.add(row.get('License plate No', '').strip())
+                logger.warning(
+                    "OMV transactions row skipped missing vehicle: row=%s raw_plate=%s",
+                    index,
+                    row.get('License plate No'),
+                )
             except Exception as e:
                 skipped += 1
                 errors += 1
+                logger.exception(
+                    "OMV transactions row error: row=%s plate=%s error=%s",
+                    index,
+                    row.get('License plate No'),
+                    e,
+                )
 
     result = {
         "status": "ok",
