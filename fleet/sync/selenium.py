@@ -818,13 +818,22 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
     skipped = 0
     errors = 0
     missing_vehicles = set()
+    logger.info("OMV fuel import start: file=%s", csv_file_path)
 
     with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
-        for row in reader:
+        for index, row in enumerate(reader, start=1):
+            formatted_plate = ""
             try:
+                logger.info("OMV fuel row start: row=%s", index)
                 # Formatiraj registarske tablice
                 formatted_plate = format_license_plate(row['License plate No'])
+                logger.info(
+                    "OMV fuel row plate: row=%s raw=%s formatted=%s",
+                    index,
+                    row.get('License plate No'),
+                    formatted_plate,
+                )
 
                 # PronaÄ‘i vozilo prema formatiranoj tablici u TrafficCard modelu
                 traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
@@ -856,15 +865,31 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                         mileage=row['Mileage'],
                     )
                     created += 1
+                    logger.info(
+                        "OMV fuel row created: row=%s plate=%s date=%s gross=%s qty=%s",
+                        index,
+                        formatted_plate,
+                        transaction_date,
+                        cost_bruto,
+                        amount,
+                    )
                 except IntegrityError:
                     skipped += 1
+                    logger.warning("OMV fuel row skipped duplicate: row=%s plate=%s", index, formatted_plate)
             
             except ObjectDoesNotExist:
                 skipped += 1
                 missing_vehicles.add(row.get('License plate No', '').strip())
+                logger.warning(
+                    "OMV fuel row skipped missing vehicle: row=%s raw_plate=%s formatted=%s",
+                    index,
+                    row.get('License plate No'),
+                    formatted_plate,
+                )
             except Exception as e:
                 skipped += 1
                 errors += 1
+                logger.exception("OMV fuel row error: row=%s plate=%s error=%s", index, formatted_plate, e)
 
     result = {
         "status": "ok",
@@ -987,13 +1012,11 @@ def import_omv_transactions_from_csv(csv_file_path):
 
 def import_nis_fuel_consumption(file_path):
     db_alias = nis_import_db_alias()
-    logger.info("NIS fuel import start: file=%s db_alias=%s", file_path, db_alias)
     # Preuzmi vremensku zonu iz Django podeÅ¡avanja
     timezone = pytz.timezone(settings.TIME_ZONE)
     
     # UÄitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1, engine="openpyxl")
-    logger.info("NIS fuel import loaded: rows=%s", len(df))
     created = 0
     skipped = 0
     errors = 0
@@ -1002,12 +1025,9 @@ def import_nis_fuel_consumption(file_path):
     # Ostatak funkcije ostaje isti...
     for index, row in df.iterrows():
         formatted_plate = ""
-        excel_row = index + 3
         try:
-            logger.info("NIS fuel row start: excel_row=%s", excel_row)
             # Formatiraj registarski broj pre nego što ga upotrebiš
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
-            logger.info("NIS fuel row plate: excel_row=%s raw=%s formatted=%s", excel_row, row.get('Registarska oznaka vozila'), formatted_plate)
 
             # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
             traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
@@ -1031,26 +1051,15 @@ def import_nis_fuel_consumption(file_path):
                 mileage=row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
             )
             created += 1
-            logger.info(
-                "NIS fuel row created: excel_row=%s plate=%s date=%s total=%s quantity=%s",
-                excel_row,
-                formatted_plate,
-                transaction_date,
-                row.get('Total'),
-                row.get('Količina'),
-            )
         
         except ObjectDoesNotExist:
             skipped += 1
             missing_vehicles.add(formatted_plate)
-            logger.warning("NIS fuel row skipped missing vehicle: excel_row=%s plate=%s", excel_row, formatted_plate)
         except IntegrityError:
             skipped += 1
-            logger.warning("NIS fuel row skipped duplicate: excel_row=%s plate=%s", excel_row, formatted_plate)
         except Exception as e:
             skipped += 1
             errors += 1
-            logger.exception("NIS fuel row error: excel_row=%s plate=%s error=%s", excel_row, formatted_plate, e)
 
     result = {
         "status": "ok",
@@ -1066,12 +1075,10 @@ def import_nis_fuel_consumption(file_path):
 
 def import_nis_transactions(file_path):
     db_alias = nis_import_db_alias()
-    logger.info("NIS transactions import start: file=%s db_alias=%s", file_path, db_alias)
     # Preuzmi vremensku zonu iz Django podešavanja
     timezone = pytz.timezone(settings.TIME_ZONE)
     # Učitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1)  # Koristi prvi sheet i drugi red kao zaglavlje
-    logger.info("NIS transactions import loaded: rows=%s", len(df))
     created = 0
     skipped = 0
     errors = 0
@@ -1079,17 +1086,9 @@ def import_nis_transactions(file_path):
 
     for index, row in df.iterrows():
         formatted_plate = ""
-        excel_row = index + 3
         try:
-            logger.info("NIS transactions row start: excel_row=%s", excel_row)
             # Formatiraj registarski broj pre nego što ga upotrebiš
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
-            logger.info(
-                "NIS transactions row plate: excel_row=%s raw=%s formatted=%s",
-                excel_row,
-                row.get('Registarska oznaka vozila'),
-                formatted_plate,
-            )
 
             # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
             traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
@@ -1144,25 +1143,15 @@ def import_nis_transactions(file_path):
                 nacin_ocitavanja_kartice=row['Način očitavanja kartice']
             )
             created += 1
-            logger.info(
-                "NIS transactions row created: excel_row=%s plate=%s transaction_id=%s total=%s",
-                excel_row,
-                formatted_plate,
-                row.get('ID transakcije'),
-                total,
-            )
         
         except ObjectDoesNotExist:
             skipped += 1
             missing_vehicles.add(formatted_plate)
-            logger.warning("NIS transactions row skipped missing vehicle: excel_row=%s plate=%s", excel_row, formatted_plate)
         except IntegrityError:
             skipped += 1
-            logger.warning("NIS transactions row skipped duplicate: excel_row=%s plate=%s", excel_row, formatted_plate)
         except Exception as e:
             skipped += 1
             errors += 1
-            logger.exception("NIS transactions row error: excel_row=%s plate=%s error=%s", excel_row, formatted_plate, e)
 
     result = {
         "status": "ok",
