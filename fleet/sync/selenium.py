@@ -902,7 +902,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                         return timezone.localize(naive_datetime)
                     return None
 
-                # Konverzija numeriÄkih vrednosti, ostavi kao None ako je prazno
+                # Konverzija numeričkih vrednosti, ostavi kao None ako je prazno
                 def to_float(value):
                     return float(value.replace(',', '')) if value else None
 
@@ -924,7 +924,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                 invoice_date = to_aware_datetime(row['Invoice date'], format='%Y-%m-%d') if row['Invoice date'] else None  # 'Invoice date'
                 date_to = to_aware_datetime(row['Date to'], format='%Y-%m-%d') if row['Date to'] else None  # 'Date to'
                 
-                # Kreiraj instancu TransactionOMV modela i saÄuvaj je u bazi
+                # Kreiraj instancu TransactionOMV modela i sačuvaj je u bazi
                 TransactionOMV.objects.create(
                     vehicle = vehicle,
                     issuer=row['Issuer'].strip(),
@@ -987,11 +987,13 @@ def import_omv_transactions_from_csv(csv_file_path):
 
 def import_nis_fuel_consumption(file_path):
     db_alias = nis_import_db_alias()
+    logger.info("NIS fuel import start: file=%s db_alias=%s", file_path, db_alias)
     # Preuzmi vremensku zonu iz Django podeÅ¡avanja
     timezone = pytz.timezone(settings.TIME_ZONE)
     
     # UÄitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1, engine="openpyxl")
+    logger.info("NIS fuel import loaded: rows=%s", len(df))
     created = 0
     skipped = 0
     errors = 0
@@ -1000,11 +1002,14 @@ def import_nis_fuel_consumption(file_path):
     # Ostatak funkcije ostaje isti...
     for index, row in df.iterrows():
         formatted_plate = ""
+        excel_row = index + 3
         try:
-            # Formatiraj registarski broj pre nego Å¡to ga upotrebiÅ¡
+            logger.info("NIS fuel row start: excel_row=%s", excel_row)
+            # Formatiraj registarski broj pre nego što ga upotrebiš
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
+            logger.info("NIS fuel row plate: excel_row=%s raw=%s formatted=%s", excel_row, row.get('Registarska oznaka vozila'), formatted_plate)
 
-            # PronaÄ‘i vozilo prema formatiranom registracionom brcoju u TrafficCard modelu
+            # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
             traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
@@ -1026,15 +1031,26 @@ def import_nis_fuel_consumption(file_path):
                 mileage=row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
             )
             created += 1
+            logger.info(
+                "NIS fuel row created: excel_row=%s plate=%s date=%s total=%s quantity=%s",
+                excel_row,
+                formatted_plate,
+                transaction_date,
+                row.get('Total'),
+                row.get('Količina'),
+            )
         
         except ObjectDoesNotExist:
             skipped += 1
             missing_vehicles.add(formatted_plate)
+            logger.warning("NIS fuel row skipped missing vehicle: excel_row=%s plate=%s", excel_row, formatted_plate)
         except IntegrityError:
             skipped += 1
+            logger.warning("NIS fuel row skipped duplicate: excel_row=%s plate=%s", excel_row, formatted_plate)
         except Exception as e:
             skipped += 1
             errors += 1
+            logger.exception("NIS fuel row error: excel_row=%s plate=%s error=%s", excel_row, formatted_plate, e)
 
     result = {
         "status": "ok",
@@ -1050,10 +1066,12 @@ def import_nis_fuel_consumption(file_path):
 
 def import_nis_transactions(file_path):
     db_alias = nis_import_db_alias()
-    # Preuzmi vremensku zonu iz Django podeÅ¡avanja
+    logger.info("NIS transactions import start: file=%s db_alias=%s", file_path, db_alias)
+    # Preuzmi vremensku zonu iz Django podešavanja
     timezone = pytz.timezone(settings.TIME_ZONE)
-    # UÄitaj Excel fajl
+    # Učitaj Excel fajl
     df = pd.read_excel(file_path, sheet_name=0, header=1)  # Koristi prvi sheet i drugi red kao zaglavlje
+    logger.info("NIS transactions import loaded: rows=%s", len(df))
     created = 0
     skipped = 0
     errors = 0
@@ -1061,11 +1079,19 @@ def import_nis_transactions(file_path):
 
     for index, row in df.iterrows():
         formatted_plate = ""
+        excel_row = index + 3
         try:
-            # Formatiraj registarski broj pre nego Å¡to ga upotrebiÅ¡
+            logger.info("NIS transactions row start: excel_row=%s", excel_row)
+            # Formatiraj registarski broj pre nego što ga upotrebiš
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
+            logger.info(
+                "NIS transactions row plate: excel_row=%s raw=%s formatted=%s",
+                excel_row,
+                row.get('Registarska oznaka vozila'),
+                formatted_plate,
+            )
 
-            # PronaÄ‘i vozilo prema formatiranom registracionom broju u TrafficCard modelu
+            # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
             traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
             vehicle = traffic_card.vehicle
 
@@ -1073,38 +1099,38 @@ def import_nis_transactions(file_path):
             naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
             transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
 
-            # Konverzija numeriÄkih vrednosti gde je potrebno
-            kolicina = row['KoliÄina']
+            # Konverzija numeričkih vrednosti gde je potrebno
+            kolicina = row['Količina']
             popust = row['Popust']
             total = row['Total']
             cena_sa_kase = row['Cena sa kase']
 
-            # Postavi kilometraÅ¾u na None ako nije dostupna
-            kilometraza = int(row['KilometraÅ¾a']) if pd.notna(row['KilometraÅ¾a']) else None
+            # Postavi kilometražu na None ako nije dostupna
+            kilometraza = int(row['Kilometraža']) if pd.notna(row['Kilometraža']) else None
 
             # Kreiraj instancu TransactionIMS modela
             TransactionNIS.objects.using(db_alias).create(
                 vehicle=vehicle,
                 kupac=row['Kupac'],
-                sifra_kupca=row['Å ifra kupca'],
+                sifra_kupca=row['Šifra kupca'],
                 broj_kartice=row['Broj kartice'],
-                kompanijski_kod_kupca=row['Å ifra kupca'],
-                zemlja_sipanja=row['DrÅ¾ava sipanja'],
+                kompanijski_kod_kupca=row['Šifra kupca'],
+                zemlja_sipanja=row['Država sipanja'],
                 benzinska_stanica=row['Benzinska stanica'],
                 id_transakcije=row['ID transakcije'],
                 app_kod=row['App kod'],
                 datum_transakcije=transaction_date,
-                tociono_mesto=row['ToÄiono mesto'],
+                tociono_mesto=row['Točiono mesto'],
                 naziv_kartice=row['Naziv kartice'],
                 licenca=row.get('Licenca', ''),
                 broj_gazdinstva=row.get('Broj gazdinstva', ''),
                 registarska_oznaka_vozila=formatted_plate,
-                broj_racuna=row['Broj raÄuna'],
+                broj_racuna=row['Broj računa'],
                 kilometraza=kilometraza,
                 sipanje_van_rezervoara=row['Sipanje van rezervoara'],
                 naziv_proizvoda=row['Naziv proizvoda'],
                 kolicina=kolicina,
-                kolicina_kg=row.get('KoliÄina KG', None),
+                kolicina_kg=row.get('Količina KG', None),
                 popust=popust,
                 primenjen_popust=row['Primenjen popust'],
                 cena_sa_kase=cena_sa_kase,
@@ -1112,21 +1138,31 @@ def import_nis_transactions(file_path):
                 total_sa_kase=row['Total sa kase'],
                 total=total,
                 valuta=row['Valuta'],
-                aktivirano_prekoracenje=row['Aktivirano prekoraÄenje'],
-                kolicinsko_prekoracenje=row['KoliÄinsko prekoraÄenje'],
-                finansijsko_prekoracenje=row['Finansijsko prekoraÄenje'],
-                nacin_ocitavanja_kartice=row['NaÄin oÄitavanja kartice']
+                aktivirano_prekoracenje=row['Aktivirano prekoračenje'],
+                kolicinsko_prekoracenje=row['Količinsko prekoračenje'],
+                finansijsko_prekoracenje=row['Finansijsko prekoračenje'],
+                nacin_ocitavanja_kartice=row['Način očitavanja kartice']
             )
             created += 1
+            logger.info(
+                "NIS transactions row created: excel_row=%s plate=%s transaction_id=%s total=%s",
+                excel_row,
+                formatted_plate,
+                row.get('ID transakcije'),
+                total,
+            )
         
         except ObjectDoesNotExist:
             skipped += 1
             missing_vehicles.add(formatted_plate)
+            logger.warning("NIS transactions row skipped missing vehicle: excel_row=%s plate=%s", excel_row, formatted_plate)
         except IntegrityError:
             skipped += 1
+            logger.warning("NIS transactions row skipped duplicate: excel_row=%s plate=%s", excel_row, formatted_plate)
         except Exception as e:
             skipped += 1
             errors += 1
+            logger.exception("NIS transactions row error: excel_row=%s plate=%s error=%s", excel_row, formatted_plate, e)
 
     result = {
         "status": "ok",
