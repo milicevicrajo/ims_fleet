@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+  <div class="d-flex gap-2">
+    <a class="btn btn-primary" href="{% url 'ugovori:partner_update' pk=partner.pk %}">
+      <i class="mdi mdi-pencil"></i> Izmeni
+    </a>
+    <a class="btn btn-outline-danger" href="{% url 'ugovori:partner_delete' pk=partner.pk %}">
+      <i class="mdi mdi-delete"></i> Obriši
+    </a>
+    <a class="btn btn-outline-secondary" href="{% url 'ugovori:partner_list' %}">
+      <i class="mdi mdi-arrow-left"></i> Nazad
+    </a>
+  </div>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><h5 class="mb-0">Podaci o partneru</h5></div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-striped mb-0">
+          <tbody>
+            <tr><th style="width:180px">Naziv</th><td>{{ partner.name }}</td></tr>
+            <tr><th>Tip partnera</th><td>{{ partner.get_partner_type_display }}</td></tr>
+            <tr><th>Rezidentnost</th><td>{{ partner.get_residency_display }}</td></tr>
+            <tr>
+              <th>Status</th>
+              <td>
+                {% if partner.is_active %}
+                  <span class="badge bg-success">Aktivan</span>
+                {% else %}
+                  <span class="badge bg-secondary">Neaktivan</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% if partner.pib %}
+            <tr><th>PIB</th><td>{{ partner.pib }}</td></tr>
+            {% endif %}
+            {% if partner.maticni_broj %}
+            <tr><th>Matični broj</th><td>{{ partner.maticni_broj }}</td></tr>
+            {% endif %}
+            {% if partner.jmbg %}
+            <tr><th>JMBG</th><td>{{ partner.jmbg }}</td></tr>
+            {% endif %}
+            {% if partner.passport_number %}
+            <tr><th>Broj pasoša</th><td>{{ partner.passport_number }}</td></tr>
+            {% endif %}
+            {% if partner.foreign_tax_id %}
+            <tr><th>Strani poreski ID</th><td>{{ partner.foreign_tax_id }}</td></tr>
+            {% endif %}
+            {% if partner.country %}
+            <tr><th>Zemlja</th><td>{{ partner.country }}</td></tr>
+            {% endif %}
+            {% if partner.city %}
+            <tr><th>Grad / Mesto</th><td>{{ partner.city }}</td></tr>
+            {% endif %}
+            {% if partner.address %}
+            <tr><th>Adresa</th><td>{{ partner.address }}</td></tr>
+            {% endif %}
+            {% if partner.email %}
+            <tr><th>Email</th><td><a href="mailto:{{ partner.email }}">{{ partner.email }}</a></td></tr>
+            {% endif %}
+            {% if partner.phone %}
+            <tr><th>Telefon</th><td>{{ partner.phone }}</td></tr>
+            {% endif %}
+            {% if partner.contact_person %}
+            <tr><th>Kontakt osoba</th><td>{{ partner.contact_person }}</td></tr>
+            {% endif %}
+            {% if partner.external_sif_par %}
+            <tr><th>Šifra (stari sistem)</th><td>{{ partner.external_sif_par }}</td></tr>
+            {% endif %}
+            {% if partner.note %}
+            <tr><th>Napomena</th><td>{{ partner.note|linebreaksbr }}</td></tr>
+            {% endif %}
+            <tr><th>Kreirao</th><td>{{ partner.created_by|default:"-" }} — {{ partner.created_at|date:"d.m.Y H:i" }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Ugovori ({{ contracts.count }})</h5>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:contract_create' %}">
+          <i class="mdi mdi-plus"></i> Novi ugovor
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Broj ugovora</th>
+              <th>Naslov</th>
+              <th>Tip</th>
+              <th>Status</th>
+              <th>Aneksa</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ugovor in contracts %}
+            <tr>
+              <td>
+                <a href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}">{{ ugovor.contract_number }}</a>
+              </td>
+              <td>{{ ugovor.title }}</td>
+              <td>{{ ugovor.contract_type.name }}</td>
+              <td>
+                {% if ugovor.status == "active" %}<span class="badge bg-success">Aktivan</span>
+                {% elif ugovor.status == "draft" %}<span class="badge bg-warning text-dark">Nacrt</span>
+                {% elif ugovor.status == "expired" %}<span class="badge bg-danger">Istekao</span>
+                {% elif ugovor.status == "terminated" %}<span class="badge bg-dark">Raskinut</span>
+                {% else %}<span class="badge bg-secondary">{{ ugovor.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td>{{ ugovor.annexes.count }}</td>
+              <td>
+                <a class="btn btn-sm btn-info" href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}" title="Detalj">
+                  <i class="mdi mdi-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-2">Nema ugovora za ovog partnera.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

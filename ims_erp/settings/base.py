@@ -78,11 +78,12 @@ DEBUG = True
 # Application definition
 
 INSTALLED_APPS = [
-    "core", 
+    "core",
     'fleet',
     'hr',
     'naplata',
     'menice',
+    'ugovori',
 
     'django.contrib.admin',
     'django.contrib.auth',

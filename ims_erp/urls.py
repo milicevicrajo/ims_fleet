@@ -9,6 +9,7 @@ urlpatterns = [
     path("hr/", include(("hr.urls", "hr"), namespace="hr")),
     path("naplata/", include(("naplata.urls", "naplata"), namespace="naplata")),
     path("menice/", include(("menice.urls", "menice"), namespace="menice")),
+    path("ugovori/", include(("ugovori.urls", "ugovori"), namespace="ugovori")),
     path("", include("core.urls")),
 ]
 

@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .form-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .form-hero h1 { font-size: 1.45rem; margin: 0; letter-spacing: 0; }
+  .form-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .form-section {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #fff;
+  }
+  .form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: #14395b;
+    font-weight: 700;
+  }
+  .form-check-card {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .dynamic-field[hidden] { display: none !important; }
+</style>
+
+<div class="form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Osnovni, identifikacioni i kontakt podaci partnera za ugovore.</p>
+  </div>
+  <a class="btn btn-light btn-sm" href="{{ cancel_url }}">
+    <i class="mdi mdi-arrow-left"></i> Nazad
+  </a>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-account-card-details"></i> Osnovno</div>
+        <div class="row">
+          <div class="col-12 col-lg-6 mb-3">
+            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }} <span class="text-danger">*</span></label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-lg-3 mb-3">
+            <label for="{{ form.partner_type.id_for_label }}" class="form-label">{{ form.partner_type.label }}</label>
+            {{ form.partner_type }}
+            {% if form.partner_type.errors %}<div class="invalid-feedback d-block">{{ form.partner_type.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-lg-3 mb-3">
+            <label for="{{ form.residency.id_for_label }}" class="form-label">{{ form.residency.label }}</label>
+            {{ form.residency }}
+            {% if form.residency.errors %}<div class="invalid-feedback d-block">{{ form.residency.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-identifier"></i> Identifikacija</div>
+        <div class="row">
+          <div class="col-12 col-md-6 col-xl-3 mb-3 dynamic-field" data-partner-field="external">
+            <label for="{{ form.external_sif_par.id_for_label }}" class="form-label">{{ form.external_sif_par.label }}</label>
+            {{ form.external_sif_par }}
+            {% if form.external_sif_par.errors %}<div class="invalid-feedback d-block">{{ form.external_sif_par.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3 dynamic-field" data-partner-field="domestic-legal">
+            <label for="{{ form.pib.id_for_label }}" class="form-label">{{ form.pib.label }}</label>
+            {{ form.pib }}
+            {% if form.pib.errors %}<div class="invalid-feedback d-block">{{ form.pib.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3 dynamic-field" data-partner-field="domestic-legal">
+            <label for="{{ form.maticni_broj.id_for_label }}" class="form-label">{{ form.maticni_broj.label }}</label>
+            {{ form.maticni_broj }}
+            {% if form.maticni_broj.errors %}<div class="invalid-feedback d-block">{{ form.maticni_broj.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3 dynamic-field" data-partner-field="domestic-person">
+            <label for="{{ form.jmbg.id_for_label }}" class="form-label">{{ form.jmbg.label }}</label>
+            {{ form.jmbg }}
+            {% if form.jmbg.errors %}<div class="invalid-feedback d-block">{{ form.jmbg.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 mb-3 dynamic-field" data-partner-field="foreign-person">
+            <label for="{{ form.passport_number.id_for_label }}" class="form-label">{{ form.passport_number.label }}</label>
+            {{ form.passport_number }}
+            {% if form.passport_number.errors %}<div class="invalid-feedback d-block">{{ form.passport_number.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 mb-3 dynamic-field" data-partner-field="foreign">
+            <label for="{{ form.foreign_tax_id.id_for_label }}" class="form-label">{{ form.foreign_tax_id.label }}</label>
+            {{ form.foreign_tax_id }}
+            {% if form.foreign_tax_id.errors %}<div class="invalid-feedback d-block">{{ form.foreign_tax_id.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-map-marker"></i> Kontakt i adresa</div>
+        <div class="row">
+          <div class="col-12 col-md-6 col-xl-3 mb-3 dynamic-field" data-partner-field="foreign-address">
+            <label for="{{ form.country.id_for_label }}" class="form-label">{{ form.country.label }}</label>
+            {{ form.country }}
+            {% if form.country.errors %}<div class="invalid-feedback d-block">{{ form.country.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}</label>
+            {{ form.city }}
+            {% if form.city.errors %}<div class="invalid-feedback d-block">{{ form.city.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-xl-6 mb-3">
+            <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+            {{ form.address }}
+            {% if form.address.errors %}<div class="invalid-feedback d-block">{{ form.address.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-4 mb-3">
+            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-4 mb-3">
+            <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}<div class="invalid-feedback d-block">{{ form.phone.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-xl-4 mb-3">
+            <label for="{{ form.contact_person.id_for_label }}" class="form-label">{{ form.contact_person.label }}</label>
+            {{ form.contact_person }}
+            {% if form.contact_person.errors %}<div class="invalid-feedback d-block">{{ form.contact_person.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-note-text"></i> Status i napomena</div>
+        <div class="row">
+          <div class="col-12 col-lg-8 mb-3">
+            <label for="{{ form.note.id_for_label }}" class="form-label">{{ form.note.label }}</label>
+            {{ form.note }}
+            {% if form.note.errors %}<div class="invalid-feedback d-block">{{ form.note.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-lg-4 mb-3 d-flex align-items-end">
+            <div class="form-check form-check-card w-100">
+              {{ form.is_active }}
+              <label class="form-check-label ms-1" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+              {% if form.is_active.errors %}<div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="mdi mdi-content-save"></i> Sacuvaj
+        </button>
+        <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Otkazi</a>
+      </div>
+    </div>
+  </div>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var partnerType = document.getElementById('{{ form.partner_type.id_for_label }}');
+  var residency = document.getElementById('{{ form.residency.id_for_label }}');
+
+  function clearField(container) {
+    container.querySelectorAll('input, textarea, select').forEach(function (field) {
+      if (field.type === 'hidden') return;
+      if (field.type === 'checkbox' || field.type === 'radio') {
+        field.checked = false;
+      } else {
+        field.value = '';
+        if (window.$ && $.fn.select2 && $(field).hasClass('select2-hidden-accessible')) {
+          $(field).val(null).trigger('change.select2');
+        }
+      }
+    });
+  }
+
+  function setVisible(container, visible) {
+    if (container.querySelector('.invalid-feedback')) {
+      visible = true;
+    }
+    if (visible) {
+      container.hidden = false;
+    } else {
+      clearField(container);
+      container.hidden = true;
+    }
+  }
+
+  function togglePartnerFields() {
+    var type = partnerType ? partnerType.value : 'legal_entity';
+    var res = residency ? residency.value : 'domestic';
+
+    document.querySelectorAll('[data-partner-field]').forEach(function (container) {
+      var group = container.getAttribute('data-partner-field');
+      var visible = false;
+
+      if (group === 'external') visible = type === 'legal_entity' && res === 'domestic';
+      if (group === 'domestic-legal') visible = type === 'legal_entity' && res === 'domestic';
+      if (group === 'domestic-person') visible = type === 'person' && res === 'domestic';
+      if (group === 'foreign') visible = res === 'foreign';
+      if (group === 'foreign-person') visible = type === 'person' && res === 'foreign';
+      if (group === 'foreign-address') visible = res === 'foreign';
+
+      setVisible(container, visible);
+    });
+  }
+
+  if (partnerType) {
+    partnerType.addEventListener('change', togglePartnerFields);
+    if (window.$) $(partnerType).on('select2:select change', togglePartnerFields);
+  }
+  if (residency) {
+    residency.addEventListener('change', togglePartnerFields);
+    if (window.$) $(residency).on('select2:select change', togglePartnerFields);
+  }
+  togglePartnerFields();
+});
+</script>
+{% endblock %}

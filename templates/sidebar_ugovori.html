@@ -1,0 +1,24 @@
+{% load static %}
+<aside class="left-sidebar" data-sidebarbg="skin5">
+  <div class="scroll-sidebar">
+    <nav class="sidebar-nav">
+      <ul id="sidebarnav" class="pt-4">
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'ugovori:contract_list' %}">
+            <i class="mdi mdi-file-document-multiple"></i><span class="hide-menu">Ugovori</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'ugovori:partner_list' %}">
+            <i class="mdi mdi-account-group"></i><span class="hide-menu">Partneri</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'ugovori:contract_type_list' %}">
+            <i class="mdi mdi-tag-multiple"></i><span class="hide-menu">Tipovi ugovora</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>

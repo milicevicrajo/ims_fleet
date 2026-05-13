@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+  <div class="d-flex gap-2">
+    <a class="btn btn-primary" href="{% url 'ugovori:contract_update' pk=ugovor.pk %}">
+      <i class="mdi mdi-pencil"></i> Izmeni
+    </a>
+    {% if ugovor.kind == "MAIN" %}
+      <a class="btn btn-outline-primary" href="{% url 'ugovori:annex_create' parent_pk=ugovor.pk %}">
+        <i class="mdi mdi-file-plus"></i> Novi aneks
+      </a>
+    {% endif %}
+    <a class="btn btn-outline-danger" href="{% url 'ugovori:contract_delete' pk=ugovor.pk %}">
+      <i class="mdi mdi-delete"></i> Obriši
+    </a>
+    <a class="btn btn-outline-secondary" href="{% url 'ugovori:contract_list' %}">
+      <i class="mdi mdi-arrow-left"></i> Nazad
+    </a>
+  </div>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Podaci o ugovoru -->
+    <div class="card mb-3">
+      <div class="card-header"><h5 class="mb-0">Podaci o ugovoru</h5></div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-striped mb-0">
+          <tbody>
+            <tr><th style="width:220px">Broj ugovora</th><td>{{ ugovor.contract_number }}</td></tr>
+            <tr><th>Naslov</th><td>{{ ugovor.title }}</td></tr>
+            <tr>
+              <th>Vrsta</th>
+              <td>
+                {% if ugovor.kind == "MAIN" %}
+                  <span class="badge bg-primary">Glavni ugovor</span>
+                {% else %}
+                  <span class="badge bg-secondary">Aneks</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% if ugovor.parent_contract %}
+            <tr>
+              <th>Glavni ugovor</th>
+              <td>
+                <a href="{% url 'ugovori:contract_detail' pk=ugovor.parent_contract.pk %}">
+                  {{ ugovor.parent_contract.contract_number }} – {{ ugovor.parent_contract.title }}
+                </a>
+              </td>
+            </tr>
+            {% endif %}
+            <tr><th>Tip ugovora</th><td>{{ ugovor.contract_type }}</td></tr>
+            <tr>
+              <th>Status</th>
+              <td>
+                {% if ugovor.status == "active" %}<span class="badge bg-success">Aktivan</span>
+                {% elif ugovor.status == "draft" %}<span class="badge bg-warning text-dark">Nacrt</span>
+                {% elif ugovor.status == "expired" %}<span class="badge bg-danger">Istekao</span>
+                {% elif ugovor.status == "terminated" %}<span class="badge bg-dark">Raskinut</span>
+                {% elif ugovor.status == "archived" %}<span class="badge bg-secondary">Arhiviran</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr><th>Datum ugovora</th><td>{{ ugovor.contract_date|date:"d.m.Y" }}</td></tr>
+            <tr><th>Važi od</th><td>{{ ugovor.valid_from|date:"d.m.Y"|default:"-" }}</td></tr>
+            <tr><th>Važi do</th><td>{{ ugovor.valid_to|date:"d.m.Y"|default:"-" }}</td></tr>
+            <tr>
+              <th>Vrednost</th>
+              <td>
+                {% if ugovor.value %}{{ ugovor.value|floatformat:2 }} {{ ugovor.currency }}{% else %}-{% endif %}
+              </td>
+            </tr>
+            {% if ugovor.subject %}
+            <tr><th>Predmet</th><td>{{ ugovor.subject|linebreaksbr }}</td></tr>
+            {% endif %}
+            {% if ugovor.note %}
+            <tr><th>Napomena</th><td>{{ ugovor.note|linebreaksbr }}</td></tr>
+            {% endif %}
+            <tr><th>Kreirao</th><td>{{ ugovor.created_by|default:"-" }} — {{ ugovor.created_at|date:"d.m.Y H:i" }}</td></tr>
+            <tr><th>Poslednja izmena</th><td>{{ ugovor.updated_at|date:"d.m.Y H:i" }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Stranke ugovora -->
+    <div class="card mb-3">
+      <div class="card-header"><h5 class="mb-0">Stranke ugovora</h5></div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr><th>Partner</th><th>Uloga</th><th>Napomena</th></tr>
+          </thead>
+          <tbody>
+            {% for party in ugovor.parties.all %}
+            <tr>
+              <td>
+                <a href="{% url 'ugovori:partner_detail' pk=party.partner.pk %}">
+                  {{ party.partner.name }}
+                </a>
+              </td>
+              <td>{{ party.get_role_display }}</td>
+              <td>{{ party.note|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted text-center">Nema unetih stranaka.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Fajl -->
+    {% if ugovor.file %}
+    <div class="card mb-3">
+      <div class="card-header"><h5 class="mb-0">Fajl ugovora</h5></div>
+      <div class="card-body">
+        <a href="{{ ugovor.file.url }}" class="btn btn-outline-primary w-100" target="_blank">
+          <i class="mdi mdi-file-download"></i> Preuzmi fajl
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Aneksi (samo za MAIN ugovore) -->
+{% if ugovor.kind == "MAIN" %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Aneksi ({{ annexes.count }})</h5>
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:annex_create' parent_pk=ugovor.pk %}">
+      <i class="mdi mdi-plus"></i> Novi aneks
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Broj aneksa</th>
+          <th>Naslov</th>
+          <th>Stranke</th>
+          <th>Status</th>
+          <th>Datum</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for aneks in annexes %}
+        <tr>
+          <td>
+            <a href="{% url 'ugovori:contract_detail' pk=aneks.pk %}">{{ aneks.contract_number }}</a>
+          </td>
+          <td>{{ aneks.title }}</td>
+          <td>
+            {% for party in aneks.parties.all %}
+              {{ party.partner.name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}-{% endfor %}
+          </td>
+          <td>
+            {% if aneks.status == "active" %}<span class="badge bg-success">Aktivan</span>
+            {% elif aneks.status == "draft" %}<span class="badge bg-warning text-dark">Nacrt</span>
+            {% elif aneks.status == "expired" %}<span class="badge bg-danger">Istekao</span>
+            {% elif aneks.status == "terminated" %}<span class="badge bg-dark">Raskinut</span>
+            {% else %}<span class="badge bg-secondary">{{ aneks.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td>{{ aneks.contract_date|date:"d.m.Y" }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a class="btn btn-sm btn-info" href="{% url 'ugovori:contract_detail' pk=aneks.pk %}" title="Detalj">
+                <i class="mdi mdi-eye"></i>
+              </a>
+              <a class="btn btn-sm btn-primary" href="{% url 'ugovori:contract_update' pk=aneks.pk %}" title="Izmeni">
+                <i class="mdi mdi-pencil"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-2">Nema aneksa.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .assignment-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .assignment-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .assignment-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .assignment-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .assignment-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+  }
+  .assignment-status.open { background: #e7f7ef; color: #147044; }
+  .assignment-status.closed { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .partner-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .partner-chip.legal { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .partner-chip.person { background: #fff4db; color: #7a4d00; border: 1px solid #f1d38a; }
+  .partner-chip.domestic { background: #e7f7ef; color: #147044; border: 1px solid #bfe6cf; }
+  .partner-chip.foreign { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+  tr.assignment-closed td { background: #f3f6f9 !important; color: #657282; }
+  tr.assignment-closed a.btn-outline-primary { border-color: #9aa8b6; color: #405060; }
+</style>
+
+<div class="assignment-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Partneri</h1>
+    <p>Lokalna evidencija partnera za ugovore, odvojena od postojeceg eksternog registra.</p>
+  </div>
+  <a href="{% url 'ugovori:partner_create' %}" class="btn btn-light btn-sm">
+    <i class="mdi mdi-plus"></i> Novi partner
+  </a>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="assignment-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-7">
+              <label class="form-label mb-1" for="filter-q">Pretraga</label>
+              <input id="filter-q" type="text" name="q" value="{{ q }}" class="form-control" placeholder="Naziv, PIB, maticni broj, JMBG...">
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label mb-1" for="filter-active">Status</label>
+              <select id="filter-active" name="active" class="form-select form-control select2-method">
+                <option value="">Svi partneri</option>
+                <option value="1" {% if active_filter == "1" %}selected{% endif %}>Aktivni</option>
+                <option value="0" {% if active_filter == "0" %}selected{% endif %}>Neaktivni</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-2 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="mdi mdi-filter"></i> Filter
+              </button>
+              <a href="{% url 'ugovori:partner_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="PartnersTable" class="display compact table table-hover table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>Naziv</th>
+                <th>Status</th>
+                <th>Tip</th>
+                <th>Rezidentnost</th>
+                <th>PIB</th>
+                <th>MB / JMBG</th>
+                <th>Grad</th>
+                <th>Telefon</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for partner in partneri %}
+              <tr class="{% if not partner.is_active %}assignment-closed{% endif %}">
+                <td>
+                  <a href="{% url 'ugovori:partner_detail' pk=partner.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="mdi mdi-eye"></i> {{ partner.name }}
+                  </a>
+                </td>
+                <td>
+                  {% if partner.is_active %}
+                    <span class="assignment-status open"><i class="mdi mdi-check-circle"></i> Aktivan</span>
+                  {% else %}
+                    <span class="assignment-status closed"><i class="mdi mdi-close-circle"></i> Neaktivan</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if partner.partner_type == "legal_entity" %}
+                    <span class="partner-chip legal"><i class="mdi mdi-domain"></i> {{ partner.get_partner_type_display }}</span>
+                  {% else %}
+                    <span class="partner-chip person"><i class="mdi mdi-account"></i> {{ partner.get_partner_type_display }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if partner.residency == "domestic" %}
+                    <span class="partner-chip domestic"><i class="mdi mdi-map-marker-check"></i> {{ partner.get_residency_display }}</span>
+                  {% else %}
+                    <span class="partner-chip foreign"><i class="mdi mdi-earth"></i> {{ partner.get_residency_display }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ partner.pib|default:"/" }}</td>
+                <td>{{ partner.maticni_broj|default:partner.jmbg|default:"/" }}</td>
+                <td>{{ partner.city|default:"/" }}</td>
+                <td>{{ partner.phone|default:"/" }}</td>
+                <td class="text-center">
+                  <a class="btn btn-outline-primary btn-sm" href="{% url 'ugovori:partner_update' pk=partner.pk %}">
+                    <i class="mdi mdi-pencil"></i> Izmeni
+                  </a>
+                  <a class="btn btn-outline-danger btn-sm" href="{% url 'ugovori:partner_delete' pk=partner.pk %}">
+                    <i class="mdi mdi-delete"></i> Obrisi
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Naziv</th>
+                <th>Status</th>
+                <th>Tip</th>
+                <th>Rezidentnost</th>
+                <th>PIB</th>
+                <th>MB / JMBG</th>
+                <th>Grad</th>
+                <th>Telefon</th>
+                <th>Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#PartnersTable', {
+        exportTitle: '{{ title }}',
+        order: [[0, 'asc']],
+        autoSelectThreshold: 25
+      });
+    }
+  });
+</script>
+{% endblock %}

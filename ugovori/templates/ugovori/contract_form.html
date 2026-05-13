@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .form-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .form-hero h1 { font-size: 1.45rem; margin: 0; letter-spacing: 0; }
+  .form-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .form-section {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #fff;
+  }
+  .form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: #14395b;
+    font-weight: 700;
+  }
+  .party-form-row {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .dynamic-field[hidden] { display: none !important; }
+</style>
+
+<div class="form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>{% if parent_contract %}Aneks se vezuje za glavni ugovor {{ parent_contract.contract_number }}.{% else %}Unos osnovnih podataka, vazenja, vrednosti i stranaka ugovora.{% endif %}</p>
+  </div>
+  <a class="btn btn-light btn-sm" href="{{ cancel_url }}">
+    <i class="mdi mdi-arrow-left"></i> Nazad
+  </a>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+
+  {% if parent_contract %}
+    <input type="hidden" name="kind" value="ANNEX">
+    <input type="hidden" name="parent_contract" value="{{ parent_contract.pk }}">
+  {% endif %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-file-document-edit"></i> Osnovni podaci</div>
+        <div class="row">
+          {% if not parent_contract %}
+            <div class="col-12 col-md-6 col-xl-3 mb-3">
+              <label for="{{ form.kind.id_for_label }}" class="form-label">{{ form.kind.label }}</label>
+              {{ form.kind }}
+              {% if form.kind.errors %}<div class="invalid-feedback d-block">{{ form.kind.errors.0 }}</div>{% endif %}
+            </div>
+          {% endif %}
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.contract_type.id_for_label }}" class="form-label">{{ form.contract_type.label }} <span class="text-danger">*</span></label>
+            {{ form.contract_type }}
+            {% if form.contract_type.errors %}<div class="invalid-feedback d-block">{{ form.contract_type.errors.0 }}</div>{% endif %}
+          </div>
+          {% if not parent_contract %}
+            <div class="col-12 col-md-6 col-xl-3 mb-3 dynamic-field" data-contract-field="parent">
+              <label for="{{ form.parent_contract.id_for_label }}" class="form-label">{{ form.parent_contract.label }}</label>
+              {{ form.parent_contract }}
+              {% if form.parent_contract.errors %}<div class="invalid-feedback d-block">{{ form.parent_contract.errors.0 }}</div>{% endif %}
+            </div>
+          {% endif %}
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.contract_number.id_for_label }}" class="form-label">{{ form.contract_number.label }} <span class="text-danger">*</span></label>
+            {{ form.contract_number }}
+            {% if form.contract_number.errors %}<div class="invalid-feedback d-block">{{ form.contract_number.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-lg-6 mb-3">
+            <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-lg-6 mb-3">
+            <label for="{{ form.file.id_for_label }}" class="form-label">{{ form.file.label }}</label>
+            {{ form.file|add_class:"form-control" }}
+            {% if form.file.errors %}<div class="invalid-feedback d-block">{{ form.file.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 mb-3">
+            <label for="{{ form.subject.id_for_label }}" class="form-label">{{ form.subject.label }}</label>
+            {{ form.subject }}
+            {% if form.subject.errors %}<div class="invalid-feedback d-block">{{ form.subject.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-calendar-clock"></i> Rokovi, vrednost i status</div>
+        <div class="row">
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.contract_date.id_for_label }}" class="form-label">{{ form.contract_date.label }} <span class="text-danger">*</span></label>
+            {{ form.contract_date }}
+            {% if form.contract_date.errors %}<div class="invalid-feedback d-block">{{ form.contract_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.valid_from.id_for_label }}" class="form-label">{{ form.valid_from.label }}</label>
+            {{ form.valid_from }}
+            {% if form.valid_from.errors %}<div class="invalid-feedback d-block">{{ form.valid_from.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.valid_to.id_for_label }}" class="form-label">{{ form.valid_to.label }}</label>
+            {{ form.valid_to }}
+            {% if form.valid_to.errors %}<div class="invalid-feedback d-block">{{ form.valid_to.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.value.id_for_label }}" class="form-label">{{ form.value.label }}</label>
+            {{ form.value }}
+            {% if form.value.errors %}<div class="invalid-feedback d-block">{{ form.value.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }}</label>
+            {{ form.currency }}
+            {% if form.currency.errors %}<div class="invalid-feedback d-block">{{ form.currency.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-xl-6 mb-3">
+            <label for="{{ form.note.id_for_label }}" class="form-label">{{ form.note.label }}</label>
+            {{ form.note }}
+            {% if form.note.errors %}<div class="invalid-feedback d-block">{{ form.note.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="form-section-title mb-0"><i class="mdi mdi-account-multiple"></i> Stranke ugovora</div>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="add-party-row">
+          <i class="mdi mdi-plus"></i> Dodaj stranku
+        </button>
+      </div>
+
+      {{ formset.management_form }}
+      {% if formset.non_form_errors %}
+        <div class="alert alert-danger">
+          {% for error in formset.non_form_errors %}{{ error }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <div id="party-formset">
+        {% for party_form in formset %}
+          <div class="party-form-row row align-items-end g-2 mb-2">
+            {% for field in party_form.hidden_fields %}{{ field }}{% endfor %}
+            <div class="col-12 col-lg-5">
+              <label class="form-label">Partner</label>
+              {{ party_form.partner }}
+              {% if party_form.partner.errors %}<div class="invalid-feedback d-block">{{ party_form.partner.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-5 col-lg-3">
+              <label class="form-label">Uloga</label>
+              {{ party_form.role }}
+              {% if party_form.role.errors %}<div class="invalid-feedback d-block">{{ party_form.role.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-5 col-lg-3">
+              <label class="form-label">Napomena</label>
+              {{ party_form.note }}
+              {% if party_form.note.errors %}<div class="invalid-feedback d-block">{{ party_form.note.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-2 col-lg-1">
+              {% if party_form.DELETE %}
+                <div class="form-check pt-4">
+                  {{ party_form.DELETE }}
+                  <label class="form-check-label text-danger" for="{{ party_form.DELETE.id_for_label }}">
+                    Obrisi
+                  </label>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">
+      <i class="mdi mdi-content-save"></i> Sacuvaj
+    </button>
+    <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Otkazi</a>
+  </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var kindField = document.getElementById('{{ form.kind.id_for_label }}');
+  var parentRows = document.querySelectorAll('[data-contract-field="parent"]');
+
+  function toggleContractKindFields() {
+    var isAnnex = kindField && kindField.value === 'ANNEX';
+    parentRows.forEach(function (row) {
+      if (row.querySelector('.invalid-feedback')) {
+        row.hidden = false;
+        return;
+      }
+      row.hidden = !isAnnex;
+      row.querySelectorAll('select, input, textarea').forEach(function (field) {
+        if (field.name === 'parent_contract') {
+          field.required = isAnnex;
+        }
+        if (!isAnnex && field.type !== 'hidden') {
+          field.value = '';
+          if (window.$ && $.fn.select2 && $(field).hasClass('select2-hidden-accessible')) {
+            $(field).val(null).trigger('change.select2');
+          }
+        }
+      });
+    });
+  }
+
+  if (kindField) {
+    kindField.addEventListener('change', toggleContractKindFields);
+    if (window.$) $(kindField).on('select2:select change', toggleContractKindFields);
+    toggleContractKindFields();
+  }
+
+  var totalForms = document.getElementById('id_parties-TOTAL_FORMS');
+  var formsetContainer = document.getElementById('party-formset');
+  var addBtn = document.getElementById('add-party-row');
+
+  if (!addBtn || !formsetContainer || !totalForms) return;
+
+  addBtn.addEventListener('click', function () {
+    var formCount = parseInt(totalForms.value, 10);
+    var rows = formsetContainer.querySelectorAll('.party-form-row');
+    if (!rows.length) return;
+
+    var sourceRow = rows[rows.length - 1];
+    if (window.$ && $.fn.select2) {
+      $(sourceRow).find('.select2-hidden-accessible').select2('destroy');
+    }
+
+    var newRow = sourceRow.cloneNode(true);
+    newRow.querySelectorAll('.select2-container').forEach(function (container) {
+      container.remove();
+    });
+    newRow.innerHTML = newRow.innerHTML.replace(/parties-(\d+)-/g, 'parties-' + formCount + '-');
+    newRow.innerHTML = newRow.innerHTML.replace(/id_parties-(\d+)-/g, 'id_parties-' + formCount + '-');
+
+    newRow.querySelectorAll('input:not([type=hidden]), textarea').forEach(function (input) {
+      input.value = '';
+    });
+    newRow.querySelectorAll('select').forEach(function (select) {
+      select.selectedIndex = 0;
+    });
+    newRow.querySelectorAll('input[type=checkbox]').forEach(function (checkbox) {
+      checkbox.checked = false;
+    });
+
+    formsetContainer.appendChild(newRow);
+    totalForms.value = formCount + 1;
+
+    if (window.$ && $.fn.select2) {
+      $(sourceRow).find('.select2-method').select2({ theme: 'bootstrap-5', width: '100%' });
+      $(newRow).find('.select2-method').select2({ theme: 'bootstrap-5', width: '100%' });
+    }
+  });
+});
+</script>
+{% endblock %}
