@@ -319,7 +319,10 @@ class FuelConsumption(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['date', 'cost_bruto', 'amount'], name='unique_fuel_consumption')
+            models.UniqueConstraint(
+                fields=['vehicle', 'supplier', 'date', 'cost_bruto', 'amount'],
+                name='unique_fuel_consumption_per_vehicle'
+            )
         ]
 
     def __str__(self):

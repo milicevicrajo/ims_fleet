@@ -869,18 +869,20 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 # IzraÄunaj neto troÅ¡ak
                 cost_neto = cost_bruto - vat
 
-                try:
-                    FuelConsumption.objects.create(
-                        vehicle=vehicle,
-                        date=transaction_date,
-                        amount=amount,
-                        fuel_type=row['Product INV'],
-                        cost_bruto=cost_bruto,
-                        cost_neto=cost_neto,
-                        supplier="OMV",
-                        job_code=job_code,
-                        mileage=mileage,
-                    )
+                fuel_obj, was_created = FuelConsumption.objects.get_or_create(
+                    vehicle=vehicle,
+                    supplier="OMV",
+                    date=transaction_date,
+                    amount=amount,
+                    cost_bruto=cost_bruto,
+                    defaults={
+                        "fuel_type": row['Product INV'],
+                        "cost_neto": cost_neto,
+                        "job_code": job_code,
+                        "mileage": mileage,
+                    },
+                )
+                if was_created:
                     created += 1
                     logger.info(
                         "OMV fuel row created: row=%s plate=%s date=%s gross=%s qty=%s",
@@ -890,7 +892,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                         cost_bruto,
                         amount,
                     )
-                except IntegrityError:
+                else:
                     skipped += 1
                     logger.warning("OMV fuel row skipped duplicate: row=%s plate=%s", index, formatted_plate)
             
@@ -1056,18 +1058,23 @@ def import_nis_fuel_consumption(file_path):
             
             job_code = get_vehicle_job_code(vehicle)
            
-            FuelConsumption.objects.using(db_alias).create(
+            _, was_created = FuelConsumption.objects.using(db_alias).get_or_create(
                 vehicle=vehicle,
+                supplier="NIS",
                 date=transaction_date,
                 amount=row['Količina'],
-                fuel_type=row['Naziv proizvoda'],
                 cost_bruto=row['Total'],
-                cost_neto=round(row['Total']*5/6,2),
-                supplier="NIS",
-                job_code=job_code,
-                mileage=row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
+                defaults={
+                    "fuel_type": row['Naziv proizvoda'],
+                    "cost_neto": round(row['Total'] * 5 / 6, 2),
+                    "job_code": job_code,
+                    "mileage": row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
+                },
             )
-            created += 1
+            if was_created:
+                created += 1
+            else:
+                skipped += 1
         
         except ObjectDoesNotExist:
             skipped += 1
