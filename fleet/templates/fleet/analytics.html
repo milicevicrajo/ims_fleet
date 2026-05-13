@@ -161,7 +161,13 @@
             <td class="text-end" data-order="{{ row.annual_km }}">{{ row.annual_km|floatformat:0|intcomma }}</td>
             <td>{{ row.mileage_source }}</td>
             <td class="text-end" data-order="{{ row.total_cost }}">{{ row.total_cost|floatformat:0|intcomma }}</td>
-            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
+            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">
+              {{ row.cost_per_km|floatformat:2|intcomma }}
+              {% if row.below_mileage_threshold %}
+                <i class="fas fa-exclamation-circle" style="color: #ff9800; margin-left: 5px; cursor: help;" 
+                   title="{{ row.low_mileage_note }}" data-bs-toggle="tooltip" data-bs-title="{{ row.low_mileage_note }}"></i>
+              {% endif %}
+            </td>
             <td>{{ row.status }}</td>
             <td class="text-end">
               <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#costDetails{{ row.period_key }}{{ row.vehicle_id }}">
@@ -215,7 +221,13 @@
             <td class="text-end" data-order="{{ row.annual_km }}">{{ row.annual_km|floatformat:0|intcomma }}</td>
             <td>{{ row.mileage_source }}</td>
             <td class="text-end" data-order="{{ row.total_cost }}">{{ row.total_cost|floatformat:0|intcomma }}</td>
-            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
+            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">
+              {{ row.cost_per_km|floatformat:2|intcomma }}
+              {% if row.below_mileage_threshold %}
+                <i class="fas fa-exclamation-circle" style="color: #ff9800; margin-left: 5px; cursor: help;" 
+                   title="{{ row.low_mileage_note }}" data-bs-toggle="tooltip" data-bs-title="{{ row.low_mileage_note }}"></i>
+              {% endif %}
+            </td>
             <td>{{ row.status }}</td>
             <td class="text-end">
               <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#costDetails{{ row.period_key }}{{ row.vehicle_id }}">
@@ -336,7 +348,13 @@
               </tr>
               <tr>
                 <th>Trošak po km</th>
-                <th class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }} RSD/km</th>
+                <th class="text-end">
+                  {{ row.cost_per_km|floatformat:2|intcomma }} RSD/km
+                  {% if row.below_mileage_threshold %}
+                    <i class="fas fa-exclamation-circle" style="color: #ff9800; margin-left: 5px; cursor: help;" 
+                       title="{{ row.low_mileage_note }}" data-bs-toggle="tooltip" data-bs-title="{{ row.low_mileage_note }}"></i>
+                  {% endif %}
+                </th>
               </tr>
               <tr>
                 <th>Status</th>
@@ -378,7 +396,13 @@
             <td>{{ row.category }}</td>
             <td>{{ row.center }}</td>
             <td class="text-end">{{ row.comparison_cost_per_km|floatformat:2|intcomma }} RSD/km</td>
-            <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }} RSD/km</td>
+            <td class="text-end">
+              {{ row.cost_per_km|floatformat:2|intcomma }} RSD/km
+              {% if row.below_mileage_threshold %}
+                <i class="fas fa-exclamation-circle" style="color: #ff9800; margin-left: 5px; cursor: help;" 
+                   title="{{ row.low_mileage_note }}" data-bs-toggle="tooltip" data-bs-title="{{ row.low_mileage_note }}"></i>
+              {% endif %}
+            </td>
             <td class="text-end">{{ row.change_percent|floatformat:0 }}%</td>
             <td>{{ row.status }}</td>
           </tr>
@@ -504,7 +528,13 @@
             <td class="text-end">{{ row.lease_annual_cost|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.insurance_recovery|floatformat:0|intcomma }}</td>
             <td class="text-end">{{ row.total_cost|floatformat:0|intcomma }}</td>
-            <td class="text-end">{{ row.cost_per_km|floatformat:2|intcomma }}</td>
+            <td class="text-end">
+              {{ row.cost_per_km|floatformat:2|intcomma }}
+              {% if row.below_mileage_threshold %}
+                <i class="fas fa-exclamation-circle" style="color: #ff9800; margin-left: 5px; cursor: help;" 
+                   title="{{ row.low_mileage_note }}" data-bs-toggle="tooltip" data-bs-title="{{ row.low_mileage_note }}"></i>
+              {% endif %}
+            </td>
           </tr>
           {% empty %}
           <tr>

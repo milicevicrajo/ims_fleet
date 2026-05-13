@@ -285,6 +285,15 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
 
         cost_per_km = total_cost / annual_km if annual_km > 0 else None
 
+        # Napomena za automobile koji se malo voze (ispod 15000 km godišnje)
+        low_mileage_threshold = 15000
+        below_mileage_threshold = annual_km < low_mileage_threshold if annual_km > 0 else False
+        low_mileage_note = (
+            f"Vozilo se malo vozi ({annual_km}km < {low_mileage_threshold}km godišnje). "
+            "Cena po km može biti iskrivljena jer se fiksni troškovi (osiguranje, doprinosi) "
+            "raspoređuju na manju kilometražu." if below_mileage_threshold else None
+        )
+
         rows.append({
             'label': vehicle.registration_number or str(vehicle),
             'vehicle_id': vehicle.id,
@@ -306,6 +315,8 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'insurance_recovery': insurance_recovery,
             'total_cost': total_cost,
             'cost_per_km': cost_per_km,
+            'below_mileage_threshold': below_mileage_threshold,
+            'low_mileage_note': low_mileage_note,
             'maximum_permissible_weight': float(vehicle.maximum_permissible_weight or 0),
         })
 
