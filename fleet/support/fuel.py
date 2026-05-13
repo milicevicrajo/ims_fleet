@@ -14,6 +14,7 @@ FUEL_PRODUCT_KEYWORDS = (
     "maxxmotion",
     "maxxm",
     "bmb",
+    "adblue",
     "lpg",
     "autogas",
     "cng",

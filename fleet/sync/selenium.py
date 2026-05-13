@@ -1002,6 +1002,9 @@ def import_omv_transactions_from_csv(csv_file_path):
                     license_plate_no=formatted_plate,
                     transaction_date=transaction_date,
                     product_inv=row.get('Product INV'),
+                    voucher=row.get('Voucher'),
+                    quantity=quantity,
+                    gross_cc=gross_cc,
                     defaults={
                         "vehicle": vehicle,
                         "issuer": row['Issuer'].strip(),

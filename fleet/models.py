@@ -1004,8 +1004,8 @@ class TransactionOMV(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['license_plate_no', 'transaction_date', 'product_inv'],
-                name='unique_license_plate_transaction'
+                fields=['license_plate_no', 'transaction_date', 'product_inv', 'voucher', 'quantity', 'gross_cc'],
+                name='unique_omv_transaction_line'
             )
         ]
 
