@@ -1017,13 +1017,13 @@ def import_nis_fuel_consumption(file_path):
             FuelConsumption.objects.using(db_alias).create(
                 vehicle=vehicle,
                 date=transaction_date,
-                amount=row['KoliÄina'],
+                amount=row['Količina'],
                 fuel_type=row['Naziv proizvoda'],
                 cost_bruto=row['Total'],
                 cost_neto=round(row['Total']*5/6,2),
                 supplier="NIS",
                 job_code=job_code,
-                mileage=row['KilometraÅ¾a'] if isinstance(row['KilometraÅ¾a'], (int, float)) and not pd.isna(row['KilometraÅ¾a']) else 0,
+                mileage=row['Kilometraža'] if isinstance(row['Kilometraža'], (int, float)) and not pd.isna(row['Kilometraža']) else 0,
             )
             created += 1
         
