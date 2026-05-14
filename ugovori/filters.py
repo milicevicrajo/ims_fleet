@@ -28,7 +28,6 @@ class ContractFilter(django_filters.FilterSet):
         field_name="contract_date",
         lookup_expr="gte",
         label="Datum od",
-        widget=django_filters.widgets.DateRangeWidget,
     )
     contract_date_to = DateFilter(
         field_name="contract_date",
