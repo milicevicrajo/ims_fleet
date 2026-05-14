@@ -54,9 +54,19 @@
     <h1>Partneri</h1>
     <p>Lokalna evidencija partnera za ugovore, odvojena od postojeceg eksternog registra.</p>
   </div>
-  <a href="{% url 'ugovori:partner_create' %}" class="btn btn-light btn-sm">
-    <i class="mdi mdi-plus"></i> Novi partner
-  </a>
+  <div class="d-flex flex-wrap gap-2">
+    <form id="finance-sync-form" method="post" action="{% url 'ugovori:partner_sync_finansije' %}" class="m-0">
+      {% csrf_token %}
+      <button type="button" id="finance-sync-btn" class="btn btn-outline-light btn-sm"
+              data-start-url="{% url 'ugovori:partner_sync_finansije_start' %}"
+              data-batch-url="{% url 'ugovori:partner_sync_finansije_batch' %}">
+        <i class="mdi mdi-sync"></i> Osvezi iz finansija
+      </button>
+    </form>
+    <a href="{% url 'ugovori:partner_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Novi partner
+    </a>
+  </div>
 </div>
 
 <div class="row">
@@ -94,6 +104,7 @@
           <table id="PartnersTable" class="display compact table table-hover table-bordered align-middle w-100">
             <thead>
               <tr>
+                <th>Sifra</th>
                 <th>Naziv</th>
                 <th>Status</th>
                 <th>Tip</th>
@@ -105,52 +116,10 @@
                 <th class="text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
-            <tbody>
-              {% for partner in partneri %}
-              <tr class="{% if not partner.is_active %}assignment-closed{% endif %}">
-                <td>
-                  <a href="{% url 'ugovori:partner_detail' pk=partner.pk %}" class="btn btn-sm btn-outline-primary">
-                    <i class="mdi mdi-eye"></i> {{ partner.name }}
-                  </a>
-                </td>
-                <td>
-                  {% if partner.is_active %}
-                    <span class="assignment-status open"><i class="mdi mdi-check-circle"></i> Aktivan</span>
-                  {% else %}
-                    <span class="assignment-status closed"><i class="mdi mdi-close-circle"></i> Neaktivan</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if partner.partner_type == "legal_entity" %}
-                    <span class="partner-chip legal"><i class="mdi mdi-domain"></i> {{ partner.get_partner_type_display }}</span>
-                  {% else %}
-                    <span class="partner-chip person"><i class="mdi mdi-account"></i> {{ partner.get_partner_type_display }}</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if partner.residency == "domestic" %}
-                    <span class="partner-chip domestic"><i class="mdi mdi-map-marker-check"></i> {{ partner.get_residency_display }}</span>
-                  {% else %}
-                    <span class="partner-chip foreign"><i class="mdi mdi-earth"></i> {{ partner.get_residency_display }}</span>
-                  {% endif %}
-                </td>
-                <td>{{ partner.pib|default:"/" }}</td>
-                <td>{{ partner.maticni_broj|default:partner.jmbg|default:"/" }}</td>
-                <td>{{ partner.city|default:"/" }}</td>
-                <td>{{ partner.phone|default:"/" }}</td>
-                <td class="text-center">
-                  <a class="btn btn-outline-primary btn-sm" href="{% url 'ugovori:partner_update' pk=partner.pk %}">
-                    <i class="mdi mdi-pencil"></i> Izmeni
-                  </a>
-                  <a class="btn btn-outline-danger btn-sm" href="{% url 'ugovori:partner_delete' pk=partner.pk %}">
-                    <i class="mdi mdi-delete"></i> Obrisi
-                  </a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
+            <tbody></tbody>
             <tfoot>
               <tr>
+                <th>Sifra</th>
                 <th>Naziv</th>
                 <th>Status</th>
                 <th>Tip</th>
@@ -169,15 +138,251 @@
   </div>
 </div>
 
+<div class="modal fade" id="financeSyncModal" tabindex="-1" aria-labelledby="financeSyncModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="financeSyncModalLabel">Sinhronizacija partnera iz finansija</h5>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span id="finance-sync-status">Priprema...</span>
+          <span id="finance-sync-percent">0%</span>
+        </div>
+        <div class="progress mb-3" style="height: 20px;">
+          <div id="finance-sync-progress" class="progress-bar progress-bar-striped progress-bar-animated"
+               role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+        </div>
+        <div class="small text-muted">
+          Obradjeno: <span id="finance-sync-processed">0</span> /
+          <span id="finance-sync-total">0</span>
+          <span class="ms-2">Trajanje: <span id="finance-sync-elapsed">0s</span></span>
+        </div>
+        <div class="small mt-2">
+          Novo: <span id="finance-sync-created">0</span>,
+          azurirano: <span id="finance-sync-updated">0</span>,
+          bez izmene: <span id="finance-sync-unchanged">0</span>,
+          preskoceno: <span id="finance-sync-skipped">0</span>
+        </div>
+        <div id="finance-sync-error" class="alert alert-danger mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="finance-sync-close" class="btn btn-outline-secondary" data-bs-dismiss="modal" disabled>Zatvori</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#PartnersTable', {
-        exportTitle: '{{ title }}',
-        order: [[0, 'asc']],
-        autoSelectThreshold: 25
+    if (window.jQuery && jQuery.fn.select2) {
+      jQuery('.select2-method').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        allowClear: true,
+        placeholder: 'Izaberi'
       });
     }
+
+    var partnersTableApi = null;
+
+    function isPartnersDataTableInitialized(tableNode) {
+      if (window.DataTable && DataTable.isDataTable) {
+        return DataTable.isDataTable(tableNode);
+      }
+      if (window.jQuery && jQuery.fn.dataTable && jQuery.fn.dataTable.isDataTable) {
+        return jQuery.fn.dataTable.isDataTable(tableNode);
+      }
+      return false;
+    }
+
+    if (window.jQuery && jQuery.fn.DataTable) {
+      var table = jQuery('#PartnersTable');
+      if (table.length && !isPartnersDataTableInitialized(table[0])) {
+        partnersTableApi = table.DataTable({
+          serverSide: true,
+          processing: true,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+          order: [[1, 'asc']],
+          scrollX: true,
+          ajax: {
+            url: "{% url 'ugovori:partner_data' %}" + window.location.search,
+            type: "GET"
+          },
+          columns: [
+            { data: 'external_sif_par' },
+            { data: 'name' },
+            { data: 'status' },
+            { data: 'partner_type' },
+            { data: 'residency' },
+            { data: 'pib' },
+            { data: 'identification' },
+            { data: 'city' },
+            { data: 'phone' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+          ],
+          language: {
+            processing: 'Ucitavanje...',
+            search: 'Pretraga:',
+            lengthMenu: 'Prikazi _MENU_ redova',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ partnera',
+            infoEmpty: 'Nema partnera',
+            infoFiltered: '(filtrirano od _MAX_ ukupno)',
+            zeroRecords: 'Nema rezultata',
+            paginate: {
+              first: 'Prva',
+              last: 'Poslednja',
+              next: 'Sledeca',
+              previous: 'Prethodna'
+            }
+          }
+        });
+      }
+    }
+
+    var syncBtn = document.getElementById('finance-sync-btn');
+    if (!syncBtn) return;
+
+    var syncForm = document.getElementById('finance-sync-form');
+    var csrfInput = syncForm ? syncForm.querySelector('input[name="csrfmiddlewaretoken"]') : null;
+    var csrfToken = csrfInput ? csrfInput.value : '';
+    var modalEl = document.getElementById('financeSyncModal');
+    var modal = window.bootstrap && modalEl ? new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false }) : null;
+    var startedAt = null;
+    var timerId = null;
+
+    function setText(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+    function setProgress(processed, total) {
+      var percent = total ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+      var bar = document.getElementById('finance-sync-progress');
+      if (bar) {
+        bar.style.width = percent + '%';
+        bar.setAttribute('aria-valuenow', String(percent));
+      }
+      setText('finance-sync-percent', percent + '%');
+      setText('finance-sync-processed', processed);
+      setText('finance-sync-total', total);
+    }
+    function resetModal() {
+      setText('finance-sync-status', 'Priprema...');
+      setProgress(0, 0);
+      setText('finance-sync-created', '0');
+      setText('finance-sync-updated', '0');
+      setText('finance-sync-unchanged', '0');
+      setText('finance-sync-skipped', '0');
+      setText('finance-sync-elapsed', '0s');
+      var errorEl = document.getElementById('finance-sync-error');
+      if (errorEl) {
+        errorEl.classList.add('d-none');
+        errorEl.textContent = '';
+      }
+      var closeBtn = document.getElementById('finance-sync-close');
+      if (closeBtn) closeBtn.disabled = true;
+    }
+    function updateElapsed() {
+      if (!startedAt) return;
+      setText('finance-sync-elapsed', Math.floor((Date.now() - startedAt) / 1000) + 's');
+    }
+    function finishSync() {
+      setText('finance-sync-status', 'Zavrseno');
+      var closeBtn = document.getElementById('finance-sync-close');
+      if (closeBtn) closeBtn.disabled = false;
+      if (timerId) clearInterval(timerId);
+      if (partnersTableApi) {
+        partnersTableApi.ajax.reload(null, false);
+      }
+    }
+    function showError(message) {
+      setText('finance-sync-status', 'Greska');
+      var errorEl = document.getElementById('finance-sync-error');
+      if (errorEl) {
+        errorEl.textContent = message || 'Sinhronizacija nije uspela.';
+        errorEl.classList.remove('d-none');
+      }
+      var closeBtn = document.getElementById('finance-sync-close');
+      if (closeBtn) closeBtn.disabled = false;
+      if (timerId) clearInterval(timerId);
+    }
+    function postForm(url, data) {
+      var formData = new FormData();
+      Object.keys(data || {}).forEach(function (key) {
+        formData.append(key, data[key]);
+      });
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken },
+        body: formData
+      }).then(function (response) {
+        return response.json().then(function (json) {
+          if (!response.ok || !json.ok) {
+            throw new Error(json.error || 'Zahtev nije uspeo.');
+          }
+          return json;
+        });
+      });
+    }
+
+    syncBtn.addEventListener('click', function () {
+      resetModal();
+      if (modal) modal.show();
+      startedAt = Date.now();
+      timerId = setInterval(updateElapsed, 1000);
+      syncBtn.disabled = true;
+
+      var totals = { created: 0, updated: 0, unchanged: 0, skipped: 0 };
+      var processed = 0;
+      var total = 0;
+      var batchSize = 250;
+
+      postForm(syncBtn.dataset.startUrl, {})
+        .then(function (start) {
+          total = start.total || 0;
+          batchSize = start.batch_size || batchSize;
+          setText('finance-sync-status', 'Sinhronizacija u toku...');
+          setProgress(0, total);
+
+          function runNextBatch() {
+            if (processed >= total || total === 0) {
+              finishSync();
+              return Promise.resolve();
+            }
+
+            return postForm(syncBtn.dataset.batchUrl, {
+              offset: processed,
+              batch_size: batchSize
+            }).then(function (batch) {
+              var batchProcessed = batch.processed || 0;
+              if (batchProcessed === 0) {
+                throw new Error('Finansijski view nije vratio sledeci paket partnera.');
+              }
+              processed += batchProcessed;
+              totals.created += batch.created || 0;
+              totals.updated += batch.updated || 0;
+              totals.unchanged += batch.unchanged || 0;
+              totals.skipped += batch.skipped || 0;
+              setProgress(processed, total);
+              setText('finance-sync-created', totals.created);
+              setText('finance-sync-updated', totals.updated);
+              setText('finance-sync-unchanged', totals.unchanged);
+              setText('finance-sync-skipped', totals.skipped);
+              return runNextBatch();
+            });
+          }
+
+          return runNextBatch();
+        })
+        .catch(function (error) {
+          showError(error.message);
+        })
+        .finally(function () {
+          syncBtn.disabled = false;
+          updateElapsed();
+        });
+    });
   });
 </script>
 {% endblock %}

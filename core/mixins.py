@@ -22,6 +22,8 @@ class RoleRequiredMixin(UserPassesTestMixin):
         return []
 
     def test_func(self):
+        if not self.request.user.is_authenticated:
+            return False
         if self.request.user.is_superuser:
             return True
         required_roles = self.get_required_roles()
@@ -61,6 +63,8 @@ class RolePermissionRequiredMixin(UserPassesTestMixin):
         return None
 
     def test_func(self):
+        if not self.request.user.is_authenticated:
+            return False
         if self.request.user.is_superuser:
             return True
         permission_code = self.get_permission_code()
@@ -76,6 +80,8 @@ class RolePermissionRequiredMixin(UserPassesTestMixin):
 
 
 def user_has_role_permission(user, permission_code):
+    if not user.is_authenticated:
+        return False
     if user.is_superuser:
         return True
     if not permission_code:

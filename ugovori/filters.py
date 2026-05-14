@@ -1,13 +1,13 @@
 import django_filters
+from django.db.models import Q
 from django_filters import CharFilter, ChoiceFilter, DateFilter, ModelChoiceFilter
 
-from .models import Contract, ContractType, Partner
+from .models import Contract, ContractType
 
 
 class ContractFilter(django_filters.FilterSet):
-    partner = ModelChoiceFilter(
-        queryset=Partner.objects.filter(is_active=True),
-        field_name="parties__partner",
+    partner = CharFilter(
+        method="filter_partner",
         label="Partner",
     )
     contract_type = ModelChoiceFilter(
@@ -41,11 +41,25 @@ class ContractFilter(django_filters.FilterSet):
         model = Contract
         fields = ["partner", "contract_type", "kind", "status"]
 
+    def filter_partner(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+
+        query = (
+            Q(parties__partner__name__icontains=value)
+            | Q(parties__partner__pib__icontains=value)
+            | Q(parties__partner__maticni_broj__icontains=value)
+        )
+        if value.isdigit():
+            query |= Q(parties__partner__external_sif_par=int(value))
+        return queryset.filter(query).distinct()
+
     def filter_search(self, queryset, name, value):
         if value:
             return queryset.filter(
-                contract_number__icontains=value
-            ) | queryset.filter(title__icontains=value)
+                Q(contract_number__icontains=value) | Q(title__icontains=value)
+            )
         return queryset
 
     def __init__(self, *args, **kwargs):
