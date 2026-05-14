@@ -25,7 +25,7 @@
       <table id="DatatableMenice" class="display compact">
         <thead>
           <tr>
-            <th>Redni broj</th>
+            <th>Serijski broj menice</th>
             <th>Osnov izdavanja</th>
             <th>Datum registracije</th>
             <th>Naziv banke</th>
@@ -40,7 +40,7 @@
         <tbody>
           {% for menica in menice %}
           <tr>
-            <td>{{ menica.redni_broj|default_if_none:"" }}</td>
+            <td>{{ menica.serijski_broj_menice|default_if_none:"" }}</td>
             <td>{{ menica.osnov_izdavanja|default_if_none:"" }}</td>
             <td>{{ menica.datum_registracije|date:"d.m.Y" }}</td>
             <td>{{ menica.naziv_banke|default_if_none:"" }}</td>
@@ -79,7 +79,7 @@
     if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
     window.initFleetReportTable(table, {
       pageLength: 50,
-      order: [[3, 'desc']],
+      order: [[2, 'desc']],
       scrollX: true
     });
   });

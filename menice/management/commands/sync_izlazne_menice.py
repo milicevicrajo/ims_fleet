@@ -4,7 +4,7 @@ from menice.services import sync_izlazne_menice
 
 
 class Command(BaseCommand):
-    help = "Povlaci nove izlazne menice iz NBS registra."
+    help = "Povlaci izlazne menice iz NBS registra i azurira samo NBS polja."
 
     def add_arguments(self, parser):
         parser.add_argument("--tax-code", default="100223617")
@@ -34,6 +34,9 @@ class Command(BaseCommand):
         result = sync_izlazne_menice(**sync_options)
         self.stdout.write(
             self.style.SUCCESS(
-                "Povuceno: {fetched}, novo: {created}, preskoceno: {skipped}".format(**result)
+                (
+                    "Povuceno: {fetched}, novo: {created}, azurirano: {updated}, "
+                    "bez izmene: {unchanged}, preskoceno: {skipped}"
+                ).format(**result)
             )
         )

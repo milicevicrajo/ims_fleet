@@ -6,9 +6,11 @@ from django.db import models
 class Partner(models.Model):
     LEGAL_ENTITY = "legal_entity"
     PERSON = "person"
+    BANK = "bank"
     PARTNER_TYPE_CHOICES = [
         (LEGAL_ENTITY, "Pravno lice"),
-        (PERSON, "Fizičko lice"),
+        (PERSON, "Fizicko lice"),
+        (BANK, "Banka"),
     ]
 
     DOMESTIC = "domestic"

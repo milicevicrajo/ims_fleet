@@ -28,6 +28,27 @@ def residency_from_country(country):
     return Partner.FOREIGN
 
 
+BANK_GROUPS = {11, 13, 14}
+
+
+def parse_finance_group(value):
+    if value in (None, ""):
+        return None
+    try:
+        return int(float(str(value).strip()))
+    except (TypeError, ValueError):
+        return None
+
+
+def partner_type_from_finance_group(group):
+    group = parse_finance_group(group)
+    if group == 10:
+        return Partner.PERSON
+    if group in BANK_GROUPS:
+        return Partner.BANK
+    return Partner.LEGAL_ENTITY
+
+
 def get_finance_partner(sif_par, source_db="server_db"):
     rows = fetch_finance_partners(source_db=source_db, sif_par=sif_par)
     return rows[0] if rows else None
@@ -35,14 +56,14 @@ def get_finance_partner(sif_par, source_db="server_db"):
 
 def count_finance_partners(source_db="server_db"):
     with connections[source_db].cursor() as cursor:
-        cursor.execute("SELECT COUNT(*) FROM dbo.partneri")
+        cursor.execute("SELECT COUNT(DISTINCT sif_par) FROM dbo.partneri WHERE sif_par IS NOT NULL")
         return int(cursor.fetchone()[0] or 0)
 
 
 def fetch_finance_partners(source_db="server_db", limit=None, offset=None, sif_par=None):
     use_offset = offset is not None
     top_sql = f"TOP ({int(limit)}) " if limit and not use_offset else ""
-    where = []
+    where = ["rn = 1"]
     params = []
     if sif_par is not None:
         where.append("sif_par = %s")
@@ -57,7 +78,37 @@ def fetch_finance_partners(source_db="server_db", limit=None, offset=None, sif_p
         params.extend([offset_value, limit_value])
 
     sql = f"""
+        WITH ranked_partners AS (
+            SELECT
+                naz_grup,
+                grupa,
+                sif_par,
+                naz_par,
+                ulica_par,
+                mesto_par,
+                mb,
+                telefon,
+                email,
+                lice,
+                pib,
+                zemlja,
+                ROW_NUMBER() OVER (
+                    PARTITION BY sif_par
+                    ORDER BY
+                        CASE
+                            WHEN grupa = 1 THEN 1
+                            WHEN grupa = 10 THEN 2
+                            WHEN grupa IN (11, 13, 14) THEN 3
+                            ELSE 4
+                        END,
+                        grupa
+                ) AS rn
+            FROM dbo.partneri
+            WHERE sif_par IS NOT NULL
+        )
         SELECT {top_sql}
+            naz_grup,
+            grupa,
             sif_par,
             naz_par,
             ulica_par,
@@ -68,7 +119,7 @@ def fetch_finance_partners(source_db="server_db", limit=None, offset=None, sif_p
             lice,
             pib,
             zemlja
-        FROM dbo.partneri
+        FROM ranked_partners
         {where_sql}
         ORDER BY sif_par
         {paging_sql}
@@ -83,7 +134,7 @@ def fetch_finance_partners(source_db="server_db", limit=None, offset=None, sif_p
 def partner_defaults_from_finance(row):
     return {
         "name": clean_text(row["naz_par"]) or f"Partner {row['sif_par']}",
-        "partner_type": Partner.LEGAL_ENTITY,
+        "partner_type": partner_type_from_finance_group(row.get("grupa")),
         "residency": residency_from_country(row["zemlja"]),
         "pib": clean_text(row["pib"]),
         "maticni_broj": clean_text(row["mb"]),

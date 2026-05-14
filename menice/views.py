@@ -161,7 +161,10 @@ class IzlazneMeniceSyncView(LoginRequiredMixin, View):
         else:
             messages.success(
                 request,
-                "Povuceno: {fetched}, novo: {created}, preskoceno: {skipped}".format(**result),
+                (
+                    "Povuceno: {fetched}, novo: {created}, azurirano: {updated}, "
+                    "bez izmene: {unchanged}, preskoceno: {skipped}"
+                ).format(**result),
             )
         return redirect("menice:menica_list", tip=Menica.TIP_IZLAZNA)
 

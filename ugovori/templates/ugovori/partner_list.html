@@ -43,6 +43,7 @@
   }
   .partner-chip.legal { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
   .partner-chip.person { background: #fff4db; color: #7a4d00; border: 1px solid #f1d38a; }
+  .partner-chip.bank { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
   .partner-chip.domestic { background: #e7f7ef; color: #147044; border: 1px solid #bfe6cf; }
   .partner-chip.foreign { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
   tr.assignment-closed td { background: #f3f6f9 !important; color: #657282; }
@@ -75,11 +76,11 @@
       <div class="card-body border-bottom">
         <form method="get" class="assignment-filter">
           <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-7">
+            <div class="col-12 col-lg-4">
               <label class="form-label mb-1" for="filter-q">Pretraga</label>
               <input id="filter-q" type="text" name="q" value="{{ q }}" class="form-control" placeholder="Naziv, PIB, maticni broj, JMBG...">
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-sm-6 col-lg-2">
               <label class="form-label mb-1" for="filter-active">Status</label>
               <select id="filter-active" name="active" class="form-select form-control select2-method">
                 <option value="">Svi partneri</option>
@@ -87,7 +88,24 @@
                 <option value="0" {% if active_filter == "0" %}selected{% endif %}>Neaktivni</option>
               </select>
             </div>
-            <div class="col-12 col-md-2 d-flex gap-2">
+            <div class="col-12 col-sm-6 col-lg-2">
+              <label class="form-label mb-1" for="filter-partner-type">Tip</label>
+              <select id="filter-partner-type" name="partner_type" class="form-select form-control select2-method">
+                <option value="">Svi tipovi</option>
+                <option value="legal_entity" {% if partner_type_filter == "legal_entity" %}selected{% endif %}>Pravno lice</option>
+                <option value="person" {% if partner_type_filter == "person" %}selected{% endif %}>Fizicko lice</option>
+                <option value="bank" {% if partner_type_filter == "bank" %}selected{% endif %}>Banka</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-2">
+              <label class="form-label mb-1" for="filter-residency">Rezidentnost</label>
+              <select id="filter-residency" name="residency" class="form-select form-control select2-method">
+                <option value="">Svi</option>
+                <option value="domestic" {% if residency_filter == "domestic" %}selected{% endif %}>Domace</option>
+                <option value="foreign" {% if residency_filter == "foreign" %}selected{% endif %}>Strano</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-2 d-flex gap-2">
               <button type="submit" class="btn btn-primary w-100">
                 <i class="mdi mdi-filter"></i> Filter
               </button>

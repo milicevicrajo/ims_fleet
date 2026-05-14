@@ -43,6 +43,14 @@ class PartnerListView(RolePermissionRequiredMixin, ListView):
             qs = qs.filter(is_active=True)
         elif active == "0":
             qs = qs.filter(is_active=False)
+
+        partner_type = self.request.GET.get("partner_type", "")
+        if partner_type in {Partner.LEGAL_ENTITY, Partner.PERSON, Partner.BANK}:
+            qs = qs.filter(partner_type=partner_type)
+
+        residency = self.request.GET.get("residency", "")
+        if residency in {Partner.DOMESTIC, Partner.FOREIGN}:
+            qs = qs.filter(residency=residency)
         return qs
 
     def get_context_data(self, **kwargs):
@@ -50,6 +58,8 @@ class PartnerListView(RolePermissionRequiredMixin, ListView):
         ctx["title"] = "Partneri"
         ctx["q"] = self.request.GET.get("q", "")
         ctx["active_filter"] = self.request.GET.get("active", "")
+        ctx["partner_type_filter"] = self.request.GET.get("partner_type", "")
+        ctx["residency_filter"] = self.request.GET.get("residency", "")
         ctx["current_app"] = "ugovori"
         return ctx
 
@@ -73,6 +83,14 @@ def _partner_filtered_qs(request):
         qs = qs.filter(is_active=True)
     elif active == "0":
         qs = qs.filter(is_active=False)
+
+    partner_type = request.GET.get("partner_type", "")
+    if partner_type in {Partner.LEGAL_ENTITY, Partner.PERSON, Partner.BANK}:
+        qs = qs.filter(partner_type=partner_type)
+
+    residency = request.GET.get("residency", "")
+    if residency in {Partner.DOMESTIC, Partner.FOREIGN}:
+        qs = qs.filter(residency=residency)
     return qs
 
 
@@ -86,6 +104,9 @@ def _partner_type_html(partner):
     if partner.partner_type == Partner.LEGAL_ENTITY:
         icon = "mdi-domain"
         css_class = "legal"
+    elif partner.partner_type == Partner.BANK:
+        icon = "mdi-bank"
+        css_class = "bank"
     else:
         icon = "mdi-account"
         css_class = "person"
