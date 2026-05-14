@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .employee-detail-tabs .table {
+    margin-bottom: 0;
+  }
+  #TravelOrdersTable td {
+    vertical-align: middle;
+  }
+</style>
+
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm">
@@ -19,65 +28,248 @@
         </div>
       </div>
       <div class="card-body">
-        <div class="row g-3">
-          <div class="col-lg-6">
-            <div class="card border">
-              <div class="card-body">
-                <h5 class="card-title">Osnovni podaci</h5>
-                <p><strong>Sifra zaposlenog:</strong> {{ employee.employee_code }}</p>
-                <p><strong>Titula:</strong> {{ employee.title|default:"-" }}</p>
-                <p><strong>Ime:</strong> {{ employee.first_name|default:"-" }}</p>
-                <p><strong>Prezime:</strong> {{ employee.last_name|default:"-" }}</p>
-                <p><strong>Pol:</strong> {{ employee.gender|default:"-" }}</p>
-                <p><strong>Datum rodjenja:</strong> {{ employee.date_of_birth|date:"d.m.Y" }}</p>
-                <p><strong>Datum zaposljavanja:</strong> {{ employee.date_of_joining|date:"d.m.Y" }}</p>
-                <p><strong>Aktivan:</strong> {% if employee.is_active %}Da{% else %}Ne{% endif %}</p>
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs mb-3" id="employeeDetailTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="basic-info-tab" data-bs-toggle="tab" data-bs-target="#basic-info" type="button" role="tab" aria-controls="basic-info" aria-selected="true">
+              Osnovni podaci
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="travel-orders-tab" data-bs-toggle="tab" data-bs-target="#travel-orders" type="button" role="tab" aria-controls="travel-orders" aria-selected="false">
+              Putni nalozi <span class="badge bg-white text-dark">{{ travel_orders_count }}</span>
+            </button>
+          </li>
+          {% if contracts %}
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="contracts-tab" data-bs-toggle="tab" data-bs-target="#contracts" type="button" role="tab" aria-controls="contracts" aria-selected="false">
+              Ugovori <span class="badge bg-white text-dark">{{ contracts_count }}</span>
+            </button>
+          </li>
+          {% endif %}
+        </ul>
+
+        <!-- Tab content -->
+        <div class="tab-content employee-detail-tabs" id="employeeDetailTabContent">
+          <!-- Osnovni podaci tab -->
+          <div class="tab-pane fade show active" id="basic-info" role="tabpanel" aria-labelledby="basic-info-tab">
+            <div class="row g-3">
+              <div class="col-lg-6">
+                <div class="card border">
+                  <div class="card-body">
+                    <h5 class="card-title">Osnovni podaci</h5>
+                    <p><strong>Sifra zaposlenog:</strong> {{ employee.employee_code }}</p>
+                    <p><strong>Titula:</strong> {{ employee.title|default:"-" }}</p>
+                    <p><strong>Ime:</strong> {{ employee.first_name|default:"-" }}</p>
+                    <p><strong>Prezime:</strong> {{ employee.last_name|default:"-" }}</p>
+                    <p><strong>Pol:</strong> {{ employee.gender|default:"-" }}</p>
+                    <p><strong>Datum rodjenja:</strong> {{ employee.date_of_birth|date:"d.m.Y" }}</p>
+                    <p><strong>Datum zaposljavanja:</strong> {{ employee.date_of_joining|date:"d.m.Y" }}</p>
+                    <p><strong>Aktivan:</strong> {% if employee.is_active %}Da{% else %}Ne{% endif %}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <div class="card border">
+                  <div class="card-body">
+                    <h5 class="card-title">Radni podaci</h5>
+                    <p><strong>Pozicija:</strong> {{ employee.position|default:"-" }}</p>
+                    <p><strong>Sifra odeljenja:</strong> {{ employee.department_code|default:"-" }}</p>
+                    <p><strong>OJ:</strong> {{ employee.org_unit_code|default:"-" }}</p>
+                    <p><strong>Sifra sistema:</strong> {{ employee.system_code|default:"-" }}</p>
+                    <p><strong>Naziv sistema:</strong> {{ employee.system_name|default:"-" }}</p>
+                    <p><strong>Sifra zanimanja:</strong> {{ employee.job_code|default:"-" }}</p>
+                    <p><strong>Naziv zanimanja:</strong> {{ employee.job_title|default:"-" }}</p>
+                    <p><strong>Sifra statusa:</strong> {{ employee.status_code|default:"-" }}</p>
+                    <p><strong>Naziv statusa:</strong> {{ employee.status_name|default:"-" }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <div class="card border">
+                  <div class="card-body">
+                    <h5 class="card-title">Kontakt</h5>
+                    <p><strong>Broj telefona:</strong> {{ employee.phone_number|default:"-" }}</p>
+                    <p><strong>Mobilni broj:</strong> {{ employee.mobile_phone|default:"-" }}</p>
+                    <p><strong>Adresa:</strong> {{ employee.address|default:"-" }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <div class="card border">
+                  <div class="card-body">
+                    <h5 class="card-title">Dodatno</h5>
+                    <p><strong>Maticni broj:</strong> {{ employee.personal_number|default:"-" }}</p>
+                    <p><strong>Partija:</strong> {{ employee.account_number|default:"-" }}</p>
+                    <p><strong>Skola:</strong> {{ employee.education|default:"-" }}</p>
+                    <p><strong>Slava:</strong> {{ employee.slava|default:"-" }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="col-lg-6">
-            <div class="card border">
-              <div class="card-body">
-                <h5 class="card-title">Radni podaci</h5>
-                <p><strong>Pozicija:</strong> {{ employee.position|default:"-" }}</p>
-                <p><strong>Sifra odeljenja:</strong> {{ employee.department_code|default:"-" }}</p>
-                <p><strong>OJ:</strong> {{ employee.org_unit_code|default:"-" }}</p>
-                <p><strong>Sifra sistema:</strong> {{ employee.system_code|default:"-" }}</p>
-                <p><strong>Naziv sistema:</strong> {{ employee.system_name|default:"-" }}</p>
-                <p><strong>Sifra zanimanja:</strong> {{ employee.job_code|default:"-" }}</p>
-                <p><strong>Naziv zanimanja:</strong> {{ employee.job_title|default:"-" }}</p>
-                <p><strong>Sifra statusa:</strong> {{ employee.status_code|default:"-" }}</p>
-                <p><strong>Naziv statusa:</strong> {{ employee.status_name|default:"-" }}</p>
+          <!-- Putni nalozi tab -->
+          <div class="tab-pane fade" id="travel-orders" role="tabpanel" aria-labelledby="travel-orders-tab">
+            {% if travel_orders %}
+              <div class="table-responsive">
+                <table id="TravelOrdersTable" class="table table-striped table-bordered align-middle w-100">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Broj naloga</th>
+                      <th>Datum</th>
+                      <th>Mesto putovanja</th>
+                      <th>Vozilo</th>
+                      <th>Broj dana</th>
+                      <th>Status</th>
+                      <th class="text-center" style="width: 80px;">Akcija</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for order in travel_orders %}
+                      <tr>
+                        <td><strong>{{ order.order_number }}</strong></td>
+                        <td>{{ order.order_date|date:"d.m.Y" }}</td>
+                        <td>{{ order.travel_location }}</td>
+                        <td>
+                          {% if order.vehicle %}
+                            {{ order.vehicle }}
+                          {% else %}
+                            {{ order.other_vehicle|default:"-" }}
+                          {% endif %}
+                        </td>
+                        <td>{{ order.number_of_days }}</td>
+                        <td>
+                          {% if order.storniran %}
+                            <span class="badge bg-danger">Storniran</span>
+                          {% elif order.opravdan %}
+                            <span class="badge bg-success">Opravdan</span>
+                          {% else %}
+                            <span class="badge bg-warning text-dark">Nije opravdan</span>
+                          {% endif %}
+                        </td>
+                        <td class="text-center">
+                          <a href="{% url 'putninalog_detail' order.pk %}" class="btn btn-sm btn-outline-primary" title="Pregled">
+                            <i class="mdi mdi-eye"></i>
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
               </div>
-            </div>
+            {% else %}
+              <div class="alert alert-info mb-0">
+                <i class="mdi mdi-information"></i> Zaposleni nema putnih naloga
+              </div>
+            {% endif %}
           </div>
 
-          <div class="col-lg-6">
-            <div class="card border">
-              <div class="card-body">
-                <h5 class="card-title">Kontakt</h5>
-                <p><strong>Broj telefona:</strong> {{ employee.phone_number|default:"-" }}</p>
-                <p><strong>Mobilni broj:</strong> {{ employee.mobile_phone|default:"-" }}</p>
-                <p><strong>Adresa:</strong> {{ employee.address|default:"-" }}</p>
-              </div>
+          <!-- Ugovori tab -->
+          {% if contracts %}
+          <div class="tab-pane fade" id="contracts" role="tabpanel" aria-labelledby="contracts-tab">
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered align-middle w-100">
+                <thead class="table-light">
+                  <tr>
+                    <th>Broj ugovora</th>
+                    <th>Naslov</th>
+                    <th>Partner</th>
+                    <th>Tip</th>
+                    <th>Status</th>
+                    <th>Važi od</th>
+                    <th>Važi do</th>
+                    <th class="text-center" style="width: 80px;">Akcija</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for contract in contracts %}
+                    <tr>
+                      <td><strong>{{ contract.contract_number }}</strong></td>
+                      <td>{{ contract.title }}</td>
+                      <td>
+                        {% for party in contract.parties.all %}
+                          <span class="badge bg-light text-dark me-1">{{ party.partner.name }}</span>
+                        {% endfor %}
+                      </td>
+                      <td>{{ contract.contract_type.name }}</td>
+                      <td>
+                        {% if contract.status == 'draft' %}
+                          <span class="badge bg-secondary">Nacrt</span>
+                        {% elif contract.status == 'active' %}
+                          <span class="badge bg-success">Aktivan</span>
+                        {% elif contract.status == 'expired' %}
+                          <span class="badge bg-warning text-dark">Istekao</span>
+                        {% elif contract.status == 'terminated' %}
+                          <span class="badge bg-danger">Raskinut</span>
+                        {% elif contract.status == 'archived' %}
+                          <span class="badge bg-dark">Arhiviran</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ contract.valid_from|date:"d.m.Y"|default:"-" }}</td>
+                      <td>{{ contract.valid_to|date:"d.m.Y"|default:"-" }}</td>
+                      <td class="text-center">
+                        <a href="{% url 'contract_detail' contract.pk %}" class="btn btn-sm btn-outline-primary" title="Pregled">
+                          <i class="mdi mdi-eye"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
           </div>
-
-          <div class="col-lg-6">
-            <div class="card border">
-              <div class="card-body">
-                <h5 class="card-title">Dodatno</h5>
-                <p><strong>Maticni broj:</strong> {{ employee.personal_number|default:"-" }}</p>
-                <p><strong>Partija:</strong> {{ employee.account_number|default:"-" }}</p>
-                <p><strong>Skola:</strong> {{ employee.education|default:"-" }}</p>
-                <p><strong>Slava:</strong> {{ employee.slava|default:"-" }}</p>
-              </div>
-            </div>
-          </div>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Inicijalizuj DataTable za putne naloge
+  if (window.jQuery && jQuery.fn.DataTable) {
+    var table = jQuery('#TravelOrdersTable');
+    if (table.length && !jQuery.fn.DataTable.isDataTable(table)) {
+      table.DataTable({
+        pageLength: 25,
+        lengthMenu: [[25, 50, 100], [25, 50, 100]],
+        order: [[0, 'desc']],
+        columnDefs: [
+          { orderable: false, targets: -1 }
+        ],
+        language: {
+          processing: 'Ucitavanje...',
+          search: 'Pretraga:',
+          lengthMenu: 'Prikazi _MENU_ redova',
+          info: 'Prikaz _START_ do _END_ od _TOTAL_ naloga',
+          infoEmpty: 'Nema naloga',
+          infoFiltered: '(filtrirano od _MAX_ ukupno)',
+          zeroRecords: 'Nema rezultata',
+          emptyTable: 'Nema putnih naloga',
+          paginate: {
+            first: 'Prvi',
+            last: 'Poslednji',
+            next: 'Sledeća',
+            previous: 'Prethodna'
+          }
+        }
+      });
+    }
+
+    // Prilagodi DataTable kada se tab promeni
+    document.querySelectorAll('#employeeDetailTabs button[data-bs-toggle="tab"]').forEach(function (button) {
+      button.addEventListener('shown.bs.tab', function () {
+        if (window.DataTable && DataTable.tables) {
+          DataTable.tables({ visible: true, api: true }).columns.adjust();
+        }
+      });
+    });
+  }
+});
+</script>
 {% endblock %}

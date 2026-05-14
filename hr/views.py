@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.db.models import Q
 
 from core.mixins import RolePermissionRequiredMixin
 
@@ -59,6 +60,27 @@ class EmployeeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Detail
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f"Detalji zaposlenog {self.object.last_name} {self.object.first_name}"
+        
+        # Dodaj putne naloge
+        from fleet.models import PutniNalog
+        travel_orders = PutniNalog.objects.filter(employee=self.object).order_by('-order_date')
+        context["travel_orders"] = travel_orders
+        context["travel_orders_count"] = travel_orders.count()
+        
+        # Dodaj ugovore preko šifre stranke iz job_code-a putnih naloga
+        from ugovori.models import Contract
+        
+        # Pronađi sve šifre Job Code-ova iz putnih naloga
+        job_codes = travel_orders.values_list('job_code__code', flat=True).distinct()
+        
+        # Pronađi sve ugovore čiji partneri imaju external_sif_par koji se pojavljuje u job_codes
+        contracts = Contract.objects.filter(
+            parties__partner__external_sif_par__in=job_codes
+        ).distinct().order_by('-contract_date')
+        
+        context["contracts"] = contracts
+        context["contracts_count"] = contracts.count()
+        
         return context
 
 
