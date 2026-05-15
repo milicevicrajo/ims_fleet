@@ -158,6 +158,9 @@
     <p>Partner u evidenciji ugovora{% if partner.city %} - {{ partner.city }}{% endif %}</p>
   </div>
   <div class="partner-actions">
+    <button type="button" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" data-bs-target="#aprUpdateConfirmModal">
+      <i class="mdi mdi-cloud-sync"></i> Proveri APR Open API
+    </button>
     <a class="btn btn-light btn-sm" href="{% url 'ugovori:partner_update' pk=partner.pk %}">
       <i class="mdi mdi-pencil"></i> Izmeni
     </a>
@@ -256,6 +259,30 @@
               <div class="partner-meta-value">{{ partner.phone }}</div>
             </div>
           {% endif %}
+          {% if partner.data_source %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">Izvor validacije</div>
+              <div class="partner-meta-value">
+                {% if partner.data_source == "apr_openapi" %}
+                  Sinhronizovano sa APR Open API
+                {% else %}
+                  {{ partner.data_source }}
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+          {% if partner.apr_status %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">APR status</div>
+              <div class="partner-meta-value">{{ partner.apr_status }}</div>
+            </div>
+          {% endif %}
+          {% if partner.apr_checked_at %}
+            <div class="partner-meta">
+              <div class="partner-meta-label">APR provera</div>
+              <div class="partner-meta-value">{{ partner.apr_checked_at|date:"d.m.Y H:i" }}</div>
+            </div>
+          {% endif %}
         </div>
 
         {% if partner.note %}
@@ -349,4 +376,58 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="aprUpdateConfirmModal" tabindex="-1" aria-labelledby="aprUpdateConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'ugovori:partner_apr_update' pk=partner.pk %}" id="aprUpdateForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="aprUpdateConfirmModalLabel">APR Open API provera</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">Partner ce biti proveren po maticnom broju iz APR OpenData registra.</p>
+          <p class="text-muted small mb-0">Ako postoji u registru, tacan naziv i aktivnost ce biti upisani i zasticeni od legacy sinhronizacije.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkazi</button>
+          <button type="submit" class="btn btn-primary" id="aprUpdateSubmit">
+            <i class="mdi mdi-cloud-sync"></i> Pokreni proveru
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="aprUpdateLoadingModal" tabindex="-1" aria-labelledby="aprUpdateLoadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aprUpdateLoadingModalLabel">APR Open API provera</h5>
+      </div>
+      <div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>
+        <p class="mb-1">Ucitavam APR OpenData registar i proveravam partnera.</p>
+        <p class="text-muted small mb-0">Ne zatvarajte stranicu dok se provera ne zavrsi.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var form = document.getElementById('aprUpdateForm');
+  var submit = document.getElementById('aprUpdateSubmit');
+  var loadingModalElement = document.getElementById('aprUpdateLoadingModal');
+  if (!form || !submit || !loadingModalElement || !window.bootstrap) return;
+  var loadingModal = new bootstrap.Modal(loadingModalElement, {backdrop: 'static', keyboard: false});
+  form.addEventListener('submit', function () {
+    submit.disabled = true;
+    submit.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Provera';
+    loadingModal.show();
+  });
+});
+</script>
 {% endblock %}

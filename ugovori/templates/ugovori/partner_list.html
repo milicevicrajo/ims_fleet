@@ -64,6 +64,11 @@
         <i class="mdi mdi-sync"></i> Osvezi iz finansija
       </button>
     </form>
+    <button type="button" id="apr-sync-btn" class="btn btn-outline-light btn-sm"
+            data-start-url="{% url 'ugovori:partner_sync_apr_start' %}"
+            data-batch-url="{% url 'ugovori:partner_sync_apr_batch' %}">
+      <i class="mdi mdi-cloud-sync"></i> Sinhronizuj sa Open API
+    </button>
     <a href="{% url 'ugovori:partner_create' %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-plus"></i> Novi partner
     </a>
@@ -76,7 +81,7 @@
       <div class="card-body border-bottom">
         <form method="get" class="assignment-filter">
           <div class="row g-2 align-items-end">
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-lg-3">
               <label class="form-label mb-1" for="filter-q">Pretraga</label>
               <input id="filter-q" type="text" name="q" value="{{ q }}" class="form-control" placeholder="Naziv, PIB, maticni broj, JMBG...">
             </div>
@@ -105,6 +110,14 @@
                 <option value="foreign" {% if residency_filter == "foreign" %}selected{% endif %}>Strano</option>
               </select>
             </div>
+            <div class="col-12 col-sm-6 col-lg-2">
+              <label class="form-label mb-1" for="filter-sync">Sync</label>
+              <select id="filter-sync" name="sync" class="form-select form-control select2-method">
+                <option value="">Svi</option>
+                <option value="needs_check" {% if sync_filter == "needs_check" %}selected{% endif %}>Potrebno proveriti</option>
+                <option value="synced" {% if sync_filter == "synced" %}selected{% endif %}>Sinhronizovani</option>
+              </select>
+            </div>
             <div class="col-12 col-sm-6 col-lg-2 d-flex gap-2">
               <button type="submit" class="btn btn-primary w-100">
                 <i class="mdi mdi-filter"></i> Filter
@@ -131,6 +144,7 @@
                 <th>MB / JMBG</th>
                 <th>Grad</th>
                 <th>Telefon</th>
+                <th class="text-center">Sync</th>
                 <th class="text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
@@ -146,6 +160,7 @@
                 <th>MB / JMBG</th>
                 <th>Grad</th>
                 <th>Telefon</th>
+                <th>Sync</th>
                 <th>Akcije</th>
               </tr>
             </tfoot>
@@ -186,6 +201,43 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="finance-sync-close" class="btn btn-outline-secondary" data-bs-dismiss="modal" disabled>Zatvori</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="aprSyncModal" tabindex="-1" aria-labelledby="aprSyncModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aprSyncModalLabel">Sinhronizacija partnera sa APR Open API</h5>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span id="apr-sync-status">Priprema...</span>
+          <span id="apr-sync-percent">0%</span>
+        </div>
+        <div class="progress mb-3" style="height: 20px;">
+          <div id="apr-sync-progress" class="progress-bar progress-bar-striped progress-bar-animated"
+               role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+        </div>
+        <div class="small text-muted">
+          Obradjeno: <span id="apr-sync-processed">0</span> /
+          <span id="apr-sync-total">0</span>
+          <span class="ms-2">Trajanje: <span id="apr-sync-elapsed">0s</span></span>
+        </div>
+        <div class="small mt-2">
+          Azurirano: <span id="apr-sync-updated">0</span>,
+          bez izmene: <span id="apr-sync-unchanged">0</span>,
+          nije nadjeno u APR: <span id="apr-sync-not-found">0</span>
+        </div>
+        <div class="small text-muted mt-2">
+          APR menja tacan naziv i aktivnost partnera po maticnom broju. Ta polja zatim ostaju zasticena od legacy sinhronizacije.
+        </div>
+        <div id="apr-sync-error" class="alert alert-danger mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="apr-sync-close" class="btn btn-outline-secondary" data-bs-dismiss="modal" disabled>Zatvori</button>
       </div>
     </div>
   </div>
@@ -238,6 +290,7 @@
             { data: 'identification' },
             { data: 'city' },
             { data: 'phone' },
+            { data: 'sync', orderable: false, searchable: false, className: 'text-center' },
             { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
           ],
           language: {
@@ -399,6 +452,125 @@
         .finally(function () {
           syncBtn.disabled = false;
           updateElapsed();
+        });
+    });
+
+    var aprSyncBtn = document.getElementById('apr-sync-btn');
+    if (!aprSyncBtn) return;
+
+    var aprModalEl = document.getElementById('aprSyncModal');
+    var aprModal = window.bootstrap && aprModalEl ? new bootstrap.Modal(aprModalEl, { backdrop: 'static', keyboard: false }) : null;
+    var aprStartedAt = null;
+    var aprTimerId = null;
+
+    function setAprText(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+    function setAprProgress(processed, total) {
+      var percent = total ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+      var bar = document.getElementById('apr-sync-progress');
+      if (bar) {
+        bar.style.width = percent + '%';
+        bar.setAttribute('aria-valuenow', String(percent));
+      }
+      setAprText('apr-sync-percent', percent + '%');
+      setAprText('apr-sync-processed', processed);
+      setAprText('apr-sync-total', total);
+    }
+    function resetAprModal() {
+      setAprText('apr-sync-status', 'Ucitavanje APR Open API podataka...');
+      setAprProgress(0, 0);
+      setAprText('apr-sync-updated', '0');
+      setAprText('apr-sync-unchanged', '0');
+      setAprText('apr-sync-not-found', '0');
+      setAprText('apr-sync-elapsed', '0s');
+      var errorEl = document.getElementById('apr-sync-error');
+      if (errorEl) {
+        errorEl.classList.add('d-none');
+        errorEl.textContent = '';
+      }
+      var closeBtn = document.getElementById('apr-sync-close');
+      if (closeBtn) closeBtn.disabled = true;
+    }
+    function updateAprElapsed() {
+      if (!aprStartedAt) return;
+      setAprText('apr-sync-elapsed', Math.floor((Date.now() - aprStartedAt) / 1000) + 's');
+    }
+    function finishAprSync() {
+      setAprText('apr-sync-status', 'Zavrseno');
+      var closeBtn = document.getElementById('apr-sync-close');
+      if (closeBtn) closeBtn.disabled = false;
+      if (aprTimerId) clearInterval(aprTimerId);
+      if (partnersTableApi) {
+        partnersTableApi.ajax.reload(null, false);
+      }
+    }
+    function showAprError(message) {
+      setAprText('apr-sync-status', 'Greska');
+      var errorEl = document.getElementById('apr-sync-error');
+      if (errorEl) {
+        errorEl.textContent = message || 'APR sinhronizacija nije uspela.';
+        errorEl.classList.remove('d-none');
+      }
+      var closeBtn = document.getElementById('apr-sync-close');
+      if (closeBtn) closeBtn.disabled = false;
+      if (aprTimerId) clearInterval(aprTimerId);
+    }
+
+    aprSyncBtn.addEventListener('click', function () {
+      resetAprModal();
+      if (aprModal) aprModal.show();
+      aprStartedAt = Date.now();
+      aprTimerId = setInterval(updateAprElapsed, 1000);
+      aprSyncBtn.disabled = true;
+
+      var totals = { updated: 0, unchanged: 0, notFound: 0 };
+      var processed = 0;
+      var total = 0;
+      var batchSize = 100;
+
+      postForm(aprSyncBtn.dataset.startUrl, {})
+        .then(function (start) {
+          total = start.total || 0;
+          batchSize = start.batch_size || batchSize;
+          setAprText('apr-sync-status', 'Sinhronizacija u toku...');
+          setAprProgress(0, total);
+
+          function runNextAprBatch() {
+            if (processed >= total || total === 0) {
+              finishAprSync();
+              return Promise.resolve();
+            }
+
+            return postForm(aprSyncBtn.dataset.batchUrl, {
+              offset: processed,
+              batch_size: batchSize
+            }).then(function (batch) {
+              var batchProcessed = batch.processed || 0;
+              if (batchProcessed === 0) {
+                throw new Error('Nema sledeceg paketa partnera za APR sinhronizaciju.');
+              }
+              processed += batchProcessed;
+              totals.updated += batch.updated || 0;
+              totals.unchanged += batch.unchanged || 0;
+              totals.notFound += batch.not_found || 0;
+              setAprProgress(processed, total);
+              setAprText('apr-sync-updated', totals.updated);
+              setAprText('apr-sync-unchanged', totals.unchanged);
+              setAprText('apr-sync-not-found', totals.notFound);
+              return runNextAprBatch();
+            });
+          }
+
+          return runNextAprBatch();
+        })
+        .catch(function (error) {
+          showAprError(error.message);
+        })
+        .finally(function () {
+          aprSyncBtn.disabled = false;
+          updateAprElapsed();
         });
     });
   });

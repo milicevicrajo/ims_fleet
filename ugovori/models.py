@@ -57,6 +57,17 @@ class Partner(models.Model):
         max_length=255, blank=True, null=True, verbose_name="Kontakt osoba"
     )
     note = models.TextField(blank=True, null=True, verbose_name="Napomena")
+    data_source = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name="Izvor podataka",
+    )
+    data_validated = models.BooleanField(default=False, db_index=True, verbose_name="Podaci validni")
+    data_validated_at = models.DateTimeField(null=True, blank=True, verbose_name="Datum validacije")
+    apr_status = models.CharField(max_length=100, blank=True, null=True, verbose_name="APR status")
+    apr_checked_at = models.DateTimeField(null=True, blank=True, verbose_name="APR provera")
     is_active = models.BooleanField(default=True, verbose_name="Aktivan", db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

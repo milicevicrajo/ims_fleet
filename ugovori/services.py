@@ -5,6 +5,7 @@ from pathlib import Path
 
 from django.db import connections, transaction
 
+from .apr_openapi import APR_OPENAPI_SOURCE
 from .models import Contract, ContractParty, ContractType, Partner
 
 
@@ -86,6 +87,7 @@ def residency_from_country(country):
 
 
 BANK_GROUPS = {11, 13, 14}
+APR_PROTECTED_PARTNER_FIELDS = {"name", "is_active"}
 
 
 def parse_finance_group(value):
@@ -252,6 +254,12 @@ def sync_finance_partner_rows(rows, target_db="default", commit=True):
 
             defaults = partner_defaults_from_finance(row)
             partner = existing_partners.get(row["sif_par"])
+            if partner is not None and partner.data_source == APR_OPENAPI_SOURCE and partner.data_validated:
+                defaults = {
+                    field: value
+                    for field, value in defaults.items()
+                    if field not in APR_PROTECTED_PARTNER_FIELDS
+                }
 
             if partner is None:
                 result.created += 1

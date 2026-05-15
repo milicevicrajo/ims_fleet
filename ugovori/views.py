@@ -7,9 +7,13 @@ from django.utils.html import escape
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_filters.views import FilterView
+import json
+import tempfile
+from pathlib import Path
 
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
+from .apr_openapi import APR_OPENAPI_SOURCE, fetch_apr_companies, get_apr_company, update_partner_from_apr, update_partners_from_apr
 from .filters import ContractFilter
 from .forms import AnnexForm, ContractForm, ContractPartyFormSet, ContractTypeForm, PartnerForm
 from .models import Contract, ContractParty, ContractType, Partner
@@ -19,6 +23,8 @@ from .services import count_finance_partners, sync_finance_partner_batch, sync_f
 # ---------------------------------------------------------------------------
 # Partner views
 # ---------------------------------------------------------------------------
+
+APR_SYNC_CACHE_PATH = Path(tempfile.gettempdir()) / "ims_fleet_apr_companies.json"
 
 class PartnerListView(RolePermissionRequiredMixin, ListView):
     model = Partner
@@ -51,6 +57,11 @@ class PartnerListView(RolePermissionRequiredMixin, ListView):
         residency = self.request.GET.get("residency", "")
         if residency in {Partner.DOMESTIC, Partner.FOREIGN}:
             qs = qs.filter(residency=residency)
+        sync_filter = self.request.GET.get("sync", "")
+        if sync_filter == "synced":
+            qs = qs.filter(data_source=APR_OPENAPI_SOURCE, data_validated=True)
+        elif sync_filter == "needs_check":
+            qs = qs.exclude(data_source=APR_OPENAPI_SOURCE, data_validated=True)
         return qs
 
     def get_context_data(self, **kwargs):
@@ -60,6 +71,7 @@ class PartnerListView(RolePermissionRequiredMixin, ListView):
         ctx["active_filter"] = self.request.GET.get("active", "")
         ctx["partner_type_filter"] = self.request.GET.get("partner_type", "")
         ctx["residency_filter"] = self.request.GET.get("residency", "")
+        ctx["sync_filter"] = self.request.GET.get("sync", "")
         ctx["current_app"] = "ugovori"
         return ctx
 
@@ -91,6 +103,12 @@ def _partner_filtered_qs(request):
     residency = request.GET.get("residency", "")
     if residency in {Partner.DOMESTIC, Partner.FOREIGN}:
         qs = qs.filter(residency=residency)
+
+    sync_filter = request.GET.get("sync", "")
+    if sync_filter == "synced":
+        qs = qs.filter(data_source=APR_OPENAPI_SOURCE, data_validated=True)
+    elif sync_filter == "needs_check":
+        qs = qs.exclude(data_source=APR_OPENAPI_SOURCE, data_validated=True)
     return qs
 
 
@@ -127,6 +145,27 @@ def _partner_residency_html(partner):
         f'<span class="partner-chip {css_class}"><i class="mdi {icon}"></i> '
         f'{escape(partner.get_residency_display())}</span>'
     )
+
+
+def _truncate_text(value, max_length=50):
+    value = str(value or "")
+    if len(value) <= max_length:
+        return value
+    return f"{value[:max_length].rstrip()}..."
+
+
+def _partner_name_html(partner):
+    detail_url = reverse("ugovori:partner_detail", kwargs={"pk": partner.pk})
+    return (
+        f'<a href="{detail_url}" class="btn btn-sm btn-outline-primary" title="{escape(partner.name)}">'
+        f'<i class="mdi mdi-eye"></i> {escape(_truncate_text(partner.name, 50))}</a>'
+    )
+
+
+def _partner_sync_html(partner):
+    if partner.data_source == APR_OPENAPI_SOURCE and partner.data_validated:
+        return '<span class="text-success" title="Sinhronizovano sa APR Open API"><i class="mdi mdi-check-circle"></i></span>'
+    return '<span class="text-danger" title="Nije sinhronizovano sa APR Open API"><i class="mdi mdi-close-circle"></i></span>'
 
 
 @role_permission_required("ugovori:partner_list")
@@ -182,16 +221,12 @@ def partner_datatable_data(request):
 
     data = []
     for partner in qs[start:start + length]:
-        detail_url = reverse("ugovori:partner_detail", kwargs={"pk": partner.pk})
         update_url = reverse("ugovori:partner_update", kwargs={"pk": partner.pk})
         delete_url = reverse("ugovori:partner_delete", kwargs={"pk": partner.pk})
         data.append({
             "DT_RowClass": "" if partner.is_active else "assignment-closed",
             "external_sif_par": partner.external_sif_par or "",
-            "name": (
-                f'<a href="{detail_url}" class="btn btn-sm btn-outline-primary">'
-                f'<i class="mdi mdi-eye"></i> {escape(partner.name)}</a>'
-            ),
+            "name": _partner_name_html(partner),
             "status": _partner_badge_html(partner),
             "partner_type": _partner_type_html(partner),
             "residency": _partner_residency_html(partner),
@@ -199,6 +234,7 @@ def partner_datatable_data(request):
             "identification": escape(partner.maticni_broj or partner.jmbg or "/"),
             "city": escape(partner.city or "/"),
             "phone": escape(partner.phone or "/"),
+            "sync": _partner_sync_html(partner),
             "actions": (
                 f'<a class="btn btn-outline-primary btn-sm" href="{update_url}">'
                 '<i class="mdi mdi-pencil"></i> Izmeni</a> '
@@ -358,6 +394,91 @@ def sync_finansijski_partneri_batch(request):
         "unchanged": result.unchanged,
         "skipped": result.skipped,
     })
+
+
+def _apr_partner_queryset():
+    return (
+        Partner.objects.filter(
+            partner_type=Partner.LEGAL_ENTITY,
+            residency=Partner.DOMESTIC,
+        )
+        .exclude(maticni_broj__isnull=True)
+        .exclude(maticni_broj="")
+        .order_by("id")
+    )
+
+
+@require_POST
+@role_permission_required("ugovori:partner_list")
+def sync_apr_partneri_start(request):
+    try:
+        companies = fetch_apr_companies()
+        APR_SYNC_CACHE_PATH.write_text(json.dumps(companies, ensure_ascii=False), encoding="utf-8")
+        total = _apr_partner_queryset().count()
+    except Exception as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=500)
+    return JsonResponse({"ok": True, "total": total, "batch_size": 100})
+
+
+@require_POST
+@role_permission_required("ugovori:partner_list")
+def sync_apr_partneri_batch(request):
+    try:
+        offset = max(int(request.POST.get("offset", 0)), 0)
+    except (TypeError, ValueError):
+        offset = 0
+    try:
+        batch_size = int(request.POST.get("batch_size", 100))
+    except (TypeError, ValueError):
+        batch_size = 100
+    batch_size = min(max(batch_size, 1), 300)
+
+    try:
+        if not APR_SYNC_CACHE_PATH.exists():
+            return JsonResponse(
+                {"ok": False, "error": "APR podaci nisu ucitani. Pokrenite sinhronizaciju ponovo."},
+                status=400,
+            )
+        companies = json.loads(APR_SYNC_CACHE_PATH.read_text(encoding="utf-8"))
+        partners = list(_apr_partner_queryset()[offset:offset + batch_size])
+        result = update_partners_from_apr(partners, companies=companies, commit=True)
+    except Exception as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=500)
+
+    return JsonResponse({
+        "ok": True,
+        "processed": result.checked,
+        "updated": result.updated,
+        "unchanged": result.unchanged,
+        "missing_maticni_broj": result.missing_maticni_broj,
+        "not_found": result.not_found,
+    })
+
+
+@require_POST
+@role_permission_required("ugovori:partner_list")
+def partner_apr_update(request, pk):
+    partner = get_object_or_404(Partner, pk=pk)
+    if not partner.maticni_broj:
+        messages.error(request, "Partner nema maticni broj za APR Open API proveru.")
+        return redirect("ugovori:partner_detail", pk=partner.pk)
+
+    try:
+        companies = fetch_apr_companies()
+        company = get_apr_company(partner.maticni_broj, companies)
+        if not company:
+            messages.warning(request, "Partner nije pronadjen u APR Open API registru po maticnom broju.")
+            return redirect("ugovori:partner_detail", pk=partner.pk)
+        changed_fields = update_partner_from_apr(partner, company, commit=True)
+    except Exception as exc:
+        messages.error(request, f"APR Open API provera nije uspela: {exc}")
+        return redirect("ugovori:partner_detail", pk=partner.pk)
+
+    if changed_fields:
+        messages.success(request, "Partner je azuriran iz APR Open API registra.")
+    else:
+        messages.info(request, "APR Open API podaci su vec upisani za ovog partnera.")
+    return redirect("ugovori:partner_detail", pk=partner.pk)
 
 
 # ---------------------------------------------------------------------------
