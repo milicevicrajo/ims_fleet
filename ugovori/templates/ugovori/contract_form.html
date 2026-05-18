@@ -34,7 +34,10 @@
     background: #f8fafc;
     border: 1px solid #e6ebf1;
     border-radius: 8px;
-    padding: 12px;
+    padding: 14px;
+  }
+  .contract-party-card .select2-container {
+    width: 100% !important;
   }
   .party-role-field .form-label {
     color: #14395b;
@@ -101,99 +104,7 @@
     </div>
   {% endif %}
 
-  <div class="card shadow-sm mb-3">
-    <div class="card-body">
-      <div class="form-section">
-        <div class="form-section-title"><i class="mdi mdi-file-document-edit"></i> Osnovni podaci</div>
-        <div class="row">
-          {% if not parent_contract %}
-            <div class="col-12 col-md-6 col-xl-3 mb-3">
-              <label for="{{ form.kind.id_for_label }}" class="form-label">{{ form.kind.label }}</label>
-              {{ form.kind }}
-              {% if form.kind.errors %}<div class="invalid-feedback d-block">{{ form.kind.errors.0 }}</div>{% endif %}
-            </div>
-          {% endif %}
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.contract_type.id_for_label }}" class="form-label">{{ form.contract_type.label }} <span class="text-danger">*</span></label>
-            {{ form.contract_type }}
-            {% if form.contract_type.errors %}<div class="invalid-feedback d-block">{{ form.contract_type.errors.0 }}</div>{% endif %}
-          </div>
-          {% if not parent_contract %}
-            <div class="col-12 col-md-6 col-xl-3 mb-3 dynamic-field" data-contract-field="parent">
-              <label for="{{ form.parent_contract.id_for_label }}" class="form-label">{{ form.parent_contract.label }}</label>
-              {{ form.parent_contract }}
-              {% if form.parent_contract.errors %}<div class="invalid-feedback d-block">{{ form.parent_contract.errors.0 }}</div>{% endif %}
-            </div>
-          {% endif %}
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.contract_number.id_for_label }}" class="form-label">{{ form.contract_number.label }} <span class="text-danger">*</span></label>
-            {{ form.contract_number }}
-            {% if form.contract_number.errors %}<div class="invalid-feedback d-block">{{ form.contract_number.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-lg-6 mb-3">
-            <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
-            {{ form.title }}
-            {% if form.title.errors %}<div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-lg-6 mb-3">
-            <label for="{{ form.file.id_for_label }}" class="form-label">{{ form.file.label }}</label>
-            {{ form.file|add_class:"form-control" }}
-            {% if form.file.errors %}<div class="invalid-feedback d-block">{{ form.file.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 mb-3">
-            <label for="{{ form.subject.id_for_label }}" class="form-label">{{ form.subject.label }}</label>
-            {{ form.subject }}
-            {% if form.subject.errors %}<div class="invalid-feedback d-block">{{ form.subject.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-      </div>
-
-      <div class="form-section">
-        <div class="form-section-title"><i class="mdi mdi-calendar-clock"></i> Rokovi, vrednost i status</div>
-        <div class="row">
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.contract_date.id_for_label }}" class="form-label">{{ form.contract_date.label }} <span class="text-danger">*</span></label>
-            {{ form.contract_date }}
-            {% if form.contract_date.errors %}<div class="invalid-feedback d-block">{{ form.contract_date.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.valid_from.id_for_label }}" class="form-label">{{ form.valid_from.label }}</label>
-            {{ form.valid_from }}
-            {% if form.valid_from.errors %}<div class="invalid-feedback d-block">{{ form.valid_from.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.valid_to.id_for_label }}" class="form-label">{{ form.valid_to.label }}</label>
-            {{ form.valid_to }}
-            {% if form.valid_to.errors %}<div class="invalid-feedback d-block">{{ form.valid_to.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
-            {{ form.status }}
-            {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.value.id_for_label }}" class="form-label">{{ form.value.label }}</label>
-            {{ form.value }}
-            {% if form.value.errors %}<div class="invalid-feedback d-block">{{ form.value.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-md-6 col-xl-3 mb-3">
-            <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }}</label>
-            {{ form.currency }}
-            {% if form.currency.errors %}<div class="invalid-feedback d-block">{{ form.currency.errors.0 }}</div>{% endif %}
-          </div>
-          <div class="col-12 col-xl-6 mb-3">
-            <label for="{{ form.note.id_for_label }}" class="form-label">{{ form.note.label }}</label>
-            {{ form.note }}
-            {% if form.note.errors %}<div class="invalid-feedback d-block">{{ form.note.errors.0 }}</div>{% endif %}
-          </div>
-        </div>
-      </div>
-
-      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
-    </div>
-  </div>
-
-  <div class="card shadow-sm mb-3">
+  <div class="card shadow-sm mb-3 contract-party-card">
     <div class="card-body">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div class="form-section-title mb-0"><i class="mdi mdi-account-multiple"></i> Stranke ugovora</div>
@@ -213,24 +124,24 @@
         {% for party_form in formset %}
           <div class="party-form-row row align-items-end g-2 mb-2">
             {% for field in party_form.hidden_fields %}{{ field }}{% endfor %}
-            <div class="col-12 col-lg-5">
+            <div class="col-12 col-xl-6">
               <label class="form-label">Partner</label>
               {{ party_form.partner }}
               {% if party_form.partner.errors %}<div class="invalid-feedback d-block">{{ party_form.partner.errors.0 }}</div>{% endif %}
             </div>
-            <div class="col-12 col-md-5 col-lg-3 party-role-field">
+            <div class="col-12 col-md-5 col-xl-2 party-role-field">
               <label class="form-label" for="{{ party_form.role.id_for_label }}">
                 <i class="mdi mdi-account-switch-outline"></i> Uloga
               </label>
               {{ party_form.role }}
               {% if party_form.role.errors %}<div class="invalid-feedback d-block">{{ party_form.role.errors.0 }}</div>{% endif %}
             </div>
-            <div class="col-12 col-md-5 col-lg-3">
+            <div class="col-12 col-md-5 col-xl-3">
               <label class="form-label">Napomena</label>
               {{ party_form.note }}
               {% if party_form.note.errors %}<div class="invalid-feedback d-block">{{ party_form.note.errors.0 }}</div>{% endif %}
             </div>
-            <div class="col-12 col-md-2 col-lg-1">
+            <div class="col-12 col-md-2 col-xl-1">
               {% if party_form.DELETE %}
                 <div class="form-check pt-4">
                   {{ party_form.DELETE }}
@@ -243,6 +154,131 @@
           </div>
         {% endfor %}
       </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-file-document-edit"></i> Osnovni podaci</div>
+        <div class="row">
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.contract_number.id_for_label }}" class="form-label">{{ form.contract_number.label }} <span class="text-danger">*</span></label>
+            {{ form.contract_number }}
+            {% if form.contract_number.errors %}<div class="invalid-feedback d-block">{{ form.contract_number.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.contract_date.id_for_label }}" class="form-label">{{ form.contract_date.label }} <span class="text-danger">*</span></label>
+            {{ form.contract_date }}
+            {% if form.contract_date.errors %}<div class="invalid-feedback d-block">{{ form.contract_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.file.id_for_label }}" class="form-label">{{ form.file.label }}</label>
+            {{ form.file|add_class:"form-control" }}
+            {% if form.file.errors %}<div class="invalid-feedback d-block">{{ form.file.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="row">
+          {% if not parent_contract %}
+            <div class="col-12 col-md-6 col-xl-4 mb-3">
+              <label for="{{ form.kind.id_for_label }}" class="form-label">{{ form.kind.label }}</label>
+              {{ form.kind }}
+              {% if form.kind.errors %}<div class="invalid-feedback d-block">{{ form.kind.errors.0 }}</div>{% endif %}
+            </div>
+          {% else %}
+            <div class="col-12 col-md-6 col-xl-4 mb-3">
+              <label class="form-label">Vrsta</label>
+              <input type="text" class="form-control" value="Aneks" readonly>
+            </div>
+          {% endif %}
+          <div class="col-12 col-md-6 col-xl-4 mb-3">
+            <label for="{{ form.contract_type.id_for_label }}" class="form-label">{{ form.contract_type.label }} <span class="text-danger">*</span></label>
+            {{ form.contract_type }}
+            {% if form.contract_type.errors %}<div class="invalid-feedback d-block">{{ form.contract_type.errors.0 }}</div>{% endif %}
+          </div>
+          {% if not parent_contract %}
+            <div class="col-12 col-md-6 col-xl-4 mb-3 dynamic-field" data-contract-field="parent">
+              <label for="{{ form.parent_contract.id_for_label }}" class="form-label">{{ form.parent_contract.label }}</label>
+              {{ form.parent_contract }}
+              {% if form.parent_contract.errors %}<div class="invalid-feedback d-block">{{ form.parent_contract.errors.0 }}</div>{% endif %}
+            </div>
+          {% else %}
+            <div class="col-12 col-md-6 col-xl-4 mb-3">
+              <label class="form-label">Glavni ugovor</label>
+              <input type="text" class="form-control" value="{{ parent_contract.contract_number }} - {{ parent_contract.title }}" readonly>
+            </div>
+          {% endif %}
+        </div>
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label for="{{ form.subject.id_for_label }}" class="form-label">{{ form.subject.label }}</label>
+            {{ form.subject }}
+            {% if form.subject.errors %}<div class="invalid-feedback d-block">{{ form.subject.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-calendar-clock"></i> Rokovi, vrednost i status</div>
+        <div class="row">
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.valid_from.id_for_label }}" class="form-label">{{ form.valid_from.label }}</label>
+            {{ form.valid_from }}
+            {% if form.valid_from.errors %}<div class="invalid-feedback d-block">{{ form.valid_from.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.valid_to.id_for_label }}" class="form-label">{{ form.valid_to.label }}</label>
+            {{ form.valid_to }}
+            {% if form.valid_to.errors %}<div class="invalid-feedback d-block">{{ form.valid_to.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.value_type.id_for_label }}" class="form-label">{{ form.value_type.label }}</label>
+            {{ form.value_type }}
+            {% if form.value_type.errors %}<div class="invalid-feedback d-block">{{ form.value_type.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3" data-value-field="total">
+            <label for="{{ form.value.id_for_label }}" class="form-label">{{ form.value.label }}</label>
+            {{ form.value }}
+            {% if form.value.errors %}<div class="invalid-feedback d-block">{{ form.value.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3" data-value-field="unit">
+            <label for="{{ form.unit_price.id_for_label }}" class="form-label">{{ form.unit_price.label }}</label>
+            {{ form.unit_price }}
+            {% if form.unit_price.errors %}<div class="invalid-feedback d-block">{{ form.unit_price.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3" data-value-field="unit">
+            <label for="{{ form.unit_label.id_for_label }}" class="form-label">{{ form.unit_label.label }}</label>
+            {{ form.unit_label }}
+            {% if form.unit_label.errors %}<div class="invalid-feedback d-block">{{ form.unit_label.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 col-xl-3 mb-3">
+            <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }}</label>
+            {{ form.currency }}
+            {% if form.currency.errors %}<div class="invalid-feedback d-block">{{ form.currency.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label for="{{ form.note.id_for_label }}" class="form-label">{{ form.note.label }}</label>
+            {{ form.note }}
+            {% if form.note.errors %}<div class="invalid-feedback d-block">{{ form.note.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% for field in form.hidden_fields %}{{ field }}{% endfor %}
     </div>
   </div>
 
@@ -285,6 +321,33 @@ document.addEventListener('DOMContentLoaded', function () {
     kindField.addEventListener('change', toggleContractKindFields);
     if (window.$) $(kindField).on('select2:select change', toggleContractKindFields);
     toggleContractKindFields();
+  }
+
+  var valueTypeField = document.getElementById('{{ form.value_type.id_for_label }}');
+  var totalValueRows = document.querySelectorAll('[data-value-field="total"]');
+  var unitValueRows = document.querySelectorAll('[data-value-field="unit"]');
+  var unitLabelField = document.getElementById('{{ form.unit_label.id_for_label }}');
+
+  function toggleValueFields() {
+    var valueType = valueTypeField ? valueTypeField.value : 'fixed';
+    var showTotal = valueType === 'fixed';
+    var showUnit = valueType === 'hourly' || valueType === 'unit';
+
+    totalValueRows.forEach(function (row) {
+      row.hidden = !showTotal && !row.querySelector('.invalid-feedback');
+    });
+    unitValueRows.forEach(function (row) {
+      row.hidden = !showUnit && !row.querySelector('.invalid-feedback');
+    });
+    if (valueType === 'hourly' && unitLabelField && !unitLabelField.value) {
+      unitLabelField.value = 'radni sat';
+    }
+  }
+
+  if (valueTypeField) {
+    valueTypeField.addEventListener('change', toggleValueFields);
+    if (window.$) $(valueTypeField).on('select2:select change', toggleValueFields);
+    toggleValueFields();
   }
 
   var totalForms = document.getElementById('id_parties-TOTAL_FORMS');

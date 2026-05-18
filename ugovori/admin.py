@@ -22,8 +22,8 @@ class ContractTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
-    list_display = ["contract_number", "title", "kind", "status", "contract_date"]
-    list_filter = ["kind", "status", "contract_type"]
+    list_display = ["contract_number", "title", "kind", "status", "value_type", "contract_date"]
+    list_filter = ["kind", "status", "value_type", "contract_type"]
     search_fields = ["contract_number", "title"]
     inlines = [ContractPartyInline]
 

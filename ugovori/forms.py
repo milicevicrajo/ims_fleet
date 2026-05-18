@@ -83,6 +83,9 @@ class ContractForm(forms.ModelForm):
             "valid_from",
             "valid_to",
             "value",
+            "value_type",
+            "unit_price",
+            "unit_label",
             "currency",
             "status",
             "file",
@@ -92,6 +95,7 @@ class ContractForm(forms.ModelForm):
             "subject": forms.Textarea(attrs={"rows": 3}),
             "note": forms.Textarea(attrs={"rows": 3}),
             "kind": Select2Widget(attrs={"class": "select2-method"}),
+            "value_type": Select2Widget(attrs={"class": "select2-method"}),
             "status": Select2Widget(attrs={"class": "select2-method"}),
             "currency": Select2Widget(attrs={"class": "select2-method"}),
         }
@@ -117,6 +121,32 @@ class ContractForm(forms.ModelForm):
         # Textarea class
         for name in ("subject", "note"):
             self.fields[name].widget.attrs.setdefault("class", "form-control")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        value_type = cleaned_data.get("value_type")
+        unit_price = cleaned_data.get("unit_price")
+        unit_label = (cleaned_data.get("unit_label") or "").strip()
+
+        if value_type == Contract.VALUE_TYPE_HOURLY and not unit_label:
+            cleaned_data["unit_label"] = "radni sat"
+        elif value_type == Contract.VALUE_TYPE_UNIT and not unit_label:
+            self.add_error("unit_label", "Unesite naziv jedinice.")
+
+        if value_type in {Contract.VALUE_TYPE_HOURLY, Contract.VALUE_TYPE_UNIT} and unit_price is None:
+            self.add_error("unit_price", "Unesite cenu po jedinici.")
+
+        if value_type == Contract.VALUE_TYPE_FIXED:
+            cleaned_data["unit_price"] = None
+            cleaned_data["unit_label"] = ""
+        elif value_type in {Contract.VALUE_TYPE_HOURLY, Contract.VALUE_TYPE_UNIT}:
+            cleaned_data["value"] = None
+        elif value_type == Contract.VALUE_TYPE_UNDEFINED:
+            cleaned_data["value"] = None
+            cleaned_data["unit_price"] = None
+            cleaned_data["unit_label"] = ""
+
+        return cleaned_data
 
 
 class AnnexForm(ContractForm):
@@ -144,9 +174,23 @@ class ContractPartyForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["partner"].widget = Select2Widget(attrs={"class": "select2-method"})
         self.fields["partner"].queryset = Partner.objects.filter(is_active=True)
+        self.fields["partner"].label_from_instance = self.partner_label_from_instance
         self.fields["role"].widget.attrs.setdefault("class", "form-select contract-party-role-select")
         self.fields["note"].widget.attrs.setdefault("class", "form-control")
         self.fields["note"].required = False
+
+    @staticmethod
+    def partner_label_from_instance(partner):
+        details = []
+        if partner.external_sif_par:
+            details.append(f"Sifra: {partner.external_sif_par}")
+        if partner.pib:
+            details.append(f"PIB: {partner.pib}")
+        if partner.maticni_broj:
+            details.append(f"MB: {partner.maticni_broj}")
+        if details:
+            return f"{partner.name} ({', '.join(details)})"
+        return partner.name
 
 
 ContractPartyFormSet = inlineformset_factory(

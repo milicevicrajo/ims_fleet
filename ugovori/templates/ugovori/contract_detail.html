@@ -120,6 +120,12 @@
     font-size: .86rem;
     margin-top: 3px;
   }
+  .party-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
   .side-card {
     border: 1px solid #e6ebf1;
     border-radius: 8px;
@@ -137,6 +143,9 @@
     .contract-meta-grid,
     .party-row {
       grid-template-columns: 1fr;
+    }
+    .party-actions {
+      justify-content: flex-start;
     }
   }
 </style>
@@ -216,7 +225,15 @@
           <div class="contract-meta">
             <div class="contract-meta-label">Vrednost</div>
             <div class="contract-meta-value">
-              {% if ugovor.value %}{{ ugovor.value|floatformat:2 }} {{ ugovor.currency }}{% else %}-{% endif %}
+              {% if ugovor.value_type == "fixed" and ugovor.value %}
+                {{ ugovor.value|floatformat:2 }} {{ ugovor.currency }}
+              {% elif ugovor.value_type == "hourly" and ugovor.unit_price %}
+                {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"radni sat" }}
+              {% elif ugovor.value_type == "unit" and ugovor.unit_price %}
+                {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"jedinica" }}
+              {% elif ugovor.value_type == "undefined" %}
+                Bez definisane vrednosti
+              {% else %}-{% endif %}
             </div>
           </div>
           <div class="contract-meta">
@@ -267,7 +284,15 @@
                 <div class="party-note">{{ party.note }}</div>
               {% endif %}
             </div>
-            <span class="contract-pill main">{{ party.get_role_display }}</span>
+            <div class="party-actions">
+              <span class="contract-pill main">{{ party.get_role_display }}</span>
+              {% if party.partner.external_sif_par %}
+                <a class="btn btn-sm btn-outline-primary"
+                   href="{% url 'naplata:detalji_partner' party.partner.external_sif_par %}">
+                  <i class="mdi mdi-cash-multiple"></i> Naplata
+                </a>
+              {% endif %}
+            </div>
           </div>
         {% empty %}
           <div class="text-muted text-center py-3">Nema unetih stranaka.</div>

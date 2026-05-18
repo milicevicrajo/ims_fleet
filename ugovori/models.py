@@ -145,6 +145,16 @@ class Contract(models.Model):
         ("USD", "USD"),
         ("CHF", "CHF"),
     ]
+    VALUE_TYPE_FIXED = "fixed"
+    VALUE_TYPE_HOURLY = "hourly"
+    VALUE_TYPE_UNIT = "unit"
+    VALUE_TYPE_UNDEFINED = "undefined"
+    VALUE_TYPE_CHOICES = [
+        (VALUE_TYPE_FIXED, "Fiksna vrednost"),
+        (VALUE_TYPE_HOURLY, "Po radnom satu"),
+        (VALUE_TYPE_UNIT, "Po jedinici"),
+        (VALUE_TYPE_UNDEFINED, "Bez definisane vrednosti"),
+    ]
 
     kind = models.CharField(
         max_length=10,
@@ -175,6 +185,26 @@ class Contract(models.Model):
     valid_to = models.DateField(null=True, blank=True, verbose_name="Važi do")
     value = models.DecimalField(
         max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Vrednost"
+    )
+    value_type = models.CharField(
+        max_length=20,
+        choices=VALUE_TYPE_CHOICES,
+        default=VALUE_TYPE_FIXED,
+        db_index=True,
+        verbose_name="Tip vrednosti",
+    )
+    unit_price = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Cena po jedinici",
+    )
+    unit_label = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        verbose_name="Jedinica",
     )
     currency = models.CharField(
         max_length=10, choices=CURRENCY_CHOICES, default="RSD", verbose_name="Valuta"

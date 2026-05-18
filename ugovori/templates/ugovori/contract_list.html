@@ -128,8 +128,12 @@
                 <td>{{ ugovor.contract_date|date:"d.m.Y" }}</td>
                 <td>{% if ugovor.valid_to %}{{ ugovor.valid_to|date:"d.m.Y" }}{% else %}/{% endif %}</td>
                 <td>
-                  {% if ugovor.value %}
+                  {% if ugovor.value_type == "fixed" and ugovor.value %}
                     {{ ugovor.value|floatformat:2 }} {{ ugovor.currency }}
+                  {% elif ugovor.value_type == "hourly" and ugovor.unit_price %}
+                    {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"radni sat" }}
+                  {% elif ugovor.value_type == "unit" and ugovor.unit_price %}
+                    {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"jedinica" }}
                   {% else %}/{% endif %}
                 </td>
                 <td class="text-center">
