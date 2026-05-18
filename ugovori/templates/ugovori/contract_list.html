@@ -96,10 +96,7 @@
               <tr>
                 <th>Broj ugovora</th>
                 <th>Vrsta</th>
-                <th>Status</th>
-                <th>Naslov</th>
                 <th>Stranke</th>
-                <th>Tip</th>
                 <th>Datum</th>
                 <th>Vazi do</th>
                 <th>Vrednost</th>
@@ -122,29 +119,12 @@
                   {% endif %}
                 </td>
                 <td>
-                  {% if ugovor.status == "active" %}
-                    <span class="assignment-status active"><i class="mdi mdi-check-circle"></i> Aktivan</span>
-                  {% elif ugovor.status == "draft" %}
-                    <span class="assignment-status draft"><i class="mdi mdi-pencil-circle"></i> Nacrt</span>
-                  {% elif ugovor.status == "expired" %}
-                    <span class="assignment-status expired"><i class="mdi mdi-clock-alert"></i> Istekao</span>
-                  {% elif ugovor.status == "terminated" %}
-                    <span class="assignment-status terminated"><i class="mdi mdi-close-circle"></i> Raskinut</span>
-                  {% elif ugovor.status == "archived" %}
-                    <span class="assignment-status archived"><i class="mdi mdi-archive"></i> Arhiviran</span>
-                  {% else %}
-                    {{ ugovor.get_status_display }}
-                  {% endif %}
-                </td>
-                <td>{{ ugovor.title }}</td>
-                <td>
                   {% for party in ugovor.parties.all %}
-                    <span class="badge bg-light text-dark border me-1">
-                      {{ party.partner.name }} <small class="text-muted">({{ party.get_role_display }})</small>
+                    <span class="badge bg-light text-dark border me-1" title="{{ party.partner.name }}">
+                      {{ party.partner.name|truncatechars:50 }}
                     </span>
                   {% empty %}/{% endfor %}
                 </td>
-                <td>{{ ugovor.contract_type.name }}</td>
                 <td>{{ ugovor.contract_date|date:"d.m.Y" }}</td>
                 <td>{% if ugovor.valid_to %}{{ ugovor.valid_to|date:"d.m.Y" }}{% else %}/{% endif %}</td>
                 <td>
@@ -172,10 +152,7 @@
               <tr>
                 <th>Broj ugovora</th>
                 <th>Vrsta</th>
-                <th>Status</th>
-                <th>Naslov</th>
                 <th>Stranke</th>
-                <th>Tip</th>
                 <th>Datum</th>
                 <th>Vazi do</th>
                 <th>Vrednost</th>
@@ -194,7 +171,7 @@
     if (window.ReportsDT) {
       ReportsDT('#ContractsTable', {
         exportTitle: '{{ title }}',
-        order: [[6, 'desc']],
+        order: [[3, 'desc']],
         autoSelectThreshold: 25
       });
     }

@@ -615,6 +615,13 @@ class _ContractFormMixin:
         )
 
     def post(self, request, *args, **kwargs):
+        pk_url_kwarg = getattr(self, "pk_url_kwarg", "pk")
+        slug_url_kwarg = getattr(self, "slug_url_kwarg", "slug")
+        has_object_lookup = (
+            kwargs.get(pk_url_kwarg) is not None
+            or kwargs.get(slug_url_kwarg) is not None
+        )
+        self.object = self.get_object() if has_object_lookup else None
         form = self.get_form()
         formset = self.get_formset()
         if form.is_valid():
