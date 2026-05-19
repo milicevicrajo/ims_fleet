@@ -127,19 +127,29 @@ class ContractForm(forms.ModelForm):
         value_type = cleaned_data.get("value_type")
         unit_price = cleaned_data.get("unit_price")
         unit_label = (cleaned_data.get("unit_label") or "").strip()
+        unit_value_types = {
+            Contract.VALUE_TYPE_HOURLY,
+            Contract.VALUE_TYPE_MONTHLY,
+            Contract.VALUE_TYPE_MAN_MONTH,
+            Contract.VALUE_TYPE_UNIT,
+        }
 
         if value_type == Contract.VALUE_TYPE_HOURLY and not unit_label:
             cleaned_data["unit_label"] = "radni sat"
+        elif value_type == Contract.VALUE_TYPE_MONTHLY and not unit_label:
+            cleaned_data["unit_label"] = "mesec"
+        elif value_type == Contract.VALUE_TYPE_MAN_MONTH and not unit_label:
+            cleaned_data["unit_label"] = "čovek mesec"
         elif value_type == Contract.VALUE_TYPE_UNIT and not unit_label:
             self.add_error("unit_label", "Unesite naziv jedinice.")
 
-        if value_type in {Contract.VALUE_TYPE_HOURLY, Contract.VALUE_TYPE_UNIT} and unit_price is None:
+        if value_type in unit_value_types and unit_price is None:
             self.add_error("unit_price", "Unesite cenu po jedinici.")
 
         if value_type == Contract.VALUE_TYPE_FIXED:
             cleaned_data["unit_price"] = None
             cleaned_data["unit_label"] = ""
-        elif value_type in {Contract.VALUE_TYPE_HOURLY, Contract.VALUE_TYPE_UNIT}:
+        elif value_type in unit_value_types:
             cleaned_data["value"] = None
         elif value_type == Contract.VALUE_TYPE_UNDEFINED:
             cleaned_data["value"] = None

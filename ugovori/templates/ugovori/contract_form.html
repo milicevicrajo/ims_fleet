@@ -331,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function toggleValueFields() {
     var valueType = valueTypeField ? valueTypeField.value : 'fixed';
     var showTotal = valueType === 'fixed';
-    var showUnit = valueType === 'hourly' || valueType === 'unit';
+    var showUnit = ['hourly', 'monthly', 'man_month', 'unit'].indexOf(valueType) !== -1;
 
     totalValueRows.forEach(function (row) {
       row.hidden = !showTotal && !row.querySelector('.invalid-feedback');
@@ -341,6 +341,10 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     if (valueType === 'hourly' && unitLabelField && !unitLabelField.value) {
       unitLabelField.value = 'radni sat';
+    } else if (valueType === 'monthly' && unitLabelField && !unitLabelField.value) {
+      unitLabelField.value = 'mesec';
+    } else if (valueType === 'man_month' && unitLabelField && !unitLabelField.value) {
+      unitLabelField.value = 'čovek mesec';
     }
   }
 

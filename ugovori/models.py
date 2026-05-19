@@ -147,11 +147,15 @@ class Contract(models.Model):
     ]
     VALUE_TYPE_FIXED = "fixed"
     VALUE_TYPE_HOURLY = "hourly"
+    VALUE_TYPE_MONTHLY = "monthly"
+    VALUE_TYPE_MAN_MONTH = "man_month"
     VALUE_TYPE_UNIT = "unit"
     VALUE_TYPE_UNDEFINED = "undefined"
     VALUE_TYPE_CHOICES = [
         (VALUE_TYPE_FIXED, "Fiksna vrednost"),
         (VALUE_TYPE_HOURLY, "Po radnom satu"),
+        (VALUE_TYPE_MONTHLY, "Mesečno"),
+        (VALUE_TYPE_MAN_MONTH, "Čovek mesec"),
         (VALUE_TYPE_UNIT, "Po jedinici"),
         (VALUE_TYPE_UNDEFINED, "Bez definisane vrednosti"),
     ]

@@ -229,6 +229,10 @@
                 {{ ugovor.value|floatformat:2 }} {{ ugovor.currency }}
               {% elif ugovor.value_type == "hourly" and ugovor.unit_price %}
                 {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"radni sat" }}
+              {% elif ugovor.value_type == "monthly" and ugovor.unit_price %}
+                {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"mesec" }}
+              {% elif ugovor.value_type == "man_month" and ugovor.unit_price %}
+                {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"čovek mesec" }}
               {% elif ugovor.value_type == "unit" and ugovor.unit_price %}
                 {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"jedinica" }}
               {% elif ugovor.value_type == "undefined" %}

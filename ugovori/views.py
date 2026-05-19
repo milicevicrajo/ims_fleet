@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.http import Http404, JsonResponse
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
@@ -11,6 +11,7 @@ import json
 import tempfile
 from pathlib import Path
 
+from core.exporting import rows_to_xlsx_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
 from .apr_openapi import APR_OPENAPI_SOURCE, fetch_apr_companies, get_apr_company, update_partner_from_apr, update_partners_from_apr
@@ -560,6 +561,45 @@ class ContractTypeDeleteView(RolePermissionRequiredMixin, DeleteView):
 # Contract views
 # ---------------------------------------------------------------------------
 
+def _contract_center(contract_number):
+    if not contract_number or "-" not in contract_number:
+        return ""
+    return contract_number.split("-", 1)[0].strip()
+
+
+def _contract_value_display(contract):
+    if contract.value_type == Contract.VALUE_TYPE_FIXED and contract.value:
+        return f"{contract.value:.2f} {contract.currency}"
+    if contract.value_type == Contract.VALUE_TYPE_HOURLY and contract.unit_price:
+        return f"{contract.unit_price:.2f} {contract.currency} / {contract.unit_label or 'radni sat'}"
+    if contract.value_type == Contract.VALUE_TYPE_MONTHLY and contract.unit_price:
+        return f"{contract.unit_price:.2f} {contract.currency} / {contract.unit_label or 'mesec'}"
+    if contract.value_type == Contract.VALUE_TYPE_MAN_MONTH and contract.unit_price:
+        return f"{contract.unit_price:.2f} {contract.currency} / {contract.unit_label or 'covek mesec'}"
+    if contract.value_type == Contract.VALUE_TYPE_UNIT and contract.unit_price:
+        return f"{contract.unit_price:.2f} {contract.currency} / {contract.unit_label or 'jedinica'}"
+    if contract.value_type == Contract.VALUE_TYPE_UNDEFINED:
+        return "Bez definisane vrednosti"
+    return ""
+
+
+def _contract_party_names(contract):
+    return ", ".join(party.partner.name for party in contract.parties.all())
+
+
+def _contract_list_base_queryset():
+    return (
+        Contract.objects.all()
+        .select_related("contract_type", "parent_contract")
+        .prefetch_related("parties__partner")
+        .distinct()
+    )
+
+
+def _filtered_contracts(request):
+    return ContractFilter(request.GET or None, queryset=_contract_list_base_queryset()).qs
+
+
 class ContractListView(RolePermissionRequiredMixin, FilterView):
     model = Contract
     template_name = "ugovori/contract_list.html"
@@ -567,18 +607,65 @@ class ContractListView(RolePermissionRequiredMixin, FilterView):
     filterset_class = ContractFilter
 
     def get_queryset(self):
-        return (
-            Contract.objects.all()
-            .select_related("contract_type", "parent_contract")
-            .prefetch_related("parties__partner")
-            .distinct()
-        )
+        return _contract_list_base_queryset()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Ugovori"
         ctx["current_app"] = "ugovori"
         return ctx
+
+
+@role_permission_required("ugovori:contract_list")
+def contract_list_print(request):
+    contracts = _filtered_contracts(request)
+    return render(
+        request,
+        "ugovori/contract_list_print.html",
+        {
+            "title": "Lista ugovora",
+            "ugovori": contracts,
+            "current_app": "ugovori",
+        },
+    )
+
+
+@role_permission_required("ugovori:contract_list")
+def contract_list_export_excel(request):
+    contracts = _filtered_contracts(request)
+    headers = [
+        "Broj ugovora",
+        "Centar",
+        "Godina",
+        "Vrsta",
+        "Stranke",
+        "Datum ugovora",
+        "Vazi do",
+        "Vrednost",
+    ]
+    rows = []
+    for contract in contracts:
+        rows.append(
+            [
+                contract.contract_number,
+                _contract_center(contract.contract_number),
+                contract.contract_date.year if contract.contract_date else "",
+                contract.get_kind_display(),
+                _contract_party_names(contract),
+                contract.contract_date.strftime("%d.%m.%Y") if contract.contract_date else "",
+                contract.valid_to.strftime("%d.%m.%Y") if contract.valid_to else "",
+                _contract_value_display(contract),
+            ]
+        )
+    return rows_to_xlsx_response(
+        "ugovori.xlsx",
+        "Ugovori",
+        headers,
+        rows,
+        quoted=True,
+        bold_header=True,
+        auto_width=True,
+    )
 
 
 class _ContractFormMixin:

@@ -46,9 +46,20 @@
     <h1>Ugovori</h1>
     <p>Pregled glavnih ugovora i aneksa sa partnerima, statusima, vazenjem i dokumentima.</p>
   </div>
-  <a href="{% url 'ugovori:contract_create' %}" class="btn btn-light btn-sm">
-    <i class="mdi mdi-plus"></i> Novi ugovor
-  </a>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'ugovori:contract_list_print' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+       class="btn btn-outline-light btn-sm"
+       target="_blank">
+      <i class="mdi mdi-printer"></i> Stampaj listu
+    </a>
+    <a href="{% url 'ugovori:contract_list_export_excel' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+       class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-file-excel"></i> Excel
+    </a>
+    <a href="{% url 'ugovori:contract_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Novi ugovor
+    </a>
+  </div>
 </div>
 
 <div class="row">
@@ -62,18 +73,26 @@
               {{ filter.form.partner|add_class:"form-control" }}
             </div>
             <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.center.label }}</label>
+              {{ filter.form.center|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-1">
+              <label class="form-label mb-1">{{ filter.form.year.label }}</label>
+              {{ filter.form.year|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-2">
               <label class="form-label mb-1">{{ filter.form.contract_type.label }}</label>
               {{ filter.form.contract_type|add_class:"form-select form-control select2-method" }}
             </div>
-            <div class="col-12 col-md-2">
+            <div class="col-12 col-md-1">
               <label class="form-label mb-1">{{ filter.form.kind.label }}</label>
               {{ filter.form.kind|add_class:"form-select form-control select2-method" }}
             </div>
-            <div class="col-12 col-md-2">
+            <div class="col-12 col-md-1">
               <label class="form-label mb-1">{{ filter.form.status.label }}</label>
               {{ filter.form.status|add_class:"form-select form-control select2-method" }}
             </div>
-            <div class="col-12 col-md-2">
+            <div class="col-12 col-md-1">
               <label class="form-label mb-1">{{ filter.form.search.label }}</label>
               {{ filter.form.search|add_class:"form-control" }}
             </div>
@@ -132,6 +151,10 @@
                     {{ ugovor.value|floatformat:2 }} {{ ugovor.currency }}
                   {% elif ugovor.value_type == "hourly" and ugovor.unit_price %}
                     {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"radni sat" }}
+                  {% elif ugovor.value_type == "monthly" and ugovor.unit_price %}
+                    {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"mesec" }}
+                  {% elif ugovor.value_type == "man_month" and ugovor.unit_price %}
+                    {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"čovek mesec" }}
                   {% elif ugovor.value_type == "unit" and ugovor.unit_price %}
                     {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"jedinica" }}
                   {% else %}/{% endif %}
@@ -176,7 +199,8 @@
       ReportsDT('#ContractsTable', {
         exportTitle: '{{ title }}',
         order: [[3, 'desc']],
-        autoSelectThreshold: 25
+        autoSelectThreshold: 25,
+        scrollX: false
       });
     }
   });

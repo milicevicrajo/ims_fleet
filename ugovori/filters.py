@@ -24,6 +24,16 @@ class ContractFilter(django_filters.FilterSet):
         label="Status",
         empty_label=None,
     )
+    center = ChoiceFilter(
+        method="filter_center",
+        label="Centar",
+        empty_label=None,
+    )
+    year = ChoiceFilter(
+        method="filter_year",
+        label="Godina",
+        empty_label=None,
+    )
     contract_date_from = DateFilter(
         field_name="contract_date",
         lookup_expr="gte",
@@ -38,7 +48,13 @@ class ContractFilter(django_filters.FilterSet):
 
     class Meta:
         model = Contract
-        fields = ["partner", "contract_type", "kind", "status"]
+        fields = ["partner", "contract_type", "kind", "status", "center", "year"]
+
+    @staticmethod
+    def _contract_center(contract_number):
+        if not contract_number or "-" not in contract_number:
+            return ""
+        return contract_number.split("-", 1)[0].strip()
 
     def filter_partner(self, queryset, name, value):
         value = (value or "").strip()
@@ -54,6 +70,18 @@ class ContractFilter(django_filters.FilterSet):
             query |= Q(parties__partner__external_sif_par=int(value))
         return queryset.filter(query).distinct()
 
+    def filter_center(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(contract_number__startswith=f"{value}-")
+
+    def filter_year(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(contract_date__year=value)
+
     def filter_search(self, queryset, name, value):
         if value:
             return queryset.filter(
@@ -63,6 +91,27 @@ class ContractFilter(django_filters.FilterSet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        center_values = sorted(
+            {
+                center
+                for center in (
+                    self._contract_center(contract_number)
+                    for contract_number in Contract.objects.values_list("contract_number", flat=True)
+                )
+                if center
+            },
+            key=lambda value: (not value.isdigit(), int(value) if value.isdigit() else value),
+        )
+        year_values = [
+            date_value.year
+            for date_value in Contract.objects.dates("contract_date", "year", order="DESC")
+        ]
+        self.form.fields["center"].choices = [("", "---------")] + [
+            (value, value) for value in center_values
+        ]
+        self.form.fields["year"].choices = [("", "---------")] + [
+            (str(value), str(value)) for value in year_values
+        ]
         for field in self.form.fields.values():
             if hasattr(field, "widget"):
                 from django.forms import Select, TextInput

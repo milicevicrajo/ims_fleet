@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .print-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .print-table {
+    font-size: 12px;
+  }
+  .print-table th,
+  .print-table td {
+    vertical-align: top;
+    white-space: normal;
+  }
+  @media print {
+    .left-sidebar,
+    .topbar,
+    .footer,
+    .print-toolbar {
+      display: none !important;
+    }
+    .page-wrapper {
+      margin-left: 0 !important;
+    }
+    .container-fluid {
+      padding: 0 !important;
+    }
+  }
+</style>
+
+<div class="print-toolbar">
+  <h4 class="mb-0">Lista ugovora</h4>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">
+      <i class="mdi mdi-printer"></i> Stampaj
+    </button>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'ugovori:contract_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+      Nazad
+    </a>
+  </div>
+</div>
+
+<table class="table table-bordered table-sm print-table">
+  <thead>
+    <tr>
+      <th>Broj ugovora</th>
+      <th>Vrsta</th>
+      <th>Stranke</th>
+      <th>Datum</th>
+      <th>Vazi do</th>
+      <th>Vrednost</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ugovor in ugovori %}
+      <tr>
+        <td>{{ ugovor.contract_number }}</td>
+        <td>{{ ugovor.get_kind_display }}</td>
+        <td>
+          {% for party in ugovor.parties.all %}
+            {{ party.partner.name }}{% if not forloop.last %}, {% endif %}
+          {% empty %}/{% endfor %}
+        </td>
+        <td>{{ ugovor.contract_date|date:"d.m.Y" }}</td>
+        <td>{% if ugovor.valid_to %}{{ ugovor.valid_to|date:"d.m.Y" }}{% else %}/{% endif %}</td>
+        <td>
+          {% if ugovor.value_type == "fixed" and ugovor.value %}
+            {{ ugovor.value|floatformat:2 }} {{ ugovor.currency }}
+          {% elif ugovor.value_type == "hourly" and ugovor.unit_price %}
+            {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"radni sat" }}
+          {% elif ugovor.value_type == "monthly" and ugovor.unit_price %}
+            {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"mesec" }}
+          {% elif ugovor.value_type == "man_month" and ugovor.unit_price %}
+            {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"covek mesec" }}
+          {% elif ugovor.value_type == "unit" and ugovor.unit_price %}
+            {{ ugovor.unit_price|floatformat:2 }} {{ ugovor.currency }} / {{ ugovor.unit_label|default:"jedinica" }}
+          {% else %}/{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="6" class="text-center text-muted">Nema ugovora za izabrane filtere.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

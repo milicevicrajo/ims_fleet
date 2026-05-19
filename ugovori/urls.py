@@ -16,6 +16,8 @@ from .views import (
     PartnerDetailView,
     PartnerListView,
     PartnerUpdateView,
+    contract_list_export_excel,
+    contract_list_print,
     partner_apr_update,
     partner_datatable_data,
     sync_apr_partneri_batch,
@@ -50,6 +52,8 @@ urlpatterns = [
 
     # Ugovori
     path("", ContractListView.as_view(), name="contract_list"),
+    path("stampaj/", contract_list_print, name="contract_list_print"),
+    path("export-excel/", contract_list_export_excel, name="contract_list_export_excel"),
     path("novi/", ContractCreateView.as_view(), name="contract_create"),
     path("<int:pk>/", ContractDetailView.as_view(), name="contract_detail"),
     path("<int:pk>/izmeni/", ContractUpdateView.as_view(), name="contract_update"),
