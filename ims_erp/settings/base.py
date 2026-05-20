@@ -179,6 +179,9 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+MAX_CONTRACT_UPLOAD_SIZE = int(os.getenv("MAX_CONTRACT_UPLOAD_SIZE", str(50 * 1024 * 1024)))
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("DATA_UPLOAD_MAX_MEMORY_SIZE", str(60 * 1024 * 1024)))
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

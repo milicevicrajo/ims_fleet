@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.forms import inlineformset_factory
 from django_select2.forms import Select2Widget
 
@@ -157,6 +158,19 @@ class ContractForm(forms.ModelForm):
             cleaned_data["unit_label"] = ""
 
         return cleaned_data
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data.get("file")
+        if not uploaded_file:
+            return uploaded_file
+
+        max_size = getattr(settings, "MAX_CONTRACT_UPLOAD_SIZE", 50 * 1024 * 1024)
+        if uploaded_file.size > max_size:
+            max_mb = max_size / (1024 * 1024)
+            raise forms.ValidationError(
+                f"Fajl ugovora je veci od dozvoljenih {max_mb:.0f} MB."
+            )
+        return uploaded_file
 
 
 class AnnexForm(ContractForm):
