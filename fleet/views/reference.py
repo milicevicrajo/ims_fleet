@@ -128,12 +128,13 @@ class VehicleTenderDocumentDeleteView(RolePermissionRequiredMixin, LoginRequired
     context_object_name = "document"
     success_url = reverse_lazy("vehicle_tender_document_list")
 
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
         self.object = self.get_object()
         vehicle_id = self.object.vehicle_id
-        messages.success(request, "Dokument je uspešno obrisan.")
         self.success_url = reverse("vehicle_detail", kwargs={"pk": vehicle_id})
-        return super().delete(request, *args, **kwargs)
+        response = super().form_valid(form)
+        messages.success(self.request, "Dokument je uspešno obrisan.")
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

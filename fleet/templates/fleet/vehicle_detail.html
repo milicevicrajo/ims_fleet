@@ -113,6 +113,21 @@
     flex: 1;
     overflow-y: auto;
   }
+  .vehicle-document-preview {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+  }
+  .vehicle-document-thumb {
+    max-height: 150px;
+    width: 100%;
+    object-fit: contain;
+    background: #f8f9fa;
+  }
 </style>
 
 <div class="vehicle-hero">
@@ -134,6 +149,11 @@
       {% else %}
         <span class="vehicle-status vehicle-status-risk">Neisplativo</span>
       {% endif %}
+      <div class="mt-3">
+        <a href="{% url 'vehicle_tender_documentation_zip' vehicle.pk %}" class="btn btn-sm btn-light" target="vehicle-documentation-download-frame" data-no-preloader download>
+          <i class="mdi mdi-download"></i> Preuzmi tendersku dokumentaciju
+        </a>
+      </div>
       <div class="vehicle-meta mt-2">
         {% if current_job_code %}
           {{ current_job_code.organizational_unit }}
@@ -144,6 +164,7 @@
     </div>
   </div>
 </div>
+<iframe name="vehicle-documentation-download-frame" title="Preuzimanje tenderske dokumentacije" class="d-none"></iframe>
 
 <div class="vehicle-kpis">
   <div class="vehicle-kpi">
@@ -559,6 +580,23 @@
           <h3 class="card-title mb-0">Tender dokumenti</h3>
           <a href="{{ tender_document_create_url }}" class="btn btn-sm btn-outline-success">Dodaj dokument</a>
         </div>
+        {% if latest_sticker_document and latest_sticker_document.image %}
+          <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong>Poslednja nalepnica</strong>
+              <span class="text-muted small">
+                {% if latest_sticker_document.taken_at %}{{ latest_sticker_document.taken_at|date:"d.m.Y" }}{% else %}{{ latest_sticker_document.created_at|date:"d.m.Y" }}{% endif %}
+              </span>
+            </div>
+            <a href="{% url 'vehicle_tender_document_detail' latest_sticker_document.pk %}">
+              <img src="{{ latest_sticker_document.image.url }}" alt="{{ latest_sticker_document.title }}" class="vehicle-document-preview">
+            </a>
+            <form method="post" action="{% url 'vehicle_tender_document_delete' latest_sticker_document.pk %}" class="mt-2" onsubmit="return confirm('Da li sigurno zelis da uklonis sliku nalepnice?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger">Ukloni nalepnicu</button>
+            </form>
+          </div>
+        {% endif %}
         {% if tender_documents %}
           <div class="row g-3">
             {% for doc in tender_documents %}
@@ -568,11 +606,17 @@
                 <div class="text-muted small">{% if doc.taken_at %}{{ doc.taken_at|date:"d.m.Y" }}{% else %}-{% endif %}</div>
                 <a href="{% url 'vehicle_tender_document_detail' doc.pk %}">
                   {% if doc.image %}
-                    <img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="img-fluid rounded mt-2" style="max-height: 150px; object-fit: cover;">
+                    <img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="img-fluid rounded mt-2 vehicle-document-thumb">
                   {% else %}
                     <span class="text-muted">Nema slike</span>
                   {% endif %}
                 </a>
+                {% if doc.document_type == "sticker" %}
+                  <form method="post" action="{% url 'vehicle_tender_document_delete' doc.pk %}" class="mt-2" onsubmit="return confirm('Da li sigurno zelis da uklonis sliku nalepnice?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Ukloni nalepnicu</button>
+                  </form>
+                {% endif %}
               </div>
             </div>
             {% endfor %}
@@ -583,6 +627,30 @@
       </div>
 
       <div class="tab-pane fade" id="traffic-cards-pane" role="tabpanel" aria-labelledby="traffic-cards-tab">
+        {% if latest_traffic_card.traffic_card_front_image or latest_traffic_card.traffic_card_back_image %}
+          <div class="row g-3 mb-3">
+            {% if latest_traffic_card.traffic_card_front_image %}
+              <div class="col-12 col-md-6">
+                <div class="border rounded p-2 h-100">
+                  <strong>Prednja strana</strong>
+                  <a href="{{ latest_traffic_card.traffic_card_front_image.url }}" target="_blank" rel="noopener">
+                    <img src="{{ latest_traffic_card.traffic_card_front_image.url }}" alt="Saobraćajna dozvola prednja strana" class="vehicle-document-preview mt-2">
+                  </a>
+                </div>
+              </div>
+            {% endif %}
+            {% if latest_traffic_card.traffic_card_back_image %}
+              <div class="col-12 col-md-6">
+                <div class="border rounded p-2 h-100">
+                  <strong>Zadnja strana</strong>
+                  <a href="{{ latest_traffic_card.traffic_card_back_image.url }}" target="_blank" rel="noopener">
+                    <img src="{{ latest_traffic_card.traffic_card_back_image.url }}" alt="Saobraćajna dozvola zadnja strana" class="vehicle-document-preview mt-2">
+                  </a>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
         <h3 class="card-title">Saobraćajne dozvole</h3>
         <div class="table-responsive">
           <table class="table table-sm mb-0">
@@ -591,6 +659,8 @@
                 <th>Registracija</th>
                 <th>Broj dozvole</th>
                 <th>Važi do</th>
+                <th>Prednja</th>
+                <th>Zadnja</th>
                 <th>PDF</th>
               </tr>
             </thead>
@@ -601,6 +671,20 @@
                 <td>{{ card.traffic_card_number }}</td>
                 <td>{{ card.valid_until|date:"d.m.Y" }}</td>
                 <td>
+                  {% if card.traffic_card_front_image %}
+                    <a href="{{ card.traffic_card_front_image.url }}" target="_blank" rel="noopener">Slika</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  {% if card.traffic_card_back_image %}
+                    <a href="{{ card.traffic_card_back_image.url }}" target="_blank" rel="noopener">Slika</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
                   {% if card.traffic_card_pdf %}
                     <a href="{{ card.traffic_card_pdf.url }}" target="_blank" rel="noopener">PDF</a>
                   {% else %}
@@ -609,7 +693,7 @@
                 </td>
               </tr>
               {% empty %}
-              <tr><td colspan="4" class="text-muted">Nema saobraćajnih dozvola.</td></tr>
+              <tr><td colspan="6" class="text-muted">Nema saobraćajnih dozvola.</td></tr>
               {% endfor %}
             </tbody>
           </table>

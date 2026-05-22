@@ -84,6 +84,18 @@ class TrafficCard(models.Model):
         null=True,
         blank=True
     )
+    traffic_card_front_image = models.ImageField(
+        upload_to='traffic_cards/images/%Y/%m/',
+        verbose_name=_("Slika saobraćajne dozvole - prednja strana"),
+        null=True,
+        blank=True,
+    )
+    traffic_card_back_image = models.ImageField(
+        upload_to='traffic_cards/images/%Y/%m/',
+        verbose_name=_("Slika saobraćajne dozvole - zadnja strana"),
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f"{self.registration_number} valid until {self.valid_until}"
@@ -124,6 +136,40 @@ class VehicleTenderDocument(models.Model):
 
     def __str__(self):
         return f"{self.get_document_type_display()} - {self.title}"
+
+    @staticmethod
+    def _delete_file_after_commit(file_field):
+        if not file_field:
+            return
+
+        storage = file_field.storage
+        name = file_field.name
+        transaction.on_commit(lambda: storage.delete(name) if storage.exists(name) else None)
+
+    def save(self, *args, **kwargs):
+        old_image = None
+        if self.pk:
+            old_image = (
+                type(self).objects.filter(pk=self.pk)
+                .values_list("image", flat=True)
+                .first()
+            )
+
+        super().save(*args, **kwargs)
+
+        new_image = self.image.name if self.image else ""
+        if old_image and old_image != new_image:
+            old_field = self._meta.get_field("image").attr_class(
+                self,
+                self._meta.get_field("image"),
+                old_image,
+            )
+            self._delete_file_after_commit(old_field)
+
+    def delete(self, *args, **kwargs):
+        image_field = self.image
+        super().delete(*args, **kwargs)
+        self._delete_file_after_commit(image_field)
 
 
 

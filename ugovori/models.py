@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 
 
 class Partner(models.Model):
@@ -245,6 +245,40 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"{self.contract_number} – {self.title}"
+
+    @staticmethod
+    def _delete_file_after_commit(file_field):
+        if not file_field:
+            return
+
+        storage = file_field.storage
+        name = file_field.name
+        transaction.on_commit(lambda: storage.delete(name) if storage.exists(name) else None)
+
+    def save(self, *args, **kwargs):
+        old_file = None
+        if self.pk:
+            old_file = (
+                type(self).objects.filter(pk=self.pk)
+                .values_list("file", flat=True)
+                .first()
+            )
+
+        super().save(*args, **kwargs)
+
+        new_file = self.file.name if self.file else ""
+        if old_file and old_file != new_file:
+            old_field = self._meta.get_field("file").attr_class(
+                self,
+                self._meta.get_field("file"),
+                old_file,
+            )
+            self._delete_file_after_commit(old_field)
+
+    def delete(self, *args, **kwargs):
+        file_field = self.file
+        super().delete(*args, **kwargs)
+        self._delete_file_after_commit(file_field)
 
     def clean(self):
         if self.kind == self.ANNEX and not self.parent_contract_id:

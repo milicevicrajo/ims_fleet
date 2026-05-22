@@ -129,6 +129,7 @@ from .views.vehicles import (
     VehicleTogleStatusView,
     VehicleUpdateView,
     vehicle_export_csv,
+    vehicle_tender_documentation_zip,
 )
 from .views.kvar import (
     GarazaHomeView,
@@ -202,6 +203,7 @@ urlpatterns = [
     path('vozila/export/csv/', vehicle_export_csv, name='vehicle_export_csv'),
     path('vozila/novo/', VehicleCreateView.as_view(), name='vehicle_create'),
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
+    path('vozila/<int:pk>/tenderska-dokumentacija/', vehicle_tender_documentation_zip, name='vehicle_tender_documentation_zip'),
     path('vozila/<int:pk>/', VehicleDetailView.as_view(), name='vehicle_detail'),
     path('vozila/tender-dokumenti/', VehicleTenderDocumentListView.as_view(), name='vehicle_tender_document_list'),
     path('vozila/tender-dokumenti/novo/<int:vehicle_id>/', VehicleTenderDocumentCreateView.as_view(), name='vehicle_tender_document_create_for_vehicle'),

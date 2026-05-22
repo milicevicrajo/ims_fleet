@@ -42,6 +42,11 @@ class TrafficCardForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             field.required = True
 
+        for field_name in ("traffic_card_pdf", "traffic_card_front_image", "traffic_card_back_image"):
+            if field_name in self.fields:
+                self.fields[field_name].required = False
+                self.fields[field_name].widget.attrs.update({"class": "form-control"})
+
 
 class VehicleTenderDocumentForm(forms.ModelForm):
     vehicle = forms.ModelChoiceField(

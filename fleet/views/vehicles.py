@@ -1,12 +1,16 @@
 from collections import defaultdict
 import csv
 import datetime
+from io import BytesIO
+import posixpath
+import re
+import zipfile
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import OuterRef, Subquery, Sum
 from django.db.models.functions import TruncMonth, TruncYear
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -30,6 +34,7 @@ from ..models import (
     PutniNalog,
     TrafficCard,
     Vehicle,
+    VehicleTenderDocument,
     VehicleTravelOrder,
 )
 from ..support.fuel import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
@@ -50,6 +55,32 @@ def _safe_next_url(request, next_url):
     if next_url == request.path:
         return None
     return next_url
+
+
+def _safe_zip_name(value, fallback="dokument"):
+    value = (value or fallback).strip()
+    value = re.sub(r"[^\w.-]+", "_", value, flags=re.UNICODE)
+    value = value.strip("._-")
+    return value or fallback
+
+
+def _file_extension(file_field):
+    filename = posixpath.basename(file_field.name or "")
+    extension = posixpath.splitext(filename)[1]
+    return extension or ".bin"
+
+
+def _write_storage_file(zip_file, file_field, archive_name):
+    if not file_field or not file_field.name:
+        return False
+
+    storage = file_field.storage
+    if not storage.exists(file_field.name):
+        return False
+
+    with storage.open(file_field.name, "rb") as source:
+        zip_file.writestr(archive_name, source.read())
+    return True
 
 
 def _mark_vehicles_with_expired_lease_as_retired():
@@ -191,6 +222,66 @@ def vehicle_export_csv(request):
     return response
 
 
+@role_permission_required("vehicle_detail")
+def vehicle_tender_documentation_zip(request, pk):
+    vehicle = get_object_or_404(Vehicle, pk=pk)
+
+    latest_org_unit_subquery = JobCode.objects.filter(vehicle_id=OuterRef("pk")).order_by("-assigned_date").values("organizational_unit__center")[:1]
+    vehicle_with_latest_org_unit = Vehicle.objects.annotate(
+        latest_org_unit=Subquery(latest_org_unit_subquery)
+    ).get(pk=vehicle.pk)
+
+    user_allowed_centers_manager = request.user.allowed_centers
+    if user_allowed_centers_manager.exists():
+        allowed_centers_codes = user_allowed_centers_manager.values_list("center", flat=True)
+        if (
+            vehicle_with_latest_org_unit.latest_org_unit is not None
+            and vehicle_with_latest_org_unit.latest_org_unit not in allowed_centers_codes
+        ):
+            return HttpResponseForbidden("Nemate dozvolu za pristup ovom vozilu.")
+
+    traffic_cards = TrafficCard.objects.filter(vehicle=vehicle).order_by("-issue_date", "-id")
+    latest_traffic_card = traffic_cards.first()
+    registration = latest_traffic_card.registration_number if latest_traffic_card else None
+    zip_base_name = _safe_zip_name(registration, fallback=f"vozilo_{vehicle.pk}")
+
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
+        for index, card in enumerate(traffic_cards, start=1):
+            card_folder = _safe_zip_name(card.registration_number, fallback=f"saobracajna_{index}")
+            base_folder = f"saobracajna_dozvola/{index:02d}_{card_folder}"
+
+            _write_storage_file(
+                zip_file,
+                card.traffic_card_pdf,
+                f"{base_folder}/ocitana_saobracajna_dozvola{_file_extension(card.traffic_card_pdf)}",
+            )
+            _write_storage_file(
+                zip_file,
+                card.traffic_card_front_image,
+                f"{base_folder}/prednja_strana{_file_extension(card.traffic_card_front_image)}",
+            )
+            _write_storage_file(
+                zip_file,
+                card.traffic_card_back_image,
+                f"{base_folder}/zadnja_strana{_file_extension(card.traffic_card_back_image)}",
+            )
+
+        tender_documents = vehicle.tender_documents.order_by("-created_at", "-id")
+        for index, document in enumerate(tender_documents, start=1):
+            document_type = _safe_zip_name(document.get_document_type_display(), fallback="dokument")
+            title = _safe_zip_name(document.title, fallback=f"dokument_{index}")
+            archive_name = (
+                f"tenderska_dokumentacija/{index:02d}_{document_type}_{title}"
+                f"{_file_extension(document.image)}"
+            )
+            _write_storage_file(zip_file, document.image, archive_name)
+
+    response = HttpResponse(buffer.getvalue(), content_type="application/zip")
+    response["Content-Disposition"] = f'attachment; filename="{zip_base_name}_tenderska_dokumentacija.zip"'
+    return response
+
+
 class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Vehicle
     template_name = "fleet/vehicle_detail.html"
@@ -258,6 +349,14 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
 
         trafic_cards = TrafficCard.objects.filter(vehicle=vehicle).order_by("-issue_date")
         trafic_card = trafic_cards.first()
+        latest_sticker_document = (
+            vehicle.tender_documents.filter(
+                document_type=VehicleTenderDocument.DocumentType.STICKER,
+                is_active=True,
+            )
+            .order_by("-created_at")
+            .first()
+        )
         status_light = "green" if repair_costs < vehicle.purchase_value else "red"
 
         vehicle_value = vehicle.value or vehicle.purchase_value or 0
@@ -369,11 +468,13 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
                 "consumptions": consumptions,
                 "trafic_cards": trafic_cards,
                 "trafic_card": trafic_card,
+                "latest_traffic_card": trafic_card,
                 "vehicle_analysis": vehicle_analysis,
                 "monthly_vehicle_costs": monthly_vehicle_costs,
                 "service_category_rows": service_category_rows,
                 "vehicle_cost_per_km_details": vehicle_cost_per_km_details,
                 "tender_documents": vehicle.tender_documents.order_by("-created_at"),
+                "latest_sticker_document": latest_sticker_document,
                 "tender_document_create_url": reverse("vehicle_tender_document_create_for_vehicle", kwargs={"vehicle_id": vehicle.pk}),
                 "title": f"Detalji vozila {self.object.brand} {self.object.model}",
             }
