@@ -83,17 +83,6 @@ def _write_storage_file(zip_file, file_field, archive_name):
     return True
 
 
-def _mark_vehicles_with_expired_lease_as_retired():
-    today = datetime.date.today()
-    vehicles_with_active_lease = Vehicle.objects.filter(leases__end_date__gte=today).values("pk")
-    vehicles_with_only_expired_leases = (
-        Vehicle.objects.filter(leases__isnull=False)
-        .exclude(pk__in=vehicles_with_active_lease)
-        .values("pk")
-    )
-    Vehicle.objects.filter(pk__in=vehicles_with_only_expired_leases, otpis=False).update(otpis=True)
-
-
 class VehicleListView(LoginRequiredMixin, FilterView):
     model = Vehicle
     template_name = "fleet/vehicle_list.html"
@@ -101,8 +90,6 @@ class VehicleListView(LoginRequiredMixin, FilterView):
     filterset_class = VehicleFilter
 
     def get_queryset(self):
-        _mark_vehicles_with_expired_lease_as_retired()
-
         qs = Vehicle.objects.all()
 
         latest_job_code_qs = JobCode.objects.filter(vehicle=OuterRef("pk")).order_by("-assigned_date", "-pk")
@@ -147,8 +134,6 @@ class VehicleListView(LoginRequiredMixin, FilterView):
 
 
 def _vehicle_list_base_queryset(request):
-    _mark_vehicles_with_expired_lease_as_retired()
-
     qs = Vehicle.objects.all()
 
     latest_job_code_qs = JobCode.objects.filter(vehicle=OuterRef("pk")).order_by("-assigned_date", "-pk")
@@ -515,6 +500,9 @@ class VehicleUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateV
 class VehicleTogleStatusView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, pk):
         vehicle = get_object_or_404(Vehicle, pk=pk)
+        if vehicle.otpis and not request.user.is_superuser:
+            return HttpResponseForbidden("Samo superuser moze da vrati vozilo u upotrebu.")
+
         vehicle.otpis = not vehicle.otpis
         vehicle.save()
 
@@ -529,6 +517,26 @@ class VehicleTogleStatusView(RolePermissionRequiredMixin, LoginRequiredMixin, Vi
             return redirect(next_url)
 
         return redirect("vehicle_detail", pk=pk)
+
+
+class VehicleRestoreView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        if not request.user.is_superuser:
+            return HttpResponseForbidden("Samo superuser moze da vrati vozilo u upotrebu.")
+
+        vehicle = get_object_or_404(Vehicle, pk=pk)
+        vehicle.otpis = False
+        vehicle.save(update_fields=["otpis"])
+        messages.success(request, "Vozilo je vraceno u upotrebu.")
+
+        next_url = _safe_next_url(
+            request,
+            request.POST.get("next") or request.GET.get("next") or request.META.get("HTTP_REFERER"),
+        )
+        if next_url:
+            return redirect(next_url)
+
+        return redirect("vehicle_list")
 
 
 class VehicleDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
