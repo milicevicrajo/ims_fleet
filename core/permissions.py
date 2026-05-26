@@ -33,9 +33,16 @@ def collect_naplata_permission_codes():
     return collect_url_pattern_names(naplata_urls.urlpatterns, prefix="naplata")
 
 
+def collect_nabavka_permission_codes():
+    from nabavka import urls as nabavka_urls
+
+    return collect_url_pattern_names(nabavka_urls.urlpatterns, prefix="nabavka")
+
+
 def collect_permission_codes():
     codes = set(collect_fleet_permission_codes())
     codes.update(collect_naplata_permission_codes())
+    codes.update(collect_nabavka_permission_codes())
     return sorted(codes)
 
 

@@ -139,6 +139,29 @@
   .annex-table td {
     vertical-align: middle;
   }
+  .instrument-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .instrument-row {
+    border: 1px solid #eef2f6;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+  }
+  .instrument-row + .instrument-row {
+    margin-top: 10px;
+  }
+  .instrument-title {
+    color: #243746;
+    font-weight: 700;
+  }
+  .instrument-meta {
+    color: #6c7f90;
+    font-size: .86rem;
+    margin-top: 3px;
+  }
   @media (max-width: 767.98px) {
     .contract-meta-grid,
     .party-row {
@@ -287,6 +310,9 @@
               {% if party.note %}
                 <div class="party-note">{{ party.note }}</div>
               {% endif %}
+              {% if party.party_contract_number %}
+                <div class="party-note">Njihov broj ugovora: {{ party.party_contract_number }}</div>
+              {% endif %}
             </div>
             <div class="party-actions">
               <span class="contract-pill main">{{ party.get_role_display }}</span>
@@ -301,6 +327,65 @@
         {% empty %}
           <div class="text-muted text-center py-3">Nema unetih stranaka.</div>
         {% endfor %}
+      </div>
+    </div>
+
+    <div class="contract-section">
+      <div class="contract-section-header">
+        <span><i class="mdi mdi-shield-check"></i> Instrumenti obezbedjenja</span>
+      </div>
+      <div class="contract-section-body">
+        <div class="instrument-flags mb-3">
+          {% if ugovor.has_incoming_menice %}
+            <span class="contract-pill active"><i class="mdi mdi-check-circle"></i> Ulazne menice</span>
+          {% else %}
+            <span class="contract-pill archived"><i class="mdi mdi-minus-circle"></i> Ulazne menice</span>
+          {% endif %}
+          {% if ugovor.has_outgoing_menice %}
+            <span class="contract-pill active"><i class="mdi mdi-check-circle"></i> Izlazne menice</span>
+          {% else %}
+            <span class="contract-pill archived"><i class="mdi mdi-minus-circle"></i> Izlazne menice</span>
+          {% endif %}
+          {% if ugovor.has_guarantees %}
+            <span class="contract-pill active"><i class="mdi mdi-check-circle"></i> Garancije</span>
+          {% else %}
+            <span class="contract-pill archived"><i class="mdi mdi-minus-circle"></i> Garancije</span>
+          {% endif %}
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+            <div class="contract-meta-label">Povezane menice</div>
+          </div>
+          {% for link in ugovor.menica_links.all %}
+            <div class="instrument-row">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                <div>
+                  <div class="instrument-title">{{ link.instrument_serial }}</div>
+                  <div class="instrument-meta">
+                    {{ link.instrument_type_display }} | {{ link.instrument_partner }} | {{ link.instrument_amount_display }}
+                  </div>
+                  {% if link.note %}
+                    <div class="instrument-meta">{{ link.note }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="text-muted py-2">Nema povezanih menica.</div>
+          {% endfor %}
+        </div>
+
+        <div>
+          <div class="contract-meta-label mb-2">Garancije</div>
+          <div class="instrument-row">
+            {% if ugovor.has_guarantees %}
+              <div class="instrument-title"><i class="mdi mdi-check-circle text-success"></i> Ugovor ima garancije</div>
+            {% else %}
+              <div class="instrument-title text-muted"><i class="mdi mdi-minus-circle"></i> Ugovor nema garancije</div>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
   </div>

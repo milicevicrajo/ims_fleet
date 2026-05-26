@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">{{ case.case_number }} - {{ case.title }}</h2>
+    <div class="text-muted">{{ case.get_case_type_display }} / {{ case.get_status_display }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'nabavka:case_list' %}">Lista</a>
+    <a class="btn btn-primary" href="{% url 'nabavka:case_update' case.pk %}">
+      <i class="mdi mdi-pencil"></i> Izmeni
+    </a>
+    <a class="btn btn-success" href="{% url 'nabavka:purchase_order_create' %}?case={{ case.pk }}">
+      <i class="mdi mdi-file-plus"></i> Narudžbenica
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h4 class="mb-0">Osnovni podaci</h4></div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Dobavljač</dt><dd class="col-sm-8">{{ case.supplier|default:"/" }}</dd>
+          <dt class="col-sm-4">Ugovor</dt><dd class="col-sm-8">{{ case.contract|default:"/" }}</dd>
+          <dt class="col-sm-4">OJ / šifra posla</dt><dd class="col-sm-8">{{ case.job_code|default:"/" }}</dd>
+          <dt class="col-sm-4">Vozilo</dt><dd class="col-sm-8">{{ case.vehicle|default:"/" }}</dd>
+          <dt class="col-sm-4">GZN garaže</dt><dd class="col-sm-8">{{ case.fleet_procurement_request|default:"/" }}</dd>
+          <dt class="col-sm-4">Odgovorno lice</dt><dd class="col-sm-8">{{ case.responsible|default:"/" }}</dd>
+          <dt class="col-sm-4">Procenjena vrednost</dt><dd class="col-sm-8">{{ case.estimated_value|default:"/" }} {{ case.currency }}</dd>
+          <dt class="col-sm-4">Potrebno do</dt><dd class="col-sm-8">{{ case.needed_by|date:"d.m.Y"|default:"/" }}</dd>
+          <dt class="col-sm-4">Opis</dt><dd class="col-sm-8">{{ case.description|linebreaksbr|default:"/" }}</dd>
+          <dt class="col-sm-4">Napomena</dt><dd class="col-sm-8">{{ case.note|linebreaksbr|default:"/" }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h4 class="mb-0">Stavke</h4></div>
+      <div class="card-body">
+        <div class="table-responsive mb-3">
+          <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Naziv</th>
+                <th>JM</th>
+                <th>Količina</th>
+                <th>Cena</th>
+                <th>Ukupno</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in case.items.all %}
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.uom }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.estimated_unit_price|default:"/" }}</td>
+                <td>{{ item.estimated_total|default:"/" }}</td>
+                <td class="text-center">
+                  <form method="post" action="{% url 'nabavka:item_delete' case.pk item.pk %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Obrisati stavku?');">
+                      <i class="mdi mdi-delete"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted">Nema stavki.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <form method="post" action="{% url 'nabavka:item_create' case.pk %}">
+          {% csrf_token %}
+          <div class="row g-2">
+            <div class="col-md-4">{{ item_form.name }}</div>
+            <div class="col-md-2">{{ item_form.uom }}</div>
+            <div class="col-md-2">{{ item_form.quantity }}</div>
+            <div class="col-md-2">{{ item_form.estimated_unit_price }}</div>
+            <div class="col-md-2">{{ item_form.note }}</div>
+          </div>
+          <button class="btn btn-outline-success btn-sm mt-2" type="submit">
+            <i class="mdi mdi-plus"></i> Dodaj stavku
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Povezane fakture</h4>
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:euf_invoice_list' %}">
+          <i class="mdi mdi-link"></i> EUF
+        </a>
+      </div>
+      <div class="card-body">
+        <ul class="list-group">
+          {% for link in case.invoice_links.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <strong>{{ link.invoice_number }}</strong>
+              <div class="text-muted small">{{ link.supplier_name|default:"/" }} / {{ link.amount|default:"/" }}</div>
+            </div>
+            <form method="post" action="{% url 'nabavka:invoice_link_delete' link.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'nabavka:case_detail' case.pk %}">
+              <button class="btn btn-outline-danger btn-sm" type="submit"><i class="mdi mdi-delete"></i></button>
+            </form>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted">Nema povezanih faktura.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h4 class="mb-0">Povezani ugovori</h4></div>
+      <div class="card-body">
+        <ul class="list-group mb-3">
+          {% for link in case.contract_links.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <strong>{{ link.contract.contract_number }}</strong>
+              <div class="text-muted small">{{ link.contract.title }}</div>
+            </div>
+            <form method="post" action="{% url 'nabavka:contract_link_delete' case.pk link.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-danger btn-sm" type="submit"><i class="mdi mdi-delete"></i></button>
+            </form>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted">Nema dodatnih veza ugovora.</li>
+          {% endfor %}
+        </ul>
+        <form method="post" action="{% url 'nabavka:contract_link_create' case.pk %}">
+          {% csrf_token %}
+          <div class="mb-2">{{ contract_link_form.contract }}</div>
+          <div class="mb-2">{{ contract_link_form.invoice_link }}</div>
+          <div class="mb-2">{{ contract_link_form.note }}</div>
+          <button class="btn btn-outline-success btn-sm" type="submit">
+            <i class="mdi mdi-plus"></i> Poveži ugovor
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header"><h4 class="mb-0">Status</h4></div>
+      <div class="card-body">
+        <form method="post" action="{% url 'nabavka:status_log_create' case.pk %}">
+          {% csrf_token %}
+          <div class="mb-2">{{ status_log_form.new_status }}</div>
+          <div class="mb-2">{{ status_log_form.comment }}</div>
+          <button class="btn btn-outline-primary btn-sm" type="submit">Sačuvaj status</button>
+        </form>
+        <hr>
+        <ul class="list-group">
+          {% for log in case.status_logs.all %}
+          <li class="list-group-item">
+            <strong>{{ log.get_new_status_display }}</strong>
+            <div class="text-muted small">{{ log.created_at|date:"d.m.Y H:i" }} / {{ log.created_by|default:"/" }}</div>
+            {% if log.comment %}<div>{{ log.comment }}</div>{% endif %}
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted">Nema istorije statusa.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

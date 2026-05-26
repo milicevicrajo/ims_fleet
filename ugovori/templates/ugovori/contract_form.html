@@ -69,6 +69,86 @@
     border-color: #9fb1c1;
   }
   .dynamic-field[hidden] { display: none !important; }
+  .instrument-toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .instrument-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 9px 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .instrument-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .instrument-switch-ui {
+    position: relative;
+    flex: 0 0 46px;
+    width: 46px;
+    height: 24px;
+    border-radius: 999px;
+    background: #cbd5df;
+    transition: background .16s ease, box-shadow .16s ease;
+  }
+  .instrument-switch-ui::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20, 57, 91, .24);
+    transition: transform .16s ease;
+  }
+  .instrument-switch input:checked + .instrument-switch-ui {
+    background: #1f6f8b;
+    box-shadow: 0 0 0 3px rgba(31, 111, 139, .12);
+  }
+  .instrument-switch input:checked + .instrument-switch-ui::before {
+    transform: translateX(22px);
+  }
+  .instrument-switch-text {
+    color: #243746;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .instrument-control {
+    border: 1px solid #eef2f6;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+  }
+  .instrument-control.is-locked {
+    opacity: .78;
+  }
+  .instrument-selector {
+    margin-top: 12px;
+  }
+  .instrument-selector .select2-container {
+    width: 100% !important;
+  }
+  .menica-lock-note {
+    color: #6c7f90;
+    font-size: .86rem;
+    margin-top: 8px;
+  }
+  @media (max-width: 767.98px) {
+    .instrument-toggle-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 
 <div class="form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -124,7 +204,7 @@
         {% for party_form in formset %}
           <div class="party-form-row row align-items-end g-2 mb-2">
             {% for field in party_form.hidden_fields %}{{ field }}{% endfor %}
-            <div class="col-12 col-xl-6">
+            <div class="col-12 col-xl-5">
               <label class="form-label">Partner</label>
               {{ party_form.partner }}
               {% if party_form.partner.errors %}<div class="invalid-feedback d-block">{{ party_form.partner.errors.0 }}</div>{% endif %}
@@ -136,7 +216,12 @@
               {{ party_form.role }}
               {% if party_form.role.errors %}<div class="invalid-feedback d-block">{{ party_form.role.errors.0 }}</div>{% endif %}
             </div>
-            <div class="col-12 col-md-5 col-xl-3">
+            <div class="col-12 col-md-5 col-xl-2">
+              <label class="form-label">Njihov broj ugovora</label>
+              {{ party_form.party_contract_number }}
+              {% if party_form.party_contract_number.errors %}<div class="invalid-feedback d-block">{{ party_form.party_contract_number.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-5 col-xl-2">
               <label class="form-label">Napomena</label>
               {{ party_form.note }}
               {% if party_form.note.errors %}<div class="invalid-feedback d-block">{{ party_form.note.errors.0 }}</div>{% endif %}
@@ -278,6 +363,49 @@
         </div>
       </div>
 
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-shield-check"></i> Instrumenti obezbedjenja</div>
+        <div class="instrument-toggle-grid">
+          <div class="instrument-control is-locked" data-menica-field-group="outgoing">
+            <label class="instrument-switch" for="{{ form.has_outgoing_menice.id_for_label }}">
+              {{ form.has_outgoing_menice }}
+              <span class="instrument-switch-ui"></span>
+              <span class="instrument-switch-text">{{ form.has_outgoing_menice.label }}</span>
+            </label>
+            {% if form.has_outgoing_menice.errors %}<div class="invalid-feedback d-block">{{ form.has_outgoing_menice.errors.0 }}</div>{% endif %}
+            <div class="instrument-selector">
+              <label for="{{ form.link_outgoing_menica.id_for_label }}" class="form-label">{{ form.link_outgoing_menica.label }}</label>
+              {{ form.link_outgoing_menica }}
+              {% if form.link_outgoing_menica.errors %}<div class="invalid-feedback d-block">{{ form.link_outgoing_menica.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="menica-lock-note">Selector se otkljucava kada ukljucis izlazne menice.</div>
+          </div>
+          <div class="instrument-control is-locked" data-menica-field-group="incoming">
+            <label class="instrument-switch" for="{{ form.has_incoming_menice.id_for_label }}">
+              {{ form.has_incoming_menice }}
+              <span class="instrument-switch-ui"></span>
+              <span class="instrument-switch-text">{{ form.has_incoming_menice.label }}</span>
+            </label>
+            {% if form.has_incoming_menice.errors %}<div class="invalid-feedback d-block">{{ form.has_incoming_menice.errors.0 }}</div>{% endif %}
+            <div class="instrument-selector">
+              <label for="{{ form.link_ulazna_menica.id_for_label }}" class="form-label">{{ form.link_ulazna_menica.label }}</label>
+              {{ form.link_ulazna_menica }}
+              {% if form.link_ulazna_menica.errors %}<div class="invalid-feedback d-block">{{ form.link_ulazna_menica.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="menica-lock-note">Selector se otkljucava kada ukljucis ulazne menice.</div>
+          </div>
+          <div class="instrument-control">
+            <label class="instrument-switch" for="{{ form.has_guarantees.id_for_label }}">
+              {{ form.has_guarantees }}
+              <span class="instrument-switch-ui"></span>
+              <span class="instrument-switch-text">{{ form.has_guarantees.label }}</span>
+            </label>
+            {% if form.has_guarantees.errors %}<div class="invalid-feedback d-block">{{ form.has_guarantees.errors.0 }}</div>{% endif %}
+            <div class="menica-lock-note">Za garancije za sada nema dodatnog selektora.</div>
+          </div>
+        </div>
+      </div>
+
       {% for field in form.hidden_fields %}{{ field }}{% endfor %}
     </div>
   </div>
@@ -353,6 +481,38 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.$) $(valueTypeField).on('select2:select change', toggleValueFields);
     toggleValueFields();
   }
+
+  var incomingMeniceToggle = document.getElementById('{{ form.has_incoming_menice.id_for_label }}');
+  var outgoingMeniceToggle = document.getElementById('{{ form.has_outgoing_menice.id_for_label }}');
+  var incomingMenicaGroups = document.querySelectorAll('[data-menica-field-group="incoming"]');
+  var outgoingMenicaGroups = document.querySelectorAll('[data-menica-field-group="outgoing"]');
+
+  function setMenicaGroupEnabled(groups, enabled) {
+    groups.forEach(function (group) {
+      group.classList.toggle('is-locked', !enabled);
+      var field = group.querySelector('select');
+      if (!field) return;
+      field.disabled = !enabled;
+      if (window.$ && $.fn.select2 && $(field).hasClass('select2-hidden-accessible')) {
+        $(field).prop('disabled', !enabled).trigger('change.select2');
+      }
+    });
+  }
+
+  function toggleMenicaLinkFields() {
+    var incomingEnabled = incomingMeniceToggle && incomingMeniceToggle.checked;
+    var outgoingEnabled = outgoingMeniceToggle && outgoingMeniceToggle.checked;
+    setMenicaGroupEnabled(incomingMenicaGroups, incomingEnabled);
+    setMenicaGroupEnabled(outgoingMenicaGroups, outgoingEnabled);
+  }
+
+  if (incomingMeniceToggle) {
+    incomingMeniceToggle.addEventListener('change', toggleMenicaLinkFields);
+  }
+  if (outgoingMeniceToggle) {
+    outgoingMeniceToggle.addEventListener('change', toggleMenicaLinkFields);
+  }
+  toggleMenicaLinkFields();
 
   var totalForms = document.getElementById('id_parties-TOTAL_FORMS');
   var formsetContainer = document.getElementById('party-formset');

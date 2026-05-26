@@ -1,10 +1,28 @@
 from django.contrib import admin
-from .models import Partner, ContractType, Contract, ContractParty
+from .models import (
+    Contract,
+    ContractGuarantee,
+    ContractMenicaLink,
+    ContractParty,
+    ContractType,
+    Partner,
+)
 
 
 class ContractPartyInline(admin.TabularInline):
     model = ContractParty
     extra = 1
+
+
+class ContractMenicaLinkInline(admin.TabularInline):
+    model = ContractMenicaLink
+    extra = 0
+    autocomplete_fields = ["menica", "ulazna_menica"]
+
+
+class ContractGuaranteeInline(admin.TabularInline):
+    model = ContractGuarantee
+    extra = 0
 
 
 @admin.register(Partner)
@@ -22,13 +40,49 @@ class ContractTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
-    list_display = ["contract_number", "title", "kind", "status", "value_type", "contract_date"]
-    list_filter = ["kind", "status", "value_type", "contract_type"]
+    list_display = [
+        "contract_number",
+        "title",
+        "kind",
+        "status",
+        "value_type",
+        "has_incoming_menice",
+        "has_outgoing_menice",
+        "has_guarantees",
+        "contract_date",
+    ]
+    list_filter = [
+        "kind",
+        "status",
+        "value_type",
+        "contract_type",
+        "has_incoming_menice",
+        "has_outgoing_menice",
+        "has_guarantees",
+    ]
     search_fields = ["contract_number", "title"]
-    inlines = [ContractPartyInline]
+    inlines = [ContractPartyInline, ContractMenicaLinkInline, ContractGuaranteeInline]
 
 
 @admin.register(ContractParty)
 class ContractPartyAdmin(admin.ModelAdmin):
-    list_display = ["contract", "partner", "role"]
+    list_display = ["contract", "partner", "role", "party_contract_number"]
     list_filter = ["role"]
+
+
+@admin.register(ContractMenicaLink)
+class ContractMenicaLinkAdmin(admin.ModelAdmin):
+    list_display = ["contract", "instrument_serial", "instrument_type_display", "created_at"]
+    search_fields = [
+        "contract__contract_number",
+        "menica__serijski_broj_menice",
+        "ulazna_menica__serijski_broj_menice",
+    ]
+    autocomplete_fields = ["contract", "menica", "ulazna_menica"]
+
+
+@admin.register(ContractGuarantee)
+class ContractGuaranteeAdmin(admin.ModelAdmin):
+    list_display = ["contract", "guarantee_number", "issuer", "amount", "currency", "valid_to", "status"]
+    list_filter = ["status", "currency"]
+    search_fields = ["contract__contract_number", "guarantee_number", "issuer", "beneficiary"]

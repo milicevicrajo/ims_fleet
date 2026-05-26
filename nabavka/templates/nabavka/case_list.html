@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">{{ title }}</h2>
+  <a class="btn btn-success" href="{% url 'nabavka:case_create' %}">
+    <i class="mdi mdi-plus"></i> Novi zahtev
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-3">{{ filter.form.q.label_tag }} {{ filter.form.q }}</div>
+      <div class="col-md-2">{{ filter.form.case_type.label_tag }} {{ filter.form.case_type }}</div>
+      <div class="col-md-2">{{ filter.form.status.label_tag }} {{ filter.form.status }}</div>
+      <div class="col-md-3">{{ filter.form.supplier.label_tag }} {{ filter.form.supplier|add_class:"select2-method" }}</div>
+      <div class="col-md-2">{{ filter.form.job_code.label_tag }} {{ filter.form.job_code|add_class:"select2-method" }}</div>
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><i class="mdi mdi-filter"></i> Filtriraj</button>
+        <a class="btn btn-outline-secondary" href="{% url 'nabavka:case_list' %}">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Broj</th>
+            <th>Naziv</th>
+            <th>Tip</th>
+            <th>Status</th>
+            <th>Dobavljač</th>
+            <th>Ugovor</th>
+            <th>OJ</th>
+            <th class="text-center">Akcije</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for case in cases %}
+          <tr>
+            <td>{{ case.case_number }}</td>
+            <td>{{ case.title }}</td>
+            <td>{{ case.get_case_type_display }}</td>
+            <td>{{ case.get_status_display }}</td>
+            <td>{{ case.supplier|default:"/" }}</td>
+            <td>{{ case.contract.contract_number|default:"/" }}</td>
+            <td>{% if case.job_code %}{{ case.job_code.code }}{% else %}/{% endif %}</td>
+            <td class="text-center text-nowrap">
+              <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:case_detail' case.pk %}">
+                <i class="mdi mdi-eye"></i> Otvori
+              </a>
+              <a class="btn btn-outline-secondary btn-sm" href="{% url 'nabavka:case_update' case.pk %}">
+                <i class="mdi mdi-pencil"></i> Izmeni
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center text-muted">Nema podataka.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

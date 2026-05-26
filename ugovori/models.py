@@ -220,6 +220,18 @@ class Contract(models.Model):
         db_index=True,
         verbose_name="Status",
     )
+    has_incoming_menice = models.BooleanField(
+        default=False,
+        verbose_name="Ima ulazne menice",
+    )
+    has_outgoing_menice = models.BooleanField(
+        default=False,
+        verbose_name="Ima izlazne menice",
+    )
+    has_guarantees = models.BooleanField(
+        default=False,
+        verbose_name="Ima garancije",
+    )
     file = models.FileField(
         upload_to="ugovori/files/%Y/%m/", null=True, blank=True, verbose_name="Fajl ugovora"
     )
@@ -327,6 +339,12 @@ class ContractParty(models.Model):
         verbose_name="Partner",
     )
     role = models.CharField(max_length=30, choices=ROLE_CHOICES, verbose_name="Uloga")
+    party_contract_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Broj ugovora kod stranke",
+    )
     note = models.CharField(max_length=255, blank=True, null=True, verbose_name="Napomena")
 
     class Meta:
@@ -337,3 +355,155 @@ class ContractParty(models.Model):
 
     def __str__(self):
         return f"{self.partner} – {self.get_role_display()}"
+
+
+class ContractMenicaLink(models.Model):
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.CASCADE,
+        related_name="menica_links",
+        verbose_name="Ugovor",
+    )
+    menica = models.ForeignKey(
+        "menice.Menica",
+        on_delete=models.PROTECT,
+        related_name="contract_links",
+        null=True,
+        blank=True,
+        verbose_name="Menica",
+    )
+    ulazna_menica = models.ForeignKey(
+        "menice.UlaznaMenica",
+        on_delete=models.PROTECT,
+        related_name="contract_links",
+        null=True,
+        blank=True,
+        verbose_name="Ulazna menica",
+    )
+    note = models.CharField(max_length=255, blank=True, null=True, verbose_name="Napomena")
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ugovori_menica_linkovi_kreirani",
+    )
+
+    class Meta:
+        db_table = "ugovori_contract_menica_link"
+        verbose_name = "Veza ugovora i menice"
+        verbose_name_plural = "Veze ugovora i menica"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.contract.contract_number} - {self.instrument_serial()}"
+
+    def clean(self):
+        if bool(self.menica_id) == bool(self.ulazna_menica_id):
+            raise ValidationError("Izaberite tacno jednu menicu.")
+
+    def instrument_serial(self):
+        if self.menica_id:
+            return self.menica.serijski_broj_menice or f"Menica {self.menica_id}"
+        if self.ulazna_menica_id:
+            return self.ulazna_menica.serijski_broj_menice
+        return "-"
+
+    def instrument_type_display(self):
+        if self.menica_id:
+            return self.menica.get_tip_display()
+        if self.ulazna_menica_id:
+            return "Ulazna menica"
+        return "-"
+
+    def instrument_partner(self):
+        if self.menica_id:
+            return self.menica.naziv_duznika or self.menica.izdavalac_menice or "-"
+        if self.ulazna_menica_id:
+            return self.ulazna_menica.naziv_pravnog_lica or "-"
+        return "-"
+
+    def instrument_amount_display(self):
+        if self.menica_id and self.menica.iznos_menice is not None:
+            return f"{self.menica.iznos_menice:.2f} {self.menica.valuta_menice or ''}".strip()
+        if self.ulazna_menica_id and self.ulazna_menica.procenat_iznos is not None:
+            return f"{self.ulazna_menica.procenat_iznos:.2f}"
+        return "-"
+
+
+class ContractGuarantee(models.Model):
+    STATUS_ACTIVE = "active"
+    STATUS_RETURNED = "returned"
+    STATUS_EXPIRED = "expired"
+    STATUS_CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, "Aktivna"),
+        (STATUS_RETURNED, "Vracena"),
+        (STATUS_EXPIRED, "Istekla"),
+        (STATUS_CANCELLED, "Stornirana"),
+    ]
+
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.CASCADE,
+        related_name="guarantees",
+        verbose_name="Ugovor",
+    )
+    guarantee_number = models.CharField(max_length=100, verbose_name="Broj garancije")
+    issuer = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Izdavalac / banka",
+    )
+    beneficiary = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Korisnik garancije",
+    )
+    amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        verbose_name="Iznos",
+    )
+    currency = models.CharField(
+        max_length=10,
+        choices=Contract.CURRENCY_CHOICES,
+        default="RSD",
+        verbose_name="Valuta",
+    )
+    valid_from = models.DateField(blank=True, null=True, verbose_name="Vazi od")
+    valid_to = models.DateField(blank=True, null=True, verbose_name="Vazi do")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_ACTIVE,
+        db_index=True,
+        verbose_name="Status",
+    )
+    note = models.TextField(blank=True, null=True, verbose_name="Napomena")
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ugovori_garancije_kreirane",
+    )
+
+    class Meta:
+        db_table = "ugovori_contract_guarantee"
+        verbose_name = "Garancija uz ugovor"
+        verbose_name_plural = "Garancije uz ugovore"
+        ordering = ["-valid_to", "-created_at"]
+
+    def __str__(self):
+        return f"{self.guarantee_number} - {self.contract.contract_number}"
+
+    def clean(self):
+        if self.valid_from and self.valid_to and self.valid_to < self.valid_from:
+            raise ValidationError({"valid_to": "Datum 'Vazi do' ne sme biti pre datuma 'Vazi od'."})

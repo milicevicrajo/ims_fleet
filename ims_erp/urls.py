@@ -10,6 +10,7 @@ urlpatterns = [
     path("naplata/", include(("naplata.urls", "naplata"), namespace="naplata")),
     path("menice/", include(("menice.urls", "menice"), namespace="menice")),
     path("ugovori/", include(("ugovori.urls", "ugovori"), namespace="ugovori")),
+    path("nabavka/", include(("nabavka.urls", "nabavka"), namespace="nabavka")),
     path("", include("core.urls")),
 ]
 

@@ -1,0 +1,44 @@
+{% load static %}
+<aside class="left-sidebar" data-sidebarbg="skin5">
+  <div class="scroll-sidebar">
+    <nav class="sidebar-nav">
+      <ul id="sidebarnav" class="pt-4">
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:dashboard' %}">
+            <i class="mdi mdi-view-dashboard"></i><span class="hide-menu">Kontrolna tabla</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:case_list' %}">
+            <i class="mdi mdi-clipboard-list"></i><span class="hide-menu">Zahtevi</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:euf_invoice_list' %}">
+            <i class="mdi mdi-file-import"></i><span class="hide-menu">EUF fakture</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:invoice_link_list' %}">
+            <i class="mdi mdi-link-variant"></i><span class="hide-menu">Povezivanje faktura</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:purchase_order_list' %}">
+            <i class="mdi mdi-file-document-edit"></i><span class="hide-menu">Narudžbenice</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:reports' %}">
+            <i class="mdi mdi-file-chart"></i><span class="hide-menu">Izveštaji</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:alerts' %}">
+            <i class="mdi mdi-bell-alert"></i><span class="hide-menu">Alarmi</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>

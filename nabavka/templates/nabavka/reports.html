@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-3">{{ title }}</h2>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h4 class="mb-0">Predmeti po statusu</h4></div>
+      <div class="card-body">
+        <table class="table table-sm">
+          {% for row in by_status %}
+          <tr><td>{{ row.status }}</td><td class="text-end">{{ row.count }}</td></tr>
+          {% empty %}
+          <tr><td class="text-muted">Nema podataka.</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h4 class="mb-0">Predmeti po tipu</h4></div>
+      <div class="card-body">
+        <table class="table table-sm">
+          {% for row in by_type %}
+          <tr><td>{{ row.case_type }}</td><td class="text-end">{{ row.count }}</td></tr>
+          {% empty %}
+          <tr><td class="text-muted">Nema podataka.</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-md-6">
+    <div class="card"><div class="card-body">
+      <div class="text-muted">Ukupan iznos povezanih faktura</div>
+      <h3>{{ invoice_total|default:"0.00" }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-6">
+    <div class="card"><div class="card-body">
+      <div class="text-muted">Ukupan iznos narudžbenica</div>
+      <h3>{{ order_total|default:"0.00" }}</h3>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

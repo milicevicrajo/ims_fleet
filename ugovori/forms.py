@@ -4,7 +4,8 @@ from django.forms import inlineformset_factory
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
-from .models import Contract, ContractParty, ContractType, Partner
+from menice.models import Menica, UlaznaMenica
+from .models import Contract, ContractGuarantee, ContractMenicaLink, ContractParty, ContractType, Partner
 
 
 class PartnerForm(forms.ModelForm):
@@ -68,6 +69,18 @@ class ContractTypeForm(forms.ModelForm):
 
 class ContractForm(forms.ModelForm):
     contract_date = localized_date_field(label="Datum ugovora")
+    link_outgoing_menica = forms.ModelChoiceField(
+        queryset=Menica.objects.none(),
+        required=False,
+        label="Izlazna menica",
+        widget=Select2Widget(attrs={"class": "select2-method"}),
+    )
+    link_ulazna_menica = forms.ModelChoiceField(
+        queryset=UlaznaMenica.objects.none(),
+        required=False,
+        label="Ulazna menica",
+        widget=Select2Widget(attrs={"class": "select2-method"}),
+    )
     valid_from = localized_date_field(label="Važi od", required=False)
     valid_to = localized_date_field(label="Važi do", required=False)
 
@@ -89,6 +102,9 @@ class ContractForm(forms.ModelForm):
             "unit_label",
             "currency",
             "status",
+            "has_incoming_menice",
+            "has_outgoing_menice",
+            "has_guarantees",
             "file",
             "note",
         ]
@@ -108,6 +124,17 @@ class ContractForm(forms.ModelForm):
         self.fields["parent_contract"].widget = Select2Widget(attrs={"class": "select2-method"})
         self.fields["parent_contract"].queryset = Contract.objects.filter(kind=Contract.MAIN)
         self.fields["parent_contract"].required = False
+        self.fields["link_outgoing_menica"].queryset = Menica.objects.filter(
+            tip=Menica.TIP_IZLAZNA,
+        ).order_by("-datum_registracije", "-created_at")
+        self.fields["link_outgoing_menica"].empty_label = "Izaberi izlaznu menicu..."
+        self.fields["link_outgoing_menica"].label_from_instance = self.menica_label_from_instance
+        self.fields["link_ulazna_menica"].queryset = UlaznaMenica.objects.all().order_by(
+            "-datum_prijema_menice",
+            "-created_at",
+        )
+        self.fields["link_ulazna_menica"].empty_label = "Izaberi ulaznu menicu..."
+        self.fields["link_ulazna_menica"].label_from_instance = self.ulazna_menica_label_from_instance
 
         for name, field in self.fields.items():
             widget = field.widget
@@ -116,6 +143,8 @@ class ContractForm(forms.ModelForm):
                 widget.attrs["class"] = f"{existing} select2-method".strip()
             elif isinstance(widget, forms.Select):
                 widget.attrs.setdefault("class", "form-select")
+            elif isinstance(widget, forms.CheckboxInput):
+                widget.attrs.setdefault("class", "form-check-input")
             elif not isinstance(widget, (forms.CheckboxInput, Select2Widget, forms.FileInput, forms.Textarea)):
                 widget.attrs.setdefault("class", "form-control")
 
@@ -157,7 +186,33 @@ class ContractForm(forms.ModelForm):
             cleaned_data["unit_price"] = None
             cleaned_data["unit_label"] = ""
 
+        if not cleaned_data.get("has_outgoing_menice"):
+            cleaned_data["link_outgoing_menica"] = None
+        if not cleaned_data.get("has_incoming_menice"):
+            cleaned_data["link_ulazna_menica"] = None
+
         return cleaned_data
+
+    @staticmethod
+    def menica_label_from_instance(menica):
+        details = [menica.get_tip_display()]
+        if menica.naziv_duznika:
+            details.append(menica.naziv_duznika)
+        if menica.iznos_menice is not None:
+            details.append(f"{menica.iznos_menice:.2f} {menica.valuta_menice or ''}".strip())
+        return f"{menica.serijski_broj_menice or 'Bez serijskog broja'} ({', '.join(details)})"
+
+    @staticmethod
+    def ulazna_menica_label_from_instance(menica):
+        details = []
+        if menica.naziv_pravnog_lica:
+            details.append(menica.naziv_pravnog_lica)
+        if menica.broj_naseg_ugovora:
+            details.append(f"ugovor {menica.broj_naseg_ugovora}")
+        if menica.sifra_centra:
+            details.append(f"centar {menica.sifra_centra}")
+        suffix = f" ({', '.join(details)})" if details else ""
+        return f"{menica.serijski_broj_menice}{suffix}"
 
     def clean_file(self):
         uploaded_file = self.cleaned_data.get("file")
@@ -192,7 +247,7 @@ class AnnexForm(ContractForm):
 class ContractPartyForm(forms.ModelForm):
     class Meta:
         model = ContractParty
-        fields = ["partner", "role", "note"]
+        fields = ["partner", "role", "party_contract_number", "note"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -200,6 +255,8 @@ class ContractPartyForm(forms.ModelForm):
         self.fields["partner"].queryset = Partner.objects.filter(is_active=True)
         self.fields["partner"].label_from_instance = self.partner_label_from_instance
         self.fields["role"].widget.attrs.setdefault("class", "form-select contract-party-role-select")
+        self.fields["party_contract_number"].widget.attrs.setdefault("class", "form-control")
+        self.fields["party_contract_number"].required = False
         self.fields["note"].widget.attrs.setdefault("class", "form-control")
         self.fields["note"].required = False
 
@@ -226,3 +283,98 @@ ContractPartyFormSet = inlineformset_factory(
     min_num=0,
     validate_min=False,
 )
+
+
+class ContractMenicaLinkForm(forms.ModelForm):
+    class Meta:
+        model = ContractMenicaLink
+        fields = ["menica", "ulazna_menica", "note"]
+        widgets = {
+            "menica": Select2Widget(attrs={"class": "select2-method"}),
+            "ulazna_menica": Select2Widget(attrs={"class": "select2-method"}),
+            "note": forms.TextInput(attrs={"class": "form-control"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["menica"].required = False
+        self.fields["menica"].empty_label = "Izaberi menicu..."
+        self.fields["menica"].queryset = Menica.objects.all().order_by(
+            "tip",
+            "-datum_registracije",
+            "-created_at",
+        )
+        self.fields["menica"].label_from_instance = self.menica_label_from_instance
+        self.fields["ulazna_menica"].required = False
+        self.fields["ulazna_menica"].empty_label = "Izaberi ulaznu menicu..."
+        self.fields["ulazna_menica"].queryset = UlaznaMenica.objects.all().order_by(
+            "-datum_prijema_menice",
+            "-created_at",
+        )
+        self.fields["ulazna_menica"].label_from_instance = self.ulazna_menica_label_from_instance
+        self.fields["note"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        menica = cleaned_data.get("menica")
+        ulazna_menica = cleaned_data.get("ulazna_menica")
+        if bool(menica) == bool(ulazna_menica):
+            raise forms.ValidationError("Izaberite tacno jednu menicu.")
+        return cleaned_data
+
+    @staticmethod
+    def menica_label_from_instance(menica):
+        details = [menica.get_tip_display()]
+        if menica.naziv_duznika:
+            details.append(menica.naziv_duznika)
+        if menica.iznos_menice is not None:
+            details.append(f"{menica.iznos_menice:.2f} {menica.valuta_menice or ''}".strip())
+        return f"{menica.serijski_broj_menice or 'Bez serijskog broja'} ({', '.join(details)})"
+
+    @staticmethod
+    def ulazna_menica_label_from_instance(menica):
+        details = []
+        if menica.naziv_pravnog_lica:
+            details.append(menica.naziv_pravnog_lica)
+        if menica.broj_naseg_ugovora:
+            details.append(f"ugovor {menica.broj_naseg_ugovora}")
+        if menica.sifra_centra:
+            details.append(f"centar {menica.sifra_centra}")
+        suffix = f" ({', '.join(details)})" if details else ""
+        return f"{menica.serijski_broj_menice}{suffix}"
+
+
+class ContractGuaranteeForm(forms.ModelForm):
+    valid_from = localized_date_field(label="Vazi od", required=False)
+    valid_to = localized_date_field(label="Vazi do", required=False)
+
+    class Meta:
+        model = ContractGuarantee
+        fields = [
+            "guarantee_number",
+            "issuer",
+            "beneficiary",
+            "amount",
+            "currency",
+            "valid_from",
+            "valid_to",
+            "status",
+            "note",
+        ]
+        widgets = {
+            "currency": Select2Widget(attrs={"class": "select2-method"}),
+            "status": Select2Widget(attrs={"class": "select2-method"}),
+            "note": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            widget = field.widget
+            if isinstance(widget, Select2Widget):
+                existing = widget.attrs.get("class", "")
+                widget.attrs["class"] = f"{existing} select2-method".strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs.setdefault("class", "form-select")
+            elif not isinstance(widget, forms.Textarea):
+                widget.attrs.setdefault("class", "form-control")

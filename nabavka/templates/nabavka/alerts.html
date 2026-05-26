@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-3">{{ title }}</h2>
+
+<div class="card mb-3">
+  <div class="card-header"><h4 class="mb-0">Probio rok</h4></div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm table-striped">
+        <thead><tr><th>Broj</th><th>Naziv</th><th>Dobavljač</th><th>Potrebno do</th><th>Odgovoran</th></tr></thead>
+        <tbody>
+          {% for case in overdue_cases %}
+          <tr>
+            <td><a href="{% url 'nabavka:case_detail' case.pk %}">{{ case.case_number }}</a></td>
+            <td>{{ case.title }}</td>
+            <td>{{ case.supplier|default:"/" }}</td>
+            <td>{{ case.needed_by|date:"d.m.Y" }}</td>
+            <td>{{ case.responsible|default:"/" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-muted text-center">Nema probijenih rokova.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h4 class="mb-0">Čekaju fakturu</h4></div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm table-striped">
+        <thead><tr><th>Broj</th><th>Naziv</th><th>Dobavljač</th><th>Odgovoran</th></tr></thead>
+        <tbody>
+          {% for case in waiting_invoice_cases %}
+          <tr>
+            <td><a href="{% url 'nabavka:case_detail' case.pk %}">{{ case.case_number }}</a></td>
+            <td>{{ case.title }}</td>
+            <td>{{ case.supplier|default:"/" }}</td>
+            <td>{{ case.responsible|default:"/" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted text-center">Nema predmeta koji čekaju fakturu.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

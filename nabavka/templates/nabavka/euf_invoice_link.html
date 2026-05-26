@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h3 class="mb-0">{{ title }}</h3></div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-4">Datum</dt><dd class="col-sm-8">{% if invoice.datum %}{{ invoice.datum|date:"d.m.Y" }}{% else %}{{ invoice.datum_raw }}{% endif %}</dd>
+          <dt class="col-sm-4">Partner</dt><dd class="col-sm-8">{{ invoice.naziv_partnera }}</dd>
+          <dt class="col-sm-4">Broj fakture</dt><dd class="col-sm-8">{{ invoice.broj_fakture }}</dd>
+          <dt class="col-sm-4">Iznos</dt><dd class="col-sm-8">{{ invoice.iznos|default:"/" }}</dd>
+        </dl>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.procurement_case.id_for_label }}">{{ form.procurement_case.label }}</label>
+            {{ form.procurement_case }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+            {{ form.note }}
+          </div>
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-link"></i> Poveži fakturu</button>
+          <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_invoice_list' %}">Nazad</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView, View
 from django_filters.views import FilterView
 import json
 import tempfile
@@ -16,8 +16,16 @@ from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
 from .apr_openapi import APR_OPENAPI_SOURCE, fetch_apr_companies, get_apr_company, update_partner_from_apr, update_partners_from_apr
 from .filters import ContractFilter
-from .forms import AnnexForm, ContractForm, ContractPartyFormSet, ContractTypeForm, PartnerForm
-from .models import Contract, ContractParty, ContractType, Partner
+from .forms import (
+    AnnexForm,
+    ContractForm,
+    ContractGuaranteeForm,
+    ContractMenicaLinkForm,
+    ContractPartyFormSet,
+    ContractTypeForm,
+    PartnerForm,
+)
+from .models import Contract, ContractGuarantee, ContractMenicaLink, ContractParty, ContractType, Partner
 from .services import count_finance_partners, sync_finance_partner_batch, sync_finance_partners
 
 
@@ -693,6 +701,7 @@ class _ContractFormMixin:
         self.object.save()
         formset.instance = self.object
         formset.save()
+        self.create_contract_menica_links(form)
         messages.success(self.request, "Ugovor je uspešno sačuvan.")
         return redirect(self.get_success_url())
 
@@ -700,6 +709,30 @@ class _ContractFormMixin:
         return self.render_to_response(
             self.get_context_data(form=form, formset=formset)
         )
+
+    def create_contract_menica_links(self, form):
+        link_map = [
+            ("link_outgoing_menica", "menica"),
+            ("link_ulazna_menica", "ulazna_menica"),
+        ]
+        for field_name, target_field in link_map:
+            instrument = form.cleaned_data.get(field_name)
+            if not instrument:
+                continue
+            filters = {
+                "contract": self.object,
+                "menica": None,
+                "ulazna_menica": None,
+            }
+            filters[target_field] = instrument
+            if ContractMenicaLink.objects.filter(**filters).exists():
+                continue
+            ContractMenicaLink.objects.create(
+                contract=self.object,
+                menica=instrument if target_field == "menica" else None,
+                ulazna_menica=instrument if target_field == "ulazna_menica" else None,
+                created_by=self.request.user,
+            )
 
     def post(self, request, *args, **kwargs):
         pk_url_kwarg = getattr(self, "pk_url_kwarg", "pk")
@@ -762,7 +795,13 @@ class ContractDetailView(RolePermissionRequiredMixin, DetailView):
     def get_queryset(self):
         return (
             Contract.objects.select_related("contract_type", "parent_contract", "created_by")
-            .prefetch_related("parties__partner", "annexes__contract_type", "annexes__parties__partner")
+            .prefetch_related(
+                "parties__partner",
+                "annexes__contract_type",
+                "annexes__parties__partner",
+                "menica_links__menica",
+                "menica_links__ulazna_menica",
+            )
         )
 
     def get_context_data(self, **kwargs):
@@ -771,6 +810,72 @@ class ContractDetailView(RolePermissionRequiredMixin, DetailView):
         ctx["annexes"] = self.object.annexes.all().select_related("contract_type").prefetch_related("parties__partner")
         ctx["current_app"] = "ugovori"
         return ctx
+
+
+class ContractMenicaLinkCreateView(RolePermissionRequiredMixin, View):
+    required_permission_code = "ugovori:contract_update"
+
+    def post(self, request, pk):
+        contract = get_object_or_404(Contract, pk=pk)
+        form = ContractMenicaLinkForm(request.POST)
+        if form.is_valid():
+            link = form.save(commit=False)
+            link.contract = contract
+            link.created_by = request.user
+            link.full_clean()
+            link.save()
+            if link.ulazna_menica_id or (link.menica_id and link.menica.tip == "ulazna"):
+                contract.has_incoming_menice = True
+            if link.menica_id and link.menica.tip == "izlazna":
+                contract.has_outgoing_menice = True
+            contract.save(update_fields=["has_incoming_menice", "has_outgoing_menice", "updated_at"])
+            messages.success(request, "Menica je povezana sa ugovorom.")
+        else:
+            messages.error(request, "Menica nije povezana. Izaberite tacno jednu menicu.")
+        return redirect("ugovori:contract_detail", pk=contract.pk)
+
+
+class ContractMenicaLinkDeleteView(RolePermissionRequiredMixin, View):
+    required_permission_code = "ugovori:contract_update"
+
+    def post(self, request, pk, link_pk):
+        contract = get_object_or_404(Contract, pk=pk)
+        link = get_object_or_404(ContractMenicaLink, pk=link_pk, contract=contract)
+        link.delete()
+        messages.success(request, "Veza sa menicom je uklonjena.")
+        return redirect("ugovori:contract_detail", pk=contract.pk)
+
+
+class ContractGuaranteeCreateView(RolePermissionRequiredMixin, View):
+    required_permission_code = "ugovori:contract_update"
+
+    def post(self, request, pk):
+        contract = get_object_or_404(Contract, pk=pk)
+        form = ContractGuaranteeForm(request.POST)
+        if form.is_valid():
+            guarantee = form.save(commit=False)
+            guarantee.contract = contract
+            guarantee.created_by = request.user
+            guarantee.full_clean()
+            guarantee.save()
+            if not contract.has_guarantees:
+                contract.has_guarantees = True
+                contract.save(update_fields=["has_guarantees", "updated_at"])
+            messages.success(request, "Garancija je dodata uz ugovor.")
+        else:
+            messages.error(request, "Garancija nije sacuvana. Proverite obavezna polja i datume.")
+        return redirect("ugovori:contract_detail", pk=contract.pk)
+
+
+class ContractGuaranteeDeleteView(RolePermissionRequiredMixin, View):
+    required_permission_code = "ugovori:contract_update"
+
+    def post(self, request, pk, guarantee_pk):
+        contract = get_object_or_404(Contract, pk=pk)
+        guarantee = get_object_or_404(ContractGuarantee, pk=guarantee_pk, contract=contract)
+        guarantee.delete()
+        messages.success(request, "Garancija je uklonjena.")
+        return redirect("ugovori:contract_detail", pk=contract.pk)
 
 
 class ContractDeleteView(RolePermissionRequiredMixin, DeleteView):

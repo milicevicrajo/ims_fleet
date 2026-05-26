@@ -8,6 +8,7 @@ def current_app(request):
         "administracija": "sidebar_administracija.html",
         "menice": "sidebar_menice.html",
         "ugovori": "sidebar_ugovori.html",
+        "nabavka": "sidebar_nabavka.html",
     }
     return {
         "current_app": app,

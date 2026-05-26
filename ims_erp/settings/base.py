@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     'naplata',
     'menice',
     'ugovori',
+    'nabavka',
 
     'django.contrib.admin',
     'django.contrib.auth',

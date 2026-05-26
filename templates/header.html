@@ -126,6 +126,11 @@
                title="Ugovori">
               <i class="mdi mdi-file-document-multiple"></i><span class="app-label">Ugovori</span>
             </a>
+            <a class="nav-link {% if current_app == 'nabavka' %}active{% endif %}"
+               href="{% url 'switch_app' 'nabavka' %}?next={% url 'nabavka:dashboard' %}"
+               title="Nabavka">
+              <i class="mdi mdi-clipboard-check"></i><span class="app-label">Nabavka</span>
+            </a>
             <a class="nav-link {% if current_app == 'kadrovi' %}active{% endif %}"
                href="{% url 'switch_app' 'kadrovi' %}?next={% url 'employee_list' %}"
                title="Kadrovi">
