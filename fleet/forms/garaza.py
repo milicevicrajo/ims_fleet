@@ -2,15 +2,11 @@ from django import forms
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
-from core.models import OrganizationalUnit
-
 from hr.models import Employee
 
 from ..models import (
     Kvar,
     KvarPart,
-    ProcurementItem,
-    ProcurementRequest,
     Vehicle,
     VehicleTravelOrder,
 )
@@ -152,33 +148,3 @@ class KvarPartForm(forms.ModelForm):
             "uom": forms.TextInput(attrs={"class": "form-control", "placeholder": "kom/l/kg"}),
         }
 
-
-class ProcurementRequestForm(forms.ModelForm):
-    class Meta:
-        model = ProcurementRequest
-        fields = ["job_code", "note"]
-        widgets = {
-            "job_code": forms.Select(attrs={"class": "form-select"}),
-            "note": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        try:
-            default_oj = OrganizationalUnit.objects.filter(code="832111").first()
-        except Exception:
-            default_oj = None
-        if default_oj and not self.initial.get("job_code") and not getattr(self.instance, "job_code_id", None):
-            self.initial["job_code"] = default_oj.pk
-
-
-class ProcurementItemForm(forms.ModelForm):
-    class Meta:
-        model = ProcurementItem
-        fields = ["name", "uom", "quantity", "note"]
-        widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Naziv materijala / usluge"}),
-            "uom": forms.TextInput(attrs={"class": "form-control", "placeholder": "Jedinica mere"}),
-            "quantity": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
-            "note": forms.TextInput(attrs={"class": "form-control", "placeholder": "Napomena (opciono)"}),
-        }

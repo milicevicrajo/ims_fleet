@@ -17,7 +17,6 @@ from fleet.models import (
     Kvar,
     Lease,
     Policy,
-    ProcurementRequest,
     Requisition,
     ServiceTransaction,
     ServiceType,
@@ -238,7 +237,6 @@ class Command(BaseCommand):
         ]
         full_garaza_models = [
             Kvar,
-            ProcurementRequest,
             VehicleTravelOrder,
         ]
 

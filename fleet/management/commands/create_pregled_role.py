@@ -16,7 +16,6 @@ from fleet.models import (
     Kvar,
     Lease,
     Policy,
-    ProcurementRequest,
     Requisition,
     ServiceTransaction,
     ServiceType,
@@ -137,7 +136,6 @@ class Command(BaseCommand):
             Requisition,
             Insurance,
             Kvar,
-            ProcurementRequest,
             VehicleTravelOrder,
         ]
         django_perms: List[Permission] = []

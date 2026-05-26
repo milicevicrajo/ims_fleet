@@ -13,12 +13,6 @@ from .kvar import (
     KvarVanIMSListView,
     KvarWorkOrderView,
 )
-from .procurement import (
-    ProcurementRequestCreateView,
-    ProcurementRequestDetailView,
-    ProcurementRequestListView,
-    ProcurementRequestPrintView,
-)
 from .vehicle_travel_orders import (
     VehicleTravelOrderCloseView,
     VehicleTravelOrderCreateView,
