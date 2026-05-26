@@ -6,6 +6,7 @@ from decimal import Decimal
 from hashlib import sha256
 
 from django.db import connections
+from django.utils import timezone
 
 
 @dataclass(frozen=True)
@@ -113,3 +114,55 @@ def get_euf_invoice(euf_key):
         if invoice.euf_key == wanted:
             return invoice
     return None
+
+
+def upsert_euf_invoice_snapshot(invoice):
+    from nabavka.models import ProcurementInvoice
+
+    obj, created = ProcurementInvoice.objects.get_or_create(
+        source=ProcurementInvoice.SOURCE_EUF,
+        euf_key=invoice.euf_key,
+        defaults={
+            "invoice_number": invoice.broj_fakture,
+            "invoice_date": invoice.datum,
+            "invoice_date_raw": invoice.datum_raw,
+            "supplier_name": invoice.naziv_partnera,
+            "amount": invoice.iznos,
+            "center": invoice.centar,
+            "warehouse": invoice.magacin,
+            "registration": invoice.registracija,
+            "center_name": invoice.centar,
+            "goes_to_warehouse": bool(invoice.magacin),
+            "synced_at": timezone.now(),
+        },
+    )
+    if not created:
+        obj.invoice_number = invoice.broj_fakture
+        obj.invoice_date = invoice.datum
+        obj.invoice_date_raw = invoice.datum_raw
+        obj.supplier_name = invoice.naziv_partnera
+        obj.amount = invoice.iznos
+        obj.center = invoice.centar
+        obj.warehouse = invoice.magacin
+        obj.registration = invoice.registracija
+        obj.synced_at = timezone.now()
+        obj.save(
+            update_fields=[
+                "invoice_number",
+                "invoice_date",
+                "invoice_date_raw",
+                "supplier_name",
+                "amount",
+                "center",
+                "warehouse",
+                "registration",
+                "synced_at",
+                "updated_at",
+            ]
+        )
+    return obj
+
+
+def sync_euf_invoice_snapshots(q=None, limit=2000):
+    invoices = list_euf_invoices(q=q, limit=limit)
+    return [upsert_euf_invoice_snapshot(invoice) for invoice in invoices]

@@ -1,71 +1,245 @@
 {% extends "base.html" %}
 {% load widget_tweaks %}
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">{{ title }}</h2>
-  <a class="btn btn-success" href="{% url 'nabavka:case_create' %}">
-    <i class="mdi mdi-plus"></i> Novi zahtev
-  </a>
-</div>
+{% block title %}{{ title }}{% endblock %}
 
-<div class="card mb-3">
-  <div class="card-body">
-    <form method="get" class="row g-2 align-items-end">
-      <div class="col-md-3">{{ filter.form.q.label_tag }} {{ filter.form.q }}</div>
-      <div class="col-md-2">{{ filter.form.case_type.label_tag }} {{ filter.form.case_type }}</div>
-      <div class="col-md-2">{{ filter.form.status.label_tag }} {{ filter.form.status }}</div>
-      <div class="col-md-3">{{ filter.form.supplier.label_tag }} {{ filter.form.supplier|add_class:"select2-method" }}</div>
-      <div class="col-md-2">{{ filter.form.job_code.label_tag }} {{ filter.form.job_code|add_class:"select2-method" }}</div>
-      <div class="col-12 d-flex gap-2">
-        <button class="btn btn-primary" type="submit"><i class="mdi mdi-filter"></i> Filtriraj</button>
-        <a class="btn btn-outline-secondary" href="{% url 'nabavka:case_list' %}">Reset</a>
-      </div>
-    </form>
+{% block content %}
+<style>
+  .assignment-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .assignment-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .assignment-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .assignment-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .assignment-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .assignment-status.type { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .assignment-status.garage { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .assignment-status.regular { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .assignment-status.draft { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .assignment-status.submitted { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .assignment-status.in_progress { background: #e6f7fb; color: #116276; border: 1px solid #b7deea; }
+  .assignment-status.waiting_invoice { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .assignment-status.invoice_linked { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .assignment-status.completed { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .assignment-status.cancelled { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
+  tr.assignment-closed td { background: #f3f6f9 !important; color: #657282; }
+  tr.assignment-closed a.btn-outline-primary { border-color: #9aa8b6; color: #405060; }
+  .case-title {
+    display: block;
+    max-width: 320px;
+  }
+  .case-muted {
+    display: block;
+    color: #6b7785;
+    font-size: .82rem;
+    margin-top: 2px;
+  }
+</style>
+
+<div class="assignment-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Zahtevi za nabavku</h1>
+    <p>Centralni pregled zahteva, OJ, garaže, dobavljača i statusa pre knjiženja faktura.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'nabavka:case_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Novi zahtev
+    </a>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-striped table-bordered align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Broj</th>
-            <th>Naziv</th>
-            <th>Tip</th>
-            <th>Status</th>
-            <th>Dobavljač</th>
-            <th>Ugovor</th>
-            <th>OJ</th>
-            <th class="text-center">Akcije</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for case in cases %}
-          <tr>
-            <td>{{ case.case_number }}</td>
-            <td>{{ case.title }}</td>
-            <td>{{ case.get_case_type_display }}</td>
-            <td>{{ case.get_status_display }}</td>
-            <td>{{ case.supplier|default:"/" }}</td>
-            <td>{{ case.contract.contract_number|default:"/" }}</td>
-            <td>{% if case.job_code %}{{ case.job_code.code }}{% else %}/{% endif %}</td>
-            <td class="text-center text-nowrap">
-              <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:case_detail' case.pk %}">
-                <i class="mdi mdi-eye"></i> Otvori
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="assignment-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.q.label }}</label>
+              {{ filter.form.q|add_class:"form-control" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.case_type.label }}</label>
+              {{ filter.form.case_type|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.status.label }}</label>
+              {{ filter.form.status|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.is_garage.label }}</label>
+              {{ filter.form.is_garage|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.supplier.label }}</label>
+              {{ filter.form.supplier|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.job_code.label }}</label>
+              {{ filter.form.job_code|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 d-flex gap-2 justify-content-end">
+              <button type="submit" class="btn btn-primary" title="Filter">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'nabavka:case_list' %}" class="btn btn-outline-secondary" title="Očisti filtere">
+                <i class="mdi mdi-close"></i>
               </a>
-              <a class="btn btn-outline-secondary btn-sm" href="{% url 'nabavka:case_update' case.pk %}">
-                <i class="mdi mdi-pencil"></i> Izmeni
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="8" class="text-center text-muted">Nema podataka.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="ProcurementCasesTable" class="display compact table table-hover table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>Broj</th>
+                <th>Naziv</th>
+                <th>Tip</th>
+                <th>Status</th>
+                <th>Garaža</th>
+                <th>OJ</th>
+                <th>Dobavljač</th>
+                <th>Potrebno do</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for case in cases %}
+              <tr class="{% if case.status == 'completed' or case.status == 'cancelled' %}assignment-closed{% endif %}">
+                <td>
+                  <a href="{% url 'nabavka:case_detail' case.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="mdi mdi-eye"></i> {{ case.case_number|default:case.pk }}
+                  </a>
+                </td>
+                <td>
+                  <strong class="case-title">{{ case.title|truncatechars:70 }}</strong>
+                  {% if case.estimated_value %}
+                    <span class="case-muted">{{ case.estimated_value|floatformat:2 }} {{ case.currency }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="assignment-status type">
+                    {% if case.case_type == 'usluga' %}
+                      <i class="mdi mdi-briefcase-check"></i>
+                    {% elif case.case_type == 'oprema' %}
+                      <i class="mdi mdi-tools"></i>
+                    {% else %}
+                      <i class="mdi mdi-cart-outline"></i>
+                    {% endif %}
+                    {{ case.get_case_type_display }}
+                  </span>
+                </td>
+                <td>
+                  <span class="assignment-status {{ case.status }}">
+                    {% if case.status == 'completed' %}
+                      <i class="mdi mdi-check-circle"></i>
+                    {% elif case.status == 'cancelled' %}
+                      <i class="mdi mdi-close-circle"></i>
+                    {% elif case.status == 'waiting_invoice' or case.status == 'invoice_linked' %}
+                      <i class="mdi mdi-file-document-check"></i>
+                    {% elif case.status == 'in_progress' %}
+                      <i class="mdi mdi-progress-clock"></i>
+                    {% else %}
+                      <i class="mdi mdi-file-document-outline"></i>
+                    {% endif %}
+                    {{ case.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  {% if case.is_garage %}
+                    <span class="assignment-status garage"><i class="mdi mdi-car-wrench"></i> Da</span>
+                    {% if case.vehicle %}
+                      <span class="case-muted">{{ case.vehicle }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="assignment-status regular"><i class="mdi mdi-domain"></i> Ne</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if case.job_code %}
+                    <span class="badge bg-light text-dark border" title="{{ case.job_code.name|default:'' }}">
+                      {{ case.job_code.code }}
+                    </span>
+                    {% if case.job_code.name %}
+                      <span class="case-muted">{{ case.job_code.name|truncatechars:48 }}</span>
+                    {% endif %}
+                  {% else %}/{% endif %}
+                </td>
+                <td>
+                  {% if case.supplier %}
+                    <span title="{{ case.supplier.name }}">{{ case.supplier.name|truncatechars:50 }}</span>
+                  {% else %}/{% endif %}
+                </td>
+                <td>{% if case.needed_by %}{{ case.needed_by|date:"d.m.Y" }}{% else %}/{% endif %}</td>
+                <td class="text-center text-nowrap">
+                  <a class="btn btn-outline-secondary btn-sm" href="{% url 'nabavka:case_print' case.pk %}" target="_blank" title="Štampa">
+                    <i class="mdi mdi-printer"></i>
+                  </a>
+                  <form method="post" action="{% url 'nabavka:case_repeat' case.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-info btn-sm" type="submit" title="Ponovi zahtev">
+                      <i class="mdi mdi-content-copy"></i>
+                    </button>
+                  </form>
+                  <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:case_update' case.pk %}">
+                    <i class="mdi mdi-pencil"></i> Izmeni
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Broj</th>
+                <th>Naziv</th>
+                <th>Tip</th>
+                <th>Status</th>
+                <th>Garaža</th>
+                <th>OJ</th>
+                <th>Dobavljač</th>
+                <th>Potrebno do</th>
+                <th>Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#ProcurementCasesTable', {
+        exportTitle: '{{ title }}',
+        order: [[0, 'desc']],
+        autoSelectThreshold: 25,
+        scrollX: false
+      });
+    }
+  });
+</script>
 {% endblock %}

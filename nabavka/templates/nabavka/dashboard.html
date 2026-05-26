@@ -1,43 +1,173 @@
 {% extends "base.html" %}
 
+{% block title %}{{ title }}{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">{{ title }}</h2>
-  <a class="btn btn-success" href="{% url 'nabavka:case_create' %}">
-    <i class="mdi mdi-plus"></i> Novi zahtev
-  </a>
+<style>
+  .procurement-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .procurement-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .procurement-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .procurement-kpi {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    min-height: 116px;
+    box-shadow: 0 8px 20px rgba(15, 38, 64, 0.06);
+  }
+  .procurement-kpi .card-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .procurement-kpi-label {
+    color: #647181;
+    font-size: .86rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .procurement-kpi-value {
+    color: #17324d;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .procurement-kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+    flex: 0 0 auto;
+  }
+  .procurement-kpi-icon.total { background: #e8f0fb; color: #174f83; }
+  .procurement-kpi-icon.open { background: #e6f7fb; color: #116276; }
+  .procurement-kpi-icon.invoice { background: #fff4db; color: #7a4d00; }
+  .procurement-kpi-icon.garage { background: #e7f7ef; color: #147044; }
+  .procurement-kpi-icon.overdue { background: #fde8e8; color: #9b1c1c; }
+  .procurement-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .procurement-status.draft { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .procurement-status.submitted { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .procurement-status.in_progress { background: #e6f7fb; color: #116276; border: 1px solid #b7deea; }
+  .procurement-status.waiting_invoice { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .procurement-status.invoice_linked,
+  .procurement-status.completed { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .procurement-status.cancelled { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
+  .procurement-muted {
+    display: block;
+    color: #6b7785;
+    font-size: .82rem;
+    margin-top: 2px;
+  }
+</style>
+
+<div class="procurement-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Nabavka</h1>
+    <p>Pregled zahteva, rokova, garažnih predmeta i faktura pre knjiženja.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_list' %}">
+      <i class="mdi mdi-format-list-bulleted"></i> Zahtevi
+    </a>
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:euf_invoice_list' %}">
+      <i class="mdi mdi-file-document-check"></i> EUF fakture
+    </a>
+    <a class="btn btn-light btn-sm" href="{% url 'nabavka:case_create' %}">
+      <i class="mdi mdi-plus"></i> Novi zahtev
+    </a>
+  </div>
 </div>
 
 <div class="row g-3 mb-3">
-  <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted">Ukupno predmeta</div>
-      <h3 class="mb-0">{{ total_cases }}</h3>
-    </div></div>
+  <div class="col-sm-6 col-xl">
+    <div class="card procurement-kpi">
+      <div class="card-body">
+        <div>
+          <div class="procurement-kpi-label">Ukupno zahteva</div>
+          <div class="procurement-kpi-value">{{ total_cases }}</div>
+        </div>
+        <span class="procurement-kpi-icon total"><i class="mdi mdi-clipboard-text-outline"></i></span>
+      </div>
+    </div>
   </div>
-  <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted">Otvoreni predmeti</div>
-      <h3 class="mb-0">{{ open_cases }}</h3>
-    </div></div>
+  <div class="col-sm-6 col-xl">
+    <div class="card procurement-kpi">
+      <div class="card-body">
+        <div>
+          <div class="procurement-kpi-label">Otvoreni</div>
+          <div class="procurement-kpi-value">{{ open_cases }}</div>
+        </div>
+        <span class="procurement-kpi-icon open"><i class="mdi mdi-progress-clock"></i></span>
+      </div>
+    </div>
   </div>
-  <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <div class="text-muted">Čekaju fakturu</div>
-      <h3 class="mb-0">{{ waiting_invoice }}</h3>
-    </div></div>
+  <div class="col-sm-6 col-xl">
+    <div class="card procurement-kpi">
+      <div class="card-body">
+        <div>
+          <div class="procurement-kpi-label">Čekaju fakturu</div>
+          <div class="procurement-kpi-value">{{ waiting_invoice }}</div>
+        </div>
+        <span class="procurement-kpi-icon invoice"><i class="mdi mdi-file-clock-outline"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl">
+    <div class="card procurement-kpi">
+      <div class="card-body">
+        <div>
+          <div class="procurement-kpi-label">Garaža</div>
+          <div class="procurement-kpi-value">{{ garage_cases }}</div>
+        </div>
+        <span class="procurement-kpi-icon garage"><i class="mdi mdi-car-wrench"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl">
+    <div class="card procurement-kpi">
+      <div class="card-body">
+        <div>
+          <div class="procurement-kpi-label">Prekoračen rok</div>
+          <div class="procurement-kpi-value">{{ overdue_cases }}</div>
+        </div>
+        <span class="procurement-kpi-icon overdue"><i class="mdi mdi-alert-circle-outline"></i></span>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4 class="mb-0">Nedavni predmeti</h4>
-    <a href="{% url 'nabavka:case_list' %}" class="btn btn-outline-secondary btn-sm">Svi predmeti</a>
+<div class="card shadow-sm">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h4 class="mb-0">Nedavni zahtevi</h4>
+      <div class="text-muted small">Poslednji kreirani predmeti nabavke</div>
+    </div>
+    <a href="{% url 'nabavka:case_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="mdi mdi-format-list-bulleted"></i> Svi zahtevi
+    </a>
   </div>
   <div class="card-body">
     <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead>
+      <table class="table table-hover table-bordered align-middle mb-0">
+        <thead class="table-light">
           <tr>
             <th>Broj</th>
             <th>Naziv</th>
@@ -45,20 +175,49 @@
             <th>Status</th>
             <th>Dobavljač</th>
             <th>OJ</th>
+            <th>Rok</th>
+            <th class="text-center">Akcije</th>
           </tr>
         </thead>
         <tbody>
           {% for case in recent_cases %}
           <tr>
-            <td><a href="{% url 'nabavka:case_detail' case.pk %}">{{ case.case_number }}</a></td>
-            <td>{{ case.title }}</td>
+            <td>
+              <a href="{% url 'nabavka:case_detail' case.pk %}" class="btn btn-sm btn-outline-primary">
+                <i class="mdi mdi-eye"></i> {{ case.case_number }}
+              </a>
+            </td>
+            <td>
+              <strong>{{ case.title|truncatechars:70 }}</strong>
+              {% if case.is_garage %}
+                <span class="procurement-muted"><i class="mdi mdi-car-wrench"></i> Garaža{% if case.vehicle %} / {{ case.vehicle }}{% endif %}</span>
+              {% endif %}
+            </td>
             <td>{{ case.get_case_type_display }}</td>
-            <td>{{ case.get_status_display }}</td>
+            <td>
+              <span class="procurement-status {{ case.status }}">
+                {{ case.get_status_display }}
+              </span>
+            </td>
             <td>{{ case.supplier|default:"/" }}</td>
-            <td>{% if case.job_code %}{{ case.job_code.code }}{% else %}/{% endif %}</td>
+            <td>
+              {% if case.job_code %}
+                <span class="badge bg-light text-dark border">{{ case.job_code.code }}</span>
+                {% if case.job_code.name %}<span class="procurement-muted">{{ case.job_code.name|truncatechars:40 }}</span>{% endif %}
+              {% else %}/{% endif %}
+            </td>
+            <td>{% if case.needed_by %}{{ case.needed_by|date:"d.m.Y" }}{% else %}/{% endif %}</td>
+            <td class="text-center text-nowrap">
+              <a class="btn btn-outline-secondary btn-sm" href="{% url 'nabavka:case_print' case.pk %}" target="_blank" title="Štampa">
+                <i class="mdi mdi-printer"></i>
+              </a>
+              <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:case_update' case.pk %}" title="Izmeni">
+                <i class="mdi mdi-pencil"></i>
+              </a>
+            </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" class="text-center text-muted">Nema predmeta.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted">Nema zahteva.</td></tr>
           {% endfor %}
         </tbody>
       </table>

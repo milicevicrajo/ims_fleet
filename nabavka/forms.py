@@ -1,19 +1,31 @@
+from datetime import timedelta
+
 from django import forms
+from django.utils import timezone
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
 from core.models import OrganizationalUnit
-from fleet.models import ProcurementRequest, Vehicle
+from fleet.models import Vehicle
 from ugovori.models import Contract, Partner
 
 from .models import (
     ProcurementCase,
     ProcurementContractLink,
+    ProcurementInvoice,
     ProcurementInvoiceLink,
+    ProcurementItemInvoiceLink,
     ProcurementItem,
     ProcurementStatusLog,
     PurchaseOrder,
 )
+
+
+PROCUREMENT_CASE_TYPE_CHOICES = [
+    (ProcurementCase.CaseType.PROCUREMENT, "Zahtev za nabavku"),
+    (ProcurementCase.CaseType.SERVICE, "Zahtev za uslugu"),
+    (ProcurementCase.CaseType.EQUIPMENT, "Predlog za nabavku"),
+]
 
 
 def _style_fields(fields):
@@ -37,15 +49,13 @@ class ProcurementCaseForm(forms.ModelForm):
         model = ProcurementCase
         fields = [
             "case_type",
+            "is_garage",
             "status",
             "title",
             "description",
             "job_code",
             "supplier",
-            "contract",
             "vehicle",
-            "fleet_procurement_request",
-            "responsible",
             "estimated_value",
             "currency",
             "needed_by",
@@ -61,18 +71,32 @@ class ProcurementCaseForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["job_code"].queryset = OrganizationalUnit.objects.all().order_by("code")
+        if not self.is_bound and not self.instance.pk:
+            default_needed_by = timezone.localdate() + timedelta(days=7)
+            self.initial.setdefault("needed_by", default_needed_by.strftime("%d.%m.%Y"))
+        self.fields["case_type"].choices = PROCUREMENT_CASE_TYPE_CHOICES
+        self.fields["job_code"].required = True
+        self.fields["supplier"].required = False
         self.fields["job_code"].widget = Select2Widget(attrs={"class": "select2-method"})
-        self.fields["supplier"].queryset = Partner.objects.filter(is_active=True).order_by("name")
+        self.fields["job_code"].queryset = OrganizationalUnit.objects.all().order_by("code")
         self.fields["supplier"].widget = Select2Widget(attrs={"class": "select2-method"})
-        self.fields["contract"].queryset = Contract.objects.all().order_by("-contract_date")
-        self.fields["contract"].widget = Select2Widget(attrs={"class": "select2-method"})
-        self.fields["vehicle"].queryset = Vehicle.objects.all().order_by("brand", "model")
+        self.fields["supplier"].queryset = Partner.objects.filter(is_active=True).order_by("name")
         self.fields["vehicle"].widget = Select2Widget(attrs={"class": "select2-method"})
-        self.fields["fleet_procurement_request"].queryset = ProcurementRequest.objects.all().order_by("-created_at")
-        self.fields["fleet_procurement_request"].widget = Select2Widget(attrs={"class": "select2-method"})
-        self.fields["responsible"].widget = Select2Widget(attrs={"class": "select2-method"})
+        self.fields["vehicle"].queryset = Vehicle.objects.all().order_by("brand", "model")
         _style_fields(self.fields)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_garage = cleaned_data.get("is_garage")
+        vehicle = cleaned_data.get("vehicle")
+
+        if not cleaned_data.get("needed_by"):
+            cleaned_data["needed_by"] = timezone.localdate() + timedelta(days=7)
+        if is_garage and not vehicle:
+            self.add_error("vehicle", "Ako je predmet garažni, izbor vozila je obavezan.")
+        if not is_garage:
+            cleaned_data["vehicle"] = None
+        return cleaned_data
 
 
 class ProcurementItemForm(forms.ModelForm):
@@ -84,6 +108,7 @@ class ProcurementItemForm(forms.ModelForm):
             "uom": forms.TextInput(attrs={"placeholder": "kom/l/kg"}),
             "quantity": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
             "estimated_unit_price": forms.NumberInput(attrs={"step": "0.01", "min": "0"}),
+            "note": forms.Textarea(attrs={"rows": 3, "placeholder": "Napomena"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -91,17 +116,51 @@ class ProcurementItemForm(forms.ModelForm):
         _style_fields(self.fields)
 
 
-class EufInvoiceLinkForm(forms.Form):
-    procurement_case = forms.ModelChoiceField(
-        queryset=ProcurementCase.objects.exclude(status=ProcurementCase.Status.COMPLETED).order_by("-created_at"),
+class EufInvoiceItemLinkForm(forms.Form):
+    procurement_item = forms.ModelChoiceField(
+        queryset=ProcurementItem.objects.none(),
         widget=Select2Widget(attrs={"class": "select2-method"}),
-        label="Predmet nabavke",
+        label="Stavka zahteva",
     )
     note = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         label="Napomena",
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["procurement_item"].queryset = (
+            ProcurementItem.objects.select_related("procurement_case")
+            .filter(invoice_link__isnull=True)
+            .exclude(procurement_case__status=ProcurementCase.Status.COMPLETED)
+            .order_by("-procurement_case__created_at", "procurement_case__case_number", "id")
+        )
+
+
+class ProcurementItemInvoiceLinkForm(forms.ModelForm):
+    class Meta:
+        model = ProcurementItemInvoiceLink
+        fields = ["invoice", "note"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["invoice"].queryset = ProcurementInvoice.objects.all().order_by("-invoice_date", "-id")
+        self.fields["invoice"].widget = Select2Widget(attrs={"class": "select2-method"})
+        _style_fields(self.fields)
+
+
+class ProcurementInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = ProcurementInvoice
+        fields = ["center_name", "goes_to_warehouse", "internal_note"]
+        widgets = {
+            "internal_note": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _style_fields(self.fields)
 
 
 class ProcurementContractLinkForm(forms.ModelForm):

@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 
 from core.mixins import RolePermissionRequiredMixin
 
-from ..models import ProcurementCase, ProcurementInvoiceLink, PurchaseOrder
+from ..models import ProcurementCase, ProcurementInvoice, PurchaseOrder
 from .cases import NabavkaContextMixin
 
 
@@ -18,7 +18,7 @@ class ReportsView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequire
                 "title": "Izveštaji nabavke",
                 "by_status": ProcurementCase.objects.values("status").annotate(count=Count("id")).order_by("status"),
                 "by_type": ProcurementCase.objects.values("case_type").annotate(count=Count("id")).order_by("case_type"),
-                "invoice_total": ProcurementInvoiceLink.objects.aggregate(total=Sum("amount"))["total"],
+                "invoice_total": ProcurementInvoice.objects.filter(item_links__isnull=False).distinct().aggregate(total=Sum("amount"))["total"],
                 "order_total": PurchaseOrder.objects.aggregate(total=Sum("amount"))["total"],
             }
         )

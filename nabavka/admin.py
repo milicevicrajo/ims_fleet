@@ -3,8 +3,10 @@ from django.contrib import admin
 from .models import (
     ProcurementCase,
     ProcurementContractLink,
+    ProcurementInvoice,
     ProcurementInvoiceLink,
     ProcurementItem,
+    ProcurementItemInvoiceLink,
     ProcurementStatusLog,
     PurchaseOrder,
 )
@@ -28,6 +30,33 @@ class ProcurementInvoiceLinkAdmin(admin.ModelAdmin):
     list_display = ["invoice_number", "supplier_name", "amount", "procurement_case", "created_at"]
     list_filter = ["source"]
     search_fields = ["invoice_number", "supplier_name", "euf_key", "procurement_case__case_number"]
+
+
+@admin.register(ProcurementInvoice)
+class ProcurementInvoiceAdmin(admin.ModelAdmin):
+    list_display = [
+        "invoice_number",
+        "supplier_name",
+        "amount",
+        "invoice_date",
+        "center_name",
+        "goes_to_warehouse",
+        "source",
+        "synced_at",
+    ]
+    list_filter = ["source", "invoice_date", "goes_to_warehouse"]
+    search_fields = ["invoice_number", "supplier_name", "euf_key", "center_name"]
+
+
+@admin.register(ProcurementItemInvoiceLink)
+class ProcurementItemInvoiceLinkAdmin(admin.ModelAdmin):
+    list_display = ["invoice", "procurement_item", "created_by", "created_at"]
+    search_fields = [
+        "invoice__invoice_number",
+        "invoice__supplier_name",
+        "procurement_item__name",
+        "procurement_item__procurement_case__case_number",
+    ]
 
 
 @admin.register(ProcurementContractLink)

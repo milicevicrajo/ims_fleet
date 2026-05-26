@@ -6,19 +6,35 @@ from django_select2.forms import Select2Widget
 from core.models import OrganizationalUnit
 from ugovori.models import Partner
 
-from .models import ProcurementCase, ProcurementInvoiceLink, PurchaseOrder
+from .models import ProcurementCase, ProcurementItemInvoiceLink, PurchaseOrder
+
+
+PROCUREMENT_CASE_TYPE_FILTER_CHOICES = [
+    ("", "Svi tipovi"),
+    (ProcurementCase.CaseType.PROCUREMENT, "Zahtev za nabavku"),
+    (ProcurementCase.CaseType.SERVICE, "Nabavka usluga"),
+    (ProcurementCase.CaseType.EQUIPMENT, "Predlog za nabavku"),
+]
+
+
+GARAGE_FILTER_CHOICES = [
+    ("", "Sve"),
+    ("yes", "Garaža"),
+    ("no", "Nije garaža"),
+]
 
 
 class ProcurementCaseFilter(django_filters.FilterSet):
     q = django_filters.CharFilter(method="filter_q", label="Pretraga")
-    case_type = django_filters.ChoiceFilter(choices=[("", "Svi tipovi")] + list(ProcurementCase.CaseType.choices), label="Tip")
+    case_type = django_filters.ChoiceFilter(choices=PROCUREMENT_CASE_TYPE_FILTER_CHOICES, label="Tip")
     status = django_filters.ChoiceFilter(choices=[("", "Svi statusi")] + list(ProcurementCase.Status.choices), label="Status")
+    is_garage = django_filters.ChoiceFilter(choices=GARAGE_FILTER_CHOICES, method="filter_is_garage", label="Garaža")
     supplier = django_filters.ModelChoiceFilter(queryset=Partner.objects.filter(is_active=True), label="Dobavljač")
     job_code = django_filters.ModelChoiceFilter(queryset=OrganizationalUnit.objects.all().order_by("code"), label="OJ")
 
     class Meta:
         model = ProcurementCase
-        fields = ["q", "case_type", "status", "supplier", "job_code"]
+        fields = ["q", "case_type", "status", "is_garage", "supplier", "job_code"]
 
     def filter_q(self, queryset, name, value):
         value = (value or "").strip()
@@ -30,6 +46,13 @@ class ProcurementCaseFilter(django_filters.FilterSet):
             | Q(description__icontains=value)
             | Q(supplier__name__icontains=value)
         )
+
+    def filter_is_garage(self, queryset, name, value):
+        if value == "yes":
+            return queryset.filter(is_garage=True)
+        if value == "no":
+            return queryset.filter(is_garage=False)
+        return queryset
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -72,7 +95,7 @@ class ProcurementInvoiceLinkFilter(django_filters.FilterSet):
     q = django_filters.CharFilter(method="filter_q", label="Pretraga")
 
     class Meta:
-        model = ProcurementInvoiceLink
+        model = ProcurementItemInvoiceLink
         fields = ["q"]
 
     def filter_q(self, queryset, name, value):
@@ -80,10 +103,11 @@ class ProcurementInvoiceLinkFilter(django_filters.FilterSet):
         if not value:
             return queryset
         return queryset.filter(
-            Q(invoice_number__icontains=value)
-            | Q(supplier_name__icontains=value)
-            | Q(procurement_case__case_number__icontains=value)
-            | Q(procurement_case__title__icontains=value)
+            Q(invoice__invoice_number__icontains=value)
+            | Q(invoice__supplier_name__icontains=value)
+            | Q(procurement_item__name__icontains=value)
+            | Q(procurement_item__procurement_case__case_number__icontains=value)
+            | Q(procurement_item__procurement_case__title__icontains=value)
         )
 
     def __init__(self, *args, **kwargs):

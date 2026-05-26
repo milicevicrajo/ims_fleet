@@ -1,63 +1,119 @@
 {% extends "base.html" %}
 
+{% block title %}{{ title }}{% endblock %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0">{{ title }}</h2>
-  <a class="btn btn-outline-secondary" href="{% url 'nabavka:invoice_link_list' %}">Povezane fakture</a>
+<style>
+  .invoice-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .invoice-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .invoice-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .invoice-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .invoice-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+</style>
+
+<div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>EUF fakture</h1>
+    <p>Kontrolisana lokalna evidencija faktura povučenih iz EUF SQL view-a.</p>
+  </div>
+  <form method="post" action="{% url 'nabavka:euf_invoice_sync' %}" class="d-flex gap-2">
+    {% csrf_token %}
+    <input type="hidden" name="q" value="{{ q }}">
+    <button class="btn btn-light btn-sm" type="submit">
+      <i class="mdi mdi-refresh"></i> Povuci iz EUF
+    </button>
+  </form>
 </div>
 
-<div class="card mb-3">
+<div class="card shadow-sm mb-3">
   <div class="card-body">
-    <form method="get" class="row g-2 align-items-end">
-      <div class="col-md-6">
-        <label class="form-label" for="id_q">Pretraga po broju fakture ili partneru</label>
-        <input id="id_q" class="form-control" type="text" name="q" value="{{ q }}">
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretraži</button>
-        <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_invoice_list' %}">Reset</a>
+    <form method="get" class="invoice-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-8">
+          <label class="form-label mb-1" for="id_q">Pretraga po broju fakture, partneru ili centru</label>
+          <input id="id_q" class="form-control" type="text" name="q" value="{{ q }}">
+        </div>
+        <div class="col-12 col-md-4 d-flex gap-2">
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretraži</button>
+          <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_invoice_list' %}">Reset</a>
+        </div>
       </div>
     </form>
   </div>
 </div>
 
-<div class="card">
+<div class="card shadow-sm">
   <div class="card-body">
     <div class="table-responsive">
-      <table class="table table-striped table-bordered align-middle">
+      <table class="table table-hover table-bordered align-middle">
         <thead class="table-light">
           <tr>
             <th>Datum</th>
             <th>Partner</th>
             <th>Broj fakture</th>
             <th>Iznos</th>
-            <th>Centar</th>
+            <th>Naziv centra</th>
             <th>Magacin</th>
-            <th>Registracija</th>
+            <th>Garaža</th>
+            <th>Stavke</th>
             <th class="text-center">Akcije</th>
           </tr>
         </thead>
         <tbody>
           {% for invoice in invoices %}
           <tr>
-            <td>{% if invoice.datum %}{{ invoice.datum|date:"d.m.Y" }}{% else %}{{ invoice.datum_raw|default:"/" }}{% endif %}</td>
-            <td>{{ invoice.naziv_partnera }}</td>
-            <td>{{ invoice.broj_fakture }}</td>
-            <td>{{ invoice.iznos|default:"/" }}</td>
-            <td>{{ invoice.centar|default:"/" }}</td>
-            <td>{{ invoice.magacin|default:"/" }}</td>
-            <td>{{ invoice.registracija|default:"/" }}</td>
-            <td class="text-center text-nowrap">
-              {% if invoice.euf_key in linked_keys %}
-                <span class="badge bg-success">Povezano</span>
+            <td>{% if invoice.invoice_date %}{{ invoice.invoice_date|date:"d.m.Y" }}{% else %}{{ invoice.invoice_date_raw|default:"/" }}{% endif %}</td>
+            <td>{{ invoice.supplier_name|default:"/" }}</td>
+            <td>{{ invoice.invoice_number }}</td>
+            <td>{{ invoice.amount|default:"/" }}</td>
+            <td>{{ invoice.center_name|default:invoice.center|default:"/" }}</td>
+            <td>
+              {% if invoice.goes_to_warehouse %}
+                <span class="invoice-badge ok"><i class="mdi mdi-warehouse"></i> Da</span>
+              {% else %}
+                <span class="invoice-badge muted"><i class="mdi mdi-minus-circle-outline"></i> Ne</span>
               {% endif %}
-              <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:euf_invoice_link' invoice.euf_key %}">
-                <i class="mdi mdi-link"></i> Poveži
+            </td>
+            <td>
+              {% if invoice.is_garage_related %}
+                <span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Da</span>
+              {% else %}
+                <span class="invoice-badge muted">Ne</span>
+              {% endif %}
+            </td>
+            <td>{{ invoice.item_links.count }}</td>
+            <td class="text-center text-nowrap">
+              <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:euf_invoice_detail' invoice.pk %}">
+                <i class="mdi mdi-eye"></i> Detalj
               </a>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="text-center text-muted">Nema EUF faktura.</td></tr>
+          <tr><td colspan="9" class="text-center text-muted">Nema EUF faktura u lokalnoj tabeli.</td></tr>
           {% endfor %}
         </tbody>
       </table>

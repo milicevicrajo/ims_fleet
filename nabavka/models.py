@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.db import models, transaction
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -9,9 +10,6 @@ class ProcurementCase(models.Model):
         PROCUREMENT = "nabavka", _("Zahtev za nabavku")
         SERVICE = "usluga", _("Zahtev za uslugu")
         EQUIPMENT = "oprema", _("Predlog za nabavku opreme")
-        GARAGE_PROCUREMENT = "garaza_nabavka", _("Garaža - nabavka")
-        GARAGE_SERVICE = "garaza_usluga", _("Garaža - usluga")
-        PURCHASE_ORDER = "narudzbenica", _("Nabavka po narudžbenici")
 
     class Status(models.TextChoices):
         DRAFT = "draft", _("Nacrt")
@@ -28,7 +26,11 @@ class ProcurementCase(models.Model):
         ("USD", "USD"),
         ("CHF", "CHF"),
     ]
-
+    CASE_TYPE_PREFIXES = {
+        CaseType.PROCUREMENT: "ZN",
+        CaseType.SERVICE: "ZU",
+        CaseType.EQUIPMENT: "PLN",
+    }
     case_number = models.CharField(
         max_length=32,
         unique=True,
@@ -53,11 +55,11 @@ class ProcurementCase(models.Model):
     )
     title = models.CharField(max_length=255, verbose_name=_("Naziv"))
     description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
+    is_garage = models.BooleanField(default=False, verbose_name=_("Garaža"))
     job_code = models.ForeignKey(
         "fleet.OrganizationalUnit",
         on_delete=models.SET_NULL,
         null=True,
-        blank=True,
         related_name="nabavka_cases",
         verbose_name=_("OJ / šifra posla"),
     )
@@ -84,14 +86,6 @@ class ProcurementCase(models.Model):
         blank=True,
         related_name="nabavka_cases",
         verbose_name=_("Vozilo"),
-    )
-    fleet_procurement_request = models.ForeignKey(
-        "fleet.ProcurementRequest",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="nabavka_cases",
-        verbose_name=_("GZN iz garaže"),
     )
     responsible = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -140,11 +134,44 @@ class ProcurementCase(models.Model):
     def __str__(self):
         return f"{self.case_number or 'NAB'} - {self.title}"
 
+    def clean(self):
+        if self.is_garage and not self.vehicle_id:
+            raise ValidationError({"vehicle": _("Ako je predmet garažni, izbor vozila je obavezan.")})
+
+    def get_sequence_year(self):
+        return (self.created_at.date() if self.created_at else timezone.localdate()).year
+
+    def get_case_type_prefix(self):
+        return self.CASE_TYPE_PREFIXES.get(self.case_type, "ZN")
+
+    def get_center_code(self):
+        center_code = getattr(self.job_code, "center", None)
+        if not center_code:
+            raise ValidationError({"job_code": _("Nedostaje sifra centra za broj zahteva.")})
+        return str(center_code).strip()
+
+    def generate_case_number(self):
+        year = self.get_sequence_year()
+        center_code = self.get_center_code()
+        type_prefix = self.get_case_type_prefix()
+        prefix = f"{type_prefix}-{center_code}/{year}-"
+        existing = ProcurementCase.objects.filter(case_number__startswith=prefix).values_list(
+            "case_number", flat=True
+        )
+        max_number = 0
+        for case_number in existing:
+            try:
+                num_part = case_number.split(prefix, 1)[1]
+                max_number = max(max_number, int(num_part))
+            except Exception:
+                continue
+
+        return f"{prefix}{max_number + 1}"
+
     def save(self, *args, **kwargs):
+        if not self.case_number:
+            self.case_number = self.generate_case_number()
         super().save(*args, **kwargs)
-        if not self.case_number and self.pk:
-            self.case_number = f"NAB-{self.pk}/{timezone.now().year}"
-            super().save(update_fields=["case_number"])
 
 
 class ProcurementItem(models.Model):
@@ -179,6 +206,18 @@ class ProcurementItem(models.Model):
         if self.estimated_unit_price is None or self.quantity is None:
             return None
         return self.estimated_unit_price * self.quantity
+
+    @property
+    def invoice_assignment(self):
+        try:
+            return self.invoice_link
+        except ProcurementItemInvoiceLink.DoesNotExist:
+            return None
+
+    @property
+    def linked_invoice(self):
+        assignment = self.invoice_assignment
+        return assignment.invoice if assignment else None
 
 
 class ProcurementInvoiceLink(models.Model):
@@ -236,6 +275,89 @@ class ProcurementInvoiceLink(models.Model):
 
     def __str__(self):
         return f"{self.invoice_number} -> {self.procurement_case}"
+
+
+class ProcurementInvoice(models.Model):
+    SOURCE_EUF = "euf"
+    SOURCE_CHOICES = [
+        (SOURCE_EUF, "EUF"),
+    ]
+
+    source = models.CharField(
+        max_length=20,
+        choices=SOURCE_CHOICES,
+        default=SOURCE_EUF,
+        db_index=True,
+        verbose_name=_("Izvor"),
+    )
+    euf_key = models.CharField(max_length=64, db_index=True, verbose_name=_("EUF kljuc"))
+    invoice_number = models.CharField(max_length=100, db_index=True, verbose_name=_("Broj fakture"))
+    invoice_date = models.DateField(null=True, blank=True, db_index=True, verbose_name=_("Datum fakture"))
+    invoice_date_raw = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Datum iz izvora"))
+    supplier_name = models.CharField(max_length=255, blank=True, null=True, db_index=True, verbose_name=_("Naziv partnera"))
+    amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name=_("Iznos"))
+    center = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Centar"))
+    warehouse = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Magacin"))
+    registration = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Registracija"))
+    center_name = models.CharField(max_length=150, blank=True, null=True, verbose_name=_("Naziv centra"))
+    goes_to_warehouse = models.BooleanField(default=False, verbose_name=_("Ide u magacin"))
+    internal_note = models.TextField(blank=True, null=True, verbose_name=_("Interna napomena"))
+    synced_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Sinhronizovano"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        db_table = "nabavka_invoice"
+        ordering = ["-invoice_date", "-id"]
+        verbose_name = _("Faktura nabavke")
+        verbose_name_plural = _("Fakture nabavke")
+        constraints = [
+            models.UniqueConstraint(fields=["source", "euf_key"], name="uniq_nabavka_invoice_source_key")
+        ]
+        indexes = [
+            models.Index(fields=["invoice_number", "supplier_name"]),
+        ]
+
+    def __str__(self):
+        return f"{self.invoice_number} - {self.supplier_name or ''}".strip()
+
+    @property
+    def is_garage_related(self):
+        return self.item_links.filter(procurement_item__procurement_case__is_garage=True).exists()
+
+
+class ProcurementItemInvoiceLink(models.Model):
+    procurement_item = models.OneToOneField(
+        ProcurementItem,
+        on_delete=models.CASCADE,
+        related_name="invoice_link",
+        verbose_name=_("Stavka nabavke"),
+    )
+    invoice = models.ForeignKey(
+        ProcurementInvoice,
+        on_delete=models.CASCADE,
+        related_name="item_links",
+        verbose_name=_("Faktura"),
+    )
+    note = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Napomena"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="nabavka_item_invoice_links",
+        verbose_name=_("Povezao"),
+    )
+
+    class Meta:
+        db_table = "nabavka_item_invoice_link"
+        ordering = ["-created_at", "-id"]
+        verbose_name = _("Veza stavke i fakture")
+        verbose_name_plural = _("Veze stavki i faktura")
+
+    def __str__(self):
+        return f"{self.procurement_item} -> {self.invoice}"
 
 
 class ProcurementContractLink(models.Model):

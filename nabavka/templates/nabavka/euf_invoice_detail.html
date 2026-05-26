@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h2 class="mb-0">{{ invoice.invoice_number }}</h2>
+    <div class="text-muted">{{ invoice.supplier_name|default:"/" }} / {{ invoice.amount|default:"/" }}</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_invoice_list' %}">
+    <i class="mdi mdi-arrow-left"></i> EUF fakture
+  </a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header"><h4 class="mb-0">Detalji fakture</h4></div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Datum</dt>
+          <dd class="col-sm-8">{% if invoice.invoice_date %}{{ invoice.invoice_date|date:"d.m.Y" }}{% else %}{{ invoice.invoice_date_raw|default:"/" }}{% endif %}</dd>
+          <dt class="col-sm-4">Partner</dt><dd class="col-sm-8">{{ invoice.supplier_name|default:"/" }}</dd>
+          <dt class="col-sm-4">Broj fakture</dt><dd class="col-sm-8">{{ invoice.invoice_number }}</dd>
+          <dt class="col-sm-4">Iznos</dt><dd class="col-sm-8">{{ invoice.amount|default:"/" }}</dd>
+          <dt class="col-sm-4">Centar iz EUF</dt><dd class="col-sm-8">{{ invoice.center|default:"/" }}</dd>
+          <dt class="col-sm-4">Magacin iz EUF</dt><dd class="col-sm-8">{{ invoice.warehouse|default:"/" }}</dd>
+          <dt class="col-sm-4">Registracija</dt><dd class="col-sm-8">{{ invoice.registration|default:"/" }}</dd>
+          <dt class="col-sm-4">Sinhronizovano</dt><dd class="col-sm-8">{{ invoice.synced_at|date:"d.m.Y H:i"|default:"/" }}</dd>
+          <dt class="col-sm-4">Garaža</dt>
+          <dd class="col-sm-8">{% if invoice.is_garage_related %}Da{% else %}Ne{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header"><h4 class="mb-0">Stavke povezane sa fakturom</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Zahtev</th>
+                <th>Stavka</th>
+                <th>Količina</th>
+                <th>Garaža</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for link in item_links %}
+              <tr>
+                <td>
+                  <a href="{% url 'nabavka:case_detail' link.procurement_item.procurement_case.pk %}">
+                    {{ link.procurement_item.procurement_case.case_number }}
+                  </a>
+                  <div class="text-muted small">{{ link.procurement_item.procurement_case.title|truncatechars:45 }}</div>
+                </td>
+                <td>{{ link.procurement_item.name }}</td>
+                <td>{{ link.procurement_item.quantity }} {{ link.procurement_item.uom }}</td>
+                <td>{% if link.procurement_item.procurement_case.is_garage %}Da{% else %}Ne{% endif %}</td>
+                <td class="text-center">
+                  <form method="post" action="{% url 'nabavka:invoice_link_delete' link.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'nabavka:euf_invoice_detail' invoice.pk %}">
+                    <button class="btn btn-outline-danger btn-sm" type="submit">
+                      <i class="mdi mdi-link-off"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">Nema povezanih stavki.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header"><h4 class="mb-0">Dopuna podataka</h4></div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_details">
+          <div class="mb-3">
+            <label class="form-label" for="{{ invoice_form.center_name.id_for_label }}">{{ invoice_form.center_name.label }}</label>
+            {{ invoice_form.center_name|add_class:"form-control" }}
+          </div>
+          <div class="form-check form-switch mb-3">
+            {{ invoice_form.goes_to_warehouse|add_class:"form-check-input" }}
+            <label class="form-check-label" for="{{ invoice_form.goes_to_warehouse.id_for_label }}">{{ invoice_form.goes_to_warehouse.label }}</label>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ invoice_form.internal_note.id_for_label }}">{{ invoice_form.internal_note.label }}</label>
+            {{ invoice_form.internal_note|add_class:"form-control" }}
+          </div>
+          <button class="btn btn-primary" type="submit">
+            <i class="mdi mdi-content-save"></i> Sačuvaj detalje
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header"><h4 class="mb-0">Poveži stavku</h4></div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="link_item">
+          <div class="mb-3">
+            <label class="form-label" for="{{ item_link_form.procurement_item.id_for_label }}">{{ item_link_form.procurement_item.label }}</label>
+            {{ item_link_form.procurement_item|add_class:"form-select select2-method" }}
+            <div class="form-text">Prikazuju se samo stavke koje još nemaju povezanu fakturu.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ item_link_form.note.id_for_label }}">{{ item_link_form.note.label }}</label>
+            {{ item_link_form.note|add_class:"form-control" }}
+          </div>
+          <button class="btn btn-outline-primary" type="submit">
+            <i class="mdi mdi-link"></i> Poveži stavku
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

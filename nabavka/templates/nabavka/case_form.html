@@ -2,32 +2,271 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="row">
-  <div class="col-lg-8">
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="mb-0">{{ title }}</h3>
-        <a class="btn btn-outline-secondary btn-sm" href="{% url 'nabavka:case_list' %}">Nazad</a>
+<style>
+  .form-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .form-hero h1 {
+    font-size: 1.45rem;
+    margin: 0;
+    letter-spacing: 0;
+  }
+  .form-hero p {
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, .86);
+  }
+  .form-shell {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #fff;
+    padding: 16px;
+    box-shadow: 0 8px 22px rgba(20, 57, 91, 0.06);
+  }
+  .form-section {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #fff;
+  }
+  .form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    color: #14395b;
+    font-weight: 700;
+  }
+  .garage-control {
+    border: 1px solid #eef2f6;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+    height: 100%;
+  }
+  .garage-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .garage-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .garage-switch-ui {
+    position: relative;
+    flex: 0 0 46px;
+    width: 46px;
+    height: 24px;
+    border-radius: 999px;
+    background: #cbd5df;
+    transition: background .16s ease, box-shadow .16s ease;
+  }
+  .garage-switch-ui::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20, 57, 91, .24);
+    transition: transform .16s ease;
+  }
+  .garage-switch input:checked + .garage-switch-ui {
+    background: #1f6f8b;
+    box-shadow: 0 0 0 3px rgba(31, 111, 139, .12);
+  }
+  .garage-switch input:checked + .garage-switch-ui::before {
+    transform: translateX(22px);
+  }
+  .garage-switch-text {
+    color: #243746;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .garage-help {
+    color: #6c7f90;
+    font-size: .86rem;
+    margin-top: 8px;
+  }
+  .dynamic-field[hidden] {
+    display: none !important;
+  }
+  .select2-container {
+    width: 100% !important;
+  }
+  @media (max-width: 767.98px) {
+    .form-shell {
+      padding: 12px;
+    }
+  }
+</style>
+
+<div class="form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Osnovni podaci zahteva se unose ovde, a stavke se dodaju naknadno na detalju zahteva.</p>
+  </div>
+  <a class="btn btn-light btn-sm" href="{% url 'nabavka:case_list' %}">
+    <i class="mdi mdi-arrow-left"></i> Nazad
+  </a>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="form-shell">
+    <div class="form-section">
+      <div class="form-section-title"><i class="mdi mdi-file-document-edit"></i> Osnovni podaci</div>
+      <div class="row">
+        <div class="col-12 col-md-4 mb-3">
+          <label for="{{ form.case_type.id_for_label }}" class="form-label">{{ form.case_type.label }} <span class="text-danger">*</span></label>
+          {{ form.case_type }}
+          {% if form.case_type.errors %}<div class="invalid-feedback d-block">{{ form.case_type.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+          <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+          {{ form.status }}
+          {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+          <label for="{{ form.needed_by.id_for_label }}" class="form-label">{{ form.needed_by.label }}</label>
+          {{ form.needed_by }}
+          {% if form.needed_by.errors %}<div class="invalid-feedback d-block">{{ form.needed_by.errors.0 }}</div>{% endif %}
+        </div>
       </div>
-      <div class="card-body">
-        <form method="post">
-          {% csrf_token %}
-          {% for field in form %}
-          <div class="mb-3">
-            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
-            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-            {% for error in field.errors %}
-              <div class="invalid-feedback d-block">{{ error }}</div>
-            {% endfor %}
-          </div>
-          {% endfor %}
-          <button class="btn btn-primary" type="submit">
-            <i class="mdi mdi-content-save"></i> {{ submit_button_label|default:"Sačuvaj" }}
-          </button>
-        </form>
+      <div class="row">
+        <div class="col-12 mb-3">
+          <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+          {{ form.title }}
+          {% if form.title.errors %}<div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 mb-3">
+          <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>{% endif %}
+        </div>
       </div>
     </div>
+
+    <div class="form-section">
+      <div class="form-section-title"><i class="mdi mdi-office-building-marker"></i> Organizacija i garaža</div>
+      <div class="row align-items-start">
+        <div class="col-12 col-md-6 col-xl-4 mb-3">
+          <label for="{{ form.job_code.id_for_label }}" class="form-label">{{ form.job_code.label }} <span class="text-danger">*</span></label>
+          {{ form.job_code }}
+          {% if form.job_code.errors %}<div class="invalid-feedback d-block">{{ form.job_code.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-6 col-xl-4 mb-3">
+          <div class="garage-control">
+            <label class="garage-switch" for="{{ form.is_garage.id_for_label }}">
+              {{ form.is_garage }}
+              <span class="garage-switch-ui"></span>
+              <span class="garage-switch-text">{{ form.is_garage.label }}</span>
+            </label>
+            <div class="garage-help">Ako je zahtev iz garaže, izbor vozila je obavezan.</div>
+            {% if form.is_garage.errors %}<div class="invalid-feedback d-block">{{ form.is_garage.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-4 mb-3 dynamic-field" id="field-wrap-vehicle">
+          <label for="{{ form.vehicle.id_for_label }}" class="form-label">{{ form.vehicle.label }}</label>
+          {{ form.vehicle }}
+          {% if form.vehicle.errors %}<div class="invalid-feedback d-block">{{ form.vehicle.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title"><i class="mdi mdi-cash-multiple"></i> Finansije i partner</div>
+      <div class="row">
+        <div class="col-12 col-md-6 col-xl-4 mb-3">
+          <label for="{{ form.supplier.id_for_label }}" class="form-label">{{ form.supplier.label }}</label>
+          {{ form.supplier }}
+          {% if form.supplier.errors %}<div class="invalid-feedback d-block">{{ form.supplier.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-6 col-xl-4 mb-3">
+          <label for="{{ form.estimated_value.id_for_label }}" class="form-label">{{ form.estimated_value.label }}</label>
+          {{ form.estimated_value }}
+          {% if form.estimated_value.errors %}<div class="invalid-feedback d-block">{{ form.estimated_value.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 col-md-6 col-xl-4 mb-3">
+          <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }}</label>
+          {{ form.currency }}
+          {% if form.currency.errors %}<div class="invalid-feedback d-block">{{ form.currency.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="col-12 mb-3">
+          <label for="{{ form.note.id_for_label }}" class="form-label">{{ form.note.label }}</label>
+          {{ form.note }}
+          {% if form.note.errors %}<div class="invalid-feedback d-block">{{ form.note.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
   </div>
-</div>
+
+  <div class="d-flex gap-2 mt-3">
+    <button class="btn btn-primary" type="submit">
+      <i class="mdi mdi-content-save"></i> {{ submit_button_label|default:"Sacuvaj" }}
+    </button>
+    <a class="btn btn-outline-secondary" href="{% url 'nabavka:case_list' %}">Otkazi</a>
+  </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var garageInput = document.getElementById('{{ form.is_garage.id_for_label }}');
+  var vehicleWrap = document.getElementById('field-wrap-vehicle');
+  var vehicleField = document.getElementById('{{ form.vehicle.id_for_label }}');
+
+  if (!garageInput || !vehicleWrap || !vehicleField) return;
+
+  function syncVehicleVisibility() {
+    var isGarage = garageInput.checked;
+    var hasError = !!vehicleWrap.querySelector('.invalid-feedback');
+    vehicleWrap.hidden = !isGarage && !hasError;
+    vehicleField.required = isGarage;
+    vehicleField.disabled = !isGarage && !hasError;
+    if (!isGarage && !hasError) {
+      if (window.$ && $.fn.select2 && $(vehicleField).hasClass('select2-hidden-accessible')) {
+        $(vehicleField).val(null).trigger('change');
+      } else {
+        vehicleField.value = '';
+      }
+    }
+    if (window.$ && $.fn.select2 && $(vehicleField).hasClass('select2-hidden-accessible')) {
+      $(vehicleField).prop('disabled', vehicleField.disabled).trigger('change.select2');
+    }
+  }
+
+  garageInput.addEventListener('change', syncVehicleVisibility);
+  syncVehicleVisibility();
+});
+</script>
 {% endblock %}
