@@ -28,6 +28,7 @@ class ContractImportResult:
     skipped_invalid: int = 0
     parties_rows: int = 0
     parties_created: int = 0
+    parties_updated: int = 0
     parties_unchanged: int = 0
     parties_skipped: int = 0
     commit: bool = False
@@ -374,6 +375,222 @@ def update_contract_from_defaults(contract, defaults):
     return changed_fields
 
 
+SUPPLEMENTAL_IMPORT_REQUIRED_HEADERS = {
+    "sheet",
+    "row",
+    "contract_number",
+    "partner_name",
+    "sif_par",
+    "vrsta",
+    "predmet",
+    "contract_date",
+}
+
+
+def is_supplemental_contract_sheet(worksheet):
+    headers = set(excel_headers(worksheet))
+    return SUPPLEMENTAL_IMPORT_REQUIRED_HEADERS.issubset(headers)
+
+
+def find_supplemental_contract_sheet(workbook):
+    for sheet_name in workbook.sheetnames:
+        worksheet = workbook[sheet_name]
+        if is_supplemental_contract_sheet(worksheet):
+            return sheet_name
+    return None
+
+
+def supplemental_kind(row):
+    source_sheet = (clean_text(row.get("sheet")) or "").lower()
+    if "aneks" in source_sheet or "dopunski" in source_sheet:
+        return Contract.ANNEX
+    return Contract.MAIN
+
+
+def supplemental_note(row):
+    parts = []
+    source_sheet = clean_text(row.get("sheet"))
+    source_row = clean_text(row.get("row"))
+    problems = clean_text(row.get("problemi"))
+    if source_sheet or source_row:
+        parts.append(f"Import Book1: {source_sheet or '-'} red {source_row or '-'}.")
+    if problems:
+        parts.append(f"Napomena iz pripreme: {problems}")
+    return "\n".join(parts) or None
+
+
+def supplemental_contract_defaults(row, contract_type, parent_contract=None):
+    return {
+        "kind": supplemental_kind(row),
+        "contract_type": contract_type,
+        "parent_contract": parent_contract,
+        "title": clean_text(row.get("vrsta")) or normalize_contract_number(row.get("contract_number")),
+        "subject": clean_text(row.get("predmet")),
+        "contract_date": parse_excel_date(row.get("contract_date")),
+        "valid_from": parse_excel_date(row.get("valid_from")),
+        "valid_to": parse_excel_date(row.get("valid_to")),
+        "value": None,
+        "currency": "RSD",
+        "status": Contract.STATUS_ACTIVE,
+        "note": supplemental_note(row),
+    }
+
+
+def supplemental_partner_codes(row):
+    codes = []
+    for field_name in ("sif_par", "sif_par2"):
+        value = row.get(field_name)
+        if value in (None, ""):
+            continue
+        try:
+            code = int(float(str(value).strip()))
+        except (TypeError, ValueError):
+            continue
+        if code not in codes:
+            codes.append(code)
+    return codes
+
+
+def update_or_create_contract_party(contract, partner, role, party_contract_number, note, result, commit):
+    existing_party = ContractParty.objects.filter(
+        contract=contract,
+        partner=partner,
+        role=role,
+    ).first()
+    if existing_party is None:
+        result.parties_created += 1
+        if commit:
+            ContractParty.objects.create(
+                contract=contract,
+                partner=partner,
+                role=role,
+                party_contract_number=party_contract_number,
+                note=note,
+            )
+        return
+
+    changed_fields = []
+    if party_contract_number and existing_party.party_contract_number != party_contract_number:
+        existing_party.party_contract_number = party_contract_number
+        changed_fields.append("party_contract_number")
+    if note and existing_party.note != note:
+        existing_party.note = note
+        changed_fields.append("note")
+
+    if changed_fields:
+        result.parties_updated += 1
+        if commit:
+            existing_party.save(update_fields=changed_fields)
+    else:
+        result.parties_unchanged += 1
+
+
+def import_contracts_from_supplemental_excel(workbook, sheet_name, *, commit=False):
+    result = ContractImportResult(commit=commit)
+    worksheet = workbook[sheet_name]
+
+    seen_numbers = set()
+    contract_rows = []
+    for row_index, row in excel_rows(worksheet):
+        contract_number = normalize_contract_number(row.get("contract_number"))
+        if not contract_number:
+            continue
+        result.rows += 1
+        if contract_number in seen_numbers:
+            result.skipped_duplicate += 1
+            continue
+        seen_numbers.add(contract_number)
+        contract_rows.append((row_index, contract_number, row))
+
+    imported_contracts = {
+        contract.contract_number: contract
+        for contract in Contract.objects.filter(contract_number__in=seen_numbers)
+    }
+
+    with transaction.atomic():
+        for wanted_kind in (Contract.MAIN, Contract.ANNEX):
+            for row_index, contract_number, row in contract_rows:
+                kind = supplemental_kind(row)
+                if kind != wanted_kind:
+                    continue
+
+                parent_contract = None
+                contract_type = get_contract_type_from_excel(row)
+                if kind == Contract.ANNEX:
+                    parent_number = normalize_contract_number(row.get("parent_contract_number"))
+                    parent_contract = imported_contracts.get(parent_number)
+                    if not parent_contract and parent_number:
+                        parent_contract = Contract.objects.filter(contract_number=parent_number).first()
+                    if not parent_contract:
+                        result.skipped_invalid += 1
+                        continue
+                    if contract_type is None:
+                        contract_type = parent_contract.contract_type
+
+                if contract_type is None:
+                    result.skipped_invalid += 1
+                    continue
+
+                defaults = supplemental_contract_defaults(row, contract_type, parent_contract)
+                if not defaults["contract_date"]:
+                    result.skipped_invalid += 1
+                    continue
+
+                contract = imported_contracts.get(contract_number)
+                if contract is None:
+                    result.created += 1
+                    contract = Contract.objects.create(
+                        contract_number=contract_number,
+                        **defaults,
+                    )
+                    imported_contracts[contract_number] = contract
+                    continue
+
+                changed_fields = update_contract_from_defaults(contract, defaults)
+                if changed_fields:
+                    result.updated += 1
+                    contract.save(update_fields=[*changed_fields, "updated_at"])
+                else:
+                    result.unchanged += 1
+
+        for row_index, row in excel_rows(worksheet):
+            contract_number = normalize_contract_number(row.get("contract_number"))
+            if not contract_number:
+                continue
+            result.parties_rows += 1
+            contract = imported_contracts.get(contract_number)
+            if not contract:
+                result.parties_skipped += 1
+                continue
+
+            partner_codes = supplemental_partner_codes(row)
+            if not partner_codes:
+                result.parties_skipped += 1
+                continue
+
+            party_contract_number = clean_text(row.get("nas broj ugovora"))
+            note = clean_text(row.get("partner_name"))
+            for code in partner_codes:
+                partner = Partner.objects.filter(external_sif_par=code).order_by("id").first()
+                if not partner:
+                    result.parties_skipped += 1
+                    continue
+                update_or_create_contract_party(
+                    contract,
+                    partner,
+                    "ostalo",
+                    party_contract_number,
+                    note,
+                    result,
+                    commit,
+                )
+
+        if not commit:
+            transaction.set_rollback(True)
+
+    return result
+
+
 def import_contracts_from_excel(
     file_path,
     *,
@@ -386,6 +603,13 @@ def import_contracts_from_excel(
     workbook_path = Path(file_path)
     workbook = load_workbook(workbook_path, read_only=True, data_only=True)
     if contracts_sheet not in workbook.sheetnames:
+        supplemental_sheet = find_supplemental_contract_sheet(workbook)
+        if supplemental_sheet:
+            return import_contracts_from_supplemental_excel(
+                workbook,
+                supplemental_sheet,
+                commit=commit,
+            )
         raise ValueError(f"Sheet '{contracts_sheet}' ne postoji u fajlu {workbook_path}.")
     if parties_sheet not in workbook.sheetnames:
         raise ValueError(f"Sheet '{parties_sheet}' ne postoji u fajlu {workbook_path}.")

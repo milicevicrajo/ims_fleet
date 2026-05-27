@@ -69,8 +69,8 @@
 <div class="card shadow-sm">
   <div class="card-body">
     <div class="table-responsive">
-      <table class="table table-hover table-bordered align-middle">
-        <thead class="table-light">
+      <table id="EufInvoicesTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
           <tr>
             <th>Datum</th>
             <th>Partner</th>
@@ -99,13 +99,13 @@
               {% endif %}
             </td>
             <td>
-              {% if invoice.is_garage_related %}
+              {% if invoice.garage_item_links_total %}
                 <span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Da</span>
               {% else %}
                 <span class="invoice-badge muted">Ne</span>
               {% endif %}
             </td>
-            <td>{{ invoice.item_links.count }}</td>
+            <td>{{ invoice.item_links_total }}</td>
             <td class="text-center text-nowrap">
               <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:euf_invoice_detail' invoice.pk %}">
                 <i class="mdi mdi-eye"></i> Detalj
@@ -116,8 +116,34 @@
           <tr><td colspan="9" class="text-center text-muted">Nema EUF faktura u lokalnoj tabeli.</td></tr>
           {% endfor %}
         </tbody>
+        <tfoot>
+          <tr>
+            <th>Datum</th>
+            <th>Partner</th>
+            <th>Broj fakture</th>
+            <th>Iznos</th>
+            <th>Naziv centra</th>
+            <th>Magacin</th>
+            <th>Garaža</th>
+            <th>Stavke</th>
+            <th>Akcije</th>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#EufInvoicesTable', {
+        exportTitle: '{{ title }}',
+        order: [[0, 'desc']],
+        autoSelectThreshold: 25,
+        scrollX: false
+      });
+    }
+  });
+</script>
 {% endblock %}

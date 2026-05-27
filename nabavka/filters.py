@@ -1,8 +1,6 @@
 import django_filters
 from django import forms
 from django.db.models import Q
-from django_select2.forms import Select2Widget
-
 from core.models import OrganizationalUnit
 from ugovori.models import Partner
 
@@ -29,7 +27,7 @@ class ProcurementCaseFilter(django_filters.FilterSet):
     case_type = django_filters.ChoiceFilter(choices=PROCUREMENT_CASE_TYPE_FILTER_CHOICES, label="Tip")
     status = django_filters.ChoiceFilter(choices=[("", "Svi statusi")] + list(ProcurementCase.Status.choices), label="Status")
     is_garage = django_filters.ChoiceFilter(choices=GARAGE_FILTER_CHOICES, method="filter_is_garage", label="Garaža")
-    supplier = django_filters.ModelChoiceFilter(queryset=Partner.objects.filter(is_active=True), label="Dobavljač")
+    supplier = django_filters.CharFilter(method="filter_supplier", label="Dobavljač")
     job_code = django_filters.ModelChoiceFilter(queryset=OrganizationalUnit.objects.all().order_by("code"), label="OJ")
 
     class Meta:
@@ -53,6 +51,19 @@ class ProcurementCaseFilter(django_filters.FilterSet):
         if value == "no":
             return queryset.filter(is_garage=False)
         return queryset
+
+    def filter_supplier(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        query = (
+            Q(supplier__name__icontains=value)
+            | Q(supplier__pib__icontains=value)
+            | Q(supplier__maticni_broj__icontains=value)
+        )
+        if value.isdigit():
+            query |= Q(supplier__external_sif_par=int(value))
+        return queryset.filter(query)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

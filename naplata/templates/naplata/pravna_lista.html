@@ -1,126 +1,199 @@
 {% extends 'base.html' %}
-{% load humanize form_filters %}
+{% load form_filters %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>{{ title }}</h2>
+<style>
+  .legal-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3b214b 0%, #6f4d7b 52%, #9a5b4f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(59, 33, 75, 0.18);
+  }
+  .legal-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .legal-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .legal-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .legal-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+  }
+  .legal-status.active { background: #e7f7ef; color: #147044; }
+  .legal-status.archived { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  tr.legal-archived td { background: #f3f6f9 !important; color: #657282; }
+  .legal-table th,
+  .legal-table td { vertical-align: middle; }
+</style>
+
+<div class="legal-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
+    <h1>{{ title }}</h1>
+    <p>Pregled pravnih predmeta, partnera, dugovanja i faza postupka.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
     <a href="{% url 'naplata:pravna_izvestaj' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
-       target="_blank" class="btn btn-outline-dark me-2">
-      <i class="mdi mdi-printer"></i> Generiši izveštaj
+       target="_blank"
+       class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-printer"></i> Stampaj listu
     </a>
     {% if case_type == 'tuzeni' %}
       <a href="{% url 'naplata:pravna_izvestaj_excel' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
          id="tuzeni-export-excel"
-         class="btn btn-success me-2"
+         class="btn btn-outline-light btn-sm"
          data-no-preloader>
-        <i class="mdi mdi-file-excel"></i> Export Excel
+        <i class="mdi mdi-file-excel"></i> Excel
       </a>
     {% endif %}
-    <a href="{% url 'naplata:pravna_dodaj' case_type=case_type %}" class="btn btn-primary">
+    <a href="{% url 'naplata:pravna_dodaj' case_type=case_type %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-plus"></i> Novi postupak
     </a>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body">
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="legal-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+              <label class="form-label mb-1">Sifra partnera</label>
+              <select name="sifra_partnera" class="form-select select2-method">
+                <option value="">Sve sifre</option>
+                {% for opt in partner_options %}
+                  <option value="{{ opt.sifra }}" {% if selected_sifra == opt.sifra|stringformat:"s" %}selected{% endif %}>
+                    {{ opt.sifra }}{% if opt.naziv %} - {{ opt.naziv }}{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label mb-1">Naziv partnera</label>
+              <select name="naziv_partnera" class="form-select select2-method">
+                <option value="">Svi nazivi</option>
+                {% for naziv in naziv_options %}
+                  <option value="{{ naziv }}" {% if selected_naziv == naziv %}selected{% endif %}>{{ naziv }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-2">
+              <input type="hidden" name="arhivirano" value="{% if show_archived %}1{% else %}0{% endif %}">
+              {% if show_archived %}
+                <a href="?arhivirano=0{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
+                   class="btn btn-outline-secondary w-100">
+                  <i class="mdi mdi-archive-off"></i> Sakrij arhivu
+                </a>
+              {% else %}
+                <a href="?arhivirano=1{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
+                   class="btn btn-outline-secondary w-100">
+                  <i class="mdi mdi-archive"></i> Prikazi arhivu
+                </a>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-2 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Filter">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}{% if show_archived %}?arhivirano=1{% endif %}"
+                 class="btn btn-outline-secondary"
+                 title="Ocisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
 
-    <form method="get" class="mb-3">
-      <div class="row g-2 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label">Šifra partnera</label>
-          <select name="sifra_partnera" class="form-select select2-method">
-            <option value="">Sve šifre</option>
-            {% for opt in partner_options %}
-              <option value="{{ opt.sifra }}" {% if selected_sifra == opt.sifra|stringformat:"s" %}selected{% endif %}>
-                {{ opt.sifra }}{% if opt.naziv %} - {{ opt.naziv }}{% endif %}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Naziv partnera</label>
-          <select name="naziv_partnera" class="form-select select2-method">
-            <option value="">Svi nazivi</option>
-            {% for naziv in naziv_options %}
-              <option value="{{ naziv }}" {% if selected_naziv == naziv %}selected{% endif %}>{{ naziv }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-3">
-          <input type="hidden" name="arhivirano" value="{% if show_archived %}1{% else %}0{% endif %}">
-          <button type="submit" class="btn btn-primary">Filtriraj</button>
-          <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}{% if show_archived %}?arhivirano=1{% endif %}" class="btn btn-outline-secondary ms-1">Reset</a>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="DatatablePostupci" class="display compact table table-hover table-bordered align-middle w-100 legal-table">
+            <thead>
+              <tr>
+                {% for col_key, col_label in columns %}
+                  <th>{{ col_label }}</th>
+                {% endfor %}
+                <th>Status</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in postupci %}
+              <tr class="{% if p.arhivirano %}legal-archived{% endif %}">
+                {% for col_key, col_label in columns %}
+                  <td>
+                    {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
+                      {{ p|get_attr:col_key|date:"d.m.Y"|default:"-" }}
+                    {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
+                      {{ p|get_attr:col_key|money_rs|default:"-" }}
+                    {% else %}
+                      {{ p|get_attr:col_key|default:"-" }}
+                    {% endif %}
+                  </td>
+                {% endfor %}
+                <td>
+                  {% if p.arhivirano %}
+                    <span class="legal-status archived"><i class="mdi mdi-archive"></i> Arhiviran</span>
+                  {% else %}
+                    <span class="legal-status active"><i class="mdi mdi-check-circle"></i> Aktivan</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <div class="d-flex flex-wrap justify-content-center gap-1">
+                    <a href="{% url 'naplata:pravna_detalj' pk=p.pk %}" class="btn btn-sm btn-outline-primary" title="Detalji">
+                      <i class="mdi mdi-eye"></i>
+                    </a>
+                    <form id="delete-postupak-{{ p.pk }}" method="post" action="{% url 'naplata:pravna_obrisi' pk=p.pk %}" class="m-0">
+                      {% csrf_token %}
+                      {% if p.promene_count %}
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger js-delete-with-entries"
+                          title="Obrisi"
+                          data-form-id="delete-postupak-{{ p.pk }}"
+                          data-promene-count="{{ p.promene_count }}">
+                          <i class="mdi mdi-delete"></i>
+                        </button>
+                      {% else %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Obrisi">
+                          <i class="mdi mdi-delete"></i>
+                        </button>
+                      {% endif %}
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="{{ columns|length|add:"2" }}" class="text-center text-muted py-3">
+                    Nema postupaka za izabrane filtere.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                {% for col_key, col_label in columns %}
+                  <th>{{ col_label }}</th>
+                {% endfor %}
+                <th>Status</th>
+                <th>Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
-    </form>
-
-    <div class="mb-3">
-      {% if show_archived %}
-        <a href="?arhivirano=0{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary">Sakrij arhivirane</a>
-      {% else %}
-        <a href="?arhivirano=1{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary">Prikaži arhivirane</a>
-      {% endif %}
-    </div>
-
-    <div class="table-responsive">
-      <table id="DatatablePostupci" class="display compact">
-        <thead>
-          <tr>
-            {% for col_key, col_label in columns %}
-              <th>{{ col_label }}</th>
-            {% endfor %}
-            <th>Arh.</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in postupci %}
-          <tr>
-            {% for col_key, col_label in columns %}
-              <td>
-                {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
-                  {{ p|get_attr:col_key|date:"d.m.Y" }}
-                {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
-                  {{ p|get_attr:col_key|floatformat:2 }}
-                {% else %}
-                  {{ p|get_attr:col_key|default:"-" }}
-                {% endif %}
-              </td>
-            {% endfor %}
-            <td>{% if p.arhivirano %}<span class="badge bg-secondary">Da</span>{% endif %}</td>
-            <td>
-              <div class="d-flex gap-1">
-                <a href="{% url 'naplata:pravna_detalj' pk=p.pk %}" class="btn btn-sm btn-info" title="Detalji">
-                  <i class="mdi mdi-eye"></i>
-                </a>
-                <form id="delete-postupak-{{ p.pk }}" method="post" action="{% url 'naplata:pravna_obrisi' pk=p.pk %}" class="m-0">
-                  {% csrf_token %}
-                  {% if p.promene_count %}
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-danger js-delete-with-entries"
-                      title="Obriši"
-                      data-form-id="delete-postupak-{{ p.pk }}"
-                      data-promene-count="{{ p.promene_count }}">
-                      <i class="mdi mdi-delete"></i>
-                    </button>
-                  {% else %}
-                    <button type="submit" class="btn btn-sm btn-danger" title="Obriši">
-                      <i class="mdi mdi-delete"></i>
-                    </button>
-                  {% endif %}
-                </form>
-              </div>
-            </td>
-          </tr>
-
-          {% endfor %}
-        </tbody>
-      </table>
     </div>
   </div>
 </div>
@@ -133,12 +206,12 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
       </div>
       <div class="modal-body">
-        <p class="mb-1">Ovaj slučaj ima <strong id="deletePromeneCount">0</strong> unosa.</p>
-        <p class="mb-0">Da li ste sigurni da želite da obrišete slučaj?</p>
+        <p class="mb-1">Ovaj slucaj ima <strong id="deletePromeneCount">0</strong> unosa.</p>
+        <p class="mb-0">Da li ste sigurni da zelite da obrisete slucaj?</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkaži</button>
-        <button type="button" class="btn btn-danger" id="confirmDeleteWithEntriesBtn">Obriši</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkazi</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteWithEntriesBtn">Obrisi</button>
       </div>
     </div>
   </div>
@@ -147,7 +220,19 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var table = document.getElementById('DatatablePostupci');
-    if (!table || !window.initFleetReportTable) return;
+    if (!table) return;
+
+    if (window.ReportsDT) {
+      ReportsDT('#DatatablePostupci', {
+        exportTitle: '{{ title }}',
+        order: [[0, 'asc']],
+        autoSelectThreshold: 25,
+        scrollX: false
+      });
+      return;
+    }
+
+    if (!window.initFleetReportTable) return;
     if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
     window.initFleetReportTable(table, { pageLength: 50, order: [[0, 'asc']] });
   });
@@ -219,7 +304,7 @@
           return;
         }
 
-        var fallbackMessage = 'Ovaj slučaj ima ' + promeneCount + ' unosa. Da li ste sigurni da želite da obrišete slučaj?';
+        var fallbackMessage = 'Ovaj slucaj ima ' + promeneCount + ' unosa. Da li ste sigurni da zelite da obrisete slucaj?';
         if (targetForm && window.confirm(fallbackMessage)) {
           targetForm.submit();
         }

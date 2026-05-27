@@ -31,6 +31,10 @@ class ProcurementCase(models.Model):
         CaseType.SERVICE: "ZU",
         CaseType.EQUIPMENT: "PLN",
     }
+    GARAGE_CASE_TYPE_PREFIXES = {
+        CaseType.PROCUREMENT: "ZNG",
+        CaseType.SERVICE: "ZUG",
+    }
     case_number = models.CharField(
         max_length=32,
         unique=True,
@@ -142,6 +146,11 @@ class ProcurementCase(models.Model):
         return (self.created_at.date() if self.created_at else timezone.localdate()).year
 
     def get_case_type_prefix(self):
+        if self.is_garage:
+            return self.GARAGE_CASE_TYPE_PREFIXES.get(
+                self.case_type,
+                self.CASE_TYPE_PREFIXES.get(self.case_type, "ZN"),
+            )
         return self.CASE_TYPE_PREFIXES.get(self.case_type, "ZN")
 
     def get_center_code(self):

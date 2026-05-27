@@ -1,144 +1,270 @@
 {% extends 'base.html' %}
-{% load humanize form_filters %}
+{% load form_filters %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>{{ title }}</h2>
+<style>
+  .legal-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3b214b 0%, #6f4d7b 52%, #9a5b4f 100%);
+    color: #fff;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(59, 33, 75, 0.18);
+  }
+  .legal-hero h1 { font-size: 1.45rem; margin: 0; letter-spacing: 0; }
+  .legal-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .legal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .legal-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .legal-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-weight: 700;
+    font-size: .82rem;
+  }
+  .legal-pill.active { background: #e7f7ef; color: #147044; }
+  .legal-pill.archived { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .legal-section {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .legal-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+    background: #f8fafc;
+    color: #3b214b;
+    font-weight: 700;
+  }
+  .legal-section-body { padding: 16px; }
+  .legal-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .legal-meta {
+    border: 1px solid #eef2f6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fff;
+  }
+  .legal-meta-label {
+    color: #6c7f90;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .legal-meta-value {
+    color: #243746;
+    font-weight: 700;
+    margin-top: 3px;
+    word-break: break-word;
+  }
+  .legal-text-block {
+    border-left: 3px solid #6f4d7b;
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: #3e5569;
+  }
+  .side-card {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 16px;
+  }
+  .side-card-body { padding: 14px; }
+  .change-row {
+    border: 1px solid #eef2f6;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+  }
+  .change-row + .change-row { margin-top: 10px; }
+  .change-date {
+    color: #243746;
+    font-weight: 700;
+  }
+  .change-text {
+    color: #3e5569;
+    margin-top: 4px;
+  }
+  @media (max-width: 767.98px) {
+    .legal-meta-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="legal-hero d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
-    <a href="{% url 'naplata:pravna_izmeni' pk=postupak.pk %}" class="btn btn-warning">
+    <div class="legal-hero-chips">
+      {% if postupak.arhivirano %}
+        <span class="legal-pill archived"><i class="mdi mdi-archive"></i> Arhiviran</span>
+      {% else %}
+        <span class="legal-pill active"><i class="mdi mdi-check-circle"></i> Aktivan</span>
+      {% endif %}
+      <span class="legal-pill archived"><i class="mdi mdi-gavel"></i> {{ postupak.get_tip_display }}</span>
+    </div>
+    <h1>{{ postupak.broj_predmeta|default:title }}</h1>
+    <p>{{ postupak.naziv_partnera|default:postupak.sifra_partnera|default:"Pravni predmet" }}</p>
+  </div>
+  <div class="legal-actions">
+    <a href="{% url 'naplata:pravna_izmeni' pk=postupak.pk %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-pencil"></i> Izmeni
     </a>
-    <a href="{% url 'naplata:pravna_cases_list' case_type=postupak.tip %}" class="btn btn-secondary">
+    <a href="{% url 'naplata:pravna_cases_list' case_type=postupak.tip %}" class="btn btn-outline-light btn-sm">
       <i class="mdi mdi-arrow-left"></i> Nazad
     </a>
   </div>
 </div>
 
-<!-- ── Podaci o postupku ─────────────────────────────────────── -->
-<div class="card mb-3">
-  <div class="card-body">
-    <h5 class="card-title">Podaci o postupku</h5>
-    <div class="table-responsive">
-      <table class="table table-bordered mb-0">
-        <tbody>
+<div class="row">
+  <div class="col-lg-8">
+    <div class="legal-section">
+      <div class="legal-section-header">
+        <span><i class="mdi mdi-file-document-edit"></i> Podaci o postupku</span>
+      </div>
+      <div class="legal-section-body">
+        <div class="legal-meta-grid">
           {% for col_key, col_label in columns %}
-          <tr>
-            <th style="width:250px">{{ col_label }}</th>
-            <td>
-              {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
-                {{ postupak|get_attr:col_key|date:"d.m.Y"|default:"-" }}
-              {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
-                {{ postupak|get_attr:col_key|floatformat:2|default:"-" }}
-              {% else %}
-                {{ postupak|get_attr:col_key|default:"-" }}
-              {% endif %}
-            </td>
-          </tr>
+            <div class="legal-meta">
+              <div class="legal-meta-label">{{ col_label }}</div>
+              <div class="legal-meta-value">
+                {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
+                  {{ postupak|get_attr:col_key|date:"d.m.Y"|default:"-" }}
+                {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
+                  {{ postupak|get_attr:col_key|money_rs|default:"-" }}
+                {% elif col_key == 'predmet_spora' or col_key == 'prijava_potrazivanja' %}
+                  <div class="legal-text-block">{{ postupak|get_attr:col_key|default:"-"|linebreaksbr }}</div>
+                {% else %}
+                  {{ postupak|get_attr:col_key|default:"-" }}
+                {% endif %}
+              </div>
+            </div>
           {% endfor %}
-          <tr>
-            <th>Arhivirano</th>
-            <td>{% if postupak.arhivirano %}<span class="badge bg-secondary">Da</span>{% else %}Ne{% endif %}</td>
-          </tr>
-        </tbody>
-      </table>
+          <div class="legal-meta">
+            <div class="legal-meta-label">Arhivirano</div>
+            <div class="legal-meta-value">
+              {% if postupak.arhivirano %}Da{% else %}Ne{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- ── Partner iz baze ───────────────────────────────────────── -->
-{% if partner %}
-<div class="card mb-3">
-  <div class="card-body">
-    <h5 class="card-title">Partner iz baze (automatski)</h5>
-    <div class="table-responsive">
-      <table class="table table-bordered mb-0">
-        <tbody>
-          <tr><th style="width:250px">Naziv u bazi</th><td>{{ partner.naziv_u_bazi|default:"-" }}</td></tr>
-          <tr><th>Mesto</th><td>{{ partner.mesto|default:"-" }}</td></tr>
-          <tr><th>PIB</th><td>{{ partner.pib|default:"-" }}</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-{% endif %}
-
-<!-- ── Istorija promena (faze) ────────────────────────────────── -->
-<div class="card mb-3">
-  <div class="card-body">
-    <h5 class="card-title">Istorija promena</h5>
-
-    <div class="table-responsive">
-      <table id="DatatablePromene" class="display compact">
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Promena</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for pr in promene %}
-          <tr>
-            <td>{{ pr.datum|date:"d.m.Y" }}</td>
-            <td>{{ pr.promena }}</td>
-            <td>
+    <div class="legal-section">
+      <div class="legal-section-header">
+        <span><i class="mdi mdi-timeline-text"></i> Istorija promena</span>
+      </div>
+      <div class="legal-section-body">
+        {% for pr in promene %}
+          <div class="change-row">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+              <div>
+                <div class="change-date">{{ pr.datum|date:"d.m.Y" }}</div>
+                <div class="change-text">{{ pr.promena|linebreaksbr }}</div>
+              </div>
               <form method="post" action="{% url 'naplata:pravna_obrisi_promenu' pk=pr.pk %}"
-                    onsubmit="return confirm('Obrisati ovu promenu?');" style="display:inline">
+                    onsubmit="return confirm('Obrisati ovu promenu?');" class="m-0">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-danger" title="Obriši">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obrisi">
                   <i class="mdi mdi-delete"></i>
                 </button>
               </form>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="3" class="text-center">Nema promena.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </div>
+          </div>
+        {% empty %}
+          <div class="text-muted text-center py-3">Nema promena.</div>
+        {% endfor %}
+      </div>
     </div>
 
-    <!-- Forma za dodavanje nove promene -->
-    <hr>
-    <h6>Dodaj promenu</h6>
-    <form method="post" action="{% url 'naplata:pravna_dodaj_promenu' pk=postupak.pk %}" class="row g-2 align-items-end">
-      {% csrf_token %}
-      <div class="col-md-3">
-        <label class="form-label">Datum</label>
-        <input type="text" name="datum" class="form-control js-date" autocomplete="off" required>
+    <div class="legal-section">
+      <div class="legal-section-header">
+        <span><i class="mdi mdi-plus-circle"></i> Dodaj promenu</span>
       </div>
-      <div class="col-md-7">
-        <label class="form-label">Promena</label>
-        <textarea name="promena" class="form-control" rows="1" required></textarea>
+      <div class="legal-section-body">
+        <form method="post" action="{% url 'naplata:pravna_dodaj_promenu' pk=postupak.pk %}" class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-3">
+            <label class="form-label">Datum</label>
+            <input type="text" name="datum" class="form-control js-date" autocomplete="off" required>
+          </div>
+          <div class="col-md-7">
+            <label class="form-label">Promena</label>
+            <textarea name="promena" class="form-control" rows="2" required></textarea>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="mdi mdi-plus"></i> Dodaj
+            </button>
+          </div>
+        </form>
       </div>
-      <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">
-          <i class="mdi mdi-plus"></i> Dodaj
-        </button>
-      </div>
-    </form>
+    </div>
   </div>
-</div>
 
-<!-- ── Arhiviranje postupka ─────────────────────────────────── -->
-<div class="card border-warning mb-3">
-  <div class="card-body">
-    <form method="post" action="{% url 'naplata:pravna_arhiviraj' pk=postupak.pk %}"
-          onsubmit="return confirm('Potvrdi izmenu statusa arhive za ovaj postupak.');">
-      {% csrf_token %}
-      {% if postupak.arhivirano %}
-      <button type="submit" class="btn btn-outline-success">
-        <i class="mdi mdi-backup-restore"></i> Vrati iz arhive
-      </button>
-      {% else %}
-      <button type="submit" class="btn btn-outline-warning">
-        <i class="mdi mdi-archive"></i> Arhiviraj postupak
-      </button>
-      {% endif %}
-    </form>
+  <div class="col-lg-4">
+    {% if partner %}
+      <div class="side-card">
+        <div class="legal-section-header">
+          <span><i class="mdi mdi-domain"></i> Partner iz baze</span>
+        </div>
+        <div class="side-card-body">
+          <div class="legal-meta mb-2">
+            <div class="legal-meta-label">Naziv u bazi</div>
+            <div class="legal-meta-value">{{ partner.naziv_u_bazi|default:"-" }}</div>
+          </div>
+          <div class="legal-meta mb-2">
+            <div class="legal-meta-label">Mesto</div>
+            <div class="legal-meta-value">{{ partner.mesto|default:"-" }}</div>
+          </div>
+          <div class="legal-meta">
+            <div class="legal-meta-label">PIB</div>
+            <div class="legal-meta-value">{{ partner.pib|default:"-" }}</div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="side-card">
+      <div class="legal-section-header">
+        <span><i class="mdi mdi-archive"></i> Arhiva</span>
+      </div>
+      <div class="side-card-body">
+        <form method="post" action="{% url 'naplata:pravna_arhiviraj' pk=postupak.pk %}"
+              onsubmit="return confirm('Potvrdi izmenu statusa arhive za ovaj postupak.');">
+          {% csrf_token %}
+          {% if postupak.arhivirano %}
+            <button type="submit" class="btn btn-outline-success w-100">
+              <i class="mdi mdi-backup-restore"></i> Vrati iz arhive
+            </button>
+          {% else %}
+            <button type="submit" class="btn btn-outline-warning w-100">
+              <i class="mdi mdi-archive"></i> Arhiviraj postupak
+            </button>
+          {% endif %}
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

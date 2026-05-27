@@ -4,44 +4,100 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="pagetitle">
-  <h1>{{ title }}</h1>
+<style>
+  .legal-form-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3b214b 0%, #6f4d7b 52%, #9a5b4f 100%);
+    color: #fff;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(59, 33, 75, 0.18);
+  }
+  .legal-form-hero h1 { font-size: 1.45rem; margin: 0; letter-spacing: 0; }
+  .legal-form-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .legal-section {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .legal-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f6;
+    background: #f8fafc;
+    color: #3b214b;
+    font-weight: 700;
+  }
+  .legal-section-body { padding: 16px; }
+  .legal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+</style>
+
+<div class="legal-form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Unos osnovnih podataka pravnog postupka i statusa evidencije.</p>
+  </div>
+  <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}" class="btn btn-outline-light btn-sm">
+    <i class="mdi mdi-arrow-left"></i> Nazad
+  </a>
 </div>
 
-<section class="section">
-  <div class="row">
-    <div class="col-lg-8">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Popuniti formu</h5>
-
-          <form method="post">
-            {% csrf_token %}
-
+<div class="row">
+  <div class="col-lg-9">
+    <form method="post">
+      {% csrf_token %}
+      <div class="legal-section">
+        <div class="legal-section-header">
+          <span><i class="mdi mdi-file-document-edit"></i> Podaci o postupku</span>
+        </div>
+        <div class="legal-section-body">
+          <div class="row">
             {% for field in form %}
-            <div class="row mb-3">
-              <label for="{{ field.id_for_label }}" class="col-sm-4 col-form-label">{{ field.label }}:</label>
-              <div class="col-sm-8">
-                {{ field|add_class:'form-control' }}
+              <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-12 col-md-6{% endif %} mb-3">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                  <div class="form-check mt-2">
+                    {{ field|add_class:'form-check-input' }}
+                    <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+                  </div>
+                {% else %}
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {{ field|add_class:'form-control' }}
+                {% endif %}
                 {% if field.errors %}
-                <div class="invalid-feedback" style="display: block;">
-                  {% for error in field.errors %}
-                    {{ error }}
-                  {% endfor %}
-                </div>
+                  <div class="invalid-feedback d-block">
+                    {% for error in field.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
                 {% endif %}
               </div>
-            </div>
             {% endfor %}
-
-            <div class="text-center mt-3">
-              <button type="submit" class="btn btn-primary">Sačuvaj</button>
-              <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}" class="btn btn-secondary ms-2">Otkaži</a>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
-    </div>
+
+      <div class="legal-actions">
+        <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}" class="btn btn-outline-secondary">
+          Otkazi
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="mdi mdi-content-save"></i> Sacuvaj
+        </button>
+      </div>
+    </form>
   </div>
-</section>
+</div>
 {% endblock %}

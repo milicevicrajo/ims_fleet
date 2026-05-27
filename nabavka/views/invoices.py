@@ -1,10 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
-from django.views.generic import DetailView, TemplateView
+from django.views.generic import DetailView, ListView
 
 from core.mixins import RolePermissionRequiredMixin
 
@@ -14,11 +14,12 @@ from ..services.euf import sync_euf_invoice_snapshots
 from .cases import NabavkaContextMixin
 
 
-class EufInvoiceListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
+class EufInvoiceListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
     template_name = "nabavka/euf_invoice_list.html"
+    context_object_name = "invoices"
+    paginate_by = 50
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
+    def get_queryset(self):
         q = (self.request.GET.get("q") or "").strip()
         invoices = ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF)
         if q:
@@ -28,10 +29,21 @@ class EufInvoiceListView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                 | Q(center_name__icontains=q)
                 | Q(center__icontains=q)
             )
+        return invoices.annotate(
+            item_links_total=Count("item_links", distinct=True),
+            garage_item_links_total=Count(
+                "item_links",
+                filter=Q(item_links__procurement_item__procurement_case__is_garage=True),
+                distinct=True,
+            ),
+        ).order_by("-invoice_date", "-id")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        q = (self.request.GET.get("q") or "").strip()
         ctx.update(
             {
                 "title": "EUF fakture",
-                "invoices": invoices.order_by("-invoice_date", "-id")[:500],
                 "q": q,
             }
         )

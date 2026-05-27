@@ -33,3 +33,19 @@ def receipt_number(value):
     if decimal_value == decimal_value.to_integral_value():
         return str(decimal_value.to_integral_value())
     return text
+
+
+@register.filter
+def money_rs(value):
+    """Formatira novcani iznos sa srpskim separatorima: 1.234.567,89."""
+    if value is None:
+        return ''
+    text = str(value).strip()
+    if not text:
+        return ''
+    try:
+        amount = Decimal(text.replace(',', '.'))
+    except (InvalidOperation, ValueError):
+        return text
+    formatted = f"{amount:,.2f}"
+    return formatted.replace(',', 'X').replace('.', ',').replace('X', '.')

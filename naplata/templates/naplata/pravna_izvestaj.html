@@ -65,7 +65,7 @@
                     {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
                       {{ item.postupak|get_attr:col_key|date:"d.m.Y"|default:"-" }}
                     {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
-                      {{ item.postupak|get_attr:col_key|floatformat:2|default:"-" }}
+                      {{ item.postupak|get_attr:col_key|money_rs|default:"-" }}
                     {% else %}
                       {{ item.postupak|get_attr:col_key|default:"-" }}
                     {% endif %}

@@ -40,7 +40,8 @@ class Command(BaseCommand):
         self.stdout.write(
             (
                 "Stranke - redova: {parties_rows}, novo: {parties_created}, "
-                "bez izmene: {parties_unchanged}, preskoceno: {parties_skipped}"
+                "azurirano: {parties_updated}, bez izmene: {parties_unchanged}, "
+                "preskoceno: {parties_skipped}"
             ).format(**result.__dict__)
         )
         if not result.commit:
