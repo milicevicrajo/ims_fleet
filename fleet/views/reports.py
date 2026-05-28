@@ -1,12 +1,20 @@
 from django.shortcuts import render
 
-from core.exporting import dataframe_xlsx_response
+from core.exporting import dataframe_xlsx_response, rows_to_xlsx_response
 
 from ..forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from ..support.report_helpers import (
-    date_period_filtered_query,
     get_data_from_secondary_db,
     report_period_filtered_query,
+)
+from ..support.fuel_reports import (
+    SUPPLIER_NIS,
+    SUPPLIER_OMV,
+    VEHICLE_TYPE_PASSENGER,
+    VEHICLE_TYPE_TRUCK,
+    fuel_job_code_report,
+    supplier_label,
+    vehicle_type_label,
 )
 from ..report_exports import (
     NIS_PUTNICKA_EXPORT,
@@ -39,6 +47,10 @@ def reports_index(request):
     """Početna stranica za izveštaje sa linkovima."""
     sections = {
         "Finansije": [
+            {"name": "Potrosnja goriva po sifri posla - OMV putnicka (istorijski)", "url": "fuel_job_code_omv_putnicka"},
+            {"name": "Potrosnja goriva po sifri posla - OMV teretna (istorijski)", "url": "fuel_job_code_omv_teretna"},
+            {"name": "Potrosnja goriva po sifri posla - NIS putnicka (istorijski)", "url": "fuel_job_code_nis_putnicka"},
+            {"name": "Potrosnja goriva po sifri posla - NIS teretna (istorijski)", "url": "fuel_job_code_nis_teretna"},
             {"name": "Spisak vozila po šiframa posla", "url": "vehicle_list"},
             {"name": "Pregled potrošnje goriva po šiframa posla - OMV putnička", "url": "omv_putnicka"},
             {"name": "Pregled potrošnje goriva po šiframa posla - OMV teretna", "url": "omv_teretna"},
@@ -91,6 +103,88 @@ def _render_secondary_report(request, *, form, query, filter_query, template_nam
 def _export_secondary_report(*, form, query, filter_query, export_spec):
     data = _secondary_report_data(query, form, filter_query, cast_params=True)
     return report_xlsx_response(export_spec, data)
+
+
+FUEL_JOB_CODE_EXPORT_HEADERS = [
+    "Dobavljac",
+    "Tip vozila",
+    "Sifra posla",
+    "Naziv sifre posla",
+    "Godina",
+    "Mesec",
+    "Polovina",
+    "Broj transakcija",
+    "Kolicina",
+    "Bruto",
+    "Neto",
+]
+
+
+def _fuel_job_code_export_rows(rows):
+    for row in rows:
+        yield [
+            row["supplier"],
+            row["tipvozila"],
+            row["sifpos"],
+            row["naziv_sifre_posla"],
+            row["godina"],
+            row["mesec"],
+            row["polovina"],
+            row["broj_transakcija"],
+            row["kolicina"],
+            row["bruto"],
+            row["neto"],
+        ]
+
+
+def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
+    form = PutnickaFilterForm(request.GET or None)
+    selected_sifpos = (request.GET.get("sifpos") or "").strip()
+    data, detail_rows = fuel_job_code_report(
+        form,
+        supplier=supplier,
+        vehicle_type=vehicle_type,
+        sifpos=selected_sifpos,
+    )
+    title = f"{supplier_label(supplier)} {vehicle_type_label(vehicle_type)} - potrosnja goriva po sifri posla"
+
+    if "export" in request.GET:
+        return rows_to_xlsx_response(
+            f"{supplier}_{vehicle_type}_gorivo_po_sifri_posla.xlsx",
+            "Gorivo po sifri posla",
+            FUEL_JOB_CODE_EXPORT_HEADERS,
+            _fuel_job_code_export_rows(data),
+        )
+
+    return render(
+        request,
+        "fleet/reports/fuel_job_code.html",
+        {
+            "data": data,
+            "detail_rows": detail_rows,
+            "selected_sifpos": selected_sifpos,
+            "form": form,
+            "title": title,
+            "supplier_label": supplier_label(supplier),
+            "vehicle_type_label": vehicle_type_label(vehicle_type),
+        },
+    )
+
+
+def fuel_job_code_omv_putnicka_view(request):
+    return _render_fuel_job_code_report(request, supplier=SUPPLIER_OMV, vehicle_type=VEHICLE_TYPE_PASSENGER)
+
+
+def fuel_job_code_omv_teretna_view(request):
+    return _render_fuel_job_code_report(request, supplier=SUPPLIER_OMV, vehicle_type=VEHICLE_TYPE_TRUCK)
+
+
+def fuel_job_code_nis_putnicka_view(request):
+    return _render_fuel_job_code_report(request, supplier=SUPPLIER_NIS, vehicle_type=VEHICLE_TYPE_PASSENGER)
+
+
+def fuel_job_code_nis_teretna_view(request):
+    return _render_fuel_job_code_report(request, supplier=SUPPLIER_NIS, vehicle_type=VEHICLE_TYPE_TRUCK)
 
 
 def _render_simple_secondary_report(request, *, query, db_alias, template_name):
@@ -152,7 +246,7 @@ def nis_teretna_view(request):
         request,
         form=form,
         query=NIS_TERETNA_SQL,
-        filter_query=date_period_filtered_query,
+        filter_query=report_period_filtered_query,
         template_name="fleet/reports/nis_teretna.html",
         title="NIS Teretna vozila",
         export_filename="nis_teretna.xlsx",
@@ -165,7 +259,7 @@ def export_nis_teretna_excel(request):
     return _export_secondary_report(
         form=form,
         query=NIS_TERETNA_SQL,
-        filter_query=date_period_filtered_query,
+        filter_query=report_period_filtered_query,
         export_spec=NIS_TERETNA_EXPORT,
     )
 

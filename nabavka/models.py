@@ -417,6 +417,46 @@ class ProcurementContractLink(models.Model):
         return f"{self.contract} -> {self.procurement_case}"
 
 
+class ProcurementInvoiceContractLink(models.Model):
+    invoice = models.ForeignKey(
+        ProcurementInvoice,
+        on_delete=models.CASCADE,
+        related_name="contract_links",
+        verbose_name=_("Faktura"),
+    )
+    contract = models.ForeignKey(
+        "ugovori.Contract",
+        on_delete=models.PROTECT,
+        related_name="nabavka_invoice_links",
+        verbose_name=_("Kupovni ugovor"),
+    )
+    note = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Napomena"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="nabavka_invoice_contract_links",
+        verbose_name=_("Povezao"),
+    )
+
+    class Meta:
+        db_table = "nabavka_invoice_contract_link"
+        ordering = ["-created_at", "-id"]
+        verbose_name = _("Veza fakture i ugovora")
+        verbose_name_plural = _("Veze faktura i ugovora")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["invoice", "contract"],
+                name="uniq_nabavka_invoice_contract",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.invoice} -> {self.contract}"
+
+
 class PurchaseOrder(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", _("Nacrt")

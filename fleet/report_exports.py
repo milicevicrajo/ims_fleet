@@ -12,10 +12,6 @@ class ReportExportSpec:
     formatters: dict[str, object] = field(default_factory=dict)
 
 
-def format_report_datetime(value):
-    return value.strftime("%d.%m.%Y %H:%M") if value else ""
-
-
 def report_export_rows(data, spec):
     for row in data:
         yield [
@@ -50,9 +46,8 @@ NIS_PUTNICKA_EXPORT = ReportExportSpec(
 NIS_TERETNA_EXPORT = ReportExportSpec(
     filename="nis_teretna.xlsx",
     sheet_name="NIS Teretna",
-    headers=["Tip vozila", "Šifra posla", "Reg oznaka", "Kartica", "Datum", "Proizvod", "Količina", "Cena", "Bruto", "Neto"],
-    fields=["tipvozila", "sifpos", "regozn", "kartica", "datum", "proizvod", "kolicina", "cena", "bruto", "neto"],
-    formatters={"datum": format_report_datetime},
+    headers=["Tip vozila", "Sifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"],
+    fields=["tipvozila", "sifpos", "godina", "mesec", "polovina", "bruto", "neto"],
 )
 
 OMV_TERETNA_EXPORT = ReportExportSpec(

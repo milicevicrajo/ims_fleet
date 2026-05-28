@@ -2,7 +2,7 @@ import django_filters
 from django import forms
 from django.db.models import Q
 from core.models import OrganizationalUnit
-from ugovori.models import Partner
+from ugovori.models import Contract, Partner
 
 from .models import ProcurementCase, ProcurementItemInvoiceLink, PurchaseOrder
 
@@ -124,3 +124,59 @@ class ProcurementInvoiceLinkFilter(django_filters.FilterSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.form.fields["q"].widget.attrs.setdefault("class", "form-control")
+
+
+class PurchaseContractFilter(django_filters.FilterSet):
+    q = django_filters.CharFilter(method="filter_q", label="Pretraga")
+    partner = django_filters.CharFilter(method="filter_partner", label="Partner")
+    kind = django_filters.ChoiceFilter(choices=[("", "Sve")] + list(Contract.KIND_CHOICES), label="Vrsta")
+    status = django_filters.ChoiceFilter(choices=[("", "Svi statusi")] + list(Contract.STATUS_CHOICES), label="Status")
+    year = django_filters.ChoiceFilter(method="filter_year", label="Godina")
+
+    class Meta:
+        model = Contract
+        fields = ["q", "partner", "kind", "status", "year"]
+
+    def filter_q(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(contract_number__icontains=value)
+            | Q(title__icontains=value)
+            | Q(subject__icontains=value)
+            | Q(parties__party_contract_number__icontains=value)
+        ).distinct()
+
+    def filter_partner(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        query = (
+            Q(parties__partner__name__icontains=value)
+            | Q(parties__partner__pib__icontains=value)
+            | Q(parties__partner__maticni_broj__icontains=value)
+        )
+        if value.isdigit():
+            query |= Q(parties__partner__external_sif_par=int(value))
+        return queryset.filter(query).distinct()
+
+    def filter_year(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(contract_date__year=value)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        years = [
+            date_value.year
+            for date_value in Contract.objects.filter(contract_type__code__startswith="KUP")
+            .dates("contract_date", "year", order="DESC")
+        ]
+        self.form.fields["year"].choices = [("", "Sve godine")] + [(str(year), str(year)) for year in years]
+        for field in self.form.fields.values():
+            if isinstance(field.widget, forms.Select):
+                field.widget.attrs.setdefault("class", "form-select")
+            else:
+                field.widget.attrs.setdefault("class", "form-control")

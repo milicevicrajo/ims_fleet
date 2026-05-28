@@ -5,22 +5,16 @@
     <div style="font-weight:700; font-size:8pt;">INSTITUT IMS AD</div>
   </div>
   <div class="block" style="border:1px solid #000; padding:1mm 1.5mm; min-width:26mm; text-align:center; font-size:8pt;">
-    Oznaka<br><strong>{% if proc_case.case_type == "usluga" %}IZ 052{% else %}IZ 050{% endif %}</strong>
+    Oznaka<br><strong>IZ 051</strong>
   </div>
 </div>
 <div class="top-line" style="gap:4mm; margin:2mm 0 1mm 0; font-size:11pt; display:flex; flex-wrap:wrap; row-gap:1.2mm;">
   <div style="min-width:50mm;">Šifra posla: <strong>{{ center }}</strong></div>
   <div style="min-width:45mm;">O.J.: <strong>{{ job_code.code|default:"" }}</strong></div>
-  <div style="min-width:35mm;">Datum: <strong>{{ proc_case.created_at|date:"d.m.Y" }}</strong></div>
+  <div style="min-width:35mm;">Datum: <strong>{{ print_date|date:"d.m.Y" }}</strong></div>
 </div>
 <div class="treb-title" style="margin:1mm 0 0.2mm 0; font-size:11pt; display:flex; justify-content:space-between; align-items:center;">
-  <span>
-    {% if proc_case.case_type == "usluga" %}
-      ZAHTEV ZA USLUGU BR. {{ proc_case.case_number|default:"(u toku)" }}
-    {% else %}
-      ZAHTEV ZA NABAVKU BR. {{ proc_case.case_number|default:"(u toku)" }}
-    {% endif %}
-  </span>
+  <span>TREBOVANJE MATERIJALA BR. {{ proc_case.case_number|default:"(u toku)" }}</span>
   <span style="font-size:9pt;">Lista {{ page_number|default:1 }} od {{ total_pages|default:1 }}</span>
 </div>
 
@@ -55,6 +49,7 @@
 </table>
 
 <div class="footer-sign">
-  <div class="signature">Direktor centra<span class="line"></span></div>
-  <div class="signature">Poslovodstvo<span class="line"></span></div>
+  <div class="signature">Rukovodilac centra<span class="line"></span></div>
+  <div class="signature">Primio materijal<span class="line"></span></div>
+  <div class="signature">Izdao materijal<span class="line"></span></div>
 </div>

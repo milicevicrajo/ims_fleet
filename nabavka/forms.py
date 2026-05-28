@@ -11,8 +11,8 @@ from ugovori.models import Contract, Partner
 
 from .models import (
     ProcurementCase,
-    ProcurementContractLink,
     ProcurementInvoice,
+    ProcurementInvoiceContractLink,
     ProcurementInvoiceLink,
     ProcurementItemInvoiceLink,
     ProcurementItem,
@@ -163,19 +163,19 @@ class ProcurementInvoiceForm(forms.ModelForm):
         _style_fields(self.fields)
 
 
-class ProcurementContractLinkForm(forms.ModelForm):
+class ProcurementInvoiceContractLinkForm(forms.ModelForm):
     class Meta:
-        model = ProcurementContractLink
-        fields = ["contract", "invoice_link", "note"]
+        model = ProcurementInvoiceContractLink
+        fields = ["contract", "note"]
 
-    def __init__(self, *args, procurement_case=None, **kwargs):
+    def __init__(self, *args, invoice=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["contract"].queryset = Contract.objects.all().order_by("-contract_date")
-        self.fields["contract"].widget = Select2Widget(attrs={"class": "select2-method"})
-        if procurement_case is not None:
-            self.fields["invoice_link"].queryset = procurement_case.invoice_links.all()
-        self.fields["invoice_link"].required = False
-        self.fields["invoice_link"].widget = Select2Widget(attrs={"class": "select2-method"})
+        queryset = Contract.objects.filter(contract_type__code__startswith="KUP").order_by("-contract_date")
+        if invoice is not None:
+            queryset = queryset.exclude(nabavka_invoice_links__invoice=invoice)
+        self.fields["contract"].queryset = queryset
+        self.fields["contract"].widget = forms.Select(attrs={"class": "form-select select2-method"})
+        self.fields["contract"].widget.choices = self.fields["contract"].choices
         _style_fields(self.fields)
 
 
@@ -207,7 +207,9 @@ class PurchaseOrderForm(forms.ModelForm):
         self.fields["procurement_case"].widget = Select2Widget(attrs={"class": "select2-method"})
         self.fields["supplier"].queryset = Partner.objects.filter(is_active=True).order_by("name")
         self.fields["supplier"].widget = Select2Widget(attrs={"class": "select2-method"})
-        self.fields["contract"].queryset = Contract.objects.all().order_by("-contract_date")
+        self.fields["contract"].queryset = Contract.objects.filter(
+            contract_type__code__startswith="KUP",
+        ).order_by("-contract_date")
         self.fields["contract"].widget = Select2Widget(attrs={"class": "select2-method"})
         if procurement_case is not None:
             self.fields["procurement_case"].initial = procurement_case

@@ -110,17 +110,14 @@ class ReportExportRowsTests(SimpleTestCase):
 			[["832111", 2026, 4, "PUTNICKO", 2, Decimal("1200.00"), Decimal("1000.00")]],
 		)
 
-	def test_report_export_rows_formats_nis_teretna_datetime(self):
+	def test_report_export_rows_uses_nis_teretna_summary_fields(self):
 		data = [
 			{
 				"tipvozila": "TERETNO",
 				"sifpos": "832111",
-				"regozn": "BG123-AA",
-				"kartica": "1234",
-				"datum": datetime.datetime(2026, 4, 24, 13, 45),
-				"proizvod": "Dizel",
-				"kolicina": Decimal("42.00"),
-				"cena": Decimal("200.00"),
+				"godina": 2026,
+				"mesec": 4,
+				"polovina": 2,
 				"bruto": Decimal("8400.00"),
 				"neto": Decimal("7000.00"),
 			}
@@ -133,12 +130,9 @@ class ReportExportRowsTests(SimpleTestCase):
 			[[
 				"TERETNO",
 				"832111",
-				"BG123-AA",
-				"1234",
-				"24.04.2026 13:45",
-				"Dizel",
-				Decimal("42.00"),
-				Decimal("200.00"),
+				2026,
+				4,
+				2,
 				Decimal("8400.00"),
 				Decimal("7000.00"),
 			]],

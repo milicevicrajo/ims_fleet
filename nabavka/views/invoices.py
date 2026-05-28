@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
@@ -8,8 +8,13 @@ from django.views.generic import DetailView, ListView
 
 from core.mixins import RolePermissionRequiredMixin
 
-from ..forms import EufInvoiceItemLinkForm, ProcurementInvoiceForm
-from ..models import ProcurementCase, ProcurementInvoice, ProcurementItemInvoiceLink
+from ..forms import EufInvoiceItemLinkForm, ProcurementInvoiceContractLinkForm, ProcurementInvoiceForm
+from ..models import (
+    ProcurementCase,
+    ProcurementInvoice,
+    ProcurementInvoiceContractLink,
+    ProcurementItemInvoiceLink,
+)
 from ..services.euf import sync_euf_invoice_snapshots
 from .cases import NabavkaContextMixin
 
@@ -74,6 +79,7 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
         return ProcurementInvoice.objects.prefetch_related(
             "item_links__procurement_item__procurement_case",
             "item_links__created_by",
+            "contract_links__contract__contract_type",
         )
 
     def post(self, request, *args, **kwargs):
@@ -113,7 +119,46 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 messages.error(request, "Stavka nije povezana. Proverite izbor stavke.")
                 return self.render_to_response(self.get_context_data(item_link_form=form))
 
+        elif action == "link_contract":
+            form = ProcurementInvoiceContractLinkForm(request.POST, invoice=self.object)
+            if form.is_valid():
+                link = form.save(commit=False)
+                link.invoice = self.object
+                link.created_by = request.user
+                link.save()
+                messages.success(request, "Kupovni ugovor je povezan sa fakturom.")
+            else:
+                messages.error(request, "Ugovor nije povezan. Proverite izbor ugovora.")
+                return self.render_to_response(self.get_context_data(contract_link_form=form))
+
         return redirect("nabavka:euf_invoice_detail", pk=self.object.pk)
+
+    @staticmethod
+    def _contract_execution_rows(invoice):
+        rows = []
+        links = invoice.contract_links.select_related("contract", "contract__contract_type")
+        for link in links:
+            contract = link.contract
+            execution_total = (
+                ProcurementInvoiceContractLink.objects.filter(contract=contract)
+                .aggregate(total=Sum("invoice__amount"))
+                .get("total")
+                or 0
+            )
+            has_fixed_value = contract.value_type == contract.VALUE_TYPE_FIXED and contract.value is not None
+            remaining = contract.value - execution_total if has_fixed_value else None
+            percent = (execution_total / contract.value * 100) if has_fixed_value and contract.value else None
+            rows.append(
+                {
+                    "link": link,
+                    "contract": contract,
+                    "execution_total": execution_total,
+                    "remaining": remaining,
+                    "percent": percent,
+                    "has_fixed_value": has_fixed_value,
+                }
+            )
+        return rows
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -122,6 +167,9 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 "title": f"Faktura {self.object.invoice_number}",
                 "invoice_form": kwargs.get("invoice_form") or ProcurementInvoiceForm(instance=self.object),
                 "item_link_form": kwargs.get("item_link_form") or EufInvoiceItemLinkForm(),
+                "contract_link_form": kwargs.get("contract_link_form")
+                or ProcurementInvoiceContractLinkForm(invoice=self.object),
+                "contract_execution_rows": self._contract_execution_rows(self.object),
                 "item_links": self.object.item_links.select_related(
                     "procurement_item",
                     "procurement_item__procurement_case",
@@ -140,3 +188,12 @@ class ProcurementInvoiceLinkDeleteView(RolePermissionRequiredMixin, LoginRequire
         link.delete()
         messages.success(request, "Veza stavke i fakture je obrisana.")
         return redirect(next_url or reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice_pk}))
+
+
+class ProcurementInvoiceContractLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    def post(self, request, pk):
+        link = get_object_or_404(ProcurementInvoiceContractLink, pk=pk)
+        invoice_pk = link.invoice_id
+        link.delete()
+        messages.success(request, "Veza fakture i ugovora je obrisana.")
+        return redirect("nabavka:euf_invoice_detail", pk=invoice_pk)

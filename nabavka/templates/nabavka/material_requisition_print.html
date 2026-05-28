@@ -3,7 +3,7 @@
 <html lang="sr">
 <head>
   <meta charset="utf-8">
-  <title>Štampa zahteva</title>
+  <title>Štampa trebovanja materijala</title>
   <style>
     @page { size: A4 portrait; margin: 0; }
     body{margin:0;padding:0;background:#f3f3f3;}
@@ -33,7 +33,7 @@
     .list-table{width:100%; border-collapse:collapse; margin-top:1mm;}
     .list-table td{border:1px solid #000; padding:0.34mm 0.51mm; font-size:8.4pt; height:5.1mm;}
     .footer-sign{display:flex; justify-content:space-between; margin-top:5mm; font-size:8pt;}
-    .signature{width:36%; text-align:center;}
+    .signature{width:30%; text-align:center;}
     .signature .line{display:block; border-bottom:1px solid #000; margin-top:7.2mm;}
   </style>
 </head>
@@ -43,9 +43,9 @@
       <div class="print-toolbar" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0;">
         <span class="text-muted" style="font-size:13px;">
           {% if rows_pages|length > 1 %}
-            Štampa svih lista ({{ rows_pages|length }} strana)
+            Štampa svih trebovanja ({{ rows_pages|length }} strana)
           {% else %}
-            Štampa liste
+            Štampa trebovanja
           {% endif %}
         </span>
         <div class="btn-group" style="gap:6px;">
@@ -53,16 +53,16 @@
             ← Nazad
           </a>
           <button class="btn btn-primary" style="border-radius:8px; padding:8px 16px;" onclick="window.print()">
-            {% if rows_pages|length > 1 %}Štampaj sve liste{% else %}Štampaj{% endif %}
+            {% if rows_pages|length > 1 %}Štampaj sva trebovanja{% else %}Štampaj{% endif %}
           </button>
         </div>
       </div>
 
       {% for rows in rows_pages %}
       <section class="a4-page">
-        {% include "nabavka/case_print_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}
+        {% include "nabavka/material_requisition_print_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}
         <div style="margin:16mm 0; border-top:1px dashed #666;"></div>
-        {% include "nabavka/case_print_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}
+        {% include "nabavka/material_requisition_print_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}
       </section>
       {% endfor %}
     </div>

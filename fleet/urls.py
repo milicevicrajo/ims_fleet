@@ -161,6 +161,10 @@ from .views.reports import (
     export_nis_teretna_excel,
     export_omv_putnicka_excel,
     export_omv_teretna_excel,
+    fuel_job_code_nis_putnicka_view,
+    fuel_job_code_nis_teretna_view,
+    fuel_job_code_omv_putnicka_view,
+    fuel_job_code_omv_teretna_view,
     kasko_rate_view,
     magacin_view,
     nis_putnicka_view,
@@ -343,6 +347,10 @@ urlpatterns = [
     
     # IZVESTAJI 
     path('izvestaji/', reports_index, name='reports_index'),
+    path('izvestaji/gorivo-sifra-posla/omv-putnicka/', fuel_job_code_omv_putnicka_view, name='fuel_job_code_omv_putnicka'),
+    path('izvestaji/gorivo-sifra-posla/omv-teretna/', fuel_job_code_omv_teretna_view, name='fuel_job_code_omv_teretna'),
+    path('izvestaji/gorivo-sifra-posla/nis-putnicka/', fuel_job_code_nis_putnicka_view, name='fuel_job_code_nis_putnicka'),
+    path('izvestaji/gorivo-sifra-posla/nis-teretna/', fuel_job_code_nis_teretna_view, name='fuel_job_code_nis_teretna'),
     path('izvestaji/omv_putnicka/', omv_putnicka_view, name='omv_putnicka'),
     path('izvestaji/omv_putnicka/export', export_omv_putnicka_excel, name='export_omv_putnicka_excel'),
     path('izvestaji/nis_putnicka/', nis_putnicka_view, name='nis_putnicka'),

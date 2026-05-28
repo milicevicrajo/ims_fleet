@@ -2,8 +2,8 @@ from django.contrib import admin
 
 from .models import (
     ProcurementCase,
-    ProcurementContractLink,
     ProcurementInvoice,
+    ProcurementInvoiceContractLink,
     ProcurementInvoiceLink,
     ProcurementItem,
     ProcurementItemInvoiceLink,
@@ -59,10 +59,10 @@ class ProcurementItemInvoiceLinkAdmin(admin.ModelAdmin):
     ]
 
 
-@admin.register(ProcurementContractLink)
-class ProcurementContractLinkAdmin(admin.ModelAdmin):
-    list_display = ["procurement_case", "contract", "invoice_link", "created_at"]
-    search_fields = ["procurement_case__case_number", "contract__contract_number"]
+@admin.register(ProcurementInvoiceContractLink)
+class ProcurementInvoiceContractLinkAdmin(admin.ModelAdmin):
+    list_display = ["invoice", "contract", "created_by", "created_at"]
+    search_fields = ["invoice__invoice_number", "invoice__supplier_name", "contract__contract_number"]
 
 
 @admin.register(PurchaseOrder)

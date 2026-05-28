@@ -108,6 +108,83 @@
     </div>
 
     <div class="card shadow-sm mt-3">
+      <div class="card-header"><h4 class="mb-0">Kupovni ugovori i izvršenje</h4></div>
+      <div class="card-body">
+        <form method="post" class="border rounded p-3 mb-3 bg-light">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="link_contract">
+          <div class="mb-3">
+            <label class="form-label" for="{{ contract_link_form.contract.id_for_label }}">{{ contract_link_form.contract.label }}</label>
+            {{ contract_link_form.contract|add_class:"form-select select2-method" }}
+            <div class="form-text">Prikazuju se samo kupovni ugovori koji nisu već povezani sa ovom fakturom.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ contract_link_form.note.id_for_label }}">{{ contract_link_form.note.label }}</label>
+            {{ contract_link_form.note|add_class:"form-control" }}
+          </div>
+          <button class="btn btn-outline-success" type="submit">
+            <i class="mdi mdi-link"></i> Poveži ugovor
+          </button>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Ugovor</th>
+                <th>Vrednost</th>
+                <th>Povezano faktura</th>
+                <th>Razlika</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in contract_execution_rows %}
+              <tr>
+                <td>
+                  <a href="{% url 'ugovori:contract_detail' row.contract.pk %}">
+                    <strong>{{ row.contract.contract_number }}</strong>
+                  </a>
+                  <div class="text-muted small">{{ row.contract.title|truncatechars:55 }}</div>
+                  {% if row.link.note %}<div class="small">{{ row.link.note }}</div>{% endif %}
+                </td>
+                <td>
+                  {% if row.has_fixed_value %}
+                    {{ row.contract.value|floatformat:2 }} {{ row.contract.currency }}
+                  {% else %}
+                    <span class="text-muted">Nema fiksnu vrednost</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {{ row.execution_total|floatformat:2 }} {{ row.contract.currency }}
+                  {% if row.percent is not None %}
+                    <div class="text-muted small">{{ row.percent|floatformat:1 }}%</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.remaining is not None %}
+                    {{ row.remaining|floatformat:2 }} {{ row.contract.currency }}
+                  {% else %}/{% endif %}
+                </td>
+                <td class="text-center">
+                  <form method="post" action="{% url 'nabavka:invoice_contract_link_delete' row.link.pk %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Skini vezu sa ugovorom">
+                      <i class="mdi mdi-link-off"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted">Faktura nije povezana sa kupovnim ugovorom.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
       <div class="card-header"><h4 class="mb-0">Poveži stavku</h4></div>
       <div class="card-body">
         <form method="post">

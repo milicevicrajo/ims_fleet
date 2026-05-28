@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .purchase-contract-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #17324d 0%, #25676e 52%, #5b7d3a 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(23, 50, 77, 0.18);
+  }
+  .purchase-contract-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .purchase-contract-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .purchase-contract-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .purchase-contract-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .purchase-contract-status.main { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .purchase-contract-status.annex { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .purchase-contract-status.active { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .purchase-contract-status.draft { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .purchase-contract-status.expired { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
+  .purchase-contract-status.terminated,
+  .purchase-contract-status.archived { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  tr.purchase-contract-closed td { background: #f3f6f9 !important; color: #657282; }
+  .contract-title { display: block; max-width: 360px; }
+  .contract-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
+</style>
+
+<div class="purchase-contract-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Kupovni ugovori</h1>
+    <p>Pregled kupovnih ugovora iz modula ugovori, za povezivanje sa zahtevima, narudžbenicama i fakturama.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'ugovori:contract_list' %}?contract_type={{ request.GET.contract_type|default:'' }}"
+       class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-open-in-new"></i> Svi ugovori
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="purchase-contract-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.q.label }}</label>
+              {{ filter.form.q|add_class:"form-control" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.partner.label }}</label>
+              {{ filter.form.partner|add_class:"form-control" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.kind.label }}</label>
+              {{ filter.form.kind|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.status.label }}</label>
+              {{ filter.form.status|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-1">
+              <label class="form-label mb-1">{{ filter.form.year.label }}</label>
+              {{ filter.form.year|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-1 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Filter">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'nabavka:purchase_contract_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="PurchaseContractsTable" class="display compact table table-hover table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>Broj ugovora</th>
+                <th>Vrsta</th>
+                <th>Predmet</th>
+                <th>Stranke</th>
+                <th>Status</th>
+                <th>Datum</th>
+                <th>Vazi do</th>
+                <th>Vrednost</th>
+                <th>Fakture</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for contract in contracts %}
+              <tr class="{% if contract.status == 'expired' or contract.status == 'terminated' or contract.status == 'archived' %}purchase-contract-closed{% endif %}">
+                <td>
+                  <a href="{% url 'ugovori:contract_detail' pk=contract.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="mdi mdi-eye"></i> {{ contract.contract_number }}
+                  </a>
+                  {% if contract.parent_contract %}
+                    <span class="contract-muted">Glavni: {{ contract.parent_contract.contract_number }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if contract.kind == "MAIN" %}
+                    <span class="purchase-contract-status main"><i class="mdi mdi-file-document"></i> Glavni</span>
+                  {% else %}
+                    <span class="purchase-contract-status annex"><i class="mdi mdi-file-document-multiple"></i> Aneks</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <strong class="contract-title">{{ contract.title|truncatechars:70 }}</strong>
+                  {% if contract.subject %}
+                    <span class="contract-muted">{{ contract.subject|striptags|truncatechars:90 }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% for party in contract.parties.all %}
+                    <span class="badge bg-light text-dark border me-1" title="{{ party.partner.name }}">
+                      {{ party.partner.name|truncatechars:45 }}
+                    </span>
+                    {% if party.party_contract_number %}
+                      <span class="contract-muted">Br. kod stranke: {{ party.party_contract_number }}</span>
+                    {% endif %}
+                  {% empty %}/{% endfor %}
+                </td>
+                <td>
+                  <span class="purchase-contract-status {{ contract.status }}">
+                    {% if contract.status == 'active' %}
+                      <i class="mdi mdi-check-circle"></i>
+                    {% elif contract.status == 'draft' %}
+                      <i class="mdi mdi-file-document-outline"></i>
+                    {% elif contract.status == 'expired' %}
+                      <i class="mdi mdi-clock-alert"></i>
+                    {% else %}
+                      <i class="mdi mdi-archive"></i>
+                    {% endif %}
+                    {{ contract.get_status_display }}
+                  </span>
+                </td>
+                <td>{{ contract.contract_date|date:"d.m.Y" }}</td>
+                <td>{% if contract.valid_to %}{{ contract.valid_to|date:"d.m.Y" }}{% else %}/{% endif %}</td>
+                <td>
+                  {% if contract.value_type == "fixed" and contract.value %}
+                    {{ contract.value|floatformat:2 }} {{ contract.currency }}
+                  {% elif contract.unit_price %}
+                    {{ contract.unit_price|floatformat:2 }} {{ contract.currency }} / {{ contract.unit_label|default:"jedinica" }}
+                  {% else %}/{% endif %}
+                </td>
+                <td>
+                  {% if contract.linked_invoice_count %}
+                    <span class="badge bg-success">{{ contract.linked_invoice_count }}</span>
+                    {% if contract.linked_invoice_amount %}
+                      <span class="contract-muted">{{ contract.linked_invoice_amount|floatformat:2 }} {{ contract.currency }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="badge bg-light text-dark border">0</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Broj ugovora</th>
+                <th>Vrsta</th>
+                <th>Predmet</th>
+                <th>Stranke</th>
+                <th>Status</th>
+                <th>Datum</th>
+                <th>Vazi do</th>
+                <th>Vrednost</th>
+                <th>Fakture</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#PurchaseContractsTable', {
+        exportTitle: '{{ title }}',
+        order: [[5, 'desc']],
+        autoSelectThreshold: 25,
+        scrollX: true
+      });
+    }
+  });
+</script>
+{% endblock %}

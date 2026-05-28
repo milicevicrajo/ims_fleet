@@ -38,7 +38,7 @@
             <div class="col-auto">
                 <div>
                     <button type="submit" class="btn btn-primary">Filtriraj</button>
-                    <a href="{% url 'export_nis_putnicka_excel' %}?godina={{ request.GET.godina }}&mesec={{ request.GET.mesec }}&polovina={{ request.GET.polovina }}" class="btn btn-success">
+                    <a href="{% url 'export_nis_teretna' %}?godina={{ request.GET.godina }}&mesec={{ request.GET.mesec }}&polovina={{ request.GET.polovina }}" class="btn btn-success">
                         Preuzmi Excel
                     </a>
                 </div>
@@ -49,13 +49,10 @@
                 <thead>
                     <tr>
                         <th>Tip vozila</th>
-                        <th>Šifra posla</th>
-                        <th>Reg. oznaka</th>
-                        <th>Kartica</th>
-                        <th>Datum</th>
-                        <th>Proizvod</th>
-                        <th>Količina</th>
-                        <th>Cena</th>
+                        <th>SifPos</th>
+                        <th>Godina</th>
+                        <th>Mesec</th>
+                        <th>Polovina</th>
                         <th>Bruto</th>
                         <th>Neto</th>
                     </tr>
@@ -65,14 +62,15 @@
                     <tr>
                         <td>{{ row.tipvozila }}</td>
                         <td>{{ row.sifpos }}</td>
-                        <td>{{ row.regozn }}</td>
-                        <td>{{ row.kartica }}</td>
-                        <td>{{ row.datum|date:"d.m.Y H:i" }}</td>
-                        <td>{{ row.proizvod }}</td>
-                        <td>{{ row.kolicina }}</td>
-                        <td>{{ row.cena }}</td>
-                        <td>{{ row.bruto }}</td>
-                        <td>{{ row.neto }}</td>
+                        <td>{{ row.godina }}</td>
+                        <td>{{ row.mesec }}</td>
+                        <td>{{ row.polovina }}</td>
+                        <td>{{ row.bruto|floatformat:2 }}</td>
+                        <td>{{ row.neto|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">Nema podataka za izabrane filtere.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

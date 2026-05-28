@@ -14,10 +14,9 @@ from django_filters.views import FilterView
 from core.mixins import RolePermissionRequiredMixin
 
 from ..filters import ProcurementCaseFilter
-from ..forms import ProcurementCaseForm, ProcurementContractLinkForm, ProcurementItemForm, ProcurementItemInvoiceLinkForm, ProcurementStatusLogForm
+from ..forms import ProcurementCaseForm, ProcurementItemForm, ProcurementItemInvoiceLinkForm, ProcurementStatusLogForm
 from ..models import (
     ProcurementCase,
-    ProcurementContractLink,
     ProcurementInvoice,
     ProcurementItem,
     ProcurementItemInvoiceLink,
@@ -162,7 +161,6 @@ class ProcurementCaseDetailView(NabavkaContextMixin, RolePermissionRequiredMixin
         ).prefetch_related(
             Prefetch("items", queryset=ProcurementItem.objects.select_related("invoice_link__invoice").order_by("id")),
             "invoice_links",
-            "contract_links__contract",
             "purchase_orders",
             "status_logs__created_by",
         )
@@ -174,12 +172,7 @@ class ProcurementCaseDetailView(NabavkaContextMixin, RolePermissionRequiredMixin
                 "title": str(self.object),
                 "item_invoice_form": ProcurementItemInvoiceLinkForm(),
                 "available_invoices": ProcurementInvoice.objects.all().order_by("-invoice_date", "-id")[:500],
-                "item_invoice_links": ProcurementItemInvoiceLink.objects.select_related(
-                    "procurement_item",
-                    "invoice",
-                    "created_by",
-                ).filter(procurement_item__procurement_case=self.object),
-                "contract_link_form": ProcurementContractLinkForm(procurement_case=self.object),
+                "unlinked_items_count": self.object.items.filter(invoice_link__isnull=True).count(),
                 "status_log_form": ProcurementStatusLogForm(initial={"new_status": self.object.status}),
             }
         )
@@ -220,6 +213,15 @@ class ProcurementCasePrintView(NabavkaContextMixin, RolePermissionRequiredMixin,
                 "next_url": self.request.GET.get("next") or reverse("nabavka:case_detail", kwargs={"pk": procurement_case.pk}),
             }
         )
+        return ctx
+
+
+class ProcurementCaseMaterialRequisitionPrintView(ProcurementCasePrintView):
+    template_name = "nabavka/material_requisition_print.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["print_date"] = timezone.localdate()
         return ctx
 
 
@@ -352,6 +354,47 @@ class ProcurementItemInvoiceLinkCreateView(RolePermissionRequiredMixin, LoginReq
         return redirect("nabavka:case_detail", pk=procurement_case.pk)
 
 
+class ProcurementCaseInvoiceLinkCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:item_invoice_link_create"
+
+    def post(self, request, case_pk):
+        procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
+        invoice = get_object_or_404(ProcurementInvoice, pk=request.POST.get("invoice"))
+        note = (request.POST.get("note") or "").strip()
+        items = list(
+            ProcurementItem.objects.filter(
+                procurement_case=procurement_case,
+                invoice_link__isnull=True,
+            ).order_by("id")
+        )
+
+        if not items:
+            messages.warning(request, "Sve stavke su vec povezane sa fakturom.")
+            return redirect("nabavka:case_detail", pk=procurement_case.pk)
+
+        ProcurementItemInvoiceLink.objects.bulk_create(
+            [
+                ProcurementItemInvoiceLink(
+                    procurement_item=item,
+                    invoice=invoice,
+                    note=note,
+                    created_by=request.user,
+                )
+                for item in items
+            ]
+        )
+
+        if procurement_case.status == ProcurementCase.Status.WAITING_INVOICE:
+            procurement_case.status = ProcurementCase.Status.INVOICE_LINKED
+            procurement_case.save(update_fields=["status", "updated_at"])
+
+        messages.success(
+            request,
+            f"Faktura {invoice.invoice_number} je povezana sa {len(items)} stavki.",
+        )
+        return redirect("nabavka:case_detail", pk=procurement_case.pk)
+
+
 class ProcurementItemInvoiceLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, case_pk, item_pk):
         procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
@@ -359,29 +402,6 @@ class ProcurementItemInvoiceLinkDeleteView(RolePermissionRequiredMixin, LoginReq
         link = get_object_or_404(ProcurementItemInvoiceLink, procurement_item=procurement_item)
         link.delete()
         messages.success(request, "Veza stavke i fakture je obrisana.")
-        return redirect("nabavka:case_detail", pk=procurement_case.pk)
-
-
-class ProcurementContractLinkCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
-    def post(self, request, case_pk):
-        procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
-        form = ProcurementContractLinkForm(request.POST, procurement_case=procurement_case)
-        if form.is_valid():
-            link = form.save(commit=False)
-            link.procurement_case = procurement_case
-            link.created_by = request.user
-            link.save()
-            messages.success(request, "Ugovor je povezan.")
-        else:
-            messages.error(request, "Ugovor nije povezan. Proverite unete podatke.")
-        return redirect("nabavka:case_detail", pk=procurement_case.pk)
-
-
-class ProcurementContractLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
-    def post(self, request, case_pk, link_pk):
-        procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
-        get_object_or_404(ProcurementContractLink, pk=link_pk, procurement_case=procurement_case).delete()
-        messages.success(request, "Veza ugovora je obrisana.")
         return redirect("nabavka:case_detail", pk=procurement_case.pk)
 
 

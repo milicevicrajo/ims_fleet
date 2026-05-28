@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+{% load humanize %}
+
+{% block content %}
+<style>
+  .fuel-report-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .fuel-report-hero h1 { font-size: 1.55rem; margin: 0; letter-spacing: 0; }
+  .fuel-report-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .fuel-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .fuel-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 700;
+    font-size: .82rem;
+    background: #e8f0fb;
+    color: #174f83;
+    border: 1px solid #c9d9ec;
+  }
+</style>
+
+<div class="fuel-report-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Izvestaj koristi istorijsku sifru posla vozila na datum transakcije goriva.</p>
+  </div>
+  <a class="btn btn-outline-light btn-sm" href="{{ request.path }}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}export=1">
+    <i class="mdi mdi-file-excel"></i> Excel
+  </a>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="fuel-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+          <label for="id_godina" class="form-label mb-1">{{ form.godina.label }}</label>
+          {{ form.godina|add_class:'form-select form-control select2-method' }}
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="id_mesec" class="form-label mb-1">{{ form.mesec.label }}</label>
+          {{ form.mesec|add_class:'form-select form-control select2-method' }}
+        </div>
+        <div class="col-12 col-md-3">
+          <label for="id_polovina" class="form-label mb-1">{{ form.polovina.label }}</label>
+          {{ form.polovina|add_class:'form-select form-control select2-method' }}
+        </div>
+        {% if selected_sifpos %}
+          <input type="hidden" name="sifpos" value="{{ selected_sifpos }}">
+        {% endif %}
+        <div class="col-12 col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100"><i class="mdi mdi-filter"></i> Filter</button>
+          <a href="{{ request.path }}" class="btn btn-outline-secondary"><i class="mdi mdi-close"></i></a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h4 class="mb-0">Pregled po sifri posla</h4>
+      <span class="fuel-chip">{{ supplier_label }} / {{ vehicle_type_label }}</span>
+    </div>
+    <div class="table-responsive">
+      <table id="FuelJobCodeSummaryTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Sifra posla</th>
+            <th>Naziv</th>
+            <th>Godina</th>
+            <th>Mesec</th>
+            <th>Polovina</th>
+            <th>Broj transakcija</th>
+            <th>Kolicina</th>
+            <th>Bruto</th>
+            <th>Neto</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+            <tr>
+              <td>
+                <a class="btn btn-sm btn-outline-primary"
+                   href="{{ request.path }}?godina={{ row.godina }}&mesec={{ row.mesec }}&polovina={{ row.polovina }}&sifpos={{ row.sifpos|urlencode }}">
+                  <i class="mdi mdi-eye"></i> {{ row.sifpos }}
+                </a>
+              </td>
+              <td>{{ row.naziv_sifre_posla|default:"-" }}</td>
+              <td>{{ row.godina }}</td>
+              <td>{{ row.mesec }}</td>
+              <td>{% if row.polovina == 1 %}Prva{% else %}Druga{% endif %}</td>
+              <td>{{ row.broj_transakcija }}</td>
+              <td>{{ row.kolicina|floatformat:2|intcomma }}</td>
+              <td>{{ row.bruto|floatformat:2|intcomma }}</td>
+              <td>{{ row.neto|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="9" class="text-center text-muted">Nema podataka za izabrane filtere.</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Sifra posla</th>
+            <th>Naziv</th>
+            <th>Godina</th>
+            <th>Mesec</th>
+            <th>Polovina</th>
+            <th>Broj transakcija</th>
+            <th>Kolicina</th>
+            <th>Bruto</th>
+            <th>Neto</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if selected_sifpos %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h4 class="mb-0">Detalj potrosnje po vozilu - {{ selected_sifpos }}</h4>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ request.path }}?godina={{ request.GET.godina }}&mesec={{ request.GET.mesec }}&polovina={{ request.GET.polovina }}">
+        <i class="mdi mdi-arrow-left"></i> Nazad na pregled
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table id="FuelJobCodeDetailTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Reg. oznaka</th>
+            <th>Vozilo</th>
+            <th>Kartica</th>
+            <th>Proizvod</th>
+            <th>Kolicina</th>
+            <th>Cena</th>
+            <th>Bruto</th>
+            <th>Neto</th>
+            <th>Km</th>
+            <th>Dodela sifre</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in detail_rows %}
+            <tr>
+              <td>{{ row.datum|date:"d.m.Y H:i" }}</td>
+              <td>{{ row.regozn }}</td>
+              <td>{{ row.vozilo }}</td>
+              <td>{{ row.kartica }}</td>
+              <td>{{ row.proizvod }}</td>
+              <td>{{ row.kolicina|floatformat:2|intcomma }}</td>
+              <td>{{ row.cena|floatformat:2|default:"-" }}</td>
+              <td>{{ row.bruto|floatformat:2|intcomma }}</td>
+              <td>{{ row.neto|floatformat:2|intcomma }}</td>
+              <td>{{ row.kilometraza|default:"-" }}</td>
+              <td>{{ row.datum_dodele_sifre|date:"d.m.Y"|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="11" class="text-center text-muted">Nema detalja za izabranu sifru posla.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#FuelJobCodeSummaryTable', {
+        exportTitle: '{{ title }}',
+        order: [[2, 'desc'], [3, 'desc'], [4, 'asc']],
+        autoSelectThreshold: 25,
+        scrollX: false
+      });
+      if (document.getElementById('FuelJobCodeDetailTable')) {
+        ReportsDT('#FuelJobCodeDetailTable', {
+          exportTitle: '{{ title }} - detalj',
+          order: [[0, 'asc']],
+          autoSelectThreshold: 25,
+          scrollX: false
+        });
+      }
+    }
+  });
+</script>
+{% endblock %}
