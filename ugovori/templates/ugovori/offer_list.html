@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .archive-hero{border-radius:8px;background:linear-gradient(135deg,#14395b 0%,#1f6f8b 48%,#2f8f6f 100%);color:#fff;padding:22px 24px;margin-bottom:16px;box-shadow:0 10px 26px rgba(20,57,91,.18);}
+  .archive-hero h1{font-size:1.6rem;margin:0;letter-spacing:0;}
+  .archive-hero p{margin:6px 0 0;color:rgba(255,255,255,.86);}
+  .archive-filter{background:#f8fafc;border:1px solid #e6ebf1;border-radius:8px;padding:14px;}
+  .archive-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 9px;font-weight:700;font-size:.82rem;white-space:nowrap;}
+  .archive-pill.outgoing{background:#e8f0fb;color:#174f83;border:1px solid #c9d9ec;}
+  .archive-pill.incoming{background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;}
+  .archive-pill.recorded{background:#fff4db;color:#7a4d00;border:1px solid #f1d38a;}
+  .archive-pill.accepted{background:#e7f7ef;color:#147044;}
+  .archive-pill.rejected{background:#fde8e8;color:#9b1c1c;}
+  .archive-pill.expired,.archive-pill.archived{background:#edf2f7;color:#526170;border:1px solid #cfd8e3;}
+</style>
+
+<div class="archive-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Ponude</h1>
+    <p>Arhiva nasih ponuda i ponuda koje su date Institutu.</p>
+  </div>
+  <a href="{% url 'ugovori:offer_create' %}" class="btn btn-light btn-sm">
+    <i class="mdi mdi-plus"></i> Nova ponuda
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body border-bottom">
+    <form method="get" class="archive-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-lg-3">
+          <label class="form-label mb-1">{{ filter.form.partner.label }}</label>
+          {{ filter.form.partner|add_class:"form-control" }}
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1">{{ filter.form.direction.label }}</label>
+          {{ filter.form.direction|add_class:"form-select form-control select2-method" }}
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1">{{ filter.form.offer_type.label }}</label>
+          {{ filter.form.offer_type|add_class:"form-select form-control select2-method" }}
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1">{{ filter.form.status.label }}</label>
+          {{ filter.form.status|add_class:"form-select form-control select2-method" }}
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1">{{ filter.form.search.label }}</label>
+          {{ filter.form.search|add_class:"form-control" }}
+        </div>
+        <div class="col-12 col-md-1 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100" title="Filter"><i class="mdi mdi-filter"></i></button>
+          <a href="{% url 'ugovori:offer_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere"><i class="mdi mdi-close"></i></a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="OffersTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Broj</th>
+            <th>Datum</th>
+            <th>Smer</th>
+            <th>Partner</th>
+            <th>Tip</th>
+            <th>Predmet</th>
+            <th>Vrednost</th>
+            <th>Status</th>
+            <th class="text-center" data-filter="none">Akcije</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ponuda in ponude %}
+          <tr>
+            <td><a href="{% url 'ugovori:offer_detail' pk=ponuda.pk %}" class="btn btn-sm btn-outline-primary"><i class="mdi mdi-eye"></i> {{ ponuda.offer_number }}</a></td>
+            <td>{{ ponuda.offer_date|date:"d.m.Y" }}</td>
+            <td><span class="archive-pill {{ ponuda.direction }}">{{ ponuda.get_direction_display }}</span></td>
+            <td>{{ ponuda.partner_display }}</td>
+            <td>{{ ponuda.get_offer_type_display }}</td>
+            <td>{{ ponuda.subject }}</td>
+            <td>{% if ponuda.value %}{{ ponuda.value|floatformat:2 }} {{ ponuda.currency }}{% else %}/{% endif %}</td>
+            <td><span class="archive-pill {{ ponuda.status }}">{{ ponuda.get_status_display }}</span></td>
+            <td class="text-center">
+              <a href="{% url 'ugovori:offer_update' pk=ponuda.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
+              <a href="{% url 'ugovori:offer_delete' pk=ponuda.pk %}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i> Obrisi</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#OffersTable', { exportTitle: '{{ title }}', order: [[1, 'desc']], autoSelectThreshold: 25 });
+    }
+  });
+</script>
+{% endblock %}

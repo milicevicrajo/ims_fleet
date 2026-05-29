@@ -309,6 +309,23 @@ class ProcurementInvoice(models.Model):
     warehouse = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Magacin"))
     registration = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Registracija"))
     center_name = models.CharField(max_length=150, blank=True, null=True, verbose_name=_("Naziv centra"))
+    job_code = models.ForeignKey(
+        "fleet.OrganizationalUnit",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="nabavka_invoices",
+        verbose_name=_("OJ / sifra posla"),
+    )
+    is_garage = models.BooleanField(default=False, verbose_name=_("Garaza"))
+    vehicle = models.ForeignKey(
+        "fleet.Vehicle",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="nabavka_invoices",
+        verbose_name=_("Vozilo"),
+    )
     goes_to_warehouse = models.BooleanField(default=False, verbose_name=_("Ide u magacin"))
     internal_note = models.TextField(blank=True, null=True, verbose_name=_("Interna napomena"))
     synced_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Sinhronizovano"))

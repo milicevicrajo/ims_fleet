@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .form-hero{border-radius:8px;background:linear-gradient(135deg,#14395b 0%,#1f6f8b 48%,#2f8f6f 100%);color:#fff;padding:20px 24px;margin-bottom:16px;box-shadow:0 10px 26px rgba(20,57,91,.18);}
+  .form-hero h1{font-size:1.45rem;margin:0;letter-spacing:0;}
+  .form-hero p{margin:6px 0 0;color:rgba(255,255,255,.86);}
+  .form-section{border:1px solid #e6ebf1;border-radius:8px;padding:16px;margin-bottom:16px;background:#fff;}
+  .form-section-title{display:flex;align-items:center;gap:8px;margin-bottom:14px;color:#14395b;font-weight:700;}
+</style>
+
+<div class="form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Osnovni podaci i dokument zahteva.</p>
+  </div>
+  <a class="btn btn-light btn-sm" href="{{ cancel_url }}"><i class="mdi mdi-arrow-left"></i> Nazad</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+  {% endif %}
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-file-document-edit"></i> Osnovno</div>
+        <div class="row">
+          <div class="col-12 col-md-4 mb-3">
+            <label class="form-label" for="{{ form.request_number.id_for_label }}">{{ form.request_number.label }} <span class="text-danger">*</span></label>
+            {{ form.request_number }}
+            {% if form.request_number.errors %}<div class="invalid-feedback d-block">{{ form.request_number.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-4 mb-3">
+            <label class="form-label" for="{{ form.request_date.id_for_label }}">{{ form.request_date.label }} <span class="text-danger">*</span></label>
+            {{ form.request_date }}
+            {% if form.request_date.errors %}<div class="invalid-feedback d-block">{{ form.request_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-4 mb-3">
+            <label class="form-label" for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 mb-3">
+            <label class="form-label" for="{{ form.partner.id_for_label }}">{{ form.partner.label }}</label>
+            {{ form.partner }}
+            {% if form.partner.errors %}<div class="invalid-feedback d-block">{{ form.partner.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-6 mb-3">
+            <label class="form-label" for="{{ form.external_partner_name.id_for_label }}">{{ form.external_partner_name.label }}</label>
+            {{ form.external_partner_name }}
+            {% if form.external_partner_name.errors %}<div class="invalid-feedback d-block">{{ form.external_partner_name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-4 mb-3">
+            <label class="form-label" for="{{ form.request_type.id_for_label }}">{{ form.request_type.label }}</label>
+            {{ form.request_type }}
+            {% if form.request_type.errors %}<div class="invalid-feedback d-block">{{ form.request_type.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-8 mb-3">
+            <label class="form-label" for="{{ form.center.id_for_label }}">{{ form.center.label }}</label>
+            {{ form.center }}
+            {% if form.center.errors %}<div class="invalid-feedback d-block">{{ form.center.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title"><i class="mdi mdi-note-text"></i> Predmet</div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.subject.id_for_label }}">{{ form.subject.label }} <span class="text-danger">*</span></label>
+          {{ form.subject }}
+          {% if form.subject.errors %}<div class="invalid-feedback d-block">{{ form.subject.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="form-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+          {{ form.file }}
+          {% if form.file.errors %}<div class="invalid-feedback d-block">{{ form.file.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save"></i> Sacuvaj</button>
+        <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Otkazi</a>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

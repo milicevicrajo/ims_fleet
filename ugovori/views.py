@@ -15,17 +15,19 @@ from core.exporting import rows_to_xlsx_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
 from .apr_openapi import APR_OPENAPI_SOURCE, fetch_apr_companies, get_apr_company, update_partner_from_apr, update_partners_from_apr
-from .filters import ContractFilter
+from .filters import BusinessRequestFilter, ContractFilter, OfferFilter
 from .forms import (
     AnnexForm,
+    BusinessRequestForm,
     ContractForm,
     ContractGuaranteeForm,
     ContractMenicaLinkForm,
     ContractPartyFormSet,
     ContractTypeForm,
+    OfferForm,
     PartnerForm,
 )
-from .models import Contract, ContractGuarantee, ContractMenicaLink, ContractParty, ContractType, Partner
+from .models import BusinessRequest, Contract, ContractGuarantee, ContractMenicaLink, ContractParty, ContractType, Offer, Partner
 from .services import count_finance_partners, sync_finance_partner_batch, sync_finance_partners
 
 
@@ -561,6 +563,209 @@ class ContractTypeDeleteView(RolePermissionRequiredMixin, DeleteView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = f"Brisanje tipa: {self.object.name}"
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+# ---------------------------------------------------------------------------
+# Business request archive views
+# ---------------------------------------------------------------------------
+
+class BusinessRequestListView(RolePermissionRequiredMixin, FilterView):
+    model = BusinessRequest
+    template_name = "ugovori/business_request_list.html"
+    context_object_name = "zahtevi"
+    filterset_class = BusinessRequestFilter
+
+    def get_queryset(self):
+        return BusinessRequest.objects.select_related("partner", "created_by")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Zahtevi"
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class BusinessRequestCreateView(RolePermissionRequiredMixin, CreateView):
+    model = BusinessRequest
+    form_class = BusinessRequestForm
+    template_name = "ugovori/business_request_form.html"
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "Zahtev je uspesno sacuvan.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("ugovori:business_request_detail", kwargs={"pk": self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Novi zahtev"
+        ctx["cancel_url"] = reverse_lazy("ugovori:business_request_list")
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class BusinessRequestUpdateView(RolePermissionRequiredMixin, UpdateView):
+    model = BusinessRequest
+    form_class = BusinessRequestForm
+    template_name = "ugovori/business_request_form.html"
+
+    def form_valid(self, form):
+        messages.success(self.request, "Zahtev je uspesno azuriran.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("ugovori:business_request_detail", kwargs={"pk": self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = f"Izmena zahteva: {self.object.request_number}"
+        ctx["cancel_url"] = reverse_lazy("ugovori:business_request_detail", kwargs={"pk": self.object.pk})
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class BusinessRequestDetailView(RolePermissionRequiredMixin, DetailView):
+    model = BusinessRequest
+    template_name = "ugovori/business_request_detail.html"
+    context_object_name = "zahtev"
+
+    def get_queryset(self):
+        return BusinessRequest.objects.select_related("partner", "created_by").prefetch_related("offers")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = str(self.object)
+        ctx["offers"] = self.object.offers.select_related("partner").all()
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class BusinessRequestDeleteView(RolePermissionRequiredMixin, DeleteView):
+    model = BusinessRequest
+    template_name = "ugovori/business_request_confirm_delete.html"
+    success_url = reverse_lazy("ugovori:business_request_list")
+
+    def post(self, request, *args, **kwargs):
+        messages.success(request, "Zahtev je obrisan.")
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = f"Brisanje zahteva: {self.object.request_number}"
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+# ---------------------------------------------------------------------------
+# Offer archive views
+# ---------------------------------------------------------------------------
+
+class OfferListView(RolePermissionRequiredMixin, FilterView):
+    model = Offer
+    template_name = "ugovori/offer_list.html"
+    context_object_name = "ponude"
+    filterset_class = OfferFilter
+
+    def get_queryset(self):
+        return Offer.objects.select_related("partner", "request", "created_by")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Ponude"
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class OfferCreateView(RolePermissionRequiredMixin, CreateView):
+    model = Offer
+    form_class = OfferForm
+    template_name = "ugovori/offer_form.html"
+
+    def get_initial(self):
+        initial = super().get_initial()
+        request_id = self.request.GET.get("request")
+        if request_id:
+            request_obj = BusinessRequest.objects.filter(pk=request_id).select_related("partner").first()
+            if request_obj:
+                initial.update(
+                    {
+                        "request": request_obj,
+                        "partner": request_obj.partner,
+                        "external_partner_name": request_obj.external_partner_name,
+                        "offer_type": request_obj.request_type if request_obj.request_type in dict(Offer.OFFER_TYPE_CHOICES) else Offer.TYPE_SERVICE,
+                        "subject": request_obj.subject,
+                        "description": request_obj.description,
+                    }
+                )
+        return initial
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "Ponuda je uspesno sacuvana.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("ugovori:offer_detail", kwargs={"pk": self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Nova ponuda"
+        ctx["cancel_url"] = reverse_lazy("ugovori:offer_list")
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class OfferUpdateView(RolePermissionRequiredMixin, UpdateView):
+    model = Offer
+    form_class = OfferForm
+    template_name = "ugovori/offer_form.html"
+
+    def form_valid(self, form):
+        messages.success(self.request, "Ponuda je uspesno azurirana.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("ugovori:offer_detail", kwargs={"pk": self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = f"Izmena ponude: {self.object.offer_number}"
+        ctx["cancel_url"] = reverse_lazy("ugovori:offer_detail", kwargs={"pk": self.object.pk})
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class OfferDetailView(RolePermissionRequiredMixin, DetailView):
+    model = Offer
+    template_name = "ugovori/offer_detail.html"
+    context_object_name = "ponuda"
+
+    def get_queryset(self):
+        return Offer.objects.select_related("partner", "request", "created_by")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = str(self.object)
+        ctx["current_app"] = "ugovori"
+        return ctx
+
+
+class OfferDeleteView(RolePermissionRequiredMixin, DeleteView):
+    model = Offer
+    template_name = "ugovori/offer_confirm_delete.html"
+    success_url = reverse_lazy("ugovori:offer_list")
+
+    def post(self, request, *args, **kwargs):
+        messages.success(request, "Ponuda je obrisana.")
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = f"Brisanje ponude: {self.object.offer_number}"
         ctx["current_app"] = "ugovori"
         return ctx
 

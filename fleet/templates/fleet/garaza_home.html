@@ -76,49 +76,32 @@
       <div class="card-body d-flex flex-column gap-3">
         <div class="d-flex align-items-center gap-3">
           <div class="action-icon bg-primary-subtle text-primary">
+            <i class="mdi mdi-car-connected"></i>
+          </div>
+          <div>
+            <h5 class="mb-0">Zaduzenja vozila</h5>
+            <p class="text-muted small mb-0 action-text">Sva zaduzenja vozila na jednom mestu.</p>
+          </div>
+        </div>
+        <a href="{% url 'vehicle_travel_order_list' %}" class="btn btn-primary w-100" data-no-preloader>
+          Otvori zaduzenja
+        </a>
+      </div>
+    </div>
+
+    <div class="card action-card shadow-sm border-0">
+      <div class="card-body d-flex flex-column gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="action-icon bg-primary-subtle text-primary">
             <i class="mdi mdi-plus-circle-outline"></i>
           </div>
           <div>
-            <h5 class="mb-0">Novi putni nalog</h5>
-            <p class="text-muted small mb-0 action-text">Kreiraj novi putni nalog za vozilo.</p>
+            <h5 class="mb-0">Novo zaduzenje vozila</h5>
+            <p class="text-muted small mb-0 action-text">Kreiraj novo zaduzenje i odmah otvori dokumenta za stampu.</p>
           </div>
         </div>
-        <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-primary w-100" data-no-preloader>
+        <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-outline-primary w-100" data-no-preloader>
           Otvori obrazac
-        </a>
-      </div>
-    </div>
-
-    <div class="card action-card shadow-sm border-0">
-      <div class="card-body d-flex flex-column gap-3">
-        <div class="d-flex align-items-center gap-3">
-          <div class="action-icon bg-primary-subtle text-primary">
-            <i class="mdi mdi-timer-sand"></i>
-          </div>
-          <div>
-            <h5 class="mb-0">Otvoreni nalozi</h5>
-            <p class="text-muted small mb-0 action-text">Aktuelni putni nalozi koji su u toku.</p>
-          </div>
-        </div>
-        <a href="{% url 'vehicle_travel_order_open_list' %}" class="btn btn-outline-primary w-100" data-no-preloader>
-          Pogledaj otvorene
-        </a>
-      </div>
-    </div>
-
-    <div class="card action-card shadow-sm border-0">
-      <div class="card-body d-flex flex-column gap-3">
-        <div class="d-flex align-items-center gap-3">
-          <div class="action-icon bg-primary-subtle text-primary">
-            <i class="mdi mdi-check-circle-outline"></i>
-          </div>
-          <div>
-            <h5 class="mb-0">Zatvoreni nalozi</h5>
-            <p class="text-muted small mb-0 action-text">Arhiva zavrsenih putnih naloga.</p>
-          </div>
-        </div>
-        <a href="{% url 'vehicle_travel_order_closed_list' %}" class="btn btn-outline-primary w-100" data-no-preloader>
-          Pogledaj zavrsene
         </a>
       </div>
     </div>

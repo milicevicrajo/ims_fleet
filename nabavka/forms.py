@@ -153,14 +153,26 @@ class ProcurementItemInvoiceLinkForm(forms.ModelForm):
 class ProcurementInvoiceForm(forms.ModelForm):
     class Meta:
         model = ProcurementInvoice
-        fields = ["center_name", "goes_to_warehouse", "internal_note"]
+        fields = ["job_code", "is_garage", "vehicle", "goes_to_warehouse", "internal_note"]
         widgets = {
             "internal_note": forms.Textarea(attrs={"rows": 3}),
+            "job_code": Select2Widget(attrs={"class": "select2-method"}),
+            "vehicle": Select2Widget(attrs={"class": "select2-method"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["job_code"].required = False
+        self.fields["job_code"].queryset = OrganizationalUnit.objects.all().order_by("code")
+        self.fields["vehicle"].required = False
+        self.fields["vehicle"].queryset = Vehicle.objects.all().order_by("brand", "model")
         _style_fields(self.fields)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get("is_garage"):
+            cleaned_data["vehicle"] = None
+        return cleaned_data
 
 
 class ProcurementInvoiceContractLinkForm(forms.ModelForm):

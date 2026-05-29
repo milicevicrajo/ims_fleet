@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12 col-lg-8 mx-auto">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="mb-2">Stampanje zaduzenja vozila</h3>
+        <p class="text-muted mb-3">
+          Otvaram dokumenta za PN {{ order.pn_number }} u novim karticama.
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{{ request_url }}" target="_blank" class="btn btn-outline-info" data-no-preloader>
+            <i class="mdi mdi-printer"></i> Zahtev
+          </a>
+          {% if previous_report_url %}
+          <a href="{{ previous_report_url }}" target="_blank" class="btn btn-outline-dark" data-no-preloader>
+            <i class="mdi mdi-printer"></i> Obracun goriva prethodnog perioda
+          </a>
+          {% endif %}
+          <a href="{{ list_url }}" class="btn btn-primary">
+            <i class="mdi mdi-arrow-left"></i> Zaduzenja vozila
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.addEventListener('load', function () {
+    const urls = [
+      '{{ request_url|escapejs }}',
+      {% if previous_report_url %}'{{ previous_report_url|escapejs }}'{% else %}''{% endif %}
+    ].filter(Boolean);
+
+    urls.forEach(function (url) {
+      window.open(url, '_blank');
+    });
+
+    window.setTimeout(function () {
+      window.location.href = '{{ list_url|escapejs }}';
+    }, 700);
+  });
+</script>
+{% endblock %}

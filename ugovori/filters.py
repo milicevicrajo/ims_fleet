@@ -2,7 +2,7 @@ import django_filters
 from django.db.models import Q
 from django_filters import CharFilter, ChoiceFilter, DateFilter, ModelChoiceFilter
 
-from .models import Contract, ContractType
+from .models import BusinessRequest, Contract, ContractType, Offer
 
 
 class ContractFilter(django_filters.FilterSet):
@@ -112,6 +112,139 @@ class ContractFilter(django_filters.FilterSet):
         self.form.fields["year"].choices = [("", "---------")] + [
             (str(value), str(value)) for value in year_values
         ]
+        for field in self.form.fields.values():
+            if hasattr(field, "widget"):
+                from django.forms import Select, TextInput
+                if isinstance(field.widget, Select):
+                    field.widget.attrs.setdefault("class", "form-select")
+                elif isinstance(field.widget, TextInput):
+                    field.widget.attrs.setdefault("class", "form-control")
+
+
+class BusinessRequestFilter(django_filters.FilterSet):
+    partner = CharFilter(method="filter_partner", label="Partner")
+    request_type = ChoiceFilter(
+        choices=[("", "---------")] + BusinessRequest.REQUEST_TYPE_CHOICES,
+        label="Tip",
+        empty_label=None,
+    )
+    status = ChoiceFilter(
+        choices=[("", "---------")] + BusinessRequest.STATUS_CHOICES,
+        label="Status",
+        empty_label=None,
+    )
+    request_date_from = DateFilter(
+        field_name="request_date",
+        lookup_expr="gte",
+        label="Datum od",
+    )
+    request_date_to = DateFilter(
+        field_name="request_date",
+        lookup_expr="lte",
+        label="Datum do",
+    )
+    search = CharFilter(method="filter_search", label="Pretraga")
+
+    class Meta:
+        model = BusinessRequest
+        fields = ["partner", "request_type", "status"]
+
+    def filter_partner(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        query = (
+            Q(partner__name__icontains=value)
+            | Q(partner__pib__icontains=value)
+            | Q(partner__maticni_broj__icontains=value)
+            | Q(external_partner_name__icontains=value)
+        )
+        if value.isdigit():
+            query |= Q(partner__external_sif_par=int(value))
+        return queryset.filter(query)
+
+    def filter_search(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(request_number__icontains=value)
+            | Q(subject__icontains=value)
+            | Q(description__icontains=value)
+            | Q(center__icontains=value)
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.form.fields.values():
+            if hasattr(field, "widget"):
+                from django.forms import Select, TextInput
+                if isinstance(field.widget, Select):
+                    field.widget.attrs.setdefault("class", "form-select")
+                elif isinstance(field.widget, TextInput):
+                    field.widget.attrs.setdefault("class", "form-control")
+
+
+class OfferFilter(django_filters.FilterSet):
+    partner = CharFilter(method="filter_partner", label="Partner")
+    direction = ChoiceFilter(
+        choices=[("", "---------")] + Offer.DIRECTION_CHOICES,
+        label="Smer",
+        empty_label=None,
+    )
+    offer_type = ChoiceFilter(
+        choices=[("", "---------")] + Offer.OFFER_TYPE_CHOICES,
+        label="Tip",
+        empty_label=None,
+    )
+    status = ChoiceFilter(
+        choices=[("", "---------")] + Offer.STATUS_CHOICES,
+        label="Status",
+        empty_label=None,
+    )
+    offer_date_from = DateFilter(
+        field_name="offer_date",
+        lookup_expr="gte",
+        label="Datum od",
+    )
+    offer_date_to = DateFilter(
+        field_name="offer_date",
+        lookup_expr="lte",
+        label="Datum do",
+    )
+    search = CharFilter(method="filter_search", label="Pretraga")
+
+    class Meta:
+        model = Offer
+        fields = ["partner", "direction", "offer_type", "status"]
+
+    def filter_partner(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        query = (
+            Q(partner__name__icontains=value)
+            | Q(partner__pib__icontains=value)
+            | Q(partner__maticni_broj__icontains=value)
+            | Q(external_partner_name__icontains=value)
+        )
+        if value.isdigit():
+            query |= Q(partner__external_sif_par=int(value))
+        return queryset.filter(query)
+
+    def filter_search(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(offer_number__icontains=value)
+            | Q(subject__icontains=value)
+            | Q(description__icontains=value)
+            | Q(request__request_number__icontains=value)
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         for field in self.form.fields.values():
             if hasattr(field, "widget"):
                 from django.forms import Select, TextInput

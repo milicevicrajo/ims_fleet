@@ -7,6 +7,8 @@ from django.views import View
 from django.views.generic import DetailView, ListView
 
 from core.mixins import RolePermissionRequiredMixin
+from core.models import OrganizationalUnit
+from fleet.models import Vehicle
 
 from ..forms import EufInvoiceItemLinkForm, ProcurementInvoiceContractLinkForm, ProcurementInvoiceForm
 from ..models import (
@@ -34,7 +36,7 @@ class EufInvoiceListView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                 | Q(center_name__icontains=q)
                 | Q(center__icontains=q)
             )
-        return invoices.annotate(
+        return invoices.select_related("job_code", "vehicle").annotate(
             item_links_total=Count("item_links", distinct=True),
             garage_item_links_total=Count(
                 "item_links",
@@ -50,6 +52,8 @@ class EufInvoiceListView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
             {
                 "title": "EUF fakture",
                 "q": q,
+                "job_codes": OrganizationalUnit.objects.all().order_by("code"),
+                "vehicles": Vehicle.objects.all().order_by("brand", "model"),
             }
         )
         return ctx
@@ -70,6 +74,21 @@ class EufInvoiceSyncView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
         return redirect(f"{redirect_url}?q={q}" if q else redirect_url)
 
 
+class EufInvoiceUpdateView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:euf_invoice_detail"
+
+    def post(self, request, pk):
+        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        form = ProcurementInvoiceForm(request.POST, instance=invoice)
+        next_url = request.POST.get("next")
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Detalji fakture su sacuvani.")
+        else:
+            messages.error(request, "Detalji fakture nisu sacuvani. Proverite unete podatke.")
+        return redirect(next_url or reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice.pk}))
+
+
 class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = ProcurementInvoice
     template_name = "nabavka/euf_invoice_detail.html"
@@ -77,10 +96,10 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
 
     def get_queryset(self):
         return ProcurementInvoice.objects.prefetch_related(
-            "item_links__procurement_item__procurement_case",
-            "item_links__created_by",
-            "contract_links__contract__contract_type",
-        )
+                "item_links__procurement_item__procurement_case",
+                "item_links__created_by",
+                "contract_links__contract__contract_type",
+        ).select_related("job_code", "vehicle")
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()

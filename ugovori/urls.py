@@ -2,6 +2,11 @@ from django.urls import path
 
 from .views import (
     AnnexCreateView,
+    BusinessRequestCreateView,
+    BusinessRequestDeleteView,
+    BusinessRequestDetailView,
+    BusinessRequestListView,
+    BusinessRequestUpdateView,
     ContractCreateView,
     ContractDeleteView,
     ContractDetailView,
@@ -15,6 +20,11 @@ from .views import (
     ContractTypeListView,
     ContractTypeUpdateView,
     ContractUpdateView,
+    OfferCreateView,
+    OfferDeleteView,
+    OfferDetailView,
+    OfferListView,
+    OfferUpdateView,
     PartnerCreateView,
     PartnerDeleteView,
     PartnerDetailView,
@@ -53,6 +63,20 @@ urlpatterns = [
     path("tipovi/novi/", ContractTypeCreateView.as_view(), name="contract_type_create"),
     path("tipovi/<int:pk>/izmeni/", ContractTypeUpdateView.as_view(), name="contract_type_update"),
     path("tipovi/<int:pk>/obrisi/", ContractTypeDeleteView.as_view(), name="contract_type_delete"),
+
+    # Zahtevi
+    path("zahtevi/", BusinessRequestListView.as_view(), name="business_request_list"),
+    path("zahtevi/novi/", BusinessRequestCreateView.as_view(), name="business_request_create"),
+    path("zahtevi/<int:pk>/", BusinessRequestDetailView.as_view(), name="business_request_detail"),
+    path("zahtevi/<int:pk>/izmeni/", BusinessRequestUpdateView.as_view(), name="business_request_update"),
+    path("zahtevi/<int:pk>/obrisi/", BusinessRequestDeleteView.as_view(), name="business_request_delete"),
+
+    # Ponude
+    path("ponude/", OfferListView.as_view(), name="offer_list"),
+    path("ponude/nova/", OfferCreateView.as_view(), name="offer_create"),
+    path("ponude/<int:pk>/", OfferDetailView.as_view(), name="offer_detail"),
+    path("ponude/<int:pk>/izmeni/", OfferUpdateView.as_view(), name="offer_update"),
+    path("ponude/<int:pk>/obrisi/", OfferDeleteView.as_view(), name="offer_delete"),
 
     # Ugovori
     path("", ContractListView.as_view(), name="contract_list"),

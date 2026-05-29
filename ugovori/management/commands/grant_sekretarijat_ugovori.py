@@ -10,13 +10,15 @@ from django.urls import URLPattern, URLResolver
 
 from core.models import PermissionCode, Role
 from ugovori import urls as ugovori_urls
-from ugovori.models import Contract, ContractParty, ContractType, Partner
+from ugovori.models import BusinessRequest, Contract, ContractParty, ContractType, Offer, Partner
 
 
 UGOVORI_MODELS = (
+    BusinessRequest,
     Contract,
     ContractParty,
     ContractType,
+    Offer,
     Partner,
 )
 

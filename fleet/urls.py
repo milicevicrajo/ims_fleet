@@ -152,6 +152,7 @@ from .views.vehicle_travel_orders import (
     VehicleTravelOrderDetailView,
     VehicleTravelOrderFuelReportView,
     VehicleTravelOrderListView,
+    VehicleTravelOrderPrintOpenView,
     VehicleTravelOrderRequestView,
     VehicleTravelOrderUpdateView,
 )
@@ -272,14 +273,13 @@ urlpatterns = [
     path('garaza/kvarovi/<int:pk>/trebovanje/', KvarTrebovanjeView.as_view(), name='kvar_trebovanje'),
 
     path('garaza/putni-nalozi-vozila/', VehicleTravelOrderListView.as_view(), name='vehicle_travel_order_list'),
-    path('garaza/putni-nalozi-vozila/otvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'open'}, name='vehicle_travel_order_open_list'),
-    path('garaza/putni-nalozi-vozila/zatvoreni/', VehicleTravelOrderListView.as_view(), {'status': 'closed'}, name='vehicle_travel_order_closed_list'),
     path('garaza/putni-nalozi-vozila/novo/', VehicleTravelOrderCreateView.as_view(), name='vehicle_travel_order_create'),
     path('garaza/putni-nalozi-vozila/<int:pk>/', VehicleTravelOrderDetailView.as_view(), name='vehicle_travel_order_detail'),
     path('garaza/putni-nalozi-vozila/<int:pk>/obracun/', VehicleTravelOrderFuelReportView.as_view(), name='vehicle_travel_order_fuel_report'),
     path('garaza/putni-nalozi-vozila/<int:pk>/izmena/', VehicleTravelOrderUpdateView.as_view(), name='vehicle_travel_order_update'),
     path('garaza/putni-nalozi-vozila/<int:pk>/zatvori/', VehicleTravelOrderCloseView.as_view(), name='vehicle_travel_order_close'),
     path('garaza/putni-nalozi-vozila/<int:pk>/zahtev/', VehicleTravelOrderRequestView.as_view(), name='vehicle_travel_order_request'),
+    path('garaza/putni-nalozi-vozila/<int:pk>/otvori-stampu/', VehicleTravelOrderPrintOpenView.as_view(), name='vehicle_travel_order_print_open'),
     path('garaza/putni-nalozi-vozila/<int:pk>/brisanje/', VehicleTravelOrderDeleteView.as_view(), name='vehicle_travel_order_delete'),
 
     path('putni-nalozi/', PutniNalogListView.as_view(), name='putninalog_list'),

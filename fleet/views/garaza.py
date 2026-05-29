@@ -20,6 +20,7 @@ from .vehicle_travel_orders import (
     VehicleTravelOrderDetailView,
     VehicleTravelOrderFuelReportView,
     VehicleTravelOrderListView,
+    VehicleTravelOrderPrintOpenView,
     VehicleTravelOrderRequestView,
     VehicleTravelOrderUpdateView,
 )

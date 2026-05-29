@@ -118,6 +118,304 @@ class ContractType(models.Model):
         return f"{self.code} – {self.name}"
 
 
+class BusinessRequest(models.Model):
+    TYPE_TESTING = "testing"
+    TYPE_SERVICE = "service"
+    TYPE_FIELD = "field"
+    TYPE_CONSULTING = "consulting"
+    TYPE_OTHER = "other"
+    REQUEST_TYPE_CHOICES = [
+        (TYPE_TESTING, "Ispitivanje"),
+        (TYPE_SERVICE, "Usluga"),
+        (TYPE_FIELD, "Izlazak na teren"),
+        (TYPE_CONSULTING, "Konsultacija"),
+        (TYPE_OTHER, "Ostalo"),
+    ]
+
+    STATUS_RECORDED = "recorded"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_COMPLETED = "completed"
+    STATUS_REJECTED = "rejected"
+    STATUS_ARCHIVED = "archived"
+    STATUS_CHOICES = [
+        (STATUS_RECORDED, "Evidentiran"),
+        (STATUS_IN_PROGRESS, "U radu"),
+        (STATUS_COMPLETED, "Zavrsen"),
+        (STATUS_REJECTED, "Odbijen"),
+        (STATUS_ARCHIVED, "Arhiviran"),
+    ]
+
+    request_number = models.CharField(max_length=100, unique=True, verbose_name="Broj zahteva")
+    request_date = models.DateField(verbose_name="Datum zahteva")
+    partner = models.ForeignKey(
+        Partner,
+        on_delete=models.PROTECT,
+        related_name="business_requests",
+        null=True,
+        blank=True,
+        verbose_name="Partner",
+    )
+    external_partner_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name="Naziv narucioca",
+    )
+    request_type = models.CharField(
+        max_length=20,
+        choices=REQUEST_TYPE_CHOICES,
+        default=TYPE_SERVICE,
+        db_index=True,
+        verbose_name="Tip zahteva",
+    )
+    subject = models.CharField(max_length=255, verbose_name="Predmet")
+    description = models.TextField(blank=True, null=True, verbose_name="Opis / napomena")
+    center = models.CharField(max_length=100, blank=True, default="", verbose_name="Centar / sektor")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_RECORDED,
+        db_index=True,
+        verbose_name="Status",
+    )
+    file = models.FileField(
+        upload_to="ugovori/zahtevi/%Y/%m/",
+        null=True,
+        blank=True,
+        verbose_name="Fajl zahteva",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ugovori_zahtevi_kreirani",
+    )
+
+    class Meta:
+        db_table = "ugovori_business_request"
+        verbose_name = "Zahtev"
+        verbose_name_plural = "Zahtevi"
+        ordering = ["-request_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["request_type", "status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.request_number} - {self.subject}"
+
+    @staticmethod
+    def _delete_file_after_commit(file_field):
+        if not file_field:
+            return
+
+        storage = file_field.storage
+        name = file_field.name
+        transaction.on_commit(lambda: storage.delete(name) if storage.exists(name) else None)
+
+    def save(self, *args, **kwargs):
+        old_file = None
+        if self.pk:
+            old_file = (
+                type(self).objects.filter(pk=self.pk)
+                .values_list("file", flat=True)
+                .first()
+            )
+
+        super().save(*args, **kwargs)
+
+        new_file = self.file.name if self.file else ""
+        if old_file and old_file != new_file:
+            old_field = self._meta.get_field("file").attr_class(
+                self,
+                self._meta.get_field("file"),
+                old_file,
+            )
+            self._delete_file_after_commit(old_field)
+
+    def delete(self, *args, **kwargs):
+        file_field = self.file
+        super().delete(*args, **kwargs)
+        self._delete_file_after_commit(file_field)
+
+    def partner_display(self):
+        if self.partner_id:
+            return self.partner.name
+        return self.external_partner_name or "-"
+
+
+class Offer(models.Model):
+    DIRECTION_OUTGOING = "outgoing"
+    DIRECTION_INCOMING = "incoming"
+    DIRECTION_CHOICES = [
+        (DIRECTION_OUTGOING, "Nasa ponuda"),
+        (DIRECTION_INCOMING, "Ponuda data nama"),
+    ]
+
+    TYPE_TESTING = "testing"
+    TYPE_SERVICE = "service"
+    TYPE_FIELD = "field"
+    TYPE_PROCUREMENT = "procurement"
+    TYPE_OTHER = "other"
+    OFFER_TYPE_CHOICES = [
+        (TYPE_TESTING, "Ispitivanje"),
+        (TYPE_SERVICE, "Usluga"),
+        (TYPE_FIELD, "Izlazak na teren"),
+        (TYPE_PROCUREMENT, "Nabavka"),
+        (TYPE_OTHER, "Ostalo"),
+    ]
+
+    STATUS_RECORDED = "recorded"
+    STATUS_ACCEPTED = "accepted"
+    STATUS_REJECTED = "rejected"
+    STATUS_EXPIRED = "expired"
+    STATUS_ARCHIVED = "archived"
+    STATUS_CHOICES = [
+        (STATUS_RECORDED, "Evidentirana"),
+        (STATUS_ACCEPTED, "Prihvacena"),
+        (STATUS_REJECTED, "Odbijena"),
+        (STATUS_EXPIRED, "Istekla"),
+        (STATUS_ARCHIVED, "Arhivirana"),
+    ]
+
+    CURRENCY_CHOICES = [
+        ("RSD", "RSD"),
+        ("EUR", "EUR"),
+        ("USD", "USD"),
+        ("CHF", "CHF"),
+    ]
+
+    offer_number = models.CharField(max_length=100, unique=True, verbose_name="Broj ponude")
+    offer_date = models.DateField(verbose_name="Datum ponude")
+    valid_until = models.DateField(null=True, blank=True, verbose_name="Vazi do")
+    direction = models.CharField(
+        max_length=20,
+        choices=DIRECTION_CHOICES,
+        default=DIRECTION_OUTGOING,
+        db_index=True,
+        verbose_name="Smer",
+    )
+    partner = models.ForeignKey(
+        Partner,
+        on_delete=models.PROTECT,
+        related_name="offers",
+        null=True,
+        blank=True,
+        verbose_name="Partner",
+    )
+    external_partner_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name="Naziv partnera",
+    )
+    request = models.ForeignKey(
+        BusinessRequest,
+        on_delete=models.SET_NULL,
+        related_name="offers",
+        null=True,
+        blank=True,
+        verbose_name="Zahtev",
+    )
+    offer_type = models.CharField(
+        max_length=20,
+        choices=OFFER_TYPE_CHOICES,
+        default=TYPE_SERVICE,
+        db_index=True,
+        verbose_name="Tip ponude",
+    )
+    subject = models.CharField(max_length=255, verbose_name="Predmet")
+    description = models.TextField(blank=True, null=True, verbose_name="Opis / napomena")
+    value = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Vrednost",
+    )
+    currency = models.CharField(max_length=10, choices=CURRENCY_CHOICES, default="RSD", verbose_name="Valuta")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_RECORDED,
+        db_index=True,
+        verbose_name="Status",
+    )
+    file = models.FileField(
+        upload_to="ugovori/ponude/%Y/%m/",
+        null=True,
+        blank=True,
+        verbose_name="Fajl ponude",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ugovori_ponude_kreirane",
+    )
+
+    class Meta:
+        db_table = "ugovori_offer"
+        verbose_name = "Ponuda"
+        verbose_name_plural = "Ponude"
+        ordering = ["-offer_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["direction", "status"]),
+            models.Index(fields=["offer_type", "status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.offer_number} - {self.subject}"
+
+    @staticmethod
+    def _delete_file_after_commit(file_field):
+        if not file_field:
+            return
+
+        storage = file_field.storage
+        name = file_field.name
+        transaction.on_commit(lambda: storage.delete(name) if storage.exists(name) else None)
+
+    def save(self, *args, **kwargs):
+        old_file = None
+        if self.pk:
+            old_file = (
+                type(self).objects.filter(pk=self.pk)
+                .values_list("file", flat=True)
+                .first()
+            )
+
+        super().save(*args, **kwargs)
+
+        new_file = self.file.name if self.file else ""
+        if old_file and old_file != new_file:
+            old_field = self._meta.get_field("file").attr_class(
+                self,
+                self._meta.get_field("file"),
+                old_file,
+            )
+            self._delete_file_after_commit(old_field)
+
+    def delete(self, *args, **kwargs):
+        file_field = self.file
+        super().delete(*args, **kwargs)
+        self._delete_file_after_commit(file_field)
+
+    def clean(self):
+        if self.valid_until and self.valid_until < self.offer_date:
+            raise ValidationError({"valid_until": "Datum 'Vazi do' ne sme biti pre datuma ponude."})
+
+    def partner_display(self):
+        if self.partner_id:
+            return self.partner.name
+        return self.external_partner_name or "-"
+
+
 class Contract(models.Model):
     MAIN = "MAIN"
     ANNEX = "ANNEX"

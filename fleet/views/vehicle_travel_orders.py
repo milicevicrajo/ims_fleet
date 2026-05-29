@@ -1,6 +1,5 @@
 import datetime
 from decimal import Decimal
-from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -45,12 +44,6 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
             .select_related("vehicle", "employee")
             .order_by("-created_at", "-pn_number")
         )
-        status = self.kwargs.get("status")
-        if status == "open":
-            queryset = queryset.filter(closed_at__isnull=True)
-        elif status == "closed":
-            queryset = queryset.filter(closed_at__isnull=False)
-
         vehicle_id = self.request.GET.get("vehicle")
         employee_id = self.request.GET.get("employee")
         status_filter = self.request.GET.get("status")
@@ -59,23 +52,16 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(vehicle_id=vehicle_id)
         if employee_id:
             queryset = queryset.filter(employee_id=employee_id)
-        if not status and status_filter == "open":
+        if status_filter == "open":
             queryset = queryset.filter(closed_at__isnull=True)
-        elif not status and status_filter == "closed":
+        elif status_filter == "closed":
             queryset = queryset.filter(closed_at__isnull=False)
         return queryset
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        status = self.kwargs.get("status")
-        if status == "open":
-            title = "Otvorena zaduzenja vozila"
-        elif status == "closed":
-            title = "Zatvorena zaduzenja vozila"
-        else:
-            title = "Zaduzenja vozila"
-        ctx["title"] = title
-        ctx["status"] = status
+        ctx["title"] = "Zaduzenja vozila"
+        ctx["status"] = ""
         ctx["selected_status"] = self.request.GET.get("status", "")
         ctx["selected_vehicle"] = self.request.GET.get("vehicle", "")
         ctx["selected_employee"] = self.request.GET.get("employee", "")
@@ -209,7 +195,7 @@ class VehicleTravelOrderFuelReportView(VehicleTravelOrderDetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["next_url"] = self.request.GET.get("next") or reverse("vehicle_travel_order_detail", args=[self.object.pk])
+        ctx["next_url"] = reverse("vehicle_travel_order_list")
         return ctx
 
 
@@ -241,12 +227,7 @@ class VehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMix
         return response
 
     def get_success_url(self):
-        next_url = reverse("vehicle_travel_order_detail", args=[self.object.pk])
-        query = {"next": next_url}
-        previous_order_id = getattr(self, "closed_previous_order_id", None)
-        if previous_order_id:
-            query["previous_report"] = reverse("vehicle_travel_order_fuel_report", args=[previous_order_id])
-        return f"{reverse('vehicle_travel_order_request', args=[self.object.pk])}?{urlencode(query)}"
+        return reverse("vehicle_travel_order_print_open", args=[self.object.pk])
 
 
 class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
@@ -291,7 +272,7 @@ class VehicleTravelOrderCloseView(RolePermissionRequiredMixin, LoginRequiredMixi
 class VehicleTravelOrderDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = VehicleTravelOrder
     template_name = "fleet/vehicle_travel_order_confirm_delete.html"
-    success_url = reverse_lazy("vehicle_travel_order_open_list")
+    success_url = reverse_lazy("vehicle_travel_order_list")
     context_object_name = "travel_order"
 
     def dispatch(self, request, *args, **kwargs):
@@ -333,8 +314,35 @@ class VehicleTravelOrderRequestView(RolePermissionRequiredMixin, LoginRequiredMi
                 "organizational_unit_code": getattr(organizational_unit, "code", ""),
                 "organizational_unit_name": getattr(organizational_unit, "name", ""),
                 "registration_number": getattr(traffic_card, "registration_number", ""),
-                "next_url": self.request.GET.get("next") or reverse("vehicle_travel_order_open_list"),
+                "next_url": reverse("vehicle_travel_order_list"),
                 "previous_report_url": self.request.GET.get("previous_report"),
+            }
+        )
+        return ctx
+
+
+class VehicleTravelOrderPrintOpenView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
+    template_name = "fleet/vehicle_travel_order_print_open.html"
+    required_permission_code = "vehicle_travel_order_create"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        order = get_object_or_404(
+            VehicleTravelOrder.objects.select_related("vehicle", "employee"),
+            pk=kwargs.get("pk"),
+        )
+        previous_order = get_previous_vehicle_travel_order(order)
+        ctx.update(
+            {
+                "title": "Otvaranje stampe zaduzenja",
+                "order": order,
+                "list_url": reverse("vehicle_travel_order_list"),
+                "request_url": reverse("vehicle_travel_order_request", args=[order.pk]),
+                "previous_report_url": (
+                    reverse("vehicle_travel_order_fuel_report", args=[previous_order.pk])
+                    if previous_order
+                    else ""
+                ),
             }
         )
         return ctx

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>{{ title }}</h2>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <p class="mb-3">
+      Da li ste sigurni da zelite da obrisete ponudu
+      <strong>{{ object.offer_number }}</strong> - {{ object.subject }}?
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">
+          <i class="mdi mdi-delete"></i> Da, obrisi
+        </button>
+        <a href="{% url 'ugovori:offer_detail' pk=object.pk %}" class="btn btn-outline-secondary">Otkazi</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

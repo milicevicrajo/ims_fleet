@@ -23,6 +23,7 @@ from .views.invoices import (
     EufInvoiceDetailView,
     EufInvoiceListView,
     EufInvoiceSyncView,
+    EufInvoiceUpdateView,
     ProcurementInvoiceContractLinkDeleteView,
     ProcurementInvoiceLinkDeleteView,
 )
@@ -54,6 +55,7 @@ urlpatterns = [
     path("zahtevi/<int:case_pk>/status/", ProcurementStatusLogCreateView.as_view(), name="status_log_create"),
     path("euf-fakture/", EufInvoiceListView.as_view(), name="euf_invoice_list"),
     path("euf-fakture/sync/", EufInvoiceSyncView.as_view(), name="euf_invoice_sync"),
+    path("euf-fakture/<int:pk>/izmeni/", EufInvoiceUpdateView.as_view(), name="euf_invoice_update"),
     path("euf-fakture/<int:pk>/", EufInvoiceDetailView.as_view(), name="euf_invoice_detail"),
     path("euf-fakture/veze/<int:pk>/obrisi/", ProcurementInvoiceLinkDeleteView.as_view(), name="invoice_link_delete"),
     path("euf-fakture/ugovori/<int:pk>/obrisi/", ProcurementInvoiceContractLinkDeleteView.as_view(), name="invoice_contract_link_delete"),

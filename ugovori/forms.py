@@ -5,7 +5,16 @@ from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
 from menice.models import Menica, UlaznaMenica
-from .models import Contract, ContractGuarantee, ContractMenicaLink, ContractParty, ContractType, Partner
+from .models import (
+    BusinessRequest,
+    Contract,
+    ContractGuarantee,
+    ContractMenicaLink,
+    ContractParty,
+    ContractType,
+    Offer,
+    Partner,
+)
 
 
 class PartnerForm(forms.ModelForm):
@@ -65,6 +74,134 @@ class ContractTypeForm(forms.ModelForm):
                 field.widget.attrs.setdefault("class", "form-control")
             elif isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs.setdefault("class", "form-check-input")
+
+
+class BusinessRequestForm(forms.ModelForm):
+    request_date = localized_date_field(label="Datum zahteva")
+
+    class Meta:
+        model = BusinessRequest
+        fields = [
+            "request_number",
+            "request_date",
+            "partner",
+            "external_partner_name",
+            "request_type",
+            "subject",
+            "description",
+            "center",
+            "status",
+            "file",
+        ]
+        widgets = {
+            "partner": Select2Widget(attrs={"class": "select2-method"}),
+            "request_type": Select2Widget(attrs={"class": "select2-method"}),
+            "status": Select2Widget(attrs={"class": "select2-method"}),
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["partner"].queryset = Partner.objects.filter(is_active=True)
+        self.fields["partner"].required = False
+        self.fields["partner"].empty_label = "Izaberi partnera..."
+        self.fields["external_partner_name"].required = False
+        self.fields["description"].required = False
+        self.fields["center"].required = False
+        self.fields["file"].required = False
+        for field in self.fields.values():
+            widget = field.widget
+            if isinstance(widget, Select2Widget):
+                existing = widget.attrs.get("class", "")
+                widget.attrs["class"] = f"{existing} select2-method".strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs.setdefault("class", "form-select")
+            elif not isinstance(widget, (forms.FileInput, forms.Textarea)):
+                widget.attrs.setdefault("class", "form-control")
+        self.fields["description"].widget.attrs.setdefault("class", "form-control")
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data.get("file")
+        if not uploaded_file:
+            return uploaded_file
+
+        max_size = getattr(settings, "MAX_CONTRACT_UPLOAD_SIZE", 50 * 1024 * 1024)
+        if uploaded_file.size > max_size:
+            max_mb = max_size / (1024 * 1024)
+            raise forms.ValidationError(
+                f"Fajl zahteva je veci od dozvoljenih {max_mb:.0f} MB."
+            )
+        return uploaded_file
+
+
+class OfferForm(forms.ModelForm):
+    offer_date = localized_date_field(label="Datum ponude")
+    valid_until = localized_date_field(label="Vazi do", required=False)
+
+    class Meta:
+        model = Offer
+        fields = [
+            "offer_number",
+            "offer_date",
+            "valid_until",
+            "direction",
+            "partner",
+            "external_partner_name",
+            "request",
+            "offer_type",
+            "subject",
+            "description",
+            "value",
+            "currency",
+            "status",
+            "file",
+        ]
+        widgets = {
+            "direction": Select2Widget(attrs={"class": "select2-method"}),
+            "partner": Select2Widget(attrs={"class": "select2-method"}),
+            "request": Select2Widget(attrs={"class": "select2-method"}),
+            "offer_type": Select2Widget(attrs={"class": "select2-method"}),
+            "currency": Select2Widget(attrs={"class": "select2-method"}),
+            "status": Select2Widget(attrs={"class": "select2-method"}),
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["partner"].queryset = Partner.objects.filter(is_active=True)
+        self.fields["partner"].required = False
+        self.fields["partner"].empty_label = "Izaberi partnera..."
+        self.fields["request"].queryset = BusinessRequest.objects.order_by("-request_date", "-created_at")
+        self.fields["request"].required = False
+        self.fields["request"].empty_label = "Izaberi zahtev..."
+        self.fields["external_partner_name"].required = False
+        self.fields["valid_until"].required = False
+        self.fields["description"].required = False
+        self.fields["value"].required = False
+        self.fields["file"].required = False
+        for field in self.fields.values():
+            widget = field.widget
+            if isinstance(widget, Select2Widget):
+                existing = widget.attrs.get("class", "")
+                widget.attrs["class"] = f"{existing} select2-method".strip()
+            elif isinstance(widget, forms.Select):
+                widget.attrs.setdefault("class", "form-select")
+            elif not isinstance(widget, (forms.FileInput, forms.Textarea)):
+                widget.attrs.setdefault("class", "form-control")
+        self.fields["description"].widget.attrs.setdefault("class", "form-control")
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data.get("file")
+        if not uploaded_file:
+            return uploaded_file
+
+        max_size = getattr(settings, "MAX_CONTRACT_UPLOAD_SIZE", 50 * 1024 * 1024)
+        if uploaded_file.size > max_size:
+            max_mb = max_size / (1024 * 1024)
+            raise forms.ValidationError(
+                f"Fajl ponude je veci od dozvoljenih {max_mb:.0f} MB."
+            )
+        return uploaded_file
 
 
 class ContractForm(forms.ModelForm):
