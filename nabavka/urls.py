@@ -4,6 +4,7 @@ from .views.alerts import AlertsView
 from .views.cases import (
     DashboardView,
     ProcurementCaseCreateView,
+    ProcurementCaseDataView,
     ProcurementCaseDeleteView,
     ProcurementCaseDetailView,
     ProcurementCaseInvoiceLinkCreateView,
@@ -49,6 +50,7 @@ app_name = "nabavka"
 urlpatterns = [
     path("", DashboardView.as_view(), name="dashboard"),
     path("zahtevi/", ProcurementCaseListView.as_view(), name="case_list"),
+    path("zahtevi/data/", ProcurementCaseDataView.as_view(), name="case_data"),
     path("zahtevi/novi/", ProcurementCaseCreateView.as_view(), name="case_create"),
     path("zahtevi/<int:pk>/", ProcurementCaseDetailView.as_view(), name="case_detail"),
     path("zahtevi/<int:pk>/stampaj/", ProcurementCasePrintView.as_view(), name="case_print"),

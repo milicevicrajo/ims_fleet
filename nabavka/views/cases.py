@@ -2,11 +2,14 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.middleware.csrf import get_token
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.html import escape
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, TemplateView, UpdateView
 from django_filters.views import FilterView
@@ -70,17 +73,188 @@ class ProcurementCaseListView(NabavkaContextMixin, RolePermissionRequiredMixin, 
     template_name = "nabavka/case_list.html"
     context_object_name = "cases"
     filterset_class = ProcurementCaseFilter
-    paginate_by = 50
-
     def get_queryset(self):
-        return ProcurementCase.objects.select_related(
-            "supplier", "contract", "vehicle", "job_code", "responsible"
-        ).order_by("-created_at", "-id")
+        return ProcurementCase.objects.none()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Zahtevi i procesi nabavke"
+        ctx["title"] = "Zahtevi za nabavku i uslugu"
         return ctx
+
+
+def _procurement_case_base_queryset():
+    return (
+        ProcurementCase.objects.select_related(
+            "supplier", "contract", "vehicle", "job_code", "responsible"
+        )
+        .prefetch_related("vehicle__traffic_cards")
+    )
+
+
+def _truncate_text(value, max_length):
+    text = str(value or "")
+    visible = f"{text[:max_length]}..." if len(text) > max_length else text
+    return f'<span title="{escape(text)}">{escape(visible)}</span>'
+
+
+def _case_type_html(procurement_case):
+    icon = {
+        ProcurementCase.CaseType.SERVICE: "mdi-briefcase-check",
+        ProcurementCase.CaseType.EQUIPMENT: "mdi-tools",
+    }.get(procurement_case.case_type, "mdi-cart-outline")
+    return (
+        '<span class="assignment-status type">'
+        f'<i class="mdi {icon}"></i> {escape(procurement_case.get_case_type_display())}'
+        "</span>"
+    )
+
+
+def _case_status_html(procurement_case):
+    icon = {
+        ProcurementCase.Status.COMPLETED: "mdi-check-circle",
+        ProcurementCase.Status.CANCELLED: "mdi-close-circle",
+        ProcurementCase.Status.WAITING_INVOICE: "mdi-file-document-check",
+        ProcurementCase.Status.INVOICE_LINKED: "mdi-file-document-check",
+        ProcurementCase.Status.IN_PROGRESS: "mdi-progress-clock",
+    }.get(procurement_case.status, "mdi-file-document-outline")
+    return (
+        f'<span class="assignment-status {escape(procurement_case.status)}">'
+        f'<i class="mdi {icon}"></i> {escape(procurement_case.get_status_display())}'
+        "</span>"
+    )
+
+
+def _case_garage_html(procurement_case):
+    if not procurement_case.is_garage:
+        return '<span class="assignment-status regular"><i class="mdi mdi-domain"></i> Ne</span>'
+    traffic_card = next(iter(procurement_case.vehicle.traffic_cards.all()), None) if procurement_case.vehicle else None
+    registration = (
+        f'<span class="case-muted">{escape(traffic_card.registration_number)}</span>'
+        if traffic_card
+        else ""
+    )
+    return f'<span class="assignment-status garage"><i class="mdi mdi-car-wrench"></i> Da</span>{registration}'
+
+
+def _case_job_code_html(procurement_case):
+    if not procurement_case.job_code:
+        return "/"
+    name = procurement_case.job_code.name or ""
+    return (
+        f'<span class="badge bg-light text-dark border" title="{escape(name)}">'
+        f"{escape(procurement_case.job_code.code)}</span>"
+        + (f'<span class="case-muted">{_truncate_text(name, 48)}</span>' if name else "")
+    )
+
+
+def _case_actions_html(request, procurement_case):
+    print_url = reverse("nabavka:case_print", kwargs={"pk": procurement_case.pk})
+    repeat_url = reverse("nabavka:case_repeat", kwargs={"pk": procurement_case.pk})
+    update_url = reverse("nabavka:case_update", kwargs={"pk": procurement_case.pk})
+    csrf_token = escape(get_token(request))
+    return (
+        f'<a class="btn btn-outline-secondary btn-sm" href="{print_url}" target="_blank" title="Stampa">'
+        '<i class="mdi mdi-printer"></i></a> '
+        f'<form method="post" action="{repeat_url}" class="d-inline">'
+        f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">'
+        '<button class="btn btn-outline-info btn-sm" type="submit" title="Ponovi zahtev">'
+        '<i class="mdi mdi-content-copy"></i></button></form> '
+        f'<a class="btn btn-outline-primary btn-sm" href="{update_url}">'
+        '<i class="mdi mdi-pencil"></i> Izmeni</a>'
+    )
+
+
+class ProcurementCaseDataView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:case_list"
+
+    def get(self, request):
+        cases = ProcurementCaseFilter(request.GET, queryset=_procurement_case_base_queryset()).qs
+        search_value = request.GET.get("search[value]", "").strip()
+        if search_value:
+            cases = cases.filter(
+                Q(case_number__icontains=search_value)
+                | Q(title__icontains=search_value)
+                | Q(description__icontains=search_value)
+                | Q(supplier__name__icontains=search_value)
+                | Q(job_code__code__icontains=search_value)
+                | Q(job_code__name__icontains=search_value)
+                | Q(vehicle__traffic_cards__registration_number__icontains=search_value)
+            ).distinct()
+
+        records_total = ProcurementCase.objects.count()
+        records_filtered = cases.count()
+        order_map = {
+            "0": "case_number",
+            "1": "title",
+            "2": "case_type",
+            "3": "status",
+            "4": "is_garage",
+            "5": "job_code__code",
+            "6": "supplier__name",
+            "7": "needed_by",
+        }
+        order_field = order_map.get(request.GET.get("order[0][column]", "0"), "created_at")
+        if request.GET.get("order[0][dir]", "desc") == "desc":
+            order_field = f"-{order_field}"
+        cases = cases.order_by(order_field, "-id")
+
+        try:
+            start = max(int(request.GET.get("start", 0)), 0)
+        except (TypeError, ValueError):
+            start = 0
+        try:
+            length = int(request.GET.get("length", 50))
+        except (TypeError, ValueError):
+            length = 50
+        if length < 0:
+            length = 50
+        length = min(length, 200)
+
+        rows = []
+        for procurement_case in cases[start:start + length]:
+            detail_url = reverse("nabavka:case_detail", kwargs={"pk": procurement_case.pk})
+            amount = (
+                f'<span class="case-muted">{procurement_case.estimated_value:.2f} '
+                f"{escape(procurement_case.currency)}</span>"
+                if procurement_case.estimated_value is not None
+                else ""
+            )
+            rows.append(
+                {
+                    "case_number": (
+                        f'<a href="{detail_url}" class="btn btn-sm btn-outline-primary">'
+                        f'<i class="mdi mdi-eye"></i> {escape(procurement_case.case_number or procurement_case.pk)}</a>'
+                    ),
+                    "title": f'<strong class="case-title">{_truncate_text(procurement_case.title, 20)}</strong>{amount}',
+                    "case_type": _case_type_html(procurement_case),
+                    "status": _case_status_html(procurement_case),
+                    "is_garage": _case_garage_html(procurement_case),
+                    "job_code": _case_job_code_html(procurement_case),
+                    "supplier": _truncate_text(procurement_case.supplier.name, 50) if procurement_case.supplier else "/",
+                    "needed_by": procurement_case.needed_by.strftime("%d.%m.%Y") if procurement_case.needed_by else "/",
+                    "actions": _case_actions_html(request, procurement_case),
+                    "DT_RowClass": (
+                        "assignment-closed"
+                        if procurement_case.status in {
+                            ProcurementCase.Status.COMPLETED,
+                            ProcurementCase.Status.CANCELLED,
+                        }
+                        else ""
+                    ),
+                }
+            )
+        try:
+            draw = int(request.GET.get("draw", 0))
+        except (TypeError, ValueError):
+            draw = 0
+        return JsonResponse(
+            {
+                "draw": draw,
+                "recordsTotal": records_total,
+                "recordsFiltered": records_filtered,
+                "data": rows,
+            }
+        )
 
 
 class ProcurementCaseCreateView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
