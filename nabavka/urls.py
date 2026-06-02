@@ -20,6 +20,7 @@ from .views.cases import (
 )
 from .views.contracts import PurchaseContractListView
 from .views.invoices import (
+    EufInvoiceDataView,
     EufInvoiceDetailView,
     EufInvoiceListView,
     EufInvoiceSyncView,
@@ -34,6 +35,14 @@ from .views.orders import (
     PurchaseOrderUpdateView,
 )
 from .views.reports import ReportsView
+from .views.source_snapshots import (
+    EufItemSnapshotDataView,
+    EufItemSnapshotListView,
+    EufItemSnapshotSyncView,
+    GoodsSnapshotDataView,
+    GoodsSnapshotListView,
+    GoodsSnapshotSyncView,
+)
 
 app_name = "nabavka"
 
@@ -54,11 +63,18 @@ urlpatterns = [
     path("zahtevi/<int:case_pk>/stavke/<int:item_pk>/faktura/obrisi/", ProcurementItemInvoiceLinkDeleteView.as_view(), name="item_invoice_link_delete"),
     path("zahtevi/<int:case_pk>/status/", ProcurementStatusLogCreateView.as_view(), name="status_log_create"),
     path("euf-fakture/", EufInvoiceListView.as_view(), name="euf_invoice_list"),
+    path("euf-fakture/data/", EufInvoiceDataView.as_view(), name="euf_invoice_data"),
     path("euf-fakture/sync/", EufInvoiceSyncView.as_view(), name="euf_invoice_sync"),
     path("euf-fakture/<int:pk>/izmeni/", EufInvoiceUpdateView.as_view(), name="euf_invoice_update"),
     path("euf-fakture/<int:pk>/", EufInvoiceDetailView.as_view(), name="euf_invoice_detail"),
     path("euf-fakture/veze/<int:pk>/obrisi/", ProcurementInvoiceLinkDeleteView.as_view(), name="invoice_link_delete"),
     path("euf-fakture/ugovori/<int:pk>/obrisi/", ProcurementInvoiceContractLinkDeleteView.as_view(), name="invoice_contract_link_delete"),
+    path("uf-stavke/", EufItemSnapshotListView.as_view(), name="euf_item_list"),
+    path("uf-stavke/data/", EufItemSnapshotDataView.as_view(), name="euf_item_data"),
+    path("uf-stavke/sync/", EufItemSnapshotSyncView.as_view(), name="euf_item_sync"),
+    path("roba/", GoodsSnapshotListView.as_view(), name="goods_list"),
+    path("roba/data/", GoodsSnapshotDataView.as_view(), name="goods_data"),
+    path("roba/sync/", GoodsSnapshotSyncView.as_view(), name="goods_sync"),
     path("kupovni-ugovori/", PurchaseContractListView.as_view(), name="purchase_contract_list"),
     path("narudzbenice/", PurchaseOrderListView.as_view(), name="purchase_order_list"),
     path("narudzbenice/nova/", PurchaseOrderCreateView.as_view(), name="purchase_order_create"),

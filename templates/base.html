@@ -348,10 +348,20 @@
 
     <script type="text/javascript">
         $(document).ready(function() {
-            // Initialize Select2 on all existing elements with class 'select2-method'
-            $('.select2-method').select2({
-                theme: 'bootstrap-5',  // Using Bootstrap 5 theme
-                width: '100%'          // Ensure it takes up the full width of the parent container
+            // Keep modal Select2 search inputs inside the modal focus trap.
+            $('.select2-method').each(function() {
+                var $select = $(this);
+                var $modal = $select.closest('.modal');
+                var options = {
+                    theme: 'bootstrap-5',
+                    width: '100%'
+                };
+
+                if ($modal.length) {
+                    options.dropdownParent = $modal;
+                }
+
+                $select.select2(options);
             });
         });
     </script>

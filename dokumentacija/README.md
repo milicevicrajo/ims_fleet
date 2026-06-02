@@ -12,3 +12,6 @@ Opsti vodic za arhitekturu, podesavanja, task scheduling i operativu Celery task
 
 3. `opravdanost_radnog_mesta_flota.md`
 Obrazlozenje poslovne opravdanosti za osobu koja operativno vodi flotu kroz IMS Fleet aplikaciju.
+
+4. `nabavka-funkcionalnosti-i-povezivanja.md`
+Pregled implementiranih funkcionalnosti aplikacije Nabavka, nacina povezivanja zahteva, stavki, EUF faktura, ugovora i narudzbenica, kao i predlog daljih faza razvoja.

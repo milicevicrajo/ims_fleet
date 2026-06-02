@@ -352,6 +352,83 @@ class ProcurementInvoice(models.Model):
         return self.item_links.filter(procurement_item__procurement_case__is_garage=True).exists()
 
 
+class EufItemSnapshot(models.Model):
+    source_key = models.CharField(max_length=64, unique=True, verbose_name=_("Kljuc izvora"))
+    purchase_invoice_id = models.CharField(max_length=40, blank=True, null=True, db_index=True, verbose_name=_("UF ID"))
+    creation_date = models.DateField(blank=True, null=True, db_index=True, verbose_name=_("Datum kreiranja"))
+    document_date = models.DateField(blank=True, null=True, db_index=True, verbose_name=_("Datum dokumenta"))
+    due_date = models.DateField(blank=True, null=True, verbose_name=_("Datum dospeca"))
+    note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+    contract_document_reference = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Referenca ugovora"))
+    invoice_number = models.CharField(max_length=120, blank=True, null=True, db_index=True, verbose_name=_("Broj fakture"))
+    tender_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Broj tendera"))
+    partner_pib = models.CharField(max_length=15, blank=True, null=True, db_index=True, verbose_name=_("PIB partnera"))
+    partner_mb = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("MB partnera"))
+    partner_name = models.CharField(max_length=400, blank=True, null=True, db_index=True, verbose_name=_("Partner"))
+    total = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Ukupno"))
+    base_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Osnovica"))
+    payment_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Placanje"))
+    uom = models.CharField(max_length=10, blank=True, null=True, verbose_name=_("JM"))
+    item_name = models.TextField(blank=True, null=True, verbose_name=_("Naziv stavke"))
+    quantity = models.DecimalField(max_digits=18, decimal_places=3, blank=True, null=True, verbose_name=_("Kolicina"))
+    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Cena"))
+    value = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Vrednost"))
+    account = models.CharField(max_length=6, blank=True, null=True, db_index=True, verbose_name=_("Konto"))
+    synced_at = models.DateTimeField(blank=True, null=True, verbose_name=_("Sinhronizovano"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        db_table = "nabavka_euf_item_snapshot"
+        ordering = ["-document_date", "-id"]
+        verbose_name = _("UF stavka")
+        verbose_name_plural = _("UF stavke")
+        indexes = [
+            models.Index(fields=["invoice_number", "partner_name"]),
+        ]
+
+    def __str__(self):
+        return f"{self.invoice_number or '/'} - {self.item_name or ''}".strip()
+
+
+class GoodsSnapshot(models.Model):
+    source_key = models.CharField(max_length=64, unique=True, verbose_name=_("Kljuc izvora"))
+    year = models.CharField(max_length=4, blank=True, null=True, db_index=True, verbose_name=_("Godina"))
+    document_number = models.IntegerField(blank=True, null=True, db_index=True, verbose_name=_("Broj dokumenta"))
+    document_type = models.CharField(max_length=3, blank=True, null=True, db_index=True, verbose_name=_("Vrsta dokumenta"))
+    organizational_unit = models.IntegerField(blank=True, null=True, db_index=True, verbose_name=_("OJ"))
+    partner_code = models.IntegerField(blank=True, null=True, db_index=True, verbose_name=_("Sifra partnera"))
+    partner_name = models.CharField(max_length=400, blank=True, null=True, db_index=True, verbose_name=_("Partner"))
+    document_date = models.DateField(blank=True, null=True, db_index=True, verbose_name=_("Datum"))
+    linked_document = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("Vezni dokument"))
+    debit = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Potrazuje"))
+    currency = models.CharField(max_length=3, blank=True, null=True, verbose_name=_("Valuta"))
+    foreign_currency_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Devize"))
+    subject_code = models.IntegerField(blank=True, null=True, verbose_name=_("Sifra predmeta"))
+    line_number = models.IntegerField(blank=True, null=True, verbose_name=_("Stavka"))
+    article_code = models.CharField(max_length=20, blank=True, null=True, db_index=True, verbose_name=_("Sifra artikla"))
+    article_type = models.CharField(max_length=8, blank=True, null=True, db_index=True, verbose_name=_("Vrsta artikla"))
+    article_name = models.CharField(max_length=80, blank=True, null=True, db_index=True, verbose_name=_("Naziv artikla"))
+    quantity = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Kolicina"))
+    price = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Cena"))
+    synced_at = models.DateTimeField(blank=True, null=True, verbose_name=_("Sinhronizovano"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        db_table = "nabavka_goods_snapshot"
+        ordering = ["-document_date", "-id"]
+        verbose_name = _("Roba")
+        verbose_name_plural = _("Roba")
+        indexes = [
+            models.Index(fields=["document_number", "partner_name"]),
+            models.Index(fields=["article_code", "article_name"]),
+        ]
+
+    def __str__(self):
+        return f"{self.document_number or '/'} - {self.article_name or ''}".strip()
+
+
 class ProcurementItemInvoiceLink(models.Model):
     procurement_item = models.OneToOneField(
         ProcurementItem,

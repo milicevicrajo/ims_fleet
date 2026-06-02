@@ -1,6 +1,8 @@
 from django.contrib import admin
 
 from .models import (
+    EufItemSnapshot,
+    GoodsSnapshot,
     ProcurementCase,
     ProcurementInvoice,
     ProcurementInvoiceContractLink,
@@ -46,6 +48,20 @@ class ProcurementInvoiceAdmin(admin.ModelAdmin):
     ]
     list_filter = ["source", "invoice_date", "goes_to_warehouse"]
     search_fields = ["invoice_number", "supplier_name", "euf_key", "center_name"]
+
+
+@admin.register(EufItemSnapshot)
+class EufItemSnapshotAdmin(admin.ModelAdmin):
+    list_display = ["invoice_number", "partner_name", "document_date", "item_name", "quantity", "value", "account"]
+    list_filter = ["document_date", "account"]
+    search_fields = ["invoice_number", "partner_name", "partner_pib", "item_name", "account"]
+
+
+@admin.register(GoodsSnapshot)
+class GoodsSnapshotAdmin(admin.ModelAdmin):
+    list_display = ["document_date", "document_number", "organizational_unit", "partner_name", "article_code", "article_name", "quantity", "price"]
+    list_filter = ["document_date", "document_type", "organizational_unit", "article_type"]
+    search_fields = ["document_number", "partner_name", "linked_document", "article_code", "article_name"]
 
 
 @admin.register(ProcurementItemInvoiceLink)

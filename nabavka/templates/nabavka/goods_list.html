@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .snapshot-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .snapshot-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .snapshot-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .snapshot-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+</style>
+
+<div class="snapshot-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Roba</h1>
+    <p>Kontrolisana lokalna evidencija robe povučene iz SQL view-a.</p>
+  </div>
+  <form method="post" action="{% url 'nabavka:goods_sync' %}">
+    {% csrf_token %}
+    <input type="hidden" name="source_search" value="{{ q }}">
+    <input type="hidden" name="next_query" value="{{ request.GET.urlencode }}">
+    <button class="btn btn-light btn-sm" type="submit">
+      <i class="mdi mdi-refresh"></i> Povuci robu
+    </button>
+  </form>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="snapshot-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label mb-1" for="id_source_search">Pretraga</label>
+          <input id="id_source_search" class="form-control" type="text" name="source_search" value="{{ q }}" placeholder="Dokument, partner, artikal ili vezni dokument">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_date_from">Datum od</label>
+          <input id="id_date_from" class="form-control" type="date" name="date_from" value="{{ date_from }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_date_to">Datum do</label>
+          <input id="id_date_to" class="form-control" type="date" name="date_to" value="{{ date_to }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_partner">Partner</label>
+          <input id="id_partner" class="form-control" type="text" name="partner" value="{{ partner }}">
+        </div>
+        <div class="col-12 col-md-1">
+          <label class="form-label mb-1" for="id_organizational_unit">OJ</label>
+          <input id="id_organizational_unit" class="form-control" type="number" name="organizational_unit" value="{{ organizational_unit }}">
+        </div>
+        <div class="col-12 col-md-1">
+          <label class="form-label mb-1" for="id_article_type">Vrsta</label>
+          <input id="id_article_type" class="form-control" type="text" name="article_type" value="{{ article_type }}">
+        </div>
+        <div class="col-12 d-flex gap-2 justify-content-end">
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretraži</button>
+          <a class="btn btn-outline-secondary" href="{% url 'nabavka:goods_list' %}">Reset</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="GoodsTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Dokument</th>
+            <th>Vrsta</th>
+            <th>OJ</th>
+            <th>Partner</th>
+            <th>Vezni dokument</th>
+            <th>Šifra artikla</th>
+            <th>Artikal</th>
+            <th>Vrsta artikla</th>
+            <th>Količina</th>
+            <th>Cena</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.DataTable) return;
+    var table = jQuery('#GoodsTable');
+    if (!table.length || jQuery.fn.DataTable.isDataTable(table)) return;
+    table.DataTable({
+      serverSide: true,
+      processing: true,
+      pageLength: 50,
+      lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+      order: [[0, 'desc']],
+      ajax: { url: "{% url 'nabavka:goods_data' %}" + window.location.search, type: 'GET' },
+      columns: [
+        { data: 'document_date' },
+        { data: 'document' },
+        { data: 'document_type' },
+        { data: 'organizational_unit' },
+        { data: 'partner_name' },
+        { data: 'linked_document' },
+        { data: 'article_code' },
+        { data: 'article_name' },
+        { data: 'article_type' },
+        { data: 'quantity' },
+        { data: 'price' }
+      ],
+      language: {
+        processing: 'Učitavanje...', search: 'Pretraga:', lengthMenu: 'Prikaži _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ stavki robe', infoEmpty: 'Nema robe',
+        infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema rezultata',
+        paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' }
+      }
+    });
+  });
+</script>
+{% endblock %}

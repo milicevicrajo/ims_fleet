@@ -1,14 +1,19 @@
+from datetime import datetime
+from urllib.parse import parse_qsl, urlencode
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, OuterRef, Q, Subquery, Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.dateparse import parse_date
+from django.utils.html import escape
 from django.views import View
 from django.views.generic import DetailView, ListView
 
 from core.mixins import RolePermissionRequiredMixin
-from core.models import OrganizationalUnit
-from fleet.models import Vehicle
+from fleet.models import JobCode, Vehicle
 
 from ..forms import EufInvoiceItemLinkForm, ProcurementInvoiceContractLinkForm, ProcurementInvoiceForm
 from ..models import (
@@ -21,57 +26,210 @@ from ..services.euf import sync_euf_invoice_snapshots
 from .cases import NabavkaContextMixin
 
 
-class EufInvoiceListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
-    template_name = "nabavka/euf_invoice_list.html"
-    context_object_name = "invoices"
-    paginate_by = 50
+def _parse_filter_date(value):
+    parsed = parse_date(value or "")
+    if parsed:
+        return parsed
+    try:
+        return datetime.strptime(value or "", "%d.%m.%Y").date()
+    except ValueError:
+        return None
 
-    def get_queryset(self):
-        q = (self.request.GET.get("q") or "").strip()
-        invoices = ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF)
-        if q:
-            invoices = invoices.filter(
-                Q(invoice_number__icontains=q)
-                | Q(supplier_name__icontains=q)
-                | Q(center_name__icontains=q)
-                | Q(center__icontains=q)
-            )
-        return invoices.select_related("job_code", "vehicle").annotate(
+
+def _euf_invoice_base_queryset():
+    return (
+        ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF)
+        .select_related("job_code", "vehicle")
+        .prefetch_related("vehicle__traffic_cards")
+        .annotate(
             item_links_total=Count("item_links", distinct=True),
             garage_item_links_total=Count(
                 "item_links",
                 filter=Q(item_links__procurement_item__procurement_case__is_garage=True),
                 distinct=True,
             ),
-        ).order_by("-invoice_date", "-id")
+        )
+    )
+
+
+def _filter_euf_invoices(request, invoices=None):
+    q = (request.GET.get("invoice_search") or request.GET.get("q") or "").strip()
+    supplier = (request.GET.get("supplier") or "").strip()
+    center = (request.GET.get("center") or "").strip()
+    date_from = _parse_filter_date(request.GET.get("date_from"))
+    date_to = _parse_filter_date(request.GET.get("date_to"))
+    goes_to_warehouse = request.GET.get("goes_to_warehouse")
+    is_garage = request.GET.get("is_garage")
+    invoices = invoices if invoices is not None else _euf_invoice_base_queryset()
+    if q:
+        invoices = invoices.filter(
+            Q(invoice_number__icontains=q)
+            | Q(supplier_name__icontains=q)
+            | Q(center_name__icontains=q)
+            | Q(center__icontains=q)
+        )
+    if supplier:
+        invoices = invoices.filter(supplier_name__icontains=supplier)
+    if center:
+        invoices = invoices.filter(Q(center__icontains=center) | Q(center_name__icontains=center))
+    if date_from:
+        invoices = invoices.filter(invoice_date__gte=date_from)
+    if date_to:
+        invoices = invoices.filter(invoice_date__lte=date_to)
+    if goes_to_warehouse in {"0", "1"}:
+        invoices = invoices.filter(goes_to_warehouse=goes_to_warehouse == "1")
+    if is_garage in {"0", "1"}:
+        invoices = invoices.filter(is_garage=is_garage == "1")
+    return invoices
+
+
+def _euf_invoice_vehicle_label(invoice):
+    return str(invoice.vehicle) if invoice.vehicle else ""
+
+
+def _hover_text(value, max_length=50):
+    text = str(value or "")
+    visible = f"{text[:max_length]}..." if len(text) > max_length else text
+    return f'<span title="{escape(text)}">{escape(visible)}</span>'
+
+
+class EufInvoiceListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
+    template_name = "nabavka/euf_invoice_list.html"
+    context_object_name = "invoices"
+
+    def get_queryset(self):
+        return ProcurementInvoice.objects.none()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        q = (self.request.GET.get("q") or "").strip()
+        q = (self.request.GET.get("invoice_search") or self.request.GET.get("q") or "").strip()
+        date_from = _parse_filter_date(self.request.GET.get("date_from"))
+        date_to = _parse_filter_date(self.request.GET.get("date_to"))
         ctx.update(
             {
-                "title": "EUF fakture",
+                "title": "Preuzete EUF",
                 "q": q,
-                "job_codes": OrganizationalUnit.objects.all().order_by("code"),
-                "vehicles": Vehicle.objects.all().order_by("brand", "model"),
+                "supplier": (self.request.GET.get("supplier") or "").strip(),
+                "center": (self.request.GET.get("center") or "").strip(),
+                "date_from": date_from.isoformat() if date_from else "",
+                "date_to": date_to.isoformat() if date_to else "",
+                "goes_to_warehouse": self.request.GET.get("goes_to_warehouse") or "",
+                "is_garage": self.request.GET.get("is_garage") or "",
             }
         )
         return ctx
+
+
+class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:euf_invoice_list"
+
+    def get(self, request):
+        invoices = _filter_euf_invoices(request)
+        search_value = request.GET.get("search[value]", "").strip()
+        if search_value:
+            invoices = invoices.filter(
+                Q(invoice_number__icontains=search_value)
+                | Q(supplier_name__icontains=search_value)
+                | Q(center_name__icontains=search_value)
+                | Q(center__icontains=search_value)
+                | Q(warehouse__icontains=search_value)
+                | Q(registration__icontains=search_value)
+                | Q(job_code__code__icontains=search_value)
+                | Q(vehicle__brand__icontains=search_value)
+                | Q(vehicle__model__icontains=search_value)
+            )
+
+        records_total = ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF).count()
+        records_filtered = invoices.count()
+        order_map = {
+            "0": "invoice_date",
+            "1": "supplier_name",
+            "2": "invoice_number",
+            "3": "amount",
+            "4": "job_code__code",
+            "5": "goes_to_warehouse",
+            "6": "is_garage",
+            "7": "vehicle__brand",
+            "8": "item_links_total",
+        }
+        order_field = order_map.get(request.GET.get("order[0][column]", "0"), "invoice_date")
+        if request.GET.get("order[0][dir]", "desc") == "desc":
+            order_field = f"-{order_field}"
+        invoices = invoices.order_by(order_field, "-id")
+
+        try:
+            start = max(int(request.GET.get("start", 0)), 0)
+        except (TypeError, ValueError):
+            start = 0
+        try:
+            length = int(request.GET.get("length", 50))
+        except (TypeError, ValueError):
+            length = 50
+        if length < 0:
+            length = 50
+        length = min(length, 200)
+
+        rows = []
+        for invoice in invoices[start:start + length]:
+            detail_url = reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice.pk})
+            rows.append(
+                {
+                    "invoice_date": (
+                        invoice.invoice_date.strftime("%d.%m.%Y")
+                        if invoice.invoice_date
+                        else escape(invoice.invoice_date_raw or "")
+                    ),
+                    "supplier_name": _hover_text(invoice.supplier_name),
+                    "invoice_number": escape(invoice.invoice_number or ""),
+                    "amount": str(invoice.amount) if invoice.amount is not None else "",
+                    "job_code": escape(getattr(invoice.job_code, "code", "") or ""),
+                    "warehouse": (
+                        '<span class="invoice-badge ok"><i class="mdi mdi-warehouse"></i> Da</span>'
+                        if invoice.goes_to_warehouse
+                        else '<span class="invoice-badge muted"><i class="mdi mdi-minus-circle-outline"></i> Ne</span>'
+                    ),
+                    "is_garage": (
+                        '<span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Da</span>'
+                        if invoice.is_garage or invoice.garage_item_links_total
+                        else '<span class="invoice-badge muted">Ne</span>'
+                    ),
+                    "vehicle": escape(_euf_invoice_vehicle_label(invoice)),
+                    "item_links_total": invoice.item_links_total,
+                    "actions": (
+                        f'<a class="btn btn-outline-primary btn-sm" href="{detail_url}">'
+                        '<i class="mdi mdi-eye"></i> Detalj</a>'
+                    ),
+                }
+            )
+
+        try:
+            draw = int(request.GET.get("draw", 0))
+        except (TypeError, ValueError):
+            draw = 0
+        return JsonResponse(
+            {
+                "draw": draw,
+                "recordsTotal": records_total,
+                "recordsFiltered": records_filtered,
+                "data": rows,
+            }
+        )
 
 
 class EufInvoiceSyncView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
     required_permission_code = "nabavka:euf_invoice_list"
 
     def post(self, request):
-        q = (request.POST.get("q") or "").strip()
+        q = (request.POST.get("invoice_search") or request.POST.get("q") or "").strip()
         try:
             invoices = sync_euf_invoice_snapshots(q=q, limit=2000)
         except Exception as exc:
-            messages.error(request, f"EUF fakture nisu povucene iz view-a: {exc}")
+            messages.error(request, f"Fakture nisu preuzete iz EUF view-a: {exc}")
         else:
-            messages.success(request, f"EUF fakture su osvezene. Obradjeno zapisa: {len(invoices)}.")
+            messages.success(request, f"Preuzete EUF su osvezene. Obradjeno zapisa: {len(invoices)}.")
         redirect_url = reverse("nabavka:euf_invoice_list")
-        return redirect(f"{redirect_url}?q={q}" if q else redirect_url)
+        query_string = urlencode(parse_qsl(request.POST.get("next_query") or "", keep_blank_values=False))
+        return redirect(f"{redirect_url}?{query_string}" if query_string else redirect_url)
 
 
 class EufInvoiceUpdateView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
@@ -181,6 +339,19 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        latest_job_code = (
+            JobCode.objects.filter(vehicle_id=OuterRef("pk"))
+            .order_by("-assigned_date", "-pk")
+            .values("organizational_unit_id")[:1]
+        )
+        vehicle_job_codes = {
+            str(vehicle_id): job_code_id
+            for vehicle_id, job_code_id in (
+                Vehicle.objects.annotate(current_job_code_id=Subquery(latest_job_code))
+                .exclude(current_job_code_id__isnull=True)
+                .values_list("pk", "current_job_code_id")
+            )
+        }
         ctx.update(
             {
                 "title": f"Faktura {self.object.invoice_number}",
@@ -189,6 +360,7 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 "contract_link_form": kwargs.get("contract_link_form")
                 or ProcurementInvoiceContractLinkForm(invoice=self.object),
                 "contract_execution_rows": self._contract_execution_rows(self.object),
+                "vehicle_job_codes": vehicle_job_codes,
                 "item_links": self.object.item_links.select_related(
                     "procurement_item",
                     "procurement_item__procurement_case",

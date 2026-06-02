@@ -33,75 +33,17 @@
   .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
   .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
   .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
-  .invoice-switch-card {
-    border: 1px solid #e6ebf1;
-    border-radius: 8px;
-    background: #f8fafc;
-    padding: 12px;
-    min-height: 86px;
-  }
-  .garage-switch {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 42px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .garage-switch input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .garage-switch-ui {
-    position: relative;
-    flex: 0 0 46px;
-    width: 46px;
-    height: 24px;
-    border-radius: 999px;
-    background: #cbd5df;
-    transition: background .16s ease, box-shadow .16s ease;
-  }
-  .garage-switch-ui::before {
-    content: "";
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(20, 57, 91, .24);
-    transition: transform .16s ease;
-  }
-  .garage-switch input:checked + .garage-switch-ui {
-    background: #1f6f8b;
-    box-shadow: 0 0 0 3px rgba(31, 111, 139, .12);
-  }
-  .garage-switch input:checked + .garage-switch-ui::before {
-    transform: translateX(22px);
-  }
-  .garage-switch-text {
-    color: #243746;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-  .invoice-switch-help {
-    color: #6c7f90;
-    font-size: .82rem;
-    line-height: 1.25;
-    margin: 0;
-  }
 </style>
 
 <div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
-    <h1>EUF fakture</h1>
+    <h1>Preuzete EUF</h1>
     <p>Kontrolisana lokalna evidencija faktura povučenih iz EUF SQL view-a.</p>
   </div>
   <form method="post" action="{% url 'nabavka:euf_invoice_sync' %}" class="d-flex gap-2">
     {% csrf_token %}
-    <input type="hidden" name="q" value="{{ q }}">
+    <input type="hidden" name="invoice_search" value="{{ q }}">
+    <input type="hidden" name="next_query" value="{{ request.GET.urlencode }}">
     <button class="btn btn-light btn-sm" type="submit">
       <i class="mdi mdi-refresh"></i> Povuci iz EUF
     </button>
@@ -112,11 +54,43 @@
   <div class="card-body">
     <form method="get" class="invoice-filter">
       <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-8">
+        <div class="col-12 col-md-4">
           <label class="form-label mb-1" for="id_q">Pretraga po broju fakture, partneru ili centru</label>
-          <input id="id_q" class="form-control" type="text" name="q" value="{{ q }}">
+          <input id="id_q" class="form-control" type="text" name="invoice_search" value="{{ q }}">
         </div>
-        <div class="col-12 col-md-4 d-flex gap-2">
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_date_from">Datum od</label>
+          <input id="id_date_from" class="form-control" type="date" name="date_from" value="{{ date_from }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_date_to">Datum do</label>
+          <input id="id_date_to" class="form-control" type="date" name="date_to" value="{{ date_to }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_supplier">Dobavljač</label>
+          <input id="id_supplier" class="form-control" type="text" name="supplier" value="{{ supplier }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_center">Centar</label>
+          <input id="id_center" class="form-control" type="text" name="center" value="{{ center }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_goes_to_warehouse">Magacin</label>
+          <select id="id_goes_to_warehouse" class="form-select select2-method" name="goes_to_warehouse">
+            <option value="">Svi</option>
+            <option value="1" {% if goes_to_warehouse == "1" %}selected{% endif %}>Da</option>
+            <option value="0" {% if goes_to_warehouse == "0" %}selected{% endif %}>Ne</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_is_garage">Garaža</label>
+          <select id="id_is_garage" class="form-select select2-method" name="is_garage">
+            <option value="">Sve</option>
+            <option value="1" {% if is_garage == "1" %}selected{% endif %}>Da</option>
+            <option value="0" {% if is_garage == "0" %}selected{% endif %}>Ne</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-8 d-flex gap-2 justify-content-end">
           <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretraži</button>
           <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_invoice_list' %}">Reset</a>
         </div>
@@ -143,196 +117,61 @@
             <th class="text-center">Akcije</th>
           </tr>
         </thead>
-        <tbody>
-          {% for invoice in invoices %}
-          <tr>
-            <td>{% if invoice.invoice_date %}{{ invoice.invoice_date|date:"d.m.Y" }}{% else %}{{ invoice.invoice_date_raw|default:"/" }}{% endif %}</td>
-            <td title="{{ invoice.supplier_name|default:'/' }}">{{ invoice.supplier_name|default:"/"|truncatechars:20 }}</td>
-            <td>{{ invoice.invoice_number }}</td>
-            <td>{{ invoice.amount|default:"/" }}</td>
-            <td>{% if invoice.job_code %}{{ invoice.job_code.code }}{% else %}/{% endif %}</td>
-            <td>
-              {% if invoice.goes_to_warehouse %}
-                <span class="invoice-badge ok"><i class="mdi mdi-warehouse"></i> Da</span>
-              {% else %}
-                <span class="invoice-badge muted"><i class="mdi mdi-minus-circle-outline"></i> Ne</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if invoice.is_garage or invoice.garage_item_links_total %}
-                <span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Da</span>
-              {% else %}
-                <span class="invoice-badge muted">Ne</span>
-              {% endif %}
-            </td>
-            <td>{{ invoice.vehicle|default:"/" }}</td>
-            <td>{{ invoice.item_links_total }}</td>
-            <td class="text-center text-nowrap">
-              <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:euf_invoice_detail' invoice.pk %}">
-                <i class="mdi mdi-eye"></i> Detalj
-              </a>
-              <button
-                class="btn btn-outline-secondary btn-sm js-edit-invoice"
-                type="button"
-                data-bs-toggle="modal"
-                data-bs-target="#editInvoiceModal"
-                data-action="{% url 'nabavka:euf_invoice_update' invoice.pk %}"
-                data-invoice-number="{{ invoice.invoice_number }}"
-                data-is-garage="{% if invoice.is_garage %}1{% else %}0{% endif %}"
-                data-vehicle-id="{{ invoice.vehicle_id|default_if_none:'' }}"
-                data-goes-to-warehouse="{% if invoice.goes_to_warehouse %}1{% else %}0{% endif %}"
-                data-job-code-id="{{ invoice.job_code_id|default_if_none:'' }}"
-                data-note="{{ invoice.internal_note|default_if_none:''|escape }}"
-              >
-                <i class="mdi mdi-pencil"></i> Izmeni
-              </button>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="10" class="text-center text-muted">Nema EUF faktura u lokalnoj tabeli.</td></tr>
-          {% endfor %}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th>Datum</th>
-            <th>Partner</th>
-            <th>Broj fakture</th>
-            <th>Iznos</th>
-            <th>Povezana OJ</th>
-            <th>Magacin</th>
-            <th>Garaža</th>
-            <th>Vozilo</th>
-            <th>Stavke</th>
-            <th>Akcije</th>
-          </tr>
-        </tfoot>
+        <tbody></tbody>
       </table>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="editInvoiceModal" tabindex="-1" aria-labelledby="editInvoiceModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <form id="editInvoiceForm" method="post" action="">
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editInvoiceModalLabel">Izmeni EUF fakturu</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-12 col-md-6">
-              <div class="invoice-switch-card">
-                <label class="garage-switch" for="id_is_garage_modal">
-                  <input id="id_is_garage_modal" type="checkbox" name="is_garage" class="form-check-input js-invoice-garage-toggle" data-target="#invoiceVehicleWrap">
-                  <span class="garage-switch-ui"></span>
-                  <span class="garage-switch-text">Garaza</span>
-                </label>
-                <p class="invoice-switch-help">Ukljuci kada se faktura odnosi na garazu ili vozilo.</p>
-                <div id="invoiceVehicleWrap" class="mt-3">
-                  <label class="form-label" for="id_vehicle_modal">Automobil</label>
-                  <select id="id_vehicle_modal" name="vehicle" class="form-select form-control select2-method">
-                    <option value="">---------</option>
-                    {% for vehicle in vehicles %}
-                      <option value="{{ vehicle.pk }}">{{ vehicle }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="invoice-switch-card">
-                <label class="garage-switch" for="id_goes_to_warehouse_modal">
-                  <input id="id_goes_to_warehouse_modal" type="checkbox" name="goes_to_warehouse" class="form-check-input">
-                  <span class="garage-switch-ui"></span>
-                  <span class="garage-switch-text">Magacin</span>
-                </label>
-                <p class="invoice-switch-help">Oznaci fakture koje treba pratiti kao ulaz u magacin.</p>
-                <div class="mt-3">
-                  <label class="form-label" for="id_job_code_modal">Povezana OJ</label>
-                  <select id="id_job_code_modal" name="job_code" class="form-select form-control select2-method">
-                    <option value="">---------</option>
-                    {% for job_code in job_codes %}
-                      <option value="{{ job_code.pk }}">{{ job_code.code }} - {{ job_code.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div class="col-12">
-              <label class="form-label" for="id_internal_note_modal">Interna napomena</label>
-              <textarea id="id_internal_note_modal" name="internal_note" rows="3" class="form-control"></textarea>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkazi</button>
-          <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save"></i> Sacuvaj</button>
-        </div>
-      </form>
     </div>
   </div>
 </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    function setSelectValue(select, value) {
-      if (!select) return;
-      select.value = value || '';
-      if (window.jQuery && jQuery.fn.select2) {
-        jQuery(select).val(value || null).trigger('change');
-      }
+    if (!window.jQuery || !jQuery.fn.DataTable) {
+      return;
     }
 
-    document.querySelectorAll('.js-edit-invoice').forEach(function (button) {
-      button.addEventListener('click', function () {
-        var form = document.getElementById('editInvoiceForm');
-        var title = document.getElementById('editInvoiceModalLabel');
-        var garageToggle = document.getElementById('id_is_garage_modal');
-        var warehouseToggle = document.getElementById('id_goes_to_warehouse_modal');
-        var note = document.getElementById('id_internal_note_modal');
+    var table = jQuery('#EufInvoicesTable');
+    if (!table.length || jQuery.fn.DataTable.isDataTable(table)) {
+      return;
+    }
 
-        if (form) form.action = button.dataset.action || '';
-        if (title) title.textContent = 'Izmeni EUF fakturu ' + (button.dataset.invoiceNumber || '');
-        if (garageToggle) garageToggle.checked = button.dataset.isGarage === '1';
-        if (warehouseToggle) warehouseToggle.checked = button.dataset.goesToWarehouse === '1';
-        if (note) note.value = button.dataset.note || '';
-
-        setSelectValue(document.getElementById('id_vehicle_modal'), button.dataset.vehicleId);
-        setSelectValue(document.getElementById('id_job_code_modal'), button.dataset.jobCodeId);
-        if (garageToggle) garageToggle.dispatchEvent(new Event('change'));
-      });
-    });
-
-    document.querySelectorAll('.js-invoice-garage-toggle').forEach(function (toggle) {
-      function syncVehicleVisibility() {
-        var target = document.querySelector(toggle.dataset.target);
-        if (!target) return;
-        target.hidden = !toggle.checked;
-        if (!toggle.checked) {
-          var select = target.querySelector('select');
-          if (select) {
-            select.value = '';
-            if (window.jQuery && jQuery.fn.select2) {
-              jQuery(select).val(null).trigger('change');
-            }
-          }
+    table.DataTable({
+      serverSide: true,
+      processing: true,
+      pageLength: 50,
+      lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+      order: [[0, 'desc']],
+      ajax: {
+        url: "{% url 'nabavka:euf_invoice_data' %}" + window.location.search,
+        type: "GET"
+      },
+      columns: [
+        { data: 'invoice_date' },
+        { data: 'supplier_name' },
+        { data: 'invoice_number' },
+        { data: 'amount' },
+        { data: 'job_code' },
+        { data: 'warehouse' },
+        { data: 'is_garage' },
+        { data: 'vehicle' },
+        { data: 'item_links_total' },
+        { data: 'actions', orderable: false, searchable: false, className: 'text-center text-nowrap' }
+      ],
+      language: {
+        processing: 'Učitavanje...',
+        search: 'Pretraga:',
+        lengthMenu: 'Prikaži _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ faktura',
+        infoEmpty: 'Nema faktura',
+        infoFiltered: '(filtrirano od _MAX_ ukupno)',
+        zeroRecords: 'Nema rezultata',
+        paginate: {
+          first: 'Prva',
+          last: 'Poslednja',
+          next: 'Sledeća',
+          previous: 'Prethodna'
         }
       }
-      toggle.addEventListener('change', syncVehicleVisibility);
-      syncVehicleVisibility();
     });
-
-    if (window.ReportsDT) {
-      ReportsDT('#EufInvoicesTable', {
-        exportTitle: '{{ title }}',
-        order: [[0, 'desc']],
-        autoSelectThreshold: 25,
-        scrollX: false
-      });
-    }
   });
 </script>
 {% endblock %}

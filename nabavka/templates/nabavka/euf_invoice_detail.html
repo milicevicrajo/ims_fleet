@@ -71,7 +71,7 @@
     <div class="text-muted">{{ invoice.supplier_name|default:"/" }} / {{ invoice.amount|default:"/" }}</div>
   </div>
   <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_invoice_list' %}">
-    <i class="mdi mdi-arrow-left"></i> EUF fakture
+    <i class="mdi mdi-arrow-left"></i> Preuzete EUF
   </a>
 </div>
 
@@ -291,22 +291,40 @@
     </div>
   </div>
 </div>
+{{ vehicle_job_codes|json_script:"vehicle-job-codes" }}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var toggle = document.querySelector('.js-detail-garage-toggle');
     var vehicleWrap = document.getElementById('detailVehicleWrap');
+    var vehicleSelect = vehicleWrap ? vehicleWrap.querySelector('select') : null;
+    var jobCodeSelect = document.getElementById('{{ invoice_form.job_code.id_for_label }}');
+    var vehicleJobCodes = JSON.parse(document.getElementById('vehicle-job-codes').textContent);
     if (!toggle || !vehicleWrap) return;
+
+    function setJobCodeForVehicle() {
+      if (!vehicleSelect || !jobCodeSelect || !vehicleSelect.value) return;
+      var jobCodeId = vehicleJobCodes[vehicleSelect.value] || '';
+      jobCodeSelect.value = jobCodeId;
+      if (window.jQuery && jQuery.fn.select2) {
+        jQuery(jobCodeSelect).val(jobCodeId || null).trigger('change');
+      }
+    }
+
     function syncVehicleVisibility() {
       vehicleWrap.hidden = !toggle.checked;
       if (!toggle.checked) {
-        var select = vehicleWrap.querySelector('select');
-        if (select) {
-          select.value = '';
+        if (vehicleSelect) {
+          vehicleSelect.value = '';
           if (window.jQuery && jQuery.fn.select2) {
-            jQuery(select).val(null).trigger('change');
+            jQuery(vehicleSelect).val(null).trigger('change');
           }
         }
       }
+    }
+    if (vehicleSelect && window.jQuery) {
+      jQuery(vehicleSelect).on('change select2:select', setJobCodeForVehicle);
+    } else if (vehicleSelect) {
+      vehicleSelect.addEventListener('change', setJobCodeForVehicle);
     }
     toggle.addEventListener('change', syncVehicleVisibility);
     syncVehicleVisibility();
