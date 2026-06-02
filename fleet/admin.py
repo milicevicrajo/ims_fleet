@@ -25,8 +25,13 @@ from core.tasks import sync_permission_codes_task
 class CustomUserAdmin(UserAdmin):
     # Add the allowed_centers field to the admin form
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('allowed_centers', 'allowed_center_codes', 'roles')}),
+        (None, {'fields': ('employee', 'allowed_centers', 'allowed_center_codes', 'roles')}),
     )
+    autocomplete_fields = ('employee',)
+
+
+class EmployeeAdmin(admin.ModelAdmin):
+    search_fields = ('employee_code', 'first_name', 'last_name')
 
 admin.site.register(CustomUser, CustomUserAdmin)
 class RolePermissionInline(admin.TabularInline):
@@ -64,7 +69,7 @@ admin.site.register(JobCode)
 admin.site.register(Lease)
 admin.site.register(Policy)
 admin.site.register(FuelConsumption)
-admin.site.register(Employee)
+admin.site.register(Employee, EmployeeAdmin)
 admin.site.register(PutniNalog)
 admin.site.register(VehicleTravelOrder)
 admin.site.register(ServiceType)

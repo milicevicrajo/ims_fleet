@@ -87,12 +87,16 @@
     <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_list' %}">
       <i class="mdi mdi-format-list-bulleted"></i> Zahtevi za nabavku i uslugu
     </a>
-    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:euf_invoice_list' %}">
-      <i class="mdi mdi-file-document-check"></i> Preuzete EUF
-    </a>
-    <a class="btn btn-light btn-sm" href="{% url 'nabavka:case_create' %}">
-      <i class="mdi mdi-plus"></i> Novi zahtev
-    </a>
+    {% if nabavka_permissions.euf_invoice_list %}
+      <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:euf_invoice_list' %}">
+        <i class="mdi mdi-file-document-check"></i> Preuzete EUF
+      </a>
+    {% endif %}
+    {% if nabavka_permissions.case_create %}
+      <a class="btn btn-light btn-sm" href="{% url 'nabavka:case_create' %}">
+        <i class="mdi mdi-plus"></i> Novi zahtev
+      </a>
+    {% endif %}
   </div>
 </div>
 

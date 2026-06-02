@@ -65,6 +65,15 @@ class RolePermission(models.Model):
 
 
 class CustomUser(AbstractUser):
+    employee = models.OneToOneField(
+        "fleet.Employee",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="user_account",
+        verbose_name=_("Zaposleni"),
+    )
+
     allowed_centers = models.ManyToManyField(
         "OrganizationalUnit",
         blank=True,

@@ -139,18 +139,24 @@
     <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_material_requisition_print' case.pk %}" target="_blank">
       <i class="mdi mdi-printer-pos"></i> Trebovanje
     </a>
-    <form method="post" action="{% url 'nabavka:case_repeat' case.pk %}">
-      {% csrf_token %}
-      <button class="btn btn-outline-light btn-sm" type="submit">
-        <i class="mdi mdi-content-copy"></i> Ponovi
-      </button>
-    </form>
-    <a class="btn btn-light btn-sm" href="{% url 'nabavka:case_update' case.pk %}">
-      <i class="mdi mdi-pencil"></i> Izmeni
-    </a>
-    <a class="btn btn-warning btn-sm" href="{% url 'nabavka:purchase_order_create' %}?case={{ case.pk }}">
-      <i class="mdi mdi-file-plus"></i> Narudzbenica
-    </a>
+    {% if can_repeat %}
+      <form method="post" action="{% url 'nabavka:case_repeat' case.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-light btn-sm" type="submit">
+          <i class="mdi mdi-content-copy"></i> Ponovi
+        </button>
+      </form>
+    {% endif %}
+    {% if can_update %}
+      <a class="btn btn-light btn-sm" href="{% url 'nabavka:case_update' case.pk %}">
+        <i class="mdi mdi-pencil"></i> Izmeni
+      </a>
+    {% endif %}
+    {% if can_create_purchase_order %}
+      <a class="btn btn-warning btn-sm" href="{% url 'nabavka:purchase_order_create' %}?case={{ case.pk }}">
+        <i class="mdi mdi-file-plus"></i> Narudzbenica
+      </a>
+    {% endif %}
   </div>
 </div>
 
@@ -176,12 +182,16 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0">Dodate stavke</h4>
         <div class="d-flex gap-2">
-          <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:item_create' case.pk %}">
-            <i class="mdi mdi-plus"></i> Dodaj stavku
-          </a>
-          <a class="btn btn-outline-secondary btn-sm" href="{% url 'nabavka:euf_invoice_list' %}">
-            <i class="mdi mdi-refresh"></i> Preuzete EUF
-          </a>
+          {% if can_add_items %}
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'nabavka:item_create' case.pk %}">
+              <i class="mdi mdi-plus"></i> Dodaj stavku
+            </a>
+          {% endif %}
+          {% if can_view_euf %}
+            <a class="btn btn-outline-secondary btn-sm" href="{% url 'nabavka:euf_invoice_list' %}">
+              <i class="mdi mdi-refresh"></i> Preuzete EUF
+            </a>
+          {% endif %}
         </div>
       </div>
       <div class="card-body">
@@ -257,12 +267,14 @@
                       {% if item.source_type %}Izmeni{% else %}Povezi{% endif %}
                     </button>
                     {% endif %}
-                    <form method="post" action="{% url 'nabavka:item_delete' case.pk item.pk %}">
-                      {% csrf_token %}
-                      <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Obrisati stavku?');">
-                        <i class="mdi mdi-delete"></i>
-                      </button>
-                    </form>
+                    {% if can_delete_items %}
+                      <form method="post" action="{% url 'nabavka:item_delete' case.pk item.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Obrisati stavku?');">
+                          <i class="mdi mdi-delete"></i>
+                        </button>
+                      </form>
+                    {% endif %}
                   </div>
                 </td>
               </tr>
@@ -280,13 +292,15 @@
     <div class="card">
       <div class="card-header"><h4 class="mb-0">Status</h4></div>
       <div class="card-body">
-        <form method="post" action="{% url 'nabavka:status_log_create' case.pk %}">
-          {% csrf_token %}
-          <div class="mb-2">{{ status_log_form.new_status }}</div>
-          <div class="mb-2">{{ status_log_form.comment }}</div>
-          <button class="btn btn-outline-primary btn-sm" type="submit">Sacuvaj status</button>
-        </form>
-        <hr>
+        {% if can_change_status %}
+          <form method="post" action="{% url 'nabavka:status_log_create' case.pk %}">
+            {% csrf_token %}
+            <div class="mb-2">{{ status_log_form.new_status }}</div>
+            <div class="mb-2">{{ status_log_form.comment }}</div>
+            <button class="btn btn-outline-primary btn-sm" type="submit">Sacuvaj status</button>
+          </form>
+          <hr>
+        {% endif %}
         <ul class="list-group">
           {% for log in case.status_logs.all %}
           <li class="list-group-item">

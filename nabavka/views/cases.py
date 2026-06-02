@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.middleware.csrf import get_token
 from django.db import transaction
 from django.db.models import Prefetch, Q
@@ -41,6 +42,14 @@ class NabavkaContextMixin:
         ctx["current_app"] = "nabavka"
         ctx["sidebar_template"] = "sidebar_nabavka.html"
         return ctx
+
+
+def _is_zahtev_only_user(user):
+    return (
+        not user.is_superuser
+        and user.roles.filter(slug="zahtev").exists()
+        and not user_has_role_permission(user, "nabavka:case_update")
+    )
 
 
 class DashboardView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
@@ -158,16 +167,25 @@ def _case_actions_html(request, procurement_case):
     repeat_url = reverse("nabavka:case_repeat", kwargs={"pk": procurement_case.pk})
     update_url = reverse("nabavka:case_update", kwargs={"pk": procurement_case.pk})
     csrf_token = escape(get_token(request))
-    return (
-        f'<a class="btn btn-outline-secondary btn-sm" href="{print_url}" target="_blank" title="Stampa">'
-        '<i class="mdi mdi-printer"></i></a> '
-        f'<form method="post" action="{repeat_url}" class="d-inline">'
-        f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">'
-        '<button class="btn btn-outline-info btn-sm" type="submit" title="Ponovi zahtev">'
-        '<i class="mdi mdi-content-copy"></i></button></form> '
-        f'<a class="btn btn-outline-primary btn-sm" href="{update_url}">'
-        '<i class="mdi mdi-pencil"></i> Izmeni</a>'
-    )
+    actions = []
+    if user_has_role_permission(request.user, "nabavka:case_print"):
+        actions.append(
+            f'<a class="btn btn-outline-secondary btn-sm" href="{print_url}" target="_blank" title="Stampa">'
+            '<i class="mdi mdi-printer"></i></a>'
+        )
+    if user_has_role_permission(request.user, "nabavka:case_repeat"):
+        actions.append(
+            f'<form method="post" action="{repeat_url}" class="d-inline">'
+            f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">'
+            '<button class="btn btn-outline-info btn-sm" type="submit" title="Ponovi zahtev">'
+            '<i class="mdi mdi-content-copy"></i></button></form>'
+        )
+    if user_has_role_permission(request.user, "nabavka:case_update"):
+        actions.append(
+            f'<a class="btn btn-outline-primary btn-sm" href="{update_url}">'
+            '<i class="mdi mdi-pencil"></i> Izmeni</a>'
+        )
+    return " ".join(actions)
 
 
 class ProcurementCaseDataView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
@@ -269,6 +287,7 @@ class ProcurementCaseCreateView(NabavkaContextMixin, RolePermissionRequiredMixin
     template_name = "nabavka/case_form.html"
 
     def form_valid(self, form):
+        form.instance.status = ProcurementCase.Status.DRAFT
         form.instance.created_by = self.request.user
         if not form.instance.responsible_id:
             form.instance.responsible = self.request.user
@@ -282,6 +301,11 @@ class ProcurementCaseCreateView(NabavkaContextMixin, RolePermissionRequiredMixin
         )
         messages.success(self.request, "Predmet nabavke je sačuvan.")
         return response
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields.pop("status", None)
+        return form
 
     def get_success_url(self):
         return reverse("nabavka:case_detail", kwargs={"pk": self.object.pk})
@@ -352,11 +376,25 @@ class ProcurementCaseDetailView(NabavkaContextMixin, RolePermissionRequiredMixin
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        can_manage_request_items = (
+            not _is_zahtev_only_user(self.request.user)
+            or (
+                self.object.created_by_id == self.request.user.id
+                and self.object.status == ProcurementCase.Status.DRAFT
+            )
+        )
         ctx.update(
             {
                 "title": str(self.object),
                 "source_unlinked_items_count": self.object.items.filter(source_type="").count(),
                 "can_link_sources": user_has_role_permission(self.request.user, "nabavka:euf_invoice_list"),
+                "can_add_items": user_has_role_permission(self.request.user, "nabavka:item_create") and can_manage_request_items,
+                "can_delete_items": user_has_role_permission(self.request.user, "nabavka:item_delete") and can_manage_request_items,
+                "can_change_status": user_has_role_permission(self.request.user, "nabavka:status_log_create"),
+                "can_repeat": user_has_role_permission(self.request.user, "nabavka:case_repeat"),
+                "can_update": user_has_role_permission(self.request.user, "nabavka:case_update"),
+                "can_create_purchase_order": user_has_role_permission(self.request.user, "nabavka:purchase_order_create"),
+                "can_view_euf": user_has_role_permission(self.request.user, "nabavka:euf_invoice_list"),
                 "status_log_form": ProcurementStatusLogForm(initial={"new_status": self.object.status}),
             }
         )
@@ -484,6 +522,14 @@ class ProcurementItemCreateView(NabavkaContextMixin, RolePermissionRequiredMixin
 
     def dispatch(self, request, *args, **kwargs):
         self.procurement_case = get_object_or_404(ProcurementCase, pk=kwargs["case_pk"])
+        if (
+            _is_zahtev_only_user(request.user)
+            and (
+                self.procurement_case.created_by_id != request.user.id
+                or self.procurement_case.status != ProcurementCase.Status.DRAFT
+            )
+        ):
+            raise PermissionDenied("Stavke mozete menjati samo na svom zahtevu u statusu Nacrt.")
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -648,6 +694,14 @@ class ProcurementCaseSourceLinkView(RolePermissionRequiredMixin, LoginRequiredMi
 class ProcurementItemDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, case_pk, item_pk):
         procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
+        if (
+            _is_zahtev_only_user(request.user)
+            and (
+                procurement_case.created_by_id != request.user.id
+                or procurement_case.status != ProcurementCase.Status.DRAFT
+            )
+        ):
+            raise PermissionDenied("Stavke mozete menjati samo na svom zahtevu u statusu Nacrt.")
         get_object_or_404(ProcurementItem, pk=item_pk, procurement_case=procurement_case).delete()
         messages.success(request, "Stavka je obrisana.")
         return redirect("nabavka:case_detail", pk=procurement_case.pk)

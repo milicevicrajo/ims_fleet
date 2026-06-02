@@ -77,9 +77,11 @@
     <p>Centralni pregled zahteva, OJ, garaže, dobavljača i statusa pre knjiženja faktura.</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
-    <a href="{% url 'nabavka:case_create' %}" class="btn btn-light btn-sm">
-      <i class="mdi mdi-plus"></i> Novi zahtev
-    </a>
+    {% if nabavka_permissions.case_create %}
+      <a href="{% url 'nabavka:case_create' %}" class="btn btn-light btn-sm">
+        <i class="mdi mdi-plus"></i> Novi zahtev
+      </a>
+    {% endif %}
   </div>
 </div>
 
