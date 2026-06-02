@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django import forms
 from django.utils import timezone
 from django_select2.forms import Select2Widget
@@ -43,7 +41,7 @@ def _style_fields(fields):
 
 
 class ProcurementCaseForm(forms.ModelForm):
-    needed_by = localized_date_field(label="Potrebno do", required=False)
+    needed_by = localized_date_field(label="Datum zahteva", required=False)
 
     class Meta:
         model = ProcurementCase
@@ -72,7 +70,7 @@ class ProcurementCaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.is_bound and not self.instance.pk:
-            default_needed_by = timezone.localdate() + timedelta(days=7)
+            default_needed_by = timezone.localdate()
             self.initial.setdefault("needed_by", default_needed_by.strftime("%d.%m.%Y"))
         self.fields["case_type"].choices = PROCUREMENT_CASE_TYPE_CHOICES
         self.fields["job_code"].required = True
@@ -90,7 +88,7 @@ class ProcurementCaseForm(forms.ModelForm):
         is_garage = cleaned_data.get("is_garage")
 
         if not cleaned_data.get("needed_by"):
-            cleaned_data["needed_by"] = timezone.localdate() + timedelta(days=7)
+            cleaned_data["needed_by"] = timezone.localdate()
         if not is_garage:
             cleaned_data["vehicle"] = None
         return cleaned_data

@@ -171,7 +171,7 @@
           <dt class="col-sm-4">Garaza</dt><dd class="col-sm-8">{% if case.is_garage %}Da{% else %}Ne{% endif %}</dd>
           <dt class="col-sm-4">Vozilo</dt><dd class="col-sm-8">{{ case.vehicle|default:"/" }}</dd>
           <dt class="col-sm-4">Procenjena vrednost</dt><dd class="col-sm-8">{{ case.estimated_value|default:"/" }} {{ case.currency }}</dd>
-          <dt class="col-sm-4">Potrebno do</dt><dd class="col-sm-8">{{ case.needed_by|date:"d.m.Y"|default:"/" }}</dd>
+          <dt class="col-sm-4">Datum zahteva</dt><dd class="col-sm-8">{{ case.needed_by|date:"d.m.Y"|default:"/" }}</dd>
           <dt class="col-sm-4">Opis</dt><dd class="col-sm-8">{{ case.description|linebreaksbr|default:"/" }}</dd>
           <dt class="col-sm-4">Napomena</dt><dd class="col-sm-8">{{ case.note|linebreaksbr|default:"/" }}</dd>
         </dl>

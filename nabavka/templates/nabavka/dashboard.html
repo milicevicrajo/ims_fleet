@@ -52,7 +52,6 @@
   .procurement-kpi-icon.open { background: #e6f7fb; color: #116276; }
   .procurement-kpi-icon.invoice { background: #fff4db; color: #7a4d00; }
   .procurement-kpi-icon.garage { background: #e7f7ef; color: #147044; }
-  .procurement-kpi-icon.overdue { background: #fde8e8; color: #9b1c1c; }
   .procurement-status {
     display: inline-flex;
     align-items: center;
@@ -81,7 +80,7 @@
 <div class="procurement-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
     <h1>Nabavka</h1>
-    <p>Pregled zahteva, rokova, garažnih predmeta i faktura pre knjiženja.</p>
+    <p>Pregled zahteva, statusa, garažnih predmeta i faktura pre knjiženja.</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_list' %}">
@@ -145,17 +144,6 @@
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl">
-    <div class="card procurement-kpi">
-      <div class="card-body">
-        <div>
-          <div class="procurement-kpi-label">Prekoračen rok</div>
-          <div class="procurement-kpi-value">{{ overdue_cases }}</div>
-        </div>
-        <span class="procurement-kpi-icon overdue"><i class="mdi mdi-alert-circle-outline"></i></span>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div class="card shadow-sm">
@@ -179,7 +167,7 @@
             <th>Status</th>
             <th>Dobavljač</th>
             <th>OJ</th>
-            <th>Rok</th>
+            <th>Datum zahteva</th>
             <th class="text-center">Akcije</th>
           </tr>
         </thead>

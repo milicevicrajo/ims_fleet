@@ -8,6 +8,13 @@
       <ul id="sidebarnav" class="pt-4">
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'my_employee_profile' %}" aria-expanded="false">
+            <i class="mdi mdi-account-circle"></i>
+            <span class="hide-menu">Moj profil</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
              href="{% url 'employee_list' %}" aria-expanded="false">
             <i class="mdi mdi-account-group"></i>
             <span class="hide-menu">Spisak zaposlenih</span>

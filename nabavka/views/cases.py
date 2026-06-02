@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -57,10 +55,6 @@ class DashboardView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequi
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        today = timezone.localdate()
-        open_status_filter = {
-            "status__in": [ProcurementCase.Status.COMPLETED, ProcurementCase.Status.CANCELLED]
-        }
         ctx.update(
             {
                 "title": "Nabavka",
@@ -72,9 +66,6 @@ class DashboardView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequi
                     status=ProcurementCase.Status.WAITING_INVOICE
                 ).count(),
                 "garage_cases": ProcurementCase.objects.filter(is_garage=True).count(),
-                "overdue_cases": ProcurementCase.objects.exclude(**open_status_filter).filter(
-                    needed_by__lt=today
-                ).count(),
                 "recent_cases": ProcurementCase.objects.select_related(
                     "supplier", "job_code", "responsible"
                 ).order_by("-created_at", "-id")[:8],
@@ -483,7 +474,7 @@ class ProcurementCaseRepeatView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 responsible=request.user,
                 estimated_value=source.estimated_value,
                 currency=source.currency,
-                needed_by=timezone.localdate() + timedelta(days=7),
+                needed_by=timezone.localdate(),
                 note=source.note,
                 created_by=request.user,
             )

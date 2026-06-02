@@ -156,7 +156,9 @@
       <ul class="navbar-nav ms-auto me-0 align-items-center">
         <li class="nav-item me-3 text-white">
           {% if user.is_authenticated %}
-            <span class="fw-semibold">{{ user.first_name }} {{ user.last_name }}</span>
+            <a class="text-white fw-semibold text-decoration-none" href="{% url 'my_employee_profile' %}" title="Otvori moj profil">
+              <i class="mdi mdi-account-circle me-1"></i>{% if user.employee %}{{ user.employee.display_first_name }} {{ user.employee.display_last_name }}{% else %}{{ user.first_name|default:user.username }} {{ user.last_name }}{% endif %}
+            </a>
           {% else %}
             <span class="fw-semibold">Uloguj se</span>
           {% endif %}

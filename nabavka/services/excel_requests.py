@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 from collections import Counter, defaultdict
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -248,7 +248,7 @@ def _create_case(request_row, item_rows, request_date, job_code, vehicle):
         is_garage=True,
         job_code=job_code,
         vehicle=vehicle,
-        needed_by=request_date + timedelta(days=7),
+        needed_by=request_date,
         note=f"{marker}\nDatum zahteva iz Excel evidencije: {request_date:%d.%m.%Y}.",
         created_at=created_at,
     )
@@ -351,9 +351,12 @@ def import_garage_requests_from_excel(
                 result["already_imported"] += 1
                 created_at = _imported_created_at(request_date)
                 existing_case = existing_markers[marker]
-                if existing_case.created_at != created_at:
+                if existing_case.created_at != created_at or existing_case.needed_by != request_date:
                     if commit:
-                        ProcurementCase.objects.filter(pk=existing_case.pk).update(created_at=created_at)
+                        ProcurementCase.objects.filter(pk=existing_case.pk).update(
+                            created_at=created_at,
+                            needed_by=request_date,
+                        )
                     result["updated_dates"] += 1
                 continue
 

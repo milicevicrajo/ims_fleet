@@ -39,8 +39,8 @@
               {% for employee in employees %}
               <tr>
                 <td>{{ employee.employee_code }}</td>
-                <td>{{ employee.last_name }}</td>
-                <td>{{ employee.first_name }}</td>
+                <td>{{ employee.display_last_name }}</td>
+                <td>{{ employee.display_first_name }}</td>
                 <td>{{ employee.position }}</td>
                 <td>{{ employee.org_unit_code|default:employee.department_code }}</td>
                 <td>{{ employee.gender }}</td>

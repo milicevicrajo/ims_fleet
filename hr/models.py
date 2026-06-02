@@ -12,6 +12,18 @@ class Employee(models.Model):
     title = models.CharField(max_length=20, verbose_name=_("Titula"), blank=True, null=True)
     first_name = models.CharField(max_length=50, verbose_name=_("Ime"), blank=True, null=True)
     last_name = models.CharField(max_length=50, verbose_name=_("Prezime"), blank=True, null=True)
+    display_first_name_override = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        verbose_name=_("Ime za prikaz"),
+    )
+    display_last_name_override = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        verbose_name=_("Prezime za prikaz"),
+    )
     position = models.CharField(max_length=100, verbose_name=_("Pozicija"))
     department_code = models.IntegerField(verbose_name=_("Šifra odeljenja"))
     org_unit_code = models.CharField(max_length=20, verbose_name=_("OJ"), blank=True, null=True)
@@ -36,5 +48,44 @@ class Employee(models.Model):
     class Meta:
         app_label = "fleet"
 
+    @property
+    def display_first_name(self):
+        return self.display_first_name_override or self.first_name or ""
+
+    @property
+    def display_last_name(self):
+        return self.display_last_name_override or self.last_name or ""
+
     def __str__(self):
-        return f"{self.last_name} {self.first_name}"
+        return f"{self.display_last_name} {self.display_first_name}".strip()
+
+
+class EmployeeCVItem(models.Model):
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="cv_items",
+        verbose_name=_("Zaposleni"),
+    )
+    title = models.CharField(max_length=255, verbose_name=_("Naziv posla ili projekta"))
+    organization = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name=_("Organizacija / klijent"),
+    )
+    role = models.CharField(max_length=255, blank=True, verbose_name=_("Uloga"))
+    start_date = models.DateField(blank=True, null=True, verbose_name=_("Period od"))
+    end_date = models.DateField(blank=True, null=True, verbose_name=_("Period do"))
+    description = models.TextField(verbose_name=_("Opis aktivnosti"))
+    skills = models.TextField(blank=True, verbose_name=_("Znanja i vestine"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        app_label = "fleet"
+        ordering = ["-start_date", "-id"]
+        verbose_name = _("CV stavka")
+        verbose_name_plural = _("CV stavke")
+
+    def __str__(self):
+        return f"{self.employee} - {self.title}"

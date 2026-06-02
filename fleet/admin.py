@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 
 from core.models import CustomUser, PermissionCode, Role, RolePermission
-from hr.models import Employee
+from hr.models import Employee, EmployeeCVItem
 
 from .models import (
     FuelConsumption,
@@ -30,8 +30,14 @@ class CustomUserAdmin(UserAdmin):
     autocomplete_fields = ('employee',)
 
 
+class EmployeeCVItemInline(admin.TabularInline):
+    model = EmployeeCVItem
+    extra = 0
+
+
 class EmployeeAdmin(admin.ModelAdmin):
     search_fields = ('employee_code', 'first_name', 'last_name')
+    inlines = [EmployeeCVItemInline]
 
 admin.site.register(CustomUser, CustomUserAdmin)
 class RolePermissionInline(admin.TabularInline):

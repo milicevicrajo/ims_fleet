@@ -112,7 +112,7 @@ class ProcurementCase(models.Model):
         default="RSD",
         verbose_name=_("Valuta"),
     )
-    needed_by = models.DateField(null=True, blank=True, verbose_name=_("Potrebno do"))
+    needed_by = models.DateField(null=True, blank=True, verbose_name=_("Datum zahteva"))
     note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Ažurirano"))

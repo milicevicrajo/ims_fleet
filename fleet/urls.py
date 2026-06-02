@@ -3,11 +3,16 @@ from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from django.urls import path, register_converter
 from hr.views import (
+    EmployeeCVItemCreateView,
+    EmployeeCVItemDeleteView,
+    EmployeeCVItemUpdateView,
     EmployeeCreateView,
     EmployeeDeleteView,
     EmployeeDetailView,
     EmployeeListView,
     EmployeeUpdateView,
+    MyEmployeeProfileView,
+    MyEmployeeNameCorrectionView,
 )
 
 from .views.fuel import (
@@ -259,6 +264,11 @@ urlpatterns = [
     path('zaposleni/izmeni/<int:pk>/', EmployeeUpdateView.as_view(), name='employee_update'),
     path('zaposleni/<int:pk>/', EmployeeDetailView.as_view(), name='employee_detail'),
     path('zaposleni/obrisi/<int:pk>/', EmployeeDeleteView.as_view(), name='employee_delete'),
+    path('moj-profil/', MyEmployeeProfileView.as_view(), name='my_employee_profile'),
+    path('moj-profil/ispravi-ime/', MyEmployeeNameCorrectionView.as_view(), name='my_employee_name_correction'),
+    path('moj-profil/cv/novo/', EmployeeCVItemCreateView.as_view(), name='employee_cv_item_create'),
+    path('moj-profil/cv/<int:pk>/izmeni/', EmployeeCVItemUpdateView.as_view(), name='employee_cv_item_update'),
+    path('moj-profil/cv/<int:pk>/obrisi/', EmployeeCVItemDeleteView.as_view(), name='employee_cv_item_delete'),
 
     path('garaza/', GarazaHomeView.as_view(), name='garaza_home'),
     path('garaza/kvarovi/', KvarListView.as_view(), name='kvar_list'),
