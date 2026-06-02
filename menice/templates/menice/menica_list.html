@@ -3,70 +3,128 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>{{ title }}</h2>
+<style>
+  .menica-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .menica-hero h1 { font-size: 1.6rem; margin: 0; }
+  .menica-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .menica-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .menica-badge {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .menica-badge.status-0 { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .menica-badge.status-1 { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
+  .menica-badge.status-2 { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .menica-table-wrap {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  #DatatableMenice {
+    width: 100% !important;
+    table-layout: fixed;
+  }
+  #DatatableMenice th,
+  #DatatableMenice td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  #DatatableMenice td:last-child .btn {
+    margin: 2px 0;
+  }
+</style>
+
+<div class="menica-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Centralni pregled menica, ugovora, OJ i statusa.</p>
+  </div>
   {% if tip == "izlazna" %}
     <form method="post" action="{% url 'menice:izlazne_sync' %}" class="m-0">
       {% csrf_token %}
-      <button type="submit" class="btn btn-primary">
+      <button type="submit" class="btn btn-light btn-sm">
         <i class="mdi mdi-sync"></i> Azuriraj iz NBS
       </button>
     </form>
   {% else %}
-    <a class="btn btn-primary" href="{% url 'menice:menica_create' tip=tip %}">
+    <a class="btn btn-light btn-sm" href="{% url 'menice:menica_create' tip=tip %}">
       <i class="mdi mdi-plus"></i> Nova menica
     </a>
   {% endif %}
 </div>
 
-<div class="card">
+<div class="card shadow-sm mb-3">
   <div class="card-body">
-    <div class="table-responsive">
-      <table id="DatatableMenice" class="display compact">
+    <form method="get" class="menica-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label mb-1" for="id_q">Pretraga</label>
+          <input id="id_q" class="form-control" type="text" name="q" value="{{ q }}" placeholder="Serijski broj, osnov, banka ili ugovor">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_date_from">Datum registracije od</label>
+          <input id="id_date_from" class="form-control" type="date" name="date_from" value="{{ date_from }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_date_to">Datum registracije do</label>
+          <input id="id_date_to" class="form-control" type="date" name="date_to" value="{{ date_to }}">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_status">Status</label>
+          <select id="id_status" class="form-select select2-method" name="status">
+            <option value="">Svi</option>
+            {% for value, label in status_choices %}
+              <option value="{{ value }}" {% if status == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="id_oj">OJ</label>
+          <input id="id_oj" class="form-control" type="text" name="oj" value="{{ oj }}">
+        </div>
+        <div class="col-12 d-flex gap-2 justify-content-end">
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretrazi</button>
+          <a class="btn btn-outline-secondary" href="{% url 'menice:menica_list' tip=tip %}">Reset</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="menica-table-wrap">
+      <table id="DatatableMenice" class="display compact table table-hover table-bordered align-middle w-100">
         <thead>
           <tr>
-            <th>Serijski broj menice</th>
+            <th>Serijski broj</th>
             <th>Osnov izdavanja</th>
             <th>Datum registracije</th>
-            <th>Naziv banke</th>
+            <th>Banka</th>
             <th>Broj ugovora</th>
             <th>Datum ugovora</th>
             <th>OJ</th>
             <th>Napomena</th>
             <th>Status</th>
-            <th></th>
+            <th class="text-center">Akcije</th>
           </tr>
         </thead>
-        <tbody>
-          {% for menica in menice %}
-          <tr>
-            <td>{{ menica.serijski_broj_menice|default_if_none:"" }}</td>
-            <td>{{ menica.osnov_izdavanja|default_if_none:"" }}</td>
-            <td>{{ menica.datum_registracije|date:"d.m.Y" }}</td>
-            <td>{{ menica.naziv_banke|default_if_none:"" }}</td>
-            <td>{{ menica.broj_ugovora|default_if_none:"" }}</td>
-            <td>{{ menica.datum_ugovora|date:"d.m.Y" }}</td>
-            <td>{{ menica.oj|default_if_none:"" }}</td>
-            <td title="{{ menica.napomena|default_if_none:'' }}">
-              {{ menica.napomena|default_if_none:""|truncatechars:80 }}
-            </td>
-            <td>{{ menica.get_interni_status_display }}</td>
-            <td>
-              <div class="d-flex gap-1">
-                <a class="btn btn-sm btn-info" href="{% url 'menice:menica_detail' tip=tip pk=menica.pk %}" title="Detalj">
-                  <i class="mdi mdi-eye"></i>
-                </a>
-                <a class="btn btn-sm btn-primary" href="{% url 'menice:menica_update' tip=tip pk=menica.pk %}" title="Izmeni">
-                  <i class="mdi mdi-pencil"></i>
-                </a>
-                <a class="btn btn-sm btn-outline-danger" href="{% url 'menice:menica_delete' tip=tip pk=menica.pk %}" title="Obrisi">
-                  <i class="mdi mdi-delete"></i>
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
+        <tbody></tbody>
       </table>
     </div>
   </div>
@@ -74,13 +132,39 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    var table = document.getElementById('DatatableMenice');
-    if (!table || !window.initFleetReportTable) return;
-    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
-    window.initFleetReportTable(table, {
+    if (!window.jQuery || !jQuery.fn.DataTable) return;
+    var table = jQuery('#DatatableMenice');
+    if (!table.length || jQuery.fn.DataTable.isDataTable(table)) return;
+    table.DataTable({
+      serverSide: true,
+      processing: true,
+      autoWidth: false,
       pageLength: 50,
+      lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
       order: [[2, 'desc']],
-      scrollX: true
+      ajax: { url: "{% url 'menice:menica_data' tip=tip %}" + window.location.search, type: 'GET' },
+      columns: [
+        { data: 'serial' },
+        { data: 'basis' },
+        { data: 'registration_date' },
+        { data: 'bank' },
+        { data: 'contract_number' },
+        { data: 'contract_date' },
+        { data: 'oj' },
+        { data: 'note' },
+        { data: 'status' },
+        { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+      ],
+      language: {
+        processing: 'Ucitavanje...',
+        search: 'Pretraga:',
+        lengthMenu: 'Prikazi _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ menica',
+        infoEmpty: 'Nema menica',
+        infoFiltered: '(filtrirano od _MAX_ ukupno)',
+        zeroRecords: 'Nema rezultata',
+        paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
+      }
     });
   });
 </script>

@@ -54,6 +54,7 @@ ULAZNE_EXCEL_FIELD_MAP = {
     "Osnov izdavanja": "osnov_izdavanja",
     "Datum prijema menice": "datum_prijema_menice",
     "Procenat - iznos": "procenat_iznos",
+    "Jedinica vrednosti": "jedinica_vrednosti",
     "Sifra poslovnog partnera": "sifra_poslovnog_partnera",
     "Naziv pravnog lica": "naziv_pravnog_lica",
     "Broj naseg ugovora": "broj_naseg_ugovora",
@@ -354,6 +355,15 @@ def _ulazna_excel_row_values(worksheet, row_index, headers):
             values[field_name] = parse_integer(raw_value)
         else:
             values[field_name] = normalize_text(raw_value)
+    unit = (values.get("jedinica_vrednosti") or UlaznaMenica.JEDINICA_PROCENAT).upper()
+    values["jedinica_vrednosti"] = unit
+    amount = values.get("procenat_iznos")
+    if (
+        unit == UlaznaMenica.JEDINICA_PROCENAT
+        and amount is not None
+        and Decimal("0") < amount <= Decimal("1")
+    ):
+        values["procenat_iznos"] = amount * Decimal("100")
     return values
 
 

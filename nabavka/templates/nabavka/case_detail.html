@@ -2,29 +2,153 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<style>
+  .case-detail-hero {
+    border-radius: 10px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 52%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, .18);
+  }
+  .case-detail-hero h1 { font-size: 1.65rem; letter-spacing: 0; margin: 0; }
+  .case-detail-hero-title { color: rgba(255, 255, 255, .9); font-size: .96rem; margin-top: 6px; }
+  .case-detail-hero-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+  .case-detail-hero-badge {
+    align-items: center;
+    background: rgba(255, 255, 255, .14);
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 999px;
+    color: #fff;
+    display: inline-flex;
+    font-size: .78rem;
+    font-weight: 700;
+    gap: 5px;
+    padding: 4px 9px;
+  }
+  .case-detail-hero-actions { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+  .case-detail-hero-actions .btn { font-weight: 700; }
+  .case-detail-hero-actions form { margin: 0; }
+  .source-link-modal-content {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 18px 55px rgba(20, 57, 91, .22);
+    overflow: hidden;
+  }
+  .source-link-modal-header {
+    border: 0;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 62%, #2f8f6f 100%);
+    color: #fff;
+    padding: 18px 20px;
+  }
+  .source-link-modal-header .btn-close { filter: brightness(0) invert(1); opacity: .9; }
+  .source-link-modal-title { display: flex; align-items: center; gap: 10px; font-weight: 800; }
+  .source-link-modal-title i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .16);
+  }
+  .source-link-modal-subtitle { color: rgba(255, 255, 255, .82); font-size: .84rem; margin-top: 4px; }
+  .source-link-target {
+    border: 1px solid #dfe8ef;
+    border-radius: 10px;
+    background: #f7fafc;
+    color: #29465b;
+    font-weight: 700;
+    padding: 11px 13px;
+  }
+  .source-link-step-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #14395b;
+    font-weight: 700;
+  }
+  .source-link-step-label span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e6f1f5;
+    color: #176077;
+    font-size: .75rem;
+  }
+  .source-link-help {
+    border: 1px solid #d8e8ef;
+    border-radius: 9px;
+    background: #f4fbfd;
+    color: #486579;
+    font-size: .83rem;
+    padding: 10px 12px;
+  }
+  .source-type-select + .select2-container .select2-selection--single {
+    align-items: center;
+    border: 1px solid #cfdce6;
+    border-radius: 8px;
+    display: flex;
+    min-height: 40px;
+    padding: 4px 8px;
+  }
+  .source-type-select + .select2-container .select2-selection__rendered {
+    color: #29465b;
+    font-weight: 700;
+    padding-left: 0;
+  }
+  .source-type-select + .select2-container .select2-selection__arrow { height: 38px; }
+  .source-type-option { align-items: center; display: inline-flex; gap: 7px; }
+  .source-type-option i { color: #1f6f8b; font-size: 1rem; }
+  .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: #1f6f8b;
+    box-shadow: 0 0 0 .2rem rgba(31, 111, 139, .14);
+  }
+  .source-link-modal-footer { border-top: 1px solid #eef2f6; background: #fbfcfd; padding: 13px 20px; }
+</style>
+
+<div class="case-detail-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
-    <h2 class="mb-0">{{ case.case_number }} - {{ case.title }}</h2>
-    <div class="text-muted">{{ case.get_case_type_display }} / {{ case.get_status_display }}</div>
+    <h1>{{ case.case_number }}</h1>
+    <div class="case-detail-hero-title">{{ case.title }}</div>
+    <div class="case-detail-hero-badges">
+      <span class="case-detail-hero-badge">
+        <i class="mdi mdi-file-document-outline"></i> {{ case.get_case_type_display }}
+      </span>
+      <span class="case-detail-hero-badge">
+        <i class="mdi mdi-progress-check"></i> {{ case.get_status_display }}
+      </span>
+      {% if case.is_garage %}
+        <span class="case-detail-hero-badge">
+          <i class="mdi mdi-car-wrench"></i>
+          {% if case.vehicle %}Garaza{% else %}Magacin garaze{% endif %}
+        </span>
+      {% endif %}
+    </div>
   </div>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{% url 'nabavka:case_list' %}">Lista</a>
-    <a class="btn btn-outline-dark" href="{% url 'nabavka:case_print' case.pk %}" target="_blank">
+  <div class="case-detail-hero-actions">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_list' %}">
+      <i class="mdi mdi-arrow-left"></i> Lista
+    </a>
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_print' case.pk %}" target="_blank">
       <i class="mdi mdi-printer"></i> Stampa
     </a>
-    <a class="btn btn-outline-dark" href="{% url 'nabavka:case_material_requisition_print' case.pk %}" target="_blank">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_material_requisition_print' case.pk %}" target="_blank">
       <i class="mdi mdi-printer-pos"></i> Trebovanje
     </a>
     <form method="post" action="{% url 'nabavka:case_repeat' case.pk %}">
       {% csrf_token %}
-      <button class="btn btn-outline-info" type="submit">
+      <button class="btn btn-outline-light btn-sm" type="submit">
         <i class="mdi mdi-content-copy"></i> Ponovi
       </button>
     </form>
-    <a class="btn btn-primary" href="{% url 'nabavka:case_update' case.pk %}">
+    <a class="btn btn-light btn-sm" href="{% url 'nabavka:case_update' case.pk %}">
       <i class="mdi mdi-pencil"></i> Izmeni
     </a>
-    <a class="btn btn-success" href="{% url 'nabavka:purchase_order_create' %}?case={{ case.pk }}">
+    <a class="btn btn-warning btn-sm" href="{% url 'nabavka:purchase_order_create' %}?case={{ case.pk }}">
       <i class="mdi mdi-file-plus"></i> Narudzbenica
     </a>
   </div>
@@ -61,38 +185,34 @@
         </div>
       </div>
       <div class="card-body">
-        <form method="post" action="{% url 'nabavka:case_invoice_link_create' case.pk %}" class="border rounded p-3 mb-3 bg-light">
-          {% csrf_token %}
-          <div class="row g-2 align-items-end">
-            <div class="col-12 col-lg-7">
-              <label class="form-label mb-1">Povezi sve nepovezane stavke sa fakturom</label>
-              <select name="invoice" class="form-select select2-method" required {% if not unlinked_items_count %}disabled{% endif %}>
-                <option value="">Izaberi fakturu...</option>
-                {% for invoice in available_invoices %}
-                  <option value="{{ invoice.pk }}">
-                    {{ invoice.invoice_number }} - {{ invoice.supplier_name|default:"/" }} - {{ invoice.amount|default:"/" }}
-                  </option>
-                {% endfor %}
-              </select>
+        {% if can_link_sources %}
+          <div class="border rounded p-3 mb-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <strong>Povezivanje nepovezanih stavki</strong>
+              <div class="text-muted small">
+                {% if source_unlinked_items_count %}
+                  Izaberite tip i zapis koji ce biti postavljen na sve trenutno nepovezane stavke.
+                {% else %}
+                  Sve stavke ovog zahteva su vec povezane.
+                {% endif %}
+              </div>
             </div>
-            <div class="col-12 col-lg-3">
-              <label class="form-label mb-1">Napomena</label>
-              <input type="text" name="note" class="form-control" {% if not unlinked_items_count %}disabled{% endif %}>
-            </div>
-            <div class="col-12 col-lg-2">
-              <button class="btn btn-outline-primary w-100" type="submit" {% if not unlinked_items_count %}disabled{% endif %}>
-                <i class="mdi mdi-link"></i> Povezi {{ unlinked_items_count }}
-              </button>
-            </div>
+            <button
+              class="btn btn-outline-primary item-source-link-button"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#item-source-link-modal"
+              data-action="{% url 'nabavka:case_source_link' case.pk %}"
+              data-item-name="Sve nepovezane stavke: {{ source_unlinked_items_count }}"
+              data-source-type=""
+              data-source-id=""
+              data-source-label=""
+              {% if not source_unlinked_items_count %}disabled{% endif %}
+            >
+              <i class="mdi mdi-link-variant"></i> Povezi sve: {{ source_unlinked_items_count }}
+            </button>
           </div>
-          {% if not available_invoices %}
-            <div class="text-muted small mt-2">
-              Nema ucitanih faktura. Otvorite Preuzete EUF da se podaci osveze iz EUF view-a.
-            </div>
-          {% elif not unlinked_items_count %}
-            <div class="text-muted small mt-2">Sve stavke ovog zahteva su vec povezane sa fakturom.</div>
-          {% endif %}
-        </form>
+        {% endif %}
 
         <div class="table-responsive">
           <table class="table table-sm table-bordered align-middle">
@@ -103,7 +223,7 @@
                 <th>Kolicina</th>
                 <th>Cena</th>
                 <th>Ukupno</th>
-                <th>Faktura</th>
+                <th>Povezano sa</th>
                 <th class="text-center">Akcije</th>
               </tr>
             </thead>
@@ -118,53 +238,32 @@
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.estimated_unit_price|default:"/" }}</td>
                 <td>{{ item.estimated_total|default:"/" }}</td>
-                <td style="min-width: 300px;">
-                  {% if item.linked_invoice %}
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                      <div>
-                        <a href="{% url 'nabavka:euf_invoice_detail' item.linked_invoice.pk %}">
-                          <strong>{{ item.linked_invoice.invoice_number }}</strong>
-                        </a>
-                        <div class="text-muted small">
-                          {{ item.linked_invoice.supplier_name|default:"/" }} / {{ item.linked_invoice.amount|default:"/" }}
-                        </div>
-                      </div>
-                      <form method="post" action="{% url 'nabavka:item_invoice_link_delete' case.pk item.pk %}">
-                        {% csrf_token %}
-                        <button class="btn btn-outline-danger btn-sm" type="submit" title="Skini vezu sa fakturom">
-                          <i class="mdi mdi-link-off"></i>
-                        </button>
-                      </form>
-                    </div>
-                  {% else %}
-                    <form method="post" action="{% url 'nabavka:item_invoice_link_create' case.pk item.pk %}" class="d-flex gap-2 align-items-start">
+                <td>{{ item.source_reference_label|default:"/" }}</td>
+                <td class="text-center">
+                  <div class="d-flex justify-content-center gap-1">
+                    {% if can_link_sources %}
+                    <button
+                      class="btn btn-outline-secondary btn-sm item-source-link-button"
+                      type="button"
+                      data-bs-toggle="modal"
+                      data-bs-target="#item-source-link-modal"
+                      data-action="{% url 'nabavka:item_source_link' case.pk item.pk %}"
+                      data-item-name="{{ item.name }}"
+                      data-source-type="{{ item.source_type }}"
+                      data-source-id="{{ item.source_reference_id }}"
+                      data-source-label="{{ item.source_reference_label }}"
+                    >
+                      <i class="mdi mdi-link-variant"></i>
+                      {% if item.source_type %}Izmeni{% else %}Povezi{% endif %}
+                    </button>
+                    {% endif %}
+                    <form method="post" action="{% url 'nabavka:item_delete' case.pk item.pk %}">
                       {% csrf_token %}
-                      <select name="invoice" class="form-select form-select-sm select2-method" required>
-                        <option value="">Izaberi fakturu...</option>
-                        {% for invoice in available_invoices %}
-                          <option value="{{ invoice.pk }}">
-                            {{ invoice.invoice_number }} - {{ invoice.supplier_name|default:"/" }} - {{ invoice.amount|default:"/" }}
-                          </option>
-                        {% endfor %}
-                      </select>
-                      <button class="btn btn-outline-primary btn-sm" type="submit" title="Povezi fakturu">
-                        <i class="mdi mdi-link"></i>
+                      <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Obrisati stavku?');">
+                        <i class="mdi mdi-delete"></i>
                       </button>
                     </form>
-                    {% if not available_invoices %}
-                      <div class="text-muted small mt-1">
-                        Nema ucitanih faktura. Otvorite Preuzete EUF da se podaci osveze iz EUF view-a.
-                      </div>
-                    {% endif %}
-                  {% endif %}
-                </td>
-                <td class="text-center">
-                  <form method="post" action="{% url 'nabavka:item_delete' case.pk item.pk %}">
-                    {% csrf_token %}
-                    <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Obrisati stavku?');">
-                      <i class="mdi mdi-delete"></i>
-                    </button>
-                  </form>
+                  </div>
                 </td>
               </tr>
               {% empty %}
@@ -203,4 +302,172 @@
     </div>
   </div>
 </div>
+
+{% if can_link_sources %}
+<div class="modal fade" id="item-source-link-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content source-link-modal-content">
+      <form method="post" id="item-source-link-form">
+        {% csrf_token %}
+        <div class="modal-header source-link-modal-header">
+          <div>
+            <h5 class="modal-title source-link-modal-title">
+              <i class="mdi mdi-link-variant"></i>
+              Povezivanje stavke
+            </h5>
+            <div class="source-link-modal-subtitle">Izaberite evidenciju i zapis koji odgovara stavci zahteva.</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="source-link-target mb-4">
+            <i class="mdi mdi-file-document-outline me-1"></i>
+            <span id="item-source-link-name"></span>
+          </div>
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label source-link-step-label" for="item-source-type">
+                <span>1</span> Tip povezivanja
+              </label>
+              <select class="form-select source-type-select" id="item-source-type" name="source_type">
+                <option value="">Bez povezivanja</option>
+                <option value="euf">EUF</option>
+                <option value="uf">UF</option>
+                <option value="goods">Roba</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-8">
+              <label class="form-label source-link-step-label" for="item-source-reference">
+                <span>2</span> Povezi sa zapisom
+              </label>
+              <select class="form-select" id="item-source-reference" name="source_reference"></select>
+            </div>
+          </div>
+          <div class="source-link-help mt-4" id="item-source-link-help">
+            <i class="mdi mdi-information-outline me-1"></i>
+            Prvo izaberite tip povezivanja, a zatim pronadjite zapis iz evidencije.
+          </div>
+        </div>
+        <div class="modal-footer source-link-modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="mdi mdi-content-save"></i> Sacuvaj vezu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var modal = document.getElementById('item-source-link-modal');
+  var form = document.getElementById('item-source-link-form');
+  var nameLabel = document.getElementById('item-source-link-name');
+  var sourceType = document.getElementById('item-source-type');
+  var sourceReference = document.getElementById('item-source-reference');
+  var helpLabel = document.getElementById('item-source-link-help');
+  var $sourceType = window.jQuery ? jQuery(sourceType) : null;
+  var $sourceReference = window.jQuery ? jQuery(sourceReference) : null;
+
+  function formatSourceType(option) {
+    if (!option.id) {
+      return jQuery('<span class="source-type-option"><i class="mdi mdi-link-off"></i> Bez povezivanja</span>');
+    }
+    var icons = {
+      euf: 'mdi-file-document-outline',
+      uf: 'mdi-format-list-bulleted',
+      goods: 'mdi-package-variant-closed'
+    };
+    return jQuery(
+      '<span class="source-type-option"><i class="mdi ' +
+      (icons[option.id] || 'mdi-link-variant') +
+      '"></i> ' +
+      option.text +
+      '</span>'
+    );
+  }
+
+  function resetReference(sourceId, sourceLabel) {
+    if (!$sourceReference) return;
+    $sourceReference.empty();
+    if (sourceId) {
+      $sourceReference.append(new Option(sourceLabel || sourceId, sourceId, true, true));
+    }
+    $sourceReference.prop('disabled', !sourceType.value).trigger('change');
+  }
+
+  function updateHelpLabel() {
+    if (!helpLabel) return;
+    helpLabel.innerHTML = sourceType.value
+      ? '<i class="mdi mdi-information-outline me-1"></i> Pretrazite i izaberite zapis iz odabrane evidencije.'
+      : '<i class="mdi mdi-link-off me-1"></i> Bez povezivanja uklanja postojecu vezu kada sacuvate izmenu.';
+  }
+
+  if ($sourceType && jQuery.fn.select2) {
+    $sourceType.select2({
+      theme: 'bootstrap-5',
+      width: '100%',
+      dropdownParent: jQuery(modal),
+      minimumResultsForSearch: Infinity,
+      templateResult: formatSourceType,
+      templateSelection: formatSourceType
+    });
+  }
+
+  if ($sourceReference && jQuery.fn.select2) {
+    $sourceReference.select2({
+      theme: 'bootstrap-5',
+      width: '100%',
+      dropdownParent: jQuery(modal),
+      placeholder: 'Izaberite zapis...',
+      allowClear: true,
+      ajax: {
+        url: '{% url "nabavka:item_source_data" %}',
+        dataType: 'json',
+        delay: 250,
+        data: function (params) {
+          return {
+            source_type: sourceType.value,
+            q: params.term || '',
+            page: params.page || 1
+          };
+        },
+        processResults: function (data) {
+          return {
+            results: data.results || [],
+            pagination: { more: Boolean(data.pagination && data.pagination.more) }
+          };
+        }
+      }
+    });
+  }
+
+  function handleSourceTypeChange() {
+    resetReference('', '');
+    updateHelpLabel();
+  }
+
+  if ($sourceType) {
+    $sourceType.on('change', handleSourceTypeChange);
+  } else {
+    sourceType.addEventListener('change', handleSourceTypeChange);
+  }
+
+  document.querySelectorAll('.item-source-link-button').forEach(function (button) {
+    button.addEventListener('click', function () {
+      form.action = button.getAttribute('data-action');
+      nameLabel.textContent = button.getAttribute('data-item-name') || '';
+      sourceType.value = button.getAttribute('data-source-type') || '';
+      if ($sourceType) $sourceType.trigger('change.select2');
+      resetReference(
+        button.getAttribute('data-source-id') || '',
+        button.getAttribute('data-source-label') || ''
+      );
+      updateHelpLabel();
+    });
+  });
+});
+</script>
+{% endif %}
 {% endblock %}

@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from core.models import PermissionCode, Role, RolePermission
+
 
 class MeniceSmokeTests(TestCase):
     def setUp(self):
@@ -9,6 +11,11 @@ class MeniceSmokeTests(TestCase):
             username="menice-test",
             password="test-password",
         )
+        role = Role.objects.create(name="Menice", slug="menice")
+        for code in ["menice:menica_list", "menice:ulazna_menica_create"]:
+            permission = PermissionCode.objects.create(code=code)
+            RolePermission.objects.create(role=role, permission=permission)
+        self.user.roles.add(role)
         self.client.force_login(self.user)
 
     def test_izlazne_list_page_renders(self):

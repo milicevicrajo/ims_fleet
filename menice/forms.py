@@ -1,5 +1,9 @@
 from django import forms
 from django.db import connections
+from django_select2.forms import Select2Widget
+
+from core.form_fields import localized_date_field
+from core.models import OrganizationalUnit
 
 from .models import Menica, UlaznaMenica
 
@@ -84,12 +88,19 @@ class MenicaCreateForm(forms.ModelForm):
 
 
 class MenicaUpdateForm(forms.ModelForm):
+    datum_ugovora = localized_date_field(label="Datum ugovora", required=False)
+    oj = forms.ChoiceField(
+        label="OJ",
+        required=False,
+        choices=[],
+        widget=Select2Widget(attrs={"class": "select2-method"}),
+    )
     interni_status = forms.TypedChoiceField(
         label="Status",
         choices=Menica.INTERNI_STATUS_CHOICES,
         coerce=int,
         required=True,
-        widget=forms.Select(attrs={"class": "form-control"}),
+        widget=Select2Widget(attrs={"class": "select2-method"}),
     )
 
     class Meta:
@@ -103,12 +114,38 @@ class MenicaUpdateForm(forms.ModelForm):
             "interni_status",
         ]
         widgets = {
-            "datum_ugovora": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            "fizicka_lokacija": Select2Widget(attrs={"class": "select2-method"}),
             "napomena": forms.Textarea(attrs={"rows": 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [("", "Bez izbora OJ")]
+        choices.extend(
+            (unit.code.strip(), f"{unit.code.strip()} - {unit.name}")
+            for unit in OrganizationalUnit.objects.all().order_by("code")
+        )
+        current_oj = (self.instance.oj or "").strip() if self.instance else ""
+        if current_oj and current_oj not in {value for value, _ in choices}:
+            choices.append((current_oj, f"{current_oj} - postojeca vrednost"))
+        self.fields["oj"].choices = choices
+
 
 class UlaznaMenicaForm(forms.ModelForm):
+    datum_prijema_menice = localized_date_field(label="Datum prijema menice", required=False)
+    datum_ugovora = localized_date_field(label="Datum ugovora", required=False)
+    ugovor_vazi_do = localized_date_field(label="Ugovor vazi do", required=False)
+    sifra_centra = forms.ChoiceField(
+        label="Sifra centra",
+        required=False,
+        choices=[],
+        widget=Select2Widget(attrs={"class": "select2-method"}),
+    )
+    jedinica_vrednosti = forms.ChoiceField(
+        label="Jedinica vrednosti",
+        choices=UlaznaMenica.JEDINICA_VREDNOSTI_CHOICES,
+        widget=Select2Widget(attrs={"class": "select2-method"}),
+    )
     partner = forms.ChoiceField(
         label="Poslovni partner",
         required=False,
@@ -117,12 +154,7 @@ class UlaznaMenicaForm(forms.ModelForm):
 
     class Meta:
         model = UlaznaMenica
-        exclude = ["created_at", "updated_at"]
-        widgets = {
-            "datum_prijema_menice": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
-            "datum_ugovora": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
-            "ugovor_vazi_do": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
-        }
+        exclude = ["created_at", "updated_at", "naziv_pravnog_lica"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -132,10 +164,27 @@ class UlaznaMenicaForm(forms.ModelForm):
         self.fields["sifra_poslovnog_partnera"].widget = forms.HiddenInput()
 
         field_order = ["partner"] + [name for name in self.fields if name != "partner"]
+        field_order.remove("jedinica_vrednosti")
+        amount_index = field_order.index("procenat_iznos")
+        field_order.insert(amount_index, "jedinica_vrednosti")
         self.order_fields(field_order)
 
         if self.instance and self.instance.pk and self.instance.sifra_poslovnog_partnera:
             self.initial["partner"] = str(self.instance.sifra_poslovnog_partnera)
+
+        centers = sorted(
+            {
+                center.strip()
+                for center in OrganizationalUnit.objects.exclude(center__isnull=True).exclude(center="")
+                .values_list("center", flat=True)
+                if center.strip()
+            }
+        )
+        center_choices = [("", "Bez izbora centra")] + [(center, center) for center in centers]
+        current_center = (self.instance.sifra_centra or "").strip() if self.instance else ""
+        if current_center and current_center not in {value for value, _ in center_choices}:
+            center_choices.append((current_center, f"{current_center} - postojeca vrednost"))
+        self.fields["sifra_centra"].choices = center_choices
 
     def clean(self):
         cleaned_data = super().clean()
@@ -143,5 +192,5 @@ class UlaznaMenicaForm(forms.ModelForm):
         partner_data = self.partner_lookup.get(partner_key)
         if partner_data:
             cleaned_data["sifra_poslovnog_partnera"] = partner_data["sifra_partnera"]
-            cleaned_data["naziv_pravnog_lica"] = partner_data["naziv_duznika"]
+            self.instance.naziv_pravnog_lica = partner_data["naziv_duznika"]
         return cleaned_data

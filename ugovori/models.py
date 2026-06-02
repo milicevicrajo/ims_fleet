@@ -726,7 +726,10 @@ class ContractMenicaLink(models.Model):
         if self.menica_id and self.menica.iznos_menice is not None:
             return f"{self.menica.iznos_menice:.2f} {self.menica.valuta_menice or ''}".strip()
         if self.ulazna_menica_id and self.ulazna_menica.procenat_iznos is not None:
-            return f"{self.ulazna_menica.procenat_iznos:.2f}"
+            return (
+                f"{self.ulazna_menica.procenat_iznos:.2f} "
+                f"{self.ulazna_menica.get_jedinica_vrednosti_display()}"
+            )
         return "-"
 
 

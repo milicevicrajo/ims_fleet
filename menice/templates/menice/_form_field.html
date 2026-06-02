@@ -1,0 +1,11 @@
+{% load form_filters %}
+<div class="{% if field.name == 'napomena' or field.name == 'avalisti_detalji' %}col-12{% else %}col-12 col-md-6 col-xl-4{% endif %}">
+  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+  {{ field|add_class:"form-control" }}
+  {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+  {% if field.errors %}
+    <div class="invalid-feedback d-block">
+      {% for error in field.errors %}{{ error }}{% endfor %}
+    </div>
+  {% endif %}
+</div>

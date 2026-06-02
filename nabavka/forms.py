@@ -10,11 +10,11 @@ from fleet.models import Vehicle
 from ugovori.models import Contract, Partner
 
 from .models import (
+    EufItemSnapshot,
+    GoodsSnapshot,
     ProcurementCase,
     ProcurementInvoice,
     ProcurementInvoiceContractLink,
-    ProcurementInvoiceLink,
-    ProcurementItemInvoiceLink,
     ProcurementItem,
     ProcurementStatusLog,
     PurchaseOrder,
@@ -88,12 +88,9 @@ class ProcurementCaseForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         is_garage = cleaned_data.get("is_garage")
-        vehicle = cleaned_data.get("vehicle")
 
         if not cleaned_data.get("needed_by"):
             cleaned_data["needed_by"] = timezone.localdate() + timedelta(days=7)
-        if is_garage and not vehicle:
-            self.add_error("vehicle", "Ako je predmet garažni, izbor vozila je obavezan.")
         if not is_garage:
             cleaned_data["vehicle"] = None
         return cleaned_data
@@ -116,6 +113,40 @@ class ProcurementItemForm(forms.ModelForm):
         _style_fields(self.fields)
 
 
+class ProcurementItemSourceLinkForm(forms.Form):
+    source_type = forms.ChoiceField(
+        required=False,
+        label="Tip povezivanja",
+        choices=ProcurementItem.SOURCE_CHOICES,
+    )
+    source_reference = forms.CharField(required=False, label="Povezi sa zapisom")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        source_type = cleaned_data.get("source_type") or ""
+        source_reference = cleaned_data.get("source_reference") or ""
+        source_models = {
+            ProcurementItem.SOURCE_EUF: ("euf_invoice", ProcurementInvoice),
+            ProcurementItem.SOURCE_UF: ("uf_item", EufItemSnapshot),
+            ProcurementItem.SOURCE_GOODS: ("goods_item", GoodsSnapshot),
+        }
+        if not source_type:
+            if source_reference:
+                self.add_error("source_reference", "Izaberite tip povezivanja.")
+            return cleaned_data
+        if not source_reference:
+            self.add_error("source_reference", "Izaberite zapis za povezivanje.")
+            return cleaned_data
+
+        field_name, model = source_models[source_type]
+        try:
+            cleaned_data["source_object"] = model.objects.get(pk=source_reference)
+            cleaned_data["source_field"] = field_name
+        except (model.DoesNotExist, ValueError, TypeError):
+            self.add_error("source_reference", "Izabrani zapis ne postoji.")
+        return cleaned_data
+
+
 class EufInvoiceItemLinkForm(forms.Form):
     procurement_item = forms.ModelChoiceField(
         queryset=ProcurementItem.objects.none(),
@@ -136,18 +167,6 @@ class EufInvoiceItemLinkForm(forms.Form):
             .exclude(procurement_case__status=ProcurementCase.Status.COMPLETED)
             .order_by("-procurement_case__created_at", "procurement_case__case_number", "id")
         )
-
-
-class ProcurementItemInvoiceLinkForm(forms.ModelForm):
-    class Meta:
-        model = ProcurementItemInvoiceLink
-        fields = ["invoice", "note"]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["invoice"].queryset = ProcurementInvoice.objects.all().order_by("-invoice_date", "-id")
-        self.fields["invoice"].widget = Select2Widget(attrs={"class": "select2-method"})
-        _style_fields(self.fields)
 
 
 class ProcurementInvoiceForm(forms.ModelForm):

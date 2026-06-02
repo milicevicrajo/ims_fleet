@@ -1,60 +1,27 @@
 ﻿broj_strane,broj_reda,excel_red_zahteva,sifra_posla,datum,tip,registracije,broj_stavki,razlozi,detalji
-1,1,3,811002,2026-01-12 00:00:00,nabavka,,3,Nedostaje registracija vozila,
 1,9,11,437111,2026-01-26 00:00:00,nabavka,BG2309-KX,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 53 / stavka 1
-1,14,16,811002,2026-01-26 00:00:00,nabavka,,7,Nedostaje registracija vozila,
-2,3,22,811002,2026-01-29 00:00:00,nabavka,"BG2161-XH, BG2204-NU",6,Postoje nepotpune stavke | Zahtev sadrzi stavke za vise vozila,"nepotpune stavke: Excel red 57 / stavka 2 | registracije=BG2161-XH, BG2204-NU"
-2,4,23,811002,2026-02-02 00:00:00,nabavka,,5,Nedostaje registracija vozila,
-2,8,27,811002,2026-02-03 00:00:00,nabavka,"BG1200-ZS, BG2348-TM",9,Zahtev sadrzi stavke za vise vozila,"registracije=BG1200-ZS, BG2348-TM"
+2,3,22,811002,2026-01-29 00:00:00,nabavka,"BG2161-XH, BG2204-NU",6,Postoje nepotpune stavke,"nepotpune stavke: Excel red 57 / stavka 2 | magacin garaze: vise vozila=BG2161-XH, BG2204-NU"
 2,10,29,811002,2026-01-21 00:00:00,nabavka,BG3035-BD,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 84 / stavka 1
-2,13,32,811002,2026-02-06 00:00:00,nabavka,,1,Nedostaje registracija vozila,
-2,14,33,436111,2026-02-09 00:00:00,usluga,,2,Nedostaje registracija vozila,
-2,16,35,811002,2026-02-18 00:00:00,nabavka,,1,Postoje nepotpune stavke | Nedostaje registracija vozila,nepotpune stavke: Excel red 92 / stavka 1
+2,16,35,811002,2026-02-18 00:00:00,nabavka,,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 92 / stavka 1 | magacin garaze: bez registracije vozila
 2,17,36,437111,2026-02-20 00:00:00,nabavka,BG2484-NU,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 93 / stavka 1
 3,1,37,413111,2026-02-10 00:00:00,,BG2185-VG,1,Nedostaje ili nije prepoznat tip zahteva | Postoje nepotpune stavke,nepotpune stavke: Excel red 94 / stavka 1
 3,2,38,413111,2026-02-10 00:00:00,,BG2185-VG,1,Nedostaje ili nije prepoznat tip zahteva | Postoje nepotpune stavke,nepotpune stavke: Excel red 95 / stavka 1
 3,4,40,413111,2026-02-13 00:00:00,,BG1200-ZS,1,Nedostaje ili nije prepoznat tip zahteva | Postoje nepotpune stavke,nepotpune stavke: Excel red 97 / stavka 1
-3,5,41,413111,2026-02-22 00:00:00,usluga,,1,Nedostaje registracija vozila,
-3,6,42,811002,2026-02-23 00:00:00,nabavka,,4,Nedostaje registracija vozila,
-3,13,49,436222,2026-03-02 00:00:00,usluga,BG1470-VB,1,Registracija vozila ne postoji u aplikaciji,registracija=BG1470-VB
-3,14,50,811002,2026-03-06 00:00:00,nabavka,,3,Nedostaje registracija vozila,
-3,15,51,811002,2026-03-09 00:00:00,nabavka,BG1549-PJ,1,Registracija vozila ne postoji u aplikaciji,registracija=BG1549-PJ
 4,1,55,441111,2026-03-17 00:00:00,usluga,BG934-TU,1,Postoje nepotpune stavke | Registracija vozila ne postoji u aplikaciji,nepotpune stavke: Excel red 126 / stavka 1 | registracija=BG934-TU
-4,3,57,811002,2026-03-18 00:00:00,nabavka,,3,Nedostaje registracija vozila,
-4,4,58,811002,2026-03-20 00:00:00,nabavka,,6,Nedostaje registracija vozila,
 4,6,60,439111,2026-03-20 00:00:00,nabavka,BG2161-XH,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 138 / stavka 1
 4,7,61,436222,2026-01-20 00:00:00,nabavka,BG1470-XI,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 139 / stavka 1
 4,8,62,437111,2026-01-25 00:00:00,nabavka,BG2030-HF,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 140 / stavka 1
 4,9,63,413111,2026-03-25 00:00:00,nabavka,BG635-AM,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 141 / stavka 1
-4,14,68,811002,2026-03-31 00:00:00,nabavka,"BG2504-DE, BG575-AH",5,Zahtev sadrzi stavke za vise vozila,"registracije=BG2504-DE, BG575-AH"
-5,1,72,811002,2026-03-26 00:00:00,nabavka,,4,Nedostaje registracija vozila,
-5,2,73,811002,2026-03-30 00:00:00,nabavka,,3,Nedostaje registracija vozila,
-5,3,74,436222,2026-04-01 00:00:00,usluga,BG2434-GU,1,Registracija vozila ne postoji u aplikaciji,registracija=BG2434-GU
-5,4,75,811002,2026-04-01 00:00:00,nabavka,,3,Nedostaje registracija vozila,
 5,5,76,413111,2026-03-31 00:00:00,nabavka,BG2275-ZS,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 165 / stavka 1
 5,6,77,413111,2026-03-30 00:00:00,nabavka,BG935-NZ,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 166 / stavka 1
-5,7,78,437111,2026-03-30 00:00:00,usluga,BG2434-GU,1,Registracija vozila ne postoji u aplikaciji,registracija=BG2434-GU
 5,9,80,436222,2026-04-03 00:00:00,nabavka,BG3035-BD,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 167 / stavka 1
 5,10,81,437111,2026-04-03 00:00:00,nabavka,BG1479-ZU,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 168 / stavka 1
-5,12,83,436222,2026-04-06 00:00:00,nabavka,"BG1200-XC, BG1703-HX, BG2305-UK",3,Zahtev sadrzi stavke za vise vozila,"registracije=BG1200-XC, BG1703-HX, BG2305-UK"
-5,13,84,437111,2026-03-26 00:00:00,nabavka,,2,Nedostaje registracija vozila,
 5,14,85,413111,2026-04-02 00:00:00,nabavka,BG593-ST,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 169 / stavka 1
-5,15,86,811002,2026-04-08 00:00:00,nabavka,,2,Nedostaje registracija vozila,
-5,16,87,411111,2026-04-09 00:00:00,usluga,,1,Nedostaje registracija vozila,
 5,17,88,436222,2026-03-23 00:00:00,nabavka,BG3035-BD,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 171 / stavka 1
 6,1,89,436222,2026-03-23 00:00:00,,BG3035-BD,1,Nedostaje ili nije prepoznat tip zahteva | Postoje nepotpune stavke,nepotpune stavke: Excel red 193 / stavka 1
-6,2,90,811002,2026-04-13 00:00:00,nabavka,,1,Nedostaje registracija vozila,
 6,4,92,811002,2026-04-16 00:00:00,nabavka,BG996-FI,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 199 / stavka 1
 6,5,93,417111,2026-04-17 00:00:00,nabavka,BG1200-ZT,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 200 / stavka 1
 6,7,95,437111,2026-04-17 00:00:00,nabavka,BG2030-HG,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 202 / stavka 1
 6,8,96,437111,2026-04-20 00:00:00,nabavka,BG2504-GL,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 203 / stavka 1
-6,9,97,437111,2026-04-20 00:00:00,nabavka,BG2504-GU,1,Registracija vozila ne postoji u aplikaciji,registracija=BG2504-GU
 6,11,99,413111,2026-04-20 00:00:00,nabavka,BG935-NZ,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 206 / stavka 1
-6,13,101,811002,2026-04-23 00:00:00,nabavka,,3,Nedostaje registracija vozila,
-7,4,109,436222,1900-01-16 07:12:00,nabavka,BG2024-OU,1,Datum zahteva nije validan,datum=1900-01-16 07:12:00
-7,5,110,436222,1900-01-26 00:00:00,usluga,BG3035-BC,1,Datum zahteva nije validan,datum=1900-01-26 00:00:00
-7,8,113,811002,2026-04-28 00:00:00,nabavka,"BG1017-OU, BG2484-OP",7,Zahtev sadrzi stavke za vise vozila,"registracije=BG1017-OU, BG2484-OP"
-7,10,115,811002,2026-05-05 00:00:00,nabavka,,4,Nedostaje registracija vozila,
-7,12,117,811002,2026-05-07 00:00:00,nabavka,"BG1470-XA, BG2290-RP",7,Zahtev sadrzi stavke za vise vozila,"registracije=BG1470-XA, BG2290-RP"
-7,14,119,811002,2026-05-13 00:00:00,nabavka,,8,Nedostaje registracija vozila,
 7,17,122,437111,2026-05-14 00:00:00,usluga,BG996-FI,1,Postoje nepotpune stavke,nepotpune stavke: Excel red 263 / stavka 1
-8,1,123,811002,2026-05-18 00:00:00,nabavka,,5,Nedostaje registracija vozila,

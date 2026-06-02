@@ -69,7 +69,7 @@ class ExportingTests(SimpleTestCase):
 
 class RolePermissionMixinTests(SimpleTestCase):
     def test_user_has_role_permission_returns_false_without_code(self):
-        user = SimpleNamespace(is_superuser=False, roles=Mock())
+        user = SimpleNamespace(is_authenticated=True, is_superuser=False, roles=Mock())
 
         self.assertFalse(user_has_role_permission(user, None))
         user.roles.filter.assert_not_called()
@@ -79,7 +79,7 @@ class RolePermissionMixinTests(SimpleTestCase):
         filter_mock.exists.return_value = True
         roles = Mock()
         roles.filter.return_value = filter_mock
-        user = SimpleNamespace(is_superuser=False, roles=roles)
+        user = SimpleNamespace(is_authenticated=True, is_superuser=False, roles=roles)
 
         self.assertTrue(user_has_role_permission(user, "fleet:vehicle_list"))
         roles.filter.assert_called_once_with(
@@ -92,7 +92,7 @@ class RolePermissionMixinTests(SimpleTestCase):
         filter_mock.exists.return_value = True
         roles = Mock()
         roles.filter.return_value = filter_mock
-        user = SimpleNamespace(is_superuser=False, roles=roles)
+        user = SimpleNamespace(is_authenticated=True, is_superuser=False, roles=roles)
         request = SimpleNamespace(
             user=user,
             resolver_match=SimpleNamespace(view_name="naplata:lista_dugovanja"),
@@ -113,7 +113,7 @@ class RolePermissionMixinTests(SimpleTestCase):
         filter_mock.exists.return_value = False
         roles = Mock()
         roles.filter.return_value = filter_mock
-        user = SimpleNamespace(is_superuser=False, roles=roles)
+        user = SimpleNamespace(is_authenticated=True, is_superuser=False, roles=roles)
         request = SimpleNamespace(
             user=user,
             resolver_match=SimpleNamespace(view_name="fleet:vehicle_list"),

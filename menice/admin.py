@@ -37,13 +37,15 @@ class UlaznaMenicaAdmin(admin.ModelAdmin):
         "sifra_poslovnog_partnera",
         "naziv_pravnog_lica",
         "broj_naseg_ugovora",
+        "jedinica_vrednosti",
+        "procenat_iznos",
         "datum_prijema_menice",
         "datum_ugovora",
         "ugovor_vazi_do",
         "lokacija_menice",
         "sifra_centra",
     )
-    list_filter = ("lokacija_menice", "sifra_centra")
+    list_filter = ("jedinica_vrednosti", "lokacija_menice", "sifra_centra")
     search_fields = (
         "serijski_broj_menice",
         "naziv_pravnog_lica",

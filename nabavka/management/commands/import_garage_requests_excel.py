@@ -38,6 +38,9 @@ class Command(BaseCommand):
                 "Zahteva: {requests}, stavki: {items}, moguce za uvoz: {importable}, "
                 "kreirano zahteva: {created}, kreirano stavki: {created_items}, "
                 "vec uvezeno: {already_imported}, korigovano datuma: {updated_dates}, "
+                "ispravljeno datuma iz izvora: {corrected_input_dates}, "
+                "ispravljeno registracija: {corrected_plates}, "
+                "magacin garaze: {garage_warehouse_requests}, "
                 "preskoceno: {skipped}, "
                 "stavki bez zahteva: {orphan_items}"
             ).format(**result)

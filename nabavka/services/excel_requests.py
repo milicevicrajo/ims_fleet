@@ -17,6 +17,17 @@ from ..models import ProcurementCase, ProcurementItem, ProcurementStatusLog
 
 SOURCE_CODE = "PRACENJE_NABAVKE_ZA_GARAZU"
 DEFAULT_REPORT_PATH = "izvestaji/nabavka_zahtevi_za_dopunu.csv"
+GARAGE_WAREHOUSE_JOB_CODE = "811002"
+REQUEST_DATE_CORRECTIONS = {
+    (7, 4): date(2026, 3, 16),
+    (7, 5): date(2026, 4, 17),
+}
+PLATE_CORRECTIONS = {
+    "BG1470-VB": "BG1470-XB",
+    "BG1549-PJ": "BG1542-PJ",
+    "BG2434-GU": "BG2186-GU",
+    "BG2504-GU": "BG2504-GL",
+}
 
 
 def _clean_text(value):
@@ -155,6 +166,30 @@ def _load_rows(file_path, sheet_name):
     return requests, items, orphan_items
 
 
+def _apply_known_corrections(key, request_row, item_rows):
+    request_row = dict(request_row)
+    item_rows = [dict(item) for item in item_rows]
+    corrected_date = False
+    corrected_plates = 0
+
+    if key in REQUEST_DATE_CORRECTIONS:
+        request_row["request_date"] = REQUEST_DATE_CORRECTIONS[key]
+        corrected_date = True
+
+    for item in item_rows:
+        corrected_plate = PLATE_CORRECTIONS.get(item["plate"])
+        if corrected_plate:
+            item["plate"] = corrected_plate
+            corrected_plates += 1
+
+    plates = sorted({item["plate"] for item in item_rows if item["plate"]})
+    goes_to_garage_warehouse = not plates or len(plates) > 1
+    if goes_to_garage_warehouse:
+        request_row["job_code"] = GARAGE_WAREHOUSE_JOB_CODE
+
+    return request_row, item_rows, corrected_date, corrected_plates, goes_to_garage_warehouse
+
+
 def _validate_request(request_row, item_rows, units_by_code, vehicles_by_plate):
     reasons = []
     details = []
@@ -192,10 +227,9 @@ def _validate_request(request_row, item_rows, units_by_code, vehicles_by_plate):
 
     plates = sorted({item["plate"] for item in item_rows if item["plate"]})
     if not plates:
-        reasons.append("Nedostaje registracija vozila")
+        details.append("magacin garaze: bez registracije vozila")
     elif len(plates) > 1:
-        reasons.append("Zahtev sadrzi stavke za vise vozila")
-        details.append("registracije=" + ", ".join(plates))
+        details.append("magacin garaze: vise vozila=" + ", ".join(plates))
     elif plates[0] not in vehicles_by_plate:
         reasons.append("Registracija vozila ne postoji u aplikaciji")
         details.append("registracija=" + plates[0])
@@ -275,6 +309,9 @@ def import_garage_requests_from_excel(
         "created": 0,
         "created_items": 0,
         "updated_dates": 0,
+        "corrected_input_dates": 0,
+        "corrected_plates": 0,
+        "garage_warehouse_requests": 0,
         "already_imported": 0,
         "skipped": 0,
         "orphan_items": len(orphan_items),
@@ -286,6 +323,16 @@ def import_garage_requests_from_excel(
     with transaction.atomic():
         for key, request_row in requests.items():
             item_rows = items.get(key, [])
+            (
+                request_row,
+                item_rows,
+                corrected_date,
+                corrected_plates,
+                goes_to_garage_warehouse,
+            ) = _apply_known_corrections(key, request_row, item_rows)
+            result["corrected_input_dates"] += int(corrected_date)
+            result["corrected_plates"] += corrected_plates
+            result["garage_warehouse_requests"] += int(goes_to_garage_warehouse)
             reasons, details, request_date, plates = _validate_request(
                 request_row,
                 item_rows,
@@ -316,7 +363,7 @@ def import_garage_requests_from_excel(
                     item_rows,
                     request_date,
                     units_by_code[request_row["job_code"]],
-                    vehicles_by_plate[plates[0]],
+                    vehicles_by_plate[plates[0]] if len(plates) == 1 else None,
                 )
             result["created"] += 1
             result["created_items"] += len(item_rows)

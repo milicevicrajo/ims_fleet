@@ -92,10 +92,25 @@ class Menica(models.Model):
 
 
 class UlaznaMenica(models.Model):
+    JEDINICA_RSD = "RSD"
+    JEDINICA_EUR = "EUR"
+    JEDINICA_PROCENAT = "PROCENAT"
+    JEDINICA_VREDNOSTI_CHOICES = [
+        (JEDINICA_RSD, "RSD"),
+        (JEDINICA_EUR, "EUR"),
+        (JEDINICA_PROCENAT, "Procenat"),
+    ]
+
     serijski_broj_menice = models.CharField("Serijski broj menice", max_length=100, db_index=True)
     osnov_izdavanja = models.CharField("Osnov izdavanja", max_length=255, blank=True, null=True)
     datum_prijema_menice = models.DateField("Datum prijema menice", blank=True, null=True)
-    procenat_iznos = models.DecimalField("Procenat - iznos", max_digits=18, decimal_places=2, blank=True, null=True)
+    jedinica_vrednosti = models.CharField(
+        "Jedinica vrednosti",
+        max_length=10,
+        choices=JEDINICA_VREDNOSTI_CHOICES,
+        default=JEDINICA_PROCENAT,
+    )
+    procenat_iznos = models.DecimalField("Iznos", max_digits=18, decimal_places=2, blank=True, null=True)
     sifra_poslovnog_partnera = models.IntegerField("Sifra poslovnog partnera", blank=True, null=True, db_index=True)
     naziv_pravnog_lica = models.CharField("Naziv pravnog lica", max_length=255, blank=True, null=True)
     broj_naseg_ugovora = models.CharField("Broj naseg ugovora", max_length=100, blank=True, null=True)

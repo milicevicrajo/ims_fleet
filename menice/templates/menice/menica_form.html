@@ -4,34 +4,89 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>{{ title }}</h2>
-  <a class="btn btn-outline-secondary" href="{{ cancel_url }}">
-    Nazad
+<style>
+  .menica-form-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .menica-form-hero h1 { font-size: 1.6rem; margin: 0; }
+  .menica-form-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .menica-form-section {
+    border-bottom: 1px solid #e6ebf1;
+    color: #174f83;
+    font-size: .92rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .menica-form-card {
+    border: 1px solid #e6ebf1;
+  }
+</style>
+
+<div class="menica-form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Unos i kontrola podataka menice.</p>
+  </div>
+  <a class="btn btn-outline-light btn-sm" href="{{ cancel_url }}">
+    <i class="mdi mdi-arrow-left"></i> Nazad
   </a>
 </div>
 
-<div class="card">
+<div class="card shadow-sm menica-form-card">
   <div class="card-body">
     <form method="post" novalidate>
       {% csrf_token %}
       {% for field in form.hidden_fields %}
         {{ field }}
       {% endfor %}
-      <div class="row">
-        {% for field in form.visible_fields %}
-          <div class="col-md-6 col-xl-4 mb-3">
-            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-            {{ field|add_class:"form-control" }}
-            {% if field.errors %}
-              <div class="invalid-feedback d-block">
-                {% for error in field.errors %}{{ error }}{% endfor %}
-              </div>
-            {% endif %}
-          </div>
-        {% endfor %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+      {% if is_ulazna_menica_form %}
+        <div class="menica-form-section"><i class="mdi mdi-file-document-edit"></i> Osnovni podaci</div>
+        <div class="row g-3">
+          {% include "menice/_form_field.html" with field=form.partner %}
+          {% include "menice/_form_field.html" with field=form.serijski_broj_menice %}
+          {% include "menice/_form_field.html" with field=form.osnov_izdavanja %}
+          {% include "menice/_form_field.html" with field=form.datum_prijema_menice %}
+        </div>
+        <div class="menica-form-section mt-4"><i class="mdi mdi-cash-multiple"></i> Vrednost menice</div>
+        <div class="row g-3">
+          {% include "menice/_form_field.html" with field=form.jedinica_vrednosti %}
+          {% include "menice/_form_field.html" with field=form.procenat_iznos %}
+        </div>
+        <div class="menica-form-section mt-4"><i class="mdi mdi-file-sign"></i> Ugovor</div>
+        <div class="row g-3">
+          {% include "menice/_form_field.html" with field=form.broj_naseg_ugovora %}
+          {% include "menice/_form_field.html" with field=form.datum_ugovora %}
+          {% include "menice/_form_field.html" with field=form.ugovor_vazi_do %}
+        </div>
+        <div class="menica-form-section mt-4"><i class="mdi mdi-map-marker"></i> Lokacija</div>
+        <div class="row g-3">
+          {% include "menice/_form_field.html" with field=form.lokacija_menice %}
+          {% include "menice/_form_field.html" with field=form.sifra_centra %}
+        </div>
+      {% else %}
+        <div class="menica-form-section"><i class="mdi mdi-file-document-edit"></i> Podaci menice</div>
+        <div class="row g-3">
+          {% for field in form.visible_fields %}
+            {% include "menice/_form_field.html" with field=field %}
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="d-flex justify-content-end gap-2 border-top mt-4 pt-3">
+        <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Odustani</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="mdi mdi-content-save"></i> {{ submit_button_label }}
+        </button>
       </div>
-      <button type="submit" class="btn btn-primary">{{ submit_button_label }}</button>
     </form>
   </div>
 </div>

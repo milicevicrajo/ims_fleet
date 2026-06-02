@@ -138,10 +138,6 @@ class ProcurementCase(models.Model):
     def __str__(self):
         return f"{self.case_number or 'NAB'} - {self.title}"
 
-    def clean(self):
-        if self.is_garage and not self.vehicle_id:
-            raise ValidationError({"vehicle": _("Ako je predmet garažni, izbor vozila je obavezan.")})
-
     def get_sequence_year(self):
         return (self.created_at.date() if self.created_at else timezone.localdate()).year
 
@@ -184,11 +180,51 @@ class ProcurementCase(models.Model):
 
 
 class ProcurementItem(models.Model):
+    SOURCE_EUF = "euf"
+    SOURCE_UF = "uf"
+    SOURCE_GOODS = "goods"
+    SOURCE_CHOICES = [
+        ("", _("Bez povezivanja")),
+        (SOURCE_EUF, "EUF"),
+        (SOURCE_UF, "UF"),
+        (SOURCE_GOODS, _("Roba")),
+    ]
+
     procurement_case = models.ForeignKey(
         ProcurementCase,
         on_delete=models.CASCADE,
         related_name="items",
         verbose_name=_("Predmet nabavke"),
+    )
+    source_type = models.CharField(
+        max_length=10,
+        choices=SOURCE_CHOICES,
+        blank=True,
+        verbose_name=_("Tip povezivanja"),
+    )
+    euf_invoice = models.ForeignKey(
+        "ProcurementInvoice",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="procurement_items",
+        verbose_name=_("EUF"),
+    )
+    uf_item = models.ForeignKey(
+        "EufItemSnapshot",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="procurement_items",
+        verbose_name=_("UF"),
+    )
+    goods_item = models.ForeignKey(
+        "GoodsSnapshot",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="procurement_items",
+        verbose_name=_("Roba"),
     )
     name = models.CharField(max_length=255, verbose_name=_("Naziv"))
     uom = models.CharField(max_length=30, verbose_name=_("Jedinica mere"))
@@ -209,6 +245,34 @@ class ProcurementItem(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.quantity} {self.uom})"
+
+    def clean(self):
+        super().clean()
+        source_fields = {
+            self.SOURCE_EUF: self.euf_invoice_id,
+            self.SOURCE_UF: self.uf_item_id,
+            self.SOURCE_GOODS: self.goods_item_id,
+        }
+        selected_fields = [source for source, value in source_fields.items() if value]
+        if self.source_type:
+            if source_fields.get(self.source_type) is None or len(selected_fields) != 1:
+                raise ValidationError(_("Izaberite jedan zapis koji odgovara tipu povezivanja."))
+        elif selected_fields:
+            raise ValidationError(_("Izaberite tip povezivanja za povezani zapis."))
+
+    @property
+    def source_reference_label(self):
+        if self.source_type == self.SOURCE_EUF and self.euf_invoice:
+            return f"EUF: {self.euf_invoice.invoice_number}"
+        if self.source_type == self.SOURCE_UF and self.uf_item:
+            return f"UF: {self.uf_item.invoice_number or self.uf_item.purchase_invoice_id or self.uf_item.source_key}"
+        if self.source_type == self.SOURCE_GOODS and self.goods_item:
+            return f"Roba: {self.goods_item.article_code or '/'} - {self.goods_item.article_name or ''}".strip()
+        return ""
+
+    @property
+    def source_reference_id(self):
+        return self.euf_invoice_id or self.uf_item_id or self.goods_item_id or ""
 
     @property
     def estimated_total(self):

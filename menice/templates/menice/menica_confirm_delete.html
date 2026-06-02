@@ -6,10 +6,14 @@
 <div class="card">
   <div class="card-body">
     <h2 class="mb-3">{{ title }}</h2>
-    <p>Da li ste sigurni da zelite da obrisete menicu {{ object }}?</p>
+    {% if soft_delete %}
+      <p>Da li ste sigurni da zelite da oznacite menicu {{ object }} kao obrisanu?</p>
+    {% else %}
+      <p>Da li ste sigurni da zelite da obrisete menicu {{ object }}?</p>
+    {% endif %}
     <form method="post">
       {% csrf_token %}
-      <button type="submit" class="btn btn-danger">Obrisi</button>
+      <button type="submit" class="btn btn-danger">{% if soft_delete %}Oznaci kao obrisanu{% else %}Obrisi{% endif %}</button>
       <a class="btn btn-outline-secondary" href="{{ object.get_absolute_url }}">Odustani</a>
     </form>
   </div>
