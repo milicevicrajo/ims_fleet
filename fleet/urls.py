@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from django.urls import path, register_converter
+from core.views import RequiredPasswordChangeView
 from hr.views import (
     EmployeeCVItemCreateView,
     EmployeeCVItemDeleteView,
@@ -266,6 +267,7 @@ urlpatterns = [
     path('zaposleni/obrisi/<int:pk>/', EmployeeDeleteView.as_view(), name='employee_delete'),
     path('moj-profil/', MyEmployeeProfileView.as_view(), name='my_employee_profile'),
     path('moj-profil/ispravi-ime/', MyEmployeeNameCorrectionView.as_view(), name='my_employee_name_correction'),
+    path('moj-profil/promena-lozinke/', RequiredPasswordChangeView.as_view(), name='password_change'),
     path('moj-profil/cv/novo/', EmployeeCVItemCreateView.as_view(), name='employee_cv_item_create'),
     path('moj-profil/cv/<int:pk>/izmeni/', EmployeeCVItemUpdateView.as_view(), name='employee_cv_item_update'),
     path('moj-profil/cv/<int:pk>/obrisi/', EmployeeCVItemDeleteView.as_view(), name='employee_cv_item_delete'),

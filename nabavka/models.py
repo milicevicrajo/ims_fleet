@@ -615,6 +615,125 @@ class ProcurementInvoiceContractLink(models.Model):
         return f"{self.invoice} -> {self.contract}"
 
 
+class PublicProcurementPlanVersion(models.Model):
+    year = models.PositiveIntegerField(db_index=True, verbose_name=_("Godina"))
+    version_number = models.PositiveIntegerField(verbose_name=_("Verzija"))
+    source_filename = models.CharField(max_length=255, verbose_name=_("Excel fajl"))
+    note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+    imported_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Ucitano"))
+    imported_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="public_procurement_plan_imports",
+        verbose_name=_("Uvezao"),
+    )
+    total_rows = models.PositiveIntegerField(default=0, verbose_name=_("Ukupno stavki"))
+    added_count = models.PositiveIntegerField(default=0, verbose_name=_("Dodato"))
+    changed_count = models.PositiveIntegerField(default=0, verbose_name=_("Izmenjeno"))
+    unchanged_count = models.PositiveIntegerField(default=0, verbose_name=_("Bez izmene"))
+    removed_count = models.PositiveIntegerField(default=0, verbose_name=_("Uklonjeno"))
+
+    class Meta:
+        db_table = "nabavka_public_procurement_plan_version"
+        ordering = ["-year", "-version_number"]
+        verbose_name = _("Verzija plana javnih nabavki")
+        verbose_name_plural = _("Verzije plana javnih nabavki")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["year", "version_number"],
+                name="uniq_nabavka_public_procurement_plan_version_year_number",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.year} v{self.version_number}"
+
+
+class PublicProcurementPlanItem(models.Model):
+    class PlanType(models.TextChoices):
+        PUBLIC = "public", _("Javna nabavka")
+        EXEMPT = "exempt", _("Nabavka bez primene ZJN")
+
+    class DiffStatus(models.TextChoices):
+        ADDED = "added", _("Dodato")
+        CHANGED = "changed", _("Izmenjeno")
+        UNCHANGED = "unchanged", _("Bez izmene")
+        REMOVED = "removed", _("Uklonjeno")
+
+    version = models.ForeignKey(
+        PublicProcurementPlanVersion,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name=_("Verzija"),
+    )
+    previous_item = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="next_version_items",
+        verbose_name=_("Prethodna stavka"),
+    )
+    plan_type = models.CharField(
+        max_length=20,
+        choices=PlanType.choices,
+        db_index=True,
+        verbose_name=_("Tip plana"),
+    )
+    diff_status = models.CharField(
+        max_length=20,
+        choices=DiffStatus.choices,
+        db_index=True,
+        verbose_name=_("Status razlike"),
+    )
+    stable_key = models.CharField(max_length=120, db_index=True, verbose_name=_("Kljuc stavke"))
+    content_hash = models.CharField(max_length=64, db_index=True, verbose_name=_("Hash sadrzaja"))
+    source_sheet = models.CharField(max_length=120, verbose_name=_("Sheet"))
+    source_row = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Excel red"))
+    item_number = models.CharField(max_length=50, blank=True, null=True, db_index=True, verbose_name=_("Redni broj"))
+    subject_type = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Vrsta predmeta"))
+    title = models.TextField(verbose_name=_("Predmet nabavke"))
+    estimated_value = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Procenjena vrednost"),
+    )
+    procurement_category = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Predmet"))
+    procedure_type = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Vrsta postupka"))
+    quarter = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Okvirno vreme / kvartal"))
+    cpv = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("CPV"))
+    nuts = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("NSTJ"))
+    technique = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Tehnika / organizacioni deo"))
+    conducted_by_other = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Sprovodi drugi narucilac"))
+    exemption_basis = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Osnov izuzeca"))
+    valuation_method = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Nacin procene vrednosti"))
+    note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+    raw_data = models.JSONField(default=dict, blank=True, verbose_name=_("Izvorni podaci"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+
+    class Meta:
+        db_table = "nabavka_public_procurement_plan_item"
+        ordering = ["plan_type", "source_sheet", "item_number", "id"]
+        verbose_name = _("Stavka plana javnih nabavki")
+        verbose_name_plural = _("Stavke plana javnih nabavki")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["version", "stable_key"],
+                name="uniq_nabavka_public_procurement_plan_item_version_key",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["plan_type", "diff_status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.item_number or '/'} - {self.title}"
+
+
 class PurchaseOrder(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", _("Nacrt")

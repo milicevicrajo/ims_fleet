@@ -208,6 +208,25 @@ class ProcurementInvoiceContractLinkForm(forms.ModelForm):
         _style_fields(self.fields)
 
 
+class PublicProcurementPlanImportForm(forms.Form):
+    year = forms.IntegerField(
+        label="Godina",
+        min_value=2000,
+        max_value=2100,
+        widget=forms.NumberInput(attrs={"placeholder": "2026"}),
+    )
+    excel_file = forms.FileField(label="Excel fajl")
+    note = forms.CharField(
+        label="Napomena",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Npr. prva izmena plana"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _style_fields(self.fields)
+
+
 class PurchaseOrderForm(forms.ModelForm):
     order_date = localized_date_field(label="Datum narudžbenice")
 

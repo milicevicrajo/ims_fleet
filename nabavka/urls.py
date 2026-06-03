@@ -35,6 +35,11 @@ from .views.orders import (
     PurchaseOrderListView,
     PurchaseOrderUpdateView,
 )
+from .views.public_procurements import (
+    PublicProcurementPlanDetailView,
+    PublicProcurementPlanImportView,
+    PublicProcurementPlanListView,
+)
 from .views.reports import ReportsView
 from .views.source_snapshots import (
     EufItemSnapshotDataView,
@@ -78,6 +83,9 @@ urlpatterns = [
     path("roba/data/", GoodsSnapshotDataView.as_view(), name="goods_data"),
     path("roba/sync/", GoodsSnapshotSyncView.as_view(), name="goods_sync"),
     path("kupovni-ugovori/", PurchaseContractListView.as_view(), name="purchase_contract_list"),
+    path("javne-nabavke/", PublicProcurementPlanListView.as_view(), name="public_procurement_list"),
+    path("javne-nabavke/uvoz/", PublicProcurementPlanImportView.as_view(), name="public_procurement_import"),
+    path("javne-nabavke/<int:pk>/", PublicProcurementPlanDetailView.as_view(), name="public_procurement_detail"),
     path("narudzbenice/", PurchaseOrderListView.as_view(), name="purchase_order_list"),
     path("narudzbenice/nova/", PurchaseOrderCreateView.as_view(), name="purchase_order_create"),
     path("narudzbenice/<int:pk>/", PurchaseOrderDetailView.as_view(), name="purchase_order_detail"),

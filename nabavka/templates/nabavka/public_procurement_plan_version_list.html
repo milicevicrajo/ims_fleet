@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .public-procurement-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #17324d 0%, #25676e 52%, #5b7d3a 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(23, 50, 77, 0.18);
+  }
+  .public-procurement-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .public-procurement-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .public-procurement-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .version-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 700;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .version-stat.added { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .version-stat.changed { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .version-stat.unchanged { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .version-stat.removed { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
+  .procurement-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
+</style>
+
+<div class="public-procurement-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Javne nabavke</h1>
+    <p>Pregled uvezenih verzija plana. Stavke i razlike su u detalju svake verzije.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 col-xl-9">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="public-procurement-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-5">
+              <label class="form-label mb-1">Pretraga</label>
+              <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Naziv Excel fajla">
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label mb-1">Godina</label>
+              <select name="year" class="form-select form-control select2-method">
+                <option value="">Sve godine</option>
+                {% for year in years %}
+                  <option value="{{ year }}" {% if request.GET.year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-2 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Filter">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'nabavka:public_procurement_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="PublicProcurementVersionsTable" class="display compact table table-hover table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>Godina</th>
+                <th>Verzija</th>
+                <th>Excel fajl</th>
+                <th>Ucitano</th>
+                <th>Stavke</th>
+                <th>Razlike</th>
+                <th>Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for version in versions %}
+                <tr>
+                  <td><strong>{{ version.year }}</strong></td>
+                  <td>v{{ version.version_number }}</td>
+                  <td>
+                    {{ version.source_filename }}
+                    {% if version.note %}<span class="procurement-muted">{{ version.note|truncatechars:90 }}</span>{% endif %}
+                  </td>
+                  <td>
+                    {{ version.imported_at|date:"d.m.Y H:i" }}
+                    {% if version.imported_by %}<span class="procurement-muted">{{ version.imported_by }}</span>{% endif %}
+                  </td>
+                  <td>{{ version.total_rows }}</td>
+                  <td>
+                    <span class="version-stat added">+ {{ version.added_count }}</span>
+                    <span class="version-stat changed">~ {{ version.changed_count }}</span>
+                    <span class="version-stat unchanged">= {{ version.unchanged_count }}</span>
+                    <span class="version-stat removed">- {{ version.removed_count }}</span>
+                  </td>
+                  <td>
+                    <a href="{% url 'nabavka:public_procurement_detail' version.pk %}" class="btn btn-sm btn-outline-primary">
+                      <i class="mdi mdi-eye"></i> Detalj
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">Nema uvezenih planova javnih nabavki.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-3">
+    {% if can_import %}
+      <div class="card shadow-sm">
+        <div class="card-header"><h5 class="mb-0">Uvoz nove verzije</h5></div>
+        <div class="card-body">
+          <form method="post" action="{% url 'nabavka:public_procurement_import' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-2">
+              <label class="form-label">{{ import_form.year.label }}</label>
+              {{ import_form.year|add_class:"form-control" }}
+            </div>
+            <div class="mb-2">
+              <label class="form-label">{{ import_form.excel_file.label }}</label>
+              {{ import_form.excel_file|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ import_form.note.label }}</label>
+              {{ import_form.note|add_class:"form-control" }}
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="mdi mdi-file-import"></i> Ucitaj Excel
+            </button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#PublicProcurementVersionsTable', {
+        exportTitle: '{{ title }}',
+        order: [[0, 'desc'], [1, 'desc']],
+        autoSelectThreshold: 25,
+        scrollX: false
+      });
+    }
+  });
+</script>
+{% endblock %}

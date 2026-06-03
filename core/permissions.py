@@ -66,6 +66,18 @@ def sync_permission_codes():
     for perm in PermissionCode.objects.all():
         RolePermission.objects.get_or_create(role=role, permission=perm)
 
+    nabavka_codes = collect_nabavka_permission_codes()
+    nabavka_role, _ = Role.objects.get_or_create(
+        name="Nabavka",
+        slug="nabavka",
+        defaults={"description": "Pristup svim funkcijama aplikacije nabavka."},
+    )
+    RolePermission.objects.filter(role=nabavka_role).exclude(
+        permission__code__in=nabavka_codes
+    ).delete()
+    for perm in PermissionCode.objects.filter(code__in=nabavka_codes):
+        RolePermission.objects.get_or_create(role=nabavka_role, permission=perm)
+
     menice_codes = collect_menice_permission_codes()
     menice_role, _ = Role.objects.get_or_create(
         name="Menice",
@@ -104,6 +116,7 @@ def sync_permission_codes():
         "synced": len(codes),
         "created": created,
         "role": role,
+        "nabavka_role": nabavka_role,
         "menice_role": menice_role,
         "zahtev_role": zahtev_role,
     }

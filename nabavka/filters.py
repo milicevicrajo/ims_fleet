@@ -4,7 +4,13 @@ from django.db.models import Q
 from core.models import OrganizationalUnit
 from ugovori.models import Contract, Partner
 
-from .models import ProcurementCase, ProcurementItemInvoiceLink, PurchaseOrder
+from .models import (
+    ProcurementCase,
+    ProcurementItemInvoiceLink,
+    PublicProcurementPlanItem,
+    PublicProcurementPlanVersion,
+    PurchaseOrder,
+)
 
 
 PROCUREMENT_CASE_TYPE_FILTER_CHOICES = [
@@ -175,6 +181,65 @@ class PurchaseContractFilter(django_filters.FilterSet):
             .dates("contract_date", "year", order="DESC")
         ]
         self.form.fields["year"].choices = [("", "Sve godine")] + [(str(year), str(year)) for year in years]
+        for field in self.form.fields.values():
+            if isinstance(field.widget, forms.Select):
+                field.widget.attrs.setdefault("class", "form-select")
+            else:
+                field.widget.attrs.setdefault("class", "form-control")
+
+
+class PublicProcurementPlanItemFilter(django_filters.FilterSet):
+    q = django_filters.CharFilter(method="filter_q", label="Pretraga")
+    plan_type = django_filters.ChoiceFilter(
+        choices=[("", "Svi tipovi")] + list(PublicProcurementPlanItem.PlanType.choices),
+        label="Tip plana",
+    )
+    diff_status = django_filters.ChoiceFilter(
+        choices=[("", "Sve promene")] + list(PublicProcurementPlanItem.DiffStatus.choices),
+        label="Razlika",
+    )
+    year = django_filters.ChoiceFilter(method="filter_passthrough", label="Godina")
+    version = django_filters.ChoiceFilter(method="filter_passthrough", label="Verzija")
+
+    class Meta:
+        model = PublicProcurementPlanItem
+        fields = ["q", "plan_type", "diff_status", "year", "version"]
+
+    def filter_q(self, queryset, name, value):
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(item_number__icontains=value)
+            | Q(title__icontains=value)
+            | Q(subject_type__icontains=value)
+            | Q(procurement_category__icontains=value)
+            | Q(procedure_type__icontains=value)
+            | Q(cpv__icontains=value)
+            | Q(technique__icontains=value)
+            | Q(note__icontains=value)
+        )
+
+    def filter_passthrough(self, queryset, name, value):
+        return queryset
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        years = (
+            PublicProcurementPlanVersion.objects.order_by("-year")
+            .values_list("year", flat=True)
+            .distinct()
+        )
+        selected_year = (self.data.get("year") if self.data else "") or ""
+        versions = PublicProcurementPlanVersion.objects.all().order_by("-version_number")
+        if selected_year:
+            versions = versions.filter(year=selected_year)
+        self.form.fields["year"].choices = [("", "Poslednja godina")] + [
+            (str(year), str(year)) for year in years
+        ]
+        self.form.fields["version"].choices = [("", "Poslednja verzija")] + [
+            (str(version.pk), f"v{version.version_number}") for version in versions
+        ]
         for field in self.form.fields.values():
             if isinstance(field.widget, forms.Select):
                 field.widget.attrs.setdefault("class", "form-select")

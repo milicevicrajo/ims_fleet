@@ -1,34 +1,226 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h2>List of Users</h2>
+{% block title %}{{ title }}{% endblock %}
 
-<table class="table">
-    <thead>
-        <tr>
+{% block content %}
+<style>
+  .users-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #17324d 0%, #25676e 52%, #5b7d3a 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(23, 50, 77, 0.18);
+  }
+  .users-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .users-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .user-stat-card {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+    background: #fff;
+    height: 100%;
+  }
+  .user-stat-card span { display: block; color: #6b7785; font-size: .84rem; }
+  .user-stat-card strong { font-size: 1.55rem; line-height: 1.2; }
+  .user-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 700;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .user-status.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .user-status.warning { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .user-status.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .user-status.danger { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
+  .user-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
+  #UsersTable th,
+  #UsersTable td,
+  #EmployeesWithoutProfileTable th,
+  #EmployeesWithoutProfileTable td {
+    white-space: normal !important;
+    vertical-align: top;
+  }
+</style>
+
+<div class="users-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Korisnici</h1>
+    <p>Pregled korisnickih naloga, povezanih zaposlenih, promene inicijalne lozinke i poslednje prijave.</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-2">
+    <div class="user-stat-card"><span>Ukupno korisnika</span><strong>{{ total_users }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="user-stat-card"><span>Povezano sa zaposlenim</span><strong>{{ linked_users }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="user-stat-card"><span>Ulazili u aplikaciju</span><strong class="text-success">{{ users_logged_in }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="user-stat-card"><span>Nisu ulazili</span><strong class="text-muted">{{ users_never_logged_in }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="user-stat-card"><span>Nisu promenili sifru</span><strong class="text-warning">{{ must_change_password_count }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="user-stat-card"><span>Aktivni bez profila</span><strong class="text-danger">{{ active_without_profile_count }}</strong></div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header">
+    <h4 class="mb-0">Lista korisnika</h4>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="UsersTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
             <th>Username</th>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
             <th>Zaposleni</th>
-            <th>Allowed Centers</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.first_name }}</td>
-            <td>{{ user.last_name }}</td>
-            <td>{{ user.email }}</td>
-            <td>{% if user.employee %}{{ user.employee.employee_code }} - {{ user.employee }}{% else %}-{% endif %}</td>
-            <td>{{ user.allowed_centers }}</td> <!-- Assuming you want to display this -->
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6">No users found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            <th>Ime i prezime</th>
+            <th>Centri</th>
+            <th>Uloge</th>
+            <th>Lozinka</th>
+            <th>Prijava</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in users %}
+            <tr>
+              <td>
+                <strong>{{ account.username }}</strong>
+                {% if account.email %}<span class="user-muted">{{ account.email }}</span>{% endif %}
+              </td>
+              <td>
+                {% if account.employee %}
+                  <a href="{% url 'employee_detail' account.employee.pk %}" class="btn btn-sm btn-outline-primary">
+                    {{ account.employee.employee_code }}
+                  </a>
+                  <span class="user-muted">OJ {{ account.employee.org_unit_code|default:"/" }}</span>
+                {% else %}
+                  <span class="user-status danger">Bez zaposlenog</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if account.employee %}
+                  {{ account.employee }}
+                {% else %}
+                  {{ account.first_name }} {{ account.last_name }}
+                {% endif %}
+              </td>
+              <td>{{ account.centers_display }}</td>
+              <td>{{ account.roles_display }}</td>
+              <td>
+                {% if account.must_change_password %}
+                  <span class="user-status warning"><i class="mdi mdi-lock-alert"></i> Nije promenio</span>
+                {% else %}
+                  <span class="user-status ok"><i class="mdi mdi-lock-check"></i> Promenjena / nije obavezna</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if account.last_login %}
+                  <span class="user-status ok"><i class="mdi mdi-login"></i> Ulazio</span>
+                  <span class="user-muted">{{ account.last_login|date:"d.m.Y H:i" }}</span>
+                {% else %}
+                  <span class="user-status muted"><i class="mdi mdi-login-variant"></i> Nije ulazio</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if account.is_active %}
+                  <span class="user-status ok">Aktivan</span>
+                {% else %}
+                  <span class="user-status danger">Neaktivan</span>
+                {% endif %}
+                {% if account.is_superuser %}<span class="user-muted">Superuser</span>{% endif %}
+                {% if account.is_staff %}<span class="user-muted">Staff</span>{% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="text-center text-muted">Nema korisnika.</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Username</th>
+            <th>Zaposleni</th>
+            <th>Ime i prezime</th>
+            <th>Centri</th>
+            <th>Uloge</th>
+            <th>Lozinka</th>
+            <th>Prijava</th>
+            <th>Status</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <h4 class="mb-0">Aktivni zaposleni bez korisnickog profila</h4>
+    <span class="badge bg-danger">{{ active_without_profile_count }}</span>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="EmployeesWithoutProfileTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Sifra</th>
+            <th>Zaposleni</th>
+            <th>OJ</th>
+            <th>Pozicija</th>
+            <th>Telefon</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for employee in active_without_profile %}
+            <tr>
+              <td>{{ employee.employee_code }}</td>
+              <td>
+                <a href="{% url 'employee_detail' employee.pk %}" class="fw-semibold">{{ employee }}</a>
+              </td>
+              <td>{{ employee.org_unit_code|default:"/" }}</td>
+              <td>{{ employee.position|default:"/" }}</td>
+              <td>{{ employee.mobile_phone|default:employee.phone_number|default:"/" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">Svi aktivni zaposleni imaju korisnicki profil.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#UsersTable', {
+        exportTitle: 'Korisnici',
+        order: [[0, 'asc']],
+        autoSelectThreshold: 25,
+        scrollX: false,
+        autoWidth: false
+      });
+      ReportsDT('#EmployeesWithoutProfileTable', {
+        exportTitle: 'Aktivni zaposleni bez profila',
+        order: [[0, 'asc']],
+        autoSelectThreshold: 25,
+        scrollX: false,
+        autoWidth: false
+      });
+    }
+  });
+</script>
 {% endblock %}

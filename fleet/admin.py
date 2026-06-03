@@ -25,7 +25,7 @@ from core.tasks import sync_permission_codes_task
 class CustomUserAdmin(UserAdmin):
     # Add the allowed_centers field to the admin form
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('employee', 'allowed_centers', 'allowed_center_codes', 'roles')}),
+        (None, {'fields': ('employee', 'allowed_centers', 'allowed_center_codes', 'must_change_password', 'roles')}),
     )
     autocomplete_fields = ('employee',)
 

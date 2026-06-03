@@ -33,6 +33,11 @@
             <i class="mdi mdi-file-document"></i><span class="hide-menu">Kupovni ugovori</span>
           </a>
         </li>{% endif %}
+        {% if nabavka_permissions.public_procurement_list %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:public_procurement_list' %}">
+            <i class="mdi mdi-clipboard-text"></i><span class="hide-menu">Javne nabavke</span>
+          </a>
+        </li>{% endif %}
         {% if nabavka_permissions.purchase_order_list %}<li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:purchase_order_list' %}">
             <i class="mdi mdi-file-document-edit"></i><span class="hide-menu">Narudžbenice</span>

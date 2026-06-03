@@ -10,6 +10,8 @@ from .models import (
     ProcurementItem,
     ProcurementItemInvoiceLink,
     ProcurementStatusLog,
+    PublicProcurementPlanItem,
+    PublicProcurementPlanVersion,
     PurchaseOrder,
 )
 
@@ -86,6 +88,38 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     list_display = ["order_number", "procurement_case", "supplier", "status", "amount", "order_date"]
     list_filter = ["status", "currency"]
     search_fields = ["order_number", "procurement_case__case_number", "supplier__name"]
+
+
+@admin.register(PublicProcurementPlanVersion)
+class PublicProcurementPlanVersionAdmin(admin.ModelAdmin):
+    list_display = [
+        "year",
+        "version_number",
+        "source_filename",
+        "total_rows",
+        "added_count",
+        "changed_count",
+        "removed_count",
+        "imported_at",
+    ]
+    list_filter = ["year"]
+    search_fields = ["source_filename", "note"]
+
+
+@admin.register(PublicProcurementPlanItem)
+class PublicProcurementPlanItemAdmin(admin.ModelAdmin):
+    list_display = [
+        "version",
+        "plan_type",
+        "diff_status",
+        "item_number",
+        "title",
+        "estimated_value",
+        "source_sheet",
+        "source_row",
+    ]
+    list_filter = ["version__year", "plan_type", "diff_status", "source_sheet"]
+    search_fields = ["item_number", "title", "cpv", "technique", "note"]
 
 
 @admin.register(ProcurementStatusLog)

@@ -19,6 +19,7 @@ def current_app(request):
         "case_create",
         "euf_invoice_list",
         "purchase_contract_list",
+        "public_procurement_list",
         "purchase_order_list",
         "reports",
         "alerts",
@@ -30,4 +31,8 @@ def current_app(request):
             code: user_has_role_permission(request.user, f"nabavka:{code}")
             for code in nabavka_codes
         },
+        "must_change_password": (
+            request.user.is_authenticated
+            and getattr(request.user, "must_change_password", False)
+        ),
     }

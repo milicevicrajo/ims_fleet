@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .public-procurement-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #17324d 0%, #25676e 52%, #5b7d3a 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(23, 50, 77, 0.18);
+  }
+  .public-procurement-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .public-procurement-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .public-procurement-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .public-procurement-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 700;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .public-procurement-status.added { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .public-procurement-status.changed { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .public-procurement-status.unchanged { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .public-procurement-status.removed { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
+  .public-procurement-status.public { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .public-procurement-status.exempt { background: #f0f7ea; color: #476f1d; border: 1px solid #cfe3bd; }
+  tr.public-procurement-removed td { background: #fff5f5 !important; color: #7f1d1d; }
+  #PublicProcurementTable {
+    table-layout: fixed;
+  }
+  #PublicProcurementTable th,
+  #PublicProcurementTable td {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    vertical-align: top;
+  }
+  #PublicProcurementTable th:nth-child(1),
+  #PublicProcurementTable td:nth-child(1) { width: 105px; }
+  #PublicProcurementTable th:nth-child(2),
+  #PublicProcurementTable td:nth-child(2) { width: 125px; }
+  #PublicProcurementTable th:nth-child(3),
+  #PublicProcurementTable td:nth-child(3) { width: 70px; }
+  #PublicProcurementTable th:nth-child(4),
+  #PublicProcurementTable td:nth-child(4) { width: 30%; }
+  #PublicProcurementTable th:nth-child(6),
+  #PublicProcurementTable td:nth-child(6) { width: 120px; }
+  #PublicProcurementTable th:nth-child(8),
+  #PublicProcurementTable td:nth-child(8) { width: 85px; }
+  .procurement-title { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .procurement-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
+  .version-card strong { font-size: 1.25rem; }
+</style>
+
+<div class="public-procurement-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Javne nabavke</h1>
+    <p>Verzionisani pregled plana javnih nabavki iz Excela, sa razlikama u odnosu na prethodnu verziju iste godine.</p>
+  </div>
+  {% if selected_version %}
+    <div class="text-end d-flex flex-column gap-2">
+      <div>Godina {{ selected_version.year }} / v{{ selected_version.version_number }}</div>
+      <small>{{ selected_version.imported_at|date:"d.m.Y H:i" }} | {{ selected_version.source_filename }}</small>
+      <a href="{% url 'nabavka:public_procurement_list' %}" class="btn btn-outline-light btn-sm">
+        <i class="mdi mdi-arrow-left"></i> Svi planovi
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="public-procurement-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-5">
+              <label class="form-label mb-1">{{ filter.form.q.label }}</label>
+              {{ filter.form.q|add_class:"form-control" }}
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label mb-1">{{ filter.form.plan_type.label }}</label>
+              {{ filter.form.plan_type|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label mb-1">{{ filter.form.diff_status.label }}</label>
+              {{ filter.form.diff_status|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-1 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Filter">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'nabavka:public_procurement_detail' selected_version.pk %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {% if selected_version %}
+        <div class="card-body border-bottom">
+          <div class="row g-2">
+            <div class="col-6 col-md-2 version-card"><span class="procurement-muted">Ukupno</span><strong>{{ selected_version.total_rows }}</strong></div>
+            <div class="col-6 col-md-2 version-card"><span class="procurement-muted">Dodato</span><strong class="text-success">{{ selected_version.added_count }}</strong></div>
+            <div class="col-6 col-md-2 version-card"><span class="procurement-muted">Izmenjeno</span><strong class="text-warning">{{ selected_version.changed_count }}</strong></div>
+            <div class="col-6 col-md-2 version-card"><span class="procurement-muted">Bez izmene</span><strong class="text-muted">{{ selected_version.unchanged_count }}</strong></div>
+            <div class="col-6 col-md-2 version-card"><span class="procurement-muted">Uklonjeno</span><strong class="text-danger">{{ selected_version.removed_count }}</strong></div>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="PublicProcurementTable" class="display compact table table-hover table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>Razlika</th>
+                <th>Tip</th>
+                <th>Rbr</th>
+                <th>Predmet</th>
+                <th>Vrsta</th>
+                <th>Procenjena vrednost</th>
+                <th>Postupak / osnov</th>
+                <th>Kvartal</th>
+                <th>CPV</th>
+                <th>Sheet</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+                <tr class="{% if item.diff_status == 'removed' %}public-procurement-removed{% endif %}">
+                  <td>
+                    <span class="public-procurement-status {{ item.diff_status }}">
+                      {% if item.diff_status == 'added' %}
+                        <i class="mdi mdi-plus-circle"></i>
+                      {% elif item.diff_status == 'changed' %}
+                        <i class="mdi mdi-swap-horizontal"></i>
+                      {% elif item.diff_status == 'removed' %}
+                        <i class="mdi mdi-close-circle"></i>
+                      {% else %}
+                        <i class="mdi mdi-check-circle-outline"></i>
+                      {% endif %}
+                      {{ item.get_diff_status_display }}
+                    </span>
+                  </td>
+                  <td><span class="public-procurement-status {{ item.plan_type }}">{{ item.get_plan_type_display }}</span></td>
+                  <td>{{ item.item_number|default:"/" }}</td>
+                  <td>
+                    <strong class="procurement-title" title="{{ item.title }}">{{ item.title|truncatechars:90 }}</strong>
+                    {% if item.previous_item and item.diff_status == 'changed' %}
+                      <span class="procurement-muted">Prethodna verzija: red {{ item.previous_item.source_row|default:"/" }}</span>
+                    {% endif %}
+                    {% if item.note %}<span class="procurement-muted" title="{{ item.note }}">{{ item.note|truncatechars:90 }}</span>{% endif %}
+                  </td>
+                  <td>{{ item.subject_type|default:item.procurement_category|default:"/" }}</td>
+                  <td>{% if item.estimated_value %}{{ item.estimated_value|floatformat:2 }}{% else %}/{% endif %}</td>
+                  <td>
+                    {{ item.procedure_type|default:item.exemption_basis|default:"/" }}
+                    {% if item.valuation_method %}<span class="procurement-muted">{{ item.valuation_method|truncatechars:70 }}</span>{% endif %}
+                  </td>
+                  <td>{{ item.quarter|default:"/" }}</td>
+                  <td><span title="{{ item.cpv }}">{{ item.cpv|truncatechars:45|default:"/" }}</span></td>
+                  <td>{{ item.source_sheet }}{% if item.source_row %}<span class="procurement-muted">red {{ item.source_row }}</span>{% endif %}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="10" class="text-center text-muted">Nema uvezenih stavki za izabrani filter.</td></tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Razlika</th>
+                <th>Tip</th>
+                <th>Rbr</th>
+                <th>Predmet</th>
+                <th>Vrsta</th>
+                <th>Procenjena vrednost</th>
+                <th>Postupak / osnov</th>
+                <th>Kvartal</th>
+                <th>CPV</th>
+                <th>Sheet</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#PublicProcurementTable', {
+        exportTitle: '{{ title }}',
+        order: [[1, 'asc'], [2, 'asc']],
+        autoSelectThreshold: 25,
+        scrollX: false,
+        autoWidth: false
+      });
+    }
+  });
+</script>
+{% endblock %}

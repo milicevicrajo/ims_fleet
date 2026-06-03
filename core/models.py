@@ -88,6 +88,11 @@ class CustomUser(AbstractUser):
         help_text=_("Unesi šifre centara odvojene zarezom, npr: 43, 12, 77"),
     )
 
+    must_change_password = models.BooleanField(
+        default=False,
+        verbose_name=_("Mora promeniti lozinku"),
+    )
+
     roles = models.ManyToManyField(
         Role,
         blank=True,
