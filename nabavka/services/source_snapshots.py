@@ -80,10 +80,10 @@ def _bulk_upsert(model, rows):
         obj.updated_at = synced_at
         to_update.append(obj)
 
-    if to_create:
-        model.objects.bulk_create(to_create, batch_size=500)
-    if to_update:
-        model.objects.bulk_update(to_update, [*update_fields, "synced_at", "updated_at"], batch_size=500)
+    for obj in to_create:
+        obj.save()
+    for obj in to_update:
+        obj.save(update_fields=[*update_fields, "synced_at", "updated_at"])
     for ids in _chunks(unchanged_ids):
         model.objects.filter(pk__in=ids).update(synced_at=synced_at)
     return [*to_create, *existing_by_key.values()]

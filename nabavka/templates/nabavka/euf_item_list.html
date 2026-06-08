@@ -27,11 +27,11 @@
     <h1>UF stavke</h1>
     <p>Kontrolisana lokalna evidencija stavki povučenih iz UF SQL view-a.</p>
   </div>
-  <form method="post" action="{% url 'nabavka:euf_item_sync' %}">
+  <form method="post" action="{% url 'nabavka:euf_item_sync' %}" class="snapshot-sync-form">
     {% csrf_token %}
-    <input type="hidden" name="source_search" value="{{ q }}">
+    <input type="hidden" name="source_search" value="{{ q }}" data-sync-search>
     <input type="hidden" name="next_query" value="{{ request.GET.urlencode }}">
-    <button class="btn btn-light btn-sm" type="submit">
+    <button class="btn btn-light btn-sm" type="submit" data-sync-button data-sync-label="Povlacim UF stavke...">
       <i class="mdi mdi-refresh"></i> Povuci UF stavke
     </button>
   </form>
@@ -96,6 +96,20 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.snapshot-sync-form').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        var searchInput = document.getElementById('id_source_search');
+        var hiddenSearch = form.querySelector('[data-sync-search]');
+        var button = form.querySelector('[data-sync-button]');
+        if (searchInput && hiddenSearch) {
+          hiddenSearch.value = searchInput.value || '';
+        }
+        if (button) {
+          button.disabled = true;
+          button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>' + (button.dataset.syncLabel || 'Povlacim...');
+        }
+      });
+    });
     if (!window.jQuery || !jQuery.fn.DataTable) return;
     var table = jQuery('#EufItemsTable');
     if (!table.length || jQuery.fn.DataTable.isDataTable(table)) return;

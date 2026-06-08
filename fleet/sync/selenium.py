@@ -813,8 +813,11 @@ def omv_teretna_data_import(*args, **kwargs):
     finally:
         driver.quit()
 
+    return "OMV Teretna komanda uspesno zavrsena."
+
 def import_omv_fuel_consumption_from_csv(csv_file_path):
     created = 0
+    updated = 0
     skipped = 0
     errors = 0
     missing_vehicles = set()
@@ -869,19 +872,36 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 # IzraÄunaj neto troÅ¡ak
                 cost_neto = cost_bruto - vat
 
-                fuel_obj, was_created = FuelConsumption.objects.get_or_create(
-                    vehicle=vehicle,
-                    supplier="OMV",
-                    date=transaction_date,
-                    amount=amount,
-                    cost_bruto=cost_bruto,
-                    defaults={
-                        "fuel_type": row['Product INV'],
-                        "cost_neto": cost_neto,
-                        "job_code": job_code,
-                        "mileage": mileage,
-                    },
-                )
+                fuel_defaults = {
+                    "fuel_type": row['Product INV'],
+                    "cost_bruto": cost_bruto,
+                    "cost_neto": cost_neto,
+                    "job_code": job_code,
+                    "mileage": mileage,
+                }
+                fuel_lookup = {
+                    "vehicle": vehicle,
+                    "supplier": "OMV",
+                    "date": transaction_date,
+                    "amount": amount,
+                    "fuel_type": row['Product INV'],
+                }
+                fuel_obj = FuelConsumption.objects.filter(**fuel_lookup).order_by("-id").first()
+                if fuel_obj:
+                    for field, value in fuel_defaults.items():
+                        setattr(fuel_obj, field, value)
+                    fuel_obj.save(update_fields=list(fuel_defaults))
+                    was_created = False
+                    updated += 1
+                else:
+                    FuelConsumption.objects.create(
+                        vehicle=vehicle,
+                        supplier="OMV",
+                        date=transaction_date,
+                        amount=amount,
+                        **fuel_defaults,
+                    )
+                    was_created = True
                 if was_created:
                     created += 1
                     logger.info(
@@ -893,8 +913,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                         amount,
                     )
                 else:
-                    skipped += 1
-                    logger.warning("OMV fuel row skipped duplicate: row=%s plate=%s", index, formatted_plate)
+                    logger.info("OMV fuel row updated: row=%s plate=%s", index, formatted_plate)
             
             except ObjectDoesNotExist:
                 skipped += 1
@@ -912,8 +931,9 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
 
     result = {
         "status": "ok",
-        "rows": created + skipped,
+        "rows": created + updated + skipped,
         "created": created,
+        "updated": updated,
         "skipped": skipped,
         "errors": errors,
         "missing_vehicles": sorted(v for v in missing_vehicles if v),
@@ -925,6 +945,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
 def import_omv_transactions_from_csv(csv_file_path):
     timezone = pytz.timezone(settings.TIME_ZONE)
     created = 0
+    updated = 0
     skipped = 0
     errors = 0
     missing_vehicles = set()
@@ -997,56 +1018,63 @@ def import_omv_transactions_from_csv(csv_file_path):
                 invoice_date = parse_date(row.get('Invoice date'))
                 date_to = parse_date(row.get('Date to'))
                 
-                # Kreiraj instancu TransactionOMV modela i sačuvaj je u bazi
-                _, was_created = TransactionOMV.objects.get_or_create(
-                    license_plate_no=formatted_plate,
-                    transaction_date=transaction_date,
-                    product_inv=row.get('Product INV'),
-                    voucher=row.get('Voucher'),
-                    quantity=quantity,
-                    gross_cc=gross_cc,
-                    defaults={
-                        "vehicle": vehicle,
-                        "issuer": row['Issuer'].strip(),
-                        "customer": row['Customer'],
-                        "card": row['Card'],
-                        "quantity": quantity,
-                        "gross_cc": gross_cc,
-                        "vat": vat,
-                        "voucher": row.get('Voucher'),
-                        "mileage": mileage,
-                        "corrected_mileage": corrected_mileage,
-                        "additional_info": row.get('Additional info'),
-                        "supply_country": row.get('Supply country'),
-                        "site_town": row.get('Site Town'),
-                        "product_del": row.get('Product DEL'),
-                        "unit_price": unit_price,
-                        "amount": amount,
-                        "discount": discount,
-                        "surcharge": surcharge,
-                        "vat_2010": row.get('VAT2010'),
-                        "supplier_currency": row.get('Suppliercurrency'),
-                        "invoice_no": row.get('Voucher'),
-                        "invoice_date": invoice_date,
-                        "invoiced": parse_bool(row.get('Invoiced?')),
-                        "state": row.get('State'),
-                        "supplier": row.get('Supplier'),
-                        "cost_1": cost_1,
-                        "cost_2": cost_2,
-                        "reference_no": row.get('Reference No'),
-                        "record_type": row.get('Recordtype'),
-                        "amount_other": amount_other,
-                        "is_list_price": 1 if parse_bool(row.get('is listprice ?')) else 0,
-                        "approval_code": row.get('Approval code'),
-                        "date_to": date_to,
-                        "final_trx": row.get('Final Trx.'),
-                        "lpi": row.get('LPI'),
-                    }
+                transaction_defaults = {
+                    "vehicle": vehicle,
+                    "issuer": row['Issuer'].strip(),
+                    "customer": row['Customer'],
+                    "card": row['Card'],
+                    "quantity": quantity,
+                    "gross_cc": gross_cc,
+                    "vat": vat,
+                    "voucher": row.get('Voucher'),
+                    "mileage": mileage,
+                    "corrected_mileage": corrected_mileage,
+                    "additional_info": row.get('Additional info'),
+                    "supply_country": row.get('Supply country'),
+                    "site_town": row.get('Site Town'),
+                    "product_del": row.get('Product DEL'),
+                    "unit_price": unit_price,
+                    "amount": amount,
+                    "discount": discount,
+                    "surcharge": surcharge,
+                    "vat_2010": row.get('VAT2010'),
+                    "supplier_currency": row.get('Suppliercurrency'),
+                    "invoice_no": row.get('Invoice No'),
+                    "invoice_date": invoice_date,
+                    "invoiced": parse_bool(row.get('Invoiced?')),
+                    "state": row.get('State'),
+                    "supplier": row.get('Supplier'),
+                    "cost_1": cost_1,
+                    "cost_2": cost_2,
+                    "reference_no": row.get('Reference No'),
+                    "record_type": row.get('Recordtype'),
+                    "amount_other": amount_other,
+                    "is_list_price": 1 if parse_bool(row.get('is listprice ?')) else 0,
+                    "approval_code": row.get('Approval code'),
+                    "date_to": date_to,
+                    "final_trx": row.get('Final Trx.'),
+                    "lpi": row.get('LPI'),
+                }
+                transaction_lookup = {
+                    "license_plate_no": formatted_plate,
+                    "transaction_date": transaction_date,
+                    "product_inv": row.get('Product INV'),
+                    "voucher": row.get('Voucher'),
+                    "quantity": quantity,
+                }
+                transaction = (
+                    TransactionOMV.objects.filter(**transaction_lookup)
+                    .order_by("-invoiced", "-invoice_date", "-id")
+                    .first()
                 )
-                if was_created:
-                    created += 1
+                if transaction:
+                    for field, value in transaction_defaults.items():
+                        setattr(transaction, field, value)
+                    transaction.save(update_fields=list(transaction_defaults))
+                    updated += 1
                 else:
-                    skipped += 1
+                    TransactionOMV.objects.create(**{**transaction_lookup, **transaction_defaults})
+                    created += 1
             
             except ObjectDoesNotExist:
                 skipped += 1
@@ -1068,8 +1096,9 @@ def import_omv_transactions_from_csv(csv_file_path):
 
     result = {
         "status": "ok",
-        "rows": created + skipped,
+        "rows": created + updated + skipped,
         "created": created,
+        "updated": updated,
         "skipped": skipped,
         "errors": errors,
         "missing_vehicles": sorted(v for v in missing_vehicles if v),

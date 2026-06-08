@@ -14,7 +14,7 @@ from hr.models import Employee
 
 from ..forms.garaza import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from ..models import TransactionNIS, TransactionOMV, Vehicle, VehicleTravelOrder
-from ..support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset
+from ..support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset, format_omv_receipt_number
 from ..support.garaza import get_vehicle_center_code, get_vehicle_latest_organizational_unit
 
 
@@ -84,7 +84,7 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
         amt = trx.amount or Decimal("0")
         return {
             "date": trx.transaction_date,
-            "invoice": trx.voucher,
+            "invoice": format_omv_receipt_number(trx.invoice_no, trx.voucher),
             "card": trx.card,
             "supplier": "OMV",
             "quantity": qty,

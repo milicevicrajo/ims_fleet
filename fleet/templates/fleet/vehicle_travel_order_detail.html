@@ -61,7 +61,7 @@
               {% for trx in omv_transactions %}
               <tr>
                 <td>{{ trx.transaction_date|date:"d.m.Y H:i" }}</td>
-                <td>{{ trx.voucher|default:"/" }}</td>
+                <td>{{ trx.invoice_no|default:trx.voucher|default:"/" }}{% if trx.invoice_no and trx.voucher and trx.invoice_no != trx.voucher %} / {{ trx.voucher }}{% endif %}</td>
                 <td>{{ trx.card|default:"/" }}</td>
                 <td class="text-end">{{ trx.quantity|default_if_none:"0"|floatformat:2 }}</td>
                 <td class="text-end">{{ trx.mileage|default_if_none:"/" }}</td>

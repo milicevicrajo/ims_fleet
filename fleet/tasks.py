@@ -4,7 +4,6 @@ from fleet.sync import (
     fetch_requisition_data,
     fetch_service_data,
     format_nis_sync_result,
-    kerio_login,
     nis_data_import,
     omv_putnicka_data_import,
     omv_teretna_data_import,
@@ -150,15 +149,6 @@ def fetch_requisition_data_task():
         lock_ttl_seconds=90 * 60,
         fn=_runner,
     )
-
-@shared_task
-def kerio_login_task():
-    return _run_with_singleton_lock(
-        task_name="kerio_login_task",
-        lock_ttl_seconds=30 * 60,
-        fn=kerio_login,
-    )
-				
 
 @shared_task
 def fetch_job_codes():

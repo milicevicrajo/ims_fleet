@@ -1,4 +1,7 @@
+import csv
 import datetime
+import os
+import tempfile
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -11,18 +14,20 @@ from django.utils import timezone
 from .forms import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
-from .models import TransactionNIS, TransactionOMV
+from .models import TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
 from .support.report_helpers import date_period_filtered_query, report_period_filtered_query
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
-from .support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset
+from .support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset, format_omv_receipt_number
+from .templatetags.form_filters import receipt_number
 from .views.vehicle_travel_orders import (
 	VehicleTravelOrderCreateView,
 	VehicleTravelOrderDeleteView,
 	VehicleTravelOrderDetailView,
 	VehicleTravelOrderUpdateView,
 )
+from .sync.selenium import import_omv_transactions_from_csv
 
 
 class SecondaryReportViewHelperTests(SimpleTestCase):
@@ -252,6 +257,135 @@ class FuelProductFilterTests(TestCase):
 		filtered_ids = list(filter_omv_fuel_queryset(TransactionOMV.objects.all()).values_list("id", flat=True))
 
 		self.assertEqual(filtered_ids, [fuel.id])
+
+	def test_format_omv_receipt_number_combines_invoice_and_voucher(self):
+		self.assertEqual(format_omv_receipt_number("8916372386", "00168851"), "8916372386 / 00168851")
+		self.assertEqual(format_omv_receipt_number("8916372386", ""), "8916372386")
+		self.assertEqual(format_omv_receipt_number("", "00168851"), "00168851")
+
+	def test_receipt_number_keeps_omv_leading_zeroes(self):
+		self.assertEqual(receipt_number("00282457"), "00282457")
+		self.assertEqual(receipt_number("7562133.0"), "7562133")
+
+
+class OMVTransactionImportTests(TestCase):
+	@staticmethod
+	def _dt(year, month, day, hour, minute):
+		return timezone.make_aware(datetime.datetime(year, month, day, hour, minute))
+
+	def setUp(self):
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="INV-OMV-1",
+			chassis_number="WF0XXXOMV0000001",
+			brand="Ford",
+			model="Focus",
+			year_of_manufacture=2021,
+			first_registration_date=datetime.date(2021, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1599.00"),
+			engine_number="ENG-OMV-1",
+			weight=Decimal("1400.00"),
+			engine_power=Decimal("88.00"),
+			load_capacity=Decimal("500.00"),
+			category="PUTNICKO VOZILO",
+			maximum_permissible_weight=Decimal("1900.00"),
+			fuel_type="DIZEL",
+			number_of_seats=5,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		TrafficCard.objects.create(
+			vehicle=self.vehicle,
+			registration_number="BG1007-KX",
+			issue_date=datetime.date(2021, 1, 1),
+			valid_until=datetime.date(2031, 1, 1),
+			traffic_card_number="TC-1",
+			serial_number="SER-1",
+			owner="IMS",
+			homologation_number="HOM-1",
+		)
+
+	def test_import_updates_existing_omv_transaction_when_invoice_arrives(self):
+		headers = [
+			"Issuer", "Customer", "Card", "License plate No", "Transactiondate", "Product INV",
+			"Quantity", "Gross CC", "VAT", "Voucher", "Mileage", "Corrected mileage",
+			"Additional info", "Supply country", "Site Town", "Product DEL", "Unitprice",
+			"Amount", "Discount", "Surcharge", "VAT2010", "Suppliercurrency", "Invoice No",
+			"Invoice date", "Invoiced?", "State", "Supplier", "Cost 1", "Cost 2",
+			"Reference No", "Recordtype", "Amount other", "is listprice ?", "Approval code",
+			"Date to", "Final Trx.", "LPI",
+		]
+		base_row = {
+			"Issuer": "710111",
+			"Customer": "107248",
+			"Card": "123",
+			"License plate No": "BG 1007 - KX",
+			"Transactiondate": "2026-02-28 12:37:00",
+			"Product INV": "OMV EVRO DIZEL",
+			"Quantity": "43.02",
+			"Gross CC": "8604.00",
+			"VAT": "1434.00",
+			"Voucher": "00289548",
+			"Mileage": "222866",
+			"Corrected mileage": "222866",
+			"Additional info": "",
+			"Supply country": "SR",
+			"Site Town": "BEOGRAD",
+			"Product DEL": "OMV EVRO DIZEL",
+			"Unitprice": "200.00",
+			"Amount": "8604.00",
+			"Discount": "0.00",
+			"Surcharge": "0.00",
+			"VAT2010": "NO",
+			"Suppliercurrency": "RSD",
+			"Invoice No": "",
+			"Invoice date": "",
+			"Invoiced?": "NO",
+			"State": "217",
+			"Supplier": "OMV-RS",
+			"Cost 1": "",
+			"Cost 2": "",
+			"Reference No": "",
+			"Recordtype": "D",
+			"Amount other": "0.00",
+			"is listprice ?": "No",
+			"Approval code": "700001",
+			"Date to": "2026-02-28",
+			"Final Trx.": "1",
+			"LPI": "",
+		}
+		final_row = {
+			**base_row,
+			"Gross CC": "8302.86",
+			"VAT": "1383.81",
+			"Unitprice": "193.00",
+			"Amount": "8302.86",
+			"Amount other": "8604.00",
+			"is listprice ?": "Yes",
+			"Invoice No": "8916357590",
+			"Invoice date": "2026-02-28",
+			"Invoiced?": "YES",
+		}
+
+		with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8-sig", suffix=".csv", delete=False) as handle:
+			writer = csv.DictWriter(handle, fieldnames=headers, delimiter=";")
+			writer.writeheader()
+			writer.writerow(base_row)
+			writer.writerow(final_row)
+			csv_path = handle.name
+
+		try:
+			result = import_omv_transactions_from_csv(csv_path)
+		finally:
+			os.unlink(csv_path)
+
+		self.assertEqual(result["created"], 1)
+		self.assertEqual(result["updated"], 1)
+		self.assertEqual(TransactionOMV.objects.count(), 1)
+		transaction = TransactionOMV.objects.get()
+		self.assertEqual(transaction.invoice_no, "8916357590")
+		self.assertEqual(transaction.gross_cc, Decimal("8302.86"))
 
 	def test_filter_nis_fuel_queryset_excludes_non_fuel_products(self):
 		fuel = TransactionNIS.objects.create(
@@ -664,6 +798,7 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 			quantity=Decimal("20.00"),
 			gross_cc=Decimal("4000.00"),
 			vat=Decimal("666.67"),
+			invoice_no="8916372386",
 			voucher="R1",
 			mileage=Decimal("1050"),
 			unit_price=Decimal("200.00"),
@@ -712,4 +847,4 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 		self.assertEqual(context["distance"], 100)
 		self.assertEqual(context["total_liters"], Decimal("50"))
 		self.assertEqual(context["consumption"], Decimal("50"))
-		self.assertEqual([row["invoice"] for row in context["fuel_rows"]], ["R1", "R2"])
+		self.assertEqual([row["invoice"] for row in context["fuel_rows"]], ["8916372386 / R1", "R2"])

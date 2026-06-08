@@ -26,6 +26,8 @@ def receipt_number(value):
     text = str(value).strip()
     if not text:
         return ''
+    if text.isdigit() and len(text) > 1 and text.startswith('0'):
+        return text
     try:
         decimal_value = Decimal(text.replace(',', '.'))
     except (InvalidOperation, ValueError):

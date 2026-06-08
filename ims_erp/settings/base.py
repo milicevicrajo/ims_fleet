@@ -222,7 +222,6 @@ CELERY_TASK_ROUTES = {
     'fleet.tasks.run_nis_command': {'queue': 'selenium'},
     'fleet.tasks.run_omv_putnicka_command': {'queue': 'selenium'},
     'fleet.tasks.run_omv_teretna_command': {'queue': 'selenium'},
-    'fleet.tasks.kerio_login_task': {'queue': 'selenium'},
     'fleet.tasks.fetch_policy_data_task': {'queue': 'sync'},
     'fleet.tasks.fetch_service_data_task': {'queue': 'sync'},
     'fleet.tasks.fetch_requisition_data_task': {'queue': 'sync'},
@@ -231,6 +230,9 @@ CELERY_TASK_ROUTES = {
     'fleet.tasks.proveri_otpis': {'queue': 'sync'},
     'fleet.tasks.sync_hr_employees_task': {'queue': 'sync'},
     'core.tasks.sync_permission_codes_task': {'queue': 'sync'},
+    'nabavka.tasks.sync_euf_invoices_task': {'queue': 'sync'},
+    'nabavka.tasks.sync_uf_items_task': {'queue': 'sync'},
+    'nabavka.tasks.sync_goods_task': {'queue': 'sync'},
 }
 
 CELERY_WORKER_REDIRECT_STDOUTS = False

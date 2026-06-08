@@ -1,6 +1,7 @@
 from datetime import date, datetime, time as datetime_time
 
-from django.db.models import CharField, F, OuterRef, Q, Subquery, Value
+from django.db.models import Case, CharField, F, OuterRef, Q, Subquery, Value, When
+from django.db.models.functions import Concat
 from django.utils import timezone as django_timezone
 
 from ..models import TrafficCard, TransactionNIS, TransactionOMV
@@ -30,12 +31,35 @@ def _fuel_product_filter(field_name):
     return product_filter
 
 
+def _dedupe_omv_transaction_lines(queryset):
+    preferred_line = (
+        TransactionOMV.objects.filter(
+            license_plate_no=OuterRef("license_plate_no"),
+            transaction_date=OuterRef("transaction_date"),
+            product_inv=OuterRef("product_inv"),
+            voucher=OuterRef("voucher"),
+            quantity=OuterRef("quantity"),
+        )
+        .order_by("-invoiced", "-invoice_date", "-id")
+        .values("id")[:1]
+    )
+    return queryset.filter(id=Subquery(preferred_line))
+
+
 def filter_omv_fuel_queryset(queryset):
-    return queryset.filter(_fuel_product_filter("product_inv"))
+    return _dedupe_omv_transaction_lines(queryset.filter(_fuel_product_filter("product_inv")))
 
 
 def filter_nis_fuel_queryset(queryset):
     return queryset.filter(_fuel_product_filter("naziv_proizvoda"))
+
+
+def format_omv_receipt_number(invoice_no, voucher):
+    invoice_no = str(invoice_no or "").strip()
+    voucher = str(voucher or "").strip()
+    if invoice_no and voucher and invoice_no != voucher:
+        return f"{invoice_no} / {voucher}"
+    return invoice_no or voucher
 
 
 def date_range_for_datetime_field(start_date=None, end_date=None):
@@ -126,10 +150,24 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
         vehicle=OuterRef("vehicle")
     ).order_by("-issue_date").values("registration_number")[:1]
 
+    omv_receipt_number = Case(
+        When(
+            Q(invoice_no__isnull=False)
+            & ~Q(invoice_no="")
+            & Q(voucher__isnull=False)
+            & ~Q(voucher="")
+            & ~Q(invoice_no=F("voucher")),
+            then=Concat("invoice_no", Value(" / "), "voucher"),
+        ),
+        When(Q(invoice_no__isnull=False) & ~Q(invoice_no=""), then=F("invoice_no")),
+        default=F("voucher"),
+        output_field=CharField(),
+    )
+
     omv_queryset = filter_omv_fuel_queryset(TransactionOMV.objects.all()).annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
         annotated_transaction_date=F("transaction_date"),
-        annotated_receipt_number=F("voucher"),
+        annotated_receipt_number=omv_receipt_number,
         annotated_quantity=F("quantity"),
         price_per_liter=F("unit_price"),
         total_net=F("amount"),
