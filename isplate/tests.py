@@ -62,7 +62,13 @@ class VirmanServiceTests(TestCase):
         self.assertTrue(all(len(line) == RECORD_LENGTH for line in lines))
         self.assertEqual(lines[2][:18], "160510010339155882")
         self.assertIn("CAVRAK JELENA", lines[2])
-        self.assertEqual(lines[2][88:98].strip(), "Upl.zarade")
+        self.assertEqual(lines[1][63:78], "000000006313986")
+        self.assertEqual(lines[1][78:83], "00001")
+        self.assertEqual(lines[2][88:123].strip(), "NEOPOREZIVA PRIMANJA ZAPOSLENIH")
+        self.assertEqual(lines[2][130:133], "241")
+        self.assertEqual(lines[2][135:148], "0000006313986")
+        self.assertEqual(lines[2][148:154], "972491")
+        self.assertEqual(lines[2][154:169], "000000000120261")
 
     def test_rejects_employee_without_account(self):
         order = create_order(employee=create_employee(account_number=""))

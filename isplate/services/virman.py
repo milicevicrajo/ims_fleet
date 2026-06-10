@@ -11,16 +11,15 @@ RECORD_LENGTH = 180
 PAYER_ACCOUNT = "205000000001445485"
 PAYER_NAME = "Institut IMS a.d."
 PAYER_CITY = "Beograd"
-PAYER_REFERENCE = "00000310420994500314"
 HEADER_DATE_FORMAT = "%d%m%y"
 DETAIL_DATE_FORMAT = "%d%m%y01"
 HEADER_SUFFIX = "Multi E_BANK0"
 
 DETAIL_MODEL = "000"
-DETAIL_PURPOSE = "Upl.zarade"
+DETAIL_PURPOSE = "NEOPOREZIVA PRIMANJA ZAPOSLENIH"
 DETAIL_CONTROL = "00000"
-DETAIL_PAYMENT_CODE = "240"
-DETAIL_REFERENCE_SUFFIX = "2491000000063139858"
+DETAIL_PAYMENT_CODE = "241"
+DETAIL_FIXED_REFERENCE = "972491"
 
 
 SERBIAN_TRANSLITERATION = str.maketrans(
@@ -87,9 +86,24 @@ def _amount_cents(value):
     return int(amount * 100)
 
 
+def _amount_cents_for_header(value):
+    amount = Decimal(value or 0).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if amount < 0:
+        raise ValidationError("Ukupan iznos ne moze biti negativan.")
+    return int(amount * 100)
+
+
 def _detail_reference(amount):
-    amount_part = str(_amount_cents(amount)).zfill(15)
-    return f"{amount_part}{DETAIL_REFERENCE_SUFFIX}"
+    amount_part = str(_amount_cents(amount)).zfill(13)
+    return f"{amount_part}{DETAIL_FIXED_REFERENCE}"
+
+
+def _order_number_reference(order):
+    reference = re.sub(r"[^A-Za-z0-9]", "", order.order_number or "")
+    reference = _safe_text(reference).upper()
+    if not reference:
+        raise ValidationError(f"{order.order_number}: nedostaje broj putnog naloga.")
+    return reference[-15:].rjust(15, "0")
 
 
 def _recipient_name(order):
@@ -123,7 +137,7 @@ def validate_order_for_virman(order, allow_regenerate=False):
         raise ValidationError(errors)
 
 
-def build_header_lines(payment_date):
+def build_header_lines(payment_date, total_amount=0, order_count=0):
     date_text = payment_date.strftime(HEADER_DATE_FORMAT)
 
     first = _blank_record()
@@ -137,7 +151,8 @@ def build_header_lines(payment_date):
     _write(second, 1, 18, PAYER_ACCOUNT)
     _write(second, 19, 35, PAYER_NAME)
     _write(second, 54, 10, PAYER_CITY)
-    _write(second, 64, 20, PAYER_REFERENCE)
+    _write(second, 64, 15, f"{_amount_cents_for_header(total_amount):015d}")
+    _write(second, 79, 5, f"{order_count:05d}")
     _write(second, 180, 1, "9")
 
     return [_record_to_string(first), _record_to_string(second)]
@@ -154,7 +169,8 @@ def build_detail_line(order, payment_date, allow_regenerate=False):
     _write(record, 89, 35, DETAIL_PURPOSE)
     _write(record, 125, 5, DETAIL_CONTROL)
     _write(record, 131, 3, DETAIL_PAYMENT_CODE)
-    _write(record, 136, 34, _detail_reference(order.advance_payment))
+    _write(record, 136, 19, _detail_reference(order.advance_payment))
+    _write(record, 155, 15, _order_number_reference(order))
     _write(record, 173, 8, payment_date.strftime(DETAIL_DATE_FORMAT))
     return _record_to_string(record)
 
@@ -167,7 +183,8 @@ def build_virman_file(orders, payment_date, generated_at, allow_regenerate=False
     for order in orders:
         validate_order_for_virman(order, allow_regenerate=allow_regenerate)
 
-    lines = build_header_lines(payment_date)
+    total_amount = sum(Decimal(order.advance_payment or 0) for order in orders)
+    lines = build_header_lines(payment_date, total_amount=total_amount, order_count=len(orders))
     lines.extend(
         build_detail_line(order, payment_date, allow_regenerate=allow_regenerate)
         for order in orders
