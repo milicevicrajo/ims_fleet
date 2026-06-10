@@ -487,6 +487,24 @@ class PutniNalog(models.Model):
         verbose_name=_("Storniran")
     )
 
+    virman_generated = models.BooleanField(
+        default=False,
+        verbose_name=_("Virman odradjen")
+    )
+    virman_generated_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("Vreme generisanja virmana")
+    )
+    virman_generated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="generated_travel_order_virmans",
+        verbose_name=_("Virman generisao")
+    )
+
     def generate_order_number(self):
         center_code = getattr(self.job_code, "center", None)
         if not center_code:

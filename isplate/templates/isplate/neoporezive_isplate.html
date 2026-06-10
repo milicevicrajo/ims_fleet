@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .assignment-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .assignment-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .assignment-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .assignment-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .payout-kpi {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    min-height: 108px;
+  }
+  .payout-kpi .card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .payout-kpi-label {
+    color: #657282;
+    font-size: .84rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .payout-kpi-value {
+    color: #17324d;
+    font-size: 1.65rem;
+    font-weight: 700;
+  }
+  .payout-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+  }
+  .payout-kpi-icon.ready { background: #e7f7ef; color: #147044; }
+  .payout-kpi-icon.amount { background: #e8f0fb; color: #174f83; }
+  .payout-kpi-icon.warning { background: #fff4db; color: #7a4d00; }
+  .filter-label {
+    color: #657282;
+    font-size: .82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .payout-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .payout-status.ready { background: #e7f7ef; color: #147044; }
+  .payout-status.warning { background: #fff4db; color: #7a4d00; border: 1px solid #f1d38a; }
+  .payout-status.generated { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  #PayoutOrders td {
+    vertical-align: middle;
+  }
+  .payout-selection-cell {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    padding: .45rem !important;
+    text-align: center;
+    vertical-align: middle !important;
+  }
+  .payout-selection-box {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .payout-selection-cell .dt-column-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .payout-selection-cell .dt-column-order {
+    display: none;
+  }
+  .payout-check {
+    display: block;
+    flex: 0 0 auto;
+    float: none !important;
+    position: static !important;
+    width: 20px;
+    height: 20px;
+    margin: 0 !important;
+    cursor: pointer;
+    border: 2px solid #647181;
+    vertical-align: middle !important;
+  }
+  .payout-check:checked {
+    background-color: #2f8f6f;
+    border-color: #2f8f6f;
+  }
+  .payout-row-selected > td {
+    background: #e7f7ef !important;
+    box-shadow: inset 3px 0 0 #2f8f6f;
+  }
+  .payout-row-blocked {
+    color: #6b7785;
+  }
+  .payout-row-blocked > td {
+    background: #f8fafc;
+  }
+  .payout-toolbar {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 10px 12px;
+  }
+  .payout-count-badge {
+    min-width: 34px;
+  }
+</style>
+
+<div class="assignment-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Isplata neoporezovanih</h1>
+    <p>Pregled putnih naloga sa akontacijom, racunima zaposlenih i priprema TXT virmana.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'putninalog_list' %}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-road-variant"></i> Putni nalozi
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card payout-kpi">
+      <div class="card-body">
+        <div>
+          <div class="payout-kpi-label">Naloga</div>
+          <div class="payout-kpi-value">{{ orders_count }}</div>
+        </div>
+        <span class="payout-kpi-icon ready"><i class="mdi mdi-format-list-checks"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card payout-kpi">
+      <div class="card-body">
+        <div>
+          <div class="payout-kpi-label">Ukupan iznos</div>
+          <div class="payout-kpi-value">{{ total_amount|floatformat:2|intcomma }}</div>
+        </div>
+        <span class="payout-kpi-icon amount"><i class="mdi mdi-cash"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card payout-kpi">
+      <div class="card-body">
+        <div>
+          <div class="payout-kpi-label">Bez racuna</div>
+          <div class="payout-kpi-value">{{ missing_account_count }}</div>
+        </div>
+        <span class="payout-kpi-icon warning"><i class="mdi mdi-alert-circle-outline"></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body border-bottom">
+    <form method="get" class="assignment-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label mb-1" for="status">Status</label>
+          <select id="status" name="status" class="form-select form-control select2-method">
+            <option value="pending" {% if status == "pending" %}selected{% endif %}>Nije odradjen</option>
+            <option value="generated" {% if status == "generated" %}selected{% endif %}>Odradjen</option>
+            <option value="all" {% if status == "all" %}selected{% endif %}>Svi</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+          <label class="form-label mb-1" for="center">Centar</label>
+          <select id="center" name="center" class="form-select form-control select2-method">
+            <option value="">Svi centri</option>
+            {% for center in centers %}
+              <option value="{{ center }}" {% if selected_center == center|stringformat:"s" %}selected{% endif %}>{{ center }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-1">
+          <label class="form-label mb-1" for="year">Godina</label>
+          <select id="year" name="year" class="form-select form-control select2-method">
+            <option value="">Sve</option>
+            {% for year in years %}
+              <option value="{{ year }}" {% if selected_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-1">
+          <label class="form-label mb-1" for="month">Mesec</label>
+          <select id="month" name="month" class="form-select form-control select2-method">
+            <option value="">Svi</option>
+            {% for month in months %}
+              <option value="{{ month }}" {% if selected_month == month|stringformat:"s" %}selected{% endif %}>{{ month|stringformat:"02d" }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-lg-4">
+          <label class="form-label mb-1" for="q">Pretraga</label>
+          <input id="q" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Broj naloga, ime, racun, mesto...">
+        </div>
+        <div class="col-12 col-lg-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="mdi mdi-filter"></i> Filter
+          </button>
+          <a href="{% url 'isplate:neoporezive_isplate' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+            <i class="mdi mdi-close"></i>
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<form id="virmanForm" method="post">
+  {% csrf_token %}
+  <div class="card shadow-sm">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-end gap-2">
+      <div>
+        <h4 class="mb-0">Nalozi za isplatu</h4>
+        <div class="text-muted small">Izaberi naloge koji ulaze u TXT virman.</div>
+      </div>
+      <div class="payout-toolbar d-flex flex-wrap align-items-end gap-2">
+        <div class="form-check mb-1">
+          <input id="allow_regenerate" class="form-check-input" type="checkbox" name="allow_regenerate" value="1" {% if allow_regenerate %}checked{% endif %}>
+          <label class="form-check-label" for="allow_regenerate">Ponovno generisanje</label>
+        </div>
+        <div>
+          <label class="form-label filter-label mb-1" for="payment_date">Datum isplate</label>
+          <input id="payment_date" type="date" name="payment_date" value="{{ payment_date|date:'Y-m-d' }}" class="form-control form-control-sm">
+        </div>
+        <div class="mb-1">
+          <span class="badge bg-light text-dark border">
+            Izabrano: <span id="selectedOrderCount" class="payout-count-badge d-inline-block text-end">0</span>
+          </span>
+        </div>
+        <button class="btn btn-primary btn-sm" type="submit" name="virman_action" value="selected">
+          <i class="mdi mdi-file-export"></i> Generisi izabrane
+        </button>
+        <button class="btn btn-outline-primary btn-sm" type="submit" name="virman_action" value="pending_for_date">
+          <i class="mdi mdi-calendar-check"></i> Generisi koji nemaju za datum
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" type="submit" name="virman_action" value="test_selected">
+          <i class="mdi mdi-file-eye"></i> Test izlaz
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table id="PayoutOrders" class="table table-striped table-bordered align-middle w-100">
+          <thead class="table-light">
+            <tr>
+              <th class="payout-selection-cell" data-dt-order="disable">
+                <div class="payout-selection-box">
+                  <input id="selectAllOrders" class="form-check-input payout-check" type="checkbox" title="Izaberi sve">
+                </div>
+              </th>
+              <th>Broj naloga</th>
+              <th>Zaposleni</th>
+              <th>Originalno ime</th>
+              <th>Racun</th>
+              <th>Centar</th>
+              <th>Mesto</th>
+              <th>Datum</th>
+              <th class="text-end">Iznos</th>
+              <th class="text-center">Virman</th>
+              <th>Kontrola</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              <tr class="{% if not order.employee or not order.employee.account_number %}payout-row-blocked{% elif order.virman_generated %}payout-row-generated{% endif %}" data-generated="{% if order.virman_generated %}1{% else %}0{% endif %}">
+                <td class="payout-selection-cell">
+                  <div class="payout-selection-box">
+                    <input class="form-check-input payout-check order-select" type="checkbox" name="order_ids" value="{{ order.pk }}" {% if order.virman_generated or not order.employee or not order.employee.account_number %}disabled{% endif %}>
+                  </div>
+                </td>
+                <td>
+                  <a href="{% url 'putninalog_detail' order.pk %}" class="btn btn-outline-primary btn-sm">
+                    <i class="mdi mdi-eye"></i> {{ order.order_number }}
+                  </a>
+                </td>
+                <td>{% if order.employee %}{{ order.employee }}{% else %}{{ order.other_employee_name|default:"-" }}{% endif %}</td>
+                <td>{% if order.employee %}{{ order.employee.original_full_name|default:"-" }}{% else %}-{% endif %}</td>
+                <td>
+                  {% if order.employee and order.employee.account_number %}
+                    {{ order.employee.account_number }}
+                  {% else %}
+                    <span class="badge bg-warning text-dark">Nedostaje</span>
+                  {% endif %}
+                </td>
+                <td>{{ order.job_code.center|default:"-" }}</td>
+                <td>{{ order.travel_location }}</td>
+                <td>{{ order.travel_date|date:"d.m.Y" }}</td>
+                <td class="text-end">{{ order.advance_payment|floatformat:2|intcomma }} {{ order.advance_payment_currency }}</td>
+                <td class="text-center">
+                  {% if order.virman_generated %}
+                    <span class="badge bg-success">Da</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark">Ne</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if not order.employee %}
+                    <span class="badge bg-warning text-dark">Nema IMS zaposlenog</span>
+                  {% elif not order.employee.account_number %}
+                    <span class="badge bg-warning text-dark">Nema racun</span>
+                  {% elif order.virman_generated %}
+                    <span class="badge bg-secondary">Samo uz ponovno</span>
+                  {% else %}
+                    <span class="badge bg-success">Spreman</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="11" class="text-center text-muted">Nema naloga za izabrane filtere.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if orders_count > 500 %}
+        <div class="alert alert-info mt-3 mb-0">Prikazano je prvih 500 naloga. Suzite filtere za precizniji pregled.</div>
+      {% endif %}
+    </div>
+  </div>
+</form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.jQuery && jQuery.fn.select2) {
+      jQuery('.select2-method').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        allowClear: true,
+        placeholder: 'Izaberi'
+      });
+    }
+
+    var table = window.jQuery ? jQuery('#PayoutOrders') : null;
+    if (table && jQuery.fn.DataTable && table.length && !jQuery.fn.DataTable.isDataTable(table)) {
+      table.DataTable({
+        pageLength: 50,
+        order: [[7, 'desc']],
+        columnDefs: [
+          { targets: 0, orderable: false, searchable: false }
+        ],
+        language: {
+          search: 'Pretraga:',
+          lengthMenu: 'Prikazi _MENU_ redova',
+          info: 'Prikaz _START_ do _END_ od _TOTAL_ naloga',
+          infoEmpty: 'Nema naloga',
+          zeroRecords: 'Nema rezultata',
+          paginate: {
+            first: 'Prva',
+            last: 'Poslednja',
+            next: 'Sledeca',
+            previous: 'Prethodna'
+          }
+        }
+      });
+    }
+
+    var selectAll = document.getElementById('selectAllOrders');
+    var allowRegenerate = document.getElementById('allow_regenerate');
+    var selectedCount = document.getElementById('selectedOrderCount');
+
+    function syncRowState(input) {
+      var row = input.closest('tr');
+      if (!row) {
+        return;
+      }
+      row.classList.toggle('payout-row-selected', input.checked);
+    }
+
+    function updateSelectedCount() {
+      var count = document.querySelectorAll('.order-select:checked').length;
+      if (selectedCount) {
+        selectedCount.textContent = count;
+      }
+    }
+
+    function syncRegenerateState() {
+      var allow = allowRegenerate && allowRegenerate.checked;
+      document.querySelectorAll('.order-select').forEach(function (input) {
+        var row = input.closest('tr');
+        var generated = row && row.dataset.generated === '1';
+        var blocked = row && row.classList.contains('payout-row-blocked');
+        input.disabled = blocked || (generated && !allow);
+        if (input.disabled) {
+          input.checked = false;
+        }
+        syncRowState(input);
+      });
+      if (selectAll) {
+        selectAll.checked = false;
+      }
+      updateSelectedCount();
+    }
+
+    document.querySelectorAll('.order-select').forEach(function (input) {
+      input.addEventListener('change', function () {
+        syncRowState(input);
+        updateSelectedCount();
+      });
+      syncRowState(input);
+    });
+
+    if (selectAll) {
+      selectAll.addEventListener('change', function () {
+        document.querySelectorAll('.order-select:not(:disabled)').forEach(function (input) {
+          input.checked = selectAll.checked;
+          syncRowState(input);
+        });
+        updateSelectedCount();
+      });
+    }
+
+    if (allowRegenerate) {
+      allowRegenerate.addEventListener('change', syncRegenerateState);
+      syncRegenerateState();
+    }
+
+    var virmanForm = document.getElementById('virmanForm');
+    if (virmanForm) {
+      virmanForm.addEventListener('submit', function (event) {
+        var action = event.submitter ? event.submitter.value : 'selected';
+        var needsSelection = action === 'selected' || action === 'test_selected';
+        if (needsSelection && !document.querySelector('.order-select:checked')) {
+          event.preventDefault();
+          alert('Izaberi bar jedan putni nalog.');
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

@@ -165,6 +165,7 @@ def sync_employees_from_hr_view(using=None):
 
         defaults = {
             "title": title,
+            "original_full_name": _as_str(ranaz) or "",
             "first_name": first_name,
             "last_name": last_name,
             "position": _as_str(naz_sis) or "",

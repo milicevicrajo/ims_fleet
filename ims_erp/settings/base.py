@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'fleet',
     'hr',
     'naplata',
+    'isplate',
     'menice',
     'ugovori',
     'nabavka',

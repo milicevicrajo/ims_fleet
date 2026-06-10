@@ -215,6 +215,7 @@ def putninalog_datatable_data(request):
         "8": "advance_payment",
         "9": "is_weekly",
         "10": "opravdan",
+        "11": "virman_generated",
     }
     order_field = order_map.get(order_column, "pn_sort_key")
     if order_dir == "desc":
@@ -252,6 +253,10 @@ def putninalog_datatable_data(request):
                 if putni_nalog.is_weekly else '<span class="badge bg-light text-dark">Ne</span>'
             ),
             "opravdan": justified_html,
+            "virman": (
+                '<span class="badge bg-success">Da</span>'
+                if putni_nalog.virman_generated else '<span class="badge bg-light text-dark">Ne</span>'
+            ),
             "update": update_html,
             "print": print_html,
             "copy": copy_html,

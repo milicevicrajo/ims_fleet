@@ -10,6 +10,12 @@ class Employee(models.Model):
 
     employee_code = models.IntegerField(unique=True, verbose_name=_("Šifra zaposlenog"))
     title = models.CharField(max_length=20, verbose_name=_("Titula"), blank=True, null=True)
+    original_full_name = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        verbose_name=_("Originalno ime i prezime"),
+    )
     first_name = models.CharField(max_length=50, verbose_name=_("Ime"), blank=True, null=True)
     last_name = models.CharField(max_length=50, verbose_name=_("Prezime"), blank=True, null=True)
     display_first_name_override = models.CharField(

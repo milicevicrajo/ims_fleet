@@ -6,6 +6,7 @@ def current_app(request):
     sidebar_map = {
         "fleet": "sidebar_fleet.html",
         "naplata": "sidebar_naplata.html",
+        "isplate": "sidebar_isplate.html",
         "pravna": "sidebar_pravna.html",
         "kadrovi": "sidebar_kadrovi.html",
         "administracija": "sidebar_administracija.html",

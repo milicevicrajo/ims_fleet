@@ -111,6 +111,11 @@
                title="Naplata">
               <i class="mdi mdi-cash-multiple"></i><span class="app-label">Naplata</span>
             </a>
+            <a class="nav-link {% if current_app == 'isplate' %}active{% endif %}"
+               href="{% url 'switch_app' 'isplate' %}?next={% url 'isplate:neoporezive_isplate' %}"
+               title="Isplate">
+              <i class="mdi mdi-bank-transfer"></i><span class="app-label">Isplate</span>
+            </a>
             <a class="nav-link {% if current_app == 'pravna' %}active{% endif %}"
                href="{% url 'switch_app' 'pravna' %}?next={% url 'naplata:pravna_cases_list' case_type='tuzeni' %}"
                title="Pravna sluzba">
