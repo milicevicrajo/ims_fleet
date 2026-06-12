@@ -24,8 +24,8 @@
 
 <div class="snapshot-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
-    <h1>UF stavke</h1>
-    <p>Kontrolisana lokalna evidencija stavki povučenih iz UF SQL view-a.</p>
+    <h1>UF fakture</h1>
+    <p>Kontrolisana lokalna evidencija UF faktura formiranih grupisanjem stavki po broju fakture.</p>
   </div>
   <form method="post" action="{% url 'nabavka:euf_item_sync' %}" class="snapshot-sync-form">
     {% csrf_token %}
@@ -43,7 +43,7 @@
       <div class="row g-2 align-items-end">
         <div class="col-12 col-md-4">
           <label class="form-label mb-1" for="id_source_search">Pretraga</label>
-          <input id="id_source_search" class="form-control" type="text" name="source_search" value="{{ q }}" placeholder="Faktura, partner, stavka ili konto">
+          <input id="id_source_search" class="form-control" type="text" name="source_search" value="{{ q }}" placeholder="Faktura, partner, PIB ili konto">
         </div>
         <div class="col-12 col-md-2">
           <label class="form-label mb-1" for="id_date_from">Datum od</label>
@@ -62,7 +62,7 @@
           <input id="id_account" class="form-control" type="text" name="account" value="{{ account }}">
         </div>
         <div class="col-12 d-flex gap-2 justify-content-end">
-          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretraži</button>
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretrazi</button>
           <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_item_list' %}">Reset</a>
         </div>
       </div>
@@ -80,12 +80,11 @@
             <th>Broj fakture</th>
             <th>Partner</th>
             <th>PIB</th>
-            <th>Stavka</th>
-            <th>JM</th>
-            <th>Količina</th>
-            <th>Cena</th>
-            <th>Vrednost</th>
-            <th>Konto</th>
+            <th>Iznos za placanje</th>
+            <th>Vrednost stavki</th>
+            <th>Broj stavki</th>
+            <th>Konta</th>
+            <th class="text-center">Akcije</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -125,18 +124,17 @@
         { data: 'invoice_number' },
         { data: 'partner_name' },
         { data: 'partner_pib' },
-        { data: 'item_name' },
-        { data: 'uom' },
-        { data: 'quantity' },
-        { data: 'price' },
-        { data: 'value' },
-        { data: 'account' }
+        { data: 'payment_amount' },
+        { data: 'item_value_total' },
+        { data: 'item_count' },
+        { data: 'accounts' },
+        { data: 'actions', orderable: false, searchable: false, className: 'text-center text-nowrap' }
       ],
       language: {
-        processing: 'Učitavanje...', search: 'Pretraga:', lengthMenu: 'Prikaži _MENU_ redova',
-        info: 'Prikaz _START_ do _END_ od _TOTAL_ UF stavki', infoEmpty: 'Nema UF stavki',
+        processing: 'Ucitavanje...', search: 'Pretraga:', lengthMenu: 'Prikazi _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ UF faktura', infoEmpty: 'Nema UF faktura',
         infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema rezultata',
-        paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' }
+        paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
       }
     });
   });

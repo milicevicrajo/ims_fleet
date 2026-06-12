@@ -29,6 +29,7 @@ from ..models import (
     ProcurementInvoice,
     ProcurementItem,
     ProcurementStatusLog,
+    UfInvoiceSnapshot,
 )
 
 
@@ -357,7 +358,7 @@ class ProcurementCaseDetailView(NabavkaContextMixin, RolePermissionRequiredMixin
             Prefetch(
                 "items",
                 queryset=ProcurementItem.objects.select_related(
-                    "euf_invoice", "uf_item", "goods_item"
+                    "euf_invoice", "uf_invoice", "uf_item", "goods_item"
                 ).order_by("id"),
             ),
             "invoice_links",
@@ -575,22 +576,24 @@ class ProcurementItemSourceDataView(RolePermissionRequiredMixin, LoginRequiredMi
                 for item in items
             ]
         elif source_type == ProcurementItem.SOURCE_UF:
-            queryset = EufItemSnapshot.objects.all()
+            queryset = UfInvoiceSnapshot.objects.all()
             if query:
                 queryset = queryset.filter(
                     Q(invoice_number__icontains=query)
                     | Q(partner_name__icontains=query)
-                    | Q(item_name__icontains=query)
+                    | Q(partner_pib__icontains=query)
+                    | Q(accounts__icontains=query)
                 )
             items, has_more = paginate(queryset.order_by("-document_date", "-id"))
             results = [
                 {
                     "id": item.pk,
-                    "text": f"{item.invoice_number or item.purchase_invoice_id or '/'} - {item.partner_name or '/'} - {item.item_name or '/'}",
-                    "name": item.item_name or "",
-                    "uom": item.uom or "",
-                    "quantity": str(item.quantity or ""),
-                    "price": str(item.price or ""),
+                    "text": (
+                        f"{item.invoice_number or item.purchase_invoice_id or '/'} - "
+                        f"{item.partner_name or '/'} - "
+                        f"{item.payment_amount or item.total or item.item_value_total or '/'} "
+                        f"({item.item_count} stavki)"
+                    ),
                 }
                 for item in items
             ]
@@ -601,12 +604,16 @@ class ProcurementItemSourceDataView(RolePermissionRequiredMixin, LoginRequiredMi
                     Q(article_code__icontains=query)
                     | Q(article_name__icontains=query)
                     | Q(partner_name__icontains=query)
+                    | Q(linked_document__icontains=query)
                 )
             items, has_more = paginate(queryset.order_by("-document_date", "-id"))
             results = [
                 {
                     "id": item.pk,
-                    "text": f"{item.article_code or '/'} - {item.article_name or '/'} - {item.partner_name or '/'}",
+                    "text": (
+                        f"{item.article_code or '/'} - {item.article_name or '/'} - "
+                        f"Faktura: {item.linked_document or '/'} - {item.partner_name or '/'}"
+                    ),
                     "name": item.article_name or "",
                     "quantity": str(item.quantity or ""),
                     "price": str(item.price or ""),
@@ -637,13 +644,14 @@ class ProcurementItemSourceLinkView(RolePermissionRequiredMixin, LoginRequiredMi
         procurement_item.source_type = form.cleaned_data["source_type"]
         procurement_item.euf_invoice = None
         procurement_item.uf_item = None
+        procurement_item.uf_invoice = None
         procurement_item.goods_item = None
         source_field = form.cleaned_data.get("source_field")
         if source_field:
             setattr(procurement_item, source_field, form.cleaned_data["source_object"])
         procurement_item.full_clean()
         procurement_item.save(
-            update_fields=["source_type", "euf_invoice", "uf_item", "goods_item"]
+            update_fields=["source_type", "euf_invoice", "uf_item", "uf_invoice", "goods_item"]
         )
         messages.success(
             request,
@@ -668,6 +676,7 @@ class ProcurementCaseSourceLinkView(RolePermissionRequiredMixin, LoginRequiredMi
             "source_type": form.cleaned_data["source_type"],
             "euf_invoice": None,
             "uf_item": None,
+            "uf_invoice": None,
             "goods_item": None,
             source_field: source_object,
         }

@@ -15,3 +15,6 @@ Obrazlozenje poslovne opravdanosti za osobu koja operativno vodi flotu kroz IMS 
 
 4. `nabavka-funkcionalnosti-i-povezivanja.md`
 Pregled implementiranih funkcionalnosti aplikacije Nabavka, nacina povezivanja zahteva, stavki, EUF faktura, ugovora i narudzbenica, kao i predlog daljih faza razvoja.
+
+5. `nabavka-modeli-zahtevi-euf-uf-roba.md`
+Detaljan opis nacina funkcionisanja cetiri osnovne evidencije u Nabavci: zahtevi, EUF fakture, UF fakture i roba, ukljucujuci tvrdo povezivanje i meko poklapanje robe sa UF/EUF fakturama.

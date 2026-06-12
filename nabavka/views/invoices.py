@@ -1,29 +1,40 @@
 from datetime import datetime
+from io import BytesIO
 from urllib.parse import parse_qsl, urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, OuterRef, Q, Subquery, Sum
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.html import escape
 from django.views import View
 from django.views.generic import DetailView, ListView
 
 from core.mixins import RolePermissionRequiredMixin
-from fleet.models import JobCode, Vehicle
+from fleet.models import JobCode, OrganizationalUnit, Vehicle
 
-from ..forms import EufInvoiceItemLinkForm, ProcurementInvoiceContractLinkForm, ProcurementInvoiceForm
+from ..forms import (
+    EufInvoiceItemLinkForm,
+    ProcurementInvoiceContractLinkForm,
+    ProcurementInvoiceForm,
+    ProcurementInvoiceJobCodeLinkForm,
+)
 from ..models import (
     ProcurementCase,
     ProcurementInvoice,
     ProcurementInvoiceContractLink,
+    ProcurementInvoiceJobCodeLink,
     ProcurementItemInvoiceLink,
 )
 from ..services.euf import sync_euf_invoice_snapshots
 from .cases import NabavkaContextMixin
+
+
+JOB_CODE_LINK_FORM_PREFIX = "job_code_link"
 
 
 def _parse_filter_date(value):
@@ -40,7 +51,7 @@ def _euf_invoice_base_queryset():
     return (
         ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF)
         .select_related("job_code", "vehicle")
-        .prefetch_related("vehicle__traffic_cards")
+        .prefetch_related("vehicle__traffic_cards", "job_code_links__job_code")
         .annotate(
             item_links_total=Count("item_links", distinct=True),
             garage_item_links_total=Count(
@@ -85,6 +96,18 @@ def _filter_euf_invoices(request, invoices=None):
 
 def _euf_invoice_vehicle_label(invoice):
     return str(invoice.vehicle) if invoice.vehicle else ""
+
+
+def _invoice_job_code_labels(invoice):
+    labels = []
+    if invoice.job_code:
+        labels.append(getattr(invoice.job_code, "code", "") or "")
+    labels.extend(
+        link.job_code.code
+        for link in invoice.job_code_links.all()
+        if link.job_code and link.job_code.code
+    )
+    return list(dict.fromkeys(label for label in labels if label))
 
 
 def _hover_text(value, max_length=50):
@@ -135,9 +158,11 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                 | Q(warehouse__icontains=search_value)
                 | Q(registration__icontains=search_value)
                 | Q(job_code__code__icontains=search_value)
+                | Q(job_code_links__job_code__code__icontains=search_value)
+                | Q(job_code_links__job_code__name__icontains=search_value)
                 | Q(vehicle__brand__icontains=search_value)
                 | Q(vehicle__model__icontains=search_value)
-            )
+            ).distinct()
 
         records_total = ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF).count()
         records_filtered = invoices.count()
@@ -149,8 +174,9 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
             "4": "job_code__code",
             "5": "goes_to_warehouse",
             "6": "is_garage",
-            "7": "vehicle__brand",
-            "8": "item_links_total",
+            "7": "is_returned",
+            "8": "vehicle__brand",
+            "9": "item_links_total",
         }
         order_field = order_map.get(request.GET.get("order[0][column]", "0"), "invoice_date")
         if request.GET.get("order[0][dir]", "desc") == "desc":
@@ -172,6 +198,7 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
         rows = []
         for invoice in invoices[start:start + length]:
             detail_url = reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice.pk})
+            returned_url = reverse("nabavka:euf_invoice_returned_toggle", kwargs={"pk": invoice.pk})
             rows.append(
                 {
                     "invoice_date": (
@@ -182,7 +209,7 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                     "supplier_name": _hover_text(invoice.supplier_name),
                     "invoice_number": escape(invoice.invoice_number or ""),
                     "amount": str(invoice.amount) if invoice.amount is not None else "",
-                    "job_code": escape(getattr(invoice.job_code, "code", "") or ""),
+                    "job_code": escape(", ".join(_invoice_job_code_labels(invoice))),
                     "warehouse": (
                         '<span class="invoice-badge ok"><i class="mdi mdi-warehouse"></i> Da</span>'
                         if invoice.goes_to_warehouse
@@ -192,6 +219,13 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                         '<span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Da</span>'
                         if invoice.is_garage or invoice.garage_item_links_total
                         else '<span class="invoice-badge muted">Ne</span>'
+                    ),
+                    "is_returned": (
+                        '<div class="form-check invoice-returned-check">'
+                        f'<input class="form-check-input js-invoice-returned" type="checkbox" '
+                        f'data-url="{returned_url}" {"checked" if invoice.is_returned else ""} '
+                        f'aria-label="Vraceno za fakturu {escape(invoice.invoice_number or "")}">'
+                        "</div>"
                     ),
                     "vehicle": escape(_euf_invoice_vehicle_label(invoice)),
                     "item_links_total": invoice.item_links_total,
@@ -214,6 +248,81 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                 "data": rows,
             }
         )
+
+
+class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:euf_invoice_list"
+
+    def get(self, request):
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
+        from openpyxl.utils import get_column_letter
+
+        invoices = _filter_euf_invoices(request).order_by("-invoice_date", "-id")
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Preuzete EUF"
+        headers = [
+            "Datum",
+            "Partner",
+            "Broj fakture",
+            "Iznos",
+            "Povezana OJ",
+            "Magacin",
+            "Garaza",
+            "Vraceno",
+            "Vozilo",
+            "Stavke",
+        ]
+        worksheet.append(headers)
+
+        header_fill = PatternFill("solid", fgColor="D9EAF7")
+        for cell in worksheet[1]:
+            cell.font = Font(bold=True)
+            cell.fill = header_fill
+
+        for invoice in invoices:
+            worksheet.append(
+                [
+                    invoice.invoice_date.strftime("%d.%m.%Y") if invoice.invoice_date else invoice.invoice_date_raw or "",
+                    invoice.supplier_name or "",
+                    invoice.invoice_number or "",
+                    invoice.amount,
+                    ", ".join(_invoice_job_code_labels(invoice)),
+                    "Da" if invoice.goes_to_warehouse else "Ne",
+                    "Da" if invoice.is_garage or invoice.garage_item_links_total else "Ne",
+                    "Da" if invoice.is_returned else "Ne",
+                    _euf_invoice_vehicle_label(invoice),
+                    invoice.item_links_total,
+                ]
+            )
+
+        for column_cells in worksheet.columns:
+            max_length = max(len(str(cell.value or "")) for cell in column_cells)
+            worksheet.column_dimensions[get_column_letter(column_cells[0].column)].width = min(max(max_length + 2, 10), 45)
+        worksheet.freeze_panes = "A2"
+        worksheet.auto_filter.ref = worksheet.dimensions
+
+        output = BytesIO()
+        workbook.save(output)
+        output.seek(0)
+        filename = f"preuzete-euf-{timezone.localtime().strftime('%Y%m%d-%H%M')}.xlsx"
+        response = HttpResponse(
+            output.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+
+class EufInvoiceReturnedToggleView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:euf_invoice_list"
+
+    def post(self, request, pk):
+        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        invoice.is_returned = (request.POST.get("is_returned") or "").lower() in {"1", "true", "on", "yes"}
+        invoice.save(update_fields=["is_returned", "updated_at"])
+        return JsonResponse({"ok": True, "is_returned": invoice.is_returned})
 
 
 class EufInvoiceSyncView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
@@ -257,6 +366,7 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 "item_links__procurement_item__procurement_case",
                 "item_links__created_by",
                 "contract_links__contract__contract_type",
+                "job_code_links__job_code",
         ).select_related("job_code", "vehicle")
 
     def post(self, request, *args, **kwargs):
@@ -308,6 +418,22 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 messages.error(request, "Ugovor nije povezan. Proverite izbor ugovora.")
                 return self.render_to_response(self.get_context_data(contract_link_form=form))
 
+        elif action == "link_job_code":
+            form = ProcurementInvoiceJobCodeLinkForm(
+                request.POST,
+                invoice=self.object,
+                prefix=JOB_CODE_LINK_FORM_PREFIX,
+            )
+            if form.is_valid():
+                link = form.save(commit=False)
+                link.invoice = self.object
+                link.created_by = request.user
+                link.save()
+                messages.success(request, "Sifra posla je povezana sa fakturom.")
+            else:
+                messages.error(request, "Sifra posla nije povezana. Proverite izbor.")
+                return self.render_to_response(self.get_context_data(job_code_link_form=form))
+
         return redirect("nabavka:euf_invoice_detail", pk=self.object.pk)
 
     @staticmethod
@@ -352,6 +478,14 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 .values_list("pk", "current_job_code_id")
             )
         }
+        job_code_labels = {
+            job_code.pk: f"{job_code.code} - {job_code.name}"
+            for job_code in OrganizationalUnit.objects.filter(pk__in=set(vehicle_job_codes.values()))
+        }
+        vehicle_job_code_options = {
+            vehicle_id: {"id": job_code_id, "text": job_code_labels.get(job_code_id, str(job_code_id))}
+            for vehicle_id, job_code_id in vehicle_job_codes.items()
+        }
         ctx.update(
             {
                 "title": f"Faktura {self.object.invoice_number}",
@@ -359,8 +493,14 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 "item_link_form": kwargs.get("item_link_form") or EufInvoiceItemLinkForm(),
                 "contract_link_form": kwargs.get("contract_link_form")
                 or ProcurementInvoiceContractLinkForm(invoice=self.object),
+                "job_code_link_form": kwargs.get("job_code_link_form")
+                or ProcurementInvoiceJobCodeLinkForm(
+                    invoice=self.object,
+                    prefix=JOB_CODE_LINK_FORM_PREFIX,
+                ),
+                "job_code_links": self.object.job_code_links.select_related("job_code", "created_by"),
                 "contract_execution_rows": self._contract_execution_rows(self.object),
-                "vehicle_job_codes": vehicle_job_codes,
+                "vehicle_job_codes": vehicle_job_code_options,
                 "item_links": self.object.item_links.select_related(
                     "procurement_item",
                     "procurement_item__procurement_case",
@@ -387,4 +527,15 @@ class ProcurementInvoiceContractLinkDeleteView(RolePermissionRequiredMixin, Logi
         invoice_pk = link.invoice_id
         link.delete()
         messages.success(request, "Veza fakture i ugovora je obrisana.")
+        return redirect("nabavka:euf_invoice_detail", pk=invoice_pk)
+
+
+class ProcurementInvoiceJobCodeLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:euf_invoice_detail"
+
+    def post(self, request, pk):
+        link = get_object_or_404(ProcurementInvoiceJobCodeLink, pk=pk)
+        invoice_pk = link.invoice_id
+        link.delete()
+        messages.success(request, "Veza fakture i sifre posla je obrisana.")
         return redirect("nabavka:euf_invoice_detail", pk=invoice_pk)

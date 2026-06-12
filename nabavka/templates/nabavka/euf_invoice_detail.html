@@ -86,7 +86,23 @@
           <dt class="col-sm-4">Partner</dt><dd class="col-sm-8">{{ invoice.supplier_name|default:"/" }}</dd>
           <dt class="col-sm-4">Broj fakture</dt><dd class="col-sm-8">{{ invoice.invoice_number }}</dd>
           <dt class="col-sm-4">Iznos</dt><dd class="col-sm-8">{{ invoice.amount|default:"/" }}</dd>
-          <dt class="col-sm-4">Povezana OJ</dt><dd class="col-sm-8">{% if invoice.job_code %}{{ invoice.job_code.code }} - {{ invoice.job_code.name }}{% else %}/{% endif %}</dd>
+          <dt class="col-sm-4">Osnovna sifra posla</dt>
+          <dd class="col-sm-8">
+            {% if invoice.job_code %}
+              {{ invoice.job_code.code }} - {{ invoice.job_code.name }}
+              {% if invoice.job_code_is_vehicle_snapshot %}
+                <div class="text-muted small">
+                  Sifra posla automobila - snapshot{% if invoice.vehicle_job_code_assigned_date %}, dodela od {{ invoice.vehicle_job_code_assigned_date|date:"d.m.Y" }}{% endif %}
+                </div>
+              {% endif %}
+            {% else %}/{% endif %}
+          </dd>
+          <dt class="col-sm-4">Dodatne sifre posla</dt>
+          <dd class="col-sm-8">
+            {% for link in job_code_links %}
+              <span class="badge bg-light text-dark border me-1">{{ link.job_code.code }}</span>
+            {% empty %}/{% endfor %}
+          </dd>
           <dt class="col-sm-4">Magacin iz EUF</dt><dd class="col-sm-8">{{ invoice.warehouse|default:"/" }}</dd>
           <dt class="col-sm-4">Registracija</dt><dd class="col-sm-8">{{ invoice.registration|default:"/" }}</dd>
           <dt class="col-sm-4">Sinhronizovano</dt><dd class="col-sm-8">{{ invoice.synced_at|date:"d.m.Y H:i"|default:"/" }}</dd>
@@ -163,6 +179,18 @@
                   <label class="form-label" for="{{ invoice_form.vehicle.id_for_label }}">{{ invoice_form.vehicle.label }}</label>
                   {{ invoice_form.vehicle|add_class:"form-select select2-method" }}
                 </div>
+                <div
+                  class="mt-2 small text-muted"
+                  id="autoJobCodePreview"
+                  data-snapshot-vehicle-id="{{ invoice.vehicle_id|default:'' }}"
+                  data-snapshot-text="{% if invoice.job_code_is_vehicle_snapshot and invoice.job_code %}Osnovna sifra posla: {{ invoice.job_code.code }} - sacuvan snapshot automobila.{% endif %}"
+                >
+                  {% if invoice.job_code_is_vehicle_snapshot and invoice.job_code %}
+                    Osnovna sifra posla: {{ invoice.job_code.code }} - snapshot automobila.
+                  {% else %}
+                    Osnovna sifra posla se automatski popunjava samo za garaznu fakturu sa odabranim autom.
+                  {% endif %}
+                </div>
               </div>
             </div>
             <div class="col-12 col-md-6">
@@ -173,10 +201,6 @@
                   <span class="garage-switch-text">{{ invoice_form.goes_to_warehouse.label }}</span>
                 </label>
                 <p class="invoice-switch-help">Oznaci fakture koje treba pratiti kao ulaz u magacin.</p>
-                <div class="mt-3">
-                  <label class="form-label" for="{{ invoice_form.job_code.id_for_label }}">{{ invoice_form.job_code.label }}</label>
-                  {{ invoice_form.job_code|add_class:"form-select select2-method" }}
-                </div>
               </div>
             </div>
           </div>
@@ -188,6 +212,63 @@
             <i class="mdi mdi-content-save"></i> Sačuvaj detalje
           </button>
         </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header"><h4 class="mb-0">Sifre posla fakture</h4></div>
+      <div class="card-body">
+        <form method="post" class="border rounded p-3 mb-3 bg-light">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="link_job_code">
+          <div class="mb-3">
+            <label class="form-label" for="{{ job_code_link_form.job_code.id_for_label }}">{{ job_code_link_form.job_code.label }}</label>
+            {{ job_code_link_form.job_code|add_class:"form-select select2-method" }}
+            {% for error in job_code_link_form.job_code.errors %}
+              <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+            <div class="form-text">Rucno povezivanje sifre posla koristi se kada faktura nema automobil ili za dodatne sifre.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ job_code_link_form.note.id_for_label }}">{{ job_code_link_form.note.label }}</label>
+            {{ job_code_link_form.note|add_class:"form-control" }}
+          </div>
+          <button class="btn btn-outline-primary" type="submit">
+            <i class="mdi mdi-link"></i> Povezi sifru posla
+          </button>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Sifra posla</th>
+                <th>Naziv</th>
+                <th>Napomena</th>
+                <th class="text-center">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for link in job_code_links %}
+              <tr>
+                <td><span class="badge bg-light text-dark border">{{ link.job_code.code }}</span></td>
+                <td>{{ link.job_code.name }}</td>
+                <td>{{ link.note|default:"/" }}</td>
+                <td class="text-center">
+                  <form method="post" action="{% url 'nabavka:invoice_job_code_link_delete' link.pk %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger btn-sm" type="submit" title="Skini vezu sa sifrom posla">
+                      <i class="mdi mdi-link-off"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">Nema dodatnih sifara posla za ovu fakturu.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -292,22 +373,41 @@
   </div>
 </div>
 {{ vehicle_job_codes|json_script:"vehicle-job-codes" }}
+{% endblock %}
+
+{% block extra_js %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var toggle = document.querySelector('.js-detail-garage-toggle');
     var vehicleWrap = document.getElementById('detailVehicleWrap');
     var vehicleSelect = vehicleWrap ? vehicleWrap.querySelector('select') : null;
-    var jobCodeSelect = document.getElementById('{{ invoice_form.job_code.id_for_label }}');
+    var autoJobCodePreview = document.getElementById('autoJobCodePreview');
     var vehicleJobCodes = JSON.parse(document.getElementById('vehicle-job-codes').textContent);
+
     if (!toggle || !vehicleWrap) return;
 
-    function setJobCodeForVehicle() {
-      if (!vehicleSelect || !jobCodeSelect || !vehicleSelect.value) return;
-      var jobCodeId = vehicleJobCodes[vehicleSelect.value] || '';
-      jobCodeSelect.value = jobCodeId;
-      if (window.jQuery && jQuery.fn.select2) {
-        jQuery(jobCodeSelect).val(jobCodeId || null).trigger('change');
+    function syncJobCodePreview() {
+      if (!autoJobCodePreview) return;
+      if (!toggle.checked) {
+        autoJobCodePreview.textContent = 'Osnovna sifra posla se popunjava samo za garaznu fakturu sa odabranim autom.';
+        return;
       }
+      if (!vehicleSelect || !vehicleSelect.value) {
+        autoJobCodePreview.textContent = 'Odaberite auto da bi se osnovna sifra posla sacuvala kao snapshot.';
+        return;
+      }
+      if (
+        autoJobCodePreview.dataset.snapshotVehicleId
+        && vehicleSelect.value === autoJobCodePreview.dataset.snapshotVehicleId
+        && autoJobCodePreview.dataset.snapshotText
+      ) {
+        autoJobCodePreview.textContent = autoJobCodePreview.dataset.snapshotText;
+        return;
+      }
+      var jobCodeOption = vehicleJobCodes[vehicleSelect.value];
+      autoJobCodePreview.textContent = jobCodeOption && jobCodeOption.text
+        ? 'Osnovna sifra posla: ' + jobCodeOption.text + ' - bice sacuvana kao snapshot automobila.'
+        : 'Za izabrani auto nije pronadjena trenutna sifra posla.';
     }
 
     function syncVehicleVisibility() {
@@ -320,11 +420,12 @@
           }
         }
       }
+      syncJobCodePreview();
     }
     if (vehicleSelect && window.jQuery) {
-      jQuery(vehicleSelect).on('change select2:select', setJobCodeForVehicle);
+      jQuery(vehicleSelect).on('change select2:select', syncJobCodePreview);
     } else if (vehicleSelect) {
-      vehicleSelect.addEventListener('change', setJobCodeForVehicle);
+      vehicleSelect.addEventListener('change', syncJobCodePreview);
     }
     toggle.addEventListener('change', syncVehicleVisibility);
     syncVehicleVisibility();

@@ -11,11 +11,11 @@ from django.urls import reverse
 from django.utils.dateparse import parse_date
 from django.utils.html import escape
 from django.views import View
-from django.views.generic import ListView
+from django.views.generic import DetailView, ListView
 
 from core.mixins import RolePermissionRequiredMixin
 
-from ..models import EufItemSnapshot, GoodsSnapshot
+from ..models import EufItemSnapshot, GoodsSnapshot, ProcurementInvoice, UfInvoiceSnapshot
 from ..services.source_snapshots import sync_euf_item_snapshots, sync_goods_snapshots
 from .cases import NabavkaContextMixin
 
@@ -86,46 +86,46 @@ def _datatable_response(request, records_total, records_filtered, rows):
     )
 
 
-def _filter_euf_items(request):
+def _filter_uf_invoices(request):
     q = (request.GET.get("source_search") or "").strip()
     partner = (request.GET.get("partner") or "").strip()
     account = (request.GET.get("account") or "").strip()
     date_from = _parse_filter_date(request.GET.get("date_from"))
     date_to = _parse_filter_date(request.GET.get("date_to"))
-    items = EufItemSnapshot.objects.all()
+    invoices = UfInvoiceSnapshot.objects.all()
     if q:
-        items = items.filter(
+        invoices = invoices.filter(
             Q(invoice_number__icontains=q)
             | Q(partner_name__icontains=q)
-            | Q(item_name__icontains=q)
-            | Q(account__icontains=q)
+            | Q(partner_pib__icontains=q)
+            | Q(accounts__icontains=q)
         )
     if partner:
-        items = items.filter(partner_name__icontains=partner)
+        invoices = invoices.filter(partner_name__icontains=partner)
     if account:
-        items = items.filter(account__icontains=account)
+        invoices = invoices.filter(accounts__icontains=account)
     if date_from:
-        items = items.filter(document_date__gte=date_from)
+        invoices = invoices.filter(document_date__gte=date_from)
     if date_to:
-        items = items.filter(document_date__lte=date_to)
-    return items
+        invoices = invoices.filter(document_date__lte=date_to)
+    return invoices
 
 
 class EufItemSnapshotListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
     required_permission_code = "nabavka:euf_invoice_list"
-    model = EufItemSnapshot
+    model = UfInvoiceSnapshot
     template_name = "nabavka/euf_item_list.html"
-    context_object_name = "items"
+    context_object_name = "invoices"
 
     def get_queryset(self):
-        return EufItemSnapshot.objects.none()
+        return UfInvoiceSnapshot.objects.none()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_filter_context(self.request))
         ctx.update(
             {
-                "title": "UF stavke",
+                "title": "UF fakture",
                 "account": (self.request.GET.get("account") or "").strip(),
             }
         )
@@ -136,50 +136,77 @@ class EufItemSnapshotDataView(NabavkaContextMixin, RolePermissionRequiredMixin, 
     required_permission_code = "nabavka:euf_invoice_list"
 
     def get(self, request):
-        items = _filter_euf_items(request)
+        invoices = _filter_uf_invoices(request)
         search_value = request.GET.get("search[value]", "").strip()
         if search_value:
-            items = items.filter(
+            invoices = invoices.filter(
                 Q(invoice_number__icontains=search_value)
                 | Q(partner_name__icontains=search_value)
                 | Q(partner_pib__icontains=search_value)
-                | Q(item_name__icontains=search_value)
-                | Q(account__icontains=search_value)
+                | Q(accounts__icontains=search_value)
             )
-        records_total = EufItemSnapshot.objects.count()
-        records_filtered = items.count()
+        records_total = UfInvoiceSnapshot.objects.count()
+        records_filtered = invoices.count()
         page = _datatable_page(
             request,
-            items,
+            invoices,
             {
                 "0": "document_date",
                 "1": "invoice_number",
                 "2": "partner_name",
                 "3": "partner_pib",
-                "4": "item_name",
-                "5": "uom",
-                "6": "quantity",
-                "7": "price",
-                "8": "value",
-                "9": "account",
+                "4": "payment_amount",
+                "5": "item_value_total",
+                "6": "item_count",
+                "7": "accounts",
             },
         )
         rows = [
             {
+                "actions": (
+                    f'<a class="btn btn-outline-primary btn-sm" href="'
+                    f'{reverse("nabavka:uf_invoice_detail", kwargs={"pk": item.pk})}">'
+                    '<i class="mdi mdi-eye"></i> Detalj</a>'
+                ),
                 "document_date": item.document_date.strftime("%d.%m.%Y") if item.document_date else "",
-                "invoice_number": escape(item.invoice_number or ""),
+                "invoice_number": escape(item.invoice_number or item.purchase_invoice_id or ""),
                 "partner_name": _hover_text(item.partner_name),
                 "partner_pib": escape(item.partner_pib or ""),
-                "item_name": _hover_text(item.item_name, 70),
-                "uom": escape(item.uom or ""),
-                "quantity": str(item.quantity) if item.quantity is not None else "",
-                "price": str(item.price) if item.price is not None else "",
-                "value": str(item.value) if item.value is not None else "",
-                "account": escape(item.account or ""),
+                "payment_amount": str(item.payment_amount or item.total or ""),
+                "item_value_total": str(item.item_value_total or ""),
+                "item_count": item.item_count,
+                "accounts": escape(item.accounts or ""),
             }
             for item in page
         ]
         return _datatable_response(request, records_total, records_filtered, rows)
+
+
+class UfInvoiceSnapshotDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
+    required_permission_code = "nabavka:euf_invoice_list"
+    model = UfInvoiceSnapshot
+    template_name = "nabavka/uf_invoice_detail.html"
+    context_object_name = "invoice"
+
+    def get_queryset(self):
+        return UfInvoiceSnapshot.objects.prefetch_related(
+            "items",
+            "procurement_items__procurement_case",
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(
+            {
+                "title": f"UF faktura {self.object.invoice_number or self.object.purchase_invoice_id or self.object.pk}",
+                "items": self.object.items.all().order_by("id"),
+                "linked_items": self.object.procurement_items.select_related("procurement_case").order_by(
+                    "procurement_case__case_number",
+                    "id",
+                ),
+            }
+        )
+        return ctx
 
 
 class EufItemSnapshotSyncView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
@@ -225,6 +252,43 @@ def _filter_goods(request):
     if date_to:
         goods = goods.filter(document_date__lte=date_to)
     return goods
+
+
+def _goods_invoice_match_badges(goods_items):
+    linked_documents = {
+        (item.linked_document or "").strip()
+        for item in goods_items
+        if (item.linked_document or "").strip()
+    }
+    if not linked_documents:
+        return {}
+
+    matches = {document: [] for document in linked_documents}
+    uf_invoices = UfInvoiceSnapshot.objects.filter(
+        Q(invoice_number__in=linked_documents) | Q(purchase_invoice_id__in=linked_documents)
+    ).values("id", "invoice_number", "purchase_invoice_id")
+    for invoice in uf_invoices:
+        for document in {invoice["invoice_number"], invoice["purchase_invoice_id"]}:
+            document = (document or "").strip()
+            if document in matches:
+                url = reverse("nabavka:uf_invoice_detail", kwargs={"pk": invoice["id"]})
+                matches[document].append(
+                    f'<a class="goods-source-badge uf" href="{url}" title="Postoji povucena UF faktura">UF</a>'
+                )
+
+    euf_invoices = ProcurementInvoice.objects.filter(
+        source=ProcurementInvoice.SOURCE_EUF,
+        invoice_number__in=linked_documents,
+    ).values("id", "invoice_number")
+    for invoice in euf_invoices:
+        document = (invoice["invoice_number"] or "").strip()
+        if document in matches:
+            url = reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice["id"]})
+            matches[document].append(
+                f'<a class="goods-source-badge euf" href="{url}" title="Postoji povucena EUF faktura">EUF</a>'
+            )
+
+    return {document: "".join(dict.fromkeys(badges)) for document, badges in matches.items() if badges}
 
 
 class GoodsSnapshotListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
@@ -283,22 +347,32 @@ class GoodsSnapshotDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
                 "10": "price",
             },
         )
-        rows = [
-            {
+        page_items = list(page)
+        match_badges = _goods_invoice_match_badges(page_items)
+        rows = []
+        for item in page_items:
+            linked_document = (item.linked_document or "").strip()
+            badges = match_badges.get(linked_document, "")
+            rows.append(
+                {
                 "document_date": item.document_date.strftime("%d.%m.%Y") if item.document_date else "",
                 "document": f"{escape(item.year or '')}/{item.document_number or ''}",
                 "document_type": escape(item.document_type or ""),
                 "organizational_unit": item.organizational_unit or "",
                 "partner_name": _hover_text(item.partner_name),
-                "linked_document": escape(item.linked_document or ""),
+                "linked_document": (
+                    f'{escape(linked_document)} <span class="goods-source-badges">{badges}</span>'
+                    if badges
+                    else escape(linked_document)
+                ),
                 "article_code": escape(item.article_code or ""),
                 "article_name": _hover_text(item.article_name, 45),
                 "article_type": escape(item.article_type or ""),
                 "quantity": str(item.quantity) if item.quantity is not None else "",
                 "price": str(item.price) if item.price is not None else "",
-            }
-            for item in page
-        ]
+                "DT_RowClass": "goods-has-invoice-match" if badges else "",
+                }
+            )
         return _datatable_response(request, records_total, records_filtered, rows)
 
 

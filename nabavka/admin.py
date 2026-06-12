@@ -13,6 +13,7 @@ from .models import (
     PublicProcurementPlanItem,
     PublicProcurementPlanVersion,
     PurchaseOrder,
+    UfInvoiceSnapshot,
 )
 
 
@@ -54,9 +55,16 @@ class ProcurementInvoiceAdmin(admin.ModelAdmin):
 
 @admin.register(EufItemSnapshot)
 class EufItemSnapshotAdmin(admin.ModelAdmin):
-    list_display = ["invoice_number", "partner_name", "document_date", "item_name", "quantity", "value", "account"]
+    list_display = ["invoice_number", "partner_name", "document_date", "item_name", "quantity", "value", "account", "uf_invoice"]
     list_filter = ["document_date", "account"]
-    search_fields = ["invoice_number", "partner_name", "partner_pib", "item_name", "account"]
+    search_fields = ["invoice_number", "partner_name", "partner_pib", "item_name", "account", "uf_invoice__invoice_number"]
+
+
+@admin.register(UfInvoiceSnapshot)
+class UfInvoiceSnapshotAdmin(admin.ModelAdmin):
+    list_display = ["invoice_number", "partner_name", "document_date", "payment_amount", "item_value_total", "item_count", "accounts"]
+    list_filter = ["document_date"]
+    search_fields = ["invoice_number", "partner_name", "partner_pib", "accounts"]
 
 
 @admin.register(GoodsSnapshot)

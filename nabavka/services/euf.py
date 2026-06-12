@@ -133,6 +133,7 @@ def upsert_euf_invoice_snapshot(invoice):
             "registration": invoice.registracija,
             "center_name": invoice.centar,
             "goes_to_warehouse": bool(invoice.magacin),
+            "is_returned": False,
             "synced_at": timezone.now(),
         },
     )

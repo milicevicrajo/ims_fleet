@@ -33,6 +33,37 @@
   .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
   .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
   .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .invoice-table-card .card-body,
+  .invoice-table-wrap,
+  .invoice-table-card .dataTables_wrapper {
+    overflow-x: visible !important;
+  }
+  #EufInvoicesTable {
+    table-layout: fixed;
+    width: 100% !important;
+    font-size: .82rem;
+  }
+  #EufInvoicesTable th,
+  #EufInvoicesTable td {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    padding: 5px 6px;
+  }
+  #EufInvoicesTable .text-nowrap {
+    white-space: nowrap !important;
+  }
+  .invoice-returned-check {
+    display: flex;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0;
+    margin: 0;
+  }
+  .invoice-returned-check .form-check-input {
+    float: none;
+    margin: 0;
+  }
 </style>
 
 <div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -40,14 +71,19 @@
     <h1>Preuzete EUF</h1>
     <p>Kontrolisana lokalna evidencija faktura povučenih iz EUF SQL view-a.</p>
   </div>
-  <form method="post" action="{% url 'nabavka:euf_invoice_sync' %}" class="d-flex gap-2">
-    {% csrf_token %}
-    <input type="hidden" name="invoice_search" value="{{ q }}">
-    <input type="hidden" name="next_query" value="{{ request.GET.urlencode }}">
-    <button class="btn btn-light btn-sm" type="submit">
-      <i class="mdi mdi-refresh"></i> Povuci iz EUF
-    </button>
-  </form>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:euf_invoice_export' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}">
+      <i class="mdi mdi-file-excel"></i> Export Excel
+    </a>
+    <form method="post" action="{% url 'nabavka:euf_invoice_sync' %}" class="d-flex gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="invoice_search" value="{{ q }}">
+      <input type="hidden" name="next_query" value="{{ request.GET.urlencode }}">
+      <button class="btn btn-light btn-sm" type="submit">
+        <i class="mdi mdi-refresh"></i> Povuci iz EUF
+      </button>
+    </form>
+  </div>
 </div>
 
 <div class="card shadow-sm mb-3">
@@ -99,9 +135,9 @@
   </div>
 </div>
 
-<div class="card shadow-sm">
+<div class="card shadow-sm invoice-table-card">
   <div class="card-body">
-    <div class="table-responsive">
+    <div class="invoice-table-wrap">
       <table id="EufInvoicesTable" class="display compact table table-hover table-bordered align-middle w-100">
         <thead>
           <tr>
@@ -112,6 +148,7 @@
             <th>Povezana OJ</th>
             <th>Magacin</th>
             <th>Garaža</th>
+            <th class="text-center">Vra&#263;eno</th>
             <th>Vozilo</th>
             <th>Stavke</th>
             <th class="text-center">Akcije</th>
@@ -137,6 +174,8 @@
     table.DataTable({
       serverSide: true,
       processing: true,
+      autoWidth: false,
+      scrollX: false,
       pageLength: 50,
       lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
       order: [[0, 'desc']],
@@ -152,9 +191,21 @@
         { data: 'job_code' },
         { data: 'warehouse' },
         { data: 'is_garage' },
+        { data: 'is_returned', orderable: true, searchable: false, className: 'text-center' },
         { data: 'vehicle' },
-        { data: 'item_links_total' },
+        { data: 'item_links_total', className: 'text-center' },
         { data: 'actions', orderable: false, searchable: false, className: 'text-center text-nowrap' }
+      ],
+      columnDefs: [
+        { targets: 0, width: '8%' },
+        { targets: 1, width: '18%' },
+        { targets: 2, width: '10%' },
+        { targets: 3, width: '8%' },
+        { targets: 4, width: '9%' },
+        { targets: [5, 6, 7], width: '7%' },
+        { targets: 8, width: '10%' },
+        { targets: 9, width: '5%' },
+        { targets: 10, width: '8%' }
       ],
       language: {
         processing: 'Učitavanje...',
@@ -171,6 +222,34 @@
           previous: 'Prethodna'
         }
       }
+    });
+
+    table.on('change', '.js-invoice-returned', function () {
+      var checkbox = this;
+      var checked = checkbox.checked;
+      checkbox.disabled = true;
+      fetch(checkbox.dataset.url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ is_returned: checked ? '1' : '0' })
+      }).then(function (response) {
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        return response.json();
+      }).then(function (data) {
+        checkbox.checked = !!data.is_returned;
+      }).catch(function () {
+        checkbox.checked = !checked;
+        if (window.toastr) {
+          toastr.error('Status Vraceno nije sacuvan.');
+        }
+      }).finally(function () {
+        checkbox.disabled = false;
+      });
     });
   });
 </script>

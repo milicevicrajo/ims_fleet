@@ -23,10 +23,13 @@ from .views.contracts import PurchaseContractListView
 from .views.invoices import (
     EufInvoiceDataView,
     EufInvoiceDetailView,
+    EufInvoiceExportView,
     EufInvoiceListView,
+    EufInvoiceReturnedToggleView,
     EufInvoiceSyncView,
     EufInvoiceUpdateView,
     ProcurementInvoiceContractLinkDeleteView,
+    ProcurementInvoiceJobCodeLinkDeleteView,
     ProcurementInvoiceLinkDeleteView,
 )
 from .views.orders import (
@@ -40,7 +43,7 @@ from .views.public_procurements import (
     PublicProcurementPlanImportView,
     PublicProcurementPlanListView,
 )
-from .views.reports import ReportsView
+from .views.reports import PartnerJobCodeCheckReportView, ReportsView
 from .views.source_snapshots import (
     EufItemSnapshotDataView,
     EufItemSnapshotListView,
@@ -48,6 +51,7 @@ from .views.source_snapshots import (
     GoodsSnapshotDataView,
     GoodsSnapshotListView,
     GoodsSnapshotSyncView,
+    UfInvoiceSnapshotDetailView,
 )
 
 app_name = "nabavka"
@@ -71,14 +75,18 @@ urlpatterns = [
     path("zahtevi/<int:case_pk>/status/", ProcurementStatusLogCreateView.as_view(), name="status_log_create"),
     path("euf-fakture/", EufInvoiceListView.as_view(), name="euf_invoice_list"),
     path("euf-fakture/data/", EufInvoiceDataView.as_view(), name="euf_invoice_data"),
+    path("euf-fakture/export/", EufInvoiceExportView.as_view(), name="euf_invoice_export"),
     path("euf-fakture/sync/", EufInvoiceSyncView.as_view(), name="euf_invoice_sync"),
+    path("euf-fakture/<int:pk>/vraceno/", EufInvoiceReturnedToggleView.as_view(), name="euf_invoice_returned_toggle"),
     path("euf-fakture/<int:pk>/izmeni/", EufInvoiceUpdateView.as_view(), name="euf_invoice_update"),
     path("euf-fakture/<int:pk>/", EufInvoiceDetailView.as_view(), name="euf_invoice_detail"),
     path("euf-fakture/veze/<int:pk>/obrisi/", ProcurementInvoiceLinkDeleteView.as_view(), name="invoice_link_delete"),
     path("euf-fakture/ugovori/<int:pk>/obrisi/", ProcurementInvoiceContractLinkDeleteView.as_view(), name="invoice_contract_link_delete"),
+    path("euf-fakture/sifre-posla/<int:pk>/obrisi/", ProcurementInvoiceJobCodeLinkDeleteView.as_view(), name="invoice_job_code_link_delete"),
     path("uf-stavke/", EufItemSnapshotListView.as_view(), name="euf_item_list"),
     path("uf-stavke/data/", EufItemSnapshotDataView.as_view(), name="euf_item_data"),
     path("uf-stavke/sync/", EufItemSnapshotSyncView.as_view(), name="euf_item_sync"),
+    path("uf-stavke/<int:pk>/", UfInvoiceSnapshotDetailView.as_view(), name="uf_invoice_detail"),
     path("roba/", GoodsSnapshotListView.as_view(), name="goods_list"),
     path("roba/data/", GoodsSnapshotDataView.as_view(), name="goods_data"),
     path("roba/sync/", GoodsSnapshotSyncView.as_view(), name="goods_sync"),
@@ -91,5 +99,6 @@ urlpatterns = [
     path("narudzbenice/<int:pk>/", PurchaseOrderDetailView.as_view(), name="purchase_order_detail"),
     path("narudzbenice/<int:pk>/izmeni/", PurchaseOrderUpdateView.as_view(), name="purchase_order_update"),
     path("izvestaji/", ReportsView.as_view(), name="reports"),
+    path("izvestaji/provera-sifre-posla-partnera/", PartnerJobCodeCheckReportView.as_view(), name="partner_job_code_check_report"),
     path("alarmi/", AlertsView.as_view(), name="alerts"),
 ]

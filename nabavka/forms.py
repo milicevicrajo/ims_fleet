@@ -3,8 +3,7 @@ from django.utils import timezone
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
-from core.models import OrganizationalUnit
-from fleet.models import Vehicle
+from fleet.models import JobCode, OrganizationalUnit, Vehicle
 from ugovori.models import Contract, Partner
 
 from .models import (
@@ -13,9 +12,11 @@ from .models import (
     ProcurementCase,
     ProcurementInvoice,
     ProcurementInvoiceContractLink,
+    ProcurementInvoiceJobCodeLink,
     ProcurementItem,
     ProcurementStatusLog,
     PurchaseOrder,
+    UfInvoiceSnapshot,
 )
 
 
@@ -125,7 +126,7 @@ class ProcurementItemSourceLinkForm(forms.Form):
         source_reference = cleaned_data.get("source_reference") or ""
         source_models = {
             ProcurementItem.SOURCE_EUF: ("euf_invoice", ProcurementInvoice),
-            ProcurementItem.SOURCE_UF: ("uf_item", EufItemSnapshot),
+            ProcurementItem.SOURCE_UF: ("uf_invoice", UfInvoiceSnapshot),
             ProcurementItem.SOURCE_GOODS: ("goods_item", GoodsSnapshot),
         }
         if not source_type:
@@ -170,17 +171,17 @@ class EufInvoiceItemLinkForm(forms.Form):
 class ProcurementInvoiceForm(forms.ModelForm):
     class Meta:
         model = ProcurementInvoice
-        fields = ["job_code", "is_garage", "vehicle", "goes_to_warehouse", "internal_note"]
+        fields = ["is_garage", "vehicle", "goes_to_warehouse", "internal_note"]
         widgets = {
             "internal_note": forms.Textarea(attrs={"rows": 3}),
-            "job_code": Select2Widget(attrs={"class": "select2-method"}),
             "vehicle": Select2Widget(attrs={"class": "select2-method"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["job_code"].required = False
-        self.fields["job_code"].queryset = OrganizationalUnit.objects.all().order_by("code")
+        self._initial_vehicle_id = self.instance.vehicle_id if self.instance and self.instance.pk else None
+        self._initial_job_code_id = self.instance.job_code_id if self.instance and self.instance.pk else None
+        self._initial_job_code_source = self.instance.job_code_source if self.instance and self.instance.pk else ""
         self.fields["vehicle"].required = False
         self.fields["vehicle"].queryset = Vehicle.objects.all().order_by("brand", "model")
         _style_fields(self.fields)
@@ -190,6 +191,49 @@ class ProcurementInvoiceForm(forms.ModelForm):
         if not cleaned_data.get("is_garage"):
             cleaned_data["vehicle"] = None
         return cleaned_data
+
+    @staticmethod
+    def _current_vehicle_job_code(vehicle):
+        if not vehicle:
+            return None
+        return (
+            JobCode.objects.select_related("organizational_unit")
+            .filter(vehicle=vehicle, organizational_unit__isnull=False)
+            .order_by("-assigned_date", "-pk")
+            .first()
+        )
+
+    def save(self, commit=True):
+        invoice = super().save(commit=False)
+        vehicle = self.cleaned_data.get("vehicle")
+        should_keep_snapshot = (
+            invoice.is_garage
+            and vehicle
+            and self._initial_vehicle_id == vehicle.pk
+            and self._initial_job_code_id
+            and self._initial_job_code_source == ProcurementInvoice.JOB_CODE_SOURCE_VEHICLE_SNAPSHOT
+        )
+
+        if should_keep_snapshot:
+            pass
+        elif invoice.is_garage and vehicle:
+            assignment = self._current_vehicle_job_code(vehicle)
+            invoice.job_code = assignment.organizational_unit if assignment else None
+            invoice.job_code_source = (
+                ProcurementInvoice.JOB_CODE_SOURCE_VEHICLE_SNAPSHOT
+                if assignment
+                else ""
+            )
+            invoice.vehicle_job_code_assigned_date = assignment.assigned_date if assignment else None
+        else:
+            invoice.job_code = None
+            invoice.job_code_source = ""
+            invoice.vehicle_job_code_assigned_date = None
+
+        if commit:
+            invoice.save()
+            self.save_m2m()
+        return invoice
 
 
 class ProcurementInvoiceContractLinkForm(forms.ModelForm):
@@ -205,6 +249,24 @@ class ProcurementInvoiceContractLinkForm(forms.ModelForm):
         self.fields["contract"].queryset = queryset
         self.fields["contract"].widget = forms.Select(attrs={"class": "form-select select2-method"})
         self.fields["contract"].widget.choices = self.fields["contract"].choices
+        _style_fields(self.fields)
+
+
+class ProcurementInvoiceJobCodeLinkForm(forms.ModelForm):
+    class Meta:
+        model = ProcurementInvoiceJobCodeLink
+        fields = ["job_code", "note"]
+
+    def __init__(self, *args, invoice=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = OrganizationalUnit.objects.all().order_by("code")
+        if invoice is not None:
+            queryset = queryset.exclude(nabavka_invoice_job_code_links__invoice=invoice)
+            if invoice.job_code_id:
+                queryset = queryset.exclude(pk=invoice.job_code_id)
+        self.fields["job_code"].queryset = queryset
+        self.fields["job_code"].widget = forms.Select(attrs={"class": "form-select select2-method"})
+        self.fields["job_code"].widget.choices = self.fields["job_code"].choices
         _style_fields(self.fields)
 
 

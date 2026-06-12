@@ -218,6 +218,14 @@ class ProcurementItem(models.Model):
         related_name="procurement_items",
         verbose_name=_("UF"),
     )
+    uf_invoice = models.ForeignKey(
+        "UfInvoiceSnapshot",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="procurement_items",
+        verbose_name=_("UF faktura"),
+    )
     goods_item = models.ForeignKey(
         "GoodsSnapshot",
         on_delete=models.SET_NULL,
@@ -250,7 +258,7 @@ class ProcurementItem(models.Model):
         super().clean()
         source_fields = {
             self.SOURCE_EUF: self.euf_invoice_id,
-            self.SOURCE_UF: self.uf_item_id,
+            self.SOURCE_UF: self.uf_invoice_id,
             self.SOURCE_GOODS: self.goods_item_id,
         }
         selected_fields = [source for source, value in source_fields.items() if value]
@@ -264,15 +272,28 @@ class ProcurementItem(models.Model):
     def source_reference_label(self):
         if self.source_type == self.SOURCE_EUF and self.euf_invoice:
             return f"EUF: {self.euf_invoice.invoice_number}"
+        if self.source_type == self.SOURCE_UF and self.uf_invoice:
+            return f"UF: {self.uf_invoice.invoice_number or self.uf_invoice.purchase_invoice_id or self.uf_invoice.source_key}"
         if self.source_type == self.SOURCE_UF and self.uf_item:
             return f"UF: {self.uf_item.invoice_number or self.uf_item.purchase_invoice_id or self.uf_item.source_key}"
         if self.source_type == self.SOURCE_GOODS and self.goods_item:
-            return f"Roba: {self.goods_item.article_code or '/'} - {self.goods_item.article_name or ''}".strip()
+            invoice_number = self.goods_item.linked_document or "/"
+            return (
+                f"Roba: {self.goods_item.article_code or '/'} - "
+                f"{self.goods_item.article_name or ''} "
+                f"(Faktura: {invoice_number})"
+            ).strip()
         return ""
 
     @property
     def source_reference_id(self):
-        return self.euf_invoice_id or self.uf_item_id or self.goods_item_id or ""
+        if self.source_type == self.SOURCE_EUF:
+            return self.euf_invoice_id or ""
+        if self.source_type == self.SOURCE_UF:
+            return self.uf_invoice_id or self.uf_item_id or ""
+        if self.source_type == self.SOURCE_GOODS:
+            return self.goods_item_id or ""
+        return ""
 
     @property
     def estimated_total(self):
@@ -352,6 +373,10 @@ class ProcurementInvoiceLink(models.Model):
 
 class ProcurementInvoice(models.Model):
     SOURCE_EUF = "euf"
+    JOB_CODE_SOURCE_VEHICLE_SNAPSHOT = "vehicle_snapshot"
+    JOB_CODE_SOURCE_CHOICES = [
+        (JOB_CODE_SOURCE_VEHICLE_SNAPSHOT, _("Sifra posla automobila - snapshot")),
+    ]
     SOURCE_CHOICES = [
         (SOURCE_EUF, "EUF"),
     ]
@@ -381,6 +406,18 @@ class ProcurementInvoice(models.Model):
         related_name="nabavka_invoices",
         verbose_name=_("OJ / sifra posla"),
     )
+    job_code_source = models.CharField(
+        max_length=30,
+        choices=JOB_CODE_SOURCE_CHOICES,
+        blank=True,
+        default="",
+        verbose_name=_("Izvor sifre posla"),
+    )
+    vehicle_job_code_assigned_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("Datum dodele sifre posla vozilu"),
+    )
     is_garage = models.BooleanField(default=False, verbose_name=_("Garaza"))
     vehicle = models.ForeignKey(
         "fleet.Vehicle",
@@ -391,6 +428,7 @@ class ProcurementInvoice(models.Model):
         verbose_name=_("Vozilo"),
     )
     goes_to_warehouse = models.BooleanField(default=False, verbose_name=_("Ide u magacin"))
+    is_returned = models.BooleanField(default=False, verbose_name=_("Vraceno"))
     internal_note = models.TextField(blank=True, null=True, verbose_name=_("Interna napomena"))
     synced_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Sinhronizovano"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
@@ -415,9 +453,27 @@ class ProcurementInvoice(models.Model):
     def is_garage_related(self):
         return self.item_links.filter(procurement_item__procurement_case__is_garage=True).exists()
 
+    @property
+    def job_code_is_vehicle_snapshot(self):
+        return self.job_code_source == self.JOB_CODE_SOURCE_VEHICLE_SNAPSHOT
+
+    @property
+    def job_code_source_label(self):
+        if self.job_code_is_vehicle_snapshot:
+            return _("Sifra posla automobila - snapshot")
+        return ""
+
 
 class EufItemSnapshot(models.Model):
     source_key = models.CharField(max_length=64, unique=True, verbose_name=_("Kljuc izvora"))
+    uf_invoice = models.ForeignKey(
+        "UfInvoiceSnapshot",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="items",
+        verbose_name=_("UF faktura"),
+    )
     purchase_invoice_id = models.CharField(max_length=40, blank=True, null=True, db_index=True, verbose_name=_("UF ID"))
     creation_date = models.DateField(blank=True, null=True, db_index=True, verbose_name=_("Datum kreiranja"))
     document_date = models.DateField(blank=True, null=True, db_index=True, verbose_name=_("Datum dokumenta"))
@@ -453,6 +509,39 @@ class EufItemSnapshot(models.Model):
 
     def __str__(self):
         return f"{self.invoice_number or '/'} - {self.item_name or ''}".strip()
+
+
+class UfInvoiceSnapshot(models.Model):
+    source_key = models.CharField(max_length=64, unique=True, verbose_name=_("Kljuc izvora"))
+    purchase_invoice_id = models.CharField(max_length=40, blank=True, null=True, db_index=True, verbose_name=_("UF ID"))
+    invoice_number = models.CharField(max_length=120, blank=True, null=True, db_index=True, verbose_name=_("Broj fakture"))
+    partner_pib = models.CharField(max_length=15, blank=True, null=True, db_index=True, verbose_name=_("PIB partnera"))
+    partner_mb = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("MB partnera"))
+    partner_name = models.CharField(max_length=400, blank=True, null=True, db_index=True, verbose_name=_("Partner"))
+    document_date = models.DateField(blank=True, null=True, db_index=True, verbose_name=_("Datum dokumenta"))
+    creation_date = models.DateField(blank=True, null=True, verbose_name=_("Datum kreiranja"))
+    due_date = models.DateField(blank=True, null=True, verbose_name=_("Datum dospeca"))
+    total = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Ukupno"))
+    base_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Osnovica"))
+    payment_amount = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Placanje"))
+    item_value_total = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, verbose_name=_("Vrednost stavki"))
+    item_count = models.PositiveIntegerField(default=0, verbose_name=_("Broj stavki"))
+    accounts = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Konta"))
+    synced_at = models.DateTimeField(blank=True, null=True, verbose_name=_("Sinhronizovano"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        db_table = "nabavka_uf_invoice_snapshot"
+        ordering = ["-document_date", "-id"]
+        verbose_name = _("UF faktura")
+        verbose_name_plural = _("UF fakture")
+        indexes = [
+            models.Index(fields=["invoice_number", "partner_name"]),
+        ]
+
+    def __str__(self):
+        return f"{self.invoice_number or self.purchase_invoice_id or '/'} - {self.partner_name or ''}".strip()
 
 
 class GoodsSnapshot(models.Model):
@@ -525,6 +614,46 @@ class ProcurementItemInvoiceLink(models.Model):
 
     def __str__(self):
         return f"{self.procurement_item} -> {self.invoice}"
+
+
+class ProcurementInvoiceJobCodeLink(models.Model):
+    invoice = models.ForeignKey(
+        ProcurementInvoice,
+        on_delete=models.CASCADE,
+        related_name="job_code_links",
+        verbose_name=_("Faktura"),
+    )
+    job_code = models.ForeignKey(
+        "fleet.OrganizationalUnit",
+        on_delete=models.PROTECT,
+        related_name="nabavka_invoice_job_code_links",
+        verbose_name=_("OJ / sifra posla"),
+    )
+    note = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Napomena"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="nabavka_invoice_job_code_links",
+        verbose_name=_("Povezao"),
+    )
+
+    class Meta:
+        db_table = "nabavka_invoice_job_code_link"
+        ordering = ["job_code__code", "id"]
+        verbose_name = _("Veza fakture i sifre posla")
+        verbose_name_plural = _("Veze faktura i sifara posla")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["invoice", "job_code"],
+                name="uniq_nabavka_invoice_job_code",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.invoice} -> {self.job_code}"
 
 
 class ProcurementContractLink(models.Model):

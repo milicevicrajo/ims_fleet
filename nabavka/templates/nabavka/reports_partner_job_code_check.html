@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .assignment-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .assignment-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .assignment-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .assignment-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .report-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+    background: #e8f0fb;
+    color: #174f83;
+    border: 1px solid #c9d9ec;
+  }
+</style>
+
+<div class="assignment-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Pregled partnera i sifara posla iz SQL view-a nbv_sif_pos_par.</p>
+  </div>
+  <a href="{% url 'nabavka:reports' %}" class="btn btn-outline-light btn-sm">
+    <i class="mdi mdi-arrow-left"></i> Izvestaji
+  </a>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body border-bottom">
+    <form method="get" class="assignment-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-8 col-lg-9">
+          <label class="form-label mb-1" for="id_partner">Ime partnera</label>
+          <input id="id_partner" class="form-control" type="text" name="partner" value="{{ partner }}" placeholder="Unesi deo naziva partnera">
+        </div>
+        <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="mdi mdi-filter"></i> Filter
+          </button>
+          <a href="{% url 'nabavka:partner_job_code_check_report' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+            <i class="mdi mdi-close"></i>
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span class="report-count"><i class="mdi mdi-format-list-numbered"></i> Redova: {{ rows_count }}</span>
+    {% if rows_count >= 2000 %}
+      <span class="text-muted small">Prikaz je ogranicen na prvih 2000 redova. Suzite filter po partneru.</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="PartnerJobCodeTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Sifra partnera</th>
+            <th>Ime partnera</th>
+            <th>Sifra posla</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.partner_code }}</td>
+            <td>{{ row.partner_name }}</td>
+            <td>{{ row.job_code }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-center text-muted">Nema podataka za izabrani filter.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.DataTable) return;
+    var table = jQuery('#PartnerJobCodeTable');
+    if (!table.length || jQuery.fn.DataTable.isDataTable(table)) return;
+    table.DataTable({
+      pageLength: 50,
+      order: [[1, 'asc'], [2, 'asc']],
+      language: {
+        search: 'Pretraga:',
+        lengthMenu: 'Prikazi _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ redova',
+        infoEmpty: 'Nema redova',
+        zeroRecords: 'Nema rezultata',
+        paginate: {
+          first: 'Prva',
+          last: 'Poslednja',
+          next: 'Sledeca',
+          previous: 'Prethodna'
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

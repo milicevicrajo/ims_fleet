@@ -161,10 +161,85 @@ def _euf_item_values(row):
     return values
 
 
+def _uf_invoice_group_key(item):
+    invoice_number = _clean(item.invoice_number)
+    partner_key = _clean(item.partner_pib) or _clean(item.partner_mb) or _clean(item.partner_name)
+    fallback = _clean(item.purchase_invoice_id) or _clean(item.source_key)
+    return _source_key(invoice_number or fallback, partner_key)
+
+
+def _pick_latest_date(values):
+    dates = [value for value in values if value]
+    return max(dates) if dates else None
+
+
+def _pick_first_text(values):
+    for value in values:
+        text = _clean(value)
+        if text:
+            return text
+    return ""
+
+
+def _pick_first_decimal(values):
+    for value in values:
+        if value is not None:
+            return value
+    return None
+
+
+@transaction.atomic
+def rebuild_uf_invoice_snapshots():
+    from nabavka.models import EufItemSnapshot, ProcurementItem, UfInvoiceSnapshot
+
+    groups = {}
+    for item in EufItemSnapshot.objects.all().order_by("invoice_number", "partner_name", "id"):
+        source_key = _uf_invoice_group_key(item)
+        groups.setdefault(source_key, []).append(item)
+
+    invoice_ids = []
+    synced_at = timezone.now()
+    for source_key, items in groups.items():
+        values = {
+            "purchase_invoice_id": _pick_first_text(item.purchase_invoice_id for item in items),
+            "invoice_number": _pick_first_text(item.invoice_number for item in items),
+            "partner_pib": _pick_first_text(item.partner_pib for item in items),
+            "partner_mb": _pick_first_text(item.partner_mb for item in items),
+            "partner_name": _pick_first_text(item.partner_name for item in items),
+            "document_date": _pick_latest_date(item.document_date for item in items),
+            "creation_date": _pick_latest_date(item.creation_date for item in items),
+            "due_date": _pick_latest_date(item.due_date for item in items),
+            "total": _pick_first_decimal(item.total for item in items),
+            "base_amount": _pick_first_decimal(item.base_amount for item in items),
+            "payment_amount": _pick_first_decimal(item.payment_amount for item in items),
+            "item_value_total": sum((item.value or Decimal("0.00")) for item in items),
+            "item_count": len(items),
+            "accounts": ", ".join(sorted({account for account in (_clean(item.account) for item in items) if account})),
+            "synced_at": synced_at,
+        }
+        invoice, _ = UfInvoiceSnapshot.objects.update_or_create(
+            source_key=source_key,
+            defaults=values,
+        )
+        invoice_ids.append(invoice.pk)
+        item_ids = [item.pk for item in items]
+        EufItemSnapshot.objects.filter(pk__in=item_ids).update(uf_invoice=invoice)
+        ProcurementItem.objects.filter(uf_item_id__in=item_ids, uf_invoice__isnull=True).update(uf_invoice=invoice)
+
+    if invoice_ids:
+        UfInvoiceSnapshot.objects.exclude(pk__in=invoice_ids).delete()
+    else:
+        UfInvoiceSnapshot.objects.all().delete()
+    return invoice_ids
+
+
 def sync_euf_item_snapshots(q=None, limit=10000):
     from nabavka.models import EufItemSnapshot
 
-    return _bulk_upsert(EufItemSnapshot, list_euf_items(q=q, limit=limit))
+    snapshots = _bulk_upsert(EufItemSnapshot, list_euf_items(q=q, limit=limit))
+    rebuild_uf_invoice_snapshots()
+    return snapshots
+
 
 
 def list_goods(q=None, limit=10000):

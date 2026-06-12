@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .uf-invoice-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .uf-invoice-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .uf-invoice-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .uf-stat {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 12px;
+    background: #f8fafc;
+  }
+  .uf-stat .label {
+    color: #6c7f90;
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .uf-stat .value {
+    color: #243746;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+</style>
+
+<div class="uf-invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ invoice.invoice_number|default:invoice.purchase_invoice_id|default:"UF faktura" }}</h1>
+    <p>{{ invoice.partner_name|default:"/" }}</p>
+  </div>
+  <a class="btn btn-light btn-sm" href="{% url 'nabavka:euf_item_list' %}">
+    <i class="mdi mdi-arrow-left"></i> UF fakture
+  </a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="uf-stat h-100">
+      <div class="label">Datum dokumenta</div>
+      <div class="value">{% if invoice.document_date %}{{ invoice.document_date|date:"d.m.Y" }}{% else %}/{% endif %}</div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="uf-stat h-100">
+      <div class="label">Iznos za placanje</div>
+      <div class="value">{{ invoice.payment_amount|default:invoice.total|default:"/" }}</div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="uf-stat h-100">
+      <div class="label">Broj stavki</div>
+      <div class="value">{{ invoice.item_count }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header"><h4 class="mb-0">Podaci fakture</h4></div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Broj fakture</dt><dd class="col-sm-8">{{ invoice.invoice_number|default:"/" }}</dd>
+          <dt class="col-sm-4">UF ID</dt><dd class="col-sm-8">{{ invoice.purchase_invoice_id|default:"/" }}</dd>
+          <dt class="col-sm-4">Partner</dt><dd class="col-sm-8">{{ invoice.partner_name|default:"/" }}</dd>
+          <dt class="col-sm-4">PIB</dt><dd class="col-sm-8">{{ invoice.partner_pib|default:"/" }}</dd>
+          <dt class="col-sm-4">MB</dt><dd class="col-sm-8">{{ invoice.partner_mb|default:"/" }}</dd>
+          <dt class="col-sm-4">Konta</dt><dd class="col-sm-8">{{ invoice.accounts|default:"/" }}</dd>
+          <dt class="col-sm-4">Osnovica</dt><dd class="col-sm-8">{{ invoice.base_amount|default:"/" }}</dd>
+          <dt class="col-sm-4">Ukupno</dt><dd class="col-sm-8">{{ invoice.total|default:"/" }}</dd>
+          <dt class="col-sm-4">Vrednost stavki</dt><dd class="col-sm-8">{{ invoice.item_value_total|default:"/" }}</dd>
+          <dt class="col-sm-4">Sinhronizovano</dt><dd class="col-sm-8">{{ invoice.synced_at|date:"d.m.Y H:i"|default:"/" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-header"><h4 class="mb-0">Povezano sa zahtevima</h4></div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Zahtev</th>
+                <th>Stavka zahteva</th>
+                <th>Kolicina</th>
+                <th>Procenjena cena</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in linked_items %}
+              <tr>
+                <td>
+                  <a href="{% url 'nabavka:case_detail' item.procurement_case.pk %}">
+                    {{ item.procurement_case.case_number }}
+                  </a>
+                </td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.quantity }} {{ item.uom }}</td>
+                <td>{{ item.estimated_unit_price|default:"/" }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center text-muted">Ova UF faktura nije povezana sa stavkama zahteva.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-3">
+  <div class="card-header"><h4 class="mb-0">UF stavke u fakturi</h4></div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Naziv</th>
+            <th>JM</th>
+            <th>Kolicina</th>
+            <th>Cena</th>
+            <th>Vrednost</th>
+            <th>Konto</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>
+              {{ item.item_name|default:"/" }}
+              {% if item.note %}<div class="text-muted small">{{ item.note }}</div>{% endif %}
+            </td>
+            <td>{{ item.uom|default:"/" }}</td>
+            <td>{{ item.quantity|default:"/" }}</td>
+            <td>{{ item.price|default:"/" }}</td>
+            <td>{{ item.value|default:"/" }}</td>
+            <td>{{ item.account|default:"/" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted">Nema UF stavki za ovu fakturu.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
