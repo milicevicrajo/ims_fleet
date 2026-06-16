@@ -259,11 +259,7 @@ class ProcurementInvoiceJobCodeLinkForm(forms.ModelForm):
 
     def __init__(self, *args, invoice=None, **kwargs):
         super().__init__(*args, **kwargs)
-        queryset = OrganizationalUnit.objects.all().order_by("code")
-        if invoice is not None:
-            queryset = queryset.exclude(nabavka_invoice_job_code_links__invoice=invoice)
-            if invoice.job_code_id:
-                queryset = queryset.exclude(pk=invoice.job_code_id)
+        queryset = OrganizationalUnit.objects.all().order_by("code", "name")
         self.fields["job_code"].queryset = queryset
         self.fields["job_code"].widget = forms.Select(attrs={"class": "form-select select2-method"})
         self.fields["job_code"].widget.choices = self.fields["job_code"].choices

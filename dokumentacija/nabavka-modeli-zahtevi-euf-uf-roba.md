@@ -311,13 +311,18 @@ Zato se koristi meko poklapanje.
 
 ### Meko poklapanje robe sa UF/EUF
 
-Na ekranu "Roba" sistem proverava da li `linked_document` postoji kao broj neke povucene UF ili EUF fakture.
+Na ekranu "Roba" sistem proverava da li postoje dve tacne potvrde veze:
 
-Ako postoji poklapanje:
+- `linked_document` mora da odgovara broju povucene UF ili EUF fakture,
+- partner na robi mora da odgovara partneru na toj fakturi.
+
+Ako postoji jednoznacno poklapanje:
 
 - red robe se vizuelno naglasi,
 - pored veznog dokumenta se prikaze oznaka `UF` ili `EUF`,
 - oznaka je link na tu fakturu.
+
+Ako se ista roba po tim pravilima poklopi i sa UF i sa EUF, oznaka se ne prikazuje, jer izvor nije jednoznacno potvrdjen.
 
 Ovo korisniku jasno kaze:
 

@@ -11,6 +11,7 @@ from openpyxl import load_workbook
 from fleet.models import JobCode, OrganizationalUnit, Vehicle
 from .models import (
     EufItemSnapshot,
+    GoodsSnapshot,
     ProcurementCase,
     ProcurementInvoice,
     ProcurementInvoiceJobCodeLink,
@@ -120,6 +121,7 @@ class ProcurementInvoiceJobCodeLinkTests(TestCase):
         detail_html = detail_response.content.decode()
         self.assertNotIn('id="id_job_code"', detail_html)
         self.assertIn('id="id_job_code_link-job_code"', detail_html)
+        self.assertIn(f'value="{primary_job_code.pk}"', detail_html)
         self.assertIn(f'value="{additional_job_code.pk}"', detail_html)
 
         response = self.client.post(
@@ -137,6 +139,44 @@ class ProcurementInvoiceJobCodeLinkTests(TestCase):
         self.assertEqual(link.created_by, user)
         invoice.refresh_from_db()
         self.assertEqual(invoice.job_code, primary_job_code)
+
+    def test_existing_invoice_job_code_can_be_selected_without_duplicate_error(self):
+        job_code = OrganizationalUnit.objects.create(
+            code="210",
+            name="Postojeca sifra",
+            center="21",
+        )
+        invoice = ProcurementInvoice.objects.create(
+            source=ProcurementInvoice.SOURCE_EUF,
+            euf_key="euf-existing-job-code",
+            invoice_number="IF-EXISTING-JC",
+            supplier_name="Partner DOO",
+        )
+        ProcurementInvoiceJobCodeLink.objects.create(
+            invoice=invoice,
+            job_code=job_code,
+            note="Stara napomena",
+        )
+        user = get_user_model().objects.create_user(
+            username="invoice-existing-job-code",
+            password="test",
+            is_superuser=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("nabavka:euf_invoice_detail", args=[invoice.pk]),
+            {
+                "action": "link_job_code",
+                "job_code_link-job_code": str(job_code.pk),
+                "job_code_link-note": "Nova napomena",
+            },
+        )
+
+        self.assertRedirects(response, reverse("nabavka:euf_invoice_detail", args=[invoice.pk]))
+        self.assertEqual(ProcurementInvoiceJobCodeLink.objects.filter(invoice=invoice, job_code=job_code).count(), 1)
+        link = ProcurementInvoiceJobCodeLink.objects.get(invoice=invoice, job_code=job_code)
+        self.assertEqual(link.note, "Nova napomena")
 
     def test_primary_job_code_is_vehicle_snapshot_only(self):
         first_job_code = OrganizationalUnit.objects.create(
@@ -369,3 +409,88 @@ class UfInvoiceSnapshotTests(TestCase):
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, "UF-DETAIL")
         self.assertContains(detail_response, "Detaljna stavka")
+
+
+@override_settings(ALLOWED_HOSTS=["testserver"])
+class GoodsInvoiceSoftMatchTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="goods-soft-match",
+            password="test",
+            is_superuser=True,
+        )
+        self.client.force_login(self.user)
+
+    def test_goods_match_requires_document_and_partner_and_single_source(self):
+        goods = GoodsSnapshot.objects.create(
+            source_key="goods-uf-match",
+            linked_document="UF-100",
+            partner_name="Partner DOO",
+        )
+        uf_invoice = UfInvoiceSnapshot.objects.create(
+            source_key="uf-match",
+            invoice_number="UF-100",
+            partner_name="Partner DOO",
+        )
+        ProcurementInvoice.objects.create(
+            source=ProcurementInvoice.SOURCE_EUF,
+            euf_key="euf-other-partner",
+            invoice_number="UF-100",
+            supplier_name="Drugi Partner DOO",
+        )
+
+        response = self.client.get(reverse("nabavka:goods_data"), {"source_search": "UF-100"})
+
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["data"][0]
+        self.assertIn(reverse("nabavka:uf_invoice_detail", args=[uf_invoice.pk]), row["linked_document"])
+        self.assertIn(">UF</a>", row["linked_document"])
+        self.assertNotIn(">EUF</a>", row["linked_document"])
+        self.assertEqual(row["DT_RowClass"], "goods-has-invoice-match")
+        self.assertEqual(goods.linked_document, "UF-100")
+
+    def test_goods_match_is_hidden_when_uf_and_euf_both_match(self):
+        GoodsSnapshot.objects.create(
+            source_key="goods-conflict",
+            linked_document="BOTH-100",
+            partner_name="Partner DOO",
+        )
+        UfInvoiceSnapshot.objects.create(
+            source_key="uf-conflict",
+            invoice_number="BOTH-100",
+            partner_name="Partner DOO",
+        )
+        ProcurementInvoice.objects.create(
+            source=ProcurementInvoice.SOURCE_EUF,
+            euf_key="euf-conflict",
+            invoice_number="BOTH-100",
+            supplier_name="Partner DOO",
+        )
+
+        response = self.client.get(reverse("nabavka:goods_data"), {"source_search": "BOTH-100"})
+
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["data"][0]
+        self.assertNotIn(">UF</a>", row["linked_document"])
+        self.assertNotIn(">EUF</a>", row["linked_document"])
+        self.assertEqual(row["DT_RowClass"], "")
+
+    def test_goods_match_is_hidden_when_only_document_matches(self):
+        GoodsSnapshot.objects.create(
+            source_key="goods-document-only",
+            linked_document="DOC-ONLY",
+            partner_name="Partner DOO",
+        )
+        UfInvoiceSnapshot.objects.create(
+            source_key="uf-document-only",
+            invoice_number="DOC-ONLY",
+            partner_name="Drugi Partner DOO",
+        )
+
+        response = self.client.get(reverse("nabavka:goods_data"), {"source_search": "DOC-ONLY"})
+
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["data"][0]
+        self.assertNotIn(">UF</a>", row["linked_document"])
+        self.assertNotIn(">EUF</a>", row["linked_document"])
+        self.assertEqual(row["DT_RowClass"], "")

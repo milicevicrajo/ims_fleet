@@ -53,6 +53,10 @@ def _hover_text(value, max_length=50):
     return f'<span title="{escape(text)}">{escape(visible)}</span>'
 
 
+def _normalize_match_value(value):
+    return " ".join(str(value or "").split()).casefold()
+
+
 def _datatable_page(request, queryset, order_map):
     try:
         start = max(int(request.GET.get("start", 0)), 0)
@@ -255,40 +259,65 @@ def _filter_goods(request):
 
 
 def _goods_invoice_match_badges(goods_items):
+    match_keys = {
+        item.pk: (
+            _normalize_match_value(item.linked_document),
+            _normalize_match_value(item.partner_name),
+        )
+        for item in goods_items
+        if _normalize_match_value(item.linked_document) and _normalize_match_value(item.partner_name)
+    }
     linked_documents = {
         (item.linked_document or "").strip()
         for item in goods_items
-        if (item.linked_document or "").strip()
+        if item.pk in match_keys
     }
     if not linked_documents:
         return {}
 
-    matches = {document: [] for document in linked_documents}
+    matches = {item_id: {"uf": [], "euf": []} for item_id in match_keys}
     uf_invoices = UfInvoiceSnapshot.objects.filter(
         Q(invoice_number__in=linked_documents) | Q(purchase_invoice_id__in=linked_documents)
-    ).values("id", "invoice_number", "purchase_invoice_id")
+    ).values("id", "invoice_number", "purchase_invoice_id", "partner_name")
     for invoice in uf_invoices:
-        for document in {invoice["invoice_number"], invoice["purchase_invoice_id"]}:
-            document = (document or "").strip()
-            if document in matches:
+        invoice_partner = _normalize_match_value(invoice["partner_name"])
+        for invoice_document in {invoice["invoice_number"], invoice["purchase_invoice_id"]}:
+            invoice_document = _normalize_match_value(invoice_document)
+            for item_id, (linked_document, partner_name) in match_keys.items():
+                if invoice_document != linked_document or invoice_partner != partner_name:
+                    continue
                 url = reverse("nabavka:uf_invoice_detail", kwargs={"pk": invoice["id"]})
-                matches[document].append(
-                    f'<a class="goods-source-badge uf" href="{url}" title="Postoji povucena UF faktura">UF</a>'
+                matches[item_id]["uf"].append(
+                    f'<a class="goods-source-badge uf" href="{url}" '
+                    'title="Potvrdjeno brojem fakture i partnerom">UF</a>'
                 )
 
     euf_invoices = ProcurementInvoice.objects.filter(
         source=ProcurementInvoice.SOURCE_EUF,
         invoice_number__in=linked_documents,
-    ).values("id", "invoice_number")
+    ).values("id", "invoice_number", "supplier_name")
     for invoice in euf_invoices:
-        document = (invoice["invoice_number"] or "").strip()
-        if document in matches:
+        invoice_document = _normalize_match_value(invoice["invoice_number"])
+        invoice_partner = _normalize_match_value(invoice["supplier_name"])
+        for item_id, (linked_document, partner_name) in match_keys.items():
+            if invoice_document != linked_document or invoice_partner != partner_name:
+                continue
             url = reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice["id"]})
-            matches[document].append(
-                f'<a class="goods-source-badge euf" href="{url}" title="Postoji povucena EUF faktura">EUF</a>'
+            matches[item_id]["euf"].append(
+                f'<a class="goods-source-badge euf" href="{url}" '
+                'title="Potvrdjeno brojem fakture i partnerom">EUF</a>'
             )
 
-    return {document: "".join(dict.fromkeys(badges)) for document, badges in matches.items() if badges}
+    badges_by_item = {}
+    for item_id, source_matches in matches.items():
+        uf_badges = list(dict.fromkeys(source_matches["uf"]))
+        euf_badges = list(dict.fromkeys(source_matches["euf"]))
+        if bool(uf_badges) == bool(euf_badges):
+            continue
+        source_badges = uf_badges or euf_badges
+        if len(source_badges) == 1:
+            badges_by_item[item_id] = source_badges[0]
+    return badges_by_item
 
 
 class GoodsSnapshotListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
@@ -352,7 +381,7 @@ class GoodsSnapshotDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
         rows = []
         for item in page_items:
             linked_document = (item.linked_document or "").strip()
-            badges = match_badges.get(linked_document, "")
+            badges = match_badges.get(item.pk, "")
             rows.append(
                 {
                 "document_date": item.document_date.strftime("%d.%m.%Y") if item.document_date else "",

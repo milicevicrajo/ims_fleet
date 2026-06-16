@@ -425,11 +425,25 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                 prefix=JOB_CODE_LINK_FORM_PREFIX,
             )
             if form.is_valid():
-                link = form.save(commit=False)
-                link.invoice = self.object
-                link.created_by = request.user
-                link.save()
-                messages.success(request, "Sifra posla je povezana sa fakturom.")
+                job_code = form.cleaned_data["job_code"]
+                note = form.cleaned_data.get("note")
+                link, created = ProcurementInvoiceJobCodeLink.objects.get_or_create(
+                    invoice=self.object,
+                    job_code=job_code,
+                    defaults={
+                        "note": note,
+                        "created_by": request.user,
+                    },
+                )
+                if not created and note and link.note != note:
+                    link.note = note
+                    link.save(update_fields=["note"])
+                messages.success(
+                    request,
+                    "Sifra posla je povezana sa fakturom."
+                    if created
+                    else "Sifra posla je vec povezana sa fakturom.",
+                )
             else:
                 messages.error(request, "Sifra posla nije povezana. Proverite izbor.")
                 return self.render_to_response(self.get_context_data(job_code_link_form=form))

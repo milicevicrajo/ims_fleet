@@ -227,7 +227,7 @@
             {% for error in job_code_link_form.job_code.errors %}
               <div class="invalid-feedback d-block">{{ error }}</div>
             {% endfor %}
-            <div class="form-text">Rucno povezivanje sifre posla koristi se kada faktura nema automobil ili za dodatne sifre.</div>
+            <div class="form-text">Prikazuju se sve sifre posla. Ako je sifra vec povezana, sacuvace se samo napomena.</div>
           </div>
           <div class="mb-3">
             <label class="form-label" for="{{ job_code_link_form.note.id_for_label }}">{{ job_code_link_form.note.label }}</label>
