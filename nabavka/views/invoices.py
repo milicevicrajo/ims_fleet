@@ -427,6 +427,12 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
             if form.is_valid():
                 job_code = form.cleaned_data["job_code"]
                 note = form.cleaned_data.get("note")
+                if self.object.job_code_id == job_code.pk:
+                    messages.warning(
+                        request,
+                        "Sifra posla je vec dodata kao osnovna sifra fakture.",
+                    )
+                    return redirect("nabavka:euf_invoice_detail", pk=self.object.pk)
                 link, created = ProcurementInvoiceJobCodeLink.objects.get_or_create(
                     invoice=self.object,
                     job_code=job_code,

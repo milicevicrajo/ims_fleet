@@ -178,6 +178,45 @@ class ProcurementInvoiceJobCodeLinkTests(TestCase):
         link = ProcurementInvoiceJobCodeLink.objects.get(invoice=invoice, job_code=job_code)
         self.assertEqual(link.note, "Nova napomena")
 
+    def test_primary_invoice_job_code_cannot_be_added_as_additional(self):
+        primary_job_code = OrganizationalUnit.objects.create(
+            code="220",
+            name="Osnovna sifra",
+            center="22",
+        )
+        invoice = ProcurementInvoice.objects.create(
+            source=ProcurementInvoice.SOURCE_EUF,
+            euf_key="euf-primary-job-code",
+            invoice_number="IF-PRIMARY-JC",
+            supplier_name="Partner DOO",
+            job_code=primary_job_code,
+        )
+        user = get_user_model().objects.create_user(
+            username="invoice-primary-job-code",
+            password="test",
+            is_superuser=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("nabavka:euf_invoice_detail", args=[invoice.pk]),
+            {
+                "action": "link_job_code",
+                "job_code_link-job_code": str(primary_job_code.pk),
+                "job_code_link-note": "Dupla osnovna",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sifra posla je vec dodata kao osnovna sifra fakture.")
+        self.assertFalse(
+            ProcurementInvoiceJobCodeLink.objects.filter(
+                invoice=invoice,
+                job_code=primary_job_code,
+            ).exists()
+        )
+
     def test_primary_job_code_is_vehicle_snapshot_only(self):
         first_job_code = OrganizationalUnit.objects.create(
             code="301",
