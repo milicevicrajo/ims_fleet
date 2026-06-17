@@ -53,7 +53,6 @@ def _euf_invoice_base_queryset():
         .select_related("job_code", "vehicle")
         .prefetch_related("vehicle__traffic_cards", "job_code_links__job_code")
         .annotate(
-            item_links_total=Count("item_links", distinct=True),
             garage_item_links_total=Count(
                 "item_links",
                 filter=Q(item_links__procurement_item__procurement_case__is_garage=True),
@@ -94,8 +93,30 @@ def _filter_euf_invoices(request, invoices=None):
     return invoices
 
 
-def _euf_invoice_vehicle_label(invoice):
-    return str(invoice.vehicle) if invoice.vehicle else ""
+def _euf_invoice_registration_label(invoice):
+    registration = (invoice.registration or "").strip()
+    if registration:
+        return registration
+    if invoice.vehicle:
+        traffic_card = next(iter(invoice.vehicle.traffic_cards.all()), None)
+        if traffic_card:
+            return traffic_card.registration_number or ""
+    return ""
+
+
+def _euf_invoice_garage_html(invoice):
+    if not (invoice.is_garage or invoice.garage_item_links_total):
+        return '<span class="invoice-badge muted">Ne</span>'
+    registration = _euf_invoice_registration_label(invoice)
+    registration_html = (
+        f'<div class="invoice-registration-small">{escape(registration)}</div>'
+        if registration
+        else ""
+    )
+    return (
+        '<span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Da</span>'
+        f"{registration_html}"
+    )
 
 
 def _invoice_job_code_labels(invoice):
@@ -175,8 +196,6 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
             "5": "goes_to_warehouse",
             "6": "is_garage",
             "7": "is_returned",
-            "8": "vehicle__brand",
-            "9": "item_links_total",
         }
         order_field = order_map.get(request.GET.get("order[0][column]", "0"), "invoice_date")
         if request.GET.get("order[0][dir]", "desc") == "desc":
@@ -215,11 +234,7 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                         if invoice.goes_to_warehouse
                         else '<span class="invoice-badge muted"><i class="mdi mdi-minus-circle-outline"></i> Ne</span>'
                     ),
-                    "is_garage": (
-                        '<span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Da</span>'
-                        if invoice.is_garage or invoice.garage_item_links_total
-                        else '<span class="invoice-badge muted">Ne</span>'
-                    ),
+                    "is_garage": _euf_invoice_garage_html(invoice),
                     "is_returned": (
                         '<div class="form-check invoice-returned-check">'
                         f'<input class="form-check-input js-invoice-returned" type="checkbox" '
@@ -227,8 +242,6 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                         f'aria-label="Vraceno za fakturu {escape(invoice.invoice_number or "")}">'
                         "</div>"
                     ),
-                    "vehicle": escape(_euf_invoice_vehicle_label(invoice)),
-                    "item_links_total": invoice.item_links_total,
                     "actions": (
                         f'<a class="btn btn-outline-primary btn-sm" href="{detail_url}">'
                         '<i class="mdi mdi-eye"></i> Detalj</a>'
@@ -271,8 +284,6 @@ class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
             "Magacin",
             "Garaza",
             "Vraceno",
-            "Vozilo",
-            "Stavke",
         ]
         worksheet.append(headers)
 
@@ -292,8 +303,6 @@ class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                     "Da" if invoice.goes_to_warehouse else "Ne",
                     "Da" if invoice.is_garage or invoice.garage_item_links_total else "Ne",
                     "Da" if invoice.is_returned else "Ne",
-                    _euf_invoice_vehicle_label(invoice),
-                    invoice.item_links_total,
                 ]
             )
 

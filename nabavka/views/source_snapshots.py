@@ -1,4 +1,6 @@
 from datetime import datetime
+import re
+import unicodedata
 from urllib.parse import parse_qsl, urlencode
 
 from django.contrib import messages
@@ -55,6 +57,45 @@ def _hover_text(value, max_length=50):
 
 def _normalize_match_value(value):
     return " ".join(str(value or "").split()).casefold()
+
+
+def _normalize_company_value(value):
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(char for char in text if not unicodedata.combining(char)).casefold()
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    tokens = text.split()
+    normalized_tokens = []
+    index = 0
+    legal_form_tokens = {"doo", "ad", "szr", "pr"}
+    while index < len(tokens):
+        token = tokens[index]
+        if index + 2 < len(tokens) and tokens[index:index + 3] == ["d", "o", "o"]:
+            index += 3
+            continue
+        if index + 1 < len(tokens) and tokens[index:index + 2] == ["a", "d"]:
+            index += 2
+            continue
+        if token not in legal_form_tokens:
+            normalized_tokens.append(token)
+        index += 1
+    return " ".join(normalized_tokens)
+
+
+def _company_matches(first, second):
+    first_key = _normalize_company_value(first)
+    second_key = _normalize_company_value(second)
+    if not first_key or not second_key:
+        return False
+    if first_key == second_key:
+        return True
+    first_tokens = first_key.split()
+    second_tokens = second_key.split()
+    shorter, longer = (
+        (first_tokens, second_tokens)
+        if len(first_tokens) <= len(second_tokens)
+        else (second_tokens, first_tokens)
+    )
+    return longer[: len(shorter)] == shorter
 
 
 def _datatable_page(request, queryset, order_map):
@@ -262,10 +303,10 @@ def _goods_invoice_match_badges(goods_items):
     match_keys = {
         item.pk: (
             _normalize_match_value(item.linked_document),
-            _normalize_match_value(item.partner_name),
+            item.partner_name,
         )
         for item in goods_items
-        if _normalize_match_value(item.linked_document) and _normalize_match_value(item.partner_name)
+        if _normalize_match_value(item.linked_document) and _normalize_company_value(item.partner_name)
     }
     linked_documents = {
         (item.linked_document or "").strip()
@@ -280,16 +321,15 @@ def _goods_invoice_match_badges(goods_items):
         Q(invoice_number__in=linked_documents) | Q(purchase_invoice_id__in=linked_documents)
     ).values("id", "invoice_number", "purchase_invoice_id", "partner_name")
     for invoice in uf_invoices:
-        invoice_partner = _normalize_match_value(invoice["partner_name"])
         for invoice_document in {invoice["invoice_number"], invoice["purchase_invoice_id"]}:
             invoice_document = _normalize_match_value(invoice_document)
             for item_id, (linked_document, partner_name) in match_keys.items():
-                if invoice_document != linked_document or invoice_partner != partner_name:
+                if invoice_document != linked_document or not _company_matches(invoice["partner_name"], partner_name):
                     continue
                 url = reverse("nabavka:uf_invoice_detail", kwargs={"pk": invoice["id"]})
                 matches[item_id]["uf"].append(
                     f'<a class="goods-source-badge uf" href="{url}" '
-                    'title="Potvrdjeno brojem fakture i partnerom">UF</a>'
+                    'title="Potvrdjeno brojem fakture i firmom">UF</a>'
                 )
 
     euf_invoices = ProcurementInvoice.objects.filter(
@@ -298,25 +338,30 @@ def _goods_invoice_match_badges(goods_items):
     ).values("id", "invoice_number", "supplier_name")
     for invoice in euf_invoices:
         invoice_document = _normalize_match_value(invoice["invoice_number"])
-        invoice_partner = _normalize_match_value(invoice["supplier_name"])
         for item_id, (linked_document, partner_name) in match_keys.items():
-            if invoice_document != linked_document or invoice_partner != partner_name:
+            if invoice_document != linked_document or not _company_matches(invoice["supplier_name"], partner_name):
                 continue
             url = reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice["id"]})
             matches[item_id]["euf"].append(
                 f'<a class="goods-source-badge euf" href="{url}" '
-                'title="Potvrdjeno brojem fakture i partnerom">EUF</a>'
+                'title="Potvrdjeno brojem fakture i firmom">EUF</a>'
             )
 
     badges_by_item = {}
     for item_id, source_matches in matches.items():
         uf_badges = list(dict.fromkeys(source_matches["uf"]))
         euf_badges = list(dict.fromkeys(source_matches["euf"]))
-        if bool(uf_badges) == bool(euf_badges):
-            continue
-        source_badges = uf_badges or euf_badges
-        if len(source_badges) == 1:
-            badges_by_item[item_id] = source_badges[0]
+        if len(uf_badges) == 1:
+            badges_by_item[item_id] = (
+                uf_badges[0].replace(
+                    'title="Potvrdjeno brojem fakture i firmom"',
+                    'title="Potvrdjeno brojem fakture i firmom. Postoji i EUF, ali roba se prikazuje kao UF jer UF ima stavke."',
+                )
+                if euf_badges
+                else uf_badges[0]
+            )
+        elif len(euf_badges) == 1:
+            badges_by_item[item_id] = euf_badges[0]
     return badges_by_item
 
 

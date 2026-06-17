@@ -386,6 +386,99 @@ class OMVTransactionImportTests(TestCase):
 		transaction = TransactionOMV.objects.get()
 		self.assertEqual(transaction.invoice_no, "8916357590")
 		self.assertEqual(transaction.gross_cc, Decimal("8302.86"))
+		self.assertEqual(transaction.quantity, Decimal("43.02"))
+		self.assertEqual(transaction.amount, Decimal("8604.00"))
+		self.assertEqual(transaction.unit_price, Decimal("200.00"))
+
+	def test_import_does_not_overwrite_final_list_price_transaction_with_regular_row(self):
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="710111",
+			customer="107248",
+			card="123",
+			license_plate_no="BG1007-KX",
+			transaction_date=self._dt(2026, 2, 28, 12, 37),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("43.02"),
+			gross_cc=Decimal("8302.86"),
+			vat=Decimal("1383.81"),
+			voucher="00289548",
+			mileage=Decimal("222866"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("8604.00"),
+			amount_other=Decimal("8604.00"),
+			is_list_price=Decimal("1"),
+			invoice_no="8916357590",
+			invoiced=True,
+		)
+		headers = [
+			"Issuer", "Customer", "Card", "License plate No", "Transactiondate", "Product INV",
+			"Quantity", "Gross CC", "VAT", "Voucher", "Mileage", "Corrected mileage",
+			"Additional info", "Supply country", "Site Town", "Product DEL", "Unitprice",
+			"Amount", "Discount", "Surcharge", "VAT2010", "Suppliercurrency", "Invoice No",
+			"Invoice date", "Invoiced?", "State", "Supplier", "Cost 1", "Cost 2",
+			"Reference No", "Recordtype", "Amount other", "is listprice ?", "Approval code",
+			"Date to", "Final Trx.", "LPI",
+		]
+		row = {
+			"Issuer": "710111",
+			"Customer": "107248",
+			"Card": "123",
+			"License plate No": "BG 1007 - KX",
+			"Transactiondate": "2026-02-28 12:37:00",
+			"Product INV": "OMV EVRO DIZEL",
+			"Quantity": "43.02",
+			"Gross CC": "8604.00",
+			"VAT": "1434.00",
+			"Voucher": "00289548",
+			"Mileage": "222866",
+			"Corrected mileage": "222866",
+			"Additional info": "",
+			"Supply country": "SR",
+			"Site Town": "BEOGRAD",
+			"Product DEL": "OMV EVRO DIZEL",
+			"Unitprice": "200.00",
+			"Amount": "8604.00",
+			"Discount": "0.00",
+			"Surcharge": "0.00",
+			"VAT2010": "NO",
+			"Suppliercurrency": "RSD",
+			"Invoice No": "",
+			"Invoice date": "",
+			"Invoiced?": "NO",
+			"State": "217",
+			"Supplier": "OMV-RS",
+			"Cost 1": "",
+			"Cost 2": "",
+			"Reference No": "",
+			"Recordtype": "D",
+			"Amount other": "0.00",
+			"is listprice ?": "No",
+			"Approval code": "700001",
+			"Date to": "2026-02-28",
+			"Final Trx.": "1",
+			"LPI": "",
+		}
+
+		with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8-sig", suffix=".csv", delete=False) as handle:
+			writer = csv.DictWriter(handle, fieldnames=headers, delimiter=";")
+			writer.writeheader()
+			writer.writerow(row)
+			csv_path = handle.name
+
+		try:
+			result = import_omv_transactions_from_csv(csv_path)
+		finally:
+			os.unlink(csv_path)
+
+		transaction = TransactionOMV.objects.get()
+		self.assertEqual(result["preserved_final"], 1)
+		self.assertEqual(result["updated"], 0)
+		self.assertEqual(transaction.invoice_no, "8916357590")
+		self.assertEqual(transaction.invoiced, True)
+		self.assertEqual(transaction.amount, Decimal("8604.00"))
+		self.assertEqual(transaction.amount_other, Decimal("8604.00"))
+		self.assertEqual(transaction.unit_price, Decimal("200.00"))
 
 	def test_filter_nis_fuel_queryset_excludes_non_fuel_products(self):
 		fuel = TransactionNIS.objects.create(

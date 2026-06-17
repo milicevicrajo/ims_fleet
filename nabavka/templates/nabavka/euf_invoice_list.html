@@ -33,6 +33,13 @@
   .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
   .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
   .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .invoice-registration-small {
+    color: #6b7785;
+    font-size: .72rem;
+    line-height: 1.15;
+    margin-top: 3px;
+    white-space: nowrap;
+  }
   .invoice-table-card .card-body,
   .invoice-table-wrap,
   .invoice-table-card .dataTables_wrapper {
@@ -149,8 +156,6 @@
             <th>Magacin</th>
             <th>Garaža</th>
             <th class="text-center">Vra&#263;eno</th>
-            <th>Vozilo</th>
-            <th>Stavke</th>
             <th class="text-center">Akcije</th>
           </tr>
         </thead>
@@ -192,20 +197,16 @@
         { data: 'warehouse' },
         { data: 'is_garage' },
         { data: 'is_returned', orderable: true, searchable: false, className: 'text-center' },
-        { data: 'vehicle' },
-        { data: 'item_links_total', className: 'text-center' },
         { data: 'actions', orderable: false, searchable: false, className: 'text-center text-nowrap' }
       ],
       columnDefs: [
-        { targets: 0, width: '8%' },
-        { targets: 1, width: '18%' },
-        { targets: 2, width: '10%' },
-        { targets: 3, width: '8%' },
-        { targets: 4, width: '9%' },
-        { targets: [5, 6, 7], width: '7%' },
-        { targets: 8, width: '10%' },
-        { targets: 9, width: '5%' },
-        { targets: 10, width: '8%' }
+        { targets: 0, width: '9%' },
+        { targets: 1, width: '22%' },
+        { targets: 2, width: '12%' },
+        { targets: 3, width: '9%' },
+        { targets: 4, width: '12%' },
+        { targets: [5, 6, 7], width: '9%' },
+        { targets: 8, width: '9%' }
       ],
       language: {
         processing: 'Učitavanje...',

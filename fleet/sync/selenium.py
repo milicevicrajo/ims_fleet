@@ -6,6 +6,7 @@ import sys
 import time
 import unicodedata
 from datetime import date, datetime, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 import pandas as pd
 import pytz
@@ -990,6 +991,18 @@ def import_omv_transactions_from_csv(csv_file_path):
         value = str(value or "").strip().lower()
         return value in {"yes", "da", "true", "1"}
 
+    def apply_list_price_amount(amount, unit_price, amount_other, quantity, is_list_price):
+        if not is_list_price or amount_other in (None, 0):
+            return amount, unit_price
+        corrected_unit_price = unit_price
+        if quantity:
+            corrected_unit_price = (
+                Decimal(str(amount_other)) / Decimal(str(quantity))
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return amount_other, corrected_unit_price
+
+    preserved_final = 0
+
     with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')  # Pazi na delimiter ';'
         for index, row in enumerate(reader, start=1):
@@ -1013,6 +1026,14 @@ def import_omv_transactions_from_csv(csv_file_path):
                 amount = parse_decimal(row.get('Amount'))
                 mileage = parse_decimal(row.get('Mileage'))
                 corrected_mileage = parse_decimal(row.get('Corrected mileage'))
+                is_list_price = 1 if parse_bool(row.get('is listprice ?')) else 0
+                amount, unit_price = apply_list_price_amount(
+                    amount,
+                    unit_price,
+                    amount_other,
+                    quantity,
+                    is_list_price,
+                )
 
                 transaction_date = parse_datetime(row.get('Transactiondate'))
                 invoice_date = parse_date(row.get('Invoice date'))
@@ -1049,7 +1070,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                     "reference_no": row.get('Reference No'),
                     "record_type": row.get('Recordtype'),
                     "amount_other": amount_other,
-                    "is_list_price": 1 if parse_bool(row.get('is listprice ?')) else 0,
+                    "is_list_price": is_list_price,
                     "approval_code": row.get('Approval code'),
                     "date_to": date_to,
                     "final_trx": row.get('Final Trx.'),
@@ -1068,6 +1089,9 @@ def import_omv_transactions_from_csv(csv_file_path):
                     .first()
                 )
                 if transaction:
+                    if transaction.is_list_price == 1 and not is_list_price:
+                        preserved_final += 1
+                        continue
                     for field, value in transaction_defaults.items():
                         setattr(transaction, field, value)
                     transaction.save(update_fields=list(transaction_defaults))
@@ -1096,10 +1120,11 @@ def import_omv_transactions_from_csv(csv_file_path):
 
     result = {
         "status": "ok",
-        "rows": created + updated + skipped,
+        "rows": created + updated + skipped + preserved_final,
         "created": created,
         "updated": updated,
         "skipped": skipped,
+        "preserved_final": preserved_final,
         "errors": errors,
         "missing_vehicles": sorted(v for v in missing_vehicles if v),
     }

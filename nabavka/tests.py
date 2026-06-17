@@ -306,6 +306,21 @@ class EufInvoiceListControlsTests(TestCase):
         row = response.json()["data"][0]
         self.assertIn("is_returned", row)
         self.assertIn("js-invoice-returned", row["is_returned"])
+        self.assertNotIn("vehicle", row)
+        self.assertNotIn("item_links_total", row)
+
+    def test_garage_column_includes_registration(self):
+        self.invoice.is_garage = True
+        self.invoice.registration = "BG-123-AA"
+        self.invoice.save(update_fields=["is_garage", "registration"])
+
+        response = self.client.get(reverse("nabavka:euf_invoice_data"))
+
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["data"][0]
+        self.assertIn("> Da</span>", row["is_garage"])
+        self.assertIn("invoice-registration-small", row["is_garage"])
+        self.assertIn("BG-123-AA", row["is_garage"])
 
     def test_returned_toggle_updates_invoice(self):
         response = self.client.post(
@@ -333,6 +348,8 @@ class EufInvoiceListControlsTests(TestCase):
         worksheet = workbook.active
         headers = [cell.value for cell in worksheet[1]]
         self.assertIn("Vraceno", headers)
+        self.assertNotIn("Vozilo", headers)
+        self.assertNotIn("Stavke", headers)
         self.assertEqual(worksheet["C2"].value, "IF-CTRL-1")
 
 
@@ -488,13 +505,33 @@ class GoodsInvoiceSoftMatchTests(TestCase):
         self.assertEqual(row["DT_RowClass"], "goods-has-invoice-match")
         self.assertEqual(goods.linked_document, "UF-100")
 
-    def test_goods_match_is_hidden_when_uf_and_euf_both_match(self):
+    def test_goods_match_normalizes_company_name(self):
+        GoodsSnapshot.objects.create(
+            source_key="goods-company-normalized",
+            linked_document="634/26",
+            partner_name="MS COPY DOO",
+        )
+        uf_invoice = UfInvoiceSnapshot.objects.create(
+            source_key="uf-company-normalized",
+            invoice_number="634/26",
+            partner_name="MS COPY D.O.O.",
+        )
+
+        response = self.client.get(reverse("nabavka:goods_data"), {"source_search": "634/26"})
+
+        self.assertEqual(response.status_code, 200)
+        row = response.json()["data"][0]
+        self.assertIn(reverse("nabavka:uf_invoice_detail", args=[uf_invoice.pk]), row["linked_document"])
+        self.assertIn(">UF</a>", row["linked_document"])
+        self.assertEqual(row["DT_RowClass"], "goods-has-invoice-match")
+
+    def test_goods_match_prefers_uf_when_uf_and_euf_both_match(self):
         GoodsSnapshot.objects.create(
             source_key="goods-conflict",
             linked_document="BOTH-100",
             partner_name="Partner DOO",
         )
-        UfInvoiceSnapshot.objects.create(
+        uf_invoice = UfInvoiceSnapshot.objects.create(
             source_key="uf-conflict",
             invoice_number="BOTH-100",
             partner_name="Partner DOO",
@@ -510,9 +547,10 @@ class GoodsInvoiceSoftMatchTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         row = response.json()["data"][0]
-        self.assertNotIn(">UF</a>", row["linked_document"])
+        self.assertIn(reverse("nabavka:uf_invoice_detail", args=[uf_invoice.pk]), row["linked_document"])
+        self.assertIn(">UF</a>", row["linked_document"])
         self.assertNotIn(">EUF</a>", row["linked_document"])
-        self.assertEqual(row["DT_RowClass"], "")
+        self.assertEqual(row["DT_RowClass"], "goods-has-invoice-match")
 
     def test_goods_match_is_hidden_when_only_document_matches(self):
         GoodsSnapshot.objects.create(
