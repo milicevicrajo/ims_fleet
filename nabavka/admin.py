@@ -6,6 +6,7 @@ from .models import (
     ProcurementCase,
     ProcurementInvoice,
     ProcurementInvoiceContractLink,
+    ProcurementInvoiceJobCodeLink,
     ProcurementInvoiceLink,
     ProcurementItem,
     ProcurementItemInvoiceLink,
@@ -89,6 +90,13 @@ class ProcurementItemInvoiceLinkAdmin(admin.ModelAdmin):
 class ProcurementInvoiceContractLinkAdmin(admin.ModelAdmin):
     list_display = ["invoice", "contract", "created_by", "created_at"]
     search_fields = ["invoice__invoice_number", "invoice__supplier_name", "contract__contract_number"]
+
+
+@admin.register(ProcurementInvoiceJobCodeLink)
+class ProcurementInvoiceJobCodeLinkAdmin(admin.ModelAdmin):
+    list_display = ["invoice", "job_code", "kind", "is_returned", "returned_by", "returned_at", "created_by", "created_at"]
+    list_filter = ["kind", "is_returned"]
+    search_fields = ["invoice__invoice_number", "invoice__supplier_name", "job_code__code", "job_code__name"]
 
 
 @admin.register(PurchaseOrder)

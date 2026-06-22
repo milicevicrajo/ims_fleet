@@ -463,6 +463,44 @@ class ProcurementInvoice(models.Model):
             return _("Sifra posla automobila - snapshot")
         return ""
 
+    def sync_primary_job_code_link(self, created_by=None):
+        if not self.pk:
+            return None
+        primary_links = self.job_code_links.filter(
+            kind=ProcurementInvoiceJobCodeLink.KIND_PRIMARY
+        )
+        if not self.job_code_id:
+            primary_links.filter(is_returned=False).delete()
+            primary_links.filter(is_returned=True).update(
+                kind=ProcurementInvoiceJobCodeLink.KIND_ADDITIONAL
+            )
+            return None
+
+        link, created = ProcurementInvoiceJobCodeLink.objects.get_or_create(
+            invoice=self,
+            job_code=self.job_code,
+            defaults={
+                "kind": ProcurementInvoiceJobCodeLink.KIND_PRIMARY,
+                "created_by": created_by,
+            },
+        )
+        update_fields = []
+        if link.kind != ProcurementInvoiceJobCodeLink.KIND_PRIMARY:
+            link.kind = ProcurementInvoiceJobCodeLink.KIND_PRIMARY
+            update_fields.append("kind")
+        if created_by and not link.created_by_id:
+            link.created_by = created_by
+            update_fields.append("created_by")
+        if update_fields:
+            link.save(update_fields=update_fields)
+
+        old_primary_links = primary_links.exclude(pk=link.pk)
+        old_primary_links.filter(is_returned=False).delete()
+        old_primary_links.filter(is_returned=True).update(
+            kind=ProcurementInvoiceJobCodeLink.KIND_ADDITIONAL
+        )
+        return link
+
 
 class EufItemSnapshot(models.Model):
     source_key = models.CharField(max_length=64, unique=True, verbose_name=_("Kljuc izvora"))
@@ -617,6 +655,13 @@ class ProcurementItemInvoiceLink(models.Model):
 
 
 class ProcurementInvoiceJobCodeLink(models.Model):
+    KIND_PRIMARY = "primary"
+    KIND_ADDITIONAL = "additional"
+    KIND_CHOICES = [
+        (KIND_PRIMARY, _("Osnovna")),
+        (KIND_ADDITIONAL, _("Dodatna")),
+    ]
+
     invoice = models.ForeignKey(
         ProcurementInvoice,
         on_delete=models.CASCADE,
@@ -628,6 +673,23 @@ class ProcurementInvoiceJobCodeLink(models.Model):
         on_delete=models.PROTECT,
         related_name="nabavka_invoice_job_code_links",
         verbose_name=_("OJ / sifra posla"),
+    )
+    kind = models.CharField(
+        max_length=20,
+        choices=KIND_CHOICES,
+        default=KIND_ADDITIONAL,
+        db_index=True,
+        verbose_name=_("Tip veze"),
+    )
+    is_returned = models.BooleanField(default=False, db_index=True, verbose_name=_("Vraceno"))
+    returned_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Vraceno u"))
+    returned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="nabavka_returned_invoice_job_code_links",
+        verbose_name=_("Oznacio kao vraceno"),
     )
     note = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Napomena"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))

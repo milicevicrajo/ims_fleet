@@ -165,6 +165,32 @@
   </div>
 </div>
 
+<div class="modal fade" id="invoice-returned-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Vraceno po sifri posla</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-muted small mb-3" id="invoiceReturnedModalSubtitle"></div>
+        <div class="d-flex justify-content-end mb-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="invoiceReturnedCheckAll">
+            <i class="mdi mdi-check-all"></i> Oznaci sve
+          </button>
+        </div>
+        <div id="invoiceReturnedModalBody" class="list-group"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
+        <button type="button" class="btn btn-primary" id="invoiceReturnedSave">
+          <i class="mdi mdi-content-save"></i> Sacuvaj
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     if (!window.jQuery || !jQuery.fn.DataTable) {
@@ -176,7 +202,7 @@
       return;
     }
 
-    table.DataTable({
+    var dataTable = table.DataTable({
       serverSide: true,
       processing: true,
       autoWidth: false,
@@ -225,33 +251,104 @@
       }
     });
 
-    table.on('change', '.js-invoice-returned', function () {
-      var checkbox = this;
-      var checked = checkbox.checked;
-      checkbox.disabled = true;
-      fetch(checkbox.dataset.url, {
+    var returnedModalEl = document.getElementById('invoice-returned-modal');
+    var returnedModal = returnedModalEl && window.bootstrap ? new bootstrap.Modal(returnedModalEl) : null;
+    var returnedModalBody = document.getElementById('invoiceReturnedModalBody');
+    var returnedModalSubtitle = document.getElementById('invoiceReturnedModalSubtitle');
+    var returnedSave = document.getElementById('invoiceReturnedSave');
+    var returnedCheckAll = document.getElementById('invoiceReturnedCheckAll');
+    var currentReturnedUrl = '';
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, function (char) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+      });
+    }
+
+    function renderReturnedRows(data) {
+      returnedModalSubtitle.textContent = 'Faktura: ' + (data.invoice || '');
+      if (!data.job_codes || !data.job_codes.length) {
+        returnedModalBody.innerHTML = '<div class="text-muted border rounded p-3">Faktura nema povezane sifre posla.</div>';
+        return;
+      }
+      returnedModalBody.innerHTML = data.job_codes.map(function (item) {
+        var checked = item.is_returned ? 'checked' : '';
+        return (
+          '<label class="list-group-item d-flex align-items-start gap-2">' +
+            '<input class="form-check-input mt-1 js-returned-link" type="checkbox" value="' + item.id + '" ' + checked + '>' +
+            '<span class="flex-grow-1">' +
+              '<span class="fw-bold">' + escapeHtml(item.code || '/') + '</span>' +
+              '<span class="badge bg-light text-dark border ms-2">' + escapeHtml(item.kind_label || '') + '</span>' +
+              '<span class="d-block text-muted small">' + escapeHtml(item.name || '') + '</span>' +
+            '</span>' +
+          '</label>'
+        );
+      }).join('');
+    }
+
+    table.on('click', '.js-invoice-returned-modal', function () {
+      currentReturnedUrl = this.dataset.url || '';
+      returnedModalBody.innerHTML = '<div class="text-muted border rounded p-3">Ucitavanje...</div>';
+      returnedModalSubtitle.textContent = 'Faktura: ' + (this.dataset.invoice || '');
+      if (returnedModal) {
+        returnedModal.show();
+      }
+      fetch(currentReturnedUrl, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      }).then(function (response) {
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        return response.json();
+      }).then(renderReturnedRows).catch(function () {
+        returnedModalBody.innerHTML = '<div class="text-danger border rounded p-3">Sifre posla nisu ucitane.</div>';
+      });
+    });
+
+    if (returnedCheckAll) {
+      returnedCheckAll.addEventListener('click', function () {
+        returnedModalBody.querySelectorAll('.js-returned-link').forEach(function (checkbox) {
+          checkbox.checked = true;
+        });
+      });
+    }
+
+    if (returnedSave) {
+      returnedSave.addEventListener('click', function () {
+        if (!currentReturnedUrl) return;
+        var body = new URLSearchParams();
+        returnedModalBody.querySelectorAll('.js-returned-link:checked').forEach(function (checkbox) {
+          body.append('returned_links', checkbox.value);
+        });
+        returnedSave.disabled = true;
+        fetch(currentReturnedUrl, {
         method: 'POST',
         headers: {
           'X-CSRFToken': '{{ csrf_token }}',
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: new URLSearchParams({ is_returned: checked ? '1' : '0' })
+          body: body
       }).then(function (response) {
         if (!response.ok) {
           throw new Error('HTTP ' + response.status);
         }
         return response.json();
       }).then(function (data) {
-        checkbox.checked = !!data.is_returned;
+          renderReturnedRows(data);
+          if (returnedModal) {
+            returnedModal.hide();
+          }
+          dataTable.ajax.reload(null, false);
       }).catch(function () {
-        checkbox.checked = !checked;
         if (window.toastr) {
-          toastr.error('Status Vraceno nije sacuvan.');
+            toastr.error('Status Vraceno nije sacuvan.');
         }
       }).finally(function () {
-        checkbox.disabled = false;
+          returnedSave.disabled = false;
       });
-    });
+      });
+    }
   });
 </script>
 {% endblock %}

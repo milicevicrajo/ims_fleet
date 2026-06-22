@@ -232,6 +232,7 @@ class ProcurementInvoiceForm(forms.ModelForm):
 
         if commit:
             invoice.save()
+            invoice.sync_primary_job_code_link()
             self.save_m2m()
         return invoice
 

@@ -58,6 +58,11 @@ def _euf_invoice_base_queryset():
                 filter=Q(item_links__procurement_item__procurement_case__is_garage=True),
                 distinct=True,
             ),
+            returned_job_code_links_total=Count(
+                "job_code_links",
+                filter=Q(job_code_links__is_returned=True),
+                distinct=True,
+            ),
         )
     )
 
@@ -131,6 +136,53 @@ def _invoice_job_code_labels(invoice):
     return list(dict.fromkeys(label for label in labels if label))
 
 
+def _invoice_returned_job_code_labels(invoice):
+    labels = [
+        link.job_code.code
+        for link in invoice.job_code_links.all()
+        if link.is_returned and link.job_code and link.job_code.code
+    ]
+    return list(dict.fromkeys(labels))
+
+
+def _invoice_returned_button_html(invoice):
+    returned_url = reverse("nabavka:euf_invoice_returned_job_codes", kwargs={"pk": invoice.pk})
+    returned_labels = _invoice_returned_job_code_labels(invoice)
+    status_html = ""
+    button_class = "btn-outline-secondary"
+    if returned_labels:
+        button_class = "btn-outline-warning"
+        status_html = (
+            '<div class="invoice-registration-small">'
+            f'{escape(", ".join(returned_labels))}'
+            "</div>"
+        )
+    elif invoice.is_returned:
+        button_class = "btn-outline-warning"
+        status_html = '<div class="invoice-registration-small">Staro Vraceno</div>'
+    return (
+        f'<button type="button" class="btn {button_class} btn-sm js-invoice-returned-modal" '
+        f'data-url="{returned_url}" data-invoice="{escape(invoice.invoice_number or "")}">'
+        '<i class="mdi mdi-clipboard-check-outline"></i> Vraceno</button>'
+        f"{status_html}"
+    )
+
+
+def _apply_legacy_returned_to_job_code_links(invoice, user=None):
+    links = list(invoice.job_code_links.select_related("job_code"))
+    if not invoice.is_returned or not links or any(link.is_returned for link in links):
+        return
+    now = timezone.now()
+    for link in links:
+        link.is_returned = True
+        link.returned_at = link.returned_at or now
+        update_fields = ["is_returned", "returned_at"]
+        if user and user.is_authenticated and not link.returned_by_id:
+            link.returned_by = user
+            update_fields.append("returned_by")
+        link.save(update_fields=update_fields)
+
+
 def _hover_text(value, max_length=50):
     text = str(value or "")
     visible = f"{text[:max_length]}..." if len(text) > max_length else text
@@ -195,7 +247,7 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
             "4": "job_code__code",
             "5": "goes_to_warehouse",
             "6": "is_garage",
-            "7": "is_returned",
+            "7": "returned_job_code_links_total",
         }
         order_field = order_map.get(request.GET.get("order[0][column]", "0"), "invoice_date")
         if request.GET.get("order[0][dir]", "desc") == "desc":
@@ -217,7 +269,6 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
         rows = []
         for invoice in invoices[start:start + length]:
             detail_url = reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice.pk})
-            returned_url = reverse("nabavka:euf_invoice_returned_toggle", kwargs={"pk": invoice.pk})
             rows.append(
                 {
                     "invoice_date": (
@@ -235,13 +286,7 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                         else '<span class="invoice-badge muted"><i class="mdi mdi-minus-circle-outline"></i> Ne</span>'
                     ),
                     "is_garage": _euf_invoice_garage_html(invoice),
-                    "is_returned": (
-                        '<div class="form-check invoice-returned-check">'
-                        f'<input class="form-check-input js-invoice-returned" type="checkbox" '
-                        f'data-url="{returned_url}" {"checked" if invoice.is_returned else ""} '
-                        f'aria-label="Vraceno za fakturu {escape(invoice.invoice_number or "")}">'
-                        "</div>"
-                    ),
+                    "is_returned": _invoice_returned_button_html(invoice),
                     "actions": (
                         f'<a class="btn btn-outline-primary btn-sm" href="{detail_url}">'
                         '<i class="mdi mdi-eye"></i> Detalj</a>'
@@ -302,7 +347,7 @@ class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                     ", ".join(_invoice_job_code_labels(invoice)),
                     "Da" if invoice.goes_to_warehouse else "Ne",
                     "Da" if invoice.is_garage or invoice.garage_item_links_total else "Ne",
-                    "Da" if invoice.is_returned else "Ne",
+                    ", ".join(_invoice_returned_job_code_labels(invoice)) or ("Da" if invoice.is_returned else "Ne"),
                 ]
             )
 
@@ -331,7 +376,91 @@ class EufInvoiceReturnedToggleView(RolePermissionRequiredMixin, LoginRequiredMix
         invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
         invoice.is_returned = (request.POST.get("is_returned") or "").lower() in {"1", "true", "on", "yes"}
         invoice.save(update_fields=["is_returned", "updated_at"])
+        invoice.sync_primary_job_code_link(created_by=request.user)
+        if invoice.is_returned:
+            _apply_legacy_returned_to_job_code_links(invoice, request.user)
         return JsonResponse({"ok": True, "is_returned": invoice.is_returned})
+
+
+class EufInvoiceReturnedJobCodesView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    required_permission_code = "nabavka:euf_invoice_list"
+
+    @staticmethod
+    def _job_code_rows(invoice):
+        links = sorted(
+            invoice.job_code_links.select_related("job_code"),
+            key=lambda link: (
+                0 if link.kind == ProcurementInvoiceJobCodeLink.KIND_PRIMARY else 1,
+                link.job_code.code if link.job_code else "",
+                link.pk,
+            ),
+        )
+        return [
+            {
+                "id": link.pk,
+                "code": link.job_code.code if link.job_code else "",
+                "name": link.job_code.name if link.job_code else "",
+                "kind": link.kind,
+                "kind_label": link.get_kind_display(),
+                "is_returned": link.is_returned,
+            }
+            for link in links
+        ]
+
+    def get(self, request, pk):
+        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        invoice.sync_primary_job_code_link(created_by=request.user)
+        _apply_legacy_returned_to_job_code_links(invoice, request.user)
+        return JsonResponse(
+            {
+                "ok": True,
+                "invoice": invoice.invoice_number or str(invoice.pk),
+                "job_codes": self._job_code_rows(invoice),
+            }
+        )
+
+    def post(self, request, pk):
+        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        invoice.sync_primary_job_code_link(created_by=request.user)
+        returned_ids = {
+            int(value)
+            for value in request.POST.getlist("returned_links")
+            if str(value).isdigit()
+        }
+        now = timezone.now()
+        links = list(invoice.job_code_links.select_related("job_code"))
+        for link in links:
+            should_return = link.pk in returned_ids
+            update_fields = []
+            if link.is_returned != should_return:
+                link.is_returned = should_return
+                update_fields.append("is_returned")
+            if should_return and not link.returned_at:
+                link.returned_at = now
+                update_fields.append("returned_at")
+            if should_return and request.user.is_authenticated and link.returned_by_id != request.user.pk:
+                link.returned_by = request.user
+                update_fields.append("returned_by")
+            if not should_return and (link.returned_at or link.returned_by_id):
+                link.returned_at = None
+                link.returned_by = None
+                update_fields.extend(["returned_at", "returned_by"])
+            if update_fields:
+                link.save(update_fields=update_fields)
+
+        if links:
+            invoice.is_returned = any(link.pk in returned_ids for link in links)
+            invoice.save(update_fields=["is_returned", "updated_at"])
+        invoice = ProcurementInvoice.objects.prefetch_related("job_code_links__job_code").get(pk=invoice.pk)
+        return JsonResponse(
+            {
+                "ok": True,
+                "invoice": invoice.invoice_number or str(invoice.pk),
+                "job_codes": self._job_code_rows(invoice),
+                "returned_labels": _invoice_returned_job_code_labels(invoice),
+                "button_html": _invoice_returned_button_html(invoice),
+            }
+        )
 
 
 class EufInvoiceSyncView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
@@ -493,6 +622,7 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
         return rows
 
     def get_context_data(self, **kwargs):
+        self.object.sync_primary_job_code_link(created_by=self.request.user)
         ctx = super().get_context_data(**kwargs)
         latest_job_code = (
             JobCode.objects.filter(vehicle_id=OuterRef("pk"))
@@ -528,6 +658,11 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                     prefix=JOB_CODE_LINK_FORM_PREFIX,
                 ),
                 "job_code_links": self.object.job_code_links.select_related("job_code", "created_by"),
+                "additional_job_code_links": self.object.job_code_links.select_related("job_code", "created_by").filter(
+                    kind=ProcurementInvoiceJobCodeLink.KIND_ADDITIONAL
+                ),
+                "returned_job_code_labels": _invoice_returned_job_code_labels(self.object),
+                "returned_job_codes_url": reverse("nabavka:euf_invoice_returned_job_codes", kwargs={"pk": self.object.pk}),
                 "contract_execution_rows": self._contract_execution_rows(self.object),
                 "vehicle_job_codes": vehicle_job_code_options,
                 "item_links": self.object.item_links.select_related(
