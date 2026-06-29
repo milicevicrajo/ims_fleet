@@ -31,8 +31,8 @@ class VehicleFilter(django_filters.FilterSet):
     latest_center_code_sq = Subquery(latest_jobcode_qs.values('organizational_unit__center')[:1])
 
     # --- Osnovni filteri ---
-    category = django_filters.CharFilter(
-        label="Kategorija", lookup_expr="icontains"
+    category = django_filters.ChoiceFilter(
+        label="Kategorija", choices=Vehicle.Category.choices, empty_label="Sve kategorije"
     )
 
     engine_volume_min = django_filters.NumberFilter(
@@ -51,12 +51,13 @@ class VehicleFilter(django_filters.FilterSet):
 
     # --- Status: aktivna / otpisana / sva ---
     STATUS_CHOICES = (
+        ("all", "Sva"),
         ("active", "Aktivna"),
         ("archived", "Otpisana"),
 
     )
     status = django_filters.ChoiceFilter(
-        label="Status", choices=STATUS_CHOICES, method="filter_status"
+        label="Status", choices=STATUS_CHOICES, method="filter_status", empty_label=None
     )
 
     # Back-compat za stari parametar show_archived=yes
@@ -116,15 +117,6 @@ class VehicleFilter(django_filters.FilterSet):
         self.filters["center_code"].extra["choices"] = center_choices
         self.form.fields["center_code"].choices = center_choices
 
-        # KATEGORIJE kao select (prijatnije nego plain text)
-        cats = (Vehicle.objects
-                .exclude(category__isnull=True).exclude(category="")
-                .values_list("category", flat=True)
-                .distinct().order_by("category"))
-        # ako želiš select umesto text:
-        self.form.fields["category"].widget = forms.Select(
-            choices=[("", "— sve —")] + [(c, c) for c in cats]
-        )
 
         # Ako korisnik NIJE poslao status, prikaži 'Aktivna' kao default u UI
         if not self.data.get("status"):

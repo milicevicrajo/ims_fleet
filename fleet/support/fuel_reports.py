@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db.models import Case, IntegerField, OuterRef, Q, Subquery, Value, When
 from django.db.models.functions import ExtractMonth, ExtractYear
 
-from ..models import JobCode, TransactionNIS, TransactionOMV
+from ..models import JobCode, TransactionNIS, TransactionOMV, Vehicle
 from .fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset
 
 
@@ -14,7 +14,7 @@ SUPPLIER_NIS = "nis"
 
 
 def vehicle_type_label(vehicle_type):
-    return "Putnicka" if vehicle_type == VEHICLE_TYPE_PASSENGER else "Teretna"
+    return "Putnička vozila" if vehicle_type == VEHICLE_TYPE_PASSENGER else "Teretna vozila"
 
 
 def supplier_label(supplier):
@@ -23,8 +23,8 @@ def supplier_label(supplier):
 
 def _vehicle_type_filter(vehicle_type):
     if vehicle_type == VEHICLE_TYPE_PASSENGER:
-        return Q(vehicle__category__icontains="PUTNICKO")
-    return Q(vehicle__category__icontains="TERETNO")
+        return Q(vehicle__category=Vehicle.Category.PASSENGER)
+    return Q(vehicle__category=Vehicle.Category.CARGO)
 
 
 def _period_filter(queryset, date_field, form):
@@ -140,7 +140,7 @@ def _detail_from_omv(qs, sifpos):
         rows.append(
             {
                 "supplier": "OMV",
-                "tipvozila": trx.vehicle.category if trx.vehicle else "",
+                "tipvozila": trx.vehicle.get_category_display() if trx.vehicle else "",
                 "sifpos": trx.sifpos or "Bez sifre",
                 "naziv_sifre_posla": trx.naziv_sifre_posla or "",
                 "regozn": trx.license_plate_no,
@@ -170,7 +170,7 @@ def _detail_from_nis(qs, sifpos):
         rows.append(
             {
                 "supplier": "NIS",
-                "tipvozila": trx.vehicle.category if trx.vehicle else "",
+                "tipvozila": trx.vehicle.get_category_display() if trx.vehicle else "",
                 "sifpos": trx.sifpos or "Bez sifre",
                 "naziv_sifre_posla": trx.naziv_sifre_posla or "",
                 "regozn": trx.registarska_oznaka_vozila,

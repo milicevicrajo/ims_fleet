@@ -13,6 +13,11 @@ from hr.models import Employee
 #                 <!-- MODELI SAMOSTALNE APLIKACIJE -->
 # <!-- ======================================================================= -->
 class Vehicle(models.Model):
+    class Category(models.TextChoices):
+        PASSENGER = "putnicko", _("Putničko vozilo")
+        CARGO = "teretno", _("Teretno vozilo")
+        TRAILER = "prikljucno", _("Priključno vozilo")
+
     inventory_number = models.CharField(max_length=20, unique=True, verbose_name=_("Inventarski broj"))
     chassis_number = models.CharField(max_length=17, unique=True, verbose_name=_("Broj šasije"))
     brand = models.CharField(max_length=50, verbose_name=_("Marka"))
@@ -26,7 +31,7 @@ class Vehicle(models.Model):
     weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Masa (kg)"))
     engine_power = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_("Snaga motora (kW)"))
     load_capacity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Nosivost (kg)"))
-    category = models.CharField(max_length=50, verbose_name=_("Kategorija vozila"))
+    category = models.CharField(max_length=50, choices=Category.choices, verbose_name=_("Kategorija vozila"))
     maximum_permissible_weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Maksimalna dozvoljena masa (kg)"))
     fuel_type = models.CharField(max_length=20, verbose_name=_("Vrsta goriva"))
     number_of_seats = models.IntegerField(verbose_name=_("Broj sedišta"))

@@ -81,7 +81,7 @@
 
                             <button type="submit" class="btn btn-primary">Filtriraj</button>                        
 
-                            <button type="submit" class="btn btn-outline-secondary" href="{% url 'vehicle_list' %}">Reset</button>
+                            <a class="btn btn-outline-secondary" href="{% url 'vehicle_list' %}">Reset</a>
 
                     </div>
                 </div>
@@ -121,7 +121,7 @@
                     0
                   {% endif %}
                 </td>
-                <td>{{ vehicle.category }}</td>
+                <td>{{ vehicle.get_category_display }}</td>
                 <td>{{ vehicle.latest_org_unit_code|default:"-" }}</td>
                 <td>{{ vehicle.engine_volume|floatformat:0 }}</td>
                 <td class="text-center text-nowrap">

@@ -198,7 +198,7 @@ def vehicle_export_csv(request):
                 vehicle.year_of_manufacture or "",
                 vehicle.mileage or "",
                 f"{avg_consumption:.2f}" if avg_consumption is not None else "0",
-                vehicle.category or "",
+                vehicle.get_category_display() or "",
                 vehicle.latest_org_unit_code or "",
                 f"{vehicle.engine_volume:.0f}" if vehicle.engine_volume is not None else "",
             ]

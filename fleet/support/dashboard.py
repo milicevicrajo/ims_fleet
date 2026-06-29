@@ -40,7 +40,7 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
 
     vehicles = Vehicle.objects.filter(
         otpis=False,
-        category__in=['PUTNICKO VOZILO', 'TERETNO VOZILO'],
+        category__in=[Vehicle.Category.PASSENGER, Vehicle.Category.CARGO],
     )
     if vehicle_ids is not None:
         if isinstance(vehicle_ids, (list, tuple, set)):
@@ -299,7 +299,7 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'vehicle_id': vehicle.id,
             'brand': vehicle.brand,
             'model': vehicle.model,
-            'category': vehicle.category,
+            'category': vehicle.get_category_display(),
             'center': vehicle.center_code or 'Bez centra',
             'annual_km': annual_km,
             'mileage_source': mileage_source,

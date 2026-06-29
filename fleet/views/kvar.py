@@ -10,7 +10,7 @@ from core.mixins import RolePermissionRequiredMixin
 
 from ..filters import KvarFilter
 from ..forms.garaza import KvarForm, KvarPartForm
-from ..models import JobCode, Kvar, KvarPart
+from ..models import JobCode, Kvar, KvarPart, Vehicle
 from ..support.garaza import ensure_auto_parts
 
 
@@ -186,11 +186,10 @@ class KvarTrebovanjeView(RolePermissionRequiredMixin, LoginRequiredMixin, Templa
                 "is_van_ims": kvar.van_ims,
                 "auto_print": self.request.GET.get("auto") == "1",
                 "next_url": self.request.GET.get("next") or reverse("kvar_list"),
-                "vehicle_type": (
-                    "Teretno"
-                    if (getattr(vehicle, "category", "") or "").lower().find("teret") != -1
-                    else "Putnicko"
-                ),
+                "vehicle_type": {
+                    Vehicle.Category.CARGO: "Teretno vozilo",
+                    Vehicle.Category.TRAILER: "Priključno vozilo",
+                }.get(vehicle.category, "Putničko vozilo"),
             }
         )
         return ctx

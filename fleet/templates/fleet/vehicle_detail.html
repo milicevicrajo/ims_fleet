@@ -138,7 +138,7 @@
       </div>
       <h1 class="mt-3 mb-1">{{ vehicle.brand }} {{ vehicle.model }}</h1>
       <div class="vehicle-meta">
-        {{ vehicle.category }} · {{ vehicle.year_of_manufacture }} · {{ vehicle.fuel_type }} · inventar {{ vehicle.inventory_number }}
+        {{ vehicle.get_category_display }} · {{ vehicle.year_of_manufacture }} · {{ vehicle.fuel_type }} · inventar {{ vehicle.inventory_number }}
       </div>
     </div>
     <div class="text-end">

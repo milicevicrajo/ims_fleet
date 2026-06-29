@@ -83,7 +83,7 @@ class ProcurementInvoiceJobCodeLinkTests(TestCase):
             weight=Decimal("1200.00"),
             engine_power=Decimal("80.00"),
             load_capacity=Decimal("400.00"),
-            category="Putnicko",
+            category=Vehicle.Category.PASSENGER,
             maximum_permissible_weight=Decimal("1600.00"),
             fuel_type="Dizel",
             number_of_seats=5,

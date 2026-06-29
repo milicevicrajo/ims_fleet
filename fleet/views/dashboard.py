@@ -83,8 +83,8 @@ def dashboard(request):
     )
 
     total_vehicles = active_vehicles_qs.count()
-    passenger_vehicles = active_vehicles_qs.filter(category='PUTNICKO VOZILO').count()
-    transport_vehicles = active_vehicles_qs.filter(category='TERETNO VOZILO').count()
+    passenger_vehicles = active_vehicles_qs.filter(category=Vehicle.Category.PASSENGER).count()
+    transport_vehicles = active_vehicles_qs.filter(category=Vehicle.Category.CARGO).count()
 
     average_age = age_eligible_vehicles_qs.aggregate(avg_age=(current_year - Avg('year_of_manufacture')))
     book_value = Vehicle.objects.filter(purchase_date__lte=last_day_of_previous_month).aggregate(total_value=Sum('value'))
