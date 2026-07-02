@@ -1,6 +1,10 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -10,11 +14,12 @@ from django.views.generic import (
     UpdateView,
 )
 
-from core.mixins import RolePermissionRequiredMixin
+from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 
 from .forms import EmployeeCVItemForm, EmployeeForm, EmployeeNameCorrectionForm
 from .models import Employee, EmployeeCVItem
 from .querysets import employee_list_queryset
+from .sync import sync_employees_from_hr_view
 
 
 def _collect_user_activities(user):
@@ -166,7 +171,32 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
         context = super().get_context_data(**kwargs)
         context["title"] = "Lista zaposlenih"
         context["show_inactive"] = self.request.GET.get("inactive") == "1"
+        context["can_sync_employees"] = user_has_role_permission(
+            self.request.user,
+            "employee_sync",
+        )
         return context
+
+
+@login_required
+@require_POST
+@role_permission_required("employee_sync")
+def employee_sync_view(request):
+    try:
+        result = sync_employees_from_hr_view()
+    except Exception as exc:
+        messages.error(request, f"Sinhronizacija zaposlenih nije uspela: {exc}")
+    else:
+        messages.success(
+            request,
+            "Sinhronizacija zaposlenih zavrsena. "
+            f"Ukupno: {result['total']}, "
+            f"Kreirano: {result['created']}, "
+            f"Azurirano: {result['updated']}, "
+            f"Azurirano neaktivnih: {result['updated_inactive']}, "
+            f"Preskoceno neaktivnih: {result['skipped_inactive']}.",
+        )
+    return redirect("employee_list")
 
 
 class EmployeeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):

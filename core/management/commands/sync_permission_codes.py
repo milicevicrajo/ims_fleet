@@ -11,6 +11,8 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Synced {result['synced']} codes, created {result['created']}. "
-                "Uprava has all permissions. Menice and Zahtev roles have scoped permissions."
+                "Uprava has all permissions. "
+                "Menice, Blagajna, Zahtev, and Sekretarijat roles have scoped permissions. "
+                f"Sekretarijat users synced: {result['sekretarijat_group_users_synced']}."
             )
         )

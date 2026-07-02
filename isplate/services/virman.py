@@ -19,7 +19,7 @@ DETAIL_MODEL = "000"
 DETAIL_PURPOSE = "NEOPOREZIVA PRIMANJA ZAPOSLENIH"
 DETAIL_CONTROL = "00000"
 DETAIL_PAYMENT_CODE = "241"
-DETAIL_FIXED_REFERENCE = "972491"
+DETAIL_REFERENCE_FILLER = "000000"
 
 
 SERBIAN_TRANSLITERATION = str.maketrans(
@@ -93,9 +93,9 @@ def _amount_cents_for_header(value):
     return int(amount * 100)
 
 
-def _detail_reference(amount):
+def _detail_reference(amount, order):
     amount_part = str(_amount_cents(amount)).zfill(13)
-    return f"{amount_part}{DETAIL_FIXED_REFERENCE}"
+    return f"{amount_part}{DETAIL_REFERENCE_FILLER}{_order_number_reference(order)}"
 
 
 def _order_number_reference(order):
@@ -169,8 +169,7 @@ def build_detail_line(order, payment_date, allow_regenerate=False):
     _write(record, 89, 35, DETAIL_PURPOSE)
     _write(record, 125, 5, DETAIL_CONTROL)
     _write(record, 131, 3, DETAIL_PAYMENT_CODE)
-    _write(record, 136, 19, _detail_reference(order.advance_payment))
-    _write(record, 155, 15, _order_number_reference(order))
+    _write(record, 136, 34, _detail_reference(order.advance_payment, order))
     _write(record, 173, 8, payment_date.strftime(DETAIL_DATE_FORMAT))
     return _record_to_string(record)
 

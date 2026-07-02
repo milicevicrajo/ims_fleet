@@ -1,8 +1,11 @@
 import datetime
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+
+from core.models import PermissionCode, Role
 
 from .models import Employee, EmployeeCVItem
 
@@ -62,6 +65,17 @@ class MyEmployeeProfileTests(TestCase):
             date_of_birth=datetime.date(1990, 1, 1),
             date_of_joining=datetime.date(2020, 1, 1),
         )
+
+    def create_user_with_permissions(self, username, permission_codes):
+        user = get_user_model().objects.create_user(username, password="test")
+        role = Role.objects.create(name=f"Role {username}", slug=f"role-{username}")
+        permissions = [
+            PermissionCode.objects.create(code=code)
+            for code in permission_codes
+        ]
+        role.permissions.add(*permissions)
+        user.roles.add(role)
+        return user
 
     def test_linked_user_can_open_own_profile(self):
         employee = self.create_employee(100)
@@ -125,6 +139,40 @@ class MyEmployeeProfileTests(TestCase):
         response = self.client.get(reverse("employee_list"))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_employee_list_shows_manual_sync_button_with_permission(self):
+        self.create_employee(109)
+        user = self.create_user_with_permissions(
+            "sekretarijat",
+            ["employee_list", "employee_sync"],
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("employee_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("employee_sync"))
+        self.assertContains(response, "Sinhronizuj zaposlene")
+
+    @patch("hr.views.sync_employees_from_hr_view")
+    def test_manual_employee_sync_requires_permission_and_runs_sync(self, sync_mock):
+        sync_mock.return_value = {
+            "total": 1,
+            "created": 1,
+            "updated": 0,
+            "updated_inactive": 0,
+            "skipped_inactive": 0,
+        }
+        user = self.create_user_with_permissions(
+            "syncuser",
+            ["employee_list", "employee_sync"],
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("employee_sync"))
+
+        self.assertRedirects(response, reverse("employee_list"))
+        sync_mock.assert_called_once_with()
 
     def test_contracts_are_linked_through_employee_partner_code(self):
         from ugovori.models import Contract, ContractParty, ContractType, Partner

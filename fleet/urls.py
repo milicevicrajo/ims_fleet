@@ -14,6 +14,7 @@ from hr.views import (
     EmployeeUpdateView,
     MyEmployeeProfileView,
     MyEmployeeNameCorrectionView,
+    employee_sync_view,
 )
 
 from .views.fuel import (
@@ -261,6 +262,7 @@ urlpatterns = [
     path('potrosnja-goriva/obrisi/<int:pk>/', FuelConsumptionDeleteView.as_view(), name='fuelconsumption_delete'),
 
     path('zaposleni/', EmployeeListView.as_view(), name='employee_list'),
+    path('zaposleni/sync/', employee_sync_view, name='employee_sync'),
     path('zaposleni/novo/', EmployeeCreateView.as_view(), name='employee_create'),
     path('zaposleni/izmeni/<int:pk>/', EmployeeUpdateView.as_view(), name='employee_update'),
     path('zaposleni/<int:pk>/', EmployeeDetailView.as_view(), name='employee_detail'),

@@ -67,7 +67,7 @@ class VirmanServiceTests(TestCase):
         self.assertEqual(lines[2][88:123].strip(), "NEOPOREZIVA PRIMANJA ZAPOSLENIH")
         self.assertEqual(lines[2][130:133], "241")
         self.assertEqual(lines[2][135:148], "0000006313986")
-        self.assertEqual(lines[2][148:154], "972491")
+        self.assertEqual(lines[2][148:154], "000000")
         self.assertEqual(lines[2][154:169], "000000000120261")
 
     def test_rejects_employee_without_account(self):

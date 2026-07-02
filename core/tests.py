@@ -2,8 +2,10 @@ from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from openpyxl import load_workbook
 
 from .exporting import (
@@ -125,6 +127,39 @@ class RolePermissionMixinTests(SimpleTestCase):
 
         with self.assertRaises(PermissionDenied):
             protected_view(request)
+
+
+class PermissionCodeSyncTests(TestCase):
+    def test_sync_permission_codes_grants_employee_sync_to_sekretarijat(self):
+        from .permissions import sync_permission_codes
+
+        sync_permission_codes()
+
+        role = Role.objects.get(slug="sekretarijat")
+        codes = set(role.permissions.values_list("code", flat=True))
+        self.assertIn("employee_list", codes)
+        self.assertIn("employee_sync", codes)
+
+    def test_sync_permission_codes_grants_isplate_permissions_to_blagajna(self):
+        from .permissions import sync_permission_codes
+
+        sync_permission_codes()
+
+        role = Role.objects.get(slug="blagajna")
+        codes = set(role.permissions.values_list("code", flat=True))
+        self.assertIn("isplate:neoporezive_isplate", codes)
+
+    def test_sync_permission_codes_links_sekretarijat_group_users_to_role(self):
+        from .permissions import sync_permission_codes
+
+        group = Group.objects.create(name="Sekretarijat")
+        user = get_user_model().objects.create_user("sekretar", password="test")
+        user.groups.add(group)
+
+        result = sync_permission_codes()
+
+        self.assertEqual(result["sekretarijat_group_users_synced"], 1)
+        self.assertTrue(user.roles.filter(slug="sekretarijat").exists())
 
 
 class OrganizationalUnitLocationTests(SimpleTestCase):

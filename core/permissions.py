@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group
 from django.urls import URLPattern, URLResolver
 
 from core.models import PermissionCode, Role, RolePermission
@@ -45,11 +46,18 @@ def collect_menice_permission_codes():
     return collect_url_pattern_names(menice_urls.urlpatterns, prefix="menice")
 
 
+def collect_isplate_permission_codes():
+    from isplate import urls as isplate_urls
+
+    return collect_url_pattern_names(isplate_urls.urlpatterns, prefix="isplate")
+
+
 def collect_permission_codes():
     codes = set(collect_fleet_permission_codes())
     codes.update(collect_naplata_permission_codes())
     codes.update(collect_nabavka_permission_codes())
     codes.update(collect_menice_permission_codes())
+    codes.update(collect_isplate_permission_codes())
     return sorted(codes)
 
 
@@ -90,6 +98,18 @@ def sync_permission_codes():
     for perm in PermissionCode.objects.filter(code__in=menice_codes):
         RolePermission.objects.get_or_create(role=menice_role, permission=perm)
 
+    isplate_codes = collect_isplate_permission_codes()
+    blagajna_role, _ = Role.objects.get_or_create(
+        name="Blagajna",
+        slug="blagajna",
+        defaults={"description": "Pristup svim funkcijama aplikacije isplate."},
+    )
+    RolePermission.objects.filter(role=blagajna_role).exclude(
+        permission__code__in=isplate_codes
+    ).delete()
+    for perm in PermissionCode.objects.filter(code__in=isplate_codes):
+        RolePermission.objects.get_or_create(role=blagajna_role, permission=perm)
+
     zahtev_codes = [
         "nabavka:dashboard",
         "nabavka:case_list",
@@ -112,11 +132,39 @@ def sync_permission_codes():
     for perm in PermissionCode.objects.filter(code__in=zahtev_codes):
         RolePermission.objects.get_or_create(role=zahtev_role, permission=perm)
 
+    sekretarijat_codes = [
+        "employee_list",
+        "employee_sync",
+    ]
+    sekretarijat_role, _ = Role.objects.get_or_create(
+        slug="sekretarijat",
+        defaults={
+            "name": "Sekretarijat",
+            "description": "Pristup funkcijama sekretarijata.",
+            "is_active": True,
+        },
+    )
+    if sekretarijat_role.name != "Sekretarijat" or not sekretarijat_role.is_active:
+        sekretarijat_role.name = "Sekretarijat"
+        sekretarijat_role.is_active = True
+        sekretarijat_role.save(update_fields=["name", "is_active"])
+    for perm in PermissionCode.objects.filter(code__in=sekretarijat_codes):
+        RolePermission.objects.get_or_create(role=sekretarijat_role, permission=perm)
+    sekretarijat_group_users_synced = 0
+    sekretarijat_group = Group.objects.filter(name__iexact="Sekretarijat").first()
+    if sekretarijat_group:
+        for user in sekretarijat_group.user_set.all():
+            user.roles.add(sekretarijat_role)
+            sekretarijat_group_users_synced += 1
+
     return {
         "synced": len(codes),
         "created": created,
         "role": role,
         "nabavka_role": nabavka_role,
         "menice_role": menice_role,
+        "blagajna_role": blagajna_role,
         "zahtev_role": zahtev_role,
+        "sekretarijat_role": sekretarijat_role,
+        "sekretarijat_group_users_synced": sekretarijat_group_users_synced,
     }
