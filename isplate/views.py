@@ -10,31 +10,17 @@ from django.shortcuts import redirect
 from django.utils import timezone
 from django.views.generic import TemplateView
 
+from core.mixins import RolePermissionRequiredMixin
 from fleet.models import PutniNalog
 
 from .services.virman import build_virman_file
 
 
-def _is_uprava(user):
-    return user.roles.filter(slug="uprava").exists()
-
-
-def _get_allowed_centers(user):
-    codes = []
-    raw = (user.allowed_center_codes or "").strip()
-    if raw:
-        parts = [part.strip() for part in raw.replace(";", ",").split(",")]
-        codes.extend([part for part in parts if part])
-    unit_centers = list(user.allowed_centers.values_list("center", flat=True))
-    codes.extend([center for center in unit_centers if center])
-    return sorted({str(code).strip() for code in codes if str(code).strip()})
-
-
-class IsplataNeoporezovanihView(LoginRequiredMixin, TemplateView):
+class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "isplate/neoporezive_isplate.html"
 
     def get_queryset(self):
-        qs = (
+        return (
             PutniNalog.objects.select_related(
                 "employee",
                 "job_code",
@@ -44,16 +30,6 @@ class IsplataNeoporezovanihView(LoginRequiredMixin, TemplateView):
             .filter(storniran=False, advance_payment__gt=0)
             .order_by("-travel_date", "-id")
         )
-
-        user = self.request.user
-        if not user.is_superuser and not _is_uprava(user):
-            allowed_centers = _get_allowed_centers(user)
-            if allowed_centers:
-                qs = qs.filter(job_code__center__in=allowed_centers)
-            else:
-                return qs.none()
-
-        return qs
 
     def apply_filters(self, qs, include_status=True):
         if include_status:

@@ -7,7 +7,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import OrganizationalUnit
+from core.models import OrganizationalUnit, PermissionCode, Role
 from fleet.models import PutniNalog
 from hr.models import Employee
 
@@ -29,11 +29,11 @@ def create_employee(code=9001, account_number="160-5100103391558-82"):
     )
 
 
-def create_order(employee=None, order_number="01/2026-1", amount=Decimal("63139.86")):
+def create_order(employee=None, order_number="01/2026-1", amount=Decimal("63139.86"), center="01"):
     job_code = OrganizationalUnit.objects.create(
-        code=f"JC{order_number.split('-')[-1]}",
+        code=f"JC{center}{order_number.split('-')[-1]}",
         name="Test centar",
-        center="01",
+        center=center,
     )
     return PutniNalog.objects.create(
         order_number=order_number,
@@ -107,6 +107,24 @@ class VirmanServiceTests(TestCase):
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
 class IsplataNeoporezovanihViewTests(TestCase):
+    def create_isplate_user(self, username="blagajna"):
+        permission = PermissionCode.objects.create(code="isplate:neoporezive_isplate")
+        role = Role.objects.create(name="Blagajna", slug="blagajna")
+        role.permissions.add(permission)
+        user = get_user_model().objects.create_user(username=username, password="test")
+        user.roles.add(role)
+        return user
+
+    def test_isplate_permission_sees_all_centers_without_center_scope(self):
+        order = create_order(order_number="77/2026-10", center="77")
+        user = self.create_isplate_user()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("isplate:neoporezive_isplate"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, order.order_number)
+
     def test_post_generates_file_and_marks_order(self):
         order = create_order()
         user = get_user_model().objects.create_user(
