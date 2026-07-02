@@ -67,8 +67,7 @@ class VirmanServiceTests(TestCase):
         self.assertEqual(lines[2][88:123].strip(), "NEOPOREZIVA PRIMANJA ZAPOSLENIH")
         self.assertEqual(lines[2][130:133], "241")
         self.assertEqual(lines[2][135:148], "0000006313986")
-        self.assertEqual(lines[2][148:154], "000000")
-        self.assertEqual(lines[2][154:169], "000000000120261")
+        self.assertEqual(lines[2][148:169], "01/2026-1".rjust(21))
 
     def test_rejects_employee_without_account(self):
         order = create_order(employee=create_employee(account_number=""))

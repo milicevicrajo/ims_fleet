@@ -19,7 +19,7 @@ DETAIL_MODEL = "000"
 DETAIL_PURPOSE = "NEOPOREZIVA PRIMANJA ZAPOSLENIH"
 DETAIL_CONTROL = "00000"
 DETAIL_PAYMENT_CODE = "241"
-DETAIL_REFERENCE_FILLER = "000000"
+DETAIL_REFERENCE_SUFFIX_WIDTH = 21
 
 
 SERBIAN_TRANSLITERATION = str.maketrans(
@@ -95,15 +95,18 @@ def _amount_cents_for_header(value):
 
 def _detail_reference(amount, order):
     amount_part = str(_amount_cents(amount)).zfill(13)
-    return f"{amount_part}{DETAIL_REFERENCE_FILLER}{_order_number_reference(order)}"
+    return f"{amount_part}{_order_number_reference(order)}"
 
 
 def _order_number_reference(order):
-    reference = re.sub(r"[^A-Za-z0-9]", "", order.order_number or "")
-    reference = _safe_text(reference).upper()
+    reference = _safe_text(order.order_number or "")
     if not reference:
         raise ValidationError(f"{order.order_number}: nedostaje broj putnog naloga.")
-    return reference[-15:].rjust(15, "0")
+    if len(reference) > DETAIL_REFERENCE_SUFFIX_WIDTH:
+        raise ValidationError(
+            f"{order.order_number}: broj putnog naloga je duzi od {DETAIL_REFERENCE_SUFFIX_WIDTH} karaktera."
+        )
+    return reference.rjust(DETAIL_REFERENCE_SUFFIX_WIDTH)
 
 
 def _recipient_name(order):
