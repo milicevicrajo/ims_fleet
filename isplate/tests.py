@@ -26,6 +26,7 @@ def create_employee(code=9001, account_number="160-5100103391558-82"):
         date_of_birth=datetime.date(1990, 1, 1),
         date_of_joining=datetime.date(2020, 1, 1),
         account_number=account_number,
+        residence_municipality="Vracar",
     )
 
 
@@ -62,6 +63,7 @@ class VirmanServiceTests(TestCase):
         self.assertTrue(all(len(line) == RECORD_LENGTH for line in lines))
         self.assertEqual(lines[2][:18], "160510010339155882")
         self.assertIn("CAVRAK JELENA", lines[2])
+        self.assertEqual(lines[2][53:63].strip(), "VRACAR")
         self.assertEqual(lines[1][63:78], "000000006313986")
         self.assertEqual(lines[1][78:83], "00001")
         self.assertEqual(lines[2][88:123].strip(), "NEOPOREZIVA PRIMANJA ZAPOSLENIH")
@@ -81,6 +83,15 @@ class VirmanServiceTests(TestCase):
 
         with self.assertRaises(ValidationError):
             build_detail_line(order, datetime.date(2026, 5, 20))
+
+    def test_detail_line_uses_employee_residence_municipality_instead_of_travel_location(self):
+        employee = create_employee(code=9010, account_number="160-5100103391558-82")
+        order = create_order(employee=employee, order_number="01/2026-10")
+        order.travel_location = "Nis"
+
+        line = build_detail_line(order, datetime.date(2026, 5, 20))
+
+        self.assertEqual(line[53:63].strip(), "VRACAR")
 
     def test_rejects_generated_order_without_explicit_regenerate(self):
         order = create_order()

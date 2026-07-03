@@ -34,6 +34,23 @@ class HrAppTests(SimpleTestCase):
         self.assertIs(FleetEmployee, HrEmployee)
         self.assertIs(fleet_sync, hr_sync)
 
+    def test_optional_hr_sync_column_reports_when_source_is_missing(self):
+        from .sync import _optional_column
+
+        expression, exists = _optional_column({}, ["opstina_boravka"], "opstina_boravka")
+
+        self.assertFalse(exists)
+        self.assertIn("CAST(NULL", expression)
+
+    def test_residence_municipality_is_normalized_for_sync(self):
+        from .sync import _normalize_residence_municipality, _optional_column
+
+        expression, exists = _optional_column({"naz_ops": "naz_ops"}, ["naz_ops"], "opstina_boravka")
+
+        self.assertTrue(exists)
+        self.assertEqual(expression, "[naz_ops] AS opstina_boravka")
+        self.assertEqual(_normalize_residence_municipality("VOZDOVAC                      "), "VOZDOVAC")
+
     def test_employee_command_aliases_are_available(self):
         from fleet.management.commands.fetch_employee_data import Command as FetchCommand
         from hr.management.commands.fetch_employee_data import Command as HrFetchCommand

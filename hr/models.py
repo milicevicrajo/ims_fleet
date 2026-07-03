@@ -44,6 +44,12 @@ class Employee(models.Model):
     personal_number = models.CharField(max_length=13, verbose_name=_("Matični broj"), blank=True, null=True)
     account_number = models.CharField(max_length=50, verbose_name=_("Partija"), blank=True, null=True)
     address = models.CharField(max_length=255, verbose_name=_("Adresa"), blank=True, null=True)
+    residence_municipality = models.CharField(
+        max_length=100,
+        verbose_name=_("Opstina boravka"),
+        blank=True,
+        null=True,
+    )
     education = models.CharField(max_length=255, verbose_name=_("Škola"), blank=True, null=True)
     job_code = models.CharField(max_length=20, verbose_name=_("Šifra zanimanja"), blank=True, null=True)
     job_title = models.CharField(max_length=255, verbose_name=_("Naziv zanimanja"), blank=True, null=True)

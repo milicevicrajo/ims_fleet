@@ -86,6 +86,13 @@ def _as_str(value):
     return value or None
 
 
+def _normalize_residence_municipality(value):
+    value = _as_str(value)
+    if value is None:
+        return None
+    return " ".join(value.split()).upper()
+
+
 def _resolve_hr_db_alias(preferred=None):
     if preferred:
         return preferred
@@ -97,9 +104,47 @@ def _resolve_hr_db_alias(preferred=None):
     return "default"
 
 
+def _hr_employee_columns(cursor):
+    cursor.execute(
+        """
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = 'dbo'
+          AND TABLE_NAME = 'hr_employee'
+        """
+    )
+    return {str(row[0]).lower(): str(row[0]) for row in cursor.fetchall()}
+
+
+def _optional_column(columns, candidates, alias):
+    for candidate in candidates:
+        column = columns.get(candidate.lower())
+        if column:
+            return f"[{column}] AS {alias}", True
+    return f"CAST(NULL AS nvarchar(255)) AS {alias}", False
+
+
 def sync_employees_from_hr_view(using=None):
     using = _resolve_hr_db_alias(using)
-    query = """
+
+    with connections[using].cursor() as cursor:
+        columns = _hr_employee_columns(cursor)
+
+    residence_municipality_expr, has_residence_municipality_source = _optional_column(
+        columns,
+        [
+            "naz_ops",
+            "opstina_boravka",
+            "opstina",
+            "opstina_stanovanja",
+            "opstina_prebivalista",
+            "municipality",
+            "residence_municipality",
+        ],
+        "opstina_boravka",
+    )
+
+    query = f"""
         SELECT
             rasif,
             ranaz,
@@ -114,6 +159,7 @@ def sync_employees_from_hr_view(using=None):
             matbr,
             partija,
             adresa,
+            {residence_municipality_expr},
             skola,
             sif_zan,
             naz_zan,
@@ -147,6 +193,7 @@ def sync_employees_from_hr_view(using=None):
             matbr,
             partija,
             adresa,
+            opstina_boravka,
             skola,
             sif_zan,
             naz_zan,
@@ -189,6 +236,8 @@ def sync_employees_from_hr_view(using=None):
             "status_name": _as_str(naz_stat),
             "slava": _as_str(slava),
         }
+        if has_residence_municipality_source:
+            defaults["residence_municipality"] = _normalize_residence_municipality(opstina_boravka)
 
         if not is_active:
             existing = Employee.objects.filter(employee_code=employee_code).first()

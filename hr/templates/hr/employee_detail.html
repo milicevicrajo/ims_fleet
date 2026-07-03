@@ -84,7 +84,8 @@
               <h5 class="card-title">Kontakt</h5>
               <p><strong>Broj telefona:</strong> {{ employee.phone_number|default:"-" }}</p>
               <p><strong>Mobilni broj:</strong> {{ employee.mobile_phone|default:"-" }}</p>
-              <p class="mb-0"><strong>Adresa:</strong> {{ employee.address|default:"-" }}</p>
+              <p><strong>Adresa:</strong> {{ employee.address|default:"-" }}</p>
+              <p class="mb-0"><strong>Opstina boravka:</strong> {{ employee.residence_municipality|default:"-" }}</p>
             </div></div>
           </div>
           <div class="col-lg-6">

@@ -115,6 +115,12 @@ def _recipient_name(order):
     return order.other_employee_name or ""
 
 
+def _recipient_city(order):
+    if order.employee:
+        return (order.employee.residence_municipality or PAYER_CITY).upper()
+    return PAYER_CITY
+
+
 def validate_order_for_virman(order, allow_regenerate=False):
     errors = []
 
@@ -167,7 +173,7 @@ def build_detail_line(order, payment_date, allow_regenerate=False):
     record = _blank_record()
     _write(record, 1, 18, _account_digits(order.employee.account_number))
     _write(record, 19, 35, _safe_text(_recipient_name(order)).upper())
-    _write(record, 54, 10, _safe_text(order.travel_location or PAYER_CITY))
+    _write(record, 54, 10, _safe_text(_recipient_city(order)))
     _write(record, 64, 25, DETAIL_MODEL)
     _write(record, 89, 35, DETAIL_PURPOSE)
     _write(record, 125, 5, DETAIL_CONTROL)
