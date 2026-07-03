@@ -38,6 +38,7 @@ def create_order(employee=None, order_number="01/2026-1", amount=Decimal("63139.
     )
     return PutniNalog.objects.create(
         order_number=order_number,
+        order_date=datetime.date(2026, 5, 20),
         employee=employee or create_employee(),
         job_code=job_code,
         travel_location="Beograd",
@@ -115,6 +116,33 @@ class VirmanServiceTests(TestCase):
 
         self.assertEqual(len(virman_file.content.splitlines()), 3)
 
+    def test_virman_uses_order_date_instead_of_supplied_payment_date(self):
+        order = create_order()
+        order.order_date = datetime.date(2026, 5, 21)
+        order.save(update_fields=["order_date"])
+
+        virman_file = build_virman_file(
+            [order],
+            datetime.date(2026, 6, 15),
+            timezone.datetime(2026, 5, 20, 10, 30, tzinfo=datetime.UTC),
+        )
+        lines = virman_file.content.splitlines()
+
+        self.assertEqual(lines[0][63:69], "210526")
+        self.assertEqual(lines[2][172:180], "21052601")
+
+    def test_virman_rejects_orders_with_different_order_dates(self):
+        first_order = create_order(order_number="01/2026-11")
+        second_order = create_order(
+            employee=create_employee(code=9011, account_number="325-9300600276066-68"),
+            order_number="01/2026-12",
+        )
+        second_order.order_date = datetime.date(2026, 5, 21)
+        second_order.save(update_fields=["order_date"])
+
+        with self.assertRaises(ValidationError):
+            build_virman_file([first_order, second_order], datetime.date(2026, 5, 20), timezone.now())
+
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
 class IsplataNeoporezovanihViewTests(TestCase):
@@ -135,6 +163,32 @@ class IsplataNeoporezovanihViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, order.order_number)
+
+    def test_year_filter_and_list_date_use_order_date_not_travel_date(self):
+        included_order = create_order(
+            employee=create_employee(code=9020, account_number="160-5100103391558-82"),
+            order_number="01/2026-20",
+        )
+        included_order.order_date = datetime.date(2026, 1, 15)
+        included_order.travel_date = datetime.date(2025, 12, 31)
+        included_order.save(update_fields=["order_date", "travel_date"])
+        excluded_order = create_order(
+            employee=create_employee(code=9021, account_number="325-9300600276066-68"),
+            order_number="01/2025-21",
+        )
+        excluded_order.order_date = datetime.date(2025, 12, 31)
+        excluded_order.travel_date = datetime.date(2026, 1, 15)
+        excluded_order.save(update_fields=["order_date", "travel_date"])
+        user = self.create_isplate_user()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("isplate:neoporezive_isplate"), {"year": "2026"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Datum izdavanja")
+        self.assertContains(response, "15.01.2026")
+        self.assertContains(response, included_order.order_number)
+        self.assertNotContains(response, excluded_order.order_number)
 
     def test_post_generates_file_and_marks_order(self):
         order = create_order()

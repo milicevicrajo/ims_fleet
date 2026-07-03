@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
@@ -28,7 +26,7 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 "virman_generated_by",
             )
             .filter(storniran=False, advance_payment__gt=0)
-            .order_by("-travel_date", "-id")
+            .order_by("-order_date", "-id")
         )
 
     def apply_filters(self, qs, include_status=True):
@@ -45,11 +43,11 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
 
         year = self.request.GET.get("year", "").strip()
         if year.isdigit():
-            qs = qs.filter(travel_date__year=int(year))
+            qs = qs.filter(order_date__year=int(year))
 
         month = self.request.GET.get("month", "").strip()
         if month.isdigit():
-            qs = qs.filter(travel_date__month=int(month))
+            qs = qs.filter(order_date__month=int(month))
 
         search = self.request.GET.get("q", "").strip()
         if search:
@@ -70,14 +68,6 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
         action = request.POST.get("virman_action", "selected")
         is_test = action == "test_selected"
         allow_regenerate = request.POST.get("allow_regenerate") == "1"
-        payment_date_raw = request.POST.get("payment_date", "").strip()
-        payment_date = timezone.localdate()
-        if payment_date_raw:
-            try:
-                payment_date = datetime.strptime(payment_date_raw, "%Y-%m-%d").date()
-            except ValueError:
-                messages.error(request, "Datum isplate nije ispravan.")
-                return redirect(request.get_full_path())
 
         qs = self.get_queryset().select_related("employee", "job_code")
         if action in {"selected", "test_selected"}:
@@ -112,8 +102,7 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
         try:
             virman_file = build_virman_file(
                 orders,
-                payment_date,
-                generated_at,
+                generated_at=generated_at,
                 allow_regenerate=allow_regenerate,
             )
         except ValidationError as exc:
@@ -146,10 +135,10 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
             .order_by("job_code__center")
         )
         years = (
-            base_qs.exclude(travel_date__isnull=True)
-            .values_list("travel_date__year", flat=True)
+            base_qs.exclude(order_date__isnull=True)
+            .values_list("order_date__year", flat=True)
             .distinct()
-            .order_by("-travel_date__year")
+            .order_by("-order_date__year")
         )
 
         total_amount = filtered_qs.aggregate(total=Sum("advance_payment"))["total"] or 0
@@ -172,7 +161,6 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 "centers": centers,
                 "years": years,
                 "months": range(1, 13),
-                "payment_date": timezone.localdate(),
                 "orders_count": filtered_qs.count(),
                 "total_amount": total_amount,
                 "missing_account_count": missing_account_count,

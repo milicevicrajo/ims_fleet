@@ -253,10 +253,6 @@
           <input id="allow_regenerate" class="form-check-input" type="checkbox" name="allow_regenerate" value="1" {% if allow_regenerate %}checked{% endif %}>
           <label class="form-check-label" for="allow_regenerate">Ponovno generisanje</label>
         </div>
-        <div>
-          <label class="form-label filter-label mb-1" for="payment_date">Datum isplate</label>
-          <input id="payment_date" type="date" name="payment_date" value="{{ payment_date|date:'Y-m-d' }}" class="form-control form-control-sm">
-        </div>
         <div class="mb-1">
           <span class="badge bg-light text-dark border">
             Izabrano: <span id="selectedOrderCount" class="payout-count-badge d-inline-block text-end">0</span>
@@ -266,7 +262,7 @@
           <i class="mdi mdi-file-export"></i> Generisi izabrane
         </button>
         <button class="btn btn-outline-primary btn-sm" type="submit" name="virman_action" value="pending_for_date">
-          <i class="mdi mdi-calendar-check"></i> Generisi koji nemaju za datum
+          <i class="mdi mdi-calendar-check"></i> Generisi neodradjene
         </button>
         <button class="btn btn-outline-secondary btn-sm" type="submit" name="virman_action" value="test_selected">
           <i class="mdi mdi-file-eye"></i> Test izlaz
@@ -289,7 +285,7 @@
               <th>Racun</th>
               <th>Centar</th>
               <th>Mesto</th>
-              <th>Datum</th>
+              <th>Datum izdavanja</th>
               <th class="text-end">Iznos</th>
               <th class="text-center">Virman</th>
               <th>Kontrola</th>
@@ -319,7 +315,7 @@
                 </td>
                 <td>{{ order.job_code.center|default:"-" }}</td>
                 <td>{{ order.travel_location }}</td>
-                <td>{{ order.travel_date|date:"d.m.Y" }}</td>
+                <td>{{ order.order_date|date:"d.m.Y" }}</td>
                 <td class="text-end">{{ order.advance_payment|floatformat:2|intcomma }} {{ order.advance_payment_currency }}</td>
                 <td class="text-center">
                   {% if order.virman_generated %}

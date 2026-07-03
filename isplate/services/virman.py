@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 RECORD_LENGTH = 180
@@ -167,8 +168,15 @@ def build_header_lines(payment_date, total_amount=0, order_count=0):
     return [_record_to_string(first), _record_to_string(second)]
 
 
-def build_detail_line(order, payment_date, allow_regenerate=False):
+def _order_payment_date(order):
+    if not order.order_date:
+        raise ValidationError(f"{order.order_number}: nedostaje datum izdavanja naloga.")
+    return order.order_date
+
+
+def build_detail_line(order, payment_date=None, allow_regenerate=False):
     validate_order_for_virman(order, allow_regenerate=allow_regenerate)
+    order_date = _order_payment_date(order)
 
     record = _blank_record()
     _write(record, 1, 18, _account_digits(order.employee.account_number))
@@ -179,11 +187,11 @@ def build_detail_line(order, payment_date, allow_regenerate=False):
     _write(record, 125, 5, DETAIL_CONTROL)
     _write(record, 131, 3, DETAIL_PAYMENT_CODE)
     _write(record, 136, 34, _detail_reference(order.advance_payment, order))
-    _write(record, 173, 8, payment_date.strftime(DETAIL_DATE_FORMAT))
+    _write(record, 173, 8, order_date.strftime(DETAIL_DATE_FORMAT))
     return _record_to_string(record)
 
 
-def build_virman_file(orders, payment_date, generated_at, allow_regenerate=False):
+def build_virman_file(orders, payment_date=None, generated_at=None, allow_regenerate=False):
     orders = list(orders)
     if not orders:
         raise ValidationError("Izaberi bar jedan putni nalog.")
@@ -191,12 +199,18 @@ def build_virman_file(orders, payment_date, generated_at, allow_regenerate=False
     for order in orders:
         validate_order_for_virman(order, allow_regenerate=allow_regenerate)
 
+    order_dates = {_order_payment_date(order) for order in orders}
+    if len(order_dates) > 1:
+        raise ValidationError("Svi izabrani nalozi u jednom virmanu moraju imati isti datum izdavanja.")
+    virman_date = order_dates.pop()
+
     total_amount = sum(Decimal(order.advance_payment or 0) for order in orders)
-    lines = build_header_lines(payment_date, total_amount=total_amount, order_count=len(orders))
+    lines = build_header_lines(virman_date, total_amount=total_amount, order_count=len(orders))
     lines.extend(
-        build_detail_line(order, payment_date, allow_regenerate=allow_regenerate)
+        build_detail_line(order, allow_regenerate=allow_regenerate)
         for order in orders
     )
     content = "\r\n".join(lines) + "\r\n"
+    generated_at = generated_at or timezone.now()
     filename = f"Virman-putni-nalozi-{generated_at.strftime('%Y%m%d-%H%M%S')}.txt"
     return VirmanFile(filename=filename, content=content)
