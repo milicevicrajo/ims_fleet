@@ -2,70 +2,77 @@
 {% load widget_tweaks %}
 
 {% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Prijave kvarova, radni nalozi, trebovanja i zahtevi za servis po vozilu.</p>
+  </div>
+  <a href="{% url 'kvar_create' %}" class="btn btn-light btn-sm">
+    <i class="mdi mdi-plus"></i> Novi kvar
+  </a>
+</div>
+
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="card-title mb-0">{{ title }}</h2>
-        <div class="btn-group">
-          <a href="{% url 'kvar_create' %}" class="btn btn-primary btn-sm">
-            <i class="mdi mdi-plus"></i> Novi kvar
-          </a>
-        </div>
+      <div class="card-body border-bottom">
+        <form method="get" class="fleet-list-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_datum_od">{{ form.datum_od.label }}</label>
+              {{ form.datum_od|add_class:"form-control" }}
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_datum_do">{{ form.datum_do.label }}</label>
+              {{ form.datum_do|add_class:"form-control" }}
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_vozilo">{{ form.vozilo.label }}</label>
+              {{ form.vozilo|add_class:"form-control" }}
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_van_ims">{{ form.van_ims.label }}</label>
+              {{ form.van_ims|add_class:"form-select form-control" }}
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_kilometraza_od">{{ form.kilometraza_od.label }}</label>
+              {{ form.kilometraza_od|add_class:"form-control" }}
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_kilometraza_do">{{ form.kilometraza_do.label }}</label>
+              {{ form.kilometraza_do|add_class:"form-control" }}
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_opis">{{ form.opis.label }}</label>
+              {{ form.opis|add_class:"form-control" }}
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <label class="form-label mb-1" for="id_napomena">{{ form.napomena.label }}</label>
+              {{ form.napomena|add_class:"form-control" }}
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button type="submit" class="btn btn-primary" title="Filter">
+                <i class="mdi mdi-filter"></i> Filtriraj
+              </button>
+              <a href="{% url 'kvar_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+                <i class="mdi mdi-close"></i> Reset
+              </a>
+            </div>
+          </div>
+        </form>
       </div>
 
       <div class="card-body">
-        <form method="get" class="row g-3 align-items-end mb-4">
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_datum_od">{{ form.datum_od.label }}</label>
-            {{ form.datum_od|add_class:"form-control" }}
-          </div>
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_datum_do">{{ form.datum_do.label }}</label>
-            {{ form.datum_do|add_class:"form-control" }}
-          </div>
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_vozilo">{{ form.vozilo.label }}</label>
-            {{ form.vozilo|add_class:"form-control" }}
-          </div>
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_van_ims">{{ form.van_ims.label }}</label>
-            {{ form.van_ims|add_class:"form-select" }}
-          </div>
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_kilometraza_od">{{ form.kilometraza_od.label }}</label>
-            {{ form.kilometraza_od|add_class:"form-control" }}
-          </div>
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_kilometraza_do">{{ form.kilometraza_do.label }}</label>
-            {{ form.kilometraza_do|add_class:"form-control" }}
-          </div>
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_opis">{{ form.opis.label }}</label>
-            {{ form.opis|add_class:"form-control" }}
-          </div>
-          <div class="col-sm-6 col-md-3">
-            <label class="form-label" for="id_napomena">{{ form.napomena.label }}</label>
-            {{ form.napomena|add_class:"form-control" }}
-          </div>
-          <div class="col-12 d-flex gap-2">
-            <button type="submit" class="btn btn-outline-primary">
-              <i class="mdi mdi-filter"></i> Filtriraj
-            </button>
-            <a href="{% url 'kvar_list' %}" class="btn btn-outline-secondary">
-              <i class="mdi mdi-restore"></i> Resetuj
-            </a>
-          </div>
-        </form>
-
         <div class="table-responsive">
-          <table id="GarageFaultsTable" class="display compact table table-hover table-striped table-bordered align-middle w-100">
-            <thead class="table-light">
+          <table id="GarageFaultsTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
+            <thead>
               <tr>
                 <th>Detalj</th>
                 <th>Vozilo</th>
                 <th>Vrsta</th>
-                <th>Kilometraža</th>
+                <th data-type="numeric">Kilometraza</th>
                 <th>Opis kvara</th>
                 <th>Napomena</th>
                 <th>Van IMS-a</th>
@@ -73,58 +80,13 @@
                 <th class="text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
-            <tbody>
-              {% for kvar in kvarovi %}
-                <tr>
-                  <td><a href="{% url 'kvar_detail' kvar.pk %}" class="btn btn-outline-info btn-sm">Otvori</a></td>
-                  <td><a href="{% url 'vehicle_detail' kvar.vehicle.id %}">{{ kvar.vehicle }}</a></td>
-                  <td>{{ kvar.get_work_type_display }}</td>
-                  <td>{{ kvar.kilometraza }}</td>
-                  <td>{{ kvar.opis }}</td>
-                  <td>{{ kvar.napomena|default:"/" }}</td>
-                  <td>
-                    {% if kvar.van_ims %}
-                      Van IMS-a
-                    {% else %}
-                      IMS garaža
-                    {% endif %}
-                  </td>
-                  <td>{{ kvar.created_at|date:"d.m.Y H:i" }}</td>
-                  <td class="text-center text-nowrap">
-                    <a href="{% url 'kvar_update' kvar.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
-                      <i class="fas fa-edit"></i> Izmeni
-                    </a>
-                    <a href="{% url 'kvar_print' kvar.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Prijava kvara (A4)">
-                      <i class="mdi mdi-printer"></i> Prijava
-                    </a>
-                    <a href="{% url 'kvar_workorder' kvar.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Radni nalog">
-                      <i class="mdi mdi-clipboard-text"></i> Radni nalog
-                    </a>
-                    <a href="{% url 'kvar_trebovanje' kvar.pk %}" class="btn btn-outline-secondary btn-sm" style="min-width:110px;" target="_blank" title="{% if kvar.van_ims %}Zahtev za uslugu{% else %}Trebovanje{% endif %}">
-                      <i class="mdi mdi-file-document"></i> {% if kvar.van_ims %}Zahtev{% else %}Trebovanje{% endif %}
-                    </a>
-                    <form method="post" action="{% url 'kvar_delete' kvar.pk %}"
-                          class="d-inline"
-                        onsubmit="return confirm('Da li sigurno želite da obrišete ovaj kvar?');">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-outline-danger btn-sm" title="Obriši">
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="9" class="text-center text-muted">Nema podataka</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-            <tfoot class="table-light">
+            <tbody></tbody>
+            <tfoot>
               <tr>
                 <th>Detalj</th>
                 <th>Vozilo</th>
                 <th>Vrsta</th>
-                <th>Kilometraža</th>
+                <th>Kilometraza</th>
                 <th>Opis kvara</th>
                 <th>Napomena</th>
                 <th>Van IMS-a</th>
@@ -141,12 +103,42 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#GarageFaultsTable', {
-        exportTitle: 'Kvarovi garaža',
-        order: [[5, 'desc']],
-        autoSelectThreshold: 25
-      });
+    if (window.jQuery && jQuery.fn.DataTable) {
+      var table = jQuery('#GarageFaultsTable');
+      if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
+        table.DataTable({
+          serverSide: true,
+          processing: true,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+          order: [[7, 'desc']],
+          ajax: {
+            url: "{% url 'kvar_data' %}" + window.location.search,
+            type: "GET"
+          },
+          columns: [
+            { data: 'detail', orderable: false, searchable: false },
+            { data: 'vehicle' },
+            { data: 'work_type' },
+            { data: 'mileage' },
+            { data: 'description' },
+            { data: 'note' },
+            { data: 'van_ims' },
+            { data: 'created_at' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+          ],
+          language: {
+            processing: 'Ucitavanje...',
+            search: 'Pretraga:',
+            lengthMenu: 'Prikazi _MENU_ redova',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ kvarova',
+            infoEmpty: 'Nema kvarova',
+            infoFiltered: '(filtrirano od _MAX_ ukupno)',
+            zeroRecords: 'Nema rezultata',
+            paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
+          }
+        });
+      }
     }
   });
 </script>

@@ -1,76 +1,101 @@
 {% extends "base.html" %}
 {% load form_filters %}
+
 {% block content %}
-<h2>{{ title }}</h2>
-<div class="card shadow-sm">
-  <div class="card-body">
-      <form method="get" class="row g-3 align-items-end pb-3">
-        <div class="col-auto">
-            <label for="id_start_date" class="col-form-label">Od datuma:</label>
-            <div>
-                {{ filter_form.start_date|add_class:'form-control' }}
-            </div>
-        </div>
-        <div class="col-auto">
-            <label for="id_end_date" class="col-form-label">Do datuma:</label>
-            <div>
-                {{ filter_form.end_date|add_class:'form-control' }}
-            </div>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary">Filtriraj</button>
-        </div>
-    </form>
-    
-      <div class="table-responsive">
-          <table id="FuelTransactionsTable" class="display compact w-100" data-reports-dt="true">
-            <thead>
-                <tr>
-                    <th>Registarska oznaka</th>
-                    <th>Datum</th>
-                    <th>Broj računa</th>
-                    <th data-type="numeric" data-decimals="2">Količina (L)</th>
-                    <th data-type="numeric" data-decimals="2">Cena po litru (RSD)</th>
-                    <th data-type="numeric" data-decimals="2">Iznos neto (RSD)</th>
-                    <th data-type="numeric" data-decimals="2">Iznos bruto (RSD)</th>
-                    <th>Dobavljač</th>
-                    <th data-type="numeric" data-decimals="0">Kilometraža</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transaction in fuel_transactions %}
-                <tr>
-                    <td>{{ transaction.registration_number|default:"N/A" }}</td>
-                    <td>{{ transaction.annotated_transaction_date|date:"d.m.Y H:i:s" }}</td>
-                    <td>{{ transaction.annotated_receipt_number|receipt_number }}</td>
-                    <td data-order="{{ transaction.annotated_quantity|default_if_none:'0' }}">{{ transaction.annotated_quantity|default_if_none:"0"|floatformat:2 }}</td>
-                    <td data-order="{{ transaction.price_per_liter|default_if_none:'0' }}">{{ transaction.price_per_liter|default_if_none:"0"|floatformat:2 }}</td>
-                    <td data-order="{{ transaction.total_net|default_if_none:'0' }}">{{ transaction.total_net|default_if_none:"0"|floatformat:2 }}</td>
-                    <td data-order="{{ transaction.total_gross|default_if_none:'0' }}">{{ transaction.total_gross|default_if_none:"0"|floatformat:2 }}</td>
-                    <td>{{ transaction.annotated_supplier }}</td>
-                    <td data-order="{{ transaction.annotated_mileage|default_if_none:'0' }}">{{ transaction.annotated_mileage|default_if_none:"0"|floatformat:0 }}</td>
-                </tr>
+{% include "fleet/includes/list_styles.html" %}
 
-                {% endfor %}
-            </tbody>
-          </table>
-      </div>
-
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Promet goriva po vozilima, racunima, dobavljacima, kolicinama i kilometrazi.</p>
   </div>
 </div>
+
+<div class="card shadow-sm">
+  <div class="card-body border-bottom">
+    <form method="get" class="fleet-list-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-lg-3">
+          <label for="id_start_date" class="form-label mb-1">Od datuma</label>
+          {{ filter_form.start_date|add_class:'form-control' }}
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <label for="id_end_date" class="form-label mb-1">Do datuma</label>
+          {{ filter_form.end_date|add_class:'form-control' }}
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100" title="Filter">
+            <i class="mdi mdi-filter"></i>
+          </button>
+          <a href="{% url 'fuel_transactions_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+            <i class="mdi mdi-close"></i>
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="FuelTransactionsTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
+        <thead>
+          <tr>
+            <th>Registarska oznaka</th>
+            <th>Datum</th>
+            <th>Broj racuna</th>
+            <th data-type="numeric" data-decimals="2">Kolicina (L)</th>
+            <th data-type="numeric" data-decimals="2">Cena po litru (RSD)</th>
+            <th data-type="numeric" data-decimals="2">Iznos neto (RSD)</th>
+            <th data-type="numeric" data-decimals="2">Iznos bruto (RSD)</th>
+            <th>Dobavljac</th>
+            <th data-type="numeric" data-decimals="0">Kilometraza</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#FuelTransactionsTable', {
-        exportTitle: 'Promet goriva',
-        order: [[1, 'desc']],
-        numericColumns: [3, 4, 5, 6, 8],
-        sumColumns: [3, 5, 6],
-        avgColumns: [4],
-        autoSelectThreshold: 20
-      });
+    if (window.jQuery && jQuery.fn.DataTable) {
+      var table = jQuery('#FuelTransactionsTable');
+      if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
+        table.DataTable({
+          serverSide: true,
+          processing: true,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+          order: [[1, 'desc']],
+          ajax: {
+            url: "{% url 'fuel_transactions_data' %}" + window.location.search,
+            type: "GET"
+          },
+          columns: [
+            { data: 'registration_number' },
+            { data: 'date' },
+            { data: 'receipt_number' },
+            { data: 'quantity' },
+            { data: 'price_per_liter' },
+            { data: 'total_net' },
+            { data: 'total_gross' },
+            { data: 'supplier' },
+            { data: 'mileage' }
+          ],
+          language: {
+            processing: 'Ucitavanje...',
+            search: 'Pretraga:',
+            lengthMenu: 'Prikazi _MENU_ redova',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ transakcija',
+            infoEmpty: 'Nema transakcija',
+            infoFiltered: '(filtrirano od _MAX_ ukupno)',
+            zeroRecords: 'Nema rezultata',
+            paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
+          }
+        });
+      }
     }
   });
 </script>
-
 {% endblock %}

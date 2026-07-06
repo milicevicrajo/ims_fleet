@@ -47,23 +47,28 @@
                 });
             }
             
-            var table = $('#DatatableVozila').DataTable({
-                "language": languageSettings,
-                "pageLength": 50,  // Postavlja podrazumevani broj redova
-
-            });
+            var $vozilaTable = $('#DatatableVozila');
+            if ($vozilaTable.length && !$vozilaTable.is('[data-server-side-dt]') && !$.fn.DataTable.isDataTable($vozilaTable[0])) {
+                $vozilaTable.DataTable({
+                    "language": languageSettings,
+                    "pageLength": 50,  // Postavlja podrazumevani broj redova
+                });
+            }
             var table = $('#DatatableSaobracajne').DataTable({
                 "language": languageSettings,
                 "columnDefs": [
                 { "type": "date-custom", "targets": [2,3] }
                 ]
             });
-            var table = $('#DatatableLease').DataTable({
-                "language": languageSettings,
-                "columnDefs": [
-                { "type": "date-custom", "targets": [6,7] }
-                ]
-            });
+            var $leaseTable = $('#DatatableLease');
+            if ($leaseTable.length && !$leaseTable.is('[data-server-side-dt]') && !$.fn.DataTable.isDataTable($leaseTable[0])) {
+                $leaseTable.DataTable({
+                    "language": languageSettings,
+                    "columnDefs": [
+                    { "type": "date-custom", "targets": [6,7] }
+                    ]
+                });
+            }
 
             var table = $('#DatatablePolicy').DataTable({
                 "language": languageSettings,

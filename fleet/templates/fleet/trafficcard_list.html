@@ -1,116 +1,138 @@
 {% extends "base.html" %}
 {% load widget_tweaks %}
-{% load form_filters %}
-{% load ims_tags %}
 
 {% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Pregled saobracajnih dozvola po vozilu, registraciji, vazenju i vlasniku.</p>
+  </div>
+  <a href="{% url 'trafficcard_create_manual' %}" class="btn btn-light btn-sm">
+    <i class="mdi mdi-plus"></i> Dodaj saobracajnu dozvolu
+  </a>
+</div>
+
 <div class="row">
   <div class="col-12">
-    <div class="card">
-
-      <!-- Header: naslov + dugmad (Export CSV + Dodaj saobraćajnu dozvolu) -->
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="card-title mb-0">{{ title }}</h2>
-        <div class="d-flex align-items-center gap-2">
-          {# Kad povežeš URL, zameni href="#" sa {% url 'trafficcard_export_csv' %} i ukloni 'disabled' #}
-          <a href="#"
-             class="btn btn-success btn-sm disabled"
-             tabindex="-1" aria-disabled="true" data-no-preloader
-             title="Export u CSV (uskoro)">
-            <i class="mdi mdi-file-excel me-1"></i> Export CSV
-          </a>
-
-          <a href="{% url 'trafficcard_create_manual' %}" class="btn btn-primary btn-sm">
-            <i class="mdi mdi-plus-box me-1"></i> Dodaj saobraćajnu dozvolu
-          </a>
-        </div>
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="fleet-list-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-4 col-lg-3">
+              <label for="{{ filter_form.center.id_for_label }}" class="form-label mb-1">
+                {{ filter_form.center.label }}
+              </label>
+              {{ filter_form.center|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-4 col-lg-3">
+              <label for="{{ filter_form.organizational_unit.id_for_label }}" class="form-label mb-1">
+                {{ filter_form.organizational_unit.label }}
+              </label>
+              {{ filter_form.organizational_unit|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-4 col-lg-2 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Filter">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'trafficcard_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
       </div>
 
       <div class="card-body">
-        <form method="get" class="mb-4">
-          <div class="row g-3 align-items-end">
-
-            <!-- Centar -->
-            <div class="col-12 col-md-4 col-lg-3">
-              <label for="{{ filter_form.center.id_for_label }}" class="form-label mb-0">
-                {{ filter_form.center.label }}
-              </label>
-              {{ filter_form.center|add_class:"form-select select2-method" }}
-            </div>
-
-            <!-- OJ -->
-            <div class="col-12 col-md-4 col-lg-3">
-              <label for="{{ filter_form.organizational_unit.id_for_label }}" class="form-label mb-0">
-                {{ filter_form.organizational_unit.label }}
-              </label>
-              {{ filter_form.organizational_unit|add_class:"form-select select2-method" }}
-            </div>
-
-            <!-- Dugmad desno, u istom redu -->
-            <div class="col">
-              <button type="submit" class="btn btn-primary">
-                <i class="mdi mdi-filter-variant me-1"></i> Filtriraj
-              </button>
-              <button type="submit" class="btn btn-outline-secondary" href="{% url 'trafficcard_list' %}"> Reset
-
-              </button>
-            </div>
-
-          </div>
-        </form>
         <div class="table-responsive">
-            <table id="DatatableSaobracajne" class="display">
-              <thead>
-                  <tr>
-                      <th>Vozilo</th>
-                      <th>Registracija</th>
-                      <th>Datum izdavanja</th>
-                      <th>Važi do</th>
-                      <th>Broj dozvole</th>
-                      <th>Vlasnik</th>
-                      <th>Akcije</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  {% for card in traffic_cards %}
-                  <tr>                        
-                      <td>{{ card.vehicle }}</td>                      
-                      <td>{{ card.registration_number }}</td>
-                      <td>{{ card.issue_date|date:"d.m.Y"  }}</td>
-                      <td>{{ card.valid_until|date:"d.m.Y"}}</td>
-                      <td>{{ card.traffic_card_number }}</td>
-                      <td>{{ card.owner }}</td>
-                      <td>
-                        <!-- Izmeni dugme -->
-                        <a href="{% url 'trafficcard_update' card.pk %}" class="btn btn-sm btn-primary">
-                          <i class="fas fa-edit"></i> Izmeni
-                        </a>
-                      
-                        <!-- Preuzmi PDF ako postoji -->
-                        {% if card.traffic_card_pdf %}
-                          <a href="{{ card.traffic_card_pdf.url }}" class="btn btn-sm btn-success ms-2" target="_blank">
-                            <i class="fas fa-file-pdf"></i> Preuzmi PDF
-                          </a>
-                        {% else %}
-                          <span class="text-muted ms-2"><i class="fas fa-times-circle"></i> Nema PDF</span>
-                        {% endif %}
-                      </td>
-                      
-                  </tr>
-              {% endfor %}
-              <tfoot>
-                  <tr>
-                    <th>Vozilo</th>
-                    <th>Registracija</th>
-                    <th>Datum izdavanja</th>
-                    <th>Važi do</th>
-                    <th>Broj dozvole</th>
-                    <th>Vlasnik</th>
-                    <th>Homologacijski br.</th>
-                  </tr>
-              </tfoot>
+          <table id="TrafficCardsTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
+            <thead>
+              <tr>
+                <th>Vozilo</th>
+                <th>Registracija</th>
+                <th>Datum izdavanja</th>
+                <th>Vazi do</th>
+                <th>Broj dozvole</th>
+                <th>Vlasnik</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th>Vozilo</th>
+                <th>Registracija</th>
+                <th>Datum izdavanja</th>
+                <th>Vazi do</th>
+                <th>Broj dozvole</th>
+                <th>Vlasnik</th>
+                <th>Akcije</th>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
+    </div>
   </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.jQuery && jQuery.fn.select2) {
+      jQuery('.select2-method').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        allowClear: true,
+        placeholder: 'Izaberi'
+      });
+    }
+
+    if (!window.jQuery || !jQuery.fn.DataTable) {
+      return;
+    }
+
+    var table = jQuery('#TrafficCardsTable');
+    if (!table.length || jQuery.fn.DataTable.isDataTable(table[0])) {
+      return;
+    }
+
+    table.DataTable({
+      serverSide: true,
+      processing: true,
+      pageLength: 50,
+      lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+      order: [[3, 'desc']],
+      scrollX: true,
+      ajax: {
+        url: "{% url 'trafficcard_data' %}" + window.location.search,
+        type: "GET"
+      },
+      columns: [
+        { data: 'vehicle' },
+        { data: 'registration_number' },
+        { data: 'issue_date' },
+        { data: 'valid_until' },
+        { data: 'traffic_card_number' },
+        { data: 'owner' },
+        { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+      ],
+      language: {
+        processing: 'Ucitavanje...',
+        search: 'Pretraga:',
+        lengthMenu: 'Prikazi _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ dozvola',
+        infoEmpty: 'Nema dozvola',
+        infoFiltered: '(filtrirano od _MAX_ ukupno)',
+        zeroRecords: 'Nema rezultata',
+        paginate: {
+          first: 'Prva',
+          last: 'Poslednja',
+          next: 'Sledeca',
+          previous: 'Prethodna'
+        }
+      }
+    });
+  });
+</script>
 {% endblock %}

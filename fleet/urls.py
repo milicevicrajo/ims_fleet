@@ -194,6 +194,17 @@ from .views.reports import (
 from .views.dashboard import dashboard
 from .views.analytics import fleet_analytics
 from .views.center_statistics import center_statistics
+from .views.datatables import (
+    fuel_transactions_datatable_data,
+    kvar_datatable_data,
+    leases_datatable_data,
+    policies_datatable_data,
+    requisitions_datatable_data,
+    service_transactions_datatable_data,
+    traffic_cards_datatable_data,
+    vehicle_datatable_data,
+    vehicle_travel_order_datatable_data,
+)
 
 
 class FloatConverter:
@@ -207,6 +218,7 @@ register_converter(FloatConverter, 'float')
 
 urlpatterns = [
     path('vozila/', VehicleListView.as_view(), name='vehicle_list'),
+    path('vozila/data/', vehicle_datatable_data, name='vehicle_data'),
     path('vozila/export/csv/', vehicle_export_csv, name='vehicle_export_csv'),
     path('vozila/novo/', VehicleCreateView.as_view(), name='vehicle_create'),
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
@@ -223,6 +235,7 @@ urlpatterns = [
     path('vozila/<int:pk>/toggle-status', VehicleTogleStatusView.as_view(), name='vehicle_toggle_status'),
 
     path('saobracajne-dozvole/', TrafficCardListView.as_view(), name='trafficcard_list'),
+    path('saobracajne-dozvole/data/', traffic_cards_datatable_data, name='trafficcard_data'),
     path('saobracajne-dozvole/novo/', TrafficCardCreateView.as_view(), name='trafficcard_create_manual'),
     path('saobracajne-dozvole/novo/<int:vehicle_id>/', TrafficCardCreateView.as_view(), name='trafficcard_create'),
     path('saobracajne-dozvole/izmeni/<int:pk>/', TrafficCardUpdateView.as_view(), name='trafficcard_update'),
@@ -237,6 +250,7 @@ urlpatterns = [
     path('sifre-poslova/obrisi/<int:pk>/', JobCodeDeleteView.as_view(), name='jobcode_delete'),
 
     path('zakupi/', LeaseListView.as_view(), name='lease_list'),
+    path('zakupi/data/', leases_datatable_data, name='lease_data'),
     path('zakupi/novo/', LeaseCreateView.as_view(), name='lease_create'),
     path('zakupi/izmeni/<int:pk>/', LeaseUpdateView.as_view(), name='lease_update'),
     path('zakupi/<int:pk>/', LeaseDetailView.as_view(), name='lease_detail'),
@@ -246,6 +260,7 @@ urlpatterns = [
     path('azuriranje', fetch_vehicle_value_view, name='fetch_vehicle_value_legacy'),
     
     path('polise/', PolicyListView.as_view(), name='policy_list'),
+    path('polise/data/', policies_datatable_data, name='policy_data'),
     path('polise/nedovrseno/', PolicyFixingListView.as_view(), name='policy_fixing_list'),
     path('dopuna-polise/<int:pk>/', DraftPolicyUpdateView.as_view(), name='draft_policy_update'),
     path('polise/novo/', PolicyCreateView.as_view(), name='policy_create'),
@@ -256,6 +271,7 @@ urlpatterns = [
 
     path('potrosnja-goriva/', FuelConsumptionListView.as_view(), name='fuelconsumption_list'),
     path('fuel-transactions/', FuelTransactionsListView.as_view(), name='fuel_transactions_list'),
+    path('fuel-transactions/data/', fuel_transactions_datatable_data, name='fuel_transactions_data'),
     path('potrosnja-goriva/novo/', FuelConsumptionCreateView.as_view(), name='fuelconsumption_create'),
     path('potrosnja-goriva/izmeni/<int:pk>/', FuelConsumptionUpdateView.as_view(), name='fuelconsumption_update'),
     path('potrosnja-goriva/<int:pk>/', FuelConsumptionDetailView.as_view(), name='fuelconsumption_detail'),
@@ -276,6 +292,7 @@ urlpatterns = [
 
     path('garaza/', GarazaHomeView.as_view(), name='garaza_home'),
     path('garaza/kvarovi/', KvarListView.as_view(), name='kvar_list'),
+    path('garaza/kvarovi/data/', kvar_datatable_data, name='kvar_data'),
     path('garaza/kvarovi/novo/', KvarCreateView.as_view(), name='kvar_create'),
     path('garaza/kvarovi/izmena/<int:pk>/', KvarUpdateView.as_view(), name='kvar_update'),
     path('garaza/kvarovi/<int:pk>/', KvarDetailView.as_view(), name='kvar_detail'),
@@ -287,6 +304,7 @@ urlpatterns = [
     path('garaza/kvarovi/<int:pk>/trebovanje/', KvarTrebovanjeView.as_view(), name='kvar_trebovanje'),
 
     path('garaza/putni-nalozi-vozila/', VehicleTravelOrderListView.as_view(), name='vehicle_travel_order_list'),
+    path('garaza/putni-nalozi-vozila/data/', vehicle_travel_order_datatable_data, name='vehicle_travel_order_data'),
     path('garaza/putni-nalozi-vozila/novo/', VehicleTravelOrderCreateView.as_view(), name='vehicle_travel_order_create'),
     path('garaza/putni-nalozi-vozila/<int:pk>/', VehicleTravelOrderDetailView.as_view(), name='vehicle_travel_order_detail'),
     path('garaza/putni-nalozi-vozila/<int:pk>/obracun/', VehicleTravelOrderFuelReportView.as_view(), name='vehicle_travel_order_fuel_report'),
@@ -323,6 +341,7 @@ urlpatterns = [
     # path('servisi/obrisi/<int:pk>/', ServiceDeleteView.as_view(), name='service_delete'),
 
     path('service-transactions/', ServiceTransactionListView.as_view(), name='service_transaction_list'),
+    path('service-transactions/data/', service_transactions_datatable_data, name='service_transaction_data'),
     path('servisi/nedovrseno/', ServiceTransactionFixingListView.as_view(), name='service_fixing_list'),
     path('servisi-nedovrseno/<int:pk>/edit/', DraftServiceTransactionUpdateView.as_view(), name='draft_service_transaction_update'),
     path('service-transactions/add/', ServiceTransactionCreateView.as_view(), name='service_transaction_add'),
@@ -347,6 +366,7 @@ urlpatterns = [
     path('fetch-lease-interest/', fetch_lease_interest_data, name='fetch_lease_interest'),
 
     path('requisitions/', RequisitionListView.as_view(), name='requisition_list'),
+    path('requisitions/data/', requisitions_datatable_data, name='requisition_data'),
     path('requisition/<int:god>/<str:br_dok>/', RequisitionDetailView.as_view(), name='requisition_detail'),
     path('requisitions/nedovrseno/', RequisitionFixingListView.as_view(), name='requisition_fixing_list'),
     path('requisitions-nedovrseno/<int:pk>/edit/', DraftRequisitionUpdateView.as_view(), name='draft_requisition_update'),

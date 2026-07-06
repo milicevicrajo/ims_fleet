@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import OuterRef, Subquery
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
@@ -149,32 +148,8 @@ class TrafficCardListView(LoginRequiredMixin, ListView):
     form_class = TrafficCardFilterForm
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related("vehicle")
         self.filter_form = self.form_class(self.request.GET or None)
-
-        latest_org_unit_subquery = JobCode.objects.filter(
-            vehicle_id=OuterRef("vehicle_id")
-        ).order_by("-assigned_date").values("organizational_unit__code")[:1]
-
-        latest_center_subquery = JobCode.objects.filter(
-            vehicle_id=OuterRef("vehicle_id")
-        ).order_by("-assigned_date").values("organizational_unit__center")[:1]
-
-        queryset = queryset.annotate(
-            latest_org_unit=Subquery(latest_org_unit_subquery),
-            latest_center=Subquery(latest_center_subquery),
-        )
-
-        if self.filter_form.is_valid():
-            org_unit = self.filter_form.cleaned_data.get("organizational_unit")
-            center = self.filter_form.cleaned_data.get("center")
-
-            if org_unit:
-                queryset = queryset.filter(latest_org_unit=org_unit.code)
-            if center:
-                queryset = queryset.filter(latest_center=center)
-
-        return queryset
+        return TrafficCard.objects.none()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

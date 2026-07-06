@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% include "fleet/includes/list_styles.html" %}
 <style>
   .assignment-hero {
     border-radius: 8px;
@@ -85,7 +86,7 @@
 
       <div class="card-body">
         <div class="table-responsive">
-          <table id="VehicleTravelOrdersTable" class="display compact table table-hover table-bordered align-middle w-100">
+          <table id="VehicleTravelOrdersTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
             <thead>
               <tr>
                 <th>PN broj</th>
@@ -98,50 +99,7 @@
                 <th class="text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
-            <tbody>
-              {% for order in travel_orders %}
-              <tr class="{% if order.closed_at %}assignment-closed{% endif %}">
-                <td>
-                  <a href="{% url 'vehicle_travel_order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">
-                    <i class="mdi mdi-eye"></i> PN {{ order.pn_number }}
-                  </a>
-                </td>
-                <td>
-                  {% if order.closed_at %}
-                    <span class="assignment-status closed"><i class="mdi mdi-lock"></i> Zatvoren</span>
-                  {% else %}
-                    <span class="assignment-status open"><i class="mdi mdi-folder-open"></i> Otvoren</span>
-                  {% endif %}
-                </td>
-                <td>{{ order.rbz|default:"/" }}</td>
-                <td>{{ order.vehicle }}</td>
-                <td>{{ order.employee }}</td>
-                <td>{{ order.created_at|date:"d.m.Y" }}</td>
-                <td>{% if order.closed_at %}{{ order.closed_at|date:"d.m.Y" }}{% else %}/{% endif %}</td>
-                <td class="text-center">
-                  {% if not order.closed_at or request.user.is_superuser %}
-                  <a href="{% url 'vehicle_travel_order_update' order.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
-                  {% endif %}
-                  {% if not order.closed_at %}
-                  <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-outline-success btn-sm"><i class="mdi mdi-lock"></i> Zatvori</a>
-                  {% if order.previous_period_order %}
-                  <a href="{% url 'vehicle_travel_order_fuel_report' order.previous_period_order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-secondary btn-sm" title="Obracun prethodnog perioda" target="_blank">
-                    <i class="mdi mdi-printer"></i> Prethodni obracun
-                  </a>
-                  {% endif %}
-                  {% else %}
-                  <a href="{% url 'vehicle_travel_order_fuel_report' order.pk %}" class="btn btn-outline-secondary btn-sm" title="Obracun goriva" target="_blank">
-                    <i class="mdi mdi-printer"></i> Obracun
-                  </a>
-                  {% endif %}
-                  <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info btn-sm" target="_blank"><i class="mdi mdi-printer"></i> Zahtev</a>
-                  {% if not order.closed_at or request.user.is_superuser %}
-                  <a href="{% url 'vehicle_travel_order_delete' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i> Obrisi</a>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
+            <tbody></tbody>
             <tfoot>
               <tr>
                 <th>PN broj</th>
@@ -163,12 +121,41 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#VehicleTravelOrdersTable', {
-        exportTitle: '{{ title }}',
-        order: [[5, 'desc']],
-        autoSelectThreshold: 25
-      });
+    if (window.jQuery && jQuery.fn.DataTable) {
+      var table = jQuery('#VehicleTravelOrdersTable');
+      if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
+        table.DataTable({
+          serverSide: true,
+          processing: true,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+          order: [[5, 'desc']],
+          ajax: {
+            url: "{% url 'vehicle_travel_order_data' %}" + window.location.search,
+            type: "GET"
+          },
+          columns: [
+            { data: 'pn_number' },
+            { data: 'status' },
+            { data: 'rbz' },
+            { data: 'vehicle' },
+            { data: 'employee' },
+            { data: 'created_at' },
+            { data: 'closed_at' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+          ],
+          language: {
+            processing: 'Ucitavanje...',
+            search: 'Pretraga:',
+            lengthMenu: 'Prikazi _MENU_ redova',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ zaduzenja',
+            infoEmpty: 'Nema zaduzenja',
+            infoFiltered: '(filtrirano od _MAX_ ukupno)',
+            zeroRecords: 'Nema rezultata',
+            paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
+          }
+        });
+      }
     }
   });
 </script>

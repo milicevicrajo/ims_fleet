@@ -1,113 +1,129 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h2 class="card-title mb-0">{{ title }}</h2>
-                <a href="{% url 'lease_create' %}" class="btn btn-primary btn-sm ms-auto">
-                    <i class="fas fa-plus-circle me-1"></i> Nova stavka
-                </a>
-            </div>
-            <div class="card-body">
-                
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-                    <div class="btn-toolbar" role="toolbar" aria-label="Export toolbar">
-                        <div class="btn-group" role="group" aria-label="Export grupe">
-                            <a href="{{ export_url }}" class="btn btn-outline-success">
-                                <i class="mdi mdi-file-excel me-1"></i> Izvezi prikaz
-                            </a>
-                        </div>
-                    </div>
+{% include "fleet/includes/list_styles.html" %}
 
-                    <div class="btn-toolbar" role="toolbar" aria-label="Filter toolbar">
-                        <div class="btn-group" role="group" aria-label="Filter grupe">
-                            <a href="{{ lease_filter_links.all }}" class="btn btn-outline-primary {% if not active_tip %}active{% endif %}">
-                                <i class="mdi mdi-filter-variant me-1"></i> Svi
-                            </a>
-                            <a href="{{ lease_filter_links.finansijski }}"
-                                class="btn btn-outline-primary {% if active_tip == 'finansijski' %}active{% endif %}">
-                                Finansijski
-                            </a>
-                            <a href="{{ lease_filter_links.operativni }}"
-                                class="btn btn-outline-primary {% if active_tip == 'operativni' %}active{% endif %}">
-                                Operativni
-                            </a>
-                            <a href="{{ lease_filter_links.dugorocni }}"
-                                class="btn btn-outline-primary {% if active_tip == 'dugorocni' %}active{% endif %}">
-                                Dugoročni najam
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="btn-toolbar" role="toolbar" aria-label="Status toolbar">
-                        <div class="btn-group" role="group" aria-label="Filter po isteku">
-                            <a href="{{ only_active_url }}" class="btn btn-outline-secondary {% if not show_expired %}active{% endif %}">
-                                Aktivni
-                            </a>
-                            <a href="{{ show_expired_url }}" class="btn btn-outline-secondary {% if show_expired %}active{% endif %}">
-                                Neaktivni (istekli)
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-
-                <div class="table-responsive">
-                    <table id="DatatableLease" class="display table table-hover table-striped table-bordered align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Vozilo</th>
-                                <th>Partner</th>
-                                <th>Broj ugovora</th>
-                                <th>Vrsta</th>
-                                <th>Trenutna vrednost otplate</th>
-                                <th>Datum početka</th>
-                                <th>Datum završetka</th>
-                                <th>Napomena</th>
-                                <th class="text-center">Akcija</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for lease in leases %}
-                            <tr>
-                                <td>{{ lease.vehicle }}</td>
-                                <td>{{ lease.partner_name }} <small class="text-muted d-block">{{ lease.partner_code }}</small></td>
-                                <td>{{ lease.contract_number }} <small class="text-muted d-block">{{ lease.job_code }}</small></td>
-                                <td>
-                                {% if lease.lease_type == 'finansijski' %}
-                                    <span class="badge bg-primary text-white">Finansijski</span>
-                                {% elif lease.lease_type == 'operativni' %}
-                                    <span class="badge bg-info text-white">Operativni</span>
-                                {% elif lease.is_long_term_rental %}
-                                    <span class="badge bg-warning text-white">Dugoročni najam</span>
-                                {% else %}
-                                    {{ lease.lease_type_label|default:"—" }}
-                                {% endif %}
-                                </td>
-                                <td>{{ lease.current_payment_amount }}</td>
-                                <td>{{ lease.start_date|date:"d.m.Y" }}</td>
-                                <td>{{ lease.end_date|date:"d.m.Y" }}</td>
-                                <td>{{ lease.note|default:"Nema napomena" }}</td>
-                                <td class="text-center text-nowrap">
-                                    <a href="{% url 'lease_update' lease.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
-                                        <i class="fas fa-edit"></i>Izmeni
-                                    </a>
-                                    <a href="{% url 'lease_delete' lease.pk %}"
-                                       class="btn btn-danger btn-sm"
-                                       title="Obriši"
-                                       onclick="return confirm('Da li sigurno želiš da obrišeš ugovor {{ lease.contract_number }} za {{ lease.vehicle }}?');">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Lizing i najam vozila po partneru, tipu ugovora, periodu vazenja i vrednosti otplate.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ export_url }}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-file-excel"></i> Izvezi prikaz
+    </a>
+    <a href="{% url 'lease_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Nova stavka
+    </a>
+  </div>
 </div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <div class="fleet-list-filter d-flex flex-wrap justify-content-between gap-3">
+          <div class="btn-group flex-wrap" role="group" aria-label="Filter po vrsti">
+            <a href="{{ lease_filter_links.all }}" class="btn btn-sm btn-outline-primary {% if not active_tip %}active{% endif %}">
+              <i class="mdi mdi-filter-variant"></i> Svi
+            </a>
+            <a href="{{ lease_filter_links.finansijski }}" class="btn btn-sm btn-outline-primary {% if active_tip == 'finansijski' %}active{% endif %}">
+              Finansijski
+            </a>
+            <a href="{{ lease_filter_links.operativni }}" class="btn btn-sm btn-outline-primary {% if active_tip == 'operativni' %}active{% endif %}">
+              Operativni
+            </a>
+            <a href="{{ lease_filter_links.dugorocni }}" class="btn btn-sm btn-outline-primary {% if active_tip == 'dugorocni' %}active{% endif %}">
+              Dugorocni najam
+            </a>
+          </div>
+          <div class="btn-group flex-wrap" role="group" aria-label="Filter po statusu">
+            <a href="{{ only_active_url }}" class="btn btn-sm btn-outline-secondary {% if not show_expired %}active{% endif %}">
+              Aktivni
+            </a>
+            <a href="{{ show_expired_url }}" class="btn btn-sm btn-outline-secondary {% if show_expired %}active{% endif %}">
+              Neaktivni
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="LeasesTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
+            <thead>
+              <tr>
+                <th>Vozilo</th>
+                <th>Partner</th>
+                <th>Broj ugovora</th>
+                <th>Vrsta</th>
+                <th data-type="numeric">Trenutna vrednost otplate</th>
+                <th>Datum pocetka</th>
+                <th>Datum zavrsetka</th>
+                <th>Napomena</th>
+                <th class="text-center" data-filter="none">Akcija</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th>Vozilo</th>
+                <th>Partner</th>
+                <th>Broj ugovora</th>
+                <th>Vrsta</th>
+                <th>Trenutna vrednost otplate</th>
+                <th>Datum pocetka</th>
+                <th>Datum zavrsetka</th>
+                <th>Napomena</th>
+                <th>Akcija</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.jQuery && jQuery.fn.DataTable) {
+      var table = jQuery('#LeasesTable');
+      if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
+        table.DataTable({
+          serverSide: true,
+          processing: true,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+          order: [[6, 'desc']],
+          ajax: {
+            url: "{% url 'lease_data' %}" + window.location.search,
+            type: "GET"
+          },
+          columns: [
+            { data: 'vehicle' },
+            { data: 'partner' },
+            { data: 'contract' },
+            { data: 'lease_type' },
+            { data: 'current_payment_amount' },
+            { data: 'start_date' },
+            { data: 'end_date' },
+            { data: 'note' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+          ],
+          language: {
+            processing: 'Ucitavanje...',
+            search: 'Pretraga:',
+            lengthMenu: 'Prikazi _MENU_ redova',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ ugovora',
+            infoEmpty: 'Nema ugovora',
+            infoFiltered: '(filtrirano od _MAX_ ukupno)',
+            zeroRecords: 'Nema rezultata',
+            paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
+          }
+        });
+      }
+    }
+  });
+</script>
 {% endblock %}

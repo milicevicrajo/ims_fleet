@@ -1,96 +1,107 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Polise osiguranja po vozilu, partneru, periodu vazenja i iznosu premije.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'policy_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Nova polisa
+    </a>
+    <a href="{% url 'policies_monthly_costs' %}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-chart-line"></i> Izvestaj troskova
+    </a>
+    <a href="{% url 'policies_monthly_costs_csv' %}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-file-excel"></i> CSV
+    </a>
+  </div>
+</div>
 
 <div class="row">
   <div class="col-12">
-    <div class="card">
-        <!-- Header: naslov + dugmad (Export CSV + Novo) -->
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h2 class="card-title mb-0">{{ title }}</h2>
-            <div class="btn-group">
-                <a href="{% url 'policy_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus-circle"></i> Dodaj novu polisu
-                </a>
-                <a href="{% url 'policies_monthly_costs' %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-chart-line"></i> Izveštaj troškova
-                </a>
-                <a href="{% url 'policies_monthly_costs_csv' %}" class="btn btn-outline-success">
-                    <i class="fas fa-file-csv"></i> Preuzmi CSV
-                </a>
-            </div>
-        </div>
-    <div class="card-body">
+    <div class="card shadow-sm">
+      <div class="card-body">
         <div class="table-responsive">
-            <table id="PolicyTable" class="display compact table table-hover w-100" data-reports-dt="true">
-                <thead>
-                    <tr>
-                        <th>Vozilo</th>
-                        <th>Partner</th>
-                        <th>Broj ugovora</th>
-                        <th>Datum izdavanja</th>
-                        <th>Tip osiguranja</th>
-                        <th>Broj polise</th>
-                        <th data-type="numeric">Iznos premije</th>
-                        <th>Datum početka</th>
-                        <th>Datum završetka</th>
-                        <th class="text-center" data-filter="none">Akcije</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for policy in policies %}
-                    <tr>
-                        <td>{{ policy.vehicle }}</td>
-                        <td>
-                            {{ policy.partner_name }}
-                            {% if policy.partner_pib %}
-                            <small class="text-muted d-block">{{ policy.partner_pib }}</small>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ policy.invoice_number|floatformat:0 }}
-                            {% if policy.invoice_id %}
-                            <small class="text-muted d-block">{{ policy.invoice_id }}</small>
-                            {% endif %}
-                        </td>
-                        <td>{{ policy.issue_date|date:"d.m.Y" }}</td>
-                        <td>{{ policy.insurance_type }}</td>
-                        <td>{{ policy.policy_number|floatformat:0 }}</td>
-                        <td>{{ policy.premium_amount|floatformat:2 }}</td>
-                        <td>{{ policy.start_date|date:"d.m.Y" }}</td>
-                        <td>{{ policy.end_date|date:"d.m.Y" }}</td>
-
-                        <td class="text-center">
-                            <a href="{% url 'policy_update' policy.pk %}"class="btn btn-primary btn-sm" title="Izmeni">
-                                <i class="fas fa-edit"></i>Izmeni
-                            </a>
-                            <a href="{% url 'policy_delete' policy.pk %}" class="btn btn-sm btn-danger" title="Obriši">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="14" class="text-center">Trenutno nema polisa.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-
-            </table>
+          <table id="PolicyTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
+            <thead>
+              <tr>
+                <th>Vozilo</th>
+                <th>Partner</th>
+                <th>Broj ugovora</th>
+                <th>Datum izdavanja</th>
+                <th>Tip osiguranja</th>
+                <th>Broj polise</th>
+                <th data-type="numeric">Iznos premije</th>
+                <th>Datum pocetka</th>
+                <th>Datum zavrsetka</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th>Vozilo</th>
+                <th>Partner</th>
+                <th>Broj ugovora</th>
+                <th>Datum izdavanja</th>
+                <th>Tip osiguranja</th>
+                <th>Broj polise</th>
+                <th>Iznos premije</th>
+                <th>Datum pocetka</th>
+                <th>Datum zavrsetka</th>
+                <th>Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
         </div>
+      </div>
     </div>
   </div>
 </div>
-</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#PolicyTable', {
-        exportTitle: 'Polise osiguranja',
-        order: [[8, 'desc']],
-        numericColumns: [6],
-        autoSelectThreshold: 15
-      });
+    if (window.jQuery && jQuery.fn.DataTable) {
+      var table = jQuery('#PolicyTable');
+      if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
+        table.DataTable({
+          serverSide: true,
+          processing: true,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+          order: [[8, 'desc']],
+          ajax: {
+            url: "{% url 'policy_data' %}" + window.location.search,
+            type: "GET"
+          },
+          columns: [
+            { data: 'vehicle' },
+            { data: 'partner' },
+            { data: 'invoice' },
+            { data: 'issue_date' },
+            { data: 'insurance_type' },
+            { data: 'policy_number' },
+            { data: 'premium_amount' },
+            { data: 'start_date' },
+            { data: 'end_date' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+          ],
+          language: {
+            processing: 'Ucitavanje...',
+            search: 'Pretraga:',
+            lengthMenu: 'Prikazi _MENU_ redova',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ polisa',
+            infoEmpty: 'Nema polisa',
+            infoFiltered: '(filtrirano od _MAX_ ukupno)',
+            zeroRecords: 'Nema rezultata',
+            paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
+          }
+        });
+      }
     }
   });
 </script>

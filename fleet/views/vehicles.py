@@ -122,12 +122,6 @@ class VehicleListView(LoginRequiredMixin, FilterView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        vehicles = ctx.get("vehicles") or ctx.get("object_list")
-        vehicle_consumption_data = {}
-        for vehicle in vehicles:
-            vehicle_consumption_data[vehicle.id] = calculate_average_fuel_consumption(vehicle)
-
-        ctx["vehicle_consumption_data"] = vehicle_consumption_data
         ctx["title"] = "Lista vozila"
         ctx.setdefault("current_app", "fleet")
         return ctx

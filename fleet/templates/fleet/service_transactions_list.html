@@ -1,67 +1,49 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Servisne intervencije po vozilu, tipu servisa, dobavljacu i trosku.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'reports_service_monthly_costs' %}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-chart-line"></i> Izvestaj troskova
+    </a>
+    <a href="{% url 'reports_service_monthly_costs_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
+       class="btn btn-light btn-sm" target="_blank" rel="noopener" data-no-preloader download>
+      <i class="mdi mdi-file-excel"></i> CSV
+    </a>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm">
-
-      <!-- Header: naslov + dugmad (Izveštaj + CSV) -->
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="card-title mb-0">{{ title }}</h2>
-        <div class="btn-group">
-          <a href="{% url 'reports_service_monthly_costs' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-chart-line"></i> Izveštaj troškova
-          </a>
-          <a href="{% url 'reports_service_monthly_costs_csv' %}" {% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
-            class="btn btn-outline-success"
-            target="_blank" rel="noopener" data-no-preloader download>
-            <i class="mdi mdi-file-excel me-1"></i> Preuzmi CSV
-          </a>
-        </div>
-      </div>
-
       <div class="card-body">
         <div class="table-responsive">
-          <table id="ServiceTransactionsTable" class="display compact table table-hover table-striped table-bordered align-middle w-100" data-reports-dt="true">
-            <thead class="table-light">
+          <table id="ServiceTransactionsTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
+            <thead>
               <tr>
                 <th>Vozilo</th>
                 <th>Tip servisa</th>
                 <th>Datum servisa</th>
-                <th data-type="numeric">Trošak</th>
-                <th>Dobavljač</th>
+                <th data-type="numeric">Trosak</th>
+                <th>Dobavljac</th>
                 <th>Opis</th>
                 <th class="text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
-            <tbody>
-              {% for service_transaction in service_transactions %}
-                <tr>
-                  <td>{{ service_transaction.vehicle }}</td>
-                  <td>{{ service_transaction.popravka_kategorija }}</td>
-                  <td>{{ service_transaction.datum|date:"d.m.Y." }}</td>
-                  <td>{{ service_transaction.potrazuje }}</td>
-                  <td>{{ service_transaction.naz_par_pl }}</td>
-                  <td>{{ service_transaction.napomena }}</td>
-                  <td class="text-center text-nowrap">
-                    <a href="{% url 'service_transaction_update' service_transaction.pk %}" class="btn btn-primary btn-sm" title="Izmeni">
-                        <i class="fas fa-edit"></i>Izmeni
-                    </a>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="7" class="text-center text-muted">Nema podataka</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-            <tfoot class="table-light">
+            <tbody></tbody>
+            <tfoot>
               <tr>
                 <th>Vozilo</th>
                 <th>Tip servisa</th>
                 <th>Datum servisa</th>
-                <th>Trošak</th>
-                <th>Dobavljač</th>
+                <th>Trosak</th>
+                <th>Dobavljac</th>
                 <th>Opis</th>
                 <th class="text-center">Akcije</th>
               </tr>
@@ -69,19 +51,46 @@
           </table>
         </div>
       </div>
-
     </div>
   </div>
 </div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#ServiceTransactionsTable', {
-        exportTitle: 'Servisne intervencije',
-        order: [[2, 'desc']],
-        numericColumns: [3],
-        autoSelectThreshold: 20
-      });
+    if (window.jQuery && jQuery.fn.DataTable) {
+      var table = jQuery('#ServiceTransactionsTable');
+      if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
+        table.DataTable({
+          serverSide: true,
+          processing: true,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
+          order: [[2, 'desc']],
+          ajax: {
+            url: "{% url 'service_transaction_data' %}" + window.location.search,
+            type: "GET"
+          },
+          columns: [
+            { data: 'vehicle' },
+            { data: 'service_type' },
+            { data: 'date' },
+            { data: 'cost' },
+            { data: 'supplier' },
+            { data: 'description' },
+            { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+          ],
+          language: {
+            processing: 'Ucitavanje...',
+            search: 'Pretraga:',
+            lengthMenu: 'Prikazi _MENU_ redova',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ servisa',
+            infoEmpty: 'Nema servisa',
+            infoFiltered: '(filtrirano od _MAX_ ukupno)',
+            zeroRecords: 'Nema rezultata',
+            paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
+          }
+        });
+      }
     }
   });
 </script>

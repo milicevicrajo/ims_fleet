@@ -69,8 +69,6 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
         ctx["employees"] = Employee.objects.filter(
             vehicle_travel_orders__isnull=False
         ).distinct().order_by("last_name", "first_name")
-        for order in ctx["travel_orders"]:
-            order.previous_period_order = get_previous_vehicle_travel_order(order)
         return ctx
 
 
