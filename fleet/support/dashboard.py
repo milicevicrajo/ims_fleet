@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 import calendar
 
-from django.db.models import Count, ExpressionWrapper, F, IntegerField, Max, Min, OuterRef, Subquery, Sum
+from django.db.models import OuterRef, Subquery, Sum
 
 from ..models import (
     FuelConsumption,
@@ -21,6 +21,115 @@ from .analytics import cost_per_km_status, cost_per_km_thresholds, fixed_cost_pe
 from .fuel import date_range_for_datetime_field
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
+
+
+def _as_date(value):
+    return value.date() if hasattr(value, "date") else value
+
+
+def _valid_number(value):
+    try:
+        number = float(value or 0)
+    except (TypeError, ValueError):
+        return None
+    return number if number > 0 else None
+
+
+def _mileage_readings(vehicle):
+    readings = []
+    invalid_fuel_count = 0
+
+    for row in FuelConsumption.objects.filter(vehicle=vehicle).values("date", "mileage"):
+        mileage = _valid_number(row["mileage"])
+        if mileage is None:
+            invalid_fuel_count += 1
+            continue
+        readings.append({"date": _as_date(row["date"]), "mileage": mileage, "source": "Točenje"})
+
+    for order in VehicleTravelOrder.objects.filter(vehicle=vehicle).values(
+        "created_at",
+        "closed_at",
+        "start_mileage",
+        "end_mileage",
+    ):
+        start_mileage = _valid_number(order["start_mileage"])
+        if start_mileage is not None and order["created_at"]:
+            readings.append({"date": _as_date(order["created_at"]), "mileage": start_mileage, "source": "Zaduženje"})
+
+        end_mileage = _valid_number(order["end_mileage"])
+        if end_mileage is not None and order["closed_at"]:
+            readings.append({"date": _as_date(order["closed_at"]), "mileage": end_mileage, "source": "Zaduženje"})
+
+    readings = [reading for reading in readings if reading["date"]]
+    readings.sort(key=lambda reading: (reading["date"], reading["mileage"]))
+    return readings, invalid_fuel_count
+
+
+def _estimate_period_mileage(vehicle, period_start_date, period_end_date):
+    readings, invalid_fuel_count = _mileage_readings(vehicle)
+    period_days = max((period_end_date - period_start_date).days, 1)
+
+    def no_data(issue):
+        if invalid_fuel_count:
+            issue += " Točenja sa kilometražom 0 su ignorisana."
+        return {
+            "km": 0,
+            "source": "Nema podatka",
+            "issue": issue,
+            "requires_driver_warning": True,
+            "observed_days": 0,
+            "period_days": period_days,
+            "start_reading": None,
+            "end_reading": None,
+        }
+
+    if len(readings) < 2:
+        return no_data("Nema dva validna očitavanja kilometraže iz točenja ili zaduženja.")
+
+    best_pair = None
+    best_score = None
+    for start in readings:
+        for end in readings:
+            observed_days = (end["date"] - start["date"]).days
+            distance = end["mileage"] - start["mileage"]
+            if observed_days <= 0 or distance <= 0:
+                continue
+
+            score = abs((start["date"] - period_start_date).days) + abs((end["date"] - period_end_date).days)
+            if best_score is None or score < best_score:
+                best_score = score
+                best_pair = (start, end, observed_days, distance)
+
+    if not best_pair:
+        return no_data("Nema validan rast kilometraže između dostupnih točenja ili zaduženja.")
+
+    start, end, observed_days, distance = best_pair
+    estimated_km = distance / observed_days * period_days
+    sources = {start["source"], end["source"]}
+    if sources == {"Točenje"}:
+        source = "Točenja (okvirno)"
+    elif sources == {"Zaduženje"}:
+        source = "Zaduženja (okvirno)"
+    else:
+        source = "Točenja/zaduženja (okvirno)"
+
+    issue_parts = [
+        "Okvirno: kilometraža je preračunata iz najbližih validnih očitavanja "
+        f"({start['date']:%d.%m.%Y} - {end['date']:%d.%m.%Y}, {observed_days} dana)."
+    ]
+    if invalid_fuel_count:
+        issue_parts.append("Točenja sa kilometražom 0 su ignorisana.")
+
+    return {
+        "km": estimated_km,
+        "source": source,
+        "issue": " ".join(issue_parts),
+        "requires_driver_warning": False,
+        "observed_days": observed_days,
+        "period_days": period_days,
+        "start_reading": start,
+        "end_reading": end,
+    }
 
 
 def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None, vehicle_ids=None):
@@ -69,52 +178,6 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             )
             .values('vehicle')
             .annotate(total=Sum('amount'))
-            .values('total')[:1]
-        ),
-        min_fuel_mileage_period=Subquery(
-            FuelConsumption.objects.filter(
-                vehicle=OuterRef('pk'),
-                date__gte=period_start_dt,
-                date__lt=period_end_exclusive_dt,
-            )
-            .values('vehicle')
-            .annotate(total=Min('mileage'))
-            .values('total')[:1]
-        ),
-        max_fuel_mileage_period=Subquery(
-            FuelConsumption.objects.filter(
-                vehicle=OuterRef('pk'),
-                date__gte=period_start_dt,
-                date__lt=period_end_exclusive_dt,
-            )
-            .values('vehicle')
-            .annotate(total=Max('mileage'))
-            .values('total')[:1]
-        ),
-        fuel_entry_count_period=Subquery(
-            FuelConsumption.objects.filter(
-                vehicle=OuterRef('pk'),
-                date__gte=period_start_dt,
-                date__lt=period_end_exclusive_dt,
-            )
-            .values('vehicle')
-            .annotate(total=Count('id'))
-            .values('total')[:1]
-        ),
-        travel_order_km_period=Subquery(
-            VehicleTravelOrder.objects.filter(
-                vehicle=OuterRef('pk'),
-                created_at__lte=period_end_date,
-                closed_at__gte=period_start_date,
-                start_mileage__isnull=False,
-                end_mileage__isnull=False,
-                start_mileage__gt=0,
-                end_mileage__gt=F('start_mileage'),
-            )
-            .annotate(distance=ExpressionWrapper(F('end_mileage') - F('start_mileage'), output_field=IntegerField()))
-            .order_by()
-            .values('vehicle')
-            .annotate(total=Sum('distance'))
             .values('total')[:1]
         ),
         service_cost_period=Subquery(
@@ -223,34 +286,11 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
 
     rows = []
     for vehicle in vehicles:
-        fuel_entry_count = number(vehicle.fuel_entry_count_period)
-        fuel_km = number(vehicle.max_fuel_mileage_period) - number(vehicle.min_fuel_mileage_period)
-        travel_order_km = number(vehicle.travel_order_km_period)
-        mileage_source = 'Gorivo'
-        mileage_issue = ''
-        requires_driver_warning = False
-
-        suspicious_fuel_mileage = fuel_entry_count > 0 and fuel_km < 10
-
-        if fuel_entry_count >= 2 and fuel_km >= 10:
-            annual_km = fuel_km
-        elif travel_order_km > 0:
-            annual_km = travel_order_km
-            mileage_source = 'Putni nalozi'
-            if suspicious_fuel_mileage:
-                mileage_issue = 'Kilometraža pri točenju je manja od 10 km; korišćeni su putni nalozi.'
-            elif fuel_entry_count < 2:
-                mileage_issue = 'Nema dovoljno kilometraže pri točenju; korišćeni su putni nalozi.'
-            else:
-                mileage_issue = 'Sumnjiva kilometraža pri točenju; korišćeni su putni nalozi.'
-        else:
-            annual_km = 0
-            mileage_source = 'Nema podatka'
-            requires_driver_warning = True
-            if suspicious_fuel_mileage:
-                mileage_issue = 'Kilometraža pri točenju je manja od 10 km. Opomenuti vozače da unose stvarnu kilometražu pri sipanju goriva.'
-            else:
-                mileage_issue = 'Opomenuti vozače da unose kilometražu pri točenju goriva.'
+        mileage_estimate = _estimate_period_mileage(vehicle, period_start_date, period_end_date)
+        annual_km = mileage_estimate["km"]
+        mileage_source = mileage_estimate["source"]
+        mileage_issue = mileage_estimate["issue"]
+        requires_driver_warning = mileage_estimate["requires_driver_warning"]
 
         fuel_cost = number(vehicle.fuel_cost_period)
         service_cost = number(vehicle.service_cost_period)
@@ -305,6 +345,10 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'mileage_source': mileage_source,
             'mileage_issue': mileage_issue,
             'requires_driver_warning': requires_driver_warning,
+            'mileage_observed_days': mileage_estimate["observed_days"],
+            'mileage_period_days': mileage_estimate["period_days"],
+            'mileage_start_reading': mileage_estimate["start_reading"],
+            'mileage_end_reading': mileage_estimate["end_reading"],
             'fuel_cost': fuel_cost,
             'fuel_liters': number(vehicle.fuel_liters_period),
             'service_cost': service_cost,

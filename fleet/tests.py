@@ -14,8 +14,9 @@ from django.utils import timezone
 from .forms import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
-from .models import TrafficCard, TransactionNIS, TransactionOMV
+from .models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
+from .support.dashboard import vehicle_cost_per_km_rows
 from .support.report_helpers import date_period_filtered_query, report_period_filtered_query
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
@@ -142,6 +143,94 @@ class ReportExportRowsTests(SimpleTestCase):
 				Decimal("7000.00"),
 			]],
 		)
+
+
+class VehicleCostPerKmMileageTests(TestCase):
+	def create_vehicle(self, inventory_number="A-1", chassis_number="CHASSIS000000001", engine_number="ENGINE-1"):
+		return Vehicle.objects.create(
+			inventory_number=inventory_number,
+			chassis_number=chassis_number,
+			brand="Test",
+			model="Vozilo",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1600.00"),
+			engine_number=engine_number,
+			weight=Decimal("1200.00"),
+			engine_power=Decimal("80.00"),
+			load_capacity=Decimal("500.00"),
+			category=Vehicle.Category.PASSENGER,
+			maximum_permissible_weight=Decimal("1800.00"),
+			fuel_type="Dizel",
+			number_of_seats=5,
+			purchase_value=Decimal("1000000.00"),
+			value=Decimal("800000.00"),
+			service_interval=15000,
+			purchase_date=datetime.date(2020, 1, 1),
+		)
+
+	def create_fuel(self, vehicle, when, mileage, cost=Decimal("1000.00")):
+		return FuelConsumption.objects.create(
+			vehicle=vehicle,
+			date=timezone.make_aware(datetime.datetime.combine(when, datetime.time(12, 0))),
+			amount=Decimal("10.00"),
+			fuel_type="Dizel",
+			cost_bruto=cost,
+			cost_neto=cost,
+			supplier="NIS",
+			mileage=mileage,
+		)
+
+	def test_cost_per_km_ignores_zero_fuel_mileage_and_estimates_period_km(self):
+		vehicle = self.create_vehicle()
+		self.create_fuel(vehicle, datetime.date(2026, 1, 1), 10000)
+		self.create_fuel(vehicle, datetime.date(2026, 6, 1), 0)
+		self.create_fuel(vehicle, datetime.date(2027, 1, 1), 20000)
+
+		rows = vehicle_cost_per_km_rows(
+			datetime.date(2026, 1, 1),
+			datetime.date(2027, 1, 1),
+			vehicle_ids=[vehicle.id],
+		)
+
+		self.assertEqual(len(rows), 1)
+		self.assertAlmostEqual(rows[0]["annual_km"], 10000)
+		self.assertEqual(rows[0]["mileage_source"], "Točenja (okvirno)")
+		self.assertIn("0 su ignorisana", rows[0]["mileage_issue"])
+
+	def test_cost_per_km_uses_vehicle_travel_order_mileage_when_fuel_mileage_is_invalid(self):
+		vehicle = self.create_vehicle("A-2", "CHASSIS000000002", "ENGINE-2")
+		employee = Employee.objects.create(
+			employee_code=9901,
+			first_name="Test",
+			last_name="Vozac",
+			position="Vozac",
+			department_code=1,
+			gender="M",
+			date_of_birth=datetime.date(1990, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+		)
+		self.create_fuel(vehicle, datetime.date(2026, 6, 1), 0)
+		VehicleTravelOrder.objects.create(
+			vehicle=vehicle,
+			employee=employee,
+			created_at=datetime.date(2026, 1, 1),
+			closed_at=datetime.date(2027, 1, 1),
+			start_mileage=1000,
+			end_mileage=4650,
+		)
+
+		rows = vehicle_cost_per_km_rows(
+			datetime.date(2026, 1, 1),
+			datetime.date(2027, 1, 1),
+			vehicle_ids=[vehicle.id],
+		)
+
+		self.assertEqual(len(rows), 1)
+		self.assertAlmostEqual(rows[0]["annual_km"], 3650)
+		self.assertEqual(rows[0]["mileage_source"], "Zaduženja (okvirno)")
 
 
 class ReportPeriodFilterHelperTests(SimpleTestCase):

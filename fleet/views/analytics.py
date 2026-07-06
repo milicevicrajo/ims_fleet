@@ -52,13 +52,13 @@ def fleet_analytics(request):
     cost_per_km_periods = [
         {
             'key': '12m',
-            'label': 'Poslednjih 12 meseci',
+            'label': 'Poslednjih 12 meseci (okvirno)',
             'start': start_of_last_12_months,
             'end': today,
         },
         {
             'key': '24m',
-            'label': 'Poslednja 24 meseca',
+            'label': 'Poslednja 24 meseca (okvirno)',
             'start': start_of_last_24_months,
             'end': today,
         },

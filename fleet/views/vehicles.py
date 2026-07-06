@@ -371,17 +371,18 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
 
         cost_per_km_periods = [
             {
-                "label": "Poslednjih 12 meseci",
+                "label": "Poslednjih 12 meseci (okvirno)",
                 "start": datetime.date.today() - datetime.timedelta(days=365),
                 "end": datetime.date.today(),
             },
             {
-                "label": "Poslednja 24 meseca",
+                "label": "Poslednja 24 meseca (okvirno)",
                 "start": datetime.date.today() - datetime.timedelta(days=730),
                 "end": datetime.date.today(),
             },
         ]
         vehicle_cost_per_km_details = []
+        vehicle_cost_per_km_12m = None
         for period in cost_per_km_periods:
             row = next(
                 iter(
@@ -403,6 +404,8 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
                     "status": status,
                 }
             )
+            if vehicle_cost_per_km_12m is None:
+                vehicle_cost_per_km_12m = vehicle_cost_per_km_details[-1]
 
         service_category_rows = [
             {
@@ -458,6 +461,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
                 "monthly_vehicle_costs": monthly_vehicle_costs,
                 "service_category_rows": service_category_rows,
                 "vehicle_cost_per_km_details": vehicle_cost_per_km_details,
+                "vehicle_cost_per_km_12m": vehicle_cost_per_km_12m,
                 "tender_documents": vehicle.tender_documents.order_by("-created_at"),
                 "latest_sticker_document": latest_sticker_document,
                 "tender_document_create_url": reverse("vehicle_tender_document_create_for_vehicle", kwargs={"vehicle_id": vehicle.pk}),

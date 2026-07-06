@@ -142,12 +142,18 @@
       </div>
     </div>
     <div class="text-end">
-      {% if vehicle_analysis.red_zone %}
-        <span class="vehicle-status vehicle-status-risk">Crvena zona</span>
-      {% elif vehicle_analysis.long_term_rental %}
-        <span class="vehicle-status vehicle-status-ok">Dugoročni najam</span>
+      {% if vehicle_cost_per_km_12m %}
+        {% if vehicle_cost_per_km_12m.status == 'Dobro' %}
+          <span class="vehicle-status vehicle-status-ok">{{ vehicle_cost_per_km_12m.status }}</span>
+        {% elif vehicle_cost_per_km_12m.status == 'Za praćenje' %}
+          <span class="vehicle-status vehicle-status-ok">{{ vehicle_cost_per_km_12m.status }}</span>
+        {% elif vehicle_cost_per_km_12m.status == 'Nema podatka' %}
+          <span class="vehicle-status vehicle-status-risk">{{ vehicle_cost_per_km_12m.status }}</span>
+        {% else %}
+          <span class="vehicle-status vehicle-status-risk">{{ vehicle_cost_per_km_12m.status }}</span>
+        {% endif %}
       {% else %}
-        <span class="vehicle-status vehicle-status-risk">Neisplativo</span>
+        <span class="vehicle-status vehicle-status-risk">Nema podatka</span>
       {% endif %}
       <div class="mt-3">
         <a href="{% url 'vehicle_tender_documentation_zip' vehicle.pk %}" class="btn btn-sm btn-light" target="vehicle-documentation-download-frame" data-no-preloader download>
@@ -180,16 +186,22 @@
     <strong>{{ vehicle_analysis.maintenance_value_ratio|floatformat:0 }}%</strong>
   </div>
   <div class="vehicle-kpi">
+    <small>Cena po km 12m</small>
+    <strong>
+      {% if vehicle_cost_per_km_12m.row.cost_per_km %}
+        {{ vehicle_cost_per_km_12m.row.cost_per_km|floatformat:2|intcomma }} RSD/km
+      {% else %}
+        -
+      {% endif %}
+    </strong>
+  </div>
+  <div class="vehicle-kpi">
     <small>Gorivo ukupno</small>
     <strong>{{ vehicle_analysis.total_fuel_cost|floatformat:0|intcomma }} RSD</strong>
   </div>
   <div class="vehicle-kpi">
     <small>Potrošeno gorivo</small>
     <strong>{{ vehicle_analysis.total_fuel_liters|floatformat:0|intcomma }} l</strong>
-  </div>
-  <div class="vehicle-kpi">
-    <small>Kilometraža</small>
-    <strong>{% if mileage %}{{ mileage|floatformat:0|intcomma }} km{% else %}-{% endif %}</strong>
   </div>
 </div>
 
@@ -335,7 +347,7 @@
 
 <div class="card mt-3">
   <div class="card-body">
-    <h3 class="card-title">Proračun isplativosti (cena po kilometru)</h3>
+    <h3 class="card-title">Proračun isplativosti (12m/24m okvirno)</h3>
     <p class="text-muted mb-3">
       Formula: (Gorivo + Servis + IMS trebovanja + Polise + Godišnja amortizacija + Godišnji lizing/zakup - Naplata osiguranja) / Pređena kilometraža.
     </p>
@@ -346,6 +358,7 @@
             <th>Period</th>
             <th class="text-end">Km</th>
             <th>Izvor km</th>
+            <th>Validna očitavanja</th>
             <th class="text-end">Gorivo</th>
             <th class="text-end">Servis</th>
             <th class="text-end">IMS</th>
@@ -366,6 +379,22 @@
               <td>{{ item.period_label }}</td>
               <td class="text-end">{{ item.row.annual_km|floatformat:0|intcomma }}</td>
               <td>{{ item.row.mileage_source }}</td>
+              <td class="small">
+                {% if item.row.mileage_start_reading and item.row.mileage_end_reading %}
+                  {{ item.row.mileage_start_reading.date|date:"d.m.Y" }}
+                  - {{ item.row.mileage_start_reading.mileage|floatformat:0|intcomma }} km
+                  ({{ item.row.mileage_start_reading.source }})
+                  <br>
+                  {{ item.row.mileage_end_reading.date|date:"d.m.Y" }}
+                  - {{ item.row.mileage_end_reading.mileage|floatformat:0|intcomma }} km
+                  ({{ item.row.mileage_end_reading.source }})
+                  {% if item.row.mileage_observed_days %}
+                    <div class="text-muted">{{ item.row.mileage_observed_days }} dana za obračun</div>
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
               <td class="text-end">{{ item.row.fuel_cost|floatformat:0|intcomma }}</td>
               <td class="text-end">{{ item.row.service_cost|floatformat:0|intcomma }}</td>
               <td class="text-end">{{ item.row.requisition_cost|floatformat:0|intcomma }}</td>
@@ -403,13 +432,13 @@
             </tr>
             {% if item.row.mileage_issue %}
             <tr>
-              <td colspan="14" class="text-muted small">Napomena: {{ item.row.mileage_issue }}</td>
+              <td colspan="15" class="text-muted small">Napomena: {{ item.row.mileage_issue }}</td>
             </tr>
             {% endif %}
             {% else %}
             <tr>
               <td>{{ item.period_label }}</td>
-              <td colspan="13" class="text-muted">Nema dovoljno podataka za obračun cene po kilometru.</td>
+              <td colspan="14" class="text-muted">Nema dovoljno podataka za obračun cene po kilometru.</td>
             </tr>
             {% endif %}
           {% endfor %}
