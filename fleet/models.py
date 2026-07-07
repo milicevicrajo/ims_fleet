@@ -6,7 +6,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.models import Group, Permission
 import datetime
 
-from core.models import CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission
+from core.models import ActivityLog, CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission
 from hr.models import Employee
 
 # <!-- ======================================================================= -->

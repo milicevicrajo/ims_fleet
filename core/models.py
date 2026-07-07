@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -105,3 +106,66 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class ActivityLog(models.Model):
+    ACTION_REQUEST = "request"
+    ACTION_LOGIN = "login"
+    ACTION_LOGOUT = "logout"
+    ACTION_LOGIN_FAILED = "login_failed"
+    ACTION_MANUAL = "manual"
+
+    ACTION_CHOICES = [
+        (ACTION_REQUEST, _("Akcija")),
+        (ACTION_LOGIN, _("Prijava")),
+        (ACTION_LOGOUT, _("Odjava")),
+        (ACTION_LOGIN_FAILED, _("Neuspesna prijava")),
+        (ACTION_MANUAL, _("Rucni zapis")),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs",
+        verbose_name=_("Korisnik"),
+    )
+    actor_username = models.CharField(max_length=150, blank=True, verbose_name=_("Username"))
+    actor_display_name = models.CharField(max_length=255, blank=True, verbose_name=_("Ime korisnika"))
+    action = models.CharField(
+        max_length=30,
+        choices=ACTION_CHOICES,
+        default=ACTION_REQUEST,
+        db_index=True,
+        verbose_name=_("Akcija"),
+    )
+    description = models.CharField(max_length=500, blank=True, verbose_name=_("Opis"))
+    app_label = models.CharField(max_length=80, blank=True, db_index=True, verbose_name=_("Aplikacija"))
+    view_name = models.CharField(max_length=150, blank=True, db_index=True, verbose_name=_("View"))
+    method = models.CharField(max_length=10, blank=True, verbose_name=_("Metod"))
+    path = models.CharField(max_length=500, blank=True, verbose_name=_("Putanja"))
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True, verbose_name=_("Status"))
+    object_model = models.CharField(max_length=150, blank=True, verbose_name=_("Model"))
+    object_pk = models.CharField(max_length=80, blank=True, verbose_name=_("ID zapisa"))
+    object_repr = models.CharField(max_length=255, blank=True, verbose_name=_("Zapis"))
+    changes = models.JSONField(default=dict, blank=True, verbose_name=_("Detalji"))
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name=_("IP adresa"))
+    user_agent = models.CharField(max_length=500, blank=True, verbose_name=_("User agent"))
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=_("Vreme"))
+
+    class Meta:
+        app_label = "fleet"
+        db_table = "fleet_activity_log"
+        ordering = ["-created_at", "-id"]
+        verbose_name = _("Activity log")
+        verbose_name_plural = _("Activity log")
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["action", "-created_at"]),
+            models.Index(fields=["app_label", "-created_at"]),
+        ]
+
+    def __str__(self):
+        actor = self.actor_username or str(self.user or "")
+        return f"{self.created_at:%Y-%m-%d %H:%M} {actor} {self.get_action_display()}"

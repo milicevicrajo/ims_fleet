@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 
-from core.models import CustomUser, PermissionCode, Role, RolePermission
+from core.models import ActivityLog, CustomUser, PermissionCode, Role, RolePermission
 from hr.models import Employee, EmployeeCVItem
 
 from .models import (
@@ -40,6 +40,15 @@ class EmployeeAdmin(admin.ModelAdmin):
     inlines = [EmployeeCVItemInline]
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
+
+@admin.register(ActivityLog)
+class ActivityLogAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "actor_username", "action", "description", "status_code", "app_label", "path")
+    list_filter = ("action", "app_label", "status_code", "created_at")
+    search_fields = ("actor_username", "actor_display_name", "description", "path", "view_name", "object_repr")
+    readonly_fields = [field.name for field in ActivityLog._meta.fields]
+    date_hierarchy = "created_at"
 class RolePermissionInline(admin.TabularInline):
     model = RolePermission
     extra = 1

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .activity-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1f3b4d 0%, #23646a 58%, #6b7b35 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(31, 59, 77, 0.18);
+  }
+  .activity-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .activity-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .activity-stat-card {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+    background: #fff;
+    height: 100%;
+  }
+  .activity-stat-card span { display: block; color: #6b7785; font-size: .84rem; }
+  .activity-stat-card strong { font-size: 1.55rem; line-height: 1.2; }
+  .assignment-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .activity-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 700;
+    font-size: .82rem;
+    white-space: nowrap;
+    background: #edf2f7;
+    color: #526170;
+    border: 1px solid #cfd8e3;
+  }
+  .activity-badge.ok { background: #e7f7ef; color: #147044; border-color: #b7e3cb; }
+  .activity-badge.warning { background: #fff4db; color: #7a4d00; border-color: #f1d28d; }
+  .activity-badge.danger { background: #fde8e8; color: #9b1c1c; border-color: #f4b4b4; }
+  .activity-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
+  .activity-table th,
+  .activity-table td {
+    white-space: normal !important;
+    vertical-align: top;
+  }
+  .activity-path {
+    word-break: break-word;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .84rem;
+  }
+</style>
+
+<div class="activity-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Activity log</h1>
+    <p>Pregled korisnickih akcija, prijava, odjava i neuspesnih prijava kroz aplikaciju.</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="activity-stat-card"><span>Ukupno zapisa</span><strong>{{ total_logs }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="activity-stat-card"><span>Danas</span><strong class="text-success">{{ today_logs }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="activity-stat-card"><span>Neuspesne prijave</span><strong class="text-danger">{{ failed_logs }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="activity-stat-card"><span>Prikazano na strani</span><strong>{{ logs|length }}</strong></div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body border-bottom">
+    <form method="get" class="assignment-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="activity-q">Pretraga</label>
+          <input id="activity-q" class="form-control" type="text" name="q" value="{{ filters.q }}" placeholder="Korisnik, opis, putanja, IP">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="activity-user">Korisnik</label>
+          <select id="activity-user" class="form-select form-control select2-method" name="user">
+            <option value="">Svi</option>
+            {% for option_user in user_options %}
+              <option value="{{ option_user.id }}" {% if filters.user == option_user.id|stringformat:"s" %}selected{% endif %}>{{ option_user.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="activity-action">Akcija</label>
+          <select id="activity-action" class="form-select form-control select2-method" name="action">
+            <option value="">Sve</option>
+            {% for value,label in action_options %}
+              <option value="{{ value }}" {% if filters.action == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-1">
+          <label class="form-label mb-1" for="activity-app">Aplikacija</label>
+          <select id="activity-app" class="form-select form-control select2-method" name="app">
+            <option value="">Sve</option>
+            {% for app in app_options %}
+              <option value="{{ app }}" {% if filters.app == app %}selected{% endif %}>{{ app }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-1">
+          <label class="form-label mb-1" for="activity-status">Status</label>
+          <input id="activity-status" class="form-control" type="number" name="status" value="{{ filters.status }}" placeholder="200">
+        </div>
+        <div class="col-12 col-md-1">
+          <label class="form-label mb-1" for="activity-from">Od</label>
+          <input id="activity-from" class="form-control" type="date" name="from" value="{{ filters.from }}">
+        </div>
+        <div class="col-12 col-md-1">
+          <label class="form-label mb-1" for="activity-to">Do</label>
+          <input id="activity-to" class="form-control" type="date" name="to" value="{{ filters.to }}">
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+          <button class="btn btn-primary w-100" type="submit" title="Filter">
+            <i class="mdi mdi-filter"></i> Filter
+          </button>
+          <a class="btn btn-outline-secondary" href="{% url 'activity_log_list' %}" title="Ocisti filtere">
+            <i class="mdi mdi-close"></i>
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-body">
+    {% if is_paginated %}
+      <div class="d-flex justify-content-end mb-2">
+        <span class="badge bg-light text-dark">Strana {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      </div>
+    {% endif %}
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered align-middle activity-table">
+        <thead class="table-light">
+          <tr>
+            <th>Vreme</th>
+            <th>Korisnik</th>
+            <th>Akcija</th>
+            <th>Opis</th>
+            <th>Putanja</th>
+            <th>Status</th>
+            <th>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+            <tr>
+              <td>
+                {{ log.created_at|date:"d.m.Y H:i:s" }}
+                {% if log.app_label %}<span class="activity-muted">{{ log.app_label }}</span>{% endif %}
+              </td>
+              <td>
+                <strong>{{ log.actor_username|default:"/" }}</strong>
+                {% if log.actor_display_name %}<span class="activity-muted">{{ log.actor_display_name }}</span>{% endif %}
+              </td>
+              <td>
+                <span class="activity-badge {% if log.action == 'login' %}ok{% elif log.action == 'login_failed' %}danger{% elif log.action == 'logout' %}warning{% endif %}">
+                  {{ log.get_action_display }}
+                </span>
+                {% if log.method %}<span class="activity-muted">{{ log.method }}</span>{% endif %}
+              </td>
+              <td>
+                {{ log.description|default:"/" }}
+                {% if log.object_repr %}<span class="activity-muted">{{ log.object_repr }}</span>{% endif %}
+                {% if log.view_name %}<span class="activity-muted">{{ log.view_name }}</span>{% endif %}
+              </td>
+              <td class="activity-path">{{ log.path|default:"/" }}</td>
+              <td>
+                {% if log.status_code %}
+                  <span class="activity-badge {% if log.status_code >= 500 %}danger{% elif log.status_code >= 400 %}warning{% else %}ok{% endif %}">{{ log.status_code }}</span>
+                {% else %}
+                  <span class="text-muted">/</span>
+                {% endif %}
+              </td>
+              <td>{{ log.ip_address|default:"/" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="text-center text-muted">Nema zapisa za izabrane filtere.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+      <nav aria-label="Activity log pagination">
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Prethodna</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Prethodna</span></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Sledeca</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Sledeca</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -78,7 +78,7 @@ DEBUG = True
 # Application definition
 
 INSTALLED_APPS = [
-    "core",
+    "core.apps.CoreConfig",
     'fleet',
     'hr',
     'naplata',
@@ -106,6 +106,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.ActivityLogMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

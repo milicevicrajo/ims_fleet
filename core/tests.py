@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 from openpyxl import load_workbook
 
 from .exporting import (
@@ -15,7 +16,7 @@ from .exporting import (
     xlsx_attachment_response,
 )
 from .mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
-from .models import CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission
+from .models import ActivityLog, CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission
 
 
 class ExportingTests(SimpleTestCase):
@@ -174,6 +175,7 @@ class OrganizationalUnitLocationTests(SimpleTestCase):
 
 class FleetAuthModelLocationTests(SimpleTestCase):
     def test_fleet_auth_models_keep_fleet_app_label(self):
+        self.assertEqual(ActivityLog._meta.app_label, "fleet")
         self.assertEqual(CustomUser._meta.app_label, "fleet")
         self.assertEqual(Role._meta.app_label, "fleet")
         self.assertEqual(PermissionCode._meta.app_label, "fleet")
@@ -181,13 +183,60 @@ class FleetAuthModelLocationTests(SimpleTestCase):
 
     def test_fleet_auth_models_are_reexported_from_fleet_models(self):
         from fleet.models import (
+            ActivityLog as FleetActivityLog,
             CustomUser as FleetCustomUser,
             PermissionCode as FleetPermissionCode,
             Role as FleetRole,
             RolePermission as FleetRolePermission,
         )
 
+        self.assertIs(FleetActivityLog, ActivityLog)
         self.assertIs(FleetCustomUser, CustomUser)
         self.assertIs(FleetRole, Role)
         self.assertIs(FleetPermissionCode, PermissionCode)
         self.assertIs(FleetRolePermission, RolePermission)
+
+
+class ActivityLogTests(TestCase):
+    def test_log_activity_stores_actor_snapshot(self):
+        from core.activity import log_activity
+
+        user = get_user_model().objects.create_user(
+            username="admin-test",
+            first_name="Admin",
+            last_name="Test",
+            password="test",
+        )
+
+        log = log_activity(
+            user=user,
+            action=ActivityLog.ACTION_MANUAL,
+            description="Test aktivnost",
+            app_label="fleet",
+            view_name="activity_log_list",
+        )
+
+        self.assertEqual(log.user, user)
+        self.assertEqual(log.actor_username, "admin-test")
+        self.assertEqual(log.actor_display_name, "Admin Test")
+        self.assertEqual(log.description, "Test aktivnost")
+
+    def test_activity_log_list_renders_for_superuser(self):
+        user = get_user_model().objects.create_superuser(
+            username="super-admin",
+            email="admin@example.com",
+            password="test-pass",
+        )
+        ActivityLog.objects.create(
+            user=user,
+            actor_username=user.username,
+            action=ActivityLog.ACTION_MANUAL,
+            description="Provera ekrana",
+            app_label="fleet",
+        )
+
+        self.client.force_login(user)
+        response = self.client.get(reverse("activity_log_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Provera ekrana")

@@ -1,7 +1,13 @@
+from datetime import datetime, time
+
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
+from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.views.generic import ListView
 
-from core.models import CustomUser
+from core.mixins import RolePermissionRequiredMixin
+from core.models import ActivityLog, CustomUser
 from fleet.models import Employee
 
 
@@ -59,6 +65,85 @@ class UserListView(LoginRequiredMixin, ListView):
                 "changed_password_count": sum(1 for user in users if not user.must_change_password),
                 "active_without_profile": active_without_profile,
                 "active_without_profile_count": len(active_without_profile),
+            }
+        )
+        return context
+
+
+class ActivityLogListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
+    model = ActivityLog
+    template_name = "fleet/activity_log_list.html"
+    context_object_name = "logs"
+    paginate_by = 100
+    required_permission_code = "activity_log_list"
+
+    def get_queryset(self):
+        queryset = ActivityLog.objects.select_related("user").order_by("-created_at", "-id")
+        params = self.request.GET
+
+        q = (params.get("q") or "").strip()
+        if q:
+            queryset = queryset.filter(
+                Q(actor_username__icontains=q)
+                | Q(actor_display_name__icontains=q)
+                | Q(description__icontains=q)
+                | Q(path__icontains=q)
+                | Q(view_name__icontains=q)
+                | Q(object_model__icontains=q)
+                | Q(object_pk__icontains=q)
+                | Q(object_repr__icontains=q)
+                | Q(ip_address__icontains=q)
+            )
+
+        user_id = params.get("user") or ""
+        if user_id.isdigit():
+            queryset = queryset.filter(user_id=user_id)
+
+        action = params.get("action") or ""
+        if action:
+            queryset = queryset.filter(action=action)
+
+        app_label = (params.get("app") or "").strip()
+        if app_label:
+            queryset = queryset.filter(app_label=app_label)
+
+        status = (params.get("status") or "").strip()
+        if status.isdigit():
+            queryset = queryset.filter(status_code=int(status))
+
+        date_from = parse_date(params.get("from") or "")
+        if date_from:
+            start = timezone.make_aware(datetime.combine(date_from, time.min))
+            queryset = queryset.filter(created_at__gte=start)
+
+        date_to = parse_date(params.get("to") or "")
+        if date_to:
+            end = timezone.make_aware(datetime.combine(date_to, time.max))
+            queryset = queryset.filter(created_at__lte=end)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        params = self.request.GET.copy()
+        params.pop("page", None)
+        context.update(
+            {
+                "title": "Activity log",
+                "filters": self.request.GET,
+                "querystring": params.urlencode(),
+                "user_options": CustomUser.objects.order_by("username").only("id", "username", "first_name", "last_name"),
+                "action_options": ActivityLog.ACTION_CHOICES,
+                "app_options": (
+                    ActivityLog.objects.exclude(app_label="")
+                    .values_list("app_label", flat=True)
+                    .distinct()
+                    .order_by("app_label")
+                ),
+                "total_logs": ActivityLog.objects.count(),
+                "today_logs": ActivityLog.objects.filter(created_at__date=today).count(),
+                "failed_logs": ActivityLog.objects.filter(action=ActivityLog.ACTION_LOGIN_FAILED).count(),
             }
         )
         return context
