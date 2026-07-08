@@ -249,6 +249,10 @@
         <div class="text-muted small">Izaberi naloge koji ulaze u TXT virman.</div>
       </div>
       <div class="payout-toolbar d-flex flex-wrap align-items-end gap-2">
+        <div>
+          <label class="form-label mb-1 small" for="payment_date">Datum virmana</label>
+          <input id="payment_date" class="form-control form-control-sm js-date" type="text" name="payment_date" value="{{ payment_date }}" placeholder="dd.mm.gggg" autocomplete="off" required>
+        </div>
         <div class="form-check mb-1">
           <input id="allow_regenerate" class="form-check-input" type="checkbox" name="allow_regenerate" value="1" {% if allow_regenerate %}checked{% endif %}>
           <label class="form-check-label" for="allow_regenerate">Ponovno generisanje</label>
@@ -263,9 +267,6 @@
         </button>
         <button class="btn btn-outline-primary btn-sm" type="submit" name="virman_action" value="pending_for_date">
           <i class="mdi mdi-calendar-check"></i> Generisi neodradjene
-        </button>
-        <button class="btn btn-outline-secondary btn-sm" type="submit" name="virman_action" value="test_selected">
-          <i class="mdi mdi-file-eye"></i> Test izlaz
         </button>
       </div>
     </div>
@@ -319,7 +320,7 @@
                 <td class="text-end">{{ order.advance_payment|floatformat:2|intcomma }} {{ order.advance_payment_currency }}</td>
                 <td class="text-center">
                   {% if order.virman_generated %}
-                    <span class="badge bg-success">Da</span>
+                    <span class="badge bg-success text-white">Da</span>
                   {% else %}
                     <span class="badge bg-light text-dark">Ne</span>
                   {% endif %}
@@ -332,12 +333,24 @@
                   {% elif order.virman_generated %}
                     <span class="badge bg-secondary">Samo uz ponovno</span>
                   {% else %}
-                    <span class="badge bg-success">Spreman</span>
+                    <span class="badge bg-success text-white">Spreman</span>
                   {% endif %}
                 </td>
               </tr>
             {% empty %}
-              <tr><td colspan="11" class="text-center text-muted">Nema naloga za izabrane filtere.</td></tr>
+              <tr>
+                <td class="payout-selection-cell"></td>
+                <td class="text-center text-muted">Nema naloga za izabrane filtere.</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
             {% endfor %}
           </tbody>
         </table>
@@ -448,7 +461,14 @@
     if (virmanForm) {
       virmanForm.addEventListener('submit', function (event) {
         var action = event.submitter ? event.submitter.value : 'selected';
-        var needsSelection = action === 'selected' || action === 'test_selected';
+        var needsSelection = action === 'selected';
+        var paymentDate = document.getElementById('payment_date');
+        if (paymentDate && !paymentDate.value) {
+          event.preventDefault();
+          alert('Izaberi datum virmana.');
+          paymentDate.focus();
+          return;
+        }
         if (needsSelection && !document.querySelector('.order-select:checked')) {
           event.preventDefault();
           alert('Izaberi bar jedan putni nalog.');

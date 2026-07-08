@@ -116,7 +116,7 @@ class VirmanServiceTests(TestCase):
 
         self.assertEqual(len(virman_file.content.splitlines()), 3)
 
-    def test_virman_uses_order_date_instead_of_supplied_payment_date(self):
+    def test_virman_uses_supplied_payment_date_instead_of_order_date(self):
         order = create_order()
         order.order_date = datetime.date(2026, 5, 21)
         order.save(update_fields=["order_date"])
@@ -128,10 +128,10 @@ class VirmanServiceTests(TestCase):
         )
         lines = virman_file.content.splitlines()
 
-        self.assertEqual(lines[0][63:69], "210526")
-        self.assertEqual(lines[2][172:180], "21052601")
+        self.assertEqual(lines[0][63:69], "150626")
+        self.assertEqual(lines[2][172:180], "15062601")
 
-    def test_virman_rejects_orders_with_different_order_dates(self):
+    def test_virman_allows_orders_with_different_order_dates_when_payment_date_is_selected(self):
         first_order = create_order(order_number="01/2026-11")
         second_order = create_order(
             employee=create_employee(code=9011, account_number="325-9300600276066-68"),
@@ -140,8 +140,9 @@ class VirmanServiceTests(TestCase):
         second_order.order_date = datetime.date(2026, 5, 21)
         second_order.save(update_fields=["order_date"])
 
-        with self.assertRaises(ValidationError):
-            build_virman_file([first_order, second_order], datetime.date(2026, 5, 20), timezone.now())
+        virman_file = build_virman_file([first_order, second_order], datetime.date(2026, 5, 20), timezone.now())
+
+        self.assertEqual(len(virman_file.content.splitlines()), 4)
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
@@ -190,6 +191,46 @@ class IsplataNeoporezovanihViewTests(TestCase):
         self.assertContains(response, included_order.order_number)
         self.assertNotContains(response, excluded_order.order_number)
 
+    def test_non_rsd_orders_are_not_listed(self):
+        rsd_order = create_order(order_number="01/2026-22")
+        eur_order = create_order(
+            employee=create_employee(code=9022, account_number="325-9300600276066-68"),
+            order_number="01/2026-23",
+        )
+        eur_order.advance_payment_currency = "EUR"
+        eur_order.save(update_fields=["advance_payment_currency"])
+        user = self.create_isplate_user()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("isplate:neoporezive_isplate"), {"status": "all"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, rsd_order.order_number)
+        self.assertNotContains(response, eur_order.order_number)
+
+    def test_non_rsd_selected_order_is_rejected_as_unavailable(self):
+        order = create_order()
+        order.advance_payment_currency = "EUR"
+        order.save(update_fields=["advance_payment_currency"])
+        user = get_user_model().objects.create_user(
+            username="isplate-non-rsd",
+            password="test",
+            is_superuser=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("isplate:neoporezive_isplate"),
+            {
+                "order_ids": [str(order.pk)],
+                "payment_date": "15.06.2026",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        order.refresh_from_db()
+        self.assertFalse(order.virman_generated)
+
     def test_post_generates_file_and_marks_order(self):
         order = create_order()
         user = get_user_model().objects.create_user(
@@ -218,10 +259,10 @@ class IsplataNeoporezovanihViewTests(TestCase):
         self.assertEqual(order.virman_generated_by, user)
         self.assertIsNotNone(order.virman_generated_at)
 
-    def test_test_output_does_not_mark_order(self):
-        order = create_order()
+    def test_post_accepts_flatpickr_payment_date_format(self):
+        order = create_order(order_number="01/2026-31")
         user = get_user_model().objects.create_user(
-            username="isplate-test",
+            username="isplate-flatpickr",
             password="test",
             is_superuser=True,
         )
@@ -231,17 +272,15 @@ class IsplataNeoporezovanihViewTests(TestCase):
             reverse("isplate:neoporezive_isplate"),
             {
                 "order_ids": [str(order.pk)],
-                "payment_date": "2026-05-20",
-                "virman_action": "test_selected",
+                "payment_date": "15.06.2026",
             },
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("TEST-Virman-putni-nalozi-", response["Content-Disposition"])
-        order.refresh_from_db()
-        self.assertFalse(order.virman_generated)
-        self.assertIsNone(order.virman_generated_by)
-        self.assertIsNone(order.virman_generated_at)
+        content = response.content.decode("cp1250")
+        lines = content.splitlines()
+        self.assertEqual(lines[0][63:69], "150626")
+        self.assertEqual(lines[2][172:180], "15062601")
 
     def test_pending_for_date_generates_unmarked_orders_without_selection(self):
         pending_order = create_order(

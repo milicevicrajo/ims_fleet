@@ -6,12 +6,26 @@ from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.views.generic import TemplateView
 
 from core.mixins import RolePermissionRequiredMixin
 from fleet.models import PutniNalog
 
 from .services.virman import build_virman_file
+
+
+def parse_payment_date(value):
+    value = (value or "").strip()
+    if not value:
+        return None
+    parsed = parse_date(value)
+    if parsed:
+        return parsed
+    try:
+        return timezone.datetime.strptime(value, "%d.%m.%Y").date()
+    except ValueError:
+        return None
 
 
 class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
@@ -26,6 +40,7 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 "virman_generated_by",
             )
             .filter(storniran=False, advance_payment__gt=0)
+            .filter(advance_payment_currency="RSD")
             .order_by("-order_date", "-id")
         )
 
@@ -66,11 +81,14 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("virman_action", "selected")
-        is_test = action == "test_selected"
         allow_regenerate = request.POST.get("allow_regenerate") == "1"
+        payment_date = parse_payment_date(request.POST.get("payment_date"))
+        if not payment_date:
+            messages.error(request, "Izaberi datum virmana.")
+            return redirect(request.get_full_path())
 
         qs = self.get_queryset().select_related("employee", "job_code")
-        if action in {"selected", "test_selected"}:
+        if action == "selected":
             selected_ids = request.POST.getlist("order_ids")
             try:
                 selected_ids = [int(selected_id) for selected_id in selected_ids]
@@ -102,6 +120,7 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
         try:
             virman_file = build_virman_file(
                 orders,
+                payment_date=payment_date,
                 generated_at=generated_at,
                 allow_regenerate=allow_regenerate,
             )
@@ -110,17 +129,15 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 messages.error(request, message)
             return redirect(request.get_full_path())
 
-        if not is_test:
-            with transaction.atomic():
-                PutniNalog.objects.filter(pk__in=[order.pk for order in orders]).update(
-                    virman_generated=True,
-                    virman_generated_at=generated_at,
-                    virman_generated_by=request.user,
-                )
+        with transaction.atomic():
+            PutniNalog.objects.filter(pk__in=[order.pk for order in orders]).update(
+                virman_generated=True,
+                virman_generated_at=generated_at,
+                virman_generated_by=request.user,
+            )
 
         response = HttpResponse(virman_file.bytes, content_type="text/plain; charset=windows-1250")
-        filename = f"TEST-{virman_file.filename}" if is_test else virman_file.filename
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response["Content-Disposition"] = f'attachment; filename="{virman_file.filename}"'
         return response
 
     def get_context_data(self, **kwargs):
@@ -161,6 +178,7 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 "centers": centers,
                 "years": years,
                 "months": range(1, 13),
+                "payment_date": timezone.localdate().strftime("%d.%m.%Y"),
                 "orders_count": filtered_qs.count(),
                 "total_amount": total_amount,
                 "missing_account_count": missing_account_count,
