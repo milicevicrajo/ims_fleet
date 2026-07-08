@@ -157,6 +157,11 @@
         <i class="mdi mdi-file-plus"></i> Narudzbenica
       </a>
     {% endif %}
+    {% if can_delete %}
+      <button class="btn btn-danger btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#case-delete-modal">
+        <i class="mdi mdi-delete"></i> Obrisi
+      </button>
+    {% endif %}
   </div>
 </div>
 
@@ -316,6 +321,40 @@
     </div>
   </div>
 </div>
+
+{% if can_delete %}
+<div class="modal fade" id="case-delete-modal" tabindex="-1" aria-labelledby="case-delete-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="{% url 'nabavka:case_delete' case.pk %}">
+        {% csrf_token %}
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="case-delete-modal-label">
+            <i class="mdi mdi-alert-circle-outline"></i> Brisanje zahteva
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">Da li ste sigurni da zelite da obrisete ovaj zahtev?</p>
+          <div class="border rounded p-3 bg-light">
+            <strong>{{ case.case_number }}</strong>
+            <div class="text-muted small">{{ case.title }}</div>
+          </div>
+          <p class="text-danger small mt-3 mb-0">
+            Brisanje je trajno i obrisace povezane stavke i istoriju statusa ovog zahteva.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
+          <button type="submit" class="btn btn-danger">
+            <i class="mdi mdi-delete"></i> Potvrdi brisanje
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 {% if can_link_sources %}
 <div class="modal fade" id="item-source-link-modal" tabindex="-1" aria-hidden="true">

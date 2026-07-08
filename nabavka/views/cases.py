@@ -385,6 +385,7 @@ class ProcurementCaseDetailView(NabavkaContextMixin, RolePermissionRequiredMixin
                 "can_change_status": user_has_role_permission(self.request.user, "nabavka:status_log_create"),
                 "can_repeat": user_has_role_permission(self.request.user, "nabavka:case_repeat"),
                 "can_update": user_has_role_permission(self.request.user, "nabavka:case_update"),
+                "can_delete": user_has_role_permission(self.request.user, "nabavka:case_delete"),
                 "can_create_purchase_order": user_has_role_permission(self.request.user, "nabavka:purchase_order_create"),
                 "can_view_euf": user_has_role_permission(self.request.user, "nabavka:euf_invoice_list"),
                 "status_log_form": ProcurementStatusLogForm(initial={"new_status": self.object.status}),

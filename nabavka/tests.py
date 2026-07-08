@@ -8,6 +8,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from openpyxl import load_workbook
 
+from core.models import PermissionCode, Role
 from fleet.models import JobCode, OrganizationalUnit, Vehicle
 from .models import (
     EufItemSnapshot,
@@ -465,6 +466,52 @@ class UfInvoiceSnapshotTests(TestCase):
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, "UF-DETAIL")
         self.assertContains(detail_response, "Detaljna stavka")
+
+
+@override_settings(ALLOWED_HOSTS=["testserver"])
+class ProcurementCaseDeleteControlsTests(TestCase):
+    def create_user_with_permissions(self, username, codes):
+        role = Role.objects.create(name=f"Role {username}", slug=f"role-{username}")
+        for code in codes:
+            permission, _ = PermissionCode.objects.get_or_create(code=code)
+            role.permissions.add(permission)
+        user = get_user_model().objects.create_user(username=username, password="test")
+        user.roles.add(role)
+        return user
+
+    def create_case(self):
+        org_unit = OrganizationalUnit.objects.create(code="DEL-01", name="Brisanje", center="01")
+        return ProcurementCase.objects.create(
+            case_number="ZN-01/2026-1",
+            title="Zahtev za brisanje",
+            job_code=org_unit,
+        )
+
+    def test_case_detail_shows_delete_modal_for_delete_permission(self):
+        procurement_case = self.create_case()
+        user = self.create_user_with_permissions(
+            "case-delete-user",
+            ["nabavka:case_detail", "nabavka:case_delete"],
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("nabavka:case_detail", args=[procurement_case.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-bs-target="#case-delete-modal"')
+        self.assertContains(response, "Potvrdi brisanje")
+        self.assertContains(response, reverse("nabavka:case_delete", args=[procurement_case.pk]))
+
+    def test_case_detail_hides_delete_modal_without_delete_permission(self):
+        procurement_case = self.create_case()
+        user = self.create_user_with_permissions("case-detail-user", ["nabavka:case_detail"])
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("nabavka:case_detail", args=[procurement_case.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'data-bs-target="#case-delete-modal"')
+        self.assertNotContains(response, "Potvrdi brisanje")
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
