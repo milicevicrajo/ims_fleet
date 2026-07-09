@@ -36,6 +36,11 @@ class Employee(models.Model):
     system_code = models.CharField(max_length=10, verbose_name=_("Šifra sistema"), blank=True, null=True)
     system_name = models.CharField(max_length=255, verbose_name=_("Naziv sistema"), blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name=_("Pol"))
+    skip_hr_identity_update = models.BooleanField(
+        default=False,
+        verbose_name=_("Ne azuriraj identitet iz HR-a"),
+        help_text=_("Ako je ukljuceno, HR sinhronizacija ne menja titulu, ime, prezime i pol."),
+    )
     date_of_birth = models.DateField(verbose_name=_("Datum rođenja"))
     date_of_joining = models.DateField(verbose_name=_("Datum zapošljavanja"))
     phone_number = models.CharField(max_length=20, verbose_name=_("Broj telefona"), blank=True, null=True)

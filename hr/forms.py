@@ -9,7 +9,32 @@ from .models import Employee, EmployeeCVItem
 class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
-        exclude = ["display_first_name_override", "display_last_name_override"]
+        fields = "__all__"
+        labels = {
+            "display_first_name_override": "Ime za prikaz",
+            "display_last_name_override": "Prezime za prikaz",
+            "skip_hr_identity_update": "Ne azuriraj ime, prezime, titulu i pol iz HR-a",
+        }
+        help_texts = {
+            "display_first_name_override": (
+                "Ako je popunjeno, aplikacija prikazuje ovu vrednost i HR sinhronizacija je nece prepisati. "
+                "Ostavi prazno za HR vrednost."
+            ),
+            "display_last_name_override": (
+                "Ako je popunjeno, aplikacija prikazuje ovu vrednost i HR sinhronizacija je nece prepisati. "
+                "Ostavi prazno za HR vrednost."
+            ),
+            "skip_hr_identity_update": (
+                "Ukljuci kada rucno menjas titulu, ime, prezime ili pol i ne zelis da ih HR sync vrati."
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not getattr(user, "is_superuser", False):
+            self.fields.pop("display_first_name_override", None)
+            self.fields.pop("display_last_name_override", None)
+            self.fields.pop("skip_hr_identity_update", None)
 
 
 class EmployeeCVItemForm(forms.ModelForm):

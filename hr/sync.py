@@ -10,6 +10,15 @@ from .models import Employee
 logger = logging.getLogger(__name__)
 
 TITLE_TOKENS = {"dr", "mr", "prof", "ing", "msc", "phd"}
+LOCKED_HR_IDENTITY_FIELDS = ("title", "original_full_name", "first_name", "last_name", "gender")
+
+
+def _preserve_locked_identity_fields(employee, defaults):
+    if not employee or not employee.skip_hr_identity_update:
+        return defaults
+    for field_name in LOCKED_HR_IDENTITY_FIELDS:
+        defaults[field_name] = getattr(employee, field_name)
+    return defaults
 
 
 def _normalize_part(part: str) -> str:
@@ -239,8 +248,10 @@ def sync_employees_from_hr_view(using=None):
         if has_residence_municipality_source:
             defaults["residence_municipality"] = _normalize_residence_municipality(opstina_boravka)
 
+        existing = Employee.objects.filter(employee_code=employee_code).first()
+        _preserve_locked_identity_fields(existing, defaults)
+
         if not is_active:
-            existing = Employee.objects.filter(employee_code=employee_code).first()
             if existing:
                 for key, value in defaults.items():
                     setattr(existing, key, value)

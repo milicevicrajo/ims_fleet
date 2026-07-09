@@ -1,6 +1,12 @@
 from .base import * 
 
-ALLOWED_HOSTS = ['192.168.6.7', '127.0.0.1']
+ALLOWED_HOSTS = [
+    "ims-flota",
+    "ims.portal",
+    "192.168.6.7",
+    "127.0.0.1",
+    "localhost",
+]
 
 DATABASES = {
     'default': {

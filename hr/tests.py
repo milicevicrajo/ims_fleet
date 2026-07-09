@@ -264,6 +264,154 @@ class MyEmployeeProfileTests(TestCase):
         employee.refresh_from_db()
         self.assertEqual(employee.display_last_name_override, "")
 
+    def test_employee_update_hides_display_name_override_for_regular_hr_user(self):
+        employee = self.create_employee(110, last_name="Petrovic")
+        user = self.create_user_with_permissions("hruser", ["employee_update"])
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("employee_update", args=[employee.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "display_first_name_override")
+        self.assertNotContains(response, "display_last_name_override")
+        self.assertNotContains(response, "skip_hr_identity_update")
+
+    def test_superuser_can_lock_identity_fields_on_employee_update(self):
+        from .sync import _preserve_locked_identity_fields
+
+        employee = self.create_employee(112, last_name="Petrovic")
+        user = get_user_model().objects.create_user(
+            "superlock",
+            password="test",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("employee_update", args=[employee.pk]),
+            {
+                "employee_code": employee.employee_code,
+                "title": "dr",
+                "original_full_name": "Jovanovic Jovana",
+                "first_name": "Jovana",
+                "last_name": "Jovanovic",
+                "display_first_name_override": "",
+                "display_last_name_override": "",
+                "position": "Inzenjer",
+                "department_code": 1,
+                "org_unit_code": "",
+                "system_code": "",
+                "system_name": "",
+                "gender": "F",
+                "skip_hr_identity_update": "on",
+                "date_of_birth": "1990-01-01",
+                "date_of_joining": "2020-01-01",
+                "phone_number": "",
+                "mobile_phone": "",
+                "is_active": "on",
+                "personal_number": "",
+                "account_number": "",
+                "address": "",
+                "residence_municipality": "",
+                "education": "",
+                "job_code": "",
+                "job_title": "",
+                "status_code": "",
+                "status_name": "",
+                "slava": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_list"))
+        employee.refresh_from_db()
+        self.assertTrue(employee.skip_hr_identity_update)
+        self.assertEqual(employee.title, "dr")
+        self.assertEqual(employee.original_full_name, "Jovanovic Jovana")
+        self.assertEqual(employee.first_name, "Jovana")
+        self.assertEqual(employee.last_name, "Jovanovic")
+        self.assertEqual(employee.gender, "F")
+
+        sync_defaults = {
+            "title": None,
+            "original_full_name": "PETROVIC PETAR",
+            "first_name": "Petar",
+            "last_name": "Petrovic",
+            "gender": "M",
+        }
+        _preserve_locked_identity_fields(employee, sync_defaults)
+        Employee.objects.update_or_create(
+            employee_code=employee.employee_code,
+            defaults=sync_defaults,
+        )
+
+        employee.refresh_from_db()
+        self.assertEqual(employee.title, "dr")
+        self.assertEqual(employee.original_full_name, "Jovanovic Jovana")
+        self.assertEqual(employee.first_name, "Jovana")
+        self.assertEqual(employee.last_name, "Jovanovic")
+        self.assertEqual(employee.gender, "F")
+
+    def test_superuser_can_set_display_name_override_on_employee_update(self):
+        employee = self.create_employee(111, last_name="Petrovic")
+        user = get_user_model().objects.create_user(
+            "superhr",
+            password="test",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("employee_update", args=[employee.pk]),
+            {
+                "employee_code": employee.employee_code,
+                "title": "",
+                "original_full_name": "",
+                "first_name": "Petar",
+                "last_name": "Petrovic",
+                "display_first_name_override": "Pera",
+                "display_last_name_override": "Petrovic Korigovano",
+                "position": "Inzenjer",
+                "department_code": 1,
+                "org_unit_code": "",
+                "system_code": "",
+                "system_name": "",
+                "gender": "M",
+                "date_of_birth": "1990-01-01",
+                "date_of_joining": "2020-01-01",
+                "phone_number": "",
+                "mobile_phone": "",
+                "is_active": "on",
+                "personal_number": "",
+                "account_number": "",
+                "address": "",
+                "residence_municipality": "",
+                "education": "",
+                "job_code": "",
+                "job_title": "",
+                "status_code": "",
+                "status_name": "",
+                "slava": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("employee_list"))
+        employee.refresh_from_db()
+        self.assertEqual(employee.display_first_name, "Pera")
+        self.assertEqual(employee.display_last_name, "Petrovic Korigovano")
+
+        Employee.objects.update_or_create(
+            employee_code=employee.employee_code,
+            defaults={"first_name": "PETAR", "last_name": "PETROVIC"},
+        )
+
+        employee.refresh_from_db()
+        self.assertEqual(employee.first_name, "PETAR")
+        self.assertEqual(employee.last_name, "PETROVIC")
+        self.assertEqual(employee.display_first_name, "Pera")
+        self.assertEqual(employee.display_last_name, "Petrovic Korigovano")
+
     def test_hr_source_update_does_not_overwrite_display_name_override(self):
         employee = self.create_employee(108, last_name="Petrovic")
         employee.display_last_name_override = "Petrović"

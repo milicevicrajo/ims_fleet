@@ -20,7 +20,16 @@
                 <div class="row mb-3">
                     <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
                     <div class="col-sm-7">
+                        {% if field.field.widget.input_type == "checkbox" %}
+                        <div class="form-check pt-2">
+                            {{ field|add_class:'form-check-input' }}
+                        </div>
+                        {% else %}
                         {{ field|add_class:'form-control' }}
+                        {% endif %}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
                         {% if field.errors %}
                         <div class="invalid-feedback" style="display: block;">
                           {% for error in field.errors %}
