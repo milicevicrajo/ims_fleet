@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_service_data(last_24_hours=True, days=None):
     try:
-        logger.info("Pokrećem funkciju za povlačenje podataka o servisnim transakcijama...")
+        logger.debug("Servisi sync start")
 
         query = """
             SELECT god, sif_par_pl, naz_par_pl, datum, sif_vrs, br_naloga, vez_dok, knt_pl, potrazuje,
@@ -27,23 +27,31 @@ def fetch_service_data(last_24_hours=True, days=None):
 
         if days is not None:
             query += f" WHERE datum > DATEADD(day, -{days}, GETDATE())"
-            logger.info("Filtriram podatke za poslednjih %s dana.", days)
+            logger.debug("Servisi sync filter: poslednjih %s dana", days)
         elif last_24_hours:
             query += " WHERE datum > DATEADD(day, -1, GETDATE())"
-            logger.info("Filtriram podatke za poslednja 24 sata.")
+            logger.debug("Servisi sync filter: poslednja 24 sata")
 
         with connections["server_db"].cursor() as cursor:
-            logger.info("Izvršavam SQL upit za preuzimanje podataka: %s", query)
+            logger.debug("Servisi sync SQL: %s", query)
             cursor.execute(query)
             rows = cursor.fetchall()
-            logger.info("Broj povučenih redova: %s", len(rows))
+            logger.debug("Servisi sync fetched rows=%s", len(rows))
 
         expected_columns = 20
+        created = 0
+        skipped_existing_final = 0
+        skipped_existing_draft = 0
+        skipped_bad_columns = 0
+        missing_service_types = 0
+        conversion_errors = 0
+        errors = 0
 
         for index, row in enumerate(rows):
             if len(row) != expected_columns:
-                logger.warning(
-                    "UPOZORENJE: Red %s ima %s kolona, očekivano je %s. Preskačem red: %s",
+                skipped_bad_columns += 1
+                logger.debug(
+                    "Servisi sync row skipped bad columns: row=%s columns=%s expected=%s data=%s",
                     index + 1,
                     len(row),
                     expected_columns,
@@ -73,14 +81,16 @@ def fetch_service_data(last_24_hours=True, days=None):
                 draft_exists = DraftServiceTransaction.objects.filter(**unique_fields).exists()
 
                 if transaction_exists:
-                    logger.warning(
-                        "Transakcija sa brojem naloga %s već postoji u finalnoj tabeli, preskačem unos.",
+                    skipped_existing_final += 1
+                    logger.debug(
+                        "Servisi sync row skipped existing final: br_naloga=%s",
                         row[5],
                     )
                     continue
                 if draft_exists:
-                    logger.warning(
-                        "Transakcija sa brojem naloga %s već postoji u draft tabeli, preskačem unos.",
+                    skipped_existing_draft += 1
+                    logger.debug(
+                        "Servisi sync row skipped existing draft: br_naloga=%s",
                         row[5],
                     )
                     continue
@@ -106,20 +116,23 @@ def fetch_service_data(last_24_hours=True, days=None):
                     try:
                         service_type_instance = ServiceType.objects.get(name=str(service_type_value).strip())
                     except ServiceType.DoesNotExist:
-                        logger.warning(
-                            "UPOZORENJE: ServiceType '%s' ne postoji u bazi. Polje će biti postavljeno na None.",
+                        missing_service_types += 1
+                        logger.debug(
+                            "Servisi sync missing ServiceType: value=%s",
                             service_type_value,
                         )
                     except Exception as exc:
-                        logger.info(
-                            "Greška pri traženju ServiceType '%s': %s. Polje će biti postavljeno na None.",
+                        missing_service_types += 1
+                        logger.debug(
+                            "Servisi sync ServiceType lookup error: value=%s error=%s",
                             service_type_value,
                             exc,
+                            exc_info=True,
                         )
 
                 vehicle = Vehicle.objects.filter(traffic_cards__registration_number=row[15]).first() if row[15] else None
 
-                logger.info("Novi zapis za br_naloga %s se dodaje u draft tabelu.", row[5])
+                logger.debug("Servisi sync creating draft: br_naloga=%s", row[5])
 
                 draft_transaction = DraftServiceTransaction(
                     vehicle=vehicle,
@@ -143,30 +156,52 @@ def fetch_service_data(last_24_hours=True, days=None):
                     napomena=row[19],
                 )
                 draft_transaction.save()
-                logger.info("Zapis sa brojem naloga %s je uspešno sačuvan u draft tabeli.", row[5])
+                created += 1
+                logger.debug("Servisi sync draft saved: br_naloga=%s", row[5])
 
             except ValueError as exc:
-                logger.info(
-                    "Greška pri konverziji podataka u redu %s (nalog: %s): %s. Cela kolona: %s",
+                conversion_errors += 1
+                logger.debug(
+                    "Servisi sync conversion error: row=%s br_naloga=%s error=%s data=%s",
                     index + 1,
                     row[5],
                     exc,
                     row,
+                    exc_info=True,
                 )
             except Exception as exc:
-                logger.error(
-                    "Nepredviđena greška pri obradi reda %s (nalog: %s): %s. Cela kolona: %s",
+                errors += 1
+                logger.debug(
+                    "Servisi sync row error: row=%s br_naloga=%s error=%s data=%s",
                     index + 1,
                     row[5],
                     exc,
                     row,
+                    exc_info=True,
                 )
 
-        return "Podaci su uspešno povučeni i sačuvani u draft tabeli, preskočeni su duplikati."
+        skipped = skipped_existing_final + skipped_existing_draft + skipped_bad_columns
+        problems = missing_service_types + conversion_errors + errors
+        result = {
+            "fetched": len(rows),
+            "created": created,
+            "skipped": skipped,
+            "skipped_existing_final": skipped_existing_final,
+            "skipped_existing_draft": skipped_existing_draft,
+            "skipped_bad_columns": skipped_bad_columns,
+            "missing_service_types": missing_service_types,
+            "conversion_errors": conversion_errors,
+            "errors": errors,
+        }
+        logger.info("Servisi sync summary: %s", result)
+        return (
+            "Servisi sync: "
+            f"povuceno={len(rows)}, kreirano={created}, preskoceno={skipped}, problemi={problems}"
+        )
 
     except Exception as exc:
-        logger.info("Došlo je do opšte greške prilikom povlačenja podataka: %s", exc)
-        return f"Došlo je do opšte greške prilikom povlačenja podataka: {exc}"
+        logger.error("Servisi sync failed: %s", exc, exc_info=True)
+        return f"Servisi sync failed: {exc}"
 
 
 def migrate_draft_to_service_transaction(draft_id):
@@ -204,7 +239,7 @@ def migrate_draft_to_service_transaction(draft_id):
 
 def fetch_requisition_data(last_24_hours=True, days=None):
     try:
-        logger.info("Pokrećem funkciju za povlačenje podataka o trebovanjima...")
+        logger.debug("Trebovanja sync start")
 
         query = """
             SELECT sif_pred, god, br_dok, sif_vrsart, stavka, sif_art, naz_art, kol, cena, vrednost_nab, napomena
@@ -213,21 +248,28 @@ def fetch_requisition_data(last_24_hours=True, days=None):
 
         if days is not None:
             query += f" WHERE GETDATE() - {days} > '2000-01-01'"
-            logger.info("Filtriram podatke za poslednjih %s dana.", days)
+            logger.debug("Trebovanja sync filter: poslednjih %s dana", days)
         elif last_24_hours:
-            logger.warning("Napomena: Nema vremenskog filtriranja jer nema dostupnog datuma.")
+            logger.debug("Trebovanja sync filter: nema vremenskog filtriranja jer nema dostupnog datuma")
 
         with connections["server_db"].cursor() as cursor:
-            logger.info("Izvršavam SQL upit za preuzimanje podataka...")
+            logger.debug("Trebovanja sync SQL: %s", query)
             cursor.execute(query)
             rows = cursor.fetchall()
-            logger.info("Broj povučenih redova: %s", len(rows))
+            logger.debug("Trebovanja sync fetched rows=%s", len(rows))
+
+        created = 0
+        skipped_existing = 0
+        skipped_bad_columns = 0
+        conversion_errors = 0
+        errors = 0
 
         for index, row in enumerate(rows):
-            logger.info("Obrađujem red %s sa %s kolona.", index + 1, len(row))
+            logger.debug("Trebovanja sync row start: row=%s columns=%s", index + 1, len(row))
 
             if len(row) < 11:
-                logger.info("Red %s ima manje od očekivanih 11 kolona: %s", index + 1, row)
+                skipped_bad_columns += 1
+                logger.debug("Trebovanja sync row skipped bad columns: row=%s data=%s", index + 1, row)
                 continue
 
             try:
@@ -239,7 +281,7 @@ def fetch_requisition_data(last_24_hours=True, days=None):
                 draft_exists = DraftRequisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
 
                 if not requisition_exists and not draft_exists:
-                    logger.warning("Zapis %s - %s ne postoji. Dodajem u draft tabelu.", br_dok, sif_art)
+                    logger.debug("Trebovanja sync creating draft: br_dok=%s sif_art=%s", br_dok, sif_art)
 
                     kol = float(row[7]) if row[7] else None
                     cena = float(row[8]) if row[8] else None
@@ -259,20 +301,39 @@ def fetch_requisition_data(last_24_hours=True, days=None):
                         napomena=row[10] if row[10] else None,
                     )
                     draft.save()
-                    logger.info("Zapis %s - %s je uspešno sačuvan u draft tabeli.", br_dok, sif_art)
+                    created += 1
+                    logger.debug("Trebovanja sync draft saved: br_dok=%s sif_art=%s", br_dok, sif_art)
                 else:
-                    logger.info("Zapis %s - %s već postoji. Preskačem unos.", br_dok, sif_art)
+                    skipped_existing += 1
+                    logger.debug("Trebovanja sync row skipped existing: br_dok=%s sif_art=%s", br_dok, sif_art)
 
             except ValueError as exc:
-                logger.info("Greška pri konverziji podataka u redu %s: %s", index + 1, exc)
+                conversion_errors += 1
+                logger.debug("Trebovanja sync conversion error: row=%s error=%s", index + 1, exc, exc_info=True)
             except Exception as exc:
-                logger.error("Neprikazana greška u redu %s: %s", index + 1, exc)
+                errors += 1
+                logger.debug("Trebovanja sync row error: row=%s error=%s", index + 1, exc, exc_info=True)
 
-        return "Podaci su uspešno povučeni i sačuvani, preskočeni su duplikati."
+        skipped = skipped_existing + skipped_bad_columns
+        problems = conversion_errors + errors
+        result = {
+            "fetched": len(rows),
+            "created": created,
+            "skipped": skipped,
+            "skipped_existing": skipped_existing,
+            "skipped_bad_columns": skipped_bad_columns,
+            "conversion_errors": conversion_errors,
+            "errors": errors,
+        }
+        logger.info("Trebovanja sync summary: %s", result)
+        return (
+            "Trebovanja sync: "
+            f"povuceno={len(rows)}, kreirano={created}, preskoceno={skipped}, problemi={problems}"
+        )
 
     except Exception as exc:
-        logger.info("Došlo je do greške prilikom povlačenja podataka: %s", exc)
-        return f"Došlo je do greške prilikom povlačenja podataka: {exc}"
+        logger.error("Trebovanja sync failed: %s", exc, exc_info=True)
+        return f"Trebovanja sync failed: {exc}"
 
 
 def delete_complete_drafts():

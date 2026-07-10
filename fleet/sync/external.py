@@ -26,7 +26,7 @@ KEY_FIELDS = ("god", "sif_vrs", "br_naloga", "stavka", "knt")
 
 def fetch_policy_data(last_24_hours=True, days=None):
     try:
-        logger.info("Starting data fetching process...")
+        logger.debug("Policy sync start")
 
         base_query = """
             SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate,
@@ -40,27 +40,38 @@ def fetch_policy_data(last_24_hours=True, days=None):
         if days is not None:
             where_clauses.append("issuedate > DATEADD(day, -%s, GETDATE())")
             params.append(days)
-            logger.info("Filtering data for last %s days", days)
+            logger.debug("Policy sync filter: last %s days", days)
         elif last_24_hours:
             where_clauses.append("issuedate > DATEADD(day, -1, GETDATE())")
-            logger.info("Filtering data for last 24 hours")
+            logger.debug("Policy sync filter: last 24 hours")
 
         query = base_query
         if where_clauses:
             query += " WHERE " + " AND ".join(where_clauses)
 
         with connections["server_db"].cursor() as cursor:
-            logger.info("Executing SQL query...")
+            logger.debug("Policy sync executing SQL query")
             cursor.execute(query, params)
             columns = [col[0] for col in cursor.description]
             rows = cursor.fetchall()
 
-            logger.info("Fetched %s rows", len(rows))
+            logger.debug("Policy sync fetched rows=%s", len(rows))
             if not rows:
-                return "No new data found"
+                result = {
+                    "fetched": 0,
+                    "created_policies": 0,
+                    "created_drafts": 0,
+                    "skipped_existing": 0,
+                    "normalization_issues": 0,
+                    "errors": 0,
+                }
+                logger.info("Policy sync summary: %s", result)
+                return "Policy sync: povuceno=0, polise=0, draft=0, preskoceno=0, problemi=0"
 
         new_policies = 0
         new_drafts = 0
+        skipped_existing = 0
+        normalization_issues = 0
         errors = 0
 
         with transaction.atomic():
@@ -74,6 +85,7 @@ def fetch_policy_data(last_24_hours=True, days=None):
                         or DraftPolicy.objects.filter(invoice_id=invoice_id_from_db).exists()
                     )
                     if exists:
+                        skipped_existing += 1
                         logger.debug("Skipping existing invoice %s", invoice_id_from_db)
                         continue
 
@@ -111,7 +123,8 @@ def fetch_policy_data(last_24_hours=True, days=None):
                                     try:
                                         value = datetime.strptime(value, "%Y-%m-%d").date()
                                     except ValueError:
-                                        logger.warning(
+                                        normalization_issues += 1
+                                        logger.debug(
                                             "Invalid date format for %s: %r. Setting to None for invoice %s.",
                                             model_field,
                                             value,
@@ -119,7 +132,8 @@ def fetch_policy_data(last_24_hours=True, days=None):
                                         )
                                         value = None
                             elif not isinstance(value, date):
-                                logger.warning(
+                                normalization_issues += 1
+                                logger.debug(
                                     "Unexpected date type for %s: %s. Setting to None for invoice %s.",
                                     model_field,
                                     type(value),
@@ -137,7 +151,8 @@ def fetch_policy_data(last_24_hours=True, days=None):
                                     try:
                                         value = Decimal(value)
                                     except Exception:
-                                        logger.warning(
+                                        normalization_issues += 1
+                                        logger.debug(
                                             "Invalid decimal format for %s: %r. Setting to None for invoice %s.",
                                             model_field,
                                             value,
@@ -145,7 +160,8 @@ def fetch_policy_data(last_24_hours=True, days=None):
                                         )
                                         value = None
                             elif not isinstance(value, (Decimal, int, float)):
-                                logger.warning(
+                                normalization_issues += 1
+                                logger.debug(
                                     "Unexpected numeric type for %s: %s. Setting to None for invoice %s.",
                                     model_field,
                                     type(value),
@@ -156,7 +172,8 @@ def fetch_policy_data(last_24_hours=True, days=None):
                                 try:
                                     value = Decimal(value)
                                 except Exception:
-                                    logger.warning(
+                                    normalization_issues += 1
+                                    logger.debug(
                                         "Could not convert %s %r to Decimal. Setting to None for invoice %s.",
                                         model_field,
                                         value,
@@ -174,7 +191,8 @@ def fetch_policy_data(last_24_hours=True, days=None):
                                     try:
                                         value = int(value)
                                     except ValueError:
-                                        logger.warning(
+                                        normalization_issues += 1
+                                        logger.debug(
                                             "Invalid integer format for %s: %r. Setting to None for invoice %s.",
                                             model_field,
                                             value,
@@ -182,7 +200,8 @@ def fetch_policy_data(last_24_hours=True, days=None):
                                         )
                                         value = None
                             elif not isinstance(value, int):
-                                logger.warning(
+                                normalization_issues += 1
+                                logger.debug(
                                     "Unexpected integer type for %s: %s. Setting to None for invoice %s.",
                                     model_field,
                                     type(value),
@@ -198,18 +217,30 @@ def fetch_policy_data(last_24_hours=True, days=None):
                     if temp_draft_policy.is_complete():
                         Policy.objects.create(**policy_data_to_save)
                         new_policies += 1
-                        logger.info("Created complete Policy for invoice %s.", invoice_id_from_db)
+                        logger.debug("Created complete Policy for invoice %s.", invoice_id_from_db)
                     else:
                         DraftPolicy.objects.create(**policy_data_to_save)
                         new_drafts += 1
-                        logger.info("Created DraftPolicy for invoice %s (incomplete).", invoice_id_from_db)
+                        logger.debug("Created DraftPolicy for invoice %s (incomplete).", invoice_id_from_db)
 
                 except Exception as exc:
-                    logger.error("Error processing invoice %s: %s", invoice_id_from_db, exc, exc_info=True)
                     errors += 1
+                    logger.debug("Error processing invoice %s: %s", invoice_id_from_db, exc, exc_info=True)
 
-        msg = f"Successfully processed {new_policies} policies, {new_drafts} drafts. Errors: {errors}"
-        logger.info(msg)
+        result = {
+            "fetched": len(rows),
+            "created_policies": new_policies,
+            "created_drafts": new_drafts,
+            "skipped_existing": skipped_existing,
+            "normalization_issues": normalization_issues,
+            "errors": errors,
+        }
+        logger.info("Policy sync summary: %s", result)
+        msg = (
+            "Policy sync: "
+            f"povuceno={len(rows)}, polise={new_policies}, draft={new_drafts}, "
+            f"preskoceno={skipped_existing}, problemi={normalization_issues + errors}"
+        )
         return msg
 
     except Exception as exc:
@@ -219,7 +250,7 @@ def fetch_policy_data(last_24_hours=True, days=None):
 
 def process_vehicle_retirements():
     try:
-        logger.info("Pokrećem funkciju za obradu otpisanih vozila...")
+        logger.debug("Otpis vozila sync start")
         query = """
             SELECT inv_br
             FROM dbo.otpis;
@@ -227,21 +258,23 @@ def process_vehicle_retirements():
 
         retired_vehicles_from_db = []
         with connections["server_db"].cursor() as cursor:
-            logger.info("Izvršavam SQL upit za preuzimanje otpisanih vozila: %s", query)
+            logger.debug("Otpis vozila sync SQL: %s", query)
             cursor.execute(query)
             rows = cursor.fetchall()
-            logger.info("Broj povučenih redova iz dbo.otpis: %s", len(rows))
+            logger.debug("Otpis vozila sync fetched rows=%s", len(rows))
 
             for row in rows:
                 if row[0] is not None:
                     retired_vehicles_from_db.append(str(row[0]).strip())
 
         if not retired_vehicles_from_db:
-            logger.info("Nema inventarnih brojeva u dbo.otpis za obradu.")
+            logger.info("Proces otpisa završen: Ažurirano vozila: 0, Već otpisana (preskočena): 0, Nije pronađeno u Django bazi: 0, Greške: 0")
             return "Nema otpisanih vozila za obradu."
 
         updated_count = 0
         skipped_count = 0
+        not_found_count = 0
+        errors = 0
 
         with transaction.atomic():
             for inv_br_from_db in retired_vehicles_from_db:
@@ -256,7 +289,7 @@ def process_vehicle_retirements():
                     vehicle.otpis = True
                     vehicle.save(update_fields=["otpis"])
                     updated_count += 1
-                    logger.info(
+                    logger.debug(
                         "Uspešno otpisano vozilo: %s - %s %s.",
                         vehicle.inventory_number,
                         vehicle.brand,
@@ -264,15 +297,18 @@ def process_vehicle_retirements():
                     )
 
                 except Vehicle.DoesNotExist:
-                    logger.warning("Vozilo sa inventarnim brojem %r iz dbo.otpis nije pronađeno u Django bazi.", inv_br_from_db)
+                    not_found_count += 1
+                    logger.debug("Vozilo sa inventarnim brojem %r iz dbo.otpis nije pronađeno u Django bazi.", inv_br_from_db)
                 except Exception as exc:
-                    logger.error("Greška pri obradi vozila %r: %s", inv_br_from_db, exc, exc_info=True)
+                    errors += 1
+                    logger.debug("Greška pri obradi vozila %r: %s", inv_br_from_db, exc, exc_info=True)
 
         message = (
             "Proces otpisa završen: "
             f"Ažurirano vozila: {updated_count}, "
             f"Već otpisana (preskočena): {skipped_count}, "
-            f"Nije pronađeno u Django bazi: {len(retired_vehicles_from_db) - updated_count - skipped_count}"
+            f"Nije pronađeno u Django bazi: {not_found_count}, "
+            f"Greške: {errors}"
         )
         logger.info(message)
         return message
@@ -371,12 +407,14 @@ def sync_organizational_units_from_view():
         else:
             updated += 1
 
-    logger.info("Organizacione jedinice: %s dodatih, %s ažuriranih.", created, updated)
+    message = f"Organizacione jedinice: dodatih={created}, azuriranih={updated}"
+    logger.info(message)
+    return message
 
 
 def fetch_ddor_insurance_data():
     try:
-        logger.info("Pokrećem fetch_ddor_insurance_data...")
+        logger.debug("DDOR sync start")
 
         query = f"""
             SELECT
@@ -385,10 +423,14 @@ def fetch_ddor_insurance_data():
         """
 
         with connections[DB_ALIAS].cursor() as cursor:
-            logger.info("Izvršavam SQL upit...")
+            logger.debug("DDOR sync executing SQL query")
             cursor.execute(query)
             rows = cursor.fetchall()
-            logger.info("Preuzeto redova: %s", len(rows))
+            logger.debug("DDOR sync fetched rows=%s", len(rows))
+
+        created = 0
+        skipped_existing = 0
+        errors = 0
 
         for i, row in enumerate(rows, start=1):
             try:
@@ -415,7 +457,8 @@ def fetch_ddor_insurance_data():
 
                 key_filter = dict(god=god, sif_vrs=sif_vrs, br_naloga=br_naloga, stavka=stavka, knt=knt)
                 if Insurance.objects.filter(**key_filter).exists() or DraftInsurance.objects.filter(**key_filter).exists():
-                    logger.warning("[%s] Postoji (final/draft): %s - preskačem.", i, key_filter)
+                    skipped_existing += 1
+                    logger.debug("[%s] Postoji (final/draft): %s - preskačem.", i, key_filter)
                     continue
 
                 DraftInsurance.objects.create(
@@ -430,15 +473,27 @@ def fetch_ddor_insurance_data():
                     potrazuje=potrazuje,
                     kola=kola,
                 )
-                logger.info("[%s] Sačuvan draft: %s/%s (%s)", i, br_naloga, stavka, god)
+                created += 1
+                logger.debug("[%s] Sačuvan draft: %s/%s (%s)", i, br_naloga, stavka, god)
 
             except Exception as exc:
-                logger.info("[%s] Greška u obradi reda: %s", i, exc)
+                errors += 1
+                logger.debug("[%s] Greška u obradi reda: %s", i, exc, exc_info=True)
 
-        return "DDOR: podaci uspešno povučeni u draft; duplikati preskočeni."
+        result = {
+            "fetched": len(rows),
+            "created": created,
+            "skipped_existing": skipped_existing,
+            "errors": errors,
+        }
+        logger.info("DDOR sync summary: %s", result)
+        return (
+            "DDOR sync: "
+            f"povuceno={len(rows)}, kreirano={created}, preskoceno={skipped_existing}, problemi={errors}"
+        )
 
     except Exception as exc:
-        logger.info("Greška u fetch_ddor_insurance_data: %s", exc)
+        logger.error("Greška u fetch_ddor_insurance_data: %s", exc, exc_info=True)
         return f"Greška u fetch_ddor_insurance_data: {exc}"
 
 

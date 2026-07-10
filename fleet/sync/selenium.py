@@ -34,11 +34,11 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_nis_console_logging(logger):
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
     if not any(getattr(handler, "_nis_console_handler", False) for handler in logger.handlers):
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.DEBUG)
+        console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(formatter)
         console_handler._nis_console_handler = True
         logger.addHandler(console_handler)
@@ -63,7 +63,7 @@ def get_latest_download_file(download_path):
 def wait_for_download_file(download_path, timeout=60):
     start = time.time()
     last_log_second = -1
-    logger.info("NIS download: cekam fajl u folderu %s, timeout=%ss", download_path, timeout)
+    logger.debug("NIS download: cekam fajl u folderu %s, timeout=%ss", download_path, timeout)
     while time.time() - start < timeout:
         files = [
             f for f in os.listdir(download_path)
@@ -72,12 +72,12 @@ def wait_for_download_file(download_path, timeout=60):
         if files:
             paths = [os.path.join(download_path, basename) for basename in files]
             latest_file = max(paths, key=os.path.getctime)
-            logger.info("NIS download: pronadjen fajl %s", latest_file)
+            logger.debug("NIS download: pronadjen fajl %s", latest_file)
             return latest_file
         elapsed = int(time.time() - start)
         if elapsed and elapsed % 5 == 0 and elapsed != last_log_second:
             last_log_second = elapsed
-            logger.info("NIS download: jos cekam fajl, proslo %ss", elapsed)
+            logger.debug("NIS download: jos cekam fajl, proslo %ss", elapsed)
         time.sleep(1)
     raise TimeoutException("Download file not found within timeout.")
 
@@ -201,7 +201,7 @@ def parse_nis_picker_month(value):
 
 
 def open_nis_datetime_picker(driver, label):
-    logger.info("NIS datepicker: otvaram polje '%s'", label)
+    logger.debug("NIS datepicker: otvaram polje '%s'", label)
     input_element = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((
             By.XPATH,
@@ -213,7 +213,7 @@ def open_nis_datetime_picker(driver, label):
     input_element.click()
     input_element.click()
     WebDriverWait(driver, 10).until(lambda current_driver: visible_nis_picker(current_driver) is not None)
-    logger.info("NIS datepicker: otvoren za '%s', mesec=%s", label, active_nis_picker_month(driver))
+    logger.debug("NIS datepicker: otvoren za '%s', mesec=%s", label, active_nis_picker_month(driver))
     return True
 
 
@@ -222,7 +222,7 @@ def click_active_nis_picker_nav(driver, direction):
     if picker is None:
         return False
     selector = ".rdtPrev" if direction < 0 else ".rdtNext"
-    logger.info("NIS datepicker: klik navigacija %s", "prethodni" if direction < 0 else "sledeci")
+    logger.debug("NIS datepicker: klik navigacija %s", "prethodni" if direction < 0 else "sledeci")
     picker.find_element(By.CSS_SELECTOR, selector).click()
     return True
 
@@ -235,7 +235,7 @@ def select_day_in_active_nis_picker(driver, target_date):
     for cell in cells:
         if cell.get_attribute("data-value") == str(target_date.day):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", cell)
-            logger.info("NIS datepicker: klik na dan %s", target_date.day)
+            logger.debug("NIS datepicker: klik na dan %s", target_date.day)
             cell.click()
             return True
     return False
@@ -249,7 +249,7 @@ def select_different_day_in_active_nis_picker(driver, target_date):
     for cell in cells:
         classes = cell.get_attribute("class") or ""
         if cell.get_attribute("data-value") != str(target_date.day) and "rdtDisabled" not in classes:
-            logger.info("NIS datepicker: fallback klik na drugi dan %s", cell.get_attribute("data-value"))
+            logger.debug("NIS datepicker: fallback klik na drugi dan %s", cell.get_attribute("data-value"))
             cell.click()
             return True
     return False
@@ -270,7 +270,7 @@ def get_nis_datetime_field_value(driver, label):
 
 
 def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0):
-    logger.info(
+    logger.debug(
         "NIS datepicker: pocinjem izbor datuma label=%s target=%s fixed_prev_clicks=%s",
         label,
         target_date,
@@ -291,7 +291,7 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
             if not click_active_nis_picker_nav(driver, -1):
                 return "nav_not_found"
             time.sleep(0.2)
-            logger.info(
+            logger.debug(
                 "NIS datepicker: posle klika nazad %s/%s mesec=%s",
                 click_index + 1,
                 fixed_prev_clicks,
@@ -318,9 +318,9 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
         return "day_not_found"
     time.sleep(0.5)
     value = get_nis_datetime_field_value(driver, label) or ""
-    logger.info("NIS datepicker: vrednost posle prvog izbora '%s' = %s", label, value)
+    logger.debug("NIS datepicker: vrednost posle prvog izbora '%s' = %s", label, value)
     if not value.startswith(nis_date_prefix(target_date)):
-        logger.warning("NIS datepicker: vrednost nije prihvacena, pokrecem fallback. Trenutno=%s", value)
+        logger.debug("NIS datepicker: vrednost nije prihvacena, pokrecem fallback. Trenutno=%s", value)
         if not open_nis_datetime_picker(driver, label):
             return f"value_not_changed:{value}"
         time.sleep(0.2)
@@ -349,7 +349,7 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
             return f"value_not_changed:{value}"
         time.sleep(0.5)
         value = get_nis_datetime_field_value(driver, label) or ""
-        logger.info("NIS datepicker: vrednost posle fallback-a '%s' = %s", label, value)
+        logger.debug("NIS datepicker: vrednost posle fallback-a '%s' = %s", label, value)
     if not value.startswith(nis_date_prefix(target_date)):
         return f"value_not_changed:{value}"
     return "ok"
@@ -428,7 +428,7 @@ def nis_data_import():
         handler = logging.FileHandler(log_path, encoding="utf-8")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-    logger.info("NIS sync: start")
+    logger.debug("NIS sync: start")
 
     try:
         config = {
@@ -441,7 +441,7 @@ def nis_data_import():
             "keep_browser_open": False,
         }
         date_from, date_to = previous_month_range()
-        logger.info(
+        logger.debug(
             "NIS sync: config base_url=%s download_dir=%s chrome_binary=%s headless=%s keep_browser_open=%s",
             config["base_url"],
             config["download_dir"],
@@ -449,10 +449,10 @@ def nis_data_import():
             config["headless"],
             config["keep_browser_open"],
         )
-        logger.info("NIS sync: period date_from=%s date_to=%s", date_from, date_to)
+        logger.debug("NIS sync: period date_from=%s date_to=%s", date_from, date_to)
 
         os.makedirs(config["download_dir"], exist_ok=True)
-        logger.info("NIS sync: download folder spreman: %s", config["download_dir"])
+        logger.debug("NIS sync: download folder spreman: %s", config["download_dir"])
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--ignore-certificate-errors")
         chrome_options.add_argument("--allow-insecure-localhost")
@@ -467,54 +467,54 @@ def nis_data_import():
             chrome_options.binary_location = config["chrome_binary"]
 
         service = Service(log_output=os.devnull)
-        logger.info("NIS sync: pokrecem Chrome webdriver")
+        logger.debug("NIS sync: pokrecem Chrome webdriver")
         driver = webdriver.Chrome(options=chrome_options, service=service)
         driver.set_page_load_timeout(60)
         driver.set_script_timeout(30)
         driver.implicitly_wait(5)
         driver.set_window_size(1920, 1080)
-        logger.info("NIS sync: Chrome webdriver pokrenut")
+        logger.debug("NIS sync: Chrome webdriver pokrenut")
 
         try:
             step = "login_page"
-            logger.info("NIS sync: otvaram login stranicu.")
+            logger.debug("NIS sync: otvaram login stranicu.")
             driver.get(config["base_url"])
 
             step = "username_input"
-            logger.info("NIS sync: cekam polje za korisnicko ime.")
+            logger.debug("NIS sync: cekam polje za korisnicko ime.")
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@type='text' or @name='username' or contains(@placeholder,'ime')]"))
             ).send_keys(config["username"])
 
             step = "password_input"
-            logger.info("NIS sync: cekam polje za lozinku.")
+            logger.debug("NIS sync: cekam polje za lozinku.")
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//input[@type='password' or @name='password' or contains(@placeholder,'Lozinka')]"))
             ).send_keys(config["password"])
 
             step = "login_button"
-            logger.info("NIS sync: klik na login.")
+            logger.debug("NIS sync: klik na login.")
             WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@type='submit' and contains(@class, 'pure-button-primary')]"))
             ).click()
-            logger.info("NIS sync: login kliknut")
+            logger.debug("NIS sync: login kliknut")
 
             time.sleep(5)
-            logger.info("NIS sync: posle login pauze url=%s title=%s", driver.current_url, driver.title)
+            logger.debug("NIS sync: posle login pauze url=%s title=%s", driver.current_url, driver.title)
             step = "client_transactions_page"
-            logger.info("NIS sync: otvaram izvestaj Transakcije po kupcima.")
+            logger.debug("NIS sync: otvaram izvestaj Transakcije po kupcima.")
             dismiss_disclaimer_overlay(driver)
             driver.get(config["base_url"].rstrip("/") + "/reports/client-transactions")
             time.sleep(2)
-            logger.info("NIS sync: transakcije otvorene url=%s title=%s", driver.current_url, driver.title)
+            logger.debug("NIS sync: transakcije otvorene url=%s title=%s", driver.current_url, driver.title)
 
             step = "report_form_loaded"
-            logger.info("NIS sync: cekam formu izvestaja.")
+            logger.debug("NIS sync: cekam formu izvestaja.")
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, "//label[contains(., 'Datum od')]"))
             )
             step = "date_from"
-            logger.info("NIS sync: postavljam Datum od: %s", date_from)
+            logger.debug("NIS sync: postavljam Datum od: %s", date_from)
             date_from_result = select_nis_date_with_widget(driver, "Datum od", date_from, fixed_prev_clicks=2)
             if date_from_result != "ok":
                 raise RuntimeError(f"NIS sync nije uspeo da postavi polje Datum od preko widgeta: {date_from_result}.")
@@ -529,10 +529,10 @@ def nis_data_import():
                     f"Ocekivano Datum od: {expected_from}; "
                     f"na stranici: {actual_from}."
                 )
-            logger.info("NIS sync: datum prihvacen, Datum od=%s", actual_from)
+            logger.debug("NIS sync: datum prihvacen, Datum od=%s", actual_from)
 
             step = "show_report_button"
-            logger.info("NIS sync: klik na Prikazi izvestaj.")
+            logger.debug("NIS sync: klik na Prikazi izvestaj.")
             show_report_button = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'pure-button-primary') and (contains(., 'Prika') or contains(., 'Show'))]"))
             )
@@ -541,13 +541,13 @@ def nis_data_import():
             ActionChains(driver).move_to_element(show_report_button).click().perform()
             time.sleep(2)
             step = "download_dropdown"
-            logger.info("NIS sync: otvaram download meni.")
+            logger.debug("NIS sync: otvaram download meni.")
             WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'download-button')]"))
             ).click()
             time.sleep(2)
             step = "xlsx_option"
-            logger.info("NIS sync: biram XLSX.")
+            logger.debug("NIS sync: biram XLSX.")
             xlsx_option = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//li[@class='option']//button[contains(., 'XLSX')]"))
             )
@@ -556,18 +556,18 @@ def nis_data_import():
             ActionChains(driver).move_to_element(xlsx_option).click().perform()
             time.sleep(2)
             step = "download_file"
-            logger.info("NIS sync: cekam preuzimanje fajla.")
+            logger.debug("NIS sync: cekam preuzimanje fajla.")
             xlsx_file_path = wait_for_download_file(config["download_dir"], timeout=90)
             try:
-                logger.info("NIS sync: Excel preuzet %s velicina=%s bytes", xlsx_file_path, os.path.getsize(xlsx_file_path))
+                logger.debug("NIS sync: Excel preuzet %s velicina=%s bytes", xlsx_file_path, os.path.getsize(xlsx_file_path))
             except OSError:
-                logger.info("NIS sync: Excel preuzet %s", xlsx_file_path)
-            logger.info("NIS sync: start import goriva")
+                logger.debug("NIS sync: Excel preuzet %s", xlsx_file_path)
+            logger.debug("NIS sync: start import goriva")
             fuel_result = import_nis_fuel_consumption(xlsx_file_path)
-            logger.info("NIS sync: kraj import goriva result=%s", fuel_result)
-            logger.info("NIS sync: start import transakcija")
+            logger.debug("NIS sync: kraj import goriva result=%s", fuel_result)
+            logger.debug("NIS sync: start import transakcija")
             transactions_result = import_nis_transactions(xlsx_file_path)
-            logger.info("NIS sync: kraj import transakcija result=%s", transactions_result)
+            logger.debug("NIS sync: kraj import transakcija result=%s", transactions_result)
             missing_vehicles = sorted(set(
                 fuel_result.get("missing_vehicles", []) + transactions_result.get("missing_vehicles", [])
             ))
@@ -578,7 +578,7 @@ def nis_data_import():
                 "transactions": transactions_result,
                 "missing_vehicles": missing_vehicles,
             }
-            logger.info("NIS sync: zavrsen result=%s", result)
+            logger.debug("NIS sync: zavrsen result=%s", result)
             return result
 
         except Exception:
@@ -588,9 +588,9 @@ def nis_data_import():
             raise
         finally:
             if not config["keep_browser_open"] and driver:
-                logger.info("NIS sync: zatvaram Chrome")
+                logger.debug("NIS sync: zatvaram Chrome")
                 driver.quit()
-                logger.info("NIS sync: Chrome zatvoren")
+                logger.debug("NIS sync: Chrome zatvoren")
 
     except Exception as e:
         logger.exception("NIS sync: neuspesan na koraku '%s'.", step)
@@ -822,17 +822,17 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
     skipped = 0
     errors = 0
     missing_vehicles = set()
-    logger.info("OMV fuel import start: file=%s", csv_file_path)
+    logger.debug("OMV fuel import start: file=%s", csv_file_path)
 
     with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for index, row in enumerate(reader, start=1):
             formatted_plate = ""
             try:
-                logger.info("OMV fuel row start: row=%s", index)
+                logger.debug("OMV fuel row start: row=%s", index)
                 # Formatiraj registarske tablice
                 formatted_plate = format_license_plate(row['License plate No'])
-                logger.info(
+                logger.debug(
                     "OMV fuel row plate: row=%s raw=%s formatted=%s",
                     index,
                     row.get('License plate No'),
@@ -905,7 +905,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                     was_created = True
                 if was_created:
                     created += 1
-                    logger.info(
+                    logger.debug(
                         "OMV fuel row created: row=%s plate=%s date=%s gross=%s qty=%s",
                         index,
                         formatted_plate,
@@ -914,12 +914,12 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                         amount,
                     )
                 else:
-                    logger.info("OMV fuel row updated: row=%s plate=%s", index, formatted_plate)
+                    logger.debug("OMV fuel row updated: row=%s plate=%s", index, formatted_plate)
             
             except ObjectDoesNotExist:
                 skipped += 1
                 missing_vehicles.add(row.get('License plate No', '').strip())
-                logger.warning(
+                logger.debug(
                     "OMV fuel row skipped missing vehicle: row=%s raw_plate=%s formatted=%s",
                     index,
                     row.get('License plate No'),
@@ -928,7 +928,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
             except Exception as e:
                 skipped += 1
                 errors += 1
-                logger.exception("OMV fuel row error: row=%s plate=%s error=%s", index, formatted_plate, e)
+                logger.debug("OMV fuel row error: row=%s plate=%s error=%s", index, formatted_plate, e, exc_info=True)
 
     result = {
         "status": "ok",
@@ -1103,7 +1103,7 @@ def import_omv_transactions_from_csv(csv_file_path):
             except ObjectDoesNotExist:
                 skipped += 1
                 missing_vehicles.add(row.get('License plate No', '').strip())
-                logger.warning(
+                logger.debug(
                     "OMV transactions row skipped missing vehicle: row=%s raw_plate=%s",
                     index,
                     row.get('License plate No'),
@@ -1111,11 +1111,12 @@ def import_omv_transactions_from_csv(csv_file_path):
             except Exception as e:
                 skipped += 1
                 errors += 1
-                logger.exception(
+                logger.debug(
                     "OMV transactions row error: row=%s plate=%s error=%s",
                     index,
                     row.get('License plate No'),
                     e,
+                    exc_info=True,
                 )
 
     result = {

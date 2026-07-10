@@ -31,6 +31,83 @@ from .views.vehicle_travel_orders import (
 from .sync.selenium import import_omv_transactions_from_csv
 
 
+class UserProfileManagementTests(TestCase):
+	def create_employee(self, code=8701, first_name="Novi", last_name="Zaposleni"):
+		return Employee.objects.create(
+			employee_code=code,
+			first_name=first_name,
+			last_name=last_name,
+			position="Referent",
+			department_code=1,
+			org_unit_code="1",
+			gender="M",
+			date_of_birth=datetime.date(1990, 1, 1),
+			date_of_joining=datetime.date(2026, 1, 1),
+			personal_number="0101990710000",
+		)
+
+	def create_superuser(self):
+		return get_user_model().objects.create_user(
+			"super-korisnici",
+			password="test",
+			is_staff=True,
+			is_superuser=True,
+		)
+
+	def test_superuser_can_link_existing_user_to_employee(self):
+		employee = self.create_employee()
+		account = get_user_model().objects.create_user("nepovezan", password="test")
+		self.client.force_login(self.create_superuser())
+
+		response = self.client.post(
+			reverse("user_link_employee"),
+			{"user_id": account.pk, "employee_id": employee.pk},
+		)
+
+		self.assertRedirects(response, reverse("user_list"))
+		account.refresh_from_db()
+		self.assertEqual(account.employee, employee)
+		self.assertEqual(account.first_name, employee.first_name)
+		self.assertEqual(account.last_name, employee.last_name)
+
+	def test_regular_user_cannot_link_user_to_employee(self):
+		employee = self.create_employee()
+		account = get_user_model().objects.create_user("nepovezan", password="test")
+		regular = get_user_model().objects.create_user("regular-korisnici", password="test")
+		self.client.force_login(regular)
+
+		response = self.client.post(
+			reverse("user_link_employee"),
+			{"user_id": account.pk, "employee_id": employee.pk},
+		)
+
+		self.assertEqual(response.status_code, 403)
+		account.refresh_from_db()
+		self.assertIsNone(account.employee)
+
+	def test_superuser_can_create_profile_for_employee(self):
+		employee = self.create_employee(first_name="Pera", last_name="Peric")
+		self.client.force_login(self.create_superuser())
+
+		response = self.client.post(reverse("user_create_employee_profile", args=[employee.pk]))
+
+		self.assertRedirects(response, reverse("user_list"))
+		created_user = get_user_model().objects.get(employee=employee)
+		self.assertEqual(created_user.username, "pera.peric")
+		self.assertTrue(created_user.must_change_password)
+		self.assertTrue(created_user.roles.filter(slug="zaposleni").exists())
+
+	def test_user_list_renders_superuser_profile_actions(self):
+		self.create_employee()
+		self.client.force_login(self.create_superuser())
+
+		response = self.client.get(reverse("user_list"))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, reverse("user_create_missing_profiles"))
+		self.assertContains(response, "Kreiraj profil")
+
+
 class SecondaryReportViewHelperTests(SimpleTestCase):
 	def setUp(self):
 		self.factory = RequestFactory()

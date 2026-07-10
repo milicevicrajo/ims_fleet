@@ -186,6 +186,7 @@ def sync_employees_from_hr_view(using=None):
     updated = 0
     updated_inactive = 0
     skipped_inactive = 0
+    skipped_invalid_code = 0
 
     for row in rows:
         (
@@ -213,7 +214,8 @@ def sync_employees_from_hr_view(using=None):
 
         employee_code = _as_int(rasif)
         if employee_code is None:
-            logger.warning("Preskacem zapis bez validne sifre zaposlenog: %s", rasif)
+            skipped_invalid_code += 1
+            logger.debug("Preskacem zapis bez validne sifre zaposlenog: %s", rasif)
             continue
 
         title, first_name, last_name = _normalize_full_name(ranaz)
@@ -275,5 +277,6 @@ def sync_employees_from_hr_view(using=None):
         "updated": updated,
         "updated_inactive": updated_inactive,
         "skipped_inactive": skipped_inactive,
+        "skipped_invalid_code": skipped_invalid_code,
         "total": len(rows),
     }

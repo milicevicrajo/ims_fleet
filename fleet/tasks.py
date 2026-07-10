@@ -192,7 +192,8 @@ def sync_hr_employees_task():
             f"kreirano={result['created']}, "
             f"azurirano={result['updated']}, "
             f"azurirano_neaktivni={result['updated_inactive']}, "
-            f"preskoceno_neaktivni={result['skipped_inactive']}"
+            f"preskoceno_neaktivni={result['skipped_inactive']}, "
+            f"preskoceno_nevalidna_sifra={result.get('skipped_invalid_code', 0)}"
         )
 
     return _run_with_singleton_lock(

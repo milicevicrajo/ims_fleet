@@ -60,6 +60,7 @@ def sync_permission_codes_task():
     def _runner():
         output = StringIO()
         call_command("sync_permission_codes", stdout=output)
+        call_command("sync_celery_periodic_tasks", stdout=output)
         return output.getvalue().strip()
 
     return _run_with_singleton_lock(

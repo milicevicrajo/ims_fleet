@@ -38,6 +38,13 @@
   .user-status.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
   .user-status.danger { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
   .user-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
+  .user-action-form {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    min-width: 260px;
+  }
+  .user-action-form .form-select { min-width: 170px; }
   #UsersTable th,
   #UsersTable td,
   #EmployeesWithoutProfileTable th,
@@ -52,6 +59,14 @@
     <h1>Korisnici</h1>
     <p>Pregled korisnickih naloga, povezanih zaposlenih, promene inicijalne lozinke i poslednje prijave.</p>
   </div>
+  {% if can_manage_user_profiles and active_without_profile_count %}
+    <form method="post" action="{% url 'user_create_missing_profiles' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-light btn-sm">
+        <i class="mdi mdi-account-multiple-plus"></i> Kreiraj profile za sve
+      </button>
+    </form>
+  {% endif %}
 </div>
 
 <div class="row g-3 mb-3">
@@ -92,6 +107,7 @@
             <th>Lozinka</th>
             <th>Prijava</th>
             <th>Status</th>
+            {% if can_manage_user_profiles %}<th>Akcija</th>{% endif %}
           </tr>
         </thead>
         <tbody>
@@ -144,9 +160,32 @@
                 {% if account.is_superuser %}<span class="user-muted">Superuser</span>{% endif %}
                 {% if account.is_staff %}<span class="user-muted">Staff</span>{% endif %}
               </td>
+              {% if can_manage_user_profiles %}
+                <td>
+                  {% if not account.employee_id and link_employee_options %}
+                    <form method="post" action="{% url 'user_link_employee' %}" class="user-action-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="user_id" value="{{ account.pk }}">
+                      <select name="employee_id" class="form-select form-select-sm" required>
+                        <option value="">Zaposleni...</option>
+                        {% for employee in link_employee_options %}
+                          <option value="{{ employee.pk }}">{{ employee.employee_code }} - {{ employee }}</option>
+                        {% endfor %}
+                      </select>
+                      <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="mdi mdi-link"></i> Povezi
+                      </button>
+                    </form>
+                  {% elif not account.employee_id %}
+                    <span class="text-muted">Nema slobodnih zaposlenih</span>
+                  {% else %}
+                    <span class="text-muted">Povezan</span>
+                  {% endif %}
+                </td>
+              {% endif %}
             </tr>
           {% empty %}
-            <tr><td colspan="8" class="text-center text-muted">Nema korisnika.</td></tr>
+            <tr><td colspan="{% if can_manage_user_profiles %}9{% else %}8{% endif %}" class="text-center text-muted">Nema korisnika.</td></tr>
           {% endfor %}
         </tbody>
         <tfoot>
@@ -159,6 +198,7 @@
             <th>Lozinka</th>
             <th>Prijava</th>
             <th>Status</th>
+            {% if can_manage_user_profiles %}<th>Akcija</th>{% endif %}
           </tr>
         </tfoot>
       </table>
@@ -181,6 +221,7 @@
             <th>OJ</th>
             <th>Pozicija</th>
             <th>Telefon</th>
+            {% if can_manage_user_profiles %}<th>Akcija</th>{% endif %}
           </tr>
         </thead>
         <tbody>
@@ -193,9 +234,19 @@
               <td>{{ employee.org_unit_code|default:"/" }}</td>
               <td>{{ employee.position|default:"/" }}</td>
               <td>{{ employee.mobile_phone|default:employee.phone_number|default:"/" }}</td>
+              {% if can_manage_user_profiles %}
+                <td>
+                  <form method="post" action="{% url 'user_create_employee_profile' employee.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                      <i class="mdi mdi-account-plus"></i> Kreiraj profil
+                    </button>
+                  </form>
+                </td>
+              {% endif %}
             </tr>
           {% empty %}
-            <tr><td colspan="5" class="text-center text-muted">Svi aktivni zaposleni imaju korisnicki profil.</td></tr>
+            <tr><td colspan="{% if can_manage_user_profiles %}6{% else %}5{% endif %}" class="text-center text-muted">Svi aktivni zaposleni imaju korisnicki profil.</td></tr>
           {% endfor %}
         </tbody>
       </table>

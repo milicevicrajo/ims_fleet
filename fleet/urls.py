@@ -163,7 +163,13 @@ from .views.vehicle_travel_orders import (
     VehicleTravelOrderRequestView,
     VehicleTravelOrderUpdateView,
 )
-from .views.users import ActivityLogListView, UserListView
+from .views.users import (
+    ActivityLogListView,
+    UserListView,
+    create_employee_user_profile_view,
+    create_missing_employee_user_profiles_view,
+    link_user_employee_view,
+)
 from .views.reports import (
     export_nis_putnicka_excel,
     export_nis_teretna_excel,
@@ -418,6 +424,9 @@ urlpatterns = [
     path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),
     
     path('users/', UserListView.as_view(), name='user_list'),
+    path('users/link-employee/', link_user_employee_view, name='user_link_employee'),
+    path('users/create-missing-profiles/', create_missing_employee_user_profiles_view, name='user_create_missing_profiles'),
+    path('users/create-profile/<int:pk>/', create_employee_user_profile_view, name='user_create_employee_profile'),
     path('administracija/activity-log/', ActivityLogListView.as_view(), name='activity_log_list'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

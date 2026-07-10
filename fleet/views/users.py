@@ -1,14 +1,28 @@
 from datetime import datetime, time
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 
 from core.mixins import RolePermissionRequiredMixin
 from core.models import ActivityLog, CustomUser
 from fleet.models import Employee
+from fleet.services.employee_user_profiles import (
+    create_user_profile_for_employee,
+    create_user_profiles_for_missing_employees,
+)
+
+
+def _require_superuser(request):
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        raise PermissionDenied("Samo superuser moze da upravlja korisnickim profilima.")
 
 
 class UserListView(LoginRequiredMixin, ListView):
@@ -54,6 +68,7 @@ class UserListView(LoginRequiredMixin, ListView):
             Employee.objects.filter(is_active=True, user_account__isnull=True)
             .order_by("employee_code")
         )
+        unlinked_users = [user for user in users if not user.employee_id]
         context.update(
             {
                 "title": "Korisnici",
@@ -65,9 +80,69 @@ class UserListView(LoginRequiredMixin, ListView):
                 "changed_password_count": sum(1 for user in users if not user.must_change_password),
                 "active_without_profile": active_without_profile,
                 "active_without_profile_count": len(active_without_profile),
+                "can_manage_user_profiles": self.request.user.is_superuser,
+                "link_employee_options": active_without_profile,
+                "unlinked_users_count": len(unlinked_users),
             }
         )
         return context
+
+
+@login_required
+@require_POST
+def link_user_employee_view(request):
+    _require_superuser(request)
+    user_id = request.POST.get("user_id")
+    employee_id = request.POST.get("employee_id")
+    account = get_object_or_404(CustomUser, pk=user_id)
+    employee = get_object_or_404(Employee, pk=employee_id, is_active=True)
+
+    if account.employee_id:
+        messages.error(request, f"Korisnik {account.username} je vec povezan sa zaposlenim.")
+        return redirect("user_list")
+    if CustomUser.objects.filter(employee=employee).exclude(pk=account.pk).exists():
+        messages.error(request, f"Zaposleni {employee} vec ima korisnicki profil.")
+        return redirect("user_list")
+
+    account.employee = employee
+    if not account.first_name:
+        account.first_name = employee.first_name or ""
+    if not account.last_name:
+        account.last_name = employee.last_name or ""
+    account.save(update_fields=["employee", "first_name", "last_name"])
+    messages.success(request, f"Korisnik {account.username} je povezan sa zaposlenim {employee}.")
+    return redirect("user_list")
+
+
+@login_required
+@require_POST
+def create_employee_user_profile_view(request, pk):
+    _require_superuser(request)
+    employee = get_object_or_404(Employee, pk=pk, is_active=True, user_account__isnull=True)
+    try:
+        user, _center, _reason = create_user_profile_for_employee(employee)
+    except Exception as exc:
+        messages.error(request, f"Profil za {employee} nije kreiran: {exc}")
+    else:
+        messages.success(
+            request,
+            f"Kreiran je korisnicki profil {user.username} za {employee}. Inicijalna lozinka je JMBG ili ims{employee.employee_code}.",
+        )
+    return redirect("user_list")
+
+
+@login_required
+@require_POST
+def create_missing_employee_user_profiles_view(request):
+    _require_superuser(request)
+    created, skipped = create_user_profiles_for_missing_employees()
+    if created:
+        messages.success(request, f"Kreirano korisnickih profila: {len(created)}.")
+    if skipped:
+        messages.warning(request, f"Preskoceno zaposlenih: {len(skipped)}.")
+    if not created and not skipped:
+        messages.info(request, "Nema aktivnih zaposlenih bez korisnickog profila.")
+    return redirect("user_list")
 
 
 class ActivityLogListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
