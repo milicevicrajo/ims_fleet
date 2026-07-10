@@ -1,8 +1,11 @@
 import datetime
+import json
 from decimal import Decimal
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -11,6 +14,7 @@ from core.models import OrganizationalUnit, PermissionCode, Role
 from fleet.models import PutniNalog
 from hr.models import Employee
 
+from .services.converters import convert_virman_txt_to_internal_json
 from .services.virman import RECORD_LENGTH, build_detail_line, build_virman_file, validate_order_for_virman
 
 
@@ -145,10 +149,45 @@ class VirmanServiceTests(TestCase):
         self.assertEqual(len(virman_file.content.splitlines()), 4)
 
 
+class TxtJsonConverterTests(TestCase):
+    def test_converts_fixed_width_virman_txt_to_internal_json_records(self):
+        sample_path = Path(__file__).resolve().parent.parent / "Virman-165-B5-2.TXT"
+        uploaded_file = SimpleUploadedFile(
+            "Virman-165-B5-2.TXT",
+            sample_path.read_bytes(),
+            content_type="text/plain",
+        )
+
+        conversion = convert_virman_txt_to_internal_json(uploaded_file)
+
+        self.assertEqual(len(conversion.records), 19)
+        first = conversion.records[0]
+        self.assertEqual(first["PaymentBasis"], "Upl.zarade")
+        self.assertEqual(first["PaymentCode"], 240)
+        self.assertEqual(first["Amount"], 71054.57)
+        self.assertEqual(first["DebtorBankAccount"], "205000000001445485")
+        self.assertEqual(first["DebtorCodeModel"], 0)
+        self.assertEqual(first["DebtorCode"], "")
+        self.assertEqual(first["CreditorName"], "DELIC-NIKOLIC IVANA")
+        self.assertEqual(first["CreditorAddress"], "GROCKA")
+        self.assertEqual(first["CreditorBankAccount"], "325930060005536258")
+        self.assertEqual(first["CreditorCodeModel"], 97)
+        self.assertEqual(first["CreditorCode"], "6891000000063670692")
+        self.assertIs(first["UrgentPayment"], True)
+        self.assertEqual(first["ExpectedPaymentDate"], "2026-07-10")
+        self.assertIsNone(first["ExternalId"])
+        self.assertIsNone(first["UserGroupName"])
+        self.assertEqual(first["UserTags"], "")
+        self.assertEqual(first["Comment"], "")
+
+        parsed_json = json.loads(conversion.json_text)
+        self.assertEqual(parsed_json[0]["CreditorName"], "DELIC-NIKOLIC IVANA")
+
+
 @override_settings(ALLOWED_HOSTS=["testserver"])
 class IsplataNeoporezovanihViewTests(TestCase):
-    def create_isplate_user(self, username="blagajna"):
-        permission = PermissionCode.objects.create(code="isplate:neoporezive_isplate")
+    def create_isplate_user(self, username="blagajna", permission_code="isplate:neoporezive_isplate"):
+        permission = PermissionCode.objects.create(code=permission_code)
         role = Role.objects.create(name="Blagajna", slug="blagajna")
         role.permissions.add(permission)
         user = get_user_model().objects.create_user(username=username, password="test")
@@ -359,3 +398,29 @@ class IsplataNeoporezovanihViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("Virman-putni-nalozi-", response["Content-Disposition"])
+
+    def test_converter_page_downloads_json_from_uploaded_txt(self):
+        sample_path = Path(__file__).resolve().parent.parent / "Virman-165-B5-2.TXT"
+        user = self.create_isplate_user(
+            username="converter",
+            permission_code="isplate:converter",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("isplate:converter"),
+            {
+                "txt_file": SimpleUploadedFile(
+                    "Virman-165-B5-2.TXT",
+                    sample_path.read_bytes(),
+                    content_type="text/plain",
+                )
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/json; charset=utf-8")
+        self.assertIn('filename="Virman-165-B5-2.json"', response["Content-Disposition"])
+        records = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(len(records), 19)
+        self.assertEqual(records[0]["CreditorName"], "DELIC-NIKOLIC IVANA")

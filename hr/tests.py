@@ -1,13 +1,17 @@
 import datetime
+from decimal import Decimal
+from io import StringIO
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
+from django.db import DatabaseError
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from core.models import PermissionCode, Role
+from core.models import OrganizationalUnit, PermissionCode, Role
 
-from .models import Employee, EmployeeCVItem
+from .models import Employee, EmployeeCVItem, WorkTimeSheet
 
 
 class HrAppTests(SimpleTestCase):
@@ -67,6 +71,146 @@ class HrAppTests(SimpleTestCase):
         self.assertTrue(issubclass(SyncCommand, HrSyncCommand))
         self.assertIsNotNone(employee_list_queryset)
         self.assertIsNotNone(employees_for_travel_orders)
+
+    def test_attendance_month_period_uses_half_open_range(self):
+        from hr.services.attendance import month_period
+
+        date_from, date_to, last_day = month_period(2026, 12)
+
+        self.assertEqual(date_from, datetime.date(2026, 12, 1))
+        self.assertEqual(date_to, datetime.date(2027, 1, 1))
+        self.assertEqual(last_day, 31)
+
+    def test_clock_events_can_be_calculated_in_django(self):
+        from hr.services.attendance import ClockEvent, calculate_daily_hours_from_clock_events
+
+        events = [
+            ClockEvent(1, 849, "Petrovic", "Petar", "", 1, datetime.datetime(2026, 5, 4, 8, 0), 1),
+            ClockEvent(1, 849, "Petrovic", "Petar", "", 2, datetime.datetime(2026, 5, 4, 16, 30), 2),
+            ClockEvent(1, 849, "Petrovic", "Petar", "", 3, datetime.datetime(2026, 5, 5, 8, 0), 1),
+        ]
+
+        daily_hours, issues = calculate_daily_hours_from_clock_events(events)
+
+        self.assertEqual(len(daily_hours), 2)
+        self.assertEqual(daily_hours[0].total_minutes, 510)
+        self.assertEqual(daily_hours[0].hours, 8)
+        self.assertEqual(daily_hours[0].minutes, 30)
+        self.assertEqual(daily_hours[0].issue_count, 0)
+        self.assertEqual(daily_hours[1].issue_count, 1)
+        self.assertEqual(issues[0].message, "Ulazak 1 bez izlaza.")
+
+    def test_official_exit_counts_until_16h(self):
+        from hr.services.attendance import ClockEvent, calculate_daily_hours_from_clock_events
+
+        events = [
+            ClockEvent(1, 849, "Petrovic", "Petar", "", 1, datetime.datetime(2026, 5, 25, 8, 55), 1),
+            ClockEvent(1, 849, "Petrovic", "Petar", "", 2, datetime.datetime(2026, 5, 25, 12, 45), 4),
+        ]
+
+        daily_hours, issues = calculate_daily_hours_from_clock_events(events)
+
+        self.assertEqual(daily_hours[0].total_minutes, 425)
+        self.assertEqual(daily_hours[0].hours, 7)
+        self.assertEqual(daily_hours[0].minutes, 5)
+        self.assertEqual(daily_hours[0].issue_count, 0)
+        self.assertEqual(len(issues), 1)
+        self.assertFalse(issues[0].is_problem)
+        self.assertIn("racunato do 16:00", issues[0].message)
+
+    @patch("hr.management.commands.hr_attendance_summary.get_month_daily_work_hours")
+    @patch("hr.management.commands.hr_attendance_summary.get_clock_button_definitions", return_value={})
+    @patch("hr.management.commands.hr_attendance_summary.get_clock_events")
+    @patch("hr.management.commands.hr_attendance_summary.get_clock_event_summary")
+    def test_attendance_summary_command_prints_compact_summary(
+        self,
+        summary_mock,
+        events_mock,
+        button_definitions_mock,
+        daily_mock,
+    ):
+        from hr.services.attendance import ClockEventSummary, DailyWorkHours
+
+        summary_mock.return_value = ClockEventSummary(
+            total=4,
+            first_event_at="2026-05-04 07:00",
+            last_event_at="2026-05-04 15:30",
+        )
+        events_mock.return_value = []
+        daily_mock.return_value = [
+            DailyWorkHours(
+                year=2026,
+                month=5,
+                day=4,
+                employee_code=579,
+                organizational_unit=101,
+                employee_name="Petar Petrovic",
+                hours=8,
+                minutes=30,
+                total_hours=Decimal("8.50"),
+            )
+        ]
+        output = StringIO()
+
+        call_command(
+            "hr_attendance_summary",
+            "--employee",
+            "579",
+            "--year",
+            "2026",
+            "--month",
+            "5",
+            stdout=output,
+        )
+
+        value = output.getvalue()
+        self.assertIn("Prolasci: 4", value)
+        self.assertIn("Obracun iz prolaza: 0 dana, ukupno: 0.00, problemi: 0", value)
+        self.assertIn("Dnevni sati iz obradjene tabele: 1 dana, ukupno: 8.50", value)
+        summary_mock.assert_called_once()
+        events_mock.assert_called_once()
+        button_definitions_mock.assert_called_once()
+        daily_mock.assert_called_once()
+
+    @patch("hr.management.commands.hr_attendance_summary.get_month_daily_work_hours")
+    @patch("hr.management.commands.hr_attendance_summary.get_clock_button_definitions", return_value={})
+    @patch("hr.management.commands.hr_attendance_summary.get_clock_events")
+    @patch("hr.management.commands.hr_attendance_summary.get_clock_event_summary")
+    def test_attendance_summary_command_can_filter_clock_events_by_source_id(
+        self,
+        summary_mock,
+        events_mock,
+        button_definitions_mock,
+        daily_mock,
+    ):
+        from hr.services.attendance import ClockEventSummary
+
+        summary_mock.return_value = ClockEventSummary(total=0, first_event_at=None, last_event_at=None)
+        events_mock.return_value = []
+        daily_mock.return_value = []
+        output = StringIO()
+
+        call_command(
+            "hr_attendance_summary",
+            "--employee",
+            "579",
+            "--source-worker-id",
+            "123",
+            "--year",
+            "2026",
+            "--month",
+            "5",
+            stdout=output,
+        )
+
+        summary_kwargs = summary_mock.call_args.kwargs
+        events_kwargs = events_mock.call_args.kwargs
+        daily_kwargs = daily_mock.call_args.kwargs
+        self.assertIsNone(summary_kwargs["employee_code"])
+        self.assertEqual(summary_kwargs["source_worker_id"], 123)
+        self.assertIsNone(events_kwargs["employee_code"])
+        self.assertEqual(events_kwargs["source_worker_id"], 123)
+        self.assertEqual(daily_kwargs["employee_code"], 579)
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
@@ -275,6 +419,157 @@ class MyEmployeeProfileTests(TestCase):
         self.assertNotContains(response, "display_first_name_override")
         self.assertNotContains(response, "display_last_name_override")
         self.assertNotContains(response, "skip_hr_identity_update")
+
+    def test_linked_user_can_open_work_time_sheet(self):
+        employee = self.create_employee(111)
+        user = get_user_model().objects.create_user("radnalista", password="test", employee=employee)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Radna lista")
+        sheet = WorkTimeSheet.objects.get(employee=employee, month=5, year=2026)
+        self.assertEqual(sheet.lines.count(), 12)
+        self.assertContains(response, "meal-code-select select2-method")
+        self.assertContains(response, "work-code-select select2-method")
+        self.assertContains(response, "integer-input")
+        self.assertNotContains(response, 'type="number"')
+        self.assertNotContains(response, 'step="0.5"')
+
+    @patch("hr.views.get_clock_events")
+    def test_work_time_sheet_shows_clock_attendance_rows(self, clock_events_mock):
+        from hr.services.attendance import ClockEvent
+
+        employee = self.create_employee(115, first_name="Rajo", last_name="Milicevic")
+        user = get_user_model().objects.create_user("prolazi", password="test", employee=employee)
+        clock_events_mock.return_value = [
+            ClockEvent(1, employee.employee_code, "Milicevic", "Rajo", "", 1, datetime.datetime(2026, 5, 4, 8, 0), 1),
+            ClockEvent(1, employee.employee_code, "Milicevic", "Rajo", "", 2, datetime.datetime(2026, 5, 4, 16, 30), 2),
+            ClockEvent(1, employee.employee_code, "Milicevic", "Rajo", "", 3, datetime.datetime(2026, 5, 5, 8, 0), 1),
+        ]
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Evidencija prolaza")
+        self.assertContains(response, "8:30")
+        self.assertContains(response, "Ulazak 1 bez izlaza")
+
+    @patch("hr.views.get_clock_events", side_effect=DatabaseError("linked server nije dostupan"))
+    def test_work_time_sheet_stays_available_when_clock_attendance_fails(self, clock_events_mock):
+        employee = self.create_employee(116)
+        user = get_user_model().objects.create_user("prolazigreska", password="test", employee=employee)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Evidencija prolaza nije ucitana")
+
+    def test_work_time_sheet_post_saves_hours_and_keeps_single_sheet_per_month(self):
+        employee = self.create_employee(112)
+        user = get_user_model().objects.create_user("sati", password="test", employee=employee)
+        unit = OrganizationalUnit.objects.create(code="100", name="Centar 100", center="10")
+        self.client.force_login(user)
+        self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
+        sheet = WorkTimeSheet.objects.get(employee=employee, month=5, year=2026)
+        lines = list(sheet.lines.order_by("line_number"))
+
+        data = {
+            "month": "5",
+            "year": "2026",
+            "status": WorkTimeSheet.Status.SUBMITTED,
+            "meal_days": "21",
+            "meal_organizational_unit": str(unit.pk),
+            "field_allowance_days": "2",
+            "lines-TOTAL_FORMS": "12",
+            "lines-INITIAL_FORMS": "12",
+            "lines-MIN_NUM_FORMS": "12",
+            "lines-MAX_NUM_FORMS": "12",
+        }
+        for index, line in enumerate(lines):
+            prefix = f"lines-{index}"
+            data[f"{prefix}-id"] = str(line.pk)
+            data[f"{prefix}-line_number"] = str(line.line_number)
+            data[f"{prefix}-organizational_unit"] = str(unit.pk) if index == 0 else ""
+            for day in range(1, 32):
+                data[f"{prefix}-day_{day}"] = "8" if index == 0 and day in (1, 2) else ""
+            data[f"{prefix}-work_conditions"] = "redovno" if index == 0 else ""
+            data[f"{prefix}-note"] = "napomena" if index == 0 else ""
+
+        response = self.client.post(reverse("hr:work_time_sheet"), data)
+
+        self.assertRedirects(response, f"{reverse('hr:work_time_sheet')}?month=5&year=2026")
+        self.assertEqual(WorkTimeSheet.objects.filter(employee=employee, month=5, year=2026).count(), 1)
+        sheet.refresh_from_db()
+        first_line = sheet.lines.order_by("line_number").first()
+        self.assertEqual(sheet.status, WorkTimeSheet.Status.SUBMITTED)
+        self.assertEqual(first_line.organizational_unit, unit)
+        self.assertEqual(first_line.day_1, 8)
+        self.assertEqual(first_line.day_2, 8)
+        self.assertEqual(first_line.total_hours, 16)
+
+    def test_submit_work_time_sheet_redirects_to_print_and_sets_submitted_status(self):
+        employee = self.create_employee(113)
+        user = get_user_model().objects.create_user("predaja", password="test", employee=employee)
+        unit = OrganizationalUnit.objects.create(code="200", name="Centar 200", center="20")
+        self.client.force_login(user)
+        self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
+        sheet = WorkTimeSheet.objects.get(employee=employee, month=5, year=2026)
+        lines = list(sheet.lines.order_by("line_number"))
+
+        data = {
+            "month": "5",
+            "year": "2026",
+            "action": "submit_print",
+            "status": WorkTimeSheet.Status.DRAFT,
+            "meal_days": "21",
+            "meal_organizational_unit": str(unit.pk),
+            "field_allowance_days": "",
+            "lines-TOTAL_FORMS": "12",
+            "lines-INITIAL_FORMS": "12",
+            "lines-MIN_NUM_FORMS": "12",
+            "lines-MAX_NUM_FORMS": "12",
+        }
+        for index, line in enumerate(lines):
+            prefix = f"lines-{index}"
+            data[f"{prefix}-id"] = str(line.pk)
+            data[f"{prefix}-line_number"] = str(line.line_number)
+            data[f"{prefix}-organizational_unit"] = str(unit.pk) if index == 0 else ""
+            for day in range(1, 32):
+                data[f"{prefix}-day_{day}"] = "8" if index == 0 and day == 1 else ""
+            data[f"{prefix}-work_conditions"] = ""
+            data[f"{prefix}-note"] = ""
+
+        response = self.client.post(reverse("hr:work_time_sheet"), data)
+
+        sheet.refresh_from_db()
+        self.assertEqual(sheet.status, WorkTimeSheet.Status.SUBMITTED)
+        self.assertRedirects(response, reverse("hr:work_time_sheet_print", args=[sheet.pk]))
+
+    def test_own_profile_shows_work_time_sheets_tab(self):
+        employee = self.create_employee(114)
+        user = get_user_model().objects.create_user("profilradneliste", password="test", employee=employee)
+        WorkTimeSheet.objects.create(employee=employee, month=5, year=2026, created_by=user, updated_by=user)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("my_employee_profile"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Radne liste")
+        self.assertContains(response, "Maj")
+        sheet = WorkTimeSheet.objects.get(employee=employee, month=5, year=2026)
+        self.assertContains(response, reverse("hr:work_time_sheet_print", args=[sheet.pk]))
+
+    def test_unlinked_user_cannot_open_work_time_sheet(self):
+        user = get_user_model().objects.create_user("bezradneliste", password="test")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("hr:work_time_sheet"))
+
+        self.assertEqual(response.status_code, 403)
 
     def test_superuser_can_lock_identity_fields_on_employee_update(self):
         from .sync import _preserve_locked_identity_fields

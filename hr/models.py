@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -106,3 +108,149 @@ class EmployeeCVItem(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.title}"
+
+
+class WorkTimeSheet(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", _("Popunjava se")
+        SUBMITTED = "submitted", _("Predato")
+        APPROVED = "approved", _("Odobreno")
+
+    employee = models.ForeignKey(
+        "fleet.Employee",
+        on_delete=models.CASCADE,
+        related_name="work_time_sheets",
+        verbose_name=_("Zaposleni"),
+    )
+    year = models.PositiveSmallIntegerField(
+        verbose_name=_("Godina"),
+        validators=[MinValueValidator(2000), MaxValueValidator(2100)],
+    )
+    month = models.PositiveSmallIntegerField(
+        verbose_name=_("Mesec"),
+        validators=[MinValueValidator(1), MaxValueValidator(12)],
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        verbose_name=_("Status"),
+    )
+    meal_days = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        validators=[MaxValueValidator(31)],
+        verbose_name=_("Topli obrok - broj dana"),
+    )
+    meal_organizational_unit = models.ForeignKey(
+        "fleet.OrganizationalUnit",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="meal_work_time_sheets",
+        verbose_name=_("Topli obrok - sifra posla"),
+    )
+    field_allowance_days = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+        validators=[MaxValueValidator(31)],
+        verbose_name=_("Terenski dodatak - broj dana"),
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="created_work_time_sheets",
+        verbose_name=_("Kreirao"),
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="updated_work_time_sheets",
+        verbose_name=_("Azurirao"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        ordering = ["-year", "-month", "employee__last_name", "employee__first_name"]
+        unique_together = ("employee", "year", "month")
+        verbose_name = _("Radna lista")
+        verbose_name_plural = _("Radne liste")
+
+    @property
+    def total_hours(self):
+        return sum((line.total_hours for line in self.lines.all()), 0)
+
+    def __str__(self):
+        return f"{self.employee} - {self.month:02d}/{self.year}"
+
+
+class WorkTimeSheetLine(models.Model):
+    sheet = models.ForeignKey(
+        WorkTimeSheet,
+        on_delete=models.CASCADE,
+        related_name="lines",
+        verbose_name=_("Radna lista"),
+    )
+    line_number = models.PositiveSmallIntegerField(verbose_name=_("R.b."))
+    organizational_unit = models.ForeignKey(
+        "fleet.OrganizationalUnit",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="work_time_sheet_lines",
+        verbose_name=_("Sifra posla"),
+    )
+    day_1 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_2 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_3 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_4 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_5 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_6 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_7 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_8 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_9 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_10 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_11 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_12 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_13 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_14 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_15 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_16 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_17 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_18 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_19 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_20 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_21 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_22 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_23 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_24 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_25 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_26 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_27 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_28 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_29 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_30 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    day_31 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
+    work_conditions = models.CharField(max_length=100, blank=True, verbose_name=_("Uslovi rada"))
+    note = models.CharField(max_length=255, blank=True, verbose_name=_("Napomena"))
+
+    class Meta:
+        ordering = ["line_number"]
+        unique_together = ("sheet", "line_number")
+        verbose_name = _("Red radne liste")
+        verbose_name_plural = _("Redovi radne liste")
+
+    @property
+    def total_hours(self):
+        total = 0
+        for day in range(1, 32):
+            total += getattr(self, f"day_{day}") or 0
+        return total
+
+    def __str__(self):
+        return f"{self.sheet} / {self.line_number}"

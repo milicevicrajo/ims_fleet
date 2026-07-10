@@ -12,6 +12,7 @@ from django.views.generic import TemplateView
 from core.mixins import RolePermissionRequiredMixin
 from fleet.models import PutniNalog
 
+from .services.converters import convert_virman_txt_to_internal_json
 from .services.virman import build_virman_file
 
 
@@ -182,6 +183,40 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 "orders_count": filtered_qs.count(),
                 "total_amount": total_amount,
                 "missing_account_count": missing_account_count,
+            }
+        )
+        return context
+
+
+class IsplateConverterView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
+    template_name = "isplate/converter.html"
+
+    def post(self, request, *args, **kwargs):
+        uploaded_file = request.FILES.get("txt_file")
+        if not uploaded_file:
+            messages.error(request, "Izaberi TXT fajl za konverziju.")
+            return redirect("isplate:converter")
+
+        try:
+            conversion = convert_virman_txt_to_internal_json(uploaded_file)
+        except ValidationError as exc:
+            for message in exc.messages:
+                messages.error(request, message)
+            return redirect("isplate:converter")
+
+        response = HttpResponse(
+            conversion.json_text,
+            content_type="application/json; charset=utf-8",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{conversion.output_filename}"'
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "title": "Konverter isplata",
+                "sidebar_template": "sidebar_isplate.html",
             }
         )
         return context

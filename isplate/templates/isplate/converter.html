@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Konverter isplata{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div>
+    <h1 class="h3 mb-1">Konverter isplata</h1>
+    <div class="text-muted">TXT virman format u interni JSON format.</div>
+  </div>
+</div>
+
+<div class="card converter-card">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data" class="converter-form">
+      {% csrf_token %}
+      <div>
+        <label for="txt-file" class="form-label fw-semibold">TXT fajl</label>
+        <input id="txt-file" type="file" name="txt_file" class="form-control" accept=".txt,text/plain" required>
+      </div>
+      <div class="converter-actions">
+        <button type="submit" class="btn btn-primary">Konvertuj u JSON</button>
+      </div>
+    </form>
+
+    <div class="converter-note">
+      <div class="fw-semibold mb-1">Podrzani format</div>
+      <div>Fixed-width virman TXT od 180 karaktera po redu, sa dva header reda i detaljnim redovima.</div>
+      <div>Izlaz je JSON lista sa poljima kao u primeru <code>internal.txt.json</code>.</div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .converter-card {
+    max-width: 760px;
+  }
+  .converter-form {
+    display: grid;
+    gap: 16px;
+  }
+  .converter-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .converter-note {
+    margin-top: 18px;
+    padding: 12px 14px;
+    border: 1px solid #d9e2ec;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #334155;
+  }
+</style>
+{% endblock %}

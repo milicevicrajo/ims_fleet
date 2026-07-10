@@ -149,6 +149,7 @@ class PermissionCodeSyncTests(TestCase):
         role = Role.objects.get(slug="blagajna")
         codes = set(role.permissions.values_list("code", flat=True))
         self.assertIn("isplate:neoporezive_isplate", codes)
+        self.assertIn("isplate:converter", codes)
 
     def test_sync_permission_codes_links_sekretarijat_group_users_to_role(self):
         from .permissions import sync_permission_codes

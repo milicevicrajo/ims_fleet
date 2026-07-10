@@ -18,6 +18,11 @@ def get_attr(obj, attr_name):
     """Vraća vrednost atributa iz objekta."""
     return getattr(obj, attr_name, None)
 
+
+@register.filter
+def field_by_name(form, field_name):
+    return form[field_name]
+
 @register.filter
 def receipt_number(value):
     """Prikazuje broj računa kao identifikator, bez decimalnog dela."""

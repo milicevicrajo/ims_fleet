@@ -2,8 +2,15 @@ import re
 import unicodedata
 
 from django import forms
+from django.forms import inlineformset_factory
 
-from .models import Employee, EmployeeCVItem
+from core.models import OrganizationalUnit
+
+from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine
+
+
+WORK_TIME_SHEET_LINE_COUNT = 12
+WORK_TIME_SHEET_DAY_FIELDS = [f"day_{day}" for day in range(1, 32)]
 
 
 class EmployeeForm(forms.ModelForm):
@@ -103,3 +110,101 @@ class EmployeeNameCorrectionForm(forms.ModelForm):
 
     def clean_display_last_name_override(self):
         return self._validate_diacritics_only("display_last_name_override", "last_name")
+
+
+class WorkTimeSheetForm(forms.ModelForm):
+    class Meta:
+        model = WorkTimeSheet
+        fields = ["status", "meal_days", "meal_organizational_unit", "field_allowance_days"]
+        widgets = {
+            "status": forms.Select(attrs={"class": "form-select form-select-sm work-status-select"}),
+            "meal_days": forms.TextInput(
+                attrs={
+                    "class": "form-control form-control-sm integer-input",
+                    "inputmode": "numeric",
+                    "pattern": "[0-9]*",
+                    "autocomplete": "off",
+                }
+            ),
+            "meal_organizational_unit": forms.Select(
+                attrs={"class": "form-select form-select-sm meal-code-select select2-method"}
+            ),
+            "field_allowance_days": forms.TextInput(
+                attrs={
+                    "class": "form-control form-control-sm integer-input",
+                    "inputmode": "numeric",
+                    "pattern": "[0-9]*",
+                    "autocomplete": "off",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["meal_organizational_unit"].queryset = OrganizationalUnit.objects.order_by("code", "name")
+        self.fields["meal_organizational_unit"].empty_label = ""
+        self.fields["meal_organizational_unit"].label_from_instance = lambda obj: obj.code
+
+    def clean(self):
+        cleaned_data = super().clean()
+        meal_days = cleaned_data.get("meal_days")
+        meal_organizational_unit = cleaned_data.get("meal_organizational_unit")
+        if meal_days and not meal_organizational_unit:
+            self.add_error("meal_organizational_unit", "Izaberi sifru posla za topli obrok.")
+        return cleaned_data
+
+
+class WorkTimeSheetLineForm(forms.ModelForm):
+    class Meta:
+        model = WorkTimeSheetLine
+        fields = [
+            "line_number",
+            "organizational_unit",
+            *WORK_TIME_SHEET_DAY_FIELDS,
+            "work_conditions",
+            "note",
+        ]
+        widgets = {
+            "line_number": forms.HiddenInput(),
+            "organizational_unit": forms.Select(
+                attrs={"class": "form-select form-select-sm work-code-select select2-method"}
+            ),
+            "work_conditions": forms.TextInput(attrs={"class": "form-control form-control-sm work-condition-input"}),
+            "note": forms.TextInput(attrs={"class": "form-control form-control-sm note-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["organizational_unit"].queryset = OrganizationalUnit.objects.order_by("code", "name")
+        self.fields["organizational_unit"].empty_label = ""
+        self.fields["organizational_unit"].label_from_instance = lambda obj: obj.code
+        for field_name in WORK_TIME_SHEET_DAY_FIELDS:
+            self.fields[field_name].widget = forms.TextInput(
+                attrs={
+                    "class": "form-control form-control-sm hours-input integer-input",
+                    "inputmode": "numeric",
+                    "pattern": "[0-9]*",
+                    "autocomplete": "off",
+                }
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name in WORK_TIME_SHEET_DAY_FIELDS:
+            value = cleaned_data.get(field_name)
+            if value is not None and (value < 0 or value > 24):
+                self.add_error(field_name, "Sati moraju biti izmedju 0 i 24.")
+        return cleaned_data
+
+
+WorkTimeSheetLineFormSet = inlineformset_factory(
+    WorkTimeSheet,
+    WorkTimeSheetLine,
+    form=WorkTimeSheetLineForm,
+    extra=0,
+    can_delete=False,
+    min_num=WORK_TIME_SHEET_LINE_COUNT,
+    max_num=WORK_TIME_SHEET_LINE_COUNT,
+    validate_min=True,
+    validate_max=True,
+)

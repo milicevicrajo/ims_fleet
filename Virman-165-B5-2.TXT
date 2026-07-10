@@ -1,0 +1,21 @@
+205000000001445485Institut IMS a.d.                  Beograd   100726                                                                                                  Multi E_BANK0
+205000000001445485Institut IMS a.d.                  Beograd   00000028402809500019                                                                                                9
+325930060005536258DELIC-NIKOLIC IVANA                GROCKA    000                      Upl.zarade                          00000 240  0000007105457976891000000063670692   10072601
+265000000419636363JANKOVIC DR KSENIJA                NOVI BEOGR000                      Upl.zarade                          00000 240  0000019856846976891000000063670692   10072601
+265000000005472844MILICIC LJILJANA                   NOVI BEOGR000                      Upl.zarade                          00000 240  0000007105459976891000000063670692   10072601
+200000006746124012DJOKOVIC DR KSENIJA                Beograd   000                      Upl.zarade                          00000 240  0000014052647976891000000063670692   10072601
+170001034304000009STOJANOVIC DR MARKO                GROCKA    000                      Upl.zarade                          00000 240  0000014052650976891000000063670692   10072601
+265000000033889673BOJOVIC DR DRAGAN                  BEOGRAD   000                      Upl.zarade                          00000 240  0000015782070976891000000063670692   10072601
+160600000208634245ILIC DR BILJANA                    BEOGRAD   000                      Upl.zarade                          00000 240  0000016581426976891000000063670692   10072601
+200000002514768575ALEKSIC DR VUJADIN                 Beograd   000                      Upl.zarade                          00000 240  0000016581424976891000000063670692   10072601
+265000000032548939FLAJS DR ZELJKO                    Beograd   000                      Upl.zarade                          00000 240  0000014052648976891000000063670692   10072601
+265000000048066708VASIC DR MILICA                    Beograd   000                      Upl.zarade                          00000 240  0000025813699976891000000063670692   10072601
+200000003222338955VASIC DR MILOS                     Beograd   000                      Upl.zarade                          00000 240  0000016581424976891000000063670692   10072601
+325930070131218624MIJATOVIC DR NEVENKA               Beograd   000                      Upl.zarade                          00000 240  0000018268398976891000000063670692   10072601
+160510010077264030TERZIC DR ANJA                     NOVI BEOGR000                      Upl.zarade                          00000 240  0000019856845976891000000063670692   10072601
+200000007285327030COSIC DR MLADEN                    LOZNICA   000                      Upl.zarade                          00000 240  0000014052648976891000000063670692   10072601
+170001029482500064BOZOVIC NIKOLA                     Beograd   000                      Upl.zarade                          00000 240  0000011874698976891000000063670692   10072601
+205900103159190181BULATOVIC DR SRDJAN                BEOGRAD   000                      Upl.zarade                          00000 240  0000016581423976891000000063670692   10072601
+205900102087531271TOMIC NIKOLA                       Beograd   000                      Upl.zarade                          00000 240  0000011117495976891000000063670692   10072601
+325930070718503863CORLUKA DR STEVAN                  BEOGRAD   000                      Upl.zarade                          00000 240  0000010658188976891000000063670692   10072601
+160600000246303904SUSIC DR ISIDORA                   Beograd   000                      Upl.zarade                          00000 240  0000014052650976891000000063670692   10072601

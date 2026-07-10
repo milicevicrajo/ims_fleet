@@ -1,0 +1,366 @@
+{% load form_filters static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>Radna lista {{ sheet.month|stringformat:"02d" }}/{{ sheet.year }}</title>
+  <style>
+    @page { size: A4 landscape; margin: 0; }
+    * { box-sizing: border-box; }
+    html {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f3f3f3;
+      color: #000;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 7pt;
+      font-weight: 400;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+    }
+    .toolbar button {
+      border: 1px solid #2563eb;
+      background: #2563eb;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .page {
+      width: 297mm;
+      height: 210mm;
+      background: #fff;
+      color: #000;
+      box-sizing: border-box;
+      padding: 8mm;
+      border: none;
+      position: relative;
+      margin: 0 auto 12mm;
+      overflow: hidden;
+    }
+    .print-head {
+      width: 100%;
+      margin-bottom: 5mm;
+      padding-top: 5mm;
+      position: relative;
+    }
+    .print-logo {
+      position: absolute;
+      left: 0;
+      top: 1mm;
+      width: 34mm;
+      height: auto;
+    }
+    .company {
+      text-align: center;
+      font-size: 12pt;
+      font-weight: 700;
+      height: 10mm;
+      line-height: 10mm;
+    }
+    .print-title {
+      font-size: 18pt;
+      font-weight: 700;
+      letter-spacing: 5px;
+      text-align: center;
+      margin-top: 7mm;
+      margin-bottom: 10mm;
+      line-height: 1;
+    }
+    .header-tables {
+      display: grid;
+      grid-template-columns: 104mm 1fr 112mm;
+      gap: 10mm;
+      align-items: start;
+      margin-bottom: 4mm;
+    }
+    table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 6.5pt;
+    }
+    th,
+    td {
+      border: 1px solid #000;
+      height: 5.25mm;
+      padding: 0.35mm;
+      text-align: center;
+      vertical-align: middle;
+      line-height: 1.05;
+      font-weight: 400;
+      overflow: hidden;
+    }
+    tr {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    th {
+      font-weight: 700;
+      background: #f2f2f2;
+    }
+    .rb-col { width: 6mm; }
+    .code-col { width: 16mm; }
+    .day-col { width: 5.2mm; font-size: 6pt; }
+    .total-col { width: 9mm; }
+    .conditions-col { width: 14mm; }
+    .approval-col { width: 13mm; }
+    .note-col { width: 24mm; }
+    .left { text-align: left; }
+    .weekend { background: #fff2cc; }
+    .inactive { background: #e7e7e7; color: #777; }
+    tfoot th,
+    tfoot td {
+      background: #eaf2ff;
+      font-weight: 700;
+    }
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 7pt;
+    }
+    .header-table th,
+    .header-table td {
+      height: 7mm;
+      padding: 0.8mm 1.2mm;
+      border: 1px solid #000;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+      line-height: 1.05;
+      vertical-align: middle;
+      background: #fff;
+    }
+    .header-table th {
+      background: #f2f2f2;
+      font-weight: 700;
+      text-align: center;
+    }
+    .header-label {
+      text-align: left;
+      color: #222;
+      font-weight: 400;
+    }
+    .header-value {
+      text-align: center;
+      font-weight: 700;
+    }
+    .header-value.left {
+      text-align: left;
+    }
+    .signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18mm;
+      margin-top: 9mm;
+      font-size: 8pt;
+    }
+    .signature {
+      text-align: center;
+      min-height: 9mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .signature-line {
+      border-top: 1px solid #000;
+      height: 1px;
+      width: 100%;
+    }
+    .signature-caption {
+      margin-top: 0.8mm;
+      line-height: 1;
+      color: #222;
+    }
+    .footer-code {
+      position: absolute;
+      right: 8mm;
+      bottom: 6mm;
+      font-size: 7pt;
+    }
+    @media print {
+      body * { visibility: hidden; }
+      .page, .page * { visibility: visible; }
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 297mm !important;
+        height: 210mm !important;
+        overflow: hidden !important;
+        background: #fff !important;
+      }
+      .page {
+        position: relative;
+        border: none;
+        width: 297mm !important;
+        height: 210mm !important;
+        margin: 0 !important;
+        padding: 8mm !important;
+        page-break-after: auto;
+        page-break-inside: avoid;
+        overflow: hidden !important;
+      }
+      .toolbar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span>Stampa radne liste</span>
+    <button type="button" onclick="window.print()">Stampaj</button>
+  </div>
+
+  <section class="page">
+    <div class="print-head">
+      <img class="print-logo" src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+      <div class="company">Institut za ispitivanje materijala a.d. Beograd</div>
+      <div class="print-title">RADNA LISTA</div>
+      <div class="header-tables">
+        <table class="header-table">
+          <colgroup>
+            <col style="width:35mm;">
+            <col style="width:31mm;">
+            <col style="width:38mm;">
+          </colgroup>
+          <tr>
+            <td></td>
+            <th>broj dana</th>
+            <th>sifra posla</th>
+          </tr>
+          <tr>
+            <td class="header-label">topli obrok</td>
+            <td class="header-value">{{ sheet.meal_days|default_if_none:"" }}</td>
+            <td class="header-value">{% if sheet.meal_organizational_unit %}{{ sheet.meal_organizational_unit.code }}{% endif %}</td>
+          </tr>
+          <tr>
+            <td class="header-label">terenski dodatak</td>
+            <td class="header-value">{{ sheet.field_allowance_days|default_if_none:"" }}</td>
+            <td class="header-value"></td>
+          </tr>
+        </table>
+
+        <div></div>
+
+        <table class="header-table">
+          <colgroup>
+            <col style="width:34mm;">
+            <col style="width:78mm;">
+          </colgroup>
+          <tr>
+            <td class="header-label">mesec</td>
+            <td class="header-value">{{ month_name }} {{ sheet.year }}</td>
+          </tr>
+          <tr>
+            <td class="header-label">zaposleni</td>
+            <td class="header-value left">{{ employee.display_first_name }} {{ employee.display_last_name }}</td>
+          </tr>
+          <tr>
+            <td class="header-label">sifra radnika</td>
+            <td class="header-value">{{ employee.employee_code }}</td>
+          </tr>
+          <tr>
+            <td class="header-label">broj radnih dana</td>
+            <td class="header-value">{{ working_days }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <table>
+      <colgroup>
+        <col style="width:6mm;">
+        <col style="width:16mm;">
+        {% for day in day_fields %}<col style="width:5.2mm;">{% endfor %}
+        <col style="width:9mm;">
+        <col style="width:14mm;">
+        <col style="width:13mm;">
+        <col style="width:24mm;">
+      </colgroup>
+      <thead>
+        <tr>
+          <th rowspan="2">r.b.</th>
+          <th rowspan="2">sifra posla</th>
+          <th colspan="31">d a t u m</th>
+          <th>svega</th>
+          <th>Uslovi</th>
+          <th>overa</th>
+          <th>napomena</th>
+        </tr>
+        <tr>
+          {% for day in day_fields %}
+            <th class="{% if day.is_weekend %}weekend{% endif %} {% if not day.active %}inactive{% endif %}">{{ day.day }}</th>
+          {% endfor %}
+          <th>sati</th>
+          <th>Rada</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in lines %}
+          <tr>
+            <td>{{ line.line_number }}</td>
+            <td>{% if line.organizational_unit %}{{ line.organizational_unit.code }}{% endif %}</td>
+            {% for day in day_fields %}
+              <td class="{% if day.is_weekend %}weekend{% endif %} {% if not day.active %}inactive{% endif %}">
+                {% with value=line|get_attr:day.field %}
+                  {% if value %}{{ value|floatformat:"-2" }}{% endif %}
+                {% endwith %}
+              </td>
+            {% endfor %}
+            <td>{{ line.total_hours|floatformat:"-2" }}</td>
+            <td>{{ line.work_conditions }}</td>
+            <td></td>
+            <td class="left">{{ line.note }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">Ukupno</th>
+          {% for day in day_fields %}
+            <td class="{% if day.is_weekend %}weekend{% endif %} {% if not day.active %}inactive{% endif %}">
+              {% if day.total %}{{ day.total|floatformat:"-2" }}{% endif %}
+            </td>
+          {% endfor %}
+          <td>{{ sheet.total_hours|floatformat:"-2" }}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="signatures">
+      <div class="signature">
+        <div class="signature-line"></div>
+        <div class="signature-caption">datum</div>
+      </div>
+      <div class="signature">
+        <div class="signature-line"></div>
+        <div class="signature-caption">potpis zaposlenog</div>
+      </div>
+      <div class="signature">
+        <div class="signature-line"></div>
+        <div class="signature-caption">direktor</div>
+      </div>
+    </div>
+
+    <div class="footer-code">IZ 055</div>
+  </section>
+</body>
+</html>
