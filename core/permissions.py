@@ -110,6 +110,55 @@ def sync_permission_codes():
     for perm in PermissionCode.objects.filter(code__in=isplate_codes):
         RolePermission.objects.get_or_create(role=blagajna_role, permission=perm)
 
+    pregled_naplate_codes = [
+        "naplata:lista_dugovanja",
+        "naplata:lista_dugovanja_po_bucketima",
+        "naplata:lista_avans_klijenti",
+        "naplata:detalji_partner",
+        "naplata:izvestaj_po_siframa_posla",
+        "naplata:neodobrene_if_izvestaj",
+        "naplata:lista_tuzenih",
+        "naplata:lista_kontakata",
+        "naplata:lista_napomena",
+        "naplata:lista_opomena",
+        "naplata:lista_poziva",
+        "naplata:lista_pozivnih_pisma",
+        "naplata:lista_tuzbi",
+        "naplata:pravna_cases_list",
+        "naplata:pravna_izvestaj",
+        "naplata:pravna_izvestaj_excel",
+        "naplata:pravna_detalj",
+        "naplata:export_dugovanja_excel",
+        "naplata:export_neodobrene_if_excel",
+        "naplata:export_partner_baketi_excel",
+        "naplata:export_utuzene_fakture",
+        "naplata:export_opomene_fakture",
+        "naplata:export_baket_90_excel",
+        "naplata:export_baket_60_excel",
+    ]
+    pregled_naplate_role, _ = Role.objects.get_or_create(
+        slug="pregled-naplate",
+        defaults={
+            "name": "Pregled naplate",
+            "description": "Pregled lista, detalja i Excel izvoza u aplikaciji naplate, bez izmena i provere.",
+            "is_active": True,
+        },
+    )
+    role_changes = []
+    if pregled_naplate_role.name != "Pregled naplate":
+        pregled_naplate_role.name = "Pregled naplate"
+        role_changes.append("name")
+    if not pregled_naplate_role.is_active:
+        pregled_naplate_role.is_active = True
+        role_changes.append("is_active")
+    if role_changes:
+        pregled_naplate_role.save(update_fields=role_changes)
+    RolePermission.objects.filter(role=pregled_naplate_role).exclude(
+        permission__code__in=pregled_naplate_codes
+    ).delete()
+    for perm in PermissionCode.objects.filter(code__in=pregled_naplate_codes):
+        RolePermission.objects.get_or_create(role=pregled_naplate_role, permission=perm)
+
     zahtev_codes = [
         "nabavka:dashboard",
         "nabavka:case_list",
@@ -157,6 +206,13 @@ def sync_permission_codes():
             user.roles.add(sekretarijat_role)
             sekretarijat_group_users_synced += 1
 
+    pregled_naplate_group_users_synced = 0
+    pregled_naplate_group = Group.objects.filter(name__iexact="Pregled naplate").first()
+    if pregled_naplate_group:
+        for user in pregled_naplate_group.user_set.all():
+            user.roles.add(pregled_naplate_role)
+            pregled_naplate_group_users_synced += 1
+
     return {
         "synced": len(codes),
         "created": created,
@@ -164,7 +220,9 @@ def sync_permission_codes():
         "nabavka_role": nabavka_role,
         "menice_role": menice_role,
         "blagajna_role": blagajna_role,
+        "pregled_naplate_role": pregled_naplate_role,
         "zahtev_role": zahtev_role,
         "sekretarijat_role": sekretarijat_role,
         "sekretarijat_group_users_synced": sekretarijat_group_users_synced,
+        "pregled_naplate_group_users_synced": pregled_naplate_group_users_synced,
     }

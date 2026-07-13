@@ -151,6 +151,24 @@ class PermissionCodeSyncTests(TestCase):
         self.assertIn("isplate:neoporezive_isplate", codes)
         self.assertIn("isplate:converter", codes)
 
+    def test_sync_permission_codes_grants_readonly_naplata_role(self):
+        from .permissions import sync_permission_codes
+
+        sync_permission_codes()
+
+        role = Role.objects.get(slug="pregled-naplate")
+        codes = set(role.permissions.values_list("code", flat=True))
+        self.assertIn("naplata:lista_dugovanja_po_bucketima", codes)
+        self.assertIn("naplata:lista_avans_klijenti", codes)
+        self.assertIn("naplata:detalji_partner", codes)
+        self.assertIn("naplata:export_dugovanja_excel", codes)
+        self.assertIn("naplata:pravna_detalj", codes)
+        self.assertNotIn("naplata:toggle_avans_klijent", codes)
+        self.assertNotIn("naplata:dodaj_kontakt", codes)
+        self.assertNotIn("naplata:izmeni_kontakt", codes)
+        self.assertNotIn("naplata:obrisi_kontakt", codes)
+        self.assertNotIn("naplata:pravna_izmeni", codes)
+
     def test_sync_permission_codes_links_sekretarijat_group_users_to_role(self):
         from .permissions import sync_permission_codes
 
@@ -162,6 +180,18 @@ class PermissionCodeSyncTests(TestCase):
 
         self.assertEqual(result["sekretarijat_group_users_synced"], 1)
         self.assertTrue(user.roles.filter(slug="sekretarijat").exists())
+
+    def test_sync_permission_codes_links_pregled_naplate_group_users_to_role(self):
+        from .permissions import sync_permission_codes
+
+        group = Group.objects.create(name="Pregled naplate")
+        user = get_user_model().objects.create_user("pregled-naplate-user", password="test")
+        user.groups.add(group)
+
+        result = sync_permission_codes()
+
+        self.assertEqual(result["pregled_naplate_group_users_synced"], 1)
+        self.assertTrue(user.roles.filter(slug="pregled-naplate").exists())
 
 
 class OrganizationalUnitLocationTests(SimpleTestCase):

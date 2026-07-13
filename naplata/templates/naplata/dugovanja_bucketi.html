@@ -46,7 +46,9 @@
                         <th>Ukupno</th>
                         <th>Veliki</th>
                         <th>INO</th>  <!-- nova kolona -->
+                        {% if naplata_permissions.toggle_avans_klijent %}
                         <th>Provera</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -81,6 +83,7 @@
                                     Ino
                                 {% endif %}
                             </td>
+                            {% if naplata_permissions.toggle_avans_klijent %}
                             <td class="avans-cell">
                                 <form method="post" action="{% url 'naplata:toggle_avans_klijent' %}" class="avans-form">
                                     {% csrf_token %}
@@ -89,6 +92,7 @@
                                            {% if dug.0 in marked_ids %}checked{% endif %}>
                                 </form>
                             </td>
+                            {% endif %}
                             
                         </tr>
                     {% endfor %}
@@ -107,7 +111,9 @@
                         <th id="total_ukupno"></th>
                         <th></th> <!-- Veliki ne sumiramo -->
                         <th></th> <!-- INO ne sumiramo -->
+                        {% if naplata_permissions.toggle_avans_klijent %}
                         <th></th> <!-- Provera ne sumiramo -->
+                        {% endif %}
                     </tr>
                 </tfoot>
             </table>

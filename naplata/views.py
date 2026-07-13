@@ -73,6 +73,13 @@ def _allowed_sif_pos_from_user(user):
 
     return sorted(codes)
 
+
+def _is_pregled_naplate_user(user):
+    if not user.is_authenticated or user.is_superuser:
+        return False
+    return user.roles.filter(slug="pregled-naplate", is_active=True).exists()
+
+
 @role_permission_required()
 def lista_dugovanja(request):
     with connections['server_db'].cursor() as cursor:
@@ -102,6 +109,7 @@ def lista_dugovanja_po_bucketima(request):
 
 
 @never_cache
+@role_permission_required()
 def lista_avans_klijenti(request):
     marked_ids = list(AvansKlijent.objects.values_list('sif_par', flat=True))
     dugovanja = dugovanja_po_bucketima_rows(marked_ids)
@@ -225,13 +233,14 @@ def export_dugovanja_bucketi_excel(request):
 @never_cache
 @role_permission_required()
 def detalji_partner(request, sif_par):
-    report_mode = request.GET.get('report') == '1'
-    report_allowed_sif_pos = _allowed_sif_pos_from_user(request.user) if report_mode else []
+    report_filter_mode = request.GET.get('report') == '1'
+    read_only_mode = report_filter_mode or _is_pregled_naplate_user(request.user)
+    report_allowed_sif_pos = _allowed_sif_pos_from_user(request.user) if report_filter_mode else []
 
-    if report_mode and not request.user.is_superuser and not report_allowed_sif_pos:
+    if report_filter_mode and not request.user.is_superuser and not report_allowed_sif_pos:
         raise PermissionDenied('Nije definisana šifra posla za korisnika.')
 
-    if report_mode and not request.user.is_superuser:
+    if report_filter_mode and not request.user.is_superuser:
         with connections['server_db'].cursor() as cursor:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             cursor.execute(f"""
@@ -272,7 +281,7 @@ def detalji_partner(request, sif_par):
             WHERE sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -301,7 +310,7 @@ def detalji_partner(request, sif_par):
             WHERE b.sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND b.sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -328,7 +337,7 @@ def detalji_partner(request, sif_par):
             WHERE sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -349,7 +358,7 @@ def detalji_partner(request, sif_par):
             WHERE sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -400,7 +409,7 @@ def detalji_partner(request, sif_par):
             WHERE baket = 181 AND sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -421,7 +430,7 @@ def detalji_partner(request, sif_par):
             WHERE baket = 180 AND sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -441,7 +450,7 @@ def detalji_partner(request, sif_par):
             WHERE baket = 90 AND sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -465,7 +474,7 @@ def detalji_partner(request, sif_par):
             WHERE baket = 60 AND sif_par = %s
         """
         params = [sif_par]
-        if report_mode and not request.user.is_superuser:
+        if report_filter_mode and not request.user.is_superuser:
             placeholders = ",".join(["%s"] * len(report_allowed_sif_pos))
             sql += f" AND sif_pos IN ({placeholders})"
             params.extend(report_allowed_sif_pos)
@@ -494,7 +503,7 @@ def detalji_partner(request, sif_par):
         'opomene_fakture': opomene_fakture,
         'fakture_baket_90': fakture_baket_90,
         'fakture_baket_60':fakture_baket_60,
-        'report_mode': report_mode,
+        'report_mode': read_only_mode,
         'report_allowed_sif_pos': report_allowed_sif_pos,
     })
 

@@ -4,42 +4,53 @@
     <nav class="sidebar-nav">
       <ul id="sidebarnav" class="pt-4">
 
+        {% if naplata_permissions.lista_dugovanja_po_bucketima %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:lista_dugovanja_po_bucketima' %}">
             <i class="mdi mdi-cash-multiple"></i><span class="hide-menu">Lista dugovanja</span>
           </a>
         </li>
+        {% endif %}
 
+        {% if naplata_permissions.lista_avans_klijenti %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:lista_avans_klijenti' %}">
             <i class="mdi mdi-account-check"></i><span class="hide-menu">Spisak za proveru</span>
           </a>
         </li>
+        {% endif %}
 
+        {% if naplata_permissions.lista_tuzenih %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:lista_tuzenih' %}">
-            <i class="mdi mdi-file-document-box"></i><span class="hide-menu">Utuženi klijenti</span>
+            <i class="mdi mdi-file-document-box"></i><span class="hide-menu">Utuzeni klijenti</span>
           </a>
         </li>
+        {% endif %}
 
+        {% if naplata_permissions.lista_opomena %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:lista_opomena' %}">
             <i class="mdi mdi-bell"></i><span class="hide-menu">Opomene</span>
           </a>
         </li>
+        {% endif %}
 
+        {% if naplata_permissions.izvestaj_po_siframa_posla %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:izvestaj_po_siframa_posla' %}">
-            <i class="mdi mdi-file-document"></i><span class="hide-menu">Izveštaj po šiframa posla</span>
+            <i class="mdi mdi-file-document"></i><span class="hide-menu">Izvestaj po siframa posla</span>
           </a>
         </li>
+        {% endif %}
 
+        {% if naplata_permissions.neodobrene_if_izvestaj %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'naplata:neodobrene_if_izvestaj' %}">
             <i class="mdi mdi-alert-circle-outline"></i><span class="hide-menu">Neodobrene IF</span>
           </a>
         </li>
-
+        {% endif %}
 
         <li class="sidebar-item mt-3 px-3 text-uppercase text-muted" style="font-size: 11px; letter-spacing: .6px;">
           Korisni linkovi
@@ -52,7 +63,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            <i class="mdi mdi-link-variant"></i><span class="hide-menu">NBS - Jedinstveni registar računa</span>
+            <i class="mdi mdi-link-variant"></i><span class="hide-menu">NBS - Jedinstveni registar racuna</span>
           </a>
         </li>
 
@@ -63,7 +74,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            <i class="mdi mdi-link-variant"></i><span class="hide-menu">NBS - Dužnici u prinudnoj naplati</span>
+            <i class="mdi mdi-link-variant"></i><span class="hide-menu">NBS - Duznici u prinudnoj naplati</span>
           </a>
         </li>
 
