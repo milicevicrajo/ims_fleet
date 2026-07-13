@@ -371,7 +371,7 @@ class FuelConsumption(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['vehicle', 'supplier', 'date', 'cost_bruto', 'amount'],
+                fields=['vehicle', 'supplier', 'date', 'amount', 'fuel_type'],
                 name='unique_fuel_consumption_per_vehicle'
             )
         ]

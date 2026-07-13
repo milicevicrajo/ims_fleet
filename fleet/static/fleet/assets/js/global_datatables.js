@@ -164,24 +164,28 @@
                 "pageLength": 50,  // Postavlja podrazumevani broj redova
 
             });
-            var table = $('#DatatableFuelDetail').DataTable({
-                "language": languageSettings,
-                "scrollX": true,  // Enable horizontal scrolling
-                "autoWidth": false,  // Disable automatic column width calculation
-                "columnDefs": [
-                { "type": "date-custom", "targets": [0] }
-                        ],
-                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
-                "pageLength": 10,  // Postavlja podrazumevani broj redova
-                "order": [[0, "desc"]],
-                layout: {
-                    topStart: {
-                        buttons: [
-                            'copy', 'excel', 'pdf'
-                        ]
-                    }
-                },
-            });
+            var $fuelDetailTable = $('#DatatableFuelDetail');
+            if ($fuelDetailTable.length) {
+                if ($.fn.DataTable.isDataTable($fuelDetailTable[0])) {
+                    $fuelDetailTable.DataTable().destroy();
+                }
+                var table = $fuelDetailTable.DataTable({
+                    "language": languageSettings,
+                    "scrollX": true,  // Enable horizontal scrolling
+                    "autoWidth": false,  // Disable automatic column width calculation
+                    "ordering": true,
+                    "order": [[0, "desc"]],
+                    "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],  // Definiše opcije za broj redova po stranici
+                    "pageLength": 10,  // Postavlja podrazumevani broj redova
+                    layout: {
+                        topStart: {
+                            buttons: [
+                                'copy', 'excel', 'pdf'
+                            ]
+                        }
+                    },
+                });
+            }
 
             var table = $('#DatatableFuelMonth').DataTable({
                 "language": languageSettings,

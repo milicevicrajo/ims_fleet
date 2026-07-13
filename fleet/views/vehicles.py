@@ -37,7 +37,11 @@ from ..models import (
     VehicleTenderDocument,
     VehicleTravelOrder,
 )
-from ..support.fuel import calculate_average_fuel_consumption, calculate_average_fuel_consumption_ever
+from ..support.fuel import (
+    calculate_average_fuel_consumption,
+    calculate_average_fuel_consumption_ever,
+    get_vehicle_fuel_transaction_rows,
+)
 from ..forms.vehicles import VehicleForm
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
@@ -298,7 +302,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         omv_card = vehicle.omv_transactions.filter().first()
         mileage = vehicle.fuel_consumptions.order_by("-mileage").values_list("mileage", flat=True).first()
 
-        consumptions = vehicle.fuel_consumptions.order_by("-date", "-id")
+        consumptions = get_vehicle_fuel_transaction_rows(vehicle)
         average_consumption = calculate_average_fuel_consumption(vehicle)
         average_consumption_ever = calculate_average_fuel_consumption_ever(vehicle)
 

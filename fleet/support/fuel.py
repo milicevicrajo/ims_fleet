@@ -223,3 +223,74 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     )
 
     return omv_queryset.union(nis_queryset)
+
+
+def get_vehicle_fuel_transaction_rows(vehicle):
+    omv_receipt_number = Case(
+        When(
+            Q(invoice_no__isnull=False)
+            & ~Q(invoice_no="")
+            & Q(voucher__isnull=False)
+            & ~Q(voucher="")
+            & ~Q(invoice_no=F("voucher")),
+            then=Concat("invoice_no", Value(" / "), "voucher"),
+        ),
+        When(Q(invoice_no__isnull=False) & ~Q(invoice_no=""), then=F("invoice_no")),
+        default=F("voucher"),
+        output_field=CharField(),
+    )
+
+    omv_rows = filter_omv_fuel_queryset(TransactionOMV.objects.filter(vehicle=vehicle)).annotate(
+        receipt_number=omv_receipt_number,
+        supplier_name=Value("OMV", output_field=CharField()),
+    ).values(
+        "transaction_date",
+        "receipt_number",
+        "quantity",
+        "unit_price",
+        "amount",
+        "gross_cc",
+        "supplier_name",
+        "mileage",
+    )
+
+    nis_rows = filter_nis_fuel_queryset(TransactionNIS.objects.filter(vehicle=vehicle)).annotate(
+        supplier_name=Value("NIS", output_field=CharField()),
+    ).values(
+        "datum_transakcije",
+        "broj_racuna",
+        "kolicina",
+        "cena",
+        "total",
+        "total_sa_kase",
+        "supplier_name",
+        "kilometraza",
+    )
+
+    rows = [
+        {
+            "date": row["transaction_date"],
+            "receipt_number": row["receipt_number"],
+            "amount": row["quantity"],
+            "price_per_liter": row["unit_price"],
+            "cost_neto": row["amount"],
+            "cost_bruto": row["gross_cc"],
+            "supplier": row["supplier_name"],
+            "mileage": row["mileage"],
+        }
+        for row in omv_rows
+    ]
+    rows.extend(
+        {
+            "date": row["datum_transakcije"],
+            "receipt_number": row["broj_racuna"],
+            "amount": row["kolicina"],
+            "price_per_liter": row["cena"],
+            "cost_neto": row["total"],
+            "cost_bruto": row["total_sa_kase"],
+            "supplier": row["supplier_name"],
+            "mileage": row["kilometraza"],
+        }
+        for row in nis_rows
+    )
+    return sorted(rows, key=lambda row: (row["date"], row["supplier"], row["receipt_number"] or ""), reverse=True)

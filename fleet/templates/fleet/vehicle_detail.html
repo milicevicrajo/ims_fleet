@@ -479,22 +479,26 @@
             <thead>
               <tr>
                 <th>Datum</th>
+                <th>Broj računa</th>
                 <th>Količina</th>
+                <th>Cena/l</th>
                 <th>Iznos neto</th>
+                <th>Iznos bruto</th>
                 <th>Kilometraža</th>
                 <th>Dobavljač</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
               {% for consumption in consumptions %}
               <tr>
-                <td>{{ consumption.date|date:"d.m.Y H:i" }}</td>
+                <td data-order="{{ consumption.date|date:'U' }}">{{ consumption.date|date:"d.m.Y H:i" }}</td>
+                <td>{{ consumption.receipt_number|default:"-" }}</td>
                 <td>{{ consumption.amount|floatformat:2 }}</td>
+                <td>{{ consumption.price_per_liter|floatformat:2 }}</td>
                 <td>{{ consumption.cost_neto|floatformat:2 }}</td>
+                <td>{{ consumption.cost_bruto|floatformat:2 }}</td>
                 <td>{{ consumption.mileage|floatformat:0 }}</td>
                 <td>{{ consumption.supplier }}</td>
-                <td><a href="{% url 'fuelconsumption_update' consumption.pk %}">Izmeni</a></td>
               </tr>
               {% endfor %}
             </tbody>
