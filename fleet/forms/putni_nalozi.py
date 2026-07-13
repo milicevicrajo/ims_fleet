@@ -91,6 +91,7 @@ class PutniNalogForm(forms.ModelForm):
         self.fields.pop("virman_generated", None)
         self.fields.pop("virman_generated_at", None)
         self.fields.pop("virman_generated_by", None)
+        self.fields.pop("isplaceno", None)
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
             if inactive_employee.exists():

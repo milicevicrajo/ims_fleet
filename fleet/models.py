@@ -463,6 +463,13 @@ class PutniNalog(models.Model):
     travel_date = models.DateField(verbose_name=_("Datum putovanja"))
     number_of_days = models.PositiveIntegerField(verbose_name=_("Broj dana"))
     advance_payment = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Isplata/Akontacija"))
+    isplaceno = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        editable=False,
+        verbose_name=_("Isplaćeno"),
+    )
     advance_payment_currency = models.CharField(
         max_length=3,
         choices=CURRENCY_CHOICES,
@@ -1144,7 +1151,6 @@ class KaskoRate(models.Model):
         managed = False
         db_table = '[dbo].[kasko_rate]'
         app_label = 'fleet'
-
 
 
 class KontaVozila(models.Model):

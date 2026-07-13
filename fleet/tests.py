@@ -11,10 +11,11 @@ from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from core.models import OrganizationalUnit
 from .forms import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
-from .models import FuelConsumption, TrafficCard, TransactionNIS, TransactionOMV
+from .models import FuelConsumption, PutniNalog, TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
 from .support.dashboard import vehicle_cost_per_km_rows
 from .support.report_helpers import date_period_filtered_query, report_period_filtered_query
@@ -106,6 +107,63 @@ class UserProfileManagementTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, reverse("user_create_missing_profiles"))
 		self.assertContains(response, "Kreiraj profil")
+
+
+class PutniNalogPaidAmountListTests(TestCase):
+	def create_order(self, order_number="01/2026-1", opravdan=False):
+		job_code, _ = OrganizationalUnit.objects.get_or_create(
+			code="832111",
+			defaults={
+				"name": "Test sifra",
+				"center": "01",
+			},
+		)
+		return PutniNalog.objects.create(
+			order_number=order_number,
+			job_code=job_code,
+			travel_location="Beograd",
+			task="Test putovanje",
+			travel_date=datetime.date(2026, 7, 10),
+			number_of_days=1,
+			advance_payment=Decimal("1000.00"),
+			opravdan=opravdan,
+		)
+
+	def test_datatable_includes_isplaceno_amount(self):
+		order = self.create_order()
+		order.isplaceno = Decimal("24190.25")
+		order.save(update_fields=["isplaceno"])
+		user = get_user_model().objects.create_superuser("fleet-admin", password="test")
+		self.client.force_login(user)
+
+		response = self.client.get(
+			reverse("putninalog_data"),
+			{"draw": "1", "start": "0", "length": "10"},
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()["data"][0]["isplaceno"], "24190.25")
+
+	def test_datatable_filters_neopravdani_orders(self):
+		neopravdan = self.create_order(order_number="01/2026-2", opravdan=False)
+		opravdan = self.create_order(order_number="01/2026-3", opravdan=True)
+		user = get_user_model().objects.create_superuser("fleet-admin-filter", password="test")
+		self.client.force_login(user)
+
+		response = self.client.get(
+			reverse("putninalog_data"),
+			{
+				"draw": "1",
+				"start": "0",
+				"length": "10",
+				"opravdan_status": "neopravdani",
+			},
+		)
+
+		self.assertEqual(response.status_code, 200)
+		order_numbers = {row["order_number"] for row in response.json()["data"]}
+		self.assertIn(neopravdan.order_number, order_numbers)
+		self.assertNotIn(opravdan.order_number, order_numbers)
 
 
 class SecondaryReportViewHelperTests(SimpleTestCase):

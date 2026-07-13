@@ -82,6 +82,13 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "10",
     },
     {
+        "name": "Putni nalozi - azuriranje isplacenog iznosa",
+        "aliases": ["Putni nalozi isplaceno"],
+        "task": "fleet.tasks.sync_putni_nalozi_isplaceno_task",
+        "hour": "12",
+        "minute": "30",
+    },
+    {
         "name": "Nabavka - EUF fakture",
         "aliases": ["Nabavka EUF fakture"],
         "task": "nabavka.tasks.sync_euf_invoices_task",

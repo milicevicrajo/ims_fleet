@@ -189,10 +189,19 @@ class PutniNalogFilter(django_filters.FilterSet):
     vehicle = django_filters.ModelChoiceFilter(
         label="Vozilo", queryset=Vehicle.objects.none(), method="filter_vehicle"
     )
+    opravdan_status = django_filters.ChoiceFilter(
+        label="Status opravdanja",
+        method="filter_opravdan_status",
+        choices=[
+            ("", "Svi"),
+            ("opravdani", "Opravdani"),
+            ("neopravdani", "Neopravdani"),
+        ],
+    )
 
     class Meta:
         model = PutniNalog
-        fields = ["center", "job_code", "year", "month", "employee", "vehicle"]
+        fields = ["center", "job_code", "year", "month", "employee", "vehicle", "opravdan_status"]
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -234,7 +243,7 @@ class PutniNalogFilter(django_filters.FilterSet):
             .order_by("brand", "model")
         )
 
-        for field_name in ["center", "job_code", "year", "month", "employee", "vehicle"]:
+        for field_name in ["center", "job_code", "year", "month", "employee", "vehicle", "opravdan_status"]:
             field = self.form.fields.get(field_name)
             if field:
                 field.widget.attrs.update({
@@ -270,6 +279,13 @@ class PutniNalogFilter(django_filters.FilterSet):
         if not value:
             return qs
         return qs.filter(vehicle=value)
+
+    def filter_opravdan_status(self, qs, name, value):
+        if value == "opravdani":
+            return qs.filter(opravdan=True)
+        if value == "neopravdani":
+            return qs.filter(opravdan=False)
+        return qs
 
 
 class KvarFilter(django_filters.FilterSet):

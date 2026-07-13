@@ -51,6 +51,7 @@
         <th>Datum putovanja</th>
         <th>Broj dana</th>
         <th>Avans</th>
+        <th>Isplaćeno</th>
       </tr>
     </thead>
     <tbody>
@@ -71,10 +72,11 @@
         <td>{{ putni_nalog.travel_date|date:"d.m.Y" }}</td>
         <td>{{ putni_nalog.number_of_days }}</td>
         <td>{{ putni_nalog.advance_payment }}</td>
+        <td>{{ putni_nalog.isplaceno }}</td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="9" class="text-center text-muted">Nema podataka.</td>
+        <td colspan="10" class="text-center text-muted">Nema podataka.</td>
       </tr>
       {% endfor %}
     </tbody>

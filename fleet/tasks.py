@@ -201,3 +201,17 @@ def sync_hr_employees_task():
         lock_ttl_seconds=90 * 60,
         fn=_runner,
     )
+
+
+@shared_task
+def sync_putni_nalozi_isplaceno_task():
+    def _runner():
+        output = StringIO()
+        call_command("sync_putni_nalozi_isplaceno", stdout=output)
+        return output.getvalue().strip()
+
+    return _run_with_singleton_lock(
+        task_name="sync_putni_nalozi_isplaceno_task",
+        lock_ttl_seconds=90 * 60,
+        fn=_runner,
+    )

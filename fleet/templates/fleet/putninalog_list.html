@@ -54,13 +54,17 @@
             </div>
           </div>
           <div class="row g-2 align-items-end mt-1">
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-4">
               <label class="form-label mb-1">{{ filter.form.vehicle.label }}</label>
               {{ filter.form.vehicle }}
             </div>
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-4">
               <label class="form-label mb-1">{{ filter.form.employee.label }}</label>
               {{ filter.form.employee }}
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label mb-1">{{ filter.form.opravdan_status.label }}</label>
+              {{ filter.form.opravdan_status }}
             </div>
           </div>
         </form>
@@ -80,6 +84,7 @@
                 <th>Datum putovanja</th>
                 <th>Broj dana</th>
                 <th>Avans</th>
+                <th>Isplaćeno</th>
                 <th class="text-center">Nedeljni</th>
                 <th class="text-center">Opravdan</th>
                 <th class="text-center">Izmeni</th>
@@ -137,6 +142,7 @@
         { data: 'travel_date' },
         { data: 'number_of_days' },
         { data: 'advance_payment' },
+        { data: 'isplaceno', searchable: false },
         { data: 'is_weekly', searchable: false, className: 'text-center' },
         { data: 'opravdan', searchable: false, className: 'text-center' },
         { data: 'update', orderable: false, searchable: false, className: 'text-center' },

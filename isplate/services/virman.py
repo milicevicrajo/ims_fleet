@@ -100,12 +100,13 @@ def _detail_reference(amount, order):
 
 
 def _order_number_reference(order):
-    reference = _safe_text(order.order_number or "")
+    order_number = _safe_text(order.order_number or "")
+    reference = order_number.rsplit("-", 1)[-1].strip()
     if not reference:
         raise ValidationError(f"{order.order_number}: nedostaje broj putnog naloga.")
     if len(reference) > DETAIL_REFERENCE_SUFFIX_WIDTH:
         raise ValidationError(
-            f"{order.order_number}: broj putnog naloga je duzi od {DETAIL_REFERENCE_SUFFIX_WIDTH} karaktera."
+            f"{order.order_number}: redni broj putnog naloga je duzi od {DETAIL_REFERENCE_SUFFIX_WIDTH} karaktera."
         )
     return reference.rjust(DETAIL_REFERENCE_SUFFIX_WIDTH)
 

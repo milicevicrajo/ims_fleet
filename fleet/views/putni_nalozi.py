@@ -213,8 +213,9 @@ def putninalog_datatable_data(request):
         "6": "travel_date",
         "7": "number_of_days",
         "8": "advance_payment",
-        "9": "is_weekly",
-        "10": "opravdan",
+        "9": "isplaceno",
+        "10": "is_weekly",
+        "11": "opravdan",
     }
     order_field = order_map.get(order_column, "pn_sort_key")
     if order_dir == "desc":
@@ -247,6 +248,7 @@ def putninalog_datatable_data(request):
             "travel_date": putni_nalog.travel_date.strftime("%d.%m.%Y") if putni_nalog.travel_date else "",
             "number_of_days": putni_nalog.number_of_days or "",
             "advance_payment": str(putni_nalog.advance_payment or ""),
+            "isplaceno": str(putni_nalog.isplaceno or ""),
             "is_weekly": (
                 '<span class="badge bg-warning text-dark">Da</span>'
                 if putni_nalog.is_weekly else '<span class="badge bg-light text-dark">Ne</span>'
