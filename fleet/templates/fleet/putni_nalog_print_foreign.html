@@ -1,0 +1,299 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="utf-8">
+    <title>IZ 073 - Zahtev za put u inostranstvo</title>
+    <style>
+        @page { size: A4 portrait; margin: 0; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #565a5b;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            color: #fff;
+        }
+        .toolbar a,
+        .toolbar button {
+            border: 1px solid #777;
+            background: #fff;
+            color: #000;
+            padding: 6px 10px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto 12mm;
+            padding: 8mm 12mm 10mm;
+            background: #fff;
+        }
+        .inner {
+            min-height: 279mm;
+            padding: 7mm 7mm 6mm;
+        }
+        .header {
+            display: grid;
+            grid-template-columns: 32mm 1fr 32mm;
+            align-items: center;
+            margin-bottom: 3mm;
+        }
+        .logo {
+            width: 18mm;
+            height: auto;
+            opacity: .72;
+            margin-left: 2mm;
+        }
+        .institute {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            font-weight: 700;
+            letter-spacing: .2px;
+            font-size: 11pt;
+        }
+        .orange-rule {
+            border-top: 1px dashed #ff6b2a;
+            height: 1px;
+        }
+        .title {
+            text-align: center;
+            font-size: 16pt;
+            line-height: 1.1;
+            margin: 5mm 0 6mm;
+            font-weight: 400;
+        }
+        .fields {
+            margin-top: 2mm;
+        }
+        .field-row {
+            display: grid;
+            grid-template-columns: 9mm 1fr;
+            column-gap: 4mm;
+            align-items: start;
+            min-height: 14.2mm;
+        }
+        .field-row.short {
+            min-height: 11.8mm;
+        }
+        .num {
+            padding-top: 1.8mm;
+            text-align: center;
+        }
+        .field-body {
+            border-bottom: 1px solid #111;
+            min-height: 9mm;
+            padding: 1.8mm 1.5mm 1.2mm;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            column-gap: 4mm;
+            align-items: start;
+        }
+        .field-row.no-line .field-body {
+            border-bottom: 0;
+        }
+        .label {
+            white-space: nowrap;
+        }
+        .value {
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.25;
+            min-height: 4mm;
+            word-break: break-word;
+        }
+        .value.left {
+            text-align: left;
+        }
+        .value.blank {
+            color: transparent;
+        }
+        .signatures {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 7mm;
+            margin-top: 5mm;
+            font-size: 9pt;
+            font-weight: 700;
+        }
+        .signature {
+            text-align: center;
+        }
+        .signature-line {
+            border-top: 1px solid #111;
+            margin-top: 8mm;
+            height: 1px;
+        }
+        .footer-code {
+            margin-top: 13mm;
+            font-weight: 700;
+            font-size: 10pt;
+        }
+        .bottom-rule {
+            margin-top: 7mm;
+        }
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none; }
+            .page {
+                width: 210mm;
+                min-height: 297mm;
+                margin: 0;
+                padding: 8mm 12mm 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <span>IZ 073 - Zahtev za put u inostranstvo</span>
+        <div>
+            <a href="{% url 'putninalog_list' %}">Nazad</a>
+            <button type="button" onclick="window.print()">Štampaj</button>
+        </div>
+    </div>
+
+    <section class="page">
+        <div class="inner">
+            <div class="header">
+                <img class="logo" src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+                <div class="institute">ИНСТИТУТ ЗА ИСПИТИВАЊЕ МАТЕРИЈАЛА ИМС А.Д.</div>
+                <div></div>
+            </div>
+            <div class="orange-rule"></div>
+
+            <div class="title">
+                ПОДАЦИ ПОТРЕБНИ ЗА<br>
+                РЕШЕЊА О УПУЋИВАЊУ ЗАПОСЛЕНИХ<br>
+                НА СЛУЖБЕНО ПУТОВАЊЕ У ИНОСТРАНСТВО
+            </div>
+
+            <div class="fields">
+                <div class="field-row">
+                    <div class="num">1</div>
+                    <div class="field-body">
+                        <div class="label">ИМЕ И ПРЕЗИМЕ ЗАПОСЛЕНОГ СЕКТОР/ЦЕНТАР</div>
+                        <div class="value">{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %} / {{ putni_nalog.job_code.center }}</div>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="num">2</div>
+                    <div class="field-body">
+                        <div class="label">ДРЖАВА И МЕСТО ГДЕ ЗАПОСЛЕНИ ПУТУЈЕ</div>
+                        <div class="value">{{ putni_nalog.travel_location }}</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">3</div>
+                    <div class="field-body">
+                        <div class="label">ДАТУМ ОДЛАСКА ПОВРАТКА</div>
+                        <div class="value">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">4</div>
+                    <div class="field-body">
+                        <div class="label">КОЛИКО ДАНА</div>
+                        <div class="value">{{ putni_nalog.number_of_days }}</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">5</div>
+                    <div class="field-body">
+                        <div class="label">РАЗЛОГ ПУТОВАЊА</div>
+                        <div class="value left">{{ putni_nalog.task }}</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">6</div>
+                    <div class="field-body">
+                        <div class="label">БРОЈ ШИФРЕ ПОСЛА</div>
+                        <div class="value">{{ putni_nalog.job_code.code }}</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">7</div>
+                    <div class="field-body">
+                        <div class="label">ПРЕВОЗ</div>
+                        <div class="value">{% if putni_nalog.vehicle %}{{ putni_nalog.vehicle }}{% else %}{{ putni_nalog.other_vehicle }}{% endif %}</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">8</div>
+                    <div class="field-body">
+                        <div class="label">ПРЕНОЋИШТЕ</div>
+                        <div class="value blank">.</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">9</div>
+                    <div class="field-body">
+                        <div class="label">ТРОШКОВИ ПУТА</div>
+                        <div class="value blank">.</div>
+                    </div>
+                </div>
+
+                <div class="field-row short">
+                    <div class="num">10</div>
+                    <div class="field-body">
+                        <div class="label">ДНЕВНИЦА</div>
+                        <div class="value">{{ putni_nalog.daily_allowance }} {{ putni_nalog.advance_payment_currency }}</div>
+                    </div>
+                </div>
+
+                <div class="field-row short no-line">
+                    <div class="num">11</div>
+                    <div class="field-body">
+                        <div class="label">АКОНТАЦИЈА У ИЗНОСУ ОД</div>
+                        <div class="value" style="border-bottom: 1px solid #111;">{{ putni_nalog.advance_payment }} {{ putni_nalog.advance_payment_currency }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="signatures">
+                <div class="signature">
+                    Подносилац захтева
+                    <div class="signature-line"></div>
+                </div>
+                <div class="signature">
+                    Директор Центра
+                    <div class="signature-line"></div>
+                </div>
+                <div class="signature">
+                    Директор Института ИМС
+                    <div class="signature-line"></div>
+                </div>
+            </div>
+
+            <div class="footer-code">IZ 073</div>
+            <div class="orange-rule bottom-rule"></div>
+        </div>
+    </section>
+
+    {% if auto_print %}
+    <script>
+        window.addEventListener('load', function () {
+            window.print();
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

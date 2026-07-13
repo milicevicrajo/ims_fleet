@@ -4,11 +4,13 @@
 <h2>{{ title|default:'Lista opomena' }}</h2>
 <div class="card">
   <div class="card-body">
+    {% if can_import_opomene %}
     <form method="post" enctype="multipart/form-data" class="mb-3 d-flex align-items-center" style="gap: 10px;">
       {% csrf_token %}
       <input type="file" name="excel_file" accept=".xlsx,.xls" class="form-control" style="max-width: 420px;" required>
       <button type="submit" class="btn btn-primary">Učitaj Excel</button>
     </form>
+    {% endif %}
 
     <div class="table-responsive">
       <table id="DatatableOpomene" class="display compact">
@@ -40,7 +42,6 @@
             <td>{{ row.7 }}</td>
             <td>{{ row.8 }}</td>
           </tr>
-
           {% endfor %}
         </tbody>
       </table>

@@ -8,7 +8,7 @@ from decimal import Decimal
 from openpyxl.styles import Alignment
 
 from core.exporting import create_xlsx_workbook, set_column_widths, style_header_row, workbook_response
-from core.mixins import role_permission_required
+from core.mixins import role_permission_required, user_has_role_permission
 from .db_users import resolve_user_pk_for_db
 from .models import Postupak, PromenaPostupka
 from .forms_pravna import PostupakForm, PromenaPostupkaForm, COLUMNS_BY_TIP
@@ -130,6 +130,8 @@ def pravna_cases_list(request, case_type):
         'selected_naziv': ctx['selected_naziv'],
         'partner_options': ctx['partner_options'],
         'naziv_options': ctx['naziv_options'],
+        'can_add_pravna': user_has_role_permission(request.user, 'naplata:pravna_dodaj'),
+        'can_delete_pravna': user_has_role_permission(request.user, 'naplata:pravna_obrisi'),
     })
 
 
@@ -329,6 +331,10 @@ def pravna_detalj(request, pk):
         'partner': partner,
         'columns': columns,
         'forma_promena': forma_promena,
+        'can_edit_pravna': user_has_role_permission(request.user, 'naplata:pravna_izmeni'),
+        'can_archive_pravna': user_has_role_permission(request.user, 'naplata:pravna_arhiviraj'),
+        'can_add_pravna_promena': user_has_role_permission(request.user, 'naplata:pravna_dodaj_promenu'),
+        'can_delete_pravna_promena': user_has_role_permission(request.user, 'naplata:pravna_obrisi_promenu'),
     })
 
 

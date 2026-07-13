@@ -2,9 +2,11 @@
             <div class="tab-pane fade" id="pozivna_pisma">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Pozivi/pisma</h4>
+                    {% if can_edit_naplata_detail %}
                     <a href="{% url 'naplata:dodaj_poziv_pismo' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj poziv/pismo
                     </a>
+                    {% endif %}
                 </div>
                 <table class="table table-striped table-sm">
                     <tr>
@@ -14,26 +16,22 @@
                         <th>Iznos</th>
                         <th>Fakture</th>
                         <th>Napomene</th>
-                        <th class="d-flex justify-content-end align-items-center">Akcije</th>
+                        {% if can_edit_naplata_detail %}<th class="d-flex justify-content-end align-items-center">Akcije</th>{% endif %}
                     </tr>
                     {% for pismo in poziv_pismo %}
                     <tr>
-                        <td>{{ pismo.god|floatformat:0}}</td>
+                        <td>{{ pismo.god|floatformat:0 }}</td>
                         <td>{{ pismo.br_pisma|floatformat:0 }}</td>
                         <td>{{ pismo.datum|date:"d.m.Y" }}</td>
                         <td>{{ pismo.iznos|floatformat:0 }}</td>
                         <td>{{ pismo.fakture|floatformat:0 }}</td>
-                        <td>{{ pismo.napomene|floatformat:0}}</td>
+                        <td>{{ pismo.napomene|floatformat:0 }}</td>
+                        {% if can_edit_naplata_detail %}
                         <td class="d-flex justify-content-end align-items-center">
-                            <!-- Izmena poziva/pisma -->
                             <a href="{% url 'naplata:izmeni_poziv_pismo' pismo.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
-                        
-                            <!-- Vertikalna crta -->
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
-                        
-                            <!-- Brisanje poziva/pisma -->
                             <form action="{% url 'naplata:obrisi_poziv_pismo' pismo.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
@@ -43,7 +41,7 @@
                                 </button>
                             </form>
                         </td>
-                        
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </table>

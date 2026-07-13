@@ -2,9 +2,11 @@
             <div class="tab-pane fade" id="opomene">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Opomene</h4>
+                    {% if can_edit_naplata_detail %}
                     <a href="{% url 'naplata:dodaj_opomenu' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj opomenu
                     </a>
+                    {% endif %}
                 </div>
                 <table class="table table-striped table-sm">
                     <tr>
@@ -13,25 +15,21 @@
                         <th>Datum</th>
                         <th>Iznos</th>
                         <th>Napomene</th>
-                        <th class="d-flex justify-content-end align-items-center">Akcije</th>
+                        {% if can_edit_naplata_detail %}<th class="d-flex justify-content-end align-items-center">Akcije</th>{% endif %}
                     </tr>
                     {% for opomena in opomene %}
                     <tr>
                         <td>{{ opomena.god|floatformat:0 }}</td>
                         <td>{{ opomena.br_opomene|floatformat:0 }}</td>
-                        <td>{{ opomena.datum|date:"d.m.Y"  }}</td>
+                        <td>{{ opomena.datum|date:"d.m.Y" }}</td>
                         <td>{{ opomena.iznos|floatformat:0 }}</td>
                         <td>{{ opomena.napomene }}</td>
+                        {% if can_edit_naplata_detail %}
                         <td class="d-flex justify-content-end align-items-center">
-                            <!-- Izmena opomene -->
                             <a href="{% url 'naplata:izmeni_opomenu' opomena.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
-                        
-                            <!-- Vertikalna crta -->
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
-                        
-                            <!-- Brisanje opomene -->
                             <form action="{% url 'naplata:obrisi_opomenu' opomena.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
@@ -41,7 +39,7 @@
                                 </button>
                             </form>
                         </td>
-                        
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </table>

@@ -9,7 +9,7 @@
             <li class="nav-item">
                 <a class="nav-link active" data-bs-toggle="tab" href="#podaci">Osnovni podaci</a>
             </li>
-            {% if not report_mode %}
+            {% if show_full_naplata_detail %}
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#kontakti">Kontakti</a>
             </li>
@@ -38,19 +38,16 @@
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#dugovanja_fakture">Dugovanja po fakturama</a>
             </li>
-            {% if not report_mode %}
+            {% if show_full_naplata_detail %}
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#ispravke">Otpisana potraživanja</a>
             </li>
             {% endif %}
         </ul>
 
-
-
         <div class="tab-content mt-3">
             {% include "naplata/partials/detalji_partner/_podaci.html" %}
-
-            {% if not report_mode %}
+            {% if show_full_naplata_detail %}
             {% include "naplata/partials/detalji_partner/_kontakti.html" %}
             {% include "naplata/partials/detalji_partner/_napomene.html" %}
             {% include "naplata/partials/detalji_partner/_opomene.html" %}
@@ -58,17 +55,14 @@
             {% include "naplata/partials/detalji_partner/_pozivna_pisma.html" %}
             {% include "naplata/partials/detalji_partner/_tuzbe.html" %}
             {% endif %}
-
             {% include "naplata/partials/detalji_partner/_dugovanja.html" %}
             {% include "naplata/partials/detalji_partner/_dugovanja_baketi.html" %}
             {% include "naplata/partials/detalji_partner/_dugovanja_fakture.html" %}
-
-            {% if not report_mode %}
+            {% if show_full_naplata_detail %}
             {% include "naplata/partials/detalji_partner/_ispravke.html" %}
             {% endif %}
         </div>
     </div>
 </div>
-
 
 {% endblock %}

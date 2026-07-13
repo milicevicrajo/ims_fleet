@@ -13,7 +13,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from core.exporting import rows_to_xlsx_response
-from core.mixins import role_permission_required
+from core.mixins import role_permission_required, user_has_role_permission
 from core.models import OrganizationalUnit
 
 from .db_users import resolve_user_pk_for_db
@@ -78,6 +78,33 @@ def _is_pregled_naplate_user(user):
     if not user.is_authenticated or user.is_superuser:
         return False
     return user.roles.filter(slug="pregled-naplate", is_active=True).exists()
+
+
+def _can_edit_naplata_partner_detail(user):
+    action_codes = [
+        "dodaj_kontakt",
+        "izmeni_kontakt",
+        "obrisi_kontakt",
+        "dodaj_napomenu",
+        "izmeni_napomenu",
+        "obrisi_napomenu",
+        "dodaj_opomenu",
+        "izmeni_opomenu",
+        "obrisi_opomenu",
+        "dodaj_poziv",
+        "izmeni_poziv",
+        "obrisi_poziv",
+        "dodaj_poziv_pismo",
+        "izmeni_poziv_pismo",
+        "obrisi_poziv_pismo",
+        "dodaj_tuzbu",
+        "izmeni_tuzbu",
+        "obrisi_tuzbu",
+    ]
+    return any(
+        user_has_role_permission(user, f"naplata:{code}")
+        for code in action_codes
+    )
 
 
 @role_permission_required()
@@ -235,6 +262,11 @@ def export_dugovanja_bucketi_excel(request):
 def detalji_partner(request, sif_par):
     report_filter_mode = request.GET.get('report') == '1'
     read_only_mode = report_filter_mode or _is_pregled_naplate_user(request.user)
+    can_edit_naplata_detail = (
+        not report_filter_mode
+        and not read_only_mode
+        and _can_edit_naplata_partner_detail(request.user)
+    )
     report_allowed_sif_pos = _allowed_sif_pos_from_user(request.user) if report_filter_mode else []
 
     if report_filter_mode and not request.user.is_superuser and not report_allowed_sif_pos:
@@ -503,7 +535,9 @@ def detalji_partner(request, sif_par):
         'opomene_fakture': opomene_fakture,
         'fakture_baket_90': fakture_baket_90,
         'fakture_baket_60':fakture_baket_60,
-        'report_mode': read_only_mode,
+        'report_mode': report_filter_mode,
+        'can_edit_naplata_detail': can_edit_naplata_detail,
+        'show_full_naplata_detail': not report_filter_mode,
         'report_allowed_sif_pos': report_allowed_sif_pos,
     })
 
@@ -639,7 +673,11 @@ def export_baket_60_excel(request, sif_par):
 @role_permission_required()
 def lista_kontakata(request):
     kontakti = Kontakti.objects.using('server_db').all()
-    return render(request, 'naplata/kontakti_lista.html', {'kontakti': kontakti})
+    return render(request, 'naplata/kontakti_lista.html', {
+        'kontakti': kontakti,
+        'can_edit_kontakti': user_has_role_permission(request.user, 'naplata:izmeni_kontakt')
+        or user_has_role_permission(request.user, 'naplata:obrisi_kontakt'),
+    })
 
 
 @role_permission_required()
@@ -691,7 +729,11 @@ def obrisi_kontakt(request, id):
 @role_permission_required()
 def lista_napomena(request):
     napomene = Napomene.objects.using('server_db').all()
-    return render(request, 'naplata/napomena_lista.html', {'napomene': napomene})
+    return render(request, 'naplata/napomena_lista.html', {
+        'napomene': napomene,
+        'can_edit_napomene': user_has_role_permission(request.user, 'naplata:izmeni_napomenu')
+        or user_has_role_permission(request.user, 'naplata:obrisi_napomenu'),
+    })
 
 @role_permission_required()
 def dodaj_napomenu(request, sif_par, naz_par):
@@ -735,6 +777,9 @@ def obrisi_napomenu(request, id):
 @role_permission_required()
 def lista_opomena(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
+        if not user_has_role_permission(request.user, 'naplata:dodaj_opomenu'):
+            raise PermissionDenied('Nemate dozvolu za unos opomena.')
+
         excel_file = request.FILES['excel_file']
         try:
             wb = load_workbook(excel_file, data_only=True)
@@ -932,6 +977,7 @@ def lista_opomena(request):
         'opomene': opomene,
         'title': 'Lista opomena',
         'selected_year': selected_year,
+        'can_import_opomene': user_has_role_permission(request.user, 'naplata:dodaj_opomenu'),
     })
 
 @role_permission_required()

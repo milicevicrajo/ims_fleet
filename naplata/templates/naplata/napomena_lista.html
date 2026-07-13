@@ -4,7 +4,6 @@
 <h2>Lista napomena</h2>
 <div class="card">
     <div class="card-body">
-
         <div class="table-responsive">
             <table id="Datatable" class="display">
                 <thead>
@@ -13,7 +12,7 @@
                         <th>Naziv</th>
                         <th>Napomena</th>
                         <th>Veliki</th>
-                        <th>Akcije</th>
+                        {% if can_edit_napomene %}<th>Akcije</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -29,15 +28,13 @@
                                 Ne
                             {% endif %}
                         </td>
+                        {% if can_edit_napomene %}
                         <td style="width: 20px;">
                             <div class="d-flex flex-column">
-                                <!-- Link za izmenu -->
-                                <a href="{% url 'izmeni_napomenu' napomena.id %}" class="text-success d-flex align-items-center mb-1">
+                                <a href="{% url 'naplata:izmeni_napomenu' napomena.id %}" class="text-success d-flex align-items-center mb-1">
                                     <i class="mdi mdi-lead-pencil me-1"></i> Izmeni
                                 </a>
-                        
-                                <!-- Forma za brisanje -->
-                                <form action="{% url 'obrisi_napomenu' napomena.id %}" method="post" style="display:inline;">
+                                <form action="{% url 'naplata:obrisi_napomenu' napomena.id %}" method="post" style="display:inline;">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
                                             onclick="return confirm('Da li ste sigurni da želite da uklonite ovu NAPOMENU?');">
@@ -45,7 +42,8 @@
                                     </button>
                                 </form>
                             </div>
-                        </td>                        
+                        </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>

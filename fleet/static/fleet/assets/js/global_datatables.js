@@ -6,12 +6,13 @@
             // Ako koristiš datetime-moment plugin, registruj format:
             if ($.fn.dataTable.moment) {
             $.fn.dataTable.moment('DD.MM.YYYY');
+            $.fn.dataTable.moment('DD.MM.YYYY HH:mm');
             $.fn.dataTable.moment('DD.MM.YYYY HH:mm:ss');
             }
 
             // Fallback custom tip (ako želiš eksplicitno da ga koristiš kroz "type":"date-custom")
             $.fn.dataTable.ext.type.order['date-custom-pre'] = function(date) {
-            const m = moment(date, 'DD.MM.YYYY', true);
+            const m = moment(date, ['DD.MM.YYYY HH:mm:ss', 'DD.MM.YYYY HH:mm', 'DD.MM.YYYY'], true);
             return m.isValid() ? +m.toDate() : 0;
             };
 

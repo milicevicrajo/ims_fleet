@@ -56,9 +56,11 @@
         <i class="mdi mdi-file-excel"></i> Excel
       </a>
     {% endif %}
+    {% if can_add_pravna %}
     <a href="{% url 'naplata:pravna_dodaj' case_type=case_type %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-plus"></i> Novi postupak
     </a>
+    {% endif %}
   </div>
 </div>
 
@@ -154,6 +156,7 @@
                     <a href="{% url 'naplata:pravna_detalj' pk=p.pk %}" class="btn btn-sm btn-outline-primary" title="Detalji">
                       <i class="mdi mdi-eye"></i>
                     </a>
+                    {% if can_delete_pravna %}
                     <form id="delete-postupak-{{ p.pk }}" method="post" action="{% url 'naplata:pravna_obrisi' pk=p.pk %}" class="m-0">
                       {% csrf_token %}
                       {% if p.promene_count %}
@@ -171,6 +174,7 @@
                         </button>
                       {% endif %}
                     </form>
+                    {% endif %}
                   </div>
                 </td>
               </tr>

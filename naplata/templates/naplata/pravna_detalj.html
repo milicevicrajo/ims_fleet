@@ -127,9 +127,11 @@
     <p>{{ postupak.naziv_partnera|default:postupak.sifra_partnera|default:"Pravni predmet" }}</p>
   </div>
   <div class="legal-actions">
+    {% if can_edit_pravna %}
     <a href="{% url 'naplata:pravna_izmeni' pk=postupak.pk %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-pencil"></i> Izmeni
     </a>
+    {% endif %}
     <a href="{% url 'naplata:pravna_cases_list' case_type=postupak.tip %}" class="btn btn-outline-light btn-sm">
       <i class="mdi mdi-arrow-left"></i> Nazad
     </a>
@@ -182,6 +184,7 @@
                 <div class="change-date">{{ pr.datum|date:"d.m.Y" }}</div>
                 <div class="change-text">{{ pr.promena|linebreaksbr }}</div>
               </div>
+              {% if can_delete_pravna_promena %}
               <form method="post" action="{% url 'naplata:pravna_obrisi_promenu' pk=pr.pk %}"
                     onsubmit="return confirm('Obrisati ovu promenu?');" class="m-0">
                 {% csrf_token %}
@@ -189,6 +192,7 @@
                   <i class="mdi mdi-delete"></i>
                 </button>
               </form>
+              {% endif %}
             </div>
           </div>
         {% empty %}
@@ -197,6 +201,7 @@
       </div>
     </div>
 
+    {% if can_add_pravna_promena %}
     <div class="legal-section">
       <div class="legal-section-header">
         <span><i class="mdi mdi-plus-circle"></i> Dodaj promenu</span>
@@ -220,6 +225,7 @@
         </form>
       </div>
     </div>
+    {% endif %}
   </div>
 
   <div class="col-lg-4">
@@ -245,6 +251,7 @@
       </div>
     {% endif %}
 
+    {% if can_archive_pravna %}
     <div class="side-card">
       <div class="legal-section-header">
         <span><i class="mdi mdi-archive"></i> Arhiva</span>
@@ -265,6 +272,7 @@
         </form>
       </div>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

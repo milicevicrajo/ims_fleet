@@ -2,7 +2,6 @@
 
 {% block content %}
 <h2>Lista kontakata</h2>
-<a href="{% url 'dodaj_kontakt' %}">Dodaj novi kontakt</a>
 <table border="1">
     <tr>
         <th>Šifra partnera</th>
@@ -10,7 +9,7 @@
         <th>Kontakt</th>
         <th>Email</th>
         <th>Napomena</th>
-        <th>Akcije</th>
+        {% if can_edit_kontakti %}<th>Akcije</th>{% endif %}
     </tr>
     {% for kontakt in kontakti %}
     <tr>
@@ -19,10 +18,9 @@
         <td>{{ kontakt.kontakt }}</td>
         <td>{{ kontakt.email }}</td>
         <td>{{ kontakt.napomena }}</td>
-        <td>
-            {% comment %} <a href="{% url 'izmeni_kontakt' kontakt.sif_par %}">Izmeni</a> |
-            <a href="{% url 'obrisi_kontakt' kontakt.sif_par %}">Obriši</a> {% endcomment %}
-        </td>
+        {% if can_edit_kontakti %}
+        <td></td>
+        {% endif %}
     </tr>
     {% endfor %}
 </table>

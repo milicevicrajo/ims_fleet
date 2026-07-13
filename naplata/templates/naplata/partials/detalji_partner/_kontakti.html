@@ -2,32 +2,30 @@
             <div class="tab-pane fade show" id="kontakti">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4>Kontakti</h4>
+                    {% if can_edit_naplata_detail %}
                     <a href="{% url 'naplata:dodaj_kontakt' partner.2 partner.3 %}" class="text-success" style="font-size: 1.05em;">
                         <i class="mdi mdi-plus-box"></i> Dodaj kontakt
                     </a>
-                </div> 
+                    {% endif %}
+                </div>
                  <table class="table table-striped table-sm">
                     <tr>
                         <th>Kontakt</th>
                         <th>Email</th>
                         <th>Napomena</th>
-                        <th>Akcije</th>
+                        {% if can_edit_naplata_detail %}<th>Akcije</th>{% endif %}
                     </tr>
                     {% for kontakt in kontakti %}
                     <tr>
                         <td>{{ kontakt.kontakt }}</td>
                         <td>{{ kontakt.email }}</td>
                         <td>{{ kontakt.napomena }}</td>
+                        {% if can_edit_naplata_detail %}
                         <td class="d-flex align-items-center">
-                            <!-- Izmena kontakta -->
                             <a href="{% url 'naplata:izmeni_kontakt' kontakt.id %}" class="text-success d-flex align-items-center me-3">
                                 <i class="fas fa-edit"></i>
                             </a>
-                        
-                            <!-- Vertikalna crta -->
                             <span class="mx-2" style="border-left: 1px solid #ccc; height: 20px;"></span>
-                        
-                            <!-- Brisanje kontakta -->
                             <form action="{% url 'naplata:obrisi_kontakt' kontakt.id %}" method="post" class="d-flex align-items-center" style="margin: 0; padding: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-link text-danger p-0 m-0 d-flex align-items-center"
@@ -37,7 +35,7 @@
                                 </button>
                             </form>
                         </td>
-                                                
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </table>

@@ -298,7 +298,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         omv_card = vehicle.omv_transactions.filter().first()
         mileage = vehicle.fuel_consumptions.order_by("-mileage").values_list("mileage", flat=True).first()
 
-        consumptions = vehicle.fuel_consumptions.all()
+        consumptions = vehicle.fuel_consumptions.order_by("-date", "-id")
         average_consumption = calculate_average_fuel_consumption(vehicle)
         average_consumption_ever = calculate_average_fuel_consumption_ever(vehicle)
 

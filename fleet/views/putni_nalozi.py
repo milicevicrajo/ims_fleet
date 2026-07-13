@@ -467,6 +467,12 @@ class PutniNalogPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, Detai
     template_name = "fleet/putni_nalog_print.html"
     context_object_name = "putni_nalog"
 
+    def get_template_names(self):
+        currency = (self.object.advance_payment_currency or "").upper()
+        if currency and currency != "RSD":
+            return ["fleet/putni_nalog_print_foreign.html"]
+        return super().get_template_names()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f"Štampa putnog naloga {self.object.order_number}"
