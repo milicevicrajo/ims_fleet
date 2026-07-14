@@ -86,6 +86,7 @@ from .views.putni_nalozi import (
     PutniNalogCreateView,
     PutniNalogDeleteView,
     PutniNalogDetailView,
+    PutniNalogForeignPrintView,
     PutniNalogListView,
     PutniNalogPrintView,
     PutniNalogUpdateView,
@@ -330,6 +331,7 @@ urlpatterns = [
     path('putni-nalozi/<int:pk>/', PutniNalogDetailView.as_view(), name='putninalog_detail'),
     path('putni-nalozi/obrisi/<int:pk>/', PutniNalogDeleteView.as_view(), name='putninalog_delete'),
     path('putni-nalozi/<int:pk>/print/', PutniNalogPrintView.as_view(), name='putninalog_print'),
+    path('putni-nalozi/<int:pk>/prilog-inostranstvo/', PutniNalogForeignPrintView.as_view(), name='putninalog_foreign_print'),
 
 
     path('tipovi-servisa/', ServiceTypeListView.as_view(), name='servicetype_list'),

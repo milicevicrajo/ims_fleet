@@ -108,10 +108,23 @@ def _putninalog_vehicle_label(putni_nalog):
     return putni_nalog.other_vehicle or ""
 
 
+def _is_foreign_currency(putni_nalog):
+    currency = (putni_nalog.advance_payment_currency or "").upper()
+    return bool(currency and currency != "RSD")
+
+
+def _putninalog_print_urls(putni_nalog):
+    urls = [f"{reverse('putninalog_print', args=[putni_nalog.pk])}?auto=1"]
+    if _is_foreign_currency(putni_nalog):
+        urls.append(f"{reverse('putninalog_foreign_print', args=[putni_nalog.pk])}?auto=1")
+    return urls
+
+
 def _putninalog_actions_html(request, putni_nalog):
     csrf_token = get_token(request)
     update_url = reverse("putninalog_update", args=[putni_nalog.pk])
     print_url = reverse("putninalog_print", args=[putni_nalog.pk])
+    foreign_print_url = reverse("putninalog_foreign_print", args=[putni_nalog.pk])
     copy_url = f"{reverse('putninalog_create')}?copy={putni_nalog.pk}"
     justify_url = reverse("putninalog_set_opravdan", args=[putni_nalog.pk])
     storno_url = reverse("putninalog_storniraj", args=[putni_nalog.pk])
@@ -141,6 +154,11 @@ def _putninalog_actions_html(request, putni_nalog):
         f'<a href="{print_url}" class="btn btn-outline-secondary btn-sm" target="_blank">'
         '<i class="mdi mdi-printer"></i> Stampa</a>'
     )
+    if _is_foreign_currency(putni_nalog):
+        print_html += (
+            f' <a href="{foreign_print_url}" class="btn btn-outline-info btn-sm" target="_blank">'
+            '<i class="mdi mdi-file-document-outline"></i> Prilog</a>'
+        )
     copy_html = (
         f'<a href="{copy_url}" class="btn btn-outline-info btn-sm">'
         '<i class="mdi mdi-content-copy"></i> Ponovi</a>'
@@ -394,6 +412,7 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
             {
                 "redirect_url": reverse("putninalog_list"),
                 "print_url": f"{reverse('putninalog_print', args=[self.object.pk])}?auto=1",
+                "print_urls": _putninalog_print_urls(self.object),
             }
         )
 
@@ -418,6 +437,7 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
             {
                 "redirect_url": reverse("putninalog_list"),
                 "print_url": f"{reverse('putninalog_print', args=[self.object.pk])}?auto=1",
+                "print_urls": _putninalog_print_urls(self.object),
             }
         )
 
@@ -467,17 +487,24 @@ class PutniNalogPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, Detai
     template_name = "fleet/putni_nalog_print.html"
     context_object_name = "putni_nalog"
 
-    def get_template_names(self):
-        currency = (self.object.advance_payment_currency or "").upper()
-        if currency and currency != "RSD":
-            return ["fleet/putni_nalog_print_foreign.html"]
-        return super().get_template_names()
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f"Štampa putnog naloga {self.object.order_number}"
         context["auto_print"] = self.request.GET.get("auto") == "1"
         context["napomena_lines"] = _split_putni_nalog_note_lines(self.object.napomena)
+        return context
+
+
+class PutniNalogForeignPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
+    model = PutniNalog
+    template_name = "fleet/putni_nalog_print_foreign.html"
+    context_object_name = "putni_nalog"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Prilog za put u inostranstvo {self.object.order_number}"
+        context["auto_print"] = self.request.GET.get("auto") == "1"
+        context["foreign_rulebook_text"] = "po pravilniku"
         return context
 
 

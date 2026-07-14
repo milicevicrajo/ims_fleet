@@ -239,7 +239,7 @@
                     <div class="num">8</div>
                     <div class="field-body">
                         <div class="label">ПРЕНОЋИШТЕ</div>
-                        <div class="value blank">.</div>
+                        <div class="value">{{ foreign_rulebook_text|default:"po pravilniku" }}</div>
                     </div>
                 </div>
 
@@ -247,7 +247,7 @@
                     <div class="num">9</div>
                     <div class="field-body">
                         <div class="label">ТРОШКОВИ ПУТА</div>
-                        <div class="value blank">.</div>
+                        <div class="value">{{ foreign_rulebook_text|default:"po pravilniku" }}</div>
                     </div>
                 </div>
 
@@ -255,7 +255,7 @@
                     <div class="num">10</div>
                     <div class="field-body">
                         <div class="label">ДНЕВНИЦА</div>
-                        <div class="value">{{ putni_nalog.daily_allowance }} {{ putni_nalog.advance_payment_currency }}</div>
+                        <div class="value">{% if putni_nalog.daily_allowance %}{{ putni_nalog.daily_allowance }} {{ putni_nalog.advance_payment_currency }}{% else %}{{ foreign_rulebook_text|default:"po pravilniku" }}{% endif %}</div>
                     </div>
                 </div>
 
@@ -263,7 +263,7 @@
                     <div class="num">11</div>
                     <div class="field-body">
                         <div class="label">АКОНТАЦИЈА У ИЗНОСУ ОД</div>
-                        <div class="value" style="border-bottom: 1px solid #111;">{{ putni_nalog.advance_payment }} {{ putni_nalog.advance_payment_currency }}</div>
+                        <div class="value" style="border-bottom: 1px solid #111;">{% if putni_nalog.advance_payment %}{{ putni_nalog.advance_payment }} {{ putni_nalog.advance_payment_currency }}{% else %}{{ foreign_rulebook_text|default:"po pravilniku" }}{% endif %}</div>
                     </div>
                 </div>
             </div>

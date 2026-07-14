@@ -77,6 +77,7 @@ from .putni_nalozi import (
     PutniNalogCreateView,
     PutniNalogDeleteView,
     PutniNalogDetailView,
+    PutniNalogForeignPrintView,
     PutniNalogListView,
     PutniNalogPrintView,
     PutniNalogUpdateView,

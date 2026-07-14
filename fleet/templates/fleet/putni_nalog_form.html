@@ -266,14 +266,20 @@
                 document.body.removeChild(a);
               }
 
-              if (data && data.print_url) {
+              function openPrintUrl(url) {
                 const printLink = document.createElement('a');
-                printLink.href = data.print_url;
+                printLink.href = url;
                 printLink.target = '_blank';
                 printLink.rel = 'noopener';
                 document.body.appendChild(printLink);
                 printLink.click();
                 document.body.removeChild(printLink);
+              }
+
+              if (data && Array.isArray(data.print_urls) && data.print_urls.length) {
+                data.print_urls.forEach(openPrintUrl);
+              } else if (data && data.print_url) {
+                openPrintUrl(data.print_url);
               }
 
               window.location.href = data.redirect_url;
