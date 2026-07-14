@@ -184,6 +184,7 @@ def sync_permission_codes():
     sekretarijat_codes = [
         "employee_list",
         "employee_sync",
+        "putninalog_foreign_print",
     ]
     sekretarijat_role, _ = Role.objects.get_or_create(
         slug="sekretarijat",

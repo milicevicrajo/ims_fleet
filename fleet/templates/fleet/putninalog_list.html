@@ -11,15 +11,21 @@
     <h1>{{ title }}</h1>
     <p>Pregled putnih naloga sa zaposlenima, vozilima, statusom virmana i stampom.</p>
   </div>
+  {% if can_print_putninalog_list or can_create_putninalog %}
   <div class="d-flex flex-wrap gap-2">
+    {% if can_print_putninalog_list %}
     <a href="{% url 'putninalog_print_list' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"
        class="btn btn-outline-light btn-sm" target="_blank">
       <i class="mdi mdi-printer"></i> Stampa liste
     </a>
+    {% endif %}
+    {% if can_create_putninalog %}
     <a href="{% url 'putninalog_create' %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-plus"></i> Dodaj putni nalog
     </a>
+    {% endif %}
   </div>
+  {% endif %}
 </div>
 
 <div class="row">

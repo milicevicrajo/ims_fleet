@@ -140,6 +140,13 @@ class PermissionCodeSyncTests(TestCase):
         codes = set(role.permissions.values_list("code", flat=True))
         self.assertIn("employee_list", codes)
         self.assertIn("employee_sync", codes)
+        self.assertIn("putninalog_foreign_print", codes)
+        self.assertNotIn("putninalog_print", codes)
+        self.assertNotIn("putninalog_print_list", codes)
+        self.assertNotIn("putninalog_create", codes)
+        self.assertNotIn("putninalog_update", codes)
+        self.assertNotIn("putninalog_set_opravdan", codes)
+        self.assertNotIn("putninalog_storniraj", codes)
 
     def test_sync_permission_codes_grants_isplate_permissions_to_blagajna(self):
         from .permissions import sync_permission_codes

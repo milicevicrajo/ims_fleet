@@ -13,7 +13,7 @@ from django.utils.html import escape
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 from django_filters.views import FilterView
 
-from core.mixins import RolePermissionRequiredMixin, role_permission_required
+from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 
 from ..filters import PutniNalogFilter
 from ..mixins import CenterMixin
@@ -113,83 +113,111 @@ def _is_foreign_currency(putni_nalog):
     return bool(currency and currency != "RSD")
 
 
-def _putninalog_print_urls(putni_nalog):
-    urls = [f"{reverse('putninalog_print', args=[putni_nalog.pk])}?auto=1"]
-    if _is_foreign_currency(putni_nalog):
+def _putninalog_print_urls(putni_nalog, user=None):
+    urls = []
+    can_print = user is None or user_has_role_permission(user, "putninalog_print")
+    can_print_foreign = user is None or user_has_role_permission(user, "putninalog_foreign_print")
+    if can_print:
+        urls.append(f"{reverse('putninalog_print', args=[putni_nalog.pk])}?auto=1")
+    if _is_foreign_currency(putni_nalog) and can_print_foreign:
         urls.append(f"{reverse('putninalog_foreign_print', args=[putni_nalog.pk])}?auto=1")
     return urls
 
 
 def _putninalog_actions_html(request, putni_nalog):
+    user = request.user
+    can_update = user_has_role_permission(user, "putninalog_update")
+    can_print = user_has_role_permission(user, "putninalog_print")
+    can_print_foreign = user_has_role_permission(user, "putninalog_foreign_print")
+    can_create = user_has_role_permission(user, "putninalog_create")
+    can_justify = user_has_role_permission(user, "putninalog_set_opravdan")
+    can_storno = user_has_role_permission(user, "putninalog_storniraj")
+
     csrf_token = get_token(request)
-    update_url = reverse("putninalog_update", args=[putni_nalog.pk])
-    print_url = reverse("putninalog_print", args=[putni_nalog.pk])
-    foreign_print_url = reverse("putninalog_foreign_print", args=[putni_nalog.pk])
-    copy_url = f"{reverse('putninalog_create')}?copy={putni_nalog.pk}"
-    justify_url = reverse("putninalog_set_opravdan", args=[putni_nalog.pk])
-    storno_url = reverse("putninalog_storniraj", args=[putni_nalog.pk])
     modal_id = f"stornoModal{putni_nalog.pk}"
     modal_label_id = f"stornoModalLabel{putni_nalog.pk}"
     order_number = escape(putni_nalog.order_number or "")
 
+    update_html = ""
+    print_html = ""
+    copy_html = ""
+    storno_html = ""
+
     if putni_nalog.opravdan:
         justified_html = '<span class="badge bg-success">Opravdan</span>'
-        update_html = (
-            '<span class="btn btn-outline-secondary btn-sm disabled">'
-            '<i class="mdi mdi-lock"></i> Zakljucan</span>'
-        )
+        if can_update:
+            update_html = (
+                '<span class="btn btn-outline-secondary btn-sm disabled">'
+                '<i class="mdi mdi-lock"></i> Zakljucan</span>'
+            )
     else:
-        justified_html = (
-            f'<form method="post" action="{justify_url}">'
-            f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">'
-            '<button type="submit" class="btn btn-outline-success btn-sm">'
-            '<i class="mdi mdi-check"></i> Opravdaj</button></form>'
-        )
-        update_html = (
-            f'<a href="{update_url}" class="btn btn-outline-primary btn-sm">'
-            '<i class="mdi mdi-pencil"></i> Izmeni</a>'
-        )
+        if can_justify:
+            justify_url = reverse("putninalog_set_opravdan", args=[putni_nalog.pk])
+            justified_html = (
+                f'<form method="post" action="{justify_url}">'
+                f'<input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">'
+                '<button type="submit" class="btn btn-outline-success btn-sm">'
+                '<i class="mdi mdi-check"></i> Opravdaj</button></form>'
+            )
+        else:
+            justified_html = '<span class="badge bg-light text-dark">Ne</span>'
+        if can_update:
+            update_url = reverse("putninalog_update", args=[putni_nalog.pk])
+            update_html = (
+                f'<a href="{update_url}" class="btn btn-outline-primary btn-sm">'
+                '<i class="mdi mdi-pencil"></i> Izmeni</a>'
+            )
 
-    print_html = (
-        f'<a href="{print_url}" class="btn btn-outline-secondary btn-sm" target="_blank">'
-        '<i class="mdi mdi-printer"></i> Stampa</a>'
-    )
-    if _is_foreign_currency(putni_nalog):
+    if can_print:
+        print_url = reverse("putninalog_print", args=[putni_nalog.pk])
         print_html += (
-            f' <a href="{foreign_print_url}" class="btn btn-outline-info btn-sm" target="_blank">'
+            f'<a href="{print_url}" class="btn btn-outline-secondary btn-sm" target="_blank">'
+            '<i class="mdi mdi-printer"></i> Stampa</a>'
+        )
+    if _is_foreign_currency(putni_nalog) and can_print_foreign:
+        foreign_print_url = reverse("putninalog_foreign_print", args=[putni_nalog.pk])
+        spacer = " " if print_html else ""
+        print_html += (
+            f'{spacer}<a href="{foreign_print_url}" class="btn btn-outline-info btn-sm" target="_blank">'
             '<i class="mdi mdi-file-document-outline"></i> Prilog</a>'
         )
-    copy_html = (
-        f'<a href="{copy_url}" class="btn btn-outline-info btn-sm">'
-        '<i class="mdi mdi-content-copy"></i> Ponovi</a>'
-    )
-    storno_html = f"""
-        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#{modal_id}">
-          <i class="mdi mdi-close-circle"></i> Storniraj
-        </button>
-        <div class="modal fade" id="{modal_id}" tabindex="-1" aria-labelledby="{modal_label_id}" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="{modal_label_id}">Potvrda storniranja</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-              </div>
-              <div class="modal-body text-start">
-                Da li ste sigurni da stornirate ovaj nalog <strong>{order_number}</strong>?
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Otkazi</button>
-                <form method="post" action="{storno_url}">
-                  <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
-                  <button type="submit" class="btn btn-danger btn-sm">
-                    <i class="mdi mdi-alert-circle"></i> Da, storniraj
-                  </button>
-                </form>
+
+    if can_create:
+        copy_url = f"{reverse('putninalog_create')}?copy={putni_nalog.pk}"
+        copy_html = (
+            f'<a href="{copy_url}" class="btn btn-outline-info btn-sm">'
+            '<i class="mdi mdi-content-copy"></i> Ponovi</a>'
+        )
+
+    if can_storno:
+        storno_url = reverse("putninalog_storniraj", args=[putni_nalog.pk])
+        storno_html = f"""
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#{modal_id}">
+              <i class="mdi mdi-close-circle"></i> Storniraj
+            </button>
+            <div class="modal fade" id="{modal_id}" tabindex="-1" aria-labelledby="{modal_label_id}" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="{modal_label_id}">Potvrda storniranja</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+                  </div>
+                  <div class="modal-body text-start">
+                    Da li ste sigurni da stornirate ovaj nalog <strong>{order_number}</strong>?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Otkazi</button>
+                    <form method="post" action="{storno_url}">
+                      <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
+                      <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="mdi mdi-alert-circle"></i> Da, storniraj
+                      </button>
+                    </form>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-    """
+        """
     return justified_html, update_html, print_html, copy_html, storno_html
 
 
@@ -308,6 +336,14 @@ class PutniNalogListView(LoginRequiredMixin, FilterView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Lista putnih naloga"
+        context["can_print_putninalog_list"] = user_has_role_permission(
+            self.request.user,
+            "putninalog_print_list",
+        )
+        context["can_create_putninalog"] = user_has_role_permission(
+            self.request.user,
+            "putninalog_create",
+        )
         return context
 
 
@@ -408,11 +444,12 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
             form.add_error("start_sequence", str(exc))
             return self.form_invalid(form)
 
+        print_urls = _putninalog_print_urls(self.object, self.request.user)
         return JsonResponse(
             {
                 "redirect_url": reverse("putninalog_list"),
-                "print_url": f"{reverse('putninalog_print', args=[self.object.pk])}?auto=1",
-                "print_urls": _putninalog_print_urls(self.object),
+                "print_url": print_urls[0] if print_urls else "",
+                "print_urls": print_urls,
             }
         )
 
@@ -433,11 +470,12 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
 
     def form_valid(self, form):
         self.object = form.save()
+        print_urls = _putninalog_print_urls(self.object, self.request.user)
         return JsonResponse(
             {
                 "redirect_url": reverse("putninalog_list"),
-                "print_url": f"{reverse('putninalog_print', args=[self.object.pk])}?auto=1",
-                "print_urls": _putninalog_print_urls(self.object),
+                "print_url": print_urls[0] if print_urls else "",
+                "print_urls": print_urls,
             }
         )
 
