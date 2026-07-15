@@ -173,7 +173,7 @@ class TxtJsonConverterTests(TestCase):
         self.assertEqual(first["PaymentCode"], 240)
         self.assertEqual(first["Amount"], 71054.57)
         self.assertEqual(first["DebtorBankAccount"], "205000000001445485")
-        self.assertEqual(first["DebtorCodeModel"], 0)
+        self.assertIsNone(first["DebtorCodeModel"])
         self.assertEqual(first["DebtorCode"], "")
         self.assertEqual(first["CreditorName"], "DELIC-NIKOLIC IVANA")
         self.assertEqual(first["CreditorAddress"], "GROCKA")

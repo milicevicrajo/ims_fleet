@@ -108,6 +108,16 @@ def _putninalog_vehicle_label(putni_nalog):
     return putni_nalog.other_vehicle or ""
 
 
+def _datatable_hover_text(value, max_chars=15):
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    visible = text[:max_chars]
+    if len(text) > max_chars:
+        visible = f"{visible}..."
+    return f'<span title="{escape(text)}">{escape(visible)}</span>'
+
+
 def _is_foreign_currency(putni_nalog):
     currency = (putni_nalog.advance_payment_currency or "").upper()
     return bool(currency and currency != "RSD")
@@ -288,8 +298,8 @@ def putninalog_datatable_data(request):
             "order_number": escape(putni_nalog.order_number or ""),
             "employee": escape(_putninalog_employee_label(putni_nalog)),
             "job_code": escape(getattr(putni_nalog.job_code, "code", "") or ""),
-            "travel_location": escape(putni_nalog.travel_location or ""),
-            "contract_offer": escape(putni_nalog.contract_offer or ""),
+            "travel_location": _datatable_hover_text(putni_nalog.travel_location),
+            "contract_offer": _datatable_hover_text(putni_nalog.contract_offer),
             "vehicle": escape(_putninalog_vehicle_label(putni_nalog)),
             "travel_date": putni_nalog.travel_date.strftime("%d.%m.%Y") if putni_nalog.travel_date else "",
             "number_of_days": putni_nalog.number_of_days or "",

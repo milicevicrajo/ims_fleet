@@ -104,7 +104,7 @@ def _convert_detail_line(line, debtor_bank_account):
         "PaymentCode": _parse_int(_line_value(line, 131, 133)),
         "Amount": _parse_amount(reference[:13]),
         "DebtorBankAccount": debtor_bank_account,
-        "DebtorCodeModel": _parse_int(_line_value(line, 64, 66)),
+        "DebtorCodeModel": None,
         "DebtorCode": _line_value(line, 67, 88),
         "CreditorName": _line_value(line, 19, 53),
         "CreditorAddress": _line_value(line, 54, 63),
