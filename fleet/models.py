@@ -938,9 +938,11 @@ class DraftServiceTransaction(models.Model):
 class Requisition(models.Model):
     vehicle = models.ForeignKey(
         Vehicle,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='requisitions',
-        verbose_name=_("Vozilo")
+        verbose_name=_("Vozilo"),
+        null=True,
+        blank=True,
     )
     sif_pred = models.IntegerField(verbose_name=_("Šifra predmeta"))
     god = models.IntegerField(verbose_name=_("Godina"))
@@ -962,7 +964,7 @@ class Requisition(models.Model):
         verbose_name=_("Kategorija popravke (povezana)")
     )
     kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
-    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"))
+    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), default=False)
     napomena = models.TextField(verbose_name=_("Napomena"), blank=True, null=True)
     kvar = models.ForeignKey(
         Kvar,
@@ -976,60 +978,15 @@ class Requisition(models.Model):
     def __str__(self):
         return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["sif_pred", "god", "br_dok", "sif_vrsart", "stavka"],
+                name="uniq_requisition_source_line",
+            )
+        ]
 
-class DraftRequisition(models.Model):
-    vehicle = models.ForeignKey(
-        Vehicle,
-        on_delete=models.CASCADE,
-        related_name='draft_requisitions',
-        verbose_name=_("Vozilo"),
-        blank=True,
-        null=True
-    )
-    sif_pred = models.IntegerField(verbose_name=_("Šifra predmeta"), blank=True, null=True)
-    god = models.IntegerField(verbose_name=_("Godina"), null=True, blank=True)
-    br_dok = models.CharField(max_length=50, verbose_name=_("Broj dokumenta"))
-    sif_vrsart = models.CharField(max_length=50, verbose_name=_("Šifra vrste artikla"), null=True, blank=True)
-    stavka = models.CharField(max_length=50, verbose_name=_("Stavka"), null=True, blank=True)
-    sif_art = models.CharField(max_length=50, verbose_name=_("Šifra artikla"), null=True, blank=True)
-    naz_art = models.CharField(max_length=255, verbose_name=_("Naziv artikla"), null=True, blank=True)
-    kol = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Količina"), null=True, blank=True)
-    cena = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Cena"), null=True, blank=True)
-    vrednost_nab = models.DecimalField(max_digits=15, decimal_places=2, verbose_name=_("Vrednost nabavke"), null=True, blank=True)
-    popravka_kategorija = models.ForeignKey(
-        ServiceType,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name=_("Kategorija popravke (povezana)")
-    )
-    mesec_unosa = models.IntegerField(verbose_name=_("Mesec unosa"), null=True, blank=True)
-    kilometraza = models.IntegerField(verbose_name=_("Kilometraža"), null=True, blank=True)
-    nije_garaza = models.BooleanField(verbose_name=_("Nije garaža"), default=False)
-    datum_trebovanja = models.DateField(verbose_name=_("Datum trebovanja"), null=True, blank=True)
-    napomena = models.TextField(verbose_name=_("Napomena"), null=True, blank=True)
-    kvar = models.ForeignKey(
-        Kvar,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="draft_requisitions",
-        verbose_name=_("Kvar (IMS)")
-    )
 
-    def __str__(self):
-        return f"Requisition {self.br_dok} for {self.naz_art} ({self.god})"
-
-    def is_complete(self):
-        return all([
-            self.vehicle is not None,
-            bool(self.popravka_kategorija),
-            self.mesec_unosa is not None,
-            self.datum_trebovanja is not None,
-            self.kvar is not None,
-        ])
-
-    
 class TransactionOMV(models.Model):
     vehicle = models.ForeignKey(
         Vehicle,

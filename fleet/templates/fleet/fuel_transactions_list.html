@@ -7,7 +7,7 @@
 <div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
     <h1>{{ title }}</h1>
-    <p>Promet goriva po vozilima, racunima, dobavljacima, kolicinama i kilometrazi.</p>
+    <p>Računi za gorivo po vozilima, dobavljačima, količinama i kilometraži.</p>
   </div>
 </div>
 
@@ -15,13 +15,9 @@
   <div class="card-body border-bottom">
     <form method="get" class="fleet-list-filter">
       <div class="row g-2 align-items-end">
-        <div class="col-12 col-sm-6 col-lg-3">
-          <label for="id_start_date" class="form-label mb-1">Od datuma</label>
-          {{ filter_form.start_date|add_class:'form-control' }}
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3">
-          <label for="id_end_date" class="form-label mb-1">Do datuma</label>
-          {{ filter_form.end_date|add_class:'form-control' }}
+        <div class="col-12 col-sm-8 col-lg-5">
+          <label for="{{ filter_form.vehicle.id_for_label }}" class="form-label mb-1">{{ filter_form.vehicle.label }}</label>
+          {{ filter_form.vehicle|add_class:'form-control select2-method' }}
         </div>
         <div class="col-12 col-sm-6 col-lg-2 d-flex gap-2">
           <button type="submit" class="btn btn-primary w-100" title="Filter">
@@ -41,14 +37,14 @@
         <thead>
           <tr>
             <th>Registarska oznaka</th>
-            <th>Datum</th>
-            <th>Broj racuna</th>
+            <th>Datum računa</th>
+            <th>Broj računa</th>
             <th data-type="numeric" data-decimals="2">Kolicina (L)</th>
-            <th data-type="numeric" data-decimals="2">Cena po litru (RSD)</th>
             <th data-type="numeric" data-decimals="2">Iznos neto (RSD)</th>
             <th data-type="numeric" data-decimals="2">Iznos bruto (RSD)</th>
             <th>Dobavljac</th>
             <th data-type="numeric" data-decimals="0">Kilometraza</th>
+            <th data-type="numeric" data-decimals="0">Stavki</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -77,18 +73,18 @@
             { data: 'date' },
             { data: 'receipt_number' },
             { data: 'quantity' },
-            { data: 'price_per_liter' },
             { data: 'total_net' },
             { data: 'total_gross' },
             { data: 'supplier' },
-            { data: 'mileage' }
+            { data: 'mileage' },
+            { data: 'line_count' }
           ],
           language: {
             processing: 'Ucitavanje...',
             search: 'Pretraga:',
             lengthMenu: 'Prikazi _MENU_ redova',
-            info: 'Prikaz _START_ do _END_ od _TOTAL_ transakcija',
-            infoEmpty: 'Nema transakcija',
+            info: 'Prikaz _START_ do _END_ od _TOTAL_ računa',
+            infoEmpty: 'Nema računa',
             infoFiltered: '(filtrirano od _MAX_ ukupno)',
             zeroRecords: 'Nema rezultata',
             paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }

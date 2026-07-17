@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>{{ supplier }}{% if vehicle %} · {{ vehicle }}{% endif %}</p>
+  </div>
+  <a href="{{ back_url }}" class="btn btn-light btn-sm">
+    <i class="mdi mdi-arrow-left"></i> Nazad
+  </a>
+</div>
+
+{% if vehicle %}
+<div class="mb-3">
+  <a href="{% url 'vehicle_detail' vehicle.pk %}" class="btn btn-outline-primary btn-sm">
+    <i class="mdi mdi-car"></i> Detalj automobila
+  </a>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered align-middle">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Broj računa</th>
+            <th>Proizvod</th>
+            <th class="text-end">Količina</th>
+            <th class="text-end">Cena/l</th>
+            <th class="text-end">Neto</th>
+            <th class="text-end">Bruto</th>
+            <th class="text-end">Kilometraža</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row.date|date:"d.m.Y H:i:s" }}</td>
+            <td>{{ row.receipt_number }}</td>
+            <td>{{ row.product|default:"" }}</td>
+            <td class="text-end">{{ row.quantity|default_if_none:0|floatformat:2|intcomma }}</td>
+            <td class="text-end">{{ row.price_per_liter|default_if_none:0|floatformat:2|intcomma }}</td>
+            <td class="text-end">{{ row.total_net|default_if_none:0|floatformat:2|intcomma }}</td>
+            <td class="text-end">{{ row.total_gross|default_if_none:0|floatformat:2|intcomma }}</td>
+            <td class="text-end">{{ row.mileage|default_if_none:0|floatformat:0|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted">Nema stavki za ovaj račun.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

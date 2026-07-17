@@ -1,4 +1,4 @@
-<!-- requisition_list.html -->
+<!-- requisition_fixing_list.html -->
 {% extends 'base.html' %}
 {% block content %}
 <h2>{{ title }}</h2>
@@ -29,7 +29,7 @@
                         <td>{{ requisition.naz_art }}</td>
                         <td>{{ requisition.kol }}</td>
                                                 <td class="text-center text-nowrap">
-                                                    <a href="{% url 'draft_requisition_update' requisition.pk %}?next={{ request.get_full_path|urlencode }}"
+                                                    <a href="{% url 'requisition_update' requisition.pk %}?next={{ request.get_full_path|urlencode }}"
                                                          class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
                                                         <i class="mdi mdi-pencil"></i> Dopuni
                                                     </a>

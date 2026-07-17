@@ -1,17 +1,51 @@
 import logging
+from datetime import date, datetime
+from decimal import Decimal
 
 from django.db import connections, transaction
 
 from fleet.models import (
-    DraftRequisition,
     DraftServiceTransaction,
     Requisition,
     ServiceTransaction,
     ServiceType,
+    TrafficCard,
     Vehicle,
 )
+from fleet.support.vehicle import format_license_plate
 
 logger = logging.getLogger(__name__)
+
+
+def _clean(value):
+    return str(value or "").strip()
+
+
+def _int_or_none(value):
+    if value is None or _clean(value) == "":
+        return None
+    return int(Decimal(str(value).strip()))
+
+
+def _decimal_or_none(value):
+    if value is None or _clean(value) == "":
+        return None
+    return Decimal(str(value).strip())
+
+
+def _date_or_none(value):
+    if value is None or _clean(value) == "":
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    return datetime.fromisoformat(str(value).strip()[:10]).date()
+
+
+def _plate_key(value):
+    formatted = format_license_plate(_clean(value))
+    return formatted.replace("-", "")
 
 
 def fetch_service_data(last_24_hours=True, days=None):
@@ -242,70 +276,91 @@ def fetch_requisition_data(last_24_hours=True, days=None):
         logger.debug("Trebovanja sync start")
 
         query = """
-            SELECT sif_pred, god, br_dok, sif_vrsart, stavka, sif_art, naz_art, kol, cena, vrednost_nab, napomena
+            SELECT sif_pred, god, br_dok, sif_vrsart, stavka, sif_art, naz_art, kol, cena, vrednost_nab,
+                   datum_trebovanja, napomena, registracija
             FROM dbo.fleet_trebovanja
         """
+        params = []
 
         if days is not None:
-            query += f" WHERE GETDATE() - {days} > '2000-01-01'"
+            query += " WHERE datum_trebovanja > DATEADD(day, -%s, GETDATE())"
+            params.append(days)
             logger.debug("Trebovanja sync filter: poslednjih %s dana", days)
         elif last_24_hours:
-            logger.debug("Trebovanja sync filter: nema vremenskog filtriranja jer nema dostupnog datuma")
+            query += " WHERE datum_trebovanja > DATEADD(day, -1, GETDATE())"
+            logger.debug("Trebovanja sync filter: poslednja 24 sata")
 
         with connections["server_db"].cursor() as cursor:
             logger.debug("Trebovanja sync SQL: %s", query)
-            cursor.execute(query)
+            cursor.execute(query, params)
             rows = cursor.fetchall()
             logger.debug("Trebovanja sync fetched rows=%s", len(rows))
 
+        reg_to_vehicle = {
+            _plate_key(card.registration_number): card.vehicle_id
+            for card in TrafficCard.objects.only("registration_number", "vehicle_id")
+            if _plate_key(card.registration_number)
+        }
+
         created = 0
-        skipped_existing = 0
+        updated = 0
         skipped_bad_columns = 0
+        missing_vehicle = 0
         conversion_errors = 0
         errors = 0
 
         for index, row in enumerate(rows):
             logger.debug("Trebovanja sync row start: row=%s columns=%s", index + 1, len(row))
 
-            if len(row) < 11:
+            if len(row) < 13:
                 skipped_bad_columns += 1
                 logger.debug("Trebovanja sync row skipped bad columns: row=%s data=%s", index + 1, row)
                 continue
 
             try:
-                br_dok = row[2]
-                sif_art = row[5]
-                stavka = row[4]
+                sif_pred = _int_or_none(row[0])
+                god = _int_or_none(row[1])
+                br_dok = _clean(row[2])
+                sif_vrsart = _clean(row[3])
+                stavka = _int_or_none(row[4])
+                sif_art = _clean(row[5])
+                datum_trebovanja = _date_or_none(row[10])
+                registration = _clean(row[12])
+                vehicle_id = reg_to_vehicle.get(_plate_key(registration)) if registration else None
 
-                requisition_exists = Requisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
-                draft_exists = DraftRequisition.objects.filter(br_dok=br_dok, sif_art=sif_art, stavka=stavka).exists()
+                if vehicle_id is None:
+                    missing_vehicle += 1
 
-                if not requisition_exists and not draft_exists:
-                    logger.debug("Trebovanja sync creating draft: br_dok=%s sif_art=%s", br_dok, sif_art)
+                lookup = {
+                    "sif_pred": sif_pred,
+                    "god": god,
+                    "br_dok": br_dok,
+                    "sif_vrsart": sif_vrsart,
+                    "stavka": stavka,
+                }
+                defaults = {
+                    "sif_art": sif_art,
+                    "naz_art": _clean(row[6]),
+                    "kol": _decimal_or_none(row[7]),
+                    "cena": _decimal_or_none(row[8]),
+                    "vrednost_nab": _decimal_or_none(row[9]),
+                    "mesec_unosa": datum_trebovanja.month,
+                    "datum_trebovanja": datum_trebovanja,
+                    "napomena": _clean(row[11]) or None,
+                }
+                if vehicle_id is not None:
+                    defaults["vehicle_id"] = vehicle_id
 
-                    kol = float(row[7]) if row[7] else None
-                    cena = float(row[8]) if row[8] else None
-                    vrednost_nab = float(row[9]) if row[9] else None
-
-                    draft = DraftRequisition(
-                        sif_pred=row[0] if row[0] else None,
-                        god=row[1] if row[1] else None,
-                        br_dok=br_dok,
-                        sif_vrsart=row[3] if row[3] else None,
-                        stavka=row[4] if row[4] else None,
-                        sif_art=sif_art,
-                        naz_art=row[6] if row[6] else None,
-                        kol=kol,
-                        cena=cena,
-                        vrednost_nab=vrednost_nab,
-                        napomena=row[10] if row[10] else None,
-                    )
-                    draft.save()
+                _requisition, was_created = Requisition.objects.update_or_create(
+                    **lookup,
+                    defaults=defaults,
+                )
+                if was_created:
                     created += 1
-                    logger.debug("Trebovanja sync draft saved: br_dok=%s sif_art=%s", br_dok, sif_art)
+                    logger.debug("Trebovanja sync requisition created: br_dok=%s sif_art=%s", br_dok, sif_art)
                 else:
-                    skipped_existing += 1
-                    logger.debug("Trebovanja sync row skipped existing: br_dok=%s sif_art=%s", br_dok, sif_art)
+                    updated += 1
+                    logger.debug("Trebovanja sync requisition updated: br_dok=%s sif_art=%s", br_dok, sif_art)
 
             except ValueError as exc:
                 conversion_errors += 1
@@ -314,58 +369,25 @@ def fetch_requisition_data(last_24_hours=True, days=None):
                 errors += 1
                 logger.debug("Trebovanja sync row error: row=%s error=%s", index + 1, exc, exc_info=True)
 
-        skipped = skipped_existing + skipped_bad_columns
+        skipped = skipped_bad_columns
         problems = conversion_errors + errors
         result = {
             "fetched": len(rows),
             "created": created,
+            "updated": updated,
             "skipped": skipped,
-            "skipped_existing": skipped_existing,
             "skipped_bad_columns": skipped_bad_columns,
+            "missing_vehicle": missing_vehicle,
             "conversion_errors": conversion_errors,
             "errors": errors,
         }
         logger.info("Trebovanja sync summary: %s", result)
         return (
             "Trebovanja sync: "
-            f"povuceno={len(rows)}, kreirano={created}, preskoceno={skipped}, problemi={problems}"
+            f"povuceno={len(rows)}, kreirano={created}, azurirano={updated}, "
+            f"bez_vozila={missing_vehicle}, preskoceno={skipped}, problemi={problems}"
         )
 
     except Exception as exc:
         logger.error("Trebovanja sync failed: %s", exc, exc_info=True)
         return f"Trebovanja sync failed: {exc}"
-
-
-def delete_complete_drafts():
-    for draft in DraftRequisition.objects.all():
-        if draft.is_complete():
-            draft.delete()
-
-
-def migrate_draft_to_requisition(draft_id, vehicle_id):
-    try:
-        draft = DraftRequisition.objects.get(id=draft_id)
-
-        if draft.is_complete() and vehicle_id:
-            with transaction.atomic():
-                requisition = Requisition.objects.create(
-                    vehicle_id=vehicle_id,
-                    sif_pred=draft.sif_pred,
-                    god=draft.god,
-                    br_dok=draft.br_dok,
-                    sif_vrsart=draft.sif_vrsart,
-                    stavka=draft.stavka,
-                    sif_art=draft.sif_art,
-                    naz_art=draft.naz_art,
-                    kol=draft.kol,
-                    cena=draft.cena,
-                    vrednost_nab=draft.vrednost_nab,
-                    datum_trebovanja=draft.datum_trebovanja,
-                    napomena=draft.napomena,
-                    kvar=draft.kvar,
-                )
-                draft.delete()
-            return requisition
-
-    except DraftRequisition.DoesNotExist:
-        raise ValueError("Nepotpuni zapis ne postoji ili nije validan")

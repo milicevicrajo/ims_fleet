@@ -15,6 +15,7 @@ from .fuel import (
     FuelConsumptionDetailView,
     FuelConsumptionListView,
     FuelConsumptionUpdateView,
+    FuelTransactionDetailView,
     FuelTransactionsListView,
 )
 from .kvar import (
@@ -110,7 +111,6 @@ from .reference import (
     VehicleTenderDocumentUpdateView,
 )
 from .services import (
-    DraftRequisitionUpdateView,
     DraftServiceTransactionUpdateView,
     RequisitionCreateView,
     RequisitionDeleteView,

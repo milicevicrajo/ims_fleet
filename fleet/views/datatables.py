@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import OuterRef, Q, Subquery
@@ -12,7 +13,7 @@ from hr.models import Employee
 
 from ..filters import KvarFilter, TrafficCardFilterForm, VehicleFilter
 from ..models import JobCode, Kvar, Lease, Policy, Requisition, ServiceTransaction, TrafficCard, Vehicle, VehicleTravelOrder
-from ..support.fuel import calculate_average_fuel_consumption, get_fuel_consumption_queryset, format_omv_receipt_number
+from ..support.fuel import calculate_average_fuel_consumption, get_fuel_invoice_queryset, format_omv_receipt_number
 from .lease import LONG_TERM_LEASE_TYPES, LeaseListView
 from .vehicles import _vehicle_list_base_queryset
 from .vehicle_travel_orders import get_previous_vehicle_travel_order
@@ -245,49 +246,78 @@ def vehicle_travel_order_datatable_data(request):
 
 @login_required
 def fuel_transactions_datatable_data(request):
-    start_date = request.GET.get("start_date") or date.today() - timedelta(days=40)
-    end_date = request.GET.get("end_date") or date.today()
-    qs = get_fuel_consumption_queryset(start_date=start_date, end_date=end_date)
+    vehicle_id = request.GET.get("vehicle") or None
+    search_value = request.GET.get("search[value]", "").strip()
+    base_qs = get_fuel_invoice_queryset(vehicle_id=vehicle_id)
+    qs = get_fuel_invoice_queryset(vehicle_id=vehicle_id, search_value=search_value)
 
-    def search(value):
-        return (
-            Q(registration_number__icontains=value)
-            | Q(supplier__icontains=value)
-            | Q(annotated_supplier__icontains=value)
-            | Q(annotated_receipt_number__icontains=value)
+    columns = {
+        "0": "registration_number",
+        "1": "latest_date",
+        "2": "receipt_number",
+        "3": "quantity_total",
+        "4": "total_net",
+        "5": "total_gross",
+        "6": "supplier_name",
+        "7": "max_mileage",
+        "8": "line_count",
+    }
+
+    order_column = request.GET.get("order[0][column]")
+    order_dir = request.GET.get("order[0][dir]", "asc")
+    order_field = columns.get(order_column)
+    if order_field:
+        qs = qs.order_by(f"-{order_field}" if order_dir == "desc" else order_field)
+    else:
+        qs = qs.order_by("-latest_date")
+
+    start = max(_int_param(request, "start", 0), 0)
+    length = _int_param(request, "length", 50)
+    if length < 0:
+        length = 50
+    length = min(length, 200)
+
+    def row(invoice):
+        vehicle_pk = invoice.get("vehicle_id")
+        registration_number = invoice.get("registration_number") or "N/A"
+        vehicle_link = (
+            f'<a href="{reverse("vehicle_detail", args=[vehicle_pk])}" class="btn btn-outline-primary btn-sm">'
+            f'<i class="mdi mdi-car"></i> {escape(registration_number)}</a>'
+            if vehicle_pk
+            else escape(registration_number)
         )
-
-    def row(transaction):
+        detail_query = urlencode(
+            {
+                "supplier": invoice.get("supplier_name") or "",
+                "receipt": invoice.get("receipt_number") or "",
+                "vehicle": vehicle_pk or "",
+            }
+        )
+        receipt_link = (
+            f'<a href="{reverse("fuel_transaction_detail")}?{detail_query}" class="btn btn-outline-primary btn-sm">'
+            f'<i class="mdi mdi-receipt"></i> {escape(invoice.get("receipt_number") or "")}</a>'
+        )
         return {
-            "registration_number": escape(transaction.get("registration_number") or "N/A"),
-            "date": _date(transaction.get("annotated_transaction_date"), "%d.%m.%Y %H:%M:%S"),
-            "receipt_number": escape(transaction.get("annotated_receipt_number") or ""),
-            "quantity": _money(transaction.get("annotated_quantity") or 0),
-            "price_per_liter": _money(transaction.get("price_per_liter") or 0),
-            "total_net": _money(transaction.get("total_net") or 0),
-            "total_gross": _money(transaction.get("total_gross") or 0),
-            "supplier": escape(transaction.get("annotated_supplier") or ""),
-            "mileage": f"{transaction.get('annotated_mileage') or 0:.0f}",
+            "registration_number": vehicle_link,
+            "date": _date(invoice.get("latest_date"), "%d.%m.%Y %H:%M:%S"),
+            "receipt_number": receipt_link,
+            "quantity": _money(invoice.get("quantity_total") or 0),
+            "total_net": _money(invoice.get("total_net") or 0),
+            "total_gross": _money(invoice.get("total_gross") or 0),
+            "supplier": escape(invoice.get("supplier_name") or ""),
+            "mileage": f"{invoice.get('max_mileage') or 0:.0f}",
+            "line_count": f"{invoice.get('line_count') or 0}",
         }
 
-    return _datatable_response(
-        request,
-        qs,
+    page_rows = list(qs)[start:start + length]
+
+    return JsonResponse(
         {
-            "0": "registration_number",
-            "1": "annotated_transaction_date",
-            "2": "annotated_receipt_number",
-            "3": "annotated_quantity",
-            "4": "price_per_liter",
-            "5": "total_net",
-            "6": "total_gross",
-            "7": "annotated_supplier",
-            "8": "annotated_mileage",
-        },
-        row,
-        search,
-        default_order=("-annotated_transaction_date",),
-        append_id_order=False,
+            "draw": _int_param(request, "draw", 0),
+            "recordsTotal": base_qs.count(),
+            "recordsFiltered": qs.count(),
+            "data": [row(invoice) for invoice in page_rows],
+        }
     )
 
 
@@ -516,7 +546,7 @@ def requisitions_datatable_data(request):
 
     def row(requisition):
         return {
-            "vehicle": escape(str(requisition.vehicle)),
+            "vehicle": escape(str(requisition.vehicle) if requisition.vehicle_id else ""),
             "year": requisition.god,
             "document": (
                 f'<a href="{reverse("requisition_detail", kwargs={"god": requisition.god, "br_dok": requisition.br_dok})}" '

@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from fleet.models import (
     Requisition,
     ServiceTransaction,
-    DraftRequisition,
     DraftServiceTransaction,
     ServiceType,
 )
@@ -38,18 +37,6 @@ class Command(BaseCommand):
             except ServiceType.DoesNotExist:
                 pass
         total_counts['ServiceTransaction'] = service_count
-
-        # DRAFT REQUISITION
-        draft_requisition_count = 0
-        for dr in DraftRequisition.objects.exclude(popravka_kategorija__isnull=True).exclude(popravka_kategorija__exact=""):
-            try:
-                kategorija = ServiceType.objects.get(name=dr.popravka_kategorija.strip())
-                dr.popravka_kategorija_fk = kategorija
-                dr.save()
-                draft_requisition_count += 1
-            except ServiceType.DoesNotExist:
-                pass
-        total_counts['DraftRequisition'] = draft_requisition_count
 
         # DRAFT SERVICE TRANSACTION
         draft_service_count = 0

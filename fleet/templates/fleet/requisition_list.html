@@ -8,9 +8,17 @@
     <h1>{{ title }}</h1>
     <p>Trebovanja po vozilu, godini, broju dokumenta, artiklu i kolicini.</p>
   </div>
-  <a href="{% url 'requisition_create' %}" class="btn btn-light btn-sm">
-    <i class="mdi mdi-plus"></i> Dodaj trebovanje
-  </a>
+  <div class="d-flex flex-wrap gap-2">
+    <form method="post" action="{% url 'fetch_requisitions' %}" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-light btn-sm">
+        <i class="mdi mdi-sync"></i> Povuci trebovanja
+      </button>
+    </form>
+    <a href="{% url 'requisition_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Dodaj trebovanje
+    </a>
+  </div>
 </div>
 
 <div class="card shadow-sm">

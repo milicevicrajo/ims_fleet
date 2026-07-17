@@ -23,6 +23,7 @@ from .views.fuel import (
     FuelConsumptionDetailView,
     FuelConsumptionListView,
     FuelConsumptionUpdateView,
+    FuelTransactionDetailView,
     FuelTransactionsListView,
 )
 from .views.insurance import (
@@ -96,7 +97,6 @@ from .views.putni_nalozi import (
     putninalog_storniraj,
 )
 from .views.services import (
-    DraftRequisitionUpdateView,
     DraftServiceTransactionUpdateView,
     RequisitionCreateView,
     RequisitionDeleteView,
@@ -279,6 +279,7 @@ urlpatterns = [
     path('potrosnja-goriva/', FuelConsumptionListView.as_view(), name='fuelconsumption_list'),
     path('fuel-transactions/', FuelTransactionsListView.as_view(), name='fuel_transactions_list'),
     path('fuel-transactions/data/', fuel_transactions_datatable_data, name='fuel_transactions_data'),
+    path('fuel-transactions/detail/', FuelTransactionDetailView.as_view(), name='fuel_transaction_detail'),
     path('potrosnja-goriva/novo/', FuelConsumptionCreateView.as_view(), name='fuelconsumption_create'),
     path('potrosnja-goriva/izmeni/<int:pk>/', FuelConsumptionUpdateView.as_view(), name='fuelconsumption_update'),
     path('potrosnja-goriva/<int:pk>/', FuelConsumptionDetailView.as_view(), name='fuelconsumption_detail'),
@@ -377,7 +378,6 @@ urlpatterns = [
     path('requisitions/data/', requisitions_datatable_data, name='requisition_data'),
     path('requisition/<int:god>/<str:br_dok>/', RequisitionDetailView.as_view(), name='requisition_detail'),
     path('requisitions/nedovrseno/', RequisitionFixingListView.as_view(), name='requisition_fixing_list'),
-    path('requisitions-nedovrseno/<int:pk>/edit/', DraftRequisitionUpdateView.as_view(), name='draft_requisition_update'),
     path('requisitions/create/', RequisitionCreateView.as_view(), name='requisition_create'),
     path('requisitions/<int:pk>/edit/', RequisitionUpdateView.as_view(), name='requisition_update'),
     path('requisitions/<int:pk>/delete/', RequisitionDeleteView.as_view(), name='requisition_delete'),

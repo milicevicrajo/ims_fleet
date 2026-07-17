@@ -1,10 +1,11 @@
-from datetime import date, timedelta
+from datetime import timedelta
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import OuterRef, Subquery
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, TemplateView, UpdateView
 from django_filters.views import FilterView
 
 from core.mixins import RolePermissionRequiredMixin
@@ -12,7 +13,7 @@ from core.mixins import RolePermissionRequiredMixin
 from ..filters import FuelFilterForm, FuelTransactionFilterForm
 from ..forms.fuel import FuelConsumptionForm
 from ..models import FuelConsumption, TrafficCard
-from ..support.fuel import date_range_for_datetime_field, get_fuel_consumption_queryset
+from ..support.fuel import date_range_for_datetime_field, get_fuel_invoice_lines
 
 
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):
@@ -53,31 +54,40 @@ class FuelConsumptionListView(LoginRequiredMixin, FilterView):
         return context
 
 
-class FuelTransactionsListView(LoginRequiredMixin, ListView):
+class FuelTransactionsListView(LoginRequiredMixin, TemplateView):
     template_name = "fleet/fuel_transactions_list.html"
-    context_object_name = "fuel_transactions"
-
-    def get_queryset(self):
-        start_date = self.request.GET.get("start_date")
-        end_date = self.request.GET.get("end_date")
-
-        if not start_date:
-            start_date = date.today() - timedelta(days=40)
-        if not end_date:
-            end_date = date.today()
-
-        return get_fuel_consumption_queryset(start_date=start_date, end_date=end_date)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["filter_form"] = FuelTransactionFilterForm(
-            self.request.GET
-            or {
-                "start_date": (date.today() - timedelta(days=40)).strftime("%Y-%m-%d"),
-                "end_date": date.today().strftime("%Y-%m-%d"),
+        context["filter_form"] = FuelTransactionFilterForm(self.request.GET or None)
+        context["title"] = "Lista računa za gorivo"
+        return context
+
+
+class FuelTransactionDetailView(LoginRequiredMixin, TemplateView):
+    template_name = "fleet/fuel_transaction_detail.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        supplier = self.request.GET.get("supplier", "")
+        receipt_number = self.request.GET.get("receipt", "")
+        vehicle_id = self.request.GET.get("vehicle") or None
+        rows = get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=vehicle_id)
+        vehicle = rows[0]["vehicle"] if rows else None
+        back_params = {"vehicle": vehicle_id} if vehicle_id else {}
+        back_url = reverse_lazy("fuel_transactions_list")
+        if back_params:
+            back_url = f"{back_url}?{urlencode(back_params)}"
+        context.update(
+            {
+                "title": f"Račun {receipt_number}",
+                "supplier": supplier,
+                "receipt_number": receipt_number,
+                "vehicle": vehicle,
+                "rows": rows,
+                "back_url": back_url,
             }
         )
-        context["title"] = "Izveštaj o potrošnji goriva"
         return context
 
 

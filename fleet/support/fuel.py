@@ -1,6 +1,6 @@
 from datetime import date, datetime, time as datetime_time
 
-from django.db.models import Case, CharField, F, OuterRef, Q, Subquery, Value, When
+from django.db.models import Case, CharField, Count, F, Max, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Concat
 from django.utils import timezone as django_timezone
 
@@ -60,6 +60,22 @@ def format_omv_receipt_number(invoice_no, voucher):
     if invoice_no and voucher and invoice_no != voucher:
         return f"{invoice_no} / {voucher}"
     return invoice_no or voucher
+
+
+def omv_receipt_number_expression():
+    return Case(
+        When(
+            Q(invoice_no__isnull=False)
+            & ~Q(invoice_no="")
+            & Q(voucher__isnull=False)
+            & ~Q(voucher="")
+            & ~Q(invoice_no=F("voucher")),
+            then=Concat("invoice_no", Value(" / "), "voucher"),
+        ),
+        When(Q(invoice_no__isnull=False) & ~Q(invoice_no=""), then=F("invoice_no")),
+        default=F("voucher"),
+        output_field=CharField(),
+    )
 
 
 def date_range_for_datetime_field(start_date=None, end_date=None):
@@ -150,19 +166,7 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
         vehicle=OuterRef("vehicle")
     ).order_by("-issue_date").values("registration_number")[:1]
 
-    omv_receipt_number = Case(
-        When(
-            Q(invoice_no__isnull=False)
-            & ~Q(invoice_no="")
-            & Q(voucher__isnull=False)
-            & ~Q(voucher="")
-            & ~Q(invoice_no=F("voucher")),
-            then=Concat("invoice_no", Value(" / "), "voucher"),
-        ),
-        When(Q(invoice_no__isnull=False) & ~Q(invoice_no=""), then=F("invoice_no")),
-        default=F("voucher"),
-        output_field=CharField(),
-    )
+    omv_receipt_number = omv_receipt_number_expression()
 
     omv_queryset = filter_omv_fuel_queryset(TransactionOMV.objects.all()).annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
@@ -223,6 +227,146 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     )
 
     return omv_queryset.union(nis_queryset)
+
+
+def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
+    latest_traffic_card_subquery = TrafficCard.objects.filter(
+        vehicle=OuterRef("vehicle")
+    ).order_by("-issue_date").values("registration_number")[:1]
+
+    search_value = str(search_value or "").strip()
+
+    omv_queryset = filter_omv_fuel_queryset(TransactionOMV.objects.all()).annotate(
+        registration_number=Subquery(latest_traffic_card_subquery),
+        receipt_number=omv_receipt_number_expression(),
+        supplier_name=Value("OMV", output_field=CharField()),
+    )
+    nis_queryset = filter_nis_fuel_queryset(TransactionNIS.objects.all()).annotate(
+        registration_number=Subquery(latest_traffic_card_subquery),
+        receipt_number=F("broj_racuna"),
+        supplier_name=Value("NIS", output_field=CharField()),
+    )
+
+    if vehicle_id:
+        omv_queryset = omv_queryset.filter(vehicle_id=vehicle_id)
+        nis_queryset = nis_queryset.filter(vehicle_id=vehicle_id)
+
+    if search_value:
+        omv_queryset = omv_queryset.filter(
+            Q(registration_number__icontains=search_value)
+            | Q(receipt_number__icontains=search_value)
+            | Q(supplier__icontains=search_value)
+            | Q(product_inv__icontains=search_value)
+        )
+        nis_queryset = nis_queryset.filter(
+            Q(registration_number__icontains=search_value)
+            | Q(receipt_number__icontains=search_value)
+            | Q(naziv_proizvoda__icontains=search_value)
+        )
+
+    omv_invoices = (
+        omv_queryset.values("vehicle_id", "registration_number", "receipt_number", "supplier_name")
+        .annotate(
+            latest_date=Max("transaction_date"),
+            quantity_total=Sum("quantity"),
+            total_net=Sum("amount"),
+            total_gross=Sum("gross_cc"),
+            max_mileage=Max("mileage"),
+            line_count=Count("id"),
+        )
+        .values(
+            "vehicle_id",
+            "registration_number",
+            "receipt_number",
+            "supplier_name",
+            "latest_date",
+            "quantity_total",
+            "total_net",
+            "total_gross",
+            "max_mileage",
+            "line_count",
+        )
+    )
+
+    nis_invoices = (
+        nis_queryset.values("vehicle_id", "registration_number", "receipt_number", "supplier_name")
+        .annotate(
+            latest_date=Max("datum_transakcije"),
+            quantity_total=Sum("kolicina"),
+            total_net=Sum("total"),
+            total_gross=Sum("total_sa_kase"),
+            max_mileage=Max("kilometraza"),
+            line_count=Count("id"),
+        )
+        .values(
+            "vehicle_id",
+            "registration_number",
+            "receipt_number",
+            "supplier_name",
+            "latest_date",
+            "quantity_total",
+            "total_net",
+            "total_gross",
+            "max_mileage",
+            "line_count",
+        )
+    )
+
+    return omv_invoices.union(nis_invoices)
+
+
+def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
+    supplier = str(supplier or "").strip().upper()
+    receipt_number = str(receipt_number or "").strip()
+
+    if supplier == "OMV":
+        queryset = filter_omv_fuel_queryset(TransactionOMV.objects.select_related("vehicle"))
+        if " / " in receipt_number:
+            invoice_no, voucher = [part.strip() for part in receipt_number.split(" / ", 1)]
+            queryset = queryset.filter(invoice_no=invoice_no, voucher=voucher)
+        else:
+            queryset = queryset.filter(Q(invoice_no=receipt_number) | Q(voucher=receipt_number))
+        if vehicle_id:
+            queryset = queryset.filter(vehicle_id=vehicle_id)
+        return [
+            {
+                "supplier": "OMV",
+                "vehicle": row.vehicle,
+                "date": row.transaction_date,
+                "receipt_number": format_omv_receipt_number(row.invoice_no, row.voucher),
+                "product": row.product_inv,
+                "quantity": row.quantity,
+                "price_per_liter": row.unit_price,
+                "total_net": row.amount,
+                "total_gross": row.gross_cc,
+                "mileage": row.mileage,
+            }
+            for row in queryset.order_by("transaction_date", "id")
+        ]
+
+    if supplier == "NIS":
+        queryset = filter_nis_fuel_queryset(TransactionNIS.objects.select_related("vehicle")).filter(
+            broj_racuna=receipt_number
+        )
+        if vehicle_id:
+            queryset = queryset.filter(vehicle_id=vehicle_id)
+        return [
+            {
+                "supplier": "NIS",
+                "vehicle": row.vehicle,
+                "date": row.datum_transakcije,
+                "receipt_number": row.broj_racuna,
+                "product": row.naziv_proizvoda,
+                "quantity": row.kolicina,
+                "price_per_liter": row.cena,
+                "total_net": row.total,
+                "total_gross": row.total_sa_kase,
+                "mileage": row.kilometraza,
+            }
+            for row in queryset.order_by("datum_transakcije", "id")
+        ]
+
+    return []
 
 
 def get_vehicle_fuel_transaction_rows(vehicle):

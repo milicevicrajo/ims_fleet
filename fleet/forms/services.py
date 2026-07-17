@@ -5,7 +5,6 @@ from django_select2.forms import Select2Widget
 from core.form_fields import localized_date_field
 
 from ..models import (
-    DraftRequisition,
     DraftServiceTransaction,
     Kvar,
     Requisition,
@@ -111,73 +110,3 @@ class RequisitionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.datum_trebovanja:
             self.initial["datum_trebovanja"] = self.instance.datum_trebovanja.strftime("%d.%m.%Y")
-
-        for field_name, field in self.fields.items():
-            if not isinstance(field, forms.BooleanField):
-                field.required = True
-
-
-class DraftRequisitionForm(forms.ModelForm):
-    YES_NO_CHOICES = (
-        (True, _("Ne")),
-        (False, _("Da")),
-    )
-
-    vehicle = forms.ModelChoiceField(
-        queryset=Vehicle.objects.all(),
-        widget=Select2Widget(attrs={"class": "select2-method"}),
-        label="Vozilo",
-    )
-    datum_trebovanja = localized_date_field(label="Datum")
-    mesec_unosa = forms.IntegerField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
-        label="Mesec unosa",
-    )
-    popravka_kategorija = forms.ModelChoiceField(
-        queryset=ServiceType.objects.all(),
-        widget=Select2Widget(attrs={"class": "select2-method"}),
-        label="Kategorija popravke",
-    )
-    kvar = forms.ModelChoiceField(
-        queryset=Kvar.objects.filter(van_ims=False),
-        required=False,
-        widget=Select2Widget(attrs={"class": "select2-method", "data-placeholder": "Izaberi IMS kvar"}),
-        label="Kvar (IMS)",
-    )
-    kilometraza = forms.IntegerField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
-        label="Kilometraža",
-    )
-    nije_garaza = forms.ChoiceField(
-        choices=YES_NO_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={"class": "form-control"}),
-        help_text="Izaberite opciju: 'Da' ako se odnosi na važnu napomenu, ili ostavite prazno.",
-        label="Garaža",
-    )
-    napomena = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-        label="Napomena",
-    )
-
-    class Meta:
-        model = DraftRequisition
-        fields = [
-            "vehicle",
-            "datum_trebovanja",
-            "mesec_unosa",
-            "popravka_kategorija",
-            "kilometraza",
-            "nije_garaza",
-            "napomena",
-            "kvar",
-        ]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk and self.instance.datum_trebovanja:
-            self.initial["datum_trebovanja"] = self.instance.datum_trebovanja.strftime("%d.%m.%Y")
-
-        for field_name, field in self.fields.items():
-            field.required = False

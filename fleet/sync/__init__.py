@@ -20,15 +20,12 @@ from fleet.sync.selenium import (
     omv_teretna_data_import,
 )
 from fleet.sync.services import (
-    delete_complete_drafts,
     fetch_requisition_data,
     fetch_service_data,
-    migrate_draft_to_requisition,
     migrate_draft_to_service_transaction,
 )
 
 __all__ = [
-    "delete_complete_drafts",
     "fetch_ddor_insurance_data",
     "fetch_policy_data",
     "fetch_requisition_data",
@@ -40,7 +37,6 @@ __all__ = [
     "kerio_login",
     "format_nis_sync_result",
     "migrate_draft_to_insurance_single",
-    "migrate_draft_to_requisition",
     "migrate_draft_to_service_transaction",
     "nis_data_import",
     "omv_putnicka_data_import",

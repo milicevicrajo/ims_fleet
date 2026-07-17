@@ -413,35 +413,16 @@ class FuelFilterForm(django_filters.FilterSet):
 
 
 class FuelTransactionFilterForm(forms.Form):
-    start_date = forms.DateField(
+    vehicle = forms.ModelChoiceField(
+        queryset=Vehicle.objects.none(),
         required=False,
-        widget=forms.DateInput(
-            attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'placeholder': 'Od datuma'
-            }
-        ),
-        label="Od datuma"
-    )
-    end_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(
-            attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'placeholder': 'Do datuma'
-            }
-        ),
-        label="Do datuma"
+        label="Automobil",
+        widget=forms.Select(attrs={"class": "form-control select2-method"}),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not self.data.get('start_date'):
-            self.initial['start_date'] = date.today() - timedelta(days=40)
-        if not self.data.get('end_date'):
-            self.initial['end_date'] = date.today()
+        self.fields["vehicle"].queryset = Vehicle.objects.order_by("brand", "model", "id")
 
 class PoliciesMonthlyCostsFilter(django_filters.FilterSet):
     # ChoiceFilter -> lep dropdown; vrednosti ćemo dinamički popuniti u __init__

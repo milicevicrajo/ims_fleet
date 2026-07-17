@@ -13,7 +13,6 @@ from .reference import OrganizationalUnitForm
 from .reports import OMVPutnickaFilterForm, PutnickaFilterForm, ReportPeriodFilterForm
 from .vehicles import JobCodeForm, TrafficCardForm, VehicleForm, VehicleTenderDocumentForm
 from .services import (
-    DraftRequisitionForm,
     DraftServiceTransactionForm,
     RequisitionForm,
     ServiceFixingFilterForm,

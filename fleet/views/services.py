@@ -17,7 +17,6 @@ from core.mixins import RolePermissionRequiredMixin
 
 from ..filters import ServiceFixingFilter, ServiceMonthlyCostsFilter
 from ..forms.services import (
-    DraftRequisitionForm,
     DraftServiceTransactionForm,
     RequisitionForm,
     ServiceForm,
@@ -25,7 +24,6 @@ from ..forms.services import (
     ServiceTypeForm,
 )
 from ..models import (
-    DraftRequisition,
     DraftServiceTransaction,
     Requisition,
     Service,
@@ -34,7 +32,6 @@ from ..models import (
 )
 from ..support.service_queries import service_monthly_costs_rows
 from ..sync import (
-    delete_complete_drafts,
     fetch_requisition_data,
     fetch_service_data,
     migrate_draft_to_service_transaction,
@@ -333,16 +330,21 @@ class RequisitionDetailView(LoginRequiredMixin, ListView):
 
 
 class RequisitionFixingListView(LoginRequiredMixin, ListView):
-    model = DraftRequisition
-    template_name = "fleet/draft_requisition_list.html"
+    model = Requisition
+    template_name = "fleet/requisition_fixing_list.html"
     context_object_name = "requisitions"
 
     def get_queryset(self):
-        return DraftRequisition.objects.filter(nije_garaza=False)
+        return (
+            Requisition.objects.select_related("vehicle", "popravka_kategorija")
+            .filter(nije_garaza=False)
+            .filter(vehicle__isnull=True)
+            .order_by("-datum_trebovanja", "-id")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Trebovanja koja je potrebno dopuniti"
+        context["title"] = "Trebovanja bez povezanog vozila"
         return context
 
 
@@ -361,20 +363,6 @@ class RequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
     success_url = reverse_lazy("requisition_list")
     success_message = "Trebovanje uspešno izmenjeno!"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["title"] = "Izmena trebovanja"
-        context["submit_button_label"] = "Sačuvaj izmene"
-        return context
-
-
-class DraftRequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
-    model = DraftRequisition
-    form_class = DraftRequisitionForm
-    template_name = "fleet/generic_form_draft.html"
-    success_message = "Trebovanje uspešno izmenjeno!"
-    success_url = reverse_lazy("requisition_fixing_list")
-
     def get_success_url(self):
         next_url = self.request.GET.get("next")
         if next_url and url_has_allowed_host_and_scheme(
@@ -385,63 +373,10 @@ class DraftRequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin
             return next_url
         return str(self.success_url)
 
-    def form_valid(self, form):
-        current_instance = form.save()
-
-        DraftRequisition.objects.filter(
-            br_dok=current_instance.br_dok,
-            god=current_instance.god,
-        ).exclude(id=current_instance.id).update(
-            vehicle=current_instance.vehicle,
-            datum_trebovanja=current_instance.datum_trebovanja,
-            mesec_unosa=current_instance.mesec_unosa,
-            popravka_kategorija=current_instance.popravka_kategorija,
-            kilometraza=current_instance.kilometraza,
-            nije_garaza=current_instance.nije_garaza,
-            napomena=current_instance.napomena,
-        )
-
-        draft_requisitions = DraftRequisition.objects.filter(
-            br_dok=current_instance.br_dok,
-            god=current_instance.god,
-        )
-
-        for draft in draft_requisitions:
-            logger.info("Obrada: %s, kompletan: %s", draft, draft.is_complete())
-            if draft.is_complete():
-                logger.info("-> Premeštam u Requisition")
-                Requisition.objects.create(
-                    vehicle=draft.vehicle,
-                    sif_pred=draft.sif_pred,
-                    god=draft.god,
-                    br_dok=draft.br_dok,
-                    sif_vrsart=draft.sif_vrsart,
-                    stavka=draft.stavka,
-                    sif_art=draft.sif_art,
-                    naz_art=draft.naz_art,
-                    kol=draft.kol,
-                    cena=draft.cena,
-                    vrednost_nab=draft.vrednost_nab,
-                    popravka_kategorija=draft.popravka_kategorija,
-                    mesec_unosa=draft.mesec_unosa,
-                    kilometraza=draft.kilometraza,
-                    nije_garaza=draft.nije_garaza,
-                    datum_trebovanja=draft.datum_trebovanja,
-                    napomena=draft.napomena,
-                )
-                draft.delete()
-
-        delete_complete_drafts()
-        return redirect(self.get_success_url())
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"Izmena trebovanja {self.object.br_dok}"
+        context["title"] = "Izmena trebovanja"
         context["submit_button_label"] = "Sačuvaj izmene"
-        context["manual"] = (
-            "Kilometražu je poželjno uneti uvek, ali nije obavezno. "
-            "Kada se radi o redovnim servisima, kilometraža je obavezna."
-        )
         return context
 
 

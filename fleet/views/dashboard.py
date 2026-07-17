@@ -9,7 +9,6 @@ from django.shortcuts import render
 from ..models import (
     DraftInsurance,
     DraftPolicy,
-    DraftRequisition,
     DraftServiceTransaction,
     FuelConsumption,
     Insurance,
@@ -29,7 +28,11 @@ from ..support.fuel import date_range_for_datetime_field
 def dashboard(request):
     services_without_vehicle = DraftServiceTransaction.objects.count()
     policies_without_vehicle = DraftPolicy.objects.count()
-    requisitions_without_vehicle = DraftRequisition.objects.count()
+    requisitions_without_vehicle = (
+        Requisition.objects.filter(nije_garaza=False)
+        .filter(vehicle__isnull=True)
+        .count()
+    )
     draft_insurance_count = DraftInsurance.objects.count()
 
     today = date.today()
