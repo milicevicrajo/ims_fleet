@@ -22,6 +22,89 @@
 </div>
 
 <div class="card shadow-sm">
+  <div class="card-body border-bottom">
+    <form method="get" class="fleet-list-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-6 col-xl-3">
+          <label class="form-label mb-1" for="filter-vehicle">Automobil</label>
+          <select id="filter-vehicle" name="vehicle" class="form-select form-control select2-method">
+            <option value="">Svi automobili</option>
+            {% for vehicle in vehicles %}
+              <option value="{{ vehicle.pk }}" {% if selected_vehicle == vehicle.pk|stringformat:"s" %}selected{% endif %}>{{ vehicle }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-md-3 col-xl-1">
+          <label class="form-label mb-1" for="filter-year">Godina</label>
+          <select id="filter-year" name="year" class="form-select form-control select2-method">
+            <option value="">Sve</option>
+            {% for year in years %}
+              <option value="{{ year }}" {% if selected_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+          <label class="form-label mb-1" for="filter-document">Broj dokumenta</label>
+          <input id="filter-document" name="document" value="{{ selected_document }}" class="form-control" placeholder="Broj dokumenta">
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+          <label class="form-label mb-1" for="filter-article">Artikal</label>
+          <input id="filter-article" name="article" value="{{ selected_article }}" class="form-control" placeholder="Sifra ili naziv">
+        </div>
+        <div class="col-12 col-md-6 col-xl-2">
+          <label class="form-label mb-1" for="filter-category">Kategorija</label>
+          <select id="filter-category" name="category" class="form-select form-control select2-method">
+            <option value="">Sve kategorije</option>
+            {% for category in categories %}
+              <option value="{{ category.pk }}" {% if selected_category == category.pk|stringformat:"s" %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100" title="Primeni filtere">
+            <i class="mdi mdi-filter"></i> Filter
+          </button>
+          <a href="{% url 'requisition_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+            <i class="mdi mdi-close"></i>
+          </a>
+        </div>
+      </div>
+      <div class="row g-2 align-items-end mt-1">
+        <div class="col-12 col-md-4 col-xl-2">
+          <label class="form-label mb-1" for="filter-vehicle-status">Vozilo</label>
+          <select id="filter-vehicle-status" name="vehicle_status" class="form-select form-control select2-method">
+            <option value="">Sva trebovanja</option>
+            <option value="linked" {% if selected_vehicle_status == "linked" %}selected{% endif %}>Sa vozilom</option>
+            <option value="missing" {% if selected_vehicle_status == "missing" %}selected{% endif %}>Bez vozila</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <label class="form-label mb-1" for="filter-date-from">Datum od</label>
+          <input id="filter-date-from" type="date" name="date_from" value="{{ selected_date_from }}" class="form-control">
+        </div>
+        <div class="col-6 col-md-3 col-xl-2">
+          <label class="form-label mb-1" for="filter-date-to">Datum do</label>
+          <input id="filter-date-to" type="date" name="date_to" value="{{ selected_date_to }}" class="form-control">
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-body border-bottom py-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-6 col-lg-4">
+        <label class="form-label mb-1" for="requisition-quick-search">Brza pretraga</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+          <input id="requisition-quick-search" type="text" class="form-control" placeholder="Automobil, dokument, artikal">
+          <button id="requisition-clear-search" type="button" class="btn btn-outline-secondary" title="Ocisti pretragu">
+            <i class="mdi mdi-close"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="card-body">
     <div class="table-responsive">
       <table id="RequisitionTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
@@ -33,6 +116,7 @@
             <th>Datum trebovanja</th>
             <th>Naziv artikla</th>
             <th data-type="numeric">Kolicina</th>
+            <th>Kategorija</th>
             <th class="text-center" data-filter="none">Akcije</th>
           </tr>
         </thead>
@@ -45,6 +129,7 @@
             <th>Datum trebovanja</th>
             <th>Naziv artikla</th>
             <th>Kolicina</th>
+            <th>Kategorija</th>
             <th>Akcije</th>
           </tr>
         </tfoot>
@@ -58,12 +143,15 @@
     if (window.jQuery && jQuery.fn.DataTable) {
       var table = jQuery('#RequisitionTable');
       if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
-        table.DataTable({
+        var dataTable = table.DataTable({
           serverSide: true,
           processing: true,
+          searching: true,
           pageLength: 50,
           lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
           order: [[3, 'desc']],
+          dom: "<'row'<'col-sm-12 col-md-6'l>>rt<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+          scrollX: true,
           ajax: {
             url: "{% url 'requisition_data' %}" + window.location.search,
             type: "GET"
@@ -75,6 +163,7 @@
             { data: 'date' },
             { data: 'article' },
             { data: 'quantity' },
+            { data: 'category' },
             { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
           ],
           language: {
@@ -87,6 +176,24 @@
             zeroRecords: 'Nema rezultata',
             paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
           }
+        });
+
+        var quickSearch = jQuery('#requisition-quick-search');
+        var clearSearch = jQuery('#requisition-clear-search');
+        var searchTimer = null;
+
+        quickSearch.on('input', function () {
+          var value = this.value;
+          window.clearTimeout(searchTimer);
+          searchTimer = window.setTimeout(function () {
+            dataTable.search(value).draw();
+          }, 200);
+        });
+
+        clearSearch.on('click', function () {
+          quickSearch.val('');
+          dataTable.search('').draw();
+          quickSearch.trigger('focus');
         });
       }
     }

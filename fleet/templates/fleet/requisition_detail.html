@@ -1,34 +1,161 @@
-{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>Trebovanje {{ br_dok }} / {{ god }}</title>
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+    body { margin: 0; padding: 0; background: #f3f3f3; color: #000; font-family: Arial, sans-serif; }
+    .a4-viewport { width: 210mm; margin: 0 auto; }
+    .print-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; }
+    .print-toolbar a, .print-toolbar button {
+      border-radius: 8px; padding: 8px 14px; border: 1px solid #6c757d; background: #fff; color: #1f2933;
+      text-decoration: none; cursor: pointer; font-size: 14px;
+    }
+    .print-toolbar button { background: #0d6efd; color: #fff; border-color: #0d6efd; }
+    .a4-page {
+      width: 210mm; min-height: 297mm; background: #fff; box-sizing: border-box; padding: 5mm 7mm;
+      border: 1px solid #000;
+    }
+    .treb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2mm; }
+    .brand { display: flex; align-items: center; gap: 2mm; font-size: 8pt; font-weight: 700; }
+    .brand img { height: 15mm; width: auto; }
+    .oznaka { border: 1px solid #000; padding: 1mm 1.5mm; min-width: 26mm; text-align: center; font-size: 8pt; }
+    .top-line { display: flex; flex-wrap: wrap; gap: 4mm; margin: 2mm 0 1mm; font-size: 10pt; }
+    .top-line div { min-width: 36mm; }
+    .treb-title { display: flex; justify-content: space-between; align-items: center; font-size: 11pt; font-weight: 700; margin: 1mm 0; }
+    .vehicle-line { border: 1px solid #000; padding: 1.4mm; margin: 2mm 0; font-size: 9pt; }
+    .list-table { width: 100%; border-collapse: collapse; margin-top: 2mm; }
+    .list-table th, .list-table td { border: 1px solid #000; padding: 0.8mm 1mm; font-size: 8.4pt; height: 6mm; vertical-align: middle; }
+    .list-table th { text-align: center; font-weight: 700; }
+    .text-center { text-align: center; }
+    .text-end { text-align: right; }
+    .summary { display: flex; justify-content: flex-end; gap: 10mm; margin-top: 2mm; font-size: 9pt; font-weight: 700; }
+    .note-box { min-height: 18mm; border: 1px solid #000; margin-top: 3mm; padding: 1.5mm; font-size: 8.5pt; }
+    .footer-sign { display: flex; justify-content: space-between; margin-top: 10mm; font-size: 8pt; }
+    .signature { width: 30%; text-align: center; }
+    .signature .line { display: block; border-bottom: 1px solid #000; margin-top: 8mm; }
+    @media print {
+      body { background: #fff; }
+      .print-toolbar { display: none; }
+      .a4-viewport { width: 210mm; margin: 0; }
+      .a4-page { border: none; min-height: 297mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="a4-viewport">
+    <div class="print-toolbar">
+      <span>Trebovanje {{ br_dok }} / {{ god }}</span>
+      <div>
+        <a href="{{ next_url }}">Nazad</a>
+        {% if vehicle %}
+          <a href="{% url 'vehicle_detail' vehicle.pk %}">Detalj automobila</a>
+        {% endif %}
+        <button type="button" onclick="window.print()">Stampaj</button>
+      </div>
+    </div>
 
-{% block content %}
-  <h2>Trebovanje {{ br_dok }} ({{ god }})</h2>
+    <section class="a4-page">
+      <div class="treb-header">
+        <div class="brand">
+          <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo">
+          <div>INSTITUT IMS AD</div>
+        </div>
+        <div class="oznaka">Oznaka<br><strong>IZ 051</strong></div>
+      </div>
 
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Stavka</th>
-        <th>Šifra artikla</th>
-        <th>Naziv artikla</th>
-        <th>Količina</th>
-        <th>Cena</th>
-        <th>Vrednost</th>
-        <th>Napomena</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for stavka in stavke %}
-      <tr>
-        <td>{{ stavka.stavka }}</td>
-        <td>{{ stavka.sif_art }}</td>
-        <td>{{ stavka.naz_art }}</td>
-        <td>{{ stavka.kol }}</td>
-        <td>{{ stavka.cena }}</td>
-        <td>{{ stavka.vrednost_nab }}</td>
-        <td>{{ stavka.napomena }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      <div class="top-line">
+        <div>Sifra predmeta: <strong>{% if first_requisition %}{{ first_requisition.sif_pred }}{% endif %}</strong></div>
+        <div>Godina: <strong>{{ god }}</strong></div>
+        <div>Datum: <strong>{% if first_requisition %}{{ first_requisition.datum_trebovanja|date:"d.m.Y" }}{% else %}{{ print_date|date:"d.m.Y" }}{% endif %}</strong></div>
+        <div>Stampa: <strong>{{ print_date|date:"d.m.Y" }}</strong></div>
+      </div>
 
-  <a href="{% url 'requisition_list' %}" class="btn btn-secondary">Nazad na listu</a>
-{% endblock %}
+      <div class="treb-title">
+        <span>TREBOVANJE MATERIJALA BR. {{ br_dok }}</span>
+        <span>{% if first_requisition and first_requisition.popravka_kategorija %}{{ first_requisition.popravka_kategorija }}{% endif %}</span>
+      </div>
+
+      <div class="vehicle-line">
+        Automobil:
+        <strong>{% if vehicle %}{{ vehicle }}{% else %}Nedostaje povezano vozilo{% endif %}</strong>
+        {% if first_requisition and first_requisition.kilometraza %}
+          &nbsp; Kilometraza: <strong>{{ first_requisition.kilometraza|intcomma }}</strong>
+        {% endif %}
+      </div>
+
+      <table class="list-table">
+        <colgroup>
+          <col style="width:7%">
+          <col style="width:13%">
+          <col style="width:39%">
+          <col style="width:10%">
+          <col style="width:12%">
+          <col style="width:13%">
+          <col style="width:6%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>R.br.</th>
+            <th>Sifra artikla</th>
+            <th>Naziv materijala / usluge</th>
+            <th>Kolicina</th>
+            <th>Cena</th>
+            <th>Vrednost</th>
+            <th>Nap.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in print_rows %}
+          <tr>
+            <td class="text-center">{% if row %}{{ row.stavka }}{% endif %}</td>
+            <td>{% if row %}{{ row.sif_art }}{% endif %}</td>
+            <td>{% if row %}{{ row.naz_art }}{% endif %}</td>
+            <td class="text-end">{% if row %}{{ row.kol|floatformat:2 }}{% endif %}</td>
+            <td class="text-end">{% if row %}{{ row.cena|floatformat:2 }}{% endif %}</td>
+            <td class="text-end">{% if row %}{{ row.vrednost_nab|floatformat:2 }}{% endif %}</td>
+            <td>{% if row %}{{ row.napomena|default:"" }}{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div>Ukupna kolicina: {{ total_quantity|floatformat:2 }}</div>
+        <div>Ukupna vrednost: {{ total_value|floatformat:2|intcomma }}</div>
+      </div>
+
+      <div class="note-box">
+        Napomena:
+        {% if first_requisition and first_requisition.napomena %}
+          {{ first_requisition.napomena }}
+        {% endif %}
+      </div>
+
+      <div class="footer-sign">
+        <div class="signature">Rukovodilac centra<span class="line"></span></div>
+        <div class="signature">Primio materijal<span class="line"></span></div>
+        <div class="signature">Izdao materijal<span class="line"></span></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      var autoPrint = {{ auto_print|yesno:"true,false" }};
+      var nextUrl = "{{ next_url|default:'' }}";
+      if (autoPrint) {
+        window.print();
+        window.onafterprint = function () {
+          if (nextUrl) {
+            window.location.href = nextUrl;
+          }
+        };
+      }
+    })();
+  </script>
+</body>
+</html>

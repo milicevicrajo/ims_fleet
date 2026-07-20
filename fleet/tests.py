@@ -13,16 +13,22 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.models import OrganizationalUnit
+from nabavka.models import ProcurementInvoice
 from .forms import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
-from .models import FuelConsumption, PutniNalog, TrafficCard, TransactionNIS, TransactionOMV
+from .models import FuelConsumption, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
 from .support.dashboard import vehicle_cost_per_km_rows
 from .support.report_helpers import date_period_filtered_query, report_period_filtered_query
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
-from .support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset, format_omv_receipt_number
+from .support.fuel import (
+	filter_nis_fuel_queryset,
+	filter_omv_fuel_queryset,
+	format_omv_receipt_number,
+	format_receipt_identifier,
+)
 from .templatetags.form_filters import receipt_number
 from .views.vehicle_travel_orders import (
 	PreviousVehicleTravelOrderCreateView,
@@ -31,8 +37,10 @@ from .views.vehicle_travel_orders import (
 	VehicleTravelOrderDetailView,
 	VehicleTravelOrderUpdateView,
 )
-from .views.datatables import vehicle_travel_order_datatable_data
+from .views.datatables import policies_datatable_data, requisitions_datatable_data, vehicle_travel_order_datatable_data
 from .sync.selenium import import_omv_transactions_from_csv
+from .sync.external import _merged_policy_defaults, _policy_data_from_invoice, _policy_data_is_complete, fetch_policy_data
+from .tasks import _run_policy_data_import_with_report
 
 
 class UserProfileManagementTests(TestCase):
@@ -489,10 +497,13 @@ class FuelProductFilterTests(TestCase):
 		self.assertEqual(format_omv_receipt_number("8916372386", "00168851"), "8916372386 / 00168851")
 		self.assertEqual(format_omv_receipt_number("8916372386", ""), "8916372386")
 		self.assertEqual(format_omv_receipt_number("", "00168851"), "00168851")
+		self.assertEqual(format_omv_receipt_number("8,916,372,386", "00168851"), "8916372386 / 00168851")
 
 	def test_receipt_number_keeps_omv_leading_zeroes(self):
 		self.assertEqual(receipt_number("00282457"), "00282457")
 		self.assertEqual(receipt_number("7562133.0"), "7562133")
+		self.assertEqual(receipt_number("7,562,133.0"), "7562133")
+		self.assertEqual(format_receipt_identifier("7,562,133.0"), "7562133")
 
 
 class OMVTransactionImportTests(TestCase):
@@ -1319,3 +1330,369 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 
 		self.assertEqual(payload["recordsFiltered"], 1)
 		self.assertIn(f"PN {order.pn_number}", payload["data"][0]["pn_number"])
+
+
+class RequisitionListAndDetailTests(TestCase):
+	def setUp(self):
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="REQ-1",
+			chassis_number="WVWZZZREQ000001",
+			brand="Skoda",
+			model="Fabia",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1198.00"),
+			engine_number="REQ-ENG-1",
+			weight=Decimal("1200.00"),
+			engine_power=Decimal("55.00"),
+			load_capacity=Decimal("400.00"),
+			category=Vehicle.Category.PASSENGER,
+			maximum_permissible_weight=Decimal("1700.00"),
+			fuel_type="BENZIN",
+			number_of_seats=5,
+			purchase_value=Decimal("8000.00"),
+			value=Decimal("7000.00"),
+		)
+		self.service_type = ServiceType.objects.create(name="Gume")
+
+	def create_requisition(self, **overrides):
+		defaults = {
+			"vehicle": self.vehicle,
+			"sif_pred": 11,
+			"god": 2026,
+			"br_dok": "TR-100",
+			"sif_vrsart": "MAT",
+			"stavka": 1,
+			"sif_art": "ART-1",
+			"naz_art": "Guma 205/55 R16",
+			"kol": Decimal("4.00"),
+			"cena": Decimal("1000.00"),
+			"vrednost_nab": Decimal("4000.00"),
+			"mesec_unosa": 1,
+			"datum_trebovanja": datetime.date(2026, 1, 15),
+			"popravka_kategorija": self.service_type,
+			"kilometraza": 123456,
+			"nije_garaza": False,
+		}
+		defaults.update(overrides)
+		return Requisition.objects.create(**defaults)
+
+	def test_requisition_datatable_filters_and_links_vehicle_detail(self):
+		user = get_user_model().objects.create_user(username="req-list-user", password="pass")
+		self.create_requisition()
+		self.create_requisition(
+			vehicle=None,
+			sif_pred=12,
+			br_dok="TR-101",
+			stavka=1,
+			naz_art="Ulje motora",
+			sif_art="ART-2",
+		)
+		request = RequestFactory().get(
+			"/requisitions/data/",
+			{
+				"draw": "1",
+				"start": "0",
+				"length": "50",
+				"vehicle": str(self.vehicle.pk),
+				"year": "2026",
+				"article": "Guma",
+			},
+		)
+		request.user = user
+
+		response = requisitions_datatable_data(request)
+		payload = json.loads(response.content)
+
+		self.assertEqual(payload["recordsFiltered"], 1)
+		self.assertIn("TR-100", payload["data"][0]["document"])
+		self.assertIn(reverse("vehicle_detail", args=[self.vehicle.pk]), payload["data"][0]["vehicle"])
+
+	def test_requisition_detail_uses_print_layout(self):
+		user = get_user_model().objects.create_user(username="req-detail-user", password="pass")
+		self.create_requisition()
+		self.create_requisition(stavka=2, sif_art="ART-3", naz_art="Ventil", kol=Decimal("4.00"))
+		self.client.force_login(user)
+
+		response = self.client.get(reverse("requisition_detail", kwargs={"god": 2026, "br_dok": "TR-100"}))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "TREBOVANJE MATERIJALA BR. TR-100")
+		self.assertContains(response, "Stampaj")
+		self.assertContains(response, "Detalj automobila")
+
+
+class PolicyDirectSyncTests(TestCase):
+	def setUp(self):
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="POL-1",
+			chassis_number="WVWZZZTEST000001",
+			brand="Skoda",
+			model="Octavia",
+			year_of_manufacture=2021,
+			first_registration_date=datetime.date(2021, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1598.00"),
+			engine_number="POL-ENG-1",
+			weight=Decimal("1500.00"),
+			engine_power=Decimal("85.00"),
+			load_capacity=Decimal("500.00"),
+			category=Vehicle.Category.PASSENGER,
+			maximum_permissible_weight=Decimal("2000.00"),
+			fuel_type="DIZEL",
+			number_of_seats=5,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		TrafficCard.objects.create(
+			vehicle=self.vehicle,
+			registration_number="BG1234-PP",
+			issue_date=datetime.date(2026, 1, 1),
+			valid_until=datetime.date(2027, 1, 1),
+			traffic_card_number="POL-TC-1",
+			serial_number="POL-SER-1",
+			owner="IMS",
+			homologation_number="POL-HOM-1",
+		)
+
+	def test_incomplete_policy_stays_in_policy_warning_queryset(self):
+		incomplete_policy = Policy.objects.create(
+			vehicle=None,
+			invoice_id=9001,
+			invoice_number="IF-9001",
+		)
+		Policy.objects.create(
+			vehicle=self.vehicle,
+			partner_pib=123456789,
+			partner_name="Osiguranje",
+			invoice_id=9002,
+			invoice_number="IF-9002",
+			issue_date=datetime.date(2026, 1, 1),
+			insurance_type="Kasko",
+			policy_number="POL-9002",
+			premium_amount=Decimal("12000.00"),
+			start_date=datetime.date(2026, 1, 1),
+			end_date=datetime.date(2027, 1, 1),
+			first_installment_amount=Decimal("3000.00"),
+			other_installments_amount=Decimal("3000.00"),
+			number_of_installments=4,
+		)
+
+		warning_ids = list(Policy.objects.filter(Policy.incomplete_q()).values_list("id", flat=True))
+
+		self.assertEqual(warning_ids, [incomplete_policy.id])
+
+	def test_policy_sync_invoice_maps_to_policy_data_and_allows_incomplete_policy(self):
+		stats = {"normalization_issues": 0}
+		invoice = ProcurementInvoice.objects.create(
+			euf_key="POL-INV-9003",
+			invoice_number="IF-9003",
+			invoice_date=datetime.date(2026, 1, 1),
+			supplier_name="DDOR Novi Sad",
+			amount=Decimal("12000.00"),
+			is_garage=True,
+			vehicle=self.vehicle,
+		)
+
+		policy_data = _policy_data_from_invoice(invoice, stats)
+
+		self.assertEqual(policy_data["vehicle"], self.vehicle)
+		self.assertEqual(policy_data["invoice_id"], invoice.id)
+		self.assertEqual(policy_data["partner_name"], "DDOR Novi Sad")
+		self.assertEqual(policy_data["insurance_type"], "DDOR")
+		self.assertEqual(policy_data["start_date"], datetime.date(2026, 1, 1))
+		self.assertEqual(policy_data["end_date"], datetime.date(2027, 1, 1))
+		self.assertEqual(policy_data["premium_amount"], Decimal("12000.00"))
+		self.assertEqual(policy_data["first_installment_amount"], Decimal("12000.00"))
+		self.assertEqual(policy_data["other_installments_amount"], Decimal("0.00"))
+		self.assertEqual(policy_data["number_of_installments"], 1)
+		self.assertIsNone(policy_data["policy_number"])
+		self.assertFalse(_policy_data_is_complete(policy_data))
+		self.assertEqual(stats["normalization_issues"], 0)
+
+	def test_policy_sync_fetches_from_procurement_invoices_without_duplicates(self):
+		today = datetime.date.today()
+		policy_invoice = ProcurementInvoice.objects.create(
+			euf_key="POL-INV-9005",
+			invoice_number="IF-9005",
+			invoice_date=today,
+			supplier_name="DDOR osiguranje",
+			amount=Decimal("18000.00"),
+			is_garage=True,
+			vehicle=self.vehicle,
+		)
+		ProcurementInvoice.objects.create(
+			euf_key="POL-INV-9006",
+			invoice_number="IF-9006",
+			invoice_date=today,
+			supplier_name="Servis vozila",
+			amount=Decimal("5000.00"),
+			is_garage=True,
+			vehicle=self.vehicle,
+		)
+		ProcurementInvoice.objects.create(
+			euf_key="POL-INV-9007",
+			invoice_number="IF-9007",
+			invoice_date=today,
+			supplier_name="DDOR osiguranje",
+			amount=Decimal("7000.00"),
+			is_garage=False,
+			vehicle=self.vehicle,
+		)
+		ProcurementInvoice.objects.create(
+			euf_key="POL-INV-9008",
+			invoice_number="IF-9008",
+			invoice_date=today,
+			supplier_name="Osiguranje vozila",
+			amount=Decimal("9000.00"),
+			is_garage=True,
+			vehicle=None,
+		)
+
+		result = fetch_policy_data(last_24_hours=True)
+		second_result = fetch_policy_data(last_24_hours=True)
+
+		policy = Policy.objects.get(invoice_id=policy_invoice.id)
+		self.assertIn("povuceno=1", result)
+		self.assertIn("kreirano=1", result)
+		self.assertIn("azurirano=1", second_result)
+		self.assertEqual(Policy.objects.count(), 1)
+		self.assertEqual(policy.vehicle, self.vehicle)
+		self.assertEqual(policy.invoice_number, "IF-9005")
+		self.assertEqual(policy.partner_name, "DDOR osiguranje")
+		self.assertEqual(policy.end_date, today + datetime.timedelta(days=365))
+		self.assertIsNone(policy.policy_number)
+		self.assertFalse(policy.is_complete())
+
+	def test_policy_datatable_filters_incomplete_and_links_vehicle_detail(self):
+		user = get_user_model().objects.create_user(username="policy-list-user", password="pass")
+		incomplete_policy = Policy.objects.create(
+			vehicle=self.vehicle,
+			invoice_id=9010,
+			invoice_number="IF-9010",
+			partner_name="DDOR osiguranje",
+			insurance_type="DDOR",
+			end_date=datetime.date(2026, 12, 31),
+		)
+		Policy.objects.create(
+			vehicle=self.vehicle,
+			partner_pib=123456789,
+			partner_name="DDOR osiguranje",
+			invoice_id=9011,
+			invoice_number="IF-9011",
+			issue_date=datetime.date(2026, 1, 1),
+			insurance_type="DDOR",
+			policy_number="POL-9011",
+			premium_amount=Decimal("12000.00"),
+			start_date=datetime.date(2026, 1, 1),
+			end_date=datetime.date(2027, 1, 1),
+			first_installment_amount=Decimal("12000.00"),
+			other_installments_amount=Decimal("0.00"),
+			number_of_installments=1,
+		)
+		request = RequestFactory().get(
+			"/polise/data/",
+			{
+				"draw": "1",
+				"start": "0",
+				"length": "50",
+				"completeness": "incomplete",
+				"vehicle": str(self.vehicle.pk),
+			},
+		)
+		request.user = user
+
+		response = policies_datatable_data(request)
+		payload = json.loads(response.content)
+
+		self.assertEqual(payload["recordsFiltered"], 1)
+		self.assertIn("IF-9010", payload["data"][0]["invoice"])
+		self.assertIn(reverse("vehicle_detail", args=[self.vehicle.pk]), payload["data"][0]["vehicle"])
+		self.assertIn(reverse("policy_detail", args=[incomplete_policy.pk]), payload["data"][0]["actions"])
+
+	def test_policy_detail_renders_missing_fields_and_vehicle_link(self):
+		user = get_user_model().objects.create_superuser(
+			username="policy-detail-user",
+			email="policy-detail@example.com",
+			password="pass",
+		)
+		policy = Policy.objects.create(
+			vehicle=self.vehicle,
+			invoice_id=9012,
+			invoice_number="IF-9012",
+			partner_name="DDOR osiguranje",
+			insurance_type="DDOR",
+			end_date=datetime.date(2026, 12, 31),
+		)
+		self.client.force_login(user)
+
+		response = self.client.get(reverse("policy_detail", args=[policy.pk]))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "Ova polisa je nepotpuna")
+		self.assertContains(response, "Broj polise")
+		self.assertContains(response, reverse("vehicle_detail", args=[self.vehicle.pk]))
+
+	def test_policy_sync_merge_does_not_overwrite_existing_values_with_empty_values(self):
+		existing_policy = Policy.objects.create(
+			vehicle=self.vehicle,
+			partner_pib=123456789,
+			partner_name="Osiguranje",
+			invoice_id=9004,
+			invoice_number="IF-9004",
+			issue_date=datetime.date(2026, 1, 1),
+			insurance_type="Kasko",
+			policy_number="POL-9004",
+			premium_amount=Decimal("12000.00"),
+			start_date=datetime.date(2026, 1, 1),
+			end_date=datetime.date(2027, 1, 1),
+			first_installment_amount=Decimal("3000.00"),
+			other_installments_amount=Decimal("3000.00"),
+			number_of_installments=4,
+		)
+
+		defaults = _merged_policy_defaults(
+			existing_policy,
+			{
+				"vehicle": None,
+				"partner_pib": None,
+				"partner_name": "",
+				"invoice_number": "IF-9004-A",
+				"issue_date": None,
+				"insurance_type": None,
+				"policy_number": "",
+				"premium_amount": None,
+				"start_date": None,
+				"end_date": None,
+				"first_installment_amount": None,
+				"other_installments_amount": None,
+				"number_of_installments": None,
+			},
+		)
+
+		self.assertEqual(defaults["vehicle"], self.vehicle)
+		self.assertEqual(defaults["partner_name"], "Osiguranje")
+		self.assertEqual(defaults["policy_number"], "POL-9004")
+		self.assertEqual(defaults["invoice_number"], "IF-9004-A")
+
+	@patch("fleet.tasks.fetch_policy_data")
+	def test_policy_celery_runner_returns_direct_sync_report(self, fetch_policy_mock):
+		fetch_policy_mock.return_value = "Policy sync: povuceno=1, kreirano=1, azurirano=0, nepotpuno=0, problemi=0"
+
+		result = _run_policy_data_import_with_report()
+
+		fetch_policy_mock.assert_called_once_with(last_24_hours=True)
+		self.assertEqual(
+			result,
+			"Fetch Policy Data: Policy sync: povuceno=1, kreirano=1, azurirano=0, nepotpuno=0, problemi=0",
+		)
+
+	@patch("fleet.tasks.fetch_policy_data")
+	def test_policy_celery_runner_raises_on_critical_sync_error(self, fetch_policy_mock):
+		fetch_policy_mock.return_value = "Critical error: server_db nije dostupan"
+
+		with self.assertRaises(RuntimeError):
+			_run_policy_data_import_with_report()

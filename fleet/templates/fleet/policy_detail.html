@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<style>
+  .policy-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 6px 11px;
+    font-weight: 700;
+  }
+  .policy-status-complete {
+    background: #e7f7ef;
+    color: #147044;
+  }
+  .policy-status-incomplete {
+    background: #fff3cd;
+    color: #7a5600;
+    border: 1px solid #ffe08a;
+  }
+  .policy-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .policy-kpi {
+    border: 1px solid #e7ecf2;
+    border-radius: 8px;
+    padding: 14px;
+    background: #fff;
+  }
+  .policy-kpi small {
+    display: block;
+    color: #6c757d;
+    margin-bottom: 5px;
+  }
+  .policy-kpi strong {
+    font-size: 18px;
+  }
+  .policy-detail-table td:first-child {
+    width: 38%;
+    color: #607d8b;
+    font-weight: 700;
+  }
+  .policy-action-card .btn {
+    min-height: 46px;
+    font-weight: 700;
+  }
+</style>
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>
+      {% if policy.vehicle %}{{ policy.vehicle }}{% else %}Nedostaje automobil{% endif %}
+      / {{ policy.partner_name|default:"Nedostaje partner" }}
+    </p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'policy_list' %}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-arrow-left"></i> Nazad na listu
+    </a>
+    <a href="{% url 'policy_update' policy.pk %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-pencil"></i> Izmeni
+    </a>
+  </div>
+</div>
+
+{% if missing_fields %}
+<div class="alert alert-warning shadow-sm">
+  <h4 class="alert-heading mb-2">Ova polisa je nepotpuna</h4>
+  <p class="mb-2">
+    Sistem je napravio polisu iz fakture, ali nema sve podatke koji su potrebni za kompletan prikaz i pracenje isteka.
+    Kliknite na <strong>Izmeni</strong> i dopunite podatke ispod.
+  </p>
+  <div class="d-flex flex-wrap gap-2">
+    {% for field in missing_fields %}
+      <span class="badge bg-warning text-dark border">{{ field }}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            {% if missing_fields %}
+              <span class="policy-status policy-status-incomplete"><i class="mdi mdi-alert"></i> Nepotpuna polisa</span>
+            {% else %}
+              <span class="policy-status policy-status-complete"><i class="mdi mdi-check-circle"></i> Kompletna polisa</span>
+            {% endif %}
+          </div>
+          {% if policy.vehicle %}
+            <a href="{% url 'vehicle_detail' policy.vehicle_id %}" class="btn btn-outline-primary">
+              <i class="mdi mdi-car"></i> Detalj automobila
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="policy-kpis">
+          <div class="policy-kpi">
+            <small>Broj polise</small>
+            <strong>{{ policy.policy_number|default:"Nedostaje" }}</strong>
+          </div>
+          <div class="policy-kpi">
+            <small>Tip osiguranja</small>
+            <strong>{{ policy.insurance_type|default:"Nedostaje" }}</strong>
+          </div>
+          <div class="policy-kpi">
+            <small>Vazi do</small>
+            <strong>{% if policy.end_date %}{{ policy.end_date|date:"d.m.Y" }}{% else %}Nedostaje{% endif %}</strong>
+          </div>
+          <div class="policy-kpi">
+            <small>Iznos premije</small>
+            <strong>{% if policy.premium_amount is not None %}{{ policy.premium_amount|floatformat:2|intcomma }}{% else %}Nedostaje{% endif %}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header">
+        <strong>Podaci o polisi</strong>
+      </div>
+      <div class="card-body">
+        <table class="table table-bordered table-hover align-middle mb-0 policy-detail-table">
+          <tbody>
+            <tr><td>Automobil</td><td>{% if policy.vehicle %}<a href="{% url 'vehicle_detail' policy.vehicle_id %}">{{ policy.vehicle }}</a>{% else %}<span class="text-danger">Nedostaje</span>{% endif %}</td></tr>
+            <tr><td>Partner</td><td>{{ policy.partner_name|default:"Nedostaje" }}</td></tr>
+            <tr><td>PIB partnera</td><td>{{ policy.partner_pib|default:"Nedostaje" }}</td></tr>
+            <tr><td>Tip osiguranja</td><td>{{ policy.insurance_type|default:"Nedostaje" }}</td></tr>
+            <tr><td>Broj polise</td><td>{{ policy.policy_number|default:"Nedostaje" }}</td></tr>
+            <tr><td>Obnavlja se</td><td>{% if policy.is_renewable %}Da{% else %}Ne{% endif %}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header">
+        <strong>Faktura i period</strong>
+      </div>
+      <div class="card-body">
+        <table class="table table-bordered table-hover align-middle mb-0 policy-detail-table">
+          <tbody>
+            <tr><td>ID fakture</td><td>{{ policy.invoice_id }}</td></tr>
+            <tr><td>Broj fakture</td><td>{{ policy.invoice_number|default:"Nedostaje" }}</td></tr>
+            <tr><td>Datum izdavanja</td><td>{% if policy.issue_date %}{{ policy.issue_date|date:"d.m.Y" }}{% else %}Nedostaje{% endif %}</td></tr>
+            <tr><td>Datum pocetka</td><td>{% if policy.start_date %}{{ policy.start_date|date:"d.m.Y" }}{% else %}Nedostaje{% endif %}</td></tr>
+            <tr><td>Datum zavrsetka</td><td>{% if policy.end_date %}{{ policy.end_date|date:"d.m.Y" }}{% else %}Nedostaje{% endif %}</td></tr>
+            <tr><td>Iznos premije</td><td>{% if policy.premium_amount is not None %}{{ policy.premium_amount|floatformat:2|intcomma }}{% else %}Nedostaje{% endif %}</td></tr>
+            <tr><td>Iznos prve rate</td><td>{% if policy.first_installment_amount is not None %}{{ policy.first_installment_amount|floatformat:2|intcomma }}{% else %}Nedostaje{% endif %}</td></tr>
+            <tr><td>Iznos ostalih rata</td><td>{% if policy.other_installments_amount is not None %}{{ policy.other_installments_amount|floatformat:2|intcomma }}{% else %}Nedostaje{% endif %}</td></tr>
+            <tr><td>Broj rata</td><td>{{ policy.number_of_installments|default:"Nedostaje" }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm policy-action-card">
+  <div class="card-body">
+    <div class="row g-2">
+      <div class="col-12 col-md-4">
+        <a href="{% url 'policy_update' policy.pk %}" class="btn btn-primary w-100">
+          <i class="mdi mdi-pencil"></i> Izmeni polisu
+        </a>
+      </div>
+      {% if policy.vehicle %}
+      <div class="col-12 col-md-4">
+        <a href="{% url 'vehicle_detail' policy.vehicle_id %}" class="btn btn-outline-primary w-100">
+          <i class="mdi mdi-car"></i> Otvori automobil
+        </a>
+      </div>
+      {% endif %}
+      <div class="col-12 col-md-4">
+        <a href="{% url 'policy_delete' policy.pk %}" class="btn btn-outline-danger w-100">
+          <i class="mdi mdi-delete"></i> Obrisi polisu
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -6,6 +6,7 @@ from django.db.models import OuterRef, Q, Subquery
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.urls import reverse
+from django.utils.dateparse import parse_date
 from django.utils import timezone
 from django.utils.html import escape
 
@@ -13,7 +14,11 @@ from hr.models import Employee
 
 from ..filters import KvarFilter, TrafficCardFilterForm, VehicleFilter
 from ..models import JobCode, Kvar, Lease, Policy, Requisition, ServiceTransaction, TrafficCard, Vehicle, VehicleTravelOrder
-from ..support.fuel import calculate_average_fuel_consumption, get_fuel_invoice_queryset, format_omv_receipt_number
+from ..support.fuel import (
+    calculate_average_fuel_consumption,
+    format_receipt_identifier,
+    get_fuel_invoice_queryset,
+)
 from .lease import LONG_TERM_LEASE_TYPES, LeaseListView
 from .vehicles import _vehicle_list_base_queryset
 from .vehicle_travel_orders import get_previous_vehicle_travel_order
@@ -290,6 +295,8 @@ def fuel_transactions_datatable_data(request):
     def row(invoice):
         vehicle_pk = invoice.get("vehicle_id")
         registration_number = invoice.get("registration_number") or "N/A"
+        raw_receipt_number = invoice.get("receipt_number") or ""
+        display_receipt_number = format_receipt_identifier(raw_receipt_number)
         vehicle_link = (
             f'<a href="{reverse("vehicle_detail", args=[vehicle_pk])}" class="btn btn-outline-primary btn-sm">'
             f'<i class="mdi mdi-car"></i> {escape(registration_number)}</a>'
@@ -299,13 +306,13 @@ def fuel_transactions_datatable_data(request):
         detail_query = urlencode(
             {
                 "supplier": invoice.get("supplier_name") or "",
-                "receipt": invoice.get("receipt_number") or "",
+                "receipt": raw_receipt_number,
                 "vehicle": vehicle_pk or "",
             }
         )
         receipt_link = (
             f'<a href="{reverse("fuel_transaction_detail")}?{detail_query}" class="btn btn-outline-primary btn-sm">'
-            f'<i class="mdi mdi-receipt"></i> {escape(invoice.get("receipt_number") or "")}</a>'
+            f'<i class="mdi mdi-receipt"></i> {escape(display_receipt_number)}</a>'
         )
         return {
             "registration_number": vehicle_link,
@@ -372,6 +379,32 @@ def service_transactions_datatable_data(request):
 @login_required
 def policies_datatable_data(request):
     qs = Policy.objects.select_related("vehicle")
+    vehicle_id = request.GET.get("vehicle")
+    partner = (request.GET.get("partner") or "").strip()
+    insurance_type = (request.GET.get("insurance_type") or "").strip()
+    completeness = request.GET.get("completeness")
+    renewable = request.GET.get("renewable")
+    end_from = parse_date(request.GET.get("end_from") or "")
+    end_to = parse_date(request.GET.get("end_to") or "")
+
+    if vehicle_id:
+        qs = qs.filter(vehicle_id=vehicle_id)
+    if partner:
+        qs = qs.filter(partner_name__icontains=partner)
+    if insurance_type:
+        qs = qs.filter(insurance_type=insurance_type)
+    if completeness == "incomplete":
+        qs = qs.filter(Policy.incomplete_q())
+    elif completeness == "complete":
+        qs = qs.exclude(Policy.incomplete_q())
+    if renewable == "1":
+        qs = qs.filter(is_renewable=True)
+    elif renewable == "0":
+        qs = qs.filter(is_renewable=False)
+    if end_from:
+        qs = qs.filter(end_date__gte=end_from)
+    if end_to:
+        qs = qs.filter(end_date__lte=end_to)
 
     def search(value):
         return (
@@ -385,14 +418,25 @@ def policies_datatable_data(request):
         )
 
     def row(policy):
+        incomplete_badge = ""
+        if not policy.is_complete():
+            incomplete_badge = '<small class="badge bg-warning text-dark d-block mt-1">Nepotpuna polisa</small>'
         partner = escape(policy.partner_name or "")
         if policy.partner_pib:
             partner += f'<small class="text-muted d-block">{policy.partner_pib}</small>'
         invoice = escape(str(policy.invoice_number or ""))
         if policy.invoice_id:
             invoice += f'<small class="text-muted d-block">{policy.invoice_id}</small>'
+        if policy.vehicle:
+            vehicle_html = (
+                f'<a href="{reverse("vehicle_detail", args=[policy.vehicle_id])}" class="btn btn-sm btn-outline-primary">'
+                f'<i class="mdi mdi-car"></i> {escape(str(policy.vehicle))}</a>'
+            )
+        else:
+            vehicle_html = '<span class="text-danger">Nedostaje vozilo</span>'
         return {
-            "vehicle": escape(str(policy.vehicle)),
+            "DT_RowClass": "table-warning" if incomplete_badge else "",
+            "vehicle": f"{vehicle_html}{incomplete_badge}",
             "partner": partner,
             "invoice": invoice,
             "issue_date": _date(policy.issue_date),
@@ -403,6 +447,8 @@ def policies_datatable_data(request):
             "end_date": _date(policy.end_date),
             "actions": (
                 '<span class="fleet-list-actions">'
+                f'<a href="{reverse("policy_detail", args=[policy.pk])}" class="btn btn-outline-info btn-sm" title="Detalj">'
+                '<i class="mdi mdi-eye"></i> Detalj</a>'
                 f'<a href="{reverse("policy_update", args=[policy.pk])}" class="btn btn-outline-primary btn-sm" title="Izmeni">'
                 '<i class="mdi mdi-pencil"></i> Izmeni</a>'
                 f'<a href="{reverse("policy_delete", args=[policy.pk])}" class="btn btn-outline-danger btn-sm" title="Obrisi">'
@@ -543,7 +589,34 @@ def kvar_datatable_data(request):
 
 @login_required
 def requisitions_datatable_data(request):
-    qs = Requisition.objects.select_related("vehicle")
+    qs = Requisition.objects.select_related("vehicle", "popravka_kategorija")
+    vehicle_id = request.GET.get("vehicle")
+    year = request.GET.get("year")
+    document = (request.GET.get("document") or "").strip()
+    article = (request.GET.get("article") or "").strip()
+    category_id = request.GET.get("category")
+    vehicle_status = request.GET.get("vehicle_status")
+    date_from = parse_date(request.GET.get("date_from") or "")
+    date_to = parse_date(request.GET.get("date_to") or "")
+
+    if vehicle_id and vehicle_id.isdigit():
+        qs = qs.filter(vehicle_id=vehicle_id)
+    if year and year.isdigit():
+        qs = qs.filter(god=int(year))
+    if document:
+        qs = qs.filter(br_dok__icontains=document)
+    if article:
+        qs = qs.filter(Q(naz_art__icontains=article) | Q(sif_art__icontains=article))
+    if category_id and category_id.isdigit():
+        qs = qs.filter(popravka_kategorija_id=category_id)
+    if vehicle_status == "missing":
+        qs = qs.filter(vehicle__isnull=True)
+    elif vehicle_status == "linked":
+        qs = qs.filter(vehicle__isnull=False)
+    if date_from:
+        qs = qs.filter(datum_trebovanja__gte=date_from)
+    if date_to:
+        qs = qs.filter(datum_trebovanja__lte=date_to)
 
     def search(value):
         return (
@@ -555,8 +628,15 @@ def requisitions_datatable_data(request):
         )
 
     def row(requisition):
+        if requisition.vehicle_id:
+            vehicle = (
+                f'<a href="{reverse("vehicle_detail", args=[requisition.vehicle_id])}" class="btn btn-outline-primary btn-sm">'
+                f'<i class="mdi mdi-car"></i> {escape(str(requisition.vehicle))}</a>'
+            )
+        else:
+            vehicle = '<span class="text-danger">Nedostaje vozilo</span>'
         return {
-            "vehicle": escape(str(requisition.vehicle) if requisition.vehicle_id else ""),
+            "vehicle": vehicle,
             "year": requisition.god,
             "document": (
                 f'<a href="{reverse("requisition_detail", kwargs={"god": requisition.god, "br_dok": requisition.br_dok})}" '
@@ -565,6 +645,7 @@ def requisitions_datatable_data(request):
             "date": _date(requisition.datum_trebovanja),
             "article": escape(requisition.naz_art or ""),
             "quantity": _money(requisition.kol),
+            "category": escape(str(requisition.popravka_kategorija or "")),
             "actions": (
                 f'<a href="{reverse("requisition_update", args=[requisition.pk])}" class="btn btn-outline-primary btn-sm">'
                 '<i class="mdi mdi-pencil"></i> Izmeni</a>'
@@ -574,7 +655,15 @@ def requisitions_datatable_data(request):
     return _datatable_response(
         request,
         qs,
-        {"0": "vehicle__brand", "1": "god", "2": "br_dok", "3": "datum_trebovanja", "4": "naz_art", "5": "kol"},
+        {
+            "0": "vehicle__brand",
+            "1": "god",
+            "2": "br_dok",
+            "3": "datum_trebovanja",
+            "4": "naz_art",
+            "5": "kol",
+            "6": "popravka_kategorija__name",
+        },
         row,
         search,
         default_order=("-datum_trebovanja", "-id"),

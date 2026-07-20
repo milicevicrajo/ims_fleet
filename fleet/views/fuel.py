@@ -13,7 +13,7 @@ from core.mixins import RolePermissionRequiredMixin
 from ..filters import FuelFilterForm, FuelTransactionFilterForm
 from ..forms.fuel import FuelConsumptionForm
 from ..models import FuelConsumption, TrafficCard
-from ..support.fuel import date_range_for_datetime_field, get_fuel_invoice_lines
+from ..support.fuel import date_range_for_datetime_field, format_receipt_identifier, get_fuel_invoice_lines
 
 
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):
@@ -73,6 +73,7 @@ class FuelTransactionDetailView(LoginRequiredMixin, TemplateView):
         receipt_number = self.request.GET.get("receipt", "")
         vehicle_id = self.request.GET.get("vehicle") or None
         rows = get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=vehicle_id)
+        display_receipt_number = format_receipt_identifier(receipt_number)
         vehicle = rows[0]["vehicle"] if rows else None
         back_params = {"vehicle": vehicle_id} if vehicle_id else {}
         back_url = reverse_lazy("fuel_transactions_list")
@@ -80,9 +81,10 @@ class FuelTransactionDetailView(LoginRequiredMixin, TemplateView):
             back_url = f"{back_url}?{urlencode(back_params)}"
         context.update(
             {
-                "title": f"Račun {receipt_number}",
+                "title": f"Račun {display_receipt_number}",
                 "supplier": supplier,
                 "receipt_number": receipt_number,
+                "display_receipt_number": display_receipt_number,
                 "vehicle": vehicle,
                 "rows": rows,
                 "back_url": back_url,

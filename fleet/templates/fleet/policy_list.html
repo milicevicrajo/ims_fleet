@@ -9,6 +9,12 @@
     <p>Polise osiguranja po vozilu, partneru, periodu vazenja i iznosu premije.</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
+    <form method="post" action="{% url 'fetch_policies' %}" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-warning btn-sm">
+        <i class="mdi mdi-sync"></i> Rucni sync
+      </button>
+    </form>
     <a href="{% url 'policy_create' %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-plus"></i> Nova polisa
     </a>
@@ -24,6 +30,84 @@
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="fleet-list-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-6 col-xl-3">
+              <label class="form-label mb-1" for="filter-vehicle">Automobil</label>
+              <select id="filter-vehicle" name="vehicle" class="form-select form-control select2-method">
+                <option value="">Svi automobili</option>
+                {% for vehicle in vehicles %}
+                  <option value="{{ vehicle.pk }}" {% if selected_vehicle == vehicle.pk|stringformat:"s" %}selected{% endif %}>{{ vehicle }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6 col-xl-2">
+              <label class="form-label mb-1" for="filter-partner">Partner</label>
+              <input id="filter-partner" name="partner" value="{{ selected_partner }}" class="form-control" placeholder="Naziv partnera">
+            </div>
+            <div class="col-12 col-md-6 col-xl-2">
+              <label class="form-label mb-1" for="filter-insurance-type">Tip osiguranja</label>
+              <select id="filter-insurance-type" name="insurance_type" class="form-select form-control select2-method">
+                <option value="">Svi tipovi</option>
+                {% for insurance_type in insurance_types %}
+                  <option value="{{ insurance_type }}" {% if selected_insurance_type == insurance_type %}selected{% endif %}>{{ insurance_type }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6 col-xl-2">
+              <label class="form-label mb-1" for="filter-completeness">Status podataka</label>
+              <select id="filter-completeness" name="completeness" class="form-select form-control select2-method">
+                <option value="">Sve polise</option>
+                <option value="complete" {% if selected_completeness == "complete" %}selected{% endif %}>Kompletne</option>
+                <option value="incomplete" {% if selected_completeness == "incomplete" %}selected{% endif %}>Nepotpune</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6 col-xl-1">
+              <label class="form-label mb-1" for="filter-renewable">Obnova</label>
+              <select id="filter-renewable" name="renewable" class="form-select form-control select2-method">
+                <option value="">Sve</option>
+                <option value="1" {% if selected_renewable == "1" %}selected{% endif %}>Da</option>
+                <option value="0" {% if selected_renewable == "0" %}selected{% endif %}>Ne</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6 col-xl-2 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Primeni filtere">
+                <i class="mdi mdi-filter"></i> Filter
+              </button>
+              <a href="{% url 'policy_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+          <div class="row g-2 align-items-end mt-1">
+            <div class="col-6 col-md-3 col-xl-2">
+              <label class="form-label mb-1" for="filter-end-from">Vazi do od</label>
+              <input id="filter-end-from" type="date" name="end_from" value="{{ selected_end_from }}" class="form-control">
+            </div>
+            <div class="col-6 col-md-3 col-xl-2">
+              <label class="form-label mb-1" for="filter-end-to">Vazi do</label>
+              <input id="filter-end-to" type="date" name="end_to" value="{{ selected_end_to }}" class="form-control">
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body border-bottom py-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-md-6 col-lg-4">
+            <label class="form-label mb-1" for="policy-quick-search">Brza pretraga</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+              <input id="policy-quick-search" type="text" class="form-control" placeholder="Automobil, partner, faktura, broj polise">
+              <button id="policy-clear-search" type="button" class="btn btn-outline-secondary" title="Ocisti pretragu">
+                <i class="mdi mdi-close"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card-body">
         <div class="table-responsive">
           <table id="PolicyTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
@@ -68,12 +152,15 @@
     if (window.jQuery && jQuery.fn.DataTable) {
       var table = jQuery('#PolicyTable');
       if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
-        table.DataTable({
+        var dataTable = table.DataTable({
           serverSide: true,
           processing: true,
+          searching: true,
           pageLength: 50,
           lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
           order: [[8, 'desc']],
+          dom: "<'row'<'col-sm-12 col-md-6'l>>rt<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+          scrollX: true,
           ajax: {
             url: "{% url 'policy_data' %}" + window.location.search,
             type: "GET"
@@ -100,6 +187,24 @@
             zeroRecords: 'Nema rezultata',
             paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
           }
+        });
+
+        var quickSearch = jQuery('#policy-quick-search');
+        var clearSearch = jQuery('#policy-clear-search');
+        var searchTimer = null;
+
+        quickSearch.on('input', function () {
+          var value = this.value;
+          window.clearTimeout(searchTimer);
+          searchTimer = window.setTimeout(function () {
+            dataTable.search(value).draw();
+          }, 200);
+        });
+
+        clearSearch.on('click', function () {
+          quickSearch.val('');
+          dataTable.search('').draw();
+          quickSearch.trigger('focus');
         });
       }
     }

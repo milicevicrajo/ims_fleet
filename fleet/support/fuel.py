@@ -1,4 +1,5 @@
 from datetime import date, datetime, time as datetime_time
+from decimal import Decimal
 
 from django.db.models import Case, CharField, Count, F, Max, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Concat
@@ -15,7 +16,6 @@ FUEL_PRODUCT_KEYWORDS = (
     "maxxmotion",
     "maxxm",
     "bmb",
-    "adblue",
     "lpg",
     "autogas",
     "cng",
@@ -54,9 +54,27 @@ def filter_nis_fuel_queryset(queryset):
     return queryset.filter(_fuel_product_filter("naziv_proizvoda"))
 
 
+def format_receipt_identifier(value):
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if not text:
+        return ""
+    text = text.replace(",", "")
+    if text.isdigit() and len(text) > 1 and text.startswith("0"):
+        return text
+    try:
+        decimal_value = Decimal(text)
+    except Exception:
+        return text
+    if decimal_value == decimal_value.to_integral_value():
+        return str(decimal_value.to_integral_value())
+    return text
+
+
 def format_omv_receipt_number(invoice_no, voucher):
-    invoice_no = str(invoice_no or "").strip()
-    voucher = str(voucher or "").strip()
+    invoice_no = format_receipt_identifier(invoice_no)
+    voucher = format_receipt_identifier(voucher)
     if invoice_no and voucher and invoice_no != voucher:
         return f"{invoice_no} / {voucher}"
     return invoice_no or voucher
@@ -355,7 +373,7 @@ def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
                 "supplier": "NIS",
                 "vehicle": row.vehicle,
                 "date": row.datum_transakcije,
-                "receipt_number": row.broj_racuna,
+                "receipt_number": format_receipt_identifier(row.broj_racuna),
                 "product": row.naziv_proizvoda,
                 "quantity": row.kolicina,
                 "price_per_liter": row.cena,
@@ -414,7 +432,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
     rows = [
         {
             "date": row["transaction_date"],
-            "receipt_number": row["receipt_number"],
+            "receipt_number": format_receipt_identifier(row["receipt_number"]),
             "amount": row["quantity"],
             "price_per_liter": row["unit_price"],
             "cost_neto": row["amount"],
@@ -427,7 +445,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
     rows.extend(
         {
             "date": row["datum_transakcije"],
-            "receipt_number": row["broj_racuna"],
+            "receipt_number": format_receipt_identifier(row["broj_racuna"]),
             "amount": row["kolicina"],
             "price_per_liter": row["cena"],
             "cost_neto": row["total"],

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load humanize %}
+{% load form_filters %}
 
 {% block content %}
 {% include "fleet/includes/list_styles.html" %}
@@ -42,7 +43,7 @@
           {% for row in rows %}
           <tr>
             <td>{{ row.date|date:"d.m.Y H:i:s" }}</td>
-            <td>{{ row.receipt_number }}</td>
+            <td>{{ row.receipt_number|receipt_number }}</td>
             <td>{{ row.product|default:"" }}</td>
             <td class="text-end">{{ row.quantity|default_if_none:0|floatformat:2|intcomma }}</td>
             <td class="text-end">{{ row.price_per_liter|default_if_none:0|floatformat:2|intcomma }}</td>

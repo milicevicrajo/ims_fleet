@@ -1,15 +1,16 @@
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.db import connections, transaction
+from django.db.models import Q
 from django.utils.dateparse import parse_datetime
 
 from core.models import OrganizationalUnit
+from nabavka.models import ProcurementInvoice
 
 from fleet.models import (
     DraftInsurance,
-    DraftPolicy,
     Insurance,
     JobCode,
     Policy,
@@ -23,223 +24,241 @@ INS_VIEW = "dbo.fleet_potrazivanje_ddor"
 DB_ALIAS = "server_db"
 KEY_FIELDS = ("god", "sif_vrs", "br_naloga", "stavka", "knt")
 
+POLICY_DATE_FIELDS = {"issue_date", "start_date", "end_date"}
+POLICY_DECIMAL_FIELDS = {"premium_amount", "first_installment_amount", "other_installments_amount"}
+POLICY_INTEGER_FIELDS = {"partner_pib", "invoice_id", "number_of_installments"}
+POLICY_REQUIRED_FIELDS = {
+    "vehicle",
+    "partner_pib",
+    "partner_name",
+    "invoice_number",
+    "issue_date",
+    "insurance_type",
+    "policy_number",
+    "premium_amount",
+    "start_date",
+    "end_date",
+    "first_installment_amount",
+    "other_installments_amount",
+    "number_of_installments",
+}
+POLICY_INVOICE_SUPPLIER_Q = Q(supplier_name__icontains="osiguranje") | Q(supplier_name__icontains="ddor")
+
+
+def _normalize_policy_value(model_field, value, invoice_id, stats):
+    if model_field in POLICY_DATE_FIELDS:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            if not value.strip():
+                return None
+            try:
+                return datetime.strptime(value.strip()[:10], "%Y-%m-%d").date()
+            except ValueError:
+                stats["normalization_issues"] += 1
+                logger.debug(
+                    "Policy sync invalid date: field=%s value=%r invoice=%s",
+                    model_field,
+                    value,
+                    invoice_id,
+                )
+                return None
+        stats["normalization_issues"] += 1
+        logger.debug("Policy sync unexpected date type: field=%s type=%s invoice=%s", model_field, type(value), invoice_id)
+        return None
+
+    if model_field in POLICY_DECIMAL_FIELDS:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        try:
+            return Decimal(str(value).strip())
+        except Exception:
+            stats["normalization_issues"] += 1
+            logger.debug(
+                "Policy sync invalid decimal: field=%s value=%r invoice=%s",
+                model_field,
+                value,
+                invoice_id,
+            )
+            return None
+
+    if model_field in POLICY_INTEGER_FIELDS:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        try:
+            return int(Decimal(str(value).strip()))
+        except Exception:
+            stats["normalization_issues"] += 1
+            logger.debug(
+                "Policy sync invalid integer: field=%s value=%r invoice=%s",
+                model_field,
+                value,
+                invoice_id,
+            )
+            return None
+
+    if isinstance(value, str):
+        value = value.strip()
+    return value if value != "" else None
+
+
+def _policy_data_is_complete(policy_data):
+    return all(policy_data.get(field) is not None and policy_data.get(field) != "" for field in POLICY_REQUIRED_FIELDS)
+
+
+def _policy_insurance_type_from_supplier(supplier_name):
+    if not supplier_name:
+        return None
+    supplier_name_lower = supplier_name.lower()
+    if "ddor" in supplier_name_lower:
+        return "DDOR"
+    if "osiguranje" in supplier_name_lower:
+        return "Osiguranje"
+    return None
+
+
+def _policy_invoice_queryset(last_24_hours=True, days=None):
+    queryset = (
+        ProcurementInvoice.objects.select_related("vehicle")
+        .filter(is_garage=True, vehicle__isnull=False)
+        .filter(POLICY_INVOICE_SUPPLIER_Q)
+        .order_by("id")
+    )
+
+    if days is not None:
+        queryset = queryset.filter(invoice_date__gt=date.today() - timedelta(days=days))
+        logger.debug("Policy sync invoice filter: last %s days", days)
+    elif last_24_hours:
+        queryset = queryset.filter(invoice_date__gt=date.today() - timedelta(days=1))
+        logger.debug("Policy sync invoice filter: last 24 hours")
+
+    return queryset
+
+
+def _policy_data_from_invoice(invoice, stats):
+    invoice_id = invoice.pk
+    invoice_date = _normalize_policy_value("issue_date", invoice.invoice_date, invoice_id, stats)
+    end_date = invoice_date + timedelta(days=365) if invoice_date else None
+    amount = _normalize_policy_value("premium_amount", invoice.amount, invoice_id, stats)
+
+    return {
+        "vehicle": invoice.vehicle,
+        "partner_pib": None,
+        "partner_name": _normalize_policy_value("partner_name", invoice.supplier_name, invoice_id, stats),
+        "invoice_id": _normalize_policy_value("invoice_id", invoice_id, invoice_id, stats),
+        "invoice_number": _normalize_policy_value("invoice_number", invoice.invoice_number, invoice_id, stats),
+        "issue_date": invoice_date,
+        "insurance_type": _policy_insurance_type_from_supplier(invoice.supplier_name),
+        "policy_number": None,
+        "premium_amount": amount,
+        "start_date": invoice_date,
+        "end_date": end_date,
+        "first_installment_amount": amount,
+        "other_installments_amount": Decimal("0.00"),
+        "number_of_installments": 1,
+        "is_renewable": True,
+    }
+
+
+def _merged_policy_defaults(existing_policy, incoming_data):
+    if existing_policy is None:
+        return incoming_data
+
+    merged = {}
+    for field, incoming_value in incoming_data.items():
+        if incoming_value is not None and incoming_value != "":
+            merged[field] = incoming_value
+        else:
+            merged[field] = getattr(existing_policy, field)
+    return merged
+
 
 def fetch_policy_data(last_24_hours=True, days=None):
     try:
         logger.debug("Policy sync start")
 
-        base_query = """
-            SELECT PartnerPIB, PartnerIme, ID, BrojFakture, issuedate,
-                   VrstaOsiguranja, BrojPolise, IznosPremije, RegistraskaOznaka,
-                   PeriodOd, PeriodDo, IznosPrveRate, IznosOstalihRata, BrojRata
-            FROM dbo.fleet_polise
-        """
-        params = []
-        where_clauses = []
+        stats = {
+            "created": 0,
+            "updated": 0,
+            "incomplete": 0,
+            "missing_invoice_id": 0,
+            "normalization_issues": 0,
+            "errors": 0,
+        }
+        invoices = list(_policy_invoice_queryset(last_24_hours=last_24_hours, days=days))
 
-        if days is not None:
-            where_clauses.append("issuedate > DATEADD(day, -%s, GETDATE())")
-            params.append(days)
-            logger.debug("Policy sync filter: last %s days", days)
-        elif last_24_hours:
-            where_clauses.append("issuedate > DATEADD(day, -1, GETDATE())")
-            logger.debug("Policy sync filter: last 24 hours")
-
-        query = base_query
-        if where_clauses:
-            query += " WHERE " + " AND ".join(where_clauses)
-
-        with connections["server_db"].cursor() as cursor:
-            logger.debug("Policy sync executing SQL query")
-            cursor.execute(query, params)
-            columns = [col[0] for col in cursor.description]
-            rows = cursor.fetchall()
-
-            logger.debug("Policy sync fetched rows=%s", len(rows))
-            if not rows:
-                result = {
-                    "fetched": 0,
-                    "created_policies": 0,
-                    "created_drafts": 0,
-                    "skipped_existing": 0,
-                    "normalization_issues": 0,
-                    "errors": 0,
-                }
-                logger.info("Policy sync summary: %s", result)
-                return "Policy sync: povuceno=0, polise=0, draft=0, preskoceno=0, problemi=0"
-
-        new_policies = 0
-        new_drafts = 0
-        skipped_existing = 0
-        normalization_issues = 0
-        errors = 0
+        logger.debug("Policy sync fetched invoices=%s", len(invoices))
+        if not invoices:
+            result = {
+                "fetched": 0,
+                "created": 0,
+                "updated": 0,
+                "incomplete": 0,
+                "missing_invoice_id": 0,
+                "normalization_issues": 0,
+                "errors": 0,
+            }
+            logger.info("Policy sync summary: %s", result)
+            return "Policy sync: povuceno=0, kreirano=0, azurirano=0, nepotpuno=0, problemi=0"
 
         with transaction.atomic():
-            for row in rows:
-                row_data = dict(zip(columns, row))
-                invoice_id_from_db = row_data["ID"]
+            for invoice in invoices:
+                invoice_id_from_db = invoice.pk
 
                 try:
-                    exists = (
-                        Policy.objects.filter(invoice_id=invoice_id_from_db).exists()
-                        or DraftPolicy.objects.filter(invoice_id=invoice_id_from_db).exists()
-                    )
-                    if exists:
-                        skipped_existing += 1
-                        logger.debug("Skipping existing invoice %s", invoice_id_from_db)
+                    policy_data_to_save = _policy_data_from_invoice(invoice, stats)
+                    invoice_id = policy_data_to_save.pop("invoice_id")
+                    if invoice_id is None:
+                        stats["missing_invoice_id"] += 1
+                        logger.debug("Policy sync invoice skipped without invoice ID: invoice=%s", invoice_id_from_db)
                         continue
 
-                    vehicle = None
-                    if reg_plate := row_data.get("RegistraskaOznaka"):
-                        vehicle = Vehicle.objects.filter(registration_number=reg_plate).first()
-
-                    model_field_map = {
-                        "PartnerPIB": "partner_pib",
-                        "PartnerIme": "partner_name",
-                        "ID": "invoice_id",
-                        "BrojFakture": "invoice_number",
-                        "issuedate": "issue_date",
-                        "VrstaOsiguranja": "insurance_type",
-                        "BrojPolise": "policy_number",
-                        "IznosPremije": "premium_amount",
-                        "PeriodOd": "start_date",
-                        "PeriodDo": "end_date",
-                        "IznosPrveRate": "first_installment_amount",
-                        "IznosOstalihRata": "other_installments_amount",
-                        "BrojRata": "number_of_installments",
-                    }
-
-                    policy_data_to_save = {}
-                    for sql_col, model_field in model_field_map.items():
-                        value = row_data.get(sql_col)
-
-                        if model_field in ["issue_date", "start_date", "end_date"]:
-                            if value is None:
-                                value = None
-                            elif isinstance(value, str):
-                                if not value.strip():
-                                    value = None
-                                else:
-                                    try:
-                                        value = datetime.strptime(value, "%Y-%m-%d").date()
-                                    except ValueError:
-                                        normalization_issues += 1
-                                        logger.debug(
-                                            "Invalid date format for %s: %r. Setting to None for invoice %s.",
-                                            model_field,
-                                            value,
-                                            invoice_id_from_db,
-                                        )
-                                        value = None
-                            elif not isinstance(value, date):
-                                normalization_issues += 1
-                                logger.debug(
-                                    "Unexpected date type for %s: %s. Setting to None for invoice %s.",
-                                    model_field,
-                                    type(value),
-                                    invoice_id_from_db,
-                                )
-                                value = None
-
-                        elif model_field in ["premium_amount", "first_installment_amount", "other_installments_amount"]:
-                            if value is None:
-                                value = None
-                            elif isinstance(value, str):
-                                if not value.strip():
-                                    value = None
-                                else:
-                                    try:
-                                        value = Decimal(value)
-                                    except Exception:
-                                        normalization_issues += 1
-                                        logger.debug(
-                                            "Invalid decimal format for %s: %r. Setting to None for invoice %s.",
-                                            model_field,
-                                            value,
-                                            invoice_id_from_db,
-                                        )
-                                        value = None
-                            elif not isinstance(value, (Decimal, int, float)):
-                                normalization_issues += 1
-                                logger.debug(
-                                    "Unexpected numeric type for %s: %s. Setting to None for invoice %s.",
-                                    model_field,
-                                    type(value),
-                                    invoice_id_from_db,
-                                )
-                                value = None
-                            else:
-                                try:
-                                    value = Decimal(value)
-                                except Exception:
-                                    normalization_issues += 1
-                                    logger.debug(
-                                        "Could not convert %s %r to Decimal. Setting to None for invoice %s.",
-                                        model_field,
-                                        value,
-                                        invoice_id_from_db,
-                                    )
-                                    value = None
-
-                        elif model_field in ["partner_pib", "invoice_id", "number_of_installments"]:
-                            if value is None:
-                                value = None
-                            elif isinstance(value, str):
-                                if not value.strip():
-                                    value = None
-                                else:
-                                    try:
-                                        value = int(value)
-                                    except ValueError:
-                                        normalization_issues += 1
-                                        logger.debug(
-                                            "Invalid integer format for %s: %r. Setting to None for invoice %s.",
-                                            model_field,
-                                            value,
-                                            invoice_id_from_db,
-                                        )
-                                        value = None
-                            elif not isinstance(value, int):
-                                normalization_issues += 1
-                                logger.debug(
-                                    "Unexpected integer type for %s: %s. Setting to None for invoice %s.",
-                                    model_field,
-                                    type(value),
-                                    invoice_id_from_db,
-                                )
-                                value = None
-
-                        policy_data_to_save[model_field] = value
-
-                    policy_data_to_save["vehicle"] = vehicle
-
-                    temp_draft_policy = DraftPolicy(**policy_data_to_save)
-                    if temp_draft_policy.is_complete():
-                        Policy.objects.create(**policy_data_to_save)
-                        new_policies += 1
-                        logger.debug("Created complete Policy for invoice %s.", invoice_id_from_db)
+                    existing_policy = Policy.objects.filter(invoice_id=invoice_id).first()
+                    defaults = _merged_policy_defaults(existing_policy, policy_data_to_save)
+                    _policy, created = Policy.objects.update_or_create(
+                        invoice_id=invoice_id,
+                        defaults=defaults,
+                    )
+                    if created:
+                        stats["created"] += 1
+                        logger.debug("Policy sync created invoice %s.", invoice_id)
                     else:
-                        DraftPolicy.objects.create(**policy_data_to_save)
-                        new_drafts += 1
-                        logger.debug("Created DraftPolicy for invoice %s (incomplete).", invoice_id_from_db)
+                        stats["updated"] += 1
+                        logger.debug("Policy sync updated invoice %s.", invoice_id)
+
+                    policy_check_data = defaults.copy()
+                    policy_check_data["invoice_id"] = invoice_id
+                    if not _policy_data_is_complete(policy_check_data):
+                        stats["incomplete"] += 1
+                        logger.debug("Policy sync incomplete Policy invoice %s.", invoice_id)
 
                 except Exception as exc:
-                    errors += 1
-                    logger.debug("Error processing invoice %s: %s", invoice_id_from_db, exc, exc_info=True)
+                    stats["errors"] += 1
+                    logger.debug("Policy sync error processing invoice %s: %s", invoice_id_from_db, exc, exc_info=True)
 
         result = {
-            "fetched": len(rows),
-            "created_policies": new_policies,
-            "created_drafts": new_drafts,
-            "skipped_existing": skipped_existing,
-            "normalization_issues": normalization_issues,
-            "errors": errors,
+            "fetched": len(invoices),
+            "created": stats["created"],
+            "updated": stats["updated"],
+            "incomplete": stats["incomplete"],
+            "missing_invoice_id": stats["missing_invoice_id"],
+            "normalization_issues": stats["normalization_issues"],
+            "errors": stats["errors"],
         }
         logger.info("Policy sync summary: %s", result)
         msg = (
             "Policy sync: "
-            f"povuceno={len(rows)}, polise={new_policies}, draft={new_drafts}, "
-            f"preskoceno={skipped_existing}, problemi={normalization_issues + errors}"
+            f"povuceno={len(invoices)}, kreirano={stats['created']}, azurirano={stats['updated']}, "
+            f"nepotpuno={stats['incomplete']}, bez_id_fakture={stats['missing_invoice_id']}, "
+            f"problemi={stats['normalization_issues'] + stats['errors']}"
         )
         return msg
 

@@ -285,42 +285,13 @@ class Policy(models.Model):
         Vehicle,
         on_delete=models.CASCADE,
         related_name='policies',
-        verbose_name=_("Vozilo")
-    )
-    partner_pib = models.IntegerField(verbose_name=_("PIB partnera"))
-    partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
-    invoice_id = models.IntegerField(verbose_name=_("ID fakture"), unique=True)
-    invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"))
-    issue_date = models.DateField(verbose_name=_("Datum izdavanja"))
-    insurance_type = models.CharField(max_length=50, verbose_name=_("Tip osiguranja"))
-    policy_number = models.CharField(max_length=50, verbose_name=_("Broj polise"))
-    premium_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos premije"))
-    start_date = models.DateField(verbose_name=_("Datum početka"))
-    end_date = models.DateField(verbose_name=_("Datum završetka"))
-    first_installment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos prve rate"))
-    other_installments_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos ostalih rata"))
-    number_of_installments = models.IntegerField(verbose_name=_("Broj rata"))
-    is_renewable = models.BooleanField(
-        default=True,
-        choices=YES_NO_CHOICES,
-        verbose_name=_("Da li se polisa obnavlja?")
-    )
-
-    def __str__(self):
-        return f"Polisa {self.policy_number} – {self.partner_name}"
-
-
-class DraftPolicy(models.Model):
-    vehicle = models.ForeignKey(
-        Vehicle,
-        on_delete=models.SET_NULL,
-        related_name='draft_policies',
         verbose_name=_("Vozilo"),
-        null=True, blank=True
+        null=True,
+        blank=True,
     )
     partner_pib = models.IntegerField(verbose_name=_("PIB partnera"), null=True, blank=True)
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True, blank=True)
-    invoice_id = models.IntegerField(verbose_name=_("ID fakture"), unique=True, null=True, blank=True)
+    invoice_id = models.IntegerField(verbose_name=_("ID fakture"), unique=True)
     invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True, blank=True)
     issue_date = models.DateField(verbose_name=_("Datum izdavanja"), null=True, blank=True)
     insurance_type = models.CharField(max_length=50, verbose_name=_("Tip osiguranja"), null=True, blank=True)
@@ -331,26 +302,57 @@ class DraftPolicy(models.Model):
     first_installment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos prve rate"), null=True, blank=True)
     other_installments_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos ostalih rata"), null=True, blank=True)
     number_of_installments = models.IntegerField(verbose_name=_("Broj rata"), null=True, blank=True)
+    is_renewable = models.BooleanField(
+        default=True,
+        choices=YES_NO_CHOICES,
+        verbose_name=_("Da li se polisa obnavlja?")
+    )
+
+    def __str__(self):
+        return f"Polisa {self.policy_number} – {self.partner_name}"
+
+    @classmethod
+    def incomplete_q(cls):
+        return (
+            models.Q(vehicle__isnull=True)
+            | models.Q(partner_pib__isnull=True)
+            | models.Q(partner_name__isnull=True)
+            | models.Q(partner_name="")
+            | models.Q(invoice_number__isnull=True)
+            | models.Q(invoice_number="")
+            | models.Q(issue_date__isnull=True)
+            | models.Q(insurance_type__isnull=True)
+            | models.Q(insurance_type="")
+            | models.Q(policy_number__isnull=True)
+            | models.Q(policy_number="")
+            | models.Q(premium_amount__isnull=True)
+            | models.Q(start_date__isnull=True)
+            | models.Q(end_date__isnull=True)
+            | models.Q(first_installment_amount__isnull=True)
+            | models.Q(other_installments_amount__isnull=True)
+            | models.Q(number_of_installments__isnull=True)
+        )
 
     def is_complete(self):
         return all(
-            getattr(self, field_name)
-            for field_name in [
-                'partner_pib',
-                'partner_name',
-                'invoice_id',
-                'invoice_number',
-                'issue_date',
-                'insurance_type',
-                'policy_number',
-                'premium_amount',
-                'start_date',
-                'end_date',
-                'first_installment_amount',
-                'other_installments_amount',
-                'number_of_installments'
+            value is not None and value != ""
+            for value in [
+                self.vehicle_id,
+                self.partner_pib,
+                self.partner_name,
+                self.invoice_number,
+                self.issue_date,
+                self.insurance_type,
+                self.policy_number,
+                self.premium_amount,
+                self.start_date,
+                self.end_date,
+                self.first_installment_amount,
+                self.other_installments_amount,
+                self.number_of_installments,
             ]
         )
+
 
 class FuelConsumption(models.Model):
     vehicle = models.ForeignKey(

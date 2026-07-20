@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ title }}</h2>
+<div class="alert alert-warning">
+  Ovo su polise koje su vec upisane u glavnu tabelu polisa, ali im nedostaje jedan ili vise podataka.
+  Otvorite <strong>Dopuni</strong>, unesite podatke koji fale i sacuvajte polisu.
+</div>
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="PolicyFixingTable" class="display compact" data-reports-dt="true">
+        <thead>
+          <tr>
+            <th>Vozilo</th>
+            <th>Partner-pib</th>
+            <th>Partner</th>
+            <th>ID ugovora</th>
+            <th>Broj ugovora</th>
+            <th>Datum izdavanja</th>
+            <th>Tip osiguranja</th>
+            <th>Broj polise</th>
+            <th>Iznos premije</th>
+            <th>Datum pocetka</th>
+            <th>Datum zavrsetka</th>
+            <th>Iznos prve rate</th>
+            <th>Iznos ostalih rata</th>
+            <th>Broj rata</th>
+            <th>Akcije</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for policy in policies %}
+            <tr>
+              <td>{{ policy.vehicle|default:"Nedostaje" }}</td>
+              <td>{{ policy.partner_pib|default:"Nedostaje" }}</td>
+              <td>{{ policy.partner_name|default:"Nedostaje" }}</td>
+              <td>{{ policy.invoice_id|default:"Nedostaje" }}</td>
+              <td>{{ policy.invoice_number|default:"Nedostaje" }}</td>
+              <td>{{ policy.issue_date|date:"d.m.Y"|default:"Nedostaje" }}</td>
+              <td>{{ policy.insurance_type|default:"Nedostaje" }}</td>
+              <td>{{ policy.policy_number|default:"Nedostaje" }}</td>
+              <td>{{ policy.premium_amount|default:"Nedostaje" }}</td>
+              <td>{{ policy.start_date|date:"d.m.Y"|default:"Nedostaje" }}</td>
+              <td>{{ policy.end_date|date:"d.m.Y"|default:"Nedostaje" }}</td>
+              <td>{{ policy.first_installment_amount|default:"Nedostaje" }}</td>
+              <td>{{ policy.other_installments_amount|default:"Nedostaje" }}</td>
+              <td>{{ policy.number_of_installments|default:"Nedostaje" }}</td>
+              <td class="text-center text-nowrap">
+                <a href="{% url 'policy_update' policy.pk %}?next={{ request.get_full_path|urlencode }}"
+                   class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                  <i class="mdi mdi-pencil"></i> Dopuni
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="15">Nema nepotpunih polisa.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Vozilo</th>
+            <th>Partner-pib</th>
+            <th>Partner</th>
+            <th>ID ugovora</th>
+            <th>Broj ugovora</th>
+            <th>Datum izdavanja</th>
+            <th>Tip osiguranja</th>
+            <th>Broj polise</th>
+            <th>Iznos premije</th>
+            <th>Datum pocetka</th>
+            <th>Datum zavrsetka</th>
+            <th>Iznos prve rate</th>
+            <th>Iznos ostalih rata</th>
+            <th>Broj rata</th>
+            <th>Akcije</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

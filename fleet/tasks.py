@@ -33,6 +33,20 @@ def _run_nis_data_import_with_report():
     return message
 
 
+def _raise_on_critical_sync_result(sync_name, result):
+    if isinstance(result, str) and result.startswith("Critical error"):
+        raise RuntimeError(f"{sync_name}: {result}")
+    return result
+
+
+def _run_policy_data_import_with_report():
+    result = fetch_policy_data(last_24_hours=True)
+    _raise_on_critical_sync_result("Policy sync", result)
+    message = f"Fetch Policy Data: {result}"
+    logger.info("Policy task report: %s", message)
+    return message
+
+
 def _run_with_singleton_lock(task_name, lock_ttl_seconds, fn):
     """
     Sprečava preklapanje istog taska ako se prethodni izvršava predugo.
@@ -116,14 +130,10 @@ def run_omv_teretna_command():
 # Zadaci za povlačenje podataka
 @shared_task
 def fetch_policy_data_task():
-    def _runner():
-        result = fetch_policy_data(last_24_hours=True)
-        return f"Fetch Policy Data: {result}"
-
     return _run_with_singleton_lock(
         task_name="fetch_policy_data_task",
         lock_ttl_seconds=90 * 60,
-        fn=_runner,
+        fn=_run_policy_data_import_with_report,
     )
 
 @shared_task

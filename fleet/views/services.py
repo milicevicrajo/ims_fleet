@@ -1,11 +1,13 @@
 import csv
 import logging
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
@@ -29,6 +31,7 @@ from ..models import (
     Service,
     ServiceTransaction,
     ServiceType,
+    Vehicle,
 )
 from ..support.service_queries import service_monthly_costs_rows
 from ..sync import (
@@ -308,6 +311,29 @@ class RequisitionListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Trebovanja"
+        context["vehicles"] = (
+            Vehicle.objects.filter(requisitions__isnull=False)
+            .distinct()
+            .order_by("brand", "model", "inventory_number", "id")
+        )
+        context["years"] = (
+            Requisition.objects.order_by("-god")
+            .values_list("god", flat=True)
+            .distinct()
+        )
+        context["categories"] = (
+            ServiceType.objects.filter(requisition__isnull=False)
+            .distinct()
+            .order_by("name")
+        )
+        context["selected_vehicle"] = self.request.GET.get("vehicle", "")
+        context["selected_year"] = self.request.GET.get("year", "")
+        context["selected_document"] = self.request.GET.get("document", "")
+        context["selected_article"] = self.request.GET.get("article", "")
+        context["selected_category"] = self.request.GET.get("category", "")
+        context["selected_vehicle_status"] = self.request.GET.get("vehicle_status", "")
+        context["selected_date_from"] = self.request.GET.get("date_from", "")
+        context["selected_date_to"] = self.request.GET.get("date_to", "")
         return context
 
 
@@ -324,8 +350,18 @@ class RequisitionDetailView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        rows = list(context["stavke"])
+        first_requisition = rows[0] if rows else None
         context["br_dok"] = self.kwargs["br_dok"]
         context["god"] = self.kwargs["god"]
+        context["first_requisition"] = first_requisition
+        context["vehicle"] = first_requisition.vehicle if first_requisition and first_requisition.vehicle_id else None
+        context["print_date"] = timezone.localdate()
+        context["total_quantity"] = sum((row.kol or Decimal("0")) for row in rows)
+        context["total_value"] = sum((row.vrednost_nab or Decimal("0")) for row in rows)
+        context["print_rows"] = rows + [None] * max(0, 12 - len(rows))
+        context["next_url"] = self.request.GET.get("next") or reverse("requisition_list")
+        context["auto_print"] = self.request.GET.get("auto") == "1"
         return context
 
 

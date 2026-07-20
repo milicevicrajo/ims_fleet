@@ -72,7 +72,6 @@ from .views.lease import (
     export_leases_to_excel,
 )
 from .views.policy import (
-    DraftPolicyUpdateView,
     ExpiringAndNotRenewedPolicyView,
     PoliciesMonthlyCostsView,
     PolicyCreateView,
@@ -199,7 +198,7 @@ from .views.reports import (
     troskovi_svi_view,
     zatvoren_putni_view,
 )
-from .views.dashboard import dashboard
+from .views.dashboard import dashboard, fleet_other
 from .views.analytics import fleet_analytics
 from .views.center_statistics import center_statistics
 from .views.datatables import (
@@ -270,7 +269,6 @@ urlpatterns = [
     path('polise/', PolicyListView.as_view(), name='policy_list'),
     path('polise/data/', policies_datatable_data, name='policy_data'),
     path('polise/nedovrseno/', PolicyFixingListView.as_view(), name='policy_fixing_list'),
-    path('dopuna-polise/<int:pk>/', DraftPolicyUpdateView.as_view(), name='draft_policy_update'),
     path('polise/novo/', PolicyCreateView.as_view(), name='policy_create'),
     path('polise/izmeni/<int:pk>/', PolicyUpdateView.as_view(), name='policy_update'),
     path('polise/<int:pk>/', PolicyDetailView.as_view(), name='policy_detail'),
@@ -424,6 +422,7 @@ urlpatterns = [
     path('reports/services/monthly.csv', service_monthly_costs_csv, name='reports_service_monthly_costs_csv'),
     
     path('', dashboard, name='dashboard'),
+    path('ostalo/', fleet_other, name='fleet_other'),
     path('analitika/', fleet_analytics, name='fleet_analytics'),
     path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),
     

@@ -8,7 +8,6 @@ from django.shortcuts import render
 
 from ..models import (
     DraftInsurance,
-    DraftPolicy,
     DraftServiceTransaction,
     FuelConsumption,
     Insurance,
@@ -25,9 +24,40 @@ from ..support.fuel import date_range_for_datetime_field
 
 
 @login_required
+def fleet_other(request):
+    links = [
+        {
+            "title": "Tipovi servisa",
+            "description": "Sifarnik kategorija servisa i popravki koje se koriste u troskovima i trebovanjima.",
+            "url_name": "servicetype_list",
+            "icon": "mdi-format-list-bulleted-type",
+        },
+        {
+            "title": "DDOR potrazivanja",
+            "description": "Pregled DDOR potrazivanja i povezivanje naplate stete sa vozilom.",
+            "url_name": "insurance_list",
+            "icon": "mdi-shield-alert",
+        },
+        {
+            "title": "Konta vozila",
+            "description": "Sifarnik konta koja se koriste za prepoznavanje i klasifikaciju troskova vozila.",
+            "url_name": "konta_list",
+            "icon": "mdi-account-card-details",
+        },
+        {
+            "title": "Izvestaji sa servera",
+            "description": "Tehnicki i istorijski izvestaji koji se citaju direktno sa servera.",
+            "url_name": "reports_index",
+            "icon": "mdi-file-chart",
+        },
+    ]
+    return render(request, "fleet/other_links.html", {"title": "Ostalo", "links": links})
+
+
+@login_required
 def dashboard(request):
     services_without_vehicle = DraftServiceTransaction.objects.count()
-    policies_without_vehicle = DraftPolicy.objects.count()
+    policies_without_vehicle = Policy.objects.filter(Policy.incomplete_q()).count()
     requisitions_without_vehicle = (
         Requisition.objects.filter(nije_garaza=False)
         .filter(vehicle__isnull=True)
@@ -38,13 +68,15 @@ def dashboard(request):
     today = date.today()
     thirty_days_from_now = today + timedelta(days=30)
 
-    newest_policy = Policy.objects.filter(
+    complete_policies = Policy.objects.exclude(Policy.incomplete_q())
+
+    newest_policy = complete_policies.filter(
         vehicle=OuterRef('vehicle'),
         insurance_type=OuterRef('insurance_type'),
         is_renewable=True,
     ).order_by('-end_date').values('end_date')[:1]
 
-    expiring_policies = Policy.objects.annotate(
+    expiring_policies = complete_policies.annotate(
         latest_end_date=Subquery(newest_policy)
     ).filter(
         end_date__gte=today,
@@ -55,14 +87,14 @@ def dashboard(request):
 
     expiring_policies_count = expiring_policies.count()
 
-    newer_policy_exists = Policy.objects.filter(
+    newer_policy_exists = complete_policies.filter(
         vehicle=OuterRef('vehicle'),
         insurance_type=OuterRef('insurance_type'),
         start_date__gt=OuterRef('start_date'),
         is_renewable=True,
     )
 
-    expired_unrenewed_policies = Policy.objects.annotate(
+    expired_unrenewed_policies = complete_policies.annotate(
         has_newer_policy=Exists(newer_policy_exists)
     ).filter(
         end_date__lt=today,

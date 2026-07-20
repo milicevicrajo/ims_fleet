@@ -13,51 +13,33 @@
                 class="hide-menu">Kontrolna tabla</span></a></li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'vehicle_list'%}" aria-expanded="false"><i class="mdi mdi-car"></i><span
-                class="hide-menu">Spisak autmobila</span></a></li>
+                class="hide-menu">Spisak automobila</span></a></li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'fleet_analytics'%}" aria-expanded="false"><i class="mdi mdi-chart-areaspline"></i><span
                 class="hide-menu">Analitika</span></a></li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'trafficcard_list'%}" aria-expanded="false"><i class="mdi mdi-credit-card-multiple"></i><span
-                class="hide-menu">Saobraćajne dozvole</span></a></li>
+                class="hide-menu">Saobracajne dozvole</span></a></li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'lease_list'%}" aria-expanded="false"><i class="mdi mdi-currency-usd"></i><span
                 class="hide-menu">Lizing i najam</span></a></li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'policy_list'%}" aria-expanded="false"><i class="mdi mdi-file-document"></i><span
                 class="hide-menu">Polise</span></a></li>
-
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
             href="{% url 'fuel_transactions_list'%}" aria-expanded="false"><i class="mdi mdi-gas-station"></i><span
-                class="hide-menu">Potrošnja</span></a></li>
-
+                class="hide-menu">Potrosnja</span></a></li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-            href="{% url 'service_transaction_list'%}" aria-expanded="false"><i class="mdi mdi-wrench"></i><span
-                class="hide-menu">Popravke van IMS </span></a>
+            href="{% url 'kvar_list_van_ims'%}" aria-expanded="false"><i class="mdi mdi-file-document-edit"></i><span
+                class="hide-menu">Zahtevi za uslugu</span></a>
     </li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-            href="{% url 'requisition_list'%}" aria-expanded="false"><i class="mdi mdi-wrench"></i><span
+            href="{% url 'requisition_list'%}" aria-expanded="false"><i class="mdi mdi-tools"></i><span
                 class="hide-menu">Popravke u IMS</span></a></li>
-    <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-            href="{% url 'servicetype_list'%}" aria-expanded="false"><i class="mdi mdi-pencil-box-outline"></i><span
-                class="hide-menu">Tipovi servisa</span></a></li>  
-
-    <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-            href="{% url 'insurance_list'%}" aria-expanded="false"><i class="mdi mdi-pencil-box-outline"></i><span
-                class="hide-menu">DDOR potraživanja</span></a></li>
-
-    <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-            href="{% url 'konta_list'%}" aria-expanded="false"><i class="mdi mdi-account-card-details"></i><span
-                class="hide-menu">Konta vozila</span></a>
-    </li>
-    <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-            href="{% url 'reports_index'%}" aria-expanded="false"><i class="mdi mdi-file-chart"></i><span
-                class="hide-menu">Izvestaji sa servera</span></a>
-    </li>  
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
         href="{% url 'putninalog_list'%}" aria-expanded="false"><i class="mdi mdi-road-variant"></i><span
                 class="hide-menu">Putni nalozi</span></a>
-    </li> 
+    </li>
     <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
         href="{% url 'vehicle_travel_order_list'%}" aria-expanded="false"><i class="mdi mdi-car-connected"></i><span
                 class="hide-menu">Zaduzenja vozila</span></a>
@@ -67,6 +49,10 @@
                 class="hide-menu">Garaza IMS</span></a>
     </li>
 
+    <li class="sidebar-item mt-3"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
+            href="{% url 'fleet_other'%}" aria-expanded="false"><i class="mdi mdi-dots-horizontal-circle"></i><span
+                class="hide-menu">Ostalo</span></a>
+    </li>
 </ul>
         </nav>
         <!-- End Sidebar navigation -->
@@ -76,7 +62,3 @@
 <!-- ============================================================== -->
 <!-- End Left Sidebar - style you can find in sidebar.scss  -->
 <!-- ============================================================== -->
-
-{% comment %} <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link"
-    href="{% url 'incident_list'%}" aria-expanded="false"><i class="mdi mdi-alert"></i><span
-class="hide-menu">Incidenti</span></a></li> {% endcomment %}
