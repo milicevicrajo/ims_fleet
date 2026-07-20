@@ -32,6 +32,7 @@ from .kvar import (
     KvarWorkOrderView,
 )
 from .vehicle_travel_orders import (
+    PreviousVehicleTravelOrderCreateView,
     VehicleTravelOrderCloseView,
     VehicleTravelOrderCreateView,
     VehicleTravelOrderDeleteView,

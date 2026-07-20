@@ -154,6 +154,7 @@ from .views.kvar import (
     KvarWorkOrderView,
 )
 from .views.vehicle_travel_orders import (
+    PreviousVehicleTravelOrderCreateView,
     VehicleTravelOrderCloseView,
     VehicleTravelOrderCreateView,
     VehicleTravelOrderDeleteView,
@@ -320,6 +321,7 @@ urlpatterns = [
     path('garaza/putni-nalozi-vozila/<int:pk>/zatvori/', VehicleTravelOrderCloseView.as_view(), name='vehicle_travel_order_close'),
     path('garaza/putni-nalozi-vozila/<int:pk>/zahtev/', VehicleTravelOrderRequestView.as_view(), name='vehicle_travel_order_request'),
     path('garaza/putni-nalozi-vozila/<int:pk>/otvori-stampu/', VehicleTravelOrderPrintOpenView.as_view(), name='vehicle_travel_order_print_open'),
+    path('garaza/putni-nalozi-vozila/<int:pk>/prethodni-obracun/', PreviousVehicleTravelOrderCreateView.as_view(), name='vehicle_travel_order_previous_create'),
     path('garaza/putni-nalozi-vozila/<int:pk>/brisanje/', VehicleTravelOrderDeleteView.as_view(), name='vehicle_travel_order_delete'),
 
     path('putni-nalozi/', PutniNalogListView.as_view(), name='putninalog_list'),

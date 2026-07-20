@@ -1,10 +1,11 @@
 import datetime
 from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
@@ -12,7 +13,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, T
 from core.mixins import RolePermissionRequiredMixin
 from hr.models import Employee
 
-from ..forms.garaza import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
+from ..forms.garaza import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from ..models import TransactionNIS, TransactionOMV, Vehicle, VehicleTravelOrder
 from ..support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset, format_omv_receipt_number
 from ..support.garaza import get_vehicle_center_code, get_vehicle_latest_organizational_unit
@@ -172,6 +173,7 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
             {
                 "period_start": period_start,
                 "period_end": period_end,
+                "previous_order": get_previous_vehicle_travel_order(order),
                 "registration_number": registration_number,
                 "center_code": center_code,
                 "omv_transactions": [row["object"] for row in fuel_rows if row["supplier"] == "OMV"],
@@ -185,6 +187,9 @@ class VehicleTravelOrderDetailView(RolePermissionRequiredMixin, LoginRequiredMix
                 "second_fuel_page": second_fuel_page,
             }
         )
+        previous_report_pk = self.request.GET.get("open_previous_report")
+        if ctx["previous_order"] and previous_report_pk == str(ctx["previous_order"].pk):
+            ctx["auto_previous_report_url"] = reverse("vehicle_travel_order_fuel_report", args=[ctx["previous_order"].pk])
         return ctx
 
 
@@ -225,7 +230,7 @@ class VehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMix
         return response
 
     def get_success_url(self):
-        return reverse("vehicle_travel_order_print_open", args=[self.object.pk])
+        return reverse("vehicle_travel_order_detail", args=[self.object.pk])
 
 
 class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
@@ -247,9 +252,13 @@ class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMix
         ctx["submit_button_label"] = "Sacuvaj izmene"
         return ctx
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def get_success_url(self):
-        next_url = self.request.POST.get("next") or self.request.GET.get("next")
-        return next_url or reverse("vehicle_travel_order_detail", args=[self.object.pk])
+        return reverse("vehicle_travel_order_detail", args=[self.object.pk])
 
 
 class VehicleTravelOrderCloseView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
@@ -265,6 +274,61 @@ class VehicleTravelOrderCloseView(RolePermissionRequiredMixin, LoginRequiredMixi
 
     def get_success_url(self):
         return reverse("vehicle_travel_order_detail", args=[self.object.pk])
+
+
+class PreviousVehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
+    model = VehicleTravelOrder
+    form_class = PreviousVehicleTravelOrderForm
+    template_name = "fleet/generic_form.html"
+    required_permission_code = "vehicle_travel_order_create"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.next_order = get_object_or_404(
+            VehicleTravelOrder.objects.select_related("vehicle", "employee"),
+            pk=kwargs.get("pk"),
+        )
+        if get_previous_vehicle_travel_order(self.next_order):
+            messages.info(request, "Prethodno zaduzenje vec postoji za ovaj automobil.")
+            return redirect("vehicle_travel_order_detail", pk=self.next_order.pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["employee"] = self.next_order.employee_id
+        return initial
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["next_order"] = self.next_order
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Unos prethodnog zaduzenja za obracun goriva"
+        ctx["submit_button_label"] = "Sacuvaj prethodno zaduzenje"
+        ctx["form_help"] = (
+            "Ovaj unos sluzi samo kada ne postoji prethodno zaduzenje za automobil. "
+            f"Sistem ce ga automatski zatvoriti datumom {self.next_order.created_at:%d.%m.%Y}. "
+            "Posle cuvanja vracate se na zaduzenje sa kog ste krenuli i obracun goriva ce biti dostupan."
+        )
+        ctx["cancel_url"] = reverse("vehicle_travel_order_detail", args=[self.next_order.pk])
+        return ctx
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.vehicle = self.next_order.vehicle
+        self.object.closed_at = self.next_order.created_at
+        self.object.end_mileage = self.next_order.start_mileage
+        self.object.save()
+        messages.success(
+            self.request,
+            "Prethodno zaduzenje je uneto i automatski zatvoreno. Obracun goriva je sada dostupan.",
+        )
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        detail_url = reverse("vehicle_travel_order_detail", args=[self.next_order.pk])
+        return f"{detail_url}?open_previous_report={self.object.pk}"
 
 
 class VehicleTravelOrderDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):

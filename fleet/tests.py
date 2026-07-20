@@ -1,5 +1,6 @@
 import csv
 import datetime
+import json
 import os
 import tempfile
 from decimal import Decimal
@@ -12,7 +13,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.models import OrganizationalUnit
-from .forms import VehicleTravelOrderCloseForm, VehicleTravelOrderForm
+from .forms import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
 from .models import FuelConsumption, PutniNalog, TrafficCard, TransactionNIS, TransactionOMV
@@ -24,11 +25,13 @@ from .views.reports import _export_secondary_report, _render_secondary_report, _
 from .support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset, format_omv_receipt_number
 from .templatetags.form_filters import receipt_number
 from .views.vehicle_travel_orders import (
+	PreviousVehicleTravelOrderCreateView,
 	VehicleTravelOrderCreateView,
 	VehicleTravelOrderDeleteView,
 	VehicleTravelOrderDetailView,
 	VehicleTravelOrderUpdateView,
 )
+from .views.datatables import vehicle_travel_order_datatable_data
 from .sync.selenium import import_omv_transactions_from_csv
 
 
@@ -859,6 +862,40 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 		self.assertIsNone(later_open_order.closed_at)
 		self.assertIsNone(later_open_order.end_mileage)
 
+	def test_previous_order_create_closes_previous_with_next_order_date(self):
+		next_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			start_mileage=62423,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		form = PreviousVehicleTravelOrderForm(
+			next_order=next_order,
+			data={
+				"created_at": "01.04.2026",
+				"employee": self.employee.pk,
+				"start_mileage": 61500,
+			},
+		)
+		self.assertTrue(form.is_valid(), form.errors)
+
+		request = RequestFactory().post("/")
+		request.user = get_user_model().objects.create_superuser(username="previous-order", password="x")
+		view = PreviousVehicleTravelOrderCreateView()
+		view.request = request
+		view.next_order = next_order
+
+		with patch("fleet.views.vehicle_travel_orders.messages.success"):
+			response = view.form_valid(form)
+
+		previous_order = VehicleTravelOrder.objects.exclude(pk=next_order.pk).get()
+
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(previous_order.vehicle, next_order.vehicle)
+		self.assertEqual(previous_order.closed_at, next_order.created_at)
+		self.assertEqual(previous_order.end_mileage, next_order.start_mileage)
+		self.assertEqual(response["Location"], f"{reverse('vehicle_travel_order_detail', args=[next_order.pk])}?open_previous_report={previous_order.pk}")
+
 
 class VehicleTravelOrderCloseFormTests(TestCase):
 	def setUp(self):
@@ -1007,6 +1044,67 @@ class VehicleTravelOrderUpdateViewTests(TestCase):
 
 		with self.assertRaises(PermissionDenied):
 			view.dispatch(request, pk=order.pk)
+
+	def test_superuser_can_reopen_closed_order_through_update_form(self):
+		vehicle = Vehicle.objects.create(
+			inventory_number="INV-42",
+			chassis_number="WF0XXXTEST0000042",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="ENG-42",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category=Vehicle.Category.CARGO,
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		employee = Employee.objects.create(
+			employee_code=42,
+			first_name="Milan",
+			last_name="Milic",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1993, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			closed_at=datetime.date(2026, 4, 25),
+			start_mileage=1000,
+			end_mileage=1100,
+			employee=employee,
+			vehicle=vehicle,
+		)
+		user = get_user_model().objects.create_superuser(username="super-reopen", password="x")
+		form = VehicleTravelOrderForm(
+			instance=order,
+			user=user,
+			data={
+				"created_at": "24.04.2026",
+				"status": VehicleTravelOrderForm.STATUS_OPEN,
+				"employee": employee.pk,
+				"vehicle": vehicle.pk,
+				"start_mileage": 1000,
+			},
+		)
+
+		self.assertTrue(form.is_valid(), form.errors)
+		form.save()
+		order.refresh_from_db()
+
+		self.assertIsNone(order.closed_at)
+		self.assertIsNone(order.end_mileage)
 
 
 class VehicleTravelOrderDeleteViewTests(TestCase):
@@ -1165,3 +1263,59 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 		self.assertEqual(context["total_liters"], Decimal("50"))
 		self.assertEqual(context["consumption"], Decimal("50"))
 		self.assertEqual([row["invoice"] for row in context["fuel_rows"]], ["8916372386 / R1", "R2"])
+
+	def test_detail_context_includes_previous_closed_order_for_same_vehicle(self):
+		previous_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 20),
+			closed_at=datetime.date(2026, 4, 21),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+
+		request = self.factory.get("/")
+		view = VehicleTravelOrderDetailView()
+		view.request = request
+		view.object = order
+
+		context = view.get_context_data()
+
+		self.assertEqual(context["previous_order"], previous_order)
+
+	def test_datatable_search_finds_order_by_registration_number(self):
+		TrafficCard.objects.create(
+			vehicle=self.vehicle,
+			registration_number="BG1234-AA",
+			issue_date=datetime.date(2026, 1, 1),
+			valid_until=datetime.date(2027, 1, 1),
+			traffic_card_number="TC-1",
+			serial_number="SER-1",
+			owner="IMS",
+			homologation_number="HOM-1",
+		)
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		user = get_user_model().objects.create_user(username="datatable-search", password="x")
+		request = self.factory.get(
+			"/",
+			{
+				"draw": "1",
+				"start": "0",
+				"length": "50",
+				"search[value]": "BG1234",
+			},
+		)
+		request.user = user
+
+		response = vehicle_travel_order_datatable_data(request)
+		payload = json.loads(response.content)
+
+		self.assertEqual(payload["recordsFiltered"], 1)
+		self.assertIn(f"PN {order.pn_number}", payload["data"][0]["pn_number"])

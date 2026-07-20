@@ -172,14 +172,24 @@ def vehicle_travel_order_datatable_data(request):
         qs = qs.filter(closed_at__isnull=False)
 
     def search(value):
+        status_query = Q()
+        normalized_value = value.lower()
+        if "otvoren".startswith(normalized_value):
+            status_query |= Q(closed_at__isnull=True)
+        if "zatvoren".startswith(normalized_value):
+            status_query |= Q(closed_at__isnull=False)
+
         return (
             Q(pn_number__icontains=value)
             | Q(rbz__icontains=value)
             | Q(vehicle__brand__icontains=value)
             | Q(vehicle__model__icontains=value)
             | Q(vehicle__chassis_number__icontains=value)
+            | Q(vehicle__inventory_number__icontains=value)
+            | Q(vehicle__traffic_cards__registration_number__icontains=value)
             | Q(employee__first_name__icontains=value)
             | Q(employee__last_name__icontains=value)
+            | status_query
         )
 
     def row(order):

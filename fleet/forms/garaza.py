@@ -13,6 +13,18 @@ from ..models import (
 
 
 class VehicleTravelOrderForm(forms.ModelForm):
+    STATUS_OPEN = "open"
+    STATUS_CLOSED = "closed"
+
+    status = forms.ChoiceField(
+        choices=(
+            (STATUS_OPEN, "Otvoren"),
+            (STATUS_CLOSED, "Zatvoren"),
+        ),
+        required=False,
+        label="Status",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
     created_at = localized_date_field(
         required=True,
         label="Datum otvaranja",
@@ -40,9 +52,10 @@ class VehicleTravelOrderForm(forms.ModelForm):
 
     class Meta:
         model = VehicleTravelOrder
-        fields = ["pn_number", "created_at", "employee", "vehicle", "start_mileage"]
+        fields = ["pn_number", "created_at", "status", "employee", "vehicle", "start_mileage"]
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
@@ -53,7 +66,25 @@ class VehicleTravelOrderForm(forms.ModelForm):
                 VehicleTravelOrder.objects.order_by("-pn_number").values_list("pn_number", flat=True).first() or 0
             )
             self.initial.setdefault("pn_number", last_number + 1)
+        if self.instance.pk and getattr(self.user, "is_superuser", False):
+            self.initial["status"] = self.STATUS_CLOSED if self.instance.closed_at else self.STATUS_OPEN
+        else:
+            self.fields.pop("status", None)
         self.fields["pn_number"].disabled = True
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if (
+            self.instance.pk
+            and getattr(self.user, "is_superuser", False)
+            and self.cleaned_data.get("status") == self.STATUS_OPEN
+        ):
+            instance.closed_at = None
+            instance.end_mileage = None
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class VehicleTravelOrderCloseForm(forms.ModelForm):
@@ -83,6 +114,43 @@ class VehicleTravelOrderCloseForm(forms.ModelForm):
             )
 
         return cleaned_data
+
+
+class PreviousVehicleTravelOrderForm(forms.ModelForm):
+    created_at = localized_date_field(
+        required=True,
+        label="Datum pocetka prethodnog zaduzenja",
+        help_text="Unesite datum od kada je automobil bio zaduzen pre ovog naloga.",
+    )
+    employee = forms.ModelChoiceField(
+        queryset=Employee.objects.filter(is_active=True),
+        widget=Select2Widget(attrs={"class": "select2-method"}),
+        label="Zaposleni na prethodnom zaduzenju",
+    )
+    start_mileage = forms.IntegerField(
+        required=True,
+        label="Pocetna kilometraza prethodnog zaduzenja",
+        widget=forms.NumberInput(attrs={"class": "form-control", "placeholder": "km"}),
+        help_text="Ovo je pocetna kilometraza za obracun goriva prethodnog perioda.",
+    )
+
+    class Meta:
+        model = VehicleTravelOrder
+        fields = ["created_at", "employee", "start_mileage"]
+
+    def __init__(self, *args, next_order=None, **kwargs):
+        self.next_order = next_order
+        super().__init__(*args, **kwargs)
+        if next_order and next_order.employee_id:
+            self.initial.setdefault("employee", next_order.employee_id)
+
+    def clean_created_at(self):
+        created_at = self.cleaned_data["created_at"]
+        if self.next_order and created_at >= self.next_order.created_at:
+            raise forms.ValidationError(
+                "Datum pocetka prethodnog zaduzenja mora biti pre datuma trenutnog zaduzenja."
+            )
+        return created_at
 
 
 class KvarForm(forms.ModelForm):
@@ -147,4 +215,3 @@ class KvarPartForm(forms.ModelForm):
             "quantity": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
             "uom": forms.TextInput(attrs={"class": "form-control", "placeholder": "kom/l/kg"}),
         }
-

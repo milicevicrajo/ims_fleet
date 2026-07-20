@@ -84,6 +84,21 @@
         </form>
       </div>
 
+      <div class="card-body border-bottom py-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-md-6 col-lg-4">
+            <label class="form-label mb-1" for="assignment-quick-search">Brza pretraga</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+              <input id="assignment-quick-search" type="text" class="form-control" placeholder="PN, registracija, vozilo, zaposleni">
+              <button id="assignment-clear-search" type="button" class="btn btn-outline-secondary" title="Ocisti pretragu">
+                <i class="mdi mdi-close"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card-body">
         <div class="table-responsive">
           <table id="VehicleTravelOrdersTable" class="display compact table table-hover table-bordered align-middle w-100" data-server-side-dt="true">
@@ -124,12 +139,14 @@
     if (window.jQuery && jQuery.fn.DataTable) {
       var table = jQuery('#VehicleTravelOrdersTable');
       if (table.length && !jQuery.fn.DataTable.isDataTable(table[0])) {
-        table.DataTable({
+        var dataTable = table.DataTable({
           serverSide: true,
           processing: true,
+          searching: true,
           pageLength: 50,
           lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
           order: [[5, 'desc']],
+          dom: "<'row'<'col-sm-12 col-md-6'l>>rt<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
           ajax: {
             url: "{% url 'vehicle_travel_order_data' %}" + window.location.search,
             type: "GET"
@@ -154,6 +171,24 @@
             zeroRecords: 'Nema rezultata',
             paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeca', previous: 'Prethodna' }
           }
+        });
+
+        var quickSearch = jQuery('#assignment-quick-search');
+        var clearSearch = jQuery('#assignment-clear-search');
+        var searchTimer = null;
+
+        quickSearch.on('input', function () {
+          var value = this.value;
+          window.clearTimeout(searchTimer);
+          searchTimer = window.setTimeout(function () {
+            dataTable.search(value).draw();
+          }, 200);
+        });
+
+        clearSearch.on('click', function () {
+          quickSearch.val('');
+          dataTable.search('').draw();
+          quickSearch.trigger('focus');
         });
       }
     }

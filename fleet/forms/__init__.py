@@ -2,6 +2,7 @@ from .fuel import FuelConsumptionForm
 from .garaza import (
     KvarForm,
     KvarPartForm,
+    PreviousVehicleTravelOrderForm,
     VehicleTravelOrderCloseForm,
     VehicleTravelOrderForm,
 )

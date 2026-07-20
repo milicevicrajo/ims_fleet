@@ -1,67 +1,123 @@
-<!-- equipment_form.html -->
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load form_filters %}
-{% block title %}Forma{% endblock %}
+
+{% block title %}{{ title|default:"Forma" }}{% endblock %}
+
 {% block content %}
-  <div class="pagetitle">
-    <h1>{{ title }}</h1>
-    <section class="section">
-      <div class="row">
-        <div class="col-lg-6">
-    
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Popuniti formu</h5>
-              
-              <!-- Horizontal Form -->
-              <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {% for field in form %}
-                <div class="row mb-3">
-                    <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
-                    <div class="col-sm-7">
-                        {% if field.field.widget.input_type == "checkbox" %}
-                        <div class="form-check pt-2">
-                            {{ field|add_class:'form-check-input' }}
-                        </div>
-                        {% else %}
-                        {{ field|add_class:'form-control' }}
-                        {% endif %}
-                        {% if field.help_text %}
-                        <div class="form-text">{{ field.help_text }}</div>
-                        {% endif %}
-                        {% if field.errors %}
-                        <div class="invalid-feedback" style="display: block;">
-                          {% for error in field.errors %}
-                              {{ error }}
-                          {% endfor %}
-                      </div>
-                        {% endif %}
-                    </div>
-                </div>
+<style>
+  .fleet-form-page {
+    margin-top: 0;
+  }
+  .fleet-form-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .fleet-form-header h1 {
+    font-size: 1.45rem;
+    margin: 0;
+    letter-spacing: 0;
+  }
+  .fleet-form-card .card-body {
+    padding: 18px;
+  }
+  .fleet-form-card .card-title {
+    margin-bottom: 16px;
+  }
+  .fleet-form-actions {
+    border-top: 1px solid #eef1f5;
+    padding-top: 16px;
+    margin-top: 6px;
+  }
+</style>
+
+<div class="fleet-form-page">
+  <div class="fleet-form-header">
+    <h1>{{ title|default:"Forma" }}</h1>
+    {% if request.META.HTTP_REFERER %}
+      <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-outline-secondary btn-sm">
+        <i class="mdi mdi-arrow-left"></i> Nazad
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="row">
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm fleet-form-card">
+        <div class="card-body">
+          <h5 class="card-title">Podaci</h5>
+
+          {% if form_help %}
+            <div class="alert alert-info">
+              {{ form_help }}
+            </div>
+          {% endif %}
+
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <div>{{ error }}</div>
                 {% endfor %}
-                <div class="text-center">
-                  <button type="submit" class="btn btn-primary">{{ submit_button_label }}</button>
+              </div>
+            {% endif %}
+
+            {% for field in form %}
+              <div class="row mb-3 align-items-start">
+                <label for="{{ field.id_for_label }}" class="col-sm-4 col-form-label">{{ field.label }}:</label>
+                <div class="col-sm-8">
+                  {% if field.field.widget.input_type == "checkbox" %}
+                    <div class="form-check pt-2">
+                      {{ field|add_class:"form-check-input" }}
+                    </div>
+                  {% else %}
+                    {{ field|add_class:"form-control" }}
+                  {% endif %}
+
+                  {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                  {% endif %}
+
+                  {% if field.errors %}
+                    <div class="invalid-feedback" style="display:block;">
+                      {% for error in field.errors %}
+                        <div>{{ error }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
                 </div>
-              </form>
-              <!-- End Horizontal Form -->
-    
-            </div>
-          </div>
-    
-        </div>
-        {% if manual %}
-        <div class="col-lg-6">
-          <div class="card">
-            <div class="card-body">
+              </div>
+            {% endfor %}
 
+            <div class="fleet-form-actions d-flex flex-wrap justify-content-end gap-2">
+              {% if cancel_url %}
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">
+                  <i class="mdi mdi-arrow-left"></i> Odustani
+                </a>
+              {% endif %}
+              <button type="submit" class="btn btn-primary">
+                <i class="mdi mdi-content-save"></i> {{ submit_button_label|default:"Sacuvaj" }}
+              </button>
             </div>
-          </div>
+          </form>
         </div>
-        {%else%}
-        {%endif%}
       </div>
-    </section>
+    </div>
 
+    {% if manual %}
+      <div class="col-12 col-xl-5">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            {{ manual }}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}
-

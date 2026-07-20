@@ -1,113 +1,262 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+  .travel-order-print-card {
+    background: #fff;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .travel-order-print-card .btn {
+    min-height: 74px;
+    font-size: 1.08rem;
+    font-weight: 600;
+    padding: 14px 18px;
+    text-align: left;
+  }
+  .travel-order-print-card .btn i {
+    font-size: 1.55rem;
+    vertical-align: middle;
+  }
+  .travel-order-print-card .btn small {
+    display: block;
+    margin-top: 4px;
+    font-weight: 400;
+    line-height: 1.25;
+    opacity: .9;
+  }
+  .travel-order-print-card .missing-report {
+    border: 1px solid #e6ebf1;
+    border-radius: 6px;
+    padding: 16px;
+    background: #f8fafc;
+  }
+  .travel-order-print-card .missing-report strong {
+    display: block;
+    font-size: 1.05rem;
+    color: #243447;
+    margin-bottom: 6px;
+  }
+  .travel-order-print-card .missing-report p {
+    margin-bottom: 12px;
+    line-height: 1.45;
+  }
+  .travel-order-header-actions .btn {
+    min-height: 34px;
+  }
+</style>
+
 <div class="row">
   <div class="col-12">
     <div class="card shadow-sm mb-3">
-      <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-3">
         <div>
-          <h2 class="mb-0">Putni nalog #{{ order.pn_number }}</h2>
-          <small class="text-muted">Vozilo: {{ order.vehicle }} · Zaposleni: {{ order.employee }}</small>
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+            <h2 class="mb-0">Putni nalog #{{ order.pn_number }}</h2>
+            {% if order.closed_at %}
+              <span class="badge bg-secondary text-white">Zatvoren</span>
+            {% else %}
+              <span class="badge bg-success text-white">Otvoren</span>
+            {% endif %}
+          </div>
+          <div class="text-muted">
+            {{ order.vehicle }} - {{ order.employee }}
+          </div>
         </div>
-        <div class="d-flex gap-2">
-          <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-info btn-sm" target="_blank">
-            <i class="mdi mdi-printer"></i> Nalog
-          </a>
-          <a href="{% url 'vehicle_travel_order_fuel_report' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-dark btn-sm" target="_blank">
-            <i class="mdi mdi-printer"></i> Obracun utroska
-          </a>
+        <div class="travel-order-header-actions d-flex flex-wrap gap-2 align-items-center justify-content-end">
           {% if not order.closed_at %}
-          <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-success btn-sm">
-            <i class="mdi mdi-lock"></i> Zatvori nalog
-          </a>
+            <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-success btn-sm">
+              <i class="mdi mdi-lock"></i> Zatvori nalog
+            </a>
           {% endif %}
+
+          {% if not order.closed_at or request.user.is_superuser %}
+            <a href="{% url 'vehicle_travel_order_update' order.pk %}" class="btn btn-outline-primary btn-sm">
+              <i class="mdi mdi-pencil"></i> Izmeni
+            </a>
+            <a href="{% url 'vehicle_travel_order_delete' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-danger btn-sm">
+              <i class="mdi mdi-delete"></i> Obrisi
+            </a>
+          {% endif %}
+
           <a href="{% url 'vehicle_travel_order_list' %}" class="btn btn-outline-secondary btn-sm">
             <i class="mdi mdi-arrow-left"></i> Nazad
           </a>
         </div>
       </div>
+
       <div class="card-body">
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">R.b.z.</div><div class="fw-semibold">{{ order.rbz|default:"/" }}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Registracija</div><div class="fw-semibold">{{ registration_number|default:"/" }}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Otvoren</div><div class="fw-semibold">{{ period_start|date:"d.m.Y" }}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Zatvoren</div><div class="fw-semibold">{% if order.closed_at %}{{ period_end|date:"d.m.Y" }}{% else %}<span class="badge bg-success text-white">Otvoren</span>{% endif %}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Početna km</div><div class="fw-semibold">{{ order.start_mileage|default:"/" }}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Krajnja km</div><div class="fw-semibold">{{ order.end_mileage|default:"/" }}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Pređenih km</div><div class="fw-semibold">{% if distance is not None %}{{ distance }}{% else %}/{% endif %}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Ukupno l</div><div class="fw-semibold">{{ total_liters|floatformat:2 }}</div></div></div>
-          <div class="col"><div class="p-2 border rounded"><div class="text-muted small">Prosek l/100km</div><div class="fw-semibold">{% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</div></div></div>
+        <div class="row g-3">
+          <div class="col-12 col-xl-8">
+            <h5 class="card-title mb-3">Osnovni podaci</h5>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered align-middle mb-0">
+                <tbody>
+                  <tr>
+                    <th class="table-light w-25">R.b.z.</th>
+                    <td>{{ order.rbz|default:"/" }}</td>
+                    <th class="table-light w-25">Registracija</th>
+                    <td>{{ registration_number|default:"/" }}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Datum otvaranja</th>
+                    <td>{{ period_start|date:"d.m.Y" }}</td>
+                    <th class="table-light">Datum zatvaranja</th>
+                    <td>{% if order.closed_at %}{{ period_end|date:"d.m.Y" }}{% else %}/{% endif %}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Zaposleni</th>
+                    <td>{{ order.employee }}</td>
+                    <th class="table-light">Vozilo</th>
+                    <td>{{ order.vehicle }}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Sifra centra</th>
+                    <td>{{ center_code|default:"/" }}</td>
+                    <th class="table-light">Period potrosnje</th>
+                    <td>{{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="col-12 col-xl-4">
+            <h5 class="card-title mb-3">Kilometraza i gorivo</h5>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered align-middle mb-0">
+                <tbody>
+                  <tr>
+                    <th class="table-light">Pocetna km</th>
+                    <td class="text-end">{{ order.start_mileage|default:"/" }}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Krajnja km</th>
+                    <td class="text-end">{{ order.end_mileage|default:"/" }}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Predjenih km</th>
+                    <td class="text-end">{% if distance is not None %}{{ distance }}{% else %}/{% endif %}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Ukupno litara</th>
+                    <td class="text-end">{{ total_liters|floatformat:2 }}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Ukupan iznos</th>
+                    <td class="text-end">{{ total_amount|default_if_none:"0"|floatformat:2 }}</td>
+                  </tr>
+                  <tr>
+                    <th class="table-light">Prosek l/100km</th>
+                    <td class="text-end">{% if consumption is not None %}{{ consumption|floatformat:2 }}{% else %}/{% endif %}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+
+        {% if previous_order %}
+          <div class="alert alert-light border mt-3 mb-0">
+            Prethodno zaduzenje za obracun: PN {{ previous_order.pn_number }}{% if previous_order.closed_at %}, zatvoreno {{ previous_order.closed_at|date:"d.m.Y" }}{% endif %}.
+          </div>
+        {% endif %}
       </div>
     </div>
 
-    {% if omv_transactions %}
     <div class="card shadow-sm mb-3">
-      <div class="card-header"><h4 class="mb-0">OMV računi ({{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }})</h4></div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-sm table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Datum</th>
-                <th>Račun</th>
-                <th>Kartica</th>
-                <th>Količina (L)</th>
-                <th>Kilometraža</th>
-                <th>Iznos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for trx in omv_transactions %}
-              <tr>
-                <td>{{ trx.transaction_date|date:"d.m.Y H:i" }}</td>
-                <td>{{ trx.invoice_no|default:trx.voucher|default:"/" }}{% if trx.invoice_no and trx.voucher and trx.invoice_no != trx.voucher %} / {{ trx.voucher }}{% endif %}</td>
-                <td>{{ trx.card|default:"/" }}</td>
-                <td class="text-end">{{ trx.quantity|default_if_none:"0"|floatformat:2 }}</td>
-                <td class="text-end">{{ trx.mileage|default_if_none:"/" }}</td>
-                <td class="text-end">{{ trx.amount|default_if_none:"0"|floatformat:2 }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      <div class="card-header">
+        <h4 class="mb-0">Stampa dokumenata</h4>
       </div>
-    </div>
-    {% endif %}
+      <div class="card-body travel-order-print-card">
+        <p class="text-muted mb-3">
+          Prvo stampajte zahtev za trenutno zaduzenje. Ako postoji prethodno zaduzenje za isti automobil,
+          stampajte i obracun goriva za prethodni period.
+        </p>
+        <div class="row g-3">
+          <div class="col-12 col-lg-6">
+            <a href="{% url 'vehicle_travel_order_request' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-info text-white w-100" target="_blank">
+              <i class="mdi mdi-printer"></i> Stampa zahteva
+              <small>Ovo je zahtev za izdavanje putnog naloga za trenutno zaduzenje.</small>
+            </a>
+          </div>
 
-    {% if nis_transactions %}
-    <div class="card shadow-sm">
-      <div class="card-header"><h4 class="mb-0">NIS računi ({{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }})</h4></div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-sm table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Datum</th>
-                <th>Račun</th>
-                <th>Kartica</th>
-                <th>Količina (L)</th>
-                <th>Kilometraža</th>
-                <th>Iznos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for trx in nis_transactions %}
-              <tr>
-                <td>{{ trx.datum_transakcije|date:"d.m.Y H:i" }}</td>
-                <td>{{ trx.broj_racuna|default:"/" }}</td>
-                <td>{{ trx.broj_kartice|default:"/" }}</td>
-                <td class="text-end">{{ trx.kolicina|default_if_none:"0"|floatformat:2 }}</td>
-                <td class="text-end">{{ trx.kilometraza|default_if_none:"/" }}</td>
-                <td class="text-end">{{ trx.total|default_if_none:"0"|floatformat:2 }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="col-12 col-lg-6">
+            {% if previous_order %}
+              <a href="{% url 'vehicle_travel_order_fuel_report' previous_order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-dark w-100" target="_blank">
+                <i class="mdi mdi-printer"></i> Stampa obracuna
+                <small>Ovo je obracun goriva za prethodno zaduzenje: PN {{ previous_order.pn_number }}.</small>
+              </a>
+            {% else %}
+              <div class="missing-report w-100">
+                <strong>Obracun goriva nije dostupan dok ne postoji prethodno zaduzenje.</strong>
+                <p class="text-muted">
+                  Ako hocete obracun goriva za ovaj automobil, prvo morate uneti prethodno zaduzenje.
+                  Sistem ce to prethodno zaduzenje automatski zatvoriti datumom ovog naloga
+                  {% if order.created_at %}({{ order.created_at|date:"d.m.Y" }}){% endif %}
+                  i posle toga ce se pojaviti dugme za stampu obracuna.
+                </p>
+                <a href="{% url 'vehicle_travel_order_previous_create' order.pk %}" class="btn btn-warning w-100">
+                  <i class="mdi mdi-plus-circle"></i> Unesi prethodni obracun
+                  <small>Unosite prethodni period za isti automobil, da bi obracun goriva mogao da se stampa.</small>
+                </a>
+              </div>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
-    {% endif %}
+
+    <div class="card shadow-sm">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h4 class="mb-0">Potrosnja goriva</h4>
+        <span class="text-muted small">{{ period_start|date:"d.m.Y" }} - {{ period_end|date:"d.m.Y" }}</span>
+      </div>
+      <div class="card-body">
+        {% if fuel_rows %}
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Datum</th>
+                  <th>Dobavljac</th>
+                  <th>Racun</th>
+                  <th>Kartica</th>
+                  <th class="text-end">Kolicina (L)</th>
+                  <th class="text-end">Cena / L</th>
+                  <th class="text-end">Kilometraza</th>
+                  <th class="text-end">Iznos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in fuel_rows %}
+                  <tr>
+                    <td>{{ row.date|date:"d.m.Y H:i" }}</td>
+                    <td>{{ row.supplier }}</td>
+                    <td>{{ row.invoice|default:"/" }}</td>
+                    <td>{{ row.card|default:"/" }}</td>
+                    <td class="text-end">{{ row.quantity|default_if_none:"0"|floatformat:2 }}</td>
+                    <td class="text-end">{% if row.unit_price %}{{ row.unit_price|floatformat:2 }}{% else %}/{% endif %}</td>
+                    <td class="text-end">{{ row.mileage|default_if_none:"/" }}</td>
+                    <td class="text-end">{{ row.amount|default_if_none:"0"|floatformat:2 }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-muted">Nema podataka o potrosnji goriva za ovaj period.</div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
+{% if auto_previous_report_url %}
+  <script>
+    window.addEventListener('load', function () {
+      window.open('{{ auto_previous_report_url|escapejs }}?next={% url 'vehicle_travel_order_detail' order.pk %}', '_blank');
+    });
+  </script>
+{% endif %}
 {% endblock %}
