@@ -21,6 +21,7 @@ from ..models import (
 from ..support.analytics import is_red_zone, net_maintenance_cost
 from ..support.dashboard import LONG_TERM_LEASE_TYPES
 from ..support.fuel import date_range_for_datetime_field
+from ..support.policy_queries import expired_unrenewed_policy_qs, expiring_policy_qs
 
 
 @login_required
@@ -66,42 +67,9 @@ def dashboard(request):
     draft_insurance_count = DraftInsurance.objects.count()
 
     today = date.today()
-    thirty_days_from_now = today + timedelta(days=30)
-
-    complete_policies = Policy.objects.exclude(Policy.incomplete_q())
-
-    newest_policy = complete_policies.filter(
-        vehicle=OuterRef('vehicle'),
-        insurance_type=OuterRef('insurance_type'),
-        is_renewable=True,
-    ).order_by('-end_date').values('end_date')[:1]
-
-    expiring_policies = complete_policies.annotate(
-        latest_end_date=Subquery(newest_policy)
-    ).filter(
-        end_date__gte=today,
-        end_date__lte=thirty_days_from_now,
-        end_date=F('latest_end_date'),
-        is_renewable=True,
-    )
-
+    expiring_policies = expiring_policy_qs(today=today)
     expiring_policies_count = expiring_policies.count()
-
-    newer_policy_exists = complete_policies.filter(
-        vehicle=OuterRef('vehicle'),
-        insurance_type=OuterRef('insurance_type'),
-        start_date__gt=OuterRef('start_date'),
-        is_renewable=True,
-    )
-
-    expired_unrenewed_policies = complete_policies.annotate(
-        has_newer_policy=Exists(newer_policy_exists)
-    ).filter(
-        end_date__lt=today,
-        has_newer_policy=False,
-        is_renewable=True,
-    )
-
+    expired_unrenewed_policies = expired_unrenewed_policy_qs(today=today)
     expired_unrenewed_policies_count = expired_unrenewed_policies.count()
 
     current_year = datetime.datetime.now().year

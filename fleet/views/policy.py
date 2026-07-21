@@ -1,8 +1,6 @@
 import csv
-from datetime import timedelta
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import F, OuterRef, Subquery
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -15,7 +13,12 @@ from core.mixins import RolePermissionRequiredMixin
 from ..filters import PoliciesMonthlyCostsFilter
 from ..models import Policy, Vehicle
 from ..forms.policy import PolicyForm
-from ..support.policy_queries import _filtered_qs, policies_monthly_costs_qs
+from ..support.policy_queries import (
+    _filtered_qs,
+    expired_unrenewed_policy_qs,
+    expiring_policy_qs,
+    policies_monthly_costs_qs,
+)
 
 
 class PolicyListView(LoginRequiredMixin, ListView):
@@ -69,41 +72,9 @@ class ExpiringAndNotRenewedPolicyView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
-        thirty_days_from_now = today + timedelta(days=30)
-        complete_policies = Policy.objects.exclude(Policy.incomplete_q())
 
-        newest_policy = complete_policies.filter(
-            vehicle=OuterRef("vehicle"),
-            insurance_type=OuterRef("insurance_type"),
-        ).order_by("-end_date").values("end_date", "is_renewable")[:1]
-
-        expiring_policies = complete_policies.annotate(
-            latest_end_date=Subquery(newest_policy.values("end_date")[:1]),
-            latest_is_renewable=Subquery(newest_policy.values("is_renewable")[:1]),
-        ).filter(
-            end_date__gte=today,
-            end_date__lte=thirty_days_from_now,
-            end_date=F("latest_end_date"),
-            latest_is_renewable=True,
-        )
-
-        newer_policy_exists = complete_policies.filter(
-            vehicle=OuterRef("vehicle"),
-            insurance_type=OuterRef("insurance_type"),
-            start_date__gt=OuterRef("start_date"),
-        )
-
-        expired_unrenewed_policies = complete_policies.annotate(
-            has_newer_policy=Subquery(newer_policy_exists.values("id")[:1]),
-            latest_is_renewable=Subquery(newest_policy.values("is_renewable")[:1]),
-        ).filter(
-            end_date__lt=today,
-            has_newer_policy__isnull=True,
-            latest_is_renewable=True,
-        )
-
-        context["expiring_policies"] = expiring_policies
-        context["expired_unrenewed_policies"] = expired_unrenewed_policies
+        context["expiring_policies"] = expiring_policy_qs(today=today)
+        context["expired_unrenewed_policies"] = expired_unrenewed_policy_qs(today=today)
         context["title"] = "Liste polisa koje isticu i koje su istekle i nisu obnovljene"
         return context
 

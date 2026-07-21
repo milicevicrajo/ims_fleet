@@ -20,6 +20,7 @@ from hr.models import Employee
 from .models import FuelConsumption, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
 from .support.dashboard import vehicle_cost_per_km_rows
+from .support.policy_queries import expired_unrenewed_policy_qs, expiring_policy_qs
 from .support.report_helpers import date_period_filtered_query, report_period_filtered_query
 from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
 from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
@@ -1457,6 +1458,80 @@ class PolicyDirectSyncTests(TestCase):
 			owner="IMS",
 			homologation_number="POL-HOM-1",
 		)
+
+	def create_complete_policy(
+		self,
+		invoice_id,
+		start_date,
+		end_date,
+		insurance_type="Kasko",
+		is_renewable=True,
+	):
+		return Policy.objects.create(
+			vehicle=self.vehicle,
+			partner_pib=123456789,
+			partner_name="Osiguranje",
+			invoice_id=invoice_id,
+			invoice_number=f"IF-{invoice_id}",
+			issue_date=start_date,
+			insurance_type=insurance_type,
+			policy_number=f"POL-{invoice_id}",
+			premium_amount=Decimal("12000.00"),
+			start_date=start_date,
+			end_date=end_date,
+			first_installment_amount=Decimal("3000.00"),
+			other_installments_amount=Decimal("3000.00"),
+			number_of_installments=4,
+			is_renewable=is_renewable,
+		)
+
+	def test_expired_unrenewed_policy_queryset_includes_latest_expired_renewable_policy(self):
+		policy = self.create_complete_policy(
+			invoice_id=9101,
+			start_date=datetime.date(2025, 1, 1),
+			end_date=datetime.date(2026, 1, 1),
+			is_renewable=True,
+		)
+
+		ids = list(expired_unrenewed_policy_qs(today=datetime.date(2026, 7, 21)).values_list("id", flat=True))
+
+		self.assertEqual(ids, [policy.id])
+
+	def test_expired_unrenewed_policy_queryset_ignores_old_policy_when_newer_policy_exists(self):
+		self.create_complete_policy(
+			invoice_id=9102,
+			start_date=datetime.date(2025, 1, 1),
+			end_date=datetime.date(2026, 1, 1),
+			is_renewable=True,
+		)
+		self.create_complete_policy(
+			invoice_id=9103,
+			start_date=datetime.date(2026, 1, 2),
+			end_date=datetime.date(2026, 6, 30),
+			is_renewable=False,
+		)
+
+		ids = list(expired_unrenewed_policy_qs(today=datetime.date(2026, 7, 21)).values_list("id", flat=True))
+
+		self.assertEqual(ids, [])
+
+	def test_expiring_policy_queryset_uses_latest_policy_for_vehicle_and_type(self):
+		self.create_complete_policy(
+			invoice_id=9104,
+			start_date=datetime.date(2025, 8, 1),
+			end_date=datetime.date(2026, 8, 1),
+			is_renewable=True,
+		)
+		latest_policy = self.create_complete_policy(
+			invoice_id=9105,
+			start_date=datetime.date(2026, 8, 2),
+			end_date=datetime.date(2026, 8, 10),
+			is_renewable=True,
+		)
+
+		ids = list(expiring_policy_qs(today=datetime.date(2026, 7, 21)).values_list("id", flat=True))
+
+		self.assertEqual(ids, [latest_policy.id])
 
 	def test_incomplete_policy_stays_in_policy_warning_queryset(self):
 		incomplete_policy = Policy.objects.create(

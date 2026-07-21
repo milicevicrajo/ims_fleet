@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.db.models import Case, CharField, F, OuterRef, Subquery, Sum, Value, When
 from django.db.models.functions import ExtractMonth, ExtractYear
+from django.utils import timezone
 
 from ..models import JobCode, Policy
 
@@ -34,6 +37,54 @@ def policies_monthly_costs_qs(base_qs=None):
         "year", "month", "center", "oj_id", "job_code", "vrsta"
     )
     return qs
+
+
+def complete_policy_qs(base_qs=None):
+    qs = base_qs if base_qs is not None else Policy.objects
+    return qs.exclude(Policy.incomplete_q())
+
+
+def expiring_policy_qs(today=None, days=30, base_qs=None):
+    today = today or timezone.localdate()
+    end_to = today + timedelta(days=days)
+    complete_policies = complete_policy_qs(base_qs)
+    newest_policy = complete_policies.filter(
+        vehicle=OuterRef("vehicle"),
+        insurance_type=OuterRef("insurance_type"),
+    ).order_by("-end_date")
+
+    return complete_policies.annotate(
+        latest_end_date=Subquery(newest_policy.values("end_date")[:1]),
+        latest_is_renewable=Subquery(newest_policy.values("is_renewable")[:1]),
+    ).filter(
+        end_date__gte=today,
+        end_date__lte=end_to,
+        end_date=F("latest_end_date"),
+        latest_is_renewable=True,
+    )
+
+
+def expired_unrenewed_policy_qs(today=None, base_qs=None):
+    today = today or timezone.localdate()
+    complete_policies = complete_policy_qs(base_qs)
+    newest_policy = complete_policies.filter(
+        vehicle=OuterRef("vehicle"),
+        insurance_type=OuterRef("insurance_type"),
+    ).order_by("-end_date")
+    newer_policy_exists = complete_policies.filter(
+        vehicle=OuterRef("vehicle"),
+        insurance_type=OuterRef("insurance_type"),
+        start_date__gt=OuterRef("start_date"),
+    )
+
+    return complete_policies.annotate(
+        has_newer_policy=Subquery(newer_policy_exists.values("id")[:1]),
+        latest_is_renewable=Subquery(newest_policy.values("is_renewable")[:1]),
+    ).filter(
+        end_date__lt=today,
+        has_newer_policy__isnull=True,
+        latest_is_renewable=True,
+    )
 
 
 def _filtered_qs(request):
