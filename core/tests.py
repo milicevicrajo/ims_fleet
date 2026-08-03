@@ -16,7 +16,7 @@ from .exporting import (
     xlsx_attachment_response,
 )
 from .mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
-from .models import ActivityLog, CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission
+from .models import ActivityLog, CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission, TaskHistory
 
 
 class ExportingTests(SimpleTestCase):
@@ -219,6 +219,7 @@ class FleetAuthModelLocationTests(SimpleTestCase):
         self.assertEqual(Role._meta.app_label, "fleet")
         self.assertEqual(PermissionCode._meta.app_label, "fleet")
         self.assertEqual(RolePermission._meta.app_label, "fleet")
+        self.assertEqual(TaskHistory._meta.app_label, "fleet")
 
     def test_fleet_auth_models_are_reexported_from_fleet_models(self):
         from fleet.models import (
@@ -227,6 +228,7 @@ class FleetAuthModelLocationTests(SimpleTestCase):
             PermissionCode as FleetPermissionCode,
             Role as FleetRole,
             RolePermission as FleetRolePermission,
+            TaskHistory as FleetTaskHistory,
         )
 
         self.assertIs(FleetActivityLog, ActivityLog)
@@ -234,6 +236,7 @@ class FleetAuthModelLocationTests(SimpleTestCase):
         self.assertIs(FleetRole, Role)
         self.assertIs(FleetPermissionCode, PermissionCode)
         self.assertIs(FleetRolePermission, RolePermission)
+        self.assertIs(FleetTaskHistory, TaskHistory)
 
 
 class ActivityLogTests(TestCase):
@@ -279,3 +282,26 @@ class ActivityLogTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Provera ekrana")
+
+
+class TaskHistoryTests(TestCase):
+    def test_task_history_list_renders_for_superuser(self):
+        user = get_user_model().objects.create_superuser(
+            username="task-admin",
+            email="task-admin@example.com",
+            password="test-pass",
+        )
+        TaskHistory.objects.create(
+            task_id="task-1",
+            task_name="fleet.tasks.sync_hr_employees_task",
+            display_name="Kadrovi - sinhronizacija zaposlenih",
+            status=TaskHistory.STATUS_SUCCESS,
+            short_message="Sync HR Employees: ukupno=1, kreirano=1, azurirano=0, preskoceno_neaktivni=0",
+        )
+
+        self.client.force_login(user)
+        response = self.client.get(reverse("task_history_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Kadrovi - sinhronizacija zaposlenih")
+        self.assertContains(response, "kreirano=1")

@@ -19,7 +19,6 @@ from .fuel import (
     FuelTransactionsListView,
 )
 from .kvar import (
-    GarazaHomeView,
     KvarCreateView,
     KvarDeleteView,
     KvarDetailView,

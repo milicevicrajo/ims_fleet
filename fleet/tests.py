@@ -12,7 +12,7 @@ from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import OrganizationalUnit
+from core.models import OrganizationalUnit, PermissionCode, Role
 from nabavka.models import ProcurementInvoice
 from .forms import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
@@ -119,6 +119,40 @@ class UserProfileManagementTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertContains(response, reverse("user_create_missing_profiles"))
 		self.assertContains(response, "Kreiraj profil")
+
+
+class PutniNalogEmployeeSyncTests(TestCase):
+	def create_user_with_permissions(self, username, permission_codes):
+		user = get_user_model().objects.create_user(username, password="test")
+		role = Role.objects.create(name=f"Role {username}", slug=f"role-{username}")
+		permissions = [
+			PermissionCode.objects.create(code=code)
+			for code in permission_codes
+		]
+		role.permissions.add(*permissions)
+		user.roles.add(role)
+		return user
+
+	def test_putni_nalog_employee_sync_runs_sync_and_returns_to_form(self):
+		user = self.create_user_with_permissions("putni-sync", ["employee_sync"])
+		self.client.force_login(user)
+
+		with patch("fleet.views.putni_nalozi.sync_employees_from_hr_view") as sync_mock:
+			sync_mock.return_value = {
+				"total": 1,
+				"created": 1,
+				"updated": 0,
+				"updated_inactive": 0,
+				"skipped_inactive": 0,
+				"skipped_invalid_code": 0,
+			}
+			response = self.client.post(
+				reverse("putninalog_employee_sync"),
+				{"next": reverse("putninalog_create")},
+			)
+
+		self.assertRedirects(response, reverse("putninalog_create"), fetch_redirect_response=False)
+		sync_mock.assert_called_once_with()
 
 
 class PutniNalogPaidAmountListTests(TestCase):

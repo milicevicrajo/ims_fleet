@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 
 from core.mixins import RolePermissionRequiredMixin
-from core.models import ActivityLog, CustomUser
+from core.models import ActivityLog, CustomUser, TaskHistory
 from fleet.models import Employee
 from fleet.services.employee_user_profiles import (
     create_user_profile_for_employee,
@@ -219,6 +219,74 @@ class ActivityLogListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
                 "total_logs": ActivityLog.objects.count(),
                 "today_logs": ActivityLog.objects.filter(created_at__date=today).count(),
                 "failed_logs": ActivityLog.objects.filter(action=ActivityLog.ACTION_LOGIN_FAILED).count(),
+            }
+        )
+        return context
+
+
+class TaskHistoryListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
+    model = TaskHistory
+    template_name = "fleet/task_history_list.html"
+    context_object_name = "task_logs"
+    paginate_by = 100
+    required_permission_code = "task_history_list"
+
+    def get_queryset(self):
+        queryset = TaskHistory.objects.order_by("-started_at", "-created_at", "-id")
+        params = self.request.GET
+
+        q = (params.get("q") or "").strip()
+        if q:
+            queryset = queryset.filter(
+                Q(task_name__icontains=q)
+                | Q(display_name__icontains=q)
+                | Q(task_id__icontains=q)
+                | Q(short_message__icontains=q)
+                | Q(result__icontains=q)
+                | Q(error__icontains=q)
+            )
+
+        status = params.get("status") or ""
+        if status:
+            queryset = queryset.filter(status=status)
+
+        task_name = (params.get("task") or "").strip()
+        if task_name:
+            queryset = queryset.filter(task_name=task_name)
+
+        date_from = parse_date(params.get("from") or "")
+        if date_from:
+            start = timezone.make_aware(datetime.combine(date_from, time.min))
+            queryset = queryset.filter(started_at__gte=start)
+
+        date_to = parse_date(params.get("to") or "")
+        if date_to:
+            end = timezone.make_aware(datetime.combine(date_to, time.max))
+            queryset = queryset.filter(started_at__lte=end)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        params = self.request.GET.copy()
+        params.pop("page", None)
+        context.update(
+            {
+                "title": "Task history",
+                "filters": self.request.GET,
+                "querystring": params.urlencode(),
+                "status_options": TaskHistory.STATUS_CHOICES,
+                "task_options": (
+                    TaskHistory.objects.exclude(task_name="")
+                    .values_list("task_name", "display_name")
+                    .distinct()
+                    .order_by("display_name", "task_name")
+                ),
+                "total_tasks": TaskHistory.objects.count(),
+                "today_tasks": TaskHistory.objects.filter(started_at__date=today).count(),
+                "failed_tasks": TaskHistory.objects.filter(status=TaskHistory.STATUS_FAILURE).count(),
+                "skipped_tasks": TaskHistory.objects.filter(status=TaskHistory.STATUS_SKIPPED).count(),
             }
         )
         return context

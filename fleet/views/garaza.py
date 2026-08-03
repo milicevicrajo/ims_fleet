@@ -1,7 +1,6 @@
 """Compatibility re-exports for garage-related fleet views."""
 
 from .kvar import (
-    GarazaHomeView,
     KvarCreateView,
     KvarDeleteView,
     KvarDetailView,

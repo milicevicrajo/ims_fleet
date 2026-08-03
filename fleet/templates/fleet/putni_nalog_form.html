@@ -1,4 +1,3 @@
-<!-- equipment_form.html -->
 {% extends 'base.html' %}
 {% load form_filters %}
 {% block title %}Forma{% endblock %}
@@ -41,6 +40,32 @@
       border: 1px solid #d0d7de;
       border-radius: 12px;
       background: #fff;
+    }
+    .employee-sync-panel .alert {
+      border-radius: 8px;
+    }
+    .employee-sync-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .employee-sync-list li {
+      border: 1px solid #e6ebf1;
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: #fff;
+    }
+    .employee-sync-list strong {
+      display: block;
+      font-size: .92rem;
+    }
+    .employee-sync-list span {
+      display: block;
+      color: #6b7785;
+      font-size: .8rem;
+      margin-top: 2px;
     }
   </style>
   <div class="pagetitle">
@@ -200,16 +225,47 @@
           </div>
     
         </div>
-        {% if manual %}
         <div class="col-lg-6">
-          <div class="card">
+          <div class="card employee-sync-panel">
             <div class="card-body">
+              <h5 class="card-title">Zaposleni</h5>
 
+              <div class="alert alert-warning">
+                Ako zaposleni ne postoji na spisku, pokrenite sinhronizaciju zaposlenih i forma ce se ponovo ucitati.
+              </div>
+
+              {% if can_sync_employees %}
+                <form method="post" action="{% url 'putninalog_employee_sync' %}" class="mb-3">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="mdi mdi-sync"></i> Sinhronizuj zaposlene
+                  </button>
+                </form>
+              {% else %}
+                <button type="button" class="btn btn-outline-secondary w-100 mb-3" disabled>
+                  <i class="mdi mdi-lock"></i> Nemate pravo za sinhronizaciju
+                </button>
+              {% endif %}
+
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Poslednje uneti zaposleni</h6>
+                <span class="badge bg-light text-dark">{{ active_employee_count }} aktivnih</span>
+              </div>
+
+              <ul class="employee-sync-list">
+                {% for employee in recent_employees %}
+                  <li>
+                    <strong>{{ employee }}</strong>
+                    <span>Sifra: {{ employee.employee_code }}{% if employee.position %} · {{ employee.position }}{% endif %}</span>
+                  </li>
+                {% empty %}
+                  <li><span>Nema aktivnih zaposlenih u bazi.</span></li>
+                {% endfor %}
+              </ul>
             </div>
           </div>
         </div>
-        {%else%}
-        {%endif%}
       </div>
     </section>
 

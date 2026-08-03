@@ -91,6 +91,7 @@ from .views.putni_nalozi import (
     PutniNalogPrintView,
     PutniNalogUpdateView,
     putninalog_datatable_data,
+    putninalog_employee_sync,
     putninalog_print_list,
     putninalog_set_opravdan,
     putninalog_storniraj,
@@ -140,7 +141,6 @@ from .views.vehicles import (
     vehicle_tender_documentation_zip,
 )
 from .views.kvar import (
-    GarazaHomeView,
     KvarCreateView,
     KvarDeleteView,
     KvarDetailView,
@@ -166,6 +166,7 @@ from .views.vehicle_travel_orders import (
 )
 from .views.users import (
     ActivityLogListView,
+    TaskHistoryListView,
     UserListView,
     create_employee_user_profile_view,
     create_missing_employee_user_profiles_view,
@@ -297,7 +298,6 @@ urlpatterns = [
     path('moj-profil/cv/<int:pk>/izmeni/', EmployeeCVItemUpdateView.as_view(), name='employee_cv_item_update'),
     path('moj-profil/cv/<int:pk>/obrisi/', EmployeeCVItemDeleteView.as_view(), name='employee_cv_item_delete'),
 
-    path('garaza/', GarazaHomeView.as_view(), name='garaza_home'),
     path('garaza/kvarovi/', KvarListView.as_view(), name='kvar_list'),
     path('garaza/kvarovi/data/', kvar_datatable_data, name='kvar_data'),
     path('garaza/kvarovi/novo/', KvarCreateView.as_view(), name='kvar_create'),
@@ -326,6 +326,7 @@ urlpatterns = [
     path('putni-nalozi/data/', putninalog_datatable_data, name='putninalog_data'),
     path('putni-nalozi/print-list/', putninalog_print_list, name='putninalog_print_list'),
     path('putni-nalozi/novo/', PutniNalogCreateView.as_view(), name='putninalog_create'),
+    path('putni-nalozi/sync-zaposleni/', putninalog_employee_sync, name='putninalog_employee_sync'),
     path('putni-nalozi/izmeni/<int:pk>/', PutniNalogUpdateView.as_view(), name='putninalog_update'),
     path('putni-nalozi/<int:pk>/opravdan/', putninalog_set_opravdan, name='putninalog_set_opravdan'),
     path('putni-nalozi/<int:pk>/storniraj/', putninalog_storniraj, name='putninalog_storniraj'),
@@ -431,6 +432,7 @@ urlpatterns = [
     path('users/create-missing-profiles/', create_missing_employee_user_profiles_view, name='user_create_missing_profiles'),
     path('users/create-profile/<int:pk>/', create_employee_user_profile_view, name='user_create_employee_profile'),
     path('administracija/activity-log/', ActivityLogListView.as_view(), name='activity_log_list'),
+    path('administracija/task-history/', TaskHistoryListView.as_view(), name='task_history_list'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 

@@ -226,6 +226,8 @@ def sync_employees_from_hr_view(using=None):
             "original_full_name": _as_str(ranaz) or "",
             "first_name": first_name,
             "last_name": last_name,
+            "display_first_name_override": "",
+            "display_last_name_override": "",
             "position": _as_str(naz_sis) or "",
             "department_code": _as_int(oj) or 0,
             "org_unit_code": _as_str(oj),
@@ -251,6 +253,9 @@ def sync_employees_from_hr_view(using=None):
             defaults["residence_municipality"] = _normalize_residence_municipality(opstina_boravka)
 
         existing = Employee.objects.filter(employee_code=employee_code).first()
+        if existing:
+            defaults["display_first_name_override"] = existing.display_first_name_override or ""
+            defaults["display_last_name_override"] = existing.display_last_name_override or ""
         _preserve_locked_identity_fields(existing, defaults)
 
         if not is_active:

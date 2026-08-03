@@ -64,15 +64,6 @@ class KvarVanIMSListView(RolePermissionRequiredMixin, LoginRequiredMixin, Templa
         return ctx
 
 
-class GarazaHomeView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
-    template_name = "fleet/garaza_home.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Poslovi garaže IMS"
-        return ctx
-
-
 class KvarPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "fleet/kvar_print.html"
 

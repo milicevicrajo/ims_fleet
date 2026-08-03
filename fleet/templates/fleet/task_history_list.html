@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .task-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #24364a 0%, #25686a 58%, #5d7430 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(36, 54, 74, 0.18);
+  }
+  .task-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .task-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .task-stat-card {
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+    background: #fff;
+    height: 100%;
+  }
+  .task-stat-card span { display: block; color: #6b7785; font-size: .84rem; }
+  .task-stat-card strong { font-size: 1.55rem; line-height: 1.2; }
+  .task-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .task-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 700;
+    font-size: .82rem;
+    white-space: nowrap;
+    background: #edf2f7;
+    color: #526170;
+    border: 1px solid #cfd8e3;
+  }
+  .task-badge.success { background: #e7f7ef; color: #147044; border-color: #b7e3cb; }
+  .task-badge.started { background: #e7f0ff; color: #1f4e8c; border-color: #bfd3f2; }
+  .task-badge.skipped { background: #fff4db; color: #7a4d00; border-color: #f1d28d; }
+  .task-badge.failure { background: #fde8e8; color: #9b1c1c; border-color: #f4b4b4; }
+  .task-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
+  .task-table th,
+  .task-table td {
+    white-space: normal !important;
+    vertical-align: top;
+  }
+  .task-code {
+    word-break: break-word;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .84rem;
+  }
+</style>
+
+<div class="task-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Task history</h1>
+    <p>Kratka obavestenja o Celery taskovima: pokrenuto, uspesno, preskoceno i neuspesno.</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="task-stat-card"><span>Ukupno zapisa</span><strong>{{ total_tasks }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="task-stat-card"><span>Danas</span><strong class="text-success">{{ today_tasks }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="task-stat-card"><span>Neuspesno</span><strong class="text-danger">{{ failed_tasks }}</strong></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="task-stat-card"><span>Preskoceno</span><strong class="text-warning">{{ skipped_tasks }}</strong></div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body border-bottom">
+    <form method="get" class="task-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label mb-1" for="task-q">Pretraga</label>
+          <input id="task-q" class="form-control" type="text" name="q" value="{{ filters.q }}" placeholder="Naziv, poruka, task ID">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label mb-1" for="task-status">Status</label>
+          <select id="task-status" class="form-select form-control" name="status">
+            <option value="">Svi</option>
+            {% for value,label in status_options %}
+              <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label mb-1" for="task-name">Task</label>
+          <select id="task-name" class="form-select form-control select2-method" name="task">
+            <option value="">Svi</option>
+            {% for task_name,display_name in task_options %}
+              <option value="{{ task_name }}" {% if filters.task == task_name %}selected{% endif %}>{{ display_name|default:task_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 col-md-1">
+          <label class="form-label mb-1" for="task-from">Od</label>
+          <input id="task-from" class="form-control" type="date" name="from" value="{{ filters.from }}">
+        </div>
+        <div class="col-6 col-md-1">
+          <label class="form-label mb-1" for="task-to">Do</label>
+          <input id="task-to" class="form-control" type="date" name="to" value="{{ filters.to }}">
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+          <button class="btn btn-primary w-100" type="submit" title="Filter">
+            <i class="mdi mdi-filter"></i> Filter
+          </button>
+          <a class="btn btn-outline-secondary" href="{% url 'task_history_list' %}" title="Ocisti filtere">
+            <i class="mdi mdi-close"></i>
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="card-body">
+    {% if is_paginated %}
+      <div class="d-flex justify-content-end mb-2">
+        <span class="badge bg-light text-dark">Strana {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      </div>
+    {% endif %}
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered align-middle task-table">
+        <thead class="table-light">
+          <tr>
+            <th>Vreme</th>
+            <th>Task</th>
+            <th>Status</th>
+            <th>Obavestenje</th>
+            <th>Trajanje</th>
+            <th>Task ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task_log in task_logs %}
+            <tr>
+              <td>
+                {% if task_log.started_at %}{{ task_log.started_at|date:"d.m.Y H:i:s" }}{% else %}{{ task_log.created_at|date:"d.m.Y H:i:s" }}{% endif %}
+                {% if task_log.finished_at %}<span class="task-muted">Kraj: {{ task_log.finished_at|date:"d.m.Y H:i:s" }}</span>{% endif %}
+              </td>
+              <td>
+                <strong>{{ task_log.display_name|default:task_log.task_name }}</strong>
+                <span class="task-muted">{{ task_log.task_name }}</span>
+              </td>
+              <td>
+                <span class="task-badge {{ task_log.status }}">{{ task_log.get_status_display }}</span>
+              </td>
+              <td>
+                {{ task_log.short_message|default:"/" }}
+                {% if task_log.error %}<span class="task-muted text-danger">{{ task_log.error|truncatechars:220 }}</span>{% endif %}
+              </td>
+              <td>
+                {% if task_log.elapsed_seconds != None %}
+                  {{ task_log.elapsed_seconds|floatformat:2 }}s
+                {% else %}
+                  <span class="text-muted">/</span>
+                {% endif %}
+              </td>
+              <td class="task-code">{{ task_log.task_id }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">Nema task zapisa za izabrane filtere.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+      <nav aria-label="Task history pagination">
+        <ul class="pagination mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Prethodna</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Prethodna</span></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Sledeca</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Sledeca</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

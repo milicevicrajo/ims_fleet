@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.admin import UserAdmin
 
-from core.models import ActivityLog, CustomUser, PermissionCode, Role, RolePermission
+from core.models import ActivityLog, CustomUser, PermissionCode, Role, RolePermission, TaskHistory
 from hr.models import Employee, EmployeeCVItem
 
 from .models import (
@@ -49,6 +49,17 @@ class ActivityLogAdmin(admin.ModelAdmin):
     search_fields = ("actor_username", "actor_display_name", "description", "path", "view_name", "object_repr")
     readonly_fields = [field.name for field in ActivityLog._meta.fields]
     date_hierarchy = "created_at"
+
+
+@admin.register(TaskHistory)
+class TaskHistoryAdmin(admin.ModelAdmin):
+    list_display = ("started_at", "display_name", "task_name", "status", "short_message", "elapsed_seconds")
+    list_filter = ("status", "task_name", "started_at")
+    search_fields = ("task_id", "task_name", "display_name", "short_message", "result", "error")
+    readonly_fields = [field.name for field in TaskHistory._meta.fields]
+    date_hierarchy = "started_at"
+
+
 class RolePermissionInline(admin.TabularInline):
     model = RolePermission
     extra = 1

@@ -169,3 +169,53 @@ class ActivityLog(models.Model):
     def __str__(self):
         actor = self.actor_username or str(self.user or "")
         return f"{self.created_at:%Y-%m-%d %H:%M} {actor} {self.get_action_display()}"
+
+
+class TaskHistory(models.Model):
+    STATUS_STARTED = "started"
+    STATUS_SUCCESS = "success"
+    STATUS_SKIPPED = "skipped"
+    STATUS_FAILURE = "failure"
+
+    STATUS_CHOICES = [
+        (STATUS_STARTED, _("Pokrenut")),
+        (STATUS_SUCCESS, _("Uspesan")),
+        (STATUS_SKIPPED, _("Preskocen")),
+        (STATUS_FAILURE, _("Neuspesan")),
+    ]
+
+    task_id = models.CharField(max_length=255, unique=True, verbose_name=_("Task ID"))
+    task_name = models.CharField(max_length=255, db_index=True, verbose_name=_("Task"))
+    display_name = models.CharField(max_length=255, blank=True, verbose_name=_("Naziv"))
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_STARTED,
+        db_index=True,
+        verbose_name=_("Status"),
+    )
+    short_message = models.CharField(max_length=500, blank=True, verbose_name=_("Kratko obavestenje"))
+    result = models.TextField(blank=True, verbose_name=_("Rezultat"))
+    error = models.TextField(blank=True, verbose_name=_("Greska"))
+    args = models.JSONField(default=list, blank=True, verbose_name=_("Argumenti"))
+    kwargs = models.JSONField(default=dict, blank=True, verbose_name=_("Keyword argumenti"))
+    started_at = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name=_("Pocetak"))
+    finished_at = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name=_("Kraj"))
+    elapsed_seconds = models.FloatField(null=True, blank=True, verbose_name=_("Trajanje u sekundama"))
+    details = models.JSONField(default=dict, blank=True, verbose_name=_("Detalji"))
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=_("Kreirano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+
+    class Meta:
+        app_label = "fleet"
+        db_table = "fleet_task_history"
+        ordering = ["-started_at", "-created_at", "-id"]
+        verbose_name = _("Task history")
+        verbose_name_plural = _("Task history")
+        indexes = [
+            models.Index(fields=["status", "-started_at"]),
+            models.Index(fields=["task_name", "-started_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.display_name or self.task_name} - {self.get_status_display()}"

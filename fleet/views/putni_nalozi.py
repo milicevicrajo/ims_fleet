@@ -1,5 +1,6 @@
 import textwrap
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -10,10 +11,13 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 from django_filters.views import FilterView
 
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
+from hr.models import Employee
+from hr.sync import sync_employees_from_hr_view
 
 from ..filters import PutniNalogFilter
 from ..mixins import CenterMixin
@@ -132,6 +136,14 @@ def _putninalog_print_urls(putni_nalog, user=None):
     if _is_foreign_currency(putni_nalog) and can_print_foreign:
         urls.append(f"{reverse('putninalog_foreign_print', args=[putni_nalog.pk])}?auto=1")
     return urls
+
+
+def _putninalog_employee_sync_context(user):
+    return {
+        "can_sync_employees": user_has_role_permission(user, "employee_sync"),
+        "recent_employees": Employee.objects.filter(is_active=True).order_by("-id")[:10],
+        "active_employee_count": Employee.objects.filter(is_active=True).count(),
+    }
 
 
 def _putninalog_actions_html(request, putni_nalog):
@@ -400,6 +412,29 @@ def putninalog_storniraj(request, pk):
     return redirect(request.META.get("HTTP_REFERER", reverse("putninalog_list")))
 
 
+@login_required
+@require_POST
+@role_permission_required("employee_sync")
+def putninalog_employee_sync(request):
+    redirect_to = request.POST.get("next") or request.META.get("HTTP_REFERER") or reverse("putninalog_create")
+    try:
+        result = sync_employees_from_hr_view()
+    except Exception as exc:
+        messages.error(request, f"Sinhronizacija zaposlenih nije uspela: {exc}")
+    else:
+        messages.success(
+            request,
+            "Sinhronizacija zaposlenih zavrsena. "
+            f"Ukupno: {result['total']}, "
+            f"Kreirano: {result['created']}, "
+            f"Azurirano: {result['updated']}, "
+            f"Azurirano neaktivnih: {result['updated_inactive']}, "
+            f"Preskoceno neaktivnih: {result['skipped_inactive']}, "
+            f"Preskoceno nevalidnih sifara: {result.get('skipped_invalid_code', 0)}.",
+        )
+    return redirect(redirect_to)
+
+
 class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = PutniNalog
     form_class = PutniNalogForm
@@ -445,6 +480,7 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
         context = super().get_context_data(**kwargs)
         context["title"] = "Dodaj putni nalog"
         context["submit_button_label"] = "Dodaj"
+        context.update(_putninalog_employee_sync_context(self.request.user))
         return context
 
     def form_valid(self, form):
@@ -476,6 +512,7 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         context = super().get_context_data(**kwargs)
         context["title"] = "Izmeni putni nalog"
         context["submit_button_label"] = "Sačuvaj izmene"
+        context.update(_putninalog_employee_sync_context(self.request.user))
         return context
 
     def form_valid(self, form):
