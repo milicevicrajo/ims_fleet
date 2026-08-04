@@ -272,7 +272,7 @@ def process_vehicle_retirements():
         logger.debug("Otpis vozila sync start")
         query = """
             SELECT inv_br
-            FROM dbo.otpis;
+            FROM dbo.fleet_otpis;
         """
 
         retired_vehicles_from_db = []
@@ -317,7 +317,7 @@ def process_vehicle_retirements():
 
                 except Vehicle.DoesNotExist:
                     not_found_count += 1
-                    logger.debug("Vozilo sa inventarnim brojem %r iz dbo.otpis nije pronađeno u Django bazi.", inv_br_from_db)
+                    logger.debug("Vozilo sa inventarnim brojem %r iz dbo.fleet_otpis nije pronađeno u Django bazi.", inv_br_from_db)
                 except Exception as exc:
                     errors += 1
                     logger.debug("Greška pri obradi vozila %r: %s", inv_br_from_db, exc, exc_info=True)

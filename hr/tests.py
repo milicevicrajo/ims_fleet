@@ -439,10 +439,23 @@ class MyEmployeeProfileTests(TestCase):
 
     @patch("hr.views.get_clock_events")
     def test_work_time_sheet_shows_clock_attendance_rows(self, clock_events_mock):
+        from fleet.models import PutniNalog
         from hr.services.attendance import ClockEvent
 
         employee = self.create_employee(115, first_name="Rajo", last_name="Milicevic")
         user = get_user_model().objects.create_user("prolazi", password="test", employee=employee)
+        unit = OrganizationalUnit.objects.create(code="300", name="Centar 300", center="30")
+        PutniNalog.objects.create(
+            order_number="RL/2026-1",
+            order_date=datetime.date(2026, 5, 5),
+            employee=employee,
+            job_code=unit,
+            travel_location="Novi Sad",
+            task="Sastanak",
+            travel_date=datetime.date(2026, 5, 5),
+            number_of_days=1,
+            advance_payment=0,
+        )
         clock_events_mock.return_value = [
             ClockEvent(1, employee.employee_code, "Milicevic", "Rajo", "", 1, datetime.datetime(2026, 5, 4, 8, 0), 1),
             ClockEvent(1, employee.employee_code, "Milicevic", "Rajo", "", 2, datetime.datetime(2026, 5, 4, 16, 30), 2),
@@ -456,6 +469,8 @@ class MyEmployeeProfileTests(TestCase):
         self.assertContains(response, "Evidencija prolaza")
         self.assertContains(response, "8:30")
         self.assertContains(response, "Ulazak 1 bez izlaza")
+        self.assertContains(response, "Putni nalog RL/2026-1 - Novi Sad")
+        self.assertContains(response, "max-height: none")
 
     @patch("hr.views.get_clock_events", side_effect=DatabaseError("linked server nije dostupan"))
     def test_work_time_sheet_stays_available_when_clock_attendance_fails(self, clock_events_mock):
@@ -548,6 +563,20 @@ class MyEmployeeProfileTests(TestCase):
         sheet.refresh_from_db()
         self.assertEqual(sheet.status, WorkTimeSheet.Status.SUBMITTED)
         self.assertRedirects(response, reverse("hr:work_time_sheet_print", args=[sheet.pk]))
+
+    @patch("hr.views.timezone.localdate", return_value=datetime.date(2026, 8, 4))
+    def test_work_time_sheet_print_marks_weekends_and_generated_date(self, localdate_mock):
+        employee = self.create_employee(117)
+        user = get_user_model().objects.create_user("stamparadneliste", password="test", employee=employee)
+        sheet = WorkTimeSheet.objects.create(employee=employee, month=5, year=2026, created_by=user, updated_by=user)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("hr:work_time_sheet_print", args=[sheet.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "background: #ffe6a3 !important")
+        self.assertContains(response, 'class="weekend ">2</th>')
+        self.assertContains(response, "Generisano u IMS-ERP aplikaciji dana 04.08.2026.")
 
     def test_own_profile_shows_work_time_sheets_tab(self):
         employee = self.create_employee(114)

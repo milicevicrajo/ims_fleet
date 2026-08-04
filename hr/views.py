@@ -1,5 +1,5 @@
 import calendar
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -34,6 +34,39 @@ from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine
 from .querysets import employee_list_queryset
 from .services.attendance import calculate_daily_hours_from_clock_events, get_clock_events, month_period
 from .sync import sync_employees_from_hr_view
+
+
+def _travel_orders_by_day(employee, year, month):
+    from fleet.models import PutniNalog
+
+    month_start = date(year, month, 1)
+    days_in_month = calendar.monthrange(year, month)[1]
+    month_end = date(year, month, days_in_month)
+    orders_by_day = {}
+    orders = (
+        PutniNalog.objects.filter(
+            employee=employee,
+            storniran=False,
+            travel_date__lte=month_end,
+        )
+        .select_related("job_code")
+        .order_by("travel_date", "order_number")
+    )
+
+    for order in orders:
+        order_days = max(order.number_of_days or 1, 1)
+        order_start = order.travel_date
+        order_end = order_start + timedelta(days=order_days - 1)
+        if order_end < month_start:
+            continue
+
+        current_date = max(order_start, month_start)
+        end_date = min(order_end, month_end)
+        while current_date <= end_date:
+            orders_by_day.setdefault(current_date, []).append(order)
+            current_date += timedelta(days=1)
+
+    return orders_by_day
 
 
 def _collect_user_activities(user):
@@ -425,6 +458,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             }
 
         daily_by_date = {item.date: item for item in daily_hours}
+        travel_orders_by_day = _travel_orders_by_day(employee, year, month)
         notes_by_date = {}
         for issue in issues:
             notes_by_date.setdefault(issue.date, []).append(issue)
@@ -452,6 +486,13 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             for issue in day_notes:
                 issue_time = issue.event_time.strftime("%H:%M") if hasattr(issue.event_time, "strftime") else issue.event_time
                 issue_messages.append(f"{issue_time} - {issue.message}")
+            travel_orders = [
+                {
+                    "order_number": order.order_number,
+                    "location": order.travel_location,
+                }
+                for order in travel_orders_by_day.get(work_date, [])
+            ]
 
             rows.append(
                 {
@@ -466,6 +507,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                     "status": status,
                     "status_class": status_class,
                     "issue_messages": issue_messages,
+                    "travel_orders": travel_orders,
                 }
             )
 
@@ -616,6 +658,7 @@ class WorkTimeSheetPrintView(LoginRequiredMixin, TemplateView):
                 "month_name": self.MONTH_LABELS[sheet.month - 1],
                 "days_in_month": days_in_month,
                 "working_days": working_days,
+                "generated_date": timezone.localdate(),
             }
         )
         return context

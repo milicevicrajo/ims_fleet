@@ -119,8 +119,18 @@
     .approval-col { width: 13mm; }
     .note-col { width: 24mm; }
     .left { text-align: left; }
-    .weekend { background: #fff2cc; }
-    .inactive { background: #e7e7e7; color: #777; }
+    .weekend,
+    th.weekend,
+    td.weekend,
+    tfoot td.weekend {
+      background: #ffe6a3 !important;
+    }
+    .inactive,
+    th.inactive,
+    td.inactive {
+      background: #e7e7e7 !important;
+      color: #777;
+    }
     tfoot th,
     tfoot td {
       background: #eaf2ff;
@@ -190,6 +200,13 @@
       right: 8mm;
       bottom: 6mm;
       font-size: 7pt;
+    }
+    .generated-footer {
+      position: absolute;
+      left: 8mm;
+      bottom: 6mm;
+      font-size: 7pt;
+      color: #333;
     }
     @media print {
       body * { visibility: hidden; }
@@ -360,6 +377,7 @@
       </div>
     </div>
 
+    <div class="generated-footer">Generisano u IMS-ERP aplikaciji dana {{ generated_date|date:"d.m.Y" }}.</div>
     <div class="footer-code">IZ 055</div>
   </section>
 </body>

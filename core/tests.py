@@ -285,6 +285,53 @@ class ActivityLogTests(TestCase):
 
 
 class TaskHistoryTests(TestCase):
+    def test_sync_summary_with_skipped_counts_is_success(self):
+        from ims_erp.celery import _task_status_from_result
+
+        status = _task_status_from_result(
+            "SUCCESS",
+            "Sync HR Employees: ukupno=837, kreirano=0, azurirano=332, "
+            "azurirano_neaktivni=34, preskoceno_neaktivni=471",
+        )
+
+        self.assertEqual(status, TaskHistory.STATUS_SUCCESS)
+
+    def test_putni_nalozi_sync_summary_with_skipped_counts_is_success(self):
+        from ims_erp.celery import _task_status_from_result
+
+        status = _task_status_from_result(
+            "SUCCESS",
+            "Sync isplaceno putni nalozi: view_redova=2795, pronadjeno_naloga=2397, "
+            "azurirano=47, preskoceno_bez_promene=2350",
+        )
+
+        self.assertEqual(status, TaskHistory.STATUS_SUCCESS)
+
+    def test_generic_sync_summary_with_preskoceno_is_success(self):
+        from ims_erp.celery import _task_status_from_result
+
+        summaries = [
+            "Fetch Service Data: Servisi sync: povuceno=0, kreirano=0, preskoceno=0, problemi=0",
+            "Fetch DDOR Insurance Data: DDOR sync: povuceno=30, kreirano=0, preskoceno=30, problemi=0",
+            "Fetch Requisition Data: Trebovanja sync: povuceno=0, kreirano=0, azurirano=0, bez_vozila=0, preskoceno=0, problemi=0",
+            "NIS sync zavrsen. Gorivo: redova 398, upisano 10, preskoceno 388. Transakcije: redova 398, upisano 10, preskoceno 388.",
+        ]
+
+        for summary in summaries:
+            with self.subTest(summary=summary):
+                self.assertEqual(
+                    _task_status_from_result("SUCCESS", summary),
+                    TaskHistory.STATUS_SUCCESS,
+                )
+
+    def test_explicit_skip_result_is_skipped(self):
+        from ims_erp.celery import _task_status_from_result
+
+        self.assertEqual(
+            _task_status_from_result("SUCCESS", "SKIP: task 'sync_hr_employees_task' je vec aktivan."),
+            TaskHistory.STATUS_SKIPPED,
+        )
+
     def test_task_history_list_renders_for_superuser(self):
         user = get_user_model().objects.create_superuser(
             username="task-admin",

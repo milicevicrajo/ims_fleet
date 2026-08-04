@@ -191,11 +191,18 @@
                   <span class="attendance-status attendance-status-{{ row.status_class }}">{{ row.status }}</span>
                 </td>
                 <td>
+                  {% if row.travel_orders %}
+                    {% for travel_order in row.travel_orders %}
+                      <div class="attendance-travel-order">
+                        Putni nalog {{ travel_order.order_number }}{% if travel_order.location %} - {{ travel_order.location }}{% endif %}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
                   {% if row.issue_messages %}
                     {% for message in row.issue_messages %}
                       <div>{{ message }}</div>
                     {% endfor %}
-                  {% else %}
+                  {% elif not row.travel_orders %}
                     <span class="text-muted">-</span>
                   {% endif %}
                 </td>
@@ -396,7 +403,8 @@
     font-size: 1.05rem;
   }
   .attendance-table-wrap {
-    max-height: 430px;
+    max-height: none;
+    overflow-y: visible;
     border: 1px solid #d9e2ec;
     border-radius: 6px;
   }
@@ -435,6 +443,10 @@
   .attendance-status-problem {
     color: #991b1b;
     background: #fee2e2;
+  }
+  .attendance-travel-order {
+    color: #075985;
+    font-weight: 700;
   }
   @media (max-width: 768px) {
     .work-sheet-toolbar {

@@ -58,10 +58,10 @@ def _task_display_name(task_name):
 
 def _task_status_from_result(state, retval):
     text = str(retval or "")
-    lowered = text.lower()
+    normalized = text.strip().lower()
     if state == "FAILURE":
         return "failure"
-    if text.startswith("SKIP:") or "task skipped" in lowered or "preskocen" in lowered or "presko" in lowered:
+    if normalized.startswith("skip:") or normalized.startswith("task skipped"):
         return "skipped"
     return "success"
 

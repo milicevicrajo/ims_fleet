@@ -40,7 +40,13 @@ from .views.vehicle_travel_orders import (
 )
 from .views.datatables import policies_datatable_data, requisitions_datatable_data, vehicle_travel_order_datatable_data
 from .sync.selenium import import_omv_transactions_from_csv
-from .sync.external import _merged_policy_defaults, _policy_data_from_invoice, _policy_data_is_complete, fetch_policy_data
+from .sync.external import (
+	_merged_policy_defaults,
+	_policy_data_from_invoice,
+	_policy_data_is_complete,
+	fetch_policy_data,
+	process_vehicle_retirements,
+)
 from .tasks import _run_policy_data_import_with_report
 
 
@@ -324,6 +330,21 @@ class ReportExportRowsTests(SimpleTestCase):
 				Decimal("7000.00"),
 			]],
 		)
+
+
+class VehicleRetirementSyncTests(SimpleTestCase):
+	@patch("fleet.sync.external.connections")
+	def test_vehicle_retirement_sync_reads_fleet_otpis_view(self, connections_mock):
+		cursor = connections_mock.__getitem__.return_value.cursor.return_value.__enter__.return_value
+		cursor.fetchall.return_value = []
+
+		result = process_vehicle_retirements()
+
+		cursor.execute.assert_called_once()
+		query = cursor.execute.call_args.args[0]
+		self.assertIn("FROM dbo.fleet_otpis", query)
+		self.assertNotIn("FROM dbo.otpis", query)
+		self.assertEqual(result, "Nema otpisanih vozila za obradu.")
 
 
 class VehicleCostPerKmMileageTests(TestCase):
