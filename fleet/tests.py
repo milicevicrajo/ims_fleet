@@ -1001,6 +1001,42 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 			is_active=True,
 		)
 
+	def create_vehicle(self, inventory_number, chassis_number):
+		return Vehicle.objects.create(
+			inventory_number=inventory_number,
+			chassis_number=chassis_number,
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number=chassis_number,
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category=Vehicle.Category.CARGO,
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+
+	def create_employee(self, code, first_name="Mika", last_name="Mikic"):
+		return Employee.objects.create(
+			employee_code=code,
+			first_name=first_name,
+			last_name=last_name,
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1990, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+
 	def test_new_travel_order_closes_previous_and_copies_start_mileage(self):
 		previous_order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 20),
@@ -1030,7 +1066,7 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 		self.assertEqual(previous_order.closed_at, new_order.created_at)
 		self.assertEqual(previous_order.end_mileage, new_order.start_mileage)
 
-	def test_new_travel_order_does_not_close_later_open_order(self):
+	def test_new_travel_order_rejects_later_open_vehicle_order(self):
 		later_open_order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 25),
 			start_mileage=70000,
@@ -1046,16 +1082,65 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 				"start_mileage": 70100,
 			}
 		)
-		self.assertTrue(form.is_valid(), form.errors)
 
-		view = VehicleTravelOrderCreateView()
-		response = view.form_valid(form)
-
+		self.assertFalse(form.is_valid())
+		self.assertIn("employee", form.errors)
+		self.assertIn("vehicle", form.errors)
 		later_open_order.refresh_from_db()
-
-		self.assertEqual(response.status_code, 302)
 		self.assertIsNone(later_open_order.closed_at)
-		self.assertIsNone(later_open_order.end_mileage)
+
+	def test_new_travel_order_rejects_same_day_employee_or_vehicle_duplicate(self):
+		other_vehicle = self.create_vehicle("INV-1B", "WF0XXXTEST000001B")
+		other_employee = self.create_employee(11)
+		VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			start_mileage=70000,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+
+		same_employee_form = VehicleTravelOrderForm(
+			data={
+				"created_at": "24.04.2026",
+				"employee": self.employee.pk,
+				"vehicle": other_vehicle.pk,
+				"start_mileage": 70100,
+			}
+		)
+		same_vehicle_form = VehicleTravelOrderForm(
+			data={
+				"created_at": "24.04.2026",
+				"employee": other_employee.pk,
+				"vehicle": self.vehicle.pk,
+				"start_mileage": 70100,
+			}
+		)
+
+		self.assertFalse(same_employee_form.is_valid())
+		self.assertIn("employee", same_employee_form.errors)
+		self.assertFalse(same_vehicle_form.is_valid())
+		self.assertIn("vehicle", same_vehicle_form.errors)
+
+	def test_new_travel_order_rejects_open_employee_order_for_another_vehicle(self):
+		other_vehicle = self.create_vehicle("INV-1C", "WF0XXXTEST000001C")
+		VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 20),
+			start_mileage=70000,
+			employee=self.employee,
+			vehicle=other_vehicle,
+		)
+
+		form = VehicleTravelOrderForm(
+			data={
+				"created_at": "24.04.2026",
+				"employee": self.employee.pk,
+				"vehicle": self.vehicle.pk,
+				"start_mileage": 70100,
+			}
+		)
+
+		self.assertFalse(form.is_valid())
+		self.assertIn("employee", form.errors)
 
 	def test_previous_order_create_closes_previous_with_next_order_date(self):
 		next_order = VehicleTravelOrder.objects.create(
@@ -1471,6 +1556,66 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 403)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[other_order.pk])).status_code, 403)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_previous_create", args=[own_order.pk])).status_code, 403)
+
+	def test_employee_list_and_data_show_only_own_vehicle_travel_orders(self):
+		own_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		other_vehicle = Vehicle.objects.create(
+			inventory_number="INV-502",
+			chassis_number="WF0XXXTEST0000502",
+			brand="Dacia",
+			model="Dokker",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1599.00"),
+			engine_number="ENG-502",
+			weight=Decimal("1500.00"),
+			engine_power=Decimal("88.00"),
+			load_capacity=Decimal("500.00"),
+			category=Vehicle.Category.CARGO,
+			maximum_permissible_weight=Decimal("2000.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 25),
+			employee=self.other_employee,
+			vehicle=other_vehicle,
+		)
+		self.client.force_login(self.user)
+
+		list_response = self.client.get(reverse("vehicle_travel_order_list"))
+		self.assertEqual(list_response.status_code, 200)
+		self.assertEqual(list(list_response.context["employees"]), [self.employee])
+		self.assertEqual(list(list_response.context["vehicles"]), [self.vehicle])
+
+		data_response = self.client.get(
+			reverse("vehicle_travel_order_data"),
+			{"draw": "1", "start": "0", "length": "10"},
+		)
+		self.assertEqual(data_response.status_code, 200)
+		rows = data_response.json()["data"]
+		self.assertEqual(len(rows), 1)
+		self.assertIn(f"PN {own_order.pn_number}", rows[0]["pn_number"])
+
+		filtered_response = self.client.get(
+			reverse("vehicle_travel_order_data"),
+			{
+				"draw": "1",
+				"start": "0",
+				"length": "10",
+				"employee": self.other_employee.pk,
+			},
+		)
+		self.assertEqual(filtered_response.status_code, 200)
+		self.assertEqual(filtered_response.json()["data"], [])
 
 
 class VehicleTravelOrderConsumptionTests(TestCase):

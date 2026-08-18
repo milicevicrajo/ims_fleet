@@ -151,10 +151,19 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
         ctx["selected_status"] = self.request.GET.get("status", "")
         ctx["selected_vehicle"] = self.request.GET.get("vehicle", "")
         ctx["selected_employee"] = self.request.GET.get("employee", "")
-        ctx["vehicles"] = Vehicle.objects.order_by("brand", "model", "inventory_number")
-        ctx["employees"] = Employee.objects.filter(
-            vehicle_travel_orders__isnull=False
-        ).distinct().order_by("last_name", "first_name")
+        if _has_vehicle_travel_order_broad_access(self.request.user):
+            ctx["vehicles"] = Vehicle.objects.order_by("brand", "model", "inventory_number")
+            ctx["employees"] = Employee.objects.filter(
+                vehicle_travel_orders__isnull=False
+            ).distinct().order_by("last_name", "first_name")
+        else:
+            own_orders = _vehicle_travel_order_base_qs(self.request)
+            ctx["vehicles"] = Vehicle.objects.filter(
+                vehicle_travel_orders__in=own_orders,
+            ).distinct().order_by("brand", "model", "inventory_number")
+            ctx["employees"] = Employee.objects.filter(
+                pk=getattr(self.request.user, "employee_id", None),
+            )
         ctx["can_create_vehicle_travel_order"] = (
             _has_vehicle_travel_order_broad_access(self.request.user)
             or _can_employee_access_own_vehicle_travel_order(self.request.user, "vehicle_travel_order_create")
