@@ -212,7 +212,6 @@ def sync_permission_codes():
         "vehicle_travel_order_data",
         "vehicle_travel_order_create",
         "vehicle_travel_order_detail",
-        "vehicle_travel_order_update",
         "vehicle_travel_order_fuel_report",
         "vehicle_travel_order_print_open",
         "vehicle_travel_order_request",
@@ -231,6 +230,10 @@ def sync_permission_codes():
         zaposleni_role.save(update_fields=["name", "is_active"])
     for perm in PermissionCode.objects.filter(code__in=zaposleni_codes):
         RolePermission.objects.get_or_create(role=zaposleni_role, permission=perm)
+    RolePermission.objects.filter(
+        role=zaposleni_role,
+        permission__code="vehicle_travel_order_update",
+    ).delete()
 
     sekretarijat_group_users_synced = 0
     sekretarijat_group = Group.objects.filter(name__iexact="Sekretarijat").first()

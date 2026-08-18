@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
@@ -26,7 +27,6 @@ EMPLOYEE_VEHICLE_TRAVEL_ORDER_PERMISSIONS = {
     "vehicle_travel_order_data",
     "vehicle_travel_order_create",
     "vehicle_travel_order_detail",
-    "vehicle_travel_order_update",
     "vehicle_travel_order_request",
     "vehicle_travel_order_fuel_report",
     "vehicle_travel_order_print_open",
@@ -92,8 +92,11 @@ def _can_employee_access_own_vehicle_travel_order(user, permission_code):
 def _vehicle_travel_order_base_qs(request):
     qs = VehicleTravelOrder.objects.select_related("vehicle", "employee")
     user = request.user
-    if _is_vehicle_travel_order_employee_self_service(user):
-        return qs.filter(employee_id=user.employee_id)
+    if _is_vehicle_travel_order_employee_self_service(user) and _user_has_employee_role_permission(
+        user,
+        "vehicle_travel_order_list",
+    ):
+        return qs
     if _has_vehicle_travel_order_broad_access(user):
         return qs
     if _can_employee_access_own_vehicle_travel_order(user, "vehicle_travel_order_list"):
@@ -107,11 +110,13 @@ class VehicleTravelOrderEmployeeAccessMixin(RolePermissionRequiredMixin):
         if not user.is_authenticated:
             return False
         permission_code = self.get_permission_code()
+        if _is_vehicle_travel_order_employee_self_service(user) and permission_code == "vehicle_travel_order_update":
+            return False
         if _is_vehicle_travel_order_employee_self_service(user) and permission_code in EMPLOYEE_VEHICLE_TRAVEL_ORDER_PERMISSIONS:
             if permission_code == "vehicle_travel_order_create":
                 return True
             pk = self.kwargs.get("pk")
-            return VehicleTravelOrder.objects.filter(pk=pk, employee_id=user.employee_id).exists()
+            return VehicleTravelOrder.objects.filter(pk=pk).exists()
         if user.is_superuser or _user_has_non_employee_role_permission(user, permission_code):
             return True
         if permission_code == "vehicle_travel_order_create":
@@ -141,15 +146,41 @@ def can_print_previous_vehicle_travel_order_report(user, order, previous_order):
         return False
     if user.is_superuser or _user_has_non_employee_role_permission(user, "vehicle_travel_order_fuel_report"):
         return True
-    if not (
+    if (
         _is_vehicle_travel_order_employee_self_service(user)
-        and order
-        and order.employee_id == getattr(user, "employee_id", None)
         and _user_has_employee_role_permission(user, "vehicle_travel_order_fuel_report")
     ):
-        return False
+        return True
     expected_previous_order = get_previous_vehicle_travel_order(order)
     return bool(expected_previous_order and expected_previous_order.pk == previous_order.pk)
+
+
+def vehicle_travel_order_form_manual():
+    return mark_safe(
+        """
+        <h5 class="mb-3">Uputstvo za zaduzenje vozila</h5>
+        <ol class="mb-3">
+          <li><strong>PN broj</strong> sistem dodeljuje automatski. Polje se ne popunjava rucno.</li>
+          <li><strong>Datum otvaranja</strong> je datum od kada zaposleni preuzima auto.</li>
+          <li><strong>Zaposleni</strong> je lice na koje se otvara zaduzenje. Za ulogu Zaposleni sistem automatski postavlja prijavljenog korisnika.</li>
+          <li><strong>Vozilo</strong> je auto koji se zaduzuje. Izaberite tacno vozilo iz liste.</li>
+          <li><strong>Pocetna kilometraza</strong> je stanje kilometraze na dan preuzimanja vozila.</li>
+        </ol>
+        <h6 class="mb-2">Pravila pri cuvanju</h6>
+        <ul class="mb-3">
+          <li>Za istog zaposlenog ne moze postojati vise od jednog otvorenog zaduzenja.</li>
+          <li>Za isto vozilo ne moze postojati vise od jednog otvorenog zaduzenja.</li>
+          <li>Isti zaposleni ne moze imati dva zaduzenja na isti datum.</li>
+          <li>Isto vozilo ne moze imati dva zaduzenja na isti datum.</li>
+        </ul>
+        <h6 class="mb-2">Sta sistem radi automatski</h6>
+        <ul class="mb-0">
+          <li>Kada se otvori novo zaduzenje za auto koji ima ranije otvoreno zaduzenje, prethodno zaduzenje za taj auto se zatvara datumom novog naloga.</li>
+          <li>Ako unesete pocetnu kilometrazu na novom nalogu, ona se upisuje kao krajnja kilometraza prethodnog zaduzenja za isti auto.</li>
+          <li>Posle cuvanja otvara se detalj zaduzenja, gde mogu da se stampaju nalog i obracun.</li>
+        </ul>
+        """
+    )
 
 
 class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
@@ -184,8 +215,6 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
         is_employee_self_service = _is_vehicle_travel_order_employee_self_service(user)
         own_employee_id = getattr(user, "employee_id", None)
         selected_employee = self.request.GET.get("employee", "")
-        if is_employee_self_service and own_employee_id:
-            selected_employee = str(own_employee_id)
 
         ctx["title"] = "Zaduzenja vozila"
         ctx["status"] = ""
@@ -193,16 +222,9 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
         ctx["selected_vehicle"] = self.request.GET.get("vehicle", "")
         ctx["selected_employee"] = selected_employee
         ctx["is_employee_self_service"] = is_employee_self_service
+        ctx["limit_employee_filter_to_self"] = False
         ctx["own_employee_id"] = own_employee_id
-        if is_employee_self_service:
-            own_orders = _vehicle_travel_order_base_qs(self.request)
-            ctx["vehicles"] = Vehicle.objects.filter(
-                vehicle_travel_orders__in=own_orders,
-            ).distinct().order_by("brand", "model", "inventory_number")
-            ctx["employees"] = Employee.objects.filter(
-                pk=own_employee_id,
-            )
-        elif has_broad_access:
+        if has_broad_access or is_employee_self_service:
             ctx["vehicles"] = Vehicle.objects.order_by("brand", "model", "inventory_number")
             employees = Employee.objects.filter(
                 vehicle_travel_orders__isnull=False
@@ -344,7 +366,10 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
                 "fuel_rows": fuel_rows,
                 "first_fuel_page": first_fuel_page,
                 "second_fuel_page": second_fuel_page,
-                "can_update_vehicle_travel_order": user_has_role_permission(self.request.user, "vehicle_travel_order_update"),
+                "can_update_vehicle_travel_order": user_has_role_permission(
+                    self.request.user,
+                    "vehicle_travel_order_update",
+                ) and not _is_vehicle_travel_order_employee_self_service(self.request.user),
                 "can_close_vehicle_travel_order": user_has_role_permission(self.request.user, "vehicle_travel_order_close"),
                 "can_delete_vehicle_travel_order": user_has_role_permission(self.request.user, "vehicle_travel_order_delete"),
                 "can_create_previous_vehicle_travel_order": user_has_role_permission(
@@ -403,6 +428,7 @@ class VehicleTravelOrderCreateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Novi putni nalog (vozilo)"
         ctx["submit_button_label"] = "Sacuvaj"
+        ctx["manual"] = vehicle_travel_order_form_manual()
         return ctx
 
     def get_form_kwargs(self):
@@ -450,6 +476,7 @@ class VehicleTravelOrderUpdateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Izmena putnog naloga (vozilo)"
         ctx["submit_button_label"] = "Sacuvaj izmene"
+        ctx["manual"] = vehicle_travel_order_form_manual()
         return ctx
 
     def get_form_kwargs(self):

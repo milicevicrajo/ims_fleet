@@ -23,6 +23,7 @@ from ..support.fuel import (
 from .lease import LONG_TERM_LEASE_TYPES, LeaseListView
 from .vehicles import _vehicle_list_base_queryset
 from .vehicle_travel_orders import (
+    _is_vehicle_travel_order_employee_self_service,
     _vehicle_travel_order_base_qs,
     can_print_previous_vehicle_travel_order_report,
     get_previous_vehicle_travel_order,
@@ -205,7 +206,10 @@ def vehicle_travel_order_datatable_data(request):
     def row(order):
         previous = get_previous_vehicle_travel_order(order)
         actions = []
-        can_update = user_has_role_permission(request.user, "vehicle_travel_order_update")
+        can_update = user_has_role_permission(
+            request.user,
+            "vehicle_travel_order_update",
+        ) and not _is_vehicle_travel_order_employee_self_service(request.user)
         can_close = user_has_role_permission(request.user, "vehicle_travel_order_close")
         can_delete = user_has_role_permission(request.user, "vehicle_travel_order_delete")
         can_print_request = user_has_role_permission(request.user, "vehicle_travel_order_request")

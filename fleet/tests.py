@@ -1510,7 +1510,6 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 				"vehicle_travel_order_data",
 				"vehicle_travel_order_create",
 				"vehicle_travel_order_detail",
-				"vehicle_travel_order_update",
 				"vehicle_travel_order_request",
 				"vehicle_travel_order_fuel_report",
 				"vehicle_travel_order_print_open",
@@ -1522,6 +1521,11 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 
 	def test_employee_create_vehicle_travel_order_is_for_logged_in_employee(self):
 		self.client.force_login(self.user)
+
+		form_response = self.client.get(reverse("vehicle_travel_order_create"))
+		self.assertEqual(form_response.status_code, 200)
+		self.assertContains(form_response, "Uputstvo za zaduzenje vozila")
+		self.assertContains(form_response, "Sta sistem radi automatski")
 
 		response = self.client.post(
 			reverse("vehicle_travel_order_create"),
@@ -1537,7 +1541,7 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.assertRedirects(response, reverse("vehicle_travel_order_detail", args=[order.pk]))
 		self.assertEqual(order.employee, self.employee)
 
-	def test_employee_can_open_own_detail_and_print_pages_only(self):
+	def test_employee_can_open_any_detail_and_print_pages_but_not_update(self):
 		own_order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 24),
 			employee=self.employee,
@@ -1554,13 +1558,15 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_request", args=[own_order.pk])).status_code, 200)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_fuel_report", args=[own_order.pk])).status_code, 200)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[own_order.pk])).status_code, 200)
-		self.assertEqual(self.client.get(reverse("vehicle_travel_order_update", args=[own_order.pk])).status_code, 200)
-		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 403)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_update", args=[own_order.pk])).status_code, 403)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_request", args=[other_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_fuel_report", args=[other_order.pk])).status_code, 200)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_update", args=[other_order.pk])).status_code, 403)
-		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[other_order.pk])).status_code, 403)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[other_order.pk])).status_code, 200)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_previous_create", args=[own_order.pk])).status_code, 403)
 
-	def test_employee_update_keeps_order_on_logged_in_employee(self):
+	def test_employee_cannot_update_vehicle_travel_order(self):
 		order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 24),
 			employee=self.employee,
@@ -1579,10 +1585,10 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 			},
 		)
 
-		self.assertRedirects(response, reverse("vehicle_travel_order_detail", args=[order.pk]))
+		self.assertEqual(response.status_code, 403)
 		order.refresh_from_db()
 		self.assertEqual(order.employee, self.employee)
-		self.assertEqual(order.start_mileage, 1234)
+		self.assertEqual(order.start_mileage, 1000)
 
 	def test_employee_can_print_previous_report_for_own_current_order(self):
 		previous_order = VehicleTravelOrder.objects.create(
@@ -1604,9 +1610,10 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		)
 		self.assertEqual(data_response.status_code, 200)
 		rows = data_response.json()["data"]
-		self.assertEqual(len(rows), 1)
-		self.assertIn("Prethodni obracun", rows[0]["actions"])
-		self.assertIn(f"for_order={current_order.pk}", rows[0]["actions"])
+		self.assertEqual(len(rows), 2)
+		current_row = next(row for row in rows if f"PN {current_order.pn_number}" in row["pn_number"])
+		self.assertIn("Prethodni obracun", current_row["actions"])
+		self.assertIn(f"for_order={current_order.pk}", current_row["actions"])
 
 		detail_response = self.client.get(reverse("vehicle_travel_order_detail", args=[current_order.pk]))
 		self.assertEqual(detail_response.status_code, 200)
@@ -1614,10 +1621,10 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.assertNotContains(detail_response, "nije dostupan")
 
 		report_url = reverse("vehicle_travel_order_fuel_report", args=[previous_order.pk])
-		self.assertEqual(self.client.get(report_url).status_code, 403)
+		self.assertEqual(self.client.get(report_url).status_code, 200)
 		self.assertEqual(self.client.get(f"{report_url}?for_order={current_order.pk}").status_code, 200)
 
-	def test_employee_list_and_data_show_only_own_vehicle_travel_orders(self):
+	def test_employee_list_and_data_show_all_vehicle_travel_orders_without_update_action(self):
 		own_order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 24),
 			employee=self.employee,
@@ -1644,7 +1651,7 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 			purchase_value=Decimal("10000.00"),
 			value=Decimal("9000.00"),
 		)
-		VehicleTravelOrder.objects.create(
+		other_order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 25),
 			employee=self.other_employee,
 			vehicle=other_vehicle,
@@ -1653,10 +1660,11 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 
 		list_response = self.client.get(reverse("vehicle_travel_order_list"))
 		self.assertEqual(list_response.status_code, 200)
-		self.assertEqual(list(list_response.context["employees"]), [self.employee])
-		self.assertEqual(list(list_response.context["vehicles"]), [self.vehicle])
-		self.assertEqual(list_response.context["selected_employee"], str(self.employee.pk))
+		self.assertEqual(set(list_response.context["employees"]), {self.employee, self.other_employee})
+		self.assertEqual(set(list_response.context["vehicles"]), {self.vehicle, other_vehicle})
+		self.assertEqual(list_response.context["selected_employee"], "")
 		self.assertTrue(list_response.context["is_employee_self_service"])
+		self.assertFalse(list_response.context["limit_employee_filter_to_self"])
 
 		data_response = self.client.get(
 			reverse("vehicle_travel_order_data"),
@@ -1664,9 +1672,10 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		)
 		self.assertEqual(data_response.status_code, 200)
 		rows = data_response.json()["data"]
-		self.assertEqual(len(rows), 1)
-		self.assertIn(f"PN {own_order.pn_number}", rows[0]["pn_number"])
-		self.assertIn("Izmeni", rows[0]["actions"])
+		self.assertEqual(len(rows), 2)
+		self.assertTrue(any(f"PN {own_order.pn_number}" in row["pn_number"] for row in rows))
+		self.assertTrue(any(f"PN {other_order.pn_number}" in row["pn_number"] for row in rows))
+		self.assertTrue(all("Izmeni" not in row["actions"] for row in rows))
 
 		filtered_response = self.client.get(
 			reverse("vehicle_travel_order_data"),
@@ -1678,7 +1687,9 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 			},
 		)
 		self.assertEqual(filtered_response.status_code, 200)
-		self.assertEqual(filtered_response.json()["data"], [])
+		filtered_rows = filtered_response.json()["data"]
+		self.assertEqual(len(filtered_rows), 1)
+		self.assertIn(f"PN {other_order.pn_number}", filtered_rows[0]["pn_number"])
 
 		closed_filter_response = self.client.get(
 			reverse("vehicle_travel_order_data"),
@@ -1701,11 +1712,11 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(list(response.context["employees"]), [self.employee])
-		self.assertEqual(response.context["selected_employee"], str(self.employee.pk))
+		self.assertEqual(response.context["selected_employee"], "")
 		self.assertContains(response, "Peric Petar")
-		self.assertNotContains(response, "Svi zaposleni")
+		self.assertContains(response, "Svi zaposleni")
 
-	def test_employee_role_filters_own_orders_even_with_additional_broad_role(self):
+	def test_employee_role_with_additional_broad_role_can_view_all_but_not_update(self):
 		broad_role = Role.objects.create(name="Centar zaduzenja", slug="centar-zaduzenja")
 		broad_role.permissions.add(
 			PermissionCode.objects.get(code="vehicle_travel_order_list"),
@@ -1748,8 +1759,8 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 
 		list_response = self.client.get(reverse("vehicle_travel_order_list"))
 		self.assertEqual(list_response.status_code, 200)
-		self.assertEqual(list(list_response.context["employees"]), [self.employee])
-		self.assertEqual(list_response.context["selected_employee"], str(self.employee.pk))
+		self.assertEqual(set(list_response.context["employees"]), {self.employee, self.other_employee})
+		self.assertEqual(list_response.context["selected_employee"], "")
 
 		data_response = self.client.get(
 			reverse("vehicle_travel_order_data"),
@@ -1757,9 +1768,12 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		)
 		self.assertEqual(data_response.status_code, 200)
 		rows = data_response.json()["data"]
-		self.assertEqual(len(rows), 1)
-		self.assertIn(f"PN {own_order.pn_number}", rows[0]["pn_number"])
-		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 403)
+		self.assertEqual(len(rows), 2)
+		self.assertTrue(any(f"PN {own_order.pn_number}" in row["pn_number"] for row in rows))
+		self.assertTrue(any(f"PN {other_order.pn_number}" in row["pn_number"] for row in rows))
+		self.assertTrue(all("Izmeni" not in row["actions"] for row in rows))
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_update", args=[other_order.pk])).status_code, 403)
 
 
 class VehicleTravelOrderConsumptionTests(TestCase):

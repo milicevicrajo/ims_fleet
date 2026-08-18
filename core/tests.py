@@ -158,10 +158,10 @@ class PermissionCodeSyncTests(TestCase):
         codes = set(role.permissions.values_list("code", flat=True))
         self.assertIn("vehicle_travel_order_create", codes)
         self.assertIn("vehicle_travel_order_detail", codes)
-        self.assertIn("vehicle_travel_order_update", codes)
         self.assertIn("vehicle_travel_order_request", codes)
         self.assertIn("vehicle_travel_order_fuel_report", codes)
         self.assertNotIn("putninalog_create", codes)
+        self.assertNotIn("vehicle_travel_order_update", codes)
 
     def test_sync_permission_codes_grants_isplate_permissions_to_blagajna(self):
         from .permissions import sync_permission_codes

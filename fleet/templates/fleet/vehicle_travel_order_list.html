@@ -63,8 +63,8 @@
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label mb-1" for="filter-employee">Zaposleni</label>
-              <select id="filter-employee" name="employee" class="form-select form-control select2-method" data-own-employee-id="{% if is_employee_self_service %}{{ own_employee_id|default:'' }}{% endif %}" {% if is_employee_self_service %}disabled{% endif %}>
-                {% if not is_employee_self_service %}
+              <select id="filter-employee" name="employee" class="form-select form-control select2-method" data-own-employee-id="{% if limit_employee_filter_to_self %}{{ own_employee_id|default:'' }}{% endif %}" {% if limit_employee_filter_to_self %}disabled{% endif %}>
+                {% if not limit_employee_filter_to_self %}
                   <option value="">Svi zaposleni</option>
                 {% endif %}
                 {% for employee in employees %}
