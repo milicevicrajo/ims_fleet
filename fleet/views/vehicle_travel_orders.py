@@ -26,6 +26,7 @@ EMPLOYEE_VEHICLE_TRAVEL_ORDER_PERMISSIONS = {
     "vehicle_travel_order_data",
     "vehicle_travel_order_create",
     "vehicle_travel_order_detail",
+    "vehicle_travel_order_update",
     "vehicle_travel_order_request",
     "vehicle_travel_order_fuel_report",
     "vehicle_travel_order_print_open",
@@ -59,6 +60,15 @@ def _user_has_employee_role_permission(user, permission_code):
     ).exists()
 
 
+def _is_vehicle_travel_order_employee_self_service(user):
+    if not user.is_authenticated or user.is_superuser:
+        return False
+    return bool(
+        getattr(user, "employee_id", None)
+        and user.roles.filter(slug=EMPLOYEE_ROLE_SLUG, is_active=True).exists()
+    )
+
+
 def _has_vehicle_travel_order_broad_access(user):
     if not user.is_authenticated:
         return False
@@ -82,6 +92,8 @@ def _can_employee_access_own_vehicle_travel_order(user, permission_code):
 def _vehicle_travel_order_base_qs(request):
     qs = VehicleTravelOrder.objects.select_related("vehicle", "employee")
     user = request.user
+    if _is_vehicle_travel_order_employee_self_service(user):
+        return qs.filter(employee_id=user.employee_id)
     if _has_vehicle_travel_order_broad_access(user):
         return qs
     if _can_employee_access_own_vehicle_travel_order(user, "vehicle_travel_order_list"):
@@ -95,6 +107,11 @@ class VehicleTravelOrderEmployeeAccessMixin(RolePermissionRequiredMixin):
         if not user.is_authenticated:
             return False
         permission_code = self.get_permission_code()
+        if _is_vehicle_travel_order_employee_self_service(user) and permission_code in EMPLOYEE_VEHICLE_TRAVEL_ORDER_PERMISSIONS:
+            if permission_code == "vehicle_travel_order_create":
+                return True
+            pk = self.kwargs.get("pk")
+            return VehicleTravelOrder.objects.filter(pk=pk, employee_id=user.employee_id).exists()
         if user.is_superuser or _user_has_non_employee_role_permission(user, permission_code):
             return True
         if permission_code == "vehicle_travel_order_create":
@@ -146,27 +163,48 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        has_broad_access = _has_vehicle_travel_order_broad_access(user)
+        is_employee_self_service = _is_vehicle_travel_order_employee_self_service(user)
+        own_employee_id = getattr(user, "employee_id", None)
+        selected_employee = self.request.GET.get("employee", "")
+        if is_employee_self_service and own_employee_id:
+            selected_employee = str(own_employee_id)
+
         ctx["title"] = "Zaduzenja vozila"
         ctx["status"] = ""
         ctx["selected_status"] = self.request.GET.get("status", "")
         ctx["selected_vehicle"] = self.request.GET.get("vehicle", "")
-        ctx["selected_employee"] = self.request.GET.get("employee", "")
-        if _has_vehicle_travel_order_broad_access(self.request.user):
-            ctx["vehicles"] = Vehicle.objects.order_by("brand", "model", "inventory_number")
+        ctx["selected_employee"] = selected_employee
+        ctx["is_employee_self_service"] = is_employee_self_service
+        ctx["own_employee_id"] = own_employee_id
+        if is_employee_self_service:
+            own_orders = _vehicle_travel_order_base_qs(self.request)
+            ctx["vehicles"] = Vehicle.objects.filter(
+                vehicle_travel_orders__in=own_orders,
+            ).distinct().order_by("brand", "model", "inventory_number")
             ctx["employees"] = Employee.objects.filter(
+                pk=own_employee_id,
+            )
+        elif has_broad_access:
+            ctx["vehicles"] = Vehicle.objects.order_by("brand", "model", "inventory_number")
+            employees = Employee.objects.filter(
                 vehicle_travel_orders__isnull=False
-            ).distinct().order_by("last_name", "first_name")
+            )
+            if own_employee_id:
+                employees = employees | Employee.objects.filter(pk=own_employee_id)
+            ctx["employees"] = employees.distinct().order_by("last_name", "first_name")
         else:
             own_orders = _vehicle_travel_order_base_qs(self.request)
             ctx["vehicles"] = Vehicle.objects.filter(
                 vehicle_travel_orders__in=own_orders,
             ).distinct().order_by("brand", "model", "inventory_number")
             ctx["employees"] = Employee.objects.filter(
-                pk=getattr(self.request.user, "employee_id", None),
+                pk=own_employee_id,
             )
         ctx["can_create_vehicle_travel_order"] = (
-            _has_vehicle_travel_order_broad_access(self.request.user)
-            or _can_employee_access_own_vehicle_travel_order(self.request.user, "vehicle_travel_order_create")
+            has_broad_access
+            or _can_employee_access_own_vehicle_travel_order(user, "vehicle_travel_order_create")
         )
         return ctx
 
@@ -338,7 +376,10 @@ class VehicleTravelOrderCreateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
-        kwargs["limit_to_user_employee"] = not _has_vehicle_travel_order_broad_access(self.request.user)
+        kwargs["limit_to_user_employee"] = (
+            _is_vehicle_travel_order_employee_self_service(self.request.user)
+            or not _has_vehicle_travel_order_broad_access(self.request.user)
+        )
         return kwargs
 
     def form_valid(self, form):
@@ -360,7 +401,7 @@ class VehicleTravelOrderCreateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
         return reverse("vehicle_travel_order_detail", args=[self.object.pk])
 
 
-class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+class VehicleTravelOrderUpdateView(VehicleTravelOrderEmployeeAccessMixin, LoginRequiredMixin, UpdateView):
     model = VehicleTravelOrder
     form_class = VehicleTravelOrderForm
     template_name = "fleet/generic_form.html"
@@ -382,6 +423,7 @@ class VehicleTravelOrderUpdateView(RolePermissionRequiredMixin, LoginRequiredMix
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
+        kwargs["limit_to_user_employee"] = _is_vehicle_travel_order_employee_self_service(self.request.user)
         return kwargs
 
     def get_success_url(self):

@@ -212,6 +212,7 @@ def sync_permission_codes():
         "vehicle_travel_order_data",
         "vehicle_travel_order_create",
         "vehicle_travel_order_detail",
+        "vehicle_travel_order_update",
         "vehicle_travel_order_fuel_report",
         "vehicle_travel_order_print_open",
         "vehicle_travel_order_request",

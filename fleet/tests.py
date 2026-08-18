@@ -1510,6 +1510,7 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 				"vehicle_travel_order_data",
 				"vehicle_travel_order_create",
 				"vehicle_travel_order_detail",
+				"vehicle_travel_order_update",
 				"vehicle_travel_order_request",
 				"vehicle_travel_order_fuel_report",
 				"vehicle_travel_order_print_open",
@@ -1553,9 +1554,35 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_request", args=[own_order.pk])).status_code, 200)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_fuel_report", args=[own_order.pk])).status_code, 200)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[own_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_update", args=[own_order.pk])).status_code, 200)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 403)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_update", args=[other_order.pk])).status_code, 403)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[other_order.pk])).status_code, 403)
 		self.assertEqual(self.client.get(reverse("vehicle_travel_order_previous_create", args=[own_order.pk])).status_code, 403)
+
+	def test_employee_update_keeps_order_on_logged_in_employee(self):
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+			start_mileage=1000,
+		)
+		self.client.force_login(self.user)
+
+		response = self.client.post(
+			reverse("vehicle_travel_order_update", args=[order.pk]),
+			{
+				"created_at": "24.04.2026",
+				"employee": self.other_employee.pk,
+				"vehicle": self.vehicle.pk,
+				"start_mileage": 1234,
+			},
+		)
+
+		self.assertRedirects(response, reverse("vehicle_travel_order_detail", args=[order.pk]))
+		order.refresh_from_db()
+		self.assertEqual(order.employee, self.employee)
+		self.assertEqual(order.start_mileage, 1234)
 
 	def test_employee_list_and_data_show_only_own_vehicle_travel_orders(self):
 		own_order = VehicleTravelOrder.objects.create(
@@ -1595,6 +1622,8 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.assertEqual(list_response.status_code, 200)
 		self.assertEqual(list(list_response.context["employees"]), [self.employee])
 		self.assertEqual(list(list_response.context["vehicles"]), [self.vehicle])
+		self.assertEqual(list_response.context["selected_employee"], str(self.employee.pk))
+		self.assertTrue(list_response.context["is_employee_self_service"])
 
 		data_response = self.client.get(
 			reverse("vehicle_travel_order_data"),
@@ -1604,6 +1633,7 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		rows = data_response.json()["data"]
 		self.assertEqual(len(rows), 1)
 		self.assertIn(f"PN {own_order.pn_number}", rows[0]["pn_number"])
+		self.assertIn("Izmeni", rows[0]["actions"])
 
 		filtered_response = self.client.get(
 			reverse("vehicle_travel_order_data"),
@@ -1616,6 +1646,87 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		)
 		self.assertEqual(filtered_response.status_code, 200)
 		self.assertEqual(filtered_response.json()["data"], [])
+
+		closed_filter_response = self.client.get(
+			reverse("vehicle_travel_order_data"),
+			{"draw": "1", "start": "0", "length": "10", "status": "closed"},
+		)
+		self.assertEqual(closed_filter_response.status_code, 200)
+		self.assertEqual(closed_filter_response.json()["data"], [])
+
+		vehicle_filter_response = self.client.get(
+			reverse("vehicle_travel_order_data"),
+			{"draw": "1", "start": "0", "length": "10", "vehicle": self.vehicle.pk},
+		)
+		self.assertEqual(vehicle_filter_response.status_code, 200)
+		self.assertEqual(len(vehicle_filter_response.json()["data"]), 1)
+
+	def test_employee_list_filter_shows_logged_in_employee_without_orders(self):
+		self.client.force_login(self.user)
+
+		response = self.client.get(reverse("vehicle_travel_order_list"))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(list(response.context["employees"]), [self.employee])
+		self.assertEqual(response.context["selected_employee"], str(self.employee.pk))
+		self.assertContains(response, "Peric Petar")
+		self.assertNotContains(response, "Svi zaposleni")
+
+	def test_employee_role_filters_own_orders_even_with_additional_broad_role(self):
+		broad_role = Role.objects.create(name="Centar zaduzenja", slug="centar-zaduzenja")
+		broad_role.permissions.add(
+			PermissionCode.objects.get(code="vehicle_travel_order_list"),
+			PermissionCode.objects.get(code="vehicle_travel_order_data"),
+			PermissionCode.objects.get(code="vehicle_travel_order_detail"),
+		)
+		self.user.roles.add(broad_role)
+		own_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		other_vehicle = Vehicle.objects.create(
+			inventory_number="INV-503",
+			chassis_number="WF0XXXTEST0000503",
+			brand="Renault",
+			model="Kangoo",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1599.00"),
+			engine_number="ENG-503",
+			weight=Decimal("1500.00"),
+			engine_power=Decimal("88.00"),
+			load_capacity=Decimal("500.00"),
+			category=Vehicle.Category.CARGO,
+			maximum_permissible_weight=Decimal("2000.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		other_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 25),
+			employee=self.other_employee,
+			vehicle=other_vehicle,
+		)
+		self.client.force_login(self.user)
+
+		list_response = self.client.get(reverse("vehicle_travel_order_list"))
+		self.assertEqual(list_response.status_code, 200)
+		self.assertEqual(list(list_response.context["employees"]), [self.employee])
+		self.assertEqual(list_response.context["selected_employee"], str(self.employee.pk))
+
+		data_response = self.client.get(
+			reverse("vehicle_travel_order_data"),
+			{"draw": "1", "start": "0", "length": "10"},
+		)
+		self.assertEqual(data_response.status_code, 200)
+		rows = data_response.json()["data"]
+		self.assertEqual(len(rows), 1)
+		self.assertIn(f"PN {own_order.pn_number}", rows[0]["pn_number"])
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 403)
 
 
 class VehicleTravelOrderConsumptionTests(TestCase):

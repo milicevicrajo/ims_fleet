@@ -50,7 +50,7 @@
   <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body border-bottom">
-        <form method="get" class="assignment-filter">
+        <form method="get" class="assignment-filter" id="vehicle-travel-order-filter-form">
           <div class="row g-2 align-items-end">
             <div class="col-12 col-md-4">
               <label class="form-label mb-1" for="filter-vehicle">Auto</label>
@@ -63,8 +63,10 @@
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label mb-1" for="filter-employee">Zaposleni</label>
-              <select id="filter-employee" name="employee" class="form-select form-control select2-method">
-                <option value="">Svi zaposleni</option>
+              <select id="filter-employee" name="employee" class="form-select form-control select2-method" data-own-employee-id="{% if is_employee_self_service %}{{ own_employee_id|default:'' }}{% endif %}" {% if is_employee_self_service %}disabled{% endif %}>
+                {% if not is_employee_self_service %}
+                  <option value="">Svi zaposleni</option>
+                {% endif %}
                 {% for employee in employees %}
                   <option value="{{ employee.pk }}" {% if selected_employee == employee.pk|stringformat:"s" %}selected{% endif %}>{{ employee }}</option>
                 {% endfor %}
@@ -80,7 +82,7 @@
             </div>
             <div class="col-12 col-md-2 d-flex gap-2">
               <button type="submit" class="btn btn-primary w-100"><i class="mdi mdi-filter"></i> Filter</button>
-              <a href="{% url 'vehicle_travel_order_list' %}" class="btn btn-outline-secondary" title="Ocisti filtere"><i class="mdi mdi-close"></i></a>
+              <a href="{% url 'vehicle_travel_order_list' %}" class="btn btn-outline-secondary" id="vehicle-travel-order-clear-filters" title="Ocisti filtere"><i class="mdi mdi-close"></i></a>
             </div>
           </div>
         </form>
@@ -150,8 +152,13 @@
           order: [[5, 'desc']],
           dom: "<'row'<'col-sm-12 col-md-6'l>>rt<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
           ajax: {
-            url: "{% url 'vehicle_travel_order_data' %}" + window.location.search,
-            type: "GET"
+            url: "{% url 'vehicle_travel_order_data' %}",
+            type: "GET",
+            data: function (data) {
+              data.vehicle = jQuery('#filter-vehicle').val() || '';
+              data.employee = jQuery('#filter-employee').val() || '';
+              data.status = jQuery('#filter-status').val() || '';
+            }
           },
           columns: [
             { data: 'pn_number' },
@@ -177,7 +184,25 @@
 
         var quickSearch = jQuery('#assignment-quick-search');
         var clearSearch = jQuery('#assignment-clear-search');
+        var filterForm = jQuery('#vehicle-travel-order-filter-form');
+        var clearFilters = jQuery('#vehicle-travel-order-clear-filters');
         var searchTimer = null;
+
+        filterForm.on('submit', function (event) {
+          event.preventDefault();
+          dataTable.ajax.reload();
+        });
+
+        clearFilters.on('click', function (event) {
+          event.preventDefault();
+          var employeeFilter = jQuery('#filter-employee');
+          var ownEmployeeId = employeeFilter.data('ownEmployeeId');
+          filterForm.find('select').not('#filter-employee').val('').trigger('change');
+          employeeFilter.val(ownEmployeeId ? String(ownEmployeeId) : '').trigger('change');
+          dataTable.search('');
+          quickSearch.val('');
+          dataTable.ajax.reload();
+        });
 
         quickSearch.on('input', function () {
           var value = this.value;
