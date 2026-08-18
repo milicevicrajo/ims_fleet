@@ -24,6 +24,7 @@ from .lease import LONG_TERM_LEASE_TYPES, LeaseListView
 from .vehicles import _vehicle_list_base_queryset
 from .vehicle_travel_orders import (
     _vehicle_travel_order_base_qs,
+    can_print_previous_vehicle_travel_order_report,
     get_previous_vehicle_travel_order,
 )
 
@@ -209,6 +210,11 @@ def vehicle_travel_order_datatable_data(request):
         can_delete = user_has_role_permission(request.user, "vehicle_travel_order_delete")
         can_print_request = user_has_role_permission(request.user, "vehicle_travel_order_request")
         can_print_report = user_has_role_permission(request.user, "vehicle_travel_order_fuel_report")
+        can_print_previous_report = can_print_previous_vehicle_travel_order_report(
+            request.user,
+            order,
+            previous,
+        )
 
         if can_update and (not order.closed_at or request.user.is_superuser):
             actions.append(
@@ -220,24 +226,13 @@ def vehicle_travel_order_datatable_data(request):
                 f'<a href="{reverse("vehicle_travel_order_close", args=[order.pk])}" class="btn btn-outline-success btn-sm">'
                 '<i class="mdi mdi-lock"></i> Zatvori</a>'
             )
-            can_open_previous_report = bool(
-                previous
-                and can_print_report
-                and (
-                    previous.employee_id == getattr(request.user, "employee_id", None)
-                    or request.user.is_superuser
-                    or request.user.roles.filter(
-                        permissions__code="vehicle_travel_order_fuel_report",
-                        is_active=True,
-                    ).exclude(slug="zaposleni").exists()
-                )
+        if can_print_previous_report:
+            previous_report_params = urlencode({"for_order": order.pk, "next": request.get_full_path()})
+            actions.append(
+                f'<a href="{reverse("vehicle_travel_order_fuel_report", args=[previous.pk])}?{previous_report_params}" '
+                'class="btn btn-outline-secondary btn-sm" target="_blank" title="Obracun prethodnog perioda">'
+                '<i class="mdi mdi-printer"></i> Prethodni obracun</a>'
             )
-            if can_open_previous_report:
-                actions.append(
-                    f'<a href="{reverse("vehicle_travel_order_fuel_report", args=[previous.pk])}?next={request.get_full_path()}" '
-                    'class="btn btn-outline-secondary btn-sm" target="_blank" title="Obracun prethodnog perioda">'
-                    '<i class="mdi mdi-printer"></i> Prethodni obracun</a>'
-                )
         elif can_print_report:
             actions.append(
                 f'<a href="{reverse("vehicle_travel_order_fuel_report", args=[order.pk])}" class="btn btn-outline-secondary btn-sm" '

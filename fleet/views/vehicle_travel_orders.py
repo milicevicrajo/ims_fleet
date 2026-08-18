@@ -136,6 +136,22 @@ def get_previous_vehicle_travel_order(order):
     )
 
 
+def can_print_previous_vehicle_travel_order_report(user, order, previous_order):
+    if not previous_order:
+        return False
+    if user.is_superuser or _user_has_non_employee_role_permission(user, "vehicle_travel_order_fuel_report"):
+        return True
+    if not (
+        _is_vehicle_travel_order_employee_self_service(user)
+        and order
+        and order.employee_id == getattr(user, "employee_id", None)
+        and _user_has_employee_role_permission(user, "vehicle_travel_order_fuel_report")
+    ):
+        return False
+    expected_previous_order = get_previous_vehicle_travel_order(order)
+    return bool(expected_previous_order and expected_previous_order.pk == previous_order.pk)
+
+
 class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
     model = VehicleTravelOrder
     template_name = "fleet/vehicle_travel_order_list.html"
@@ -306,18 +322,10 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
                     second_fuel_page.append(None)
 
         previous_order = get_previous_vehicle_travel_order(order)
-        can_print_previous_order_report = bool(
-            previous_order
-            and (
-                _has_vehicle_travel_order_broad_access(self.request.user)
-                or (
-                    previous_order.employee_id == getattr(self.request.user, "employee_id", None)
-                    and _can_employee_access_own_vehicle_travel_order(
-                        self.request.user,
-                        "vehicle_travel_order_fuel_report",
-                    )
-                )
-            )
+        can_print_previous_order_report = can_print_previous_vehicle_travel_order_report(
+            self.request.user,
+            order,
+            previous_order,
         )
 
         ctx.update(
@@ -348,12 +356,36 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
         )
         previous_report_pk = self.request.GET.get("open_previous_report")
         if ctx["previous_order"] and previous_report_pk == str(ctx["previous_order"].pk):
-            ctx["auto_previous_report_url"] = reverse("vehicle_travel_order_fuel_report", args=[ctx["previous_order"].pk])
+            ctx["auto_previous_report_url"] = (
+                f"{reverse('vehicle_travel_order_fuel_report', args=[ctx['previous_order'].pk])}"
+                f"?for_order={order.pk}&next={reverse('vehicle_travel_order_detail', args=[order.pk])}"
+            )
         return ctx
 
 
 class VehicleTravelOrderFuelReportView(VehicleTravelOrderDetailView):
     template_name = "fleet/vehicle_travel_order_fuel_report.html"
+
+    def test_func(self):
+        if super().test_func():
+            return True
+        user = self.request.user
+        if not (
+            _is_vehicle_travel_order_employee_self_service(user)
+            and _user_has_employee_role_permission(user, "vehicle_travel_order_fuel_report")
+        ):
+            return False
+        current_order_pk = self.request.GET.get("for_order")
+        if not current_order_pk:
+            return False
+        current_order = VehicleTravelOrder.objects.filter(
+            pk=current_order_pk,
+            employee_id=user.employee_id,
+        ).select_related("vehicle", "employee").first()
+        previous_order = VehicleTravelOrder.objects.filter(
+            pk=self.kwargs.get("pk"),
+        ).select_related("vehicle", "employee").first()
+        return can_print_previous_vehicle_travel_order_report(user, current_order, previous_order)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -568,7 +600,7 @@ class VehicleTravelOrderPrintOpenView(VehicleTravelOrderEmployeeAccessMixin, Log
                 "list_url": reverse("vehicle_travel_order_list"),
                 "request_url": reverse("vehicle_travel_order_request", args=[order.pk]),
                 "previous_report_url": (
-                    reverse("vehicle_travel_order_fuel_report", args=[previous_order.pk])
+                    f"{reverse('vehicle_travel_order_fuel_report', args=[previous_order.pk])}?for_order={order.pk}"
                     if previous_order
                     else ""
                 ),

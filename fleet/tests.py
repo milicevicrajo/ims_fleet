@@ -1584,6 +1584,39 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.assertEqual(order.employee, self.employee)
 		self.assertEqual(order.start_mileage, 1234)
 
+	def test_employee_can_print_previous_report_for_own_current_order(self):
+		previous_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 20),
+			closed_at=datetime.date(2026, 4, 24),
+			employee=self.other_employee,
+			vehicle=self.vehicle,
+		)
+		current_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		self.client.force_login(self.user)
+
+		data_response = self.client.get(
+			reverse("vehicle_travel_order_data"),
+			{"draw": "1", "start": "0", "length": "10"},
+		)
+		self.assertEqual(data_response.status_code, 200)
+		rows = data_response.json()["data"]
+		self.assertEqual(len(rows), 1)
+		self.assertIn("Prethodni obracun", rows[0]["actions"])
+		self.assertIn(f"for_order={current_order.pk}", rows[0]["actions"])
+
+		detail_response = self.client.get(reverse("vehicle_travel_order_detail", args=[current_order.pk]))
+		self.assertEqual(detail_response.status_code, 200)
+		self.assertContains(detail_response, "Stampa obracuna")
+		self.assertNotContains(detail_response, "nije dostupan")
+
+		report_url = reverse("vehicle_travel_order_fuel_report", args=[previous_order.pk])
+		self.assertEqual(self.client.get(report_url).status_code, 403)
+		self.assertEqual(self.client.get(f"{report_url}?for_order={current_order.pk}").status_code, 200)
+
 	def test_employee_list_and_data_show_only_own_vehicle_travel_orders(self):
 		own_order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 24),
