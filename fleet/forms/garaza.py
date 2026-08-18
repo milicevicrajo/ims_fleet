@@ -56,11 +56,17 @@ class VehicleTravelOrderForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
+        self.limit_to_user_employee = kwargs.pop("limit_to_user_employee", False)
         super().__init__(*args, **kwargs)
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
             if inactive_employee.exists():
                 self.fields["employee"].queryset = self.fields["employee"].queryset | inactive_employee
+        if self.limit_to_user_employee:
+            employee_id = getattr(self.user, "employee_id", None)
+            self.fields["employee"].queryset = Employee.objects.filter(pk=employee_id)
+            self.fields["employee"].disabled = True
+            self.initial["employee"] = employee_id
         if not self.instance.pk:
             last_number = (
                 VehicleTravelOrder.objects.order_by("-pn_number").values_list("pn_number", flat=True).first() or 0
@@ -74,6 +80,8 @@ class VehicleTravelOrderForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
+        if self.limit_to_user_employee:
+            instance.employee = self.user.employee
         if (
             self.instance.pk
             and getattr(self.user, "is_superuser", False)

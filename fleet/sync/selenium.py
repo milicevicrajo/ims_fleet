@@ -14,6 +14,7 @@ import pytz
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
+from django.db.models import F
 from django.utils import timezone as dj_timezone
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -950,6 +951,7 @@ def import_omv_transactions_from_csv(csv_file_path):
     skipped = 0
     errors = 0
     missing_vehicles = set()
+    skipped_duplicate_receipts = 0
 
     def parse_decimal(value, default=None):
         value = str(value or "").strip()
@@ -1038,6 +1040,9 @@ def import_omv_transactions_from_csv(csv_file_path):
                 transaction_date = parse_datetime(row.get('Transactiondate'))
                 invoice_date = parse_date(row.get('Invoice date'))
                 date_to = parse_date(row.get('Date to'))
+                invoice_no = str(row.get('Invoice No') or "").strip()
+                voucher = str(row.get('Voucher') or "").strip()
+                invoiced = parse_bool(row.get('Invoiced?'))
                 
                 transaction_defaults = {
                     "vehicle": vehicle,
@@ -1047,7 +1052,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                     "quantity": quantity,
                     "gross_cc": gross_cc,
                     "vat": vat,
-                    "voucher": row.get('Voucher'),
+                    "voucher": voucher,
                     "mileage": mileage,
                     "corrected_mileage": corrected_mileage,
                     "additional_info": row.get('Additional info'),
@@ -1060,9 +1065,9 @@ def import_omv_transactions_from_csv(csv_file_path):
                     "surcharge": surcharge,
                     "vat_2010": row.get('VAT2010'),
                     "supplier_currency": row.get('Suppliercurrency'),
-                    "invoice_no": row.get('Invoice No'),
+                    "invoice_no": invoice_no,
                     "invoice_date": invoice_date,
-                    "invoiced": parse_bool(row.get('Invoiced?')),
+                    "invoiced": invoiced,
                     "state": row.get('State'),
                     "supplier": row.get('Supplier'),
                     "cost_1": cost_1,
@@ -1080,7 +1085,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                     "license_plate_no": formatted_plate,
                     "transaction_date": transaction_date,
                     "product_inv": row.get('Product INV'),
-                    "voucher": row.get('Voucher'),
+                    "voucher": voucher,
                     "quantity": quantity,
                 }
                 transaction = (
@@ -1097,8 +1102,38 @@ def import_omv_transactions_from_csv(csv_file_path):
                     transaction.save(update_fields=list(transaction_defaults))
                     updated += 1
                 else:
-                    TransactionOMV.objects.create(**{**transaction_lookup, **transaction_defaults})
-                    created += 1
+                    duplicate_receipt = None
+                    if voucher and invoice_no == voucher and not invoiced:
+                        duplicate_receipt = (
+                            TransactionOMV.objects.filter(
+                                license_plate_no=formatted_plate,
+                                product_inv=row.get('Product INV'),
+                                voucher=voucher,
+                                quantity=quantity,
+                                gross_cc=gross_cc,
+                                amount=amount,
+                                mileage=mileage,
+                                invoice_date=invoice_date,
+                                invoiced=True,
+                            )
+                            .filter(invoice_no__isnull=False)
+                            .exclude(invoice_no="")
+                            .exclude(invoice_no=F("voucher"))
+                            .order_by("-invoice_date", "-id")
+                            .first()
+                        )
+                    if duplicate_receipt:
+                        skipped_duplicate_receipts += 1
+                        logger.info(
+                            "OMV transactions row skipped duplicate receipt echo: row=%s plate=%s voucher=%s existing_id=%s",
+                            index,
+                            formatted_plate,
+                            voucher,
+                            duplicate_receipt.id,
+                        )
+                    else:
+                        TransactionOMV.objects.create(**{**transaction_lookup, **transaction_defaults})
+                        created += 1
             
             except ObjectDoesNotExist:
                 skipped += 1
@@ -1121,11 +1156,12 @@ def import_omv_transactions_from_csv(csv_file_path):
 
     result = {
         "status": "ok",
-        "rows": created + updated + skipped + preserved_final,
+        "rows": created + updated + skipped + preserved_final + skipped_duplicate_receipts,
         "created": created,
         "updated": updated,
         "skipped": skipped,
         "preserved_final": preserved_final,
+        "skipped_duplicate_receipts": skipped_duplicate_receipts,
         "errors": errors,
         "missing_vehicles": sorted(v for v in missing_vehicles if v),
     }

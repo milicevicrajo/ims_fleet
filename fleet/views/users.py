@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Case, Count, IntegerField, Max, Q, Sum, When
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -198,16 +198,64 @@ class ActivityLogListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
 
         return queryset
 
+    def get_user_activity_summary(self, queryset):
+        total = queryset.count()
+        rows = (
+            queryset.values("user_id", "actor_username", "actor_display_name")
+            .annotate(
+                total=Count("id"),
+                request_count=Sum(
+                    Case(
+                        When(action=ActivityLog.ACTION_REQUEST, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                login_count=Sum(
+                    Case(
+                        When(action=ActivityLog.ACTION_LOGIN, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                failed_login_count=Sum(
+                    Case(
+                        When(action=ActivityLog.ACTION_LOGIN_FAILED, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                error_count=Sum(
+                    Case(
+                        When(status_code__gte=400, then=1),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                last_activity=Max("created_at"),
+            )
+            .order_by("-total", "actor_username")[:20]
+        )
+        summary = []
+        for row in rows:
+            count = row["total"] or 0
+            row["activity_percent"] = round((count / total) * 100, 1) if total else 0
+            summary.append(row)
+        return summary
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
         params = self.request.GET.copy()
         params.pop("page", None)
+        filtered_queryset = self.object_list
         context.update(
             {
                 "title": "Activity log",
                 "filters": self.request.GET,
                 "querystring": params.urlencode(),
+                "user_activity_summary": self.get_user_activity_summary(filtered_queryset),
+                "filtered_logs_count": filtered_queryset.count(),
                 "user_options": CustomUser.objects.order_by("username").only("id", "username", "first_name", "last_name"),
                 "action_options": ActivityLog.ACTION_CHOICES,
                 "app_options": (

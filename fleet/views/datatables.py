@@ -10,6 +10,7 @@ from django.utils.dateparse import parse_date
 from django.utils import timezone
 from django.utils.html import escape
 
+from core.mixins import user_has_role_permission
 from hr.models import Employee
 
 from ..filters import KvarFilter, TrafficCardFilterForm, VehicleFilter
@@ -21,7 +22,10 @@ from ..support.fuel import (
 )
 from .lease import LONG_TERM_LEASE_TYPES, LeaseListView
 from .vehicles import _vehicle_list_base_queryset
-from .vehicle_travel_orders import get_previous_vehicle_travel_order
+from .vehicle_travel_orders import (
+    _vehicle_travel_order_base_qs,
+    get_previous_vehicle_travel_order,
+)
 
 
 def _int_param(request, name, default=0):
@@ -163,7 +167,7 @@ def vehicle_datatable_data(request):
 
 @login_required
 def vehicle_travel_order_datatable_data(request):
-    qs = VehicleTravelOrder.objects.select_related("vehicle", "employee")
+    qs = _vehicle_travel_order_base_qs(request)
     vehicle_id = request.GET.get("vehicle")
     employee_id = request.GET.get("employee")
     status_filter = request.GET.get("status")
@@ -200,32 +204,51 @@ def vehicle_travel_order_datatable_data(request):
     def row(order):
         previous = get_previous_vehicle_travel_order(order)
         actions = []
-        if not order.closed_at or request.user.is_superuser:
+        can_update = user_has_role_permission(request.user, "vehicle_travel_order_update")
+        can_close = user_has_role_permission(request.user, "vehicle_travel_order_close")
+        can_delete = user_has_role_permission(request.user, "vehicle_travel_order_delete")
+        can_print_request = user_has_role_permission(request.user, "vehicle_travel_order_request")
+        can_print_report = user_has_role_permission(request.user, "vehicle_travel_order_fuel_report")
+
+        if can_update and (not order.closed_at or request.user.is_superuser):
             actions.append(
                 f'<a href="{reverse("vehicle_travel_order_update", args=[order.pk])}" class="btn btn-outline-primary btn-sm">'
                 '<i class="mdi mdi-pencil"></i> Izmeni</a>'
             )
-        if not order.closed_at:
+        if can_close and not order.closed_at:
             actions.append(
                 f'<a href="{reverse("vehicle_travel_order_close", args=[order.pk])}" class="btn btn-outline-success btn-sm">'
                 '<i class="mdi mdi-lock"></i> Zatvori</a>'
             )
-            if previous:
+            can_open_previous_report = bool(
+                previous
+                and can_print_report
+                and (
+                    previous.employee_id == getattr(request.user, "employee_id", None)
+                    or request.user.is_superuser
+                    or request.user.roles.filter(
+                        permissions__code="vehicle_travel_order_fuel_report",
+                        is_active=True,
+                    ).exclude(slug="zaposleni").exists()
+                )
+            )
+            if can_open_previous_report:
                 actions.append(
                     f'<a href="{reverse("vehicle_travel_order_fuel_report", args=[previous.pk])}?next={request.get_full_path()}" '
                     'class="btn btn-outline-secondary btn-sm" target="_blank" title="Obracun prethodnog perioda">'
                     '<i class="mdi mdi-printer"></i> Prethodni obracun</a>'
                 )
-        else:
+        elif can_print_report:
             actions.append(
                 f'<a href="{reverse("vehicle_travel_order_fuel_report", args=[order.pk])}" class="btn btn-outline-secondary btn-sm" '
                 'target="_blank" title="Obracun goriva"><i class="mdi mdi-printer"></i> Obracun</a>'
             )
-        actions.append(
-            f'<a href="{reverse("vehicle_travel_order_request", args=[order.pk])}?next={request.get_full_path()}" '
-            'class="btn btn-outline-info btn-sm" target="_blank"><i class="mdi mdi-printer"></i> Zahtev</a>'
-        )
-        if not order.closed_at or request.user.is_superuser:
+        if can_print_request:
+            actions.append(
+                f'<a href="{reverse("vehicle_travel_order_request", args=[order.pk])}?next={request.get_full_path()}" '
+                'class="btn btn-outline-info btn-sm" target="_blank"><i class="mdi mdi-printer"></i> Zahtev</a>'
+            )
+        if can_delete and (not order.closed_at or request.user.is_superuser):
             actions.append(
                 f'<a href="{reverse("vehicle_travel_order_delete", args=[order.pk])}?next={request.get_full_path()}" '
                 'class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i> Obrisi</a>'

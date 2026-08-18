@@ -39,9 +39,11 @@
     <h1>Zaduzenja vozila</h1>
     <p>Putni nalozi za automobile na jednom mestu, sa statusom i obracunom goriva po periodu.</p>
   </div>
-  <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-light btn-sm">
-    <i class="mdi mdi-plus"></i> Otvori novi putni nalog
-  </a>
+  {% if can_create_vehicle_travel_order %}
+    <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Otvori novi putni nalog
+    </a>
+  {% endif %}
 </div>
 
 <div class="row">

@@ -206,12 +206,44 @@ def sync_permission_codes():
         sekretarijat_role.save(update_fields=["name", "is_active"])
     for perm in PermissionCode.objects.filter(code__in=sekretarijat_codes):
         RolePermission.objects.get_or_create(role=sekretarijat_role, permission=perm)
+
+    zaposleni_codes = [
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_data",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_print_open",
+        "vehicle_travel_order_request",
+    ]
+    zaposleni_role, _ = Role.objects.get_or_create(
+        slug="zaposleni",
+        defaults={
+            "name": "Zaposleni",
+            "description": "Pristup sopstvenom profilu i sopstvenim zaduzenjima vozila.",
+            "is_active": True,
+        },
+    )
+    if zaposleni_role.name != "Zaposleni" or not zaposleni_role.is_active:
+        zaposleni_role.name = "Zaposleni"
+        zaposleni_role.is_active = True
+        zaposleni_role.save(update_fields=["name", "is_active"])
+    for perm in PermissionCode.objects.filter(code__in=zaposleni_codes):
+        RolePermission.objects.get_or_create(role=zaposleni_role, permission=perm)
+
     sekretarijat_group_users_synced = 0
     sekretarijat_group = Group.objects.filter(name__iexact="Sekretarijat").first()
     if sekretarijat_group:
         for user in sekretarijat_group.user_set.all():
             user.roles.add(sekretarijat_role)
             sekretarijat_group_users_synced += 1
+
+    zaposleni_group_users_synced = 0
+    zaposleni_group = Group.objects.filter(name__iexact="Zaposleni").first()
+    if zaposleni_group:
+        for user in zaposleni_group.user_set.all():
+            user.roles.add(zaposleni_role)
+            zaposleni_group_users_synced += 1
 
     pregled_naplate_group_users_synced = 0
     pregled_naplate_group = Group.objects.filter(name__iexact="Pregled naplate").first()
@@ -230,6 +262,8 @@ def sync_permission_codes():
         "pregled_naplate_role": pregled_naplate_role,
         "zahtev_role": zahtev_role,
         "sekretarijat_role": sekretarijat_role,
+        "zaposleni_role": zaposleni_role,
         "sekretarijat_group_users_synced": sekretarijat_group_users_synced,
+        "zaposleni_group_users_synced": zaposleni_group_users_synced,
         "pregled_naplate_group_users_synced": pregled_naplate_group_users_synced,
     }

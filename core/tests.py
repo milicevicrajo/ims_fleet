@@ -149,6 +149,20 @@ class PermissionCodeSyncTests(TestCase):
         self.assertIn("putninalog_update", codes)
         self.assertNotIn("putninalog_set_opravdan", codes)
 
+    def test_sync_permission_codes_grants_self_service_permissions_to_zaposleni(self):
+        from .permissions import sync_permission_codes
+
+        sync_permission_codes()
+
+        role = Role.objects.get(slug="zaposleni")
+        codes = set(role.permissions.values_list("code", flat=True))
+        self.assertIn("vehicle_travel_order_create", codes)
+        self.assertIn("vehicle_travel_order_detail", codes)
+        self.assertIn("vehicle_travel_order_request", codes)
+        self.assertIn("vehicle_travel_order_fuel_report", codes)
+        self.assertNotIn("putninalog_create", codes)
+        self.assertNotIn("vehicle_travel_order_update", codes)
+
     def test_sync_permission_codes_grants_isplate_permissions_to_blagajna(self):
         from .permissions import sync_permission_codes
 
@@ -282,6 +296,46 @@ class ActivityLogTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Provera ekrana")
+
+    def test_activity_log_list_shows_user_summary(self):
+        admin = get_user_model().objects.create_superuser(
+            username="activity-admin",
+            email="activity-admin@example.com",
+            password="test-pass",
+        )
+        active_user = get_user_model().objects.create_user("aktivni", password="test-pass")
+        quiet_user = get_user_model().objects.create_user("tihi", password="test-pass")
+        ActivityLog.objects.create(
+            user=active_user,
+            actor_username=active_user.username,
+            action=ActivityLog.ACTION_REQUEST,
+            description="Prva akcija",
+            status_code=200,
+        )
+        ActivityLog.objects.create(
+            user=active_user,
+            actor_username=active_user.username,
+            action=ActivityLog.ACTION_REQUEST,
+            description="Druga akcija",
+            status_code=404,
+        )
+        ActivityLog.objects.create(
+            user=quiet_user,
+            actor_username=quiet_user.username,
+            action=ActivityLog.ACTION_LOGIN,
+            description="Prijava",
+        )
+
+        self.client.force_login(admin)
+        response = self.client.get(reverse("activity_log_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Rekapitulacija po korisniku")
+        summary = response.context["user_activity_summary"]
+        active_row = next(row for row in summary if row["actor_username"] == "aktivni")
+        self.assertEqual(active_row["total"], 2)
+        self.assertEqual(active_row["request_count"], 2)
+        self.assertEqual(active_row["error_count"], 1)
 
 
 class TaskHistoryTests(TestCase):

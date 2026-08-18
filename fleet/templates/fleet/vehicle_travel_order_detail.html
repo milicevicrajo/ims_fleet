@@ -65,16 +65,18 @@
           </div>
         </div>
         <div class="travel-order-header-actions d-flex flex-wrap gap-2 align-items-center justify-content-end">
-          {% if not order.closed_at %}
+          {% if can_close_vehicle_travel_order and not order.closed_at %}
             <a href="{% url 'vehicle_travel_order_close' order.pk %}" class="btn btn-success btn-sm">
               <i class="mdi mdi-lock"></i> Zatvori nalog
             </a>
           {% endif %}
 
-          {% if not order.closed_at or request.user.is_superuser %}
+          {% if can_update_vehicle_travel_order and not order.closed_at or request.user.is_superuser %}
             <a href="{% url 'vehicle_travel_order_update' order.pk %}" class="btn btn-outline-primary btn-sm">
               <i class="mdi mdi-pencil"></i> Izmeni
             </a>
+          {% endif %}
+          {% if can_delete_vehicle_travel_order and not order.closed_at or request.user.is_superuser %}
             <a href="{% url 'vehicle_travel_order_delete' order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-outline-danger btn-sm">
               <i class="mdi mdi-delete"></i> Obrisi
             </a>
@@ -183,11 +185,18 @@
           </div>
 
           <div class="col-12 col-lg-6">
-            {% if previous_order %}
+            {% if can_print_previous_order_report %}
               <a href="{% url 'vehicle_travel_order_fuel_report' previous_order.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-dark w-100" target="_blank">
                 <i class="mdi mdi-printer"></i> Stampa obracuna
                 <small>Ovo je obracun goriva za prethodno zaduzenje: PN {{ previous_order.pn_number }}.</small>
               </a>
+            {% elif previous_order %}
+              <div class="missing-report w-100">
+                <strong>Obracun goriva prethodnog zaduzenja nije dostupan za ovog korisnika.</strong>
+                <p class="text-muted mb-0">
+                  Prethodno zaduzenje postoji, ali je vezano za drugog zaposlenog.
+                </p>
+              </div>
             {% else %}
               <div class="missing-report w-100">
                 <strong>Obracun goriva nije dostupan dok ne postoji prethodno zaduzenje.</strong>
@@ -197,10 +206,12 @@
                   {% if order.created_at %}({{ order.created_at|date:"d.m.Y" }}){% endif %}
                   i posle toga ce se pojaviti dugme za stampu obracuna.
                 </p>
-                <a href="{% url 'vehicle_travel_order_previous_create' order.pk %}" class="btn btn-warning w-100">
-                  <i class="mdi mdi-plus-circle"></i> Unesi prethodni obracun
-                  <small>Unosite prethodni period za isti automobil, da bi obracun goriva mogao da se stampa.</small>
-                </a>
+                {% if can_create_previous_vehicle_travel_order %}
+                  <a href="{% url 'vehicle_travel_order_previous_create' order.pk %}" class="btn btn-warning w-100">
+                    <i class="mdi mdi-plus-circle"></i> Unesi prethodni obracun
+                    <small>Unosite prethodni period za isti automobil, da bi obracun goriva mogao da se stampa.</small>
+                  </a>
+                {% endif %}
               </div>
             {% endif %}
           </div>

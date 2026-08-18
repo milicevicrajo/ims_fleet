@@ -549,6 +549,48 @@ class FuelProductFilterTests(TestCase):
 
 		self.assertEqual(filtered_ids, [fuel.id])
 
+	def test_filter_omv_fuel_queryset_excludes_uninvoiced_receipt_echo(self):
+		final = TransactionOMV.objects.create(
+			issuer="OMV",
+			customer="IMS",
+			card="150",
+			license_plate_no="BG2280-ET",
+			transaction_date=self._dt(2025, 3, 10, 7, 21),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("37.45"),
+			gross_cc=Decimal("7280.28"),
+			vat=Decimal("1213.38"),
+			voucher="00027427",
+			mileage=Decimal("70275"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("7490.00"),
+			invoice_no="8915362134",
+			invoice_date=datetime.date(2025, 3, 15),
+			invoiced=True,
+		)
+		TransactionOMV.objects.create(
+			issuer="OMV",
+			customer="IMS",
+			card="150",
+			license_plate_no="BG2280-ET",
+			transaction_date=self._dt(2026, 5, 7, 12, 5),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("37.45"),
+			gross_cc=Decimal("7280.28"),
+			vat=Decimal("1213.38"),
+			voucher="00027427",
+			mileage=Decimal("70275"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("7490.00"),
+			invoice_no="00027427",
+			invoice_date=datetime.date(2025, 3, 15),
+			invoiced=False,
+		)
+
+		filtered_ids = list(filter_omv_fuel_queryset(TransactionOMV.objects.all()).values_list("id", flat=True))
+
+		self.assertEqual(filtered_ids, [final.id])
+
 	def test_format_omv_receipt_number_combines_invoice_and_voucher(self):
 		self.assertEqual(format_omv_receipt_number("8916372386", "00168851"), "8916372386 / 00168851")
 		self.assertEqual(format_omv_receipt_number("8916372386", ""), "8916372386")
@@ -774,6 +816,91 @@ class OMVTransactionImportTests(TestCase):
 		self.assertEqual(transaction.amount_other, Decimal("8604.00"))
 		self.assertEqual(transaction.unit_price, Decimal("200.00"))
 
+	def test_import_skips_uninvoiced_receipt_echo_with_wrong_transaction_date(self):
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="710111",
+			customer="107248",
+			card="150",
+			license_plate_no="BG1007-KX",
+			transaction_date=self._dt(2025, 3, 10, 7, 21),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("37.45"),
+			gross_cc=Decimal("7280.28"),
+			vat=Decimal("1213.38"),
+			voucher="00027427",
+			mileage=Decimal("70275"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("7490.00"),
+			invoice_no="8915362134",
+			invoice_date=datetime.date(2025, 3, 15),
+			invoiced=True,
+		)
+		headers = [
+			"Issuer", "Customer", "Card", "License plate No", "Transactiondate", "Product INV",
+			"Quantity", "Gross CC", "VAT", "Voucher", "Mileage", "Corrected mileage",
+			"Additional info", "Supply country", "Site Town", "Product DEL", "Unitprice",
+			"Amount", "Discount", "Surcharge", "VAT2010", "Suppliercurrency", "Invoice No",
+			"Invoice date", "Invoiced?", "State", "Supplier", "Cost 1", "Cost 2",
+			"Reference No", "Recordtype", "Amount other", "is listprice ?", "Approval code",
+			"Date to", "Final Trx.", "LPI",
+		]
+		row = {
+			"Issuer": "710111",
+			"Customer": "107248",
+			"Card": "150",
+			"License plate No": "BG 1007 - KX",
+			"Transactiondate": "2026-05-07 12:05:00",
+			"Product INV": "OMV EVRO DIZEL",
+			"Quantity": "37.45",
+			"Gross CC": "7280.28",
+			"VAT": "1213.38",
+			"Voucher": "00027427",
+			"Mileage": "70275",
+			"Corrected mileage": "70275",
+			"Additional info": "",
+			"Supply country": "SR",
+			"Site Town": "BEOGRAD",
+			"Product DEL": "OMV EVRO DIZEL",
+			"Unitprice": "200.00",
+			"Amount": "7490.00",
+			"Discount": "0.00",
+			"Surcharge": "0.00",
+			"VAT2010": "NO",
+			"Suppliercurrency": "RSD",
+			"Invoice No": "00027427",
+			"Invoice date": "2025-03-15",
+			"Invoiced?": "NO",
+			"State": "217",
+			"Supplier": "OMV-RS",
+			"Cost 1": "",
+			"Cost 2": "",
+			"Reference No": "",
+			"Recordtype": "D",
+			"Amount other": "0.00",
+			"is listprice ?": "No",
+			"Approval code": "700001",
+			"Date to": "2026-05-07",
+			"Final Trx.": "1",
+			"LPI": "",
+		}
+
+		with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8-sig", suffix=".csv", delete=False) as handle:
+			writer = csv.DictWriter(handle, fieldnames=headers, delimiter=";")
+			writer.writeheader()
+			writer.writerow(row)
+			csv_path = handle.name
+
+		try:
+			result = import_omv_transactions_from_csv(csv_path)
+		finally:
+			os.unlink(csv_path)
+
+		self.assertEqual(result["created"], 0)
+		self.assertEqual(result["updated"], 0)
+		self.assertEqual(result["skipped_duplicate_receipts"], 1)
+		self.assertEqual(TransactionOMV.objects.count(), 1)
+
 	def test_filter_nis_fuel_queryset_excludes_non_fuel_products(self):
 		fuel = TransactionNIS.objects.create(
 			kupac="IMS",
@@ -899,6 +1026,7 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 		new_order = view.object
 
 		self.assertEqual(response.status_code, 302)
+		self.assertEqual(response["Location"], reverse("vehicle_travel_order_detail", args=[new_order.pk]))
 		self.assertEqual(previous_order.closed_at, new_order.created_at)
 		self.assertEqual(previous_order.end_mileage, new_order.start_mileage)
 
@@ -1175,10 +1303,10 @@ class VehicleTravelOrderUpdateViewTests(TestCase):
 
 
 class VehicleTravelOrderDeleteViewTests(TestCase):
-	def test_closed_order_delete_is_allowed_only_for_superuser(self):
-		vehicle = Vehicle.objects.create(
-			inventory_number="INV-41",
-			chassis_number="WF0XXXTEST0000041",
+	def create_vehicle(self, inventory_number="INV-41", chassis_number="WF0XXXTEST0000041"):
+		return Vehicle.objects.create(
+			inventory_number=inventory_number,
+			chassis_number=chassis_number,
 			brand="Ford",
 			model="Transit",
 			year_of_manufacture=2020,
@@ -1186,7 +1314,7 @@ class VehicleTravelOrderDeleteViewTests(TestCase):
 			color="Bela",
 			number_of_axles=2,
 			engine_volume=Decimal("1999.00"),
-			engine_number="ENG-41",
+			engine_number=chassis_number,
 			weight=Decimal("2500.00"),
 			engine_power=Decimal("96.00"),
 			load_capacity=Decimal("1200.00"),
@@ -1197,10 +1325,12 @@ class VehicleTravelOrderDeleteViewTests(TestCase):
 			purchase_value=Decimal("10000.00"),
 			value=Decimal("9000.00"),
 		)
-		employee = Employee.objects.create(
-			employee_code=41,
-			first_name="Jovan",
-			last_name="Jovanovic",
+
+	def create_employee(self, code=41, first_name="Jovan", last_name="Jovanovic"):
+		return Employee.objects.create(
+			employee_code=code,
+			first_name=first_name,
+			last_name=last_name,
 			position="Vozac",
 			department_code=10,
 			gender="M",
@@ -1208,6 +1338,10 @@ class VehicleTravelOrderDeleteViewTests(TestCase):
 			date_of_joining=datetime.date(2020, 1, 1),
 			is_active=True,
 		)
+
+	def test_closed_order_delete_is_allowed_only_for_superuser(self):
+		vehicle = self.create_vehicle()
+		employee = self.create_employee()
 		order = VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 24),
 			closed_at=datetime.date(2026, 4, 25),
@@ -1222,6 +1356,121 @@ class VehicleTravelOrderDeleteViewTests(TestCase):
 
 		with self.assertRaises(PermissionDenied):
 			view.dispatch(request, pk=order.pk)
+
+	def test_delete_returns_to_vehicle_travel_order_list_even_when_next_points_to_detail(self):
+		vehicle = self.create_vehicle()
+		employee = self.create_employee()
+		order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=employee,
+			vehicle=vehicle,
+		)
+		request = RequestFactory().post("/", {"next": reverse("vehicle_travel_order_detail", args=[order.pk])})
+		view = VehicleTravelOrderDeleteView()
+		view.request = request
+
+		self.assertEqual(view.get_success_url(), reverse("vehicle_travel_order_list"))
+
+
+class VehicleTravelOrderEmployeePermissionTests(TestCase):
+	def setUp(self):
+		self.employee = Employee.objects.create(
+			employee_code=501,
+			first_name="Petar",
+			last_name="Peric",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1990, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+		self.other_employee = Employee.objects.create(
+			employee_code=502,
+			first_name="Milan",
+			last_name="Milic",
+			position="Vozac",
+			department_code=10,
+			gender="M",
+			date_of_birth=datetime.date(1991, 1, 1),
+			date_of_joining=datetime.date(2020, 1, 1),
+			is_active=True,
+		)
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="INV-501",
+			chassis_number="WF0XXXTEST0000501",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="ENG-501",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category=Vehicle.Category.CARGO,
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		role = Role.objects.create(name="Zaposleni", slug="zaposleni")
+		permissions = [
+			PermissionCode.objects.create(code=code)
+			for code in [
+				"vehicle_travel_order_list",
+				"vehicle_travel_order_data",
+				"vehicle_travel_order_create",
+				"vehicle_travel_order_detail",
+				"vehicle_travel_order_request",
+				"vehicle_travel_order_fuel_report",
+				"vehicle_travel_order_print_open",
+			]
+		]
+		role.permissions.add(*permissions)
+		self.user = get_user_model().objects.create_user("zaposleni-vozilo", password="test", employee=self.employee)
+		self.user.roles.add(role)
+
+	def test_employee_create_vehicle_travel_order_is_for_logged_in_employee(self):
+		self.client.force_login(self.user)
+
+		response = self.client.post(
+			reverse("vehicle_travel_order_create"),
+			{
+				"created_at": "24.04.2026",
+				"employee": self.other_employee.pk,
+				"vehicle": self.vehicle.pk,
+				"start_mileage": 1000,
+			},
+		)
+
+		order = VehicleTravelOrder.objects.get()
+		self.assertRedirects(response, reverse("vehicle_travel_order_detail", args=[order.pk]))
+		self.assertEqual(order.employee, self.employee)
+
+	def test_employee_can_open_own_detail_and_print_pages_only(self):
+		own_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
+		other_order = VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 25),
+			employee=self.other_employee,
+			vehicle=self.vehicle,
+		)
+		self.client.force_login(self.user)
+
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[own_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_request", args=[own_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_fuel_report", args=[own_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[own_order.pk])).status_code, 200)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_detail", args=[other_order.pk])).status_code, 403)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_print_open", args=[other_order.pk])).status_code, 403)
+		self.assertEqual(self.client.get(reverse("vehicle_travel_order_previous_create", args=[own_order.pk])).status_code, 403)
 
 
 class VehicleTravelOrderConsumptionTests(TestCase):

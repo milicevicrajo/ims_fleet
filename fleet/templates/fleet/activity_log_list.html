@@ -55,6 +55,24 @@
     font-family: Consolas, "Courier New", monospace;
     font-size: .84rem;
   }
+  .activity-summary-table th,
+  .activity-summary-table td {
+    vertical-align: middle;
+  }
+  .activity-meter {
+    min-width: 110px;
+  }
+  .activity-meter-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #edf2f7;
+    overflow: hidden;
+  }
+  .activity-meter-fill {
+    height: 100%;
+    background: #23646a;
+  }
 </style>
 
 <div class="activity-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -139,6 +157,55 @@
   </div>
 
   <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+      <div>
+        <h2 class="h5 mb-1">Rekapitulacija po korisniku</h2>
+        <div class="text-muted small">Rangirano po broju aktivnosti za trenutno izabrane filtere. Filtrirano zapisa: {{ filtered_logs_count }}.</div>
+      </div>
+    </div>
+    <div class="table-responsive mb-4">
+      <table class="table table-sm table-bordered align-middle activity-summary-table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Korisnik</th>
+            <th class="text-end">Ukupno</th>
+            <th class="text-end">Akcije</th>
+            <th class="text-end">Prijave</th>
+            <th class="text-end">Neuspesne prijave</th>
+            <th class="text-end">Greske</th>
+            <th>Udeo</th>
+            <th>Poslednja aktivnost</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in user_activity_summary %}
+            <tr>
+              <td>
+                <strong>{{ row.actor_username|default:"/ bez korisnika" }}</strong>
+                {% if row.actor_display_name %}<span class="activity-muted">{{ row.actor_display_name }}</span>{% endif %}
+              </td>
+              <td class="text-end fw-semibold">{{ row.total }}</td>
+              <td class="text-end">{{ row.request_count }}</td>
+              <td class="text-end">{{ row.login_count }}</td>
+              <td class="text-end {% if row.failed_login_count %}text-danger fw-semibold{% endif %}">{{ row.failed_login_count }}</td>
+              <td class="text-end {% if row.error_count %}text-warning fw-semibold{% endif %}">{{ row.error_count }}</td>
+              <td>
+                <div class="activity-meter">
+                  <div class="activity-meter-track">
+                    <div class="activity-meter-fill" style="width: {{ row.activity_percent|stringformat:'g' }}%;"></div>
+                  </div>
+                  <span class="activity-muted">{{ row.activity_percent }}%</span>
+                </div>
+              </td>
+              <td>{{ row.last_activity|date:"d.m.Y H:i:s" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="text-center text-muted">Nema aktivnosti za rekapitulaciju.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
     {% if is_paginated %}
       <div class="d-flex justify-content-end mb-2">
         <span class="badge bg-light text-dark">Strana {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>

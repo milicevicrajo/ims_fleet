@@ -1,7 +1,7 @@
 from datetime import date, datetime, time as datetime_time
 from decimal import Decimal
 
-from django.db.models import Case, CharField, Count, F, Max, OuterRef, Q, Subquery, Sum, Value, When
+from django.db.models import Case, CharField, Count, Exists, F, Max, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Concat
 from django.utils import timezone as django_timezone
 
@@ -46,8 +46,38 @@ def _dedupe_omv_transaction_lines(queryset):
     return queryset.filter(id=Subquery(preferred_line))
 
 
+def _exclude_omv_receipt_echoes(queryset):
+    final_receipt_match = (
+        TransactionOMV.objects.filter(
+            license_plate_no=OuterRef("license_plate_no"),
+            product_inv=OuterRef("product_inv"),
+            voucher=OuterRef("voucher"),
+            quantity=OuterRef("quantity"),
+            gross_cc=OuterRef("gross_cc"),
+            amount=OuterRef("amount"),
+            mileage=OuterRef("mileage"),
+            invoice_date=OuterRef("invoice_date"),
+            invoiced=True,
+        )
+        .filter(invoice_no__isnull=False)
+        .exclude(invoice_no="")
+        .exclude(id=OuterRef("id"))
+        .exclude(invoice_no=F("voucher"))
+    )
+    return (
+        queryset.annotate(_has_final_receipt_match=Exists(final_receipt_match))
+        .exclude(
+            Q(_has_final_receipt_match=True)
+            & (Q(invoiced=False) | Q(invoiced__isnull=True))
+            & Q(invoice_no=F("voucher"))
+        )
+    )
+
+
 def filter_omv_fuel_queryset(queryset):
-    return _dedupe_omv_transaction_lines(queryset.filter(_fuel_product_filter("product_inv")))
+    return _exclude_omv_receipt_echoes(
+        _dedupe_omv_transaction_lines(queryset.filter(_fuel_product_filter("product_inv")))
+    )
 
 
 def filter_nis_fuel_queryset(queryset):
