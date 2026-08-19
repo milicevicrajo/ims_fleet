@@ -1,0 +1,50 @@
+<!-- ============================================================== -->
+<!-- Left Sidebar -->
+<!-- ============================================================== -->
+<aside class="left-sidebar" data-sidebarbg="skin5">
+  <div class="scroll-sidebar">
+    <nav class="sidebar-nav">
+      <ul id="sidebarnav" class="pt-4">
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'mobilni:mobile_dashboard' %}" aria-expanded="false">
+            <i class="mdi mdi-cellphone"></i><span class="hide-menu">Pregled</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'mobilni:mobile_assignment_list' %}" aria-expanded="false">
+            <i class="mdi mdi-account-switch"></i><span class="hide-menu">Dodele</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'mobilni:mobile_usage_list' %}" aria-expanded="false">
+            <i class="mdi mdi-chart-bar"></i><span class="hide-menu">Potrosnja</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'mobilni:mobile_package_list' %}" aria-expanded="false">
+            <i class="mdi mdi-package-variant"></i><span class="hide-menu">Paketi</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'mobilni:mobile_user_list' %}" aria-expanded="false">
+            <i class="mdi mdi-account-multiple"></i><span class="hide-menu">Korisnici</span>
+          </a>
+        </li>
+        <li class="sidebar-item mt-3">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'mobilni:mobile_import' %}" aria-expanded="false">
+            <i class="mdi mdi-upload"></i><span class="hide-menu">Import</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>
+<!-- ============================================================== -->
+<!-- End Left Sidebar -->
+<!-- ============================================================== -->

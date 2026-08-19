@@ -136,6 +136,11 @@
                title="Nabavka">
               <i class="mdi mdi-clipboard-check"></i><span class="app-label">Nabavka</span>
             </a>
+            <a class="nav-link {% if current_app == 'mobilni' %}active{% endif %}"
+               href="{% url 'switch_app' 'mobilni' %}?next={% url 'mobilni:mobile_dashboard' %}"
+               title="Mobilni telefoni">
+              <i class="mdi mdi-cellphone"></i><span class="app-label">Mobilni</span>
+            </a>
             <a class="nav-link {% if current_app == 'kadrovi' %}active{% endif %}"
                href="{% url 'switch_app' 'kadrovi' %}?next={% url 'employee_list' %}"
                title="Kadrovi">

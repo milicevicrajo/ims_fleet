@@ -1220,4 +1220,3 @@ class Insurance(models.Model):
         return f"Insurance {self.br_naloga}/{self.stavka} ({self.god})"
 
 
-

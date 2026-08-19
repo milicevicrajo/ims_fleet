@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Mesecni pregled brojeva, paketa i zaposlenih kojima su brojevi dodeljeni.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'mobilni:mobile_assignment_export' %}?{{ request.GET.urlencode }}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-file-excel"></i> Export</a>
+    <a href="{% url 'mobilni:mobile_import' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-upload"></i> Import</a>
+    <a href="{% url 'mobilni:mobile_assignment_create' %}" class="btn btn-light btn-sm"><i class="mdi mdi-plus"></i> Nova dodela</a>
+  </div>
+</div>
+
+{% include "mobilni/mobile/_period_filter.html" %}
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="MobileAssignmentsTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Broj</th>
+            <th>Status</th>
+            <th>Paket</th>
+            <th>Korisnik</th>
+            <th>ID zap.</th>
+            <th>Sifra</th>
+            <th>Napomena</th>
+            <th class="text-center no-sort">Akcija</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in assignments %}
+            <tr>
+              <td>{{ item.phone_number }}</td>
+              <td>
+                {% if item.number_active %}
+                  <span class="fleet-status active">Aktivan</span>
+                {% else %}
+                  <span class="fleet-status muted">Neaktivan</span>
+                {% endif %}
+              </td>
+              <td>{{ item.package_name|default:item.package }}</td>
+              <td>{{ item.employee_name|default:"/" }}</td>
+              <td>{{ item.employee_id|default:"/" }}</td>
+              <td>{{ item.employee_code|default:"/" }}</td>
+              <td>{{ item.note|default:"/"|truncatechars:60 }}</td>
+              <td class="text-center">
+                <span class="fleet-list-actions">
+                  <a href="{% url 'mobilni:mobile_assignment_update' item.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
+                  <a href="{% url 'mobilni:mobile_assignment_delete' item.pk %}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i></a>
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Broj</th>
+            <th>Status</th>
+            <th>Paket</th>
+            <th>Korisnik</th>
+            <th>ID zap.</th>
+            <th>Sifra</th>
+            <th>Napomena</th>
+            <th class="no-sort">Akcija</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "mobilni/mobile/_datatable.html" with table_id="MobileAssignmentsTable" order="[[3, 'asc'], [0, 'asc']]" %}
+{% endblock %}

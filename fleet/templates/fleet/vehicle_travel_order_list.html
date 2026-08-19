@@ -32,6 +32,13 @@
   .assignment-status.closed { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
   tr.assignment-closed td { background: #f3f6f9 !important; color: #657282; }
   tr.assignment-closed a.btn-outline-primary { border-color: #9aa8b6; color: #405060; }
+  .assignment-manual-modal .modal-body {
+    line-height: 1.55;
+  }
+  .assignment-manual-modal h5,
+  .assignment-manual-modal h6 {
+    letter-spacing: 0;
+  }
 </style>
 
 <div class="assignment-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -39,11 +46,33 @@
     <h1>Zaduzenja vozila</h1>
     <p>Putni nalozi za automobile na jednom mestu, sa statusom i obracunom goriva po periodu.</p>
   </div>
-  {% if can_create_vehicle_travel_order %}
-    <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-light btn-sm">
-      <i class="mdi mdi-plus"></i> Otvori novi putni nalog
+  <div class="d-flex flex-wrap gap-2">
+    <a href="#assignmentManualModal" class="btn btn-outline-light btn-sm" data-bs-toggle="modal" role="button">
+      <i class="mdi mdi-help-circle-outline"></i> Uputstvo
     </a>
-  {% endif %}
+    {% if can_create_vehicle_travel_order %}
+      <a href="{% url 'vehicle_travel_order_create' %}" class="btn btn-light btn-sm">
+        <i class="mdi mdi-plus"></i> Otvori novi putni nalog
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="modal fade assignment-manual-modal" id="assignmentManualModal" tabindex="-1" aria-labelledby="assignmentManualModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content text-start">
+      <div class="modal-header">
+        <h5 class="modal-title" id="assignmentManualModalLabel">Uputstvo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        {{ manual }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="row">

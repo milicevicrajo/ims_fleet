@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Dodela brojeva, paketi, mesecna potrosnja i import istorija na jednom mestu.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'mobilni:mobile_usage_export' %}?year={{ selected_year }}&month={{ selected_month }}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-file-excel"></i> Export potrosnje
+    </a>
+    <a href="{% url 'mobilni:mobile_import' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-upload"></i> Import
+    </a>
+  </div>
+</div>
+
+{% include "mobilni/mobile/_period_filter.html" %}
+
+<div class="row mb-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm"><div class="card-body">
+      <small class="text-muted">Dodela u periodu</small>
+      <h3 class="mb-0">{{ assignment_count|intcomma }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm"><div class="card-body">
+      <small class="text-muted">Aktivni brojevi</small>
+      <h3 class="mb-0">{{ active_number_count|intcomma }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm"><div class="card-body">
+      <small class="text-muted">Racuni u periodu</small>
+      <h3 class="mb-0">{{ usage_count|intcomma }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm"><div class="card-body">
+      <small class="text-muted">Ukupno za naplatu</small>
+      <h3 class="mb-0">{{ usage_total|floatformat:2|intcomma }}</h3>
+    </div></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-xl-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="card-title mb-0">Najveci racuni</h5>
+          <a href="{% url 'mobilni:mobile_usage_list' %}?year={{ selected_year }}&month={{ selected_month }}" class="btn btn-outline-primary btn-sm">
+            <i class="mdi mdi-open-in-new"></i> Sva potrosnja
+          </a>
+        </div>
+        <div class="table-responsive">
+          <table id="MobileDashboardUsageTable" class="display compact table table-hover table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>Broj</th>
+                <th>ID zap.</th>
+                <th>Korisnik</th>
+                <th>Paket</th>
+                <th class="text-end">Ukupno</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for usage in usages %}
+                <tr>
+                  <td>{{ usage.phone_number }}</td>
+                  <td>{{ usage.employee_id|default:"/" }}</td>
+                  <td>{{ usage.assignment.employee_name|default:"/" }}</td>
+                  <td>{{ usage.assignment.package_name|default:"/" }}</td>
+                  <td class="text-end" data-order="{{ usage.total }}">{{ usage.total|floatformat:2|intcomma }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Broj</th>
+                <th>ID zap.</th>
+                <th>Korisnik</th>
+                <th>Paket</th>
+                <th>Ukupno</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Poslednji importi</h5>
+        <div class="list-group list-group-flush">
+          {% for item in latest_imports %}
+            <div class="list-group-item px-0">
+              <strong>{{ item.get_import_type_display }}</strong>
+              <small class="text-muted d-block">{{ item.created_at|date:"d.m.Y H:i" }} - {{ item.source_file }}</small>
+              <small>Novo {{ item.imported_count }}, azurirano {{ item.updated_count }}, preskoceno {{ item.skipped_count }}</small>
+              {% if item.error_message %}
+                <small class="text-danger d-block">{{ item.error_message|truncatechars:100 }}</small>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p class="text-muted mb-0">Import jos nije pokretan.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% include "mobilni/mobile/_datatable.html" with table_id="MobileDashboardUsageTable" order="[[4, 'desc'], [0, 'asc']]" %}
+{% endblock %}

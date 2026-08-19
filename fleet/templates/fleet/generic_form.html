@@ -32,20 +32,37 @@
     padding-top: 16px;
     margin-top: 6px;
   }
+  .fleet-form-manual-trigger {
+    white-space: nowrap;
+  }
+  .fleet-form-manual-modal .modal-body {
+    line-height: 1.55;
+  }
+  .fleet-form-manual-modal h5,
+  .fleet-form-manual-modal h6 {
+    letter-spacing: 0;
+  }
 </style>
 
 <div class="fleet-form-page">
   <div class="fleet-form-header">
     <h1>{{ title|default:"Forma" }}</h1>
-    {% if request.META.HTTP_REFERER %}
-      <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-outline-secondary btn-sm">
-        <i class="mdi mdi-arrow-left"></i> Nazad
-      </a>
-    {% endif %}
+    <div class="d-flex flex-wrap gap-2">
+      {% if manual %}
+        <button type="button" class="btn btn-outline-primary btn-sm fleet-form-manual-trigger" data-bs-toggle="modal" data-bs-target="#formManualModal">
+          <i class="mdi mdi-help-circle-outline"></i> Uputstvo
+        </button>
+      {% endif %}
+      {% if request.META.HTTP_REFERER %}
+        <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-outline-secondary btn-sm">
+          <i class="mdi mdi-arrow-left"></i> Nazad
+        </a>
+      {% endif %}
+    </div>
   </div>
 
   <div class="row">
-    <div class="col-12 col-xl-7">
+    <div class="col-12 col-xl-8">
       <div class="card shadow-sm fleet-form-card">
         <div class="card-body">
           <h5 class="card-title">Podaci</h5>
@@ -108,16 +125,25 @@
         </div>
       </div>
     </div>
-
-    {% if manual %}
-      <div class="col-12 col-xl-5">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            {{ manual }}
-          </div>
-        </div>
-      </div>
-    {% endif %}
   </div>
 </div>
+
+{% if manual %}
+  <div class="modal fade fleet-form-manual-modal" id="formManualModal" tabindex="-1" aria-labelledby="formManualModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="formManualModalLabel">Uputstvo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+        </div>
+        <div class="modal-body">
+          {{ manual }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

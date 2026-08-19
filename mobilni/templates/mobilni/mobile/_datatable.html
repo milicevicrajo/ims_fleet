@@ -1,0 +1,98 @@
+<style>
+  .dataTables_wrapper,
+  .dt-container {
+    width: 100%;
+  }
+
+  .dt-container .dt-layout-row,
+  .dataTables_wrapper .row {
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .dt-container .dt-search,
+  .dt-container .dt-length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_length {
+    color: #5b667a;
+    font-size: 0.875rem;
+  }
+
+  .dt-container .dt-search input,
+  .dt-container .dt-length select,
+  .dataTables_wrapper .dataTables_filter input,
+  .dataTables_wrapper .dataTables_length select {
+    border: 1px solid #d7dce5;
+    border-radius: 6px;
+    color: #1f2937;
+    min-height: 34px;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .dt-container .dt-search input,
+  .dataTables_wrapper .dataTables_filter input {
+    min-width: min(280px, 70vw);
+  }
+
+  .dt-container .dt-paging .dt-paging-button,
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    border: 1px solid #d7dce5 !important;
+    border-radius: 6px !important;
+    color: #334155 !important;
+    margin-left: 0.25rem;
+    padding: 0.35rem 0.65rem !important;
+  }
+
+  .dt-container .dt-paging .dt-paging-button.current,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #fff !important;
+  }
+
+  table.dataTable thead th,
+  table.dataTable tfoot th {
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!window.jQuery || !jQuery.fn.DataTable) {
+      return;
+    }
+
+    var table = jQuery('#{{ table_id }}');
+    if (!table.length || jQuery.fn.DataTable.isDataTable(table[0])) {
+      return;
+    }
+
+    table.DataTable({
+      pageLength: {{ page_length|default:50 }},
+      lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Sve']],
+      order: {{ order|default:"[[0, 'asc']]"|safe }},
+      autoWidth: false,
+      scrollX: true,
+      columnDefs: [
+        { targets: 'no-sort', orderable: false, searchable: false }
+      ],
+      language: {
+        processing: 'Ucitavanje...',
+        search: 'Pretraga:',
+        lengthMenu: 'Prikazi _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ redova',
+        infoEmpty: 'Nema redova',
+        infoFiltered: '(filtrirano od _MAX_ ukupno)',
+        zeroRecords: 'Nema rezultata',
+        emptyTable: 'Nema podataka',
+        paginate: {
+          first: 'Prva',
+          last: 'Poslednja',
+          next: 'Sledeca',
+          previous: 'Prethodna'
+        }
+      }
+    });
+  });
+</script>

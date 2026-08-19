@@ -244,6 +244,7 @@ class VehicleTravelOrderListView(LoginRequiredMixin, ListView):
             has_broad_access
             or _can_employee_access_own_vehicle_travel_order(user, "vehicle_travel_order_create")
         )
+        ctx["manual"] = vehicle_travel_order_form_manual()
         return ctx
 
 

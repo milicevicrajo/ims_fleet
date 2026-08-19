@@ -13,6 +13,7 @@ def current_app(request):
         "menice": "sidebar_menice.html",
         "ugovori": "sidebar_ugovori.html",
         "nabavka": "sidebar_nabavka.html",
+        "mobilni": "sidebar_mobilni.html",
     }
     nabavka_codes = [
         "dashboard",

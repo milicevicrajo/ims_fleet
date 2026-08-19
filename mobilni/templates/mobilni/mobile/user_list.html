@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Sifarnik korisnika mobilnih brojeva iz stare tabele i rucnih izmena.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'mobilni:mobile_user_export' %}?{{ request.GET.urlencode }}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-file-excel"></i> Export</a>
+    <a href="{% url 'mobilni:mobile_import' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-upload"></i> Import</a>
+    <a href="{% url 'mobilni:mobile_user_create' %}" class="btn btn-light btn-sm"><i class="mdi mdi-plus"></i> Novi korisnik</a>
+  </div>
+</div>
+
+<form method="get" class="fleet-list-filter d-flex flex-wrap align-items-end gap-2 mb-3">
+  <div>
+    <label class="form-label" for="mobile-user-status">Status</label>
+    <select id="mobile-user-status" name="status" class="form-control">
+      <option value="active" {% if status == "active" %}selected{% endif %}>Aktivni</option>
+      <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Neaktivni</option>
+      <option value="all" {% if status == "all" %}selected{% endif %}>Svi</option>
+    </select>
+  </div>
+  <div>
+    <label class="form-label" for="mobile-user-oj">OJ</label>
+    <select id="mobile-user-oj" name="oj" class="form-control">
+      <option value="">Sve OJ</option>
+      {% for option in oj_options %}
+        <option value="{{ option }}" {% if option == oj %}selected{% endif %}>{{ option }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="form-label" for="mobile-user-hr-link">HR veza</label>
+    <select id="mobile-user-hr-link" name="hr_link" class="form-control">
+      <option value="all" {% if hr_link == "all" %}selected{% endif %}>Svi</option>
+      <option value="linked" {% if hr_link == "linked" %}selected{% endif %}>Povezani</option>
+      <option value="unlinked" {% if hr_link == "unlinked" %}selected{% endif %}>Nepovezani</option>
+    </select>
+  </div>
+  <div class="flex-grow-1" style="min-width: 240px;">
+    <label class="form-label" for="mobile-user-search">Pretraga</label>
+    <input id="mobile-user-search" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Ime, sifra ili OJ">
+  </div>
+  <button type="submit" class="btn btn-primary"><i class="mdi mdi-magnify"></i> Prikazi</button>
+  <a href="{% url 'mobilni:mobile_user_list' %}" class="btn btn-outline-secondary"><i class="mdi mdi-filter-remove"></i> Reset</a>
+</form>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="MobileUsersTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Sifra</th>
+            <th>ID zap.</th>
+            <th>Korisnik</th>
+            <th>OJ</th>
+            <th>Status</th>
+            <th>Datum odlaska</th>
+            <th class="text-center no-sort">Akcija</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in mobile_users %}
+            <tr>
+              <td>{{ item.employee_code }}</td>
+              <td>{{ item.employee_id|default:"/" }}</td>
+              <td>{{ item.full_name }} <small class="text-muted d-block">{{ item.personal_number }}</small></td>
+              <td>{{ item.organizational_unit|default:"/" }}</td>
+              <td>
+                {% if item.is_active %}
+                  <span class="fleet-status active">Aktivan</span>
+                {% else %}
+                  <span class="fleet-status muted">Neaktivan</span>
+                {% endif %}
+              </td>
+              <td data-order="{{ item.departure_date|date:'Y-m-d' }}">{{ item.departure_date|date:"d.m.Y"|default:"/" }}</td>
+              <td class="text-center">
+                <span class="fleet-list-actions">
+                  <a href="{% url 'mobilni:mobile_user_update' item.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
+                  <a href="{% url 'mobilni:mobile_user_delete' item.pk %}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i></a>
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Sifra</th>
+            <th>ID zap.</th>
+            <th>Korisnik</th>
+            <th>OJ</th>
+            <th>Status</th>
+            <th>Datum odlaska</th>
+            <th class="no-sort">Akcija</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "mobilni/mobile/_datatable.html" with table_id="MobileUsersTable" order="[[2, 'asc']]" %}
+{% endblock %}

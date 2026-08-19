@@ -12,6 +12,7 @@ urlpatterns = [
     path("menice/", include(("menice.urls", "menice"), namespace="menice")),
     path("ugovori/", include(("ugovori.urls", "ugovori"), namespace="ugovori")),
     path("nabavka/", include(("nabavka.urls", "nabavka"), namespace="nabavka")),
+    path("mobilni/", include(("mobilni.urls", "mobilni"), namespace="mobilni")),
     path("", include("core.urls")),
 ]
 

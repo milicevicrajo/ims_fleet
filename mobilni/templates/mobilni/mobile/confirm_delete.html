@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="card-title">Brisanje</h4>
+        <p>Da li sigurno zelite da obrisete stavku: <strong>{{ object }}</strong>?</p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="btn btn-outline-secondary">
+              <i class="mdi mdi-arrow-left"></i> Odustani
+            </a>
+            <button type="submit" class="btn btn-danger">
+              <i class="mdi mdi-delete"></i> Obrisi
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
