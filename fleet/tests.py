@@ -1519,7 +1519,7 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 		self.user = get_user_model().objects.create_user("zaposleni-vozilo", password="test", employee=self.employee)
 		self.user.roles.add(role)
 
-	def test_employee_create_vehicle_travel_order_is_for_logged_in_employee(self):
+	def test_employee_can_create_vehicle_travel_order_for_another_employee(self):
 		self.client.force_login(self.user)
 
 		form_response = self.client.get(reverse("vehicle_travel_order_create"))
@@ -1539,7 +1539,7 @@ class VehicleTravelOrderEmployeePermissionTests(TestCase):
 
 		order = VehicleTravelOrder.objects.get()
 		self.assertRedirects(response, reverse("vehicle_travel_order_detail", args=[order.pk]))
-		self.assertEqual(order.employee, self.employee)
+		self.assertEqual(order.employee, self.other_employee)
 
 	def test_employee_can_open_any_detail_and_print_pages_but_not_update(self):
 		own_order = VehicleTravelOrder.objects.create(

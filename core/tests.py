@@ -173,6 +173,41 @@ class PermissionCodeSyncTests(TestCase):
         self.assertIn("isplate:neoporezive_isplate", codes)
         self.assertIn("isplate:converter", codes)
 
+    def test_sync_permission_codes_grants_ugovori_permissions_to_pravna(self):
+        from .permissions import sync_permission_codes
+
+        existing_permission = PermissionCode.objects.create(code="naplata:pravna_dodaj")
+        role = Role.objects.create(name="Pravna sluzba", slug="pravna")
+        role.permissions.add(existing_permission)
+
+        sync_permission_codes()
+
+        role.refresh_from_db()
+        codes = set(role.permissions.values_list("code", flat=True))
+        self.assertIn("ugovori:contract_list", codes)
+        self.assertIn("ugovori:contract_create", codes)
+        self.assertIn("ugovori:contract_update", codes)
+        self.assertIn("ugovori:contract_delete", codes)
+        self.assertIn("ugovori:partner_list", codes)
+        self.assertIn("naplata:pravna_dodaj", codes)
+
+    def test_sync_permission_codes_separates_mobilni_from_sekretarijat(self):
+        from .permissions import sync_permission_codes
+
+        mobile_permission = PermissionCode.objects.create(code="mobilni:mobile_dashboard")
+        sekretarijat = Role.objects.create(name="Sekretarijat", slug="sekretarijat")
+        sekretarijat.permissions.add(mobile_permission)
+
+        sync_permission_codes()
+
+        mobilni = Role.objects.get(slug="mobilni")
+        mobile_codes = set(mobilni.permissions.values_list("code", flat=True))
+        sekretarijat_codes = set(sekretarijat.permissions.values_list("code", flat=True))
+        self.assertIn("mobilni:mobile_dashboard", mobile_codes)
+        self.assertIn("mobilni:mobile_import", mobile_codes)
+        self.assertIn("mobilni:mobile_assignment_create", mobile_codes)
+        self.assertNotIn("mobilni:mobile_dashboard", sekretarijat_codes)
+
     def test_sync_permission_codes_grants_readonly_naplata_role(self):
         from .permissions import sync_permission_codes
 

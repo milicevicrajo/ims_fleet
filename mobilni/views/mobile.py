@@ -1,12 +1,16 @@
+import csv
+
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
 from django.db.models import Q, Sum
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
-from core.exporting import rows_to_xlsx_response
+from core.exporting import csv_attachment_response, rows_to_xlsx_response
+from core.mixins import RolePermissionRequiredMixin, role_permission_required
 
 from ..forms.mobile import (
     MobileAssignmentForm,
@@ -18,6 +22,13 @@ from ..forms.mobile import (
 )
 from ..models import MobileAssignment, MobileImportLog, MobilePackage, MobileUsage, MobileUser
 from ..support.mobile import import_assignments, import_packages, import_usages, import_users, sync_employee_links
+from ..withholdings import (
+    REPORT_ALL,
+    REPORT_EMPLOYEES,
+    REPORT_FORMER_EMPLOYEES,
+    REPORT_TYPES,
+    get_withholding_rows,
+)
 
 
 def _periods():
@@ -153,7 +164,7 @@ def _mobile_user_filter_context(request):
     }
 
 
-class MobileDashboardView(LoginRequiredMixin, ListView):
+class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
     template_name = "mobilni/mobile/dashboard.html"
     context_object_name = "usages"
 
@@ -202,7 +213,7 @@ class MobileDashboardView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class MobileAssignmentListView(LoginRequiredMixin, ListView):
+class MobileAssignmentListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
     model = MobileAssignment
     template_name = "mobilni/mobile/assignment_list.html"
     context_object_name = "assignments"
@@ -226,7 +237,7 @@ class MobileAssignmentListView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class MobileUsageListView(LoginRequiredMixin, ListView):
+class MobileUsageListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
     model = MobileUsage
     template_name = "mobilni/mobile/usage_list.html"
     context_object_name = "usages"
@@ -250,7 +261,7 @@ class MobileUsageListView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class MobilePackageListView(LoginRequiredMixin, ListView):
+class MobilePackageListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
     model = MobilePackage
     template_name = "mobilni/mobile/package_list.html"
     context_object_name = "packages"
@@ -265,7 +276,7 @@ class MobilePackageListView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class MobileUserListView(LoginRequiredMixin, ListView):
+class MobileUserListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
     model = MobileUser
     template_name = "mobilni/mobile/user_list.html"
     context_object_name = "mobile_users"
@@ -281,7 +292,7 @@ class MobileUserListView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class MobilePackageCreateView(LoginRequiredMixin, CreateView):
+class MobilePackageCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = MobilePackage
     form_class = MobilePackageForm
     template_name = "fleet/generic_form.html"
@@ -301,7 +312,7 @@ class MobilePackageUpdateView(MobilePackageCreateView, UpdateView):
         return ctx
 
 
-class MobileUserCreateView(LoginRequiredMixin, CreateView):
+class MobileUserCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = MobileUser
     form_class = MobileUserForm
     template_name = "fleet/generic_form.html"
@@ -321,7 +332,7 @@ class MobileUserUpdateView(MobileUserCreateView, UpdateView):
         return ctx
 
 
-class MobileAssignmentCreateView(LoginRequiredMixin, CreateView):
+class MobileAssignmentCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = MobileAssignment
     form_class = MobileAssignmentForm
     template_name = "fleet/generic_form.html"
@@ -341,7 +352,7 @@ class MobileAssignmentUpdateView(MobileAssignmentCreateView, UpdateView):
         return ctx
 
 
-class MobileUsageCreateView(LoginRequiredMixin, CreateView):
+class MobileUsageCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = MobileUsage
     form_class = MobileUsageForm
     template_name = "fleet/generic_form.html"
@@ -361,35 +372,111 @@ class MobileUsageUpdateView(MobileUsageCreateView, UpdateView):
         return ctx
 
 
-class MobileAssignmentDeleteView(LoginRequiredMixin, DeleteView):
+class MobileAssignmentDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = MobileAssignment
     template_name = "mobilni/mobile/confirm_delete.html"
     success_url = reverse_lazy("mobilni:mobile_assignment_list")
     context_object_name = "object"
 
 
-class MobileUsageDeleteView(LoginRequiredMixin, DeleteView):
+class MobileUsageDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = MobileUsage
     template_name = "mobilni/mobile/confirm_delete.html"
     success_url = reverse_lazy("mobilni:mobile_usage_list")
     context_object_name = "object"
 
 
-class MobilePackageDeleteView(LoginRequiredMixin, DeleteView):
+class MobilePackageDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = MobilePackage
     template_name = "mobilni/mobile/confirm_delete.html"
     success_url = reverse_lazy("mobilni:mobile_package_list")
     context_object_name = "object"
 
 
-class MobileUserDeleteView(LoginRequiredMixin, DeleteView):
+class MobileUserDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = MobileUser
     template_name = "mobilni/mobile/confirm_delete.html"
     success_url = reverse_lazy("mobilni:mobile_user_list")
     context_object_name = "object"
 
 
-@login_required
+class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
+    template_name = "mobilni/mobile/withholding_report.html"
+    report_type = REPORT_ALL
+
+    def get_report_type(self):
+        if self.report_type not in REPORT_TYPES:
+            raise Http404("Izvestaj ne postoji.")
+        return self.report_type
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        report_type = self.get_report_type()
+        year, month = _selected_period(self.request)
+        search = (self.request.GET.get("q") or "").strip()
+        rows = get_withholding_rows(
+            report_type,
+            year=year,
+            month=month,
+            search=search,
+        )
+        paginator = Paginator(rows, 100)
+        page_obj = paginator.get_page(self.request.GET.get("page"))
+        query_params = self.request.GET.copy()
+        query_params.pop("page", None)
+        total = sum((row.withholding for row in rows if row.withholding is not None), start=0)
+        titles = {
+            REPORT_ALL: "Detaljni izvestaj obustava",
+            REPORT_EMPLOYEES: "Obustave zaposlenih",
+            REPORT_FORMER_EMPLOYEES: "Obustave bivsih zaposlenih",
+        }
+        context.update(
+            {
+                "title": titles[report_type],
+                "report_type": report_type,
+                "report_all": REPORT_ALL,
+                "report_employees": REPORT_EMPLOYEES,
+                "report_former_employees": REPORT_FORMER_EMPLOYEES,
+                "rows": page_obj.object_list,
+                "page_obj": page_obj,
+                "is_paginated": page_obj.has_other_pages(),
+                "query_without_page": query_params.urlencode(),
+                "periods": _periods(),
+                "selected_year": year,
+                "selected_month": month,
+                "q": search,
+                "row_count": len(rows),
+                "withholding_total": total,
+            }
+        )
+        return context
+
+
+@role_permission_required()
+def export_employee_withholdings_csv(request):
+    year, month = _selected_period(request)
+    search = (request.GET.get("q") or "").strip()
+    rows = get_withholding_rows(
+        REPORT_EMPLOYEES,
+        year=year,
+        month=month,
+        search=search,
+    )
+    suffix = _period_suffix(year, month)
+    response = csv_attachment_response(
+        f"obustave_zaposleni_{suffix}.csv",
+        charset="utf-8",
+    )
+    response.write("\ufeff")
+    writer = csv.writer(response, delimiter=";", lineterminator="\r\n")
+    writer.writerow(["Godina", "Mesec", "Sifra radnika", "Iznos obustave"])
+    for row in rows:
+        amount = "" if row.withholding is None else f"{row.withholding:.2f}"
+        writer.writerow([row.year, row.month, row.employee_code or "", amount])
+    return response
+
+
+@role_permission_required()
 def export_assignments_xlsx(request):
     qs, year, month = _filter_assignments(request)
     headers = [
@@ -438,7 +525,7 @@ def export_assignments_xlsx(request):
     )
 
 
-@login_required
+@role_permission_required()
 def export_usages_xlsx(request):
     qs, year, month = _filter_usages(request)
     headers = [
@@ -521,7 +608,7 @@ def export_usages_xlsx(request):
     )
 
 
-@login_required
+@role_permission_required()
 def export_packages_xlsx(request):
     qs = _filter_packages(request)
     headers = ["Sifra partnera", "Partner", "Paket", "Vazi od", "Vazi do", "Neto", "Bruto", "Opis"]
@@ -549,7 +636,7 @@ def export_packages_xlsx(request):
     )
 
 
-@login_required
+@role_permission_required()
 def export_users_xlsx(request):
     qs = _filter_users(request)
     headers = ["ID zaposlenog", "OJ", "Sifra radnika", "Ime i prezime", "JMBG", "Aktivan", "Datum odlaska"]
@@ -576,7 +663,7 @@ def export_users_xlsx(request):
     )
 
 
-@login_required
+@role_permission_required()
 def mobile_import_view(request):
     forms = {
         "packages": MobileSimpleImportForm(prefix="packages"),

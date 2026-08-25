@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Obustave</h1>
+    <p>{{ title }} na osnovu lokalno uvezenih podataka mobilne telefonije.</p>
+  </div>
+  {% if report_type == report_employees %}
+    <a href="{% url 'mobilni:mobile_withholding_employees_export' %}?{{ request.GET.urlencode }}"
+       class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-file-delimited"></i> Export CSV
+    </a>
+  {% endif %}
+</div>
+
+<div class="btn-group flex-wrap mb-3" role="group" aria-label="Izvestaji obustava">
+  <a href="{% url 'mobilni:mobile_withholding_all' %}"
+     class="btn btn-sm {% if report_type == report_all %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    Detaljni izvestaj
+  </a>
+  <a href="{% url 'mobilni:mobile_withholding_employees' %}"
+     class="btn btn-sm {% if report_type == report_employees %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    Zaposleni
+  </a>
+  <a href="{% url 'mobilni:mobile_withholding_former_employees' %}"
+     class="btn btn-sm {% if report_type == report_former_employees %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    Bivsi zaposleni
+  </a>
+</div>
+
+<form method="get" class="fleet-list-filter d-flex flex-wrap align-items-end gap-2 mb-3">
+  <div>
+    <label class="form-label" for="withholding-period">Period</label>
+    <select id="withholding-period" name="period" class="form-control"
+            onchange="var p=this.value.split('-'); this.form.year.value=p[0]||''; this.form.month.value=p[1]||'';">
+      {% for year, month in periods %}
+        <option value="{{ year }}-{{ month }}" {% if year == selected_year and month == selected_month %}selected{% endif %}>
+          {{ month|stringformat:"02d" }}/{{ year }}
+        </option>
+      {% endfor %}
+    </select>
+    <input type="hidden" name="year" value="{{ selected_year|default:'' }}">
+    <input type="hidden" name="month" value="{{ selected_month|default:'' }}">
+  </div>
+  <div class="flex-grow-1" style="min-width: 220px;">
+    <label class="form-label" for="withholding-search">Pretraga</label>
+    <input id="withholding-search" type="search" name="q" value="{{ q }}" class="form-control"
+           placeholder="Sifra, zaposleni ili broj telefona">
+  </div>
+  <button type="submit" class="btn btn-primary"><i class="mdi mdi-magnify"></i> Prikazi</button>
+</form>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Broj stavki</div>
+      <div class="h4 mb-0">{{ row_count|intcomma }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Ukupna obustava</div>
+      <div class="h4 mb-0">{{ withholding_total|floatformat:2|intcomma }} RSD</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      {% if report_type == report_all %}
+        <table class="table table-sm table-hover table-bordered align-middle text-nowrap">
+          <thead><tr>
+            <th>Sifra radnika</th><th>Radnik</th><th>Paket</th><th class="text-end">Iznos neto</th>
+            <th>Godina</th><th>Mesec</th><th>Broj</th>
+            <th class="text-end">Onnet</th><th class="text-end">U MTS mrezi</th><th class="text-end">Van MTS mreze</th>
+            <th class="text-end">Ka KIM</th><th class="text-end">Ka specijalnim</th><th class="text-end">Internacionalni</th>
+            <th class="text-end">Roaming</th><th class="text-end">GPRS</th><th class="text-end">SMS</th>
+            <th class="text-end">SMS internac.</th><th class="text-end">SMS u roamingu</th><th class="text-end">MMS</th>
+            <th class="text-end">VAS SMS</th><th class="text-end">Saobracaj za popust</th><th class="text-end">Fiksni popust</th>
+            <th class="text-end">Varijabilni popust</th><th class="text-end">Usluge</th><th class="text-end">Otpremnice</th>
+            <th class="text-end">Parking</th><th class="text-end">NZRD</th><th class="text-end">Osnovica za PDV</th>
+            <th class="text-end">PDV</th><th class="text-end">Placanje na rate</th><th class="text-end">Ukupno za naplatu</th>
+            <th class="text-end">Obustava</th>
+          </tr></thead>
+          <tbody>
+          {% for item in rows %}
+            <tr>
+              <td>{{ item.employee_code|default:"/" }}</td><td>{{ item.employee_name|default:"/" }}</td>
+              <td>{{ item.package_name|default:"/" }}</td><td class="text-end">{{ item.package_net_amount|floatformat:2|intcomma }}</td>
+              <td>{{ item.year }}</td><td>{{ item.month }}</td><td>{{ item.phone_number }}</td>
+              <td class="text-end">{{ item.usage.onnet|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.mts_network|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.outside_mts|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.kim|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.special|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.international|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.roaming|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.gprs|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.sms|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.sms_international|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.sms_roaming|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.mms|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.vas_sms|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.discount_traffic|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.fixed_discount|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.variable_discount|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.services|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.dispatch_notes|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.parking|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.nzrd|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.vat_base|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.vat|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.installments|floatformat:2|intcomma }}</td>
+              <td class="text-end">{{ item.usage.total|floatformat:2|intcomma }}</td>
+              <td class="text-end"><strong>{{ item.withholding|floatformat:2|intcomma }}</strong></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="32" class="text-center text-muted py-4">Nema podataka za izabrane uslove.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <table class="table table-sm table-hover table-bordered align-middle">
+          <thead><tr>
+            <th>Sifra radnika</th><th>Radnik</th><th>Godina</th><th>Mesec</th><th>Broj</th><th class="text-end">Obustava</th>
+          </tr></thead>
+          <tbody>
+          {% for item in rows %}
+            <tr>
+              <td>{{ item.employee_code|default:"/" }}</td><td>{{ item.employee_name|default:"/" }}</td>
+              <td>{{ item.year }}</td><td>{{ item.month }}</td><td>{{ item.phone_number }}</td>
+              <td class="text-end"><strong>{{ item.withholding|floatformat:2|intcomma }}</strong></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Nema podataka za izabrane uslove.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+    {% if is_paginated %}
+      <nav aria-label="Stranice" class="mt-3">
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">Prethodna</a></li>
+          {% endif %}
+          <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">Sledeca</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -162,7 +162,7 @@ def vehicle_travel_order_form_manual():
         <ol class="mb-3">
           <li><strong>PN broj</strong> sistem dodeljuje automatski. Polje se ne popunjava rucno.</li>
           <li><strong>Datum otvaranja</strong> je datum od kada zaposleni preuzima auto.</li>
-          <li><strong>Zaposleni</strong> je lice na koje se otvara zaduzenje. Za ulogu Zaposleni sistem automatski postavlja prijavljenog korisnika.</li>
+          <li><strong>Zaposleni</strong> je lice na koje se otvara zaduzenje. Mozete izabrati bilo kog aktivnog zaposlenog.</li>
           <li><strong>Vozilo</strong> je auto koji se zaduzuje. Izaberite tacno vozilo iz liste.</li>
           <li><strong>Pocetna kilometraza</strong> je stanje kilometraze na dan preuzimanja vozila.</li>
         </ol>
@@ -435,9 +435,9 @@ class VehicleTravelOrderCreateView(VehicleTravelOrderEmployeeAccessMixin, LoginR
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
-        kwargs["limit_to_user_employee"] = (
+        kwargs["limit_to_user_employee"] = not (
             _is_vehicle_travel_order_employee_self_service(self.request.user)
-            or not _has_vehicle_travel_order_broad_access(self.request.user)
+            or _has_vehicle_travel_order_broad_access(self.request.user)
         )
         return kwargs
 

@@ -52,12 +52,26 @@ def collect_isplate_permission_codes():
     return collect_url_pattern_names(isplate_urls.urlpatterns, prefix="isplate")
 
 
+def collect_ugovori_permission_codes():
+    from ugovori import urls as ugovori_urls
+
+    return collect_url_pattern_names(ugovori_urls.urlpatterns, prefix="ugovori")
+
+
+def collect_mobilni_permission_codes():
+    from mobilni import urls as mobilni_urls
+
+    return collect_url_pattern_names(mobilni_urls.urlpatterns, prefix="mobilni")
+
+
 def collect_permission_codes():
     codes = set(collect_fleet_permission_codes())
     codes.update(collect_naplata_permission_codes())
     codes.update(collect_nabavka_permission_codes())
     codes.update(collect_menice_permission_codes())
     codes.update(collect_isplate_permission_codes())
+    codes.update(collect_ugovori_permission_codes())
+    codes.update(collect_mobilni_permission_codes())
     return sorted(codes)
 
 
@@ -109,6 +123,45 @@ def sync_permission_codes():
     ).delete()
     for perm in PermissionCode.objects.filter(code__in=isplate_codes):
         RolePermission.objects.get_or_create(role=blagajna_role, permission=perm)
+
+    ugovori_codes = collect_ugovori_permission_codes()
+    pravna_role, _ = Role.objects.get_or_create(
+        slug="pravna",
+        defaults={
+            "name": "Pravna sluzba",
+            "description": "Pristup funkcijama pravne sluzbe i aplikaciji ugovori.",
+            "is_active": True,
+        },
+    )
+    if not pravna_role.is_active:
+        pravna_role.is_active = True
+        pravna_role.save(update_fields=["is_active"])
+    for perm in PermissionCode.objects.filter(code__in=ugovori_codes):
+        RolePermission.objects.get_or_create(role=pravna_role, permission=perm)
+
+    mobilni_codes = collect_mobilni_permission_codes()
+    mobilni_role, _ = Role.objects.get_or_create(
+        slug="mobilni",
+        defaults={
+            "name": "Mobilni",
+            "description": "Pristup svim funkcijama aplikacije mobilni telefoni.",
+            "is_active": True,
+        },
+    )
+    mobilni_role_changes = []
+    if mobilni_role.name != "Mobilni":
+        mobilni_role.name = "Mobilni"
+        mobilni_role_changes.append("name")
+    if not mobilni_role.is_active:
+        mobilni_role.is_active = True
+        mobilni_role_changes.append("is_active")
+    if mobilni_role_changes:
+        mobilni_role.save(update_fields=mobilni_role_changes)
+    RolePermission.objects.filter(role=mobilni_role).exclude(
+        permission__code__in=mobilni_codes
+    ).delete()
+    for perm in PermissionCode.objects.filter(code__in=mobilni_codes):
+        RolePermission.objects.get_or_create(role=mobilni_role, permission=perm)
 
     pregled_naplate_codes = [
         "naplata:lista_dugovanja",
@@ -206,6 +259,10 @@ def sync_permission_codes():
         sekretarijat_role.save(update_fields=["name", "is_active"])
     for perm in PermissionCode.objects.filter(code__in=sekretarijat_codes):
         RolePermission.objects.get_or_create(role=sekretarijat_role, permission=perm)
+    RolePermission.objects.filter(
+        role=sekretarijat_role,
+        permission__code__in=mobilni_codes,
+    ).delete()
 
     zaposleni_codes = [
         "vehicle_travel_order_list",
@@ -220,7 +277,7 @@ def sync_permission_codes():
         slug="zaposleni",
         defaults={
             "name": "Zaposleni",
-            "description": "Pristup sopstvenom profilu i sopstvenim zaduzenjima vozila.",
+            "description": "Pristup sopstvenom profilu i otvaranju zaduzenja vozila.",
             "is_active": True,
         },
     )
@@ -234,7 +291,6 @@ def sync_permission_codes():
         role=zaposleni_role,
         permission__code="vehicle_travel_order_update",
     ).delete()
-
     sekretarijat_group_users_synced = 0
     sekretarijat_group = Group.objects.filter(name__iexact="Sekretarijat").first()
     if sekretarijat_group:
@@ -263,6 +319,8 @@ def sync_permission_codes():
         "nabavka_role": nabavka_role,
         "menice_role": menice_role,
         "blagajna_role": blagajna_role,
+        "pravna_role": pravna_role,
+        "mobilni_role": mobilni_role,
         "pregled_naplate_role": pregled_naplate_role,
         "zahtev_role": zahtev_role,
         "sekretarijat_role": sekretarijat_role,

@@ -18,6 +18,8 @@ from .views.mobile import (
     MobileUserDeleteView,
     MobileUserListView,
     MobileUserUpdateView,
+    MobileWithholdingReportView,
+    export_employee_withholdings_csv,
     export_assignments_xlsx,
     export_packages_xlsx,
     export_usages_xlsx,
@@ -51,4 +53,24 @@ urlpatterns = [
     path("korisnici/novo/", MobileUserCreateView.as_view(), name="mobile_user_create"),
     path("korisnici/<int:pk>/izmena/", MobileUserUpdateView.as_view(), name="mobile_user_update"),
     path("korisnici/<int:pk>/brisanje/", MobileUserDeleteView.as_view(), name="mobile_user_delete"),
+    path(
+        "obustave/",
+        MobileWithholdingReportView.as_view(report_type="sve"),
+        name="mobile_withholding_all",
+    ),
+    path(
+        "obustave/zaposleni/",
+        MobileWithholdingReportView.as_view(report_type="zaposleni"),
+        name="mobile_withholding_employees",
+    ),
+    path(
+        "obustave/bivsi-zaposleni/",
+        MobileWithholdingReportView.as_view(report_type="bivsi-zaposleni"),
+        name="mobile_withholding_former_employees",
+    ),
+    path(
+        "obustave/zaposleni/export.csv",
+        export_employee_withholdings_csv,
+        name="mobile_withholding_employees_export",
+    ),
 ]
