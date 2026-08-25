@@ -11,16 +11,17 @@
   </div>
   {% if report_type == report_employees %}
     <a href="{% url 'mobilni:mobile_withholding_employees_export' %}?{{ request.GET.urlencode }}"
-       class="btn btn-outline-light btn-sm">
+       class="btn btn-outline-light btn-sm"
+       data-no-preloader>
       <i class="mdi mdi-file-delimited"></i> Export CSV
     </a>
   {% endif %}
 </div>
 
-<div class="btn-group flex-wrap mb-3" role="group" aria-label="Izvestaji obustava">
+<div class="btn-group flex-wrap mb-3" role="group" aria-label="Izveštaji obustava">
   <a href="{% url 'mobilni:mobile_withholding_all' %}"
      class="btn btn-sm {% if report_type == report_all %}btn-primary{% else %}btn-outline-primary{% endif %}">
-    Detaljni izvestaj
+    Detaljni izveštaj
   </a>
   <a href="{% url 'mobilni:mobile_withholding_employees' %}"
      class="btn btn-sm {% if report_type == report_employees %}btn-primary{% else %}btn-outline-primary{% endif %}">
@@ -28,31 +29,45 @@
   </a>
   <a href="{% url 'mobilni:mobile_withholding_former_employees' %}"
      class="btn btn-sm {% if report_type == report_former_employees %}btn-primary{% else %}btn-outline-primary{% endif %}">
-    Bivsi zaposleni
+    Bivši zaposleni
   </a>
 </div>
 
-<form method="get" class="fleet-list-filter d-flex flex-wrap align-items-end gap-2 mb-3">
-  <div>
-    <label class="form-label" for="withholding-period">Period</label>
-    <select id="withholding-period" name="period" class="form-control"
-            onchange="var p=this.value.split('-'); this.form.year.value=p[0]||''; this.form.month.value=p[1]||'';">
-      {% for year, month in periods %}
-        <option value="{{ year }}-{{ month }}" {% if year == selected_year and month == selected_month %}selected{% endif %}>
-          {{ month|stringformat:"02d" }}/{{ year }}
-        </option>
-      {% endfor %}
-    </select>
-    <input type="hidden" name="year" value="{{ selected_year|default:'' }}">
-    <input type="hidden" name="month" value="{{ selected_month|default:'' }}">
+<div class="card shadow-sm mb-3">
+  <div class="card-body border-bottom">
+    <form id="mobile-withholding-filter" method="get" class="fleet-list-filter mb-0">
+      <div class="fleet-filter-grid">
+        <div>
+          <label class="form-label mb-1" for="withholding-period">Period</label>
+          <select id="withholding-period" name="period" class="form-control" data-auto-filter data-period-select="true">
+            {% for year, month in periods %}
+              <option value="{{ year }}-{{ month }}" {% if year == selected_year and month == selected_month %}selected{% endif %}>
+                {{ month|stringformat:"02d" }}/{{ year }}
+              </option>
+            {% endfor %}
+          </select>
+          <input type="hidden" name="year" value="{{ selected_year|default:'' }}">
+          <input type="hidden" name="month" value="{{ selected_month|default:'' }}">
+        </div>
+        <div class="fleet-filter-phone">
+          <label class="form-label mb-1" for="withholding-phone">Broj telefona</label>
+          <input id="withholding-phone" type="search" name="phone_number" value="{{ phone_number }}" class="form-control"
+                 placeholder="38163..." data-auto-filter data-visible-filter>
+        </div>
+        <div>
+          <label class="form-label mb-1" for="withholding-search">Pretraga</label>
+          <input id="withholding-search" type="search" name="q" value="{{ q }}" class="form-control"
+                 placeholder="Šifra ili zaposleni" data-auto-filter data-visible-filter>
+        </div>
+        <div class="fleet-filter-action">
+          <a href="{{ request.path }}" class="btn btn-outline-secondary w-100" title="Poništi filtere">
+            <i class="mdi mdi-filter-remove"></i> Poništi
+          </a>
+        </div>
+      </div>
+    </form>
   </div>
-  <div class="flex-grow-1" style="min-width: 220px;">
-    <label class="form-label" for="withholding-search">Pretraga</label>
-    <input id="withholding-search" type="search" name="q" value="{{ q }}" class="form-control"
-           placeholder="Sifra, zaposleni ili broj telefona">
-  </div>
-  <button type="submit" class="btn btn-primary"><i class="mdi mdi-magnify"></i> Prikazi</button>
-</form>
+</div>
 
 <div class="row g-3 mb-3">
   <div class="col-md-6">
@@ -75,16 +90,16 @@
       {% if report_type == report_all %}
         <table class="table table-sm table-hover table-bordered align-middle text-nowrap">
           <thead><tr>
-            <th>Sifra radnika</th><th>Radnik</th><th>Paket</th><th class="text-end">Iznos neto</th>
+            <th>Šifra radnika</th><th>Radnik</th><th>Paket</th><th class="text-end">Iznos neto</th>
             <th>Godina</th><th>Mesec</th><th>Broj</th>
-            <th class="text-end">Onnet</th><th class="text-end">U MTS mrezi</th><th class="text-end">Van MTS mreze</th>
+            <th class="text-end">Onnet</th><th class="text-end">U MTS mreži</th><th class="text-end">Van MTS mreže</th>
             <th class="text-end">Ka KIM</th><th class="text-end">Ka specijalnim</th><th class="text-end">Internacionalni</th>
             <th class="text-end">Roaming</th><th class="text-end">GPRS</th><th class="text-end">SMS</th>
             <th class="text-end">SMS internac.</th><th class="text-end">SMS u roamingu</th><th class="text-end">MMS</th>
-            <th class="text-end">VAS SMS</th><th class="text-end">Saobracaj za popust</th><th class="text-end">Fiksni popust</th>
+            <th class="text-end">VAS SMS</th><th class="text-end">Saobraćaj za popust</th><th class="text-end">Fiksni popust</th>
             <th class="text-end">Varijabilni popust</th><th class="text-end">Usluge</th><th class="text-end">Otpremnice</th>
             <th class="text-end">Parking</th><th class="text-end">NZRD</th><th class="text-end">Osnovica za PDV</th>
-            <th class="text-end">PDV</th><th class="text-end">Placanje na rate</th><th class="text-end">Ukupno za naplatu</th>
+            <th class="text-end">PDV</th><th class="text-end">Plaćanje na rate</th><th class="text-end">Ukupno za naplatu</th>
             <th class="text-end">Obustava</th>
           </tr></thead>
           <tbody>
@@ -127,7 +142,7 @@
       {% else %}
         <table class="table table-sm table-hover table-bordered align-middle">
           <thead><tr>
-            <th>Sifra radnika</th><th>Radnik</th><th>Godina</th><th>Mesec</th><th>Broj</th><th class="text-end">Obustava</th>
+            <th>Šifra radnika</th><th>Radnik</th><th>Godina</th><th>Mesec</th><th>Broj</th><th class="text-end">Obustava</th>
           </tr></thead>
           <tbody>
           {% for item in rows %}
@@ -151,11 +166,12 @@
           {% endif %}
           <li class="page-item active"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
           {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">Sledeca</a></li>
+            <li class="page-item"><a class="page-link" href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">Sledeća</a></li>
           {% endif %}
         </ul>
       </nav>
     {% endif %}
   </div>
 </div>
+{% include "mobilni/mobile/_auto_filter_script.html" with form_id="mobile-withholding-filter" %}
 {% endblock %}

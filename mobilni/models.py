@@ -5,16 +5,24 @@ from django.utils.translation import gettext_lazy as _
 
 
 class MobilePackage(models.Model):
-    partner_code = models.CharField(_("Sifra partnera"), max_length=20, blank=True)
+    partner_code = models.CharField(_("Šifra partnera"), max_length=20, blank=True)
     partner_name = models.CharField(_("Partner"), max_length=150, blank=True)
     name = models.CharField(_("Paket"), max_length=100)
-    valid_from = models.DateField(_("Vazi od"), null=True, blank=True)
-    valid_to = models.DateField(_("Vazi do"), null=True, blank=True)
+    valid_from = models.DateField(_("Važi od"), null=True, blank=True)
+    valid_to = models.DateField(_("Važi do"), null=True, blank=True)
     net_amount = models.DecimalField(_("Iznos neto"), max_digits=12, decimal_places=2, null=True, blank=True)
     gross_amount = models.DecimalField(_("Iznos bruto"), max_digits=12, decimal_places=2, null=True, blank=True)
     description = models.TextField(_("Opis"), blank=True)
+    contract = models.ForeignKey(
+        "ugovori.Contract",
+        on_delete=models.SET_NULL,
+        related_name="mobile_packages",
+        verbose_name=_("Ugovor"),
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(_("Kreirano"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Azurirano"), auto_now=True)
+    updated_at = models.DateTimeField(_("Ažurirano"), auto_now=True)
 
     class Meta:
         ordering = ["name", "valid_from", "id"]
@@ -33,7 +41,7 @@ class MobilePackage(models.Model):
 
 class MobileUser(models.Model):
     organizational_unit = models.CharField(_("OJ"), max_length=20, blank=True)
-    employee_code = models.IntegerField(_("Sifra radnika"), unique=True)
+    employee_code = models.IntegerField(_("Šifra radnika"), unique=True)
     full_name = models.CharField(_("Ime i prezime"), max_length=150)
     personal_number = models.CharField(_("JMBG"), max_length=13, blank=True)
     is_active = models.BooleanField(_("Aktivan"), default=True)
@@ -47,7 +55,7 @@ class MobileUser(models.Model):
         blank=True,
     )
     created_at = models.DateTimeField(_("Kreirano"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Azurirano"), auto_now=True)
+    updated_at = models.DateTimeField(_("Ažurirano"), auto_now=True)
 
     class Meta:
         ordering = ["full_name", "employee_code"]
@@ -101,13 +109,13 @@ class MobileAssignment(models.Model):
         null=True,
         blank=True,
     )
-    employee_code = models.IntegerField(_("Sifra radnika"), null=True, blank=True)
+    employee_code = models.IntegerField(_("Šifra radnika"), null=True, blank=True)
     employee_name = models.CharField(_("Radnik"), max_length=150, blank=True)
     employee_active = models.BooleanField(_("Aktivan radnik"), default=True)
     personal_number = models.CharField(_("JMBG"), max_length=13, blank=True)
     note = models.TextField(_("Napomena"), blank=True)
     created_at = models.DateTimeField(_("Kreirano"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Azurirano"), auto_now=True)
+    updated_at = models.DateTimeField(_("Ažurirano"), auto_now=True)
 
     class Meta:
         ordering = ["-year", "-month", "phone_number"]
@@ -157,8 +165,8 @@ class MobileUsage(models.Model):
         blank=True,
     )
     onnet = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    mts_network = models.DecimalField(_("U MTS mrezi"), max_digits=12, decimal_places=2, default=0)
-    outside_mts = models.DecimalField(_("Van MTS mreze"), max_digits=12, decimal_places=2, default=0)
+    mts_network = models.DecimalField(_("U MTS mreži"), max_digits=12, decimal_places=2, default=0)
+    outside_mts = models.DecimalField(_("Van MTS mreže"), max_digits=12, decimal_places=2, default=0)
     kim = models.DecimalField(_("Ka KIM"), max_digits=12, decimal_places=2, default=0)
     special = models.DecimalField(_("Ka specijalnim"), max_digits=12, decimal_places=2, default=0)
     international = models.DecimalField(_("Internacionalni"), max_digits=12, decimal_places=2, default=0)
@@ -169,7 +177,7 @@ class MobileUsage(models.Model):
     sms_roaming = models.DecimalField(_("SMS u roamingu"), max_digits=12, decimal_places=2, default=0)
     mms = models.DecimalField(_("MMS"), max_digits=12, decimal_places=2, default=0)
     vas_sms = models.DecimalField(_("VAS SMS"), max_digits=12, decimal_places=2, default=0)
-    discount_traffic = models.DecimalField(_("Saobracaj za popust"), max_digits=12, decimal_places=2, default=0)
+    discount_traffic = models.DecimalField(_("Saobraćaj za popust"), max_digits=12, decimal_places=2, default=0)
     fixed_discount = models.DecimalField(_("Fiksni popust"), max_digits=12, decimal_places=2, default=0)
     variable_discount = models.DecimalField(_("Varijabilni popust"), max_digits=12, decimal_places=2, default=0)
     services = models.DecimalField(_("Usluge"), max_digits=12, decimal_places=2, default=0)
@@ -178,15 +186,15 @@ class MobileUsage(models.Model):
     nzrd = models.DecimalField(_("NZRD"), max_digits=12, decimal_places=2, default=0)
     vat_base = models.DecimalField(_("Osnovica za PDV"), max_digits=12, decimal_places=2, default=0)
     vat = models.DecimalField(_("PDV"), max_digits=12, decimal_places=2, default=0)
-    installments = models.DecimalField(_("Placanje na rate"), max_digits=12, decimal_places=2, default=0)
+    installments = models.DecimalField(_("Plaćanje na rate"), max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(_("Ukupno za naplatu"), max_digits=12, decimal_places=2, default=0)
     created_at = models.DateTimeField(_("Kreirano"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Azurirano"), auto_now=True)
+    updated_at = models.DateTimeField(_("Ažurirano"), auto_now=True)
 
     class Meta:
         ordering = ["-year", "-month", "phone_number"]
-        verbose_name = _("Potrosnja mobilnog")
-        verbose_name_plural = _("Potrosnja mobilnih")
+        verbose_name = _("Potrošnja mobilnog")
+        verbose_name_plural = _("Potrošnja mobilnih")
         constraints = [
             models.UniqueConstraint(
                 fields=["year", "month", "phone_number"],
@@ -208,16 +216,16 @@ class MobileImportLog(models.Model):
         PACKAGES = "packages", _("Paketi")
         USERS = "users", _("Korisnici")
         ASSIGNMENTS = "assignments", _("Dodele")
-        USAGES = "usages", _("Potrosnja")
+        USAGES = "usages", _("Potrošnja")
 
     import_type = models.CharField(_("Tip importa"), max_length=20, choices=ImportType.choices)
     year = models.PositiveSmallIntegerField(_("Godina"), null=True, blank=True)
     month = models.PositiveSmallIntegerField(_("Mesec"), null=True, blank=True)
     source_file = models.CharField(_("Fajl"), max_length=255, blank=True)
     imported_count = models.PositiveIntegerField(_("Uvezeno"), default=0)
-    updated_count = models.PositiveIntegerField(_("Azurirano"), default=0)
+    updated_count = models.PositiveIntegerField(_("Ažurirano"), default=0)
     skipped_count = models.PositiveIntegerField(_("Preskoceno"), default=0)
-    error_message = models.TextField(_("Greska"), blank=True)
+    error_message = models.TextField(_("Greška"), blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

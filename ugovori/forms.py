@@ -8,6 +8,7 @@ from menice.models import Menica, UlaznaMenica
 from .models import (
     BusinessRequest,
     Contract,
+    ContractDocument,
     ContractGuarantee,
     ContractMenicaLink,
     ContractParty,
@@ -379,6 +380,64 @@ class AnnexForm(ContractForm):
 
     def clean_kind(self):
         return Contract.ANNEX
+
+
+class ContractFileForm(forms.ModelForm):
+    class Meta:
+        model = Contract
+        fields = ["file"]
+        widgets = {
+            "file": forms.FileInput(attrs={"class": "form-control"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["file"].required = True
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data.get("file")
+        if not uploaded_file:
+            return uploaded_file
+
+        max_size = getattr(settings, "MAX_CONTRACT_UPLOAD_SIZE", 50 * 1024 * 1024)
+        if uploaded_file.size > max_size:
+            max_mb = max_size / (1024 * 1024)
+            raise forms.ValidationError(
+                f"Fajl ugovora je veci od dozvoljenih {max_mb:.0f} MB."
+            )
+        return uploaded_file
+
+
+class ContractDocumentForm(forms.ModelForm):
+    class Meta:
+        model = ContractDocument
+        fields = ["description", "file"]
+        widgets = {
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 2,
+                    "placeholder": "Kratak opis dokumenta ili priloga",
+                }
+            ),
+            "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
+        }
+
+    def clean_description(self):
+        return (self.cleaned_data.get("description") or "").strip()
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data.get("file")
+        if not uploaded_file:
+            return uploaded_file
+
+        max_size = getattr(settings, "MAX_CONTRACT_UPLOAD_SIZE", 50 * 1024 * 1024)
+        if uploaded_file.size > max_size:
+            max_mb = max_size / (1024 * 1024)
+            raise forms.ValidationError(
+                f"Dokument je veci od dozvoljenih {max_mb:.0f} MB."
+            )
+        return uploaded_file
 
 
 class ContractPartyForm(forms.ModelForm):

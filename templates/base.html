@@ -218,6 +218,9 @@
                     ];
 
                     document.querySelectorAll(selectors.join(',')).forEach(function(input) {
+                        if (input.hasAttribute('data-visible-filter')) {
+                            return;
+                        }
                         input.value = '';
                         input.disabled = true;
                         var wrapper = input.closest('div');
@@ -558,6 +561,31 @@
 
         // PrikaÅ¾i preloader na klik na linkove (sa fade efektom)
         document.addEventListener("DOMContentLoaded", function () {
+            function isDownloadLink(href) {
+                if (!href) {
+                    return false;
+                }
+                try {
+                    const url = new URL(href, window.location.href);
+                    const path = url.pathname.toLowerCase();
+                    return (
+                        path.endsWith(".csv") ||
+                        path.endsWith(".xlsx") ||
+                        path.endsWith(".xls") ||
+                        path.includes("export") ||
+                        url.searchParams.get("export") === "1"
+                    );
+                } catch (err) {
+                    const loweredHref = href.toLowerCase();
+                    return (
+                        loweredHref.includes(".csv") ||
+                        loweredHref.includes(".xlsx") ||
+                        loweredHref.includes(".xls") ||
+                        loweredHref.includes("export")
+                    );
+                }
+            }
+
             document.querySelectorAll("a").forEach(function (el) {
                 el.addEventListener("click", function (e) {
                     const href = el.getAttribute("href"); // Uzmite href atribut
@@ -568,6 +596,7 @@
                         (href && href.startsWith("#")) ||         // IskljuÄi # linkove
                         (href && href.startsWith("javascript:")) || // <-- DODAJTE OVAJ USLOV: IskljuÄi javascript: linkove
                         el.hasAttribute("data-no-preloader") || // IskljuÄi linkove sa data-no-preloader atributom
+                        isDownloadLink(href) || // IskljuÄi export/download linkove
                         (el.hostname && el.hostname !== window.location.hostname) // IskljuÄi eksterne linkove
                     ) {
                         return; // Nemoj prikazivati preloader za ove linkove

@@ -7,22 +7,33 @@
 <div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
     <h1>{{ title }}</h1>
-    <p>Sifarnik mobilnih paketa, partnera, vazenja i ugovorenih iznosa.</p>
+    <p>Šifarnik mobilnih paketa, opisa, ugovora, važenja i ugovorenih iznosa.</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
-    <a href="{% url 'mobilni:mobile_package_export' %}?{{ request.GET.urlencode }}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-file-excel"></i> Export</a>
+    <a href="{% url 'mobilni:mobile_package_export' %}?{{ request.GET.urlencode }}" class="btn btn-outline-light btn-sm" data-no-preloader><i class="mdi mdi-file-excel"></i> Export</a>
     <a href="{% url 'mobilni:mobile_import' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-upload"></i> Import</a>
     <a href="{% url 'mobilni:mobile_package_create' %}" class="btn btn-light btn-sm"><i class="mdi mdi-plus"></i> Novi paket</a>
   </div>
 </div>
 
-<form method="get" class="fleet-list-filter d-flex flex-wrap align-items-end gap-2 mb-3">
-  <div class="flex-grow-1" style="min-width: 240px;">
-    <label class="form-label" for="package-search">Pretraga</label>
-    <input id="package-search" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Paket ili partner">
+<div class="card shadow-sm mb-3">
+  <div class="card-body border-bottom">
+    <form id="mobile-package-filter" method="get" class="fleet-list-filter mb-0">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-10">
+          <label class="form-label mb-1" for="package-search">Pretraga</label>
+          <input id="package-search" type="search" name="q" value="{{ q }}" class="form-control"
+                 placeholder="Paket, opis, partner ili ugovor" data-auto-filter data-visible-filter>
+        </div>
+        <div class="col-12 col-md-2">
+          <a href="{% url 'mobilni:mobile_package_list' %}" class="btn btn-outline-secondary w-100" title="Poništi filtere">
+            <i class="mdi mdi-filter-remove"></i> Poništi
+          </a>
+        </div>
+      </div>
+    </form>
   </div>
-  <button type="submit" class="btn btn-primary"><i class="mdi mdi-magnify"></i> Prikazi</button>
-</form>
+</div>
 
 <div class="card shadow-sm">
   <div class="card-body">
@@ -32,7 +43,9 @@
           <tr>
             <th>Paket</th>
             <th>Partner</th>
-            <th>Vazi</th>
+            <th>Opis paketa</th>
+            <th>Ugovor</th>
+            <th>Važi</th>
             <th class="text-end">Neto</th>
             <th class="text-end">Bruto</th>
             <th class="text-center no-sort">Akcija</th>
@@ -43,6 +56,13 @@
             <tr>
               <td>{{ item.name }}</td>
               <td>{{ item.partner_name }} <small class="text-muted d-block">{{ item.partner_code }}</small></td>
+              <td style="min-width: 280px; white-space: normal;">{{ item.description|default:"/"|linebreaksbr }}</td>
+              <td>
+                {% if item.contract %}
+                  <a href="{% url 'ugovori:contract_detail' item.contract.pk %}">{{ item.contract.contract_number }}</a>
+                  <small class="text-muted d-block">{{ item.contract.contract_date|date:"Y" }}</small>
+                {% else %}/{% endif %}
+              </td>
               <td data-order="{{ item.valid_from|date:'Y-m-d' }}">{{ item.valid_from|date:"d.m.Y"|default:"/" }} - {{ item.valid_to|date:"d.m.Y"|default:"/" }}</td>
               <td class="text-end" data-order="{{ item.net_amount }}">{{ item.net_amount|floatformat:2|intcomma }}</td>
               <td class="text-end" data-order="{{ item.gross_amount }}">{{ item.gross_amount|floatformat:2|intcomma }}</td>
@@ -59,7 +79,9 @@
           <tr>
             <th>Paket</th>
             <th>Partner</th>
-            <th>Vazi</th>
+            <th>Opis paketa</th>
+            <th>Ugovor</th>
+            <th>Važi</th>
             <th>Neto</th>
             <th>Bruto</th>
             <th class="no-sort">Akcija</th>
@@ -70,4 +92,5 @@
   </div>
 </div>
 {% include "mobilni/mobile/_datatable.html" with table_id="MobilePackagesTable" order="[[0, 'asc']]" page_length=25 %}
+{% include "mobilni/mobile/_auto_filter_script.html" with form_id="mobile-package-filter" %}
 {% endblock %}

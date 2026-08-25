@@ -1,8 +1,10 @@
 import datetime
 
 from django import forms
+from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
+from ugovori.models import Contract
 
 from ..models import MobileAssignment, MobilePackage, MobileUsage, MobileUser
 
@@ -26,8 +28,8 @@ class MobileSimpleImportForm(forms.Form):
 
 
 class MobilePackageForm(forms.ModelForm):
-    valid_from = localized_date_field(label="Vazi od", required=False)
-    valid_to = localized_date_field(label="Vazi do", required=False)
+    valid_from = localized_date_field(label="Važi od", required=False)
+    valid_to = localized_date_field(label="Važi do", required=False)
 
     class Meta:
         model = MobilePackage
@@ -40,10 +42,18 @@ class MobilePackageForm(forms.ModelForm):
             "net_amount",
             "gross_amount",
             "description",
+            "contract",
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["contract"].queryset = Contract.objects.filter(
+            kind=Contract.MAIN,
+        ).order_by("-contract_date", "contract_number")
+        self.fields["contract"].widget = Select2Widget(attrs={"class": "select2-method"})
 
 
 class MobileUserForm(forms.ModelForm):

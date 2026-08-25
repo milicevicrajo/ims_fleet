@@ -68,7 +68,15 @@ def calculate_withholding(usage):
     return usage.vat_base - package_deduction + parking + usage.nzrd
 
 
-def withholding_usage_queryset(*, year=None, month=None, search=""):
+def withholding_usage_queryset(
+    *,
+    year=None,
+    month=None,
+    search="",
+    phone_number="",
+    employee="",
+    package_id=None,
+):
     queryset = (
         MobileUsage.objects.filter(
             assignment__isnull=False,
@@ -83,6 +91,17 @@ def withholding_usage_queryset(*, year=None, month=None, search=""):
         queryset = queryset.filter(year=year)
     if month:
         queryset = queryset.filter(month=month)
+    phone_number = (phone_number or "").strip()
+    if phone_number:
+        queryset = queryset.filter(phone_number__icontains=phone_number)
+    employee = (employee or "").strip()
+    if employee:
+        employee_query = Q(assignment__employee_name__icontains=employee)
+        if employee.isdigit():
+            employee_query |= Q(assignment__employee_code=int(employee))
+        queryset = queryset.filter(employee_query)
+    if package_id:
+        queryset = queryset.filter(assignment__package_id=package_id)
     search = (search or "").strip()
     if search:
         query = Q(phone_number__icontains=search) | Q(assignment__employee_name__icontains=search)
@@ -107,11 +126,27 @@ def _is_former_employee_for_period(usage):
     return departure_date < month_end
 
 
-def get_withholding_rows(report_type, *, year=None, month=None, search=""):
+def get_withholding_rows(
+    report_type,
+    *,
+    year=None,
+    month=None,
+    search="",
+    phone_number="",
+    employee="",
+    package_id=None,
+):
     if report_type not in REPORT_TYPES:
-        raise ValueError(f"Nepoznat izvestaj obustava: {report_type}")
+        raise ValueError(f"Nepoznat izveštaj obustava: {report_type}")
 
-    usages = withholding_usage_queryset(year=year, month=month, search=search)
+    usages = withholding_usage_queryset(
+        year=year,
+        month=month,
+        search=search,
+        phone_number=phone_number,
+        employee=employee,
+        package_id=package_id,
+    )
     rows = []
     for usage in usages:
         assignment = usage.assignment

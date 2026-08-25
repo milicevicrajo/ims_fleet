@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 class Partner(models.Model):
@@ -531,7 +533,10 @@ class Contract(models.Model):
         verbose_name="Ima garancije",
     )
     file = models.FileField(
-        upload_to="ugovori/files/%Y/%m/", null=True, blank=True, verbose_name="Fajl ugovora"
+        upload_to="ugovori/files/%Y/%m/",
+        null=True,
+        blank=True,
+        verbose_name="Fajl ugovora",
     )
     note = models.TextField(blank=True, null=True, verbose_name="Napomena")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -563,7 +568,9 @@ class Contract(models.Model):
 
         storage = file_field.storage
         name = file_field.name
-        transaction.on_commit(lambda: storage.delete(name) if storage.exists(name) else None)
+        transaction.on_commit(
+            lambda: storage.delete(name) if storage.exists(name) else None
+        )
 
     def save(self, *args, **kwargs):
         old_file = None
@@ -610,6 +617,79 @@ class Contract(models.Model):
             raise ValidationError(
                 {"valid_to": "Datum 'Važi do' ne sme biti pre datuma 'Važi od'."}
             )
+
+
+class ContractDocument(models.Model):
+    TYPE_CONTRACT = "contract"
+    TYPE_ANNEX = "annex"
+    TYPE_ATTACHMENT = "attachment"
+    TYPE_OTHER = "other"
+    DOCUMENT_TYPE_CHOICES = [
+        (TYPE_CONTRACT, "Ugovor"),
+        (TYPE_ANNEX, "Aneks"),
+        (TYPE_ATTACHMENT, "Prilog"),
+        (TYPE_OTHER, "Ostalo"),
+    ]
+
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.CASCADE,
+        related_name="documents",
+        verbose_name="Ugovor",
+    )
+    document_type = models.CharField(
+        max_length=20,
+        choices=DOCUMENT_TYPE_CHOICES,
+        default=TYPE_CONTRACT,
+        db_index=True,
+        verbose_name="Vrsta dokumenta",
+    )
+    description = models.CharField(max_length=500, verbose_name="Opis")
+    file = models.FileField(
+        upload_to="ugovori/dokumenti/%Y/%m/",
+        verbose_name="Fajl",
+    )
+    original_filename = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name="Originalni naziv fajla",
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Postavljeno")
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ugovori_dokumenti_postavljeni",
+        verbose_name="Postavio",
+    )
+
+    class Meta:
+        db_table = "ugovori_contract_document"
+        verbose_name = "Dokument uz ugovor"
+        verbose_name_plural = "Dokumenta uz ugovor"
+        ordering = ["-uploaded_at", "-pk"]
+        indexes = [
+            models.Index(fields=["contract", "document_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.contract.contract_number} - {self.description}"
+
+    @property
+    def filename(self):
+        return self.original_filename or self.file.name.rsplit("/", 1)[-1]
+
+
+@receiver(post_delete, sender=ContractDocument)
+def delete_contract_document_file(sender, instance, **kwargs):
+    file_field = instance.file
+    if not file_field:
+        return
+    storage = file_field.storage
+    name = file_field.name
+    transaction.on_commit(lambda: storage.delete(name) if storage.exists(name) else None)
 
 
 class ContractParty(models.Model):

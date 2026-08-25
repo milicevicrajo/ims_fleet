@@ -7,7 +7,7 @@
 <div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
     <h1>{{ title }}</h1>
-    <p>Load data za pakete, korisnike, dodele i mesecne racune.</p>
+    <p>Učitavanje podataka za pakete, korisnike, dodele i mesečne račune.</p>
   </div>
   <a href="{% url 'mobilni:mobile_dashboard' %}" class="btn btn-outline-light btn-sm">
     <i class="mdi mdi-arrow-left"></i> Pregled
@@ -24,7 +24,7 @@
           <input type="hidden" name="import_type" value="packages">
           {{ forms.packages.file.label_tag }}
           {{ forms.packages.file|add_class:"form-control mb-3" }}
-          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Ucitaj pakete</button>
+          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Učitaj pakete</button>
         </form>
       </div>
     </div>
@@ -38,7 +38,7 @@
           <input type="hidden" name="import_type" value="users">
           {{ forms.users.file.label_tag }}
           {{ forms.users.file|add_class:"form-control mb-3" }}
-          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Ucitaj korisnike</button>
+          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Učitaj korisnike</button>
         </form>
       </div>
     </div>
@@ -62,7 +62,7 @@
           </div>
           {{ forms.assignments.file.label_tag }}
           {{ forms.assignments.file|add_class:"form-control mb-3" }}
-          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Ucitaj dodele</button>
+          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Učitaj dodele</button>
         </form>
       </div>
     </div>
@@ -70,7 +70,7 @@
   <div class="col-xl-6">
     <div class="card shadow-sm mb-3">
       <div class="card-body">
-        <h5 class="card-title">Potrosnja</h5>
+        <h5 class="card-title">Potrošnja</h5>
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
           <input type="hidden" name="import_type" value="usages">
@@ -86,7 +86,7 @@
           </div>
           {{ forms.usages.file.label_tag }}
           {{ forms.usages.file|add_class:"form-control mb-3" }}
-          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Ucitaj potrosnju</button>
+          <button class="btn btn-primary"><i class="mdi mdi-upload"></i> Učitaj potrošnju</button>
         </form>
       </div>
     </div>
@@ -105,9 +105,9 @@
             <th>Period</th>
             <th>Fajl</th>
             <th>Novo</th>
-            <th>Azurirano</th>
-            <th>Preskoceno</th>
-            <th>Greska</th>
+            <th>Ažurirano</th>
+            <th>Preskočeno</th>
+            <th>Greška</th>
           </tr>
         </thead>
         <tbody>

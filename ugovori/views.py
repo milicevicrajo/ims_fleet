@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -19,6 +20,8 @@ from .filters import BusinessRequestFilter, ContractFilter, OfferFilter
 from .forms import (
     AnnexForm,
     BusinessRequestForm,
+    ContractDocumentForm,
+    ContractFileForm,
     ContractForm,
     ContractGuaranteeForm,
     ContractMenicaLinkForm,
@@ -27,7 +30,17 @@ from .forms import (
     OfferForm,
     PartnerForm,
 )
-from .models import BusinessRequest, Contract, ContractGuarantee, ContractMenicaLink, ContractParty, ContractType, Offer, Partner
+from .models import (
+    BusinessRequest,
+    Contract,
+    ContractDocument,
+    ContractGuarantee,
+    ContractMenicaLink,
+    ContractParty,
+    ContractType,
+    Offer,
+    Partner,
+)
 from .services import count_finance_partners, sync_finance_partner_batch, sync_finance_partners
 
 
@@ -1004,8 +1017,10 @@ class ContractDetailView(RolePermissionRequiredMixin, DetailView):
                 "parties__partner",
                 "annexes__contract_type",
                 "annexes__parties__partner",
+                "documents__uploaded_by",
                 "menica_links__menica",
                 "menica_links__ulazna_menica",
+                "mobile_packages",
             )
         )
 
@@ -1013,8 +1028,70 @@ class ContractDetailView(RolePermissionRequiredMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = str(self.object)
         ctx["annexes"] = self.object.annexes.all().select_related("contract_type").prefetch_related("parties__partner")
+        ctx["documents"] = self.object.documents.all()
+        ctx["document_form"] = ContractDocumentForm()
+        ctx["contract_file_form"] = ContractFileForm(instance=self.object)
+        ctx["mobile_packages"] = self.object.mobile_packages.all()
         ctx["current_app"] = "ugovori"
         return ctx
+
+
+class ContractFileUploadView(RolePermissionRequiredMixin, View):
+    required_permission_code = "ugovori:contract_update"
+
+    def post(self, request, pk):
+        contract = get_object_or_404(Contract, pk=pk)
+        form = ContractFileForm(request.POST, request.FILES, instance=contract)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Fajl ugovora je sačuvan.")
+        else:
+            errors = " ".join(
+                error
+                for field_errors in form.errors.values()
+                for error in field_errors
+            )
+            messages.error(request, f"Fajl ugovora nije sačuvan. {errors}".strip())
+        return redirect("ugovori:contract_detail", pk=contract.pk)
+
+
+class ContractDocumentCreateView(RolePermissionRequiredMixin, View):
+    required_permission_code = "ugovori:contract_update"
+
+    def post(self, request, pk):
+        contract = get_object_or_404(Contract, pk=pk)
+        form = ContractDocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.contract = contract
+            document.document_type = ContractDocument.TYPE_ATTACHMENT
+            document.uploaded_by = request.user
+            document.original_filename = Path(document.file.name).name[:255]
+            document.save()
+            messages.success(request, "Dokument je dodat uz ugovor.")
+        else:
+            errors = " ".join(
+                error
+                for field_errors in form.errors.values()
+                for error in field_errors
+            )
+            messages.error(request, f"Dokument nije dodat. {errors}".strip())
+        return redirect("ugovori:contract_detail", pk=contract.pk)
+
+
+class ContractDocumentDeleteView(RolePermissionRequiredMixin, View):
+    required_permission_code = "ugovori:contract_update"
+
+    def post(self, request, pk, document_pk):
+        contract = get_object_or_404(Contract, pk=pk)
+        document = get_object_or_404(
+            ContractDocument,
+            pk=document_pk,
+            contract=contract,
+        )
+        document.delete()
+        messages.success(request, "Dokument je uklonjen sa ugovora.")
+        return redirect("ugovori:contract_detail", pk=contract.pk)
 
 
 class ContractMenicaLinkCreateView(RolePermissionRequiredMixin, View):
@@ -1088,6 +1165,7 @@ class ContractDeleteView(RolePermissionRequiredMixin, DeleteView):
     template_name = "ugovori/contract_confirm_delete.html"
     success_url = reverse_lazy("ugovori:contract_list")
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         contract = self.get_object()
         if contract.annexes.exists():
@@ -1096,6 +1174,7 @@ class ContractDeleteView(RolePermissionRequiredMixin, DeleteView):
                 "Ugovor ne može biti obrisan jer ima anekse. Prvo obrišite anekse.",
             )
             return redirect("ugovori:contract_detail", pk=contract.pk)
+        contract.mobile_packages.update(contract=None)
         messages.success(request, "Ugovor je obrisan.")
         return super().post(request, *args, **kwargs)
 

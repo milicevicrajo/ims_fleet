@@ -162,12 +162,43 @@
     font-size: .86rem;
     margin-top: 3px;
   }
+  .contract-document-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e7edf3;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .contract-document-row + .contract-document-row {
+    margin-top: 10px;
+  }
+  .contract-document-title {
+    color: #243746;
+    font-weight: 700;
+  }
+  .contract-document-meta {
+    color: #6c7f90;
+    font-size: .84rem;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+  }
+  .contract-document-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
   @media (max-width: 767.98px) {
     .contract-meta-grid,
-    .party-row {
+    .party-row,
+    .contract-document-row {
       grid-template-columns: 1fr;
     }
-    .party-actions {
+    .party-actions,
+    .contract-document-actions {
       justify-content: flex-start;
     }
   }
@@ -198,6 +229,12 @@
     <p>{{ ugovor.title }}</p>
   </div>
   <div class="contract-actions">
+    <button class="btn btn-light btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#contractFileModal">
+      <i class="mdi mdi-file-upload"></i> Okači ugovor
+    </button>
+    <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#contractAttachmentModal">
+      <i class="mdi mdi-paperclip"></i> Okači prilog
+    </button>
     <a class="btn btn-light btn-sm" href="{% url 'ugovori:contract_update' pk=ugovor.pk %}">
       <i class="mdi mdi-pencil"></i> Izmeni
     </a>
@@ -295,6 +332,81 @@
         {% endif %}
       </div>
     </div>
+
+    <div class="contract-section" id="contract-attachments">
+      <div class="contract-section-header">
+        <span><i class="mdi mdi-paperclip"></i> Prilozi ugovora</span>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#contractAttachmentModal">
+          <i class="mdi mdi-upload"></i> Okači prilog
+        </button>
+      </div>
+      <div class="contract-section-body">
+        {% for document in documents %}
+          <div class="contract-document-row">
+            <div>
+              <div class="contract-document-title">
+                <span class="badge bg-light text-dark border me-1">{{ document.get_document_type_display }}</span>
+                {{ document.description }}
+              </div>
+              <div class="contract-document-meta">
+                {{ document.filename }}
+                &middot; {{ document.uploaded_at|date:"d.m.Y H:i" }}
+                {% if document.uploaded_by %}&middot; {{ document.uploaded_by }}{% endif %}
+              </div>
+            </div>
+            <div class="contract-document-actions">
+              <a href="{{ document.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                <i class="mdi mdi-open-in-new"></i> Otvori
+              </a>
+              <form method="post" action="{% url 'ugovori:contract_document_delete' pk=ugovor.pk document_pk=document.pk %}"
+                    onsubmit="return confirm('Ukloniti ovaj dokument sa ugovora?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obrisi dokument">
+                  <i class="mdi mdi-delete"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        {% empty %}
+          <div class="text-muted text-center py-3">Nema dodatih priloga.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if mobile_packages %}
+      <div class="contract-section">
+        <div class="contract-section-header">
+          <span><i class="mdi mdi-cellphone-link"></i> Povezani tarifni paketi ({{ mobile_packages|length }})</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Paket</th>
+                <th>Opis</th>
+                <th>Važenje</th>
+                <th class="text-end">Neto iznos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for package in mobile_packages %}
+                <tr>
+                  <td><strong>{{ package.name }}</strong></td>
+                  <td style="min-width: 220px; white-space: normal;">{{ package.description|default:"-"|linebreaksbr }}</td>
+                  <td>
+                    {{ package.valid_from|date:"d.m.Y"|default:"-" }}
+                    – {{ package.valid_to|date:"d.m.Y"|default:"-" }}
+                  </td>
+                  <td class="text-end">
+                    {% if package.net_amount is not None %}{{ package.net_amount|floatformat:2 }} RSD{% else %}-{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
 
     <div class="contract-section">
       <div class="contract-section-header">
@@ -409,16 +521,20 @@
 
     <div class="side-card">
       <div class="contract-section-header">
-        <span><i class="mdi mdi-file"></i> Dokument</span>
+        <span><i class="mdi mdi-file-document"></i> Ugovor</span>
       </div>
       <div class="side-card-body">
         {% if ugovor.file %}
-          <a href="{{ ugovor.file.url }}" class="btn btn-outline-primary w-100" target="_blank">
-            <i class="mdi mdi-file-download"></i> Preuzmi fajl
+          <a href="{{ ugovor.file.url }}" class="btn btn-outline-primary w-100 mb-2" target="_blank">
+            <i class="mdi mdi-open-in-new"></i> Otvori ugovor
           </a>
+          <div class="text-muted small mb-2" style="overflow-wrap:anywhere;">{{ ugovor.file.name }}</div>
         {% else %}
-          <div class="text-muted">Fajl nije dodat.</div>
+          <div class="text-muted mb-2">Fajl ugovora nije dodat.</div>
         {% endif %}
+        <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="modal" data-bs-target="#contractFileModal">
+          <i class="mdi mdi-upload"></i> {% if ugovor.file %}Zameni ugovor{% else %}Okači ugovor{% endif %}
+        </button>
       </div>
     </div>
 
@@ -428,6 +544,64 @@
           <i class="mdi mdi-delete"></i> Obrisi ugovor
         </a>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="contractFileModal" tabindex="-1" aria-labelledby="contractFileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" enctype="multipart/form-data" action="{% url 'ugovori:contract_file_upload' pk=ugovor.pk %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="contractFileModalLabel">
+            <i class="mdi mdi-file-upload"></i> {% if ugovor.file %}Zameni fajl ugovora{% else %}Okači fajl ugovora{% endif %}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label" for="{{ contract_file_form.file.id_for_label }}">Fajl ugovora</label>
+          {{ contract_file_form.file }}
+          <div class="form-text">Maksimalna veličina fajla je 50 MB.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkaži</button>
+          <button type="submit" class="btn btn-primary"><i class="mdi mdi-upload"></i> Sačuvaj ugovor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="contractAttachmentModal" tabindex="-1" aria-labelledby="contractAttachmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" enctype="multipart/form-data" action="{% url 'ugovori:contract_document_create' pk=ugovor.pk %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="contractAttachmentModalLabel">
+            <i class="mdi mdi-paperclip"></i> Okači prilog uz ugovor
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label" for="{{ document_form.description.id_for_label }}">{{ document_form.description.label }}</label>
+            {{ document_form.description }}
+          </div>
+          <div>
+            <label class="form-label" for="{{ document_form.file.id_for_label }}">{{ document_form.file.label }}</label>
+            {{ document_form.file }}
+            <div class="form-text">Maksimalna veličina fajla je 50 MB.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkaži</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="mdi mdi-upload"></i> Okači prilog
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

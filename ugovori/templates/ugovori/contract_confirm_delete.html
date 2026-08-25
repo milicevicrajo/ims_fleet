@@ -18,6 +18,12 @@
         Ovaj ugovor ima {{ object.annexes.count }} aneks/a. Brisanje nije moguće dok postoje aneksi.
       </div>
     {% else %}
+      {% if object.mobile_packages.exists %}
+        <div class="alert alert-warning">
+          Ugovor je povezan sa {{ object.mobile_packages.count }} mobilnim paketom/paketa.
+          Paketi neće biti obrisani, već će samo biti uklonjena veza sa ovim ugovorom.
+        </div>
+      {% endif %}
       <form method="post">
         {% csrf_token %}
         <div class="d-flex gap-2">

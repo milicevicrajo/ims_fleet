@@ -1,21 +1,35 @@
-<form method="get" class="fleet-list-filter d-flex flex-wrap align-items-end gap-2 mb-3">
-  <div>
-    <label class="form-label" for="mobile-period">Period</label>
-    <select id="mobile-period" name="period" class="form-control" onchange="var p=this.value.split('-'); this.form.year.value=p[0]||''; this.form.month.value=p[1]||'';">
-      {% for year, month in periods %}
-        <option value="{{ year }}-{{ month }}" {% if year == selected_year and month == selected_month %}selected{% endif %}>
-          {{ month|stringformat:"02d" }}/{{ year }}
-        </option>
-      {% endfor %}
-    </select>
-    <input type="hidden" name="year" value="{{ selected_year|default:'' }}">
-    <input type="hidden" name="month" value="{{ selected_month|default:'' }}">
+<div class="card shadow-sm mb-3">
+  <div class="card-body border-bottom">
+    <form id="{{ filter_form_id|default:'mobile-period-filter' }}" method="get" class="fleet-list-filter mb-0">
+      <div class="fleet-filter-grid">
+        <div>
+          <label class="form-label mb-1" for="mobile-period">Period</label>
+          <select id="mobile-period" name="period" class="form-control" data-auto-filter data-period-select="true">
+            {% for year, month in periods %}
+              <option value="{{ year }}-{{ month }}" {% if year == selected_year and month == selected_month %}selected{% endif %}>
+                {{ month|stringformat:"02d" }}/{{ year }}
+              </option>
+            {% endfor %}
+          </select>
+          <input type="hidden" name="year" value="{{ selected_year|default:'' }}">
+          <input type="hidden" name="month" value="{{ selected_month|default:'' }}">
+        </div>
+        <div class="fleet-filter-phone">
+          <label class="form-label mb-1" for="mobile-phone">Broj telefona</label>
+          <input id="mobile-phone" type="search" name="phone_number" value="{{ phone_number }}" class="form-control" placeholder="38163..." data-auto-filter data-visible-filter>
+        </div>
+        <div>
+          <label class="form-label mb-1" for="mobile-search">Pretraga</label>
+          <input id="mobile-search" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Korisnik ili paket" data-auto-filter data-visible-filter>
+        </div>
+        <div class="fleet-filter-action">
+          <a href="{{ reset_url }}" class="btn btn-outline-secondary w-100" title="Poništi filtere">
+            <i class="mdi mdi-filter-remove"></i> Poništi
+          </a>
+        </div>
+      </div>
+    </form>
   </div>
-  <div class="flex-grow-1" style="min-width: 220px;">
-    <label class="form-label" for="mobile-search">Pretraga</label>
-    <input id="mobile-search" type="search" name="q" value="{{ q }}" class="form-control" placeholder="Broj, korisnik, paket">
-  </div>
-  <button type="submit" class="btn btn-primary">
-    <i class="mdi mdi-magnify"></i> Prikazi
-  </button>
-</form>
+</div>
+
+{% include "mobilni/mobile/_auto_filter_script.html" with form_id=filter_form_id|default:"mobile-period-filter" %}

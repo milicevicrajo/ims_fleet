@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import (
     Contract,
+    ContractDocument,
     ContractGuarantee,
     ContractMenicaLink,
     ContractParty,
@@ -23,6 +24,12 @@ class ContractMenicaLinkInline(admin.TabularInline):
 class ContractGuaranteeInline(admin.TabularInline):
     model = ContractGuarantee
     extra = 0
+
+
+class ContractDocumentInline(admin.TabularInline):
+    model = ContractDocument
+    extra = 0
+    readonly_fields = ["original_filename", "uploaded_at", "uploaded_by"]
 
 
 @admin.register(Partner)
@@ -61,13 +68,37 @@ class ContractAdmin(admin.ModelAdmin):
         "has_guarantees",
     ]
     search_fields = ["contract_number", "title"]
-    inlines = [ContractPartyInline, ContractMenicaLinkInline, ContractGuaranteeInline]
+    inlines = [
+        ContractPartyInline,
+        ContractDocumentInline,
+        ContractMenicaLinkInline,
+        ContractGuaranteeInline,
+    ]
 
 
 @admin.register(ContractParty)
 class ContractPartyAdmin(admin.ModelAdmin):
     list_display = ["contract", "partner", "role", "party_contract_number"]
     list_filter = ["role"]
+
+
+@admin.register(ContractDocument)
+class ContractDocumentAdmin(admin.ModelAdmin):
+    list_display = [
+        "contract",
+        "document_type",
+        "description",
+        "original_filename",
+        "uploaded_at",
+        "uploaded_by",
+    ]
+    list_filter = ["document_type", "uploaded_at"]
+    search_fields = [
+        "contract__contract_number",
+        "description",
+        "original_filename",
+    ]
+    autocomplete_fields = ["contract"]
 
 
 @admin.register(ContractMenicaLink)

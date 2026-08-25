@@ -27,6 +27,40 @@
     font-weight: 600;
     color: #526170;
   }
+  .fleet-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(150px, 180px) minmax(190px, 230px) minmax(220px, 1fr) max-content;
+    gap: 10px;
+    align-items: end;
+  }
+  .fleet-filter-grid.has-package {
+    grid-template-columns: minmax(150px, 180px) minmax(190px, 230px) minmax(220px, 1fr) minmax(220px, 1fr) max-content;
+  }
+  .fleet-filter-phone .form-label {
+    color: #174f83;
+  }
+  .fleet-filter-phone .form-control {
+    border-color: #9fc4de;
+    background: #f7fbff;
+  }
+  .fleet-filter-action {
+    min-width: 120px;
+  }
+  @media (max-width: 991.98px) {
+    .fleet-filter-grid,
+    .fleet-filter-grid.has-package {
+      grid-template-columns: 1fr 1fr;
+    }
+    .fleet-filter-action {
+      min-width: 0;
+    }
+  }
+  @media (max-width: 575.98px) {
+    .fleet-filter-grid,
+    .fleet-filter-grid.has-package {
+      grid-template-columns: 1fr;
+    }
+  }
   .fleet-list-actions {
     display: inline-flex;
     flex-wrap: wrap;

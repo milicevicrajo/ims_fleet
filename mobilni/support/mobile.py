@@ -85,7 +85,7 @@ def read_table(uploaded_file, matcher):
             normalized = normalize_dataframe(df)
             if matcher(normalized):
                 return normalized
-        raise ValueError("Fajl nema ocekivane kolone.")
+        raise ValueError("Fajl nema očekivane kolone.")
 
     text = decode_bytes(content)
     lines = text.splitlines()
@@ -96,7 +96,7 @@ def read_table(uploaded_file, matcher):
     df = pd.read_csv(StringIO(relevant), sep=separator, dtype=str, engine="python")
     normalized = normalize_dataframe(df)
     if not matcher(normalized):
-        raise ValueError("CSV nema ocekivane kolone.")
+        raise ValueError("CSV nema očekivane kolone.")
     return normalized
 
 
@@ -497,7 +497,7 @@ def sync_from_sqlserver(server, database, username, password, driver="ODBC Drive
     try:
         import pyodbc
     except ImportError as exc:
-        raise RuntimeError("pyodbc nije instaliran u virtuelnom okruzenju.") from exc
+        raise RuntimeError("pyodbc nije instaliran u virtuelnom okruženju.") from exc
 
     connection_string = (
         f"DRIVER={{{driver}}};"

@@ -6,7 +6,7 @@ from mobilni.support.mobile import sync_from_sqlserver
 
 
 class Command(BaseCommand):
-    help = "Povlaci mobilne pakete, dodele i potrosnju iz stare SQL Server baze."
+    help = "Povlači mobilne pakete, dodele i potrošnju iz stare SQL Server baze."
 
     def add_arguments(self, parser):
         parser.add_argument("--server", default=os.environ.get("MOBILNI_SQLSERVER_HOST", "SMS-SERVER"))
@@ -18,7 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         password = options["password"]
         if not password:
-            raise CommandError("Lozinka nije prosledjena. Koristi --password ili MOBILNI_SQLSERVER_PASSWORD.")
+            raise CommandError("Lozinka nije prosleđena. Koristi --password ili MOBILNI_SQLSERVER_PASSWORD.")
 
         result = sync_from_sqlserver(
             server=options["server"],
@@ -30,15 +30,15 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                "SQL Server sync zavrsen: "
-                f"paketi novo {result.packages.imported}, azurirano {result.packages.updated}, "
-                f"preskoceno {result.packages.skipped}; "
-                f"korisnici novo {result.users.imported}, azurirano {result.users.updated}, "
-                f"preskoceno {result.users.skipped}; "
-                f"dodele novo {result.assignments.imported}, azurirano {result.assignments.updated}, "
-                f"preskoceno {result.assignments.skipped}; "
-                f"potrosnja novo {result.usages.imported}, azurirano {result.usages.updated}, "
-                f"preskoceno {result.usages.skipped}; "
-                f"sync zaposlenih {result.employee_links}"
+                "SQL Server sinhronizacija završena: "
+                f"paketi novo {result.packages.imported}, ažurirano {result.packages.updated}, "
+                f"preskočeno {result.packages.skipped}; "
+                f"korisnici novo {result.users.imported}, ažurirano {result.users.updated}, "
+                f"preskočeno {result.users.skipped}; "
+                f"dodele novo {result.assignments.imported}, ažurirano {result.assignments.updated}, "
+                f"preskočeno {result.assignments.skipped}; "
+                f"potrošnja novo {result.usages.imported}, ažurirano {result.usages.updated}, "
+                f"preskočeno {result.usages.skipped}; "
+                f"sinhronizacija zaposlenih {result.employee_links}"
             )
         )

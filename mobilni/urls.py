@@ -40,6 +40,7 @@ urlpatterns = [
     path("dodele/<int:pk>/brisanje/", MobileAssignmentDeleteView.as_view(), name="mobile_assignment_delete"),
     path("potrosnja/", MobileUsageListView.as_view(), name="mobile_usage_list"),
     path("potrosnja/export.xlsx", export_usages_xlsx, name="mobile_usage_export"),
+    path("potrosnja/obracunski-mesec.csv", export_employee_withholdings_csv, name="mobile_usage_accounting_csv"),
     path("potrosnja/novo/", MobileUsageCreateView.as_view(), name="mobile_usage_create"),
     path("potrosnja/<int:pk>/izmena/", MobileUsageUpdateView.as_view(), name="mobile_usage_update"),
     path("potrosnja/<int:pk>/brisanje/", MobileUsageDeleteView.as_view(), name="mobile_usage_delete"),

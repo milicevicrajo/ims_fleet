@@ -1,9 +1,11 @@
 import csv
+from collections import defaultdict
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
@@ -67,11 +69,13 @@ def _filter_assignments(request):
     year, month = _selected_period(request)
     if year and month:
         qs = qs.filter(year=year, month=month)
+    phone_number = (request.GET.get("phone_number") or "").strip()
+    if phone_number:
+        qs = qs.filter(phone_number__icontains=phone_number)
     search = (request.GET.get("q") or "").strip()
     if search:
         query = (
-            Q(phone_number__icontains=search)
-            | Q(employee_name__icontains=search)
+            Q(employee_name__icontains=search)
             | Q(package_name__icontains=search)
         )
         if search.isdigit():
@@ -81,30 +85,32 @@ def _filter_assignments(request):
     return qs, year, month
 
 
-def _filter_usages(request):
-    qs = MobileUsage.objects.select_related("assignment", "employee")
+def _usage_report_filters(request):
     year, month = _selected_period(request)
-    if year and month:
-        qs = qs.filter(year=year, month=month)
-    search = (request.GET.get("q") or "").strip()
-    if search:
-        query = (
-            Q(phone_number__icontains=search)
-            | Q(assignment__employee_name__icontains=search)
-            | Q(employee__first_name__icontains=search)
-            | Q(employee__last_name__icontains=search)
-        )
-        if search.isdigit():
-            query |= Q(employee_id=int(search))
-        qs = qs.filter(query)
-    return qs, year, month
+    package_id = request.GET.get("package") or None
+    try:
+        package_id = int(package_id) if package_id else None
+    except (TypeError, ValueError):
+        package_id = None
+    return {
+        "year": year,
+        "month": month,
+        "phone_number": (request.GET.get("phone_number") or "").strip(),
+        "employee": (request.GET.get("employee") or "").strip(),
+        "package_id": package_id,
+    }
 
 
 def _filter_packages(request):
-    qs = MobilePackage.objects.all()
+    qs = MobilePackage.objects.select_related("contract")
     search = (request.GET.get("q") or "").strip()
     if search:
-        qs = qs.filter(Q(name__icontains=search) | Q(partner_name__icontains=search))
+        qs = qs.filter(
+            Q(name__icontains=search)
+            | Q(description__icontains=search)
+            | Q(partner_name__icontains=search)
+            | Q(contract__contract_number__icontains=search)
+        )
     return qs
 
 
@@ -173,11 +179,13 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
         qs = MobileUsage.objects.select_related("assignment", "employee")
         if year and month:
             qs = qs.filter(year=year, month=month)
+        phone_number = (self.request.GET.get("phone_number") or "").strip()
+        if phone_number:
+            qs = qs.filter(phone_number__icontains=phone_number)
         search = (self.request.GET.get("q") or "").strip()
         if search:
             query = (
-                Q(phone_number__icontains=search)
-                | Q(assignment__employee_name__icontains=search)
+                Q(assignment__employee_name__icontains=search)
                 | Q(assignment__package_name__icontains=search)
                 | Q(employee__first_name__icontains=search)
                 | Q(employee__last_name__icontains=search)
@@ -185,16 +193,56 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
             if search.isdigit():
                 query |= Q(employee_id=int(search))
             qs = qs.filter(query)
-        return qs.order_by("-total", "phone_number")
+        return qs.order_by("-total", "phone_number")[:15]
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         year, month = _selected_period(self.request)
+        phone_number = (self.request.GET.get("phone_number") or "").strip()
         usage_period_qs = MobileUsage.objects.filter(year=year, month=month) if year and month else MobileUsage.objects.none()
         assignment_period_qs = (
             MobileAssignment.objects.filter(year=year, month=month)
             if year and month
             else MobileAssignment.objects.none()
+        )
+        if phone_number:
+            usage_period_qs = usage_period_qs.filter(phone_number__icontains=phone_number)
+            assignment_period_qs = assignment_period_qs.filter(phone_number__icontains=phone_number)
+        withholding_rows = get_withholding_rows(REPORT_ALL, year=year, month=month, phone_number=phone_number)
+        usage_total = sum((row.usage.total for row in withholding_rows), start=Decimal("0"))
+        withholding_total = sum(
+            (row.withholding for row in withholding_rows if row.withholding is not None),
+            start=Decimal("0"),
+        )
+        institute_total = usage_total - withholding_total
+        package_metrics = defaultdict(
+            lambda: {
+                "package_name": "Bez paketa",
+                "phone_numbers": set(),
+                "usage_total": Decimal("0"),
+                "withholding_total": Decimal("0"),
+            }
+        )
+        for row in withholding_rows:
+            package_key = row.usage.assignment.package_id or row.package_name or "bez-paketa"
+            metric = package_metrics[package_key]
+            metric["package_name"] = row.package_name or "Bez paketa"
+            metric["phone_numbers"].add(row.phone_number)
+            metric["usage_total"] += row.usage.total
+            if row.withholding is not None:
+                metric["withholding_total"] += row.withholding
+        package_summary = []
+        for metric in package_metrics.values():
+            metric["number_count"] = len(metric.pop("phone_numbers"))
+            metric["institute_total"] = metric["usage_total"] - metric["withholding_total"]
+            package_summary.append(metric)
+        package_summary.sort(key=lambda item: item["institute_total"], reverse=True)
+        contracted_number_count = assignment_period_qs.count()
+        active_number_count = assignment_period_qs.filter(number_active=True).count()
+        active_number_percent = (
+            (active_number_count / contracted_number_count) * 100
+            if contracted_number_count
+            else 0
         )
         ctx.update(
             {
@@ -202,12 +250,18 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
                 "periods": _periods(),
                 "selected_year": year,
                 "selected_month": month,
-                "assignment_count": assignment_period_qs.count(),
-                "active_number_count": assignment_period_qs.filter(number_active=True).count(),
+                "assignment_count": contracted_number_count,
+                "contracted_number_count": contracted_number_count,
+                "active_number_count": active_number_count,
+                "active_number_percent": active_number_percent,
                 "usage_count": usage_period_qs.count(),
-                "usage_total": usage_period_qs.aggregate(total=Sum("total"))["total"] or 0,
+                "usage_total": usage_total,
+                "withholding_total": withholding_total,
+                "institute_total": institute_total,
+                "package_summary": package_summary,
                 "latest_imports": MobileImportLog.objects.all()[:8],
                 "q": self.request.GET.get("q", ""),
+                "phone_number": phone_number,
             }
         )
         return ctx
@@ -232,6 +286,7 @@ class MobileAssignmentListView(RolePermissionRequiredMixin, LoginRequiredMixin, 
                 "selected_year": year,
                 "selected_month": month,
                 "q": self.request.GET.get("q", ""),
+                "phone_number": self.request.GET.get("phone_number", ""),
             }
         )
         return ctx
@@ -243,19 +298,26 @@ class MobileUsageListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
     context_object_name = "usages"
 
     def get_queryset(self):
-        qs, _, _ = _filter_usages(self.request)
-        return qs.order_by("-total", "phone_number")
+        filters = _usage_report_filters(self.request)
+        return get_withholding_rows(REPORT_ALL, **filters)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        year, month = _selected_period(self.request)
+        filters = _usage_report_filters(self.request)
         ctx.update(
             {
-                "title": "Potrosnja mobilnih",
+                "title": "Potrošnja mobilnih",
                 "periods": _periods(),
-                "selected_year": year,
-                "selected_month": month,
-                "q": self.request.GET.get("q", ""),
+                "selected_year": filters["year"],
+                "selected_month": filters["month"],
+                "phone_number": filters["phone_number"],
+                "employee_filter": filters["employee"],
+                "selected_package": filters["package_id"],
+                "package_options": MobilePackage.objects.order_by("name", "valid_from"),
+                "withholding_total": sum(
+                    (row.withholding for row in ctx["usages"] if row.withholding is not None),
+                    start=Decimal("0"),
+                ),
             }
         )
         return ctx
@@ -301,7 +363,7 @@ class MobilePackageCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, C
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Novi mobilni paket"
-        ctx["submit_button_label"] = "Sacuvaj paket"
+        ctx["submit_button_label"] = "Sačuvaj paket"
         return ctx
 
 
@@ -321,7 +383,7 @@ class MobileUserCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Novi korisnik mobilnog"
-        ctx["submit_button_label"] = "Sacuvaj korisnika"
+        ctx["submit_button_label"] = "Sačuvaj korisnika"
         return ctx
 
 
@@ -341,7 +403,7 @@ class MobileAssignmentCreateView(RolePermissionRequiredMixin, LoginRequiredMixin
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = "Nova dodela mobilnog broja"
-        ctx["submit_button_label"] = "Sacuvaj dodelu"
+        ctx["submit_button_label"] = "Sačuvaj dodelu"
         return ctx
 
 
@@ -360,15 +422,15 @@ class MobileUsageCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Cre
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Nova potrosnja mobilnog"
-        ctx["submit_button_label"] = "Sacuvaj potrosnju"
+        ctx["title"] = "Nova potrošnja mobilnog"
+        ctx["submit_button_label"] = "Sačuvaj potrošnju"
         return ctx
 
 
 class MobileUsageUpdateView(MobileUsageCreateView, UpdateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["title"] = "Izmeni potrosnju mobilnog"
+        ctx["title"] = "Izmeni potrošnju mobilnog"
         return ctx
 
 
@@ -406,7 +468,7 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
 
     def get_report_type(self):
         if self.report_type not in REPORT_TYPES:
-            raise Http404("Izvestaj ne postoji.")
+            raise Http404("Izveštaj ne postoji.")
         return self.report_type
 
     def get_context_data(self, **kwargs):
@@ -414,11 +476,13 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
         report_type = self.get_report_type()
         year, month = _selected_period(self.request)
         search = (self.request.GET.get("q") or "").strip()
+        phone_number = (self.request.GET.get("phone_number") or "").strip()
         rows = get_withholding_rows(
             report_type,
             year=year,
             month=month,
             search=search,
+            phone_number=phone_number,
         )
         paginator = Paginator(rows, 100)
         page_obj = paginator.get_page(self.request.GET.get("page"))
@@ -426,9 +490,9 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
         query_params.pop("page", None)
         total = sum((row.withholding for row in rows if row.withholding is not None), start=0)
         titles = {
-            REPORT_ALL: "Detaljni izvestaj obustava",
+            REPORT_ALL: "Detaljni izveštaj obustava",
             REPORT_EMPLOYEES: "Obustave zaposlenih",
-            REPORT_FORMER_EMPLOYEES: "Obustave bivsih zaposlenih",
+            REPORT_FORMER_EMPLOYEES: "Obustave bivših zaposlenih",
         }
         context.update(
             {
@@ -445,6 +509,7 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
                 "selected_year": year,
                 "selected_month": month,
                 "q": search,
+                "phone_number": phone_number,
                 "row_count": len(rows),
                 "withholding_total": total,
             }
@@ -454,12 +519,13 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
 
 @role_permission_required()
 def export_employee_withholdings_csv(request):
-    year, month = _selected_period(request)
+    filters = _usage_report_filters(request)
+    year = filters["year"]
+    month = filters["month"]
     search = (request.GET.get("q") or "").strip()
     rows = get_withholding_rows(
         REPORT_EMPLOYEES,
-        year=year,
-        month=month,
+        **filters,
         search=search,
     )
     suffix = _period_suffix(year, month)
@@ -469,7 +535,7 @@ def export_employee_withholdings_csv(request):
     )
     response.write("\ufeff")
     writer = csv.writer(response, delimiter=";", lineterminator="\r\n")
-    writer.writerow(["Godina", "Mesec", "Sifra radnika", "Iznos obustave"])
+    writer.writerow(["Godina", "Mesec", "Šifra radnika", "Iznos obustave"])
     for row in rows:
         amount = "" if row.withholding is None else f"{row.withholding:.2f}"
         writer.writerow([row.year, row.month, row.employee_code or "", amount])
@@ -489,7 +555,7 @@ def export_assignments_xlsx(request):
         "Paket do",
         "Paket neto",
         "ID zaposlenog",
-        "Sifra radnika",
+        "Šifra radnika",
         "Radnik",
         "Aktivan radnik",
         "JMBG",
@@ -527,16 +593,21 @@ def export_assignments_xlsx(request):
 
 @role_permission_required()
 def export_usages_xlsx(request):
-    qs, year, month = _filter_usages(request)
+    filters = _usage_report_filters(request)
+    year = filters["year"]
+    month = filters["month"]
+    report_rows = get_withholding_rows(REPORT_ALL, **filters)
     headers = [
+        "Šifra radnika",
+        "Korisnik",
+        "Paket",
+        "Iznos neto",
         "Godina",
         "Mesec",
         "Broj",
-        "ID zaposlenog",
-        "Korisnik",
         "Onnet",
-        "U MTS mrezi",
-        "Van MTS mreze",
+        "U MTS mreži",
+        "Van MTS mreže",
         "Ka KIM",
         "Ka specijalnim",
         "Internacionalni",
@@ -547,7 +618,7 @@ def export_usages_xlsx(request):
         "SMS u roamingu",
         "MMS",
         "VAS SMS",
-        "Saobracaj za popust",
+        "Saobraćaj za popust",
         "Fiksni popust",
         "Varijabilni popust",
         "Usluge",
@@ -556,50 +627,50 @@ def export_usages_xlsx(request):
         "NZRD",
         "Osnovica za PDV",
         "PDV",
-        "Placanje na rate",
+        "Plaćanje na rate",
         "Ukupno za naplatu",
+        "Obustava",
     ]
     rows = [
         [
-            item.year,
-            item.month,
-            item.phone_number,
-            item.employee_id or "",
-            (
-                item.assignment.employee_name
-                if item.assignment
-                else str(item.employee or "")
-            ),
-            _decimal(item.onnet),
-            _decimal(item.mts_network),
-            _decimal(item.outside_mts),
-            _decimal(item.kim),
-            _decimal(item.special),
-            _decimal(item.international),
-            _decimal(item.roaming),
-            _decimal(item.gprs),
-            _decimal(item.sms),
-            _decimal(item.sms_international),
-            _decimal(item.sms_roaming),
-            _decimal(item.mms),
-            _decimal(item.vas_sms),
-            _decimal(item.discount_traffic),
-            _decimal(item.fixed_discount),
-            _decimal(item.variable_discount),
-            _decimal(item.services),
-            _decimal(item.dispatch_notes),
-            _decimal(item.parking),
-            _decimal(item.nzrd),
-            _decimal(item.vat_base),
-            _decimal(item.vat),
-            _decimal(item.installments),
-            _decimal(item.total),
+            row.employee_code or "",
+            row.employee_name,
+            row.package_name,
+            _decimal(row.package_net_amount),
+            row.year,
+            row.month,
+            row.phone_number,
+            _decimal(row.usage.onnet),
+            _decimal(row.usage.mts_network),
+            _decimal(row.usage.outside_mts),
+            _decimal(row.usage.kim),
+            _decimal(row.usage.special),
+            _decimal(row.usage.international),
+            _decimal(row.usage.roaming),
+            _decimal(row.usage.gprs),
+            _decimal(row.usage.sms),
+            _decimal(row.usage.sms_international),
+            _decimal(row.usage.sms_roaming),
+            _decimal(row.usage.mms),
+            _decimal(row.usage.vas_sms),
+            _decimal(row.usage.discount_traffic),
+            _decimal(row.usage.fixed_discount),
+            _decimal(row.usage.variable_discount),
+            _decimal(row.usage.services),
+            _decimal(row.usage.dispatch_notes),
+            _decimal(row.usage.parking),
+            _decimal(row.usage.nzrd),
+            _decimal(row.usage.vat_base),
+            _decimal(row.usage.vat),
+            _decimal(row.usage.installments),
+            _decimal(row.usage.total),
+            _decimal(row.withholding),
         ]
-        for item in qs.order_by("year", "month", "phone_number")
+        for row in report_rows
     ]
     return rows_to_xlsx_response(
         f"mobilni_potrosnja_{_period_suffix(year, month)}.xlsx",
-        "Potrosnja",
+        "Potrošnja",
         headers,
         rows,
         quoted=True,
@@ -611,7 +682,18 @@ def export_usages_xlsx(request):
 @role_permission_required()
 def export_packages_xlsx(request):
     qs = _filter_packages(request)
-    headers = ["Sifra partnera", "Partner", "Paket", "Vazi od", "Vazi do", "Neto", "Bruto", "Opis"]
+    headers = [
+        "Šifra partnera",
+        "Partner",
+        "Paket",
+        "Važi od",
+        "Važi do",
+        "Neto",
+        "Bruto",
+        "Opis",
+        "Godina ugovora",
+        "Broj ugovora",
+    ]
     rows = [
         [
             item.partner_code,
@@ -622,6 +704,8 @@ def export_packages_xlsx(request):
             _decimal(item.net_amount),
             _decimal(item.gross_amount),
             item.description,
+            item.contract.contract_date.year if item.contract_id else "",
+            item.contract.contract_number if item.contract_id else "",
         ]
         for item in qs.order_by("name", "valid_from", "id")
     ]
@@ -639,7 +723,7 @@ def export_packages_xlsx(request):
 @role_permission_required()
 def export_users_xlsx(request):
     qs = _filter_users(request)
-    headers = ["ID zaposlenog", "OJ", "Sifra radnika", "Ime i prezime", "JMBG", "Aktivan", "Datum odlaska"]
+    headers = ["ID zaposlenog", "OJ", "Šifra radnika", "Ime i prezime", "JMBG", "Aktivan", "Datum odlaska"]
     rows = [
         [
             item.employee_id or "",
@@ -720,11 +804,11 @@ def _handle_mobile_import(request, import_type, form):
         messages.success(
             request,
             (
-                f"Import zavrsen: novo {result.imported}, azurirano {result.updated}, "
-                f"preskoceno {result.skipped}. Sync zaposlenih: "
+                f"Import završen: novo {result.imported}, ažurirano {result.updated}, "
+                f"preskočeno {result.skipped}. Sinhronizacija zaposlenih: "
                 f"korisnici {sync_result['mobile_users_linked']}, "
                 f"dodele {sync_result['assignments_employee_linked']}, "
-                f"potrosnja {sync_result['usages_employee_linked']}."
+                f"potrošnja {sync_result['usages_employee_linked']}."
             ),
         )
     except Exception as exc:

@@ -1,0 +1,52 @@
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('{{ form_id }}');
+    if (!form) {
+      return;
+    }
+
+    var timer = null;
+    var debounceMs = 450;
+
+    function syncPeriod(select) {
+      var parts = (select.value || '').split('-');
+      var yearInput = form.querySelector('input[name="year"]');
+      var monthInput = form.querySelector('input[name="month"]');
+      if (yearInput) {
+        yearInput.value = parts[0] || '';
+      }
+      if (monthInput) {
+        monthInput.value = parts[1] || '';
+      }
+    }
+
+    function submitForm() {
+      if (timer) {
+        window.clearTimeout(timer);
+      }
+      form.submit();
+    }
+
+    form.querySelectorAll('[data-auto-filter]').forEach(function (control) {
+      if (control.dataset.periodSelect === 'true') {
+        control.addEventListener('change', function () {
+          syncPeriod(control);
+          submitForm();
+        });
+        return;
+      }
+
+      if (control.tagName === 'INPUT') {
+        control.addEventListener('input', function () {
+          if (timer) {
+            window.clearTimeout(timer);
+          }
+          timer = window.setTimeout(submitForm, debounceMs);
+        });
+        return;
+      }
+
+      control.addEventListener('change', submitForm);
+    });
+  });
+</script>
