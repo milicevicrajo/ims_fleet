@@ -92,14 +92,8 @@ class VehicleTravelOrderForm(forms.ModelForm):
             return cleaned_data
 
         qs = VehicleTravelOrder.objects.exclude(pk=self.instance.pk)
-        same_day_employee = qs.filter(employee=employee, created_at=created_at).first()
         same_day_vehicle = qs.filter(vehicle=vehicle, created_at=created_at).first()
 
-        if same_day_employee:
-            self.add_error(
-                "employee",
-                f"Zaposleni vec ima zaduzenje na datum {created_at:%d.%m.%Y} (PN {same_day_employee.pn_number}).",
-            )
         if same_day_vehicle:
             self.add_error(
                 "vehicle",
@@ -109,19 +103,6 @@ class VehicleTravelOrderForm(forms.ModelForm):
         status = cleaned_data.get("status")
         if self.instance.pk and self.instance.closed_at and status != self.STATUS_OPEN:
             return cleaned_data
-
-        employee_open_conflict = (
-            qs.filter(employee=employee, closed_at__isnull=True)
-            .exclude(vehicle=vehicle, created_at__lt=created_at)
-            .order_by("-created_at", "-id")
-            .first()
-        )
-        if employee_open_conflict:
-            self.add_error(
-                "employee",
-                f"Zaposleni vec ima otvoreno zaduzenje (PN {employee_open_conflict.pn_number}). "
-                "Prvo zatvorite postojece zaduzenje.",
-            )
 
         vehicle_open_conflict = (
             qs.filter(vehicle=vehicle, closed_at__isnull=True, created_at__gte=created_at)

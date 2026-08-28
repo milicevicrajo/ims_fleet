@@ -9,7 +9,7 @@ from fleet.sync import (
     omv_teretna_data_import,
     process_vehicle_retirements,
     sync_employees_from_hr_view,
-    sync_organizational_units_from_view,
+    sync_vehicle_job_codes_with_org_units,
 )
 from celery import shared_task
 from django.core.management import call_command
@@ -162,13 +162,10 @@ def fetch_requisition_data_task():
 
 @shared_task
 def fetch_job_codes():
-    def _runner():
-        return sync_organizational_units_from_view()
-
     return _run_with_singleton_lock(
         task_name="fetch_job_codes",
         lock_ttl_seconds=60 * 60,
-        fn=_runner,
+        fn=sync_vehicle_job_codes_with_org_units,
     )
 
 @shared_task

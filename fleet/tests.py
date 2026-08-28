@@ -17,7 +17,7 @@ from nabavka.models import ProcurementInvoice
 from .forms import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
-from .models import FuelConsumption, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
+from .models import FuelConsumption, JobCode, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
 from .support.dashboard import vehicle_cost_per_km_rows
 from .support.policy_queries import expired_unrenewed_policy_qs, expiring_policy_qs
@@ -46,6 +46,8 @@ from .sync.external import (
 	_policy_data_is_complete,
 	fetch_policy_data,
 	process_vehicle_retirements,
+	sync_vehicle_job_codes_with_org_units,
+	update_job_codes_from_view,
 )
 from .tasks import _run_policy_data_import_with_report
 
@@ -345,6 +347,117 @@ class VehicleRetirementSyncTests(SimpleTestCase):
 		self.assertIn("FROM dbo.fleet_otpis", query)
 		self.assertNotIn("FROM dbo.otpis", query)
 		self.assertEqual(result, "Nema otpisanih vozila za obradu.")
+
+
+class VehicleJobCodeSyncTests(TestCase):
+	def setUp(self):
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="SYNC-1",
+			chassis_number="SYNCCHASSIS000001",
+			brand="Ford",
+			model="Transit",
+			year_of_manufacture=2020,
+			first_registration_date=datetime.date(2020, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1999.00"),
+			engine_number="SYNC-ENGINE-1",
+			weight=Decimal("2500.00"),
+			engine_power=Decimal("96.00"),
+			load_capacity=Decimal("1200.00"),
+			category=Vehicle.Category.CARGO,
+			maximum_permissible_weight=Decimal("3500.00"),
+			fuel_type="DIZEL",
+			number_of_seats=3,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		self.traffic_card = TrafficCard.objects.create(
+			vehicle=self.vehicle,
+			registration_number="BG1200-XD",
+			issue_date=datetime.date(2026, 1, 1),
+			valid_until=datetime.date(2027, 1, 1),
+			traffic_card_number="TC-SYNC-1",
+			serial_number="SER-SYNC-1",
+			owner="IMS",
+			homologation_number="HOMO-SYNC-1",
+		)
+		self.org_unit = OrganizationalUnit.objects.create(
+			code="209001",
+			name="Organizacija i poslovanje",
+			center="2",
+		)
+
+	def source_cursor(self, connections_mock, rows):
+		cursor = connections_mock.__getitem__.return_value.cursor.return_value.__enter__.return_value
+		cursor.fetchall.return_value = rows
+		return cursor
+
+	@patch("fleet.sync.external.connections")
+	def test_vehicle_job_code_sync_reads_vozila_view_and_normalizes_plate(self, connections_mock):
+		cursor = self.source_cursor(connections_mock, [("BG1200XD", 209001)])
+
+		result = update_job_codes_from_view()
+
+		cursor.execute.assert_called_once_with("SELECT regbr, sifpos FROM Vozila.dbo.sif_pos_trenutno")
+		job_code = JobCode.objects.get(vehicle=self.vehicle)
+		self.assertEqual(job_code.organizational_unit, self.org_unit)
+		self.assertIn("povuceno=1", result)
+		self.assertIn("kreirano=1", result)
+
+	@patch("fleet.sync.external.connections")
+	def test_vehicle_job_code_sync_updates_today_record_instead_of_creating_duplicate(self, connections_mock):
+		other_org_unit = OrganizationalUnit.objects.create(
+			code="411111",
+			name="Stara sifra",
+			center="4",
+		)
+		existing = JobCode.objects.create(
+			vehicle=self.vehicle,
+			organizational_unit=other_org_unit,
+			assigned_date=datetime.date.today(),
+		)
+		self.source_cursor(connections_mock, [("BG1200XD", 209001)])
+
+		result = update_job_codes_from_view()
+
+		existing.refresh_from_db()
+		self.assertEqual(existing.organizational_unit, self.org_unit)
+		self.assertEqual(JobCode.objects.filter(vehicle=self.vehicle).count(), 1)
+		self.assertIn("azurirano=1", result)
+
+
+class JobCodeSyncFunctionTests(SimpleTestCase):
+	@patch("fleet.sync.external.update_job_codes_from_view")
+	@patch("fleet.sync.external.sync_organizational_units_from_view")
+	def test_job_code_sync_function_combines_organization_and_vehicle_sync(self, org_sync_mock, job_code_sync_mock):
+		org_sync_mock.return_value = "Organizacione jedinice: dodatih=1, azuriranih=0, preskoceno=0"
+		job_code_sync_mock.return_value = "Sifre posla vozila: povuceno=1, kreirano=1, azurirano=0, bez_promene=0, bez_vozila=0, bez_oj=0, preskoceno=0"
+
+		result = sync_vehicle_job_codes_with_org_units()
+
+		org_sync_mock.assert_called_once_with()
+		job_code_sync_mock.assert_called_once_with()
+		self.assertIn("Organizacione jedinice", result)
+		self.assertIn("Sifre posla vozila", result)
+
+
+class FetchDataViewTests(TestCase):
+	@patch("fleet.sync.views.sync_vehicle_job_codes_with_org_units")
+	def test_fetch_data_view_runs_job_code_sync_function(self, sync_mock):
+		sync_mock.return_value = "Organizacione jedinice: dodatih=0, azuriranih=1, preskoceno=0; Sifre posla vozila: povuceno=1, kreirano=1, azurirano=0, bez_promene=0, bez_vozila=0, bez_oj=0, preskoceno=0"
+		user = get_user_model().objects.create_user(
+			username="fetch-data-admin",
+			password="test",
+			is_staff=True,
+			is_superuser=True,
+		)
+		self.client.force_login(user)
+
+		response = self.client.post(reverse("fetch_data"), {"command": "fetch_job_codes"})
+
+		self.assertRedirects(response, reverse("fetch_data"))
+		sync_mock.assert_called_once_with()
 
 
 class VehicleCostPerKmMileageTests(TestCase):
@@ -1084,14 +1197,12 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 		)
 
 		self.assertFalse(form.is_valid())
-		self.assertIn("employee", form.errors)
 		self.assertIn("vehicle", form.errors)
 		later_open_order.refresh_from_db()
 		self.assertIsNone(later_open_order.closed_at)
 
-	def test_new_travel_order_rejects_same_day_employee_or_vehicle_duplicate(self):
+	def test_new_travel_order_allows_same_employee_on_another_vehicle_same_day(self):
 		other_vehicle = self.create_vehicle("INV-1B", "WF0XXXTEST000001B")
-		other_employee = self.create_employee(11)
 		VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 24),
 			start_mileage=70000,
@@ -1107,6 +1218,17 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 				"start_mileage": 70100,
 			}
 		)
+
+		self.assertTrue(same_employee_form.is_valid(), same_employee_form.errors)
+
+	def test_new_travel_order_rejects_same_day_vehicle_duplicate(self):
+		other_employee = self.create_employee(11)
+		VehicleTravelOrder.objects.create(
+			created_at=datetime.date(2026, 4, 24),
+			start_mileage=70000,
+			employee=self.employee,
+			vehicle=self.vehicle,
+		)
 		same_vehicle_form = VehicleTravelOrderForm(
 			data={
 				"created_at": "24.04.2026",
@@ -1116,12 +1238,10 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 			}
 		)
 
-		self.assertFalse(same_employee_form.is_valid())
-		self.assertIn("employee", same_employee_form.errors)
 		self.assertFalse(same_vehicle_form.is_valid())
 		self.assertIn("vehicle", same_vehicle_form.errors)
 
-	def test_new_travel_order_rejects_open_employee_order_for_another_vehicle(self):
+	def test_new_travel_order_allows_open_employee_order_for_another_vehicle(self):
 		other_vehicle = self.create_vehicle("INV-1C", "WF0XXXTEST000001C")
 		VehicleTravelOrder.objects.create(
 			created_at=datetime.date(2026, 4, 20),
@@ -1139,8 +1259,7 @@ class VehicleTravelOrderCreateViewTests(TestCase):
 			}
 		)
 
-		self.assertFalse(form.is_valid())
-		self.assertIn("employee", form.errors)
+		self.assertTrue(form.is_valid(), form.errors)
 
 	def test_previous_order_create_closes_previous_with_next_order_date(self):
 		next_order = VehicleTravelOrder.objects.create(

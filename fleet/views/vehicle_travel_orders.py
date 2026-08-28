@@ -168,9 +168,8 @@ def vehicle_travel_order_form_manual():
         </ol>
         <h6 class="mb-2">Pravila pri cuvanju</h6>
         <ul class="mb-3">
-          <li>Za istog zaposlenog ne moze postojati vise od jednog otvorenog zaduzenja.</li>
+          <li>Zaposleni moze imati vise otvorenih zaduzenja ako su za razlicita vozila.</li>
           <li>Za isto vozilo ne moze postojati vise od jednog otvorenog zaduzenja.</li>
-          <li>Isti zaposleni ne moze imati dva zaduzenja na isti datum.</li>
           <li>Isto vozilo ne moze imati dva zaduzenja na isti datum.</li>
         </ul>
         <h6 class="mb-2">Sta sistem radi automatski</h6>

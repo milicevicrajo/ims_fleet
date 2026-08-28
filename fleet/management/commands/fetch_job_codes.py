@@ -1,7 +1,11 @@
 from django.core.management.base import BaseCommand
-from ...sync import sync_organizational_units_from_view
+
+from ...sync import sync_vehicle_job_codes_with_org_units
+
+
 class Command(BaseCommand):
-    help = 'Učitavanje podataka o vozilima iz Excel fajla'
-    
+    help = "Povlaci organizacione jedinice i sifre posla vozila iz baze Vozila"
+
     def handle(self, *args, **kwargs):
-        sync_organizational_units_from_view()
+        result = sync_vehicle_job_codes_with_org_units()
+        self.stdout.write(self.style.SUCCESS(result))

@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
 from ..models import Lease, LeaseInterest, Vehicle
-from . import fetch_policy_data, format_nis_sync_result, nis_data_import
+from . import fetch_policy_data, format_nis_sync_result, nis_data_import, sync_vehicle_job_codes_with_org_units
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,9 @@ def fetch_data_view(request):
                 logger.info("Administracija sync: pokrecem OMV teretna")
                 call_command("omv_command_teretna")
                 message = "OMV teretna komanda je uspesno izvrsena."
+            elif command == "fetch_job_codes":
+                logger.info("Administracija sync: pokrecem direktan sync sifri posla vozila")
+                message = sync_vehicle_job_codes_with_org_units()
             else:
                 return JsonResponse(
                     {"status": "error", "message": "Nepoznata komanda."},

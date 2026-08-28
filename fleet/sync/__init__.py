@@ -4,6 +4,7 @@ from fleet.sync.external import (
     migrate_draft_to_insurance_single,
     process_vehicle_retirements,
     sync_organizational_units_from_view,
+    sync_vehicle_job_codes_with_org_units,
     update_job_codes_from_view,
     update_vehicle_values,
 )
@@ -43,6 +44,7 @@ __all__ = [
     "omv_teretna_data_import",
     "process_vehicle_retirements",
     "sync_organizational_units_from_view",
+    "sync_vehicle_job_codes_with_org_units",
     "sync_employees_from_hr_view",
     "update_job_codes_from_view",
     "update_vehicle_values",
