@@ -93,7 +93,11 @@
           <tr>
             <td>{{ item.employee_code|default:"/" }}</td><td>{{ item.employee_name|default:"/" }}</td>
             <td>{{ item.package_name|default:"/" }}</td><td class="text-end">{{ item.package_net_amount|floatformat:2|intcomma }}</td>
-            <td>{{ item.year }}</td><td>{{ item.month }}</td><td>{{ item.phone_number }}</td>
+            <td>{{ item.year }}</td><td>{{ item.month }}</td>
+            <td>
+              {{ item.phone_number }}
+              {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=item.parking_exempt only %}
+            </td>
             <td class="text-end">{{ item.usage.onnet|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.mts_network|floatformat:2|intcomma }}</td>
             <td class="text-end">{{ item.usage.outside_mts|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.kim|floatformat:2|intcomma }}</td>
             <td class="text-end">{{ item.usage.special|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.international|floatformat:2|intcomma }}</td>
@@ -103,7 +107,10 @@
             <td class="text-end">{{ item.usage.vas_sms|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.discount_traffic|floatformat:2|intcomma }}</td>
             <td class="text-end">{{ item.usage.fixed_discount|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.variable_discount|floatformat:2|intcomma }}</td>
             <td class="text-end">{{ item.usage.services|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.dispatch_notes|floatformat:2|intcomma }}</td>
-            <td class="text-end">{{ item.usage.parking|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.nzrd|floatformat:2|intcomma }}</td>
+            <td class="text-end">
+              {{ item.usage.parking|floatformat:2|intcomma }}
+              {% if item.parking_exempt %}<small class="text-warning d-block">Ne ide u obustavu</small>{% endif %}
+            </td><td class="text-end">{{ item.usage.nzrd|floatformat:2|intcomma }}</td>
             <td class="text-end">{{ item.usage.vat_base|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.vat|floatformat:2|intcomma }}</td>
             <td class="text-end">{{ item.usage.installments|floatformat:2|intcomma }}</td><td class="text-end">{{ item.usage.total|floatformat:2|intcomma }}</td>
             <td class="text-end"><strong>{{ item.withholding|floatformat:2|intcomma }}</strong></td>

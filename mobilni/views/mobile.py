@@ -17,19 +17,28 @@ from core.mixins import RolePermissionRequiredMixin, role_permission_required
 from ..forms.mobile import (
     MobileAssignmentForm,
     MobilePackageForm,
+    MobileParkingExemptionForm,
     MobilePeriodImportForm,
     MobileSimpleImportForm,
     MobileUsageForm,
     MobileUserForm,
 )
-from ..models import MobileAssignment, MobileImportLog, MobilePackage, MobileUsage, MobileUser
+from ..models import MobileAssignment, MobileImportLog, MobilePackage, MobileParkingExemption, MobileUsage, MobileUser
 from ..support.mobile import import_assignments, import_packages, import_usages, import_users, sync_employee_links
 from ..withholdings import (
     REPORT_ALL,
     REPORT_EMPLOYEES,
     REPORT_FORMER_EMPLOYEES,
     REPORT_TYPES,
+    SPECIAL_PHONE_NUMBER,
+    assignment_employee_active,
+    assignment_employee_code,
+    assignment_employee_name,
+    assignment_package_amount,
+    assignment_package_name,
     get_withholding_rows,
+    normalize_phone_number,
+    parking_exempt_phone_numbers,
 )
 
 
@@ -65,7 +74,7 @@ def _decimal(value):
 
 
 def _filter_assignments(request):
-    qs = MobileAssignment.objects.select_related("package", "mobile_user", "employee")
+    qs = MobileAssignment.objects.select_related("package", "employee")
     year, month = _selected_period(request)
     if year and month:
         qs = qs.filter(year=year, month=month)
@@ -75,11 +84,14 @@ def _filter_assignments(request):
     search = (request.GET.get("q") or "").strip()
     if search:
         query = (
-            Q(employee_name__icontains=search)
-            | Q(package_name__icontains=search)
+            Q(employee__first_name__icontains=search)
+            | Q(employee__last_name__icontains=search)
+            | Q(employee__original_full_name__icontains=search)
+            | Q(package__name__icontains=search)
+            | Q(package__partner_name__icontains=search)
         )
         if search.isdigit():
-            query |= Q(employee_code=int(search))
+            query |= Q(employee__employee_code=int(search))
             query |= Q(employee_id=int(search))
         qs = qs.filter(query)
     return qs, year, month
@@ -148,6 +160,14 @@ def _filter_users(request):
     return qs
 
 
+def _filter_parking_exemptions(request):
+    qs = MobileParkingExemption.objects.all()
+    search = (request.GET.get("q") or "").strip()
+    if search:
+        qs = qs.filter(phone_number__icontains=search)
+    return qs, search
+
+
 def _mobile_user_filter_context(request):
     status = request.GET.get("status") or "active"
     if status not in {"active", "inactive", "all"}:
@@ -176,7 +196,7 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
 
     def get_queryset(self):
         year, month = _selected_period(self.request)
-        qs = MobileUsage.objects.select_related("assignment", "employee")
+        qs = MobileUsage.objects.select_related("assignment__employee", "assignment__package", "employee")
         if year and month:
             qs = qs.filter(year=year, month=month)
         phone_number = (self.request.GET.get("phone_number") or "").strip()
@@ -185,13 +205,16 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
         search = (self.request.GET.get("q") or "").strip()
         if search:
             query = (
-                Q(assignment__employee_name__icontains=search)
-                | Q(assignment__package_name__icontains=search)
+                Q(assignment__employee__first_name__icontains=search)
+                | Q(assignment__employee__last_name__icontains=search)
+                | Q(assignment__employee__original_full_name__icontains=search)
+                | Q(assignment__package__name__icontains=search)
                 | Q(employee__first_name__icontains=search)
                 | Q(employee__last_name__icontains=search)
             )
             if search.isdigit():
                 query |= Q(employee_id=int(search))
+                query |= Q(assignment__employee__employee_code=int(search))
             qs = qs.filter(query)
         return qs.order_by("-total", "phone_number")[:15]
 
@@ -199,6 +222,9 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
         ctx = super().get_context_data(**kwargs)
         year, month = _selected_period(self.request)
         phone_number = (self.request.GET.get("phone_number") or "").strip()
+        parking_exempt_numbers = parking_exempt_phone_numbers(year, month)
+        for usage in ctx.get("usages", []):
+            usage.parking_exempt = normalize_phone_number(usage.phone_number) in parking_exempt_numbers
         usage_period_qs = MobileUsage.objects.filter(year=year, month=month) if year and month else MobileUsage.objects.none()
         assignment_period_qs = (
             MobileAssignment.objects.filter(year=year, month=month)
@@ -224,7 +250,7 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
             }
         )
         for row in withholding_rows:
-            package_key = row.usage.assignment.package_id or row.package_name or "bez-paketa"
+            package_key = row.usage.assignment.package_id or "bez-paketa"
             metric = package_metrics[package_key]
             metric["package_name"] = row.package_name or "Bez paketa"
             metric["phone_numbers"].add(row.phone_number)
@@ -262,6 +288,7 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
                 "latest_imports": MobileImportLog.objects.all()[:8],
                 "q": self.request.GET.get("q", ""),
                 "phone_number": phone_number,
+                "parking_exempt_numbers": parking_exempt_numbers,
             }
         )
         return ctx
@@ -279,6 +306,9 @@ class MobileAssignmentListView(RolePermissionRequiredMixin, LoginRequiredMixin, 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         year, month = _selected_period(self.request)
+        parking_exempt_numbers = parking_exempt_phone_numbers(year, month)
+        for assignment in ctx.get("assignments", []):
+            assignment.parking_exempt = normalize_phone_number(assignment.phone_number) in parking_exempt_numbers
         ctx.update(
             {
                 "title": "Dodele mobilnih brojeva",
@@ -287,6 +317,7 @@ class MobileAssignmentListView(RolePermissionRequiredMixin, LoginRequiredMixin, 
                 "selected_month": month,
                 "q": self.request.GET.get("q", ""),
                 "phone_number": self.request.GET.get("phone_number", ""),
+                "parking_exempt_numbers": parking_exempt_numbers,
             }
         )
         return ctx
@@ -351,6 +382,27 @@ class MobileUserListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListVi
         ctx["title"] = "Korisnici mobilnih"
         ctx["q"] = self.request.GET.get("q", "")
         ctx.update(_mobile_user_filter_context(self.request))
+        return ctx
+
+
+class MobileParkingExemptionListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView):
+    model = MobileParkingExemption
+    template_name = "mobilni/mobile/parking_exemption_list.html"
+    context_object_name = "parking_exemptions"
+
+    def get_queryset(self):
+        qs, _ = _filter_parking_exemptions(self.request)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        _, search = _filter_parking_exemptions(self.request)
+        ctx.update(
+            {
+                "title": "Izuzeci parkinga",
+                "q": search,
+            }
+        )
         return ctx
 
 
@@ -434,6 +486,27 @@ class MobileUsageUpdateView(MobileUsageCreateView, UpdateView):
         return ctx
 
 
+class MobileParkingExemptionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
+    model = MobileParkingExemption
+    form_class = MobileParkingExemptionForm
+    template_name = "fleet/generic_form.html"
+    success_url = reverse_lazy("mobilni:mobile_parking_exemption_list")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Novi izuzetak parkinga"
+        ctx["submit_button_label"] = "Sacuvaj izuzetak"
+        ctx["cancel_url"] = reverse_lazy("mobilni:mobile_parking_exemption_list")
+        return ctx
+
+
+class MobileParkingExemptionUpdateView(MobileParkingExemptionCreateView, UpdateView):
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["title"] = "Izmeni izuzetak parkinga"
+        return ctx
+
+
 class MobileAssignmentDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = MobileAssignment
     template_name = "mobilni/mobile/confirm_delete.html"
@@ -459,6 +532,13 @@ class MobileUserDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, Dele
     model = MobileUser
     template_name = "mobilni/mobile/confirm_delete.html"
     success_url = reverse_lazy("mobilni:mobile_user_list")
+    context_object_name = "object"
+
+
+class MobileParkingExemptionDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
+    model = MobileParkingExemption
+    template_name = "mobilni/mobile/confirm_delete.html"
+    success_url = reverse_lazy("mobilni:mobile_parking_exemption_list")
     context_object_name = "object"
 
 
@@ -501,6 +581,7 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
                 "report_all": REPORT_ALL,
                 "report_employees": REPORT_EMPLOYEES,
                 "report_former_employees": REPORT_FORMER_EMPLOYEES,
+                "special_phone_number": SPECIAL_PHONE_NUMBER,
                 "rows": page_obj.object_list,
                 "page_obj": page_obj,
                 "is_paginated": page_obj.has_other_pages(),
@@ -545,10 +626,12 @@ def export_employee_withholdings_csv(request):
 @role_permission_required()
 def export_assignments_xlsx(request):
     qs, year, month = _filter_assignments(request)
+    parking_exempt_numbers = parking_exempt_phone_numbers(year, month)
     headers = [
         "Godina",
         "Mesec",
         "Broj",
+        "Parking izuzet",
         "Aktivan broj",
         "Paket",
         "Paket od",
@@ -559,24 +642,23 @@ def export_assignments_xlsx(request):
         "Radnik",
         "Aktivan radnik",
         "JMBG",
-        "Napomena",
     ]
     rows = [
         [
             item.year,
             item.month,
             item.phone_number,
+            "Da" if normalize_phone_number(item.phone_number) in parking_exempt_numbers else "Ne",
             "Da" if item.number_active else "Ne",
-            item.package_name or str(item.package or ""),
-            _date(item.valid_from),
-            _date(item.valid_to),
-            _decimal(item.package_net_amount),
+            assignment_package_name(item),
+            _date(item.package.valid_from if item.package_id else None),
+            _date(item.package.valid_to if item.package_id else None),
+            _decimal(assignment_package_amount(item)),
             item.employee_id or "",
-            item.employee_code or "",
-            item.employee_name,
-            "Da" if item.employee_active else "Ne",
-            item.personal_number,
-            item.note,
+            assignment_employee_code(item) or "",
+            assignment_employee_name(item),
+            "Da" if assignment_employee_active(item) else "Ne",
+            item.employee.personal_number if item.employee_id else "",
         ]
         for item in qs.order_by("year", "month", "phone_number")
     ]
@@ -605,6 +687,7 @@ def export_usages_xlsx(request):
         "Godina",
         "Mesec",
         "Broj",
+        "Parking izuzet",
         "Onnet",
         "U MTS mreži",
         "Van MTS mreže",
@@ -640,6 +723,7 @@ def export_usages_xlsx(request):
             row.year,
             row.month,
             row.phone_number,
+            "Da" if row.parking_exempt else "Ne",
             _decimal(row.usage.onnet),
             _decimal(row.usage.mts_network),
             _decimal(row.usage.outside_mts),
@@ -807,7 +891,6 @@ def _handle_mobile_import(request, import_type, form):
                 f"Import završen: novo {result.imported}, ažurirano {result.updated}, "
                 f"preskočeno {result.skipped}. Sinhronizacija zaposlenih: "
                 f"korisnici {sync_result['mobile_users_linked']}, "
-                f"dodele {sync_result['assignments_employee_linked']}, "
                 f"potrošnja {sync_result['usages_employee_linked']}."
             ),
         )

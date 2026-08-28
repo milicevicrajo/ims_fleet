@@ -91,8 +91,11 @@
     <div class="table-responsive"><table class="table table-sm table-hover table-bordered align-middle mb-0">
       <thead><tr><th>Broj</th><th>Šifra</th><th>Korisnik</th><th>Paket</th><th class="text-end">Ukupno</th></tr></thead>
       <tbody>{% for usage in usages %}<tr>
-        <td>{{ usage.phone_number }}</td><td>{{ usage.assignment.employee_code|default:"/" }}</td>
-        <td>{{ usage.assignment.employee_name|default:"/" }}</td><td>{{ usage.assignment.package_name|default:"/" }}</td>
+        <td>
+          {{ usage.phone_number }}
+          {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=usage.parking_exempt only %}
+        </td><td>{{ usage.assignment.employee.employee_code|default:"/" }}</td>
+        <td>{{ usage.assignment.employee|default:"/" }}</td><td>{{ usage.assignment.package.name|default:"/" }}</td>
         <td class="text-end"><strong>{{ usage.total|floatformat:2|intcomma }}</strong></td>
       </tr>{% empty %}<tr><td colspan="5" class="text-center text-muted">Nema podataka.</td></tr>{% endfor %}</tbody>
     </table></div>

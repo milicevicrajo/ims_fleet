@@ -16,21 +16,6 @@
 
 <hr>
 
-<div class="card">
-    <div class="card-body">
-        <h2 class="card-title">Povlacenje sifri posla vozila</h2>
-        <form method="post" action="{% url 'fetch_data' %}">
-            {% csrf_token %}
-            <input type="hidden" name="command" value="fetch_job_codes">
-            <button type="submit" class="btn btn-primary">
-                <i class="mdi mdi-source-pull"></i> Povuci OJ i sifre posla vozila
-            </button>
-        </form>
-    </div>
-</div>
-
-<hr>
-
 <!-- Forma za rucni import NIS Excel fajla -->
 <form method="post" action="{% url 'import_nis_excel' %}" enctype="multipart/form-data">
     {% csrf_token %}

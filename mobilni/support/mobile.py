@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+import calendar
+import datetime
 from decimal import Decimal, InvalidOperation
 from io import BytesIO, StringIO
 import math
@@ -58,6 +60,11 @@ class SqlServerSyncResult:
     assignments: ImportResult = field(default_factory=ImportResult)
     usages: ImportResult = field(default_factory=ImportResult)
     employee_links: dict = field(default_factory=dict)
+
+
+def add_import_error(result, message, limit=50):
+    if len(result.errors) < limit:
+        result.errors.append(message)
 
 
 def normalize_column(value):
@@ -174,15 +181,15 @@ def clean_phone_number(value):
     if not value:
         return ""
     if re.fullmatch(r"\d+\.0+", value):
-        return value.split(".", 1)[0]
+        value = value.split(".", 1)[0]
     if "e" in value.lower():
         try:
             decimal_value = Decimal(value)
             if decimal_value == decimal_value.to_integral_value():
-                return str(decimal_value.quantize(Decimal("1")))
+                value = str(decimal_value.quantize(Decimal("1")))
         except InvalidOperation:
             pass
-    return value
+    return "".join(ch for ch in value if ch.isdigit()) or value
 
 
 def clean_bool(value, default=True):
@@ -275,6 +282,7 @@ def import_assignments(uploaded_file, year=None, month=None):
     df = read_table(uploaded_file, lambda table: {"broj", "paket"}.issubset(set(table.columns)))
     result = ImportResult()
     employees_by_code = employee_map()
+    packages_by_name = package_candidates_by_name()
 
     with transaction.atomic():
         for _, row in df.iterrows():
@@ -284,16 +292,36 @@ def import_assignments(uploaded_file, year=None, month=None):
                 result.skipped += 1
                 continue
 
-            phone_number = clean_text(get_value(row, "broj"))
+            phone_number = clean_phone_number(get_value(row, "broj"))
             if not phone_number:
                 result.skipped += 1
                 continue
 
             employee_code = clean_int(get_value(row, "rasif"))
             package_name = clean_text(get_value(row, "paket"))
-            package = find_package(package_name)
+            package = find_package_from_candidates(
+                package_name,
+                packages_by_name,
+                valid_from=clean_date(get_value(row, "datum_od")),
+                year=target_year,
+                month=target_month,
+            )
             mobile_user = find_mobile_user(employee_code)
             employee = find_employee(employee_code, employees_by_code, mobile_user)
+            if not package:
+                result.skipped += 1
+                add_import_error(
+                    result,
+                    f"Dodela {phone_number} {target_month:02d}/{target_year}: paket '{package_name}' nije pronadjen.",
+                )
+                continue
+            if not employee:
+                result.skipped += 1
+                add_import_error(
+                    result,
+                    f"Dodela {phone_number} {target_month:02d}/{target_year}: radnik '{employee_code or ''}' nije pronadjen.",
+                )
+                continue
 
             defaults = {
                 "number_active": clean_bool(
@@ -301,20 +329,7 @@ def import_assignments(uploaded_file, year=None, month=None):
                     default=True,
                 ),
                 "package": package,
-                "package_name": package_name,
-                "valid_from": clean_date(get_value(row, "datum_od")),
-                "valid_to": clean_date(get_value(row, "datum_do")),
-                "package_net_amount": clean_decimal(get_value(row, "iznos_neto")),
-                "mobile_user": mobile_user,
                 "employee": employee,
-                "employee_code": employee_code,
-                "employee_name": clean_text(get_value(row, "ranaz")),
-                "employee_active": clean_bool(
-                    get_value(row, "aktivan_radnik", "rad_aktivan", "aktivan"),
-                    default=True,
-                ),
-                "personal_number": clean_text(get_value(row, "jmbg")),
-                "note": clean_text(get_value(row, "napomena", "napomene")),
             }
             _, created = MobileAssignment.objects.update_or_create(
                 year=target_year,
@@ -346,7 +361,7 @@ def import_usages(uploaded_file, year=None, month=None):
                 result.skipped += 1
                 continue
 
-            phone_number = clean_text(get_value(row, "pretpl.broj", "pretpl_broj", "broj"))
+            phone_number = clean_phone_number(get_value(row, "pretpl.broj", "pretpl_broj", "broj"))
             if not phone_number:
                 result.skipped += 1
                 continue
@@ -371,10 +386,47 @@ def import_usages(uploaded_file, year=None, month=None):
     return result
 
 
-def find_package(package_name):
-    if not package_name:
+def package_candidates_by_name():
+    packages = {}
+    for package in MobilePackage.objects.order_by("name", "-valid_from", "-id"):
+        packages.setdefault(clean_text(package.name).lower(), []).append(package)
+    return packages
+
+
+def package_matches_period(package, year, month):
+    if not year or not month:
+        return False
+    period_start = datetime.date(year, month, 1)
+    period_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
+    if package.valid_from and package.valid_from > period_end:
+        return False
+    if package.valid_to and package.valid_to < period_start:
+        return False
+    return True
+
+
+def find_package_from_candidates(package_name, packages_by_name, *, valid_from=None, year=None, month=None):
+    candidates = packages_by_name.get(clean_text(package_name).lower(), [])
+    if not candidates:
         return None
-    return MobilePackage.objects.filter(name__iexact=package_name).order_by("-valid_from", "-id").first()
+    if valid_from:
+        for package in candidates:
+            if package.valid_from == valid_from:
+                return package
+    for package in candidates:
+        if package_matches_period(package, year, month):
+            return package
+    return candidates[0]
+
+
+def find_package(package_name, valid_from=None, year=None, month=None):
+    return find_package_from_candidates(
+        package_name,
+        package_candidates_by_name(),
+        valid_from=valid_from,
+        year=year,
+        month=month,
+    )
 
 
 def find_mobile_user(employee_code):
@@ -424,23 +476,16 @@ def find_employee(employee_code, employees_by_code=None, mobile_user=None):
 def employee_from_assignment(assignment):
     if not assignment:
         return None
-    if assignment.employee_id:
-        return assignment.employee
-    if assignment.mobile_user_id and assignment.mobile_user.employee_id:
-        return assignment.mobile_user.employee
-    return None
+    return assignment.employee if assignment.employee_id else None
 
 
 def sync_employee_links():
     result = {
         "mobile_users_linked": 0,
-        "assignments_mobile_user_linked": 0,
-        "assignments_employee_linked": 0,
         "usages_assignment_linked": 0,
         "usages_employee_linked": 0,
     }
     employees_by_code = employee_map()
-    mobile_users_by_code = {item.employee_code: item for item in MobileUser.objects.select_related("employee")}
 
     with transaction.atomic():
         for mobile_user in MobileUser.objects.all():
@@ -448,30 +493,7 @@ def sync_employee_links():
             if employee and mobile_user.employee_id != employee.id:
                 mobile_user.employee = employee
                 mobile_user.save(update_fields=["employee", "updated_at"])
-                mobile_users_by_code[mobile_user.employee_code] = mobile_user
                 result["mobile_users_linked"] += 1
-
-        for assignment in MobileAssignment.objects.select_related("mobile_user", "employee"):
-            update_fields = []
-            if assignment.employee_code and not assignment.mobile_user_id:
-                mobile_user = mobile_users_by_code.get(assignment.employee_code)
-                if mobile_user:
-                    assignment.mobile_user = mobile_user
-                    update_fields.append("mobile_user")
-                    result["assignments_mobile_user_linked"] += 1
-
-            employee = find_employee(
-                assignment.employee_code,
-                employees_by_code,
-                assignment.mobile_user,
-            )
-            if employee and assignment.employee_id != employee.id:
-                assignment.employee = employee
-                update_fields.append("employee")
-                result["assignments_employee_linked"] += 1
-
-            if update_fields:
-                assignment.save(update_fields=[*update_fields, "updated_at"])
 
         for usage in MobileUsage.objects.select_related("assignment", "employee"):
             update_fields = []
@@ -642,16 +664,14 @@ def sync_sqlserver_assignments(conn):
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT god, mesec, broj, aktivan_broj, paket, rasif, ranaz, aktivan_radnik, napomena
+        SELECT god, mesec, broj, aktivan_broj, paket, rasif
         FROM dodeljeno
         """
     )
     result = ImportResult()
     employees_by_code = employee_map()
     mobile_users_by_code = {item.employee_code: item for item in MobileUser.objects.select_related("employee")}
-    packages_by_name = {}
-    for package in MobilePackage.objects.order_by("name", "-valid_from", "-id"):
-        packages_by_name.setdefault(package.name.lower(), package)
+    packages_by_name = package_candidates_by_name()
     source = {}
 
     for row in cursor.fetchall():
@@ -666,16 +686,25 @@ def sync_sqlserver_assignments(conn):
         package_name = clean_text(row.paket)
         mobile_user = mobile_users_by_code.get(employee_code)
         employee = find_employee(employee_code, employees_by_code, mobile_user)
+        package = find_package_from_candidates(package_name, packages_by_name, year=year, month=month)
+        if not package:
+            result.skipped += 1
+            add_import_error(
+                result,
+                f"Dodela {phone_number} {month:02d}/{year}: paket '{package_name}' nije pronadjen.",
+            )
+            continue
+        if not employee:
+            result.skipped += 1
+            add_import_error(
+                result,
+                f"Dodela {phone_number} {month:02d}/{year}: radnik '{employee_code or ''}' nije pronadjen.",
+            )
+            continue
         source[(year, month, phone_number)] = {
             "number_active": clean_bool(row.aktivan_broj, default=True),
-            "package": packages_by_name.get(package_name.lower()),
-            "package_name": package_name,
-            "mobile_user": mobile_user,
+            "package": package,
             "employee": employee,
-            "employee_code": employee_code,
-            "employee_name": clean_text(row.ranaz),
-            "employee_active": clean_bool(row.aktivan_radnik, default=True),
-            "note": clean_text(row.napomena),
         }
 
     existing = {
@@ -688,13 +717,7 @@ def sync_sqlserver_assignments(conn):
     update_fields = [
         "number_active",
         "package",
-        "package_name",
-        "mobile_user",
         "employee",
-        "employee_code",
-        "employee_name",
-        "employee_active",
-        "note",
         "updated_at",
     ]
     for (year, month, phone_number), defaults in source.items():
@@ -850,7 +873,7 @@ def sync_sqlserver_usages(conn):
 def assignment_lookup_maps():
     exact = {}
     by_phone = {}
-    qs = MobileAssignment.objects.select_related("employee", "mobile_user__employee").order_by(
+    qs = MobileAssignment.objects.select_related("employee", "package").order_by(
         "phone_number",
         "-year",
         "-month",

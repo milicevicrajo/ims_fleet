@@ -17,7 +17,7 @@ from nabavka.models import ProcurementInvoice
 from .forms import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
-from .models import FuelConsumption, JobCode, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
+from .models import FuelConsumption, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
 from .support.dashboard import vehicle_cost_per_km_rows
 from .support.policy_queries import expired_unrenewed_policy_qs, expiring_policy_qs
@@ -46,8 +46,7 @@ from .sync.external import (
 	_policy_data_is_complete,
 	fetch_policy_data,
 	process_vehicle_retirements,
-	sync_vehicle_job_codes_with_org_units,
-	update_job_codes_from_view,
+	sync_organizational_units_from_view,
 )
 from .tasks import _run_policy_data_import_with_report
 
@@ -349,115 +348,27 @@ class VehicleRetirementSyncTests(SimpleTestCase):
 		self.assertEqual(result, "Nema otpisanih vozila za obradu.")
 
 
-class VehicleJobCodeSyncTests(TestCase):
-	def setUp(self):
-		self.vehicle = Vehicle.objects.create(
-			inventory_number="SYNC-1",
-			chassis_number="SYNCCHASSIS000001",
-			brand="Ford",
-			model="Transit",
-			year_of_manufacture=2020,
-			first_registration_date=datetime.date(2020, 1, 1),
-			color="Bela",
-			number_of_axles=2,
-			engine_volume=Decimal("1999.00"),
-			engine_number="SYNC-ENGINE-1",
-			weight=Decimal("2500.00"),
-			engine_power=Decimal("96.00"),
-			load_capacity=Decimal("1200.00"),
-			category=Vehicle.Category.CARGO,
-			maximum_permissible_weight=Decimal("3500.00"),
-			fuel_type="DIZEL",
-			number_of_seats=3,
-			purchase_value=Decimal("10000.00"),
-			value=Decimal("9000.00"),
-		)
-		self.traffic_card = TrafficCard.objects.create(
-			vehicle=self.vehicle,
-			registration_number="BG1200-XD",
-			issue_date=datetime.date(2026, 1, 1),
-			valid_until=datetime.date(2027, 1, 1),
-			traffic_card_number="TC-SYNC-1",
-			serial_number="SER-SYNC-1",
-			owner="IMS",
-			homologation_number="HOMO-SYNC-1",
-		)
-		self.org_unit = OrganizationalUnit.objects.create(
-			code="209001",
-			name="Organizacija i poslovanje",
-			center="2",
-		)
-
-	def source_cursor(self, connections_mock, rows):
+class OrganizationalUnitSyncTests(TestCase):
+	@patch("fleet.sync.external.connections")
+	def test_sync_skips_rows_with_empty_fields_and_reports_warning(self, connections_mock):
 		cursor = connections_mock.__getitem__.return_value.cursor.return_value.__enter__.return_value
-		cursor.fetchall.return_value = rows
-		return cursor
+		cursor.fetchall.return_value = [
+			("209001", "Organizacija", "2"),
+			("", "Bez sifre", "2"),
+			("209002", "", "2"),
+			("209003", "Bez centra", None),
+		]
 
-	@patch("fleet.sync.external.connections")
-	def test_vehicle_job_code_sync_reads_vozila_view_and_normalizes_plate(self, connections_mock):
-		cursor = self.source_cursor(connections_mock, [("BG1200XD", 209001)])
+		result = sync_organizational_units_from_view()
 
-		result = update_job_codes_from_view()
-
-		cursor.execute.assert_called_once_with("SELECT regbr, sifpos FROM Vozila.dbo.sif_pos_trenutno")
-		job_code = JobCode.objects.get(vehicle=self.vehicle)
-		self.assertEqual(job_code.organizational_unit, self.org_unit)
-		self.assertIn("povuceno=1", result)
-		self.assertIn("kreirano=1", result)
-
-	@patch("fleet.sync.external.connections")
-	def test_vehicle_job_code_sync_updates_today_record_instead_of_creating_duplicate(self, connections_mock):
-		other_org_unit = OrganizationalUnit.objects.create(
-			code="411111",
-			name="Stara sifra",
-			center="4",
-		)
-		existing = JobCode.objects.create(
-			vehicle=self.vehicle,
-			organizational_unit=other_org_unit,
-			assigned_date=datetime.date.today(),
-		)
-		self.source_cursor(connections_mock, [("BG1200XD", 209001)])
-
-		result = update_job_codes_from_view()
-
-		existing.refresh_from_db()
-		self.assertEqual(existing.organizational_unit, self.org_unit)
-		self.assertEqual(JobCode.objects.filter(vehicle=self.vehicle).count(), 1)
-		self.assertIn("azurirano=1", result)
-
-
-class JobCodeSyncFunctionTests(SimpleTestCase):
-	@patch("fleet.sync.external.update_job_codes_from_view")
-	@patch("fleet.sync.external.sync_organizational_units_from_view")
-	def test_job_code_sync_function_combines_organization_and_vehicle_sync(self, org_sync_mock, job_code_sync_mock):
-		org_sync_mock.return_value = "Organizacione jedinice: dodatih=1, azuriranih=0, preskoceno=0"
-		job_code_sync_mock.return_value = "Sifre posla vozila: povuceno=1, kreirano=1, azurirano=0, bez_promene=0, bez_vozila=0, bez_oj=0, preskoceno=0"
-
-		result = sync_vehicle_job_codes_with_org_units()
-
-		org_sync_mock.assert_called_once_with()
-		job_code_sync_mock.assert_called_once_with()
-		self.assertIn("Organizacione jedinice", result)
-		self.assertIn("Sifre posla vozila", result)
-
-
-class FetchDataViewTests(TestCase):
-	@patch("fleet.sync.views.sync_vehicle_job_codes_with_org_units")
-	def test_fetch_data_view_runs_job_code_sync_function(self, sync_mock):
-		sync_mock.return_value = "Organizacione jedinice: dodatih=0, azuriranih=1, preskoceno=0; Sifre posla vozila: povuceno=1, kreirano=1, azurirano=0, bez_promene=0, bez_vozila=0, bez_oj=0, preskoceno=0"
-		user = get_user_model().objects.create_user(
-			username="fetch-data-admin",
-			password="test",
-			is_staff=True,
-			is_superuser=True,
-		)
-		self.client.force_login(user)
-
-		response = self.client.post(reverse("fetch_data"), {"command": "fetch_job_codes"})
-
-		self.assertRedirects(response, reverse("fetch_data"))
-		sync_mock.assert_called_once_with()
+		cursor.execute.assert_called_once_with("SELECT sif_pos, naz_pos, blok FROM dbo.v_organizationalunit")
+		self.assertTrue(OrganizationalUnit.objects.filter(code="209001").exists())
+		self.assertFalse(OrganizationalUnit.objects.filter(code="209002").exists())
+		self.assertFalse(OrganizationalUnit.objects.filter(code="209003").exists())
+		self.assertIn("preskoceno=3", result)
+		self.assertIn("Upozorenje", result)
+		self.assertIn("red 2: sif_pos", result)
+		self.assertIn("red 4: blok", result)
 
 
 class VehicleCostPerKmMileageTests(TestCase):

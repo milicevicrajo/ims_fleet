@@ -33,6 +33,15 @@
   </a>
 </div>
 
+<div class="alert alert-info shadow-sm mb-3">
+  <div class="fw-semibold mb-1">Obracun obustave</div>
+  <div>Obustava = osnovica za PDV - neto iznos paketa + parking + NZRD.</div>
+  <div class="small mt-1">
+    Ako je broj u Parking izuzecima, parking se racuna kao 0. Za broj {{ special_phone_number }} neto iznos paketa se ne odbija.
+    Ako broj nema dodelu ili dodela nema povezan paket, obustava ostaje prazna.
+  </div>
+</div>
+
 <div class="card shadow-sm mb-3">
   <div class="card-body border-bottom">
     <form id="mobile-withholding-filter" method="get" class="fleet-list-filter mb-0">
@@ -107,7 +116,11 @@
             <tr>
               <td>{{ item.employee_code|default:"/" }}</td><td>{{ item.employee_name|default:"/" }}</td>
               <td>{{ item.package_name|default:"/" }}</td><td class="text-end">{{ item.package_net_amount|floatformat:2|intcomma }}</td>
-              <td>{{ item.year }}</td><td>{{ item.month }}</td><td>{{ item.phone_number }}</td>
+              <td>{{ item.year }}</td><td>{{ item.month }}</td>
+              <td>
+                {{ item.phone_number }}
+                {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=item.parking_exempt only %}
+              </td>
               <td class="text-end">{{ item.usage.onnet|floatformat:2|intcomma }}</td>
               <td class="text-end">{{ item.usage.mts_network|floatformat:2|intcomma }}</td>
               <td class="text-end">{{ item.usage.outside_mts|floatformat:2|intcomma }}</td>
@@ -126,7 +139,10 @@
               <td class="text-end">{{ item.usage.variable_discount|floatformat:2|intcomma }}</td>
               <td class="text-end">{{ item.usage.services|floatformat:2|intcomma }}</td>
               <td class="text-end">{{ item.usage.dispatch_notes|floatformat:2|intcomma }}</td>
-              <td class="text-end">{{ item.usage.parking|floatformat:2|intcomma }}</td>
+              <td class="text-end">
+                {{ item.usage.parking|floatformat:2|intcomma }}
+                {% if item.parking_exempt %}<small class="text-warning d-block">Ne ide u obustavu</small>{% endif %}
+              </td>
               <td class="text-end">{{ item.usage.nzrd|floatformat:2|intcomma }}</td>
               <td class="text-end">{{ item.usage.vat_base|floatformat:2|intcomma }}</td>
               <td class="text-end">{{ item.usage.vat|floatformat:2|intcomma }}</td>
@@ -148,7 +164,11 @@
           {% for item in rows %}
             <tr>
               <td>{{ item.employee_code|default:"/" }}</td><td>{{ item.employee_name|default:"/" }}</td>
-              <td>{{ item.year }}</td><td>{{ item.month }}</td><td>{{ item.phone_number }}</td>
+              <td>{{ item.year }}</td><td>{{ item.month }}</td>
+              <td>
+                {{ item.phone_number }}
+                {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=item.parking_exempt only %}
+              </td>
               <td class="text-end"><strong>{{ item.withholding|floatformat:2|intcomma }}</strong></td>
             </tr>
           {% empty %}

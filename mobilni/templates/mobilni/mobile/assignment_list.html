@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block content %}
 {% include "fleet/includes/list_styles.html" %}
@@ -27,17 +28,19 @@
             <th>Broj</th>
             <th>Status</th>
             <th>Paket</th>
+            <th class="text-end">Paket neto</th>
             <th>Korisnik</th>
-            <th>ID zap.</th>
             <th>Šifra</th>
-            <th>Napomena</th>
             <th class="text-center no-sort">Akcija</th>
           </tr>
         </thead>
         <tbody>
           {% for item in assignments %}
             <tr>
-              <td>{{ item.phone_number }}</td>
+              <td>
+                {{ item.phone_number }}
+                {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=item.parking_exempt only %}
+              </td>
               <td>
                 {% if item.number_active %}
                   <span class="fleet-status active">Aktivan</span>
@@ -45,11 +48,10 @@
                   <span class="fleet-status muted">Neaktivan</span>
                 {% endif %}
               </td>
-              <td>{{ item.package_name|default:item.package }}</td>
-              <td>{{ item.employee_name|default:"/" }}</td>
-              <td>{{ item.employee_id|default:"/" }}</td>
-              <td>{{ item.employee_code|default:"/" }}</td>
-              <td>{{ item.note|default:"/"|truncatechars:60 }}</td>
+              <td>{{ item.package.name|default:"/" }}</td>
+              <td class="text-end">{{ item.package.net_amount|floatformat:2|intcomma }}</td>
+              <td>{{ item.employee|default:"/" }}</td>
+              <td>{{ item.employee.employee_code|default:"/" }}</td>
               <td class="text-center">
                 <span class="fleet-list-actions">
                   <a href="{% url 'mobilni:mobile_assignment_update' item.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
@@ -64,10 +66,9 @@
             <th>Broj</th>
             <th>Status</th>
             <th>Paket</th>
+            <th>Paket neto</th>
             <th>Korisnik</th>
-            <th>ID zap.</th>
             <th>Šifra</th>
-            <th>Napomena</th>
             <th class="no-sort">Akcija</th>
           </tr>
         </tfoot>
@@ -75,5 +76,5 @@
     </div>
   </div>
 </div>
-{% include "mobilni/mobile/_datatable.html" with table_id="MobileAssignmentsTable" order="[[3, 'asc'], [0, 'asc']]" %}
+{% include "mobilni/mobile/_datatable.html" with table_id="MobileAssignmentsTable" order="[[4, 'asc'], [0, 'asc']]" %}
 {% endblock %}

@@ -4,6 +4,13 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+def _clean_mobile_phone_number(value):
+    value = "" if value is None else str(value).strip()
+    if value.endswith(".0"):
+        value = value[:-2]
+    return "".join(ch for ch in value if ch.isdigit()) or value
+
+
 class MobilePackage(models.Model):
     partner_code = models.CharField(_("Šifra partnera"), max_length=20, blank=True)
     partner_name = models.CharField(_("Partner"), max_length=150, blank=True)
@@ -89,18 +96,6 @@ class MobileAssignment(models.Model):
         null=True,
         blank=True,
     )
-    package_name = models.CharField(_("Paket - naziv"), max_length=100, blank=True)
-    valid_from = models.DateField(_("Paket od"), null=True, blank=True)
-    valid_to = models.DateField(_("Paket do"), null=True, blank=True)
-    package_net_amount = models.DecimalField(_("Paket neto"), max_digits=12, decimal_places=2, null=True, blank=True)
-    mobile_user = models.ForeignKey(
-        MobileUser,
-        on_delete=models.SET_NULL,
-        related_name="assignments",
-        verbose_name=_("Korisnik mobilnog"),
-        null=True,
-        blank=True,
-    )
     employee = models.ForeignKey(
         "fleet.Employee",
         on_delete=models.SET_NULL,
@@ -109,11 +104,6 @@ class MobileAssignment(models.Model):
         null=True,
         blank=True,
     )
-    employee_code = models.IntegerField(_("Šifra radnika"), null=True, blank=True)
-    employee_name = models.CharField(_("Radnik"), max_length=150, blank=True)
-    employee_active = models.BooleanField(_("Aktivan radnik"), default=True)
-    personal_number = models.CharField(_("JMBG"), max_length=13, blank=True)
-    note = models.TextField(_("Napomena"), blank=True)
     created_at = models.DateTimeField(_("Kreirano"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Ažurirano"), auto_now=True)
 
@@ -130,7 +120,6 @@ class MobileAssignment(models.Model):
         indexes = [
             models.Index(fields=["year", "month"]),
             models.Index(fields=["phone_number"]),
-            models.Index(fields=["employee_code"]),
             models.Index(fields=["employee"]),
         ]
 
@@ -209,6 +198,24 @@ class MobileUsage(models.Model):
 
     def __str__(self):
         return f"{self.phone_number} - {self.total} ({self.month:02d}/{self.year})"
+
+
+class MobileParkingExemption(models.Model):
+    phone_number = models.CharField(_("Broj telefona"), max_length=30, unique=True)
+    created_at = models.DateTimeField(_("Kreirano"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Azurirano"), auto_now=True)
+
+    class Meta:
+        ordering = ["phone_number"]
+        verbose_name = _("Izuzetak parkinga")
+        verbose_name_plural = _("Izuzeci parkinga")
+
+    def save(self, *args, **kwargs):
+        self.phone_number = _clean_mobile_phone_number(self.phone_number)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.phone_number
 
 
 class MobileImportLog(models.Model):

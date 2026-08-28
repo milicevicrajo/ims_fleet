@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Brojevi telefona za koje se parking ne dodaje u obustavu.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'mobilni:mobile_parking_exemption_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Novi izuzetak
+    </a>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body border-bottom">
+    <form id="mobile-parking-exemption-filter" method="get" class="fleet-list-filter mb-0">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-10">
+          <label class="form-label mb-1" for="parking-exemption-search">Broj telefona</label>
+          <input id="parking-exemption-search" type="search" name="q" value="{{ q }}" class="form-control"
+                 placeholder="38163..." data-auto-filter data-visible-filter>
+        </div>
+        <div class="col-12 col-md-2">
+          <a href="{% url 'mobilni:mobile_parking_exemption_list' %}" class="btn btn-outline-secondary w-100" title="Ponisti filtere">
+            <i class="mdi mdi-filter-remove"></i> Ponisti
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table id="MobileParkingExemptionsTable" class="display compact table table-hover table-bordered align-middle w-100">
+        <thead>
+          <tr>
+            <th>Broj</th>
+            <th>Pravilo</th>
+            <th>Kreirano</th>
+            <th class="text-center no-sort">Akcija</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in parking_exemptions %}
+            <tr>
+              <td>
+                {{ item.phone_number }}
+                {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=True only %}
+              </td>
+              <td>Parking se ne obracunava za obustavu</td>
+              <td data-order="{{ item.created_at|date:'Y-m-d H:i:s' }}">{{ item.created_at|date:"d.m.Y H:i" }}</td>
+              <td class="text-center">
+                <span class="fleet-list-actions">
+                  <a href="{% url 'mobilni:mobile_parking_exemption_update' item.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
+                  <a href="{% url 'mobilni:mobile_parking_exemption_delete' item.pk %}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i></a>
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Broj</th>
+            <th>Pravilo</th>
+            <th>Kreirano</th>
+            <th class="no-sort">Akcija</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% include "mobilni/mobile/_datatable.html" with table_id="MobileParkingExemptionsTable" order="[[0, 'asc']]" page_length=25 %}
+{% include "mobilni/mobile/_auto_filter_script.html" with form_id="mobile-parking-exemption-filter" %}
+{% endblock %}

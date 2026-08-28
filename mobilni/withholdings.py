@@ -1,11 +1,10 @@
-import calendar
-import datetime
 from dataclasses import dataclass
+import datetime
 from decimal import Decimal
 
 from django.db.models import F, Q
 
-from .models import MobileUsage
+from .models import MobileParkingExemption, MobileUsage
 
 
 REPORT_ALL = "sve"
@@ -14,7 +13,6 @@ REPORT_FORMER_EMPLOYEES = "bivsi-zaposleni"
 REPORT_TYPES = {REPORT_ALL, REPORT_EMPLOYEES, REPORT_FORMER_EMPLOYEES}
 
 SPECIAL_PHONE_NUMBER = "381637781481"
-PARKING_EXEMPT_EMPLOYEE_CODES = {141, 647}
 
 
 @dataclass(frozen=True)
@@ -25,6 +23,7 @@ class WithholdingRow:
     package_name: str
     package_net_amount: Decimal | None
     withholding: Decimal | None
+    parking_exempt: bool
 
     @property
     def year(self):
@@ -39,20 +38,52 @@ class WithholdingRow:
         return self.usage.phone_number
 
 
-def _normalized_phone_number(value):
+def normalize_phone_number(value):
     value = str(value or "").strip()
     if value.endswith(".0"):
         value = value[:-2]
-    return value
+    return "".join(ch for ch in value if ch.isdigit()) or value
 
 
-def calculate_withholding(usage):
+def parking_exempt_phone_numbers(year=None, month=None):
+    return {normalize_phone_number(item.phone_number) for item in MobileParkingExemption.objects.all()}
+
+
+def assignment_employee_code(assignment):
+    return assignment.employee.employee_code if assignment and assignment.employee_id else None
+
+
+def assignment_employee_name(assignment):
+    if not assignment or not assignment.employee_id:
+        return ""
+    return str(assignment.employee).strip() or assignment.employee.original_full_name or ""
+
+
+def assignment_employee_active(assignment):
+    return bool(assignment and assignment.employee_id and assignment.employee.is_active)
+
+
+def assignment_package_name(assignment):
+    return assignment.package.name if assignment and assignment.package_id else ""
+
+
+def assignment_package_amount(assignment):
+    return assignment.package.net_amount if assignment and assignment.package_id else None
+
+
+def is_parking_exempt(usage, exempt_phone_numbers=None):
+    if exempt_phone_numbers is None:
+        exempt_phone_numbers = parking_exempt_phone_numbers(usage.year, usage.month)
+    return normalize_phone_number(usage.phone_number) in exempt_phone_numbers
+
+
+def calculate_withholding(usage, exempt_phone_numbers=None):
     assignment = usage.assignment
     if assignment is None:
         return None
 
-    phone_number = _normalized_phone_number(usage.phone_number)
-    package_amount = assignment.package.net_amount if assignment.package_id else None
+    phone_number = normalize_phone_number(usage.phone_number)
+    package_amount = assignment_package_amount(assignment)
     if phone_number == SPECIAL_PHONE_NUMBER:
         package_deduction = Decimal("0")
     elif package_amount is None:
@@ -60,11 +91,7 @@ def calculate_withholding(usage):
     else:
         package_deduction = package_amount
 
-    parking = (
-        Decimal("0")
-        if assignment.employee_code in PARKING_EXEMPT_EMPLOYEE_CODES
-        else usage.parking
-    )
+    parking = Decimal("0") if is_parking_exempt(usage, exempt_phone_numbers) else usage.parking
     return usage.vat_base - package_deduction + parking + usage.nzrd
 
 
@@ -84,8 +111,8 @@ def withholding_usage_queryset(
             month=F("assignment__month"),
             phone_number=F("assignment__phone_number"),
         )
-        .select_related("assignment__package", "assignment__mobile_user")
-        .order_by("-year", "-month", "assignment__employee_name", "phone_number")
+        .select_related("assignment__package", "assignment__employee")
+        .order_by("-year", "-month", "assignment__employee__last_name", "assignment__employee__first_name", "phone_number")
     )
     if year:
         queryset = queryset.filter(year=year)
@@ -96,34 +123,40 @@ def withholding_usage_queryset(
         queryset = queryset.filter(phone_number__icontains=phone_number)
     employee = (employee or "").strip()
     if employee:
-        employee_query = Q(assignment__employee_name__icontains=employee)
+        employee_query = (
+            Q(assignment__employee__first_name__icontains=employee)
+            | Q(assignment__employee__last_name__icontains=employee)
+            | Q(assignment__employee__original_full_name__icontains=employee)
+        )
         if employee.isdigit():
-            employee_query |= Q(assignment__employee_code=int(employee))
+            employee_query |= Q(assignment__employee__employee_code=int(employee))
         queryset = queryset.filter(employee_query)
     if package_id:
         queryset = queryset.filter(assignment__package_id=package_id)
     search = (search or "").strip()
     if search:
-        query = Q(phone_number__icontains=search) | Q(assignment__employee_name__icontains=search)
+        query = (
+            Q(phone_number__icontains=search)
+            | Q(assignment__employee__first_name__icontains=search)
+            | Q(assignment__employee__last_name__icontains=search)
+            | Q(assignment__employee__original_full_name__icontains=search)
+            | Q(assignment__package__name__icontains=search)
+        )
         if search.isdigit():
-            query |= Q(assignment__employee_code=int(search))
+            query |= Q(assignment__employee__employee_code=int(search))
         queryset = queryset.filter(query)
     return queryset
 
 
 def _is_former_employee_for_period(usage):
     assignment = usage.assignment
-    if assignment.employee_active or not assignment.mobile_user_id:
+    if not assignment or not assignment.employee_id or assignment.employee.is_active:
         return False
-    departure_date = assignment.mobile_user.departure_date
-    if departure_date is None:
-        return False
-    month_end = datetime.date(
-        usage.year,
-        usage.month,
-        calendar.monthrange(usage.year, usage.month)[1],
-    )
-    return departure_date < month_end
+    mobile_user = assignment.employee.mobile_users.order_by("-id").first()
+    if mobile_user and mobile_user.departure_date:
+        period_start = datetime.date(usage.year, usage.month, 1)
+        return mobile_user.departure_date < period_start
+    return True
 
 
 def get_withholding_rows(
@@ -147,25 +180,29 @@ def get_withholding_rows(
         employee=employee,
         package_id=package_id,
     )
+    exempt_phone_numbers = parking_exempt_phone_numbers(year, month)
     rows = []
     for usage in usages:
         assignment = usage.assignment
+        employee_code = assignment_employee_code(assignment)
+        employee_name = assignment_employee_name(assignment)
         if report_type == REPORT_EMPLOYEES and (
-            not assignment.employee_active or assignment.employee_code is None
+            not assignment_employee_active(assignment) or employee_code is None
         ):
             continue
         if report_type == REPORT_FORMER_EMPLOYEES and not _is_former_employee_for_period(usage):
             continue
 
-        package_amount = assignment.package.net_amount if assignment.package_id else None
+        parking_exempt = is_parking_exempt(usage, exempt_phone_numbers)
         rows.append(
             WithholdingRow(
                 usage=usage,
-                employee_code=assignment.employee_code,
-                employee_name=assignment.employee_name,
-                package_name=assignment.package_name,
-                package_net_amount=package_amount,
-                withholding=calculate_withholding(usage),
+                employee_code=employee_code,
+                employee_name=employee_name,
+                package_name=assignment_package_name(assignment),
+                package_net_amount=assignment_package_amount(assignment),
+                withholding=calculate_withholding(usage, exempt_phone_numbers),
+                parking_exempt=parking_exempt,
             )
         )
     return rows

@@ -3,12 +3,16 @@ from decimal import Decimal
 from io import BytesIO
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from openpyxl import load_workbook
 
 from core.models import PermissionCode, Role
-from mobilni.models import MobileAssignment, MobilePackage, MobileUsage, MobileUser
+from fleet.models import Employee
+from mobilni.forms.mobile import MobileParkingExemptionForm
+from mobilni.models import MobileAssignment, MobilePackage, MobileParkingExemption, MobileUsage, MobileUser
+from mobilni.support.mobile import import_assignments
 from mobilni.withholdings import (
     REPORT_ALL,
     REPORT_EMPLOYEES,
@@ -93,23 +97,22 @@ class MobileWithholdingTests(TestCase):
         package=None,
     ):
         package = package or self.package
-        mobile_user = MobileUser.objects.create(
+        employee = self.create_employee(employee_code, is_active=employee_active)
+        MobileUser.objects.update_or_create(
             employee_code=employee_code,
-            full_name=f"Radnik {employee_code}",
-            is_active=employee_active,
-            departure_date=departure_date,
+            defaults={
+                "full_name": f"Radnik {employee_code}",
+                "is_active": employee_active,
+                "departure_date": departure_date,
+                "employee": employee,
+            },
         )
         assignment = MobileAssignment.objects.create(
             year=2026,
             month=6,
             phone_number=phone_number,
             package=package,
-            package_name=package.name,
-            package_net_amount=package.net_amount,
-            mobile_user=mobile_user,
-            employee_code=employee_code,
-            employee_name=mobile_user.full_name,
-            employee_active=employee_active,
+            employee=employee,
         )
         return MobileUsage.objects.create(
             year=2026,
@@ -122,6 +125,24 @@ class MobileWithholdingTests(TestCase):
             total=total,
         )
 
+    def create_employee(self, employee_code, *, is_active=True):
+        employee, _ = Employee.objects.update_or_create(
+            employee_code=employee_code,
+            defaults={
+                "first_name": f"Radnik {employee_code}",
+                "last_name": "",
+                "position": "Referent",
+                "department_code": 1,
+                "org_unit_code": "1",
+                "gender": "M",
+                "date_of_birth": datetime.date(1990, 1, 1),
+                "date_of_joining": datetime.date(2026, 1, 1),
+                "personal_number": f"0101990{employee_code:06d}"[:13],
+                "is_active": is_active,
+            },
+        )
+        return employee
+
     def grant_permission(self, user, code):
         permission = PermissionCode.objects.create(code=code)
         role = Role.objects.create(name=f"Role {code}", slug=code.replace(":", "-"))
@@ -133,11 +154,21 @@ class MobileWithholdingTests(TestCase):
 
         self.assertEqual(calculate_withholding(usage), Decimal("75.00"))
 
-    def test_calculate_withholding_applies_parking_and_phone_exceptions(self):
-        parking_exempt = self.create_usage(employee_code=141, phone_number="381631111111")
-        special_phone = self.create_usage(employee_code=501, phone_number="381637781481")
+    def test_calculate_withholding_applies_parking_exemption_by_phone_number(self):
+        MobileParkingExemption.objects.create(phone_number="381631111111")
+        parking_exempt = self.create_usage(employee_code=999, phone_number="381631111111")
 
         self.assertEqual(calculate_withholding(parking_exempt), Decimal("55.00"))
+
+    def test_calculate_withholding_applies_parking_exemption_while_number_exists(self):
+        MobileParkingExemption.objects.create(phone_number="381 63 111 1111")
+        usage = self.create_usage(employee_code=999, phone_number="381631111111")
+
+        self.assertEqual(calculate_withholding(usage), Decimal("55.00"))
+
+    def test_calculate_withholding_applies_special_phone_exception(self):
+        special_phone = self.create_usage(employee_code=501, phone_number="381637781481")
+
         self.assertEqual(calculate_withholding(special_phone), Decimal("175.00"))
 
     def test_reports_separate_current_and_former_employees(self):
@@ -163,8 +194,8 @@ class MobileWithholdingTests(TestCase):
 
     def test_employee_report_excludes_unassigned_active_numbers(self):
         usage = self.create_usage()
-        usage.assignment.employee_code = None
-        usage.assignment.save(update_fields=["employee_code"])
+        usage.assignment.employee = None
+        usage.assignment.save(update_fields=["employee"])
 
         rows = get_withholding_rows(REPORT_EMPLOYEES, year=2026, month=6)
 
@@ -218,11 +249,14 @@ class MobileWithholdingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Radnik 500")
         self.assertContains(response, "75.00")
+        self.assertContains(response, "Obustava = osnovica za PDV - neto iznos paketa + parking + NZRD")
+        self.assertContains(response, "381637781481")
         self.assertContains(response, "Šifra radnika")
 
     def test_withholding_report_page_uses_phone_filter(self):
         self.create_usage(employee_code=500, phone_number="381631111111")
         self.create_usage(employee_code=501, phone_number="381632222222")
+        MobileParkingExemption.objects.create(phone_number="381631111111")
         user = get_user_model().objects.create_user("withholding-phone-filter", password="test")
         self.grant_permission(user, "mobilni:mobile_withholding_all")
         self.client.force_login(user)
@@ -236,6 +270,8 @@ class MobileWithholdingTests(TestCase):
         self.assertContains(response, 'id="withholding-phone"')
         self.assertContains(response, "Broj telefona")
         self.assertContains(response, "381631111111")
+        self.assertContains(response, "Parking izuzet")
+        self.assertContains(response, "Ne ide u obustavu")
         self.assertNotContains(response, "381632222222")
         self.assertEqual(response.context["phone_number"], "1111")
 
@@ -267,6 +303,7 @@ class MobileWithholdingTests(TestCase):
     def test_usage_page_uses_phone_filter(self):
         self.create_usage(employee_code=500, phone_number="381631111111")
         self.create_usage(employee_code=501, phone_number="381632222222")
+        MobileParkingExemption.objects.create(phone_number="381631111111")
         user = get_user_model().objects.create_user("usage-list", password="test")
         self.grant_permission(user, "mobilni:mobile_usage_list")
         self.client.force_login(user)
@@ -283,7 +320,51 @@ class MobileWithholdingTests(TestCase):
         self.assertContains(response, "Šifra radnika")
         self.assertEqual(len(response.context["usages"]), 1)
         self.assertContains(response, "381631111111")
+        self.assertContains(response, "Parking izuzet")
+        self.assertContains(response, "Ne ide u obustavu")
         self.assertNotContains(response, "381632222222")
+
+    def test_assignment_page_marks_parking_exempt_numbers(self):
+        self.create_usage(employee_code=500, phone_number="381631111111")
+        MobileParkingExemption.objects.create(phone_number="381631111111")
+        user = get_user_model().objects.create_user("assignment-list", password="test")
+        self.grant_permission(user, "mobilni:mobile_assignment_list")
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("mobilni:mobile_assignment_list"),
+            {"year": 2026, "month": 6},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "381631111111")
+        self.assertContains(response, "Parking izuzet")
+
+    def test_parking_exemption_form_uses_only_phone_number(self):
+        self.create_usage(employee_code=500, phone_number="381631111111")
+        form = MobileParkingExemptionForm(data={"phone_number": "381 63 111 1111"})
+        choices = dict(MobileParkingExemptionForm().fields["phone_number"].widget.choices)
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(list(form.fields), ["phone_number"])
+        self.assertEqual(form.cleaned_data["phone_number"], "381631111111")
+        self.assertIn("select2-method", form.fields["phone_number"].widget.attrs["class"])
+        self.assertIn("381631111111", choices)
+        self.assertIn("Radnik 500", choices["381631111111"])
+
+    def test_parking_exemption_page_renders_configured_numbers(self):
+        MobileParkingExemption.objects.create(phone_number="381631111111")
+        user = get_user_model().objects.create_user("parking-exemption-list", password="test")
+        self.grant_permission(user, "mobilni:mobile_parking_exemption_list")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("mobilni:mobile_parking_exemption_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Izuzeci parkinga")
+        self.assertContains(response, "381631111111")
+        self.assertContains(response, "Parking izuzet")
+        self.assertContains(response, "Parking se ne obracunava za obustavu")
 
     def test_usage_excel_contains_obustava_and_respects_phone_filter(self):
         self.create_usage(employee_code=500, phone_number="381631111111")
@@ -303,8 +384,10 @@ class MobileWithholdingTests(TestCase):
         self.assertEqual(workbook.active.title, "Potrošnja")
         self.assertIn("Šifra radnika", rows[0])
         self.assertEqual(rows[0][-1], "Obustava")
+        self.assertIn("Parking izuzet", rows[0])
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[1][6], "381631111111")
+        self.assertEqual(rows[1][7], "Ne")
         self.assertEqual(rows[1][-1], 75)
 
     def test_dashboard_calculates_package_and_institute_totals(self):
@@ -313,6 +396,7 @@ class MobileWithholdingTests(TestCase):
             phone_number="381631111111",
             total=Decimal("200.00"),
         )
+        MobileParkingExemption.objects.create(phone_number="381631111111")
         self.create_usage(
             employee_code=501,
             phone_number="381632222222",
@@ -333,9 +417,40 @@ class MobileWithholdingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'id="mobile-phone"')
         self.assertContains(response, "Broj telefona")
+        self.assertContains(response, "Parking izuzet")
         self.assertEqual(response.context["usage_total"], Decimal("380.00"))
-        self.assertEqual(response.context["withholding_total"], Decimal("105.00"))
-        self.assertEqual(response.context["institute_total"], Decimal("275.00"))
+        self.assertEqual(response.context["withholding_total"], Decimal("85.00"))
+        self.assertEqual(response.context["institute_total"], Decimal("295.00"))
         self.assertEqual(response.context["active_number_count"], 2)
         self.assertEqual(response.context["contracted_number_count"], 2)
         self.assertEqual(response.context["package_summary"][0]["number_count"], 2)
+
+    def test_import_assignments_links_existing_employee_and_package(self):
+        employee = self.create_employee(700)
+        uploaded_file = SimpleUploadedFile(
+            "dodele.csv",
+            b"broj;paket;rasif\n381 63 999 9999;Paket 1;700\n",
+            content_type="text/csv",
+        )
+
+        result = import_assignments(uploaded_file, year=2026, month=6)
+
+        assignment = MobileAssignment.objects.get(phone_number="381639999999")
+        self.assertEqual(result.imported, 1)
+        self.assertEqual(result.updated, 0)
+        self.assertEqual(assignment.employee, employee)
+        self.assertEqual(assignment.package, self.package)
+
+    def test_import_assignments_skips_row_without_existing_links(self):
+        uploaded_file = SimpleUploadedFile(
+            "dodele.csv",
+            b"broj;paket;rasif\n381639999998;Nepostojeci;9999\n381639999997;Paket 1;9999\n",
+            content_type="text/csv",
+        )
+
+        result = import_assignments(uploaded_file, year=2026, month=6)
+
+        self.assertEqual(result.skipped, 2)
+        self.assertFalse(MobileAssignment.objects.exists())
+        self.assertIn("paket 'Nepostojeci' nije pronadjen", result.errors[0])
+        self.assertIn("radnik '9999' nije pronadjen", result.errors[1])

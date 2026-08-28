@@ -17,14 +17,11 @@ from fleet.models import (
     TrafficCard,
     Vehicle,
 )
-from fleet.support.vehicle import format_license_plate
 
 logger = logging.getLogger(__name__)
 
 INS_VIEW = "dbo.fleet_potrazivanje_ddor"
 DB_ALIAS = "server_db"
-ORG_UNIT_SOURCE_VIEW = "Vozila.dbo.v_sifre_posla"
-VEHICLE_JOB_CODE_SOURCE_VIEW = "Vozila.dbo.sif_pos_trenutno"
 KEY_FIELDS = ("god", "sif_vrs", "br_naloga", "stavka", "knt")
 
 POLICY_DATE_FIELDS = {"issue_date", "start_date", "end_date"}
@@ -375,104 +372,81 @@ def update_vehicle_values():
     return updated_vehicles_count
 
 
+def update_job_codes_from_view():
+    today = date.today()
+    updated = 0
+
+    with connections["server_db"].cursor() as cursor:
+        cursor.execute("SELECT regbr, sifpos FROM dbo.sif_pos_trenutno")
+        rows = cursor.fetchall()
+
+    for regbr, sifpos in rows:
+        try:
+            traffic_card = TrafficCard.objects.select_related("vehicle").get(registration_number=regbr)
+            vehicle = traffic_card.vehicle
+        except TrafficCard.DoesNotExist:
+            continue
+
+        try:
+            org_unit = OrganizationalUnit.objects.get(code=sifpos)
+        except OrganizationalUnit.DoesNotExist:
+            continue
+
+        latest_job = vehicle.job_codes.order_by("-assigned_date").first()
+
+        if not latest_job or latest_job.organizational_unit != org_unit:
+            JobCode.objects.create(
+                vehicle=vehicle,
+                organizational_unit=org_unit,
+                assigned_date=today,
+            )
+            updated += 1
+
+    return updated
+
+
 def _clean_source_value(value):
     return "" if value is None else str(value).strip()
 
 
-def update_job_codes_from_view():
-    today = date.today()
-    stats = {
-        "fetched": 0,
-        "created": 0,
-        "updated": 0,
-        "unchanged": 0,
-        "missing_vehicle": 0,
-        "missing_org_unit": 0,
-        "skipped_invalid": 0,
-    }
-
-    with connections[DB_ALIAS].cursor() as cursor:
-        cursor.execute(f"SELECT regbr, sifpos FROM {VEHICLE_JOB_CODE_SOURCE_VIEW}")
-        rows = cursor.fetchall()
-    stats["fetched"] = len(rows)
-
-    traffic_cards_by_plate = {
-        format_license_plate(card.registration_number): card
-        for card in TrafficCard.objects.select_related("vehicle").all()
-    }
-    units_by_code = {
-        _clean_source_value(unit.code): unit
-        for unit in OrganizationalUnit.objects.all()
-    }
-
-    for regbr, sifpos in rows:
-        plate = format_license_plate(_clean_source_value(regbr))
-        org_code = _clean_source_value(sifpos)
-        if not plate or not org_code:
-            stats["skipped_invalid"] += 1
-            continue
-
-        traffic_card = traffic_cards_by_plate.get(plate)
-        if not traffic_card:
-            stats["missing_vehicle"] += 1
-            logger.debug("Sifra posla vozila: registracija nije nadjena regbr=%r plate=%s", regbr, plate)
-            continue
-
-        org_unit = units_by_code.get(org_code)
-        if not org_unit:
-            stats["missing_org_unit"] += 1
-            logger.debug("Sifra posla vozila: OJ nije nadjena sifpos=%r code=%s", sifpos, org_code)
-            continue
-
-        vehicle = traffic_card.vehicle
-        latest_job = vehicle.job_codes.order_by("-assigned_date", "-id").first()
-
-        if latest_job and latest_job.organizational_unit_id == org_unit.id:
-            stats["unchanged"] += 1
-            continue
-
-        if latest_job and latest_job.assigned_date == today:
-            latest_job.organizational_unit = org_unit
-            latest_job.save(update_fields=["organizational_unit"])
-            stats["updated"] += 1
-            continue
-
-        JobCode.objects.create(
-            vehicle=vehicle,
-            organizational_unit=org_unit,
-            assigned_date=today,
-        )
-        stats["created"] += 1
-
-    message = (
-        "Sifre posla vozila: "
-        f"povuceno={stats['fetched']}, kreirano={stats['created']}, azurirano={stats['updated']}, "
-        f"bez_promene={stats['unchanged']}, bez_vozila={stats['missing_vehicle']}, "
-        f"bez_oj={stats['missing_org_unit']}, preskoceno={stats['skipped_invalid']}"
-    )
-    logger.info(message)
-    return message
-
-
 def sync_organizational_units_from_view():
-    with connections[DB_ALIAS].cursor() as cursor:
-        cursor.execute(f"SELECT sif_pos, naz_pos, blok FROM {ORG_UNIT_SOURCE_VIEW}")
+    with connections["server_db"].cursor() as cursor:
+        cursor.execute("SELECT sif_pos, naz_pos, blok FROM dbo.v_organizationalunit")
         rows = cursor.fetchall()
 
     created = 0
     updated = 0
     skipped = 0
+    skipped_examples = []
 
-    for sif_pos, naz_pos, blok in rows:
+    for row_number, (sif_pos, naz_pos, blok) in enumerate(rows, start=1):
         code = _clean_source_value(sif_pos)
+        name = _clean_source_value(naz_pos)
+        center = _clean_source_value(blok)
+        missing_fields = []
         if not code:
+            missing_fields.append("sif_pos")
+        if not name:
+            missing_fields.append("naz_pos")
+        if not center:
+            missing_fields.append("blok")
+
+        if missing_fields:
             skipped += 1
+            if len(skipped_examples) < 5:
+                skipped_examples.append(f"red {row_number}: {', '.join(missing_fields)}")
+            logger.warning(
+                "Organizacione jedinice sync: preskocen red %s zbog praznih polja: %s",
+                row_number,
+                ", ".join(missing_fields),
+            )
             continue
+
         _, created_flag = OrganizationalUnit.objects.update_or_create(
             code=code,
             defaults={
-                "name": _clean_source_value(naz_pos),
-                "center": _clean_source_value(blok),
+                "name": name,
+                "center": center,
             },
         )
         if created_flag:
@@ -481,15 +455,12 @@ def sync_organizational_units_from_view():
             updated += 1
 
     message = f"Organizacione jedinice: dodatih={created}, azuriranih={updated}, preskoceno={skipped}"
+    if skipped:
+        examples = "; ".join(skipped_examples)
+        if skipped > len(skipped_examples):
+            examples = f"{examples}; jos {skipped - len(skipped_examples)}"
+        message = f"{message}. Upozorenje: preskoceni su redovi sa praznim poljima ({examples})"
     logger.info(message)
-    return message
-
-
-def sync_vehicle_job_codes_with_org_units():
-    org_units_message = sync_organizational_units_from_view()
-    vehicle_job_codes_message = update_job_codes_from_view()
-    message = f"{org_units_message}; {vehicle_job_codes_message}"
-    logger.info("Sifre posla vozila sync zavrsen: %s", message)
     return message
 
 

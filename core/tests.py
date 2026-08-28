@@ -404,6 +404,7 @@ class TaskHistoryTests(TestCase):
             "Fetch DDOR Insurance Data: DDOR sync: povuceno=30, kreirano=0, preskoceno=30, problemi=0",
             "Fetch Requisition Data: Trebovanja sync: povuceno=0, kreirano=0, azurirano=0, bez_vozila=0, preskoceno=0, problemi=0",
             "NIS sync zavrsen. Gorivo: redova 398, upisano 10, preskoceno 388. Transakcije: redova 398, upisano 10, preskoceno 388.",
+            "Organizacione jedinice: dodatih=0, azuriranih=10, preskoceno=1. Upozorenje: preskoceni su redovi sa praznim poljima (red 3: blok)",
         ]
 
         for summary in summaries:
