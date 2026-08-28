@@ -36,7 +36,9 @@ from ..withholdings import (
     assignment_employee_name,
     assignment_package_amount,
     assignment_package_name,
+    calculate_withholding,
     get_withholding_rows,
+    is_parking_exempt,
     normalize_phone_number,
     parking_exempt_phone_numbers,
 )
@@ -318,6 +320,48 @@ class MobileAssignmentListView(RolePermissionRequiredMixin, LoginRequiredMixin, 
                 "q": self.request.GET.get("q", ""),
                 "phone_number": self.request.GET.get("phone_number", ""),
                 "parking_exempt_numbers": parking_exempt_numbers,
+            }
+        )
+        return ctx
+
+
+class MobilePhoneDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
+    template_name = "mobilni/mobile/phone_detail.html"
+    required_permission_code = "mobilni:mobile_assignment_list"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        raw_phone_number = self.kwargs["phone_number"]
+        phone_number = normalize_phone_number(raw_phone_number)
+        phone_values = {value for value in {raw_phone_number, phone_number} if value}
+
+        assignments = list(
+            MobileAssignment.objects.filter(phone_number__in=phone_values)
+            .select_related("package", "employee")
+            .order_by("-year", "-month", "-id")
+        )
+        usages = list(
+            MobileUsage.objects.filter(phone_number__in=phone_values)
+            .select_related("assignment__package", "assignment__employee", "employee")
+            .order_by("-year", "-month", "-id")
+        )
+        if not assignments and not usages:
+            raise Http404("Broj nije pronadjen.")
+
+        exempt_phone_numbers = parking_exempt_phone_numbers()
+        for usage in usages:
+            usage.parking_exempt = is_parking_exempt(usage, exempt_phone_numbers)
+            usage.withholding = calculate_withholding(usage, exempt_phone_numbers)
+
+        current_assignment = assignments[0] if assignments else None
+        ctx.update(
+            {
+                "title": f"Detalj broja {phone_number or raw_phone_number}",
+                "phone_number": phone_number or raw_phone_number,
+                "assignments": assignments,
+                "usages": usages,
+                "current_assignment": current_assignment,
+                "parking_exempt": normalize_phone_number(raw_phone_number) in exempt_phone_numbers,
             }
         )
         return ctx

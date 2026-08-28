@@ -340,6 +340,40 @@ class MobileWithholdingTests(TestCase):
         self.assertContains(response, "381631111111")
         self.assertContains(response, "Parking izuzet")
 
+    def test_assignment_page_links_phone_detail_and_employee(self):
+        usage = self.create_usage(employee_code=500, phone_number="381631111111")
+        user = get_user_model().objects.create_user("assignment-links", password="test")
+        self.grant_permission(user, "mobilni:mobile_assignment_list")
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("mobilni:mobile_assignment_list"),
+            {"year": 2026, "month": 6},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse("mobilni:mobile_phone_detail", args=[usage.phone_number]),
+        )
+        self.assertContains(response, reverse("employee_detail", args=[usage.assignment.employee_id]))
+        self.assertContains(response, "Sifra: 500")
+
+    def test_phone_detail_page_renders_assignment_and_usage_history(self):
+        self.create_usage(employee_code=500, phone_number="381631111111")
+        user = get_user_model().objects.create_user("phone-detail", password="test")
+        self.grant_permission(user, "mobilni:mobile_assignment_list")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("mobilni:mobile_phone_detail", args=["381631111111"]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "381631111111")
+        self.assertContains(response, "Paket 1")
+        self.assertContains(response, "Radnik 500")
+        self.assertContains(response, "Sifra: 500")
+        self.assertContains(response, "75.00")
+
     def test_parking_exemption_form_uses_only_phone_number(self):
         self.create_usage(employee_code=500, phone_number="381631111111")
         form = MobileParkingExemptionForm(data={"phone_number": "381 63 111 1111"})

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ phone_number }}</h1>
+    <p>Detalj mobilnog broja kroz dodele, korisnika, paket i potrosnju.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'mobilni:mobile_assignment_list' %}?phone_number={{ phone_number|urlencode }}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-format-list-bulleted"></i> Dodele
+    </a>
+    <a href="{% url 'mobilni:mobile_usage_list' %}?phone_number={{ phone_number|urlencode }}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-phone-log"></i> Potrosnja
+    </a>
+    <a href="{% url 'mobilni:mobile_withholding_all' %}?phone_number={{ phone_number|urlencode }}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-calculator"></i> Obustave
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <small class="text-muted">Trenutni status</small>
+    <div class="mt-1">
+      {% if current_assignment and current_assignment.number_active %}
+        <span class="fleet-status active">Aktivan</span>
+      {% elif current_assignment %}
+        <span class="fleet-status muted">Neaktivan</span>
+      {% else %}
+        <span class="fleet-status muted">Bez dodele</span>
+      {% endif %}
+      {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=parking_exempt only %}
+    </div>
+  </div></div></div>
+  <div class="col-md-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <small class="text-muted">Korisnik</small>
+    <div class="fw-semibold mt-1">
+      {% if current_assignment.employee_id %}
+        <a href="{% url 'employee_detail' current_assignment.employee_id %}">{{ current_assignment.employee }}</a>
+        <small class="text-muted d-block">Sifra: {{ current_assignment.employee.employee_code }}</small>
+      {% else %}
+        /
+      {% endif %}
+    </div>
+  </div></div></div>
+  <div class="col-md-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <small class="text-muted">Paket</small>
+    <div class="fw-semibold mt-1">
+      {% if current_assignment.package_id %}
+        <a href="{% url 'mobilni:mobile_package_update' current_assignment.package_id %}">{{ current_assignment.package.name }}</a>
+        <small class="text-muted d-block">Neto: {{ current_assignment.package.net_amount|floatformat:2|intcomma }}</small>
+      {% else %}
+        /
+      {% endif %}
+    </div>
+  </div></div></div>
+  <div class="col-md-3"><div class="card shadow-sm h-100"><div class="card-body">
+    <small class="text-muted">Poslednji period</small>
+    <div class="fw-semibold mt-1">
+      {% if current_assignment %}
+        {{ current_assignment.month|stringformat:"02d" }}/{{ current_assignment.year }}
+      {% else %}
+        /
+      {% endif %}
+    </div>
+  </div></div></div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h5 class="card-title mb-0">Istorija dodela</h5>
+      <a href="{% url 'mobilni:mobile_assignment_create' %}" class="btn btn-outline-primary btn-sm">
+        <i class="mdi mdi-plus"></i> Nova dodela
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover table-bordered align-middle mb-0">
+        <thead><tr>
+          <th>Period</th>
+          <th>Status</th>
+          <th>Paket</th>
+          <th class="text-end">Paket neto</th>
+          <th>Korisnik</th>
+          <th class="text-center">Akcija</th>
+        </tr></thead>
+        <tbody>
+          {% for item in assignments %}
+            <tr>
+              <td>{{ item.month|stringformat:"02d" }}/{{ item.year }}</td>
+              <td>
+                {% if item.number_active %}
+                  <span class="fleet-status active">Aktivan</span>
+                {% else %}
+                  <span class="fleet-status muted">Neaktivan</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if item.package_id %}
+                  <a href="{% url 'mobilni:mobile_package_update' item.package_id %}">{{ item.package.name }}</a>
+                {% else %}
+                  /
+                {% endif %}
+              </td>
+              <td class="text-end">{{ item.package.net_amount|floatformat:2|intcomma }}</td>
+              <td>
+                {% if item.employee_id %}
+                  <a href="{% url 'employee_detail' item.employee_id %}">{{ item.employee }}</a>
+                  <small class="text-muted d-block">Sifra: {{ item.employee.employee_code }}</small>
+                {% else %}
+                  /
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <a href="{% url 'mobilni:mobile_assignment_update' item.pk %}" class="btn btn-outline-primary btn-sm">
+                  <i class="mdi mdi-pencil"></i> Izmeni
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Nema dodela za ovaj broj.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Istorija potrosnje</h5>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover table-bordered align-middle mb-0">
+        <thead><tr>
+          <th>Period</th>
+          <th>Paket</th>
+          <th>Korisnik</th>
+          <th class="text-end">Parking</th>
+          <th class="text-end">Ukupno</th>
+          <th class="text-end">Obustava</th>
+          <th class="text-center">Akcija</th>
+        </tr></thead>
+        <tbody>
+          {% for item in usages %}
+            <tr>
+              <td>{{ item.month|stringformat:"02d" }}/{{ item.year }}</td>
+              <td>{{ item.assignment.package.name|default:"/" }}</td>
+              <td>
+                {% if item.assignment.employee_id %}
+                  <a href="{% url 'employee_detail' item.assignment.employee_id %}">{{ item.assignment.employee }}</a>
+                  <small class="text-muted d-block">Sifra: {{ item.assignment.employee.employee_code }}</small>
+                {% else %}
+                  /
+                {% endif %}
+              </td>
+              <td class="text-end">
+                {{ item.parking|floatformat:2|intcomma }}
+                {% if item.parking_exempt %}<small class="text-warning d-block">Ne ide u obustavu</small>{% endif %}
+              </td>
+              <td class="text-end">{{ item.total|floatformat:2|intcomma }}</td>
+              <td class="text-end"><strong>{{ item.withholding|floatformat:2|intcomma }}</strong></td>
+              <td class="text-center">
+                <a href="{% url 'mobilni:mobile_usage_update' item.pk %}" class="btn btn-outline-primary btn-sm">
+                  <i class="mdi mdi-pencil"></i> Izmeni
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-4">Nema potrosnje za ovaj broj.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

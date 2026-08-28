@@ -30,7 +30,6 @@
             <th>Paket</th>
             <th class="text-end">Paket neto</th>
             <th>Korisnik</th>
-            <th>Šifra</th>
             <th class="text-center no-sort">Akcija</th>
           </tr>
         </thead>
@@ -38,7 +37,11 @@
           {% for item in assignments %}
             <tr>
               <td>
-                {{ item.phone_number }}
+                <a href="{% url 'mobilni:mobile_phone_detail' item.phone_number %}"
+                   class="btn btn-outline-info btn-sm d-inline-flex align-items-center gap-1"
+                   title="Detalj broja">
+                  <i class="mdi mdi-cellphone"></i> {{ item.phone_number }}
+                </a>
                 {% include "mobilni/mobile/_parking_exempt_badge.html" with is_exempt=item.parking_exempt only %}
               </td>
               <td>
@@ -48,10 +51,26 @@
                   <span class="fleet-status muted">Neaktivan</span>
                 {% endif %}
               </td>
-              <td>{{ item.package.name|default:"/" }}</td>
+              <td>
+                {% if item.package_id %}
+                  <a href="{% url 'mobilni:mobile_package_update' item.package_id %}">{{ item.package.name }}</a>
+                {% else %}
+                  /
+                {% endif %}
+              </td>
               <td class="text-end">{{ item.package.net_amount|floatformat:2|intcomma }}</td>
-              <td>{{ item.employee|default:"/" }}</td>
-              <td>{{ item.employee.employee_code|default:"/" }}</td>
+              <td>
+                {% if item.employee_id %}
+                  <a href="{% url 'employee_detail' item.employee_id %}"
+                     class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                     title="Detalj korisnika">
+                    <i class="mdi mdi-account-details"></i> {{ item.employee }}
+                  </a>
+                  <small class="text-muted d-block">Sifra: {{ item.employee.employee_code }}</small>
+                {% else %}
+                  /
+                {% endif %}
+              </td>
               <td class="text-center">
                 <span class="fleet-list-actions">
                   <a href="{% url 'mobilni:mobile_assignment_update' item.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-pencil"></i> Izmeni</a>
@@ -68,7 +87,6 @@
             <th>Paket</th>
             <th>Paket neto</th>
             <th>Korisnik</th>
-            <th>Šifra</th>
             <th class="no-sort">Akcija</th>
           </tr>
         </tfoot>
