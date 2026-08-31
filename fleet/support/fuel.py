@@ -2,7 +2,7 @@ from datetime import date, datetime, time as datetime_time
 from decimal import Decimal
 
 from django.db.models import Case, CharField, Count, Exists, F, Max, OuterRef, Q, Subquery, Sum, Value, When
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, TruncDate
 from django.utils import timezone as django_timezone
 
 from ..models import TrafficCard, TransactionNIS, TransactionOMV
@@ -31,9 +31,30 @@ def _fuel_product_filter(field_name):
     return product_filter
 
 
+def is_fuel_product_name(value):
+    text = str(value or "").casefold()
+    return any(keyword in text for keyword in FUEL_PRODUCT_KEYWORDS)
+
+
+def is_omv_invoice_date_stale(transaction_date, invoice_date):
+    if not transaction_date or not invoice_date:
+        return False
+    transaction_day = transaction_date.date() if hasattr(transaction_date, "date") else transaction_date
+    return invoice_date < transaction_day
+
+
+def omv_stale_invoice_queryset(queryset):
+    return queryset.annotate(_transaction_day=TruncDate("transaction_date")).filter(
+        invoice_date__isnull=False,
+        transaction_date__isnull=False,
+        invoice_date__lt=F("_transaction_day"),
+    )
+
+
 def _dedupe_omv_transaction_lines(queryset):
     preferred_line = (
-        TransactionOMV.objects.filter(
+        _exclude_omv_stale_invoice_dates(TransactionOMV.objects.using(queryset.db).all())
+        .filter(
             license_plate_no=OuterRef("license_plate_no"),
             transaction_date=OuterRef("transaction_date"),
             product_inv=OuterRef("product_inv"),
@@ -48,7 +69,7 @@ def _dedupe_omv_transaction_lines(queryset):
 
 def _exclude_omv_receipt_echoes(queryset):
     final_receipt_match = (
-        TransactionOMV.objects.filter(
+        TransactionOMV.objects.using(queryset.db).filter(
             license_plate_no=OuterRef("license_plate_no"),
             product_inv=OuterRef("product_inv"),
             voucher=OuterRef("voucher"),
@@ -74,9 +95,15 @@ def _exclude_omv_receipt_echoes(queryset):
     )
 
 
+def _exclude_omv_stale_invoice_dates(queryset):
+    return queryset.exclude(id__in=omv_stale_invoice_queryset(queryset).values("id"))
+
+
 def filter_omv_fuel_queryset(queryset):
     return _exclude_omv_receipt_echoes(
-        _dedupe_omv_transaction_lines(queryset.filter(_fuel_product_filter("product_inv")))
+        _dedupe_omv_transaction_lines(
+            _exclude_omv_stale_invoice_dates(queryset.filter(_fuel_product_filter("product_inv")))
+        )
     )
 
 

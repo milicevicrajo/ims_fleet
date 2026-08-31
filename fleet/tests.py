@@ -30,6 +30,7 @@ from .support.fuel import (
 	format_omv_receipt_number,
 	format_receipt_identifier,
 )
+from .support.fuel_cleanup import cleanup_omv_fuel_data
 from .templatetags.form_filters import receipt_number
 from .views.vehicle_travel_orders import (
 	PreviousVehicleTravelOrderCreateView,
@@ -39,7 +40,7 @@ from .views.vehicle_travel_orders import (
 	VehicleTravelOrderUpdateView,
 )
 from .views.datatables import policies_datatable_data, requisitions_datatable_data, vehicle_travel_order_datatable_data
-from .sync.selenium import import_omv_transactions_from_csv
+from .sync.selenium import import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
 from .sync.external import (
 	_merged_policy_defaults,
 	_policy_data_from_invoice,
@@ -615,6 +616,48 @@ class FuelProductFilterTests(TestCase):
 
 		self.assertEqual(filtered_ids, [final.id])
 
+	def test_filter_omv_fuel_queryset_excludes_stale_invoice_date(self):
+		valid = TransactionOMV.objects.create(
+			issuer="OMV",
+			customer="IMS",
+			card="583",
+			license_plate_no="BG996-FI",
+			transaction_date=self._dt(2025, 5, 9, 14, 47),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("44.64"),
+			gross_cc=Decimal("8035.20"),
+			vat=Decimal("1339.20"),
+			voucher="00036003",
+			mileage=Decimal("0"),
+			unit_price=Decimal("186.00"),
+			amount=Decimal("8303.00"),
+			invoice_no="8915372196",
+			invoice_date=datetime.date(2025, 5, 15),
+			invoiced=True,
+		)
+		TransactionOMV.objects.create(
+			issuer="OMV",
+			customer="IMS",
+			card="583",
+			license_plate_no="BG996-FI",
+			transaction_date=self._dt(2026, 8, 11, 18, 0),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("44.64"),
+			gross_cc=Decimal("8035.20"),
+			vat=Decimal("1339.20"),
+			voucher="00036003",
+			mileage=Decimal("0"),
+			unit_price=Decimal("186.00"),
+			amount=Decimal("8303.00"),
+			invoice_no="8915372196",
+			invoice_date=datetime.date(2025, 5, 15),
+			invoiced=True,
+		)
+
+		filtered_ids = list(filter_omv_fuel_queryset(TransactionOMV.objects.all()).values_list("id", flat=True))
+
+		self.assertEqual(filtered_ids, [valid.id])
+
 	def test_format_omv_receipt_number_combines_invoice_and_voucher(self):
 		self.assertEqual(format_omv_receipt_number("8916372386", "00168851"), "8916372386 / 00168851")
 		self.assertEqual(format_omv_receipt_number("8916372386", ""), "8916372386")
@@ -924,6 +967,310 @@ class OMVTransactionImportTests(TestCase):
 		self.assertEqual(result["updated"], 0)
 		self.assertEqual(result["skipped_duplicate_receipts"], 1)
 		self.assertEqual(TransactionOMV.objects.count(), 1)
+
+	def test_import_skips_stale_invoice_date_transaction(self):
+		headers = [
+			"Issuer", "Customer", "Card", "License plate No", "Transactiondate", "Product INV",
+			"Quantity", "Gross CC", "VAT", "Voucher", "Mileage", "Corrected mileage",
+			"Additional info", "Supply country", "Site Town", "Product DEL", "Unitprice",
+			"Amount", "Discount", "Surcharge", "VAT2010", "Suppliercurrency", "Invoice No",
+			"Invoice date", "Invoiced?", "State", "Supplier", "Cost 1", "Cost 2",
+			"Reference No", "Recordtype", "Amount other", "is listprice ?", "Approval code",
+			"Date to", "Final Trx.", "LPI",
+		]
+		row = {
+			"Issuer": "710111",
+			"Customer": "107248",
+			"Card": "583",
+			"License plate No": "BG 1007 - KX",
+			"Transactiondate": "2026-08-11 18:00:00",
+			"Product INV": "OMV EVRO DIZEL",
+			"Quantity": "44.64",
+			"Gross CC": "8035.20",
+			"VAT": "1339.20",
+			"Voucher": "00036003",
+			"Mileage": "0",
+			"Corrected mileage": "0",
+			"Additional info": "",
+			"Supply country": "SR",
+			"Site Town": "BEOGRAD",
+			"Product DEL": "OMV EVRO DIZEL",
+			"Unitprice": "186.00",
+			"Amount": "8303.00",
+			"Discount": "0.00",
+			"Surcharge": "0.00",
+			"VAT2010": "NO",
+			"Suppliercurrency": "RSD",
+			"Invoice No": "8915372196",
+			"Invoice date": "2025-05-15",
+			"Invoiced?": "YES",
+			"State": "217",
+			"Supplier": "OMV-RS",
+			"Cost 1": "",
+			"Cost 2": "",
+			"Reference No": "",
+			"Recordtype": "D",
+			"Amount other": "0.00",
+			"is listprice ?": "No",
+			"Approval code": "700001",
+			"Date to": "2026-08-11",
+			"Final Trx.": "1",
+			"LPI": "",
+		}
+
+		with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8-sig", suffix=".csv", delete=False) as handle:
+			writer = csv.DictWriter(handle, fieldnames=headers, delimiter=";")
+			writer.writeheader()
+			writer.writerow(row)
+			csv_path = handle.name
+
+		try:
+			result = import_omv_transactions_from_csv(csv_path)
+		finally:
+			os.unlink(csv_path)
+
+		self.assertEqual(result["created"], 0)
+		self.assertEqual(result["updated"], 0)
+		self.assertEqual(result["skipped"], 1)
+		self.assertEqual(result["skipped_invalid_invoice_dates"], 1)
+		self.assertEqual(TransactionOMV.objects.count(), 0)
+
+	def test_import_skips_duplicate_receipt_identity_with_different_transaction_date(self):
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="710111",
+			customer="107248",
+			card="583",
+			license_plate_no="BG1007-KX",
+			transaction_date=self._dt(2026, 5, 9, 14, 47),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("44.64"),
+			gross_cc=Decimal("8035.20"),
+			vat=Decimal("1339.20"),
+			voucher="00036003",
+			mileage=Decimal("0"),
+			unit_price=Decimal("186.00"),
+			amount=Decimal("8303.00"),
+			invoice_no="8915372196",
+			invoice_date=datetime.date(2026, 5, 15),
+			invoiced=True,
+		)
+		headers = [
+			"Issuer", "Customer", "Card", "License plate No", "Transactiondate", "Product INV",
+			"Quantity", "Gross CC", "VAT", "Voucher", "Mileage", "Corrected mileage",
+			"Additional info", "Supply country", "Site Town", "Product DEL", "Unitprice",
+			"Amount", "Discount", "Surcharge", "VAT2010", "Suppliercurrency", "Invoice No",
+			"Invoice date", "Invoiced?", "State", "Supplier", "Cost 1", "Cost 2",
+			"Reference No", "Recordtype", "Amount other", "is listprice ?", "Approval code",
+			"Date to", "Final Trx.", "LPI",
+		]
+		row = {
+			"Issuer": "710111",
+			"Customer": "107248",
+			"Card": "583",
+			"License plate No": "BG 1007 - KX",
+			"Transactiondate": "2026-05-10 18:00:00",
+			"Product INV": "OMV EVRO DIZEL",
+			"Quantity": "44.64",
+			"Gross CC": "8035.20",
+			"VAT": "1339.20",
+			"Voucher": "00036003",
+			"Mileage": "0",
+			"Corrected mileage": "0",
+			"Additional info": "",
+			"Supply country": "SR",
+			"Site Town": "BEOGRAD",
+			"Product DEL": "OMV EVRO DIZEL",
+			"Unitprice": "186.00",
+			"Amount": "8303.00",
+			"Discount": "0.00",
+			"Surcharge": "0.00",
+			"VAT2010": "NO",
+			"Suppliercurrency": "RSD",
+			"Invoice No": "8915372196",
+			"Invoice date": "2026-05-15",
+			"Invoiced?": "YES",
+			"State": "217",
+			"Supplier": "OMV-RS",
+			"Cost 1": "",
+			"Cost 2": "",
+			"Reference No": "",
+			"Recordtype": "D",
+			"Amount other": "0.00",
+			"is listprice ?": "No",
+			"Approval code": "700001",
+			"Date to": "2026-05-10",
+			"Final Trx.": "1",
+			"LPI": "",
+		}
+
+		with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8-sig", suffix=".csv", delete=False) as handle:
+			writer = csv.DictWriter(handle, fieldnames=headers, delimiter=";")
+			writer.writeheader()
+			writer.writerow(row)
+			csv_path = handle.name
+
+		try:
+			result = import_omv_transactions_from_csv(csv_path)
+		finally:
+			os.unlink(csv_path)
+
+		self.assertEqual(result["created"], 0)
+		self.assertEqual(result["skipped_duplicate_transaction_identities"], 1)
+		self.assertEqual(TransactionOMV.objects.count(), 1)
+
+	def test_import_omv_fuel_consumption_skips_non_fuel_and_duplicate_identity(self):
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="710111",
+			customer="107248",
+			card="583",
+			license_plate_no="BG1007-KX",
+			transaction_date=self._dt(2026, 5, 9, 14, 47),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("44.64"),
+			gross_cc=Decimal("8035.20"),
+			vat=Decimal("1339.20"),
+			voucher="00036003",
+			mileage=Decimal("0"),
+			unit_price=Decimal("186.00"),
+			amount=Decimal("8303.00"),
+			invoice_no="8915372196",
+			invoice_date=datetime.date(2026, 5, 15),
+			invoiced=True,
+		)
+		headers = [
+			"Card", "License plate No", "Transactiondate", "Product INV", "Quantity",
+			"Gross CC", "VAT", "Voucher", "Mileage", "Amount", "Invoice No", "Invoice date",
+		]
+		duplicate_fuel = {
+			"Card": "583",
+			"License plate No": "BG 1007 - KX",
+			"Transactiondate": "2026-05-10 18:00:00",
+			"Product INV": "OMV EVRO DIZEL",
+			"Quantity": "44.64",
+			"Gross CC": "8035.20",
+			"VAT": "1339.20",
+			"Voucher": "00036003",
+			"Mileage": "0",
+			"Amount": "8303.00",
+			"Invoice No": "8915372196",
+			"Invoice date": "2026-05-15",
+		}
+		non_fuel = {
+			**duplicate_fuel,
+			"Transactiondate": "2026-05-10 19:00:00",
+			"Product INV": "Putarina",
+			"Quantity": "4700.00",
+			"Gross CC": "4700.00",
+			"Amount": "4700.00",
+			"Voucher": "00036004",
+			"Invoice No": "8915372197",
+		}
+
+		with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8-sig", suffix=".csv", delete=False) as handle:
+			writer = csv.DictWriter(handle, fieldnames=headers, delimiter=";")
+			writer.writeheader()
+			writer.writerow(duplicate_fuel)
+			writer.writerow(non_fuel)
+			csv_path = handle.name
+
+		try:
+			result = import_omv_fuel_consumption_from_csv(csv_path)
+		finally:
+			os.unlink(csv_path)
+
+		self.assertEqual(result["created"], 0)
+		self.assertEqual(result["skipped_duplicate_transaction_identities"], 1)
+		self.assertEqual(result["skipped_non_fuel_products"], 1)
+		self.assertEqual(FuelConsumption.objects.count(), 0)
+
+	def test_cleanup_omv_fuel_data_removes_stale_duplicates_and_non_fuel(self):
+		valid_transaction = TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="710111",
+			customer="107248",
+			card="583",
+			license_plate_no="BG1007-KX",
+			transaction_date=self._dt(2026, 5, 9, 14, 47),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("44.64"),
+			gross_cc=Decimal("8035.20"),
+			vat=Decimal("1339.20"),
+			voucher="00036003",
+			mileage=Decimal("0"),
+			unit_price=Decimal("186.00"),
+			amount=Decimal("8303.00"),
+			invoice_no="8915372196",
+			invoice_date=datetime.date(2026, 5, 15),
+			invoiced=True,
+		)
+		duplicate_transaction = TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="710111",
+			customer="107248",
+			card="583",
+			license_plate_no="BG1007-KX",
+			transaction_date=self._dt(2026, 5, 10, 18, 0),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("44.64"),
+			gross_cc=Decimal("8035.20"),
+			vat=Decimal("1339.20"),
+			voucher="00036003",
+			mileage=Decimal("0"),
+			unit_price=Decimal("186.00"),
+			amount=Decimal("8303.00"),
+			invoice_no="8915372196",
+			invoice_date=datetime.date(2026, 5, 15),
+			invoiced=True,
+		)
+		valid_consumption = FuelConsumption.objects.create(
+			vehicle=self.vehicle,
+			supplier="OMV",
+			date=valid_transaction.transaction_date,
+			amount=Decimal("44.64"),
+			fuel_type="OMV EVRO DIZEL",
+			cost_bruto=Decimal("8035.20"),
+			cost_neto=Decimal("6696.00"),
+			mileage=0,
+		)
+		FuelConsumption.objects.create(
+			vehicle=self.vehicle,
+			supplier="OMV",
+			date=duplicate_transaction.transaction_date,
+			amount=Decimal("44.64"),
+			fuel_type="OMV EVRO DIZEL",
+			cost_bruto=Decimal("8035.20"),
+			cost_neto=Decimal("6696.00"),
+			mileage=0,
+		)
+		FuelConsumption.objects.create(
+			vehicle=self.vehicle,
+			supplier="OMV",
+			date=self._dt(2026, 5, 8, 22, 0),
+			amount=Decimal("44.64"),
+			fuel_type="OMV EVRO DIZEL",
+			cost_bruto=Decimal("8035.20"),
+			cost_neto=Decimal("6696.00"),
+			mileage=0,
+		)
+		FuelConsumption.objects.create(
+			vehicle=self.vehicle,
+			supplier="OMV",
+			date=self._dt(2026, 5, 11, 8, 0),
+			amount=Decimal("4700.00"),
+			fuel_type="Putarina",
+			cost_bruto=Decimal("4700.00"),
+			cost_neto=Decimal("3916.67"),
+			mileage=0,
+		)
+
+		result = cleanup_omv_fuel_data(apply=True)
+
+		self.assertEqual(result["deleted_omv_transactions"], 1)
+		self.assertEqual(result["deleted_fuel_consumptions"], 3)
+		self.assertEqual(list(TransactionOMV.objects.values_list("id", flat=True)), [valid_transaction.id])
+		self.assertEqual(list(FuelConsumption.objects.values_list("id", flat=True)), [valid_consumption.id])
 
 	def test_filter_nis_fuel_queryset_excludes_non_fuel_products(self):
 		fuel = TransactionNIS.objects.create(

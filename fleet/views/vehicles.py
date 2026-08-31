@@ -9,7 +9,7 @@ import zipfile
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import OuterRef, Subquery, Sum
-from django.db.models.functions import TruncMonth, TruncYear
+from django.db.models.functions import TruncMonth
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -300,22 +300,15 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
 
         nis_card = vehicle.nis_transactions.filter().first()
         omv_card = vehicle.omv_transactions.filter().first()
-        mileage = vehicle.fuel_consumptions.order_by("-mileage").values_list("mileage", flat=True).first()
-
         consumptions = get_vehicle_fuel_transaction_rows(vehicle)
+        mileage_values = [row["mileage"] for row in consumptions if row["mileage"]]
+        mileage = (
+            max(mileage_values)
+            if mileage_values
+            else vehicle.fuel_consumptions.order_by("-mileage").values_list("mileage", flat=True).first()
+        )
         average_consumption = calculate_average_fuel_consumption(vehicle)
         average_consumption_ever = calculate_average_fuel_consumption_ever(vehicle)
-
-        fuel_data = (
-            FuelConsumption.objects.filter(vehicle=vehicle)
-            .annotate(month=TruncMonth("date"), year=TruncYear("date"))
-            .values("month", "year", "supplier")
-            .annotate(total_liters=Sum("amount"), total_cost_bruto=Sum("cost_bruto"))
-            .order_by("year", "month", "supplier")
-        )
-
-        omv_data = fuel_data.filter(supplier="OMV")
-        nis_data = fuel_data.filter(supplier="NIS")
 
         lease_info = Lease.objects.filter(vehicle=vehicle).order_by("-start_date").first()
         long_term_rental = Lease.objects.filter(vehicle=vehicle, lease_type__in=LONG_TERM_LEASE_TYPES).exists()
@@ -343,8 +336,8 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         status_light = "green" if repair_costs < vehicle.purchase_value else "red"
 
         vehicle_value = vehicle.value or vehicle.purchase_value or 0
-        total_fuel_cost = vehicle.fuel_consumptions.aggregate(total=Sum("cost_bruto"))["total"] or 0
-        total_fuel_liters = vehicle.fuel_consumptions.aggregate(total=Sum("amount"))["total"] or 0
+        total_fuel_cost = sum((row["cost_bruto"] or 0) for row in consumptions)
+        total_fuel_liters = sum((row["amount"] or 0) for row in consumptions)
         gross_maintenance_cost = repair_costs + requisition_costs
         total_maintenance_cost = net_maintenance_cost(repair_costs, requisition_costs, insurance_recovery)
         maintenance_value_ratio = (total_maintenance_cost / vehicle_value * 100) if vehicle_value else 0
@@ -352,12 +345,13 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         red_zone = is_red_zone(long_term_rental, vehicle_value, total_maintenance_cost)
 
         def month_date(value):
-            return value.date() if hasattr(value, "date") else value
+            value = value.date() if hasattr(value, "date") else value
+            return value.replace(day=1) if value else value
 
         monthly_costs = defaultdict(lambda: {"fuel": 0, "service": 0})
-        for row in vehicle.fuel_consumptions.annotate(month=TruncMonth("date")).values("month").annotate(total=Sum("cost_bruto")).order_by("month"):
-            if row["month"]:
-                monthly_costs[month_date(row["month"])]["fuel"] = float(row["total"] or 0)
+        for row in consumptions:
+            if row["date"]:
+                monthly_costs[month_date(row["date"])]["fuel"] += float(row["cost_bruto"] or 0)
         for row in vehicle.service_transactions.annotate(month=TruncMonth("datum")).values("month").annotate(total=Sum("potrazuje")).order_by("month"):
             if row["month"]:
                 monthly_costs[month_date(row["month"])]["service"] = float(row["total"] or 0)
@@ -439,8 +433,6 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
                 "active_policies": active_policies,
                 "average_consumption": average_consumption,
                 "average_consumption_ever": average_consumption_ever,
-                "omv_data": omv_data,
-                "nis_data": nis_data,
                 "current_job_code": current_job_code,
                 "job_codes": job_codes,
                 "status_light": status_light,

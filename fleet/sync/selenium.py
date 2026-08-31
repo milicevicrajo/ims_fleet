@@ -30,6 +30,8 @@ from fleet.support.vehicle import (
     format_license_plate,
 
 )
+from fleet.support.fuel import is_fuel_product_name, is_omv_invoice_date_stale
+from fleet.support.fuel_cleanup import cleanup_omv_fuel_data
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +121,108 @@ def format_nis_sync_result(result):
         source=result.get("source", "-"),
         missing_note=missing_note,
     )
+
+
+def format_omv_sync_result(result, label="OMV"):
+    if not isinstance(result, dict):
+        return str(result)
+    if result.get("status") != "ok":
+        return f"{label} sync rezultat: {result}"
+
+    fuel = result.get("fuel", {}) or {}
+    transactions = result.get("transactions", {}) or {}
+    cleanup = result.get("cleanup", {}) or {}
+    missing = result.get("missing_vehicles") or []
+    missing_note = f" Vozila bez poklapanja: {', '.join(missing[:10])}." if missing else ""
+    return (
+        "{label} sync zavrsen. "
+        "Transakcije: redova {trx_rows}, upisano {trx_created}, azurirano {trx_updated}, "
+        "preskoceno {trx_skipped}, dupli racuni {trx_duplicates}, stale datum racuna {trx_stale}. "
+        "Gorivo: redova {fuel_rows}, upisano {fuel_created}, azurirano {fuel_updated}, "
+        "preskoceno {fuel_skipped}, nije gorivo {fuel_non_fuel}, stale datum racuna {fuel_stale}, "
+        "dupli racuni {fuel_duplicates}. "
+        "Cleanup: obrisano OMV transakcija {deleted_trx}, obrisano potrosnji goriva {deleted_fuel}. "
+        "Fajl: {source}.{missing_note}"
+    ).format(
+        label=label,
+        trx_rows=transactions.get("rows", 0),
+        trx_created=transactions.get("created", 0),
+        trx_updated=transactions.get("updated", 0),
+        trx_skipped=transactions.get("skipped", 0),
+        trx_duplicates=transactions.get("skipped_duplicate_transaction_identities", 0),
+        trx_stale=transactions.get("skipped_invalid_invoice_dates", 0),
+        fuel_rows=fuel.get("rows", 0),
+        fuel_created=fuel.get("created", 0),
+        fuel_updated=fuel.get("updated", 0),
+        fuel_skipped=fuel.get("skipped", 0),
+        fuel_non_fuel=fuel.get("skipped_non_fuel_products", 0),
+        fuel_stale=fuel.get("skipped_invalid_invoice_dates", 0),
+        fuel_duplicates=fuel.get("skipped_duplicate_transaction_identities", 0),
+        deleted_trx=cleanup.get("deleted_omv_transactions", 0),
+        deleted_fuel=cleanup.get("deleted_fuel_consumptions", 0),
+        source=result.get("source", "-"),
+        missing_note=missing_note,
+    )
+
+
+def _omv_duplicate_transaction_identity(
+    *,
+    formatted_plate,
+    card,
+    product_inv,
+    voucher,
+    quantity,
+    gross_cc,
+    amount,
+    mileage,
+    invoice_no,
+    transaction_date,
+):
+    if not (formatted_plate and product_inv and voucher and quantity is not None):
+        return None
+
+    filters = {
+        "license_plate_no": formatted_plate,
+        "product_inv": product_inv,
+        "voucher": voucher,
+        "quantity": quantity,
+    }
+    if card:
+        filters["card"] = card
+    if gross_cc is not None:
+        filters["gross_cc"] = gross_cc
+    if amount is not None:
+        filters["amount"] = amount
+    if mileage is not None:
+        filters["mileage"] = mileage
+    if invoice_no:
+        filters["invoice_no"] = invoice_no
+
+    return (
+        TransactionOMV.objects.filter(**filters)
+        .exclude(transaction_date=transaction_date)
+        .order_by("transaction_date", "-invoiced", "-invoice_date", "-id")
+        .first()
+    )
+
+
+def import_omv_csv_data(csv_file_path, *, cleanup=True):
+    transactions_result = import_omv_transactions_from_csv(csv_file_path)
+    fuel_result = import_omv_fuel_consumption_from_csv(csv_file_path)
+    cleanup_result = cleanup_omv_fuel_data(apply=True) if cleanup else {}
+    missing_vehicles = sorted(
+        set(transactions_result.get("missing_vehicles", []) + fuel_result.get("missing_vehicles", []))
+    )
+    result = {
+        "status": "ok",
+        "source": csv_file_path,
+        "transactions": transactions_result,
+        "fuel": fuel_result,
+        "cleanup": cleanup_result,
+        "missing_vehicles": missing_vehicles,
+    }
+    logger.info("OMV csv import summary: %s", result)
+    return result
 
 
 def previous_month_range(reference_date=None):
@@ -697,13 +801,12 @@ def omv_putnicka_data_import(*args, **kwargs):
         time.sleep(5)
 
         csv_file_path = get_latest_download_file(download_path)
-        import_omv_fuel_consumption_from_csv(csv_file_path)
-        import_omv_transactions_from_csv(csv_file_path)
+        result = import_omv_csv_data(csv_file_path)
 
     finally:
         driver.quit()
 
-    return "OMV PutniÄka komanda uspeÅ¡no zavrÅ¡ena."
+    return format_omv_sync_result(result, label="OMV putnicka")
 
 
 def omv_teretna_data_import(*args, **kwargs):
@@ -809,13 +912,12 @@ def omv_teretna_data_import(*args, **kwargs):
         time.sleep(5)
 
         csv_file_path = get_latest_download_file(download_path)
-        import_omv_fuel_consumption_from_csv(csv_file_path)
-        import_omv_transactions_from_csv(csv_file_path)
+        result = import_omv_csv_data(csv_file_path)
 
     finally:
         driver.quit()
 
-    return "OMV Teretna komanda uspesno zavrsena."
+    return format_omv_sync_result(result, label="OMV teretna")
 
 def import_omv_fuel_consumption_from_csv(csv_file_path):
     created = 0
@@ -823,6 +925,9 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
     skipped = 0
     errors = 0
     missing_vehicles = set()
+    skipped_invalid_invoice_dates = 0
+    skipped_duplicate_transaction_identities = 0
+    skipped_non_fuel_products = 0
     logger.debug("OMV fuel import start: file=%s", csv_file_path)
 
     with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
@@ -831,6 +936,17 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
             formatted_plate = ""
             try:
                 logger.debug("OMV fuel row start: row=%s", index)
+                product_inv = row.get('Product INV')
+                if not is_fuel_product_name(product_inv):
+                    skipped += 1
+                    skipped_non_fuel_products += 1
+                    logger.debug(
+                        "OMV fuel row skipped non fuel product: row=%s product=%s",
+                        index,
+                        product_inv,
+                    )
+                    continue
+
                 # Formatiraj registarske tablice
                 formatted_plate = format_license_plate(row['License plate No'])
                 logger.debug(
@@ -858,9 +974,33 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                         normalized = normalized.replace(",", ".")
                     return float(normalized)
 
+                def parse_date(value):
+                    value = str(value or "").strip()
+                    if not value:
+                        return None
+                    for fmt in ("%Y-%m-%d", "%d.%m.%Y"):
+                        try:
+                            return datetime.strptime(value, fmt).date()
+                        except ValueError:
+                            continue
+                    raise ValueError(f"Unsupported date format: {value}")
+
                 # Konvertuj datume i druge vrednosti
                 naive_dt = datetime.strptime(row['Transactiondate'], '%Y-%m-%d %H:%M:%S')
                 transaction_date = dj_timezone.make_aware(naive_dt, dj_timezone.get_current_timezone()) if dj_timezone.is_naive(naive_dt) else naive_dt
+                invoice_date = parse_date(row.get("Invoice date") or row.get("Invoice Date"))
+                if is_omv_invoice_date_stale(transaction_date, invoice_date):
+                    skipped += 1
+                    skipped_invalid_invoice_dates += 1
+                    logger.info(
+                        "OMV fuel row skipped stale invoice date: row=%s plate=%s transaction_date=%s invoice_date=%s",
+                        index,
+                        formatted_plate,
+                        transaction_date,
+                        invoice_date,
+                    )
+                    continue
+
                 amount = parse_decimal(row.get('Quantity'))
 
                 # Konvertuj bruto troÅ¡ak i PDV u decimalne vrednosti
@@ -873,9 +1013,32 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 job_code = get_vehicle_job_code(vehicle)
                 # IzraÄunaj neto troÅ¡ak
                 cost_neto = cost_bruto - vat
+                duplicate_transaction = _omv_duplicate_transaction_identity(
+                    formatted_plate=formatted_plate,
+                    card=str(row.get('Card') or "").strip(),
+                    product_inv=product_inv,
+                    voucher=str(row.get('Voucher') or "").strip(),
+                    quantity=amount,
+                    gross_cc=cost_bruto,
+                    amount=parse_decimal(row.get('Amount'), default=None),
+                    mileage=parse_decimal(row.get('Mileage'), default=None),
+                    invoice_no=str(row.get('Invoice No') or "").strip(),
+                    transaction_date=transaction_date,
+                )
+                if duplicate_transaction:
+                    skipped += 1
+                    skipped_duplicate_transaction_identities += 1
+                    logger.info(
+                        "OMV fuel row skipped duplicate receipt identity: row=%s plate=%s transaction_date=%s existing_id=%s",
+                        index,
+                        formatted_plate,
+                        transaction_date,
+                        duplicate_transaction.id,
+                    )
+                    continue
 
                 fuel_defaults = {
-                    "fuel_type": row['Product INV'],
+                    "fuel_type": product_inv,
                     "cost_bruto": cost_bruto,
                     "cost_neto": cost_neto,
                     "job_code": job_code,
@@ -886,7 +1049,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                     "supplier": "OMV",
                     "date": transaction_date,
                     "amount": amount,
-                    "fuel_type": row['Product INV'],
+                    "fuel_type": product_inv,
                 }
                 fuel_obj = FuelConsumption.objects.filter(**fuel_lookup).order_by("-id").first()
                 if fuel_obj:
@@ -937,6 +1100,9 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
         "created": created,
         "updated": updated,
         "skipped": skipped,
+        "skipped_invalid_invoice_dates": skipped_invalid_invoice_dates,
+        "skipped_duplicate_transaction_identities": skipped_duplicate_transaction_identities,
+        "skipped_non_fuel_products": skipped_non_fuel_products,
         "errors": errors,
         "missing_vehicles": sorted(v for v in missing_vehicles if v),
     }
@@ -952,6 +1118,8 @@ def import_omv_transactions_from_csv(csv_file_path):
     errors = 0
     missing_vehicles = set()
     skipped_duplicate_receipts = 0
+    skipped_invalid_invoice_dates = 0
+    skipped_duplicate_transaction_identities = 0
 
     def parse_decimal(value, default=None):
         value = str(value or "").strip()
@@ -1043,7 +1211,22 @@ def import_omv_transactions_from_csv(csv_file_path):
                 invoice_no = str(row.get('Invoice No') or "").strip()
                 voucher = str(row.get('Voucher') or "").strip()
                 invoiced = parse_bool(row.get('Invoiced?'))
-                
+                is_stale_invoice_date = is_omv_invoice_date_stale(transaction_date, invoice_date)
+                is_uninvoiced_receipt_echo = bool(voucher and invoice_no == voucher and not invoiced)
+                if is_stale_invoice_date and not is_uninvoiced_receipt_echo:
+                    skipped += 1
+                    skipped_invalid_invoice_dates += 1
+                    logger.info(
+                        "OMV transactions row skipped stale invoice date: row=%s plate=%s transaction_date=%s invoice_date=%s invoice_no=%s voucher=%s",
+                        index,
+                        formatted_plate,
+                        transaction_date,
+                        invoice_date,
+                        invoice_no,
+                        voucher,
+                    )
+                    continue
+
                 transaction_defaults = {
                     "vehicle": vehicle,
                     "issuer": row['Issuer'].strip(),
@@ -1103,7 +1286,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                     updated += 1
                 else:
                     duplicate_receipt = None
-                    if voucher and invoice_no == voucher and not invoiced:
+                    if is_uninvoiced_receipt_echo:
                         duplicate_receipt = (
                             TransactionOMV.objects.filter(
                                 license_plate_no=formatted_plate,
@@ -1131,9 +1314,43 @@ def import_omv_transactions_from_csv(csv_file_path):
                             voucher,
                             duplicate_receipt.id,
                         )
+                    elif is_stale_invoice_date:
+                        skipped += 1
+                        skipped_invalid_invoice_dates += 1
+                        logger.info(
+                            "OMV transactions row skipped stale invoice date: row=%s plate=%s transaction_date=%s invoice_date=%s invoice_no=%s voucher=%s",
+                            index,
+                            formatted_plate,
+                            transaction_date,
+                            invoice_date,
+                            invoice_no,
+                            voucher,
+                        )
                     else:
-                        TransactionOMV.objects.create(**{**transaction_lookup, **transaction_defaults})
-                        created += 1
+                        duplicate_identity = _omv_duplicate_transaction_identity(
+                            formatted_plate=formatted_plate,
+                            card=str(row.get('Card') or "").strip(),
+                            product_inv=row.get('Product INV'),
+                            voucher=voucher,
+                            quantity=quantity,
+                            gross_cc=gross_cc,
+                            amount=amount,
+                            mileage=mileage,
+                            invoice_no=invoice_no,
+                            transaction_date=transaction_date,
+                        )
+                        if duplicate_identity:
+                            skipped_duplicate_transaction_identities += 1
+                            logger.info(
+                                "OMV transactions row skipped duplicate receipt identity: row=%s plate=%s transaction_date=%s existing_id=%s",
+                                index,
+                                formatted_plate,
+                                transaction_date,
+                                duplicate_identity.id,
+                            )
+                        else:
+                            TransactionOMV.objects.create(**{**transaction_lookup, **transaction_defaults})
+                            created += 1
             
             except ObjectDoesNotExist:
                 skipped += 1
@@ -1156,12 +1373,21 @@ def import_omv_transactions_from_csv(csv_file_path):
 
     result = {
         "status": "ok",
-        "rows": created + updated + skipped + preserved_final + skipped_duplicate_receipts,
+        "rows": (
+            created
+            + updated
+            + skipped
+            + preserved_final
+            + skipped_duplicate_receipts
+            + skipped_duplicate_transaction_identities
+        ),
         "created": created,
         "updated": updated,
         "skipped": skipped,
         "preserved_final": preserved_final,
         "skipped_duplicate_receipts": skipped_duplicate_receipts,
+        "skipped_invalid_invoice_dates": skipped_invalid_invoice_dates,
+        "skipped_duplicate_transaction_identities": skipped_duplicate_transaction_identities,
         "errors": errors,
         "missing_vehicles": sorted(v for v in missing_vehicles if v),
     }

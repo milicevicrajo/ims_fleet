@@ -123,11 +123,10 @@ def _handle_omv_csv_import(request, category_label):
                 tmp_file.write(chunk)
             temp_file_path = tmp_file.name
 
-        from . import import_omv_fuel_consumption_from_csv, import_omv_transactions_from_csv
+        from . import format_omv_sync_result, import_omv_csv_data
 
-        import_omv_fuel_consumption_from_csv(temp_file_path)
-        import_omv_transactions_from_csv(temp_file_path)
-        messages.success(request, f"OMV {category_label} CSV import je uspešno završen.")
+        result = import_omv_csv_data(temp_file_path)
+        messages.success(request, format_omv_sync_result(result, label=f"OMV {category_label}"))
     except Exception as exc:
         logger.exception("Greška prilikom ručnog OMV %s CSV importa.", category_label)
         messages.error(request, f"Greška prilikom OMV {category_label} importa: {exc}")
