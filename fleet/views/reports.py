@@ -80,7 +80,7 @@ def reports_index(request):
 
 def _secondary_report_data(query, form, filter_query, cast_params=False):
     query, params = filter_query(query, form, cast_params=cast_params)
-    return get_data_from_secondary_db(query, "test_db", params=params)
+    return get_data_from_secondary_db(query, "default", params=params)
 
 
 def _render_secondary_report(request, *, form, query, filter_query, template_name, title, export_filename, export_sheet):
@@ -292,7 +292,7 @@ def kasko_rate_view(request):
     return _render_simple_secondary_report(
         request,
         query=KASKO_RATE_SQL,
-        db_alias="test_db",
+        db_alias="default",
         template_name="fleet/reports/kasko_rate.html",
     )
 

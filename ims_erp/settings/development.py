@@ -22,18 +22,6 @@ DATABASES = {
     #     'NAME': BASE_DIR / 'db.sqlite3',
     # },
 
-    'test_db': {
-        'ENGINE': 'mssql',
-        'NAME': 'IMS_ERP',  # Naziv baze na serveru
-        'USER': 'Rajo Milicevic',
-        'PASSWORD': 'Rajo123',
-        'HOST': 'SMS-SERVER',
-        'PORT': '',  # Ostavite prazno ako koristite podrazumevani port
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
-    },
-
     'server_db': {
         'ENGINE': 'mssql',
         'NAME': 'IMS_ERP',  # Naziv baze na serveru

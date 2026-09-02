@@ -248,7 +248,7 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 
 		self.assertEqual(response, "rendered")
 		render_mock.assert_called_once()
-		get_data_mock.assert_called_once()
+		get_data_mock.assert_called_once_with("SELECT * FROM x WHERE 1=1", "default", params=[])
 
 	@patch("fleet.views.reports.report_xlsx_response")
 	@patch("fleet.views.reports.get_data_from_secondary_db")
@@ -266,7 +266,7 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 
 		self.assertEqual(response, "xlsx")
 		export_mock.assert_called_once()
-		get_data_mock.assert_called_once()
+		get_data_mock.assert_called_once_with("SELECT * FROM x WHERE 1=1 AND godina = %s", "default", params=[2026])
 
 	@patch("fleet.views.reports.render")
 	@patch("fleet.views.reports.get_data_from_secondary_db")

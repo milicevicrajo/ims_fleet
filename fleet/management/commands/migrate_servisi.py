@@ -9,7 +9,7 @@ from fleet.models import (
 )
 from datetime import datetime, date
 
-DEFAULT_SOURCE_ALIAS = "test_db"
+DEFAULT_SOURCE_ALIAS = "default"
 DEFAULT_TARGET_ALIAS = "server_db"
 DEFAULT_SOURCE_OBJECT = "dbo.servisi"   # možeš promeniti na "dbo.v_servisi" po potrebi
 
@@ -44,7 +44,7 @@ def to_date(val):
 
 class Command(BaseCommand):
     help = (
-        "Povlači servisne transakcije iz izvora (test_db, npr. dbo.servisi) "
+        "Povlači servisne transakcije iz izvora (default, npr. dbo.servisi) "
         "i upisuje u DraftServiceTransaction na odredištu (server_db). "
         "Preskače duplikate (ako već postoji u ServiceTransaction ili DraftServiceTransaction)."
     )

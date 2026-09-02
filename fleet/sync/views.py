@@ -156,7 +156,7 @@ def import_omv_teretna_csv_view(request):
 
 def fetch_vehicle_value_view(request):
     if request.method == "POST":
-        with connections["test_db"].cursor() as cursor:
+        with connections["default"].cursor() as cursor:
             cursor.execute(
                 """
                 SELECT sif_osn, vrednost FROM dbo.vrednost_vozila
@@ -204,7 +204,7 @@ def fetch_vehicle_value_view(request):
 
 def fetch_lease_interest_data(request):
     if request.method == "POST":
-        with connections["test_db"].cursor() as cursor:
+        with connections["default"].cursor() as cursor:
             cursor.execute(
                 """
                 SELECT god, ugovor, iznos FROM dbo.lizing_kamate

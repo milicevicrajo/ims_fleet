@@ -106,11 +106,11 @@ def _resolve_hr_db_alias(preferred=None):
     if preferred:
         return preferred
     configured = set(getattr(settings, "DATABASES", {}).keys())
-    if "test_db" in configured:
-        return "test_db"
+    if "default" in configured:
+        return "default"
     if "server_db" in configured:
         return "server_db"
-    return "default"
+    return next(iter(configured))
 
 
 def _hr_employee_columns(cursor):
