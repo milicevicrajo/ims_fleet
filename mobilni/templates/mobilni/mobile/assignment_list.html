@@ -60,13 +60,16 @@
               </td>
               <td class="text-end">{{ item.package.net_amount|floatformat:2|intcomma }}</td>
               <td>
-                {% if item.employee_id %}
-                  <a href="{% url 'employee_detail' item.employee_id %}"
+                {% if item.linked_employee_id %}
+                  <a href="{% url 'employee_detail' item.linked_employee_id %}"
                      class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
                      title="Detalj korisnika">
-                    <i class="mdi mdi-account-details"></i> {{ item.employee }}
+                    <i class="mdi mdi-account-details"></i> {{ item.display_employee_name }}
                   </a>
-                  <small class="text-muted d-block">Sifra: {{ item.employee.employee_code }}</small>
+                  <small class="text-muted d-block">Sifra: {{ item.display_employee_code }}</small>
+                {% elif item.display_employee_code or item.display_employee_name %}
+                  {{ item.display_employee_name|default:"/" }}
+                  <small class="text-muted d-block">Sifra: {{ item.display_employee_code|default:"/" }}</small>
                 {% else %}
                   /
                 {% endif %}

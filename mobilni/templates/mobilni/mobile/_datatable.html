@@ -55,6 +55,27 @@
   table.dataTable tfoot th {
     white-space: nowrap;
   }
+
+  .table-responsive > .dt-container,
+  .table-responsive > .dataTables_wrapper {
+    overflow-x: visible;
+  }
+
+  .dt-container .dt-scroll,
+  .dataTables_wrapper .dataTables_scroll {
+    width: 100%;
+  }
+
+  .dt-container .dt-scroll-head,
+  .dataTables_wrapper .dataTables_scrollHead {
+    overflow: hidden !important;
+  }
+
+  .dt-container .dt-scroll-body,
+  .dataTables_wrapper .dataTables_scrollBody {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
 </style>
 
 <script>
@@ -68,15 +89,41 @@
       return;
     }
 
-    table.DataTable({
+    table.removeClass('w-100').css('width', '100%');
+
+    function syncScrollHeader(dataTable) {
+      var container = jQuery(dataTable.table().container());
+      var scrollBody = container.find('.dt-scroll-body, .dataTables_scrollBody').first();
+      var scrollHead = container.find('.dt-scroll-head, .dataTables_scrollHead').first();
+
+      if (scrollBody.length && scrollHead.length) {
+        scrollHead.scrollLeft(scrollBody.scrollLeft());
+      }
+    }
+
+    function adjustColumns(dataTable) {
+      if (!dataTable || !dataTable.columns) {
+        return;
+      }
+      dataTable.columns.adjust();
+      syncScrollHeader(dataTable);
+    }
+
+    var dataTable = table.DataTable({
       pageLength: {{ page_length|default:50 }},
       lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Sve']],
       order: {{ order|default:"[[0, 'asc']]"|safe }},
-      autoWidth: false,
+      autoWidth: true,
       scrollX: true,
       columnDefs: [
         { targets: 'no-sort', orderable: false, searchable: false }
       ],
+      initComplete: function () {
+        adjustColumns(this.api());
+      },
+      drawCallback: function () {
+        syncScrollHeader(this.api());
+      },
       language: {
         processing: 'Učitavanje...',
         search: 'Pretraga:',
@@ -94,5 +141,28 @@
         }
       }
     });
+
+    function scheduleAdjust() {
+      window.requestAnimationFrame(function () {
+        adjustColumns(dataTable);
+      });
+    }
+
+    var eventNamespace = '.mobileDataTable.{{ table_id }}';
+    var scrollBody = jQuery(dataTable.table().container()).find('.dt-scroll-body, .dataTables_scrollBody').first();
+    scrollBody.off('scroll' + eventNamespace).on('scroll' + eventNamespace, function () {
+      syncScrollHeader(dataTable);
+    });
+
+    jQuery(window)
+      .off(eventNamespace)
+      .on('load' + eventNamespace + ' resize' + eventNamespace + ' orientationchange' + eventNamespace, scheduleAdjust);
+    jQuery(document)
+      .off(eventNamespace)
+      .on('shown.bs.tab' + eventNamespace + ' shown.bs.collapse' + eventNamespace, scheduleAdjust);
+
+    scheduleAdjust();
+    window.setTimeout(scheduleAdjust, 150);
+    window.setTimeout(scheduleAdjust, 500);
   });
 </script>

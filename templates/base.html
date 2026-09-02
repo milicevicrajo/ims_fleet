@@ -639,9 +639,16 @@
             font-size: 14px;   /* Adjust font size */
         }
         
-        /* Ensure horizontal scrolling is handled */
+        /* Keep DataTables horizontal scrolling inside its body wrapper. */
+        .dt-container,
         .dataTables_wrapper {
-            overflow-x: auto;  /* Enable horizontal scrolling for wrappers */
+            overflow-x: visible;
+        }
+
+        .dt-container .dt-scroll-body,
+        .dataTables_wrapper .dataTables_scrollBody {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         table.display.compact tbody td {

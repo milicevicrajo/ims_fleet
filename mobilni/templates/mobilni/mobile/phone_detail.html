@@ -39,9 +39,12 @@
   <div class="col-md-3"><div class="card shadow-sm h-100"><div class="card-body">
     <small class="text-muted">Korisnik</small>
     <div class="fw-semibold mt-1">
-      {% if current_assignment.employee_id %}
-        <a href="{% url 'employee_detail' current_assignment.employee_id %}">{{ current_assignment.employee }}</a>
-        <small class="text-muted d-block">Sifra: {{ current_assignment.employee.employee_code }}</small>
+      {% if current_assignment.linked_employee_id %}
+        <a href="{% url 'employee_detail' current_assignment.linked_employee_id %}">{{ current_assignment.display_employee_name }}</a>
+        <small class="text-muted d-block">Sifra: {{ current_assignment.display_employee_code }}</small>
+      {% elif current_assignment.display_employee_code or current_assignment.display_employee_name %}
+        {{ current_assignment.display_employee_name|default:"/" }}
+        <small class="text-muted d-block">Sifra: {{ current_assignment.display_employee_code|default:"/" }}</small>
       {% else %}
         /
       {% endif %}
@@ -108,9 +111,12 @@
               </td>
               <td class="text-end">{{ item.package.net_amount|floatformat:2|intcomma }}</td>
               <td>
-                {% if item.employee_id %}
-                  <a href="{% url 'employee_detail' item.employee_id %}">{{ item.employee }}</a>
-                  <small class="text-muted d-block">Sifra: {{ item.employee.employee_code }}</small>
+                {% if item.linked_employee_id %}
+                  <a href="{% url 'employee_detail' item.linked_employee_id %}">{{ item.display_employee_name }}</a>
+                  <small class="text-muted d-block">Sifra: {{ item.display_employee_code }}</small>
+                {% elif item.display_employee_code or item.display_employee_name %}
+                  {{ item.display_employee_name|default:"/" }}
+                  <small class="text-muted d-block">Sifra: {{ item.display_employee_code|default:"/" }}</small>
                 {% else %}
                   /
                 {% endif %}
@@ -150,9 +156,12 @@
               <td>{{ item.month|stringformat:"02d" }}/{{ item.year }}</td>
               <td>{{ item.assignment.package.name|default:"/" }}</td>
               <td>
-                {% if item.assignment.employee_id %}
-                  <a href="{% url 'employee_detail' item.assignment.employee_id %}">{{ item.assignment.employee }}</a>
-                  <small class="text-muted d-block">Sifra: {{ item.assignment.employee.employee_code }}</small>
+                {% if item.assignment.linked_employee_id %}
+                  <a href="{% url 'employee_detail' item.assignment.linked_employee_id %}">{{ item.assignment.display_employee_name }}</a>
+                  <small class="text-muted d-block">Sifra: {{ item.assignment.display_employee_code }}</small>
+                {% elif item.assignment.display_employee_code or item.assignment.display_employee_name %}
+                  {{ item.assignment.display_employee_name|default:"/" }}
+                  <small class="text-muted d-block">Sifra: {{ item.assignment.display_employee_code|default:"/" }}</small>
                 {% else %}
                   /
                 {% endif %}

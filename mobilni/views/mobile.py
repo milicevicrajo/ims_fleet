@@ -5,10 +5,11 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
 from core.exporting import csv_attachment_response, rows_to_xlsx_response
@@ -29,6 +30,7 @@ from ..withholdings import (
     REPORT_ALL,
     REPORT_EMPLOYEES,
     REPORT_FORMER_EMPLOYEES,
+    REPORT_NON_EMPLOYEES,
     REPORT_TYPES,
     SPECIAL_PHONE_NUMBER,
     assignment_employee_active,
@@ -41,26 +43,85 @@ from ..withholdings import (
     is_parking_exempt,
     normalize_phone_number,
     parking_exempt_phone_numbers,
+    withholding_amount_expression,
+    withholding_exact_usage_queryset,
 )
 
 
+MONTH_LABELS = {
+    1: "Jan",
+    2: "Feb",
+    3: "Mar",
+    4: "Apr",
+    5: "Maj",
+    6: "Jun",
+    7: "Jul",
+    8: "Avg",
+    9: "Sep",
+    10: "Okt",
+    11: "Nov",
+    12: "Dec",
+}
+
+CHART_COLORS = (
+    "#2563eb",
+    "#16a34a",
+    "#f59e0b",
+    "#dc2626",
+    "#7c3aed",
+    "#0891b2",
+    "#db2777",
+    "#65a30d",
+    "#475569",
+    "#ea580c",
+)
+
+
+def _current_period():
+    today = timezone.localdate()
+    return today.year, today.month
+
+
 def _periods():
+    values = _existing_periods()
+    return values or [_current_period()]
+
+
+def _existing_periods():
     values = set(
-        MobileAssignment.objects.values_list("year", "month")
-    ) | set(MobileUsage.objects.values_list("year", "month"))
+        MobileAssignment.objects.order_by().values_list("year", "month").distinct()
+    ) | set(MobileUsage.objects.order_by().values_list("year", "month").distinct())
     return sorted(values, reverse=True)
 
 
+def _latest_existing_period():
+    periods = _existing_periods()
+    return periods[0] if periods else _current_period()
+
+
 def _selected_period(request):
-    periods = _periods()
     try:
         year = int(request.GET.get("year") or 0)
         month = int(request.GET.get("month") or 0)
     except (TypeError, ValueError):
         year, month = 0, 0
-    if year and month:
+    if year and 1 <= month <= 12:
         return year, month
-    return periods[0] if periods else (None, None)
+    return _latest_existing_period()
+
+
+def _selected_optional_period(request):
+    period_was_submitted = any(key in request.GET for key in ("period", "year", "month"))
+    try:
+        year = int(request.GET.get("year") or 0)
+        month = int(request.GET.get("month") or 0)
+    except (TypeError, ValueError):
+        year, month = 0, 0
+    if year and 1 <= month <= 12:
+        return year, month
+    if period_was_submitted:
+        return None, None
+    return _latest_existing_period()
 
 
 def _period_suffix(year, month):
@@ -75,8 +136,196 @@ def _decimal(value):
     return float(value or 0)
 
 
+def _chart_amount_label(value):
+    amount = Decimal(value or 0)
+    abs_amount = abs(amount)
+    if abs_amount >= Decimal("1000000"):
+        return f"{amount / Decimal('1000000'):.1f}m"
+    if abs_amount >= Decimal("1000"):
+        return f"{amount / Decimal('1000'):.1f}k"
+    if amount == amount.quantize(Decimal("1")):
+        return f"{amount:.0f}"
+    return f"{amount:.2f}"
+
+
+def _chart_height_style(value, max_value):
+    amount = Decimal(value or 0)
+    maximum = Decimal(max_value or 0)
+    if amount <= 0 or maximum <= 0:
+        return "0%"
+    percent = min((amount / maximum) * Decimal("100"), Decimal("100"))
+    return f"{percent:.4f}%"
+
+
+def _short_chart_label(value, limit=18):
+    text = str(value or "").strip() or "/"
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit - 3]}..."
+
+
+def _monthly_usage_by_tariff_chart(year, phone_number=""):
+    queryset = withholding_exact_usage_queryset(year=year, phone_number=phone_number)
+    rows = (
+        queryset.values("month", "assignment__package_id", "assignment__package__name")
+        .annotate(total=Sum("total"))
+        .order_by("month", "assignment__package__name")
+    )
+
+    by_month = {month: [] for month in range(1, 13)}
+    package_totals = defaultdict(lambda: Decimal("0"))
+    package_labels = {}
+    for row in rows:
+        month = int(row["month"] or 0)
+        if month not in by_month:
+            continue
+        package_key = row["assignment__package_id"] or "bez-paketa"
+        label = row["assignment__package__name"] or "Bez paketa"
+        amount = row["total"] or Decimal("0")
+        by_month[month].append({"key": package_key, "label": label, "amount": amount})
+        package_totals[package_key] += amount
+        package_labels[package_key] = label
+
+    ordered_keys = sorted(package_totals, key=lambda key: (-package_totals[key], package_labels[key]))
+    order_index = {key: index for index, key in enumerate(ordered_keys)}
+    colors = {key: CHART_COLORS[index % len(CHART_COLORS)] for index, key in enumerate(ordered_keys)}
+    month_totals = {
+        month: sum((segment["amount"] for segment in segments), start=Decimal("0"))
+        for month, segments in by_month.items()
+    }
+    max_total = max(month_totals.values(), default=Decimal("0"))
+
+    months = []
+    for month in range(1, 13):
+        segments = sorted(by_month[month], key=lambda segment: order_index.get(segment["key"], 999))
+        segment_items = []
+        for segment in segments:
+            amount = segment["amount"]
+            height_percent = (
+                (amount / max_total) * Decimal("100")
+                if amount > 0 and max_total > 0
+                else Decimal("0")
+            )
+            segment_items.append(
+                {
+                    "label": segment["label"],
+                    "short_label": _short_chart_label(segment["label"]),
+                    "amount": amount,
+                    "amount_label": _chart_amount_label(amount),
+                    "height_style": _chart_height_style(amount, max_total),
+                    "color": colors[segment["key"]],
+                    "show_label": height_percent >= Decimal("8"),
+                }
+            )
+        total = month_totals[month]
+        months.append(
+            {
+                "number": month,
+                "label": MONTH_LABELS[month],
+                "total": total,
+                "total_label": _chart_amount_label(total),
+                "segments": segment_items,
+            }
+        )
+
+    legend = [
+        {
+            "label": package_labels[key],
+            "total": package_totals[key],
+            "total_label": _chart_amount_label(package_totals[key]),
+            "color": colors[key],
+        }
+        for key in ordered_keys
+    ]
+    return {
+        "year": year,
+        "months": months,
+        "legend": legend,
+        "has_data": any(total > 0 for total in month_totals.values()),
+        "max_total": max_total,
+    }
+
+
+def _withholding_totals(queryset, exempt_phone_numbers):
+    totals = queryset.aggregate(
+        usage_total=Sum("total"),
+        withholding_total=Sum(withholding_amount_expression(exempt_phone_numbers)),
+    )
+    usage_total = totals["usage_total"] or Decimal("0")
+    withholding_total = totals["withholding_total"] or Decimal("0")
+    return usage_total, withholding_total
+
+
+def _package_summary(queryset, exempt_phone_numbers):
+    withholding_expression = withholding_amount_expression(exempt_phone_numbers)
+    rows = (
+        queryset.values("assignment__package_id", "assignment__package__name")
+        .annotate(
+            usage_total=Sum("total"),
+            withholding_total=Sum(withholding_expression),
+            number_count=Count("phone_number", distinct=True),
+        )
+        .order_by()
+    )
+    summary = []
+    for row in rows:
+        usage_total = row["usage_total"] or Decimal("0")
+        withholding_total = row["withholding_total"] or Decimal("0")
+        summary.append(
+            {
+                "package_name": row["assignment__package__name"] or "Bez paketa",
+                "number_count": row["number_count"] or 0,
+                "usage_total": usage_total,
+                "withholding_total": withholding_total,
+                "institute_total": usage_total - withholding_total,
+            }
+        )
+    summary.sort(key=lambda item: item["institute_total"], reverse=True)
+    return summary
+
+
+def _assignment_counts(queryset):
+    counts = queryset.aggregate(
+        contracted_number_count=Count("id"),
+        active_number_count=Count("id", filter=Q(number_active=True)),
+    )
+    return counts["contracted_number_count"] or 0, counts["active_number_count"] or 0
+
+
+def _monthly_withholding_chart(year, phone_number="", exempt_phone_numbers=None):
+    if exempt_phone_numbers is None:
+        exempt_phone_numbers = parking_exempt_phone_numbers(year)
+    rows = (
+        withholding_exact_usage_queryset(year=year, phone_number=phone_number)
+        .values("month")
+        .annotate(total=Sum(withholding_amount_expression(exempt_phone_numbers)))
+        .order_by()
+    )
+    month_totals = {month: Decimal("0") for month in range(1, 13)}
+    for row in rows:
+        month = int(row["month"] or 0)
+        if month in month_totals:
+            month_totals[month] = row["total"] or Decimal("0")
+    max_total = max(month_totals.values(), default=Decimal("0"))
+    return {
+        "year": year,
+        "months": [
+            {
+                "number": month,
+                "label": MONTH_LABELS[month],
+                "total": month_totals[month],
+                "total_label": _chart_amount_label(month_totals[month]),
+                "height_style": _chart_height_style(month_totals[month], max_total),
+            }
+            for month in range(1, 13)
+        ],
+        "has_data": any(total > 0 for total in month_totals.values()),
+        "max_total": max_total,
+    }
+
+
 def _filter_assignments(request):
-    qs = MobileAssignment.objects.select_related("package", "employee")
+    qs = MobileAssignment.objects.select_related("package", "employee", "mobile_user", "mobile_user__employee")
     year, month = _selected_period(request)
     if year and month:
         qs = qs.filter(year=year, month=month)
@@ -89,18 +338,23 @@ def _filter_assignments(request):
             Q(employee__first_name__icontains=search)
             | Q(employee__last_name__icontains=search)
             | Q(employee__original_full_name__icontains=search)
+            | Q(mobile_user__full_name__icontains=search)
+            | Q(source_full_name__icontains=search)
             | Q(package__name__icontains=search)
             | Q(package__partner_name__icontains=search)
         )
         if search.isdigit():
             query |= Q(employee__employee_code=int(search))
             query |= Q(employee_id=int(search))
+            query |= Q(mobile_user__employee_code=int(search))
+            query |= Q(mobile_user__employee__employee_code=int(search))
+            query |= Q(source_employee_code=int(search))
         qs = qs.filter(query)
     return qs, year, month
 
 
-def _usage_report_filters(request):
-    year, month = _selected_period(request)
+def _usage_report_filters(request, *, period_optional=False):
+    year, month = _selected_optional_period(request) if period_optional else _selected_period(request)
     package_id = request.GET.get("package") or None
     try:
         package_id = int(package_id) if package_id else None
@@ -154,10 +408,14 @@ def _filter_users(request):
         query = (
             Q(full_name__icontains=search)
             | Q(organizational_unit__icontains=search)
+            | Q(employee__first_name__icontains=search)
+            | Q(employee__last_name__icontains=search)
+            | Q(employee__original_full_name__icontains=search)
         )
         if search.isdigit():
             query |= Q(employee_code=int(search))
             query |= Q(employee_id=int(search))
+            query |= Q(employee__employee_code=int(search))
         qs = qs.filter(query)
     return qs
 
@@ -198,9 +456,13 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
 
     def get_queryset(self):
         year, month = _selected_period(self.request)
-        qs = MobileUsage.objects.select_related("assignment__employee", "assignment__package", "employee")
-        if year and month:
-            qs = qs.filter(year=year, month=month)
+        qs = withholding_exact_usage_queryset(year=year, month=month).select_related(
+            "assignment__employee",
+            "assignment__mobile_user",
+            "assignment__mobile_user__employee",
+            "assignment__package",
+            "employee",
+        )
         phone_number = (self.request.GET.get("phone_number") or "").strip()
         if phone_number:
             qs = qs.filter(phone_number__icontains=phone_number)
@@ -210,6 +472,8 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
                 Q(assignment__employee__first_name__icontains=search)
                 | Q(assignment__employee__last_name__icontains=search)
                 | Q(assignment__employee__original_full_name__icontains=search)
+                | Q(assignment__mobile_user__full_name__icontains=search)
+                | Q(assignment__source_full_name__icontains=search)
                 | Q(assignment__package__name__icontains=search)
                 | Q(employee__first_name__icontains=search)
                 | Q(employee__last_name__icontains=search)
@@ -217,6 +481,9 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
             if search.isdigit():
                 query |= Q(employee_id=int(search))
                 query |= Q(assignment__employee__employee_code=int(search))
+                query |= Q(assignment__mobile_user__employee_code=int(search))
+                query |= Q(assignment__mobile_user__employee__employee_code=int(search))
+                query |= Q(assignment__source_employee_code=int(search))
             qs = qs.filter(query)
         return qs.order_by("-total", "phone_number")[:15]
 
@@ -224,6 +491,7 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
         ctx = super().get_context_data(**kwargs)
         year, month = _selected_period(self.request)
         phone_number = (self.request.GET.get("phone_number") or "").strip()
+        chart_year = year or _current_period()[0]
         parking_exempt_numbers = parking_exempt_phone_numbers(year, month)
         for usage in ctx.get("usages", []):
             usage.parking_exempt = normalize_phone_number(usage.phone_number) in parking_exempt_numbers
@@ -236,37 +504,11 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
         if phone_number:
             usage_period_qs = usage_period_qs.filter(phone_number__icontains=phone_number)
             assignment_period_qs = assignment_period_qs.filter(phone_number__icontains=phone_number)
-        withholding_rows = get_withholding_rows(REPORT_ALL, year=year, month=month, phone_number=phone_number)
-        usage_total = sum((row.usage.total for row in withholding_rows), start=Decimal("0"))
-        withholding_total = sum(
-            (row.withholding for row in withholding_rows if row.withholding is not None),
-            start=Decimal("0"),
-        )
+        withholding_qs = withholding_exact_usage_queryset(year=year, month=month, phone_number=phone_number)
+        usage_total, withholding_total = _withholding_totals(withholding_qs, parking_exempt_numbers)
         institute_total = usage_total - withholding_total
-        package_metrics = defaultdict(
-            lambda: {
-                "package_name": "Bez paketa",
-                "phone_numbers": set(),
-                "usage_total": Decimal("0"),
-                "withholding_total": Decimal("0"),
-            }
-        )
-        for row in withholding_rows:
-            package_key = row.usage.assignment.package_id or "bez-paketa"
-            metric = package_metrics[package_key]
-            metric["package_name"] = row.package_name or "Bez paketa"
-            metric["phone_numbers"].add(row.phone_number)
-            metric["usage_total"] += row.usage.total
-            if row.withholding is not None:
-                metric["withholding_total"] += row.withholding
-        package_summary = []
-        for metric in package_metrics.values():
-            metric["number_count"] = len(metric.pop("phone_numbers"))
-            metric["institute_total"] = metric["usage_total"] - metric["withholding_total"]
-            package_summary.append(metric)
-        package_summary.sort(key=lambda item: item["institute_total"], reverse=True)
-        contracted_number_count = assignment_period_qs.count()
-        active_number_count = assignment_period_qs.filter(number_active=True).count()
+        package_summary = _package_summary(withholding_qs, parking_exempt_numbers)
+        contracted_number_count, active_number_count = _assignment_counts(assignment_period_qs)
         active_number_percent = (
             (active_number_count / contracted_number_count) * 100
             if contracted_number_count
@@ -287,6 +529,12 @@ class MobileDashboardView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
                 "withholding_total": withholding_total,
                 "institute_total": institute_total,
                 "package_summary": package_summary,
+                "usage_monthly_chart": _monthly_usage_by_tariff_chart(chart_year, phone_number=phone_number),
+                "withholding_monthly_chart": _monthly_withholding_chart(
+                    chart_year,
+                    phone_number=phone_number,
+                    exempt_phone_numbers=parking_exempt_numbers,
+                ),
                 "latest_imports": MobileImportLog.objects.all()[:8],
                 "q": self.request.GET.get("q", ""),
                 "phone_number": phone_number,
@@ -337,12 +585,18 @@ class MobilePhoneDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Tem
 
         assignments = list(
             MobileAssignment.objects.filter(phone_number__in=phone_values)
-            .select_related("package", "employee")
+            .select_related("package", "employee", "mobile_user", "mobile_user__employee")
             .order_by("-year", "-month", "-id")
         )
         usages = list(
             MobileUsage.objects.filter(phone_number__in=phone_values)
-            .select_related("assignment__package", "assignment__employee", "employee")
+            .select_related(
+                "assignment__package",
+                "assignment__employee",
+                "assignment__mobile_user",
+                "assignment__mobile_user__employee",
+                "employee",
+            )
             .order_by("-year", "-month", "-id")
         )
         if not assignments and not usages:
@@ -373,16 +627,17 @@ class MobileUsageListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListV
     context_object_name = "usages"
 
     def get_queryset(self):
-        filters = _usage_report_filters(self.request)
+        filters = _usage_report_filters(self.request, period_optional=True)
         return get_withholding_rows(REPORT_ALL, **filters)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        filters = _usage_report_filters(self.request)
+        filters = _usage_report_filters(self.request, period_optional=True)
         ctx.update(
             {
                 "title": "Potrošnja mobilnih",
                 "periods": _periods(),
+                "period_optional": True,
                 "selected_year": filters["year"],
                 "selected_month": filters["month"],
                 "phone_number": filters["phone_number"],
@@ -617,6 +872,7 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
             REPORT_ALL: "Detaljni izveštaj obustava",
             REPORT_EMPLOYEES: "Obustave zaposlenih",
             REPORT_FORMER_EMPLOYEES: "Obustave bivših zaposlenih",
+            REPORT_NON_EMPLOYEES: "Obustave nezaposlenih",
         }
         context.update(
             {
@@ -625,6 +881,7 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
                 "report_all": REPORT_ALL,
                 "report_employees": REPORT_EMPLOYEES,
                 "report_former_employees": REPORT_FORMER_EMPLOYEES,
+                "report_non_employees": REPORT_NON_EMPLOYEES,
                 "special_phone_number": SPECIAL_PHONE_NUMBER,
                 "rows": page_obj.object_list,
                 "page_obj": page_obj,
@@ -644,7 +901,8 @@ class MobileWithholdingReportView(RolePermissionRequiredMixin, LoginRequiredMixi
 
 @role_permission_required()
 def export_employee_withholdings_csv(request):
-    filters = _usage_report_filters(request)
+    period_optional = getattr(request.resolver_match, "view_name", "") == "mobilni:mobile_usage_accounting_csv"
+    filters = _usage_report_filters(request, period_optional=period_optional)
     year = filters["year"]
     month = filters["month"]
     search = (request.GET.get("q") or "").strip()
@@ -662,6 +920,8 @@ def export_employee_withholdings_csv(request):
     writer = csv.writer(response, delimiter=";", lineterminator="\r\n")
     writer.writerow(["Godina", "Mesec", "Šifra radnika", "Iznos obustave"])
     for row in rows:
+        if row.withholding is None or row.withholding == 0:
+            continue
         amount = "" if row.withholding is None else f"{row.withholding:.2f}"
         writer.writerow([row.year, row.month, row.employee_code or "", amount])
     return response
@@ -698,11 +958,11 @@ def export_assignments_xlsx(request):
             _date(item.package.valid_from if item.package_id else None),
             _date(item.package.valid_to if item.package_id else None),
             _decimal(assignment_package_amount(item)),
-            item.employee_id or "",
+            item.linked_employee_id or "",
             assignment_employee_code(item) or "",
             assignment_employee_name(item),
             "Da" if assignment_employee_active(item) else "Ne",
-            item.employee.personal_number if item.employee_id else "",
+            item.display_personal_number,
         ]
         for item in qs.order_by("year", "month", "phone_number")
     ]
@@ -719,7 +979,7 @@ def export_assignments_xlsx(request):
 
 @role_permission_required()
 def export_usages_xlsx(request):
-    filters = _usage_report_filters(request)
+    filters = _usage_report_filters(request, period_optional=True)
     year = filters["year"]
     month = filters["month"]
     report_rows = get_withholding_rows(REPORT_ALL, **filters)
@@ -851,7 +1111,16 @@ def export_packages_xlsx(request):
 @role_permission_required()
 def export_users_xlsx(request):
     qs = _filter_users(request)
-    headers = ["ID zaposlenog", "OJ", "Šifra radnika", "Ime i prezime", "JMBG", "Aktivan", "Datum odlaska"]
+    headers = [
+        "ID zaposlenog",
+        "OJ",
+        "Sifra radnika",
+        "Ime i prezime",
+        "JMBG",
+        "Aktivan",
+        "Datum odlaska",
+        "Status veze",
+    ]
     rows = [
         [
             item.employee_id or "",
@@ -861,6 +1130,7 @@ def export_users_xlsx(request):
             item.personal_number,
             "Da" if item.is_active else "Ne",
             _date(item.departure_date),
+            item.get_link_status_display(),
         ]
         for item in qs.order_by("full_name", "employee_code")
     ]
@@ -935,6 +1205,7 @@ def _handle_mobile_import(request, import_type, form):
                 f"Import završen: novo {result.imported}, ažurirano {result.updated}, "
                 f"preskočeno {result.skipped}. Sinhronizacija zaposlenih: "
                 f"korisnici {sync_result['mobile_users_linked']}, "
+                f"dodele {sync_result['assignments_employee_linked']}, "
                 f"potrošnja {sync_result['usages_employee_linked']}."
             ),
         )

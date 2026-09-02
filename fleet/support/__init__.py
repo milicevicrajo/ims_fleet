@@ -14,7 +14,9 @@ from fleet.support.fuel import (
     calculate_average_fuel_consumption_ever,
     date_range_for_datetime_field,
     filter_nis_fuel_queryset,
+    filter_nis_travel_order_fuel_queryset,
     filter_omv_fuel_queryset,
+    filter_omv_travel_order_fuel_queryset,
     get_fuel_consumption_queryset,
 )
 from fleet.support.garaza import (
@@ -78,7 +80,9 @@ __all__ = [
     "date_range_for_datetime_field",
     "ensure_auto_parts",
     "filter_nis_fuel_queryset",
+    "filter_nis_travel_order_fuel_queryset",
     "filter_omv_fuel_queryset",
+    "filter_omv_travel_order_fuel_queryset",
     "format_license_plate",
     "get_vehicle_center_code",
     "get_vehicle_latest_organizational_unit",

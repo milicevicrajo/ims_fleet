@@ -7,6 +7,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
@@ -26,7 +27,9 @@ from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_expo
 from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
 from .support.fuel import (
 	filter_nis_fuel_queryset,
+	filter_nis_travel_order_fuel_queryset,
 	filter_omv_fuel_queryset,
+	filter_omv_travel_order_fuel_queryset,
 	format_omv_receipt_number,
 	format_receipt_identifier,
 )
@@ -523,7 +526,7 @@ class FuelProductFilterTests(TestCase):
 	def _dt(year, month, day, hour, minute):
 		return timezone.make_aware(datetime.datetime(year, month, day, hour, minute))
 
-	def test_filter_omv_fuel_queryset_excludes_putarina_and_adblue(self):
+	def test_filter_omv_fuel_queryset_excludes_putarina_and_includes_adblue(self):
 		fuel = TransactionOMV.objects.create(
 			issuer="OMV",
 			customer="IMS",
@@ -554,7 +557,7 @@ class FuelProductFilterTests(TestCase):
 			unit_price=Decimal("1.00"),
 			amount=Decimal("4700.00"),
 		)
-		TransactionOMV.objects.create(
+		adblue = TransactionOMV.objects.create(
 			issuer="OMV",
 			customer="IMS",
 			card="123",
@@ -570,9 +573,17 @@ class FuelProductFilterTests(TestCase):
 			amount=Decimal("999.00"),
 		)
 
-		filtered_ids = list(filter_omv_fuel_queryset(TransactionOMV.objects.all()).values_list("id", flat=True))
+		filtered_ids = list(
+			filter_omv_fuel_queryset(TransactionOMV.objects.all()).order_by("id").values_list("id", flat=True)
+		)
+		travel_order_filtered_ids = list(
+			filter_omv_travel_order_fuel_queryset(TransactionOMV.objects.all())
+			.order_by("id")
+			.values_list("id", flat=True)
+		)
 
-		self.assertEqual(filtered_ids, [fuel.id])
+		self.assertEqual(filtered_ids, [fuel.id, adblue.id])
+		self.assertEqual(travel_order_filtered_ids, [fuel.id])
 
 	def test_filter_omv_fuel_queryset_excludes_uninvoiced_receipt_echo(self):
 		final = TransactionOMV.objects.create(
@@ -1157,21 +1168,33 @@ class OMVTransactionImportTests(TestCase):
 			"Invoice No": "8915372196",
 			"Invoice date": "2026-05-15",
 		}
-		non_fuel = {
+		adblue_fuel = {
 			**duplicate_fuel,
 			"Transactiondate": "2026-05-10 19:00:00",
+			"Product INV": "AdBlue Kanister",
+			"Quantity": "10.00",
+			"Gross CC": "1500.00",
+			"VAT": "250.00",
+			"Amount": "1500.00",
+			"Voucher": "00036004",
+			"Invoice No": "8915372197",
+		}
+		non_fuel = {
+			**duplicate_fuel,
+			"Transactiondate": "2026-05-10 20:00:00",
 			"Product INV": "Putarina",
 			"Quantity": "4700.00",
 			"Gross CC": "4700.00",
 			"Amount": "4700.00",
-			"Voucher": "00036004",
-			"Invoice No": "8915372197",
+			"Voucher": "00036005",
+			"Invoice No": "8915372198",
 		}
 
 		with tempfile.NamedTemporaryFile("w", newline="", encoding="utf-8-sig", suffix=".csv", delete=False) as handle:
 			writer = csv.DictWriter(handle, fieldnames=headers, delimiter=";")
 			writer.writeheader()
 			writer.writerow(duplicate_fuel)
+			writer.writerow(adblue_fuel)
 			writer.writerow(non_fuel)
 			csv_path = handle.name
 
@@ -1180,10 +1203,14 @@ class OMVTransactionImportTests(TestCase):
 		finally:
 			os.unlink(csv_path)
 
-		self.assertEqual(result["created"], 0)
+		self.assertEqual(result["created"], 1)
 		self.assertEqual(result["skipped_duplicate_transaction_identities"], 1)
 		self.assertEqual(result["skipped_non_fuel_products"], 1)
-		self.assertEqual(FuelConsumption.objects.count(), 0)
+		self.assertEqual(FuelConsumption.objects.count(), 1)
+		consumption = FuelConsumption.objects.get()
+		self.assertEqual(consumption.fuel_type, "AdBlue Kanister")
+		self.assertEqual(consumption.amount, Decimal("10.00"))
+		self.assertEqual(consumption.cost_bruto, Decimal("1500.00"))
 
 	def test_cleanup_omv_fuel_data_removes_stale_duplicates_and_non_fuel(self):
 		valid_transaction = TransactionOMV.objects.create(
@@ -1331,10 +1358,47 @@ class OMVTransactionImportTests(TestCase):
 			finansijsko_prekoracenje=False,
 			nacin_ocitavanja_kartice="manual",
 		)
+		adblue = TransactionNIS.objects.create(
+			kupac="IMS",
+			sifra_kupca="107248",
+			broj_kartice="123",
+			kompanijski_kod_kupca="217",
+			zemlja_sipanja="SR",
+			benzinska_stanica="MARTINCI 2",
+			id_transakcije="3",
+			app_kod="APP",
+			datum_transakcije=self._dt(2026, 4, 24, 9, 0),
+			tociono_mesto="1",
+			registarska_oznaka_vozila="BG2024-OT",
+			broj_racuna="00211067",
+			kilometraza=0,
+			sipanje_van_rezervoara=False,
+			naziv_proizvoda="Ad Blue 10L",
+			kolicina=Decimal("10.00"),
+			popust=Decimal("0.00"),
+			primenjen_popust="",
+			cena_sa_kase=Decimal("150.00"),
+			cena=Decimal("150.00"),
+			total_sa_kase=Decimal("1500.00"),
+			total=Decimal("1500.00"),
+			valuta="RSD",
+			aktivirano_prekoracenje=False,
+			kolicinsko_prekoracenje=False,
+			finansijsko_prekoracenje=False,
+			nacin_ocitavanja_kartice="manual",
+		)
 
-		filtered_ids = list(filter_nis_fuel_queryset(TransactionNIS.objects.all()).values_list("id", flat=True))
+		filtered_ids = list(
+			filter_nis_fuel_queryset(TransactionNIS.objects.all()).order_by("id").values_list("id", flat=True)
+		)
+		travel_order_filtered_ids = list(
+			filter_nis_travel_order_fuel_queryset(TransactionNIS.objects.all())
+			.order_by("id")
+			.values_list("id", flat=True)
+		)
 
-		self.assertEqual(filtered_ids, [fuel.id])
+		self.assertEqual(filtered_ids, [fuel.id, adblue.id])
+		self.assertEqual(travel_order_filtered_ids, [fuel.id])
 
 
 class VehicleTravelOrderCreateViewTests(TestCase):
@@ -2247,8 +2311,25 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 			unit_price=Decimal("200.00"),
 			amount=Decimal("6000.00"),
 		)
+		TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="OMV",
+			customer="IMS",
+			card="123",
+			license_plate_no="BG000-AA",
+			transaction_date=timezone.make_aware(datetime.datetime(2026, 4, 21, 11, 0)),
+			product_inv="AdBlue Kanister",
+			quantity=Decimal("10.00"),
+			gross_cc=Decimal("1500.00"),
+			vat=Decimal("250.00"),
+			voucher="R3",
+			mileage=Decimal("1100"),
+			unit_price=Decimal("150.00"),
+			amount=Decimal("1500.00"),
+		)
 
 		request = self.factory.get("/")
+		request.user = AnonymousUser()
 		view = VehicleTravelOrderDetailView()
 		view.request = request
 		view.object = order
@@ -2257,6 +2338,7 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 
 		self.assertEqual(context["distance"], 100)
 		self.assertEqual(context["total_liters"], Decimal("50"))
+		self.assertEqual(context["total_amount"], Decimal("10000.00"))
 		self.assertEqual(context["consumption"], Decimal("50"))
 		self.assertEqual([row["invoice"] for row in context["fuel_rows"]], ["8916372386 / R1", "R2"])
 
@@ -2274,6 +2356,7 @@ class VehicleTravelOrderConsumptionTests(TestCase):
 		)
 
 		request = self.factory.get("/")
+		request.user = AnonymousUser()
 		view = VehicleTravelOrderDetailView()
 		view.request = request
 		view.object = order

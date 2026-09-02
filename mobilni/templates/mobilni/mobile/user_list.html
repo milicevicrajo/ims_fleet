@@ -70,6 +70,7 @@
             <th>Korisnik</th>
             <th>OJ</th>
             <th>Status</th>
+            <th>Veza</th>
             <th>Datum odlaska</th>
             <th class="text-center no-sort">Akcija</th>
           </tr>
@@ -88,6 +89,7 @@
                   <span class="fleet-status muted">Neaktivan</span>
                 {% endif %}
               </td>
+              <td>{{ item.get_link_status_display }}</td>
               <td data-order="{{ item.departure_date|date:'Y-m-d' }}">{{ item.departure_date|date:"d.m.Y"|default:"/" }}</td>
               <td class="text-center">
                 <span class="fleet-list-actions">
@@ -105,6 +107,7 @@
             <th>Korisnik</th>
             <th>OJ</th>
             <th>Status</th>
+            <th>Veza</th>
             <th>Datum odlaska</th>
             <th class="no-sort">Akcija</th>
           </tr>

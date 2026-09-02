@@ -80,6 +80,11 @@ urlpatterns = [
         name="mobile_withholding_former_employees",
     ),
     path(
+        "obustave/nezaposleni/",
+        MobileWithholdingReportView.as_view(report_type="nezaposleni"),
+        name="mobile_withholding_non_employees",
+    ),
+    path(
         "obustave/zaposleni/export.csv",
         export_employee_withholdings_csv,
         name="mobile_withholding_employees_export",

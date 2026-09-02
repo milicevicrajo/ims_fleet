@@ -31,6 +31,10 @@
      class="btn btn-sm {% if report_type == report_former_employees %}btn-primary{% else %}btn-outline-primary{% endif %}">
     Bivši zaposleni
   </a>
+  <a href="{% url 'mobilni:mobile_withholding_non_employees' %}"
+     class="btn btn-sm {% if report_type == report_non_employees %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    Nezaposleni
+  </a>
 </div>
 
 <div class="alert alert-info shadow-sm mb-3">

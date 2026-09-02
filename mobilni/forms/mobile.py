@@ -1,6 +1,7 @@
 import datetime
 
 from django import forms
+from django.utils import timezone
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
@@ -29,6 +30,12 @@ class MobilePeriodImportForm(forms.Form):
     year = forms.ChoiceField(label="Godina", choices=year_choices)
     month = forms.ChoiceField(label="Mesec", choices=MONTH_CHOICES)
     file = forms.FileField(label="Fajl")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        today = timezone.localdate()
+        self.initial.setdefault("year", today.year)
+        self.initial.setdefault("month", today.month)
 
 
 class MobileSimpleImportForm(forms.Form):
@@ -77,7 +84,39 @@ class MobileUserForm(forms.ModelForm):
             "is_active",
             "departure_date",
             "employee",
+            "link_status",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        field = self.fields["employee"]
+        field.label_from_instance = self._employee_label
+        field.widget = forms.Select(attrs={"class": "form-select form-control"})
+        field.queryset = Employee.objects.order_by("last_name", "first_name", "employee_code")
+
+    @staticmethod
+    def _employee_label(employee):
+        name = str(employee).strip() or employee.original_full_name or "/"
+        return f"{employee.employee_code} - {name}"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        employee = cleaned_data.get("employee")
+        employee_code = cleaned_data.get("employee_code")
+        link_status = cleaned_data.get("link_status")
+
+        if link_status == MobileUser.LinkStatus.NON_EMPLOYEE:
+            cleaned_data["employee"] = None
+        elif link_status == MobileUser.LinkStatus.MANUAL and not employee:
+            self.add_error("employee", "Izaberi zaposlenog za rucnu vezu.")
+        elif employee and employee_code and employee.employee_code != employee_code:
+            cleaned_data["link_status"] = MobileUser.LinkStatus.MANUAL
+        elif employee and employee_code and employee.employee_code == employee_code:
+            cleaned_data["link_status"] = MobileUser.LinkStatus.AUTO
+        elif link_status == MobileUser.LinkStatus.AUTO and not employee:
+            cleaned_data["link_status"] = MobileUser.LinkStatus.UNMATCHED
+
+        return cleaned_data
 
 
 class MobilePackageChoiceField(forms.ModelChoiceField):
@@ -88,10 +127,11 @@ class MobilePackageChoiceField(forms.ModelChoiceField):
         return label
 
 
-class EmployeeChoiceField(forms.ModelChoiceField):
+class MobileUserChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        name = str(obj).strip() or obj.original_full_name or "/"
-        return f"{obj.employee_code} - {name}"
+        name = obj.full_name or "/"
+        link = obj.get_link_status_display()
+        return f"{obj.employee_code} - {name} ({link})"
 
 
 class MobileAssignmentForm(forms.ModelForm):
@@ -101,11 +141,11 @@ class MobileAssignmentForm(forms.ModelForm):
         label="Paket",
         required=True,
     )
-    employee = EmployeeChoiceField(
-        queryset=Employee.objects.all(),
+    mobile_user = MobileUserChoiceField(
+        queryset=MobileUser.objects.all(),
         widget=Select2Widget(attrs={"class": "select2-method"}),
-        label="Zaposleni",
-        required=True,
+        label="Korisnik mobilnog",
+        required=False,
     )
 
     class Meta:
@@ -116,13 +156,18 @@ class MobileAssignmentForm(forms.ModelForm):
             "phone_number",
             "number_active",
             "package",
-            "employee",
+            "mobile_user",
+            "source_employee_code",
+            "source_full_name",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["package"].queryset = MobilePackage.objects.order_by("name", "-valid_from", "-id")
-        self.fields["employee"].queryset = Employee.objects.order_by("last_name", "first_name", "employee_code")
+        self.fields["mobile_user"].queryset = MobileUser.objects.select_related("employee").order_by(
+            "full_name",
+            "employee_code",
+        )
 
     def clean_phone_number(self):
         value = _clean_mobile_phone_number(self.cleaned_data["phone_number"])
@@ -130,11 +175,38 @@ class MobileAssignmentForm(forms.ModelForm):
             raise forms.ValidationError("Unesi broj telefona.")
         return value
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.mobile_user_id:
+            instance.employee = instance.mobile_user.employee if instance.mobile_user.employee_id else None
+            if instance.source_employee_code is None:
+                instance.source_employee_code = instance.mobile_user.employee_code
+            if not instance.source_full_name:
+                instance.source_full_name = instance.mobile_user.full_name
+        else:
+            instance.employee = None
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
+
 
 class MobileUsageForm(forms.ModelForm):
     class Meta:
         model = MobileUsage
         fields = "__all__"
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        assignment = instance.assignment
+        if assignment:
+            instance.employee = assignment.linked_employee
+        else:
+            instance.employee = None
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
 
 class MobileParkingExemptionForm(forms.ModelForm):
@@ -171,17 +243,17 @@ class MobileParkingExemptionForm(forms.ModelForm):
         assignments = (
             MobileAssignment.objects.exclude(phone_number="")
             .order_by("-year", "-month", "phone_number", "-id")
-            .select_related("employee")
+            .select_related("employee", "mobile_user", "mobile_user__employee")
         )
         for assignment in assignments:
             phone_number = _clean_mobile_phone_number(assignment.phone_number)
             if not phone_number or phone_number in excluded_numbers or phone_number in choices_by_number:
                 continue
             label = phone_number
-            employee = assignment.employee
-            if employee:
-                employee_name = str(employee).strip() or employee.original_full_name or "/"
-                label = f"{label} - {employee.employee_code} {employee_name}"
+            employee_code = assignment.display_employee_code
+            employee_name = assignment.display_employee_name
+            if employee_code or employee_name:
+                label = f"{label} - {employee_code or '/'} {employee_name or '/'}"
             if assignment.year and assignment.month:
                 label = f"{label} ({assignment.month:02d}/{assignment.year})"
             choices_by_number[phone_number] = label

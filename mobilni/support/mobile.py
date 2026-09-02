@@ -203,6 +203,97 @@ def clean_bool(value, default=True):
     return default
 
 
+def employee_display_name(employee):
+    if not employee:
+        return ""
+    return str(employee).strip() or employee.original_full_name or ""
+
+
+def resolve_employee_link(employee_code, employees_by_code=None, mobile_user=None, *, is_active=None):
+    if mobile_user and mobile_user.link_status == MobileUser.LinkStatus.NON_EMPLOYEE:
+        return None, MobileUser.LinkStatus.NON_EMPLOYEE
+    if mobile_user and mobile_user.link_status == MobileUser.LinkStatus.MANUAL:
+        return (
+            mobile_user.employee if mobile_user.employee_id else None,
+            mobile_user.link_status,
+        )
+
+    employees_by_code = employees_by_code or employee_map()
+    employee = employees_by_code.get(employee_code) if employee_code else None
+    if not employee:
+        return None, MobileUser.LinkStatus.UNMATCHED
+    if employee.is_active or is_active is False:
+        return employee, MobileUser.LinkStatus.AUTO
+    return None, MobileUser.LinkStatus.AMBIGUOUS
+
+
+def update_or_create_mobile_user(
+    employee_code,
+    *,
+    full_name="",
+    organizational_unit="",
+    personal_number="",
+    is_active=None,
+    departure_date=None,
+    employees_by_code=None,
+    update_empty=False,
+):
+    if not employee_code:
+        return None, False
+
+    employees_by_code = employees_by_code or employee_map()
+    mobile_user = MobileUser.objects.select_related("employee").filter(employee_code=employee_code).first()
+    employee, link_status = resolve_employee_link(
+        employee_code,
+        employees_by_code,
+        mobile_user,
+        is_active=is_active,
+    )
+    fallback_name = (
+        full_name
+        or (mobile_user.full_name if mobile_user else "")
+        or employee_display_name(employee)
+        or f"Sifra {employee_code}"
+    )
+
+    if not mobile_user:
+        mobile_user = MobileUser.objects.create(
+            employee_code=employee_code,
+            organizational_unit=organizational_unit,
+            full_name=fallback_name,
+            personal_number=personal_number,
+            is_active=True if is_active is None else is_active,
+            departure_date=departure_date,
+            employee=employee,
+            link_status=link_status,
+        )
+        return mobile_user, True
+
+    update_fields = []
+
+    def set_field(field, value):
+        if getattr(mobile_user, field) != value:
+            setattr(mobile_user, field, value)
+            update_fields.append(field)
+
+    if update_empty or organizational_unit:
+        set_field("organizational_unit", organizational_unit)
+    if update_empty or full_name:
+        set_field("full_name", fallback_name)
+    if update_empty or personal_number:
+        set_field("personal_number", personal_number)
+    if is_active is not None:
+        set_field("is_active", is_active)
+    if update_empty or departure_date:
+        set_field("departure_date", departure_date)
+    set_field("employee", employee)
+    set_field("link_status", link_status)
+
+    if update_fields:
+        mobile_user.save(update_fields=[*update_fields, "updated_at"])
+    return mobile_user, False
+
+
 def get_value(row, *names):
     for name in names:
         normalized = normalize_column(name)
@@ -260,17 +351,15 @@ def import_users(uploaded_file):
                 result.skipped += 1
                 continue
 
-            defaults = {
-                "organizational_unit": clean_text(get_value(row, "oj")),
-                "full_name": full_name,
-                "personal_number": clean_text(get_value(row, "matbr")),
-                "is_active": clean_bool(get_value(row, "aktivan"), default=True),
-                "departure_date": clean_date(get_value(row, "dat_odlaska")),
-                "employee": employees_by_code.get(employee_code),
-            }
-            _, created = MobileUser.objects.update_or_create(
+            _, created = update_or_create_mobile_user(
                 employee_code=employee_code,
-                defaults=defaults,
+                full_name=full_name,
+                organizational_unit=clean_text(get_value(row, "oj")),
+                personal_number=clean_text(get_value(row, "matbr")),
+                is_active=clean_bool(get_value(row, "aktivan"), default=True),
+                departure_date=clean_date(get_value(row, "dat_odlaska")),
+                employees_by_code=employees_by_code,
+                update_empty=True,
             )
             result.imported += int(created)
             result.updated += int(not created)
@@ -298,6 +387,11 @@ def import_assignments(uploaded_file, year=None, month=None):
                 continue
 
             employee_code = clean_int(get_value(row, "rasif"))
+            source_full_name = clean_text(get_value(row, "ime", "ranaz"))
+            employee_active = None
+            employee_active_value = get_value(row, "aktivan_radnik", "aktivan")
+            if employee_active_value is not None:
+                employee_active = clean_bool(employee_active_value, default=None)
             package_name = clean_text(get_value(row, "paket"))
             package = find_package_from_candidates(
                 package_name,
@@ -306,8 +400,6 @@ def import_assignments(uploaded_file, year=None, month=None):
                 year=target_year,
                 month=target_month,
             )
-            mobile_user = find_mobile_user(employee_code)
-            employee = find_employee(employee_code, employees_by_code, mobile_user)
             if not package:
                 result.skipped += 1
                 add_import_error(
@@ -315,20 +407,24 @@ def import_assignments(uploaded_file, year=None, month=None):
                     f"Dodela {phone_number} {target_month:02d}/{target_year}: paket '{package_name}' nije pronadjen.",
                 )
                 continue
-            if not employee:
-                result.skipped += 1
-                add_import_error(
-                    result,
-                    f"Dodela {phone_number} {target_month:02d}/{target_year}: radnik '{employee_code or ''}' nije pronadjen.",
-                )
-                continue
 
+            mobile_user, _ = update_or_create_mobile_user(
+                employee_code,
+                full_name=source_full_name,
+                is_active=employee_active,
+                employees_by_code=employees_by_code,
+                update_empty=False,
+            )
+            employee = employee_from_mobile_user(mobile_user)
             defaults = {
                 "number_active": clean_bool(
                     get_value(row, "aktivan_broj", "broj_aktivan"),
                     default=True,
                 ),
                 "package": package,
+                "mobile_user": mobile_user,
+                "source_employee_code": employee_code,
+                "source_full_name": source_full_name or (mobile_user.full_name if mobile_user else ""),
                 "employee": employee,
             }
             _, created = MobileAssignment.objects.update_or_create(
@@ -436,75 +532,133 @@ def find_mobile_user(employee_code):
 
 
 def find_assignment(phone_number, year, month):
-    exact = MobileAssignment.objects.filter(
+    return MobileAssignment.objects.select_related(
+        "employee",
+        "mobile_user",
+        "mobile_user__employee",
+        "package",
+    ).filter(
         year=year,
         month=month,
         phone_number=phone_number,
     ).first()
-    if exact:
-        return exact
-
-    before_or_same = MobileAssignment.objects.filter(
-        phone_number=phone_number,
-    ).filter(
-        year__lt=year,
-    ) | MobileAssignment.objects.filter(
-        phone_number=phone_number,
-        year=year,
-        month__lte=month,
-    )
-    assignment = before_or_same.order_by("-year", "-month", "-id").first()
-    if assignment:
-        return assignment
-
-    return MobileAssignment.objects.filter(phone_number=phone_number).order_by("-year", "-month", "-id").first()
 
 
 def employee_map():
     return {employee.employee_code: employee for employee in Employee.objects.all()}
 
 
-def find_employee(employee_code, employees_by_code=None, mobile_user=None):
-    if mobile_user and mobile_user.employee_id:
-        return mobile_user.employee
-    if not employee_code:
+def find_employee(employee_code, employees_by_code=None, mobile_user=None, *, full_name="", employees_by_name=None):
+    employee, _ = resolve_employee_link(employee_code, employees_by_code, mobile_user)
+    return employee
+
+
+def employee_from_mobile_user(mobile_user):
+    if not mobile_user:
         return None
-    employees_by_code = employees_by_code or employee_map()
-    return employees_by_code.get(employee_code)
+    if mobile_user.link_status == MobileUser.LinkStatus.NON_EMPLOYEE:
+        return None
+    return mobile_user.employee if mobile_user.employee_id else None
 
 
 def employee_from_assignment(assignment):
     if not assignment:
         return None
+    if assignment.mobile_user_id:
+        return employee_from_mobile_user(assignment.mobile_user)
     return assignment.employee if assignment.employee_id else None
+
+
+def assignment_matches_usage(assignment, usage):
+    return bool(
+        assignment
+        and assignment.year == usage.year
+        and assignment.month == usage.month
+        and assignment.phone_number == usage.phone_number
+    )
 
 
 def sync_employee_links():
     result = {
         "mobile_users_linked": 0,
+        "assignments_employee_linked": 0,
         "usages_assignment_linked": 0,
         "usages_employee_linked": 0,
     }
     employees_by_code = employee_map()
 
     with transaction.atomic():
-        for mobile_user in MobileUser.objects.all():
-            employee = employees_by_code.get(mobile_user.employee_code)
-            if employee and mobile_user.employee_id != employee.id:
-                mobile_user.employee = employee
-                mobile_user.save(update_fields=["employee", "updated_at"])
-                result["mobile_users_linked"] += 1
-
-        for usage in MobileUsage.objects.select_related("assignment", "employee"):
+        for mobile_user in MobileUser.objects.select_related("employee"):
+            employee, link_status = resolve_employee_link(
+                mobile_user.employee_code,
+                employees_by_code,
+                mobile_user,
+                is_active=mobile_user.is_active,
+            )
+            employee_id = employee.id if employee else None
             update_fields = []
-            assignment = usage.assignment or find_assignment(usage.phone_number, usage.year, usage.month)
+            if mobile_user.employee_id != employee_id:
+                mobile_user.employee = employee
+                update_fields.append("employee")
+                result["mobile_users_linked"] += 1
+            if mobile_user.link_status != link_status:
+                mobile_user.link_status = link_status
+                update_fields.append("link_status")
+            if update_fields:
+                mobile_user.save(update_fields=[*update_fields, "updated_at"])
+
+        mobile_users_by_code = {item.employee_code: item for item in MobileUser.objects.select_related("employee")}
+        for assignment in MobileAssignment.objects.select_related("employee", "mobile_user", "mobile_user__employee"):
+            mobile_user = assignment.mobile_user
+            if not mobile_user and assignment.source_employee_code:
+                mobile_user = mobile_users_by_code.get(assignment.source_employee_code)
+            if not mobile_user and assignment.employee_id:
+                mobile_user = mobile_users_by_code.get(assignment.employee.employee_code)
+
+            employee = employee_from_mobile_user(mobile_user) if mobile_user else assignment.employee
+            employee_id = employee.id if employee else None
+            source_employee_code = assignment.source_employee_code
+            source_full_name = assignment.source_full_name
+            if mobile_user:
+                source_employee_code = source_employee_code or mobile_user.employee_code
+                source_full_name = source_full_name or mobile_user.full_name
+            elif assignment.employee_id:
+                source_employee_code = source_employee_code or assignment.employee.employee_code
+                source_full_name = source_full_name or employee_display_name(assignment.employee)
+
+            update_fields = []
+            if assignment.mobile_user_id != (mobile_user.id if mobile_user else None):
+                assignment.mobile_user = mobile_user
+                update_fields.append("mobile_user")
+            if assignment.employee_id != employee_id:
+                assignment.employee = employee
+                update_fields.append("employee")
+                result["assignments_employee_linked"] += 1
+            if assignment.source_employee_code != source_employee_code:
+                assignment.source_employee_code = source_employee_code
+                update_fields.append("source_employee_code")
+            if assignment.source_full_name != source_full_name:
+                assignment.source_full_name = source_full_name
+                update_fields.append("source_full_name")
+            if update_fields:
+                assignment.save(update_fields=[*update_fields, "updated_at"])
+
+        for usage in MobileUsage.objects.select_related("assignment", "assignment__mobile_user", "assignment__mobile_user__employee", "employee"):
+            update_fields = []
+            assignment = usage.assignment if assignment_matches_usage(usage.assignment, usage) else None
+            assignment = assignment or find_assignment(usage.phone_number, usage.year, usage.month)
             if assignment and usage.assignment_id != assignment.id:
                 usage.assignment = assignment
                 update_fields.append("assignment")
                 result["usages_assignment_linked"] += 1
+            elif not assignment and usage.assignment_id:
+                usage.assignment = None
+                update_fields.append("assignment")
+                result["usages_assignment_linked"] += 1
 
             employee = employee_from_assignment(assignment)
-            if employee and usage.employee_id != employee.id:
+            employee_id = employee.id if employee else None
+            if usage.employee_id != employee_id:
                 usage.employee = employee
                 update_fields.append("employee")
                 result["usages_employee_linked"] += 1
@@ -613,7 +767,6 @@ def sync_sqlserver_users(conn):
     )
     result = ImportResult()
     employees_by_code = employee_map()
-    source = {}
 
     for row in cursor.fetchall():
         employee_code = clean_int(row.rasif)
@@ -621,41 +774,15 @@ def sync_sqlserver_users(conn):
         if not employee_code or not full_name:
             result.skipped += 1
             continue
-        source[employee_code] = {
-            "full_name": full_name,
-            "is_active": clean_bool(row.aktivan_radnik, default=True),
-            "employee": employees_by_code.get(employee_code),
-        }
-
-    existing = {item.employee_code: item for item in MobileUser.objects.all()}
-    now = timezone.now()
-    to_create = []
-    to_update = []
-    update_fields = ["full_name", "is_active", "employee", "updated_at"]
-    for employee_code, defaults in source.items():
-        item = existing.get(employee_code)
-        if item:
-            for field, value in defaults.items():
-                setattr(item, field, value)
-            item.updated_at = now
-            to_update.append(item)
-        else:
-            to_create.append(
-                MobileUser(
-                    employee_code=employee_code,
-                    organizational_unit="",
-                    personal_number="",
-                    departure_date=None,
-                    created_at=now,
-                    updated_at=now,
-                    **defaults,
-                )
-            )
-
-    MobileUser.objects.bulk_create(to_create, batch_size=500)
-    MobileUser.objects.bulk_update(to_update, update_fields, batch_size=500)
-    result.imported = len(to_create)
-    result.updated = len(to_update)
+        _, created = update_or_create_mobile_user(
+            employee_code,
+            full_name=full_name,
+            is_active=clean_bool(row.aktivan_radnik, default=True),
+            employees_by_code=employees_by_code,
+            update_empty=False,
+        )
+        result.imported += int(created)
+        result.updated += int(not created)
 
     return result
 
@@ -664,7 +791,7 @@ def sync_sqlserver_assignments(conn):
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT god, mesec, broj, aktivan_broj, paket, rasif
+        SELECT god, mesec, broj, aktivan_broj, paket, rasif, ranaz, aktivan_radnik
         FROM dodeljeno
         """
     )
@@ -683,9 +810,9 @@ def sync_sqlserver_assignments(conn):
             continue
 
         employee_code = clean_int(row.rasif)
+        source_full_name = clean_text(row.ranaz)
+        employee_active = clean_bool(row.aktivan_radnik, default=None)
         package_name = clean_text(row.paket)
-        mobile_user = mobile_users_by_code.get(employee_code)
-        employee = find_employee(employee_code, employees_by_code, mobile_user)
         package = find_package_from_candidates(package_name, packages_by_name, year=year, month=month)
         if not package:
             result.skipped += 1
@@ -694,16 +821,32 @@ def sync_sqlserver_assignments(conn):
                 f"Dodela {phone_number} {month:02d}/{year}: paket '{package_name}' nije pronadjen.",
             )
             continue
-        if not employee:
-            result.skipped += 1
-            add_import_error(
-                result,
-                f"Dodela {phone_number} {month:02d}/{year}: radnik '{employee_code or ''}' nije pronadjen.",
+        mobile_user = mobile_users_by_code.get(employee_code)
+        if not mobile_user and employee_code:
+            mobile_user, _ = update_or_create_mobile_user(
+                employee_code,
+                full_name=source_full_name,
+                is_active=employee_active,
+                employees_by_code=employees_by_code,
+                update_empty=False,
             )
-            continue
+            mobile_users_by_code[employee_code] = mobile_user
+        elif mobile_user:
+            mobile_user, _ = update_or_create_mobile_user(
+                employee_code,
+                full_name=source_full_name,
+                is_active=employee_active,
+                employees_by_code=employees_by_code,
+                update_empty=False,
+            )
+            mobile_users_by_code[employee_code] = mobile_user
+        employee = employee_from_mobile_user(mobile_user)
         source[(year, month, phone_number)] = {
             "number_active": clean_bool(row.aktivan_broj, default=True),
             "package": package,
+            "mobile_user": mobile_user,
+            "source_employee_code": employee_code,
+            "source_full_name": source_full_name or (mobile_user.full_name if mobile_user else ""),
             "employee": employee,
         }
 
@@ -717,6 +860,9 @@ def sync_sqlserver_assignments(conn):
     update_fields = [
         "number_active",
         "package",
+        "mobile_user",
+        "source_employee_code",
+        "source_full_name",
         "employee",
         "updated_at",
     ]
@@ -787,7 +933,7 @@ def sync_sqlserver_usages(conn):
         "Placanjenarate": "installments",
         "Ukupnozanaplatu": "total",
     }
-    exact_assignments, assignments_by_phone = assignment_lookup_maps()
+    exact_assignments = assignment_lookup_maps()
     source = {}
 
     for row in cursor.fetchall():
@@ -798,7 +944,7 @@ def sync_sqlserver_usages(conn):
             result.skipped += 1
             continue
 
-        assignment = find_assignment_from_maps(phone_number, year, month, exact_assignments, assignments_by_phone)
+        assignment = find_assignment_from_maps(phone_number, year, month, exact_assignments)
         defaults = {
             "assignment": assignment,
             "employee": employee_from_assignment(assignment),
@@ -872,8 +1018,12 @@ def sync_sqlserver_usages(conn):
 
 def assignment_lookup_maps():
     exact = {}
-    by_phone = {}
-    qs = MobileAssignment.objects.select_related("employee", "package").order_by(
+    qs = MobileAssignment.objects.select_related(
+        "employee",
+        "mobile_user",
+        "mobile_user__employee",
+        "package",
+    ).order_by(
         "phone_number",
         "-year",
         "-month",
@@ -881,18 +1031,8 @@ def assignment_lookup_maps():
     )
     for assignment in qs:
         exact[(assignment.year, assignment.month, assignment.phone_number)] = assignment
-        by_phone.setdefault(assignment.phone_number, []).append(assignment)
-    return exact, by_phone
+    return exact
 
 
-def find_assignment_from_maps(phone_number, year, month, exact_assignments, assignments_by_phone):
-    exact = exact_assignments.get((year, month, phone_number))
-    if exact:
-        return exact
-
-    assignments = assignments_by_phone.get(phone_number, [])
-    for assignment in assignments:
-        if assignment.year < year or (assignment.year == year and assignment.month <= month):
-            return assignment
-
-    return assignments[0] if assignments else None
+def find_assignment_from_maps(phone_number, year, month, exact_assignments):
+    return exact_assignments.get((year, month, phone_number))

@@ -17,7 +17,11 @@ from hr.models import Employee
 
 from ..forms.garaza import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from ..models import TransactionNIS, TransactionOMV, Vehicle, VehicleTravelOrder
-from ..support.fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset, format_omv_receipt_number
+from ..support.fuel import (
+    filter_nis_travel_order_fuel_queryset,
+    filter_omv_travel_order_fuel_queryset,
+    format_omv_receipt_number,
+)
 from ..support.garaza import get_vehicle_center_code, get_vehicle_latest_organizational_unit
 
 
@@ -311,10 +315,10 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
             omv_vehicle_filter &= Q(license_plate_no=registration_number)
             nis_vehicle_filter &= Q(registarska_oznaka_vozila=registration_number)
 
-        omv_period = list(filter_omv_fuel_queryset(
+        omv_period = list(filter_omv_travel_order_fuel_queryset(
             TransactionOMV.objects.filter(omv_vehicle_filter, transaction_date__range=(start_dt, end_dt))
         ).order_by("transaction_date", "id"))
-        nis_period = list(filter_nis_fuel_queryset(
+        nis_period = list(filter_nis_travel_order_fuel_queryset(
             TransactionNIS.objects.filter(nis_vehicle_filter, datum_transakcije__range=(start_dt, end_dt))
         ).order_by("datum_transakcije", "id"))
 

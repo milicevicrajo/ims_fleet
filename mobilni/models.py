@@ -47,6 +47,13 @@ class MobilePackage(models.Model):
 
 
 class MobileUser(models.Model):
+    class LinkStatus(models.TextChoices):
+        AUTO = "auto", _("Automatski")
+        MANUAL = "manual", _("Rucno povezano")
+        UNMATCHED = "unmatched", _("Nepovezano")
+        NON_EMPLOYEE = "non_employee", _("Nezaposleni")
+        AMBIGUOUS = "ambiguous", _("Nejasno")
+
     organizational_unit = models.CharField(_("OJ"), max_length=20, blank=True)
     employee_code = models.IntegerField(_("Šifra radnika"), unique=True)
     full_name = models.CharField(_("Ime i prezime"), max_length=150)
@@ -60,6 +67,12 @@ class MobileUser(models.Model):
         verbose_name=_("Zaposleni"),
         null=True,
         blank=True,
+    )
+    link_status = models.CharField(
+        _("Status veze"),
+        max_length=20,
+        choices=LinkStatus.choices,
+        default=LinkStatus.UNMATCHED,
     )
     created_at = models.DateTimeField(_("Kreirano"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Ažurirano"), auto_now=True)
@@ -96,6 +109,16 @@ class MobileAssignment(models.Model):
         null=True,
         blank=True,
     )
+    mobile_user = models.ForeignKey(
+        MobileUser,
+        on_delete=models.SET_NULL,
+        related_name="assignments",
+        verbose_name=_("Korisnik mobilnog"),
+        null=True,
+        blank=True,
+    )
+    source_employee_code = models.IntegerField(_("Sifra iz dodele"), null=True, blank=True)
+    source_full_name = models.CharField(_("Ime iz dodele"), max_length=150, blank=True, default="")
     employee = models.ForeignKey(
         "fleet.Employee",
         on_delete=models.SET_NULL,
@@ -121,10 +144,56 @@ class MobileAssignment(models.Model):
             models.Index(fields=["year", "month"]),
             models.Index(fields=["phone_number"]),
             models.Index(fields=["employee"]),
+            models.Index(fields=["mobile_user"]),
+            models.Index(fields=["source_employee_code"]),
         ]
 
     def __str__(self):
         return f"{self.phone_number} ({self.month:02d}/{self.year})"
+
+    @property
+    def linked_employee(self):
+        if self.mobile_user_id:
+            if self.mobile_user.link_status == MobileUser.LinkStatus.NON_EMPLOYEE:
+                return None
+            return self.mobile_user.employee if self.mobile_user.employee_id else None
+        if self.employee_id:
+            return self.employee
+        return None
+
+    @property
+    def linked_employee_id(self):
+        employee = self.linked_employee
+        return employee.pk if employee else None
+
+    @property
+    def display_employee_code(self):
+        employee = self.linked_employee
+        if employee:
+            return employee.employee_code
+        if self.source_employee_code is not None:
+            return self.source_employee_code
+        if self.mobile_user_id:
+            return self.mobile_user.employee_code
+        return None
+
+    @property
+    def display_employee_name(self):
+        employee = self.linked_employee
+        if employee:
+            return str(employee).strip() or employee.original_full_name or ""
+        if self.mobile_user_id and self.mobile_user.full_name:
+            return self.mobile_user.full_name
+        return self.source_full_name or ""
+
+    @property
+    def display_personal_number(self):
+        employee = self.linked_employee
+        if employee:
+            return employee.personal_number or ""
+        if self.mobile_user_id:
+            return self.mobile_user.personal_number
+        return ""
 
 
 class MobileUsage(models.Model):

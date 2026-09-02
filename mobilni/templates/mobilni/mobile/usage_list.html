@@ -28,6 +28,7 @@
         <div>
           <label class="form-label mb-1" for="usage-period">Period</label>
           <select id="usage-period" name="period" class="form-control" data-auto-filter data-period-select="true">
+            <option value="" {% if not selected_year and not selected_month %}selected{% endif %}>Svi periodi</option>
             {% for year, month in periods %}
               <option value="{{ year }}-{{ month }}" {% if year == selected_year and month == selected_month %}selected{% endif %}>
                 {{ month|stringformat:"02d" }}/{{ year }}

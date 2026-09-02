@@ -8,6 +8,11 @@ from django.utils import timezone as django_timezone
 from ..models import TrafficCard, TransactionNIS, TransactionOMV
 
 
+ADBLUE_PRODUCT_KEYWORDS = (
+    "adblue",
+    "ad blue",
+)
+
 FUEL_PRODUCT_KEYWORDS = (
     "dizel",
     "diesel",
@@ -21,14 +26,23 @@ FUEL_PRODUCT_KEYWORDS = (
     "cng",
     "tng",
     "ngv",
+    *ADBLUE_PRODUCT_KEYWORDS,
 )
 
 
-def _fuel_product_filter(field_name):
+def _product_keyword_filter(field_name, keywords):
     product_filter = Q()
-    for keyword in FUEL_PRODUCT_KEYWORDS:
+    for keyword in keywords:
         product_filter |= Q(**{f"{field_name}__icontains": keyword})
     return product_filter
+
+
+def _fuel_product_filter(field_name):
+    return _product_keyword_filter(field_name, FUEL_PRODUCT_KEYWORDS)
+
+
+def _adblue_product_filter(field_name):
+    return _product_keyword_filter(field_name, ADBLUE_PRODUCT_KEYWORDS)
 
 
 def is_fuel_product_name(value):
@@ -109,6 +123,14 @@ def filter_omv_fuel_queryset(queryset):
 
 def filter_nis_fuel_queryset(queryset):
     return queryset.filter(_fuel_product_filter("naziv_proizvoda"))
+
+
+def filter_omv_travel_order_fuel_queryset(queryset):
+    return filter_omv_fuel_queryset(queryset).exclude(_adblue_product_filter("product_inv"))
+
+
+def filter_nis_travel_order_fuel_queryset(queryset):
+    return filter_nis_fuel_queryset(queryset).exclude(_adblue_product_filter("naziv_proizvoda"))
 
 
 def format_receipt_identifier(value):
