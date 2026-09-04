@@ -34,10 +34,6 @@ from fleet.support.report_helpers import (
 from fleet.support.report_queries import (
     KASKO_RATE_SQL,
     MAGACIN_SQL,
-    NIS_PUTNICKA_SQL,
-    NIS_TERETNA_SQL,
-    OMV_PUTNICKA_SQL,
-    OMV_TERETNA_SQL,
     OTPIS_SQL,
     PO_DOBAVLJACIMA_SQL,
     POTRAZIVANJE_DDOR_SQL,
@@ -47,7 +43,6 @@ from fleet.support.report_queries import (
     TRO_PARKING_SQL,
     TRO_PRACENJA_VOZILA_SQL,
     TRO_ZARADE_SQL,
-    ZATVOREN_PUTNI_SQL,
 )
 from fleet.support.service_queries import service_monthly_costs_rows
 from fleet.support.vehicle import format_license_plate
@@ -56,10 +51,6 @@ __all__ = [
     "KASKO_RATE_SQL",
     "LONG_TERM_LEASE_TYPES",
     "MAGACIN_SQL",
-    "NIS_PUTNICKA_SQL",
-    "NIS_TERETNA_SQL",
-    "OMV_PUTNICKA_SQL",
-    "OMV_TERETNA_SQL",
     "OTPIS_SQL",
     "PO_DOBAVLJACIMA_SQL",
     "POTRAZIVANJE_DDOR_SQL",
@@ -69,7 +60,6 @@ __all__ = [
     "TRO_PARKING_SQL",
     "TRO_PRACENJA_VOZILA_SQL",
     "TRO_ZARADE_SQL",
-    "ZATVOREN_PUTNI_SQL",
     "_filtered_qs",
     "calculate_average_fuel_consumption",
     "calculate_average_fuel_consumption_ever",

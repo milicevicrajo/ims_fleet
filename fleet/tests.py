@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, SimpleTestCase, TestCase
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 
 from core.models import OrganizationalUnit, PermissionCode, Role
@@ -18,21 +18,27 @@ from nabavka.models import ProcurementInvoice
 from .forms import PreviousVehicleTravelOrderForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
 from .forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
 from hr.models import Employee
-from .models import FuelConsumption, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
+from .models import FuelConsumption, JobCode, Policy, PutniNalog, Requisition, ServiceType, TrafficCard, TransactionNIS, TransactionOMV
 from .models import Vehicle, VehicleTravelOrder
 from .support.dashboard import vehicle_cost_per_km_rows
 from .support.policy_queries import expired_unrenewed_policy_qs, expiring_policy_qs
 from .support.report_helpers import date_period_filtered_query, report_period_filtered_query
-from .report_exports import NIS_TERETNA_EXPORT, OMV_PUTNICKA_EXPORT, report_export_rows
-from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report
+from .report_exports import ReportExportSpec, report_export_rows
+from .views.reports import _export_secondary_report, _render_secondary_report, _render_simple_secondary_report, reports_index
 from .support.fuel import (
 	filter_nis_fuel_queryset,
 	filter_nis_travel_order_fuel_queryset,
 	filter_omv_fuel_queryset,
 	filter_omv_travel_order_fuel_queryset,
+	get_fuel_consumption_queryset,
+	get_fuel_invoice_lines,
+	get_fuel_invoice_queryset,
+	get_vehicle_fuel_transaction_rows,
 	format_omv_receipt_number,
 	format_receipt_identifier,
+	omv_charged_gross_net_amounts,
 )
+from .support.fuel_reports import SUPPLIER_OMV, VEHICLE_TYPE_PASSENGER, fuel_job_code_report
 from .support.fuel_cleanup import cleanup_omv_fuel_data
 from .templatetags.form_filters import receipt_number
 from .views.vehicle_travel_orders import (
@@ -228,6 +234,31 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 		self.factory = RequestFactory()
 
 	@patch("fleet.views.reports.render")
+	def test_reports_index_uses_current_fuel_reports_only(self, render_mock):
+		request = self.factory.get("/fleet/izvestaji/")
+		render_mock.return_value = "rendered"
+
+		response = reports_index(request)
+
+		self.assertEqual(response, "rendered")
+		sections = render_mock.call_args.args[2]["sections"]
+		report_names = [report["name"] for reports in sections.values() for report in reports]
+		report_urls = [report["url"] for reports in sections.values() for report in reports]
+		self.assertIn("Potrosnja goriva po sifri posla - OMV putnicka", report_names)
+		self.assertIn("Potrosnja goriva po sifri posla - NIS teretna", report_names)
+		self.assertNotIn("Spisak vozila po siframa posla", report_names)
+		self.assertNotIn("Zatvoreni putni nalozi", report_names)
+		self.assertNotIn("vehicle_list", report_urls)
+		self.assertNotIn("zatvoreni_putni", report_urls)
+		self.assertNotIn("omv_putnicka", report_urls)
+		self.assertNotIn("nis_teretna", report_urls)
+
+	def test_removed_server_report_route_names_do_not_resolve(self):
+		for name in ("omv_putnicka", "nis_putnicka", "omv_teretna", "nis_teretna", "zatvoreni_putni"):
+			with self.subTest(name=name), self.assertRaises(NoReverseMatch):
+				reverse(name)
+
+	@patch("fleet.views.reports.render")
 	@patch("fleet.views.reports.get_data_from_secondary_db")
 	def test_render_secondary_report_renders_template_with_context(self, get_data_mock, render_mock):
 		request = self.factory.get("/fleet/report/")
@@ -240,7 +271,7 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 			form=form,
 			query="SELECT * FROM x WHERE 1=1",
 			filter_query=report_period_filtered_query,
-			template_name="fleet/reports/omv_putnicka.html",
+			template_name="fleet/reports/test_report.html",
 			title="Test report",
 			export_filename="test.xlsx",
 			export_sheet="Test",
@@ -261,7 +292,12 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 			form=form,
 			query="SELECT * FROM x WHERE 1=1",
 			filter_query=report_period_filtered_query,
-			export_spec=OMV_PUTNICKA_EXPORT,
+			export_spec=ReportExportSpec(
+				filename="test.xlsx",
+				sheet_name="Test",
+				headers=["Sifra pos"],
+				fields=["sifpos"],
+			),
 		)
 
 		self.assertEqual(response, "xlsx")
@@ -301,7 +337,14 @@ class ReportExportRowsTests(SimpleTestCase):
 			}
 		]
 
-		rows = list(report_export_rows(data, OMV_PUTNICKA_EXPORT))
+		spec = ReportExportSpec(
+			filename="test.xlsx",
+			sheet_name="Test",
+			headers=["Sifra pos", "Godina", "Mesec", "Tip vozila", "Polovina", "Bruto", "Neto"],
+			fields=["sifpos", "godina", "mesec", "tipvozila", "polovina", "bruto", "neto"],
+		)
+
+		rows = list(report_export_rows(data, spec))
 
 		self.assertEqual(
 			rows,
@@ -321,7 +364,14 @@ class ReportExportRowsTests(SimpleTestCase):
 			}
 		]
 
-		rows = list(report_export_rows(data, NIS_TERETNA_EXPORT))
+		spec = ReportExportSpec(
+			filename="test.xlsx",
+			sheet_name="Test",
+			headers=["Tip vozila", "Sifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"],
+			fields=["tipvozila", "sifpos", "godina", "mesec", "polovina", "bruto", "neto"],
+		)
+
+		rows = list(report_export_rows(data, spec))
 
 		self.assertEqual(
 			rows,
@@ -682,6 +732,137 @@ class FuelProductFilterTests(TestCase):
 		self.assertEqual(format_receipt_identifier("7,562,133.0"), "7562133")
 
 
+class FuelChargedGrossNetAmountTests(TestCase):
+	@staticmethod
+	def _dt(year, month, day, hour, minute):
+		return timezone.make_aware(datetime.datetime(year, month, day, hour, minute))
+
+	def setUp(self):
+		self.vehicle = Vehicle.objects.create(
+			inventory_number="INV-FUEL-1",
+			chassis_number="WF0XXXFUEL000001",
+			brand="Ford",
+			model="Focus",
+			year_of_manufacture=2021,
+			first_registration_date=datetime.date(2021, 1, 1),
+			color="Bela",
+			number_of_axles=2,
+			engine_volume=Decimal("1599.00"),
+			engine_number="ENG-FUEL-1",
+			weight=Decimal("1400.00"),
+			engine_power=Decimal("88.00"),
+			load_capacity=Decimal("500.00"),
+			category=Vehicle.Category.PASSENGER,
+			maximum_permissible_weight=Decimal("1900.00"),
+			fuel_type="DIZEL",
+			number_of_seats=5,
+			purchase_value=Decimal("10000.00"),
+			value=Decimal("9000.00"),
+		)
+		TrafficCard.objects.create(
+			vehicle=self.vehicle,
+			registration_number="BG1007-KX",
+			issue_date=datetime.date(2021, 1, 1),
+			valid_until=datetime.date(2031, 1, 1),
+			traffic_card_number="TC-FUEL-1",
+			serial_number="SER-FUEL-1",
+			owner="IMS",
+			homologation_number="HOM-FUEL-1",
+		)
+		self.job_code = OrganizationalUnit.objects.create(
+			code="100",
+			name="Test sifra posla",
+			center="10",
+		)
+		JobCode.objects.create(
+			vehicle=self.vehicle,
+			organizational_unit=self.job_code,
+			assigned_date=datetime.date(2026, 1, 1),
+		)
+		self.transaction = TransactionOMV.objects.create(
+			vehicle=self.vehicle,
+			issuer="710111",
+			customer="107248",
+			card="123",
+			license_plate_no="BG1007-KX",
+			transaction_date=self._dt(2026, 2, 28, 12, 37),
+			product_inv="OMV EVRO DIZEL",
+			quantity=Decimal("43.02"),
+			gross_cc=Decimal("8302.86"),
+			vat=Decimal("1383.81"),
+			voucher="00289548",
+			mileage=Decimal("222866"),
+			unit_price=Decimal("200.00"),
+			amount=Decimal("8604.00"),
+			amount_other=Decimal("8604.00"),
+			is_list_price=Decimal("1"),
+			invoice_no="8916357590",
+			invoice_date=datetime.date(2026, 2, 28),
+			invoiced=True,
+		)
+
+	def test_calculates_omv_charged_gross_and_net_amounts(self):
+		self.assertEqual(
+			omv_charged_gross_net_amounts(Decimal("8302.86"), Decimal("1383.81")),
+			(Decimal("8302.86"), Decimal("6919.05")),
+		)
+
+	def test_calculates_omv_net_without_vat_when_vat_is_missing(self):
+		self.transaction.vat = None
+		self.transaction.save(update_fields=["vat"])
+
+		self.assertEqual(
+			omv_charged_gross_net_amounts(Decimal("8302.86"), None),
+			(Decimal("8302.86"), Decimal("6919.05")),
+		)
+		invoice = list(get_fuel_invoice_queryset(vehicle_id=self.vehicle.pk))[0]
+		self.assertEqual(invoice["total_gross"], Decimal("8302.86"))
+		self.assertEqual(invoice["total_net"], Decimal("6919.05"))
+
+	def test_fuel_views_use_omv_charged_amounts_for_list_price_rows(self):
+		invoice = list(get_fuel_invoice_queryset(vehicle_id=self.vehicle.pk))[0]
+		self.assertEqual(invoice["total_gross"], Decimal("8302.86"))
+		self.assertEqual(invoice["total_net"], Decimal("6919.05"))
+		self.assertGreater(invoice["total_gross"], invoice["total_net"])
+
+		invoice_lines = get_fuel_invoice_lines(
+			"OMV",
+			"8916357590 / 00289548",
+			vehicle_id=self.vehicle.pk,
+		)
+		self.assertEqual(invoice_lines[0]["total_gross"], Decimal("8302.86"))
+		self.assertEqual(invoice_lines[0]["total_net"], Decimal("6919.05"))
+
+		vehicle_rows = get_vehicle_fuel_transaction_rows(self.vehicle)
+		self.assertEqual(vehicle_rows[0]["cost_bruto"], Decimal("8302.86"))
+		self.assertEqual(vehicle_rows[0]["cost_neto"], Decimal("6919.05"))
+
+		consumption_row = list(
+			get_fuel_consumption_queryset(
+				datetime.date(2026, 2, 1),
+				datetime.date(2026, 2, 28),
+			)
+		)[0]
+		self.assertEqual(consumption_row["total_gross"], Decimal("8302.86"))
+		self.assertEqual(consumption_row["total_net"], Decimal("6919.05"))
+
+	def test_fuel_job_code_report_uses_omv_charged_amounts(self):
+		form = OMVPutnickaFilterForm(data={"godina": "2026", "mesec": "2"})
+		self.assertTrue(form.is_valid(), form.errors)
+
+		summary, detail = fuel_job_code_report(
+			form,
+			supplier=SUPPLIER_OMV,
+			vehicle_type=VEHICLE_TYPE_PASSENGER,
+			sifpos=self.job_code.code,
+		)
+
+		self.assertEqual(summary[0]["bruto"], Decimal("8302.86"))
+		self.assertEqual(summary[0]["neto"], Decimal("6919.05"))
+		self.assertEqual(detail[0]["bruto"], Decimal("8302.86"))
+		self.assertEqual(detail[0]["neto"], Decimal("6919.05"))
+
+
 class OMVTransactionImportTests(TestCase):
 	@staticmethod
 	def _dt(year, month, day, hour, minute):
@@ -801,8 +982,9 @@ class OMVTransactionImportTests(TestCase):
 		self.assertEqual(transaction.invoice_no, "8916357590")
 		self.assertEqual(transaction.gross_cc, Decimal("8302.86"))
 		self.assertEqual(transaction.quantity, Decimal("43.02"))
-		self.assertEqual(transaction.amount, Decimal("8604.00"))
-		self.assertEqual(transaction.unit_price, Decimal("200.00"))
+		self.assertEqual(transaction.amount, Decimal("8302.86"))
+		self.assertEqual(transaction.amount_other, Decimal("8604.00"))
+		self.assertEqual(transaction.unit_price, Decimal("193.00"))
 
 	def test_import_does_not_overwrite_final_list_price_transaction_with_regular_row(self):
 		TransactionOMV.objects.create(
@@ -818,8 +1000,8 @@ class OMVTransactionImportTests(TestCase):
 			vat=Decimal("1383.81"),
 			voucher="00289548",
 			mileage=Decimal("222866"),
-			unit_price=Decimal("200.00"),
-			amount=Decimal("8604.00"),
+			unit_price=Decimal("193.00"),
+			amount=Decimal("8302.86"),
 			amount_other=Decimal("8604.00"),
 			is_list_price=Decimal("1"),
 			invoice_no="8916357590",
@@ -890,9 +1072,10 @@ class OMVTransactionImportTests(TestCase):
 		self.assertEqual(result["updated"], 0)
 		self.assertEqual(transaction.invoice_no, "8916357590")
 		self.assertEqual(transaction.invoiced, True)
-		self.assertEqual(transaction.amount, Decimal("8604.00"))
+		self.assertEqual(transaction.gross_cc, Decimal("8302.86"))
+		self.assertEqual(transaction.amount, Decimal("8302.86"))
 		self.assertEqual(transaction.amount_other, Decimal("8604.00"))
-		self.assertEqual(transaction.unit_price, Decimal("200.00"))
+		self.assertEqual(transaction.unit_price, Decimal("193.00"))
 
 	def test_import_skips_uninvoiced_receipt_echo_with_wrong_transaction_date(self):
 		TransactionOMV.objects.create(

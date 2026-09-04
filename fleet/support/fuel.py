@@ -1,8 +1,8 @@
 from datetime import date, datetime, time as datetime_time
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
-from django.db.models import Case, CharField, Count, Exists, F, Max, OuterRef, Q, Subquery, Sum, Value, When
-from django.db.models.functions import Concat, TruncDate
+from django.db.models import Case, CharField, Count, DecimalField, Exists, ExpressionWrapper, F, Max, OuterRef, Q, Subquery, Sum, Value, When
+from django.db.models.functions import Coalesce, Concat, TruncDate
 from django.utils import timezone as django_timezone
 
 from ..models import TrafficCard, TransactionNIS, TransactionOMV
@@ -12,6 +12,10 @@ ADBLUE_PRODUCT_KEYWORDS = (
     "adblue",
     "ad blue",
 )
+MONEY_ZERO = Decimal("0.00")
+MONEY_QUANT = Decimal("0.01")
+VAT_NET_NUMERATOR = Decimal("5.00")
+VAT_NET_DENOMINATOR = Decimal("6.00")
 
 FUEL_PRODUCT_KEYWORDS = (
     "dizel",
@@ -28,6 +32,90 @@ FUEL_PRODUCT_KEYWORDS = (
     "ngv",
     *ADBLUE_PRODUCT_KEYWORDS,
 )
+
+
+def _is_missing_amount(value):
+    if value is None:
+        return True
+    try:
+        return value != value
+    except TypeError:
+        return False
+
+
+def _money_output_field():
+    return DecimalField(max_digits=14, decimal_places=2)
+
+
+def _amount_for_decimal(value):
+    if _is_missing_amount(value):
+        return None
+    try:
+        return Decimal(str(value))
+    except Exception:
+        return None
+
+
+def _quantize_money(value):
+    if value is None:
+        return None
+    return value.quantize(MONEY_QUANT, rounding=ROUND_HALF_UP)
+
+
+def net_amount_from_gross_and_vat(gross_value, vat_value=None):
+    gross = _amount_for_decimal(gross_value)
+    if gross is None:
+        return None
+    vat = _amount_for_decimal(vat_value)
+    if vat is not None:
+        return _quantize_money(gross - vat)
+    return _quantize_money(gross * VAT_NET_NUMERATOR / VAT_NET_DENOMINATOR)
+
+
+def omv_charged_gross_net_amounts(gross_cc, vat):
+    gross = _amount_for_decimal(gross_cc)
+    if gross is None:
+        return None, None
+    return _quantize_money(gross), net_amount_from_gross_and_vat(gross, vat)
+
+
+def nis_charged_gross_net_amounts(total):
+    gross = _amount_for_decimal(total)
+    if gross is None:
+        return None, None
+    return _quantize_money(gross), net_amount_from_gross_and_vat(gross)
+
+
+def _coalesced_amount(field_name):
+    return Coalesce(
+        F(field_name),
+        Value(MONEY_ZERO, output_field=_money_output_field()),
+        output_field=_money_output_field(),
+    )
+
+
+def _amount_minus_expression(gross_field, vat_field):
+    return ExpressionWrapper(
+        _coalesced_amount(gross_field) - _coalesced_amount(vat_field),
+        output_field=_money_output_field(),
+    )
+
+
+def _amount_without_vat_expression(gross_field):
+    return ExpressionWrapper(
+        _coalesced_amount(gross_field)
+        * Value(VAT_NET_NUMERATOR, output_field=_money_output_field())
+        / Value(VAT_NET_DENOMINATOR, output_field=_money_output_field()),
+        output_field=_money_output_field(),
+    )
+
+
+def _amount_minus_vat_or_without_vat_expression(gross_field, vat_field):
+    return Case(
+        When(**{f"{vat_field}__isnull": True}, then=_amount_without_vat_expression(gross_field)),
+        default=_amount_minus_expression(gross_field, vat_field),
+        output_field=_money_output_field(),
+    )
 
 
 def _product_keyword_filter(field_name, keywords):
@@ -264,6 +352,10 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     ).order_by("-issue_date").values("registration_number")[:1]
 
     omv_receipt_number = omv_receipt_number_expression()
+    omv_gross = _coalesced_amount("gross_cc")
+    omv_net = _amount_minus_vat_or_without_vat_expression("gross_cc", "vat")
+    nis_gross = _coalesced_amount("total")
+    nis_net = _amount_without_vat_expression("total")
 
     omv_queryset = filter_omv_fuel_queryset(TransactionOMV.objects.all()).annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
@@ -271,8 +363,8 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
         annotated_receipt_number=omv_receipt_number,
         annotated_quantity=F("quantity"),
         price_per_liter=F("unit_price"),
-        total_net=F("amount"),
-        total_gross=F("gross_cc"),
+        total_net=omv_net,
+        total_gross=omv_gross,
         annotated_supplier=Value("OMV", output_field=CharField()),
         annotated_mileage=F("mileage"),
     )
@@ -300,8 +392,8 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
         annotated_receipt_number=F("broj_racuna"),
         annotated_quantity=F("kolicina"),
         price_per_liter=F("cena"),
-        total_net=F("total"),
-        total_gross=F("total_sa_kase"),
+        total_net=nis_net,
+        total_gross=nis_gross,
         annotated_supplier=Value("NIS", output_field=CharField()),
         annotated_mileage=F("kilometraza"),
     )
@@ -332,16 +424,24 @@ def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
     ).order_by("-issue_date").values("registration_number")[:1]
 
     search_value = str(search_value or "").strip()
+    omv_gross = _coalesced_amount("gross_cc")
+    omv_net = _amount_minus_vat_or_without_vat_expression("gross_cc", "vat")
+    nis_gross = _coalesced_amount("total")
+    nis_net = _amount_without_vat_expression("total")
 
     omv_queryset = filter_omv_fuel_queryset(TransactionOMV.objects.all()).annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
         receipt_number=omv_receipt_number_expression(),
         supplier_name=Value("OMV", output_field=CharField()),
+        line_net=omv_net,
+        line_gross=omv_gross,
     )
     nis_queryset = filter_nis_fuel_queryset(TransactionNIS.objects.all()).annotate(
         registration_number=Subquery(latest_traffic_card_subquery),
         receipt_number=F("broj_racuna"),
         supplier_name=Value("NIS", output_field=CharField()),
+        line_net=nis_net,
+        line_gross=nis_gross,
     )
 
     if vehicle_id:
@@ -366,8 +466,8 @@ def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
         .annotate(
             latest_date=Max("transaction_date"),
             quantity_total=Sum("quantity"),
-            total_net=Sum("amount"),
-            total_gross=Sum("gross_cc"),
+            total_net=Sum("line_net"),
+            total_gross=Sum("line_gross"),
             max_mileage=Max("mileage"),
             line_count=Count("id"),
         )
@@ -390,8 +490,8 @@ def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
         .annotate(
             latest_date=Max("datum_transakcije"),
             quantity_total=Sum("kolicina"),
-            total_net=Sum("total"),
-            total_gross=Sum("total_sa_kase"),
+            total_net=Sum("line_net"),
+            total_gross=Sum("line_gross"),
             max_mileage=Max("kilometraza"),
             line_count=Count("id"),
         )
@@ -425,21 +525,24 @@ def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
             queryset = queryset.filter(Q(invoice_no=receipt_number) | Q(voucher=receipt_number))
         if vehicle_id:
             queryset = queryset.filter(vehicle_id=vehicle_id)
-        return [
-            {
-                "supplier": "OMV",
-                "vehicle": row.vehicle,
-                "date": row.transaction_date,
-                "receipt_number": format_omv_receipt_number(row.invoice_no, row.voucher),
-                "product": row.product_inv,
-                "quantity": row.quantity,
-                "price_per_liter": row.unit_price,
-                "total_net": row.amount,
-                "total_gross": row.gross_cc,
-                "mileage": row.mileage,
-            }
-            for row in queryset.order_by("transaction_date", "id")
-        ]
+        rows = []
+        for row in queryset.order_by("transaction_date", "id"):
+            total_gross, total_net = omv_charged_gross_net_amounts(row.gross_cc, row.vat)
+            rows.append(
+                {
+                    "supplier": "OMV",
+                    "vehicle": row.vehicle,
+                    "date": row.transaction_date,
+                    "receipt_number": format_omv_receipt_number(row.invoice_no, row.voucher),
+                    "product": row.product_inv,
+                    "quantity": row.quantity,
+                    "price_per_liter": row.unit_price,
+                    "total_net": total_net,
+                    "total_gross": total_gross,
+                    "mileage": row.mileage,
+                }
+            )
+        return rows
 
     if supplier == "NIS":
         queryset = filter_nis_fuel_queryset(TransactionNIS.objects.select_related("vehicle")).filter(
@@ -447,21 +550,24 @@ def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
         )
         if vehicle_id:
             queryset = queryset.filter(vehicle_id=vehicle_id)
-        return [
-            {
-                "supplier": "NIS",
-                "vehicle": row.vehicle,
-                "date": row.datum_transakcije,
-                "receipt_number": format_receipt_identifier(row.broj_racuna),
-                "product": row.naziv_proizvoda,
-                "quantity": row.kolicina,
-                "price_per_liter": row.cena,
-                "total_net": row.total,
-                "total_gross": row.total_sa_kase,
-                "mileage": row.kilometraza,
-            }
-            for row in queryset.order_by("datum_transakcije", "id")
-        ]
+        rows = []
+        for row in queryset.order_by("datum_transakcije", "id"):
+            total_gross, total_net = nis_charged_gross_net_amounts(row.total)
+            rows.append(
+                {
+                    "supplier": "NIS",
+                    "vehicle": row.vehicle,
+                    "date": row.datum_transakcije,
+                    "receipt_number": format_receipt_identifier(row.broj_racuna),
+                    "product": row.naziv_proizvoda,
+                    "quantity": row.kolicina,
+                    "price_per_liter": row.cena,
+                    "total_net": total_net,
+                    "total_gross": total_gross,
+                    "mileage": row.kilometraza,
+                }
+            )
+        return rows
 
     return []
 
@@ -489,8 +595,8 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         "receipt_number",
         "quantity",
         "unit_price",
-        "amount",
         "gross_cc",
+        "vat",
         "supplier_name",
         "mileage",
     )
@@ -503,35 +609,37 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         "kolicina",
         "cena",
         "total",
-        "total_sa_kase",
         "supplier_name",
         "kilometraza",
     )
 
-    rows = [
-        {
-            "date": row["transaction_date"],
-            "receipt_number": format_receipt_identifier(row["receipt_number"]),
-            "amount": row["quantity"],
-            "price_per_liter": row["unit_price"],
-            "cost_neto": row["amount"],
-            "cost_bruto": row["gross_cc"],
-            "supplier": row["supplier_name"],
-            "mileage": row["mileage"],
-        }
-        for row in omv_rows
-    ]
-    rows.extend(
-        {
-            "date": row["datum_transakcije"],
-            "receipt_number": format_receipt_identifier(row["broj_racuna"]),
-            "amount": row["kolicina"],
-            "price_per_liter": row["cena"],
-            "cost_neto": row["total"],
-            "cost_bruto": row["total_sa_kase"],
-            "supplier": row["supplier_name"],
-            "mileage": row["kilometraza"],
-        }
-        for row in nis_rows
-    )
+    rows = []
+    for row in omv_rows:
+        cost_bruto, cost_neto = omv_charged_gross_net_amounts(row["gross_cc"], row["vat"])
+        rows.append(
+            {
+                "date": row["transaction_date"],
+                "receipt_number": format_receipt_identifier(row["receipt_number"]),
+                "amount": row["quantity"],
+                "price_per_liter": row["unit_price"],
+                "cost_neto": cost_neto,
+                "cost_bruto": cost_bruto,
+                "supplier": row["supplier_name"],
+                "mileage": row["mileage"],
+            }
+        )
+    for row in nis_rows:
+        cost_bruto, cost_neto = nis_charged_gross_net_amounts(row["total"])
+        rows.append(
+            {
+                "date": row["datum_transakcije"],
+                "receipt_number": format_receipt_identifier(row["broj_racuna"]),
+                "amount": row["kolicina"],
+                "price_per_liter": row["cena"],
+                "cost_neto": cost_neto,
+                "cost_bruto": cost_bruto,
+                "supplier": row["supplier_name"],
+                "mileage": row["kilometraza"],
+            }
+        )
     return sorted(rows, key=lambda row: (row["date"], row["supplier"], row["receipt_number"] or ""), reverse=True)

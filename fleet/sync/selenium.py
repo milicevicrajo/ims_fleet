@@ -6,7 +6,7 @@ import sys
 import time
 import unicodedata
 from datetime import date, datetime, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
 import pandas as pd
 import pytz
@@ -1161,16 +1161,6 @@ def import_omv_transactions_from_csv(csv_file_path):
         value = str(value or "").strip().lower()
         return value in {"yes", "da", "true", "1"}
 
-    def apply_list_price_amount(amount, unit_price, amount_other, quantity, is_list_price):
-        if not is_list_price or amount_other in (None, 0):
-            return amount, unit_price
-        corrected_unit_price = unit_price
-        if quantity:
-            corrected_unit_price = (
-                Decimal(str(amount_other)) / Decimal(str(quantity))
-            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        return amount_other, corrected_unit_price
-
     preserved_final = 0
 
     with open(csv_file_path, newline='', encoding='utf-8-sig') as csvfile:
@@ -1197,13 +1187,6 @@ def import_omv_transactions_from_csv(csv_file_path):
                 mileage = parse_decimal(row.get('Mileage'))
                 corrected_mileage = parse_decimal(row.get('Corrected mileage'))
                 is_list_price = 1 if parse_bool(row.get('is listprice ?')) else 0
-                amount, unit_price = apply_list_price_amount(
-                    amount,
-                    unit_price,
-                    amount_other,
-                    quantity,
-                    is_list_price,
-                )
 
                 transaction_date = parse_datetime(row.get('Transactiondate'))
                 invoice_date = parse_date(row.get('Invoice date'))

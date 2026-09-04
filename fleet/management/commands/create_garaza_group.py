@@ -50,7 +50,6 @@ READ_ONLY_PREFIXES = (
     "po_dobavljacima",
     "magacin",
     "otpis",
-    "zatvoreni_putni",
     "export_",
 )
 

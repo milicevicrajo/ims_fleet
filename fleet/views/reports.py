@@ -2,11 +2,8 @@ from django.shortcuts import render
 
 from core.exporting import dataframe_xlsx_response, rows_to_xlsx_response
 
-from ..forms.reports import OMVPutnickaFilterForm, PutnickaFilterForm
-from ..support.report_helpers import (
-    get_data_from_secondary_db,
-    report_period_filtered_query,
-)
+from ..forms.reports import PutnickaFilterForm
+from ..report_exports import report_xlsx_response
 from ..support.fuel_reports import (
     SUPPLIER_NIS,
     SUPPLIER_OMV,
@@ -16,20 +13,10 @@ from ..support.fuel_reports import (
     supplier_label,
     vehicle_type_label,
 )
-from ..report_exports import (
-    NIS_PUTNICKA_EXPORT,
-    NIS_TERETNA_EXPORT,
-    OMV_PUTNICKA_EXPORT,
-    OMV_TERETNA_EXPORT,
-    report_xlsx_response,
-)
+from ..support.report_helpers import get_data_from_secondary_db
 from ..support.report_queries import (
     KASKO_RATE_SQL,
     MAGACIN_SQL,
-    NIS_PUTNICKA_SQL,
-    NIS_TERETNA_SQL,
-    OMV_PUTNICKA_SQL,
-    OMV_TERETNA_SQL,
     OTPIS_SQL,
     PO_DOBAVLJACIMA_SQL,
     POTRAZIVANJE_DDOR_SQL,
@@ -39,39 +26,29 @@ from ..support.report_queries import (
     TRO_PARKING_SQL,
     TRO_PRACENJA_VOZILA_SQL,
     TRO_ZARADE_SQL,
-    ZATVOREN_PUTNI_SQL,
 )
 
 
 def reports_index(request):
-    """Početna stranica za izveštaje sa linkovima."""
     sections = {
         "Finansije": [
-            {"name": "Potrosnja goriva po sifri posla - OMV putnicka (istorijski)", "url": "fuel_job_code_omv_putnicka"},
-            {"name": "Potrosnja goriva po sifri posla - OMV teretna (istorijski)", "url": "fuel_job_code_omv_teretna"},
-            {"name": "Potrosnja goriva po sifri posla - NIS putnicka (istorijski)", "url": "fuel_job_code_nis_putnicka"},
-            {"name": "Potrosnja goriva po sifri posla - NIS teretna (istorijski)", "url": "fuel_job_code_nis_teretna"},
-            {"name": "Spisak vozila po šiframa posla", "url": "vehicle_list"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - OMV putnička", "url": "omv_putnicka"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - OMV teretna", "url": "omv_teretna"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - NIS putnička", "url": "nis_putnicka"},
-            {"name": "Pregled potrošnje goriva po šiframa posla - NIS teretna", "url": "nis_teretna"},
+            {"name": "Potrosnja goriva po sifri posla - OMV putnicka", "url": "fuel_job_code_omv_putnicka"},
+            {"name": "Potrosnja goriva po sifri posla - OMV teretna", "url": "fuel_job_code_omv_teretna"},
+            {"name": "Potrosnja goriva po sifri posla - NIS putnicka", "url": "fuel_job_code_nis_putnicka"},
+            {"name": "Potrosnja goriva po sifri posla - NIS teretna", "url": "fuel_job_code_nis_teretna"},
         ],
-        "Centri": [
-            {"name": "Zatvoreni putni nalozi", "url": "zatvoreni_putni"},
-        ],
-        "Garaža": [
+        "Garaza": [
             {"name": "Trenutno stanje u magacinu", "url": "magacin"},
             {"name": "Spisak otpisanih vozila", "url": "otpis"},
         ],
         "Uprava": [
             {"name": "Promet goriva po mesecima", "url": "tro_gorivo_mesec"},
-            {"name": "Pregled ukupnih troškova, pa po kontima, pa po centrima, po mesecima", "url": "troskovi_svi"},
-            {"name": "Troškovi praćenja vozila", "url": "tro_pracenja_vozila"},
-            {"name": "Troškovi tahografa", "url": "troskovi_tahograf"},
-            {"name": "Troškovi parkinga", "url": "tro_parking"},
-            {"name": "Pregled potraživanja od osiguranja", "url": "potrazivanje_ddor"},
-            {"name": "Pregled najvećih dobavljača usluga", "url": "po_dobavljacima"},
+            {"name": "Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima", "url": "troskovi_svi"},
+            {"name": "Troskovi pracenja vozila", "url": "tro_pracenja_vozila"},
+            {"name": "Troskovi tahografa", "url": "troskovi_tahograf"},
+            {"name": "Troskovi parkinga", "url": "tro_parking"},
+            {"name": "Pregled potrazivanja od osiguranja", "url": "potrazivanje_ddor"},
+            {"name": "Pregled najvecih dobavljaca usluga", "url": "po_dobavljacima"},
         ],
     }
 
@@ -192,117 +169,12 @@ def _render_simple_secondary_report(request, *, query, db_alias, template_name):
     return render(request, template_name, {"data": data})
 
 
-def omv_putnicka_view(request):
-    form = OMVPutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=OMV_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        template_name="fleet/reports/omv_putnicka.html",
-        title="OMV Putnicka vozila",
-        export_filename="omv_putnicka.xlsx",
-        export_sheet="OMV Putnicka",
-    )
-
-
-def export_omv_putnicka_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=OMV_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        export_spec=OMV_PUTNICKA_EXPORT,
-    )
-
-
-def nis_putnicka_view(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=NIS_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        template_name="fleet/reports/nis_putnicka.html",
-        title="NIS Putnicka vozila",
-        export_filename="nis_putnicka.xlsx",
-        export_sheet="NIS Putnicka",
-    )
-
-
-def export_nis_putnicka_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=NIS_PUTNICKA_SQL,
-        filter_query=report_period_filtered_query,
-        export_spec=NIS_PUTNICKA_EXPORT,
-    )
-
-
-def nis_teretna_view(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=NIS_TERETNA_SQL,
-        filter_query=report_period_filtered_query,
-        template_name="fleet/reports/nis_teretna.html",
-        title="NIS Teretna vozila",
-        export_filename="nis_teretna.xlsx",
-        export_sheet="NIS Teretna",
-    )
-
-
-def export_nis_teretna_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=NIS_TERETNA_SQL,
-        filter_query=report_period_filtered_query,
-        export_spec=NIS_TERETNA_EXPORT,
-    )
-
-
-def omv_teretna_view(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _render_secondary_report(
-        request,
-        form=form,
-        query=OMV_TERETNA_SQL,
-        filter_query=report_period_filtered_query,
-        template_name="fleet/reports/omv_teretna.html",
-        title="OMV Teretna vozila",
-        export_filename="omv_teretna.xlsx",
-        export_sheet="OMV Teretna",
-    )
-
-
-def export_omv_teretna_excel(request):
-    form = PutnickaFilterForm(request.GET or None)
-    return _export_secondary_report(
-        form=form,
-        query=OMV_TERETNA_SQL,
-        filter_query=report_period_filtered_query,
-        export_spec=OMV_TERETNA_EXPORT,
-    )
-
-
 def kasko_rate_view(request):
     return _render_simple_secondary_report(
         request,
         query=KASKO_RATE_SQL,
         db_alias="default",
         template_name="fleet/reports/kasko_rate.html",
-    )
-
-
-def zatvoren_putni_view(request):
-    return _render_simple_secondary_report(
-        request,
-        query=ZATVOREN_PUTNI_SQL,
-        db_alias="server_db",
-        template_name="fleet/reports/zatvoreni_putni.html",
     )
 
 

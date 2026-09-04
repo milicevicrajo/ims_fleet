@@ -1,30 +1,4 @@
-OMV_PUTNICKA_SQL = """
-        SELECT sifpos, godina, mesec, tipvozila, polovina, bruto, neto
-        FROM dbo.fleet_omv_sifpos
-        WHERE tipvozila LIKE N'%%PUTNICKO%%'
-    """
-
-NIS_PUTNICKA_SQL = """
-        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
-        FROM dbo.fleet_nis_sifpos
-        WHERE tipvozila LIKE N'%%PUTNICKO%%'
-    """
-
-NIS_TERETNA_SQL = """
-        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
-        FROM dbo.fleet_nis_sifpos
-        WHERE tipvozila LIKE N'%%TERETNO%%'
-    """
-
-OMV_TERETNA_SQL = """
-        SELECT tipvozila, sifpos, godina, mesec, polovina, bruto, neto
-        FROM dbo.fleet_omv_sifpos
-        WHERE tipvozila LIKE N'%%TERETNO%%'
-    """
-
 KASKO_RATE_SQL = "SELECT * FROM dbo.kasko_rate"
-
-ZATVOREN_PUTNI_SQL = "SELECT * FROM dbo.fleet_zatvoren_putni"
 
 MAGACIN_SQL = """
         SELECT sif_pred, god, oj, sif_mag, sif_art, kolul, koliz, popkol, vrulnab, vriznab,

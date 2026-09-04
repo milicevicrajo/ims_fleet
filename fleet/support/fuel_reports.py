@@ -4,7 +4,12 @@ from django.db.models import Case, IntegerField, OuterRef, Q, Subquery, Value, W
 from django.db.models.functions import ExtractMonth, ExtractYear
 
 from ..models import JobCode, TransactionNIS, TransactionOMV, Vehicle
-from .fuel import filter_nis_fuel_queryset, filter_omv_fuel_queryset
+from .fuel import (
+    filter_nis_fuel_queryset,
+    filter_omv_fuel_queryset,
+    nis_charged_gross_net_amounts,
+    omv_charged_gross_net_amounts,
+)
 
 
 VEHICLE_TYPE_PASSENGER = "putnicka"
@@ -137,6 +142,7 @@ def _detail_from_omv(qs, sifpos):
         qs = qs.filter(sifpos=sifpos if sifpos != "Bez sifre" else None)
     rows = []
     for trx in qs.order_by("transaction_date", "vehicle__id", "id"):
+        bruto, neto = omv_charged_gross_net_amounts(trx.gross_cc, trx.vat)
         rows.append(
             {
                 "supplier": "OMV",
@@ -153,8 +159,8 @@ def _detail_from_omv(qs, sifpos):
                 "proizvod": trx.product_inv,
                 "kolicina": trx.quantity or Decimal("0.00"),
                 "cena": trx.unit_price,
-                "bruto": trx.gross_cc or Decimal("0.00"),
-                "neto": trx.amount or Decimal("0.00"),
+                "bruto": bruto or Decimal("0.00"),
+                "neto": neto or Decimal("0.00"),
                 "kilometraza": trx.mileage,
                 "datum_dodele_sifre": trx.datum_dodele_sifre,
             }
@@ -167,6 +173,7 @@ def _detail_from_nis(qs, sifpos):
         qs = qs.filter(sifpos=sifpos if sifpos != "Bez sifre" else None)
     rows = []
     for trx in qs.order_by("datum_transakcije", "vehicle__id", "id"):
+        bruto, neto = nis_charged_gross_net_amounts(trx.total)
         rows.append(
             {
                 "supplier": "NIS",
@@ -183,8 +190,8 @@ def _detail_from_nis(qs, sifpos):
                 "proizvod": trx.naziv_proizvoda,
                 "kolicina": trx.kolicina or Decimal("0.00"),
                 "cena": trx.cena,
-                "bruto": trx.total_sa_kase or Decimal("0.00"),
-                "neto": trx.total or Decimal("0.00"),
+                "bruto": bruto or Decimal("0.00"),
+                "neto": neto or Decimal("0.00"),
                 "kilometraza": trx.kilometraza,
                 "datum_dodele_sifre": trx.datum_dodele_sifre,
             }

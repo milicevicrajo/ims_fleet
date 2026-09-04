@@ -258,7 +258,7 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
 
     def _row_from_omv(self, trx):
         qty = trx.quantity or Decimal("0")
-        amt = trx.amount or Decimal("0")
+        amt = trx.gross_cc or trx.amount or Decimal("0")
         return {
             "date": trx.transaction_date,
             "invoice": format_omv_receipt_number(trx.invoice_no, trx.voucher),

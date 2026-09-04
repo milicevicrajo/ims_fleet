@@ -27,32 +27,3 @@ def report_xlsx_response(spec, data):
         spec.headers,
         report_export_rows(data, spec),
     )
-
-
-OMV_PUTNICKA_EXPORT = ReportExportSpec(
-    filename="omv_putnicka.xlsx",
-    sheet_name="OMV Putnička",
-    headers=["Šifra pos", "Godina", "Mesec", "Tip vozila", "Polovina", "Bruto", "Neto"],
-    fields=["sifpos", "godina", "mesec", "tipvozila", "polovina", "bruto", "neto"],
-)
-
-NIS_PUTNICKA_EXPORT = ReportExportSpec(
-    filename="nis_putnicka.xlsx",
-    sheet_name="NIS Putnička",
-    headers=["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"],
-    fields=["tipvozila", "sifpos", "godina", "mesec", "polovina", "bruto", "neto"],
-)
-
-NIS_TERETNA_EXPORT = ReportExportSpec(
-    filename="nis_teretna.xlsx",
-    sheet_name="NIS Teretna",
-    headers=["Tip vozila", "Sifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"],
-    fields=["tipvozila", "sifpos", "godina", "mesec", "polovina", "bruto", "neto"],
-)
-
-OMV_TERETNA_EXPORT = ReportExportSpec(
-    filename="omv_teretna.xlsx",
-    sheet_name="OMV Teretna",
-    headers=["Tip vozila", "Šifra pos", "Godina", "Mesec", "Polovina", "Bruto", "Neto"],
-    fields=["tipvozila", "sifpos", "godina", "mesec", "polovina", "bruto", "neto"],
-)
