@@ -87,11 +87,15 @@ def read_table(uploaded_file, matcher):
     uploaded_file.seek(0)
 
     if name.endswith((".xlsx", ".xls")):
-        sheets = pd.read_excel(BytesIO(content), sheet_name=None, dtype=object)
+        sheets = pd.read_excel(BytesIO(content), sheet_name=None, header=None, dtype=object)
         for df in sheets.values():
-            normalized = normalize_dataframe(df)
-            if matcher(normalized):
-                return normalized
+            for header_index, row in df.iterrows():
+                columns = [normalize_column(clean_text(value)) for value in row]
+                if matcher(pd.DataFrame(columns=columns)):
+                    table = df.iloc[header_index + 1:].copy()
+                    table.columns = columns
+                    table = table.loc[:, table.columns != ""]
+                    return normalize_dataframe(table).reset_index(drop=True)
         raise ValueError("Fajl nema očekivane kolone.")
 
     text = decode_bytes(content)
@@ -468,6 +472,8 @@ def import_usages(uploaded_file, year=None, month=None):
                 "employee": employee_from_assignment(assignment),
             }
             for source_column, model_field in USAGE_FIELD_MAP.items():
+                if source_column not in row and model_field in defaults:
+                    continue
                 defaults[model_field] = clean_decimal(get_value(row, source_column))
 
             _, created = MobileUsage.objects.update_or_create(

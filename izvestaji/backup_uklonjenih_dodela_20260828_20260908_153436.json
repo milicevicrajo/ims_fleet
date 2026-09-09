@@ -1,0 +1,232 @@
+{
+  "reason": "User requested removal of 14 erroneous vehicle job-code assignments dated 2026-08-28",
+  "created_at": "2026-09-08T13:34:36.677123+00:00",
+  "records": [
+    {
+      "model": "fleet.jobcode",
+      "pk": 20648,
+      "fields": {
+        "vehicle": 141,
+        "organizational_unit": 1,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20649,
+      "fields": {
+        "vehicle": 137,
+        "organizational_unit": 3,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20650,
+      "fields": {
+        "vehicle": 120,
+        "organizational_unit": 14,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20651,
+      "fields": {
+        "vehicle": 122,
+        "organizational_unit": 5,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20652,
+      "fields": {
+        "vehicle": 8,
+        "organizational_unit": 6,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20653,
+      "fields": {
+        "vehicle": 92,
+        "organizational_unit": 2,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20654,
+      "fields": {
+        "vehicle": 114,
+        "organizational_unit": 19,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20655,
+      "fields": {
+        "vehicle": 117,
+        "organizational_unit": 19,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20656,
+      "fields": {
+        "vehicle": 5,
+        "organizational_unit": 13,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20657,
+      "fields": {
+        "vehicle": 146,
+        "organizational_unit": 1,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20658,
+      "fields": {
+        "vehicle": 27,
+        "organizational_unit": 14,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20659,
+      "fields": {
+        "vehicle": 35,
+        "organizational_unit": 14,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20660,
+      "fields": {
+        "vehicle": 36,
+        "organizational_unit": 14,
+        "assigned_date": "2026-08-28"
+      }
+    },
+    {
+      "model": "fleet.jobcode",
+      "pk": 20661,
+      "fields": {
+        "vehicle": 26,
+        "organizational_unit": 14,
+        "assigned_date": "2026-08-28"
+      }
+    }
+  ],
+  "summary": [
+    {
+      "inventory_number": "10986",
+      "deleted_id": 20648,
+      "removed_code": "436111",
+      "previous_code": "413111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "11155",
+      "deleted_id": 20649,
+      "removed_code": "412111",
+      "previous_code": "436222",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "10997",
+      "deleted_id": 20650,
+      "removed_code": "436222",
+      "previous_code": "437111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "10924",
+      "deleted_id": 20651,
+      "removed_code": "421114",
+      "previous_code": "436222",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "10603",
+      "deleted_id": 20652,
+      "removed_code": "832111",
+      "previous_code": "412111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "11267",
+      "deleted_id": 20653,
+      "removed_code": "425002",
+      "previous_code": "436222",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "10720",
+      "deleted_id": 20654,
+      "removed_code": "431111",
+      "previous_code": "413111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "10711",
+      "deleted_id": 20655,
+      "removed_code": "431111",
+      "previous_code": "437111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "11513",
+      "deleted_id": 20656,
+      "removed_code": "811002",
+      "previous_code": "707001",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "11557",
+      "deleted_id": 20657,
+      "removed_code": "436111",
+      "previous_code": "436222",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "11130",
+      "deleted_id": 20658,
+      "removed_code": "436222",
+      "previous_code": "437111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "10880",
+      "deleted_id": 20659,
+      "removed_code": "436222",
+      "previous_code": "413111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "10883",
+      "deleted_id": 20660,
+      "removed_code": "436222",
+      "previous_code": "413111",
+      "later_rows": []
+    },
+    {
+      "inventory_number": "11121",
+      "deleted_id": 20661,
+      "removed_code": "436222",
+      "previous_code": "437111",
+      "later_rows": []
+    }
+  ]
+}

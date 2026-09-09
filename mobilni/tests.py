@@ -4,16 +4,16 @@ from io import BytesIO
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 from core.models import PermissionCode, Role
 from fleet.models import Employee
 from mobilni.forms.mobile import MobileParkingExemptionForm, MobileUserForm
 from mobilni.models import MobileAssignment, MobilePackage, MobileParkingExemption, MobileUsage, MobileUser
-from mobilni.support.mobile import import_assignments, import_usages, sync_employee_links
+from mobilni.support.mobile import import_assignments, import_usages, read_table, sync_employee_links
 from mobilni.withholdings import (
     REPORT_ALL,
     REPORT_EMPLOYEES,
@@ -23,6 +23,49 @@ from mobilni.withholdings import (
     get_withholding_rows,
 )
 from ugovori.models import Contract, ContractType
+
+
+class MobileExcelTableTests(SimpleTestCase):
+    def make_upload(self, preamble=(), include_header=True, summary_sheet=False):
+        workbook = Workbook()
+        sheet = workbook.active
+        if summary_sheet:
+            sheet.append(["Pregled racuna", 1439.4])
+            sheet = workbook.create_sheet("Detalji")
+        for row in preamble:
+            sheet.append(row)
+        if include_header:
+            sheet.append(["Redni broj", "Pretpl.broj", "Ukupno za naplatu"])
+        sheet.append([1, "38162243875", 1439.4])
+        content = BytesIO()
+        workbook.save(content)
+        return SimpleUploadedFile("detalji.xlsx", content.getvalue())
+
+    def test_reads_excel_header_after_invoice_metadata(self):
+        for preamble in ((), (["Sif.kor.:1346312", "Rbr zb.racuna:5"],),
+                         (["Podaci o racunu"], [], ["Period obracuna:299"])):
+            with self.subTest(preamble=preamble):
+                table = read_table(
+                    self.make_upload(preamble),
+                    lambda df: {"pretplbroj", "ukupnozanaplatu"}.issubset(df.columns),
+                )
+                self.assertEqual(len(table), 1)
+                self.assertEqual(table.iloc[0]["pretplbroj"], "38162243875")
+                self.assertEqual(table.iloc[0]["ukupnozanaplatu"], 1439.4)
+
+    def test_finds_detail_sheet_after_summary(self):
+        table = read_table(
+            self.make_upload(summary_sheet=True),
+            lambda df: {"pretplbroj", "ukupnozanaplatu"}.issubset(df.columns),
+        )
+        self.assertEqual(len(table), 1)
+
+    def test_rejects_excel_without_required_columns(self):
+        with self.assertRaisesMessage(ValueError, "Fajl nema očekivane kolone."):
+            read_table(
+                self.make_upload(include_header=False),
+                lambda df: {"pretplbroj", "ukupnozanaplatu"}.issubset(df.columns),
+            )
 
 
 class MobilePermissionTests(TestCase):
@@ -865,3 +908,24 @@ class MobileWithholdingTests(TestCase):
         self.assertEqual(result.imported, 1)
         self.assertIsNone(usage.assignment)
         self.assertIsNone(usage.employee)
+
+    def test_import_excel_usages_with_invoice_metadata_and_discount_aliases(self):
+        for discount_header in ("Varijabilni popust", "Varjabilni popust"):
+            with self.subTest(discount_header=discount_header):
+                workbook = Workbook()
+                sheet = workbook.active
+                sheet.append(["Sif.kor.:1346312", "Period obracuna:299"])
+                sheet.append(["Pretpl.broj", "Ukupno za naplatu", discount_header, "PDV"])
+                sheet.append(["38162243875", 1439.4, 25.5, 239.9])
+                content = BytesIO()
+                workbook.save(content)
+                upload = SimpleUploadedFile("detalji.xlsx", content.getvalue())
+
+                result = import_usages(upload, year=2026, month=6)
+
+                usage = MobileUsage.objects.get(phone_number="38162243875", year=2026, month=6)
+                self.assertEqual(result.imported + result.updated, 1)
+                self.assertEqual(result.skipped, 0)
+                self.assertEqual(usage.total, Decimal("1439.40"))
+                self.assertEqual(usage.variable_discount, Decimal("25.50"))
+                self.assertEqual(usage.vat, Decimal("239.90"))
