@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db import transaction
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import Group, Permission
 import datetime
 
@@ -18,45 +19,72 @@ class Vehicle(models.Model):
         CARGO = "teretno", _("Teretno vozilo")
         TRAILER = "prikljucno", _("Priključno vozilo")
 
-    inventory_number = models.CharField(max_length=20, unique=True, verbose_name=_("Inventarski broj"))
+    inventory_number = models.CharField(max_length=20, unique=True, null=True, blank=True, verbose_name=_("Inventarski broj"))
     chassis_number = models.CharField(max_length=17, unique=True, verbose_name=_("Broj šasije"))
     brand = models.CharField(max_length=50, verbose_name=_("Marka"))
+    photo = models.ImageField(upload_to='vehicles/photos/%Y/%m/', blank=True, verbose_name=_("Slika vozila"))
     model = models.CharField(max_length=50, verbose_name=_("Model"))
     year_of_manufacture = models.IntegerField(verbose_name=_("Godina proizvodnje"))
-    first_registration_date = models.DateField(verbose_name=_("Datum prve registracije"))
-    color = models.CharField(max_length=30, verbose_name=_("Boja"))
-    number_of_axles = models.IntegerField(verbose_name=_("Broj osovina"))
-    engine_volume = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_("Zapremina motora (cm³)"))
-    engine_number = models.CharField(max_length=50, unique=True, verbose_name=_("Broj motora"))
-    weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Masa (kg)"))
-    engine_power = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_("Snaga motora (kW)"))
-    load_capacity = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Nosivost (kg)"))
+    first_registration_date = models.DateField(null=True, blank=True, verbose_name=_("Datum prve registracije"))
+    color = models.CharField(max_length=30, blank=True, verbose_name=_("Boja"))
+    homologation_number = models.CharField(max_length=50, blank=True, verbose_name=_("Homologacioni broj"))
+    number_of_axles = models.IntegerField(null=True, blank=True, verbose_name=_("Broj osovina"))
+    engine_volume = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, verbose_name=_("Zapremina motora (cm³)"))
+    engine_number = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name=_("Broj motora"))
+    weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("Masa (kg)"))
+    engine_power = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, verbose_name=_("Snaga motora (kW)"))
+    load_capacity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("Nosivost (kg)"))
     category = models.CharField(max_length=50, choices=Category.choices, verbose_name=_("Kategorija vozila"))
-    maximum_permissible_weight = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Maksimalna dozvoljena masa (kg)"))
-    fuel_type = models.CharField(max_length=20, verbose_name=_("Vrsta goriva"))
-    number_of_seats = models.IntegerField(verbose_name=_("Broj sedišta"))
-    purchase_value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Nabavna vrednost"))
-    value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Knjigovodstvena vrednost"), null=True)
+    maximum_permissible_weight = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("Maksimalna dozvoljena masa (kg)"))
+    fuel_type = models.CharField(max_length=20, blank=True, verbose_name=_("Vrsta goriva"))
+    number_of_seats = models.IntegerField(null=True, blank=True, verbose_name=_("Broj sedišta"))
+    purchase_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name=_("Nabavna vrednost"))
+    value = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("Knjigovodstvena vrednost"), null=True, blank=True)
     service_interval = models.IntegerField(verbose_name=_("Servisni interval (km)"), default=15000)
     
     # Nova polja
-    purchase_date = models.DateField(verbose_name=_("Datum nabavke"), null=True)
-    partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"), null=True)
-    partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True)
-    invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True)
+    purchase_date = models.DateField(verbose_name=_("Datum nabavke"), null=True, blank=True)
+    partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"), null=True, blank=True)
+    partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True, blank=True)
+    invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True, blank=True)
     description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
 
     otpis = models.BooleanField(_("Otpis"), default=False, editable=False)
 
 
     def __str__(self):
-        traffic_card = self.traffic_cards.first()
+        traffic_card = self.traffic_cards.filter(issue_date__lte=timezone.localdate()).first()
         if traffic_card:
             return f"{traffic_card.registration_number} - {self.brand} {self.model}"
         return f"{self.chassis_number} - {self.brand} {self.model}"
 
 
+class TrafficCardQuerySet(models.QuerySet):
+    def issued(self):
+        return self.filter(issue_date__lte=timezone.localdate())
+
+    def plate_vehicle_map(self, normalize):
+        grouped = {}
+        for plate, vehicle_id in self.order_by().values_list('registration_number', 'vehicle_id'):
+            key = normalize(plate)
+            if key:
+                grouped.setdefault(key, set()).add(vehicle_id)
+        return {key: next(iter(ids)) for key, ids in grouped.items() if len(ids) == 1}
+
+    def for_plate(self, registration_number):
+        """Resolve a plate through document history; never guess between vehicles."""
+        from .support.vehicle import format_license_plate
+        qs = self.filter(registration_number=format_license_plate(registration_number))
+        vehicles = list(qs.order_by().values_list('vehicle_id', flat=True).distinct()[:2])
+        if not vehicles:
+            raise self.model.DoesNotExist('Vozilo za registarsku oznaku nije pronađeno.')
+        if len(vehicles) != 1:
+            raise self.model.MultipleObjectsReturned('Registarska oznaka pripada različitim vozilima; potrebna je provera.')
+        return qs.select_related('vehicle').order_by('-issue_date', '-pk').first()
+
+
 class TrafficCard(models.Model):
+    objects = TrafficCardQuerySet.as_manager()
     vehicle = models.ForeignKey(
         Vehicle,
         on_delete=models.CASCADE,
@@ -73,15 +101,16 @@ class TrafficCard(models.Model):
             )
         ],
         verbose_name=_("Registracioni broj"),
-        unique=True
+        db_index=True
     )
 
     issue_date = models.DateField(verbose_name=_("Datum izdavanja"))
-    valid_until = models.DateField(verbose_name=_("Važi do"))
+    valid_until = models.DateField(null=True, blank=True, verbose_name=_("Rok važenja saobraćajne (ako je naveden)"))
+    registration_valid_until = models.DateField(null=True, blank=True, verbose_name=_("Registracija važi do"))
     traffic_card_number = models.CharField(max_length=50, verbose_name=_("Broj saobraćajne dozvole"))
     serial_number = models.CharField(max_length=50, verbose_name=_("Serijski broj"))
     owner = models.CharField(max_length=100, verbose_name=_("Vlasnik"))
-    homologation_number = models.CharField(max_length=50, verbose_name=_("Homologacioni broj"))
+    homologation_number = models.CharField(max_length=50, blank=True, verbose_name=_("Homologacioni broj — prethodna evidencija"))
 
     traffic_card_pdf = models.FileField(
         upload_to='traffic_cards/',
@@ -101,6 +130,28 @@ class TrafficCard(models.Model):
         null=True,
         blank=True,
     )
+
+    class Meta:
+        ordering = ['-issue_date', '-id']
+        indexes = [models.Index(fields=['vehicle', '-issue_date', '-id'], name='traffic_vehicle_issued_idx')]
+
+    def clean(self):
+        super().clean()
+        from .support.vehicle import format_license_plate
+        self.registration_number = format_license_plate(self.registration_number)
+        errors = {}
+        if self.vehicle_id and type(self).objects.filter(registration_number=self.registration_number).exclude(vehicle_id=self.vehicle_id).exclude(pk=self.pk).exists():
+            errors['registration_number'] = 'Ove tablice su već povezane sa drugim vozilom. Potrebna je provera istorije.'
+        if self.issue_date and self.valid_until and self.valid_until < self.issue_date:
+            errors['valid_until'] = 'Rok dokumenta ne može biti pre datuma izdavanja.'
+        if self.issue_date and self.issue_date > timezone.localdate():
+            errors['issue_date'] = 'Datum izdavanja ne može biti u budućnosti.'
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.registration_number} valid until {self.valid_until}"
@@ -231,6 +282,7 @@ class Lease(models.Model):
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
     job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
     contract_number = models.CharField(max_length=50, verbose_name=_("Broj ugovora"))
+    contract = models.ForeignKey('ugovori.Contract', on_delete=models.PROTECT, null=True, blank=True, related_name='fleet_leases', verbose_name=_("Ugovor iz evidencije Ugovori"))
     current_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Trenutna rata / iznos otplate"))
 
     lease_type = models.CharField(
@@ -256,6 +308,62 @@ class Lease(models.Model):
         if self.is_long_term_rental:
             return "Dugoročni najam"
         return self.get_lease_type_display()
+
+
+class VehicleHolding(models.Model):
+    BASIS_CHOICES = [('owned', 'Vlasništvo IMS'), ('contract', 'Korišćenje po ugovoru')]
+    FINANCING_CHOICES = [('', 'Nije evidentirano'), ('own_funds', 'Sopstvena sredstva'), ('credit', 'Kredit')]
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='holdings', verbose_name=_("Vozilo"))
+    basis = models.CharField(max_length=20, choices=BASIS_CHOICES, verbose_name=_("Osnov raspolaganja"))
+    start_date = models.DateField(verbose_name=_("Važi od"))
+    end_date = models.DateField(null=True, blank=True, verbose_name=_("Važi do (uključivo)"))
+    lease = models.ForeignKey(Lease, on_delete=models.PROTECT, null=True, blank=True, related_name='holdings', verbose_name=_("Lizing / najam"))
+    financing = models.CharField(max_length=20, choices=FINANCING_CHOICES, blank=True, verbose_name=_("Finansiranje nabavke"))
+    financing_contract = models.ForeignKey('ugovori.Contract', on_delete=models.PROTECT, null=True, blank=True, related_name='vehicle_holdings', verbose_name=_("Ugovor o finansiranju"))
+    evidence = models.CharField(max_length=255, blank=True, verbose_name=_("Dokument / osnov promene"))
+    note = models.TextField(blank=True, verbose_name=_("Napomena"))
+
+    class Meta:
+        ordering = ['-start_date', '-id']
+        verbose_name = 'Osnov raspolaganja vozilom'
+        verbose_name_plural = 'Osnovi raspolaganja vozilima'
+        constraints = [models.CheckConstraint(check=models.Q(end_date__isnull=True) | models.Q(end_date__gte=models.F('start_date')), name='holding_dates_order')]
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.end_date and self.start_date and self.end_date < self.start_date:
+            errors['end_date'] = 'Završetak ne može biti pre početka.'
+        if self.basis == 'contract':
+            if not self.lease_id:
+                errors['lease'] = 'Izaberite ugovor o lizingu ili najmu.'
+            elif self.lease.vehicle_id != self.vehicle_id:
+                errors['lease'] = 'Ugovor mora pripadati ovom vozilu.'
+            elif self.start_date and (self.start_date < self.lease.start_date or not self.end_date or self.end_date > self.lease.end_date):
+                errors['end_date'] = 'Period raspolaganja mora biti unutar perioda ugovora.'
+            if self.financing or self.financing_contract_id:
+                errors['financing'] = 'Finansiranje nabavke unosi se za vlasništvo IMS.'
+        elif self.lease_id:
+            errors['lease'] = 'Za vlasništvo IMS ne bira se ugovor o korišćenju.'
+        if self.financing_contract_id and self.financing != 'credit':
+            errors['financing_contract'] = 'Ugovor o finansiranju povezuje se uz kredit.'
+        if self.vehicle_id and self.start_date:
+            overlap = type(self).objects.filter(vehicle_id=self.vehicle_id).exclude(pk=self.pk).filter(models.Q(end_date__isnull=True) | models.Q(end_date__gte=self.start_date))
+            if self.end_date:
+                overlap = overlap.filter(start_date__lte=self.end_date)
+            if overlap.exists():
+                errors['start_date'] = 'Period se preklapa sa postojećim osnovom raspolaganja. Najpre završite prethodni period.'
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic(using=kwargs.get('using') or self._state.db or 'default'):
+            Vehicle.objects.using(kwargs.get('using') or self._state.db or 'default').select_for_update().get(pk=self.vehicle_id)
+            self.full_clean()
+            return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.get_basis_display()} — {self.start_date}'
 
 
 class LeaseInterest(models.Model):
@@ -1218,5 +1326,3 @@ class Insurance(models.Model):
 
     def __str__(self):
         return f"Insurance {self.br_naloga}/{self.stavka} ({self.god})"
-
-

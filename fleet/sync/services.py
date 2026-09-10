@@ -164,7 +164,10 @@ def fetch_service_data(last_24_hours=True, days=None):
                             exc_info=True,
                         )
 
-                vehicle = Vehicle.objects.filter(traffic_cards__registration_number=row[15]).first() if row[15] else None
+                try:
+                    vehicle = TrafficCard.objects.for_plate(row[15]).vehicle if row[15] else None
+                except (TrafficCard.DoesNotExist, TrafficCard.MultipleObjectsReturned):
+                    vehicle = None
 
                 logger.debug("Servisi sync creating draft: br_naloga=%s", row[5])
 
@@ -296,11 +299,7 @@ def fetch_requisition_data(last_24_hours=True, days=None):
             rows = cursor.fetchall()
             logger.debug("Trebovanja sync fetched rows=%s", len(rows))
 
-        reg_to_vehicle = {
-            _plate_key(card.registration_number): card.vehicle_id
-            for card in TrafficCard.objects.only("registration_number", "vehicle_id")
-            if _plate_key(card.registration_number)
-        }
+        reg_to_vehicle = TrafficCard.objects.plate_vehicle_map(_plate_key)
 
         created = 0
         updated = 0

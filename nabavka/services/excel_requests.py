@@ -10,7 +10,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.models import OrganizationalUnit
-from fleet.models import TrafficCard
+from fleet.models import TrafficCard, Vehicle
 
 from ..models import ProcurementCase, ProcurementItem, ProcurementStatusLog
 
@@ -292,10 +292,9 @@ def import_garage_requests_from_excel(
     units_by_code = {
         _normalize_number(unit.code): unit for unit in OrganizationalUnit.objects.all()
     }
-    vehicles_by_plate = {
-        _normalize_plate(card.registration_number): card.vehicle
-        for card in TrafficCard.objects.select_related("vehicle")
-    }
+    plate_vehicle_ids = TrafficCard.objects.plate_vehicle_map(_normalize_plate)
+    vehicles_by_id = Vehicle.objects.in_bulk(set(plate_vehicle_ids.values()))
+    vehicles_by_plate = {plate: vehicles_by_id[pk] for plate, pk in plate_vehicle_ids.items()}
     existing_markers = {}
     for procurement_case in ProcurementCase.objects.filter(note__contains=f"[IMPORT:{SOURCE_CODE}:"):
         for line in (procurement_case.note or "").splitlines():

@@ -140,6 +140,7 @@ from .views.vehicles import (
     vehicle_export_csv,
     vehicle_tender_documentation_zip,
 )
+from .views.vehicle_onboarding import VehicleOnboardingView, VehicleHoldingCreateView, VehicleHoldingUpdateView
 from .views.kvar import (
     KvarCreateView,
     KvarDeleteView,
@@ -219,7 +220,9 @@ urlpatterns = [
     path('vozila/', VehicleListView.as_view(), name='vehicle_list'),
     path('vozila/data/', vehicle_datatable_data, name='vehicle_data'),
     path('vozila/export/csv/', vehicle_export_csv, name='vehicle_export_csv'),
-    path('vozila/novo/', VehicleCreateView.as_view(), name='vehicle_create'),
+    path('vozila/novo/', VehicleOnboardingView.as_view(), name='vehicle_create'),
+    path('vozila/<int:vehicle_id>/osnov/novo/', VehicleHoldingCreateView.as_view(), name='vehicle_holding_create'),
+    path('vozila/<int:vehicle_id>/osnov/<int:pk>/', VehicleHoldingUpdateView.as_view(), name='vehicle_holding_update'),
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
     path('vozila/<int:pk>/tenderska-dokumentacija/', vehicle_tender_documentation_zip, name='vehicle_tender_documentation_zip'),
     path('vozila/<int:pk>/vrati-u-upotrebu/', VehicleRestoreView.as_view(), name='vehicle_restore'),

@@ -1,4 +1,6 @@
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -167,9 +169,23 @@ class TrafficCardCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Cre
     def get_initial(self):
         return {"vehicle": self.kwargs.get("vehicle_id")}
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        vehicle_id = self.kwargs.get('vehicle_id')
+        if vehicle_id:
+            vehicle = get_object_or_404(Vehicle, pk=vehicle_id)
+            form.fields['vehicle'].queryset = Vehicle.objects.filter(pk=vehicle_id)
+            form.fields['vehicle'].initial = vehicle
+            form.fields['vehicle'].disabled = True
+        return form
+
     def form_valid(self, form):
-        response = super().form_valid(form)
-        return redirect("jobcode_create", vehicle_id=self.object.vehicle.id)
+        try:
+            self.object = form.save()
+        except ValidationError as exc:
+            form.add_error(None, exc)
+            return self.form_invalid(form)
+        return redirect('vehicle_detail', pk=self.object.vehicle_id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -183,6 +199,15 @@ class TrafficCardUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
     form_class = TrafficCardForm
     template_name = "fleet/generic_form.html"
     success_url = reverse_lazy("trafficcard_list")
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['vehicle'].disabled = True
+        form.fields['vehicle'].queryset = Vehicle.objects.filter(pk=self.object.vehicle_id)
+        return form
+
+    def get_success_url(self):
+        return reverse('vehicle_detail', kwargs={'pk': self.object.vehicle_id})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -382,9 +382,9 @@ def update_job_codes_from_view():
 
     for regbr, sifpos in rows:
         try:
-            traffic_card = TrafficCard.objects.select_related("vehicle").get(registration_number=regbr)
+            traffic_card = TrafficCard.objects.select_related("vehicle").for_plate(regbr)
             vehicle = traffic_card.vehicle
-        except TrafficCard.DoesNotExist:
+        except (TrafficCard.DoesNotExist, TrafficCard.MultipleObjectsReturned):
             continue
 
         try:

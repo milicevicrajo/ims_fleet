@@ -1,0 +1,24 @@
+<div class="vehicle-hero">
+  <div class="vd-section-heading"><div class="vd-vehicle-heading">
+    {% if vehicle.photo %}<a href="{{ vehicle.photo.url }}" target="_blank" rel="noopener"><img class="vd-vehicle-photo" src="{{ vehicle.photo.url }}" alt="{{ vehicle.brand }} {{ vehicle.model }}"></a>{% endif %}
+    <div>
+    <span class="vehicle-plate">{% if trafic_card %}{{ trafic_card.registration_number }}{% else %}Bez evidentiranih tablica{% endif %}</span>
+    <h1>{{ vehicle.brand }} {{ vehicle.model }}</h1>
+    <p>{{ vehicle.get_category_display }} · {{ vehicle.year_of_manufacture|default_if_none:"Godina nije uneta" }} · {{ vehicle.fuel_type|default:"Gorivo nije uneto" }}</p>
+    <p>VIN <strong>{{ vehicle.chassis_number }}</strong> · Inventar {{ vehicle.inventory_number|default:"nije dodeljen" }}</p>
+  </div></div><div class="vd-actions">
+    <span class="vd-pill">{% if vehicle.otpis %}Otpisano{% else %}U evidenciji aktivnih vozila{% endif %}</span>
+    <a href="{% url 'vehicle_update' vehicle.pk %}" class="btn btn-light">Izmeni podatke</a>
+  </div></div>
+</div>
+<div class="vehicle-kpis vd-state">
+  <div class="vehicle-kpi"><small>Registracija / obavezno osiguranje</small>
+    {% if registration_days != None %}<strong>{% if registration_days < 0 %}Istekla{% elif registration_days <= 30 %}Ističe uskoro{% else %}Važi do{% endif %} {{ trafic_card.registration_valid_until|date:"d.m.Y" }}</strong>
+    {% elif ao_policy %}<strong>AO polisa {% if ao_policy.end_date < today %}istekla{% else %}do{% endif %} {{ ao_policy.end_date|date:"d.m.Y" }}</strong>
+    {% else %}<strong>Rok nije evidentiran</strong>{% endif %}
+    <small>{% if registration_days != None %}Prema evidentiranom roku registracije.{% elif ao_policy %}Rok iz polise autoodgovornosti; rok nalepnice nije unet.{% else %}Nema unetog roka registracije ni AO polise.{% endif %}</small>
+  </div>
+  <div class="vehicle-kpi"><small>Trenutni osnov raspolaganja</small><strong>{{ holding_label }}</strong><small>{% if holding_lease %}{{ holding_lease.get_lease_type_display }} · {{ holding_lease.contract_number }}{% elif current_holding %}{{ current_holding.get_financing_display|default:"Finansiranje nije navedeno" }}{% else %}Bez važećeg ugovora o lizingu / najmu.{% endif %}</small></div>
+  <div class="vehicle-kpi"><small>Trenutna organizaciona jedinica</small><strong>{{ current_job_code.organizational_unit|default:"Nije dodeljena" }}</strong><small>{% if current_job_code %}Od {{ current_job_code.assigned_date|date:"d.m.Y" }}{% else %}Dodela se vodi kroz istoriju šifara posla.{% endif %}</small></div>
+  <div class="vehicle-kpi"><small>Polise koje važe danas</small><strong>{{ active_policies|length }}</strong><small>Na dan {{ today|date:"d.m.Y" }}. Buduće polise su u istoriji.</small></div>
+</div>

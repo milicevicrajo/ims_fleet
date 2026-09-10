@@ -1,0 +1,18 @@
+<li class="vd-mini-item"><div>
+  {% if kind == 'holding' %}
+    <strong>{{ item.get_basis_display }}</strong><small>{{ item.start_date|date:'d.m.Y' }} – {{ item.end_date|date:'d.m.Y'|default:'do daljeg' }}</small>
+    {% if item.lease %}<small>{{ item.lease.get_lease_type_display }} · {{ item.lease.contract_number }}</small>{% else %}<small>{{ item.get_financing_display|default:'—' }}{% if item.financing_contract %} · {{ item.financing_contract }}{% endif %}</small>{% endif %}
+    {% if item.evidence %}<small>{{ item.evidence }}</small>{% endif %}
+  {% elif kind == 'job' %}
+    <strong>{{ item.organizational_unit }}</strong><small>Od {{ item.assigned_date|date:'d.m.Y' }} · {% if item.assigned_date > today %}Planirano{% elif item.pk == current_job_code.pk %}Trenutno{% else %}Prethodno{% endif %}</small>
+  {% elif kind == 'lease' %}
+    <strong>{{ item.contract_number }} · {{ item.get_lease_type_display }}</strong><small>{{ item.partner_name }}</small><small>{{ item.start_date|date:'d.m.Y' }} – {{ item.end_date|date:'d.m.Y' }}</small>
+  {% elif kind == 'policy' %}
+    <strong>{{ item.policy_number|default:'Bez broja' }} · {{ item.insurance_type|default:'Vrsta nije uneta' }}</strong>
+    <small>{{ item.start_date|date:'d.m.Y'|default:'—' }} – {{ item.end_date|date:'d.m.Y'|default:'—' }} · {% if not item.start_date or not item.end_date %}Nepotpuni datumi{% elif item.start_date > today %}Buduća{% elif item.end_date < today %}Istekla{% else %}Važeća{% endif %}</small>
+    <small>Premija: {{ item.premium_amount|floatformat:'2g'|default:'—' }} RSD</small>
+  {% endif %}</div>
+  {% if kind == 'holding' %}<a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_holding_update' vehicle_id=vehicle.id pk=item.pk %}">Izmeni</a>
+  {% elif kind == 'lease' %}<a class="btn btn-sm btn-outline-primary" href="{% url 'lease_detail' item.pk %}">Detalji</a>
+  {% elif kind == 'policy' %}<a class="btn btn-sm btn-outline-primary" href="{% url 'policy_detail' item.pk %}">Detalji</a>{% endif %}
+</li>

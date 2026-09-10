@@ -1,0 +1,33 @@
+<section class="card"><div class="card-body">
+  <div class="vd-section-heading"><h3>Aktuelna saobraćajna dozvola</h3><div class="vd-button-row">{% if latest_traffic_card %}<a class="btn btn-sm btn-outline-primary" href="{% url 'trafficcard_update' latest_traffic_card.pk %}">Izmeni dokument</a>{% endif %}<a class="btn btn-sm btn-primary" href="{% url 'trafficcard_create' vehicle_id=vehicle.pk %}">Nova saobraćajna</a></div></div>
+  {% if latest_traffic_card %}
+  <div class="vd-document-grid">
+    <div><table class="table table-sm detail-table"><tbody>
+      <tr><td>Tablice</td><td><strong>{{ latest_traffic_card.registration_number }}</strong></td></tr>
+      <tr><td>Broj dozvole</td><td>{{ latest_traffic_card.traffic_card_number }}</td></tr>
+      <tr><td>Datum izdavanja</td><td>{{ latest_traffic_card.issue_date|date:"d.m.Y" }}</td></tr>
+      <tr><td>Vlasnik u dokumentu</td><td>{{ latest_traffic_card.owner|default:"—" }}</td></tr>
+      <tr><td>Dokument važi do</td><td>{{ latest_traffic_card.valid_until|date:"d.m.Y"|default:"Nije naveden rok" }}</td></tr>
+      <tr><td>Registracija važi do</td><td>{{ latest_traffic_card.registration_valid_until|date:"d.m.Y"|default:"Nije unet rok sa nalepnice" }}</td></tr>
+    </tbody></table>{% if latest_traffic_card.traffic_card_pdf %}<a class="btn btn-sm btn-outline-primary" href="{{ latest_traffic_card.traffic_card_pdf.url }}" target="_blank" rel="noopener">Otvori PDF</a>{% endif %}</div>
+    <div class="vd-document-image"><h4>Prednja strana</h4>{% if latest_traffic_card.traffic_card_front_image %}<a href="{{ latest_traffic_card.traffic_card_front_image.url }}" target="_blank" rel="noopener"><img class="vehicle-document-preview" src="{{ latest_traffic_card.traffic_card_front_image.url }}" alt="Prednja strana saobraćajne"></a>{% else %}<p class="vd-empty-preview">Slika nije dodata</p>{% endif %}</div>
+    <div class="vd-document-image"><h4>Zadnja strana</h4>{% if latest_traffic_card.traffic_card_back_image %}<a href="{{ latest_traffic_card.traffic_card_back_image.url }}" target="_blank" rel="noopener"><img class="vehicle-document-preview" src="{{ latest_traffic_card.traffic_card_back_image.url }}" alt="Zadnja strana saobraćajne"></a>{% else %}<p class="vd-empty-preview">Slika nije dodata</p>{% endif %}</div>
+  </div>
+  {% else %}<p class="vd-note">Saobraćajna dozvola još nije evidentirana.</p>{% endif %}
+</div></section>
+{% if previous_traffic_cards %}
+<section class="card" id="previous-traffic-cards"><div class="card-body"><h3>Prethodne saobraćajne dozvole</h3>
+  <div class="table-responsive"><table class="table table-sm vd-data"><thead><tr><th>Izdato</th><th>Tablice</th><th>Broj dozvole</th><th>Dokument važi do</th><th>Prilozi</th><th>Radnja</th></tr></thead><tbody>
+    {% for card in previous_traffic_cards %}<tr><td data-order="{{ card.issue_date|date:'Y-m-d' }}">{{ card.issue_date|date:"d.m.Y" }}</td><td>{{ card.registration_number }}</td><td>{{ card.traffic_card_number }}</td><td>{{ card.valid_until|date:"d.m.Y"|default:"—" }}</td><td><div class="vd-button-row">{% if card.traffic_card_front_image %}<a class="btn btn-sm btn-outline-secondary" href="{{ card.traffic_card_front_image.url }}" target="_blank" rel="noopener">Prednja</a>{% endif %}{% if card.traffic_card_back_image %}<a class="btn btn-sm btn-outline-secondary" href="{{ card.traffic_card_back_image.url }}" target="_blank" rel="noopener">Zadnja</a>{% endif %}{% if card.traffic_card_pdf %}<a class="btn btn-sm btn-outline-secondary" href="{{ card.traffic_card_pdf.url }}" target="_blank" rel="noopener">PDF</a>{% endif %}</div></td><td><a class="btn btn-sm btn-outline-primary" href="{% url 'trafficcard_update' card.pk %}">Izmeni</a></td></tr>{% endfor %}
+  </tbody></table></div>
+</div></section>
+{% endif %}
+<section class="card"><div class="card-body">
+  <div class="vd-section-heading"><h3>Ostala dokumentacija vozila</h3><a href="{{ tender_document_create_url }}" class="btn btn-sm btn-primary">Dodaj dokument</a></div>
+  <div class="vd-grid vd-documents">
+    {% for doc in tender_documents %}<article class="vd-document-tile"><div class="vd-section-heading"><div><h4>{{ doc.title }}</h4><small>{{ doc.get_document_type_display }} · {{ doc.created_at|date:"d.m.Y" }}{% if not doc.is_active %} · Neaktivan{% endif %}</small></div><a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_tender_document_detail' doc.pk %}">Detalji</a></div>
+      {% if doc.image %}<a href="{% url 'vehicle_tender_document_detail' doc.pk %}"><img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="vehicle-document-thumb"></a>{% endif %}
+      {% if doc.document_type == 'sticker' %}<form method="post" action="{% url 'vehicle_tender_document_delete' doc.pk %}" onsubmit="return confirm('Ukloniti sliku nalepnice?');">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Ukloni nalepnicu</button></form>{% endif %}
+    </article>{% empty %}<p class="text-muted">Nema dodatih dokumenata.</p>{% endfor %}
+  </div>
+</div></section>

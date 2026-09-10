@@ -1,0 +1,36 @@
+<section class="card" id="vehicle-analysis"><div class="card-body">
+  <div class="vd-section-heading"><div><h2>Evidentirani troškovi</h2><p class="text-muted">Izaberite period za pokazatelje, mesece i stavke goriva i održavanja.</p></div>
+    <form method="get" action="#vehicle-analysis" class="vd-period">
+      <div><label for="id_start">Od</label>{{ period_form.start }}{{ period_form.start.errors }}</div>
+      <div><label for="id_end">Do</label>{{ period_form.end }}{{ period_form.end.errors }}</div>
+      <button class="btn btn-primary" type="submit">Prikaži</button>
+    </form>
+  </div>
+  {{ period_form.non_field_errors }}
+  {% if period_valid %}
+  <p><strong>{{ period_start|date:"d.m.Y" }} – {{ period_end|date:"d.m.Y" }}</strong> · oba datuma uključena · iznosi u RSD</p>
+  <div class="vehicle-kpis">
+    <div class="vehicle-kpi"><small>Gorivo i AdBlue · bruto</small><strong>{% if analytics.counts.fuel %}{{ analytics.totals.fuel|floatformat:"2g" }}{% else %}Nema stavki{% endif %}</strong><small>{{ analytics.counts.fuel }} transakcija NIS / OMV</small></div>
+    <div class="vehicle-kpi"><small>Održavanje · evidentirani iznos</small><strong>{% if analytics.maintenance_count %}{{ analytics.maintenance|floatformat:"2g" }}{% else %}Nema stavki{% endif %}</strong><small>Spoljne usluge i delovi + IMS trebovanja</small></div>
+    <div class="vehicle-kpi"><small>Naknade osiguranja za vozilo</small><strong>{% if analytics.counts.recovery %}{{ analytics.totals.recovery|floatformat:"2g" }}{% else %}Nema stavki{% endif %}</strong><small>Prikazane odvojeno od troškova</small></div>
+    <div class="vehicle-kpi"><small>Razlika očitanja kilometraže</small><strong>{% if analytics.mileage %}{{ analytics.mileage.km|floatformat:0 }} km{% else %}Nedovoljno podataka{% endif %}</strong><small>{% if analytics.mileage %}{{ analytics.mileage.start|date:"d.m.Y" }} – {{ analytics.mileage.end|date:"d.m.Y" }} · sa računa za gorivo{% else %}Potrebna su rastuća očitanja na različite dane.{% endif %}</small></div>
+  </div>
+  {% if analytics.mileage_issue %}<p class="alert alert-warning">{{ analytics.mileage_issue }}</p>{% endif %}
+  <div class="vd-note">Ovo je pregled unetih stavki. Gorivo je bruto; usluge i trebovanja su u iznosima iz izvornih evidencija, bez dodatnog preračuna PDV-a. Nisu objedinjeni u ukupan trošak vlasništva. Premije polisa, lizing/najam, amortizacija i praćenje vozila nisu uključeni u ove pokazatelje. Prazna evidencija ne potvrđuje da troška nije bilo.</div>
+  <div class="row mt-4">
+    <div class="col-lg-8"><h3>Mesečni pregled</h3><p class="text-muted">Prvi i poslednji mesec obuhvataju samo izabrane datume. Crtica znači da nema stavki.</p>
+      <div class="table-responsive"><table class="table table-sm vd-months"><thead><tr><th>Mesec</th><th>Gorivo / AdBlue<br>bruto</th><th>Spoljne usluge<br>i delovi</th><th>IMS<br>trebovanja</th><th>Naknade<br>osiguranja</th></tr></thead><tbody>
+        {% for row in analytics.monthly %}<tr><th>{{ row.month|date:"m.Y" }}</th><td>{{ row.fuel|floatformat:"2g"|default:"—" }}</td><td>{{ row.service|floatformat:"2g"|default:"—" }}</td><td>{{ row.requisition|floatformat:"2g"|default:"—" }}</td><td>{{ row.recovery|floatformat:"2g"|default:"—" }}</td></tr>{% endfor %}
+      </tbody><tfoot><tr><th>Period</th><th>{{ analytics.totals.fuel|floatformat:"2g" }}</th><th>{{ analytics.totals.service|floatformat:"2g" }}</th><th>{{ analytics.totals.requisition|floatformat:"2g" }}</th><th>{{ analytics.totals.recovery|floatformat:"2g" }}</th></tr></tfoot></table></div>
+    </div>
+    <div class="col-lg-4"><h3>Struktura održavanja</h3><p class="text-muted">Spoljne usluge i delovi + IMS trebovanja, za isti period. Prikazane su sve kategorije.</p>
+      {% for category in analytics.categories %}<div class="vd-category"><div><span>{{ category.label }}</span><strong>{{ category.amount|floatformat:"2g" }}</strong></div><progress max="100" value="{{ category.width|stringformat:'.0f' }}" aria-label="{{ category.label }}"></progress>{% if category.amount < 0 %}<small>Negativan saldo / storno</small>{% endif %}</div>{% empty %}<p>Nema stavki održavanja u ovom periodu.</p>{% endfor %}
+    </div>
+  </div>
+  <details class="vd-note"><summary>Kako čitati pokazatelje</summary>
+    <p>Održavanje = spoljne usluge i delovi + vrednost IMS trebovanja. Naknade osiguranja se prikazuju po datumu evidencije i mogu se odnositi na raniju štetu. Negativni iznosi ostaju vidljivi.</p>
+    <p>Razlika očitanja nije potvrđena kilometraža celog perioda. Bez usklađenih očitanja i potpunih troškova nema pouzdane ocene isplativosti niti ukupne cene po kilometru. Količina sa računa ne dokazuje potrošnju goriva, naročito kada uključuje AdBlue.</p>
+    <p>Nabavna i knjigovodstvena vrednost su zasebni podaci vozila. Troškovi održavanja se ne oduzimaju od knjigovodstvene vrednosti.</p>
+  </details>
+  {% else %}<p class="alert alert-warning">Ispravite period da biste videli analitiku i finansijske stavke.</p>{% endif %}
+</div></section>

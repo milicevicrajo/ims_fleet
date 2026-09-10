@@ -143,9 +143,9 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
     latest_center = JobCode.objects.filter(
         vehicle=OuterRef('pk')
     ).order_by('-assigned_date').values('organizational_unit__center')[:1]
-    latest_registration = TrafficCard.objects.filter(
+    latest_registration = TrafficCard.objects.issued().filter(
         vehicle=OuterRef('pk')
-    ).order_by('-issue_date').values('registration_number')[:1]
+    ).order_by('-issue_date', '-id').values('registration_number')[:1]
 
     vehicles = Vehicle.objects.filter(
         otpis=False,

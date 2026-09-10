@@ -1,243 +1,24 @@
 {% extends "base.html" %}
-{% load humanize %}
-{% load form_filters %}
-{% block content %}
+{% load humanize form_filters i18n %}
+{% block content %}{% language "sr-latn" %}
 <style>
-  .vehicle-hero {
-    background: #263238;
-    color: #fff;
-    border-radius: 6px;
-    padding: 22px;
-    margin-bottom: 18px;
-  }
-  .vehicle-plate {
-    display: inline-block;
-    background: #fff;
-    color: #111;
-    border: 2px solid #111;
-    border-radius: 4px;
-    padding: 7px 14px;
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: 1px;
-  }
-  .vehicle-meta {
-    color: rgba(255, 255, 255, .76);
-  }
-  .vehicle-kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-  .vehicle-kpi {
-    background: #fff;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 14px 16px;
-  }
-  .vehicle-kpi small {
-    display: block;
-    color: #6c757d;
-    margin-bottom: 5px;
-  }
-  .vehicle-kpi strong {
-    font-size: 18px;
-  }
-  .vehicle-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-weight: 600;
-  }
-  .vehicle-status-ok {
-    background: #e8f5e9;
-    color: #1b5e20;
-  }
-  .vehicle-status-risk {
-    background: #ffebee;
-    color: #b71c1c;
-  }
-  .vehicle-chart {
-    height: 280px;
-    width: 100%;
-  }
-  .detail-table td:first-child {
-    width: 42%;
-    color: #607d8b;
-    font-weight: 600;
-  }
-  .vehicle-info-row {
-    align-items: stretch;
-  }
-  .vehicle-info-row > [class*="col-"] {
-    display: flex;
-    margin-bottom: 1rem;
-  }
-  .vehicle-info-row > [class*="col-"] > .card {
-    width: 100%;
-    margin-bottom: 0;
-  }
-  .vehicle-info-row .card-body {
-    display: flex;
-    flex-direction: column;
-  }
-  .vehicle-info-row .table {
-    margin-bottom: 0;
-  }
-  .vehicle-fixed-card {
-    height: 300px;
-  }
-  .vehicle-fixed-card .card-body {
-    height: 100%;
-    overflow-y: auto;
-  }
-  .vehicle-document-card {
-    height: 360px;
-  }
-  .vehicle-document-card .card-body {
-    height: 100%;
-    overflow-y: auto;
-  }
-  .vehicle-tabs-card {
-    height: 680px;
-  }
-  .vehicle-tabs-card .card-body {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-  .vehicle-tabs-card .tab-content {
-    min-height: 0;
-    flex: 1;
-    overflow-y: auto;
-  }
-  .vehicle-document-preview {
-    display: block;
-    width: 100%;
-    max-height: 220px;
-    object-fit: contain;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-  }
-  .vehicle-document-thumb {
-    max-height: 150px;
-    width: 100%;
-    object-fit: contain;
-    background: #f8f9fa;
-  }
-</style>
-
-<div class="vehicle-hero">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-    <div>
-      <div class="vehicle-plate">
-        {% if trafic_card %}{{ trafic_card.registration_number }}{% else %}Bez registracije{% endif %}
-      </div>
-      <h1 class="mt-3 mb-1">{{ vehicle.brand }} {{ vehicle.model }}</h1>
-      <div class="vehicle-meta">
-        {{ vehicle.get_category_display }} · {{ vehicle.year_of_manufacture }} · {{ vehicle.fuel_type }} · inventar {{ vehicle.inventory_number }}
-      </div>
-    </div>
-    <div class="text-end">
-      {% if vehicle_cost_per_km_12m %}
-        {% if vehicle_cost_per_km_12m.status == 'Dobro' %}
-          <span class="vehicle-status vehicle-status-ok">{{ vehicle_cost_per_km_12m.status }}</span>
-        {% elif vehicle_cost_per_km_12m.status == 'Za praćenje' %}
-          <span class="vehicle-status vehicle-status-ok">{{ vehicle_cost_per_km_12m.status }}</span>
-        {% elif vehicle_cost_per_km_12m.status == 'Nema podatka' %}
-          <span class="vehicle-status vehicle-status-risk">{{ vehicle_cost_per_km_12m.status }}</span>
-        {% else %}
-          <span class="vehicle-status vehicle-status-risk">{{ vehicle_cost_per_km_12m.status }}</span>
-        {% endif %}
-      {% else %}
-        <span class="vehicle-status vehicle-status-risk">Nema podatka</span>
-      {% endif %}
-      <div class="mt-3">
-        <a href="{% url 'vehicle_tender_documentation_zip' vehicle.pk %}" class="btn btn-sm btn-light" target="vehicle-documentation-download-frame" data-no-preloader download>
-          <i class="mdi mdi-download"></i> Preuzmi tendersku dokumentaciju
-        </a>
-      </div>
-      <div class="vehicle-meta mt-2">
-        {% if current_job_code %}
-          {{ current_job_code.organizational_unit }}
-        {% else %}
-          Bez trenutne šifre posla
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-<iframe name="vehicle-documentation-download-frame" title="Preuzimanje tenderske dokumentacije" class="d-none"></iframe>
-
-<div class="vehicle-kpis">
-  <div class="vehicle-kpi">
-    <small>Knjigovodstvena vrednost</small>
-    <strong>{{ vehicle_analysis.vehicle_value|floatformat:0|intcomma }} RSD</strong>
-  </div>
-  <div class="vehicle-kpi">
-    <small>Neto održavanje</small>
-    <strong>{{ vehicle_analysis.total_maintenance_cost|floatformat:0|intcomma }} RSD</strong>
-  </div>
-  <div class="vehicle-kpi">
-    <small>Održavanje / vrednost</small>
-    <strong>{{ vehicle_analysis.maintenance_value_ratio|floatformat:0 }}%</strong>
-  </div>
-  <div class="vehicle-kpi">
-    <small>Cena po km 12m</small>
-    <strong>
-      {% if vehicle_cost_per_km_12m.row.cost_per_km %}
-        {{ vehicle_cost_per_km_12m.row.cost_per_km|floatformat:2|intcomma }} RSD/km
-      {% else %}
-        -
-      {% endif %}
-    </strong>
-  </div>
-  <div class="vehicle-kpi">
-    <small>Gorivo ukupno</small>
-    <strong>{{ vehicle_analysis.total_fuel_cost|floatformat:0|intcomma }} RSD</strong>
-  </div>
-  <div class="vehicle-kpi">
-    <small>Potrošeno gorivo</small>
-    <strong>{{ vehicle_analysis.total_fuel_liters|floatformat:0|intcomma }} l</strong>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-lg-8">
-    <div class="card">
-      <div class="card-body">
-        <h3 class="card-title">Trošak vozila po mesecima</h3>
-        <div id="vehicleCostChart" class="vehicle-chart"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <h3 class="card-title">Troškovi servisa po tipu popravke</h3>
-        <div id="vehicleServiceCategoryChart" class="vehicle-chart"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row vehicle-info-row">
-  <div class="col-lg-4">
+.vd-page {width:100%;max-width:none;margin:0;color:#263748}.vd-page *{box-sizing:border-box}.vd-page h1{font-size:28px;margin-top:16px}.vd-page h2{font-size:22px}.vd-page h3{font-size:18px;margin-top:14px}.vehicle-hero{background:#20394a;color:#fff;padding:26px;border-radius:12px;margin-bottom:18px}.vehicle-plate{display:inline-block;background:white;color:#182a37;border:2px solid #adc3d0;border-radius:6px;font-size:23px;font-weight:700;padding:7px 16px;letter-spacing:1px}.vd-section-heading{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}.vd-actions{display:flex;flex-direction:column;align-items:flex-start;gap:9px}.vd-pill{border:1px solid #aac2cf;border-radius:20px;padding:5px 12px}.vehicle-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.vehicle-kpi{padding:18px;border:1px solid #dce4ea;border-radius:10px;background:white;overflow-wrap:anywhere}.vehicle-kpi small{display:block;color:#526675;margin:4px 0 9px}.vehicle-kpi strong{font-size:18px;line-height:1.4}.vd-tabs{display:flex;flex-wrap:wrap;gap:5px;border-bottom:1px solid #dce4ea;margin-bottom:18px;padding-bottom:7px}.vd-tabs .nav-link{border:0;border-radius:7px;color:#314c62;padding:12px 18px;background:#eff3f6}.vd-tabs .nav-link.active{background:#20577b;color:white}.vd-page .card{border:1px solid #e0e6eb;border-radius:10px;box-shadow:none}.vd-page .card-body{padding:22px}.vd-page .table td,.vd-page .table th{vertical-align:middle}.detail-table td:first-child{width:46%;color:#526675}.detail-table td{overflow-wrap:anywhere}.vd-period{display:flex;flex-wrap:wrap;align-items:end;gap:10px}.vd-period label{display:block}.vd-period input{padding:8px;border:1px solid #9aaebc;border-radius:5px;max-width:100%;min-width:0}.vd-note{background:#f1f5f8;padding:14px 17px;border-radius:7px;line-height:1.6;margin:16px 0}.vd-records{background:white;border:1px solid #dce4ea;padding:18px;border-radius:9px;margin:14px 0}.vd-records summary,.vd-note summary{cursor:pointer;font-weight:600}.vd-category{margin:18px 0}.vd-category>div{display:flex;justify-content:space-between;gap:10px}.vd-category progress{display:block;width:100%;height:9px;accent-color:#2c7896}.vd-months td,.vd-months th{text-align:right;white-space:nowrap}.vd-months th:first-child{text-align:left}.vehicle-document-preview{display:block;width:100%;max-height:240px;object-fit:contain;background:#f4f7f9}.vehicle-document-thumb{width:100%;max-height:150px;object-fit:contain}.vd-page .table-responsive{max-width:100%}.vd-page .errorlist{color:#a32922}.vd-page .tab-pane{min-width:0}.vd-page .row>div{min-width:0}.vd-shell>.card-body{padding:22px;background:#fff}.vd-page .vd-shell .card{background:#fafcfd;border-color:#dbe4eb}.vehicle-info-row{align-items:stretch}.vehicle-info-row>div{display:flex}.vehicle-info-row>div>.card{width:100%;margin-bottom:0}.vd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.vd-grid>.card{margin-bottom:0}.vd-page .vd-section-heading{align-items:center;margin-bottom:16px}.vd-page .vd-section-heading h3{margin:0}.vd-current{padding:12px;background:#edf3f7;border-radius:6px}.vd-page .table thead th{background:#edf3f7;font-weight:600;border-bottom:1px solid #cad7e0;padding:12px 10px}.vd-page .table td{padding:10px;border-bottom:1px solid #e3eaf0}.vd-page .table tbody tr:nth-child(even){background:#f4f7fa}.vd-page .table tbody tr:hover{background:#eaf1f6}.vd-page .table .btn{white-space:nowrap}.vd-button-row{display:flex;gap:8px;flex-wrap:wrap}.vd-document-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:20px}.vd-document-image{border:1px solid #dbe4eb;padding:15px;border-radius:8px;background:white}.vd-document-image h4{font-size:15px}.vd-empty-preview{height:200px;display:flex;align-items:center;justify-content:center;background:#edf3f7;color:#6a7d8b}.vd-document-tile{border:1px solid #dbe4eb;border-radius:8px;padding:18px;background:white}.vd-document-tile h4{font-size:16px}.vd-document-tile .vehicle-document-thumb{margin:12px 0}.vd-page .dt-container{width:100%;padding-top:10px}.vd-page .dt-search input,.vd-page .dt-length select{border:1px solid #aabbc8;border-radius:5px;padding:6px}.vd-page .dataTables_wrapper{width:100%}
+.vd-page .btn{border-radius:6px;font-weight:500}.vd-page .btn-outline-primary{color:#20577b;border-color:#a7c0d0;background:white}.vd-page .btn-outline-primary:hover{color:white;background:#20577b;border-color:#20577b}.vd-page .btn-primary{background:#20577b;border-color:#20577b}.vd-grid .table td,.vd-grid .table th{padding:9px 7px}.vd-grid .table{font-size:13px}.vd-grid .dt-search input{max-width:145px}.vd-mini-list{list-style:none;padding:0;margin:0}.vd-mini-item{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #dfe7ed}.vd-mini-item:last-child{border-bottom:0}.vd-mini-item small{display:block;color:#607381;margin-top:4px}.vd-mini-item .btn{flex-shrink:0}.vd-mini-more{margin-top:10px}.vd-mini-more summary{cursor:pointer;color:#20577b;font-weight:600;padding:8px 0}.vd-mini-item strong{overflow-wrap:anywhere}.vd-vehicle-heading{display:flex;align-items:center;gap:24px}.vd-vehicle-photo{width:220px;height:160px;object-fit:cover;border-radius:9px;border:1px solid #718997}</style><div class="vd-page">{% include "fleet/_vehicle_overview.html" %}<div class="card vd-shell"><div class="card-body"><nav class="nav vd-tabs" role="tablist" aria-label="Detalji vozila"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab" aria-controls="overview-pane" aria-selected="true">Podaci</button><button class="nav-link" id="holding-tab" data-bs-toggle="tab" data-bs-target="#holding-pane" type="button" role="tab" aria-controls="holding-pane" aria-selected="false">Raspolaganje i polise</button><button class="nav-link" id="cost-tab" data-bs-toggle="tab" data-bs-target="#cost-pane" type="button" role="tab" aria-controls="cost-pane" aria-selected="false">Troškovi</button><button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage-pane" type="button" role="tab" aria-controls="usage-pane" aria-selected="false">Korišćenje</button><button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-controls="documents-pane" aria-selected="false">Dokumenti</button></nav><div class="tab-content"><section class="tab-pane fade show active" id="overview-pane" role="tabpanel" aria-labelledby="overview-tab" tabindex="0"><div class="row vehicle-info-row" id="vehicle-basics">
+  <div class="col-lg-6">
     <div class="card">
       <div class="card-body">
         <h3 class="card-title">Identitet vozila</h3>
         <table class="table table-sm detail-table">
           <tbody>
             <tr><td>Broj šasije</td><td>{{ vehicle.chassis_number }}</td></tr>
-            <tr><td>Broj motora</td><td>{{ vehicle.engine_number }}</td></tr>
+            <tr><td>Inventarski broj</td><td>{{ vehicle.inventory_number|default:"Nije dodeljen" }}</td></tr>
+            <tr><td>Boja</td><td>{{ vehicle.color|default:"Nije uneta" }}</td></tr>
+            <tr><td>Homologacioni broj</td><td>{{ vehicle.homologation_number|default:"Nije unet / proveriti prethodne dokumente" }}</td></tr>
+            <tr><td>Broj motora</td><td>{{ vehicle.engine_number|default:"Nije unet / nije primenljivo" }}</td></tr>
             <tr><td>Prva registracija</td><td>{{ vehicle.first_registration_date|date:"d.m.Y" }}</td></tr>
             <tr><td>Datum nabavke</td><td>{{ vehicle.purchase_date|date:"d.m.Y" }}</td></tr>
-            <tr><td>Nabavna vrednost</td><td>{{ vehicle.purchase_value|floatformat:0|intcomma }} RSD</td></tr>
-            <tr><td>Knjigovodstvena vrednost</td><td>{{ vehicle.value|floatformat:0|intcomma }} RSD</td></tr>
+            <tr><td>Nabavna vrednost</td><td>{% if vehicle.purchase_value != None %}{{ vehicle.purchase_value|floatformat:0|intcomma }} RSD{% else %}Nije uneto{% endif %}</td></tr>
+            <tr><td>Knjigovodstvena vrednost</td><td>{% if vehicle.value != None %}{{ vehicle.value|floatformat:0|intcomma }} RSD{% else %}Nije uneto{% endif %}</td></tr>
             <tr><td>Partner</td><td>{{ vehicle.partner_name|default:"-" }}</td></tr>
             <tr><td>Faktura</td><td>{{ vehicle.invoice_number|default:"-" }}</td></tr>
           </tbody>
@@ -247,242 +28,36 @@
 
   </div>
 
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <h3 class="card-title">Gorivo</h3>
-        <table class="table table-sm detail-table">
-          <tbody>
-            <tr><td>NIS kartica</td><td>{% if nis_card %}{{ nis_card.broj_kartice|floatformat:0 }}{% else %}-{% endif %}</td></tr>
-            <tr><td>OMV kartica</td><td>{% if omv_card %}{{ omv_card.card }}{% else %}-{% endif %}</td></tr>
-            <tr><td>Prosek poslednjih 10 točenja</td><td>{% if average_consumption %}{{ average_consumption|floatformat:2 }} l/100km{% else %}-{% endif %}</td></tr>
-            <tr><td>Prosek ukupno</td><td>{% if average_consumption_ever %}{{ average_consumption_ever|floatformat:2 }} l/100km{% else %}-{% endif %}</td></tr>
-            <tr><td>Prosečna cena po litru</td><td>{{ vehicle_analysis.fuel_cost_per_liter|floatformat:2 }} RSD</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="col-lg-4">
+  <div class="col-lg-6">
     <div class="card">
       <div class="card-body">
         <h3 class="card-title">Tehnički podaci</h3>
         <table class="table table-sm detail-table">
           <tbody>
-            <tr><td>Zapremina motora</td><td>{{ vehicle.engine_volume|floatformat:0 }} cm³</td></tr>
-            <tr><td>Snaga motora</td><td>{{ vehicle.engine_power|floatformat:0 }} kW</td></tr>
-            <tr><td>Masa</td><td>{{ vehicle.weight|floatformat:0|intcomma }} kg</td></tr>
-            <tr><td>Nosivost</td><td>{{ vehicle.load_capacity|floatformat:0|intcomma }} kg</td></tr>
-            <tr><td>Max dozvoljena masa</td><td>{{ vehicle.maximum_permissible_weight|floatformat:0|intcomma }} kg</td></tr>
-            <tr><td>Broj osovina</td><td>{{ vehicle.number_of_axles }}</td></tr>
-            <tr><td>Broj sedišta</td><td>{{ vehicle.number_of_seats }}</td></tr>
-            <tr><td>Servisni interval</td><td>{{ vehicle.service_interval|floatformat:0|intcomma }} km</td></tr>
+            <tr><td>Zapremina motora</td><td>{% if vehicle.engine_volume != None %}{{ vehicle.engine_volume|floatformat:0 }} cm³{% else %}Nije uneto{% endif %}</td></tr>
+            <tr><td>Snaga motora</td><td>{% if vehicle.engine_power != None %}{{ vehicle.engine_power|floatformat:0 }} kW{% else %}Nije uneto{% endif %}</td></tr>
+            <tr><td>Masa</td><td>{% if vehicle.weight != None %}{{ vehicle.weight|floatformat:0|intcomma }} kg{% else %}Nije uneto{% endif %}</td></tr>
+            <tr><td>Nosivost</td><td>{% if vehicle.load_capacity != None %}{{ vehicle.load_capacity|floatformat:0|intcomma }} kg{% else %}Nije uneto{% endif %}</td></tr>
+            <tr><td>Max dozvoljena masa</td><td>{% if vehicle.maximum_permissible_weight != None %}{{ vehicle.maximum_permissible_weight|floatformat:0|intcomma }} kg{% else %}Nije uneto{% endif %}</td></tr>
+            <tr><td>Broj osovina</td><td>{{ vehicle.number_of_axles|default_if_none:"Nije uneto" }}</td></tr>
+            <tr><td>Broj sedišta</td><td>{{ vehicle.number_of_seats|default_if_none:"Nije uneto" }}</td></tr>
+            <tr><td>Servisni interval</td><td>{% if vehicle.service_interval != None %}{{ vehicle.service_interval|floatformat:0|intcomma }} km{% else %}Nije uneto{% endif %}</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
   </div>
-</div>
-
-<div class="row g-3">
-  <div class="col-lg-6">
-    <div class="card vehicle-fixed-card">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-          <h3 class="card-title mb-0">Šifra posla</h3>
-          <a href="{% url 'jobcode_create' vehicle_id=vehicle.id %}" class="btn btn-sm btn-outline-success">Promeni</a>
-        </div>
-        {% if current_job_code %}
-          <p class="mt-3 mb-2"><strong>{{ current_job_code.organizational_unit }}</strong></p>
-        {% else %}
-          <p class="text-muted mt-3 mb-2">Nema trenutne šifre posla.</p>
-        {% endif %}
-        {% if job_codes %}
-          <div class="table-responsive">
-            <table class="table table-sm mb-0">
-              <tbody>
-                {% for job_code in job_codes|slice:":6" %}
-                <tr>
-                  <td>{{ job_code.assigned_date|date:"d.m.Y" }}</td>
-                  <td>{{ job_code.organizational_unit }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
-  <div class="col-lg-6">
-    <div class="card vehicle-fixed-card">
-      <div class="card-body">
-        <h3 class="card-title">Aktivne polise</h3>
-        {% if active_policies %}
-          <div class="table-responsive">
-            <table class="table table-sm mb-0">
-              <tbody>
-                {% for policy in active_policies %}
-                <tr>
-                  <td>{{ policy.insurance_type }}</td>
-                  <td>{{ policy.policy_number }}</td>
-                  <td>{{ policy.end_date|date:"d.m.Y" }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">Nema aktivnih polisa.</p>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<div class="card mt-3">
-  <div class="card-body">
-    <h3 class="card-title">Proračun isplativosti (12m/24m okvirno)</h3>
-    <p class="text-muted mb-3">
-      Formula: (Gorivo + Servis + IMS trebovanja + Polise + Godišnja amortizacija + Godišnji lizing/zakup - Naplata osiguranja) / Pređena kilometraža.
-    </p>
-    <div class="table-responsive">
-      <table class="table table-striped table-sm align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Period</th>
-            <th class="text-end">Km</th>
-            <th>Izvor km</th>
-            <th>Validna očitavanja</th>
-            <th class="text-end">Gorivo</th>
-            <th class="text-end">Servis</th>
-            <th class="text-end">IMS</th>
-            <th class="text-end">Polise</th>
-            <th class="text-end">Amortizacija</th>
-            <th class="text-end">Lizing/Zakup</th>
-            <th class="text-end">Naplata osig.</th>
-            <th class="text-end">Ukupan trošak</th>
-            <th class="text-end">RSD/km</th>
-            <th>Test granice</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in vehicle_cost_per_km_details %}
-            {% if item.row %}
-            <tr>
-              <td>{{ item.period_label }}</td>
-              <td class="text-end">{{ item.row.annual_km|floatformat:0|intcomma }}</td>
-              <td>{{ item.row.mileage_source }}</td>
-              <td class="small">
-                {% if item.row.mileage_start_reading and item.row.mileage_end_reading %}
-                  {{ item.row.mileage_start_reading.date|date:"d.m.Y" }}
-                  - {{ item.row.mileage_start_reading.mileage|floatformat:0|intcomma }} km
-                  ({{ item.row.mileage_start_reading.source }})
-                  <br>
-                  {{ item.row.mileage_end_reading.date|date:"d.m.Y" }}
-                  - {{ item.row.mileage_end_reading.mileage|floatformat:0|intcomma }} km
-                  ({{ item.row.mileage_end_reading.source }})
-                  {% if item.row.mileage_observed_days %}
-                    <div class="text-muted">{{ item.row.mileage_observed_days }} dana za obračun</div>
-                  {% endif %}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td class="text-end">{{ item.row.fuel_cost|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ item.row.service_cost|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ item.row.requisition_cost|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ item.row.policy_cost|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ item.row.annual_depreciation|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ item.row.lease_annual_cost|floatformat:0|intcomma }}</td>
-              <td class="text-end">-{{ item.row.insurance_recovery|floatformat:0|intcomma }}</td>
-              <td class="text-end">{{ item.row.total_cost|floatformat:0|intcomma }}</td>
-              <td class="text-end">
-                {% if item.row.cost_per_km %}
-                  {{ item.row.cost_per_km|floatformat:2|intcomma }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td class="small text-muted">
-                {{ item.threshold.weight_class_label }}:
-                dobro ≤ {{ item.threshold.ok }},
-                praćenje ≤ {{ item.threshold.watch }},
-                rizično ≤ {{ item.threshold.risky }} RSD/km
-              </td>
-              <td>
-                {% if item.status == 'Dobro' %}
-                  <span class="badge text-bg-success">{{ item.status }}</span>
-                {% elif item.status == 'Za praćenje' %}
-                  <span class="badge text-bg-warning">{{ item.status }}</span>
-                {% elif item.status == 'Rizično' %}
-                  <span class="badge text-bg-danger">{{ item.status }}</span>
-                {% elif item.status == 'Neisplativo' %}
-                  <span class="badge text-bg-dark">{{ item.status }}</span>
-                {% else %}
-                  <span class="badge text-bg-secondary">{{ item.status }}</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% if item.row.mileage_issue %}
-            <tr>
-              <td colspan="15" class="text-muted small">Napomena: {{ item.row.mileage_issue }}</td>
-            </tr>
-            {% endif %}
-            {% else %}
-            <tr>
-              <td>{{ item.period_label }}</td>
-              <td colspan="14" class="text-muted">Nema dovoljno podataka za obračun cene po kilometru.</td>
-            </tr>
-            {% endif %}
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div class="card vehicle-tabs-card">
-  <div class="card-body">
-    <ul class="nav nav-tabs" id="vehicleDetailTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="fuel-tab" data-bs-toggle="tab" data-bs-target="#fuel-pane" type="button" role="tab" aria-controls="fuel-pane" aria-selected="true">Gorivo</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance-pane" type="button" role="tab" aria-controls="maintenance-pane" aria-selected="false">Servis i održavanje</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="travel-tab" data-bs-toggle="tab" data-bs-target="#travel-pane" type="button" role="tab" aria-controls="travel-pane" aria-selected="false">Putni nalozi</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="vehicle-orders-tab" data-bs-toggle="tab" data-bs-target="#vehicle-orders-pane" type="button" role="tab" aria-controls="vehicle-orders-pane" aria-selected="false">Nalozi za auto</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tender-docs-tab" data-bs-toggle="tab" data-bs-target="#tender-docs-pane" type="button" role="tab" aria-controls="tender-docs-pane" aria-selected="false">Tender dokumenti</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="traffic-cards-tab" data-bs-toggle="tab" data-bs-target="#traffic-cards-pane" type="button" role="tab" aria-controls="traffic-cards-pane" aria-selected="false">Saobraćajne dozvole</button>
-      </li>
-    </ul>
-
-    <div class="tab-content pt-3" id="vehicleDetailTabsContent">
-      <div class="tab-pane fade show active" id="fuel-pane" role="tabpanel" aria-labelledby="fuel-tab">
-        <h3 class="card-title">Gorivo</h3>
+</div></section><section class="tab-pane fade" id="holding-pane" role="tabpanel" aria-labelledby="holding-tab" tabindex="0">{% include 'fleet/_vehicle_holding.html' %}</section><section class="tab-pane fade" id="cost-pane" role="tabpanel" aria-labelledby="cost-tab" tabindex="0">{% include 'fleet/_vehicle_analysis.html' %}{% if period_valid %}<details class='vd-records'><summary>Računi za gorivo i AdBlue</summary>
+        <h3 class="card-title">Gorivo i AdBlue · izabrani period</h3><p>Količine i cene su iz izvornih transakcija; nisu obračun potrošnje l/100 km.</p>
         <div class="table-responsive">
-          <table id="DatatableFuelDetail" class="display compact">
+          <table id="vehicleFuelRecords" class="display compact">
             <thead>
               <tr>
                 <th>Datum</th>
                 <th>Broj računa</th>
-                <th>Količina</th>
-                <th>Cena/l</th>
+                <th>Proizvod</th><th>Količina</th>
+                <th>Jedinična cena</th>
                 <th>Iznos neto</th>
                 <th>Iznos bruto</th>
                 <th>Kilometraža</th>
@@ -494,10 +69,10 @@
               <tr>
                 <td data-order="{{ consumption.date|date:'U' }}">{{ consumption.date|date:"d.m.Y H:i" }}</td>
                 <td>{{ consumption.receipt_number|receipt_number|default:"-" }}</td>
-                <td>{{ consumption.amount|floatformat:2 }}</td>
-                <td>{{ consumption.price_per_liter|floatformat:2 }}</td>
-                <td>{{ consumption.cost_neto|floatformat:2 }}</td>
-                <td>{{ consumption.cost_bruto|floatformat:2 }}</td>
+                <td>{{ consumption.product|default:"—" }}</td><td>{{ consumption.amount|floatformat:"2g" }}</td>
+                <td>{{ consumption.price_per_liter|floatformat:"2g" }}</td>
+                <td>{{ consumption.cost_neto|floatformat:"2g" }}</td>
+                <td>{{ consumption.cost_bruto|floatformat:"2g" }}</td>
                 <td>{{ consumption.mileage|floatformat:0 }}</td>
                 <td>{{ consumption.supplier }}</td>
               </tr>
@@ -505,18 +80,10 @@
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div class="tab-pane fade" id="maintenance-pane" role="tabpanel" aria-labelledby="maintenance-tab">
-        <h3 class="card-title">Servis i održavanje</h3>
-        <div class="mb-3">
-          <span class="me-3"><strong>Van IMS:</strong> {{ repair_costs|floatformat:0|intcomma }} RSD</span>
-          <span><strong>IMS trebovanja:</strong> {{ requisition_costs|floatformat:0|intcomma }} RSD</span>
-          <span class="me-3"><strong>Naplata osiguranja:</strong> {{ insurance_recovery|floatformat:0|intcomma }} RSD</span>
-          <span><strong>Neto održavanje:</strong> {{ vehicle_analysis.total_maintenance_cost|floatformat:0|intcomma }} RSD</span>
-        </div>
+      </details><details class="vd-records"><summary>Stavke održavanja i naknade osiguranja</summary>
+        <h3 class="card-title">Spoljne usluge i delovi · izabrani period</h3>
         <div class="table-responsive">
-          <table id="DatatableServiceDetail" class="display compact">
+          <table id="vehicleServiceRecords" class="display compact">
             <thead>
               <tr>
                 <th>Datum</th>
@@ -526,10 +93,10 @@
               </tr>
             </thead>
             <tbody>
-              {% for service in service_list|slice:":80" %}
+              {% for service in service_list %}
               <tr>
-                <td>{{ service.datum|date:"d.m.Y" }}</td>
-                <td>{{ service.potrazuje|floatformat:2 }}</td>
+                <td data-order="{{ service.datum|date:'Y-m-d' }}">{{ service.datum|date:"d.m.Y" }}</td>
+                <td>{{ service.potrazuje|floatformat:"2g" }}</td>
                 <td>{{ service.popravka_kategorija|default:"-" }}</td>
                 <td>{{ service.naz_par_pl }}</td>
               </tr>
@@ -537,257 +104,36 @@
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div class="tab-pane fade" id="travel-pane" role="tabpanel" aria-labelledby="travel-tab">
-        <h3 class="card-title">Putni nalozi</h3>
-        <div class="table-responsive">
-          <table class="table table-striped table-sm align-middle mb-0">
-            <thead>
-              <tr>
-                <th>Broj</th>
-                <th>Datum puta</th>
-                <th>Zaposleni</th>
-                <th>Lokacija</th>
-                <th>Šifra posla</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for order in putni_nalozi %}
-              <tr>
-                <td>{{ order.order_number }}</td>
-                <td>{{ order.travel_date|date:"d.m.Y" }}</td>
-                <td>{% if order.employee %}{{ order.employee }}{% else %}{{ order.other_employee_name|default:"-" }}{% endif %}</td>
-                <td>{{ order.travel_location }}</td>
-                <td>{{ order.job_code.code }}</td>
-                <td>{% if order.storniran %}Storniran{% elif order.opravdan %}Opravdan{% else %}Otvoren{% endif %}</td>
-                <td><a href="{% url 'putninalog_detail' order.pk %}">Detalji</a></td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="7" class="text-center text-muted">Nema putnih naloga za ovo vozilo.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="tab-pane fade" id="vehicle-orders-pane" role="tabpanel" aria-labelledby="vehicle-orders-tab">
-        <h3 class="card-title">Nalozi za auto</h3>
-        <div class="table-responsive">
-          <table class="table table-striped table-sm align-middle mb-0">
-            <thead>
-              <tr>
-                <th>PN</th>
-                <th>R.b.z.</th>
-                <th>Otvoren</th>
-                <th>Zatvoren</th>
-                <th>Zaposleni</th>
-                <th>Km početak</th>
-                <th>Km kraj</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for order in vehicle_travel_orders %}
-              <tr>
-                <td>{{ order.pn_number }}</td>
-                <td>{{ order.rbz }}</td>
-                <td>{{ order.created_at|date:"d.m.Y" }}</td>
-                <td>{% if order.closed_at %}{{ order.closed_at|date:"d.m.Y" }}{% else %}-{% endif %}</td>
-                <td>{{ order.employee }}</td>
-                <td>{{ order.start_mileage|default:"-" }}</td>
-                <td>{{ order.end_mileage|default:"-" }}</td>
-                <td><a href="{% url 'vehicle_travel_order_detail' order.pk %}">Detalji</a></td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="8" class="text-center text-muted">Nema naloga za auto.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="tab-pane fade" id="tender-docs-pane" role="tabpanel" aria-labelledby="tender-docs-tab">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h3 class="card-title mb-0">Tender dokumenti</h3>
-          <a href="{{ tender_document_create_url }}" class="btn btn-sm btn-outline-success">Dodaj dokument</a>
-        </div>
-        {% if latest_sticker_document and latest_sticker_document.image %}
-          <div class="border rounded p-3 mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <strong>Poslednja nalepnica</strong>
-              <span class="text-muted small">
-                {% if latest_sticker_document.taken_at %}{{ latest_sticker_document.taken_at|date:"d.m.Y" }}{% else %}{{ latest_sticker_document.created_at|date:"d.m.Y" }}{% endif %}
-              </span>
-            </div>
-            <a href="{% url 'vehicle_tender_document_detail' latest_sticker_document.pk %}">
-              <img src="{{ latest_sticker_document.image.url }}" alt="{{ latest_sticker_document.title }}" class="vehicle-document-preview">
-            </a>
-            <form method="post" action="{% url 'vehicle_tender_document_delete' latest_sticker_document.pk %}" class="mt-2" onsubmit="return confirm('Da li sigurno zelis da uklonis sliku nalepnice?');">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-outline-danger">Ukloni nalepnicu</button>
-            </form>
-          </div>
-        {% endif %}
-        {% if tender_documents %}
-          <div class="row g-3">
-            {% for doc in tender_documents %}
-            <div class="col-12 col-md-6">
-              <div class="border rounded p-2 h-100">
-                <strong>{{ doc.get_document_type_display }}</strong>
-                <div class="text-muted small">{% if doc.taken_at %}{{ doc.taken_at|date:"d.m.Y" }}{% else %}-{% endif %}</div>
-                <a href="{% url 'vehicle_tender_document_detail' doc.pk %}">
-                  {% if doc.image %}
-                    <img src="{{ doc.image.url }}" alt="{{ doc.title }}" class="img-fluid rounded mt-2 vehicle-document-thumb">
-                  {% else %}
-                    <span class="text-muted">Nema slike</span>
-                  {% endif %}
-                </a>
-                {% if doc.document_type == "sticker" %}
-                  <form method="post" action="{% url 'vehicle_tender_document_delete' doc.pk %}" class="mt-2" onsubmit="return confirm('Da li sigurno zelis da uklonis sliku nalepnice?');">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Ukloni nalepnicu</button>
-                  </form>
-                {% endif %}
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">Nema dodatih tender dokumenata.</p>
-        {% endif %}
-      </div>
-
-      <div class="tab-pane fade" id="traffic-cards-pane" role="tabpanel" aria-labelledby="traffic-cards-tab">
-        {% if latest_traffic_card.traffic_card_front_image or latest_traffic_card.traffic_card_back_image %}
-          <div class="row g-3 mb-3">
-            {% if latest_traffic_card.traffic_card_front_image %}
-              <div class="col-12 col-md-6">
-                <div class="border rounded p-2 h-100">
-                  <strong>Prednja strana</strong>
-                  <a href="{{ latest_traffic_card.traffic_card_front_image.url }}" target="_blank" rel="noopener">
-                    <img src="{{ latest_traffic_card.traffic_card_front_image.url }}" alt="Saobraćajna dozvola prednja strana" class="vehicle-document-preview mt-2">
-                  </a>
-                </div>
-              </div>
-            {% endif %}
-            {% if latest_traffic_card.traffic_card_back_image %}
-              <div class="col-12 col-md-6">
-                <div class="border rounded p-2 h-100">
-                  <strong>Zadnja strana</strong>
-                  <a href="{{ latest_traffic_card.traffic_card_back_image.url }}" target="_blank" rel="noopener">
-                    <img src="{{ latest_traffic_card.traffic_card_back_image.url }}" alt="Saobraćajna dozvola zadnja strana" class="vehicle-document-preview mt-2">
-                  </a>
-                </div>
-              </div>
-            {% endif %}
-          </div>
-        {% endif %}
-        <h3 class="card-title">Saobraćajne dozvole</h3>
-        <div class="table-responsive">
-          <table class="table table-sm mb-0">
-            <thead>
-              <tr>
-                <th>Registracija</th>
-                <th>Broj dozvole</th>
-                <th>Važi do</th>
-                <th>Prednja</th>
-                <th>Zadnja</th>
-                <th>PDF</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for card in trafic_cards %}
-              <tr>
-                <td>{{ card.registration_number }}</td>
-                <td>{{ card.traffic_card_number }}</td>
-                <td>{{ card.valid_until|date:"d.m.Y" }}</td>
-                <td>
-                  {% if card.traffic_card_front_image %}
-                    <a href="{{ card.traffic_card_front_image.url }}" target="_blank" rel="noopener">Slika</a>
-                  {% else %}
-                    -
-                  {% endif %}
-                </td>
-                <td>
-                  {% if card.traffic_card_back_image %}
-                    <a href="{{ card.traffic_card_back_image.url }}" target="_blank" rel="noopener">Slika</a>
-                  {% else %}
-                    -
-                  {% endif %}
-                </td>
-                <td>
-                  {% if card.traffic_card_pdf %}
-                    <a href="{{ card.traffic_card_pdf.url }}" target="_blank" rel="noopener">PDF</a>
-                  {% else %}
-                    -
-                  {% endif %}
-                </td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="6" class="text-muted">Nema saobraćajnih dozvola.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-{{ monthly_vehicle_costs|json_script:"vehicle-monthly-costs" }}
-{{ service_category_rows|json_script:"vehicle-service-categories" }}
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('#vehicleDetailTabs button[data-bs-toggle="tab"]').forEach(function (button) {
-      button.addEventListener('shown.bs.tab', function () {
-        if (window.DataTable && DataTable.tables) {
-          DataTable.tables({ visible: true, api: true }).columns.adjust();
-        }
-      });
+      <h3>IMS trebovanja · izabrani period</h3><div class="table-responsive"><table class="table table-sm vd-data"><thead><tr><th>Datum</th><th>Dokument</th><th>Artikal</th><th>Kategorija</th><th>Iznos RSD</th></tr></thead><tbody>{% for item in requisition_list %}<tr><td data-order="{{ item.datum_trebovanja|date:'Y-m-d' }}">{{ item.datum_trebovanja|date:"d.m.Y" }}</td><td>{{ item.br_dok }}</td><td>{{ item.naz_art }}</td><td>{{ item.popravka_kategorija|default:"Nerazvrstano" }}</td><td>{{ item.vrednost_nab|floatformat:"2g" }}</td></tr>{% endfor %}</tbody></table></div>
+<h3>Naknade osiguranja · izabrani period</h3><div class="table-responsive"><table class="table table-sm vd-data"><thead><tr><th>Datum</th><th>Nalog</th><th>Dokument</th><th>Iznos RSD</th></tr></thead><tbody>{% for item in recovery_list %}<tr><td data-order="{{ item.datum|date:'Y-m-d' }}">{{ item.datum|date:"d.m.Y" }}</td><td>{{ item.br_naloga }}</td><td>{{ item.vez_dok|default:"—" }}</td><td>{{ item.potrazuje|floatformat:"2g"|default:"Nije unet" }}</td></tr>{% endfor %}</tbody></table></div></details>{% endif %}</section><section class="tab-pane fade" id="usage-pane" role="tabpanel" aria-labelledby="usage-tab" tabindex="0">{% include 'fleet/_vehicle_usage.html' %}</section><section class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab" tabindex="0">{% include 'fleet/_vehicle_documents.html' %}</section></div></div></div></div><script>
+document.addEventListener('DOMContentLoaded', function () {
+  const buttons = Array.from(document.querySelectorAll('.vd-tabs button'));
+  function activateHash() {
+    const id = location.hash === '#vehicle-analysis' ? '#cost-pane' : location.hash;
+    const button = buttons.find(b => b.dataset.bsTarget === id);
+    if (button && window.bootstrap) (bootstrap.Tab.getInstance(button) || new bootstrap.Tab(button)).show();
+  }
+  buttons.forEach(function(button,index) {
+    button.addEventListener('shown.bs.tab', function() {
+      history.replaceState(null, '', location.pathname + location.search + button.dataset.bsTarget);
+      if(window.jQuery && jQuery.fn.dataTable) jQuery.fn.dataTable.tables({visible:true,api:true}).columns.adjust();
     });
-
-    if (!window.jQuery || !jQuery.plot) {
-      return;
-    }
-
-    const srNumber = new Intl.NumberFormat('sr-RS', { maximumFractionDigits: 0 });
-    const monthly = JSON.parse(document.getElementById('vehicle-monthly-costs').textContent);
-    const categories = JSON.parse(document.getElementById('vehicle-service-categories').textContent);
-
-    const ticks = monthly.map(function (row, index) {
-      return [index, row.label];
-    });
-    const fuelSeries = monthly.map(function (row, index) {
-      return [index - 0.18, row.fuel];
-    });
-    const serviceSeries = monthly.map(function (row, index) {
-      return [index + 0.18, row.service];
-    });
-
-    jQuery.plot(jQuery('#vehicleCostChart'), [
-      { label: 'Gorivo', data: fuelSeries, bars: { show: true, barWidth: 0.32, align: 'center' } },
-      { label: 'Servis', data: serviceSeries, bars: { show: true, barWidth: 0.32, align: 'center' } }
-    ], {
-      xaxis: { ticks: ticks },
-      yaxis: { tickFormatter: function (value) { return srNumber.format(value); } },
-      grid: { hoverable: true, borderWidth: 1 },
-      legend: { position: 'nw' },
-      tooltip: true,
-      tooltipOpts: { content: '%s: %y RSD' }
-    });
-
-    jQuery.plot(jQuery('#vehicleServiceCategoryChart'), categories.map(function (row) {
-      return { label: row.label, data: row.value };
-    }), {
-      series: { pie: { show: true, radius: 1, label: { show: true, radius: 0.75 } } },
-      legend: { show: true },
-      grid: { hoverable: true },
-      tooltip: true,
-      tooltipOpts: { content: '%s: %p.0%' }
+    button.addEventListener('keydown', function(event) {
+      let next;
+      if(event.key === 'ArrowRight') next = (index+1)%buttons.length;
+      if(event.key === 'ArrowLeft') next = (index+buttons.length-1)%buttons.length;
+      if(event.key === 'Home') next = 0;
+      if(event.key === 'End') next = buttons.length-1;
+      if(next !== undefined && window.bootstrap){event.preventDefault();buttons[next].focus();(bootstrap.Tab.getInstance(buttons[next]) || new bootstrap.Tab(buttons[next])).show();}
     });
   });
-</script>
-{% endblock %}
+  activateHash();
+  window.addEventListener('hashchange', activateHash);
+  if(window.jQuery && jQuery.fn.DataTable) {
+    jQuery('#vehicleFuelRecords, #vehicleServiceRecords, .vd-data').each(function(){
+      if(!jQuery.fn.dataTable.isDataTable(this)) jQuery(this).DataTable({pageLength:10,order:[[Number(this.dataset.dateColumn || 0),'desc']],autoWidth:false,language:{search:'Pretraga:',lengthMenu:'Prikaži _MENU_ stavki',info:'_START_–_END_ od _TOTAL_',infoEmpty:'Nema stavki',zeroRecords:'Nema stavki za prikaz',emptyTable:'Nema evidentiranih stavki',paginate:{previous:'Prethodna',next:'Sledeća'}}});
+    });
+    document.querySelectorAll('.vd-records').forEach(el=>el.addEventListener('toggle',()=>jQuery.fn.dataTable.tables({visible:true,api:true}).columns.adjust()));
+  }
+});
+</script>{% endlanguage %}{% endblock %}

@@ -1,0 +1,12 @@
+<section class="card"><div class="card-body">
+  <h3>Putni nalozi</h3><p class="text-muted">Celokupna istorija putnih naloga za vozilo.</p>
+  <div class="table-responsive"><table id="vehicleTravelRecords" class="table table-sm vd-data" data-date-column="1"><thead><tr><th>Broj</th><th>Datum puta</th><th>Zaposleni</th><th>Lokacija</th><th>Šifra posla</th><th>Status</th><th>Radnja</th></tr></thead><tbody>
+    {% for order in putni_nalozi %}<tr><td>{{ order.order_number }}</td><td data-order="{{ order.travel_date|date:'Y-m-d' }}">{{ order.travel_date|date:"d.m.Y" }}</td><td>{% if order.employee %}{{ order.employee }}{% else %}{{ order.other_employee_name|default:"—" }}{% endif %}</td><td>{{ order.travel_location }}</td><td>{{ order.job_code.code|default:"—" }}</td><td>{% if order.storniran %}Storniran{% elif order.opravdan %}Opravdan{% else %}Otvoren{% endif %}</td><td><a class="btn btn-sm btn-outline-primary" href="{% url 'putninalog_detail' order.pk %}">Detalji</a></td></tr>{% endfor %}
+  </tbody></table></div>
+</div></section>
+<section class="card"><div class="card-body">
+  <h3>Zaduženja vozila</h3><p class="text-muted">Celokupna istorija zaduženja i razduženja zaposlenih.</p>
+  <div class="table-responsive"><table id="vehicleAssignmentRecords" class="table table-sm vd-data" data-date-column="2"><thead><tr><th>PN</th><th>R.b.z.</th><th>Datum zaduženja</th><th>Datum razduženja</th><th>Zaposleni</th><th>Km početak</th><th>Km kraj</th><th>Radnja</th></tr></thead><tbody>
+    {% for order in vehicle_travel_orders %}<tr><td>{{ order.pn_number }}</td><td>{{ order.rbz }}</td><td data-order="{{ order.created_at|date:'U' }}">{{ order.created_at|date:"d.m.Y" }}</td><td data-order="{{ order.closed_at|date:'U' }}">{{ order.closed_at|date:"d.m.Y"|default:"Otvoreno" }}</td><td>{{ order.employee|default:"—" }}</td><td>{{ order.start_mileage|default_if_none:"—" }}</td><td>{{ order.end_mileage|default_if_none:"—" }}</td><td><a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_travel_order_detail' order.pk %}">Detalji</a></td></tr>{% endfor %}
+  </tbody></table></div>
+</div></section>

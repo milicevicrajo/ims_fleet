@@ -39,6 +39,8 @@ def fixed_cost_per_km_ranges():
 def fixed_cost_per_km_threshold(max_weight_kg):
     """Vraća fiksne pragove (ok/watch/risky) za datu max dozvoljenu masu vozila."""
     weight = float(max_weight_kg or 0)
+    if weight <= 0:
+        return None
     for max_w, label, ok, watch, risky in _WEIGHT_CLASS_THRESHOLDS:
         if weight <= max_w:
             return {'weight_class_label': label, 'ok': ok, 'watch': watch, 'risky': risky}
@@ -51,6 +53,8 @@ def cost_per_km_thresholds(rows):
     for row in rows:
         if row["cost_per_km"] is not None:
             t = fixed_cost_per_km_threshold(row.get("maximum_permissible_weight", 0))
+            if t is None:
+                continue
             key = t['weight_class_label']
             grouped[key]['values'].append(row["cost_per_km"])
             grouped[key]['threshold'] = t

@@ -703,7 +703,14 @@ def traffic_cards_datatable_data(request):
     qs = TrafficCard.objects.select_related("vehicle").annotate(
         latest_org_unit=Subquery(latest_org_unit_subquery),
         latest_center=Subquery(latest_center_subquery),
+        latest_card_id=Subquery(TrafficCard.objects.issued().filter(vehicle_id=OuterRef('vehicle_id')).order_by('-issue_date', '-id').values('id')[:1]),
     )
+
+    if request.GET.get('history') != '1':
+        from django.db.models import F
+        qs = qs.filter(pk=F('latest_card_id'))
+    if request.user.allowed_centers.exists():
+        qs = qs.filter(latest_center__in=request.user.allowed_centers.values_list('center', flat=True))
 
     filter_form = TrafficCardFilterForm(request.GET or None)
     if filter_form.is_valid():
@@ -725,6 +732,7 @@ def traffic_cards_datatable_data(request):
             | Q(serial_number__icontains=value)
             | Q(owner__icontains=value)
             | Q(homologation_number__icontains=value)
+            | Q(vehicle__homologation_number__icontains=value)
         )
 
     def row(card):
@@ -739,6 +747,8 @@ def traffic_cards_datatable_data(request):
             "registration_number": escape(card.registration_number or ""),
             "issue_date": _date(card.issue_date),
             "valid_until": _date(card.valid_until),
+            "registration_valid_until": _date(card.registration_valid_until),
+            "document_status": 'Poslednja izdata' if card.pk == card.latest_card_id else 'Prethodni dokument',
             "traffic_card_number": escape(card.traffic_card_number or ""),
             "owner": escape(card.owner or ""),
             "actions": (
@@ -759,8 +769,9 @@ def traffic_cards_datatable_data(request):
             "3": "valid_until",
             "4": "traffic_card_number",
             "5": "owner",
+            "6": "registration_valid_until",
         },
         row,
         search,
-        default_order=("-valid_until", "-id"),
+        default_order=("-issue_date", "-id"),
     )

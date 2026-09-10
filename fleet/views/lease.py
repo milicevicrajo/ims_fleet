@@ -79,6 +79,15 @@ class LeaseCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateVie
     template_name = "fleet/generic_form.html"
     success_url = reverse_lazy("lease_list")
 
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.request.GET.get('vehicle'):
+            initial['vehicle'] = self.request.GET['vehicle']
+        return initial
+
+    def get_success_url(self):
+        return reverse('vehicle_detail', kwargs={'pk': self.object.vehicle_id})
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Kreiraj novi zakup"

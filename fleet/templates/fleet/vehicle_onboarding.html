@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+{% block title %}Dodavanje vozila{% endblock %}
+{% block content %}
+<style>
+  .vehicle-wizard-page { max-width: none; width:100%; padding:0; color:#263d50; }
+  .vehicle-wizard-steps { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 24px 0; counter-reset: wizard-step; }
+  .vehicle-wizard-steps li { counter-increment: wizard-step; border-bottom: 3px solid #dbe2e8; padding: 10px 5px; font-size: 13px; color: #52616e; }
+  .vehicle-wizard-steps li::before { content: counter(wizard-step); display: inline-flex; align-items: center; justify-content: center; width: 23px; height: 23px; margin-right: 5px; border-radius: 50%; background: #e9eef2; }
+  .vehicle-wizard-steps [aria-current="step"] { color: #176b60; border-color: #176b60; font-weight: 700; }
+  .vehicle-wizard-steps [aria-current="step"]::before { background: #176b60; color: white; }
+  .vehicle-wizard-page [hidden] { display: none !important; }
+  .vehicle-wizard-page dd { overflow-wrap: anywhere; }
+  .vehicle-wizard-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 20px; }
+  .vehicle-wizard-actions .btn { margin: 0 0 8px 5px; }
+  .wizard-hero{background:#20394a;color:white;padding:26px 30px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:24px}.wizard-hero h1{font-size:28px;margin:8px 0 12px}.wizard-hero p{color:#d3e0e8;margin:0;font-size:14px}.wizard-eyebrow{text-transform:uppercase;letter-spacing:1.5px;font-size:11px}.wizard-stage{border:1px solid #617b8e;border-radius:9px;padding:18px 24px;min-width:210px}.wizard-stage strong{display:block;font-size:21px;margin-top:6px}.vehicle-wizard-steps{gap:12px;margin:22px 0}.vehicle-wizard-steps li{background:white;border:1px solid #dce5ed;border-bottom:3px solid #dce5ed;border-radius:8px;padding:15px 12px}.vehicle-wizard-steps [aria-current="step"]{background:#eff6fa;border-color:#9ebdd1;border-bottom-color:#20577b;color:#20577b}.vehicle-wizard-steps [aria-current="step"]::before{background:#20577b}.vehicle-wizard-steps .wizard-complete{border-bottom-color:#6c9e91}.vehicle-wizard-page .card{border:1px solid #dce5ed;border-radius:10px;box-shadow:none}.vehicle-wizard-page .card-body{padding:28px}.wizard-form-heading{font-size:21px;margin-bottom:16px}.wizard-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 28px;margin-top:24px}.wizard-field{display:block;margin:0!important;min-width:0}.wizard-field>label,.wizard-field>div{width:100%;max-width:none;flex:none;padding:0}.wizard-field>label{display:block;font-weight:600;color:#344e62;padding-bottom:8px}.wizard-field .form-control{border:1px solid #b9cad6;border-radius:7px;min-height:44px;padding:10px 13px;background:white}.wizard-field .form-control:focus{border-color:#4281a8;box-shadow:0 0 0 3px #e1edf5}.wizard-field small{display:block;margin-top:7px;line-height:1.5}.wizard-field[data-field="photo"],.wizard-field[data-field="description"],.wizard-field[data-field="note"]{grid-column:1/-1}.wizard-field[data-field="photo"]{background:#f2f7fa;border:1px dashed #a7c0d0;padding:20px!important;border-radius:9px}.wizard-field[data-field="photo"] input{background:white}.wizard-field .form-check{padding:8px 0 8px 25px}.wizard-field input[type="checkbox"]{width:18px;height:18px}.vehicle-wizard-actions{padding:18px 24px;border:1px solid #dce5ed;border-radius:9px;background:white;align-items:center}.vehicle-wizard-actions .btn{margin:0 0 0 8px;padding:10px 20px;border-radius:6px}.vehicle-wizard-page .btn-primary{background:#20577b;border-color:#20577b}.wizard-required{color:#9d4238}.wizard-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.wizard-summary-grid .card{margin:0!important}.wizard-summary-grid dl{margin-top:18px}.wizard-summary-grid dd,.wizard-summary-grid dt{padding-top:8px;padding-bottom:8px;border-bottom:1px solid #edf1f4}
+</style>
+<div class="container-fluid py-3 vehicle-wizard-page">
+  <header class="wizard-hero"><div><span class="wizard-eyebrow">IMS · evidencija vozila</span><h1>Dodavanje vozila</h1><p>Od identiteta i slike do raspoređivanja. Podaci se čuvaju završnom potvrdom.</p></div><div class="wizard-stage"><small>Korak {{ step|add:1 }} od 6</small><strong>{% for label in steps %}{% if forloop.counter0 == step %}{{ label }}{% endif %}{% endfor %}</strong></div></header>
+  <ol class="vehicle-wizard-steps" aria-label="Koraci unosa">
+    {% for label in steps %}<li {% if forloop.counter0 == step %}aria-current="step"{% elif forloop.counter0 < step %}class="wizard-complete"{% endif %}>{{ label }}</li>{% endfor %}
+  </ol>
+  {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" enctype="multipart/form-data" novalidate id="vehicle-wizard">
+    {% csrf_token %}<input type="hidden" name="draft_token" value="{{ draft_token }}"><input type="hidden" name="step" value="{{ step }}">
+    {% if step == 5 %}
+      <p>Proverite podatke pre čuvanja. Evidentiranje vozila nije potvrda njegove spremnosti za upotrebu.</p>
+      {% for warning in warnings %}<div class="alert alert-warning">{{ warning }}</div>{% endfor %}
+      <div class="wizard-summary-grid">{% for index, label, values in summaries %}
+      <section class="card mb-3"><div class="card-body">
+        <div class="d-flex justify-content-between"><h2 class="h5">{{ label }}</h2><button class="btn btn-sm btn-outline-secondary" name="action" value="edit:{{ index }}">Izmeni</button></div>
+        <dl class="row mb-0">{% for label, value in values %}<dt class="col-sm-5">{{ label }}</dt><dd class="col-sm-7">{{ value }}</dd>{% endfor %}</dl>
+      </div></section>
+      {% endfor %}</div>
+    {% else %}
+      <div class="card"><div class="card-body">
+        <h2 class="wizard-form-heading">{% for label in steps %}{% if forloop.counter0 == step %}{{ label }}{% endif %}{% endfor %}</h2>
+        {% if step == 0 %}<p class="text-muted">Inventarski broj unesite ako je vozilo uvedeno u računovodstvenu evidenciju. Identitet vozila proverava se prema šasiji.</p>{% endif %}
+        {% if step == 2 %}<p class="text-muted">Podaci prepisani sa saobraćajne ovde opisuju vozilo. Nepoznate podatke ostavite prazne; nemojte unositi nulu kao zamenu.</p>{% endif %}
+        {% if step == 3 %}<p class="text-muted">Ako nemate dokument, isključite „Unosim saobraćajnu sada“. Rok dokumenta i datum isteka registracije su odvojeni podaci.</p>{% endif %}
+        {% if retained_files %}<p>Sačuvan izbor: {% for name in retained_files %}<strong>{{ name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %}. Novi izbor datoteke zamenjuje odgovarajući prilog.</p>{% endif %}
+        {% if step == 4 %}<p class="text-muted">Organizaciona pripadnost i zaduženje zaposlenog vode se odvojeno. Možete ih dopuniti na kartici vozila.</p>{% endif %}
+        {% for error in form.non_field_errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+        <div class="wizard-fields">{% for field in form %}
+        <div class="wizard-field" data-field="{{ field.name }}" {% if field.name == 'remove_photo' and not retained_files %}hidden{% endif %}>
+          <label for="{{ field.id_for_label }}" class="col-form-label">{{ field.label }}{% if field.field.required %}<span class="wizard-required"> *</span>{% endif %}</label>
+          <div class="col-sm-7">
+            {% if field.field.widget.input_type == 'checkbox' %}<div class="form-check pt-2">{{ field|add_class:'form-check-input' }}</div>{% else %}{{ field|add_class:'form-control' }}{% endif %}
+            {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+            {% if field.name == 'photo' %}<img id="vehicle-photo-preview" alt="Pregled izabrane slike vozila" hidden style="display:block;max-width:360px;max-height:220px;object-fit:contain;margin-top:12px;border-radius:8px">{% endif %}
+            {% for error in field.errors %}<div class="text-danger" role="alert">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+        {% endfor %}</div>
+      </div></div>
+    {% endif %}
+    <div class="vehicle-wizard-actions">
+      <button class="btn btn-outline-danger" name="action" value="cancel" formnovalidate>Odustani</button>
+      <div class="d-flex gap-2">
+        {% if step > 0 %}<button class="btn btn-outline-secondary" name="action" value="back" formnovalidate>Nazad</button>{% endif %}
+        <button class="btn btn-primary" name="action" value="next">{% if step == 5 %}Sačuvaj vozilo{% else %}Dalje{% endif %}</button>
+      </div>
+    </div>
+  </form>
+  <p class="text-muted mt-3">* Obavezna polja. Privremeni unos možete nastaviti do dva sata od poslednjeg sačuvanog koraka.</p>
+</div>
+<script>
+(() => {
+  const photoInput = document.getElementById('id_photo');
+  const photoPreview = document.getElementById('vehicle-photo-preview');
+  let photoUrl;
+  if (photoInput && photoPreview) photoInput.addEventListener('change', () => {
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    const file = photoInput.files[0];
+    photoPreview.hidden = !file;
+    if (file) {
+      photoUrl = URL.createObjectURL(file);
+      photoPreview.src = photoUrl;
+      document.getElementById('id_remove_photo').checked = false;
+    }
+  });
+  const form = document.getElementById('vehicle-wizard');
+  const show = (names, visible) => names.forEach(name => {
+    const row = form.querySelector('[data-field="' + name + '"]');
+    if (row) { row.hidden = !visible; row.querySelectorAll('input,select,textarea').forEach(input => input.disabled = !visible); }
+  });
+  const refresh = () => {
+    const basis = form.elements.basis;
+    if (basis) {
+      const owned = basis.value === 'owned';
+      show(['financing','purchase_date','purchase_value','invoice_number'], owned);
+      show(['financing_contract'], owned && form.elements.financing.value === 'credit');
+      show(['lease_type','contract_number','contract','end_date','current_payment_amount'], !owned);
+    }
+    const document = form.elements.add_document;
+    if (document) show(['registration_number','issue_date','valid_until','registration_valid_until','traffic_card_number','serial_number','owner','traffic_card_pdf','traffic_card_front_image','traffic_card_back_image'], document.checked);
+    const employee = form.elements.assign_employee;
+    if (employee) show(['employee','created_at','start_mileage'], employee.checked);
+    const fuel = form.elements.fuel_type;
+    if (fuel) show(['engine_volume'], !['električno','elektricno','electric','električna energija'].includes(fuel.value.trim().toLowerCase()));
+  };
+  form.addEventListener('change', refresh);
+  refresh();
+})();
+</script>
+{% endblock %}

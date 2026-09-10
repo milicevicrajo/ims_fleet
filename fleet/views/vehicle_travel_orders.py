@@ -300,7 +300,7 @@ class VehicleTravelOrderDetailView(VehicleTravelOrderEmployeeAccessMixin, LoginR
             end_dt = timezone.make_aware(end_dt)
 
         registration_number = (
-            order.vehicle.traffic_cards.order_by("-issue_date")
+            order.vehicle.traffic_cards.order_by("-issue_date", "-id")
             .values_list("registration_number", flat=True)
             .first()
         )

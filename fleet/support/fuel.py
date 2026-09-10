@@ -347,9 +347,9 @@ def calculate_average_fuel_consumption_ever(vehicle):
 def get_fuel_consumption_queryset(start_date=None, end_date=None):
     start_dt, end_dt = date_range_for_datetime_field(start_date, end_date)
 
-    latest_traffic_card_subquery = TrafficCard.objects.filter(
+    latest_traffic_card_subquery = TrafficCard.objects.issued().filter(
         vehicle=OuterRef("vehicle")
-    ).order_by("-issue_date").values("registration_number")[:1]
+    ).order_by("-issue_date", "-id").values("registration_number")[:1]
 
     omv_receipt_number = omv_receipt_number_expression()
     omv_gross = _coalesced_amount("gross_cc")
@@ -419,9 +419,9 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
 
 
 def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
-    latest_traffic_card_subquery = TrafficCard.objects.filter(
+    latest_traffic_card_subquery = TrafficCard.objects.issued().filter(
         vehicle=OuterRef("vehicle")
-    ).order_by("-issue_date").values("registration_number")[:1]
+    ).order_by("-issue_date", "-id").values("registration_number")[:1]
 
     search_value = str(search_value or "").strip()
     omv_gross = _coalesced_amount("gross_cc")
@@ -592,6 +592,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         supplier_name=Value("OMV", output_field=CharField()),
     ).values(
         "transaction_date",
+        "product_inv",
         "receipt_number",
         "quantity",
         "unit_price",
@@ -605,6 +606,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         supplier_name=Value("NIS", output_field=CharField()),
     ).values(
         "datum_transakcije",
+        "naziv_proizvoda",
         "broj_racuna",
         "kolicina",
         "cena",
@@ -619,6 +621,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         rows.append(
             {
                 "date": row["transaction_date"],
+                "product": row["product_inv"],
                 "receipt_number": format_receipt_identifier(row["receipt_number"]),
                 "amount": row["quantity"],
                 "price_per_liter": row["unit_price"],
@@ -633,6 +636,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         rows.append(
             {
                 "date": row["datum_transakcije"],
+                "product": row["naziv_proizvoda"],
                 "receipt_number": format_receipt_identifier(row["broj_racuna"]),
                 "amount": row["kolicina"],
                 "price_per_liter": row["cena"],

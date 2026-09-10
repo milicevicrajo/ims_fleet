@@ -216,6 +216,7 @@
                     }
                 },
             });
+            if ($('#DatatableServiceDetail').length && !$.fn.dataTable.isDataTable('#DatatableServiceDetail')) {
             var table = $('#DatatableServiceDetail').DataTable({
                 "language": languageSettings,
 
@@ -233,6 +234,7 @@
                     }
                 },
             });
+            }
             var table = $('#DatatableRequisitionDetail').DataTable({
                 "language": languageSettings,
 

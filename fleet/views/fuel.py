@@ -23,9 +23,9 @@ class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     context_object_name = "fuel_consumptions"
 
     def get_queryset(self):
-        latest_traffic_card_subquery = TrafficCard.objects.filter(
+        latest_traffic_card_subquery = TrafficCard.objects.issued().filter(
             vehicle=OuterRef("vehicle")
-        ).order_by("-issue_date").values("registration_number")[:1]
+        ).order_by("-issue_date", "-id").values("registration_number")[:1]
 
         queryset = super().get_queryset().annotate(
             registration_number=Subquery(latest_traffic_card_subquery)

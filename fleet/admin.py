@@ -17,10 +17,13 @@ from .models import (
     ServiceType,
     TrafficCard,
     Vehicle,
+    VehicleHolding,
     VehicleTenderDocument,
     VehicleTravelOrder,
 )
 from core.tasks import sync_permission_codes_task
+
+admin.site.register(VehicleHolding)
 
 class CustomUserAdmin(UserAdmin):
     # Add the allowed_centers field to the admin form

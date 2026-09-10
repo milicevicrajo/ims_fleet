@@ -957,7 +957,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 )
 
                 # PronaÄ‘i vozilo prema formatiranoj tablici u TrafficCard modelu
-                traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
+                traffic_card = TrafficCard.objects.for_plate(formatted_plate)
                 vehicle = traffic_card.vehicle
 
                 def parse_decimal(value, default=0.0):
@@ -1171,7 +1171,7 @@ def import_omv_transactions_from_csv(csv_file_path):
                 formatted_plate = format_license_plate(row['License plate No'])
                 
                 # PronaÄ‘i vozilo prema formatiranoj tablici u TrafficCard
-                traffic_card = TrafficCard.objects.get(registration_number=formatted_plate)
+                traffic_card = TrafficCard.objects.for_plate(formatted_plate)
                 vehicle = traffic_card.vehicle
 
                 quantity = parse_decimal(row.get('Quantity'))
@@ -1397,7 +1397,7 @@ def import_nis_fuel_consumption(file_path):
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
             # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
-            traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
+            traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").for_plate(formatted_plate)
             vehicle = traffic_card.vehicle
 
             # Konverzija datuma transakcije sa vremenskom zonom
@@ -1463,7 +1463,7 @@ def import_nis_transactions(file_path):
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
             # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
-            traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").get(registration_number=formatted_plate)
+            traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").for_plate(formatted_plate)
             vehicle = traffic_card.vehicle
 
             # Konverzija datuma transakcije sa vremenskom zonom
