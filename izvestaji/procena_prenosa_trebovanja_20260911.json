@@ -1,0 +1,113 @@
+{
+  "checked_at": "2026-09-11T07:33:49",
+  "read_only": true,
+  "method": "Exact trimmed source-key candidates; not proof of business identity or financial equivalence.",
+  "database_checks": {
+    "default": {
+      "status": "available"
+    },
+    "server_db": {
+      "status": "available"
+    }
+  },
+  "local": {
+    "requisition_rows": 2980,
+    "goods_rows": 6660,
+    "requisition_documents_by_subject_year_number": 698,
+    "requisition_years": {
+      "2024": 1007,
+      "2025": 1202,
+      "2026": 771
+    },
+    "goods_years": {
+      "2026": 2351,
+      "2025": 4308,
+      "": 1
+    },
+    "goods_document_types": {
+      "KA": 6659,
+      "": 1
+    },
+    "requisition_value_by_year": {
+      "2024": "1889995.95",
+      "2025": "2715498.14",
+      "2026": "2285615.90"
+    },
+    "missing_vehicle": 2,
+    "linked_garage_order": 0,
+    "has_category": 2209,
+    "has_mileage": 1833,
+    "has_note": 13,
+    "not_garage": 0,
+    "negative_quantity": 0,
+    "value_differs_from_quantity_times_price": 8,
+    "non_numeric_document_numbers": 0,
+    "article_name_longer_than_goods_max80": 0,
+    "goods_linked_request_items": 23,
+    "candidate_key_fields": [
+      "sif_pred",
+      "god",
+      "br_dok",
+      "sif_vrsart",
+      "stavka"
+    ],
+    "candidate_rows": 76,
+    "unambiguous_candidate_rows": 76,
+    "same_article_quantity_price_date": 0,
+    "unmatched_rows": 2904
+  },
+  "source_views": {
+    "fleet_trebovanja": {
+      "row_count": 935,
+      "columns": [
+        "sif_pred",
+        "god",
+        "br_dok",
+        "sif_vrsart",
+        "stavka",
+        "sif_art",
+        "naz_art",
+        "kol",
+        "cena",
+        "vrednost_nab",
+        "datum_trebovanja",
+        "napomena",
+        "registracija"
+      ],
+      "definition_available": true
+    },
+    "nbv_roba": {
+      "row_count": 6642,
+      "columns": [
+        "god",
+        "br_dok",
+        "sif_vrs",
+        "oj",
+        "sif_par",
+        "naz_par",
+        "datum",
+        "vez_dok",
+        "potrazuje",
+        "skr_naz",
+        "deviza",
+        "sif_pred",
+        "stavka",
+        "sif_art",
+        "sif_vrsart",
+        "naz_art",
+        "kol",
+        "cena"
+      ],
+      "definition_available": true
+    }
+  },
+  "same_requisition_source_comparison": {
+    "source_rows": 935,
+    "source_unique_keys": 935,
+    "duplicate_source_key_groups": 0,
+    "source_keys_missing_locally": 164,
+    "local_keys_absent_from_current_source": 2209,
+    "source_rows_matching_local_key": 771,
+    "field_differences": {}
+  }
+}

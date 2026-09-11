@@ -1,0 +1,149 @@
+{
+  "headers": [
+    "Ид",
+    "Пацијент",
+    "ЈМБГ",
+    "Статус",
+    "Узрок",
+    "Датум почетка боловања",
+    "Датум закључења боловања",
+    "Укупно дана",
+    "Лекар",
+    "Здравствена установа",
+    "Филијала"
+  ],
+  "rows": 23,
+  "status_counts": {
+    "Aktivno": 4,
+    "Zaključeno": 19
+  },
+  "id_lengths": {
+    "7": 23
+  },
+  "jmbg_lengths": {
+    "13": 23
+  },
+  "start_date_examples": [
+    "2026-08-07",
+    "2026-08-26",
+    "2026-08-25"
+  ],
+  "end_date_blank": 0,
+  "day_count_examples": [
+    "48",
+    "17",
+    "18",
+    "9",
+    "16",
+    "5",
+    "8",
+    "12"
+  ],
+  "jmbg_matching": {
+    "unique": 23,
+    "missing": 0,
+    "ambiguous": 0
+  },
+  "[BazaLDIMS]_status": "ProgrammingError",
+  "annual_leave_source": "[putgeo-server].[BazaLDIMS]",
+  "annual_leave_columns": [
+    [
+      "Godmor",
+      "sif_pred",
+      "int"
+    ],
+    [
+      "Godmor",
+      "god",
+      "char"
+    ],
+    [
+      "Godmor",
+      "rasif",
+      "numeric"
+    ],
+    [
+      "Godmor",
+      "dana1",
+      "int"
+    ],
+    [
+      "Godmor",
+      "dana2",
+      "int"
+    ],
+    [
+      "Godmor",
+      "dana3",
+      "int"
+    ],
+    [
+      "Godmor",
+      "dana4",
+      "int"
+    ],
+    [
+      "Godmor",
+      "dana5",
+      "int"
+    ],
+    [
+      "Godmor",
+      "dana6",
+      "int"
+    ],
+    [
+      "Godmor",
+      "dana",
+      "int"
+    ],
+    [
+      "Godmor",
+      "ostalo",
+      "int"
+    ],
+    [
+      "Godmor",
+      "ranaz",
+      "nvarchar"
+    ],
+    [
+      "GodmorKor",
+      "sif_pred",
+      "int"
+    ],
+    [
+      "GodmorKor",
+      "god",
+      "char"
+    ],
+    [
+      "GodmorKor",
+      "rasif",
+      "numeric"
+    ],
+    [
+      "GodmorKor",
+      "od_datuma",
+      "datetime"
+    ],
+    [
+      "GodmorKor",
+      "do_datuma",
+      "datetime"
+    ],
+    [
+      "GodmorKor",
+      "dana",
+      "int"
+    ],
+    [
+      "GodmorKor",
+      "komentar",
+      "nvarchar"
+    ]
+  ],
+  "Godmor_rows": 7643,
+  "GodmorKor_rows": 13838,
+  "checked_at": "2026-09-11"
+}

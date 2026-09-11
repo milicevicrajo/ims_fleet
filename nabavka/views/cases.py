@@ -278,6 +278,25 @@ class ProcurementCaseCreateView(NabavkaContextMixin, RolePermissionRequiredMixin
     form_class = ProcurementCaseForm
     template_name = "nabavka/case_form.html"
 
+    def get_initial(self):
+        from fleet.models import Kvar, Vehicle
+        initial = super().get_initial()
+        order_id = self.request.GET.get("garage_order", "")
+        vehicle_id = self.request.GET.get("vehicle", "")
+        if order_id.isdigit():
+            order = get_object_or_404(Kvar, pk=order_id)
+            assignment = order.vehicle.job_codes.order_by("-assigned_date", "-pk").first()
+            initial.update(is_garage=True, vehicle=order.vehicle_id, garage_order=order.pk,
+                           work_type=order.work_type, job_code=assignment.organizational_unit_id if assignment else None)
+        elif vehicle_id.isdigit():
+            vehicle = get_object_or_404(Vehicle, pk=vehicle_id)
+            assignment = vehicle.job_codes.order_by("-assigned_date", "-pk").first()
+            initial.update(is_garage=True, vehicle=vehicle.pk, job_code=assignment.organizational_unit_id if assignment else None)
+        case_type = self.request.GET.get("case_type")
+        if case_type in (ProcurementCase.CaseType.PROCUREMENT, ProcurementCase.CaseType.SERVICE):
+            initial["case_type"] = case_type
+        return initial
+
     def form_valid(self, form):
         form.instance.status = ProcurementCase.Status.DRAFT
         form.instance.created_by = self.request.user
@@ -473,6 +492,7 @@ class ProcurementCaseRepeatView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 supplier=source.supplier,
                 contract=source.contract,
                 vehicle=source.vehicle,
+                work_type=source.work_type,
                 responsible=request.user,
                 estimated_value=source.estimated_value,
                 currency=source.currency,

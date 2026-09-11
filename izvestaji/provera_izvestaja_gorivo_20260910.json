@@ -1,0 +1,201 @@
+{
+  "period": [
+    "2026-01-01",
+    "2026-09-10"
+  ],
+  "sources": {
+    "NIS": {
+      "count": 2607,
+      "gross": "17630290.80",
+      "application_matches_direct_sql": true,
+      "fuel_only_count": 2607,
+      "fuel_only_gross": "17630290.80"
+    },
+    "OMV": {
+      "count": 1629,
+      "gross": "13766901.87",
+      "application_matches_direct_sql": true,
+      "fuel_only_count": 1562,
+      "fuel_only_gross": "13662120.97"
+    }
+  },
+  "existing_views": {
+    "fleet_nis_sifpos": {
+      "count": 2335,
+      "gross": "15718380.38"
+    },
+    "fleet_omv_sifpos": {
+      "count": 1704,
+      "gross": "14395787.82"
+    }
+  },
+  "notes": [
+    "NIS view filters passenger category and current open JobCode rows.",
+    "OMV view uses Date_to and current open JobCode rows.",
+    "Detailed report uses transaction date and historical JobCode; quantities remain separated by source product.",
+    "Accounting view includes account 51300 groups NIS/OMV, warehouse and employees; not the same scope as fuel card transactions."
+  ],
+  "omv_by_date_to": {
+    "count": 1630,
+    "gross": "13774845.96"
+  },
+  "accounting_2026": [
+    {
+      "year": "2026",
+      "month": 1,
+      "category": "Magacin",
+      "amount": "36218.00"
+    },
+    {
+      "year": "2026",
+      "month": 1,
+      "category": "NIS i OMV",
+      "amount": "2011246.35"
+    },
+    {
+      "year": "2026",
+      "month": 1,
+      "category": "Zaposleni",
+      "amount": "193000.00"
+    },
+    {
+      "year": "2026",
+      "month": 2,
+      "category": "Magacin",
+      "amount": "45517.21"
+    },
+    {
+      "year": "2026",
+      "month": 2,
+      "category": "NIS i OMV",
+      "amount": "2606995.81"
+    },
+    {
+      "year": "2026",
+      "month": 2,
+      "category": "Zaposleni",
+      "amount": "215297.36"
+    },
+    {
+      "year": "2026",
+      "month": 3,
+      "category": "Magacin",
+      "amount": "64422.81"
+    },
+    {
+      "year": "2026",
+      "month": 3,
+      "category": "NIS i OMV",
+      "amount": "3401075.82"
+    },
+    {
+      "year": "2026",
+      "month": 3,
+      "category": "Zaposleni",
+      "amount": "238772.48"
+    },
+    {
+      "year": "2026",
+      "month": 4,
+      "category": "Magacin",
+      "amount": "28492.85"
+    },
+    {
+      "year": "2026",
+      "month": 4,
+      "category": "NIS i OMV",
+      "amount": "3590000.02"
+    },
+    {
+      "year": "2026",
+      "month": 4,
+      "category": "Zaposleni",
+      "amount": "252210.99"
+    },
+    {
+      "year": "2026",
+      "month": 5,
+      "category": "Magacin",
+      "amount": "119699.03"
+    },
+    {
+      "year": "2026",
+      "month": 5,
+      "category": "NIS i OMV",
+      "amount": "3825565.67"
+    },
+    {
+      "year": "2026",
+      "month": 5,
+      "category": "Zaposleni",
+      "amount": "39454.61"
+    },
+    {
+      "year": "2026",
+      "month": 6,
+      "category": "Magacin",
+      "amount": "93894.03"
+    },
+    {
+      "year": "2026",
+      "month": 6,
+      "category": "NIS i OMV",
+      "amount": "4074415.21"
+    },
+    {
+      "year": "2026",
+      "month": 6,
+      "category": "Zaposleni",
+      "amount": "253151.05"
+    },
+    {
+      "year": "2026",
+      "month": 7,
+      "category": "Magacin",
+      "amount": "104000.09"
+    },
+    {
+      "year": "2026",
+      "month": 7,
+      "category": "NIS i OMV",
+      "amount": "4280664.55"
+    },
+    {
+      "year": "2026",
+      "month": 7,
+      "category": "Zaposleni",
+      "amount": "80899.96"
+    },
+    {
+      "year": "2026",
+      "month": 8,
+      "category": "Magacin",
+      "amount": "53654.44"
+    },
+    {
+      "year": "2026",
+      "month": 8,
+      "category": "NIS i OMV",
+      "amount": "3510220.26"
+    },
+    {
+      "year": "2026",
+      "month": 8,
+      "category": "Zaposleni",
+      "amount": "242005.97"
+    },
+    {
+      "year": "2026",
+      "month": 9,
+      "category": "Zaposleni",
+      "amount": "3209.00"
+    }
+  ],
+  "all_six_groupings_reconcile": true,
+  "omv_existing_view_join": {
+    "rows": 1704,
+    "unique_transactions": 1630,
+    "extra_joined_rows": 74,
+    "gross": "14395787.82"
+  }
+}

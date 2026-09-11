@@ -250,11 +250,12 @@ class SecondaryReportViewHelperTests(SimpleTestCase):
 		self.assertNotIn("Zatvoreni putni nalozi", report_names)
 		self.assertNotIn("vehicle_list", report_urls)
 		self.assertNotIn("zatvoreni_putni", report_urls)
+		self.assertNotIn("potrazivanje_ddor", report_urls)
 		self.assertNotIn("omv_putnicka", report_urls)
 		self.assertNotIn("nis_teretna", report_urls)
 
 	def test_removed_server_report_route_names_do_not_resolve(self):
-		for name in ("omv_putnicka", "nis_putnicka", "omv_teretna", "nis_teretna", "zatvoreni_putni"):
+		for name in ("omv_putnicka", "nis_putnicka", "omv_teretna", "nis_teretna", "zatvoreni_putni", "potrazivanje_ddor"):
 			with self.subTest(name=name), self.assertRaises(NoReverseMatch):
 				reverse(name)
 

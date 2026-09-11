@@ -287,6 +287,8 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
 
     def get_context_data(self, **kwargs):
         from fleet.support.vehicle_detail import VehiclePeriodForm, recorded_analytics, date_only
+        from fleet.support.vehicle_mileage import vehicle_mileage
+        from fleet.support.vehicle_maintenance import vehicle_maintenance
         from django.utils import timezone
 
         context = super().get_context_data(**kwargs)
@@ -317,6 +319,9 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         ao_policy = vehicle.policies.filter(insurance_type__icontains='AUTOODGOVORNOST', start_date__lte=today, end_date__isnull=False).order_by('-end_date', '-id').first()
         registration_days = (card.registration_valid_until - today).days if card and card.registration_valid_until else None
         context.update({
+            'mileage': vehicle_mileage(vehicle, params, today),
+            'maintenance': vehicle_maintenance(vehicle, today),
+            'mileage_other_filters': [(key, value) for key, value in params.items() if key not in ('mileage_from', 'mileage_to')],
             'today': today, 'period_form': period_form, 'period_valid': valid_period,
             'period_start': start, 'period_end': end, 'analytics': analytics,
             'consumptions': fuel, 'service_list': services, 'requisition_list': requisitions,

@@ -9,8 +9,10 @@
     <h1 class="h3 mb-1">Radna lista</h1>
     <div class="text-muted">
       {{ employee.display_first_name }} {{ employee.display_last_name }} | sifra {{ employee.employee_code }} | {{ month_name }} {{ year }}
+      {% if employee.recipient_code %}<span class="ms-2">{{ employee.recipient_code }} · {{ employee.recipient_name }}</span>{% endif %}
     </div>
   </div>
+  {% if is_other_employee_sheet %}<a class="btn btn-outline-primary btn-sm" href="{% url 'employee_detail' employee.pk %}">Detalj zaposlenog</a>{% endif %}
   <form method="get" class="period-picker">
     <select name="month" class="form-select form-select-sm period-select period-month-select" aria-label="Mesec">
       {% for item in available_months %}
@@ -26,6 +28,7 @@
   </form>
 </div>
 
+{% if not employee.recipient_code %}<div class="alert alert-info">Zaposlenom nije evidentirana vrsta primaoca iz HR-a. Izbor vrste rada i odsustva biće dostupan nakon povezivanja; dodatnu napomenu možete uneti odmah.</div>{% elif not has_work_categories %}<div class="alert alert-info">Za vrstu primaoca {{ employee.recipient_code }} nisu podešene aktivne vrste rada i odsustva. Potrebno je dopuniti veze u šifrarniku „Elementi RL“; dodatnu napomenu možete uneti odmah.</div>{% endif %}
 <form method="post" id="work-time-sheet-form">
   {% csrf_token %}
   <input type="hidden" name="month" value="{{ month }}">
@@ -80,7 +83,7 @@
               {% endfor %}
               <th class="text-center total-col">Svega</th>
               <th class="conditions-col">Uslovi rada</th>
-              <th class="note-col">Napomena</th>
+              <th class="note-col">Vrsta rada / odsustva i napomena</th>
             </tr>
           </thead>
           <tbody>
@@ -107,7 +110,12 @@
                 {% endfor %}
                 <td class="text-end fw-semibold row-total">0</td>
                 <td>{{ form.work_conditions }}</td>
-                <td>{{ form.note }}</td>
+                <td class="note-col">
+                  {{ form.work_category }}
+                  {% if form.work_category.errors %}<div class="text-danger small">{{ form.work_category.errors|striptags }}</div>{% endif %}
+                  <div class="mt-1">{{ form.note }}</div>
+                  {% if form.note.errors %}<div class="text-danger small">{{ form.note.errors|striptags }}</div>{% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
@@ -165,7 +173,7 @@
       <div class="alert alert-warning mb-0">
         Evidencija prolaza nije ucitana: {{ clock_attendance_error }}
       </div>
-    {% else %}
+    {% endif %}
       <div class="table-responsive attendance-table-wrap">
         <table class="table table-sm table-bordered align-middle attendance-table mb-0">
           <thead>
@@ -191,6 +199,9 @@
                   <span class="attendance-status attendance-status-{{ row.status_class }}">{{ row.status }}</span>
                 </td>
                 <td>
+                  {% for leave in row.sick_leaves %}
+                    <div class="attendance-sick-leave">Bolovanje · RFZO {{ leave.rfzo_id }} · {{ leave.start_date|date:"d.m.Y" }}–{% if leave.end_date %}{{ leave.end_date|date:"d.m.Y" }}{% else %}otvoreno (evidentirano do {{ leave.source_date|date:"d.m.Y" }}){% endif %}</div>
+                  {% endfor %}
                   {% if row.travel_orders %}
                     {% for travel_order in row.travel_orders %}
                       <div class="attendance-travel-order">
@@ -202,7 +213,7 @@
                     {% for message in row.issue_messages %}
                       <div>{{ message }}</div>
                     {% endfor %}
-                  {% elif not row.travel_orders %}
+                  {% elif not row.travel_orders and not row.sick_leaves %}
                     <span class="text-muted">-</span>
                   {% endif %}
                 </td>
@@ -215,7 +226,6 @@
           </tbody>
         </table>
       </div>
-    {% endif %}
   </div>
 </div>
 
@@ -326,6 +336,7 @@
     height: 32px;
   }
   .work-code-col .select2-container,
+  .note-col .select2-container,
   .work-sheet-control .select2-container {
     width: 100% !important;
   }
@@ -363,7 +374,12 @@
     width: 140px;
   }
   .note-col {
-    width: 220px;
+    width: 290px;
+    min-width: 290px;
+  }
+  .note-col .select2-selection__rendered {
+    text-align: left;
+    font-size: 0.8rem;
   }
   .weekend-day {
     background: #fff4d6;
@@ -448,6 +464,8 @@
     color: #075985;
     font-weight: 700;
   }
+  .attendance-sick-leave { color: #6b21a8; font-weight: 600; }
+  .attendance-status-leave { color: #6b21a8; background: #f3e8ff; }
   @media (max-width: 768px) {
     .work-sheet-toolbar {
       grid-template-columns: 1fr;

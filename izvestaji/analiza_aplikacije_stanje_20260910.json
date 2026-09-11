@@ -1,0 +1,3948 @@
+{
+  "as_of": "2026-09-10",
+  "roles": [
+    {
+      "name": "Blagajna",
+      "slug": "blagajna",
+      "active": true,
+      "active_users": 2,
+      "permission_count": 2,
+      "key_permissions": [],
+      "travel_permissions": [],
+      "all_permissions": [
+        "isplate:converter",
+        "isplate:neoporezive_isplate"
+      ]
+    },
+    {
+      "name": "Garaza",
+      "slug": "garaza",
+      "active": true,
+      "active_users": 1,
+      "permission_count": 84,
+      "key_permissions": [
+        "vehicle_list",
+        "vehicle_detail",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_close",
+        "putninalog_list",
+        "kvar_list",
+        "kvar_create",
+        "kvar_update",
+        "kvar_delete"
+      ],
+      "travel_permissions": [
+        "export_nis_putnicka_excel",
+        "export_omv_putnicka_excel",
+        "nis_putnicka",
+        "omv_putnicka",
+        "putninalog_detail",
+        "putninalog_list",
+        "putninalog_print",
+        "putninalog_print_list",
+        "vehicle_travel_order_close",
+        "vehicle_travel_order_closed_list",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_delete",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_request",
+        "vehicle_travel_order_update",
+        "zatvoreni_putni"
+      ],
+      "all_permissions": [
+        "center_statistics",
+        "dashboard",
+        "expiring_and_not_renewed_policies",
+        "export_leases",
+        "export_nis_putnicka_excel",
+        "export_nis_teretna",
+        "export_omv_putnicka_excel",
+        "export_omv_teretna_excel",
+        "fuel_transactions_list",
+        "fuelconsumption_detail",
+        "fuelconsumption_list",
+        "garaza_home",
+        "gzn_create",
+        "gzn_detail",
+        "gzn_list",
+        "gzn_print",
+        "insurance_detail",
+        "insurance_fixing_list",
+        "insurance_list",
+        "jobcode_detail",
+        "jobcode_list",
+        "kasko_rate",
+        "konta_list",
+        "kvar_create",
+        "kvar_delete",
+        "kvar_detail",
+        "kvar_list",
+        "kvar_list_ims",
+        "kvar_list_van_ims",
+        "kvar_print",
+        "kvar_trebovanje",
+        "kvar_update",
+        "kvar_workorder",
+        "lease_detail",
+        "lease_list",
+        "lease_monthly_costs",
+        "magacin",
+        "nis_putnicka",
+        "nis_teretna",
+        "omv_putnicka",
+        "omv_teretna",
+        "otpis",
+        "po_dobavljacima",
+        "policy_detail",
+        "policy_fixing_list",
+        "policy_list",
+        "potrazivanje_ddor",
+        "putninalog_detail",
+        "putninalog_list",
+        "putninalog_print",
+        "putninalog_print_list",
+        "reports_index",
+        "reports_service_monthly_costs",
+        "reports_service_monthly_costs_csv",
+        "requisition_detail",
+        "requisition_fixing_list",
+        "requisition_list",
+        "service_list",
+        "service_transaction_list",
+        "servicetype_detail",
+        "servicetype_list",
+        "trafficcard_detail",
+        "trafficcard_list",
+        "tro_gorivo_mesec",
+        "tro_parking",
+        "tro_pracenja_vozila",
+        "tro_zarade",
+        "troskovi_svi",
+        "troskovi_tahograf",
+        "vehicle_detail",
+        "vehicle_export_csv",
+        "vehicle_list",
+        "vehicle_tender_document_detail",
+        "vehicle_tender_document_list",
+        "vehicle_travel_order_close",
+        "vehicle_travel_order_closed_list",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_delete",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_request",
+        "vehicle_travel_order_update",
+        "zatvoreni_putni"
+      ]
+    },
+    {
+      "name": "Menice",
+      "slug": "menice",
+      "active": true,
+      "active_users": 1,
+      "permission_count": 12,
+      "key_permissions": [],
+      "travel_permissions": [],
+      "all_permissions": [
+        "menice:izlazne_sync",
+        "menice:menica_create",
+        "menice:menica_data",
+        "menice:menica_delete",
+        "menice:menica_detail",
+        "menice:menica_list",
+        "menice:menica_update",
+        "menice:ulazna_menica_create",
+        "menice:ulazna_menica_data",
+        "menice:ulazna_menica_delete",
+        "menice:ulazna_menica_list",
+        "menice:ulazna_menica_update"
+      ]
+    },
+    {
+      "name": "Mobilni",
+      "slug": "mobilni",
+      "active": true,
+      "active_users": 3,
+      "permission_count": 27,
+      "key_permissions": [],
+      "travel_permissions": [],
+      "all_permissions": [
+        "mobilni:mobile_assignment_create",
+        "mobilni:mobile_assignment_delete",
+        "mobilni:mobile_assignment_export",
+        "mobilni:mobile_assignment_list",
+        "mobilni:mobile_assignment_update",
+        "mobilni:mobile_dashboard",
+        "mobilni:mobile_import",
+        "mobilni:mobile_package_create",
+        "mobilni:mobile_package_delete",
+        "mobilni:mobile_package_export",
+        "mobilni:mobile_package_list",
+        "mobilni:mobile_package_update",
+        "mobilni:mobile_usage_accounting_csv",
+        "mobilni:mobile_usage_create",
+        "mobilni:mobile_usage_delete",
+        "mobilni:mobile_usage_export",
+        "mobilni:mobile_usage_list",
+        "mobilni:mobile_usage_update",
+        "mobilni:mobile_user_create",
+        "mobilni:mobile_user_delete",
+        "mobilni:mobile_user_export",
+        "mobilni:mobile_user_list",
+        "mobilni:mobile_user_update",
+        "mobilni:mobile_withholding_all",
+        "mobilni:mobile_withholding_employees",
+        "mobilni:mobile_withholding_employees_export",
+        "mobilni:mobile_withholding_former_employees"
+      ]
+    },
+    {
+      "name": "Nabavka",
+      "slug": "nabavka",
+      "active": true,
+      "active_users": 2,
+      "permission_count": 45,
+      "key_permissions": [
+        "nabavka:case_create",
+        "nabavka:case_update",
+        "nabavka:status_log_create",
+        "nabavka:euf_invoice_list",
+        "nabavka:euf_invoice_detail"
+      ],
+      "travel_permissions": [],
+      "all_permissions": [
+        "nabavka:alerts",
+        "nabavka:case_create",
+        "nabavka:case_data",
+        "nabavka:case_delete",
+        "nabavka:case_detail",
+        "nabavka:case_list",
+        "nabavka:case_material_requisition_print",
+        "nabavka:case_print",
+        "nabavka:case_repeat",
+        "nabavka:case_source_link",
+        "nabavka:case_update",
+        "nabavka:dashboard",
+        "nabavka:euf_invoice_data",
+        "nabavka:euf_invoice_detail",
+        "nabavka:euf_invoice_export",
+        "nabavka:euf_invoice_list",
+        "nabavka:euf_invoice_returned_job_codes",
+        "nabavka:euf_invoice_returned_toggle",
+        "nabavka:euf_invoice_sync",
+        "nabavka:euf_invoice_update",
+        "nabavka:euf_item_data",
+        "nabavka:euf_item_list",
+        "nabavka:euf_item_sync",
+        "nabavka:goods_data",
+        "nabavka:goods_list",
+        "nabavka:goods_sync",
+        "nabavka:invoice_contract_link_delete",
+        "nabavka:invoice_job_code_link_delete",
+        "nabavka:invoice_link_delete",
+        "nabavka:item_create",
+        "nabavka:item_delete",
+        "nabavka:item_source_data",
+        "nabavka:item_source_link",
+        "nabavka:partner_job_code_check_report",
+        "nabavka:public_procurement_detail",
+        "nabavka:public_procurement_import",
+        "nabavka:public_procurement_list",
+        "nabavka:purchase_contract_list",
+        "nabavka:purchase_order_create",
+        "nabavka:purchase_order_detail",
+        "nabavka:purchase_order_list",
+        "nabavka:purchase_order_update",
+        "nabavka:reports",
+        "nabavka:status_log_create",
+        "nabavka:uf_invoice_detail"
+      ]
+    },
+    {
+      "name": "Pravna sluzba",
+      "slug": "pravna",
+      "active": true,
+      "active_users": 4,
+      "permission_count": 54,
+      "key_permissions": [],
+      "travel_permissions": [],
+      "all_permissions": [
+        "naplata:lista_avans_klijenti",
+        "naplata:lista_dugovanja_po_bucketima",
+        "naplata:lista_opomena",
+        "naplata:lista_tuzenih",
+        "naplata:pravna_arhiviraj",
+        "naplata:pravna_cases_list",
+        "naplata:pravna_detalj",
+        "naplata:pravna_dodaj",
+        "naplata:pravna_dodaj_promenu",
+        "naplata:pravna_izmeni",
+        "naplata:pravna_izvestaj",
+        "naplata:pravna_obrisi",
+        "naplata:pravna_obrisi_promenu",
+        "ugovori:annex_create",
+        "ugovori:business_request_create",
+        "ugovori:business_request_delete",
+        "ugovori:business_request_detail",
+        "ugovori:business_request_list",
+        "ugovori:business_request_update",
+        "ugovori:contract_create",
+        "ugovori:contract_delete",
+        "ugovori:contract_detail",
+        "ugovori:contract_document_create",
+        "ugovori:contract_document_delete",
+        "ugovori:contract_file_upload",
+        "ugovori:contract_guarantee_create",
+        "ugovori:contract_guarantee_delete",
+        "ugovori:contract_list",
+        "ugovori:contract_list_export_excel",
+        "ugovori:contract_list_print",
+        "ugovori:contract_menica_link_create",
+        "ugovori:contract_menica_link_delete",
+        "ugovori:contract_type_create",
+        "ugovori:contract_type_delete",
+        "ugovori:contract_type_list",
+        "ugovori:contract_type_update",
+        "ugovori:contract_update",
+        "ugovori:offer_create",
+        "ugovori:offer_delete",
+        "ugovori:offer_detail",
+        "ugovori:offer_list",
+        "ugovori:offer_update",
+        "ugovori:partner_apr_update",
+        "ugovori:partner_create",
+        "ugovori:partner_data",
+        "ugovori:partner_delete",
+        "ugovori:partner_detail",
+        "ugovori:partner_list",
+        "ugovori:partner_sync_apr_batch",
+        "ugovori:partner_sync_apr_start",
+        "ugovori:partner_sync_finansije",
+        "ugovori:partner_sync_finansije_batch",
+        "ugovori:partner_sync_finansije_start",
+        "ugovori:partner_update"
+      ]
+    },
+    {
+      "name": "Pregled",
+      "slug": "pregled",
+      "active": true,
+      "active_users": 3,
+      "permission_count": 85,
+      "key_permissions": [
+        "vehicle_list",
+        "vehicle_detail",
+        "vehicle_travel_order_list",
+        "putninalog_list",
+        "kvar_list"
+      ],
+      "travel_permissions": [
+        "export_nis_putnicka_excel",
+        "export_omv_putnicka_excel",
+        "nis_putnicka",
+        "omv_putnicka",
+        "putninalog_data",
+        "putninalog_detail",
+        "putninalog_list",
+        "putninalog_print",
+        "putninalog_print_list",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_request",
+        "zatvoreni_putni"
+      ],
+      "all_permissions": [
+        "center_statistics",
+        "dashboard",
+        "employee_detail",
+        "employee_list",
+        "expiring_and_not_renewed_policies",
+        "export_leases",
+        "export_nis_putnicka_excel",
+        "export_nis_teretna",
+        "export_omv_putnicka_excel",
+        "export_omv_teretna_excel",
+        "fleet_analytics",
+        "fuel_transactions_list",
+        "fuelconsumption_detail",
+        "fuelconsumption_list",
+        "garaza_home",
+        "gzn_detail",
+        "gzn_list",
+        "gzn_print",
+        "insurance_detail",
+        "insurance_fixing_list",
+        "insurance_list",
+        "jobcode_detail",
+        "jobcode_list",
+        "kasko_rate",
+        "konta_list",
+        "kvar_detail",
+        "kvar_list",
+        "kvar_list_ims",
+        "kvar_list_van_ims",
+        "kvar_print",
+        "kvar_trebovanje",
+        "kvar_workorder",
+        "lease_detail",
+        "lease_list",
+        "lease_monthly_costs",
+        "magacin",
+        "nis_putnicka",
+        "nis_teretna",
+        "omv_putnicka",
+        "omv_teretna",
+        "organizational_unit_list",
+        "otpis",
+        "po_dobavljacima",
+        "policies_monthly_costs",
+        "policies_monthly_costs_csv",
+        "policy_detail",
+        "policy_fixing_list",
+        "policy_list",
+        "potrazivanje_ddor",
+        "putninalog_data",
+        "putninalog_detail",
+        "putninalog_list",
+        "putninalog_print",
+        "putninalog_print_list",
+        "reports_index",
+        "reports_service_monthly_costs",
+        "reports_service_monthly_costs_csv",
+        "requisition_detail",
+        "requisition_fixing_list",
+        "requisition_list",
+        "service_fixing_list",
+        "service_list",
+        "service_transaction_list",
+        "servicetype_detail",
+        "servicetype_list",
+        "trafficcard_detail",
+        "trafficcard_list",
+        "tro_gorivo_mesec",
+        "tro_parking",
+        "tro_pracenja_vozila",
+        "tro_zarade",
+        "troskovi_svi",
+        "troskovi_tahograf",
+        "vehicle_detail",
+        "vehicle_export_csv",
+        "vehicle_list",
+        "vehicle_tender_document_detail",
+        "vehicle_tender_document_list",
+        "vehicle_tender_documentation_zip",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_request",
+        "zatvoreni_putni"
+      ]
+    },
+    {
+      "name": "Pregled naplate",
+      "slug": "pregled-naplate",
+      "active": true,
+      "active_users": 1,
+      "permission_count": 24,
+      "key_permissions": [],
+      "travel_permissions": [],
+      "all_permissions": [
+        "naplata:detalji_partner",
+        "naplata:export_baket_60_excel",
+        "naplata:export_baket_90_excel",
+        "naplata:export_dugovanja_excel",
+        "naplata:export_neodobrene_if_excel",
+        "naplata:export_opomene_fakture",
+        "naplata:export_partner_baketi_excel",
+        "naplata:export_utuzene_fakture",
+        "naplata:izvestaj_po_siframa_posla",
+        "naplata:lista_avans_klijenti",
+        "naplata:lista_dugovanja",
+        "naplata:lista_dugovanja_po_bucketima",
+        "naplata:lista_kontakata",
+        "naplata:lista_napomena",
+        "naplata:lista_opomena",
+        "naplata:lista_poziva",
+        "naplata:lista_pozivnih_pisma",
+        "naplata:lista_tuzbi",
+        "naplata:lista_tuzenih",
+        "naplata:neodobrene_if_izvestaj",
+        "naplata:pravna_cases_list",
+        "naplata:pravna_detalj",
+        "naplata:pravna_izvestaj",
+        "naplata:pravna_izvestaj_excel"
+      ]
+    },
+    {
+      "name": "Render check",
+      "slug": "render-check",
+      "active": true,
+      "active_users": 1,
+      "permission_count": 1,
+      "key_permissions": [],
+      "travel_permissions": [],
+      "all_permissions": [
+        "mobilni:mobile_usage_list"
+      ]
+    },
+    {
+      "name": "Render check 2",
+      "slug": "render-check-2",
+      "active": true,
+      "active_users": 1,
+      "permission_count": 1,
+      "key_permissions": [],
+      "travel_permissions": [],
+      "all_permissions": [
+        "mobilni:mobile_usage_list"
+      ]
+    },
+    {
+      "name": "Sekretarijat",
+      "slug": "sekretarijat",
+      "active": true,
+      "active_users": 10,
+      "permission_count": 58,
+      "key_permissions": [
+        "vehicle_detail",
+        "vehicle_travel_order_create",
+        "putninalog_create"
+      ],
+      "travel_permissions": [
+        "putninalog_create",
+        "putninalog_detail",
+        "putninalog_foreign_print",
+        "putninalog_print",
+        "putninalog_print_list",
+        "putninalog_storniraj",
+        "putninalog_update",
+        "vehicle_travel_order_closed_list",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_request",
+        "vehicle_travel_order_update",
+        "zatvoreni_putni"
+      ],
+      "all_permissions": [
+        "employee_detail",
+        "employee_list",
+        "employee_sync",
+        "garaza_home",
+        "putninalog_create",
+        "putninalog_detail",
+        "putninalog_foreign_print",
+        "putninalog_print",
+        "putninalog_print_list",
+        "putninalog_storniraj",
+        "putninalog_update",
+        "ugovori:annex_create",
+        "ugovori:business_request_create",
+        "ugovori:business_request_delete",
+        "ugovori:business_request_detail",
+        "ugovori:business_request_list",
+        "ugovori:business_request_update",
+        "ugovori:contract_create",
+        "ugovori:contract_delete",
+        "ugovori:contract_detail",
+        "ugovori:contract_guarantee_create",
+        "ugovori:contract_guarantee_delete",
+        "ugovori:contract_list",
+        "ugovori:contract_list_export_excel",
+        "ugovori:contract_list_print",
+        "ugovori:contract_menica_link_create",
+        "ugovori:contract_menica_link_delete",
+        "ugovori:contract_type_create",
+        "ugovori:contract_type_delete",
+        "ugovori:contract_type_list",
+        "ugovori:contract_type_update",
+        "ugovori:contract_update",
+        "ugovori:offer_create",
+        "ugovori:offer_delete",
+        "ugovori:offer_detail",
+        "ugovori:offer_list",
+        "ugovori:offer_update",
+        "ugovori:partner_apr_update",
+        "ugovori:partner_create",
+        "ugovori:partner_data",
+        "ugovori:partner_delete",
+        "ugovori:partner_detail",
+        "ugovori:partner_list",
+        "ugovori:partner_sync_apr_batch",
+        "ugovori:partner_sync_apr_start",
+        "ugovori:partner_sync_finansije",
+        "ugovori:partner_sync_finansije_batch",
+        "ugovori:partner_sync_finansije_start",
+        "ugovori:partner_update",
+        "vehicle_detail",
+        "vehicle_travel_order_closed_list",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_request",
+        "vehicle_travel_order_update",
+        "zatvoreni_putni"
+      ]
+    },
+    {
+      "name": "Uprava",
+      "slug": "uprava",
+      "active": true,
+      "active_users": 3,
+      "permission_count": 390,
+      "key_permissions": [
+        "vehicle_list",
+        "vehicle_detail",
+        "vehicle_update",
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_close",
+        "putninalog_list",
+        "putninalog_create",
+        "kvar_list",
+        "kvar_create",
+        "kvar_update",
+        "kvar_delete",
+        "nabavka:case_create",
+        "nabavka:case_update",
+        "nabavka:status_log_create",
+        "nabavka:euf_invoice_list",
+        "nabavka:euf_invoice_detail"
+      ],
+      "travel_permissions": [
+        "download_travel_order_excel",
+        "export_nis_putnicka_excel",
+        "export_omv_putnicka_excel",
+        "fuel_job_code_nis_putnicka",
+        "fuel_job_code_omv_putnicka",
+        "import_omv_putnicka_csv",
+        "nis_putnicka",
+        "omv_putnicka",
+        "putninalog_create",
+        "putninalog_data",
+        "putninalog_delete",
+        "putninalog_detail",
+        "putninalog_employee_sync",
+        "putninalog_foreign_print",
+        "putninalog_list",
+        "putninalog_print",
+        "putninalog_print_list",
+        "putninalog_set_opravdan",
+        "putninalog_storniraj",
+        "putninalog_update",
+        "vehicle_travel_order_close",
+        "vehicle_travel_order_closed_list",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_data",
+        "vehicle_travel_order_delete",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_previous_create",
+        "vehicle_travel_order_print_open",
+        "vehicle_travel_order_request",
+        "vehicle_travel_order_update",
+        "zatvoreni_putni"
+      ],
+      "all_permissions": [
+        "activity_log_list",
+        "center_statistics",
+        "dashboard",
+        "download_travel_order_excel",
+        "draft_insurance_update",
+        "draft_policy_update",
+        "draft_requisition_update",
+        "draft_service_transaction_update",
+        "employee_create",
+        "employee_cv_item_create",
+        "employee_cv_item_delete",
+        "employee_cv_item_update",
+        "employee_delete",
+        "employee_detail",
+        "employee_list",
+        "employee_sync",
+        "employee_update",
+        "expiring_and_not_renewed_policies",
+        "export_leases",
+        "export_nis_putnicka_excel",
+        "export_nis_teretna",
+        "export_omv_putnicka_excel",
+        "export_omv_teretna_excel",
+        "fetch_data",
+        "fetch_ddor",
+        "fetch_lease_interest",
+        "fetch_policies",
+        "fetch_requisitions",
+        "fetch_services",
+        "fetch_vehicle_value",
+        "fetch_vehicle_value_legacy",
+        "fleet_analytics",
+        "fleet_other",
+        "fuel_job_code_nis_putnicka",
+        "fuel_job_code_nis_teretna",
+        "fuel_job_code_omv_putnicka",
+        "fuel_job_code_omv_teretna",
+        "fuel_transaction_detail",
+        "fuel_transactions_data",
+        "fuel_transactions_list",
+        "fuelconsumption_create",
+        "fuelconsumption_delete",
+        "fuelconsumption_detail",
+        "fuelconsumption_list",
+        "fuelconsumption_update",
+        "garaza_home",
+        "gzn_create",
+        "gzn_detail",
+        "gzn_list",
+        "gzn_print",
+        "import_nis_excel",
+        "import_omv_putnicka_csv",
+        "import_omv_teretna_csv",
+        "incident_create",
+        "incident_delete",
+        "incident_detail",
+        "incident_list",
+        "incident_update",
+        "insurance_create",
+        "insurance_delete",
+        "insurance_detail",
+        "insurance_fetch_ddor",
+        "insurance_fixing_list",
+        "insurance_list",
+        "insurance_migrate_one",
+        "insurance_update",
+        "isplate:converter",
+        "isplate:neoporezive_isplate",
+        "jobcode_create",
+        "jobcode_delete",
+        "jobcode_detail",
+        "jobcode_list",
+        "jobcode_update",
+        "kasko_rate",
+        "konta_create",
+        "konta_delete",
+        "konta_list",
+        "konta_update",
+        "kvar_create",
+        "kvar_data",
+        "kvar_delete",
+        "kvar_detail",
+        "kvar_list",
+        "kvar_list_ims",
+        "kvar_list_van_ims",
+        "kvar_print",
+        "kvar_trebovanje",
+        "kvar_update",
+        "kvar_workorder",
+        "lease_create",
+        "lease_data",
+        "lease_delete",
+        "lease_detail",
+        "lease_list",
+        "lease_monthly_costs",
+        "lease_update",
+        "login",
+        "logout",
+        "magacin",
+        "menice:izlazne_sync",
+        "menice:menica_create",
+        "menice:menica_data",
+        "menice:menica_delete",
+        "menice:menica_detail",
+        "menice:menica_list",
+        "menice:menica_update",
+        "menice:ulazna_menica_create",
+        "menice:ulazna_menica_data",
+        "menice:ulazna_menica_delete",
+        "menice:ulazna_menica_list",
+        "menice:ulazna_menica_update",
+        "mobilni:mobile_assignment_create",
+        "mobilni:mobile_assignment_delete",
+        "mobilni:mobile_assignment_export",
+        "mobilni:mobile_assignment_list",
+        "mobilni:mobile_assignment_update",
+        "mobilni:mobile_dashboard",
+        "mobilni:mobile_import",
+        "mobilni:mobile_package_create",
+        "mobilni:mobile_package_delete",
+        "mobilni:mobile_package_export",
+        "mobilni:mobile_package_list",
+        "mobilni:mobile_package_update",
+        "mobilni:mobile_parking_exemption_create",
+        "mobilni:mobile_parking_exemption_delete",
+        "mobilni:mobile_parking_exemption_list",
+        "mobilni:mobile_parking_exemption_update",
+        "mobilni:mobile_phone_detail",
+        "mobilni:mobile_usage_accounting_csv",
+        "mobilni:mobile_usage_create",
+        "mobilni:mobile_usage_delete",
+        "mobilni:mobile_usage_export",
+        "mobilni:mobile_usage_list",
+        "mobilni:mobile_usage_update",
+        "mobilni:mobile_user_create",
+        "mobilni:mobile_user_delete",
+        "mobilni:mobile_user_export",
+        "mobilni:mobile_user_list",
+        "mobilni:mobile_user_update",
+        "mobilni:mobile_withholding_all",
+        "mobilni:mobile_withholding_employees",
+        "mobilni:mobile_withholding_employees_export",
+        "mobilni:mobile_withholding_former_employees",
+        "mobilni:mobile_withholding_non_employees",
+        "my_employee_name_correction",
+        "my_employee_profile",
+        "nabavka:alerts",
+        "nabavka:case_create",
+        "nabavka:case_data",
+        "nabavka:case_delete",
+        "nabavka:case_detail",
+        "nabavka:case_invoice_link_create",
+        "nabavka:case_list",
+        "nabavka:case_material_requisition_print",
+        "nabavka:case_print",
+        "nabavka:case_repeat",
+        "nabavka:case_source_link",
+        "nabavka:case_update",
+        "nabavka:contract_link_create",
+        "nabavka:contract_link_delete",
+        "nabavka:dashboard",
+        "nabavka:euf_invoice_data",
+        "nabavka:euf_invoice_detail",
+        "nabavka:euf_invoice_export",
+        "nabavka:euf_invoice_link",
+        "nabavka:euf_invoice_list",
+        "nabavka:euf_invoice_returned_job_codes",
+        "nabavka:euf_invoice_returned_toggle",
+        "nabavka:euf_invoice_sync",
+        "nabavka:euf_invoice_update",
+        "nabavka:euf_item_data",
+        "nabavka:euf_item_list",
+        "nabavka:euf_item_sync",
+        "nabavka:goods_data",
+        "nabavka:goods_list",
+        "nabavka:goods_sync",
+        "nabavka:invoice_contract_link_delete",
+        "nabavka:invoice_job_code_link_delete",
+        "nabavka:invoice_link_delete",
+        "nabavka:invoice_link_list",
+        "nabavka:item_create",
+        "nabavka:item_delete",
+        "nabavka:item_invoice_link_create",
+        "nabavka:item_invoice_link_delete",
+        "nabavka:item_source_data",
+        "nabavka:item_source_link",
+        "nabavka:partner_job_code_check_report",
+        "nabavka:public_procurement_detail",
+        "nabavka:public_procurement_import",
+        "nabavka:public_procurement_list",
+        "nabavka:purchase_contract_list",
+        "nabavka:purchase_order_create",
+        "nabavka:purchase_order_detail",
+        "nabavka:purchase_order_list",
+        "nabavka:purchase_order_update",
+        "nabavka:reports",
+        "nabavka:status_log_create",
+        "nabavka:uf_invoice_detail",
+        "naplata:detalji_partner",
+        "naplata:dodaj_kontakt",
+        "naplata:dodaj_napomenu",
+        "naplata:dodaj_opomenu",
+        "naplata:dodaj_poziv",
+        "naplata:dodaj_poziv_pismo",
+        "naplata:dodaj_tuzbu",
+        "naplata:export_baket_60_excel",
+        "naplata:export_baket_90_excel",
+        "naplata:export_dugovanja_excel",
+        "naplata:export_neodobrene_if_excel",
+        "naplata:export_opomene_fakture",
+        "naplata:export_partner_baketi_excel",
+        "naplata:export_utuzene_fakture",
+        "naplata:izmeni_kontakt",
+        "naplata:izmeni_napomenu",
+        "naplata:izmeni_opomenu",
+        "naplata:izmeni_poziv",
+        "naplata:izmeni_poziv_pismo",
+        "naplata:izmeni_tuzbu",
+        "naplata:izvestaj_po_siframa_posla",
+        "naplata:lista_avans_klijenti",
+        "naplata:lista_dugovanja",
+        "naplata:lista_dugovanja_po_bucketima",
+        "naplata:lista_kontakata",
+        "naplata:lista_napomena",
+        "naplata:lista_opomena",
+        "naplata:lista_poziva",
+        "naplata:lista_pozivnih_pisma",
+        "naplata:lista_tuzbi",
+        "naplata:lista_tuzenih",
+        "naplata:neodobrene_if_izvestaj",
+        "naplata:obrisi_kontakt",
+        "naplata:obrisi_napomenu",
+        "naplata:obrisi_opomenu",
+        "naplata:obrisi_poziv",
+        "naplata:obrisi_poziv_pismo",
+        "naplata:obrisi_tuzbu",
+        "naplata:pravna_arhiviraj",
+        "naplata:pravna_cases_list",
+        "naplata:pravna_detalj",
+        "naplata:pravna_dodaj",
+        "naplata:pravna_dodaj_promenu",
+        "naplata:pravna_izmeni",
+        "naplata:pravna_izvestaj",
+        "naplata:pravna_izvestaj_excel",
+        "naplata:pravna_obrisi",
+        "naplata:pravna_obrisi_promenu",
+        "naplata:toggle_avans_klijent",
+        "nis_putnicka",
+        "nis_teretna",
+        "omv_putnicka",
+        "omv_teretna",
+        "organizational_unit_create",
+        "organizational_unit_list",
+        "organizational_unit_update",
+        "otpis",
+        "password_change",
+        "po_dobavljacima",
+        "policies_monthly_costs",
+        "policies_monthly_costs_csv",
+        "policy_create",
+        "policy_data",
+        "policy_delete",
+        "policy_detail",
+        "policy_fixing_list",
+        "policy_list",
+        "policy_update",
+        "potrazivanje_ddor",
+        "putninalog_create",
+        "putninalog_data",
+        "putninalog_delete",
+        "putninalog_detail",
+        "putninalog_employee_sync",
+        "putninalog_foreign_print",
+        "putninalog_list",
+        "putninalog_print",
+        "putninalog_print_list",
+        "putninalog_set_opravdan",
+        "putninalog_storniraj",
+        "putninalog_update",
+        "reports_index",
+        "reports_service_monthly_costs",
+        "reports_service_monthly_costs_csv",
+        "requisition_create",
+        "requisition_data",
+        "requisition_delete",
+        "requisition_detail",
+        "requisition_fixing_list",
+        "requisition_list",
+        "requisition_update",
+        "service_fixing_list",
+        "service_list",
+        "service_transaction_add",
+        "service_transaction_data",
+        "service_transaction_delete",
+        "service_transaction_list",
+        "service_transaction_update",
+        "servicetype_create",
+        "servicetype_delete",
+        "servicetype_detail",
+        "servicetype_list",
+        "servicetype_update",
+        "task_history_list",
+        "trafficcard_create",
+        "trafficcard_create_manual",
+        "trafficcard_data",
+        "trafficcard_delete",
+        "trafficcard_detail",
+        "trafficcard_list",
+        "trafficcard_update",
+        "tro_gorivo_mesec",
+        "tro_parking",
+        "tro_pracenja_vozila",
+        "tro_zarade",
+        "troskovi_svi",
+        "troskovi_tahograf",
+        "ugovori:annex_create",
+        "ugovori:business_request_create",
+        "ugovori:business_request_delete",
+        "ugovori:business_request_detail",
+        "ugovori:business_request_list",
+        "ugovori:business_request_update",
+        "ugovori:contract_create",
+        "ugovori:contract_delete",
+        "ugovori:contract_detail",
+        "ugovori:contract_document_create",
+        "ugovori:contract_document_delete",
+        "ugovori:contract_file_upload",
+        "ugovori:contract_guarantee_create",
+        "ugovori:contract_guarantee_delete",
+        "ugovori:contract_list",
+        "ugovori:contract_list_export_excel",
+        "ugovori:contract_list_print",
+        "ugovori:contract_menica_link_create",
+        "ugovori:contract_menica_link_delete",
+        "ugovori:contract_type_create",
+        "ugovori:contract_type_delete",
+        "ugovori:contract_type_list",
+        "ugovori:contract_type_update",
+        "ugovori:contract_update",
+        "ugovori:offer_create",
+        "ugovori:offer_delete",
+        "ugovori:offer_detail",
+        "ugovori:offer_list",
+        "ugovori:offer_update",
+        "ugovori:partner_apr_update",
+        "ugovori:partner_create",
+        "ugovori:partner_data",
+        "ugovori:partner_delete",
+        "ugovori:partner_detail",
+        "ugovori:partner_list",
+        "ugovori:partner_sync_apr_batch",
+        "ugovori:partner_sync_apr_start",
+        "ugovori:partner_sync_finansije",
+        "ugovori:partner_sync_finansije_batch",
+        "ugovori:partner_sync_finansije_start",
+        "ugovori:partner_update",
+        "user_create_employee_profile",
+        "user_create_missing_profiles",
+        "user_link_employee",
+        "user_list",
+        "vehicle_create",
+        "vehicle_data",
+        "vehicle_delete",
+        "vehicle_detail",
+        "vehicle_export_csv",
+        "vehicle_list",
+        "vehicle_restore",
+        "vehicle_tender_document_create",
+        "vehicle_tender_document_create_for_vehicle",
+        "vehicle_tender_document_delete",
+        "vehicle_tender_document_detail",
+        "vehicle_tender_document_list",
+        "vehicle_tender_document_update",
+        "vehicle_tender_documentation_zip",
+        "vehicle_toggle_status",
+        "vehicle_travel_order_close",
+        "vehicle_travel_order_closed_list",
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_data",
+        "vehicle_travel_order_delete",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_open_list",
+        "vehicle_travel_order_previous_create",
+        "vehicle_travel_order_print_open",
+        "vehicle_travel_order_request",
+        "vehicle_travel_order_update",
+        "vehicle_update",
+        "zatvoreni_putni"
+      ]
+    },
+    {
+      "name": "Zahtev",
+      "slug": "zahtev",
+      "active": true,
+      "active_users": 0,
+      "permission_count": 9,
+      "key_permissions": [
+        "nabavka:case_create"
+      ],
+      "travel_permissions": [],
+      "all_permissions": [
+        "nabavka:case_create",
+        "nabavka:case_data",
+        "nabavka:case_detail",
+        "nabavka:case_list",
+        "nabavka:case_material_requisition_print",
+        "nabavka:case_print",
+        "nabavka:dashboard",
+        "nabavka:item_create",
+        "nabavka:item_delete"
+      ]
+    },
+    {
+      "name": "Zaposleni",
+      "slug": "zaposleni",
+      "active": true,
+      "active_users": 300,
+      "permission_count": 7,
+      "key_permissions": [
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_create"
+      ],
+      "travel_permissions": [
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_data",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_print_open",
+        "vehicle_travel_order_request"
+      ],
+      "all_permissions": [
+        "vehicle_travel_order_create",
+        "vehicle_travel_order_data",
+        "vehicle_travel_order_detail",
+        "vehicle_travel_order_fuel_report",
+        "vehicle_travel_order_list",
+        "vehicle_travel_order_print_open",
+        "vehicle_travel_order_request"
+      ]
+    },
+    {
+      "name": "Zatvaranje putnih naloga",
+      "slug": "zatvaranje_pravdanje_putnih_naloga",
+      "active": true,
+      "active_users": 2,
+      "permission_count": 2,
+      "key_permissions": [
+        "putninalog_list"
+      ],
+      "travel_permissions": [
+        "putninalog_list",
+        "putninalog_set_opravdan"
+      ],
+      "all_permissions": [
+        "putninalog_list",
+        "putninalog_set_opravdan"
+      ]
+    }
+  ],
+  "counts": {
+    "Vehicle": 172,
+    "TrafficCard": 172,
+    "JobCode": 204,
+    "VehicleHolding": 23,
+    "Lease": 23,
+    "Policy": 647,
+    "VehicleTravelOrder": 217,
+    "PutniNalog": 3522,
+    "Kvar": 1,
+    "KvarPart": 0,
+    "Service": 0,
+    "ServiceType": 15,
+    "Requisition": 2980,
+    "ServiceTransaction": 1342,
+    "FuelConsumption": 15936,
+    "TransactionNIS": 9092,
+    "TransactionOMV": 7058,
+    "Insurance": 0,
+    "ProcurementCase": 224,
+    "ProcurementItem": 455,
+    "ProcurementInvoice": 3061,
+    "ProcurementInvoiceLink": 0,
+    "ProcurementItemInvoiceLink": 1,
+    "UfInvoiceSnapshot": 4922,
+    "EufItemSnapshot": 13200,
+    "GoodsSnapshot": 6660,
+    "ProcurementStatusLog": 276
+  },
+  "quality": {
+    "active_vehicles": 164,
+    "service_intervals": [
+      {
+        "service_interval": 0,
+        "count": 2
+      },
+      {
+        "service_interval": 15000,
+        "count": 162
+      }
+    ],
+    "no_issued_traffic_card": 0,
+    "no_registration_deadline": 164,
+    "without_any_holding_record": 141,
+    "without_job_code": 0,
+    "open_assignments": 98,
+    "open_assignment_vehicle_duplicates": [],
+    "assignments_missing_start_km": 0,
+    "closed_assignments_missing_end_km": 5,
+    "assignments_decreasing_km": 3,
+    "travel_orders_with_vehicle": 3461,
+    "garage_order_types": [
+      {
+        "work_type": "popravka",
+        "van_ims": true,
+        "count": 1
+      }
+    ],
+    "requisitions_vehicle": 2978,
+    "requisitions_order": 0,
+    "requisition_categories": [
+      {
+        "popravka_kategorija__name": "Redovan servis u IMS",
+        "count": 1117
+      },
+      {
+        "popravka_kategorija__name": null,
+        "count": 771
+      },
+      {
+        "popravka_kategorija__name": "Veliki servis u IMS",
+        "count": 668
+      },
+      {
+        "popravka_kategorija__name": "Popravka u IMS",
+        "count": 264
+      },
+      {
+        "popravka_kategorija__name": "Potrosni materijal",
+        "count": 155
+      },
+      {
+        "popravka_kategorija__name": "Redovan servis van IMS",
+        "count": 5
+      }
+    ],
+    "service_transaction_categories": [
+      {
+        "popravka_kategorija__name": "Tehnicki pregled, registracija",
+        "count": 333
+      },
+      {
+        "popravka_kategorija__name": "Popravka van IMS",
+        "count": 275
+      },
+      {
+        "popravka_kategorija__name": "Gume - zamena",
+        "count": 222
+      },
+      {
+        "popravka_kategorija__name": "Dopuna taga, tag, putarina",
+        "count": 154
+      },
+      {
+        "popravka_kategorija__name": "Redovan servis van IMS",
+        "count": 101
+      },
+      {
+        "popravka_kategorija__name": "Gume - kupovina",
+        "count": 99
+      },
+      {
+        "popravka_kategorija__name": "Lizing i najam",
+        "count": 49
+      },
+      {
+        "popravka_kategorija__name": "Pranje vozila",
+        "count": 36
+      },
+      {
+        "popravka_kategorija__name": "Potrosni materijal",
+        "count": 35
+      },
+      {
+        "popravka_kategorija__name": "Veliki servis van IMS",
+        "count": 19
+      },
+      {
+        "popravka_kategorija__name": null,
+        "count": 8
+      },
+      {
+        "popravka_kategorija__name": "Gorivo",
+        "count": 8
+      },
+      {
+        "popravka_kategorija__name": "Redovan servis u IMS",
+        "count": 1
+      },
+      {
+        "popravka_kategorija__name": "Odjava vozila",
+        "count": 1
+      },
+      {
+        "popravka_kategorija__name": "Veliki servis u IMS",
+        "count": 1
+      }
+    ],
+    "garage_cases": 222,
+    "cases_vehicle": 173,
+    "cases_order": 0,
+    "cases_typed": 0,
+    "case_statuses": [
+      {
+        "status": "draft",
+        "count": 223
+      },
+      {
+        "status": "invoice_linked",
+        "count": 1
+      }
+    ],
+    "invoices_vehicle": 242,
+    "invoices_typed": 0,
+    "invoices_no_date": 0,
+    "nis_no_vehicle": 0,
+    "omv_no_vehicle": 0,
+    "service_categories": [
+      {
+        "name": "Redovan servis van IMS",
+        "mapped_type": ""
+      },
+      {
+        "name": "Redovan servis u IMS",
+        "mapped_type": ""
+      },
+      {
+        "name": "Veliki servis u IMS",
+        "mapped_type": "veliki_servis"
+      },
+      {
+        "name": "Veliki servis van IMS",
+        "mapped_type": "veliki_servis"
+      },
+      {
+        "name": "Popravka u IMS",
+        "mapped_type": "popravka"
+      },
+      {
+        "name": "Popravka van IMS",
+        "mapped_type": "popravka"
+      },
+      {
+        "name": "Potrosni materijal",
+        "mapped_type": ""
+      },
+      {
+        "name": "Dopuna taga, tag, putarina",
+        "mapped_type": ""
+      },
+      {
+        "name": "Tehnicki pregled, registracija",
+        "mapped_type": ""
+      },
+      {
+        "name": "Odjava vozila",
+        "mapped_type": ""
+      },
+      {
+        "name": "Gorivo",
+        "mapped_type": ""
+      },
+      {
+        "name": "Gume - zamena",
+        "mapped_type": ""
+      },
+      {
+        "name": "Gume - kupovina",
+        "mapped_type": ""
+      },
+      {
+        "name": "Pranje vozila",
+        "mapped_type": ""
+      },
+      {
+        "name": "Lizing i najam",
+        "mapped_type": ""
+      }
+    ]
+  },
+  "schema": {
+    "Vehicle": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "inventory_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "chassis_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "brand",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "photo",
+        "type": "FileField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "model",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "year_of_manufacture",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "first_registration_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "color",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "homologation_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "number_of_axles",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "engine_volume",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "engine_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "weight",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "engine_power",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "load_capacity",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "category",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "maximum_permissible_weight",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "fuel_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "number_of_seats",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "purchase_value",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "value",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "service_interval",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "purchase_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_code",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoice_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "description",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "otpis",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "TrafficCard": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      },
+      {
+        "name": "registration_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "issue_date",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "valid_until",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "registration_valid_until",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "traffic_card_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "serial_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "owner",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "homologation_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "traffic_card_pdf",
+        "type": "FileField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "traffic_card_front_image",
+        "type": "FileField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "traffic_card_back_image",
+        "type": "FileField",
+        "null": true,
+        "related": null
+      }
+    ],
+    "JobCode": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "organizational_unit",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "OrganizationalUnit"
+      },
+      {
+        "name": "assigned_date",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "VehicleHolding": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      },
+      {
+        "name": "basis",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "start_date",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "end_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "lease",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Lease"
+      },
+      {
+        "name": "financing",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "financing_contract",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Contract"
+      },
+      {
+        "name": "evidence",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "note",
+        "type": "TextField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "Lease": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      },
+      {
+        "name": "partner_code",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "partner_name",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "job_code",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "contract_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "contract",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Contract"
+      },
+      {
+        "name": "current_payment_amount",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "lease_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "start_date",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "end_date",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "note",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      }
+    ],
+    "Policy": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "partner_pib",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoice_id",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "invoice_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "issue_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "insurance_type",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "policy_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "premium_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "start_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "end_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "first_installment_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "other_installments_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "number_of_installments",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "is_renewable",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "VehicleTravelOrder": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "pn_number",
+        "type": "PositiveIntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "closed_at",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "start_mileage",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "end_mileage",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "rbz",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "employee",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Employee"
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      }
+    ],
+    "PutniNalog": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "order_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "order_date",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "employee",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Employee"
+      },
+      {
+        "name": "other_employee_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "job_code",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "OrganizationalUnit"
+      },
+      {
+        "name": "travel_location",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "task",
+        "type": "TextField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "napomena",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "contract_offer",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "other_vehicle",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "travel_date",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "number_of_days",
+        "type": "PositiveIntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "advance_payment",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "isplaceno",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "advance_payment_currency",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "daily_allowance",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "is_weekly",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "opravdan",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "storniran",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "virman_generated",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "virman_generated_at",
+        "type": "DateTimeField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "virman_generated_by",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "CustomUser"
+      }
+    ],
+    "Kvar": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      },
+      {
+        "name": "work_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kilometraza",
+        "type": "PositiveIntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "opis",
+        "type": "TextField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "napomena",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "van_ims",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "rbz",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "KvarPart": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kvar",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Kvar"
+      },
+      {
+        "name": "name",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "quantity",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "uom",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "Service": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "service_type",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "ServiceType"
+      },
+      {
+        "name": "service_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "cost",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "provider",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "description",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      }
+    ],
+    "ServiceType": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "name",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "description",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      }
+    ],
+    "Requisition": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "sif_pred",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "god",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "br_dok",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "sif_vrsart",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "stavka",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "sif_art",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "naz_art",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kol",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "cena",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vrednost_nab",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "mesec_unosa",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "datum_trebovanja",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "popravka_kategorija",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "ServiceType"
+      },
+      {
+        "name": "kilometraza",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "nije_garaza",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "napomena",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "kvar",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Kvar"
+      }
+    ],
+    "ServiceTransaction": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      },
+      {
+        "name": "god",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "sif_par_pl",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "naz_par_pl",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "datum",
+        "type": "DateField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "sif_vrs",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "br_naloga",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vez_dok",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "knt_pl",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "potrazuje",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "sif_par_npl",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "knt_npl",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "duguje",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "konto_vozila",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kom",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "popravka_kategorija",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "ServiceType"
+      },
+      {
+        "name": "kilometraza",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "nije_garaza",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "napomena",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      }
+    ],
+    "FuelConsumption": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      },
+      {
+        "name": "date",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "amount",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "fuel_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "cost_bruto",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "cost_neto",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "supplier",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "job_code",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "mileage",
+        "type": "IntegerField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "TransactionNIS": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "kupac",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "sifra_kupca",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "broj_kartice",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kompanijski_kod_kupca",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "zemlja_sipanja",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "benzinska_stanica",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "id_transakcije",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "app_kod",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "datum_transakcije",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "tociono_mesto",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "naziv_kartice",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "licenca",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "broj_gazdinstva",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "registarska_oznaka_vozila",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "broj_racuna",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kilometraza",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "sipanje_van_rezervoara",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "naziv_proizvoda",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kolicina",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kolicina_kg",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "popust",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "primenjen_popust",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "cena_sa_kase",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "cena",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "total_sa_kase",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "total",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "valuta",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "aktivirano_prekoracenje",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "kolicinsko_prekoracenje",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "finansijsko_prekoracenje",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "nacin_ocitavanja_kartice",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "TransactionOMV": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "issuer",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "customer",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "card",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "license_plate_no",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "transaction_date",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "product_inv",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "quantity",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "gross_cc",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "vat",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "voucher",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "mileage",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "corrected_mileage",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "additional_info",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "supply_country",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "site_town",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "product_del",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "unit_price",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "discount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "surcharge",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "vat_2010",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "supplier_currency",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoice_no",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoice_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoiced",
+        "type": "BooleanField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "state",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "supplier",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "cost_1",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "cost_2",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "reference_no",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "record_type",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "amount_other",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "is_list_price",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "approval_code",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "date_to",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "final_trx",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "lpi",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      }
+    ],
+    "Insurance": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "Vehicle"
+      },
+      {
+        "name": "god",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "sif_vrs",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "br_naloga",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "stavka",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "oj",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "knt",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "datum",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "vez_dok",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "potrazuje",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "kola",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "ProcurementCase": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "case_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "case_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "status",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "title",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "description",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "is_garage",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "work_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "garage_order",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Kvar"
+      },
+      {
+        "name": "job_code",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "OrganizationalUnit"
+      },
+      {
+        "name": "supplier",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Partner"
+      },
+      {
+        "name": "contract",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Contract"
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "responsible",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "CustomUser"
+      },
+      {
+        "name": "estimated_value",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "currency",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "needed_by",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "note",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "created_by",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "CustomUser"
+      }
+    ],
+    "ProcurementItem": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "procurement_case",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "ProcurementCase"
+      },
+      {
+        "name": "source_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "euf_invoice",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "ProcurementInvoice"
+      },
+      {
+        "name": "uf_item",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "EufItemSnapshot"
+      },
+      {
+        "name": "uf_invoice",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "UfInvoiceSnapshot"
+      },
+      {
+        "name": "goods_item",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "GoodsSnapshot"
+      },
+      {
+        "name": "name",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "uom",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "quantity",
+        "type": "DecimalField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "estimated_unit_price",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "note",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      }
+    ],
+    "ProcurementInvoice": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "source",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "euf_key",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "invoice_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "invoice_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoice_date_raw",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "supplier_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "center",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "warehouse",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "registration",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "center_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "job_code",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "OrganizationalUnit"
+      },
+      {
+        "name": "job_code_source",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle_job_code_assigned_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "is_garage",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "work_type",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "vehicle",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "Vehicle"
+      },
+      {
+        "name": "goes_to_warehouse",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "is_returned",
+        "type": "BooleanField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "internal_note",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "synced_at",
+        "type": "DateTimeField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "ProcurementInvoiceLink": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "procurement_case",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "ProcurementCase"
+      },
+      {
+        "name": "source",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "euf_key",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "invoice_number",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "invoice_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "supplier_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "note",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "created_by",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "CustomUser"
+      }
+    ],
+    "ProcurementItemInvoiceLink": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "procurement_item",
+        "type": "OneToOneField",
+        "null": false,
+        "related": "ProcurementItem"
+      },
+      {
+        "name": "invoice",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "ProcurementInvoice"
+      },
+      {
+        "name": "note",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "created_by",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "CustomUser"
+      }
+    ],
+    "UfInvoiceSnapshot": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "source_key",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "purchase_invoice_id",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoice_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_pib",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_mb",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "document_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "creation_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "due_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "total",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "base_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "payment_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "item_value_total",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "item_count",
+        "type": "PositiveIntegerField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "accounts",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "synced_at",
+        "type": "DateTimeField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "EufItemSnapshot": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "source_key",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "uf_invoice",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "UfInvoiceSnapshot"
+      },
+      {
+        "name": "purchase_invoice_id",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "creation_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "document_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "due_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "note",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "contract_document_reference",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "invoice_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "tender_number",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_pib",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_mb",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "total",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "base_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "payment_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "uom",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "item_name",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "quantity",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "price",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "value",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "account",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "synced_at",
+        "type": "DateTimeField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "GoodsSnapshot": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "source_key",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "year",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "document_number",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "document_type",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "organizational_unit",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_code",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "partner_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "document_date",
+        "type": "DateField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "linked_document",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "debit",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "currency",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "foreign_currency_amount",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "subject_code",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "line_number",
+        "type": "IntegerField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "article_code",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "article_type",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "article_name",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "quantity",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "price",
+        "type": "DecimalField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "synced_at",
+        "type": "DateTimeField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "updated_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      }
+    ],
+    "ProcurementStatusLog": [
+      {
+        "name": "id",
+        "type": "BigAutoField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "procurement_case",
+        "type": "ForeignKey",
+        "null": false,
+        "related": "ProcurementCase"
+      },
+      {
+        "name": "old_status",
+        "type": "CharField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "new_status",
+        "type": "CharField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "comment",
+        "type": "TextField",
+        "null": true,
+        "related": null
+      },
+      {
+        "name": "created_at",
+        "type": "DateTimeField",
+        "null": false,
+        "related": null
+      },
+      {
+        "name": "created_by",
+        "type": "ForeignKey",
+        "null": true,
+        "related": "CustomUser"
+      }
+    ]
+  },
+  "users": {
+    "active": 323,
+    "active_superusers": 2,
+    "no_roles_non_superuser": 1
+  }
+}

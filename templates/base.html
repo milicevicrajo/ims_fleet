@@ -375,6 +375,15 @@
                     options.dropdownParent = $modal;
                 }
 
+                var vehicleFieldId = $select.attr('data-vehicle-filter');
+                if (vehicleFieldId) {
+                    options.matcher = function(params, data) {
+                        var vehicleField = document.getElementById(vehicleFieldId);
+                        if (data.id && (!vehicleField || !data.element || data.element.getAttribute('data-vehicle') !== vehicleField.value)) return null;
+                        return $.fn.select2.defaults.defaults.matcher(params, data);
+                    };
+                }
+
                 $select.select2(options);
             });
         });

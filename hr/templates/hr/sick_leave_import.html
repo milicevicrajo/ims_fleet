@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card border-0 text-white mb-3" style="background:#203f56"><div class="card-body p-4"><h1 class="h3 text-white mb-1"><i class="mdi mdi-file-import me-2"></i>Uvoz bolovanja</h1><div>Preuzmite Excel sa RFZO i povežite odsustva sa zaposlenima.</div></div></div>
+<div class="card" style="max-width:900px"><div class="card-body p-4">
+  <p>Ponovni uvoz ažurira bolovanje sa istim RFZO ID-jem. Zaposleni se pronalazi po JMBG-u; ako nema jednoznačnog podudaranja, bolovanje ostaje na proveri.</p>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3 mb-4"><div class="col-4"><label class="form-label" for="{{ form.source_date.id_for_label }}">{{ form.source_date.label }}</label>{{ form.source_date }}{{ form.source_date.errors }}</div><div class="col-8"><label class="form-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>{{ form.file }}{{ form.file.errors }}</div></div>
+    <p class="small text-muted">Oznaka „Bolovanje“ pojavljuje se u napomeni uz prolaske za obuhvaćene datume. Uvoz ne popunjava niti menja sate u radnoj listi.</p>
+    <button type="submit" class="btn btn-primary"><i class="mdi mdi-upload"></i> Uvezi bolovanja</button>
+    {% if hr_permissions.sick_leave_list %}<a class="btn btn-outline-secondary ms-2" href="{% url 'hr:sick_leave_list' %}">Pregled bolovanja</a>{% endif %}
+  </form>
+</div></div>
+{% endblock %}

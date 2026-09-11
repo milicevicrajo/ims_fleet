@@ -19,7 +19,6 @@ from ..support.report_queries import (
     MAGACIN_SQL,
     OTPIS_SQL,
     PO_DOBAVLJACIMA_SQL,
-    POTRAZIVANJE_DDOR_SQL,
     TAHOGRAF_PARTNERI_SQL,
     TROSKOVI_SVI_SQL,
     TRO_GORIVO_MESEC_SQL,
@@ -31,27 +30,52 @@ from ..support.report_queries import (
 
 def reports_index(request):
     sections = {
+        "Vozni park": [
+            {"name": "Potrošnja", "url": "fuel_transactions_list"},
+            {"name": "Polise", "url": "policy_list"},
+            {"name": "Popravke van IMS", "url": "service_transaction_list"},
+            {"name": "Popravke u IMS", "url": "requisition_list"},
+            {"name": "Lizing i najam", "url": "lease_list"},
+        ],
         "Finansije": [
+            {"name": "Gorivo IMS — meseci, centri i šifre posla", "url": "fleet_fuel_report", "description": "Vrsta proizvoda, period, raspored i pojedinačna točenja."},
             {"name": "Potrosnja goriva po sifri posla - OMV putnicka", "url": "fuel_job_code_omv_putnicka"},
             {"name": "Potrosnja goriva po sifri posla - OMV teretna", "url": "fuel_job_code_omv_teretna"},
             {"name": "Potrosnja goriva po sifri posla - NIS putnicka", "url": "fuel_job_code_nis_putnicka"},
             {"name": "Potrosnja goriva po sifri posla - NIS teretna", "url": "fuel_job_code_nis_teretna"},
         ],
-        "Garaza": [
+        "Osiguranje": [
+            {"name": "Kasko — vozila starija od 7 godina", "url": "casco_report", "description": "Izbor po godištu, bez uslova vrednosti, sa Excel izvozom."},
+            {"name": "Auto osiguranje — vlasništvo IMS", "url": "owned_insurance_report", "description": "Podaci o vozilima, dokumentima i osnovu raspolaganja."},
+        ],
+        "Garaža": [
             {"name": "Trenutno stanje u magacinu", "url": "magacin"},
             {"name": "Spisak otpisanih vozila", "url": "otpis"},
         ],
         "Uprava": [
-            {"name": "Promet goriva po mesecima", "url": "tro_gorivo_mesec"},
+            {"name": "Knjiženi troškovi goriva po mesecima", "url": "tro_gorivo_mesec", "description": "Postojeći računovodstveni pregled, odvojen od točenja."},
             {"name": "Pregled ukupnih troskova, pa po kontima, pa po centrima, po mesecima", "url": "troskovi_svi"},
             {"name": "Troskovi pracenja vozila", "url": "tro_pracenja_vozila"},
             {"name": "Troskovi tahografa", "url": "troskovi_tahograf"},
             {"name": "Troskovi parkinga", "url": "tro_parking"},
-            {"name": "Pregled potrazivanja od osiguranja", "url": "potrazivanje_ddor"},
             {"name": "Pregled najvecih dobavljaca usluga", "url": "po_dobavljacima"},
+        ],
+        "Nabavka i delovi": [
+            {"name": "Kupljeni delovi — AutoDeki / dobavljač", "url": "supplier_parts_report", "description": "Stavke faktura i robna evidencija iz Nabavke."},
         ],
     }
 
+    icons = {
+        'fuel_transactions_list': 'gas-station', 'fleet_fuel_report': 'gas-station',
+        'policy_list': 'shield-check', 'service_transaction_list': 'wrench', 'requisition_list': 'tools',
+        'lease_list': 'bank', 'casco_report': 'shield-car', 'owned_insurance_report': 'car',
+        'supplier_parts_report': 'cart', 'magacin': 'package-variant', 'otpis': 'car-off',
+        'tro_gorivo_mesec': 'calendar', 'troskovi_svi': 'cash-multiple', 'tro_pracenja_vozila': 'map-marker',
+        'troskovi_tahograf': 'speedometer', 'tro_parking': 'parking', 'po_dobavljacima': 'store',
+    }
+    for reports in sections.values():
+        for report in reports:
+            report['icon'] = icons.get(report['url'], 'chart-bar')
     return render(request, "fleet/reports_index.html", {"sections": sections})
 
 
@@ -256,13 +280,4 @@ def po_dobavljacima_view(request):
         query=PO_DOBAVLJACIMA_SQL,
         db_alias="server_db",
         template_name="fleet/reports/po_dobavljacima.html",
-    )
-
-
-def potrazivanje_ddor_view(request):
-    return _render_simple_secondary_report(
-        request,
-        query=POTRAZIVANJE_DDOR_SQL,
-        db_alias="server_db",
-        template_name="fleet/reports/potrazivanje_ddor.html",
     )

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% load static %}
+{% load l10n %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'vendor/datatables/datatables.min.css' %}">
 <style>
@@ -16,11 +17,11 @@
   <!-- Globalni filteri sa widgetima -->
   <div class="col-auto">
     <label class="form-label mb-1" for="minDate">Datum od</label>
-    <input type="date" id="minDate" class="form-control">
+    <input type="date" id="minDate" class="form-control" data-native-date="true">
   </div>
   <div class="col-auto">
     <label class="form-label mb-1" for="maxDate">Datum do</label>
-    <input type="date" id="maxDate" class="form-control">
+    <input type="date" id="maxDate" class="form-control" data-native-date="true">
   </div>
   <div class="col-auto">
     <label class="form-label mb-1" for="minDuguje">Duguje ≥</label>
@@ -69,13 +70,13 @@
         <tr>
           <td>{{ row.god }}</td>
           <td>{{ row.sif_vrs }}</td>
-          <td>{{ row.datum|date:"d.m.Y" }}</td>
+          <td data-order="{{ row.datum|date:'Y-m-d' }}">{{ row.datum|date:"d.m.Y" }}</td>
           <td>{{ row.br_naloga }}</td>
           <td>{{ row.stavka }}</td>
           <td>{{ row.oj }}</td>
           <td>{{ row.knt }}</td>
           <td>{{ row.naz_knt }}</td>
-          <td>{{ row.duguje }}</td>
+          <td>{{ row.duguje|default_if_none:""|unlocalize }}</td>
           <td>{{ row.sif_pos }}</td>
         </tr>
         {% endfor %}
@@ -100,10 +101,9 @@
     aria: { sortAscending:": aktiviraj za sortiranje uzlazno", sortDescending:": aktiviraj za sortiranje silazno" }
   };
 
-  function parseSrNumber(val){
-    if (val == null) return NaN;
-    const n = parseFloat(String(val).replace(/\./g,'').replace(',','.').trim());
-    return isNaN(n) ? NaN : n;
+  function numericValue(val){
+    if (val == null || String(val).trim() === '') return NaN;
+    return Number(val);
   }
   function parseDMY(s){
     if (!s) return null;
@@ -141,9 +141,10 @@
         {
           targets: 8, // Duguje
           className: 'text-end',
+          type: 'num',
           render: function(data, type){
-            const num = (typeof data === 'number') ? data : parseSrNumber(data);
-            if (type === 'display') return isNaN(num) ? (data ?? '') : new Intl.NumberFormat('sr-RS').format(num);
+            const num = numericValue(data);
+            if (type === 'display') return isNaN(num) ? '—' : new Intl.NumberFormat('sr-RS', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(num);
             return isNaN(num) ? data : num; // sort/export numerički
           }
         }
@@ -158,14 +159,15 @@
               filename: 'troskovi_' + new Date().toISOString().slice(0,10),
               exportOptions: {
                 columns: ':visible',
+                orthogonal: 'export',
                 format: { body: function (data, row, col) {
                   const val = (data == null) ? '' : String(data).replace(/<[^>]*>/g, '').trim();
-                  if (col === 8) return val.replace(/\./g,'').replace(',','.');
+                  if (col === 8) return Number.isFinite(numericValue(val)) ? numericValue(val) : '';
                   return val;
                 }}
               }
             },
-            'excel', 'print', 'colvis'
+            {extend: 'excelHtml5', exportOptions: {orthogonal: 'export'}}, 'print', 'colvis'
           ]
         }
       } : undefined
@@ -186,7 +188,7 @@
       if (settings.nTable !== tableNode) return true; // važi samo za ovu tabelu
 
       const d   = parseDMY(data[2]);     // Datum (kol. 2)
-      const amt = parseSrNumber(data[8]); // Duguje (kol. 8)
+      const amt = numericValue(data[8]); // canonical numeric value, not localized display
 
       // datum od
       if (minDate && minDate.value){
@@ -200,12 +202,12 @@
       }
       // duguje >=
       if (minDug && minDug.value !== ''){
-        const m = parseSrNumber(minDug.value);
+        const m = numericValue(minDug.value);
         if (isFinite(m) && (!isFinite(amt) || amt < m)) return false;
       }
       // duguje <=
       if (maxDug && maxDug.value !== ''){
-        const x = parseSrNumber(maxDug.value);
+        const x = numericValue(maxDug.value);
         if (isFinite(x) && (!isFinite(amt) || amt > x)) return false;
       }
       return true;
@@ -277,7 +279,8 @@
 
     // Reset dugme
     (function(){
-      const topStart = dt.container().querySelector('.dt-layout-row:first-child .dt-layout-cell:first-child');
+      const container = dt.table().container();
+      const topStart = container.querySelector('.dt-layout-row:first-child .dt-layout-cell:first-child');
       const btn = document.createElement('button');
       btn.type='button'; btn.className='btn btn-sm btn-outline-secondary ms-2';
       btn.textContent='Reset filtera';
@@ -293,7 +296,7 @@
         dt.columns().search('');
         dt.draw();
       });
-      (topStart || dt.container()).appendChild(btn);
+      (topStart || container).appendChild(btn);
     })();
   }
 

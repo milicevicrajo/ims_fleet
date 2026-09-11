@@ -182,7 +182,6 @@ from .views.reports import (
     magacin_view,
     otpis_view,
     po_dobavljacima_view,
-    potrazivanje_ddor_view,
     reports_index,
     tahograf_partneri_view,
     tro_gorivo_mesec_view,
@@ -192,6 +191,7 @@ from .views.reports import (
     troskovi_svi_view,
 )
 from .views.dashboard import dashboard, fleet_other
+from .views.management_reports import casco_report, owned_insurance_report, fleet_fuel_report, supplier_parts_report
 from .views.analytics import fleet_analytics
 from .views.center_statistics import center_statistics
 from .views.datatables import (
@@ -384,6 +384,10 @@ urlpatterns = [
     
     # IZVESTAJI 
     path('izvestaji/', reports_index, name='reports_index'),
+    path('izvestaji/osiguranje/kasko/', casco_report, name='casco_report'),
+    path('izvestaji/osiguranje/ims/', owned_insurance_report, name='owned_insurance_report'),
+    path('izvestaji/gorivo-ims/', fleet_fuel_report, name='fleet_fuel_report'),
+    path('izvestaji/delovi-dobavljaca/', supplier_parts_report, name='supplier_parts_report'),
     path('izvestaji/gorivo-sifra-posla/omv-putnicka/', fuel_job_code_omv_putnicka_view, name='fuel_job_code_omv_putnicka'),
     path('izvestaji/gorivo-sifra-posla/omv-teretna/', fuel_job_code_omv_teretna_view, name='fuel_job_code_omv_teretna'),
     path('izvestaji/gorivo-sifra-posla/nis-putnicka/', fuel_job_code_nis_putnicka_view, name='fuel_job_code_nis_putnicka'),
@@ -397,7 +401,6 @@ urlpatterns = [
     path('izvestaji/troskovi_tahograf/', tahograf_partneri_view, name='troskovi_tahograf'),
     path('izvestaji/tro_zarade/', tro_zarade_view, name='tro_zarade'),
     path('izvestaji/tro_parking/', tro_parking_view, name='tro_parking'),
-    path('izvestaji/potrazivanje_ddor/', potrazivanje_ddor_view, name='potrazivanje_ddor'),
     path('izvestaji/po_dobavljacima/', po_dobavljacima_view, name='po_dobavljacima'),    
     path('izvestaji/policies-monthly-costs/', PoliciesMonthlyCostsView.as_view(), name='policies_monthly_costs'),
     path('izvestaji/policies-monthly-costs.csv', policies_monthly_costs_csv, name='policies_monthly_costs_csv'),

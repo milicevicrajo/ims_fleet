@@ -51,8 +51,3 @@ PO_DOBAVLJACIMA_SQL = """
                duguje, potrazuje, skr_naz, deviza, kom, stavka_k, dpo, promena, sif_pos, dat_naloga, d_p, placeno
         FROM dbo.fleet_dobavljaci
     """
-
-POTRAZIVANJE_DDOR_SQL = """
-        SELECT god, sif_vrs, br_naloga, stavka, oj, knt, datum, vez_dok, potrazuje
-        FROM dbo.fleet_potrazivanje_ddor
-    """

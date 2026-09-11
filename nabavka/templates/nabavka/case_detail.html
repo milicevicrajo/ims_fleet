@@ -130,6 +130,11 @@
     </div>
   </div>
   <div class="case-detail-hero-actions">
+    {% if case.vehicle_id %}
+      <a class="btn btn-outline-light btn-sm" href="{% url 'vehicle_detail' case.vehicle_id %}">
+        <i class="mdi mdi-car"></i> Detalji vozila
+      </a>
+    {% endif %}
     <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:case_list' %}">
       <i class="mdi mdi-arrow-left"></i> Lista
     </a>
@@ -174,7 +179,9 @@
           <dt class="col-sm-4">Dobavljac</dt><dd class="col-sm-8">{{ case.supplier|default:"/" }}</dd>
           <dt class="col-sm-4">OJ / sifra posla</dt><dd class="col-sm-8">{{ case.job_code|default:"/" }}</dd>
           <dt class="col-sm-4">Garaza</dt><dd class="col-sm-8">{% if case.is_garage %}Da{% else %}Ne{% endif %}</dd>
-          <dt class="col-sm-4">Vozilo</dt><dd class="col-sm-8">{{ case.vehicle|default:"/" }}</dd>
+          {% if case.is_garage %}<dt class="col-sm-4">Vrsta intervencije</dt><dd class="col-sm-8">{{ case.get_work_type_display|default:"Nije razvrstano" }}</dd>
+          <dt class="col-sm-4">Nalog garaže</dt><dd class="col-sm-8">{% if case.garage_order %}<a href="{% url 'kvar_detail' case.garage_order_id %}">{{ case.garage_order.rbz }}</a>{% else %}Nije povezan{% endif %}</dd>{% endif %}
+          <dt class="col-sm-4">Vozilo</dt><dd class="col-sm-8">{% if case.vehicle_id %}<a href="{% url 'vehicle_detail' case.vehicle_id %}">{{ case.vehicle }}</a>{% else %}Nije povezano{% endif %}</dd>
           <dt class="col-sm-4">Procenjena vrednost</dt><dd class="col-sm-8">{{ case.estimated_value|default:"/" }} {{ case.currency }}</dd>
           <dt class="col-sm-4">Datum zahteva</dt><dd class="col-sm-8">{{ case.needed_by|date:"d.m.Y"|default:"/" }}</dd>
           <dt class="col-sm-4">Opis</dt><dd class="col-sm-8">{{ case.description|linebreaksbr|default:"/" }}</dd>

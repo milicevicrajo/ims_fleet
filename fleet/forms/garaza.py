@@ -219,7 +219,7 @@ class KvarForm(forms.ModelForm):
     )
     work_type = forms.ChoiceField(
         choices=WORK_TYPE_CHOICES,
-        widget=forms.Select(attrs={"class": "form-control"}),
+        widget=Select2Widget(attrs={"class": "select2-method", "data-minimum-results-for-search": "Infinity"}),
         label="Vrsta intervencije",
         initial="popravka",
     )

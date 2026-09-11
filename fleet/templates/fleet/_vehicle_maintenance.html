@@ -1,0 +1,28 @@
+<div class="vd-section-heading"><h3>Mali i veliki servis</h3><a class="btn btn-outline-primary" href="{% url 'nabavka:case_create' %}?vehicle={{ vehicle.pk }}&amp;case_type=usluga"><i class="mdi mdi-plus"></i> Zahtev za uslugu</a></div>
+<div class="vd-grid">
+ {% for summary in maintenance.summaries %}<section class="card"><div class="card-body">
+  <h3><i class="mdi mdi-wrench"></i> {{ summary.label }}</h3>
+  <p class="text-muted">Poslednji evidentirani dokument</p>
+  {% if summary.latest %}<div class="vd-current"><strong>{{ summary.latest.date|date:'d.m.Y' }}</strong><br><a href="{{ summary.latest.url }}">{{ summary.latest.kind }} {{ summary.latest.reference }}</a></div>{% else %}<div class="vd-current">Nema dokumenta sa određenim tipom servisa i datumom.</div>{% endif %}
+  <small class="text-muted">{{ summary.count }} datiranih dokumenata u evidenciji</small>
+ </div></section>{% endfor %}
+</div>
+<p class="vd-note">Datum je preuzet isključivo sa fakture ili trebovanja. Datum zahteva nije datum obavljenog servisa. Dokument potvrđuje evidenciju nabavke ili izdavanja delova; završetak servisa i sledeći rok ne izvode se automatski. Stavke bez određenog tipa ostaju „Nije razvrstano“.</p>
+<section class="card"><div class="card-body">
+ <div class="vd-section-heading"><h3><i class="mdi mdi-clipboard-text-outline"></i> Nalozi</h3><span class="text-muted">Garaža i zahtevi za nabavku / uslugu</span></div>
+ <div class="table-responsive"><table id="vehicleMaintenanceOrders" class="table table-sm vd-data" data-date-column="3">
+ <thead><tr><th>Nalog / zahtev</th><th>Vrsta</th><th>Tip servisa</th><th>Datumi faktura / trebovanja</th><th>Povezani dokumenti</th><th>Radnja</th></tr></thead><tbody>
+ {% for order in maintenance.orders %}<tr><td>{{ order.reference }}</td><td>{{ order.title }}{% if order.status_label %}<small class="d-block text-muted">{{ order.status_label }}</small>{% endif %}</td><td>{{ order.type_label }}</td>
+ <td data-order="{{ order.latest_date|date:'Y-m-d' }}">{% for doc in order.documents %}<div>{{ doc.date|date:'d.m.Y'|default:'Datum nije unet' }}</div>{% empty %}—{% endfor %}</td>
+ <td>{% for doc in order.documents %}<div><a href="{{ doc.url }}">{{ doc.kind }} {{ doc.reference }}</a></div>{% empty %}<span class="text-muted">Nema povezanog dokumenta</span>{% endfor %}</td>
+ <td><a class="btn btn-sm btn-outline-primary" href="{{ order.url }}">Detalji</a></td></tr>{% endfor %}
+ </tbody></table></div>
+</div></section>
+<section class="card"><div class="card-body">
+ <div class="vd-section-heading"><h3><i class="mdi mdi-cart-outline"></i> Nabavka</h3><span class="text-muted">Fakture i trebovanja vezani za ovo vozilo</span></div>
+ <div class="table-responsive"><table id="vehicleMaintenanceDocuments" class="table table-sm vd-data">
+ <thead><tr><th>Datum dokumenta</th><th>Dokument</th><th>Tip servisa</th><th>Dobavljač</th><th>Nalog / zahtev</th><th>Radnja</th></tr></thead><tbody>
+ {% for doc in maintenance.documents %}<tr><td data-order="{{ doc.date|date:'Y-m-d' }}">{{ doc.date|date:'d.m.Y'|default:'Nije unet' }}</td><td>{{ doc.kind }} {{ doc.reference }}</td><td{% if doc.conflict %} class="text-danger"{% endif %}>{{ doc.type_label }}</td><td>{{ doc.supplier|default:'—' }}</td><td>{% for order in doc.order_links %}<div><a href="{{ order.url }}">{{ order.reference }}</a></div>{% empty %}<span class="text-muted">Nije povezano sa nalogom</span>{% endfor %}</td><td><a class="btn btn-sm btn-outline-primary" href="{{ doc.url }}">Detalji</a></td></tr>{% endfor %}
+ </tbody></table></div>
+ <p class="text-muted">Postojeće veze su sačuvane. Kategorija se preuzima iz naloga, zahteva, fakture ili kategorije trebovanja. Sličan naziv, isti iznos ili isti datum nisu osnov za automatsko povezivanje.</p>
+</div></section>

@@ -23,12 +23,6 @@ def fleet_other(request):
             "url_name": "konta_list",
             "icon": "mdi-account-card-details",
         },
-        {
-            "title": "Izvestaji sa servera",
-            "description": "Tehnicki i istorijski izvestaji koji se citaju direktno sa servera.",
-            "url_name": "reports_index",
-            "icon": "mdi-file-chart",
-        },
     ]
     return render(request, "fleet/other_links.html", {"title": "Ostalo", "links": links})
 

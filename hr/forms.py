@@ -3,10 +3,11 @@ import unicodedata
 
 from django import forms
 from django.forms import inlineformset_factory
+from django.db.models import Q
 
 from core.models import OrganizationalUnit
 
-from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine
+from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeCategory
 
 
 WORK_TIME_SHEET_LINE_COUNT = 12
@@ -23,6 +24,8 @@ class EmployeeForm(forms.ModelForm):
             "skip_hr_identity_update": "Ne azuriraj ime, prezime, titulu i pol iz HR-a",
         }
         help_texts = {
+            "recipient_code": "Preuzima se iz polja sif_prim u HR izvoru; sinhronizacija ažurira ovu vrednost.",
+            "recipient_name": "Izvorni naziv iz HR-a. Naziv šifrarnika se zasebno uređuje u Elementima RL.",
             "display_first_name_override": (
                 "Ako je popunjeno, aplikacija prikazuje ovu vrednost i HR sinhronizacija je nece prepisati. "
                 "Ostavi prazno za HR vrednost."
@@ -162,6 +165,7 @@ class WorkTimeSheetLineForm(forms.ModelForm):
             "organizational_unit",
             *WORK_TIME_SHEET_DAY_FIELDS,
             "work_conditions",
+            "work_category",
             "note",
         ]
         widgets = {
@@ -171,10 +175,23 @@ class WorkTimeSheetLineForm(forms.ModelForm):
             ),
             "work_conditions": forms.TextInput(attrs={"class": "form-control form-control-sm work-condition-input"}),
             "note": forms.TextInput(attrs={"class": "form-control form-control-sm note-input"}),
+            "work_category": forms.Select(attrs={"class": "form-select form-select-sm select2-method work-category-select", "data-placeholder": "Vrsta rada / odsustva", "data-allow-clear": "true"}),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, employee=None, **kwargs):
         super().__init__(*args, **kwargs)
+        employee = employee or (self.instance.sheet.employee if self.instance.sheet_id else None)
+        available = WorkTimeCategory.objects.filter(
+            is_active=True, employee_selectable=True,
+            elements__is_active=True, elements__recipient_type__is_active=True,
+            elements__recipient_type__code=getattr(employee, "recipient_code", ""),
+        ).values_list("pk", flat=True)
+        # Keep an already selected historical/inactive category visible, without offering it on new rows.
+        self.fields["work_category"].queryset = WorkTimeCategory.objects.filter(
+            Q(pk__in=available) | Q(pk=self.instance.work_category_id)
+        ).distinct()
+        self.fields["work_category"].empty_label = ""
+        self.fields["note"].widget.attrs["placeholder"] = "Dodatna napomena (opciono)"
         self.fields["organizational_unit"].queryset = OrganizationalUnit.objects.order_by("code", "name")
         self.fields["organizational_unit"].empty_label = ""
         self.fields["organizational_unit"].label_from_instance = lambda obj: obj.code

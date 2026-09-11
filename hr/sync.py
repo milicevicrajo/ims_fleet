@@ -152,6 +152,8 @@ def sync_employees_from_hr_view(using=None):
         ],
         "opstina_boravka",
     )
+    recipient_code_expr, has_recipient_code = _optional_column(columns, ["sif_prim"], "recipient_code")
+    recipient_name_expr, has_recipient_name = _optional_column(columns, ["naz_prim"], "recipient_name")
 
     query = f"""
         SELECT
@@ -174,7 +176,9 @@ def sync_employees_from_hr_view(using=None):
             naz_zan,
             sif_stat,
             naz_stat,
-            slava
+            slava,
+            {recipient_code_expr},
+            {recipient_name_expr}
         FROM dbo.hr_employee
     """
 
@@ -210,6 +214,8 @@ def sync_employees_from_hr_view(using=None):
             sif_stat,
             naz_stat,
             slava,
+            recipient_code,
+            recipient_name,
         ) = row
 
         employee_code = _as_int(rasif)
@@ -251,6 +257,10 @@ def sync_employees_from_hr_view(using=None):
         }
         if has_residence_municipality_source:
             defaults["residence_municipality"] = _normalize_residence_municipality(opstina_boravka)
+        if has_recipient_code:
+            defaults["recipient_code"] = _as_str(recipient_code) or ""
+        if has_recipient_name:
+            defaults["recipient_name"] = _as_str(recipient_name) or ""
 
         existing = Employee.objects.filter(employee_code=employee_code).first()
         if existing:

@@ -134,6 +134,7 @@
         </div>
 
         <div class="mt-4 d-flex flex-wrap gap-2">
+          <a class="btn btn-primary btn-lg" href="{% url 'nabavka:case_create' %}?garage_order={{ kvar.pk }}&amp;case_type={% if kvar.van_ims %}usluga{% else %}nabavka{% endif %}"><i class="mdi mdi-cart-outline"></i> {% if kvar.van_ims %}Zahtev za uslugu{% else %}Zahtev za nabavku{% endif %}</a>
           <a class="btn btn-outline-secondary btn-lg" href="{% url 'kvar_print' kvar.pk %}" target="_blank">
             <i class="mdi mdi-printer"></i> Prijava kvara
           </a>

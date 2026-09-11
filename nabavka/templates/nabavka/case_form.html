@@ -199,6 +199,16 @@
           {{ form.vehicle }}
           {% if form.vehicle.errors %}<div class="invalid-feedback d-block">{{ form.vehicle.errors.0 }}</div>{% endif %}
         </div>
+        <div class="col-12 col-md-6 mb-3 garage-service-field">
+          <label for="{{ form.work_type.id_for_label }}" class="form-label">{{ form.work_type.label }}</label>
+          {{ form.work_type }}{{ form.work_type.errors }}
+          <small class="text-muted">Mali servis, veliki servis ili popravka. Ako nije poznato, ostavite prazno.</small>
+        </div>
+        <div class="col-12 col-md-6 mb-3 garage-service-field">
+          <label for="{{ form.garage_order.id_for_label }}" class="form-label">{{ form.garage_order.label }}</label>
+          {{ form.garage_order }}{{ form.garage_order.errors }}
+          <small class="text-muted">{{ form.garage_order.help_text }} Bez veze, zahtev ostaje zaseban.</small>
+        </div>
       </div>
     </div>
 
@@ -244,11 +254,38 @@ document.addEventListener('DOMContentLoaded', function () {
   var garageInput = document.getElementById('{{ form.is_garage.id_for_label }}');
   var vehicleWrap = document.getElementById('field-wrap-vehicle');
   var vehicleField = document.getElementById('{{ form.vehicle.id_for_label }}');
+  var orderField = document.getElementById('{{ form.garage_order.id_for_label }}');
+  var typeField = document.getElementById('{{ form.work_type.id_for_label }}');
+
+  function syncOrders() {
+    Array.from(orderField.options).forEach(function(option) {
+      if (!option.value) return;
+      option.hidden = option.dataset.vehicle !== vehicleField.value;
+      if (option.hidden && option.selected) orderField.value = '';
+    });
+    if (window.jQuery) jQuery(orderField).trigger('change.select2');
+  }
+  vehicleField.addEventListener('change', syncOrders);
+  if (window.jQuery) jQuery(vehicleField).on('change', syncOrders);
+  function syncWorkType() {
+    var selected = orderField.options[orderField.selectedIndex];
+    if (selected && selected.value) {
+      typeField.value = selected.dataset.workType;
+      if (window.jQuery) jQuery(typeField).trigger('change.select2');
+    }
+  }
+  orderField.addEventListener('change', syncWorkType);
+  if (window.jQuery) jQuery(orderField).on('change', syncWorkType);
 
   if (!garageInput || !vehicleWrap || !vehicleField) return;
 
   function syncVehicleVisibility() {
     var isGarage = garageInput.checked;
+    document.querySelectorAll('.garage-service-field').forEach(function(el) {el.hidden = !isGarage;});
+    orderField.disabled = !isGarage;
+    typeField.disabled = !isGarage;
+    if (window.jQuery) jQuery(typeField).trigger('change.select2');
+    syncOrders();
     var hasError = !!vehicleWrap.querySelector('.invalid-feedback');
     vehicleWrap.hidden = !isGarage && !hasError;
     vehicleField.required = isGarage;

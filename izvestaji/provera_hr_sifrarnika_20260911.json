@@ -1,0 +1,56 @@
+{
+  "counts": {
+    "recipients": 3,
+    "categories": 13,
+    "elements": 27,
+    "selectable_categories": 10,
+    "employees_by_recipient": [
+      {
+        "recipient_code": "01",
+        "is_active": false,
+        "total": 32
+      },
+      {
+        "recipient_code": "07",
+        "is_active": false,
+        "total": 1
+      },
+      {
+        "recipient_code": "09",
+        "is_active": false,
+        "total": 4
+      },
+      {
+        "recipient_code": "",
+        "is_active": true,
+        "total": 2
+      },
+      {
+        "recipient_code": "01",
+        "is_active": true,
+        "total": 319
+      },
+      {
+        "recipient_code": "09",
+        "is_active": true,
+        "total": 12
+      }
+    ]
+  },
+  "browser": {
+    "hr:work_time_catalog": {
+      "rows": 27,
+      "tabs": 3,
+      "search_empty": true
+    },
+    "hr:work_time_catalog_create": {
+      "form_rendered": true
+    },
+    "hr:employee_work_time_sheet": {
+      "selectors": 12,
+      "available_categories": 10,
+      "selection_and_hours": true
+    }
+  },
+  "browser_errors": []
+}

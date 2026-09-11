@@ -3,49 +3,35 @@
 {% load static %}
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card shadow-sm">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="card-title mb-0">Izveštaji</h2>
-        {# mesto za eventualne globalne akcije npr. export svih, help, sl. #}
-      </div>
-
-      <div class="card-body">
-        {% if sections %}
-          <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
-            {% for section, reports in sections.items %}
-              <div class="col">
-                <div class="card h-100 border-0 bg-light">
-                  <div class="card-header bg-white border-0 fw-semibold">
-                    <i class="mdi mdi-folder-outline me-1"></i> {{ section }}
-                  </div>
-
-                  {% if reports %}
-                    <ul class="list-group list-group-flush">
-                      {% for report in reports %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                          <a href="{% url report.url %}" class="stretched-link text-decoration-none">
-                            <i class="mdi mdi-file-chart-outline me-2"></i>{{ report.name }}
-                          </a>
-                          <i class="mdi mdi-chevron-right text-muted"></i>
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  {% else %}
-                    <div class="p-3 text-muted">Nema dostupnih izveštaja u ovoj sekciji.</div>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="alert alert-info mb-0">
-            Trenutno nema definisanih izveštaja.
-          </div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
+{% include "fleet/includes/list_styles.html" %}
+<style>
+ .reports-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start;}
+ .reports-section {background:#fff;border:1px solid #e3e9f0;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(15,23,42,.04);}
+ .reports-section h2 {font-size:16px;font-weight:600;margin:0;padding:18px 22px;background:#f4f7fb;color:#193c55;}
+ .report-link {display:flex;align-items:center;gap:15px;padding:16px 22px;color:#25384b;border-top:1px solid #eef1f5;text-decoration:none;}
+ .report-link:hover {background:#f3f8fe;color:#165ea3;text-decoration:none;}
+ .report-icon {display:flex;align-items:center;justify-content:center;width:42px;height:42px;flex-shrink:0;background:#eaf2fb;color:#2867a0;border-radius:10px;font-size:22px;}
+ .report-link strong {font-weight:600;display:block;} .report-link small {display:block;color:#697b8c;margin-top:3px;line-height:1.4;}
+ .report-link .mdi-chevron-right {margin-left:auto;color:#95a4b3;}
+ .report-search {max-width:360px;margin:0 0 20px;}
+</style>
+<div class="fleet-list-hero"><h1>Izveštaji</h1><p>Pregledi voznog parka, osiguranja, nabavke i troškova na jednom mestu.</p></div>
+<input id="report-search" class="form-control report-search" type="search" placeholder="Pronađi izveštaj…" aria-label="Pretraga izveštaja">
+<div class="reports-grid">
+ {% for section,reports in sections.items %}
+ <section class="reports-section"><h2>{{ section }}</h2>
+  {% for report in reports %}<a class="report-link" href="{% url report.url %}"><span class="report-icon"><i class="mdi mdi-{{ report.icon }}"></i></span><span><strong>{{ report.name }}</strong>{% if report.description %}<small>{{ report.description }}</small>{% endif %}</span><i class="mdi mdi-chevron-right"></i></a>{% endfor %}
+ </section>
+ {% endfor %}
 </div>
+<p id="report-search-empty" class="text-muted mt-3" hidden>Nema izveštaja za unetu pretragu.</p>
+<script>
+document.getElementById('report-search').addEventListener('input',function(){
+ const query=this.value.toLocaleLowerCase('sr-Latn');let total=0;
+ document.querySelectorAll('.reports-section').forEach(section=>{
+  let visible=0;section.querySelectorAll('.report-link').forEach(link=>{const match=link.textContent.toLocaleLowerCase('sr-Latn').includes(query);link.hidden=!match;link.style.display=match?'':'none';visible+=match;});
+  section.hidden=!visible;total+=visible;
+ });document.getElementById('report-search-empty').hidden=!!total;
+});
+</script>
 {% endblock %}

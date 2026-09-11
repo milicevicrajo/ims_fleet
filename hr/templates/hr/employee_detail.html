@@ -77,6 +77,7 @@
               <p><strong>Naziv sistema:</strong> {{ employee.system_name|default:"-" }}</p>
               <p><strong>Sifra zanimanja:</strong> {{ employee.job_code|default:"-" }}</p>
               <p><strong>Naziv zanimanja:</strong> {{ employee.job_title|default:"-" }}</p>
+              <p><strong>Vrsta primaoca:</strong> {{ employee.recipient_code|default:"—" }} · {{ employee.recipient_name|default:"Nije evidentirano" }}</p>
               <p class="mb-0"><strong>Status:</strong> {{ employee.status_name|default:"-" }}</p>
             </div></div>
           </div>
@@ -151,6 +152,8 @@
           </div>
           {% if is_self_profile %}
             <a href="{% url 'hr:work_time_sheet' %}" class="btn btn-primary btn-sm"><i class="mdi mdi-calendar-edit"></i> Otvori radnu listu</a>
+          {% elif request.user.is_superuser %}
+            <a href="{% url 'hr:employee_work_time_sheet' employee.pk %}" class="btn btn-primary btn-sm"><i class="mdi mdi-calendar-edit"></i> Otvori radnu listu zaposlenog</a>
           {% endif %}
         </div>
         {% if work_time_sheets %}
@@ -182,6 +185,8 @@
                     <div class="d-flex gap-1">
                       {% if is_self_profile %}
                         <a href="{% url 'hr:work_time_sheet' %}?month={{ sheet.month }}&year={{ sheet.year }}" class="btn btn-outline-primary btn-sm" title="Izmeni"><i class="mdi mdi-pencil"></i></a>
+                      {% elif request.user.is_superuser %}
+                        <a href="{% url 'hr:employee_work_time_sheet' employee.pk %}?month={{ sheet.month }}&year={{ sheet.year }}" class="btn btn-outline-primary btn-sm" title="Otvori radnu listu"><i class="mdi mdi-eye"></i></a>
                       {% endif %}
                       <a href="{% url 'hr:work_time_sheet_print' sheet.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm" title="Stampaj"><i class="mdi mdi-printer"></i></a>
                     </div>

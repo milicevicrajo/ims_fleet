@@ -3,7 +3,7 @@ from django.utils import timezone
 from django_select2.forms import Select2Widget
 
 from core.form_fields import localized_date_field
-from fleet.models import JobCode, OrganizationalUnit, Vehicle
+from fleet.models import JobCode, Kvar, OrganizationalUnit, Vehicle
 from ugovori.models import Contract, Partner
 
 from .models import (
@@ -41,6 +41,15 @@ def _style_fields(fields):
             widget.attrs.setdefault("class", "form-control")
 
 
+class GarageOrderSelect(Select2Widget):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        if value:
+            option["attrs"]["data-vehicle"] = value.instance.vehicle_id
+            option["attrs"]["data-work-type"] = value.instance.work_type
+        return option
+
+
 class ProcurementCaseForm(forms.ModelForm):
     needed_by = localized_date_field(label="Datum zahteva", required=False)
 
@@ -55,6 +64,8 @@ class ProcurementCaseForm(forms.ModelForm):
             "job_code",
             "supplier",
             "vehicle",
+            "work_type",
+            "garage_order",
             "estimated_value",
             "currency",
             "needed_by",
@@ -66,6 +77,7 @@ class ProcurementCaseForm(forms.ModelForm):
             "case_type": Select2Widget(attrs={"class": "select2-method"}),
             "status": Select2Widget(attrs={"class": "select2-method"}),
             "currency": Select2Widget(attrs={"class": "select2-method"}),
+            "work_type": Select2Widget(attrs={"class": "select2-method", "data-minimum-results-for-search": "Infinity"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -82,6 +94,12 @@ class ProcurementCaseForm(forms.ModelForm):
         self.fields["supplier"].queryset = Partner.objects.filter(is_active=True).order_by("name")
         self.fields["vehicle"].widget = Select2Widget(attrs={"class": "select2-method"})
         self.fields["vehicle"].queryset = Vehicle.objects.all().order_by("brand", "model")
+        self.fields["garage_order"].widget = GarageOrderSelect(attrs={
+            "class": "select2-method", "data-vehicle-filter": self["vehicle"].auto_id,
+        })
+        self.fields["garage_order"].queryset = Kvar.objects.order_by("-created_at")
+        self.fields["garage_order"].label_from_instance = lambda obj: f"{obj.rbz} · {obj.get_work_type_display()} · {obj.created_at:%d.%m.%Y}"
+        self.fields["garage_order"].help_text = "Opciono. Prikazuju se samo nalozi izabranog vozila."
         _style_fields(self.fields)
 
     def clean(self):
@@ -92,6 +110,18 @@ class ProcurementCaseForm(forms.ModelForm):
             cleaned_data["needed_by"] = timezone.localdate()
         if not is_garage:
             cleaned_data["vehicle"] = None
+            cleaned_data["work_type"] = ""
+            cleaned_data["garage_order"] = None
+        elif not cleaned_data.get("vehicle"):
+            self.add_error("vehicle", "Izaberite vozilo za zahtev garaže.")
+        elif cleaned_data.get("garage_order"):
+            order = cleaned_data["garage_order"]
+            if order.vehicle_id != getattr(cleaned_data.get("vehicle"), "pk", None):
+                self.add_error("garage_order", "Nalog mora pripadati izabranom vozilu.")
+            elif cleaned_data.get("work_type") and cleaned_data["work_type"] != order.work_type:
+                self.add_error("work_type", "Vrsta intervencije mora odgovarati izabranom nalogu.")
+            else:
+                cleaned_data["work_type"] = order.work_type
         return cleaned_data
 
 
@@ -171,10 +201,11 @@ class EufInvoiceItemLinkForm(forms.Form):
 class ProcurementInvoiceForm(forms.ModelForm):
     class Meta:
         model = ProcurementInvoice
-        fields = ["is_garage", "vehicle", "goes_to_warehouse", "internal_note"]
+        fields = ["is_garage", "vehicle", "work_type", "goes_to_warehouse", "internal_note"]
         widgets = {
             "internal_note": forms.Textarea(attrs={"rows": 3}),
             "vehicle": Select2Widget(attrs={"class": "select2-method"}),
+            "work_type": Select2Widget(attrs={"class": "select2-method", "data-minimum-results-for-search": "Infinity"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -190,6 +221,7 @@ class ProcurementInvoiceForm(forms.ModelForm):
         cleaned_data = super().clean()
         if not cleaned_data.get("is_garage"):
             cleaned_data["vehicle"] = None
+            cleaned_data["work_type"] = ""
         return cleaned_data
 
     @staticmethod

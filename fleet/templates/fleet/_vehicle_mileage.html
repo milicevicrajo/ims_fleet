@@ -1,0 +1,34 @@
+{% load l10n %}
+<section class="card"><div class="card-body">
+ <div class="vd-section-heading"><h3>Kilometraža vozila</h3><span class="text-muted">Evidentirana očitavanja, bez procene između datuma</span></div>
+ <div class="vehicle-kpis">
+  <div class="vehicle-kpi"><small>Poslednje evidentirano stanje</small><strong>{% if mileage.current %}{{ mileage.current.value|floatformat:'2g' }} km{% else %}Nema očitavanja{% endif %}</strong>{% if mileage.current %}<small>{{ mileage.current.date|date:'d.m.Y' }} · {{ mileage.current.source }}</small>{% if mileage.current.needs_check %}<span class="text-danger">Proveriti: očitavanje je niže od prethodnog dana.</span>{% endif %}{% endif %}</div>
+  <div class="vehicle-kpi"><small>Pređeno u obuhvaćenom periodu</small><strong>{% if mileage.total_km != None %}{{ mileage.total_km|floatformat:'2g' }} km{% else %}Nema pouzdanog zbira{% endif %}</strong><small>{% if mileage.coverage_start %}{{ mileage.coverage_start|date:'d.m.Y' }} – {{ mileage.coverage_end|date:'d.m.Y' }}{% else %}Nema podataka u izabranom periodu{% endif %}</small></div>
+  <div class="vehicle-kpi"><small>Očitavanja u periodu</small><strong>{{ mileage.readings|length }}</strong><small>{{ mileage.days|length }} različitih datuma</small></div>
+  <div class="vehicle-kpi"><small>Periodi za proveru</small><strong>{{ mileage.issue_count }}</strong><small>Razlika se ne računa kada očitavanja opadaju.</small></div>
+ </div>
+ <form method="get" action="#mileage-pane" class="vd-period">
+  {% for name,value in mileage_other_filters %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+  {% for field in mileage.form %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+  <button class="btn btn-primary">Prikaži</button><a class="btn btn-outline-secondary" href="{% url 'vehicle_detail' vehicle.pk %}#mileage-pane">Cela evidencija</a>
+ </form>{{ mileage.form.non_field_errors }}
+</div></section>
+<section class="card"><div class="card-body">
+ <h3>Pređena kilometraža između očitavanja</h3>
+ <p class="text-muted">Sledeće očitavanje bira se najbliže datumu 30 dana posle početnog. Prikazani su stvarni datumi i trajanje, pa period može biti kraći ili duži od meseca.</p>
+ <div class="table-responsive"><table id="vehicleMileagePeriods" class="table table-sm vd-data"><thead><tr><th>Od</th><th>Do</th><th>Dana</th><th>Km početak</th><th>Km kraj</th><th>Pređeno km</th><th>Izvor početka / kraja</th><th>Napomena</th></tr></thead><tbody>
+ {% for period in mileage.intervals %}<tr>
+  <td data-order="{{ period.start|date:'Y-m-d' }}">{{ period.start|date:'d.m.Y' }}</td><td data-order="{{ period.end|date:'Y-m-d' }}">{{ period.end|date:'d.m.Y' }}</td><td>{{ period.days }}</td>
+  <td data-order="{{ period.start_value|unlocalize }}">{{ period.start_value|floatformat:'2g' }}</td><td data-order="{{ period.end_value|unlocalize }}">{{ period.end_value|floatformat:'2g' }}</td><td data-order="{{ period.km|default_if_none:''|unlocalize }}">{% if period.km != None %}<strong>{{ period.km|floatformat:'2g' }}</strong>{% else %}—{% endif %}</td>
+  <td>{{ period.start_source }}<br>{{ period.end_source }}</td><td>{% if period.issues %}<span class="text-danger">Opadanje očitavanja — proveriti: {% for day in period.issues %}{{ day|date:'d.m.Y' }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% else %}Razlika evidentiranih stanja{% endif %}</td>
+ </tr>{% endfor %}
+ </tbody></table></div>
+ {% if not mileage.intervals %}<p class="vd-note">Za pređenu kilometražu potrebna su očitavanja na najmanje dva različita datuma. Jedno očitavanje prikazuje samo evidentirano stanje.</p>{% endif %}
+</div></section>
+<details class="vd-records"><summary>Sva očitavanja i izvori u periodu ({{ mileage.readings|length }})</summary>
+ <div class="table-responsive"><table id="vehicleMileageReadings" class="table table-sm vd-data"><thead><tr><th>Datum</th><th>Stanje km</th><th>Izvor</th><th>Dokument</th><th>Radnja</th></tr></thead><tbody>
+ {% for reading in mileage.readings %}<tr><td data-order="{{ reading.date|date:'Y-m-d' }}">{{ reading.date|date:'d.m.Y' }}</td><td data-order="{{ reading.value|unlocalize }}">{{ reading.value|floatformat:'2g' }}</td><td>{{ reading.source }}{% if reading.original_value != None %}<small class="d-block text-muted">Izvorno: {{ reading.original_value|floatformat:"2g" }} km</small>{% endif %}</td><td>{{ reading.reference|default:'—' }}</td><td>{% if reading.url %}<a class="btn btn-sm btn-outline-primary" href="{{ reading.url }}">Detalji naloga</a>{% endif %}</td></tr>{% endfor %}
+ </tbody></table></div>
+</details>
+<div class="vd-note"><strong>OMV — korigovano u izvoru:</strong> vrednost iz kolone „Corrected mileage“ u OMV evidenciji, preuzeta pri uvozu. Aplikacija je ne izračunava i nema podatak ko ju je i zbog čega promenio. Koristi se kada je veća od nule; izvorna vrednost „Mileage“ prikazana je u spisku kada se razlikuje.</div>
+<div class="vd-note">Izvori su NIS/OMV očitavanja i početna/završna kilometraža naloga zaduženja vozila. Ranija evidencija goriva dopunjava samo datume bez direktnih NIS/OMV očitavanja. Obični putni nalozi za dnevnice nemaju očitavanje brojila. Kada ima više očitavanja istog dana, za granicu perioda koristi se najveće; sva su dostupna iznad. Periodi se ne preklapaju osim zajedničkog graničnog očitavanja. Nule iz goriva, neispravne vrednosti, buduća očitavanja i kraj naloga bez datuma ne koriste se u obračunu{% if mileage.excluded %} ({{ mileage.excluded }} zapisa){% endif %}. Poslednje stanje je poslednji zapis do danas, ne potvrda kilometraže u ovom trenutku.</div>

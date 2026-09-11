@@ -63,6 +63,8 @@ class Employee(models.Model):
     status_code = models.CharField(max_length=10, verbose_name=_("Šifra statusa"), blank=True, null=True)
     status_name = models.CharField(max_length=255, verbose_name=_("Naziv statusa"), blank=True, null=True)
     slava = models.CharField(max_length=100, verbose_name=_("Slava"), blank=True, null=True)
+    recipient_code = models.CharField(max_length=20, blank=True, default="", verbose_name=_("Šifra vrste primaoca"))
+    recipient_name = models.CharField(max_length=255, blank=True, default="", verbose_name=_("Vrsta primaoca iz HR-a"))
 
     class Meta:
         app_label = "fleet"
@@ -238,6 +240,8 @@ class WorkTimeSheetLine(models.Model):
     day_31 = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MaxValueValidator(24)])
     work_conditions = models.CharField(max_length=100, blank=True, verbose_name=_("Uslovi rada"))
     note = models.CharField(max_length=255, blank=True, verbose_name=_("Napomena"))
+    work_category = models.ForeignKey("WorkTimeCategory", null=True, blank=True,
+        on_delete=models.PROTECT, related_name="sheet_lines", verbose_name=_("Vrsta rada / odsustva"))
 
     class Meta:
         ordering = ["line_number"]
@@ -252,5 +256,111 @@ class WorkTimeSheetLine(models.Model):
             total += getattr(self, f"day_{day}") or 0
         return total
 
+    @property
+    def display_note(self):
+        category = self.work_category.name if self.work_category_id else ""
+        return " — ".join(value for value in (category, self.note) if value)
+
     def __str__(self):
         return f"{self.sheet} / {self.line_number}"
+
+
+class RecipientType(models.Model):
+    code = models.CharField(max_length=20, unique=True, verbose_name=_("Šifra primaoca"))
+    name = models.CharField(max_length=255, verbose_name=_("Naziv vrste primaoca"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Aktivno"))
+
+    class Meta:
+        ordering = ["code"]
+        verbose_name = _("Vrsta primaoca")
+        verbose_name_plural = _("Vrste primalaca")
+
+    def __str__(self):
+        return f"{self.code} — {self.name}"
+
+
+class WorkTimeCategory(models.Model):
+    code = models.SlugField(max_length=50, unique=True, verbose_name=_("Oznaka"))
+    name = models.CharField(max_length=100, verbose_name=_("Napomena za radnu listu"))
+    employee_selectable = models.BooleanField(default=True, verbose_name=_("Zaposleni bira u radnoj listi"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Aktivno"))
+    sort_order = models.PositiveSmallIntegerField(default=0, verbose_name=_("Redosled"))
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+        verbose_name = _("Vrsta rada / odsustva")
+        verbose_name_plural = _("Vrste rada / odsustva")
+
+    def __str__(self):
+        return self.name
+
+
+class WorkTimeElement(models.Model):
+    recipient_type = models.ForeignKey(RecipientType, on_delete=models.PROTECT,
+        related_name="elements", verbose_name=_("Vrsta primaoca"))
+    category = models.ForeignKey(WorkTimeCategory, on_delete=models.PROTECT,
+        related_name="elements", verbose_name=_("Napomena za radnu listu"))
+    payroll_code = models.PositiveIntegerField(verbose_name=_("Šifra elementa (elsif)"))
+    payroll_name = models.CharField(max_length=255, verbose_name=_("Naziv elementa (elnaz)"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Aktivno"))
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["recipient_type__code", "payroll_code"]
+        constraints = [models.UniqueConstraint(fields=["recipient_type", "payroll_code"],name="hr_unique_recipient_payroll_element")]
+        verbose_name = _("Element radne liste")
+        verbose_name_plural = _("Elementi radne liste")
+
+    def __str__(self):
+        return f"{self.recipient_type.code} / {self.payroll_code} — {self.payroll_name}"
+
+
+class SickLeaveImport(models.Model):
+    filename = models.CharField(max_length=255, verbose_name=_("RFZO datoteka"))
+    file_hash = models.CharField(max_length=64)
+    source_date = models.DateField(verbose_name=_("Datum RFZO izvoza"))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name="sick_leave_imports")
+    created_at = models.DateTimeField(auto_now_add=True)
+    row_count = models.PositiveIntegerField(default=0)
+    created_count = models.PositiveIntegerField(default=0)
+    updated_count = models.PositiveIntegerField(default=0)
+    unchanged_count = models.PositiveIntegerField(default=0)
+    unlinked_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = _("Uvoz bolovanja")
+        verbose_name_plural = _("Uvozi bolovanja")
+
+
+class SickLeave(models.Model):
+    rfzo_id = models.CharField(max_length=64, unique=True, verbose_name=_("RFZO ID"))
+    employee = models.ForeignKey("fleet.Employee", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="sick_leaves", verbose_name=_("Zaposleni"))
+    personal_number = models.CharField(max_length=13, verbose_name=_("JMBG iz izvora"))
+    start_date = models.DateField(db_index=True, verbose_name=_("Početak bolovanja"))
+    end_date = models.DateField(null=True, blank=True, verbose_name=_("Završetak bolovanja"))
+    source_status = models.CharField(max_length=50, verbose_name=_("Status RFZO"))
+    source_total_days = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Ukupno dana RFZO"))
+    source_date = models.DateField(verbose_name=_("Datum RFZO izvoza"))
+    matching_note = models.CharField(max_length=100, blank=True, verbose_name=_("Povezivanje"))
+    last_import = models.ForeignKey(SickLeaveImport, null=True, on_delete=models.SET_NULL,
+                                    related_name="sick_leaves")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_date", "-pk"]
+        verbose_name = _("Bolovanje")
+        verbose_name_plural = _("Bolovanja")
+        constraints = [models.CheckConstraint(
+            check=models.Q(end_date__isnull=True) | models.Q(end_date__gte=models.F("start_date")),
+            name="hr_sick_leave_valid_period")]
+
+    @property
+    def masked_personal_number(self):
+        return "*********" + self.personal_number[-4:]
+
+    def __str__(self):
+        return f"Bolovanje {self.rfzo_id} ({self.start_date:%d.%m.%Y})"

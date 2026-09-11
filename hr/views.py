@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -30,9 +30,10 @@ from .forms import (
     WorkTimeSheetForm,
     WorkTimeSheetLineFormSet,
 )
-from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine
+from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement
 from .querysets import employee_list_queryset
 from .services.attendance import calculate_daily_hours_from_clock_events, get_clock_events, month_period
+from .services.sick_leave import sick_leaves_by_day
 from .sync import sync_employees_from_hr_view
 
 
@@ -399,9 +400,20 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
     ]
 
     def get_employee(self):
+        employee_pk = self.kwargs.get("employee_pk")
+        if employee_pk is not None:
+            if not self.request.user.is_superuser:
+                raise PermissionDenied("Radne liste drugih zaposlenih otvara superuser.")
+            return get_object_or_404(Employee, pk=employee_pk)
         if not self.request.user.employee_id:
             raise PermissionDenied("Korisnicki nalog nije povezan sa zaposlenim.")
         return self.request.user.employee
+
+    def get_sheet_url(self):
+        employee_pk = self.kwargs.get("employee_pk")
+        if employee_pk is not None:
+            return reverse("hr:employee_work_time_sheet", kwargs={"employee_pk": employee_pk})
+        return reverse("hr:work_time_sheet")
 
     def get_period(self):
         today = timezone.localdate()
@@ -437,6 +449,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         return sheet
 
     def build_clock_attendance_context(self, employee, year, month, days_in_month):
+        attendance_error = None
         try:
             date_from, date_to, _last_day = month_period(year, month)
             clock_events = get_clock_events(
@@ -445,20 +458,13 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                 employee_code=employee.employee_code,
             )
             daily_hours, issues = calculate_daily_hours_from_clock_events(clock_events)
-        except DatabaseError as exc:
-            return {
-                "clock_attendance_error": str(exc),
-                "clock_attendance_rows": [],
-                "clock_attendance_summary": {
-                    "event_count": 0,
-                    "day_count": 0,
-                    "total_label": "0:00",
-                    "issue_count": 0,
-                },
-            }
+        except DatabaseError:
+            attendance_error = "Izvor prolazaka trenutno nije dostupan. Bolovanja i putni nalozi prikazani su iz aplikacije."
+            clock_events, daily_hours, issues = [], [], []
 
         daily_by_date = {item.date: item for item in daily_hours}
         travel_orders_by_day = _travel_orders_by_day(employee, year, month)
+        leaves_by_day = sick_leaves_by_day(employee, year, month)
         notes_by_date = {}
         for issue in issues:
             notes_by_date.setdefault(issue.date, []).append(issue)
@@ -493,6 +499,11 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                 }
                 for order in travel_orders_by_day.get(work_date, [])
             ]
+            sick_leaves = leaves_by_day.get(work_date, [])
+            if sick_leaves and not day_problems and not (item and item.pair_count):
+                status, status_class = "Bolovanje", "leave"
+            elif attendance_error:
+                status, status_class = "Nije učitano", "empty"
 
             rows.append(
                 {
@@ -500,24 +511,25 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                     "date": work_date,
                     "weekday": work_date.strftime("%a"),
                     "is_weekend": calendar.weekday(year, month, day) >= 5,
-                    "hours_label": f"{item.hours}:{item.minutes:02d}" if item else "0:00",
-                    "decimal_label": f"{item.total_hours:.2f}" if item else "0.00",
+                    "hours_label": "—" if attendance_error else (f"{item.hours}:{item.minutes:02d}" if item else "0:00"),
+                    "decimal_label": "—" if attendance_error else (f"{item.total_hours:.2f}" if item else "0.00"),
                     "pair_count": item.pair_count if item else 0,
                     "issue_count": len(day_problems),
                     "status": status,
                     "status_class": status_class,
                     "issue_messages": issue_messages,
                     "travel_orders": travel_orders,
+                    "sick_leaves": sick_leaves,
                 }
             )
 
         return {
-            "clock_attendance_error": None,
+            "clock_attendance_error": attendance_error,
             "clock_attendance_rows": rows,
             "clock_attendance_summary": {
                 "event_count": len(clock_events),
                 "day_count": len([item for item in daily_hours if item.pair_count or item.issue_count]),
-                "total_label": f"{total_minutes // 60}:{total_minutes % 60:02d}",
+                "total_label": "—" if attendance_error else f"{total_minutes // 60}:{total_minutes % 60:02d}",
                 "issue_count": len([issue for issue in issues if issue.is_problem]),
             },
         }
@@ -533,6 +545,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             line_formset = WorkTimeSheetLineFormSet(
                 instance=sheet,
                 queryset=sheet.lines.order_by("line_number"),
+                form_kwargs={"employee": employee},
             )
         attendance_context = self.build_clock_attendance_context(employee, year, month, days_in_month)
 
@@ -556,6 +569,11 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             "year": year,
             "month_name": self.MONTH_LABELS[month - 1],
             "days_in_month": days_in_month,
+            "is_other_employee_sheet": employee.pk != self.request.user.employee_id,
+            "has_work_categories": WorkTimeElement.objects.filter(
+                recipient_type__code=employee.recipient_code, recipient_type__is_active=True,
+                is_active=True, category__is_active=True, category__employee_selectable=True,
+            ).exists(),
             "available_years": range(timezone.localdate().year - 2, timezone.localdate().year + 2),
             "available_months": [
                 {"value": index, "label": label}
@@ -572,6 +590,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         context.update(self.build_context(header_form=header_form, line_formset=line_formset))
         return context
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         employee = self.get_employee()
         year, month = self.get_period()
@@ -582,6 +601,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             request.POST,
             instance=sheet,
             queryset=sheet.lines.order_by("line_number"),
+            form_kwargs={"employee": employee},
         )
 
         if header_form.is_valid() and line_formset.is_valid():
@@ -608,7 +628,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             if action == "submit_print":
                 return redirect("hr:work_time_sheet_print", pk=saved_sheet.pk)
             messages.success(request, "Radna lista je sacuvana.")
-            return redirect(f"{reverse('hr:work_time_sheet')}?month={month}&year={year}")
+            return redirect(f"{self.get_sheet_url()}?month={month}&year={year}")
 
         context = self.get_context_data(header_form=header_form, line_formset=line_formset)
         return self.render_to_response(context)
@@ -621,7 +641,7 @@ class WorkTimeSheetPrintView(LoginRequiredMixin, TemplateView):
     def get_sheet(self):
         sheet = get_object_or_404(
             WorkTimeSheet.objects.select_related("employee", "meal_organizational_unit")
-            .prefetch_related("lines__organizational_unit"),
+            .prefetch_related("lines__organizational_unit", "lines__work_category"),
             pk=self.kwargs["pk"],
         )
         can_print_other = self.request.user.is_superuser or user_has_role_permission(self.request.user, "employee_list")

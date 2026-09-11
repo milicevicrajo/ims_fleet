@@ -60,6 +60,14 @@ class ProcurementCase(models.Model):
     title = models.CharField(max_length=255, verbose_name=_("Naziv"))
     description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
     is_garage = models.BooleanField(default=False, verbose_name=_("Garaža"))
+    work_type = models.CharField(max_length=20, blank=True, default="", choices=[
+        ("mali_servis", _("Mali servis")), ("veliki_servis", _("Veliki servis")),
+        ("popravka", _("Popravka")),
+    ], verbose_name=_("Vrsta intervencije"))
+    garage_order = models.ForeignKey(
+        "fleet.Kvar", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="procurement_cases", verbose_name=_("Nalog garaže"),
+    )
     job_code = models.ForeignKey(
         "fleet.OrganizationalUnit",
         on_delete=models.SET_NULL,
@@ -419,6 +427,10 @@ class ProcurementInvoice(models.Model):
         verbose_name=_("Datum dodele sifre posla vozilu"),
     )
     is_garage = models.BooleanField(default=False, verbose_name=_("Garaza"))
+    work_type = models.CharField(max_length=20, blank=True, default="", choices=[
+        ("mali_servis", _("Mali servis")), ("veliki_servis", _("Veliki servis")),
+        ("popravka", _("Popravka")),
+    ], verbose_name=_("Vrsta intervencije"))
     vehicle = models.ForeignKey(
         "fleet.Vehicle",
         on_delete=models.SET_NULL,
