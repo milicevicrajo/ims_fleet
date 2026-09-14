@@ -1,72 +1,22 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card shadow-sm">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">{{ title }}</h2>
-        <div class="d-flex gap-2">
-          {% if can_sync_employees %}
-            <form method="post" action="{% url 'employee_sync' %}" class="m-0">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-primary btn-sm">
-                <i class="mdi mdi-sync"></i> Sinhronizuj zaposlene
-              </button>
-            </form>
-          {% endif %}
-          {% if show_inactive %}
-            <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary btn-sm">
-              Prikazi aktivne
-            </a>
-          {% else %}
-            <a href="{% url 'employee_list' %}?inactive=1" class="btn btn-outline-secondary btn-sm">
-              Prikazi neaktivne
-            </a>
-          {% endif %}
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table id="DatatableEmployee" class="table table-striped table-bordered align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Sifra zaposlenog</th>
-                <th>Prezime</th>
-                <th>Ime</th>
-                <th>Pozicija</th>
-                <th>OJ</th>
-                <th>Pol</th>
-                <th>Datum rodjenja</th>
-                <th>Datum zaposljavanja</th>
-                <th>Broj telefona</th>
-                <th class="text-center">Detalji</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for employee in employees %}
-              <tr>
-                <td>{{ employee.employee_code }}</td>
-                <td>{{ employee.display_last_name }}</td>
-                <td>{{ employee.display_first_name }}</td>
-                <td>{{ employee.position }}</td>
-                <td>{{ employee.org_unit_code|default:employee.department_code }}</td>
-                <td>{{ employee.gender }}</td>
-                <td>{{ employee.date_of_birth|date:"d.m.Y" }}</td>
-                <td>{{ employee.date_of_joining|date:"d.m.Y" }}</td>
-                <td>{{ employee.phone_number|default:employee.mobile_phone }}</td>
-                <td class="text-center">
-                  <a href="{% url 'employee_detail' employee.pk %}" class="btn btn-outline-primary btn-sm">
-                    <i class="mdi mdi-eye"></i> Detalji
-                  </a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
+{% extends 'hr/list_base.html' %}
+{% block hr_content %}
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3">
+  <div><div class="hr-kicker">Kadrovi · Evidencija zaposlenih</div><h1><i class="mdi mdi-account-group me-2"></i>Spisak zaposlenih</h1><p>Podaci zaposlenih, organizacione jedinice i pristup ličnoj evidenciji.</p></div>
+  <div class="d-flex align-items-center gap-3"><span>{{ employees|length }} u prikazu</span>{% if can_sync_employees %}<form method="post" action="{% url 'employee_sync' %}" class="m-0">{% csrf_token %}<button class="btn btn-light btn-sm" type="submit"><i class="mdi mdi-sync"></i> Sinhronizuj zaposlene</button></form>{% endif %}</div>
 </div>
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <form id="hr-employee-filter" method="get" class="fleet-list-filter mb-0"><div class="hr-filter-grid">
+    <div><label class="form-label" for="employee-status">Status</label><select id="employee-status" name="status" class="form-control" data-auto-filter><option value="active" {% if status == 'active' %}selected{% endif %}>Aktivni</option><option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Neaktivni</option><option value="all" {% if status == 'all' %}selected{% endif %}>Svi zaposleni</option></select></div>
+    <div><label class="form-label" for="employee-oj">Organizaciona jedinica</label><select id="employee-oj" name="oj" class="form-control" data-auto-filter><option value="">Sve OJ</option>{% for code in oj_options %}<option value="{{ code }}" {% if code == selected_oj %}selected{% endif %}>{{ code }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="employee-recipient">Vrsta primaoca</label><select id="employee-recipient" name="recipient" class="form-control" data-auto-filter><option value="">Sve vrste</option>{% for item in recipient_options %}<option value="{{ item.code }}" {% if item.code == selected_recipient %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="employee-query">Pretraga zaposlenih</label><input id="employee-query" class="form-control" type="search" name="q" value="{{ query }}" placeholder="Ime, prezime ili šifra" data-auto-filter data-visible-filter></div>
+    <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary"><i class="mdi mdi-filter-remove"></i> Poništi</a>
+  </div></form>
+</div></div>
+<div class="card shadow-sm"><div class="card-body"><div class="table-responsive">
+<table id="HrEmployeeTable" class="display compact table table-hover table-bordered align-middle w-100"><thead><tr><th>Šifra</th><th>Prezime</th><th>Ime</th><th>Pozicija</th><th>OJ</th><th>Pol</th><th>Datum rođenja</th><th>Datum zaposlenja</th><th>Telefon</th><th class="no-sort text-center">Detalji</th></tr></thead><tbody>
+{% for employee in employees %}<tr><td>{{ employee.employee_code }}</td><td class="fw-semibold">{{ employee.display_last_name }}</td><td>{{ employee.display_first_name }}</td><td>{{ employee.position }}</td><td><span class="fleet-status info">{{ employee.org_unit_code|default:employee.department_code }}</span></td><td>{{ employee.gender }}</td><td data-order="{{ employee.date_of_birth|date:'Y-m-d' }}">{{ employee.date_of_birth|date:'d.m.Y' }}</td><td data-order="{{ employee.date_of_joining|date:'Y-m-d' }}">{{ employee.date_of_joining|date:'d.m.Y' }}</td><td>{{ employee.phone_number|default:employee.mobile_phone|default:'—' }}</td><td class="text-center">{% if can_view_employee %}<span class="fleet-list-actions"><a href="{% url 'employee_detail' employee.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-account-details"></i> Detalji</a></span>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div></div></div>
+{% include 'mobilni/mobile/_datatable.html' with table_id='HrEmployeeTable' order="[[1, 'asc'],[2, 'asc']]" %}
+{% include 'mobilni/mobile/_auto_filter_script.html' with form_id='hr-employee-filter' %}
 {% endblock %}

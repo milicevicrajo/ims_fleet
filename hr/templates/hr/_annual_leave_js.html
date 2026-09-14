@@ -1,0 +1,23 @@
+<script>
+jQuery(function ($) {
+  ['DatatableAnnualAllowance','DatatableAnnualDecision'].forEach(function (id) {
+    var table = document.getElementById(id);
+    if (!table || $.fn.DataTable.isDataTable(table)) return;
+    $(table).DataTable({pageLength:25, lengthMenu:[25,50,100], autoWidth:false,
+      order: id==='DatatableAnnualDecision' ? [[0,'desc'],[1,'desc']] : [[0,'desc']],
+      language:{search:'Pretraga:',lengthMenu:'Prikaži _MENU_ redova',info:'Prikaz _START_ do _END_ od _TOTAL_ zapisa',infoEmpty:'Nema zapisa',infoFiltered:'(filtrirano od _MAX_ ukupno)',emptyTable:'Nema sinhronizovanih zapisa za izabrani prikaz.',zeroRecords:'Nema rezultata pretrage.',paginate:{first:'Prva',last:'Poslednja',next:'Sledeća',previous:'Prethodna'}}
+    });
+  });
+  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (tab) {
+    tab.addEventListener('shown.bs.tab',function () {
+      ['DatatableAnnualAllowance','DatatableAnnualDecision'].forEach(function (id) {
+        if ($.fn.DataTable.isDataTable('#'+id)) $('#'+id).DataTable().columns.adjust();
+      });
+    });
+  });
+  if (window.location.hash === '#annual-leave') {
+    var target = document.querySelector('[data-bs-target="#annual-leave"]');
+    if (target) bootstrap.Tab.getOrCreateInstance(target).show();
+  }
+});
+</script>

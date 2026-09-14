@@ -91,7 +91,8 @@ class WorkTimeCatalogTests(TestCase):
         self.category.save()
         self.assertIn(self.category, WorkTimeSheetLineForm(instance=line).fields['work_category'].queryset)
         self.assertNotIn(self.category, WorkTimeSheetLineForm(employee=self.employee).fields['work_category'].queryset)
-        self.assertEqual(line.display_note, 'Redovan rad — Dodatno')
+        self.assertEqual(line.display_note, 'Redovan rad')
+        self.assertNotIn('note', WorkTimeSheetLineForm(instance=line).fields)
 
     @patch('hr.views.get_clock_events', return_value=[])
     def test_superuser_without_employee_can_open_save_and_print_selected_sheet(self, clock):
@@ -99,6 +100,7 @@ class WorkTimeCatalogTests(TestCase):
         url = reverse('hr:employee_work_time_sheet', args=[self.employee.pk])
         response = self.client.get(url, {'year':2026,'month':5})
         self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'name="lines-0-note"')
         self.assertEqual(response.context['employee'], self.employee)
         sheet = response.context['sheet']
         data = {'month':5,'year':2026,'status':'draft','lines-TOTAL_FORMS':12,'lines-INITIAL_FORMS':12,'lines-MIN_NUM_FORMS':12,'lines-MAX_NUM_FORMS':12}
@@ -111,10 +113,12 @@ class WorkTimeCatalogTests(TestCase):
         line = sheet.lines.get(line_number=1)
         self.assertEqual(line.work_category, self.category)
         self.assertEqual(line.day_4, 8)
+        self.assertEqual(line.note, '')  # Forged free-text input is ignored.
         sheet.refresh_from_db()
         self.assertEqual(sheet.updated_by, self.admin)
         response = self.client.get(reverse('hr:work_time_sheet_print',args=[sheet.pk]))
-        self.assertContains(response, 'Redovan rad — Dodatna napomena')
+        self.assertContains(response, 'Redovan rad')
+        self.assertNotContains(response, 'Dodatna napomena')
         clock.assert_called_once_with(date_from=date(2026,5,1), date_to=date(2026,6,1), employee_code=901)
 
     def test_regular_user_cannot_open_or_save_selected_employee_route(self):

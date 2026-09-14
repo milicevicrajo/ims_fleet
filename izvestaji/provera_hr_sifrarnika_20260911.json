@@ -1,5 +1,14 @@
 {
   "counts": {
+    "annual_render": {
+      "status": 200,
+      "allocations_2026": 328,
+      "decisions_2026": 293,
+      "unlinked_2026": 0
+    },
+    "annual_allowances": 7643,
+    "annual_decisions": 13838,
+    "annual_sync_batches": 1,
     "recipients": 3,
     "categories": 13,
     "elements": 27,
@@ -50,6 +59,23 @@
       "selectors": 12,
       "available_categories": 10,
       "selection_and_hours": true
+    },
+    "hr:annual_leave_list": {
+      "tables": 2,
+      "date_sort": true,
+      "sync_form": true
+    },
+    "employee_list": {
+      "table": true,
+      "hero": true,
+      "filter": true,
+      "detail_button": true
+    },
+    "hr:sick_leave_list": {
+      "table": true,
+      "hero": true,
+      "filter": true,
+      "detail_button": true
     }
   },
   "browser_errors": []

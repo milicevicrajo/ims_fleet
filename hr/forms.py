@@ -166,7 +166,6 @@ class WorkTimeSheetLineForm(forms.ModelForm):
             *WORK_TIME_SHEET_DAY_FIELDS,
             "work_conditions",
             "work_category",
-            "note",
         ]
         widgets = {
             "line_number": forms.HiddenInput(),
@@ -174,7 +173,6 @@ class WorkTimeSheetLineForm(forms.ModelForm):
                 attrs={"class": "form-select form-select-sm work-code-select select2-method"}
             ),
             "work_conditions": forms.TextInput(attrs={"class": "form-control form-control-sm work-condition-input"}),
-            "note": forms.TextInput(attrs={"class": "form-control form-control-sm note-input"}),
             "work_category": forms.Select(attrs={"class": "form-select form-select-sm select2-method work-category-select", "data-placeholder": "Vrsta rada / odsustva", "data-allow-clear": "true"}),
         }
 
@@ -191,7 +189,6 @@ class WorkTimeSheetLineForm(forms.ModelForm):
             Q(pk__in=available) | Q(pk=self.instance.work_category_id)
         ).distinct()
         self.fields["work_category"].empty_label = ""
-        self.fields["note"].widget.attrs["placeholder"] = "Dodatna napomena (opciono)"
         self.fields["organizational_unit"].queryset = OrganizationalUnit.objects.order_by("code", "name")
         self.fields["organizational_unit"].empty_label = ""
         self.fields["organizational_unit"].label_from_instance = lambda obj: obj.code

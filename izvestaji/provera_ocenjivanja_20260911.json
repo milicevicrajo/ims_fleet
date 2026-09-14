@@ -1,0 +1,40 @@
+{
+  "counts": {
+    "groups": 2,
+    "criteria": 6,
+    "scales": 60
+  },
+  "browser": {
+    "hr:evaluation_list": {
+      "datatable": true,
+      "rows": 0
+    },
+    "hr:evaluation_create": {
+      "select2": true
+    },
+    "hr:evaluation_catalog": {
+      "datatable": true,
+      "rows": 60
+    },
+    "hr:evaluation_catalog_create": {
+      "select2": true
+    },
+    "values": {
+      "six_criteria": true,
+      "neutral": "1,00000",
+      "maximum": "1,30000"
+    },
+    "detail": {
+      "report": true
+    },
+    "print": {
+      "cyrillic": true,
+      "pdf": true
+    },
+    "summary": {
+      "datatable": true,
+      "rows": 1
+    }
+  },
+  "browser_errors": []
+}

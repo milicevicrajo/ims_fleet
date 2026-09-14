@@ -20,6 +20,9 @@
             <span class="hide-menu">Spisak zaposlenih</span>
           </a>
         </li>
+        {% if hr_permissions.annual_leave_list %}
+        <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:annual_leave_list' %}"><i class="mdi mdi-calendar-check"></i><span class="hide-menu">Godišnji odmori</span></a></li>
+        {% endif %}
         {% if hr_permissions.sick_leave_list %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:sick_leave_list' %}">
@@ -32,6 +35,9 @@
             <i class="mdi mdi-file-import"></i><span class="hide-menu">Uvoz bolovanja</span>
           </a>
         </li>
+        {% endif %}
+        {% if hr_permissions.evaluation_list %}
+        <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:evaluation_list' %}"><i class="mdi mdi-clipboard-check-outline"></i><span class="hide-menu">Ocenjivanje zaposlenih</span></a></li>
         {% endif %}
         {% if hr_permissions.work_time_catalog %}
         <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:work_time_catalog' %}"><i class="mdi mdi-format-list-bulleted"></i><span class="hide-menu">Elementi radne liste</span></a></li>

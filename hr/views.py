@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import DatabaseError, transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -30,7 +31,7 @@ from .forms import (
     WorkTimeSheetForm,
     WorkTimeSheetLineFormSet,
 )
-from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement
+from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision
 from .querysets import employee_list_queryset
 from .services.attendance import calculate_daily_hours_from_clock_events, get_clock_events, month_period
 from .services.sick_leave import sick_leaves_by_day
@@ -207,6 +208,8 @@ def _employee_detail_context(employee, *, is_self_profile=False):
         "vehicle_travel_orders_count": vehicle_travel_orders.count(),
         "work_time_sheets": work_time_sheets,
         "work_time_sheets_count": len(work_time_sheets),
+        "annual_allowances": AnnualLeaveAllowance.objects.filter(employee=employee),
+        "annual_decisions": AnnualLeaveDecision.objects.filter(employee=employee),
         "incidents": incidents,
         "incidents_count": incidents.count(),
         "contracts": contracts,
@@ -222,13 +225,38 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
     context_object_name = "employees"
 
     def get_queryset(self):
-        show_inactive = self.request.GET.get("inactive") == "1"
-        return employee_list_queryset(show_inactive=show_inactive)
+        status = self.request.GET.get("status", "inactive" if self.request.GET.get("inactive") == "1" else "active")
+        qs = Employee.objects.order_by("last_name", "first_name")
+        if status != "all":
+            qs = qs.filter(is_active=status != "inactive")
+        oj = self.request.GET.get("oj", "").strip()
+        if oj:
+            match = Q(org_unit_code=oj)
+            if oj.isdigit():
+                match |= (Q(org_unit_code__isnull=True) | Q(org_unit_code="")) & Q(department_code=int(oj))
+            qs = qs.filter(match)
+        recipient = self.request.GET.get("recipient", "").strip()
+        if recipient:
+            qs = qs.filter(recipient_code=recipient)
+        for term in self.request.GET.get("q", "").split():
+            match = Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(display_first_name_override__icontains=term) | Q(display_last_name_override__icontains=term)
+            if term.isdigit():
+                match |= Q(employee_code=int(term))
+            qs = qs.filter(match)
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Lista zaposlenih"
-        context["show_inactive"] = self.request.GET.get("inactive") == "1"
+        context["status"] = self.request.GET.get("status", "inactive" if self.request.GET.get("inactive") == "1" else "active")
+        context["show_inactive"] = context["status"] == "inactive"
+        context["query"] = self.request.GET.get("q", "")
+        context["selected_oj"] = self.request.GET.get("oj", "")
+        context["selected_recipient"] = self.request.GET.get("recipient", "")
+        context["oj_options"] = sorted({str(code or department) for code, department in Employee.objects.values_list("org_unit_code", "department_code")})
+        from .models import RecipientType
+        context["recipient_options"] = RecipientType.objects.all()
+        context["can_view_employee"] = user_has_role_permission(self.request.user, "employee_detail")
         context["can_sync_employees"] = user_has_role_permission(
             self.request.user,
             "employee_sync",

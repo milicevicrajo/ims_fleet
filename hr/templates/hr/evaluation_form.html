@@ -1,0 +1,51 @@
+{% extends 'hr/list_base.html' %}
+{% load hr_evaluation %}
+{% block hr_content %}
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3"><div><div class="hr-kicker">Kadrovi · Mesečno ocenjivanje</div><h1><i class="mdi mdi-clipboard-check-outline me-2"></i>Образац оцењивања</h1><p>Подаци запосленог, мерила, оцене и лични коефицијент.</p></div><a class="btn btn-outline-light btn-sm" href="{% url 'hr:evaluation_list' %}"><i class="mdi mdi-arrow-left"></i> Pregled ocenjivanja</a></div>
+{% if header_form %}
+<div class="card shadow-sm"><div class="card-body p-4"><h5 class="mb-3">1. Zaposleni, period i ocenjivači</h5><p class="text-muted">Izbor zaposlenog preuzima grupu i ocenjivače iz šifrarnika kada su podešeni. Nepopunjene podatke izaberite pre pripreme obrasca.</p>
+<form method="get" id="evaluation-header">
+  {{ header_form.non_field_errors }}<div class="row g-3">{% for field in header_form %}<div class="{% if field.name == 'employee' %}col-6{% elif field.name == 'month' or field.name == 'year' %}col-3{% else %}col-6{% endif %}"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}</div>{% endfor %}</div>
+  <div class="mt-4 pt-3 border-top"><button class="btn btn-primary" name="prepare" value="1" type="submit"><i class="mdi mdi-arrow-right"></i> Pripremi obrazac</button></div>
+</form></div></div>
+{% else %}
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <div class="d-flex justify-content-between"><div><h4>{{ snapshot.employee.name }}</h4><div>Шифра {{ snapshot.employee.code }} · {{ snapshot.employee.position }} · {{ snapshot.employee.education }}</div><div class="text-muted mt-1">{{ snapshot.month_name }} {{ snapshot.year }}. · ОЈ {{ snapshot.unit.code }} {{ snapshot.unit.name }} · {{ snapshot.group.name }}</div></div><div><span class="fleet-status info">Границе К4: {{ snapshot.minimum|coefficient }} — {{ snapshot.maximum|coefficient }}</span></div></div>
+  {% if source %}<p class="text-muted mt-3 mb-0">Нова верзија на основу верзије {{ source.revision }}. Претходни образац и сагласности остају у историји.</p>{% endif %}
+</div></div>
+<form method="post" id="evaluation-values">{% csrf_token %}{{ values_form.snapshot_token }}
+  {% if values_form.errors %}<div class="alert alert-danger">Проверите унете оцене и коментаре. {{ values_form.non_field_errors }}{{ values_form.snapshot_token.errors }}</div>{% endif %}
+  <div class="card shadow-sm"><div class="card-body"><table class="table table-bordered align-middle"><thead><tr><th style="width:35%">Мерило</th><th style="width:20%">Бодови / стимулација<br><small>ОЈ {{ snapshot.unit.code }}</small></th><th>Коментар оцењивача</th></tr></thead><tbody>
+  {% for row in values_form.rows %}<tr><td><strong>{{ row.item.code }}. {{ row.item.name }}</strong><div class="small text-muted mt-2" id="description-{{ row.item.code }}"></div></td><td>{{ row.choice }}{{ row.choice.errors }}</td><td>{{ row.comment }}{{ row.comment.errors }}</td></tr>{% endfor %}
+  </tbody><tfoot><tr><th>Укупна стимулација</th><th id="evaluation-stimulation">0,00000</th><td rowspan="2" class="text-muted">К4 = 1 + збир стимулација.<br>Сагласности се дају после чувања обрасца.</td></tr><tr><th>Лични коефицијент К4</th><th id="evaluation-coefficient">1,00000</th></tr></tfoot></table>
+  <label class="form-label" for="{{ values_form.comment.id_for_label }}">{{ values_form.comment.label }}</label>{{ values_form.comment }}{{ values_form.comment.errors }}
+  <div class="mt-4 d-flex justify-content-between align-items-center border-top pt-3"><span class="text-muted">Чува се снимак података и вредности овог обрасца.</span><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Сачувај образац</button></div>
+  </div></div>
+</form>
+{{ snapshot|json_script:'evaluation-snapshot' }}
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+jQuery(function ($) {
+  $('#evaluation-header #id_employee').on('change', function () {
+    ['group','supervisor','director','general_director'].forEach(function (key) { $('#id_'+key).val(''); });
+    document.getElementById('evaluation-header').submit();
+  });
+  var data = document.getElementById('evaluation-snapshot');
+  if (!data) return;
+  var snapshot = JSON.parse(data.textContent);
+  function recalculate() {
+    var total = 0;
+    snapshot.items.forEach(function (item) {
+      var select = document.querySelector('[name="criterion_'+item.code+'"]');
+      var option = item.options.find(function (value) { return String(value.points) === select.value; });
+      if (option) { total += Number(option.value); document.getElementById('description-'+item.code).textContent = option.description; }
+    });
+    document.getElementById('evaluation-stimulation').textContent = total.toFixed(5).replace('.',',');
+    document.getElementById('evaluation-coefficient').textContent = (1+total).toFixed(5).replace('.',',');
+  }
+  $('.evaluation-points').on('change',recalculate); recalculate();
+});
+</script>
+{% endblock %}

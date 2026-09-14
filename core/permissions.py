@@ -68,6 +68,7 @@ def collect_permission_codes():
     from hr import urls as hr_urls
     codes = set(collect_fleet_permission_codes())
     codes.update(collect_url_pattern_names(hr_urls.urlpatterns, prefix="hr"))
+    codes.add('hr:evaluation_view_all')
     codes.update(collect_naplata_permission_codes())
     codes.update(collect_nabavka_permission_codes())
     codes.update(collect_menice_permission_codes())

@@ -40,7 +40,7 @@ def current_app(request):
         "current_app": app,
         "hr_permissions": {
             code: user_has_role_permission(request.user, f"hr:{code}")
-            for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog")
+            for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list", "evaluation_list")
         },
         "sidebar_template": sidebar_map.get(app, "sidebar_fleet.html"),
         "nabavka_permissions": {

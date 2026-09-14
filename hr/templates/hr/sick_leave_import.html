@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="card border-0 text-white mb-3" style="background:#203f56"><div class="card-body p-4"><h1 class="h3 text-white mb-1"><i class="mdi mdi-file-import me-2"></i>Uvoz bolovanja</h1><div>Preuzmite Excel sa RFZO i povežite odsustva sa zaposlenima.</div></div></div>
+{% extends 'hr/list_base.html' %}
+{% block hr_content %}
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3"><div><div class="hr-kicker">Kadrovi · RFZO evidencija</div><h1><i class="mdi mdi-file-import me-2"></i>Uvoz bolovanja</h1><p>Učitavanje odsustava iz Excel datoteke i povezivanje sa zaposlenima.</p></div>{% if hr_permissions.sick_leave_list %}<a class="btn btn-outline-light btn-sm" href="{% url 'hr:sick_leave_list' %}"><i class="mdi mdi-arrow-left"></i> Pregled bolovanja</a>{% endif %}</div>
 <div class="card" style="max-width:900px"><div class="card-body p-4">
   <p>Ponovni uvoz ažurira bolovanje sa istim RFZO ID-jem. Zaposleni se pronalazi po JMBG-u; ako nema jednoznačnog podudaranja, bolovanje ostaje na proveri.</p>
   <form method="post" enctype="multipart/form-data">{% csrf_token %}

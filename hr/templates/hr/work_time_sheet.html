@@ -28,7 +28,7 @@
   </form>
 </div>
 
-{% if not employee.recipient_code %}<div class="alert alert-info">Zaposlenom nije evidentirana vrsta primaoca iz HR-a. Izbor vrste rada i odsustva biće dostupan nakon povezivanja; dodatnu napomenu možete uneti odmah.</div>{% elif not has_work_categories %}<div class="alert alert-info">Za vrstu primaoca {{ employee.recipient_code }} nisu podešene aktivne vrste rada i odsustva. Potrebno je dopuniti veze u šifrarniku „Elementi RL“; dodatnu napomenu možete uneti odmah.</div>{% endif %}
+{% if not employee.recipient_code %}<div class="alert alert-info">Zaposlenom nije evidentirana vrsta primaoca iz HR-a. Izbor vrste rada i odsustva biće dostupan nakon povezivanja.</div>{% elif not has_work_categories %}<div class="alert alert-info">Za vrstu primaoca {{ employee.recipient_code }} nisu podešene aktivne vrste rada i odsustva. Potrebno je dopuniti veze u šifrarniku „Elementi RL“.</div>{% endif %}
 <form method="post" id="work-time-sheet-form">
   {% csrf_token %}
   <input type="hidden" name="month" value="{{ month }}">
@@ -83,7 +83,7 @@
               {% endfor %}
               <th class="text-center total-col">Svega</th>
               <th class="conditions-col">Uslovi rada</th>
-              <th class="note-col">Vrsta rada / odsustva i napomena</th>
+              <th class="note-col">Vrsta rada / odsustva</th>
             </tr>
           </thead>
           <tbody>
@@ -113,8 +113,6 @@
                 <td class="note-col">
                   {{ form.work_category }}
                   {% if form.work_category.errors %}<div class="text-danger small">{{ form.work_category.errors|striptags }}</div>{% endif %}
-                  <div class="mt-1">{{ form.note }}</div>
-                  {% if form.note.errors %}<div class="text-danger small">{{ form.note.errors|striptags }}</div>{% endif %}
                 </td>
               </tr>
             {% endfor %}
@@ -330,8 +328,7 @@
   }
   .work-code-select,
   .meal-code-select,
-  .work-condition-input,
-  .note-input {
+  .work-condition-input {
     width: 100%;
     height: 32px;
   }

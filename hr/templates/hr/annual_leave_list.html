@@ -1,0 +1,24 @@
+{% extends 'hr/list_base.html' %}
+{% block hr_content %}
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3">
+  <div><div class="hr-kicker">Kadrovi · Odsustva zaposlenih</div><h1><i class="mdi mdi-calendar-check me-2"></i>Godišnji odmori</h1><p>Dodela dana i rešenja po godini prava, povezana sa zaposlenima.</p></div>
+  {% if can_sync %}<form method="post" action="{% url 'hr:annual_leave_sync' %}">{% csrf_token %}<input type="hidden" name="year" value="{{ selected_year|default_if_none:'' }}"><button class="btn btn-light btn-sm" type="submit"><i class="mdi mdi-sync"></i> Sinhronizuj {% if selected_year %}{{ selected_year }}.{% else %}sve godine{% endif %}</button></form>{% endif %}
+</div>
+<div class="row mb-3">
+  <div class="col-3"><div class="card h-100 mb-0 shadow-sm"><div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-calendar-plus"></i></span><div><span class="hr-stat-label">Dodele u prikazu</span><strong>{{ allocation_count }}</strong></div></div></div></div>
+  <div class="col-3"><div class="card h-100 mb-0 shadow-sm"><div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-file-document-outline"></i></span><div><span class="hr-stat-label">Rešenja u prikazu</span><strong>{{ decision_count }}</strong></div></div></div></div>
+  <div class="col-3"><div class="card h-100 mb-0 shadow-sm"><div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-account-alert"></i></span><div><span class="hr-stat-label">Zapisi bez povezane osobe</span><strong>{{ unlinked_count }}</strong></div></div></div></div>
+  <div class="col-3"><div class="card h-100 mb-0 shadow-sm"><div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-sync"></i></span><div><span class="hr-stat-label">Poslednja sinhronizacija</span><strong class="hr-stat-date">{{ last_annual_sync.created_at|date:'d.m.Y H:i'|default:'Nema sinhronizacije' }}</strong>{% if last_annual_sync %}<div class="small text-muted">{% if last_annual_sync.year %}Godina {{ last_annual_sync.year }}.{% else %}Sve godine{% endif %}</div>{% endif %}</div></div></div></div>
+</div>
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <form id="hr-annual-filter" method="get" class="fleet-list-filter mb-0"><div class="fleet-filter-grid" style="grid-template-columns:180px minmax(280px,1fr) 250px 120px">
+    <div><label class="form-label" for="annual-year">Godina prava</label><select class="form-control" name="year" id="annual-year" data-auto-filter><option value="">Sve godine</option>{% for year in available_years %}<option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="annual-query">Zaposleni ili šifra</label><input id="annual-query" type="search" class="form-control" name="q" value="{{ query }}" placeholder="Ime, prezime ili šifra" data-auto-filter data-visible-filter></div>
+    <div><label class="form-label" for="annual-archive">Status u izvoru</label><select id="annual-archive" name="archive" class="form-control" data-auto-filter><option value="">Prisutan u izvoru</option><option value="1" {% if include_withdrawn %}selected{% endif %}>Uključi povučene zapise</option></select></div>
+    <a class="btn btn-outline-secondary" href="{% url 'hr:annual_leave_list' %}"><i class="mdi mdi-filter-remove"></i> Poništi</a>
+  </div></form>
+</div></div>
+{% include 'hr/_annual_leave_tables.html' with show_employee=True %}
+{% include 'mobilni/mobile/_auto_filter_script.html' with form_id='hr-annual-filter' %}
+{% endblock %}
+{% block extra_js %}{% include 'hr/_annual_leave_js.html' %}{% endblock %}

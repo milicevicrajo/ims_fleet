@@ -3,6 +3,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from .evaluation_models import (EvaluationGroup, EvaluationCriterion, EvaluationScale,
+    EvaluationUnitSetup, EvaluationEmployeeSetup, EmployeeEvaluation, EvaluationApproval)
+
 
 class Employee(models.Model):
     GENDER_CHOICES = [
@@ -258,11 +261,71 @@ class WorkTimeSheetLine(models.Model):
 
     @property
     def display_note(self):
-        category = self.work_category.name if self.work_category_id else ""
-        return " — ".join(value for value in (category, self.note) if value)
+        return self.work_category.name if self.work_category_id else ""
 
     def __str__(self):
         return f"{self.sheet} / {self.line_number}"
+
+
+class AnnualLeaveSync(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="annual_leave_syncs")
+    year = models.PositiveSmallIntegerField(null=True, blank=True)
+    counts = models.JSONField(default=dict)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name = _("Sinhronizacija godišnjih odmora")
+
+
+class AnnualLeaveSourceRecord(models.Model):
+    company_code = models.PositiveIntegerField(default=1)
+    year = models.PositiveSmallIntegerField(verbose_name=_("Godina prava"))
+    employee_code = models.IntegerField(verbose_name=_("Šifra zaposlenog u izvoru"))
+    employee = models.ForeignKey("fleet.Employee", null=True, blank=True, on_delete=models.SET_NULL)
+    source_present = models.BooleanField(default=True, verbose_name=_("Prisutan u izvoru"))
+    last_seen_at = models.DateTimeField()
+    last_sync = models.ForeignKey(AnnualLeaveSync, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        abstract = True
+
+
+class AnnualLeaveAllowance(AnnualLeaveSourceRecord):
+    source_employee_name = models.CharField(max_length=255, blank=True)
+    allocated_days = models.PositiveIntegerField(verbose_name=_("Dodeljeno dana"))
+    source_day_1 = models.IntegerField(null=True, blank=True)
+    source_day_2 = models.IntegerField(null=True, blank=True)
+    source_day_3 = models.IntegerField(null=True, blank=True)
+    source_day_4 = models.IntegerField(null=True, blank=True)
+    source_day_5 = models.IntegerField(null=True, blank=True)
+    source_day_6 = models.IntegerField(null=True, blank=True)
+    source_other = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-year", "employee_code"]
+        constraints = [models.UniqueConstraint(fields=["company_code", "year", "employee_code"], name="hr_annual_allowance_source_key")]
+        verbose_name = _("Dodela godišnjeg odmora")
+        verbose_name_plural = _("Dodele godišnjeg odmora")
+
+
+class AnnualLeaveDecision(AnnualLeaveSourceRecord):
+    # Preserve the exact datetime portion of the source PK, independently of display dates/time zones.
+    source_start_key = models.CharField(max_length=26)
+    start_date = models.DateField(verbose_name=_("Od"))
+    end_date = models.DateField(verbose_name=_("Do"))
+    approved_days = models.PositiveIntegerField(verbose_name=_("Dana po rešenju"))
+    source_comment = models.CharField(max_length=255, blank=True, verbose_name=_("Komentar iz rešenja"))
+
+    class Meta:
+        ordering = ["-year", "-start_date", "employee_code"]
+        constraints = [
+            models.UniqueConstraint(fields=["company_code", "year", "employee_code", "source_start_key"], name="hr_annual_decision_source_key"),
+            models.CheckConstraint(check=models.Q(end_date__gte=models.F("start_date")), name="hr_annual_decision_valid_period"),
+        ]
+        verbose_name = _("Rešenje godišnjeg odmora")
+        verbose_name_plural = _("Rešenja godišnjeg odmora")
 
 
 class RecipientType(models.Model):

@@ -1,34 +1,33 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="card border-0 text-white mb-3" style="background:#203f56">
-  <div class="card-body d-flex justify-content-between align-items-center p-4">
-    <div><h1 class="h3 text-white mb-1"><i class="mdi mdi-calendar-remove me-2"></i>Bolovanja</h1><div>RFZO evidencija odsustava povezana sa zaposlenima</div></div>
-    {% if can_import %}<a class="btn btn-light" href="{% url 'hr:sick_leave_import' %}"><i class="mdi mdi-file-import"></i> Uvezi RFZO Excel</a>{% endif %}
-  </div>
+{% extends 'hr/list_base.html' %}
+{% block hr_content %}
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3">
+  <div><div class="hr-kicker">Kadrovi · Odsustva zaposlenih</div><h1><i class="mdi mdi-calendar-remove me-2"></i>Bolovanja</h1><p>RFZO evidencija odsustava i povezivanje sa zaposlenima.</p></div>
+  {% if can_import %}<a class="btn btn-light btn-sm" href="{% url 'hr:sick_leave_import' %}"><i class="mdi mdi-file-import"></i> Uvezi RFZO Excel</a>{% endif %}
 </div>
 <div class="row mb-3">
-  <div class="col-4"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted">Evidentirana bolovanja</div><strong class="h3">{{ total_count }}</strong></div></div></div>
-  <div class="col-4"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted">Bez povezane osobe</div><a class="h3" href="?unlinked=1">{{ unlinked_count }}</a></div></div></div>
-  <div class="col-4"><div class="card h-100 mb-0"><div class="card-body"><div class="text-muted">Poslednji uvoz</div><strong>{{ last_batch.created_at|date:'d.m.Y H:i'|default:'Nema uvoza' }}</strong>{% if last_batch %}<div class="small text-muted">RFZO izvoz: {{ last_batch.source_date|date:'d.m.Y' }}</div>{% endif %}</div></div></div>
+  <div class="col-4"><div class="card h-100 mb-0 shadow-sm"><div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-calendar-text"></i></span><div><span class="hr-stat-label">Evidentirana bolovanja</span><strong>{{ total_count }}</strong></div></div></div></div>
+  <div class="col-4"><div class="card h-100 mb-0 shadow-sm"><div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-account-alert"></i></span><div><span class="hr-stat-label">Bez povezane osobe</span><a class="btn btn-outline-primary btn-sm mt-1" href="?unlinked=1"><i class="mdi mdi-account-search"></i> {{ unlinked_count }} · Pregledaj</a></div></div></div></div>
+  <div class="col-4"><div class="card h-100 mb-0 shadow-sm"><div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-sync"></i></span><div><span class="hr-stat-label">Poslednji uvoz</span><strong class="hr-stat-date">{{ last_batch.created_at|date:'d.m.Y H:i'|default:'Nema uvoza' }}</strong>{% if last_batch %}<div class="small text-muted">RFZO izvoz: {{ last_batch.source_date|date:'d.m.Y' }}</div>{% endif %}</div></div></div></div>
 </div>
-<div class="card"><div class="card-body">
-  <form method="get" class="d-flex gap-2 mb-3 align-items-end">
-    <div style="min-width:300px"><label for="leave-query" class="form-label">Zaposleni ili RFZO ID</label><input id="leave-query" class="form-control" name="q" value="{{ query }}"></div>
-    <div><label for="leave-year" class="form-label">Godina odsustva</label><input id="leave-year" class="form-control" name="year" value="{{ selected_year }}" placeholder="Sve godine" inputmode="numeric" maxlength="4"></div>
-    {% if request.GET.unlinked == '1' %}<input type="hidden" name="unlinked" value="1">{% endif %}
-    <button class="btn btn-primary" type="submit">Prikaži</button><a class="btn btn-outline-secondary" href="{% url 'hr:sick_leave_list' %}">Poništi filtere</a>
-  </form>
+<div class="card shadow-sm"><div class="card-body">
+  <form id="hr-sick-leave-filter" method="get" class="fleet-list-filter mb-4"><div class="fleet-filter-grid" style="grid-template-columns:minmax(280px,1fr) 180px 240px 120px">
+    <div><label for="leave-query" class="form-label">Zaposleni ili RFZO ID</label><input type="search" id="leave-query" class="form-control" name="q" value="{{ query }}" placeholder="Ime, prezime ili RFZO ID" data-auto-filter data-visible-filter></div>
+    <div><label for="leave-year" class="form-label">Godina odsustva</label><input id="leave-year" class="form-control" name="year" value="{{ selected_year }}" placeholder="Sve godine" inputmode="numeric" maxlength="4" data-auto-filter></div>
+    <div><label for="leave-link" class="form-label">Veza sa zaposlenim</label><select id="leave-link" name="unlinked" class="form-control" data-auto-filter><option value="">Sva bolovanja</option><option value="1" {% if request.GET.unlinked == '1' %}selected{% endif %}>Bez povezane osobe</option></select></div>
+    <a class="btn btn-outline-secondary" href="{% url 'hr:sick_leave_list' %}"><i class="mdi mdi-filter-remove"></i> Poništi</a>
+  </div></form>
   <div class="table-responsive"><table id="DatatableSickLeave" class="display compact table table-hover table-bordered align-middle" style="width:100%">
     <thead><tr><th>RFZO ID</th><th>Zaposleni</th><th>Od</th><th>Do</th><th>Status RFZO</th><th class="text-end">Dana RFZO</th><th>Povezivanje</th></tr></thead>
     <tbody>{% for leave in sick_leaves %}<tr>
-      <td>{{ leave.rfzo_id }}</td><td>{% if leave.employee %}{% if can_view_employee %}<a href="{% url 'employee_detail' leave.employee_id %}" class="fw-semibold" title="Detalji zaposlenog">{{ leave.employee }}</a>{% elif leave.employee_id == request.user.employee_id %}<a href="{% url 'my_employee_profile' %}" class="fw-semibold">{{ leave.employee }}</a>{% else %}{{ leave.employee }}{% endif %} <span class="text-muted small">({{ leave.employee.employee_code }})</span>{% else %}<span class="text-warning">Nije povezano</span><div class="small">JMBG {{ leave.masked_personal_number }}</div>{% endif %}</td>
+      <td>{{ leave.rfzo_id }}</td><td>{% if leave.employee %}{% if can_view_employee %}<a href="{% url 'employee_detail' leave.employee_id %}" class="btn btn-outline-primary btn-sm hr-person-link" title="Detalji zaposlenog"><i class="mdi mdi-account-details"></i> {{ leave.employee }}</a>{% elif leave.employee_id == request.user.employee_id %}<a href="{% url 'my_employee_profile' %}" class="btn btn-outline-primary btn-sm hr-person-link"><i class="mdi mdi-account-details"></i> {{ leave.employee }}</a>{% else %}{{ leave.employee }}{% endif %} <span class="text-muted small">({{ leave.employee.employee_code }})</span>{% else %}<span class="text-warning">Nije povezano</span><div class="small">JMBG {{ leave.masked_personal_number }}</div>{% endif %}</td>
       <td data-order="{{ leave.start_date|date:'Y-m-d' }}">{{ leave.start_date|date:'d.m.Y' }}</td><td data-order="{{ leave.end_date|date:'Y-m-d' }}">{{ leave.end_date|date:'d.m.Y'|default:'Otvoreno' }}</td>
       <td>{{ leave.source_status }}</td><td class="text-end" data-order="{{ leave.source_total_days|default_if_none:'-1' }}">{{ leave.source_total_days|default_if_none:'—' }}</td>
-      <td>{% if leave.employee %}<span class="badge bg-success">Povezano po JMBG-u</span>{% else %}{{ leave.matching_note|default:'Proveriti zaposlenog' }}{% endif %}</td>
+      <td>{% if leave.employee %}<span class="fleet-status active">Povezano po JMBG-u</span>{% else %}{{ leave.matching_note|default:'Proveriti zaposlenog' }}{% endif %}</td>
     </tr>{% endfor %}</tbody>
   </table></div>
   <p class="small text-muted mb-0">Datumi i broj dana preuzeti su iz RFZO evidencije. Broj dana nije automatski obračun radnih dana ili sati. U radnoj listi bolovanje se prikazuje u napomeni uz odgovarajuće datume.</p>
 </div></div>
+{% include 'mobilni/mobile/_auto_filter_script.html' with form_id='hr-sick-leave-filter' %}
 {% endblock %}
 {% block extra_js %}
 <script>
