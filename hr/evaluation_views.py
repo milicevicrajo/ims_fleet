@@ -51,7 +51,7 @@ class EvaluationListView(LoginRequiredMixin, TemplateView):
         history = self.request.GET.get('history') == '1'
         items = list(qs)
         # Keep latest revision for each employee, independent of submission/approval status.
-        latest = {row['employee_id']:row['last'] for row in EmployeeEvaluation.objects.filter(employee_id__in=[item.employee_id for item in items],year=year,month=month).values('employee_id').annotate(last=Max('revision'))}
+        latest = {row['employee_id']:row['last'] for row in EmployeeEvaluation.objects.filter(employee_id__in=[item.employee_id for item in items],year=year,month=month).order_by().values('employee_id').annotate(last=Max('revision'))}
         items = [decorate_evaluation(item) for item in items if history or item.revision == latest.get(item.employee_id)]
         ctx.update(title='Ocenjivanje zaposlenih',sidebar_template='sidebar_kadrovi.html',evaluations=items,
             year=year,month=month,months=list(enumerate(MONTHS,1)),history=history,selected_unit=unit,
