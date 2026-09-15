@@ -1,7 +1,7 @@
 {% extends 'hr/list_base.html' %}
 {% load hr_evaluation %}
 {% block hr_content %}
-<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3"><div><div class="hr-kicker">Kadrovi · Mesečno ocenjivanje</div><h1><i class="mdi mdi-clipboard-check-outline me-2"></i>Образац оцењивања</h1><p>Подаци запосленог, мерила, оцене и лични коефицијент.</p></div><a class="btn btn-outline-light btn-sm" href="{% url 'hr:evaluation_list' %}"><i class="mdi mdi-arrow-left"></i> Pregled ocenjivanja</a></div>
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3"><div><div class="hr-kicker">Kadrovi - Mesečno ocenjivanje</div><h1><i class="mdi mdi-clipboard-check-outline me-2"></i>Obrazac ocenjivanja</h1><p>Podaci zaposlenog, merila, ocene i lični koeficijent.</p></div><a class="btn btn-outline-light btn-sm" href="{% url 'hr:evaluation_list' %}"><i class="mdi mdi-arrow-left"></i> Pregled ocenjivanja</a></div>
 {% if header_form %}
 <div class="card shadow-sm"><div class="card-body p-4"><h5 class="mb-3">1. Zaposleni, period i ocenjivači</h5><p class="text-muted">Izbor zaposlenog preuzima grupu i ocenjivače iz šifrarnika kada su podešeni. Nepopunjene podatke izaberite pre pripreme obrasca.</p>
 <form method="get" id="evaluation-header">
@@ -10,16 +10,16 @@
 </form></div></div>
 {% else %}
 <div class="card shadow-sm mb-3"><div class="card-body">
-  <div class="d-flex justify-content-between"><div><h4>{{ snapshot.employee.name }}</h4><div>Шифра {{ snapshot.employee.code }} · {{ snapshot.employee.position }} · {{ snapshot.employee.education }}</div><div class="text-muted mt-1">{{ snapshot.month_name }} {{ snapshot.year }}. · ОЈ {{ snapshot.unit.code }} {{ snapshot.unit.name }} · {{ snapshot.group.name }}</div></div><div><span class="fleet-status info">Границе К4: {{ snapshot.minimum|coefficient }} — {{ snapshot.maximum|coefficient }}</span></div></div>
-  {% if source %}<p class="text-muted mt-3 mb-0">Нова верзија на основу верзије {{ source.revision }}. Претходни образац и сагласности остају у историји.</p>{% endif %}
+  <div class="d-flex justify-content-between"><div><h4>{{ snapshot.employee.name|latin_text }}</h4><div>Šifra {{ snapshot.employee.code }} - {{ snapshot.employee.position|latin_text }} - {{ snapshot.employee.education|latin_text }}</div><div class="text-muted mt-1">{{ snapshot.month_name|latin_text }} {{ snapshot.year }}. - OJ {{ snapshot.unit.code }} {{ snapshot.unit.name|latin_text }} - {{ snapshot.group.name|latin_text }}</div></div><div><span class="fleet-status info">Granice K4: {{ snapshot.minimum|coefficient }} - {{ snapshot.maximum|coefficient }}</span></div></div>
+  {% if source %}<p class="text-muted mt-3 mb-0">Nova verzija na osnovu verzije {{ source.revision }}. Prethodni obrazac i saglasnosti ostaju u istoriji.</p>{% endif %}
 </div></div>
 <form method="post" id="evaluation-values">{% csrf_token %}{{ values_form.snapshot_token }}
-  {% if values_form.errors %}<div class="alert alert-danger">Проверите унете оцене и коментаре. {{ values_form.non_field_errors }}{{ values_form.snapshot_token.errors }}</div>{% endif %}
-  <div class="card shadow-sm"><div class="card-body"><table class="table table-bordered align-middle"><thead><tr><th style="width:35%">Мерило</th><th style="width:20%">Бодови / стимулација<br><small>ОЈ {{ snapshot.unit.code }}</small></th><th>Коментар оцењивача</th></tr></thead><tbody>
-  {% for row in values_form.rows %}<tr><td><strong>{{ row.item.code }}. {{ row.item.name }}</strong><div class="small text-muted mt-2" id="description-{{ row.item.code }}"></div></td><td>{{ row.choice }}{{ row.choice.errors }}</td><td>{{ row.comment }}{{ row.comment.errors }}</td></tr>{% endfor %}
-  </tbody><tfoot><tr><th>Укупна стимулација</th><th id="evaluation-stimulation">0,00000</th><td rowspan="2" class="text-muted">К4 = 1 + збир стимулација.<br>Сагласности се дају после чувања обрасца.</td></tr><tr><th>Лични коефицијент К4</th><th id="evaluation-coefficient">1,00000</th></tr></tfoot></table>
+  {% if values_form.errors %}<div class="alert alert-danger">Proverite unete ocene i komentare. {{ values_form.non_field_errors }}{{ values_form.snapshot_token.errors }}</div>{% endif %}
+  <div class="card shadow-sm"><div class="card-body"><table class="table table-bordered align-middle"><thead><tr><th style="width:35%">Merilo</th><th style="width:20%">Bodovi / stimulacija<br><small>OJ {{ snapshot.unit.code }}</small></th><th>Komentar ocenjivača</th></tr></thead><tbody>
+  {% for row in values_form.rows %}<tr><td><strong>{{ row.item.code }}. {{ row.item.name|latin_text }}</strong><div class="small text-muted mt-2" id="description-{{ row.item.code }}"></div></td><td>{{ row.choice }}{{ row.choice.errors }}</td><td>{{ row.comment }}{{ row.comment.errors }}</td></tr>{% endfor %}
+  </tbody><tfoot><tr><th>Ukupna stimulacija</th><th id="evaluation-stimulation">0,00000</th><td rowspan="2" class="text-muted">K4 = 1 + zbir stimulacija.<br>Saglasnosti se daju posle čuvanja obrasca.</td></tr><tr><th>Lični koeficijent K4</th><th id="evaluation-coefficient">1,00000</th></tr></tfoot></table>
   <label class="form-label" for="{{ values_form.comment.id_for_label }}">{{ values_form.comment.label }}</label>{{ values_form.comment }}{{ values_form.comment.errors }}
-  <div class="mt-4 d-flex justify-content-between align-items-center border-top pt-3"><span class="text-muted">Чува се снимак података и вредности овог обрасца.</span><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Сачувај образац</button></div>
+  <div class="mt-4 d-flex justify-content-between align-items-center border-top pt-3"><span class="text-muted">Čuva se snimak podataka i vrednosti ovog obrasca.</span><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj obrazac</button></div>
   </div></div>
 </form>
 {{ snapshot|json_script:'evaluation-snapshot' }}

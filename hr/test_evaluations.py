@@ -33,11 +33,11 @@ def workbook_fixture(path):
     form = book.create_sheet('obrazac')
     criteria = book.create_sheet('kriterijumi')
     for number in range(1,7):
-        form.cell(18+number,1,f'{number}.Мерило {number}')
+        form.cell(18+number,1,f'{number}.Merilo {number}')
         for points in range(5):
             row = (4 if number<=3 else 15)+(4-points)
             col = [1,7,13][(number-1)%3]
-            criteria.cell(row,col,f'Опис {number}/{points}')
+            criteria.cell(row,col,f'Opis {number}/{points}')
     book.save(path)
     book.close()
 
@@ -88,7 +88,7 @@ class EvaluationTests(TestCase):
         self.assertEqual(EvaluationCriterion.objects.count(),6)
         self.assertEqual(EvaluationScale.objects.count(),60)
         scale = EvaluationScale.objects.first()
-        scale.description = 'Локални опис'
+        scale.description = 'Lokalni opis'
         scale.save()
         with TemporaryDirectory() as directory:
             path = Path(directory)/'fixture.xlsx'
@@ -96,7 +96,7 @@ class EvaluationTests(TestCase):
             counts = import_evaluation_catalog(path)
         self.assertEqual(counts['preserved'],60)
         scale.refresh_from_db()
-        self.assertEqual(scale.description,'Локални опис')
+        self.assertEqual(scale.description,'Lokalni opis')
 
     def test_incomplete_catalog_rejects_whole_import(self):
         with TemporaryDirectory() as directory:
@@ -127,14 +127,14 @@ class EvaluationTests(TestCase):
         item = self.save(points=4)
         before = copy.deepcopy(item.snapshot)
         EvaluationScale.objects.update(coefficient=Decimal('0'))
-        EvaluationCriterion.objects.update(name='Промењено мерило')
+        EvaluationCriterion.objects.update(name='Promenjeno merilo')
         Employee.objects.filter(pk=self.employee.pk).update(first_name='Changed',position='Changed')
         self.client.force_login(self.admin)
         response = self.client.get(reverse('hr:evaluation_print',args=[item.pk]))
-        self.assertContains(response,'Петар Петровић')
+        self.assertContains(response,'Petar Petrović')
         self.assertContains(response,'1,30000')
         self.assertNotContains(response,'Changed')
-        self.assertNotContains(response,'Промењено мерило')
+        self.assertNotContains(response,'Promenjeno merilo')
         item.refresh_from_db()
         self.assertEqual(item.snapshot,before)
 
@@ -177,7 +177,7 @@ class EvaluationTests(TestCase):
         approvals,value = approval_state(item)
         self.assertEqual(value,Decimal('1.2'))
         self.assertEqual(len(approvals),3)
-        self.assertEqual(approvals['director'].comment,'Корекција')
+        self.assertEqual(approvals['director'].comment,'Korekcija')
 
     def test_director_override_requires_comment_and_respects_snapshot_limits(self):
         item = self.save()
@@ -228,7 +228,7 @@ class EvaluationTests(TestCase):
             self.assertEqual(self.client.get(reverse('hr:evaluation_catalog_create',args=[kind])).status_code,200)
         scale = EvaluationScale.objects.filter(group=self.group,criterion__code=1,points=4).get()
         response = self.client.post(reverse('hr:evaluation_catalog_edit',args=['scales',scale.pk]),{
-            'group':self.group.pk,'criterion':scale.criterion_id,'points':4,'coefficient':'0,07000','description':'Ново','is_active':'on'})
+            'group':self.group.pk,'criterion':scale.criterion_id,'points':4,'coefficient':'0,07000','description':'Novo','is_active':'on'})
         self.assertEqual(response.status_code,302)
         scale.refresh_from_db()
         self.assertEqual(scale.coefficient,Decimal('.07'))
@@ -254,4 +254,4 @@ class EvaluationTests(TestCase):
         self.assertFalse(EvaluationApproval.objects.filter(stage='director').exists())
 
     def test_cyrillic_transliteration_preserves_existing_cyrillic(self):
-        self.assertEqual(cyrillic('Ljiljana Petrović — ИМС'),'Љиљана Петровић — ИМС')
+        self.assertEqual(cyrillic('\u0409\u0438\u0459\u0430\u043d\u0430 \u041f\u0435\u0442\u0440\u043e\u0432\u0438\u045b - \u0418\u041c\u0421'),'Ljiljana Petrović - IMS')

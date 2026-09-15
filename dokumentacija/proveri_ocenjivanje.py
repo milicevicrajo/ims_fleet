@@ -128,7 +128,7 @@ def browser_check():
                 page.screenshot(path=str(ROOT/'dokumentacija/kadrovi_ocenjivanje.png'),full_page=True)
                 checks['browser'][name] = {'six_criteria':True,'neutral':'1,00000','maximum':'1,30000'}
             elif name == 'print':
-                assert page.locator('.evaluation-report h2').inner_text() == 'ИЗВЕШТАЈ О ОЦЕЊИВАЊУ'
+                assert page.locator('.evaluation-report h2').inner_text() == 'IZVEŠTAJ O OCENJIVANJU'
                 page.pdf(path=str(ROOT/'dokumentacija/Primer ocenjivanja - stampa.pdf'),format='A4',prefer_css_page_size=True)
                 checks['browser'][name] = {'cyrillic':True,'pdf':True}
             else:

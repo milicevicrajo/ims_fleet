@@ -93,9 +93,9 @@ class EmployeeEvaluation(models.Model):
 
 class EvaluationApproval(models.Model):
     class Stage(models.TextChoices):
-        SUPERVISOR = 'supervisor', 'Непосредни руководилац'
-        DIRECTOR = 'director', 'Директор центра'
-        GENERAL = 'general_director', 'Генерални директор'
+        SUPERVISOR = 'supervisor', 'Neposredni rukovodilac'
+        DIRECTOR = 'director', 'Direktor centra'
+        GENERAL = 'general_director', 'Generalni direktor'
 
     evaluation = models.ForeignKey(EmployeeEvaluation, on_delete=models.PROTECT, related_name='approvals')
     stage = models.CharField(max_length=20, choices=Stage.choices)

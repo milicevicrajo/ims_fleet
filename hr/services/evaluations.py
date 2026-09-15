@@ -17,16 +17,36 @@ from hr.models import (Employee, EvaluationGroup, EvaluationCriterion, Evaluatio
 
 STAGES = ['supervisor', 'director', 'general_director']
 SIGNING_SALT = 'hr.evaluation.snapshot.v1'
-MONTHS = ['Јануар','Фебруар','Март','Април','Мај','Јун','Јул','Август','Септембар','Октобар','Новембар','Децембар']
+MONTHS = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar']
+
+
+def latin(value):
+    text = str(value or '')
+    pairs = [
+        ('\u0409','Lj'),('\u040a','Nj'),('\u040f','Dž'),('\u0459','lj'),('\u045a','nj'),('\u045f','dž'),
+        ('\u0410','A'),('\u0411','B'),('\u0412','V'),('\u0413','G'),('\u0414','D'),('\u0402','Đ'),('\u0415','E'),('\u0416','Ž'),('\u0417','Z'),
+        ('\u0418','I'),('\u0408','J'),('\u041a','K'),('\u041b','L'),('\u041c','M'),('\u041d','N'),('\u041e','O'),('\u041f','P'),('\u0420','R'),
+        ('\u0421','S'),('\u0422','T'),('\u040b','Ć'),('\u0423','U'),('\u0424','F'),('\u0425','H'),('\u0426','C'),('\u0427','Č'),('\u0428','Š'),
+        ('\u0430','a'),('\u0431','b'),('\u0432','v'),('\u0433','g'),('\u0434','d'),('\u0452','đ'),('\u0435','e'),('\u0436','ž'),('\u0437','z'),
+        ('\u0438','i'),('\u0458','j'),('\u043a','k'),('\u043b','l'),('\u043c','m'),('\u043d','n'),('\u043e','o'),('\u043f','p'),('\u0440','r'),
+        ('\u0441','s'),('\u0442','t'),('\u045b','ć'),('\u0443','u'),('\u0444','f'),('\u0445','h'),('\u0446','c'),('\u0447','č'),('\u0448','š'),
+    ]
+    mapping = dict(pairs)
+    return ''.join(mapping.get(char, char) for char in text)
 
 
 def cyrillic(value):
-    text = str(value or '')
-    for latin, cyr in [('DŽ','Џ'),('Dž','Џ'),('dž','џ'),('LJ','Љ'),('Lj','Љ'),('lj','љ'),('NJ','Њ'),('Nj','Њ'),('nj','њ')]:
-        text = text.replace(latin, cyr)
-    lower = dict(zip('abcčćdđefghijklmnoprsštuvzž', 'абцчћдђефгхијклмнопрсштувзж'))
-    mapping = dict(lower, **{key.upper(): val.upper() for key, val in lower.items()})
-    return ''.join(mapping.get(char, char) for char in text)
+    return latin(value)
+
+
+def latin_data(value):
+    if isinstance(value, dict):
+        return {key: latin_data(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [latin_data(item) for item in value]
+    if isinstance(value, str):
+        return latin(value)
+    return value
 
 
 def money_decimal(value):
@@ -63,8 +83,8 @@ def import_evaluation_catalog(path):
             coefficient = money_decimal(coefficient)
             column = [1,7,13][(criterion-1) % 3]
             row = (4 if criterion <= 3 else 15) + (4-points)
-            description = str(criteria.cell(row, column).value or '').strip()
-            title = str(form.cell(18+criterion, 1).value or '').strip().split('.',1)[-1].strip()
+            description = latin(str(criteria.cell(row, column).value or '').strip())
+            title = latin(str(form.cell(18+criterion, 1).value or '').strip().split('.',1)[-1].strip())
             rows.append((management, criterion, points, coefficient, title, description))
         if len(seen) != 60:
             raise ValidationError('Očekivano je 60 kombinacija za dve grupe, šest merila i pet nivoa.')
@@ -73,7 +93,7 @@ def import_evaluation_catalog(path):
     counts = {'groups':0,'criteria':0,'scales':0,'preserved':0}
     for management, code, points, coefficient, title, description in rows:
         group, created = EvaluationGroup.objects.get_or_create(code='management' if management else 'employee',
-            defaults={'name':'Менаџмент' if management else 'Остали запослени'})
+            defaults={'name':'Menadžment' if management else 'Ostali zaposleni'})
         counts['groups'] += created
         criterion, created = EvaluationCriterion.objects.get_or_create(code=code, defaults={'name':title,'sort_order':code})
         counts['criteria'] += created
@@ -120,11 +140,11 @@ def build_snapshot(*, employee, group, year, month, supervisor, director, genera
     scales = list(EvaluationScale.objects.filter(group=group,is_active=True,criterion__is_active=True))
     items = []
     for criterion in criteria:
-        options = [{'points':row.points,'value':str(row.coefficient),'description':row.description} for row in scales if row.criterion_id == criterion.pk]
+        options = [{'points':row.points,'value':str(row.coefficient),'description':latin(row.description)} for row in scales if row.criterion_id == criterion.pk]
         if not options or not any(Decimal(option['value']) == 0 for option in options):
             raise ValidationError(f'Merilo {criterion.code} nema aktivnu skalu sa neutralnom vrednošću 0.')
         neutral = next((row for row in options if row['points']==1 and Decimal(row['value'])==0), next(row for row in options if Decimal(row['value'])==0))
-        items.append({'code':criterion.code,'name':criterion.name,'options':options,'points':neutral['points'],'value':'0.00000','comment':''})
+        items.append({'code':criterion.code,'name':latin(criterion.name),'options':options,'points':neutral['points'],'value':'0.00000','comment':''})
     if not items:
         raise ValidationError('Nema aktivnih merila za ocenjivanje.')
     unit_code = str(employee.org_unit_code or employee.department_code or '')
@@ -135,7 +155,7 @@ def build_snapshot(*, employee, group, year, month, supervisor, director, genera
         'employee':{'id':employee.pk,'code':employee.employee_code,'name':display_person(employee),
             'original_name':str(employee),'position':cyrillic(employee.position or employee.job_title),
             'title':cyrillic(employee.title),'education':cyrillic(employee.education)},
-        'unit':{'code':unit_code,'name':cyrillic(unit.name) if unit else '', 'center':unit.center if unit else ''},
+        'unit':{'code':unit_code,'name':cyrillic(unit.name) if unit else '', 'center':latin(unit.center) if unit else ''},
         'group':{'code':group.code,'name':cyrillic(group.name)},
         'reviewers':{key:{'id':person.pk,'name':display_person(person)} for key,person in zip(STAGES,[supervisor,director,general_director])},
         'items':items,'comment':'',

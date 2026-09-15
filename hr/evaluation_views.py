@@ -20,13 +20,13 @@ from hr.evaluation_forms import EvaluationHeaderForm, EvaluationValuesForm, Eval
 from hr.models import (Employee, EvaluationGroup, EvaluationCriterion, EvaluationScale, EvaluationUnitSetup,
     EvaluationEmployeeSetup, EmployeeEvaluation)
 from hr.services.evaluations import (visible_evaluations, editable_employees, build_snapshot, sign_snapshot,
-    read_snapshot, save_evaluation, approval_state, approve_evaluation, STAGES, MONTHS)
+    read_snapshot, save_evaluation, approval_state, approve_evaluation, latin, latin_data, STAGES, MONTHS)
 
 
 def decorate_evaluation(item):
     approvals, coefficient = approval_state(item)
     item.final_coefficient = coefficient
-    item.approval_rows = [{'stage':stage,'name':item.snapshot['reviewers'][stage]['name'],'approval':approvals.get(stage)} for stage in STAGES]
+    item.approval_rows = [{'stage':stage,'name':latin(item.snapshot['reviewers'][stage]['name']),'approval':approvals.get(stage)} for stage in STAGES]
     item.is_final = all(stage in approvals for stage in STAGES)
     item.month_name = MONTHS[item.month-1]
     return item
@@ -80,7 +80,7 @@ class EvaluationCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, Temp
             source = get_object_or_404(visible_evaluations(request.user),pk=request.GET['source'])
             if not editable_employees(request.user).filter(pk=source.employee_id).exists():
                 raise PermissionDenied
-            snapshot = copy.deepcopy(source.snapshot)
+            snapshot = latin_data(copy.deepcopy(source.snapshot))
             token = sign_snapshot(snapshot,request.user,source.pk)
             ctx.update(snapshot=snapshot,source=source,values_form=EvaluationValuesForm(snapshot=snapshot,token=token))
         else:
@@ -201,7 +201,7 @@ def catalog_value(value):
         return 'Da' if value else 'Ne'
     if isinstance(value, Decimal):
         return format(value, '.5f').replace('.', ',')
-    return value
+    return latin(value)
 
 
 class EvaluationCatalogView(LoginRequiredMixin,RolePermissionRequiredMixin,TemplateView):

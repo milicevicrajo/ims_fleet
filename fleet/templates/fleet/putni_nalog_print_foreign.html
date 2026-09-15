@@ -1,6 +1,6 @@
-{% load static %}
+{% load static hr_evaluation %}
 <!DOCTYPE html>
-<html lang="sr">
+<html lang="sr-Latn">
 <head>
     <meta charset="utf-8">
     <title>IZ 073 - Zahtev za put u inostranstvo</title>
@@ -167,38 +167,38 @@
         <div class="inner">
             <div class="header">
                 <img class="logo" src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
-                <div class="institute">ИНСТИТУТ ЗА ИСПИТИВАЊЕ МАТЕРИЈАЛА ИМС А.Д.</div>
+                <div class="institute">INSTITUT ZA ISPITIVANJE MATERIJALA IMS A.D.</div>
                 <div></div>
             </div>
             <div class="orange-rule"></div>
 
             <div class="title">
-                ПОДАЦИ ПОТРЕБНИ ЗА<br>
-                РЕШЕЊА О УПУЋИВАЊУ ЗАПОСЛЕНИХ<br>
-                НА СЛУЖБЕНО ПУТОВАЊЕ У ИНОСТРАНСТВО
+                PODACI POTREBNI ZA<br>
+                REŠENJA O UPUĆIVANJU ZAPOSLENIH<br>
+                NA SLUŽBENO PUTOVANJE U INOSTRANSTVO
             </div>
 
             <div class="fields">
                 <div class="field-row">
                     <div class="num">1</div>
                     <div class="field-body">
-                        <div class="label">ИМЕ И ПРЕЗИМЕ ЗАПОСЛЕНОГ СЕКТОР/ЦЕНТАР</div>
-                        <div class="value">{% if putni_nalog.employee %}{{ putni_nalog.employee }}{% else %}{{ putni_nalog.other_employee_name }}{% endif %} / {{ putni_nalog.job_code.center }}</div>
+                        <div class="label">IME I PREZIME ZAPOSLENOG SEKTOR/CENTAR</div>
+                        <div class="value">{% if putni_nalog.employee %}{{ putni_nalog.employee|latin_text }}{% else %}{{ putni_nalog.other_employee_name|latin_text }}{% endif %} / {{ putni_nalog.job_code.center|latin_text }}</div>
                     </div>
                 </div>
 
                 <div class="field-row">
                     <div class="num">2</div>
                     <div class="field-body">
-                        <div class="label">ДРЖАВА И МЕСТО ГДЕ ЗАПОСЛЕНИ ПУТУЈЕ</div>
-                        <div class="value">{{ putni_nalog.travel_location }}</div>
+                        <div class="label">DRŽAVA I MESTO GDE ZAPOSLENI PUTUJE</div>
+                        <div class="value">{{ putni_nalog.travel_location|latin_text }}</div>
                     </div>
                 </div>
 
                 <div class="field-row short">
                     <div class="num">3</div>
                     <div class="field-body">
-                        <div class="label">ДАТУМ ОДЛАСКА ПОВРАТКА</div>
+                        <div class="label">DATUM ODLASKA POVRATKA</div>
                         <div class="value">{{ putni_nalog.travel_date|date:"d.m.Y" }}</div>
                     </div>
                 </div>
@@ -206,7 +206,7 @@
                 <div class="field-row short">
                     <div class="num">4</div>
                     <div class="field-body">
-                        <div class="label">КОЛИКО ДАНА</div>
+                        <div class="label">KOLIKO DANA</div>
                         <div class="value">{{ putni_nalog.number_of_days }}</div>
                     </div>
                 </div>
@@ -214,15 +214,15 @@
                 <div class="field-row short">
                     <div class="num">5</div>
                     <div class="field-body">
-                        <div class="label">РАЗЛОГ ПУТОВАЊА</div>
-                        <div class="value left">{{ putni_nalog.task }}</div>
+                        <div class="label">RAZLOG PUTOVANJA</div>
+                        <div class="value left">{{ putni_nalog.task|latin_text }}</div>
                     </div>
                 </div>
 
                 <div class="field-row short">
                     <div class="num">6</div>
                     <div class="field-body">
-                        <div class="label">БРОЈ ШИФРЕ ПОСЛА</div>
+                        <div class="label">BROJ ŠIFRE POSLA</div>
                         <div class="value">{{ putni_nalog.job_code.code }}</div>
                     </div>
                 </div>
@@ -230,39 +230,39 @@
                 <div class="field-row short">
                     <div class="num">7</div>
                     <div class="field-body">
-                        <div class="label">ПРЕВОЗ</div>
-                        <div class="value">{% if putni_nalog.vehicle %}{{ putni_nalog.vehicle }}{% else %}{{ putni_nalog.other_vehicle }}{% endif %}</div>
+                        <div class="label">PREVOZ</div>
+                        <div class="value">{% if putni_nalog.vehicle %}{{ putni_nalog.vehicle|latin_text }}{% else %}{{ putni_nalog.other_vehicle|latin_text }}{% endif %}</div>
                     </div>
                 </div>
 
                 <div class="field-row short">
                     <div class="num">8</div>
                     <div class="field-body">
-                        <div class="label">ПРЕНОЋИШТЕ</div>
-                        <div class="value">{{ foreign_rulebook_text|default:"po pravilniku" }}</div>
+                        <div class="label">PRENOĆIŠTE</div>
+                        <div class="value">{{ foreign_rulebook_text|latin_text|default:"po pravilniku" }}</div>
                     </div>
                 </div>
 
                 <div class="field-row short">
                     <div class="num">9</div>
                     <div class="field-body">
-                        <div class="label">ТРОШКОВИ ПУТА</div>
-                        <div class="value">{{ foreign_rulebook_text|default:"po pravilniku" }}</div>
+                        <div class="label">TROŠKOVI PUTA</div>
+                        <div class="value">{{ foreign_rulebook_text|latin_text|default:"po pravilniku" }}</div>
                     </div>
                 </div>
 
                 <div class="field-row short">
                     <div class="num">10</div>
                     <div class="field-body">
-                        <div class="label">ДНЕВНИЦА</div>
-                        <div class="value">{% if putni_nalog.daily_allowance %}{{ putni_nalog.daily_allowance }} {{ putni_nalog.advance_payment_currency }}{% else %}{{ foreign_rulebook_text|default:"po pravilniku" }}{% endif %}</div>
+                        <div class="label">DNEVNICA</div>
+                        <div class="value">{% if putni_nalog.daily_allowance %}{{ putni_nalog.daily_allowance }} {{ putni_nalog.advance_payment_currency }}{% else %}{{ foreign_rulebook_text|latin_text|default:"po pravilniku" }}{% endif %}</div>
                     </div>
                 </div>
 
                 <div class="field-row short no-line">
                     <div class="num">11</div>
                     <div class="field-body">
-                        <div class="label">АКОНТАЦИЈА У ИЗНОСУ ОД</div>
+                        <div class="label">AKONTACIJA U IZNOSU OD</div>
                         <div class="value" style="border-bottom: 1px solid #111;">{{ putni_nalog.advance_payment }} {{ putni_nalog.advance_payment_currency }}</div>
                     </div>
                 </div>
@@ -270,15 +270,15 @@
 
             <div class="signatures">
                 <div class="signature">
-                    Подносилац захтева
+                    Podnosilac zahteva
                     <div class="signature-line"></div>
                 </div>
                 <div class="signature">
-                    Директор Центра
+                    Direktor Centra
                     <div class="signature-line"></div>
                 </div>
                 <div class="signature">
-                    Директор Института ИМС
+                    Direktor Instituta IMS
                     <div class="signature-line"></div>
                 </div>
             </div>
