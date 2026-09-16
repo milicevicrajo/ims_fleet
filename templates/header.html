@@ -136,6 +136,13 @@
                title="Nabavka">
               <i class="mdi mdi-clipboard-check"></i><span class="app-label">Nabavka</span>
             </a>
+            {% if finansije_permissions.dashboard %}
+            <a class="nav-link {% if current_app == 'finansije' %}active{% endif %}"
+               href="{% url 'switch_app' 'finansije' %}?next={% url 'finansije:dashboard' %}"
+               title="Finansijska analitika">
+              <i class="mdi mdi-chart-bar"></i><span class="app-label">Finansije</span>
+            </a>
+            {% endif %}
             <a class="nav-link {% if current_app == 'mobilni' %}active{% endif %}"
                href="{% url 'switch_app' 'mobilni' %}?next={% url 'mobilni:mobile_dashboard' %}"
                title="Mobilni telefoni">

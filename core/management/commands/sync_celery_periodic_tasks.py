@@ -5,6 +5,18 @@ from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 EXPECTED_PERIODIC_TASKS = [
     {
+        "name": "Finansije - tekuca godina",
+        "task": "finansije.tasks.sync_current_year",
+        "hour": "*",
+        "minute": "20",
+    },
+    {
+        "name": "Finansije - sve godine od 2025",
+        "task": "finansije.tasks.sync_all_years",
+        "hour": "3",
+        "minute": "50",
+    },
+    {
         "name": "Flota - provera otpisa vozila",
         "aliases": ["Provera otpisa"],
         "task": "fleet.tasks.proveri_otpis",

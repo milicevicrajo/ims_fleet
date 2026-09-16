@@ -1,0 +1,22 @@
+<form method="get" class="card shadow-sm mb-3">
+  <div class="card-body">
+    {% if form.errors %}<div class="alert alert-danger" role="alert">Proverite izabrane filtere. {{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3">
+      {% for field in form %}
+        {% if field.name != 'include_empty' and field.name != 'account_exact' %}
+        <div class="col-sm-6 col-xl-3">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}{{ field.errors }}
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+      <button class="btn btn-primary" type="submit">Prikaži</button>
+      <a class="btn btn-outline-secondary" href="{% if is_ledger %}{% url 'finansije:ledger' %}{% else %}{% url 'finansije:dashboard' %}{% endif %}">Poništi filtere</a>
+      <label class="form-check-label">{{ form.account_exact }} {{ form.account_exact.label }}</label>
+      {% if not is_ledger %}<label class="form-check-label">{{ form.include_empty }} {{ form.include_empty.label }}</label>{% endif %}
+      {% if valid and can_export %}<a class="btn btn-outline-success ms-auto" href="{% url 'finansije:export' %}?{{ params }}{% if is_ledger %}&amp;report=ledger{% endif %}"><i class="mdi mdi-file-excel"></i> Excel</a>{% endif %}
+    </div>
+  </div>
+</form>

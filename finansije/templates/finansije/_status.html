@@ -1,0 +1,10 @@
+{% if not last_success %}
+<div class="alert alert-info">Podaci još nisu sinhronizovani. Prvi uvoz obuhvata knjiženja od 2025. godine.</div>
+{% else %}
+<p class="text-muted small mb-3">Poslednja uspešna sinhronizacija: <strong>{{ last_success.finished_at|date:"d.m.Y. H:i" }}</strong> (godine {{ last_success.year_from }}–{{ last_success.year_to }}).
+{% if restricted %} Prikaz obuhvata samo centre i poslove za koje imate pristup.{% endif %}
+{% if can_sync_status %}<a href="{% url 'finansije:sync_status' %}">Istorija sinhronizacije</a>{% endif %}</p>
+{% endif %}
+{% if sync_failed %}<div class="alert alert-warning">Poslednja sinhronizacija nije uspela. Prikazano je prethodno uspešno stanje.</div>{% endif %}
+{% if sync_running %}<div class="alert alert-info">Sinhronizacija je u toku. Prikazano je prethodno uspešno stanje do završetka provere.</div>{% endif %}
+{% if missing_years %}<div class="alert alert-warning">Izabrani period nije potpuno preuzet. Nedostaju godine: {{ missing_years|join:", " }}. Zbirovi mogu biti nepotpuni.</div>{% endif %}

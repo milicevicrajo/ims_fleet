@@ -1,0 +1,9 @@
+{% if page_obj.has_other_pages %}
+<nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-3" aria-label="Stranice">
+  <span>Strana {{ page_obj.number }} od {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} zapisa</span>
+  <div>
+  {% if page_obj.has_previous %}<a class="btn btn-sm btn-outline-primary" href="?{{ params }}&amp;page={{ page_obj.previous_page_number }}">Prethodna</a>{% endif %}
+  {% if page_obj.has_next %}<a class="btn btn-sm btn-outline-primary" href="?{{ params }}&amp;page={{ page_obj.next_page_number }}">Sledeća</a>{% endif %}
+  </div>
+</nav>
+{% endif %}

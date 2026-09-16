@@ -64,8 +64,26 @@ def collect_mobilni_permission_codes():
     return collect_url_pattern_names(mobilni_urls.urlpatterns, prefix="mobilni")
 
 
+def sync_finance_permissions():
+    """Register finance access without modifying assignments in other applications."""
+    from finansije import urls as finansije_urls
+
+    codes = collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije") + ["finansije:view_all"]
+    finance_role, _ = Role.objects.get_or_create(
+        slug="finansije", defaults={"name": "Finansijska analitika", "description": "Finansijski izveštaji za dodeljene centre."},
+    )
+    management, _ = Role.objects.get_or_create(name="Uprava", slug="uprava")
+    for code in codes:
+        permission, _ = PermissionCode.objects.get_or_create(code=code)
+        RolePermission.objects.get_or_create(role=management, permission=permission)
+        if code in ("finansije:dashboard", "finansije:ledger", "finansije:export"):
+            RolePermission.objects.get_or_create(role=finance_role, permission=permission)
+    return codes
+
+
 def collect_permission_codes():
     from hr import urls as hr_urls
+    from finansije import urls as finansije_urls
     codes = set(collect_fleet_permission_codes())
     codes.update(collect_url_pattern_names(hr_urls.urlpatterns, prefix="hr"))
     codes.add('hr:evaluation_view_all')
@@ -75,6 +93,8 @@ def collect_permission_codes():
     codes.update(collect_isplate_permission_codes())
     codes.update(collect_ugovori_permission_codes())
     codes.update(collect_mobilni_permission_codes())
+    codes.update(collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije"))
+    codes.add("finansije:view_all")
     return sorted(codes)
 
 
@@ -90,6 +110,8 @@ def sync_permission_codes():
     role, _ = Role.objects.get_or_create(name="Uprava", slug="uprava")
     for perm in PermissionCode.objects.all():
         RolePermission.objects.get_or_create(role=role, permission=perm)
+
+    sync_finance_permissions()
 
     nabavka_codes = collect_nabavka_permission_codes()
     nabavka_role, _ = Role.objects.get_or_create(

@@ -1,0 +1,5 @@
+<div class="row g-3 mb-3">
+  <div class="col-md-4"><div class="card h-100 border-start border-success border-3"><div class="card-body"><div class="text-muted">Prihodi · RSD</div><h3 class="mb-0 mt-2">{{ totals.revenue|floatformat:"2g" }}</h3></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border-start border-warning border-3"><div class="card-body"><div class="text-muted">Direktni rashodi · RSD</div><h3 class="mb-0 mt-2">{{ totals.expense|floatformat:"2g" }}</h3></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border-start border-primary border-3"><div class="card-body"><div class="text-muted">Direktni rezultat · RSD</div><h3 class="mb-0 mt-2 {% if totals.result < 0 %}text-danger{% endif %}">{{ totals.result|floatformat:"2g" }}</h3></div></div></div>
+</div>

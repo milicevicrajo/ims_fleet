@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     'ugovori',
     'nabavka',
     'mobilni',
+    'finansije.apps.FinansijeConfig',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -237,6 +238,11 @@ CELERY_TASK_ROUTES = {
     'nabavka.tasks.sync_euf_invoices_task': {'queue': 'sync'},
     'nabavka.tasks.sync_uf_items_task': {'queue': 'sync'},
     'nabavka.tasks.sync_goods_task': {'queue': 'sync'},
+    'finansije.tasks.sync_current_year': {'queue': 'sync'},
+    'finansije.tasks.sync_all_years': {'queue': 'sync'},
 }
+
+FINANSIJE_COMPANY = 1
+FINANSIJE_SOURCE_DB = 'server_db'
 
 CELERY_WORKER_REDIRECT_STDOUTS = False

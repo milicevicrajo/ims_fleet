@@ -14,6 +14,7 @@ def current_app(request):
         "ugovori": "sidebar_ugovori.html",
         "nabavka": "sidebar_nabavka.html",
         "mobilni": "sidebar_mobilni.html",
+        "finansije": "sidebar_finansije.html",
     }
     nabavka_codes = [
         "dashboard",
@@ -38,6 +39,10 @@ def current_app(request):
     ]
     return {
         "current_app": app,
+        "finansije_permissions": {
+            code: user_has_role_permission(request.user, f"finansije:{code}")
+            for code in ("dashboard", "ledger", "export", "sync_status", "view_all")
+        },
         "hr_permissions": {
             code: user_has_role_permission(request.user, f"hr:{code}")
             for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list", "evaluation_list")

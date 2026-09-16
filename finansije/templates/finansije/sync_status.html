@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Sinhronizacija finansija{% endblock %}
+{% block content %}
+<h2 class="mb-3">Sinhronizacija finansija</h2>
+<p class="text-muted">Tekuća godina se osvežava svakog sata, a sve godine od 2025. jednom dnevno, kada su periodični zadaci aktivni. Svako uspešno preuzimanje prolazi kontrolu broja stavki i iznosa po godini i kontu.</p>
+<div class="card"><div class="card-body table-responsive"><table class="table table-sm align-middle">
+  <thead><tr><th>Početak</th><th>Završetak</th><th>Godine</th><th>Status</th><th>Preuzeto</th><th>Novo</th><th>Izmenjeno</th><th>Nepromenjeno</th><th>Uklonjeno</th></tr></thead>
+  <tbody>{% for run in page_obj %}<tr><td>{{ run.started_at|date:"d.m.Y. H:i:s" }}</td><td>{{ run.finished_at|date:"d.m.Y. H:i:s"|default:"—" }}</td><td>{{ run.year_from }}–{{ run.year_to }}</td><td><span class="badge {% if run.status == 'success' %}bg-success{% elif run.status == 'failed' %}bg-danger{% else %}bg-info{% endif %}">{{ run.get_status_display }}</span></td><td>{{ run.source_rows }}</td><td>{{ run.created }}</td><td>{{ run.updated }}</td><td>{{ run.unchanged }}</td><td>{{ run.removed }}</td></tr>
+  {% if run.error %}<tr><td colspan="9" class="text-danger">{{ run.error }}</td></tr>{% endif %}
+  {% empty %}<tr><td colspan="9" class="text-muted">Sinhronizacija još nije pokrenuta.</td></tr>{% endfor %}</tbody>
+</table>{% include "finansije/_pagination.html" %}</div></div>
+{% endblock %}

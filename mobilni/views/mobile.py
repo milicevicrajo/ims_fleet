@@ -1,6 +1,6 @@
 import csv
 from collections import defaultdict
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -922,7 +922,7 @@ def export_employee_withholdings_csv(request):
     for row in rows:
         if row.withholding is None or row.withholding == 0:
             continue
-        amount = "" if row.withholding is None else f"{row.withholding:.2f}"
+        amount = row.withholding.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         writer.writerow([row.year, row.month, row.employee_code or "", amount])
     return response
 

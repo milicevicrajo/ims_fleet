@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Finansijska analitika · IMS{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+  <div><h2 class="mb-1">Finansijska analitika</h2><p class="text-muted">Prihodi, rashodi i rezultat po datumu knjiženja.</p></div>
+  <a class="btn btn-outline-primary" href="{% url 'finansije:ledger' %}?{{ params }}">Pregled knjiženja</a>
+</div>
+{% include "finansije/_status.html" %}
+{% include "finansije/_filters.html" %}
+{% include "finansije/_totals.html" %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h4>{% if group == 'center' %}Centri / organizacione jedinice{% elif group == 'job' %}Šifre posla{% elif group == 'account' %}Struktura po kontima{% else %}Mesečni pregled{% endif %}</h4>
+    <p class="text-muted small">Učešća se računaju u odnosu na ukupne prihode i rashode izabranog dostupnog prikaza. Crta označava da je ukupan iznos nula. Negativna knjiženja zadržavaju svoj znak.</p>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Šifra / period</th><th>Naziv</th>{% if group == 'job' %}<th>Centar</th>{% endif %}<th class="text-end">Prihodi</th><th class="text-end">Rashodi</th><th class="text-end">Rezultat</th><th class="text-end">Učešće prihoda</th><th class="text-end">Učešće rashoda</th><th>Detalji</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td class="text-nowrap"><a href="{{ row.ledger_url }}">{{ row.code|default:"Neraspoređeno" }}</a></td>
+            <td>{{ row.label }}</td>{% if group == 'job' %}<td>{{ row.center|default:"—" }}</td>{% endif %}
+            <td class="text-end text-nowrap">{{ row.revenue|floatformat:"2g" }}</td>
+            <td class="text-end text-nowrap">{{ row.expense|floatformat:"2g" }}</td>
+            <td class="text-end text-nowrap {% if row.result < 0 %}text-danger{% endif %}">{{ row.result|floatformat:"2g" }}</td>
+            <td class="text-end">{% if row.revenue_share != None %}{{ row.revenue_share|floatformat:2 }}%{% else %}—{% endif %}</td>
+            <td class="text-end">{% if row.expense_share != None %}{{ row.expense_share|floatformat:2 }}%{% else %}—{% endif %}</td>
+            <td class="text-nowrap"><a href="{{ row.ledger_url }}">Knjiženja ({{ row.count }})</a>{% if group == 'center' %}<br><a href="{{ row.report_url }}">Šifre posla</a>{% elif group == 'job' %}<br><a href="{{ row.report_url }}">Konta posla</a>{% endif %}</td>
+          </tr>
+        {% empty %}<tr><td colspan="9" class="text-center text-muted py-4">Nema knjiženja za izabrane filtere i dodeljena prava pristupa.</td></tr>{% endfor %}
+        </tbody>
+        <tfoot><tr class="fw-bold"><td colspan="{% if group == 'job' %}3{% else %}2{% endif %}">Ukupno · {{ totals.count }} knjiženja</td><td class="text-end text-nowrap">{{ totals.revenue|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ totals.expense|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ totals.result|floatformat:"2g" }}</td><td colspan="3"></td></tr></tfoot>
+      </table>
+    </div>
+    <p class="small text-muted mb-0">Prihodi: potražuje − duguje na kontima klase 6. Rashodi: duguje − potražuje na kontima klase 5. Centar se preuzima iz šifarnika posla. Prikaz obuhvata direktna knjiženja, bez dodatne raspodele zajedničkih troškova. Iznosi nisu pokazatelj naplate.</p>
+  </div>
+</div>
+{% endblock %}
