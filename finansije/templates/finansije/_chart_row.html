@@ -1,0 +1,16 @@
+<div class="finance-overview-row">
+  <a href="{{ row.url }}" class="finance-overview-name">{{ row.label }}{% if row.name %}<small>{{ row.name }}</small>{% endif %}</a>
+  {% for metric in row.metrics %}
+  <div class="finance-overview-metric finance-metric-{{ metric.key }}" role="group" aria-label="{{ metric.title }}">
+    <div class="finance-overview-value">
+      <span class="finance-mobile-metric">{{ metric.title }}</span>
+      <strong{% if metric.negative %} class="text-danger"{% endif %}>{{ metric.value|floatformat:"2g" }} <small>RSD</small></strong>
+      <span class="finance-overview-share" title="Učešće u ukupnom iznosu kolone">{% if metric.share != None %}{{ metric.share|floatformat:2 }}%{% else %}—{% endif %}</span>
+    </div>
+    <div class="finance-chart-track{% if metric.overflow %} finance-chart-overflow{% endif %}" aria-hidden="true"{% if metric.overflow %} title="Učešće prelazi 100%; tačan procenat je prikazan iznad."{% endif %}>
+      <span class="finance-chart-bar{% if metric.negative %} finance-chart-bar-negative{% endif %}" style="left:0;width:{{ metric.width }}%"></span>
+      {% if metric.overflow %}<span class="finance-chart-overflow-marker">»</span>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>

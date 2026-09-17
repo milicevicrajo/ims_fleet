@@ -1,10 +1,19 @@
+{% load finance %}
+{% finance_sidebar_section request as finance_section %}
+{% url 'finansije:dashboard' as overview_url %}
+{% url 'finansije:report' as report_url %}
+{% url 'finansije:ledger' as ledger_url %}
+{% url 'finansije:sync_status' as sync_url %}
 <aside class="left-sidebar" data-sidebarbg="skin5"><div class="scroll-sidebar"><nav class="sidebar-nav"><ul id="sidebarnav" class="pt-4">
   {% if finansije_permissions.dashboard %}
-  <li class="sidebar-item"><a class="sidebar-link" href="{% url 'finansije:dashboard' %}"><i class="mdi mdi-chart-bar"></i><span class="hide-menu">Finansijski pregled</span></a></li>
-  <li class="sidebar-item"><a class="sidebar-link" href="{% url 'finansije:dashboard' %}?group=job"><i class="mdi mdi-briefcase-outline"></i><span class="hide-menu">Šifre posla</span></a></li>
-  <li class="sidebar-item"><a class="sidebar-link" href="{% url 'finansije:dashboard' %}?group=account&amp;kind=expense"><i class="mdi mdi-format-list-bulleted"></i><span class="hide-menu">Struktura rashoda</span></a></li>
-  <li class="sidebar-item"><a class="sidebar-link" href="{% url 'finansije:dashboard' %}?group=month"><i class="mdi mdi-calendar"></i><span class="hide-menu">Mesečni pregled</span></a></li>
+    {% include "finansije/_sidebar_item.html" with section="overview" label="Finansijski pregled" icon="mdi-chart-bar" href=overview_url %}
+    {% include "finansije/_sidebar_item.html" with section="jobs" label="Šifre posla" icon="mdi-briefcase-outline" href=report_url|add:"?group=job" %}
+    {% include "finansije/_sidebar_item.html" with section="month" label="Mesečni pregled" icon="mdi-calendar" href=report_url|add:"?group=month" %}
   {% endif %}
-  {% if finansije_permissions.ledger %}<li class="sidebar-item"><a class="sidebar-link" href="{% url 'finansije:ledger' %}"><i class="mdi mdi-book-open-page-variant"></i><span class="hide-menu">Knjiženja</span></a></li>{% endif %}
-  {% if finansije_permissions.sync_status and finansije_permissions.view_all %}<li class="sidebar-item"><a class="sidebar-link" href="{% url 'finansije:sync_status' %}"><i class="mdi mdi-sync"></i><span class="hide-menu">Sinhronizacija</span></a></li>{% endif %}
+  {% if finansije_permissions.ledger %}
+    {% include "finansije/_sidebar_item.html" with section="ledger" label="Knjiženja" icon="mdi-book-open-page-variant" href=ledger_url %}
+  {% endif %}
+  {% if finansije_permissions.sync_status and finansije_permissions.view_all %}
+    {% include "finansije/_sidebar_item.html" with section="sync" label="Sinhronizacija" icon="mdi-sync" href=sync_url %}
+  {% endif %}
 </ul></nav></div></aside>

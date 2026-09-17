@@ -9,6 +9,10 @@ from finansije.models import FinanceJob, LedgerEntry
 
 
 ZERO = Decimal("0.00")
+# Confirmed in the source ledger: ZAT closes income/expense accounts, while
+# 59900/69900 transfer their balances to the result (also posted through ON).
+# Ordinary ON postings and corrections on 59120/69120 must remain included.
+CLOSING_POSTINGS = Q(journal_type="ZAT") | Q(account__in=("59900", "69900"))
 
 
 def base_querysets(user):
@@ -20,6 +24,8 @@ def base_querysets(user):
 
 def apply_filters(entries, filters):
     entries = entries.filter(booking_date__range=(filters["date_from"], filters["date_to"]))
+    if filters["kind"] != "all":
+        entries = entries.exclude(CLOSING_POSTINGS)
     for name, field in (("center", "center"), ("job", "job_code")):
         if filters.get(name):
             entries = entries.filter(**{field: "" if filters[name] == "__none__" else filters[name]})
@@ -39,8 +45,8 @@ def apply_filters(entries, filters):
 def expressions():
     amount = DecimalField(max_digits=24, decimal_places=2)
     return {
-        "revenue": Sum(Case(When(account__startswith="6", then=F("credit") - F("debit")), default=Value(ZERO), output_field=amount)),
-        "expense": Sum(Case(When(account__startswith="5", then=F("debit") - F("credit")), default=Value(ZERO), output_field=amount)),
+        "revenue": Sum(Case(When(Q(account__startswith="6") & ~CLOSING_POSTINGS, then=F("credit") - F("debit")), default=Value(ZERO), output_field=amount)),
+        "expense": Sum(Case(When(Q(account__startswith="5") & ~CLOSING_POSTINGS, then=F("debit") - F("credit")), default=Value(ZERO), output_field=amount)),
         "count": Count("pk"),
     }
 

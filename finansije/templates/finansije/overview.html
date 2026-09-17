@@ -1,0 +1,48 @@
+{% extends "finansije/base.html" %}
+{% block title %}Finansijski pregled · IMS{% endblock %}
+{% block hero_title %}<i class="mdi mdi-chart-bar me-2" aria-hidden="true"></i>Finansijski pregled{% endblock %}
+{% block hero_description %}{% if valid %}Prihodi, rashodi i neto rezultat svih dostupnih centara i šifara posla.{% else %}Izaberite ispravan period za pregled prihoda, rashoda i rezultata.{% endif %}{% endblock %}
+{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:report' %}?{{ params }}"><i class="mdi mdi-table me-1" aria-hidden="true"></i>Detaljni izveštaji</a>{% endblock %}
+{% block finance_content %}
+<form method="get" class="fleet-list-filter finance-period mb-3" aria-label="Period finansijskog pregleda">
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_from.id_for_label }}">Datum knjiženja od</label>{{ form.date_from }}{{ form.date_from.errors }}</div>
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_to.id_for_label }}">Datum knjiženja do</label>{{ form.date_to }}{{ form.date_to.errors }}</div>
+  <button class="btn btn-primary" type="submit"><i class="mdi mdi-calendar-check me-1" aria-hidden="true"></i>Prikaži</button>
+  <div class="finance-period-shortcuts"><span>Brzi izbor</span>{% for year in period_years %}<a class="btn btn-outline-secondary btn-sm" href="?date_from={{ year.date_from }}&amp;date_to={{ year.date_to }}">{{ year.label|stringformat:'d' }}</a>{% endfor %}</div>
+  {% if not valid %}<div class="finance-period-errors alert alert-danger mb-0" role="alert">Proverite izabrani period. {{ form.non_field_errors }}</div>{% endif %}
+</form>
+{% include "finansije/_period.html" %}
+{% include "finansije/_status.html" %}
+{% if valid %}
+{% include "finansije/_totals.html" %}
+<p class="finance-accounting-note"><i class="mdi mdi-information-outline me-1" aria-hidden="true"></i>Prihodi i rashodi bez završnog zatvaranja i prenosa rezultata (ZAT, konta 59900/69900). Neto rezultat = prihodi − rashodi, pre poreza na dobit.</p>
+{% include "finansije/_charts.html" %}
+<section class="finance-ranking-section" aria-labelledby="ranking-title">
+  <div class="finance-section-heading">
+    <h2 id="ranking-title">Najbolji i najgori rezultati</h2>
+    <p>Za period od {{ form.cleaned_data.date_from|date:"d.m.Y." }} do {{ form.cleaned_data.date_to|date:"d.m.Y." }} · Rangirano po neto rezultatu: prihodi − direktni rashodi. Iznosi nisu pokazatelj naplate.</p>
+  </div>
+  <div class="row g-3">
+    {% for ranking in rankings %}
+    <div class="col-md-6 col-xl-3">
+      <article class="card h-100 finance-ranking finance-ranking-{{ ranking.kind }}">
+        <div class="card-body">
+          <h3><i class="mdi {{ ranking.icon }}" aria-hidden="true"></i>{{ ranking.title }}</h3>
+          {% for row in ranking.rows %}
+          <div class="finance-ranking-row">
+            <span class="finance-ranking-position">{{ forloop.counter }}</span>
+            <div>
+              <a href="{{ row.url }}">{{ row.label }}</a>
+              {% if row.name %}<small>{{ row.name }}</small>{% endif %}
+              <strong class="{% if row.result < 0 %}text-danger{% else %}text-success{% endif %}">{{ row.result|floatformat:"2g" }} <span>RSD</span></strong>
+            </div>
+          </div>
+          {% empty %}<p class="text-muted small mb-0">Nema podataka za rangiranje.</p>{% endfor %}
+        </div>
+      </article>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

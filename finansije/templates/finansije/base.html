@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+<link rel="stylesheet" href="{% static 'finansije/finance.css' %}?v=20260917-light-green">
+<div class="finance-page">
+  <header class="fleet-list-hero finance-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="finance-kicker">IMS · Finansijska analitika</div>
+      <h1>{% block hero_title %}Finansijska analitika{% endblock %}</h1>
+      <p>{% block hero_description %}{% endblock %}</p>
+      {% block hero_period %}{% if valid %}<div class="finance-hero-period"><i class="mdi mdi-calendar-range me-1" aria-hidden="true"></i>Pokazatelji za period <strong>od {{ form.cleaned_data.date_from|date:"d.m.Y." }} do {{ form.cleaned_data.date_to|date:"d.m.Y." }}</strong></div>{% endif %}{% endblock %}
+    </div>
+    <div class="finance-hero-actions d-flex flex-wrap gap-2">{% block hero_actions %}{% endblock %}</div>
+    {% block hero_metrics %}{% endblock %}
+  </header>
+  {% block finance_content %}{% endblock %}
+</div>
+{% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'finansije/tables.js' %}?v=20260917-signed-sort"></script>{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "finansije/base.html" %}
+{% load finance %}
+{% block title %}Šifre posla · IMS{% endblock %}
+{% block hero_title %}<i class="mdi mdi-briefcase-outline me-2" aria-hidden="true"></i>Šifre posla{% endblock %}
+{% block hero_description %}Finansijski pokazatelji i povezane evidencije za svaku šifru posla.{% endblock %}
+{% block hero_period %}{% endblock %}
+{% block hero_actions %}{% if valid and can_export %}<a class="btn btn-outline-light" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Excel</a>{% endif %}{% endblock %}
+{% block finance_content %}
+{% include "finansije/_status.html" %}
+<form method="get" class="fleet-list-filter finance-period mb-3" aria-label="Period i centar">
+  <input type="hidden" name="group" value="job">
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_from.id_for_label }}">{{ form.date_from.label }}</label>{{ form.date_from }}{{ form.date_from.errors }}</div>
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_to.id_for_label }}">{{ form.date_to.label }}</label>{{ form.date_to }}{{ form.date_to.errors }}</div>
+  <div class="finance-period-field"><label class="form-label" for="{{ form.center.id_for_label }}">{{ form.center.label }}</label>{{ form.center }}{{ form.center.errors }}</div>
+  <button class="btn btn-primary" type="submit"><i class="mdi mdi-filter-outline me-1" aria-hidden="true"></i>Prikaži</button>
+  {% if not valid %}<div class="finance-period-errors alert alert-danger mb-0">Proverite period i centar. {{ form.non_field_errors }}</div>{% endif %}
+</form>
+{% include "finansije/_period.html" %}
+{% if valid %}
+<div class="card"><div class="card-body">
+  <h2 class="finance-job-heading">Pregled svih šifara posla</h2>
+  <p class="text-muted small">Iznosi u RSD. Rashodi, zajednički troškovi i odliv prikazani su sa znakom minus. Crtica znači da podatak nije dostupan; zvezdica označava nepotpun obračun, sa objašnjenjem pri prelasku mišem. Prikazane su i šifre bez prometa.</p>
+  {% include "finansije/_table_error.html" %}
+  <div class="table-responsive"><table id="FinanceJobsTable" class="table table-hover align-middle finance-datatable" data-page-length="100" data-ajax-source="{{ table_source }}" style="width:100%">
+    <thead><tr><th>Šifra posla</th><th>Naziv</th><th>Centar</th>{% for label in metric_labels %}<th class="finance-number">{{ label }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in rows|slice:":100" %}<tr>
+      <td>{% if row.card_url %}{% finance_job_button row.code row.card_url %}{% else %}Bez šifre{% endif %}</td><td>{{ row.label }}</td><td>{{ row.center|default:"—" }}</td>
+      {% for label in metric_labels %}<td>Učitavanje…</td>{% endfor %}
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="text-muted small mb-0">Rezultat bez ZT = prihodi − rashodi; rezultat posle ZT = prihodi − rashodi − zajednički troškovi. Neto gotovina = priliv − odliv. Novčani tokovi koriste obračun 52nt. Za period kroz više godina obračuni se rade po godinama i sabiraju. Dugme sa šifrom posla otvara detalj sa fakturama i ostalim evidencijama za poslednji mesec perioda, odnosno celu godinu kada je izabrana cela godina.</p>
+</div></div>
+{% endif %}
+{% endblock %}

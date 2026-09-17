@@ -1,12 +1,26 @@
-{% extends "base.html" %}
+{% extends "finansije/base.html" %}
+{% load static %}
 {% block title %}Sinhronizacija finansija{% endblock %}
-{% block content %}
-<h2 class="mb-3">Sinhronizacija finansija</h2>
+{% block hero_title %}<i class="mdi mdi-sync me-2" aria-hidden="true"></i>Sinhronizacija finansija{% endblock %}
+{% block hero_description %}Status preuzimanja podataka i istorija osvežavanja izveštaja.{% endblock %}
+{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:dashboard' %}"><i class="mdi mdi-chart-bar me-1" aria-hidden="true"></i>Pregled finansija</a>{% endblock %}
+{% block finance_content %}
+<div class="card mb-3"><div class="card-body">
+  <form method="post" action="{% url 'finansije:sync_run' %}" id="FinanceSyncForm" class="finance-sync-form" data-no-preloader>
+    {% csrf_token %}
+    <div><label class="form-label" for="{{ sync_form.scope.id_for_label }}">{{ sync_form.scope.label }}</label>{{ sync_form.scope }}</div>
+    <button type="submit" class="btn btn-primary"><i class="mdi mdi-sync me-1" aria-hidden="true"></i><span>Pokreni sinhronizaciju</span></button>
+  </form>
+  <p class="small text-muted mt-2 mb-0">Pokreće preuzimanje i proveru podataka za izabrane godine. Po završetku se istorija automatski osvežava.</p>
+  <div id="FinanceSyncResult" class="alert d-none mt-3 mb-0" role="status" aria-live="polite"></div>
+</div></div>
 <p class="text-muted">Tekuća godina se osvežava svakog sata, a sve godine od 2025. jednom dnevno, kada su periodični zadaci aktivni. Svako uspešno preuzimanje prolazi kontrolu broja stavki i iznosa po godini i kontu.</p>
-<div class="card"><div class="card-body table-responsive"><table class="table table-sm align-middle">
-  <thead><tr><th>Početak</th><th>Završetak</th><th>Godine</th><th>Status</th><th>Preuzeto</th><th>Novo</th><th>Izmenjeno</th><th>Nepromenjeno</th><th>Uklonjeno</th></tr></thead>
-  <tbody>{% for run in page_obj %}<tr><td>{{ run.started_at|date:"d.m.Y. H:i:s" }}</td><td>{{ run.finished_at|date:"d.m.Y. H:i:s"|default:"—" }}</td><td>{{ run.year_from }}–{{ run.year_to }}</td><td><span class="badge {% if run.status == 'success' %}bg-success{% elif run.status == 'failed' %}bg-danger{% else %}bg-info{% endif %}">{{ run.get_status_display }}</span></td><td>{{ run.source_rows }}</td><td>{{ run.created }}</td><td>{{ run.updated }}</td><td>{{ run.unchanged }}</td><td>{{ run.removed }}</td></tr>
-  {% if run.error %}<tr><td colspan="9" class="text-danger">{{ run.error }}</td></tr>{% endif %}
-  {% empty %}<tr><td colspan="9" class="text-muted">Sinhronizacija još nije pokrenuta.</td></tr>{% endfor %}</tbody>
-</table>{% include "finansije/_pagination.html" %}</div></div>
+<div class="card"><div class="card-body">
+  <div class="finance-table-error alert alert-warning d-none" role="alert"></div>
+  <table id="FinanceSyncTable" class="table table-sm align-middle finance-datatable" data-source="{% url 'finansije:sync_status' %}" data-order-direction="desc" style="width:100%">
+    <thead><tr><th class="finance-date">Početak</th><th class="finance-date">Završetak</th><th>Godine</th><th>Status</th><th class="finance-number">Preuzeto</th><th class="finance-number">Novo</th><th class="finance-number">Izmenjeno</th><th class="finance-number">Nepromenjeno</th><th class="finance-number">Uklonjeno</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div></div>
 {% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'finansije/sync.js' %}?v=20260917-1"></script>{% endblock %}

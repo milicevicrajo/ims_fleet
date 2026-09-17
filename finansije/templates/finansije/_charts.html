@@ -1,0 +1,29 @@
+{% for chart_group in chart_groups %}
+<section class="card finance-overview-group finance-overview-{{ chart_group.dimension }} mb-4" aria-labelledby="charts-{{ chart_group.dimension }}">
+  <div class="card-body">
+    <div class="finance-overview-heading">
+      <div>
+        <h2 id="charts-{{ chart_group.dimension }}"><i class="mdi {% if chart_group.dimension == 'center' %}mdi-domain{% else %}mdi-briefcase-outline{% endif %}" aria-hidden="true"></i>{{ chart_group.heading }}</h2>
+        <p>Od {{ form.cleaned_data.date_from|date:"d.m.Y." }} do {{ form.cleaned_data.date_to|date:"d.m.Y." }} · sortirano po neto rezultatu · klik na oznaku otvara detalje.</p>
+      </div>
+      <span class="finance-chart-count">{{ chart_group.rows|length }} {% if chart_group.dimension == 'center' %}centara{% else %}šifara{% endif %}</span>
+    </div>
+    <div class="finance-overview-columns" aria-hidden="true">
+      <span>{% if chart_group.dimension == 'center' %}Centar{% else %}Šifra posla{% endif %}</span>
+      <div class="finance-column-revenue">Prihodi<strong>{{ totals.revenue|floatformat:"2g" }} <small>RSD</small></strong></div>
+      <div class="finance-column-expense">Rashodi<strong>{{ totals.expense|floatformat:"2g" }} <small>RSD</small></strong></div>
+      <div class="finance-column-result">Neto rezultat<strong{% if totals.result < 0 %} class="text-danger"{% endif %}>{{ totals.result|floatformat:"2g" }} <small>RSD</small></strong></div>
+    </div>
+    {% for row in chart_group.visible %}{% include "finansije/_chart_row.html" %}{% empty %}
+      <div class="finance-chart-empty"><i class="mdi mdi-chart-bar" aria-hidden="true"></i><p>Nema knjiženja za ovaj period i dodeljena prava pristupa.</p></div>
+    {% endfor %}
+    {% if chart_group.remaining %}
+    <details class="finance-overview-expand">
+      <summary><span class="finance-expand-label">Proširi sve šifre ({{ chart_group.rows|length }})</span><span class="finance-collapse-label">Sažmi prikaz na prvih 8 šifara</span><i class="mdi mdi-chevron-down" aria-hidden="true"></i></summary>
+      <div>{% for row in chart_group.remaining %}{% include "finansije/_chart_row.html" %}{% endfor %}</div>
+    </details>
+    {% endif %}
+    <p class="finance-overview-note">Cela traka = 100%. Popunjenost odgovara učešću u ukupnim prihodima, rashodima ili neto rezultatu. Negativni iznosi su crveni; za ukupan iznos nula učešće nije definisano.{% if chart_group.has_overflow %} Oznaka » znači da učešće prelazi 100% — kod neto rezultata to je moguće zbog gubitaka drugih centara ili poslova. Tačan procenat je prikazan iznad trake.{% endif %}</p>
+  </div>
+</section>
+{% endfor %}

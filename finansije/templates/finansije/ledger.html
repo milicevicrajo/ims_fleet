@@ -1,26 +1,27 @@
-{% extends "base.html" %}
+{% extends "finansije/base.html" %}
+{% load finance %}
 {% block title %}Knjiženja · Finansijska analitika{% endblock %}
-{% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2>Finansijska knjiženja</h2><a class="btn btn-outline-primary" href="{% url 'finansije:dashboard' %}?{{ params }}{% if form.cleaned_data.kind == 'all' %}&amp;kind=pnl{% endif %}">Zbirni izveštaj</a></div>
+{% block hero_title %}<i class="mdi mdi-format-list-bulleted me-2" aria-hidden="true"></i>Finansijska knjiženja{% endblock %}
+{% block hero_description %}Detalji naloga, konta i prometa za izabrani period.{% endblock %}
+{% block hero_actions %}
+  {% if job_detail_url %}<a class="btn btn-light" href="{{ job_detail_url }}">Detalj šifre {{ form.cleaned_data.job }}</a>{% endif %}
+  <a class="btn btn-light" href="{% url 'finansije:report' %}?{{ params }}{% if form.cleaned_data.kind == 'all' %}&amp;kind=pnl{% endif %}"><i class="mdi mdi-chart-bar me-1" aria-hidden="true"></i>Zbirni izveštaj</a>
+  {% if valid and can_export %}<a class="btn btn-outline-light" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}&amp;report=ledger"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Excel</a>{% endif %}
+{% endblock %}
+{% block finance_content %}
 {% include "finansije/_status.html" %}
 {% include "finansije/_filters.html" %}
+{% include "finansije/_period.html" %}
+{% if valid %}
 {% include "finansije/_totals.html" %}
+<p class="small text-muted">Pokazatelji prihoda, rashoda i rezultata izuzimaju završno zatvaranje ZAT i konta prenosa 59900/69900. Opcija „Sva knjiženja” prikazuje i te stavke u tabeli i prometu duguje/potražuje.</p>
 <div class="card shadow-sm"><div class="card-body">
-  <p>{{ page_obj.paginator.count }} knjiženja · Duguje: <strong>{{ movements.debit|default:0|floatformat:"2g" }}</strong> · Potražuje: <strong>{{ movements.credit|default:0|floatformat:"2g" }}</strong> RSD</p>
-  <div class="table-responsive"><table class="table table-sm table-hover align-middle">
-    <thead><tr><th>Datum knjiženja</th><th>Nalog / stavka</th><th>Centar</th><th>Šifra posla</th><th>OJ knjiženja</th><th>Konto</th><th>Partner</th><th>Dokument</th><th class="text-end">Duguje</th><th class="text-end">Potražuje</th></tr></thead>
-    <tbody>{% for row in page_obj %}<tr>
-      <td class="text-nowrap">{{ row.booking_date|date:"d.m.Y." }}</td>
-      <td class="text-nowrap">{{ row.year }}/{{ row.journal_type }}/{{ row.journal_number }}<br><small class="text-muted">Stavka {{ row.line_number }}</small></td>
-      <td>{{ row.center|default:"—" }}</td>
-      <td>{{ row.job_code|default:"—" }}<br><small class="text-muted">{{ row.job_name }}</small></td>
-      <td title="{{ row.organizational_unit_name }}">{{ row.organizational_unit }}</td>
-      <td>{{ row.account }}<br><small class="text-muted">{{ row.account_name }}</small></td>
-      <td>{{ row.partner_name }}<br><small class="text-muted">{{ row.partner_code|default_if_none:"" }}</small></td>
-      <td>{{ row.document_reference|default:"—" }}<br><small class="text-muted">{{ row.document_date|date:"d.m.Y." }} · {{ row.description }}</small></td>
-      <td class="text-end text-nowrap">{{ row.debit|floatformat:"2g" }}</td><td class="text-end text-nowrap">{{ row.credit|floatformat:"2g" }}</td>
-    </tr>{% empty %}<tr><td colspan="10" class="text-center text-muted py-4">Nema knjiženja za izabrane filtere i dodeljena prava pristupa.</td></tr>{% endfor %}</tbody>
+  <p>Ukupno za filtere: {{ page_obj.paginator.count }} knjiženja · Duguje: {{ movements.debit|default:0|amount_badge }} · Potražuje: {{ movements.credit|default:0|amount_badge }} RSD</p>
+  <div class="finance-table-error alert alert-warning d-none" role="alert"></div>
+  <div class="table-responsive"><table id="FinanceLedgerTable" class="table table-sm table-hover align-middle finance-datatable" data-source="{% url 'finansije:ledger' %}?{{ params }}" data-order-direction="desc" style="width:100%">
+    <thead><tr><th class="finance-date">Datum knjiženja</th><th>Nalog / stavka</th><th>Centar</th><th>Šifra posla</th><th>OJ knjiženja</th><th>Konto</th><th>Partner</th><th>Dokument</th><th class="finance-date">Datum dokumenta</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th></tr></thead>
+    <tbody></tbody>
   </table></div>
-  {% include "finansije/_pagination.html" %}
 </div></div>
+{% endif %}
 {% endblock %}

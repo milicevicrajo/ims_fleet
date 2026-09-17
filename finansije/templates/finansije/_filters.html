@@ -1,22 +1,23 @@
-<form method="get" class="card shadow-sm mb-3">
-  <div class="card-body">
+<form method="get" class="fleet-list-filter finance-filter mb-3{% if is_ledger %} finance-filter-ledger{% endif %}" aria-label="Filteri finansijskog izveštaja">
     {% if form.errors %}<div class="alert alert-danger" role="alert">Proverite izabrane filtere. {{ form.non_field_errors }}</div>{% endif %}
-    <div class="row g-3">
+    <div class="finance-filter-grid">
       {% for field in form %}
-        {% if field.name != 'include_empty' and field.name != 'account_exact' %}
-        <div class="col-sm-6 col-xl-3">
+        {% if field.name == 'group' and is_ledger %}
+          {{ field.as_hidden }}
+        {% elif field.name != 'include_empty' and field.name != 'account_exact' %}
+        <div class="finance-filter-field finance-filter-{{ field.name }}">
           <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }}{{ field.errors }}
         </div>
         {% endif %}
       {% endfor %}
+      <div class="finance-filter-checks">
+        <label class="finance-switch" for="{{ form.account_exact.id_for_label }}">{{ form.account_exact }}<span class="finance-switch-track" aria-hidden="true"></span><span>{{ form.account_exact.label }}</span></label>
+        {% if not is_ledger %}<label class="finance-switch" for="{{ form.include_empty.id_for_label }}">{{ form.include_empty }}<span class="finance-switch-track" aria-hidden="true"></span><span>Šifre bez prometa</span></label>{% endif %}
+      </div>
+      <div class="finance-filter-actions">
+        <a class="btn btn-outline-secondary" aria-label="Poništi filtere" title="Poništi filtere" href="{% if is_ledger %}{% url 'finansije:ledger' %}{% else %}{% url 'finansije:report' %}?group={{ group|default:'center' }}{% if group == 'account' %}&amp;kind={{ form.cleaned_data.kind|default:'pnl' }}{% endif %}{% endif %}"><i class="mdi mdi-filter-remove-outline" aria-hidden="true"></i></a>
+        <button class="btn btn-primary" type="submit"><i class="mdi mdi-filter-outline me-1" aria-hidden="true"></i>Prikaži</button>
+      </div>
     </div>
-    <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
-      <button class="btn btn-primary" type="submit">Prikaži</button>
-      <a class="btn btn-outline-secondary" href="{% if is_ledger %}{% url 'finansije:ledger' %}{% else %}{% url 'finansije:dashboard' %}{% endif %}">Poništi filtere</a>
-      <label class="form-check-label">{{ form.account_exact }} {{ form.account_exact.label }}</label>
-      {% if not is_ledger %}<label class="form-check-label">{{ form.include_empty }} {{ form.include_empty.label }}</label>{% endif %}
-      {% if valid and can_export %}<a class="btn btn-outline-success ms-auto" href="{% url 'finansije:export' %}?{{ params }}{% if is_ledger %}&amp;report=ledger{% endif %}"><i class="mdi mdi-file-excel"></i> Excel</a>{% endif %}
-    </div>
-  </div>
 </form>

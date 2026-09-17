@@ -1,0 +1,7 @@
+{% if valid %}
+<div class="finance-analysis-period" role="status">
+  <i class="mdi mdi-calendar-range" aria-hidden="true"></i>
+  <span>Pokazatelji za period <strong>od {{ form.cleaned_data.date_from|date:"d.m.Y." }} do {{ form.cleaned_data.date_to|date:"d.m.Y." }}</strong></span>
+  <small>Prema datumu knjiženja · RSD</small>
+</div>
+{% endif %}

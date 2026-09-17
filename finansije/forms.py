@@ -1,4 +1,5 @@
-from datetime import date
+from calendar import monthrange
+from datetime import date, datetime
 
 from django import forms
 from django.utils import timezone
@@ -6,11 +7,81 @@ from django.utils import timezone
 
 GROUPS = [("center", "Po centrima / OJ"), ("job", "Po šiframa posla"), ("account", "Po kontima"), ("month", "Po mesecima")]
 KINDS = [("pnl", "Prihodi i rashodi"), ("revenue", "Samo prihodi"), ("expense", "Samo rashodi")]
+DATE_FORMATS = ["%d.%m.%Y", "%d.%m.%Y.", "%Y-%m-%d"]
+
+
+class ReportDateInput(forms.DateInput):
+    """Use the shared Flatpickr display format, including for ISO query links."""
+    def __init__(self):
+        super().__init__(format="%d.%m.%Y", attrs={"placeholder": "DD.MM.GGGG", "autocomplete": "off"})
+
+    def format_value(self, value):
+        if isinstance(value, str):
+            for pattern in DATE_FORMATS:
+                try:
+                    value = datetime.strptime(value.strip(), pattern).date()
+                    break
+                except ValueError:
+                    continue
+        return super().format_value(value)
+
+
+class ReportDateField(forms.DateField):
+    def __init__(self, **kwargs):
+        super().__init__(widget=ReportDateInput(), input_formats=DATE_FORMATS,
+                         error_messages={"invalid": "Unesite datum u formatu DD.MM.GGGG.", "required": "Unesite datum."}, **kwargs)
+
+
+class SyncForm(forms.Form):
+    scope = forms.ChoiceField(label="Obuhvat sinhronizacije", initial="current",
+                             widget=forms.Select(attrs={"class": "form-select form-control"}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_year = timezone.localdate().year
+        self.fields["scope"].choices = [
+            ("current", f"Tekuća godina ({self.current_year})"),
+            ("all", f"Sve godine (2025–{self.current_year})"),
+        ]
+
+    def sync_years(self):
+        return {"year_from": self.current_year if self.cleaned_data["scope"] == "current" else 2025,
+                "year_to": self.current_year}
+
+
+class JobMonthForm(forms.Form):
+    job = forms.ChoiceField(label="Šifra posla", required=False)
+    year = forms.TypedChoiceField(label="Godina", coerce=int)
+    month = forms.TypedChoiceField(label="Mesec", coerce=int, required=False, empty_value=None, choices=[("", "Cela godina")] + [
+        (i, name) for i, name in enumerate([
+            "Januar", "Februar", "Mart", "April", "Maj", "Jun", "Jul", "Avgust",
+            "Septembar", "Oktobar", "Novembar", "Decembar",
+        ], 1)
+    ])
+
+    def __init__(self, data, *, choices):
+        values = data.copy()
+        today = timezone.localdate()
+        values.setdefault("year", str(today.year))
+        values.setdefault("month", str(today.month))
+        super().__init__(values)
+        self.fields["job"].choices = [("", "Izaberite šifru posla")] + choices
+        self.fields["year"].choices = [(y, y) for y in range(2025, today.year + 1)]
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-select form-control select2-method"
+
+    def clean(self):
+        data = super().clean()
+        if "year" in data and "month" in data:
+            year, month = data["year"], data["month"]
+            data["date_from"] = date(year, month or 1, 1)
+            data["date_to"] = date(year, month, monthrange(year, month)[1]) if month else date(year, 12, 31)
+        return data
 
 
 class ReportFilters(forms.Form):
-    date_from = forms.DateField(label="Datum knjiženja od", widget=forms.DateInput(attrs={"type": "date"}), input_formats=["%Y-%m-%d"])
-    date_to = forms.DateField(label="Datum knjiženja do", widget=forms.DateInput(attrs={"type": "date"}), input_formats=["%Y-%m-%d"])
+    date_from = ReportDateField(label="Datum knjiženja od")
+    date_to = ReportDateField(label="Datum knjiženja do")
     center = forms.ChoiceField(label="Centar / OJ", required=False)
     job = forms.ChoiceField(label="Šifra posla", required=False)
     unit = forms.ChoiceField(label="OJ knjiženja", required=False)
@@ -37,7 +108,12 @@ class ReportFilters(forms.Form):
         if ledger:
             self.fields["kind"].choices = [*KINDS, ("all", "Sva knjiženja")]
         for field in self.fields.values():
-            field.widget.attrs["class"] = "form-check-input" if isinstance(field, forms.BooleanField) else "form-select" if isinstance(field, forms.ChoiceField) else "form-control"
+            field.widget.attrs["class"] = "form-check-input" if isinstance(field, forms.BooleanField) else "form-select form-control select2-method" if isinstance(field, forms.ChoiceField) else "form-control"
+            if isinstance(field, ReportDateField):
+                field.widget.attrs["class"] += " js-date"
+        self.fields["account"].widget.attrs.update(placeholder="npr. 5 ili 51200", inputmode="numeric")
+        for name in ("account_exact", "include_empty"):
+            self.fields[name].widget.attrs["role"] = "switch"
 
     def clean(self):
         data = super().clean()
