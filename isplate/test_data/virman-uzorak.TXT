@@ -1,0 +1,21 @@
+123456789012345678Uzorak d.o.o.                      Beograd   200526                                                                                                  Multi E_BANK0
+123456789012345678                                                                                                                                                                  
+325930060000000001UZORAK-PRIMER ANA                  BEOGRAD   000                      Upl.zarade                                240  0000007105457974891000000037690001   200526  
+160510010000000002UZORAK PRIMER BRANKO               NOVI SAD  000                      Upl.zarade                                240  0000004821000974891000000037690002   200526  
+265100000000000003UZORAK PRIMER CVETA                NIS       000                      Upl.zarade                                240  0000003599999974891000000037690003   200526  
+170030000000000004UZORAK-PRIMER DRAGAN               KRAGUJEVAC000                      Upl.zarade                                240  0000006230045974891000000037690004   200526  
+205000000000000005UZORAK PRIMER EMA                  SUBOTICA  000                      Upl.zarade                                240  0000005112010974891000000037690005   200526  
+340000000000000006UZORAK PRIMER FILIP                ZRENJANIN 000                      Upl.zarade                                240  0000004487530974891000000037690006   200526  
+155000000000000007UZORAK-PRIMER GORAN                PANCEVO   000                      Upl.zarade                                240  0000003964000974891000000037690007   200526  
+200000000000000008UZORAK PRIMER HELENA               CACAK     000                      Upl.zarade                                240  0000005899025974891000000037690008   200526  
+285000000000000009UZORAK PRIMER IVAN                 VALJEVO   000                      Upl.zarade                                240  0000004731080974891000000037690009   200526  
+355000000000000010UZORAK-PRIMER JELENA               SOMBOR    000                      Upl.zarade                                240  0000005340000974891000000037690010   200526  
+115000000000000011UZORAK PRIMER KATARINA             LESKOVAC  000                      Upl.zarade                                240  0000004127565974891000000037690011   200526  
+165000000000000012UZORAK PRIMER LAZAR                UZICE     000                      Upl.zarade                                240  0000006615000974891000000037690012   200526  
+245000000000000013UZORAK-PRIMER MARIJA               ZAJECAR   000                      Upl.zarade                                240  0000003782040974891000000037690013   200526  
+325000000000000014UZORAK PRIMER NIKOLA               VRANJE    000                      Upl.zarade                                240  0000004900500974891000000037690014   200526  
+180000000000000015UZORAK PRIMER OLGA                 SABAC     000                      Upl.zarade                                240  0000005563075974891000000037690015   200526  
+275000000000000016UZORAK-PRIMER PAVLE                KRUSEVAC  000                      Upl.zarade                                240  0000004319020974891000000037690016   200526  
+190000000000000017UZORAK PRIMER RADA                 SMEDEREVO 000                      Upl.zarade                                240  0000006047500974891000000037690017   200526  
+310000000000000018UZORAK PRIMER STEFAN               POZAREVAC 000                      Upl.zarade                                240  0000003826590974891000000037690018   200526  
+225000000000000019UZORAK-PRIMER TAMARA               KIKINDA   000                      Upl.zarade                                240  0000005284055974891000000037690019   200526  

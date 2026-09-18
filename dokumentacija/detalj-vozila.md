@@ -18,7 +18,7 @@ Ako eksplicitni rok registracije nedostaje, zaglavlje prikazuje datum poslednje 
 
 Nije implementiran kompletan TCO: gorivo je bruto, dok su ostali iznosi u izvornoj evidenciji; premije, finansiranje, amortizacija i praćenje nisu periodizovani. Uklonjeni su nepouzdana ocena isplativosti i procenjena cena/km sa ovog detalja. Ostali zbirni ekrani analitike nisu prepravljeni ovom iteracijom.
 
-Za novi detalj nema dodatnih migracija. Prethodno izvedene migracije 0073/0074 opisane su u `unos-vozila-carobnjak.md`.
+Za novi detalj nema dodatnih migracija. Prethodno izvedene migracije 0073/0074 bile su opisane u uklonjenom `unos-vozila-carobnjak.md`.
 
 Datumski filter koristi `data-native-date` kako ga zajednički Flatpickr inicijalizator ne bi protumačio kao tekstualni datum drugog formata. Tabovi koriste API koji postoji u instaliranom Bootstrap 5.0.0-beta1. Tabele imaju posebne identifikatore kako zajednički skript ne bi ponovo inicijalizovao DataTables. Inicijalizacija lokalnih tabela uključuje pretragu i straničenje; redovi se i dalje učitavaju iz izabranog perioda na serveru.
 
@@ -26,4 +26,4 @@ Zajednički `global_datatables.js` dodatno proverava da DatatableServiceDetail n
 
 Provere: 11 novih testova detalja + 25 prethodnih testova unosa/modela prolaze. Širi paket 128/130, sa ista dva prethodno potvrđena pada u pretrazi naloga bez korisničkih prava i dodatnoj vezi fakture sa šifrom posla. Chrome provera na privremenoj bazi: pet kartica, datumi očuvani nakon potvrde, tabela goriva sa proizvodom, prazne DataTables tabele, sortiranje zaduženja, jednake visine kartica i širine desktopa 1440/1920/2560. Snimci `detalj_vozila_*.png` koriste demonstracione podatke. Po zahtevu korisnika nema daljeg rada na mobilnom prikazu; uklonjen je limit širine od 1600 px da bi sadržaj koristio raspoloživu širinu desktopa i pri zoom-out prikazu.
 
-Korisnikov radni dokument je `Presek stanja - primedbe i odgovori.docx`: originalne 33 primedbe, odgovori, status svake tačke i dopuna realizacije sa slikama. Pri narednim izmenama dopuniti taj Word dokument uz očuvanje ranijih beleški. Prvobitna analiza sačuvana je u `dokumentacija/arhiva/`.
+Korisnikov radni dokument bio je `Presek stanja - primedbe i odgovori.docx` (33 primedbe, odgovori i status svake tačke). Taj dokument je, zajedno sa direktorijumom `dokumentacija/arhiva/`, uklonjen iz repozitorijuma 18.09.2026.; sadržaj je prešao u objedinjenu dokumentaciju u [`docs/`](docs/), a stare verzije ostaju dostupne kroz git istoriju.

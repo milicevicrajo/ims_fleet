@@ -157,10 +157,17 @@ class VirmanServiceTests(TestCase):
 
 
 class TxtJsonConverterTests(TestCase):
+    """Koristi izmisljen uzorak iz isplate/test_data/, ne stvarne isplate.
+
+    Raniji uzorak je sadrzao prava imena i brojeve racuna; zamenjen je 18.09.2026.
+    Ako menjas ocekivane vrednosti, menjaj i uzorak -- nikada ga ne zameni izvozom
+    iz proizvodnje.
+    """
+
     def test_converts_fixed_width_virman_txt_to_internal_json_records(self):
-        sample_path = Path(__file__).resolve().parent.parent / "Virman-165-B5-2.TXT"
+        sample_path = Path(__file__).resolve().parent / "test_data" / "virman-uzorak.TXT"
         uploaded_file = SimpleUploadedFile(
-            "Virman-165-B5-2.TXT",
+            "virman-uzorak.TXT",
             sample_path.read_bytes(),
             content_type="text/plain",
         )
@@ -172,23 +179,23 @@ class TxtJsonConverterTests(TestCase):
         self.assertEqual(first["PaymentBasis"], "Upl.zarade")
         self.assertEqual(first["PaymentCode"], 240)
         self.assertEqual(first["Amount"], 71054.57)
-        self.assertEqual(first["DebtorBankAccount"], "205000000001445485")
+        self.assertEqual(first["DebtorBankAccount"], "123456789012345678")
         self.assertIsNone(first["DebtorCodeModel"])
         self.assertEqual(first["DebtorCode"], "")
-        self.assertEqual(first["CreditorName"], "DELIC-NIKOLIC IVANA")
-        self.assertEqual(first["CreditorAddress"], "GROCKA")
-        self.assertEqual(first["CreditorBankAccount"], "325930060005536258")
+        self.assertEqual(first["CreditorName"], "UZORAK-PRIMER ANA")
+        self.assertEqual(first["CreditorAddress"], "BEOGRAD")
+        self.assertEqual(first["CreditorBankAccount"], "325930060000000001")
         self.assertEqual(first["CreditorCodeModel"], 97)
-        self.assertEqual(first["CreditorCode"], "6891000000063670692")
+        self.assertEqual(first["CreditorCode"], "4891000000037690001")
         self.assertIs(first["UrgentPayment"], True)
-        self.assertEqual(first["ExpectedPaymentDate"], "2026-07-10")
+        self.assertEqual(first["ExpectedPaymentDate"], "2026-05-20")
         self.assertIsNone(first["ExternalId"])
         self.assertIsNone(first["UserGroupName"])
         self.assertEqual(first["UserTags"], "")
         self.assertEqual(first["Comment"], "")
 
         parsed_json = json.loads(conversion.json_text)
-        self.assertEqual(parsed_json[0]["CreditorName"], "DELIC-NIKOLIC IVANA")
+        self.assertEqual(parsed_json[0]["CreditorName"], "UZORAK-PRIMER ANA")
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
@@ -407,7 +414,7 @@ class IsplataNeoporezovanihViewTests(TestCase):
         self.assertIn("Virman-putni-nalozi-", response["Content-Disposition"])
 
     def test_converter_page_downloads_json_from_uploaded_txt(self):
-        sample_path = Path(__file__).resolve().parent.parent / "Virman-165-B5-2.TXT"
+        sample_path = Path(__file__).resolve().parent / "test_data" / "virman-uzorak.TXT"
         user = self.create_isplate_user(
             username="converter",
             permission_code="isplate:converter",
@@ -418,7 +425,7 @@ class IsplataNeoporezovanihViewTests(TestCase):
             reverse("isplate:converter"),
             {
                 "txt_file": SimpleUploadedFile(
-                    "Virman-165-B5-2.TXT",
+                    "virman-uzorak.TXT",
                     sample_path.read_bytes(),
                     content_type="text/plain",
                 )
@@ -427,7 +434,7 @@ class IsplataNeoporezovanihViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/json; charset=utf-8")
-        self.assertIn('filename="Virman-165-B5-2.json"', response["Content-Disposition"])
+        self.assertIn('filename="virman-uzorak.json"', response["Content-Disposition"])
         records = json.loads(response.content.decode("utf-8"))
         self.assertEqual(len(records), 19)
-        self.assertEqual(records[0]["CreditorName"], "DELIC-NIKOLIC IVANA")
+        self.assertEqual(records[0]["CreditorName"], "UZORAK-PRIMER ANA")

@@ -2,6 +2,10 @@
 
 Datum plana: **18.09.2026.**
 
+**Dopuna:** novi [plan organizacije i dozvola — V2](plan-organizacije-i-dozvola-v2.md)
+razrađuje dodelu uloga sa obuhvatom, Admin interfejs u aplikaciji i novi redosled realizacije.
+Za naredne korake koristiti V2; ovaj dokument ostaje osnova pravila registra i istorije.
+
 **Predlog:** uvesti centralni registar sa tačno tri poslovna nivoa, stalnim internim identitetom i istorijom promena. Postojeće module povezivati postepeno, uz očuvanje njihovih ID-eva, dokumentacije, obračuna i sinhronizacije. Ovaj dokument je plan; centralizacija još nije implementirana.
 
 Prvi nivo je centar, drugi je njegova podjedinica, a treći krajnje odeljenje odnosno poslovna šifra koja se koristi na dokumentima. Primeri korisnika su `43 / 6 / 111 → 436111` i `43 / 6 / 22 → 43622`. Završni deo nema obavezno tri cifre. Naziv drugog nivoa u interfejsu usaglasiće se sa sistematizacijom; njegova strukturna uloga je već definisana.

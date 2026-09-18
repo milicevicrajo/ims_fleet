@@ -139,6 +139,6 @@ Glavna neizvesnost nije količina redova nego očuvanje istorije, migracionog re
 
 ## 10. Dokazi i granice provere
 
-Dokazni presek je izvestaji/procena_prenosa_trebovanja_20260911.json. Definicije pregledanih izvora sačuvane su u izvestaji/procena_fleet_trebovanja_20260911.sql i izvestaji/procena_nbv_roba_20260911.sql. Skripta dokumentacija/procena_prenosa_trebovanja_audit.py vrši samo čitanje i upisuje lokalni zbirni izveštaj; ne pokreće poslovnu sinhronizaciju.
+Dokazni presek je izvestaji/procena_prenosa_trebovanja_20260911.json. Definicije pregledanih izvora premeštene su 18.09.2026. u [`ddl-nasledjenih-pogleda/`](ddl-nasledjenih-pogleda/README.md) — `fleet_trebovanja.sql` i `nbv_roba.sql`. Skripta `procena_prenosa_trebovanja_audit.py`, koja je samo čitala izvor i upisivala lokalni zbirni izveštaj, uklonjena je iz repozitorijuma; dostupna je kroz git istoriju.
 
 Sadašnja provera razrešava prethodnu neizvesnost iz dokumenta o toku garaže: baza je dostupna i potvrđeno je da postojeća roba Nabavke nije isto što i trebovanja Flote. Nisu izvršeni prenos modela, migracije ili dopuna 164 stavke. Nije potvrđena računovodstvena ispravnost svih istorijskih iznosa. Ocenjena je tehnička izvodljivost prenosa uz očuvanje postojećeg ponašanja.
