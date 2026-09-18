@@ -5,6 +5,13 @@ from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 EXPECTED_PERIODIC_TASKS = [
     {
+        "name": "Finansije - osvezavanje nalog_z u 10 i 11",
+        "task": "finansije.tasks.refresh_nalog_z_task",
+        "hour": "10,11",
+        "minute": "0",
+        "timezone": "Europe/Belgrade",
+    },
+    {
         "name": "Finansije - tekuca godina",
         "task": "finansije.tasks.sync_current_year",
         "hour": "*",
@@ -151,7 +158,7 @@ class Command(BaseCommand):
                 day_of_week="*",
                 day_of_month="*",
                 month_of_year="*",
-                timezone=timezone,
+                timezone=spec.get("timezone", timezone),
             )
             lookup_names = [spec["name"], *spec.get("aliases", [])]
             existing = PeriodicTask.objects.filter(name__in=lookup_names).first()

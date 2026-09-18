@@ -1,8 +1,15 @@
-# Finansijska analitika — prva faza
+# Finansijska analitika
+
+**Kompletna metodologija svih prikazanih podataka:**
+[Izvori, formule, periodi, izuzeci i kontrolni postupak](../dokumentacija/finansije-metodologija-obracuna.md).
+Dokument je usklađen sa implementacijom na dan 18.09.2026. i predstavlja glavno mesto za opis obračuna.
+Ovaj README sadrži tehničko uputstvo i beleške prethodnih faza; ranije zabeleženi brojevi testova i
+kontrolni iznosi predstavljaju provere tih faza, ne trenutno stanje izvora.
 
 Izvor se isključivo čita preko postojećeg `server_db` aliasa:
 `[PUTGEO-SERVER].[bazaims].dbo.nalog_z`, uz `posao`, `konto`, `ob_jedin` i `partner`.
-Ne izvršavaju se poslovne procedure SPFINizv i ne menja se postojeća lokalna tabela `nalog_z`.
+Otvaranje izveštaja ne izvršava poslovne procedure SPFINizv. Posebna funkcija osvežavanja izvora,
+opisana ispod, poziva `IMS_ERP.dbo.sp_AzurirajNalogZ` i ažurira lokalni `nalog_z`.
 
 ## Detalj šifre posla
 
@@ -14,20 +21,25 @@ Izveštaji po kontima i mesecima za izabranu šifru imaju i dugme za detalj.
 Naplata po šiframa posla nudi vezu kada korisnik ima pristup finansijskoj analitici.
 
 - Prihodi/rashodi i knt3 koriste datum knjiženja i ista isključenja zatvaranja kao ostali izveštaji.
-- IF dokumenti koriste datum dokumenta. Grupisanje po godini, nalogu, vezi dokumenta i partneru
-  prikazuje prihod klase 6 na izabranoj šifri, bez sabiranja PDV-a i potraživanja sa prihodom.
-  Ovo nije kompletan iznos fakture niti evidencija neproknjiženih faktura.
+- IF dokumenti koriste datum dokumenta i izabranu izvornu godinu. Tačna konta su `20400/20500`,
+  a iznos je zbir `duguje - potrazuje` na izabranoj šifri, grupisan po godini, nalogu, vezi i partneru.
+  Ovo je iznos sa konta potraživanja, ne prihod klase 6 niti dokaz naplate.
+- Interne fakture su zaseban tab: `ON` na tačnim kontima `61420/61421/61521/64002`,
+  sa iznosom `potrazuje - duguje`, istim pravilima perioda i grupisanja i očuvanim znakom korekcija.
 - Vozila se prikazuju prema intervalima istorijskih dodela, zaključno sa danom pre sledeće dodele.
 - Službena putovanja koriste datum putovanja, izuzimaju storna i zadržavaju postojeći obuhvat pristupa.
-- Naplata koristi postojeći upit i prava pristupa. To je trenutno stanje, bez istorijskog mesečnog preseka.
-- Interne fakture, lična zaduženja i zarade ostaju označeni kao nedostupni
-  do potvrde izvora i pravila. Godina bez uspešne sinhronizacije ne prikazuje finansijske iznose kao nulu.
-- Detalj zahteva `finansije:dashboard` i dostupan centar/šifru; vozila, putni nalozi i Naplata
+- Potraživanja koriste lokalni objavljeni snimak nove aplikacije i njena prava pristupa.
+  Prikazani su datum stanja i vreme preuzimanja; nema istorijskog mesečnog preseka.
+  Link partnera vodi u Potraživanja na isti snimak. Otvaranje taba ne čita stare view-ove Naplate.
+- Lična zaduženja povezana su preko istorijskih dodela vozila; zaposleni se prikazuju iz zaključenih
+  obračuna zarada na šifri posla. Istorijski spisak zaposlenih centra i ukupan trošak
+  zarada centra čekaju potvrdu izvora i pravila. Godina bez uspešne sinhronizacije u detalju ne prikazuje finansijske iznose kao nulu.
+- Detalj zahteva `finansije:dashboard` i dostupan centar/šifru; vozila, putni nalozi i Potraživanja
   dodatno poštuju prava njihovih modula. Otvaranje stranice ne pokreće sinhronizaciju/procedure.
-- Početni HTML učitava samo izbor posla i zbirne pokazatelje. Pet tabela dobija podatke preko
-  `/finansije/posao/tabela/<invoices|expenses|vehicles|travel|collections>/` sa istim parametrima.
+- Početni HTML učitava samo izbor posla i zbirne pokazatelje. Osam tabela dobija podatke preko
+  `/finansije/posao/tabela/<invoices|internal_invoices|expenses|vehicles|custody|employees|travel|collections>/` sa istim parametrima.
   Svaki zahtev ponovo proverava dostupnost šifre, period i prava izvornog modula.
-  Tabele detalja su u pet tabova unutar zajedničke kartice. Sve se učitavaju u pozadini odmah po otvaranju stranice.
+  Tabele detalja su u osam tabova unutar zajedničke kartice. Sve se učitavaju u pozadini odmah po otvaranju stranice.
   Povratak na otvoren tab zadržava podatke, pretragu i stranicu, uz prilagođavanje širina kolona.
   Koriste `deferRender` i nude ponovni
   pokušaj kod greške. Skup za izabrani period se preuzima jednom po tabeli; pretraga, sortiranje i stranice
@@ -83,10 +95,13 @@ Potvrđena je jednakost priliva/odliva i za januar 2026, celu 2025. i celu 2026.
   Sinhronizacija čuva sve stavke; opcija „Sva knjiženja” i njen Excel izvoz uključuju i zatvaranja.
   Pokazatelji prihoda/rashoda i tada ostaju analitički, dok promet duguje/potražuje uključuje sve.
 - Centar/OJ u zbirnom izveštaju dolazi iz **aktuelnog** `posao.blok`, dok je `nalog_z.oj` zaseban filter „OJ knjiženja“.
-  Promena centra u šifarniku pregrupiše istoriju u osveženom obuhvatu. Istorijska raspodela i mesečni koeficijenti su sledeća faza.
+  Promena centra u šifarniku pregrupiše istoriju u osveženom obuhvatu. Mesečni koeficijenti raspodele ZT koriste se;
+  zasebna istorija pripadnosti posla centru po datumima nije uvedena.
 - Učešća imaju imenilac ukupnog filtriranog, korisniku dostupnog prikaza; nulti imenilac daje crtu.
 - Knjiženja bez šifarnika se ne odbacuju. Prazan centar prikazan je kao neraspoređen (dostupan samo uz globalna prava ili izričito dozvoljen posao).
-- Fakturisano, naplaćeno, plaćanja dobavljačima i raspodela zajedničkih troškova **nisu** obračunati u ovoj fazi.
+- Implementirani su IF iznosi na kontima potraživanja, interne ON fakture, ZT i novčani tokovi po pravilima 52nt.
+  Iznos cele fakture preko svih poslova, povezivanje fakture sa pojedinačnom uplatom i spisak plaćenih
+  računa dobavljača nisu izvedeni iz tih pokazatelja. Naplata je trenutno stanje dugovanja.
 
 ## Sinhronizacija
 
@@ -115,11 +130,43 @@ Celery zadaci na redu `sync`:
 - `finansije.tasks.sync_ledger_task(year_from=2025, year_to=None)`: opšti zadatak za zadati opseg godina.
 - `finansije.tasks.sync_current_year`: svakog sata u :20.
 - `finansije.tasks.sync_all_years`: svakog dana u 03:50 (vremenska zona projekta).
+- `finansije.tasks.refresh_nalog_z_task`: svakog dana u 10:00 i 11:00 (`Europe/Belgrade`).
 
 Rasporedi su dodati postojećoj komandi `sync_celery_periodic_tasks`. Posle isporuke koda
 treba ponovo pokrenuti relevantne Celery workere da registruju nove zadatke, pa aktivirati raspored.
 Samo finansije mogu se aktivirati komandom `manage.py configure_finansije --enable-schedule`.
+Samo raspored procedure, bez aktiviranja drugih zadataka:
+`manage.py configure_finansije --enable-nalog-z-schedule`.
 Ne pokretati stare radnike sa novim rasporedom: mogu odbaciti nepoznat zadatak.
+
+### Osvežavanje lokalnog nalog_z (18.09.2026.)
+
+Na stranici sinhronizacije dugme **Osveži nalog_z** direktno poziva
+`services.nalog_z.refresh_nalog_z`, a isti servis koristi Celery zadatak.
+POST ruta `sinhronizacija/nalog-z/` zahteva prijavu, CSRF i obe postojeće dozvole
+`finansije:sync_status` i `finansije:view_all`. Ne prihvata naziv procedure niti SQL iz zahteva.
+Procedura nema parametre i obuhvata sve firme; godine bira sama (do uključivo 30. aprila
+prethodna i tekuća godina, zatim tekuća). Otvaranje stranice ne pokreće proceduru.
+
+Istorija `NalogZRefreshRun` beleži ko/odakle je pokrenuo, vreme, trajanje, status, godine,
+ažurirane i dodate redove, grešku i Celery ID. Prikazuje se u posebnoj AJAX DataTable tabeli.
+Brojač ažuriranih redova uključuje sve pogođene UPDATE-om, ne samo stvarno promenjene redove.
+SQL `sp_getapplock` u IMS_ERP, vezan za istu sesiju kao procedura, sprečava preklapanje
+ručnih i Celery poziva ovog servisa; zauzet poziv se beleži kao preskočen. Pozivi direktno
+iz SQL alata/Agenta moraju koristiti isti lock da bi učestvovali u ovoj zaštiti.
+
+Uspeh se upisuje tek nakon čitanja svih SQL rezultata i brojača. Greške se ne ponavljaju
+automatski. Posle pada procesa raniji nezavršeni zapis dobija status „Ishod nepoznat“ pri
+sledećem uspešnom preuzimanju lock-a; potrebno je proveriti stanje u bazi.
+Prekid veze ili greška prijema rezultata ne garantuju da procedura nije već commit-ovala.
+SQL timeout je samo tokom ove operacije `FINANSIJE_NALOG_Z_TIMEOUT` (podrazumevano 900 s),
+pa se vraća prethodna vrednost; web/proxy timeout treba uskladiti jer ručni poziv traje
+do završetka. Prekinut HTTP odgovor traži proveru istorije pre ponovnog pokretanja.
+
+Migracija `0002_nalogzrefreshrun` dodaje isključivo tabelu istorije. Procedura i poslovni
+view-ovi nisu prepravljani. Ova operacija ne preuzima LedgerEntry i ne preusmerava Naplatu
+sa udaljenih view-ova na lokalni izvor. Procedura ne briše nestale izvorne redove.
+Detaljan plan migracije ostaje u `dokumentacija/naplata-lokalni-izvor-plan.md`.
 
 Na stranici `/finansije/sinhronizacija/` postoji dugme **Pokreni sinhronizaciju**, sa izborom
 tekuće godine ili svih godina od 2025. POST ruta `/finansije/sinhronizacija/pokreni/` direktno
@@ -154,9 +201,8 @@ odgovarajućeg izveštaja i isti opseg podataka kao ekran. Excel tretira izvorne
 .\.venv\Scripts\python.exe manage.py test finansije core --settings=ims_erp.settings.testing
 ```
 
-Pre operativne upotrebe potvrditi računovodstveni obuhvat naloga (posebno završna knjiženja),
-vezu centara i nekoliko poslova prema postojećem izveštaju 51. Nije potrebno pokretati procedure
-52/53/55, koje menjaju poslovne podatke, radi prikaza ove aplikacije.
+Kontrolni postupak za knjiženja, centre, ZT i tokove opisan je u kompletnoj metodologiji.
+Nije potrebno pokretati izvorne poslovne procedure 52/53/55 radi prikaza ove aplikacije.
 
 Pri proširenoj proveri zabeležen je postojeći pad testa
 `nabavka.tests.ProcurementInvoiceJobCodeLinkTests.test_primary_invoice_job_code_cannot_be_added_as_additional`.
@@ -272,7 +318,7 @@ dokaz prisustva ili broj izvršilaca preračunat iz sati. Izvorne tabele zarada 
 za 2025. i januar–avgust 2026, ali otvoreni avgustovski obračun nije prikazan kao zaključen.
 Lokalne radne liste nisu uzete za potpuni spisak jer postoje samo dve predate liste.
 
-Preostalo: potvrda pomoćne tabele za interne ON fakture; istorijska pripadnost zaposlenih
+Preostalo: istorijska pripadnost zaposlenih
 centru; pravilo ukupnog troška zarada i raspodele automatskih elemenata/doprinosa.
 `SPLdKnjizenje` potvrđuje da prost zbir `Zarada.dinara` nije dovoljna zamena za puni trošak.
 Procedura nije izvršavana; nijedan izvorni poslovni podatak nije menjan.
@@ -296,8 +342,8 @@ Višegodišnji period se obračunava zasebno po kalendarskim godinama, a zatim s
 Tabela se završava neto gotovinom (ukupno 11 kolona). Šifra posla je jasno dugme
 koje otvara detalj sa dokumentima i evidencijama. Detalj zadržava izbor poslednjeg
 meseca perioda, osim izbora cele kalendarske godine koji
-otvara celu godinu. Ta razlika je navedena ispod tabele. Interne fakture i trošak zarada
-ostaju nedostupni dok se ne potvrde izvor i pravila. Izvoz u Excel koristi iste
+otvara celu godinu. Ta razlika je navedena ispod tabele. Trošak zarada
+ostaje nedostupan dok se ne potvrde izvor i pravila. Izvoz u Excel koristi iste
 brojčane pokazatelje, znakove i napomene o obuhvatu, uz link na detalj.
 
 Finansijske numeričke kolone koriste namensko sortiranje `finance-signed` nad sirovim

@@ -12,4 +12,5 @@ urlpatterns = [
     path("izvoz/", views.export, name="export"),
     path("sinhronizacija/", views.sync_status, name="sync_status"),
     path("sinhronizacija/pokreni/", views.sync_run, name="sync_run"),
+    path("sinhronizacija/nalog-z/", views.nalog_z_refresh, name="nalog_z_refresh"),
 ]

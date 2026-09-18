@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load static %}
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+<link rel="stylesheet" href="{% static 'potrazivanja/collections.css' %}">
+<link rel="stylesheet" href="{% static 'potrazivanja/amounts.css' %}?v=20260918-red">
+<div class="collections-page">
+  <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div><div class="collections-kicker">IMS · Potraživanja</div>
+      <h1>{% block hero_title %}{{ title }}{% endblock %}</h1>
+      {% if snapshot %}<p class="mb-1">Stanje na dan <strong>{{ snapshot.as_of_date|date:"d.m.Y." }}</strong> · RSD</p>
+      <small>Obuhvat knjiženja: {{ snapshot.run.scope.baza_years|join:", " }}. Ispravke: {{ snapshot.run.scope.ispravke_years|join:", " }}. Preuzeto {{ snapshot.source_observed_at|date:"d.m.Y. H:i" }}.</small>
+      {% else %}<p>Prvi snimak podataka još nije objavljen.</p>{% endif %}
+    </div>
+    <div class="d-flex gap-2">{% if can_sync %}<a class="btn btn-light" href="{% url 'potrazivanja:sync_status' %}"><i class="mdi mdi-sync"></i> Sinhronizacija</a>{% endif %}
+      {% if all_access %}<a class="btn btn-outline-light" href="{% url 'potrazivanja:dashboard' %}?view=directory">Svi partneri</a>{% endif %}</div>
+  </header>
+  <form method="post" class="d-none collections-csrf">{% csrf_token %}</form>
+  <div class="collections-feedback alert alert-danger d-none" role="alert"></div>
+  {% block collections_content %}{% endblock %}
+</div>
+{% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'potrazivanja/collections.js' %}?v=20260918-red"></script>{% endblock %}

@@ -1,0 +1,9 @@
+.receivable-amount{display:inline-block;padding:4px 7px;border:1px solid;border-radius:5px;white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums}
+.receivable-tone-1{color:#781c25;background:#ffe5e5;border-color:#efabab}
+.receivable-tone-2{color:#70151f;background:#ffc2c2;border-color:#e8858b}
+.receivable-tone-3{color:#590c18;background:#f58e98;border-color:#d65b6b}
+.receivable-tone-4{color:#fff;background:#b9233b;border-color:#a0172e}
+.receivable-tone-5{color:#fff;background:#780e25;border-color:#630b1e}
+.receivable-zero{color:#596475;background:#edf1f6;border-color:#d9e0eb}
+.receivable-legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 16px;font-size:12px}
+.collections-page .collections-metric{color:#a91c2d}

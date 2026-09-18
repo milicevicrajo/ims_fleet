@@ -1,0 +1,4 @@
+<div class="table-responsive">
+<table class="table table-striped table-hover collections-table" data-kind="{{ kind }}" data-url="{% url 'potrazivanja:table_data' %}" data-snapshot="{{ snapshot.pk }}" data-partner="{{ partner.pk }}" data-center="{{ selected_center }}" style="width:100%">
+  <thead><tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr></thead><tbody></tbody>
+</table></div>

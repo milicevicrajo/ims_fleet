@@ -5,6 +5,9 @@ from decimal import Decimal
 from django.utils.html import format_html
 from django.utils.formats import number_format
 from django.conf import settings
+from django.urls import reverse
+from django.utils import timezone
+from potrazivanja.services.reports import job_balances, AGING_TONES
 
 from finansije.templatetags.finance import amount_badge, expense_badge
 from .job_card import assigned_vehicles, monthly_expenses, monthly_invoices, vehicle_custody
@@ -29,8 +32,9 @@ def day(value):
     return result
 
 
-def invoice_data(entries, start, end):
-    invoices = monthly_invoices(entries, start, end)
+def invoice_data(entries, start, end, *, internal=False):
+    invoices = monthly_invoices(entries, start, end, internal=internal)
+    journal_type = "ON" if internal else "IF"
     rows = []
     for item in invoices:
         document_date = day(item["date"])
@@ -38,10 +42,11 @@ def invoice_data(entries, start, end):
             document_date["display"] = str(format_html('{}<br><small>Više datuma: do {}</small>',
                 document_date["display"], item["last_date"].strftime("%d.%m.%Y.")))
         rows.append([document_date, cell(item["document_reference"] or "Bez veze dokumenta"),
-                     cell(f'{item["year"]}/IF/{item["journal_number"]}'),
-                     cell(f'{item["partner_code"] or "—"} · {item["partner_name"]}'), money(item["revenue"])])
-    total = sum((item["revenue"] or Decimal("0") for item in invoices), Decimal("0"))
-    return {"data": rows, "footer": {"invoice_revenue": str(amount_badge(total))}}
+                     cell(f'{item["year"]}/{journal_type}/{item["journal_number"]}'),
+                     cell(f'{item["partner_code"] or "—"} · {item["partner_name"]}'), money(item["amount"])])
+    total = sum((item["amount"] or Decimal("0") for item in invoices), Decimal("0"))
+    footer_key = "internal_invoice_amount" if internal else "invoice_amount"
+    return {"data": rows, "footer": {footer_key: str(amount_badge(total))}}
 
 
 def expense_data(entries, start, end, code, can_ledger):
@@ -106,10 +111,26 @@ def travel_data(request, code, start, end):
     return {"data": rows}
 
 
-def collection_data(user, allowed, code):
-    from naplata.queries import izvestaj_po_siframa_posla_data
-    records, _ = izvestaj_po_siframa_posla_data(user.is_superuser, allowed, code)
-    return {"data": [[cell(f"{r[0]} · {r[1]}"), *[money(value) for value in r[2:11]]] for r in records]}
+def collection_data(user, code):
+    report = job_balances(user, code, company=getattr(settings, 'FINANSIJE_COMPANY', 1))
+    snapshot = report['snapshot']
+    if not snapshot:
+        return {'data': [], 'available': False, 'footer': {
+            'collections_as_of': 'Potraživanja još nemaju uspešan snimak podataka. Iznosi nisu dostupni.'}}
+    rows = []
+    for record in report['rows']:
+        label = f"{record['partner_code']} · {record['partner_name']}"
+        url = reverse('potrazivanja:partner_detail', args=[record['identity_id']]) + f'?snapshot={snapshot.pk}'
+        rows.append([cell(label, format_html('<a href="{}">{}</a>', url, label)),
+                     *[cell(value, format_html('<span class="receivable-amount {}">{}</span>',
+                        f'receivable-tone-{tone}' if value else 'receivable-zero',
+                        number_format(value, decimal_pos=2, use_l10n=True, force_grouping=True)))
+                       for value, tone in zip(record['amounts'], AGING_TONES)]])
+    observed = timezone.localtime(snapshot.source_observed_at)
+    return {'data': rows, 'available': True, 'snapshot_id': snapshot.pk, 'as_of_date': snapshot.as_of_date.isoformat(),
+            'footer': {'collections_as_of': str(format_html(
+                'Stanje na dan {} · Preuzeto {} · Izvor: Potraživanja',
+                snapshot.as_of_date.strftime('%d.%m.%Y.'), observed.strftime('%d.%m.%Y. %H:%M')))}}
 
 
 def shared_data(entries, code, start, end):

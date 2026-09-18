@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'fleet',
     'hr',
     'naplata',
+    'potrazivanja.apps.PotrazivanjaConfig',
     'isplate',
     'menice',
     'ugovori',
@@ -241,9 +242,12 @@ CELERY_TASK_ROUTES = {
     'finansije.tasks.sync_current_year': {'queue': 'sync'},
     'finansije.tasks.sync_ledger_task': {'queue': 'sync'},
     'finansije.tasks.sync_all_years': {'queue': 'sync'},
+    'finansije.tasks.refresh_nalog_z_task': {'queue': 'sync'},
+    'potrazivanja.tasks.sync_collections_task': {'queue': 'sync'},
 }
 
 FINANSIJE_COMPANY = 1
 FINANSIJE_SOURCE_DB = 'server_db'
+FINANSIJE_NALOG_Z_TIMEOUT = int(os.getenv('FINANSIJE_NALOG_Z_TIMEOUT', '900'))
 
 CELERY_WORKER_REDIRECT_STDOUTS = False

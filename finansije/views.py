@@ -22,9 +22,10 @@ from openpyxl.cell import WriteOnlyCell
 from core.mixins import role_permission_required, user_has_role_permission
 from .access import can_view_all
 from .forms import JobMonthForm, ReportFilters, SyncForm
-from .models import SyncRun
+from .models import SyncRun, NalogZRefreshRun
 from .services.charts import overview_data
-from .services.datatables import ledger_response, sync_response
+from .services.datatables import ledger_response, sync_response, nalog_z_response
+from .services.nalog_z import refresh_nalog_z, TASK_NAME
 from .services.reports import apply_filters, base_querysets, grouped_report, summary
 from .services.sync import SyncBusy, sync_ledger
 from .services import job_tables
@@ -211,7 +212,7 @@ def job_card(request):
         context["totals"] = summary(selected.filter(booking_date__range=(start, end)))
         context["table_urls"] = {table: reverse("finansije:job_table", args=[table]) + "?" + urlencode({
             "job": code, "year": start.year, "month": form.cleaned_data["month"] or "",
-        }) for table in ("invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash")}
+        }) for table in ("invoices", "internal_invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash")}
         context["ledger_url"] = reverse("finansije:ledger") + "?" + urlencode({
             "job": code, "date_from": start.isoformat(), "date_to": end.isoformat(), "kind": "pnl",
         })
@@ -220,16 +221,13 @@ def job_card(request):
         context["can_custody"] = context["can_vehicles"] and user_has_role_permission(request.user, "vehicle_travel_order_list")
         context["can_employees"] = user_has_role_permission(request.user, "employee_list")
         context["can_travel"] = user_has_role_permission(request.user, "putninalog_list")
-        context["can_collections"], _ = job_collections_access(request.user, code)
+        context["can_collections"] = job_collections_access(request.user, code)
     return render(request, "finansije/job_card.html", context)
 
 
 def job_collections_access(user, code):
-    if not user_has_role_permission(user, "naplata:izvestaj_po_siframa_posla"):
-        return False, []
-    from naplata.views import _allowed_sif_pos_from_user
-    allowed = _allowed_sif_pos_from_user(user)
-    return user.is_superuser or code in allowed, allowed
+    from potrazivanja.access import can_view_job
+    return can_view_job(user, code, company=getattr(settings, 'FINANSIJE_COMPANY', 1))
 
 
 @never_cache
@@ -237,7 +235,7 @@ def job_collections_access(user, code):
 @login_required
 @role_permission_required("finansije:dashboard")
 def job_table(request, table):
-    if table not in ("invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash"):
+    if table not in ("invoices", "internal_invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash"):
         return JsonResponse({"error": "Tabela nije pronađena."}, status=404)
     entries, jobs = base_querysets(request.user)
     code = request.GET.get("job", "").strip()
@@ -257,18 +255,16 @@ def job_table(request, table):
         raise PermissionDenied
     if table == "custody" and not user_has_role_permission(request.user, "jobcode_list"):
         raise PermissionDenied
-    allowed = []
     if table == "collections":
-        permitted, allowed = job_collections_access(request.user, code)
-        if not permitted:
+        if not job_collections_access(request.user, code):
             raise PermissionDenied
-    if table in ("invoices", "expenses", "shared", "cash") and not SyncRun.objects.filter(
+    if table in ("invoices", "internal_invoices", "expenses", "shared", "cash") and not SyncRun.objects.filter(
             company=getattr(settings, "FINANSIJE_COMPANY", 1), status="success",
             year_from__lte=start.year, year_to__gte=start.year).exists():
         return JsonResponse({"error": "Nema potvrđenih podataka za ovu godinu."}, status=409)
     try:
-        if table == "invoices":
-            data = job_tables.invoice_data(selected, start, end)
+        if table in ("invoices", "internal_invoices"):
+            data = job_tables.invoice_data(selected, start, end, internal=table == "internal_invoices")
         elif table == "expenses":
             data = job_tables.expense_data(selected, start, end, code, user_has_role_permission(request.user, "finansije:ledger"))
         elif table == "vehicles":
@@ -284,7 +280,7 @@ def job_table(request, table):
         elif table == "cash":
             data = job_tables.cash_data(code, start, end)
         else:
-            data = job_tables.collection_data(request.user, allowed, code)
+            data = job_tables.collection_data(request.user, code)
     except DatabaseError:
         logger.exception("Tabela detalja šifre posla nije dostupna: %s", table)
         return JsonResponse({"error": "Podaci trenutno nisu dostupni. Pokušajte ponovo."}, status=503)
@@ -368,8 +364,14 @@ def sync_status(request):
     request.session["current_app"] = "finansije"
     runs = SyncRun.objects.filter(company=getattr(settings, "FINANSIJE_COMPANY", 1))
     if "draw" in request.GET:
+        if request.GET.get("source") == "nalog_z":
+            return nalog_z_response(request, NalogZRefreshRun.objects.all())
         return sync_response(request, runs)
-    return render(request, "finansije/sync_status.html", {"title": "Sinhronizacija finansija", "sync_form": SyncForm()})
+    from django_celery_beat.models import PeriodicTask
+    schedules = PeriodicTask.objects.filter(task=TASK_NAME, enabled=True).select_related("crontab")
+    return render(request, "finansije/sync_status.html", {
+        "title": "Sinhronizacija finansija", "sync_form": SyncForm(), "nalog_z_schedules": schedules,
+    })
 
 
 @require_POST
@@ -399,4 +401,28 @@ def sync_run(request):
         return JsonResponse({"status": status, "message": message}, status=code)
     level = {"success": messages.SUCCESS, "busy": messages.WARNING, "error": messages.ERROR}[status]
     messages.add_message(request, level, message)
+    return redirect("finansije:sync_status")
+
+
+@require_POST
+@login_required
+@role_permission_required("finansije:sync_status")
+def nalog_z_refresh(request):
+    if not can_view_all(request.user):
+        raise PermissionDenied
+    try:
+        run = refresh_nalog_z(requested_by=request.user.get_username())
+    except SyncBusy:
+        status, code, message = "busy", 409, "Osvežavanje nalog_z je već u toku. Sačekajte završetak."
+    except Exception:
+        logger.exception("Ručno osvežavanje nalog_z nije uspelo.")
+        status, code, message = "error", 500, "Osvežavanje nije potvrđeno. Proverite detalje u istoriji procedure."
+    else:
+        status, code = "success", 200
+        message = (f"Lokalni nalog_z je osvežen za {run.year_from}–{run.year_to}. "
+                   f"Ažurirano: {run.updated_rows}; dodato: {run.inserted_rows}.")
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"status": status, "message": message}, status=code)
+    messages.add_message(request, {"success": messages.SUCCESS, "busy": messages.WARNING,
+                                  "error": messages.ERROR}[status], message)
     return redirect("finansije:sync_status")

@@ -1,0 +1,23 @@
+{% extends 'potrazivanja/base.html' %}
+{% block collections_content %}
+<div class="card"><div class="card-body">
+<form method="post" class="collections-record-form" data-partners-url="{% url 'potrazivanja:partner_options' %}" data-contacts-url="{% url 'potrazivanja:contact_options' %}">
+  {% csrf_token %}{{ form.non_field_errors }}{% for field in form.hidden_fields %}{{ field }}{% endfor %}
+  <div class="row g-3">{% for field in form.visible_fields %}<div class="col-md-6">
+    {% if field.field.widget.input_type == 'checkbox' %}<div class="form-check form-switch">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>
+    {% else %}<label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}{% endif %}
+    {{ field.errors }}{% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+  </div>{% endfor %}</div>
+  {% if formset %}<hr><h2 class="h5">{% if kind == 'contact' %}Telefoni i e-pošta{% else %}Stavke dokumenta{% endif %}</h2>
+  <p class="text-muted">{% if kind == 'contact' %}Jedna osoba po kontaktu. Za svaki broj ili adresu dodajte zaseban red.{% else %}Svaka faktura ima svoj red, dospeće i iznos. Ukupan iznos mora odgovarati zbiru stavki.{% endif %}</p>
+  {{ formset.management_form }}{{ formset.non_form_errors }}
+  <div class="collections-formset">{% for line in formset %}<div class="collections-form-row border rounded p-3 mb-2">{{ line.non_field_errors }}{% for field in line.hidden_fields %}{{ field }}{% endfor %}<div class="row g-2">{% for field in line.visible_fields %}<div class="col-md">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}</div></div>{% endfor %}</div>
+  <template id="collection-empty-form"><div class="collections-form-row border rounded p-3 mb-2">{% for field in formset.empty_form.hidden_fields %}{{ field }}{% endfor %}<div class="row g-2">{% for field in formset.empty_form.visible_fields %}<div class="col-md">{{ field.label_tag }}{{ field }}</div>{% endfor %}</div></div></template>
+  <button type="button" class="btn btn-outline-primary mb-3 collections-add-row">Dodaj red</button>{% endif %}
+  <div class="d-flex gap-2 mt-4"><button type="submit" class="btn btn-primary">Sačuvaj</button><a class="btn btn-outline-secondary" href="{% if record.identity_id %}{% url 'potrazivanja:partner_detail' record.identity_id %}{% else %}{% url 'potrazivanja:dashboard' %}{% endif %}">Nazad</a></div>
+</form>
+{% if record.original_data %}<details class="mt-4"><summary>Originalni podaci prenosa</summary><dl class="mt-2">{% for key,value in record.original_data.items %}<dt>{{ key }}</dt><dd class="text-break">{{ value }}</dd>{% endfor %}</dl></details>{% endif %}
+{% if can_archive %}<hr><form method="post" action="{% url 'potrazivanja:record_archive' kind record.pk %}">{% csrf_token %}<input type="hidden" name="version" value="{{ record.updated_at.isoformat }}">
+{% if record.archived or record.arhivirano or kind == 'contact' and not record.active %}<input type="hidden" name="archived" value="0"><button class="btn btn-outline-primary">Vrati iz arhive</button>{% else %}<input type="hidden" name="archived" value="1"><button class="btn btn-outline-danger">Arhiviraj zapis</button>{% endif %}</form>{% endif %}
+</div></div>
+{% endblock %}

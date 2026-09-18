@@ -1,11 +1,13 @@
 from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
+from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
 from django.db import DatabaseError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from core.models import OrganizationalUnit, PermissionCode, Role
 from fleet.models import JobCode, PutniNalog, Vehicle, VehicleTravelOrder
@@ -24,7 +26,7 @@ class JobCardTests(TestCase):
         FinanceJob.objects.create(**job())
         FinanceJob.objects.create(**job("420001", "42", name="Other job"))
         SyncRun.objects.create(company=1, year_from=2025, year_to=2026, status="success")
-        self.collections = patch("naplata.queries.izvestaj_po_siframa_posla_data", return_value=([], []))
+        self.collections = patch("finansije.services.job_tables.job_balances", return_value={'snapshot': None, 'rows': []})
         self.collections_mock = self.collections.start()
         self.addCleanup(self.collections.stop)
 
@@ -55,29 +57,61 @@ class JobCardTests(TestCase):
         self.assertEqual([(r[0]["sort"], Decimal(r[1]["sort"]), Decimal(r[2]["sort"])) for r in expenses], [("512", Decimal("-30"), Decimal("100"))])
         self.assertIn("finance-amount-negative", expenses[0][1]["display"])
         self.assertContains(response, "28.02.2026.")
-        self.assertContains(response, "Nema podataka")
+        self.assertContains(response, "Interne fakture · ON")
 
-    def test_if_uses_document_month_and_counts_only_revenue_on_selected_job(self):
+    def test_if_uses_document_month_and_only_agreed_receivable_accounts(self):
         save_entry(document_date=date(2026, 2, 9))
         save_entry(line_number=2, account="20400", debit=Decimal("120"), credit=Decimal("0"), document_date=date(2026, 2, 9))
         save_entry(line_number=3, account="47000", credit=Decimal("20"), document_date=date(2026, 2, 9))
         save_entry(line_number=4, job_code="420001", center="42", credit=Decimal("800"), document_date=date(2026, 2, 9))
         save_entry(number=2, document_date=date(2026, 1, 31))
         save_entry(number=3, journal_type="ON", document_date=date(2026, 2, 9))
+        save_entry(number=4, account="20500", debit=Decimal("60"), credit=Decimal("10"), document_date=date(2026, 2, 28))
+        save_entry(number=5, account="204001", debit=Decimal("900"), document_date=date(2026, 2, 9))
+        save_entry(number=6, account="20400", debit=Decimal("900"), document_date=date(2026, 1, 31))
+        save_entry(number=7, account="20400", debit=Decimal("900"), document_date=date(2026, 2, 9), year=2025)
+        save_entry(number=8, account="20400", debit=Decimal("900"), document_date=date(2026, 2, 9), company=2)
+        save_entry(number=9, account="20400", debit=Decimal("900"), document_date=date(2026, 2, 9), job_code="420001", center="42")
+        inactive = save_entry(number=10, account="20400", debit=Decimal("900"), document_date=date(2026, 2, 9))
+        LedgerEntry.objects.filter(pk=inactive.pk).update(active=False)
         response = self.get_table("invoices")
         invoices = response.json()["data"]
-        self.assertEqual(len(invoices), 1)
-        self.assertEqual(Decimal(invoices[0][4]["sort"]), Decimal("100"))
-        self.assertIn("100", response.json()["footer"]["invoice_revenue"])
+        self.assertEqual(len(invoices), 2)
+        self.assertEqual(Decimal(invoices[0][4]["sort"]), Decimal("120"))
+        self.assertEqual(Decimal(invoices[1][4]["sort"]), Decimal("50"))
+        self.assertIn("170", response.json()["footer"]["invoice_amount"])
         self.assertEqual(invoices[0][0]["sort"], "2026-02-09")
 
     def test_if_keeps_separate_documents_partners_and_negative_corrections(self):
-        save_entry(document_date=date(2026, 2, 1), credit=Decimal("100"))
-        save_entry(line_number=2, document_reference="IF-B", document_date=date(2026, 2, 1), credit=Decimal("-20"))
-        save_entry(line_number=3, partner_code=222, document_date=date(2026, 2, 1), credit=Decimal("30"))
+        save_entry(account="20400", document_date=date(2026, 2, 1), debit=Decimal("100"), credit=Decimal("0"))
+        save_entry(account="20400", line_number=2, document_reference="IF-B", document_date=date(2026, 2, 1), debit=Decimal("-20"), credit=Decimal("0"))
+        save_entry(account="20500", line_number=3, partner_code=222, document_date=date(2026, 2, 1), debit=Decimal("30"), credit=Decimal("0"))
         data = self.get_table("invoices").json()
         self.assertEqual(len(data["data"]), 3)
         self.assertEqual(sum(Decimal(r[4]["sort"]) for r in data["data"]), Decimal("110"))
+
+    def test_internal_invoices_use_all_four_exact_accounts_and_preserve_negative_amounts(self):
+        for line, account in enumerate(("61420", "61421", "61521", "64002"), 1):
+            save_entry(journal_type="ON", line_number=line, account=account,
+                       document_date=date(2026, 2, 9), credit=Decimal("-20"), debit=Decimal("5"))
+        for number, changes in enumerate((
+                {"account": "614200"}, {"account": "61300"}, {"journal_type": "IF"},
+                {"year": 2025}, {"company": 2}, {"job_code": "420001", "center": "42"},
+                {"document_date": date(2026, 3, 1)}), 2):
+            values = dict(journal_type="ON", account="61420", document_date=date(2026, 2, 9))
+            save_entry(number=number, **{**values, **changes})
+        inactive = save_entry(number=20, journal_type="ON", account="64002", document_date=date(2026, 2, 9))
+        LedgerEntry.objects.filter(pk=inactive.pk).update(active=False)
+        data = self.get_table("internal_invoices").json()
+        self.assertEqual(len(data["data"]), 1)
+        self.assertEqual(data["data"][0][2]["sort"], "2026/ON/1")
+        self.assertEqual(Decimal(data["data"][0][4]["sort"]), Decimal("-100"))
+        self.assertIn("finance-amount-negative", data["data"][0][4]["display"])
+        self.assertIn("100", data["footer"]["internal_invoice_amount"])
+        save_entry(number=21, journal_type="ON", account="61521", document_date=date(2026, 8, 1))
+        self.assertEqual(len(self.get_table("internal_invoices", month="").json()["data"]), 3)
+        SyncRun.objects.all().delete()
+        self.assertEqual(self.get_table("internal_invoices").status_code, 409)
 
     def test_uncovered_year_is_missing_not_zero_and_empty_synchronized_job_is_zero(self):
         response = self.get_card()
@@ -126,13 +160,15 @@ class JobCardTests(TestCase):
         self.assertEqual(self.get_card().status_code, 302)
 
     def test_current_collections_are_scoped_and_not_reported_as_monthly_cash(self):
-        self.collections_mock.return_value = ([(123, "Partner", *[Decimal(i) for i in range(1, 10)], "ne", 0)], [])
+        self.collections_mock.return_value = {'snapshot': SimpleNamespace(pk=91, as_of_date=date(2026,9,18), source_observed_at=timezone.now()),
+            'rows': [{'identity_id': 123, 'partner_code': 123, 'partner_name': 'Partner', 'amounts': [Decimal(i) for i in range(1,10)]}]}
         response = self.get_card()
         self.collections_mock.assert_not_called()
         row = self.get_table("collections").json()["data"][0]
-        self.collections_mock.assert_called_once_with(True, [], "410001")
+        self.collections_mock.assert_called_once_with(self.user, "410001", company=1)
         self.assertEqual([Decimal(c["sort"]) for c in row[1:]], list(map(Decimal, range(1, 10))))
         self.assertContains(response, "Ovaj deo se ne filtrira po izabranom mesecu")
+        self.assertIn('/potrazivanja/partner/123/?snapshot=91', row[0]['display'])
 
     def test_collections_failure_keeps_monthly_finance_available(self):
         save_entry()
@@ -274,8 +310,10 @@ class JobCardTests(TestCase):
             response = self.get_card()
         self.assertEqual(response.status_code, 200)
         self.collections_mock.assert_not_called()
-        self.assertContains(response, "data-ajax-source=", count=7)
-        self.assertContains(response, "<tbody></tbody>", count=7)
+        self.assertContains(response, "data-ajax-source=", count=8)
+        self.assertContains(response, "<tbody></tbody>", count=8)
+        self.assertContains(response, 'id="JobInternalInvoices"')
+        self.assertNotContains(response, "Čeka se pomoćna tabela")
 
     def test_ajax_rechecks_scope_and_module_permissions_on_every_request(self):
         user = get_user_model().objects.create_user("ajax-limited", allowed_center_codes="41")
@@ -283,25 +321,27 @@ class JobCardTests(TestCase):
         role.permissions.add(PermissionCode.objects.create(code="finansije:dashboard"))
         user.roles.add(role)
         self.client.force_login(user)
-        for table in ("invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash"):
+        for table in ("invoices", "internal_invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash"):
             self.assertEqual(self.get_table(table, job="420001").status_code, 404)
         for table in ("vehicles", "custody", "employees", "travel", "collections"):
             self.assertEqual(self.get_table(table).status_code, 403)
         self.assertEqual(self.get_table("invoices").status_code, 200)
+        self.assertEqual(self.get_table("internal_invoices").status_code, 200)
         self.collections_mock.assert_not_called()
         user.roles.clear()
         self.assertEqual(self.get_table("invoices").status_code, 403)
+        self.assertEqual(self.get_table("internal_invoices").status_code, 403)
 
     def test_ajax_rejects_invalid_periods_and_unknown_tables(self):
         self.assertEqual(self.get_table("bad").status_code, 404)
-        for table in ("invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash"):
+        for table in ("invoices", "internal_invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash"):
             self.assertEqual(self.get_table(table, month=13).status_code, 400)
             self.assertEqual(self.get_table(table, job="").status_code, 400)
         self.collections_mock.assert_not_called()
 
     def test_ajax_escapes_source_text_and_keeps_raw_sort_values(self):
         save_entry(document_date=date(2026, 2, 9), partner_name='<img src=x onerror="bad()">',
-                   document_reference='<script>bad</script>', credit=Decimal("-1200.50"))
+                   document_reference='<script>bad</script>', account="20400", debit=Decimal("-1200.50"), credit=Decimal("0"))
         response = self.get_table("invoices")
         row = response.json()["data"][0]
         self.assertNotIn("<script>", row[1]["display"])
@@ -315,6 +355,8 @@ class JobCardTests(TestCase):
     def test_blank_month_covers_whole_year_and_ajax_keeps_blank_month(self):
         save_entry(document_date=date(2026, 2, 9))
         save_entry(number=2, booking_date=date(2026, 8, 1), document_date=date(2026, 8, 1))
+        save_entry(line_number=2, account="20400", debit=Decimal("120"), credit=Decimal("0"), document_date=date(2026, 2, 9))
+        save_entry(number=2, line_number=2, account="20400", debit=Decimal("120"), credit=Decimal("0"), document_date=date(2026, 8, 1))
         response = self.get_card(month="")
         self.assertEqual(response.context["period_from"], date(2026, 1, 1))
         self.assertEqual(response.context["period_to"], date(2026, 12, 31))

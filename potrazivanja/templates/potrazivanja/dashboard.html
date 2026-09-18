@@ -1,0 +1,44 @@
+{% extends "potrazivanja/base.html" %}
+{% block collections_content %}
+{% if kind == 'partners' or kind == 'jobs' or kind == 'review' or kind == 'positions' %}{% include "potrazivanja/_aging_legend.html" %}{% endif %}
+{% if kind == 'partners' or kind == 'positions' %}
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><div class="card h-100"><div class="card-body"><small>Ukupan saldo · RSD</small><div class="collections-metric">{{ totals.balance|default:0|floatformat:"2g" }}</div><small>{{ partner_count }} partnera</small></div></div></div>
+  <div class="col-md-3"><div class="card h-100"><div class="card-body"><small>Dospelo · RSD</small><div class="collections-metric collections-debt">{{ totals.overdue|default:0|floatformat:"2g" }}</div><small>Dospeće pre datuma snimka</small></div></div></div>
+  <div class="col-md-3"><div class="card h-100"><div class="card-body"><small>Nedospelo · RSD</small><div class="collections-metric">{{ totals.not_due|default:0|floatformat:"2g" }}</div><small>Poznato dospeće</small></div></div></div>
+  <div class="col-md-3"><div class="card h-100"><div class="card-body"><small>Bez datuma dospeća · RSD</small><div class="collections-metric">{{ totals.unknown|default:0|floatformat:"2g" }}</div><small>U staroj Naplati ulazi u baket 0,1</small></div></div></div>
+</div>
+{% endif %}
+{% if kind == 'partners' or kind == 'positions' or kind == 'postings' or kind == 'ispravke' or kind == 'jobs' or kind == 'review' %}
+<form method="get" class="card"><div class="card-body d-flex flex-wrap align-items-end gap-3">
+  <input type="hidden" name="view" value="{{ kind }}">
+  <div><label class="form-label" for="collection-center">Centar</label><select id="collection-center" class="form-select" name="center"><option value="">Svi dostupni centri</option>{% for center in centers %}<option value="{{ center }}" {% if center == selected_center %}selected{% endif %}>Centar {{ center }}</option>{% endfor %}</select></div>
+  {% if kind == 'jobs' %}<div><label class="form-label" for="collection-job">Šifra posla</label><input class="form-control" id="collection-job" name="job" value="{{ selected_job }}" placeholder="Sve šifre posla"></div>{% endif %}
+  <button type="submit" class="btn btn-primary">Prikaži</button>
+</div></form>{% endif %}
+<div class="card"><div class="card-body">
+  <h2 class="h5">{{ title }}</h2>
+  {% if kind == 'ispravke' %}<p class="text-muted">Zadržano poslovno pravilo stare Naplate: posle prelaznog roka koriste se ispravke prethodne godine.</p>{% endif %}
+  {% if list_entity == 'contacts' or list_entity == 'activities' or list_entity == 'notices' or list_entity == 'legal' %}
+  <form method="get" class="d-flex flex-wrap align-items-end gap-3 mb-3">
+    <input type="hidden" name="view" value="{{ kind }}">
+    <div><label class="form-label">Stanje</label><select class="form-select" name="archived"><option value="0">Aktivno</option><option value="1" {% if request.GET.archived == '1' %}selected{% endif %}>Arhiva</option><option value="all" {% if request.GET.archived == 'all' %}selected{% endif %}>Sve</option></select></div>
+    {% if list_entity == 'notices' %}<div><label class="form-label">Godina</label><input name="year" class="form-control" type="number" value="{{ request.GET.year }}"></div>{% endif %}
+    {% if kind == 'contacts' %}<label class="form-check form-switch"><input class="form-check-input" type="checkbox" name="review" value="1" {% if request.GET.review == '1' %}checked{% endif %}> Samo za sređivanje</label>{% endif %}
+    <button class="btn btn-primary">Prikaži</button>
+  </form>{% endif %}
+  <div class="d-flex flex-wrap gap-2 mb-3">
+  {% if can_export %}<a class="btn btn-outline-primary collections-export" href="{% url 'potrazivanja:export' %}?{{ request.GET.urlencode }}&kind={{ kind }}">Excel</a>{% endif %}
+  {% if kind == 'reminders' and can_import %}<a class="btn btn-outline-primary" href="{% url 'potrazivanja:notice_import' %}">Uvezi opomene</a>{% endif %}
+  {% if kind == 'contacts' and write_rights.contact %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'contact' %}">Novi kontakt</a>{% endif %}
+  {% if kind == 'notes' and write_rights.activity %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'activity' %}?type=note">Nova napomena</a>{% endif %}
+  {% if kind == 'calls' and write_rights.activity %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'activity' %}?type=phone">Novi poziv</a>{% endif %}
+  {% if kind == 'reminders' and write_rights.notice %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?type=reminder">Nova opomena</a>{% endif %}
+  {% if kind == 'letters' and write_rights.notice %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?type=letter">Novo pismo</a>{% endif %}
+  {% if kind == 'claims' and write_rights.notice %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?type=legacy_claim">Nova evidencija tužbe</a>{% endif %}
+  {% if kind == 'legal' and write_rights.legal %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'legal' %}">Novi postupak</a>{% endif %}
+  </div>
+  {% include 'potrazivanja/table.html' %}
+</div></div>
+<p class="text-muted small">Pozitivan saldo znači potraživanje; negativan saldo znači višak potražne strane. Sam saldo nije dokaz naplate određene fakture. Datumi i baketi važe za datum snimka.</p>
+{% endblock %}

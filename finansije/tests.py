@@ -313,8 +313,7 @@ class ReportTests(TestCase):
         response = self.client.get(reverse("finansije:report"), dict(self.params, date_from="2026-01-01", date_to="2026-01-31"))
         self.assertEqual(response.context["totals"]["count"], 0)
 
-    @patch("naplata.queries.izvestaj_po_siframa_posla_data", return_value=([], []))
-    def test_overview_only_filters_period_and_links_keep_selected_dates(self, collections):
+    def test_overview_only_filters_period_and_links_keep_selected_dates(self):
         response = self.client.get(reverse("finansije:dashboard"), dict(self.params, center="42", kind="expense"))
         self.assertNotContains(response, 'class="finance-filter-grid"')
         self.assertNotContains(response, '<table')

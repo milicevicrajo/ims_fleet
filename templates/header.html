@@ -106,11 +106,12 @@
                title="Flota">
               <i class="mdi mdi-car"></i><span class="app-label">Flota</span>
             </a>
-            <a class="nav-link {% if current_app == 'naplata' %}active{% endif %}"
-               href="{% url 'switch_app' 'naplata' %}?next={% url 'naplata:lista_dugovanja_po_bucketima' %}"
-               title="Naplata">
-              <i class="mdi mdi-cash-multiple"></i><span class="app-label">Naplata</span>
+            {% if potrazivanja_permissions.dashboard %}
+            <a class="nav-link {% if current_app == 'potrazivanja' %}active{% endif %}"
+               href="{% url 'switch_app' 'potrazivanja' %}?next={% url 'potrazivanja:dashboard' %}" title="Potraživanja">
+              <i class="mdi mdi-cash-check"></i><span class="app-label">Potraživanja</span>
             </a>
+            {% endif %}
             <a class="nav-link {% if current_app == 'isplate' %}active{% endif %}"
                href="{% url 'switch_app' 'isplate' %}?next={% url 'isplate:neoporezive_isplate' %}"
                title="Isplate">

@@ -1,0 +1,42 @@
+{% extends "potrazivanja/base.html" %}
+{% block hero_title %}{{ partner.partner_code }} · {{ partner.source_name }}{% endblock %}
+{% block collections_content %}
+<div class="card collections-partner-card">
+  <div class="collections-partner-header">
+    <div>
+      <h2>Evidencija partnera</h2>
+      <div class="collections-partner-meta">
+        {% if partner.source_address or partner.source_city %}<span>{{ partner.source_address }}{% if partner.source_address and partner.source_city %}, {% endif %}{{ partner.source_city }}</span>{% endif %}
+        <span>PIB <strong>{{ partner.source_tax_id|default:"—" }}</strong></span>
+      </div>
+    </div>
+    {% if can_review %}<a class="btn btn-sm btn-outline-primary" href="{% url 'potrazivanja:profile_edit' partner.pk %}"><i class="mdi mdi-account-check-outline" aria-hidden="true"></i> Oznake kupca</a>{% endif %}
+  </div>
+  <div class="card-header collections-partner-tab-header">
+  <nav class="nav collections-partner-tabs" role="tablist" aria-label="Evidencije partnera">{% for tab in tabs %}
+    <button class="nav-link {% if forloop.first %}active{% endif %}" id="tab-{{ tab.kind }}" data-bs-toggle="tab" data-bs-target="#pane-{{ tab.kind }}" type="button" role="tab" aria-controls="pane-{{ tab.kind }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"{% if not forloop.first %} tabindex="-1"{% endif %}>{{ tab.title }}</button>
+  {% endfor %}</nav>
+  </div>
+  <div class="tab-content collections-partner-content">{% for tab in tabs %}<div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="pane-{{ tab.kind }}" role="tabpanel" aria-labelledby="tab-{{ tab.kind }}">
+    <div class="collections-pane-heading"><h2>{{ tab.title }}</h2>
+    {% if tab.kind == 'contacts' and write_rights.contact %}
+    <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'contact' %}?partner={{ partner.pk }}"><i class="mdi mdi-plus" aria-hidden="true"></i> Novi kontakt</a></div>
+    {% elif tab.kind == 'calls' and write_rights.activity %}
+    <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'activity' %}?partner={{ partner.pk }}&type=phone"><i class="mdi mdi-plus" aria-hidden="true"></i> Novi poziv</a></div>
+    {% elif tab.kind == 'notes' and write_rights.activity %}
+    <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'activity' %}?partner={{ partner.pk }}&type=note"><i class="mdi mdi-plus" aria-hidden="true"></i> Nova napomena</a></div>
+    {% elif tab.kind == 'reminders' and write_rights.notice %}
+    <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?partner={{ partner.pk }}&type=reminder"><i class="mdi mdi-plus" aria-hidden="true"></i> Nova opomena</a></div>
+    {% elif tab.kind == 'letters' and write_rights.notice %}
+    <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?partner={{ partner.pk }}&type=letter"><i class="mdi mdi-plus" aria-hidden="true"></i> Novo pismo</a></div>
+    {% elif tab.kind == 'claims' and write_rights.notice %}
+    <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?partner={{ partner.pk }}&type=legacy_claim"><i class="mdi mdi-plus" aria-hidden="true"></i> Nova evidencija tužbe</a></div>
+    {% elif tab.kind == 'legal' and write_rights.legal %}
+    <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'legal' %}?partner={{ partner.pk }}"><i class="mdi mdi-plus" aria-hidden="true"></i> Novi postupak</a></div>
+    {% endif %}
+    </div>
+    {% if tab.kind == 'positions' %}{% include 'potrazivanja/_aging_legend.html' %}{% endif %}
+    {% include 'potrazivanja/table.html' with kind=tab.kind columns=tab.columns %}
+  </div>{% endfor %}</div>
+</div>
+{% endblock %}

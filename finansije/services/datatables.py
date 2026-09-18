@@ -124,3 +124,30 @@ def sync_response(request, runs):
                 item.source_rows, item.created, item.updated, item.unchanged, item.removed]
 
     return response(request, runs, columns, row, search)
+
+
+def nalog_z_response(request, runs):
+    columns = [("started_at",), ("finished_at",), ("trigger", "requested_by"),
+               ("year_from", "year_to"), ("status",), ("updated_rows",), ("inserted_rows",)]
+
+    def search(term):
+        query = Q(requested_by__icontains=term) | Q(error__icontains=term) | Q(status__icontains=term)
+        for code, label in runs.model.STATUS:
+            if term.casefold() in label.casefold():
+                query |= Q(status=code)
+        return query
+
+    def row(item):
+        color = {"success": "success", "failed": "danger", "running": "info",
+                 "skipped": "warning", "unknown": "warning"}[item.status]
+        status = format_html('<span class="badge bg-{}">{}</span>', color, item.get_status_display())
+        if item.error:
+            status = format_html('{}<details><summary>Detalji</summary><div>{}</div></details>', status, item.error)
+        duration = f"{(item.finished_at - item.started_at).total_seconds():.1f} s" if item.finished_at else ""
+        return [display_date(item.started_at, True), two_lines(display_date(item.finished_at, True), duration),
+                two_lines(item.get_trigger_display(), item.requested_by),
+                f"{item.year_from}–{item.year_to}" if item.year_from else "—", status,
+                item.updated_rows if item.updated_rows is not None else "—",
+                item.inserted_rows if item.inserted_rows is not None else "—"]
+
+    return response(request, runs, columns, row, search)

@@ -2,10 +2,12 @@ from core.mixins import user_has_role_permission
 
 
 def current_app(request):
+    from potrazivanja.access import can_view, can_view_all, can_sync
     app = request.session.get("current_app", "fleet")
     sidebar_map = {
         "fleet": "sidebar_fleet.html",
         "naplata": "sidebar_naplata.html",
+        "potrazivanja": "sidebar_potrazivanja.html",
         "isplate": "sidebar_isplate.html",
         "pravna": "sidebar_pravna.html",
         "kadrovi": "sidebar_kadrovi.html",
@@ -39,6 +41,7 @@ def current_app(request):
     ]
     return {
         "current_app": app,
+        "potrazivanja_permissions": {"dashboard": can_view(request.user), "view_all": can_view_all(request.user), "sync_status": can_sync(request.user)},
         "finansije_permissions": {
             code: user_has_role_permission(request.user, f"finansije:{code}")
             for code in ("dashboard", "ledger", "export", "sync_status", "view_all")

@@ -6,7 +6,27 @@
 {% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:dashboard' %}"><i class="mdi mdi-chart-bar me-1" aria-hidden="true"></i>Pregled finansija</a>{% endblock %}
 {% block finance_content %}
 <div class="card mb-3"><div class="card-body">
-  <form method="post" action="{% url 'finansije:sync_run' %}" id="FinanceSyncForm" class="finance-sync-form" data-no-preloader>
+  <h2 class="h5">Osvežavanje lokalnog izvora nalog_z</h2>
+  <p>Preuzima knjiženja u lokalni IMS_ERP za sve firme. Do 30. aprila osvežava prethodnu i tekuću godinu, a zatim samo tekuću.</p>
+  <form method="post" action="{% url 'finansije:nalog_z_refresh' %}" class="finance-sync-form" data-result="NalogZResult" data-history="NalogZTable" data-no-preloader>
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary"><i class="mdi mdi-database-sync me-1" aria-hidden="true"></i><span>Osveži nalog_z</span></button>
+  </form>
+  <p class="small text-muted mt-2 mb-0">Pokreće sp_AzurirajNalogZ. Ažurirani redovi uključuju i postojeće redove bez promene iznosa. Podaci finansijskih izveštaja preuzimaju se zasebnom sinhronizacijom ispod.</p>
+  <p class="small mt-2 mb-0">{% for schedule in nalog_z_schedules %}Aktivan raspored: {{ schedule.crontab }}. Potrebni su pokrenuti Celery worker za red sync i Celery Beat.{% empty %}Automatski raspored trenutno nije aktiviran.{% endfor %}</p>
+  <div id="NalogZResult" class="alert d-none mt-3 mb-0" role="status" aria-live="polite"></div>
+</div></div>
+<div class="card mb-4"><div class="card-body">
+  <h2 class="h5">Istorija osvežavanja nalog_z</h2>
+  <div class="finance-table-error alert alert-warning d-none" role="alert"></div>
+  <table id="NalogZTable" class="table table-sm align-middle finance-datatable" data-source="{% url 'finansije:sync_status' %}?source=nalog_z" data-order-direction="desc" style="width:100%">
+    <thead><tr><th class="finance-date">Početak</th><th class="finance-date">Završetak</th><th>Pokrenuo</th><th>Godine</th><th>Status</th><th class="finance-number">Ažurirano</th><th class="finance-number">Dodato</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div></div>
+<div class="card mb-3"><div class="card-body">
+  <h2 class="h5">Preuzimanje podataka finansijskih izveštaja</h2>
+  <form method="post" action="{% url 'finansije:sync_run' %}" id="FinanceSyncForm" class="finance-sync-form" data-result="FinanceSyncResult" data-history="FinanceSyncTable" data-no-preloader>
     {% csrf_token %}
     <div><label class="form-label" for="{{ sync_form.scope.id_for_label }}">{{ sync_form.scope.label }}</label>{{ sync_form.scope }}</div>
     <button type="submit" class="btn btn-primary"><i class="mdi mdi-sync me-1" aria-hidden="true"></i><span>Pokreni sinhronizaciju</span></button>
@@ -23,4 +43,4 @@
   </table>
 </div></div>
 {% endblock %}
-{% block extra_js %}{{ block.super }}<script src="{% static 'finansije/sync.js' %}?v=20260917-1"></script>{% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'finansije/sync.js' %}?v=20260918-1"></script>{% endblock %}

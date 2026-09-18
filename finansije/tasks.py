@@ -2,6 +2,7 @@ from celery import shared_task
 from django.utils import timezone
 
 from .services.sync import SyncBusy, sync_ledger
+from .services.nalog_z import refresh_nalog_z
 
 
 def _sync(year_from, year_to=None):
@@ -26,3 +27,13 @@ def sync_current_year():
 @shared_task
 def sync_all_years():
     return _sync(2025)
+
+
+@shared_task(bind=True)
+def refresh_nalog_z_task(self):
+    try:
+        run = refresh_nalog_z(trigger="celery", task_id=self.request.id or "")
+    except SyncBusy:
+        return "Task skipped: osvežavanje nalog_z je već pokrenuto."
+    return (f"nalog_z {run.year_from}–{run.year_to}: "
+            f"ažurirano={run.updated_rows}, dodato={run.inserted_rows}.")

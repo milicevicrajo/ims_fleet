@@ -1,0 +1,36 @@
+.collections-page .fleet-list-hero{margin-bottom:20px;background:linear-gradient(115deg,#164762,#1a777b);color:#fff;border-radius:10px;padding:24px 28px}
+.collections-page .fleet-list-hero h1{font-size:26px;color:#fff;margin:7px 0 10px}.collections-kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.collections-page .card{border:1px solid #e0e7ef;border-radius:9px;box-shadow:0 3px 12px #17365206;margin-bottom:18px}.collections-metric{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin:7px 0}.collections-debt{color:#a91c2d}
+.collections-positive{color:#133a13!important;background:#b9f6a5!important;border:1px solid #72bf59}.collections-negative{color:#870918!important;background:#ffc1ca!important;border:1px solid #d75a6c}.collections-neutral{color:#37465c!important;background:#edf1f6!important;border:1px solid #d9e0eb}
+.collections-amount{padding:4px 7px;border-radius:5px;white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums}.collections-tabs{padding:8px;background:#eff4f8;border-radius:9px;gap:5px}.collections-tabs .nav-link{border-radius:6px;font-weight:600;color:#24516d}.collections-tabs .nav-link.active{background:#175e7c;color:#fff}.collections-page table{font-size:13px}.collections-page th{white-space:nowrap}.collections-page .dataTables_wrapper,.collections-page .dt-container{width:100%}.collections-page td{vertical-align:middle}.collections-link{white-space:normal;min-width:150px;text-align:left}.collections-page .form-select{min-width:210px}.collections-page .badge{font-size:12px;padding:6px 9px}
+.collections-page .form-label{display:block;font-size:12px;font-weight:600;margin-bottom:6px}.collections-page .form-select{display:block;background:#fff;color:#24445d;border:1px solid #ccd9e6;border-radius:6px;padding:9px 32px 9px 12px;font:inherit;min-width:250px}.collections-page form .card-body{gap:16px}.collections-tabs button{border:0;padding:9px 13px;cursor:pointer}.collections-tabs{display:flex;flex-wrap:wrap}.collections-page .fleet-list-hero .btn{margin-left:8px}
+.collections-record-form .errorlist{color:#b42332;padding-left:1.25rem;margin-top:.4rem}
+.collections-form-row input:not([type=checkbox]):not([type=hidden]),.collections-form-row select{display:block;width:100%;min-height:38px;border:1px solid #ccd6e0;border-radius:6px;padding:7px}
+.collections-form-row label{display:block;font-size:.85rem;margin-bottom:4px}
+.collections-record-form .select2-container .select2-selection--single{min-height:38px;padding:4px;border-color:#ccd6e0}
+.collections-review{cursor:pointer}
+.collections-page .gap-2{gap:.5rem}.collections-page .gap-3{gap:1rem}
+.collections-page .btn{border-radius:6px}.collections-page .btn-outline-primary{color:#175e7c;border-color:#175e7c}.collections-page .btn-outline-primary:hover{color:#fff;background:#175e7c}
+.collections-page .form-check.form-switch{display:flex;align-items:center;gap:.5rem;padding-left:0}
+.collections-page .form-switch .form-check-input{appearance:none;-webkit-appearance:none;background:#cbd5df;background-image:none;width:36px;height:20px;border:1px solid #90a3b5;border-radius:20px;position:relative;margin:0;flex-shrink:0;cursor:pointer}
+.collections-page .form-switch .form-check-input:after{content:'';position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .15s}
+.collections-page .form-switch .form-check-input:checked{background:#287438;border-color:#287438}.collections-page .form-switch .form-check-input:checked:after{transform:translateX(16px)}
+.collections-page .form-switch .form-check-input:focus-visible{outline:3px solid #81afd2;outline-offset:2px}.collections-page .form-switch .form-check-input:disabled{opacity:.6}
+.collections-partner-header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 24px}
+.collections-partner-header h2{font-size:18px;font-weight:700;color:#193e53;margin:0 0 7px}
+.collections-partner-meta{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:12px;color:#627384}
+.collections-partner-meta strong{font-weight:600;color:#355167}
+/* Same workspace header and tab styling as the finance job detail. */
+.collections-partner-card > .collections-partner-tab-header{background:#f8fafc;padding:14px 18px;border-bottom:1px solid #dfe7ed;border-top:1px solid #e8eef3;border-radius:0}
+.collections-page .collections-partner-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0}
+.collections-page .collections-partner-tabs .nav-link{padding:9px 16px;background:#eaf2f9;border:1px solid transparent;border-radius:6px;color:#235b83;font-size:.82rem;font-weight:600;cursor:pointer}
+.collections-page .collections-partner-tabs .nav-link:hover{background:#dce9f3}
+.collections-page .collections-partner-tabs .nav-link.active{color:#fff;background:#235b83}
+.collections-page .collections-partner-tabs .nav-link:focus-visible{outline:2px solid #235b83;outline-offset:3px}
+.collections-partner-content{padding:24px}
+.collections-pane-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.collections-pane-heading h2{font-size:1.05rem;font-weight:700;color:#235b83;margin:0}
+.collections-tab-actions{display:flex;flex-wrap:wrap;gap:8px}
+.collections-tab-actions .btn-primary{background:#235b83;border-color:#235b83}
+.collections-tab-actions .btn-primary:hover{background:#194664;border-color:#194664}
+@media(max-width:767px){.collections-partner-header{padding:18px 16px;align-items:flex-start;flex-wrap:wrap;gap:14px}.collections-partner-content{padding:16px}.collections-partner-card > .collections-partner-tab-header{padding:14px 16px}}

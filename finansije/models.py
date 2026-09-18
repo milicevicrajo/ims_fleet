@@ -86,3 +86,22 @@ class SyncRun(models.Model):
 
     class Meta:
         ordering = ["-started_at", "-pk"]
+
+
+class NalogZRefreshRun(models.Model):
+    STATUS = [("running", "U toku"), ("success", "Uspešno"),
+              ("failed", "Neuspešno"), ("skipped", "Preskočeno"), ("unknown", "Ishod nepoznat")]
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True)
+    status = models.CharField(max_length=10, choices=STATUS, default="running")
+    trigger = models.CharField(max_length=10, choices=[("manual", "Ručno"), ("celery", "Celery")])
+    requested_by = models.CharField(max_length=255, blank=True)
+    task_id = models.CharField(max_length=255, blank=True)
+    year_from = models.PositiveSmallIntegerField(null=True)
+    year_to = models.PositiveSmallIntegerField(null=True)
+    updated_rows = models.PositiveBigIntegerField(null=True)
+    inserted_rows = models.PositiveBigIntegerField(null=True)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-started_at", "-pk"]

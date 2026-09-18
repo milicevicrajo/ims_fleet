@@ -95,6 +95,8 @@ def collect_permission_codes():
     codes.update(collect_mobilni_permission_codes())
     codes.update(collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije"))
     codes.add("finansije:view_all")
+    from potrazivanja.permissions import PERMISSIONS
+    codes.update(f"potrazivanja:{code}" for code in PERMISSIONS)
     return sorted(codes)
 
 
@@ -337,6 +339,10 @@ def sync_permission_codes():
             user.roles.add(pregled_naplate_role)
             pregled_naplate_group_users_synced += 1
 
+    # Preserve equivalent grants in the independent collections namespace after
+    # the standard role reconciliation above. This does not change Naplata grants.
+    from potrazivanja.permissions import configure_permissions
+    configure_permissions()
     return {
         "synced": len(codes),
         "created": created,

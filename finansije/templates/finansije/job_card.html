@@ -1,10 +1,11 @@
 {% extends "finansije/base.html" %}
-{% load finance l10n %}
+{% load finance l10n static %}
 {% block title %}Detalj šifre posla · IMS{% endblock %}
 {% block hero_title %}<i class="mdi mdi-briefcase-outline me-2" aria-hidden="true"></i>{% if job_code %}{{ job_code }} · {{ job_info.name }}{% else %}Detalj šifre posla{% endif %}{% endblock %}
 {% block hero_description %}{% if job_code %}Detalj šifre posla · Centar {{ job_info.center|default:"Neraspoređeno" }} · Finansijski pokazatelji i povezane evidencije.{% else %}Izaberite posao i mesec ili celu godinu za pregled rezultata, dokumenata i angažovanih vozila.{% endif %}{% endblock %}
 {% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:report' %}?group=job">Sve šifre posla</a>{% if job_code and can_ledger %}<a class="btn btn-outline-light" href="{{ ledger_url }}">Knjiženja u periodu</a>{% endif %}{% endblock %}
 {% block finance_content %}
+<link rel="stylesheet" href="{% static 'potrazivanja/amounts.css' %}?v=20260918-red">
 <form method="get" class="card fleet-list-filter finance-filter mb-3">
   <div class="finance-job-filters">
     <div class="finance-job-select"><label class="form-label" for="{{ form.job.id_for_label }}">{{ form.job.label }}</label>{{ form.job }}{{ form.job.errors }}</div>
@@ -16,7 +17,7 @@
 {% if not valid %}<div class="alert alert-danger">Proverite šifru posla, godinu i mesec.</div>
 {% elif not job_code %}<div class="card"><div class="card-body text-muted">Izaberite šifru posla da biste otvorili mesečnu analizu.</div></div>
 {% else %}
-<div class="finance-analysis-period"><i class="mdi mdi-calendar-range" aria-hidden="true"></i><span>Analiza šifre <strong>{{ job_code }}</strong> za period <strong>od {{ period_from|date:"d.m.Y." }} do {{ period_to|date:"d.m.Y." }}</strong>.</span><small>Iznosi u RSD · Naplata prikazuje trenutno stanje</small></div>
+<div class="finance-analysis-period"><i class="mdi mdi-calendar-range" aria-hidden="true"></i><span>Analiza šifre <strong>{{ job_code }}</strong> za period <strong>od {{ period_from|date:"d.m.Y." }} do {{ period_to|date:"d.m.Y." }}</strong>.</span><small>Iznosi u RSD · Potraživanja prikazuju poslednji snimak</small></div>
 {% if not finance_available %}<div class="alert alert-warning">Nema potvrđenih sinhronizovanih finansijskih podataka za {{ form.cleaned_data.year }}. Iznosi nisu prikazani kao nula.</div>{% endif %}
 {% if period_from <= today and period_to >= today %}<p class="finance-accounting-note">Izabrani period je u toku. Finansijski iznosi obuhvataju do sada preuzeta knjiženja.</p>{% endif %}
 <div class="finance-job-metrics mb-3">
@@ -42,27 +43,39 @@
 <div class="card-header">
 <nav class="nav finance-job-nav mb-3" role="tablist" aria-label="Delovi detalja šifre posla">
   <button class="nav-link active" id="job-invoices-tab" data-bs-toggle="tab" data-bs-target="#job-invoices" type="button" role="tab" aria-controls="job-invoices" aria-selected="true">Fakture</button>
+  <button class="nav-link" id="job-internal-invoices-tab" data-bs-toggle="tab" data-bs-target="#job-internal-invoices" type="button" role="tab" aria-controls="job-internal-invoices" aria-selected="false" tabindex="-1">Interne fakture</button>
   <button class="nav-link" id="job-expenses-tab" data-bs-toggle="tab" data-bs-target="#job-expenses" type="button" role="tab" aria-controls="job-expenses" aria-selected="false" tabindex="-1">Rashodi</button>
   <button class="nav-link" id="job-vehicles-tab" data-bs-toggle="tab" data-bs-target="#job-vehicles" type="button" role="tab" aria-controls="job-vehicles" aria-selected="false" tabindex="-1">Vozila</button>
   <button class="nav-link" id="job-custody-tab" data-bs-toggle="tab" data-bs-target="#job-custody" type="button" role="tab" aria-controls="job-custody" aria-selected="false" tabindex="-1">Zaduženja vozila</button>
   <button class="nav-link" id="job-employees-tab" data-bs-toggle="tab" data-bs-target="#job-employees" type="button" role="tab" aria-controls="job-employees" aria-selected="false" tabindex="-1">Zaposleni i zarade</button>
   <button class="nav-link" id="job-travel-tab" data-bs-toggle="tab" data-bs-target="#job-travel" type="button" role="tab" aria-controls="job-travel" aria-selected="false" tabindex="-1">Putni nalozi</button>
-  <button class="nav-link" id="job-collections-tab" data-bs-toggle="tab" data-bs-target="#job-collections" type="button" role="tab" aria-controls="job-collections" aria-selected="false" tabindex="-1">Naplata</button>
+  <button class="nav-link" id="job-collections-tab" data-bs-toggle="tab" data-bs-target="#job-collections" type="button" role="tab" aria-controls="job-collections" aria-selected="false" tabindex="-1">Potraživanja</button>
 </nav>
 </div>
 <div class="tab-content finance-job-panels">
 
 <section id="job-invoices" class="tab-pane active" role="tabpanel" aria-labelledby="job-invoices-tab" tabindex="0"><div class="card-body">
   <h2 class="finance-job-heading">Izdate fakture · IF</h2>
-  <p class="text-muted small">Dokumenti od {{ period_from|date:"d.m.Y." }} do {{ period_to|date:"d.m.Y." }}, prema datumu dokumenta. Prikazan je prihod knjižen na ovoj šifri posla, bez PDV-a; to nije ukupna vrednost fakture. Jedna faktura može teretiti više šifara. Nalog i veza dokumenta zajedno identifikuju zapis.</p>
+  <p class="text-muted small">Dokumenti od {{ period_from|date:"d.m.Y." }} do {{ period_to|date:"d.m.Y." }}, prema datumu dokumenta, za izabranu izvornu godinu. IF · konta 20400 i 20500 · iznos duguje − potražuje na ovoj šifri posla. Prikazuje se iznos sa konta potraživanja, a ne prihod. Ako je faktura podeljena na više poslova, ovde je samo deo knjižen na ovoj šifri.</p>
   {% if finance_available %}
   {% include "finansije/_table_error.html" %}<div class="table-responsive"><table class="table table-hover finance-datatable" id="JobInvoices" data-ajax-source="{{ table_urls.invoices }}" data-lazy="true" style="width:100%" data-order-direction="desc">
-    <thead><tr><th class="finance-date">Datum dokumenta</th><th>Veza dokumenta</th><th>Nalog</th><th>Partner</th><th class="finance-number">Prihod na šifri · RSD</th></tr></thead>
+    <thead><tr><th class="finance-date">Datum dokumenta</th><th>Veza dokumenta</th><th>Nalog</th><th>Partner</th><th class="finance-number">Iznos fakture na šifri · RSD</th></tr></thead>
     <tbody></tbody>
-    <tfoot><tr><td colspan="4">Ukupan prihod na šifri iz svih IF dokumenata izabranog perioda</td><td class="text-end"><span data-footer="invoice_revenue">—</span></td></tr></tfoot>
+    <tfoot><tr><td colspan="4">Ukupan iznos IF na kontima 20400 i 20500 za izabrani period i šifru</td><td class="text-end"><span data-footer="invoice_amount">—</span></td></tr></tfoot>
   </table></div>
   {% else %}<p class="text-muted">Nema podataka za ovu godinu.</p>{% endif %}
-  <div class="finance-job-note"><strong>Interne fakture</strong> · Nema podataka. Čeka se pomoćna tabela koja izdvaja interne fakture iz ON naloga.</div>
+</div></section>
+
+<section id="job-internal-invoices" class="tab-pane" role="tabpanel" aria-labelledby="job-internal-invoices-tab" tabindex="0"><div class="card-body">
+  <h2 class="finance-job-heading">Interne fakture · ON</h2>
+  <p class="text-muted small">Dokumenti od {{ period_from|date:"d.m.Y." }} do {{ period_to|date:"d.m.Y." }}, prema datumu dokumenta, za izabranu izvornu godinu. ON · konta 61420, 61421, 61521 i 64002 · iznos potražuje − duguje na ovoj šifri posla. Storna i korekcije zadržavaju znak.</p>
+  {% if finance_available %}
+  {% include "finansije/_table_error.html" %}<div class="table-responsive"><table class="table table-hover finance-datatable" id="JobInternalInvoices" data-ajax-source="{{ table_urls.internal_invoices }}" data-lazy="true" style="width:100%" data-order-direction="desc">
+    <thead><tr><th class="finance-date">Datum dokumenta</th><th>Veza dokumenta</th><th>Nalog</th><th>Partner</th><th class="finance-number">Iznos interne fakture · RSD</th></tr></thead>
+    <tbody></tbody>
+    <tfoot><tr><td colspan="4">Ukupan iznos internih faktura za izabrani period i šifru</td><td class="text-end"><span data-footer="internal_invoice_amount">—</span></td></tr></tfoot>
+  </table></div>
+  {% else %}<p class="text-muted">Nema podataka za ovu godinu.</p>{% endif %}
 </div></section>
 
 <section id="job-expenses" class="tab-pane" role="tabpanel" aria-labelledby="job-expenses-tab" tabindex="0"><div class="card-body">
@@ -114,11 +127,13 @@
 </div></section>
 
 <section id="job-collections" class="tab-pane" role="tabpanel" aria-labelledby="job-collections-tab" tabindex="0"><div class="card-body">
-  <h2 class="finance-job-heading">Naplata · trenutno stanje</h2>
-  <p class="text-muted small">Postojeća evidencija dugovanja za šifru {{ job_code }}, prikazana {{ today|date:"d.m.Y." }}. Ovaj deo se ne filtrira po izabranom mesecu i ne predstavlja stanje na njegovom kraju, niti iznos naplaćen u tom mesecu.</p>
-  {% if not can_collections %}<p class="text-muted">Za ovaj deo potreban je pristup izveštaju Naplate za ovu šifru posla.</p>
-  {% else %}{% include "finansije/_table_error.html" %}<div class="table-responsive"><table id="JobCollections" data-ajax-source="{{ table_urls.collections }}" data-lazy="true" class="table table-hover finance-datatable" style="width:100%">
-    <thead><tr><th>Partner</th><th class="finance-number">Nedospelo</th><th class="finance-number">Do 30 dana</th><th class="finance-number">31–45</th><th class="finance-number">46–60</th><th class="finance-number">61–90</th><th class="finance-number">91–180</th><th class="finance-number">Preko 180</th><th class="finance-number">Dospelo</th><th class="finance-number">Ukupno · RSD</th></tr></thead>
+  <h2 class="finance-job-heading">Potraživanja · poslednje sinhronizovano stanje</h2>
+  <p class="text-muted small">Lokalna evidencija potraživanja za šifru {{ job_code }}. Ovaj deo se ne filtrira po izabranom mesecu i ne predstavlja stanje na njegovom kraju, niti iznos naplaćen u tom mesecu.</p>
+  {% if not can_collections %}<p class="text-muted">Za ovaj deo potreban je pristup Potraživanjima za ovu šifru posla.</p>
+  {% else %}<p class="finance-accounting-note" data-footer="collections_as_of">Učitavanje datuma stanja…</p>
+  {% include "potrazivanja/_aging_legend.html" %}
+  {% include "finansije/_table_error.html" %}<div class="table-responsive"><table id="JobCollections" data-ajax-source="{{ table_urls.collections }}" data-lazy="true" class="table table-hover finance-datatable" style="width:100%">
+    <thead><tr><th>Partner</th><th class="finance-number">Nedospelo / bez datuma</th><th class="finance-number">Do 30 dana</th><th class="finance-number">31–45</th><th class="finance-number">46–60</th><th class="finance-number">61–90</th><th class="finance-number">91–180</th><th class="finance-number">Preko 180</th><th class="finance-number">Dospelo</th><th class="finance-number">Ukupno · RSD</th></tr></thead>
     <tbody></tbody>
   </table></div>{% endif %}
 </div></section>

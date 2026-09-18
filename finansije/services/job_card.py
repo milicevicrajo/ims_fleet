@@ -7,7 +7,11 @@ from django.db.models.functions import Substr
 from django.urls import reverse
 
 from fleet.models import JobCode, TrafficCard
-from .reports import CLOSING_POSTINGS, expressions, summary
+from .reports import CLOSING_POSTINGS, summary
+
+
+INVOICE_ACCOUNTS = ("20400", "20500")
+INTERNAL_INVOICE_ACCOUNTS = ("61420", "61421", "61521", "64002")
 
 
 def monthly_expenses(entries, start, end, job_code):
@@ -27,14 +31,18 @@ def monthly_expenses(entries, start, end, job_code):
     return expenses
 
 
-def monthly_invoices(entries, start, end):
+def monthly_invoices(entries, start, end, *, internal=False):
     # Issued documents are selected by document date, not booking date.
-    # Revenue is the portion posted to this job, never the sum of every invoice line.
-    invoices = list(entries.filter(journal_type="IF", document_date__range=(start, end))
+    # Sum only the agreed accounts, preserving corrections and the authorized job scope.
+    journal_type = "ON" if internal else "IF"
+    accounts = INTERNAL_INVOICE_ACCOUNTS if internal else INVOICE_ACCOUNTS
+    amount = F("credit") - F("debit") if internal else F("debit") - F("credit")
+    invoices = list(entries.filter(journal_type=journal_type, account__in=accounts,
+                                  year=start.year, document_date__range=(start, end))
                     .order_by().values("year", "journal_number", "document_reference",
                                       "partner_group", "partner_code")
                     .annotate(partner_name=Max("partner_name"), date=Min("document_date"),
-                              last_date=Max("document_date"), **expressions())
+                              last_date=Max("document_date"), amount=Sum(amount))
                     .order_by("date", "year", "journal_number", "document_reference"))
     return invoices
 

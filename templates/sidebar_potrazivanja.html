@@ -1,0 +1,18 @@
+<aside class="left-sidebar" data-sidebarbg="skin5"><div class="scroll-sidebar"><nav class="sidebar-nav"><ul id="sidebarnav" class="pt-4">
+<li class="sidebar-item {% if section == 'partners' %}selected{% endif %}"><a class="sidebar-link" href="{% url 'potrazivanja:dashboard' %}"><i class="mdi mdi-cash-multiple"></i><span class="hide-menu">Lista dugovanja</span></a></li>
+{% if potrazivanja_permissions.view_all %}
+<li class="sidebar-item {% if section == 'review' %}selected{% endif %}"><a class="sidebar-link" href="{% url 'potrazivanja:dashboard' %}?view=review"><i class="mdi mdi-clipboard-check"></i><span class="hide-menu">Spisak za proveru</span></a></li>
+<li class="sidebar-item {% if section == 'legal' %}selected{% endif %}"><a class="sidebar-link" href="{% url 'potrazivanja:dashboard' %}?view=legal"><i class="mdi mdi-gavel"></i><span class="hide-menu">Utuženi klijenti</span></a></li>
+<li class="sidebar-item {% if section == 'notices' %}selected{% endif %}"><a class="sidebar-link" href="{% url 'potrazivanja:dashboard' %}?view=reminders"><i class="mdi mdi-email-outline"></i><span class="hide-menu">Opomene</span></a></li>
+{% endif %}
+<li class="sidebar-item {% if section == 'jobs' %}selected{% endif %}"><a class="sidebar-link" href="{% url 'potrazivanja:dashboard' %}?view=jobs"><i class="mdi mdi-briefcase-outline"></i><span class="hide-menu">Izveštaj po šiframa posla</span></a></li>
+{% if potrazivanja_permissions.view_all %}<li class="sidebar-item {% if section == 'sef' %}selected{% endif %}"><a class="sidebar-link" href="{% url 'potrazivanja:dashboard' %}?view=sef"><i class="mdi mdi-file-check"></i><span class="hide-menu">Neodobrene IF</span></a></li>{% endif %}
+<li class="sidebar-item"><a class="sidebar-link" target="_blank" rel="noopener" href="https://www.nbs.rs/sr/drugi-nivo-navigacije/servisi/jedinstveni-registar-racuna/index.html"><i class="mdi mdi-bank"></i><span class="hide-menu">NBS · Registar računa</span></a></li>
+<li class="sidebar-item"><a class="sidebar-link" target="_blank" rel="noopener" href="https://www.nbs.rs/sr_RS/drugi-nivo-navigacije/servisi/duznici-pn/"><i class="mdi mdi-bank"></i><span class="hide-menu">NBS · Prinudna naplata</span></a></li>
+{% if potrazivanja_permissions.sync_status %}<li class="sidebar-item {% if section == 'sync' %}selected{% endif %}"><a class="sidebar-link" href="{% url 'potrazivanja:sync_status' %}"><i class="mdi mdi-sync"></i><span class="hide-menu">Sinhronizacija i kontrole</span></a></li>{% endif %}
+{% if naplata_permissions.lista_dugovanja_po_bucketima %}
+<li class="sidebar-item"><a class="sidebar-link" href="{% url 'switch_app' 'naplata' %}?next={% url 'naplata:lista_dugovanja_po_bucketima' %}"><i class="mdi mdi-history"></i><span class="hide-menu">Stara Naplata (legacy)</span></a></li>
+{% elif naplata_permissions.izvestaj_po_siframa_posla %}
+<li class="sidebar-item"><a class="sidebar-link" href="{% url 'switch_app' 'naplata' %}?next={% url 'naplata:izvestaj_po_siframa_posla' %}"><i class="mdi mdi-history"></i><span class="hide-menu">Stara Naplata (legacy)</span></a></li>
+{% endif %}
+</ul></nav></div></aside>
