@@ -57,14 +57,16 @@ METHODOLOGY = [
 ]
 
 
-def visible_vehicles(user, as_of=None, include_retired=False):
+def visible_vehicles(user, include_retired=False):
     # Access follows CURRENT responsibility, independently of the historical filter.
     today = timezone.localdate()
     assignment = JobCode.objects.filter(vehicle_id=OuterRef('pk'), assigned_date__lte=today).order_by('-assigned_date', '-pk')
     qs = Vehicle.objects.annotate(access_center=Subquery(assignment.values('organizational_unit__center')[:1]))
     centers = allowed_centers(user)
     if centers:
-        qs = qs.filter(access_center__in=centers)
+        # Vozilo bez ijedne dodele nema centar i ne sme da nestane: tek uneto vozilo
+        # jos nije rasporedjeno. Ranija provera je NULL izricito propustala.
+        qs = qs.filter(Q(access_center__in=centers) | Q(access_center__isnull=True))
     if not include_retired:
         qs = qs.filter(otpis=False)
     return qs.order_by('brand', 'model', 'pk')
@@ -85,6 +87,27 @@ def _active(rows, day, first='start_date', last='end_date'):
     return [r for r in rows if getattr(r, first) <= day and (getattr(r, last) is None or getattr(r, last) >= day)]
 
 
+def _active_orders(rows, day):
+    """Nalozi koji pokrivaju dan, bez lazne primopredaje.
+
+    Pri predaji vozila zatvoreni nalog dobija closed_at jednak created_at sledeceg
+    naloga. Da se taj dan ne bi brojao dvaput, dan primopredaje pripada nalogu koji
+    tog dana POCINJE. Nalog zatvoren bez naslednika zadrzava svoj poslednji dan, a
+    jednodnevni nalog svoj jedini dan.
+    """
+    handover = any(row.created_at == day for row in rows)
+    active = []
+    for row in rows:
+        if row.created_at > day:
+            continue
+        if row.closed_at is not None and row.closed_at < day:
+            continue
+        if handover and row.closed_at == day and row.created_at != day:
+            continue
+        active.append(row)
+    return active
+
+
 def period_analysis(vehicles, start, end):
     """Batch-load sources once; identical output is used by fleet and vehicle screens."""
     vehicles = list(vehicles)
@@ -98,7 +121,9 @@ def period_analysis(vehicles, start, end):
     services = _group(ServiceTransaction.objects.filter(vehicle_id__in=ids, datum__range=(start, end)).select_related('popravka_kategorija'))
     requisitions = _group(Requisition.objects.filter(vehicle_id__in=ids, datum_trebovanja__range=(start, end)).select_related('popravka_kategorija'))
     recoveries = _group(Insurance.objects.filter(vehicle_id__in=ids, kola=True, datum__range=(start, end)))
-    policies = _group(Policy.objects.filter(vehicle_id__in=ids).filter(Q(start_date__lte=end) | Q(start_date__isnull=True)))
+    policies = _group(Policy.objects.filter(vehicle_id__in=ids)
+        .filter(Q(start_date__lte=end) | Q(start_date__isnull=True))
+        .filter(Q(end_date__gte=start) | Q(end_date__isnull=True)))
     holdings = _group(VehicleHolding.objects.filter(vehicle_id__in=ids, start_date__lte=end).select_related('lease'))
     leases = list(Lease.objects.filter(vehicle_id__in=ids, start_date__lte=end, end_date__gte=start))
     lease_map = {r.pk: r for r in leases}
@@ -135,8 +160,10 @@ def period_analysis(vehicles, start, end):
         fuel = [r for r in direct[pk] if source_at(date_only(r['date'])) == 'transactions']
         for r in legacy[pk]:
             if source_at(date_only(r.date)) == 'legacy':
-                fuel.append(dict(date=r.date, amount=r.amount, cost_bruto=r.cost_bruto, mileage=r.mileage,
-                    supplier=r.supplier, product=r.fuel_type, receipt_number='Ranija evidencija'))
+                fuel.append(dict(date=r.date, amount=r.amount, cost_bruto=r.cost_bruto,
+                    cost_neto=r.cost_neto, price_per_liter=(r.cost_bruto / r.amount) if r.amount else None,
+                    mileage=r.mileage, supplier=r.supplier, product=r.fuel_type,
+                    receipt_number='Ranija evidencija'))
         if legacy[pk] and not fuel:
             warnings.add('Postoji ranija evidencija goriva, ali nije izabrana kao izvor. Izvori se ne sabiraju automatski.')
         ledger = recorded_analytics(fuel, services[pk], requisitions[pk], recoveries[pk], start, end)
@@ -253,9 +280,8 @@ def period_analysis(vehicles, start, end):
         evidence_count = sum(ledger['counts'].values()) + policy_count
         has_cost = bool(known_days)
         day_cost = total / Decimal(len(days))
-        unallocated = ZERO
         for day in days:
-            active = _active(orders[pk], day, 'created_at', 'closed_at')
+            active = _active_orders(orders[pk], day)
             if active:
                 booked_days.add(day)
             if len(active) > 1:
@@ -266,13 +292,12 @@ def period_analysis(vehicles, start, end):
                 row = jobs.setdefault(job.pk, dict(code=job.code, name=job.name, days=0, amount=ZERO))
                 row['days'] += 1
                 row['amount'] += day_cost
-            else:
-                unallocated += day_cost
         if overlapping_days:
             warnings.add(f'Preklapanje naloga tokom {overlapping_days} dana; proveriti evidenciju. Dani se broje jednom.')
         if any(not o.job_code_id for o in orders[pk]):
             warnings.add('Postoje nalozi bez potvrđene šifre posla; pripadnost se ne izvodi iz centra vozila.')
-        # Preserve reconciliation at Decimal precision without rounding each daily slice.
+        # Neraspodeljeno je ostatak posle raspodele; racuna se jednom, u punoj
+        # Decimal tacnosti, umesto sabiranja zaokruzenih dnevnih delova.
         unallocated = total - sum((j['amount'] for j in jobs.values()), ZERO)
         if not has_cost:
             for job in jobs.values():
@@ -362,7 +387,9 @@ def compare_scenarios(assessment, scenarios):
         savings = Decimal(keep['annual_equivalent']) - Decimal(best['annual_equivalent'])
         recommendation = ('Zadržavanje je najpovoljnije ili izjednačeno u okviru unetih pretpostavki.' if savings == 0 else
             f'Razmotriti alternativu „{best["name"]}” — niži ekvivalentni godišnji trošak od zadržavanja.')
-    return dict(version=VERSION, methodology=METHODOLOGY, as_of=assessment.as_of.isoformat(), years=n, discount_percent=str(assessment.discount_percent),
+    # Metodologija se ne upisuje u snimak: vezana je za version, a prikaz je cita
+    # iz koda. Ranije se ista tabela ponavljala u svakoj sacuvanoj proceni.
+    return dict(version=VERSION, as_of=assessment.as_of.isoformat(), years=n, discount_percent=str(assessment.discount_percent),
         annual_km=assessment.annual_km, annual_days=assessment.annual_days, scope=assessment.scope,
         assumptions=assessment.assumptions, scenarios=results, recommendation=recommendation,
         annual_saving=str(savings) if savings is not None else None)

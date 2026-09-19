@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
@@ -15,6 +16,16 @@ from fleet.models import (VehicleAnalysisProfile, LeaseChargePeriod, VehicleDown
     VehicleTravelOrder, VehicleEconomicAssessment)
 from fleet.services.economics import (VERSION, METHODOLOGY, visible_vehicles, period_analysis,
     fleet_summary, compare_scenarios)
+
+
+def _lookup_id(value):
+    """Kljuc iz adrese; nebrojcana vrednost daje 404 umesto greske 500."""
+    if value in (None, ''):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        raise Http404('Neispravan identifikator u adresi.')
 
 
 def default_period():
@@ -71,17 +82,17 @@ def render_fleet_analysis(request, center_code=None):
 
 
 @login_required
-@role_permission_required('vehicle_update')
+@role_permission_required('vehicle_analysis_settings')
 @require_http_methods(['GET', 'POST'])
 def vehicle_analysis_settings(request, pk):
     vehicle = get_object_or_404(visible_vehicles(request.user, include_retired=True), pk=pk)
     action = request.POST.get('action') if request.method == 'POST' else None
     profile = VehicleAnalysisProfile(vehicle=vehicle)
-    downtime_id = request.POST.get('downtime_id') if action == 'downtime' else request.GET.get('downtime')
+    downtime_id = _lookup_id(request.POST.get('downtime_id') if action == 'downtime' else request.GET.get('downtime'))
     downtime = get_object_or_404(VehicleDowntime, pk=downtime_id, vehicle=vehicle) if downtime_id else VehicleDowntime(vehicle=vehicle)
-    charge_id = request.POST.get('charge_id') if action == 'charge' else request.GET.get('charge')
+    charge_id = _lookup_id(request.POST.get('charge_id') if action == 'charge' else request.GET.get('charge'))
     charge = get_object_or_404(LeaseChargePeriod, pk=charge_id, lease__vehicle=vehicle) if charge_id else LeaseChargePeriod()
-    order_id = request.POST.get('order_id') if action == 'job' else request.GET.get('order')
+    order_id = _lookup_id(request.POST.get('order_id') if action == 'job' else request.GET.get('order'))
     order = get_object_or_404(VehicleTravelOrder, pk=order_id, vehicle=vehicle) if order_id else None
     forms = {
         'profile': AnalysisProfileForm(request.POST if action == 'profile' else None, instance=profile, prefix='profile'),
@@ -107,7 +118,7 @@ def vehicle_analysis_settings(request, pk):
 
 
 @login_required
-@role_permission_required('vehicle_update')
+@role_permission_required('vehicle_assessment_create')
 @require_http_methods(['GET', 'POST'])
 def vehicle_assessment_create(request, pk):
     vehicle = get_object_or_404(visible_vehicles(request.user, include_retired=True), pk=pk)
@@ -133,7 +144,7 @@ def vehicle_assessment_create(request, pk):
 
 
 @login_required
-@role_permission_required('vehicle_detail')
+@role_permission_required('vehicle_assessment_detail')
 @require_http_methods(['GET'])
 def vehicle_assessment_detail(request, pk):
     assessment = get_object_or_404(VehicleEconomicAssessment.objects.select_related('vehicle', 'created_by'),

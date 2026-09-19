@@ -35,7 +35,6 @@ from ..models import (
 )
 from ..support.fuel import (
     calculate_average_fuel_consumption,
-    get_vehicle_fuel_transaction_rows,
 )
 from ..forms.vehicles import VehicleForm
 

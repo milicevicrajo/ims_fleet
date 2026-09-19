@@ -62,7 +62,13 @@ class VehicleTravelOrderForm(forms.ModelForm):
             from fleet.support.management_reports import allowed_centers
             centers = allowed_centers(self.user)
             if centers:
-                self.fields['job_code'].queryset = self.fields['job_code'].queryset.filter(center__in=centers)
+                # Postojeca sifra naloga ostaje u izboru i kada je van korisnikovih
+                # centara; bez toga bi se pri izmeni tiho obrisala (polje nije obavezno).
+                limited = self.fields['job_code'].queryset.filter(center__in=centers)
+                current_id = getattr(self.instance, 'job_code_id', None)
+                if current_id:
+                    limited = limited | self.fields['job_code'].queryset.filter(pk=current_id)
+                self.fields['job_code'].queryset = limited.distinct()
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
             if inactive_employee.exists():

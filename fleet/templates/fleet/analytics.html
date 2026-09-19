@@ -1,13 +1,182 @@
-{% extends 'base.html' %}{% load humanize %}{% block content %}
-<style>.fa-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0}.fa-kpi{padding:20px;border:1px solid #d9e3ea;border-radius:9px;background:white}.fa-kpi small{display:block;color:#526675;margin-bottom:8px}.fa-kpi strong{font-size:22px}.fa-filter{display:flex;align-items:end;gap:16px;flex-wrap:wrap}.fa-filter label{display:block}.fa-filter input,.fa-filter select{padding:8px;max-width:100%}.fa-table td,.fa-table th{vertical-align:top}.fa-table small{display:block;color:#526675}.fa-table th{white-space:nowrap}.fa-note{padding:14px;background:#edf3f7;border-radius:7px}.fa-note summary{cursor:pointer}.errorlist{color:#a32922}</style>
-<h1 class="my-4">Analitika voznog parka{% if center_code %} · centar {{ center_code }}{% endif %}</h1><p>Troškovi, namena i opravdanost korišćenja · zajednička metodologija sa analitikom pojedinačnog vozila. Centar je prema dodeli na kraju izabranog perioda.</p>
-<div class="card"><div class="card-body"><form method="get" class="fa-filter">{% for field in period_form %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="btn btn-primary">Prikaži</button></form>{{ period_form.non_field_errors }}</div></div>
-{% if period_valid %}<p>{{ period_start|date:"d.m.Y" }} – {{ period_end|date:"d.m.Y" }} · oba datuma uključena · RSD. Obuhvat prema izabranom statusu vozila; istorijski datum otpisa nije evidentiran.</p>
-<div class="fa-kpis"><div class="fa-kpi"><small>Vozila u izboru</small><strong>{{ summary.count }}</strong></div><div class="fa-kpi"><small>Obuhvaćeni troškovi RSD</small><strong>{{ summary.total|floatformat:"2g"|default:"Nema iznosa" }}</strong><small>{{ summary.known_count }} vozila sa iznosima; delimičan zbir, nije TCO.</small></div><div class="fa-kpi"><small>Ponderisani RSD/km</small><strong>{{ summary.per_km|floatformat:"2g"|default:"Nije dostupno" }}</strong><small>Zbir troškova / zbir km za {{ summary.comparable_count }} vozila sa istim granicama; {{ summary.distance|floatformat:"0g" }} km.</small></div><div class="fa-kpi"><small>Potrebna provera</small><strong>{{ summary.review_count }}</strong><small>Nedostajući podaci ili prekoračen uneti kriterijum.</small></div></div>
-<p class="fa-note">Trošak po kilometru nije univerzalan kriterijum opravdanosti. Za specijalna vozila trošak mašine i radni sati moraju biti zasebno evidentirani. Ocena zamene zasniva se na sačuvanom poređenju budućih opcija.</p>
-<section class="card"><div class="card-body"><h2 class="h4">Namena × raspolaganje</h2><p>Namena je prema profilu na kraju perioda; mešoviti periodi označeni su u detaljima vozila. Raspolaganje obuhvata sve potvrđene osnove u periodu.</p><div class="table-responsive"><table class="table fa-table"><thead><tr><th>Poslovna namena</th><th>Raspolaganje</th><th>Vozila</th><th>Obuhvaćeni RSD</th><th>Ponderisani RSD/km</th></tr></thead><tbody>{% for g in groups %}<tr><td>{{ g.purpose }}</td><td>{{ g.basis }}</td><td>{{ g.summary.count }}</td><td>{{ g.summary.total|floatformat:"2g"|default:"—" }}</td><td>{{ g.summary.per_km|floatformat:"2g"|default:"—" }}<small>{{ g.summary.comparable_count }} vozila sa usklađenim granicama</small></td></tr>{% empty %}<tr><td colspan="5">Nema vozila za izabrane uslove.</td></tr>{% endfor %}</tbody></table></div></div></section>
-<section class="card"><div class="card-body"><h2 class="h4">Analiza po vozilu</h2><div class="table-responsive"><table class="table table-striped fa-table"><thead><tr><th>Vozilo / centar</th><th>Namena / raspolaganje</th><th>Obuhvaćeni RSD</th><th>Km perioda</th><th>RSD/km</th><th>Dani po nalogu</th><th>RSD/dan po nalogu</th><th>Kriterijum i podaci</th></tr></thead><tbody>{% for r in rows %}<tr><td><a href="{% url 'vehicle_detail' r.vehicle_id %}?start={{ period_start|date:'Y-m-d' }}&amp;end={{ period_end|date:'Y-m-d' }}#cost-pane">{{ r.label }}</a><small>{{ r.vehicle.brand }} {{ r.vehicle.model }} · {{ r.center }}{% if r.vehicle.otpis %} · otpisano{% endif %}</small></td><td>{{ r.purpose }}<small>{{ r.basis }}</small></td><td>{{ r.total|floatformat:"2g"|default:"Nema iznosa" }}</td><td>{{ r.distance|floatformat:"0g"|default:"Nema usklađenih granica" }}</td><td>{{ r.per_km|floatformat:"2g"|default:"—" }}</td><td>{{ r.booked_days }} / {{ r.period_days }}<small>{{ r.booked_percent|floatformat:1 }}% · administrativno zaduženje</small></td><td>{{ r.per_day|floatformat:"2g"|default:"—" }}</td><td>{{ r.status }}<small>{{ r.quality }}</small><details><summary>Obrazloženje i kriterijumi</summary><p>{{ r.indicators }}</p>{% for c in r.criteria %}<p>{{ c.label }}: {{ c.value|floatformat:"2g"|default:"nije dostupno" }}; prag {{ c.limit|floatformat:"2g" }}.</p>{% endfor %}<p>{{ r.profile.criterion_source|default:"Kriterijum nije potvrđen." }}</p><ul>{% for w in r.warnings %}<li>{{ w }}</li>{% endfor %}</ul></details></td></tr>{% endfor %}</tbody></table></div></div></section>
-<details class="card"><summary class="card-header">Mesečni zbir izabranih vozila</summary><div class="card-body"><p>Zbir istih obuhvaćenih stavki po mesecu. Bez stavki se prikazuje „Nema iznosa”; evidentirani nulti zbir ne potvrđuje potpunost evidencije.</p><table class="table table-sm"><thead><tr><th>Mesec</th><th>Obuhvaćeni troškovi RSD</th></tr></thead><tbody>{% for m in monthly %}<tr><td>{{ m.month|date:"m.Y" }}</td><td>{{ m.total|floatformat:"2g"|default:"Nema iznosa" }}</td></tr>{% endfor %}</tbody></table></div></details>
-<details class="card"><summary class="card-header">Sačuvane procene budućih opcija do kraja izabranog perioda</summary><div class="card-body"><p>Ovo su zasebne procene prema tadašnjim pretpostavkama; nisu automatski izvedene iz troškova perioda.</p><ul>{% for r in rows %}<li>{{ r.label }}: {% if r.latest_assessment %}<a href="{% url 'vehicle_assessment_detail' r.latest_assessment.pk %}">{{ r.latest_assessment.as_of|date:"d.m.Y" }} · {{ r.latest_assessment.title }}</a> — {{ r.latest_assessment.snapshot.recommendation }}{% else %}Nema sačuvanog poređenja alternativa.{% endif %}</li>{% endfor %}</ul></div></details>
-{% else %}<p class="alert alert-warning">Ispravite period i filtere da biste videli rezultate.</p>{% endif %}
-{% include 'fleet/_analysis_methodology.html' %}{% endblock %}
+{% extends 'base.html' %}
+{% load humanize widget_tweaks %}
+
+{% block title %}Analitika voznog parka · IMS{% endblock %}
+
+{% block content %}
+{% include 'fleet/includes/list_styles.html' %}
+{% include 'fleet/includes/analytics_styles.html' %}
+
+<div class="fleet-analytics-page">
+  <header class="fleet-list-hero fleet-analytics-hero">
+    <div>
+      <span class="fleet-analytics-eyebrow">IMS · upravljanje flotom</span>
+      <h1>Analitika voznog parka{% if center_code %} · centar {{ center_code }}{% endif %}</h1>
+      <p>Troškovi, angažovanje i opravdanost korišćenja vozila.</p>
+      {% if period_valid %}
+      <div class="fleet-analytics-hero-meta">
+        <span><i class="mdi mdi-calendar-range" aria-hidden="true"></i> {{ period_start|date:"d.m.Y" }} – {{ period_end|date:"d.m.Y" }}</span>
+        <span>Iznosi u RSD</span>
+      </div>
+      {% endif %}
+    </div>
+    <div class="fleet-analytics-actions">
+      <a class="btn btn-light btn-sm" href="{% url 'vehicle_list' %}"><i class="mdi mdi-car" aria-hidden="true"></i> Spisak vozila</a>
+      <a class="btn btn-outline-light btn-sm" href="#fleet-analytics-methodology"><i class="mdi mdi-book-open-outline" aria-hidden="true"></i> Metodologija</a>
+    </div>
+  </header>
+
+  <section class="card fleet-analytics-filter-card" aria-labelledby="fleet-analytics-filter-title">
+    <div class="card-body">
+      <div class="fleet-analytics-section-heading">
+        <div><h2 id="fleet-analytics-filter-title">Period i obuhvat</h2><p>Izaberite period, centar i grupu vozila za poređenje.</p></div>
+        {% if request.GET %}<a class="btn btn-outline-secondary btn-sm" href="{{ request.path }}">Poništi filtere</a>{% endif %}
+      </div>
+      <form method="get" class="fleet-list-filter fleet-analytics-filter">
+        {% for field in period_form %}
+          {% if field.field.widget.input_type != 'checkbox' %}
+          <div class="fleet-analytics-field fleet-analytics-field-{{ field.name }}">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field|add_class:'form-control' }}
+            {{ field.errors }}
+          </div>
+          {% endif %}
+        {% endfor %}
+        <div class="fleet-analytics-filter-footer">
+          <div class="form-check">
+            {{ period_form.include_retired|add_class:'form-check-input' }}
+            <label class="form-check-label" for="{{ period_form.include_retired.id_for_label }}">{{ period_form.include_retired.label }}</label>
+            {{ period_form.include_retired.errors }}
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="mdi mdi-filter-outline" aria-hidden="true"></i> Prikaži analizu</button>
+        </div>
+        {% if period_form.non_field_errors %}<div class="fleet-analytics-form-errors" role="alert">{{ period_form.non_field_errors }}</div>{% endif %}
+      </form>
+      <p class="fleet-analytics-scope">Oba datuma su uključena. Centar je prema dodeli na kraju perioda. Obuhvat je prema izabranom statusu vozila; istorijski datum otpisa nije evidentiran.</p>
+    </div>
+  </section>
+
+  {% if period_valid %}
+  <div class="fleet-analytics-kpis" aria-label="Pokazatelji za izabrani period">
+    <div class="fleet-analytics-kpi">
+      <div class="fleet-analytics-kpi-label">Vozila u izboru <i class="mdi mdi-car-multiple" aria-hidden="true"></i></div>
+      <strong class="fleet-analytics-number">{{ summary.count }}</strong>
+      <small>Vozila koja odgovaraju izabranim filterima.</small>
+    </div>
+    <div class="fleet-analytics-kpi">
+      <div class="fleet-analytics-kpi-label">Obuhvaćeni troškovi · RSD <i class="mdi mdi-wallet-outline" aria-hidden="true"></i></div>
+      <strong class="fleet-analytics-number fleet-analytics-number-amount">{{ summary.total|floatformat:"2g"|default:"Nema iznosa" }}</strong>
+      <small>Vozila sa iznosima: {{ summary.known_count }}. Delimičan zbir, nije TCO.</small>
+    </div>
+    <div class="fleet-analytics-kpi">
+      <div class="fleet-analytics-kpi-label">Ponderisani RSD/km <i class="mdi mdi-speedometer" aria-hidden="true"></i></div>
+      <strong class="fleet-analytics-number fleet-analytics-number-amount">{{ summary.per_km|floatformat:"2g"|default:"Nije dostupno" }}</strong>
+      <small>Zbir troškova / zbir km. Vozila sa istim granicama: {{ summary.comparable_count }}; {{ summary.distance|floatformat:"0g" }} km.</small>
+    </div>
+    <div class="fleet-analytics-kpi{% if summary.review_count %} fleet-analytics-kpi-review{% endif %}">
+      <div class="fleet-analytics-kpi-label">Potrebna provera <i class="mdi mdi-clipboard-text-search-outline" aria-hidden="true"></i></div>
+      <strong class="fleet-analytics-number">{{ summary.review_count }}</strong>
+      <small>Nedostajući podaci ili prekoračen uneti kriterijum.</small>
+    </div>
+  </div>
+
+  <aside class="fleet-analytics-note">
+    <i class="mdi mdi-information-outline" aria-hidden="true"></i>
+    <div><strong>Kako tumačiti rezultate</strong><p>Trošak po kilometru nije univerzalan kriterijum opravdanosti. Za specijalna vozila trošak mašine i radni sati moraju biti zasebno evidentirani. Ocena zamene zasniva se na sačuvanom poređenju budućih opcija.</p></div>
+  </aside>
+
+  <section class="card" aria-labelledby="fleet-analytics-groups-title">
+    <div class="card-body">
+      <div class="fleet-analytics-section-heading">
+        <div><h2 id="fleet-analytics-groups-title">Namena × raspolaganje</h2><p>Poređenje vozila po poslovnoj ulozi i osnovu korišćenja.</p></div>
+        <span class="fleet-status info">Grupe: {{ groups|length }}</span>
+      </div>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Troškovi po nameni i raspolaganju">
+        <table class="table fleet-analytics-table">
+          <thead><tr><th scope="col">Poslovna namena</th><th scope="col">Raspolaganje</th><th scope="col" class="fleet-analytics-numeric">Vozila</th><th scope="col" class="fleet-analytics-numeric">Obuhvaćeni RSD</th><th scope="col" class="fleet-analytics-numeric">Ponderisani RSD/km</th></tr></thead>
+          <tbody>
+            {% for g in groups %}
+            <tr><th scope="row">{{ g.purpose }}</th><td>{{ g.basis }}</td><td class="fleet-analytics-numeric">{{ g.summary.count }}</td><td class="fleet-analytics-numeric">{{ g.summary.total|floatformat:"2g"|default:"—" }}</td><td class="fleet-analytics-numeric">{{ g.summary.per_km|floatformat:"2g"|default:"—" }}<small>Vozila sa usklađenim granicama: {{ g.summary.comparable_count }}</small></td></tr>
+            {% empty %}
+            <tr><td colspan="5" class="fleet-analytics-empty"><i class="mdi mdi-filter-remove-outline" aria-hidden="true"></i><strong>Nema vozila za izabrane uslove.</strong><span>Promenite period ili filtere da biste videli rezultate.</span></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="fleet-analytics-scope">Namena je prema profilu na kraju perioda; mešoviti periodi označeni su u detaljima vozila. Raspolaganje obuhvata sve potvrđene osnove u periodu.</p>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="fleet-analytics-vehicles-title">
+    <div class="card-body">
+      <div class="fleet-analytics-section-heading">
+        <div><h2 id="fleet-analytics-vehicles-title">Analiza po vozilu</h2><p>Otvorite vozilo za strukturu troškova, evidenciju i procenu budućih opcija.</p></div>
+        <span class="fleet-status muted">Vozila: {{ summary.count }}</span>
+      </div>
+      <div class="table-responsive" tabindex="0" role="region" aria-label="Analitika pojedinačnih vozila">
+        <table class="table fleet-analytics-table fleet-analytics-vehicles">
+          <thead><tr><th scope="col">Vozilo / centar</th><th scope="col">Namena / raspolaganje</th><th scope="col" class="fleet-analytics-numeric">Obuhvaćeni RSD</th><th scope="col" class="fleet-analytics-numeric">Km perioda</th><th scope="col" class="fleet-analytics-numeric">RSD/km</th><th scope="col" class="fleet-analytics-numeric">Dani po nalogu</th><th scope="col" class="fleet-analytics-numeric">RSD/dan po nalogu</th><th scope="col">Kriterijum i podaci</th></tr></thead>
+          <tbody>
+          {% for r in rows %}
+            <tr>
+              <th scope="row"><a class="fleet-table-link fleet-analytics-vehicle-link" href="{% url 'vehicle_detail' r.vehicle_id %}?start={{ period_start|date:'Y-m-d' }}&amp;end={{ period_end|date:'Y-m-d' }}#cost-pane">{{ r.label }} <i class="mdi mdi-arrow-top-right" aria-hidden="true"></i></a><small>{{ r.vehicle.brand }} {{ r.vehicle.model }} · {{ r.center }}</small>{% if r.vehicle.otpis %}<span class="fleet-status muted">Otpisano</span>{% endif %}</th>
+              <td>{{ r.purpose }}<small>{{ r.basis }}</small></td>
+              <td class="fleet-analytics-numeric">{{ r.total|floatformat:"2g"|default:"Nema iznosa" }}</td>
+              <td class="fleet-analytics-numeric">{{ r.distance|floatformat:"0g"|default:"Nema usklađenih granica" }}</td>
+              <td class="fleet-analytics-numeric">{{ r.per_km|floatformat:"2g"|default:"—" }}</td>
+              <td class="fleet-analytics-numeric">{{ r.booked_days }} / {{ r.period_days }}<small>{{ r.booked_percent|floatformat:1 }}% · administrativno zaduženje</small></td>
+              <td class="fleet-analytics-numeric">{{ r.per_day|floatformat:"2g"|default:"—" }}</td>
+              <td class="fleet-analytics-quality"><strong>{{ r.status }}</strong><small>{{ r.quality }}</small>
+                <details class="fleet-analytics-row-details"><summary>Obrazloženje i kriterijumi</summary><div><p>{{ r.indicators }}</p>{% for c in r.criteria %}<p>{{ c.label }}: {{ c.value|floatformat:"2g"|default:"nije dostupno" }}; prag {{ c.limit|floatformat:"2g" }}.</p>{% endfor %}<p>{{ r.profile.criterion_source|default:"Kriterijum nije potvrđen." }}</p>{% if r.warnings %}<ul>{% for w in r.warnings %}<li>{{ w }}</li>{% endfor %}</ul>{% endif %}</div></details>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="fleet-analytics-empty"><strong>Nema vozila za prikaz.</strong><span>Proverite izabrani obuhvat analize.</span></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <details class="card fleet-analytics-disclosure">
+    <summary class="card-header"><i class="mdi mdi-calendar-month-outline" aria-hidden="true"></i> Mesečni zbir izabranih vozila</summary>
+    <div class="card-body">
+      <p class="fleet-analytics-muted">Zbir istih obuhvaćenih stavki po mesecu. Bez stavki se prikazuje „Nema iznosa”; evidentirani nulti zbir ne potvrđuje potpunost evidencije.</p>
+      <div class="table-responsive"><table class="table fleet-analytics-table"><thead><tr><th scope="col">Mesec</th><th scope="col" class="fleet-analytics-numeric">Obuhvaćeni troškovi RSD</th></tr></thead><tbody>{% for m in monthly %}<tr><th scope="row">{{ m.month|date:"m.Y" }}</th><td class="fleet-analytics-numeric">{{ m.total|floatformat:"2g"|default:"Nema iznosa" }}</td></tr>{% empty %}<tr><td colspan="2" class="fleet-analytics-empty">Nema mesečnih podataka za izabrani obuhvat.</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+  </details>
+
+  <details class="card fleet-analytics-disclosure">
+    <summary class="card-header"><i class="mdi mdi-file-chart-outline" aria-hidden="true"></i> Sačuvane procene budućih opcija</summary>
+    <div class="card-body">
+      <p class="fleet-analytics-muted">Procene sačuvane do kraja izabranog perioda, prema tadašnjim pretpostavkama. Nisu automatski izvedene iz troškova perioda.</p>
+      <ul class="fleet-analytics-assessments">{% for r in rows %}<li><strong>{{ r.label }}</strong><div>{% if r.latest_assessment %}<a href="{% url 'vehicle_assessment_detail' r.latest_assessment.pk %}">{{ r.latest_assessment.as_of|date:"d.m.Y" }} · {{ r.latest_assessment.title }}</a><small>{{ r.latest_assessment.snapshot.recommendation }}</small>{% else %}<span class="fleet-analytics-muted">Nema sačuvanog poređenja alternativa.</span>{% endif %}</div></li>{% empty %}<li class="fleet-analytics-muted">Nema vozila u izabranom obuhvatu.</li>{% endfor %}</ul>
+    </div>
+  </details>
+  {% else %}
+  <div class="alert alert-warning" role="alert"><i class="mdi mdi-alert-outline" aria-hidden="true"></i> Ispravite period i filtere da biste videli rezultate.</div>
+  {% endif %}
+
+  <div id="fleet-analytics-methodology" class="fleet-analytics-methodology">{% include 'fleet/_analysis_methodology.html' %}</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+  (() => {
+    const openMethodology = () => {
+      const panel = document.querySelector('#fleet-analytics-methodology > details');
+      if (panel) panel.open = true;
+    };
+    const link = document.querySelector('a[href="#fleet-analytics-methodology"]');
+    if (link) link.addEventListener('click', openMethodology);
+    const openLinkedSection = () => {
+      if (window.location.hash === '#fleet-analytics-methodology') openMethodology();
+    };
+    window.addEventListener('hashchange', openLinkedSection);
+    openLinkedSection();
+  })();
+</script>
+{% endblock %}

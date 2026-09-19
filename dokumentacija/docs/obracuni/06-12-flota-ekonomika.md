@@ -13,6 +13,18 @@ Ekrani: `/analitika/`, statistika centra i kartica **Troškovi** na detalju vozi
 Oba koriste [`period_analysis()`](../../../fleet/services/economics.py).
 Oznaka zbira je **Obuhvaćeni troškovi**, ne ukupan trošak vlasništva.
 
+Analitika flote i centra koristi zajedničko gradijentno hero zaglavlje modula
+Flota, sa izabranim periodom i prečicom koja otvara metodologiju. Filteri imaju
+posebnu opciju za otpisana vozila i poništavanje izbora. Četiri kartice izdvajaju
+broj vozila, obuhvaćene troškove, ponderisani RSD/km i broj vozila za proveru.
+Tabele imaju horizontalno pomeranje na užim ekranima, uz zadržavanje kolone
+vozila u vidnom polju; obrazloženja po vozilu,
+mesečni zbir i sačuvane procene otvaraju se po potrebi. Promena prikaza ne menja
+formule ni kriterijume obračuna.
+
+Stilovi i sidra analitike koriste prefiks `fleet-analytics-`, da ne bi dolazilo
+do sukoba sa klasama `fa-filter` i `fa-table` iz globalnog Font Awesome paketa.
+
 ### E-01.2. Poslovna svrha
 
 Uskladiti prikaz istog vozila u istom periodu na oba ekrana, prikazati poslovnu
@@ -22,9 +34,25 @@ internu raspodelu na poslove. Posebna procena E-02 poredi buduće alternative.
 ### E-01.3. Korisnici
 
 Uprava, služba voznog parka i korisnici sa dozvolama za odgovarajuće ekrane.
-Prikaz flote zahteva `fleet_analytics`; uređivanje ulaza i izrada procene
-`vehicle_update`; pregled sačuvane procene `vehicle_detail`.
-Ograničenja centara se primenjuju i na direktne URL adrese.
+
+**Kod dozvole je naziv rute**, kao i svuda u sistemu [P]:
+
+| Ekran | Dozvola |
+|---|---|
+| Analitika flote | `fleet_analytics` |
+| Statistika centra | `center_statistics` |
+| Ulazi za analitiku | `vehicle_analysis_settings` |
+| Izrada procene | `vehicle_assessment_create` |
+| Pregled sačuvane procene | `vehicle_assessment_detail` |
+
+`sync_permission_codes` te dozvole **izvodi iz postojećih**: ko je smeo da menja vozilo
+(`vehicle_update`) dobija ulaze i izradu procene, a ko je smeo da ga vidi (`vehicle_detail`)
+dobija pregled procene, analitiku flote i statistiku centra. Ručna dodela nije potrebna, ali
+**komandu treba pokrenuti pri isporuci** — inače ekrani koji su ranije bili otvoreni ostaju
+zaključani. Provereno testom `test_new_fleet_routes_inherit_permissions`.
+
+Ograničenja centara se primenjuju i na direktne URL adrese. Neispravan ključ u adresi
+(`?order=abc`) daje **404**, ne grešku servera.
 
 ### E-01.4. Ulazni podaci
 
@@ -89,6 +117,20 @@ tačnog vremena prelaska obračunske granice. Jednodnevni period nema RSD/km.
 
 **Dani po nalogu:** unija kalendarskih dana naloga u periodu. Otvoren nalog se
 ograničava krajem izabranog perioda. Ovo je administrativna zauzetost, ne produktivnost.
+
+**Dan primopredaje pripada nalogu koji tog dana počinje.** [P] Pri predaji vozila zatvoreni
+nalog dobija `closed_at` jednak `created_at` sledećeg naloga, pa bi se taj dan inače brojao
+dvaput: javljalo bi se lažno „preklapanje naloga“, vozilo bi išlo u „Potrebna provera
+podataka“, a kod različitih šifara posla trošak tog dana bi ostajao **neraspoređen**.
+
+| Slučaj | Kome pripada dan |
+|---|---|
+| Nalog zatvoren istog dana kada sledeći počinje | **Novom** nalogu |
+| Nalog zatvoren bez naslednika | Zadržava svoj poslednji dan |
+| Jednodnevni nalog (`created_at == closed_at`) | Svoj jedini dan |
+| Dva naloga stvarno preklopljena | **Preklapanje se i dalje prijavljuje** |
+
+Funkcija: `_active_orders()`. Testovi pokrivaju sva četiri slučaja.
 
 `RSD/dan po nalogu = obuhvaćeni troškovi celog perioda / jedinstveni dani po nalogu`.
 `RSD/kalendarskom danu = obuhvaćeni troškovi / svi dani perioda`.
@@ -175,6 +217,9 @@ potvrđene osnove perioda.
 - Stari nalozi nemaju automatski dodeljenu šifru posla. Korisnik potvrđuje vezu.
 - Kontrola pristupa prati današnju odgovornost za vozilo. Prikaz istorijskog centra
   koristi dodelu na kraju izabranog perioda.
+- **Vozilo bez ijedne dodele ostaje vidljivo** korisniku sa ograničenim centrima. Takvo
+  vozilo nema centar, a tek uneto vozilo ne sme da nestane sa spiska pre raspoređivanja.
+  Vozilo dodeljeno **tuđem** centru i dalje nije vidljivo.
 - `otpis` nema istorijski datum; korisnik može uključiti trenutno otpisana vozila.
 
 ### E-01.13. Status pouzdanosti

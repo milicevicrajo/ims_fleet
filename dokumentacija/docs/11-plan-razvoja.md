@@ -116,7 +116,7 @@ Za **11 izveštaja Flote** formula postoji **isključivo u bazi** — [P-27](10-
 
 ## 11.5. Prioriteti iz registra problema
 
-**49 uočenih problema, od toga 15 rešeno (18–19.09.2026.).**
+**50 uočenih problema, od toga 20 rešeno (18–19.09.2026.). U Floti je od 21 problema rešeno 16.**
 
 | Dan | Rešeno |
 |---|---|

@@ -60,7 +60,13 @@ class OrderJobForm(StyledModelForm):
         from fleet.support.management_reports import allowed_centers
         centers = allowed_centers(user)
         if centers:
-            self.fields['job_code'].queryset = self.fields['job_code'].queryset.filter(center__in=centers)
+            # Postojeca sifra ostaje ponudjena i kada je van korisnikovih centara,
+            # inace bi je ekran za potvrdu sifre posla tiho obrisao.
+            limited = self.fields['job_code'].queryset.filter(center__in=centers)
+            current_id = getattr(self.instance, 'job_code_id', None)
+            if current_id:
+                limited = limited | self.fields['job_code'].queryset.filter(pk=current_id)
+            self.fields['job_code'].queryset = limited.distinct()
 
 
 class AssessmentForm(StyledModelForm):

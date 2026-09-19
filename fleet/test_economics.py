@@ -238,6 +238,181 @@ class FleetEconomicsTests(EconomicsFixture):
         self.assertEqual(summary['comparable_count'], 2)
 
 
+class EconomicsReviewFixesTests(EconomicsFixture):
+    """Ispravke iz pregleda koda 19.09.2026.
+
+    Svaki test opisuje sta je bilo pogresno, da se ne bi vratilo.
+    """
+
+    def test_vehicle_without_assignment_stays_visible(self):
+        # Vozilo bez ijedne dodele nema centar. Ranije ga je filter po centru
+        # izbacivao (NULL IN (...) nije tacno), pa je davalo 404 na detalju.
+        user = get_user_model().objects.create_user('ogranicen', password='t')
+        user.allowed_center_codes = '01'
+        user.save()
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
+        neraspoređeno = vehicle('9')
+
+        visible = list(visible_vehicles(user))
+
+        self.assertIn(self.car, visible)
+        self.assertIn(neraspoređeno, visible, msg='vozilo bez dodele ne sme da nestane')
+
+    def test_vehicle_in_another_center_stays_hidden(self):
+        # Kontrola uz prethodni test: propustanje praznog centra ne sme da otvori
+        # vozila tudjeg centra.
+        user = get_user_model().objects.create_user('ogranicen2', password='t')
+        user.allowed_center_codes = '01'
+        user.save()
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
+        tudje = vehicle('8')
+        drugi = OrganizationalUnit.objects.create(code='P2', name='Drugi', center='02')
+        JobCode.objects.create(vehicle=tudje, organizational_unit=drugi, assigned_date=self.start)
+
+        self.assertNotIn(tudje, list(visible_vehicles(user)))
+
+    def test_handover_day_is_not_counted_as_overlap(self):
+        # Pri predaji vozila zatvoren nalog dobija closed_at jednak created_at
+        # sledeceg. Ranije su oba naloga tog dana bila "aktivna", pa je vozilo
+        # dobijalo upozorenje o preklapanju i trosak tog dana je ostajao
+        # neraspodeljen kada nalozi imaju razlicite poslove.
+        self.fuel()
+        drugi_posao = OrganizationalUnit.objects.create(code='P3', name='Treci', center='01')
+        predaja = date(2026, 1, 16)
+        self.order(created_at=self.start, closed_at=predaja, job_code=self.unit)
+        self.order(created_at=predaja, closed_at=self.end, job_code=drugi_posao)
+
+        row = self.row()
+
+        self.assertNotIn('Preklapanje naloga', ' '.join(row['warnings']))
+        self.assertEqual(row['unallocated'], D('0'), msg='dan primopredaje ne sme ostati neraspodeljen')
+        dani = {job['code']: job['days'] for job in row['jobs']}
+        # 01-15 prvom poslu, 16-31 drugom: ukupno 31 dan, bez dupliranja.
+        self.assertEqual(dani['P1'], 15)
+        self.assertEqual(dani['P3'], 16)
+        self.assertEqual(sum(dani.values()), 31)
+
+    def test_real_overlap_is_still_reported(self):
+        # Kontrola uz prethodni test: stvarno preklapanje mora i dalje da se javi.
+        self.fuel()
+        drugi_posao = OrganizationalUnit.objects.create(code='P4', name='Cetvrti', center='01')
+        self.order(created_at=self.start, closed_at=self.end, job_code=self.unit)
+        self.order(created_at=date(2026, 1, 10), closed_at=self.end, job_code=drugi_posao)
+
+        row = self.row()
+
+        self.assertIn('Preklapanje naloga', ' '.join(row['warnings']))
+        self.assertGreater(row['unallocated'], D('0'))
+
+    def test_single_day_order_keeps_its_day(self):
+        self.fuel()
+        self.order(created_at=date(2026, 1, 10), closed_at=date(2026, 1, 10), job_code=self.unit)
+
+        row = self.row()
+
+        self.assertEqual({job['code']: job['days'] for job in row['jobs']}['P1'], 1)
+
+    def test_closed_order_without_successor_keeps_last_day(self):
+        self.fuel()
+        self.order(created_at=self.start, closed_at=date(2026, 1, 10), job_code=self.unit)
+
+        row = self.row()
+
+        # 01-10 ukljucivo = 10 dana; bez naslednika poslednji dan pripada nalogu.
+        self.assertEqual({job['code']: job['days'] for job in row['jobs']}['P1'], 10)
+
+    def test_legacy_fuel_rows_carry_all_displayed_columns(self):
+        # Kartica goriva na detalju vozila prikazuje jedinicnu cenu i neto iznos;
+        # ranije su za raniju evidenciju obe kolone bile prazne.
+        self.fuel()
+
+        row = self.row()
+
+        self.assertTrue(row['fuel'])
+        for entry in row['fuel']:
+            self.assertIn('cost_neto', entry)
+            self.assertIn('price_per_liter', entry)
+        first = row['fuel'][0]
+        self.assertIsNotNone(first['cost_neto'])
+        self.assertIsNotNone(first['price_per_liter'])
+
+    def test_saved_assessment_does_not_copy_methodology(self):
+        # Metodologija je vezana za version i cita se iz koda; ranije se cela
+        # tabela upisivala u svaki snimak.
+        assessment = SimpleNamespace(discount_percent=D('0'), years=5, as_of=self.start,
+            annual_km=20000, annual_days=200, scope='Isti posao', assumptions='Izvor')
+        scenario = SimpleNamespace(name='Zadržavanje', kind='keep', feasible=True,
+            initial_cost=D('1000000'), annual_cost=D('300000'), residual_value=D('200000'),
+            evidence='Procena')
+
+        snapshot = compare_scenarios(assessment, [scenario])
+
+        self.assertNotIn('methodology', snapshot)
+        self.assertIn('version', snapshot)
+
+
+class OrderJobCodePreservedTests(EconomicsFixture):
+    """Suzavanje izbora po centru ne sme da obrise postojecu sifru posla."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = get_user_model().objects.create_user('centar01', password='t')
+        self.user.allowed_center_codes = '01'
+        self.user.save()
+        self.tudji_posao = OrganizationalUnit.objects.create(code='P7', name='Tudji', center='02')
+
+    def test_analysis_form_keeps_job_code_from_another_center(self):
+        from fleet.forms.economics import OrderJobForm
+
+        order = self.order(job_code=self.tudji_posao)
+        form = OrderJobForm(instance=order, user=self.user)
+
+        self.assertIn(self.tudji_posao, form.fields['job_code'].queryset)
+        self.assertIn(self.unit, form.fields['job_code'].queryset)
+
+        bound = OrderJobForm({'job_code': self.tudji_posao.pk}, instance=order, user=self.user)
+        self.assertTrue(bound.is_valid(), bound.errors)
+        bound.save()
+        order.refresh_from_db()
+        self.assertEqual(order.job_code, self.tudji_posao)
+
+    def test_garage_form_keeps_job_code_from_another_center(self):
+        from fleet.forms.garaza import VehicleTravelOrderForm
+
+        order = self.order(job_code=self.tudji_posao)
+        form = VehicleTravelOrderForm(instance=order, user=self.user)
+
+        self.assertIn(self.tudji_posao, form.fields['job_code'].queryset)
+
+    def test_form_without_instance_still_limits_to_own_centers(self):
+        from fleet.forms.economics import OrderJobForm
+
+        order = self.order(job_code=self.unit)
+        form = OrderJobForm(instance=order, user=self.user)
+
+        self.assertNotIn(self.tudji_posao, form.fields['job_code'].queryset)
+
+
+class AnalysisSettingsLookupTests(EconomicsFixture):
+    """Neispravan kljuc u adresi daje 404, ne gresku 500."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = get_user_model().objects.create_superuser('admin-analitika', password='t')
+        self.client.force_login(self.user)
+
+    def test_non_numeric_ids_return_404(self):
+        url = reverse('vehicle_analysis_settings', args=[self.car.pk])
+        for parameter in ('downtime', 'charge', 'order'):
+            with self.subTest(parameter=parameter):
+                response = self.client.get(url, {parameter: 'abc'})
+                self.assertEqual(response.status_code, 404)
+
+    def test_valid_page_still_opens(self):
+        response = self.client.get(reverse('vehicle_analysis_settings', args=[self.car.pk]))
+        self.assertEqual(response.status_code, 200)
+
+
 class EconomicScenarioTests(SimpleTestCase):
     def test_zero_discount_control_example_and_unfeasible_alternative(self):
         assessment = SimpleNamespace(years=5, discount_percent=D(0), annual_km=20000,
@@ -315,7 +490,10 @@ class EconomicsViewsTests(EconomicsFixture):
         self.user.is_superuser=False;self.user.save()
         self.user.allowed_center_codes='01';self.user.save()
         role = Role.objects.create(name='Test analitika',slug='test-analytics')
-        for code in ['fleet_analytics','vehicle_detail','vehicle_update']:
+        # Kod dozvole je naziv rute; sync_permission_codes te kodove izvodi iz
+        # vehicle_update / vehicle_detail — vidi test_new_fleet_routes_inherit_permissions.
+        for code in ['fleet_analytics','vehicle_detail','vehicle_update',
+                     'vehicle_analysis_settings','vehicle_assessment_create','vehicle_assessment_detail']:
             perm,_=PermissionCode.objects.get_or_create(code=code)
             RolePermission.objects.create(role=role,permission=perm)
         self.user.roles.add(role)
@@ -325,6 +503,22 @@ class EconomicsViewsTests(EconomicsFixture):
         self.assertEqual(self.client.get(reverse('fleet_analytics')).status_code,200)
         self.user.roles.clear()
         self.assertEqual(self.client.get(reverse('fleet_analytics')).status_code,403)
+
+    def test_new_fleet_routes_inherit_permissions(self):
+        """Uloga koja je smela da menja vozilo dobija i nove ekrane, bez rucne dodele."""
+        from core.permissions import sync_permission_codes
+
+        role = Role.objects.create(name='Samo vozila',slug='samo-vozila')
+        for code in ['vehicle_update','vehicle_detail']:
+            perm,_=PermissionCode.objects.get_or_create(code=code)
+            RolePermission.objects.create(role=role,permission=perm)
+
+        sync_permission_codes()
+
+        granted = set(RolePermission.objects.filter(role=role).values_list('permission__code',flat=True))
+        for code in ['vehicle_analysis_settings','vehicle_assessment_create',
+                     'vehicle_assessment_detail','fleet_analytics','center_statistics']:
+            self.assertIn(code, granted, msg=f'nedostaje dozvola {code}')
 
     def test_saved_assessment_preserves_inputs_and_comparison(self):
         data = {'as_of':'2026-01-01','title':'Kontrolna procena','years':'5','discount_percent':'0',

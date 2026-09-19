@@ -16052,6 +16052,18 @@ Ekrani: `/analitika/`, statistika centra i kartica **Troškovi** na detalju vozi
 Oba koriste [`period_analysis()`](../fleet/services/economics.py).
 Oznaka zbira je **Obuhvaćeni troškovi**, ne ukupan trošak vlasništva.
 
+Analitika flote i centra koristi zajedničko gradijentno hero zaglavlje modula
+Flota, sa izabranim periodom i prečicom koja otvara metodologiju. Filteri imaju
+posebnu opciju za otpisana vozila i poništavanje izbora. Četiri kartice izdvajaju
+broj vozila, obuhvaćene troškove, ponderisani RSD/km i broj vozila za proveru.
+Tabele imaju horizontalno pomeranje na užim ekranima, uz zadržavanje kolone
+vozila u vidnom polju; obrazloženja po vozilu,
+mesečni zbir i sačuvane procene otvaraju se po potrebi. Promena prikaza ne menja
+formule ni kriterijume obračuna.
+
+Stilovi i sidra analitike koriste prefiks `fleet-analytics-`, da ne bi dolazilo
+do sukoba sa klasama `fa-filter` i `fa-table` iz globalnog Font Awesome paketa.
+
 #### E-01.2. Poslovna svrha
 
 Uskladiti prikaz istog vozila u istom periodu na oba ekrana, prikazati poslovnu
@@ -16061,9 +16073,25 @@ internu raspodelu na poslove. Posebna procena E-02 poredi buduće alternative.
 #### E-01.3. Korisnici
 
 Uprava, služba voznog parka i korisnici sa dozvolama za odgovarajuće ekrane.
-Prikaz flote zahteva `fleet_analytics`; uređivanje ulaza i izrada procene
-`vehicle_update`; pregled sačuvane procene `vehicle_detail`.
-Ograničenja centara se primenjuju i na direktne URL adrese.
+
+**Kod dozvole je naziv rute**, kao i svuda u sistemu [P]:
+
+| Ekran | Dozvola |
+|---|---|
+| Analitika flote | `fleet_analytics` |
+| Statistika centra | `center_statistics` |
+| Ulazi za analitiku | `vehicle_analysis_settings` |
+| Izrada procene | `vehicle_assessment_create` |
+| Pregled sačuvane procene | `vehicle_assessment_detail` |
+
+`sync_permission_codes` te dozvole **izvodi iz postojećih**: ko je smeo da menja vozilo
+(`vehicle_update`) dobija ulaze i izradu procene, a ko je smeo da ga vidi (`vehicle_detail`)
+dobija pregled procene, analitiku flote i statistiku centra. Ručna dodela nije potrebna, ali
+**komandu treba pokrenuti pri isporuci** — inače ekrani koji su ranije bili otvoreni ostaju
+zaključani. Provereno testom `test_new_fleet_routes_inherit_permissions`.
+
+Ograničenja centara se primenjuju i na direktne URL adrese. Neispravan ključ u adresi
+(`?order=abc`) daje **404**, ne grešku servera.
 
 #### E-01.4. Ulazni podaci
 
@@ -16128,6 +16156,20 @@ tačnog vremena prelaska obračunske granice. Jednodnevni period nema RSD/km.
 
 **Dani po nalogu:** unija kalendarskih dana naloga u periodu. Otvoren nalog se
 ograničava krajem izabranog perioda. Ovo je administrativna zauzetost, ne produktivnost.
+
+**Dan primopredaje pripada nalogu koji tog dana počinje.** [P] Pri predaji vozila zatvoreni
+nalog dobija `closed_at` jednak `created_at` sledećeg naloga, pa bi se taj dan inače brojao
+dvaput: javljalo bi se lažno „preklapanje naloga“, vozilo bi išlo u „Potrebna provera
+podataka“, a kod različitih šifara posla trošak tog dana bi ostajao **neraspoređen**.
+
+| Slučaj | Kome pripada dan |
+|---|---|
+| Nalog zatvoren istog dana kada sledeći počinje | **Novom** nalogu |
+| Nalog zatvoren bez naslednika | Zadržava svoj poslednji dan |
+| Jednodnevni nalog (`created_at == closed_at`) | Svoj jedini dan |
+| Dva naloga stvarno preklopljena | **Preklapanje se i dalje prijavljuje** |
+
+Funkcija: `_active_orders()`. Testovi pokrivaju sva četiri slučaja.
 
 `RSD/dan po nalogu = obuhvaćeni troškovi celog perioda / jedinstveni dani po nalogu`.
 `RSD/kalendarskom danu = obuhvaćeni troškovi / svi dani perioda`.
@@ -16214,6 +16256,9 @@ potvrđene osnove perioda.
 - Stari nalozi nemaju automatski dodeljenu šifru posla. Korisnik potvrđuje vezu.
 - Kontrola pristupa prati današnju odgovornost za vozilo. Prikaz istorijskog centra
   koristi dodelu na kraju izabranog perioda.
+- **Vozilo bez ijedne dodele ostaje vidljivo** korisniku sa ograničenim centrima. Takvo
+  vozilo nema centar, a tek uneto vozilo ne sme da nestane sa spiska pre raspoređivanja.
+  Vozilo dodeljeno **tuđem** centru i dalje nije vidljivo.
 - `otpis` nema istorijski datum; korisnik može uključiti trenutno otpisana vozila.
 
 #### E-01.13. Status pouzdanosti
@@ -17150,18 +17195,18 @@ Restart-Service IMS_Fleet_Celery_Beat
 |---|---|---|---|---|
 | [P-01](#p-01--tajne-i-debug-u-repozitorijumu) | Konfiguracija | Lozinke baze, `SECRET_KEY` i `DEBUG=True` u repozitorijumu | **Visoka** | **Rešeno** 19.09. — *istorija* |
 | [P-02](#p-02--prosečna-potrošnja-ne-proverava-stariju-granicu) | Flota / gorivo | Prosečna potrošnja može biti desetostruko premala | **Visoka** | **Rešeno** 19.09. |
-| [P-03](#p-03--procena-kilometraže-koristi-očitavanja-izvan-perioda) | Flota / troškovi | Kilometraža se procenjuje iz očitavanja izvan perioda | **Visoka** | Za proveru |
+| [P-03](#p-03--procena-kilometraže-koristi-očitavanja-izvan-perioda) | Flota / troškovi | Kilometraža se procenjuje iz očitavanja izvan perioda | **Visoka** | **Rešeno** 19.09. |
 | [P-04](#p-04--kvadratna-složenost-izbora-para-očitavanja) | Flota / troškovi | Spor obračun kod vozila sa mnogo očitavanja | Niska | **Rešeno** 19.09. |
 | [P-05](#p-05--centar-se-uzima-iz-poslednje-dodele-a-ne-istorijske) | Flota / troškovi | Trošak ide na trenutni, a ne na tadašnji centar | **Srednja** | **Rešeno** 19.09. — *V-07* |
 | [P-06](#p-06--cela-premija-polise-ulazi-u-svaki-period) | Flota / troškovi | Cela godišnja premija ulazi i u jednomesečni period | **Visoka** | **Rešeno** 19.09. |
 | [P-07](#p-07--cela-godišnja-kamata-lizinga-ulazi-u-svaki-period) | Flota / troškovi | Cela godišnja kamata ulazi i u jednomesečni period | **Visoka** | **Rešeno** 19.09. |
-| [P-08](#p-08--operativni-lizing-se-deli-drugačije-od-dugoročnog-najma) | Flota / troškovi | Ista kolona se tumači na dva načina | **Srednja** | Za proveru |
+| [P-08](#p-08--operativni-lizing-se-deli-drugačije-od-dugoročnog-najma) | Flota / troškovi | Ista kolona se tumači na dva načina | **Srednja** | **Rešeno** 19.09. |
 | [P-09](#p-09--vozila-sa-troškom-nula-ili-manjim-nestaju-iz-spiska) | Flota / troškovi | Vozilo bez troška se ne prikazuje, bez objašnjenja | **Srednja** | **Rešeno** 19.09. |
 | [P-10](#p-10--napomena-o-maloj-kilometraži-poredi-period-sa-godinom) | Flota / troškovi | Upozorenje se pojavljuje i kada ne treba | Niska | **Rešeno** 18.09. |
-| [P-11](#p-11--pragovi-troška-po-km-su-upisani-u-kod) | Flota / troškovi | Pragovi se ne mogu menjati bez izmene koda | **Srednja** | Za proveru |
-| [P-12](#p-12--analiza-kroz-više-perioda-zahteva-najmanje-dva-perioda) | Flota / troškovi | Greška ako se prosledi jedan period | Niska | Za rešavanje |
+| [P-11](#p-11--pragovi-troška-po-km-su-upisani-u-kod) | Flota / troškovi | Pragovi se ne mogu menjati bez izmene koda | **Srednja** | **Rešeno** 19.09. |
+| [P-12](#p-12--analiza-kroz-više-perioda-zahteva-najmanje-dva-perioda) | Flota / troškovi | Greška ako se prosledi jedan period | Niska | Otpalo 19.09. |
 | [P-13](#p-13--superuser-ne-može-da-otvori-statistiku-centra) | Flota / pristup | Superuser dobija 403 | **Srednja** | **Rešeno** 18.09. |
-| [P-14](#p-14--statistika-centra--četiri-odvojena-nedostatka) | Flota / centri | Otpisana vozila, prosečna starost, dijakritici | **Srednja** | **Rešeno** A, B, C 18.09. |
+| [P-14](#p-14--statistika-centra--četiri-odvojena-nedostatka) | Flota / centri | Otpisana vozila, prosečna starost, dijakritici | **Srednja** | **Rešeno** A i D; B i C otpali |
 | [P-15](#p-15--jedan-celery-radnik-poništava-razdvajanje-redova) | Infrastruktura | `-P solo` blokira lake poslove | **Srednja** | Za proveru |
 | [P-16](#p-16--zaključavanje-poslova-popušta-kada-redis-nije-dostupan) | Infrastruktura | Dva ista posla mogu raditi istovremeno | **Srednja** | Za proveru |
 | [P-17](#p-17--procedura-sp_azurirajnalogz-ne-briše-obrisane-redove) | Finansije | Lokalna kopija nije jednaka izvoru | **Srednja** | Prihvaćeno |
@@ -17197,6 +17242,7 @@ Restart-Service IMS_Fleet_Celery_Beat
 | [P-47](#p-47--ključ-za-duplikate-ne-obuhvata-iznos-ni-valutu) | Flota / gorivo | Dva iznosa iste transakcije se spajaju u jedan | **Srednja** | **Za proveru** |
 | [P-48](#p-48--lični-podaci-i-brojevi-računa-329-osoba-u-repozitorijumu) | Bezbednost | Imena, adrese i brojevi računa u git istoriji | **Visoka** | Delimično rešeno — **istorija ostaje** |
 | [P-49](#p-49--procedura-osvežava-tekuću-godinu-a-ispravke-čitaju-prethodnu) | Potraživanja | Posle aprila ispravke čitaju godinu koja se ne osvežava | **Srednja** | **Za proveru** |
+| [P-50](#p-50--pregled-novog-modula-ekonomike-flote) | Flota / ekonomika | 14 nalaza u novom modulu, pre isporuke | **Visoka** | **Rešeno** 19.09. |
 
 ---
 
@@ -17396,7 +17442,7 @@ nula na starijoj granici, kilometraža koja ne raste, i samo jedno točenje sa k
 | | |
 |---|---|
 | **Ozbiljnost** | **Visoka** |
-| **Status** | Za proveru |
+| **Status** | **Rešeno** (19.09.2026.) — novim modulom |
 | **Gde** | `fleet/support/dashboard.py:89-101`, `_estimate_period_mileage()` |
 | **Obračun** | [V-08](#v-08--procena-pređene-kilometraže-u-periodu) |
 
@@ -17443,6 +17489,30 @@ podatka — a jedan je izmeren, drugi izveden iz podataka od pre dve godine.
 **Šta treba odlučiti [N]:** dokle unazad očitavanje sme da posluži kao osnova procene.
 Predlog je **90 dana** od granice perioda; izvan toga prikazati „Nema podatka“. Tačan broj
 dana je poslovna odluka.
+
+
+**Šta je urađeno (19.09.2026.) [P]:** novi modul ekonomike **ne ekstrapolira kilometražu**.
+
+```python
+distance = observed if points and points[0]['date'] == start and points[-1]['date'] == end and start < end else None
+```
+
+RSD/km se računa **samo kada očitavanja postoje na oba granična datuma**. Inače stoji
+upozorenje *„Nema usklađenih očitanja za oba granična datuma; RSD/km se ne računa.“*
+
+**Time je odgovoreno i na pitanje „šta ako vozilo stoji“ [Z]:** ako se svako točenje
+evidentira, **odsustvo točenja znači da vozilo nije radilo**. Ranija logika je iz toga
+izvlačila suprotan zaključak — posegnula bi za očitavanjem od pre dve godine i prikazala
+kilometražu koje nije bilo. Vozilo koje košta a ne radi tako je izgledalo **najzdravije u
+floti**, jer se trošak delio izmišljenim brojem kilometara.
+
+> **[P] Nasleđena `vehicle_cost_per_km_rows()` i dalje ekstrapolira**, ali je **ne koristi
+> nijedan ekran** — ostala je radi kompatibilnosti postojećih testova.
+
+> **[N] Ostaje otvoreno:** uslov „očitavanje tačno na oba granična datuma“ je strog — u
+> praksi se retko toči gorivo baš 1. i 31. u mesecu, pa će RSD/km često biti prazan.
+> Predlog je koristiti **stvarno opaženi raspon unutar perioda** uz prikaz koliko je dana
+> pokriveno.
 
 ---
 
@@ -17538,6 +17608,11 @@ dobilo novu dodelu. Time se vidi kod kojih redova pripadnost nije bila ista celo
 > **za ceo vek vozila**. Tamo je „poslednja dodela“ jedini mogući izbor. Vidi
 > [P-14 D](#p-14--statistika-centra--četiri-odvojena-nedostatka).
 
+
+> **Dopuna (19.09.2026.) [P]:** obračun se od tada izvodi u **novom modulu ekonomike**
+> ([E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa)), a ne u `vehicle_cost_per_km_rows()`.
+> Statistika centra sada bira centar po dodeli **na kraju izabranog perioda** (`assigned_date__lte=end`), pa se ponaša isto kao analitika flote. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
+
 ---
 
 #### P-06 — Cela premija polise ulazi u svaki period
@@ -17603,6 +17678,11 @@ punom iznosu. [P]
 **Testovi [P]:** `fleet/test_cost_fixes.py` — jedan za jednomesečni period, jedan za celu
 godinu (gde ceo iznos i dalje ulazi).
 
+
+> **Dopuna (19.09.2026.) [P]:** obračun se od tada izvodi u **novom modulu ekonomike**
+> ([E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa)), a ne u `vehicle_cost_per_km_rows()`.
+> Novi modul deli premiju **dan po dan** (`premium_amount / broj dana polise`), što je tačnije od deljenja srazmerno periodu. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
+
 ---
 
 #### P-07 — Cela godišnja kamata lizinga ulazi u svaki period
@@ -17648,6 +17728,11 @@ period 01.12.2025.–31.01.2026.:
 
 **Test [P]:** `fleet/test_cost_fixes.py: test_financial_lease_interest_is_split_per_calendar_year`.
 
+
+> **Dopuna (19.09.2026.) [P]:** obračun se od tada izvodi u **novom modulu ekonomike**
+> ([E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa)), a ne u `vehicle_cost_per_km_rows()`.
+> Novi modul deli kamatu **dan po dan** (`amount / 365 ili 366`), i to samo dok traje ugovorno raspolaganje. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
+
 ---
 
 #### P-08 — Operativni lizing se deli drugačije od dugoročnog najma
@@ -17655,7 +17740,7 @@ period 01.12.2025.–31.01.2026.:
 | | |
 |---|---|
 | **Ozbiljnost** | **Srednja** |
-| **Status** | Za proveru |
+| **Status** | **Rešeno** (19.09.2026.) — novom kolonom |
 | **Gde** | `fleet/support/dashboard.py:274-285` |
 
 **Šta je zatečeno [P]:** ista kolona `current_payment_amount` („Trenutna rata / iznos
@@ -17721,6 +17806,30 @@ GROUP BY lease_type;
 **Q45:** kakav je stvarni sadržaj kolone „Trenutna rata / iznos otplate“ za operativni
 lizing — mesečna rata ili ukupan iznos ugovora?
 
+
+**Šta je urađeno (19.09.2026.) [P]:** umesto da se pogađa šta dvosmislena kolona znači, uveden je
+**nov podatak kod kojeg se zna** — `LeaseChargePeriod`:
+
+| Polje | Značenje |
+|---|---|
+| `amount` | Potvrđen iznos |
+| **`basis`** | **`monthly`** (mesečni iznos) ili **`total`** (ukupan iznos perioda) |
+| `start`, `end` | Period na koji se iznos odnosi |
+| dokument | Osnov iz kojeg je iznos preuzet |
+
+Obračun po tome deli iznos:
+
+```python
+divisor = calendar.monthrange(day.year, day.month)[1] if c.basis == 'monthly' \
+          else (c.end - c.start).days + 1
+```
+
+> **[P] Stara kolona `current_payment_amount` se u novom obračunu više ne čita.**
+> Metodologija izričito kaže da se iz nje ništa ne izvodi. Time **Q45 otpada** za novi
+> obračun — pitanje ostaje samo ako neko bude tumačio istorijske podatke.
+
+Ovo je bio i vaš predlog: dodati kolone i tačno definisati šta je šta.
+
 ---
 
 #### P-09 — Vozila sa troškom nula ili manjim nestaju iz spiska
@@ -17776,6 +17885,11 @@ polja. [P]
 **Testovi [P]:** `fleet/test_cost_fixes.py` — vozilo bez ijednog troška i vozilo kod koga
 je naknada osiguranja veća od troškova.
 
+
+> **Dopuna (19.09.2026.) [P]:** obračun se od tada izvodi u **novom modulu ekonomike**
+> ([E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa)), a ne u `vehicle_cost_per_km_rows()`.
+> U novom modulu vozilo bez troška ostaje u rezultatu, a svi iznosi su `None` (`has_cost`), pa ne ulaze ni u zbirove ni u pondere. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
+
 ---
 
 #### P-10 — Napomena o maloj kilometraži poredi period sa godinom
@@ -17817,7 +17931,7 @@ ekranima. Prag od 15.000 km nije menjan — i dalje je upisan u kod, videti
 | | |
 |---|---|
 | **Ozbiljnost** | **Srednja** |
-| **Status** | Za proveru |
+| **Status** | **Rešeno** (19.09.2026.) — prag se unosi |
 | **Gde** | `fleet/support/analytics.py:14-19` |
 | **Pitanje** | Q18 |
 
@@ -17834,6 +17948,28 @@ ekranima. Prag od 15.000 km nije menjan — i dalje je upisan u kod, videti
 **Predlog rešenja [Z]:** preseliti pragove u šifarnik u bazi sa ekranom za održavanje,
 i dodati upozorenje za vozila bez unete mase.
 
+
+**Šta je urađeno (19.09.2026.) [P]:** pragovi po klasi mase više se ne koriste. Kontrolni prag se
+**unosi po vozilu**, u `VehicleAnalysisProfile`:
+
+| Polje | Uloga |
+|---|---|
+| `cost_limit_km`, `cost_limit_day` | Prag, opcion |
+| `criterion_source` | **Obavezan pisani osnov** — izvor, datum, obuhvat |
+| `criterion_basis` | Način raspolaganja na koji se prag odnosi |
+
+Provere u modelu [P]: prag bez osnova i bez izabranog raspolaganja se **ne prima**; za
+bušeću mašinu i priključno vozilo RSD/km se **ne može uneti** kao merilo opravdanosti.
+Prag se ne primenjuje kada period obuhvata više profila.
+
+> **Prekoračenje znači pregled kriterijuma, ne automatsku zamenu.** [P]
+
+> **[P]** Nasleđeni pragovi po masi (`_WEIGHT_CLASS_THRESHOLDS`) ostali su u
+> `fleet/support/analytics.py` radi postojećih testova, ali ih **ne koristi nijedan ekran**.
+
+> **[N] Predlog dorade:** prag nema svoj datum važenja (deli ga sa profilom), nema donjeg
+> praga uzorka ispod kojeg se ne primenjuje, i daje samo „preko / ispod“ bez međunivoa.
+
 ---
 
 #### P-12 — Analiza kroz više perioda zahteva najmanje dva perioda
@@ -17841,7 +17977,7 @@ i dodati upozorenje za vozila bez unete mase.
 | | |
 |---|---|
 | **Ozbiljnost** | Niska |
-| **Status** | Za rešavanje |
+| **Status** | **Otpalo** (19.09.2026.) — ekran uklonjen |
 | **Gde** | `fleet/support/dashboard.py:401-403` |
 
 **Šta je zatečeno [P]:** funkcija bez provere koristi `periods[1]`. Poziv sa jednim
@@ -17849,6 +17985,15 @@ periodom prekida se greškom.
 
 **Predlog rešenja [Z]:** proveriti broj perioda i vratiti prazan spisak trajno
 neisplativih vozila ako ih je manje od dva.
+
+
+**Stanje od 19.09.2026. [P]:** ekran analize kroz više perioda **više ne postoji**. Funkcija
+`cost_per_km_period_analysis()` ostala je u `fleet/support/dashboard.py`, ali je **ne poziva
+nijedna ruta** — samo se ponovo izvozi u `fleet/views/__init__.py`.
+
+> **Ovo nije ispravka nego nestanak.** Ako se višeperiodno poređenje vrati, uslov od
+> najmanje dva perioda treba rešiti pre povratka. Novi modul poređenje alternativa rešava
+> drugačije — kroz sačuvanu procenu [E-02](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa).
 
 ---
 
@@ -17892,7 +18037,7 @@ if not request.user.is_superuser and not request.user.allowed_centers.filter(cen
 | | |
 |---|---|
 | **Ozbiljnost** | **Srednja** |
-| **Status** | **Rešeno** A, B i C (18.09.2026.); **D ostaje za odluku** |
+| **Status** | **Rešeno** A i D; **B i C otpali** (19.09.2026.) |
 | **Gde** | `fleet/views/center_statistics.py` |
 
 **A) Otpisana vozila ulaze u statistiku [P]** (linija 61)
@@ -17951,6 +18096,21 @@ Na ekranu to nije naznačeno, pa korisnik lako pomisli da gleda tekuću godinu.
 
 **D nije menjano.** Iznosi su i dalje za ceo vek vozila i to na ekranu nije naznačeno —
 za to je potrebna odluka da li dodati izbor perioda ili samo napisati napomenu.
+
+
+**Stanje posle prepravke statistike centra (19.09.2026.) [P]:** ekran više ne računa ništa sam —
+`center_statistics` je sveden na 18 redova i prosleđuje sve `render_fleet_analysis()`.
+
+| | Stanje |
+|---|---|
+| **A** — otpisana vozila | **Rešeno.** Uključivanje otpisanih je sada **izbor korisnika** (`include_retired`), ne prećutno |
+| **B** — prosečna starost | **Pokazatelj je uklonjen** sa tog ekrana. Ispravan obračun i dalje postoji u preseku stanja flote (`fleet_snapshot.py`), odakle je i preuzet |
+| **C** — kategorije popravki | **Pokazatelj je uklonjen.** Mesečni pregled po kategorijama više ne postoji; nestala je i kolona za tehnički pregled dodata 18.09. |
+| **D** — iznosi za ceo vek vozila | **Rešeno.** Ekran sada ima **izbor perioda**, isti kao analitika flote |
+
+> **[Z] Pošteno rečeno:** B i C nisu ispravljeni nego su **otpali sa uklanjanjem
+> pokazatelja**. Ako se prosečna starost i pregled po kategorijama vrate, treba ih preuzeti
+> iz `fleet_snapshot.py`, odnosno normalizovati nazive kategorija — ne pisati iznova.
 
 ---
 
@@ -18236,6 +18396,56 @@ pogleda `fleet_trebovanja` (godina 2024 → 2026, vrste artikala `REZ`/`GOR` →
 `fleet_tro_goriva_m`, `fleet_tro_pracenje`, `fleet_tro_taho`, `fleet_tro_parking`,
 `tro_zarade`, `fleet_dobavljaci`, `fleet_magacin_rez`, `fleet_otpis`, `kasko_rate`.
 Za njih se na pitanje „odakle ovaj iznos“ i dalje **ne može odgovoriti iz projekta**.
+
+---
+
+#### P-50 — Pregled novog modula ekonomike flote
+
+| | |
+|---|---|
+| **Ozbiljnost** | **Visoka** (dve stavke), ostalo srednje i nisko |
+| **Status** | **Rešeno** (19.09.2026.) |
+| **Gde** | `fleet/services/economics.py`, `fleet/views/analytics.py`, `fleet/forms/`, `core/permissions.py` |
+| **Obračun** | [E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa) |
+
+**Povod [P]:** modul ekonomike flote (metodologija **IMS-FLOTA-2.0**) donosi 1.394 reda novog
+koda i menja obračun na tri ekrana. Pregledan je pre isporuke. Kod **nije bio u produkciji**,
+pa nijedan od nalaza nije dao pogrešan poslovni broj korisniku.
+
+**Pet nalaza koji bi se videli odmah po isporuci [P]:**
+
+| # | Nalaz | Posledica |
+|---|---|---|
+| 1 | `visible_vehicles` filtrira `access_center__in`, a `NULL IN (...)` nije tačno | Vozilo **bez ijedne dodele** nestaje sa spiska i daje **404** na detalju, svakom korisniku sa ograničenim centrima. Ranija provera je prazan centar **izričito propuštala**. |
+| 2 | `_active` uzima `closed_at` uključivo, a pri predaji se postavlja na `created_at` sledećeg naloga | **Svaki uredan dan primopredaje** broji se kao preklapanje: lažno upozorenje, vozilo ide u „Potrebna provera“, a kod različitih šifara posla trošak tog dana ostaje **neraspoređen**. |
+| 3 | Suženje izbora šifre posla po centru **ne vraća postojeću vrednost** naloga | Korisnik iz centra 01 otvori nalog sa šifrom centra 02 → pri snimanju se **veza sa poslom tiho briše**. Ekran za potvrdu šifre posla pritom javlja „Evidencija za analitiku je sačuvana.“ |
+| 4 | Dozvole se dodeljuju pod nazivom rute, a pogledi traže `vehicle_update` / `vehicle_detail` | Dodele su **mrtve**; ko dobije kod nazvan po ruti i dalje dobija zabranu. Krši pravilo iz `AGENTS.md` da je kod dozvole naziv rute. |
+| 5 | `fleet_analytics` i `center_statistics` dobili zabranu bez dodele prava | Ekrani koji su ranije bili otvoreni (analitika svakom prijavljenom, statistika po pripadnosti centru) **ostaju zaključani** svima osim superusera i uloge Uprava. |
+
+**Devet sitnijih [P]:** `?order=abc` daje **500** umesto 404; `unallocated` se sabira u petlji
+pa se prepiše — mrtav račun; `visible_vehicles(as_of=…)` prima parametar koji nikad ne čita;
+kod ranije evidencije goriva nedostaju `cost_neto` i `price_per_liter`, pa su dve kolone
+prazne; **cela tabela metodologije se upisuje u svaki snimak procene**; `Policy` se učitava
+bez donje granice perioda; `dashboard_center.html` ostao kao mrtav jednoredni fajl; mrtav
+uvoz u `vehicles.py`.
+
+**Šta je urađeno (19.09.2026.) [P]:** svih 14 ispravljeno, uz **14 novih testova**.
+
+| Ispravka | Način |
+|---|---|
+| 1 | `Q(access_center__in=centers) | Q(access_center__isnull=True)`; test potvrđuje i da tuđi centar **ostaje** skriven |
+| 2 | Nova `_active_orders()` — **dan primopredaje pripada nalogu koji tog dana počinje**. Stvarno preklapanje se i dalje prijavljuje; jednodnevni nalog i nalog bez naslednika zadržavaju svoj dan |
+| 3 | Postojeća šifra se vraća u izbor (`limited | queryset.filter(pk=current_id)`), kao što polje `employee` već radi |
+| 4 | Pogledi traže kodove po nazivu rute. **Propagacija u `sync_permission_codes` je time dobila smisao** — postojala je, ali je nikad ništa nije čitalo |
+| 5 | Oba koda dodata u propagaciju iz `vehicle_detail`; test `test_new_fleet_routes_inherit_permissions` to proverava |
+
+> **[P] Pri isporuci obavezno pokrenuti `sync_permission_codes`** — bez toga nove dozvole
+> ne postoje i ekrani ostaju zaključani.
+
+> **[Z] Ocena modula:** metodologija je disciplinovana — dosledno razdvaja potvrđeno od
+> nepotvrđenog, odbija da nepoznato prikaže kao nulu, a `period_analysis()` koriste i flota
+> i detalj vozila, pa isti period daje isti broj na oba ekrana. Nalazi su bili **greške
+> izvedbe, ne greške zamisli**.
 
 ---
 
@@ -19419,7 +19629,7 @@ Za **11 izveštaja Flote** formula postoji **isključivo u bazi** — [P-27](#10
 
 ### 11.5. Prioriteti iz registra problema
 
-**49 uočenih problema, od toga 15 rešeno (18–19.09.2026.).**
+**50 uočenih problema, od toga 20 rešeno (18–19.09.2026.). U Floti je od 21 problema rešeno 16.**
 
 | Dan | Rešeno |
 |---|---|
