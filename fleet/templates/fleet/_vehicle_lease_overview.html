@@ -1,0 +1,105 @@
+{% comment %}
+Ugovori lizinga i najma: šta je rata, šta preostaje i po čemu se to zna.
+Podaci iz `economics.leases` (fleet/services/economics.py: _lease_overview).
+Staro polje „Trenutna rata / iznos otplate“ se samo prikazuje — nije potvrđeno
+da li je mesečni ili ukupan iznos, pa se u obračun ne uzima (P-08).
+{% endcomment %}
+{% comment %}
+Celina se prikazuje UVEK, i kada vozilo nema ugovor. Ranije je bila uslovna, pa je
+kod vozila u vlasnistvu numeracija isla 1 -> 3. Uz to, „vozilo nije na lizingu“ je
+podatak koji objasnjava zasto je red ugovornih naknada u celini 1 prazan.
+{% endcomment %}
+<div class="vd-step" id="lease-overview">
+  <div class="vd-section-heading">
+    <div>
+      <h3>2 · Ugovori lizinga i najma</h3>
+      <p class="text-muted">Rata i preostala ugovorna obaveza na današnji dan.</p>
+    </div>
+  </div>
+
+  {% if not economics.leases %}
+    <p class="vd-note">
+      <strong>Vozilo nije na lizingu ni u najmu</strong> — za ovo vozilo nema evidentiranog ugovora.
+      Zato je u celini 1 red „Potvrđene naknade lizinga / najma“ prazan.
+      {% if can_edit_analysis %}Ako ugovor postoji a nije unet, dodaje se na kartici <em>Raspolaganje i polise</em>.{% endif %}
+    </p>
+  {% endif %}
+
+  {% for item in economics.leases %}
+  <div class="vd-records vd-lease">
+    <div class="vd-section-heading">
+      <div>
+        <strong>{{ item.type_label }}</strong> · ugovor {{ item.lease.contract_number }} · {{ item.lease.partner_name }}
+        <small class="vd-lease-head">
+          {{ item.lease.start_date|date:"d.m.Y" }} – {{ item.lease.end_date|date:"d.m.Y" }}
+          {% if item.expired %} · <strong>ugovor je istekao</strong>{% endif %}
+        </small>
+      </div>
+      {% if can_edit_analysis %}<a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_analysis_settings' vehicle.pk %}">Unesi naknadu</a>{% endif %}
+    </div>
+
+    <table class="table table-sm">
+      <tbody>
+      {% if item.confirmed %}
+        <tr>
+          <td>Rata</td>
+          <td>
+            {% if item.rate_basis == 'monthly' %}
+              <strong>{{ item.charge.amount|floatformat:"2g" }} RSD mesečno</strong>
+            {% else %}
+              <strong>{{ item.charge.amount|floatformat:"2g" }} RSD za ceo period</strong>
+              <small class="vd-lease-head">
+                {{ item.charge.start|date:"d.m.Y" }} – {{ item.charge.end|date:"d.m.Y" }} ·
+                to <strong>nije</strong> mesečna rata; mesečno izlazi oko {{ item.rate_monthly|floatformat:"2g" }} RSD
+              </small>
+            {% endif %}
+          </td>
+        </tr>
+        <tr><td>Dnevni deo koji ulazi u trošak</td><td>{{ item.rate_daily|floatformat:"2g" }} RSD</td></tr>
+        <tr>
+          <td>Preostalo do kraja</td>
+          <td>
+            {% if item.remaining_days %}
+              <strong>{{ item.remaining_amount|floatformat:"2g" }} RSD</strong>
+              <small class="vd-lease-head">
+                {{ item.remaining_days }} dana ({{ item.remaining_months|floatformat:1 }} meseci) od danas.
+                Ovo je <strong>ugovorna obaveza po potvrđenoj naknadi</strong>, ne dug —
+                sistem ne vodi evidenciju izvršenih uplata.
+              </small>
+            {% else %}&mdash; <small class="vd-lease-head">Ugovor je istekao ili naknada ne pokriva naredni period.</small>{% endif %}
+          </td>
+        </tr>
+        <tr><td>Osnov iznosa</td><td>{{ item.charge.evidence|default:"Nije upisan dokument" }}</td></tr>
+      {% else %}
+        <tr>
+          <td>Rata</td>
+          <td>
+            <span class="vd-state vd-state-missing">Nije potvrđena</span>
+            <small class="vd-lease-note">
+              Dok se ne unese naknada sa periodom i značenjem iznosa, ovaj ugovor
+              <strong>ne ulazi u obuhvaćene troškove</strong>.
+            </small>
+          </td>
+        </tr>
+        <tr><td>Preostalo do kraja</td><td>&mdash; <small class="vd-lease-head">Ne može se izračunati bez potvrđene naknade.</small></td></tr>
+      {% endif %}
+
+      {% if item.interest_current_year is not None %}
+        <tr><td>Kamata za tekuću godinu</td><td>{{ item.interest_current_year|floatformat:"2g" }} RSD <small class="vd-lease-head">Raspoređuje se na dane u godini dok traje ugovorno raspolaganje.</small></td></tr>
+      {% endif %}
+
+      <tr>
+        <td>Staro polje „Trenutna rata / iznos otplate“</td>
+        <td>
+          {{ item.legacy_amount|floatformat:"2g" }} RSD
+          <small class="vd-lease-head">
+            Prikazano samo radi uvida. <strong>Ne koristi se u obračunu</strong> jer nije
+            potvrđeno da li je mesečni iznos ili ukupan iznos ugovora.
+          </small>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+</div>

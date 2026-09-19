@@ -73,6 +73,13 @@
             </div>
           {% endif %}
 
+          <style>
+.fleet-required{color:#b3261e;font-weight:700}
+.fleet-required-legend{font-size:13px;margin-bottom:18px}
+.fleet-fieldset{border:1px solid #dfe6ec;border-radius:9px;padding:18px 20px 4px;margin-bottom:22px;background:#fcfdfe}
+.fleet-fieldset-legend{float:none;width:auto;font-size:15px;font-weight:600;color:#20577b;padding:0 8px;margin:0 0 4px -8px;background:transparent}
+.fleet-fieldset-help{font-size:13px;margin:0 0 14px}
+</style>
           <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
@@ -84,32 +91,23 @@
               </div>
             {% endif %}
 
-            {% for field in form %}
-              <div class="row mb-3 align-items-start">
-                <label for="{{ field.id_for_label }}" class="col-sm-4 col-form-label">{{ field.label }}:</label>
-                <div class="col-sm-8">
-                  {% if field.field.widget.input_type == "checkbox" %}
-                    <div class="form-check pt-2">
-                      {{ field|add_class:"form-check-input" }}
-                    </div>
-                  {% else %}
-                    {{ field|add_class:"form-control" }}
-                  {% endif %}
+            {% if form.has_required_fields %}
+              <p class="text-muted fleet-required-legend">
+                Polja označena sa <span class="fleet-required">*</span> su obavezna.
+              </p>
+            {% endif %}
 
-                  {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
-                  {% endif %}
-
-                  {% if field.errors %}
-                    <div class="invalid-feedback" style="display:block;">
-                      {% for error in field.errors %}
-                        <div>{{ error }}</div>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
+            {% if form.grouped_fields %}
+              {% for group in form.grouped_fields %}
+                <fieldset class="fleet-fieldset">
+                  <legend class="fleet-fieldset-legend">{{ group.title }}</legend>
+                  {% if group.description %}<p class="text-muted fleet-fieldset-help">{{ group.description }}</p>{% endif %}
+                  {% for field in group.fields %}{% include "fleet/_form_field.html" %}{% endfor %}
+                </fieldset>
+              {% endfor %}
+            {% else %}
+              {% for field in form %}{% include "fleet/_form_field.html" %}{% endfor %}
+            {% endif %}
 
             <div class="fleet-form-actions d-flex flex-wrap justify-content-end gap-2">
               {% if cancel_url %}

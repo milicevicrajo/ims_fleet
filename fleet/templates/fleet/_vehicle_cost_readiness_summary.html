@@ -1,0 +1,22 @@
+{% comment %}
+Sažet red o popunjenosti ulaznih podataka, za karticu „Troškovi“.
+Pun spisak je na ekranu unosa („Namena, kriterijumi i evidencija“), pored polja
+koja ga popunjavaju. Ovde stoji samo koliko nedostaje i veza ka tom ekranu.
+{% endcomment %}
+<div class="vd-note vd-summary-row">
+  <div>
+    {% if economics.missing_count %}
+      <strong>Ulazni podaci: {{ economics.ready_count }} od 7 popunjeno.</strong>
+      {{ economics.missing_count }} nedostaje, pa pokazatelji koji od toga zavise ostaju prazni.
+    {% else %}
+      <strong>Svi ulazni podaci su popunjeni.</strong>
+      Potpunost samih troškova time nije potvrđena — prazna evidencija nije dokaz da troška nije bilo.
+    {% endif %}
+  </div>
+  {% if can_edit_analysis %}
+    <a class="btn btn-sm {% if economics.missing_count %}btn-primary{% else %}btn-outline-primary{% endif %}"
+       href="{% url 'vehicle_analysis_settings' vehicle.pk %}">
+      {% if economics.missing_count %}Vidi šta nedostaje{% else %}Evidencija za analitiku{% endif %}
+    </a>
+  {% endif %}
+</div>

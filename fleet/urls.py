@@ -192,7 +192,7 @@ from .views.reports import (
 )
 from .views.dashboard import dashboard, fleet_other
 from .views.management_reports import casco_report, owned_insurance_report, fleet_fuel_report, supplier_parts_report
-from .views.analytics import (fleet_analytics, vehicle_analysis_settings,
+from .views.analytics import (analysis_methodology, fleet_analytics, vehicle_analysis_settings,
     vehicle_assessment_create, vehicle_assessment_detail)
 from .views.center_statistics import center_statistics
 from .views.datatables import (
@@ -414,6 +414,7 @@ urlpatterns = [
     path('', dashboard, name='dashboard'),
     path('ostalo/', fleet_other, name='fleet_other'),
     path('analitika/', fleet_analytics, name='fleet_analytics'),
+    path('analitika/metodologija/', analysis_methodology, name='analysis_methodology'),
     path('vehicles/<int:pk>/analysis-settings/', vehicle_analysis_settings, name='vehicle_analysis_settings'),
     path('vehicles/<int:pk>/assessment/new/', vehicle_assessment_create, name='vehicle_assessment_create'),
     path('vehicle-assessments/<int:pk>/', vehicle_assessment_detail, name='vehicle_assessment_detail'),

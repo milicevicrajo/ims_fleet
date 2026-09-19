@@ -26,6 +26,26 @@ class VehiclePeriodForm(forms.Form):
         return data
 
 
+def period_presets(today, selected_start=None, selected_end=None):
+    """Brzi izbori perioda, da se ne unose dva datuma za ono sto se najcesce trazi."""
+    def months_back(count):
+        index = today.year * 12 + today.month - 1 - count
+        return datetime.date(index // 12, index % 12 + 1, 1)
+
+    options = [
+        ('Ovaj mesec', today.replace(day=1), today),
+        ('Poslednja 3 meseca', months_back(2), today),
+        ('Poslednjih 12 meseci', months_back(11), today),
+        ('Ova godina', datetime.date(today.year, 1, 1), today),
+        ('Prošla godina', datetime.date(today.year - 1, 1, 1), datetime.date(today.year - 1, 12, 31)),
+    ]
+    return [
+        {'label': label, 'start': start, 'end': end,
+         'active': start == selected_start and end == selected_end}
+        for label, start, end in options
+    ]
+
+
 def date_only(value):
     if isinstance(value, datetime.datetime):
         return timezone.localtime(value).date() if timezone.is_aware(value) else value.date()

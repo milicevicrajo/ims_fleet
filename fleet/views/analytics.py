@@ -35,6 +35,14 @@ def default_period():
 
 
 @login_required
+@require_http_methods(['GET'])
+def analysis_methodology(request):
+    """Jedna stranica metodologije, umesto istog bloka na pet ekrana."""
+    return render(request, 'fleet/analysis_methodology.html',
+                  dict(methodology=METHODOLOGY, methodology_version=VERSION))
+
+
+@login_required
 @role_permission_required('fleet_analytics')
 @require_http_methods(['GET'])
 def fleet_analytics(request):
@@ -107,7 +115,15 @@ def vehicle_analysis_settings(request, pk):
         return redirect('vehicle_analysis_settings', pk=pk)
     if action and action not in forms:
         messages.error(request, 'Izaberite postojeći nalog ili ispravnu vrstu evidencije.')
+    # Spisak „sta jos nedostaje“ stoji uz polja koja ga popunjavaju, a ne na
+    # ekranu za citanje troskova. Racuna se za podrazumevani period, pa se taj
+    # period i ispisuje, da spisak ne bi delovao kao da vazi za svaki period.
+    readiness_start, readiness_end = default_period()
+    readiness = period_analysis([vehicle], readiness_start, readiness_end)[0]
+
     return render(request, 'fleet/analysis_settings.html', dict(vehicle=vehicle,
+        economics=readiness, period_start=readiness_start, period_end=readiness_end,
+        can_edit_analysis=True,
         profile_form=forms['profile'], charge_form=forms['charge'], downtime_form=forms['downtime'],
         job_form=forms.get('job'), selected_order=order, selected_downtime=downtime, selected_charge=charge,
         profiles=VehicleAnalysisProfile.objects.filter(vehicle=vehicle),

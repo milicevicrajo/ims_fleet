@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% load humanize form_filters i18n %}
 {% block content %}{% language "sr-latn" %}
-<style>
-.vd-page {width:100%;max-width:none;margin:0;color:#263748}.vd-page *{box-sizing:border-box}.vd-page h1{font-size:28px;margin-top:16px}.vd-page h2{font-size:22px}.vd-page h3{font-size:18px;margin-top:14px}.vehicle-hero{background:#20394a;color:#fff;padding:26px;border-radius:12px;margin-bottom:18px}.vehicle-plate{display:inline-block;background:white;color:#182a37;border:2px solid #adc3d0;border-radius:6px;font-size:23px;font-weight:700;padding:7px 16px;letter-spacing:1px}.vd-section-heading{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}.vd-actions{display:flex;flex-direction:column;align-items:flex-start;gap:9px}.vd-pill{border:1px solid #aac2cf;border-radius:20px;padding:5px 12px}.vehicle-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.vehicle-kpi{padding:18px;border:1px solid #dce4ea;border-radius:10px;background:white;overflow-wrap:anywhere}.vehicle-kpi small{display:block;color:#526675;margin:4px 0 9px}.vehicle-kpi strong{font-size:18px;line-height:1.4}.vd-tabs{display:flex;flex-wrap:wrap;gap:5px;border-bottom:1px solid #dce4ea;margin-bottom:18px;padding-bottom:7px}.vd-tabs .nav-link{border:0;border-radius:7px;color:#314c62;padding:12px 18px;background:#eff3f6}.vd-tabs .nav-link.active{background:#20577b;color:white}.vd-page .card{border:1px solid #e0e6eb;border-radius:10px;box-shadow:none}.vd-page .card-body{padding:22px}.vd-page .table td,.vd-page .table th{vertical-align:middle}.detail-table td:first-child{width:46%;color:#526675}.detail-table td{overflow-wrap:anywhere}.vd-period{display:flex;flex-wrap:wrap;align-items:end;gap:10px}.vd-period label{display:block}.vd-period input{padding:8px;border:1px solid #9aaebc;border-radius:5px;max-width:100%;min-width:0}.vd-note{background:#f1f5f8;padding:14px 17px;border-radius:7px;line-height:1.6;margin:16px 0}.vd-records{background:white;border:1px solid #dce4ea;padding:18px;border-radius:9px;margin:14px 0}.vd-records summary,.vd-note summary{cursor:pointer;font-weight:600}.vd-category{margin:18px 0}.vd-category>div{display:flex;justify-content:space-between;gap:10px}.vd-category progress{display:block;width:100%;height:9px;accent-color:#2c7896}.vd-months td,.vd-months th{text-align:right;white-space:nowrap}.vd-months th:first-child{text-align:left}.vehicle-document-preview{display:block;width:100%;max-height:240px;object-fit:contain;background:#f4f7f9}.vehicle-document-thumb{width:100%;max-height:150px;object-fit:contain}.vd-page .table-responsive{max-width:100%}.vd-page .errorlist{color:#a32922}.vd-page .tab-pane{min-width:0}.vd-page .row>div{min-width:0}.vd-shell>.card-body{padding:22px;background:#fff}.vd-page .vd-shell .card{background:#fafcfd;border-color:#dbe4eb}.vehicle-info-row{align-items:stretch}.vehicle-info-row>div{display:flex}.vehicle-info-row>div>.card{width:100%;margin-bottom:0}.vd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.vd-grid>.card{margin-bottom:0}.vd-page .vd-section-heading{align-items:center;margin-bottom:16px}.vd-page .vd-section-heading h3{margin:0}.vd-current{padding:12px;background:#edf3f7;border-radius:6px}.vd-page .table thead th{background:#edf3f7;font-weight:600;border-bottom:1px solid #cad7e0;padding:12px 10px}.vd-page .table td{padding:10px;border-bottom:1px solid #e3eaf0}.vd-page .table tbody tr:nth-child(even){background:#f4f7fa}.vd-page .table tbody tr:hover{background:#eaf1f6}.vd-page .table .btn{white-space:nowrap}.vd-button-row{display:flex;gap:8px;flex-wrap:wrap}.vd-document-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:20px}.vd-document-image{border:1px solid #dbe4eb;padding:15px;border-radius:8px;background:white}.vd-document-image h4{font-size:15px}.vd-empty-preview{height:200px;display:flex;align-items:center;justify-content:center;background:#edf3f7;color:#6a7d8b}.vd-document-tile{border:1px solid #dbe4eb;border-radius:8px;padding:18px;background:white}.vd-document-tile h4{font-size:16px}.vd-document-tile .vehicle-document-thumb{margin:12px 0}.vd-page .dt-container{width:100%;padding-top:10px}.vd-page .dt-search input,.vd-page .dt-length select{border:1px solid #aabbc8;border-radius:5px;padding:6px}.vd-page .dataTables_wrapper{width:100%}
-.vd-page .btn{border-radius:6px;font-weight:500}.vd-page .btn-outline-primary{color:#20577b;border-color:#a7c0d0;background:white}.vd-page .btn-outline-primary:hover{color:white;background:#20577b;border-color:#20577b}.vd-page .btn-primary{background:#20577b;border-color:#20577b}.vd-grid .table td,.vd-grid .table th{padding:9px 7px}.vd-grid .table{font-size:13px}.vd-grid .dt-search input{max-width:145px}.vd-mini-list{list-style:none;padding:0;margin:0}.vd-mini-item{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #dfe7ed}.vd-mini-item:last-child{border-bottom:0}.vd-mini-item small{display:block;color:#607381;margin-top:4px}.vd-mini-item .btn{flex-shrink:0}.vd-mini-more{margin-top:10px}.vd-mini-more summary{cursor:pointer;color:#20577b;font-weight:600;padding:8px 0}.vd-mini-item strong{overflow-wrap:anywhere}.vd-vehicle-heading{display:flex;align-items:center;gap:24px}.vd-vehicle-photo{width:220px;height:160px;object-fit:cover;border-radius:9px;border:1px solid #718997}</style><div class="vd-page">{% include "fleet/_vehicle_overview.html" %}<div class="card vd-shell"><div class="card-body"><nav class="nav vd-tabs" role="tablist" aria-label="Detalji vozila"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab" aria-controls="overview-pane" aria-selected="true">Podaci</button><button class="nav-link" id="holding-tab" data-bs-toggle="tab" data-bs-target="#holding-pane" type="button" role="tab" aria-controls="holding-pane" aria-selected="false">Raspolaganje i polise</button><button class="nav-link" id="cost-tab" data-bs-toggle="tab" data-bs-target="#cost-pane" type="button" role="tab" aria-controls="cost-pane" aria-selected="false">Troškovi</button><button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage-pane" type="button" role="tab" aria-controls="usage-pane" aria-selected="false">Korišćenje</button><button class="nav-link" id="mileage-tab" data-bs-toggle="tab" data-bs-target="#mileage-pane" type="button" role="tab" aria-controls="mileage-pane" aria-selected="false">Kilometraža</button><button class="nav-link" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance-pane" type="button" role="tab" aria-controls="maintenance-pane" aria-selected="false">Servisi</button><button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-controls="documents-pane" aria-selected="false">Dokumenti</button></nav><div class="tab-content"><section class="tab-pane fade show active" id="overview-pane" role="tabpanel" aria-labelledby="overview-tab" tabindex="0"><div class="row vehicle-info-row" id="vehicle-basics">
+{% include "fleet/includes/vehicle_detail_styles.html" %}<div class="vd-page">{% include "fleet/_vehicle_overview.html" %}<div class="card vd-shell"><div class="card-body"><nav class="nav vd-tabs" role="tablist" aria-label="Detalji vozila"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview-pane" type="button" role="tab" aria-controls="overview-pane" aria-selected="true">Podaci</button><button class="nav-link" id="holding-tab" data-bs-toggle="tab" data-bs-target="#holding-pane" type="button" role="tab" aria-controls="holding-pane" aria-selected="false">Raspolaganje i polise</button><button class="nav-link" id="cost-tab" data-bs-toggle="tab" data-bs-target="#cost-pane" type="button" role="tab" aria-controls="cost-pane" aria-selected="false">Troškovi</button><button class="nav-link" id="usage-tab" data-bs-toggle="tab" data-bs-target="#usage-pane" type="button" role="tab" aria-controls="usage-pane" aria-selected="false">Korišćenje</button><button class="nav-link" id="mileage-tab" data-bs-toggle="tab" data-bs-target="#mileage-pane" type="button" role="tab" aria-controls="mileage-pane" aria-selected="false">Kilometraža</button><button class="nav-link" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance-pane" type="button" role="tab" aria-controls="maintenance-pane" aria-selected="false">Servisi</button><button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-pane" type="button" role="tab" aria-controls="documents-pane" aria-selected="false">Dokumenti</button></nav><div class="tab-content"><section class="tab-pane fade show active" id="overview-pane" role="tabpanel" aria-labelledby="overview-tab" tabindex="0"><div class="row vehicle-info-row" id="vehicle-basics">
   <div class="col-lg-6">
     <div class="card">
       <div class="card-body">
@@ -48,64 +46,7 @@
     </div>
 
   </div>
-</div></section><section class="tab-pane fade" id="holding-pane" role="tabpanel" aria-labelledby="holding-tab" tabindex="0">{% include 'fleet/_vehicle_holding.html' %}</section><section class="tab-pane fade" id="cost-pane" role="tabpanel" aria-labelledby="cost-tab" tabindex="0">{% include 'fleet/_vehicle_analysis.html' %}{% if period_valid %}<details class='vd-records'><summary>Računi za gorivo i AdBlue</summary>
-        <h3 class="card-title">Gorivo i AdBlue · izabrani period</h3><p>Količine i cene su iz izvornih transakcija; nisu obračun potrošnje l/100 km.</p>
-        <div class="table-responsive">
-          <table id="vehicleFuelRecords" class="display compact">
-            <thead>
-              <tr>
-                <th>Datum</th>
-                <th>Broj računa</th>
-                <th>Proizvod</th><th>Količina</th>
-                <th>Jedinična cena</th>
-                <th>Iznos neto</th>
-                <th>Iznos bruto</th>
-                <th>Kilometraža</th>
-                <th>Dobavljač</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for consumption in consumptions %}
-              <tr>
-                <td data-order="{{ consumption.date|date:'U' }}">{{ consumption.date|date:"d.m.Y H:i" }}</td>
-                <td>{{ consumption.receipt_number|receipt_number|default:"-" }}</td>
-                <td>{{ consumption.product|default:"—" }}</td><td>{{ consumption.amount|floatformat:"2g" }}</td>
-                <td>{{ consumption.price_per_liter|floatformat:"2g" }}</td>
-                <td>{{ consumption.cost_neto|floatformat:"2g" }}</td>
-                <td>{{ consumption.cost_bruto|floatformat:"2g" }}</td>
-                <td>{{ consumption.mileage|floatformat:0 }}</td>
-                <td>{{ consumption.supplier }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </details><details class="vd-records"><summary>Stavke održavanja i naknade osiguranja</summary>
-        <h3 class="card-title">Spoljne usluge i delovi · izabrani period</h3>
-        <div class="table-responsive">
-          <table id="vehicleServiceRecords" class="display compact">
-            <thead>
-              <tr>
-                <th>Datum</th>
-                <th>Cena</th>
-                <th>Kategorija</th>
-                <th>Partner</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for service in service_list %}
-              <tr>
-                <td data-order="{{ service.datum|date:'Y-m-d' }}">{{ service.datum|date:"d.m.Y" }}</td>
-                <td>{{ service.potrazuje|floatformat:"2g" }}</td>
-                <td>{{ service.popravka_kategorija|default:"-" }}</td>
-                <td>{{ service.naz_par_pl }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      <h3>IMS trebovanja · izabrani period</h3><div class="table-responsive"><table class="table table-sm vd-data"><thead><tr><th>Datum</th><th>Dokument</th><th>Artikal</th><th>Kategorija</th><th>Iznos RSD</th></tr></thead><tbody>{% for item in requisition_list %}<tr><td data-order="{{ item.datum_trebovanja|date:'Y-m-d' }}">{{ item.datum_trebovanja|date:"d.m.Y" }}</td><td>{{ item.br_dok }}</td><td>{{ item.naz_art }}</td><td>{{ item.popravka_kategorija|default:"Nerazvrstano" }}</td><td>{{ item.vrednost_nab|floatformat:"2g" }}</td></tr>{% endfor %}</tbody></table></div>
-<h3>Naknade osiguranja · izabrani period</h3><div class="table-responsive"><table class="table table-sm vd-data"><thead><tr><th>Datum</th><th>Nalog</th><th>Dokument</th><th>Iznos RSD</th></tr></thead><tbody>{% for item in recovery_list %}<tr><td data-order="{{ item.datum|date:'Y-m-d' }}">{{ item.datum|date:"d.m.Y" }}</td><td>{{ item.br_naloga }}</td><td>{{ item.vez_dok|default:"—" }}</td><td>{{ item.potrazuje|floatformat:"2g"|default:"Nije unet" }}</td></tr>{% endfor %}</tbody></table></div></details>{% endif %}</section><section class="tab-pane fade" id="usage-pane" role="tabpanel" aria-labelledby="usage-tab" tabindex="0">{% include 'fleet/_vehicle_usage.html' %}</section><section class="tab-pane fade" id="mileage-pane" role="tabpanel" aria-labelledby="mileage-tab" tabindex="0">{% include "fleet/_vehicle_mileage.html" %}</section><section class="tab-pane fade" id="maintenance-pane" role="tabpanel" aria-labelledby="maintenance-tab" tabindex="0">{% include "fleet/_vehicle_maintenance.html" %}</section><section class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab" tabindex="0">{% include 'fleet/_vehicle_documents.html' %}</section></div></div></div></div><script>
+</div></section><section class="tab-pane fade" id="holding-pane" role="tabpanel" aria-labelledby="holding-tab" tabindex="0">{% include 'fleet/_vehicle_holding.html' %}</section><section class="tab-pane fade" id="cost-pane" role="tabpanel" aria-labelledby="cost-tab" tabindex="0">{% include 'fleet/_vehicle_analysis.html' %}</section><section class="tab-pane fade" id="usage-pane" role="tabpanel" aria-labelledby="usage-tab" tabindex="0">{% include 'fleet/_vehicle_usage.html' %}</section><section class="tab-pane fade" id="mileage-pane" role="tabpanel" aria-labelledby="mileage-tab" tabindex="0">{% include "fleet/_vehicle_mileage.html" %}</section><section class="tab-pane fade" id="maintenance-pane" role="tabpanel" aria-labelledby="maintenance-tab" tabindex="0">{% include "fleet/_vehicle_maintenance.html" %}</section><section class="tab-pane fade" id="documents-pane" role="tabpanel" aria-labelledby="documents-tab" tabindex="0">{% include 'fleet/_vehicle_documents.html' %}</section></div></div></div></div><script>
 document.addEventListener('DOMContentLoaded', function () {
   const buttons = Array.from(document.querySelectorAll('.vd-tabs button'));
   function activateHash() {

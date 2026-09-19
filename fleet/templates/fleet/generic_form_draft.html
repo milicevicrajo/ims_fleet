@@ -16,21 +16,20 @@
               <!-- Horizontal Form -->
               <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                {% for field in form %}
-                    <div class="row mb-3">
-                        <label for="{{ field.id_for_label }}" class="col-sm-5 col-form-label">{{ field.label }}:</label>
-                        <div class="col-sm-7">
-                            {{ field|add_class:'form-control' }}
-                            {% if field.errors %}
-                            <div class="invalid-feedback" style="display: block;">
-                                {% for error in field.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
+                {% if form.has_required_fields %}
+                  <p class="text-muted" style="font-size:13px">Polja označena sa <span style="color:#b3261e;font-weight:700">*</span> su obavezna.</p>
+                {% endif %}
+                {% if form.grouped_fields %}
+                  {% for group in form.grouped_fields %}
+                    <fieldset style="border:1px solid #dfe6ec;border-radius:9px;padding:18px 20px 4px;margin-bottom:22px;background:#fcfdfe">
+                      <legend style="float:none;width:auto;font-size:15px;font-weight:600;color:#20577b;padding:0 8px;margin:0 0 4px -8px">{{ group.title }}</legend>
+                      {% if group.description %}<p class="text-muted" style="font-size:13px;margin:0 0 14px">{{ group.description }}</p>{% endif %}
+                      {% for field in group.fields %}{% include "fleet/_form_field.html" %}{% endfor %}
+                    </fieldset>
+                  {% endfor %}
+                {% else %}
+                  {% for field in form %}{% include "fleet/_form_field.html" %}{% endfor %}
+                {% endif %}
                 <div class="text-center">
                     <button type="submit" class="btn btn-primary">{{ submit_button_label }}</button>
                 </div>

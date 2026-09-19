@@ -108,6 +108,146 @@ def _active_orders(rows, day):
     return active
 
 
+def _lease_overview(lease, lease_charges, interest_by_year, today):
+    """Sta je rata, a sta preostala ugovorna obaveza — po POTVRDJENOJ naknadi.
+
+    Staro polje `current_payment_amount` se ovde samo prikazuje, bez tumacenja:
+    nije potvrdjeno da li je mesecna rata ili ukupan iznos ugovora (P-08).
+    """
+    current = next((c for c in lease_charges if c.start <= today <= c.end), None)
+    if current is None:
+        current = next((c for c in lease_charges if c.start > today), None)
+    daily = monthly = None
+    if current is not None:
+        if current.basis == 'monthly':
+            monthly = current.amount
+            daily = current.amount / Decimal(calendar.monthrange(today.year, today.month)[1])
+        else:
+            span = Decimal((current.end - current.start).days + 1)
+            daily = current.amount / span
+            monthly = daily * Decimal(30)
+    remaining_to = min(lease.end_date, current.end) if current is not None else lease.end_date
+    remaining_days = max((remaining_to - today).days + 1, 0) if remaining_to >= today else 0
+    return dict(
+        lease=lease,
+        type_label=lease.get_lease_type_display(),
+        confirmed=current is not None,
+        charge=current,
+        rate_monthly=monthly,
+        rate_daily=daily,
+        rate_basis=current.basis if current is not None else None,
+        legacy_amount=lease.current_payment_amount,
+        remaining_days=remaining_days,
+        remaining_months=round(remaining_days / Decimal('30.44'), 1) if remaining_days else Decimal(0),
+        remaining_amount=(daily * Decimal(remaining_days)) if daily is not None and remaining_days else None,
+        interest_current_year=interest_by_year.get((lease.pk, today.year)),
+        expired=lease.end_date < today,
+    )
+
+
+def _readiness(profile, period_profiles, missing_holding_days, contract_missing,
+               distance, orders_in_period, jobless_orders, downtime_rows, period_days):
+    """Sta je potrebno za obracun troskova, sta nedostaje i gde se popunjava.
+
+    Redosled je redosled popunjavanja: bez namene nema izvora goriva, bez
+    raspolaganja nema naknada, bez naknada nema ugovornog troska, i tako redom.
+    """
+    def item(order, label, state, detail, effect, where=None, where_label=None):
+        return dict(order=order, label=label, state=state, detail=detail,
+                    effect=effect, where=where, where_label=where_label)
+
+    items = []
+
+    if profile is None:
+        items.append(item(1, 'Poslovna namena vozila', 'missing',
+            'Namena nije uneta ni za jedan dan perioda.',
+            'Određuje merodavne pokazatelje, izvor goriva i da li se kontrolni prag primenjuje.',
+            'vehicle_analysis_settings', 'Namena, kriterijumi i evidencija'))
+    elif None in period_profiles:
+        items.append(item(1, 'Poslovna namena vozila', 'partial',
+            'Namena ne pokriva ceo period; za deo dana koristi se podrazumevani izvor NIS/OMV.',
+            'Određuje merodavne pokazatelje, izvor goriva i da li se kontrolni prag primenjuje.',
+            'vehicle_analysis_settings', 'Namena, kriterijumi i evidencija'))
+    elif len(period_profiles) > 1:
+        items.append(item(1, 'Poslovna namena vozila', 'partial',
+            'Namena se menja unutar perioda; kontrolni prag se na mešovit period ne primenjuje.',
+            'Određuje merodavne pokazatelje, izvor goriva i da li se kontrolni prag primenjuje.',
+            'vehicle_analysis_settings', 'Namena, kriterijumi i evidencija'))
+    else:
+        items.append(item(1, 'Poslovna namena vozila', 'ok',
+            f'{profile.get_purpose_display()} · izvor goriva: {profile.get_fuel_source_display()}',
+            'Određuje merodavne pokazatelje, izvor goriva i da li se kontrolni prag primenjuje.'))
+
+    if missing_holding_days:
+        items.append(item(2, 'Osnov raspolaganja', 'missing' if missing_holding_days == period_days else 'partial',
+            f'Nije jednoznačno evidentiran za {missing_holding_days} od {period_days} dana.',
+            'Bez njega se ne zna da li vozilo nosi naknadu najma, kamatu ili nijedno.',
+            'vehicle_holding_create', 'Raspolaganje i polise'))
+    else:
+        items.append(item(2, 'Osnov raspolaganja', 'ok',
+            'Evidentiran za svaki dan perioda.',
+            'Određuje da li vozilo nosi naknadu najma, kamatu ili nijedno.'))
+
+    if contract_missing:
+        items.append(item(3, 'Potvrđena naknada ugovora / kamata', 'missing',
+            f'Nedostaje za {contract_missing} dana. Staro polje „Trenutna rata / iznos otplate“ se ne koristi '
+            'jer nije potvrđeno da li je mesečni ili ukupan iznos.',
+            'Naknada najma i kamata lizinga ulaze u obuhvaćene troškove.',
+            'vehicle_analysis_settings', 'Namena, kriterijumi i evidencija'))
+    else:
+        items.append(item(3, 'Potvrđena naknada ugovora / kamata', 'ok',
+            'Potvrđena za sve dane sa ugovornim raspolaganjem.',
+            'Naknada najma i kamata lizinga ulaze u obuhvaćene troškove.'))
+
+    if distance is None:
+        items.append(item(4, 'Očitavanja kilometraže na granicama perioda', 'missing',
+            'Nema očitanja na oba granična datuma, pa se kilometraža ne izvodi. Ne procenjuje se iz starijih očitanja.',
+            'Bez toga nema pokazatelja RSD/km.',
+            None, 'Kartica „Kilometraža“ i putni nalozi'))
+    else:
+        items.append(item(4, 'Očitavanja kilometraže na granicama perioda', 'ok',
+            f'{distance:.0f} km između graničnih očitanja.',
+            'Daje pokazatelj RSD/km.'))
+
+    # Naziv stavke je uvek isti; menja se samo stanje i opis, da spisak ostane
+    # uporediv izmedju dva prikaza.
+    orders_effect = 'Daju RSD/dan po nalogu i raspodelu troška na poslove.'
+    if not orders_in_period:
+        items.append(item(5, 'Putni nalozi i šifra posla', 'missing',
+            'Nema nijednog naloga koji dodiruje period.', orders_effect,
+            'vehicle_travel_order_create', 'Putni nalozi vozila'))
+    elif jobless_orders:
+        items.append(item(5, 'Putni nalozi i šifra posla', 'partial',
+            f'Od {orders_in_period} naloga, {jobless_orders} nema potvrđenu šifru posla. '
+            'Pripadnost se ne izvodi iz centra vozila.', orders_effect,
+            'vehicle_analysis_settings', 'Namena, kriterijumi i evidencija'))
+    else:
+        items.append(item(5, 'Putni nalozi i šifra posla', 'ok',
+            f'Svih {orders_in_period} naloga ima potvrđenu šifru posla.', orders_effect))
+
+    if not downtime_rows:
+        items.append(item(6, 'Evidencija zastoja', 'missing',
+            'Nije vođena. Odsustvo zapisa ne znači da zastoja nije bilo.',
+            'Pokazuje koliko je vozilo bilo neupotrebljivo u periodu.',
+            'vehicle_analysis_settings', 'Namena, kriterijumi i evidencija'))
+    else:
+        items.append(item(6, 'Evidencija zastoja', 'ok',
+            f'Evidentirano {len(downtime_rows)} zapisa.',
+            'Pokazuje koliko je vozilo bilo neupotrebljivo u periodu.'))
+
+    if profile is None or (profile.cost_limit_km is None and profile.cost_limit_day is None):
+        items.append(item(7, 'Kontrolni prag', 'optional',
+            'Nije unet. Nema univerzalnog praga isplativosti po masi vozila.',
+            'Signal za pregled kada trošak pređe unapred obrazložen iznos.',
+            'vehicle_analysis_settings', 'Namena, kriterijumi i evidencija'))
+    else:
+        items.append(item(7, 'Kontrolni prag', 'ok',
+            'Unet, sa pisanim osnovom i izabranim načinom raspolaganja.',
+            'Signal za pregled kada trošak pređe unapred obrazložen iznos.'))
+
+    return items
+
+
 def period_analysis(vehicles, start, end):
     """Batch-load sources once; identical output is used by fleet and vehicle screens."""
     vehicles = list(vehicles)
@@ -128,8 +268,14 @@ def period_analysis(vehicles, start, end):
     leases = list(Lease.objects.filter(vehicle_id__in=ids, start_date__lte=end, end_date__gte=start))
     lease_map = {r.pk: r for r in leases}
     charges = defaultdict(list)
-    for charge in LeaseChargePeriod.objects.filter(lease_id__in=lease_map, start__lte=end, end__gte=start):
-        charges[charge.lease_id].append(charge)
+    all_charges = defaultdict(list)
+    for charge in LeaseChargePeriod.objects.filter(lease_id__in=lease_map).order_by('start', 'pk'):
+        all_charges[charge.lease_id].append(charge)
+        if charge.start <= end and charge.end >= start:
+            charges[charge.lease_id].append(charge)
+    leases_by_vehicle = defaultdict(list)
+    for row in leases:
+        leases_by_vehicle[row.vehicle_id].append(row)
     interest = {(r.lease_id, r.year): r.interest_amount for r in LeaseInterest.objects.filter(lease_id__in=lease_map, year__range=(start.year, end.year))}
     profiles = _group(VehicleAnalysisProfile.objects.filter(vehicle_id__in=ids, effective_from__lte=end).order_by('effective_from', 'pk'))
     orders = _group(VehicleTravelOrder.objects.filter(vehicle_id__in=ids, created_at__lte=end).filter(Q(closed_at__isnull=True) | Q(closed_at__gte=start)).select_related('job_code'))
@@ -328,6 +474,12 @@ def period_analysis(vehicles, start, end):
                 month = monthly[day.replace(day=1)]
                 month['included'] = (month['included'] or ZERO) + value
         assignment = assignments[pk][-1] if assignments[pk] else None
+        today = timezone.localdate()
+        lease_rows = [_lease_overview(row, all_charges[row.pk], interest, today)
+                      for row in leases_by_vehicle[pk]]
+        readiness = _readiness(profile, period_profiles, missing_holding_days, contract_missing,
+            distance, len(orders[pk]), sum(1 for o in orders[pk] if not o.job_code_id),
+            downtime[pk], len(days))
         results.append(dict(vehicle=vehicle, vehicle_id=pk, label=labels[pk], profile=profile,
             purpose=profile.get_purpose_display() if profile else 'Namena nije razvrstana',
             latest_assessment=assessments[pk][-1] if assessments[pk] else None,
@@ -348,7 +500,10 @@ def period_analysis(vehicles, start, end):
             order_count=len(orders[pk]), downtime_days=len(down_days) if downtime[pk] else None,
             criteria=criteria, status=status, quality=quality, warnings=sorted(warnings),
             jobs=list(jobs.values()), unallocated=unallocated if has_cost else None,
-            monthly=list(monthly.values()), evidence_count=evidence_count))
+            monthly=list(monthly.values()), evidence_count=evidence_count,
+            readiness=readiness, ready_count=sum(1 for i in readiness if i['state'] == 'ok'),
+            missing_count=sum(1 for i in readiness if i['state'] == 'missing'),
+            leases=lease_rows))
     return results
 
 

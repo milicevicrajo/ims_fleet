@@ -6,15 +6,40 @@ from core.form_fields import localized_date_field
 from core.models import OrganizationalUnit
 
 from ..models import JobCode, TrafficCard, Vehicle, VehicleTenderDocument
+from .layout import FieldsetMixin
 
 
-class VehicleForm(forms.ModelForm):
+class VehicleForm(FieldsetMixin, forms.ModelForm):
+    fieldsets = (
+        ('Identifikacija', 'Podaci po kojima se vozilo prepoznaje. Broj šasije se ne menja.',
+         ('chassis_number', 'inventory_number', 'brand', 'model', 'year_of_manufacture',
+          'category', 'color', 'homologation_number', 'first_registration_date')),
+        ('Motor i pogon', 'Za priključna vozila se ova polja brišu pri snimanju.',
+         ('fuel_type', 'engine_number', 'engine_volume', 'engine_power')),
+        ('Mase i nosivost', 'Najveća dozvoljena masa određuje klasu vozila u izveštajima.',
+         ('weight', 'load_capacity', 'maximum_permissible_weight', 'number_of_axles', 'number_of_seats')),
+        ('Nabavka i vrednost', 'Vrednosti su zasebni podaci — troškovi održavanja se od njih ne oduzimaju.',
+         ('purchase_date', 'purchase_value', 'value', 'partner_code', 'partner_name', 'invoice_number')),
+        ('Održavanje i napomena', None, ('service_interval', 'description')),
+    )
     first_registration_date = localized_date_field(label="Datum prve registracije", required=False)
     purchase_date = localized_date_field(label="Datum kupovine", required=False)
 
     class Meta:
         model = Vehicle
         fields = ['inventory_number', 'chassis_number', 'brand', 'model', 'year_of_manufacture', 'category', 'color', 'homologation_number', 'first_registration_date', 'number_of_axles', 'engine_volume', 'engine_number', 'weight', 'engine_power', 'load_capacity', 'maximum_permissible_weight', 'fuel_type', 'number_of_seats', 'service_interval', 'purchase_value', 'value', 'purchase_date', 'partner_code', 'partner_name', 'invoice_number', 'description']
+        help_texts = {
+            'chassis_number': 'Jedinstven broj šasije (VIN). Po njemu se vozilo prepoznaje pri uvozu podataka.',
+            'inventory_number': 'Inventarski broj iz osnovnih sredstava, ako postoji.',
+            'category': 'Tehnička kategorija vozila. Poslovna namena se unosi odvojeno, na ekranu analitike.',
+            'fuel_type': 'Na primer: dizel, benzin, TNG. Za električna vozila upisati „električno“ — sistem tu vrednost prepoznaje i briše zapreminu motora.',
+            'maximum_permissible_weight': 'Najveća dozvoljena masa u kilogramima.',
+            'service_interval': 'Razmak između dva redovna servisa, u kilometrima.',
+            'purchase_value': 'Iznos po kojem je vozilo nabavljeno.',
+            'value': 'Trenutna knjigovodstvena vrednost. Zaseban podatak — troškovi održavanja je ne umanjuju.',
+            'purchase_date': 'Datum nabavke. Koristi se kao osnov za obračun amortizacije.',
+            'partner_code': 'Šifra dobavljača od kojeg je vozilo nabavljeno.',
+        }
 
     def clean_inventory_number(self):
         return (self.cleaned_data.get('inventory_number') or '').strip() or None
@@ -44,16 +69,34 @@ class VehicleForm(forms.ModelForm):
         return data
 
 
-class TrafficCardForm(forms.ModelForm):
+class TrafficCardForm(FieldsetMixin, forms.ModelForm):
+    fieldsets = (
+        ('Vozilo i registracija', None, ('vehicle', 'registration_number', 'owner')),
+        ('Dokument', 'Brojevi sa same saobraćajne dozvole.',
+         ('traffic_card_number', 'serial_number', 'issue_date', 'valid_until')),
+        ('Registracija', None, ('registration_valid_until',)),
+        ('Prilozi', 'Skenirana dozvola. Nije obavezno.',
+         ('traffic_card_pdf', 'traffic_card_front_image', 'traffic_card_back_image')),
+    )
+
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={"class": "select2-method"}),
         label="Vozilo",
         required=False,
     )
-    issue_date = localized_date_field(label="Datum izdavanja")
-    valid_until = localized_date_field(label="Rok važenja saobraćajne, ako je naveden", required=False)
-    registration_valid_until = localized_date_field(label="Registracija važi do", required=False)
+    issue_date = localized_date_field(
+        label="Datum izdavanja",
+        help_text="Datum izdavanja same saobraćajne dozvole.",
+    )
+    valid_until = localized_date_field(
+        label="Rok važenja saobraćajne, ako je naveden", required=False,
+        help_text="Rok važenja DOKUMENTA. Većina dozvola ga nema — tada ostaviti prazno.",
+    )
+    registration_valid_until = localized_date_field(
+        label="Registracija važi do", required=False,
+        help_text="Do kada je vozilo REGISTROVANO. Po ovom datumu se javlja upozorenje o isteku registracije.",
+    )
 
     class Meta:
         model = TrafficCard
@@ -79,7 +122,13 @@ class TrafficCardForm(forms.ModelForm):
                 self.fields[field_name].widget.attrs.update({"class": "form-control"})
 
 
-class VehicleTenderDocumentForm(forms.ModelForm):
+class VehicleTenderDocumentForm(FieldsetMixin, forms.ModelForm):
+    fieldsets = (
+        ('Vozilo i vrsta', None, ('vehicle', 'document_type', 'title')),
+        ('Prilog', None, ('image', 'taken_at')),
+        ('Ostalo', None, ('description', 'is_active')),
+    )
+
     vehicle = forms.ModelChoiceField(
         queryset=Vehicle.objects.all(),
         widget=Select2Widget(attrs={"class": "select2-method"}),
@@ -105,13 +154,16 @@ class VehicleTenderDocumentForm(forms.ModelForm):
             self.initial["taken_at"] = self.instance.taken_at.strftime("%d.%m.%Y")
 
 
-class JobCodeForm(forms.ModelForm):
+class JobCodeForm(FieldsetMixin, forms.ModelForm):
     organizational_unit = forms.ModelChoiceField(
         queryset=OrganizationalUnit.objects.all(),
         widget=Select2Widget(attrs={"class": "select2-method"}),
         label="Organizaciona jedinica",
     )
-    assigned_date = localized_date_field(label="Datum dodele")
+    assigned_date = localized_date_field(
+        label="Datum dodele",
+        help_text="Od kog dana vozilo pripada ovoj organizacionoj jedinici. Dodela važi do datuma sledeće promene.",
+    )
 
     class Meta:
         model = JobCode

@@ -25,6 +25,90 @@ formule ni kriterijume obračuna.
 Stilovi i sidra analitike koriste prefiks `fleet-analytics-`, da ne bi dolazilo
 do sukoba sa klasama `fa-filter` i `fa-table` iz globalnog Font Awesome paketa.
 
+**Metodologija je jedna stranica** — `/analitika/metodologija/`. Svih pet ekrana koji je
+pominju vode vezom ka njoj, umesto da svaki iscrtava istu tabelu. Izuzetak je sačuvana
+procena koja u svom snimku **nosi sopstvenu metodologiju** (starije procene): ona se
+prikazuje tačno onako kako je tada zabeležena. [P]
+
+### E-01.1.1. Raspored kartice „Troškovi“ na detalju vozila [P]
+
+Kartica ima **tri celine, uvek istim redom**:
+
+| # | Celina | Šta pokazuje |
+|---|---|---|
+| **1** | Rezultat obračuna | Pokazatelji i razlaganje zbira po delovima |
+| **2** | Ugovori lizinga i najma | Rata, dnevni deo i preostala ugovorna obaveza. **Prikazuje se i kada vozilo nema ugovor** — tada stoji „Vozilo nije na lizingu ni u najmu“, što objašnjava zašto je red ugovornih naknada u celini 1 prazan |
+| **3** | Izvorne stavke | Mesečni pregled, struktura održavanja i pojedinačni zapisi |
+
+Iznad njih je izbor perioda i **sažet red o popunjenosti ulaza** („5 od 7 popunjeno · 2
+nedostaju“), sa vezom ka ekranu unosa.
+
+**Izbor perioda [P]:** pet brzih izbora — *ovaj mesec, poslednja 3 meseca, poslednjih 12
+meseci, ova godina, prošla godina* — uz dva polja za proizvoljan period. Izabrani je
+označen, a ispod stoji šta je tačno prikazano. Ranije su stajala samo dva gola polja za
+datum i dugme, bez naznake šta je izabrano.
+
+**Sklopivih blokova ima dva** [P], a ranije ih je bilo šest:
+
+| Blok | Gde |
+|---|---|
+| Razrada zbira — po poslovima i po mesecima | Celina 1 |
+| Pojedinačni zapisi — gorivo, usluge, trebovanja, naknade | Celina 3 |
+
+> **Upozorenja („Podaci koje treba proveriti“) više nisu sklopiva** — stoje odmah vidljiva,
+> jer su razlog zašto neki pokazatelj nedostaje. Objašnjenje „Kako čitati pokazatelje“
+> premešteno je na stranicu metodologije, uz sve ostalo istog reda.
+
+Celine više nisu kartice unutar kartice, nego blokovi razdvojeni linijom — ranije su na
+istom mestu bila tri nivoa okvira.
+
+**Stilovi i naslovi [P]:** svi stilovi detalja vozila stoje u jednom mestu,
+`fleet/templates/fleet/includes/vehicle_detail_styles.html`, sa prefiksom `vd-`. Ranije su
+bili u samom `vehicle_detail.html` i u dva partiala, uz dvanaest inline `style` atributa.
+
+Skala naslova je ista na svih sedam kartica detalja:
+
+| Nivo | Šta nosi |
+|---|---|
+| `h1` | Naziv vozila — **jednom**, u pregledu |
+| `h3` | Celina unutar kartice |
+| `h4` | Pododeljak unutar celine |
+
+Kartica Troškovi je ranije imala i `h2` sa imenom kartice, kojeg ostalih šest nema — ime
+kartice već stoji na jezičku, pa je uklonjen.
+
+### Gde stoji spisak nedostajućih podataka [P]
+
+Pun spisak sedam ulaznih podataka — sa stanjem (ima / delimično / nedostaje), čemu svaki
+služi i gde se popunjava — stoji na ekranu **„Namena, kriterijumi i evidencija“**, a ne na
+kartici Troškovi.
+
+> **Zašto tamo [Z]:** spisak je **zadatak**, a kartica Troškovi je **izveštaj**. To rade
+> različiti ljudi u različitim trenucima. Uz to, sva dugmad iz spiska ionako vode na taj
+> ekran — sada spisak stoji pored polja koja traži.
+
+Spisak se računa za **podrazumevani period (poslednjih 12 meseci)** i taj period se ispisuje
+u zaglavlju, da ne bi delovao kao da važi za svaki period. Podaci dolaze iz
+`economics.readiness`. **Naziv stavke se ne menja sa stanjem** — menjaju se samo oznaka i
+opis, da spisak ostane uporediv između dva prikaza.
+
+> **Ranije su na istoj kartici stajala dva skupa po četiri pokazatelja i dve mesečne
+> tabele, sa dva različita zbira.** Otud utisak zbrke. Sada je pokazatelj „Obuhvaćeni
+> troškovi“ prikazan **tačno jednom**, a mesečna tabela izvornih stavki nosi napomenu da
+> premije i ugovorne naknade **nisu** u njoj nego u celini 2.
+
+**Lizing — šta je rata, a šta preostalo [P]:**
+
+| Prikaz | Značenje |
+|---|---|
+| Rata | Iz `LeaseChargePeriod`. Ako je osnov `monthly` → mesečni iznos; ako je `total` → ukupan iznos za period, uz izričitu napomenu da **to nije mesečna rata** |
+| Dnevni deo | Iznos koji stvarno ulazi u trošak po danu |
+| Preostalo do kraja | Dnevni deo × preostali dani od danas. Označeno kao **ugovorna obaveza, ne dug** — sistem ne vodi evidenciju izvršenih uplata |
+| Staro polje „Trenutna rata / iznos otplate“ | Prikazano radi uvida, uz napomenu da se **ne koristi u obračunu** |
+
+Kada naknada nije uneta, ugovor nosi oznaku **„Nije potvrđena“** i ne ulazi u obuhvaćene
+troškove — umesto da se iznos pogađa iz starog polja.
+
 ### E-01.2. Poslovna svrha
 
 Uskladiti prikaz istog vozila u istom periodu na oba ekrana, prikazati poslovnu

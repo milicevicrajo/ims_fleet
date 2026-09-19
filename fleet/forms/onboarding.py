@@ -6,6 +6,7 @@ from core.models import OrganizationalUnit
 from hr.models import Employee
 from ugovori.models import Contract
 from ..models import Vehicle, TrafficCard, Lease, VehicleHolding
+from .layout import FieldsetMixin
 
 
 IDENTITY_FIELDS = ['photo', 'category', 'chassis_number', 'brand', 'model', 'year_of_manufacture', 'inventory_number']
@@ -199,13 +200,32 @@ class VehicleAssignmentForm(forms.Form):
         return data
 
 
-class VehicleHoldingForm(forms.ModelForm):
-    start_date = localized_date_field(label='Važi od')
-    end_date = localized_date_field(label='Važi do (uključivo)', required=False)
+class VehicleHoldingForm(FieldsetMixin, forms.ModelForm):
+    start_date = localized_date_field(label='Važi od', help_text='Prvi dan od kog ovaj osnov važi.')
+    end_date = localized_date_field(
+        label='Važi do (uključivo)', required=False,
+        help_text='Poslednji dan važenja. Ostavite prazno dok osnov traje — otvoren period se zatvara unosom sledeće promene.',
+    )
+
+    fieldsets = (
+        ('Osnov i period', 'Šta je osnov raspolaganja i od kada važi.',
+         ('basis', 'start_date', 'end_date')),
+        ('Ugovor', 'Popunjava se kada je osnov korišćenje po ugovoru.',
+         ('lease',)),
+        ('Finansiranje nabavke', 'Popunjava se kada je vozilo u vlasništvu IMS-a.',
+         ('financing', 'financing_contract')),
+        ('Dokaz', None, ('evidence', 'note')),
+    )
 
     class Meta:
         model = VehicleHolding
         fields = ['basis', 'start_date', 'end_date', 'lease', 'financing', 'financing_contract', 'evidence', 'note']
+        help_texts = {
+            'basis': 'Vlasništvo IMS-a ili korišćenje po ugovoru. Od toga zavisi da li vozilo nosi naknadu najma ili amortizaciju.',
+            'lease': 'Ugovor o lizingu ili najmu za ovo vozilo. Iznos naknade za obračun se unosi odvojeno, na ekranu analitike.',
+            'financing': 'Da li je nabavka plaćena iz sopstvenih sredstava ili kreditom. Kamate kredita ne ulaze automatski u trošak vozila.',
+            'evidence': 'Dokument kojim se promena dokazuje — ugovor, otpremnica, zapisnik.',
+        }
 
     def __init__(self, *args, vehicle, **kwargs):
         super().__init__(*args, **kwargs)

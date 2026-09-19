@@ -1,0 +1,24 @@
+{% load form_filters %}{% comment %}
+Jedno polje forme. Obavezna polja nose zvezdicu; objašnjenje stoji ispod polja.
+Koristi se iz generic_form.html, i iz svakog šablona koji prikazuje pojedinačna polja.
+{% endcomment %}
+<div class="row mb-3 align-items-start">
+  <label for="{{ field.id_for_label }}" class="col-sm-4 col-form-label">
+    {{ field.label }}{% if field.field.required %}<span class="fleet-required" title="Obavezno polje" aria-hidden="true"> *</span><span class="visually-hidden"> (obavezno)</span>{% endif %}:
+  </label>
+  <div class="col-sm-8">
+    {% if field.field.widget.input_type == "checkbox" %}
+      <div class="form-check pt-2">{{ field|add_class:"form-check-input" }}</div>
+    {% else %}
+      {{ field|add_class:"form-control" }}
+    {% endif %}
+
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+
+    {% if field.errors %}
+      <div class="invalid-feedback" style="display:block;">
+        {% for error in field.errors %}<div>{{ error }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>

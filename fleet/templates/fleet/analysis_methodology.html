@@ -1,0 +1,44 @@
+{% extends 'base.html' %}{% block content %}
+{% include "fleet/includes/vehicle_detail_styles.html" %}
+{% comment %}
+Jedna stranica metodologije. Ranije se isti blok ugrađivao u pet ekrana, pa se
+ista tabela iscrtavala pet puta i produžavala svaki od njih.
+{% endcomment %}
+<h1 class="my-4">Metodologija proračuna i kriterijumi · {{ methodology_version }}</h1>
+
+<p>Datumi perioda su uključivi. Iznosi su u RSD. <strong>Nepoznat podatak se ne zamenjuje nulom.</strong>
+Poslovna namena određuje merodavne pokazatelje, a istorija raspolaganja ugovorne troškove.</p>
+
+<section class="card"><div class="card-body">
+  <div class="table-responsive"><table class="table table-sm">
+    <thead><tr><th>Pokazatelj</th><th>Formula</th><th>Izvor</th><th>Kriterijum i ograničenje</th></tr></thead>
+    <tbody>{% for label, formula, source, criterion in methodology %}<tr><th>{{ label }}</th><td>{{ formula }}</td><td>{{ source }}</td><td>{{ criterion }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div></section>
+
+<div class="vd-note my-3">
+  <p>Gorivo se preuzima u bruto iznosu, ostale stavke u evidentiranoj poreskoj osnovi.
+  <strong>Zbir nije poreski usaglašen TCO.</strong> Nabavka, otplata glavnice i knjigovodstvena
+  amortizacija nisu dodati ovom zbiru.</p>
+  <p class="mb-0">Ekonomski trošak kapitala računa se posebno, u scenarijima procene.
+  Preporuka ne menja status otpisa.</p>
+</div>
+
+<h2 class="mt-4">Kako čitati pokazatelje</h2>
+<section class="card"><div class="card-body">
+  <p><strong>Obuhvaćeni troškovi</strong> nisu ukupna cena vlasništva. U njima su gorivo, održavanje,
+  premije polisa za period i potvrđene ugovorne naknade. Nabavna vrednost, glavnica i knjigovodstvena
+  amortizacija <strong>nisu</strong> u tom zbiru — trošak kapitala se poredi kroz zasebnu ekonomsku procenu.</p>
+
+  <p><strong>Održavanje</strong> = spoljne usluge i delovi + vrednost IMS trebovanja. Naknade osiguranja
+  se prikazuju po datumu evidencije i mogu se odnositi na raniju štetu. Negativni iznosi (storna) ostaju vidljivi.</p>
+
+  <p><strong>Kilometraža</strong> se ne procenjuje. Ako nema očitanja na oba granična datuma, RSD/km ostaje
+  prazan — bolje nego izveden broj. Količina sa računa ne dokazuje potrošnju, naročito kada uključuje AdBlue.</p>
+
+  <p class="mb-0"><strong>Prazna evidencija ne potvrđuje da troška nije bilo.</strong> Nabavna i knjigovodstvena
+  vrednost su zasebni podaci vozila; troškovi održavanja se od njih ne oduzimaju.</p>
+</div></section>
+
+<p class="mt-3"><a class="btn btn-outline-secondary" href="{% url 'fleet_analytics' %}">← Analitika flote</a></p>
+{% endblock %}

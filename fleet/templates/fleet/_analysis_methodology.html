@@ -1,7 +1,9 @@
-<details class="card my-3"><summary class="card-header">Metodologija proračuna i kriterijumi · {{ methodology_version }}</summary>
-<div class="card-body"><p>Datumi perioda su uključivi. Iznosi su u RSD. Nepoznat podatak se ne zamenjuje nulom. Poslovna namena određuje merodavne pokazatelje, a istorija raspolaganja ugovorne troškove.</p>
-<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Pokazatelj</th><th>Formula</th><th>Izvor</th><th>Kriterijum i ograničenje</th></tr></thead><tbody>
-{% for label, formula, source, criterion in methodology %}<tr><th>{{ label }}</th><td>{{ formula }}</td><td>{{ source }}</td><td>{{ criterion }}</td></tr>{% endfor %}
-</tbody></table></div>
-<p class="mb-0">Gorivo se preuzima u bruto iznosu, ostale stavke u evidentiranoj poreskoj osnovi. Zbir nije poreski usaglašen TCO. Nabavka, otplata glavnice i knjigovodstvena amortizacija nisu dodati ovom zbiru. Ekonomski trošak kapitala računa se posebno u scenarijima. Preporuka ne menja status otpisa.</p>
-</div></details>
+{% comment %}
+Veza ka stranici metodologije. Sam sadržaj stoji na jednom mestu — ranije se
+ista tabela ugrađivala u pet ekrana i svaki od njih produžavala.
+{% endcomment %}
+<p class="my-3">
+  <a href="{% url 'analysis_methodology' %}">
+    Metodologija proračuna i kriterijumi · {{ methodology_version }}
+  </a>
+</p>

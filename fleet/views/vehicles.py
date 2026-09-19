@@ -290,6 +290,8 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         if period_form.is_bound and valid_period:
             start, end = period_form.cleaned_data['start'], period_form.cleaned_data['end']
         # Invalid filters show errors and no financial results; never silently substitute a period.
+        from fleet.support.vehicle_detail import period_presets
+        presets = period_presets(today, start, end)
         economics = period_analysis([vehicle], start, end)[0] if valid_period else None
         fuel = economics['fuel'] if economics else []
         services = economics['services'] if economics else []
@@ -306,13 +308,14 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         registration_days = (card.registration_valid_until - today).days if card and card.registration_valid_until else None
         context.update({
             'economics': economics, 'methodology': METHODOLOGY, 'methodology_version': VERSION,
-            'can_edit_analysis': user_has_role_permission(self.request.user, 'vehicle_update'),
+            'can_edit_analysis': user_has_role_permission(self.request.user, 'vehicle_analysis_settings'),
             'assessments': VehicleEconomicAssessment.objects.filter(vehicle=vehicle),
             'mileage': vehicle_mileage(vehicle, params, today),
             'maintenance': vehicle_maintenance(vehicle, today),
             'mileage_other_filters': [(key, value) for key, value in params.items() if key not in ('mileage_from', 'mileage_to')],
             'today': today, 'period_form': period_form, 'period_valid': valid_period,
             'period_start': start, 'period_end': end, 'analytics': analytics,
+            'period_presets': presets,
             'consumptions': fuel, 'service_list': services, 'requisition_list': requisitions,
             'recovery_list': recoveries,
             'current_job_code': vehicle.job_codes.filter(assigned_date__lte=today).select_related('organizational_unit').order_by('-assigned_date', '-id').first(),

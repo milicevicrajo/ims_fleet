@@ -257,12 +257,18 @@ class KvarForm(forms.ModelForm):
         coerce=lambda val: val == "True",
         empty_value=False,
         widget=forms.Select(attrs={"class": "form-control"}),
-        label="Popravka van IMS-a",
+        label="Gde se kvar rešava",
+        # Objasnjenje postoji na modelu, ali se gubi jer je polje ovde redeklarisano.
+        help_text="Izaberite „Van IMS-a“ ako popravku radi spoljni servis. Od toga zavisi da li se stavka vodi kao garažni rad.",
     )
 
     class Meta:
         model = Kvar
         fields = ["vehicle", "work_type", "kilometraza", "opis", "napomena", "van_ims"]
+        help_texts = {
+            "kilometraza": "Stanje brojača u trenutku prijave kvara.",
+            "opis": "Šta je primećeno. Ovaj tekst vide i garaža i nabavka.",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -271,9 +277,12 @@ class KvarForm(forms.ModelForm):
 
 
 class KvarPartForm(forms.ModelForm):
+    """Delovi uz kvar. Prikazuju se u redu tabele, pa nazivi stoje u zaglavlju."""
+
     class Meta:
         model = KvarPart
         fields = ["name", "quantity", "uom"]
+        labels = {"name": "Naziv dela", "quantity": "Količina", "uom": "Jedinica mere"}
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Naziv dela"}),
             "quantity": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),

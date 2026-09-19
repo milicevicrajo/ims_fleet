@@ -138,6 +138,44 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 
 ## 6. Podaci koje korisnik unosi
 
+### Kako izgledaju forme [P]
+
+Od 19.09.2026. sve forme Flote koje idu kroz zajednički šablon poštuju tri pravila:
+
+| Pravilo | Kako |
+|---|---|
+| **Obavezno polje se vidi** | Crvena zvezdica uz naziv, uz legendu na vrhu. Ranije je to imao **samo čarobnjak za unos vozila** — na ostalih 26 ekrana obaveznost se saznavala tek posle slanja |
+| **Polja su grupisana u celine** | Forma navede `fieldsets`; polje koje nije razvrstano ide u celinu **„Ostalo“**, da izmena modela ne bi tiho sakrila novo polje |
+| **Objašnjenje stoji uz polje** | `help_text`, naročito kod iznosa (mesečni ili ukupni), datuma (da li je uključiv) i knjigovodstvenih skraćenica |
+
+Grupisanje se dodaje nasleđivanjem `FieldsetMixin` iz
+[`fleet/forms/layout.py`](../../../fleet/forms/layout.py):
+
+```python
+class LeaseForm(FieldsetMixin, forms.ModelForm):
+    fieldsets = (
+        ('Vozilo i ugovor', 'Na koje vozilo se ugovor odnosi.', ('vehicle', 'contract_number')),
+        ('Trajanje', 'Oba datuma su uključena.', ('start_date', 'end_date')),
+    )
+```
+
+Sređeno je **jedanaest formi** sa ukupno 147 polja: vozilo (26), servisna stavka i njena
+nedovršena verzija (2×19), trebovanje (18), polisa (15), ugovor lizinga, saobraćajna
+dozvola, naknada osiguranja i njena nedovršena verzija (4×11), gorivo (9), raspolaganje (8)
+i tenderski dokument (7).
+
+> **Ispravljena opasna nedoslednost [P]:** polje `nije_garaza` je **negacija** — tačno
+> znači da servis **nije** rađen u garaži IMS-a. Nedovršena servisna stavka je za isto polje
+> imala naziv *„Da li ovaj servis pripada garaži?“*, dakle **suprotnog značenja**. Sve tri
+> forme sada nose isti naziv: **„Servis van garaže IMS-a“**.
+
+> **Vraćeno izgubljeno objašnjenje [P]:** `KvarForm` je redeklaracijom polja brisao
+> `help_text` koji postoji na modelu.
+
+---
+
+
+
 | Podatak | Ekran | Ko unosi |
 |---|---|---|
 | Tehnički podaci vozila | Unos vozila | Služba voznog parka |

@@ -1,7 +1,10 @@
 {% extends 'base.html' %}{% block content %}
+{% include "fleet/includes/vehicle_detail_styles.html" %}
 <h1 class="my-4">Evidencija za analitiku · {{ vehicle.brand }} {{ vehicle.model }}</h1>
 <p><a href="{% url 'vehicle_detail' vehicle.pk %}#cost-pane">← Analitika vozila</a></p>
 <p>Namena i kriterijumi važe od izabranog datuma do sledećeg profila. Stari periodi se ne popunjavaju pretpostavljenim podacima.</p>
+
+{% include 'fleet/_vehicle_cost_readiness.html' %}
 <div class="row"><div class="col-xl-6"><section class="card"><div class="card-body"><h2 class="h4">Novi profil namene i kriterijuma</h2><form method="post">{% csrf_token %}<input type="hidden" name="action" value="profile">{{ profile_form.as_p }}<button class="btn btn-primary">Sačuvaj profil</button></form>
 <details class="mt-3"><summary>Istorija profila</summary><ul>{% for p in profiles %}<li>{{ p.effective_from|date:"d.m.Y" }} · {{ p.get_purpose_display }} · {{ p.get_fuel_source_display }}<br>{{ p.criterion_source }}</li>{% empty %}<li>Nema potvrđenih profila.</li>{% endfor %}</ul></details></div></section></div>
 <div class="col-xl-6"><section class="card"><div class="card-body"><h2 class="h4">{% if selected_charge.pk %}Ispravka{% else %}Novi period{% endif %} ugovorne naknade</h2><p>Unesite mesečni ili ukupan iznos za konkretan period. Proverite da li su servis, osiguranje i druge usluge uključeni i već prikazani među troškovima. Glavnica finansijskog lizinga ovde se ne unosi.</p><form method="post">{% csrf_token %}<input type="hidden" name="action" value="charge"><input type="hidden" name="charge_id" value="{{ selected_charge.pk|default:'' }}">{{ charge_form.as_p }}<button class="btn btn-primary">Sačuvaj naknadu</button></form>

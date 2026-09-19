@@ -1,0 +1,56 @@
+{% comment %}
+Spisak ulaznih podataka za obračun troškova: šta je popunjeno, šta nedostaje i
+gde se popunjava. Redosled je redosled popunjavanja — bez gornjeg se donje ne
+može obračunati. Podaci dolaze iz `economics.readiness` (fleet/services/economics.py).
+{% endcomment %}
+<section class="card mb-3" id="cost-readiness"><div class="card-body">
+  <div class="vd-section-heading">
+    <div>
+      <h3>Šta je potrebno za obračun troškova</h3>
+      <p class="text-muted">
+        Redosled je i redosled popunjavanja — bez gornjeg se donje ne može obračunati.
+        Stanje je za period <strong>{{ period_start|date:"d.m.Y" }} – {{ period_end|date:"d.m.Y" }}</strong>.
+      </p>
+    </div>
+    <span class="vd-pill">
+      {% if economics.missing_count %}<strong>{{ economics.missing_count }}</strong> nedostaje{% else %}Sve popunjeno{% endif %}
+    </span>
+  </div>
+
+  <div class="table-responsive"><table class="table table-sm vd-check">
+    <thead><tr><th>#</th><th>Podatak</th><th>Stanje</th><th>Šta je sada i čemu služi</th><th>Gde se popunjava</th></tr></thead>
+    <tbody>
+    {% for item in economics.readiness %}
+      <tr>
+        <td>{{ item.order }}</td>
+        <td><strong>{{ item.label }}</strong></td>
+        <td>
+          <span class="vd-state vd-state-{{ item.state }}">
+            {% if item.state == 'ok' %}Ima
+            {% elif item.state == 'partial' %}Delimično
+            {% elif item.state == 'missing' %}Nedostaje
+            {% else %}Nije obavezno{% endif %}
+          </span>
+        </td>
+        <td>{{ item.detail }}<small class="vd-effect">{{ item.effect }}</small></td>
+        <td>
+          {% if item.state == 'ok' %}&mdash;
+          {% elif item.where == 'vehicle_analysis_settings' and can_edit_analysis %}
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_analysis_settings' vehicle.pk %}">{{ item.where_label }}</a>
+          {% elif item.where == 'vehicle_holding_create' %}
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_holding_create' vehicle_id=vehicle.id %}">Dodaj promenu</a>
+          {% elif item.where == 'vehicle_travel_order_create' %}
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_travel_order_create' %}">Novi nalog</a>
+          {% else %}{{ item.where_label|default:"—" }}
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+
+  <p class="text-muted mb-0">
+    Prazno polje nije potvrđena nula. Ono što nedostaje se <strong>ne procenjuje</strong> —
+    pokazatelj koji zavisi od njega ostaje prazan, uz objašnjenje.
+  </p>
+</div></section>

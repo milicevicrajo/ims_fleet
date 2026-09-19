@@ -413,6 +413,206 @@ class AnalysisSettingsLookupTests(EconomicsFixture):
         self.assertEqual(response.status_code, 200)
 
 
+class CostTabLayoutTests(EconomicsFixture):
+    """Kartica Troskovi: cetiri celine, spisak sta nedostaje i pregled lizinga."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = get_user_model().objects.create_superuser('admin-troskovi', password='t')
+        self.client.force_login(self.user)
+
+    def open_costs(self):
+        response = self.client.get(reverse('vehicle_detail', args=[self.car.pk]),
+                                   {'start': '2026-01-01', 'end': '2026-01-31'})
+        self.assertEqual(response.status_code, 200)
+        return response
+
+    def test_three_sections_are_shown_in_order(self):
+        body = self.open_costs().content.decode()
+        positions = [body.index(title) for title in [
+            '1 · Rezultat obračuna',
+            '2 · Ugovori lizinga i najma',
+            '3 · Izvorne stavke',
+        ]]
+        self.assertEqual(positions, sorted(positions), msg='celine nisu u redosledu')
+
+    def test_lease_section_is_shown_even_without_contracts(self):
+        # Vozilo u ovoj pripremi nema ugovor. Celina 2 mora ostati, inace
+        # numeracija ide 1 -> 3 i brojevi lazu.
+        body = self.open_costs().content.decode()
+
+        self.assertIn('2 · Ugovori lizinga i najma', body)
+        self.assertIn('Vozilo nije na lizingu ni u najmu', body)
+
+    def test_costs_tab_shows_only_a_summary_of_missing_inputs(self):
+        # Pun spisak stoji na ekranu unosa; ovde je samo sazet red i veza.
+        body = self.open_costs().content.decode()
+
+        self.assertIn('Ulazni podaci:', body)
+        self.assertIn('Vidi šta nedostaje', body)
+        self.assertNotIn('Šta je potrebno za obračun troškova', body)
+
+    def test_full_checklist_lives_on_the_data_entry_screen(self):
+        response = self.client.get(reverse('vehicle_analysis_settings', args=[self.car.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn('Šta je potrebno za obračun troškova', body)
+        self.assertEqual(len(response.context['economics']['readiness']), 7)
+
+    def test_source_records_are_inside_the_sources_section(self):
+        # Racuni za gorivo su ranije stajali van kartice, posle nje.
+        body = self.open_costs().content.decode()
+        self.assertLess(body.index('3 · Izvorne stavke'), body.index('Pojedinačni zapisi'))
+
+    def test_costs_tab_has_only_two_collapsible_blocks(self):
+        # Ranije ih je bilo sest, pa je kartica delovala haoticno.
+        body = self.open_costs().content.decode()
+        start = body.index('id="cost-pane"')
+        end = body.index('id="usage-pane"')
+        self.assertEqual(body.count('<details', start, end), 2)
+
+    def test_cost_tab_templates_declare_no_styles_of_their_own(self):
+        # Ranije su stilovi stajali u samom vehicle_detail.html i u dva partiala.
+        # Sada su svi u includes/vehicle_detail_styles.html.
+        for path in ['vehicle_detail', '_vehicle_analysis', '_economics_panel',
+                     '_vehicle_lease_overview', '_vehicle_cost_readiness',
+                     '_vehicle_cost_readiness_summary']:
+            with self.subTest(template=path):
+                text = open(f'fleet/templates/fleet/{path}.html', encoding='utf-8').read()
+                self.assertNotIn('<style>', text)
+
+        styles = open('fleet/templates/fleet/includes/vehicle_detail_styles.html', encoding='utf-8').read()
+        self.assertIn('<style>', styles)
+
+    def test_no_inline_styles_in_cost_tab_partials(self):
+        import glob
+        for path in ['_vehicle_analysis', '_economics_panel', '_vehicle_lease_overview',
+                     '_vehicle_cost_readiness', '_vehicle_cost_readiness_summary']:
+            with self.subTest(template=path):
+                text = open(f'fleet/templates/fleet/{path}.html', encoding='utf-8').read()
+                self.assertNotIn('style="', text)
+
+    def test_style_rules_do_not_reach_other_tabs(self):
+        """Dodata pravila smeju da diraju samo karticu Troskovi.
+
+        Prvi pokusaj je stilizovao `.vd-page h3`, cime je ugasen zateceni
+        `margin-top` na SVIM karticama detalja i razmaci su se slepili.
+        """
+        styles = open('fleet/templates/fleet/includes/vehicle_detail_styles.html', encoding='utf-8').read()
+        added = styles[styles.index('/* ---------- naslovi'):]
+        allowed = ('.vd-step', '.vd-period-box', '.vd-quick', '.vd-custom', '.vd-period-shown',
+                   '.vd-check', '.vd-state', '.vd-summary-row', '.vd-lease')
+
+        for line in added.splitlines():
+            line = line.strip()
+            if not line or line.startswith(('/*', '*', '}')) or '{' not in line:
+                continue
+            selector = line.split('{')[0].strip()
+            with self.subTest(selector=selector):
+                self.assertTrue(selector.startswith(allowed),
+                                msg='pravilo dopire izvan kartice Troškovi')
+
+    def test_existing_heading_spacing_is_untouched(self):
+        styles = open('fleet/templates/fleet/includes/vehicle_detail_styles.html', encoding='utf-8').read()
+        self.assertIn('.vd-page h3{font-size:18px;margin-top:14px}', styles)
+
+    def test_headings_start_at_h3_like_other_tabs(self):
+        # Kartice detalja vozila koriste istu skalu: h3 celina, h4 pododeljak.
+        for path in ['_vehicle_analysis', '_economics_panel', '_vehicle_lease_overview',
+                     '_vehicle_cost_readiness']:
+            with self.subTest(template=path):
+                text = open(f'fleet/templates/fleet/{path}.html', encoding='utf-8').read()
+                self.assertNotIn('<h1', text)
+                self.assertNotIn('<h2', text)
+
+    def test_period_offers_quick_choices(self):
+        response = self.open_costs()
+        labels = [option['label'] for option in response.context['period_presets']]
+
+        self.assertIn('Ovaj mesec', labels)
+        self.assertIn('Poslednjih 12 meseci', labels)
+        self.assertIn('Prošla godina', labels)
+        body = response.content.decode()
+        self.assertIn('vd-quick', body)
+
+    def test_selected_quick_choice_is_marked(self):
+        from fleet.support.vehicle_detail import period_presets
+        from datetime import date as d
+
+        today = d(2026, 5, 20)
+        options = period_presets(today, d(2026, 5, 1), today)
+        active = [option['label'] for option in options if option['active']]
+
+        self.assertEqual(active, ['Ovaj mesec'])
+
+    def test_methodology_is_one_page_not_repeated_inline(self):
+        body = self.open_costs().content.decode()
+        self.assertIn(reverse('analysis_methodology'), body)
+
+        page = self.client.get(reverse('analysis_methodology'))
+        self.assertEqual(page.status_code, 200)
+        self.assertIn('Metodologija proračuna', page.content.decode())
+
+    def test_readiness_lists_what_is_missing_and_where(self):
+        response = self.open_costs()
+        readiness = response.context['economics']['readiness']
+
+        self.assertEqual([item['order'] for item in readiness], [1, 2, 3, 4, 5, 6, 7])
+        by_label = {item['label']: item for item in readiness}
+        # Bez naloga i bez ocitanja na granicama: oba moraju biti oznacena kao nedostajuca.
+        self.assertEqual(by_label['Putni nalozi i šifra posla']['state'], 'missing')
+        self.assertEqual(by_label['Očitavanja kilometraže na granicama perioda']['state'], 'missing')
+        # Namena i raspolaganje su uneti u pripremi.
+        self.assertEqual(by_label['Poslovna namena vozila']['state'], 'ok')
+        self.assertEqual(by_label['Osnov raspolaganja']['state'], 'ok')
+        for item in readiness:
+            self.assertTrue(item['effect'], msg=f"{item['label']} nema objasnjenje cemu sluzi")
+
+    def test_readiness_turns_green_when_data_is_entered(self):
+        self.fuel()
+        self.order()
+        VehicleDowntime.objects.create(vehicle=self.car, start=self.start, end=self.start,
+                                       reason='Kvar', note='Zapisnik')
+
+        readiness = self.open_costs().context['economics']['readiness']
+        by_label = {item['label']: item for item in readiness}
+
+        self.assertEqual(by_label['Putni nalozi i šifra posla']['state'], 'ok')
+        self.assertEqual(by_label['Očitavanja kilometraže na granicama perioda']['state'], 'ok')
+        self.assertEqual(by_label['Evidencija zastoja']['state'], 'ok')
+
+    def test_lease_shows_monthly_rate_and_remaining(self):
+        lease = self.lease(start=date(2026, 1, 1), end=date(2026, 12, 31))
+        VehicleHolding.objects.filter(vehicle=self.car).delete()
+        VehicleHolding.objects.create(vehicle=self.car, basis='contract', start_date=self.start,
+                                      end_date=lease.end_date, lease=lease)
+        LeaseChargePeriod.objects.create(lease=lease, start=date(2026, 1, 1), end=date(2026, 12, 31),
+                                         amount=D('31000'), basis='monthly', evidence='Aneks 1')
+
+        row = self.open_costs().context['economics']['leases'][0]
+
+        self.assertTrue(row['confirmed'])
+        self.assertEqual(row['rate_basis'], 'monthly')
+        self.assertEqual(row['rate_monthly'], D('31000'))
+        self.assertIsNotNone(row['remaining_amount'])
+        # Staro dvosmisleno polje se prikazuje, ali se ne tumaci.
+        self.assertEqual(row['legacy_amount'], D('31000'))
+
+    def test_lease_without_confirmed_charge_is_marked_unconfirmed(self):
+        lease = self.lease(start=date(2026, 1, 1), end=date(2026, 12, 31))
+
+        row = self.open_costs().context['economics']['leases'][0]
+
+        self.assertFalse(row['confirmed'])
+        self.assertIsNone(row['rate_monthly'])
+        self.assertIsNone(row['remaining_amount'])
+
+    def test_total_cost_card_is_shown_only_once(self):
+        body = self.open_costs().content.decode()
+        self.assertEqual(body.count('Obuhvaćeni troškovi · RSD'), 1)
+
+
 class EconomicScenarioTests(SimpleTestCase):
     def test_zero_discount_control_example_and_unfeasible_alternative(self):
         assessment = SimpleNamespace(years=5, discount_percent=D(0), annual_km=20000,
