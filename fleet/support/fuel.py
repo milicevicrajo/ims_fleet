@@ -153,16 +153,38 @@ def omv_stale_invoice_queryset(queryset):
     )
 
 
+# Zamene za prazna polja pri traženju duplikata. U SQL-u poređenje NULL = NULL
+# nije tačno, pa bi zapis bez vaučera ili bez količine ostao bez para i ispao iz
+# rezultata umesto da se zadrži. Zamene se koriste samo unutar podupita.
+DEDUPE_NO_TEXT = Value("")
+DEDUPE_NO_QUANTITY = Value(Decimal("-999999.99"))
+DEDUPE_QUANTITY_FIELD = DecimalField(max_digits=10, decimal_places=2)
+
+
+def _dedupe_key_pairs():
+    """Polja po kojima se prepoznaje isti red transakcije, sa zamenama za prazne vrednosti."""
+    return {
+        "license_plate_no": OuterRef("license_plate_no"),
+        "transaction_date": OuterRef("transaction_date"),
+        "_key_product": Coalesce(OuterRef("product_inv"), DEDUPE_NO_TEXT),
+        "_key_voucher": Coalesce(OuterRef("voucher"), DEDUPE_NO_TEXT),
+        "_key_quantity": Coalesce(
+            OuterRef("quantity"), DEDUPE_NO_QUANTITY, output_field=DEDUPE_QUANTITY_FIELD
+        ),
+    }
+
+
 def _dedupe_omv_transaction_lines(queryset):
     preferred_line = (
         _exclude_omv_stale_invoice_dates(TransactionOMV.objects.using(queryset.db).all())
-        .filter(
-            license_plate_no=OuterRef("license_plate_no"),
-            transaction_date=OuterRef("transaction_date"),
-            product_inv=OuterRef("product_inv"),
-            voucher=OuterRef("voucher"),
-            quantity=OuterRef("quantity"),
+        .annotate(
+            _key_product=Coalesce("product_inv", DEDUPE_NO_TEXT),
+            _key_voucher=Coalesce("voucher", DEDUPE_NO_TEXT),
+            _key_quantity=Coalesce(
+                "quantity", DEDUPE_NO_QUANTITY, output_field=DEDUPE_QUANTITY_FIELD
+            ),
         )
+        .filter(**_dedupe_key_pairs())
         .order_by("-invoiced", "-invoice_date", "-id")
         .values("id")[:1]
     )
@@ -201,12 +223,21 @@ def _exclude_omv_stale_invoice_dates(queryset):
     return queryset.exclude(id__in=omv_stale_invoice_queryset(queryset).values("id"))
 
 
-def filter_omv_fuel_queryset(queryset):
+def deduplicate_omv_transactions(queryset):
+    """Tri koraka čišćenja OMV zapisa: zastareli datumi fakture, ponovljeni
+    redovi iste transakcije i predračuni koji imaju konačan račun.
+
+    Izdvojeno iz ``filter_omv_fuel_queryset`` da bi izveštaji koji imaju
+    sopstvenu podelu proizvoda (AdBlue, ostalo) mogli da očiste duplikate
+    bez ograničavanja samo na goriva.
+    """
     return _exclude_omv_receipt_echoes(
-        _dedupe_omv_transaction_lines(
-            _exclude_omv_stale_invoice_dates(queryset.filter(_fuel_product_filter("product_inv")))
-        )
+        _dedupe_omv_transaction_lines(_exclude_omv_stale_invoice_dates(queryset))
     )
+
+
+def filter_omv_fuel_queryset(queryset):
+    return deduplicate_omv_transactions(queryset.filter(_fuel_product_filter("product_inv")))
 
 
 def filter_nis_fuel_queryset(queryset):

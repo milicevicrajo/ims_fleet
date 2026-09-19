@@ -91,5 +91,9 @@ imports/
 exports/
 *.crdownload
 *.tmp
+# Privremeno preuzimanje OMV/NIS podataka (Selenium)
+tmp*.csv
+# Word/Excel zakljucani fajlovi otvorenog dokumenta
+~$*
 
 chrome-for-testing/

@@ -1,17 +1,61 @@
 import datetime
+import unicodedata
 
 from django.db.models import Exists, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import TruncMonth, TruncYear
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 
-from ..models import FuelConsumption, Insurance, JobCode, Lease, Policy, Requisition, ServiceTransaction, Vehicle
+from ..models import (
+    FuelConsumption,
+    Insurance,
+    JobCode,
+    Lease,
+    Policy,
+    Requisition,
+    ServiceTransaction,
+    ServiceType,
+    Vehicle,
+)
 from ..support.analytics import is_red_zone, net_maintenance_cost
 from ..support.dashboard import LONG_TERM_LEASE_TYPES
 
+# Kljuc u kontekstu -> kljucna rec naziva kategorije, bez dijakritike i malim slovima.
+SERVICE_COST_KEYWORDS = {
+    'total_cost_gume': 'gume',
+    'total_cost_redovan_servis': 'redovan servis',
+    'total_cost_tehnicki_pregled': 'tehnicki pregled',
+    'total_cost_registracija': 'registracija',
+}
+
+# Nepostojeci ID, da prazan spisak kategorija ne poništi ceo upit.
+NO_SERVICE_TYPE = 0
+
+
+def normalized_service_type_name(value):
+    value = (value or "").strip().lower()
+    value = "".join(
+        char
+        for char in unicodedata.normalize("NFD", value)
+        if unicodedata.category(char) != "Mn"
+    )
+    return " ".join(value.replace("-", " ").replace("_", " ").split())
+
+
+def service_type_ids_by_keyword():
+    """Kategorije se prepoznaju po nazivu bez dijakritike, pa 'Tehnicki pregled'
+    i 'Tehnički pregled' ulaze u isti zbir."""
+    matches = {key: [] for key in SERVICE_COST_KEYWORDS}
+    for pk, name in ServiceType.objects.values_list('pk', 'name'):
+        normalized = normalized_service_type_name(name)
+        for key, keyword in SERVICE_COST_KEYWORDS.items():
+            if keyword in normalized:
+                matches[key].append(pk)
+    return matches
+
 
 def center_statistics(request, center_code):
-    if not request.user.allowed_centers.filter(center=center_code).exists():
+    if not request.user.is_superuser and not request.user.allowed_centers.filter(center=center_code).exists():
         return HttpResponseForbidden("Nemate pristup ovim podacima.")
 
     latest_center_code = JobCode.objects.filter(
@@ -58,7 +102,7 @@ def center_statistics(request, center_code):
             long_term_rental=Exists(
                 Lease.objects.filter(vehicle=OuterRef('pk'), lease_type__in=LONG_TERM_LEASE_TYPES)
             ),
-        ).filter(center_code=center_code)
+        ).filter(center_code=center_code, otpis=False)
     )
 
     center_vehicle_count = len(center_vehicles)
@@ -72,11 +116,14 @@ def center_statistics(request, center_code):
     )
     center_total_fuel_quantity = sum((vehicle.fuel_amount or 0) for vehicle in center_vehicles)
     center_total_fuel_cost = sum((vehicle.fuel_cost or 0) for vehicle in center_vehicles)
-    center_avg_year = (
-        sum((vehicle.year_of_manufacture or 0) for vehicle in center_vehicles) / center_vehicle_count
-        if center_vehicle_count
-        else 0
-    )
+    # A missing year must not be counted as 0 and drag the average down.
+    current_year = datetime.date.today().year
+    known_years = [
+        vehicle.year_of_manufacture
+        for vehicle in center_vehicles
+        if vehicle.year_of_manufacture and 1886 <= vehicle.year_of_manufacture <= current_year
+    ]
+    center_avg_year = sum(known_years) / len(known_years) if known_years else None
     center_red_zone_vehicles = []
     for vehicle in center_vehicles:
         vehicle_value = vehicle.value or 0
@@ -98,7 +145,8 @@ def center_statistics(request, center_code):
         'vehicle_count': center_vehicle_count,
         'total_value': center_total_value,
         'avg_value': center_total_value / center_vehicle_count if center_vehicle_count else 0,
-        'avg_age': datetime.datetime.now().year - center_avg_year if center_avg_year else 0,
+        'avg_age': current_year - center_avg_year if center_avg_year else None,
+        'age_known': len(known_years),
         'total_service_cost': center_total_service_cost,
         'total_requisition_cost': center_total_requisition_cost,
         'total_insurance_recovery': center_total_insurance_recovery,
@@ -121,6 +169,8 @@ def center_statistics(request, center_code):
         total_fuel_cost=Sum('cost_bruto')
     ).order_by('year', 'month')
 
+    service_type_ids = service_type_ids_by_keyword()
+
     service_data = ServiceTransaction.objects.annotate(
         vehicle_center_code=Subquery(latest_center_code)
     ).filter(
@@ -129,10 +179,13 @@ def center_statistics(request, center_code):
         year=TruncYear('datum'),
         month=TruncMonth('datum')
     ).values('year', 'month').annotate(
-        total_cost_gume=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='gume')),
-        total_cost_redovan_servis=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='redovan servis')),
-        total_cost_tehnicki_pregled=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='tehnicki pregled')),
-        total_cost_registracija=Sum('potrazuje', filter=Q(popravka_kategorija__name__icontains='registracija'))
+        **{
+            key: Sum(
+                'potrazuje',
+                filter=Q(popravka_kategorija_id__in=ids or [NO_SERVICE_TYPE]),
+            )
+            for key, ids in service_type_ids.items()
+        }
     ).order_by('year', 'month')
 
     insurance_data = Policy.objects.annotate(
@@ -205,6 +258,7 @@ def center_statistics(request, center_code):
         'total_fuel_cost',
         'total_cost_gume',
         'total_cost_redovan_servis',
+        'total_cost_tehnicki_pregled',
         'total_cost_registracija',
         'total_registration_cost',
     ]

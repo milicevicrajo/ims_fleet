@@ -26,8 +26,8 @@
                                 <td class="text-end">{{ center_analysis.vehicle_count|floatformat:0|intcomma }}</td>
                             </tr>
                             <tr>
-                                <td>Prosečna starost</td>
-                                <td class="text-end">{{ center_analysis.avg_age|floatformat:0 }} godina</td>
+                                <td>Prosečna starost <small class="text-muted">· poznato godište {{ center_analysis.age_known }}/{{ center_analysis.vehicle_count }}</small></td>
+                                <td class="text-end">{% if center_analysis.avg_age %}{{ center_analysis.avg_age|floatformat:1 }} godina{% else %}—{% endif %}</td>
                             </tr>
                             <tr>
                                 <td>Ukupna vrednost vozila</td>
@@ -84,6 +84,7 @@
                                 <th>Ukupni Troškovi Goriva (Din)</th>
                                 <th>Trošak Gume (Din)</th>
                                 <th>Trošak Redovan Servis (Din)</th>
+                                <th>Trošak Tehnički Pregled (Din)</th>
                                 <th>Trošak Registracija (Din)</th>
                                 <th>Trošak Polisa Osiguranja (Din)</th>
                             </tr>
@@ -97,6 +98,7 @@
                                 <td>{{ data.total_fuel_cost|default_if_none:"0"|floatformat:0|intcomma }}</td>
                                 <td>{{ data.total_cost_gume|default_if_none:"0"|floatformat:0|intcomma }}</td>
                                 <td>{{ data.total_cost_redovan_servis|default_if_none:"0"|floatformat:0|intcomma }}</td>
+                                <td>{{ data.total_cost_tehnicki_pregled|default_if_none:"0"|floatformat:0|intcomma }}</td>
                                 <td>{{ data.total_cost_registracija|default_if_none:"0"|floatformat:0|intcomma }}</td>
                                 <td>{{ data.total_registration_cost|default_if_none:"0"|floatformat:0|intcomma }}</td>
                             </tr>
@@ -109,6 +111,7 @@
                                 <th>{{ center_totals.total_fuel_cost|floatformat:0|intcomma }} / {{ center_averages.total_fuel_cost|floatformat:0|intcomma }}</th>
                                 <th>{{ center_totals.total_cost_gume|floatformat:0|intcomma }} / {{ center_averages.total_cost_gume|floatformat:0|intcomma }}</th>
                                 <th>{{ center_totals.total_cost_redovan_servis|floatformat:0|intcomma }} / {{ center_averages.total_cost_redovan_servis|floatformat:0|intcomma }}</th>
+                                <th>{{ center_totals.total_cost_tehnicki_pregled|floatformat:0|intcomma }} / {{ center_averages.total_cost_tehnicki_pregled|floatformat:0|intcomma }}</th>
                                 <th>{{ center_totals.total_cost_registracija|floatformat:0|intcomma }} / {{ center_averages.total_cost_registracija|floatformat:0|intcomma }}</th>
                                 <th>{{ center_totals.total_registration_cost|floatformat:0|intcomma }} / {{ center_averages.total_registration_cost|floatformat:0|intcomma }}</th>
                             </tr>

@@ -325,11 +325,14 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
 
         cost_per_km = total_cost / annual_km if annual_km > 0 else None
 
-        # Napomena za automobile koji se malo voze (ispod 15000 km godišnje)
+        # Napomena za automobile koji se malo voze (ispod 15000 km godišnje).
+        # annual_km je kilometraža izabranog perioda, pa se pre poređenja sa godišnjim
+        # pragom svodi na godišnji nivo; inače se za kraće periode upozorenje javlja uvek.
         low_mileage_threshold = 15000
-        below_mileage_threshold = annual_km < low_mileage_threshold if annual_km > 0 else False
+        annualized_km = annual_km / period_days * 365 if annual_km > 0 else 0
+        below_mileage_threshold = 0 < annualized_km < low_mileage_threshold
         low_mileage_note = (
-            f"Vozilo se malo vozi ({annual_km}km < {low_mileage_threshold}km godišnje). "
+            f"Vozilo se malo vozi ({annualized_km:.0f} km < {low_mileage_threshold} km godišnje). "
             "Cena po km može biti iskrivljena jer se fiksni troškovi (osiguranje, doprinosi) "
             "raspoređuju na manju kilometražu." if below_mileage_threshold else None
         )
@@ -342,6 +345,7 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'category': vehicle.get_category_display(),
             'center': vehicle.center_code or 'Bez centra',
             'annual_km': annual_km,
+            'annualized_km': round(annualized_km),
             'mileage_source': mileage_source,
             'mileage_issue': mileage_issue,
             'requires_driver_warning': requires_driver_warning,

@@ -7,6 +7,7 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from fleet.models import JobCode, Lease, TrafficCard, TransactionNIS, TransactionOMV, Vehicle, VehicleHolding
+from fleet.support.fuel import deduplicate_omv_transactions
 
 ZERO = Decimal('0')
 FUEL_LABELS = {'diesel': 'Dizel', 'petrol': 'Benzin', 'lpg': 'TNG / LPG', 'cng': 'CNG', 'adblue': 'AdBlue', 'other': 'Ostalo / nerazvrstano'}
@@ -98,7 +99,12 @@ def fuel_report_rows(user, data):
         if data.get('supplier') and data['supplier'] != supplier:
             continue
         history = JobCode.objects.filter(vehicle_id=OuterRef('vehicle_id'), assigned_date__lte=OuterRef('report_day')).order_by('-assigned_date', '-pk')
-        qs = model.objects.filter(**{date_field+'__gte': start, date_field+'__lt': end}).annotate(report_day=TruncDate(date_field)).annotate(
+        qs = model.objects.filter(**{date_field+'__gte': start, date_field+'__lt': end})
+        if supplier == 'omv':
+            # Isti duplikati koje izbacuje i pregled goriva; ovde bez ograničenja na
+            # goriva, jer izveštaj sam bira AdBlue / ostalo kroz polje fuel_type.
+            qs = deduplicate_omv_transactions(qs)
+        qs = qs.annotate(report_day=TruncDate(date_field)).annotate(
             report_center=Subquery(history.values('organizational_unit__center')[:1]),
             report_job=Subquery(history.values('organizational_unit__code')[:1]),
         )

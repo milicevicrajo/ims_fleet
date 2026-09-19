@@ -10,11 +10,11 @@ class Command(BaseCommand):
     help = "Ucitava validne garazne zahteve i stavke iz Excel evidencije."
 
     def add_arguments(self, parser):
+        # Putanja je obavezna: radna Excel evidencija se vise ne cuva u repozitorijumu,
+        # pa bi podrazumevana vrednost pokazivala na nepostojeci fajl.
         parser.add_argument(
             "file_path",
-            nargs="?",
-            default="Pracenje nabavke za garazu.xlsx",
-            help="Putanja do Excel fajla.",
+            help="Putanja do Excel fajla sa garaznim zahtevima.",
         )
         parser.add_argument("--sheet", default="zahtevi")
         parser.add_argument("--report", default=DEFAULT_REPORT_PATH)

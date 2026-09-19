@@ -26,8 +26,8 @@ class ManagementReportTests(TestCase):
     def car(self,suffix='1',year=2018):
         v=vehicle(suffix);v.year_of_manufacture=year;v.save();return v
 
-    def fuel(self,car,day,product='OMV EVRO DIZEL',gross='1234.56',currency='RSD'):
-        return TransactionOMV.objects.create(vehicle=car,transaction_date=timezone.make_aware(datetime.combine(day,datetime.min.time())),license_plate_no='BG123-AA',card='test',issuer='test',customer='test',product_inv=product,quantity=Decimal('10'),gross_cc=Decimal(gross) if gross is not None else None,supplier_currency=currency)
+    def fuel(self,car,day,product='OMV EVRO DIZEL',gross='1234.56',currency='RSD',voucher=None):
+        return TransactionOMV.objects.create(vehicle=car,transaction_date=timezone.make_aware(datetime.combine(day,datetime.min.time())),license_plate_no='BG123-AA',card='test',issuer='test',customer='test',product_inv=product,quantity=Decimal('10'),gross_cc=Decimal(gross) if gross is not None else None,supplier_currency=currency,voucher=voucher)
 
     def test_casco_strictly_older_than_seven_and_not_limited_to_owned(self):
         old=self.car();self.car('2',2019);self.car('3',2099)
@@ -72,7 +72,9 @@ class ManagementReportTests(TestCase):
         self.assertEqual(len(fuel_report_rows(self.user,{**data,'fuel_type':'all'})),4)
 
     def test_grouping_keeps_currency_products_and_missing_amounts(self):
-        self.fuel(None,self.day,gross='0');self.fuel(None,self.day,gross=None,currency='EUR')
+        # Razliciti vauceri: inace su dva zapisa isti red transakcije za preciscavanje
+        # OMV podataka (kljuc je tablica + vreme + proizvod + voucher + kolicina).
+        self.fuel(None,self.day,gross='0',voucher='V1');self.fuel(None,self.day,gross=None,currency='EUR',voucher='V2')
         data={'date_from':self.day,'date_to':self.day,'fuel_type':'fuel'}
         groups=group_fuel_rows(fuel_report_rows(self.user,data),'month')
         self.assertEqual(len(groups),2)
