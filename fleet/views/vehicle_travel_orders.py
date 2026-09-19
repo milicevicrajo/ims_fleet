@@ -532,6 +532,7 @@ class PreviousVehicleTravelOrderCreateView(RolePermissionRequiredMixin, LoginReq
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["next_order"] = self.next_order
+        kwargs['user'] = self.request.user
         return kwargs
 
     def get_context_data(self, **kwargs):

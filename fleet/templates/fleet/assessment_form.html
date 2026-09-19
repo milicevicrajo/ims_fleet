@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% block content %}<h1 class="my-4">Poređenje budućih opcija · {{ vehicle.brand }} {{ vehicle.model }}</h1><p><a href="{% url 'vehicle_detail' vehicle.pk %}#cost-pane">← Analitika vozila</a></p>
+<div class="alert alert-info">Unesite najmanje dve alternative, od kojih je jedna zadržavanje. Sve moraju pokrivati isti obim rada i isti period. Ovo je ekonomski model u stalnim današnjim cenama, a ne obračun rata i likvidnosti. Iznose finansijskog lizinga unesite kao uporediv ekonomski scenario kupovine; ne sabirajte nabavku i otplatu iste glavnice.</div>
+<form method="post">{% csrf_token %}<section class="card"><div class="card-body"><h2 class="h4">Zajedničke pretpostavke</h2>{{ form.as_p }}</div></section>{{ scenarios.management_form }}{{ scenarios.non_form_errors }}
+<div class="row" id="scenario-forms">{% for scenario in scenarios %}<div class="col-xl-4 mb-3"><section class="card h-100"><div class="card-body"><h2 class="h4">Alternativa {{ forloop.counter }}</h2>{{ scenario.as_p }}</div></section></div>{% endfor %}</div>
+<template id="scenario-empty"><div class="col-xl-4 mb-3"><section class="card h-100"><div class="card-body"><h2 class="h4">Dodatna alternativa</h2>{{ scenarios.empty_form.as_p }}</div></section></div></template>
+<button type="button" class="btn btn-outline-primary" id="add-scenario">Dodaj alternativu (najviše 6)</button>
+<p class="mt-3">Neiskorišćene alternative ostavite prazne. Za kupovinu i zadržavanje koristite početnu vrednost sredstva i preostalu vrednost; za najam početne nepovratne izdatke i ugovorne troškove. Izvore i sve neujednačene ili vanredne izdatke objasnite u pretpostavkama; model pretpostavlja jednak godišnji trošak.</p>
+<button class="btn btn-primary my-3">Izračunaj i sačuvaj procenu</button></form>{% include 'fleet/_analysis_methodology.html' %}
+<script>document.addEventListener('DOMContentLoaded', function () {
+  const button = document.getElementById('add-scenario');
+  const total = document.getElementById('id_scenarios-TOTAL_FORMS');
+  function refresh() { button.disabled = Number(total.value) >= 6; }
+  button.addEventListener('click', function () {
+    const index = Number(total.value);
+    if (index >= 6) return;
+    const html = document.getElementById('scenario-empty').innerHTML.replace(/__prefix__/g, String(index));
+    document.getElementById('scenario-forms').insertAdjacentHTML('beforeend', html);
+    total.value = index + 1;
+    refresh();
+  });
+  refresh();
+});</script>{% endblock %}

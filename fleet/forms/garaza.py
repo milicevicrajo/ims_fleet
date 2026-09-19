@@ -52,12 +52,17 @@ class VehicleTravelOrderForm(forms.ModelForm):
 
     class Meta:
         model = VehicleTravelOrder
-        fields = ["pn_number", "created_at", "status", "employee", "vehicle", "start_mileage"]
+        fields = ["pn_number", "created_at", "status", "employee", "vehicle", "job_code", "start_mileage"]
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         self.limit_to_user_employee = kwargs.pop("limit_to_user_employee", False)
         super().__init__(*args, **kwargs)
+        if self.user:
+            from fleet.support.management_reports import allowed_centers
+            centers = allowed_centers(self.user)
+            if centers:
+                self.fields['job_code'].queryset = self.fields['job_code'].queryset.filter(center__in=centers)
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
             if inactive_employee.exists():
@@ -184,11 +189,16 @@ class PreviousVehicleTravelOrderForm(forms.ModelForm):
 
     class Meta:
         model = VehicleTravelOrder
-        fields = ["created_at", "employee", "start_mileage"]
+        fields = ["created_at", "employee", "job_code", "start_mileage"]
 
-    def __init__(self, *args, next_order=None, **kwargs):
+    def __init__(self, *args, next_order=None, user=None, **kwargs):
         self.next_order = next_order
         super().__init__(*args, **kwargs)
+        if user:
+            from fleet.support.management_reports import allowed_centers
+            centers = allowed_centers(user)
+            if centers:
+                self.fields['job_code'].queryset = self.fields['job_code'].queryset.filter(center__in=centers)
         if next_order and next_order.employee_id:
             self.initial.setdefault("employee", next_order.employee_id)
 

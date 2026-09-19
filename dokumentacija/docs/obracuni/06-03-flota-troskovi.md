@@ -1,5 +1,11 @@
 # 6.3. Flota — troškovi vozila
 
+> **Promena 19.09.2026:** nova `/analitika/` i analitika na detalju vozila koriste
+> [metodologiju IMS-FLOTA-2.0](06-12-flota-ekonomika.md). Opisi V-07–V-12 u ovom
+> poglavlju dokumentuju nasleđene funkcije; pragovi po masi više nisu kriterijum
+> nove analitike. Detalj vozila zadržava pregled evidentiranih stavki, uz zajednički
+> prošireni obračun, profile i sačuvane procene opisane u novom poglavlju.
+
 > Deo poglavlja [6. Analize i obračuni](../06-analize-i-obracuni.md).
 > Status tvrdnji: **[P]** potvrđeno kodom, **[Z]** zaključeno, **[N]** nepotvrđeno.
 >

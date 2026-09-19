@@ -1,5 +1,5 @@
 <section class="card" id="vehicle-analysis"><div class="card-body">
-  <div class="vd-section-heading"><div><h2>Evidentirani troškovi</h2><p class="text-muted">Izaberite period za pokazatelje, mesece i stavke goriva i održavanja.</p></div>
+  <div class="vd-section-heading"><div><h2>Analitika vozila</h2><p class="text-muted">Izaberite period za profil, pokazatelje i izvorne stavke troškova.</p></div>
     <form method="get" action="#vehicle-analysis" class="vd-period">
       <div><label for="id_start">Od</label>{{ period_form.start }}{{ period_form.start.errors }}</div>
       <div><label for="id_end">Do</label>{{ period_form.end }}{{ period_form.end.errors }}</div>
@@ -9,14 +9,16 @@
   {{ period_form.non_field_errors }}
   {% if period_valid %}
   <p><strong>{{ period_start|date:"d.m.Y" }} – {{ period_end|date:"d.m.Y" }}</strong> · oba datuma uključena · iznosi u RSD</p>
+  {% include 'fleet/_economics_panel.html' %}
+  <h3>Detaljna evidencija goriva i održavanja</h3>
   <div class="vehicle-kpis">
-    <div class="vehicle-kpi"><small>Gorivo i AdBlue · bruto</small><strong>{% if analytics.counts.fuel %}{{ analytics.totals.fuel|floatformat:"2g" }}{% else %}Nema stavki{% endif %}</strong><small>{{ analytics.counts.fuel }} transakcija NIS / OMV</small></div>
+    <div class="vehicle-kpi"><small>Gorivo i AdBlue · bruto</small><strong>{% if analytics.counts.fuel %}{{ analytics.totals.fuel|floatformat:"2g" }}{% else %}Nema stavki{% endif %}</strong><small>{{ analytics.counts.fuel }} stavki · {{ economics.profile.get_fuel_source_display|default:'NIS / OMV transakcije' }}</small></div>
     <div class="vehicle-kpi"><small>Održavanje · evidentirani iznos</small><strong>{% if analytics.maintenance_count %}{{ analytics.maintenance|floatformat:"2g" }}{% else %}Nema stavki{% endif %}</strong><small>Spoljne usluge i delovi + IMS trebovanja</small></div>
     <div class="vehicle-kpi"><small>Naknade osiguranja za vozilo</small><strong>{% if analytics.counts.recovery %}{{ analytics.totals.recovery|floatformat:"2g" }}{% else %}Nema stavki{% endif %}</strong><small>Prikazane odvojeno od troškova</small></div>
     <div class="vehicle-kpi"><small>Razlika očitanja kilometraže</small><strong>{% if analytics.mileage %}{{ analytics.mileage.km|floatformat:0 }} km{% else %}Nedovoljno podataka{% endif %}</strong><small>{% if analytics.mileage %}{{ analytics.mileage.start|date:"d.m.Y" }} – {{ analytics.mileage.end|date:"d.m.Y" }} · sa računa za gorivo{% else %}Potrebna su rastuća očitanja na različite dane.{% endif %}</small></div>
   </div>
   {% if analytics.mileage_issue %}<p class="alert alert-warning">{{ analytics.mileage_issue }}</p>{% endif %}
-  <div class="vd-note">Ovo je pregled unetih stavki. Gorivo je bruto; usluge i trebovanja su u iznosima iz izvornih evidencija, bez dodatnog preračuna PDV-a. Nisu objedinjeni u ukupan trošak vlasništva. Premije polisa, lizing/najam, amortizacija i praćenje vozila nisu uključeni u ove pokazatelje. Prazna evidencija ne potvrđuje da troška nije bilo.</div>
+  <div class="vd-note">Ovaj detaljni pregled prikazuje gorivo u bruto iznosu, usluge i trebovanja u iznosima iz izvornih evidencija, bez dodatnog preračuna PDV-a. Premije i potvrđeni ugovorni troškovi prikazani su u obračunu profila iznad, a nisu u narednoj tabeli izvornih stavki. Trošak kapitala obrađuje se kroz zasebnu ekonomsku procenu. Prazna evidencija ne potvrđuje da troška nije bilo.</div>
   <div class="row mt-4">
     <div class="col-lg-8"><h3>Mesečni pregled</h3><p class="text-muted">Prvi i poslednji mesec obuhvataju samo izabrane datume. Crtica znači da nema stavki.</p>
       <div class="table-responsive"><table class="table table-sm vd-months"><thead><tr><th>Mesec</th><th>Gorivo / AdBlue<br>bruto</th><th>Spoljne usluge<br>i delovi</th><th>IMS<br>trebovanja</th><th>Naknade<br>osiguranja</th></tr></thead><tbody>

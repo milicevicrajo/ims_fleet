@@ -62,6 +62,7 @@
           </div>
           <div class="text-muted">
             {{ order.vehicle }} - {{ order.employee }}
+            <div>Troškovi na teret: {{ order.job_code|default:"Šifra posla nije potvrđena" }}</div>
           </div>
         </div>
         <div class="travel-order-header-actions d-flex flex-wrap gap-2 align-items-center justify-content-end">

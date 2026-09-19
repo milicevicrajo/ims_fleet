@@ -617,7 +617,26 @@ def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
     return []
 
 
-def get_vehicle_fuel_transaction_rows(vehicle):
+def get_vehicle_fuel_transaction_rows(vehicle=None, *, vehicle_ids=None, start=None, end=None):
+    # Shared source for the dossier and fleet analysis; filter before materializing rows.
+    omv_base = TransactionOMV.objects.all()
+    nis_base = TransactionNIS.objects.all()
+    if vehicle is not None:
+        omv_base = omv_base.filter(vehicle=vehicle)
+        nis_base = nis_base.filter(vehicle=vehicle)
+    elif vehicle_ids is not None:
+        omv_base = omv_base.filter(vehicle_id__in=vehicle_ids)
+        nis_base = nis_base.filter(vehicle_id__in=vehicle_ids)
+    else:
+        raise ValueError('Izaberite vozilo ili skup vozila.')
+    if start is not None:
+        start_dt, _ = date_range_for_datetime_field(start)
+        omv_base = omv_base.filter(transaction_date__gte=start_dt)
+        nis_base = nis_base.filter(datum_transakcije__gte=start_dt)
+    if end is not None:
+        _, end_dt = date_range_for_datetime_field(end_date=end)
+        omv_base = omv_base.filter(transaction_date__lte=end_dt)
+        nis_base = nis_base.filter(datum_transakcije__lte=end_dt)
     omv_receipt_number = Case(
         When(
             Q(invoice_no__isnull=False)
@@ -632,11 +651,12 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         output_field=CharField(),
     )
 
-    omv_rows = filter_omv_fuel_queryset(TransactionOMV.objects.filter(vehicle=vehicle)).annotate(
+    omv_rows = filter_omv_fuel_queryset(omv_base).annotate(
         receipt_number=omv_receipt_number,
         supplier_name=Value("OMV", output_field=CharField()),
     ).values(
         "transaction_date",
+        "vehicle_id",
         "product_inv",
         "receipt_number",
         "quantity",
@@ -645,12 +665,14 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         "vat",
         "supplier_name",
         "mileage",
+        "corrected_mileage",
     )
 
-    nis_rows = filter_nis_fuel_queryset(TransactionNIS.objects.filter(vehicle=vehicle)).annotate(
+    nis_rows = filter_nis_fuel_queryset(nis_base).annotate(
         supplier_name=Value("NIS", output_field=CharField()),
     ).values(
         "datum_transakcije",
+        "vehicle_id",
         "naziv_proizvoda",
         "broj_racuna",
         "kolicina",
@@ -666,6 +688,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         rows.append(
             {
                 "date": row["transaction_date"],
+                "vehicle_id": row['vehicle_id'],
                 "product": row["product_inv"],
                 "receipt_number": format_receipt_identifier(row["receipt_number"]),
                 "amount": row["quantity"],
@@ -673,7 +696,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
                 "cost_neto": cost_neto,
                 "cost_bruto": cost_bruto,
                 "supplier": row["supplier_name"],
-                "mileage": row["mileage"],
+                "mileage": row['corrected_mileage'] if row['corrected_mileage'] is not None and row['corrected_mileage'] > 0 else row["mileage"],
             }
         )
     for row in nis_rows:
@@ -681,6 +704,7 @@ def get_vehicle_fuel_transaction_rows(vehicle):
         rows.append(
             {
                 "date": row["datum_transakcije"],
+                "vehicle_id": row['vehicle_id'],
                 "product": row["naziv_proizvoda"],
                 "receipt_number": format_receipt_identifier(row["broj_racuna"]),
                 "amount": row["kolicina"],

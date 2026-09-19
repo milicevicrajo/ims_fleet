@@ -55,6 +55,7 @@ REDOSLED = [
     "dokumentacija/docs/obracuni/06-09-nabavka.md",
     "dokumentacija/docs/obracuni/06-10-isplate.md",
     "dokumentacija/docs/obracuni/06-11-ugovori-i-menice.md",
+    "dokumentacija/docs/obracuni/06-12-flota-ekonomika.md",
     "dokumentacija/docs/07-integracije.md",
     "dokumentacija/docs/08-instalacija-i-pokretanje.md",
     "dokumentacija/docs/09-odrzavanje.md",

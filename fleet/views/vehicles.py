@@ -265,31 +265,18 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
     template_name = "fleet/vehicle_detail.html"
     context_object_name = "vehicle"
 
-    def get(self, request, *args, **kwargs):
-        vehicle = self.get_object()
-
-        latest_org_unit_subquery = JobCode.objects.filter(vehicle_id=OuterRef("pk")).order_by("-assigned_date").values("organizational_unit__center")[:1]
-
-        vehicle_with_latest_org_unit = Vehicle.objects.annotate(
-            latest_org_unit=Subquery(latest_org_unit_subquery)
-        ).get(pk=vehicle.pk)
-
-        user_allowed_centers_manager = request.user.allowed_centers
-        if user_allowed_centers_manager.exists():
-            allowed_centers_codes = user_allowed_centers_manager.values_list("center", flat=True)
-            if (
-                vehicle_with_latest_org_unit.latest_org_unit is not None
-                and vehicle_with_latest_org_unit.latest_org_unit not in allowed_centers_codes
-            ):
-                return HttpResponseForbidden("Nemate dozvolu za pristup ovom vozilu.")
-
-        return super().get(request, *args, **kwargs)
+    def get_queryset(self):
+        from fleet.services.economics import visible_vehicles
+        return visible_vehicles(self.request.user, include_retired=True)
 
     def get_context_data(self, **kwargs):
-        from fleet.support.vehicle_detail import VehiclePeriodForm, recorded_analytics, date_only
+        from fleet.support.vehicle_detail import VehiclePeriodForm
         from fleet.support.vehicle_mileage import vehicle_mileage
         from fleet.support.vehicle_maintenance import vehicle_maintenance
         from django.utils import timezone
+        from fleet.services.economics import period_analysis, METHODOLOGY, VERSION
+        from fleet.models import VehicleEconomicAssessment
+        from core.mixins import user_has_role_permission
 
         context = super().get_context_data(**kwargs)
         vehicle = self.object
@@ -304,21 +291,24 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         if period_form.is_bound and valid_period:
             start, end = period_form.cleaned_data['start'], period_form.cleaned_data['end']
         # Invalid filters show errors and no financial results; never silently substitute a period.
-        all_fuel = get_vehicle_fuel_transaction_rows(vehicle) if valid_period else []
-        fuel = [r for r in all_fuel if r['date'] and start <= date_only(r['date']) <= end]
-        services = vehicle.service_transactions.filter(datum__range=(start, end)).select_related('popravka_kategorija').order_by('-datum', '-pk') if valid_period else vehicle.service_transactions.none()
-        requisitions = vehicle.requisitions.filter(datum_trebovanja__range=(start, end)).select_related('popravka_kategorija').order_by('-datum_trebovanja', '-pk') if valid_period else vehicle.requisitions.none()
-        recoveries = vehicle.insurances.filter(kola=True, datum__range=(start, end)).order_by('-datum', '-pk') if valid_period else vehicle.insurances.none()
-        analytics = recorded_analytics(fuel, services, requisitions, recoveries, start, end) if valid_period else None
+        economics = period_analysis([vehicle], start, end)[0] if valid_period else None
+        fuel = economics['fuel'] if economics else []
+        services = economics['services'] if economics else []
+        requisitions = economics['requisitions'] if economics else []
+        recoveries = economics['recoveries'] if economics else []
+        analytics = economics['ledger'] if economics else None
         cards = vehicle.traffic_cards.order_by('-issue_date', '-id')
         card = cards.issued().first()
         holding = vehicle.holdings.filter(start_date__lte=today).filter(Q(end_date__isnull=True) | Q(end_date__gte=today)).select_related('lease').first()
         active_lease = vehicle.leases.filter(start_date__lte=today, end_date__gte=today).order_by('-start_date', '-id').first()
         holding_lease = holding.lease if holding else active_lease
-        holding_label = holding.get_basis_display() if holding else ('Ugovorno raspolaganje' if active_lease else 'Vlasništvo IMS')
+        holding_label = holding.get_basis_display() if holding else ('Ugovorno raspolaganje — proveriti period' if active_lease else 'Osnov nije potvrđen')
         ao_policy = vehicle.policies.filter(insurance_type__icontains='AUTOODGOVORNOST', start_date__lte=today, end_date__isnull=False).order_by('-end_date', '-id').first()
         registration_days = (card.registration_valid_until - today).days if card and card.registration_valid_until else None
         context.update({
+            'economics': economics, 'methodology': METHODOLOGY, 'methodology_version': VERSION,
+            'can_edit_analysis': user_has_role_permission(self.request.user, 'vehicle_update'),
+            'assessments': VehicleEconomicAssessment.objects.filter(vehicle=vehicle),
             'mileage': vehicle_mileage(vehicle, params, today),
             'maintenance': vehicle_maintenance(vehicle, today),
             'mileage_other_filters': [(key, value) for key, value in params.items() if key not in ('mileage_from', 'mileage_to')],

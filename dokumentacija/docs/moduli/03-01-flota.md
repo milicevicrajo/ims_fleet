@@ -25,8 +25,8 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 
 1. **Ko je vlasnik ili po kom ugovoru se vozilo koristi** i u kom periodu.
 2. **Kojoj organizacionoj jedinici vozilo pripada** u kom periodu.
-3. **Koliko vozilo košta** — gorivo, servisi, delovi, osiguranje, lizing, amortizacija.
-4. **Da li je vozilo isplativo** — trošak po kilometru u odnosu na prag za njegovu klasu.
+3. **Koliko vozilo košta** — evidentirani troškovi perioda; kapital i budući troškovi u zasebnoj ekonomskoj proceni.
+4. **Troškovi i opravdanost vozila** — poslovna namena × istorija raspolaganja, obrazloženi kontrolni kriterijumi i poređenje budućih alternativa; [metodologija IMS-FLOTA-2.0](../obracuni/06-12-flota-ekonomika.md).
 5. **Šta traži hitnu radnju** — istekla registracija, polisa bez pokrića, kvar.
 6. **Ko je vozilo zadužio i koliko je prešao** — putni nalozi vozila.
 7. **Službena putovanja zaposlenih** — putni nalozi sa akontacijom.
@@ -60,7 +60,7 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 | **Garaža** | Prijava kvara, radni nalog, trebovanje materijala, zahtev za nabavku (GZN) |
 | **Putni nalozi vozila** | Zaduženje vozila sa kilometražom i obračunom goriva |
 | **Putni nalozi zaposlenih** | Službena putovanja sa akontacijom, dnevnicom i štampom |
-| **Analitika** | Trošak po kilometru, pragovi po klasi mase, statistika centra |
+| **Analitika** | Zajednički obračun za flotu, centar i vozilo; namena × raspolaganje, dokumentovani kriterijumi, raspodela na poslove i sačuvane ekonomske procene |
 | **Izveštaji** | 20 izveštaja, uključujući 4 za upravu i 11 nad nasleđenim pogledima |
 | **Administracija** | Korisnici, uloge, evidencija rada, istorija pozadinskih poslova |
 
@@ -141,7 +141,7 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 | Podatak | Ekran | Ko unosi |
 |---|---|---|
 | Tehnički podaci vozila | Unos vozila | Služba voznog parka |
-| **Maksimalna dozvoljena masa** | Unos vozila | Služba voznog parka — **određuje prag troška po km** |
+| **Maksimalna dozvoljena masa** | Unos vozila | Tehnička karakteristika; u novoj analitici ne određuje kriterijum opravdanosti |
 | Saobraćajna dozvola i tablice | Saobraćajne dozvole | Služba voznog parka |
 | Osnov raspolaganja i period | Detalj vozila | Služba voznog parka |
 | Lizing i najam | Lizing | Služba voznog parka |
@@ -226,8 +226,8 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 | Modeli | [`fleet/models.py`](../../../fleet/models.py) |
 | Rute i dozvole | [`fleet/urls.py`](../../../fleet/urls.py) |
 | **Obračuni goriva** | [`fleet/support/fuel.py`](../../../fleet/support/fuel.py) |
-| **Trošak po kilometru** | [`fleet/support/dashboard.py`](../../../fleet/support/dashboard.py) |
-| **Pragovi i status** | [`fleet/support/analytics.py`](../../../fleet/support/analytics.py) |
+| **Nova analitika i ekonomske procene** | [`fleet/services/economics.py`](../../../fleet/services/economics.py), [`fleet/economics_models.py`](../../../fleet/economics_models.py) |
+| Nasleđeni trošak/km i pragovi — radi kompatibilnosti | [`fleet/support/dashboard.py`](../../../fleet/support/dashboard.py), [`fleet/support/analytics.py`](../../../fleet/support/analytics.py) |
 | Kilometraža | [`fleet/support/vehicle_mileage.py`](../../../fleet/support/vehicle_mileage.py) |
 | Održavanje | [`fleet/support/vehicle_maintenance.py`](../../../fleet/support/vehicle_maintenance.py) |
 | Presek stanja | [`fleet/support/fleet_snapshot.py`](../../../fleet/support/fleet_snapshot.py) |
@@ -287,7 +287,8 @@ ispravke i provere. [P]
 | Poglavlje | Sadržaj |
 |---|---|
 | [6.2. Gorivo](../obracuni/06-02-flota-gorivo.md) | Prečišćavanje OMV, potrošnja, gorivo po šifri posla |
-| [6.3. Troškovi](../obracuni/06-03-flota-troskovi.md) | Trošak po kilometru, pragovi, crvena zona |
+| [6.3. Troškovi](../obracuni/06-03-flota-troskovi.md) | Dokumentacija nasleđenih obračuna |
+| [6.12. Ekonomika flote](../obracuni/06-12-flota-ekonomika.md) | Aktuelna metodologija zajedničke analitike i poređenja budućih opcija |
 | [6.4. Polise i lizing](../obracuni/06-04-flota-ugovori-polise.md) | Mesečni troškovi, istek polisa |
 | [6.5. Izveštaji](../obracuni/06-05-flota-izvestaji.md) | Kilometraža, održavanje, presek stanja, izveštaji za upravu |
 

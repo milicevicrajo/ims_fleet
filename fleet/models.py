@@ -9,6 +9,8 @@ import datetime
 
 from core.models import ActivityLog, CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission, TaskHistory
 from hr.models import Employee
+from .economics_models import (VehicleAnalysisProfile, LeaseChargePeriod, VehicleDowntime,
+    VehicleEconomicAssessment, VehicleEconomicScenario)
 
 # <!-- ======================================================================= -->
 #                 <!-- MODELI SAMOSTALNE APLIKACIJE -->
@@ -687,6 +689,9 @@ class PutniNalogSequence(models.Model):
 
 
 class VehicleTravelOrder(models.Model):
+    job_code = models.ForeignKey(OrganizationalUnit, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='vehicle_usage_orders', verbose_name=_("Troškovi na teret šifre posla"),
+        help_text=_("Jedan nalog pripada jednom poslu. Prazno znači da pripadnost još nije potvrđena."))
     pn_number = models.PositiveIntegerField(
         verbose_name=_("PN broj"),
         unique=True,

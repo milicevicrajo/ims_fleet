@@ -343,6 +343,16 @@ def sync_permission_codes():
     # the standard role reconciliation above. This does not change Naplata grants.
     from potrazivanja.permissions import configure_permissions
     configure_permissions()
+    # New fleet screens retain the same scope as editing / viewing the vehicle.
+    for source_code, target_codes in {
+        'vehicle_update': ('vehicle_analysis_settings', 'vehicle_assessment_create'),
+        'vehicle_detail': ('vehicle_assessment_detail',),
+    }.items():
+        role_ids = list(RolePermission.objects.filter(permission__code=source_code).values_list('role_id', flat=True))
+        for target_code in target_codes:
+            target, _ = PermissionCode.objects.get_or_create(code=target_code)
+            for role_id in role_ids:
+                RolePermission.objects.get_or_create(role_id=role_id, permission=target)
     return {
         "synced": len(codes),
         "created": created,

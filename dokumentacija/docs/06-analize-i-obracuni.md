@@ -40,6 +40,11 @@ Svaki obračun ima istih 13 tačaka:
 
 ## 6.0.2. Zbirni pregled
 
+Nova analitika flote i vozila od 19.09.2026. opisana je u
+[6.12. Flota — ekonomika](obracuni/06-12-flota-ekonomika.md): E-01 zajednički periodni
+obračun i E-02 sačuvano poređenje budućih alternativa. Donji inventar 74 obračuna
+opisuje ranije stanje; nasleđene funkcije nisu uklonjene.
+
 | Modul | Obračuna | Poglavlje | Stanje |
 |---|---|---|---|
 | **Finansijska analitika** | 18 | [6.1](obracuni/06-01-finansije.md) | ✔ **Završeno** (preuzeto iz postojeće metodologije) |
