@@ -11,7 +11,7 @@
     <a href="{% url 'vehicle_update' vehicle.pk %}" class="btn btn-light">Izmeni podatke</a>
   </div></div>
 </div>
-<div class="vehicle-kpis vd-state">
+<div class="vehicle-kpis vd-overview-kpis" aria-label="Trenutno stanje vozila">
   <div class="vehicle-kpi"><small>Registracija / obavezno osiguranje</small>
     {% if registration_days != None %}<strong>{% if registration_days < 0 %}Istekla{% elif registration_days <= 30 %}Ističe uskoro{% else %}Važi do{% endif %} {{ trafic_card.registration_valid_until|date:"d.m.Y" }}</strong>
     {% elif ao_policy %}<strong>AO polisa {% if ao_policy.end_date < today %}istekla{% else %}do{% endif %} {{ ao_policy.end_date|date:"d.m.Y" }}</strong>

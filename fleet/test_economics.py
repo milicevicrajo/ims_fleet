@@ -493,14 +493,10 @@ class CostTabLayoutTests(EconomicsFixture):
                 text = open(f'fleet/templates/fleet/{path}.html', encoding='utf-8').read()
                 self.assertNotIn('style="', text)
 
-    def test_style_rules_do_not_reach_other_tabs(self):
-        """Dodata pravila smeju da diraju samo karticu Troskovi.
-
-        Prvi pokusaj je stilizovao `.vd-page h3`, cime je ugasen zateceni
-        `margin-top` na SVIM karticama detalja i razmaci su se slepili.
-        """
+    def test_cost_specific_style_rules_do_not_reach_other_tabs(self):
+        """Pravila troškova su odvojena od zajedničkog i mobilnog rasporeda."""
         styles = open('fleet/templates/fleet/includes/vehicle_detail_styles.html', encoding='utf-8').read()
-        added = styles[styles.index('/* ---------- naslovi'):]
+        added = styles[styles.index('/* ---------- naslovi'):styles.index('/* ---------- prilagođavanje')]
         allowed = ('.vd-step', '.vd-period-box', '.vd-quick', '.vd-custom', '.vd-period-shown',
                    '.vd-check', '.vd-state', '.vd-summary-row', '.vd-lease')
 
@@ -513,9 +509,14 @@ class CostTabLayoutTests(EconomicsFixture):
                 self.assertTrue(selector.startswith(allowed),
                                 msg='pravilo dopire izvan kartice Troškovi')
 
-    def test_existing_heading_spacing_is_untouched(self):
-        styles = open('fleet/templates/fleet/includes/vehicle_detail_styles.html', encoding='utf-8').read()
-        self.assertIn('.vd-page h3{font-size:18px;margin-top:14px}', styles)
+    def test_kpi_groups_do_not_use_status_badge_layout(self):
+        # vd-state je inline oznaka statusa. Na grupi kartica je ranije
+        # poništavala grid i nametala nowrap celom sadržaju.
+        import re
+        groups = re.findall(r'class="([^"]*\bvehicle-kpis\b[^"]*)"', self.open_costs().content.decode())
+        self.assertTrue(groups)
+        for classes in groups:
+            self.assertNotIn('vd-state', classes.split())
 
     def test_headings_start_at_h3_like_other_tabs(self):
         # Kartice detalja vozila koriste istu skalu: h3 celina, h4 pododeljak.

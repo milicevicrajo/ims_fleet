@@ -1547,6 +1547,11 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 | Saobraćajne dozvole | `/saobracajne-dozvole/` | Istorija tablica |
 | Šifre poslova (dodele) | `/sifre-poslova/` | Istorijske dodele |
 
+Detalj vozila prikazuje četiri sažete kartice trenutnog stanja. Na užim ekranima
+raspoređuju se u dve ili jednu kolonu; kartice podataka, raspolaganja i dokumenata
+takođe prelaze u jednu kolonu. Izbor odeljaka ostaje u jednom horizontalno
+pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
+
 #### Ugovori i osiguranje
 
 | Ekran | Adresa |
