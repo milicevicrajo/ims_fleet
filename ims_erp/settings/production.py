@@ -1,5 +1,7 @@
-from .base import * 
+from .base import *
 
+
+# Pristupni podaci se citaju iz .env (vidi .env.example) — nisu u repozitorijumu.
 ALLOWED_HOSTS = [
     "ims-flota",
     "ims.portal",
@@ -11,14 +13,7 @@ ALLOWED_HOSTS = [
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'IMS_ERP',  # Naziv baze na serveru
-        'USER': 'Rajo Milicevic',
-        'PASSWORD': 'Rajo123',
-        'HOST': 'SMS-SERVER',
-        'PORT': '',  # Ostavite prazno ako koristite podrazumevani port
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
+        **database_credentials(),
     },
 
     'local': {
@@ -28,14 +23,7 @@ DATABASES = {
 
     'server_db': {
         'ENGINE': 'mssql',
-        'NAME': 'IMS_ERP',  # Naziv baze na serveru
-        'USER': 'Rajo Milicevic',
-        'PASSWORD': 'Rajo123',
-        'HOST': 'SMS-SERVER',
-        'PORT': '',  # Ostavite prazno ako koristite podrazumevani port
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
+        **database_credentials(),
     },
 }
 

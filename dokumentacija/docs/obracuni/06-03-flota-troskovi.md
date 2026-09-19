@@ -10,8 +10,8 @@
 
 | Oznaka | Naziv | Problemi |
 |---|---|---|
-| [V-08](#v-08--procena-pređene-kilometraže-u-periodu) | Procena pređene kilometraže u periodu | P-03, P-04 |
-| [V-07](#v-07--trošak-po-kilometru-po-vozilu) | Trošak po kilometru po vozilu | P-05 … P-10 |
+| [V-08](#v-08--procena-pređene-kilometraže-u-periodu) | Procena pređene kilometraže u periodu | **P-03**, ~~P-04~~ |
+| [V-07](#v-07--trošak-po-kilometru-po-vozilu) | Trošak po kilometru po vozilu | ~~P-05~~ ~~P-06~~ ~~P-07~~ **P-08** ~~P-09~~ ~~P-10~~ |
 | [V-11](#v-11--pragovi-fiksnog-troška-po-kilometru) | Pragovi fiksnog troška po kilometru | P-11 |
 | [V-12](#v-12--status-vozila-prema-trošku-po-kilometru) | Status vozila prema trošku po kilometru | — |
 | [V-09](#v-09--analiza-troška-po-km-kroz-više-perioda) | Analiza troška po km kroz više perioda | P-12 |
@@ -214,7 +214,7 @@ korišćenih očitavanja, koje se prikazuje korisniku. [P]
 | Kilometraža opada (zamena brojača) | Takav par se odbacuje (razlika ≤ 0); koristi se drugi par | Ispravno |
 | Sva očitavanja istog dana | Nijedan par nema dana > 0 → „Nema podatka“ | Ispravno |
 | Očitavanje sa kilometražom 0 | Odbacuje se, korisnik se obaveštava | Ispravno |
-| **Složenost izbora para** | Sve kombinacije očitavanja — kvadratna složenost | **P-04** |
+| Složenost izbora para | **Linearno-logaritamska** (`_best_reading_pair`) | Rešeno 19.09.2026., **P-04** |
 
 ### 13. Status pouzdanosti
 
@@ -224,7 +224,8 @@ korišćenih očitavanja, koje se prikazuje korisniku. [P]
 | Vrednosti ≤ 0 se odbacuju | Potvrđeno | `dashboard.py:30-36` | — |
 | Bira se par najbliži granicama perioda | Potvrđeno | `dashboard.py:89-101` | — |
 | Preračun dnevni prosek × dana perioda | Potvrđeno | `dashboard.py:107` | — |
-| **Par nije ograničen na period** | **Potvrđeno — problem** | `dashboard.py:91-92` | **P-03** |
+| **Par nije ograničen na period** | **Potvrđeno — problem** | `dashboard.py` — `_best_reading_pair()` | **P-03** |
+| Izbor para daje isti rezultat kao ranija petlja | Potvrđeno | `fleet/test_cost_fixes.py` — poređenje sa starom petljom | Rešeno, **P-04** |
 | Rezultat je procena, ne merenje | Potvrđeno | Oznaka „okvirno“ u izvoru | — |
 
 ---
@@ -316,7 +317,8 @@ Uprava, rukovodioci centara, služba voznog parka.
 
 > **[P] Dva troška se NE dele srazmerno periodu:** premija polise i kamata finansijskog
 > lizinga ulaze **u punom iznosu** čim se period bilo kako preklopi sa njihovim važenjem.
-> Vidi probleme **P-06** i **P-07**.
+> **Ispravljeno 19.09.2026.** — vidi **P-06** i **P-07**. Premija polise i godišnja kamata
+> lizinga sada ulaze **srazmerno danima**, a ne u punom iznosu.
 
 #### Korak 3 — lizing i najam (osim finansijskog)
 
@@ -369,7 +371,10 @@ Računa se **samo** ako su popunjeni `purchase_value`, `value` i osnovni datum. 
 
 > **Ako je ukupan trošak ≤ 0, vozilo se potpuno izostavlja iz rezultata.** [P]
 
-Vidi problem **P-09**.
+> **Ispravljeno 19.09.2026.** — vozilo bez troška **ostaje** na spisku, sa oznakom
+> „Nema evidentiranog troška u periodu“ ili „Naknade osiguranja su veće od evidentiranih
+> troškova u periodu“. Cena po km ostaje nepoznata, pa vozilo ne ulazi u proseke, pragove
+> ni u crvenu zonu. Vidi **P-09**.
 
 #### Korak 7 — trošak po kilometru
 
@@ -420,7 +425,12 @@ Opadajuće po trošku po kilometru; prazne vrednosti se tretiraju kao 0. [P]
 
 **Centar vozila [P]:** uzima se **poslednja** dodela (`-assigned_date`), **bez
 ograničenja na period**. Razlikuje se od izveštaja goriva po šifri posla (V-21),
-koji koristi **istorijsku** dodelu na datum troška. Vidi problem **P-05**.
+koji koristi **istorijsku** dodelu na datum troška.
+
+> **Ispravljeno 19.09.2026.:** V-07 sada uzima dodelu koja je važila **na kraju izabranog
+> perioda**, pa se izveštaji za prošle periode više ne menjaju kad se vozilo kasnije
+> prebaci. Vozilo koje je centar promenilo **usred** perioda i dalje nosi ceo trošak u
+> centar sa kraja perioda, ali red nosi oznaku `center_changed_in_period`. Vidi **P-05**.
 
 ### 8. Primer obračuna
 
@@ -463,7 +473,7 @@ koji koristi **istorijsku** dodelu na datum troška. Vidi problem **P-05**.
 
 > Uočite: cela godišnja premija polise (60.000,00) ušla je u tromesečni period.
 > Srazmerno (89 od 365 dana) bilo bi **14.630,14 RSD** — razlika je **+310%**.
-> To je problem **P-06**.
+> **Ispravljeno 19.09.2026.** — vidi **P-06**.
 >
 > Da je premija ušla srazmerno, ukupan trošak bio bi 277.400,37 RSD, a trošak po
 > kilometru **46,23 RSD/km** umesto 53,80 — i status bi bio **„Rizično“** u oba slučaja,
@@ -514,10 +524,10 @@ koji koristi **istorijsku** dodelu na datum troška. Vidi problem **P-05**.
 
 | Uzrok | Objašnjenje |
 |---|---|
-| Trošak veći od očekivanog | Cela premija polise ili cela godišnja kamata u kratkom periodu (**P-06**, **P-07**) |
+| Trošak manji nego ranije za kratke periode | Polisa i kamata se od 19.09.2026. dele po danima (~~P-06~~, ~~P-07~~) |
 | Trošak po km neuobičajeno visok | Procena kilometraže premala (**P-03**) |
-| Vozilo nedostaje u spisku | Ukupan trošak ≤ 0 (**P-09**) |
-| Vozilo u pogrešnom centru | Koristi se poslednja dodela, ne istorijska (**P-05**) |
+| Vozilo bez cene po km | Ukupan trošak ≤ 0; red ostaje, uz objašnjenje (~~P-09~~) |
+| Vozilo u pogrešnom centru | Uzima se dodela sa **kraja perioda**; promena usred perioda je označena (~~P-05~~) |
 
 ### 12. Izuzeci i rizični slučajevi
 
@@ -525,14 +535,17 @@ koji koristi **istorijsku** dodelu na datum troška. Vidi problem **P-05**.
 |---|---|---|
 | Otpisano vozilo | Izostavljeno | Namerno |
 | Priključno vozilo | Izostavljeno | Namerno |
-| Ukupan trošak ≤ 0 | **Vozilo potpuno nestaje iz spiska** | **P-09** |
+| Ukupan trošak = 0 | Red ostaje; RSD/km je crtica, uz „Nema evidentiranog troška u periodu“ | Ispravljeno, **P-09** |
+| Ukupan trošak < 0 | Red ostaje; „Naknade osiguranja su veće od evidentiranih troškova u periodu“ | Ispravljeno, **P-09** |
 | Kilometraža = 0 | Trošak po km prazan; vozilo **ostaje** u spisku | Vidljivo |
 | Nema nabavne ili knjigovodstvene vrednosti | Amortizacija = 0, bez upozorenja | **P-09** |
 | Knjigovodstvena vrednost veća od nabavne | Amortizacija = 0 (`max(..., 0)`) | Ispravno |
 | Vozilo mlađe od godinu dana | Amortizacija razmazana na 365 dana | Namerno |
-| Polisa važi jedan dan u periodu | **Cela premija ulazi** | **P-06** |
-| Finansijski lizing, period od mesec dana | **Cela godišnja kamata ulazi** | **P-07** |
-| Vozilo promenilo centar u periodu | Ceo trošak ide na **poslednji** centar | **P-05** |
+| Polisa važi jedan dan u periodu | Ulazi **jedan dan** premije | Ispravljeno, **P-06** |
+| Polisa bez datuma početka ili kraja | **Ne ulazi** u trošak | Ispravljeno, **P-06** |
+| Finansijski lizing, period od mesec dana | Ulazi **srazmeran deo** godišnje kamate | Ispravljeno, **P-07** |
+| Prestupna godina | Imenilac kamate je **366 dana** | Ispravljeno, **P-07** |
+| Vozilo promenilo centar u periodu | Trošak ide na centar sa **kraja perioda**, red je označen | Delimično, **P-05** |
 | Period kraći od godinu dana | Kilometraža se **svodi na godišnji nivo** pre poređenja sa pragom od 15.000 km | Ispravljeno, **P-10** |
 
 ### 13. Status pouzdanosti
@@ -545,11 +558,12 @@ koji koristi **istorijsku** dodelu na datum troška. Vidi problem **P-05**.
 | Amortizacija po danima, najmanje 365 | Potvrđeno | `dashboard.py:307-312` | — |
 | Dugoročni najam se deli po mesecima | Potvrđeno | `dashboard.py:274-278` | — |
 | Operativni lizing se deli preko celog ugovora | Potvrđeno | `dashboard.py:280-285` | **P-08** |
-| **Polisa ulazi u punom iznosu** | **Potvrđeno — problem** | `dashboard.py:214-223` | **P-06** |
-| **Kamata ulazi u punom godišnjem iznosu** | **Potvrđeno — problem** | `dashboard.py:224-234` | **P-07** |
-| **Vozila sa troškom ≤ 0 nestaju** | **Potvrđeno — problem** | `dashboard.py:323-324` | **P-09** |
+| Polisa ulazi srazmerno danima preklapanja | Potvrđeno | `dashboard.py` — `policy_cost_by_vehicle` | Rešeno, **P-06** |
+| Kamata ulazi srazmerno danima u godini | Potvrđeno | `dashboard.py` — `financial_interest_by_vehicle` | Rešeno, **P-07** |
+| Vozila sa troškom ≤ 0 ostaju na spisku | Potvrđeno | `dashboard.py` — `has_cost`, `no_cost_note` | Rešeno, **P-09** |
 | Kilometraža se svodi na godišnji nivo pre poređenja sa pragom | Potvrđeno | `dashboard.py:331-333` | Rešeno, **P-10** |
-| **Centar je poslednji, ne istorijski** | **Potvrđeno — problem** | `dashboard.py:143-145` | **P-05** |
+| Centar je onaj sa **kraja perioda** | Potvrđeno | `dashboard.py` — `center_at_period_end` | Rešeno, **P-05** |
+| Promena centra unutar perioda je označena | Potvrđeno | `dashboard.py` — `center_changed_in_period` | Rešeno, **P-05** |
 | Da li je bruto gorivo ispravan izbor | **Nepotvrđeno** | — | **Q17** |
 
 ---

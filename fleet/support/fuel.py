@@ -318,33 +318,47 @@ def date_range_for_datetime_field(start_date=None, end_date=None):
 
 
 def calculate_average_fuel_consumption(vehicle):
-    last_10_consumptions = vehicle.fuel_consumptions.order_by("-date")[:10]
+    """Prosecna potrosnja iz poslednjih 10 tocenja, u l/100 km.
+
+    Granice prozora su najnovije i najstarije tocenje sa upisanom kilometrazom.
+    Obe granice se proveravaju, i kilometraza novije granice mora biti veca od
+    starije. Kada to nije ispunjeno vraca se None -- bolje nego izmisljen broj.
+
+    Isti postupak kao u calculate_average_fuel_consumption_ever(), samo ogranicen
+    na poslednjih 10 tocenja.
+    """
+    last_10_consumptions = list(vehicle.fuel_consumptions.order_by("-date")[:10])
 
     if len(last_10_consumptions) < 10:
         return None
 
-    first_entry = last_10_consumptions[0]
-    start_entry = None
-    for i in range(9):
-        if last_10_consumptions[i].mileage > 0:
-            first_entry = last_10_consumptions[9 - i]
-            start_entry = 9 - i
-            break
+    # Indeks 0 je najnovije tocenje, indeks 9 najstarije.
+    newest_index = next(
+        (i for i, entry in enumerate(last_10_consumptions) if entry.mileage > 0),
+        None,
+    )
+    oldest_index = next(
+        (
+            i
+            for i in range(len(last_10_consumptions) - 1, -1, -1)
+            if last_10_consumptions[i].mileage > 0
+        ),
+        None,
+    )
+    if newest_index is None or oldest_index is None or newest_index >= oldest_index:
+        return None
 
-    last_entry = last_10_consumptions[9]
-    end_entry = None
-    for i in range(9):
-        if last_10_consumptions[i].mileage > 0:
-            last_entry = last_10_consumptions[i]
-            end_entry = i
-            break
+    newest_entry = last_10_consumptions[newest_index]
+    oldest_entry = last_10_consumptions[oldest_index]
 
-    if start_entry is not None and end_entry is not None and start_entry >= end_entry:
-        total_amount = sum(c.amount for c in last_10_consumptions[end_entry : start_entry + 1])
-        total_mileage = last_entry.mileage - first_entry.mileage
-        if total_mileage > 0:
-            return total_amount / total_mileage * 100
-    return None
+    total_mileage = newest_entry.mileage - oldest_entry.mileage
+    if total_mileage <= 0:
+        return None
+
+    total_amount = sum(
+        entry.amount for entry in last_10_consumptions[newest_index : oldest_index + 1]
+    )
+    return total_amount / total_mileage * 100
 
 
 def calculate_average_fuel_consumption_ever(vehicle):

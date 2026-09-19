@@ -161,8 +161,14 @@
             <td class="text-end" data-order="{{ row.annual_km }}">{{ row.annual_km|floatformat:0|intcomma }}</td>
             <td>{{ row.mileage_source }}</td>
             <td class="text-end" data-order="{{ row.total_cost }}">{{ row.total_cost|floatformat:0|intcomma }}</td>
-            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">
-              {{ row.cost_per_km|floatformat:2|intcomma }}
+            <td class="text-end" data-order="{{ row.cost_per_km|default_if_none:0|stringformat:'f' }}">
+              {% if row.cost_per_km %}
+                {{ row.cost_per_km|floatformat:2|intcomma }}
+              {% else %}
+                {% firstof row.no_cost_note "Nema procenjene kilometraže u periodu" as cost_missing_note %}
+                <span class="text-muted" style="cursor: help;" title="{{ cost_missing_note }}"
+                      data-bs-toggle="tooltip" data-bs-title="{{ cost_missing_note }}">&mdash;</span>
+              {% endif %}
               {% if row.below_mileage_threshold %}
                 <i class="fas fa-exclamation-circle" style="color: #ff9800; margin-left: 5px; cursor: help;" 
                    title="{{ row.low_mileage_note }}" data-bs-toggle="tooltip" data-bs-title="{{ row.low_mileage_note }}"></i>
@@ -221,8 +227,14 @@
             <td class="text-end" data-order="{{ row.annual_km }}">{{ row.annual_km|floatformat:0|intcomma }}</td>
             <td>{{ row.mileage_source }}</td>
             <td class="text-end" data-order="{{ row.total_cost }}">{{ row.total_cost|floatformat:0|intcomma }}</td>
-            <td class="text-end" data-order="{{ row.cost_per_km|stringformat:'f' }}">
-              {{ row.cost_per_km|floatformat:2|intcomma }}
+            <td class="text-end" data-order="{{ row.cost_per_km|default_if_none:0|stringformat:'f' }}">
+              {% if row.cost_per_km %}
+                {{ row.cost_per_km|floatformat:2|intcomma }}
+              {% else %}
+                {% firstof row.no_cost_note "Nema procenjene kilometraže u periodu" as cost_missing_note %}
+                <span class="text-muted" style="cursor: help;" title="{{ cost_missing_note }}"
+                      data-bs-toggle="tooltip" data-bs-title="{{ cost_missing_note }}">&mdash;</span>
+              {% endif %}
               {% if row.below_mileage_threshold %}
                 <i class="fas fa-exclamation-circle" style="color: #ff9800; margin-left: 5px; cursor: help;" 
                    title="{{ row.low_mileage_note }}" data-bs-toggle="tooltip" data-bs-title="{{ row.low_mileage_note }}"></i>

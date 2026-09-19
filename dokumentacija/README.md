@@ -21,7 +21,7 @@ Od 18.09.2026. postoji **objedinjena dokumentacija celog sistema** u direktoriju
 | [7. Integracije](docs/07-integracije.md) | Programeri i održavanje — 9 spoljnih sistema |
 | [8. Instalacija i pokretanje](docs/08-instalacija-i-pokretanje.md) | Programeri |
 | [9. Održavanje](docs/09-odrzavanje.md) | Održavanje — 18 zakazanih poslova, česti problemi |
-| [**10. Poznati problemi**](docs/10-poznati-problemi.md) | **Registar 49 uočenih problema — 8 rešeno 18.09.2026.** |
+| [**10. Poznati problemi**](docs/10-poznati-problemi.md) | **Registar 49 uočenih problema — 15 rešeno (18–19.09.2026.)** |
 | [11. Plan razvoja](docs/11-plan-razvoja.md) | Uprava i programeri |
 | [12. Rečnik pojmova](docs/12-recnik-poslovnih-pojmova.md) | Svi — pojmovi i mapiranje ekran ↔ kod ↔ baza |
 | [**Pregled za upravu**](docs/uprava/pregled-ims-erp-a.md) | **Uprava — netehnički sažetak** |

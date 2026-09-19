@@ -1,22 +1,14 @@
-from .base import * 
+from .base import *
 
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+# Pristupni podaci se citaju iz .env (vidi .env.example) — nisu u repozitorijumu.
 ALLOWED_HOSTS = ['127.0.0.1']
-DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'mssql',
-    #     'NAME': 'IMS_ERP',  # Naziv baze na serveru
-    #     'USER': 'Rajo Milicevic',
-    #     'PASSWORD': 'Rajo123',
-    #     'HOST': 'SMS-SERVER',
-    #     'PORT': '',  # Ostavite prazno ako koristite podrazumevani port
-    #     'OPTIONS': {
-    #         'driver': 'ODBC Driver 17 for SQL Server',
-    #     },
-    # },
 
+DATABASES = {
+    # Za rad nad stvarnom bazom umesto SQLite-a, zameni 'default' sa:
+    #     'default': {'ENGINE': 'mssql', **database_credentials()},
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -24,14 +16,7 @@ DATABASES = {
 
     'server_db': {
         'ENGINE': 'mssql',
-        'NAME': 'IMS_ERP',  # Naziv baze na serveru
-        'USER': 'Rajo Milicevic',
-        'PASSWORD': 'Rajo123',
-        'HOST': 'SMS-SERVER',
-        'PORT': '',  # Ostavite prazno ako koristite podrazumevani port
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
+        **database_credentials(),
     },
 }
 

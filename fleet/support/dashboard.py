@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 import calendar
 
-from django.db.models import OuterRef, Subquery, Sum
+from django.db.models import Exists, OuterRef, Subquery, Sum
 
 from ..models import (
     FuelConsumption,
@@ -65,6 +65,78 @@ def _mileage_readings(vehicle):
     return readings, invalid_fuel_count
 
 
+def _best_reading_pair(readings, period_start_date, period_end_date):
+    """Par ocitavanja (start, end) najblizi granicama perioda.
+
+    Uslovi su isti kao ranije: end mora biti kasnijeg datuma i vece kilometraze.
+    Trazi se najmanji zbir |start - pocetak perioda| + |end - kraj perioda|.
+
+    Ranije je ovo bila dvostruka petlja preko svih ocitavanja (kvadratna
+    slozenost). Sada se ocitavanja obilaze jednom, po datumu, a najbolji
+    kandidat za start pamti se u Fenwick stablu po rangu kilometraze -- pa upit
+    "najbolji start sa manjom kilometrazom" traje logaritamski.
+
+    Pri jednakom zbiru bira se isti par koji bi nasla i ranija petlja:
+    najmanji indeks start-a, pa najmanji indeks end-a.
+    """
+    count = len(readings)
+    if count < 2:
+        return None
+
+    mileage_rank = {
+        mileage: rank
+        for rank, mileage in enumerate(sorted({r["mileage"] for r in readings}), start=1)
+    }
+    size = len(mileage_rank)
+    NONE_FOUND = (float("inf"), 0)
+    tree = [NONE_FOUND] * (size + 1)
+
+    def remember(rank, candidate):
+        while rank <= size:
+            if candidate < tree[rank]:
+                tree[rank] = candidate
+            rank += rank & -rank
+
+    def best_below(rank):
+        """Najbolji (udaljenost, indeks) medju rangovima 1..rank."""
+        best = NONE_FOUND
+        while rank > 0:
+            if tree[rank] < best:
+                best = tree[rank]
+            rank -= rank & -rank
+        return best
+
+    best_key = None  # (zbir, indeks start-a, indeks end-a)
+    inserted = 0
+    index = 0
+    while index < count:
+        day = readings[index]["date"]
+
+        # U stablo ulaze samo ocitavanja strogo starijeg datuma od tekuceg.
+        while inserted < count and readings[inserted]["date"] < day:
+            reading = readings[inserted]
+            remember(
+                mileage_rank[reading["mileage"]],
+                (abs((reading["date"] - period_start_date).days), inserted),
+            )
+            inserted += 1
+
+        while index < count and readings[index]["date"] == day:
+            end = readings[index]
+            distance_to_start, start_index = best_below(mileage_rank[end["mileage"]] - 1)
+            if distance_to_start != float("inf"):
+                score = distance_to_start + abs((end["date"] - period_end_date).days)
+                key = (score, start_index, index)
+                if best_key is None or key < best_key:
+                    best_key = key
+            index += 1
+
+    if best_key is None:
+        return None
+    _, start_index, end_index = best_key
+    return readings[start_index], readings[end_index]
+
+
 def _estimate_period_mileage(vehicle, period_start_date, period_end_date):
     readings, invalid_fuel_count = _mileage_readings(vehicle)
     period_days = max((period_end_date - period_start_date).days, 1)
@@ -86,24 +158,14 @@ def _estimate_period_mileage(vehicle, period_start_date, period_end_date):
     if len(readings) < 2:
         return no_data("Nema dva validna očitavanja kilometraže iz točenja ili zaduženja.")
 
-    best_pair = None
-    best_score = None
-    for start in readings:
-        for end in readings:
-            observed_days = (end["date"] - start["date"]).days
-            distance = end["mileage"] - start["mileage"]
-            if observed_days <= 0 or distance <= 0:
-                continue
-
-            score = abs((start["date"] - period_start_date).days) + abs((end["date"] - period_end_date).days)
-            if best_score is None or score < best_score:
-                best_score = score
-                best_pair = (start, end, observed_days, distance)
+    best_pair = _best_reading_pair(readings, period_start_date, period_end_date)
 
     if not best_pair:
         return no_data("Nema validan rast kilometraže između dostupnih točenja ili zaduženja.")
 
-    start, end, observed_days, distance = best_pair
+    start, end = best_pair
+    observed_days = (end["date"] - start["date"]).days
+    distance = end["mileage"] - start["mileage"]
     estimated_km = distance / observed_days * period_days
     sources = {start["source"], end["source"]}
     if sources == {"Točenje"}:
@@ -140,9 +202,17 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
     def number(value):
         return float(value or 0)
 
-    latest_center = JobCode.objects.filter(
-        vehicle=OuterRef('pk')
-    ).order_by('-assigned_date').values('organizational_unit__center')[:1]
+    # Centar koji je vazio na KRAJU perioda, ne trenutni. Bez toga kasnija
+    # promena centra menja i vec objavljene izvestaje za prosle periode.
+    center_at_period_end = JobCode.objects.filter(
+        vehicle=OuterRef('pk'),
+        assigned_date__lte=period_end_date,
+    ).order_by('-assigned_date', '-pk').values('organizational_unit__center')[:1]
+    changed_center_in_period = JobCode.objects.filter(
+        vehicle=OuterRef('pk'),
+        assigned_date__gt=period_start_date,
+        assigned_date__lte=period_end_date,
+    )
     latest_registration = TrafficCard.objects.issued().filter(
         vehicle=OuterRef('pk')
     ).order_by('-issue_date', '-id').values('registration_number')[:1]
@@ -158,7 +228,8 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             vehicles = vehicles.filter(pk=vehicle_ids)
 
     vehicles = vehicles.annotate(
-        center_code=Subquery(latest_center),
+        center_code=Subquery(center_at_period_end),
+        center_changed_in_period=Exists(changed_center_in_period),
         registration_number=Subquery(latest_registration),
         fuel_cost_period=Subquery(
             FuelConsumption.objects.filter(
@@ -211,30 +282,15 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             .annotate(total=Sum('potrazuje'))
             .values('total')[:1]
         ),
-        policy_cost_period=Subquery(
-            Policy.objects.filter(
-                vehicle=OuterRef('pk'),
-                start_date__lte=period_end_date,
-                end_date__gte=period_start_date,
-            )
-            .values('vehicle')
-            .annotate(total=Sum('premium_amount'))
-            .values('total')[:1]
-        ),
-        financial_lease_interest_period=Subquery(
-            LeaseInterest.objects.filter(
-                lease__vehicle=OuterRef('pk'),
-                lease__lease_type='finansijski',
-                lease__end_date__gte=period_start_date,
-                year__in=range(period_start_date.year, period_end_date.year + 1),
-            )
-            .values('lease__vehicle')
-            .annotate(total=Sum('interest_amount'))
-            .values('total')[:1]
-        ),
     )
 
     period_days = (period_end_date - period_start_date).days or 1
+
+    def days_of_overlap(first_start, first_end, second_start, second_end):
+        """Broj dana preklapanja dva zatvorena intervala; granice su ukljucive."""
+        start = max(first_start, second_start)
+        end = min(first_end, second_end)
+        return (end - start).days + 1 if end >= start else 0
 
     def monthly_cost_for_overlap(monthly_amount, overlap_start, overlap_end):
         if overlap_end <= overlap_start:
@@ -263,6 +319,49 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
     ).exclude(lease_type='finansijski').values(
         'vehicle_id', 'lease_type', 'current_payment_amount', 'start_date', 'end_date'
     )
+
+    # P-06: premija polise se deli srazmerno danima preklapanja sa periodom.
+    # Ranije je ceo godisnji iznos ulazio i u jednomesecni period.
+    policy_cost_by_vehicle = defaultdict(float)
+    for policy in Policy.objects.filter(
+        vehicle_id__in=vehicle_ids_in_query,
+        start_date__isnull=False,
+        end_date__isnull=False,
+        start_date__lte=period_end_date,
+        end_date__gte=period_start_date,
+    ).values('vehicle_id', 'premium_amount', 'start_date', 'end_date'):
+        policy_days = (policy['end_date'] - policy['start_date']).days + 1
+        if policy_days <= 0:
+            continue
+        days = days_of_overlap(
+            policy['start_date'], policy['end_date'], period_start_date, period_end_date
+        )
+        if days <= 0:
+            continue
+        policy_cost_by_vehicle[policy['vehicle_id']] += (
+            float(policy['premium_amount'] or 0) * days / policy_days
+        )
+
+    # P-07: godisnja kamata finansijskog lizinga se deli srazmerno danima
+    # preklapanja perioda sa tom kalendarskom godinom. Ranije je period koji
+    # dodirne dve godine povlacio dve pune godisnje kamate.
+    financial_interest_by_vehicle = defaultdict(float)
+    for interest in LeaseInterest.objects.filter(
+        lease__vehicle_id__in=vehicle_ids_in_query,
+        lease__lease_type='finansijski',
+        lease__end_date__gte=period_start_date,
+        year__in=range(period_start_date.year, period_end_date.year + 1),
+    ).values('lease__vehicle_id', 'year', 'interest_amount'):
+        year = interest['year']
+        days = days_of_overlap(
+            date(year, 1, 1), date(year, 12, 31), period_start_date, period_end_date
+        )
+        if days <= 0:
+            continue
+        days_in_year = 366 if calendar.isleap(year) else 365
+        financial_interest_by_vehicle[interest['lease__vehicle_id']] += (
+            float(interest['interest_amount'] or 0) * days / days_in_year
+        )
 
     non_financial_lease_cost_by_vehicle = defaultdict(float)
     for lease in lease_contracts:
@@ -295,12 +394,12 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
         fuel_cost = number(vehicle.fuel_cost_period)
         service_cost = number(vehicle.service_cost_period)
         requisition_cost = number(vehicle.requisition_cost_period)
-        policy_cost = number(vehicle.policy_cost_period)
+        policy_cost = policy_cost_by_vehicle.get(vehicle.pk, 0.0)
         # Operativni/dugorocni: current_payment_amount raspodeljeno proporcionalno na preklapajuce dane
         # Finansijski: koristimo kamatu iz LeaseInterest (principal je vec u amortizaciji)
         lease_annual_cost = (
             non_financial_lease_cost_by_vehicle.get(vehicle.pk, 0)
-            + number(vehicle.financial_lease_interest_period)
+            + financial_interest_by_vehicle.get(vehicle.pk, 0.0)
         )
         insurance_recovery = number(vehicle.insurance_recovery_period)
 
@@ -320,10 +419,17 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             + lease_annual_cost
             - insurance_recovery
         )
-        if total_cost <= 0:
-            continue
-
-        cost_per_km = total_cost / annual_km if annual_km > 0 else None
+        # P-09: vozilo bez evidentiranog troska se vise ne izostavlja iz spiska.
+        # Cena po km ostaje nepoznata, pa ne ulazi ni u pragove ni u crvenu zonu.
+        has_cost = total_cost > 0
+        cost_per_km = total_cost / annual_km if has_cost and annual_km > 0 else None
+        no_cost_note = None
+        if not has_cost:
+            no_cost_note = (
+                "Nema evidentiranog troška u periodu"
+                if total_cost == 0
+                else "Naknade osiguranja su veće od evidentiranih troškova u periodu"
+            )
 
         # Napomena za automobile koji se malo voze (ispod 15000 km godišnje).
         # annual_km je kilometraža izabranog perioda, pa se pre poređenja sa godišnjim
@@ -363,6 +469,9 @@ def vehicle_cost_per_km_rows(period_start_date, period_end_date=None, limit=None
             'insurance_recovery': insurance_recovery,
             'total_cost': total_cost,
             'cost_per_km': cost_per_km,
+            'has_cost': has_cost,
+            'no_cost_note': no_cost_note,
+            'center_changed_in_period': bool(getattr(vehicle, 'center_changed_in_period', False)),
             'below_mileage_threshold': below_mileage_threshold,
             'low_mileage_note': low_mileage_note,
             'maximum_permissible_weight': float(vehicle.maximum_permissible_weight or 0),

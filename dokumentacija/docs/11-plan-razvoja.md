@@ -116,21 +116,29 @@ Za **11 izveštaja Flote** formula postoji **isključivo u bazi** — [P-27](10-
 
 ## 11.5. Prioriteti iz registra problema
 
-**49 uočenih problema, od toga 8 rešeno 18.09.2026.** (P-10, P-13, P-14 A-C, P-21, P-22,
-P-26, P-36, P-46). Predlog redosleda za ostale — po tome **šta daje pogrešan broj**:
+**49 uočenih problema, od toga 15 rešeno (18–19.09.2026.).**
+
+| Dan | Rešeno |
+|---|---|
+| 18.09. | P-10, P-13, P-14 A-C, P-21, P-22, P-26, P-36, P-46 |
+| 19.09. | **P-01** (tajne), **P-02** (prosečna potrošnja), **P-04** (brzina), **P-05** (centar, za V-07), **P-06** (premija polise), **P-07** (kamata lizinga), **P-09** (vozila bez troška) |
+
+Predlog redosleda za ostale — po tome **šta daje pogrešan broj**:
 
 ### Prvo — pogrešan poslovni rezultat
 
 | # | Problem | Zašto prvo |
 |---|---|---|
-| [P-06](10-poznati-problemi.md) | Cela premija polise u svaki period | Trošak po km uvećan do **+1.117%** |
-| [P-07](10-poznati-problemi.md) | Cela godišnja kamata u svaki period | Isto |
-| [P-02](10-poznati-problemi.md) | Prosečna potrošnja ne proverava granicu | Prikaz **0,07 l/100 km** umesto 6 |
 | [P-23](10-poznati-problemi.md) | Lizing samo u mesecu početka | Izveštaj ne pokazuje mesečni trošak |
-| [P-08](10-poznati-problemi.md) | Operativni lizing razmazan | Rata od 50.000 ulazi kao 1.370 |
+| [P-08](10-poznati-problemi.md) | Operativni lizing razmazan | Rata od 50.000 ulazi kao 1.370. **Traži proveru podataka pre izmene koda** — vidi **Q45** |
+| [P-31](10-poznati-problemi.md) | Obustava mobilnih se nigde ne čuva | Nema traga šta je prosleđeno u zarade |
+| [P-33](10-poznati-problemi.md) | Virman skraćuje podatke i ne čuva poslatu datoteku | Tiho skraćivanje iznosa i naziva |
 
-> **[Z] Olakšica:** za P-06, P-07, P-23 i P-02 **ispravno rešenje već postoji u kodu**,
-> u drugom modulu. Ne treba izmišljati pravila — treba ih preneti.
+> **[Z] Olakšica:** za P-23 **ispravno rešenje već postoji u kodu**, u drugom modulu —
+> isti postupak koji je 19.09.2026. primenjen na P-06 i P-07.
+
+> **Rešeno 19.09.2026.:** ~~P-02~~ (prosečna potrošnja), ~~P-06~~ (premija polise),
+> ~~P-07~~ (kamata lizinga). Sva tri su davala **pogrešan poslovni broj**.
 
 ### Drugo — bezbednost i trag
 

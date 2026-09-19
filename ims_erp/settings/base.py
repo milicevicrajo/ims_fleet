@@ -13,8 +13,41 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Tajne se citaju iz .env, koji nije u repozitorijumu. Uzor: .env.example
+try:
+    from dotenv import load_dotenv
+except ImportError:  # dotenv nije obavezan ako su promenljive vec u okruzenju
+    pass
+else:
+    load_dotenv(BASE_DIR / '.env')
+
+
+def env_required(name):
+    """Vrednost iz okruzenja; bez nje se ne pokrece, umesto tihog pada na podrazumevano."""
+    value = os.getenv(name)
+    if value is None or value == '':
+        raise ImproperlyConfigured(
+            f'Nedostaje promenljiva okruzenja {name}. '
+            f'Kopiraj .env.example u .env i popuni vrednosti.'
+        )
+    return value
+
+
+def database_credentials():
+    """Pristupni podaci za SQL Server, isti za sve okoline."""
+    return {
+        'NAME': env_required('IMS_DB_NAME'),
+        'USER': env_required('IMS_DB_USER'),
+        'PASSWORD': env_required('IMS_DB_PASSWORD'),
+        'HOST': env_required('IMS_DB_HOST'),
+        'PORT': os.getenv('IMS_DB_PORT', ''),
+        'OPTIONS': {'driver': MSSQL_DRIVER},
+    }
 
 # SQL Server connection defaults used by environment-specific DATABASES blocks.
 MSSQL_DRIVER = os.getenv('MSSQL_DRIVER', 'ODBC Driver 17 for SQL Server')
@@ -67,10 +100,12 @@ def apply_mssql_connection_defaults(databases):
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)!_&_xkzdmy(u)og*824h$nur02--378mitdd_ib52ali7nuke'
+SECRET_KEY = env_required('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Pre prebacivanja na False resiti opsluzivanje media/ preko web servera —
+# ims_erp/urls.py opsluzuje slike vozila i dokumenata samo kada je DEBUG=True.
+DEBUG = os.getenv('DJANGO_DEBUG', 'False').strip().lower() in ('1', 'true', 'yes')
 
 
 

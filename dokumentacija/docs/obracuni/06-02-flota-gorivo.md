@@ -14,7 +14,7 @@
 | [V-04](#v-04--iznosi-omv-transakcije) | Iznosi OMV transakcije | — |
 | [V-05](#v-05--iznosi-nis-transakcije) | Iznosi NIS transakcije | — |
 | [V-06](#v-06--prečišćavanje-omv-transakcija) | Prečišćavanje OMV transakcija (duplikati i odjeci računa) | — |
-| [V-01](#v-01--prosečna-potrošnja-goriva-poslednjih-10-točenja) | Prosečna potrošnja goriva (poslednjih 10 točenja) | **P-02** |
+| [V-01](#v-01--prosečna-potrošnja-goriva-poslednjih-10-točenja) | Prosečna potrošnja goriva (poslednjih 10 točenja) | ~~P-02~~ |
 | [V-02](#v-02--prosečna-potrošnja-goriva-za-ceo-vek-vozila) | Prosečna potrošnja goriva za ceo vek vozila | — |
 | [V-21](#v-21--gorivo-po-šifri-posla) | Gorivo po šifri posla | — |
 | [V-23](#v-23--obračun-goriva-na-putnom-nalogu-vozila) | Obračun goriva na putnom nalogu vozila | — |
@@ -653,7 +653,12 @@ Zaokruživanje radi šablon pri prikazu.
 **NULL i nula [P]:** točenja sa `mileage = 0` se ne mogu koristiti kao **novija**
 granica, ali njihova količina **ulazi u zbir** ako se nalaze u prozoru.
 
-> **[P] Utvrđeni nedostatak — starija granica se ne proverava.**
+> **Ispravljeno 19.09.2026..** Opis niže odnosi se na **ranije** stanje; sada se obe granice
+> traže među točenjima sa `mileage > 0`, uz dva dodatna uslova: novija granica mora biti
+> stvarno novija, a njena kilometraža veća od starije. Kad to nije ispunjeno, na ekranu
+> **nema broja** umesto izmišljenog.
+>
+> **[P] Raniji nedostatak — starija granica se nije proveravala.**
 > Kod proverava `mileage > 0` samo pri traženju **novije** granice (indeks `k`).
 > **Starija granica `[9−k]` se uzima bez ikakve provere.** Ako to točenje ima
 > kilometražu 0, pređeni put postaje `mileage[k] − 0`, tj. **cela kilometraža vozila**,
@@ -662,8 +667,8 @@ granica, ali njihova količina **ulazi u zbir** ako se nalaze u prozoru.
 > Primer: `k = 2`, `mileage[2] = 128.000`, `mileage[7] = 0` → pređeni put = 128.000 km
 > umesto stvarnih ~1.500 km. Umesto ~6 l/100 km dobija se ~0,07 l/100 km.
 >
-> Vodi se kao problem **[P-02](../10-poznati-problemi.md#p-02--prosečna-potrošnja-ne-proverava-stariju-granicu)**,
-> pitanje **Q13**. Kod nije menjan.
+> Vodilo se kao problem **[P-02](../10-poznati-problemi.md#p-02--prosečna-potrošnja-ne-proverava-stariju-granicu)**.
+> **Rešeno 19.09.2026.**, uz testove u `fleet/test_cost_fixes.py`.
 
 ### 7. Tehnička implementacija
 
@@ -743,8 +748,10 @@ samo po sebi znak greške.
 | Manje od 10 točenja → nema rezultata | Potvrđeno | `fuel.py:323-324` | — |
 | Formula količina / put × 100 | Potvrđeno | `fuel.py:346` | — |
 | Prozor je simetričan `[k, 9−k]`, uslov `k ≤ 4` | Potvrđeno | `fuel.py:326-342` | — |
-| **Starija granica se ne proverava na `mileage > 0`** | **Potvrđeno — nedostatak** | `fuel.py:330, 345` | **Q13** |
-| Da li je takav rezultat ikada viđen u radu | **Nepotvrđeno** | — | **Q13** |
+| Obe granice se traže među točenjima sa `mileage > 0` | Potvrđeno | `fuel.py` — `newest_index` / `oldest_index` | Rešeno, **P-02** |
+| Novija granica mora imati **veću** kilometražu | Potvrđeno | `fuel.py` — `total_mileage > 0` | Rešeno, **P-02** |
+| Kad uslovi nisu ispunjeni, vraća se `None` | Potvrđeno | `fleet/test_cost_fixes.py` | Rešeno, **P-02** |
+| Da li je pogrešan rezultat ikada viđen u radu | **Nepotvrđeno** | — | **Q13** |
 | AdBlue ulazi u količinu | **Zaključeno** | `FuelConsumption` nema vrstu proizvoda | Potvrditi da li je to željeno |
 
 ---
@@ -1209,7 +1216,7 @@ Transakcije u periodu (bez AdBlue):
 
 | # | Pitanje |
 |---|---|
-| **Q13** | U obračunu V-01 starija granica prozora se ne proverava na `mileage > 0`. Ako to točenje ima kilometražu 0, prikazana prosečna potrošnja je drastično premala, bez upozorenja. Da li je neko primetio takve vrednosti na detalju vozila? (Kod nije menjan — potrebna je odluka da li se ispravlja.) |
+| **Q13** | Obračun V-01 je ispravljen 19.09.2026.. Ostaje pitanje **koliko je vozila ranije prikazivalo besmisleno nisku potrošnju** — to pokazuje da li se problem javljao u radu. Uz to: da li zbir goriva treba da uključi i najstarije točenje prozora, ili tek ona posle njega? Sada uključuje, kao i ranije i kao `calculate_average_fuel_consumption_ever()`. |
 | **Q14** | Da li AdBlue treba da ulazi u izveštaj „Gorivo po šifri posla“ (V-21) i u prosečnu potrošnju (V-01, V-02)? Trenutno ulazi u sve osim u obračun putnog naloga. |
 | **Q15** | Kod preklapajućih zaduženja istog vozila ista transakcija goriva ulazi u obračun oba naloga. Da li je to prihvatljivo? |
 | **Q16** | Da li su sve stavke goriva po stopi PDV-a od 20%? Preračun neto iznosa iz bruto (kada PDV nije poznat) pretpostavlja upravo tu stopu. |
