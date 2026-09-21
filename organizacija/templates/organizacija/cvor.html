@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load organizacija_extras %}
+{% comment %}
+Kartica jednog cvora. Sve je odmah vidljivo osim istorije i povezivanja, koji su u
+`<details>` jer se rede gledaju. Nema nijednog dugmeta za izmenu — registar se u Fazi 1
+ne odrzava kroz aplikaciju.
+{% endcomment %}
+{% block title %}{{ current.full_code|default:"Čvor" }} — Organizacija{% endblock %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+{% include "organizacija/_styles.html" %}
+
+<div class="org-page">
+  <header class="fleet-list-hero">
+    <div class="org-kicker">IMS · Centralni registar · {{ level_label }}</div>
+    <h1>
+      <span class="org-code org-code-{{ node.level }}">{{ current.full_code|default:"—" }}</span>
+      {{ current.name|default:"Naziv nije poznat" }}
+    </h1>
+    {% if path %}
+      <nav class="org-path" aria-label="Putanja">
+        {% for step in path %}
+          {% if not forloop.last %}
+            <a href="{% url 'organizacija:cvor' step.node_id %}">{{ step.full_code }}</a>
+            <span class="org-path-sep" aria-hidden="true">›</span>
+          {% else %}
+            <strong>{{ step.full_code }}</strong>
+          {% endif %}
+        {% endfor %}
+      </nav>
+    {% endif %}
+    <p><a href="{% url 'organizacija:stablo' %}">← Nazad na stablo</a></p>
+  </header>
+
+  {% if not current %}
+    <div class="alert alert-warning">
+      Ovaj čvor nema nijednu važeću verziju. Postoji kao identitet, ali mu trenutno
+      nijedna verzija ne važi.
+    </div>
+  {% endif %}
+
+  <div class="org-cards">
+    <section class="org-card">
+      <h2>Podaci</h2>
+      <table class="table table-sm">
+        <tbody>
+          <tr><th>Nivo</th><td>{{ node.level }} — {{ level_label }}</td></tr>
+          <tr><th>Puna šifra</th><td><span class="org-code">{{ current.full_code|default:"—" }}</span></td></tr>
+          <tr><th>Segment</th><td>{{ current.segment|default:"—" }}</td></tr>
+          <tr><th>Naziv</th><td>
+            {% if current.name %}{{ current.name }}
+            {% else %}<em class="org-unnamed">naziv nije potvrđen</em>{% endif %}
+          </td></tr>
+          <tr><th>Aktivnost</th><td>
+            {% if current.is_active %}<span class="org-badge org-badge-profit">aktivan</span>
+            {% else %}<span class="org-badge org-badge-inactive">neaktivan</span>{% endif %}
+            {% if review %}
+              <small class="org-note-inline">
+                {% if review.deactivates %}
+                  Ugašeno nalazom: <strong>nema obrta</strong> u periodu
+                  {{ review.window_from|date:"d.m.Y." }} – {{ review.window_to|date:"d.m.Y." }}.
+                {% else %}
+                  Nalaz o obrtu: <strong>{{ review.rows }}</strong>
+                  {{ review.rows|mnozina:"knjiženje,knjiženja,knjiženja" }} u periodu
+                  {{ review.window_from|date:"d.m.Y." }} – {{ review.window_to|date:"d.m.Y." }}.
+                {% endif %}
+                Aktivnost se određuje po obrtu, ne po oznaci u šifarniku.
+              </small>
+              {% if source_active != None and source_active != current.is_active %}
+                <small class="org-note-inline org-disagree">
+                  <strong>Razilazi se sa izvorom:</strong> izvorni šifarnik ovu šifru drži
+                  {% if source_active %}aktivnom{% else %}neaktivnom{% endif %},
+                  a po obrtu je {% if current.is_active %}aktivna{% else %}neaktivna{% endif %}.
+                  Razlika se ne prećutkuje, ali <strong>izvorni šifarnik se ne menja</strong>.
+                </small>
+              {% endif %}
+            {% endif %}
+          </td></tr>
+          <tr><th>Profitnost</th><td>
+            {% if current.is_profit == True %}<span class="org-badge org-badge-profit">profitni</span>
+            {% elif current.is_profit == False %}<span class="org-badge org-badge-nonprofit">neprofitni</span>
+            {% else %}<span class="org-badge org-badge-unknown">oznaka nepoznata</span>
+              <small class="org-note-inline">prazno nije potvrđeno „neprofitni“</small>{% endif %}
+          </td></tr>
+          <tr><th>Važi od</th><td>{{ current.valid_from|date:"d.m.Y."|default:"—" }}</td></tr>
+          <tr><th>Interni ID</th><td>{{ node.pk }} <small class="org-note-inline">stalan; ne menja se ni kad se promeni šifra</small></td></tr>
+        </tbody>
+      </table>
+      {% if current.note %}<p class="org-note">{{ current.note }}</p>{% endif %}
+    </section>
+
+    {% if usage %}
+      <section class="org-card">
+        <h2>Knjiženja</h2>
+        <table class="table table-sm">
+          <tbody>
+            <tr><th>Redova</th><td>{{ usage.rows }}</td></tr>
+            <tr><th>Duguje</th><td>{{ usage.debit|floatformat:"2g"|default:"—" }}</td></tr>
+            <tr><th>Potražuje</th><td>{{ usage.credit|floatformat:"2g"|default:"—" }}</td></tr>
+          </tbody>
+        </table>
+        <p class="org-note">
+          Broji se po <strong>svim šiframa koje je ovaj posao ikada nosio</strong>
+          ({{ usage.codes|join:", " }}), a ne samo po tekućoj — inače bi promena šifre
+          izgledala kao da je posao nestao.
+        </p>
+      </section>
+    {% endif %}
+  </div>
+
+  {% if children %}
+    <section class="org-card">
+      <h2>Podređeni čvorovi <span class="org-count">{{ children|length }}</span></h2>
+      <ul class="org-jobs org-child-list">
+        {% for child in children %}
+          <li class="{% if not child.is_active %}is-inactive{% endif %}">
+            <a class="org-code" href="{% url 'organizacija:cvor' child.node_id %}">{{ child.full_code }}</a>
+            <span class="org-name">
+              {% if child.name %}{{ child.name }}{% else %}<em class="org-unnamed">naziv nije potvrđen</em>{% endif %}
+            </span>
+            <span class="org-badges">
+              {% if child.is_profit == True %}<span class="org-badge org-badge-profit">profitni</span>
+              {% elif child.is_profit == False %}<span class="org-badge org-badge-nonprofit">neprofitni</span>{% endif %}
+              {% if not child.is_active %}<span class="org-badge org-badge-inactive">neaktivan</span>{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <details class="org-card org-details-card" open>
+    <summary><span class="org-chevron" aria-hidden="true"></span><h2>Istorija</h2>
+      <span class="org-count">{{ history|length }} {{ history|length|mnozina:"verzija,verzije,verzija" }}</span>
+    </summary>
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <thead><tr><th>Važi od</th><th>Do</th><th>Šifra</th><th>Naziv</th><th>Nadređeni</th><th>Promena</th></tr></thead>
+        <tbody>
+          {% for row in history %}
+            <tr class="{% if row.is_current %}is-current{% endif %}">
+              <td>{{ row.version.valid_from|date:"d.m.Y." }}</td>
+              <td>{% if row.version.valid_to %}{{ row.version.valid_to|date:"d.m.Y." }}{% else %}<strong>i dalje važi</strong>{% endif %}</td>
+              <td><span class="org-code">{{ row.version.full_code }}</span></td>
+              <td>{{ row.version.name|default:"—" }}</td>
+              <td>{{ row.parent_code|default:"—" }}</td>
+              <td>{{ row.changes|join:", " }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="org-note">
+      Objavljena verzija se ne prepravlja — zatvara se danom promene i pravi se nova.
+      Zato promena naziva ili šifre <strong>ostaje isti posao</strong>, sa istim internim ID-em.
+    </p>
+  </details>
+
+  <details class="org-card org-details-card">
+    <summary><span class="org-chevron" aria-hidden="true"></span><h2>Povezivanja</h2>
+      <span class="org-count">{{ mappings|length }} + {{ legacy_links|length }}</span>
+    </summary>
+
+    <h3>Spoljne šifre</h3>
+    {% if mappings %}
+      <table class="table table-sm">
+        <thead><tr><th>Izvor</th><th>Ključ</th><th>Sirova vrednost</th><th>Važi od</th></tr></thead>
+        <tbody>
+          {% for mapping in mappings %}
+            <tr>
+              <td>{{ mapping.source }}</td>
+              <td><span class="org-code">{{ mapping.source_key }}</span></td>
+              <td><code>{{ mapping.raw_value }}</code></td>
+              <td>{{ mapping.valid_from|date:"d.m.Y." }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}<p class="org-note">Nema veze sa spoljnom šifrom.</p>{% endif %}
+
+    <h3>Stari modeli</h3>
+    {% if legacy_links %}
+      <table class="table table-sm">
+        <thead><tr><th>Model</th><th>Primarni ključ</th></tr></thead>
+        <tbody>
+          {% for link in legacy_links %}
+            <tr><td><code>{{ link.legacy_label }}</code></td><td>#{{ link.legacy_id }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="org-note">
+        Veza ide po <strong>primarnom ključu</strong>, ne po šifri — šifra se može promeniti,
+        primarni ključ ne. Stari zapisi ostaju netaknuti i i dalje su merodavni.
+      </p>
+    {% else %}<p class="org-note">Nema veze sa starim modelima.</p>{% endif %}
+  </details>
+</div>
+{% endblock %}

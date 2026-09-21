@@ -1,0 +1,32 @@
+{% extends "finansije/base.html" %}
+{% load finance %}
+{% block title %}{{ bank.name }} · Banke{% endblock %}
+{% block hero_title %}{{ bank.name }}{% endblock %}
+{% block hero_description %}Banka · šifra partnera {{ bank.code }} · grupa 11{% endblock %}
+{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:bank_list' %}?{{ period_params }}">Sve banke</a>{% endblock %}
+{% block finance_content %}
+<nav class="finance-job-nav mb-3" aria-label="Podaci banke">
+  {% for item in tabs %}<a class="nav-link {% if item.code == tab %}active{% endif %}" {% if item.code == tab %}aria-current="page"{% endif %} href="?tab={{ item.code }}&amp;{{ period_params }}">{{ item.label }}</a>{% endfor %}
+</nav>
+{% if tab == 'basic' %}
+  <div class="card"><div class="card-body"><h2 class="finance-job-heading">Osnovni podaci</h2>
+  <div class="table-responsive"><table class="table table-striped table-sm"><tbody>{% for label, value in bank.fields %}<tr><th style="width:35%">{{ label }}</th><td>{{ value|default:"—" }}</td></tr>{% endfor %}</tbody></table></div>
+  <p class="text-muted">Podaci se preuzimaju iz šifarnika partnera. Račun naveden uz partnera nije potvrda broja IMS računa kod te banke.</p>
+  </div></div>
+{% elif tab == 'contacts' %}
+  <div class="card"><div class="card-body">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="finance-job-heading mb-0">Kontakti po vrsti posla</h2>{% if can_contact_edit %}<a class="btn btn-primary" href="{% url 'finansije:bank_contact_edit' bank.code %}">Dodaj kontakt</a>{% endif %}</div>
+  <div class="table-responsive"><table class="table table-striped">
+  <thead><tr><th>Vrsta posla</th><th>Osoba / funkcija</th><th>Telefon</th><th>Email osobe</th><th>Zajednički emailovi</th><th>Napomena</th><th></th></tr></thead>
+  <tbody>{% for item in contacts %}<tr><td>{{ item.segment }}</td><td>{{ item.name|default:"—" }}<small class="d-block text-muted">{{ item.position }}</small></td><td>{{ item.phone|default:"—" }}</td><td>{{ item.email|default:"—" }}</td><td>{{ item.shared_emails|linebreaksbr }}</td><td>{{ item.note|linebreaksbr }}</td><td class="text-nowrap">{% if can_contact_edit %}<a class="btn btn-sm btn-outline-primary" href="{% url 'finansije:bank_contact_edit' bank.code item.pk %}">Izmeni</a>{% endif %} {% if can_contact_delete %}<a class="btn btn-sm btn-outline-danger" href="{% url 'finansije:bank_contact_delete' bank.code item.pk %}">Obriši</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="7">Nema unetih kontakata. Za isti segment možete dodati više osoba, kao i red samo sa zajedničkim emailovima.</td></tr>{% endfor %}</tbody>
+  </table></div></div></div>
+{% elif tab == 'bills' %}
+  {% include "finansije/banks/_bills.html" %}
+{% else %}
+  {% include "finansije/banks/_period.html" %}
+  {% if tab == 'guarantees' %}<p class="finance-accounting-note">Prikaz depozita za garancije prema kontima 23 i 24. Ovo nisu nominalni iznosi izdatih garancija. Primljene garancije vode se i na kontima 88610/89610, izvan ovog obuhvata; u izvoru nemaju banku i ne mogu se automatski pripisati ovom partneru.</p>{% endif %}
+  {% if tab == 'deposits' %}<p class="finance-accounting-note">Knjigovodstvena evidencija kratkoročnih oročenja prema kontima 23 i 24. Kamata i datum isteka ugovora ne izvode se iz salda. Dugoročni depoziti na kontima 03/04 nisu obuhvaćeni ovim pregledom.</p>{% endif %}
+  {% if unresolved_count %}<div class="alert alert-warning">Postoje konta bez potvrđene banke ({{ unresolved_count }}). Pregled ove banke obuhvata samo povezane stavke. {% if can_map %}<a href="{% url 'finansije:bank_accounts' %}">Proveri veze</a>.{% endif %}</div>{% endif %}
+  {% if valid and not period_missing %}{% include "finansije/banks/_accounts_report.html" %}{% endif %}
+{% endif %}
+{% endblock %}

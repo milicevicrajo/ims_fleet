@@ -562,6 +562,23 @@ class TreeViewTests(ImportTestCase):
         self.assertIn("Otvori sve", content)
         self.assertIn("Zatvori sve", content)
 
+    def test_open_all_button_sits_above_the_tree(self):
+        """Dugme mora biti u zaglavlju, odmah vidljivo, a ne ispod stabla."""
+        self._grant()
+        self.client.force_login(self.user)
+        content = self.client.get(self.url).content.decode()
+        self.assertLess(content.index("data-org-open"), content.index('<div class="org-tree"'))
+        self.assertLess(content.index("data-org-close"), content.index('<div class="org-tree"'))
+
+    def test_open_and_close_buttons_appear_once_each(self):
+        self._grant()
+        self.client.force_login(self.user)
+        content = self.client.get(self.url).content.decode()
+        # Broji se atribut na dugmetu (`data-org-open>`), ne i selektor u skripti
+        # (`[data-org-open]`), koji se takodje javlja u izlazu.
+        self.assertEqual(content.count("data-org-open>"), 1)
+        self.assertEqual(content.count("data-org-close>"), 1)
+
     def test_science_codes_are_shown_outside_the_tree(self):
         self._grant()
         self.client.force_login(self.user)
@@ -579,9 +596,9 @@ class TreeViewTests(ImportTestCase):
         self._grant()
         self.client.force_login(self.user)
         content = self.client.get(self.url, {"q": "431112"}).content.decode()
-        # Trazi se bas red posla, jer se sifra javlja i u primeru u polju za pretragu.
-        self.assertIn('org-code-3">431112<', content)
-        self.assertNotIn('org-code-3">430111<', content)
+        # Trazi se bas veza posla, jer se sifra javlja i u primeru u polju za pretragu.
+        self.assertIn(">431112</a>", content)
+        self.assertNotIn(">430111</a>", content)
 
     def test_view_switches_the_current_app(self):
         self._grant()
@@ -661,3 +678,450 @@ class PluralTests(TestCase):
 
         self.assertEqual(mnozina(None, "a,b,c"), "")
         self.assertEqual(mnozina(3, ""), "")
+
+
+class NodeDetailServiceTests(ImportTestCase):
+    def setUp(self):
+        super().setUp()
+        run_import(company=1, valid_from=date(2026, 1, 1))
+        self.job = OrgNodeVersion.objects.get(full_code="430111", valid_to__isnull=True).node
+
+    def test_path_goes_from_center_to_job(self):
+        from organizacija.services.detail import node_detail
+
+        data = node_detail(self.job.pk)
+        self.assertEqual([step.full_code for step in data["path"]], ["43", "430", "430111"])
+
+    def test_center_lists_its_units_as_children(self):
+        from organizacija.services.detail import node_detail
+
+        center = OrgNodeVersion.objects.get(full_code="43", valid_to__isnull=True).node
+        data = node_detail(center.pk)
+        self.assertEqual([child.full_code for child in data["children"]], ["430", "431"])
+
+    def test_missing_node_returns_none(self):
+        from organizacija.services.detail import node_detail
+
+        self.assertIsNone(node_detail(999999))
+
+    def test_history_names_what_changed(self):
+        from organizacija.services.detail import node_detail
+
+        job = FinanceJob.objects.get(code="430111")
+        job.name = "Novi naziv"
+        job.save()
+        run_import(company=1, valid_from=date(2026, 6, 1))
+
+        data = node_detail(self.job.pk)
+        self.assertEqual(len(data["history"]), 2)
+        self.assertEqual(data["history"][0]["changes"], ["prvi upis"])
+        self.assertEqual(data["history"][1]["changes"], ["naziv"])
+        self.assertTrue(data["history"][1]["is_current"])
+        self.assertFalse(data["history"][0]["is_current"])
+
+    def test_history_shows_the_parent_code_of_its_own_time(self):
+        from organizacija.services.detail import node_detail
+
+        data = node_detail(self.job.pk)
+        self.assertEqual(data["history"][0]["parent_code"], "430")
+
+    def test_links_to_old_models_are_listed(self):
+        from organizacija.services.detail import node_detail
+
+        data = node_detail(self.job.pk)
+        labels = {link.legacy_label for link in data["legacy_links"]}
+        self.assertIn(LegacyOrgLink.LEGACY_FINANCE_JOB, labels)
+        sources = {mapping.source for mapping in data["mappings"]}
+        self.assertIn(ExternalOrgMapping.SOURCE_FINANCE_JOB, sources)
+
+    def test_ledger_usage_counts_every_code_the_job_ever_had(self):
+        from organizacija.services.detail import ledger_usage, node_detail
+
+        usage = ledger_usage(node_detail(self.job.pk))
+        self.assertEqual(usage["rows"], 1)
+        self.assertEqual(usage["codes"], ["430111"])
+
+    def test_ledger_usage_is_not_offered_for_a_center(self):
+        """Knjizenja se vezuju za sifru posla, pa za centar nema sta da se broji."""
+        from organizacija.services.detail import ledger_usage, node_detail
+
+        center = OrgNodeVersion.objects.get(full_code="43", valid_to__isnull=True).node
+        self.assertIsNone(ledger_usage(node_detail(center.pk)))
+
+
+class NodeDetailViewTests(ImportTestCase):
+    def setUp(self):
+        super().setUp()
+        run_import(company=1)
+        self.job = OrgNodeVersion.objects.get(full_code="430111", valid_to__isnull=True).node
+        self.user = get_user_model().objects.create_user("detalj", password="t")
+        self.user.is_superuser = False
+        self.user.save()
+        role = Role.objects.create(name="Registar detalj", slug="registar-detalj")
+        for code in ("organizacija:stablo", "organizacija:cvor"):
+            permission, _ = PermissionCode.objects.get_or_create(code=code)
+            RolePermission.objects.create(role=role, permission=permission)
+        self.user.roles.add(role)
+        self.url = reverse("organizacija:cvor", args=[self.job.pk])
+
+    def test_detail_renders_with_path_and_history(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn("430111", content)
+        self.assertIn("Istorija", content)
+        self.assertIn("Povezivanja", content)
+        self.assertIn("i dalje važi", content)
+
+    def test_unknown_node_gives_404_not_500(self):
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(reverse("organizacija:cvor", args=[999999])).status_code, 404)
+
+    def test_without_permission_access_is_denied(self):
+        other = get_user_model().objects.create_user("bez", password="t")
+        other.is_superuser = False
+        other.save()
+        self.client.force_login(other)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+
+    def test_tree_links_to_the_detail(self):
+        self.client.force_login(self.user)
+        content = self.client.get(reverse("organizacija:stablo")).content.decode()
+        self.assertIn(reverse("organizacija:cvor", args=[self.job.pk]), content)
+
+    def test_unit_detail_says_the_name_is_not_confirmed(self):
+        unit = OrgNodeVersion.objects.get(full_code="430", valid_to__isnull=True).node
+        self.client.force_login(self.user)
+        content = self.client.get(reverse("organizacija:cvor", args=[unit.pk])).content.decode()
+        self.assertIn("naziv nije potvrđen", content)
+
+
+class TreeFilterTests(ImportTestCase):
+    """Filteri oznaka: neaktivni, profitni, neprofitni, nepoznato."""
+
+    def setUp(self):
+        super().setUp()
+        run_import(company=1)
+
+    def _codes(self, **kwargs):
+        from organizacija.services.tree import build_tree
+
+        tree = build_tree(1, **kwargs)
+        return {job["code"] for c in tree for u in c["units"] for job in u["jobs"]}
+
+    def test_no_filter_shows_everything(self):
+        self.assertEqual(len(self._codes()), 7)
+
+    def test_only_inactive(self):
+        self.assertEqual(self._codes(status="neaktivni"), {"431112"})
+
+    def test_only_active(self):
+        codes = self._codes(status="aktivni")
+        self.assertNotIn("431112", codes)
+        self.assertEqual(len(codes), 6)
+
+    def test_only_profitable(self):
+        self.assertEqual(self._codes(profit="profitni"), {"430111", "431112"})
+
+    def test_only_nonprofitable(self):
+        codes = self._codes(profit="neprofitni")
+        self.assertIn("430001", codes)
+        self.assertNotIn("430111", codes)
+
+    def test_filters_combine(self):
+        """Profitni i neaktivni istovremeno — presek, ne unija."""
+        self.assertEqual(self._codes(status="neaktivni", profit="profitni"), {"431112"})
+
+    def test_filter_combines_with_search(self):
+        self.assertEqual(self._codes(query="43", profit="profitni"), {"430111", "431112"})
+
+    def test_empty_branches_are_dropped_when_filtering(self):
+        from organizacija.services.tree import build_tree
+
+        tree = build_tree(1, status="neaktivni")
+        self.assertEqual([center["code"] for center in tree], ["43"])
+        self.assertEqual([unit["code"] for unit in tree[0]["units"]], ["431"])
+
+    def test_unknown_filter_value_is_ignored_instead_of_breaking(self):
+        self.assertEqual(len(self._codes(status="bilo-sta", profit="bilo-sta")), 7)
+
+    def test_searching_a_center_name_keeps_its_contents(self):
+        """Pogodak na centru ne sme vratiti prazan centar."""
+        codes = self._codes(query="puteve")
+        self.assertEqual(codes, {"430111", "430001", "431112"})
+
+
+class FilterLinkTests(TestCase):
+    def test_active_filter_link_switches_it_off(self):
+        from organizacija.services.tree import filter_links
+
+        links = {link["label"]: link for link in filter_links(status="neaktivni")}
+        self.assertTrue(links["Prikaži neaktivne"]["active"])
+        self.assertEqual(links["Prikaži neaktivne"]["url"], "?")
+
+    def test_reset_link_clears_everything_but_keeps_the_search(self):
+        from organizacija.services.tree import filter_links
+
+        links = {link["label"]: link for link in filter_links(query="nadzor", status="aktivni")}
+        self.assertEqual(links["Svi"]["url"], "?q=nadzor")
+
+    def test_svi_is_active_when_no_filter_is_set(self):
+        from organizacija.services.tree import filter_links
+
+        links = {link["label"]: link for link in filter_links()}
+        self.assertTrue(links["Svi"]["active"])
+        self.assertFalse(links["Profitni"]["active"])
+
+
+class FilterViewTests(ImportTestCase):
+    def setUp(self):
+        super().setUp()
+        run_import(company=1)
+        self.url = reverse("organizacija:stablo")
+        self.user = get_user_model().objects.create_user("filter", password="t")
+        self.user.is_superuser = False
+        self.user.save()
+        role = Role.objects.create(name="Registar filter", slug="registar-filter")
+        permission, _ = PermissionCode.objects.get_or_create(code="organizacija:stablo")
+        RolePermission.objects.create(role=role, permission=permission)
+        self.user.roles.add(role)
+        self.client.force_login(self.user)
+
+    def test_all_filter_buttons_render(self):
+        content = self.client.get(self.url).content.decode()
+        for label in ("Otvori sve", "Zatvori sve", "Prikaži neaktivne", "Profitni", "Neprofitni"):
+            self.assertIn(label, content)
+
+    def test_inactive_filter_narrows_the_page(self):
+        content = self.client.get(self.url, {"status": "neaktivni"}).content.decode()
+        self.assertIn(">431112</a>", content)
+        self.assertNotIn(">430111</a>", content)
+
+    def test_filtered_page_says_how_much_is_shown(self):
+        content = self.client.get(self.url, {"status": "neaktivni"}).content.decode()
+        self.assertIn("Prikazano <strong>1</strong> od 7", content)
+
+    def test_filtered_branches_open_by_themselves(self):
+        content = self.client.get(self.url, {"profit": "profitni"}).content.decode()
+        self.assertIn('<details class="org-center" open>', content)
+
+    def test_bad_filter_value_does_not_break_the_page(self):
+        response = self.client.get(self.url, {"status": "<script>", "profit": "x"})
+        self.assertEqual(response.status_code, 200)
+
+
+class ActivityMeasureTests(ImportTestCase):
+    """Merenje obrta. Knjizenja iz pripreme su 01.03.2026."""
+
+    def setUp(self):
+        super().setUp()
+        run_import(company=1, valid_from=date(2026, 1, 1))
+
+    def _measure(self, today=date(2026, 6, 1), months=12):
+        from organizacija.services.activity import measure, summarize
+
+        result = measure(1, months, today)
+        return result, summarize(result)
+
+    def test_jobs_with_postings_in_the_window_have_turnover(self):
+        _, summary = self._measure()
+        self.assertEqual(summary["jobs"], 7)
+        # Knjizenja postoje za 430111, 430001, 410001, 209001 i 110002.
+        self.assertEqual(summary["with_turnover"], 5)
+
+    def test_window_that_ends_before_the_postings_finds_no_turnover(self):
+        _, summary = self._measure(today=date(2028, 1, 1))
+        self.assertEqual(summary["with_turnover"], 0)
+        self.assertEqual(summary["without_turnover"], 7)
+
+    def test_only_active_jobs_without_turnover_are_listed_for_deactivation(self):
+        _, summary = self._measure()
+        codes = {item["code"] for item in summary["to_deactivate"]}
+        self.assertNotIn("431112", codes)  # vec neaktivan u izvoru
+        self.assertIn("300001", codes)
+
+    def test_already_inactive_is_kept_separate(self):
+        _, summary = self._measure()
+        codes = {item["code"] for item in summary["already_inactive"]}
+        self.assertEqual(codes, {"431112"})
+
+    def test_source_and_registry_activity_are_reported_separately(self):
+        result, _ = self._measure()
+        row = next(item for item in result["findings"] if item["code"] == "431112")
+        self.assertFalse(row["source_active"])
+        self.assertFalse(row["current_active"])
+
+    def test_zero_amount_posting_is_not_turnover(self):
+        from decimal import Decimal
+
+        from organizacija.services.activity import measure, summarize
+
+        LedgerEntry.objects.filter(job_code="430001").update(
+            debit=Decimal("0.00"), credit=Decimal("0.00")
+        )
+        summary = summarize(measure(1, 12, date(2026, 6, 1)))
+        self.assertIn("430001", {item["code"] for item in summary["to_deactivate"]})
+
+    def test_turnover_counts_every_code_the_same_node_ever_had(self):
+        """Kad jedan cvor promeni sifru, obrt sa stare sifre i dalje pripada njemu."""
+        from organizacija.services.activity import measure
+
+        version = OrgNodeVersion.objects.get(full_code="430111", valid_to__isnull=True)
+        version.valid_to = date(2026, 4, 1)
+        version.save(update_fields=["valid_to"])
+        OrgNodeVersion.objects.create(
+            node=version.node, parent=version.parent, segment="119",
+            full_code="430119", name=version.name, is_active=True,
+            is_profit=version.is_profit, valid_from=date(2026, 4, 1),
+        )
+        result = measure(1, 12, date(2026, 6, 1))
+        row = next(item for item in result["findings"] if item["code"] == "430119")
+        self.assertTrue(row["has_turnover"], "obrt sa stare sifre mora da se racuna")
+        self.assertEqual(row["rows"], 1)
+
+    def test_changing_the_code_in_the_source_creates_a_new_node(self):
+        """Zabelezeno ponasanje, ne zeljeno: uvoz prepoznaje posao po sifri.
+
+        Plan trazi da promena sifre ostane isti posao, ali **samo uz potvrdjenu mapu
+        staro -> novo**, koja jos nije napravljena. Do tada uvoz vidi novu sifru kao nov
+        posao. Ovaj test to drzi vidljivim da ne prodje neprimetno.
+        """
+        job = FinanceJob.objects.get(code="430111")
+        job.code = "430119"
+        job.save()
+        run_import(company=1, valid_from=date(2026, 4, 1))
+
+        codes = set(
+            OrgNodeVersion.objects.filter(valid_to__isnull=True).values_list("full_code", flat=True)
+        )
+        self.assertIn("430119", codes)
+        self.assertIn("430111", codes)
+        stari = OrgNodeVersion.objects.get(full_code="430111", valid_to__isnull=True)
+        novi = OrgNodeVersion.objects.get(full_code="430119", valid_to__isnull=True)
+        self.assertNotEqual(stari.node_id, novi.node_id)
+
+
+class ActivityApplyTests(ImportTestCase):
+    def setUp(self):
+        super().setUp()
+        run_import(company=1, valid_from=date(2026, 1, 1))
+
+    def _apply(self, today=date(2026, 6, 1)):
+        from organizacija.services.activity import apply_reviews
+
+        return apply_reviews(1, 12, today)
+
+    def test_active_job_without_turnover_is_switched_off(self):
+        self._apply()
+        version = OrgNodeVersion.objects.get(full_code="300001", valid_to__isnull=True)
+        self.assertFalse(version.is_active)
+        self.assertIn("nema obrta", version.note)
+
+    def test_job_with_turnover_stays_active(self):
+        self._apply()
+        self.assertTrue(
+            OrgNodeVersion.objects.get(full_code="430111", valid_to__isnull=True).is_active
+        )
+
+    def test_switching_off_closes_the_old_version_instead_of_rewriting_it(self):
+        self._apply()
+        versions = OrgNodeVersion.objects.filter(full_code="300001").order_by("valid_from")
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[0].valid_to, date(2026, 6, 1))
+        self.assertTrue(versions[0].is_active)
+        self.assertFalse(versions[1].is_active)
+
+    def test_same_day_does_not_create_a_zero_length_version(self):
+        self._apply(today=date(2026, 1, 1))
+        self.assertEqual(OrgNodeVersion.objects.filter(full_code="300001").count(), 1)
+
+    def test_a_job_the_source_calls_inactive_is_switched_on_when_it_has_data(self):
+        """Odluka 21.09.2026.: obrt je merodavan u oba smera."""
+        self._ledger("431112", "43")
+        summary = self._apply()
+        self.assertTrue(
+            OrgNodeVersion.objects.get(full_code="431112", valid_to__isnull=True).is_active
+        )
+        self.assertEqual({item["code"] for item in summary["to_activate"]}, {"431112"})
+
+    def test_disagreement_with_the_source_stays_visible(self):
+        self._ledger("431112", "43")
+        summary = self._apply()
+        codes = {item["code"] for item in summary["disagreements"]}
+        self.assertIn("431112", codes)
+
+    def test_reimport_does_not_undo_the_finding(self):
+        """Bez ovoga bi oznaka oscilovala izmedju dva uvoza."""
+        self._apply()
+        run_import(company=1, valid_from=date(2026, 9, 1))
+        version = OrgNodeVersion.objects.get(full_code="300001", valid_to__isnull=True)
+        self.assertFalse(version.is_active)
+
+    def test_running_twice_changes_nothing_the_second_time(self):
+        self._apply()
+        count = OrgNodeVersion.objects.count()
+        second = self._apply(today=date(2026, 7, 1))
+        self.assertEqual(OrgNodeVersion.objects.count(), count)
+        self.assertEqual(second["versions_changed"], 0)
+
+    def test_review_row_records_the_basis(self):
+        from organizacija.models import JobActivityReview
+
+        self._apply()
+        node = OrgNodeVersion.objects.get(full_code="430111", valid_to__isnull=True).node
+        review = JobActivityReview.objects.get(node=node)
+        self.assertTrue(review.has_turnover)
+        self.assertEqual(review.rows, 1)
+        self.assertFalse(review.deactivates)
+        self.assertEqual(review.window_to, date(2026, 6, 1))
+
+    def test_finding_does_not_touch_the_source_codebook(self):
+        before = sorted(FinanceJob.objects.values_list("code", "active"))
+        self._apply()
+        self.assertEqual(sorted(FinanceJob.objects.values_list("code", "active")), before)
+
+
+class ActivityOnDetailTests(ImportTestCase):
+    def setUp(self):
+        super().setUp()
+        run_import(company=1, valid_from=date(2026, 1, 1))
+        from organizacija.services.activity import apply_reviews
+
+        apply_reviews(1, 12, date(2026, 6, 1))
+        self.user = get_user_model().objects.create_user("nalaz", password="t")
+        self.user.is_superuser = False
+        self.user.save()
+        role = Role.objects.create(name="Registar nalaz", slug="registar-nalaz")
+        for code in ("organizacija:stablo", "organizacija:cvor"):
+            permission, _ = PermissionCode.objects.get_or_create(code=code)
+            RolePermission.objects.create(role=role, permission=permission)
+        self.user.roles.add(role)
+        self.client.force_login(self.user)
+
+    def _detail(self, code):
+        node = OrgNodeVersion.objects.get(full_code=code, valid_to__isnull=True).node
+        return self.client.get(reverse("organizacija:cvor", args=[node.pk])).content.decode()
+
+    def test_switched_off_job_says_why(self):
+        content = self._detail("300001")
+        self.assertIn("Ugašeno nalazom", content)
+        self.assertIn("nema obrta", content)
+
+    def test_job_with_turnover_shows_the_count(self):
+        content = self._detail("430111")
+        self.assertIn("Nalaz o obrtu", content)
+
+    def test_disagreement_with_the_source_is_shown_on_the_card(self):
+        """Izvor kaze neaktivna, obrt kaze aktivna — kartica mora da prikaze obe strane."""
+        self._ledger("431112", "43")
+        from organizacija.services.activity import apply_reviews
+
+        apply_reviews(1, 12, date(2026, 6, 1))
+        content = self._detail("431112")
+        self.assertIn("Razilazi se sa izvorom", content)
+        self.assertIn("izvorni šifarnik se ne menja", content)
+
+    def test_no_disagreement_notice_when_both_agree(self):
+        content = self._detail("430111")
+        self.assertNotIn("Razilazi se sa izvorom", content)

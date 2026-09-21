@@ -1,5 +1,5 @@
 <li class="sidebar-item{% if finance_section == section %} selected{% endif %}">
-  <a class="sidebar-link{% if finance_section == section %} active{% endif %}" href="{{ href }}"{% if finance_section == section %} aria-current="page"{% endif %}>
+  <a class="sidebar-link{% if finance_section == section %} active{% endif %}" data-finance-section="{{ section }}" href="{{ href }}"{% if finance_section == section %} aria-current="page"{% endif %}>
     <i class="mdi {{ icon }}" aria-hidden="true"></i><span class="hide-menu">{{ label }}</span>
   </a>
 </li>

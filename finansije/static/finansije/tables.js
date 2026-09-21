@@ -117,6 +117,13 @@
         if (button.closest('[data-job-analysis-tabs]')) {
           var analysis = panel.id === 'jobs-additional' ? 'additional' : 'standard';
           document.getElementById('finance-analysis').value = analysis;
+          document.querySelectorAll('[data-finance-section]').forEach(function (link) {
+            var active = link.dataset.financeSection === (analysis === 'additional' ? 'additional' : 'jobs');
+            link.classList.toggle('active', active);
+            link.closest('li').classList.toggle('selected', active);
+            if (active) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
+          });
           document.querySelectorAll('[data-finance-jobs-export]').forEach(function (link) {
             var url = new URL(link.href);
             url.searchParams.set('analysis', analysis);

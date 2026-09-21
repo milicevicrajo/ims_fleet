@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class FinanceJob(models.Model):
@@ -105,3 +106,60 @@ class NalogZRefreshRun(models.Model):
 
     class Meta:
         ordering = ["-started_at", "-pk"]
+
+
+class BankContact(models.Model):
+    company = models.PositiveIntegerField(default=1)
+    bank_code = models.PositiveIntegerField()
+    segment = models.CharField("Vrsta posla", max_length=120)
+    name = models.CharField("Kontakt osoba", max_length=150, blank=True)
+    position = models.CharField("Funkcija", max_length=150, blank=True)
+    email = models.EmailField("Email osobe", blank=True)
+    phone = models.CharField("Telefon", max_length=100, blank=True)
+    shared_emails = models.TextField("Zajednički emailovi segmenta", blank=True)
+    note = models.TextField("Napomena", blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["segment", "name", "pk"]
+        indexes = [models.Index(fields=["company", "bank_code"], name="fin_bank_contact")]
+
+
+class BankAccountRule(models.Model):
+    SEGMENTS = [
+        ("dinar", "Dinarski račun"), ("foreign", "Devizni račun"),
+        ("deposit", "Oročena sredstva"), ("guarantee", "Depozit za garanciju"),
+        ("other", "Ostalo poslovanje"), ("excluded", "Nije račun banke"),
+    ]
+    company = models.PositiveIntegerField(default=1)
+    account = models.CharField("Konto", max_length=6)
+    bank_code = models.PositiveIntegerField("Banka", null=True, blank=True)
+    segment = models.CharField("Vrsta posla", max_length=12, choices=SEGMENTS)
+    note = models.CharField("Napomena", max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        ordering = ["account"]
+        constraints = [models.UniqueConstraint(fields=["company", "account"], name="fin_bank_account_rule")]
+
+
+class BankBillPlacement(models.Model):
+    """Explicit custody; the NBS registration bank is not proof of delivery."""
+    company = models.PositiveIntegerField(default=1)
+    bank_code = models.PositiveIntegerField()
+    bill = models.ForeignKey("menice.Menica", null=True, blank=True, on_delete=models.PROTECT)
+    incoming_bill = models.ForeignKey("menice.UlaznaMenica", null=True, blank=True, on_delete=models.PROTECT)
+    delivered_on = models.DateField("Datum predaje")
+    returned_on = models.DateField("Datum vraćanja", null=True, blank=True)
+    note = models.TextField("Namena / napomena", blank=True)
+
+    class Meta:
+        ordering = ["-delivered_on", "-pk"]
+        constraints = [
+            models.CheckConstraint(check=(models.Q(bill__isnull=False, incoming_bill__isnull=True) |
+                                          models.Q(bill__isnull=True, incoming_bill__isnull=False)), name="fin_bank_bill_one_source"),
+            models.CheckConstraint(check=models.Q(returned_on__isnull=True) | models.Q(returned_on__gte=models.F("delivered_on")), name="fin_bank_bill_dates"),
+            models.UniqueConstraint(fields=["company", "bill"], condition=models.Q(returned_on__isnull=True, bill__isnull=False), name="fin_bank_bill_held"),
+            models.UniqueConstraint(fields=["company", "incoming_bill"], condition=models.Q(returned_on__isnull=True, incoming_bill__isnull=False), name="fin_bank_incoming_held"),
+        ]

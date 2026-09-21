@@ -1,0 +1,5 @@
+{% load finance %}
+<div class="table-responsive"><table class="table table-sm table-striped">
+  <thead><tr><th>Konto</th><th>Naziv</th><th>Valuta</th><th>Promet RSD</th><th>Saldo RSD</th>{% if can_map %}<th></th>{% endif %}</tr></thead>
+  <tbody>{% for row in rows %}<tr><td>{{ row.account }}</td><td>{{ row.name }}</td><td>{{ row.currency }}</td><td>{{ row.rsd.turnover|amount_badge }}</td><td>{{ row.rsd.balance|amount_badge }}</td>{% if can_map %}<td><a href="{% url 'finansije:bank_accounts' %}?account={{ row.account }}">Veza konta</a></td>{% endif %}</tr>{% endfor %}</tbody>
+</table></div>

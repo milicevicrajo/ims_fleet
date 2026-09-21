@@ -1,0 +1,16 @@
+{% extends "finansije/base.html" %}
+{% block title %}Veze konta i banaka{% endblock %}
+{% block hero_title %}Veze konta i banaka{% endblock %}
+{% block hero_description %}Potvrda banke i vrste posla za knjiženja bez partnera{% endblock %}
+{% block hero_period %}{% endblock %}
+{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:bank_list' %}">Banke</a>{% endblock %}
+{% block finance_content %}
+<div class="card"><div class="card-body">
+  <p>Veza se koristi samo kada knjiženje nema partnera. Partner grupe 11 ima prednost. Predlog banke nije primenjen dok ga ne sačuvate; zajedničko konto 24100 i prelazni računi ne pripisuju se jednoj banci.</p>
+  <form method="post">{% csrf_token %}<div class="text-danger">{{ edit_form.non_field_errors }}</div><div class="row">{% for field in edit_form %}<div class="col-md-6 mb-3"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}</div><button type="submit" class="btn btn-primary">Sačuvaj vezu</button></form>
+</div></div>
+<div class="card"><div class="card-body"><div class="table-responsive"><table class="table table-striped finance-datatable">
+<thead><tr><th>Konto</th><th>Naziv u knjiženjima</th><th>Banka</th><th>Vrsta posla</th><th></th></tr></thead>
+<tbody>{% for row in catalog %}<tr><td>{{ row.code }}</td><td>{{ row.name }}</td><td>{{ row.bank }}</td><td>{{ row.rule.get_segment_display|default:"Prema nazivu konta" }}</td><td><a href="?account={{ row.code }}">Uredi vezu</a></td></tr>{% endfor %}</tbody>
+</table></div></div></div>
+{% endblock %}

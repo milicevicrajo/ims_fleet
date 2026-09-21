@@ -103,6 +103,30 @@ class AdditionalOverviewTests(TestCase):
         self.assertEqual(records[2][11:11+len(EXTRA_LABELS)],EXTRA_LABELS)
         self.assertEqual(records[3][11+EXTRA_KEYS.index('shared_cost_person')],-5)
 
+    def test_additional_excel_has_full_native_table_and_percentage_point_format(self):
+        response=self.client.get(reverse('finansije:export'),self.params)
+        sheet=load_workbook(BytesIO(response.content)).active
+        table=sheet.tables['DodatneAnalize']
+        self.assertEqual(table.ref,f'A3:Z{sheet.max_row}')
+        self.assertEqual(table.autoFilter.ref,table.ref)
+        self.assertEqual(len(table.tableColumns),26)
+        self.assertEqual(sheet['L4'].value,60)
+        self.assertEqual(sheet['L4'].data_type,'n')
+        self.assertIn('"%"',sheet['L4'].number_format)
+        self.assertEqual(sheet.freeze_panes,'D4')
+
+    def test_sidebar_links_directly_to_additional_and_marks_active_section(self):
+        from types import SimpleNamespace
+        from finansije.templatetags.finance import finance_sidebar_section
+        request=SimpleNamespace(resolver_match=SimpleNamespace(view_name='finansije:report'),GET=self.params)
+        self.assertEqual(finance_sidebar_section(request),'additional')
+        request.GET=dict(self.params,analysis='standard')
+        self.assertEqual(finance_sidebar_section(request),'jobs')
+        response=self.client.get(reverse('finansije:report'),self.params)
+        self.assertContains(response,'data-finance-section="additional"')
+        self.assertContains(response,'?group=job&amp;analysis=additional')
+        self.assertContains(response,'Izvezi u Excel',count=2)
+
     def test_restricted_finance_role_cannot_read_people_and_invalid_center_reads_nothing(self):
         user=get_user_model().objects.create_user('additional-limited',allowed_center_codes='41')
         role=Role.objects.create(name='Additional test',slug='additional-test')

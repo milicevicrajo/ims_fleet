@@ -8,8 +8,12 @@ register = template.Library()
 @register.simple_tag
 def finance_sidebar_section(request):
     view = getattr(getattr(request, "resolver_match", None), "view_name", "")
+    if view.startswith("finansije:bank_"):
+        return "banks"
     if view == "finansije:report":
         group = request.GET.get("group", "center")
+        if group == 'job' and request.GET.get('analysis') == 'additional':
+            return 'additional'
         if group == "month":
             return "month"
         if group == "job" or request.GET.get("job"):

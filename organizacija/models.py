@@ -256,3 +256,43 @@ class UnresolvedOrgCode(models.Model):
 
     def __str__(self):
         return f"{self.code} ({self.family})"
+
+
+class JobActivityReview(models.Model):
+    """Lokalno utvrdjena neaktivnost posla po izostanku obrta u posmatranom prozoru.
+
+    **Zasto zaseban model, a ne prosto `is_active = False`:** zastavica aktivnosti dolazi
+    iz poslovnog sistema kroz `FinanceJob.active`. Kad bi se ona prepisala, sledeci uvoz
+    bi je vratio i napravio novu verziju bez stvarne promene — oznaka bi oscilovala, a
+    istorija bi se punila lazima. Ovde se **odvojeno** cuva sta je izmereno i kada, a
+    uvoz to postuje: posao je aktivan samo ako ga i izvor drzi aktivnim **i** ako ima obrt.
+
+    Pravilo je jednosmerno: nalaz moze samo da **ugasi** posao, nikad da ga upali. Ako
+    izvor kaze da je posao neaktivan, on takav i ostaje, bez obzira na obrt.
+    """
+
+    node = models.OneToOneField(
+        OrgNode, on_delete=models.CASCADE, related_name="activity_review"
+    )
+    window_from = models.DateField(verbose_name="Prozor od")
+    window_to = models.DateField(verbose_name="Prozor do")
+    has_turnover = models.BooleanField(verbose_name="Ima obrt u prozoru")
+    rows = models.IntegerField(default=0, verbose_name="Knjizenja u prozoru")
+    debit = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    credit = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    decided_at = models.DateTimeField(auto_now=True)
+    note = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        verbose_name = "Nalaz o obrtu"
+        verbose_name_plural = "Nalazi o obrtu"
+        ordering = ["node_id"]
+
+    def __str__(self):
+        stanje = "ima obrt" if self.has_turnover else "bez obrta"
+        return f"cvor {self.node_id}: {stanje} ({self.window_from} – {self.window_to})"
+
+    @property
+    def deactivates(self):
+        """Nalaz gasi posao samo kad obrta nema."""
+        return not self.has_turnover

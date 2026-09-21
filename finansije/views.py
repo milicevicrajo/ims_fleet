@@ -32,6 +32,7 @@ from .services import job_tables
 from .services.links import job_detail_url
 from .services.job_overview import LABELS, METRICS, enrich_jobs, table_data
 from .services.job_additional import EXTRA_KEYS, EXTRA_LABELS, enrich_additional, additional_table_data
+from .services.excel import prepare_job_sheet, job_excel_row, finish_job_table
 
 
 logger = logging.getLogger(__name__)
@@ -334,7 +335,9 @@ def export(request):
                                           data=job_report_parameters(request.GET) if is_jobs else None)
     if not context["valid"]:
         return HttpResponse("Neispravni filteri. Ispravite ih na stranici izveštaja.", status=400, content_type="text/plain; charset=utf-8")
-    book = Workbook(write_only=True)
+    book = Workbook(write_only=not is_jobs)
+    if is_jobs:
+        book.remove(book.active)
     sheet = book.create_sheet("Knjiženja" if is_ledger else "Izveštaj")
     sheet.freeze_panes = "A4"
     sheet.append(safe_excel_row(sheet, ["Datum knjiženja", str(context["form"].cleaned_data["date_from"]), str(context["form"].cleaned_data["date_to"]), "Iznosi RSD; analitika bez zatvaranja ZAT i prenosa 59900/69900; sva knjiženja uključuju i te stavke; učešća u filtriranom dostupnom prikazu."]))
@@ -364,11 +367,25 @@ def export(request):
         _, rows = grouped_report(entries, jobs, context["form"].cleaned_data)
         headers = ["Šifra / period", "Naziv", "Centar", "Prihodi RSD", "Rashodi RSD", "Rezultat RSD", "Učešće u prihodima %", "Učešće u rashodima %", "Broj knjiženja"]
         records = ([row["code"], row["label"], row.get("center", ""), row["revenue"], row["expense"], row["result"], row["revenue_share"], row["expense_share"], row["count"]] for row in rows)
-    sheet.append(safe_excel_row(sheet, headers))
+    if is_jobs:
+        prepare_job_sheet(sheet, headers)
+        sheet.title = 'Dodatne analize' if request.GET.get('analysis') == 'additional' else 'Šifre posla'
+        sheet.append(job_excel_row(sheet, headers, headers, heading=True))
+    else:
+        sheet.append(safe_excel_row(sheet, headers))
+    row_count = 0
     for values in records:
-        sheet.append(safe_excel_row(sheet, values))
+        sheet.append(job_excel_row(sheet, values, headers) if is_jobs else safe_excel_row(sheet, values))
+        row_count += 1
+    if is_jobs:
+        if not row_count:
+            # Excel tables retain one empty input row when no records match.
+            sheet.append(job_excel_row(sheet, [None] * len(headers), headers))
+            row_count = 1
+        finish_job_table(sheet, headers, row_count, additional=request.GET.get('analysis') == 'additional')
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = 'attachment; filename="finansije.xlsx"'
+    filename = ('finansije_dodatne_analize.xlsx' if request.GET.get('analysis') == 'additional' else 'finansije_sifre_posla.xlsx') if is_jobs else 'finansije.xlsx'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     book.save(response)
     return response
 

@@ -25,7 +25,10 @@
   </nav>
 </div><div class="tab-content finance-job-panels">
 <section id="jobs-results" class="tab-pane{% if not additional_active %} active{% endif %}" role="tabpanel" aria-labelledby="jobs-results-tab" tabindex="0"><div class="card-body">
-  <h2 class="finance-job-heading">Pregled svih šifara posla</h2>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="finance-job-heading mb-0">Pregled svih šifara posla</h2>
+    {% if can_export %}<a class="btn btn-outline-success" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}&amp;analysis=standard"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Izvezi u Excel</a>{% endif %}
+  </div>
   <p class="text-muted small">Iznosi u RSD. Rashodi, zajednički troškovi i odliv prikazani su sa znakom minus. Crtica znači da podatak nije dostupan; zvezdica označava nepotpun obračun, sa objašnjenjem pri prelasku mišem. Prikazane su i šifre bez prometa.</p>
   {% include "finansije/_table_error.html" %}
   <div class="table-responsive"><table id="FinanceJobsTable" class="table table-hover align-middle finance-datatable" data-lazy-tab="true" data-page-length="100" data-ajax-source="{{ table_source }}" style="width:100%">
@@ -38,7 +41,10 @@
   <p class="text-muted small mb-0">Rezultat bez ZT = prihodi − rashodi; rezultat posle ZT = prihodi − rashodi − zajednički troškovi. Neto gotovina = priliv − odliv. Novčani tokovi koriste obračun 52nt. Za period kroz više godina obračuni se rade po godinama i sabiraju. Dugme sa šifrom posla otvara detalj sa fakturama i ostalim evidencijama za poslednji mesec perioda, odnosno celu godinu kada je izabrana cela godina.</p>
 </div></section>
 <section id="jobs-additional" class="tab-pane{% if additional_active %} active{% endif %}" role="tabpanel" aria-labelledby="jobs-additional-tab" tabindex="0"><div class="card-body">
-  <h2 class="finance-job-heading">Dodatne analize po šifri posla</h2>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="finance-job-heading mb-0">Dodatne analize po šifri posla</h2>
+    {% if can_export %}<a class="btn btn-outline-success" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}&amp;analysis=additional"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Izvezi u Excel</a>{% endif %}
+  </div>
   <p class="text-muted small">Isti finansijski rezultati, relativni pokazatelji i iznosi po čoveku za izabrani period. Iznosi su u RSD; rashodi, ZT i odliv imaju znak minus. Crtica označava nedostajuću ili neprimenljivu osnovicu, a * nepotpun obračun.</p>
   {% include 'finansije/_table_error.html' %}
   <div class="table-responsive"><table id="FinanceAdditionalTable" class="table table-hover align-middle finance-datatable" data-lazy-tab="true" data-page-length="100" data-ajax-source="{{ additional_source }}" style="width:100%">

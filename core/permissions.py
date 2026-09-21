@@ -82,7 +82,7 @@ def sync_finance_permissions():
     for code in codes:
         permission, _ = PermissionCode.objects.get_or_create(code=code)
         RolePermission.objects.get_or_create(role=management, permission=permission)
-        if code in ("finansije:dashboard", "finansije:ledger", "finansije:export"):
+        if code in ("finansije:dashboard", "finansije:ledger", "finansije:export", "finansije:bank_list", "finansije:bank_detail"):
             RolePermission.objects.get_or_create(role=finance_role, permission=permission)
     return codes
 

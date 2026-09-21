@@ -107,6 +107,7 @@
     - [15. Validacije i kontrole](#15-validacije-i-kontrole)
     - [16. Poznati izuzeci i granični slučajevi](#16-poznati-izuzeci-i-granični-slučajevi)
     - [17. Šta nije moguće objasniti bez dodatnih podataka](#17-šta-nije-moguće-objasniti-bez-dodatnih-podataka)
+    - [18. Banke](#18-banke)
     - [Gde dalje](#gde-dalje)
 - [3.4. Nabavka](#34-nabavka)
     - [1. Naziv modula](#1-naziv-modula)
@@ -307,6 +308,7 @@
     - [Mapa izvornog koda](#mapa-izvornog-koda)
     - [Gde dalje](#gde-dalje)
     - [Dodatne analize po šifri posla — dopuna 21.09.2026.](#dodatne-analize-po-šifri-posla--dopuna-21092026)
+    - [6.1.21. Banke po računima](#6121-banke-po-računima)
 - [6.2. Flota — obračuni goriva](#62-flota--obračuni-goriva)
     - [Zajednička osnova: šta se uopšte smatra gorivom](#zajednička-osnova-šta-se-uopšte-smatra-gorivom)
     - [V-03 — Neto iznos goriva iz bruto iznosa](#v-03--neto-iznos-goriva-iz-bruto-iznosa)
@@ -2239,6 +2241,14 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |
 
+Bočni meni ima posebnu stavku **Dodatne analize** koja direktno otvara tu
+karticu. Obe kartice šifara posla imaju dugme **Izvezi u Excel**. Izvoz pravi
+nativnu Excel tabelu sa filterima i sortiranjem u zaglavlju, naizmenično
+obojenim redovima, formatiranim brojevima i zamrznutim zaglavljem i prve
+tri kolone. Preuzimaju se sve šifre koje odgovaraju periodu, centru i
+dozvolama, a ne samo trenutno prikazana stranica tabele.
+
+
 #### Osam tabova na kartici posla [P]
 
 | Tab | Sadržaj | Odakle |
@@ -2452,6 +2462,57 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | 6 | Kako se rezultati koriste u knjiženju | **Q3** |
 
 ---
+
+### 18. Banke
+
+Ekran `/finansije/banke/` prikazuje partnere iz `PUTGEO-SERVER.bazaims.dbo.partner`
+za podešenu firmu i `grupa=11`. Osnovni podaci čitaju se neposredno iz izvora,
+sa istim poljima kao u Naplati. Novi podaci ne upisuju se u nasleđeni šifarnik.
+
+Kartice banke idu redom: **Osnovni podaci, Kontakti, Promet po računima, Menice,
+Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
+Može se izabrati drugi period unutar jedne godine od 2025. nadalje. Za svaki račun
+odvojeno se prikazuju promet izabranog perioda i povećanja/smanjenja od početka
+izabrane godine do danas, odnosno do 31. decembra za završene godine.
+
+#### Knjiženja i povezivanje
+
+- Čitaju se aktivni `LedgerEntry` redovi konta **23/24**, iz postojeće finansijske
+  sinhronizacije. Nema dodatnog preuzimanja `nalog_z` ni izvršavanja procedura.
+- Partner grupe 11 određuje banku. Za knjiženje bez partnera primenjuje se potvrđena
+  `BankAccountRule` veza konta i banke. Ne pripisuje se istoimeni broj partnera druge grupe.
+- Na ekranu **Veze konta i banaka** održavaju se banka, vrsta posla i napomena.
+  Predlog prema nazivu nije primenjen dok se ne sačuva. Dvosmislene šifre, npr.
+  AIK 15/16, ne spajaju se automatski. Zbirno konto 24100 i prelazni računi ne smeju
+  imati jednu banku. Izvorni partner uvek ima prednost nad lokalnim pravilom.
+- Nepovezana konta ostaju u posebnoj kontroli sa iznosima. Blagajne i prelazna konta
+  prikazuju se odvojeno; ne ulaze u zbir banke. Lista iznosi u RSD, a detalj dodatno
+  razdvaja izvorne valute. Račun iz partnera nije potvrđeni broj IMS računa.
+- Garancije trenutno prikazuju **depozite za garancije** u zadatom obuhvatu 23/24,
+  ne nominalne vrednosti garancija. Konta 88610/89610 i dugoročni depoziti 03/04 nisu
+  deo ovog obuhvata i ne pripisuju se banci bez potvrđene veze.
+
+#### Kontakti i menice
+
+`BankContact` podržava više osoba po istom segmentu, funkciju, telefon, email osobe,
+više zajedničkih emailova i napomenu. Red može imati samo zajedničke adrese segmenta.
+
+`BankBillPlacement` povezuje postojeću `Menica` ili `UlaznaMenica` sa bankom kojoj
+je predata, datumom predaje, vraćanja i napomenom. Jedna menica ne može imati dve
+otvorene predaje. Banka registracije nije automatski mesto čuvanja/predaje; ta
+informacija prikazuje se zasebno samo kada se poklapa naziv iz izvora.
+
+#### Dozvole i isporuka
+
+`bank_list` i `bank_detail` dodeljuju se ulozi Finansijska analitika, uz postojeće
+ograničenje knjiženja po centrima. Ograničen prikaz jasno kaže da nije stanje cele
+banke. Unos/izmena kontakata, veza i predaja traže svoju rutu i `finansije:view_all`.
+Menice dodatno traže prava postojećih evidencija; predaja traži oba prava čitanja.
+Uloga Uprava dobija nove kodove kroz postojeću sinhronizaciju dozvola.
+
+Nova migracija Finansija 0003 dodaje samo lokalne tabele i ograničenja. Posle primene
+registrovati nove dozvole. Obračun i kontrolni primer su u odeljku 6.1.21;
+regresije su u `finansije/test_banks.py`.
 
 ### Gde dalje
 
@@ -7686,6 +7747,45 @@ i imaju horizontalni skrol. Promena filtera zadržava izabranu karticu;
 Excel prati aktivnu karticu, sa istim numeričkim vrednostima i napomenama
 o nepotpunosti. Testovi: `test_job_additional.py`, `test_job_people.py`,
 uz regresije postojećeg `test_job_overview.py`.
+
+### 6.1.21. Banke po računima
+
+Implementacija: `finansije/services/banks.py`, testovi: `finansije/test_banks.py`.
+Ovo je zaseban pregled konta 23/24. Ne menja obračun 52nt, ZT, zarade ni knjiženja.
+
+**Obuhvat:** podešena firma, aktivni lokalni redovi iz finansijske sinhronizacije,
+jedna knjigovodstvena godina i datum knjiženja `booking_date`. Vrsta `ZAT` se
+isključuje. Svaki red ide tačno jednom u banku, nepovezane stavke ili kontrolu
+blagajni/prelaznih računa. Izvorna veza `(firma, grupa=11, šifra partnera)` ima
+prednost; pravilo konta primenjuje se samo kada nema izvornog partnera.
+
+Za izabrani period `[od, do]`:
+
+- Stanje pre perioda = `Σ(D−C)` za POC i redove od 1. januara pre datuma `od`.
+- Povećanje/prilivi u periodu = `ΣD`, smanjenje/odlivi = `ΣC`, bez POC.
+- Ukupan promet = `ΣD + ΣC`, sa izvornim znacima storna, bez POC i ZAT.
+- Saldo na kraju = `Σ(D−C)` od 1. januara zaključno sa `do`, sa POC.
+- Kontrola: `stanje pre perioda + prilivi − odlivi = saldo na kraju`.
+- Posebne godišnje kolone povećanja/smanjenja čitaju 1. januar do danas za tekuću
+  godinu, a celu godinu za ranije godine. Izbor užeg perioda ih ne skraćuje.
+
+Na kontima tekućih/deviznih računa duguje označava knjiženi priliv, potražuje odliv.
+Na depozitima su to povećanje/smanjenje plasmana. Uključeni su interni prenosi i
+knjigovodstvene korekcije, pa zbir svih konta nije konsolidovani eksterni tok gotovine.
+Nedostatak potvrđenog uvoza godine označava se i glavni finansijski iznosi su crtica.
+
+**Valute:** `DIN` se prikazuje kao `RSD`. Duguje/potražuje su knjigovodstveni RSD;
+`foreign_amount` se raspoređuje po oznaci `d_p` u zasebne kolone izvorne valute.
+Negativno RSD storno sa pozitivnom devizom koriguje i devizni znak. Nedostajući iznos
+ili nepoznat smer označava devizni zbir kao nepotpun; različite valute se ne sabiraju.
+
+**Kontrolni primer:** POC duguje 100; priliv 50 i odliv 20 daju početno 100,
+promet 70 i saldo 130. POC se ne računa kao priliv. Za EUR, priliv 100, odliv 20
+i storno priliva 10 daju devizno stanje 70 EUR, nezavisno od USD računa.
+
+**Ograničenje:** saldo depozita za garanciju nije iznos garancije. Vanbilansna
+konta 88610/89610 i dugoročni depoziti 03/04 ostaju izvan traženog obuhvata 23/24.
+Broj ugovora, nominalni iznos, kamata i rok oročenja ne izmišljaju se iz knjiženja.
 
 ---
 

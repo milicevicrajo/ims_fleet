@@ -190,6 +190,7 @@ class FinancePermissionSetupTests(TestCase):
         finance = Role.objects.get(slug="finansije")
         self.assertSetEqual(set(finance.permissions.values_list("code", flat=True)), {
             "finansije:dashboard", "finansije:ledger", "finansije:export",
+            "finansije:bank_list", "finansije:bank_detail",
         })
         self.assertTrue(Role.objects.get(slug="uprava").permissions.filter(code="finansije:view_all").exists())
         self.assertEqual(list(other.permissions.values_list("code", flat=True)), ["other:view"])

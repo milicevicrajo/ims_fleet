@@ -118,6 +118,57 @@ Uvoz se smatra uspešnim tek kad izveštaj pokaže:
 
 Poslednja stavka je najvažnija: to je dokaz da registar opisuje iste podatke.
 
+### 2.6 Nalaz o obrtu — lokalno gašenje neupotrebljenih šifara
+
+Urađeno 21.09.2026. na zahtev naručioca: **šifra bez obrta novca u poslednjih 12 meseci
+proglašava se neaktivnom.**
+
+**Zašto to nije prosto `is_active = False`** [P]: aktivnost dolazi iz poslovnog sistema
+kroz `FinanceJob.active`. Da je zastavica prepisana, sledeći `uvezi_organizaciju` bi je
+vratio i napravio novu verziju bez stvarne promene — oznaka bi **oscilovala između dva
+uvoza**, a istorija bi se punila lažnim redovima. To je tačno ono na šta plan upozorava:
+*„Ne smeju postojati dva nezavisna mesta koja menjaju istu oznaku bez dogovorenog
+prioriteta.”*
+
+Zato postoji model `JobActivityReview`: čuva **šta je izmereno i kada**, a uvoz ga
+poštuje — posao je aktivan samo ako ga i izvor drži aktivnim **i** ako ima obrt.
+
+| Pravilo | |
+|---|---|
+| Mera | knjiženje sa iznosom različitim od nule, po **datumu knjiženja** |
+| Obuhvat | sve šifre koje je čvor ikada nosio, da promena šifre ne izgleda kao prestanak rada |
+| Smer | **jednosmerno** — nalaz može samo da ugasi, nikad da upali |
+| Izvor podataka | `finansije.LedgerEntry`; upisuje se **isključivo** u tabele registra |
+
+**Rezultat nad produkcijom, prozor 21.09.2025 – 21.09.2026** [P]:
+
+| | |
+|---|---|
+| Poslova u stablu | 220 |
+| Sa obrtom | 88 |
+| Bez obrta | 132 |
+| — aktivni po izvoru, **ugašeni nalazom** | **61** |
+| — već neaktivni, nalaz ih potvrđuje | 71 |
+| Aktivnih posle nalaza | **83** (bilo 144) |
+
+> **Provera pouzdanosti [P]:** od 61 ugašenog, **56 nema nijedno knjiženje** otkad
+> Finansije uopšte imaju podatke (01.01.2025). Samo jedna šifra (`606001`) je blizu
+> granice — poslednje knjiženje 04.09.2025, sedamnaest dana pre početka prozora.
+> `430111 Administracija`, `430999 Režija` i `429999 Poslovi režije` imaju **nula
+> knjiženja ikada**.
+
+> **Sukob koji traži objašnjenje [P]:** pet šifara je **neaktivno po izvoru, a ima obrt**
+> u prozoru — `412113`, `413114`, `442902`, `444111`, `707003`. One se **ne pale**, jer
+> je izvor merodavan za gašenje. Ali novac koji se kreće na ugašenoj šifri je nalaz sam
+> po sebi i treba ga razrešiti.
+
+Pokreće se sa `python manage.py oznaci_neaktivne --meseci 12`, uz `--proba` za prikaz bez
+upisa. Ponovno pokretanje ne menja ništa ako se podaci nisu promenili.
+
+**Šta ovo ne radi** [P]: ne dira `FinanceJob`, ne dira knjiženja i ne menja poslovni
+sistem. Gašenje važi **samo u registru**, koji Faza 1 ionako ne koristi ni u jednom
+obračunu.
+
 ---
 
 ## 3. Faza 2 — moduli, jedan po jedan

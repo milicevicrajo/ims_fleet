@@ -53,6 +53,14 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |
 
+Bočni meni ima posebnu stavku **Dodatne analize** koja direktno otvara tu
+karticu. Obe kartice šifara posla imaju dugme **Izvezi u Excel**. Izvoz pravi
+nativnu Excel tabelu sa filterima i sortiranjem u zaglavlju, naizmenično
+obojenim redovima, formatiranim brojevima i zamrznutim zaglavljem i prve
+tri kolone. Preuzimaju se sve šifre koje odgovaraju periodu, centru i
+dozvolama, a ne samo trenutno prikazana stranica tabele.
+
+
 ### Osam tabova na kartici posla [P]
 
 | Tab | Sadržaj | Odakle |
@@ -266,6 +274,57 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | 6 | Kako se rezultati koriste u knjiženju | **Q3** |
 
 ---
+
+## 18. Banke
+
+Ekran `/finansije/banke/` prikazuje partnere iz `PUTGEO-SERVER.bazaims.dbo.partner`
+za podešenu firmu i `grupa=11`. Osnovni podaci čitaju se neposredno iz izvora,
+sa istim poljima kao u Naplati. Novi podaci ne upisuju se u nasleđeni šifarnik.
+
+Kartice banke idu redom: **Osnovni podaci, Kontakti, Promet po računima, Menice,
+Garancije, Oročena sredstva**. Početni period je 1. januar tekuće godine do danas.
+Može se izabrati drugi period unutar jedne godine od 2025. nadalje. Za svaki račun
+odvojeno se prikazuju promet izabranog perioda i povećanja/smanjenja od početka
+izabrane godine do danas, odnosno do 31. decembra za završene godine.
+
+### Knjiženja i povezivanje
+
+- Čitaju se aktivni `LedgerEntry` redovi konta **23/24**, iz postojeće finansijske
+  sinhronizacije. Nema dodatnog preuzimanja `nalog_z` ni izvršavanja procedura.
+- Partner grupe 11 određuje banku. Za knjiženje bez partnera primenjuje se potvrđena
+  `BankAccountRule` veza konta i banke. Ne pripisuje se istoimeni broj partnera druge grupe.
+- Na ekranu **Veze konta i banaka** održavaju se banka, vrsta posla i napomena.
+  Predlog prema nazivu nije primenjen dok se ne sačuva. Dvosmislene šifre, npr.
+  AIK 15/16, ne spajaju se automatski. Zbirno konto 24100 i prelazni računi ne smeju
+  imati jednu banku. Izvorni partner uvek ima prednost nad lokalnim pravilom.
+- Nepovezana konta ostaju u posebnoj kontroli sa iznosima. Blagajne i prelazna konta
+  prikazuju se odvojeno; ne ulaze u zbir banke. Lista iznosi u RSD, a detalj dodatno
+  razdvaja izvorne valute. Račun iz partnera nije potvrđeni broj IMS računa.
+- Garancije trenutno prikazuju **depozite za garancije** u zadatom obuhvatu 23/24,
+  ne nominalne vrednosti garancija. Konta 88610/89610 i dugoročni depoziti 03/04 nisu
+  deo ovog obuhvata i ne pripisuju se banci bez potvrđene veze.
+
+### Kontakti i menice
+
+`BankContact` podržava više osoba po istom segmentu, funkciju, telefon, email osobe,
+više zajedničkih emailova i napomenu. Red može imati samo zajedničke adrese segmenta.
+
+`BankBillPlacement` povezuje postojeću `Menica` ili `UlaznaMenica` sa bankom kojoj
+je predata, datumom predaje, vraćanja i napomenom. Jedna menica ne može imati dve
+otvorene predaje. Banka registracije nije automatski mesto čuvanja/predaje; ta
+informacija prikazuje se zasebno samo kada se poklapa naziv iz izvora.
+
+### Dozvole i isporuka
+
+`bank_list` i `bank_detail` dodeljuju se ulozi Finansijska analitika, uz postojeće
+ograničenje knjiženja po centrima. Ograničen prikaz jasno kaže da nije stanje cele
+banke. Unos/izmena kontakata, veza i predaja traže svoju rutu i `finansije:view_all`.
+Menice dodatno traže prava postojećih evidencija; predaja traži oba prava čitanja.
+Uloga Uprava dobija nove kodove kroz postojeću sinhronizaciju dozvola.
+
+Nova migracija Finansija 0003 dodaje samo lokalne tabele i ograničenja. Posle primene
+registrovati nove dozvole. Obračun i kontrolni primer su u odeljku 6.1.21;
+regresije su u `finansije/test_banks.py`.
 
 ## Gde dalje
 

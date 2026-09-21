@@ -23,11 +23,26 @@ jos ne odrzava kroz aplikaciju.
       <h1>Organizacija</h1>
       <p>Centar → organizaciona jedinica → šifra posla. Pripadnost je upisana vezom, ne izvedena iz šifre.</p>
     </div>
-    <div class="org-hero-metrics">
-      <div><strong>{{ totals.centers }}</strong><small>{{ totals.centers|mnozina:"centar,centra,centara" }}</small></div>
-      <div><strong>{{ totals.units }}</strong><small>{{ totals.units|mnozina:"jedinica,jedinice,jedinica" }}</small></div>
-      <div><strong>{{ totals.jobs }}</strong><small>{{ totals.jobs|mnozina:"posao,posla,poslova" }}</small></div>
-      <div><strong>{{ totals.active_jobs }}</strong><small>aktivnih</small></div>
+    <div class="org-hero-right">
+      <div class="org-hero-metrics">
+        <div><strong>{{ totals.centers }}</strong><small>{{ totals.centers|mnozina:"centar,centra,centara" }}</small></div>
+        <div><strong>{{ totals.units }}</strong><small>{{ totals.units|mnozina:"jedinica,jedinice,jedinica" }}</small></div>
+        <div><strong>{{ totals.jobs }}</strong><small>{{ totals.jobs|mnozina:"posao,posla,poslova" }}</small></div>
+        <div><strong>{{ totals.active_jobs }}</strong><small>aktivnih</small></div>
+      </div>
+      {% if not is_empty %}
+        <div class="org-filters">
+          <button type="button" class="org-filter" data-org-open>
+            <i class="mdi mdi-unfold-more-horizontal"></i> Otvori sve
+          </button>
+          <button type="button" class="org-filter" data-org-close>
+            <i class="mdi mdi-unfold-less-horizontal"></i> Zatvori sve
+          </button>
+          {% for link in filter_links %}
+            <a href="{{ link.url }}" class="org-filter {% if link.active %}is-active{% endif %}">{{ link.label }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
     </div>
   </header>
 
@@ -45,37 +60,37 @@ jos ne odrzava kroz aplikaciju.
       <input type="search" id="org-q" name="q" value="{{ query }}"
              placeholder="Šifra ili naziv — npr. 430111 ili nadzor" autocomplete="off">
       <button class="btn btn-primary" type="submit">Pretraži</button>
-      {% if query %}<a class="btn btn-outline-secondary" href="{% url 'organizacija:stablo' %}">Poništi</a>{% endif %}
+      {% if filtered %}<a class="btn btn-outline-secondary" href="{% url 'organizacija:stablo' %}">Poništi sve</a>{% endif %}
     </form>
-    <div class="org-actions">
-      <button type="button" class="btn btn-outline-primary btn-sm" data-org-open>Otvori sve</button>
-      <button type="button" class="btn btn-outline-secondary btn-sm" data-org-close>Zatvori sve</button>
-    </div>
   </div>
 
-  {% if query %}
+  {% if filtered %}
     <p class="org-note">
-      Prikazane su samo grane koje odgovaraju pretrazi <strong>{{ query }}</strong>.
-      Pogodak je označen, a nadređena grana ostaje vidljiva da se vidi gde pripada.
+      Prikazano <strong>{{ totals.jobs }}</strong> od {{ all_totals.jobs }}
+      {{ all_totals.jobs|mnozina:"posla,posla,poslova" }}
+      {% if query %}· pretraga <strong>{{ query }}</strong>{% endif %}
+      {% if status %}· <strong>{{ status }}</strong>{% endif %}
+      {% if profit %}· <strong>{{ profit }}</strong>{% endif %}
+      · grane bez pogotka su sklonjene.
     </p>
   {% endif %}
 
   <div class="org-tree" id="org-tree">
     {% for center in tree %}
-      <details class="org-center" {% if query %}open{% endif %}>
+      <details class="org-center" {% if filtered %}open{% endif %}>
         <summary>
           <span class="org-chevron" aria-hidden="true"></span>
-          <span class="org-code org-code-1">{{ center.code }}</span>
+          <a class="org-code org-code-1" href="{% url 'organizacija:cvor' center.node_id %}">{{ center.code }}</a>
           <span class="org-name">{{ center.name|default:"Naziv nije poznat" }}</span>
           <span class="org-count">{{ center.unit_count }} {{ center.unit_count|mnozina:"jedinica,jedinice,jedinica" }} · {{ center.job_count }} {{ center.job_count|mnozina:"posao,posla,poslova" }}</span>
         </summary>
 
         <div class="org-children">
           {% for unit in center.units %}
-            <details class="org-unit" {% if query %}open{% endif %}>
+            <details class="org-unit" {% if filtered %}open{% endif %}>
               <summary>
                 <span class="org-chevron" aria-hidden="true"></span>
-                <span class="org-code org-code-2">{{ unit.code }}</span>
+                <a class="org-code org-code-2" href="{% url 'organizacija:cvor' unit.node_id %}">{{ unit.code }}</a>
                 <span class="org-name">
                   {% if unit.name %}{{ unit.name }}{% else %}<em class="org-unnamed">naziv drugog nivoa nije potvrđen</em>{% endif %}
                 </span>
@@ -85,7 +100,7 @@ jos ne odrzava kroz aplikaciju.
               <ul class="org-jobs">
                 {% for job in unit.jobs %}
                   <li class="{% if job.match %}is-match{% endif %}{% if not job.is_active %} is-inactive{% endif %}">
-                    <span class="org-code org-code-3">{{ job.code }}</span>
+                    <a class="org-code org-code-3" href="{% url 'organizacija:cvor' job.node_id %}">{{ job.code }}</a>
                     <span class="org-name">{{ job.name|default:"—" }}</span>
                     <span class="org-badges">
                       {% if job.is_profit == True %}<span class="org-badge org-badge-profit">profitni</span>
@@ -103,7 +118,7 @@ jos ne odrzava kroz aplikaciju.
         </div>
       </details>
     {% empty %}
-      <p class="alert alert-warning">Nijedna grana ne odgovara pretrazi.</p>
+      <p class="alert alert-warning">Nijedna grana ne odgovara izabranom prikazu.</p>
     {% endfor %}
   </div>
 

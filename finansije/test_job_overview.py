@@ -99,6 +99,30 @@ class JobOverviewTests(TestCase):
         self.assertEqual(records[3][3:11], (100, -40, 60, -10, 50, 120, -150, -30))
         self.assertTrue(records[3][-1].endswith("year=2026&month="))
 
+    def test_excel_contains_native_table_filters_numeric_formats_and_frozen_identifiers(self):
+        FinanceJob.objects.filter(code='410001').update(name='=SUM(A1:A2)')
+        response = self.client.get(reverse('finansije:export'), self.params)
+        sheet = load_workbook(BytesIO(response.content)).active
+        table = sheet.tables['SifrePosla']
+        self.assertEqual(table.ref, f'A3:M{sheet.max_row}')
+        self.assertEqual(table.autoFilter.ref, table.ref)
+        self.assertTrue(table.tableStyleInfo.showRowStripes)
+        self.assertEqual([column.name for column in table.tableColumns], [c.value for c in sheet[3]])
+        self.assertEqual(sheet.freeze_panes, 'D4')
+        self.assertEqual(sheet['D4'].data_type, 'n')
+        self.assertIn('#,##0.00', sheet['D4'].number_format)
+        self.assertEqual(sheet['A4'].data_type, 's')
+        self.assertEqual(sheet['B4'].data_type, 's')
+        self.assertFalse(any(c.data_type == 'f' for row in sheet for c in row))
+        self.assertEqual(sheet['D3'].fill.fgColor.rgb, '00235B83')
+
+    def test_empty_excel_still_has_filterable_table_without_invented_zero_values(self):
+        with patch('finansije.views.grouped_report', return_value=({}, [])):
+            response = self.client.get(reverse('finansije:export'), self.params)
+        sheet = load_workbook(BytesIO(response.content)).active
+        self.assertEqual(sheet.tables['SifrePosla'].ref, 'A3:M4')
+        self.assertTrue(all(c.value is None for c in sheet[4]))
+
 
 class JobOverviewCalculationTests(SimpleTestCase):
     def row(self):

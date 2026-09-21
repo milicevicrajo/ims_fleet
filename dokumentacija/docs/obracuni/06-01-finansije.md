@@ -1175,3 +1175,42 @@ i imaju horizontalni skrol. Promena filtera zadržava izabranu karticu;
 Excel prati aktivnu karticu, sa istim numeričkim vrednostima i napomenama
 o nepotpunosti. Testovi: `test_job_additional.py`, `test_job_people.py`,
 uz regresije postojećeg `test_job_overview.py`.
+
+## 6.1.21. Banke po računima
+
+Implementacija: `finansije/services/banks.py`, testovi: `finansije/test_banks.py`.
+Ovo je zaseban pregled konta 23/24. Ne menja obračun 52nt, ZT, zarade ni knjiženja.
+
+**Obuhvat:** podešena firma, aktivni lokalni redovi iz finansijske sinhronizacije,
+jedna knjigovodstvena godina i datum knjiženja `booking_date`. Vrsta `ZAT` se
+isključuje. Svaki red ide tačno jednom u banku, nepovezane stavke ili kontrolu
+blagajni/prelaznih računa. Izvorna veza `(firma, grupa=11, šifra partnera)` ima
+prednost; pravilo konta primenjuje se samo kada nema izvornog partnera.
+
+Za izabrani period `[od, do]`:
+
+- Stanje pre perioda = `Σ(D−C)` za POC i redove od 1. januara pre datuma `od`.
+- Povećanje/prilivi u periodu = `ΣD`, smanjenje/odlivi = `ΣC`, bez POC.
+- Ukupan promet = `ΣD + ΣC`, sa izvornim znacima storna, bez POC i ZAT.
+- Saldo na kraju = `Σ(D−C)` od 1. januara zaključno sa `do`, sa POC.
+- Kontrola: `stanje pre perioda + prilivi − odlivi = saldo na kraju`.
+- Posebne godišnje kolone povećanja/smanjenja čitaju 1. januar do danas za tekuću
+  godinu, a celu godinu za ranije godine. Izbor užeg perioda ih ne skraćuje.
+
+Na kontima tekućih/deviznih računa duguje označava knjiženi priliv, potražuje odliv.
+Na depozitima su to povećanje/smanjenje plasmana. Uključeni su interni prenosi i
+knjigovodstvene korekcije, pa zbir svih konta nije konsolidovani eksterni tok gotovine.
+Nedostatak potvrđenog uvoza godine označava se i glavni finansijski iznosi su crtica.
+
+**Valute:** `DIN` se prikazuje kao `RSD`. Duguje/potražuje su knjigovodstveni RSD;
+`foreign_amount` se raspoređuje po oznaci `d_p` u zasebne kolone izvorne valute.
+Negativno RSD storno sa pozitivnom devizom koriguje i devizni znak. Nedostajući iznos
+ili nepoznat smer označava devizni zbir kao nepotpun; različite valute se ne sabiraju.
+
+**Kontrolni primer:** POC duguje 100; priliv 50 i odliv 20 daju početno 100,
+promet 70 i saldo 130. POC se ne računa kao priliv. Za EUR, priliv 100, odliv 20
+i storno priliva 10 daju devizno stanje 70 EUR, nezavisno od USD računa.
+
+**Ograničenje:** saldo depozita za garanciju nije iznos garancije. Vanbilansna
+konta 88610/89610 i dugoročni depoziti 03/04 ostaju izvan traženog obuhvata 23/24.
+Broj ugovora, nominalni iznos, kamata i rok oročenja ne izmišljaju se iz knjiženja.

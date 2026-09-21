@@ -1,0 +1,12 @@
+<div class="card"><div class="card-body finance-filter">
+  <form method="get" class="finance-period">
+    {% if tab %}<input type="hidden" name="tab" value="{{ tab }}">{% endif %}
+    {% for field in form %}<div class="finance-period-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="btn btn-primary" type="submit">Prikaži</button>
+    <div class="finance-period-errors text-danger">{{ form.non_field_errors }}</div>
+  </form>
+</div></div>
+{% if source_error %}<div class="alert alert-danger">{{ source_error }}</div>{% endif %}
+{% if restricted %}<div class="alert alert-info">Prikazana su knjiženja iz vašeg dozvoljenog obuhvata. Iznosi ne predstavljaju ukupno stanje banke.</div>{% endif %}
+{% if period_missing %}<div class="alert alert-warning">Za izabranu godinu nema potvrđenog potpunog uvoza. Prikazani iznosi mogu biti nepotpuni.</div>{% endif %}
+{% if last_success %}<p class="finance-accounting-note">Poslednji uspešan uvoz: {{ last_success.finished_at|date:"d.m.Y. H:i" }} · poslednji datum knjiženja: {{ last_success.latest_booking_date|date:"d.m.Y." }}.</p>{% endif %}

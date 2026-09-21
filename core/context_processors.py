@@ -45,7 +45,7 @@ def current_app(request):
         "potrazivanja_permissions": {"dashboard": can_view(request.user), "view_all": can_view_all(request.user), "sync_status": can_sync(request.user)},
         "finansije_permissions": {
             code: user_has_role_permission(request.user, f"finansije:{code}")
-            for code in ("dashboard", "ledger", "export", "sync_status", "view_all")
+            for code in ("dashboard", "ledger", "export", "sync_status", "view_all", "bank_list", "bank_detail")
         },
         "hr_permissions": {
             code: user_has_role_permission(request.user, f"hr:{code}")

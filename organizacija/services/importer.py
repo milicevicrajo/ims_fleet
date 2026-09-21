@@ -16,6 +16,7 @@ from django.utils import timezone
 
 from organizacija.models import (
     ExternalOrgMapping,
+    JobActivityReview,
     LegacyOrgLink,
     OrgImportRun,
     OrgNode,
@@ -181,6 +182,12 @@ def _import_jobs(company, classified, centers, valid_from, run):
     units = {}
     jobs = {}
     unresolved = 0
+    # Lokalni nalazi o obrtu. Gde nalaz postoji, **on odlucuje o aktivnosti**, a ne
+    # oznaka iz izvora. Inace bi se dve strane smenjivale iz uvoza u uvoz i istorija bi
+    # se punila verzijama bez stvarne promene.
+    reviewed = dict(
+        JobActivityReview.objects.values_list("node_id", "has_turnover")
+    )
 
     for row, result in classified:
         raw = row.code or ""
@@ -257,16 +264,27 @@ def _import_jobs(company, classified, centers, valid_from, run):
         if created:
             made["nodes"] += 1
             made["jobs_created"] += 1
+        turnover = reviewed.get(job_node.pk)
+        if turnover is None:
+            is_active = bool(row.active)
+            note = "Migracioni snimak; ranija istorija nije poznata."
+        else:
+            is_active = turnover
+            note = (
+                "Aktivno lokalno: ima obrta u posmatranom prozoru."
+                if turnover
+                else "Ugaseno lokalno: nema obrta u posmatranom prozoru."
+            )
         version_made = _ensure_version(
             node=job_node,
             parent=units[unit_code],
             segment=result.job,
             full_code=code,
             name=(row.name or "").strip(),
-            is_active=bool(row.active),
+            is_active=is_active,
             is_profit=_profit_flag(row.profit_type),
             valid_from=valid_from,
-            note="Migracioni snimak; ranija istorija nije poznata.",
+            note=note,
         )
         made["versions" if version_made else "unchanged"] += 1
         _ensure_legacy_link(LegacyOrgLink.LEGACY_FINANCE_JOB, row.pk, job_node)

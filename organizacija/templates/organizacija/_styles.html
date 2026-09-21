@@ -16,6 +16,14 @@ ranije je nepazljivo pisan selektor h3 pokvario razmake na svim karticama detalj
 .org-page .org-search input { flex: 1 1 auto; min-width: 0; padding: 7px 12px;
   border: 1px solid #ced4da; border-radius: 6px; }
 .org-page .org-actions { display: flex; gap: 8px; }
+.org-page .org-hero-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.org-page .org-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-end; }
+.org-page .org-filter { display: inline-flex; align-items: center; gap: 4px;
+  font-family: inherit; font-size: 12px; line-height: 1.5; padding: 3px 11px; border-radius: 12px; cursor: pointer;
+  border: 1px solid #ced4da; background: #fff; color: #4a5468; text-decoration: none; white-space: nowrap; }
+.org-page .org-filter:hover { border-color: #0d6efd; color: #0d6efd; }
+.org-page .org-filter:focus-visible { outline: 2px solid #0d6efd; outline-offset: 2px; }
+.org-page .org-filter.is-active { background: #0d6efd; border-color: #0d6efd; color: #fff; font-weight: 600; }
 .org-page .org-note { font-size: 13px; color: #6c757d; margin: 6px 0 12px; }
 
 .org-page .org-tree { border: 1px solid #e3e6ec; border-radius: 8px; overflow: hidden; background: #fff; }
@@ -70,4 +78,37 @@ ranije je nepazljivo pisan selektor h3 pokvario razmake na svim karticama detalj
   .org-page .org-jobs { padding-left: 16px; }
   .org-page .org-jobs li { flex-wrap: wrap; }
 }
+
+.org-page a.org-code { text-decoration: none; }
+.org-page a.org-code:hover { text-decoration: underline; }
+
+.org-page .org-path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; margin-top: 6px; }
+.org-page .org-path-sep { color: #9aa3b2; }
+
+.org-page .org-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px; margin-top: 16px; }
+.org-page .org-card { background: #fff; border: 1px solid #e3e6ec; border-radius: 8px;
+  padding: 14px 16px; margin-bottom: 14px; }
+.org-page .org-cards .org-card { margin-bottom: 0; }
+.org-page .org-card h2 { font-size: 16px; margin: 0 0 10px; }
+.org-page .org-card h3 { font-size: 14px; margin: 14px 0 6px; }
+.org-page .org-card table { margin-bottom: 0; }
+.org-page .org-card th { width: 34%; font-weight: 600; color: #4a5468; }
+.org-page .org-note-inline { display: block; color: #6c757d; font-size: 12px; }
+.org-page .org-disagree { color: #8a5a12; background: #fff4e5; border: 1px solid #f0d6ad;
+  border-radius: 4px; padding: 4px 8px; margin-top: 4px; }
+
+.org-page .org-details-card { padding: 0; }
+.org-page .org-details-card > summary { padding: 12px 16px; }
+.org-page .org-details-card > summary h2 { margin: 0; flex: 1 1 auto; }
+.org-page .org-details-card > .table-responsive,
+.org-page .org-details-card > h3,
+.org-page .org-details-card > table,
+.org-page .org-details-card > p { padding: 0 16px; }
+.org-page .org-details-card > p:last-child { padding-bottom: 14px; }
+.org-page .org-details-card tr.is-current { background: #f2f8f4; }
+
+.org-page .org-child-list { padding-left: 0; }
+.org-page .org-child-list li { padding-left: 0; }
 </style>
