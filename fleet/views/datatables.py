@@ -526,6 +526,8 @@ def leases_datatable_data(request):
             "contract": f'{escape(lease.contract_number or "")}<small class="text-muted d-block">{escape(lease.job_code or "")}</small>',
             "lease_type": lease_type,
             "current_payment_amount": _money(lease.current_payment_amount),
+            "monthly_amount": _money(lease.monthly_amount) or "—",
+            "total_amount": (_money(lease.total_amount) + (" (iz mesečnog iznosa)" if lease.payment_basis == "monthly" else "")) if lease.total_amount is not None else f"Nije određeno ({_money(lease.current_payment_amount)} RSD)",
             "start_date": _date(lease.start_date),
             "end_date": _date(lease.end_date),
             "note": escape(lease.note or "Nema napomena"),
@@ -542,7 +544,7 @@ def leases_datatable_data(request):
     return _datatable_response(
         request,
         qs,
-        {"0": "vehicle__brand", "1": "partner_name", "2": "contract_number", "3": "lease_type", "4": "current_payment_amount", "5": "start_date", "6": "end_date", "7": "note"},
+        {"0": "vehicle__brand", "1": "partner_name", "2": "contract_number", "3": "lease_type", "6": "start_date", "7": "end_date", "8": "note"},
         row,
         search,
         default_order=("-end_date", "-id"),

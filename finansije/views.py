@@ -31,6 +31,7 @@ from .services.sync import SyncBusy, sync_ledger
 from .services import job_tables
 from .services.links import job_detail_url
 from .services.job_overview import LABELS, METRICS, enrich_jobs, table_data
+from .services.job_additional import EXTRA_KEYS, EXTRA_LABELS, enrich_additional, additional_table_data
 
 
 logger = logging.getLogger(__name__)
@@ -83,6 +84,8 @@ def job_report_parameters(source):
         if key in source:
             data[key] = source[key]
     data.update(group="job", kind="pnl", include_empty="1")
+    if source.get('analysis') == 'additional':
+        data['analysis'] = 'additional'
     return data
 
 
@@ -164,7 +167,10 @@ def report(request):
         if context["valid"]:
             job_report_links(rows, context["form"])
         context.update(totals=totals, rows=rows, group="job", metric_labels=LABELS,
-                       table_source=reverse("finansije:jobs_data") + "?" + context["params"])
+                       additional_labels=LABELS + EXTRA_LABELS,
+                       additional_active=request.GET.get('analysis') == 'additional',
+                       table_source=reverse("finansije:jobs_data") + "?" + context["params"] + '&analysis=standard',
+                       additional_source=reverse("finansije:jobs_data") + "?" + context["params"] + '&analysis=additional')
         return render(request, "finansije/jobs_overview.html", context)
     context, entries, jobs = report_context(request)
     totals, rows = (grouped_report(entries, jobs, context["form"].cleaned_data) if context["valid"] else (summary(entries), []))
@@ -184,7 +190,12 @@ def jobs_data(request):
         return JsonResponse({"error": "Neispravan period ili centar."}, status=400)
     _, rows = grouped_report(entries, jobs, context["form"].cleaned_data)
     job_report_links(rows, context["form"])
-    return JsonResponse(table_data(enrich_job_report(rows, context["form"])))
+    enrich_job_report(rows, context["form"])
+    if request.GET.get('analysis') == 'additional':
+        enrich_additional(rows, context['form'].cleaned_data['date_from'], context['form'].cleaned_data['date_to'],
+                          can_people=user_has_role_permission(request.user, 'employee_list'))
+        return JsonResponse(additional_table_data(rows))
+    return JsonResponse(table_data(rows))
 
 
 @require_GET
@@ -336,9 +347,16 @@ def export(request):
         _, rows = grouped_report(entries, jobs, context["form"].cleaned_data)
         job_report_links(rows, context["form"])
         enrich_job_report(rows, context["form"])
-        headers = ["Šifra posla", "Naziv", "Centar", *LABELS, "Napomena o dostupnosti", "Detalj šifre posla"]
+        labels, keys = LABELS, METRICS
+        if request.GET.get('analysis') == 'additional':
+            enrich_additional(rows, context['form'].cleaned_data['date_from'], context['form'].cleaned_data['date_to'],
+                              can_people=user_has_role_permission(request.user, 'employee_list'))
+            labels, keys = LABELS + EXTRA_LABELS, METRICS + EXTRA_KEYS
+            for row in rows:
+                row['metrics'].update(row['additional'])
+        headers = ["Šifra posla", "Naziv", "Centar", *labels, "Napomena o dostupnosti", "Detalj šifre posla"]
         records = ([row["code"], row["label"], row.get("center", ""),
-                    *[row["metrics"][key]["value"] for key in METRICS],
+                    *[row["metrics"][key]["value"] for key in keys],
                     " ".join(dict.fromkeys(metric["note"] for metric in row["metrics"].values()
                                            if metric["value"] is None or not metric["complete"])),
                     request.build_absolute_uri(row["card_url"]) if row.get("card_url") else ""] for row in rows)

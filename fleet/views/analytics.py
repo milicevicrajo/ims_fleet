@@ -10,22 +10,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from core.mixins import role_permission_required
-from fleet.forms.economics import (FleetAnalysisForm, AnalysisProfileForm, ChargePeriodForm,
-    DowntimeForm, OrderJobForm, AssessmentForm, ScenarioFormSet)
-from fleet.models import (VehicleAnalysisProfile, LeaseChargePeriod, VehicleDowntime,
-    VehicleTravelOrder, VehicleEconomicAssessment)
+from fleet.forms.economics import (FleetAnalysisForm, AnalysisProfileForm, AssessmentForm, ScenarioFormSet)
+from fleet.models import VehicleAnalysisProfile, VehicleEconomicAssessment
 from fleet.services.economics import (VERSION, METHODOLOGY, visible_vehicles, period_analysis,
     fleet_summary, compare_scenarios)
-
-
-def _lookup_id(value):
-    """Kljuc iz adrese; nebrojcana vrednost daje 404 umesto greske 500."""
-    if value in (None, ''):
-        return None
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        raise Http404('Neispravan identifikator u adresi.')
 
 
 def default_period():
@@ -70,7 +58,7 @@ def render_fleet_analysis(request, center_code=None):
         rows = period_analysis(vehicles, start, end)
         purpose = data.get('purpose')
         if purpose:
-            rows = [r for r in rows if (r['profile'].purpose if r['profile'] else 'unknown') == purpose]
+            rows = [r for r in rows if r['purpose_code'] == purpose]
         if data.get('basis'):
             rows = [r for r in rows if data['basis'] in r['basis_codes']]
     groups = defaultdict(list)
@@ -96,40 +84,29 @@ def vehicle_analysis_settings(request, pk):
     vehicle = get_object_or_404(visible_vehicles(request.user, include_retired=True), pk=pk)
     action = request.POST.get('action') if request.method == 'POST' else None
     profile = VehicleAnalysisProfile(vehicle=vehicle)
-    downtime_id = _lookup_id(request.POST.get('downtime_id') if action == 'downtime' else request.GET.get('downtime'))
-    downtime = get_object_or_404(VehicleDowntime, pk=downtime_id, vehicle=vehicle) if downtime_id else VehicleDowntime(vehicle=vehicle)
-    charge_id = _lookup_id(request.POST.get('charge_id') if action == 'charge' else request.GET.get('charge'))
-    charge = get_object_or_404(LeaseChargePeriod, pk=charge_id, lease__vehicle=vehicle) if charge_id else LeaseChargePeriod()
-    order_id = _lookup_id(request.POST.get('order_id') if action == 'job' else request.GET.get('order'))
-    order = get_object_or_404(VehicleTravelOrder, pk=order_id, vehicle=vehicle) if order_id else None
-    forms = {
-        'profile': AnalysisProfileForm(request.POST if action == 'profile' else None, instance=profile, prefix='profile'),
-        'charge': ChargePeriodForm(request.POST if action == 'charge' else None, instance=charge, vehicle=vehicle, prefix='charge'),
-        'downtime': DowntimeForm(request.POST if action == 'downtime' else None, instance=downtime, vehicle=vehicle, prefix='downtime'),
-    }
-    if order:
-        forms['job'] = OrderJobForm(request.POST if action == 'job' else None, instance=order, user=request.user, prefix='job')
-    if action in forms and forms[action].is_valid():
-        forms[action].save()
-        messages.success(request, 'Evidencija za analitiku je sačuvana.')
+    form = AnalysisProfileForm(request.POST if action == 'profile' else None,
+                               instance=profile, prefix='profile')
+    if action == 'profile' and form.is_valid():
+        form.save()
+        messages.success(request, 'Profil analitike je sačuvan.')
         return redirect('vehicle_analysis_settings', pk=pk)
-    if action and action not in forms:
-        messages.error(request, 'Izaberite postojeći nalog ili ispravnu vrstu evidencije.')
+    if action and action != 'profile':
+        raise Http404('Ova evidencija se više ne uređuje kroz analitiku vozila.')
     # Spisak „sta jos nedostaje“ stoji uz polja koja ga popunjavaju, a ne na
     # ekranu za citanje troskova. Racuna se za podrazumevani period, pa se taj
     # period i ispisuje, da spisak ne bi delovao kao da vazi za svaki period.
     readiness_start, readiness_end = default_period()
     readiness = period_analysis([vehicle], readiness_start, readiness_end)[0]
+    if not form.is_bound:
+        form.initial['purpose'] = readiness['purpose_code']
 
     return render(request, 'fleet/analysis_settings.html', dict(vehicle=vehicle,
         economics=readiness, period_start=readiness_start, period_end=readiness_end,
         can_edit_analysis=True,
-        profile_form=forms['profile'], charge_form=forms['charge'], downtime_form=forms['downtime'],
-        job_form=forms.get('job'), selected_order=order, selected_downtime=downtime, selected_charge=charge,
+        profile_form=form,
         profiles=VehicleAnalysisProfile.objects.filter(vehicle=vehicle),
-        charges=LeaseChargePeriod.objects.filter(lease__vehicle=vehicle).select_related('lease'),
-        downtimes=VehicleDowntime.objects.filter(vehicle=vehicle),
-        orders=VehicleTravelOrder.objects.filter(vehicle=vehicle).select_related('job_code').order_by('-created_at', '-pk'),
+        leases=vehicle.leases.order_by('-start_date', '-pk'),
+        assignments=vehicle.job_codes.select_related('organizational_unit').order_by('-assigned_date', '-pk'),
         methodology=METHODOLOGY, methodology_version=VERSION))
 
 

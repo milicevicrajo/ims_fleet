@@ -8,6 +8,7 @@ zbira (raspodela na poslove i mesečni pregled sa polisama).
     <div>
       <h3>1 · Rezultat obračuna</h3>
       <p class="text-muted">{{ economics.purpose }} · {{ economics.basis }}</p>
+      {% if economics.purpose_estimated %}<p class="text-muted">Namena je početna procena. {{ economics.purpose_note }}</p>{% endif %}
     </div>
     {% if can_edit_analysis %}
       <div class="vd-button-row">
@@ -26,16 +27,18 @@ zbira (raspodela na poslove i mesečni pregled sa polisama).
 
   <div class="vehicle-kpis">
     <div class="vehicle-kpi"><small>Obuhvaćeni troškovi · RSD</small><strong>{{ economics.total|floatformat:"2g"|default:"Nema iznosa" }}</strong><small>Gorivo + održavanje + premije polisa + potvrđene ugovorne naknade i kamata. <strong>Bez</strong> nabavne vrednosti i amortizacije.</small></div>
-    <div class="vehicle-kpi"><small>RSD/km za isti period</small><strong>{{ economics.per_km|floatformat:"2g"|default:"Nema usklađenih podataka" }}</strong><small>Zbir / km između očitanja na granicama perioda. {{ economics.distance|floatformat:"0g"|default:"—" }} km.</small></div>
+    <div class="vehicle-kpi"><small>RSD/km{% if economics.mileage_approximate %} · približno{% endif %}</small><strong>{{ economics.per_km|floatformat:"2g"|default:"Nema usklađenih podataka" }}</strong><small>Troškovi izabranog perioda / razlika najbližih očitavanja. {{ economics.distance|floatformat:"0g"|default:"—" }} km.</small></div>
     <div class="vehicle-kpi"><small>Dani po nalogu</small><strong>{{ economics.booked_days }} / {{ economics.period_days }}</strong><small>{{ economics.booked_percent|floatformat:1 }}% kalendarskog perioda; administrativno zaduženje, nije produktivnost.</small></div>
     <div class="vehicle-kpi"><small>RSD/dan po nalogu</small><strong>{{ economics.per_day|floatformat:"2g"|default:"Nema usklađenih podataka" }}</strong><small>Troškovi celog perioda / jedinstveni dani zaduženja. RSD/kalendarskom danu: {{ economics.per_calendar_day|floatformat:"2g"|default:"—" }}.</small></div>
   </div>
+
+  {% include 'fleet/_mileage_boundaries.html' with mileage=economics.mileage %}
 
   <div class="table-responsive"><table class="table table-sm">
     <thead><tr><th>Deo obračuna</th><th class="text-end">RSD</th><th>Osnov</th></tr></thead>
     <tbody>
       <tr><td>Premije polisa za period</td><td class="text-end">{{ economics.policy|floatformat:"2g"|default:"Nema podataka" }}</td><td>Srazmerno danima važenja; ceo iznos premije se ne ponavlja u svakom mesecu.</td></tr>
-      <tr><td>Potvrđene naknade lizinga / najma</td><td class="text-end">{{ economics.contract|floatformat:"2g"|default:"Nije obračunato" }}</td><td>Potvrđeni periodi naknada i istorija raspolaganja. Proveriti usluge uključene u naknadu.</td></tr>
+      <tr><td>Naknade lizinga / najma</td><td class="text-end">{{ economics.contract|floatformat:"2g"|default:"Nije primenljivo / nedostaje iznos" }}</td><td>Mesečni ili ukupni iznos sa ugovora, srazmerno periodu važenja. Proveriti usluge uključene u naknadu.</td></tr>
       <tr><td>Kamata finansijskog lizinga za period</td><td class="text-end">{{ economics.interest|floatformat:"2g"|default:"Nije obračunato" }}</td><td>Godišnja kamata raspoređena na dane u godini dok važi ugovorno raspolaganje.</td></tr>
       <tr><td>Naknade osiguranja</td><td class="text-end">{{ economics.recovery|floatformat:"2g"|default:"Nema stavki" }}</td><td>Odvojeni prilivi, mogu se odnositi na raniju štetu.</td></tr>
       <tr><td>Razlika nakon naknada osiguranja</td><td class="text-end">{{ economics.net_after_recovery|floatformat:"2g"|default:"Nema podataka" }}</td><td>Obuhvaćeni troškovi − naknade; negativan saldo ostaje vidljiv i nije dokaz profitabilnosti.</td></tr>
@@ -43,8 +46,7 @@ zbira (raspodela na poslove i mesečni pregled sa polisama).
   </table></div>
 
   <p><strong>{{ economics.status }}</strong> · {{ economics.quality }}
-     · Merodavni pokazatelji: {{ economics.indicators }}
-     · Evidentirani zastoji: {{ economics.downtime_days|default_if_none:"nisu evidentirani" }}{% if economics.downtime_days != None %} dana{% endif %}.</p>
+     · Merodavni pokazatelji: {{ economics.indicators }}.</p>
   {% if economics.profile.criticality %}<p class="text-muted"><strong>Zahtev raspoloživosti:</strong> {{ economics.profile.criticality }}</p>{% endif %}
 
   {% if economics.criteria %}
@@ -66,12 +68,12 @@ zbira (raspodela na poslove i mesečni pregled sa polisama).
     <div class="row mt-3">
       <div class="col-lg-6">
         <h4>Raspodela na šifre posla</h4>
-        <p class="text-muted">Trošak perioda se ravnomerno deli na kalendarske dane; dnevni deo pripada jedinom potvrđenom poslu aktivnog naloga. Interna raspodela po vremenu, bez promene knjiženja.</p>
+        <p class="text-muted">Trošak prati šifru posla na koju se vozilo vodi na datum dokumenta. Premije i ugovorne naknade raspoređuju se po danima važenja. Putni nalozi ne menjaju pripadnost troška; knjiženja ostaju nepromenjena.</p>
         <table class="table table-sm">
           <thead><tr><th>Posao</th><th>Dani</th><th>Raspoređeno RSD</th></tr></thead>
           <tbody>
             {% for job in economics.jobs %}<tr><td>{{ job.code }} · {{ job.name }}</td><td>{{ job.days }}</td><td>{{ job.amount|floatformat:"2g"|default:"Nema iznosa" }}</td></tr>{% endfor %}
-            <tr><th>Neraspoređeno / slobodan kapacitet / sukob naloga</th><td>—</td><td>{{ economics.unallocated|floatformat:"2g"|default:"Nema iznosa" }}</td></tr>
+            <tr><th>Neraspoređeno — bez šifre posla vozila</th><td>—</td><td>{{ economics.unallocated|floatformat:"2g"|default:"Nema iznosa" }}</td></tr>
           </tbody>
         </table>
       </div>

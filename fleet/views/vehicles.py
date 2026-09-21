@@ -271,6 +271,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
     def get_context_data(self, **kwargs):
         from fleet.support.vehicle_detail import VehiclePeriodForm
         from fleet.support.vehicle_mileage import vehicle_mileage
+        from fleet.support.vehicle_consumption import vehicle_consumption
         from fleet.support.vehicle_maintenance import vehicle_maintenance
         from django.utils import timezone
         from fleet.services.economics import period_analysis, METHODOLOGY, VERSION
@@ -300,17 +301,19 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         analytics = economics['ledger'] if economics else None
         cards = vehicle.traffic_cards.order_by('-issue_date', '-id')
         card = cards.issued().first()
-        holding = vehicle.holdings.filter(start_date__lte=today).filter(Q(end_date__isnull=True) | Q(end_date__gte=today)).select_related('lease').first()
-        active_lease = vehicle.leases.filter(start_date__lte=today, end_date__gte=today).order_by('-start_date', '-id').first()
-        holding_lease = holding.lease if holding else active_lease
-        holding_label = holding.get_basis_display() if holding else ('Ugovorno raspolaganje — proveriti period' if active_lease else 'Osnov nije potvrđen')
+        from fleet.support.analysis_defaults import holding_at
+        holding = None
+        holding_code, holding_label, holding_lease = holding_at(list(vehicle.leases.all()), today)
         ao_policy = vehicle.policies.filter(insurance_type__icontains='AUTOODGOVORNOST', start_date__lte=today, end_date__isnull=False).order_by('-end_date', '-id').first()
         registration_days = (card.registration_valid_until - today).days if card and card.registration_valid_until else None
+        consumption_params = params if ('mileage_from' in params or 'mileage_to' in params) else {
+            'mileage_from': start.isoformat(), 'mileage_to': end.isoformat()}
+        mileage = vehicle_mileage(vehicle, consumption_params, today)
         context.update({
             'economics': economics, 'methodology': METHODOLOGY, 'methodology_version': VERSION,
             'can_edit_analysis': user_has_role_permission(self.request.user, 'vehicle_analysis_settings'),
             'assessments': VehicleEconomicAssessment.objects.filter(vehicle=vehicle),
-            'mileage': vehicle_mileage(vehicle, params, today),
+            'mileage': mileage, 'consumption': vehicle_consumption(vehicle, mileage),
             'maintenance': vehicle_maintenance(vehicle, today),
             'mileage_other_filters': [(key, value) for key, value in params.items() if key not in ('mileage_from', 'mileage_to')],
             'today': today, 'period_form': period_form, 'period_valid': valid_period,
@@ -322,6 +325,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
             'job_codes': vehicle.job_codes.select_related('organizational_unit').order_by('-assigned_date', '-id'),
             'holdings': vehicle.holdings.select_related('lease', 'financing_contract'), 'current_holding': holding,
             'holding_label': holding_label, 'holding_lease': holding_lease, 'ao_policy': ao_policy,
+            'holding_conflict': holding_code == 'unknown',
             'leases': vehicle.leases.order_by('-start_date', '-id'),
             'policies': vehicle.policies.order_by('-end_date', '-id'),
             'active_policies': vehicle.policies.filter(start_date__lte=today, end_date__gte=today),

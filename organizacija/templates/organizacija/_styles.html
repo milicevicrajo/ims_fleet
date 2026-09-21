@@ -1,0 +1,73 @@
+{% comment %}
+Stilovi stabla organizacije. Sve je pod `.org-page` da ne dodirne ostale ekrane —
+ranije je nepazljivo pisan selektor h3 pokvario razmake na svim karticama detalja vozila.
+{% endcomment %}
+<style>
+.org-page { padding-bottom: 24px; }
+.org-page .org-kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.org-page .org-hero-metrics { display: flex; gap: 18px; flex-wrap: wrap; }
+.org-page .org-hero-metrics > div { text-align: center; min-width: 74px; }
+.org-page .org-hero-metrics strong { display: block; font-size: 22px; line-height: 1.1; }
+.org-page .org-hero-metrics small { font-size: 11px; opacity: .75; }
+
+.org-page .org-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  justify-content: space-between; margin: 16px 0 10px; }
+.org-page .org-search { display: flex; gap: 8px; flex: 1 1 320px; }
+.org-page .org-search input { flex: 1 1 auto; min-width: 0; padding: 7px 12px;
+  border: 1px solid #ced4da; border-radius: 6px; }
+.org-page .org-actions { display: flex; gap: 8px; }
+.org-page .org-note { font-size: 13px; color: #6c757d; margin: 6px 0 12px; }
+
+.org-page .org-tree { border: 1px solid #e3e6ec; border-radius: 8px; overflow: hidden; background: #fff; }
+.org-page details { border-top: 1px solid #eef0f4; }
+.org-page .org-tree > details:first-child { border-top: 0; }
+.org-page summary { display: flex; align-items: center; gap: 10px; cursor: pointer;
+  padding: 10px 14px; list-style: none; user-select: none; }
+.org-page summary::-webkit-details-marker { display: none; }
+.org-page summary:hover { background: #f6f8fb; }
+.org-page summary:focus-visible { outline: 2px solid #0d6efd; outline-offset: -2px; }
+
+.org-page .org-chevron { flex: 0 0 auto; width: 0; height: 0; border-left: 6px solid #8a94a6;
+  border-top: 5px solid transparent; border-bottom: 5px solid transparent; transition: transform .12s; }
+.org-page details[open] > summary .org-chevron { transform: rotate(90deg); }
+
+.org-page .org-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px; padding: 1px 7px; border-radius: 4px; background: #eef1f6; color: #37415a; }
+.org-page .org-code-1 { background: #dfe8ff; color: #1b3a8a; font-weight: 600; }
+.org-page .org-code-2 { background: #e6f2e8; color: #1f5d33; }
+.org-page .org-code-3 { background: #f1f3f7; }
+.org-page .org-name { flex: 1 1 auto; min-width: 0; }
+.org-page .org-unnamed { color: #9aa3b2; font-size: 13px; }
+.org-page .org-count { flex: 0 0 auto; font-size: 12px; color: #6c757d; white-space: nowrap; }
+
+.org-page .org-center > summary { background: #fafbfd; font-size: 15px; }
+.org-page .org-children { padding: 0 0 0 22px; }
+.org-page .org-unit > summary { padding-left: 10px; }
+
+.org-page .org-jobs { list-style: none; margin: 0; padding: 0 0 8px 32px; }
+.org-page .org-jobs li { display: flex; align-items: center; gap: 10px; padding: 5px 14px 5px 0; }
+.org-page .org-jobs li + li { border-top: 1px dotted #eef0f4; }
+.org-page .org-jobs li.is-match { background: #fff6dd; border-radius: 4px; }
+.org-page .org-jobs li.is-inactive .org-name { color: #98a1b0; }
+
+.org-page .org-badges { flex: 0 0 auto; display: flex; gap: 6px; }
+.org-page .org-badge { font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid transparent; }
+.org-page .org-badge-profit { background: #e6f2e8; color: #1f5d33; border-color: #bcdcc5; }
+.org-page .org-badge-nonprofit { background: #eef1f6; color: #4a5468; border-color: #d6dbe5; }
+.org-page .org-badge-unknown { background: #fff4e5; color: #8a5a12; border-color: #f0d6ad; }
+.org-page .org-badge-inactive { background: #fdecec; color: #8d2e2e; border-color: #f2c6c6; }
+
+.org-page .org-unresolved { margin-top: 22px; }
+.org-page .org-unresolved h2 { font-size: 17px; margin-bottom: 4px; }
+.org-page .org-unresolved-group { border: 1px solid #e3e6ec; border-radius: 8px;
+  margin-bottom: 8px; background: #fff; }
+.org-page .org-unresolved-group table { margin: 0; }
+.org-page .org-run { margin-top: 16px; font-size: 12px; color: #6c757d; }
+
+@media (max-width: 640px) {
+  .org-page .org-count { display: none; }
+  .org-page .org-children { padding-left: 12px; }
+  .org-page .org-jobs { padding-left: 16px; }
+  .org-page .org-jobs li { flex-wrap: wrap; }
+}
+</style>

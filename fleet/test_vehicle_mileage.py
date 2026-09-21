@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from fleet.models import FuelConsumption, TransactionOMV, VehicleTravelOrder
-from fleet.support.vehicle_mileage import observed_timeline, vehicle_mileage
+from fleet.support.vehicle_mileage import observed_timeline, vehicle_mileage, nearest_period
 from fleet.test_vehicle_onboarding import vehicle
 from hr.models import Employee
 
@@ -17,6 +17,23 @@ def reading(day,km,source='NIS'):
 
 
 class MileageTimelineTests(SimpleTestCase):
+    def test_nearest_dates_can_be_outside_period_and_ties_extend_outward(self):
+        result=nearest_period([reading('2025-12-31','100'),reading('2026-01-02','150'),
+            reading('2026-01-30','200'),reading('2026-02-01','250')],date(2026,1,1),date(2026,1,31))
+        self.assertEqual(result['total_km'],150)
+        self.assertEqual(result['adopted_start']['date'],date(2025,12,31))
+        self.assertEqual(result['adopted_end']['date'],date(2026,2,1))
+        self.assertEqual((result['start_offset'],result['end_offset']),(-1,1))
+        self.assertTrue(result['approximate'])
+
+    def test_same_nearest_reading_and_single_requested_day_do_not_invent_distance(self):
+        readings=[reading('2026-01-01','100'),reading('2026-03-01','200')]
+        result=nearest_period(readings,date(2026,1,5),date(2026,1,10))
+        self.assertIsNone(result['total_km'])
+        result=nearest_period(readings,date(2026,1,15),date(2026,1,15))
+        self.assertIsNone(result['total_km'])
+        self.assertIsNone(nearest_period([],date(2026,1,1),date(2026,1,31))['total_km'])
+
     def test_nearest_monthly_boundaries_are_actual_dates_and_do_not_double_count(self):
         result=observed_timeline([reading('2026-01-01','1000'),reading('2026-01-29','1300'),reading('2026-02-02','1400'),reading('2026-03-01','2000')])
         periods=list(reversed(result['intervals']))
@@ -88,6 +105,19 @@ class VehicleMileageTests(TestCase):
         self.assertEqual(data['total_km'],100)
         data=vehicle_mileage(self.car,{'mileage_from':'2026-02-01','mileage_to':'2026-01-01'},today=date(2026,2,1))
         self.assertFalse(data['valid']);self.assertEqual(data['intervals'],[])
+
+    def test_filter_adopts_nearest_order_and_fuel_readings_with_visible_evidence(self):
+        params={'mileage_from':'2026-01-03','mileage_to':'2026-01-14'}
+        data=vehicle_mileage(self.car,params,today=date(2026,2,1))
+        self.assertEqual(data['total_km'],100)
+        self.assertEqual(data['coverage_start'],date(2026,1,1))
+        self.assertEqual(data['coverage_end'],date(2026,1,15))
+        self.assertEqual(data['current']['value'],200)
+        self.client.force_login(self.user)
+        response=self.client.get(reverse('vehicle_detail',args=[self.car.pk]),params)
+        self.assertContains(response,'Usvojena očitavanja')
+        self.assertContains(response,'odstupanje -2 dana')
+        self.assertContains(response,'približan period')
 
     def test_detail_renders_tab_even_when_cost_filter_is_invalid(self):
         self.client.force_login(self.user)

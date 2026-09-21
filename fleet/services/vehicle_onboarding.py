@@ -54,6 +54,7 @@ def create_vehicle_from_steps(forms, user):
                     job_code=assignment['organizational_unit'].code if assignment.get('organizational_unit') else '',
                     contract_number=basis['contract_number'], contract=basis.get('contract'),
                     lease_type=basis['lease_type'], current_payment_amount=basis['current_payment_amount'],
+                    payment_basis=basis.get('payment_basis') or '',
                     start_date=basis['start_date'], end_date=basis['end_date'], note=basis.get('note') or '',
                 )
                 lease.full_clean(exclude=['job_code'])

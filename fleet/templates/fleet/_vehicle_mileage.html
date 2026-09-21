@@ -1,6 +1,6 @@
 {% load l10n %}
 <section class="card"><div class="card-body">
- <div class="vd-section-heading"><h3>Kilometraža vozila</h3><span class="text-muted">Evidentirana očitavanja, bez procene između datuma</span></div>
+ <div class="vd-section-heading"><h3>Kilometraža vozila</h3><span class="text-muted">Razlika najbližih stvarnih očitavanja</span></div>
  <div class="vehicle-kpis">
   <div class="vehicle-kpi"><small>Poslednje evidentirano stanje</small><strong>{% if mileage.current %}{{ mileage.current.value|floatformat:'2g' }} km{% else %}Nema očitavanja{% endif %}</strong>{% if mileage.current %}<small>{{ mileage.current.date|date:'d.m.Y' }} · {{ mileage.current.source }}</small>{% if mileage.current.needs_check %}<span class="text-danger">Proveriti: očitavanje je niže od prethodnog dana.</span>{% endif %}{% endif %}</div>
   <div class="vehicle-kpi"><small>Pređeno u obuhvaćenom periodu</small><strong>{% if mileage.total_km != None %}{{ mileage.total_km|floatformat:'2g' }} km{% else %}Nema pouzdanog zbira{% endif %}</strong><small>{% if mileage.coverage_start %}{{ mileage.coverage_start|date:'d.m.Y' }} – {{ mileage.coverage_end|date:'d.m.Y' }}{% else %}Nema podataka u izabranom periodu{% endif %}</small></div>
@@ -12,6 +12,7 @@
   {% for field in mileage.form %}<div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
   <button class="btn btn-primary">Prikaži</button><a class="btn btn-outline-secondary" href="{% url 'vehicle_detail' vehicle.pk %}#mileage-pane">Cela evidencija</a>
  </form>{{ mileage.form.non_field_errors }}
+ {% include 'fleet/_mileage_boundaries.html' %}
 </div></section>
 <section class="card"><div class="card-body">
  <h3>Pređena kilometraža između očitavanja</h3>

@@ -1,0 +1,8 @@
+{% if mileage.adopted_start %}
+<div class="vd-note">
+  <strong>Usvojena očitavanja{% if mileage.approximate %} · približan period{% endif %}</strong>
+  <div>Početak: {{ mileage.adopted_start.date|date:"d.m.Y" }} · {{ mileage.adopted_start.value|floatformat:"2g" }} km · {{ mileage.adopted_start.source }}{% if mileage.start_offset %} (odstupanje {{ mileage.start_offset }} dana){% endif %}</div>
+  <div>Kraj: {{ mileage.adopted_end.date|date:"d.m.Y" }} · {{ mileage.adopted_end.value|floatformat:"2g" }} km · {{ mileage.adopted_end.source }}{% if mileage.end_offset %} (odstupanje {{ mileage.end_offset }} dana){% endif %}</div>
+  {% if mileage.approximate %}<small>Za obe granice izabrana su najbliža stvarna očitavanja, uključujući datume van traženog perioda. Minus označava raniji, a plus kasniji datum.</small>{% endif %}
+</div>
+{% endif %}

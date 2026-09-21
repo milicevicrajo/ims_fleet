@@ -66,7 +66,7 @@ class VehicleDetailTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Rok nije evidentiran')
-        self.assertEqual(response.context['holding_label'], 'Osnov nije potvrđen')
+        self.assertEqual(response.context['holding_label'], 'Vlasništvo IMS')
         self.assertNotContains(response, 'Neisplativo')
         self.assertNotContains(response, 'Proračun isplativosti')
         self.assertIsNone(response.context['analytics']['mileage'])
@@ -110,9 +110,9 @@ class VehicleDetailTests(TestCase):
         lease = Lease.objects.create(vehicle=self.vehicle, contract_number='L1', current_payment_amount=100, start_date=today, end_date=today+dt.timedelta(days=300))
         response = self.client.get(self.url)
         self.assertEqual(response.context['holding_lease'], lease)
-        self.assertEqual(response.context['holding_label'], 'Ugovorno raspolaganje — proveriti period')
+        self.assertEqual(response.context['holding_label'], 'Finansijski')
         Lease.objects.filter(pk=lease.pk).update(start_date=today-dt.timedelta(days=300), end_date=today-dt.timedelta(days=1))
-        self.assertEqual(self.client.get(self.url).context['holding_label'], 'Osnov nije potvrđen')
+        self.assertEqual(self.client.get(self.url).context['holding_label'], 'Vlasništvo IMS')
 
     def test_only_previous_documents_appear_in_optional_history(self):
         first = card(self.vehicle)

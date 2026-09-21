@@ -186,7 +186,7 @@ class VehicleWizardTests(TestCase):
         self.assertIsNone(car.engine_volume)
 
     def test_rental_creates_lease_and_period_without_purchase_value(self):
-        self.prepare(basis={'basis': 'contract', 'start_date': '01.01.2020', 'end_date': '31.12.2026', 'partner_code': '10', 'partner_name': 'Najmodavac', 'lease_type': 'dugorocni', 'contract_number': 'UG-1', 'current_payment_amount': '10000'})
+        self.prepare(basis={'basis': 'contract', 'start_date': '01.01.2020', 'end_date': '31.12.2026', 'partner_code': '10', 'partner_name': 'Najmodavac', 'lease_type': 'dugorocni', 'contract_number': 'UG-1', 'current_payment_amount': '10000', 'payment_basis': 'monthly'})
         self.assertEqual(self.step(5, {}).status_code, 302)
         holding = VehicleHolding.objects.get()
         self.assertEqual(holding.lease.contract_number, 'UG-1')
@@ -327,7 +327,7 @@ class VehicleWizardTests(TestCase):
     def test_existing_contract_number_can_be_taken_from_registry(self):
         kind = ContractType.objects.create(code='RENT', name='Najam')
         contract = Contract.objects.create(contract_type=kind, contract_number='N-1', title='Najam', contract_date=datetime.date(2020, 1, 1), valid_to=datetime.date(2026, 12, 31))
-        self.prepare(basis={'basis': 'contract', 'start_date': '01.01.2020', 'partner_code': '10', 'partner_name': 'Najmodavac', 'lease_type': 'dugorocni', 'contract': contract.pk, 'current_payment_amount': '10000'})
+        self.prepare(basis={'basis': 'contract', 'start_date': '01.01.2020', 'partner_code': '10', 'partner_name': 'Najmodavac', 'lease_type': 'dugorocni', 'contract': contract.pk, 'current_payment_amount': '10000', 'payment_basis': 'monthly'})
         self.assertEqual(self.step(5, {}).status_code, 302)
         lease = Lease.objects.get()
         self.assertEqual(lease.contract, contract)

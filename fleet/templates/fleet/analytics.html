@@ -71,7 +71,7 @@
     <div class="fleet-analytics-kpi">
       <div class="fleet-analytics-kpi-label">Ponderisani RSD/km <i class="mdi mdi-speedometer" aria-hidden="true"></i></div>
       <strong class="fleet-analytics-number fleet-analytics-number-amount">{{ summary.per_km|floatformat:"2g"|default:"Nije dostupno" }}</strong>
-      <small>Zbir troškova / zbir km. Vozila sa istim granicama: {{ summary.comparable_count }}; {{ summary.distance|floatformat:"0g" }} km.</small>
+      <small>Zbir troškova / zbir km; približno kada usvojeni datumi odstupaju. Vozila sa obračunatom kilometražom: {{ summary.comparable_count }}; {{ summary.distance|floatformat:"0g" }} km.</small>
     </div>
     <div class="fleet-analytics-kpi{% if summary.review_count %} fleet-analytics-kpi-review{% endif %}">
       <div class="fleet-analytics-kpi-label">Potrebna provera <i class="mdi mdi-clipboard-text-search-outline" aria-hidden="true"></i></div>
@@ -96,7 +96,7 @@
           <thead><tr><th scope="col">Poslovna namena</th><th scope="col">Raspolaganje</th><th scope="col" class="fleet-analytics-numeric">Vozila</th><th scope="col" class="fleet-analytics-numeric">Obuhvaćeni RSD</th><th scope="col" class="fleet-analytics-numeric">Ponderisani RSD/km</th></tr></thead>
           <tbody>
             {% for g in groups %}
-            <tr><th scope="row">{{ g.purpose }}</th><td>{{ g.basis }}</td><td class="fleet-analytics-numeric">{{ g.summary.count }}</td><td class="fleet-analytics-numeric">{{ g.summary.total|floatformat:"2g"|default:"—" }}</td><td class="fleet-analytics-numeric">{{ g.summary.per_km|floatformat:"2g"|default:"—" }}<small>Vozila sa usklađenim granicama: {{ g.summary.comparable_count }}</small></td></tr>
+            <tr><th scope="row">{{ g.purpose }}</th><td>{{ g.basis }}</td><td class="fleet-analytics-numeric">{{ g.summary.count }}</td><td class="fleet-analytics-numeric">{{ g.summary.total|floatformat:"2g"|default:"—" }}</td><td class="fleet-analytics-numeric">{{ g.summary.per_km|floatformat:"2g"|default:"—" }}<small>Vozila sa obračunatom kilometražom: {{ g.summary.comparable_count }}</small></td></tr>
             {% empty %}
             <tr><td colspan="5" class="fleet-analytics-empty"><i class="mdi mdi-filter-remove-outline" aria-hidden="true"></i><strong>Nema vozila za izabrane uslove.</strong><span>Promenite period ili filtere da biste videli rezultate.</span></td></tr>
             {% endfor %}
@@ -120,9 +120,9 @@
           {% for r in rows %}
             <tr>
               <th scope="row"><a class="fleet-table-link fleet-analytics-vehicle-link" href="{% url 'vehicle_detail' r.vehicle_id %}?start={{ period_start|date:'Y-m-d' }}&amp;end={{ period_end|date:'Y-m-d' }}#cost-pane">{{ r.label }} <i class="mdi mdi-arrow-top-right" aria-hidden="true"></i></a><small>{{ r.vehicle.brand }} {{ r.vehicle.model }} · {{ r.center }}</small>{% if r.vehicle.otpis %}<span class="fleet-status muted">Otpisano</span>{% endif %}</th>
-              <td>{{ r.purpose }}<small>{{ r.basis }}</small></td>
+              <td>{{ r.purpose }}{% if r.purpose_estimated %}<small>Početna procena namene</small>{% endif %}<small>{{ r.basis }}</small></td>
               <td class="fleet-analytics-numeric">{{ r.total|floatformat:"2g"|default:"Nema iznosa" }}</td>
-              <td class="fleet-analytics-numeric">{{ r.distance|floatformat:"0g"|default:"Nema usklađenih granica" }}</td>
+              <td class="fleet-analytics-numeric">{{ r.distance|floatformat:"0g"|default:"Nema razlike km" }}{% if r.mileage_approximate %}<small>Približno · {{ r.mileage_start|date:"d.m.Y" }} – {{ r.mileage_end|date:"d.m.Y" }}</small>{% endif %}</td>
               <td class="fleet-analytics-numeric">{{ r.per_km|floatformat:"2g"|default:"—" }}</td>
               <td class="fleet-analytics-numeric">{{ r.booked_days }} / {{ r.period_days }}<small>{{ r.booked_percent|floatformat:1 }}% · administrativno zaduženje</small></td>
               <td class="fleet-analytics-numeric">{{ r.per_day|floatformat:"2g"|default:"—" }}</td>

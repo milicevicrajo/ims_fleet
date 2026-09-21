@@ -1,0 +1,226 @@
+# Plan izrade centralnog registra šifara posla
+
+Datum: **21.09.2026.** · Status: **predlog za odobrenje, bez implementacije**
+
+Ovaj plan razrađuje **korak 1 i 2** iz [plana organizacije i dozvola V2](plan-organizacije-i-dozvola-v2.md)
+i **fazu 1 i 2** iz [plana centralizacije](plan-centralizacije-organizacije.md).
+Za razliku od njih, oslanja se na **izmerene podatke** iz
+[popisa nad produkcionom bazom](popis-sifara-posla-korak-0.md), a ne na primer iz razgovora.
+
+> Status tvrdnji: **[P]** izmereno, **[Z]** zaključeno, **[N]** nepotvrđeno.
+
+**Odgovor na postavljeno pitanje:** da — registar se pravi **odvojeno i paralelno**, a
+moduli se prevode **jedan po jedan**, svaki sa svojim prekidačem i svojim povratkom.
+To je i ono što oba postojeća plana traže. Novo je što se sada zna **kojim redosledom se
+isplati** i **šta se sme izostaviti na početku**.
+
+---
+
+## 1. Osnovno pravilo celog posla
+
+**Registar se prvo samo puni i poredi. Ništa ga ne čita u obračunu dok se modul izričito
+ne prebaci.** U svakom trenutku postoji tačno jedan modul koji je „u prelasku”; ostali rade
+nepromenjeno.
+
+Tri zabrane koje važe kroz sve faze:
+
+| Zabrana | Razlog |
+|---|---|
+| Ne brisati i ne preimenovati `OrganizationalUnit`, `FinanceJob` ni njihova polja | 3.651 putni nalog, 1.164 veze faktura i 204 dodele vozila drže FK na `OrganizationalUnit` [P] |
+| Ne dirati `fleet.Employee.job_code` | To je **šifra radnog mesta** — jednu vrednost deli do **49 zaposlenih** [P] |
+| Ne menjati brojeve dokumenata koji u sebi sadrže šifru centra | `PutniNalog` i `ProcurementCase` izvode broj iz centra [P] |
+
+---
+
+## 2. Faza 1 — registar koji ništa ne menja
+
+Samostalna isporuka. Posle nje aplikacija radi **identično** kao pre.
+
+### 2.1 Nova aplikacija `organizacija`
+
+| Model | Šta nosi |
+|---|---|
+| `OrgNode` | Stalni ID, firma, nivo 1/2/3. **Nikad se ne menja ni ne briše.** |
+| `OrgNodeVersion` | Naziv, segment, puna šifra, roditelj, aktivnost, profitnost, `vazi_od` / `vazi_do` |
+| `ExternalOrgMapping` | Izvorni sistem, sirova šifra (sa razmacima, neobrađena), period, ciljni `OrgNode` |
+| `LegacyOrgLink` | `OrganizationalUnit.id` i `FinanceJob.id` → `OrgNode`. Više starih zapisa sme voditi na isti čvor. |
+| `OrgImportRun` | Kada, ko/šta, koliko uneto, koliko na listi za razrešenje, izveštaj razlika |
+
+Provere u bazi: bez ciklusa, bez preklapanja intervala za isti čvor, puna šifra
+jedinstvena u firmi i periodu, dete i roditelj u istoj firmi.
+
+> Intervali su **od uključivo do isključivo**. Objavljena verzija se ne prepravlja —
+> pravi se nova.
+
+### 2.2 Uvoz — samo porodica A
+
+Prvi uvoz unosi **209 šifara porodice A** i iz njih gradi stablo:
+
+```
+nivo 1: 10 centara        41 42 43 44 50 60 70 81 82 83
+nivo 2: treći znak šifre  0–9 unutar centra
+nivo 3: 209 poslova       puna šifra = segment1 + segment2 + segment3
+```
+
+Veza roditelj–dete se upisuje **eksplicitno**. Prefiks se koristi **samo jednom, pri prvom
+uvozu, kao predlog** koji ulazi u izveštaj za potvrdu — posle toga pripadnost se nikad ne
+izvodi sečenjem teksta.
+
+Uz njih ulazi i **centar `3` (Nauka) kao čvor prvog nivoa bez potomaka**.
+
+**Šta se ne unosi u stablo:**
+
+| Skup | Šifara | Postupak |
+|---|---|---|
+| **Porodica B — nauka** | 193 | **Trajno van stabla.** Odluka naručioca (21.09.2026.): nauka je **zaseban šifarnik**. Merenje je potvrđuje — to je matrica **osoba × projekat**, a ne hijerarhija: isti projekat se javlja kod do **19 osoba** [P]. Šifre se vezuju za čvor centra `3`. |
+| Porodica C — izuzeci | 13 | Nerazvrstani, sa označenim razlogom za svaki, do odluke |
+
+Ovo pokriva **preko 97% stvarnih dokumenata** [P].
+
+> **Zašto nauka ne može u stablo** [P]: ako bi osoba bila drugi nivo, projekat `702400` bi
+> se rascepio na 19 čvorova i nikad se ne bi mogao sabrati kao projekat; ako bi projekat bio
+> drugi nivo, ista osoba bi imala više roditelja, što stablo zabranjuje. Nijedan raspored
+> nije tačan, pa se ne pravi nijedan.
+
+### 2.3 Naučni šifarnik — zaseban, kasnija faza
+
+Nije predmet ove isporuke, ali se beleži šta je izmereno, da se kasnije ne pogađa [P]:
+
+| | |
+|---|---|
+| Šifara | 193, od toga **stvarno upotrebljenih 25** |
+| Osoba (prefiks 4 znaka) | 66 u šifarniku, **23 u knjiženjima** |
+| Projekata (sufiks) | 55 u šifarniku, **5 u knjiženjima** |
+| Knjiženja | 2.666, od toga **2.372 (89%) na osobu**, 294 na osobu × projekat |
+| Centar na tim knjiženjima | **uvek `3`**; nijedna druga šifra ne koristi centar `3` |
+
+> **[Z] Kada dođe red na naučni šifarnik**, on traži dve tabele — **osoba** i **projekat** —
+> i vezu među njima, a ne stablo. Pošto 89% knjiženja ide na osobu, **osoba je nosilac**, a
+> projekat druga dimenzija. Osobe se **[Z]** verovatno mogu povezati sa kadrovskom
+> evidencijom: poređenje po imenu je već dalo parove (`315400 Delić Ivana` → zaposlena Ivana
+> Delić Nikolić). To povezivanje mora biti **potvrđeno pojedinačno**, ne po sličnosti imena.
+
+### 2.4 Ekran u Adminu — samo za čitanje
+
+Stablo levo, kartica čvora desno, pretraga po šifri i nazivu, spisak nerazvrstanih.
+Bez ijednog dugmeta za izmenu u ovoj fazi.
+
+### 2.5 Kontrolni izveštaj — uslov za nastavak
+
+Uvoz se smatra uspešnim tek kad izveštaj pokaže:
+
+- svih 209 poslova porodice A ima potvrđena oba nadređena nivoa;
+- nijedna puna šifra se ne ponavlja;
+- **za svaku od 118 stvarno upotrebljenih šifara postoji čvor ili obrazložen izuzetak** [P];
+- ponovljeni uvoz ne pravi duplikate ni nove verzije bez stvarne promene;
+- zbir `LedgerEntry` po centru izračunat preko registra **jednak** zbiru preko postojećeg
+  tekstualnog polja, za isti period.
+
+Poslednja stavka je najvažnija: to je dokaz da registar opisuje iste podatke.
+
+---
+
+## 3. Faza 2 — moduli, jedan po jedan
+
+Svaki modul dobija **opcionu** vezu `org_node` pored postojećeg polja. Staro polje ostaje
+i dalje se upisuje. Modul se prebacuje na čitanje iz registra tek kad njegov izveštaj
+prođe.
+
+### Redosled — i zašto se razlikuje od V2
+
+V2 predviđa pilot **Finansije + Potraživanja**, jer tamo najviše boli pitanje **prava
+pristupa**. Ovaj plan se bavi **registrom**, ne pravima, pa je redosled drugačiji — vodi
+ga cena povezivanja, koja je izmerena:
+
+| # | Modul | Kako je sada vezan | Obim | Zašto tim redom |
+|---|---|---|---|---|
+| **1** | **Flota** | **FK** na `OrganizationalUnit` | 204 dodele, 3.651 nalog, 16.118 goriva | Veza je FK→FK, najjeftinija. Najveći broj testova. Odmah rešava [P-52](docs/10-poznati-problemi.md#p-52--ulazni-podaci-ekonomike-su-prazni-na-produkciji) |
+| **2** | **Nabavka** | **FK** na `OrganizationalUnit` | 242 predmeta, 1.164 veze | Ista vrsta veze; već podržava više poslova po fakturi |
+| **3** | **Finansije** | tekst `job_code` | **147.851 red** | 118 različitih šifara, **sve postoje u šifarniku** [P]. Najveći obim, ali nula nepoznatih |
+| **4** | **Potraživanja** | tekst `job_code` | 12.445 + 9.516 | 100% poklapanje [P]; zavisi od Finansija |
+| **5** | **Ugovori, Menice, Mobilni** | tekst centra | mali | Male količine, nose malo rizika |
+| **—** | **HR** | **šifra radnog mesta** | 369 zaposlenih | **Ne prebacuje se.** Razrešeno merenjem: nije šifra posla |
+
+> **[Z] Zašto Flota prva:** ona jedina spaja tri stvari — vezu koja je već strukturirana,
+> mali obim i postojeću pokrivenost testovima. Ako se pokaže da model tri nivoa negde ne
+> radi, bolje je da se to vidi na 204 dodele nego na 147.851 knjiženju.
+
+### Šta se radi u svakom modulu
+
+1. Dodati `org_node` kao **null, opciono**. Staro polje ostaje merodavno.
+2. Popuniti vezu u **ponovljivim paketima**; nepovezani redovi idu u izveštaj, ne u nulu.
+3. Napraviti **uporedni izveštaj**: isti period, isti korisnik, stari i novi put — iznosi
+   moraju biti identični.
+4. Tek tada uključiti čitanje iz registra, **za sve rute modula odjednom**.
+5. Staro polje se i dalje upisuje tokom perioda stabilizacije.
+
+Pravilo iz V2 koje ovde važi doslovno: **nema režima „stari ILI novi pristup”** unutar
+jednog modula. Delimično prebačen modul je gori od neprebačenog.
+
+---
+
+## 4. Šta se ne radi u ovom poslu
+
+| Ne radi se | Kada |
+|---|---|
+| Dodele uloga sa obuhvatom i novi sistem prava | Zaseban posao, korak 2–3 u V2 |
+| Objava nove sistematizacije | Korak 8 u V2; traži datum i mapu staro → novo |
+| Uređivanje stabla kroz aplikaciju | Faza posle registra; prvo samo čitanje |
+| Brisanje starih kolona i modela | Tek po završenoj stabilizaciji svih modula |
+| Upis nazad u izvorni poslovni sistem | Nije predmet nijednog plana |
+
+---
+
+## 5. Odluke potrebne pre početka
+
+**Razrešeno 21.09.2026. — nema više blokade:**
+
+| Pitanje | Odgovor |
+|---|---|
+| Gde pripada nauka | **Zaseban šifarnik**, van stabla. Odluka naručioca, potkrepljena merenjem |
+| Šta je `Employee.job_code` | **Šifra radnog mesta** — ne povezuje se |
+
+**Otvoreno, ali ne blokira faze 1 i 2:**
+
+1. Naziv i značenje drugog nivoa u porodici A; da li je `0` zaista „zajedničko/režija”.
+   Potrebno pre nego što se stablo prikaže korisnicima sa nazivima nivoa.
+2. Šta su `432`, `vranj`, `vranjs`, `111111`.
+3. Sme li se `960001` „Test centar” ukloniti iz produkcije.
+4. Da li su `200001` i `209001`–`209007` centar `20` — ako jesu, to je **ispravka
+   podatka**, ne mapiranje, i smanjuje izuzetke sa 13 na 3.
+5. Šta znači slovo `A` na kraju četiri naučne šifre.
+
+> **Faza 1 može početi odmah.** Nijedno preostalo pitanje ne utiče na model podataka ni na
+> uvoz porodice A.
+
+---
+
+## 6. Provere pre puštanja svake faze
+
+| Provera | Očekivano |
+|---|---|
+| Ponovljen uvoz bez promene u izvoru | Nema novih verzija ni duplikata |
+| Prekinut uvoz | Nema polupopunjenog stabla; objava je atomska |
+| Šifra sa rubnim razmacima | Isti čvor kao bez njih; sirova vrednost sačuvana |
+| Vodeće nule (`430001`) | Sačuvane, nije pretvoreno u broj |
+| Nepoznata šifra u uvozu | Zapis sačuvan, upozorenje evidentirano, **bez dodele centra po prefiksu** |
+| Zbir po centru — stari put naspram registra | **Identičan** za isti period |
+| Broj putnog naloga i predmeta nabavke | **Nepromenjen** |
+| Isključivanje modula iz registra | Modul radi kao pre, bez gubitka novih unosa |
+
+---
+
+## 7. Složenost
+
+| Deo | Procena | Glavni rizik |
+|---|---|---|
+| Registar i uvoz porodice A | **Niska** | Značenje drugog nivoa nije potvrđeno |
+| Admin stablo za čitanje | **Niska** | — |
+| Povezivanje Flote i Nabavke | **Niska** | Brojevi dokumenata izvedeni iz centra |
+| Povezivanje Finansija i Potraživanja | **Srednja** | Obim; uporedni izveštaj mora biti tačan do dinara |
+| Naučni šifarnik (zasebna, kasnija isporuka) | **Srednja** | Osoba × projekat; povezivanje osoba sa kadrovskom mora biti potvrđeno pojedinačno |
+| HR | — | **Ne radi se** — nije isti šifarnik |
+
+Prva isporuka — registar, uvoz porodice A, stablo za čitanje i kontrolni izveštaj — je
+**niska složenost** i ne dodiruje nijedan postojeći obračun. To je i razlog da se počne
+od nje.

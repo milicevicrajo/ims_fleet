@@ -6,10 +6,10 @@ koja ga popunjavaju. Ovde stoji samo koliko nedostaje i veza ka tom ekranu.
 <div class="vd-note vd-summary-row">
   <div>
     {% if economics.missing_count %}
-      <strong>Ulazni podaci: {{ economics.ready_count }} od 7 popunjeno.</strong>
+      <strong>Ulazni podaci: {{ economics.ready_count }} od {{ economics.readiness|length }} dostupno.</strong>
       {{ economics.missing_count }} nedostaje, pa pokazatelji koji od toga zavise ostaju prazni.
     {% else %}
-      <strong>Svi ulazni podaci su popunjeni.</strong>
+      <strong>Nema nedostajućih obaveznih ulaza.</strong>
       Potpunost samih troškova time nije potvrđena — prazna evidencija nije dokaz da troška nije bilo.
     {% endif %}
   </div>

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block content %}
+<h1>{{ lease.lease_type_label }} · {{ lease.contract_number }}</h1>
+<p><a href="{% url 'vehicle_detail' lease.vehicle_id %}#holding-pane">{{ lease.vehicle }}</a> · {{ lease.partner_name }}</p>
+<div class="card"><div class="card-body"><table class="table">
+  <tr><th>Period ugovora</th><td>{{ lease.start_date|date:"d.m.Y" }} – {{ lease.end_date|date:"d.m.Y" }}</td></tr>
+  <tr><th>Mesečni iznos</th><td>{{ lease.monthly_amount|floatformat:"2g"|default:"Nije ugovoren kao mesečni iznos" }}</td></tr>
+  <tr><th>Ukupno za ugovor</th><td>{{ lease.total_amount|floatformat:"2g"|default:"Nije određeno" }}{% if lease.payment_basis == 'monthly' %} · izvedeno iz mesečnog iznosa i perioda{% endif %}</td></tr>
+  <tr><th>Uneti iznos</th><td>{{ lease.current_payment_amount|floatformat:"2g" }} RSD · {{ lease.get_payment_basis_display }}</td></tr>
+</table>
+{% if lease.lease_type == 'finansijski' %}<p>U trošak perioda ulazi kamata finansijskog lizinga; glavnica se ne dodaje.</p>{% endif %}
+{{ lease.note|default:""|linebreaks }}
+<a class="btn btn-primary" href="{% url 'lease_update' lease.pk %}">Izmeni ugovor</a>
+</div></div>
+{% endblock %}

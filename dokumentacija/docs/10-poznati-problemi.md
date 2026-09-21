@@ -7,7 +7,15 @@
 >
 > **Dana 18.09.2026. ispravljena je prva grupa problema** — oni kod kojih je uzrok bio
 > nedvosmislen i ispravka kratka. Označeni su statusom **Rešeno** i za svaki piše šta je
-> tačno promenjeno. Svi ostali problemi i dalje **nisu dirani**.
+> tačno promenjeno.
+>
+> **Dana 21.09.2026. registar je prvi put provereno nad produkcionom bazom.** Do tada su
+> svi nalazi bili iz koda i iz razvojne baze. Provera je zatvorila dva problema
+> ([P-27](#p-27--formule-11-izveštaja-nisu-u-projektu),
+> [P-47](#p-47--ključ-za-duplikate-ne-obuhvata-iznos-ni-valutu)) i otvorila dva nova
+> ([P-51](#p-51--tri-šifre-dozvole-ne-postoje-na-produkciji),
+> [P-52](#p-52--ulazni-podaci-ekonomike-su-prazni-na-produkciji)) koja se **nisu mogla
+> videti bez pristupa stvarnim podacima**.
 >
 > Status tvrdnji: **[P]** potvrđeno kodom, **[Z]** zaključeno, **[N]** nepotvrđeno.
 
@@ -26,6 +34,7 @@
 | **Za rešavanje** | Potvrđeno, čeka odluku i ispravku |
 | **Za proveru** | Potrebna potvrda korisnika pre bilo kakve izmene |
 | **Prihvaćeno** | Poznato ograničenje, svesno se ne menja |
+| **Zatvoreno** | Provereno nad stvarnim podacima i ne javlja se; opis ostaje radi ponovne provere |
 | **Rešeno** | Ispravljeno; u opisu stoji šta je promenjeno i kada |
 
 ---
@@ -60,7 +69,7 @@
 | [P-24](#p-24--izveštaj-lizinga-koristi-poslednju-dodelu-vozila) | Flota / lizing | Nedosledno sa ostalim mesečnim izveštajima | **Srednja** | Za rešavanje |
 | [P-25](#p-25--prateći-troškovi-lizinga-obuhvataju-sva-vozila-jedinice) | Flota / lizing | Troškovi koji ne pripadaju lizing vozilima | **Srednja** | Za rešavanje |
 | [P-26](#p-26--izveštaj-goriva-za-upravu-nema-zaštitu-pri-čitanju) | Flota / izveštaji | Nema prečišćavanja OMV pri čitanju | **Srednja** | **Rešeno** 18.09. |
-| [P-27](#p-27--formule-11-izveštaja-nisu-u-projektu) | Flota / izveštaji | Formule 11 izveštaja postoje samo u bazi | **Srednja** | Za rešavanje |
+| [P-27](#p-27--formule-11-izveštaja-nisu-u-projektu) | Flota / izveštaji | Formule 11 izveštaja postoje samo u bazi | **Srednja** | **Većim delom rešeno** 21.09. |
 | [P-28](#p-28--dva-različita-obračuna-dnevnih-sati) | Kadrovi | Dva obračuna sati iz iste evidencije | **Visoka** | Za proveru |
 | [P-29](#p-29--otvoreno-bolovanje-nestaje-sa-radne-liste) | Kadrovi | Otvoreno bolovanje se prikazuje do datuma izvoza | **Srednja** | Za rešavanje |
 | [P-30](#p-30--izuzeće-od-parkinga-nema-period-važenja) | Mobilni | Izuzetak menja i prošle obračune | **Srednja** | Za rešavanje |
@@ -80,10 +89,12 @@
 | [P-44](#p-44--promena-centra-pregrupiše-celu-istoriju-finansija) | Finansije | Prošli izveštaji se menjaju | **Srednja** | Za proveru |
 | [P-45](#p-45--modul-menice-nema-migracije) | Menice | Tabele se ne mogu stvoriti migracijom | **Visoka** | Za rešavanje |
 | [P-46](#p-46--ključ-za-duplikate-ne-podnosi-prazna-polja) | Flota / gorivo | Zapis bez vaučera ili količine nestaje sa ekrana | **Visoka** | **Rešeno** 18.09. |
-| [P-47](#p-47--ključ-za-duplikate-ne-obuhvata-iznos-ni-valutu) | Flota / gorivo | Dva iznosa iste transakcije se spajaju u jedan | **Srednja** | **Za proveru** |
+| [P-47](#p-47--ključ-za-duplikate-ne-obuhvata-iznos-ni-valutu) | Flota / gorivo | Dva iznosa iste transakcije se spajaju u jedan | **Srednja** | **Zatvoreno** 21.09. — ne javlja se |
 | [P-48](#p-48--lični-podaci-i-brojevi-računa-329-osoba-u-repozitorijumu) | Bezbednost | Imena, adrese i brojevi računa u git istoriji | **Visoka** | Delimično rešeno — **istorija ostaje** |
 | [P-49](#p-49--procedura-osvežava-tekuću-godinu-a-ispravke-čitaju-prethodnu) | Potraživanja | Posle aprila ispravke čitaju godinu koja se ne osvežava | **Srednja** | **Za proveru** |
 | [P-50](#p-50--pregled-novog-modula-ekonomike-flote) | Flota / ekonomika | 14 nalaza u novom modulu, pre isporuke | **Visoka** | **Rešeno** 19.09. |
+| [P-51](#p-51--tri-šifre-dozvole-ne-postoje-na-produkciji) | Ovlašćenja | Ekrani ekonomike dostupni samo superkorisniku | **Visoka** | **Za rešavanje** — potrebna izmena na produkciji |
+| [P-52](#p-52--ulazni-podaci-ekonomike-su-prazni-na-produkciji) | Flota / ekonomika | Modul radi, ali nema šta da računa | **Visoka** | **Za rešavanje** — unos podataka |
 
 ---
 
@@ -350,10 +361,13 @@ floti**, jer se trošak delio izmišljenim brojem kilometara.
 > **[P] Nasleđena `vehicle_cost_per_km_rows()` i dalje ekstrapolira**, ali je **ne koristi
 > nijedan ekran** — ostala je radi kompatibilnosti postojećih testova.
 
-> **[N] Ostaje otvoreno:** uslov „očitavanje tačno na oba granična datuma“ je strog — u
-> praksi se retko toči gorivo baš 1. i 31. u mesecu, pa će RSD/km često biti prazan.
-> Predlog je koristiti **stvarno opaženi raspon unutar perioda** uz prikaz koliko je dana
-> pokriveno.
+> **Dopuna 21.09.2026. — usvojeno po zahtevu korisnika:** prethodni strogi
+> uslov je zamenjen najbližim stvarnim očitavanjem za svaku granicu, iz točenja
+> ili naloga zaduženja. Mogu se usvojiti i datumi van perioda; prikazuju se
+> oba stanja, datumi, izvori i odstupanje u danima. RSD/km je tada približan,
+> dok troškovi ostaju u traženom periodu. Nema ekstrapolacije; jedan datum
+> ili pad brojača ne daje obračun. Nije uveden proizvoljan limit od 90 dana.
+> Odsustvo točenja samo po sebi ne dokazuje da vozilo nije radilo.
 
 ---
 
@@ -1163,7 +1177,7 @@ nijedno postojeće grupisanje:
 | | |
 |---|---|
 | **Ozbiljnost** | **Srednja** |
-| **Status** | **Za proveru** |
+| **Status** | **Zatvoreno kao „prihvaćeno“** (21.09.2026.) |
 | **Gde** | `fleet/support/fuel.py` — `_dedupe_omv_transaction_lines()` |
 | **Obračun** | [V-06](obracuni/06-02-flota-gorivo.md#v-06--prečišćavanje-omv-transakcija) |
 
@@ -1185,6 +1199,15 @@ istom tablicom, vremenom, proizvodom, vaučerom i količinom, a **različitim** 
 ili `supplier_currency`. Ako takvih grupa nema — ponašanje je bezopasno i ovo se zatvara
 kao „prihvaćeno“. Ako ih ima, treba odlučiti da li su to duplikati ili zasebne stavke.
 
+**Provera nad produkcionom bazom (21.09.2026.) [P]:** brojanje je izvršeno. U
+`TransactionOMV` **nema nijedne grupe** (tablica + vreme + proizvod + vaučer + količina)
+koja sadrži više od jednog reda — dakle ni jedne koja bi se razlikovala po iznosu ili
+valuti. Ključ za duplikate **u stvarnim podacima ništa ne spaja**.
+
+**Zaključak [P]:** opisano ponašanje je moguće po kodu, ali se **ne dešava**. Problem se
+zatvara kao prihvaćen, bez izmene koda. Ako se način preuzimanja OMV podataka promeni,
+ovo brojanje treba ponoviti — zato opis ostaje u registru.
+
 ---
 
 ### P-27 — Formule 11 izveštaja nisu u projektu
@@ -1192,7 +1215,7 @@ kao „prihvaćeno“. Ako ih ima, treba odlučiti da li su to duplikati ili zas
 | | |
 |---|---|
 | **Ozbiljnost** | **Srednja** |
-| **Status** | Za rešavanje |
+| **Status** | **Većim delom rešeno** (21.09.2026.) |
 | **Gde** | `fleet/support/report_queries.py` |
 | **Obračun** | [6.5.5](obracuni/06-05-flota-izvestaji.md#655-izveštaji-nad-nasleđenim-pogledima) |
 
@@ -1228,6 +1251,31 @@ datoteke sa **stvarnim definicijama pogleda** i premeštene u
 | `nbv_roba.sql` | `CREATE view [dbo].[nbv_roba]` |
 
 Dve od njih (`fleet_trebovanja.sql`, `nbv_roba.sql`) **nisu bile u kontroli verzija**.
+
+**Preuzeto iz produkcione baze (21.09.2026.) [P]:** po povezivanju na produkciju
+definicije su pročitane iz `sys.sql_modules` i snimljene u isti direktorijum:
+
+| Datoteka | Pogled |
+|---|---|
+| `fleet_tro_svi.sql` | `dbo.fleet_tro_svi` |
+| `fleet_tro_goriva_m.sql` | `dbo.fleet_tro_goriva_m` |
+| `fleet_tro_pracenje.sql` | `dbo.fleet_tro_pracenje` |
+| `fleet_tro_taho.sql` | `dbo.fleet_tro_taho` |
+| `fleet_tro_parking.sql` | `dbo.fleet_tro_parking` |
+| `fleet_dobavljaci.sql` | `dbo.fleet_dobavljaci` |
+| `fleet_magacin_rez.sql` | `dbo.fleet_magacin_rez` |
+| `fleet_otpis.sql` | `dbo.fleet_otpis` |
+| `v_neodobreneIF.sql` | `dbo.v_neodobreneIF` |
+
+**Šta preostaje [P]:** `tro_zarade` i `kasko_rate` **ne postoje u bazi** — provera nad
+`sys.objects` ne vraća nijedan red ni pod jednom šemom. Treba utvrditi da li su
+obrisani, preimenovani ili se izveštaj koji ih pominje više ne koristi. Dok se to ne
+utvrdi, ta dva izveštaja se ne mogu dokumentovati **niti se zna da li uopšte rade**.
+
+**Šta i dalje stoji [Z]:** to što su definicije sada u projektu **ne znači da su pod
+kontrolom** — one i dalje žive u bazi i izmena u bazi i dalje menja rezultat na ekranu
+bez traga u istoriji verzija. Tačke 3 i 4 predloga (dokumentovati formulu svakog
+izveštaja; odrediti vlasnika koji odobrava izmene) **nisu urađene**.
 
 **Šta je time odgovoreno [P]:** formula za `vrednost_nab` (`kol * cena`), granica
 „304“ u pogledima Naplate, razredi starosti duga i razlika između stare i nove verzije
@@ -1287,6 +1335,109 @@ uvoz u `vehicles.py`.
 > nepotvrđenog, odbija da nepoznato prikaže kao nulu, a `period_analysis()` koriste i flota
 > i detalj vozila, pa isti period daje isti broj na oba ekrana. Nalazi su bili **greške
 > izvedbe, ne greške zamisli**.
+
+
+### P-51 — Tri šifre dozvole ne postoje na produkciji
+
+| | |
+|---|---|
+| **Ozbiljnost** | **Visoka** |
+| **Status** | **Za rešavanje** — traži izmenu na produkcionoj bazi |
+| **Gde** | `core/permissions.py`, tabela dozvola u bazi |
+| **Obračun** | [E-01](obracuni/06-12-flota-ekonomika.md) |
+
+**Šta je zatečeno [P]:** provera nad produkcionom bazom (21.09.2026.) pokazuje da tri
+šifre dozvole **uopšte ne postoje**, pa nemaju nijednu dodelu ulozi:
+
+| Šifra | Ekran | Dodela ulogama |
+|---|---|---|
+| `vehicle_analysis_settings` | „Namena, kriterijumi i evidencija“ — **ekran na kom se unose podaci ekonomike** | **0** |
+| `vehicle_assessment_create` | „Uporedi buduće opcije“ | **0** |
+| `vehicle_assessment_detail` | Prikaz sačuvane procene | **0** |
+
+Za poređenje, šifre koje **postoje**: `fleet_analytics` (2 uloge), `center_statistics`
+(3 uloge). [P]
+
+**Posledica [P]:** dozvola se u ovom sistemu izvodi iz **imena rute**; ako šifra ne postoji,
+nijedna uloga je nema. Ta tri ekrana su zato dostupna **samo superkorisniku**. Dugmad
+„Evidencija za analitiku“ i „Unesi naknadu“ na kartici *Troškovi* ostalim korisnicima se
+**ne prikazuju** (`can_edit_analysis` je netačno).
+
+**Zašto je ovo prvo po redu [Z]:** ekran koji nedostaje je upravo onaj kojim se rešava
+[P-52](#p-52--ulazni-podaci-ekonomike-su-prazni-na-produkciji). Dok se šifre ne kreiraju,
+podatke ekonomike **ne može uneti niko osim superkorisnika**.
+
+**Rešenje [P]:** pokrenuti `sync_permission_codes` nad produkcijom — komanda izvodi šifre
+iz imena ruta i propagira dodele. **To je upis u produkcionu bazu i traži odobrenje.**
+Posle toga treba **dodeliti** te tri šifre ulogama koje smeju da unose podatke — koje su
+to uloge, **nije potvrđeno** [N] i o tome odlučuje naručilac.
+
+---
+
+### P-52 — Ulazni podaci ekonomike su prazni na produkciji
+
+> **Ažuriranje 21.09.2026 — metodologija 2.1:** korisnik je odobrio da trošak
+> prati istoriju šifre posla vozila, da bez važećeg lizinga/najma važi vlasništvo
+> IMS i da namena može biti jasno označena početna procena. Posebna naknada,
+> posao naloga i zastoji više nisu obavezni ulazi. Migracija 0078 primenjena je
+> na IMS_ERP: 12 dugoročnih najmova označeno je mesečnim, 4 operativna lizinga
+> ukupnim iznosom, bez promene iznosa i datuma. Sedam finansijskih lizinga
+> i dalje zahteva zasebnu kamatu. Opis ispod je istorijski nalaz za 2.0;
+> prazne tabele profila/raspolaganja/zastoja same po sebi više ne blokiraju
+> analitiku. Važeća pravila i kontrolni primeri su u [E-01](obracuni/06-12-flota-ekonomika.md).
+
+| | |
+|---|---|
+| **Ozbiljnost** | **Visoka** |
+| **Status** | **Za rešavanje** — unos podataka, ne izmena koda |
+| **Gde** | Produkciona baza — tabele modula ekonomike |
+| **Obračun** | [E-01](obracuni/06-12-flota-ekonomika.md) |
+
+**Šta je zatečeno [P]:** migracija
+`0077_vehicletravelorder_job_code_leasechargeperiod_and_more` **jeste primenjena** na
+produkciji — tabele postoje. Ali su **prazne**:
+
+| Podatak | Zapisa |
+|---|---|
+| `LeaseChargePeriod` — potvrđene naknade lizinga/najma | **0** |
+| `LeaseInterest` — kamata finansijskog lizinga | **0** |
+| `VehicleAnalysisProfile` — namena i kontrolni pragovi | **0** |
+| `VehicleDowntime` — evidentirani zastoji | **0** |
+| `VehicleEconomicAssessment` — sačuvane procene | **0** |
+
+Uz to [P]:
+
+| Podatak | Stanje |
+|---|---|
+| Nalozi sa upisanom šifrom posla | **0 od 241** |
+| Vozila bez ijednog osnova raspolaganja (`VehicleHolding`) | **149 od 172** |
+
+Postojeći podaci nisu problem — ima 172 vozila, 23 ugovora lizinga, 647 polisa,
+1.342 servisa, 2.980 trebovanja, 16.118 zapisa o gorivu. [P]
+
+**Posledica [P]:** kartica *Troškovi* radi, ali za skoro svako vozilo prikazuje
+„nedostaje“:
+
+- red **„Potvrđene naknade lizinga / najma“** je prazan za **sva 23 vozila na lizingu** —
+  nijedan ugovor nema potvrđenu naknadu, pa po pravilu modula ne ulazi u obračun;
+- red **„Kamata finansijskog lizinga“** je prazan svuda;
+- **raspodela na šifre posla** ne daje ništa — ceo iznos pada u „neraspoređeno“;
+- **kriterijumi** se ne prikazuju jer nema unetog praga ni namene;
+- kod 149 vozila **ne zna se osnov raspolaganja**, pa se ugovorne naknade ne mogu
+  rasporediti ni kada se unesu.
+
+> **Ovo nije greška u obračunu.** Modul namerno ne procenjuje ono što nije uneto — prazno
+> polje nije potvrđena nula. Prikaz je tačan: podataka nema.
+
+**Rešenje [Z]:** unos podataka, redosledom koji nalaže sam ekran
+(`_vehicle_cost_readiness.html`) — prvo osnov raspolaganja, pa naknada sa periodom i
+značenjem iznosa, pa kamata, pa namena i pragovi. Preduslov je
+[P-51](#p-51--tri-šifre-dozvole-ne-postoje-na-produkciji).
+
+**Otvoreno pitanje za naručioca [N]:** ko unosi ove podatke i po kom dokumentu se
+potvrđuje iznos naknade. Bez odgovora na to, unos se **ne sme** raditi pogađanjem — staro
+polje „Trenutna rata / iznos otplate“ se upravo zato ne koristi u obračunu
+([P-08](#p-08--operativni-lizing-se-deli-drugačije-od-dugoročnog-najma)).
 
 ---
 

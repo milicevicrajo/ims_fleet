@@ -144,6 +144,13 @@
               <i class="mdi mdi-chart-bar"></i><span class="app-label">Finansije</span>
             </a>
             {% endif %}
+            {% if organizacija_permissions.stablo %}
+            <a class="nav-link {% if current_app == 'organizacija' %}active{% endif %}"
+               href="{% url 'switch_app' 'organizacija' %}?next={% url 'organizacija:stablo' %}"
+               title="Organizacija">
+              <i class="mdi mdi-file-tree"></i><span class="app-label">Organizacija</span>
+            </a>
+            {% endif %}
             <a class="nav-link {% if current_app == 'mobilni' %}active{% endif %}"
                href="{% url 'switch_app' 'mobilni' %}?next={% url 'mobilni:mobile_dashboard' %}"
                title="Mobilni telefoni">

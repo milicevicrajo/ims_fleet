@@ -62,7 +62,8 @@
           </div>
           <div class="text-muted">
             {{ order.vehicle }} - {{ order.employee }}
-            <div>Troškovi na teret: {{ order.job_code|default:"Šifra posla nije potvrđena" }}</div>
+            <div>Šifra posla naloga (informativno): {{ order.job_code|default:"Nije uneta" }}</div>
+            <small>Trošak vozila prati šifru posla na koju se vozilo vodi.</small>
           </div>
         </div>
         <div class="travel-order-header-actions d-flex flex-wrap gap-2 align-items-center justify-content-end">

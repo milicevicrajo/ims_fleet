@@ -1,6 +1,3 @@
 <ul class="vd-mini-list">
-  {% for item in items|slice:':3' %}{% include 'fleet/_vehicle_mini_item.html' %}{% empty %}<li class="text-muted">Nema evidentiranih stavki.</li>{% endfor %}
+  {% for item in items %}{% include 'fleet/_vehicle_mini_item.html' %}{% empty %}<li class="text-muted">Nema evidentiranih stavki.</li>{% endfor %}
 </ul>
-{% if items|length > 3 %}<details class="vd-mini-more"><summary>Još {{ items|length|add:'-3' }} · prikaži / sakrij</summary><ul class="vd-mini-list">
-  {% for item in items|slice:'3:' %}{% include 'fleet/_vehicle_mini_item.html' %}{% endfor %}
-</ul></details>{% endif %}

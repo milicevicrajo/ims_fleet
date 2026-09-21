@@ -90,7 +90,7 @@
       const owned = basis.value === 'owned';
       show(['financing','purchase_date','purchase_value','invoice_number'], owned);
       show(['financing_contract'], owned && form.elements.financing.value === 'credit');
-      show(['lease_type','contract_number','contract','end_date','current_payment_amount'], !owned);
+      show(['lease_type','contract_number','contract','end_date','payment_basis','current_payment_amount'], !owned);
     }
     const document = form.elements.add_document;
     if (document) show(['registration_number','issue_date','valid_until','registration_valid_until','traffic_card_number','serial_number','owner','traffic_card_pdf','traffic_card_front_image','traffic_card_back_image'], document.checked);

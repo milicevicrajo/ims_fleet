@@ -95,6 +95,8 @@ Dokumenti nastali pre objedinjene dokumentacije.
 | [`celery-taskovi-opsti-vodic.md`](celery-taskovi-opsti-vodic.md) | Arhitektura, podešavanja, raspored i operativa Celery zadataka |
 | [`plan-centralizacije-organizacije.md`](plan-centralizacije-organizacije.md) | Tri nivoa organizacije, istorija šifara, fazni prelazak |
 | [`plan-organizacije-i-dozvola-v2.md`](plan-organizacije-i-dozvola-v2.md) | **Novi plan:** uloge po centru, OJ i poslu; poslovni Admin panel |
+| [`popis-sifara-posla-korak-0.md`](popis-sifara-posla-korak-0.md) | **Merenje nad produkcijom:** 415 sifara, tri porodice, sta se poklapa |
+| [`plan-registra-sifara-posla.md`](plan-registra-sifara-posla.md) | **Za realizaciju:** registar paralelno, pa modul po modul |
 | [`plan_migracije_naplata_u_ims_erp.md`](plan_migracije_naplata_u_ims_erp.md) | Rani plan prelaska Naplate |
 | [`Analiza aplikacije i procedure rada - IMS flota.md`](<Analiza aplikacije i procedure rada - IMS flota.md>) | Izvor za poglavlje Flote |
 | [`Procena prenosa trebovanja u Nabavku.md`](<Procena prenosa trebovanja u Nabavku.md>) | Procena prenosa trebovanja |

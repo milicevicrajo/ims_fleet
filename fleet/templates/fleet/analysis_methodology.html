@@ -7,7 +7,7 @@ ista tabela iscrtavala pet puta i produžavala svaki od njih.
 <h1 class="my-4">Metodologija proračuna i kriterijumi · {{ methodology_version }}</h1>
 
 <p>Datumi perioda su uključivi. Iznosi su u RSD. <strong>Nepoznat podatak se ne zamenjuje nulom.</strong>
-Poslovna namena određuje merodavne pokazatelje, a istorija raspolaganja ugovorne troškove.</p>
+Namena može biti početna procena. Trošak prati istoriju šifre posla vozila; raspolaganje i naknade preuzimaju se iz ugovora, a bez ugovora podrazumeva se vlasništvo IMS.</p>
 
 <section class="card"><div class="card-body">
   <div class="table-responsive"><table class="table table-sm">
@@ -33,8 +33,11 @@ Poslovna namena određuje merodavne pokazatelje, a istorija raspolaganja ugovorn
   <p><strong>Održavanje</strong> = spoljne usluge i delovi + vrednost IMS trebovanja. Naknade osiguranja
   se prikazuju po datumu evidencije i mogu se odnositi na raniju štetu. Negativni iznosi (storna) ostaju vidljivi.</p>
 
-  <p><strong>Kilometraža</strong> se ne procenjuje. Ako nema očitanja na oba granična datuma, RSD/km ostaje
-  prazan — bolje nego izveden broj. Količina sa računa ne dokazuje potrošnju, naročito kada uključuje AdBlue.</p>
+  <p><strong>Kilometraža</strong> je razlika stvarnih očitavanja najbližih početku i kraju perioda,
+  iz točenja ili naloga zaduženja. Očitavanja mogu biti i van traženog perioda; usvojeni datumi,
+  stanja i odstupanja su prikazani. Tada je RSD/km približan, a troškovi ostaju u izabranom periodu.
+  Bez dva različita datuma ili uz pad brojača razlika se ne računa.
+  Količina sa računa ne dokazuje potrošnju, naročito kada uključuje AdBlue.</p>
 
   <p class="mb-0"><strong>Prazna evidencija ne potvrđuje da troška nije bilo.</strong> Nabavna i knjigovodstvena
   vrednost su zasebni podaci vozila; troškovi održavanja se od njih ne oduzimaju.</p>

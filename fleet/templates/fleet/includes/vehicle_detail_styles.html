@@ -65,6 +65,11 @@ Skala naslova je ista kao na ostalim karticama detalja:
 .vehicle-info-row>div>.card{width:100%;margin-bottom:0}
 .vd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
 .vd-grid>.card{margin-bottom:0}
+.vd-holding-grid>.card{height:360px;overflow:hidden}
+.vd-holding-grid>.card>.card-body{display:flex;flex-direction:column;min-height:0;height:100%}
+.vd-holding-grid>.card>.card-body>:not(.vd-holding-scroll){flex-shrink:0}
+.vd-holding-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-gutter:stable}
+.vd-holding-scroll:focus-visible{outline:3px solid #3887ae;outline-offset:3px}
 .vd-page .vd-section-heading{align-items:center;margin-bottom:16px}
 .vd-page .vd-section-heading h3{margin:0}
 .vd-page .vd-section-heading>div{min-width:0}
@@ -100,8 +105,6 @@ Skala naslova je ista kao na ostalim karticama detalja:
 .vd-mini-item small{display:block;color:#607381;margin-top:4px}
 .vd-mini-item .btn{flex-shrink:0}
 .vd-mini-item>div{min-width:0;overflow-wrap:anywhere}
-.vd-mini-more{margin-top:10px}
-.vd-mini-more summary{cursor:pointer;color:#20577b;font-weight:600;padding:8px 0}
 .vd-mini-item strong{overflow-wrap:anywhere}
 .vd-vehicle-heading{display:flex;align-items:center;gap:24px;min-width:0;flex:1}
 .vd-vehicle-heading>div{min-width:0;overflow-wrap:anywhere}
@@ -140,6 +143,7 @@ Skala naslova je ista kao na ostalim karticama detalja:
 .vd-state-partial { background: #fdf1dc; color: #8a5a12; }
 .vd-state-missing { background: #fbe5e3; color: #992b21; }
 .vd-state-optional { background: #eef1f4; color: #55636e; }
+.vd-state-estimated { background: #eef1f4; color: #55636e; }
 
 /* ---------- sažet red o popunjenosti ---------- */
 .vd-summary-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; }

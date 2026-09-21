@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load organizacija_extras %}
+{% comment %}
+Stablo organizacije — centar → jedinica → posao.
+
+Sklapanje je na `<details>`, bez biblioteke: radi i bez JavaScripta, a „otvori sve“ i
+„zatvori sve“ samo postavljaju `open` na svim elementima. Pretraga otvara pogodjene
+grane same, da se rezultat vidi u kontekstu.
+
+Faza 1: prikaz je samo za citanje. Nema nijednog dugmeta za izmenu jer se registar
+jos ne odrzava kroz aplikaciju.
+{% endcomment %}
+{% block title %}Organizacija — IMS{% endblock %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+{% include "organizacija/_styles.html" %}
+
+<div class="org-page">
+  <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="org-kicker">IMS · Centralni registar</div>
+      <h1>Organizacija</h1>
+      <p>Centar → organizaciona jedinica → šifra posla. Pripadnost je upisana vezom, ne izvedena iz šifre.</p>
+    </div>
+    <div class="org-hero-metrics">
+      <div><strong>{{ totals.centers }}</strong><small>{{ totals.centers|mnozina:"centar,centra,centara" }}</small></div>
+      <div><strong>{{ totals.units }}</strong><small>{{ totals.units|mnozina:"jedinica,jedinice,jedinica" }}</small></div>
+      <div><strong>{{ totals.jobs }}</strong><small>{{ totals.jobs|mnozina:"posao,posla,poslova" }}</small></div>
+      <div><strong>{{ totals.active_jobs }}</strong><small>aktivnih</small></div>
+    </div>
+  </header>
+
+  {% if is_empty %}
+    <div class="alert alert-warning">
+      <strong>Registar je prazan.</strong>
+      Stablo se puni komandom <code>python manage.py uvezi_organizaciju</code>.
+      Uvoz čita finansijski šifarnik i knjiženja, a upisuje isključivo u tabele registra.
+    </div>
+  {% else %}
+
+  <div class="org-toolbar">
+    <form method="get" class="org-search" role="search">
+      <label for="org-q" class="visually-hidden">Pretraga</label>
+      <input type="search" id="org-q" name="q" value="{{ query }}"
+             placeholder="Šifra ili naziv — npr. 430111 ili nadzor" autocomplete="off">
+      <button class="btn btn-primary" type="submit">Pretraži</button>
+      {% if query %}<a class="btn btn-outline-secondary" href="{% url 'organizacija:stablo' %}">Poništi</a>{% endif %}
+    </form>
+    <div class="org-actions">
+      <button type="button" class="btn btn-outline-primary btn-sm" data-org-open>Otvori sve</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" data-org-close>Zatvori sve</button>
+    </div>
+  </div>
+
+  {% if query %}
+    <p class="org-note">
+      Prikazane su samo grane koje odgovaraju pretrazi <strong>{{ query }}</strong>.
+      Pogodak je označen, a nadređena grana ostaje vidljiva da se vidi gde pripada.
+    </p>
+  {% endif %}
+
+  <div class="org-tree" id="org-tree">
+    {% for center in tree %}
+      <details class="org-center" {% if query %}open{% endif %}>
+        <summary>
+          <span class="org-chevron" aria-hidden="true"></span>
+          <span class="org-code org-code-1">{{ center.code }}</span>
+          <span class="org-name">{{ center.name|default:"Naziv nije poznat" }}</span>
+          <span class="org-count">{{ center.unit_count }} {{ center.unit_count|mnozina:"jedinica,jedinice,jedinica" }} · {{ center.job_count }} {{ center.job_count|mnozina:"posao,posla,poslova" }}</span>
+        </summary>
+
+        <div class="org-children">
+          {% for unit in center.units %}
+            <details class="org-unit" {% if query %}open{% endif %}>
+              <summary>
+                <span class="org-chevron" aria-hidden="true"></span>
+                <span class="org-code org-code-2">{{ unit.code }}</span>
+                <span class="org-name">
+                  {% if unit.name %}{{ unit.name }}{% else %}<em class="org-unnamed">naziv drugog nivoa nije potvrđen</em>{% endif %}
+                </span>
+                <span class="org-count">{{ unit.job_count }} {{ unit.job_count|mnozina:"posao,posla,poslova" }}</span>
+              </summary>
+
+              <ul class="org-jobs">
+                {% for job in unit.jobs %}
+                  <li class="{% if job.match %}is-match{% endif %}{% if not job.is_active %} is-inactive{% endif %}">
+                    <span class="org-code org-code-3">{{ job.code }}</span>
+                    <span class="org-name">{{ job.name|default:"—" }}</span>
+                    <span class="org-badges">
+                      {% if job.is_profit == True %}<span class="org-badge org-badge-profit">profitni</span>
+                      {% elif job.is_profit == False %}<span class="org-badge org-badge-nonprofit">neprofitni</span>
+                      {% else %}<span class="org-badge org-badge-unknown">oznaka nepoznata</span>{% endif %}
+                      {% if not job.is_active %}<span class="org-badge org-badge-inactive">neaktivan</span>{% endif %}
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </details>
+          {% empty %}
+            <p class="org-note">Ovaj centar nema nijednu jedinicu u registru.</p>
+          {% endfor %}
+        </div>
+      </details>
+    {% empty %}
+      <p class="alert alert-warning">Nijedna grana ne odgovara pretrazi.</p>
+    {% endfor %}
+  </div>
+
+  {% if unresolved %}
+    <section class="org-unresolved">
+      <h2>Šifre van stabla</h2>
+      <p class="org-note">
+        Ove šifre <strong>nisu izgubljene</strong> — svaka je sačuvana sa razlogom zašto nije
+        raspoređena. Mesto im se ne izmišlja dok se ne potvrdi.
+      </p>
+      {% for group in unresolved %}
+        <details class="org-unresolved-group">
+          <summary>
+            <span class="org-chevron" aria-hidden="true"></span>
+            <span class="org-name">{{ group.label }}</span>
+            <span class="org-count">{{ group.count }}</span>
+          </summary>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead><tr><th>Šifra</th><th>Naziv</th><th>Centar u izvoru</th><th>Razlog</th></tr></thead>
+              <tbody>
+                {% for row in group.rows %}
+                  <tr>
+                    <td><span class="org-code">{{ row.code }}</span></td>
+                    <td>{{ row.name|default:"—" }}</td>
+                    <td>{{ row.source_center|default:"—" }}</td>
+                    <td>{{ row.reason }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if last_run %}
+    <p class="org-run">
+      Poslednji uvoz {{ last_run.finished_at|date:"d.m.Y. H:i" }} ·
+      pročitano {{ last_run.source_rows }} ·
+      novih čvorova {{ last_run.nodes_created }} ·
+      za razrešenje {{ last_run.unresolved }}
+    </p>
+  {% endif %}
+
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+<script>
+(function () {
+  var root = document.getElementById('org-tree');
+  if (!root) { return; }
+  function setAll(open) {
+    document.querySelectorAll('.org-page details').forEach(function (item) { item.open = open; });
+  }
+  var openBtn = document.querySelector('[data-org-open]');
+  var closeBtn = document.querySelector('[data-org-close]');
+  if (openBtn) { openBtn.addEventListener('click', function () { setAll(true); }); }
+  if (closeBtn) { closeBtn.addEventListener('click', function () { setAll(false); }); }
+})();
+</script>
+{% endblock %}

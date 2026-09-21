@@ -125,7 +125,7 @@ class VehicleEconomicAssessment(VehicleEvidence):
     scope = models.TextField('Isti posao, kapacitet, raspoloživost i obuhvat svih alternativa')
     assumptions = models.TextField('Izvori cena, poreska osnova i pretpostavke')
     snapshot = models.JSONField(default=dict, editable=False)
-    methodology_version = models.CharField(max_length=32, default='IMS-FLOTA-2.0', editable=False)
+    methodology_version = models.CharField(max_length=32, default='IMS-FLOTA-2.1', editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, editable=False)
 

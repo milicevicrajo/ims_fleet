@@ -159,7 +159,7 @@ Intervali se prikazuju **obrnutim redosledom** — najnoviji prvi.
 | Fajl | `fleet/support/vehicle_mileage.py` |
 | Funkcije | `vehicle_mileage()`, `observed_timeline()` |
 | Obrazac | `MileagePeriodForm` |
-| Ekran | Detalj vozila, kartica „Kilometraža“ |
+| Ekran | Od 21.09.2026. podloga kartice „Potrošnja goriva“ i obračuna RSD/km; zasebna kartica „Kilometraža“ zamenjena je potrošnjom |
 | Testovi | `fleet/test_vehicle_mileage.py` — 11 testova |
 
 ### 8. Primer obračuna

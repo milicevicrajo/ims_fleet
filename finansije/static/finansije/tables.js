@@ -114,6 +114,15 @@
         tabs.forEach(function (tab) { tab.tabIndex = tab === button ? 0 : -1; });
         var panel = document.getElementById(button.getAttribute('aria-controls'));
         if (!panel) return;
+        if (button.closest('[data-job-analysis-tabs]')) {
+          var analysis = panel.id === 'jobs-additional' ? 'additional' : 'standard';
+          document.getElementById('finance-analysis').value = analysis;
+          document.querySelectorAll('[data-finance-jobs-export]').forEach(function (link) {
+            var url = new URL(link.href);
+            url.searchParams.set('analysis', analysis);
+            link.href = url.toString();
+          });
+        }
         jQuery(panel).find('.finance-datatable').each(function () {
           initialize.call(this);
           jQuery(this).DataTable().columns.adjust();
@@ -135,7 +144,7 @@
     jQuery('.finance-datatable').each(function () {
       var panel = this.closest('.finance-job-panels > .tab-pane');
       if (panel) {
-        initialize.call(this);
+        if (this.dataset.lazyTab !== 'true' || panel.classList.contains('active')) initialize.call(this);
       }
       else if (observer && this.getAttribute('data-lazy') === 'true') observer.observe(this);
       else initialize.call(this);

@@ -52,13 +52,34 @@ def observed_timeline(readings):
         total_km=sum((i['km'] for i in intervals),Decimal('0')) if intervals and not any(i['issues'] for i in intervals) else None)
 
 
-def vehicle_mileage(vehicle, params=None, today=None):
-    today=today or timezone.localdate()
-    readings=[]
-    excluded=0
+def nearest_period(readings, start=None, end=None):
+    """Adopt nearest real dates; ties extend outward, with no interpolation."""
+    dates=sorted({r['date'] for r in readings})
+    first=last=None
+    if dates:
+        first=min(dates,key=lambda day:(abs((day-start).days),day)) if start else dates[0]
+        last=min(dates,key=lambda day:(abs((day-end).days),-day.toordinal())) if end else dates[-1]
+    selected=[r for r in readings if first <= r['date'] <= last] if dates else []
+    result=observed_timeline(selected)
+    # A single requested date cannot define a distance between two days.
+    if start and end and start >= end:
+        result.update(total_km=None,intervals=[])
+    points=result['days']
+    result.update(readings=selected,requested_start=start,requested_end=end,
+        adopted_start=points[0] if points else None,adopted_end=points[-1] if points else None,
+        start_offset=(first-start).days if first and start else 0,
+        end_offset=(last-end).days if last and end else 0,
+        approximate=bool(dates and ((start and first != start) or (end and last != end))))
+    return result
 
-    def add(day,value,source,reference='',url=None,allow_zero=False,original_value=None):
-        nonlocal excluded
+
+def mileage_readings(vehicle_ids, today=None):
+    """Batch-load actual odometer evidence, independently of the cost filter."""
+    today=today or timezone.localdate()
+    readings=defaultdict(list)
+    excluded=defaultdict(int)
+
+    def add(vehicle_id,day,value,source,reference='',url=None,allow_zero=False,original_value=None):
         if isinstance(day,datetime):
             day=timezone.localtime(day).date() if timezone.is_aware(day) else day.date()
         try:
@@ -66,39 +87,46 @@ def vehicle_mileage(vehicle, params=None, today=None):
         except (InvalidOperation,ValueError):
             number=None
         if not day or day>today or number is None or not number.is_finite() or number<0 or (number==0 and not allow_zero):
-            if value is not None: excluded+=1
+            if value is not None: excluded[vehicle_id]+=1
             return
-        readings.append(dict(date=day,value=number,source=source,reference=reference,url=url,original_value=original_value))
+        readings[vehicle_id].append(dict(date=day,value=number,source=source,reference=reference,url=url,original_value=original_value))
 
-    for row in TransactionNIS.objects.filter(vehicle=vehicle).values('datum_transakcije','kilometraza','broj_racuna'):
-        add(row['datum_transakcije'],row['kilometraza'],'NIS — točenje',row['broj_racuna'])
-    for row in TransactionOMV.objects.filter(vehicle=vehicle).values('transaction_date','mileage','corrected_mileage','voucher','invoice_no'):
+    for row in TransactionNIS.objects.filter(vehicle_id__in=vehicle_ids).values('vehicle_id','datum_transakcije','kilometraza','broj_racuna'):
+        add(row['vehicle_id'],row['datum_transakcije'],row['kilometraza'],'NIS — točenje',row['broj_racuna'])
+    for row in TransactionOMV.objects.filter(vehicle_id__in=vehicle_ids).values('vehicle_id','transaction_date','mileage','corrected_mileage','voucher','invoice_no'):
         corrected=row['corrected_mileage']
         use_corrected=corrected is not None and corrected>0
-        add(row['transaction_date'],corrected if use_corrected else row['mileage'],
+        add(row['vehicle_id'],row['transaction_date'],corrected if use_corrected else row['mileage'],
             'OMV — korigovano u izvoru' if use_corrected else 'OMV — točenje',row['voucher'] or row['invoice_no'] or '',
             original_value=row['mileage'] if use_corrected and row['mileage'] != corrected else None)
-    direct_days={r['date'] for r in readings}
-    for row in FuelConsumption.objects.filter(vehicle=vehicle).values('date','mileage','supplier'):
+    direct_days={pk:{r['date'] for r in items} for pk,items in readings.items()}
+    for row in FuelConsumption.objects.filter(vehicle_id__in=vehicle_ids).values('vehicle_id','date','mileage','supplier'):
         day=timezone.localtime(row['date']).date() if timezone.is_aware(row['date']) else row['date'].date()
-        if day not in direct_days:
-            add(day,row['mileage'],'Ranija evidencija goriva',row['supplier'])
-    for order in VehicleTravelOrder.objects.filter(vehicle=vehicle).values('pk','pn_number','rbz','created_at','closed_at','start_mileage','end_mileage'):
+        if day not in direct_days.get(row['vehicle_id'],set()):
+            add(row['vehicle_id'],day,row['mileage'],'Ranija evidencija goriva',row['supplier'])
+    for order in VehicleTravelOrder.objects.filter(vehicle_id__in=vehicle_ids).values('vehicle_id','pk','pn_number','rbz','created_at','closed_at','start_mileage','end_mileage'):
         url=reverse('vehicle_travel_order_detail',args=[order['pk']])
         ref=f'PN {order["pn_number"] or "—"} · {order["rbz"] or ""}'
-        add(order['created_at'],order['start_mileage'],'Nalog vozila — početak',ref,url,allow_zero=True)
-        add(order['closed_at'],order['end_mileage'],'Nalog vozila — završetak',ref,url,allow_zero=True)
+        add(order['vehicle_id'],order['created_at'],order['start_mileage'],'Nalog vozila — početak',ref,url,allow_zero=True)
+        add(order['vehicle_id'],order['closed_at'],order['end_mileage'],'Nalog vozila — završetak',ref,url,allow_zero=True)
+    return readings, excluded
+
+
+def vehicle_mileage(vehicle, params=None, today=None):
+    today=today or timezone.localdate()
+    by_vehicle, excluded_counts=mileage_readings([vehicle.pk],today)
+    readings=by_vehicle[vehicle.pk]
+    excluded=excluded_counts[vehicle.pk]
     readings.sort(key=lambda r:(r['date'],r['value'],r['source']),reverse=True)
     complete=observed_timeline(readings)
     bound=params is not None and ('mileage_from' in params or 'mileage_to' in params)
     form=MileagePeriodForm(params if bound else None,initial={'mileage_from':min((r['date'] for r in readings),default=None),'mileage_to':today})
     valid=not bound or form.is_valid()
-    selected=readings
+    start=end=None
     if bound and valid:
         start,end=form.cleaned_data.get('mileage_from'),form.cleaned_data.get('mileage_to')
-        selected=[r for r in readings if (not start or r['date']>=start) and (not end or r['date']<=end)]
-    if not valid:selected=[]
-    result=observed_timeline(selected)
+    result=nearest_period(readings if valid else [],start,end)
+    selected=result['readings']
     result.update(current=complete['current'],readings=selected,form=form,valid=valid,excluded=excluded,
         coverage_start=min((r['date'] for r in selected),default=None),coverage_end=max((r['date'] for r in selected),default=None))
     return result

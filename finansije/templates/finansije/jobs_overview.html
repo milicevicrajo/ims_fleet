@@ -4,11 +4,12 @@
 {% block hero_title %}<i class="mdi mdi-briefcase-outline me-2" aria-hidden="true"></i>Šifre posla{% endblock %}
 {% block hero_description %}Finansijski pokazatelji i povezane evidencije za svaku šifru posla.{% endblock %}
 {% block hero_period %}{% endblock %}
-{% block hero_actions %}{% if valid and can_export %}<a class="btn btn-outline-light" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Excel</a>{% endif %}{% endblock %}
+{% block hero_actions %}{% if valid and can_export %}<a class="btn btn-outline-light" data-finance-jobs-export data-no-preloader href="{% url 'finansije:export' %}?{{ params }}"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Excel</a>{% endif %}{% endblock %}
 {% block finance_content %}
 {% include "finansije/_status.html" %}
 <form method="get" class="fleet-list-filter finance-period mb-3" aria-label="Period i centar">
   <input type="hidden" name="group" value="job">
+  <input type="hidden" name="analysis" id="finance-analysis" value="{% if additional_active %}additional{% else %}standard{% endif %}">
   <div class="finance-period-field"><label class="form-label" for="{{ form.date_from.id_for_label }}">{{ form.date_from.label }}</label>{{ form.date_from }}{{ form.date_from.errors }}</div>
   <div class="finance-period-field"><label class="form-label" for="{{ form.date_to.id_for_label }}">{{ form.date_to.label }}</label>{{ form.date_to }}{{ form.date_to.errors }}</div>
   <div class="finance-period-field"><label class="form-label" for="{{ form.center.id_for_label }}">{{ form.center.label }}</label>{{ form.center }}{{ form.center.errors }}</div>
@@ -17,11 +18,17 @@
 </form>
 {% include "finansije/_period.html" %}
 {% if valid %}
-<div class="card"><div class="card-body">
+<div class="card finance-job-workspace"><div class="card-header">
+  <nav class="nav finance-job-nav" role="tablist" aria-label="Analize po šifri posla" data-job-analysis-tabs>
+    <button class="nav-link{% if not additional_active %} active{% endif %}" id="jobs-results-tab" data-bs-toggle="tab" data-bs-target="#jobs-results" type="button" role="tab" aria-controls="jobs-results" aria-selected="{% if additional_active %}false{% else %}true{% endif %}"{% if additional_active %} tabindex="-1"{% endif %}>Finansijski rezultati</button>
+    <button class="nav-link{% if additional_active %} active{% endif %}" id="jobs-additional-tab" data-bs-toggle="tab" data-bs-target="#jobs-additional" type="button" role="tab" aria-controls="jobs-additional" aria-selected="{% if additional_active %}true{% else %}false{% endif %}"{% if not additional_active %} tabindex="-1"{% endif %}>Dodatne analize</button>
+  </nav>
+</div><div class="tab-content finance-job-panels">
+<section id="jobs-results" class="tab-pane{% if not additional_active %} active{% endif %}" role="tabpanel" aria-labelledby="jobs-results-tab" tabindex="0"><div class="card-body">
   <h2 class="finance-job-heading">Pregled svih šifara posla</h2>
   <p class="text-muted small">Iznosi u RSD. Rashodi, zajednički troškovi i odliv prikazani su sa znakom minus. Crtica znači da podatak nije dostupan; zvezdica označava nepotpun obračun, sa objašnjenjem pri prelasku mišem. Prikazane su i šifre bez prometa.</p>
   {% include "finansije/_table_error.html" %}
-  <div class="table-responsive"><table id="FinanceJobsTable" class="table table-hover align-middle finance-datatable" data-page-length="100" data-ajax-source="{{ table_source }}" style="width:100%">
+  <div class="table-responsive"><table id="FinanceJobsTable" class="table table-hover align-middle finance-datatable" data-lazy-tab="true" data-page-length="100" data-ajax-source="{{ table_source }}" style="width:100%">
     <thead><tr><th>Šifra posla</th><th>Naziv</th><th>Centar</th>{% for label in metric_labels %}<th class="finance-number">{{ label }}</th>{% endfor %}</tr></thead>
     <tbody>{% for row in rows|slice:":100" %}<tr>
       <td>{% if row.card_url %}{% finance_job_button row.code row.card_url %}{% else %}Bez šifre{% endif %}</td><td>{{ row.label }}</td><td>{{ row.center|default:"—" }}</td>
@@ -29,6 +36,20 @@
     </tr>{% endfor %}</tbody>
   </table></div>
   <p class="text-muted small mb-0">Rezultat bez ZT = prihodi − rashodi; rezultat posle ZT = prihodi − rashodi − zajednički troškovi. Neto gotovina = priliv − odliv. Novčani tokovi koriste obračun 52nt. Za period kroz više godina obračuni se rade po godinama i sabiraju. Dugme sa šifrom posla otvara detalj sa fakturama i ostalim evidencijama za poslednji mesec perioda, odnosno celu godinu kada je izabrana cela godina.</p>
+</div></section>
+<section id="jobs-additional" class="tab-pane{% if additional_active %} active{% endif %}" role="tabpanel" aria-labelledby="jobs-additional-tab" tabindex="0"><div class="card-body">
+  <h2 class="finance-job-heading">Dodatne analize po šifri posla</h2>
+  <p class="text-muted small">Isti finansijski rezultati, relativni pokazatelji i iznosi po čoveku za izabrani period. Iznosi su u RSD; rashodi, ZT i odliv imaju znak minus. Crtica označava nedostajuću ili neprimenljivu osnovicu, a * nepotpun obračun.</p>
+  {% include 'finansije/_table_error.html' %}
+  <div class="table-responsive"><table id="FinanceAdditionalTable" class="table table-hover align-middle finance-datatable" data-lazy-tab="true" data-page-length="100" data-ajax-source="{{ additional_source }}" style="width:100%">
+    <thead><tr><th>Šifra posla</th><th>Naziv</th><th>Centar</th>{% for label in additional_labels %}<th class="finance-number">{{ label }}</th>{% endfor %}</tr></thead><tbody></tbody>
+  </table></div>
+  <details class="mt-3"><summary>Osnovice pokazatelja</summary>
+    <p class="small mt-2">Relativni pokazatelji dele rezultat, rashode ili ZT prihodima i množe sa 100. Rashodi i ZT u tim odnosima prikazani su kao pozitivno opterećenje prihoda. Za nulte ili negativne prihode procenat se ne računa.</p>
+    <p class="small">Iznos po čoveku = iznos za ceo izabrani period / prosečan mesečni broj ljudi evidentiranih na šifri u zaključenim obračunima zarada. Svaki čovek se broji jednom po mesecu i šifri, bez obzira na broj obračuna i stavki. To nije broj punih radnih mesta niti raspodela prema radnim satima; isti čovek može biti evidentiran na više šifara.</p>
+    <p class="small">Prosek obuhvata dostupne zaključene mesece, uključujući nulu za šifru bez zaposlenih u zaključenom mesecu. Nedostajući i otvoreni obračuni označavaju se zvezdicom; detalji su na pokazatelju. Za nepotpun mesec broj ljudi se odnosi na ceo mesec. Bez ljudi ili bez dostupnih obračuna nema pokazatelja po čoveku. Za te pokazatelje potrebna je postojeća dozvola za zaposlene.</p>
+  </details>
+</div></section>
 </div></div>
 {% endif %}
 {% endblock %}

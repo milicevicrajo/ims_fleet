@@ -47,25 +47,25 @@ class EconomicsFixture(TestCase):
         values.update(kwargs)
         return VehicleTravelOrder.objects.create(**values)
 
-    def lease(self, start=None, end=None, kind='operativni'):
+    def lease(self, start=None, end=None, kind='operativni', payment_basis='monthly'):
         return Lease.objects.create(vehicle=self.car, lease_type=kind, contract_number='L1',
-            partner_code='P', partner_name='Partner', job_code='P1', current_payment_amount=31000,
+            partner_code='P', partner_name='Partner', job_code='P1', current_payment_amount=31000, payment_basis=payment_basis,
             start_date=start or self.start, end_date=end or self.end)
 
 class FleetEconomicsTests(EconomicsFixture):
-    def test_no_values_are_unknown_and_not_free_ownership(self):
+    def test_default_ownership_does_not_invent_costs(self):
         self.holding.delete()
         row = self.row()
         self.assertIsNone(row['total'])
         self.assertIsNone(row['per_km'])
-        self.assertIsNone(row['downtime_days'])
-        self.assertEqual(row['basis'], 'Nije potvrđeno')
-        self.assertIn('Osnov raspolaganja', ' '.join(row['warnings']))
+        self.assertEqual(row['basis_codes'], {'owned'})
         self.assertTrue(all(m['included'] is None for m in row['monthly']))
-        self.order()
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
         self.assertIsNone(self.row()['jobs'][0]['amount'])
 
+
     def test_aligned_km_and_monthly_and_job_totals_reconcile(self):
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
         self.fuel()
         self.order()
         row = self.row()
@@ -78,29 +78,36 @@ class FleetEconomicsTests(EconomicsFixture):
         self.assertEqual(sum(j['amount'] for j in row['jobs']) + row['unallocated'], row['total'])
         self.assertEqual(row['unallocated'], 0)
 
-    def test_costs_are_not_attached_to_current_assignment_without_order_job(self):
+    def test_costs_follow_vehicle_assignment_without_order_job(self):
         self.fuel()
         JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
         self.order(job_code=None)
         row = self.row()
-        self.assertEqual(row['jobs'], [])
-        self.assertEqual(row['unallocated'], row['total'])
+        self.assertEqual(row['jobs'][0]['code'], 'P1')
+        self.assertEqual(row['jobs'][0]['amount'], row['total'])
+        self.assertEqual(row['unallocated'], 0)
 
-    def test_overlapping_orders_count_days_once_and_conflicting_jobs_are_unallocated(self):
+
+    def test_overlapping_order_jobs_do_not_change_vehicle_cost_assignment(self):
         self.fuel()
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
         self.order()
         other = OrganizationalUnit.objects.create(code='P2', name='Drugi', center='01')
         self.order(created_at=date(2026,1,20), job_code=other)
         row = self.row()
         self.assertEqual(row['booked_days'], 31)
-        self.assertEqual(row['jobs'][0]['days'], 19)
-        self.assertEqual(row['unallocated'], 1200)
+        self.assertEqual(row['jobs'][0]['days'], 31)
+        self.assertEqual(row['jobs'][0]['amount'], 3100)
+        self.assertEqual(row['unallocated'], 0)
         self.assertIn('Preklapanje', ' '.join(row['warnings']))
 
-    def test_missing_boundaries_or_internal_odometer_drop_blocks_unit_rate(self):
+
+    def test_nearest_boundaries_work_but_internal_odometer_drop_blocks_unit_rate(self):
         fueling(self.car, date(2026,1,2), 10000, cost='100')
         fueling(self.car, self.end, 11000, cost='100')
-        self.assertIsNone(self.row()['per_km'])
+        self.assertEqual(self.row()['per_km'], D('0.2'))
+        self.assertTrue(self.row()['mileage_approximate'])
+        self.assertEqual(self.row()['mileage_start'], date(2026,1,2))
         fueling(self.car, self.start, 10500, cost='100')
         self.assertIsNone(self.row()['per_km'])
         self.assertIn('opadaju', ' '.join(self.row()['warnings']))
@@ -110,6 +117,27 @@ class FleetEconomicsTests(EconomicsFixture):
         fueling(self.car, self.end, 2000, cost='0')
         self.assertEqual(self.row()['per_km'], 0)
         self.assertEqual(fleet_summary([self.row()])['known_count'], 1)
+
+    def test_nearby_readings_outside_period_do_not_add_outside_costs(self):
+        fueling(self.car,date(2025,12,31),1000,cost='9000')
+        fueling(self.car,date(2026,1,15),1500,cost='100')
+        fueling(self.car,date(2026,2,1),2000,cost='8000')
+        row=self.row()
+        self.assertEqual(row['distance'],1000)
+        self.assertEqual(row['total'],100)
+        self.assertEqual(row['per_km'],D('0.1'))
+        self.assertEqual(row['mileage_start'],date(2025,12,31))
+        self.assertEqual(row['mileage_end'],date(2026,2,1))
+        self.assertTrue(row['mileage_approximate'])
+
+    def test_closed_order_outside_cost_period_can_supply_nearest_boundary(self):
+        self.order(created_at=date(2025,12,1),closed_at=date(2025,12,31),
+            start_mileage=9000,end_mileage=10000)
+        fueling(self.car,self.end,11000,cost='100')
+        row=self.row()
+        self.assertEqual(row['distance'],1000)
+        self.assertEqual(row['booked_days'],0)
+        self.assertIn('završetak',row['mileage']['adopted_start']['source'])
 
     def test_direct_fuel_period_and_corrected_odometer_do_not_double_count_legacy(self):
         self.profile.fuel_source='transactions';self.profile.save()
@@ -140,38 +168,33 @@ class FleetEconomicsTests(EconomicsFixture):
 
     def test_unknown_lease_amount_is_not_interpreted_as_monthly_or_total(self):
         self.holding.delete()
-        lease = self.lease()
+        lease = self.lease(payment_basis='')
         VehicleHolding.objects.create(vehicle=self.car, basis='contract', lease=lease, start_date=self.start, end_date=self.end)
         row = self.row()
         self.assertIsNone(row['contract'])
         self.assertIsNone(row['total'])
         self.assertIn('naknada', ' '.join(row['warnings']))
 
-    def test_contract_periods_follow_holding_and_inclusive_single_day(self):
-        self.holding.end_date = date(2026,1,15)
-        self.holding.save()
-        lease = self.lease(start=date(2026,1,1))
-        VehicleHolding.objects.create(vehicle=self.car, basis='contract', lease=lease,
-            start_date=date(2026,1,16), end_date=self.end)
-        LeaseChargePeriod.objects.create(lease=lease, start=self.start, end=self.end,
-            amount=31000, basis='monthly', evidence='Ponuda')
+    def test_contract_follows_lease_dates_without_holding_or_charge_table(self):
+        self.lease(start=date(2026,1,16))
         self.assertEqual(self.row()['contract'], 16000)
         self.assertEqual(self.row(self.end,self.end)['contract'], 1000)
+        self.assertEqual(self.row()['basis_codes'], {'owned', 'operativni'})
+
 
     def test_zero_contract_charge_is_recorded_zero(self):
-        self.holding.delete()
-        lease = self.lease()
-        VehicleHolding.objects.create(vehicle=self.car, basis='contract', lease=lease, start_date=self.start, end_date=self.end)
-        LeaseChargePeriod.objects.create(lease=lease, start=self.start, end=self.end, amount=0, basis='total', evidence='Bez naknade')
+        lease = self.lease(payment_basis='total')
+        lease.current_payment_amount = 0
+        lease.save()
         self.assertEqual(self.row()['total'], 0)
 
-    def test_interest_only_during_financial_holding(self):
-        self.holding.end_date = date(2026,1,15)
-        self.holding.save()
-        lease = self.lease(kind='finansijski')
-        VehicleHolding.objects.create(vehicle=self.car, basis='contract', lease=lease, start_date=date(2026,1,16), end_date=self.end)
+
+    def test_interest_only_during_financial_contract(self):
+        lease = self.lease(kind='finansijski', start=date(2026,1,16))
         LeaseInterest.objects.create(lease=lease, year=2026, interest_amount=D('36500'))
         self.assertEqual(self.row()['interest'], 1600)
+        self.assertIsNone(self.row()['contract'])
+
 
     def test_contract_period_overlap_rejected(self):
         lease = self.lease()
@@ -179,11 +202,13 @@ class FleetEconomicsTests(EconomicsFixture):
         with self.assertRaises(ValidationError):
             LeaseChargePeriod.objects.create(lease=lease, start=self.end, end=self.end, amount=100, basis='monthly', evidence='Test')
 
-    def test_downtime_union_does_not_double_count_or_infer_productivity(self):
+    def test_downtime_is_not_an_analysis_requirement(self):
         VehicleDowntime.objects.create(vehicle=self.car, start=self.start, end=date(2026,1,3), reason='Kvar')
-        VehicleDowntime.objects.create(vehicle=self.car, start=date(2026,1,2), end=date(2026,1,4), reason='Servis')
-        self.assertEqual(self.row()['downtime_days'], 4)
-        self.assertEqual(self.row()['booked_days'], 0)
+        row = self.row()
+        self.assertIsNone(row['downtime_days'])
+        self.assertNotIn('Evidencija zastoja', [i['label'] for i in row['readiness']])
+        self.assertEqual(row['booked_days'], 0)
+
 
     def test_threshold_requires_basis_and_is_disabled_across_profile_change(self):
         self.fuel()
@@ -279,6 +304,8 @@ class EconomicsReviewFixesTests(EconomicsFixture):
         self.fuel()
         drugi_posao = OrganizationalUnit.objects.create(code='P3', name='Treci', center='01')
         predaja = date(2026, 1, 16)
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
+        JobCode.objects.create(vehicle=self.car, organizational_unit=drugi_posao, assigned_date=predaja)
         self.order(created_at=self.start, closed_at=predaja, job_code=self.unit)
         self.order(created_at=predaja, closed_at=self.end, job_code=drugi_posao)
 
@@ -302,7 +329,7 @@ class EconomicsReviewFixesTests(EconomicsFixture):
         row = self.row()
 
         self.assertIn('Preklapanje naloga', ' '.join(row['warnings']))
-        self.assertGreater(row['unallocated'], D('0'))
+        self.assertEqual(row['unallocated'], row['total'])
 
     def test_single_day_order_keeps_its_day(self):
         self.fuel()
@@ -310,7 +337,7 @@ class EconomicsReviewFixesTests(EconomicsFixture):
 
         row = self.row()
 
-        self.assertEqual({job['code']: job['days'] for job in row['jobs']}['P1'], 1)
+        self.assertEqual(row['booked_days'], 1)
 
     def test_closed_order_without_successor_keeps_last_day(self):
         self.fuel()
@@ -319,7 +346,7 @@ class EconomicsReviewFixesTests(EconomicsFixture):
         row = self.row()
 
         # 01-10 ukljucivo = 10 dana; bez naslednika poslednji dan pripada nalogu.
-        self.assertEqual({job['code']: job['days'] for job in row['jobs']}['P1'], 10)
+        self.assertEqual(row['booked_days'], 10)
 
     def test_legacy_fuel_rows_carry_all_displayed_columns(self):
         # Kartica goriva na detalju vozila prikazuje jedinicnu cenu i neto iznos;
@@ -401,12 +428,13 @@ class AnalysisSettingsLookupTests(EconomicsFixture):
         self.user = get_user_model().objects.create_superuser('admin-analitika', password='t')
         self.client.force_login(self.user)
 
-    def test_non_numeric_ids_return_404(self):
+    def test_retired_editor_parameters_do_not_reopen_old_forms(self):
         url = reverse('vehicle_analysis_settings', args=[self.car.pk])
         for parameter in ('downtime', 'charge', 'order'):
             with self.subTest(parameter=parameter):
                 response = self.client.get(url, {parameter: 'abc'})
-                self.assertEqual(response.status_code, 404)
+                self.assertEqual(response.status_code, 200)
+                self.assertNotContains(response, 'name="action" value="'+parameter+'"')
 
     def test_valid_page_still_opens(self):
         response = self.client.get(reverse('vehicle_analysis_settings', args=[self.car.pk]))
@@ -458,7 +486,7 @@ class CostTabLayoutTests(EconomicsFixture):
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
         self.assertIn('Šta je potrebno za obračun troškova', body)
-        self.assertEqual(len(response.context['economics']['readiness']), 7)
+        self.assertEqual(len(response.context['economics']['readiness']), 6)
 
     def test_source_records_are_inside_the_sources_section(self):
         # Racuni za gorivo su ranije stajali van kartice, posle nje.
@@ -559,11 +587,11 @@ class CostTabLayoutTests(EconomicsFixture):
         response = self.open_costs()
         readiness = response.context['economics']['readiness']
 
-        self.assertEqual([item['order'] for item in readiness], [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual([item['order'] for item in readiness], [1, 2, 3, 4, 5, 6])
         by_label = {item['label']: item for item in readiness}
         # Bez naloga i bez ocitanja na granicama: oba moraju biti oznacena kao nedostajuca.
-        self.assertEqual(by_label['Putni nalozi i šifra posla']['state'], 'missing')
-        self.assertEqual(by_label['Očitavanja kilometraže na granicama perioda']['state'], 'missing')
+        self.assertEqual(by_label['Šifra posla vozila']['state'], 'missing')
+        self.assertEqual(by_label['Najbliža očitavanja kilometraže']['state'], 'missing')
         # Namena i raspolaganje su uneti u pripremi.
         self.assertEqual(by_label['Poslovna namena vozila']['state'], 'ok')
         self.assertEqual(by_label['Osnov raspolaganja']['state'], 'ok')
@@ -571,6 +599,7 @@ class CostTabLayoutTests(EconomicsFixture):
             self.assertTrue(item['effect'], msg=f"{item['label']} nema objasnjenje cemu sluzi")
 
     def test_readiness_turns_green_when_data_is_entered(self):
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.unit, assigned_date=self.start)
         self.fuel()
         self.order()
         VehicleDowntime.objects.create(vehicle=self.car, start=self.start, end=self.start,
@@ -579,9 +608,9 @@ class CostTabLayoutTests(EconomicsFixture):
         readiness = self.open_costs().context['economics']['readiness']
         by_label = {item['label']: item for item in readiness}
 
-        self.assertEqual(by_label['Putni nalozi i šifra posla']['state'], 'ok')
-        self.assertEqual(by_label['Očitavanja kilometraže na granicama perioda']['state'], 'ok')
-        self.assertEqual(by_label['Evidencija zastoja']['state'], 'ok')
+        self.assertEqual(by_label['Šifra posla vozila']['state'], 'ok')
+        self.assertEqual(by_label['Najbliža očitavanja kilometraže']['state'], 'ok')
+        self.assertNotIn('Evidencija zastoja', by_label)
 
     def test_lease_shows_monthly_rate_and_remaining(self):
         lease = self.lease(start=date(2026, 1, 1), end=date(2026, 12, 31))
@@ -597,11 +626,11 @@ class CostTabLayoutTests(EconomicsFixture):
         self.assertEqual(row['rate_basis'], 'monthly')
         self.assertEqual(row['rate_monthly'], D('31000'))
         self.assertIsNotNone(row['remaining_amount'])
-        # Staro dvosmisleno polje se prikazuje, ali se ne tumaci.
-        self.assertEqual(row['legacy_amount'], D('31000'))
+        # Iznos se sada preuzima neposredno sa ugovora.
+        self.assertEqual(row['lease'].current_payment_amount, D('31000'))
 
-    def test_lease_without_confirmed_charge_is_marked_unconfirmed(self):
-        lease = self.lease(start=date(2026, 1, 1), end=date(2026, 12, 31))
+    def test_lease_without_amount_basis_is_marked_unconfirmed(self):
+        lease = self.lease(start=date(2026, 1, 1), end=date(2026, 12, 31), payment_basis='')
 
         row = self.open_costs().context['economics']['leases'][0]
 

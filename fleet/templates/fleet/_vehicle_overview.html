@@ -18,7 +18,7 @@
     {% else %}<strong>Rok nije evidentiran</strong>{% endif %}
     <small>{% if registration_days != None %}Prema evidentiranom roku registracije.{% elif ao_policy %}Rok iz polise autoodgovornosti; rok nalepnice nije unet.{% else %}Nema unetog roka registracije ni AO polise.{% endif %}</small>
   </div>
-  <div class="vehicle-kpi"><small>Trenutni osnov raspolaganja</small><strong>{{ holding_label }}</strong><small>{% if holding_lease %}{{ holding_lease.get_lease_type_display }} · {{ holding_lease.contract_number }}{% elif current_holding %}{{ current_holding.get_financing_display|default:"Finansiranje nije navedeno" }}{% else %}Bez važećeg ugovora o lizingu / najmu.{% endif %}</small></div>
+  <div class="vehicle-kpi"><small>Trenutni osnov raspolaganja</small><strong>{{ holding_label }}</strong><small>{% if holding_conflict %}Proveriti datume ugovora koji se preklapaju.{% elif holding_lease %}{{ holding_lease.lease_type_label }} · {{ holding_lease.contract_number }}{% else %}Podrazumevano vlasništvo — bez važećeg ugovora o lizingu / najmu.{% endif %}</small></div>
   <div class="vehicle-kpi"><small>Trenutna organizaciona jedinica</small><strong>{{ current_job_code.organizational_unit|default:"Nije dodeljena" }}</strong><small>{% if current_job_code %}Od {{ current_job_code.assigned_date|date:"d.m.Y" }}{% else %}Dodela se vodi kroz istoriju šifara posla.{% endif %}</small></div>
   <div class="vehicle-kpi"><small>Polise koje važe danas</small><strong>{{ active_policies|length }}</strong><small>Na dan {{ today|date:"d.m.Y" }}. Buduće polise su u istoriji.</small></div>
 </div>

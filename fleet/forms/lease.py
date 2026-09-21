@@ -20,8 +20,8 @@ class LeaseForm(FieldsetMixin, forms.ModelForm):
          ('partner_code', 'partner_name')),
         ('Trajanje', 'Oba datuma su uključena u period važenja.',
          ('start_date', 'end_date')),
-        ('Iznos i knjiženje', 'Iznos ovde je samo evidencija. Za obračun troškova unosi se naknada sa periodom — vidi objašnjenje ispod iznosa.',
-         ('current_payment_amount', 'job_code')),
+        ('Iznos i knjiženje', 'Naknada se obračunava neposredno iz ovog ugovora i njegovog perioda važenja.',
+         ('payment_basis', 'current_payment_amount', 'job_code')),
         ('Napomena', None, ('note',)),
     )
 
@@ -34,11 +34,8 @@ class LeaseForm(FieldsetMixin, forms.ModelForm):
         }
         help_texts = {
             "current_payment_amount": (
-                "Za dugoročni najam: mesečna naknada. Za operativni lizing: ukupan iznos za period. "
-                "Za finansijski lizing: iznos rate; kamata se vodi odvojeno. "
-                "VAŽNO: obračun troškova NE koristi ovo polje, jer njegovo značenje nije potvrđeno. "
-                "Naknada za obračun se unosi na ekranu „Namena, kriterijumi i evidencija“, "
-                "gde se uz iznos bira i da li je mesečni ili ukupan."
+                "Izaberite da li unosite mesečni iznos ili ukupni iznos ugovora. "
+                "Za finansijski lizing glavnica ne ulazi u trošak; kamata se vodi odvojeno."
             ),
             "job_code": "Šifra posla kao slobodan tekst, onako kako stoji u knjigovodstvu.",
             "contract": "Ako ugovor već postoji u evidenciji Ugovori, povežite ga — broj i rok se tada preuzimaju.",
@@ -60,10 +57,10 @@ class LeaseForm(FieldsetMixin, forms.ModelForm):
             self.add_error('end_date', 'Završetak ne može biti pre početka.')
         if data.get('current_payment_amount') is not None and data['current_payment_amount'] < 0:
             self.add_error('current_payment_amount', 'Iznos ne može biti negativan.')
+        if data.get('lease_type') != 'finansijski' and not data.get('payment_basis'):
+            self.add_error('payment_basis', 'Izaberite mesečni ili ukupni iznos ugovora.')
         if self.instance.pk:
             for holding in self.instance.holdings.all():
                 if data.get('vehicle') and data['vehicle'].pk != holding.vehicle_id:
                     self.add_error('vehicle', 'Ugovor je povezan sa istorijom ovog vozila; ne može se premestiti.')
-                if start and end and (holding.start_date < start or not holding.end_date or holding.end_date > end):
-                    self.add_error('end_date', 'Najpre usaglasite period povezanog osnova raspolaganja.')
         return data

@@ -1115,3 +1115,63 @@ predlog rešenja su u [registru problema](../10-poznati-problemi.md).
 | [4. Baza podataka](../04-baza-podataka.md#46-finansijska-analitika--finansije) | `LedgerEntry` i prateće tabele |
 | [Prilog B — DDL nasleđenih pogleda](../../ddl-nasledjenih-pogleda/README.md) | Definicije pogleda Naplate iz baze |
 | [10. Poznati problemi](../10-poznati-problemi.md) | Registar problema |
+
+
+## Dodatne analize po šifri posla — dopuna 21.09.2026.
+
+Nova kartica **Dodatne analize** na postojećem izveštaju `group=job` prikazuje
+24 kolone: šifru, naziv, centar, postojećih osam finansijskih iznosa, četiri
+relativna pokazatelja, prosečan broj ljudi i osam iznosa po čoveku. Period,
+centar i dostupne šifre isti su kao na kartici **Finansijski rezultati**.
+Osnovni obračuni prihoda, rashoda, ZT i tokova gotovine nisu promenjeni.
+
+| Pokazatelj | Formula |
+|---|---|
+| Rezultat bez ZT / prihodi % | (P − R) / P × 100 |
+| Rezultat posle ZT / prihodi % | (P − R − ZT) / P × 100 |
+| Rashodi / prihodi % | R / P × 100 |
+| ZT / prihodi % | ZT / P × 100 |
+| Prosečan broj ljudi | Zbir mesečnih brojeva ljudi na šifri / broj dostupnih zaključenih meseci |
+| Svaki iznos / čoveku | Postojeći iznos za ceo izabrani period / prosečan broj ljudi |
+
+Broj ljudi čita se zbirno iz `PUTGEO-SERVER.bazaldims.dbo.Zarada`, za firmu,
+godinu, mesece i samo korisniku dostupne šifre. Uslovi su isti kao za
+postojeći spisak zaposlenih na šifri: iznos ili količina različiti od nule
+plus odgovarajući `PomLD.status_obr='Z'`. Broji se `COUNT(DISTINCT rasif)` po
+šifri i mesecu, tako da više elemenata ili zaključenih obračuna ne duplira
+čoveka. Imena, pojedinačne zarade i radni sati se ne preuzimaju.
+
+Zaključen mesec bez stavki za šifru ulazi kao nula. Mesec bez zaključenog
+obračuna ne pretpostavlja se kao nula: prosek koristi dostupne mesece, ali
+broj ljudi i izvedeni iznosi nose oznaku nepotpunosti `*` i broj pokrivenih
+meseci. Otvoreni obračuni, nedostupan izvor i delimično izabrani meseci
+isto označavaju nepotpunost. Kod delimičnog meseca ljudi se odnose na ceo
+mesec, a finansijski iznosi na izabrane dane. Više godina obrađuje se
+odvojeno, pa se mesečni brojevi združuju pre računanja proseka.
+
+Isti čovek može biti evidentiran na više šifara; ovo nije FTE niti raspodela
+prema radnim satima i brojevi se ne sabiraju kao ukupan broj zaposlenih IMS.
+Za nulte ili negativne prihode nema procenta. Bez pozitivnog broja ljudi
+nema iznosa po čoveku. Nedostajući izvorni iznos daje crtu samo u zavisnim
+pokazateljima; ne menja se u nulu. Znak rashoda, ZT i odliva po čoveku ostaje
+minus kao u osnovnoj tabeli; procenti rashoda i ZT prikazuju opterećenje sa
+pozitivnim znakom (storno zadržava suprotan znak).
+
+**Kontrolni primer:** P=100, R=40, ZT=10; broj ljudi januar=2, februar=4.
+Prosek je 3; rezultat pre ZT 60%, posle ZT 50%; rashodi 40%, ZT 10%.
+ZT po čoveku prikazuje −10/3 = **−3,33 RSD**. Dva meseca po 2 čoveka daju
+prosek 2, a ne zbir 4. Ako je januar 4, a februar zaključen bez zaposlenih,
+prosek je 2; ako februar nije zaključen, prosek je 4 uz oznaku nepotpunosti.
+
+Implementacija: `services/job_additional.py`, `services/job_people.py`.
+Koriste se postojeće rute `jobs_data` i `export`, sa `analysis=additional`.
+Zadržane su dozvole finansija i provera dostupnih šifara, a broj ljudi i
+pokazatelji po čoveku zahtevaju postojeću dozvolu `employee_list`. Bez nje
+ostaju dostupni finansijski iznosi i relativni pokazatelji. Ne uvodi se nova
+ruta, migracija ili poslovna SQL procedura. Upiti su isključivo SELECT.
+
+Kartice se učitavaju na zahtev pri otvaranju, sortiraju po sirovim brojevima
+i imaju horizontalni skrol. Promena filtera zadržava izabranu karticu;
+Excel prati aktivnu karticu, sa istim numeričkim vrednostima i napomenama
+o nepotpunosti. Testovi: `test_job_additional.py`, `test_job_people.py`,
+uz regresije postojećeg `test_job_overview.py`.

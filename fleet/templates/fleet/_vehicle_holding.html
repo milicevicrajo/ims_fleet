@@ -1,20 +1,29 @@
-<div class="vd-grid">
+<div class="vd-grid vd-holding-grid">
   <section class="card"><div class="card-body">
-    <div class="vd-section-heading"><h3>Osnov raspolaganja</h3><a class="btn btn-sm btn-outline-primary" href="{% url 'vehicle_holding_create' vehicle_id=vehicle.id %}">Dodaj promenu</a></div>
+    <div class="vd-section-heading"><h3>Osnov raspolaganja</h3></div>
     <p class="vd-current"><strong>{{ holding_label }}</strong>{% if holding_lease %} · {{ holding_lease.get_lease_type_display }} / {{ holding_lease.contract_number }}{% endif %}</p>
-    {% include 'fleet/_vehicle_mini_list.html' with items=holdings kind='holding' %}
+    <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Istorija raspolaganja">
+      <p>Vlasništvo IMS se podrazumeva kada nema važećeg ugovora o lizingu ili najmu. Ugovorno raspolaganje važi tokom perioda upisanog na ugovoru.</p>
+      {% include 'fleet/_vehicle_mini_list.html' with items=leases kind='lease' %}
+    </div>
   </div></section>
   <section class="card"><div class="card-body">
     <div class="vd-section-heading"><h3>Organizaciona jedinica / šifra posla</h3><a href="{% url 'jobcode_create' vehicle_id=vehicle.id %}" class="btn btn-sm btn-outline-primary">Promeni dodelu</a></div>
     <p class="vd-current"><strong>{{ current_job_code.organizational_unit|default:"Nije dodeljena" }}</strong></p>
-    {% include 'fleet/_vehicle_mini_list.html' with items=job_codes kind='job' %}
+    <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Istorija dodela organizacionih jedinica i šifara posla">
+      {% include 'fleet/_vehicle_mini_list.html' with items=job_codes kind='job' %}
+    </div>
   </div></section>
   <section class="card"><div class="card-body">
     <div class="vd-section-heading"><h3>Ugovori o lizingu / najmu</h3><a class="btn btn-sm btn-outline-primary" href="{% url 'lease_create' %}?vehicle={{ vehicle.id }}">Dodaj ugovor</a></div>
-    {% include 'fleet/_vehicle_mini_list.html' with items=leases kind='lease' %}
+    <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Ugovori o lizingu i najmu">
+      {% include 'fleet/_vehicle_mini_list.html' with items=leases kind='lease' %}
+    </div>
   </div></section>
   <section class="card"><div class="card-body">
     <h3>Polise osiguranja</h3>
-    {% include 'fleet/_vehicle_mini_list.html' with items=policies kind='policy' %}
+    <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Polise osiguranja">
+      {% include 'fleet/_vehicle_mini_list.html' with items=policies kind='policy' %}
+    </div>
   </div></section>
 </div>

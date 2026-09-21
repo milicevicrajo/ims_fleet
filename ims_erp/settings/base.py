@@ -124,6 +124,7 @@ INSTALLED_APPS = [
     'nabavka',
     'mobilni',
     'finansije.apps.FinansijeConfig',
+    'organizacija.apps.OrganizacijaConfig',
 
     'django.contrib.admin',
     'django.contrib.auth',

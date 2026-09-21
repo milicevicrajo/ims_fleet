@@ -81,9 +81,10 @@ class FormLayoutTests(SimpleTestCase):
                 with self.subTest(form=form_class.__name__, field=name):
                     self.assertTrue(form[name].help_text, msg='iznos bez objašnjenja šta obuhvata')
 
-    def test_lease_amount_warns_that_it_is_not_used_in_the_calculation(self):
+    def test_lease_amount_explains_monthly_and_total_basis(self):
         help_text = str(LeaseForm()['current_payment_amount'].help_text)
-        self.assertIn('NE koristi', help_text)
+        self.assertIn('mesečni iznos', help_text)
+        self.assertIn('ukupni iznos ugovora', help_text)
 
 
 class RequiredMarkerRenderTests(TestCase):

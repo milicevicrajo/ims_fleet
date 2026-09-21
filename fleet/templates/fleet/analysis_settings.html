@@ -1,14 +1,28 @@
 {% extends 'base.html' %}{% block content %}
 {% include "fleet/includes/vehicle_detail_styles.html" %}
-<h1 class="my-4">Evidencija za analitiku · {{ vehicle.brand }} {{ vehicle.model }}</h1>
+<div class="vd-page">
+<h1 class="my-4">Namena i kriterijumi · {{ vehicle.brand }} {{ vehicle.model }}</h1>
 <p><a href="{% url 'vehicle_detail' vehicle.pk %}#cost-pane">← Analitika vozila</a></p>
-<p>Namena i kriterijumi važe od izabranog datuma do sledećeg profila. Stari periodi se ne popunjavaju pretpostavljenim podacima.</p>
-
+<p>Troškovi prate šifru posla na koju se vozilo vodi. Raspolaganje i naknade preuzimaju se iz ugovora o lizingu / najmu; bez važećeg ugovora podrazumeva se vlasništvo IMS.</p>
 {% include 'fleet/_vehicle_cost_readiness.html' %}
-<div class="row"><div class="col-xl-6"><section class="card"><div class="card-body"><h2 class="h4">Novi profil namene i kriterijuma</h2><form method="post">{% csrf_token %}<input type="hidden" name="action" value="profile">{{ profile_form.as_p }}<button class="btn btn-primary">Sačuvaj profil</button></form>
-<details class="mt-3"><summary>Istorija profila</summary><ul>{% for p in profiles %}<li>{{ p.effective_from|date:"d.m.Y" }} · {{ p.get_purpose_display }} · {{ p.get_fuel_source_display }}<br>{{ p.criterion_source }}</li>{% empty %}<li>Nema potvrđenih profila.</li>{% endfor %}</ul></details></div></section></div>
-<div class="col-xl-6"><section class="card"><div class="card-body"><h2 class="h4">{% if selected_charge.pk %}Ispravka{% else %}Novi period{% endif %} ugovorne naknade</h2><p>Unesite mesečni ili ukupan iznos za konkretan period. Proverite da li su servis, osiguranje i druge usluge uključeni i već prikazani među troškovima. Glavnica finansijskog lizinga ovde se ne unosi.</p><form method="post">{% csrf_token %}<input type="hidden" name="action" value="charge"><input type="hidden" name="charge_id" value="{{ selected_charge.pk|default:'' }}">{{ charge_form.as_p }}<button class="btn btn-primary">Sačuvaj naknadu</button></form>
-<ul class="mt-3">{% for c in charges %}<li><a href="?charge={{ c.pk }}">{{ c.lease.contract_number }} · {{ c.start|date:"d.m.Y" }}–{{ c.end|date:"d.m.Y" }} · {{ c.amount }} RSD · {{ c.get_basis_display }}</a></li>{% endfor %}</ul></div></section></div></div>
-<div class="row"><div class="col-xl-6"><section class="card"><div class="card-body"><h2 class="h4">{% if selected_downtime.pk %}Ispravka / završetak{% else %}Evidencija{% endif %} neupotrebljivosti</h2><p>Prijava kvara nije automatski zastoj. Unesite stvarni prvi i poslednji dan kada vozilo nije bilo upotrebljivo; prazan kraj označava da zastoj traje.</p><form method="post">{% csrf_token %}<input type="hidden" name="action" value="downtime"><input type="hidden" name="downtime_id" value="{{ selected_downtime.pk|default:'' }}">{{ downtime_form.as_p }}<button class="btn btn-primary">Sačuvaj zastoj</button></form><ul class="mt-3">{% for d in downtimes %}<li><a href="?downtime={{ d.pk }}">{{ d.start|date:"d.m.Y" }} – {{ d.end|date:"d.m.Y"|default:"traje" }} · {{ d.reason }}</a></li>{% endfor %}</ul></div></section></div>
-<div class="col-xl-6"><section class="card"><div class="card-body"><h2 class="h4">Šifra posla na nalogu vozila</h2><p>Jedan nalog pripada jednom poslu. Izaberite nalog za potvrdu ili ispravku veze.</p>{% if job_form %}<h3 class="h5">PN {{ selected_order.pn_number }}</h3><form method="post">{% csrf_token %}<input type="hidden" name="action" value="job"><input type="hidden" name="order_id" value="{{ selected_order.pk }}">{{ job_form.as_p }}<button class="btn btn-primary">Sačuvaj pripadnost</button></form>{% endif %}<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nalog</th><th>Period</th><th>Posao</th></tr></thead><tbody>{% for order in orders %}<tr><td><a href="?order={{ order.pk }}">PN {{ order.pn_number }}</a></td><td>{{ order.created_at|date:"d.m.Y" }} – {{ order.closed_at|date:"d.m.Y"|default:"otvoren" }}</td><td>{{ order.job_code|default:"Nije potvrđen" }}</td></tr>{% endfor %}</tbody></table></div></div></section></div></div>
-{% include 'fleet/_analysis_methodology.html' %}{% endblock %}
+<div class="vd-grid">
+  <section class="card"><div class="card-body">
+    <h3>Namena i kontrolni kriterijumi</h3>
+    <p><strong>{{ economics.purpose }}</strong>{% if economics.purpose_estimated %} · početna procena{% endif %}. {{ economics.purpose_note }}</p>
+    <p>Potvrđen profil ima prednost od izabranog datuma. Pragovi nisu obavezni.</p>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="profile">{{ profile_form.as_p }}<button class="btn btn-primary">Sačuvaj profil</button></form>
+    <details class="mt-3"><summary>Istorija profila</summary><ul>{% for p in profiles %}<li>{{ p.effective_from|date:"d.m.Y" }} · {{ p.get_purpose_display }} · {{ p.get_fuel_source_display }}</li>{% empty %}<li>Koristi se početna procena namene.</li>{% endfor %}</ul></details>
+  </div></section>
+  <section class="card"><div class="card-body">
+    <h3>Lizing i najam</h3>
+    <p>Iznos i njegovo značenje · mesečni ili ukupni · menjaju se na samom ugovoru.</p>
+    <ul>{% for lease in leases %}<li><a href="{% url 'lease_update' lease.pk %}">{{ lease.contract_number }}</a> · {{ lease.lease_type_label }} · {{ lease.current_payment_amount|floatformat:"2g" }} RSD · {{ lease.get_payment_basis_display }}</li>{% empty %}<li>Vlasništvo IMS · nema ugovora o lizingu / najmu.</li>{% endfor %}</ul>
+    <a class="btn btn-outline-primary" href="{% url 'lease_create' %}?vehicle={{ vehicle.pk }}">Dodaj ugovor</a>
+    <h3 class="mt-4">Istorija šifre posla vozila</h3>
+    <p>Promena važi od datuma dodele. Putni nalozi ne menjaju pripadnost troška.</p>
+    <ul>{% for assignment in assignments %}<li>{{ assignment.assigned_date|date:"d.m.Y" }} · {{ assignment.organizational_unit|default:"Nije dodeljena" }}</li>{% empty %}<li>Nema dodeljene šifre posla.</li>{% endfor %}</ul>
+    <a class="btn btn-outline-primary" href="{% url 'jobcode_create' vehicle_id=vehicle.pk %}">Promeni dodelu</a>
+  </div></section>
+</div>
+{% include 'fleet/_analysis_methodology.html' %}
+</div>{% endblock %}

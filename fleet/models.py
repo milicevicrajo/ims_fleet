@@ -285,7 +285,9 @@ class Lease(models.Model):
     job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
     contract_number = models.CharField(max_length=50, verbose_name=_("Broj ugovora"))
     contract = models.ForeignKey('ugovori.Contract', on_delete=models.PROTECT, null=True, blank=True, related_name='fleet_leases', verbose_name=_("Ugovor iz evidencije Ugovori"))
-    current_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Trenutna rata / iznos otplate"))
+    PAYMENT_BASIS_CHOICES = [('', 'Nije određeno'), ('monthly', 'Mesečni iznos'), ('total', 'Ukupan iznos ugovora')]
+    current_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos (RSD)"))
+    payment_basis = models.CharField(max_length=10, choices=PAYMENT_BASIS_CHOICES, blank=True, default='', verbose_name=_("Značenje iznosa"))
 
     lease_type = models.CharField(
         max_length=20,
@@ -310,6 +312,15 @@ class Lease(models.Model):
         if self.is_long_term_rental:
             return "Dugoročni najam"
         return self.get_lease_type_display()
+
+    @property
+    def monthly_amount(self):
+        return self.current_payment_amount if self.payment_basis == 'monthly' else None
+
+    @property
+    def total_amount(self):
+        from .support.lease_costs import lease_amount_between
+        return lease_amount_between(self, self.start_date, self.end_date)
 
 
 class VehicleHolding(models.Model):

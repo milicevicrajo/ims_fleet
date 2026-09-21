@@ -53,6 +53,8 @@ class VehicleTravelOrderForm(forms.ModelForm):
     class Meta:
         model = VehicleTravelOrder
         fields = ["pn_number", "created_at", "status", "employee", "vehicle", "job_code", "start_mileage"]
+        labels = {"job_code": "Šifra posla naloga (informativno)"}
+        help_texts = {"job_code": "Trošak vozila prati istoriju dodela šifre posla vozilu, nezavisno od ovog polja."}
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
@@ -196,6 +198,8 @@ class PreviousVehicleTravelOrderForm(forms.ModelForm):
     class Meta:
         model = VehicleTravelOrder
         fields = ["created_at", "employee", "job_code", "start_mileage"]
+        labels = {"job_code": "Šifra posla naloga (informativno)"}
+        help_texts = {"job_code": "Trošak vozila prati istoriju dodela šifre posla vozilu, nezavisno od ovog polja."}
 
     def __init__(self, *args, next_order=None, user=None, **kwargs):
         self.next_order = next_order

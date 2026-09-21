@@ -17,6 +17,7 @@ def current_app(request):
         "nabavka": "sidebar_nabavka.html",
         "mobilni": "sidebar_mobilni.html",
         "finansije": "sidebar_finansije.html",
+        "organizacija": "sidebar_organizacija.html",
     }
     nabavka_codes = [
         "dashboard",
@@ -51,6 +52,10 @@ def current_app(request):
             for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list", "evaluation_list")
         },
         "sidebar_template": sidebar_map.get(app, "sidebar_fleet.html"),
+        "organizacija_permissions": {
+            code: user_has_role_permission(request.user, f"organizacija:{code}")
+            for code in ("stablo",)
+        },
         "nabavka_permissions": {
             code: user_has_role_permission(request.user, f"nabavka:{code}")
             for code in nabavka_codes

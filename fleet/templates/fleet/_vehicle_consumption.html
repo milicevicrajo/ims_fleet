@@ -1,0 +1,52 @@
+{% load l10n %}
+<section class="card"><div class="card-body">
+  <div class="vd-section-heading"><h3>Potrošnja goriva</h3><span class="text-muted">Procenjena potrošnja prema točenjima i pređenom putu</span></div>
+  <form method="get" action="#mileage-pane" class="vd-period">
+    {% for name,value in mileage_other_filters %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+    {% for field in mileage.form %}<div><label for="{{ field.id_for_label }}">{% if field.name == 'mileage_from' %}Period od{% else %}Period do{% endif %}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+    <button class="btn btn-primary">Izračunaj</button>
+  </form>{{ mileage.form.non_field_errors }}
+  {% if mileage.valid %}
+  <div class="vehicle-kpis">
+    <div class="vehicle-kpi"><small>Procenjena potrošnja</small><strong>{% if consumption.rate != None %}{{ consumption.rate|floatformat:'2g' }} l/100 km{% else %}Nema obračuna{% endif %}</strong><small>Litri / pređeni km × 100</small></div>
+    <div class="vehicle-kpi"><small>Gorivo u obračunu</small><strong>{% if consumption.liters != None %}{{ consumption.liters|floatformat:'2g' }} l{% else %}Nema podataka{% endif %}</strong><small>{{ consumption.count }} stavki točenja{% if consumption.incomplete %} · nepotpune količine{% endif %}</small></div>
+    <div class="vehicle-kpi"><small>Pređeni put</small><strong>{% if mileage.total_km != None %}{{ mileage.total_km|floatformat:'2g' }} km{% else %}Proveriti očitavanja{% endif %}</strong><small>{{ mileage.coverage_start|date:'d.m.Y' }} – {{ mileage.coverage_end|date:'d.m.Y' }}</small></div>
+    <div class="vehicle-kpi"><small>AdBlue · odvojeno</small><strong>{{ consumption.adblue|floatformat:'2g' }} l</strong><small>Ne ulazi u potrošnju goriva</small></div>
+  </div>
+  {% if consumption.reason %}<p class="alert alert-warning">{{ consumption.reason }}</p>{% endif %}
+  {% include 'fleet/_mileage_boundaries.html' %}
+  {% endif %}
+</div></section>
+{% if mileage.valid %}
+<section class="card"><div class="card-body">
+  <h3>Potrošnja po periodima</h3>
+  <p class="text-muted">Rasponi od približno 30 dana, između stvarnih očitavanja. Ukupan prosek računa se iz ukupnih litara i kilometara.</p>
+  <div class="table-responsive"><table id="vehicleConsumptionPeriods" class="table table-sm vd-data">
+    <thead><tr><th>Od</th><th>Do</th><th>Pređeno km</th><th>Gorivo l</th><th>l/100 km</th><th>Napomena</th></tr></thead>
+    <tbody>{% for period in consumption.intervals %}<tr>
+      <td data-order="{{ period.start|date:'Y-m-d' }}">{{ period.start|date:'d.m.Y' }}</td>
+      <td data-order="{{ period.end|date:'Y-m-d' }}">{{ period.end|date:'d.m.Y' }}</td>
+      <td data-order="{{ period.km|default_if_none:''|unlocalize }}">{{ period.km|floatformat:'2g'|default:'—' }}</td>
+      <td data-order="{{ period.liters|default_if_none:''|unlocalize }}">{{ period.liters|floatformat:'2g'|default:'—' }}</td>
+      <td data-order="{{ period.rate|default_if_none:''|unlocalize }}"><strong>{{ period.rate|floatformat:'2g'|default:'—' }}</strong></td>
+      <td>{{ period.reason|default:'Procenjena potrošnja' }}{% if period.issues %} Proveriti datume: {% for day in period.issues %}{{ day|date:'d.m.Y' }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+</div></section>
+<details class="vd-records"><summary>Točenja u obračunu ({{ consumption.rows|length }})</summary>
+  <div class="table-responsive"><table id="vehicleConsumptionFuel" class="table table-sm vd-data">
+    <thead><tr><th>Datum</th><th>Dobavljač</th><th>Račun</th><th>Proizvod</th><th>Količina l</th><th>Stanje km</th><th>Obuhvat</th></tr></thead>
+    <tbody>{% for row in consumption.rows %}<tr>
+      <td data-order="{{ row.day|date:'Y-m-d' }}">{{ row.day|date:'d.m.Y' }}</td><td>{{ row.supplier }}</td><td>{{ row.receipt_number }}</td><td>{{ row.product }}</td>
+      <td data-order="{{ row.amount|default_if_none:''|unlocalize }}">{{ row.amount|floatformat:'2g'|default:'—' }}</td>
+      <td data-order="{{ row.mileage|default_if_none:''|unlocalize }}">{{ row.mileage|floatformat:'2g'|default:'—' }}</td>
+      <td>{% if row.kind == 'adblue' %}AdBlue · odvojeno{% else %}Gorivo{% endif %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+</details>
+<details class="vd-records"><summary>Kako je izračunato</summary>
+  <p>Za početak i kraj usvajaju se najbliža očitavanja iz točenja ili zaduženja. Sabira se gorivo posle početnog datuma, zaključno sa krajnjim datumom. Točenja na početni dan ne ulaze u zbir. Granice se dele između susednih perioda, bez dupliranja litara.</p>
+  <p>Ovo je procena prema natočenom gorivu: nivo goriva u rezervoaru na početku i kraju nije poznat. Razlika između punog i delimičnog točenja može uticati na rezultat, naročito kod kratkih perioda. AdBlue se prikazuje odvojeno. OMV duplikati se uklanjaju; NIS/OMV i ranija evidencija ne sabiraju se za isti datum, već se koristi izabrani izvor goriva.</p>
+  {% if consumption.excluded_count %}<p>{{ consumption.excluded_count }} stavki je izostavljeno: neprepoznat proizvod ili komprimovani gas koji se ne iskazuje u litrima.</p>{% endif %}
+</details>
+{% endif %}

@@ -4,7 +4,7 @@ from unittest.mock import patch
 from django.db import connection
 from django.test import TestCase
 
-from .services.job_people import payroll_employees
+from .services.job_people import payroll_employees, payroll_headcounts
 
 
 class PayrollEvidenceTests(TestCase):
@@ -57,3 +57,13 @@ class PayrollEvidenceTests(TestCase):
         self.assertEqual(len(rows), 3)
         self.assertEqual(rows[-1], (3, 10, "Person A", 1))
         self.assertEqual(payroll_employees(1, "' OR 1=1--", date(2026, 1, 1), date(2026, 12, 31))["rows"], [])
+
+    def test_batch_headcounts_deduplicate_people_and_keep_authorized_codes_only(self):
+        with self.assertNumQueries(2):
+            data = payroll_headcounts(1, {'410001', 'empty'}, date(2026,2,1), date(2026,3,31))
+        self.assertEqual(data['counts'], {'410001': {2: 2, 3: 1}})
+        self.assertEqual(data['closed_months'], [2,3])
+        self.assertEqual(data['open_months'], [2])
+        self.assertEqual(payroll_headcounts(1, {"' OR 1=1--"}, date(2026,2,1), date(2026,2,28))['counts'], {})
+        with self.assertNumQueries(0):
+            self.assertEqual(payroll_headcounts(1,set(),date(2026,2,1),date(2026,2,28))['counts'],{})

@@ -8,6 +8,12 @@ Za redosled narednih radova koristiti ovaj dokument. Pravila istorije, stalnog i
 profitnosti, aktivnosti i očuvanja izvornih podataka iz prethodnog plana ostaju osnova.
 Pregledani su kod i postojeća dokumentacija; raniji brojevi šifara nisu ponovo popisivani u bazi.
 
+> **Dopuna 21.09.2026.:** popis je u međuvremenu **izvršen nad produkcijom** —
+> [popis šifara posla](popis-sifara-posla-korak-0.md). Brojevi iz plana su potvrđeni, ali je
+> nađeno i da šifarnik ima **tri porodice**, a `fleet.Employee.job_code` **nije** poslovna
+> šifra posla (0 poklapanja od 122 vrednosti). Korak 1 je razrađen u
+> [planu registra šifara posla](plan-registra-sifara-posla.md).
+
 **Cilj:** jedno stablo **centar → organizaciona jedinica → šifra posla**, na koje se vezuju
 podaci i obuhvat korisnikovih uloga. Sve redovne dodele održavaju se kroz odeljak
 **Admin** u aplikaciji, sa pretragom, karticama, stablom i pregledom efektivnih prava.

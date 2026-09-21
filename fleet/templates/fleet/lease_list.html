@@ -57,7 +57,8 @@
                 <th>Partner</th>
                 <th>Broj ugovora</th>
                 <th>Vrsta</th>
-                <th data-type="numeric">Trenutna vrednost otplate</th>
+                <th>Mesečni iznos</th>
+                <th>Ukupno za ugovor</th>
                 <th>Datum pocetka</th>
                 <th>Datum zavrsetka</th>
                 <th>Napomena</th>
@@ -71,7 +72,8 @@
                 <th>Partner</th>
                 <th>Broj ugovora</th>
                 <th>Vrsta</th>
-                <th>Trenutna vrednost otplate</th>
+                <th>Mesečni iznos</th>
+                <th>Ukupno za ugovor</th>
                 <th>Datum pocetka</th>
                 <th>Datum zavrsetka</th>
                 <th>Napomena</th>
@@ -95,7 +97,7 @@
           processing: true,
           pageLength: 50,
           lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]],
-          order: [[6, 'desc']],
+          order: [[7, 'desc']],
           ajax: {
             url: "{% url 'lease_data' %}" + window.location.search,
             type: "GET"
@@ -105,7 +107,8 @@
             { data: 'partner' },
             { data: 'contract' },
             { data: 'lease_type' },
-            { data: 'current_payment_amount' },
+            { data: 'monthly_amount', orderable: false },
+            { data: 'total_amount', orderable: false },
             { data: 'start_date' },
             { data: 'end_date' },
             { data: 'note' },

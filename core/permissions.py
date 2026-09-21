@@ -58,6 +58,12 @@ def collect_ugovori_permission_codes():
     return collect_url_pattern_names(ugovori_urls.urlpatterns, prefix="ugovori")
 
 
+def collect_organizacija_permission_codes():
+    from organizacija import urls as organizacija_urls
+
+    return collect_url_pattern_names(organizacija_urls.urlpatterns, prefix="organizacija")
+
+
 def collect_mobilni_permission_codes():
     from mobilni import urls as mobilni_urls
 
@@ -93,6 +99,7 @@ def collect_permission_codes():
     codes.update(collect_isplate_permission_codes())
     codes.update(collect_ugovori_permission_codes())
     codes.update(collect_mobilni_permission_codes())
+    codes.update(collect_organizacija_permission_codes())
     codes.update(collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije"))
     codes.add("finansije:view_all")
     from potrazivanja.permissions import PERMISSIONS

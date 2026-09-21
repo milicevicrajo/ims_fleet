@@ -18,6 +18,7 @@
 | [V-02](#v-02--prosečna-potrošnja-goriva-za-ceo-vek-vozila) | Prosečna potrošnja goriva za ceo vek vozila | — |
 | [V-21](#v-21--gorivo-po-šifri-posla) | Gorivo po šifri posla | — |
 | [V-23](#v-23--obračun-goriva-na-putnom-nalogu-vozila) | Obračun goriva na putnom nalogu vozila | — |
+| [V-24](#v-24--potrošnja-goriva-u-detalju-vozila) | Potrošnja goriva u detalju vozila | Procena prema točenjima |
 
 Registar problema: [10. Poznati problemi](../10-poznati-problemi.md).
 
@@ -42,7 +43,7 @@ lpg, autogas, cng, tng, ngv, adblue, ad blue
 | `naziv_proizvoda` | NIS (`fleet_transactionnis`) |
 
 **AdBlue je poseban slučaj [P]:** računa se kao „proizvod goriva“ u opštim pregledima,
-ali se **izuzima** iz obračuna na putnom nalogu vozila (V-23), jer nije gorivo koje
+ali se **izuzima** iz obračuna na putnom nalogu vozila (V-23) i nove kartice potrošnje (V-24), jer nije gorivo koje
 učestvuje u potrošnji po 100 km.
 
 | Funkcija | Uključuje AdBlue |
@@ -1231,3 +1232,46 @@ Transakcije u periodu (bez AdBlue):
 | [6.5. Flota — izveštaji](06-05-flota-izvestaji.md) | Kilometraža, održavanje, presek flote |
 | [4. Baza podataka](../04-baza-podataka.md#444-gorivo) | Tabele goriva |
 | [7. Integracije](../07-integracije.md) | Kako se preuzimaju NIS i OMV podaci |
+
+
+## V-24 — Potrošnja goriva u detalju vozila
+
+Dodato 21.09.2026. po zahtevu korisnika. Kartica **Potrošnja goriva** zamenjuje
+karticu Kilometraža. Implementacija: `fleet/support/vehicle_consumption.py`,
+`fleet/support/vehicle_mileage.py`, šablon `_vehicle_consumption.html`.
+
+Filter bira period; podrazumevani period je isti kao početni period troškova
+(poslednjih 12 kalendarskih meseci do danas). Korisnik može posebno promeniti
+period potrošnje. Neispravan filter prikazuje grešku i nema obračuna.
+
+Za granice se usvajaju najbliži stvarni datumi točenja ili zaduženja, prema
+E-01.6. Prikazuju se usvojeni datumi, stanja i odstupanja. Očitavanja mogu
+biti izvan traženog perioda, pa se i gorivo uzima iz tog usvojenog raspona.
+
+**Procenjena potrošnja = litri posle početnog datuma do krajnjeg datuma
+uključivo / razlika kilometara × 100.** Sva točenja na početni dan isključena
+su iz količine. Periodi od približno 30 dana dele zajedničko granično očitanje,
+a točenje na toj granici ulazi samo u prethodni period. Ukupan prosek je
+zbir litara / ukupan put × 100, a ne prosek pojedinačnih stopa.
+
+NIS/OMV se prečišćavaju postojećim servisom, uključujući uklanjanje OMV
+ponavljanja i odjeka. Izvor se bira po profilu koji važi na datum točenja;
+bez profila koristi se NIS/OMV. Ranija evidencija ne sabira se sa direktnim
+izvorom. AdBlue se prikazuje odvojeno i ne ulazi u l/100 km. Neprepoznati
+proizvodi i CNG/NGV izostavljaju se iz litarskog obračuna. Količine CNG/NGV
+ne preračunavaju se proizvoljno iz mase u zapreminu.
+
+Prazna evidencija nije nulta potrošnja. Bez pozitivne razlike km, uz pad
+brojača, nedostajuću ili negativnu količinu goriva, stopa se ne računa i
+prikazuje se razlog. Zbir poznatih količina ostaje vidljiv kao nepotpun kada
+nedostaje količina. OMV korigovano stanje koristi se kada je pozitivno.
+
+**Kontrolni primer:** 01.01: 1.000 km i 60 l; 15.01: 1.500 km i 30 l;
+31.01: 2.000 km i 40 l, uz dodatnih 10 l AdBlue. Obračun je
+(30 + 40) / (2.000 − 1.000) × 100 = **7,00 l/100 km**. Prvih 60 l se ne
+sabira; AdBlue je zasebnih 10 l. Duplikat poslednjeg OMV reda ne menja zbir.
+
+**Ograničenje:** nivo rezervoara na granicama nije evidentiran, tako da je
+rezultat procena iz točenja, a ne merenje stvarno sagorelog goriva. Delimična
+točenja naročito utiču na kratke periode. Postojeći obračuni V-01/V-02/V-23
+nisu promenjeni. Regresije: `fleet/test_vehicle_consumption.py`.

@@ -48,6 +48,7 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 | **Finansijski pregled** | Prihodi, rashodi i rezultat po centrima i poslovima, sa grafikonima i rang-listama |
 | **Detaljni izveštaji** | Po šiframa posla, kontima, mesecima i centrima |
 | **Zbirna tabela šifara posla** | 11 kolona: prihod, rashod, P−R, ZT, P−R−ZT, priliv, odliv, neto gotovina |
+| **Dodatne analize** | Posebna kartica uz zbirnu tabelu: isti iznosi, četiri odnosa prema prihodima, prosečan broj ljudi i osam iznosa po čoveku; poseban Excel izvoz aktivne kartice |
 | **Kartica (detalj) posla** | Osam tabova sa dokumentima i evidencijama |
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |

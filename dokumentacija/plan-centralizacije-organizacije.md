@@ -2,6 +2,11 @@
 
 Datum plana: **18.09.2026.**
 
+**Dopuna 21.09.2026.:** sifarnik je [popisan nad produkcionom bazom](popis-sifara-posla-korak-0.md).
+Merenje potvrdjuje brojeve iz ovog plana, ali pokazuje i da postoje **tri porodice sifara**,
+a ne jedna: model tri nivoa vazi za 209 od 415 sifara. Za realizaciju koristiti
+[plan registra sifara posla](plan-registra-sifara-posla.md).
+
 **Dopuna:** novi [plan organizacije i dozvola — V2](plan-organizacije-i-dozvola-v2.md)
 razrađuje dodelu uloga sa obuhvatom, Admin interfejs u aplikaciji i novi redosled realizacije.
 Za naredne korake koristiti V2; ovaj dokument ostaje osnova pravila registra i istorije.

@@ -306,6 +306,7 @@
     - [6.1.20. Otvorena pitanja](#6120-otvorena-pitanja)
     - [Mapa izvornog koda](#mapa-izvornog-koda)
     - [Gde dalje](#gde-dalje)
+    - [Dodatne analize po šifri posla — dopuna 21.09.2026.](#dodatne-analize-po-šifri-posla--dopuna-21092026)
 - [6.2. Flota — obračuni goriva](#62-flota--obračuni-goriva)
     - [Zajednička osnova: šta se uopšte smatra gorivom](#zajednička-osnova-šta-se-uopšte-smatra-gorivom)
     - [V-03 — Neto iznos goriva iz bruto iznosa](#v-03--neto-iznos-goriva-iz-bruto-iznosa)
@@ -318,6 +319,7 @@
     - [V-23 — Obračun goriva na putnom nalogu vozila](#v-23--obračun-goriva-na-putnom-nalogu-vozila)
     - [Nova pitanja iz ovog poglavlja](#nova-pitanja-iz-ovog-poglavlja)
     - [Gde dalje](#gde-dalje)
+    - [V-24 — Potrošnja goriva u detalju vozila](#v-24--potrošnja-goriva-u-detalju-vozila)
 - [6.3. Flota — troškovi vozila](#63-flota--troškovi-vozila)
     - [V-08 — Procena pređene kilometraže u periodu](#v-08--procena-pređene-kilometraže-u-periodu)
     - [V-07 — Trošak po kilometru po vozilu](#v-07--trošak-po-kilometru-po-vozilu)
@@ -498,6 +500,7 @@
     - [Prilozi](#prilozi)
 - [Prilog B — DDL nasleđenih SQL pogleda](#prilog-b--ddl-nasleđenih-sql-pogleda)
     - [Šta je gde](#šta-je-gde)
+    - [Šta je provera u bazi pokazala (21.09.2026.)](#šta-je-provera-u-bazi-pokazala-21092026)
     - [Pogledi Naplate — šta koji radi](#pogledi-naplate--šta-koji-radi)
     - [`fleet_trebovanja` — trebovanja Flote](#fleet_trebovanja--trebovanja-flote)
     - [`nbv_roba` — roba za Nabavku](#nbv_roba--roba-za-nabavku)
@@ -2231,6 +2234,7 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 | **Finansijski pregled** | Prihodi, rashodi i rezultat po centrima i poslovima, sa grafikonima i rang-listama |
 | **Detaljni izveštaji** | Po šiframa posla, kontima, mesecima i centrima |
 | **Zbirna tabela šifara posla** | 11 kolona: prihod, rashod, P−R, ZT, P−R−ZT, priliv, odliv, neto gotovina |
+| **Dodatne analize** | Posebna kartica uz zbirnu tabelu: isti iznosi, četiri odnosa prema prihodima, prosečan broj ljudi i osam iznosa po čoveku; poseban Excel izvoz aktivne kartice |
 | **Kartica (detalj) posla** | Osam tabova sa dokumentima i evidencijama |
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |
@@ -7623,6 +7627,66 @@ predlog rešenja su u [registru problema](#10-poznati-problemi-i-ograničenja).
 | [Prilog B — DDL nasleđenih pogleda](#prilog-b--ddl-nasleđenih-sql-pogleda) | Definicije pogleda Naplate iz baze |
 | [10. Poznati problemi](#10-poznati-problemi-i-ograničenja) | Registar problema |
 
+
+### Dodatne analize po šifri posla — dopuna 21.09.2026.
+
+Nova kartica **Dodatne analize** na postojećem izveštaju `group=job` prikazuje
+24 kolone: šifru, naziv, centar, postojećih osam finansijskih iznosa, četiri
+relativna pokazatelja, prosečan broj ljudi i osam iznosa po čoveku. Period,
+centar i dostupne šifre isti su kao na kartici **Finansijski rezultati**.
+Osnovni obračuni prihoda, rashoda, ZT i tokova gotovine nisu promenjeni.
+
+| Pokazatelj | Formula |
+|---|---|
+| Rezultat bez ZT / prihodi % | (P − R) / P × 100 |
+| Rezultat posle ZT / prihodi % | (P − R − ZT) / P × 100 |
+| Rashodi / prihodi % | R / P × 100 |
+| ZT / prihodi % | ZT / P × 100 |
+| Prosečan broj ljudi | Zbir mesečnih brojeva ljudi na šifri / broj dostupnih zaključenih meseci |
+| Svaki iznos / čoveku | Postojeći iznos za ceo izabrani period / prosečan broj ljudi |
+
+Broj ljudi čita se zbirno iz `PUTGEO-SERVER.bazaldims.dbo.Zarada`, za firmu,
+godinu, mesece i samo korisniku dostupne šifre. Uslovi su isti kao za
+postojeći spisak zaposlenih na šifri: iznos ili količina različiti od nule
+plus odgovarajući `PomLD.status_obr='Z'`. Broji se `COUNT(DISTINCT rasif)` po
+šifri i mesecu, tako da više elemenata ili zaključenih obračuna ne duplira
+čoveka. Imena, pojedinačne zarade i radni sati se ne preuzimaju.
+
+Zaključen mesec bez stavki za šifru ulazi kao nula. Mesec bez zaključenog
+obračuna ne pretpostavlja se kao nula: prosek koristi dostupne mesece, ali
+broj ljudi i izvedeni iznosi nose oznaku nepotpunosti `*` i broj pokrivenih
+meseci. Otvoreni obračuni, nedostupan izvor i delimično izabrani meseci
+isto označavaju nepotpunost. Kod delimičnog meseca ljudi se odnose na ceo
+mesec, a finansijski iznosi na izabrane dane. Više godina obrađuje se
+odvojeno, pa se mesečni brojevi združuju pre računanja proseka.
+
+Isti čovek može biti evidentiran na više šifara; ovo nije FTE niti raspodela
+prema radnim satima i brojevi se ne sabiraju kao ukupan broj zaposlenih IMS.
+Za nulte ili negativne prihode nema procenta. Bez pozitivnog broja ljudi
+nema iznosa po čoveku. Nedostajući izvorni iznos daje crtu samo u zavisnim
+pokazateljima; ne menja se u nulu. Znak rashoda, ZT i odliva po čoveku ostaje
+minus kao u osnovnoj tabeli; procenti rashoda i ZT prikazuju opterećenje sa
+pozitivnim znakom (storno zadržava suprotan znak).
+
+**Kontrolni primer:** P=100, R=40, ZT=10; broj ljudi januar=2, februar=4.
+Prosek je 3; rezultat pre ZT 60%, posle ZT 50%; rashodi 40%, ZT 10%.
+ZT po čoveku prikazuje −10/3 = **−3,33 RSD**. Dva meseca po 2 čoveka daju
+prosek 2, a ne zbir 4. Ako je januar 4, a februar zaključen bez zaposlenih,
+prosek je 2; ako februar nije zaključen, prosek je 4 uz oznaku nepotpunosti.
+
+Implementacija: `services/job_additional.py`, `services/job_people.py`.
+Koriste se postojeće rute `jobs_data` i `export`, sa `analysis=additional`.
+Zadržane su dozvole finansija i provera dostupnih šifara, a broj ljudi i
+pokazatelji po čoveku zahtevaju postojeću dozvolu `employee_list`. Bez nje
+ostaju dostupni finansijski iznosi i relativni pokazatelji. Ne uvodi se nova
+ruta, migracija ili poslovna SQL procedura. Upiti su isključivo SELECT.
+
+Kartice se učitavaju na zahtev pri otvaranju, sortiraju po sirovim brojevima
+i imaju horizontalni skrol. Promena filtera zadržava izabranu karticu;
+Excel prati aktivnu karticu, sa istim numeričkim vrednostima i napomenama
+o nepotpunosti. Testovi: `test_job_additional.py`, `test_job_people.py`,
+uz regresije postojećeg `test_job_overview.py`.
+
 ---
 
 ## 6.2. Flota — obračuni goriva
@@ -7645,6 +7709,7 @@ predlog rešenja su u [registru problema](#10-poznati-problemi-i-ograničenja).
 | [V-02](#v-02--prosečna-potrošnja-goriva-za-ceo-vek-vozila) | Prosečna potrošnja goriva za ceo vek vozila | — |
 | [V-21](#v-21--gorivo-po-šifri-posla) | Gorivo po šifri posla | — |
 | [V-23](#v-23--obračun-goriva-na-putnom-nalogu-vozila) | Obračun goriva na putnom nalogu vozila | — |
+| [V-24](#v-24--potrošnja-goriva-u-detalju-vozila) | Potrošnja goriva u detalju vozila | Procena prema točenjima |
 
 Registar problema: [10. Poznati problemi](#10-poznati-problemi-i-ograničenja).
 
@@ -7669,7 +7734,7 @@ lpg, autogas, cng, tng, ngv, adblue, ad blue
 | `naziv_proizvoda` | NIS (`fleet_transactionnis`) |
 
 **AdBlue je poseban slučaj [P]:** računa se kao „proizvod goriva“ u opštim pregledima,
-ali se **izuzima** iz obračuna na putnom nalogu vozila (V-23), jer nije gorivo koje
+ali se **izuzima** iz obračuna na putnom nalogu vozila (V-23) i nove kartice potrošnje (V-24), jer nije gorivo koje
 učestvuje u potrošnji po 100 km.
 
 | Funkcija | Uključuje AdBlue |
@@ -8858,6 +8923,49 @@ Transakcije u periodu (bez AdBlue):
 | [6.5. Flota — izveštaji](#65-flota--kilometraža-održavanje-presek-stanja-i-izveštaji) | Kilometraža, održavanje, presek flote |
 | [4. Baza podataka](#444-gorivo) | Tabele goriva |
 | [7. Integracije](#7-integracije) | Kako se preuzimaju NIS i OMV podaci |
+
+
+### V-24 — Potrošnja goriva u detalju vozila
+
+Dodato 21.09.2026. po zahtevu korisnika. Kartica **Potrošnja goriva** zamenjuje
+karticu Kilometraža. Implementacija: `fleet/support/vehicle_consumption.py`,
+`fleet/support/vehicle_mileage.py`, šablon `_vehicle_consumption.html`.
+
+Filter bira period; podrazumevani period je isti kao početni period troškova
+(poslednjih 12 kalendarskih meseci do danas). Korisnik može posebno promeniti
+period potrošnje. Neispravan filter prikazuje grešku i nema obračuna.
+
+Za granice se usvajaju najbliži stvarni datumi točenja ili zaduženja, prema
+E-01.6. Prikazuju se usvojeni datumi, stanja i odstupanja. Očitavanja mogu
+biti izvan traženog perioda, pa se i gorivo uzima iz tog usvojenog raspona.
+
+**Procenjena potrošnja = litri posle početnog datuma do krajnjeg datuma
+uključivo / razlika kilometara × 100.** Sva točenja na početni dan isključena
+su iz količine. Periodi od približno 30 dana dele zajedničko granično očitanje,
+a točenje na toj granici ulazi samo u prethodni period. Ukupan prosek je
+zbir litara / ukupan put × 100, a ne prosek pojedinačnih stopa.
+
+NIS/OMV se prečišćavaju postojećim servisom, uključujući uklanjanje OMV
+ponavljanja i odjeka. Izvor se bira po profilu koji važi na datum točenja;
+bez profila koristi se NIS/OMV. Ranija evidencija ne sabira se sa direktnim
+izvorom. AdBlue se prikazuje odvojeno i ne ulazi u l/100 km. Neprepoznati
+proizvodi i CNG/NGV izostavljaju se iz litarskog obračuna. Količine CNG/NGV
+ne preračunavaju se proizvoljno iz mase u zapreminu.
+
+Prazna evidencija nije nulta potrošnja. Bez pozitivne razlike km, uz pad
+brojača, nedostajuću ili negativnu količinu goriva, stopa se ne računa i
+prikazuje se razlog. Zbir poznatih količina ostaje vidljiv kao nepotpun kada
+nedostaje količina. OMV korigovano stanje koristi se kada je pozitivno.
+
+**Kontrolni primer:** 01.01: 1.000 km i 60 l; 15.01: 1.500 km i 30 l;
+31.01: 2.000 km i 40 l, uz dodatnih 10 l AdBlue. Obračun je
+(30 + 40) / (2.000 − 1.000) × 100 = **7,00 l/100 km**. Prvih 60 l se ne
+sabira; AdBlue je zasebnih 10 l. Duplikat poslednjeg OMV reda ne menja zbir.
+
+**Ograničenje:** nivo rezervoara na granicama nije evidentiran, tako da je
+rezultat procena iz točenja, a ne merenje stvarno sagorelog goriva. Delimična
+točenja naročito utiču na kratke periode. Postojeći obračuni V-01/V-02/V-23
+nisu promenjeni. Regresije: `fleet/test_vehicle_consumption.py`.
 
 ---
 
@@ -10929,7 +11037,7 @@ Intervali se prikazuju **obrnutim redosledom** — najnoviji prvi.
 | Fajl | `fleet/support/vehicle_mileage.py` |
 | Funkcije | `vehicle_mileage()`, `observed_timeline()` |
 | Obrazac | `MileagePeriodForm` |
-| Ekran | Detalj vozila, kartica „Kilometraža“ |
+| Ekran | Od 21.09.2026. podloga kartice „Potrošnja goriva“ i obračuna RSD/km; zasebna kartica „Kilometraža“ zamenjena je potrošnjom |
 | Testovi | `fleet/test_vehicle_mileage.py` — 11 testova |
 
 #### 8. Primer obračuna
@@ -16082,321 +16190,215 @@ Ugovor ima tri zasebne oznake: `has_incoming_menice`, `has_outgoing_menice`,
 
 ## 6.12. Flota — analitika namene, raspolaganja i ekonomskih alternativa
 
-> Metodologija **IMS-FLOTA-2.0**, 19.09.2026. Implementacija u radnoj kopiji;
-> primena u produkciji zahteva migraciju i isporuku koda.
-> Korisnik je odobrio doradu obračuna i potvrdio: **jedan nalog vozila pripada jednom poslu**.
-> Značenje ranijeg polja rate operativnog lizinga nije potvrđeno; zato se ne pretpostavlja.
+> Metodologija **IMS-FLOTA-2.1**, 21.09.2026.
+> Korisnik je pisano odobrio: trošak prati šifru posla vozila, vlasništvo je
+> podrazumevano bez važećeg ugovora, namena može biti procena, iznos se vodi na
+> samom lizingu/najmu uz razliku mesečni/ukupni, a zastoji nisu potreban ulaz.
+> Pravila 2.1 zamenjuju prethodnu raspodelu prema poslu putnog naloga i obaveznu
+> istoriju VehicleHolding / odvojene periode LeaseChargePeriod.
 
 ### E-01 — Zajednička analitika flote i vozila
 
-#### E-01.1. Naziv
+#### E-01.1. Naziv i prikaz
 
-Ekrani: `/analitika/`, statistika centra i kartica **Troškovi** na detalju vozila.
-Oba koriste [`period_analysis()`](../fleet/services/economics.py).
-Oznaka zbira je **Obuhvaćeni troškovi**, ne ukupan trošak vlasništva.
+Ekrani `/analitika/`, statistika centra i kartica **Troškovi** na detalju vozila
+koriste isti `fleet.services.economics.period_analysis()`.
+Naziv zbira je **Obuhvaćeni troškovi**, ne ukupan trošak vlasništva.
 
-Analitika flote i centra koristi zajedničko gradijentno hero zaglavlje modula
-Flota, sa izabranim periodom i prečicom koja otvara metodologiju. Filteri imaju
-posebnu opciju za otpisana vozila i poništavanje izbora. Četiri kartice izdvajaju
-broj vozila, obuhvaćene troškove, ponderisani RSD/km i broj vozila za proveru.
-Tabele imaju horizontalno pomeranje na užim ekranima, uz zadržavanje kolone
-vozila u vidnom polju; obrazloženja po vozilu,
-mesečni zbir i sačuvane procene otvaraju se po potrebi. Promena prikaza ne menja
-formule ni kriterijume obračuna.
+Kartica Troškovi ima tri celine: rezultat obračuna; ugovori lizinga/najma;
+izvorne stavke. Izbor perioda nudi ovaj mesec, poslednja tri meseca, poslednjih
+12 meseci, ovu i prošlu godinu, kao i proizvoljne datume. Upozorenja su vidljiva.
+Razrada po poslovima i mesecima i pojedinačne stavke otvaraju se po potrebi.
+Metodologija se prikazuje na jednoj stranici `/analitika/metodologija/`.
 
-Stilovi i sidra analitike koriste prefiks `fleet-analytics-`, da ne bi dolazilo
-do sukoba sa klasama `fa-filter` i `fa-table` iz globalnog Font Awesome paketa.
+Ekran **Namena i kriterijumi** sadrži procenu namene, obrazac za potvrđen profil,
+istoriјu dodela šifre posla i veze na postojeće ugovore. Nema dodatnog obrasca
+za ugovornu naknadu, posao putnog naloga ili neupotrebljivost.
+Pregled ulaza ima šest stavki: namena, raspolaganje, ugovorni iznos/kamata,
+kilometraža, šifra posla vozila i opcion kontrolni prag. Procena namene je
+posebno označena i ne blokira obračun.
 
-**Metodologija je jedna stranica** — `/analitika/metodologija/`. Svih pet ekrana koji je
-pominju vode vezom ka njoj, umesto da svaki iscrtava istu tabelu. Izuzetak je sačuvana
-procena koja u svom snimku **nosi sopstvenu metodologiju** (starije procene): ona se
-prikazuje tačno onako kako je tada zabeležena. [P]
-
-#### E-01.1.1. Raspored kartice „Troškovi“ na detalju vozila [P]
-
-Kartica ima **tri celine, uvek istim redom**:
-
-| # | Celina | Šta pokazuje |
-|---|---|---|
-| **1** | Rezultat obračuna | Pokazatelji i razlaganje zbira po delovima |
-| **2** | Ugovori lizinga i najma | Rata, dnevni deo i preostala ugovorna obaveza. **Prikazuje se i kada vozilo nema ugovor** — tada stoji „Vozilo nije na lizingu ni u najmu“, što objašnjava zašto je red ugovornih naknada u celini 1 prazan |
-| **3** | Izvorne stavke | Mesečni pregled, struktura održavanja i pojedinačni zapisi |
-
-Iznad njih je izbor perioda i **sažet red o popunjenosti ulaza** („5 od 7 popunjeno · 2
-nedostaju“), sa vezom ka ekranu unosa.
-
-**Izbor perioda [P]:** pet brzih izbora — *ovaj mesec, poslednja 3 meseca, poslednjih 12
-meseci, ova godina, prošla godina* — uz dva polja za proizvoljan period. Izabrani je
-označen, a ispod stoji šta je tačno prikazano. Ranije su stajala samo dva gola polja za
-datum i dugme, bez naznake šta je izabrano.
-
-**Sklopivih blokova ima dva** [P], a ranije ih je bilo šest:
-
-| Blok | Gde |
-|---|---|
-| Razrada zbira — po poslovima i po mesecima | Celina 1 |
-| Pojedinačni zapisi — gorivo, usluge, trebovanja, naknade | Celina 3 |
-
-> **Upozorenja („Podaci koje treba proveriti“) više nisu sklopiva** — stoje odmah vidljiva,
-> jer su razlog zašto neki pokazatelj nedostaje. Objašnjenje „Kako čitati pokazatelje“
-> premešteno je na stranicu metodologije, uz sve ostalo istog reda.
-
-Celine više nisu kartice unutar kartice, nego blokovi razdvojeni linijom — ranije su na
-istom mestu bila tri nivoa okvira.
-
-**Stilovi i naslovi [P]:** svi stilovi detalja vozila stoje u jednom mestu,
-`fleet/templates/fleet/includes/vehicle_detail_styles.html`, sa prefiksom `vd-`. Ranije su
-bili u samom `vehicle_detail.html` i u dva partiala, uz dvanaest inline `style` atributa.
-
-Skala naslova je ista na svih sedam kartica detalja:
-
-| Nivo | Šta nosi |
-|---|---|
-| `h1` | Naziv vozila — **jednom**, u pregledu |
-| `h3` | Celina unutar kartice |
-| `h4` | Pododeljak unutar celine |
-
-Kartica Troškovi je ranije imala i `h2` sa imenom kartice, kojeg ostalih šest nema — ime
-kartice već stoji na jezičku, pa je uklonjen.
-
-#### Gde stoji spisak nedostajućih podataka [P]
-
-Pun spisak sedam ulaznih podataka — sa stanjem (ima / delimično / nedostaje), čemu svaki
-služi i gde se popunjava — stoji na ekranu **„Namena, kriterijumi i evidencija“**, a ne na
-kartici Troškovi.
-
-> **Zašto tamo [Z]:** spisak je **zadatak**, a kartica Troškovi je **izveštaj**. To rade
-> različiti ljudi u različitim trenucima. Uz to, sva dugmad iz spiska ionako vode na taj
-> ekran — sada spisak stoji pored polja koja traži.
-
-Spisak se računa za **podrazumevani period (poslednjih 12 meseci)** i taj period se ispisuje
-u zaglavlju, da ne bi delovao kao da važi za svaki period. Podaci dolaze iz
-`economics.readiness`. **Naziv stavke se ne menja sa stanjem** — menjaju se samo oznaka i
-opis, da spisak ostane uporediv između dva prikaza.
-
-> **Ranije su na istoj kartici stajala dva skupa po četiri pokazatelja i dve mesečne
-> tabele, sa dva različita zbira.** Otud utisak zbrke. Sada je pokazatelj „Obuhvaćeni
-> troškovi“ prikazan **tačno jednom**, a mesečna tabela izvornih stavki nosi napomenu da
-> premije i ugovorne naknade **nisu** u njoj nego u celini 2.
-
-**Lizing — šta je rata, a šta preostalo [P]:**
-
-| Prikaz | Značenje |
-|---|---|
-| Rata | Iz `LeaseChargePeriod`. Ako je osnov `monthly` → mesečni iznos; ako je `total` → ukupan iznos za period, uz izričitu napomenu da **to nije mesečna rata** |
-| Dnevni deo | Iznos koji stvarno ulazi u trošak po danu |
-| Preostalo do kraja | Dnevni deo × preostali dani od danas. Označeno kao **ugovorna obaveza, ne dug** — sistem ne vodi evidenciju izvršenih uplata |
-| Staro polje „Trenutna rata / iznos otplate“ | Prikazano radi uvida, uz napomenu da se **ne koristi u obračunu** |
-
-Kada naknada nije uneta, ugovor nosi oznaku **„Nije potvrđena“** i ne ulazi u obuhvaćene
-troškove — umesto da se iznos pogađa iz starog polja.
+Ugovor prikazuje zasebno **mesečni iznos** i **ukupno za ugovor**. Ako je unet
+mesečni iznos, ukupno je izvedeno po kalendarskim danima važenja. Ukupni iznos
+se ne predstavlja kao mesečna rata. Preostala obaveza računa se za preostali
+period ugovora, uključujući različite dužine meseci; nije dug jer se uplate
+ne prate. Iznos se uređuje neposredno na ekranu postojećeg ugovora.
 
 #### E-01.2. Poslovna svrha
 
-Uskladiti prikaz istog vozila u istom periodu na oba ekrana, prikazati poslovnu
-namenu i raspolaganje, upozoriti na nedostajuće podatke i omogućiti proverljivu
-internu raspodelu na poslove. Posebna procena E-02 poredi buduće alternative.
+Prikazati evidentirane troškove i pripisati ih šifri posla na koju se vozilo
+vodilo na odgovarajući datum. Posebna procena E-02 poredi buduće alternative.
 
-#### E-01.3. Korisnici
+#### E-01.3. Korisnici i dozvole
 
-Uprava, služba voznog parka i korisnici sa dozvolama za odgovarajuće ekrane.
-
-**Kod dozvole je naziv rute**, kao i svuda u sistemu [P]:
-
-| Ekran | Dozvola |
-|---|---|
-| Analitika flote | `fleet_analytics` |
-| Statistika centra | `center_statistics` |
-| Ulazi za analitiku | `vehicle_analysis_settings` |
-| Izrada procene | `vehicle_assessment_create` |
-| Pregled sačuvane procene | `vehicle_assessment_detail` |
-
-`sync_permission_codes` te dozvole **izvodi iz postojećih**: ko je smeo da menja vozilo
-(`vehicle_update`) dobija ulaze i izradu procene, a ko je smeo da ga vidi (`vehicle_detail`)
-dobija pregled procene, analitiku flote i statistiku centra. Ručna dodela nije potrebna, ali
-**komandu treba pokrenuti pri isporuci** — inače ekrani koji su ranije bili otvoreni ostaju
-zaključani. Provereno testom `test_new_fleet_routes_inherit_permissions`.
-
-Ograničenja centara se primenjuju i na direktne URL adrese. Neispravan ključ u adresi
-(`?order=abc`) daje **404**, ne grešku servera.
+Uprava, služba voznog parka i korisnici sa dozvolama za odgovarajuće rute.
+Nove rute nisu dodate. Koriste se `fleet_analytics`, `center_statistics`,
+`vehicle_analysis_settings`, `vehicle_assessment_create` i
+`vehicle_assessment_detail`; unos ugovora koristi `lease_create` / `lease_update`.
+`sync_permission_codes` izvodi dozvole analitike iz postojećih dozvola za
+pregled i izmenu vozila. Kontrola centra na analitici prati sadašnje zaduženje;
+prikaz istorijskog centra uzima dodelu na kraju izabranog perioda.
 
 #### E-01.4. Ulazni podaci
 
-| Ulaz | Model / izvor | Pravilo |
+| Ulaz | Izvor | Pravilo |
 |---|---|---|
-| Poslovna namena, kriterijumi, izvor goriva | `VehicleAnalysisProfile` | Važi od datuma do sledećeg profila; ne izvodi se iz mase |
-| Osnov raspolaganja | `VehicleHolding` | Gleda se svaki dan perioda, ne samo današnje stanje |
-| Naknade najma i operativnog lizinga | `LeaseChargePeriod` | Potvrđen iznos, period, mesečni ili ukupni osnov, dokument |
-| Kamata finansijskog lizinga | `LeaseInterest` | Godišnji iznos, raspodela samo dok važi ugovorno raspolaganje |
-| Gorivo | `TransactionNIS` / `TransactionOMV` ili `FuelConsumption` | Jedan izabrani izvor za svaki datum; nema sabiranja dve evidencije |
-| Servisi / trebovanja | `ServiceTransaction` / `Requisition` | Potpisani evidentirani iznosi, uključujući storna |
-| Polise | `Policy` | Iznos premije i oba datuma važenja |
-| Naknade osiguranja | `Insurance`, `kola=True` | Zaseban priliv, može biti povezan sa ranijom štetom |
-| Nalozi i kilometraža | `VehicleTravelOrder` | Otvaranje, zatvaranje, očitanja; novo `job_code` |
-| Zastoji | `VehicleDowntime` | Stvarni period neupotrebljivosti, opciona veza sa prijavom |
+| Šifra posla vozila | JobCode + OrganizationalUnit | Poslednja dodela čiji datum nije posle obračunskog dana |
+| Raspolaganje | Lease | Jedan važeći ugovor za dan; bez ugovora vlasništvo IMS |
+| Naknada lizinga/najma | Lease.current_payment_amount + payment_basis | monthly ili total, za period samog ugovora |
+| Kamata finansijskog lizinga | LeaseInterest | Godišnji iznos, samo za dane važećeg ugovora |
+| Namena | VehicleAnalysisProfile ili početna procena | Potvrđen profil ima prednost |
+| Gorivo | NIS/OMV ili izabrani FuelConsumption | Samo jedan izvor po datumu |
+| Održavanje | ServiceTransaction + Requisition | Iznosi na datum dokumenta, uključujući storna |
+| Premije | Policy | Premija i oba datuma važenja |
+| Naknade osiguranja | Insurance, kola=True | Poseban priliv |
+| Kilometraža / korišćenje | Gorivo + VehicleTravelOrder | Očitavanja i administrativni dani naloga |
 
-Poslovne namene su: laboratorijski prevoz; nadzor; uprava; transport mašina i
-kontejnera; vozilo sa bušećom mašinom; prevoz/vuča SPT i druge opreme; priključno vozilo.
-Tehnička kategorija `Vehicle.category` ostaje zaseban podatak.
+VehicleHolding, LeaseChargePeriod i VehicleDowntime ostaju sačuvani radi
+istorije, ali ne određuju obračun 2.1. `VehicleTravelOrder.job_code` takođe
+ne određuje pripadnost troška vozila. U analitici se ne traži popunjavanje tih
+podataka. Postojeći zapisi se ne brišu.
 
-#### E-01.5. Poreklo podataka
+#### E-01.5. Poreklo i početna procena
 
-NIS/OMV prolaze postojeće filtere proizvoda i OMV duplikata.
-Za OMV kilometražu prednost ima pozitivno korigovano očitanje kada je dostupno.
-Zajednički izvor je `get_vehicle_fuel_transaction_rows()`, proširen periodom i skupom
-vozila radi grupnog učitavanja. Kada profil izričito bira raniju evidenciju, čita se
-`FuelConsumption`. Nepostojeći profil koristi NIS/OMV i prikazuje upozorenje.
+NIS/OMV koriste postojeće filtere proizvoda i OMV duplikata preko
+`get_vehicle_fuel_transaction_rows()`. Bez profila izvor goriva je NIS/OMV.
+Nabavka služi kao dokaz; njene fakture ne sabiraju se ponovo sa servisima.
 
-Nabavka ostaje dokaz o održavanju. Njene fakture se ne dodaju ponovo servisnim
-knjiženjima: to bi moglo duplirati isti trošak. Nasleđeni objekti se ne menjaju.
+Početna namena se izvodi pri prikazu, bez masovnog upisa potvrđenih profila:
+priključna kategorija daje priključno vozilo; opis i naziv dodeljene šifre posla
+mogu predložiti laboratorijski prevoz, nadzor, upravu, transport, bušenje ili
+vuču. Bez posebnog signala početna procena je nadzor i terenski rad.
+Procena je označena na detalju i listi i može se promeniti unosom profila.
+Težina vozila i ime zaposlenog nisu dokaz namene. Procena ne stvara kontrolne
+pragove i ne predstavlja potvrdu istorijske namene.
+
+Migracija `0078_lease_payment_basis` dodaje značenje iznosa na Lease i
+razvrstava postojeće operativne ugovore kao ukupni iznos, a dugoročne najmove
+kao mesečni, prema postojećim uputstvima unosa i dogovoru 21.09.2026.
+Postojeći novčani iznosi i datumi se ne menjaju. Finansijski iznosi ostaju bez
+pretpostavljenog značenja, a obračun i dalje koristi samo zasebnu kamatu.
 
 #### E-01.6. Tačan postupak
 
-Period je zatvoren interval, oba krajnja datuma uključena. Dozvoljen je period do
-1096 dana razlike, bez budućih datuma. Pogrešan filter ne zamenjuje se podrazumevanim.
+Period je zatvoren interval, oba krajnja datuma uključena, bez budućnosti i
+najviše 1096 dana razlike. Neispravan filter se ne zamenjuje drugim periodom.
 
 **Obuhvaćeni troškovi:**
 
-`gorivo + servisi + trebovanja + premije perioda + potvrđene naknade + kamata perioda`
+`gorivo + servisi + trebovanja + premije perioda + naknade perioda + kamata perioda`
 
-Nabavna vrednost, glavnica i procenjena knjigovodstvena amortizacija nisu u ovom
-zbiru. Trošak kapitala je odvojen u E-02. Gorivo je bruto, a ostali iznosi ostaju u
-poreskoj osnovi izvora; nema pretpostavljenog preračuna povrativosti PDV-a.
+Nabavna vrednost, glavnica, amortizacija i kreditna kamata nisu automatski u
+zbiru. Naknade osiguranja prikazuju se zasebno; dodatni saldo je zbir minus
+naknade. Negativan saldo nije profit vozila. Gorivo je bruto, ostalo je u
+poreskoj osnovi izvora.
 
-**Polisa:** `premija × broj dana preklapanja / ukupan broj dana polise`.
+**Raspolaganje po danu:** važeći Lease određuje finansijski/operativni lizing
+ili najam. Ako ga nema, dan je vlasništvo IMS, uključujući dane pre i posle
+ugovora. Više važećih ugovora je konflikt: naknade za te dane se ne sabiraju,
+a konflikt je prikazan. Poseban unos osnova vlasništva nije potreban.
 
-**Mesečna naknada:** za svaki dan `mesečni iznos / broj dana tog kalendarskog meseca`.
-**Ukupan iznos naknade:** `ukupan iznos / broj dana potvrđenog perioda naknade`.
-Naknada ulazi samo tokom odgovarajućeg `VehicleHolding` perioda. Nepokrivena ili
-preklopljena istorija raspolaganja ne rešava se nagađanjem.
+**Mesečna naknada:** `iznos / broj dana konkretnog kalendarskog meseca` za svaki
+obuhvaćeni dan ugovora. **Ukupni iznos:** `iznos / broj dana ugovora`.
+Polisa: `premija / broj dana polise` za svaki dan preklapanja.
+Finansijska kamata: `godišnja kamata / 365 ili 366`, samo tokom ugovora.
+Nedostajući iznos ili značenje iznosa ne zamenjuje se nulom. Poznata nula ostaje nula.
 
-**Kamata:** `godišnji iznos / 365 ili 366`, za obuhvaćene dane finansijskog lizinga.
-Nedostajuća kamata nije potvrđena nula. Kamate kredita nisu automatski obuhvaćene.
+**Raspodela na poslove:** gorivo, servis i trebovanje pripadaju šifri posla
+vozila na datum dokumenta. Dnevni deo polise, ugovorne naknade i kamate pripada
+šifri važećoj tog dana. Nova dodela važi od svog datuma, prethodna do dana pre
+nje. Buduća dodela se ne primenjuje unazad. Prazna dodela ne vraća prethodnu.
+Bez dodele, trošak tog dana ostaje neraspoređen. Troškovi se više ne dele
+ravnomerno na sve dane celog izabranog perioda. Putni nalozi, njihovi poslovi,
+otvaranje/zatvaranje i preklapanja ne menjaju raspodelu. Ovo je analitička
+raspodela, bez izmene izvornog knjiženja.
 
-**Naknade osiguranja:** prikazane zasebno; dodatni saldo je
-`obuhvaćeni troškovi − naknade`. Negativan saldo nije dokaz profitabilnosti vozila.
+**Kilometraža (dopuna 21.09.2026):** za početak i kraj perioda usvajaju se
+najbliži stvarni datumi očitavanja iz NIS/OMV i naloga zaduženja, uključujući
+datume van perioda. Ranija evidencija goriva dopunjava dane bez direktnog
+očitanja; izbor izvora troška ne ograničava izbor očitanja. Pozitivno OMV
+korigovano stanje ima prednost. Na isti dan koristi se najveće stanje.
+Kod jednake udaljenosti bira se raniji početak i kasniji kraj. Nema
+interpolacije, ekstrapolacije ni skrivenog ograničenja udaljenosti; stvarni
+datumi, stanja, izvori i odstupanje u danima prikazani su uz rezultat.
+`nearest_period` bira granice, a `observed_timeline` proverava padove između
+njih. Dva različita datuma su obavezna; za jednodnevni zahtev nema razlike km.
+RSD/km postoji uz pozitivnu razliku bez pada brojača. Ako granice odstupaju,
+rezultat je označen kao približan. Troškovi ostaju isključivo u traženom periodu.
+Dani naloga su unija dana administrativnog zaduženja; nisu produktivnost.
+Dan primopredaje pripada novom nalogu. RSD/dan po nalogu je trošak celog
+perioda podeljen jedinstvenim danima naloga. Ovi pokazatelji su odvojeni od
+pripadnosti troška. Evidencija neupotrebljivosti se ne prikazuje niti traži.
 
-**Kilometraža:** koristi postojeću logiku opaženih očitanja (`observed_timeline`),
-bez ekstrapolacije. RSD/km se prikazuje samo ako očitanja pokrivaju oba granična
-datuma, nema pada brojača i razlika je pozitivna. Očitavanja su dnevna; nisu dokaz
-tačnog vremena prelaska obračunske granice. Jednodnevni period nema RSD/km.
-
-**Dani po nalogu:** unija kalendarskih dana naloga u periodu. Otvoren nalog se
-ograničava krajem izabranog perioda. Ovo je administrativna zauzetost, ne produktivnost.
-
-**Dan primopredaje pripada nalogu koji tog dana počinje.** [P] Pri predaji vozila zatvoreni
-nalog dobija `closed_at` jednak `created_at` sledećeg naloga, pa bi se taj dan inače brojao
-dvaput: javljalo bi se lažno „preklapanje naloga“, vozilo bi išlo u „Potrebna provera
-podataka“, a kod različitih šifara posla trošak tog dana bi ostajao **neraspoređen**.
-
-| Slučaj | Kome pripada dan |
-|---|---|
-| Nalog zatvoren istog dana kada sledeći počinje | **Novom** nalogu |
-| Nalog zatvoren bez naslednika | Zadržava svoj poslednji dan |
-| Jednodnevni nalog (`created_at == closed_at`) | Svoj jedini dan |
-| Dva naloga stvarno preklopljena | **Preklapanje se i dalje prijavljuje** |
-
-Funkcija: `_active_orders()`. Testovi pokrivaju sva četiri slučaja.
-
-`RSD/dan po nalogu = obuhvaćeni troškovi celog perioda / jedinstveni dani po nalogu`.
-`RSD/kalendarskom danu = obuhvaćeni troškovi / svi dani perioda`.
-
-**Raspodela po poslovima:** interna aproksimacija po vremenu. Trošak perioda se
-ravnomerno deli na sve kalendarske dane. Dnevni deo pripada jedinoj potvrđenoj šifri
-aktivnog naloga; bez šifre, bez naloga ili pri sukobu poslova ostaje neraspoređen.
-Preklapanje naloga sa istim poslom ne duplira trošak. Ova raspodela ne menja knjiženja
-i nije tvrdnja da je konkretan posao izazvao trošak popravke.
-
-**Zastoji:** unija evidentiranih dana neupotrebljivosti. Bez evidencije prikazuje se
-„nisu evidentirani”, a ne nula ili 100% raspoloživosti.
-
-**Flota / grupa:** zbir iznosa poznatih vozila, sa brojem obuhvaćenih vozila.
-Ponderisani RSD/km je `zbir troškova / zbir km` samo vozila sa usklađenim granicama.
-Nije aritmetička sredina pojedinačnih stopa. Priključna vozila su uključena.
-
-Sve operacije koriste `Decimal`; za prikaz se zaokružuje na dve decimale. Zbir
-poslova i neraspoređenog dela se kontroliše pre prikaznog zaokruživanja.
+Sve operacije koriste Decimal; prikaz je na dve decimale. Zbir poslova i
+neraspoređenog dela kontroliše se pre prikaznog zaokruživanja.
+Ponderisani RSD/km flote koristi vozila sa obračunatim RSD/km i može biti približan.
 
 #### E-01.7. Implementacija
 
-| Sloj | Fajl |
-|---|---|
-| Novi modeli | `fleet/economics_models.py`, uvezeni iz `fleet/models.py` |
-| Obračuni / metodologija | `fleet/services/economics.py` |
-| Forme | `fleet/forms/economics.py` |
-| Flota, ulazi i procene | `fleet/views/analytics.py` |
-| Detalj vozila | `fleet/views/vehicles.py` |
-| Zajednički prikaz metodologije | `fleet/templates/fleet/_analysis_methodology.html` |
-| Testovi | `fleet/test_economics.py`, postojeći testovi Flote |
+- Obračun: `fleet/services/economics.py`.
+- Podrazumevana namena i raspolaganje: `fleet/support/analysis_defaults.py`.
+- Dnevni iznos i suma perioda ugovora: `fleet/support/lease_costs.py`.
+- Unos iznosa: postojeći LeaseForm i forma prvog unosa vozila.
+- Regresije: `fleet/test_economics.py`, `fleet/test_analysis_defaults.py`.
 
 #### E-01.8. Kontrolni primer
 
-Period 01–31.01.2026, troškovi 3.100 RSD, očitanja 10.000 i 11.000 km na granične
-datume. Jedan nalog sa potvrđenim poslom pokriva svih 31 dan.
+01–31.01.2026: gorivo 1.000 RSD 1. januara i 2.100 RSD 31. januara.
+Šifra P1 važi od 1. januara, P2 od 16. januara. Bez ijednog putnog naloga:
+P1 dobija **1.000**, P2 **2.100**, neraspoređeno **0 RSD**.
 
-- RSD/km = 3.100 / 1.000 = **3,10**.
-- RSD/dan po nalogu = 3.100 / 31 = **100**.
-- Raspodela poslu = **3.100**, neraspoređeno = **0**.
-- Ako drugi posao ima preklopljeni nalog od 20. januara, **1.200 RSD** ostaje
-  neraspoređeno zbog sukoba; prvom poslu pripada **1.900 RSD**.
+Ako uz to postoji mesečna naknada 31.000 RSD za ceo januar, P1 dobija još
+**15.000**, P2 još **16.000 RSD**. Samo naknada ugovora koji počinje
+16. januara iznosi **16.000 RSD**, a 31. januar pojedinačno **1.000 RSD**.
 
-Za naknadu 31.000 RSD mesečno i raspolaganje po tom ugovoru od 16. do 31. januara,
-naknada perioda je **16.000 RSD**. Samo 31. januar daje **1.000 RSD**.
+Naknada 31.000 RSD mesečno od 16.01. do 15.03.2024: 16.000 + 31.000 +
+15.000 = **62.000 RSD**, uključujući prestupni februar. Ukupna ugovorna
+naknada 31.000 RSD za 01–31.01.2026 daje isti dnevni iznos 1.000 RSD.
+
+Kilometraža za januar: očitavanja 31.12.2025 = 1.000 km, 15.01.2026 =
+1.500 km, 01.02.2026 = 2.000 km. Usvajaju se 31.12. i 01.02, razlika je
+**1.000 km**, približno za januar. Ako su računi 9.000, 100 i 8.000 RSD na
+tim datumima, januarski trošak ostaje **100 RSD**, približni RSD/km **0,10**.
 
 #### E-01.9. Rezultat
 
-Istorijska analitika se računa pri prikazu iz tekuće evidencije i nije zamrznuto
-knjigovodstvo. Korekcija izvora menja rezultat. Istorija profila čuva promene namene
-i kriterijuma. Ekonomska procena E-02 čuva zamrznute ulaze i rezultat.
+Istorijska analitika se računa iz tekuće evidencije; korekcija izvora menja
+rezultat. Potvrđeni profili imaju datume važenja. Procene E-02 čuvaju snimak.
 
-#### E-01.10. Kriterijumi i upotreba
+#### E-01.10. Kriterijumi
 
-Kontrolni prag je opcion i zahteva tekstualni osnov, datum/izvor, uporediv obuhvat
-i izabran način raspolaganja na koji se odnosi. Važi samo za tu kombinaciju namene
-i raspolaganja; kod drugačijeg/mešovitog raspolaganja ili nedostajućeg ugovornog
-obračuna ne primenjuje se.
-Prekoračenje znači **pregled kriterijuma**, ne automatsku zamenu.
-Negativan zbir/storno i dokumenti bez iznosa zahtevaju proveru; prag se tada ne primenjuje.
-Prag se ne primenjuje kada period obuhvata više profila. Za bušeći sklop i prikolicu
-RSD/km se ne može uneti kao merodavan kriterijum opravdanosti.
-
-Operativni profil i ugovorni osnov kombinuju se u matrici na nivou flote. U mešovitom
-periodu prikazuje se namena na kraju perioda uz upozorenje; raspolaganje navodi sve
-potvrđene osnove perioda.
+Prag je opcion i traži pisan osnov i uporedivo raspolaganje. Ne primenjuje se
+na procenjenu namenu bez profila, mešovite profile, konfliktne ugovore ili
+nepotpun ugovorni iznos. Prekoračenje je signal za pregled, ne automatski otpis.
+Bušeći sklop i prikolica nemaju RSD/km kao merodavan kriterijum opravdanosti.
 
 #### E-01.11. Kontrola
 
-1. Izabrati identičan period na floti i vozilu: zbir mora biti jednak.
-2. Mesečni zbir mora odgovarati zbiru perioda.
-3. Zbir raspodele po poslovima i neraspoređenog dela mora odgovarati ukupnom zbiru.
-4. Proveriti dnevno pokriće polise, raspolaganja i ugovorne naknade.
-5. Proveriti da faktura za uslugu uključenu u najam nije još jednom uključena u servise.
+1. Isti period na floti i vozilu daje isti zbir.
+2. Zbir meseci odgovara periodu.
+3. Zbir poslova i neraspoređenog dela odgovara periodu.
+4. Promena posla na datum dokumenta prebacuje taj trošak na novu šifru.
+5. Ugovor bez istorije raspolaganja i bez posebne naknade radi neposredno.
+6. Dva ugovora za isti dan se ne sabiraju.
+7. Proveriti da usluge uključene u najam nisu ponovljene u servisima/polisama.
 
 #### E-01.12. Ograničenja
 
-- Nepoznati podaci nisu potvrđene nule; poznata evidentirana nula ostaje nula.
-- Potpunost svih ekonomskih troškova nije potvrđena automatskim postojanjem zapisa.
-- Posebna mašina/SPT i ekipa nisu automatski uključeni u trošak vozila. Za ceo sklop
-  u E-02 moraju biti obuhvaćeni uporedivim ručno obrazloženim scenarijima.
-- Ne postoji automatski obračun profita posla: potreban je prihod i svi ostali troškovi.
-- Nema pouzdane mere produktivnih sati iz trajanja naloga.
-- Stari nalozi nemaju automatski dodeljenu šifru posla. Korisnik potvrđuje vezu.
-- Kontrola pristupa prati današnju odgovornost za vozilo. Prikaz istorijskog centra
-  koristi dodelu na kraju izabranog perioda.
-- **Vozilo bez ijedne dodele ostaje vidljivo** korisniku sa ograničenim centrima. Takvo
-  vozilo nema centar, a tek uneto vozilo ne sme da nestane sa spiska pre raspoređivanja.
-  Vozilo dodeljeno **tuđem** centru i dalje nije vidljivo.
-- `otpis` nema istorijski datum; korisnik može uključiti trenutno otpisana vozila.
+Podrazumevano vlasništvo je dogovoreno pravilo analitike, ne rekonstrukcija
+pravnog sticanja. Datum otpisa nema istoriju. Izostanak evidentiranog troška
+nije dokaz da troška nije bilo. Nema automatske procene prihoda posla,
+produktivnih sati, tržišne vrednosti ili troška posebne mašine/ekipe.
+Ograničenja centara prate današnje zaduženje; vozilo bez dodele ostaje vidljivo.
+Izbor centra prikazuje vozila dodeljena centru na kraju izabranog perioda,
+a raspodela poslova tih vozila i dalje prati stvarne istorijske dodele.
 
 #### E-01.13. Status pouzdanosti
 
-| Tvrdnja | Status | Dokaz |
-|---|---|---|
-| Jedan nalog pripada jednom poslu | Potvrđeno korisnikom | Nova direktna veza `job_code` |
-| Zbir i periodi usklađeni na oba ekrana | Potvrđeno testovima | Kontrolni primer i testovi prikaza |
-| Značenje stare rate operativnog lizinga | Nepotvrđeno | Potreban unos `LeaseChargePeriod` |
-| Potpunost produkcionih podataka | Nepotvrđeno | Nije vršena provera baze |
-| Stvarni rad mašine i zastoji unazad | Nepotvrđeno | Nema automatskog rekonstruisanja |
+Pravila 2.1 potvrđena su korisnikom 21.09.2026. Računanje je pokriveno
+kontrolnim primerima i testovima; potpunost poslovnih izvora time nije potvrđena.
+Procena namene je jasno odvojena od potvrđenog profila i ne upisuje se kao
+potvrđen istorijski podatak.
 
 ### E-02 — Sačuvano poređenje budućih alternativa
 
@@ -17293,7 +17295,15 @@ Restart-Service IMS_Fleet_Celery_Beat
 >
 > **Dana 18.09.2026. ispravljena je prva grupa problema** — oni kod kojih je uzrok bio
 > nedvosmislen i ispravka kratka. Označeni su statusom **Rešeno** i za svaki piše šta je
-> tačno promenjeno. Svi ostali problemi i dalje **nisu dirani**.
+> tačno promenjeno.
+>
+> **Dana 21.09.2026. registar je prvi put provereno nad produkcionom bazom.** Do tada su
+> svi nalazi bili iz koda i iz razvojne baze. Provera je zatvorila dva problema
+> ([P-27](#p-27--formule-11-izveštaja-nisu-u-projektu),
+> [P-47](#p-47--ključ-za-duplikate-ne-obuhvata-iznos-ni-valutu)) i otvorila dva nova
+> ([P-51](#p-51--tri-šifre-dozvole-ne-postoje-na-produkciji),
+> [P-52](#p-52--ulazni-podaci-ekonomike-su-prazni-na-produkciji)) koja se **nisu mogla
+> videti bez pristupa stvarnim podacima**.
 >
 > Status tvrdnji: **[P]** potvrđeno kodom, **[Z]** zaključeno, **[N]** nepotvrđeno.
 
@@ -17312,6 +17322,7 @@ Restart-Service IMS_Fleet_Celery_Beat
 | **Za rešavanje** | Potvrđeno, čeka odluku i ispravku |
 | **Za proveru** | Potrebna potvrda korisnika pre bilo kakve izmene |
 | **Prihvaćeno** | Poznato ograničenje, svesno se ne menja |
+| **Zatvoreno** | Provereno nad stvarnim podacima i ne javlja se; opis ostaje radi ponovne provere |
 | **Rešeno** | Ispravljeno; u opisu stoji šta je promenjeno i kada |
 
 ---
@@ -17346,7 +17357,7 @@ Restart-Service IMS_Fleet_Celery_Beat
 | [P-24](#p-24--izveštaj-lizinga-koristi-poslednju-dodelu-vozila) | Flota / lizing | Nedosledno sa ostalim mesečnim izveštajima | **Srednja** | Za rešavanje |
 | [P-25](#p-25--prateći-troškovi-lizinga-obuhvataju-sva-vozila-jedinice) | Flota / lizing | Troškovi koji ne pripadaju lizing vozilima | **Srednja** | Za rešavanje |
 | [P-26](#p-26--izveštaj-goriva-za-upravu-nema-zaštitu-pri-čitanju) | Flota / izveštaji | Nema prečišćavanja OMV pri čitanju | **Srednja** | **Rešeno** 18.09. |
-| [P-27](#p-27--formule-11-izveštaja-nisu-u-projektu) | Flota / izveštaji | Formule 11 izveštaja postoje samo u bazi | **Srednja** | Za rešavanje |
+| [P-27](#p-27--formule-11-izveštaja-nisu-u-projektu) | Flota / izveštaji | Formule 11 izveštaja postoje samo u bazi | **Srednja** | **Većim delom rešeno** 21.09. |
 | [P-28](#p-28--dva-različita-obračuna-dnevnih-sati) | Kadrovi | Dva obračuna sati iz iste evidencije | **Visoka** | Za proveru |
 | [P-29](#p-29--otvoreno-bolovanje-nestaje-sa-radne-liste) | Kadrovi | Otvoreno bolovanje se prikazuje do datuma izvoza | **Srednja** | Za rešavanje |
 | [P-30](#p-30--izuzeće-od-parkinga-nema-period-važenja) | Mobilni | Izuzetak menja i prošle obračune | **Srednja** | Za rešavanje |
@@ -17366,10 +17377,12 @@ Restart-Service IMS_Fleet_Celery_Beat
 | [P-44](#p-44--promena-centra-pregrupiše-celu-istoriju-finansija) | Finansije | Prošli izveštaji se menjaju | **Srednja** | Za proveru |
 | [P-45](#p-45--modul-menice-nema-migracije) | Menice | Tabele se ne mogu stvoriti migracijom | **Visoka** | Za rešavanje |
 | [P-46](#p-46--ključ-za-duplikate-ne-podnosi-prazna-polja) | Flota / gorivo | Zapis bez vaučera ili količine nestaje sa ekrana | **Visoka** | **Rešeno** 18.09. |
-| [P-47](#p-47--ključ-za-duplikate-ne-obuhvata-iznos-ni-valutu) | Flota / gorivo | Dva iznosa iste transakcije se spajaju u jedan | **Srednja** | **Za proveru** |
+| [P-47](#p-47--ključ-za-duplikate-ne-obuhvata-iznos-ni-valutu) | Flota / gorivo | Dva iznosa iste transakcije se spajaju u jedan | **Srednja** | **Zatvoreno** 21.09. — ne javlja se |
 | [P-48](#p-48--lični-podaci-i-brojevi-računa-329-osoba-u-repozitorijumu) | Bezbednost | Imena, adrese i brojevi računa u git istoriji | **Visoka** | Delimično rešeno — **istorija ostaje** |
 | [P-49](#p-49--procedura-osvežava-tekuću-godinu-a-ispravke-čitaju-prethodnu) | Potraživanja | Posle aprila ispravke čitaju godinu koja se ne osvežava | **Srednja** | **Za proveru** |
 | [P-50](#p-50--pregled-novog-modula-ekonomike-flote) | Flota / ekonomika | 14 nalaza u novom modulu, pre isporuke | **Visoka** | **Rešeno** 19.09. |
+| [P-51](#p-51--tri-šifre-dozvole-ne-postoje-na-produkciji) | Ovlašćenja | Ekrani ekonomike dostupni samo superkorisniku | **Visoka** | **Za rešavanje** — potrebna izmena na produkciji |
+| [P-52](#p-52--ulazni-podaci-ekonomike-su-prazni-na-produkciji) | Flota / ekonomika | Modul radi, ali nema šta da računa | **Visoka** | **Za rešavanje** — unos podataka |
 
 ---
 
@@ -17636,10 +17649,13 @@ floti**, jer se trošak delio izmišljenim brojem kilometara.
 > **[P] Nasleđena `vehicle_cost_per_km_rows()` i dalje ekstrapolira**, ali je **ne koristi
 > nijedan ekran** — ostala je radi kompatibilnosti postojećih testova.
 
-> **[N] Ostaje otvoreno:** uslov „očitavanje tačno na oba granična datuma“ je strog — u
-> praksi se retko toči gorivo baš 1. i 31. u mesecu, pa će RSD/km često biti prazan.
-> Predlog je koristiti **stvarno opaženi raspon unutar perioda** uz prikaz koliko je dana
-> pokriveno.
+> **Dopuna 21.09.2026. — usvojeno po zahtevu korisnika:** prethodni strogi
+> uslov je zamenjen najbližim stvarnim očitavanjem za svaku granicu, iz točenja
+> ili naloga zaduženja. Mogu se usvojiti i datumi van perioda; prikazuju se
+> oba stanja, datumi, izvori i odstupanje u danima. RSD/km je tada približan,
+> dok troškovi ostaju u traženom periodu. Nema ekstrapolacije; jedan datum
+> ili pad brojača ne daje obračun. Nije uveden proizvoljan limit od 90 dana.
+> Odsustvo točenja samo po sebi ne dokazuje da vozilo nije radilo.
 
 ---
 
@@ -18449,7 +18465,7 @@ nijedno postojeće grupisanje:
 | | |
 |---|---|
 | **Ozbiljnost** | **Srednja** |
-| **Status** | **Za proveru** |
+| **Status** | **Zatvoreno kao „prihvaćeno“** (21.09.2026.) |
 | **Gde** | `fleet/support/fuel.py` — `_dedupe_omv_transaction_lines()` |
 | **Obračun** | [V-06](#v-06--prečišćavanje-omv-transakcija) |
 
@@ -18471,6 +18487,15 @@ istom tablicom, vremenom, proizvodom, vaučerom i količinom, a **različitim** 
 ili `supplier_currency`. Ako takvih grupa nema — ponašanje je bezopasno i ovo se zatvara
 kao „prihvaćeno“. Ako ih ima, treba odlučiti da li su to duplikati ili zasebne stavke.
 
+**Provera nad produkcionom bazom (21.09.2026.) [P]:** brojanje je izvršeno. U
+`TransactionOMV` **nema nijedne grupe** (tablica + vreme + proizvod + vaučer + količina)
+koja sadrži više od jednog reda — dakle ni jedne koja bi se razlikovala po iznosu ili
+valuti. Ključ za duplikate **u stvarnim podacima ništa ne spaja**.
+
+**Zaključak [P]:** opisano ponašanje je moguće po kodu, ali se **ne dešava**. Problem se
+zatvara kao prihvaćen, bez izmene koda. Ako se način preuzimanja OMV podataka promeni,
+ovo brojanje treba ponoviti — zato opis ostaje u registru.
+
 ---
 
 #### P-27 — Formule 11 izveštaja nisu u projektu
@@ -18478,7 +18503,7 @@ kao „prihvaćeno“. Ako ih ima, treba odlučiti da li su to duplikati ili zas
 | | |
 |---|---|
 | **Ozbiljnost** | **Srednja** |
-| **Status** | Za rešavanje |
+| **Status** | **Većim delom rešeno** (21.09.2026.) |
 | **Gde** | `fleet/support/report_queries.py` |
 | **Obračun** | [6.5.5](#655-izveštaji-nad-nasleđenim-pogledima) |
 
@@ -18514,6 +18539,31 @@ datoteke sa **stvarnim definicijama pogleda** i premeštene u
 | `nbv_roba.sql` | `CREATE view [dbo].[nbv_roba]` |
 
 Dve od njih (`fleet_trebovanja.sql`, `nbv_roba.sql`) **nisu bile u kontroli verzija**.
+
+**Preuzeto iz produkcione baze (21.09.2026.) [P]:** po povezivanju na produkciju
+definicije su pročitane iz `sys.sql_modules` i snimljene u isti direktorijum:
+
+| Datoteka | Pogled |
+|---|---|
+| `fleet_tro_svi.sql` | `dbo.fleet_tro_svi` |
+| `fleet_tro_goriva_m.sql` | `dbo.fleet_tro_goriva_m` |
+| `fleet_tro_pracenje.sql` | `dbo.fleet_tro_pracenje` |
+| `fleet_tro_taho.sql` | `dbo.fleet_tro_taho` |
+| `fleet_tro_parking.sql` | `dbo.fleet_tro_parking` |
+| `fleet_dobavljaci.sql` | `dbo.fleet_dobavljaci` |
+| `fleet_magacin_rez.sql` | `dbo.fleet_magacin_rez` |
+| `fleet_otpis.sql` | `dbo.fleet_otpis` |
+| `v_neodobreneIF.sql` | `dbo.v_neodobreneIF` |
+
+**Šta preostaje [P]:** `tro_zarade` i `kasko_rate` **ne postoje u bazi** — provera nad
+`sys.objects` ne vraća nijedan red ni pod jednom šemom. Treba utvrditi da li su
+obrisani, preimenovani ili se izveštaj koji ih pominje više ne koristi. Dok se to ne
+utvrdi, ta dva izveštaja se ne mogu dokumentovati **niti se zna da li uopšte rade**.
+
+**Šta i dalje stoji [Z]:** to što su definicije sada u projektu **ne znači da su pod
+kontrolom** — one i dalje žive u bazi i izmena u bazi i dalje menja rezultat na ekranu
+bez traga u istoriji verzija. Tačke 3 i 4 predloga (dokumentovati formulu svakog
+izveštaja; odrediti vlasnika koji odobrava izmene) **nisu urađene**.
 
 **Šta je time odgovoreno [P]:** formula za `vrednost_nab` (`kol * cena`), granica
 „304“ u pogledima Naplate, razredi starosti duga i razlika između stare i nove verzije
@@ -18573,6 +18623,109 @@ uvoz u `vehicles.py`.
 > nepotvrđenog, odbija da nepoznato prikaže kao nulu, a `period_analysis()` koriste i flota
 > i detalj vozila, pa isti period daje isti broj na oba ekrana. Nalazi su bili **greške
 > izvedbe, ne greške zamisli**.
+
+
+#### P-51 — Tri šifre dozvole ne postoje na produkciji
+
+| | |
+|---|---|
+| **Ozbiljnost** | **Visoka** |
+| **Status** | **Za rešavanje** — traži izmenu na produkcionoj bazi |
+| **Gde** | `core/permissions.py`, tabela dozvola u bazi |
+| **Obračun** | [E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa) |
+
+**Šta je zatečeno [P]:** provera nad produkcionom bazom (21.09.2026.) pokazuje da tri
+šifre dozvole **uopšte ne postoje**, pa nemaju nijednu dodelu ulozi:
+
+| Šifra | Ekran | Dodela ulogama |
+|---|---|---|
+| `vehicle_analysis_settings` | „Namena, kriterijumi i evidencija“ — **ekran na kom se unose podaci ekonomike** | **0** |
+| `vehicle_assessment_create` | „Uporedi buduće opcije“ | **0** |
+| `vehicle_assessment_detail` | Prikaz sačuvane procene | **0** |
+
+Za poređenje, šifre koje **postoje**: `fleet_analytics` (2 uloge), `center_statistics`
+(3 uloge). [P]
+
+**Posledica [P]:** dozvola se u ovom sistemu izvodi iz **imena rute**; ako šifra ne postoji,
+nijedna uloga je nema. Ta tri ekrana su zato dostupna **samo superkorisniku**. Dugmad
+„Evidencija za analitiku“ i „Unesi naknadu“ na kartici *Troškovi* ostalim korisnicima se
+**ne prikazuju** (`can_edit_analysis` je netačno).
+
+**Zašto je ovo prvo po redu [Z]:** ekran koji nedostaje je upravo onaj kojim se rešava
+[P-52](#p-52--ulazni-podaci-ekonomike-su-prazni-na-produkciji). Dok se šifre ne kreiraju,
+podatke ekonomike **ne može uneti niko osim superkorisnika**.
+
+**Rešenje [P]:** pokrenuti `sync_permission_codes` nad produkcijom — komanda izvodi šifre
+iz imena ruta i propagira dodele. **To je upis u produkcionu bazu i traži odobrenje.**
+Posle toga treba **dodeliti** te tri šifre ulogama koje smeju da unose podatke — koje su
+to uloge, **nije potvrđeno** [N] i o tome odlučuje naručilac.
+
+---
+
+#### P-52 — Ulazni podaci ekonomike su prazni na produkciji
+
+> **Ažuriranje 21.09.2026 — metodologija 2.1:** korisnik je odobrio da trošak
+> prati istoriju šifre posla vozila, da bez važećeg lizinga/najma važi vlasništvo
+> IMS i da namena može biti jasno označena početna procena. Posebna naknada,
+> posao naloga i zastoji više nisu obavezni ulazi. Migracija 0078 primenjena je
+> na IMS_ERP: 12 dugoročnih najmova označeno je mesečnim, 4 operativna lizinga
+> ukupnim iznosom, bez promene iznosa i datuma. Sedam finansijskih lizinga
+> i dalje zahteva zasebnu kamatu. Opis ispod je istorijski nalaz za 2.0;
+> prazne tabele profila/raspolaganja/zastoja same po sebi više ne blokiraju
+> analitiku. Važeća pravila i kontrolni primeri su u [E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa).
+
+| | |
+|---|---|
+| **Ozbiljnost** | **Visoka** |
+| **Status** | **Za rešavanje** — unos podataka, ne izmena koda |
+| **Gde** | Produkciona baza — tabele modula ekonomike |
+| **Obračun** | [E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa) |
+
+**Šta je zatečeno [P]:** migracija
+`0077_vehicletravelorder_job_code_leasechargeperiod_and_more` **jeste primenjena** na
+produkciji — tabele postoje. Ali su **prazne**:
+
+| Podatak | Zapisa |
+|---|---|
+| `LeaseChargePeriod` — potvrđene naknade lizinga/najma | **0** |
+| `LeaseInterest` — kamata finansijskog lizinga | **0** |
+| `VehicleAnalysisProfile` — namena i kontrolni pragovi | **0** |
+| `VehicleDowntime` — evidentirani zastoji | **0** |
+| `VehicleEconomicAssessment` — sačuvane procene | **0** |
+
+Uz to [P]:
+
+| Podatak | Stanje |
+|---|---|
+| Nalozi sa upisanom šifrom posla | **0 od 241** |
+| Vozila bez ijednog osnova raspolaganja (`VehicleHolding`) | **149 od 172** |
+
+Postojeći podaci nisu problem — ima 172 vozila, 23 ugovora lizinga, 647 polisa,
+1.342 servisa, 2.980 trebovanja, 16.118 zapisa o gorivu. [P]
+
+**Posledica [P]:** kartica *Troškovi* radi, ali za skoro svako vozilo prikazuje
+„nedostaje“:
+
+- red **„Potvrđene naknade lizinga / najma“** je prazan za **sva 23 vozila na lizingu** —
+  nijedan ugovor nema potvrđenu naknadu, pa po pravilu modula ne ulazi u obračun;
+- red **„Kamata finansijskog lizinga“** je prazan svuda;
+- **raspodela na šifre posla** ne daje ništa — ceo iznos pada u „neraspoređeno“;
+- **kriterijumi** se ne prikazuju jer nema unetog praga ni namene;
+- kod 149 vozila **ne zna se osnov raspolaganja**, pa se ugovorne naknade ne mogu
+  rasporediti ni kada se unesu.
+
+> **Ovo nije greška u obračunu.** Modul namerno ne procenjuje ono što nije uneto — prazno
+> polje nije potvrđena nula. Prikaz je tačan: podataka nema.
+
+**Rešenje [Z]:** unos podataka, redosledom koji nalaže sam ekran
+(`_vehicle_cost_readiness.html`) — prvo osnov raspolaganja, pa naknada sa periodom i
+značenjem iznosa, pa kamata, pa namena i pragovi. Preduslov je
+[P-51](#p-51--tri-šifre-dozvole-ne-postoje-na-produkciji).
+
+**Otvoreno pitanje za naručioca [N]:** ko unosi ove podatke i po kom dokumentu se
+potvrđuje iznos naknade. Bez odgovora na to, unos se **ne sme** raditi pogađanjem — staro
+polje „Trenutna rata / iznos otplate“ se upravo zato ne koristi u obračunu
+([P-08](#p-08--operativni-lizing-se-deli-drugačije-od-dugoročnog-najma)).
 
 ---
 
@@ -20559,9 +20712,14 @@ izvršava i prikazuje, a koje se ne vide nigde u Python kodu.
 > Sve što piše niže **pročitano je iz samih definicija u ovom direktorijumu**. Namena
 > rezultata i način knjiženja **nisu** pretpostavljani.
 
-Ovo je prvi deo odgovora na problem
+Ovo je odgovor na problem
 [P-27](#p-27--formule-11-izveštaja-nisu-u-projektu) —
-„formule 11 izveštaja nisu u projektu“. Ostatak DDL-a tek treba preuzeti iz baze.
+„formule 11 izveštaja nisu u projektu“.
+
+> **21.09.2026. — preuzeto iz produkcione baze.** Definicije su pročitane iz
+> `sys.sql_modules` i snimljene ovde. Time su **dve ranije ograde ovog dokumenta
+> razrešene** (vidi „Šta je provera u bazi pokazala“), a više tvrdnji koje su bile
+> **[N] nepotvrđene** postalo je **[P] potvrđeno**.
 
 ---
 
@@ -20572,13 +20730,82 @@ Ovo je prvi deo odgovora na problem
 | `naplata-pogledi.sql` | **7 pogleda Naplate** | Ranije `naplata.txt` u korenu projekta |
 | `fleet_trebovanja.sql` | `CREATE view [dbo].[fleet_trebovanja]` | Ranije `izvestaji/procena_fleet_trebovanja_20260911.sql` |
 | `nbv_roba.sql` | `CREATE view [dbo].[nbv_roba]` | Ranije `izvestaji/procena_nbv_roba_20260911.sql` |
+| `naplata-baza.sql`, `naplata-ispravke.sql`, `naplata-v_duplikati.sql`, `naplata-v_if.sql`, `naplata-v_neodobreneif.sql` | **Prave definicije 5 pogleda Naplate** | Produkciona baza, `sys.sql_modules`, 21.09.2026. |
+| `fleet_tro_svi.sql`, `fleet_tro_goriva_m.sql`, `fleet_tro_pracenje.sql`, `fleet_tro_taho.sql`, `fleet_tro_parking.sql`, `fleet_dobavljaci.sql`, `fleet_magacin_rez.sql`, `fleet_otpis.sql` | **8 pogleda izveštaja Flote** | Produkciona baza, 21.09.2026. |
+| `v_neodobreneIF.sql` | `dbo.v_neodobreneIF` | Produkciona baza, 21.09.2026. |
+
+> **Kada dve datoteke opisuju isti pogled, merodavna je ona preuzeta iz baze**
+> (`naplata-*.sql`), a ne ispis u `naplata-pogledi.sql`. Razlog je niže.
+
+---
+
+### Šta je provera u bazi pokazala (21.09.2026.)
+
+#### 1. Sumnja na `v_duplikati` bila je opravdana [P]
+
+Ispis u `naplata-pogledi.sql` dao je `ispravke` i `v_duplikati` **doslovno isti tekst**.
+U bazi **nisu isti**: `ispravke` ima 2.157 znakova, `v_duplikati` **929**. Ispis je bio
+pogrešan ili zastareo.
+
+Prava definicija `v_duplikati` (`naplata-v_duplikati.sql`) **potpuno se razlikuje** od
+onoga što je stajalo u ispisu. Ona [P]:
+
+- čita **samo `sif_vrs = 'IF'`**, `sif_par > 0` — dakle izlazne fakture, **ne konta
+  ispravki i tužbi** `2048%/2058%/2049%/2059%` kako je ispis tvrdio;
+- **nema uslov `Granica304`** ni bilo kakvo ograničenje godine — uzima **sve godine**;
+- spaja to sa tabelom **`dbo.duplikati18`** kroz `UNION ALL`;
+- grupiše po partneru i vezi dokumenta i zadržava **samo one koji se javljaju u više od
+  jedne godine**: `HAVING COUNT(DISTINCT god) > 1`;
+- vraća `MAX(dpo)` — **najkasnije** dospeće.
+
+> **[P] Šta je ovde „duplikat“:** ista veza dokumenta kod istog partnera koja se pojavljuje
+> u **dve ili više godina**. To je i objašnjenje zašto je pri prenosu u Potraživanja
+> `v_duplikati` dao **2.580**, a `ispravke` **2.395** redova — to su dva sasvim različita
+> upita, a ne isti upit sa dva rezultata.
+
+Time se ranije upozorenje „**1. `ispravke` i `v_duplikati` imaju doslovno isti tekst**“
+**zatvara**: greška je bila u ispisu, ne u bazi. Opis iz ranijeg plana Naplate
+(„IF iz svih godina spojen sa `duplikati18`, uz `MAX` dospeća“) bio je **tačan** i sada je
+potvrđen na izvoru — prelazi iz [Z] u **[P]**.
+
+#### 2. `v_neodobreneIF` je preuzet — ranije [N] tvrdnje su potvrđene [P]
+
+Definicija je sada u `naplata-v_neodobreneif.sql`. Sve što je ranije stajalo kao
+**nepotvrđeno** pokazalo se tačnim:
+
+| Ranija tvrdnja [N] | Stvarno u pogledu [P] |
+|---|---|
+| datum dokumenta **od 2025.** | `YEAR(datumdok) > 2024` |
+| `sif_dok = 50` | `sif_dok = 50` |
+| `StatusIz = 20` | `d.StatusIz = 20`, uz komentar `--- ovo pokazuje samo poslate fakture` |
+| status različit od `Approved` | `status <> 'Approved…'` |
+| prikaz `SUBSTRING(EID,5,20)` nije pouzdan ključ | `SUBSTRING(eid, 5, 20) as faktura` — izvedena kolona, pravi ključ je `EDok.ID` |
+
+> **[P] Poređenje statusa ide sa dopunom razmacima:** u kodu stoji
+> `status <> 'Approved' + 45 razmaka`. Radi jer je kolona `char` fiksne dužine, ali je
+> **krto** — promena dužine kolone tiho bi obesmislila uslov.
+
+#### 3. `tuzeni` **ne postoji u bazi** [P]
+
+Provera nad `sys.objects` ne vraća nijedan red ni pod jednom šemom. Pogled opisan u
+`naplata-pogledi.sql` (i u tabeli razilaženja posle 30. aprila) **danas ne postoji**.
+Nepotvrđeno je [N] da li je obrisan, preimenovan ili ga je ispis pogrešno pripisao ovoj
+bazi. **Sve što ovaj dokument tvrdi o `tuzeni` odnosi se na ispis, ne na bazu.**
+
+#### 4. `tro_zarade` i `kasko_rate` ne postoje u bazi [P]
+
+Ista provera, isti rezultat — nema ih. Njihovi izveštaji se zato **ne mogu dokumentovati
+niti se zna da li rade**.
 
 `naplata-pogledi.sql` **nije izvršiv skript** — to je ispis sadržaja pogleda, sa naslovom
 iznad svakog (`view baza`, `view tuzeni`, …), bez `CREATE VIEW` zaglavlja. [P]
 
-#### ⚠ Dve granice ovog ispisa
+#### ⚠ Dve granice ovog ispisa — **obe razrešene 21.09.2026.**
 
-**1. `ispravke` i `v_duplikati` imaju doslovno isti tekst.** [P] Poređenje znak po znak
+> Odeljak se zadržava da se vidi kako je zaključeno. **Za sadržaj pogleda merodavne su
+> datoteke `naplata-*.sql` preuzete iz baze**, ne ono što piše niže.
+
+**1. ~~`ispravke` i `v_duplikati` imaju doslovno isti tekst.~~ Razrešeno — greška ispisa.** [P] Poređenje znak po znak
 pokazuje da se dve definicije u ovoj datoteci **ne razlikuju ni u čemu**.
 
 To **ne može biti tačno**: pri prenosu u Potraživanja `ispravke` je dalo **2.395**, a
@@ -20589,7 +20816,7 @@ spojen sa `duplikati18`, uz `MAX` dospeća** — što je sasvim drugačije od on
 piše. **Definicija `v_duplikati` u ovoj datoteci je najverovatnije stara ili pogrešno
 kopirana i treba je ponovo preuzeti iz baze.** [Z]
 
-**2. Nedostaje osmi pogled — `v_neodobreneIF`.** [P] Ovde ih je sedam. Aplikacija čita i
+**2. ~~Nedostaje osmi pogled — `v_neodobreneIF`.~~ Razrešeno — preuzet iz baze.** [P] Ovde ih je sedam. Aplikacija čita i
 `v_neodobreneIF` (ekran „Neodobrene IF“). Njegova pravila poznata su samo posredno, iz
 ranijeg plana: datum dokumenta **od 2025.**, `sif_dok=50`, `StatusIz=20` i status različit
 od `Approved`. Pravi primarni ključ izvora je **`EDok.ID`**; izvedeni prikaz
@@ -20622,7 +20849,7 @@ se razilaze** [P]:
 | **baza** | `god = YEAR(GETDATE())` — **tekuća godina** | 12 |
 | **tuzeni** | `god = YEAR(GETDATE()) - 1` — **prethodna godina** | 53 |
 | **ispravke** | `god = YEAR(GETDATE()) - 1` — **prethodna godina** | 73 |
-| **v_duplikati** | `god = YEAR(GETDATE()) - 1` — **prethodna godina** | 94 |
+| **v_duplikati** | ~~`god = YEAR(GETDATE()) - 1`~~ — **u bazi nema uslov godine uopšte** | 94 |
 
 > **[P] Ovo je potvrđeno poslovno pravilo, ne greška.** Posle roka za zaključenje prethodne
 > godine saldo se gleda u tekućoj godini, a **ispravke i utuženja i dalje u prethodnoj**.
@@ -20644,9 +20871,9 @@ se razilaze** [P]:
 |---|---|---|---|
 | **baza** | Sve stavke naloga, red po red | `20400%`, `20500%` | Nema — sirove stavke |
 | **v_if** | Samo izlazne fakture (`sif_vrs = 'IF'`), od **2025.** naviše, `sif_par > 0` | Sva | Godina, mesec, partner, OJ, šifra posla, veza dokumenta, datum |
-| **v_duplikati** | Stavke sa kontima ispravki i tužbi | `2048%`, `2058%`, `2049%`, `2059%` | Nema |
-| **ispravke** | **Doslovno isti tekst** kao `v_duplikati` u ovoj datoteci — vidi upozorenje niže | `2048%`, `2058%`, `2049%`, `2059%` | Nema |
-| **tuzeni** | Samo `promena = 'O'` | `2048%`, `2058%` | Godina, partner, datum, konto |
+| **v_duplikati** | ~~Stavke sa kontima ispravki i tužbi~~ — **netačno, vidi `naplata-v_duplikati.sql`**: izlazne fakture iz **svih godina** + `duplikati18`, samo one u **više od jedne godine** | Sva | Partner, veza dokumenta |
+| **ispravke** | Stavke sa kontima ispravki i tužbi | `2048%`, `2058%`, `2049%`, `2059%` | Nema |
+| **tuzeni** | Samo `promena = 'O'` — **pogled ne postoji u bazi** | `2048%`, `2058%` | Godina, partner, datum, konto |
 | **dodela bucketa** | Saldo po partneru i vezi dokumenta, **razvrstan po starosti** | Iz `baza` | Partner, naziv, veza dokumenta, šifra posla, prve 3 cifre konta, dospeće |
 | *(bez naslova)* | Šifarnik partnera sa povezanog servera, `grupa = 1` | — | Nema |
 

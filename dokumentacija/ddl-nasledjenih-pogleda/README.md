@@ -8,9 +8,14 @@ izvršava i prikazuje, a koje se ne vide nigde u Python kodu.
 > Sve što piše niže **pročitano je iz samih definicija u ovom direktorijumu**. Namena
 > rezultata i način knjiženja **nisu** pretpostavljani.
 
-Ovo je prvi deo odgovora na problem
+Ovo je odgovor na problem
 [P-27](../docs/10-poznati-problemi.md#p-27--formule-11-izveštaja-nisu-u-projektu) —
-„formule 11 izveštaja nisu u projektu“. Ostatak DDL-a tek treba preuzeti iz baze.
+„formule 11 izveštaja nisu u projektu“.
+
+> **21.09.2026. — preuzeto iz produkcione baze.** Definicije su pročitane iz
+> `sys.sql_modules` i snimljene ovde. Time su **dve ranije ograde ovog dokumenta
+> razrešene** (vidi „Šta je provera u bazi pokazala“), a više tvrdnji koje su bile
+> **[N] nepotvrđene** postalo je **[P] potvrđeno**.
 
 ---
 
@@ -21,13 +26,82 @@ Ovo je prvi deo odgovora na problem
 | `naplata-pogledi.sql` | **7 pogleda Naplate** | Ranije `naplata.txt` u korenu projekta |
 | `fleet_trebovanja.sql` | `CREATE view [dbo].[fleet_trebovanja]` | Ranije `izvestaji/procena_fleet_trebovanja_20260911.sql` |
 | `nbv_roba.sql` | `CREATE view [dbo].[nbv_roba]` | Ranije `izvestaji/procena_nbv_roba_20260911.sql` |
+| `naplata-baza.sql`, `naplata-ispravke.sql`, `naplata-v_duplikati.sql`, `naplata-v_if.sql`, `naplata-v_neodobreneif.sql` | **Prave definicije 5 pogleda Naplate** | Produkciona baza, `sys.sql_modules`, 21.09.2026. |
+| `fleet_tro_svi.sql`, `fleet_tro_goriva_m.sql`, `fleet_tro_pracenje.sql`, `fleet_tro_taho.sql`, `fleet_tro_parking.sql`, `fleet_dobavljaci.sql`, `fleet_magacin_rez.sql`, `fleet_otpis.sql` | **8 pogleda izveštaja Flote** | Produkciona baza, 21.09.2026. |
+| `v_neodobreneIF.sql` | `dbo.v_neodobreneIF` | Produkciona baza, 21.09.2026. |
+
+> **Kada dve datoteke opisuju isti pogled, merodavna je ona preuzeta iz baze**
+> (`naplata-*.sql`), a ne ispis u `naplata-pogledi.sql`. Razlog je niže.
+
+---
+
+## Šta je provera u bazi pokazala (21.09.2026.)
+
+### 1. Sumnja na `v_duplikati` bila je opravdana [P]
+
+Ispis u `naplata-pogledi.sql` dao je `ispravke` i `v_duplikati` **doslovno isti tekst**.
+U bazi **nisu isti**: `ispravke` ima 2.157 znakova, `v_duplikati` **929**. Ispis je bio
+pogrešan ili zastareo.
+
+Prava definicija `v_duplikati` (`naplata-v_duplikati.sql`) **potpuno se razlikuje** od
+onoga što je stajalo u ispisu. Ona [P]:
+
+- čita **samo `sif_vrs = 'IF'`**, `sif_par > 0` — dakle izlazne fakture, **ne konta
+  ispravki i tužbi** `2048%/2058%/2049%/2059%` kako je ispis tvrdio;
+- **nema uslov `Granica304`** ni bilo kakvo ograničenje godine — uzima **sve godine**;
+- spaja to sa tabelom **`dbo.duplikati18`** kroz `UNION ALL`;
+- grupiše po partneru i vezi dokumenta i zadržava **samo one koji se javljaju u više od
+  jedne godine**: `HAVING COUNT(DISTINCT god) > 1`;
+- vraća `MAX(dpo)` — **najkasnije** dospeće.
+
+> **[P] Šta je ovde „duplikat“:** ista veza dokumenta kod istog partnera koja se pojavljuje
+> u **dve ili više godina**. To je i objašnjenje zašto je pri prenosu u Potraživanja
+> `v_duplikati` dao **2.580**, a `ispravke` **2.395** redova — to su dva sasvim različita
+> upita, a ne isti upit sa dva rezultata.
+
+Time se ranije upozorenje „**1. `ispravke` i `v_duplikati` imaju doslovno isti tekst**“
+**zatvara**: greška je bila u ispisu, ne u bazi. Opis iz ranijeg plana Naplate
+(„IF iz svih godina spojen sa `duplikati18`, uz `MAX` dospeća“) bio je **tačan** i sada je
+potvrđen na izvoru — prelazi iz [Z] u **[P]**.
+
+### 2. `v_neodobreneIF` je preuzet — ranije [N] tvrdnje su potvrđene [P]
+
+Definicija je sada u `naplata-v_neodobreneif.sql`. Sve što je ranije stajalo kao
+**nepotvrđeno** pokazalo se tačnim:
+
+| Ranija tvrdnja [N] | Stvarno u pogledu [P] |
+|---|---|
+| datum dokumenta **od 2025.** | `YEAR(datumdok) > 2024` |
+| `sif_dok = 50` | `sif_dok = 50` |
+| `StatusIz = 20` | `d.StatusIz = 20`, uz komentar `--- ovo pokazuje samo poslate fakture` |
+| status različit od `Approved` | `status <> 'Approved…'` |
+| prikaz `SUBSTRING(EID,5,20)` nije pouzdan ključ | `SUBSTRING(eid, 5, 20) as faktura` — izvedena kolona, pravi ključ je `EDok.ID` |
+
+> **[P] Poređenje statusa ide sa dopunom razmacima:** u kodu stoji
+> `status <> 'Approved' + 45 razmaka`. Radi jer je kolona `char` fiksne dužine, ali je
+> **krto** — promena dužine kolone tiho bi obesmislila uslov.
+
+### 3. `tuzeni` **ne postoji u bazi** [P]
+
+Provera nad `sys.objects` ne vraća nijedan red ni pod jednom šemom. Pogled opisan u
+`naplata-pogledi.sql` (i u tabeli razilaženja posle 30. aprila) **danas ne postoji**.
+Nepotvrđeno je [N] da li je obrisan, preimenovan ili ga je ispis pogrešno pripisao ovoj
+bazi. **Sve što ovaj dokument tvrdi o `tuzeni` odnosi se na ispis, ne na bazu.**
+
+### 4. `tro_zarade` i `kasko_rate` ne postoje u bazi [P]
+
+Ista provera, isti rezultat — nema ih. Njihovi izveštaji se zato **ne mogu dokumentovati
+niti se zna da li rade**.
 
 `naplata-pogledi.sql` **nije izvršiv skript** — to je ispis sadržaja pogleda, sa naslovom
 iznad svakog (`view baza`, `view tuzeni`, …), bez `CREATE VIEW` zaglavlja. [P]
 
-### ⚠ Dve granice ovog ispisa
+### ⚠ Dve granice ovog ispisa — **obe razrešene 21.09.2026.**
 
-**1. `ispravke` i `v_duplikati` imaju doslovno isti tekst.** [P] Poređenje znak po znak
+> Odeljak se zadržava da se vidi kako je zaključeno. **Za sadržaj pogleda merodavne su
+> datoteke `naplata-*.sql` preuzete iz baze**, ne ono što piše niže.
+
+**1. ~~`ispravke` i `v_duplikati` imaju doslovno isti tekst.~~ Razrešeno — greška ispisa.** [P] Poređenje znak po znak
 pokazuje da se dve definicije u ovoj datoteci **ne razlikuju ni u čemu**.
 
 To **ne može biti tačno**: pri prenosu u Potraživanja `ispravke` je dalo **2.395**, a
@@ -38,7 +112,7 @@ spojen sa `duplikati18`, uz `MAX` dospeća** — što je sasvim drugačije od on
 piše. **Definicija `v_duplikati` u ovoj datoteci je najverovatnije stara ili pogrešno
 kopirana i treba je ponovo preuzeti iz baze.** [Z]
 
-**2. Nedostaje osmi pogled — `v_neodobreneIF`.** [P] Ovde ih je sedam. Aplikacija čita i
+**2. ~~Nedostaje osmi pogled — `v_neodobreneIF`.~~ Razrešeno — preuzet iz baze.** [P] Ovde ih je sedam. Aplikacija čita i
 `v_neodobreneIF` (ekran „Neodobrene IF“). Njegova pravila poznata su samo posredno, iz
 ranijeg plana: datum dokumenta **od 2025.**, `sif_dok=50`, `StatusIz=20` i status različit
 od `Approved`. Pravi primarni ključ izvora je **`EDok.ID`**; izvedeni prikaz
@@ -71,7 +145,7 @@ se razilaze** [P]:
 | **baza** | `god = YEAR(GETDATE())` — **tekuća godina** | 12 |
 | **tuzeni** | `god = YEAR(GETDATE()) - 1` — **prethodna godina** | 53 |
 | **ispravke** | `god = YEAR(GETDATE()) - 1` — **prethodna godina** | 73 |
-| **v_duplikati** | `god = YEAR(GETDATE()) - 1` — **prethodna godina** | 94 |
+| **v_duplikati** | ~~`god = YEAR(GETDATE()) - 1`~~ — **u bazi nema uslov godine uopšte** | 94 |
 
 > **[P] Ovo je potvrđeno poslovno pravilo, ne greška.** Posle roka za zaključenje prethodne
 > godine saldo se gleda u tekućoj godini, a **ispravke i utuženja i dalje u prethodnoj**.
@@ -93,9 +167,9 @@ se razilaze** [P]:
 |---|---|---|---|
 | **baza** | Sve stavke naloga, red po red | `20400%`, `20500%` | Nema — sirove stavke |
 | **v_if** | Samo izlazne fakture (`sif_vrs = 'IF'`), od **2025.** naviše, `sif_par > 0` | Sva | Godina, mesec, partner, OJ, šifra posla, veza dokumenta, datum |
-| **v_duplikati** | Stavke sa kontima ispravki i tužbi | `2048%`, `2058%`, `2049%`, `2059%` | Nema |
-| **ispravke** | **Doslovno isti tekst** kao `v_duplikati` u ovoj datoteci — vidi upozorenje niže | `2048%`, `2058%`, `2049%`, `2059%` | Nema |
-| **tuzeni** | Samo `promena = 'O'` | `2048%`, `2058%` | Godina, partner, datum, konto |
+| **v_duplikati** | ~~Stavke sa kontima ispravki i tužbi~~ — **netačno, vidi `naplata-v_duplikati.sql`**: izlazne fakture iz **svih godina** + `duplikati18`, samo one u **više od jedne godine** | Sva | Partner, veza dokumenta |
+| **ispravke** | Stavke sa kontima ispravki i tužbi | `2048%`, `2058%`, `2049%`, `2059%` | Nema |
+| **tuzeni** | Samo `promena = 'O'` — **pogled ne postoji u bazi** | `2048%`, `2058%` | Godina, partner, datum, konto |
 | **dodela bucketa** | Saldo po partneru i vezi dokumenta, **razvrstan po starosti** | Iz `baza` | Partner, naziv, veza dokumenta, šifra posla, prve 3 cifre konta, dospeće |
 | *(bez naslova)* | Šifarnik partnera sa povezanog servera, `grupa = 1` | — | Nema |
 

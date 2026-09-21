@@ -105,6 +105,7 @@ class VehicleBasisForm(forms.Form):
     contract = forms.ModelChoiceField(label='Postojeći ugovor iz evidencije Ugovori', queryset=Contract.objects.all(), required=False)
     end_date = localized_date_field(label='Datum završetka ugovora', required=False)
     current_payment_amount = forms.DecimalField(label='Iznos naknade / otplate (RSD)', help_text='Za dugoročni najam: mesečna naknada. Za operativni: ukupan iznos za period. Finansijski lizing: iznos rate; kamata se vodi odvojeno.', max_digits=10, decimal_places=2, min_value=0, required=False)
+    payment_basis = forms.ChoiceField(label='Značenje iznosa', choices=Lease.PAYMENT_BASIS_CHOICES, required=False)
     note = forms.CharField(label='Napomena', widget=forms.Textarea(attrs={'rows': 3}), required=False)
 
     def clean(self):
@@ -125,6 +126,8 @@ class VehicleBasisForm(forms.Form):
             for key in ['partner_code', 'partner_name', 'lease_type', 'contract_number', 'end_date', 'current_payment_amount']:
                 if data.get(key) in (None, ''):
                     self.add_error(key, 'Obavezno za korišćenje po ugovoru.')
+            if data.get('lease_type') != 'finansijski' and not data.get('payment_basis'):
+                self.add_error('payment_basis', 'Izaberite mesečni ili ukupni iznos ugovora.')
             if data.get('start_date') and data.get('end_date') and data['end_date'] < data['start_date']:
                 self.add_error('end_date', 'Završetak ne može biti pre početka.')
             if contract and contract.currency != 'RSD':
