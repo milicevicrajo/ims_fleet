@@ -28,9 +28,28 @@
 .collections-page .collections-partner-tabs .nav-link.active{color:#fff;background:#235b83}
 .collections-page .collections-partner-tabs .nav-link:focus-visible{outline:2px solid #235b83;outline-offset:3px}
 .collections-partner-content{padding:24px}
+.collections-cell-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.collections-simple-review{display:flex;align-items:center;gap:6px;margin:4px 0 0;font-weight:normal}
 .collections-pane-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px}
 .collections-pane-heading h2{font-size:1.05rem;font-weight:700;color:#235b83;margin:0}
 .collections-tab-actions{display:flex;flex-wrap:wrap;gap:8px}
 .collections-tab-actions .btn-primary{background:#235b83;border-color:#235b83}
 .collections-tab-actions .btn-primary:hover{background:#194664;border-color:#194664}
 @media(max-width:767px){.collections-partner-header{padding:18px 16px;align-items:flex-start;flex-wrap:wrap;gap:14px}.collections-partner-content{padding:16px}.collections-partner-card > .collections-partner-tab-header{padding:14px 16px}}
+
+/* Partner debt: one data table, two presentation styles. */
+.collections-partners-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 18px}
+.collections-page .collections-partners-toolbar .form-select{width:auto;min-width:190px;max-width:250px;height:36px;padding-top:6px;padding-bottom:6px;font-size:13px}
+.collections-partners-toolbar .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:36px;padding:7px 12px;font-size:13px;line-height:20px;white-space:nowrap}
+.collections-list-toolbar .form-control{width:170px;height:36px;padding:7px 10px;font-size:13px}
+.collections-list-toolbar .collections-toolbar-check{display:flex;align-items:center;gap:6px;margin:0;font-size:13px}
+.collections-presentation{display:flex;gap:6px;flex-wrap:wrap}
+/* The basic table uses Naplata's display/compact CSS and its original initializer. */
+.collections-partners.collections-basic .collections-pretty-view{display:none}
+.collections-partners:not(.collections-basic) .collections-legacy-view{display:none}
+.collections-page .collections-legacy-table th,.collections-page .collections-simple-table th{white-space:normal}
+.collections-page .collections-legacy-table td,.collections-page .collections-simple-table td{vertical-align:inherit}
+.collections-legacy-view .avans-cell{text-align:center;vertical-align:middle;padding:.25rem .5rem}
+.collections-legacy-view .avans-form{display:flex;align-items:center;justify-content:center;margin:0;height:100%}
+.collections-legacy-view .avans-checkbox{width:20px;height:20px;transform:translateY(0);accent-color:#198754;cursor:pointer}
+.collections-presentation .btn:focus-visible{outline:2px solid #175e7c;outline-offset:2px}

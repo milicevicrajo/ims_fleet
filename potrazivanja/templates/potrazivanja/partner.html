@@ -35,8 +35,19 @@
     <div class="collections-tab-actions"><a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'legal' %}?partner={{ partner.pk }}"><i class="mdi mdi-plus" aria-hidden="true"></i> Novi postupak</a></div>
     {% endif %}
     </div>
-    {% if tab.kind == 'positions' %}{% include 'potrazivanja/_aging_legend.html' %}{% endif %}
+    {% if tab.kind == 'basic' %}
+    <div class="table-responsive"><table class="table table-striped table-sm">
+      <tbody>{% for label, value in basic_fields %}<tr><th scope="row">{{ label }}</th><td>{% if value == None or value == '' %}—{% else %}{{ value }}{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% elif tab.kind == 'invoices' %}
+    {% for invoice_table in invoice_tables %}
+    <section class="mb-4" aria-label="{{ invoice_table.title }}"><h3 class="h5">{{ invoice_table.title }}</h3>
+      {% include 'potrazivanja/table.html' with kind=invoice_table.kind columns=invoice_table.columns %}
+    </section>
+    {% endfor %}
+    {% else %}
     {% include 'potrazivanja/table.html' with kind=tab.kind columns=tab.columns %}
+    {% endif %}
   </div>{% endfor %}</div>
 </div>
 {% endblock %}

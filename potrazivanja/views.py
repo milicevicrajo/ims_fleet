@@ -18,6 +18,7 @@ from .models import (BalanceSnapshot, CollectionState, CollectionSyncRun, Financ
                      ReceivablePosting, ReceivablePosition, CollectionLegalCase, ImportIssue)
 from .services.source import day, integer, money, text
 from .services.sync import bucket, sync_collections
+from .services.partner_detail import INVOICE_BUCKETS, BUCKET_LABELS, basic_fields, invoice_groups
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +37,16 @@ TABLES = {
 }
 TABLES['review'] = TABLES['partners']
 TABLES['jobs'] = TABLES['partners']
+TABLES['debts'] = ('Godina', 'OJ', 'Šifra posla', 'Vrsta', 'Datum', 'Veza', 'DPO', 'Valuta', 'Duguje', 'Potražuje')
+TABLES['buckets'] = ('Opis', 'Baketi', 'Šifra posla', 'Veza', 'DPO', 'Duguje', 'Potražuje', 'Saldo', 'Akcija')
+for code, title in INVOICE_BUCKETS:
+    TABLES[f'invoices_{code}'] = ('Šifra partnera', 'Naziv', 'Veza', 'Šifra posla', 'Duguje', 'Potražuje', 'Saldo')
 LABELS = {"partners": "Dugovanja po partnerima", "positions": "Otvorene stavke / šifre posla", "postings": "Knjiženja",
           "ispravke": "Ispravke vrednosti", "sef": "Neodobrene e-fakture", "cases": "Utužena potraživanja",
           "contacts": "Kontakti", "activities": "Napomene i pozivi", "notices": "Opomene i pisma",
           "review": "Spisak za proveru", "jobs": "Izveštaj po šiframa posla", "directory": "Svi partneri", "legal": "Utuženi klijenti / pravni postupci"}
+LABELS.update(debts='Dugovanja', buckets='Dugovanja - Baketi')
+LABELS.update({f'invoices_{code}': title for code, title in INVOICE_BUCKETS})
 OPERATIONS = ('contacts', 'activities', 'notices', 'legal', 'directory')
 SPLIT_OPERATIONS = {
     'calls': ('activities', 'phone', 'Telefonski pozivi'),
@@ -126,6 +133,14 @@ def dashboard(request):
                 totals["not_due"] += row["balance"]
     list_entity = SPLIT_OPERATIONS[kind][0] if kind in SPLIT_OPERATIONS else kind
     ctx.update(kind=kind, list_entity=list_entity, columns=TABLES[kind], title=LABELS[kind], section=list_entity, totals=dict(totals), partner_count=len(partners))
+    if kind in ('partners', 'jobs', 'review'):
+        ctx['legacy_partner_rows'] = [
+            {'code': row[1]['sort'], 'name': row[0]['display'], 'url': row[0]['url'],
+             'amounts': [Decimal(item['sort']) for item in row[3:]],
+             'important': row[2]['important'], 'foreign': row[2]['foreign'],
+             'review': row[2].get('review')}
+            for row in rows_for(request, snapshot, kind)
+        ]
     return render(request, "potrazivanja/dashboard.html", ctx)
 
 
@@ -138,12 +153,27 @@ def partner_detail(request, pk):
     if not can_view_all(request.user) and (not snapshot or not scoped(snapshot.positions.filter(identity=partner), request.user).exists()):
         raise PermissionDenied("Partner nije u dodeljenom obuhvatu.")
     ctx = context(request, snapshot)
-    kinds = ["positions", "postings", "ispravke"]
+    kinds = ['basic']
     if ctx["all_access"]:
-        kinds += ["contacts", "calls", "notes", "reminders", "letters", "claims", "sef", "cases", "legal"]
-    tab_labels = {'positions': 'Stavke po poslovima', 'ispravke': 'Ispravke',
+        kinds += ['contacts', 'notes', 'reminders', 'calls', 'letters', 'claims']
+    kinds += ['debts', 'buckets', 'invoices', 'ispravke', 'positions', 'postings']
+    if ctx['all_access']:
+        kinds += ['sef', 'cases', 'legal']
+    tab_labels = {'basic': 'Osnovni podaci', 'invoices': 'Dugovanja po fakturama',
+                  'calls': 'Pozivi', 'letters': 'Pozivi/pisma', 'claims': 'Tužbe',
+                  'positions': 'Stavke po poslovima', 'ispravke': 'Otpisana potraživanja',
                   'sef': 'Neodobrene IF', 'cases': 'Utužene stavke', 'legal': 'Pravni postupci'}
-    ctx.update(partner=partner, title=partner.source_name, section="partners", tabs=[{"kind": k, "title": tab_labels.get(k, LABELS[k]), "columns": TABLES[k]} for k in kinds])
+    raw_partner = {}
+    if snapshot:
+        for raw in dataset_rows(snapshot, 'partneri').filter(partner_code=partner.partner_code).values_list('raw_data', flat=True):
+            if integer(raw.get('sif_pred')) == partner.company and integer(raw.get('grupa')) == partner.partner_group:
+                raw_partner = raw
+                break
+    ctx.update(partner=partner, title=partner.source_name, section='partners',
+               basic_fields=basic_fields(partner, raw_partner),
+               invoice_tables=[{'kind': f'invoices_{code}', 'title': title, 'columns': TABLES[f'invoices_{code}']}
+                               for code, title in INVOICE_BUCKETS],
+               tabs=[{'kind': k, 'title': tab_labels.get(k, LABELS.get(k)), 'columns': TABLES.get(k)} for k in kinds])
     return render(request, "potrazivanja/partner.html", ctx)
 
 
@@ -213,6 +243,7 @@ def rows_for(request, snapshot, kind):
                 flags.append("Za proveru")
             values = [amounts[b] for b in ("0.1", "30", "45", "60", "90", "180", "181")]
             flags_cell = cell(" · ".join(flags))
+            flags_cell.update(important=bool(profile and profile.important_customer), foreign=family == '205')
             if may_review:
                 flags_cell['review'] = {'url': reverse('potrazivanja:review_toggle', args=[identity.pk]),
                     'checked': bool(profile and profile.needs_review), 'version': profile.updated_at.isoformat() if profile else ''}
@@ -226,13 +257,29 @@ def rows_for(request, snapshot, kind):
                  cell((snapshot.as_of_date-p.due_date).days if p.due_date else None),
                  cell(p.debit, "money"), cell(p.credit, "money"),
                  dict(cell(p.balance, "money"), tone=BUCKET_TONES[bucket(p.due_date, snapshot.as_of_date)])] for p in qs]
+    if kind == 'buckets':
+        rules = {Decimal(str(r['baket'])): r for r in dataset_rows(snapshot, 'sif_baket').values_list('raw_data', flat=True)}
+        result = []
+        for p in qs:
+            code = bucket(p.due_date, snapshot.as_of_date)
+            rule = rules.get(Decimal(code), {})
+            result.append([cell(rule.get('opis') or BUCKET_LABELS[code]), dict(cell(code), sort=float(code)),
+                           cell(p.job_code), cell(p.reference), cell(p.due_date, 'date'),
+                           cell(p.debit, 'money'), cell(p.credit, 'money'),
+                           dict(cell(p.balance, 'money'), tone=BUCKET_TONES[code]), cell(rule.get('akcija'))])
+        return result
+    if kind.startswith('invoices_'):
+        return [[cell(group['identity'].partner_code), partner_cell(group['identity'], snapshot),
+                 cell(group['reference']), cell(group['job_code'])]
+                + [cell(group['amounts'][field], 'money') for field in ('debit', 'credit', 'balance')]
+                for group in invoice_groups(qs, snapshot.as_of_date, kind.removeprefix('invoices_'))]
     selected_code = None
     selected = None
-    if partner_id and kind in ("postings", "ispravke", "sef", "cases"):
+    if partner_id and kind in ("debts", "postings", "ispravke", "sef", "cases"):
         selected = get_object_or_404(FinancePartnerIdentity.objects.only("id", "source_name", "partner_code"), pk=partner_id, company=1, partner_group=1)
         selected_code = selected.partner_code
-    if kind in ("postings", "ispravke", "sef", "cases"):
-        table = {"postings": "baza", "ispravke": "ispravke", "sef": "v_neodobreneIF", "cases": "v_tuzeni"}[kind]
+    if kind in ("debts", "postings", "ispravke", "sef", "cases"):
+        table = {"debts": "baza", "postings": "baza", "ispravke": "ispravke", "sef": "v_neodobreneIF", "cases": "v_tuzeni"}[kind]
         records = dataset_rows(snapshot, table)
         if selected_code is not None:
             records = records.filter(partner_code=selected_code)
@@ -246,6 +293,8 @@ def rows_for(request, snapshot, kind):
         if request.GET.get("center"):
             jobs = [code for code, center in job_centers(snapshot).items() if center == request.GET["center"]]
             records = records.filter(job_code__in=jobs)
+        if request.GET.get('job'):
+            records = records.filter(job_code=request.GET['job'].strip())
         # Resolve only partners actually present in this local capture. In a partner
         # detail, reuse the selected identity; never fetch the entire directory per tab.
         identities = {selected.partner_code: selected} if selected else {
@@ -257,7 +306,12 @@ def rows_for(request, snapshot, kind):
         for partner_code, r in records.values_list("partner_code", "raw_data"):
             identity = identities.get(partner_code)
             label = partner_cell(identity, snapshot) if identity else cell(text(r.get("naz_par", r.get("naziv partnera"))))
-            if kind in ("postings", "ispravke"):
+            if kind == 'debts':
+                result.append([cell(integer(r.get('god'))), cell(r.get('oj')), cell(r.get('sif_pos')),
+                               cell(r.get('sif_vrs')), cell(r.get('datum'), 'date'), cell(r.get('vez_dok')),
+                               cell(r.get('dpo'), 'date'), cell(r.get('skr_naz')),
+                               cell(r.get('dug'), 'money'), cell(r.get('pot'), 'money')])
+            elif kind in ("postings", "ispravke"):
                 result.append([label, cell(r.get("sif_pos")), cell(r.get("knt")), cell(integer(r.get("god"))),
                     cell(r.get("sif_vrs")), cell(r.get("br_naloga")), cell(r.get("stavka")), cell(r.get("dat_naloga"), "date"),
                     cell(r.get("vez_dok")), cell(r.get("dug"), "money"), cell(r.get("pot"), "money"), cell(money(r.get("dug"))-money(r.get("pot")), "money")])

@@ -40,6 +40,12 @@
                 }
             };
     
+            // Shared by the debt list and every basic table in Collections.
+            window.imsDebtTableDefaults = function () {
+                return {language: $.extend(true, {}, languageSettings), autoWidth: false,
+                    lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]], pageLength: 100};
+            };
+
             // Inicijalizacija DataTables sa prilagođenim formatom datuma
             var $defaultDatatable = $('#Datatable');
             if ($defaultDatatable.length && !$defaultDatatable.is('[data-reports-dt]')) {
@@ -334,11 +340,7 @@
             //**************************************************************************************
             // Tabele za izvestaje NAPLATE sa servera sa sumama u footer-u
             //**************************************************************************************
-            var table = $('#DugovanjaBuketi').DataTable({
-                "language": languageSettings,
-                "autoWidth": false,
-                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
-                "pageLength": 100,
+            var table = $('#DugovanjaBuketi').DataTable($.extend(true, window.imsDebtTableDefaults(), {
                 "columnDefs": [
                         { 
                             targets: 1,  // Kolona broj 2
@@ -375,7 +377,7 @@
                     $('#total_dospelo').html(sumColumn(9));   // Novo: DOSPELO
                     $('#total_ukupno').html(sumColumn(10));   // Pomerena kolona UKUPNO
                 }
-            });
+            }));
 
             var table = $('#DugovanjaDetalj').DataTable({
                 "language": languageSettings,

@@ -1,9 +1,18 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.views import PasswordChangeView, redirect_to_login
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.views.csrf import csrf_failure as django_csrf_failure
 from django.views.decorators.http import require_GET
+
+
+def csrf_failure(request, reason="", template_name=None):
+    """Posle odjave stari obrazac pada na CSRF proveri; to je istekla sesija, ne greška."""
+    if not getattr(request.user, "is_authenticated", False):
+        return redirect_to_login(request.get_full_path(), settings.LOGIN_URL)
+    return django_csrf_failure(request, reason=reason)
 
 
 class RequiredPasswordChangeView(PasswordChangeView):

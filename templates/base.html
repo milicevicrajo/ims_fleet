@@ -346,7 +346,7 @@
 
     <script src="{% static 'fleet/dist/js/pages/chart/chart-page-init.js' %}"></script>
 
-    <script src="{% static 'fleet/assets/js/global_datatables.js' %}?v=2026091002"></script>
+    <script src="{% static 'fleet/assets/js/global_datatables.js' %}?v=20260922-shared-debt"></script>
 
     {% for message in messages %}
         {% if message.tags == "success" %}
@@ -627,13 +627,15 @@
     <!-- Custom CSS for No Word Wrap -->
     <style>
 
-        #DugovanjaBuketi {
+        #DugovanjaBuketi, .collections-simple-table {
             table-layout: fixed !important; /* SpreÄava automatsko prilagoÄ‘avanje */
             width: 100% !important; /* Osigurava da tabela koristi celu Å¡irinu */
         }
         
         #DugovanjaBuketi td:nth-child(2), 
-        #DugovanjaBuketi th:nth-child(2) {
+        #DugovanjaBuketi th:nth-child(2),
+        .collections-simple-table td:nth-child(2),
+        .collections-simple-table th:nth-child(2) {
             width: 100px !important; /* Fiksna Å¡irina za 2. kolonu (3. indeks u CSS) */
             white-space: nowrap; /* SpreÄava prelamanje teksta */
             overflow: hidden;

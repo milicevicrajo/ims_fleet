@@ -79,6 +79,31 @@ class LocalFinanceAdapterTests(TestCase):
         user.roles.add(role)
         return user
 
+    def test_basic_partner_table_matches_legacy_columns_and_keeps_exact_source_amounts(self):
+        self.position('100.51', 8)
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('potrazivanja:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="DugovanjaBuketi" class="display compact collections-legacy-table"')
+        self.assertContains(response, '<th>Šifra partnera</th><th>Partner</th><th>Nedospelo</th>')
+        self.assertContains(response, '<th>Ukupno Dospelo</th><th>Ukupno</th><th>Veliki</th><th>INO</th>')
+        self.assertContains(response, 'id="total_ukupno"')
+        self.assertContains(response, '<td>101</td>', count=3, html=True)
+        self.assertEqual(response.context['legacy_partner_rows'][0]['amounts'][-1], Decimal('100.51'))
+        self.assertContains(response, 'collections-summary')
+        self.assertContains(response, 'fleet-list-hero')
+
+    def test_basic_partner_table_uses_the_same_center_scope_as_the_report(self):
+        self.position('100.51', 8, center='43')
+        self.position('9999', 8, center='42')
+        self.client.force_login(self.limited_user('43'))
+        response = self.client.get(reverse('potrazivanja:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        rows = response.context['legacy_partner_rows']
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['amounts'][-1], Decimal('100.51'))
+        self.assertNotContains(response, '<th>Provera</th>')
+
     def test_exact_buckets_negative_and_unknown_dates_only_current_snapshot_and_job(self):
         for amount,days in [(1,0),(2,30),(3,45),(4,60),(5,90),(6,180),(7,181),(-10,None)]:self.position(amount,days)
         self.position(999,1,job_code='other')
@@ -93,6 +118,95 @@ class LocalFinanceAdapterTests(TestCase):
         rendered=collection_data(self.admin,'436111')
         self.assertIn('18.09.2026.',rendered['footer']['collections_as_of'])
         self.assertIn('/potrazivanja/partner/',rendered['data'][0][0]['display'])
+
+    def capture(self, name, rows, run=None):
+        run = run or self.run
+        dataset = SourceDataset.objects.create(name=name, fingerprint=f'{name}-{run.pk}',
+                                               row_count=len(rows), first_run=run)
+        for index, row in enumerate(rows, 1):
+            SourceRow.objects.create(dataset=dataset, ordinal=index, partner_code=row.get('sif_par'),
+                                     job_code=row.get('sif_pos', ''), raw_data=row)
+        CollectionSyncStep.objects.create(run=run, code=name, details={'dataset_id': dataset.pk})
+
+    def test_partner_tabs_match_naplata_and_basic_data_uses_full_identity_key(self):
+        self.capture('partneri', [
+            {'sif_pred': 1, 'grupa': 11, 'sif_par': 42, 'naz_par': 'Pogrešna grupa', 'zr': 'BANKA'},
+            {'sif_pred': 2, 'grupa': 1, 'sif_par': 42, 'naz_par': 'Druga firma', 'zr': 'DRUGA'},
+            {'sif_pred': 1, 'grupa': 1, 'sif_par': 42, 'naz_par': 'Kupac iz snimka',
+             'zr': '160-123-45', 'telefon': '011123456', 'proc_rabata': 0},
+        ])
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('potrazivanja:partner_detail', args=[self.partner.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([tab['title'] for tab in response.context['tabs']][:11], [
+            'Osnovni podaci', 'Kontakti', 'Napomene', 'Opomene', 'Pozivi', 'Pozivi/pisma',
+            'Tužbe', 'Dugovanja', 'Dugovanja - Baketi', 'Dugovanja po fakturama', 'Otpisana potraživanja',
+        ])
+        self.assertContains(response, 'Kupac iz snimka')
+        self.assertContains(response, '160-123-45')
+        self.assertNotContains(response, 'Pogrešna grupa')
+        self.assertEqual(dict(response.context['basic_fields'])['Procenat rabata'], 0)
+        for code in ('181', '180', '90', '60'):
+            self.assertContains(response, f'data-kind="invoices_{code}"')
+
+    def test_partner_invoices_and_buckets_keep_snapshot_scope_and_negative_values(self):
+        first = self.position('100.51', 181)
+        second = self.position('-20.25', 181, family='205')
+        second.reference = first.reference
+        second.save(update_fields=['reference'])
+        self.position('9999', 181, job_code='426111', center='42')
+        self.position('17', 180)
+        self.position('13', 60)
+        self.position('11', None)
+        self.capture('sif_baket', [{'baket': '181.00', 'opis': 'Preko 180', 'akcija': 'Provera'}])
+        self.client.force_login(self.limited_user())
+        detail = self.client.get(reverse('potrazivanja:partner_detail', args=[self.partner.pk]))
+        self.assertNotIn('contacts', [tab['kind'] for tab in detail.context['tabs']])
+        url = reverse('potrazivanja:table_data')
+        params = {'partner': self.partner.pk, 'snapshot': self.snapshot.pk, 'kind': 'invoices_181'}
+        response = self.client.get(url, params)
+        self.assertEqual(response.status_code, 200)
+        rows = response.json()['data']
+        self.assertEqual(len(rows), 1)
+        self.assertEqual([c['sort'] for c in rows[0][-3:]], ['100.51', '20.25', '80.26'])
+        params['kind'] = 'invoices_180'
+        self.assertEqual(self.client.get(url, params).json()['data'][0][-1]['sort'], '17.00')
+        params['kind'] = 'buckets'
+        rows = self.client.get(url, params).json()['data']
+        self.assertEqual(len(rows), 5)
+        self.assertEqual(sum(Decimal(row[7]['sort']) for row in rows), Decimal('121.26'))
+        self.assertEqual(sum(row[-1]['display'] == 'Provera' for row in rows), 2)
+        ordered = self.client.get(url, {**params, 'order[0][column]': 1, 'order[0][dir]': 'asc'}).json()['data']
+        self.assertEqual([row[1]['sort'] for row in ordered], [0.1, 60, 180, 181, 181])
+        # A requested historical snapshot must never read today's positions.
+        old = BalanceSnapshot.objects.create(run=self.run, company=1, as_of_date=date(2026, 8, 1),
+            source_observed_at=timezone.now(), published_at=timezone.now(), status='published')
+        self.position('777', 250, snapshot=old)
+        params.update(kind='invoices_181', snapshot=old.pk)
+        self.assertEqual(self.client.get(url, params).json()['data'][0][-1]['sort'], '777.00')
+
+    def test_partner_debts_use_local_capture_with_job_and_center_scope(self):
+        self.position('12', 8)
+        self.capture('posao', [{'sif_pos': '436111', 'blok': '43'}, {'sif_pos': '426111', 'blok': '42'}])
+        self.capture('baza', [dict(sif_par=42, sif_pos=job_code, god=2026, oj='01', sif_vrs='IF',
+                                 datum='2026-01-02', dpo='2026-02-02', vez_dok='IF-1',
+                                 skr_naz='RSD', dug='12.50', pot='0.50')
+                             for job_code in ('436111', '426111')])
+        self.client.force_login(self.limited_user())
+        url = reverse('potrazivanja:table_data')
+        params = {'kind': 'debts', 'partner': self.partner.pk}
+        response = self.client.get(url, params)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['recordsTotal'], 1)
+        row = response.json()['data'][0]
+        self.assertEqual(row[2]['display'], '436111')
+        self.assertEqual(row[6]['display'], '02.02.2026.')
+        self.assertEqual(row[-2]['sort'], '12.50')
+        self.client.force_login(self.admin)
+        params['job'] = '426111'
+        rows = self.client.get(url, params).json()['data']
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][2]['display'], '426111')
 
     def test_new_permissions_and_center_scope_work_without_any_legacy_permission(self):
         user=self.limited_user();self.position(100,1);self.position(999,1,'426111','42')

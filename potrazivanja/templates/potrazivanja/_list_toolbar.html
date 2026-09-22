@@ -1,0 +1,31 @@
+<form method="get" class="collections-partners-toolbar collections-list-toolbar" aria-label="Filteri i radnje">
+  <input type="hidden" name="view" value="{{ kind }}">
+  {% if snapshot %}<input type="hidden" name="snapshot" value="{{ snapshot.pk }}">{% endif %}
+  {% if selected_job and kind != 'jobs' %}<input type="hidden" name="job" value="{{ selected_job }}">{% endif %}
+{% if kind == 'positions' or kind == 'postings' or kind == 'ispravke' or kind == 'jobs' or kind == 'review' %}
+
+  <div><label class="visually-hidden" for="collection-center">Centar</label><select id="collection-center" class="form-select" name="center"><option value="">Svi dostupni centri</option>{% for center in centers %}<option value="{{ center }}" {% if center == selected_center %}selected{% endif %}>Centar {{ center }}</option>{% endfor %}</select></div>
+  {% if kind == 'jobs' %}<div><label class="visually-hidden" for="collection-job">Šifra posla</label><input class="form-control" id="collection-job" name="job" value="{{ selected_job }}" placeholder="Sve šifre posla"></div>{% endif %}
+  <button type="submit" class="btn btn-primary">Prikaži</button>
+{% endif %}
+  {% if list_entity == 'contacts' or list_entity == 'activities' or list_entity == 'notices' or list_entity == 'legal' %}
+
+    <div><label class="visually-hidden">Stanje</label><select class="form-select" name="archived" aria-label="Stanje"><option value="0">Aktivno</option><option value="1" {% if request.GET.archived == '1' %}selected{% endif %}>Arhiva</option><option value="all" {% if request.GET.archived == 'all' %}selected{% endif %}>Sve</option></select></div>
+    {% if list_entity == 'notices' %}<div><label class="visually-hidden">Godina</label><input name="year" aria-label="Godina" placeholder="Godina" class="form-control" type="number" value="{{ request.GET.year }}"></div>{% endif %}
+    {% if kind == 'contacts' %}<label class="collections-toolbar-check"><input type="checkbox" name="review" value="1" {% if request.GET.review == '1' %}checked{% endif %}> Samo za sređivanje</label>{% endif %}
+    <button class="btn btn-primary">Prikaži</button>
+  {% endif %}
+
+  {% if can_export %}<a class="btn btn-outline-primary collections-export" data-no-preloader download href="{% url 'potrazivanja:export' %}?{{ request.GET.urlencode }}&kind={{ kind }}">Excel</a>{% endif %}
+  {% if kind == 'reminders' and can_import %}<a class="btn btn-outline-primary" href="{% url 'potrazivanja:notice_import' %}">Uvezi opomene</a>{% endif %}
+  {% if kind == 'contacts' and write_rights.contact %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'contact' %}">Novi kontakt</a>{% endif %}
+  {% if kind == 'notes' and write_rights.activity %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'activity' %}?type=note">Nova napomena</a>{% endif %}
+  {% if kind == 'calls' and write_rights.activity %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'activity' %}?type=phone">Novi poziv</a>{% endif %}
+  {% if kind == 'reminders' and write_rights.notice %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?type=reminder">Nova opomena</a>{% endif %}
+  {% if kind == 'letters' and write_rights.notice %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?type=letter">Novo pismo</a>{% endif %}
+  {% if kind == 'claims' and write_rights.notice %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'notice' %}?type=legacy_claim">Nova evidencija tužbe</a>{% endif %}
+  {% if kind == 'legal' and write_rights.legal %}<a class="btn btn-primary" href="{% url 'potrazivanja:record_create' 'legal' %}">Novi postupak</a>{% endif %}
+
+  {% if can_sync %}<a class="btn btn-outline-primary" href="{% url 'potrazivanja:sync_status' %}">Sinhronizacija</a>{% endif %}
+  {% if all_access and kind != 'directory' %}<a class="btn btn-outline-primary" href="{% url 'potrazivanja:dashboard' %}?view=directory">Svi partneri</a>{% endif %}
+</form>

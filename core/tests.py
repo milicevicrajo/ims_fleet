@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.test import SimpleTestCase, TestCase
+from django.test import Client, SimpleTestCase, TestCase
 from django.urls import reverse
 from openpyxl import load_workbook
 
@@ -442,3 +442,30 @@ class TaskHistoryTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Kadrovi - sinhronizacija zaposlenih")
         self.assertContains(response, "kreirano=1")
+
+
+class AnonymousAccessRedirectTests(TestCase):
+    """Posle odjave korisnik ide na prijavu; prijavljen bez dozvole i dalje dobija 403."""
+
+    def test_anonymous_request_to_protected_page_redirects_to_login(self):
+        url = reverse("potrazivanja:dashboard")
+        response = self.client.get(url)
+        self.assertRedirects(response, f"/login/?next={url}", fetch_redirect_response=False)
+
+    def test_anonymous_request_keeps_the_query_string_in_next(self):
+        url = reverse("potrazivanja:dashboard")
+        response = self.client.get(url, {"view": "jobs"})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("view%3Djobs", response["Location"])
+
+    def test_signed_in_user_without_permission_still_gets_403(self):
+        user = get_user_model().objects.create_user(username="bez-dozvole", password="test-pass")
+        self.client.force_login(user)
+        response = self.client.get(reverse("potrazivanja:dashboard"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_stale_form_after_logout_redirects_instead_of_csrf_403(self):
+        client = Client(enforce_csrf_checks=True)
+        response = client.post(reverse("potrazivanja:sync_status"), {})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response["Location"])
