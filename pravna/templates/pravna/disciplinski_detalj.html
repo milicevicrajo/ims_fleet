@@ -11,7 +11,8 @@
     <div class="legal-hero-chips">
       {% if postupak.arhivirano %}
         <span class="legal-pill archived"><i class="mdi mdi-archive"></i> Arhiviran</span>
-      {% elif postupak.zatvoren %}
+      {% endif %}
+      {% if postupak.zatvoren %}
         <span class="legal-pill closed"><i class="mdi mdi-gavel"></i> Zatvoren</span>
       {% else %}
         <span class="legal-pill active"><i class="mdi mdi-progress-clock"></i> U toku</span>
@@ -51,7 +52,7 @@
             <div class="legal-meta-value">{{ postupak.centar|default:"-" }}</div>
           </div>
           <div class="legal-meta">
-            <div class="legal-meta-label">Datum podnošenja zahteva</div>
+            <div class="legal-meta-label">Datum</div>
             <div class="legal-meta-value">{{ postupak.datum_podnosenja|date:"d.m.Y"|default:"-" }}</div>
           </div>
           <div class="legal-meta">
@@ -59,8 +60,12 @@
             <div class="legal-meta-value">{{ postupak.podnosilac }}</div>
           </div>
           <div class="legal-meta">
-            <div class="legal-meta-label">Datum disciplinske mere</div>
-            <div class="legal-meta-value">{{ postupak.mera_datum|date:"d.m.Y"|default:"-" }}</div>
+            <div class="legal-meta-label">Status</div>
+            <div class="legal-meta-value">{% if postupak.zatvoren %}Zatvoren{% else %}U toku{% endif %}</div>
+          </div>
+          <div class="legal-meta">
+            <div class="legal-meta-label">Datum statusa</div>
+            <div class="legal-meta-value">{{ postupak.datum_statusa|date:"d.m.Y." }}</div>
           </div>
           <div class="legal-meta">
             <div class="legal-meta-label">Arhivirano</div>
@@ -81,27 +86,38 @@
         <span><i class="mdi mdi-timeline-text"></i> Tok postupka</span>
       </div>
       <div class="legal-section-body">
-        {% for zapis in tok %}
-          <div class="change-row">
-            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-              <div>
-                <div class="change-date">{{ zapis.datum|date:"d.m.Y" }}</div>
-                <div class="change-text">{{ zapis.opis|linebreaksbr }}</div>
-              </div>
-              {% if can_delete_tok %}
-              <form method="post" action="{% url 'pravna:disciplinski_obrisi_tok' pk=zapis.pk %}"
-                    onsubmit="return confirm('Obrisati ovaj unos iz toka postupka?');" class="m-0">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obriši">
-                  <i class="mdi mdi-delete"></i>
-                </button>
-              </form>
-              {% endif %}
-            </div>
-          </div>
-        {% empty %}
-          <div class="text-muted text-center py-3">Nema unosa u toku postupka.</div>
-        {% endfor %}
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead>
+              <tr>
+                <th class="legal-nowrap">Datum</th>
+                <th>Promena toka postupka</th>
+                {% if can_delete_tok %}<th class="text-end">Akcije</th>{% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for zapis in tok %}
+              <tr>
+                <td class="legal-nowrap">{{ zapis.datum|date:"d.m.Y." }}</td>
+                <td>{{ zapis.opis|linebreaksbr }}</td>
+                {% if can_delete_tok %}
+                <td class="text-end">
+                  <form method="post" action="{% url 'pravna:disciplinski_obrisi_tok' pk=zapis.pk %}"
+                        onsubmit="return confirm('Obrisati ovaj unos iz toka postupka?');" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Obriši" aria-label="Obriši unos iz toka postupka">
+                      <i class="mdi mdi-delete"></i>
+                    </button>
+                  </form>
+                </td>
+                {% endif %}
+              </tr>
+              {% empty %}
+              <tr><td colspan="{% if can_delete_tok %}3{% else %}2{% endif %}" class="text-muted text-center py-3">Nema unosa u toku postupka.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -136,41 +152,33 @@
     {% if can_mera %}
     <div class="side-card">
       <div class="legal-section-header">
-        <span><i class="mdi mdi-gavel"></i> Disciplinska mera</span>
+        <span><i class="mdi mdi-check-circle"></i> Zatvaranje postupka</span>
       </div>
       <div class="side-card-body">
         {% if postupak.zatvoren %}
           <p class="text-muted small mb-2">
-            Postupak je zatvoren merom od {{ postupak.mera_datum|date:"d.m.Y." }}
+            Datum zatvaranja: {{ postupak.mera_datum|date:"d.m.Y." }}
           </p>
           <form method="post" action="{% url 'pravna:disciplinski_mera' pk=postupak.pk %}"
-                onsubmit="return confirm('Poništiti disciplinsku meru i vratiti postupak u rad?');">
+                onsubmit="return confirm('Vratiti postupak u tok?');">
             {% csrf_token %}
             <input type="hidden" name="ponisti" value="1">
             <button type="submit" class="btn btn-outline-secondary w-100">
-              <i class="mdi mdi-backup-restore"></i> Poništi meru
+              <i class="mdi mdi-backup-restore"></i> Vrati u tok
             </button>
           </form>
         {% else %}
-          <p class="text-muted small mb-2">Unos mere zatvara disciplinski postupak.</p>
           <form method="post" action="{% url 'pravna:disciplinski_mera' pk=postupak.pk %}">
             {% csrf_token %}
             <div class="mb-2">
-              <label for="{{ forma_mera.mera_datum.id_for_label }}" class="form-label">Datum mere</label>
+              <label for="{{ forma_mera.mera_datum.id_for_label }}" class="form-label">Datum zatvaranja</label>
               {{ forma_mera.mera_datum }}
               {% for error in forma_mera.mera_datum.errors %}
                 <div class="invalid-feedback d-block">{{ error }}</div>
               {% endfor %}
             </div>
-            <div class="mb-2">
-              <label for="{{ forma_mera.mera_opis.id_for_label }}" class="form-label">Mera</label>
-              {{ forma_mera.mera_opis }}
-              {% for error in forma_mera.mera_opis.errors %}
-                <div class="invalid-feedback d-block">{{ error }}</div>
-              {% endfor %}
-            </div>
             <button type="submit" class="btn btn-primary w-100">
-              <i class="mdi mdi-gavel"></i> Zatvori postupak merom
+              <i class="mdi mdi-check"></i> Zatvori
             </button>
           </form>
         {% endif %}

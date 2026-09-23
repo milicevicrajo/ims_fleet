@@ -1,0 +1,7 @@
+{% extends 'hr/list_base.html' %}
+{% load static %}
+{% block title %}{{ title }} | IMS{% endblock %}
+{% block hr_content %}
+<link rel="stylesheet" href="{% static 'hr/resenja.css' %}?v=20260923">
+<div class="resenja-page">{% block resenja_content %}{% endblock %}</div>
+{% endblock %}

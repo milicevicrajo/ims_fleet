@@ -203,8 +203,12 @@ def _employee_detail_context(employee, *, is_self_profile=False):
         .order_by("-contract_date", "-id")
     )
 
+    resenja = employee.resenja.select_related("vrsta").order_by("-datum_resenja", "-pk")
+
     activities = _collect_user_activities(linked_user)
     return {
+        "resenja": resenja,
+        "resenja_count": resenja.count(),
         "employee": employee,
         "title": str(employee),
         "is_self_profile": is_self_profile,

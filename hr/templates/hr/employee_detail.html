@@ -46,6 +46,7 @@
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cv" type="button">CV <span class="badge bg-light text-dark">{{ cv_items_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#work-time-sheets" type="button">Radne liste <span class="badge bg-light text-dark">{{ work_time_sheets_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#annual-leave" type="button">Godišnji odmori</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#resenja" type="button">Rešenja <span class="badge bg-light text-dark">{{ resenja_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travel-orders" type="button">Putni nalozi <span class="badge bg-light text-dark">{{ travel_orders_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#vehicle-orders" type="button">Zaduzenja vozila <span class="badge bg-light text-dark">{{ vehicle_travel_orders_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#incidents" type="button">Incidenti <span class="badge bg-light text-dark">{{ incidents_count }}</span></button></li>
@@ -204,6 +205,26 @@
         {% else %}
           <div class="alert alert-info mb-0">Nema unetih radnih lista.</div>
         {% endif %}
+      </div>
+
+      <div class="tab-pane fade" id="resenja">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead><tr><th>Broj</th><th>Datum</th><th>Vrsta</th><th>Period</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for resenje in resenja %}<tr>
+              <td>{{ resenje.broj }}</td>
+              <td>{{ resenje.datum_resenja|date:'d.m.Y.' }}</td>
+              <td>{{ resenje.vrsta.naziv }}</td>
+              <td>{% if resenje.datum_od %}{{ resenje.datum_od|date:'d.m.Y.' }}{% if resenje.datum_do %} - {{ resenje.datum_do|date:'d.m.Y.' }}{% endif %}{% else %}{{ resenje.dani.count }} dan(a){% endif %}</td>
+              <td>{{ resenje.get_status_display }}</td>
+              <td><a class="btn btn-outline-primary btn-sm" href="{% url 'hr:resenje_detail' resenje.pk %}"><i class="mdi mdi-eye"></i></a></td>
+            </tr>{% empty %}
+            <tr><td colspan="6" class="text-muted">Nema rešenja za ovog zaposlenog.</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="tab-pane fade" id="travel-orders">

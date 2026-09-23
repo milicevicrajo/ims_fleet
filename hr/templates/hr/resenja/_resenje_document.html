@@ -1,0 +1,56 @@
+{% load static %}
+{% comment %}Sadržaj dolazi iz sačuvanog dokumenta; izgled je zajednički pregledu i A4 štampi.{% endcomment %}
+<article class="resenje" data-vrsta="{{ dokument.vrsta.kod }}" lang="{% if dokument.pismo == 'latinica' %}sr-Latn{% else %}sr-Cyrl{% endif %}">
+  <header class="resenje-zaglavlje">
+    <div class="resenje-memorandum">
+      <img class="resenje-logo" src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+      <div class="resenje-institut">
+        <strong>{{ dokument.zaglavlje.institut }}</strong>
+        <span>{{ dokument.zaglavlje.adresa }} · {{ dokument.zaglavlje.mesto }}</span>
+        <span class="resenje-funkcija">{{ dokument.zaglavlje.funkcija }}</span>
+      </div>
+    </div>
+    <div class="resenje-evidencija">
+      <div><span>{{ dokument.oznake.broj }}</span> <strong>{{ dokument.broj|default:"_______" }}</strong></div>
+      <div><span>{{ dokument.oznake.datum }}</span> <strong>{{ dokument.datum|default:"______________" }}</strong></div>
+    </div>
+  </header>
+
+  <div class="resenje-sadrzaj">
+    <div class="resenje-naslovni-blok">
+      <h1 class="resenje-naslov">{{ dokument.naslov }}</h1>
+      {% if dokument.podnaslov %}<h2 class="resenje-podnaslov">{{ dokument.podnaslov }}</h2>{% endif %}
+    </div>
+    <div class="resenje-zaposleni">
+      <span class="resenje-oznaka">{% if dokument.pismo == 'latinica' %}Zaposleni{% else %}Запослени{% endif %}</span>
+      <strong>{{ dokument.zaposleni.ime }}</strong>
+      <span class="resenje-jedinica">{{ dokument.zaposleni.oj }}</span>
+    </div>
+    <p class="resenje-osnov">{{ dokument.pravni_osnov }}</p>
+    <ol class="resenje-tacke">
+      {% for tacka in dokument.tacke %}<li>{{ tacka }}</li>{% endfor %}
+    </ol>
+    {% if dokument.obrazlozenje %}
+      <h3 class="resenje-medjunaslov">{{ dokument.oznake.obrazlozenje }}</h3>
+      {% for pasus in dokument.obrazlozenje %}<p>{{ pasus }}</p>{% endfor %}
+    {% endif %}
+    {% if dokument.pravna_pouka %}<p class="resenje-pouka">{{ dokument.pravna_pouka }}</p>{% endif %}
+  </div>
+
+  <footer class="resenje-zavrsni-blok">
+    <table class="resenje-podnozje">
+      <tr>
+        <td class="resenje-dostavljeno">
+          <div class="resenje-oznaka">{{ dokument.oznake.dostavljeno }}</div>
+          <ul>{% for stavka in dokument.dostavljeno %}<li>{{ stavka }}</li>{% endfor %}</ul>
+        </td>
+        <td class="resenje-potpis">
+          <strong>{{ dokument.potpis.funkcija }}</strong>
+          <div>{{ dokument.potpis.institut }}</div>
+          <div class="resenje-crta" aria-hidden="true"></div>
+          <div>{{ dokument.potpis.ime }}</div>
+        </td>
+      </tr>
+    </table>
+  </footer>
+</article>

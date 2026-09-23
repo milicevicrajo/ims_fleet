@@ -17,6 +17,7 @@
 | [K-07](#k-07--bolovanja--uvoz-rfzo-i-povezivanje) | Bolovanja — uvoz RFZO i povezivanje | **P-29** |
 | [K-08](#k-08--ocenjivanje-zaposlenih--stimulacija-i-lični-koeficijent) | **Ocenjivanje — stimulacija i lični koeficijent** | — |
 | [K-09](#k-09--tok-saglasnosti-na-ocenu) | Tok saglasnosti na ocenu | — |
+| [K-10](#k-10--rešenja-zaposlenih--izrada-teksta-dokumenta) | **Rešenja zaposlenih — izrada teksta dokumenta** | — |
 
 ---
 
@@ -1140,6 +1141,182 @@ Jedinstveno: **jedna saglasnost po nivou za istu ocenu** (kontrola u bazi). [P]
 | Korekcija mora biti u granicama snimka | Potvrđeno | `evaluations.py:237-238` |
 | Korekcija zahteva obrazloženje | Potvrđeno | `evaluations.py:239-240` |
 | Merodavan je koeficijent poslednjeg nivoa | Potvrđeno | `evaluations.py:213-216` |
+
+---
+
+## K-10 — Rešenja zaposlenih — izrada teksta dokumenta
+
+> **Ovo nije brojčani obračun.** Rezultat je tekst rešenja koje potpisuje generalni
+> direktor, pa se pravila vode ovde, uz ostale kadrovske postupke.
+
+### 1. Naziv
+
+| | |
+|---|---|
+| Naziv na ekranu | „Rešenja“, „Novo rešenje“, „Grupno izdavanje“ |
+| Tehnički naziv | `build_document()`, `izdaj_resenje()` |
+| Putanja | [`hr/services/resenja.py`](../../../hr/services/resenja.py) |
+| Adrese | `/hr/resenja/`, `/hr/resenja/novo/`, `/hr/resenja/grupno/`, štampa `/hr/resenja/<id>/stampa/` |
+
+### 2. Poslovna svrha
+
+Zamenjuje Word obrasce kadrovske službe za sedam vrsta rešenja: noćni rad, prekovremeni
+rad, prekovremeni rad i rad vikendom, rad na državni i verski praznik, rad vikendom,
+prekovremeni rad sa radom vikendom i u smenama, i plaćeno odsustvo za davanje krvi.
+
+### 3. Korisnici rezultata
+
+Kadrovska služba, zaposleni, referent obračuna zarada, dosije zaposlenog.
+
+### 4. Ulazni podaci
+
+| Poslovni naziv | Odakle | Ko unosi |
+|---|---|---|
+| Vrsta rešenja, tekstovi obrasca | `hr_vrstaresenja` | Uprava (šifarnik) |
+| Broj rešenja | Delovodnik | **Kadrovik, ručno** |
+| Datum rešenja, period ili dani | Ekran rešenja | Kadrovik |
+| Broj i datum zahteva | Zahtev iz centra | Kadrovik |
+| Ime, organizaciona jedinica, radno mesto | `fleet_employee`, `fleet_organizationalunit` | **Predlaže sistem, kadrovik ispravlja** |
+| Pol | `fleet_employee.gender` | HR sinhronizacija |
+| Potpisnik i funkcija | `hr_potpisnik`, po datumu rešenja | Uprava (šifarnik) |
+
+### 5. Poreklo podataka
+
+Svi podaci su lokalni. Nijedan povezani server ne učestvuje, pa izrada rešenja radi
+i kada `PUTGEO-SERVER` ili `INFORMATIKA23` nisu dostupni.
+
+### 6. Tačan postupak obračuna
+
+#### Pismo — jedan smer preslovljavanja [P]
+
+Tekstovi u šifarniku se čuvaju **ćirilicom**. Rešenje koje se štampa latinicom nastaje
+funkcijom `latin()` iz `hr/services/evaluations.py`.
+
+> **Zašto baš tako:** ćirilica → latinica je jednoznačna, a latinica → ćirilica nije,
+> jer se `lj`, `nj` i `dž` ne razlikuju od `l+j`, `n+j` i `d+ž` (na primer „injekcija“).
+> Zato obrnuti smer (`to_cyrillic()`) služi **samo kao predlog u formi**, nikada kao
+> konačan tekst dokumenta.
+
+Ime zaposlenog ćirilicom uzima se ovim redom [P]:
+
+1. `fleet_employee.full_name_cyrillic` — ručno uneto polje, ima prednost;
+2. automatsko preslovljavanje latiničnog imena, kada polje nije popunjeno.
+
+#### Rod — oblici po polu [P]
+
+Word obrasci pišu „запослен-а“ i „дужан-на“ jer papir ne zna pol. Šifarnik umesto toga
+koristi čuvar mesta `{rod:дужан|дужна}`, koji se razrešava iz `Employee.gender`:
+
+| Pol | Rezultat |
+|---|---|
+| `M` | prvi oblik |
+| `F` | drugi oblik |
+| prazno | oba oblika, odvojena kosom crtom |
+
+#### Uslovni delovi teksta [P]
+
+Segment `[[ime|tekst]]` opstaje samo kada vrednost `ime` nije prazna. Tako jedan obrazac
+pokriva i rešenje samo za državni praznik i ono za državni i verski:
+
+```
+ради[[dani_drzavni| {dani_drzavni} на дан државног празника]][[dani_verski| и {dani_verski} на дан верског празника]]
+```
+
+Red koji se posle razrešavanja isprazni **ne ostavlja praznu tačku** u dispozitivu.
+
+#### Opis perioda [P]
+
+| Uneto | Tekst u rešenju |
+|---|---|
+| `datum_od` i `datum_do` | „у периоду од 01.02.2026. до 28.02.2026. године“ |
+| `datum_od` i „do završetka posla“ | „почев од 23.06.2016. до завршетка посла“ |
+| pojedinačni dani | „20.06.2026. и 21.06.2026. године“ |
+
+#### Potpisnik po datumu rešenja [P]
+
+`Potpisnik.za_datum()` bira onog čiji period važenja pokriva datum rešenja
+(`vazi_od` uključivo, `vazi_do` isključivo). Zato rešenje iz 2016. godine i danas
+nosi tadašnjeg potpisnika, a ne sadašnjeg.
+
+#### Snimak dokumenta [P]
+
+Dok je rešenje **nacrt**, tekst se računa iz trenutnih podataka pri svakom otvaranju.
+Pri **izdavanju** se ceo razrešen dokument upisuje u `hr_resenje.dokument` (JSON) i
+status prelazi u `izdato`. Od tog trenutka:
+
+- izmena šifarnika, naziva OJ ili potpisnika **ne menja** izdato rešenje;
+- rešenje se više ne otvara za izmenu — ispravka ide preko **storniranja** i novog rešenja.
+
+Isti obrazac koristi ocenjivanje (K-08), iz istog razloga.
+
+### 7. Tehnička implementacija
+
+| Element | Vrednost |
+|---|---|
+| Fajlovi | `hr/resenja_models.py`, `hr/services/resenja.py`, `hr/resenja_views.py`, `hr/resenja_forms.py` |
+| Funkcije | `build_document()`, `razresi()`, `opis_perioda()`, `pripremi_resenje()`, `izdaj_resenje()` |
+| Tabele | `hr_vrstaresenja`, `hr_potpisnik`, `hr_resenje`, `hr_resenjedan` |
+| Početni šifarnik | Migracija `hr/migrations/0014_resenja_sifrarnik_i_dozvole.py` |
+| Testovi | `hr/test_resenja.py` — **41 test** |
+| Štampa | HTML strana A4 sa dugmetom „Štampaj / Sačuvaj PDF“, bez dodatnih biblioteka |
+
+### 8. Primer
+
+> Rešenje za rad na državni i verski praznik, muškarac, ćirilica.
+
+Ulaz: zaposleni Лазар Живановић (OJ 430, centar 43), dani 01.01.2025. i 02.01.2025.
+kao državni praznik, 07.01.2025. kao verski, zahtev br. 43-15238 od 27.12.2024.
+
+Tačka 1 dispozitiva:
+
+```
+ЛАЗАР ЖИВАНОВИЋ запослен у Институту за испитивање материјала а.д. Београд,
+распоређен у ЦЕНТАР ЗА ПУТЕВЕ И ГЕОТЕХНИКУ, дужан је да ради 01.01.2025. и
+02.01.2025. на дан државног празника и 07.01.2025. на дан верског празника.
+```
+
+Isto rešenje za ženu daje „запослена … распоређена … дужна“, bez ijedne ručne izmene.
+
+### 9. Rezultat
+
+| Izlaz | Gde |
+|---|---|
+| Nacrt rešenja | `/hr/resenja/<id>/` |
+| Izdato rešenje sa snimkom | `hr_resenje.dokument` |
+| Štampa jednog ili više rešenja | `/hr/resenja/<id>/stampa/`, `/hr/resenja/stampa/` |
+
+### 10. Upotreba rezultata
+
+Odštampano rešenje potpisuje generalni direktor; primerci idu zaposlenom, referentu
+obračuna, centru i u dosije. Dani upisani u `hr_resenjedan` ostaju kao osnov za
+proveru prekovremenih i prazničnih sati u radnoj listi.
+
+### 11. Kontrola i ručna provera
+
+- Broj rešenja je **jedinstven po datumu** — duplikat iz delovodnika se odbija pri unosu.
+- Pre izdavanja se ceo tekst vidi na ekranu detalja, u konačnom obliku.
+- Vrsta koja traži dane ne prolazi bez ijednog unetog dana.
+
+### 12. Izuzeci i rizični slučajevi
+
+| Slučaj | Ponašanje |
+|---|---|
+| Zaposleni bez unetog pola | Tekst dobija oba oblika („дужан/дужна“) — vidljivo pri pregledu |
+| Automatsko preslovljavanje pogreši digraf | Ispravlja se poljem „Ime i prezime (ćirilica)“ na zaposlenom |
+| Potreban drugi padež (plaćeno odsustvo traži dativ) | Polje „Zaposleni u tekstu rešenja“ se menja ručno |
+| Nema potpisnika za datum rešenja | Izdavanje se odbija uz poruku |
+| Zaposleni nema OJ u `fleet_organizationalunit` | Naziv jedinice i centar ostaju prazni; unose se ručno |
+
+### 13. Status pouzdanosti
+
+| Tvrdnja | Status | Dokaz |
+|---|---|---|
+| Šifarnik se čuva ćirilicom, latinica nastaje preslovljavanjem | Potvrđeno | `resenja.py: u_pismu()` |
+| Ručno uneto ćirilično ime ima prednost | Potvrđeno | `resenja.py: ime_zaposlenog()` |
+| Rod se razrešava iz `Employee.gender` | Potvrđeno | `resenja.py: razresi()` |
+| Prazan uslovni segment ne ostavlja praznu tačku | Potvrđeno | `resenja.py: _neprazni()` |
+| Izdato rešenje se ne menja izmenom šifarnika | Potvrđeno | `test_resenja.py: test_izmena_sifrarnika_ne_menja_vec_izdato_resenje` |
+| Potpisnik se bira po datumu rešenja | Potvrđeno | `resenja_models.py: Potpisnik.za_datum()` |
 
 ---
 

@@ -40,10 +40,11 @@
             <tbody>
               <tr><th style="width:260px">Zaposleni</th><td>{{ item.postupak.zaposleni }}</td></tr>
               <tr><th>Centar</th><td>{{ item.postupak.centar|default:"-" }}</td></tr>
-              <tr><th>Datum podnošenja zahteva</th><td>{{ item.postupak.datum_podnosenja|date:"d.m.Y"|default:"-" }}</td></tr>
+              <tr><th>Datum</th><td>{{ item.postupak.datum_podnosenja|date:"d.m.Y"|default:"-" }}</td></tr>
               <tr><th>Podnosilac</th><td>{{ item.postupak.podnosilac }}</td></tr>
-              <tr><th>Datum disciplinske mere</th><td>{{ item.postupak.mera_datum|date:"d.m.Y"|default:"-" }}</td></tr>
-              <tr><th>Disciplinska mera</th><td>{{ item.postupak.mera_opis|default:"-" }}</td></tr>
+              <tr><th>Status</th><td>{% if item.postupak.zatvoren %}Zatvoren{% else %}U toku{% endif %}</td></tr>
+              <tr><th>Datum statusa</th><td>{{ item.postupak.datum_statusa|date:"d.m.Y." }}</td></tr>
+              {% if item.postupak.mera_opis %}<tr><th>Disciplinska mera</th><td>{{ item.postupak.mera_opis }}</td></tr>{% endif %}
             </tbody>
           </table>
 

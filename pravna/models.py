@@ -118,7 +118,7 @@ def centar_zaposlenog(zaposleni):
 
 
 class DisciplinskiPostupak(models.Model):
-    """Disciplinski postupak protiv zaposlenog. Zatvara ga disciplinska mera."""
+    """Disciplinski postupak protiv zaposlenog, zatvoren unosom datuma."""
 
     zaposleni = models.ForeignKey(
         'fleet.Employee',
@@ -166,6 +166,10 @@ class DisciplinskiPostupak(models.Model):
     @property
     def zatvoren(self):
         return self.mera_datum is not None
+
+    @property
+    def datum_statusa(self):
+        return self.mera_datum or self.datum_podnosenja
 
     def save(self, *args, **kwargs):
         if not self.centar and self.zaposleni_id:

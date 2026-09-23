@@ -1,0 +1,10 @@
+{% comment %}Jedno polje forme. Ulaz: `polje`, opciono `sirina` (bootstrap kolona).{% endcomment %}
+<div class="{{ sirina|default:'col-12 col-md-4' }} resenja-field{% if polje.errors %} has-errors{% endif %}">
+  {% if polje.field.widget.input_type == 'checkbox' %}
+    <div class="resenja-check">{{ polje }}<label class="form-check-label" for="{{ polje.id_for_label }}">{{ polje.label }}</label></div>
+  {% else %}
+    <label class="form-label" for="{{ polje.id_for_label }}">{{ polje.label }}{% if polje.field.required %} <span class="text-danger" aria-label="obavezno">*</span>{% endif %}</label>{{ polje }}
+  {% endif %}
+  {% if polje.help_text %}<div class="form-text" id="{{ polje.auto_id }}_helptext">{{ polje.help_text }}</div>{% endif %}
+  {% for greska in polje.errors %}<div class="invalid-feedback d-block">{{ greska }}</div>{% endfor %}
+</div>

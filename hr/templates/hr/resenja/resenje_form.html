@@ -1,0 +1,125 @@
+{% extends 'hr/resenja/base.html' %}
+{% block resenja_content %}
+<div class="fleet-list-hero">
+  <div>
+  <div class="hr-kicker">Kadrovi - Rešenja zaposlenih</div>
+  <h1><i class="mdi mdi-file-document-edit-outline me-2"></i>{{ title }}</h1>
+  <p>Unesite podatke, sačuvajte nacrt i pregledajte dokument pre izdavanja.</p>
+  </div>
+  <a class="btn btn-outline-light btn-sm" href="{% if resenje %}{% url 'hr:resenje_detail' resenje.pk %}{% else %}{% url 'hr:resenje_list' %}{% endif %}"><i class="mdi mdi-arrow-left"></i> Nazad</a>
+</div>
+
+<form method="post" novalidate>{% csrf_token %}
+{% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header"><h5><i class="mdi mdi-file-document-outline"></i>Osnovni podaci</h5><span class="small text-muted">Polja označena * su obavezna.</span></div>
+  <div class="card-body"><div class="row g-3">
+    {% include 'hr/resenja/_polje.html' with polje=form.vrsta %}
+    {% include 'hr/resenja/_polje.html' with polje=form.zaposleni %}
+    {% include 'hr/resenja/_polje.html' with polje=form.broj %}
+    {% include 'hr/resenja/_polje.html' with polje=form.datum_resenja %}
+    {% include 'hr/resenja/_polje.html' with polje=form.pismo %}
+    {% include 'hr/resenja/_polje.html' with polje=form.potpisnik %}
+  </div></div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header"><h5><i class="mdi mdi-text-box-outline"></i>Tekst rešenja</h5></div>
+  <div class="card-body">
+    <p class="text-muted small">Ime, organizaciona jedinica i radno mesto preuzimaju se iz evidencije zaposlenih. Po potrebi prilagodite tekst i padež za ovo rešenje.</p>
+    <div class="row g-3">
+      {% include 'hr/resenja/_polje.html' with polje=form.zaposleni_tekst sirina='col-md-6' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.oj_naziv sirina='col-md-6' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.radno_mesto sirina='col-md-6' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.zahtev_broj sirina='col-12 col-md-3' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.zahtev_datum sirina='col-12 col-md-3' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.napomena sirina='col-12' %}
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3" data-grupa="period">
+  <div class="card-header"><h5><i class="mdi mdi-calendar-range"></i>Period</h5></div>
+  <div class="card-body"><div class="row g-3">
+    {% include 'hr/resenja/_polje.html' with polje=form.datum_od %}
+    {% include 'hr/resenja/_polje.html' with polje=form.datum_do %}
+    {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
+  </div></div>
+</div>
+
+<div class="card shadow-sm mb-3" data-grupa="radni_dani">
+  <div class="card-header"><h5><i class="mdi mdi-calendar-check"></i>Plaćeno odsustvo</h5></div>
+  <div class="card-body"><div class="row g-3">
+    {% include 'hr/resenja/_polje.html' with polje=form.broj_radnih_dana %}
+    {% include 'hr/resenja/_polje.html' with polje=form.datum_povratka %}
+  </div></div>
+</div>
+
+<div class="card shadow-sm mb-3" data-grupa="dani">
+  <div class="card-header"><h5><i class="mdi mdi-calendar-multiple"></i>Pojedinačni dani</h5><button type="button" class="btn btn-outline-primary btn-sm" id="resenje-add-day"><i class="mdi mdi-plus"></i> Dodaj dan</button></div>
+  <div class="card-body">
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
+    <div class="table-responsive"><table class="table table-bordered align-middle">
+      <thead><tr><th style="width:220px">Datum</th><th>Vrsta dana</th><th style="width:110px">Ukloni</th></tr></thead>
+      <tbody id="resenje-days">
+      {% for dan in formset %}{% include 'hr/resenja/_dan.html' %}{% endfor %}
+      </tbody>
+    </table></div>
+    <template id="resenje-empty-day">{% include 'hr/resenja/_dan.html' with dan=formset.empty_form %}</template>
+  </div>
+</div>
+
+<div class="resenja-form-actions">
+  <span class="resenja-form-note">Nacrt možete izmeniti pre izdavanja.</span>
+  <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj nacrt</button>
+  <a class="btn btn-outline-secondary" href="{% if resenje %}{% url 'hr:resenje_detail' resenje.pk %}{% else %}{% url 'hr:resenje_list' %}{% endif %}">Odustani</a>
+</div>
+</form>
+{% endblock %}
+{% block extra_js %}
+{{ vrste_meta|json_script:"vrste-meta" }}
+<script>jQuery(function ($) {
+  var meta = JSON.parse(document.getElementById('vrste-meta').textContent);
+  var vrsta = $('#id_vrsta'), zaposleni = $('#id_zaposleni'), pismo = $('#id_pismo');
+
+  function prikazi() {
+    var podaci = meta[vrsta.val()] || {period: false, dani: false, radni_dani: false};
+    $('[data-grupa="period"]').toggle(!!podaci.period);
+    $('[data-grupa="dani"]').toggle(!!podaci.dani);
+    $('[data-grupa="radni_dani"]').toggle(!!podaci.radni_dani);
+  }
+
+  function predlozi() {
+    if (!zaposleni.val()) { return; }
+    $.getJSON("{% url 'hr:resenje_predlog' %}", {zaposleni: zaposleni.val(), pismo: pismo.val()}, function (podaci) {
+      $('#id_zaposleni_tekst').val(podaci.zaposleni_tekst);
+      $('#id_oj_naziv').val(podaci.oj_naziv);
+      $('#id_radno_mesto').val(podaci.radno_mesto);
+    });
+  }
+
+  vrsta.on('change', function () {
+    prikazi();
+    var podaci = meta[vrsta.val()];
+    if (podaci && podaci.pismo && pismo.val() !== podaci.pismo) { pismo.val(podaci.pismo).trigger('change'); }
+  });
+  zaposleni.on('change', predlozi);
+  pismo.on('change', predlozi);
+  prikazi();
+  $('#resenje-add-day').on('click', function () {
+    var total = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
+    var index = Number(total.value);
+    var maximum = Number(document.getElementById('id_{{ formset.prefix }}-MAX_NUM_FORMS').value);
+    if (index >= maximum) return;
+    var template = document.getElementById('resenje-empty-day').innerHTML.replace(/__prefix__/g, index);
+    var tbody = document.getElementById('resenje-days');
+    tbody.insertAdjacentHTML('beforeend', template);
+    total.value = index + 1;
+    var row = tbody.lastElementChild;
+    if (window.flatpickr) flatpickr(row.querySelector('.js-date'), {dateFormat:'d.m.Y', locale:'sr', allowInput:true, disableMobile:true});
+    row.querySelector('input[name$="-datum"]').focus();
+  });
+});</script>
+{% endblock %}

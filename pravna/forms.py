@@ -79,10 +79,8 @@ COLUMNS_BY_TIP = {
 DISCIPLINSKI_COLUMNS = [
     ('zaposleni', 'Zaposleni'),
     ('centar', 'Centar'),
-    ('datum_podnosenja', 'Datum podnošenja zahteva'),
+    ('datum_podnosenja', 'Datum'),
     ('podnosilac', 'Podnosilac'),
-    ('mera_datum', 'Datum disciplinske mere'),
-    ('mera_opis', 'Disciplinska mera'),
 ]
 
 DATE_ATTRS = {'class': 'form-control js-date', 'autocomplete': 'off'}
@@ -140,7 +138,7 @@ def _employee_queryset(keep_ids=()):
 
 
 class DisciplinskiPostupakForm(forms.ModelForm):
-    datum_podnosenja = _date_field(required=True)
+    datum_podnosenja = _date_field(label='Datum', required=True)
 
     class Meta:
         model = DisciplinskiPostupak
@@ -172,18 +170,10 @@ class TokPostupkaForm(forms.ModelForm):
 
 
 class DisciplinskaMeraForm(forms.ModelForm):
-    """Unos mere zatvara postupak; brisanje datuma ga vraca u rad."""
+    """Datum zatvara postupak; opis promene unosi se kroz tok postupka."""
 
-    mera_datum = _date_field(label='Datum disciplinske mere', required=True)
+    mera_datum = _date_field(label='Datum zatvaranja', required=True)
 
     class Meta:
         model = DisciplinskiPostupak
-        fields = ['mera_datum', 'mera_opis']
-        labels = {'mera_opis': 'Disciplinska mera'}
-        widgets = {'mera_opis': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'})}
-
-    def clean_mera_opis(self):
-        opis = (self.cleaned_data.get('mera_opis') or '').strip()
-        if not opis:
-            raise forms.ValidationError('Upišite koja je mera izrečena.')
-        return opis
+        fields = ['mera_datum']

@@ -1,0 +1,30 @@
+{% load static %}<!doctype html>
+<html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ naslov }}</title>
+{% include 'hr/resenja/_resenje_styles.html' %}
+<style>
+  @page { size:A4 portrait; margin:18mm; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#e9eef3; }
+  .print-tools { position:sticky; top:0; z-index:1; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:16px; padding:14px 20px; background:#14395b; color:#fff; font:14px/1.4 Arial,sans-serif; box-shadow:0 2px 8px #14395b26; }
+  .print-tools strong { display:block; }
+  .print-tools small { color:#cde8e9; }
+  .print-tools button { padding:10px 18px; border:0; border-radius:6px; background:#fff; color:#14395b; font:600 14px Arial,sans-serif; cursor:pointer; }
+  .print-tools button:focus-visible { outline:3px solid #8fd3d1; outline-offset:3px; }
+  .print-paper { background:#fff; width:210mm; min-height:297mm; margin:24px auto; padding:18mm; box-shadow:0 4px 18px #14395b20; }
+  @media screen and (max-width:820px) { .print-paper { margin:16px 12px; } }
+  @media print {
+    body { background:#fff; }
+    .print-tools { display:none; }
+    .print-paper { width:auto; min-height:0; margin:0; padding:0; box-shadow:none; break-after:page; }
+    .print-paper:last-child { break-after:auto; }
+  }
+</style></head>
+<body>
+<div class="print-tools">
+  <div><strong>{{ naslov }}</strong><small>A4 · uspravno · margine 18 mm</small></div>
+  <button type="button" onclick="window.print()">Štampaj / Sačuvaj PDF</button>
+  <small>U dijalogu za štampu isključite zaglavlja i podnožja pregledača.</small>
+</div>
+<main>{% for dokument in dokumenti %}<section class="print-paper">{% include 'hr/resenja/_resenje_document.html' %}</section>{% empty %}<section class="print-paper"><p>Nema rešenja za štampu.</p></section>{% endfor %}</main>
+<script src="{% static 'hr/resenje_document.js' %}?v=20260923"></script>
+</body></html>

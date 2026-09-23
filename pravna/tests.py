@@ -113,35 +113,74 @@ class DisciplinskiPostupakTests(TestCase):
         self.client.post(reverse("pravna:disciplinski_obrisi_tok", kwargs={"pk": zapis.pk}))
         self.assertEqual(postupak.tok.count(), 1)
 
-    def test_disciplinska_mera_closes_the_case_and_can_be_undone(self):
+    def test_date_alone_closes_the_case_and_can_be_undone(self):
         self._create()
         postupak = DisciplinskiPostupak.objects.get()
         self.assertFalse(postupak.zatvoren)
+        self.assertEqual(postupak.datum_statusa, date(2026, 3, 5))
 
         url = reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk})
-        response = self.client.post(url, {"mera_datum": "01.04.2026", "mera_opis": "Opomena pred otkaz"})
+        response = self.client.post(url, {"mera_datum": "01.04.2026"})
         self.assertRedirects(response, reverse("pravna:disciplinski_detalj", kwargs={"pk": postupak.pk}))
         postupak.refresh_from_db()
         self.assertTrue(postupak.zatvoren)
         self.assertEqual(postupak.mera_datum, date(2026, 4, 1))
-        self.assertEqual(postupak.mera_opis, "Opomena pred otkaz")
+        self.assertEqual(postupak.datum_statusa, date(2026, 4, 1))
+        self.assertEqual(postupak.mera_opis, "")
 
         self.client.post(url, {"ponisti": "1"})
         postupak.refresh_from_db()
         self.assertFalse(postupak.zatvoren)
+        self.assertEqual(postupak.datum_statusa, date(2026, 3, 5))
         self.assertEqual(postupak.mera_opis, "")
 
-    def test_mera_without_description_is_refused_and_case_stays_open(self):
+    def test_closing_without_valid_date_is_refused_and_case_stays_open(self):
         self._create()
         postupak = DisciplinskiPostupak.objects.get()
-        response = self.client.post(
-            reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk}),
-            {"mera_datum": "01.04.2026", "mera_opis": "   "},
+        for datum in ("", "31.02.2026"):
+            with self.subTest(datum=datum):
+                response = self.client.post(
+                    reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk}),
+                    {"mera_datum": datum},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("mera_datum", response.context["forma_mera"].errors)
+                postupak.refresh_from_db()
+                self.assertFalse(postupak.zatvoren)
+
+    def test_closing_and_reopening_preserves_existing_description_and_history(self):
+        self._create()
+        postupak = DisciplinskiPostupak.objects.get()
+        postupak.mera_opis = "Ranije evidentirana mera"
+        postupak.save()
+        zapis = TokPostupka.objects.create(
+            postupak=postupak, datum=date(2026, 3, 10), opis="Opomena pred otkaz",
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Upišite koja je mera izrečena.")
-        postupak.refresh_from_db()
-        self.assertFalse(postupak.zatvoren)
+        url = reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk})
+        for payload in ({"mera_datum": "01.04.2026"}, {"ponisti": "1"}):
+            self.client.post(url, payload)
+            postupak.refresh_from_db()
+            self.assertEqual(postupak.mera_opis, "Ranije evidentirana mera")
+            self.assertTrue(postupak.tok.filter(pk=zapis.pk).exists())
+
+    def test_list_and_detail_show_current_status_date(self):
+        self._create()
+        postupak = DisciplinskiPostupak.objects.get()
+        list_url = reverse("pravna:disciplinski_lista")
+        detail_url = reverse("pravna:disciplinski_detalj", kwargs={"pk": postupak.pk})
+        response = self.client.get(list_url)
+        self.assertContains(response, 'data-order="2026-03-05">05.03.2026.</td>')
+        self.client.post(
+            reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk}),
+            {"mera_datum": "01.04.2026"},
+        )
+        response = self.client.get(list_url)
+        self.assertContains(response, 'data-order="2026-04-01">01.04.2026.</td>')
+        self.assertNotContains(response, "Datum disciplinske mere")
+        response = self.client.get(detail_url)
+        self.assertContains(response, "Datum zatvaranja: 01.04.2026.")
+        self.assertContains(response, "Promena toka postupka")
+        self.assertNotContains(response, 'name="mera_opis"')
 
     def test_list_filters_by_center_status_and_archive(self):
         self._create()

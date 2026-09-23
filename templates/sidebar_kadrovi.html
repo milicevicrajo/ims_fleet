@@ -39,6 +39,9 @@
         {% if hr_permissions.evaluation_list %}
         <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:evaluation_list' %}"><i class="mdi mdi-clipboard-check-outline"></i><span class="hide-menu">Ocenjivanje zaposlenih</span></a></li>
         {% endif %}
+        {% if hr_permissions.resenje_list %}
+        <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:resenje_list' %}"><i class="mdi mdi-file-document-outline"></i><span class="hide-menu">Rešenja zaposlenih</span></a></li>
+        {% endif %}
         {% if hr_permissions.work_time_catalog %}
         <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:work_time_catalog' %}"><i class="mdi mdi-format-list-bulleted"></i><span class="hide-menu">Elementi radne liste</span></a></li>
         {% endif %}

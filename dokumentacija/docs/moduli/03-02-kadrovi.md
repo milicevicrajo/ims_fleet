@@ -55,6 +55,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Godišnji odmori** | Dodele i rešenja preuzeti iz obračuna zarada |
 | **Bolovanja** | Uvoz RFZO Excel izvoza, povezivanje po JMBG |
 | **Ocenjivanje** | Šest merila, bodovi 0–4, lični koeficijent, saglasnost u tri nivoa |
+| **Rešenja** | Rešenja o prekovremenom i noćnom radu, radu vikendom i praznikom, plaćenom odsustvu — pojedinačno i grupno, sa štampom |
 | **Šifarnici** | Vrste rada/odsustva, elementi radne liste, vrste primalaca, merila ocenjivanja |
 
 ---
@@ -81,6 +82,11 @@ Vodi **zaposlene i njihovo radno vreme**:
 | Saglasnost | `/hr/ocenjivanje/<id>/saglasnost/` | Imenovani ocenjivač |
 | Grupna saglasnost | `/hr/ocenjivanje/saglasnost/` | Imenovani ocenjivač |
 | Šifarnik ocenjivanja | `/hr/ocenjivanje/sifrarnik/` | Kadrovska služba |
+| **Rešenja zaposlenih** | `/hr/resenja/` | Kadrovska služba |
+| Novo rešenje | `/hr/resenja/novo/` | Kadrovska služba |
+| Grupno izdavanje | `/hr/resenja/grupno/` | Kadrovska služba |
+| Štampa rešenja | `/hr/resenja/<id>/stampa/`, `/hr/resenja/stampa/` | Kadrovska služba |
+| Šifarnik rešenja | `/hr/resenja/sifrarnik/` | **Samo Uprava** |
 | Elementi radne liste | `/hr/sifrarnici/elementi-rl/` | Kadrovska služba |
 
 ---
@@ -98,6 +104,10 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Bodovi po merilima i komentari** | Ocenjivanje | Neposredni rukovodilac |
 | Saglasnost, korekcija koeficijenta, obrazloženje | Saglasnost | Direktor centra, generalni direktor |
 | RFZO Excel datoteka i datum izvoza | Uvoz bolovanja | Kadrovska služba |
+| **Broj rešenja iz delovodnika, datum, period ili dani** | Rešenja | Kadrovska služba |
+| Broj i datum zahteva na osnovu koga se rešenje donosi | Rešenja | Kadrovska služba |
+| Ime u drugom padežu, naziv OJ i radnog mesta u tekstu rešenja | Rešenja | Kadrovska služba |
+| Ime i prezime ćirilicom (kada preslovljavanje pogreši) | Detalj zaposlenog | Kadrovska služba |
 | Šifarnici | Šifarnici | Kadrovska služba |
 
 ---
@@ -121,7 +131,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 
 ## 8. Tabele i kolone
 
-Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **16 tabela.**
+Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 
 | Tabela | Uloga |
 |---|---|
@@ -135,6 +145,10 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **16 tabela.**
 | `hr_evaluationunitsetup`, `hr_evaluationemployeesetup` | Ko koga ocenjuje |
 | **`hr_employeeevaluation`** | **Nepromenljiva ocena sa JSON snimkom** |
 | `hr_evaluationapproval` | Saglasnosti po nivoima |
+| `hr_vrstaresenja` | Šifarnik obrazaca rešenja — tekstovi ćirilicom |
+| `hr_potpisnik` | Ko potpisuje rešenja i u kom periodu |
+| **`hr_resenje`** | **Izdato rešenje sa JSON snimkom dokumenta** |
+| `hr_resenjedan` | Pojedinačni dani rešenja (vikend, praznik, prekovremeni) |
 
 ---
 
@@ -156,9 +170,10 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **16 tabela.**
 
 | Šta | Gde |
 |---|---|
-| Modeli | [`hr/models.py`](../../../hr/models.py), [`hr/evaluation_models.py`](../../../hr/evaluation_models.py) |
+| Modeli | [`hr/models.py`](../../../hr/models.py), [`hr/evaluation_models.py`](../../../hr/evaluation_models.py), [`hr/resenja_models.py`](../../../hr/resenja_models.py) |
 | **Evidencija prolazaka** | [`hr/services/attendance.py`](../../../hr/services/attendance.py) |
 | **Ocenjivanje** | [`hr/services/evaluations.py`](../../../hr/services/evaluations.py) |
+| **Rešenja** | [`hr/services/resenja.py`](../../../hr/services/resenja.py) |
 | Godišnji odmori | [`hr/services/annual_leave.py`](../../../hr/services/annual_leave.py) |
 | Bolovanja | [`hr/services/sick_leave.py`](../../../hr/services/sick_leave.py) |
 | Šifarnik radne liste | [`hr/services/work_time_catalog.py`](../../../hr/services/work_time_catalog.py) |
@@ -166,7 +181,7 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **16 tabela.**
 | Radna lista | [`hr/views.py: MyWorkTimeSheetView`](../../../hr/views.py) |
 
 Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
-`test_sick_leave.py`, `test_work_time_catalog.py` — **97 testova**. [P]
+`test_sick_leave.py`, `test_work_time_catalog.py`, `test_resenja.py` — **138 testova**. [P]
 
 ---
 
@@ -221,6 +236,10 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 | `hr:work_time_catalog` | Šifarnici |
 | `hr:evaluation_list`, `hr:evaluation_create`, `hr:evaluation_approve` | Ocenjivanje |
 | **`hr:evaluation_view_all`** | Vidi i ocenjuje **sve** zaposlene |
+| `hr:resenje_list`, `hr:resenje_create`, `hr:resenje_izdaj` | Rešenja — pregled, unos, izdavanje |
+| `hr:resenje_bulk_create`, `hr:resenje_print` | Grupno izdavanje i štampa |
+| `hr:resenje_catalog` | Šifarnik vrsta rešenja i potpisnika |
+| **`hr:resenje_view_all`** | Vidi rešenja **svih** centara |
 
 **Posebna pravila [P]:**
 
@@ -229,6 +248,23 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 - Saglasnost daje **isključivo imenovani ocenjivač sa svog naloga**.
 - Tuđu radnu listu otvara **samo superuser** — ne postoji uloga za to.
 - Korisnik bez povezanog zaposlenog **ne može** otvoriti radnu listu.
+- Bez dozvole `hr:resenje_view_all`, kadrovik vidi rešenja **samo svojih centara**
+  (`CustomUser.allowed_center_codes` i `allowed_centers`); bez ijednog dodeljenog centra
+  vidi **samo rešenja koja je sam uneo**.
+- **Izdato rešenje se više ne menja** — ispravka ide preko storniranja i novog rešenja.
+
+### Unos i štampa rešenja zaposlenih
+
+- Datumi u formama koriste format **dd.mm.gggg** i kalendar, kao ostali ekrani Kadrova.
+  Pojedinačni dani se dodaju dugmetom **Dodaj dan**, a označavanjem **Ukloni** izostavljaju
+  pri čuvanju nacrta. Grupni unos zadržava izabrane zaposlene i njihove brojeve rešenja
+  ako validacija prijavi grešku.
+- Detalj prikazuje dokument u širini **A4 (210 × 297 mm)**. Dugme **Štampaj** otvara
+  prikaz za štampu ili čuvanje PDF-a: uspravan A4, margine **18 mm**, osnovni tekst Times New Roman 12 pt.
+  Zaglavlje sadrži IMS logo, broj i datum, zatim naslov vrste i podatke zaposlenog.
+  U dijalogu pregledača isključiti njegova zaglavlja i podnožja.
+- Svako rešenje u grupnoj štampi počinje na novoj stranici. Duži tekst prelazi na narednu
+  A4 stranicu, a blok potpisa i dostavljanja ostaje zajedno pri dnu poslednje strane.
 
 ---
 

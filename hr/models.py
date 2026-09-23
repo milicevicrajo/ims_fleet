@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .evaluation_models import (EvaluationGroup, EvaluationCriterion, EvaluationScale,
     EvaluationUnitSetup, EvaluationEmployeeSetup, EmployeeEvaluation, EvaluationApproval)
+from .resenja_models import Pismo, VrstaResenja, Potpisnik, Resenje, ResenjeDan
 
 
 class Employee(models.Model):
@@ -34,6 +35,16 @@ class Employee(models.Model):
         blank=True,
         default="",
         verbose_name=_("Prezime za prikaz"),
+    )
+    full_name_cyrillic = models.CharField(
+        max_length=150,
+        blank=True,
+        default="",
+        verbose_name=_("Ime i prezime (ćirilica)"),
+        help_text=_(
+            "Koristi se u rešenjima koja se štampaju ćirilicom. Ostavi prazno za automatsko "
+            "preslovljavanje, koje ume da pogreši kod slova lj, nj i dž."
+        ),
     )
     position = models.CharField(max_length=100, verbose_name=_("Pozicija"))
     department_code = models.IntegerField(verbose_name=_("Šifra odeljenja"))

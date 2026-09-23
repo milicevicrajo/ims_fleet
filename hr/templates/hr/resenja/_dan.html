@@ -1,0 +1,17 @@
+{% load form_filters %}
+<tr class="resenja-day-row">
+  <td>
+    {{ dan.id }}
+    <label class="visually-hidden" for="{{ dan.datum.id_for_label }}">Datum</label>
+    {{ dan.datum }}
+    {% for greska in dan.datum.errors %}<div class="invalid-feedback d-block">{{ greska }}</div>{% endfor %}
+    {% for greska in dan.non_field_errors %}<div class="invalid-feedback d-block">{{ greska }}</div>{% endfor %}
+    {% for greska in dan.id.errors %}<div class="invalid-feedback d-block">{{ greska }}</div>{% endfor %}
+  </td>
+  <td>
+    <label class="visually-hidden" for="{{ dan.vrsta_dana.id_for_label }}">Vrsta dana</label>
+    {{ dan.vrsta_dana }}
+    {% for greska in dan.vrsta_dana.errors %}<div class="invalid-feedback d-block">{{ greska }}</div>{% endfor %}
+  </td>
+  <td class="resenja-day-delete"><div class="form-check">{{ dan.DELETE|add_class:'form-check-input' }}<label for="{{ dan.DELETE.id_for_label }}">Ukloni</label></div></td>
+</tr>

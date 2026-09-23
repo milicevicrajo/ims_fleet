@@ -94,8 +94,8 @@
                 {% for column in display_columns %}
                   <th class="{{ column.css }}" title="{{ column.title }}">{{ column.title }}</th>
                 {% endfor %}
-                <th class="legal-col-xs" title="Broj unosa u toku postupka">Tok postupka</th>
                 <th class="legal-col-status legal-nowrap">Status</th>
+                <th class="legal-col-date legal-nowrap">Datum statusa</th>
                 <th class="legal-col-actions legal-nowrap text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
@@ -103,22 +103,21 @@
               {% for p in postupci %}
               <tr class="{% if p.arhivirano %}legal-archived{% endif %}">
                 {% for column in display_columns %}
-                  {% if column.key == 'datum_podnosenja' or column.key == 'mera_datum' %}
+                  {% if column.key == 'datum_podnosenja' %}
                     <td class="{{ column.css }}" data-order="{{ p|get_attr:column.key|date:'Y-m-d' }}" title="{{ p|get_attr:column.key|date:'d.m.Y.'|default:'—' }}">{{ p|get_attr:column.key|date:"d.m.Y."|default:"—" }}</td>
                   {% else %}
                     <td class="{{ column.css }}"><span title="{{ p|get_attr:column.key|default:'—' }}">{{ p|get_attr:column.key|default:"—" }}</span></td>
                   {% endif %}
                 {% endfor %}
-                <td class="legal-col-xs legal-nowrap" title="Broj unosa u toku postupka: {{ p.tok_count }}">{{ p.tok_count }}</td>
                 <td class="legal-col-status legal-nowrap">
-                  {% if p.arhivirano %}
-                    <span class="legal-status archived"><i class="mdi mdi-archive"></i> Arhiviran</span>
-                  {% elif p.mera_datum %}
+                  {% if p.zatvoren %}
                     <span class="legal-status closed"><i class="mdi mdi-gavel"></i> Zatvoren</span>
                   {% else %}
                     <span class="legal-status active"><i class="mdi mdi-progress-clock"></i> U toku</span>
                   {% endif %}
+                  {% if p.arhivirano %}<span class="legal-status archived"><i class="mdi mdi-archive"></i> Arhiviran</span>{% endif %}
                 </td>
+                <td class="legal-col-date legal-nowrap" data-order="{{ p.datum_statusa|date:'Y-m-d' }}">{{ p.datum_statusa|date:"d.m.Y." }}</td>
                 <td class="legal-col-actions legal-nowrap text-center">
                   <div class="d-flex justify-content-center gap-1">
                     <a href="{% url 'pravna:disciplinski_detalj' pk=p.pk %}" class="btn btn-sm btn-outline-primary" title="Detalji postupka" aria-label="Detalji postupka">
@@ -150,8 +149,8 @@
             </tbody>
             <tfoot><tr>
               {% for column in display_columns %}<th class="{{ column.css }}">{{ column.title }}</th>{% endfor %}
-              <th class="legal-col-xs">Tok postupka</th>
               <th class="legal-col-status">Status</th>
+              <th class="legal-col-date">Datum statusa</th>
               <th class="legal-col-actions">Akcije</th>
             </tr></tfoot>
           </table>
