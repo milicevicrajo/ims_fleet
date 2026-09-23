@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.db import transaction
 from django.urls import URLPattern, URLResolver
 
 from core.models import PermissionCode, Role, RolePermission
@@ -99,6 +100,7 @@ def collect_permission_codes():
     codes = set(collect_fleet_permission_codes())
     codes.update(collect_url_pattern_names(hr_urls.urlpatterns, prefix="hr"))
     codes.add('hr:evaluation_view_all')
+    codes.add('hr:resenje_view_all')
     codes.update(collect_naplata_permission_codes())
     codes.update(collect_nabavka_permission_codes())
     codes.update(collect_menice_permission_codes())
@@ -112,6 +114,37 @@ def collect_permission_codes():
     from potrazivanja.permissions import PERMISSIONS
     codes.update(f"potrazivanja:{code}" for code in PERMISSIONS)
     return sorted(codes)
+
+
+@transaction.atomic
+def sync_pravna_resenja_permissions():
+    """Dopunjava samo Pravnu službu i rešenja, bez brisanja postojećih dozvola."""
+    from hr.permissions import RESENJA_ADMIN_CODES, collect_resenja_permission_codes
+
+    pravna_codes = set(collect_pravna_permission_codes())
+    resenja_codes = set(collect_resenja_permission_codes())
+    operational_codes = resenja_codes - RESENJA_ADMIN_CODES
+    assignments = (
+        ('uprava', 'Uprava', pravna_codes | resenja_codes),
+        ('pravna', 'Pravna sluzba', pravna_codes),
+        ('sekretarijat', 'Sekretarijat', operational_codes),
+        ('kadrovik-resenja', 'Kadrovik — rešenja', operational_codes),
+    )
+    permissions = {}
+    created = 0
+    for code in sorted(pravna_codes | resenja_codes):
+        permission, is_new = PermissionCode.objects.get_or_create(code=code)
+        permissions[code] = permission
+        created += is_new
+    grants = {}
+    for slug, name, codes in assignments:
+        role, _ = Role.objects.get_or_create(slug=slug, defaults={'name': name})
+        added = 0
+        for code in sorted(codes):
+            _, is_new = RolePermission.objects.get_or_create(role=role, permission=permissions[code])
+            added += is_new
+        grants[slug] = added
+    return {'created': created, 'grants': grants}
 
 
 def sync_permission_codes():
@@ -370,6 +403,7 @@ def sync_permission_codes():
             target, _ = PermissionCode.objects.get_or_create(code=target_code)
             for role_id in role_ids:
                 RolePermission.objects.get_or_create(role_id=role_id, permission=target)
+    pravna_resenja_result = sync_pravna_resenja_permissions()
     return {
         "synced": len(codes),
         "created": created,
@@ -386,4 +420,5 @@ def sync_permission_codes():
         "sekretarijat_group_users_synced": sekretarijat_group_users_synced,
         "zaposleni_group_users_synced": zaposleni_group_users_synced,
         "pregled_naplate_group_users_synced": pregled_naplate_group_users_synced,
+        "pravna_resenja_grants": pravna_resenja_result['grants'],
     }

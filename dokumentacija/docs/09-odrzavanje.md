@@ -164,6 +164,19 @@ Restart-Service IMS_Fleet_Celery_Beat
 > **[P] Zašto restart:** stari radnik **odbacuje nepoznat zadatak**. Ako se raspored
 > aktivira pre restarta, zadaci se gube.
 
+Za ciljanu dopunu novih ekrana Pravne službe i rešenja zaposlenih:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py sync_pravna_resenja_permissions --dry-run
+.\.venv\Scripts\python.exe manage.py sync_pravna_resenja_permissions
+```
+
+Komanda dodaje sve rute `pravna:*` ulozi **Pravna služba**, operativne dozvole
+`hr:resenje_*` ulogama **Sekretarijat** i **Kadrovik — rešenja**, a sve ove kodove
+**Upravi**. Šifrarnici i pregled svih centara nisu deo operativnih dozvola.
+Postojeće dozvole i članstva korisnika ostaju sačuvani. Ista dopuna je uključena
+u redovni `sync_permission_codes`.
+
 ---
 
 ## 9.6. Česti problemi i šta uraditi

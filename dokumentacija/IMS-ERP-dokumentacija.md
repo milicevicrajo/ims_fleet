@@ -2138,6 +2138,12 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 **Posebna pravila [P]:**
 
+- **Sekretarijat** i **Kadrovik — rešenja** dobijaju operativne dozvole za rešenja:
+  listu, detalj, unos i izmenu nacrta, brisanje, predlog teksta, izdavanje, storniranje,
+  pojedinačnu i grupnu štampu i grupni unos. Sinhronizacija dopunjava ove uloge bez
+  menjanja njihovih korisnika. Uloga **Pregled** time ne dobija pravo unosa rešenja.
+- Šifrarnici rešenja i potpisnika i `hr:resenje_view_all` pri sinhronizaciji se dodeljuju
+  **Upravi**; operativne uloge zadržavaju postojeća ograničenja po centrima.
 - Bez dozvole `hr:evaluation_view_all`, rukovodilac ocenjuje **samo zaposlene svojih OJ**.
 - Ocenu vidi onaj ko ju je napravio **ili** je na njoj imenovan kao ocenjivač.
 - Saglasnost daje **isključivo imenovani ocenjivač sa svog naloga**.
@@ -17487,6 +17493,19 @@ Restart-Service IMS_Fleet_Celery_Beat
 
 > **[P] Zašto restart:** stari radnik **odbacuje nepoznat zadatak**. Ako se raspored
 > aktivira pre restarta, zadaci se gube.
+
+Za ciljanu dopunu novih ekrana Pravne službe i rešenja zaposlenih:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py sync_pravna_resenja_permissions --dry-run
+.\.venv\Scripts\python.exe manage.py sync_pravna_resenja_permissions
+```
+
+Komanda dodaje sve rute `pravna:*` ulozi **Pravna služba**, operativne dozvole
+`hr:resenje_*` ulogama **Sekretarijat** i **Kadrovik — rešenja**, a sve ove kodove
+**Upravi**. Šifrarnici i pregled svih centara nisu deo operativnih dozvola.
+Postojeće dozvole i članstva korisnika ostaju sačuvani. Ista dopuna je uključena
+u redovni `sync_permission_codes`.
 
 ---
 

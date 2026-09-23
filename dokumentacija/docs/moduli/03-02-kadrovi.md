@@ -243,6 +243,12 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 **Posebna pravila [P]:**
 
+- **Sekretarijat** i **Kadrovik — rešenja** dobijaju operativne dozvole za rešenja:
+  listu, detalj, unos i izmenu nacrta, brisanje, predlog teksta, izdavanje, storniranje,
+  pojedinačnu i grupnu štampu i grupni unos. Sinhronizacija dopunjava ove uloge bez
+  menjanja njihovih korisnika. Uloga **Pregled** time ne dobija pravo unosa rešenja.
+- Šifrarnici rešenja i potpisnika i `hr:resenje_view_all` pri sinhronizaciji se dodeljuju
+  **Upravi**; operativne uloge zadržavaju postojeća ograničenja po centrima.
 - Bez dozvole `hr:evaluation_view_all`, rukovodilac ocenjuje **samo zaposlene svojih OJ**.
 - Ocenu vidi onaj ko ju je napravio **ili** je na njoj imenovan kao ocenjivač.
 - Saglasnost daje **isključivo imenovani ocenjivač sa svog naloga**.

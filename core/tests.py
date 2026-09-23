@@ -131,6 +131,62 @@ class RolePermissionMixinTests(SimpleTestCase):
 
 
 class PermissionCodeSyncTests(TestCase):
+    def test_targeted_sync_adds_all_legal_and_operational_hr_screens(self):
+        from .permissions import collect_pravna_permission_codes, sync_pravna_resenja_permissions
+        from hr.permissions import RESENJA_ADMIN_CODES, collect_resenja_permission_codes
+
+        sekretarijat = Role.objects.create(slug='sekretarijat', name='Sekretarijat')
+        custom = PermissionCode.objects.create(code='existing:permission')
+        sekretarijat.permissions.add(custom)
+        pregled = Role.objects.create(slug='pregled', name='Pregled')
+        pregled.permissions.add(custom)
+        user = get_user_model().objects.create_user('sekretarijat-test', password='test')
+        user.roles.add(sekretarijat)
+
+        sync_pravna_resenja_permissions()
+
+        self.assertEqual(set(Role.objects.get(slug='pravna').permissions.values_list('code', flat=True)),
+                         set(collect_pravna_permission_codes()))
+        operational = set(collect_resenja_permission_codes()) - RESENJA_ADMIN_CODES
+        self.assertEqual(set(sekretarijat.permissions.values_list('code', flat=True)), operational | {custom.code})
+        self.assertEqual(set(pregled.permissions.values_list('code', flat=True)), {custom.code})
+        self.assertEqual(list(user.roles.values_list('slug', flat=True)), ['sekretarijat'])
+        self.assertTrue(user_has_role_permission(user, 'hr:resenje_list'))
+        self.assertTrue(user_has_role_permission(user, 'hr:resenje_izdaj'))
+        self.assertFalse(user_has_role_permission(user, 'hr:resenje_catalog'))
+        self.assertFalse(user_has_role_permission(user, 'hr:resenje_view_all'))
+        uprava = Role.objects.get(slug='uprava')
+        self.assertTrue(RESENJA_ADMIN_CODES <= set(uprava.permissions.values_list('code', flat=True)))
+
+    def test_targeted_sync_is_idempotent_and_does_not_reactivate_roles(self):
+        from .permissions import sync_pravna_resenja_permissions
+
+        role = Role.objects.create(slug='sekretarijat', name='Sekretarijat', is_active=False)
+        sync_pravna_resenja_permissions()
+        count = RolePermission.objects.count()
+        result = sync_pravna_resenja_permissions()
+        self.assertEqual(result['created'], 0)
+        self.assertTrue(all(count == 0 for count in result['grants'].values()))
+        self.assertEqual(RolePermission.objects.count(), count)
+        role.refresh_from_db()
+        self.assertFalse(role.is_active)
+
+    def test_targeted_sync_dry_run_does_not_save_grants(self):
+        from io import StringIO
+        from django.core.management import call_command
+
+        counts = (PermissionCode.objects.count(), Role.objects.count(), RolePermission.objects.count())
+        call_command('sync_pravna_resenja_permissions', dry_run=True, stdout=StringIO())
+        self.assertEqual((PermissionCode.objects.count(), Role.objects.count(), RolePermission.objects.count()), counts)
+
+    def test_regular_sync_keeps_new_legal_and_hr_permissions(self):
+        from .permissions import collect_permission_codes, sync_permission_codes
+
+        sync_permission_codes()
+        self.assertIn('hr:resenje_view_all', collect_permission_codes())
+        self.assertTrue(Role.objects.get(slug='sekretarijat').permissions.filter(code='hr:resenje_bulk_create').exists())
+        self.assertTrue(Role.objects.get(slug='pravna').permissions.filter(code='pravna:disciplinski_mera').exists())
+
     def test_sync_permission_codes_grants_employee_sync_to_sekretarijat(self):
         from .permissions import sync_permission_codes
 
