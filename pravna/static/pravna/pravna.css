@@ -1,0 +1,173 @@
+/* Izgled pravne sluzbe. Isti stilovi koje su ranije nosili pojedinacni sabloni. */
+.legal-hero,
+.legal-form-hero {
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b214b 0%, #6f4d7b 52%, #9a5b4f 100%);
+  color: #fff;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 26px rgba(59, 33, 75, 0.18);
+}
+.legal-form-hero { padding: 20px 24px; }
+.legal-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+.legal-form-hero h1 { font-size: 1.45rem; margin: 0; letter-spacing: 0; }
+.legal-hero.legal-hero-detail h1 { font-size: 1.45rem; }
+.legal-hero p,
+.legal-form-hero p { margin: 6px 0 0; color: rgba(255, 255, 255, .86); }
+
+.legal-filter {
+  background: #f8fafc;
+  border: 1px solid #e6ebf1;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.legal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-weight: 600;
+  font-size: .82rem;
+}
+.legal-status.active { background: #e7f7ef; color: #147044; }
+.legal-status.archived { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+.legal-status.closed { background: #f1ecf6; color: #4d2f63; border: 1px solid #d8c9e4; }
+tr.legal-archived td { background: #f3f6f9 !important; color: #657282; }
+.legal-table th,
+.legal-table td { vertical-align: middle; }
+
+.legal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.legal-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.legal-hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.legal-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-weight: 700;
+  font-size: .82rem;
+}
+.legal-pill.active { background: #e7f7ef; color: #147044; }
+.legal-pill.archived { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+.legal-pill.closed { background: #f1ecf6; color: #4d2f63; border: 1px solid #d8c9e4; }
+
+.legal-section {
+  border: 1px solid #e6ebf1;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.legal-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef2f6;
+  background: #f8fafc;
+  color: #3b214b;
+  font-weight: 700;
+}
+.legal-section-body { padding: 16px; }
+
+.legal-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.legal-meta {
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+}
+.legal-meta-label {
+  color: #6c7f90;
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.legal-meta-value {
+  color: #243746;
+  font-weight: 700;
+  margin-top: 3px;
+  word-break: break-word;
+}
+.legal-text-block {
+  border-left: 3px solid #6f4d7b;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: #3e5569;
+}
+
+.side-card {
+  border: 1px solid #e6ebf1;
+  border-radius: 8px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+.side-card-body { padding: 14px; }
+
+.change-row {
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+.change-row + .change-row { margin-top: 10px; }
+.change-date { color: #243746; font-weight: 700; }
+.change-text { color: #3e5569; margin-top: 4px; }
+
+@media (max-width: 767.98px) {
+  .legal-meta-grid { grid-template-columns: 1fr; }
+}
+
+/* --- Sirina tabela ---------------------------------------------------------
+   base.html svim `display compact` tabelama postavlja white-space: nowrap, pa
+   duga polja (Sud, Naziv partnera, Predmet spora) guraju tabelu u stranu i
+   poslednje kolone - Status i Akcije - izlaze izvan kartice. Ovde se dug tekst
+   prelama, a kratke kolone dobijaju fiksnu sirinu, kao kod liste dugovanja. */
+.legal-table { width: 100%; }
+table.legal-table.display.compact thead th,
+table.legal-table.display.compact tbody td { white-space: normal; word-break: break-word; }
+table.legal-table.display.compact thead th.legal-nowrap,
+table.legal-table.display.compact tbody td.legal-nowrap { white-space: nowrap; }
+
+/* Kratke kolone dobijaju fiksnu sirinu; Sud, Naziv partnera i Predmet spora
+   dele ostatak i prelamaju se, pa tabela staje u karticu. */
+.legal-table .legal-col-xs { width: 5rem; }
+.legal-table .legal-col-sm { width: 7.5rem; }
+.legal-table .legal-col-date { width: 6.5rem; }
+.legal-table .legal-col-num { width: 7rem; text-align: right; }
+.legal-table .legal-col-status { width: 7rem; }
+.legal-table .legal-col-actions { width: 5.5rem; white-space: nowrap; }
+
+/* Duga polja u listi ostaju na najvise tri reda; ceo tekst je u title-u i na detalju. */
+.legal-table td.legal-col-text > span,
+.legal-table td.legal-col-wide > span {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Long date labels wrap in the heading; date values stay on a single line. */
+table.legal-table.display.compact thead th.legal-nowrap,
+table.legal-table.display.compact tfoot th {
+  white-space: normal;
+  word-break: normal;
+}
+.legal-filter .select2-container { width: 100% !important; }
+.legal-filter .form-select { min-height: 38px; }
+.legal-filter .select2-container--default .select2-selection--single {
+  min-height: 38px;
+  border-color: #ced4da;
+  border-radius: .25rem;
+}
+.legal-filter .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 36px; }
+.legal-filter .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }

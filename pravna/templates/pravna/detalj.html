@@ -1,119 +1,12 @@
 {% extends 'base.html' %}
-{% load form_filters %}
+{% load form_filters static %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<style>
-  .legal-hero {
-    border-radius: 8px;
-    background: linear-gradient(135deg, #3b214b 0%, #6f4d7b 52%, #9a5b4f 100%);
-    color: #fff;
-    padding: 20px 24px;
-    margin-bottom: 16px;
-    box-shadow: 0 10px 26px rgba(59, 33, 75, 0.18);
-  }
-  .legal-hero h1 { font-size: 1.45rem; margin: 0; letter-spacing: 0; }
-  .legal-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
-  .legal-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .legal-hero-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .legal-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 999px;
-    padding: 5px 10px;
-    font-weight: 700;
-    font-size: .82rem;
-  }
-  .legal-pill.active { background: #e7f7ef; color: #147044; }
-  .legal-pill.archived { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
-  .legal-section {
-    border: 1px solid #e6ebf1;
-    border-radius: 8px;
-    background: #fff;
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-  .legal-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 14px 16px;
-    border-bottom: 1px solid #eef2f6;
-    background: #f8fafc;
-    color: #3b214b;
-    font-weight: 700;
-  }
-  .legal-section-body { padding: 16px; }
-  .legal-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-  .legal-meta {
-    border: 1px solid #eef2f6;
-    border-radius: 8px;
-    padding: 10px 12px;
-    background: #fff;
-  }
-  .legal-meta-label {
-    color: #6c7f90;
-    font-size: .78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-  .legal-meta-value {
-    color: #243746;
-    font-weight: 700;
-    margin-top: 3px;
-    word-break: break-word;
-  }
-  .legal-text-block {
-    border-left: 3px solid #6f4d7b;
-    background: #f8fafc;
-    border-radius: 6px;
-    padding: 12px 14px;
-    color: #3e5569;
-  }
-  .side-card {
-    border: 1px solid #e6ebf1;
-    border-radius: 8px;
-    background: #fff;
-    margin-bottom: 16px;
-  }
-  .side-card-body { padding: 14px; }
-  .change-row {
-    border: 1px solid #eef2f6;
-    border-radius: 8px;
-    padding: 12px;
-    background: #fff;
-  }
-  .change-row + .change-row { margin-top: 10px; }
-  .change-date {
-    color: #243746;
-    font-weight: 700;
-  }
-  .change-text {
-    color: #3e5569;
-    margin-top: 4px;
-  }
-  @media (max-width: 767.98px) {
-    .legal-meta-grid { grid-template-columns: 1fr; }
-  }
-</style>
+<link rel="stylesheet" href="{% static 'pravna/pravna.css' %}?v=20260923">
 
-<div class="legal-hero d-flex flex-wrap justify-content-between align-items-start gap-3">
+<div class="legal-hero legal-hero-detail d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
     <div class="legal-hero-chips">
       {% if postupak.arhivirano %}
@@ -128,11 +21,11 @@
   </div>
   <div class="legal-actions">
     {% if can_edit_pravna %}
-    <a href="{% url 'naplata:pravna_izmeni' pk=postupak.pk %}" class="btn btn-light btn-sm">
+    <a href="{% url 'pravna:izmeni' pk=postupak.pk %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-pencil"></i> Izmeni
     </a>
     {% endif %}
-    <a href="{% url 'naplata:pravna_cases_list' case_type=postupak.tip %}" class="btn btn-outline-light btn-sm">
+    <a href="{% url 'pravna:cases_list' case_type=postupak.tip %}" class="btn btn-outline-light btn-sm">
       <i class="mdi mdi-arrow-left"></i> Nazad
     </a>
   </div>
@@ -185,7 +78,7 @@
                 <div class="change-text">{{ pr.promena|linebreaksbr }}</div>
               </div>
               {% if can_delete_pravna_promena %}
-              <form method="post" action="{% url 'naplata:pravna_obrisi_promenu' pk=pr.pk %}"
+              <form method="post" action="{% url 'pravna:obrisi_promenu' pk=pr.pk %}"
                     onsubmit="return confirm('Obrisati ovu promenu?');" class="m-0">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Obrisi">
@@ -207,7 +100,7 @@
         <span><i class="mdi mdi-plus-circle"></i> Dodaj promenu</span>
       </div>
       <div class="legal-section-body">
-        <form method="post" action="{% url 'naplata:pravna_dodaj_promenu' pk=postupak.pk %}" class="row g-2 align-items-end">
+        <form method="post" action="{% url 'pravna:dodaj_promenu' pk=postupak.pk %}" class="row g-2 align-items-end">
           {% csrf_token %}
           <div class="col-md-3">
             <label class="form-label">Datum</label>
@@ -257,7 +150,7 @@
         <span><i class="mdi mdi-archive"></i> Arhiva</span>
       </div>
       <div class="side-card-body">
-        <form method="post" action="{% url 'naplata:pravna_arhiviraj' pk=postupak.pk %}"
+        <form method="post" action="{% url 'pravna:arhiviraj' pk=postupak.pk %}"
               onsubmit="return confirm('Potvrdi izmenu statusa arhive za ovaj postupak.');">
           {% csrf_token %}
           {% if postupak.arhivirano %}

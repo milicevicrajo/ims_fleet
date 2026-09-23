@@ -1,18 +1,5 @@
 from django.urls import path
 from .views import *
-from .views_pravna import (
-    lista_tuzenih,
-    pravna_cases_list,
-    pravna_izvestaj,
-    pravna_izvestaj_excel,
-    pravna_detalj,
-    pravna_dodaj,
-    pravna_izmeni,
-    pravna_obrisi,
-    pravna_arhiviraj,
-    pravna_dodaj_promenu,
-    pravna_obrisi_promenu,
-)
 from django.conf import settings
 
 app_name = "naplata"
@@ -63,14 +50,4 @@ urlpatterns = [
     path('tuzbe/izmeni/<int:id>/', izmeni_tuzbu, name='izmeni_tuzbu'),
     path('tuzbe/obrisi/<int:id>/', obrisi_tuzbu, name='obrisi_tuzbu'),
 
-    path('pravna-sluzba/<str:case_type>/', pravna_cases_list, name='pravna_cases_list'),
-    path('pravna-sluzba/<str:case_type>/izvestaj/', pravna_izvestaj, name='pravna_izvestaj'),
-    path('pravna-sluzba/<str:case_type>/izvestaj/excel/', pravna_izvestaj_excel, name='pravna_izvestaj_excel'),
-    path('pravna-sluzba/<str:case_type>/dodaj/', pravna_dodaj, name='pravna_dodaj'),
-    path('pravna-sluzba/postupak/<int:pk>/', pravna_detalj, name='pravna_detalj'),
-    path('pravna-sluzba/postupak/<int:pk>/izmeni/', pravna_izmeni, name='pravna_izmeni'),
-    path('pravna-sluzba/postupak/<int:pk>/obrisi/', pravna_obrisi, name='pravna_obrisi'),
-    path('pravna-sluzba/postupak/<int:pk>/arhiviraj/', pravna_arhiviraj, name='pravna_arhiviraj'),
-    path('pravna-sluzba/postupak/<int:pk>/dodaj-promenu/', pravna_dodaj_promenu, name='pravna_dodaj_promenu'),
-    path('pravna-sluzba/promena/<int:pk>/obrisi/', pravna_obrisi_promenu, name='pravna_obrisi_promenu'),
 ]

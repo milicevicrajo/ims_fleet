@@ -8,6 +8,7 @@ urlpatterns = [
     path('', include('fleet.urls')),  # Ovo povezuje URLs iz fleet aplikacije
     path("hr/", include(("hr.urls", "hr"), namespace="hr")),
     path("naplata/", include(("naplata.urls", "naplata"), namespace="naplata")),
+    path("pravna/", include(("pravna.urls", "pravna"), namespace="pravna")),
     path("potrazivanja/", include("potrazivanja.urls", namespace="potrazivanja")),
     path("isplate/", include(("isplate.urls", "isplate"), namespace="isplate")),
     path("menice/", include(("menice.urls", "menice"), namespace="menice")),

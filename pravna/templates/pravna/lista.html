@@ -1,41 +1,10 @@
 {% extends 'base.html' %}
-{% load form_filters %}
+{% load form_filters pravna_tables static %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<style>
-  .legal-hero {
-    border-radius: 8px;
-    background: linear-gradient(135deg, #3b214b 0%, #6f4d7b 52%, #9a5b4f 100%);
-    color: #fff;
-    padding: 22px 24px;
-    margin-bottom: 16px;
-    box-shadow: 0 10px 26px rgba(59, 33, 75, 0.18);
-  }
-  .legal-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
-  .legal-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
-  .legal-filter {
-    background: #f8fafc;
-    border: 1px solid #e6ebf1;
-    border-radius: 8px;
-    padding: 14px;
-  }
-  .legal-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 999px;
-    padding: 4px 9px;
-    font-weight: 600;
-    font-size: .82rem;
-  }
-  .legal-status.active { background: #e7f7ef; color: #147044; }
-  .legal-status.archived { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
-  tr.legal-archived td { background: #f3f6f9 !important; color: #657282; }
-  .legal-table th,
-  .legal-table td { vertical-align: middle; }
-</style>
+<link rel="stylesheet" href="{% static 'pravna/pravna.css' %}?v=20260923">
 
 <div class="legal-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
@@ -43,13 +12,13 @@
     <p>Pregled pravnih predmeta, partnera, dugovanja i faza postupka.</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
-    <a href="{% url 'naplata:pravna_izvestaj' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
+    <a href="{% url 'pravna:izvestaj' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
        target="_blank"
        class="btn btn-outline-light btn-sm">
       <i class="mdi mdi-printer"></i> Stampaj listu
     </a>
     {% if case_type == 'tuzeni' %}
-      <a href="{% url 'naplata:pravna_izvestaj_excel' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
+      <a href="{% url 'pravna:izvestaj_excel' case_type=case_type %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_sifra %}&sifra_partnera={{ selected_sifra }}{% endif %}{% if selected_naziv %}&naziv_partnera={{ selected_naziv|urlencode }}{% endif %}"
          id="tuzeni-export-excel"
          class="btn btn-outline-light btn-sm"
          data-no-preloader>
@@ -57,7 +26,7 @@
       </a>
     {% endif %}
     {% if can_add_pravna %}
-    <a href="{% url 'naplata:pravna_dodaj' case_type=case_type %}" class="btn btn-light btn-sm">
+    <a href="{% url 'pravna:dodaj' case_type=case_type %}" class="btn btn-light btn-sm">
       <i class="mdi mdi-plus"></i> Novi postupak
     </a>
     {% endif %}
@@ -108,7 +77,7 @@
               <button type="submit" class="btn btn-primary w-100" title="Filter">
                 <i class="mdi mdi-filter"></i>
               </button>
-              <a href="{% url 'naplata:pravna_cases_list' case_type=case_type %}{% if show_archived %}?arhivirano=1{% endif %}"
+              <a href="{% url 'pravna:cases_list' case_type=case_type %}{% if show_archived %}?arhivirano=1{% endif %}"
                  class="btn btn-outline-secondary"
                  title="Ocisti filtere">
                 <i class="mdi mdi-close"></i>
@@ -119,28 +88,29 @@
       </div>
 
       <div class="card-body">
+        {% legal_columns columns as display_columns %}
         <div class="table-responsive">
-          <table id="DatatablePostupci" class="display compact table table-hover table-bordered align-middle w-100 legal-table">
+          <table id="DatatablePostupci" data-legal-table data-export-title="{{ title }}" data-order-column="0" data-order-direction="asc" class="display compact table table-hover table-bordered align-middle w-100 legal-table">
             <thead>
               <tr>
-                {% for col_key, col_label in columns %}
-                  <th>{{ col_label }}</th>
+                {% for column in display_columns %}
+                  <th class="{{ column.css }}">{{ column.title }}</th>
                 {% endfor %}
-                <th>Status</th>
-                <th class="text-center" data-filter="none">Akcije</th>
+                <th class="legal-col-status legal-nowrap">Status</th>
+                <th class="legal-col-actions legal-nowrap text-center" data-filter="none">Akcije</th>
               </tr>
             </thead>
             <tbody>
               {% for p in postupci %}
               <tr class="{% if p.arhivirano %}legal-archived{% endif %}">
-                {% for col_key, col_label in columns %}
-                  <td>
-                    {% if col_key == 'datum_pokretanja' or col_key == 'datum_podnosenja_tuzbe' or col_key == 'datum_otvaranja_stecaja' %}
-                      {{ p|get_attr:col_key|date:"d.m.Y"|default:"-" }}
-                    {% elif col_key == 'osnovni_dug' or col_key == 'vrednost_spora' or col_key == 'kamata' or col_key == 'troskovi' or col_key == 'ukupan_dug' %}
-                      {{ p|get_attr:col_key|money_rs|default:"-" }}
+                {% for column in display_columns %}
+                  <td class="{{ column.css }}">
+                    {% if column.key == 'datum_pokretanja' or column.key == 'datum_podnosenja_tuzbe' or column.key == 'datum_otvaranja_stecaja' %}
+                      {{ p|get_attr:column.key|date:"d.m.Y"|default:"-" }}
+                    {% elif column.key == 'osnovni_dug' or column.key == 'vrednost_spora' or column.key == 'kamata' or column.key == 'troskovi' or column.key == 'ukupan_dug' %}
+                      {{ p|get_attr:column.key|money_rs|default:"-" }}
                     {% else %}
-                      {{ p|get_attr:col_key|default:"-" }}
+                      <span title="{{ p|get_attr:column.key|default:'-' }}">{{ p|get_attr:column.key|default:"-" }}</span>
                     {% endif %}
                   </td>
                 {% endfor %}
@@ -151,13 +121,13 @@
                     <span class="legal-status active"><i class="mdi mdi-check-circle"></i> Aktivan</span>
                   {% endif %}
                 </td>
-                <td class="text-center">
-                  <div class="d-flex flex-wrap justify-content-center gap-1">
-                    <a href="{% url 'naplata:pravna_detalj' pk=p.pk %}" class="btn btn-sm btn-outline-primary" title="Detalji">
+                <td class="legal-col-actions legal-nowrap text-center">
+                  <div class="d-flex justify-content-center gap-1">
+                    <a href="{% url 'pravna:detalj' pk=p.pk %}" class="btn btn-sm btn-outline-primary" title="Detalji">
                       <i class="mdi mdi-eye"></i>
                     </a>
                     {% if can_delete_pravna %}
-                    <form id="delete-postupak-{{ p.pk }}" method="post" action="{% url 'naplata:pravna_obrisi' pk=p.pk %}" class="m-0">
+                    <form id="delete-postupak-{{ p.pk }}" method="post" action="{% url 'pravna:obrisi' pk=p.pk %}" class="m-0">
                       {% csrf_token %}
                       {% if p.promene_count %}
                         <button
@@ -188,11 +158,11 @@
             </tbody>
             <tfoot>
               <tr>
-                {% for col_key, col_label in columns %}
-                  <th>{{ col_label }}</th>
+                {% for column in display_columns %}
+                  <th class="{{ column.css }}">{{ column.title }}</th>
                 {% endfor %}
-                <th>Status</th>
-                <th>Akcije</th>
+                <th class="legal-col-status">Status</th>
+                <th class="legal-col-actions">Akcije</th>
               </tr>
             </tfoot>
           </table>
@@ -221,26 +191,8 @@
   </div>
 </div>
 
+<script src="{% static 'pravna/tables.js' %}?v=20260923"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var table = document.getElementById('DatatablePostupci');
-    if (!table) return;
-
-    if (window.ReportsDT) {
-      ReportsDT('#DatatablePostupci', {
-        exportTitle: '{{ title }}',
-        order: [[0, 'asc']],
-        autoSelectThreshold: 25,
-        scrollX: false
-      });
-      return;
-    }
-
-    if (!window.initFleetReportTable) return;
-    if (window.DataTable && DataTable.isDataTable && DataTable.isDataTable(table)) return;
-    window.initFleetReportTable(table, { pageLength: 50, order: [[0, 'asc']] });
-  });
-
   document.addEventListener('DOMContentLoaded', function () {
     var exportBtn = document.getElementById('tuzeni-export-excel');
     if (!exportBtn) return;

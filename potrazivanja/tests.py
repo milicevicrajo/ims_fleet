@@ -7,7 +7,7 @@ from django.db.models.deletion import ProtectedError
 from django.test import TestCase
 from django.utils import timezone
 
-from naplata.models import Postupak
+from pravna.models import Postupak
 from ugovori.models import Partner
 from .models import (AgingRule, BalanceSnapshot, CollectionActivity, CollectionContact,
                      CollectionNotice, CollectionNoticeItem, CollectionProfile, CollectionState,

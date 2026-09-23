@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load form_filters pravna_tables static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'pravna/pravna.css' %}?v=20260923">
+
+<div class="legal-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Pregled disciplinskih postupaka protiv zaposlenih, toka postupka i izrečenih mera.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'pravna:disciplinski_izvestaj' %}?arhivirano={% if show_archived %}1{% else %}0{% endif %}{% if selected_zaposleni %}&zaposleni={{ selected_zaposleni }}{% endif %}{% if selected_centar %}&centar={{ selected_centar|urlencode }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}"
+       target="_blank"
+       class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-printer"></i> Štampaj listu
+    </a>
+    {% if can_add %}
+    <a href="{% url 'pravna:disciplinski_dodaj' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Novi postupak
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="legal-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+              <label class="form-label mb-1" for="filter-zaposleni">Zaposleni</label>
+              <select id="filter-zaposleni" name="zaposleni" class="form-select select2-method">
+                <option value="">Svi zaposleni</option>
+                {% for opt in zaposleni_options %}
+                  <option value="{{ opt.pk }}" {% if selected_zaposleni == opt.pk|stringformat:"s" %}selected{% endif %}>{{ opt.naziv }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1" for="filter-centar">Centar</label>
+              <select id="filter-centar" name="centar" class="form-select select2-method">
+                <option value="">Svi centri</option>
+                {% for centar in centar_options %}
+                  <option value="{{ centar }}" {% if selected_centar == centar %}selected{% endif %}>Centar {{ centar }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1 d-block" for="filter-status">Status</label>
+              <select name="status" id="filter-status" class="form-select w-100">
+                <option value="">Svi</option>
+                <option value="aktivni" {% if selected_status == 'aktivni' %}selected{% endif %}>U toku</option>
+                <option value="zatvoreni" {% if selected_status == 'zatvoreni' %}selected{% endif %}>Zatvoreni</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-2">
+              <input type="hidden" name="arhivirano" value="{% if show_archived %}1{% else %}0{% endif %}">
+              {% if show_archived %}
+                <a href="?arhivirano=0{% if selected_zaposleni %}&zaposleni={{ selected_zaposleni }}{% endif %}{% if selected_centar %}&centar={{ selected_centar|urlencode }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}"
+                   class="btn btn-outline-secondary w-100">
+                  <i class="mdi mdi-archive-off"></i> Sakrij arhivu
+                </a>
+              {% else %}
+                <a href="?arhivirano=1{% if selected_zaposleni %}&zaposleni={{ selected_zaposleni }}{% endif %}{% if selected_centar %}&centar={{ selected_centar|urlencode }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}"
+                   class="btn btn-outline-secondary w-100">
+                  <i class="mdi mdi-archive"></i> Prikaži arhivu
+                </a>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-2 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Primeni filtere" aria-label="Primeni filtere">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'pravna:disciplinski_lista' %}{% if show_archived %}?arhivirano=1{% endif %}"
+                 class="btn btn-outline-secondary"
+                 title="Očisti filtere" aria-label="Očisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body">
+        {% legal_columns columns as display_columns %}
+        <div class="table-responsive">
+          <table id="DatatableDisciplinski" data-legal-table data-export-title="{{ title }}" data-order-column="2" data-order-direction="desc" class="display compact table table-hover table-bordered align-middle w-100 legal-table">
+            <thead>
+              <tr>
+                {% for column in display_columns %}
+                  <th class="{{ column.css }}" title="{{ column.title }}">{{ column.title }}</th>
+                {% endfor %}
+                <th class="legal-col-xs" title="Broj unosa u toku postupka">Tok postupka</th>
+                <th class="legal-col-status legal-nowrap">Status</th>
+                <th class="legal-col-actions legal-nowrap text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in postupci %}
+              <tr class="{% if p.arhivirano %}legal-archived{% endif %}">
+                {% for column in display_columns %}
+                  {% if column.key == 'datum_podnosenja' or column.key == 'mera_datum' %}
+                    <td class="{{ column.css }}" data-order="{{ p|get_attr:column.key|date:'Y-m-d' }}" title="{{ p|get_attr:column.key|date:'d.m.Y.'|default:'—' }}">{{ p|get_attr:column.key|date:"d.m.Y."|default:"—" }}</td>
+                  {% else %}
+                    <td class="{{ column.css }}"><span title="{{ p|get_attr:column.key|default:'—' }}">{{ p|get_attr:column.key|default:"—" }}</span></td>
+                  {% endif %}
+                {% endfor %}
+                <td class="legal-col-xs legal-nowrap" title="Broj unosa u toku postupka: {{ p.tok_count }}">{{ p.tok_count }}</td>
+                <td class="legal-col-status legal-nowrap">
+                  {% if p.arhivirano %}
+                    <span class="legal-status archived"><i class="mdi mdi-archive"></i> Arhiviran</span>
+                  {% elif p.mera_datum %}
+                    <span class="legal-status closed"><i class="mdi mdi-gavel"></i> Zatvoren</span>
+                  {% else %}
+                    <span class="legal-status active"><i class="mdi mdi-progress-clock"></i> U toku</span>
+                  {% endif %}
+                </td>
+                <td class="legal-col-actions legal-nowrap text-center">
+                  <div class="d-flex justify-content-center gap-1">
+                    <a href="{% url 'pravna:disciplinski_detalj' pk=p.pk %}" class="btn btn-sm btn-outline-primary" title="Detalji postupka" aria-label="Detalji postupka">
+                      <i class="mdi mdi-eye"></i>
+                    </a>
+                    {% if can_delete %}
+                    <form id="delete-disciplinski-{{ p.pk }}" method="post" action="{% url 'pravna:disciplinski_obrisi' pk=p.pk %}" class="m-0">
+                      {% csrf_token %}
+                      {% if p.tok_count %}
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger js-delete-with-entries"
+                          title="Obriši postupak" aria-label="Obriši postupak"
+                          data-form-id="delete-disciplinski-{{ p.pk }}"
+                          data-promene-count="{{ p.tok_count }}">
+                          <i class="mdi mdi-delete"></i>
+                        </button>
+                      {% else %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Obriši postupak" aria-label="Obriši postupak">
+                          <i class="mdi mdi-delete"></i>
+                        </button>
+                      {% endif %}
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot><tr>
+              {% for column in display_columns %}<th class="{{ column.css }}">{{ column.title }}</th>{% endfor %}
+              <th class="legal-col-xs">Tok postupka</th>
+              <th class="legal-col-status">Status</th>
+              <th class="legal-col-actions">Akcije</th>
+            </tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteWithEntriesModal" tabindex="-1" aria-labelledby="deleteWithEntriesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteWithEntriesModalLabel">Potvrda brisanja</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-1">Ovaj postupak ima <strong id="deletePromeneCount">0</strong> unosa u toku postupka.</p>
+        <p class="mb-0">Da li ste sigurni da želite da obrišete postupak?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Otkaži</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteWithEntriesBtn">Obriši</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'pravna/tables.js' %}?v=20260923"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalElement = document.getElementById('deleteWithEntriesModal');
+    var confirmBtn = document.getElementById('confirmDeleteWithEntriesBtn');
+    var countLabel = document.getElementById('deletePromeneCount');
+    if (!modalElement || !confirmBtn || !countLabel) return;
+
+    var targetForm = null;
+    var modalInstance = null;
+    if (window.bootstrap && bootstrap.Modal) {
+      modalInstance = new bootstrap.Modal(modalElement);
+    }
+
+    document.querySelectorAll('.js-delete-with-entries').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var formId = btn.getAttribute('data-form-id');
+        var promeneCount = btn.getAttribute('data-promene-count') || '0';
+        targetForm = document.getElementById(formId);
+        countLabel.textContent = promeneCount;
+
+        if (modalInstance) {
+          modalInstance.show();
+          return;
+        }
+
+        var fallbackMessage = 'Ovaj postupak ima ' + promeneCount + ' unosa. Da li ste sigurni da želite da obrišete postupak?';
+        if (targetForm && window.confirm(fallbackMessage)) {
+          targetForm.submit();
+        }
+      });
+    });
+
+    confirmBtn.addEventListener('click', function () {
+      if (!targetForm) return;
+      targetForm.submit();
+    });
+  });
+</script>
+{% endblock %}

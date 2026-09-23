@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load form_filters static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'pravna/pravna.css' %}?v=20260923">
+
+<div class="legal-form-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Unos zahteva za pokretanje disciplinskog postupka protiv zaposlenog.</p>
+  </div>
+  <a href="{% if postupak %}{% url 'pravna:disciplinski_detalj' pk=postupak.pk %}{% else %}{% url 'pravna:disciplinski_lista' %}{% endif %}" class="btn btn-outline-light btn-sm">
+    <i class="mdi mdi-arrow-left"></i> Nazad
+  </a>
+</div>
+
+<div class="row">
+  <div class="col-lg-9">
+    <form method="post">
+      {% csrf_token %}
+      <div class="legal-section">
+        <div class="legal-section-header">
+          <span><i class="mdi mdi-file-document-edit"></i> Podaci o postupku</span>
+        </div>
+        <div class="legal-section-body">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="row">
+            {% for field in form %}
+              <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-12 col-md-6{% endif %} mb-3">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                  <div class="form-check mt-2">
+                    {{ field|add_class:'form-check-input' }}
+                    <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+                  </div>
+                {% else %}
+                  <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                  {% if field.name == 'zaposleni' or field.name == 'podnosilac' %}
+                    {{ field }}
+                  {% else %}
+                    {{ field|add_class:'form-control' }}
+                  {% endif %}
+                {% endif %}
+                {% if field.errors %}
+                  <div class="invalid-feedback d-block">
+                    {% for error in field.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                {% if field.help_text %}
+                  <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="legal-form-actions">
+        <a href="{% if postupak %}{% url 'pravna:disciplinski_detalj' pk=postupak.pk %}{% else %}{% url 'pravna:disciplinski_lista' %}{% endif %}" class="btn btn-outline-secondary">
+          Otkaži
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="mdi mdi-content-save"></i> Sačuvaj
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

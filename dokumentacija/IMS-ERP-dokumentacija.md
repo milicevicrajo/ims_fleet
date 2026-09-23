@@ -844,9 +844,14 @@ računaju. Ako tražiš formulu, ona **nije** u view-u.
 
 3. **`izvestaji/` je prazan direktorijum** — nije Django aplikacija i nije u `INSTALLED_APPS`.
 
-4. **Bočni meniji ≠ aplikacije.** Meni `pravna` koristi `naplata/views_pravna.py` i
-   `ugovori`; meni `kadrovi` koristi `hr`. Prebacivanje se čuva u sesiji
+4. **Bočni meniji ≠ aplikacije.** Meni `kadrovi` koristi `hr`. Meni `pravna` jeste
+   aplikacija `pravna`, ali pored nje prikazuje i `ugovori`. Prebacivanje se čuva u sesiji
    (`request.session["current_app"]`) preko `core/context_processors.py`.
+
+5. **Pravna služba je preseljena iz `naplata` u `pravna`** (rute `pravna:*` umesto
+   `naplata:pravna_*`). Tabele `postupak` i `promena_postupka` nisu menjane — selidba je
+   izvedena kroz `SeparateDatabaseAndState`, a stare dozvole su preslikane migracijom
+   `fleet/0079_pravna_permission_codes.py`.
 
 ---
 

@@ -58,6 +58,12 @@ def collect_ugovori_permission_codes():
     return collect_url_pattern_names(ugovori_urls.urlpatterns, prefix="ugovori")
 
 
+def collect_pravna_permission_codes():
+    from pravna import urls as pravna_urls
+
+    return collect_url_pattern_names(pravna_urls.urlpatterns, prefix="pravna")
+
+
 def collect_organizacija_permission_codes():
     from organizacija import urls as organizacija_urls
 
@@ -98,6 +104,7 @@ def collect_permission_codes():
     codes.update(collect_menice_permission_codes())
     codes.update(collect_isplate_permission_codes())
     codes.update(collect_ugovori_permission_codes())
+    codes.update(collect_pravna_permission_codes())
     codes.update(collect_mobilni_permission_codes())
     codes.update(collect_organizacija_permission_codes())
     codes.update(collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije"))
@@ -170,7 +177,8 @@ def sync_permission_codes():
     if not pravna_role.is_active:
         pravna_role.is_active = True
         pravna_role.save(update_fields=["is_active"])
-    for perm in PermissionCode.objects.filter(code__in=ugovori_codes):
+    pravna_codes = list(ugovori_codes) + collect_pravna_permission_codes()
+    for perm in PermissionCode.objects.filter(code__in=pravna_codes):
         RolePermission.objects.get_or_create(role=pravna_role, permission=perm)
 
     mobilni_codes = collect_mobilni_permission_codes()
@@ -211,10 +219,10 @@ def sync_permission_codes():
         "naplata:lista_poziva",
         "naplata:lista_pozivnih_pisma",
         "naplata:lista_tuzbi",
-        "naplata:pravna_cases_list",
-        "naplata:pravna_izvestaj",
-        "naplata:pravna_izvestaj_excel",
-        "naplata:pravna_detalj",
+        "pravna:cases_list",
+        "pravna:izvestaj",
+        "pravna:izvestaj_excel",
+        "pravna:detalj",
         "naplata:export_dugovanja_excel",
         "naplata:export_neodobrene_if_excel",
         "naplata:export_partner_baketi_excel",

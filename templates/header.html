@@ -118,7 +118,7 @@
               <i class="mdi mdi-bank-transfer"></i><span class="app-label">Isplate</span>
             </a>
             <a class="nav-link {% if current_app == 'pravna' %}active{% endif %}"
-               href="{% url 'switch_app' 'pravna' %}?next={% url 'naplata:pravna_cases_list' case_type='tuzeni' %}"
+               href="{% url 'switch_app' 'pravna' %}?next={% url 'pravna:cases_list' case_type='tuzeni' %}"
                title="Pravna sluzba">
               <i class="mdi mdi-gavel"></i><span class="app-label">Pravna</span>
             </a>

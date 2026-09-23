@@ -84,7 +84,8 @@ def _collect_user_activities(user):
         ProcurementStatusLog,
         PurchaseOrder,
     )
-    from naplata.models import AvansKlijent, Postupak, PromenaPostupka
+    from naplata.models import AvansKlijent
+    from pravna.models import DisciplinskiPostupak, Postupak, PromenaPostupka, TokPostupka
     from ugovori.models import BusinessRequest, Offer, Partner
 
     activities = []
@@ -151,6 +152,14 @@ def _collect_user_activities(user):
     append_items(
         PromenaPostupka.objects.filter(created_by=user).select_related("postupak"),
         "Promena pravnog postupka",
+    )
+    append_items(
+        DisciplinskiPostupak.objects.filter(created_by=user).select_related("zaposleni"),
+        "Disciplinski postupak",
+    )
+    append_items(
+        TokPostupka.objects.filter(created_by=user).select_related("postupak"),
+        "Tok disciplinskog postupka",
     )
 
     return sorted(activities, key=lambda item: item["created_at"], reverse=True)

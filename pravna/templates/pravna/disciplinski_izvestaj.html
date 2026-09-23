@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  </head>
+<body>
+  <div class="no-print" style="text-align:right; margin-bottom:10px;">
+    <button onclick="window.print()">Štampaj</button>
+  </div>
+
+  <h1>{{ title }}</h1>
+  <p class="muted">Generisano: {{ report_date|date:"d.m.Y H:i" }}</p>
+  <p class="muted">Ukupan broj postupaka: {{ total_postupci }}</p>
+
+  <div>
+    {% for f in filter_badges %}
+      <span class="chip">{{ f }}</span>
+    {% endfor %}
+  </div>
+
+  {% for group in groups %}
+    <div class="partner-block">
+      <h2>Centar: {{ group.centar }}</h2>
+
+      {% for item in group.postupci %}
+        <div class="case-card">
+          <h3>
+            {{ item.postupak.zaposleni }}
+            {% if item.postupak.arhivirano %}
+              <span class="chip">Arhivirano</span>
+            {% elif item.postupak.zatvoren %}
+              <span class="chip">Zatvoren</span>
+            {% endif %}
+          </h3>
+
+          <table>
+            <tbody>
+              <tr><th style="width:260px">Zaposleni</th><td>{{ item.postupak.zaposleni }}</td></tr>
+              <tr><th>Centar</th><td>{{ item.postupak.centar|default:"-" }}</td></tr>
+              <tr><th>Datum podnošenja zahteva</th><td>{{ item.postupak.datum_podnosenja|date:"d.m.Y"|default:"-" }}</td></tr>
+              <tr><th>Podnosilac</th><td>{{ item.postupak.podnosilac }}</td></tr>
+              <tr><th>Datum disciplinske mere</th><td>{{ item.postupak.mera_datum|date:"d.m.Y"|default:"-" }}</td></tr>
+              <tr><th>Disciplinska mera</th><td>{{ item.postupak.mera_opis|default:"-" }}</td></tr>
+            </tbody>
+          </table>
+
+          <h4 style="margin-top:10px;">Tok postupka</h4>
+          {% if item.tok %}
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:160px">Datum</th>
+                  <th>Opis</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for zapis in item.tok %}
+                  <tr>
+                    <td>{{ zapis.datum|date:"d.m.Y" }}</td>
+                    <td>{{ zapis.opis }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="no-phase">Nema unosa u toku postupka.</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% empty %}
+    <p>Nema disciplinskih postupaka za izabrane filtere.</p>
+  {% endfor %}
+</body>
+</html>

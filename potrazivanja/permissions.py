@@ -22,7 +22,7 @@ def configure_permissions():
         for action, prefix in [('create', 'dodaj'), ('update', 'izmeni'), ('archive', 'obrisi')]:
             for kind, suffixes in [('contact', ['kontakt']), ('activity', ['napomenu', 'poziv']), ('notice', ['opomenu', 'poziv_pismo', 'tuzbu'])]:
                 if all(f'naplata:{prefix}_{suffix}' in old for suffix in suffixes): grants.add(f'{kind}_{action}')
-            if f'naplata:pravna_{prefix}' in old: grants.add(f'legal_{action}')
+            if f'naplata:pravna_{prefix}' in old or f'pravna:{prefix}' in old: grants.add(f'legal_{action}')
         if 'notice_create' in grants: grants.add('notice_import')
         for code in grants:
             permission = PermissionCode.objects.get(code=f'potrazivanja:{code}')

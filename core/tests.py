@@ -219,12 +219,12 @@ class PermissionCodeSyncTests(TestCase):
         self.assertIn("naplata:lista_avans_klijenti", codes)
         self.assertIn("naplata:detalji_partner", codes)
         self.assertIn("naplata:export_dugovanja_excel", codes)
-        self.assertIn("naplata:pravna_detalj", codes)
+        self.assertIn("pravna:detalj", codes)
         self.assertNotIn("naplata:toggle_avans_klijent", codes)
         self.assertNotIn("naplata:dodaj_kontakt", codes)
         self.assertNotIn("naplata:izmeni_kontakt", codes)
         self.assertNotIn("naplata:obrisi_kontakt", codes)
-        self.assertNotIn("naplata:pravna_izmeni", codes)
+        self.assertNotIn("pravna:izmeni", codes)
 
     def test_sync_permission_codes_links_sekretarijat_group_users_to_role(self):
         from .permissions import sync_permission_codes

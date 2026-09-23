@@ -9,9 +9,8 @@ from openpyxl.styles import Alignment
 
 from core.exporting import create_xlsx_workbook, set_column_widths, style_header_row, workbook_response
 from core.mixins import role_permission_required, user_has_role_permission
-from .db_users import resolve_user_pk_for_db
 from .models import Postupak, PromenaPostupka
-from .forms_pravna import PostupakForm, PromenaPostupkaForm, COLUMNS_BY_TIP
+from .forms import COLUMNS_BY_TIP, PostupakForm, PromenaPostupkaForm
 
 
 PRAVNA_CASE_TYPES = {
@@ -28,7 +27,7 @@ def _get_pravna_title(case_type):
 
 def _build_pravna_filtered_context(request, case_type):
     show_archived = request.GET.get('arhivirano') == '1'
-    base_qs = Postupak.objects.using('server_db').filter(tip=case_type)
+    base_qs = Postupak.objects.filter(tip=case_type)
     if not show_archived:
         base_qs = base_qs.filter(arhivirano=False)
 
@@ -110,7 +109,8 @@ def _build_pravna_filtered_context(request, case_type):
 
 @never_cache
 @role_permission_required()
-def pravna_cases_list(request, case_type):
+def cases_list(request, case_type):
+    request.session['current_app'] = 'pravna'
     title = _get_pravna_title(case_type)
     if not title:
         raise PermissionDenied('Nepoznat tip pravnog slučaja.')
@@ -120,7 +120,7 @@ def pravna_cases_list(request, case_type):
 
     columns = COLUMNS_BY_TIP.get(case_type, [])
 
-    return render(request, 'naplata/pravna_lista.html', {
+    return render(request, 'pravna/lista.html', {
         'title': f'Pravna služba - {title}',
         'case_type': case_type,
         'postupci': qs,
@@ -130,14 +130,15 @@ def pravna_cases_list(request, case_type):
         'selected_naziv': ctx['selected_naziv'],
         'partner_options': ctx['partner_options'],
         'naziv_options': ctx['naziv_options'],
-        'can_add_pravna': user_has_role_permission(request.user, 'naplata:pravna_dodaj'),
-        'can_delete_pravna': user_has_role_permission(request.user, 'naplata:pravna_obrisi'),
+        'can_add_pravna': user_has_role_permission(request.user, 'pravna:dodaj'),
+        'can_delete_pravna': user_has_role_permission(request.user, 'pravna:obrisi'),
     })
 
 
 @never_cache
 @role_permission_required()
-def pravna_izvestaj(request, case_type):
+def izvestaj(request, case_type):
+    request.session['current_app'] = 'pravna'
     title = _get_pravna_title(case_type)
     if not title:
         raise PermissionDenied('Nepoznat tip pravnog slučaja.')
@@ -148,7 +149,7 @@ def pravna_izvestaj(request, case_type):
 
     promene_map = {pid: [] for pid in postupak_ids}
     if postupak_ids:
-        promene = PromenaPostupka.objects.using('server_db').filter(
+        promene = PromenaPostupka.objects.filter(
             postupak_id__in=postupak_ids
         ).order_by('datum', 'created_at')
         for pr in promene:
@@ -183,7 +184,7 @@ def pravna_izvestaj(request, case_type):
         filter_badges.append(f"Naziv partnera: {ctx['selected_naziv']}")
     filter_badges.append('Arhivirano: ukljuceno' if ctx['show_archived'] else 'Arhivirano: iskljuceno')
 
-    return render(request, 'naplata/pravna_izvestaj.html', {
+    return render(request, 'pravna/izvestaj.html', {
         'title': f'Izvestaj - Pravna sluzba - {title}',
         'case_type': case_type,
         'report_date': datetime.now(),
@@ -196,7 +197,7 @@ def pravna_izvestaj(request, case_type):
 
 @never_cache
 @role_permission_required()
-def pravna_izvestaj_excel(request, case_type):
+def izvestaj_excel(request, case_type):
     title = _get_pravna_title(case_type)
     if not title:
         raise PermissionDenied('Nepoznat tip pravnog slucaja.')
@@ -207,7 +208,7 @@ def pravna_izvestaj_excel(request, case_type):
 
     promene_map = {pid: [] for pid in postupak_ids}
     if postupak_ids:
-        promene = PromenaPostupka.objects.using('server_db').filter(
+        promene = PromenaPostupka.objects.filter(
             postupak_id__in=postupak_ids
         ).order_by('datum', 'created_at')
         for pr in promene:
@@ -301,9 +302,10 @@ def pravna_izvestaj_excel(request, case_type):
 
 @never_cache
 @role_permission_required()
-def pravna_detalj(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
-    promene = PromenaPostupka.objects.using('server_db').filter(postupak=postupak)
+def detalj(request, pk):
+    request.session['current_app'] = 'pravna'
+    postupak = get_object_or_404(Postupak.objects, pk=pk)
+    promene = PromenaPostupka.objects.filter(postupak=postupak)
     columns = COLUMNS_BY_TIP.get(postupak.tip, [])
 
     # Partner iz baze
@@ -324,24 +326,25 @@ def pravna_detalj(request, pk):
 
     forma_promena = PromenaPostupkaForm()
 
-    return render(request, 'naplata/pravna_detalj.html', {
+    return render(request, 'pravna/detalj.html', {
         'title': f'{postupak.get_tip_display()} - {postupak.naziv_partnera or postupak.sifra_partnera}',
         'postupak': postupak,
         'promene': promene,
         'partner': partner,
         'columns': columns,
         'forma_promena': forma_promena,
-        'can_edit_pravna': user_has_role_permission(request.user, 'naplata:pravna_izmeni'),
-        'can_archive_pravna': user_has_role_permission(request.user, 'naplata:pravna_arhiviraj'),
-        'can_add_pravna_promena': user_has_role_permission(request.user, 'naplata:pravna_dodaj_promenu'),
-        'can_delete_pravna_promena': user_has_role_permission(request.user, 'naplata:pravna_obrisi_promenu'),
+        'can_edit_pravna': user_has_role_permission(request.user, 'pravna:izmeni'),
+        'can_archive_pravna': user_has_role_permission(request.user, 'pravna:arhiviraj'),
+        'can_add_pravna_promena': user_has_role_permission(request.user, 'pravna:dodaj_promenu'),
+        'can_delete_pravna_promena': user_has_role_permission(request.user, 'pravna:obrisi_promenu'),
     })
 
 
 # ─── Dodaj postupak ──────────────────────────────────────────────
 
 @role_permission_required()
-def pravna_dodaj(request, case_type):
+def dodaj(request, case_type):
+    request.session['current_app'] = 'pravna'
     title = _get_pravna_title(case_type)
     if not title:
         raise PermissionDenied('Nepoznat tip pravnog slučaja.')
@@ -351,13 +354,13 @@ def pravna_dodaj(request, case_type):
         if form.is_valid():
             obj = form.save(commit=False)
             obj.tip = case_type
-            obj.created_by_id = resolve_user_pk_for_db(request.user, 'server_db')
-            obj.save(using='server_db')
-            return redirect('naplata:pravna_cases_list', case_type=case_type)
+            obj.created_by = request.user
+            obj.save()
+            return redirect('pravna:cases_list', case_type=case_type)
     else:
         form = PostupakForm(tip=case_type)
 
-    return render(request, 'naplata/pravna_forma.html', {
+    return render(request, 'pravna/forma.html', {
         'title': f'Novi postupak - {title}',
         'form': form,
         'case_type': case_type,
@@ -367,19 +370,20 @@ def pravna_dodaj(request, case_type):
 # ─── Izmeni postupak ─────────────────────────────────────────────
 
 @role_permission_required()
-def pravna_izmeni(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
+def izmeni(request, pk):
+    request.session['current_app'] = 'pravna'
+    postupak = get_object_or_404(Postupak.objects, pk=pk)
 
     if request.method == 'POST':
         form = PostupakForm(request.POST, instance=postupak, tip=postupak.tip)
         if form.is_valid():
             obj = form.save(commit=False)
-            obj.save(using='server_db')
-            return redirect('naplata:pravna_detalj', pk=pk)
+            obj.save()
+            return redirect('pravna:detalj', pk=pk)
     else:
         form = PostupakForm(instance=postupak, tip=postupak.tip)
 
-    return render(request, 'naplata/pravna_forma.html', {
+    return render(request, 'pravna/forma.html', {
         'title': f'Izmeni - {postupak}',
         'form': form,
         'case_type': postupak.tip,
@@ -390,78 +394,46 @@ def pravna_izmeni(request, pk):
 # ─── Obriši postupak ─────────────────────────────────────────────
 
 @role_permission_required()
-def pravna_obrisi(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
+def obrisi(request, pk):
+    postupak = get_object_or_404(Postupak.objects, pk=pk)
     case_type = postupak.tip
     if request.method == 'POST':
-        postupak.delete(using='server_db')
-        return redirect('naplata:pravna_cases_list', case_type=case_type)
-    return redirect('naplata:pravna_detalj', pk=pk)
+        postupak.delete()
+        return redirect('pravna:cases_list', case_type=case_type)
+    return redirect('pravna:detalj', pk=pk)
 
 
 @role_permission_required()
-def pravna_arhiviraj(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
+def arhiviraj(request, pk):
+    postupak = get_object_or_404(Postupak.objects, pk=pk)
     if request.method == 'POST':
         postupak.arhivirano = not postupak.arhivirano
-        postupak.save(using='server_db', update_fields=['arhivirano'])
-    return redirect('naplata:pravna_detalj', pk=pk)
+        postupak.save(update_fields=['arhivirano'])
+    return redirect('pravna:detalj', pk=pk)
 
 
 # ─── Dodaj promenu (fazu) ────────────────────────────────────────
 
 @role_permission_required()
-def pravna_dodaj_promenu(request, pk):
-    postupak = get_object_or_404(Postupak.objects.using('server_db'), pk=pk)
+def dodaj_promenu(request, pk):
+    postupak = get_object_or_404(Postupak.objects, pk=pk)
 
     if request.method == 'POST':
         form = PromenaPostupkaForm(request.POST)
         if form.is_valid():
             promena = form.save(commit=False)
             promena.postupak = postupak
-            promena.created_by_id = resolve_user_pk_for_db(request.user, 'server_db')
-            promena.save(using='server_db')
-    return redirect('naplata:pravna_detalj', pk=pk)
+            promena.created_by = request.user
+            promena.save()
+    return redirect('pravna:detalj', pk=pk)
 
 
 # ─── Obriši promenu ──────────────────────────────────────────────
 
 @role_permission_required()
-def pravna_obrisi_promenu(request, pk):
-    promena = get_object_or_404(PromenaPostupka.objects.using('server_db'), pk=pk)
+def obrisi_promenu(request, pk):
+    promena = get_object_or_404(PromenaPostupka.objects, pk=pk)
     postupak_pk = promena.postupak_id
     if request.method == 'POST':
-        promena.delete(using='server_db')
-    return redirect('naplata:pravna_detalj', pk=postupak_pk)
-
-
-# ─── Stari view za listu iz SQL view-a (tuzeni) ──────────────────
-
-@never_cache
-@role_permission_required()
-def lista_tuzenih(request):
-    with connections['server_db'].cursor() as cursor:
-        cursor.execute("""
-            SELECT
-                god,
-                sif_par,
-                naz_par,
-                datum,
-                knt,
-                naz_knt,
-                duguju,
-                platili
-            FROM dbo.v_tuzeni
-            ORDER BY god DESC, duguju DESC
-        """)
-        tuzeni = cursor.fetchall()
-
-    total_duguju = sum((Decimal(row[6] or 0) for row in tuzeni), Decimal("0"))
-    total_platili = sum((Decimal(row[7] or 0) for row in tuzeni), Decimal("0"))
-
-    return render(request, 'naplata/tuzeni_list.html', {
-        'tuzeni': tuzeni,
-        'total_duguju': total_duguju,
-        'total_platili': total_platili,
-        'title': 'Utuženi Klijenti',
-    })
+        promena.delete()
+    return redirect('pravna:detalj', pk=postupak_pk)

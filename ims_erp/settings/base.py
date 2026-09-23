@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     'fleet',
     'hr',
     'naplata',
+    'pravna.apps.PravnaConfig',
     'potrazivanja.apps.PotrazivanjaConfig',
     'isplate',
     'menice',

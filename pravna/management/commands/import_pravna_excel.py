@@ -8,7 +8,7 @@ from django.db import transaction
 
 from openpyxl import load_workbook
 
-from naplata.models import Postupak, PromenaPostupka
+from pravna.models import Postupak, PromenaPostupka
 
 
 LIST_SHEETS = {
@@ -132,8 +132,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--database",
-            default="server_db",
-            help="DB alias iz settings.DATABASES (podrazumevano: server_db).",
+            default="default",
+            help="DB alias iz settings.DATABASES (podrazumevano: default).",
         )
         parser.add_argument(
             "--dry-run",

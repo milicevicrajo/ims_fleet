@@ -1155,3 +1155,33 @@ def obrisi_tuzbu(request, id):
         return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
     return redirect(request.META.get('HTTP_REFERER', 'lista_napomena'))  # Ostaje na istoj stranici
 
+
+# --- Lista utuzenih iz SQL pogleda v_tuzeni (ostaje u Naplati) ---
+@never_cache
+@role_permission_required()
+def lista_tuzenih(request):
+    with connections['server_db'].cursor() as cursor:
+        cursor.execute("""
+            SELECT
+                god,
+                sif_par,
+                naz_par,
+                datum,
+                knt,
+                naz_knt,
+                duguju,
+                platili
+            FROM dbo.v_tuzeni
+            ORDER BY god DESC, duguju DESC
+        """)
+        tuzeni = cursor.fetchall()
+
+    total_duguju = sum((Decimal(row[6] or 0) for row in tuzeni), Decimal("0"))
+    total_platili = sum((Decimal(row[7] or 0) for row in tuzeni), Decimal("0"))
+
+    return render(request, 'naplata/tuzeni_list.html', {
+        'tuzeni': tuzeni,
+        'total_duguju': total_duguju,
+        'total_platili': total_platili,
+        'title': 'Utuženi Klijenti',
+    })

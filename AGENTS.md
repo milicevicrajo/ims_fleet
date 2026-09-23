@@ -13,8 +13,8 @@ Inventar celog sistema: [`dokumentacija/00-inventar-i-plan-dokumentacije.md`](do
 Interni ERP sistem Instituta IMS. Django 5.0 monolit, Python 3.12, Microsoft SQL Server,
 Celery + Redis, Windows server. Bez REST API-ja — sve je server-side Django templates.
 
-**10 poslovnih modula:** Flota (vozni park), Kadrovi, Finansijska analitika, Nabavka,
-Potraživanja, Ugovori, Menice, Mobilna telefonija, Isplate, Administracija.
+**11 poslovnih modula:** Flota (vozni park), Kadrovi, Finansijska analitika, Nabavka,
+Potraživanja, Pravna služba, Ugovori, Menice, Mobilna telefonija, Isplate, Administracija.
 
 Obim: ~59.500 linija Pythona, 351 fajl, 280 šablona, 146 migracija, 550 testova.
 
@@ -50,6 +50,7 @@ Ako tražiš formulu, gledaj u `services/` ili `support/` — ne u `views/`.
 | Generisanje virmana za banku | `isplate/services/virman.py` |
 | Sinhronizacija potraživanja | `potrazivanja/services/sync.py` |
 | Snimci izvora nabavke (EUF, UF, roba) | `nabavka/services/` |
+| Pravni i disciplinski postupci | `pravna/views.py`, `pravna/views_disciplinski.py` |
 | Preuzimanje menica iz registra NBS | `menice/scraper.py` |
 | Provera partnera u APR-u | `ugovori/apr_openapi.py` |
 | Dozvole i uloge | `core/permissions.py`, `core/mixins.py` |
@@ -211,7 +212,7 @@ Puna tabela rasporeda: [`dokumentacija/docs/09-odrzavanje.md`](dokumentacija/doc
 | 2 | `hr/models.py` definiše `Employee`, ali ga `fleet` uvozi kao `from hr.models import Employee`, dok `CustomUser.employee` pokazuje na `"fleet.Employee"` — isti model, dva imena |
 | 3 | Aplikacija `fleet` drži i korenske rute: prijavu, kontrolnu tablu, korisnike, log rada |
 | 4 | `izvestaji/` je **prazan direktorijum**, nije Django aplikacija |
-| 5 | Bočni meniji `pravna` i `kadrovi` nisu Django aplikacije — `pravna` koristi `naplata` + `ugovori`, `kadrovi` koristi `hr` |
+| 5 | Bočni meni `kadrovi` nije Django aplikacija — koristi `hr`. Meni `pravna` jeste aplikacija `pravna`, ali uz nju prikazuje i `ugovori` |
 | 6 | U obračunu obustava mobilnih jedan broj (`381637781481`) ima poseban tretman upisan u kod |
 | 7 | Registarske oznake se normalizuju kroz `fleet/support/vehicle.py: format_license_plate` — nikad ne poredi tablice sirovo |
 | 8 | `TrafficCard.for_plate()` namerno **odbija** da pogađa kada tablica pripada većem broju vozila — ne "popravljaj" to |

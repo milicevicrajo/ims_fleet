@@ -1,28 +1,11 @@
-{% load form_filters %}
+{% load form_filters static %}
 <!DOCTYPE html>
 <html lang="sr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title }}</title>
-  <style>
-    body { font-family: Arial, sans-serif; color: #111; margin: 24px; }
-    h1, h2, h3 { margin: 0 0 8px; }
-    .muted { color: #666; font-size: 13px; }
-    .chip { display: inline-block; border: 1px solid #999; border-radius: 14px; padding: 3px 10px; margin-right: 6px; margin-bottom: 6px; font-size: 12px; }
-    .partner-block { margin-top: 24px; page-break-inside: avoid; }
-    .case-card { border: 1px solid #ccc; border-radius: 6px; padding: 10px; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { border: 1px solid #ddd; padding: 6px 8px; vertical-align: top; font-size: 13px; }
-    th { background: #f4f4f4; text-align: left; }
-    .no-phase { color: #777; font-style: italic; margin-top: 8px; }
-    @media print {
-      body { margin: 12mm; }
-      .no-print { display: none !important; }
-      a { color: #111; text-decoration: none; }
-    }
-  </style>
-</head>
+  </head>
 <body>
   <div class="no-print" style="text-align:right; margin-bottom:10px;">
     <button onclick="window.print()">Štampaj</button>
