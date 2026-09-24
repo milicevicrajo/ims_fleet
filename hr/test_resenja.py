@@ -135,6 +135,26 @@ class PripremaTests(ResenjeTestBase):
 
 
 class DokumentTests(ResenjeTestBase):
+    def test_imported_female_codes_are_resolved_in_both_scripts(self):
+        from hr.services.resenja import normalizuj_pol
+        for code in ['F', 'Z', 'Ž', 'Ж', ' z ']:
+            self.assertEqual(normalizuj_pol(code), 'F')
+        self.employee.gender = 'Z'
+        for pismo in [Pismo.CIRILICA, Pismo.LATINICA]:
+            resenje = self.napravi(broj=pismo, pismo=pismo)
+            text = build_document(resenje)['tacke'][0]
+            self.assertIn('dužna' if pismo == Pismo.LATINICA else 'дужна', text)
+            self.assertNotIn('/', text)
+
+    def test_night_hours_and_period_are_in_document(self):
+        from datetime import time
+        resenje = self.napravi(vrsta=VrstaResenja.objects.get(kod='nocni-rad'), pismo=Pismo.LATINICA,
+            datum_od=date(2026, 9, 24), datum_do=date(2026, 9, 25), vreme_od=time(22), vreme_do=time(6))
+        text = build_document(resenje)['tacke'][0]
+        self.assertIn('24.09.2026.', text)
+        self.assertIn('25.09.2026.', text)
+        self.assertIn('od 22:00 do 06:00 časova narednog dana', text)
+
     def test_pol_razresava_oblike_u_tekstu(self):
         resenje = self.napravi()
         ResenjeDan.objects.create(resenje=resenje, datum=date(2025, 1, 1), vrsta_dana='drzavni')
@@ -291,6 +311,54 @@ class EkraniTests(ResenjeTestBase):
                   'dani-0-datum': '2025-01-01', 'dani-0-vrsta_dana': 'drzavni'}
         podaci.update(kwargs)
         return podaci
+
+    def test_signer_can_be_added_with_draft_and_is_used_on_document(self):
+        Potpisnik.objects.all().delete()
+        data = self._forma_podaci(novi_potpisnik=self.direktor.pk, funkcija_potpisnika='Generalni direktor')
+        response = self.client.post(reverse('hr:resenje_create'), data)
+        self.assertEqual(response.status_code, 302)
+        resenje = Resenje.objects.get(broj='43-20001')
+        self.assertEqual(resenje.potpisnik.zaposleni, self.direktor)
+        self.assertEqual(resenje.potpisnik.vazi_od, resenje.datum_resenja)
+        self.assertIn('Бојовић', build_document(resenje)['potpis']['ime'])
+
+    def test_invalid_draft_does_not_create_signer(self):
+        Potpisnik.objects.all().delete()
+        self.client.post(reverse('hr:resenje_create'), self._forma_podaci(
+            novi_potpisnik=self.direktor.pk, funkcija_potpisnika='Direktor', **{'dani-0-datum': 'bad'}))
+        self.assertFalse(Potpisnik.objects.exists())
+
+    def test_day_based_type_accepts_date_range_without_individual_days(self):
+        data = self._forma_podaci(vrsta=VrstaResenja.objects.get(kod='prekovremeni-rad').pk,
+            datum_od='24.09.2026', datum_do='25.09.2026', vreme_od='17:00', vreme_do='19:00',
+            **{'dani-TOTAL_FORMS': '0'})
+        response = self.client.post(reverse('hr:resenje_create'), data)
+        self.assertEqual(response.status_code, 302)
+        text = build_document(Resenje.objects.get(broj='43-20001'))['tacke'][0]
+        self.assertIn('25.09.2026.', text)
+        self.assertIn('17:00', text)
+
+    def test_partial_time_and_reverse_date_range_are_rejected(self):
+        data = self._forma_podaci(datum_od='25.09.2026', datum_do='24.09.2026', vreme_od='22:00')
+        response = self.client.post(reverse('hr:resenje_create'), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('datum_do', response.context['form'].errors)
+        self.assertIn('vreme_do', response.context['form'].errors)
+
+    def test_pol_and_unit_are_defaulted_without_javascript(self):
+        self.employee.gender = 'Z'
+        self.employee.org_unit_code = '431'
+        self.employee.save(update_fields=['gender', 'org_unit_code'])
+        response = self.client.post(reverse('hr:resenje_create'), self._forma_podaci())
+        self.assertEqual(response.status_code, 302)
+        resenje = Resenje.objects.get(broj='43-20001')
+        self.assertEqual((resenje.pol, resenje.oj_kod, resenje.centar), ('F', '431', '43'))
+        self.assertEqual(resenje.oj_naziv, 'ОЈ 431')
+
+    def test_signer_outside_valid_period_is_rejected(self):
+        response = self.client.post(reverse('hr:resenje_create'), self._forma_podaci(
+            datum_resenja='01.01.2023', potpisnik=self.potpisnik.pk))
+        self.assertIn('potpisnik', response.context['form'].errors)
 
     def test_unos_kroz_formu_pravi_nacrt_sa_danima(self):
         odgovor = self.client.post(reverse('hr:resenje_create'), self._forma_podaci())

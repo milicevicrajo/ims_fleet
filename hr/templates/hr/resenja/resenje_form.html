@@ -20,8 +20,21 @@
     {% include 'hr/resenja/_polje.html' with polje=form.broj %}
     {% include 'hr/resenja/_polje.html' with polje=form.datum_resenja %}
     {% include 'hr/resenja/_polje.html' with polje=form.pismo %}
-    {% include 'hr/resenja/_polje.html' with polje=form.potpisnik %}
+    {% include 'hr/resenja/_polje.html' with polje=form.pol %}
+    {% include 'hr/resenja/_polje.html' with polje=form.oj_kod %}
   </div></div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header"><h5><i class="mdi mdi-pen"></i>Potpis na dokumentu</h5></div>
+  <div class="card-body">
+    <div class="row g-3">{% include 'hr/resenja/_polje.html' with polje=form.potpisnik sirina='col-md-6' %}</div>
+    <p id="potpisnik-info" class="small mt-2" role="status"></p>
+    {% if can_add_signer %}<details{% if form.novi_potpisnik.value or not potpisnici_meta %} open{% endif %}><summary>Dodaj osobu koja potpisuje rešenja</summary>
+      <p class="small text-muted mt-2">Izaberite osobu i unesite funkciju. Potpisnik će biti sačuvan uz nacrt i dostupan za naredna rešenja od izabranog datuma.</p>
+      <div class="row g-3">{% include 'hr/resenja/_polje.html' with polje=form.novi_potpisnik sirina='col-md-6' %}{% include 'hr/resenja/_polje.html' with polje=form.funkcija_potpisnika sirina='col-md-6' %}</div>
+    </details>{% endif %}
+  </div>
 </div>
 
 <div class="card shadow-sm mb-3">
@@ -40,11 +53,17 @@
 </div>
 
 <div class="card shadow-sm mb-3" data-grupa="period">
-  <div class="card-header"><h5><i class="mdi mdi-calendar-range"></i>Period</h5></div>
+  <div class="card-header"><h5><i class="mdi mdi-calendar-range"></i>Period od–do</h5></div>
   <div class="card-body"><div class="row g-3">
     {% include 'hr/resenja/_polje.html' with polje=form.datum_od %}
     {% include 'hr/resenja/_polje.html' with polje=form.datum_do %}
     {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
+    <div class="col-12 small text-muted">Unesite period ili pojedinačne dane ispod. Za praznike obavezno navedite pojedinačne datume i vrstu praznika.</div>
+    <div class="col-12" data-grupa="vreme"><div class="row g-3">
+      {% include 'hr/resenja/_polje.html' with polje=form.vreme_od %}
+      {% include 'hr/resenja/_polje.html' with polje=form.vreme_do %}
+      <div class="col-12 small text-muted">Opciono vreme smene. Kada je kraj pre početka, smena se završava narednog dana.</div>
+    </div></div>
   </div></div>
 </div>
 
@@ -80,6 +99,7 @@
 {% endblock %}
 {% block extra_js %}
 {{ vrste_meta|json_script:"vrste-meta" }}
+{% include 'hr/resenja/_potpisnik_script.html' %}
 <script>jQuery(function ($) {
   var meta = JSON.parse(document.getElementById('vrste-meta').textContent);
   var vrsta = $('#id_vrsta'), zaposleni = $('#id_zaposleni'), pismo = $('#id_pismo');
@@ -89,14 +109,20 @@
     $('[data-grupa="period"]').toggle(!!podaci.period);
     $('[data-grupa="dani"]').toggle(!!podaci.dani);
     $('[data-grupa="radni_dani"]').toggle(!!podaci.radni_dani);
+    $('[data-grupa="vreme"]').toggle(!!podaci.vreme);
   }
 
-  function predlozi() {
+  var pendingSuggestion;
+  function predlozi(employeeChanged) {
     if (!zaposleni.val()) { return; }
-    $.getJSON("{% url 'hr:resenje_predlog' %}", {zaposleni: zaposleni.val(), pismo: pismo.val()}, function (podaci) {
+    if (pendingSuggestion) pendingSuggestion.abort();
+    pendingSuggestion = $.getJSON("{% url 'hr:resenje_predlog' %}", {zaposleni: zaposleni.val(), pismo: pismo.val()}, function (podaci) {
       $('#id_zaposleni_tekst').val(podaci.zaposleni_tekst);
-      $('#id_oj_naziv').val(podaci.oj_naziv);
       $('#id_radno_mesto').val(podaci.radno_mesto);
+      if (employeeChanged || !$('#id_oj_kod').val()) $('#id_oj_kod').val(podaci.oj_kod).trigger('change');
+      if ($('#id_oj_kod').val() === podaci.oj_kod) $('#id_oj_naziv').val(podaci.oj_naziv);
+      else $('#id_oj_kod').trigger('change');
+      if (employeeChanged) $('#id_pol').val(podaci.pol);
     });
   }
 
@@ -105,8 +131,12 @@
     var podaci = meta[vrsta.val()];
     if (podaci && podaci.pismo && pismo.val() !== podaci.pismo) { pismo.val(podaci.pismo).trigger('change'); }
   });
-  zaposleni.on('change', predlozi);
-  pismo.on('change', predlozi);
+  zaposleni.on('change', function () { predlozi(true); });
+  pismo.on('change', function () { predlozi(false); });
+  $('#id_oj_kod').on('change', function () {
+    var code = $(this).val();
+    if (code) $('#id_oj_naziv').val((pismo.val() === 'latinica' ? 'OJ ' : 'ОЈ ') + code);
+  });
   prikazi();
   $('#resenje-add-day').on('click', function () {
     var total = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');

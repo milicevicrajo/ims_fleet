@@ -87,6 +87,8 @@ class Resenje(models.Model):
         help_text='Prepisuje se iz delovodnika, npr. 43-15238.')
     datum_resenja = models.DateField(verbose_name='Datum rešenja')
     pismo = models.CharField(max_length=10, choices=Pismo.choices, default=Pismo.CIRILICA, verbose_name='Pismo')
+    pol = models.CharField(max_length=1, choices=[('M', 'Muški'), ('F', 'Ženski')], blank=True,
+        verbose_name='Pol za tekst rešenja')
     zaposleni_tekst = models.CharField(max_length=200, verbose_name='Zaposleni u tekstu rešenja',
         help_text='Popunjava se automatski; ispravi ručno kada je potreban drugi padež.')
     oj_naziv = models.CharField(max_length=200, blank=True, verbose_name='Organizaciona jedinica u tekstu')
@@ -95,10 +97,12 @@ class Resenje(models.Model):
     centar = models.CharField(max_length=10, blank=True, verbose_name='Šifra centra')
     datum_od = models.DateField(null=True, blank=True, verbose_name='Period od')
     datum_do = models.DateField(null=True, blank=True, verbose_name='Period do')
+    vreme_od = models.TimeField(null=True, blank=True, verbose_name='Vreme rada od')
+    vreme_do = models.TimeField(null=True, blank=True, verbose_name='Vreme rada do')
     do_zavrsetka_posla = models.BooleanField(default=False, verbose_name='Do završetka posla')
     broj_radnih_dana = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='Broj radnih dana')
     datum_povratka = models.DateField(null=True, blank=True, verbose_name='Datum javljanja na posao')
-    zahtev_broj = models.CharField(max_length=40, blank=True, verbose_name='Broj zahteva')
+    zahtev_broj = models.CharField(max_length=255, blank=True, verbose_name='Zahtev (broj ili opis)')
     zahtev_datum = models.DateField(null=True, blank=True, verbose_name='Datum zahteva')
     potpisnik = models.ForeignKey(Potpisnik, on_delete=models.PROTECT, null=True, blank=True, related_name='resenja',
         verbose_name='Potpisnik')

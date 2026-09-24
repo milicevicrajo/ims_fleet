@@ -225,9 +225,9 @@ class KadroviScopeTests(TestCase):
         from hr.models import VrstaResenja, Resenje
         kind = VrstaResenja.objects.first()
         owned = Resenje.objects.create(zaposleni=self.employees[0], vrsta=kind, broj='OJ-1',
-            datum_resenja='2026-09-24', oj_kod='431 ', centar='')
+            datum_resenja='2026-09-24', oj_kod='431 ', centar='', created_by=self.user)
         hidden = Resenje.objects.create(zaposleni=self.employees[2], vrsta=kind, broj='OJ-2',
-            datum_resenja='2026-09-24', oj_kod='411', centar='')
+            datum_resenja='2026-09-24', oj_kod='411', centar='', created_by=self.user)
         self.client.force_login(self.user)
         response = self.client.get(reverse('hr:resenje_list'))
         self.assertEqual(response.status_code, 200)
@@ -235,3 +235,20 @@ class KadroviScopeTests(TestCase):
         self.assertContains(response, reverse('hr:resenje_list'))
         self.assertEqual(self.client.get(reverse('hr:resenje_detail', args=[owned.pk])).status_code, 200)
         self.assertEqual(self.client.get(reverse('hr:resenje_detail', args=[hidden.pk])).status_code, 404)
+
+    def test_resenje_form_limits_unit_choices_to_assigned_scope(self):
+        from hr.resenja_forms import ResenjeForm
+        form = ResenjeForm(actor=self.user)
+        codes = dict(form.fields['oj_kod'].choices)
+        self.assertIn('431', codes)
+        self.assertNotIn('411', codes)
+
+    def test_operational_role_cannot_register_signers_through_draft_form(self):
+        from hr.resenja_forms import ResenjeForm
+        user = CustomUser.objects.create_user('resenja-operativno')
+        role = Role.objects.create(slug='operativno', name='Operativno')
+        role.permissions.add(PermissionCode.objects.get(code='hr:resenje_create'))
+        user.roles.add(role)
+        form = ResenjeForm({'novi_potpisnik': self.employees[0].pk}, actor=user)
+        self.assertNotIn('novi_potpisnik', form.fields)
+        self.assertFalse(form.can_add_signer)

@@ -22,7 +22,7 @@
       {% if dokument.podnaslov %}<h2 class="resenje-podnaslov">{{ dokument.podnaslov }}</h2>{% endif %}
     </div>
     <div class="resenje-zaposleni">
-      <span class="resenje-oznaka">{% if dokument.pismo == 'latinica' %}Zaposleni{% else %}Запослени{% endif %}</span>
+      <span class="resenje-oznaka">{% if dokument.pismo == 'latinica' %}{% if dokument.zaposleni.pol == 'F' %}Zaposlena{% else %}Zaposleni{% endif %}{% else %}{% if dokument.zaposleni.pol == 'F' %}Запослена{% else %}Запослени{% endif %}{% endif %}</span>
       <strong>{{ dokument.zaposleni.ime }}</strong>
       <span class="resenje-jedinica">{{ dokument.zaposleni.oj }}</span>
     </div>

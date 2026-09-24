@@ -272,6 +272,20 @@ ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
 
 ### Unos i štampa rešenja zaposlenih
 
+- Pol za tekst se preuzima iz evidencije (ženske oznake `F`, `Z`, `Ž` i `Ж` se
+  prepoznaju jednako), uz mogućnost izbora oblika za konkretno rešenje. Izbor se čuva
+  u nacrtu, a izdati dokument ostaje sačuvan u svom snimku.
+- OJ se automatski bira prema zaposlenom. Izbor druge OJ ograničen je korisnikovim
+  obuhvatom. Ako nema naziva u šifrarniku, predlaže se „OJ <šifra>“, koji se može
+  tekstualno dopuniti. Centar se izvodi postojećim mapiranjem OJ na centar.
+- Period od–do dostupan je za sve vrste; kod praznika ostaju obavezni pojedinačni
+  dani sa vrstom praznika. Za rad se može uneti vreme smene od–do; završetak pre
+  početka označava naredni dan. Zahtev se trenutno unosi kao tekst (broj ili opis),
+  uz opcion datum, bez veze sa budućom evidencijom zahteva.
+- Polje **Ko potpisuje rešenje** prikazuje potpisnika prema datumu ili ručni izbor.
+  Korisnik sa dozvolom `hr:resenje_catalog_create` može dodati osobu i funkciju
+  direktno uz nacrt. Bez potpisnika nacrt se čuva, a izdavanje traži važeći potpis.
+
 - Datumi u formama koriste format **dd.mm.gggg** i kalendar, kao ostali ekrani Kadrova.
   Pojedinačni dani se dodaju dugmetom **Dodaj dan**, a označavanjem **Ukloni** izostavljaju
   pri čuvanju nacrta. Grupni unos zadržava izabrane zaposlene i njihove brojeve rešenja

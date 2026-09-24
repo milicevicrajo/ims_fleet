@@ -1,0 +1,21 @@
+{{ potpisnici_meta|json_script:"potpisnici-meta" }}
+<script>jQuery(function ($) {
+  var signers = JSON.parse(document.getElementById('potpisnici-meta').textContent);
+  function prikaziPotpisnika() {
+    var value = $('#id_datum_resenja').val() || '', date = value;
+    var parts = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?$/);
+    if (parts) date = parts[3] + '-' + parts[2].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+    var selected = $('#id_potpisnik').val();
+    var signer = signers.find(function (p) { return selected ? String(p.id) === selected : p.od <= date && (!p.do || date < p.do); });
+    var info = $('#potpisnik-info');
+    if ($('#id_novi_potpisnik').val()) {
+      info.text('Na dokumentu će biti nova osoba izabrana ispod.').removeClass('text-warning');
+    } else if (signer && signer.od <= date && (!signer.do || date < signer.do)) {
+      info.text('Potpisuje: ' + signer.ime).removeClass('text-warning');
+    } else {
+      info.text('Nema važećeg potpisnika za izabrani datum. Dodajte potpisnika pre izdavanja. Nacrt možete sačuvati.').addClass('text-warning');
+    }
+  }
+  $('#id_datum_resenja, #id_potpisnik, #id_novi_potpisnik').on('change input', prikaziPotpisnika);
+  prikaziPotpisnika();
+});</script>

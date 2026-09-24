@@ -29,9 +29,13 @@
     {% include 'hr/resenja/_polje.html' with polje=form.vrsta %}
     {% include 'hr/resenja/_polje.html' with polje=form.datum_resenja %}
     {% include 'hr/resenja/_polje.html' with polje=form.pismo %}
+    {% include 'hr/resenja/_polje.html' with polje=form.potpisnik %}
+    <div class="col-12"><p id="potpisnik-info" class="small" role="status"></p>{% if can_add_signer %}<a href="{% url 'hr:resenje_catalog_create' 'potpisnici' %}" target="_blank" rel="noopener">Podesi osobe koje potpisuju rešenja</a>{% endif %}</div>
     <div class="col-12"><hr class="my-1"></div>
     {% include 'hr/resenja/_polje.html' with polje=form.datum_od %}
     {% include 'hr/resenja/_polje.html' with polje=form.datum_do %}
+    {% include 'hr/resenja/_polje.html' with polje=form.vreme_od %}
+    {% include 'hr/resenja/_polje.html' with polje=form.vreme_do %}
     {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
     {% include 'hr/resenja/_polje.html' with polje=form.dani sirina='col-md-8' %}
     {% include 'hr/resenja/_polje.html' with polje=form.vrsta_dana %}
@@ -76,6 +80,7 @@
 {% endblock %}
 {% block extra_js %}
 {{ vrste_meta|json_script:"vrste-meta" }}
+{% include 'hr/resenja/_potpisnik_script.html' %}
 <script>jQuery(function ($) {
   var meta = JSON.parse(document.getElementById('vrste-meta').textContent);
   var vrsta = $('#id_vrsta');
@@ -85,6 +90,7 @@
     $('#id_datum_od, #id_datum_do, #id_do_zavrsetka_posla').closest('div[class^="col-"]').toggle(!!podaci.period);
     $('#id_dani, #id_vrsta_dana').closest('div[class^="col-"]').toggle(!!podaci.dani);
     $('#id_broj_radnih_dana, #id_datum_povratka').closest('div[class^="col-"]').toggle(!!podaci.radni_dani);
+    $('#id_vreme_od, #id_vreme_do').closest('div[class^="col-"]').toggle(!!podaci.vreme);
   }
 
   vrsta.on('change', function () {

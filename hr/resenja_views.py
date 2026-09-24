@@ -21,9 +21,16 @@ from hr.services.resenja import (dokument_za_prikaz, dozvoljeni_centri, izdaj_re
 SIDEBAR = 'sidebar_kadrovi.html'
 
 
+def _potpisnici_meta():
+    return [{'id': p.pk, 'ime': str(p), 'od': p.vazi_od.isoformat(),
+             'do': p.vazi_do.isoformat() if p.vazi_do else ''}
+            for p in Potpisnik.objects.select_related('zaposleni').order_by('-vazi_od', 'pk')]
+
+
 def _vrste_meta():
     """Podaci o vrstama koje forma koristi da sakrije polja koja se ne traže."""
-    return {str(vrsta.pk): {'period': vrsta.trazi_period, 'dani': vrsta.trazi_dane,
+    return {str(vrsta.pk): {'period': True, 'dani': vrsta.trazi_dane, 'kod': vrsta.kod,
+        'vreme': not vrsta.trazi_radne_dane,
         'radni_dani': vrsta.trazi_radne_dane, 'pismo': vrsta.podrazumevano_pismo}
         for vrsta in VrstaResenja.objects.filter(je_aktivna=True)}
 
@@ -78,19 +85,20 @@ class ResenjeFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateV
 
     def get_context_data(self, **kwargs):
         resenje = kwargs.pop('instance', None) or self.get_object()
-        form = kwargs.pop('form', None) or ResenjeForm(instance=resenje)
+        form = kwargs.pop('form', None) or ResenjeForm(instance=resenje, actor=self.request.user)
         form.fields['zaposleni'].queryset = visible_employees(self.request.user,
             unrestricted=user_has_role_permission(self.request.user, 'hr:resenje_view_all')).filter(is_active=True)
         formset = kwargs.pop('formset', None) or ResenjeDanFormSet(instance=resenje)
         ctx = super().get_context_data(**kwargs)
         ctx.update(title='Izmena rešenja' if resenje else 'Novo rešenje', sidebar_template=SIDEBAR,
-            form=form, formset=formset, resenje=resenje, vrste_meta=_vrste_meta())
+            form=form, formset=formset, resenje=resenje, vrste_meta=_vrste_meta(),
+            potpisnici_meta=_potpisnici_meta(), can_add_signer=form.can_add_signer)
         return ctx
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         resenje = self.get_object()
-        form = ResenjeForm(request.POST, instance=resenje)
+        form = ResenjeForm(request.POST, instance=resenje, actor=request.user)
         form.fields['zaposleni'].queryset = visible_employees(request.user,
             unrestricted=user_has_role_permission(request.user, 'hr:resenje_view_all')).filter(is_active=True)
         if not form.is_valid():
@@ -103,10 +111,11 @@ class ResenjeFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateV
         pripremi_resenje(novo)
         formset = ResenjeDanFormSet(request.POST, instance=novo)
         # Broj dana se proverava pre snimanja: posle `set_rollback` nijedan upit ne bi prošao.
-        if formset.is_valid() and novo.vrsta.trazi_dane and not _broj_dana(formset):
+        if formset.is_valid() and novo.vrsta.trazi_dane and not _broj_dana(formset) and (not novo.datum_od or novo.vrsta.kod == 'praznik'):
             form.add_error(None, 'Ova vrsta rešenja traži bar jedan dan.')
         if not formset.is_valid() or form.errors:
             return self.render_to_response(self.get_context_data(form=form, formset=formset, instance=resenje))
+        form.postavi_potpisnika(novo)
         novo.save()
         formset.instance = novo
         formset.save()
@@ -221,7 +230,8 @@ class ResenjeBulkCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, Tem
                          for employee in zaposleni]
         ctx.update(title='Grupno izdavanje rešenja', sidebar_template=SIDEBAR, form=form, zaposleni=zaposleni,
             employee_rows=employee_rows,
-            izabran_centar=centar, vrste_meta=_vrste_meta(),
+            izabran_centar=centar, vrste_meta=_vrste_meta(), potpisnici_meta=_potpisnici_meta(),
+            can_add_signer=user_has_role_permission(self.request.user, 'hr:resenje_catalog_create'),
             centri=sorted({kod for kod in OrganizationalUnit.objects.values_list('center', flat=True) if kod}))
         return ctx
 
@@ -250,7 +260,8 @@ class ResenjeBulkCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, Tem
         for employee in izabrani:
             resenje = Resenje(zaposleni=employee, vrsta=data['vrsta'], broj=brojevi[str(employee.pk)],
                 datum_resenja=data['datum_resenja'], pismo=data['pismo'], datum_od=data['datum_od'],
-                datum_do=data['datum_do'], do_zavrsetka_posla=data['do_zavrsetka_posla'],
+                datum_do=data['datum_do'], vreme_od=data['vreme_od'], vreme_do=data['vreme_do'],
+                potpisnik=data['potpisnik'], do_zavrsetka_posla=data['do_zavrsetka_posla'],
                 broj_radnih_dana=data['broj_radnih_dana'], datum_povratka=data['datum_povratka'],
                 zahtev_broj=data['zahtev_broj'], zahtev_datum=data['zahtev_datum'],
                 napomena=data['napomena'], created_by=request.user)

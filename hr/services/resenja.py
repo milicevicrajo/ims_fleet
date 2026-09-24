@@ -89,6 +89,17 @@ def organizaciona_jedinica(employee):
     return kod, OrganizationalUnit.objects.filter(code=kod).first()
 
 
+def normalizuj_pol(value):
+    value = str(value or '').strip().upper()
+    return {'M': 'M', 'М': 'M', 'F': 'F', 'Z': 'F', 'Ž': 'F', 'Ж': 'F'}.get(value, '')
+
+
+def naziv_jedinice(kod, pismo):
+    jedinica = OrganizationalUnit.objects.filter(code=kod).first()
+    naziv = jedinica.name.upper() if jedinica else f'OJ {kod}' if kod else ''
+    return u_pismu(naziv, pismo) if pismo == Pismo.LATINICA else to_cyrillic(naziv)
+
+
 def datum_teksta(value):
     return f'{value:%d.%m.%Y}.' if value else ''
 
@@ -164,13 +175,18 @@ def build_document(resenje, *, dani=None):
     employee = resenje.zaposleni
     dani = list(dani if dani is not None else resenje.dani.all())
     po_vrsti = {vrsta: [dan for dan in dani if dan.vrsta_dana == vrsta] for vrsta, _ in ResenjeDan.VrstaDana.choices}
+    period_dana = ''
+    if resenje.datum_od:
+        period_dana = datum_teksta(resenje.datum_od)
+        if resenje.datum_do and resenje.datum_do != resenje.datum_od:
+            period_dana = f'од {period_dana} до {datum_teksta(resenje.datum_do)}'
     vrednosti = {
         'zaposleni': resenje.zaposleni_tekst,
         'oj': resenje.oj_naziv,
         'radno_mesto': resenje.radno_mesto,
         'centar': resenje.centar,
         'period': opis_perioda(resenje, dani),
-        'dani': spisak_dana(dani),
+        'dani': spisak_dana(dani) or period_dana,
         'dani_prekovremeni': spisak_dana(po_vrsti['prekovremeni']),
         'dani_nocni': spisak_dana(po_vrsti['nocni']),
         'dani_vikend': spisak_dana(po_vrsti['vikend']),
@@ -189,10 +205,16 @@ def build_document(resenje, *, dani=None):
     for kljuc in ('period', 'dani', 'dani_prekovremeni', 'dani_nocni', 'dani_vikend', 'dani_drzavni', 'dani_verski'):
         vrednosti[kljuc] = u_pismu(vrednosti[kljuc], pismo)
     vrsta = resenje.vrsta
-    pol = employee.gender or ''
+    pol = normalizuj_pol(resenje.pol or employee.gender)
     tekst = lambda value: razresi(u_pismu(value, pismo), vrednosti, pol)
     potpisnik = resenje.potpisnik
     funkcija = u_pismu(potpisnik.funkcija, pismo) if potpisnik else ''
+    tacke = _neprazni(tekst(red) for red in _redovi(vrsta.dispozitiv))
+    if resenje.vreme_od and resenje.vreme_do and tacke:
+        vreme = f'Време рада: од {resenje.vreme_od:%H:%M} до {resenje.vreme_do:%H:%M} часова'
+        if resenje.vreme_do < resenje.vreme_od:
+            vreme += ' наредног дана'
+        tacke[0] += ' ' + u_pismu(vreme + '.', pismo)
     return {
         'schema': 1,
         'pismo': pismo,
@@ -206,27 +228,28 @@ def build_document(resenje, *, dani=None):
                     ('dostavljeno', 'Достављено:'))},
         'pravni_osnov': tekst(vrsta.pravni_osnov),
         'naslov': u_pismu(vrsta.naslov, pismo),
-        'podnaslov': u_pismu(vrsta.podnaslov, pismo),
-        'tacke': _neprazni(tekst(red) for red in _redovi(vrsta.dispozitiv)),
+        'podnaslov': tekst(vrsta.podnaslov).replace('запосленог (е)', 'запослене' if pol == 'F' else 'запосленог').replace('zaposlenog (e)', 'zaposlene' if pol == 'F' else 'zaposlenog'),
+        'tacke': tacke,
         'obrazlozenje': _neprazni(tekst(red) for red in _redovi(vrsta.obrazlozenje)),
         'pravna_pouka': tekst(vrsta.pravna_pouka),
         'dostavljeno': _neprazni(tekst(red) for red in _redovi(vrsta.dostavljeno)),
         'potpis': {'funkcija': funkcija, 'institut': u_pismu(INSTITUT, pismo),
                    'ime': ime_potpisnika(potpisnik, pismo)},
         'zaposleni': {'id': employee.pk, 'sifra': employee.employee_code, 'ime': resenje.zaposleni_tekst,
-                      'oj': resenje.oj_naziv, 'oj_kod': resenje.oj_kod, 'centar': resenje.centar},
+                      'oj': resenje.oj_naziv, 'oj_kod': resenje.oj_kod, 'centar': resenje.centar, 'pol': pol},
     }
 
 
 def pripremi_resenje(resenje):
     """Popunjava podatke koji se izvode iz zaposlenog, pre prvog snimanja."""
     employee = resenje.zaposleni
-    kod, jedinica = organizaciona_jedinica(employee)
+    kod = resenje.oj_kod or organizaciona_jedinica(employee)[0]
+    jedinica = OrganizationalUnit.objects.filter(code=kod).first()
+    resenje.pol = normalizuj_pol(resenje.pol or employee.gender)
     if not resenje.zaposleni_tekst:
         resenje.zaposleni_tekst = ime_zaposlenog(employee, resenje.pismo)
-    if not resenje.oj_naziv and jedinica:
-        naziv = jedinica.name.upper()
-        resenje.oj_naziv = naziv if resenje.pismo == Pismo.LATINICA else to_cyrillic(naziv)
+    if not resenje.oj_naziv:
+        resenje.oj_naziv = naziv_jedinice(kod, resenje.pismo)
     if not resenje.radno_mesto:
         radno = (employee.position or employee.job_title or '').upper()
         resenje.radno_mesto = radno if resenje.pismo == Pismo.LATINICA else to_cyrillic(radno)
@@ -245,6 +268,11 @@ def izdaj_resenje(resenje, user):
         raise ValidationError('Rešenje je već izdato ili stornirano.')
     if not resenje.potpisnik_id:
         raise ValidationError('Nije određen potpisnik za datum rešenja. Dopuni šifrarnik potpisnika.')
+    signer = resenje.potpisnik
+    if resenje.datum_resenja < signer.vazi_od or (signer.vazi_do and resenje.datum_resenja >= signer.vazi_do):
+        raise ValidationError('Potpisnik ne važi na datum rešenja. Izaberite važećeg potpisnika u izmeni nacrta.')
+    if not normalizuj_pol(resenje.pol or resenje.zaposleni.gender):
+        raise ValidationError('Izaberite pol za tekst rešenja u izmeni nacrta.')
     resenje.dokument = build_document(resenje)
     resenje.status = Resenje.Status.IZDATO
     resenje.izdato_at = timezone.now()
