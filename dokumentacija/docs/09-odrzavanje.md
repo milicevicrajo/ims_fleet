@@ -172,10 +172,25 @@ Za ciljanu dopunu novih ekrana Pravne službe i rešenja zaposlenih:
 ```
 
 Komanda dodaje sve rute `pravna:*` ulozi **Pravna služba**, operativne dozvole
-`hr:resenje_*` ulogama **Sekretarijat** i **Kadrovik — rešenja**, a sve ove kodove
-**Upravi**. Šifrarnici i pregled svih centara nisu deo operativnih dozvola.
+`hr:resenje_*` ulozi **Sekretarijat**, a ove kodove **Upravi**. Uloga **Kadrovi**
+zamenjuje **Kadrovik — rešenja** i dobija funkcije celog kadrovskog modula, uključujući
+šifarnike, uz ograničenje podataka po dodeljenom obuhvatu. Posebne dozvole za sve centre
+ne dodaju se ulozi Kadrovi.
 Postojeće dozvole i članstva korisnika ostaju sačuvani. Ista dopuna je uključena
 u redovni `sync_permission_codes`.
+
+Za ekran upravljanja korisničkim pristupom od 24.09.2026. primeniti migraciju
+`fleet.0081_customuser_allowed_hr_unit_codes`, pa ciljanu komandu:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py migrate fleet 0081
+.\.venv\Scripts\python.exe manage.py sync_user_access_permissions --dry-run
+.\.venv\Scripts\python.exe manage.py sync_user_access_permissions
+```
+
+Ona usklađuje samo ulogu Kadrovi i kodove administracije korisnika, bez redovnog
+prepisivanja dozvola drugih standardnih uloga. Posle isporuke koda restartovati web
+proces i radnike koji učitavaju `core.permissions`, da stari kod ne bi vratio staru ulogu.
 
 ---
 

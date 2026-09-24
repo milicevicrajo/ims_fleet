@@ -159,7 +159,7 @@
           </div>
           {% if is_self_profile %}
             <a href="{% url 'hr:work_time_sheet' %}" class="btn btn-primary btn-sm"><i class="mdi mdi-calendar-edit"></i> Otvori radnu listu</a>
-          {% elif request.user.is_superuser %}
+          {% elif can_manage_work_time %}
             <a href="{% url 'hr:employee_work_time_sheet' employee.pk %}" class="btn btn-primary btn-sm"><i class="mdi mdi-calendar-edit"></i> Otvori radnu listu zaposlenog</a>
           {% endif %}
         </div>
@@ -192,7 +192,7 @@
                     <div class="d-flex gap-1">
                       {% if is_self_profile %}
                         <a href="{% url 'hr:work_time_sheet' %}?month={{ sheet.month }}&year={{ sheet.year }}" class="btn btn-outline-primary btn-sm" title="Izmeni"><i class="mdi mdi-pencil"></i></a>
-                      {% elif request.user.is_superuser %}
+                      {% elif can_manage_work_time %}
                         <a href="{% url 'hr:employee_work_time_sheet' employee.pk %}?month={{ sheet.month }}&year={{ sheet.year }}" class="btn btn-outline-primary btn-sm" title="Otvori radnu listu"><i class="mdi mdi-eye"></i></a>
                       {% endif %}
                       <a href="{% url 'hr:work_time_sheet_print' sheet.pk %}" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm" title="Stampaj"><i class="mdi mdi-printer"></i></a>

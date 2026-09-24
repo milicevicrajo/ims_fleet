@@ -21,6 +21,7 @@ from django.views.generic import (
 )
 
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
+from hr.access import visible_employees
 
 from .forms import (
     EmployeeCVItemForm,
@@ -239,7 +240,7 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
 
     def get_queryset(self):
         status = self.request.GET.get("status", "inactive" if self.request.GET.get("inactive") == "1" else "active")
-        qs = Employee.objects.order_by("last_name", "first_name")
+        qs = visible_employees(self.request.user).order_by("last_name", "first_name")
         if status != "all":
             qs = qs.filter(is_active=status != "inactive")
         oj = self.request.GET.get("oj", "").strip()
@@ -266,7 +267,7 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
         context["query"] = self.request.GET.get("q", "")
         context["selected_oj"] = self.request.GET.get("oj", "")
         context["selected_recipient"] = self.request.GET.get("recipient", "")
-        context["oj_options"] = sorted({str(code or department) for code, department in Employee.objects.values_list("org_unit_code", "department_code")})
+        context["oj_options"] = sorted({str(code or department) for code, department in visible_employees(self.request.user).values_list("org_unit_code", "department_code")})
         from .models import RecipientType
         context["recipient_options"] = RecipientType.objects.all()
         context["can_view_employee"] = user_has_role_permission(self.request.user, "employee_detail")
@@ -322,6 +323,9 @@ class EmployeeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Update
     template_name = "fleet/generic_form.html"
     success_url = reverse_lazy("employee_list")
 
+    def get_queryset(self):
+        return visible_employees(self.request.user)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
@@ -339,9 +343,13 @@ class EmployeeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Detail
     template_name = "hr/employee_detail.html"
     context_object_name = "employee"
 
+    def get_queryset(self):
+        return visible_employees(self.request.user)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(_employee_detail_context(self.object))
+        context['can_manage_work_time'] = user_has_role_permission(self.request.user, 'hr:employee_work_time_sheet')
         return context
 
 
@@ -443,9 +451,9 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
     def get_employee(self):
         employee_pk = self.kwargs.get("employee_pk")
         if employee_pk is not None:
-            if not self.request.user.is_superuser:
-                raise PermissionDenied("Radne liste drugih zaposlenih otvara superuser.")
-            return get_object_or_404(Employee, pk=employee_pk)
+            if not user_has_role_permission(self.request.user, 'hr:employee_work_time_sheet'):
+                raise PermissionDenied("Nemate dozvolu za radne liste drugih zaposlenih.")
+            return get_object_or_404(visible_employees(self.request.user), pk=employee_pk)
         if not self.request.user.employee_id:
             raise PermissionDenied("Korisnicki nalog nije povezan sa zaposlenim.")
         return self.request.user.employee
@@ -688,6 +696,8 @@ class WorkTimeSheetPrintView(LoginRequiredMixin, TemplateView):
         can_print_other = self.request.user.is_superuser or user_has_role_permission(self.request.user, "employee_list")
         if sheet.employee_id != self.request.user.employee_id and not can_print_other:
             raise PermissionDenied("Mozes stampati samo svoju radnu listu.")
+        if sheet.employee_id != self.request.user.employee_id:
+            get_object_or_404(visible_employees(self.request.user), pk=sheet.employee_id)
         return sheet
 
     def get_context_data(self, **kwargs):

@@ -114,6 +114,9 @@ def visible_evaluations(user):
         return qs
     if not user.is_authenticated:
         return qs.none()
+    if user_has_role_permission(user, 'hr:kadrovi_manage'):
+        from hr.access import visible_employees
+        return qs.filter(employee__in=visible_employees(user))
     match = Q(created_by=user)
     if user.employee_id:
         match |= Q(supervisor_id=user.employee_id) | Q(director_id=user.employee_id) | Q(general_director_id=user.employee_id)
@@ -125,6 +128,9 @@ def editable_employees(user):
         return Employee.objects.none()
     if can_view_all(user):
         return Employee.objects.all()
+    if user_has_role_permission(user, 'hr:kadrovi_manage'):
+        from hr.access import visible_employees
+        return visible_employees(user)
     units = EvaluationUnitSetup.objects.filter(is_active=True, supervisor_id=user.employee_id).values_list('unit_code',flat=True) if user.employee_id else []
     return Employee.objects.filter(org_unit_code__in=units)
 

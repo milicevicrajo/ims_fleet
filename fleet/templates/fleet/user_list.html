@@ -1,277 +1,82 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block title %}{{ title }}{% endblock %}
-
 {% block content %}
-<style>
-  .users-hero {
-    border-radius: 8px;
-    background: linear-gradient(135deg, #17324d 0%, #25676e 52%, #5b7d3a 100%);
-    color: #fff;
-    padding: 22px 24px;
-    margin-bottom: 16px;
-    box-shadow: 0 10px 26px rgba(23, 50, 77, 0.18);
-  }
-  .users-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
-  .users-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
-  .user-stat-card {
-    border: 1px solid #e6ebf1;
-    border-radius: 8px;
-    padding: 14px;
-    background: #fff;
-    height: 100%;
-  }
-  .user-stat-card span { display: block; color: #6b7785; font-size: .84rem; }
-  .user-stat-card strong { font-size: 1.55rem; line-height: 1.2; }
-  .user-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 999px;
-    padding: 4px 9px;
-    font-weight: 700;
-    font-size: .82rem;
-    white-space: nowrap;
-  }
-  .user-status.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
-  .user-status.warning { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
-  .user-status.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
-  .user-status.danger { background: #fde8e8; color: #9b1c1c; border: 1px solid #f4b4b4; }
-  .user-muted { display: block; color: #6b7785; font-size: .82rem; margin-top: 2px; }
-  .user-action-form {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    min-width: 260px;
-  }
-  .user-action-form .form-select { min-width: 170px; }
-  #UsersTable th,
-  #UsersTable td,
-  #EmployeesWithoutProfileTable th,
-  #EmployeesWithoutProfileTable td {
-    white-space: normal !important;
-    vertical-align: top;
-  }
-</style>
-
-<div class="users-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
-  <div>
-    <h1>Korisnici</h1>
-    <p>Pregled korisnickih naloga, povezanih zaposlenih, promene inicijalne lozinke i poslednje prijave.</p>
-  </div>
-  {% if can_manage_user_profiles and active_without_profile_count %}
-    <form method="post" action="{% url 'user_create_missing_profiles' %}">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-light btn-sm">
-        <i class="mdi mdi-account-multiple-plus"></i> Kreiraj profile za sve
-      </button>
-    </form>
-  {% endif %}
-</div>
-
-<div class="row g-3 mb-3">
-  <div class="col-6 col-lg-2">
-    <div class="user-stat-card"><span>Ukupno korisnika</span><strong>{{ total_users }}</strong></div>
-  </div>
-  <div class="col-6 col-lg-2">
-    <div class="user-stat-card"><span>Povezano sa zaposlenim</span><strong>{{ linked_users }}</strong></div>
-  </div>
-  <div class="col-6 col-lg-2">
-    <div class="user-stat-card"><span>Ulazili u aplikaciju</span><strong class="text-success">{{ users_logged_in }}</strong></div>
-  </div>
-  <div class="col-6 col-lg-2">
-    <div class="user-stat-card"><span>Nisu ulazili</span><strong class="text-muted">{{ users_never_logged_in }}</strong></div>
-  </div>
-  <div class="col-6 col-lg-2">
-    <div class="user-stat-card"><span>Nisu promenili sifru</span><strong class="text-warning">{{ must_change_password_count }}</strong></div>
-  </div>
-  <div class="col-6 col-lg-2">
-    <div class="user-stat-card"><span>Aktivni bez profila</span><strong class="text-danger">{{ active_without_profile_count }}</strong></div>
-  </div>
-</div>
-
-<div class="card shadow-sm mb-3">
-  <div class="card-header">
-    <h4 class="mb-0">Lista korisnika</h4>
-  </div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table id="UsersTable" class="display compact table table-hover table-bordered align-middle w-100">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Zaposleni</th>
-            <th>Ime i prezime</th>
-            <th>Centri</th>
-            <th>Uloge</th>
-            <th>Lozinka</th>
-            <th>Prijava</th>
-            <th>Status</th>
-            {% if can_manage_user_profiles %}<th>Akcija</th>{% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for account in users %}
-            <tr>
-              <td>
-                <strong>{{ account.username }}</strong>
-                {% if account.email %}<span class="user-muted">{{ account.email }}</span>{% endif %}
-              </td>
-              <td>
-                {% if account.employee %}
-                  <a href="{% url 'employee_detail' account.employee.pk %}" class="btn btn-sm btn-outline-primary">
-                    {{ account.employee.employee_code }}
-                  </a>
-                  <span class="user-muted">OJ {{ account.employee.org_unit_code|default:"/" }}</span>
-                {% else %}
-                  <span class="user-status danger">Bez zaposlenog</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if account.employee %}
-                  {{ account.employee }}
-                {% else %}
-                  {{ account.first_name }} {{ account.last_name }}
-                {% endif %}
-              </td>
-              <td>{{ account.centers_display }}</td>
-              <td>{{ account.roles_display }}</td>
-              <td>
-                {% if account.must_change_password %}
-                  <span class="user-status warning"><i class="mdi mdi-lock-alert"></i> Nije promenio</span>
-                {% else %}
-                  <span class="user-status ok"><i class="mdi mdi-lock-check"></i> Promenjena / nije obavezna</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if account.last_login %}
-                  <span class="user-status ok"><i class="mdi mdi-login"></i> Ulazio</span>
-                  <span class="user-muted">{{ account.last_login|date:"d.m.Y H:i" }}</span>
-                {% else %}
-                  <span class="user-status muted"><i class="mdi mdi-login-variant"></i> Nije ulazio</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if account.is_active %}
-                  <span class="user-status ok">Aktivan</span>
-                {% else %}
-                  <span class="user-status danger">Neaktivan</span>
-                {% endif %}
-                {% if account.is_superuser %}<span class="user-muted">Superuser</span>{% endif %}
-                {% if account.is_staff %}<span class="user-muted">Staff</span>{% endif %}
-              </td>
-              {% if can_manage_user_profiles %}
-                <td>
-                  {% if not account.employee_id and link_employee_options %}
-                    <form method="post" action="{% url 'user_link_employee' %}" class="user-action-form">
-                      {% csrf_token %}
-                      <input type="hidden" name="user_id" value="{{ account.pk }}">
-                      <select name="employee_id" class="form-select form-select-sm" required>
-                        <option value="">Zaposleni...</option>
-                        {% for employee in link_employee_options %}
-                          <option value="{{ employee.pk }}">{{ employee.employee_code }} - {{ employee }}</option>
-                        {% endfor %}
-                      </select>
-                      <button type="submit" class="btn btn-sm btn-outline-primary">
-                        <i class="mdi mdi-link"></i> Povezi
-                      </button>
-                    </form>
-                  {% elif not account.employee_id %}
-                    <span class="text-muted">Nema slobodnih zaposlenih</span>
-                  {% else %}
-                    <span class="text-muted">Povezan</span>
+<link rel="stylesheet" href="{% static 'fleet/assets/css/user-list.css' %}">
+<div class="users-page">
+  <header class="users-heading">
+    <div><span class="users-eyebrow">Administracija</span><h1>Korisnici <span>{{ total_users }}</span></h1><p>Nalozi, uloge i pristup podacima na jednom mestu.</p></div>
+    <span class="users-heading-note"><i class="mdi mdi-shield-account-outline" aria-hidden="true"></i> Upravljanje pristupom</span>
+  </header>
+  <div class="users-panel">
+    <div class="users-tabs nav" role="tablist" aria-label="Pregledi korisnika">
+      <button class="active" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accounts-panel" type="button" role="tab" aria-controls="accounts-panel" aria-selected="true">Korisnički nalozi <span>{{ total_users }}</span></button>
+      <button id="missing-tab" data-bs-toggle="tab" data-bs-target="#missing-panel" type="button" role="tab" aria-controls="missing-panel" aria-selected="false">Zaposleni bez naloga <span>{{ active_without_profile_count }}</span></button>
+    </div>
+    <div class="tab-content">
+      <section class="tab-pane active show" id="accounts-panel" role="tabpanel" aria-labelledby="accounts-tab">
+        <div class="users-toolbar">
+          <div class="users-search"><label class="visually-hidden" for="users-search">Pretraga korisnika</label><i class="mdi mdi-magnify" aria-hidden="true"></i><input type="search" id="users-search" class="form-control" placeholder="Ime, korisničko ime, centar ili OJ…" autocomplete="off"></div>
+          <div><label class="visually-hidden" for="users-role">Uloga</label><select id="users-role" class="form-select"><option value="">Sve uloge</option>{% for role in role_options %}<option value="{{ role.pk }}">{{ role.name }}{% if not role.is_active %} (neaktivna){% endif %}</option>{% endfor %}</select></div>
+          <div><label class="visually-hidden" for="users-status">Status naloga</label><select id="users-status" class="form-select"><option value="">Svi statusi</option><option value="active">Aktivni</option><option value="inactive">Neaktivni</option></select></div>
+          <button type="button" class="btn btn-outline-secondary" id="users-reset" title="Poništi pretragu i filtere"><i class="mdi mdi-filter-remove-outline" aria-hidden="true"></i> Poništi</button>
+        </div>
+        <div class="users-quick-filters" aria-label="Brzi filteri">
+          <button type="button" class="is-selected" data-user-filter="all" aria-pressed="true">Svi nalozi <span>{{ total_users }}</span></button>
+          <button type="button" data-user-filter="never" aria-pressed="false">Bez prijave <span>{{ users_never_logged_in }}</span></button>
+          <button type="button" data-user-filter="password" aria-pressed="false">Obavezna promena lozinke <span>{{ must_change_password_count }}</span></button>
+          <button type="button" data-user-filter="unlinked" aria-pressed="false">Bez veze sa zaposlenim <span>{{ unlinked_users_count }}</span></button>
+        </div>
+        <div class="users-table-wrap">
+          <table id="UsersTable" class="users-table table w-100">
+            <thead><tr><th>Korisnik</th><th>Zaposleni / OJ</th><th>Uloge</th><th>Obuhvat pristupa</th><th>Poslednja prijava</th><th>Status</th>{% if can_manage_user_profiles %}<th class="users-actions-heading"><span class="visually-hidden">Upravljanje</span></th>{% endif %}</tr></thead>
+            <tbody>{% for account in users %}
+              <tr data-status="{% if account.is_active %}active{% else %}inactive{% endif %}" data-never="{{ account.last_login|yesno:'0,1' }}" data-password="{{ account.must_change_password|yesno:'1,0' }}" data-unlinked="{{ account.employee_id|yesno:'0,1' }}" data-roles="{% for role in account.roles.all %}{{ role.pk }} {% endfor %}">
+                <td data-label="Korisnik" data-order="{{ account.username }}">
+                  <div class="users-identity"><div class="users-identity-text">
+                    <strong>{% if account.employee %}{{ account.employee }}{% else %}{{ account.get_full_name|default:account.username }}{% endif %}</strong>
+                    <span class="users-secondary">{{ account.username }}</span>
+                  </div></div>
+                </td>
+                <td data-label="Zaposleni / OJ" class="users-employee">{% if account.employee %}<a href="{% url 'employee_detail' account.employee.pk %}" title="Zaposleni {{ account.employee.employee_code }}">{{ account.employee.employee_code }}</a><span class="users-unit"> · OJ {{ account.employee.org_unit_code|default:'/' }}</span>{% else %}<span class="users-secondary">—</span>{% endif %}</td>
+                <td data-label="Uloge"><div class="users-role-tags">{% for role in account.roles.all %}<span class="users-role{% if not role.is_active %} is-inactive{% endif %}" title="{{ role.description|default:role.name }}">{{ role.name }}{% if not role.is_active %} · neaktivna{% endif %}</span>{% empty %}<span class="users-secondary">Bez uloge</span>{% endfor %}</div>{% if account.is_superuser %}<span class="users-admin">Superuser</span>{% elif account.is_staff %}<span class="users-secondary">Pristup Django adminu</span>{% endif %}</td>
+                <td data-label="Obuhvat" data-search="{{ account.centers_display }} {{ account.hr_units_display }}">
+                  {% if account.is_superuser %}<span class="users-scope-all">Svi podaci</span><span class="users-secondary">Bez ograničenja</span>{% else %}
+                    {% if account.centers_display != '-' %}<span class="users-scope-value" title="{{ account.centers_display }}"><span class="users-scope-label">Centri:</span> {{ account.centers_display|truncatechars:42 }}</span>{% endif %}
+                    {% if account.hr_units_display %}<span class="users-scope-value" title="{{ account.hr_units_display }}"><span class="users-scope-label">Kadrovske OJ:</span> {{ account.hr_units_display|truncatechars:42 }}</span>{% endif %}
+                    {% if account.centers_display == '-' and not account.hr_units_display %}<span class="users-secondary" title="Prazan izbor prati pravila svakog modula.">Obuhvat nije zadat</span>{% endif %}
                   {% endif %}
                 </td>
-              {% endif %}
-            </tr>
-          {% empty %}
-            <tr><td colspan="{% if can_manage_user_profiles %}9{% else %}8{% endif %}" class="text-center text-muted">Nema korisnika.</td></tr>
-          {% endfor %}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th>Username</th>
-            <th>Zaposleni</th>
-            <th>Ime i prezime</th>
-            <th>Centri</th>
-            <th>Uloge</th>
-            <th>Lozinka</th>
-            <th>Prijava</th>
-            <th>Status</th>
-            {% if can_manage_user_profiles %}<th>Akcija</th>{% endif %}
-          </tr>
-        </tfoot>
-      </table>
+                <td data-label="Prijava" data-order="{{ account.last_login|date:'U'|default:'0' }}">{% if account.last_login %}<span class="users-date">{{ account.last_login|date:'d.m.Y.' }}</span><span class="users-secondary">{{ account.last_login|date:'H:i' }}</span>{% else %}<span class="users-secondary">Još nije prijavljen</span>{% endif %}{% if account.must_change_password %}<span class="users-password"><i class="mdi mdi-lock-outline" aria-hidden="true"></i> Promena lozinke</span>{% endif %}</td>
+                <td data-label="Status"><span class="users-state{% if not account.is_active %} is-inactive{% endif %}"><span aria-hidden="true"></span>{% if account.is_active %}Aktivan{% else %}Neaktivan{% endif %}</span></td>
+                {% if can_manage_user_profiles %}<td class="users-actions" data-label="Upravljanje"><a class="users-icon-button" href="{% url 'user_access_edit' account.pk %}" title="Uredi pristup" aria-label="Uredi pristup: {{ account.username }}"><i class="mdi mdi-pencil" aria-hidden="true"></i></a>{% if not account.employee_id and link_employee_options %}<button type="button" class="users-icon-button" title="Poveži zaposlenog" aria-label="Poveži zaposlenog: {{ account.username }}" data-bs-toggle="modal" data-bs-target="#linkUserModal" data-user-id="{{ account.pk }}" data-username="{{ account.username }}"><i class="mdi mdi-link-variant" aria-hidden="true"></i></button>{% endif %}</td>{% endif %}
+              </tr>
+            {% endfor %}</tbody>
+          </table>
+        </div>
+      </section>
+      <section class="tab-pane" id="missing-panel" role="tabpanel" aria-labelledby="missing-tab">
+        <div class="users-missing-heading"><div><h2>Zaposleni bez korisničkog naloga</h2><p>Aktivni zaposleni za koje još nije kreiran profil.</p></div>{% if can_manage_user_profiles and active_without_profile_count %}<form method="post" action="{% url 'user_create_missing_profiles' %}">{% csrf_token %}<button type="submit" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-account-multiple-plus" aria-hidden="true"></i> Kreiraj profile za sve</button></form>{% endif %}</div>
+        {% if active_without_profile %}
+          <div class="users-toolbar"><div class="users-search"><label class="visually-hidden" for="employees-search">Pretraga zaposlenih bez naloga</label><i class="mdi mdi-magnify" aria-hidden="true"></i><input type="search" id="employees-search" class="form-control" placeholder="Pretraži zaposlene bez naloga…"></div></div>
+          <div class="users-table-wrap"><table id="EmployeesWithoutProfileTable" class="users-table table w-100"><thead><tr><th>Zaposleni</th><th>OJ</th><th>Pozicija</th><th>Kontakt</th>{% if can_manage_user_profiles %}<th>Upravljanje</th>{% endif %}</tr></thead><tbody>{% for employee in active_without_profile %}<tr>
+            <td data-label="Zaposleni"><a href="{% url 'employee_detail' employee.pk %}" class="fw-semibold">{{ employee }}</a><span class="users-secondary">Šifra {{ employee.employee_code }}</span></td>
+            <td data-label="OJ">{{ employee.org_unit_code|default:'/' }}</td><td data-label="Pozicija">{{ employee.position|default:'/' }}</td><td data-label="Kontakt">{{ employee.mobile_phone|default:employee.phone_number|default:'/' }}</td>
+            {% if can_manage_user_profiles %}<td data-label="Upravljanje"><form method="post" action="{% url 'user_create_employee_profile' employee.pk %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary"><i class="mdi mdi-account-plus" aria-hidden="true"></i> Kreiraj profil</button></form></td>{% endif %}
+          </tr>{% endfor %}</tbody></table></div>
+        {% else %}<div class="users-empty"><i class="mdi mdi-account-check-outline" aria-hidden="true"></i><h3>Svi aktivni zaposleni imaju nalog</h3><p>Nema zaposlenih za koje je potrebno kreirati profil.</p></div>{% endif %}
+      </section>
     </div>
   </div>
 </div>
-
-<div class="card shadow-sm">
-  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <h4 class="mb-0">Aktivni zaposleni bez korisnickog profila</h4>
-    <span class="badge bg-danger">{{ active_without_profile_count }}</span>
-  </div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table id="EmployeesWithoutProfileTable" class="display compact table table-hover table-bordered align-middle w-100">
-        <thead>
-          <tr>
-            <th>Sifra</th>
-            <th>Zaposleni</th>
-            <th>OJ</th>
-            <th>Pozicija</th>
-            <th>Telefon</th>
-            {% if can_manage_user_profiles %}<th>Akcija</th>{% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for employee in active_without_profile %}
-            <tr>
-              <td>{{ employee.employee_code }}</td>
-              <td>
-                <a href="{% url 'employee_detail' employee.pk %}" class="fw-semibold">{{ employee }}</a>
-              </td>
-              <td>{{ employee.org_unit_code|default:"/" }}</td>
-              <td>{{ employee.position|default:"/" }}</td>
-              <td>{{ employee.mobile_phone|default:employee.phone_number|default:"/" }}</td>
-              {% if can_manage_user_profiles %}
-                <td>
-                  <form method="post" action="{% url 'user_create_employee_profile' employee.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-primary">
-                      <i class="mdi mdi-account-plus"></i> Kreiraj profil
-                    </button>
-                  </form>
-                </td>
-              {% endif %}
-            </tr>
-          {% empty %}
-            <tr><td colspan="{% if can_manage_user_profiles %}6{% else %}5{% endif %}" class="text-center text-muted">Svi aktivni zaposleni imaju korisnicki profil.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    if (window.ReportsDT) {
-      ReportsDT('#UsersTable', {
-        exportTitle: 'Korisnici',
-        order: [[0, 'asc']],
-        autoSelectThreshold: 25,
-        scrollX: false,
-        autoWidth: false
-      });
-      ReportsDT('#EmployeesWithoutProfileTable', {
-        exportTitle: 'Aktivni zaposleni bez profila',
-        order: [[0, 'asc']],
-        autoSelectThreshold: 25,
-        scrollX: false,
-        autoWidth: false
-      });
-    }
-  });
-</script>
+{% if can_manage_user_profiles %}
+<div class="modal fade" id="linkUserModal" tabindex="-1" aria-labelledby="linkUserTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <form method="post" action="{% url 'user_link_employee' %}">{% csrf_token %}<input type="hidden" name="user_id" id="link-user-id">
+    <div class="modal-header"><h5 class="modal-title" id="linkUserTitle">Poveži korisnika sa zaposlenim</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button></div>
+    <div class="modal-body"><p>Nalog: <strong id="link-username"></strong></p><label for="link-employee" class="form-label">Zaposleni bez naloga</label><select id="link-employee" name="employee_id" class="form-select select2-method" required><option value="">Izaberite zaposlenog…</option>{% for employee in link_employee_options %}<option value="{{ employee.pk }}">{{ employee.employee_code }} — {{ employee }}</option>{% endfor %}</select></div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button><button type="submit" class="btn btn-primary">Poveži</button></div>
+  </form>
+</div></div></div>
+{% endif %}
 {% endblock %}
+{% block extra_js %}<script src="{% static 'fleet/assets/js/user-list.js' %}"></script>{% endblock %}

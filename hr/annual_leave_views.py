@@ -13,6 +13,7 @@ from django.views.generic import TemplateView
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from hr.models import AnnualLeaveAllowance, AnnualLeaveDecision, AnnualLeaveSync
 from hr.services.annual_leave import sync_annual_leave
+from hr.access import scope_employee_records
 
 
 class AnnualLeaveListView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
@@ -30,8 +31,8 @@ class AnnualLeaveListView(LoginRequiredMixin, RolePermissionRequiredMixin, Templ
             year = current_year
         query = self.request.GET.get('q', '').strip()
         include_withdrawn = self.request.GET.get('archive') == '1'
-        allocations = AnnualLeaveAllowance.objects.select_related('employee')
-        decisions = AnnualLeaveDecision.objects.select_related('employee')
+        allocations = scope_employee_records(AnnualLeaveAllowance.objects.select_related('employee'), self.request.user)
+        decisions = scope_employee_records(AnnualLeaveDecision.objects.select_related('employee'), self.request.user)
         if year:
             allocations = allocations.filter(year=year)
             decisions = decisions.filter(year=year)

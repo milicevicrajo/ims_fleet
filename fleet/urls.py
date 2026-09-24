@@ -172,6 +172,7 @@ from .views.users import (
     create_employee_user_profile_view,
     create_missing_employee_user_profiles_view,
     link_user_employee_view,
+    user_access_edit_view,
 )
 from .views.reports import (
     fuel_job_code_nis_putnicka_view,
@@ -421,6 +422,7 @@ urlpatterns = [
     path('center_statistics/<str:center_code>/', center_statistics, name='center_statistics'),
     
     path('users/', UserListView.as_view(), name='user_list'),
+    path('users/<int:pk>/access/', user_access_edit_view, name='user_access_edit'),
     path('users/link-employee/', link_user_employee_view, name='user_link_employee'),
     path('users/create-missing-profiles/', create_missing_employee_user_profiles_view, name='user_create_missing_profiles'),
     path('users/create-profile/<int:pk>/', create_employee_user_profile_view, name='user_create_employee_profile'),

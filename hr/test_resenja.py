@@ -85,6 +85,18 @@ class ResenjeTestBase(TestCase):
 
 
 class SifrarnikTests(ResenjeTestBase):
+    def test_hr_unit_without_job_code_uses_existing_center_mapping(self):
+        self.employee.org_unit_code = '431 '
+        self.employee.save(update_fields=['org_unit_code'])
+        resenje = self.napravi()
+        self.assertEqual(resenje.oj_kod, '431')
+        self.assertEqual(resenje.centar, '43')
+
+    def test_unknown_hr_unit_does_not_guess_a_center(self):
+        self.employee.org_unit_code = '999'
+        self.employee.save(update_fields=['org_unit_code'])
+        self.assertEqual(self.napravi().centar, '')
+
     def test_migracija_puni_svih_sedam_obrazaca(self):
         self.assertEqual(VrstaResenja.objects.count(), 7)
 

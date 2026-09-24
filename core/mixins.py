@@ -29,7 +29,7 @@ class RoleRequiredMixin(UserPassesTestMixin):
         required_roles = self.get_required_roles()
         if not required_roles:
             return False
-        user_role_slugs = set(self.request.user.roles.values_list("slug", flat=True))
+        user_role_slugs = set(self.request.user.roles.filter(is_active=True).values_list("slug", flat=True))
         return bool(user_role_slugs.intersection(set(required_roles)))
 
     def handle_no_permission(self):

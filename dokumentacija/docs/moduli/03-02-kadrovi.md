@@ -41,7 +41,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Kadrovska služba** | Vodi zaposlene, uvozi bolovanja, sinhronizuje odmore, održava šifarnike |
 | **Neposredni rukovodilac** | Ocenjuje zaposlene svoje organizacione jedinice |
 | **Direktor centra i generalni direktor** | Daju saglasnost na ocene |
-| **Superuser** | Jedini može otvoriti **tuđu** radnu listu |
+| **Kadrovi i superuser** | Radne liste drugih zaposlenih u dozvoljenom obuhvatu |
 
 ---
 
@@ -243,21 +243,32 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 **Posebna pravila [P]:**
 
-- **Sekretarijat** i **Kadrovik — rešenja** dobijaju operativne dozvole za rešenja:
+- **Sekretarijat** dobija operativne dozvole za rešenja:
   listu, detalj, unos i izmenu nacrta, brisanje, predlog teksta, izdavanje, storniranje,
   pojedinačnu i grupnu štampu i grupni unos. Sinhronizacija dopunjava ove uloge bez
   menjanja njihovih korisnika. Uloga **Pregled** time ne dobija pravo unosa rešenja.
-- Šifrarnici rešenja i potpisnika i `hr:resenje_view_all` pri sinhronizaciji se dodeljuju
-  **Upravi**; operativne uloge zadržavaju postojeća ograničenja po centrima.
+- **Kadrovi** (`kadrovi`) zamenjuju ulogu **Kadrovik — rešenja**, zadržavaju njene korisnike
+  i dobijaju sve funkcije kadrovskog modula, uključujući šifarnike. Podaci se ograničavaju
+  centrima i kadrovskim OJ iz korisničkog profila; kod `hr:kadrovi_manage` omogućava
+  pregled i ocenjivanje zaposlenih u tom obuhvatu. Bez obuhvata nema tuđih podataka.
+- `hr:resenje_view_all` i `hr:evaluation_view_all` ostaju posebne dozvole za sve centre;
+  kompletna uloga Kadrovi ih ne dobija automatski.
 - Bez dozvole `hr:evaluation_view_all`, rukovodilac ocenjuje **samo zaposlene svojih OJ**.
 - Ocenu vidi onaj ko ju je napravio **ili** je na njoj imenovan kao ocenjivač.
 - Saglasnost daje **isključivo imenovani ocenjivač sa svog naloga**.
-- Tuđu radnu listu otvara **samo superuser** — ne postoji uloga za to.
+- Tuđu radnu listu otvara superuser ili korisnik sa `hr:employee_work_time_sheet`,
+  samo za zaposlene u svom obuhvatu. Direktan URL i štampa imaju istu proveru obuhvata.
 - Korisnik bez povezanog zaposlenog **ne može** otvoriti radnu listu.
-- Bez dozvole `hr:resenje_view_all`, kadrovik vidi rešenja **samo svojih centara**
-  (`CustomUser.allowed_center_codes` i `allowed_centers`); bez ijednog dodeljenog centra
-  vidi **samo rešenja koja je sam uneo**.
+- Bez dozvole `hr:resenje_view_all`, korisnik vidi rešenja dodeljenih centara i OJ
+  prema snimljenim šiframa na rešenju. Uloga Kadrovi bez obuhvata ne vidi tuđe podatke.
+  Za ranije operativne uloge bez obuhvata ostaje pravilo: samo sopstvena rešenja.
 - **Izdato rešenje se više ne menja** — ispravka ide preko storniranja i novog rešenja.
+
+Od 24.09.2026. `hr/access.py` ograničava spisak, detalje i izmenu zaposlenih, radne liste,
+odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i pojedinačni
+unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Kadrovske OJ biraju se
+u Administracija → Korisnici → Uloge i dozvole. Ograničenja podataka ne menjaju obračune
+ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
 
 ### Unos i štampa rešenja zaposlenih
 

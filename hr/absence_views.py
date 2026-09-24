@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views.generic import FormView, ListView
 
 from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
+from hr.access import scope_employee_records
 from .models import SickLeave, SickLeaveImport
 from .services.sick_leave import import_rfzo_workbook
 
@@ -41,7 +42,7 @@ class SickLeaveListView(LoginRequiredMixin, RolePermissionRequiredMixin, ListVie
     context_object_name='sick_leaves'
 
     def get_queryset(self):
-        qs=SickLeave.objects.select_related('employee')
+        qs=scope_employee_records(SickLeave.objects.select_related('employee'), self.request.user)
         q=self.request.GET.get('q','').strip()
         if q:
             qs=qs.filter(Q(employee__first_name__icontains=q)|Q(employee__last_name__icontains=q)|Q(rfzo_id__icontains=q))
@@ -54,7 +55,8 @@ class SickLeaveListView(LoginRequiredMixin, RolePermissionRequiredMixin, ListVie
     def get_context_data(self, **kwargs):
         ctx=super().get_context_data(**kwargs)
         ctx.update(title='Bolovanja',sidebar_template='sidebar_kadrovi.html',
-            total_count=SickLeave.objects.count(),unlinked_count=SickLeave.objects.filter(employee__isnull=True).count(),
+            total_count=scope_employee_records(SickLeave.objects.all(), self.request.user).count(),
+            unlinked_count=scope_employee_records(SickLeave.objects.all(), self.request.user).filter(employee__isnull=True).count(),
             last_batch=SickLeaveImport.objects.first(),query=self.request.GET.get('q',''),
             selected_year=self.request.GET.get('year',''),
             can_view_employee=user_has_role_permission(self.request.user,'employee_detail'),

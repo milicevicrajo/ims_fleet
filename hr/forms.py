@@ -41,10 +41,20 @@ class EmployeeForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.access_user = user
         if not getattr(user, "is_superuser", False):
             self.fields.pop("display_first_name_override", None)
             self.fields.pop("display_last_name_override", None)
             self.fields.pop("skip_hr_identity_update", None)
+
+    def clean(self):
+        data = super().clean()
+        from hr.access import allowed_unit_codes, has_restricted_scope
+        if self.access_user and has_restricted_scope(self.access_user):
+            code = str(data.get('org_unit_code') or data.get('department_code') or '').strip()
+            if code not in allowed_unit_codes(self.access_user):
+                self.add_error('org_unit_code', 'Organizaciona jedinica nije u vašem dozvoljenom obuhvatu.')
+        return data
 
 
 class EmployeeCVItemForm(forms.ModelForm):

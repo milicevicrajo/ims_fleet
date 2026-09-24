@@ -85,7 +85,7 @@ def ime_potpisnika(potpisnik, pismo):
 
 
 def organizaciona_jedinica(employee):
-    kod = str(employee.org_unit_code or employee.department_code or '')
+    kod = str(employee.org_unit_code or employee.department_code or '').strip()
     return kod, OrganizationalUnit.objects.filter(code=kod).first()
 
 
@@ -231,7 +231,8 @@ def pripremi_resenje(resenje):
         radno = (employee.position or employee.job_title or '').upper()
         resenje.radno_mesto = radno if resenje.pismo == Pismo.LATINICA else to_cyrillic(radno)
     resenje.oj_kod = kod
-    resenje.centar = (jedinica.center if jedinica else '') or ''
+    from fleet.services.employee_user_profiles import infer_center
+    resenje.centar = str((jedinica.center if jedinica else '') or '').strip() or infer_center(kod)[0]
     if resenje.potpisnik_id is None:
         resenje.potpisnik = Potpisnik.za_datum(resenje.datum_resenja or date.today())
     return resenje
@@ -284,7 +285,11 @@ def visible_resenja(user):
         return qs.none()
     if user.is_superuser or can_view_all(user):
         return qs
-    centri = dozvoljeni_centri(user)
-    if not centri:
+    from hr.access import allowed_unit_codes, scope_values, has_restricted_scope
+    from django.db.models import Q
+    from django.db.models.functions import Trim
+    centri, _ = scope_values(user)
+    if not has_restricted_scope(user):
         return qs.filter(created_by=user)
-    return qs.filter(centar__in=centri)
+    return qs.annotate(access_center=Trim('centar'), access_unit=Trim('oj_kod')).filter(
+        Q(access_center__in=centri) | Q(access_unit__in=allowed_unit_codes(user)))

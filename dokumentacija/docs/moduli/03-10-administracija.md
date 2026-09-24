@@ -45,8 +45,8 @@ Vodi **ko sme šta da radi u sistemu i šta je ko uradio**:
 
 | Celina | Šta obuhvata |
 |---|---|
-| **Korisnici** | Spisak, povezivanje sa zaposlenim, stvaranje naloga iz kadrovske evidencije |
-| **Uloge i dozvole** | 11 predefinisanih uloga; dozvole se generišu iz ruta |
+| **Korisnici** | Spisak, uređivanje pristupa, povezivanje sa zaposlenim, stvaranje naloga iz kadrovske evidencije |
+| **Uloge i dozvole** | Izbor uloga za korisnika i pregled pripadajućih dozvola; dozvole se generišu iz ruta |
 | **Organizacione jedinice** | Šifra, naziv, **centar** |
 | **Evidencija rada** | Ko, kada, koji ekran, koji zapis, sa koje IP adrese |
 | **Istorija zadataka** | Status, trajanje, rezultat i greška svakog pozadinskog posla |
@@ -60,6 +60,7 @@ Vodi **ko sme šta da radi u sistemu i šta je ko uradio**:
 | Ekran | Adresa |
 |---|---|
 | **Korisnici** | `/users/` |
+| **Uloge i dozvole korisnika** | `/users/<id>/access/` |
 | Povezivanje korisnika sa zaposlenim | `/users/link-employee/` |
 | **Stvaranje naloga za zaposlene** | `/users/create-missing-profiles/`, `/users/create-profile/<id>/` |
 | **Evidencija rada** | `/administracija/activity-log/` |
@@ -68,6 +69,13 @@ Vodi **ko sme šta da radi u sistemu i šta je ko uradio**:
 | Prijava / odjava | `/login/`, `/logout/` |
 | Obavezna promena lozinke | `/moj-profil/promena-lozinke/` |
 | Django admin | `/admin/` |
+
+Pregled **Korisnici** ima tabove **Korisnički nalozi** i **Zaposleni bez naloga**.
+Nalozi se pretražuju po imenu, korisničkom imenu, centru i OJ, uz filtere po ulozi
+i statusu. Brzi filteri izdvajaju naloge bez prijave, sa obaveznom promenom lozinke
+i bez veze sa zaposlenim. Tabela prikazuje uloge, obuhvat i poslednju prijavu;
+na telefonu se redovi prikazuju kao kartice. Administrator dugmetom **Uredi pristup**
+otvara dozvole, a **Poveži zaposlenog** otvara prozor za izbor zaposlenog.
 
 ---
 
@@ -124,6 +132,8 @@ Plus M2M tabele: `fleet_customuser_roles`, `fleet_customuser_allowed_centers`.
 
 **Provera [P]:** korisnik ima pristup ako ijedna njegova **aktivna** uloga sadrži kod
 jednak imenu rute koja se otvara. `is_superuser` prolazi svuda.
+I stariji `RoleRequiredMixin`, koji proverava slug uloge, od 24.09.2026. isključuje
+neaktivne uloge. Spisak korisnika sada traži dozvolu `user_list`.
 
 **Generisanje [P]:** `sync_permission_codes` obilazi `urlpatterns` svih aplikacija.
 Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u 01:00.
@@ -135,7 +145,7 @@ Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u
 
 > **[P]** Uloga **`uprava`** pri svakoj sinhronizaciji dobija **sve** dozvole u sistemu.
 
-### Jedanaest predefinisanih uloga [P]
+### Glavne predefinisane uloge [P]
 
 | Slug | Naziv |
 |---|---|
@@ -149,7 +159,38 @@ Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u
 | `pregled-naplate` | Pregled naplate |
 | `zahtev` | Zahtev |
 | `sekretarijat` | Sekretarijat |
+| `kadrovi` | Kadrovi — kompletan modul, podaci prema obuhvatu |
 | `zaposleni` | Zaposleni |
+
+### Upravljanje pristupom kroz aplikaciju
+
+U **Administracija → Korisnici → Uloge i dozvole**, superuser bira uloge,
+centre i kadrovske OJ iz pretraživih spiskova. Tu se menjaju ime, prezime,
+e-pošta i aktivnost naloga. Pregled dozvola prati izabrane uloge, a primena je
+tek nakon **Sačuvaj pristup**. Pristup listi traži `user_list`; izmene naloga su
+i dalje samo za superuser, uključujući direktan POST. Nije moguće ugasiti sopstveni
+nalog niti kroz ovu formu dodeliti `is_superuser` ili `is_staff`.
+
+Centri se čuvaju u `allowed_center_codes`. Kadrovske OJ (npr. 411 i 431) čuvaju
+se zasebno u `allowed_hr_unit_codes`; izbor jedne OJ ne uključuje njene susedne OJ.
+Postojeći M2M `allowed_centers` je u zasebnom odeljku jer sadrži i šifre poslova,
+a pojedini moduli iz njega izvode pristup celom centru. Dodele se sabiraju.
+
+Uloga **Kadrovi** zamenjuje `kadrovik-resenja`, uz očuvanje članstva i dodatnih
+dozvola. Ima funkcije celog modula i šifarnike, ali joj se automatski ne dodeljuju
+`hr:resenje_view_all` i `hr:evaluation_view_all`. Bez obuhvata nema tuđih kadrovskih
+podataka. Superuser i odgovarajuće posebne dozvole za sve centre imaju prednost.
+Za druge module prazan obuhvat zadržava njihova postojeća pravila; nije univerzalna
+zabrana pristupa. Obrasci to izričito prikazuju.
+
+Promena se evidentira u Activity logu sa prethodnim i novim ulogama, obuhvatom i
+aktivnošću. Pri uklanjanju uloge uklanja se i odgovarajuća stara Django grupa za
+Sekretarijat, Zaposlene ili Pregled naplate, kako je noćni sync ne bi ponovo dodelio.
+
+Provera od 24.09.2026. našla je i dodeljene probne uloge `render-check` i
+`render-check-2`. Nisu obrisane niti su njihovi korisnici menjani. Noćni sync za
+neke standardne uloge i dalje prepisuje skup dozvola; ovaj ekran menja članstvo
+korisnika, a ne definiciju zajedničke uloge.
 
 ---
 
@@ -193,7 +234,7 @@ Modul nema obračune. Ima dva pregleda:
 | Uloga | Šta može |
 |---|---|
 | `uprava` | Sve |
-| Superuser | Sve, uključujući Django admin i tuđe radne liste |
+| Superuser | Sve, uključujući Django admin i upravljanje pristupom korisnika kroz aplikaciju |
 
 > **Ranija zamka, ispravljena 18.09.2026.:** statistiku centra u Floti ni superuser nije
 > mogao da otvori bez upisanih dozvoljenih centara — [P-13](../10-poznati-problemi.md).

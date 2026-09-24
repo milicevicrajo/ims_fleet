@@ -5,7 +5,7 @@ from core.permissions import sync_pravna_resenja_permissions
 
 
 class Command(BaseCommand):
-    help = 'Dopunjava dozvole Pravne službe i rešenja zaposlenih, bez promene ostalih modula.'
+    help = 'Dopunjava Pravnu službu, rešenja Sekretarijata i objedinjenu ulogu Kadrovi.'
 
     def add_arguments(self, parser):
         parser.add_argument('--dry-run', action='store_true', help='Prikaži dopune bez čuvanja.')

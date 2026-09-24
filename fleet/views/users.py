@@ -5,14 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Case, Count, IntegerField, Max, Q, Sum, When
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 
 from core.mixins import RolePermissionRequiredMixin
-from core.models import ActivityLog, CustomUser, TaskHistory
+from core.models import ActivityLog, CustomUser, TaskHistory, Role
+from core.user_access import UserAccessForm, permission_label
 from fleet.models import Employee
 from fleet.services.employee_user_profiles import (
     create_user_profile_for_employee,
@@ -25,7 +26,7 @@ def _require_superuser(request):
         raise PermissionDenied("Samo superuser moze da upravlja korisnickim profilima.")
 
 
-class UserListView(LoginRequiredMixin, ListView):
+class UserListView(LoginRequiredMixin, RolePermissionRequiredMixin, ListView):
     model = CustomUser
     template_name = "fleet/user_list.html"
     context_object_name = "users"
@@ -37,22 +38,23 @@ class UserListView(LoginRequiredMixin, ListView):
             .order_by("username")
         )
         for user in users:
-            role_names = [role.name for role in user.roles.all()]
+            role_names = [role.name + ('' if role.is_active else ' (neaktivna)') for role in user.roles.all()]
             center_codes = [
                 part.strip()
-                for part in (user.allowed_center_codes or "").split(",")
+                for part in (user.allowed_center_codes or "").replace(';', ',').split(",")
                 if part.strip()
             ]
             unit_centers = sorted(
                 {
                     str(center or "").strip()
-                    for center in user.allowed_centers.values_list("center", flat=True)
+                    for center in (unit.center for unit in user.allowed_centers.all())
                     if str(center or "").strip()
                 }
             )
             all_centers = sorted(set(center_codes + unit_centers), key=lambda value: (len(value), value))
             user.roles_display = ", ".join(role_names) or "-"
             user.centers_display = ", ".join(all_centers) or "-"
+            user.hr_units_display = ', '.join(user.allowed_hr_unit_codes or [])
             user.login_status_display = "Ulazio" if user.last_login else "Nije ulazio"
             user.password_status_display = (
                 "Nije promenio inicijalnu lozinku"
@@ -72,6 +74,8 @@ class UserListView(LoginRequiredMixin, ListView):
         context.update(
             {
                 "title": "Korisnici",
+                "sidebar_template": "sidebar_administracija.html",
+                "current_app": "administracija",
                 "total_users": len(users),
                 "linked_users": sum(1 for user in users if user.employee_id),
                 "users_logged_in": sum(1 for user in users if user.last_login),
@@ -83,9 +87,30 @@ class UserListView(LoginRequiredMixin, ListView):
                 "can_manage_user_profiles": self.request.user.is_superuser,
                 "link_employee_options": active_without_profile,
                 "unlinked_users_count": len(unlinked_users),
+                "role_options": Role.objects.filter(users__in=users).distinct().order_by('name'),
             }
         )
         return context
+
+
+@login_required
+def user_access_edit_view(request, pk):
+    _require_superuser(request)
+    account = get_object_or_404(CustomUser, pk=pk)
+    form = UserAccessForm(request.POST if request.method == 'POST' else None, instance=account, actor=request.user)
+    if request.method == 'POST' and form.is_valid():
+        form.save(request=request)
+        messages.success(request, f'Pristup korisnika {account.username} je sačuvan.')
+        return redirect('user_access_edit', pk=account.pk)
+    role_rows = []
+    for role in Role.objects.prefetch_related('permissions').order_by('name'):
+        role_rows.append({'id':str(role.pk), 'name':role.name, 'active':role.is_active,
+            'description':role.description or '',
+            'permissions':[{'code':p.code, 'label':permission_label(p)} for p in sorted(role.permissions.all(),key=lambda p:p.code)]})
+    return render(request, 'fleet/user_access_form.html', {
+        'form':form, 'account':account, 'role_rows':role_rows,
+        'title':f'Pristup korisnika {account.username}', 'sidebar_template':'sidebar_administracija.html', 'current_app':'administracija',
+    })
 
 
 @login_required

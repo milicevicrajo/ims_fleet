@@ -1936,7 +1936,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Kadrovska služba** | Vodi zaposlene, uvozi bolovanja, sinhronizuje odmore, održava šifarnike |
 | **Neposredni rukovodilac** | Ocenjuje zaposlene svoje organizacione jedinice |
 | **Direktor centra i generalni direktor** | Daju saglasnost na ocene |
-| **Superuser** | Jedini može otvoriti **tuđu** radnu listu |
+| **Kadrovi i superuser** | Radne liste drugih zaposlenih u dozvoljenom obuhvatu |
 
 ---
 
@@ -2138,21 +2138,32 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 **Posebna pravila [P]:**
 
-- **Sekretarijat** i **Kadrovik — rešenja** dobijaju operativne dozvole za rešenja:
+- **Sekretarijat** dobija operativne dozvole za rešenja:
   listu, detalj, unos i izmenu nacrta, brisanje, predlog teksta, izdavanje, storniranje,
   pojedinačnu i grupnu štampu i grupni unos. Sinhronizacija dopunjava ove uloge bez
   menjanja njihovih korisnika. Uloga **Pregled** time ne dobija pravo unosa rešenja.
-- Šifrarnici rešenja i potpisnika i `hr:resenje_view_all` pri sinhronizaciji se dodeljuju
-  **Upravi**; operativne uloge zadržavaju postojeća ograničenja po centrima.
+- **Kadrovi** (`kadrovi`) zamenjuju ulogu **Kadrovik — rešenja**, zadržavaju njene korisnike
+  i dobijaju sve funkcije kadrovskog modula, uključujući šifarnike. Podaci se ograničavaju
+  centrima i kadrovskim OJ iz korisničkog profila; kod `hr:kadrovi_manage` omogućava
+  pregled i ocenjivanje zaposlenih u tom obuhvatu. Bez obuhvata nema tuđih podataka.
+- `hr:resenje_view_all` i `hr:evaluation_view_all` ostaju posebne dozvole za sve centre;
+  kompletna uloga Kadrovi ih ne dobija automatski.
 - Bez dozvole `hr:evaluation_view_all`, rukovodilac ocenjuje **samo zaposlene svojih OJ**.
 - Ocenu vidi onaj ko ju je napravio **ili** je na njoj imenovan kao ocenjivač.
 - Saglasnost daje **isključivo imenovani ocenjivač sa svog naloga**.
-- Tuđu radnu listu otvara **samo superuser** — ne postoji uloga za to.
+- Tuđu radnu listu otvara superuser ili korisnik sa `hr:employee_work_time_sheet`,
+  samo za zaposlene u svom obuhvatu. Direktan URL i štampa imaju istu proveru obuhvata.
 - Korisnik bez povezanog zaposlenog **ne može** otvoriti radnu listu.
-- Bez dozvole `hr:resenje_view_all`, kadrovik vidi rešenja **samo svojih centara**
-  (`CustomUser.allowed_center_codes` i `allowed_centers`); bez ijednog dodeljenog centra
-  vidi **samo rešenja koja je sam uneo**.
+- Bez dozvole `hr:resenje_view_all`, korisnik vidi rešenja dodeljenih centara i OJ
+  prema snimljenim šiframa na rešenju. Uloga Kadrovi bez obuhvata ne vidi tuđe podatke.
+  Za ranije operativne uloge bez obuhvata ostaje pravilo: samo sopstvena rešenja.
 - **Izdato rešenje se više ne menja** — ispravka ide preko storniranja i novog rešenja.
+
+Od 24.09.2026. `hr/access.py` ograničava spisak, detalje i izmenu zaposlenih, radne liste,
+odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i pojedinačni
+unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Kadrovske OJ biraju se
+u Administracija → Korisnici → Uloge i dozvole. Ograničenja podataka ne menjaju obračune
+ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
 
 #### Unos i štampa rešenja zaposlenih
 
@@ -4465,8 +4476,8 @@ Vodi **ko sme šta da radi u sistemu i šta je ko uradio**:
 
 | Celina | Šta obuhvata |
 |---|---|
-| **Korisnici** | Spisak, povezivanje sa zaposlenim, stvaranje naloga iz kadrovske evidencije |
-| **Uloge i dozvole** | 11 predefinisanih uloga; dozvole se generišu iz ruta |
+| **Korisnici** | Spisak, uređivanje pristupa, povezivanje sa zaposlenim, stvaranje naloga iz kadrovske evidencije |
+| **Uloge i dozvole** | Izbor uloga za korisnika i pregled pripadajućih dozvola; dozvole se generišu iz ruta |
 | **Organizacione jedinice** | Šifra, naziv, **centar** |
 | **Evidencija rada** | Ko, kada, koji ekran, koji zapis, sa koje IP adrese |
 | **Istorija zadataka** | Status, trajanje, rezultat i greška svakog pozadinskog posla |
@@ -4480,6 +4491,7 @@ Vodi **ko sme šta da radi u sistemu i šta je ko uradio**:
 | Ekran | Adresa |
 |---|---|
 | **Korisnici** | `/users/` |
+| **Uloge i dozvole korisnika** | `/users/<id>/access/` |
 | Povezivanje korisnika sa zaposlenim | `/users/link-employee/` |
 | **Stvaranje naloga za zaposlene** | `/users/create-missing-profiles/`, `/users/create-profile/<id>/` |
 | **Evidencija rada** | `/administracija/activity-log/` |
@@ -4488,6 +4500,13 @@ Vodi **ko sme šta da radi u sistemu i šta je ko uradio**:
 | Prijava / odjava | `/login/`, `/logout/` |
 | Obavezna promena lozinke | `/moj-profil/promena-lozinke/` |
 | Django admin | `/admin/` |
+
+Pregled **Korisnici** ima tabove **Korisnički nalozi** i **Zaposleni bez naloga**.
+Nalozi se pretražuju po imenu, korisničkom imenu, centru i OJ, uz filtere po ulozi
+i statusu. Brzi filteri izdvajaju naloge bez prijave, sa obaveznom promenom lozinke
+i bez veze sa zaposlenim. Tabela prikazuje uloge, obuhvat i poslednju prijavu;
+na telefonu se redovi prikazuju kao kartice. Administrator dugmetom **Uredi pristup**
+otvara dozvole, a **Poveži zaposlenog** otvara prozor za izbor zaposlenog.
 
 ---
 
@@ -4544,6 +4563,8 @@ Plus M2M tabele: `fleet_customuser_roles`, `fleet_customuser_allowed_centers`.
 
 **Provera [P]:** korisnik ima pristup ako ijedna njegova **aktivna** uloga sadrži kod
 jednak imenu rute koja se otvara. `is_superuser` prolazi svuda.
+I stariji `RoleRequiredMixin`, koji proverava slug uloge, od 24.09.2026. isključuje
+neaktivne uloge. Spisak korisnika sada traži dozvolu `user_list`.
 
 **Generisanje [P]:** `sync_permission_codes` obilazi `urlpatterns` svih aplikacija.
 Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u 01:00.
@@ -4555,7 +4576,7 @@ Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u
 
 > **[P]** Uloga **`uprava`** pri svakoj sinhronizaciji dobija **sve** dozvole u sistemu.
 
-#### Jedanaest predefinisanih uloga [P]
+#### Glavne predefinisane uloge [P]
 
 | Slug | Naziv |
 |---|---|
@@ -4569,7 +4590,38 @@ Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u
 | `pregled-naplate` | Pregled naplate |
 | `zahtev` | Zahtev |
 | `sekretarijat` | Sekretarijat |
+| `kadrovi` | Kadrovi — kompletan modul, podaci prema obuhvatu |
 | `zaposleni` | Zaposleni |
+
+#### Upravljanje pristupom kroz aplikaciju
+
+U **Administracija → Korisnici → Uloge i dozvole**, superuser bira uloge,
+centre i kadrovske OJ iz pretraživih spiskova. Tu se menjaju ime, prezime,
+e-pošta i aktivnost naloga. Pregled dozvola prati izabrane uloge, a primena je
+tek nakon **Sačuvaj pristup**. Pristup listi traži `user_list`; izmene naloga su
+i dalje samo za superuser, uključujući direktan POST. Nije moguće ugasiti sopstveni
+nalog niti kroz ovu formu dodeliti `is_superuser` ili `is_staff`.
+
+Centri se čuvaju u `allowed_center_codes`. Kadrovske OJ (npr. 411 i 431) čuvaju
+se zasebno u `allowed_hr_unit_codes`; izbor jedne OJ ne uključuje njene susedne OJ.
+Postojeći M2M `allowed_centers` je u zasebnom odeljku jer sadrži i šifre poslova,
+a pojedini moduli iz njega izvode pristup celom centru. Dodele se sabiraju.
+
+Uloga **Kadrovi** zamenjuje `kadrovik-resenja`, uz očuvanje članstva i dodatnih
+dozvola. Ima funkcije celog modula i šifarnike, ali joj se automatski ne dodeljuju
+`hr:resenje_view_all` i `hr:evaluation_view_all`. Bez obuhvata nema tuđih kadrovskih
+podataka. Superuser i odgovarajuće posebne dozvole za sve centre imaju prednost.
+Za druge module prazan obuhvat zadržava njihova postojeća pravila; nije univerzalna
+zabrana pristupa. Obrasci to izričito prikazuju.
+
+Promena se evidentira u Activity logu sa prethodnim i novim ulogama, obuhvatom i
+aktivnošću. Pri uklanjanju uloge uklanja se i odgovarajuća stara Django grupa za
+Sekretarijat, Zaposlene ili Pregled naplate, kako je noćni sync ne bi ponovo dodelio.
+
+Provera od 24.09.2026. našla je i dodeljene probne uloge `render-check` i
+`render-check-2`. Nisu obrisane niti su njihovi korisnici menjani. Noćni sync za
+neke standardne uloge i dalje prepisuje skup dozvola; ovaj ekran menja članstvo
+korisnika, a ne definiciju zajedničke uloge.
 
 ---
 
@@ -4613,7 +4665,7 @@ Modul nema obračune. Ima dva pregleda:
 | Uloga | Šta može |
 |---|---|
 | `uprava` | Sve |
-| Superuser | Sve, uključujući Django admin i tuđe radne liste |
+| Superuser | Sve, uključujući Django admin i upravljanje pristupom korisnika kroz aplikaciju |
 
 > **Ranija zamka, ispravljena 18.09.2026.:** statistiku centra u Floti ni superuser nije
 > mogao da otvori bez upisanih dozvoljenih centara — [P-13](#10-poznati-problemi-i-ograničenja).
@@ -4766,6 +4818,7 @@ Zamenjuje Django `User` (`AUTH_USER_MODEL = 'fleet.CustomUser'`). [P]
 |---|---|
 | `employee_id` | Veza 1:1 ka `fleet_employee` — povezuje nalog sa zaposlenim |
 | `allowed_center_codes` | Šifre centara, odvojene zarezima |
+| `allowed_hr_unit_codes` | JSON lista kadrovskih OJ; pojedinačna ograničenja za modul Kadrovi |
 | `must_change_password` | Prisiljava promenu lozinke pri prijavi |
 | M2M `fleet_customuser_allowed_centers` | Dozvoljene organizacione jedinice |
 | M2M `fleet_customuser_roles` | Dodeljene uloge |
@@ -17502,10 +17555,25 @@ Za ciljanu dopunu novih ekrana Pravne službe i rešenja zaposlenih:
 ```
 
 Komanda dodaje sve rute `pravna:*` ulozi **Pravna služba**, operativne dozvole
-`hr:resenje_*` ulogama **Sekretarijat** i **Kadrovik — rešenja**, a sve ove kodove
-**Upravi**. Šifrarnici i pregled svih centara nisu deo operativnih dozvola.
+`hr:resenje_*` ulozi **Sekretarijat**, a ove kodove **Upravi**. Uloga **Kadrovi**
+zamenjuje **Kadrovik — rešenja** i dobija funkcije celog kadrovskog modula, uključujući
+šifarnike, uz ograničenje podataka po dodeljenom obuhvatu. Posebne dozvole za sve centre
+ne dodaju se ulozi Kadrovi.
 Postojeće dozvole i članstva korisnika ostaju sačuvani. Ista dopuna je uključena
 u redovni `sync_permission_codes`.
+
+Za ekran upravljanja korisničkim pristupom od 24.09.2026. primeniti migraciju
+`fleet.0081_customuser_allowed_hr_unit_codes`, pa ciljanu komandu:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py migrate fleet 0081
+.\.venv\Scripts\python.exe manage.py sync_user_access_permissions --dry-run
+.\.venv\Scripts\python.exe manage.py sync_user_access_permissions
+```
+
+Ona usklađuje samo ulogu Kadrovi i kodove administracije korisnika, bez redovnog
+prepisivanja dozvola drugih standardnih uloga. Posle isporuke koda restartovati web
+proces i radnike koji učitavaju `core.permissions`, da stari kod ne bi vratio staru ulogu.
 
 ---
 

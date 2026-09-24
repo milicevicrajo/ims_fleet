@@ -11,6 +11,7 @@ from django.views.generic import TemplateView
 
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from core.models import OrganizationalUnit
+from hr.access import visible_employees
 from hr.models import Employee, Pismo, Potpisnik, Resenje, ResenjeDan, VrstaResenja
 from hr.resenja_forms import (GrupnoResenjeForm, PotpisnikForm, ResenjeDanFormSet, ResenjeForm,
     VrstaResenjaForm, predlog_teksta)
@@ -78,6 +79,8 @@ class ResenjeFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateV
     def get_context_data(self, **kwargs):
         resenje = kwargs.pop('instance', None) or self.get_object()
         form = kwargs.pop('form', None) or ResenjeForm(instance=resenje)
+        form.fields['zaposleni'].queryset = visible_employees(self.request.user,
+            unrestricted=user_has_role_permission(self.request.user, 'hr:resenje_view_all')).filter(is_active=True)
         formset = kwargs.pop('formset', None) or ResenjeDanFormSet(instance=resenje)
         ctx = super().get_context_data(**kwargs)
         ctx.update(title='Izmena rešenja' if resenje else 'Novo rešenje', sidebar_template=SIDEBAR,
@@ -88,6 +91,8 @@ class ResenjeFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateV
     def post(self, request, *args, **kwargs):
         resenje = self.get_object()
         form = ResenjeForm(request.POST, instance=resenje)
+        form.fields['zaposleni'].queryset = visible_employees(request.user,
+            unrestricted=user_has_role_permission(request.user, 'hr:resenje_view_all')).filter(is_active=True)
         if not form.is_valid():
             formset = ResenjeDanFormSet(request.POST, instance=resenje)
             formset.is_valid()
@@ -187,7 +192,8 @@ def resenje_obrisi(request, pk):
 @role_permission_required('hr:resenje_create')
 def resenje_predlog(request):
     """Predlog imena i organizacione jedinice za izabranog zaposlenog i pismo."""
-    employee = Employee.objects.filter(pk=request.GET.get('zaposleni')).first()
+    employee = visible_employees(request.user,
+        unrestricted=user_has_role_permission(request.user, 'hr:resenje_view_all')).filter(pk=request.GET.get('zaposleni')).first()
     if employee is None:
         return JsonResponse({'zaposleni_tekst': '', 'oj_naziv': ''})
     pismo = request.GET.get('pismo') or Pismo.CIRILICA
@@ -199,14 +205,10 @@ class ResenjeBulkCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, Tem
 
     def zaposleni(self):
         centar = self.request.GET.get('centar') or self.request.POST.get('centar') or ''
-        qs = Employee.objects.filter(is_active=True).order_by('last_name', 'first_name')
-        dozvoljeni = dozvoljeni_centri(self.request.user)
-        centri = [centar] if centar else dozvoljeni
-        if not self.request.user.is_superuser and dozvoljeni:
-            centri = [kod for kod in centri if kod in dozvoljeni] or dozvoljeni
-        if centri:
-            kodovi = OrganizationalUnit.objects.filter(center__in=centri).values_list('code', flat=True)
-            qs = qs.filter(org_unit_code__in=list(kodovi))
+        qs = visible_employees(self.request.user,
+            unrestricted=user_has_role_permission(self.request.user, 'hr:resenje_view_all')).filter(is_active=True).order_by('last_name', 'first_name')
+        if centar:
+            qs = qs.filter(pk__in=visible_employees(self.request.user, extra_centers=[centar]))
         return centar, qs
 
     def get_context_data(self, **kwargs):
@@ -234,6 +236,9 @@ class ResenjeBulkCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, Tem
         data = form.cleaned_data
         _, dostupni = self.zaposleni()
         izabrani = list(dostupni.filter(pk__in=oznake))
+        if len(izabrani) != len(set(oznake)):
+            messages.error(request, 'Izbor sadrži zaposlene van dozvoljenog obuhvata.')
+            return self.render_to_response(self.get_context_data(form=form))
         # Samo `broj_<pk>`; polje forme `broj_radnih_dana` ima isti početak i ne sme da uđe ovde.
         brojevi = {kljuc[len('broj_'):]: vrednost.strip() for kljuc, vrednost in request.POST.items()
                    if kljuc.startswith('broj_') and kljuc[len('broj_'):].isdigit() and vrednost.strip()}

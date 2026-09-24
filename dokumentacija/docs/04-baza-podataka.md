@@ -94,6 +94,7 @@ Zamenjuje Django `User` (`AUTH_USER_MODEL = 'fleet.CustomUser'`). [P]
 |---|---|
 | `employee_id` | Veza 1:1 ka `fleet_employee` — povezuje nalog sa zaposlenim |
 | `allowed_center_codes` | Šifre centara, odvojene zarezima |
+| `allowed_hr_unit_codes` | JSON lista kadrovskih OJ; pojedinačna ograničenja za modul Kadrovi |
 | `must_change_password` | Prisiljava promenu lozinke pri prijavi |
 | M2M `fleet_customuser_allowed_centers` | Dozvoljene organizacione jedinice |
 | M2M `fleet_customuser_roles` | Dodeljene uloge |

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <div><h2 class="mb-1">{{ account.username }}</h2><p class="text-muted mb-0">Uloge i pristup podacima{% if account.employee %} · {{ account.employee }}{% endif %}</p></div>
+  <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">Nazad na korisnike</a>
+</div>
+{% if account.is_superuser %}<div class="alert alert-info">Ovaj nalog je superuser i ima pristup svim funkcijama i podacima, bez obzira na izbor ispod.</div>{% endif %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card shadow-sm"><div class="card-header"><h4 class="mb-0">Korisnički nalog</h4></div><div class="card-body">
+        <div class="row g-3">{% for field in form %}{% if field.name == 'first_name' or field.name == 'last_name' or field.name == 'email' %}
+          <div class="col-md-4"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>
+        {% endif %}{% endfor %}</div>
+        <div class="form-check mt-3">{{ form.is_active }}<label class="form-check-label" for="{{ form.is_active.id_for_label }}">Aktivan nalog</label>{{ form.is_active.errors }}</div>
+      </div></div>
+      <div class="card shadow-sm"><div class="card-header"><h4 class="mb-0">Uloge</h4></div><div class="card-body">
+        <label class="form-label" for="id_roles">Izaberite jednu ili više uloga</label>{{ form.roles }}{{ form.roles.errors }}
+        <p class="text-muted small mt-2 mb-0">Dozvole aktivnih uloga se sabiraju. Kadrovi obuhvataju ceo kadrovski modul. Promena važi za ovog korisnika.</p>
+      </div></div>
+      <div class="card shadow-sm"><div class="card-header"><h4 class="mb-0">Obuhvat podataka</h4></div><div class="card-body">
+        <div class="d-flex justify-content-between"><label class="form-label" for="id_center_codes">Centri</label><button type="button" class="btn btn-link btn-sm p-0" data-select-all="id_center_codes">Izaberi sve centre</button></div>{{ form.center_codes }}{{ form.center_codes.errors }}
+        <p class="text-muted small mt-2">Centar daje pristup pripadajućim jedinicama. Pretražite šifru i dodajte više centara.</p>
+        <label class="form-label" for="id_hr_unit_codes">Kadrovske organizacione jedinice</label>{{ form.hr_unit_codes }}{{ form.hr_unit_codes.errors }}
+        <p class="text-muted small mt-2">Pojedinačne OJ zaposlenih, npr. 411 ili 431. Dodaju se izabranim centrima. Za pristup samo jednoj OJ nemojte izabrati i njen ceo centar.</p>
+        <details class="mt-3" {% if form.allowed_centers.errors %}open{% endif %}><summary>Organizacione jedinice i poslovi iz postojećeg šifarnika</summary>
+          <div class="mt-2">{{ form.allowed_centers }}{{ form.allowed_centers.errors }}</div>
+          <p class="text-muted small mt-2">Postojeće dodele za Flotu i druge module. Neki moduli iz ove dodele izvode pristup celom centru; ovo nije isto što i kadrovska OJ.</p>
+        </details>
+        <p class="small text-muted mt-3 mb-0">Kadrovi bez izabranog obuhvata nemaju pristup tuđim kadrovskim podacima. Posebne dozvole za sve centre imaju prednost. Kod ostalih modula prazan izbor prati njihova postojeća pravila i ne znači automatski zabranu.</p>
+      </div></div>
+      <div class="d-flex gap-2 mb-4"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj pristup</button><a href="{% url 'user_list' %}" class="btn btn-outline-secondary">Odustani</a></div>
+    </div>
+    <div class="col-lg-4"><div class="card shadow-sm"><div class="card-header"><h4 class="mb-0">Dozvole izabranih uloga</h4></div><div class="card-body">
+      <p class="text-muted small">Pregled se menja sa izborom uloga. Izmene se primenjuju tek nakon čuvanja.</p>
+      <div id="role-preview" aria-live="polite"></div>
+    </div></div></div>
+  </div>
+</form>
+{{ role_rows|json_script:"role-access-data" }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const roles = JSON.parse(document.getElementById('role-access-data').textContent);
+  const select = document.getElementById('id_roles');
+  const preview = document.getElementById('role-preview');
+  document.querySelectorAll('[data-select-all]').forEach(button => button.addEventListener('click', () => {
+    const field = document.getElementById(button.dataset.selectAll);
+    Array.from(field.options).forEach(option => { option.selected = true; });
+    if (window.jQuery) window.jQuery(field).trigger('change');
+    else field.dispatchEvent(new Event('change'));
+  }));
+  function update() {
+    preview.replaceChildren();
+    const ids = new Set(Array.from(select.selectedOptions, option => option.value));
+    const selected = roles.filter(role => ids.has(role.id));
+    if (!selected.length) { preview.textContent = 'Nijedna uloga nije izabrana.'; return; }
+    selected.forEach(role => {
+      const block = document.createElement('details'); block.className = 'mb-3';
+      const title = document.createElement('summary');
+      title.textContent = role.name + (role.active ? ' · ' + role.permissions.length + ' dozvola' : ' · neaktivna');
+      block.append(title);
+      const description = document.createElement('p'); description.className = 'small text-muted mt-2'; description.textContent = role.description; block.append(description);
+      if (role.active && role.permissions.some(p => p.code.endsWith('view_all'))) {
+        const warning = document.createElement('p'); warning.className = 'text-warning small';
+        warning.textContent = 'Ova uloga ima posebne dozvole za sve centre. Proverite njihov obuhvat u spisku ispod.';block.append(warning);
+      }
+      const list = document.createElement('ul'); list.className = 'small ps-3'; list.style.overflowWrap = 'anywhere';
+      role.permissions.forEach(permission => {const li = document.createElement('li');li.textContent = permission.label;list.append(li);});
+      block.append(list);preview.append(block);
+    });
+  }
+  select.addEventListener('change', update);
+  if (window.jQuery) window.jQuery(select).on('change', update);
+  update();
+});
+</script>
+{% endblock %}

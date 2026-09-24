@@ -101,6 +101,7 @@ def collect_permission_codes():
     codes.update(collect_url_pattern_names(hr_urls.urlpatterns, prefix="hr"))
     codes.add('hr:evaluation_view_all')
     codes.add('hr:resenje_view_all')
+    codes.add('hr:kadrovi_manage')
     codes.update(collect_naplata_permission_codes())
     codes.update(collect_nabavka_permission_codes())
     codes.update(collect_menice_permission_codes())
@@ -128,7 +129,6 @@ def sync_pravna_resenja_permissions():
         ('uprava', 'Uprava', pravna_codes | resenja_codes),
         ('pravna', 'Pravna sluzba', pravna_codes),
         ('sekretarijat', 'Sekretarijat', operational_codes),
-        ('kadrovik-resenja', 'Kadrovik — rešenja', operational_codes),
     )
     permissions = {}
     created = 0
@@ -144,7 +144,38 @@ def sync_pravna_resenja_permissions():
             _, is_new = RolePermission.objects.get_or_create(role=role, permission=permissions[code])
             added += is_new
         grants[slug] = added
-    return {'created': created, 'grants': grants}
+    kadrovi = sync_kadrovi_permissions()
+    grants['kadrovi'] = kadrovi['granted']
+    return {'created': created + kadrovi['created'], 'grants': grants}
+
+
+@transaction.atomic
+def sync_kadrovi_permissions():
+    """Jedna uloga za ceo modul; čuva članstvo i ranije dodatne dozvole."""
+    from hr.permissions import collect_kadrovi_permission_codes
+
+    old = Role.objects.filter(slug='kadrovik-resenja').first()
+    role = Role.objects.filter(slug='kadrovi').first() or Role.objects.filter(name='Kadrovi').first()
+    if role is None:
+        role = old or Role(name='Kadrovi', slug='kadrovi')
+    role.name = 'Kadrovi'
+    role.slug = 'kadrovi'
+    role.description = 'Ceo modul Kadrovi: zaposleni, radne liste, odmori, bolovanja, ocenjivanje, rešenja i šifarnici. Podaci prema dodeljenom obuhvatu.'
+    role.save()
+    merged_users = 0
+    if old and old.pk != role.pk:
+        for user in old.users.all():
+            user.roles.add(role)
+            merged_users += 1
+        role.permissions.add(*old.permissions.all())
+        old.delete()
+    created = granted = 0
+    for code in collect_kadrovi_permission_codes():
+        permission, is_new = PermissionCode.objects.get_or_create(code=code)
+        created += is_new
+        _, is_new = RolePermission.objects.get_or_create(role=role, permission=permission)
+        granted += is_new
+    return {'created': created, 'granted': granted, 'merged_users': merged_users, 'role': role}
 
 
 def sync_permission_codes():
