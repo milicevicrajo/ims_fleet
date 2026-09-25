@@ -16,11 +16,11 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.models import OrganizationalUnit, PermissionCode, Role, RolePermission
-from finansije.models import FinanceJob
+from finansije.models import FinanceJob, LedgerEntry
 from fleet.models import FuelConsumption, JobCode, Lease, ProcurementRequest, PutniNalog, VehicleTravelOrder
 from fleet.test_vehicle_onboarding import vehicle
 from hr.models import Employee
-from organizacija.models import ExternalOrgMapping
+from organizacija.models import ExternalOrgMapping, OrgNode, OrgNodeVersion
 from organizacija.services import flota
 from organizacija.services.importer import run_import
 from organizacija.tests import ImportTestCase
@@ -663,9 +663,10 @@ class CitanjeRegistraUFlotiTests(FlotaTestCase):
         self.assertIn(("430111", "430111 — Strucni nadzor · centar 43"), filter_naloga.filters["job_code"].extra["choices"])
         kartice = TrafficCardFilterForm()
         self.assertIn(("41", "41 — Centar za materijale"), kartice.fields["center"].choices)
-        # Filter po postojecim dodelama nudi i neaktivne sifre iz registra, ali ne i sifre van registra.
-        self.assertIn(self.neaktivna, kartice.fields["organizational_unit"].queryset)
+        # Odluka 25.09.2026.: neaktivne sifre se ne nude nigde, ni u filteru; ni sifre van registra.
+        self.assertNotIn(self.neaktivna, kartice.fields["organizational_unit"].queryset)
         self.assertNotIn(self.test_centar, kartice.fields["organizational_unit"].queryset)
+        self.assertIn(self.nadzor, kartice.fields["organizational_unit"].queryset)
 
     def test_kontrolna_tabla_imenuje_centar(self):
         from fleet.support.fleet_snapshot import fleet_snapshot
@@ -679,12 +680,14 @@ class CitanjeRegistraUFlotiTests(FlotaTestCase):
         from core.user_access import UserAccessForm
 
         admin = get_user_model().objects.create_superuser("prava-admin", "p@example.com", "x")
+        admin.allowed_centers.add(self.test_centar)  # vec dodeljeno pravo, sifra van registra
         forma = UserAccessForm(instance=admin, actor=admin)
         self.assertIn(("43", "Centar 43 — Centar za puteve i geotehniku"), forma.fields["center_codes"].choices)
         self.assertEqual(forma.fields["allowed_centers"].label_from_instance(self.nadzor),
                          "430111 — Strucni nadzor · centar 43")
-        # Postojeca prava ne nestaju: nude se sve jedinice, i one van registra.
+        # Postojeca prava ne nestaju: vec dodeljena ostaje u izboru, a neaktivne se ne nude.
         self.assertIn(self.test_centar, forma.fields["allowed_centers"].queryset)
+        self.assertNotIn(self.neaktivna, forma.fields["allowed_centers"].queryset)
 
     def test_forme_ne_prikazuju_polje_org_node(self):
         from fleet.forms.fuel import FuelConsumptionForm
@@ -759,11 +762,13 @@ class NabavkaURegistruTests(FlotaTestCase):
         neaktivna = OrganizationalUnit.objects.create(code="431112", name="Terenske lab.", center="43")
         run_import(company=1)
         veza = ProcurementInvoiceJobCodeLinkForm(invoice=self.faktura).fields["job_code"]
-        self.assertIn(neaktivna, veza.queryset)            # fakture: i neaktivne sifre
-        self.assertNotIn(self.test_centar, veza.queryset)  # ali ne i sifre van registra
+        # Odluka 25.09.2026.: neaktivne sifre se ne nude ni za povezivanje fakture.
+        self.assertNotIn(neaktivna, veza.queryset)
+        self.assertNotIn(self.test_centar, veza.queryset)
         self.assertEqual(veza.label_from_instance(self.nadzor), "430111 — Strucni nadzor · centar 43")
         filter_predmeta = ProcurementCaseFilter(data={}, queryset=ProcurementCase.objects.all())
-        self.assertIn(neaktivna, filter_predmeta.form.fields["job_code"].queryset)
+        self.assertNotIn(neaktivna, filter_predmeta.form.fields["job_code"].queryset)
+        self.assertIn(self.nadzor, filter_predmeta.form.fields["job_code"].queryset)
 
 
 class FinansijeURegistruTests(ImportTestCase):
@@ -872,3 +877,53 @@ class PotrazivanjaURegistruTests(ImportTestCase):
         zbirovi = {z["kljuc"]: z for z in flota.povezi(modul="potrazivanja")}
         self.assertEqual(zbirovi["stavke"]["postavljeno"], 1)
         self.assertEqual(ReceivablePosting.objects.get().org_node_id, cvor("436111"))
+
+
+class NeaktivneSifreIGarazaTests(ImportTestCase):
+    """Odluke 25.09.2026.: neaktivne sifre se ne nude u Finansijama; Garaza ima celu firmu."""
+
+    def setUp(self):
+        super().setUp()
+        run_import(company=1)
+
+    def test_finansije_ne_nude_neaktivne_sifre(self):
+        from finansije.forms import ReportFilters
+        from finansije.models import FinanceJob, LedgerEntry
+
+        forma = ReportFilters({}, jobs=FinanceJob.objects.all(), entries=LedgerEntry.objects.all())
+        sifre = {c for c, _ in forma.fields["job"].choices}
+        self.assertIn("430111", sifre)
+        self.assertNotIn("431112", sifre)  # neaktivna u izvoru
+        izabrana = ReportFilters({"job": "431112"}, jobs=FinanceJob.objects.all(), entries=LedgerEntry.objects.all())
+        self.assertIn("431112", {c for c, _ in izabrana.fields["job"].choices})  # izabrana ostaje
+
+    def test_izvestaj_po_siframa_prikazuje_samo_aktivne(self):
+        from finansije.models import FinanceJob, LedgerEntry
+        from finansije.services.reports import grouped_report
+
+        self._ledger("431112", "43")  # neaktivna sifra sa prometom
+        totals, rows = grouped_report(LedgerEntry.objects.all(), FinanceJob.objects.all(), {"group": "job"})
+        self.assertNotIn("431112", {r["code"] for r in rows})
+        self.assertEqual(totals["count"], sum(r["count"] for r in rows))  # zbir se slaze sa redovima
+        # Izvestaj po centrima ostaje ceo.
+        totals_c, _ = grouped_report(LedgerEntry.objects.all(), FinanceJob.objects.all(), {"group": "center"})
+        self.assertEqual(totals_c["count"], LedgerEntry.objects.count())
+
+    def test_sinhronizacija_gasi_sifre_bez_prometa(self):
+        from organizacija.services import sync
+
+        sync.sinhronizuj()
+        aktivne = set(OrgNodeVersion.objects.filter(valid_to__isnull=True, node__level=OrgNode.LEVEL_JOB,
+                                                    is_active=True).values_list("full_code", flat=True))
+        knjizene = set(LedgerEntry.objects.values_list("job_code", flat=True))
+        self.assertTrue(aktivne)
+        self.assertLessEqual(aktivne, knjizene)
+
+    def test_garaza_dobija_celu_firmu(self):
+        from organizacija.models import DodelaUloge
+        from organizacija.services import prava
+
+        korisnik = get_user_model().objects.create_user("garaza-korisnik", password="x")
+        korisnik.roles.add(Role.objects.get_or_create(slug="garaza", defaults={"name": "Garaža"})[0])
+        prava.prevedi()
+        self.assertTrue(DodelaUloge.objects.get(korisnik=korisnik, status=DodelaUloge.STATUS_NACRT).cela_firma)

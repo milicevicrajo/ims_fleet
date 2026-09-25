@@ -259,6 +259,7 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | Knjiženje bez šifarnika | **Ne odbacuje se** — prikazuje se kao neraspoređeno |
 | Prazna šifra posla u toku gotovine | Pripisuje se **`111111`**, po pravilu procedure |
 | Prazna šifra u prihodima i rashodima | **Ne preimenuje se** |
+| **Neaktivna šifra posla** (od 25.09.2026.) [P] | Izveštaj **po šiframa posla** i kartica posla prikazuju samo aktivne šifre iz registra organizacije; zbir ispod tabele računa se nad istim knjiženjima. Izveštaj po centrima, kontima i mesecima ostaje ceo, pa se za stariji period zbirovi dva pregleda mogu razlikovati. Šifra je neaktivna kad nema prometa u poslednjih 12 meseci |
 
 ---
 

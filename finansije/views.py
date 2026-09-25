@@ -20,6 +20,7 @@ from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 
 from core.mixins import role_permission_required, user_has_role_permission
+from fleet.support.registar import Registar
 from .access import can_view_all
 from .forms import JobMonthForm, ReportFilters, SyncForm
 from .models import SyncRun, NalogZRefreshRun
@@ -209,6 +210,9 @@ def job_card(request):
     for code, name, center in entries.order_by().values_list("job_code", "job_name", "center").distinct():
         if code:
             directory.setdefault(code, {"name": name, "center": center})
+    # Nude se samo aktivne sifre (odluka 25.09.2026.); sifra iz adrese ostaje, da link ka detalju radi.
+    registar, trazena = Registar(), request.GET.get("job", "")
+    directory = {code: info for code, info in directory.items() if code == trazena or registar.aktivna_sifra(code)}
     form = JobMonthForm(request.GET, choices=[(code, f"{code} — {info['name']}") for code, info in sorted(directory.items())])
     valid = form.is_valid()
     context = {"title": "Detalj šifre posla", "form": form, "valid": valid,

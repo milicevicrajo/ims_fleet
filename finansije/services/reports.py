@@ -59,8 +59,24 @@ def summary(entries):
     return result
 
 
+def samo_aktivne_sifre(entries):
+    """Izvestaj po siframa posla prikazuje samo aktivne sifre iz registra (odluka 25.09.2026.).
+
+    Knjizenja neaktivnih sifara izostaju iz redova i iz zbira ispod tabele, pa se zbir i redovi
+    slazu. Knjizenja bez sifre posla ostaju. Izvestaj po centrima, kontima i mesecima je ceo.
+    """
+    from fleet.support.registar import Registar
+
+    registar = Registar()
+    neaktivne = [code for code in entries.order_by().exclude(job_code="").values_list("job_code", flat=True).distinct()
+                 if not registar.aktivna_sifra(code)]
+    return entries.exclude(job_code__in=neaktivne) if neaktivne else entries
+
+
 def grouped_report(entries, jobs, filters):
     group = filters["group"]
+    if group == "job":
+        entries = samo_aktivne_sifre(entries)
     fields = {"center": ["center"], "job": ["job_code", "job_name", "center"], "account": ["account", "account_name"]}
     if group == "month":
         grouped = entries.annotate(report_year=ExtractYear("booking_date"), report_month=ExtractMonth("booking_date")).values("report_year", "report_month").annotate(**expressions()).order_by("report_year", "report_month")
@@ -92,7 +108,11 @@ def grouped_report(entries, jobs, filters):
         # Units are posting attributes, not job attributes. Never invent a job→OJ mapping.
         if filters.get("unit"):
             jobs = jobs.filter(code__in=LedgerEntry.objects.filter(company=getattr(settings, "FINANSIJE_COMPANY", 1), active=True, organizational_unit=int(filters["unit"])).values("job_code"))
-        rows.extend(dict(code=job.code, label=job.name or "Bez naziva", center=job.center, revenue=ZERO, expense=ZERO, count=0) for job in jobs if job.code not in present)
+        from fleet.support.registar import Registar
+
+        registar = Registar()
+        rows.extend(dict(code=job.code, label=job.name or "Bez naziva", center=job.center, revenue=ZERO, expense=ZERO, count=0)
+                    for job in jobs if job.code not in present and registar.aktivna_sifra(job.code))
         rows.sort(key=lambda row: row["code"])
     for row in rows:
         row["revenue"] = row["revenue"] or ZERO

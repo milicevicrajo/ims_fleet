@@ -107,6 +107,10 @@ class ReportFilters(forms.Form):
         job_choices = {j.code: j.name for j in jobs}
         for code, name in entries.order_by().values_list("job_code", "job_name").distinct():
             job_choices.setdefault(code, name)
+        # Neaktivne sifre se ne nude (odluka 25.09.2026.); izabrana vrednost ostaje.
+        izabrana = values.get("job") or ""
+        job_choices = {code: name for code, name in job_choices.items()
+                       if not code or code == izabrana or registar.aktivna_sifra(code)}
         self.fields["job"].choices = [("", "Sve dostupne šifre")] + [(code or "__none__", f"{code} — {name}" if code else "Bez šifre posla") for code, name in sorted(job_choices.items())]
         self.fields["unit"].choices = [("", "Sve OJ knjiženja")] + [(str(code), f"{code} — {name}") for code, name in entries.order_by("organizational_unit").values_list("organizational_unit", "organizational_unit_name").distinct()]
         if ledger:

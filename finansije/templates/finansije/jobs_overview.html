@@ -29,7 +29,7 @@
     <h2 class="finance-job-heading mb-0">Pregled svih šifara posla</h2>
     {% if can_export %}<a class="btn btn-outline-success" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}&amp;analysis=standard"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Izvezi u Excel</a>{% endif %}
   </div>
-  <p class="text-muted small">Iznosi u RSD. Rashodi, zajednički troškovi i odliv prikazani su sa znakom minus. Crtica znači da podatak nije dostupan; zvezdica označava nepotpun obračun, sa objašnjenjem pri prelasku mišem. Prikazane su i šifre bez prometa.</p>
+  <p class="text-muted small">Iznosi u RSD. Rashodi, zajednički troškovi i odliv prikazani su sa znakom minus. Crtica znači da podatak nije dostupan; zvezdica označava nepotpun obračun, sa objašnjenjem pri prelasku mišem. Prikazane su samo aktivne šifre posla, i one bez prometa; knjiženja neaktivnih šifara nisu u ovom pregledu.</p>
   {% include "finansije/_table_error.html" %}
   <div class="table-responsive"><table id="FinanceJobsTable" class="table table-hover align-middle finance-datatable" data-lazy-tab="true" data-page-length="100" data-ajax-source="{{ table_source }}" style="width:100%">
     <thead><tr><th>Šifra posla</th><th>Naziv</th><th>Centar</th>{% for label in metric_labels %}<th class="finance-number">{{ label }}</th>{% endfor %}</tr></thead>

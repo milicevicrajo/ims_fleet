@@ -14,6 +14,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 from organizacija.models import LegacyOrgLink, OrgNode, OrgNodeVersion
+from organizacija.services import activity
 from organizacija.services import classification as klas
 from organizacija.services import flota
 from organizacija.services.importer import DEFAULT_COMPANY, run_import
@@ -27,13 +28,16 @@ def sinhronizuj(company=DEFAULT_COMPANY):
     """Jedan prolaz nove sinhronizacije. Vraca recnik sa svim delovima."""
     svezina = svezina_izvora(company)
     run = run_import(company=company)
+    # Sifra bez prometa u poslednjih 12 meseci je neaktivna, sa prometom aktivna (odluka 21.09.2026.);
+    # nove sifre iz izvora tako ne ostaju aktivne samo zato sto ih izvor tako oznacava.
+    aktivnost = activity.apply_reviews(company)
     veze = flota.povezi(company, modul="sve")
     kontrola = uporedi_jedinice(company)
     izvestaj = flota.uporedni_izvestaj(company)
     nabavka = flota.uporedni_izvestaj(company, modul="nabavka")
     finansije = flota.uporedni_izvestaj(company, modul="finansije")
     potrazivanja = flota.uporedni_izvestaj(company, modul="potrazivanja")
-    return {"svezina": svezina, "run": run, "veze": veze, "kontrola": kontrola, "izvestaj": izvestaj,
+    return {"svezina": svezina, "run": run, "aktivnost": aktivnost, "veze": veze, "kontrola": kontrola, "izvestaj": izvestaj,
             "izvestaj_nabavke": nabavka, "izvestaj_finansija": finansije, "izvestaj_potrazivanja": potrazivanja}
 
 
@@ -110,6 +114,7 @@ def poruka(rezultat):
     delovi = [
         f"Registar: novih cvorova {run.nodes_created}, novih verzija {run.versions_created}, "
         f"za razresenje {run.unresolved}.",
+        f"Aktivnost po obrtu: izmenjenih {rezultat['aktivnost']['versions_changed']}.",
         f"OJ stara/nova: {kontrola['povezano']}/{kontrola['jedinica']} povezano, "
         f"razlika centra {len(kontrola['razlika_centra'])}, van stabla {len(kontrola['van_stabla'])}.",
         f"Moduli: izmenjenih veza {izmena}, bez para {bez_para}.",

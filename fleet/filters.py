@@ -118,6 +118,8 @@ class VehicleFilter(django_filters.FilterSet):
         self.filters["center_code"].extra["choices"] = center_choices
         self.form.fields["center_code"].choices = center_choices
         if registar.dostupan:
+            # Neaktivne sifre se ne nude ni u filteru (odluka 25.09.2026.).
+            self.form.fields["org_unit"].queryset = self.form.fields["org_unit"].queryset.filter(pk__in=registar.aktivne())
             self.form.fields["org_unit"].label_from_instance = registar.oznaka
 
 
@@ -227,6 +229,8 @@ class PutniNalogFilter(django_filters.FilterSet):
             .distinct()
             .order_by("code")
         )
+        if registar.dostupan:
+            job_codes = [u for u in job_codes if u.pk in registar.aktivne()]  # neaktivne se ne nude
         self.filters["job_code"].extra["choices"] = [("", "Sve šifre")] + [
             (u.code, registar.oznaka(u)) for u in job_codes
         ]
@@ -375,8 +379,8 @@ class TrafficCardFilterForm(forms.Form):
         registar = Registar()
         centers = OrganizationalUnit.objects.values_list('center', flat=True).distinct()
         self.fields['center'].choices = registar.izbor_centara(centers, '--- Svi centri ---')
-        # Filter po postojecim dodelama: nude se sve sifre iz registra (i neaktivne), ne samo aktivne.
-        ogranici_izbor(self.fields['organizational_unit'], registar=registar, samo_aktivne=False)
+        # Samo aktivne sifre iz registra (odluka 25.09.2026.: neaktivne se ne nude nigde).
+        ogranici_izbor(self.fields['organizational_unit'], registar=registar)
 
 class FuelFilterForm(django_filters.FilterSet):
     start_date = django_filters.DateFilter(
@@ -485,8 +489,7 @@ class PoliciesMonthlyCostsFilter(django_filters.FilterSet):
         self.filters["month"].extra["choices"]  = month_choices
         self.filters["center"].extra["choices"] = center_choices
         self.filters["vrsta"].extra["choices"]  = vrsta_choices
-        if registar.dostupan:
-            self.form.fields["oj"].label_from_instance = registar.oznaka
+        ogranici_izbor(self.form.fields["oj"], registar=registar)
 
 
 

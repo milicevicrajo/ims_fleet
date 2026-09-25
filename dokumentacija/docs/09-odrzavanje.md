@@ -292,13 +292,14 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa
 .\.venv\Scripts\python.exe manage.py povezi_flotu                      # popunjava org_node u paketima
 .\.venv\Scripts\python.exe manage.py povezi_flotu --modul nabavka      # isto za Nabavku (finansije, potrazivanja, ili sve)
+.\.venv\Scripts\python.exe manage.py prava_u_senci                     # nacrt prava sa obuhvatom i poređenje (ne menja pristup)
 
 # Dozvole i raspored
 .\.venv\Scripts\python.exe manage.py sync_permission_codes
 .\.venv\Scripts\python.exe manage.py sync_celery_periodic_tasks --dry-run
 ```
 
-**Ukupno 55 upravljačkih komandi.** Spisak: `manage.py help`. [P]
+**Ukupno 56 upravljačkih komandi.** Spisak: `manage.py help`. [P]
 
 > **[P] Zaštita:** ručno pokretanje koristi **isto zaključavanje** kao zakazani posao —
 > ne mogu se preklopiti.

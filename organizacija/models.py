@@ -296,3 +296,73 @@ class JobActivityReview(models.Model):
     def deactivates(self):
         """Nalaz gasi posao samo kad obrta nema."""
         return not self.has_turnover
+
+
+class OrgPutanja(models.Model):
+    """Putanja sifre posla do centra za jedan period vazenja (plan prelaska na registar, 3.1).
+
+    Izvodi se iz verzija pri svakom uvozu (`services/putanja.py`) i nikad se ne ureduje rucno.
+    Sluzi da se centar zapisa dobije jednim spojem, **na datum dokumenta**: kad sifra promeni
+    centar, stari dokumenti ostaju u starom centru.
+    """
+
+    posao = models.ForeignKey(OrgNode, on_delete=models.CASCADE, related_name="putanje")
+    jedinica = models.ForeignKey(OrgNode, on_delete=models.CASCADE, related_name="putanje_jedinice")
+    centar = models.ForeignKey(OrgNode, on_delete=models.CASCADE, related_name="putanje_centra")
+    centar_sifra = models.CharField(max_length=40, verbose_name="Oznaka centra")
+    vazi_od = models.DateField(verbose_name="Vazi od")
+    vazi_do = models.DateField(null=True, blank=True, verbose_name="Vazi do (iskljucivo)")
+
+    class Meta:
+        verbose_name = "Putanja sifre posla"
+        verbose_name_plural = "Putanje sifara posla"
+        indexes = [
+            models.Index(fields=["posao", "vazi_od"]),
+            models.Index(fields=["centar", "vazi_od"]),
+        ]
+
+    def __str__(self):
+        return f"cvor {self.posao_id} → centar {self.centar_sifra} od {self.vazi_od}"
+
+
+class DodelaUloge(models.Model):
+    """Uloga korisnika sa obuhvatom u stablu (plan prelaska na registar, 3.2; V2, korak 2).
+
+    Obuhvat je jedan cvor (centar, jedinica ili sifra posla) ili cela firma. Obuhvat centra
+    pokriva njegove jedinice i poslove; obuhvat posla **ne** daje ceo centar. Dodela u statusu
+    `nacrt` nastaje prevodom starih prava i ne odlucuje ni o cemu — sluzi za proveru u senci.
+    """
+
+    STATUS_NACRT = "nacrt"
+    STATUS_AKTIVNA = "aktivna"
+    STATUS_CHOICES = [(STATUS_NACRT, "Nacrt"), (STATUS_AKTIVNA, "Aktivna")]
+    IZVOR_PREVOD = "prevod"
+    IZVOR_RUCNO = "rucno"
+    IZVOR_CHOICES = [(IZVOR_PREVOD, "Prevod starih prava"), (IZVOR_RUCNO, "Ručno")]
+
+    korisnik = models.ForeignKey("fleet.CustomUser", on_delete=models.CASCADE, related_name="dodele_uloga")
+    uloga = models.ForeignKey("fleet.Role", on_delete=models.CASCADE, related_name="dodele")
+    cvor = models.ForeignKey(OrgNode, on_delete=models.PROTECT, null=True, blank=True, related_name="dodele_uloga",
+                             verbose_name="Obuhvat (cvor)")
+    cela_firma = models.BooleanField(default=False, verbose_name="Obuhvat: cela firma")
+    vazi_od = models.DateField(verbose_name="Vazi od")
+    vazi_do = models.DateField(null=True, blank=True, verbose_name="Vazi do (iskljucivo)")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_NACRT)
+    izvor = models.CharField(max_length=10, choices=IZVOR_CHOICES, default=IZVOR_RUCNO)
+    napomena = models.CharField(max_length=300, blank=True, verbose_name="Odakle je dodela")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Dodela uloge sa obuhvatom"
+        verbose_name_plural = "Dodele uloga sa obuhvatom"
+        constraints = [
+            models.CheckConstraint(
+                check=Q(cela_firma=True, cvor__isnull=True) | Q(cela_firma=False, cvor__isnull=False),
+                name="orgdodela_cvor_ili_firma",
+            ),
+        ]
+        indexes = [models.Index(fields=["korisnik", "status"])]
+
+    def __str__(self):
+        obuhvat = "cela firma" if self.cela_firma else f"cvor {self.cvor_id}"
+        return f"{self.korisnik} — {self.uloga} — {obuhvat} ({self.status})"

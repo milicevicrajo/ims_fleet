@@ -1746,6 +1746,11 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 > registra (`fleet/support/registar.py`) — izbor šifre u formama putnog naloga, dodele vozila,
 > prijema vozila i naloga za vozilo nudi samo **aktivne** šifre iz registra (već upisana vrednost
 > ostaje), a filteri, kontrolna tabla i prava pristupa prikazuju centre sa nazivom po pravilniku.
+> Od 25.09.2026. neaktivne šifre se ne nude **ni u filterima** (vozila, putni nalozi, saobraćajne,
+> polise), ni u Nabavci (predmet, povezivanje fakture, filter), ni u Finansijama (spisak šifara,
+> kartica posla, izveštaj po šiframa); u pravima pristupa ostaju samo već dodeljene. Šifra bez
+> prometa u poslednjih 12 meseci je neaktivna — to noćna sinhronizacija organizacije (01:40)
+> proverava sama. Uloga **Garaža** radi sa celom Flotom svih centara, a putne naloge samo gleda.
 > Filteri, zbirovi, ograničenje pristupa i broj putnog naloga i dalje rade preko starog polja
 > (centar je isti u oba izvora). Prekidač `FLOTA_REGISTAR_ORGANIZACIJE = False` u postavkama vraća
 > stare spiskove; dok je registar prazan, stari spiskovi se koriste sami.
@@ -2632,6 +2637,7 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | Knjiženje bez šifarnika | **Ne odbacuje se** — prikazuje se kao neraspoređeno |
 | Prazna šifra posla u toku gotovine | Pripisuje se **`111111`**, po pravilu procedure |
 | Prazna šifra u prihodima i rashodima | **Ne preimenuje se** |
+| **Neaktivna šifra posla** (od 25.09.2026.) [P] | Izveštaj **po šiframa posla** i kartica posla prikazuju samo aktivne šifre iz registra organizacije; zbir ispod tabele računa se nad istim knjiženjima. Izveštaj po centrima, kontima i mesecima ostaje ceo, pa se za stariji period zbirovi dva pregleda mogu razlikovati. Šifra je neaktivna kad nema prometa u poslednjih 12 meseci |
 
 ---
 
@@ -17904,13 +17910,14 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa
 .\.venv\Scripts\python.exe manage.py povezi_flotu                      # popunjava org_node u paketima
 .\.venv\Scripts\python.exe manage.py povezi_flotu --modul nabavka      # isto za Nabavku (finansije, potrazivanja, ili sve)
+.\.venv\Scripts\python.exe manage.py prava_u_senci                     # nacrt prava sa obuhvatom i poređenje (ne menja pristup)
 
 # Dozvole i raspored
 .\.venv\Scripts\python.exe manage.py sync_permission_codes
 .\.venv\Scripts\python.exe manage.py sync_celery_periodic_tasks --dry-run
 ```
 
-**Ukupno 55 upravljačkih komandi.** Spisak: `manage.py help`. [P]
+**Ukupno 56 upravljačkih komandi.** Spisak: `manage.py help`. [P]
 
 > **[P] Zaštita:** ručno pokretanje koristi **isto zaključavanje** kao zakazani posao —
 > ne mogu se preklopiti.
@@ -20457,11 +20464,12 @@ Da bi se izbeglo ponovno ispitivanje istog:
 
 ### 11.1. Šta je već isplanirano
 
-U projektu postoje tri razrađena plana, nastala pre ove dokumentacije:
+U projektu postoje razrađeni planovi; prvi su nastali pre ove dokumentacije:
 
 | Plan | Dokument | Stanje |
 |---|---|---|
 | **Centralna organizacija i dozvole (V2)** | [`plan-organizacije-i-dozvola-v2.md`](plan-organizacije-i-dozvola-v2.md) | **Aktuelan plan za realizaciju** |
+| **Prelazak na registar — čitanje, prava, gašenje stare organizacije** | [`plan-prelaska-na-registar.md`](plan-prelaska-na-registar.md) | **Naredni korak** (od 25.09.2026.), razrađuje V2 korake 2–9 |
 | Centralizacija organizacije i šifara posla | [`plan-centralizacije-organizacije.md`](plan-centralizacije-organizacije.md) | Prethodna verzija, poslovna pravila i dalje važe |
 | Prelazak Naplate na lokalni izvor | `naplata-lokalni-izvor-plan.md` (uklonjen, git `06f60c2`) | Delimično izvedeno |
 | Nova Naplata — Potraživanja | `naplata-nova-aplikacija-plan.md` (uklonjen, git `06f60c2`) | **Izvedeno**, u paralelnom radu |

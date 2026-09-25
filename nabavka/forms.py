@@ -300,8 +300,8 @@ class ProcurementInvoiceJobCodeLinkForm(forms.ModelForm):
         self.fields["job_code"].queryset = queryset
         from fleet.support.registar import ogranici_izbor
 
-        # Fakture su cesto starije: nude se sve sifre iz registra, i neaktivne.
-        ogranici_izbor(self.fields["job_code"], getattr(self.instance, "job_code_id", None), samo_aktivne=False)
+        # Samo aktivne sifre iz registra, uz vec upisanu (odluka 25.09.2026.: neaktivne se ne nude nigde).
+        ogranici_izbor(self.fields["job_code"], getattr(self.instance, "job_code_id", None))
         self.fields["job_code"].widget = forms.Select(attrs={"class": "form-select select2-method"})
         self.fields["job_code"].widget.choices = self.fields["job_code"].choices
         _style_fields(self.fields)

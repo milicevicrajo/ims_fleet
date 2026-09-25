@@ -267,6 +267,11 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 > registra (`fleet/support/registar.py`) — izbor šifre u formama putnog naloga, dodele vozila,
 > prijema vozila i naloga za vozilo nudi samo **aktivne** šifre iz registra (već upisana vrednost
 > ostaje), a filteri, kontrolna tabla i prava pristupa prikazuju centre sa nazivom po pravilniku.
+> Od 25.09.2026. neaktivne šifre se ne nude **ni u filterima** (vozila, putni nalozi, saobraćajne,
+> polise), ni u Nabavci (predmet, povezivanje fakture, filter), ni u Finansijama (spisak šifara,
+> kartica posla, izveštaj po šiframa); u pravima pristupa ostaju samo već dodeljene. Šifra bez
+> prometa u poslednjih 12 meseci je neaktivna — to noćna sinhronizacija organizacije (01:40)
+> proverava sama. Uloga **Garaža** radi sa celom Flotom svih centara, a putne naloge samo gleda.
 > Filteri, zbirovi, ograničenje pristupa i broj putnog naloga i dalje rade preko starog polja
 > (centar je isti u oba izvora). Prekidač `FLOTA_REGISTAR_ORGANIZACIJE = False` u postavkama vraća
 > stare spiskove; dok je registar prazan, stari spiskovi se koriste sami.

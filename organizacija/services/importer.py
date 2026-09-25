@@ -115,6 +115,11 @@ def run_import(company=DEFAULT_COMPANY, known_units=None, valid_from=None, link_
                 f"Povezano sa fleet.OrganizationalUnit: {linked}; bez para u registru: {missing}."
             )
 
+        from organizacija.services import putanja
+
+        bilo, sada, promenjeno = putanja.izgradi(company)
+        report.append(f"Putanje sifara do centra: {sada}" + (" (uskladjeno)." if promenjeno else ", bez promene."))
+
         run.source_rows = _source_row_count(company)
         run.nodes_created = created_nodes
         run.versions_created = created_versions

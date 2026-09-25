@@ -74,8 +74,10 @@ class UserAccessForm(forms.ModelForm):
         self.fields['center_codes'].choices = [
             (c, f'Centar {registar.oznaka_centra(c)}') for c in sorted(centers, key=lambda x: (len(x), x))]
         if registar.dostupan:
-            # Nazivi iz registra organizacije; izbor ostaje ceo, jer postojeca prava ne smeju da nestanu.
-            self.fields['allowed_centers'].label_from_instance = registar.oznaka
+            # Aktivne sifre iz registra; vec dodeljene ostaju u izboru, jer postojeca prava ne smeju da nestanu.
+            from fleet.support.registar import ogranici_izbor
+            dodeljene = set(self.instance.allowed_centers.values_list('pk', flat=True)) if self.instance.pk else set()
+            ogranici_izbor(self.fields['allowed_centers'], registar=registar, zadrzi=dodeljene)
         units = {str(c or d or '').strip() for c,d in Employee.objects.values_list('org_unit_code','department_code')}
         units.update(self.instance.allowed_hr_unit_codes or [])
         self.fields['hr_unit_codes'].choices = [(c, f'OJ {c}') for c in sorted(units - {''},key=lambda x:(len(x),x))]
