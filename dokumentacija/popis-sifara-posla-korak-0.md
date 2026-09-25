@@ -61,6 +61,14 @@ pitanje za naručioca.
 
 193 šifre imaju centar `3`. Struktura je **`3` + osoba (3 cifre) + projekat (promenljivo)**:
 
+> **Dopuna 25.09.2026. [P]:** naručilac je potvrdio da su tri cifre osobe **šifra radnika
+> iz Kadrova**, a projekat je slobodan unos. Provereno: kod svih aktivnih radnika se poklapa.
+> Nosioci `133`, `233`, `333` nisu radnici, nego zbirne institutske teme.
+> **Isti dan naručilac je odlučio da nauka nije zaseban šifarnik nego deo bloka 3:** radnik
+> ulazi u blok, jedinica drugog nivoa je **naučni projekat** (`3-702400`), a šifra je učešće
+> radnika na projektu; radnik se povezuje sa Kadrovima po ličnom broju. Zaključak ispod o „matrici van stabla”
+> time je zamenjen.
+
 ```
 315400      Delić Ivana                    <- koren: sama osoba
 3154190170  P190170-Delić I.               <- ta osoba na projektu 190170

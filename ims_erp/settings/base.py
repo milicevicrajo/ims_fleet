@@ -271,6 +271,7 @@ CELERY_TASK_ROUTES = {
     'fleet.tasks.fetch_requisition_data_task': {'queue': 'sync'},
     'fleet.tasks.fetch_ddor_data_task': {'queue': 'sync'},
     'fleet.tasks.fetch_job_codes': {'queue': 'sync'},
+    'organizacija.tasks.sync_organizacija_task': {'queue': 'sync'},
     'fleet.tasks.proveri_otpis': {'queue': 'sync'},
     'fleet.tasks.sync_hr_employees_task': {'queue': 'sync'},
     'fleet.tasks.sync_putni_nalozi_isplaceno_task': {'queue': 'sync'},

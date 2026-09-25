@@ -18,7 +18,7 @@ nema REST API-ja, nema odvojenog frontend okvira.
 | Obračuni | Obični Python moduli (`services/`, `support/`) | Bez okvira, bez klasa gde nisu potrebne |
 | Pristup podacima | Django ORM (`default`) + sirovi SQL (`server_db`) | Dva aliasa, ista baza |
 | Baza | Microsoft SQL Server, `mssql-django` 1.5, ODBC Driver 17 | Baza `IMS_ERP` |
-| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 18 zakazanih poslova |
+| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 19 zakazanih poslova |
 | Okruženje | Windows server, NSSM servisi | Tri servisa |
 
 `djangorestframework` i `psycopg2-binary` postoje u `requirements.txt`, ali **nisu**

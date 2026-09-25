@@ -53,9 +53,11 @@ def current_app(request):
                          "evaluation_list", "resenje_list", "zahtev_list")
         },
         "sidebar_template": sidebar_map.get(app, "sidebar_fleet.html"),
-        # Organizaciju vide svi prijavljeni korisnici (organizacija/views.py).
+        # Organizaciju vide svi prijavljeni korisnici (organizacija/views.py); uporedni
+        # izvestaj Flote samo uloge sa dozvolom `organizacija:flota`.
         "organizacija_permissions": {
-            code: request.user.is_authenticated for code in ("stablo", "sema")
+            **{code: request.user.is_authenticated for code in ("stablo", "sema")},
+            "flota": user_has_role_permission(request.user, "organizacija:flota"),
         },
         "nabavka_permissions": {
             code: user_has_role_permission(request.user, f"nabavka:{code}")

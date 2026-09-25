@@ -52,6 +52,28 @@ Danas se organizaciona pripadnost i prava pristupa vode na **nedosledan način**
 Uvođenje istorije pripadnosti rešava **četiri zabeležena problema odjednom**:
 P-05, P-24, P-44 i deo P-19.
 
+### Stanje realizacije registra [P]
+
+Razrada: [`plan-registra-sifara-posla.md`](../plan-registra-sifara-posla.md).
+
+| Faza | Stanje |
+|---|---|
+| Faza 1 — registar (`organizacija`), uvoz, stablo, kontrolni izveštaj | Izvedeno; otvorena pitanja o šiframa `111111`, `432`, `vranj`, `vranjs` i `960001` |
+| Faza 2, Flota — koraci 1–3 (veza `org_node`, popunjavanje, uporedni izveštaj) | Izvedeno 25.09.2026. **Čitanje iz registra (korak 4) nije uključeno** |
+| Nova sinhronizacija (01:40) | Radi paralelno sa starom (`fetch_job_codes`, 01:30): osvežava registar, povezuje Flotu i poredi staro i novo. Staru ne menja |
+| Faza 2, ostali moduli | Nije počelo |
+
+**Redosled gašenja [Z]:** stara i nova sinhronizacija rade zajedno sve vreme. Moduli prelaze
+na čitanje iz registra **jedan po jedan**, svaki tek kad mu uporedni izveštaj prođe. Stara
+sinhronizacija i `OrganizationalUnit` gase se **poslednji**, kad nijedan modul više ne čita
+staro polje — do tada na njih pokazuju strani ključevi putnih naloga, dodela i nabavke.
+
+**Odluke 25.09.2026.:** centri poslovnog i naučnog bloka su `2` i `3` (knjiženja ih vode kao
+jedinice `20` i `30`); naučna šifra je `3` + šifra radnika iz Kadrova + broj projekta i **deo
+je bloka 3** (naučni projekat je jedinica, šifra je učešće radnika, radnik je povezan sa Kadrovima); nazivi centara i jedinica su po Pravilniku o
+organizaciji od 18.04.2024. (latinicom). Uporedni izveštaj Flote na produkcionim podacima
+(proba) se poklapa do dinara u svih 9 centara, bez ijednog nepovezanog zapisa.
+
 ---
 
 ## 11.3. Gašenje nasleđene Naplate

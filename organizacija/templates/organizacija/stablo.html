@@ -21,7 +21,7 @@ jos ne odrzava kroz aplikaciju.
     <div>
       <div class="org-kicker">IMS · Centralni registar</div>
       <h1>Organizacija</h1>
-      <p>Centar → organizaciona jedinica → šifra posla. Pripadnost je upisana vezom, ne izvedena iz šifre.</p>
+      <p>Centar → organizaciona jedinica → šifra posla, po Pravilniku o organizaciji (18.04.2024.). Pripadnost je upisana vezom, ne izvedena iz šifre.</p>
     </div>
     <div class="org-hero-right">
       <div class="org-hero-metrics">
@@ -76,13 +76,15 @@ jos ne odrzava kroz aplikaciju.
   {% endif %}
 
   <div class="org-tree" id="org-tree">
-    {% for center in tree %}
+    {% for grupa in grupe %}
+    {% if grupa.deo and grupa.vise %}<div class="org-part"><span class="org-part-no">{{ grupa.deo }}.</span> {{ grupa.naziv }} <span class="org-count">· {{ grupa.centri|length }} {{ grupa.centri|length|mnozina:"celina,celine,celina" }} · Pravilnik o organizaciji, čl. 3</span></div>{% endif %}
+    {% for center in grupa.centri %}
       <details class="org-center" {% if filtered %}open{% endif %}>
         <summary>
           <span class="org-chevron" aria-hidden="true"></span>
           <a class="org-code org-code-1" href="{% url 'organizacija:cvor' center.node_id %}">{{ center.code }}</a>
-          <span class="org-name">{{ center.name|default:"Naziv nije poznat" }}</span>
-          <span class="org-count">{{ center.unit_count }} {{ center.unit_count|mnozina:"jedinica,jedinice,jedinica" }} · {{ center.job_count }} {{ center.job_count|mnozina:"posao,posla,poslova" }}</span>
+          <span class="org-name">{{ center.name|default:"Naziv nije poznat" }}{% if center.oj_knjizenja %} <span class="org-unnamed">— u knjiženjima OJ {{ center.oj_knjizenja }}</span>{% endif %}</span>
+          <span class="org-count">{{ center.unit_count }} {{ center.unit_count|mnozina:"jedinica,jedinice,jedinica" }} · {{ center.job_count }} {{ center.job_count|mnozina:"posao,posla,poslova" }} · {{ center.active_jobs }} aktivnih{% if center.ljudi %} · ljudi: {{ center.ljudi.zaposlenih }} zaposlenih, {{ center.ljudi.bivsih }} bivših{% if center.ljudi.provera %}, {{ center.ljudi.provera }} za proveru{% endif %}{% endif %}</span>
         </summary>
 
         <div class="org-children">
@@ -92,16 +94,20 @@ jos ne odrzava kroz aplikaciju.
                 <span class="org-chevron" aria-hidden="true"></span>
                 <a class="org-code org-code-2" href="{% url 'organizacija:cvor' unit.node_id %}">{{ unit.code }}</a>
                 <span class="org-name">
-                  {% if unit.name %}{{ unit.name }}{% else %}<em class="org-unnamed">naziv drugog nivoa nije potvrđen</em>{% endif %}
+                  {% if unit.name %}{{ unit.name }}
+                  {% elif unit.predlog %}{{ unit.predlog }} <span class="org-badge org-badge-suggest" title="{{ unit.predlog_razlog }} Predlog nije upisan u registar.">proveriti</span>
+                  {% else %}<em class="org-unnamed">naziv drugog nivoa nije potvrđen</em>{% endif %}
                 </span>
-                <span class="org-count">{{ unit.job_count }} {{ unit.job_count|mnozina:"posao,posla,poslova" }}</span>
+                <span class="org-count">{{ unit.job_count }} {{ unit.job_count|mnozina:"posao,posla,poslova" }} · {{ unit.active_jobs }} aktivnih</span>
               </summary>
 
               <ul class="org-jobs">
                 {% for job in unit.jobs %}
                   <li class="{% if job.match %}is-match{% endif %}{% if not job.is_active %} is-inactive{% endif %}">
                     <a class="org-code org-code-3" href="{% url 'organizacija:cvor' job.node_id %}">{{ job.code }}</a>
-                    <span class="org-name">{{ job.name|default:"—" }}</span>
+                    <span class="org-name">{{ job.name|default:"—" }}
+                      {% if job.radnik %}{% include "organizacija/_naucnik.html" with r=job.radnik %}{% endif %}
+                    </span>
                     <span class="org-badges">
                       {% if job.is_profit == True %}<span class="org-badge org-badge-profit">profitni</span>
                       {% elif job.is_profit == False %}<span class="org-badge org-badge-nonprofit">neprofitni</span>
@@ -117,6 +123,7 @@ jos ne odrzava kroz aplikaciju.
           {% endfor %}
         </div>
       </details>
+    {% endfor %}
     {% empty %}
       <p class="alert alert-warning">Nijedna grana ne odgovara izabranom prikazu.</p>
     {% endfor %}
@@ -124,7 +131,7 @@ jos ne odrzava kroz aplikaciju.
 
   {% if unresolved %}
     <section class="org-unresolved">
-      <h2>Šifre van stabla</h2>
+      <h2>Šifre na listi za razrešenje</h2>
       <p class="org-note">
         Ove šifre <strong>nisu izgubljene</strong> — svaka je sačuvana sa razlogom zašto nije
         raspoređena. Mesto im se ne izmišlja dok se ne potvrdi.

@@ -248,6 +248,10 @@ class JobCode(models.Model):
         related_name='vehicle_assignments',
         null=True
     )
+    # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
+    # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='fleet_dodele', verbose_name=_("Čvor registra"))
 
     assigned_date = models.DateField(verbose_name=_("Datum dodele"))
 
@@ -283,6 +287,10 @@ class Lease(models.Model):
     partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"))
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"))
     job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
+    # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
+    # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='fleet_lizinzi', verbose_name=_("Čvor registra"))
     contract_number = models.CharField(max_length=50, verbose_name=_("Broj ugovora"))
     contract = models.ForeignKey('ugovori.Contract', on_delete=models.PROTECT, null=True, blank=True, related_name='fleet_leases', verbose_name=_("Ugovor iz evidencije Ugovori"))
     PAYMENT_BASIS_CHOICES = [('', 'Nije određeno'), ('monthly', 'Mesečni iznos'), ('total', 'Ukupan iznos ugovora')]
@@ -489,6 +497,10 @@ class FuelConsumption(models.Model):
     cost_neto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos – neto"))
     supplier = models.CharField(max_length=50, verbose_name=_("Dobavljač"))
     job_code = models.CharField(max_length=50, verbose_name=_("Šifra posla"), blank=True, null=True)
+    # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
+    # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='fleet_gorivo', verbose_name=_("Čvor registra"))
     mileage = models.IntegerField(verbose_name=_("Kilometraža"))
 
     class Meta:
@@ -563,6 +575,10 @@ class PutniNalog(models.Model):
         related_name='travel_order_job_code',
         verbose_name=_("Troškovi idu na teret")
     )
+    # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
+    # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='fleet_putni_nalozi', verbose_name=_("Čvor registra"))
     travel_location = models.CharField(max_length=100, verbose_name=_("Mesto putovanja"))
     task = models.TextField(verbose_name=_("Zadatak"))
     napomena = models.TextField(verbose_name=_("Napomena"), blank=True, null=True)
@@ -703,6 +719,10 @@ class VehicleTravelOrder(models.Model):
     job_code = models.ForeignKey(OrganizationalUnit, on_delete=models.PROTECT, null=True, blank=True,
         related_name='vehicle_usage_orders', verbose_name=_("Troškovi na teret šifre posla"),
         help_text=_("Jedan nalog pripada jednom poslu. Prazno znači da pripadnost još nije potvrđena."))
+    # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
+    # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='fleet_nalozi_vozila', verbose_name=_("Čvor registra"))
     pn_number = models.PositiveIntegerField(
         verbose_name=_("PN broj"),
         unique=True,
@@ -946,6 +966,10 @@ class ProcurementRequest(models.Model):
         related_name="procurement_requests",
         verbose_name=_("Sifra posla (OJ)"),
     )
+    # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
+    # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+        related_name='fleet_zahtevi_nabavke', verbose_name=_("Čvor registra"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Datum kreiranja"))
     number = models.CharField(max_length=32, verbose_name=_("Broj GZN"), unique=True, blank=True, null=True)
     note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))

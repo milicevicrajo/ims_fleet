@@ -190,7 +190,7 @@ stari radnik odbacuje nepoznat zadatak.
 
 ---
 
-## 8. Zakazani poslovi (18 komada)
+## 8. Zakazani poslovi (19 komada)
 
 Noć: 01:00–07:10 sve sinhronizacije. Dan: 10:00 i 11:00 `nalog_z`, 12:30 putni nalozi,
 svaki sat u :20 tekuća godina Finansija.
@@ -218,6 +218,7 @@ Puna tabela rasporeda: [`dokumentacija/docs/09-odrzavanje.md`](dokumentacija/doc
 | 8 | `TrafficCard.for_plate()` namerno **odbija** da pogađa kada tablica pripada većem broju vozila — ne "popravljaj" to |
 | 9 | OMV transakcije imaju duplikate i „odjeke“ računa koji se filtriraju u `fleet/support/fuel.py`; sirov `SUM` daje pogrešan rezultat. Dve ulazne tačke: `filter_omv_fuel_queryset()` (čišćenje **+** samo goriva) i `deduplicate_omv_transactions()` (samo čišćenje, za izveštaje sa sopstvenom podelom proizvoda). Ključ za duplikate poredi prazna polja preko `Coalesce` — ne uklanjaj to, jer bez njega `NULL = NULL` izbacuje zapise bez vaučera |
 | 10 | Finansije namerno izuzimaju zatvaranja (`ZAT`, konta `59900`/`69900`) — zbir svih stavki klase 5/6 posle zatvaranja godine je nula, što nije greška |
+| 11 | Poslovni i naučni blok su centri **`2` i `3`** (šifarnik, Flota, registar), a knjiženja ih vode kao jedinice `20` i `30` — `OZNAKA_CENTRA_IZ_KNJIZENJA`. Naučna šifra je `3` + šifra radnika iz Kadrova + broj projekta i deo je bloka 3: jedinica je naučni projekat (`3-702400`), šifra je učešće radnika, a radnik se vezuje za Kadrove po ličnom broju. Nazivi su po Pravilniku o organizaciji (`organizacija/services/pravilnik.py`), latinicom. Ne „ispravljaj“ `2` u `20`: iz oznake se prave brojevi putnih naloga (`2/2026-…`) i po njoj se ograničava pristup |
 
 ---
 

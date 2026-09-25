@@ -208,6 +208,64 @@ ga cena povezivanja, koja je izmerena:
 Pravilo iz V2 koje ovde važi doslovno: **nema režima „stari ILI novi pristup”** unutar
 jednog modula. Delimično prebačen modul je gori od neprebačenog.
 
+### Flota — koraci 1–3 izvedeni 25.09.2026.
+
+| Korak | Kako je urađeno |
+|---|---|
+| 1. `org_node` | Opciona kolona na `JobCode`, `PutniNalog`, `VehicleTravelOrder`, `ProcurementRequest`, `FuelConsumption`, `Lease` (`fleet/migrations/0084`). Pri svakom čuvanju se **izvodi** iz starog polja (`organizacija/signals.py`); ručni upis se prepisuje |
+| 2. Popunjavanje | `manage.py povezi_flotu [--proba] [--model …] [--paket N]` — paketi po 500, menja samo ono što odstupa, pa je ponovljivo. Hvata i masovne izmene (`update`) koje signal ne vidi |
+| 3. Uporedni izveštaj | `/organizacija/flota/` i `povezi_flotu --izvestaj`: broj i iznos po centru, starim putem (`OrganizationalUnit.center`) i kroz upisani `org_node`; gorivo i po dodeli vozila važećoj na dan točenja — putem kojim ga Flota raspoređuje |
+| 4. Čitanje iz registra | **Nije uključeno** |
+
+**Paralelna sinhronizacija [P]:** stara `fleet.tasks.fetch_job_codes` (01:30) i dalje puni
+`OrganizationalUnit` i ostaje merodavna. Nova `organizacija.tasks.sync_organizacija_task`
+(01:40, ručno `manage.py sync_organizacija`) iz istog izvora (`posao` → `FinanceJob`) osvežava
+registar, povezuje jedinice i zapise Flote i poredi staru i novu organizaciju. Rezultat piše u
+istoriju zadataka; staru organizaciju ne dira.
+
+Razrešavanje je bez pogađanja: jedinica Flote preko `LegacyOrgLink` (po primarnom ključu),
+a ako veze još nema — tačnom šifrom iz šifarnika poslova; tekstualna šifra goriva i lizinga
+samo tačnom šifrom. Prefiks se ne koristi, osim potvrđenog pravila nauke (ispod).
+
+**Odluke naručioca 25.09.2026. [P]:**
+
+| Pitanje | Odluka | Kako je sprovedeno |
+|---|---|---|
+| Centar poslovnog i naučnog bloka | **`2` i `3`**, kako stoje u šifarniku (`posao.blok`) i u Floti. Knjiženja ih vode kao jedinice `20` i `30` | Uvoz jedinicu knjiženja `20`/`30` upisuje kao centar `2`/`3` (`OZNAKA_CENTRA_IZ_KNJIZENJA`); postojeće verzije ispravljene na mestu (`organizacija/migrations/0005`). Stari podatak, brojevi putnih naloga (`2/2026-…`) i pristup po centru ostaju nepromenjeni |
+| Naučne šifre | **`3` + šifra radnika iz Kadrova (3 cifre) + broj projekta (slobodan unos)**; koren `3` + radnik + `00` je sam radnik. **Deo su bloka 3, nije zaseban šifarnik** (ispravlja odluku od 21.09.) | U stablu: centar `3` (u knjiženjima OJ `30`) → **naučni projekat** `3-<broj projekta>` (npr. `3-702400` TD 7024, 19 radnika) → šifra kao učešće radnika na projektu. Koren `3` + radnik + `00` je projekat `3-00` „bez projekta”. Radnik se **povezuje sa Kadrovima** po ličnom broju (prikaz, sa poređenjem prezimena). Nosioci `133`, `233`, `333` nisu radnici — zbirne institutske teme, grupisane po nosiocu |
+| Nazivi centara i jedinica | Po **Pravilniku o organizaciji (18.04.2024.)**, latinicom | `organizacija/services/pravilnik.py`. Numeracija šifara prati pravilnik (deo 3 → `3`, 4.1–4.4 → `41`–`44`, 8.1–8.3 → `81`–`83`, 4.1.1 → `411`…). U registar se upisuje samo naziv gde se poklapaju broj i sadržaj poslova (21 jedinica); ostalih 11 su predlog „proveriti”. Naziv iz pravilnika ispravlja postojeću verziju na mestu |
+
+Provereno na Kadrovima: kod svih aktivnih radnika tri cifre posle `3` su njihova šifra
+(`315400` → 154 Delić Nikolić Ivana, `357900` → 579 Bojović Dragan…). Neupareni brojevi su
+bivši radnici i zbirni nosioci.
+
+**Proba nad produkcionim podacima (samo čitanje, pre migracije) [P]:**
+
+| Model | Zapisa | Povezano | Bez šifre | Razlika centra |
+|---|---:|---:|---:|---:|
+| Dodele vozila | 205 | 205 | 0 | 0 |
+| Putni nalozi | 3.770 | 3.770 | 0 | 0 |
+| Nalozi za vozila | 250 | 10 | 240 | 0 |
+| GZN | 2 | 2 | 0 | 0 |
+| Gorivo | 16.212 | 16.212 | 0 | 0 |
+| Lizing | 23 | 23 | 0 | 0 |
+
+Gorivo po dodeli vozila poklapa se **do dinara u svih 9 centara** (2, 41, 42, 43, 44, 70, 81,
+82, 83). Organizacione jedinice: **335 od 339** imaju čvor, sve sa istim centrom (od toga 191
+naučnih u bloku 3). Van registra su samo `111111`, `vranj`, `vranjs` (otvoreno pitanje 2)
+i `960001` (pitanje 3) — na njima nema zapisa Flote.
+
+**Uvoz 25.09.2026. [P]:** 13 centara, 115 jedinica (od toga 60 u bloku 3: 55 projekata i
+grupe), 411 poslova (220 poslovnih + 191 naučna), 0 zatvorenih verzija. Na listi za razrešenje
+ostaju 4 izuzetka porodice C; u knjiženjima su nerazrešene samo stavke bez šifre i `111111`.
+Naučne šifre: 89 povezano sa Kadrovima, 80 na brojevima kojih nema u Kadrovima (bivši radnici),
+22 zbirne. **Za proveru:** lični brojevi 657, 998 i 999 u Kadrovima pripadaju drugim osobama
+nego u nazivima šifara; projekti P36014 i P36017 upisani su pod dva broja (`36014`/`360140`,
+`36017`/`360170`) — broj je slobodan unos, pa se ne spajaju bez potvrde.
+
+**Uslov za korak 4:** isti rezultat na sačuvanim vezama posle `migrate` i `sync_organizacija`
+na serveru.
+
 ---
 
 ## 4. Šta se ne radi u ovom poslu
@@ -228,7 +286,7 @@ jednog modula. Delimično prebačen modul je gori od neprebačenog.
 
 | Pitanje | Odgovor |
 |---|---|
-| Gde pripada nauka | **Zaseban šifarnik**, van stabla. Odluka naručioca, potkrepljena merenjem |
+| Gde pripada nauka | ~~Zaseban šifarnik, van stabla~~ — **izmenjeno 25.09.2026.:** deo bloka 3; radnik je jedinica drugog nivoa, šifra je posao |
 | Šta je `Employee.job_code` | **Šifra radnog mesta** — ne povezuje se |
 
 **Otvoreno, ali ne blokira faze 1 i 2:**
@@ -237,8 +295,8 @@ jednog modula. Delimično prebačen modul je gori od neprebačenog.
    Potrebno pre nego što se stablo prikaže korisnicima sa nazivima nivoa.
 2. Šta su `432`, `vranj`, `vranjs`, `111111`.
 3. Sme li se `960001` „Test centar” ukloniti iz produkcije.
-4. Da li su `200001` i `209001`–`209007` centar `20` — ako jesu, to je **ispravka
-   podatka**, ne mapiranje, i smanjuje izuzetke sa 13 na 3.
+4. ~~Da li su `200001` i `209001`–`209007` centar `20`~~ — **razrešeno 25.09.2026.:** centri
+   blokova su `2` i `3`; `20` i `30` su samo jedinice knjiženja (poglavlje 3, Flota).
 5. Šta znači slovo `A` na kraju četiri naučne šifre.
 
 > **Faza 1 može početi odmah.** Nijedno preostalo pitanje ne utiče na model podataka ni na

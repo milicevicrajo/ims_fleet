@@ -11,7 +11,8 @@
  01:00  Dozvole i uloge
  01:10  Zaposleni iz kadrovske baze
  01:20  Provera otpisanih vozila
- 01:30  Šifre poslova i organizacione jedinice
+ 01:30  Šifre poslova i organizacione jedinice   ← stara organizacija
+ 01:40  Registar organizacije i poređenje      ← nova, paralelno sa starom
  01:45  Trebovanja
  02:00  Polise osiguranja
  02:20  EUF fakture (Nabavka)
@@ -30,7 +31,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 18 zakazanih poslova.** [P]
+**Ukupno 19 zakazanih poslova.** [P]
 
 ---
 
@@ -42,6 +43,7 @@
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
 | 01:30 | Flota — šifre poslova i OJ | `fleet.tasks.fetch_job_codes` | `sync` | 60 min |
+| 01:40 | Organizacija — registar i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
 | 02:20 | Nabavka — EUF fakture | `nabavka.tasks.sync_euf_invoices_task` | `sync` | — |
@@ -72,6 +74,7 @@
 | Knjigovodstvena vrednost vozila | Ručno |
 | Kamate lizinga | Ručno |
 | Čišćenje duplikata goriva | Automatski **uz svaki uvoz OMV podataka** |
+| Samo povezivanje Flote sa registrom (`povezi_flotu`) | Ručno; inače je deo zadatka u 01:40, a novi zapisi se povezuju sami pri čuvanju |
 
 ---
 
@@ -282,12 +285,18 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates          # pregled
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates --apply  # brisanje
 
+# Registar organizacije (nova sinhronizacija, paralelno sa fetch_job_codes)
+.\.venv\Scripts\python.exe manage.py sync_organizacija                 # isto što i zadatak u 01:40
+.\.venv\Scripts\python.exe manage.py uvezi_organizaciju
+.\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa
+.\.venv\Scripts\python.exe manage.py povezi_flotu                      # popunjava org_node u paketima
+
 # Dozvole i raspored
 .\.venv\Scripts\python.exe manage.py sync_permission_codes
 .\.venv\Scripts\python.exe manage.py sync_celery_periodic_tasks --dry-run
 ```
 
-**Ukupno 50 upravljačkih komandi.** Spisak: `manage.py help`. [P]
+**Ukupno 54 upravljačke komande.** Spisak: `manage.py help`. [P]
 
 > **[P] Zaštita:** ručno pokretanje koristi **isto zaključavanje** kao zakazani posao —
 > ne mogu se preklopiti.

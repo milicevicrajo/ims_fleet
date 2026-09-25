@@ -3,10 +3,12 @@ from django.http import Http404
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
-from core.mixins import user_has_role_permission
+from core.mixins import role_permission_required, user_has_role_permission
 from organizacija.models import OrgImportRun
 from organizacija.services import detail as detail_service
+from organizacija.services import flota as flota_service
 from organizacija.services import sema as sema_service
+from organizacija.services import sync as sync_service
 from organizacija.services import tree as tree_service
 
 COMPANY = 1
@@ -32,8 +34,8 @@ def stablo(request):
     if profit not in tree_service.PROFIT_CHOICES:
         profit = ""
 
-    tree = tree_service.build_tree(COMPANY, query, status, profit)
     last_run = OrgImportRun.objects.filter(status=OrgImportRun.STATUS_DONE).first()
+    tree = tree_service.build_tree(COMPANY, query, status, profit)
     filtered = bool(query or status or profit)
     context = {
         "tree": tree,
@@ -45,6 +47,7 @@ def stablo(request):
         "filtered": filtered,
         "filter_links": tree_service.filter_links(query, status, profit),
         "last_run": last_run,
+        "grupe": tree_service.po_delovima(tree),
         "unresolved": tree_service.unresolved_groups(last_run),
         "is_empty": not tree and not filtered,
     }
@@ -74,3 +77,29 @@ def cvor(request, pk):
     data["usage"] = (detail_service.ledger_usage(data)
                      if user_has_role_permission(request.user, LEDGER_PERMISSION) else None)
     return render(request, "organizacija/cvor.html", data)
+
+
+@require_GET
+@login_required
+@role_permission_required()
+def flota(request):
+    """Faza 2 za Flotu: stanje veze `org_node` i uporedni izvestaj starog puta i registra.
+
+    Samo za citanje — veza se popunjava komandom `povezi_flotu`. Flota i dalje sve racuna
+    iz starih polja; ovaj ekran pokazuje da li bi registar dao isto.
+    """
+    request.session["current_app"] = "organizacija"
+    godine = flota_service.godine_goriva()
+    godina = request.GET.get("godina") or ""
+    godina = int(godina) if godina.isdigit() and int(godina) in godine else None
+    izvestaj = flota_service.uporedni_izvestaj(COMPANY, godina)
+    context = {
+        "stanje": flota_service.povezi(COMPANY, proba=True),
+        "kontrola": sync_service.uporedi_jedinice(COMPANY),
+        "svezina": sync_service.svezina_izvora(COMPANY),
+        "izvestaj": izvestaj,
+        "godine": godine,
+        "godina": godina,
+        "last_run": OrgImportRun.objects.filter(status=OrgImportRun.STATUS_DONE).first(),
+    }
+    return render(request, "organizacija/flota.html", context)

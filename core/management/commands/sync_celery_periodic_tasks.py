@@ -38,6 +38,13 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "30",
     },
     {
+        # Nova sinhronizacija radi paralelno sa starom (iznad) i posle nje; staru ne menja.
+        "name": "Organizacija - sinhronizacija registra i poredjenje sa starom",
+        "task": "organizacija.tasks.sync_organizacija_task",
+        "hour": "1",
+        "minute": "40",
+    },
+    {
         "name": "Flota - sinhronizacija trebovanja",
         "aliases": ["Trebovanja"],
         "task": "fleet.tasks.fetch_requisition_data_task",

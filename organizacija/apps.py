@@ -5,3 +5,8 @@ class OrganizacijaConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "organizacija"
     verbose_name = "Centralni registar organizacije"
+
+    def ready(self):
+        from organizacija.signals import povezi_signale
+
+        povezi_signale()

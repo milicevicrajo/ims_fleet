@@ -766,7 +766,7 @@ nema REST API-ja, nema odvojenog frontend okvira.
 | Obračuni | Obični Python moduli (`services/`, `support/`) | Bez okvira, bez klasa gde nisu potrebne |
 | Pristup podacima | Django ORM (`default`) + sirovi SQL (`server_db`) | Dva aliasa, ista baza |
 | Baza | Microsoft SQL Server, `mssql-django` 1.5, ODBC Driver 17 | Baza `IMS_ERP` |
-| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 18 zakazanih poslova |
+| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 19 zakazanih poslova |
 | Okruženje | Windows server, NSSM servisi | Tri servisa |
 
 `djangorestframework` i `psycopg2-binary` postoje u `requirements.txt`, ali **nisu**
@@ -1722,6 +1722,14 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 | `fleet_vehicletravelorder` | Zaduženje vozila | `pn_number`, `rbz` |
 | `fleet_putninalog` | Službeno putovanje | `order_number` |
 
+> **[P] Veza sa registrom organizacije (faza 2, od 25.09.2026.):** šest tabela —
+> `fleet_jobcode`, `fleet_putninalog`, `fleet_vehicletravelorder`, `fleet_procurementrequest`,
+> `fleet_fuelconsumption`, `fleet_lease` — imaju opcionu kolonu `org_node_id` (čvor registra).
+> Ona se **izvodi** iz postojećeg polja (`organizational_unit` / `job_code`) pri svakom čuvanju
+> (`organizacija/signals.py`) i komandom `povezi_flotu`. **Flota je ne čita:** sve rute i obračuni
+> i dalje rade preko starih polja, koja ostaju merodavna. Uporedni izveštaj:
+> `/organizacija/flota/` (dozvola `organizacija:flota`).
+
 ---
 
 ### 9. SQL pogledi i upiti
@@ -1799,6 +1807,7 @@ ispravke i provere. [P]
 | **Finansije** | Vozila i zaduženja na šifri posla; trošak zarada |
 | **Isplate** | Putni nalozi sa akontacijom → virman |
 | **Administracija** | Organizacione jedinice i centri |
+| **Organizacija (registar)** | Kolona `org_node` na šest tabela, samo upis i poređenje — čitanje iz registra još nije uključeno |
 
 ---
 
@@ -17593,7 +17602,8 @@ chrome-for-testing/  Chrome za Selenium
  01:00  Dozvole i uloge
  01:10  Zaposleni iz kadrovske baze
  01:20  Provera otpisanih vozila
- 01:30  Šifre poslova i organizacione jedinice
+ 01:30  Šifre poslova i organizacione jedinice   ← stara organizacija
+ 01:40  Registar organizacije i poređenje      ← nova, paralelno sa starom
  01:45  Trebovanja
  02:00  Polise osiguranja
  02:20  EUF fakture (Nabavka)
@@ -17612,7 +17622,7 @@ chrome-for-testing/  Chrome za Selenium
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 18 zakazanih poslova.** [P]
+**Ukupno 19 zakazanih poslova.** [P]
 
 ---
 
@@ -17624,6 +17634,7 @@ chrome-for-testing/  Chrome za Selenium
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
 | 01:30 | Flota — šifre poslova i OJ | `fleet.tasks.fetch_job_codes` | `sync` | 60 min |
+| 01:40 | Organizacija — registar i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
 | 02:20 | Nabavka — EUF fakture | `nabavka.tasks.sync_euf_invoices_task` | `sync` | — |
@@ -17654,6 +17665,7 @@ chrome-for-testing/  Chrome za Selenium
 | Knjigovodstvena vrednost vozila | Ručno |
 | Kamate lizinga | Ručno |
 | Čišćenje duplikata goriva | Automatski **uz svaki uvoz OMV podataka** |
+| Samo povezivanje Flote sa registrom (`povezi_flotu`) | Ručno; inače je deo zadatka u 01:40, a novi zapisi se povezuju sami pri čuvanju |
 
 ---
 
@@ -17864,12 +17876,18 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates          # pregled
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates --apply  # brisanje
 
+# Registar organizacije (nova sinhronizacija, paralelno sa fetch_job_codes)
+.\.venv\Scripts\python.exe manage.py sync_organizacija                 # isto što i zadatak u 01:40
+.\.venv\Scripts\python.exe manage.py uvezi_organizaciju
+.\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa
+.\.venv\Scripts\python.exe manage.py povezi_flotu                      # popunjava org_node u paketima
+
 # Dozvole i raspored
 .\.venv\Scripts\python.exe manage.py sync_permission_codes
 .\.venv\Scripts\python.exe manage.py sync_celery_periodic_tasks --dry-run
 ```
 
-**Ukupno 50 upravljačkih komandi.** Spisak: `manage.py help`. [P]
+**Ukupno 54 upravljačke komande.** Spisak: `manage.py help`. [P]
 
 > **[P] Zaštita:** ručno pokretanje koristi **isto zaključavanje** kao zakazani posao —
 > ne mogu se preklopiti.
@@ -20459,6 +20477,28 @@ Danas se organizaciona pripadnost i prava pristupa vode na **nedosledan način**
 
 Uvođenje istorije pripadnosti rešava **četiri zabeležena problema odjednom**:
 P-05, P-24, P-44 i deo P-19.
+
+#### Stanje realizacije registra [P]
+
+Razrada: [`plan-registra-sifara-posla.md`](plan-registra-sifara-posla.md).
+
+| Faza | Stanje |
+|---|---|
+| Faza 1 — registar (`organizacija`), uvoz, stablo, kontrolni izveštaj | Izvedeno; otvorena pitanja o šiframa `111111`, `432`, `vranj`, `vranjs` i `960001` |
+| Faza 2, Flota — koraci 1–3 (veza `org_node`, popunjavanje, uporedni izveštaj) | Izvedeno 25.09.2026. **Čitanje iz registra (korak 4) nije uključeno** |
+| Nova sinhronizacija (01:40) | Radi paralelno sa starom (`fetch_job_codes`, 01:30): osvežava registar, povezuje Flotu i poredi staro i novo. Staru ne menja |
+| Faza 2, ostali moduli | Nije počelo |
+
+**Redosled gašenja [Z]:** stara i nova sinhronizacija rade zajedno sve vreme. Moduli prelaze
+na čitanje iz registra **jedan po jedan**, svaki tek kad mu uporedni izveštaj prođe. Stara
+sinhronizacija i `OrganizationalUnit` gase se **poslednji**, kad nijedan modul više ne čita
+staro polje — do tada na njih pokazuju strani ključevi putnih naloga, dodela i nabavke.
+
+**Odluke 25.09.2026.:** centri poslovnog i naučnog bloka su `2` i `3` (knjiženja ih vode kao
+jedinice `20` i `30`); naučna šifra je `3` + šifra radnika iz Kadrova + broj projekta i **deo
+je bloka 3** (naučni projekat je jedinica, šifra je učešće radnika, radnik je povezan sa Kadrovima); nazivi centara i jedinica su po Pravilniku o
+organizaciji od 18.04.2024. (latinicom). Uporedni izveštaj Flote na produkcionim podacima
+(proba) se poklapa do dinara u svih 9 centara, bez ijednog nepovezanog zapisa.
 
 ---
 

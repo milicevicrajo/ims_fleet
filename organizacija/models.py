@@ -232,7 +232,7 @@ class UnresolvedOrgCode(models.Model):
     FAMILY_SCIENCE = "B"
     FAMILY_EXCEPTION = "C"
     FAMILY_CHOICES = [
-        (FAMILY_SCIENCE, "B — nauka (zaseban sifarnik)"),
+        (FAMILY_SCIENCE, "B — nauka (deo bloka 3)"),
         (FAMILY_EXCEPTION, "C — izuzetak"),
     ]
 

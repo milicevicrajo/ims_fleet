@@ -1,0 +1,10 @@
+{% comment %}
+Radnik uz naucnu sifru (organizacija/services/naucnici.py), po licnom broju.
+`r.vrsta`: zaposlen · bivsi_u_kadrovima · bivsi · ne_poklapa · zbirni.
+{% endcomment %}
+{% if r.vrsta == "zbirni" %}<span class="org-badge org-badge-group">zbirni nosilac {{ r.broj }}</span>
+{% elif r.vrsta == "zaposlen" %}<a class="org-person" href="{% url 'employee_detail' r.pk %}" title="Radnik iz Kadrova, lični broj {{ r.broj }}"><i class="mdi mdi-account"></i> {{ r.ime }}</a>
+{% elif r.vrsta == "bivsi_u_kadrovima" %}<a class="org-person is-former" href="{% url 'employee_detail' r.pk %}" title="U Kadrovima, lični broj {{ r.broj }}, neaktivan"><i class="mdi mdi-account-off-outline"></i> {{ r.ime }}</a> <span class="org-badge org-badge-inactive">više nije zaposlen</span>
+{% elif r.vrsta == "ne_poklapa" %}<a class="org-person" href="{% url 'employee_detail' r.pk %}" title="Lični broj {{ r.broj }} u Kadrovima"><i class="mdi mdi-account-question-outline"></i> {{ r.ime }}</a> <span class="org-badge org-badge-unknown" title="U šifri: {{ r.u_sifri|default:'—' }}. Prezime iz Kadrova se ne nalazi ni u jednoj šifri ovog nosioca.">ime se ne poklapa</span>
+{% else %}<span class="org-person is-former" title="Lični broj {{ r.broj }} ne postoji u Kadrovima"><i class="mdi mdi-account-off-outline"></i> {{ r.ime|default:"—" }}</span> <span class="org-badge org-badge-inactive">bivši zaposleni</span>
+{% endif %}

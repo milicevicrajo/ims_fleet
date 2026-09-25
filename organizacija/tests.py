@@ -60,10 +60,11 @@ class ClassificationTests(TestCase):
             self.assertEqual(result.center, center, code)
 
     def test_science_root_is_not_read_as_center(self):
-        """`315400` je osoba (Delic Ivana), a ne centar 31."""
+        """`315400` je radnik 154 (Delic Ivana) u bloku 3, a ne centar 31."""
         result = klas.classify("315400", set(UNITS), name="Delic Ivana")
         self.assertEqual(result.family, klas.FAMILY_SCIENCE)
-        self.assertIsNone(result.segments)
+        self.assertEqual(result.segments, ("30", "00", "154"))
+        self.assertEqual(result.unit_code, "3-00")
 
     def test_science_project_code_is_science(self):
         result = klas.classify("3154190170", set(UNITS), name="P190170-Delic I.")
@@ -197,7 +198,7 @@ class TreeBuildTests(ImportTestCase):
         structure = structural_checks(1)
         # Pet od sest poznatih jedinica nosi poslove; `1 IMS` ne nosi nijedan.
         self.assertEqual(structure["centers"], 5)
-        self.assertEqual(structure["jobs"], 7)
+        self.assertEqual(structure["jobs"], 9)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
         self.assertEqual(structure["duplicate_codes"], [])
         self.assertEqual(structure["orphans"], [])
 
@@ -224,14 +225,14 @@ class TreeBuildTests(ImportTestCase):
         job = OrgNodeVersion.objects.get(full_code="431112", valid_to__isnull=True)
         self.assertFalse(job.is_active)
 
-    def test_science_codes_stay_out_of_the_tree(self):
-        codes = set(
-            OrgNodeVersion.objects.filter(valid_to__isnull=True).values_list("full_code", flat=True)
-        )
-        self.assertNotIn("315400", codes)
-        self.assertNotIn("3154190170", codes)
-        science = UnresolvedOrgCode.objects.filter(family=UnresolvedOrgCode.FAMILY_SCIENCE)
-        self.assertEqual(set(science.values_list("code", flat=True)), {"315400", "3154190170"})
+    def test_science_codes_are_jobs_of_block_3(self):
+        """Odluka 25.09.2026.: nauka je deo bloka 3 — projekat je jedinica, sifra je ucesce radnika."""
+        job = OrgNodeVersion.objects.get(full_code="3154190170", valid_to__isnull=True)
+        unit = OrgNodeVersion.objects.get(node=job.parent, valid_to__isnull=True)
+        center = OrgNodeVersion.objects.get(node=unit.parent, valid_to__isnull=True)
+        self.assertEqual((unit.full_code, center.full_code), ("3-190170", "3"))
+        self.assertEqual(job.segment, "154")
+        self.assertFalse(UnresolvedOrgCode.objects.filter(family=UnresolvedOrgCode.FAMILY_SCIENCE).exists())
 
     def test_exceptions_are_listed_with_a_reason(self):
         exceptions = UnresolvedOrgCode.objects.filter(family=UnresolvedOrgCode.FAMILY_EXCEPTION)
@@ -366,17 +367,18 @@ class ReconciliationTests(ImportTestCase):
         )
 
     def test_unresolved_amount_stays_visible(self):
-        """Nauka i izuzeci se ne razresavaju — i to mora da se vidi, ne da se precuti."""
+        """Izuzeci se ne razresavaju — i to mora da se vidi, ne da se precuti. Nauka je u bloku 3."""
         ledger = ledger_reconciliation(1)
         codes = {item["job_code"] for item in ledger["unresolved"]}
-        self.assertEqual(codes, {"315400", "3154190170", "vranjs"})
-        self.assertEqual(ledger["unresolved_debit"], Decimal("300.00"))
+        self.assertEqual(codes, {"vranjs"})
+        self.assertEqual(ledger["unresolved_debit"], Decimal("100.00"))
 
     def test_center_totals_use_the_tree_not_the_text_field(self):
         """`209001` ima center='2' u sifarniku; preko stabla mora pasti pod 20."""
         ledger = ledger_reconciliation(1)
-        self.assertIn("20", ledger["per_center"])
-        self.assertEqual(ledger["per_center"]["20"]["rows"], 1)
+        # Jedinica knjizenja 20 je centar 2 (odluka 25.09.2026.).
+        self.assertIn("2", ledger["per_center"])
+        self.assertEqual(ledger["per_center"]["2"]["rows"], 1)
 
     def test_report_has_all_three_parts(self):
         report = build_report(1)
@@ -496,7 +498,7 @@ class TreeServiceTests(ImportTestCase):
         center = next(item for item in tree if item["code"] == "43")
         self.assertEqual(center["job_count"], 3)
         self.assertEqual(center["active_jobs"], 2)
-        self.assertEqual(totals(tree)["jobs"], 7)
+        self.assertEqual(totals(tree)["jobs"], 9)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
 
     def test_search_keeps_the_branch_of_a_matching_job(self):
         from organizacija.services.tree import build_tree
@@ -512,20 +514,23 @@ class TreeServiceTests(ImportTestCase):
 
         tree = build_tree(1, query="NADZOR")
         codes = [job["code"] for center in tree for unit in center["units"] for job in unit["jobs"]]
-        self.assertEqual(codes, ["430111"])
+        # 431 je po pravilniku „Odeljenje za geotehniku i nadzor", pa pogodak na jedinici vraca i njen posao.
+        self.assertEqual(codes, ["430111", "431112"])
 
     def test_search_without_a_hit_returns_nothing(self):
         from organizacija.services.tree import build_tree
 
         self.assertEqual(build_tree(1, query="nepostojece"), [])
 
-    def test_science_is_not_in_the_tree_but_is_listed_separately(self):
+    def test_science_is_part_of_block_3(self):
         from organizacija.services.tree import build_tree, unresolved_groups
 
-        codes = {job["code"] for c in build_tree(1) for u in c["units"] for job in u["jobs"]}
-        self.assertNotIn("315400", codes)
+        blok = next(c for c in build_tree(1) if c["code"] == "3")
+        self.assertEqual({u["code"] for u in blok["units"]}, {"300", "3-00", "3-190170"})
+        codes = {job["code"] for u in blok["units"] for job in u["jobs"]}
+        self.assertTrue({"315400", "3154190170"} <= codes)
         families = {group["family"] for group in unresolved_groups()}
-        self.assertEqual(families, {"B", "C"})
+        self.assertEqual(families, {"C"})
 
 
 class TreeViewTests(ImportTestCase):
@@ -580,12 +585,14 @@ class TreeViewTests(ImportTestCase):
         self.assertEqual(content.count("data-org-open>"), 1)
         self.assertEqual(content.count("data-org-close>"), 1)
 
-    def test_science_codes_are_shown_outside_the_tree(self):
+    def test_science_codes_are_shown_in_block_3(self):
+        """Nauka je deo bloka 3: radnik je jedinica, a njegove sifre su poslovi."""
         self._grant()
         self.client.force_login(self.user)
         content = self.client.get(self.url).content.decode()
-        self.assertIn("Šifre van stabla", content)
+        self.assertIn("3-190170", content)
         self.assertIn("315400", content)
+        self.assertIn("Naučno-istraživački blok", content)
 
     def test_second_level_without_a_name_says_so_instead_of_inventing_one(self):
         self._grant()
@@ -820,7 +827,7 @@ class TreeFilterTests(ImportTestCase):
         return {job["code"] for c in tree for u in c["units"] for job in u["jobs"]}
 
     def test_no_filter_shows_everything(self):
-        self.assertEqual(len(self._codes()), 7)
+        self.assertEqual(len(self._codes()), 9)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
 
     def test_only_inactive(self):
         self.assertEqual(self._codes(status="neaktivni"), {"431112"})
@@ -828,7 +835,7 @@ class TreeFilterTests(ImportTestCase):
     def test_only_active(self):
         codes = self._codes(status="aktivni")
         self.assertNotIn("431112", codes)
-        self.assertEqual(len(codes), 6)
+        self.assertEqual(len(codes), 8)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
 
     def test_only_profitable(self):
         self.assertEqual(self._codes(profit="profitni"), {"430111", "431112"})
@@ -853,7 +860,7 @@ class TreeFilterTests(ImportTestCase):
         self.assertEqual([unit["code"] for unit in tree[0]["units"]], ["431"])
 
     def test_unknown_filter_value_is_ignored_instead_of_breaking(self):
-        self.assertEqual(len(self._codes(status="bilo-sta", profit="bilo-sta")), 7)
+        self.assertEqual(len(self._codes(status="bilo-sta", profit="bilo-sta")), 9)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
 
     def test_searching_a_center_name_keeps_its_contents(self):
         """Pogodak na centru ne sme vratiti prazan centar."""
@@ -909,7 +916,7 @@ class FilterViewTests(ImportTestCase):
 
     def test_filtered_page_says_how_much_is_shown(self):
         content = self.client.get(self.url, {"status": "neaktivni"}).content.decode()
-        self.assertIn("Prikazano <strong>1</strong> od 7", content)
+        self.assertIn("Prikazano <strong>1</strong> od 9", content)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
 
     def test_filtered_branches_open_by_themselves(self):
         content = self.client.get(self.url, {"profit": "profitni"}).content.decode()
@@ -935,14 +942,14 @@ class ActivityMeasureTests(ImportTestCase):
 
     def test_jobs_with_postings_in_the_window_have_turnover(self):
         _, summary = self._measure()
-        self.assertEqual(summary["jobs"], 7)
-        # Knjizenja postoje za 430111, 430001, 410001, 209001 i 110002.
-        self.assertEqual(summary["with_turnover"], 5)
+        self.assertEqual(summary["jobs"], 9)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
+        # Knjizenja postoje za 430111, 430001, 410001, 209001, 110002 i naucne 315400, 3154190170.
+        self.assertEqual(summary["with_turnover"], 7)
 
     def test_window_that_ends_before_the_postings_finds_no_turnover(self):
         _, summary = self._measure(today=date(2028, 1, 1))
         self.assertEqual(summary["with_turnover"], 0)
-        self.assertEqual(summary["without_turnover"], 7)
+        self.assertEqual(summary["without_turnover"], 9)  # nauka (315400, 3154190170) je od 25.09.2026. deo bloka 3
 
     def test_only_active_jobs_without_turnover_are_listed_for_deactivation(self):
         _, summary = self._measure()

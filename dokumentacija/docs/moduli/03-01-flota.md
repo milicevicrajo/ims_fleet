@@ -243,6 +243,14 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 | `fleet_vehicletravelorder` | Zaduženje vozila | `pn_number`, `rbz` |
 | `fleet_putninalog` | Službeno putovanje | `order_number` |
 
+> **[P] Veza sa registrom organizacije (faza 2, od 25.09.2026.):** šest tabela —
+> `fleet_jobcode`, `fleet_putninalog`, `fleet_vehicletravelorder`, `fleet_procurementrequest`,
+> `fleet_fuelconsumption`, `fleet_lease` — imaju opcionu kolonu `org_node_id` (čvor registra).
+> Ona se **izvodi** iz postojećeg polja (`organizational_unit` / `job_code`) pri svakom čuvanju
+> (`organizacija/signals.py`) i komandom `povezi_flotu`. **Flota je ne čita:** sve rute i obračuni
+> i dalje rade preko starih polja, koja ostaju merodavna. Uporedni izveštaj:
+> `/organizacija/flota/` (dozvola `organizacija:flota`).
+
 ---
 
 ## 9. SQL pogledi i upiti
@@ -320,6 +328,7 @@ ispravke i provere. [P]
 | **Finansije** | Vozila i zaduženja na šifri posla; trošak zarada |
 | **Isplate** | Putni nalozi sa akontacijom → virman |
 | **Administracija** | Organizacione jedinice i centri |
+| **Organizacija (registar)** | Kolona `org_node` na šest tabela, samo upis i poređenje — čitanje iz registra još nije uključeno |
 
 ---
 

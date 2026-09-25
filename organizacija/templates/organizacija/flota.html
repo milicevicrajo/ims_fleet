@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% comment %}
+Faza 2 registra za Flotu — samo za čitanje.
+
+Gore: stanje veze `org_node` po modelu (koliko je povezano, šta nema para u registru).
+Dole: uporedni izveštaj — broj i iznos po centru starim putem i kroz registar. Flota i dalje
+radi isključivo preko starih polja; ovde se samo proverava da li bi registar dao isto.
+{% endcomment %}
+{% block title %}Registar i Flota — IMS{% endblock %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+{% include "organizacija/_styles.html" %}
+<style>
+.org-page .fl-verdict { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px;
+  padding: 4px 12px; border-radius: 14px; }
+.org-page .fl-ok { background: #e6f2e8; color: #1f5d33; }
+.org-page .fl-bad { background: #fdecec; color: #8d2e2e; }
+.org-page .fl-info { background: #eef1f6; color: #4a5468; }
+.org-page .fl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; margin: 14px 0 6px; }
+.org-page .fl-card { border: 1px solid #e3e6ec; border-radius: 8px; background: #fff; padding: 12px 14px; }
+.org-page .fl-card h3 { font-size: 14px; margin: 0 0 8px; }
+.org-page .fl-bar { height: 6px; border-radius: 3px; background: #eef1f6; overflow: hidden; margin: 6px 0 8px; }
+.org-page .fl-bar span { display: block; height: 100%; background: #2f9e57; }
+.org-page .fl-card dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; margin: 0; font-size: 13px; }
+.org-page .fl-card dt { font-weight: 400; color: #6c757d; }
+.org-page .fl-card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.org-page .fl-codes { margin-top: 8px; font-size: 12px; color: #8a5a12; }
+.org-page .fl-part { border: 1px solid #e3e6ec; border-radius: 8px; background: #fff; margin-bottom: 14px; }
+.org-page .fl-part > header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid #eef0f4; background: #fafbfd; border-radius: 8px 8px 0 0; }
+.org-page .fl-part h3 { font-size: 15px; margin: 0; }
+.org-page .fl-part .fl-basis { font-size: 12px; color: #6c757d; }
+.org-page .fl-part table { margin: 0; font-size: 13px; }
+.org-page .fl-part td.num, .org-page .fl-part th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.org-page .fl-part tr.is-diff td { background: #fff6dd; }
+.org-page .fl-examples { padding: 8px 14px 12px; font-size: 12px; color: #4a5468; }
+.org-page .fl-examples code { font-size: 12px; }
+</style>
+
+<div class="org-page">
+  <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="org-kicker">IMS · Centralni registar · Faza 2</div>
+      <h1>Registar i Flota</h1>
+      <p>Flota i dalje računa iz starih polja. Ovde se vidi da li bi registar organizacije dao iste centre i iste iznose.</p>
+    </div>
+    <div class="org-hero-right">
+      {% if izvestaj.prolazi %}
+        <span class="fl-verdict fl-ok"><i class="mdi mdi-check-circle"></i> Uporedni izveštaj prolazi</span>
+      {% else %}
+        <span class="fl-verdict fl-bad"><i class="mdi mdi-alert-circle"></i> Uporedni izveštaj ne prolazi</span>
+      {% endif %}
+      <div class="org-filters">
+        <a href="?" class="org-filter {% if not godina %}is-active{% endif %}">Sve godine</a>
+        {% for g in godine|slice:":6" %}
+          <a href="?godina={{ g }}" class="org-filter {% if godina == g %}is-active{% endif %}">{{ g }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </header>
+
+  <p class="org-note mt-3">
+    Veza <code>org_node</code> se popunjava komandom <code>python manage.py povezi_flotu</code> (sa <code>--proba</code> bez upisa),
+    a novi i izmenjeni zapisi dobijaju je pri čuvanju. Staro polje je merodavno; zapis bez para u registru ostaje prazan.
+    {% if last_run %}Poslednji uvoz registra: {{ last_run.finished_at|date:"d.m.Y. H:i" }}.{% endif %}
+  </p>
+
+  <h2 class="h5 mt-3 mb-0">Stara i nova organizacija</h2>
+  <p class="org-note mb-0">
+    Obe sinhronizacije rade paralelno: stara (01:30) puni organizacione jedinice Flote, nova (01:40) iz istog izvora
+    osvežava registar i poredi ga sa starom. Stara ostaje merodavna dok se svi moduli ne prebace.
+    {% if svezina.kasni %}<strong class="text-danger">Šifarnik iz Finansija nije osvežen u poslednjih 26 h.</strong>{% endif %}
+  </p>
+  <div class="fl-grid">
+    <div class="fl-card">
+      <h3>Organizacione jedinice</h3>
+      <div class="fl-bar"><span style="width:{% if kontrola.jedinica %}{% widthratio kontrola.povezano kontrola.jedinica 100 %}{% else %}0{% endif %}%"></span></div>
+      <dl>
+        <dt>U staroj organizaciji</dt><dd>{{ kontrola.jedinica }}</dd>
+        <dt>Imaju čvor u registru</dt><dd>{{ kontrola.povezano }}</dd>
+        <dt>Isti centar</dt><dd>{{ kontrola.isti_centar }}</dd>
+        <dt>Različit centar</dt><dd>{{ kontrola.razlika_centra|length }}</dd>
+      </dl>
+    </div>
+    <div class="fl-card">
+      <h3>Bez para u registru</h3>
+      <dl>
+        <dt>U šifarniku, van stabla</dt><dd>{{ kontrola.van_stabla|length }}</dd>
+        <dt>Nema u šifarniku poslova</dt><dd>{{ kontrola.van_sifarnika|length }}</dd>
+        <dt>Samo u registru</dt><dd>{{ kontrola.samo_u_registru|length }}</dd>
+      </dl>
+      <div class="fl-codes">Van stabla su šifre na listi za razrešenje (npr. <code>111111</code>) — čekaju odluku.</div>
+    </div>
+    {% if kontrola.razlika_centra %}
+    <div class="fl-card">
+      <h3>Različit centar</h3>
+      <div class="fl-codes">
+        {% for red in kontrola.razlika_centra|slice:":12" %}<code>{{ red.sifra }}</code> {{ red.staro|default:"-" }} → {{ red.novo|default:"-" }}{% if not forloop.last %} · {% endif %}{% endfor %}{% if kontrola.razlika_centra|length > 12 %} …{% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <h2 class="h5 mt-3 mb-0">Stanje veze</h2>
+  <div class="fl-grid">
+    {% for z in stanje %}
+      <div class="fl-card">
+        <h3>{{ z.naziv }}</h3>
+        <div class="fl-bar"><span style="width:{% if z.ukupno %}{% widthratio z.vec_povezano z.ukupno 100 %}{% else %}0{% endif %}%"></span></div>
+        <dl>
+          <dt>Zapisa</dt><dd>{{ z.ukupno }}</dd>
+          <dt>Povezano</dt><dd>{{ z.vec_povezano }}</dd>
+          <dt>Čeka popunjavanje</dt><dd>{{ z.postavljeno|add:z.promenjeno|add:z.ocisceno }}</dd>
+          <dt>Bez šifre</dt><dd>{{ z.bez_sifre }}</dd>
+          <dt>Bez para u registru</dt><dd>{{ z.nerazreseno }}</dd>
+        </dl>
+        {% if z.nerazresene_sifre %}
+          <div class="fl-codes">
+            {% for sifra, broj in z.nerazresene_sifre|slice:":8" %}<code>{{ sifra }}</code> ×{{ broj }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if z.nerazresene_sifre|length > 8 %} …{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <h2 class="h5 mt-4 mb-2">Uporedni izveštaj po centru{% if godina %} — {{ godina }}.{% endif %}</h2>
+  <p class="org-note">
+    „Staro“ je centar iz <code>OrganizationalUnit.center</code>, kako ga Flota danas vidi; „Registar“ je centar čvora upisanog u
+    <code>org_node</code>. Zbir po centru važi i za svakog korisnika, jer se pristup u Floti ograničava po centru.
+    Naučne šifre (<code>3</code> + šifra radnika iz Kadrova + broj projekta) su poslovi bloka <code>3</code>, kao i sve ostale.
+    „Van stabla“ je zapis na šifri sa liste za razrešenje — mora se rešiti pre prelaska na registar.
+  </p>
+  {% for deo in izvestaj.delovi %}
+    <section class="fl-part">
+      <header>
+        <div>
+          <h3>{{ deo.naziv }}</h3>
+          <div class="fl-basis">Osnova: {{ deo.osnova }} · {{ deo.ukupno }} zapisa{% if not deo.stari_put %} · Flota danas ne raspoređuje po ovoj šifri — centar koji daje samo registar je dopuna, ne razlika{% endif %}</div>
+        </div>
+        {% if deo.prolazi %}
+          <span class="fl-verdict fl-ok"><i class="mdi mdi-check"></i> Poklapa se</span>
+        {% else %}
+          <span class="fl-verdict fl-bad"><i class="mdi mdi-close"></i> Razlika u {{ deo.razlika_zapisa }} zapisa</span>
+        {% endif %}
+        {% if deo.van_stabla %}<span class="fl-verdict fl-info">Van stabla: {{ deo.van_stabla }}</span>{% endif %}
+        {% if deo.dopuna %}<span class="fl-verdict fl-info">Dopuna iz registra: {{ deo.dopuna }}</span>{% endif %}
+      </header>
+      {% if deo.redovi %}
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr>
+            <th>Centar</th>
+            <th class="num">Staro — broj</th><th class="num">Registar — broj</th>
+            {% if deo.sa_iznosom %}<th class="num">Staro — iznos</th><th class="num">Registar — iznos</th><th class="num">Razlika</th>{% endif %}
+          </tr></thead>
+          <tbody>
+          {% for red in deo.redovi %}
+            <tr class="{% if not red.poklapa %}is-diff{% endif %}">
+              <td><span class="org-code org-code-1">{{ red.centar }}</span></td>
+              <td class="num">{{ red.staro_broj }}</td><td class="num">{{ red.novo_broj }}</td>
+              {% if deo.sa_iznosom %}
+                <td class="num">{{ red.staro_iznos|floatformat:"2g" }}</td>
+                <td class="num">{{ red.novo_iznos|floatformat:"2g" }}</td>
+                <td class="num">{{ red.razlika_iznos|floatformat:"2g" }}</td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="fl-examples">Nema zapisa za izabrani period.</div>
+      {% endif %}
+      {% if deo.primeri %}
+        <div class="fl-examples">
+          <strong>Primeri razlika:</strong>
+          {% for p in deo.primeri %}<span class="text-nowrap">#{{ p.pk }} <code>{{ p.sifra|default:"-" }}</code>: {{ p.staro }} → {{ p.novo }}</span>{% if not forloop.last %} · {% endif %}{% endfor %}
+        </div>
+      {% endif %}
+    </section>
+  {% endfor %}
+  <div class="org-run">Izveštaj napravljen {{ izvestaj.napravljen|date:"d.m.Y. H:i" }}. Ekran ništa ne upisuje.</div>
+</div>
+{% endblock %}
