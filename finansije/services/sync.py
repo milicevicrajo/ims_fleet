@@ -88,11 +88,23 @@ def validate_payload(rows, jobs, company, year_from, year_to):
         raise ValueError("Neispravan šifarnik poslova.")
 
 
+def _cvorovi_registra(company):
+    """Sifra posla → cvor registra organizacije. Samo citanje; prazno ako registar jos nije uvezen.
+
+    `bulk_create`/`bulk_update` ne pokrecu signale, pa se veza `org_node` postavlja ovde, pri
+    svakoj objavi — inace bi izmenjena knjizenja izgubila vezu do nocnog povezivanja.
+    """
+    from organizacija.services.report import job_code_to_node
+
+    return job_code_to_node(company)
+
+
 def publish(rows, jobs, run):
     """Publish a complete scope atomically; failures retain the previous report."""
     validate_payload(rows, jobs, run.company, run.year_from, run.year_to)
     expected = totals_for(rows)
     now = timezone.now()
+    cvorovi = _cvorovi_registra(run.company)
     with transaction.atomic():
         scope = LedgerEntry.objects.filter(company=run.company, year__range=(run.year_from, run.year_to))
         old = {source_key(row): row for row in scope.values(*KEY_FIELDS, "pk", "source_hash", "active")}
@@ -118,7 +130,8 @@ def publish(rows, jobs, run):
             if previous and previous["source_hash"] == digest and previous["active"]:
                 unchanged += 1
                 continue
-            entry = LedgerEntry(**values, source_hash=digest, active=True, removed_at=None, changed_at=now)
+            entry = LedgerEntry(**values, source_hash=digest, active=True, removed_at=None, changed_at=now,
+                                org_node_id=cvorovi.get((values.get("job_code") or "").strip()))
             if previous:
                 entry.pk = previous["pk"]
                 updates.append(entry)

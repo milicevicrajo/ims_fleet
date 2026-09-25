@@ -1,93 +1,117 @@
-from django.db.models import OuterRef, Subquery, Sum
-from django.db.models.functions import TruncMonth, TruncYear
+"""Lizing — mesecni troskovi (izvestaj `lease_monthly_costs`).
 
-from ..models import FuelConsumption, JobCode, Lease, ServiceTransaction, Vehicle
+Jedan lizing je jedno vozilo, pa je red izvestaja **jedan lizing u jednom mesecu** u kome traje:
+
+- iznos lizinga za taj mesec iz postojeceg obracuna (`lease_costs.lease_amount_between`), isto
+  kao u ekonomici vozila; kod nepoznatog znacenja iznosa (`payment_basis`) iznos je prazan;
+- centar i OJ po dodeli vozila vazecoj poslednjeg dana lizinga u tom mesecu;
+- prateci troskovi su servis (`ServiceTransaction.potrazuje`) i gorivo
+  (`FuelConsumption.cost_bruto`) **tog vozila** u tom mesecu — isti izvori kao ekonomika.
+
+Ranije je iznos prikazivan samo u mesecu pocetka lizinga, centar po poslednjoj dodeli, a prateci
+troskovi zbir svih vozila trenutno u toj OJ.
+"""
+import calendar
+import datetime
+from bisect import bisect_right
+from collections import defaultdict
+from decimal import Decimal
+
+from django.db.models import Sum
+from django.db.models.functions import ExtractMonth, ExtractYear
+
+from ..models import FuelConsumption, JobCode, Lease, ServiceTransaction
+from .lease_costs import lease_amount_between
+
+ZERO = Decimal("0")
+
+
+def _meseci(pocetak, kraj):
+    dan = pocetak.replace(day=1)
+    while dan <= kraj:
+        poslednji = dan.replace(day=calendar.monthrange(dan.year, dan.month)[1])
+        yield max(dan, pocetak), min(poslednji, kraj)
+        dan = poslednji + datetime.timedelta(days=1)
+
+
+def _dodele(vehicle_ids):
+    po_vozilu = defaultdict(list)
+    for vozilo, datum, ou_id, code, name, center in (
+        JobCode.objects.filter(vehicle_id__in=vehicle_ids, organizational_unit__isnull=False)
+        .order_by("vehicle_id", "assigned_date", "pk")
+        .values_list("vehicle_id", "assigned_date", "organizational_unit_id", "organizational_unit__code",
+                     "organizational_unit__name", "organizational_unit__center")
+    ):
+        po_vozilu[vozilo].append((datum, ou_id, (code or "").strip(), (name or "").strip(), (center or "").strip()))
+    return po_vozilu
+
+
+def _dodela_na_dan(dodele, dan):
+    mesto = bisect_right([d[0] for d in dodele], dan)
+    return dodele[mesto - 1] if mesto else None
+
+
+def _po_mesecu(queryset, polje_datuma, polje_iznosa):
+    return {
+        (red["vehicle_id"], red["godina"], red["mesec"]): red["iznos"] or ZERO
+        for red in queryset.annotate(godina=ExtractYear(polje_datuma), mesec=ExtractMonth(polje_datuma))
+        .values("vehicle_id", "godina", "mesec").annotate(iznos=Sum(polje_iznosa)).order_by()
+    }
+
+
+def _broj(vrednost):
+    try:
+        return int(vrednost)
+    except (TypeError, ValueError):
+        return None
 
 
 def lease_monthly_costs_rows(request):
-    latest_center_subq = JobCode.objects.filter(vehicle=OuterRef("vehicle")).order_by("-assigned_date").values("organizational_unit__center")[:1]
-    latest_oj_id_subq = JobCode.objects.filter(vehicle=OuterRef("vehicle")).order_by("-assigned_date").values("organizational_unit__id")[:1]
-    latest_oj_name_subq = JobCode.objects.filter(vehicle=OuterRef("vehicle")).order_by("-assigned_date").values("organizational_unit__name")[:1]
+    year, month = _broj(request.GET.get("year")), _broj(request.GET.get("month"))
+    center = (request.GET.get("center") or "").strip()
+    oj_id = _broj(request.GET.get("oj"))
+    lease_type = (request.GET.get("vrsta") or "").strip().lower()
 
-    leases_agg = Lease.objects.annotate(
-        year=TruncYear("start_date"),
-        month=TruncMonth("start_date"),
-        center=Subquery(latest_center_subq),
-        oj_id=Subquery(latest_oj_id_subq),
-        oj_name=Subquery(latest_oj_name_subq),
-    ).values(
-        "year", "month", "center", "oj_id", "oj_name", "job_code", "lease_type"
-    ).annotate(
-        total_lease_amount=Sum("current_payment_amount")
-    )
-
-    year = request.GET.get("year")
-    month = request.GET.get("month")
-    center = request.GET.get("center")
-    oj_id_filter = request.GET.get("oj")
-    lease_type = request.GET.get("vrsta")
-
-    if year:
-        leases_agg = [r for r in leases_agg if r["year"] and r["year"].year == int(year)]
-    if month:
-        leases_agg = [r for r in leases_agg if r["month"] and r["month"].month == int(month)]
-    if center:
-        leases_agg = [r for r in leases_agg if (r.get("center") or "") == center]
-    if oj_id_filter:
-        leases_agg = [r for r in leases_agg if str(r.get("oj_id") or "") == str(oj_id_filter)]
+    leases = list(Lease.objects.select_related("vehicle").order_by("start_date", "pk"))
     if lease_type:
-        leases_agg = [r for r in leases_agg if (r.get("lease_type") or "").lower() == lease_type.lower()]
+        leases = [lease for lease in leases if (lease.lease_type or "").lower() == lease_type]
+    vozila = {lease.vehicle_id for lease in leases}
+    dodele = _dodele(vozila)
+    servis = _po_mesecu(ServiceTransaction.objects.filter(vehicle_id__in=vozila), "datum", "potrazuje")
+    gorivo = _po_mesecu(FuelConsumption.objects.filter(vehicle_id__in=vozila), "date", "cost_bruto")
 
     rows = []
-    latest_ou_for_vehicle = JobCode.objects.filter(vehicle=OuterRef("pk")).order_by("-assigned_date").values("organizational_unit__id")[:1]
-
-    for r in leases_agg:
-        y = r["year"].year if r["year"] else None
-        m = r["month"].month if r["month"] else None
-        oj_id = r.get("oj_id")
-
-        if oj_id:
-            vehicle_ids = list(
-                Vehicle.objects.annotate(
-                    latest_ou_id=Subquery(latest_ou_for_vehicle)
-                ).filter(latest_ou_id=oj_id).values_list("pk", flat=True)
-            )
-        else:
-            vehicle_ids = []
-
-        num_vehicles = len(vehicle_ids)
-        service_sum = 0
-        fuel_sum = 0
-        if num_vehicles and y and m:
-            service_sum = ServiceTransaction.objects.filter(
-                vehicle_id__in=vehicle_ids,
-                datum__year=y,
-                datum__month=m,
-            ).aggregate(total=Sum("potrazuje"))["total"] or 0
-
-            fuel_sum = FuelConsumption.objects.filter(
-                vehicle_id__in=vehicle_ids,
-                date__year=y,
-                date__month=m,
-            ).aggregate(total=Sum("cost_bruto"))["total"] or 0
-
-        accompanying_total = (service_sum or 0) + (fuel_sum or 0)
-        accompanying_per_vehicle = (accompanying_total / num_vehicles) if num_vehicles else None
-
-        rows.append(
-            {
-                "year": y,
-                "month": m,
-                "center": r.get("center"),
-                "oj_id": oj_id,
-                "oj_name": r.get("oj_name"),
-                "job_code": r.get("job_code"),
-                "lease_type": r.get("lease_type"),
-                "lease_amount": r.get("total_lease_amount") or 0,
-                "accompanying_total": accompanying_total,
-                "accompanying_per_vehicle": accompanying_per_vehicle,
-                "vehicle_count": num_vehicles,
-            }
-        )
-
-    return sorted(rows, key=lambda x: (x["year"] or 0, x["month"] or 0, x.get("center") or "", x.get("oj_id") or ""))
+    for lease in leases:
+        if not lease.start_date or not lease.end_date or lease.end_date < lease.start_date:
+            continue
+        for od, do in _meseci(lease.start_date, lease.end_date):
+            if (year and od.year != year) or (month and od.month != month):
+                continue
+            dodela = _dodela_na_dan(dodele.get(lease.vehicle_id, []), do)
+            _, dodela_oj, dodela_sifra, dodela_naziv, dodela_centar = dodela or (None, None, "", "", "")
+            if center and dodela_centar != center:
+                continue
+            if oj_id and dodela_oj != oj_id:
+                continue
+            kljuc = (lease.vehicle_id, od.year, od.month)
+            prateci = servis.get(kljuc, ZERO) + gorivo.get(kljuc, ZERO)
+            iznos = lease_amount_between(lease, od, do)
+            rows.append({
+                "year": od.year,
+                "month": od.month,
+                "center": dodela_centar,
+                "oj_id": dodela_oj,
+                "oj_code": dodela_sifra,
+                "oj_name": dodela_naziv,
+                "job_code": lease.job_code,
+                "lease_type": lease.lease_type,
+                "lease_id": lease.pk,
+                "vehicle": lease.vehicle,
+                "contract_number": lease.contract_number,
+                "lease_amount": iznos,
+                "service_total": servis.get(kljuc, ZERO),
+                "fuel_total": gorivo.get(kljuc, ZERO),
+                "accompanying_total": prateci,
+                "total": (iznos + prateci) if iznos is not None else None,
+            })
+    return sorted(rows, key=lambda r: (r["year"], r["month"], r["center"] or "", r["oj_code"] or "", r["lease_id"]))

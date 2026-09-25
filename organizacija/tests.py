@@ -91,10 +91,17 @@ class ClassificationTests(TestCase):
         self.assertEqual(result.family, klas.FAMILY_EXCEPTION)
 
     def test_code_without_name_is_not_added_silently(self):
-        """`111111` strukturno lici na 11/1/111, ali nema naziv — ide na proveru."""
-        result = klas.classify("111111", set(UNITS), name="")
+        """Sifra koja strukturno odgovara (11/1/112), ali nema naziv — ide na proveru."""
+        result = klas.classify("111112", set(UNITS), name="")
         self.assertEqual(result.family, klas.FAMILY_EXCEPTION)
         self.assertEqual(result.reason, klas.REASON_NO_NAME)
+
+    def test_technical_code_is_not_a_job_and_has_no_center(self):
+        """Odluka 25.09.2026.: `111111` je tehnicka sifra zatvaranja i pocetnog stanja."""
+        result = klas.classify("111111", set(UNITS), name="")
+        self.assertEqual(result.family, klas.FAMILY_EXCEPTION)
+        self.assertFalse(result.in_tree)
+        self.assertIn("Tehnička", result.reason)
 
     def test_unknown_center_is_exception(self):
         result = klas.classify("960001", set(UNITS), name="Test centar")

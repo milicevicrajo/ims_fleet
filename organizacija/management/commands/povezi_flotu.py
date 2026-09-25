@@ -15,7 +15,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--model",
             action="append",
-            choices=[veza.kljuc for veza in flota.VEZE],
+            choices=[veza.kljuc for veza in flota.SVE_VEZE],
             help="Samo navedeni model; moze vise puta. Bez ovoga — svi.",
         )
         parser.add_argument("--proba", action="store_true", help="Samo prikazi sta bi se promenilo, bez upisa.")
@@ -25,6 +25,8 @@ class Command(BaseCommand):
             help="Posle popunjavanja prikazi uporedni izvestaj (stari put naspram registra).",
         )
         parser.add_argument("--godina", type=int, help="Uporedni izvestaj samo za jednu godinu.")
+        parser.add_argument("--modul", choices=["flota", "nabavka", "finansije", "potrazivanja", "sve"], default="flota",
+                            help="Koji modul se povezuje (podrazumevano flota).")
 
     def handle(self, *args, **options):
         if options["paket"] < 1:
@@ -34,6 +36,7 @@ class Command(BaseCommand):
             proba=options["proba"],
             batch_size=options["paket"],
             modeli=options["model"],
+            modul=options["modul"],
         )
         for zbir in zbirovi:
             self._zbir(zbir)
@@ -44,7 +47,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Izmenjenih veza: {izmena}"))
 
         if options["izvestaj"]:
-            self._izvestaj(flota.uporedni_izvestaj(options["firma"], options["godina"]))
+            moduli = list(flota.MODULI) if options["modul"] == "sve" else [options["modul"]]
+            for modul in moduli:
+                self._izvestaj(flota.uporedni_izvestaj(options["firma"], options["godina"], modul=modul))
 
     def _zbir(self, z):
         self.stdout.write(f"{z['naziv']} ({z['kljuc']})")

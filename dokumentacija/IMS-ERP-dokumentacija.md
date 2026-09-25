@@ -1589,6 +1589,13 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
 > ispravljeni komandom `ispravi_sifre_goriva` (1.076 od 16.212); ona menja samo pogrešne, a
 > zapise bez dodele na taj dan ne dira.
 
+> **[P] Lizing — mesečni troškovi (ispravljeno 25.09.2026.):** jedan lizing je jedno vozilo, pa je
+> red izveštaja jedan lizing u jednom mesecu u kome traje. Iznos je iz obračuna lizinga
+> (`fleet/support/lease_costs.py`, isto kao ekonomika vozila), centar i OJ po dodeli važećoj u
+> tom mesecu, a prateći troškovi su servis i gorivo **samo tog vozila**. Ranije je iznos bio samo
+> u mesecu početka, centar po poslednjoj dodeli, a prateći troškovi zbir svih vozila u OJ.
+> Lizing bez upisanog „Značenja iznosa” (mesečni ili ukupan) ima prazan iznos (7 od 23 [P]).
+
 #### Održavanje i garaža
 
 | Ekran | Adresa |
@@ -3031,6 +3038,7 @@ Detaljno: [4.7. Nabavka](#47-nabavka--nabavka). **13 tabela.**
 | **Flota** | Kvar (`garage_order`) i vozilo (`vehicle`) na predmetu; EUF fakture → polise; fakture i trebovanja → dokazi o održavanju |
 | **Ugovori** | Dobavljač (`supplier`), osnovni ugovor (`contract`), kupovni ugovori |
 | **Administracija** | Organizaciona jedinica i centar — određuju broj predmeta |
+| **Organizacija (registar)** | Kolona `org_node` na predmetu, fakturi i vezi fakture sa šifrom (od 25.09.2026.), izvodi se iz `job_code`; spiskovi i nazivi šifara u formama i filteru dolaze iz registra (`fleet/support/registar.py`). Broj predmeta i zbirovi i dalje iz starog polja |
 
 > **[P]** Kupovni ugovori su **pogled na modul Ugovori**, bez sopstvene tabele u Nabavci —
 > vidi [5. Ekrani](#5-glavni-korisnički-ekrani).
@@ -17895,6 +17903,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py uvezi_organizaciju
 .\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa
 .\.venv\Scripts\python.exe manage.py povezi_flotu                      # popunjava org_node u paketima
+.\.venv\Scripts\python.exe manage.py povezi_flotu --modul nabavka      # isto za Nabavku (finansije, potrazivanja, ili sve)
 
 # Dozvole i raspored
 .\.venv\Scripts\python.exe manage.py sync_permission_codes
@@ -20501,7 +20510,10 @@ Razrada: [`plan-registra-sifara-posla.md`](plan-registra-sifara-posla.md).
 | Faza 1 — registar (`organizacija`), uvoz, stablo, kontrolni izveštaj | Izvedeno; otvorena pitanja o šiframa `111111`, `432`, `vranj`, `vranjs` i `960001` |
 | Faza 2, Flota — koraci 1–3 (veza `org_node`, popunjavanje, uporedni izveštaj) | Izvedeno 25.09.2026. **Čitanje iz registra (korak 4) nije uključeno** |
 | Nova sinhronizacija (01:40) | Radi paralelno sa starom (`fetch_job_codes`, 01:30): osvežava registar, povezuje Flotu i poredi staro i novo. Staru ne menja |
-| Faza 2, ostali moduli | Nije počelo |
+| Faza 2, Nabavka — koraci 1–4 | Izvedeno 25.09.2026.: 1.784 veze, uporedni izveštaj prolazi; spiskovi i nazivi iz registra |
+| Faza 2, Finansije — koraci 1–3 | Izvedeno 25.09.2026.: 149.195 knjiženja povezano; posle odluka (`110002`/`430001` → 11/43, `111111` tehnička) uporedni izveštaj prolazi |
+| Faza 2, Potraživanja — koraci 1–3 | Izvedeno 25.09.2026.: 21.961 veza, uporedni izveštaj prolazi |
+| Faza 2, ostali moduli (Ugovori, Menice, Mobilni) | Nije počelo |
 
 **Redosled gašenja [Z]:** stara i nova sinhronizacija rade zajedno sve vreme. Moduli prelaze
 na čitanje iz registra **jedan po jedan**, svaki tek kad mu uporedni izveštaj prođe. Stara

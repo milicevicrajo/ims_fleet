@@ -110,6 +110,13 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
 > ispravljeni komandom `ispravi_sifre_goriva` (1.076 od 16.212); ona menja samo pogrešne, a
 > zapise bez dodele na taj dan ne dira.
 
+> **[P] Lizing — mesečni troškovi (ispravljeno 25.09.2026.):** jedan lizing je jedno vozilo, pa je
+> red izveštaja jedan lizing u jednom mesecu u kome traje. Iznos je iz obračuna lizinga
+> (`fleet/support/lease_costs.py`, isto kao ekonomika vozila), centar i OJ po dodeli važećoj u
+> tom mesecu, a prateći troškovi su servis i gorivo **samo tog vozila**. Ranije je iznos bio samo
+> u mesecu početka, centar po poslednjoj dodeli, a prateći troškovi zbir svih vozila u OJ.
+> Lizing bez upisanog „Značenja iznosa” (mesečni ili ukupan) ima prazan iznos (7 od 23 [P]).
+
 ### Održavanje i garaža
 
 | Ekran | Adresa |

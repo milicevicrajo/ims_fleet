@@ -46,6 +46,11 @@ class LedgerEntry(models.Model):
     job_code = models.CharField(max_length=10, blank=True)
     job_name = models.CharField(max_length=100, blank=True)
     center = models.CharField(max_length=10, blank=True)
+    # Registar organizacije, faza 2: cvor sifre posla, postavlja se pri objavi sinhronizacije
+    # (services/sync.py) i komandom `povezi_flotu --modul finansije`. Izvestaji i pristup i
+    # dalje rade preko `center` i `job_code`; ovu vezu niko ne cita u obracunu.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="finansije_knjizenja", db_index=True)
     booking_date = models.DateField()
     debit_credit_flag = models.CharField(max_length=1, blank=True)
     source_paid_amount = models.DecimalField(max_digits=18, decimal_places=2, null=True)

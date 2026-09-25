@@ -148,6 +148,10 @@ class ReceivablePosting(Timestamped):
     organizational_unit = models.CharField(max_length=50, blank=True)
     job_code = models.CharField(max_length=50, blank=True)
     center_code = models.CharField(max_length=50, blank=True)
+    # Registar organizacije, faza 2: cvor sifre posla, postavlja se pri sinhronizaciji
+    # (services/sync.py). Pristup i izvestaji i dalje rade po `job_code` / `center_code`.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="potrazivanja_stavke")
     reference = models.CharField(max_length=255, blank=True)
     document_date = models.DateField(null=True, blank=True)
     booking_date = models.DateField()
@@ -254,6 +258,10 @@ class ReceivablePosition(models.Model):
     reference = models.CharField(max_length=255, blank=True)
     job_code = models.CharField(max_length=50, blank=True)
     center_code = models.CharField(max_length=50, blank=True)
+    # Registar organizacije, faza 2: cvor sifre posla, postavlja se pri sinhronizaciji
+    # (services/sync.py). Pristup i izvestaji i dalje rade po `job_code` / `center_code`.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="potrazivanja_pozicije")
     account_family = models.CharField(max_length=3)
     debit = models.DecimalField(max_digits=18, decimal_places=2)
     credit = models.DecimalField(max_digits=18, decimal_places=2)

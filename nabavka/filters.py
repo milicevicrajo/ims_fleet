@@ -40,6 +40,13 @@ class ProcurementCaseFilter(django_filters.FilterSet):
         model = ProcurementCase
         fields = ["q", "case_type", "status", "is_garage", "supplier", "job_code"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from fleet.support.registar import ogranici_izbor
+
+        # Filter postojecih predmeta: sve sifre iz registra (i neaktivne), nazivi iz registra.
+        ogranici_izbor(self.form.fields["job_code"], samo_aktivne=False)
+
     def filter_q(self, queryset, name, value):
         value = (value or "").strip()
         if not value:

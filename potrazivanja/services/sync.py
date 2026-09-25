@@ -159,7 +159,19 @@ def sync_partners(data, run):
     return result
 
 
+def _cvorovi_registra():
+    """Sifra posla → cvor registra organizacije (samo citanje; prazno ako registar nije uvezen).
+
+    Stavke i pozicije se upisuju masovno, pa se veza `org_node` postavlja ovde, zajedno sa
+    `center_code` — signal pri cuvanju tu ne radi.
+    """
+    from organizacija.services.report import job_code_to_node
+
+    return job_code_to_node(1)
+
+
 def sync_postings(data, run, partners, centers):
+    cvorovi = _cvorovi_registra()
     existing = {(p.year, p.journal_type, p.journal_number, p.line_number): p
                 for p in ReceivablePosting.objects.filter(company=1, source_system="baza_ims")}
     seen, created, updated = set(), [], 0
@@ -184,11 +196,13 @@ def sync_postings(data, run, partners, centers):
             if values["booking_date"] is None:
                 raise ValueError(f"Knjiženje {key} nema datum knjiženja.")
             old = existing.get(key)
+            cvor = cvorovi.get(job)
             if old is None:
-                created.append(ReceivablePosting(**values))
-            elif old.source_hash != values["source_hash"] or not old.active or old.center_code != values["center_code"]:
+                created.append(ReceivablePosting(**values, org_node_id=cvor))
+            elif (old.source_hash != values["source_hash"] or not old.active or old.center_code != values["center_code"]
+                  or old.org_node_id != cvor):
                 # Changed rows only. Single-row UPDATE preserves Decimal binding.
-                ReceivablePosting.objects.filter(pk=old.pk).update(**values)
+                ReceivablePosting.objects.filter(pk=old.pk).update(**values, org_node_id=cvor)
                 updated += 1
             if table == "baza" and key[1] == "IF":
                 invoices[(key[0], key[2], code, values["reference"])].append(values)
@@ -258,6 +272,7 @@ def compare_maps(expected, actual, label):
 
 
 def publish_positions(data, run, partners, centers, observed):
+    cvorovi = _cvorovi_registra()
     snapshot = BalanceSnapshot.objects.create(run=run, company=1, as_of_date=observed.date(),
         source_observed_at=observed, rules_version="naplata-views-v1")
     base = defaultdict(Decimal)
@@ -282,7 +297,8 @@ def publish_positions(data, run, partners, centers, observed):
         amounts[key] = (debit, credit)
         due_keys[key] = due
         positions.append(ReceivablePosition(snapshot=snapshot, identity_id=partners[code].pk,
-            reference=text(row.get("vez_dok")), job_code=job, center_code=centers.get(job, ""), account_family=family,
+            reference=text(row.get("vez_dok")), job_code=job, center_code=centers.get(job, ""),
+            org_node_id=cvorovi.get(job), account_family=family,
             debit=debit, credit=credit, balance=balance, due_date=due, due_date_method="legacy_views",
             resolution_details={"source": "dodela_baketa", "bucket": bucket(due, observed.date()),
                 "category": integer(row.get("kategorija")), "unknown_due": due is None}))

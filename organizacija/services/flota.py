@@ -29,12 +29,13 @@ DEFAULT_COMPANY = 1
 BATCH_SIZE = 500
 NEPOVEZANO = "nepovezano"
 VAN_STABLA = "van stabla"
+TEHNICKA = klas.TEHNICKA
 BEZ_CENTRA = "bez centra"
 
 
 @dataclass(frozen=True)
 class Veza:
-    """Jedan model Flote: odakle se izvodi cvor i kako se model zove u izvestaju."""
+    """Jedan model modula: odakle se izvodi cvor i kako se model zove u izvestaju."""
 
     kljuc: str
     naziv: str
@@ -42,11 +43,22 @@ class Veza:
     polje: str
     tekst: bool = False
     iznos: str = ""
+    app: str = "fleet"
+    # Stari centar je polje na samom zapisu (Finansije: `LedgerEntry.center`), a ne jedinica Flote.
+    centar_polje: str = ""
+    firma_polje: str = ""
+    aktivni_polje: str = ""
+    # Poredi se samo poslednji objavljeni snimak (Potrazivanja: pozicije su snimci stanja).
+    poslednji_snimak: bool = False
 
     def model_class(self):
         from django.apps import apps
 
-        return apps.get_model("fleet", self.model)
+        return apps.get_model(self.app, self.model)
+
+    @property
+    def oznaka_modela(self):
+        return f"{self.app}.{self.model}"
 
     @property
     def izvorna_kolona(self):
@@ -61,7 +73,40 @@ VEZE = (
     Veza("gorivo", "Gorivo (šifra sa kartice)", "FuelConsumption", "job_code", tekst=True, iznos="cost_bruto"),
     Veza("lizing", "Lizing", "Lease", "job_code", tekst=True, iznos="current_payment_amount"),
 )
-VEZE_PO_MODELU = {veza.model: veza for veza in VEZE}
+# Nabavka (faza 2, drugi modul po planu): ista vrsta veze kao Flota — FK na `OrganizationalUnit`.
+# Broj predmeta (`ProcurementCase.get_center_code`) i dalje se pravi iz starog polja.
+NABAVKA = (
+    Veza("predmeti", "Predmeti nabavke", "ProcurementCase", "job_code", app="nabavka"),
+    Veza("fakture", "Fakture — glavna šifra posla", "ProcurementInvoice", "job_code", iznos="amount", app="nabavka"),
+    Veza("veze_faktura", "Veze faktura sa šiframa posla", "ProcurementInvoiceJobCodeLink", "job_code", app="nabavka"),
+)
+# Finansije (faza 2, treci modul): tekstualna sifra posla na knjizenju; stari centar je
+# `LedgerEntry.center` (prepisan iz `posao.blok`), po kome Finansije grupisu i ogranicavaju pristup.
+FINANSIJE = (
+    Veza("knjizenja", "Knjiženja (duguje)", "LedgerEntry", "job_code", tekst=True, iznos="debit", app="finansije",
+         centar_polje="center", firma_polje="company", aktivni_polje="active"),
+)
+# Potrazivanja (faza 2, cetvrti modul): tekstualna sifra i `center_code` prepisan iz `posao.blok`,
+# po kojima se ogranicava pristup. Pozicije su objavljeni snimci stanja — poredi se poslednji.
+POTRAZIVANJA = (
+    Veza("stavke", "Knjiženja potraživanja (duguje)", "ReceivablePosting", "job_code", tekst=True, iznos="debit",
+         app="potrazivanja", centar_polje="center_code", firma_polje="company", aktivni_polje="active"),
+    Veza("pozicije", "Otvorene pozicije — poslednji snimak (saldo)", "ReceivablePosition", "job_code", tekst=True,
+         iznos="balance", app="potrazivanja", centar_polje="center_code", poslednji_snimak=True),
+)
+MODULI = {"flota": VEZE, "nabavka": NABAVKA, "finansije": FINANSIJE, "potrazivanja": POTRAZIVANJA}
+NAZIVI_MODULA = {"flota": "Flota", "nabavka": "Nabavka", "finansije": "Finansije", "potrazivanja": "Potraživanja"}
+SVE_VEZE = VEZE + NABAVKA + FINANSIJE + POTRAZIVANJA
+VEZE_PO_MODELU = {veza.oznaka_modela: veza for veza in SVE_VEZE}
+
+
+def veza_za(model_ili_zapis):
+    meta = model_ili_zapis._meta
+    return VEZE_PO_MODELU.get(f"{meta.app_label}.{meta.object_name}")
+
+
+def veze_modula(modul):
+    return SVE_VEZE if modul == "sve" else MODULI[modul]
 
 
 class Razresavac:
@@ -70,6 +115,7 @@ class Razresavac:
     def __init__(self, company=DEFAULT_COMPANY):
         from core.models import OrganizationalUnit
 
+        self.company = company
         self.po_sifri = job_code_to_node(company)
         self.po_jedinici = dict(
             LegacyOrgLink.objects.filter(legacy_label=LegacyOrgLink.LEGACY_FLEET_UNIT).values_list(
@@ -82,10 +128,11 @@ class Razresavac:
             unit_id: (code, (center or "").strip())
             for unit_id, code, center in OrganizationalUnit.objects.values_list("pk", "code", "center")
         }
-        # Sifre koje postoje u sifarniku, ali ih registar ne vodi (lista za razresenje).
+        # Sifre koje postoje u sifarniku, ali ih registar ne vodi (lista za razresenje); tehnicke
+        # sifre nisu ovde — one su odlukom bez centra i vode se posebno.
         self.van_stabla = {
             klas.normalize_code(c) for c in FinanceJob.objects.filter(company=company).values_list("code", flat=True)
-        } - set(self.po_sifri)
+        } - set(self.po_sifri) - set(klas.TEHNICKE_SIFRE)
         # Stari put za tekstualnu sifru: jedinica Flote sa istom sifrom i njen centar.
         self.centar_po_sifri = {
             klas.normalize_code(code): center for code, center in self.jedinice.values()
@@ -122,7 +169,7 @@ class Razresavac:
 
 def cvor_za_zapis(instance, company=DEFAULT_COMPANY):
     """Cvor za jedan zapis — za signal pri cuvanju. Dva mala upita, bez ucitavanja svega."""
-    veza = VEZE_PO_MODELU.get(type(instance).__name__)
+    veza = veza_za(instance)
     if veza is None:
         return None
     vrednost = getattr(instance, veza.izvorna_kolona)
@@ -194,21 +241,23 @@ def mapa_jedinica_flote(company=DEFAULT_COMPANY):
     return mapa, centri
 
 
-def povezi(company=DEFAULT_COMPANY, proba=False, batch_size=BATCH_SIZE, modeli=None):
-    """Popunjava `org_node` na svim modelima Flote. Ponovljivo: menja samo ono sto odstupa.
-
-    Vraca po jedan zbir po modelu. `proba=True` ne upisuje nista.
+def povezi(company=DEFAULT_COMPANY, proba=False, batch_size=BATCH_SIZE, modeli=None, modul="flota"):
+    """Popunjava `org_node` na modelima modula (`flota`, `nabavka` ili `sve`). Ponovljivo: menja
+    samo ono sto odstupa. Vraca po jedan zbir po modelu. `proba=True` ne upisuje nista.
     """
     razresavac = Razresavac(company)
     return [
         _povezi_model(veza, razresavac, proba, batch_size)
-        for veza in VEZE
+        for veza in veze_modula(modul)
         if modeli is None or veza.kljuc in modeli
     ]
 
 
 def _povezi_model(veza, razresavac, proba, batch_size):
     model = veza.model_class()
+    redovi_modela = model.objects.all()
+    if veza.firma_polje:
+        redovi_modela = redovi_modela.filter(**{veza.firma_polje: razresavac.company})
     zbir = {
         "kljuc": veza.kljuc,
         "naziv": veza.naziv,
@@ -223,7 +272,7 @@ def _povezi_model(veza, razresavac, proba, batch_size):
     }
     # Redovi se citaju unapred (tri kolone, par desetina hiljada redova): upis paketa ne sme
     # da se preplete sa otvorenim kursorom citanja na SQL Serveru.
-    redovi = list(model.objects.order_by("pk").values_list("pk", veza.izvorna_kolona, "org_node_id"))
+    redovi = list(redovi_modela.order_by("pk").values_list("pk", veza.izvorna_kolona, "org_node_id"))
     for pocetak in range(0, len(redovi), batch_size):
         _obradi_paket(model, veza, razresavac, redovi[pocetak:pocetak + batch_size], zbir, proba)
 
@@ -274,7 +323,7 @@ def godine_goriva():
     return sorted({d.year for d in FuelConsumption.objects.dates("date", "year")}, reverse=True)
 
 
-def uporedni_izvestaj(company=DEFAULT_COMPANY, godina=None, primera=15):
+def uporedni_izvestaj(company=DEFAULT_COMPANY, godina=None, primera=15, modul="flota"):
     """Stari put naspram registra, po centru. Nista ne upisuje.
 
     Za svaki model: broj (i iznos, gde postoji) po centru starim putem i kroz upisanu vezu
@@ -283,10 +332,11 @@ def uporedni_izvestaj(company=DEFAULT_COMPANY, godina=None, primera=15):
     """
     razresavac = Razresavac(company)
     centri = node_center_map(company)
-    dodele = _dodele_po_vozilu()
-    delovi = [_uporedi_model(veza, razresavac, centri, godina, primera) for veza in VEZE]
-    delovi.append(_uporedi_gorivo_po_vozilu(razresavac, centri, dodele, godina, primera))
+    delovi = [_uporedi_model(veza, razresavac, centri, godina, primera) for veza in veze_modula(modul)]
+    if modul == "flota":
+        delovi.append(_uporedi_gorivo_po_vozilu(razresavac, centri, _dodele_po_vozilu(), godina, primera))
     return {
+        "modul": modul,
         "godina": godina,
         "delovi": delovi,
         "prolazi": all(deo["prolazi"] for deo in delovi),
@@ -297,17 +347,36 @@ def uporedni_izvestaj(company=DEFAULT_COMPANY, godina=None, primera=15):
 def _uporedi_model(veza, razresavac, centri, godina, primera):
     model = veza.model_class()
     redovi = model.objects.all()
+    if veza.firma_polje:
+        redovi = redovi.filter(**{veza.firma_polje: razresavac.company})
+    if veza.aktivni_polje:
+        redovi = redovi.filter(**{veza.aktivni_polje: True})
+    if veza.poslednji_snimak:
+        from potrazivanja.models import BalanceSnapshot
+
+        snimak = (BalanceSnapshot.objects.filter(status=BalanceSnapshot.Status.PUBLISHED)
+                  .order_by("-published_at", "-pk").values_list("pk", flat=True).first())
+        redovi = redovi.filter(snapshot_id=snimak)
     datum = _polje_datuma(veza)
     if godina and datum:
         redovi = redovi.filter(**{f"{datum}__year": godina})
-    kolone = ["pk", veza.izvorna_kolona, "org_node_id"] + ([veza.iznos] if veza.iznos else [])
+    kolone = ["pk", veza.izvorna_kolona, "org_node_id", veza.iznos or "pk", veza.centar_polje or "pk"]
+
+    def stari(red):
+        if veza.centar_polje:
+            # Prazan centar u izvoru kod potvrdjenih sifara (110002, 430001) je potvrdjena dopuna.
+            return ((red[4] or "").strip()
+                    or klas.POTVRDJENI_CENTRI_SIFARA.get(klas.normalize_code(red[1]))
+                    or None)
+        return razresavac.stari_centar(veza, red[1])
+
     tok = (
-        (red[0], razresavac.stari_centar(veza, red[1]), red[2], red[3] if veza.iznos else None,
-         razresavac.sirova(veza, red[1]))
-        for red in redovi.values_list(*kolone).iterator(chunk_size=2000)
+        (red[0], stari(red), red[2], red[3] if veza.iznos else None, razresavac.sirova(veza, red[1]))
+        for red in redovi.values_list(*kolone).iterator(chunk_size=5000)
     )
+    osnova = f"{veza.model}.{veza.polje}" + (f", centar iz {veza.model}.{veza.centar_polje}" if veza.centar_polje else "")
     return _uporedi(veza.kljuc, veza.naziv, tok, centri, bool(veza.iznos), primera,
-                    osnova=f"{veza.model}.{veza.polje}", stari_put=not veza.tekst,
+                    osnova=osnova, stari_put=bool(veza.centar_polje) or not veza.tekst,
                     van_stabla=razresavac.van_stabla)
 
 
@@ -319,6 +388,11 @@ def _polje_datuma(veza):
         "FuelConsumption": "date",
         "JobCode": "assigned_date",
         "Lease": "start_date",
+        "ProcurementCase": "created_at",
+        "ProcurementInvoice": "invoice_date",
+        "ProcurementInvoiceJobCodeLink": "invoice__invoice_date",
+        "LedgerEntry": "booking_date",
+        "ReceivablePosting": "booking_date",
     }.get(veza.model)
 
 
@@ -344,7 +418,7 @@ def _dodela_na_dan(dodele, vozilo, dan):
 def _uporedi_gorivo_po_vozilu(razresavac, centri, dodele, godina, primera):
     from fleet.models import FuelConsumption
 
-    veza_dodele = VEZE_PO_MODELU["JobCode"]
+    veza_dodele = VEZE_PO_MODELU["fleet.JobCode"]
     redovi = FuelConsumption.objects.all()
     if godina:
         redovi = redovi.filter(date__year=godina)
@@ -390,12 +464,16 @@ def _uporedi(kljuc, naziv, tok, centri, sa_iznosom, primera, osnova, stari_put, 
     novo = defaultdict(lambda: [0, Decimal("0")])
     razlike = []
     sifre_van_stabla = van_stabla
-    ukupno = razlika_broj = dopuna = van_stabla = 0
+    ukupno = razlika_broj = dopuna = van_stabla = tehnickih = 0
     for pk, stari, cvor, iznos, sirova in tok:
         ukupno += 1
         iznos = iznos or Decimal("0")
         stari = stari or BEZ_CENTRA
-        if cvor is not None:
+        if sirova in klas.TEHNICKE_SIFRE:
+            # Odluka 25.09.2026.: tehnicka sifra nema centar ni starim putem ni u registru.
+            stari = novi = TEHNICKA
+            tehnickih += 1
+        elif cvor is not None:
             novi = centri.get(cvor, BEZ_CENTRA)
         elif stari == BEZ_CENTRA:
             novi = BEZ_CENTRA
@@ -440,11 +518,12 @@ def _uporedi(kljuc, naziv, tok, centri, sa_iznosom, primera, osnova, stari_put, 
         "razlika_zapisa": razlika_broj,
         "dopuna": dopuna,
         "van_stabla": van_stabla,
+        "tehnickih": tehnickih,
         "primeri": razlike,
         "prolazi": razlika_broj == 0,
     }
 
 
 def _redosled_centra(centar):
-    posebni = {BEZ_CENTRA: 3, NEPOVEZANO: 2, VAN_STABLA: 1}
+    posebni = {BEZ_CENTRA: 4, TEHNICKA: 3, NEPOVEZANO: 2, VAN_STABLA: 1}
     return (posebni.get(centar, 0), len(centar), centar)

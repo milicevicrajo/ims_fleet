@@ -269,6 +269,53 @@ zapisa: 205 dodela, 3.770 putnih naloga, 10 naloga za vozila, 2 GZN, 16.212 gori
 Pre toga su sve šifre koje Flota koristi (25 tekućih dodela, 29 šifara na putnim nalozima od 2025.,
 4 na nalozima za vozila) potvrđene kao aktivne u registru.
 
+### Nabavka — koraci 1–4 izvedeni 25.09.2026.
+
+| Korak | Kako je urađeno |
+|---|---|
+| 1. `org_node` | `ProcurementCase`, `ProcurementInvoice`, `ProcurementInvoiceJobCodeLink` (`nabavka/migrations/0020`), izvodi se iz `job_code` pri čuvanju |
+| 2. Popunjavanje | `manage.py povezi_flotu --modul nabavka` (i noćna sinhronizacija u 01:40, za oba modula) |
+| 3. Uporedni izveštaj | `/organizacija/flota/?modul=nabavka` — predmeti, fakture (sa iznosom) i veze faktura po centru |
+| 4. Čitanje iz registra | Spiskovi i nazivi: nov predmet nudi samo aktivne šifre; povezivanje fakture i filter predmeta nude sve šifre iz registra (i neaktivne — fakture su često starije). Broj predmeta (`ZN-43/2026-…`) i dalje iz starog polja |
+
+**Na bazi [P]:** 1.784 veze (265 predmeta, 292 fakture sa šifrom — 2.947 faktura nema šifru —
+i 1.227 veza faktura), uporedni izveštaj **prolazi** u sva tri dela, 0 razlika. Tekstualni
+`ProcurementInvoice.center` je prazan u svim zapisima, pa se ne poredi.
+
+### Finansije — koraci 1–3 izvedeni 25.09.2026.
+
+| Korak | Kako je urađeno |
+|---|---|
+| 1. `org_node` | `LedgerEntry.org_node` (`finansije/migrations/0004`). Knjiženja se upisuju masovno, pa se veza postavlja **pri objavi sinhronizacije** (`finansije/services/sync.py`, mapa šifra→čvor jednom po prolazu) |
+| 2. Popunjavanje | `povezi_flotu --modul finansije` (i noćna sinhronizacija) — 149.195 knjiženja za 72 s |
+| 3. Uporedni izveštaj | `/organizacija/flota/?modul=finansije`: broj i duguje po centru, stari centar je `LedgerEntry.center` (prepisan iz `posao.blok`) |
+| 4. Čitanje iz registra | Samo **nazivi** centara u spisku i grupisanju izveštaja; ključ, zbirovi i pristup i dalje po `LedgerEntry.center` |
+
+**Na bazi [P]:** 163.102 knjiženja — 149.195 povezano, 13.323 bez šifre, 584 na `111111`.
+Centri se poklapaju do dinara, **osim**:
+
+| Šifra | Knjiženja | Staro | Registar | Šta je |
+|---|---:|---|---|---|
+| `110002`, `430001` | 77 | bez centra | 11, 43 | U `posao.blok` centar nije upisan (popis: „očigledno 11/43”) |
+| `111111` | 584 | 3 | van stabla | **Tehnička šifra zatvaranja i početnog stanja** (ZAT 558, ON 18, POC 8; OJ 1 „IMS”). Ne utiče na prihode i rashode u izveštajima: ZAT i 59900/69900 su izuzeti, a ON na njoj ide samo na bilansna i rezultatska konta |
+
+**Odluke naručioca 25.09.2026. [P]:** `110002` i `430001` su centri **11** i **43** (potvrđena
+dopuna, `POTVRDJENI_CENTRI_SIFARA`); `111111` je **tehnička šifra** zatvaranja i početnog stanja —
+van stabla i **bez centra**, i ne centar 3 (`TEHNICKE_SIFRE`). Posle toga uporedni izveštaj
+Finansija **prolazi**: 163.100 knjiženja, 0 razlika (584 knjiženja vode se kao tehnička šifra).
+
+### Potraživanja — koraci 1–3 izvedeni 25.09.2026.
+
+| Korak | Kako je urađeno |
+|---|---|
+| 1. `org_node` | `ReceivablePosting`, `ReceivablePosition` (`potrazivanja/migrations/0007`); postavlja se pri sinhronizaciji, zajedno sa `center_code` |
+| 2. Popunjavanje | `povezi_flotu --modul potrazivanja` — 21.961 veza (12.445 knjiženja, 9.516 pozicija svih snimaka) |
+| 3. Uporedni izveštaj | Knjiženja (duguje) i otvorene pozicije **poslednjeg objavljenog snimka** (saldo) po centru; stari centar je `center_code` |
+
+**Na bazi [P]:** prolazi — 12.445 knjiženja i 1.586 pozicija poslednjeg snimka, 0 razlika. Prva
+dva snimka od 18.09. imaju 489 pozicija sa praznim `center_code` (pre nego što se centar upisivao);
+to su istorijski objavljeni snimci i ne porede se.
+
 ---
 
 ## 4. Šta se ne radi u ovom poslu

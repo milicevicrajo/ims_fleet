@@ -27,10 +27,14 @@ def sinhronizuj(company=DEFAULT_COMPANY):
     """Jedan prolaz nove sinhronizacije. Vraca recnik sa svim delovima."""
     svezina = svezina_izvora(company)
     run = run_import(company=company)
-    veze = flota.povezi(company)
+    veze = flota.povezi(company, modul="sve")
     kontrola = uporedi_jedinice(company)
     izvestaj = flota.uporedni_izvestaj(company)
-    return {"svezina": svezina, "run": run, "veze": veze, "kontrola": kontrola, "izvestaj": izvestaj}
+    nabavka = flota.uporedni_izvestaj(company, modul="nabavka")
+    finansije = flota.uporedni_izvestaj(company, modul="finansije")
+    potrazivanja = flota.uporedni_izvestaj(company, modul="potrazivanja")
+    return {"svezina": svezina, "run": run, "veze": veze, "kontrola": kontrola, "izvestaj": izvestaj,
+            "izvestaj_nabavke": nabavka, "izvestaj_finansija": finansije, "izvestaj_potrazivanja": potrazivanja}
 
 
 def svezina_izvora(company=DEFAULT_COMPANY):
@@ -65,7 +69,7 @@ def uporedi_jedinice(company=DEFAULT_COMPANY, primera=10):
 
     rezultat = {
         "jedinica": 0, "povezano": 0, "isti_centar": 0,
-        "razlika_centra": [], "van_stabla": [], "van_sifarnika": [], "samo_u_registru": [],
+        "razlika_centra": [], "van_stabla": [], "van_sifarnika": [], "samo_u_registru": [], "tehnicke": [],
     }
     stare_sifre = set()
     for pk, code, center in OrganizationalUnit.objects.order_by("code").values_list("pk", "code", "center"):
@@ -74,7 +78,10 @@ def uporedi_jedinice(company=DEFAULT_COMPANY, primera=10):
         rezultat["jedinica"] += 1
         cvor = po_jedinici.get(pk) or po_sifri.get(sifra)
         if cvor is None:
-            (rezultat["van_stabla"] if sifra in u_sifarniku else rezultat["van_sifarnika"]).append(sifra)
+            if klas.je_tehnicka(sifra):
+                rezultat["tehnicke"].append(sifra)
+            else:
+                (rezultat["van_stabla"] if sifra in u_sifarniku else rezultat["van_sifarnika"]).append(sifra)
             continue
         rezultat["povezano"] += 1
         stari, novi = (center or "").strip(), centri.get(cvor, "")
@@ -105,10 +112,16 @@ def poruka(rezultat):
         f"za razresenje {run.unresolved}.",
         f"OJ stara/nova: {kontrola['povezano']}/{kontrola['jedinica']} povezano, "
         f"razlika centra {len(kontrola['razlika_centra'])}, van stabla {len(kontrola['van_stabla'])}.",
-        f"Flota: izmenjenih veza {izmena}, bez para {bez_para}.",
-        "Uporedni izvestaj: " + ("PROLAZI." if izvestaj["prolazi"] else
-                                 f"NE PROLAZI ({razlike} razlika, od toga van stabla {van_stabla})."),
+        f"Moduli: izmenjenih veza {izmena}, bez para {bez_para}.",
+        "Uporedni izvestaj Flote: " + ("PROLAZI." if izvestaj["prolazi"] else
+                                       f"NE PROLAZI ({razlike} razlika, od toga van stabla {van_stabla})."),
     ]
+    for kljuc, naziv in (("izvestaj_nabavke", "Nabavke"), ("izvestaj_finansija", "Finansija"),
+                         ("izvestaj_potrazivanja", "Potrazivanja")):
+        deo = rezultat.get(kljuc)
+        if deo is not None:
+            razlike_m = sum(d["razlika_zapisa"] for d in deo["delovi"])
+            delovi.append(f"{naziv}: " + ("PROLAZI." if deo["prolazi"] else f"NE PROLAZI ({razlike_m} razlika)."))
     if rezultat["svezina"]["kasni"]:
         delovi.insert(0, "UPOZORENJE: sifarnik iz Finansija nije osvezen u poslednjih 26 h.")
     return " ".join(delovi)

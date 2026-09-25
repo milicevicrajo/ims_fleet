@@ -68,9 +68,14 @@ def grouped_report(entries, jobs, filters):
         grouped = entries.order_by().values(*fields[group]).annotate(**expressions()).order_by(*fields[group])
     totals = summary(entries)
     rows = []
+    if group == "center":
+        from fleet.support.registar import Registar
+
+        registar = Registar()
     for item in grouped:
         if group == "center":
-            code, label = item["center"], item["center"] or "Neraspoređeno"
+            # Kljuc je i dalje `center` sa knjizenja; iz registra je samo naziv centra.
+            code, label = item["center"], (registar.oznaka_centra(item["center"]) if item["center"] else "Neraspoređeno")
         elif group == "job":
             code, label = item["job_code"], item["job_name"] or "Bez naziva"
         elif group == "account":

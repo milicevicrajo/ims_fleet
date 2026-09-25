@@ -83,18 +83,24 @@ def cvor(request, pk):
 @login_required
 @role_permission_required()
 def flota(request):
-    """Faza 2 za Flotu: stanje veze `org_node` i uporedni izvestaj starog puta i registra.
+    """Faza 2 po modulima (Flota, Nabavka): stanje veze `org_node` i uporedni izvestaj.
 
-    Samo za citanje — veza se popunjava komandom `povezi_flotu`. Flota i dalje sve racuna
-    iz starih polja; ovaj ekran pokazuje da li bi registar dao isto.
+    Samo za citanje — veza se popunjava komandom `povezi_flotu --modul …`. Moduli i dalje sve
+    racunaju iz starih polja; ovaj ekran pokazuje da li bi registar dao isto.
     """
     request.session["current_app"] = "organizacija"
+    modul = request.GET.get("modul") or "flota"
+    if modul not in flota_service.MODULI:
+        modul = "flota"
     godine = flota_service.godine_goriva()
     godina = request.GET.get("godina") or ""
     godina = int(godina) if godina.isdigit() and int(godina) in godine else None
-    izvestaj = flota_service.uporedni_izvestaj(COMPANY, godina)
+    izvestaj = flota_service.uporedni_izvestaj(COMPANY, godina, modul=modul)
     context = {
-        "stanje": flota_service.povezi(COMPANY, proba=True),
+        "modul": modul,
+        "naziv_modula": flota_service.NAZIVI_MODULA[modul],
+        "moduli": list(flota_service.NAZIVI_MODULA.items()),
+        "stanje": flota_service.povezi(COMPANY, proba=True, modul=modul),
         "kontrola": sync_service.uporedi_jedinice(COMPANY),
         "svezina": sync_service.svezina_izvora(COMPANY),
         "izvestaj": izvestaj,

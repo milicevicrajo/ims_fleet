@@ -99,7 +99,11 @@ class ReportFilters(forms.Form):
                 values[key] = value
         super().__init__(values)
         centers = set(jobs.values_list("center", flat=True)) | set(entries.order_by().values_list("center", flat=True).distinct())
-        self.fields["center"].choices = [("", "Svi dostupni centri")] + [(c or "__none__", c or "Neraspoređeno") for c in sorted(centers)]
+        from fleet.support.registar import Registar
+
+        registar = Registar()
+        self.fields["center"].choices = [("", "Svi dostupni centri")] + [
+            (c or "__none__", registar.oznaka_centra(c) if c else "Neraspoređeno") for c in sorted(centers)]
         job_choices = {j.code: j.name for j in jobs}
         for code, name in entries.order_by().values_list("job_code", "job_name").distinct():
             job_choices.setdefault(code, name)

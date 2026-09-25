@@ -90,6 +90,10 @@ class ProcurementCaseForm(forms.ModelForm):
         self.fields["supplier"].required = False
         self.fields["job_code"].widget = Select2Widget(attrs={"class": "select2-method"})
         self.fields["job_code"].queryset = OrganizationalUnit.objects.all().order_by("code")
+        from fleet.support.registar import ogranici_izbor
+
+        # Nov predmet: aktivne sifre iz registra organizacije, uz vec upisanu vrednost.
+        ogranici_izbor(self.fields["job_code"], getattr(self.instance, "job_code_id", None))
         self.fields["supplier"].widget = Select2Widget(attrs={"class": "select2-method"})
         self.fields["supplier"].queryset = Partner.objects.filter(is_active=True).order_by("name")
         self.fields["vehicle"].widget = Select2Widget(attrs={"class": "select2-method"})
@@ -294,6 +298,10 @@ class ProcurementInvoiceJobCodeLinkForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         queryset = OrganizationalUnit.objects.all().order_by("code", "name")
         self.fields["job_code"].queryset = queryset
+        from fleet.support.registar import ogranici_izbor
+
+        # Fakture su cesto starije: nude se sve sifre iz registra, i neaktivne.
+        ogranici_izbor(self.fields["job_code"], getattr(self.instance, "job_code_id", None), samo_aktivne=False)
         self.fields["job_code"].widget = forms.Select(attrs={"class": "form-select select2-method"})
         self.fields["job_code"].widget.choices = self.fields["job_code"].choices
         _style_fields(self.fields)

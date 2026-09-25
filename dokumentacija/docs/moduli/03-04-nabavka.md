@@ -326,6 +326,7 @@ Detaljno: [4.7. Nabavka](../04-baza-podataka.md#47-nabavka--nabavka). **13 tabel
 | **Flota** | Kvar (`garage_order`) i vozilo (`vehicle`) na predmetu; EUF fakture → polise; fakture i trebovanja → dokazi o održavanju |
 | **Ugovori** | Dobavljač (`supplier`), osnovni ugovor (`contract`), kupovni ugovori |
 | **Administracija** | Organizaciona jedinica i centar — određuju broj predmeta |
+| **Organizacija (registar)** | Kolona `org_node` na predmetu, fakturi i vezi fakture sa šifrom (od 25.09.2026.), izvodi se iz `job_code`; spiskovi i nazivi šifara u formama i filteru dolaze iz registra (`fleet/support/registar.py`). Broj predmeta i zbirovi i dalje iz starog polja |
 
 > **[P]** Kupovni ugovori su **pogled na modul Ugovori**, bez sopstvene tabele u Nabavci —
 > vidi [5. Ekrani](#5-glavni-korisnički-ekrani).

@@ -6,7 +6,7 @@ Gore: stanje veze `org_node` po modelu (koliko je povezano, šta nema para u reg
 Dole: uporedni izveštaj — broj i iznos po centru starim putem i kroz registar. Flota i dalje
 radi isključivo preko starih polja; ovde se samo proverava da li bi registar dao isto.
 {% endcomment %}
-{% block title %}Registar i Flota — IMS{% endblock %}
+{% block title %}Registar i {{ naziv_modula }} — IMS{% endblock %}
 
 {% block content %}
 {% include "fleet/includes/list_styles.html" %}
@@ -42,8 +42,11 @@ radi isključivo preko starih polja; ovde se samo proverava da li bi registar da
   <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
     <div>
       <div class="org-kicker">IMS · Centralni registar · Faza 2</div>
-      <h1>Registar i Flota</h1>
-      <p>Flota i dalje računa iz starih polja. Ovde se vidi da li bi registar organizacije dao iste centre i iste iznose.</p>
+      <h1>Registar i {{ naziv_modula }}</h1>
+      <p>{{ naziv_modula }} i dalje računa iz starih polja. Ovde se vidi da li bi registar organizacije dao iste centre i iste iznose.</p>
+      <div class="org-filters justify-content-start mt-2">
+        {% for kljuc, naziv in moduli %}<a href="?modul={{ kljuc }}" class="org-filter {% if modul == kljuc %}is-active{% endif %}">{{ naziv }}</a>{% endfor %}
+      </div>
     </div>
     <div class="org-hero-right">
       {% if izvestaj.prolazi %}
@@ -52,16 +55,16 @@ radi isključivo preko starih polja; ovde se samo proverava da li bi registar da
         <span class="fl-verdict fl-bad"><i class="mdi mdi-alert-circle"></i> Uporedni izveštaj ne prolazi</span>
       {% endif %}
       <div class="org-filters">
-        <a href="?" class="org-filter {% if not godina %}is-active{% endif %}">Sve godine</a>
+        <a href="?modul={{ modul }}" class="org-filter {% if not godina %}is-active{% endif %}">Sve godine</a>
         {% for g in godine|slice:":6" %}
-          <a href="?godina={{ g }}" class="org-filter {% if godina == g %}is-active{% endif %}">{{ g }}</a>
+          <a href="?modul={{ modul }}&godina={{ g }}" class="org-filter {% if godina == g %}is-active{% endif %}">{{ g }}</a>
         {% endfor %}
       </div>
     </div>
   </header>
 
   <p class="org-note mt-3">
-    Veza <code>org_node</code> se popunjava komandom <code>python manage.py povezi_flotu</code> (sa <code>--proba</code> bez upisa),
+    Veza <code>org_node</code> se popunjava komandom <code>python manage.py povezi_flotu --modul {{ modul }}</code> (sa <code>--proba</code> bez upisa),
     a novi i izmenjeni zapisi dobijaju je pri čuvanju. Staro polje je merodavno; zapis bez para u registru ostaje prazan.
     {% if last_run %}Poslednji uvoz registra: {{ last_run.finished_at|date:"d.m.Y. H:i" }}.{% endif %}
   </p>
@@ -89,6 +92,7 @@ radi isključivo preko starih polja; ovde se samo proverava da li bi registar da
         <dt>U šifarniku, van stabla</dt><dd>{{ kontrola.van_stabla|length }}</dd>
         <dt>Nema u šifarniku poslova</dt><dd>{{ kontrola.van_sifarnika|length }}</dd>
         <dt>Samo u registru</dt><dd>{{ kontrola.samo_u_registru|length }}</dd>
+        <dt>Tehničke šifre (bez centra)</dt><dd>{{ kontrola.tehnicke|length }}</dd>
       </dl>
       <div class="fl-codes">Van stabla su šifre na listi za razrešenje (npr. <code>111111</code>) — čekaju odluku.</div>
     </div>
@@ -144,6 +148,7 @@ radi isključivo preko starih polja; ovde se samo proverava da li bi registar da
           <span class="fl-verdict fl-bad"><i class="mdi mdi-close"></i> Razlika u {{ deo.razlika_zapisa }} zapisa</span>
         {% endif %}
         {% if deo.van_stabla %}<span class="fl-verdict fl-info">Van stabla: {{ deo.van_stabla }}</span>{% endif %}
+        {% if deo.tehnickih %}<span class="fl-verdict fl-info" title="Tehnička šifra (111111 — zatvaranje i početno stanje) nema centar: odluka od 25.09.2026.">Tehnička šifra: {{ deo.tehnickih }}</span>{% endif %}
         {% if deo.dopuna %}<span class="fl-verdict fl-info">Dopuna iz registra: {{ deo.dopuna }}</span>{% endif %}
       </header>
       {% if deo.redovi %}

@@ -75,6 +75,10 @@ class ProcurementCase(models.Model):
         related_name="nabavka_cases",
         verbose_name=_("OJ / šifra posla"),
     )
+    # Registar organizacije, faza 2: izvodi se iz `job_code` (organizacija/signals.py);
+    # staro polje ostaje merodavno (i za broj predmeta) i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="nabavka_predmeti", verbose_name=_("Čvor registra"))
     supplier = models.ForeignKey(
         "ugovori.Partner",
         on_delete=models.PROTECT,
@@ -414,6 +418,10 @@ class ProcurementInvoice(models.Model):
         related_name="nabavka_invoices",
         verbose_name=_("OJ / sifra posla"),
     )
+    # Registar organizacije, faza 2: izvodi se iz `job_code` (organizacija/signals.py);
+    # staro polje ostaje merodavno (i za broj predmeta) i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="nabavka_fakture", verbose_name=_("Čvor registra"))
     job_code_source = models.CharField(
         max_length=30,
         choices=JOB_CODE_SOURCE_CHOICES,
@@ -686,6 +694,10 @@ class ProcurementInvoiceJobCodeLink(models.Model):
         related_name="nabavka_invoice_job_code_links",
         verbose_name=_("OJ / sifra posla"),
     )
+    # Registar organizacije, faza 2: izvodi se iz `job_code` (organizacija/signals.py);
+    # staro polje ostaje merodavno (i za broj predmeta) i niko ne cita ovu vezu u obracunu.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="nabavka_veze_faktura", verbose_name=_("Čvor registra"))
     kind = models.CharField(
         max_length=20,
         choices=KIND_CHOICES,

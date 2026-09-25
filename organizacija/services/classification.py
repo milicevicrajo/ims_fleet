@@ -30,6 +30,21 @@ SCIENCE_UNIT = "30"
 OZNAKA_CENTRA_IZ_KNJIZENJA = {"20": "2", "30": "3"}
 
 
+# Odluka narucioca 25.09.2026.: sifre kojima u `posao.blok` centar nije upisan, a pripadaju
+# centru po sifri (popis sifara: „ocigledno 11/43"). Izvor se ne menja; ovo je potvrdjena dopuna.
+POTVRDJENI_CENTRI_SIFARA = {"110002": "11", "430001": "43"}
+
+# Odluka narucioca 25.09.2026.: tehnicke sifre nisu posao ni centar — ne ulaze u stablo i nemaju
+# centar (ni onaj iz `posao.blok`). 111111 nosi zatvaranje i pocetno stanje godine (ZAT, ON, POC na
+# OJ 1); izvestaji Finansija zatvaranja vec izuzimaju.
+TEHNICKE_SIFRE = {"111111": "Tehnička šifra zatvaranja i početnog stanja godine"}
+TEHNICKA = "tehnička šifra"
+
+
+def je_tehnicka(raw_code):
+    return normalize_code(raw_code) in TEHNICKE_SIFRE
+
+
 def oznaka_centra(jedinica_knjizenja):
     """Oznaka centra u registru za organizacionu jedinicu iz knjizenja."""
     jedinica = (jedinica_knjizenja or "").strip()
@@ -120,6 +135,9 @@ def classify(raw_code, known_units, name=""):
     procitanih iz knjizenja — ne iz `FinanceJob.center`, koji je nepouzdan.
     """
     code = normalize_code(raw_code)
+
+    if code in TEHNICKE_SIFRE:
+        return Classification(FAMILY_EXCEPTION, reason=TEHNICKE_SIFRE[code])
 
     if not code.isdigit():
         # Cetiri naucne sifre zavrsavaju slovom (npr. 320519206A); i one su nauka.

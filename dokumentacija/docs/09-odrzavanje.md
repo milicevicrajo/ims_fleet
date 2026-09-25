@@ -291,6 +291,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py uvezi_organizaciju
 .\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa
 .\.venv\Scripts\python.exe manage.py povezi_flotu                      # popunjava org_node u paketima
+.\.venv\Scripts\python.exe manage.py povezi_flotu --modul nabavka      # isto za Nabavku (finansije, potrazivanja, ili sve)
 
 # Dozvole i raspored
 .\.venv\Scripts\python.exe manage.py sync_permission_codes

@@ -326,7 +326,8 @@ class ParalelnaSinhronizacijaTests(FlotaTestCase):
         self.assertEqual(kontrola["povezano"], 2)
         self.assertEqual(kontrola["isti_centar"], 1)
         self.assertEqual(kontrola["razlika_centra"], [{"sifra": "410001", "staro": "4", "novo": "41"}])
-        self.assertEqual(kontrola["van_stabla"], ["111111"])
+        self.assertEqual(kontrola["van_stabla"], [])
+        self.assertEqual(kontrola["tehnicke"], ["111111"])  # odluka 25.09.2026.: tehnicka sifra, bez centra
         self.assertEqual(kontrola["van_sifarnika"], ["960001"])
         self.assertIn("431112", kontrola["samo_u_registru"])
 
@@ -335,7 +336,8 @@ class ParalelnaSinhronizacijaTests(FlotaTestCase):
 
         poruka = self.sync.poruka(self.sync.sinhronizuj())
         self.assertIn("UPOZORENJE", poruka)  # Finansije jos nisu nijednom preuzele sifarnik.
-        self.assertIn("Uporedni izvestaj: PROLAZI.", poruka)
+        self.assertIn("Uporedni izvestaj Flote: PROLAZI.", poruka)
+        self.assertIn("Nabavke: PROLAZI.", poruka)
         self.assertLessEqual(len(poruka), 500)
         SyncRun.objects.create(company=1, year_from=2026, year_to=2026, status="success", finished_at=timezone.now())
         self.assertNotIn("UPOZORENJE", self.sync.poruka(self.sync.sinhronizuj()))
@@ -691,3 +693,182 @@ class CitanjeRegistraUFlotiTests(FlotaTestCase):
 
         for forma in (self.forma(), JobCodeForm(), FuelConsumptionForm(), LeaseForm()):
             self.assertNotIn("org_node", forma.fields)
+
+
+class NabavkaURegistruTests(FlotaTestCase):
+    """Faza 2 za Nabavku: veza `org_node` na predmetima, fakturama i vezama faktura; uporedni izvestaj."""
+
+    def setUp(self):
+        super().setUp()
+        from nabavka.models import ProcurementCase, ProcurementInvoice, ProcurementInvoiceJobCodeLink
+
+        self.korisnik = get_user_model().objects.create_superuser("nabavka-admin", "n@example.com", "x")
+        self.predmet = ProcurementCase.objects.create(case_number="ZN-43/2026-1", title="Zahtev",
+                                                      job_code=self.nadzor, created_by=self.korisnik)
+        self.faktura = ProcurementInvoice.objects.create(source=ProcurementInvoice.SOURCE_EUF, euf_key="euf-1",
+                                                         invoice_number="IF-1", supplier_name="Partner DOO",
+                                                         job_code=self.nadzor, amount=Decimal("1200.00"),
+                                                         invoice_date=datetime.date(2026, 4, 1))
+        self.veza = ProcurementInvoiceJobCodeLink.objects.create(invoice=self.faktura, job_code=self.materijali)
+        run_import(company=1)
+
+    def test_komanda_popunjava_nabavku_i_ne_dira_flotu(self):
+        from nabavka.models import ProcurementCase, ProcurementInvoiceJobCodeLink
+
+        zbirovi = {z["kljuc"]: z for z in flota.povezi(modul="nabavka")}
+        self.assertEqual(set(zbirovi), {"predmeti", "fakture", "veze_faktura"})
+        self.assertEqual(ProcurementCase.objects.get(pk=self.predmet.pk).org_node_id, cvor("430111"))
+        self.assertEqual(ProcurementInvoiceJobCodeLink.objects.get(pk=self.veza.pk).org_node_id, cvor("410001"))
+        # Broj predmeta i staro polje ostaju.
+        predmet = ProcurementCase.objects.get(pk=self.predmet.pk)
+        self.assertEqual((predmet.case_number, predmet.job_code_id), ("ZN-43/2026-1", self.nadzor.pk))
+
+    def test_cuvanje_postavlja_vezu(self):
+        from nabavka.models import ProcurementCase
+
+        self.predmet.job_code = self.materijali
+        self.predmet.save()
+        self.assertEqual(ProcurementCase.objects.get(pk=self.predmet.pk).org_node_id, cvor("410001"))
+
+    def test_uporedni_izvestaj_nabavke(self):
+        flota.povezi(modul="nabavka")
+        izvestaj = flota.uporedni_izvestaj(modul="nabavka")
+        self.assertTrue(izvestaj["prolazi"])
+        fakture = next(d for d in izvestaj["delovi"] if d["kljuc"] == "fakture")
+        self.assertEqual([(r["centar"], r["staro_iznos"], r["novo_iznos"]) for r in fakture["redovi"]],
+                         [("43", Decimal("1200.00"), Decimal("1200.00"))])
+        self.assertNotIn("gorivo_po_vozilu", [d["kljuc"] for d in izvestaj["delovi"]])
+
+    def test_ekran_ima_karticu_nabavke(self):
+        self.client.force_login(self.korisnik)
+        odgovor = self.client.get(reverse("organizacija:flota"), {"modul": "nabavka"})
+        self.assertContains(odgovor, "Registar i Nabavka")
+        self.assertContains(odgovor, "Predmeti nabavke")
+        self.assertEqual(self.client.get(reverse("organizacija:flota"), {"modul": "xyz"}).context["modul"], "flota")
+
+    def test_forme_nabavke_ne_prikazuju_org_node(self):
+        from nabavka.models import ProcurementCase
+
+        self.assertFalse(ProcurementCase._meta.get_field("org_node").editable)
+
+    def test_spiskovi_nabavke_iz_registra(self):
+        from nabavka.filters import ProcurementCaseFilter
+        from nabavka.forms import ProcurementInvoiceJobCodeLinkForm
+        from nabavka.models import ProcurementCase
+
+        neaktivna = OrganizationalUnit.objects.create(code="431112", name="Terenske lab.", center="43")
+        run_import(company=1)
+        veza = ProcurementInvoiceJobCodeLinkForm(invoice=self.faktura).fields["job_code"]
+        self.assertIn(neaktivna, veza.queryset)            # fakture: i neaktivne sifre
+        self.assertNotIn(self.test_centar, veza.queryset)  # ali ne i sifre van registra
+        self.assertEqual(veza.label_from_instance(self.nadzor), "430111 — Strucni nadzor · centar 43")
+        filter_predmeta = ProcurementCaseFilter(data={}, queryset=ProcurementCase.objects.all())
+        self.assertIn(neaktivna, filter_predmeta.form.fields["job_code"].queryset)
+
+
+class FinansijeURegistruTests(ImportTestCase):
+    """Faza 2 za Finansije: `org_node` na knjizenju, postavljanje pri objavi i uporedni izvestaj."""
+
+    def setUp(self):
+        super().setUp()
+        from finansije.models import LedgerEntry
+
+        run_import(company=1)
+        # Kao u izvoru: centar na knjizenju je `posao.blok` sifre (2 i 3 za blokove; prazan kod 110002 i 430001).
+        for code, centar in (("209001", "2"), ("315400", "3"), ("3154190170", "3"), ("110002", ""), ("430001", "")):
+            LedgerEntry.objects.filter(job_code=code).update(center=centar)
+
+    def test_komanda_povezuje_knjizenja(self):
+        from finansije.models import LedgerEntry
+
+        zbir = flota.povezi(modul="finansije")[0]
+        self.assertEqual(zbir["kljuc"], "knjizenja")
+        self.assertEqual(LedgerEntry.objects.get(job_code="430111").org_node_id, cvor("430111"))
+        self.assertEqual(zbir["nerazresene_sifre"], [("vranjs", 1)])
+
+    def test_uporedni_izvestaj_posle_odluka(self):
+        """110002/430001 su potvrdjeno 11/43; 111111 je tehnicka sifra bez centra (odluke 25.09.2026.)."""
+        from finansije.models import LedgerEntry
+
+        self._ledger("111111", "1")
+        LedgerEntry.objects.filter(job_code="111111").update(center="3")  # izvor mu upisuje 3
+        flota.povezi(modul="finansije")
+        deo = flota.uporedni_izvestaj(modul="finansije")["delovi"][0]
+        razlike = sorted((p["sifra"], p["staro"], p["novo"]) for p in deo["primeri"])
+        self.assertEqual(razlike, [("vranjs", "43", flota.VAN_STABLA)])  # jos nerazreseno
+        self.assertEqual((deo["dopuna"], deo["tehnickih"]), (0, 1))
+        centri = {r["centar"]: r for r in deo["redovi"]}
+        self.assertEqual((centri["11"]["staro_broj"], centri["11"]["novo_broj"]), (1, 1))
+        self.assertTrue(centri[flota.TEHNICKA]["poklapa"])
+        self.assertNotIn("3", {c for c, r in centri.items() if r["staro_broj"] != r["novo_broj"]})
+
+    def test_objava_sinhronizacije_postavlja_vezu(self):
+        from unittest import mock
+
+        from finansije.models import LedgerEntry
+        from finansije.services.sync import sync_ledger
+        from finansije.tests import job, posting
+
+        red = posting(number=900, job_code="430111", center="43")
+        with mock.patch("finansije.services.sync.fetch_source", return_value=([red], [job(code="430111", center="43")])):
+            sync_ledger(year_from=2026, year_to=2026)
+        self.assertEqual(LedgerEntry.objects.get(journal_number=900).org_node_id, cvor("430111"))
+        izmenjen = posting(number=900, job_code="410001", center="41", credit=Decimal("150.00"))
+        with mock.patch("finansije.services.sync.fetch_source", return_value=([izmenjen], [job(code="410001", center="41")])):
+            sync_ledger(year_from=2026, year_to=2026)
+        self.assertEqual(LedgerEntry.objects.get(journal_number=900).org_node_id, cvor("410001"))
+
+    def test_spisak_centara_u_finansijama_nosi_naziv(self):
+        from finansije.forms import ReportFilters
+        from finansije.models import FinanceJob, LedgerEntry
+
+        forma = ReportFilters({}, jobs=FinanceJob.objects.all(), entries=LedgerEntry.objects.all())
+        self.assertIn(("43", "43 — Centar za puteve i geotehniku"), forma.fields["center"].choices)
+
+
+class PotrazivanjaURegistruTests(ImportTestCase):
+    """Faza 2 za Potrazivanja: veza se postavlja pri sinhronizaciji; poredi se poslednji snimak."""
+
+    def setUp(self):
+        super().setUp()
+        FinanceJob.objects.create(company=1, code="436111", center="43", name="Geotehnicka ispitivanja", active=True,
+                                  profit_type="P")
+        OrganizationalUnit.objects.create(code="436111", center="43", name="Posao")
+        run_import(company=1)
+
+    def sinhronizuj(self):
+        from copy import deepcopy
+        from unittest import mock
+
+        from potrazivanja.services.sync import sync_collections
+        from potrazivanja.test_sync import OBSERVED, fixture
+
+        with mock.patch("potrazivanja.services.sync.extract", return_value=(deepcopy(fixture()), OBSERVED)):
+            return sync_collections(trigger="import", include_legacy=True)
+
+    def test_sinhronizacija_postavlja_vezu_na_stavkama_i_pozicijama(self):
+        from potrazivanja.models import ReceivablePosition, ReceivablePosting
+
+        self.sinhronizuj()
+        self.assertEqual(ReceivablePosting.objects.get().org_node_id, cvor("436111"))
+        self.assertEqual(ReceivablePosition.objects.get().org_node_id, cvor("436111"))
+
+    def test_uporedni_izvestaj_poredi_poslednji_snimak(self):
+        from potrazivanja.models import ReceivablePosition
+
+        self.sinhronizuj()
+        self.sinhronizuj()  # drugi snimak; stari ostaje objavljen, ali se ne broji
+        self.assertEqual(ReceivablePosition.objects.count(), 2)
+        izvestaj = flota.uporedni_izvestaj(modul="potrazivanja")
+        self.assertTrue(izvestaj["prolazi"])
+        pozicije = next(d for d in izvestaj["delovi"] if d["kljuc"] == "pozicije")
+        self.assertEqual((pozicije["ukupno"], pozicije["redovi"][0]["centar"]), (1, "43"))
+
+    def test_komanda_za_potrazivanja(self):
+        from potrazivanja.models import ReceivablePosting
+
+        self.sinhronizuj()
+        ReceivablePosting.objects.update(org_node=None)
+        zbirovi = {z["kljuc"]: z for z in flota.povezi(modul="potrazivanja")}
+        self.assertEqual(zbirovi["stavke"]["postavljeno"], 1)
+        self.assertEqual(ReceivablePosting.objects.get().org_node_id, cvor("436111"))
