@@ -209,24 +209,31 @@ class KadroviScopeTests(TestCase):
         self.assertEqual(self.user.allowed_hr_unit_codes,['431'])
         self.assertEqual(list(visible_employees(self.user)),[self.employees[0]])
 
+    def _zahtev_za_resenje(self, employee):
+        from hr.models import Zahtev, VrstaZahteva
+        number = Zahtev.objects.count() + 1
+        return Zahtev.objects.create(vrsta=VrstaZahteva.objects.first(), zaposleni=employee,
+            godina=2026, redni_broj=number, broj=f'T-{number}', datum_zahteva='2026-09-24',
+            podnosilac=employee, odobrava=employee, created_by=self.user)
+
     def test_resenja_use_snapshot_scope_not_employee_current_center(self):
         from hr.models import VrstaResenja, Resenje
         from hr.services.resenja import visible_resenja
         kind=VrstaResenja.objects.first()
         if kind is None:
             kind=VrstaResenja.objects.create(kod='scope-test',naziv='Test',naslov='Test')
-        owned=Resenje.objects.create(zaposleni=self.employees[2],vrsta=kind,broj='S-1',datum_resenja='2026-09-24',
+        owned=Resenje.objects.create(zahtev=self._zahtev_za_resenje(self.employees[0]), zaposleni=self.employees[2],vrsta=kind,broj='S-1',datum_resenja='2026-09-24',
             created_by=self.user,oj_kod='431',centar='43 ')
-        Resenje.objects.create(zaposleni=self.employees[0],vrsta=kind,broj='S-2',datum_resenja='2026-09-24',
+        Resenje.objects.create(zahtev=self._zahtev_za_resenje(self.employees[0]), zaposleni=self.employees[0],vrsta=kind,broj='S-2',datum_resenja='2026-09-24',
             created_by=self.user,oj_kod='411',centar='41')
         self.assertEqual(list(visible_resenja(self.user)),[owned])
 
     def test_resenja_with_empty_center_are_visible_by_allowed_hr_unit(self):
         from hr.models import VrstaResenja, Resenje
         kind = VrstaResenja.objects.first()
-        owned = Resenje.objects.create(zaposleni=self.employees[0], vrsta=kind, broj='OJ-1',
+        owned = Resenje.objects.create(zahtev=self._zahtev_za_resenje(self.employees[0]), zaposleni=self.employees[0], vrsta=kind, broj='OJ-1',
             datum_resenja='2026-09-24', oj_kod='431 ', centar='', created_by=self.user)
-        hidden = Resenje.objects.create(zaposleni=self.employees[2], vrsta=kind, broj='OJ-2',
+        hidden = Resenje.objects.create(zahtev=self._zahtev_za_resenje(self.employees[0]), zaposleni=self.employees[2], vrsta=kind, broj='OJ-2',
             datum_resenja='2026-09-24', oj_kod='411', centar='', created_by=self.user)
         self.client.force_login(self.user)
         response = self.client.get(reverse('hr:resenje_list'))

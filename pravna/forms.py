@@ -139,10 +139,11 @@ def _employee_queryset(keep_ids=()):
 
 class DisciplinskiPostupakForm(forms.ModelForm):
     datum_podnosenja = _date_field(label='Datum', required=True)
+    centar = forms.ChoiceField(required=False, label='Centar')
 
     class Meta:
         model = DisciplinskiPostupak
-        fields = ['zaposleni', 'centar', 'datum_podnosenja', 'podnosilac', 'arhivirano']
+        fields = ['zaposleni', 'centar', 'datum_podnosenja', 'podnosilac']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -151,8 +152,20 @@ class DisciplinskiPostupakForm(forms.ModelForm):
         for name in ('zaposleni', 'podnosilac'):
             self.fields[name].queryset = _employee_queryset(keep)
             self.fields[name].widget.attrs['class'] = 'form-select select2-method'
-        self.fields['centar'].required = False
-        self.fields['centar'].help_text = 'Ostavi prazno da se preuzme iz organizacione jedinice zaposlenog.'
+        from fleet.services.employee_user_profiles import available_centers, infer_center
+        from core.models import OrganizationalUnit
+        centers = available_centers()
+        registry = {str(code).strip(): str(center or '').strip()
+                    for code, center in OrganizationalUnit.objects.values_list('code', 'center')}
+        self.employee_centers = {str(e.pk): registry.get(str(e.org_unit_code or e.department_code or '').strip())
+            or infer_center(e.org_unit_code or e.department_code, centers=centers)[0]
+            for e in self.fields['zaposleni'].queryset}
+        if self.instance.centar and self.instance.centar.strip() not in centers:
+            centers.append(self.instance.centar.strip())
+        self.fields['centar'].choices = [('', 'Preuzmi prema zaposlenom')] + [(c, f'Centar {c}') for c in centers]
+        self.fields['centar'].help_text = 'Centar se bira automatski prema zaposlenom. Po potrebi izaberite drugi.'
+        if self.instance.pk:
+            self.initial['centar'] = self.instance.centar.strip()
 
     def clean(self):
         cleaned = super().clean()
@@ -170,10 +183,18 @@ class TokPostupkaForm(forms.ModelForm):
 
 
 class DisciplinskaMeraForm(forms.ModelForm):
-    """Datum zatvara postupak; opis promene unosi se kroz tok postupka."""
+    """Zatvaranje zahteva jednu od mera iz člana 77 dostavljenog pravilnika."""
 
     mera_datum = _date_field(label='Datum zatvaranja', required=True)
+    mera_vrsta = forms.ChoiceField(label='Izrečena mera', choices=DisciplinskiPostupak.Mera.choices,
+        required=True, widget=forms.RadioSelect(attrs={'class': 'legal-measure-options'}))
 
     class Meta:
         model = DisciplinskiPostupak
-        fields = ['mera_datum']
+        fields = ['mera_vrsta', 'mera_datum']
+
+    def clean_mera_datum(self):
+        datum = self.cleaned_data['mera_datum']
+        if self.instance.datum_podnosenja and datum < self.instance.datum_podnosenja:
+            raise forms.ValidationError('Datum zatvaranja ne može biti pre datuma pokretanja postupka.')
+        return datum

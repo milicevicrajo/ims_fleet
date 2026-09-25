@@ -1,0 +1,55 @@
+{% load static %}
+{% comment %}Zahtev u obliku dopisa; sadržaj dolazi iz sačuvanog dokumenta, izgled deli sa rešenjem.{% endcomment %}
+<article class="resenje zahtev" data-vrsta="{{ dokument.vrsta.kod }}" lang="{% if dokument.pismo == 'latinica' %}sr-Latn{% else %}sr-Cyrl{% endif %}">
+  <header class="resenje-zaglavlje">
+    <div class="resenje-memorandum">
+      <img class="resenje-logo" src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+      <div class="resenje-institut">
+        <strong>{{ dokument.zaglavlje.institut }}</strong>
+        <span>{{ dokument.zaglavlje.adresa }} · {{ dokument.zaglavlje.mesto }}</span>
+      </div>
+    </div>
+    <div class="resenje-evidencija">
+      <div><span>{{ dokument.oznake.broj }}</span> <strong>{{ dokument.broj|default:"_______" }}</strong></div>
+      <div><span>{{ dokument.oznake.datum }}</span> <strong>{{ dokument.datum|default:"______________" }}</strong></div>
+    </div>
+  </header>
+
+  <div class="resenje-sadrzaj">
+    <div class="resenje-naslovni-blok">
+      <h1 class="resenje-naslov">{% if dokument.pismo == 'latinica' %}ZAHTEV{% else %}ЗАХТЕВ{% endif %}</h1>
+      <h2 class="resenje-podnaslov">{{ dokument.predmet }}</h2>
+    </div>
+    <div class="resenje-zaposleni">
+      <span class="resenje-oznaka">{% if dokument.pismo == 'latinica' %}{% if dokument.zaposleni.pol == 'F' %}Zaposlena{% else %}Zaposleni{% endif %}{% else %}{% if dokument.zaposleni.pol == 'F' %}Запослена{% else %}Запослени{% endif %}{% endif %}</span>
+      <strong>{{ dokument.zaposleni.ime }}</strong>
+      <span class="resenje-jedinica">{{ dokument.zaposleni.oj }}</span>
+      <span class="resenje-jedinica">{% if dokument.pismo == 'latinica' %}Šifra{% else %}Шифра{% endif %}: {{ dokument.zaposleni.sifra }}{% if dokument.zaposleni.centar %} · {% if dokument.pismo == 'latinica' %}Centar{% else %}Центар{% endif %}: {{ dokument.zaposleni.centar }}{% endif %}</span>
+    </div>
+    <div class="zahtev-primalac">
+      <span class="resenje-oznaka">{{ dokument.oznake.primalac }}</span>
+      <strong>{{ dokument.primalac.funkcija }}</strong>
+      <span>{{ dokument.primalac.ime }}</span>
+    </div>
+    {% for pasus in dokument.pasusi %}<p>{{ pasus }}</p>{% endfor %}
+  </div>
+
+  <footer class="resenje-zavrsni-blok">
+    <table class="resenje-podnozje zahtev-potpisi">
+      <tr>
+        <td class="resenje-potpis">
+          <div class="resenje-oznaka">{{ dokument.oznake.odobrava }}</div>
+          <strong>{{ dokument.odobrenje.funkcija }}</strong>
+        </td>
+        <td class="resenje-potpis">
+          <div class="resenje-oznaka">{{ dokument.oznake.podnosilac }}</div>
+          <strong>{{ dokument.potpis.funkcija }}</strong>
+        </td>
+      </tr>
+      <tr>
+        <td class="resenje-potpis"><div class="resenje-crta" aria-hidden="true"></div><div>{{ dokument.odobrenje.ime }}</div></td>
+        <td class="resenje-potpis"><div class="resenje-crta" aria-hidden="true"></div><div>{{ dokument.potpis.ime }}</div></td>
+      </tr>
+    </table>
+  </footer>
+</article>

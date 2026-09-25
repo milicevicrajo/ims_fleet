@@ -5,7 +5,8 @@ from core.mixins import user_has_role_permission
 from hr.access import visible_employees
 
 from hr.models import Employee, Pismo, Potpisnik, Resenje, ResenjeDan, VrstaResenja
-from hr.services.resenja import ime_zaposlenog, organizaciona_jedinica, to_cyrillic, normalizuj_pol, naziv_jedinice
+from hr.services.resenja import (dodatna_polja, ime_zaposlenog, naziv_jedinice, normalizuj_pol, organizaciona_jedinica,
+    parsiraj_dodatna_polja, to_cyrillic)
 
 DATE_ATTRS = {'class': 'form-control js-date', 'autocomplete': 'off', 'placeholder': 'dd.mm.gggg'}
 
@@ -49,7 +50,48 @@ def validiraj_period(form, data):
         form.add_error('vreme_do', 'Početak i kraj rada ne mogu biti isti.')
 
 
-class ResenjeForm(forms.ModelForm):
+class DodatnaPoljaMixin:
+    """Polja `dp_<oznaka>` iz šifrarnika vrsta. Prikazuju se sva, a obavezna su samo polja izabrane vrste."""
+
+    def dodaj_dodatna_polja(self, vrste, podaci=None):
+        self.dodatne_oznake = {}
+        for vrsta in vrste:
+            for oznaka, naziv in dodatna_polja(vrsta):
+                self.dodatne_oznake.setdefault(oznaka, naziv)
+        podaci = podaci or {}
+        for oznaka, naziv in self.dodatne_oznake.items():
+            self.fields['dp_' + oznaka] = forms.CharField(required=False, max_length=500, label=naziv,
+                initial=podaci.get(oznaka, ''), help_text='Unesite u pismu dokumenta.')
+
+    def dodatna_polja_forme(self):
+        return [self['dp_' + oznaka] for oznaka in getattr(self, 'dodatne_oznake', {})]
+
+    def ocisti_dodatna_polja(self, vrsta):
+        rezultat = {}
+        for oznaka, _ in dodatna_polja(vrsta):
+            vrednost = (self.cleaned_data.get('dp_' + oznaka) or '').strip()
+            if not vrednost and 'dp_' + oznaka in self.fields:
+                self.add_error('dp_' + oznaka, 'Ova vrsta traži ovaj podatak.')
+            rezultat[oznaka] = vrednost
+        return rezultat
+
+
+def izbor_oj(actor, dodatne=()):
+    """Organizacione jedinice zaposlenih koje korisnik vidi, za izbor OJ u tekstu dokumenta."""
+    employees = visible_employees(actor, unrestricted=user_has_role_permission(actor, 'hr:resenje_view_all')) if actor else Employee.objects.all()
+    codes = {str(c or d or '').strip() for c, d in employees.values_list('org_unit_code', 'department_code')}
+    codes.update(kod for kod in dodatne if kod)
+    return [('', 'Preuzmi OJ zaposlenog')] + [(c, f'OJ {c}') for c in sorted(codes - {''})]
+
+
+def ocisti_vrstu_sa_poljima(form):
+    """Provera teksta `dodatna_polja` u šifrarniku rešenja i zahteva."""
+    _, greske = parsiraj_dodatna_polja(form.cleaned_data.get('dodatna_polja'))
+    for greska in greske:
+        form.add_error('dodatna_polja', greska)
+
+
+class ResenjeForm(DodatnaPoljaMixin, forms.ModelForm):
     oj_kod = forms.ChoiceField(required=False, label='Organizaciona jedinica',
         help_text='Podrazumevano se preuzima OJ izabranog zaposlenog.')
     novi_potpisnik = forms.ModelChoiceField(queryset=Employee.objects.none(), required=False, label='Osoba koja potpisuje')
@@ -80,11 +122,7 @@ class ResenjeForm(forms.ModelForm):
         self.fields['potpisnik'].help_text = 'Potpisnik je odgovorna osoba čije ime i funkcija stoje na kraju dokumenta.'
         self.fields['pol'].choices = [('', 'Preuzmi iz evidencije'), ('M', 'Muški'), ('F', 'Ženski')]
         self.fields['pol'].help_text = 'Određuje oblike „zaposlen/zaposlena“, „dužan/dužna“ i ostali tekst.'
-        employees = visible_employees(actor, unrestricted=user_has_role_permission(actor, 'hr:resenje_view_all')) if actor else Employee.objects.all()
-        codes = {str(c or d or '').strip() for c, d in employees.values_list('org_unit_code', 'department_code')}
-        if self.instance.pk and self.instance.oj_kod:
-            codes.add(self.instance.oj_kod)
-        self.fields['oj_kod'].choices = [('', 'Preuzmi OJ zaposlenog')] + [(c, f'OJ {c}') for c in sorted(codes - {''})]
+        self.fields['oj_kod'].choices = izbor_oj(actor, [self.instance.oj_kod] if self.instance.pk else [])
         self.can_add_signer = bool(actor and user_has_role_permission(actor, 'hr:resenje_catalog_create'))
         if self.can_add_signer:
             self.fields['novi_potpisnik'].queryset = Employee.objects.filter(is_active=True).order_by('last_name', 'first_name')
@@ -95,7 +133,18 @@ class ResenjeForm(forms.ModelForm):
         self.fields['zaposleni_tekst'].required = False
         self.fields['oj_naziv'].required = False
         self.fields['radno_mesto'].required = False
-        self.fields['zahtev_broj'].help_text = 'Unesite broj ili kratak opis zahteva kao tekst.'
+        self.fields['zahtev_broj'].label = 'Broj zahteva'
+        self.fields['zahtev_broj'].help_text = 'Preuzeto iz povezanog zahteva.'
+        vrste = list(VrstaResenja.objects.filter(je_aktivna=True))
+        if self.instance.pk and self.instance.vrsta_id and self.instance.vrsta not in vrste:
+            vrste.append(self.instance.vrsta)
+        self.dodaj_dodatna_polja(vrste, self.instance.dodatni_podaci)
+        self.po_zahtevu = bool(self.instance.pk and self.instance.zahtev_id)
+        if self.po_zahtevu:
+            # Zaposleni, broj i zahtev dolaze iz zahteva i ne menjaju se u rešenju.
+            for naziv in ('zaposleni', 'broj', 'zahtev_broj', 'zahtev_datum'):
+                self.fields[naziv].disabled = True
+            self.fields['broj'].help_text = 'Podbroj zahteva, dodeljen automatski.'
         _ukrasi(self)
 
     def clean(self):
@@ -103,6 +152,7 @@ class ResenjeForm(forms.ModelForm):
         vrsta = data.get('vrsta')
         if not vrsta:
             return data
+        self.instance.dodatni_podaci = self.ocisti_dodatna_polja(vrsta)
         if vrsta.trazi_period and not data.get('datum_od'):
             self.add_error('datum_od', 'Ova vrsta rešenja traži početak perioda.')
         if vrsta.trazi_period and not data.get('datum_do') and not data.get('do_zavrsetka_posla'):
@@ -150,13 +200,14 @@ class VrstaResenjaForm(forms.ModelForm):
         model = VrstaResenja
         fields = ['kod', 'naziv', 'naslov', 'podnaslov', 'pravni_osnov', 'dispozitiv', 'obrazlozenje',
                   'pravna_pouka', 'dostavljeno', 'trazi_period', 'trazi_dane', 'trazi_radne_dane',
-                  'podrazumevano_pismo', 'redosled', 'je_aktivna']
+                  'dodatna_polja', 'podrazumevano_pismo', 'redosled', 'je_aktivna']
         widgets = {
             'pravni_osnov': forms.Textarea(attrs={'rows': 3}),
             'dispozitiv': forms.Textarea(attrs={'rows': 8}),
             'obrazlozenje': forms.Textarea(attrs={'rows': 5}),
             'pravna_pouka': forms.Textarea(attrs={'rows': 3}),
             'dostavljeno': forms.Textarea(attrs={'rows': 4}),
+            'dodatna_polja': forms.Textarea(attrs={'rows': 3}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -164,6 +215,11 @@ class VrstaResenjaForm(forms.ModelForm):
         if self.instance.pk:
             self.fields['kod'].disabled = True
         _ukrasi(self)
+
+    def clean(self):
+        data = super().clean()
+        ocisti_vrstu_sa_poljima(self)
+        return data
 
 
 class PotpisnikForm(forms.ModelForm):
@@ -190,7 +246,7 @@ class PotpisnikForm(forms.ModelForm):
         return data
 
 
-class GrupnoResenjeForm(forms.Form):
+class GrupnoResenjeForm(DodatnaPoljaMixin, forms.Form):
     """Jedna vrsta i jedan period za više zaposlenih odjednom."""
 
     vrsta = forms.ModelChoiceField(queryset=VrstaResenja.objects.filter(je_aktivna=True), label='Vrsta rešenja')
@@ -216,6 +272,7 @@ class GrupnoResenjeForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.dodaj_dodatna_polja(VrstaResenja.objects.filter(je_aktivna=True))
         _ukrasi(self)
 
     def clean_dani(self):
@@ -248,6 +305,7 @@ class GrupnoResenjeForm(forms.Form):
         if vrsta.trazi_radne_dane and not data.get('broj_radnih_dana'):
             self.add_error('broj_radnih_dana', 'Ova vrsta rešenja traži broj radnih dana.')
         validiraj_period(self, data)
+        data['dodatni_podaci'] = self.ocisti_dodatna_polja(vrsta)
         signer, day = data.get('potpisnik'), data.get('datum_resenja')
         if signer and day and (day < signer.vazi_od or (signer.vazi_do and day >= signer.vazi_do)):
             self.add_error('potpisnik', 'Izabrani potpisnik ne važi na datum rešenja.')

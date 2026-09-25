@@ -95,6 +95,7 @@ class DisciplinskiPostupakTests(TestCase):
         self.assertEqual(postupak.centar, "43")
 
     def test_explicit_center_is_not_overwritten(self):
+        OrganizationalUnit.objects.create(name='Drugi centar', code='426111', center='42')
         self._create(centar="42")
         self.assertEqual(DisciplinskiPostupak.objects.get().centar, "42")
 
@@ -113,24 +114,26 @@ class DisciplinskiPostupakTests(TestCase):
         self.client.post(reverse("pravna:disciplinski_obrisi_tok", kwargs={"pk": zapis.pk}))
         self.assertEqual(postupak.tok.count(), 1)
 
-    def test_date_alone_closes_the_case_and_can_be_undone(self):
+    def test_measure_and_date_close_the_case_and_can_be_undone(self):
         self._create()
         postupak = DisciplinskiPostupak.objects.get()
         self.assertFalse(postupak.zatvoren)
         self.assertEqual(postupak.datum_statusa, date(2026, 3, 5))
 
         url = reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk})
-        response = self.client.post(url, {"mera_datum": "01.04.2026"})
+        response = self.client.post(url, {"mera_datum": "01.04.2026", "mera_vrsta": "1"})
         self.assertRedirects(response, reverse("pravna:disciplinski_detalj", kwargs={"pk": postupak.pk}))
         postupak.refresh_from_db()
         self.assertTrue(postupak.zatvoren)
         self.assertEqual(postupak.mera_datum, date(2026, 4, 1))
         self.assertEqual(postupak.datum_statusa, date(2026, 4, 1))
         self.assertEqual(postupak.mera_opis, "")
+        self.assertEqual(postupak.mera_vrsta, '1')
 
         self.client.post(url, {"ponisti": "1"})
         postupak.refresh_from_db()
         self.assertFalse(postupak.zatvoren)
+        self.assertEqual(postupak.mera_vrsta, '')
         self.assertEqual(postupak.datum_statusa, date(2026, 3, 5))
         self.assertEqual(postupak.mera_opis, "")
 
@@ -148,6 +151,41 @@ class DisciplinskiPostupakTests(TestCase):
                 postupak.refresh_from_db()
                 self.assertFalse(postupak.zatvoren)
 
+    def test_closing_requires_one_of_the_four_measures(self):
+        self._create()
+        postupak = DisciplinskiPostupak.objects.get()
+        url = reverse('pravna:disciplinski_mera', args=[postupak.pk])
+        for mera in ['', '5', 'free text']:
+            response = self.client.post(url, {'mera_datum': '01.04.2026', 'mera_vrsta': mera})
+            self.assertIn('mera_vrsta', response.context['forma_mera'].errors)
+            postupak.refresh_from_db()
+            self.assertFalse(postupak.zatvoren)
+        for mera in ['1', '2', '3', '4']:
+            self.assertEqual(self.client.post(url, {'mera_datum': '01.04.2026', 'mera_vrsta': mera}).status_code, 302)
+            postupak.refresh_from_db()
+            self.assertEqual(postupak.mera_vrsta, mera)
+
+    def test_closed_legacy_case_can_get_measure_without_losing_date(self):
+        self._create()
+        postupak = DisciplinskiPostupak.objects.get()
+        DisciplinskiPostupak.objects.filter(pk=postupak.pk).update(mera_datum=date(2026,4,1))
+        self.assertContains(self.client.get(reverse('pravna:disciplinski_detalj', args=[postupak.pk])), 'Sačuvaj meru')
+        self.client.post(reverse('pravna:disciplinski_mera', args=[postupak.pk]), {'mera_vrsta':'3', 'mera_datum':'01.04.2026'})
+        postupak.refresh_from_db()
+        self.assertEqual(postupak.mera_datum, date(2026,4,1))
+        self.assertEqual(postupak.mera_vrsta, '3')
+
+    def test_short_hr_unit_maps_to_center_and_archived_is_not_editable_in_form(self):
+        self.radnik.org_unit_code = '431'
+        self.radnik.save()
+        self._create(arhivirano='on')
+        postupak = DisciplinskiPostupak.objects.get()
+        self.assertEqual(postupak.centar, '43')
+        self.assertFalse(postupak.arhivirano)
+        response = self.client.get(reverse('pravna:disciplinski_izmeni', args=[postupak.pk]))
+        self.assertNotContains(response, 'name="arhivirano"')
+        self.assertEqual(response.context['form'].employee_centers[str(self.radnik.pk)], '43')
+
     def test_closing_and_reopening_preserves_existing_description_and_history(self):
         self._create()
         postupak = DisciplinskiPostupak.objects.get()
@@ -157,7 +195,7 @@ class DisciplinskiPostupakTests(TestCase):
             postupak=postupak, datum=date(2026, 3, 10), opis="Opomena pred otkaz",
         )
         url = reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk})
-        for payload in ({"mera_datum": "01.04.2026"}, {"ponisti": "1"}):
+        for payload in ({"mera_datum": "01.04.2026", "mera_vrsta": "2"}, {"ponisti": "1"}):
             self.client.post(url, payload)
             postupak.refresh_from_db()
             self.assertEqual(postupak.mera_opis, "Ranije evidentirana mera")
@@ -172,7 +210,7 @@ class DisciplinskiPostupakTests(TestCase):
         self.assertContains(response, 'data-order="2026-03-05">05.03.2026.</td>')
         self.client.post(
             reverse("pravna:disciplinski_mera", kwargs={"pk": postupak.pk}),
-            {"mera_datum": "01.04.2026"},
+            {"mera_datum": "01.04.2026", "mera_vrsta": "1"},
         )
         response = self.client.get(list_url)
         self.assertContains(response, 'data-order="2026-04-01">01.04.2026.</td>')

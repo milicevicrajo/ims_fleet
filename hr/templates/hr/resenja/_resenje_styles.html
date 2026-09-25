@@ -36,5 +36,16 @@
   .resenje-podnozje .resenje-potpis { width:57%; text-align:center; }
   .resenje-potpis strong { display:block; font-size:11pt; margin-bottom:1mm; }
   .resenje-crta { width:85%; border-top:.75pt solid #171c21; margin:12mm auto 2mm; }
+  .zahtev { --resenje-ink:#2f4a5e; }
+  .zahtev-primalac { display:flex; flex-direction:column; gap:1mm; margin:0 0 6mm; padding:3mm 4mm; border:.5pt solid #bdc8cf; text-align:left; break-inside:avoid; }
+  .zahtev-primalac strong { font-size:12pt; }
+  .zahtev .resenje-sadrzaj p { text-indent:7mm; line-height:1.45; margin-bottom:4mm; }
+  .zahtev .resenje-podnaslov { max-width:145mm; margin:0 auto; line-height:1.4; }
+  .zahtev .resenje-zaposleni { padding-top:2mm; padding-bottom:2mm; }
+  .zahtev .resenje-jedinica + .resenje-jedinica { margin-top:1.5mm; }
+  .zahtev-potpisi .resenje-potpis { width:50%; }
+  .zahtev-potpisi .resenje-oznaka { display:block; margin-bottom:1mm; }
+  .zahtev-potpisi tr + tr td { padding-top:0; }
+  .zahtev-potpisi .resenje-potpis { padding-left:3mm; padding-right:3mm; }
   @media print { .resenje { print-color-adjust:exact; -webkit-print-color-adjust:exact; } }
 </style>

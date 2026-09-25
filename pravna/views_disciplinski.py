@@ -217,13 +217,14 @@ def disciplinski_obrisi_tok(request, pk):
 
 @role_permission_required()
 def disciplinski_mera(request, pk):
-    """Datum zatvara postupak. Ponistavanje zatvaranja ga vraca u rad."""
+    """Mera i datum zatvaraju postupak. Poništavanje zatvaranja ga vraća u rad."""
     postupak = get_object_or_404(DisciplinskiPostupak, pk=pk)
 
     if request.method == 'POST':
         if request.POST.get('ponisti') == '1':
             postupak.mera_datum = None
-            postupak.save(update_fields=['mera_datum', 'updated_at'])
+            postupak.mera_vrsta = ''
+            postupak.save(update_fields=['mera_datum', 'mera_vrsta', 'updated_at'])
             return redirect('pravna:disciplinski_detalj', pk=pk)
 
         form = DisciplinskaMeraForm(request.POST, instance=postupak)

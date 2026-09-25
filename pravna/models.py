@@ -111,14 +111,22 @@ def centar_zaposlenog(zaposleni):
     """Centar se izvodi iz organizacione jedinice zaposlenog, pa se pamti na postupku."""
     from core.models import OrganizationalUnit
 
-    code = (getattr(zaposleni, 'org_unit_code', '') or '').strip()
+    from fleet.services.employee_user_profiles import infer_center
+    code = str(getattr(zaposleni, 'org_unit_code', '') or getattr(zaposleni, 'department_code', '') or '').strip()
     if not code:
         return ''
-    return OrganizationalUnit.objects.filter(code=code).values_list('center', flat=True).first() or ''
+    exact = OrganizationalUnit.objects.filter(code=code).values_list('center', flat=True).first()
+    return str(exact or '').strip() or infer_center(code)[0]
 
 
 class DisciplinskiPostupak(models.Model):
-    """Disciplinski postupak protiv zaposlenog, zatvoren unosom datuma."""
+    """Disciplinski postupak protiv zaposlenog, zatvoren izborom mere i datuma."""
+
+    class Mera(models.TextChoices):
+        OPOMENA = '1', 'Pisana opomena'
+        UDALJENJE = '2', 'Udaljenje sa rada bez naknade zarade od 1 do 15 radnih dana'
+        NOVCANA = '3', 'Novčana kazna do 20% osnovne zarade za mesec u kome je izrečena, u trajanju do 3 meseca'
+        PRESTANAK = '4', 'Prestanak radnog odnosa'
 
     zaposleni = models.ForeignKey(
         'fleet.Employee',
@@ -138,6 +146,7 @@ class DisciplinskiPostupak(models.Model):
 
     mera_datum = models.DateField(blank=True, null=True, verbose_name='Datum disciplinske mere')
     mera_opis = models.TextField(blank=True, verbose_name='Disciplinska mera')
+    mera_vrsta = models.CharField(max_length=1, choices=Mera.choices, blank=True, verbose_name='Izrečena mera')
 
     arhivirano = models.BooleanField(default=False, verbose_name='Arhivirano')
 

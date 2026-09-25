@@ -45,6 +45,29 @@
 .resenja-page .resenja-meta { display:grid; grid-template-columns:90px minmax(0,1fr); gap:12px 10px; margin:0; font-size:.85rem; }
 .resenja-page .resenja-meta dt { color:#64748b; font-weight:500; }
 .resenja-page .resenja-meta dd { margin:0; color:#243447; overflow-wrap:anywhere; }
+.zahtevi-page .resenja-filters { grid-template-columns:minmax(190px,2fr) repeat(3,minmax(110px,1fr)) 100px auto; }
+.zahtevi-page .resenja-table td { padding-top:14px; padding-bottom:14px; }
+.zahtevi-page .resenja-table tr:has(.zahtev-select:checked) td { background:#f0f7fb; }
+.zahtevi-page .zahtev-secondary { display:block; margin-top:5px; color:#64748b; font-size:.78rem; line-height:1.45; }
+.zahtevi-page .zahtev-employee-name { font-weight:600; color:#243447; }
+.zahtevi-page .zahtev-actions-column { width:82px; }
+.zahtevi-page .fleet-list-actions { display:inline-flex; flex-wrap:nowrap; gap:6px; }
+.zahtevi-page .zahtev-bulk-actions { display:block; }
+.zahtevi-page .zahtev-bulk-actions summary { cursor:pointer; list-style:none; }
+.zahtevi-page .zahtev-bulk-actions summary::-webkit-details-marker { display:none; }
+.zahtevi-page .zahtev-bulk-actions summary::after { content:'+'; font-size:1.2rem; color:#1f6f8b; }
+.zahtevi-page .zahtev-bulk-actions[open] summary::after { content:'−'; }
+.zahtevi-page .zahtev-bulk-actions summary:focus-visible { outline:2px solid #1f6f8b; outline-offset:-3px; }
+.zahtevi-page .zahtev-signers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.zahtevi-page .zahtev-form-panel { min-width:0; padding:20px; border:1px solid #e2e8ef; border-radius:8px; background:#f8fafc; }
+.zahtevi-page .zahtev-form-panel h6 { margin:0 0 20px; font-weight:600; color:#174f83; }
+.zahtevi-page .zahtev-person { display:flex; flex-direction:column; gap:6px; padding:0 0 18px; margin-bottom:18px; border-bottom:1px solid #e2e8ef; font-size:.85rem; color:#64748b; overflow-wrap:anywhere; }
+.zahtevi-page .zahtev-person strong { font-size:1.1rem; line-height:1.4; color:#203d50; }
+.zahtevi-page .zahtev-caption { display:block; font-size:.75rem; font-weight:600; color:#64748b; margin-bottom:4px; }
+.zahtevi-page .zahtev-center { color:#174f83; font-weight:600; }
+.zahtevi-page .zahtev-note { margin-top:18px; padding:12px 14px; border-left:3px solid #b4c9d7; background:#f8fafc; font-size:.9rem; overflow-wrap:anywhere; }
+@media (max-width:1199.98px) { .zahtevi-page .resenja-filters { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:767.98px) { .zahtevi-page .zahtev-signers { grid-template-columns:minmax(0,1fr); } }
 @media (max-width:1399.98px) { .resenja-page .resenja-preview-layout { grid-template-columns:minmax(0,1fr); } .resenja-page .resenja-side { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; } }
 @media (max-width:991.98px) { .resenja-page .resenja-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:575.98px) { .resenja-page .resenja-filters { grid-template-columns:minmax(0,1fr); } .resenja-page .card-body { padding:16px; } .resenja-page .resenja-form-actions .btn { flex:1; } .resenja-page .resenja-form-note { width:100%; } .resenja-page .resenja-paper-stage { padding:12px; } }

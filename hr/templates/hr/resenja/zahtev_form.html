@@ -1,25 +1,24 @@
 {% extends 'hr/resenja/base.html' %}
+{% block resenja_page_class %}zahtevi-page{% endblock %}
 {% block resenja_content %}
 <div class="fleet-list-hero">
   <div>
-  <div class="hr-kicker">Kadrovi - Rešenja zaposlenih</div>
-  <h1><i class="mdi mdi-file-document-edit-outline me-2"></i>{{ title }}</h1>
-  <p>Unesite podatke, sačuvajte nacrt i pregledajte dokument pre izdavanja.</p>
+  <div class="hr-kicker">Kadrovi - Zahtevi zaposlenih</div>
+  <h1><i class="mdi mdi-file-send-outline me-2"></i>{{ title }}{% if zahtev %} {{ zahtev.broj }}{% endif %}</h1>
+  <p>{% if zahtev %}Broj {{ zahtev.broj }} je dodeljen automatski i ne menja se.{% else %}Broj zahteva se dodeljuje automatski pri čuvanju.{% endif %} Iz sačuvanog zahteva pravi se rešenje.</p>
   </div>
-  <a class="btn btn-outline-light btn-sm" href="{% if resenje %}{% url 'hr:resenje_detail' resenje.pk %}{% else %}{% url 'hr:resenje_list' %}{% endif %}"><i class="mdi mdi-arrow-left"></i> Nazad</a>
+  <a class="btn btn-outline-light btn-sm" href="{% if zahtev %}{% url 'hr:zahtev_detail' zahtev.pk %}{% else %}{% url 'hr:zahtev_list' %}{% endif %}"><i class="mdi mdi-arrow-left"></i> Nazad</a>
 </div>
 
 <form method="post" novalidate>{% csrf_token %}
 {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-{% if resenje.zahtev_id %}<div class="alert alert-info">Rešenje po zahtevu <a href="{% url 'hr:zahtev_detail' resenje.zahtev_id %}">{{ resenje.zahtev.broj }}</a>. Zaposleni, broj rešenja i podaci o zahtevu preuzeti su iz zahteva i ne menjaju se ovde.</div>{% endif %}
 
 <div class="card shadow-sm mb-3">
   <div class="card-header"><h5><i class="mdi mdi-file-document-outline"></i>Osnovni podaci</h5><span class="small text-muted">Polja označena * su obavezna.</span></div>
   <div class="card-body"><div class="row g-3">
     {% include 'hr/resenja/_polje.html' with polje=form.vrsta %}
     {% include 'hr/resenja/_polje.html' with polje=form.zaposleni %}
-    {% include 'hr/resenja/_polje.html' with polje=form.broj %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_resenja %}
+    {% include 'hr/resenja/_polje.html' with polje=form.datum_zahteva %}
     {% include 'hr/resenja/_polje.html' with polje=form.pismo %}
     {% include 'hr/resenja/_polje.html' with polje=form.pol %}
     {% include 'hr/resenja/_polje.html' with polje=form.oj_kod %}
@@ -27,28 +26,29 @@
 </div>
 
 <div class="card shadow-sm mb-3">
-  <div class="card-header"><h5><i class="mdi mdi-pen"></i>Potpis na dokumentu</h5></div>
-  <div class="card-body">
-    <div class="row g-3">{% include 'hr/resenja/_polje.html' with polje=form.potpisnik sirina='col-md-6' %}</div>
-    <p id="potpisnik-info" class="small mt-2" role="status"></p>
-    {% if can_add_signer %}<details{% if form.novi_potpisnik.value or not potpisnici_meta %} open{% endif %}><summary>Dodaj osobu koja potpisuje rešenja</summary>
-      <p class="small text-muted mt-2">Izaberite osobu i unesite funkciju. Potpisnik će biti sačuvan uz nacrt i dostupan za naredna rešenja od izabranog datuma.</p>
-      <div class="row g-3">{% include 'hr/resenja/_polje.html' with polje=form.novi_potpisnik sirina='col-md-6' %}{% include 'hr/resenja/_polje.html' with polje=form.funkcija_potpisnika sirina='col-md-6' %}</div>
-    </details>{% endif %}
-  </div>
+  <div class="card-header"><h5><i class="mdi mdi-pen"></i>Podnosilac i odobrenje</h5></div>
+  <div class="card-body"><div class="zahtev-signers">
+    <section class="zahtev-form-panel"><h6><i class="mdi mdi-account-arrow-right-outline"></i> Podnosilac zahteva</h6><div class="row g-3">
+      {% include 'hr/resenja/_polje.html' with polje=form.podnosilac sirina='col-12' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.podnosilac_funkcija sirina='col-12' %}
+    </div></section>
+    <section class="zahtev-form-panel"><h6><i class="mdi mdi-account-check-outline"></i> Odobrava zahtev</h6><div class="row g-3">
+      {% include 'hr/resenja/_polje.html' with polje=form.odobrava sirina='col-12' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.odobrava_funkcija sirina='col-12' %}
+    </div></section>
+  </div></div>
 </div>
 
 <div class="card shadow-sm mb-3">
-  <div class="card-header"><h5><i class="mdi mdi-text-box-outline"></i>Tekst rešenja</h5></div>
+  <div class="card-header"><h5><i class="mdi mdi-text-box-outline"></i>Tekst zahteva</h5></div>
   <div class="card-body">
-    <p class="text-muted small">Ime, organizaciona jedinica i radno mesto preuzimaju se iz evidencije zaposlenih. Po potrebi prilagodite tekst i padež za ovo rešenje.</p>
+    <p class="text-muted small">Ime, organizaciona jedinica i radno mesto preuzimaju se iz evidencije zaposlenih. Po potrebi prilagodite tekst i padež.</p>
     <div class="row g-3">
       {% include 'hr/resenja/_polje.html' with polje=form.zaposleni_tekst sirina='col-md-6' %}
       {% include 'hr/resenja/_polje.html' with polje=form.oj_naziv sirina='col-md-6' %}
       {% include 'hr/resenja/_polje.html' with polje=form.radno_mesto sirina='col-md-6' %}
       {% for polje in form.dodatna_polja_forme %}{% include 'hr/resenja/_polje.html' with polje=polje sirina='col-md-6' %}{% endfor %}
-      {% include 'hr/resenja/_polje.html' with polje=form.zahtev_broj sirina='col-12 col-md-3' %}
-      {% include 'hr/resenja/_polje.html' with polje=form.zahtev_datum sirina='col-12 col-md-3' %}
+      {% include 'hr/resenja/_polje.html' with polje=form.razlog sirina='col-12' %}
       {% include 'hr/resenja/_polje.html' with polje=form.napomena sirina='col-12' %}
     </div>
   </div>
@@ -60,7 +60,7 @@
     {% include 'hr/resenja/_polje.html' with polje=form.datum_od %}
     {% include 'hr/resenja/_polje.html' with polje=form.datum_do %}
     {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
-    <div class="col-12 small text-muted">Unesite period ili pojedinačne dane ispod. Za praznike obavezno navedite pojedinačne datume i vrstu praznika.</div>
+    <div class="col-12 small text-muted">Unesite period ili pojedinačne dane ispod. Za praznike navedite pojedinačne datume i vrstu praznika.</div>
     <div class="col-12" data-grupa="vreme"><div class="row g-3">
       {% include 'hr/resenja/_polje.html' with polje=form.vreme_od %}
       {% include 'hr/resenja/_polje.html' with polje=form.vreme_do %}
@@ -93,14 +93,13 @@
 </div>
 
 <div class="resenja-form-actions">
-  <span class="resenja-form-note">Nacrt možete izmeniti pre izdavanja.</span>
+  <span class="resenja-form-note">Nacrt možete menjati dok ga ne podnesete.</span>
   <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj nacrt</button>
-  <a class="btn btn-outline-secondary" href="{% if resenje %}{% url 'hr:resenje_detail' resenje.pk %}{% else %}{% url 'hr:resenje_list' %}{% endif %}">Odustani</a>
+  <a class="btn btn-outline-secondary" href="{% if zahtev %}{% url 'hr:zahtev_detail' zahtev.pk %}{% else %}{% url 'hr:zahtev_list' %}{% endif %}">Odustani</a>
 </div>
 </form>
 {% endblock %}
 {% block extra_js %}
 {{ vrste_meta|json_script:"vrste-meta" }}
-{% include 'hr/resenja/_potpisnik_script.html' %}
-{% include 'hr/resenja/_obrazac_script.html' with predlog_url='hr:resenje_predlog' %}
+{% include 'hr/resenja/_obrazac_script.html' with predlog_url='hr:zahtev_predlog' %}
 {% endblock %}

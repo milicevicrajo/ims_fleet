@@ -4,7 +4,7 @@
   <div>
   <div class="hr-kicker">Kadrovi - Šifrarnik rešenja</div>
   <h1><i class="mdi mdi-tune me-2"></i>{{ title }}</h1>
-  <p>{% if kind == 'vrste' %}Podešavanje obrasca i podataka potrebnih za pripremu rešenja.{% else %}Podaci potpisnika i period važenja potpisa na rešenjima.{% endif %}</p>
+  <p>{% if kind == 'vrste' %}Podešavanje obrasca i podataka potrebnih za pripremu rešenja.{% elif kind == 'vrste-zahteva' %}Obrazac zahteva i rešenje koje se po njemu izdaje.{% elif kind == 'brojaci' %}Poslednji dodeljeni redni broj zahteva u godini.{% else %}Podaci potpisnika i period važenja potpisa na rešenjima.{% endif %}</p>
   </div>
   <a class="btn btn-outline-light btn-sm" href="{% url 'hr:resenje_catalog' %}#{{ kind }}"><i class="mdi mdi-arrow-left"></i> Šifrarnik</a>
 </div>
@@ -26,7 +26,7 @@
   </div></div>
 </div>
 <div class="resenja-form-actions">
-  {% if kind == 'vrste' %}<span class="resenja-form-note">Tekst obrasca unesite ćirilicom. Sačuvajte oznake u vitičastim zagradama.</span>{% endif %}
+  {% if kind == 'vrste' or kind == 'vrste-zahteva' %}<span class="resenja-form-note">Tekst obrasca unesite ćirilicom. Sačuvajte oznake u vitičastim zagradama.</span>{% endif %}
   <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button>
   <a class="btn btn-outline-secondary" href="{% url 'hr:resenje_catalog' %}">Odustani</a>
 </div>

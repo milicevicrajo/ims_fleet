@@ -164,9 +164,103 @@ def _redovi(text):
     return [red.strip() for red in str(text or '').splitlines() if red.strip()]
 
 
+_OZNAKA_POLJA = re.compile(r'^[a-z][a-z_]{0,39}$')
+# Imena koja obrazac već koristi; dodatno polje ih ne sme prekriti.
+REZERVISANI_CUVARI = frozenset({
+    'rod', 'zaposleni', 'oj', 'radno_mesto', 'centar', 'period', 'dani', 'dani_prekovremeni', 'dani_nocni',
+    'dani_vikend', 'dani_drzavni', 'dani_verski', 'radni_dani', 'datum_povratka', 'zahtev_broj', 'zahtev_datum',
+    'napomena', 'broj', 'datum', 'razlog', 'razlog_zahteva', 'podnosilac', 'podnosilac_funkcija', 'odobrava',
+    'odobrava_funkcija',
+})
+
+
+def parsiraj_dodatna_polja(text):
+    """`oznaka|Naziv` po redu → [(oznaka, naziv)]. Greška se javlja pri čuvanju šifarnika."""
+    polja, greske = [], []
+    for red in _redovi(text):
+        oznaka, _, naziv = red.partition('|')
+        oznaka, naziv = oznaka.strip(), naziv.strip() or oznaka.strip()
+        if not _OZNAKA_POLJA.match(oznaka):
+            greske.append(f'„{oznaka}“: oznaka sme da ima samo mala slova bez kvačica i donju crtu.')
+        elif oznaka in REZERVISANI_CUVARI:
+            greske.append(f'„{oznaka}“ je već čuvar mesta obrasca; izaberite drugu oznaku.')
+        elif oznaka in dict(polja):
+            greske.append(f'„{oznaka}“ je navedena dva puta.')
+        else:
+            polja.append((oznaka, naziv))
+    return polja, greske
+
+
+def dodatna_polja(vrsta):
+    return parsiraj_dodatna_polja(getattr(vrsta, 'dodatna_polja', ''))[0] if vrsta else []
+
+
+def dodatne_vrednosti(vrsta, podaci):
+    """Vrednosti dodatnih polja za tekst. Unose se u pismu dokumenta, pa se ne preslovljavaju."""
+    podaci = podaci or {}
+    return {oznaka: str(podaci.get(oznaka) or '') for oznaka, _ in dodatna_polja(vrsta)}
+
+
+def ime_osobe(employee, pismo):
+    """Ime osobe u potpisu (npr. podnosilac zahteva), sa zvanjem iz šifrarnika potpisnika ako postoji."""
+    if employee is None:
+        return ''
+    potpisnik = Potpisnik.objects.filter(zaposleni=employee).exclude(ime_cirilica='').order_by('-vazi_od').first()
+    if potpisnik:
+        return ime_potpisnika(potpisnik, pismo)
+    latinica = f'{employee.display_first_name} {employee.display_last_name}'.strip()
+    if pismo != Pismo.LATINICA:
+        return getattr(employee, 'full_name_cyrillic', '') or to_cyrillic(latinica)
+    return latin(latinica)
+
+
+def vrednosti_zahteva(zahtev, pismo):
+    """Podaci zahteva koje obrazac rešenja može da navede u obrazloženju."""
+    if zahtev is None:
+        return {'razlog_zahteva': '', 'podnosilac': '', 'podnosilac_funkcija': ''}
+    return {'razlog_zahteva': zahtev.razlog, 'podnosilac': ime_osobe(zahtev.podnosilac, pismo),
+            'podnosilac_funkcija': zahtev.podnosilac_funkcija}
+
+
 def _neprazni(redovi):
     """Red koji se posle razrešavanja isprazni ne sme da ostavi praznu tačku."""
     return [red.strip() for red in redovi if red.strip()]
+
+
+def vrednosti_perioda(dokument, dani, pismo):
+    """Period, dani i odsustvo za tekst; zajedničko rešenju i zahtevu.
+
+    Izvedeni opisi nastaju ćirilicom i prolaze kroz preslovljavanje. Ime, naziv OJ i
+    napomena unose se u pismu koje je izabrano, pa se ne preslovljavaju.
+    """
+    po_vrsti = {vrsta: [dan for dan in dani if dan.vrsta_dana == vrsta] for vrsta, _ in ResenjeDan.VrstaDana.choices}
+    period_dana = ''
+    if dokument.datum_od:
+        period_dana = datum_teksta(dokument.datum_od)
+        if dokument.datum_do and dokument.datum_do != dokument.datum_od:
+            period_dana = f'од {period_dana} до {datum_teksta(dokument.datum_do)}'
+    vrednosti = {
+        'period': opis_perioda(dokument, dani),
+        'dani': spisak_dana(dani) or period_dana,
+        'dani_prekovremeni': spisak_dana(po_vrsti['prekovremeni']),
+        'dani_nocni': spisak_dana(po_vrsti['nocni']),
+        'dani_vikend': spisak_dana(po_vrsti['vikend']),
+        'dani_drzavni': spisak_dana(po_vrsti['drzavni']),
+        'dani_verski': spisak_dana(po_vrsti['verski']),
+    }
+    vrednosti = {kljuc: u_pismu(vrednost, pismo) for kljuc, vrednost in vrednosti.items()}
+    vrednosti.update({'radni_dani': dokument.broj_radnih_dana or '',
+                      'datum_povratka': datum_teksta(dokument.datum_povratka)})
+    return vrednosti
+
+
+def opis_vremena(dokument, pismo):
+    if not (dokument.vreme_od and dokument.vreme_do):
+        return ''
+    vreme = f'Време рада: од {dokument.vreme_od:%H:%M} до {dokument.vreme_do:%H:%M} часова'
+    if dokument.vreme_do < dokument.vreme_od:
+        vreme += ' наредног дана'
+    return u_pismu(vreme + '.', pismo)
 
 
 def build_document(resenje, *, dani=None):
@@ -174,47 +268,30 @@ def build_document(resenje, *, dani=None):
     pismo = resenje.pismo
     employee = resenje.zaposleni
     dani = list(dani if dani is not None else resenje.dani.all())
-    po_vrsti = {vrsta: [dan for dan in dani if dan.vrsta_dana == vrsta] for vrsta, _ in ResenjeDan.VrstaDana.choices}
-    period_dana = ''
-    if resenje.datum_od:
-        period_dana = datum_teksta(resenje.datum_od)
-        if resenje.datum_do and resenje.datum_do != resenje.datum_od:
-            period_dana = f'од {period_dana} до {datum_teksta(resenje.datum_do)}'
     vrednosti = {
         'zaposleni': resenje.zaposleni_tekst,
         'oj': resenje.oj_naziv,
         'radno_mesto': resenje.radno_mesto,
         'centar': resenje.centar,
-        'period': opis_perioda(resenje, dani),
-        'dani': spisak_dana(dani) or period_dana,
-        'dani_prekovremeni': spisak_dana(po_vrsti['prekovremeni']),
-        'dani_nocni': spisak_dana(po_vrsti['nocni']),
-        'dani_vikend': spisak_dana(po_vrsti['vikend']),
-        'dani_drzavni': spisak_dana(po_vrsti['drzavni']),
-        'dani_verski': spisak_dana(po_vrsti['verski']),
-        'radni_dani': resenje.broj_radnih_dana or '',
-        'datum_povratka': datum_teksta(resenje.datum_povratka),
+        **vrednosti_perioda(resenje, dani, pismo),
         'zahtev_broj': resenje.zahtev_broj,
         'zahtev_datum': datum_teksta(resenje.zahtev_datum),
         'napomena': resenje.napomena,
         'broj': resenje.broj,
         'datum': datum_teksta(resenje.datum_resenja),
+        **vrednosti_zahteva(resenje.zahtev if resenje.zahtev_id else None, pismo),
     }
-    # Ime, naziv OJ i napomena unose se u pismu koje je izabrano, pa se ne preslovljavaju.
-    # Tekstovi šifrarnika i izvedeni opisi jesu ćirilični i prolaze kroz preslovljavanje.
-    for kljuc in ('period', 'dani', 'dani_prekovremeni', 'dani_nocni', 'dani_vikend', 'dani_drzavni', 'dani_verski'):
-        vrednosti[kljuc] = u_pismu(vrednosti[kljuc], pismo)
+    vrednosti.update({kljuc: vrednost for kljuc, vrednost in
+                      dodatne_vrednosti(resenje.vrsta, resenje.dodatni_podaci).items() if kljuc not in vrednosti})
     vrsta = resenje.vrsta
     pol = normalizuj_pol(resenje.pol or employee.gender)
     tekst = lambda value: razresi(u_pismu(value, pismo), vrednosti, pol)
     potpisnik = resenje.potpisnik
     funkcija = u_pismu(potpisnik.funkcija, pismo) if potpisnik else ''
     tacke = _neprazni(tekst(red) for red in _redovi(vrsta.dispozitiv))
-    if resenje.vreme_od and resenje.vreme_do and tacke:
-        vreme = f'Време рада: од {resenje.vreme_od:%H:%M} до {resenje.vreme_do:%H:%M} часова'
-        if resenje.vreme_do < resenje.vreme_od:
-            vreme += ' наредног дана'
-        tacke[0] += ' ' + u_pismu(vreme + '.', pismo)
+    vreme = opis_vremena(resenje, pismo)
+    if vreme and tacke:
+        tacke[0] += ' ' + vreme
     return {
         'schema': 1,
         'pismo': pismo,
@@ -242,6 +319,8 @@ def build_document(resenje, *, dani=None):
 
 def pripremi_resenje(resenje):
     """Popunjava podatke koji se izvode iz zaposlenog, pre prvog snimanja."""
+    if not resenje.zahtev_id:
+        raise ValidationError('Rešenje mora biti povezano sa postojećim zahtevom.')
     employee = resenje.zaposleni
     kod = resenje.oj_kod or organizaciona_jedinica(employee)[0]
     jedinica = OrganizationalUnit.objects.filter(code=kod).first()
@@ -274,6 +353,14 @@ def izdaj_resenje(resenje, user):
     if not normalizuj_pol(resenje.pol or resenje.zaposleni.gender):
         raise ValidationError('Izaberite pol za tekst rešenja u izmeni nacrta.')
     resenje.dokument = build_document(resenje)
+    if resenje.zahtev_id:
+        from .zahtevi import podnesi_zahtev
+        zahtev = resenje.zahtev
+        if zahtev.status == zahtev.Status.STORNIRAN:
+            raise ValidationError('Zahtev po kome je rešenje napravljeno je storniran.')
+        if zahtev.status == zahtev.Status.NACRT:
+            # Rešenje se poziva na zahtev, pa se tekst zahteva zaključava najkasnije sada.
+            podnesi_zahtev(zahtev, user)
     resenje.status = Resenje.Status.IZDATO
     resenje.izdato_at = timezone.now()
     resenje.save(update_fields=['dokument', 'status', 'izdato_at', 'updated_at'])
@@ -307,8 +394,8 @@ def dozvoljeni_centri(user):
     return sorted({*kodovi, *(centar for centar in jedinice if centar)})
 
 
-def visible_resenja(user):
-    qs = Resenje.objects.select_related('zaposleni', 'vrsta', 'potpisnik__zaposleni', 'created_by')
+def u_obuhvatu(qs, user):
+    """Ograničenje po centru i OJ snimljenim na dokumentu; zajedničko rešenjima i zahtevima."""
     if not user.is_authenticated:
         return qs.none()
     if user.is_superuser or can_view_all(user):
@@ -321,3 +408,8 @@ def visible_resenja(user):
         return qs.filter(created_by=user)
     return qs.annotate(access_center=Trim('centar'), access_unit=Trim('oj_kod')).filter(
         Q(access_center__in=centri) | Q(access_unit__in=allowed_unit_codes(user)))
+
+
+def visible_resenja(user):
+    return u_obuhvatu(Resenje.objects.select_related('zaposleni', 'vrsta', 'potpisnik__zaposleni', 'created_by',
+                                                     'zahtev'), user)

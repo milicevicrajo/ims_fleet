@@ -205,11 +205,14 @@ def _employee_detail_context(employee, *, is_self_profile=False):
     )
 
     resenja = employee.resenja.select_related("vrsta").order_by("-datum_resenja", "-pk")
+    zahtevi = employee.zahtevi.select_related("vrsta", "podnosilac").prefetch_related("resenja").order_by("-datum_zahteva", "-redni_broj")
 
     activities = _collect_user_activities(linked_user)
     return {
         "resenja": resenja,
         "resenja_count": resenja.count(),
+        "zahtevi": zahtevi,
+        "zahtevi_count": zahtevi.count(),
         "employee": employee,
         "title": str(employee),
         "is_self_profile": is_self_profile,

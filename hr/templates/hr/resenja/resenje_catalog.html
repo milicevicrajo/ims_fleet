@@ -12,6 +12,8 @@
 <ul class="nav nav-tabs mb-3">
   <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#vrste" type="button">Vrste rešenja</button></li>
   <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#potpisnici" type="button">Potpisnici</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#vrste-zahteva" type="button">Vrste zahteva</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#brojaci" type="button">Brojač zahteva</button></li>
 </ul>
 
 <div class="tab-content">
@@ -69,14 +71,66 @@
       </div></div>
     </div>
   </div>
+
+  <div class="tab-pane fade" id="vrste-zahteva">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Vrste zahteva</h5>
+        <a class="btn btn-primary btn-sm" href="{% url 'hr:resenje_catalog_create' 'vrste-zahteva' %}"><i class="mdi mdi-plus"></i> Nova vrsta</a>
+      </div>
+      <div class="card-body"><div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead><tr><th>Oznaka</th><th>Naziv</th><th>Predmet</th><th>Rešenje po zahtevu</th><th>Aktivna</th><th></th></tr></thead>
+          <tbody>
+          {% for vrsta in vrste_zahteva %}<tr>
+            <td>{{ vrsta.kod }}</td>
+            <td>{{ vrsta.naziv }}</td>
+            <td>{{ vrsta.predmet }}</td>
+            <td>{{ vrsta.vrsta_resenja|default:"-" }}</td>
+            <td>{% if vrsta.je_aktivna %}<span class="fleet-status active">Da</span>{% else %}<span class="fleet-status muted">Ne</span>{% endif %}</td>
+            <td><a class="btn btn-outline-primary btn-sm" href="{% url 'hr:resenje_catalog_edit' 'vrste-zahteva' vrsta.pk %}"><i class="mdi mdi-pencil"></i></a></td>
+          </tr>{% empty %}
+          <tr><td colspan="6" class="text-muted">Šifrarnik je prazan.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="brojaci">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Brojač zahteva po godini</h5>
+        <a class="btn btn-primary btn-sm" href="{% url 'hr:resenje_catalog_create' 'brojaci' %}"><i class="mdi mdi-plus"></i> Nova godina</a>
+      </div>
+      <div class="card-body">
+        <p class="small text-muted">Zahtev dobija broj „centar-redni broj“, npr. 43-17; redni broj je jedan niz za celu godinu. Početak niza se može podesiti da se nastavi na postojeći delovodnik.</p>
+        <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead><tr><th>Godina</th><th>Poslednji dodeljeni broj</th><th></th></tr></thead>
+          <tbody>
+          {% for brojac in brojaci %}<tr>
+            <td>{{ brojac.godina }}</td>
+            <td>{{ brojac.poslednji_broj }}</td>
+            <td><a class="btn btn-outline-primary btn-sm" href="{% url 'hr:resenje_catalog_edit' 'brojaci' brojac.pk %}"><i class="mdi mdi-pencil"></i></a></td>
+          </tr>{% empty %}
+          <tr><td colspan="3" class="text-muted">Brojač se otvara sam pri prvom zahtevu u godini.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var target = window.location.hash;
-  if (target === '#potpisnici' && window.bootstrap) {
-    bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#potpisnici"]')).show();
+  var tab = target && document.querySelector('[data-bs-target="' + target + '"]');
+  if (tab && window.bootstrap) {
+    bootstrap.Tab.getOrCreateInstance(tab).show();
   }
 });
 </script>

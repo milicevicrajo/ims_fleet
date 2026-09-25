@@ -9,6 +9,8 @@ from .evaluation_views import (EvaluationListView, EvaluationCreateView, Evaluat
 from .resenja_views import (ResenjeListView, ResenjeFormView, ResenjeDetailView, ResenjePrintView,
     ResenjeBulkPrintView, ResenjeBulkCreateView, ResenjeCatalogView, ResenjeCatalogEditView,
     resenje_izdaj, resenje_storniraj, resenje_obrisi, resenje_predlog)
+from .zahtevi_views import (ZahtevListView, ZahtevFormView, ZahtevDetailView, ZahtevPrintView, ZahtevBulkPrintView,
+    ZahtevBulkCreateView, zahtev_podnesi, zahtev_storniraj, zahtev_resenje_create, zahtev_bulk_resenja, zahtev_predlog)
 
 app_name = "hr"
 
@@ -22,6 +24,18 @@ urlpatterns = [
     path("ocenjivanje/sifrarnik/", EvaluationCatalogView.as_view(), name="evaluation_catalog"),
     path("ocenjivanje/sifrarnik/<str:kind>/novo/", EvaluationCatalogEditView.as_view(), name="evaluation_catalog_create"),
     path("ocenjivanje/sifrarnik/<str:kind>/<int:pk>/", EvaluationCatalogEditView.as_view(), name="evaluation_catalog_edit"),
+    path("zahtevi/", ZahtevListView.as_view(), name="zahtev_list"),
+    path("zahtevi/novi/", ZahtevFormView.as_view(), name="zahtev_create"),
+    path("zahtevi/grupno/", ZahtevBulkCreateView.as_view(), name="zahtev_bulk_create"),
+    path("zahtevi/stampa/", ZahtevBulkPrintView.as_view(), name="zahtev_bulk_print"),
+    path("zahtevi/resenja/", zahtev_bulk_resenja, name="zahtev_bulk_resenja"),
+    path("zahtevi/predlog/", zahtev_predlog, name="zahtev_predlog"),
+    path("zahtevi/<int:pk>/", ZahtevDetailView.as_view(), name="zahtev_detail"),
+    path("zahtevi/<int:pk>/izmena/", ZahtevFormView.as_view(), name="zahtev_edit"),
+    path("zahtevi/<int:pk>/stampa/", ZahtevPrintView.as_view(), name="zahtev_print"),
+    path("zahtevi/<int:pk>/podnosenje/", zahtev_podnesi, name="zahtev_podnesi"),
+    path("zahtevi/<int:pk>/storniranje/", zahtev_storniraj, name="zahtev_storniraj"),
+    path("zahtevi/<int:pk>/resenje/", zahtev_resenje_create, name="zahtev_resenje_create"),
     path("resenja/", ResenjeListView.as_view(), name="resenje_list"),
     path("resenja/novo/", ResenjeFormView.as_view(), name="resenje_create"),
     path("resenja/grupno/", ResenjeBulkCreateView.as_view(), name="resenje_bulk_create"),

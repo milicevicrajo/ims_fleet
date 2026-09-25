@@ -192,6 +192,16 @@ Ona usklađuje samo ulogu Kadrovi i kodove administracije korisnika, bez redovno
 prepisivanja dozvola drugih standardnih uloga. Posle isporuke koda restartovati web
 proces i radnike koji učitavaju `core.permissions`, da stari kod ne bi vratio staru ulogu.
 
+Disciplinski postupci od 24.09.2026. koriste migraciju
+`pravna.0002_disciplinskipostupak_mera_vrsta`: zatvaranje traži datum i jednu od četiri
+mere iz člana 77 dostavljenog pravilnika (pisana opomena, udaljenje bez naknade
+1–15 radnih dana, novčana kazna do 20% osnovne zarade do tri meseca, prestanak radnog
+odnosa). Stari zatvoreni postupci ostaju zatvoreni; nedostajuća mera dopunjava se na
+detalju, bez nagađanja na osnovu datuma ili zaposlenog. Raniji slobodan opis se čuva.
+Centar u formi je izbor iz spiska, predložen iz OJ zaposlenog postojećim pravilom
+najdužeg prefiksa centra; izabrani drugi centar se čuva. „Arhivirano“ je uklonjeno iz
+forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju dostupne.
+
 ---
 
 ## 9.6. Česti problemi i šta uraditi

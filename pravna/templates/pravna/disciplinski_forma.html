@@ -72,3 +72,15 @@
   </div>
 </div>
 {% endblock %}
+{% block extra_js %}
+{{ form.employee_centers|json_script:"disciplinski-centri" }}
+<script>jQuery(function ($) {
+  var centers = JSON.parse(document.getElementById('disciplinski-centri').textContent);
+  $('#id_zaposleni').on('change', function () {
+    $('#id_centar').val(centers[this.value] || '').trigger('change');
+  });
+  if (!$('#id_centar').val() && $('#id_zaposleni').val()) {
+    $('#id_centar').val(centers[$('#id_zaposleni').val()] || '');
+  }
+});</script>
+{% endblock %}

@@ -27,13 +27,17 @@ class VrstaResenja(models.Model):
                   '{period}, {dani}, {dani_vikend}, {dani_drzavni}, {dani_verski}, {radni_dani}, {datum_povratka}. '
                   'Oblik po polu: {rod:дужан|дужна}. Uslovni deo: [[dani_verski| и {dani_verski} на дан верског празника]].')
     obrazlozenje = models.TextField(blank=True, verbose_name='Obrazloženje (ćirilica)',
-        help_text='Čuvari mesta: {zahtev_broj}, {zahtev_datum}, {napomena}.')
+        help_text='Čuvari mesta: {zahtev_broj}, {zahtev_datum}, {razlog_zahteva}, {podnosilac}, '
+                  '{podnosilac_funkcija}, {napomena} i dodatna polja.')
     pravna_pouka = models.TextField(blank=True, verbose_name='Pravna pouka (ćirilica)')
     dostavljeno = models.TextField(blank=True, verbose_name='Dostavljeno (ćirilica)',
         help_text='Svaka stavka u svom redu. Čuvar mesta {centar} daje šifru centra zaposlenog.')
     trazi_period = models.BooleanField(default=False, verbose_name='Traži period od–do')
     trazi_dane = models.BooleanField(default=False, verbose_name='Traži pojedinačne dane')
     trazi_radne_dane = models.BooleanField(default=False, verbose_name='Traži broj radnih dana i povratak')
+    dodatna_polja = models.TextField(blank=True, verbose_name='Dodatna polja',
+        help_text='Svako polje u svom redu, u obliku oznaka|Naziv polja (npr. poslovi|Poslovi koje preuzima). '
+                  'U tekstu se koristi kao {oznaka}.')
     podrazumevano_pismo = models.CharField(max_length=10, choices=Pismo.choices, default=Pismo.CIRILICA,
         verbose_name='Podrazumevano pismo')
     redosled = models.PositiveSmallIntegerField(default=0, verbose_name='Redosled')
@@ -83,8 +87,11 @@ class Resenje(models.Model):
     zaposleni = models.ForeignKey('fleet.Employee', on_delete=models.PROTECT, related_name='resenja',
         verbose_name='Zaposleni')
     vrsta = models.ForeignKey(VrstaResenja, on_delete=models.PROTECT, related_name='resenja', verbose_name='Vrsta rešenja')
+    zahtev = models.ForeignKey('hr.Zahtev', on_delete=models.PROTECT, related_name='resenja',
+        verbose_name='Zahtev')
+    podbroj = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name='Podbroj zahteva')
     broj = models.CharField(max_length=40, verbose_name='Broj rešenja',
-        help_text='Prepisuje se iz delovodnika, npr. 43-15238.')
+        help_text='Rešenje dobija broj automatski, kao podbroj zahteva (npr. 43-17/1).')
     datum_resenja = models.DateField(verbose_name='Datum rešenja')
     pismo = models.CharField(max_length=10, choices=Pismo.choices, default=Pismo.CIRILICA, verbose_name='Pismo')
     pol = models.CharField(max_length=1, choices=[('M', 'Muški'), ('F', 'Ženski')], blank=True,
@@ -107,6 +114,7 @@ class Resenje(models.Model):
     potpisnik = models.ForeignKey(Potpisnik, on_delete=models.PROTECT, null=True, blank=True, related_name='resenja',
         verbose_name='Potpisnik')
     napomena = models.TextField(blank=True, verbose_name='Napomena uz obrazloženje')
+    dodatni_podaci = models.JSONField(default=dict, blank=True, verbose_name='Dodatni podaci')
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.NACRT, verbose_name='Status')
     dokument = models.JSONField(null=True, blank=True, verbose_name='Snimak dokumenta')
     izdato_at = models.DateTimeField(null=True, blank=True, verbose_name='Izdato')
@@ -119,6 +127,7 @@ class Resenje(models.Model):
         verbose_name = 'Rešenje'
         verbose_name_plural = 'Rešenja'
         constraints = [
+            models.UniqueConstraint(fields=['zahtev'], name='hr_resenje_jedan_po_zahtevu'),
             models.UniqueConstraint(fields=['broj', 'datum_resenja'], name='hr_resenje_broj_datum'),
             models.CheckConstraint(check=models.Q(datum_do__isnull=True) | models.Q(datum_od__isnull=True)
                 | models.Q(datum_do__gte=models.F('datum_od')), name='hr_resenje_period'),

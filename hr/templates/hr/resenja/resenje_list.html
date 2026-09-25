@@ -8,8 +8,8 @@
   </div>
   <div class="resenja-actions">
     {% if resenje_catalog %}<a class="btn btn-outline-light btn-sm" href="{% url 'hr:resenje_catalog' %}"><i class="mdi mdi-tune"></i> Šifrarnik</a>{% endif %}
-    {% if resenje_bulk_create %}<a class="btn btn-outline-light btn-sm" href="{% url 'hr:resenje_bulk_create' %}"><i class="mdi mdi-account-multiple-plus"></i> Grupno izdavanje</a>{% endif %}
-    {% if resenje_create %}<a class="btn btn-light btn-sm" href="{% url 'hr:resenje_create' %}"><i class="mdi mdi-plus"></i> Novo rešenje</a>{% endif %}
+    <a class="btn btn-outline-light btn-sm" href="{% url 'hr:zahtev_list' %}"><i class="mdi mdi-file-send-outline"></i> Zahtevi</a>
+    {% if zahtev_resenje_create %}<a class="btn btn-light btn-sm" href="{% url 'hr:zahtev_list' %}?resenje=bez"><i class="mdi mdi-plus"></i> Dodaj rešenje iz zahteva</a>{% endif %}
   </div>
 </div>
 
@@ -49,7 +49,7 @@
       <tbody>
       {% for resenje in resenja %}<tr>
         <td><input type="checkbox" class="resenje-select" value="{{ resenje.pk }}" aria-label="Izaberi rešenje {{ resenje.broj }}"></td>
-        <td><a class="resenja-number" href="{% url 'hr:resenje_detail' resenje.pk %}">{{ resenje.broj }}</a></td>
+        <td><a class="resenja-number" href="{% url 'hr:resenje_detail' resenje.pk %}">{{ resenje.broj }}</a>{% if resenje.zahtev_id %}<span class="hr-person-code">po zahtevu {{ resenje.zahtev.broj }}</span>{% endif %}</td>
         <td class="resenja-date" data-order="{{ resenje.datum_resenja|date:'Y-m-d' }}">{{ resenje.datum_resenja|date:'d.m.Y.' }}</td>
         <td>{{ resenje.zaposleni }}<span class="hr-person-code">{{ resenje.zaposleni.employee_code }}</span></td>
         <td>{{ resenje.vrsta.naziv }}</td>

@@ -78,6 +78,15 @@ class ResenjeTestBase(TestCase):
             datum_resenja=date(2024, 12, 27), pismo=Pismo.CIRILICA, zahtev_broj='43-15238',
             zahtev_datum=date(2024, 12, 27), created_by=self.user)
         podaci.update(kwargs)
+        from hr.models import VrstaZahteva, Zahtev
+        from hr.services.zahtevi import dodeli_broj, pripremi_zahtev
+        zahtev = Zahtev(vrsta=VrstaZahteva.objects.first(), zaposleni=podaci['zaposleni'],
+            datum_zahteva=date(2024, 12, 27), podnosilac=self.direktor,
+            odobrava=self.direktor, created_by=self.user, pismo=podaci['pismo'])
+        pripremi_zahtev(zahtev)
+        dodeli_broj(zahtev)
+        zahtev.save()
+        podaci['zahtev'] = zahtev
         resenje = Resenje(**podaci)
         pripremi_resenje(resenje)
         resenje.save()
@@ -97,8 +106,9 @@ class SifrarnikTests(ResenjeTestBase):
         self.employee.save(update_fields=['org_unit_code'])
         self.assertEqual(self.napravi().centar, '')
 
-    def test_migracija_puni_svih_sedam_obrazaca(self):
-        self.assertEqual(VrstaResenja.objects.count(), 7)
+    def test_migracije_pune_svih_osam_obrazaca(self):
+        # Sedam obrazaca iz Word šablona i rešenje o zameni odsutnog zaposlenog uz zahteve.
+        self.assertEqual(VrstaResenja.objects.count(), 8)
 
     def test_svaki_obrazac_ima_pravni_osnov_i_dispozitiv(self):
         for vrsta in VrstaResenja.objects.all():
@@ -290,16 +300,15 @@ class EkraniTests(ResenjeTestBase):
         self.assertEqual(odgovor.status_code, 200)
         self.assertContains(odgovor, 'РЕШЕЊЕ')
 
-    def test_grupno_izdavanje_pravi_nacrt_za_svakog_izabranog(self):
-        podaci = {'vrsta': self.vrsta.pk, 'datum_resenja': '2026-06-19', 'pismo': Pismo.CIRILICA,
-                  'dani': '20.06.2026, 21.06.2026', 'vrsta_dana': 'vikend', 'zahtev_broj': '82-6992',
-                  'zahtev_datum': '2026-06-18', 'zaposleni': [self.employee.pk],
-                  f'broj_{self.employee.pk}': '82-7001'}
-        odgovor = self.client.post(reverse('hr:resenje_bulk_create'), podaci)
-        self.assertEqual(odgovor.status_code, 302)
-        resenje = Resenje.objects.get(broj='82-7001')
-        self.assertEqual(resenje.status, Resenje.Status.NACRT)
-        self.assertEqual(resenje.dani.count(), 2)
+    def test_stari_unos_i_grupni_unos_vode_na_zahteve(self):
+        for route in ('hr:resenje_create', 'hr:resenje_bulk_create'):
+            for method in (self.client.get, self.client.post):
+                self.assertRedirects(method(reverse(route)), reverse('hr:zahtev_list') + '?resenje=bez')
+        self.assertFalse(Resenje.objects.exists())
+
+    def _izmeni_nacrt(self, data):
+        resenje = self.napravi(broj='43-20001')
+        return self.client.post(reverse('hr:resenje_edit', args=[resenje.pk]), data)
 
     def _forma_podaci(self, **kwargs):
         podaci = {'vrsta': self.vrsta.pk, 'zaposleni': self.employee.pk, 'broj': '43-20001',
@@ -315,7 +324,7 @@ class EkraniTests(ResenjeTestBase):
     def test_signer_can_be_added_with_draft_and_is_used_on_document(self):
         Potpisnik.objects.all().delete()
         data = self._forma_podaci(novi_potpisnik=self.direktor.pk, funkcija_potpisnika='Generalni direktor')
-        response = self.client.post(reverse('hr:resenje_create'), data)
+        response = self._izmeni_nacrt(data)
         self.assertEqual(response.status_code, 302)
         resenje = Resenje.objects.get(broj='43-20001')
         self.assertEqual(resenje.potpisnik.zaposleni, self.direktor)
@@ -324,7 +333,7 @@ class EkraniTests(ResenjeTestBase):
 
     def test_invalid_draft_does_not_create_signer(self):
         Potpisnik.objects.all().delete()
-        self.client.post(reverse('hr:resenje_create'), self._forma_podaci(
+        self._izmeni_nacrt(self._forma_podaci(
             novi_potpisnik=self.direktor.pk, funkcija_potpisnika='Direktor', **{'dani-0-datum': 'bad'}))
         self.assertFalse(Potpisnik.objects.exists())
 
@@ -332,7 +341,7 @@ class EkraniTests(ResenjeTestBase):
         data = self._forma_podaci(vrsta=VrstaResenja.objects.get(kod='prekovremeni-rad').pk,
             datum_od='24.09.2026', datum_do='25.09.2026', vreme_od='17:00', vreme_do='19:00',
             **{'dani-TOTAL_FORMS': '0'})
-        response = self.client.post(reverse('hr:resenje_create'), data)
+        response = self._izmeni_nacrt(data)
         self.assertEqual(response.status_code, 302)
         text = build_document(Resenje.objects.get(broj='43-20001'))['tacke'][0]
         self.assertIn('25.09.2026.', text)
@@ -340,7 +349,7 @@ class EkraniTests(ResenjeTestBase):
 
     def test_partial_time_and_reverse_date_range_are_rejected(self):
         data = self._forma_podaci(datum_od='25.09.2026', datum_do='24.09.2026', vreme_od='22:00')
-        response = self.client.post(reverse('hr:resenje_create'), data)
+        response = self._izmeni_nacrt(data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('datum_do', response.context['form'].errors)
         self.assertIn('vreme_do', response.context['form'].errors)
@@ -349,19 +358,19 @@ class EkraniTests(ResenjeTestBase):
         self.employee.gender = 'Z'
         self.employee.org_unit_code = '431'
         self.employee.save(update_fields=['gender', 'org_unit_code'])
-        response = self.client.post(reverse('hr:resenje_create'), self._forma_podaci())
+        response = self._izmeni_nacrt(self._forma_podaci())
         self.assertEqual(response.status_code, 302)
         resenje = Resenje.objects.get(broj='43-20001')
         self.assertEqual((resenje.pol, resenje.oj_kod, resenje.centar), ('F', '431', '43'))
         self.assertEqual(resenje.oj_naziv, 'ОЈ 431')
 
     def test_signer_outside_valid_period_is_rejected(self):
-        response = self.client.post(reverse('hr:resenje_create'), self._forma_podaci(
+        response = self._izmeni_nacrt(self._forma_podaci(
             datum_resenja='01.01.2023', potpisnik=self.potpisnik.pk))
         self.assertIn('potpisnik', response.context['form'].errors)
 
     def test_unos_kroz_formu_pravi_nacrt_sa_danima(self):
-        odgovor = self.client.post(reverse('hr:resenje_create'), self._forma_podaci())
+        odgovor = self._izmeni_nacrt(self._forma_podaci())
         self.assertEqual(odgovor.status_code, 302)
         resenje = Resenje.objects.get(broj='43-20001')
         self.assertEqual(resenje.status, Resenje.Status.NACRT)
@@ -375,7 +384,7 @@ class EkraniTests(ResenjeTestBase):
             podaci[f'dani-{index}-datum'] = f'{index + 1:02d}.01.2025'
             podaci[f'dani-{index}-vrsta_dana'] = 'drzavni'
         podaci['dani-1-DELETE'] = 'on'
-        odgovor = self.client.post(reverse('hr:resenje_create'), podaci)
+        odgovor = self._izmeni_nacrt(podaci)
         self.assertEqual(odgovor.status_code, 302)
         resenje = Resenje.objects.get(broj='43-20001')
         self.assertEqual(resenje.datum_resenja, date(2025, 1, 3))
@@ -383,26 +392,9 @@ class EkraniTests(ResenjeTestBase):
         self.assertEqual(list(resenje.dani.values_list('datum', flat=True)),
                          [date(2025, 1, day) for day in (1, 3, 4, 5, 6)])
 
-    def test_grupna_forma_cuva_izbor_i_brojeve_posle_greske(self):
-        podaci = {'vrsta': self.vrsta.pk, 'datum_resenja': '', 'pismo': Pismo.CIRILICA,
-                  'zaposleni': [self.employee.pk], f'broj_{self.employee.pk}': '43-20002'}
-        odgovor = self.client.post(reverse('hr:resenje_bulk_create'), podaci)
-        self.assertEqual(odgovor.status_code, 200)
-        row = next(row for row in odgovor.context['employee_rows'] if row['employee'] == self.employee)
-        self.assertTrue(row['selected'])
-        self.assertEqual(row['broj'], '43-20002')
-        self.assertFalse(Resenje.objects.exists())
-
     def test_vrsta_koja_trazi_dane_ne_prolazi_bez_njih(self):
-        odgovor = self.client.post(reverse('hr:resenje_create'),
+        odgovor = self._izmeni_nacrt(
             self._forma_podaci(**{'dani-TOTAL_FORMS': '0', 'dani-0-datum': '', 'dani-0-vrsta_dana': ''}))
         self.assertEqual(odgovor.status_code, 200)
         self.assertContains(odgovor, 'traži bar jedan dan')
-        self.assertFalse(Resenje.objects.filter(broj='43-20001').exists())
-
-    def test_grupno_izdavanje_trazi_broj_za_svakog(self):
-        podaci = {'vrsta': self.vrsta.pk, 'datum_resenja': '2026-06-19', 'pismo': Pismo.CIRILICA,
-                  'dani': '20.06.2026', 'vrsta_dana': 'vikend', 'zaposleni': [self.employee.pk]}
-        odgovor = self.client.post(reverse('hr:resenje_bulk_create'), podaci)
-        self.assertEqual(odgovor.status_code, 200)
-        self.assertFalse(Resenje.objects.exists())
+        self.assertFalse(Resenje.objects.get(broj='43-20001').dani.exists())

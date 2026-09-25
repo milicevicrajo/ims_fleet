@@ -44,7 +44,8 @@
               <tr><th>Podnosilac</th><td>{{ item.postupak.podnosilac }}</td></tr>
               <tr><th>Status</th><td>{% if item.postupak.zatvoren %}Zatvoren{% else %}U toku{% endif %}</td></tr>
               <tr><th>Datum statusa</th><td>{{ item.postupak.datum_statusa|date:"d.m.Y." }}</td></tr>
-              {% if item.postupak.mera_opis %}<tr><th>Disciplinska mera</th><td>{{ item.postupak.mera_opis }}</td></tr>{% endif %}
+              {% if item.postupak.mera_vrsta %}<tr><th>Izrečena mera</th><td>{{ item.postupak.get_mera_vrsta_display }}</td></tr>{% endif %}
+              {% if item.postupak.mera_opis %}<tr><th>Disciplinska mera — raniji opis</th><td>{{ item.postupak.mera_opis }}</td></tr>{% endif %}
             </tbody>
           </table>
 

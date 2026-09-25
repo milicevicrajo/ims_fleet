@@ -2,6 +2,6 @@
 {% load static %}
 {% block title %}{{ title }} | IMS{% endblock %}
 {% block hr_content %}
-<link rel="stylesheet" href="{% static 'hr/resenja.css' %}?v=20260923">
-<div class="resenja-page">{% block resenja_content %}{% endblock %}</div>
+<link rel="stylesheet" href="{% static 'hr/resenja.css' %}?v=20260924-zahtevi">
+<div class="resenja-page {% block resenja_page_class %}{% endblock %}">{% block resenja_content %}{% endblock %}</div>
 {% endblock %}

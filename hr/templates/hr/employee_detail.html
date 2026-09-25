@@ -46,6 +46,7 @@
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cv" type="button">CV <span class="badge bg-light text-dark">{{ cv_items_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#work-time-sheets" type="button">Radne liste <span class="badge bg-light text-dark">{{ work_time_sheets_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#annual-leave" type="button">Godišnji odmori</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#zahtevi" type="button">Zahtevi <span class="badge bg-light text-dark">{{ zahtevi_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#resenja" type="button">Rešenja <span class="badge bg-light text-dark">{{ resenja_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travel-orders" type="button">Putni nalozi <span class="badge bg-light text-dark">{{ travel_orders_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#vehicle-orders" type="button">Zaduzenja vozila <span class="badge bg-light text-dark">{{ vehicle_travel_orders_count }}</span></button></li>
@@ -205,6 +206,27 @@
         {% else %}
           <div class="alert alert-info mb-0">Nema unetih radnih lista.</div>
         {% endif %}
+      </div>
+
+      <div class="tab-pane fade" id="zahtevi">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <thead><tr><th>Broj</th><th>Datum</th><th>Vrsta</th><th>Podnosi</th><th>Status</th><th>Rešenja</th><th></th></tr></thead>
+            <tbody>
+            {% for zahtev in zahtevi %}<tr>
+              <td>{{ zahtev.broj }}</td>
+              <td>{{ zahtev.datum_zahteva|date:'d.m.Y.' }}</td>
+              <td>{{ zahtev.vrsta.naziv }}</td>
+              <td>{{ zahtev.podnosilac }}</td>
+              <td>{{ zahtev.get_status_display }}</td>
+              <td>{% for resenje in zahtev.resenja.all %}<a href="{% url 'hr:resenje_detail' resenje.pk %}">{{ resenje.broj }}</a>{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</td>
+              <td><a class="btn btn-outline-primary btn-sm" href="{% url 'hr:zahtev_detail' zahtev.pk %}"><i class="mdi mdi-eye"></i></a></td>
+            </tr>{% empty %}
+            <tr><td colspan="7" class="text-muted">Nema zahteva za ovog zaposlenog.</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="tab-pane fade" id="resenja">

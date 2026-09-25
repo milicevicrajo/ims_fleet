@@ -25,6 +25,6 @@
   <button type="button" onclick="window.print()">Štampaj / Sačuvaj PDF</button>
   <small>U dijalogu za štampu isključite zaglavlja i podnožja pregledača.</small>
 </div>
-<main>{% for dokument in dokumenti %}<section class="print-paper">{% include 'hr/resenja/_resenje_document.html' %}</section>{% empty %}<section class="print-paper"><p>Nema rešenja za štampu.</p></section>{% endfor %}</main>
+<main>{% for dokument in dokumenti %}<section class="print-paper">{% include dokument_sablon|default:'hr/resenja/_resenje_document.html' %}</section>{% empty %}<section class="print-paper"><p>Nema dokumenata za štampu.</p></section>{% endfor %}</main>
 <script src="{% static 'hr/resenje_document.js' %}?v=20260923"></script>
 </body></html>

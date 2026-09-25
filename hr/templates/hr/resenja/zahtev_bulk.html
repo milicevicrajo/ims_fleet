@@ -1,12 +1,13 @@
 {% extends 'hr/resenja/base.html' %}
+{% block resenja_page_class %}zahtevi-page{% endblock %}
 {% block resenja_content %}
 <div class="fleet-list-hero">
   <div>
-  <div class="hr-kicker">Kadrovi - Rešenja zaposlenih</div>
-  <h1><i class="mdi mdi-account-multiple-plus me-2"></i>Grupno izdavanje rešenja</h1>
-  <p>Jedna vrsta i jedan period za više zaposlenih. Svako rešenje dobija svoj broj iz delovodnika i nastaje kao nacrt.</p>
+  <div class="hr-kicker">Kadrovi - Zahtevi zaposlenih</div>
+  <h1><i class="mdi mdi-account-multiple-plus me-2"></i>Isti zahtev za više zaposlenih</h1>
+  <p>Za svakog označenog zaposlenog pravi se poseban zahtev sa svojim brojem. Rešenja se zatim prave iz liste zahteva.</p>
   </div>
-  <a class="btn btn-outline-light btn-sm" href="{% url 'hr:resenje_list' %}"><i class="mdi mdi-arrow-left"></i> Rešenja</a>
+  <a class="btn btn-outline-light btn-sm" href="{% url 'hr:zahtev_list' %}"><i class="mdi mdi-arrow-left"></i> Zahtevi</a>
 </div>
 
 <div class="card shadow-sm mb-3"><div class="card-body">
@@ -24,28 +25,29 @@
 <input type="hidden" name="centar" value="{{ izabran_centar }}">
 
 <div class="card shadow-sm mb-3">
-  <div class="card-header"><h5><i class="mdi mdi-file-document-multiple-outline"></i>Podaci zajednički za sva rešenja</h5></div>
+  <div class="card-header"><h5><i class="mdi mdi-file-document-multiple-outline"></i>Podaci zajednički za sve zahteve</h5></div>
   <div class="card-body"><div class="row g-3">
     {% include 'hr/resenja/_polje.html' with polje=form.vrsta %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_resenja %}
+    {% include 'hr/resenja/_polje.html' with polje=form.datum_zahteva %}
     {% include 'hr/resenja/_polje.html' with polje=form.pismo %}
-    {% include 'hr/resenja/_polje.html' with polje=form.potpisnik %}
-    <div class="col-12"><p id="potpisnik-info" class="small" role="status"></p>{% if can_add_signer %}<a href="{% url 'hr:resenje_catalog_create' 'potpisnici' %}" target="_blank" rel="noopener">Podesi osobe koje potpisuju rešenja</a>{% endif %}</div>
+    <div class="col-12"><hr class="my-1"></div>
+    {% include 'hr/resenja/_polje.html' with polje=form.podnosilac sirina='col-md-6' %}
+    {% include 'hr/resenja/_polje.html' with polje=form.podnosilac_funkcija sirina='col-md-6' %}
+    {% include 'hr/resenja/_polje.html' with polje=form.odobrava sirina='col-md-6' %}
+    {% include 'hr/resenja/_polje.html' with polje=form.odobrava_funkcija sirina='col-md-6' %}
     <div class="col-12"><hr class="my-1"></div>
     {% include 'hr/resenja/_polje.html' with polje=form.datum_od %}
     {% include 'hr/resenja/_polje.html' with polje=form.datum_do %}
+    {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
     {% include 'hr/resenja/_polje.html' with polje=form.vreme_od %}
     {% include 'hr/resenja/_polje.html' with polje=form.vreme_do %}
-    {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
     {% include 'hr/resenja/_polje.html' with polje=form.dani sirina='col-md-8' %}
     {% include 'hr/resenja/_polje.html' with polje=form.vrsta_dana %}
     {% include 'hr/resenja/_polje.html' with polje=form.broj_radnih_dana %}
     {% include 'hr/resenja/_polje.html' with polje=form.datum_povratka %}
     <div class="col-12"><hr class="my-1"></div>
     {% for polje in form.dodatna_polja_forme %}{% include 'hr/resenja/_polje.html' with polje=polje sirina='col-md-6' %}{% endfor %}
-    {% include 'hr/resenja/_polje.html' with polje=form.zahtev_broj %}
-    {% include 'hr/resenja/_polje.html' with polje=form.zahtev_datum %}
-    {% include 'hr/resenja/_polje.html' with polje=form.napomena sirina='col-12' %}
+    {% include 'hr/resenja/_polje.html' with polje=form.razlog sirina='col-12' %}
   </div></div>
 </div>
 
@@ -56,16 +58,15 @@
   </div>
   <div class="card-body"><div class="resenja-scroll-table">
     <table class="table table-sm table-hover align-middle resenja-table">
-      <thead><tr><th style="width:60px"></th><th>Šifra</th><th>Zaposleni</th><th>OJ</th><th style="width:200px">Broj rešenja</th></tr></thead>
+      <thead><tr><th style="width:60px"></th><th>Šifra</th><th>Zaposleni</th><th>OJ</th></tr></thead>
       <tbody>
       {% for row in employee_rows %}{% with employee=row.employee %}<tr>
         <td><input class="form-check-input bulk-select" type="checkbox" name="zaposleni" value="{{ employee.pk }}" {% if row.selected %}checked{% endif %} aria-label="Izaberi {{ employee }}"></td>
         <td>{{ employee.employee_code }}</td>
         <td>{{ employee }}</td>
         <td>{{ employee.org_unit_code|default:"-" }}</td>
-        <td><input class="form-control form-control-sm" type="text" name="broj_{{ employee.pk }}" value="{{ row.broj }}" autocomplete="off" placeholder="43-15238" aria-label="Broj rešenja za {{ employee }}"></td>
       </tr>{% endwith %}{% empty %}
-      <tr><td colspan="5" class="text-muted">Nema zaposlenih za izabrani centar.</td></tr>
+      <tr><td colspan="4" class="text-muted">Nema zaposlenih za izabrani centar.</td></tr>
       {% endfor %}
       </tbody>
     </table>
@@ -73,21 +74,20 @@
 </div>
 
 <div class="resenja-form-actions">
-  <span class="resenja-form-note">Za svakog označenog zaposlenog unesite broj rešenja.</span>
-  <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save-all"></i> Napravi nacrte rešenja</button>
-  <a class="btn btn-outline-secondary" href="{% url 'hr:resenje_list' %}">Odustani</a>
+  <span class="resenja-form-note">Svaki zahtev dobija svoj broj automatski i nastaje kao nacrt.</span>
+  <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save-all"></i> Napravi zahteve</button>
+  <a class="btn btn-outline-secondary" href="{% url 'hr:zahtev_list' %}">Odustani</a>
 </div>
 </form>
 {% endblock %}
 {% block extra_js %}
 {{ vrste_meta|json_script:"vrste-meta" }}
-{% include 'hr/resenja/_potpisnik_script.html' %}
 <script>jQuery(function ($) {
   var meta = JSON.parse(document.getElementById('vrste-meta').textContent);
   var vrsta = $('#id_vrsta');
 
   function prikazi() {
-    var podaci = meta[vrsta.val()] || {period: false, dani: false, radni_dani: false};
+    var podaci = meta[vrsta.val()] || {period: false, dani: false, radni_dani: false, polja: []};
     $('#id_datum_od, #id_datum_do, #id_do_zavrsetka_posla').closest('div[class^="col-"]').toggle(!!podaci.period);
     $('#id_dani, #id_vrsta_dana').closest('div[class^="col-"]').toggle(!!podaci.dani);
     $('#id_broj_radnih_dana, #id_datum_povratka').closest('div[class^="col-"]').toggle(!!podaci.radni_dani);

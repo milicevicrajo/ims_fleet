@@ -1,7 +1,22 @@
 # Plan proširenja kadrovskih akata: Zahtev → Rešenje / Odluka
 
 Datum: 24.09.2026.
-Status: **predlog za dogovor**. Ništa nije implementirano.
+Status: **faza 1 implementirana 24.09.2026.** (zahtev → rešenje), uz sledeće odluke:
+
+| Pitanje | Odluka |
+|---|---|
+| Jedan zahtev — jedan ili više zaposlenih | **Jedan zaposleni.** Za više zaposlenih pravi se više istih zahteva odjednom, svaki sa svojim brojem |
+| Broj zahteva | **Automatski**, `{centar}-{redni broj u godini}`; početak niza podesiv u šifarniku |
+| Broj rešenja (P-5) | **Podbroj zahteva**: `43-17/1`, `43-17/2` |
+| Ko podnosi i ko odobrava (P-1) | Upisuje se **u samom zahtevu** (zaposleni + funkcija); bez toka odobravanja za sada |
+| Zamena odsutnog zaposlenog (P-3) | **Rešenje** |
+| Godišnji odmori (P-4) | Otvoreno — ostaju kako jesu |
+| Zahtev u šemi | Bez stavki: `ZahtevStavka` iz odeljka 3.1 nije potrebna, jer je zaposleni na samom zahtevu |
+
+Obrasci zahteva napravljeni su za svih 7 postojećih vrsta rešenja i za zamenu, po uzoru na
+„Zahtev za prekovremeni — Jasmina Ljubičić“ i „Imenovanje lica za zamenu“. Odluke (naknada
+štete, umanjenje zarade) i službeni put još nisu u šifarniku; mehanizam dodatnih polja koji
+im treba (iznos, mesec obustave, odredište) već postoji.
 Veza: [Plan modula Arhiva](../../../aRhiva-docs/PLAN-implementacije-modula-Arhiva.md) (delovodni broj i arhiviranje).
 
 Izvori:

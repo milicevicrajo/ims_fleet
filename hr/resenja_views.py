@@ -12,11 +12,12 @@ from django.views.generic import TemplateView
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from core.models import OrganizationalUnit
 from hr.access import visible_employees
-from hr.models import Employee, Pismo, Potpisnik, Resenje, ResenjeDan, VrstaResenja
-from hr.resenja_forms import (GrupnoResenjeForm, PotpisnikForm, ResenjeDanFormSet, ResenjeForm,
+from hr.models import BrojacZahteva, Employee, Pismo, Potpisnik, Resenje, ResenjeDan, VrstaResenja, VrstaZahteva
+from hr.resenja_forms import (PotpisnikForm, ResenjeDanFormSet, ResenjeForm,
     VrstaResenjaForm, predlog_teksta)
-from hr.services.resenja import (dokument_za_prikaz, dozvoljeni_centri, izdaj_resenje,
+from hr.services.resenja import (dodatna_polja, dokument_za_prikaz, dozvoljeni_centri, izdaj_resenje,
     pripremi_resenje, storniraj_resenje, visible_resenja)
+from hr.zahtevi_forms import BrojacZahtevaForm, VrstaZahtevaForm
 
 SIDEBAR = 'sidebar_kadrovi.html'
 
@@ -31,7 +32,8 @@ def _vrste_meta():
     """Podaci o vrstama koje forma koristi da sakrije polja koja se ne traže."""
     return {str(vrsta.pk): {'period': True, 'dani': vrsta.trazi_dane, 'kod': vrsta.kod,
         'vreme': not vrsta.trazi_radne_dane,
-        'radni_dani': vrsta.trazi_radne_dane, 'pismo': vrsta.podrazumevano_pismo}
+        'radni_dani': vrsta.trazi_radne_dane, 'pismo': vrsta.podrazumevano_pismo,
+        'polja': [oznaka for oznaka, _ in dodatna_polja(vrsta)]}
         for vrsta in VrstaResenja.objects.filter(je_aktivna=True)}
 
 
@@ -43,7 +45,7 @@ def _broj_dana(formset):
 
 def _dozvole(user):
     return {kod: user_has_role_permission(user, 'hr:' + kod) for kod in
-            ('resenje_create', 'resenje_bulk_create', 'resenje_catalog', 'resenje_izdaj')}
+            ('resenje_create', 'resenje_bulk_create', 'resenje_catalog', 'resenje_izdaj', 'zahtev_resenje_create')}
 
 
 class ResenjeListView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
@@ -75,6 +77,11 @@ class ResenjeListView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateV
 class ResenjeFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
     template_name = 'hr/resenja/resenje_form.html'
 
+    def get(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            return redirect(reverse('hr:zahtev_list') + '?resenje=bez')
+        return super().get(request, *args, **kwargs)
+
     def get_object(self):
         if 'pk' not in self.kwargs:
             return None
@@ -97,6 +104,9 @@ class ResenjeFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateV
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            messages.info(request, 'Izaberite postojeći zahtev i kliknite „Dodaj rešenje“.')
+            return redirect(reverse('hr:zahtev_list') + '?resenje=bez')
         resenje = self.get_object()
         form = ResenjeForm(request.POST, instance=resenje, actor=request.user)
         form.fields['zaposleni'].queryset = visible_employees(request.user,
@@ -210,73 +220,20 @@ def resenje_predlog(request):
 
 
 class ResenjeBulkCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
-    template_name = 'hr/resenja/resenje_bulk.html'
+    """Stari link vodi na izbor postojećih zahteva za grupno pravljenje rešenja."""
 
-    def zaposleni(self):
-        centar = self.request.GET.get('centar') or self.request.POST.get('centar') or ''
-        qs = visible_employees(self.request.user,
-            unrestricted=user_has_role_permission(self.request.user, 'hr:resenje_view_all')).filter(is_active=True).order_by('last_name', 'first_name')
-        if centar:
-            qs = qs.filter(pk__in=visible_employees(self.request.user, extra_centers=[centar]))
-        return centar, qs
+    def get(self, request, *args, **kwargs):
+        return redirect(reverse('hr:zahtev_list') + '?resenje=bez')
 
-    def get_context_data(self, **kwargs):
-        centar, zaposleni = self.zaposleni()
-        form = kwargs.pop('form', None) or GrupnoResenjeForm(initial={'pismo': Pismo.CIRILICA})
-        ctx = super().get_context_data(**kwargs)
-        selected = set(self.request.POST.getlist('zaposleni'))
-        employee_rows = [{'employee': employee, 'selected': str(employee.pk) in selected,
-                          'broj': self.request.POST.get(f'broj_{employee.pk}', '')}
-                         for employee in zaposleni]
-        ctx.update(title='Grupno izdavanje rešenja', sidebar_template=SIDEBAR, form=form, zaposleni=zaposleni,
-            employee_rows=employee_rows,
-            izabran_centar=centar, vrste_meta=_vrste_meta(), potpisnici_meta=_potpisnici_meta(),
-            can_add_signer=user_has_role_permission(self.request.user, 'hr:resenje_catalog_create'),
-            centri=sorted({kod for kod in OrganizationalUnit.objects.values_list('center', flat=True) if kod}))
-        return ctx
-
-    @transaction.atomic
     def post(self, request, *args, **kwargs):
-        form = GrupnoResenjeForm(request.POST)
-        oznake = [deo for deo in request.POST.getlist('zaposleni') if deo.isdigit()]
-        if not form.is_valid() or not oznake:
-            if not oznake:
-                messages.error(request, 'Izaberi bar jednog zaposlenog.')
-            return self.render_to_response(self.get_context_data(form=form))
-        data = form.cleaned_data
-        _, dostupni = self.zaposleni()
-        izabrani = list(dostupni.filter(pk__in=oznake))
-        if len(izabrani) != len(set(oznake)):
-            messages.error(request, 'Izbor sadrži zaposlene van dozvoljenog obuhvata.')
-            return self.render_to_response(self.get_context_data(form=form))
-        # Samo `broj_<pk>`; polje forme `broj_radnih_dana` ima isti početak i ne sme da uđe ovde.
-        brojevi = {kljuc[len('broj_'):]: vrednost.strip() for kljuc, vrednost in request.POST.items()
-                   if kljuc.startswith('broj_') and kljuc[len('broj_'):].isdigit() and vrednost.strip()}
-        bez_broja = [str(employee) for employee in izabrani if not brojevi.get(str(employee.pk))]
-        if bez_broja:
-            messages.error(request, 'Unesi broj iz delovodnika za: ' + ', '.join(bez_broja))
-            return self.render_to_response(self.get_context_data(form=form))
-        napravljeno = []
-        for employee in izabrani:
-            resenje = Resenje(zaposleni=employee, vrsta=data['vrsta'], broj=brojevi[str(employee.pk)],
-                datum_resenja=data['datum_resenja'], pismo=data['pismo'], datum_od=data['datum_od'],
-                datum_do=data['datum_do'], vreme_od=data['vreme_od'], vreme_do=data['vreme_do'],
-                potpisnik=data['potpisnik'], do_zavrsetka_posla=data['do_zavrsetka_posla'],
-                broj_radnih_dana=data['broj_radnih_dana'], datum_povratka=data['datum_povratka'],
-                zahtev_broj=data['zahtev_broj'], zahtev_datum=data['zahtev_datum'],
-                napomena=data['napomena'], created_by=request.user)
-            pripremi_resenje(resenje)
-            resenje.save()
-            for dan in data['dani']:
-                ResenjeDan.objects.create(resenje=resenje, datum=dan,
-                    vrsta_dana=data['vrsta_dana'] or ResenjeDan.VrstaDana.PREKOVREMENI)
-            napravljeno.append(resenje)
-        messages.success(request, f'Napravljeno {len(napravljeno)} nacrta rešenja.')
-        return redirect(reverse('hr:resenje_list') + f'?status={Resenje.Status.NACRT}')
+        messages.info(request, 'Označite postojeće zahteve za koje pravite rešenja.')
+        return self.get(request, *args, **kwargs)
 
 
 CATALOGS = {'vrste': (VrstaResenja, VrstaResenjaForm, 'Vrsta rešenja'),
-            'potpisnici': (Potpisnik, PotpisnikForm, 'Potpisnik rešenja')}
+            'potpisnici': (Potpisnik, PotpisnikForm, 'Potpisnik rešenja'),
+            'vrste-zahteva': (VrstaZahteva, VrstaZahtevaForm, 'Vrsta zahteva'),
+            'brojaci': (BrojacZahteva, BrojacZahtevaForm, 'Brojač zahteva')}
 
 
 class ResenjeCatalogView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
@@ -285,7 +242,8 @@ class ResenjeCatalogView(LoginRequiredMixin, RolePermissionRequiredMixin, Templa
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(title='Šifrarnik rešenja', sidebar_template=SIDEBAR,
-            vrste=VrstaResenja.objects.all(), potpisnici=Potpisnik.objects.select_related('zaposleni'))
+            vrste=VrstaResenja.objects.all(), potpisnici=Potpisnik.objects.select_related('zaposleni'),
+            vrste_zahteva=VrstaZahteva.objects.select_related('vrsta_resenja'), brojaci=BrojacZahteva.objects.all())
         return ctx
 
 

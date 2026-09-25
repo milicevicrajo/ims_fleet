@@ -1,0 +1,104 @@
+{% extends 'hr/resenja/base.html' %}
+{% block resenja_page_class %}zahtevi-page{% endblock %}
+{% block resenja_content %}
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3">
+  <div>
+    <div class="hr-kicker">Kadrovi - Zahtevi zaposlenih</div>
+    <h1><i class="mdi mdi-file-send-outline me-2"></i>Zahtevi</h1>
+    <p>Zahtevi zaposlenih, pregled statusa i povezana rešenja. Jedan zahtev — jedno rešenje.</p>
+  </div>
+  <div class="resenja-actions">
+    {% if resenje_catalog %}<a class="btn btn-outline-light btn-sm" href="{% url 'hr:resenje_catalog' %}#vrste-zahteva"><i class="mdi mdi-tune"></i> Šifrarnik</a>{% endif %}
+    {% if resenje_list %}<a class="btn btn-outline-light btn-sm" href="{% url 'hr:resenje_list' %}"><i class="mdi mdi-file-document-outline"></i> Rešenja</a>{% endif %}
+    {% if zahtev_bulk_create %}<a class="btn btn-outline-light btn-sm" href="{% url 'hr:zahtev_bulk_create' %}"><i class="mdi mdi-account-multiple-plus"></i> Više zaposlenih</a>{% endif %}
+    {% if zahtev_create %}<a class="btn btn-light btn-sm" href="{% url 'hr:zahtev_create' %}"><i class="mdi mdi-plus"></i> Novi zahtev</a>{% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <form method="get" class="resenja-filters">
+    <div><label class="form-label" for="filter-vrsta">Vrsta</label>
+      <select class="form-select" id="filter-vrsta" name="vrsta"><option value="">Sve vrste</option>
+        {% for vrsta in vrste %}<option value="{{ vrsta.pk }}" {% if izabrana_vrsta == vrsta.pk|stringformat:'s' %}selected{% endif %}>{{ vrsta.naziv }}</option>{% endfor %}
+      </select></div>
+    <div><label class="form-label" for="filter-centar">Centar</label>
+      <select class="form-select" id="filter-centar" name="centar"><option value="">Svi centri</option>
+        {% for kod in centri %}<option value="{{ kod }}" {% if izabran_centar == kod %}selected{% endif %}>{{ kod }}</option>{% endfor %}
+      </select></div>
+    <div><label class="form-label" for="filter-status">Status</label>
+      <select class="form-select" id="filter-status" name="status"><option value="">Svi statusi</option>
+        {% for vrednost,naziv in statusi %}<option value="{{ vrednost }}" {% if izabran_status == vrednost %}selected{% endif %}>{{ naziv }}</option>{% endfor %}
+      </select></div>
+    <div><label class="form-label" for="filter-resenje">Rešenje</label>
+      <select class="form-select" id="filter-resenje" name="resenje">
+        <option value="">Svi zahtevi</option>
+        <option value="bez" {% if izabrano_resenje == 'bez' %}selected{% endif %}>Čekaju rešenje</option>
+        <option value="sa" {% if izabrano_resenje == 'sa' %}selected{% endif %}>Imaju rešenje</option>
+      </select></div>
+    <div><label class="form-label" for="filter-godina">Godina</label>
+      <input class="form-control" id="filter-godina" type="number" name="godina" min="2000" max="2100" value="{{ izabrana_godina }}"></div>
+    <div class="resenja-actions"><button class="btn btn-primary" type="submit"><i class="mdi mdi-filter"></i> Prikaži</button>
+    <a class="btn btn-outline-secondary" href="{% url 'hr:zahtev_list' %}" title="Poništi filtere" aria-label="Poništi filtere"><i class="mdi mdi-filter-remove"></i></a></div>
+  </form>
+</div></div>
+
+{% if zahtev_bulk_resenja %}
+<details class="card shadow-sm mb-3 zahtev-bulk-actions">
+  <summary class="card-header"><h5><i class="mdi mdi-file-document-multiple-outline"></i>Rešenja za označene zahteve</h5><span class="small text-muted">Otvori grupni unos</span></summary>
+  <div class="card-body">
+    <p class="small text-muted">Označite zahteve u tabeli. Zahtevi koji već imaju rešenje automatski se preskaču.</p>
+    <form method="post" action="{% url 'hr:zahtev_bulk_resenja' %}" id="zahtev-resenja" class="row g-3 align-items-end">{% csrf_token %}
+      {% include 'hr/resenja/_polje.html' with polje=resenja_form.datum_resenja sirina='col-md-3' %}
+      {% include 'hr/resenja/_polje.html' with polje=resenja_form.vrsta sirina='col-md-4' %}
+      {% include 'hr/resenja/_polje.html' with polje=resenja_form.potpisnik sirina='col-md-3' %}
+      <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="mdi mdi-file-document-edit-outline"></i> Napravi rešenja</button></div>
+    </form>
+  </div>
+</details>
+{% endif %}
+
+<form method="get" action="{% url 'hr:zahtev_bulk_print' %}" target="_blank" rel="noopener" id="zahtev-print">
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5><i class="mdi mdi-format-list-bulleted"></i>Zahtevi</h5>
+    <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="mdi mdi-printer"></i> Štampaj označene</button>
+  </div>
+  <div class="card-body"><div class="table-responsive">
+    <table id="ZahtevListTable" class="table table-bordered table-hover align-middle resenja-table" style="width:100%">
+      <thead><tr>
+        <th class="no-sort"><input type="checkbox" id="zahtev-select-all" aria-label="Označi sve zahteve"></th>
+        <th>Zahtev</th><th>Zaposleni</th><th>Vrsta</th><th>Podnosi</th><th>Status</th><th>Rešenje</th><th class="no-sort zahtev-actions-column"><span class="visually-hidden">Radnje</span></th>
+      </tr></thead>
+      <tbody>
+      {% for zahtev in zahtevi %}<tr>
+        <td><input type="checkbox" class="zahtev-select" value="{{ zahtev.pk }}" aria-label="Izaberi zahtev {{ zahtev.broj }}"></td>
+        <td data-order="{{ zahtev.godina }}{{ zahtev.redni_broj|stringformat:'08d' }}"><a class="resenja-number" href="{% url 'hr:zahtev_detail' zahtev.pk %}">{{ zahtev.broj }}</a><span class="zahtev-secondary resenja-date">{{ zahtev.datum_zahteva|date:'d.m.Y.' }}</span></td>
+        <td><strong class="zahtev-employee-name">{{ zahtev.zaposleni }}</strong><span class="zahtev-secondary">{{ zahtev.zaposleni.employee_code }} · OJ {{ zahtev.oj_kod|default:"—" }} · C {{ zahtev.centar|default:"—" }}</span></td>
+        <td>{{ zahtev.vrsta.naziv }}</td>
+        <td>{{ zahtev.podnosilac }}</td>
+        <td>{% if zahtev.status == 'podnet' %}<span class="fleet-status active">Podnet</span>{% elif zahtev.status == 'storniran' %}<span class="fleet-status muted">Storniran</span>{% else %}<span class="fleet-status warning">Nacrt</span>{% endif %}</td>
+        <td data-order="{{ zahtev.broj_resenja }}">{% if zahtev.broj_resenja %}<span class="fleet-status info">Povezano</span>{% elif zahtev.status != 'storniran' %}<span class="fleet-status warning">Čeka rešenje</span>{% else %}—{% endif %}</td>
+        <td><span class="fleet-list-actions">
+          <a class="btn btn-outline-primary btn-sm" href="{% url 'hr:zahtev_detail' zahtev.pk %}" title="Otvori zahtev" aria-label="Otvori zahtev {{ zahtev.broj }}"><i class="mdi mdi-eye"></i></a>
+          <a class="btn btn-outline-secondary btn-sm" href="{% url 'hr:zahtev_print' zahtev.pk %}" target="_blank" rel="noopener" title="Štampaj A4" aria-label="Štampaj zahtev {{ zahtev.broj }} na A4"><i class="mdi mdi-printer"></i></a>
+        </span></td>
+      </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+</div>
+</form>
+{% include 'mobilni/mobile/_datatable.html' with table_id='ZahtevListTable' order="[[1, 'desc']]" %}
+{% endblock %}
+{% block extra_js %}<script>jQuery(function ($) {
+  function oznaceni() { return $('#ZahtevListTable').DataTable().rows().nodes().to$().find('.zahtev-select:checked'); }
+  $('#zahtev-select-all').on('change', function () {
+    $('#ZahtevListTable').DataTable().rows({search:'applied'}).nodes().to$().find('.zahtev-select').prop('checked', this.checked);
+  });
+  $('#zahtev-print, #zahtev-resenja').on('submit', function (event) {
+    var form = this, checked = oznaceni();
+    $(form).find('input[name="zahtev"]').remove();
+    if (!checked.length) { event.preventDefault(); alert('Označi bar jedan zahtev.'); return; }
+    checked.each(function () { $('<input>', {type:'hidden', name:'zahtev', value:this.value}).appendTo(form); });
+  });
+});</script>{% endblock %}

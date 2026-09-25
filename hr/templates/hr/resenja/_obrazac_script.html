@@ -1,0 +1,58 @@
+{% comment %}Ponašanje forme rešenja i zahteva: prikaz polja prema vrsti, predlog teksta iz evidencije i dodavanje dana.
+Ulaz: `predlog_url` (naziv rute predloga) i `vrste-meta` JSON na stranici.{% endcomment %}
+<script>jQuery(function ($) {
+  var meta = JSON.parse(document.getElementById('vrste-meta').textContent);
+  var vrsta = $('#id_vrsta'), zaposleni = $('#id_zaposleni'), pismo = $('#id_pismo');
+
+  function prikazi() {
+    var podaci = meta[vrsta.val()] || {period: false, dani: false, radni_dani: false, polja: []};
+    $('[data-grupa="period"]').toggle(!!podaci.period);
+    $('[data-grupa="dani"]').toggle(!!podaci.dani);
+    $('[data-grupa="radni_dani"]').toggle(!!podaci.radni_dani);
+    $('[data-grupa="vreme"]').toggle(!!podaci.vreme);
+    $('[id^="id_dp_"]').each(function () {
+      var oznaka = this.id.slice('id_dp_'.length);
+      $(this).closest('.resenja-field').toggle((podaci.polja || []).indexOf(oznaka) !== -1);
+    });
+  }
+
+  var pendingSuggestion;
+  function predlozi(employeeChanged) {
+    if (!zaposleni.val() || zaposleni.prop('disabled')) { return; }
+    if (pendingSuggestion) pendingSuggestion.abort();
+    pendingSuggestion = $.getJSON("{% url predlog_url %}", {zaposleni: zaposleni.val(), pismo: pismo.val()}, function (podaci) {
+      $('#id_zaposleni_tekst').val(podaci.zaposleni_tekst);
+      $('#id_radno_mesto').val(podaci.radno_mesto);
+      if (employeeChanged || !$('#id_oj_kod').val()) $('#id_oj_kod').val(podaci.oj_kod).trigger('change');
+      if ($('#id_oj_kod').val() === podaci.oj_kod) $('#id_oj_naziv').val(podaci.oj_naziv);
+      else $('#id_oj_kod').trigger('change');
+      if (employeeChanged) $('#id_pol').val(podaci.pol);
+    });
+  }
+
+  vrsta.on('change', function () {
+    prikazi();
+    var podaci = meta[vrsta.val()];
+    if (podaci && podaci.pismo && pismo.val() !== podaci.pismo) { pismo.val(podaci.pismo).trigger('change'); }
+  });
+  zaposleni.on('change', function () { predlozi(true); });
+  pismo.on('change', function () { predlozi(false); });
+  $('#id_oj_kod').on('change', function () {
+    var code = $(this).val();
+    if (code) $('#id_oj_naziv').val((pismo.val() === 'latinica' ? 'OJ ' : 'ОЈ ') + code);
+  });
+  prikazi();
+  $('#resenje-add-day').on('click', function () {
+    var total = document.querySelector('input[name$="-TOTAL_FORMS"]');
+    var index = Number(total.value);
+    var maximum = Number(document.querySelector('input[name$="-MAX_NUM_FORMS"]').value);
+    if (index >= maximum) return;
+    var template = document.getElementById('resenje-empty-day').innerHTML.replace(/__prefix__/g, index);
+    var tbody = document.getElementById('resenje-days');
+    tbody.insertAdjacentHTML('beforeend', template);
+    total.value = index + 1;
+    var row = tbody.lastElementChild;
+    if (window.flatpickr) flatpickr(row.querySelector('.js-date'), {dateFormat:'d.m.Y', locale:'sr', allowInput:true, disableMobile:true});
+    row.querySelector('input[name$="-datum"]').focus();
+  });
+});</script>

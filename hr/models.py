@@ -6,6 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from .evaluation_models import (EvaluationGroup, EvaluationCriterion, EvaluationScale,
     EvaluationUnitSetup, EvaluationEmployeeSetup, EmployeeEvaluation, EvaluationApproval)
 from .resenja_models import Pismo, VrstaResenja, Potpisnik, Resenje, ResenjeDan
+from .zahtevi_models import VrstaZahteva, BrojacZahteva, Zahtev, ZahtevDan
 
 
 class Employee(models.Model):

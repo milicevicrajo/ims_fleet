@@ -24,4 +24,4 @@ def collect_resenja_permission_codes():
     from hr.urls import urlpatterns
 
     return sorted({code for code in collect_url_pattern_names(urlpatterns, prefix='hr')
-                   if code.startswith('hr:resenje_')} | RESENJA_ADMIN_CODES)
+                   if code.startswith(('hr:resenje_', 'hr:zahtev_'))} | RESENJA_ADMIN_CODES)

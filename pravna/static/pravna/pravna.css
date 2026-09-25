@@ -113,6 +113,24 @@ tr.legal-archived td { background: #f3f6f9 !important; color: #657282; }
 }
 .side-card-body { padding: 14px; }
 
+/* Čitljiv detalj disciplinskog postupka, bez uticaja na ostale pravne evidencije. */
+.disciplinary-detail .legal-meta-value { font-size:20px; line-height:1.45; }
+.disciplinary-detail .legal-meta-label { font-size:12px; }
+.disciplinary-detail .legal-meta { padding:15px 16px; }
+.disciplinary-detail .legal-person-reference { color:#63798b; font-size:14px; margin-top:5px; }
+.disciplinary-detail .legal-section-header { font-size:17px; }
+.disciplinary-detail .legal-text-block, .disciplinary-detail .table td { font-size:16px; line-height:1.65; }
+.disciplinary-detail .table th { font-size:14px; }
+.disciplinary-detail .legal-hero p { font-size:16px; }
+.disciplinary-detail .form-control, .disciplinary-detail .form-label { font-size:15px; }
+.disciplinary-detail .legal-measure-result { padding:16px; border-left:4px solid #6f4d7b; background:#f7f5fa; border-radius:6px; }
+.disciplinary-detail .legal-measure-fieldset legend { float:none; width:auto; font-weight:600; margin-bottom:10px; }
+.disciplinary-detail .legal-measure-options > div { margin:0 0 8px; }
+.disciplinary-detail .legal-measure-options label { display:flex; align-items:flex-start; gap:9px; padding:10px; border:1px solid #dce4eb; border-radius:6px; font-size:15px; line-height:1.5; cursor:pointer; }
+.disciplinary-detail .legal-measure-options input { flex:0 0 auto; margin-top:5px; }
+.disciplinary-detail .legal-measure-options label:has(input:checked) { background:#f2edf7; border-color:#80618c; }
+@media(max-width:767px) { .disciplinary-detail .legal-meta-value { font-size:18px; } }
+
 .change-row {
   border: 1px solid #eef2f6;
   border-radius: 8px;

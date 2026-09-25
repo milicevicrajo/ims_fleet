@@ -1173,9 +1173,11 @@ Kadrovska služba, zaposleni, referent obračuna zarada, dosije zaposlenog.
 | Poslovni naziv | Odakle | Ko unosi |
 |---|---|---|
 | Vrsta rešenja, tekstovi obrasca | `hr_vrstaresenja` | Uprava (šifarnik) |
-| Broj rešenja | Delovodnik | **Kadrovik, ručno** |
-| Datum rešenja, period ili dani | Ekran rešenja | Kadrovik |
-| Broj i datum zahteva | Zahtev iz centra | Kadrovik |
+| Broj rešenja | Podbroj obavezno povezanog zahteva (`43-17/1`); jedan zahtev može imati samo jedno rešenje | **Sistem** |
+| Datum rešenja, period ili dani | Zahtev, ekran rešenja | Kadrovik |
+| Broj i datum zahteva | `hr_zahtev` | **Sistem, iz zahteva** |
+| Razlog zahteva, podnosilac | `hr_zahtev` | Kadrovik, pri unosu zahteva |
+| Dodatna polja (npr. poslovi kod zamene) | Zahtev, ekran rešenja | Kadrovik |
 | Ime, organizaciona jedinica, radno mesto | `fleet_employee`, `fleet_organizationalunit` | **Predlaže sistem, kadrovik ispravlja** |
 | Pol | `fleet_employee.gender` | HR sinhronizacija |
 | Potpisnik i funkcija | `hr_potpisnik`, po datumu rešenja | Uprava (šifarnik) |
@@ -1249,6 +1251,26 @@ status prelazi u `izdato`. Od tog trenutka:
 
 Isti obrazac koristi ocenjivanje (K-08), iz istog razloga.
 
+#### Zahtev i broj rešenja [P]
+
+Zahtev (`hr_zahtev`) dobija broj pri prvom čuvanju: `{centar}-{redni broj}`, gde je
+centar šifra centra zaposlenog, a redni broj sledeći broj iz `hr_brojaczahteva` za godinu
+datuma zahteva. Red brojača se zaključava (`select_for_update`) do kraja transakcije, pa dva
+istovremena unosa ne dobijaju isti broj. Broj je jedinstven u godini.
+
+Rešenje iz zahteva (`napravi_resenje()`) dobija broj `{broj zahteva}/{podbroj}`. Podbroj
+se čuva na zahtevu (`poslednji_podbroj`) i samo raste, pa ni obrisan nacrt ne vraća broj.
+Rešenje preuzima zaposlenog, pismo, pol, OJ, period, vreme, dane i dodatne podatke iz
+zahteva; ime u tekstu rešenja se računa iznova (padež u zahtevu može biti drugačiji).
+
+Tekst zahteva se pravi istim pravilima kao tekst rešenja (pismo, rod, uslovni delovi,
+opis perioda). Obrasci stavljaju ime zaposlenog iza dvotačke, u nominativu, da bi tekst bio
+ispravan i kada se isti zahtev pravi za više zaposlenih. Ako „ko odobrava“ nije unet,
+uzima se potpisnik rešenja koji važi na datum zahteva.
+
+Novi čuvari mesta u obrascima rešenja: `{razlog_zahteva}`, `{podnosilac}`,
+`{podnosilac_funkcija}` i dodatna polja vrste.
+
 ### 7. Tehnička implementacija
 
 | Element | Vrednost |
@@ -1256,8 +1278,9 @@ Isti obrazac koristi ocenjivanje (K-08), iz istog razloga.
 | Fajlovi | `hr/resenja_models.py`, `hr/services/resenja.py`, `hr/resenja_views.py`, `hr/resenja_forms.py` |
 | Funkcije | `build_document()`, `razresi()`, `opis_perioda()`, `pripremi_resenje()`, `izdaj_resenje()` |
 | Tabele | `hr_vrstaresenja`, `hr_potpisnik`, `hr_resenje`, `hr_resenjedan` |
-| Početni šifarnik | Migracija `hr/migrations/0014_resenja_sifrarnik_i_dozvole.py` |
-| Testovi | `hr/test_resenja.py` — **41 test** |
+| Početni šifarnik | Migracije `hr/migrations/0014_resenja_sifrarnik_i_dozvole.py` i `0017_zahtevi_sifrarnik_i_dozvole.py` |
+| Zahtevi | `hr/zahtevi_models.py`, `hr/services/zahtevi.py` — `dodeli_broj()`, `build_zahtev_document()`, `napravi_resenje()` |
+| Testovi | `hr/test_resenja.py`, `hr/test_zahtevi.py` |
 | Štampa | HTML strana A4 sa dugmetom „Štampaj / Sačuvaj PDF“, bez dodatnih biblioteka |
 
 ### 8. Primer
@@ -1294,6 +1317,9 @@ proveru prekovremenih i prazničnih sati u radnoj listi.
 ### 11. Kontrola i ručna provera
 
 - Broj rešenja je **jedinstven po datumu** — duplikat iz delovodnika se odbija pri unosu.
+- Broj zahteva je **jedinstven u godini**; brojač se ne može vratiti ispod najvećeg
+  postojećeg rednog broja.
+- Zahtev sa rešenjem koje nije stornirano ne može da se stornira.
 - Pre izdavanja se ceo tekst vidi na ekranu detalja, u konačnom obliku.
 - Vrsta koja traži dane ne prolazi bez ijednog unetog dana.
 

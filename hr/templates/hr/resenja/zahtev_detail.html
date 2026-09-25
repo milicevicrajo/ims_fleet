@@ -1,0 +1,96 @@
+{% extends 'hr/resenja/base.html' %}
+{% load static %}
+{% block resenja_page_class %}zahtevi-page{% endblock %}
+{% block resenja_content %}
+{% include 'hr/resenja/_resenje_styles.html' %}
+<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3">
+  <div>
+    <div class="hr-kicker">Kadrovi - Zahtevi zaposlenih</div>
+    <h1><i class="mdi mdi-file-send-outline me-2"></i>Zahtev {{ zahtev.broj }}</h1>
+    <p>{{ zahtev.vrsta.naziv }} - {{ zahtev.zaposleni }} - {{ zahtev.datum_zahteva|date:'d.m.Y.' }}</p>
+  </div>
+  <div class="resenja-actions">
+    {% if not resenja and zahtev.status != 'storniran' and zahtev_resenje_create %}<button type="submit" form="dodaj-resenje" class="btn btn-light btn-sm"><i class="mdi mdi-plus"></i> Dodaj rešenje</button>{% endif %}
+    <a class="btn btn-outline-light btn-sm" href="{% url 'hr:zahtev_print' zahtev.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-printer"></i> Štampaj</a>
+    {% if not zahtev.je_zakljucan and zahtev_create %}<a class="btn btn-light btn-sm" href="{% url 'hr:zahtev_edit' zahtev.pk %}"><i class="mdi mdi-pencil"></i> Izmeni</a>{% endif %}
+  </div>
+</div>
+
+<div class="resenja-preview-layout mb-3">
+  <div>
+    <div class="card shadow-sm h-100">
+      <div class="card-header"><h5><i class="mdi mdi-file-document-outline"></i>Pregled dokumenta</h5><span class="fleet-status info">A4 · 210 × 297 mm</span></div>
+      <div>
+        {% if not zahtev.dokument %}<div class="alert alert-warning m-3">Nacrt — proverite tekst pre podnošenja. Zahtev se zaključava i kada se izda prvo rešenje po njemu.</div>{% endif %}
+        <div class="resenja-paper-stage" role="region" aria-label="Pregled A4 dokumenta" tabindex="0"><div class="resenja-paper">{% include 'hr/resenja/_zahtev_document.html' %}</div></div>
+      </div>
+    </div>
+  </div>
+  <aside class="resenja-side">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header"><h5>Status</h5></div>
+      <div class="card-body">
+        <p>{% if zahtev.status == 'podnet' %}<span class="fleet-status active">Podnet</span> {{ zahtev.podneto_at|date:'d.m.Y. H:i' }}{% elif zahtev.status == 'storniran' %}<span class="fleet-status muted">Storniran</span>{% else %}<span class="fleet-status warning">Nacrt</span>{% endif %}</p>
+        <div class="zahtev-person">
+          <span class="zahtev-caption">Zaposleni</span>
+          <strong>{{ zahtev.zaposleni }}</strong>
+          <span>Šifra {{ zahtev.zaposleni.employee_code }} · OJ {{ zahtev.oj_kod|default:"—" }}</span>
+          <span>{{ zahtev.oj_naziv }}</span>
+          <span class="zahtev-center">Centar {{ zahtev.centar|default:"—" }}</span>
+        </div>
+        <dl class="resenja-meta">
+          <dt>Broj</dt><dd>{{ zahtev.broj }}</dd>
+          <dt>Datum</dt><dd>{{ zahtev.datum_zahteva|date:'d.m.Y.' }}</dd>
+          <dt>Podnosi</dt><dd>{{ zahtev.podnosilac }}{% if zahtev.podnosilac_funkcija %}<br><small>{{ zahtev.podnosilac_funkcija }}</small>{% endif %}</dd>
+          <dt>Odobrava</dt><dd>{{ zahtev.odobrava }}{% if zahtev.odobrava_funkcija %}<br><small>{{ zahtev.odobrava_funkcija }}</small>{% endif %}</dd>
+          <dt>Uneo</dt><dd>{{ zahtev.created_by }}</dd>
+        </dl>
+        {% if zahtev.napomena %}<div class="zahtev-note"><span class="zahtev-caption">Interna napomena</span>{{ zahtev.napomena|linebreaksbr }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-header"><h5>Rešenje po zahtevu</h5></div>
+      <div class="card-body">
+        {% if resenja %}
+        <ul class="list-unstyled mb-3">
+          {% for resenje in resenja %}<li class="mb-2">
+            <a class="resenja-number" href="{% url 'hr:resenje_detail' resenje.pk %}">{{ resenje.broj }}</a>
+            {% if resenje.status == 'izdato' %}<span class="fleet-status active">Izdato</span>{% elif resenje.status == 'stornirano' %}<span class="fleet-status muted">Stornirano</span>{% else %}<span class="fleet-status warning">Nacrt</span>{% endif %}
+            <div class="small text-muted">{{ resenje.vrsta.naziv }} · {{ resenje.datum_resenja|date:'d.m.Y.' }}</div>
+          </li>{% endfor %}
+        </ul>
+        {% else %}<p class="text-muted">Po ovom zahtevu još nije napravljeno rešenje.</p>{% endif %}
+
+        {% if not resenja and zahtev.status != 'storniran' and zahtev_resenje_create %}
+        <form id="dodaj-resenje" method="post" action="{% url 'hr:zahtev_resenje_create' zahtev.pk %}" class="d-flex flex-column gap-2">{% csrf_token %}
+          {% include 'hr/resenja/_polje.html' with polje=resenje_form.vrsta sirina='w-100' %}
+          {% include 'hr/resenja/_polje.html' with polje=resenje_form.datum_resenja sirina='w-100' %}
+          {% include 'hr/resenja/_polje.html' with polje=resenje_form.potpisnik sirina='w-100' %}
+          <button class="btn btn-primary w-100" type="submit"><i class="mdi mdi-file-document-edit-outline"></i> Dodaj rešenje iz zahteva</button>
+          <div class="form-text">Jedan zahtev — jedno rešenje. Preuzimaju se podaci iz zahteva i broj {{ zahtev.broj }}/{{ zahtev.poslednji_podbroj|add:1 }}.</div>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header"><h5>Radnje</h5></div>
+      <div class="card-body d-flex flex-column gap-2">
+        {% if zahtev.status == 'nacrt' and zahtev_podnesi %}
+        <form method="post" action="{% url 'hr:zahtev_podnesi' zahtev.pk %}">{% csrf_token %}
+          <button class="btn btn-outline-primary w-100" type="submit"><i class="mdi mdi-check-decagram"></i> Podnesi (zaključaj tekst)</button>
+        </form>
+        {% endif %}
+        {% if zahtev.status != 'storniran' and zahtev_storniraj %}
+        <form method="post" action="{% url 'hr:zahtev_storniraj' zahtev.pk %}" onsubmit="return confirm('Stornirati zahtev {{ zahtev.broj }}? Broj se ne koristi ponovo.');">{% csrf_token %}
+          <button class="btn btn-outline-danger w-100" type="submit"><i class="mdi mdi-cancel"></i> Storniraj</button>
+        </form>
+        {% endif %}
+        <a class="btn btn-outline-secondary w-100" href="{% url 'hr:zahtev_list' %}">Nazad na listu</a>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'hr/resenje_document.js' %}?v=20260923"></script>{% endblock %}

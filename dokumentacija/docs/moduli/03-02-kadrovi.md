@@ -55,7 +55,8 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Godišnji odmori** | Dodele i rešenja preuzeti iz obračuna zarada |
 | **Bolovanja** | Uvoz RFZO Excel izvoza, povezivanje po JMBG |
 | **Ocenjivanje** | Šest merila, bodovi 0–4, lični koeficijent, saglasnost u tri nivoa |
-| **Rešenja** | Rešenja o prekovremenom i noćnom radu, radu vikendom i praznikom, plaćenom odsustvu — pojedinačno i grupno, sa štampom |
+| **Zahtevi** | Zahtev za izdavanje rešenja, sa automatskim brojem; ko podnosi i ko odobrava upisuje se u zahtev; isti zahtev za više zaposlenih odjednom |
+| **Rešenja** | Rešenja o prekovremenom i noćnom radu, radu vikendom i praznikom, plaćenom odsustvu i zameni odsutnog zaposlenog — iz zahteva ili bez njega, pojedinačno i grupno, sa štampom |
 | **Šifarnici** | Vrste rada/odsustva, elementi radne liste, vrste primalaca, merila ocenjivanja |
 
 ---
@@ -82,6 +83,11 @@ Vodi **zaposlene i njihovo radno vreme**:
 | Saglasnost | `/hr/ocenjivanje/<id>/saglasnost/` | Imenovani ocenjivač |
 | Grupna saglasnost | `/hr/ocenjivanje/saglasnost/` | Imenovani ocenjivač |
 | Šifarnik ocenjivanja | `/hr/ocenjivanje/sifrarnik/` | Kadrovska služba |
+| **Zahtevi zaposlenih** | `/hr/zahtevi/` | Kadrovska služba |
+| Novi zahtev | `/hr/zahtevi/novi/` | Kadrovska služba |
+| Isti zahtev za više zaposlenih | `/hr/zahtevi/grupno/` | Kadrovska služba |
+| Detalj zahteva i „Dodaj rešenje iz zahteva“ | `/hr/zahtevi/<id>/` | Kadrovska služba |
+| Štampa zahteva | `/hr/zahtevi/<id>/stampa/`, `/hr/zahtevi/stampa/` | Kadrovska služba |
 | **Rešenja zaposlenih** | `/hr/resenja/` | Kadrovska služba |
 | Novo rešenje | `/hr/resenja/novo/` | Kadrovska služba |
 | Grupno izdavanje | `/hr/resenja/grupno/` | Kadrovska služba |
@@ -104,8 +110,11 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Bodovi po merilima i komentari** | Ocenjivanje | Neposredni rukovodilac |
 | Saglasnost, korekcija koeficijenta, obrazloženje | Saglasnost | Direktor centra, generalni direktor |
 | RFZO Excel datoteka i datum izvoza | Uvoz bolovanja | Kadrovska služba |
-| **Broj rešenja iz delovodnika, datum, period ili dani** | Rešenja | Kadrovska služba |
-| Broj i datum zahteva na osnovu koga se rešenje donosi | Rešenja | Kadrovska služba |
+| **Vrsta zahteva, zaposleni, datum, period ili dani, razlog** | Zahtevi | Kadrovska služba |
+| **Ko podnosi i ko odobrava zahtev**, sa funkcijama | Zahtevi | Kadrovska služba |
+| Poslovi koje zaposleni preuzima (zamena odsutnog) | Zahtevi, Rešenja | Kadrovska služba |
+| Datum rešenja i potpisnik; broj samo za rešenje **bez** zahteva | Rešenja | Kadrovska služba |
+| Broj i datum zahteva kao tekst — samo za rešenje bez zahteva | Rešenja | Kadrovska služba |
 | Ime u drugom padežu, naziv OJ i radnog mesta u tekstu rešenja | Rešenja | Kadrovska služba |
 | Ime i prezime ćirilicom (kada preslovljavanje pogreši) | Detalj zaposlenog | Kadrovska služba |
 | Šifarnici | Šifarnici | Kadrovska služba |
@@ -149,6 +158,10 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 | `hr_potpisnik` | Ko potpisuje rešenja i u kom periodu |
 | **`hr_resenje`** | **Izdato rešenje sa JSON snimkom dokumenta** |
 | `hr_resenjedan` | Pojedinačni dani rešenja (vikend, praznik, prekovremeni) |
+| `hr_vrstazahteva` | Šifarnik obrazaca zahteva — tekstovi ćirilicom, rešenje koje se po zahtevu izdaje |
+| `hr_brojaczahteva` | Poslednji dodeljeni redni broj zahteva po godini |
+| **`hr_zahtev`** | **Zahtev sa automatskim brojem, podnosiocem, odobravaocem i JSON snimkom** |
+| `hr_zahtevdan` | Pojedinačni dani zahteva |
 
 ---
 
@@ -174,6 +187,7 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 | **Evidencija prolazaka** | [`hr/services/attendance.py`](../../../hr/services/attendance.py) |
 | **Ocenjivanje** | [`hr/services/evaluations.py`](../../../hr/services/evaluations.py) |
 | **Rešenja** | [`hr/services/resenja.py`](../../../hr/services/resenja.py) |
+| **Zahtevi** | [`hr/services/zahtevi.py`](../../../hr/services/zahtevi.py), [`hr/zahtevi_models.py`](../../../hr/zahtevi_models.py) |
 | Godišnji odmori | [`hr/services/annual_leave.py`](../../../hr/services/annual_leave.py) |
 | Bolovanja | [`hr/services/sick_leave.py`](../../../hr/services/sick_leave.py) |
 | Šifarnik radne liste | [`hr/services/work_time_catalog.py`](../../../hr/services/work_time_catalog.py) |
@@ -181,7 +195,7 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 | Radna lista | [`hr/views.py: MyWorkTimeSheetView`](../../../hr/views.py) |
 
 Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
-`test_sick_leave.py`, `test_work_time_catalog.py`, `test_resenja.py` — **138 testova**. [P]
+`test_sick_leave.py`, `test_work_time_catalog.py`, `test_resenja.py`, `test_zahtevi.py`. [P]
 
 ---
 
@@ -239,7 +253,10 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 | `hr:resenje_list`, `hr:resenje_create`, `hr:resenje_izdaj` | Rešenja — pregled, unos, izdavanje |
 | `hr:resenje_bulk_create`, `hr:resenje_print` | Grupno izdavanje i štampa |
 | `hr:resenje_catalog` | Šifarnik vrsta rešenja i potpisnika |
-| **`hr:resenje_view_all`** | Vidi rešenja **svih** centara |
+| **`hr:resenje_view_all`** | Vidi rešenja i zahteve **svih** centara |
+| `hr:zahtev_list`, `hr:zahtev_create`, `hr:zahtev_bulk_create` | Zahtevi — pregled, unos, isti zahtev za više zaposlenih |
+| `hr:zahtev_resenje_create`, `hr:zahtev_bulk_resenja` | Rešenje iz jednog ili više zahteva |
+| `hr:zahtev_podnesi`, `hr:zahtev_storniraj`, `hr:zahtev_print` | Zaključavanje, storniranje i štampa zahteva |
 
 **Posebna pravila [P]:**
 
@@ -263,12 +280,52 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
   prema snimljenim šiframa na rešenju. Uloga Kadrovi bez obuhvata ne vidi tuđe podatke.
   Za ranije operativne uloge bez obuhvata ostaje pravilo: samo sopstvena rešenja.
 - **Izdato rešenje se više ne menja** — ispravka ide preko storniranja i novog rešenja.
+- Dozvole za zahteve (`hr:zahtev_*`) dobijaju Uprava, Kadrovi i Sekretarijat, isto kao
+  operativne dozvole za rešenja. Zahtev je vidljiv po istom pravilu kao rešenje: po
+  centru i OJ snimljenim na zahtevu.
 
 Od 24.09.2026. `hr/access.py` ograničava spisak, detalje i izmenu zaposlenih, radne liste,
 odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i pojedinačni
 unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Kadrovske OJ biraju se
 u Administracija → Korisnici → Uloge i dozvole. Ograničenja podataka ne menjaju obračune
 ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
+
+### Zahtev → rešenje
+
+Od 24.09.2026. rešenje se pravi **iz zahteva**:
+
+1. Kadrovik unosi zahtev (**Zahtevi → Novi zahtev**) ili isti zahtev za više zaposlenih
+   odjednom. Svaki zaposleni dobija **svoj zahtev i svoj broj**.
+2. Broj se dodeljuje **automatski**, u obliku `{centar}-{redni broj}` (npr. `43-17`).
+   Redni broj je jedan niz za ceo Institut i počinje od 1 svake godine, kao u delovodniku.
+   Početak niza se podešava u **Šifarnik → Brojač zahteva** (npr. da se nastavi na
+   postojeći delovodnik); brojač ne može da ide unazad.
+3. U zahtev se upisuje **ko podnosi** (zaposleni i funkcija, npr. „Финансијски директор“)
+   i **ko odobrava**. Ako „ko odobrava“ ostane prazno, uzima se potpisnik rešenja koji
+   važi na datum zahteva. Zahtev se štampa kao dopis sa oba potpisa.
+4. Na detalju zahteva **Dodaj rešenje iz zahteva** pravi nacrt rešenja sa istim
+   zaposlenim, periodom, danima, vremenom i dodatnim podacima. Iz liste zahteva može se
+   napraviti rešenje za više označenih zahteva odjednom; zahtev koji već ima rešenje se
+   preskače.
+5. Rešenje dobija broj kao **podbroj zahteva**: `43-17/1`. Važi **jedan zahtev — jedno
+   rešenje**, uključujući stornirano rešenje. Broj, zaposleni i podaci o zahtevu se ne menjaju ručno.
+6. Rešenje i zahtev su povezani u oba smera: detalj rešenja vodi na zahtev, a detalj
+   zahteva prikazuje povezano rešenje. Dok ga nema, prikazuje dugme **Dodaj rešenje**.
+   Profil zaposlenog ima karticu „Zahtevi“.
+
+Pravila [P]:
+
+- Zahtev se ne briše, nego **stornira**; broj storniranog zahteva se ne koristi ponovo.
+  Ni obrisan nacrt rešenja ne vraća svoj podbroj.
+- Zahtev koji ima rešenje koje nije stornirano ne može da se stornira.
+- **Podnošenje** zaključava tekst zahteva (JSON snimak). Zahtev se zaključava i sam, kada se
+  izda prvo rešenje po njemu.
+- Rešenje mora biti povezano sa postojećim zahtevom. Baza odbija praznu ili duplu vezu.
+  Stari linkovi za samostalni i grupni unos vode na listu zahteva bez rešenja.
+- Zamena odsutnog zaposlenog je **rešenje** („Imenovanje lica za zamenu“ → „Rešenje o zameni
+  odsutnog zaposlenog“). Poslovi koje zaposleni preuzima unose se kao dodatno polje.
+- Vrste rešenja i zahteva mogu imati **dodatna polja** (`oznaka|Naziv`), koja se u tekstu
+  koriste kao `{oznaka}`. Polje koje izabrana vrsta traži je obavezno.
 
 ### Unos i štampa rešenja zaposlenih
 
@@ -280,8 +337,7 @@ ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
   tekstualno dopuniti. Centar se izvodi postojećim mapiranjem OJ na centar.
 - Period od–do dostupan je za sve vrste; kod praznika ostaju obavezni pojedinačni
   dani sa vrstom praznika. Za rad se može uneti vreme smene od–do; završetak pre
-  početka označava naredni dan. Zahtev se trenutno unosi kao tekst (broj ili opis),
-  uz opcion datum, bez veze sa budućom evidencijom zahteva.
+  početka označava naredni dan. Rešenje automatski preuzima broj i datum povezanog zahteva.
 - Polje **Ko potpisuje rešenje** prikazuje potpisnika prema datumu ili ručni izbor.
   Korisnik sa dozvolom `hr:resenje_catalog_create` može dodati osobu i funkciju
   direktno uz nacrt. Bez potpisnika nacrt se čuva, a izdavanje traži važeći potpis.
