@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+Organizaciona šema IMS.
+
+„Šema“ prikazuje dostavljeni crtež (`static/organizacija/ims-organizaciona-sema.svg`) u punoj
+širini kartice, bez posebnog klizača; detalji se gledaju preko „Ceo ekran“ ili „Puna veličina“.
+„Po celinama“ je isti sadržaj kao kartice (`_sema_celine.html`, podaci iz
+`organizacija/services/sema.py`), sa pretragom. Stilovi su pod `.org-sema-page`, da ne
+dodirnu stablo (`.org-page`) ni ostale ekrane.
+{% endcomment %}
+{% block title %}Organizaciona šema — IMS{% endblock %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+<style>
+.org-sema-page { --ink:#183247; --line:#e3e6ec; --muted:#5f6f7c;
+  --c-gov:#E6EDF5; --c-gd:#173D5B; --c-centar:#DCEBF6; --c-grupa:#E3F1EE; --c-lab:#F2F8F6; --c-lab-line:#4F8F80;
+  --c-ostalo:#F2EFF8; --c-ostalo-line:#8C7FB8; --c-sluzba:#FFF1DB; --c-sluzba-line:#D9A45B; --c-border:#C1CCD5;
+  padding-bottom:12px; }
+.org-sema-page .fleet-list-hero { padding-top:10px; padding-bottom:10px; margin-bottom:0; }
+.org-sema-page .fleet-list-hero h1 { font-size:21px; margin:0; }
+.org-sema-page .org-sema-title { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; }
+.org-sema-page .fleet-list-hero p { margin:0; }
+.org-sema-page .org-kicker { font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.7; }
+.org-sema-page .org-hero-metrics { display:flex; gap:22px; flex-wrap:wrap; }
+.org-sema-page .org-hero-metrics > div { text-align:center; min-width:62px; }
+.org-sema-page .org-hero-metrics strong { display:block; font-size:21px; line-height:1.1; }
+.org-sema-page .org-hero-metrics small { font-size:11px; opacity:.75; }
+
+/* Kartice i alati u istom redu, da crtež dobije što više visine */
+.org-sema-page .org-sema-bar { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:8px 16px;
+  border-bottom:1px solid var(--line); margin-top:8px; }
+.org-sema-page .org-sema-tabs { border:0; margin:0; }
+.org-sema-page .org-sema-tabs .nav-link { color:#4a5468; font-weight:500; border:0; border-bottom:2px solid transparent;
+  padding:9px 16px; background:none; }
+.org-sema-page .org-sema-tabs .nav-link.active { color:var(--ink); border-bottom-color:var(--ink); }
+.org-sema-page .org-sema-tabs .nav-link:focus-visible { outline:2px solid #0d6efd; outline-offset:-2px; }
+.org-sema-page .org-sema-tools { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding-bottom:6px; }
+.org-sema-page .org-sema-tools[hidden] { display:none; }
+
+.org-sema-page .org-sema-card { background:#fff; border:1px solid var(--line); border-top:0; border-radius:0 0 8px 8px; }
+.org-sema-page .org-sema-view { padding:12px; background:#f7f9fb; border-radius:0 0 8px 8px; }
+.org-sema-page .org-sema-view img { display:block; width:100%; height:auto; background:#fff; border:1px solid var(--line);
+  border-radius:6px; box-shadow:0 2px 12px rgba(24,50,71,.07); }
+.org-sema-page .org-sema-card:fullscreen { border:0; border-radius:0; background:#f7f9fb; display:flex; flex-direction:column; }
+.org-sema-page .org-sema-card:fullscreen .org-sema-view { flex:1; min-height:0; border-radius:0; display:flex;
+  align-items:center; justify-content:center; }
+.org-sema-page .org-sema-card:fullscreen .org-sema-view img { width:auto; height:auto; max-width:100%; max-height:100%; }
+.org-sema-page .org-sema-fs-bar { display:none; }
+.org-sema-page .org-sema-card:fullscreen .org-sema-fs-bar { display:flex; justify-content:space-between; align-items:center;
+  padding:8px 14px; background:#fff; border-bottom:1px solid var(--line); font-weight:600; color:var(--ink); }
+
+/* ---- Po celinama ---- */
+.sc { padding:18px 20px 8px; color:#212529; }
+.sc-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin-bottom:18px; }
+.sc-search { position:relative; flex:1 1 300px; max-width:460px; }
+.sc-search i { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:#8a94a6; font-size:18px; }
+.sc-search input { width:100%; padding:8px 12px 8px 36px; border:1px solid #ced4da; border-radius:8px; }
+.sc-search input:focus { outline:0; border-color:#86b7fe; box-shadow:0 0 0 .2rem rgba(13,110,253,.18); }
+.sc-rezultat { font-size:13px; color:var(--muted); min-width:0; }
+.sc-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-left:auto; font-size:12px; color:var(--muted); }
+.sc-legend span { display:inline-flex; align-items:center; gap:6px; }
+.sc-dot { width:12px; height:12px; border-radius:3px; border:1px solid var(--c-border); display:inline-block; }
+.sc-dot-centar { background:var(--c-centar); } .sc-dot-lab { background:var(--c-lab); border-color:var(--c-lab-line); }
+.sc-dot-odeljenje { background:#fff; } .sc-dot-ostalo { background:var(--c-ostalo); border-color:var(--c-ostalo-line); }
+.sc-dot-sluzba { background:var(--c-sluzba); border-color:var(--c-sluzba-line); }
+
+.sc-section { margin-bottom:22px; }
+.sc-heading { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; font-size:15px; font-weight:700; color:var(--ink);
+  text-transform:uppercase; letter-spacing:.04em; margin:0 0 10px; }
+.sc-heading i { font-size:18px; opacity:.75; text-transform:none; align-self:center; }
+.sc-count { font-size:12px; font-weight:500; text-transform:none; letter-spacing:0; color:var(--muted); }
+.sc-caption { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:6px; }
+
+.sc-gov { background:#fbfcfd; border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+.sc-chain { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:12px; }
+.sc-arrow { color:#8a9aa7; font-size:18px; }
+.sc-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.sc-chip { display:inline-block; padding:6px 13px; border-radius:8px; background:var(--c-gov); border:1px solid var(--c-border);
+  font-weight:600; font-size:13px; color:var(--ink); }
+.sc-chip-gd { background:var(--c-gd); border-color:var(--c-gd); color:#fff; }
+.sc-chip-dashed { background:#fff; border-style:dashed; }
+.sc-gov-row { display:flex; flex-wrap:wrap; gap:12px 36px; }
+
+.sc-grid { display:grid; gap:14px; }
+.sc-grid-centri { grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); align-items:start; }
+.sc-grid-ostale { grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); }
+.sc-grid-sluzbe { grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); align-items:start; }
+.sc-split { display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(0, 1fr); gap:0 22px; }
+@media (max-width: 1200px) { .sc-split { grid-template-columns:1fr; } }
+
+.sc-card { border:1px solid var(--c-border); border-radius:10px; background:#fff; overflow:hidden; box-shadow:0 1px 3px rgba(24,50,71,.05); }
+.sc-card > header { padding:12px 14px; border-bottom:1px solid var(--c-border); position:relative; }
+.sc-card h3 { font-size:15px; font-weight:700; color:var(--ink); margin:0 0 2px; padding-right:96px; }
+.sc-role { font-size:12px; color:var(--muted); }
+.sc-badge { position:absolute; top:12px; right:12px; font-size:11px; font-weight:600; padding:2px 8px; border-radius:10px;
+  background:#fff; color:#2f5d9a; border:1px solid #c5d7ec; white-space:nowrap; }
+.sc-centar > header { background:var(--c-centar); }
+.sc-sluzba > header { background:var(--c-sluzba); }
+.sc-sluzba h3 { padding-right:0; }
+.sc-body { padding:10px; display:flex; flex-direction:column; gap:7px; }
+
+.sc-unit { display:flex; gap:9px; align-items:flex-start; padding:8px 10px; border-radius:8px; border:1px solid var(--c-border);
+  background:#fff; }
+.sc-unit > i { font-size:17px; line-height:1.2; color:#6c7a86; margin-top:1px; }
+.sc-unit strong { display:block; font-size:13px; font-weight:600; line-height:1.3; color:#1f2a33; }
+.sc-unit span { display:block; font-size:11.5px; color:var(--muted); margin-top:1px; }
+.sc-unit-lab { background:var(--c-lab); border-color:var(--c-lab-line); }
+.sc-unit-lab > i { color:var(--c-lab-line); }
+.sc-unit-parent { background:var(--c-grupa); }
+.sc-unit-ostalo { background:var(--c-ostalo); border-color:#d6d0e8; border-left:3px solid var(--c-ostalo-line); }
+.sc-unit-ostalo > i { color:var(--c-ostalo-line); }
+.sc-group { display:flex; flex-direction:column; gap:6px; }
+.sc-labs { list-style:none; margin:0 0 0 12px; padding:0 0 0 12px; border-left:2px solid #b9d6ce; display:flex; flex-direction:column; gap:5px; }
+.sc-unit-sublab { background:var(--c-lab); border-color:#c9e1da; padding:6px 10px; }
+
+.sc-areas { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.sc-areas li { padding:6px 10px 6px 12px; border-left:3px solid var(--c-sluzba-line); background:#fffaf2; border-radius:0 6px 6px 0; }
+.sc-areas strong { display:block; font-size:13px; font-weight:600; }
+.sc-areas span { display:block; font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+.sc-foot { font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px; margin:4px 0 0; }
+.sc .is-hit { box-shadow:0 0 0 2px #f2c94c inset; }
+.sc [hidden] { display:none !important; }
+
+@media (max-width: 768px) {
+  .org-sema-page .org-hero-metrics { display:none; }
+  .sc { padding:14px 12px 6px; }
+  .sc-legend { margin-left:0; }
+}
+</style>
+
+<div class="org-sema-page">
+  <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="org-sema-title">
+      <h1>Organizaciona šema</h1>
+      <p>Objedinjeni pregled prema aneksima A, B i C</p>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-4">
+      <div class="org-hero-metrics" aria-label="Sažetak šeme">
+        <div><strong>{{ ukupno.centri }}</strong><small>centra</small></div>
+        <div><strong>{{ ukupno.laboratorije }}</strong><small>laboratorija</small></div>
+        <div><strong>{{ ukupno.ostale_celine }}</strong><small>ostalih celina</small></div>
+        <div><strong>{{ ukupno.sluzbe }}</strong><small>zajedničke službe</small></div>
+      </div>
+      <a class="btn btn-outline-light btn-sm" href="{% url 'organizacija:stablo' %}"><i class="mdi mdi-file-tree"></i> Stablo organizacije</a>
+    </div>
+  </header>
+
+  <div class="org-sema-bar">
+    <ul class="nav org-sema-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="sema-crtez-tab" data-bs-toggle="tab" data-bs-target="#sema-crtez" type="button"
+                role="tab" aria-controls="sema-crtez" aria-selected="true"><i class="mdi mdi-sitemap me-1"></i>Šema</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="sema-lista-tab" data-bs-toggle="tab" data-bs-target="#sema-lista" type="button"
+                role="tab" aria-controls="sema-lista" aria-selected="false"><i class="mdi mdi-view-grid-outline me-1"></i>Po celinama</button>
+      </li>
+    </ul>
+    <div class="org-sema-tools" id="sema-tools">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="sema-fullscreen" title="Cela šema preko celog ekrana"><i class="mdi mdi-fullscreen"></i> Ceo ekran</button>
+      <a class="btn btn-outline-secondary btn-sm" href="{% static 'organizacija/ims-organizaciona-sema.svg' %}" target="_blank" rel="noopener" title="Otvori u novoj kartici, za uvećanje detalja"><i class="mdi mdi-open-in-new"></i> Puna veličina</a>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="sema-print"><i class="mdi mdi-printer"></i> Štampaj</button>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Preuzimanje">
+        <a class="btn btn-outline-secondary" href="{% static 'organizacija/ims-organizaciona-sema.png' %}" download="IMS-organizaciona-sema.png" title="Preuzmi PNG"><i class="mdi mdi-download"></i> PNG</a>
+        <a class="btn btn-outline-secondary" href="{% static 'organizacija/ims-organizaciona-sema.svg' %}" download="IMS-organizaciona-sema.svg" title="Preuzmi SVG">SVG</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content">
+    <section class="tab-pane fade show active org-sema-card" id="sema-crtez" role="tabpanel" aria-labelledby="sema-crtez-tab">
+      <div class="org-sema-fs-bar"><span>IMS — organizaciona šema</span>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="sema-fullscreen-exit"><i class="mdi mdi-fullscreen-exit"></i> Zatvori</button></div>
+      <div class="org-sema-view" id="sema-view">
+        <img id="sema-img" src="{% static 'organizacija/ims-organizaciona-sema.svg' %}" width="3600" height="2360"
+             alt="Organizaciona šema IMS: Skupština, Nadzorni odbor, Izvršni odbor i generalni direktor; četiri centra sa šesnaest laboratorija na krajnjem nivou, ostale celine iz Aneksa A i zajedničke službe."
+             onerror="if (!this.dataset.rezerva) { this.dataset.rezerva = '1'; this.src = '{% static 'organizacija/ims-organizaciona-sema.png' %}'; }">
+      </div>
+    </section>
+
+    <section class="tab-pane fade org-sema-card" id="sema-lista" role="tabpanel" aria-labelledby="sema-lista-tab">
+      {% include "organizacija/_sema_celine.html" %}
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  /* ---- Crtež: puna širina kartice; ceo ekran i štampa ---- */
+  var card = document.getElementById('sema-crtez');
+  var img = document.getElementById('sema-img');
+  var tools = document.getElementById('sema-tools');
+  if (card && img) {
+    document.getElementById('sema-fullscreen').addEventListener('click', function () {
+      if (card.requestFullscreen) card.requestFullscreen();
+    });
+    document.getElementById('sema-fullscreen-exit').addEventListener('click', function () {
+      if (document.fullscreenElement) document.exitFullscreen();
+    });
+    document.getElementById('sema-print').addEventListener('click', function () {
+      var prozor = window.open('', '_blank');
+      if (!prozor) { window.open(img.src, '_blank'); return; }
+      prozor.document.write('<!doctype html><html lang="sr"><head><meta charset="utf-8"><title>IMS — organizaciona šema</title>' +
+        '<style>@page{size:A3 landscape;margin:10mm}html,body{margin:0;background:#fff}img{display:block;width:100%;height:auto}</style>' +
+        '</head><body><img src="' + img.src + '" alt="Organizaciona šema IMS" onload="setTimeout(function(){window.print()},150)"></body></html>');
+      prozor.document.close();
+    });
+    document.getElementById('sema-crtez-tab').addEventListener('shown.bs.tab', function () { tools.hidden = false; });
+    document.getElementById('sema-lista-tab').addEventListener('shown.bs.tab', function () { tools.hidden = true; });
+  }
+
+  /* ---- Po celinama: pretraga ---- */
+  var polje = document.getElementById('sc-trazi');
+  var rezultat = document.getElementById('sc-rezultat');
+  if (!polje) return;
+  var koren = document.querySelector('.sc');
+  function normalizuj(tekst) {
+    return (tekst || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'dj');
+  }
+  var stavke = Array.prototype.slice.call(koren.querySelectorAll('[data-trazi]'));
+  stavke.forEach(function (el) { el.dataset.norm = normalizuj(el.getAttribute('data-trazi')); });
+  var grupe = Array.prototype.slice.call(koren.querySelectorAll('[data-grupa]')).reverse();
+  var odeljci = Array.prototype.slice.call(koren.querySelectorAll('.sc-section'));
+
+  polje.addEventListener('input', function () {
+    var upit = normalizuj(polje.value.trim());
+    var pogodaka = 0;
+    stavke.forEach(function (el) {
+      var hit = upit !== '' && el.dataset.norm.indexOf(upit) !== -1;
+      el.classList.toggle('is-hit', hit);
+      if (hit) pogodaka += 1;
+      el.hidden = upit !== '' && !hit && !el.matches('.sc-card > header');
+    });
+    // Grupa (centar, služba, laboratorijska celina) ostaje vidljiva ako se pogodi ona ili nešto u njoj.
+    grupe.forEach(function (grupa) {
+      if (upit === '') { grupa.hidden = false; return; }
+      var zaglavlje = grupa.querySelector(':scope > header, :scope > .sc-unit-parent');
+      var pogodjena = zaglavlje && zaglavlje.classList.contains('is-hit');
+      if (pogodjena) grupa.querySelectorAll('[data-trazi], [data-grupa]').forEach(function (el) { el.hidden = false; });
+      if (zaglavlje) zaglavlje.hidden = false;
+      grupa.hidden = !pogodjena && !grupa.querySelector('.is-hit');
+    });
+    odeljci.forEach(function (odeljak) {
+      odeljak.hidden = upit !== '' && !odeljak.querySelector('.is-hit');
+    });
+    rezultat.textContent = upit === '' ? '' : (pogodaka ? 'Pronađeno: ' + pogodaka : 'Nema pogodaka');
+  });
+}());
+</script>
+{% endblock %}

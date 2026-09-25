@@ -1,0 +1,113 @@
+{% comment %}
+Pregled šeme po celinama. Podaci dolaze iz `organizacija/services/sema.py`, u bojama crteža:
+upravljanje sivoplavo, centri plavo, laboratorije zeleno, ostale celine ljubičasto, službe
+narandžasto. Svaki naziv nosi `data-trazi`, po kome radi pretraga.
+{% endcomment %}
+<div class="sc">
+  <div class="sc-toolbar">
+    <div class="sc-search">
+      <i class="mdi mdi-magnify" aria-hidden="true"></i>
+      <input type="search" id="sc-trazi" placeholder="Pretraži laboratoriju, odeljenje, službu…" aria-label="Pretraga celina" autocomplete="off">
+    </div>
+    <span class="sc-rezultat" id="sc-rezultat" aria-live="polite"></span>
+    <div class="sc-legend" aria-label="Legenda">
+      <span><i class="sc-dot sc-dot-centar"></i>Centar</span>
+      <span><i class="sc-dot sc-dot-lab"></i>Laboratorija</span>
+      <span><i class="sc-dot sc-dot-odeljenje"></i>Odeljenje</span>
+      <span><i class="sc-dot sc-dot-ostalo"></i>Ostale celine</span>
+      <span><i class="sc-dot sc-dot-sluzba"></i>Služba</span>
+    </div>
+  </div>
+
+  <section class="sc-section" aria-labelledby="sc-upravljanje">
+    <h2 class="sc-heading" id="sc-upravljanje"><i class="mdi mdi-bank-outline"></i>Upravljanje</h2>
+    <div class="sc-gov">
+      <div class="sc-chain">
+        {% for organ in upravljanje.organi %}<span class="sc-chip" data-trazi="{{ organ }}">{{ organ }}</span><i class="mdi mdi-chevron-right sc-arrow" aria-hidden="true"></i>{% endfor %}
+        <span class="sc-chip sc-chip-gd" data-trazi="{{ upravljanje.direktor }}">{{ upravljanje.direktor }}</span>
+      </div>
+      <div class="sc-gov-row">
+        <div><span class="sc-caption">Uz generalnog direktora</span>
+          <div class="sc-chips">{% for funkcija in upravljanje.pomocnici %}<span class="sc-chip" data-trazi="{{ funkcija }}">{{ funkcija }}</span>{% endfor %}</div></div>
+        <div><span class="sc-caption">Povezani organi i funkcije</span>
+          <div class="sc-chips">{% for funkcija in upravljanje.povezano %}<span class="sc-chip sc-chip-dashed" data-trazi="{{ funkcija }}">{{ funkcija }}</span>{% endfor %}</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc-section" aria-labelledby="sc-centri">
+    <h2 class="sc-heading" id="sc-centri"><i class="mdi mdi-domain"></i>Centri <span class="sc-count">{{ ukupno.laboratorije }} laboratorija na krajnjem nivou · {{ po_centrima }}</span></h2>
+    <div class="sc-grid sc-grid-centri">
+      {% for centar in centri %}
+      <article class="sc-card sc-centar" data-grupa>
+        <header data-trazi="{{ centar.naziv }}">
+          <h3>{{ centar.naziv }}</h3>
+          <span class="sc-role">{{ centar.rukovodilac }}</span>
+          <span class="sc-badge">{{ centar.broj_laboratorija }} {% if centar.broj_laboratorija == 1 %}laboratorija{% else %}laboratorije{% endif %}</span>
+        </header>
+        <div class="sc-body">
+          {% for jedinica in centar.jedinice %}
+            {% if jedinica.vrsta == 'grupa' %}
+            <div class="sc-group" data-grupa>
+              <div class="sc-unit sc-unit-lab sc-unit-parent" data-trazi="{{ jedinica.naziv }}">
+                <i class="mdi mdi-flask-round-bottom-outline" aria-hidden="true"></i>
+                <div><strong>{{ jedinica.naziv }}</strong><span>{{ jedinica.rukovodilac }} · {{ jedinica.laboratorije|length }} laboratorija</span></div>
+              </div>
+              <ul class="sc-labs">
+                {% for lab in jedinica.laboratorije %}<li class="sc-unit sc-unit-sublab" data-trazi="{{ lab.naziv }}"><div><strong>{{ lab.naziv }}</strong><span>{{ lab.rukovodilac }}</span></div></li>{% endfor %}
+              </ul>
+            </div>
+            {% elif jedinica.vrsta == 'laboratorija' %}
+            <div class="sc-unit sc-unit-lab" data-trazi="{{ jedinica.naziv }}">
+              <i class="mdi mdi-flask-outline" aria-hidden="true"></i>
+              <div><strong>{{ jedinica.naziv }}</strong><span>{{ jedinica.rukovodilac }}</span></div>
+            </div>
+            {% else %}
+            <div class="sc-unit sc-unit-odeljenje" data-trazi="{{ jedinica.naziv }}">
+              <i class="mdi mdi-account-group-outline" aria-hidden="true"></i>
+              <div><strong>{{ jedinica.naziv }}</strong><span>{{ jedinica.rukovodilac }}</span></div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="sc-split">
+    <section class="sc-section" aria-labelledby="sc-ostale">
+      <h2 class="sc-heading" id="sc-ostale"><i class="mdi mdi-shield-check-outline"></i>Ostale celine iz Aneksa A <span class="sc-count">{{ ukupno.ostale_celine }}</span></h2>
+      <div class="sc-grid sc-grid-ostale">
+        {% for celina in ostale_celine %}
+        <div class="sc-unit sc-unit-ostalo" data-trazi="{{ celina.naziv }}">
+          <i class="mdi mdi-certificate-outline" aria-hidden="true"></i>
+          <div><strong>{{ celina.naziv }}</strong><span>{{ celina.rukovodilac }}</span></div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="sc-section" aria-labelledby="sc-sluzbe">
+      <h2 class="sc-heading" id="sc-sluzbe"><i class="mdi mdi-briefcase-outline"></i>Zajedničke službe <span class="sc-count">{{ ukupno.sluzbe }}</span></h2>
+      <div class="sc-grid sc-grid-sluzbe">
+        {% for sluzba in sluzbe %}
+        <article class="sc-card sc-sluzba" data-grupa>
+          <header data-trazi="{{ sluzba.naziv }}">
+            <h3>{{ sluzba.naziv }}</h3>
+            <span class="sc-role">{{ sluzba.rukovodilac }}</span>
+          </header>
+          <div class="sc-body">
+            <span class="sc-caption">Oblasti poslova</span>
+            <ul class="sc-areas">
+              {% for oblast in sluzba.oblasti %}<li data-trazi="{{ oblast.naziv }} {{ oblast.opis|default:'' }}"><strong>{{ oblast.naziv }}</strong>{% if oblast.opis %}<span>{{ oblast.opis }}</span>{% endif %}</li>{% endfor %}
+            </ul>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <p class="sc-foot">Nazivi i struktura prema dostavljenim prilozima (aneksi A, B i C). Veze organa i funkcija i nadležnosti su za potvrdu.</p>
+</div>

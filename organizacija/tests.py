@@ -543,9 +543,10 @@ class TreeViewTests(ImportTestCase):
         RolePermission.objects.create(role=role, permission=permission)
         self.user.roles.add(role)
 
-    def test_without_permission_access_is_denied(self):
+    def test_every_logged_in_user_sees_the_tree(self):
+        """Organizaciju vide svi prijavljeni korisnici, bez posebne uloge."""
         self.client.force_login(self.user)
-        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertEqual(self.client.get(self.url).status_code, 200)
 
     def test_anonymous_is_redirected_to_login(self):
         response = self.client.get(self.url)
@@ -778,12 +779,20 @@ class NodeDetailViewTests(ImportTestCase):
         self.client.force_login(self.user)
         self.assertEqual(self.client.get(reverse("organizacija:cvor", args=[999999])).status_code, 404)
 
-    def test_without_permission_access_is_denied(self):
+    def test_every_logged_in_user_sees_the_node_without_ledger_amounts(self):
         other = get_user_model().objects.create_user("bez", password="t")
-        other.is_superuser = False
-        other.save()
         self.client.force_login(other)
-        self.assertEqual(self.client.get(self.url).status_code, 403)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Duguje")
+
+    def test_ledger_amounts_need_the_finance_ledger_permission(self):
+        role = Role.objects.create(name="Knjiženja", slug="knjizenja")
+        permission, _ = PermissionCode.objects.get_or_create(code="finansije:ledger")
+        RolePermission.objects.create(role=role, permission=permission)
+        self.user.roles.add(role)
+        self.client.force_login(self.user)
+        self.assertContains(self.client.get(self.url), "Duguje")
 
     def test_tree_links_to_the_detail(self):
         self.client.force_login(self.user)
@@ -1125,3 +1134,38 @@ class ActivityOnDetailTests(ImportTestCase):
     def test_no_disagreement_notice_when_both_agree(self):
         content = self._detail("430111")
         self.assertNotIn("Razilazi se sa izvorom", content)
+
+
+class OrgSemaViewTests(TestCase):
+    """Organizaciona šema: poseban ekran za sve prijavljene korisnike, sa linkom u bočnom meniju."""
+
+    def setUp(self):
+        self.url = reverse("organizacija:sema")
+        self.user = get_user_model().objects.create_user("sema", password="t")
+
+    def test_anonymous_is_redirected_to_login(self):
+        self.assertIn(self.client.get(self.url).status_code, (301, 302))
+
+    def test_every_logged_in_user_sees_the_chart_and_sidebar_link(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="sema-img"')
+        self.assertContains(response, 'id="sc-trazi"')
+        self.assertContains(response, "organizacija/ims-organizaciona-sema.svg")
+        self.assertContains(response, "organizacija/ims-organizaciona-sema.png")
+        self.assertContains(response, "Laboratorija za ispitivanje geotehničkih konstrukcija")
+        self.assertContains(response, "Materijali 9 · Metali i energetika 2 · Putevi i geotehnika 4 · Konstrukcije 1")
+        self.assertContains(response, "Centar za materijale")
+        self.assertContains(response, f'href="{self.url}"')
+        self.assertEqual(self.client.session["current_app"], "organizacija")
+
+    def test_schema_counts_match_the_drawing(self):
+        from organizacija.services.sema import sema
+
+        self.assertEqual(sema()["ukupno"], {"centri": 4, "laboratorije": 16, "ostale_celine": 8, "sluzbe": 2})
+
+    def test_route_is_a_permission_code(self):
+        from core.permissions import collect_permission_codes
+
+        self.assertIn("organizacija:sema", collect_permission_codes())

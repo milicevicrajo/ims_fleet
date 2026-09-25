@@ -53,9 +53,9 @@ def current_app(request):
                          "evaluation_list", "resenje_list", "zahtev_list")
         },
         "sidebar_template": sidebar_map.get(app, "sidebar_fleet.html"),
+        # Organizaciju vide svi prijavljeni korisnici (organizacija/views.py).
         "organizacija_permissions": {
-            code: user_has_role_permission(request.user, f"organizacija:{code}")
-            for code in ("stablo",)
+            code: request.user.is_authenticated for code in ("stablo", "sema")
         },
         "nabavka_permissions": {
             code: user_has_role_permission(request.user, f"nabavka:{code}")

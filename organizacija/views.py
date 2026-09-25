@@ -3,17 +3,20 @@ from django.http import Http404
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
-from core.mixins import role_permission_required
+from core.mixins import user_has_role_permission
 from organizacija.models import OrgImportRun
 from organizacija.services import detail as detail_service
+from organizacija.services import sema as sema_service
 from organizacija.services import tree as tree_service
 
 COMPANY = 1
+# Organizaciju vide svi prijavljeni korisnici. Iznose knjiženja na kartici posla vidi
+# samo onaj ko u Finansijama sme da gleda knjiženja.
+LEDGER_PERMISSION = "finansije:ledger"
 
 
 @require_GET
 @login_required
-@role_permission_required()
 def stablo(request):
     """Stablo organizacije, samo za citanje.
 
@@ -50,7 +53,14 @@ def stablo(request):
 
 @require_GET
 @login_required
-@role_permission_required()
+def sema(request):
+    """Organizaciona šema IMS prema aneksima A, B i C — statičan prikaz, bez podataka iz registra."""
+    request.session["current_app"] = "organizacija"
+    return render(request, "organizacija/sema.html", sema_service.sema())
+
+
+@require_GET
+@login_required
 def cvor(request, pk):
     """Kartica jednog cvora: podaci, putanja, potomci, istorija i povezivanja.
 
@@ -61,5 +71,6 @@ def cvor(request, pk):
     data = detail_service.node_detail(pk)
     if data is None:
         raise Http404("Cvor ne postoji.")
-    data["usage"] = detail_service.ledger_usage(data)
+    data["usage"] = (detail_service.ledger_usage(data)
+                     if user_has_role_permission(request.user, LEDGER_PERMISSION) else None)
     return render(request, "organizacija/cvor.html", data)
