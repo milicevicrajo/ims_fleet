@@ -21,7 +21,7 @@ class Command(BaseCommand):
             z = prava.prevedi()
             self.stdout.write(
                 f"Prevod: korisnika sa ulogom {z['korisnika']}, dodela u nacrtu {z['dodela']}, bez uloge {z['bez_uloge']}, "
-                f"sa kadrovskim OJ (ceka mapu) {z['kadrovske_oj']}")
+                f"vec odobrenih (ne dira se) {z['odobreni']}")
             if z["nepoznate_oznake"]:
                 self.stdout.write(f"  oznake centra bez cvora: {dict(z['nepoznate_oznake'])}")
             if z["oj_van_registra"]:

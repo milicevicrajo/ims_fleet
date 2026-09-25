@@ -94,10 +94,6 @@ class CustomUser(AbstractUser):
         verbose_name=_("Mora promeniti lozinku"),
     )
 
-    allowed_hr_unit_codes = models.JSONField(
-        default=list, blank=True, verbose_name=_("Dozvoljene kadrovske OJ"),
-    )
-
     roles = models.ManyToManyField(
         Role,
         blank=True,

@@ -21,6 +21,13 @@
           </a>
         </li>
         {% endif %}
+        {% if organizacija_permissions.dodele %}
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'organizacija:dodele' %}">
+            <i class="mdi mdi-account-key"></i><span class="hide-menu">Dodele uloga</span>
+          </a>
+        </li>
+        {% endif %}
       </ul>
     </nav>
   </div>

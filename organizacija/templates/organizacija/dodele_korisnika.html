@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% comment %}
+Dodele uloga jednog korisnika: sve dodele sa istorijom, stara prava, senka i nova ručna dodela.
+Opozvana dodela ostaje u tabeli sa krajem važenja; briše se samo neodobren nacrt.
+{% endcomment %}
+{% block title %}Dodele — {{ korisnik.username }} — IMS{% endblock %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+{% include "organizacija/_styles.html" %}
+{% include "organizacija/_dodele_styles.html" %}
+
+<div class="org-page">
+  <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="org-kicker"><a href="{% url 'organizacija:dodele' %}" class="text-reset">Dodele uloga</a> · Korisnik</div>
+      <h1>{{ korisnik.username }}</h1>
+      <p>{{ korisnik.get_full_name|default:"" }}{% if not korisnik.is_active %} · <strong>neaktivan nalog</strong>{% endif %}
+        · Uloge: {% for u in korisnik.roles.all %}{{ u.name }}{% if not forloop.last %}, {% endif %}{% empty %}nema{% endfor %}</p>
+    </div>
+    <div class="org-hero-right">
+      {% if nacrt and moze_odobri %}
+        <form method="post" action="{% url 'organizacija:dodele_odobri' korisnik.pk %}">{% csrf_token %}
+          <button class="btn btn-success btn-sm" type="submit"><i class="mdi mdi-check"></i> Odobri nacrt ({{ nacrt }})</button>
+        </form>
+      {% endif %}
+    </div>
+  </header>
+
+  <p class="org-note mt-3">
+    <strong>Dodele još ne odlučuju o pristupu</strong> — do pilota korisnik radi po starim pravima. Odobren korisnik se više ne menja
+    prevodom starih prava. Obuhvat centra pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
+  </p>
+
+  <div class="dd-grid">
+    <div>
+      <div class="table-responsive dd-table">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Uloga</th><th>Obuhvat</th><th>Važi</th><th>Status</th><th>Poreklo</th>{% if moze_opozovi %}<th></th>{% endif %}</tr></thead>
+          <tbody>
+            {% for d in dodele %}
+              <tr {% if not d.vazi and d.dodela.status == "aktivna" %}class="is-past"{% endif %}>
+                <td>{{ d.dodela.uloga.name }}</td>
+                <td>{{ d.opis }}{% if d.nivo and d.nivo != "firma" %} <span class="small text-muted">({{ d.nivo }})</span>{% endif %}</td>
+                <td class="small text-nowrap">od {{ d.dodela.vazi_od|date:"d.m.Y." }}{% if d.dodela.vazi_do %}<br>do {{ d.dodela.vazi_do|date:"d.m.Y." }}{% endif %}</td>
+                <td>
+                  {% if d.dodela.status == "nacrt" %}<span class="dd-draft">Nacrt</span>
+                  {% elif d.dodela.opozvano %}<span class="dd-off">Opozvana</span>
+                  {% elif d.istekla %}<span class="dd-off">Istekla</span>
+                  {% elif d.vazi %}<span class="dd-ok">Odobrena</span>
+                  {% else %}<span class="dd-off">Počinje kasnije</span>{% endif %}
+                </td>
+                <td class="small">
+                  {{ d.dodela.napomena|default:d.dodela.get_izvor_display }}
+                  {% if d.dodela.odobreno %}<div class="text-muted">odobrio {{ d.dodela.odobrio.username|default:"—" }}, {{ d.dodela.odobreno|date:"d.m.Y. H:i" }}</div>{% endif %}
+                  {% if d.dodela.opozvano %}<div class="text-muted">opozvao {{ d.dodela.opozvao.username|default:"—" }}, {{ d.dodela.opozvano|date:"d.m.Y. H:i" }}</div>{% endif %}
+                </td>
+                {% if moze_opozovi %}
+                  <td class="text-end">
+                    {% if d.dodela.status == "nacrt" or not d.dodela.opozvano and not d.istekla %}
+                      <form method="post" action="{% url 'organizacija:dodela_opozovi' d.dodela.pk %}"
+                            onsubmit="return confirm('{% if d.dodela.status == "nacrt" %}Obrisati ovaj nacrt?{% else %}Opozvati dodelu od danas?{% endif %}');">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-danger btn-sm" type="submit">{% if d.dodela.status == "nacrt" %}Obriši nacrt{% else %}Opozovi{% endif %}</button>
+                      </form>
+                    {% endif %}
+                  </td>
+                {% endif %}
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-muted">Korisnik nema nijednu dodelu — po novom pravilu ne bi video ništa.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <section class="dd-card">
+        <h2>Stara prava (danas odlučuju)</h2>
+        <dl>
+          <dt>Centri</dt><dd>{{ stari_centri|join:", "|default:"—" }}</dd>
+          <dt>OJ</dt><dd>{% for code, name in stare_oj|slice:":12" %}<code>{{ code }}</code>{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}{% if stare_oj|length > 12 %} … ukupno {{ stare_oj|length }}{% endif %}</dd>
+        </dl>
+      </section>
+
+      <section class="dd-card">
+        <h2>Senka</h2>
+        {% if senka %}{% include "organizacija/_senka.html" with senka=senka detalji=True %}{% else %}<span class="text-muted small">Nalog nije aktivan ili je superuser.</span>{% endif %}
+        <p class="org-note mb-0">Broj zapisa koje vidi danas → broj koji bi video po nacrtu i odobrenim dodelama.</p>
+      </section>
+
+      <section class="dd-card">
+        <h2>Nova dodela</h2>
+        {% if form.fields.uloga.queryset.exists %}
+          <form method="post">{% csrf_token %}
+            {% if form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+            {% for field in form %}
+              <div class="mb-2">
+                <label class="form-label small mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              </div>
+            {% endfor %}
+            <button class="btn btn-primary btn-sm" type="submit">Upiši i odobri</button>
+          </form>
+        {% else %}
+          <p class="small text-muted mb-0">Korisnik nema nijednu aktivnu ulogu. Uloga se dodaje u uređivanju korisnika; ovde joj se određuje obuhvat.</p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

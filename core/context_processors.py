@@ -58,6 +58,7 @@ def current_app(request):
         "organizacija_permissions": {
             **{code: request.user.is_authenticated for code in ("stablo", "sema")},
             "flota": user_has_role_permission(request.user, "organizacija:flota"),
+            "dodele": user_has_role_permission(request.user, "organizacija:dodele"),
         },
         "nabavka_permissions": {
             code: user_has_role_permission(request.user, f"nabavka:{code}")

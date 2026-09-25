@@ -40,11 +40,10 @@
                 </td>
                 <td data-label="Zaposleni / OJ" class="users-employee">{% if account.employee %}<a href="{% url 'employee_detail' account.employee.pk %}" title="Zaposleni {{ account.employee.employee_code }}">{{ account.employee.employee_code }}</a><span class="users-unit"> · OJ {{ account.employee.org_unit_code|default:'/' }}</span>{% else %}<span class="users-secondary">—</span>{% endif %}</td>
                 <td data-label="Uloge"><div class="users-role-tags">{% for role in account.roles.all %}<span class="users-role{% if not role.is_active %} is-inactive{% endif %}" title="{{ role.description|default:role.name }}">{{ role.name }}{% if not role.is_active %} · neaktivna{% endif %}</span>{% empty %}<span class="users-secondary">Bez uloge</span>{% endfor %}</div>{% if account.is_superuser %}<span class="users-admin">Superuser</span>{% elif account.is_staff %}<span class="users-secondary">Pristup Django adminu</span>{% endif %}</td>
-                <td data-label="Obuhvat" data-search="{{ account.centers_display }} {{ account.hr_units_display }}">
+                <td data-label="Obuhvat" data-search="{{ account.centers_display }}">
                   {% if account.is_superuser %}<span class="users-scope-all">Svi podaci</span><span class="users-secondary">Bez ograničenja</span>{% else %}
                     {% if account.centers_display != '-' %}<span class="users-scope-value" title="{{ account.centers_display }}"><span class="users-scope-label">Centri:</span> {{ account.centers_display|truncatechars:42 }}</span>{% endif %}
-                    {% if account.hr_units_display %}<span class="users-scope-value" title="{{ account.hr_units_display }}"><span class="users-scope-label">Kadrovske OJ:</span> {{ account.hr_units_display|truncatechars:42 }}</span>{% endif %}
-                    {% if account.centers_display == '-' and not account.hr_units_display %}<span class="users-secondary" title="Prazan izbor prati pravila svakog modula.">Obuhvat nije zadat</span>{% endif %}
+                    {% if account.centers_display == '-' %}<span class="users-secondary" title="Prazan izbor prati pravila svakog modula.">Obuhvat nije zadat</span>{% endif %}
                   {% endif %}
                 </td>
                 <td data-label="Prijava" data-order="{{ account.last_login|date:'U'|default:'0' }}">{% if account.last_login %}<span class="users-date">{{ account.last_login|date:'d.m.Y.' }}</span><span class="users-secondary">{{ account.last_login|date:'H:i' }}</span>{% else %}<span class="users-secondary">Još nije prijavljen</span>{% endif %}{% if account.must_change_password %}<span class="users-password"><i class="mdi mdi-lock-outline" aria-hidden="true"></i> Promena lozinke</span>{% endif %}</td>

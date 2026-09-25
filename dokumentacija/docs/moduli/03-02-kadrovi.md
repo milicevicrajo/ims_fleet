@@ -289,8 +289,9 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 Od 24.09.2026. `hr/access.py` ograničava spisak, detalje i izmenu zaposlenih, radne liste,
 odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i pojedinačni
-unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Kadrovske OJ biraju se
-u Administracija → Korisnici → Uloge i dozvole. Ograničenja podataka ne menjaju obračune
+unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Obuhvat se bira po centrima
+u Administracija → Korisnici → Uloge i dozvole (izbor pojedinačnih kadrovskih OJ uklonjen je
+25.09.2026. — niko ga nije koristio). Ograničenja podataka ne menjaju obračune
 ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
 
 ### Forme Kadrova u sekcijama

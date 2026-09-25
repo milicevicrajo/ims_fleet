@@ -1,0 +1,23 @@
+{% comment %}Stilovi ekrana dodela uloga — sve pod `.org-page`, kao i ostali ekrani organizacije.{% endcomment %}
+<style>
+.org-page .dd-table { border: 1px solid #e3e6ec; border-radius: 8px; background: #fff; }
+.org-page .dd-table table { font-size: 13px; }
+.org-page .dd-table tr.is-diff td { background: #fff6dd; }
+.org-page .dd-scope { display: inline-block; margin: 1px 4px 1px 0; padding: 1px 8px; border-radius: 10px;
+  background: #eef1f6; color: #37415a; white-space: nowrap; }
+.org-page .dd-ok { display: inline-block; padding: 1px 8px; border-radius: 10px; background: #e6f2e8; color: #1f5d33; font-weight: 600; }
+.org-page .dd-draft { display: inline-block; padding: 1px 8px; border-radius: 10px; background: #fff3d6; color: #8a5a12; font-weight: 600; }
+.org-page .dd-off { display: inline-block; padding: 1px 8px; border-radius: 10px; background: #f1f3f7; color: #6c757d; }
+.org-page .dd-senka { font-size: 12px; line-height: 1.5; }
+.org-page .dd-senka.is-diff strong { color: #8a5a12; }
+.org-page .dd-plus { color: #1f5d33; margin-left: 6px; }
+.org-page .dd-minus { color: #8d2e2e; margin-left: 6px; }
+.org-page .dd-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 991px) { .org-page .dd-grid { grid-template-columns: minmax(0, 1fr); } }
+.org-page .dd-card { border: 1px solid #e3e6ec; border-radius: 8px; background: #fff; padding: 14px 16px; margin-bottom: 16px; }
+.org-page .dd-card h2 { font-size: 15px; margin: 0 0 10px; }
+.org-page .dd-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13px; }
+.org-page .dd-card dt { font-weight: 400; color: #6c757d; }
+.org-page .dd-card dd { margin: 0; }
+.org-page tr.is-past td { color: #98a1b0; }
+</style>

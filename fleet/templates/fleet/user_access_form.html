@@ -24,11 +24,9 @@
       <div class="card shadow-sm"><div class="card-header"><h4 class="mb-0">Obuhvat podataka</h4></div><div class="card-body">
         <div class="d-flex justify-content-between"><label class="form-label" for="id_center_codes">Centri</label><button type="button" class="btn btn-link btn-sm p-0" data-select-all="id_center_codes">Izaberi sve centre</button></div>{{ form.center_codes }}{{ form.center_codes.errors }}
         <p class="text-muted small mt-2">Centar daje pristup pripadajućim jedinicama. Pretražite šifru i dodajte više centara.</p>
-        <label class="form-label" for="id_hr_unit_codes">Kadrovske organizacione jedinice</label>{{ form.hr_unit_codes }}{{ form.hr_unit_codes.errors }}
-        <p class="text-muted small mt-2">Pojedinačne OJ zaposlenih, npr. 411 ili 431. Dodaju se izabranim centrima. Za pristup samo jednoj OJ nemojte izabrati i njen ceo centar.</p>
         <details class="mt-3" {% if form.allowed_centers.errors %}open{% endif %}><summary>Organizacione jedinice i poslovi iz postojećeg šifarnika</summary>
           <div class="mt-2">{{ form.allowed_centers }}{{ form.allowed_centers.errors }}</div>
-          <p class="text-muted small mt-2">Postojeće dodele za Flotu i druge module. Neki moduli iz ove dodele izvode pristup celom centru; ovo nije isto što i kadrovska OJ.</p>
+          <p class="text-muted small mt-2">Postojeće dodele za Flotu i druge module. Neki moduli iz ove dodele izvode pristup celom centru.</p>
         </details>
         <p class="small text-muted mt-3 mb-0">Kadrovi bez izabranog obuhvata nemaju pristup tuđim kadrovskim podacima. Posebne dozvole za sve centre imaju prednost. Kod ostalih modula prazan izbor prati njihova postojeća pravila i ne znači automatski zabranu.</p>
       </div></div>

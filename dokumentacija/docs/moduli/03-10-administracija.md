@@ -165,14 +165,14 @@ Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u
 ### Upravljanje pristupom kroz aplikaciju
 
 U **Administracija → Korisnici → Uloge i dozvole**, superuser bira uloge,
-centre i kadrovske OJ iz pretraživih spiskova. Tu se menjaju ime, prezime,
+centre iz pretraživih spiskova. Tu se menjaju ime, prezime,
 e-pošta i aktivnost naloga. Pregled dozvola prati izabrane uloge, a primena je
 tek nakon **Sačuvaj pristup**. Pristup listi traži `user_list`; izmene naloga su
 i dalje samo za superuser, uključujući direktan POST. Nije moguće ugasiti sopstveni
 nalog niti kroz ovu formu dodeliti `is_superuser` ili `is_staff`.
 
-Centri se čuvaju u `allowed_center_codes`. Kadrovske OJ (npr. 411 i 431) čuvaju
-se zasebno u `allowed_hr_unit_codes`; izbor jedne OJ ne uključuje njene susedne OJ.
+Centri se čuvaju u `allowed_center_codes`. Izbor pojedinačnih kadrovskih OJ
+(`allowed_hr_unit_codes`) **uklonjen je 25.09.2026.** — nijedan korisnik ga nije imao.
 Postojeći M2M `allowed_centers` je u zasebnom odeljku jer sadrži i šifre poslova,
 a pojedini moduli iz njega izvode pristup celom centru. Dodele se sabiraju.
 
@@ -191,6 +191,26 @@ Provera od 24.09.2026. našla je i dodeljene probne uloge `render-check` i
 `render-check-2`. Nisu obrisane niti su njihovi korisnici menjani. Noćni sync za
 neke standardne uloge i dalje prepisuje skup dozvola; ovaj ekran menja članstvo
 korisnika, a ne definiciju zajedničke uloge.
+
+### Dodele uloga sa obuhvatom (od 25.09.2026.) [P]
+
+**Organizacija → Dodele uloga** (`/organizacija/dodele/`) je ekran novog modela prava iz plana
+prelaska na registar (korak 3). Za svaku ulogu korisnika određuje se **obuhvat** u stablu
+organizacije: cela firma, centar, jedinica ili šifra posla, sa periodom važenja. Obuhvat centra
+pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
+
+| Radnja | Šta radi |
+|---|---|
+| Spisak | Korisnici sa brojem dodela u nacrtu i odobrenih; filter „Ima nacrt / Odobreni / Bez dodela”; **Proveri razlike (senka)** poredi sve korisnike (traje ~10 s) |
+| Kartica korisnika | Sve dodele sa istorijom, stara prava koja danas odlučuju i senka samo za tog korisnika |
+| **Odobri nacrt** | Nacrt iz prevoda starih prava postaje odobren; beleži se ko i kada. Odobrenog korisnika prevod (`prava_u_senci`) više ne menja |
+| **Nova dodela** | Ručna dodela, odmah odobrena; nude se samo uloge koje korisnik već ima i samo **aktivne** šifre; ista uloga sa istim obuhvatom u preklopljenom periodu se odbija |
+| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; neodobren nacrt se briše |
+
+Dozvole: `organizacija:dodele`, `organizacija:dodele_korisnika`, `organizacija:dodele_odobri`,
+`organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Dodele još ne odlučuju o pristupu**:
+moduli rade po starim pravima (`allowed_center_codes`, `allowed_centers`) do pilota Finansija i
+Potraživanja. Uloga Uprava dobija celu firmu kao običnu dodelu, ne kao izuzetak u proveri.
 
 ---
 

@@ -6,7 +6,6 @@ from django.db.models import Q
 
 from core.activity import log_activity
 from core.models import CustomUser, OrganizationalUnit, Role
-from hr.models import Employee
 
 
 def split_codes(raw):
@@ -18,7 +17,6 @@ def access_snapshot(account):
         'roles': list(account.roles.order_by('slug').values_list('slug', flat=True)),
         'centers': split_codes(account.allowed_center_codes),
         'units': list(account.allowed_centers.order_by('pk').values_list('pk', flat=True)),
-        'hr_units': account.allowed_hr_unit_codes,
         'is_active': account.is_active,
     }
 
@@ -51,7 +49,6 @@ def permission_label(permission):
 
 class UserAccessForm(forms.ModelForm):
     center_codes = forms.MultipleChoiceField(label='Centri', required=False)
-    hr_unit_codes = forms.MultipleChoiceField(label='Kadrovske organizacione jedinice', required=False)
     roles = RoleChoiceField(label='Uloge', queryset=Role.objects.none(), required=False)
     allowed_centers = UnitChoiceField(label='Organizacione jedinice i poslovi iz postojećeg šifarnika',
                                      queryset=OrganizationalUnit.objects.none(), required=False)
@@ -78,11 +75,7 @@ class UserAccessForm(forms.ModelForm):
             from fleet.support.registar import ogranici_izbor
             dodeljene = set(self.instance.allowed_centers.values_list('pk', flat=True)) if self.instance.pk else set()
             ogranici_izbor(self.fields['allowed_centers'], registar=registar, zadrzi=dodeljene)
-        units = {str(c or d or '').strip() for c,d in Employee.objects.values_list('org_unit_code','department_code')}
-        units.update(self.instance.allowed_hr_unit_codes or [])
-        self.fields['hr_unit_codes'].choices = [(c, f'OJ {c}') for c in sorted(units - {''},key=lambda x:(len(x),x))]
         self.initial['center_codes'] = split_codes(self.instance.allowed_center_codes)
-        self.initial['hr_unit_codes'] = self.instance.allowed_hr_unit_codes or []
         for name, field in self.fields.items():
             field.widget.attrs['class'] = ('form-check-input' if name=='is_active' else
                 'form-select select2-method' if isinstance(field, forms.MultipleChoiceField) or isinstance(field, forms.ModelMultipleChoiceField) else 'form-control')
@@ -104,8 +97,7 @@ class UserAccessForm(forms.ModelForm):
         before = access_snapshot(previous)
         account = super().save(commit=False)
         account.allowed_center_codes = ','.join(self.cleaned_data['center_codes'])
-        account.allowed_hr_unit_codes = self.cleaned_data['hr_unit_codes']
-        account.save(update_fields=['first_name','last_name','email','is_active','allowed_center_codes','allowed_hr_unit_codes'])
+        account.save(update_fields=['first_name','last_name','email','is_active','allowed_center_codes'])
         self.save_m2m()
         # Noćni sync prevodi ove stare Django grupe u uloge; uklanjanje uloge mora opstati.
         selected = set(account.roles.values_list('slug', flat=True))

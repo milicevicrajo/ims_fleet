@@ -54,7 +54,6 @@ class UserListView(LoginRequiredMixin, RolePermissionRequiredMixin, ListView):
             all_centers = sorted(set(center_codes + unit_centers), key=lambda value: (len(value), value))
             user.roles_display = ", ".join(role_names) or "-"
             user.centers_display = ", ".join(all_centers) or "-"
-            user.hr_units_display = ', '.join(user.allowed_hr_unit_codes or [])
             user.login_status_display = "Ulazio" if user.last_login else "Nije ulazio"
             user.password_status_display = (
                 "Nije promenio inicijalnu lozinku"

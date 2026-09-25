@@ -9,7 +9,7 @@ def scope_values(user):
     centers = {x.strip() for x in (user.allowed_center_codes or '').replace(';', ',').split(',') if x.strip()}
     legacy = list(user.allowed_centers.values_list('code', 'center'))
     centers.update(str(center).strip() for _,center in legacy if center and str(center).strip())
-    units = set(user.allowed_hr_unit_codes or [])
+    units = set()
     units.update(str(code).strip() for code,_ in legacy if code and str(code).strip())
     return centers, units
 

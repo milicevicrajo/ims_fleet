@@ -925,5 +925,9 @@ class NeaktivneSifreIGarazaTests(ImportTestCase):
 
         korisnik = get_user_model().objects.create_user("garaza-korisnik", password="x")
         korisnik.roles.add(Role.objects.get_or_create(slug="garaza", defaults={"name": "Garaža"})[0])
+        # Odluka 25.09.2026.: i Nabavka i Blagajna vide sve.
+        nabavka = get_user_model().objects.create_user("nabavka-korisnik", password="x", allowed_center_codes="43")
+        nabavka.roles.add(Role.objects.get_or_create(slug="nabavka", defaults={"name": "Nabavka"})[0])
         prava.prevedi()
         self.assertTrue(DodelaUloge.objects.get(korisnik=korisnik, status=DodelaUloge.STATUS_NACRT).cela_firma)
+        self.assertTrue(DodelaUloge.objects.get(korisnik=nabavka, status=DodelaUloge.STATUS_NACRT).cela_firma)

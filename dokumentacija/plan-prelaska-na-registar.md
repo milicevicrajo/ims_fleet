@@ -1,6 +1,6 @@
 # Plan prelaska na registar organizacije — čitanje, prava i gašenje stare organizacije
 
-Datum: **25.09.2026.** · Status: **u realizaciji** — koraci 1 i 2 izvedeni, korak 4 delimično (senka bez razlika); ništa od toga još ne odlučuje o pristupu
+Datum: **25.09.2026.** · Status: **u realizaciji** — koraci 1, 2 i 3 izvedeni, korak 4 izveden (senka: 4 razlike, sve potvrđene); ništa od toga još ne odlučuje o pristupu
 
 Ovaj plan je nastavak [plana registra šifara posla](plan-registra-sifara-posla.md) i razrađuje
 preostale korake **2–9** iz [plana organizacije i dozvola V2](plan-organizacije-i-dozvola-v2.md),
@@ -27,7 +27,7 @@ zapisi sa šifrom posla imaju vezu `org_node`** [P]:
 - **filteri, zbirovi i grupisanja po centru** — u svakom modulu, preko starog polja
   (`OrganizationalUnit.center`, `LedgerEntry.center`, `center_code`);
 - **prava pristupa po centru** — `CustomUser.allowed_centers` (M2M na `OrganizationalUnit`),
-  `allowed_center_codes` (tekst) i `allowed_hr_unit_codes` (kadrovske OJ);
+  `allowed_center_codes` (tekst); `allowed_hr_unit_codes` (kadrovske OJ) uklonjen je 25.09.2026.;
 - **brojevi dokumenata** — putni nalog `43/2026-…`, predmet nabavke `ZN-43/2026-…`;
 - **stara sinhronizacija** (`fetch_job_codes`, 01:30) i tabela `OrganizationalUnit`.
 
@@ -80,7 +80,7 @@ Ovo su koraci **2–4 iz V2**. Danas prava i obuhvat žive odvojeno i na tri na�
 |---|---|
 | `allowed_centers` (M2M na `OrganizationalUnit`) | 15 fajlova u Floti, po 2 u Potraživanjima, HR i core, 1 u Finansijama |
 | `allowed_center_codes` (tekst, zarezi) | 7 u Floti, 2 u HR i core, po 1 u Finansijama i Potraživanjima |
-| `allowed_hr_unit_codes` (kadrovske OJ) | HR i core |
+| ~~`allowed_hr_unit_codes`~~ (kadrovske OJ) | **uklonjeno 25.09.2026.** — niko ga nije koristio |
 | Pomoćne funkcije obuhvata | `finansije.access.visible_scope`, `potrazivanja.access.scoped`, `fleet.mixins.CenterMixin`, `fleet.support.management_reports.allowed_centers`, `putni_nalozi._get_allowed_centers`, `hr.access.allowed_unit_codes` — **šest različitih tumačenja** |
 
 Ista dva polja se u Floti negde sabiraju, a negde se čita samo M2M (popis mesta u kodu od
@@ -99,7 +99,7 @@ Ista dva polja se u Floti negde sabiraju, a negde se čita samo M2M (popis mesta
    |---|---|
    | `allowed_centers` (OJ) | **ceo centar te OJ**, kao danas (odluka 25.09.2026.) |
    | `allowed_center_codes` | čvor centra; oznake `20`, `30` → centri `2`, `3`; `96` (Test centar) → ništa [P] |
-   | `allowed_hr_unit_codes` | kadrovska OJ (tok 3.3) |
+   | ~~`allowed_hr_unit_codes`~~ | uklonjeno 25.09.2026. — nema posebne kadrovske organizacije |
    | Uloga „Uprava” | obuhvat cele firme |
 
 4. **Senka** (V2, korak 4): nova provera se računa uporedo sa starom, ali ne odlučuje. Svaka
@@ -125,33 +125,38 @@ korisnika, Potraživanja 7 — svi sa punim pristupom (`view_all`); putne naloge
 tekstu centra). Odluka 3 je doneta tako da ta dva korisnika zadrže današnji pristup.
 
 **Korisnici bez obuhvata [P]** (8): `helena.stevancevic` (Uprava — cela firma), `ivana.sibinovic`
-(u Potraživanjima `view_all`), `ana.andjelkovic` (Nabavka ne ograničava po centru),
-`milena.stojanovski` (Blagajna — ne ograničava po centru) — bez promene; **`zoran` (Garaža) bi
-izgubio Flotu**; `tmp-putni`, `render-check-phone-filter`, `render-check-phone-filter-2` — probni
-nalozi, predlog: deaktivirati.
-Senka još ne pokriva Flotu van putnih naloga (kontrolna tabla, vozila) ni Kadrove.
+(u Potraživanjima `view_all`), `ana.andjelkovic` i `milena.stojanovski` — **odluka 25.09.2026.:
+uloge Nabavka i Blagajna vide sve** (cela firma, kao Uprava i Garaža; nacrt obema odobren);
+`zoran` (Garaža) — cela firma. Probni nalozi `tmp-putni`, `render-check-phone-filter`,
+`render-check-phone-filter-2` i uloge `render-check`, `render-check-2` **obrisani su 25.09.2026.**
+**Senka za Flotu (25.09.2026.) [P]** — poredi i spisak vozila i kontrolnu tablu Flote. Današnja
+pravila koja senka poštuje: **spisak vozila nema ograničenje po centru** (svako sa `vehicle_list`
+vidi sva vozila); kontrolna tabla gleda samo centre dodeljenih OJ. Kadrovi nisu u senci (3.3).
+Rezultat na živoj bazi: 320 korisnika, **4 sa razlikom — sve potvrđene**:
 
-### 3.3. Kadrovska organizacija i sistematizacija
+| Korisnik | Razlika | Uzrok |
+|---|---|---|
+| `zoran` (Garaža) | putni nalozi 0 → 3.740 | Garaža — cela firma, samo čitanje; potvrđeno |
+| `mirjana.zivanovic`, `olivera.mazibrada`, `vladimir.markovic` (Pregled, centar 43) | vozila i kontrolna tabla 164 → 98 | Danas vide sva vozila jer spisak nema ograničenje; **odlučeno 25.09.2026.: samo svoj centar** — važi za svakog korisnika vozila osim Uprave i Garaže |
 
-Kadrovske OJ **prate numeraciju pravilnika**, isto kao šifre posla, ali opisuju **ljude**, ne
-poslove [P]:
+### 3.3. Kadrovi i sistematizacija — bez posebne kadrovske organizacije
 
-| Kadrovska OJ | Radnika | U registru |
-|---|---:|---|
-| 411–418, 421, 422, 431, 432, 441–443 | 211 | jedinica istog broja |
-| 41, 42, 43, 44, 60, 70, 81, 82 | 54 | centar istog broja |
-| **4331, 4332** (laboratorije u okviru 4.3.3) | 51 | nema — nemaju svoje šifre posla |
-| **423** (4.2.3 Metrološka laboratorija), **4110** | 3 | nema |
-| **20** (poslovni blok) | 4 | centar `2` — Kadrovi koriste oznaku knjiženja |
-| **1**, **10**, prazno | 10 | nema — Institut kao celina i nepoznato |
+**Odluka naručioca 25.09.2026.: kadrovske OJ se ne vode posebno — to je dupliranje organizacije.**
+Postoji **jedna organizacija**, registar. Zato [P]:
 
-**Predlog [Z]:** kadrovska OJ se vezuje za čvor registra mapom `KadrovskaOJ(sifra, cvor,
-vazi_od, vazi_do)`. Za 4331, 4332, 423 i 4110 potrebna je odluka: **(a)** novi čvorovi jedinica bez
-šifara posla u stablu, ili **(b)** mapiranje na nadređenu jedinicu (433, 42). Ovo je i prirodno
-mesto za potvrdu 11 naziva jedinica označenih „proveriti” — jedinice 415, 418, 422 i 432 imaju
-radnike, znači da postoje.
+- nema kadrovske mape (`KadrovskaOJ`) ni pravila „OJ istog broja ili prefiks centra” — prvobitni
+  predlog je povučen, a odluke 5 i 6 (4331/4332/423/4110, oznaka `20`) time su bespredmetne;
+- izbor kadrovskih OJ u pravima korisnika (`allowed_hr_unit_codes`) je uklonjen (niko ga nije koristio);
+- Kadrovi nisu u senci; kada dođu na red (korak 7), **zaposleni dobija vezu na čvor registra**
+  (jedinicu ili centar) na svojoj kartici, isto kao vozila i nalozi, a obuhvat se proverava kroz
+  istu dodelu uloge. Do tada Kadrovi rade po starim pravima (`hr.access`, po centrima).
+- **Uprava vidi sve zaposlene** (odluka 25.09.2026.) — danas je u Kadrovima ograničena svojim
+  centrima (`helena.stevancevic` 0, `milivoje.peric` 31, `bilja` 361 od 371); to se menja prelaskom
+  Kadrova na dodele.
 
-Sistematizacija (V2, korak 8 — ko koga vodi, objava od datuma) gradi se na ovoj mapi.
+Sistematizacija (V2, korak 8 — ko koga vodi, objava od datuma) gradi se na vezi zaposlenog sa
+čvorom registra. Potvrda 11 naziva jedinica označenih „proveriti” ostaje otvorena — jedinice 415,
+418, 422 i 432 imaju zaposlene, znači da postoje.
 
 ### 3.4. Gašenje stare organizacije
 
@@ -175,14 +180,14 @@ Nasleđena Naplata ostaje na starom režimu dok se ne ugasi (AGENTS pravilo 7).
 
 | # | Korak | Uslov završetka | Složenost |
 |---|---|---|---|
-| **0** | **Stabilizacija isporuke** — novi kod na serveru, restart workera, `sync_celery_periodic_tasks`; nedelju dana noćnih izveštaja | 7 uzastopnih noći: svi uporedni izveštaji prolaze, nijedan zapis Finansija i Potraživanja bez veze | Niska |
+| **0** | **Stabilizacija isporuke** — novi kod na serveru, `migrate`, restart workera, `sync_celery_periodic_tasks`; nedelju dana noćnih izveštaja. **Migracija `fleet.0086_bez_kadrovskih_oj` briše kolonu `allowed_hr_unit_codes`** — pokreće se tek zajedno sa novim kodom (stari kod tu kolonu čita pri svakom učitavanju korisnika); na živoj bazi namerno još nije primenjena | 7 uzastopnih noći: svi uporedni izveštaji prolaze, nijedan zapis Finansija i Potraživanja bez veze | Niska |
 | **1** ✅ | **Putanja čvora** (3.1) — izvedeno 25.09.2026. | Centar na datum iz baze jednak `node_center_map` za sve zapise; test promene centra šifre | Niska |
 | **2** ✅ | **Model prava sa obuhvatom i jedna provera** (3.2, tačke 1–2) — izgrađeno, nije uključeno | Testovi: obuhvat posla ne daje centar, istek dodele gasi pravo, prazan obuhvat ima jedno značenje | Srednja |
-| **3** | **Admin korisnika i uloga** (V2, korak 3) | Administrator održava pilot korisnike bez Django admina | Srednja |
-| **4** ◐ | **Prevod i senka** (3.2, tačke 3–4) — Finansije, Potraživanja i putni nalozi: 0 razlika; ostaje Flota van naloga i Kadrovi | Izveštaj razlika po korisniku i modulu je prazan ili potvrđen | Srednja |
+| **3** ✅ | **Admin korisnika i uloga** (V2, korak 3) — izvedeno 25.09.2026.: **Organizacija → Dodele uloga** (spisak, kartica korisnika, odobravanje nacrta, ručna dodela, opoziv sa istorijom, senka) | Administrator održava pilot korisnike bez Django admina | Srednja |
+| **4** ✅ | **Prevod i senka** (3.2, tačke 3–4) — Finansije, Potraživanja, putni nalozi, vozila i kontrolna tabla: 4 razlike, sve potvrđene (Garaža, Pregled); Kadrovi van senke (3.3) | Izveštaj razlika po korisniku i modulu je prazan ili potvrđen | Srednja |
 | **5** | **Pilot: Potraživanja + Finansije** — filteri, zbirovi i prava zajedno | Isti iznosi za isti skup; tuđi podaci nedostupni; istorija i opoziv provereni | Srednja |
 | **6** | **Flota** — ~30 mesta filtera i zbirova [P], sa pravilom dodele na datum | Nema promene brojeva dokumenata ni istorije zaduženja | Srednja |
-| **7** | **Nabavka**, pa **HR** preko kadrovske mape (3.3) | Kontrolni izveštaj modula prolazi | Srednja |
+| **7** | **Nabavka**, pa **HR** — zaposleni dobija vezu na čvor registra, bez posebne kadrovske organizacije (3.3) | Kontrolni izveštaj modula prolazi | Srednja |
 | **8** | **Sistematizacija** (V2, korak 8) | Promena naziva, šifre ili roditelja bez gubitka istorije i bez neočekivanog pristupa | Visoka |
 | **9** | **Gašenje stare organizacije** (3.4) | Uslovi iz 3.4 | Niska |
 
@@ -199,9 +204,9 @@ obuhvatu najveći, a modeli su najjednostavniji (tekstualna šifra, bez dodele v
 | 1 | Da li se uvodi tabela putanje (3.1) | Da — bez nje filteri na datum zahtevaju složene podupite u svakom modulu |
 | 2 | Značenje praznog obuhvata | ✅ **Odlučeno 25.09.2026.: ne vidi ništa** — i u Floti, gde danas vidi sve. Uloga **Garaža** dobija obuhvat cele firme (odluka 25.09.2026.): radi sa celom Flotom svih centara, a putne naloge **samo gleda** — ne kreira, ne menja i ne briše (to već važi kroz dozvole uloge: ima samo `putninalog_list`, `_detail`, `_print`). Senka zato pokazuje `zoran` 0 → 3.740 putnih naloga — potvrđeno |
 | 3 | Da li pojedinačna OJ korisnika ostaje ograničena na tu OJ | ✅ **Odlučeno 25.09.2026.: ne — ostaje kao danas**, OJ daje ceo svoj centar (tiče se `bilja`, koja ionako ima Upravu, i `suzana.injac` → centar 43) |
-| 4 | Uloga „Uprava” | Obuhvat cele firme, dodeljen eksplicitno, ne kao izuzetak u kodu |
-| 5 | Kadrovske OJ 4331, 4332, 423, 4110 | Novi čvorovi jedinica bez šifara posla (opcija a); 4110 prvo objasniti |
-| 6 | Kadrovska oznaka `20` | Mapira se na centar `2`; Kadrovi zadržavaju svoju oznaku |
+| 4 | Uloga „Uprava” | ✅ **Odlučeno 25.09.2026.:** obuhvat cele firme kroz dodelu, ne kao izuzetak u kodu (tako i radi: prevod joj pravi dodelu „cela firma”, provera nema izuzetak osim za superuser) |
+| 5 | Kadrovske OJ 4331, 4332, 423, 4110 | ✅ **Bespredmetno** — posebne kadrovske organizacije nema (3.3, odluka 25.09.2026.) |
+| 6 | Kadrovska oznaka `20` | ✅ **Bespredmetno** — posebne kadrovske organizacije nema (3.3) |
 | 7 | Pilot | Potraživanja + Finansije |
 | 8 | Neaktivne šifre | ✅ **Odlučeno 25.09.2026.: ne nude se nigde** — forme, filteri, povezivanje faktura, spisak šifara u Finansijama i šifre bez prometa. Već upisana vrednost i već dodeljeno pravo ostaju. **Šifra bez prometa u poslednjih 12 meseci je neaktivna** (primenjeno 25.09.2026.: 168 naučnih projekata koji nikad nisu knjiženi; noćna sinhronizacija 01:40 to od sada radi sama). Izveštaj Finansija **po šiframa posla** prikazuje samo aktivne šifre, a zbir ispod tabele računa se nad istim knjiženjima; izveštaj po centrima, kontima i mesecima ostaje ceo (za 2025. van pregleda po šiframa ostaje 47 knjiženja, rashod 1.071.763,60) |
 

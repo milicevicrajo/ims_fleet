@@ -351,6 +351,11 @@ class DodelaUloge(models.Model):
     izvor = models.CharField(max_length=10, choices=IZVOR_CHOICES, default=IZVOR_RUCNO)
     napomena = models.CharField(max_length=300, blank=True, verbose_name="Odakle je dodela")
     created_at = models.DateTimeField(auto_now_add=True)
+    # Ekran dodela (korak 3): ko je odobrio ili opozvao dodelu i kada — istorija ostaje u tabeli.
+    odobrio = models.ForeignKey("fleet.CustomUser", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    odobreno = models.DateTimeField(null=True, blank=True)
+    opozvao = models.ForeignKey("fleet.CustomUser", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    opozvano = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Dodela uloge sa obuhvatom"

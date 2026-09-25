@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% comment %}
+Dodele uloga sa obuhvatom — spisak korisnika (plan prelaska na registar, korak 3).
+Nijedna dodela još ne odlučuje o pristupu; moduli čitaju stara prava do pilota.
+{% endcomment %}
+{% block title %}Dodele uloga — IMS{% endblock %}
+
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+{% include "organizacija/_styles.html" %}
+{% include "organizacija/_dodele_styles.html" %}
+
+<div class="org-page">
+  <header class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+      <div class="org-kicker">IMS · Centralni registar · Prava</div>
+      <h1>Dodele uloga</h1>
+      <p>Obuhvat svake uloge korisnika u stablu organizacije: cela firma, centar, jedinica ili šifra posla.</p>
+    </div>
+    <div class="org-hero-metrics">
+      <div><strong>{{ redovi|length }}</strong><small>korisnika</small></div>
+      <div><strong>{{ ukupno_nacrt }}</strong><small>sa nacrtom</small></div>
+      <div><strong>{{ ukupno_odobreno }}</strong><small>odobreno</small></div>
+      {% if sa_senkom %}<div><strong>{{ sa_razlikom }}</strong><small>sa razlikom</small></div>{% endif %}
+    </div>
+  </header>
+
+  <p class="org-note mt-3">
+    Nacrt pravi prevod starih prava (<code>python manage.py prava_u_senci</code>). Odobrena dodela se više ne menja prevodom.
+    <strong>Dodele još ne odlučuju o pristupu</strong> — moduli rade po starim pravima dok se ne uključi pilot Finansija i Potraživanja.
+    Senka poredi šta korisnik danas vidi u Finansijama, Potraživanjima i putnim nalozima sa onim što bi video po dodelama.
+  </p>
+
+  <form method="get" class="org-toolbar">
+    <div class="org-search">
+      <input type="search" name="q" value="{{ q }}" placeholder="Korisničko ime, ime ili prezime" aria-label="Pretraga korisnika">
+      {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+      {% if sa_senkom %}<input type="hidden" name="senka" value="1">{% endif %}
+      <button class="btn btn-primary btn-sm" type="submit">Traži</button>
+    </div>
+    <div class="org-filters">
+      <a class="org-filter {% if not status %}is-active{% endif %}" href="?q={{ q|urlencode }}{% if sa_senkom %}&senka=1{% endif %}">Svi</a>
+      {% for kljuc, naziv in filteri.items %}
+        <a class="org-filter {% if status == kljuc %}is-active{% endif %}" href="?q={{ q|urlencode }}&status={{ kljuc }}{% if sa_senkom %}&senka=1{% endif %}">{{ naziv }}</a>
+      {% endfor %}
+      {% if sa_senkom %}
+        <a class="org-filter is-active" href="?q={{ q|urlencode }}&status={{ status }}">Senka uključena</a>
+      {% else %}
+        <a class="org-filter" href="?q={{ q|urlencode }}&status={{ status }}&senka=1" title="Za sve korisnike traje desetak sekundi">Proveri razlike (senka)</a>
+      {% endif %}
+    </div>
+  </form>
+
+  <div class="table-responsive dd-table">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr>
+        <th>Korisnik</th><th>Uloge</th><th>Obuhvat</th><th class="text-end">Nacrt</th><th class="text-end">Odobreno</th>
+        {% if sa_senkom %}<th>Senka</th>{% endif %}
+      </tr></thead>
+      <tbody>
+        {% for red in redovi %}
+          <tr {% if red.senka.razlika %}class="is-diff"{% endif %}>
+            <td><a href="{% url 'organizacija:dodele_korisnika' red.korisnik.pk %}">{{ red.korisnik.username }}</a>
+              {% if red.korisnik.get_full_name %}<div class="small text-muted">{{ red.korisnik.get_full_name }}</div>{% endif %}</td>
+            <td class="small">{{ red.uloge|join:", "|default:"—" }}</td>
+            <td class="small">{% for o in red.obuhvat|slice:":4" %}<span class="dd-scope">{{ o }}</span>{% empty %}<span class="text-danger">nema obuhvat — ne bi video ništa</span>{% endfor %}{% if red.obuhvat|length > 4 %} +{{ red.obuhvat|length|add:"-4" }}{% endif %}</td>
+            <td class="text-end">{{ red.nacrt|default:"—" }}</td>
+            <td class="text-end">{% if red.odobren %}<span class="dd-ok">{{ red.aktivnih }}</span>{% else %}—{% endif %}</td>
+            {% if sa_senkom %}<td>{% if red.senka %}{% include "organizacija/_senka.html" with senka=red.senka detalji=False %}{% endif %}</td>{% endif %}
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-muted">Nema korisnika za izabrani filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

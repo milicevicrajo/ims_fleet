@@ -151,3 +151,31 @@ class PrevodISenkaTests(ImportTestCase):
         # pripada centru 43 po sifarniku, a nije u registru — „manje", dok se ne resi otvoreno pitanje.
         self.assertEqual((centar_fin["vise"], centar_fin["manje"]), (["209001", "430001"], ["vranjs"]))
         self.assertNotIn("potrazivanja", redovi["samo-oj"]["moduli"])  # modul mu nije dostupan
+
+
+class SenkaFloteTests(ImportTestCase):
+    """Korak 4: senka i za spisak vozila i kontrolnu tablu Flote. Kadrovi nemaju posebnu organizaciju."""
+
+    def setUp(self):
+        super().setUp()
+        run_import(company=1)
+        from fleet.models import JobCode
+        from fleet.test_vehicle_onboarding import vehicle
+
+        nadzor = OrganizationalUnit.objects.create(code="430111", name="Strucni nadzor", center="43")
+        materijali = OrganizationalUnit.objects.create(code="410001", name="Amortizacija", center="41")
+        for broj, jedinica_ in (("1", nadzor), ("2", materijali)):
+            JobCode.objects.create(vehicle=vehicle(broj), organizational_unit=jedinica_,
+                                   assigned_date=datetime.date(2026, 1, 1))
+        self.korisnik = get_user_model().objects.create_user("pregled-41", password="x", allowed_center_codes="41")
+        self.korisnik.roles.add(uloga_sa_dozvolom("pregled-flote", "vehicle_list", "dashboard"))
+
+    def test_spisak_vozila_danas_nema_ogranicenje_a_po_dodeli_ima(self):
+        prava.prevedi()
+        red = prava.senka(get_user_model().objects.filter(pk=self.korisnik.pk))[0]
+        vozila = red["moduli"]["vozila"]
+        self.assertEqual((vozila["staro"], vozila["novo"], vozila["manje"]), (2, 1, ["430111"]))
+        tabla = red["moduli"]["kontrolna_tabla"]
+        self.assertEqual((tabla["staro"], tabla["manje"]), (2, ["430111"]))  # bez OJ tabla danas vidi sve
+        self.assertEqual(vozila["naziv"], "Vozila")
+        self.assertNotIn("zaposleni", red["moduli"])

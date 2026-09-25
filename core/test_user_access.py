@@ -34,7 +34,7 @@ class UserAccessTests(TestCase):
     def test_screen_uses_application_form_and_normalized_choices(self):
         response = self.client.get(self.url)
         self.assertContains(response,'Sačuvaj pristup')
-        self.assertContains(response,'Kadrovske organizacione jedinice')
+        self.assertNotContains(response,'Kadrovske organizacione jedinice')  # uklonjeno 25.09.2026.
         self.assertIn(('43','Centar 43'),response.context['form'].fields['center_codes'].choices)
         self.assertNotContains(response,'name="is_superuser"')
 
@@ -170,12 +170,6 @@ class KadroviScopeTests(TestCase):
     def test_center_contains_hr_units_but_not_another_center(self):
         self.assertEqual(set(visible_employees(self.user)),set(self.employees[:2]))
 
-    def test_one_hr_unit_does_not_grant_sibling_or_parent_center(self):
-        self.user.allowed_center_codes=''
-        self.user.allowed_hr_unit_codes=['431']
-        self.user.save()
-        self.assertEqual(list(visible_employees(self.user)),[self.employees[0]])
-
     def test_kadrovi_without_scope_sees_no_other_employees(self):
         self.user.allowed_center_codes='';self.user.save()
         self.assertFalse(visible_employees(self.user).exists())
@@ -198,16 +192,6 @@ class KadroviScopeTests(TestCase):
     def test_evaluation_manager_has_only_assigned_employees(self):
         from hr.services.evaluations import editable_employees
         self.assertEqual(set(editable_employees(self.user)),set(self.employees[:2]))
-
-    def test_single_unit_saved_through_form_survives_reload_and_is_applied(self):
-        admin=CustomUser.objects.create_superuser('scope-form-admin','admin@example.com','test')
-        form=UserAccessForm({'first_name':'', 'last_name':'', 'email':'', 'is_active':'on',
-            'roles':[self.role.pk], 'center_codes':[], 'hr_unit_codes':['431']},instance=self.user,actor=admin)
-        self.assertTrue(form.is_valid(),form.errors)
-        form.save()
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.allowed_hr_unit_codes,['431'])
-        self.assertEqual(list(visible_employees(self.user)),[self.employees[0]])
 
     def _zahtev_za_resenje(self, employee):
         from hr.models import Zahtev, VrstaZahteva

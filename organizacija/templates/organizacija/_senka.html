@@ -1,0 +1,17 @@
+{% comment %}Senka jednog korisnika: danas → po novim dodelama, po modulu. Ulaz: `senka` (red iz prava.senka).{% endcomment %}
+{% if not senka.moduli %}
+  <span class="text-muted small">Ne otvara nijedan modul koji se poredi (Finansije, Potraživanja, putni nalozi, vozila).</span>
+{% else %}
+  {% for modul, m in senka.moduli.items %}
+    <div class="dd-senka {% if m.vise or m.manje %}is-diff{% endif %}">
+      <strong>{{ m.naziv }}</strong>
+      {{ m.staro }} → {{ m.novo }}
+      {% if m.vise %}<span class="dd-plus">+{{ m.vise|length }} šifara ({{ m.vise_zapisa }} zapisa)</span>{% endif %}
+      {% if m.manje %}<span class="dd-minus">−{{ m.manje|length }} šifara ({{ m.manje_zapisa }} zapisa)</span>{% endif %}
+      {% if detalji %}
+        {% if m.vise %}<div class="small">Više: {% for s in m.vise|slice:":20" %}<code>{{ s }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}{% if m.vise|length > 20 %} …{% endif %}</div>{% endif %}
+        {% if m.manje %}<div class="small">Manje: {% for s in m.manje|slice:":20" %}<code>{{ s }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}{% if m.manje|length > 20 %} …{% endif %}</div>{% endif %}
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endif %}

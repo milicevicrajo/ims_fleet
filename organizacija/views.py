@@ -1,11 +1,14 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.shortcuts import render
-from django.views.decorators.http import require_GET
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from core.mixins import role_permission_required, user_has_role_permission
-from organizacija.models import OrgImportRun
+from organizacija.forms import DodelaForm
+from organizacija.models import DodelaUloge, OrgImportRun
 from organizacija.services import detail as detail_service
+from organizacija.services import dodele as dodele_service
 from organizacija.services import flota as flota_service
 from organizacija.services import sema as sema_service
 from organizacija.services import sync as sync_service
@@ -109,3 +112,73 @@ def flota(request):
         "last_run": OrgImportRun.objects.filter(status=OrgImportRun.STATUS_DONE).first(),
     }
     return render(request, "organizacija/flota.html", context)
+
+
+# --------------------------------------------------------------------------- dodele uloga (korak 3)
+# Nijedna dodela jos ne odlucuje o pristupu: moduli citaju stara prava do pilota (korak 5).
+
+
+@require_GET
+@login_required
+@role_permission_required()
+def dodele(request):
+    """Spisak korisnika sa nacrtom i odobrenim dodelama; senka samo na zahtev (traje ~10 s)."""
+    request.session["current_app"] = "organizacija"
+    q = (request.GET.get("q") or "").strip()
+    status = request.GET.get("status") or ""
+    if status not in dodele_service.FILTERI_STATUSA:
+        status = ""
+    sa_senkom = request.GET.get("senka") == "1"
+    redovi = dodele_service.spisak(q, status, sa_senkom)
+    context = {
+        "redovi": redovi, "q": q, "status": status, "sa_senkom": sa_senkom,
+        "filteri": dodele_service.FILTERI_STATUSA,
+        "ukupno_nacrt": sum(1 for r in redovi if r["nacrt"]),
+        "ukupno_odobreno": sum(1 for r in redovi if r["odobren"]),
+        "sa_razlikom": sum(1 for r in redovi if r.get("senka") and r["senka"]["razlika"]),
+    }
+    return render(request, "organizacija/dodele.html", context)
+
+
+@require_http_methods(["GET", "POST"])
+@login_required
+@role_permission_required()
+def dodele_korisnika(request, pk):
+    """Dodele jednog korisnika, istorija, stara prava i senka; POST dodaje rucnu dodelu."""
+    from core.models import CustomUser
+
+    request.session["current_app"] = "organizacija"
+    korisnik = get_object_or_404(CustomUser, pk=pk)
+    form = DodelaForm(request.POST or None, korisnik=korisnik)
+    if request.method == "POST" and form.is_valid():
+        d = form.cleaned_data
+        dodele_service.dodaj(korisnik, d["uloga"], d["cvor_id"], d["cela_firma"], d["vazi_od"], d["vazi_do"],
+                             request.user, d["napomena"])
+        messages.success(request, "Dodela je upisana i odobrena.")
+        return redirect("organizacija:dodele_korisnika", pk=korisnik.pk)
+    context = {"korisnik": korisnik, "form": form, **dodele_service.pregled_korisnika(korisnik),
+               "moze_odobri": user_has_role_permission(request.user, "organizacija:dodele_odobri"),
+               "moze_opozovi": user_has_role_permission(request.user, "organizacija:dodela_opozovi")}
+    return render(request, "organizacija/dodele_korisnika.html", context)
+
+
+@require_POST
+@login_required
+@role_permission_required()
+def dodele_odobri(request, pk):
+    from core.models import CustomUser
+
+    korisnik = get_object_or_404(CustomUser, pk=pk)
+    broj = dodele_service.odobri(korisnik, request.user)
+    messages.success(request, f"Odobreno dodela: {broj}." if broj else "Korisnik nema nacrt za odobravanje.")
+    return redirect("organizacija:dodele_korisnika", pk=korisnik.pk)
+
+
+@require_POST
+@login_required
+@role_permission_required()
+def dodela_opozovi(request, pk):
+    dodela = get_object_or_404(DodelaUloge, pk=pk)
+    ishod = dodele_service.opozovi(dodela, request.user)
+    messages.success(request, "Nacrt dodele je obrisan." if ishod == "obrisan" else "Dodela je opozvana od danas.")
+    return redirect("organizacija:dodele_korisnika", pk=dodela.korisnik_id)
