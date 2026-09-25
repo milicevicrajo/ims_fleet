@@ -71,6 +71,8 @@ class VehicleTravelOrderForm(forms.ModelForm):
                 if current_id:
                     limited = limited | self.fields['job_code'].queryset.filter(pk=current_id)
                 self.fields['job_code'].queryset = limited.distinct()
+        from fleet.support.registar import ogranici_izbor
+        ogranici_izbor(self.fields['job_code'], getattr(self.instance, 'job_code_id', None))
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
             if inactive_employee.exists():
@@ -209,6 +211,8 @@ class PreviousVehicleTravelOrderForm(forms.ModelForm):
             centers = allowed_centers(user)
             if centers:
                 self.fields['job_code'].queryset = self.fields['job_code'].queryset.filter(center__in=centers)
+        from fleet.support.registar import ogranici_izbor
+        ogranici_izbor(self.fields['job_code'], getattr(self.instance, 'job_code_id', None))
         if next_order and next_order.employee_id:
             self.initial.setdefault("employee", next_order.employee_id)
 

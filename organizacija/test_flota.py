@@ -607,3 +607,87 @@ class PravilnikTests(ImportTestCase):
         self.assertContains(odgovor, "Odeljenje za geotehniku i nadzor")
         self.assertContains(odgovor, "proveriti")
         self.assertEqual([g["family"] for g in odgovor.context["unresolved"]], ["C"])
+
+
+class CitanjeRegistraUFlotiTests(FlotaTestCase):
+    """Korak 4: Flota nudi i imenuje sifre iz registra; staro polje i dalje se upisuje."""
+
+    def setUp(self):
+        super().setUp()
+        self.neaktivna = OrganizationalUnit.objects.create(code="431112", name="Terenske lab.", center="43")
+        run_import(company=1)
+
+    def forma(self, **kwargs):
+        from fleet.forms.putni_nalozi import PutniNalogForm
+
+        return PutniNalogForm(**kwargs)
+
+    def test_izbor_sifre_su_samo_aktivne_sifre_iz_registra(self):
+        polje = self.forma().fields["job_code"]
+        self.assertEqual(set(polje.queryset.values_list("code", flat=True)), {"430111", "410001"})
+        self.assertEqual(polje.label_from_instance(self.nadzor), "430111 — Strucni nadzor · centar 43")
+
+    def test_upisana_sifra_ostaje_u_izboru_i_kad_nije_aktivna(self):
+        nalog = self.putni_nalog(self.neaktivna)
+        polje = self.forma(instance=nalog).fields["job_code"]
+        self.assertIn(self.neaktivna, polje.queryset)
+        self.assertNotIn(self.test_centar, polje.queryset)  # 960001 nije u registru
+
+    def test_iskljucen_prekidac_vraca_stari_izbor(self):
+        with self.settings(FLOTA_REGISTAR_ORGANIZACIJE=False):
+            polje = self.forma().fields["job_code"]
+            self.assertEqual(polje.queryset.count(), OrganizationalUnit.objects.count())
+            self.assertEqual(polje.label_from_instance(self.nadzor), str(self.nadzor))
+
+    def test_prazan_registar_ne_prazni_izbor(self):
+        from organizacija.models import ExternalOrgMapping, LegacyOrgLink
+
+        LegacyOrgLink.objects.all().delete()
+        ExternalOrgMapping.objects.all().delete()
+        self.assertEqual(self.forma().fields["job_code"].queryset.count(), OrganizationalUnit.objects.count())
+
+    def test_izbor_dodele_vozila(self):
+        from fleet.forms.vehicles import JobCodeForm
+
+        kodovi = set(JobCodeForm().fields["organizational_unit"].queryset.values_list("code", flat=True))
+        self.assertEqual(kodovi, {"430111", "410001"})
+
+    def test_filteri_nude_centre_sa_nazivima_iz_registra(self):
+        from fleet.filters import PutniNalogFilter, TrafficCardFilterForm
+
+        self.putni_nalog(self.nadzor)
+        filter_naloga = PutniNalogFilter(data={}, queryset=PutniNalog.objects.all())
+        self.assertIn(("43", "43 — Centar za puteve i geotehniku"), filter_naloga.filters["center"].extra["choices"])
+        self.assertIn(("430111", "430111 — Strucni nadzor · centar 43"), filter_naloga.filters["job_code"].extra["choices"])
+        kartice = TrafficCardFilterForm()
+        self.assertIn(("41", "41 — Centar za materijale"), kartice.fields["center"].choices)
+        # Filter po postojecim dodelama nudi i neaktivne sifre iz registra, ali ne i sifre van registra.
+        self.assertIn(self.neaktivna, kartice.fields["organizational_unit"].queryset)
+        self.assertNotIn(self.test_centar, kartice.fields["organizational_unit"].queryset)
+
+    def test_kontrolna_tabla_imenuje_centar(self):
+        from fleet.support.fleet_snapshot import fleet_snapshot
+
+        JobCode.objects.create(vehicle=self.car, organizational_unit=self.nadzor, assigned_date=datetime.date(2026, 1, 1))
+        admin = get_user_model().objects.create_superuser("tabla-admin", "t@example.com", "x")
+        centri = fleet_snapshot(admin, datetime.date(2026, 9, 25))["centers"]
+        self.assertIn("Centar 43 — Centar za puteve i geotehniku", [c["label"] for c in centri])
+
+    def test_forma_prava_pristupa_imenuje_centre_i_sifre(self):
+        from core.user_access import UserAccessForm
+
+        admin = get_user_model().objects.create_superuser("prava-admin", "p@example.com", "x")
+        forma = UserAccessForm(instance=admin, actor=admin)
+        self.assertIn(("43", "Centar 43 — Centar za puteve i geotehniku"), forma.fields["center_codes"].choices)
+        self.assertEqual(forma.fields["allowed_centers"].label_from_instance(self.nadzor),
+                         "430111 — Strucni nadzor · centar 43")
+        # Postojeca prava ne nestaju: nude se sve jedinice, i one van registra.
+        self.assertIn(self.test_centar, forma.fields["allowed_centers"].queryset)
+
+    def test_forme_ne_prikazuju_polje_org_node(self):
+        from fleet.forms.fuel import FuelConsumptionForm
+        from fleet.forms.lease import LeaseForm
+        from fleet.forms.vehicles import JobCodeForm
+
+        for forma in (self.forma(), JobCodeForm(), FuelConsumptionForm(), LeaseForm()):
+            self.assertNotIn("org_node", forma.fields)

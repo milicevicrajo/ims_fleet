@@ -1,10 +1,31 @@
 {% extends "base.html" %}
-
+{% comment %}Spisak dodela vozila šiframa posla (JobCode). Šifra je organizaciona jedinica dodele.{% endcomment %}
 {% block content %}
-  <h2>{{ title }}</h2>
-  <ul>
-    {% for code in job_codes %}
-      <li><a href="{% url 'jobcode_detail' code.pk %}">{{ code.job_code }}</a></li>
-    {% endfor %}
-  </ul>
+<div class="card">
+  <div class="card-body">
+    <h3 class="card-title">{{ title }}</h3>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle">
+        <thead><tr><th>Vozilo</th><th>Šifra posla / OJ</th><th>Centar</th><th>Datum dodele</th><th class="text-end">Akcije</th></tr></thead>
+        <tbody>
+        {% for code in job_codes %}
+          <tr>
+            <td>{% if code.vehicle %}<a href="{% url 'vehicle_detail' code.vehicle.pk %}">{{ code.vehicle }}</a>{% else %}—{% endif %}</td>
+            <td>{{ code.organizational_unit|default:"—" }}</td>
+            <td>{{ code.organizational_unit.center|default:"—" }}</td>
+            <td>{{ code.assigned_date|date:"d.m.Y" }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'jobcode_detail' code.pk %}" title="Detalji"><i class="mdi mdi-eye"></i></a>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'jobcode_update' code.pk %}" title="Izmeni"><i class="mdi mdi-pencil"></i></a>
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'jobcode_delete' code.pk %}" title="Obriši"><i class="mdi mdi-delete"></i></a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-muted">Nema dodela šifara posla.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

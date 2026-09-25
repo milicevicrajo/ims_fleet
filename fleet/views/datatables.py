@@ -105,6 +105,7 @@ def vehicle_datatable_data(request):
             | Q(inventory_number__icontains=value)
             | Q(chassis_number__icontains=value)
             | Q(latest_org_unit_code__icontains=value)
+            | Q(latest_org_unit__icontains=value)
         )
 
     def row(vehicle):
@@ -143,7 +144,9 @@ def vehicle_datatable_data(request):
             "mileage": vehicle.mileage or "",
             "consumption": f"{consumption:.2f}" if consumption else "0",
             "category": escape(vehicle.get_category_display() or ""),
-            "center": escape(vehicle.latest_org_unit_code or "-"),
+            # `latest_org_unit` je centar, `latest_org_unit_code` je sifra OJ (nazivi anotacija su istorijski).
+            "center": escape(" · ".join(v for v in ((vehicle.latest_org_unit or "").strip(),
+                                                    (vehicle.latest_org_unit_code or "").strip()) if v) or "-"),
             "engine_volume": f"{vehicle.engine_volume:.0f}" if vehicle.engine_volume is not None else "",
             "actions": f'<span class="fleet-list-actions">{"".join(actions)}</span>',
         }
@@ -158,7 +161,7 @@ def vehicle_datatable_data(request):
             "3": "year_of_manufacture",
             "4": "mileage",
             "6": "category",
-            "7": "latest_org_unit_code",
+            "7": "latest_org_unit",
             "8": "engine_volume",
         },
         row,

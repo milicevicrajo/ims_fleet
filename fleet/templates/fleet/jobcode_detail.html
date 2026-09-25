@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h3 class="card-title">{{ title }}</h3>
+        <dl class="row mb-3">
+          <dt class="col-sm-4">Vozilo</dt>
+          <dd class="col-sm-8">{% if job_code.vehicle %}<a href="{% url 'vehicle_detail' job_code.vehicle.pk %}">{{ job_code.vehicle }}</a>{% else %}—{% endif %}</dd>
+          <dt class="col-sm-4">Šifra posla / OJ</dt>
+          <dd class="col-sm-8">{{ job_code.organizational_unit|default:"—" }}</dd>
+          <dt class="col-sm-4">Centar</dt>
+          <dd class="col-sm-8">{{ job_code.organizational_unit.center|default:"—" }}</dd>
+          <dt class="col-sm-4">Datum dodele</dt>
+          <dd class="col-sm-8">{{ job_code.assigned_date|date:"d.m.Y" }}</dd>
+        </dl>
+        <p class="text-muted small">Dodela važi od datuma dodele do datuma sledeće dodele istog vozila.</p>
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{% url 'jobcode_list' %}" class="btn btn-outline-secondary">Nazad</a>
+          <a href="{% url 'jobcode_update' job_code.pk %}" class="btn btn-primary">Izmeni</a>
+          <a href="{% url 'jobcode_delete' job_code.pk %}" class="btn btn-outline-danger">Obriši</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

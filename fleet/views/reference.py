@@ -244,6 +244,10 @@ class JobCodeListView(LoginRequiredMixin, ListView):
     template_name = "fleet/jobcode_list.html"
     context_object_name = "job_codes"
 
+    def get_queryset(self):
+        return (JobCode.objects.select_related("vehicle", "organizational_unit")
+                .order_by("vehicle__chassis_number", "-assigned_date", "-pk"))
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Lista šifara poslova"
@@ -290,7 +294,8 @@ class JobCodeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = f"Detalji šifre posla {self.object.job_code}"
+        # JobCode nema polje `job_code`; sifra je jedinica kojoj je vozilo dodeljeno.
+        context["title"] = f"Dodela šifre posla {self.object.organizational_unit or ''}".strip()
         return context
 
 

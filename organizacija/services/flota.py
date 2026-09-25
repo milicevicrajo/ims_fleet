@@ -164,6 +164,36 @@ def _mapiranje(sifra, company):
 # --------------------------------------------------------------------------- popunjavanje
 
 
+def mapa_jedinica_flote(company=DEFAULT_COMPANY):
+    """Za citanje u Floti: `OrganizationalUnit.pk` → sifra, naziv, aktivnost, jedinica i centar iz
+    registra, i oznaka centra → naziv. Jedinica bez cvora u registru nije u mapi."""
+    from organizacija.models import OrgNode, OrgNodeVersion
+
+    razresavac = Razresavac(company)
+    verzije = {
+        v.node_id: v
+        for v in OrgNodeVersion.objects.filter(valid_to__isnull=True, node__company=company).select_related("node")
+    }
+    centri = {v.full_code: v.name for v in verzije.values() if v.node.level == OrgNode.LEVEL_CENTER}
+    mapa = {}
+    for pk in razresavac.jedinice:
+        posao = verzije.get(razresavac.za_jedinicu(pk))
+        if posao is None or posao.node.level != OrgNode.LEVEL_JOB:
+            continue
+        jedinica = verzije.get(posao.parent_id)
+        centar = verzije.get(jedinica.parent_id) if jedinica else None
+        mapa[pk] = {
+            "sifra": posao.full_code,
+            "naziv": posao.name,
+            "aktivan": posao.is_active,
+            "jedinica": jedinica.full_code if jedinica else "",
+            "naziv_jedinice": jedinica.name if jedinica else "",
+            "centar": centar.full_code if centar else "",
+            "naziv_centra": centar.name if centar else "",
+        }
+    return mapa, centri
+
+
 def povezi(company=DEFAULT_COMPANY, proba=False, batch_size=BATCH_SIZE, modeli=None):
     """Popunjava `org_node` na svim modelima Flote. Ponovljivo: menja samo ono sto odstupa.
 

@@ -8,6 +8,7 @@ from django.http import QueryDict
 from django.utils import timezone
 
 from core.models import OrganizationalUnit
+from fleet.support.registar import Registar, ogranici_izbor
 from hr.querysets import employees_for_travel_orders
 
 from .models import (
@@ -110,12 +111,14 @@ class VehicleFilter(django_filters.FilterSet):
             .order_by("code")
         )
 
-        # CENTRI kao choices (distinct, sortirano)
+        # CENTRI kao choices (distinct, sortirano); nazivi iz registra organizacije
+        registar = Registar()
         centers_qs = OrganizationalUnit.objects.exclude(center__isnull=True).values_list("center", flat=True)
-        centers_clean = sorted({c.strip() for c in centers_qs if c and c.strip()})
-        center_choices = [("", "--- Svi centri ---")] + [(c, c) for c in centers_clean]
+        center_choices = registar.izbor_centara(centers_qs, "--- Svi centri ---")
         self.filters["center_code"].extra["choices"] = center_choices
         self.form.fields["center_code"].choices = center_choices
+        if registar.dostupan:
+            self.form.fields["org_unit"].label_from_instance = registar.oznaka
 
 
         # Ako korisnik NIJE poslao status, prikaži 'Aktivna' kao default u UI
@@ -215,7 +218,8 @@ class PutniNalogFilter(django_filters.FilterSet):
             .distinct()
             .order_by("job_code__center")
         )
-        self.filters["center"].extra["choices"] = [("", "Svi centri")] + [(c, c) for c in centers]
+        registar = Registar()
+        self.filters["center"].extra["choices"] = registar.izbor_centara(centers, "Svi centri")
 
         job_codes = (
             OrganizationalUnit.objects
@@ -224,7 +228,7 @@ class PutniNalogFilter(django_filters.FilterSet):
             .order_by("code")
         )
         self.filters["job_code"].extra["choices"] = [("", "Sve šifre")] + [
-            (u.code, f"{u.code} - {u.name}") for u in job_codes
+            (u.code, registar.oznaka(u)) for u in job_codes
         ]
 
         years = (
@@ -368,8 +372,11 @@ class TrafficCardFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        centers = OrganizationalUnit.objects.values_list('center', flat=True).distinct().order_by('center')
-        self.fields['center'].choices = [('', '--- Svi centri ---')] + [(c, c) for c in centers]
+        registar = Registar()
+        centers = OrganizationalUnit.objects.values_list('center', flat=True).distinct()
+        self.fields['center'].choices = registar.izbor_centara(centers, '--- Svi centri ---')
+        # Filter po postojecim dodelama: nude se sve sifre iz registra (i neaktivne), ne samo aktivne.
+        ogranici_izbor(self.fields['organizational_unit'], registar=registar, samo_aktivne=False)
 
 class FuelFilterForm(django_filters.FilterSet):
     start_date = django_filters.DateFilter(
@@ -470,13 +477,16 @@ class PoliciesMonthlyCostsFilter(django_filters.FilterSet):
         # Sortiranja: godine ↓, meseci 1→12, centri A→Z, vrste A→Z
         year_choices   = [("", "— sve —")] + [(y, y) for y in sorted([y for y in years if y is not None], reverse=True)]
         month_choices  = [("", "— svi —")] + [(m, month_names.get(m, m)) for m in sorted([m for m in months if m])]
-        center_choices = [("", "— svi —")] + [(c, c) for c in sorted([c for c in centers if c])]
+        registar = Registar()
+        center_choices = registar.izbor_centara(centers, "— svi —")
         vrsta_choices  = [("", "— sve —")] + [(v, v) for v in sorted([v for v in vrste if v])]
 
         self.filters["year"].extra["choices"]   = year_choices
         self.filters["month"].extra["choices"]  = month_choices
         self.filters["center"].extra["choices"] = center_choices
         self.filters["vrsta"].extra["choices"]  = vrsta_choices
+        if registar.dostupan:
+            self.form.fields["oj"].label_from_instance = registar.oznaka
 
 
 

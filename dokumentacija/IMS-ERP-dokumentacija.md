@@ -1583,6 +1583,12 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
 | Fakture goriva (detalj računa) | `/fuel-transactions/detail/` |
 | Potrošnja goriva | `/potrosnja-goriva/` |
 
+> **[P] Šifra posla na gorivu (ispravljeno 25.09.2026.):** uvoz NIS i OMV upisuje u
+> `FuelConsumption.job_code` šifru **dodele vozila važeće na dan točenja** (`fleet/support/assignments.py`),
+> isto pravilo kao izveštaji o gorivu. Ranije je upisivana najstarija dodela vozila. Stari zapisi
+> ispravljeni komandom `ispravi_sifre_goriva` (1.076 od 16.212); ona menja samo pogrešne, a
+> zapise bez dodele na taj dan ne dira.
+
 #### Održavanje i garaža
 
 | Ekran | Adresa |
@@ -1726,9 +1732,16 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 > `fleet_jobcode`, `fleet_putninalog`, `fleet_vehicletravelorder`, `fleet_procurementrequest`,
 > `fleet_fuelconsumption`, `fleet_lease` — imaju opcionu kolonu `org_node_id` (čvor registra).
 > Ona se **izvodi** iz postojećeg polja (`organizational_unit` / `job_code`) pri svakom čuvanju
-> (`organizacija/signals.py`) i komandom `povezi_flotu`. **Flota je ne čita:** sve rute i obračuni
-> i dalje rade preko starih polja, koja ostaju merodavna. Uporedni izveštaj:
+> (`organizacija/signals.py`) i komandom `povezi_flotu`. Uporedni izveštaj:
 > `/organizacija/flota/` (dozvola `organizacija:flota`).
+>
+> **[P] Čitanje iz registra (od 25.09.2026.):** spiskovi i nazivi šifara posla u Floti dolaze iz
+> registra (`fleet/support/registar.py`) — izbor šifre u formama putnog naloga, dodele vozila,
+> prijema vozila i naloga za vozilo nudi samo **aktivne** šifre iz registra (već upisana vrednost
+> ostaje), a filteri, kontrolna tabla i prava pristupa prikazuju centre sa nazivom po pravilniku.
+> Filteri, zbirovi, ograničenje pristupa i broj putnog naloga i dalje rade preko starog polja
+> (centar je isti u oba izvora). Prekidač `FLOTA_REGISTAR_ORGANIZACIJE = False` u postavkama vraća
+> stare spiskove; dok je registar prazan, stari spiskovi se koriste sami.
 
 ---
 
@@ -17875,6 +17888,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py omv_command_teretna
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates          # pregled
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates --apply  # brisanje
+.\.venv\Scripts\python.exe manage.py ispravi_sifre_goriva --proba         # šifra posla goriva na dan točenja
 
 # Registar organizacije (nova sinhronizacija, paralelno sa fetch_job_codes)
 .\.venv\Scripts\python.exe manage.py sync_organizacija                 # isto što i zadatak u 01:40
@@ -17887,7 +17901,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py sync_celery_periodic_tasks --dry-run
 ```
 
-**Ukupno 54 upravljačke komande.** Spisak: `manage.py help`. [P]
+**Ukupno 55 upravljačkih komandi.** Spisak: `manage.py help`. [P]
 
 > **[P] Zaštita:** ručno pokretanje koristi **isto zaključavanje** kao zakazani posao —
 > ne mogu se preklopiti.

@@ -516,6 +516,14 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         return context
 
     def form_valid(self, form):
+        user = self.request.user
+        if not user.is_superuser:
+            # Nalog se ne sme prebaciti na sifru van centara korisnika: posle toga ni on
+            # vise ne bi mogao da ga menja, a trosak bi presao na tudji centar.
+            novi_centar = str(getattr(form.cleaned_data.get("job_code"), "center", "") or "").strip()
+            if novi_centar not in set(_get_allowed_centers(user)):
+                form.add_error("job_code", "Nalog može da ostane samo na šifri posla iz vaših centara.")
+                return self.form_invalid(form)
         self.object = form.save()
         print_urls = _putninalog_print_urls(self.object, self.request.user)
         return JsonResponse(
@@ -527,7 +535,11 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         )
 
     def get_queryset(self):
-        return PutniNalog.objects.all()
+        # Isti obuhvat kao provera u `get_object`: superuser sve, ostali samo naloge svojih centara.
+        qs = PutniNalog.objects.select_related("job_code")
+        if self.request.user.is_superuser:
+            return qs
+        return qs.filter(job_code__center__in=_get_allowed_centers(self.request.user))
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)

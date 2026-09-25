@@ -41,6 +41,9 @@ def fleet_snapshot(user, today=None):
         v.has_assignment = v.pk in assigned
         grouped[v.current_center].append(v)
 
+    from fleet.support.registar import Registar
+    registar = Registar()
+
     def statistics(rows):
         years = [v.year_of_manufacture for v in rows if v.year_of_manufacture and 1886 <= v.year_of_manufacture <= today.year]
         values = [v.value for v in rows if v.value is not None]
@@ -53,7 +56,7 @@ def fleet_snapshot(user, today=None):
 
     centers = []
     for code, rows in sorted(grouped.items(), key=lambda item: (item[0] is None, item[0] or '')):
-        centers.append(dict(code=code, label=f'Centar {code}' if code else 'Bez centra', vehicles=rows,
+        centers.append(dict(code=code, label=f'Centar {registar.oznaka_centra(code)}' if code else 'Bez centra', vehicles=rows,
                             share=100*len(rows)/len(vehicles) if vehicles else 0, **statistics(rows)))
     totals = statistics(vehicles)
     groups = []

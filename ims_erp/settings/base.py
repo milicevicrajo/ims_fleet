@@ -262,6 +262,10 @@ CELERY_RESULT_EXPIRES = int(os.getenv('CELERY_RESULT_EXPIRES', '3600'))
 
 # Routing po queue-ovima da teški Selenium taskovi ne blokiraju lake sync taskove.
 CELERY_TASK_DEFAULT_QUEUE = 'default'
+# Flota cita spiskove i nazive sifara posla iz registra organizacije (faza 2, korak 4).
+# False vraca stare spiskove bez druge promene (fleet/support/registar.py).
+FLOTA_REGISTAR_ORGANIZACIJE = True
+
 CELERY_TASK_ROUTES = {
     'fleet.tasks.run_nis_command': {'queue': 'selenium'},
     'fleet.tasks.run_omv_putnicka_command': {'queue': 'selenium'},

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% comment %}
+Lizing — mesečni troškovi po centru i OJ (fleet/support/lease_queries.py).
+Filteri su GET parametri koje upit već čita: year, month, center, oj, vrsta.
+{% endcomment %}
+{% block content %}
+<h2>Lizing — mesečni troškovi</h2>
+<form method="get" class="row g-3 align-items-end pb-3">
+  <div class="col-auto"><label class="col-form-label" for="f-year">Godina</label>
+    <input id="f-year" class="form-control" type="number" name="year" value="{{ request.GET.year }}"></div>
+  <div class="col-auto"><label class="col-form-label" for="f-month">Mesec</label>
+    <input id="f-month" class="form-control" type="number" min="1" max="12" name="month" value="{{ request.GET.month }}"></div>
+  <div class="col-auto"><label class="col-form-label" for="f-center">Centar</label>
+    <input id="f-center" class="form-control" name="center" value="{{ request.GET.center }}"></div>
+  <div class="col-auto"><label class="col-form-label" for="f-vrsta">Vrsta</label>
+    <input id="f-vrsta" class="form-control" name="vrsta" value="{{ request.GET.vrsta }}"></div>
+  <div class="col-auto d-flex align-items-end">
+    <button type="submit" class="btn btn-primary">Filtriraj</button>
+    <a class="btn btn-secondary ms-2" href="{% url 'lease_monthly_costs' %}">Reset</a>
+  </div>
+</form>
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead><tr>
+          <th>Godina</th><th>Mesec</th><th>Centar</th><th>OJ</th><th>Šifra posla</th><th>Vrsta</th>
+          <th class="text-end">Lizing</th><th class="text-end">Vozila</th>
+          <th class="text-end">Prateći troškovi</th><th class="text-end">Po vozilu</th>
+        </tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td>{{ r.year|default:"—" }}</td>
+            <td>{{ r.month|default:"—" }}</td>
+            <td>{{ r.center|default:"—" }}</td>
+            <td>{{ r.oj_name|default:"—" }}</td>
+            <td>{{ r.job_code|default:"—" }}</td>
+            <td>{{ r.lease_type|default:"—" }}</td>
+            <td class="text-end">{{ r.lease_amount|floatformat:"2g" }}</td>
+            <td class="text-end">{{ r.vehicle_count }}</td>
+            <td class="text-end">{{ r.accompanying_total|floatformat:"2g" }}</td>
+            <td class="text-end">{% if r.accompanying_per_vehicle is not None %}{{ r.accompanying_per_vehicle|floatformat:"2g" }}{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="10" class="text-center text-muted">Nema podataka za dati filter.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if is_paginated %}
+      <nav class="mt-2">
+        {% if page_obj.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="?page={{ page_obj.previous_page_number }}">Prethodna</a>{% endif %}
+        <span class="mx-2">Strana {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a class="btn btn-sm btn-outline-secondary" href="?page={{ page_obj.next_page_number }}">Sledeća</a>{% endif %}
+      </nav>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

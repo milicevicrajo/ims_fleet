@@ -215,7 +215,7 @@ jednog modula. Delimično prebačen modul je gori od neprebačenog.
 | 1. `org_node` | Opciona kolona na `JobCode`, `PutniNalog`, `VehicleTravelOrder`, `ProcurementRequest`, `FuelConsumption`, `Lease` (`fleet/migrations/0084`). Pri svakom čuvanju se **izvodi** iz starog polja (`organizacija/signals.py`); ručni upis se prepisuje |
 | 2. Popunjavanje | `manage.py povezi_flotu [--proba] [--model …] [--paket N]` — paketi po 500, menja samo ono što odstupa, pa je ponovljivo. Hvata i masovne izmene (`update`) koje signal ne vidi |
 | 3. Uporedni izveštaj | `/organizacija/flota/` i `povezi_flotu --izvestaj`: broj i iznos po centru, starim putem (`OrganizationalUnit.center`) i kroz upisani `org_node`; gorivo i po dodeli vozila važećoj na dan točenja — putem kojim ga Flota raspoređuje |
-| 4. Čitanje iz registra | **Nije uključeno** |
+| 4. Čitanje iz registra | **Uključeno 25.09.2026. za spiskove i nazive** (`fleet/support/registar.py`, prekidač `FLOTA_REGISTAR_ORGANIZACIJE`): izbor šifre u svim formama Flote nudi samo aktivne šifre iz registra (uz već upisanu vrednost), oznake su iz registra, a centri u filterima, na kontrolnoj tabli i u pravima pristupa nose naziv po pravilniku. Staro polje se i dalje upisuje i ostaje ključ za filtere, zbirove, pristup i brojeve putnih naloga — centar je u registru isti za sve zapise, pa se zbirovi ne menjaju |
 
 **Paralelna sinhronizacija [P]:** stara `fleet.tasks.fetch_job_codes` (01:30) i dalje puni
 `OrganizationalUnit` i ostaje merodavna. Nova `organizacija.tasks.sync_organizacija_task`
@@ -263,8 +263,11 @@ Naučne šifre: 89 povezano sa Kadrovima, 80 na brojevima kojih nema u Kadrovima
 nego u nazivima šifara; projekti P36014 i P36017 upisani su pod dva broja (`36014`/`360140`,
 `36017`/`360170`) — broj je slobodan unos, pa se ne spajaju bez potvrde.
 
-**Uslov za korak 4:** isti rezultat na sačuvanim vezama posle `migrate` i `sync_organizacija`
-na serveru.
+**Uslov za korak 4 — ispunjen 25.09.2026. [P]:** veza `org_node` popunjena na bazi (20.222
+zapisa: 205 dodela, 3.770 putnih naloga, 10 naloga za vozila, 2 GZN, 16.212 goriva, 23 lizinga;
+240 naloga za vozila je bez šifre), uporedni izveštaj **prolazi** u svih 7 delova, 0 razlika.
+Pre toga su sve šifre koje Flota koristi (25 tekućih dodela, 29 šifara na putnim nalozima od 2025.,
+4 na nalozima za vozila) potvrđene kao aktivne u registru.
 
 ---
 

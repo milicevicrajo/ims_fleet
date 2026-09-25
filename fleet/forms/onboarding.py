@@ -189,6 +189,13 @@ class VehicleAssignmentForm(forms.Form):
     created_at = localized_date_field(label='Datum preuzimanja vozila', required=False)
     start_mileage = forms.IntegerField(label='Kilometraža pri preuzimanju', min_value=0, required=False)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from fleet.support.registar import ogranici_izbor
+
+        # Sifre posla iz registra organizacije (aktivne); pogled posle ogranicava i na centre korisnika.
+        ogranici_izbor(self.fields['organizational_unit'], (self.initial or {}).get('organizational_unit'))
+
     def clean(self):
         data = super().clean()
         if data.get('organizational_unit') and not data.get('assigned_date'):

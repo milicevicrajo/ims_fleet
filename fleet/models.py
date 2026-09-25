@@ -250,7 +250,7 @@ class JobCode(models.Model):
     )
     # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
     # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
-    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True, editable=False,
         related_name='fleet_dodele', verbose_name=_("Čvor registra"))
 
     assigned_date = models.DateField(verbose_name=_("Datum dodele"))
@@ -289,7 +289,7 @@ class Lease(models.Model):
     job_code = models.CharField(max_length=20, verbose_name=_("Šifra posla"))
     # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
     # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
-    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True, editable=False,
         related_name='fleet_lizinzi', verbose_name=_("Čvor registra"))
     contract_number = models.CharField(max_length=50, verbose_name=_("Broj ugovora"))
     contract = models.ForeignKey('ugovori.Contract', on_delete=models.PROTECT, null=True, blank=True, related_name='fleet_leases', verbose_name=_("Ugovor iz evidencije Ugovori"))
@@ -499,7 +499,7 @@ class FuelConsumption(models.Model):
     job_code = models.CharField(max_length=50, verbose_name=_("Šifra posla"), blank=True, null=True)
     # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
     # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
-    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True, editable=False,
         related_name='fleet_gorivo', verbose_name=_("Čvor registra"))
     mileage = models.IntegerField(verbose_name=_("Kilometraža"))
 
@@ -577,7 +577,7 @@ class PutniNalog(models.Model):
     )
     # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
     # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
-    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True, editable=False,
         related_name='fleet_putni_nalozi', verbose_name=_("Čvor registra"))
     travel_location = models.CharField(max_length=100, verbose_name=_("Mesto putovanja"))
     task = models.TextField(verbose_name=_("Zadatak"))
@@ -721,7 +721,7 @@ class VehicleTravelOrder(models.Model):
         help_text=_("Jedan nalog pripada jednom poslu. Prazno znači da pripadnost još nije potvrđena."))
     # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
     # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
-    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True, editable=False,
         related_name='fleet_nalozi_vozila', verbose_name=_("Čvor registra"))
     pn_number = models.PositiveIntegerField(
         verbose_name=_("PN broj"),
@@ -968,7 +968,7 @@ class ProcurementRequest(models.Model):
     )
     # Registar organizacije, faza 2: izvodi se iz polja iznad (organizacija/signals.py);
     # staro polje ostaje merodavno i niko ne cita ovu vezu u obracunu.
-    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True,
+    org_node = models.ForeignKey('organizacija.OrgNode', on_delete=models.PROTECT, null=True, blank=True, editable=False,
         related_name='fleet_zahtevi_nabavke', verbose_name=_("Čvor registra"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Datum kreiranja"))
     number = models.CharField(max_length=32, verbose_name=_("Broj GZN"), unique=True, blank=True, null=True)

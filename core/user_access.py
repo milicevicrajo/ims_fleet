@@ -69,7 +69,13 @@ class UserAccessForm(forms.ModelForm):
         self.fields['allowed_centers'].queryset = OrganizationalUnit.objects.order_by('center','code')
         centers = {str(c).strip() for c in OrganizationalUnit.objects.values_list('center',flat=True) if c and str(c).strip()}
         centers.update(split_codes(self.instance.allowed_center_codes))
-        self.fields['center_codes'].choices = [(c, f'Centar {c}') for c in sorted(centers,key=lambda x:(len(x),x))]
+        from fleet.support.registar import Registar
+        registar = Registar()
+        self.fields['center_codes'].choices = [
+            (c, f'Centar {registar.oznaka_centra(c)}') for c in sorted(centers, key=lambda x: (len(x), x))]
+        if registar.dostupan:
+            # Nazivi iz registra organizacije; izbor ostaje ceo, jer postojeca prava ne smeju da nestanu.
+            self.fields['allowed_centers'].label_from_instance = registar.oznaka
         units = {str(c or d or '').strip() for c,d in Employee.objects.values_list('org_unit_code','department_code')}
         units.update(self.instance.allowed_hr_unit_codes or [])
         self.fields['hr_unit_codes'].choices = [(c, f'OJ {c}') for c in sorted(units - {''},key=lambda x:(len(x),x))]

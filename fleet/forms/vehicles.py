@@ -168,3 +168,10 @@ class JobCodeForm(FieldsetMixin, forms.ModelForm):
     class Meta:
         model = JobCode
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from fleet.support.registar import ogranici_izbor
+
+        # Sifre posla iz registra organizacije (aktivne), uz vec upisanu vrednost dodele.
+        ogranici_izbor(self.fields["organizational_unit"], getattr(self.instance, "organizational_unit_id", None))

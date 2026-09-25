@@ -85,11 +85,15 @@ def wait_for_download_file(download_path, timeout=60):
     raise TimeoutException("Download file not found within timeout.")
 
 
-def get_vehicle_job_code(vehicle):
-    job_code = vehicle.job_codes.select_related("organizational_unit").first()
-    if job_code and job_code.organizational_unit:
-        return job_code.organizational_unit.code
-    return None
+def get_vehicle_job_code(vehicle, na_dan=None):
+    """Sifra posla vozila koja je vazila na dan tocenja (poslednja dodela do tog dana).
+
+    Ranije je uzimana prva dodela bez redosleda, tj. najstarija, pa je gorivo dobijalo
+    zastarelu sifru. Bez dodele do tog dana vraca None — sifra se ne izmislja.
+    """
+    from fleet.support.assignments import sifra_vozila_na_dan
+
+    return sifra_vozila_na_dan(vehicle, na_dan)
 
 
 def nis_import_db_alias():
@@ -1010,7 +1014,7 @@ def import_omv_fuel_consumption_from_csv(csv_file_path):
                 mileage_value = row.get('Mileage')
                 mileage = int(parse_decimal(mileage_value, default=0.0))
 
-                job_code = get_vehicle_job_code(vehicle)
+                job_code = get_vehicle_job_code(vehicle, transaction_date)
                 # IzraÄunaj neto troÅ¡ak
                 cost_neto = cost_bruto - vat
                 duplicate_transaction = _omv_duplicate_transaction_identity(
@@ -1404,7 +1408,7 @@ def import_nis_fuel_consumption(file_path):
             naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
             transaction_date = timezone.localize(naive_transaction_date)  # Dodaj vremensku zonu
             
-            job_code = get_vehicle_job_code(vehicle)
+            job_code = get_vehicle_job_code(vehicle, transaction_date)
            
             _, was_created = FuelConsumption.objects.using(db_alias).get_or_create(
                 vehicle=vehicle,

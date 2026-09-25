@@ -1,5 +1,6 @@
 from datetime import date
 
+from fleet.support.registar import ogranici_izbor
 from django import forms
 from django_select2.forms import Select2Widget
 
@@ -92,6 +93,8 @@ class PutniNalogForm(forms.ModelForm):
         self.fields.pop("virman_generated_at", None)
         self.fields.pop("virman_generated_by", None)
         self.fields.pop("isplaceno", None)
+        # Sifre posla iz registra organizacije (aktivne), uz vec upisanu vrednost naloga.
+        ogranici_izbor(self.fields["job_code"], getattr(self.instance, "job_code_id", None))
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
             if inactive_employee.exists():

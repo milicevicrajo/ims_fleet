@@ -284,6 +284,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py omv_command_teretna
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates          # pregled
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates --apply  # brisanje
+.\.venv\Scripts\python.exe manage.py ispravi_sifre_goriva --proba         # šifra posla goriva na dan točenja
 
 # Registar organizacije (nova sinhronizacija, paralelno sa fetch_job_codes)
 .\.venv\Scripts\python.exe manage.py sync_organizacija                 # isto što i zadatak u 01:40
@@ -296,7 +297,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py sync_celery_periodic_tasks --dry-run
 ```
 
-**Ukupno 54 upravljačke komande.** Spisak: `manage.py help`. [P]
+**Ukupno 55 upravljačkih komandi.** Spisak: `manage.py help`. [P]
 
 > **[P] Zaštita:** ručno pokretanje koristi **isto zaključavanje** kao zakazani posao —
 > ne mogu se preklopiti.

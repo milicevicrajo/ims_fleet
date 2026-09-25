@@ -67,6 +67,8 @@ class OrderJobForm(StyledModelForm):
             if current_id:
                 limited = limited | self.fields['job_code'].queryset.filter(pk=current_id)
             self.fields['job_code'].queryset = limited.distinct()
+        from fleet.support.registar import ogranici_izbor
+        ogranici_izbor(self.fields['job_code'], getattr(self.instance, 'job_code_id', None))
 
 
 class AssessmentForm(StyledModelForm):
