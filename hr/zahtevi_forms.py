@@ -6,7 +6,8 @@ from django.forms import inlineformset_factory
 from django.utils import timezone
 
 from hr.models import BrojacZahteva, Employee, Pismo, Potpisnik, ResenjeDan, VrstaResenja, VrstaZahteva, Zahtev, ZahtevDan
-from hr.resenja_forms import (DATE_ATTRS, DodatnaPoljaMixin, _ukrasi, izbor_oj, ocisti_vrstu_sa_poljima,
+from hr.form_layout import SekcijeMixin
+from hr.resenja_forms import (CUVARI_UPUTSTVO, DATE_ATTRS, DodatnaPoljaMixin, _ukrasi, izbor_oj, ocisti_vrstu_sa_poljima,
     validiraj_period)
 from hr.services.resenja import normalizuj_pol
 
@@ -196,7 +197,19 @@ class ResenjaIzZahtevaForm(forms.Form):
         return data
 
 
-class VrstaZahtevaForm(forms.ModelForm):
+class VrstaZahtevaForm(SekcijeMixin, forms.ModelForm):
+    SECTIONS = (
+        ('osnovno', 'Osnovno', 'Oznaka, naziv i rešenje koje se po zahtevu izdaje.', ('kod', 'naziv', 'vrsta_resenja', 'redosled',
+         'podrazumevano_pismo', 'je_aktivna'),
+         'Vrsta rešenja se predlaže pri „Dodaj rešenje iz zahteva“; kadrovik može izabrati i drugu.', 'mdi-tag-outline'),
+        ('tekst', 'Tekst zahteva', 'Predmet i pasusi dopisa.', ('predmet', 'tekst'),
+         CUVARI_UPUTSTVO + ' Zahtev dodatno ima {razlog}, {podnosilac}, {podnosilac_funkcija}, {odobrava} i '
+         '{odobrava_funkcija}.', 'mdi-file-document-edit-outline'),
+        ('podaci', 'Podaci koje traži', 'Šta se unosi pri izradi zahteva.', ('trazi_period', 'trazi_dane', 'trazi_radne_dane', 'dodatna_polja'),
+         'Dodatna polja se pišu kao oznaka|Naziv; iste oznake u vrsti rešenja prenose vrednost iz zahteva u rešenje.',
+         'mdi-form-textbox'),
+    )
+
     class Meta:
         model = VrstaZahteva
         fields = ['kod', 'naziv', 'predmet', 'tekst', 'vrsta_resenja', 'trazi_period', 'trazi_dane',

@@ -3,6 +3,7 @@ from django.forms import inlineformset_factory
 from django.utils import timezone
 from core.mixins import user_has_role_permission
 from hr.access import visible_employees
+from hr.form_layout import SekcijeMixin
 
 from hr.models import Employee, Pismo, Potpisnik, Resenje, ResenjeDan, VrstaResenja
 from hr.services.resenja import (dodatna_polja, ime_zaposlenog, naziv_jedinice, normalizuj_pol, organizaciona_jedinica,
@@ -195,7 +196,23 @@ class ResenjeDanForm(forms.ModelForm):
 ResenjeDanFormSet = inlineformset_factory(Resenje, ResenjeDan, form=ResenjeDanForm, extra=1, can_delete=True)
 
 
-class VrstaResenjaForm(forms.ModelForm):
+CUVARI_UPUTSTVO = ('Tekst se unosi ćirilicom; latinica nastaje preslovljavanjem. Čuvari mesta u vitičastim zagradama '
+    '({zaposleni}, {oj}, {period}, {dani}…) zamenjuju se podacima, {rod:дужан|дужна} bira oblik po polu, a '
+    '[[naziv|tekst]] ostaje samo kada podatak postoji. Svaka tačka dispozitiva i svaki pasus su u svom redu.')
+
+
+class VrstaResenjaForm(SekcijeMixin, forms.ModelForm):
+    SECTIONS = (
+        ('osnovno', 'Osnovno', 'Oznaka, naziv u listama i redosled.', ('kod', 'naziv', 'redosled', 'podrazumevano_pismo', 'je_aktivna'),
+         'Oznaka se ne menja posle unosa, jer je koriste zahtevi i izdata rešenja. Neaktivna vrsta se ne nudi za nova '
+         'rešenja, a već izdata ostaju nepromenjena.', 'mdi-tag-outline'),
+        ('tekst', 'Tekst rešenja', 'Delovi dokumenta redom kako se štampaju.', ('naslov', 'podnaslov', 'pravni_osnov', 'dispozitiv',
+         'obrazlozenje', 'pravna_pouka', 'dostavljeno'), CUVARI_UPUTSTVO, 'mdi-file-document-edit-outline'),
+        ('podaci', 'Podaci koje traži', 'Šta se unosi pri izradi rešenja.', ('trazi_period', 'trazi_dane', 'trazi_radne_dane', 'dodatna_polja'),
+         'Dodatna polja se pišu kao oznaka|Naziv, svako u svom redu (npr. poslovi|Poslovi koje preuzima), a u tekstu se '
+         'koriste kao {oznaka}. Polje koje vrsta traži je obavezno pri unosu.', 'mdi-form-textbox'),
+    )
+
     class Meta:
         model = VrstaResenja
         fields = ['kod', 'naziv', 'naslov', 'podnaslov', 'pravni_osnov', 'dispozitiv', 'obrazlozenje',

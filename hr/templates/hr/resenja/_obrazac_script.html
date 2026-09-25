@@ -12,7 +12,7 @@ Ulaz: `predlog_url` (naziv rute predloga) i `vrste-meta` JSON na stranici.{% end
     $('[data-grupa="vreme"]').toggle(!!podaci.vreme);
     $('[id^="id_dp_"]').each(function () {
       var oznaka = this.id.slice('id_dp_'.length);
-      $(this).closest('.resenja-field').toggle((podaci.polja || []).indexOf(oznaka) !== -1);
+      $(this).closest('.ef-field, .resenja-field').toggle((podaci.polja || []).indexOf(oznaka) !== -1);
     });
   }
 

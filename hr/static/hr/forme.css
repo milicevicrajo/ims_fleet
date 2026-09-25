@@ -1,0 +1,103 @@
+/* Forme Kadrova u sekcijama (hr/templates/hr/forms/base.html). Sve je pod .ef, da ne dodirne druge ekrane. */
+.ef { --ef-ink:#183247; --ef-line:#e3e8ee; --ef-muted:#687785; --ef-accent:#1f6fb2; padding-bottom:90px; }
+.ef-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px 16px; margin-bottom:16px; }
+.ef-head h1 { font-size:1.45rem; margin:0; color:var(--ef-ink); }
+.ef-head p { margin:2px 0 0; color:var(--ef-muted); font-size:13.5px; }
+.ef-head p:empty { display:none; }
+
+.ef-intro { background:#fff; border:1px solid var(--ef-line); border-radius:10px; padding:14px 18px; margin-bottom:16px; }
+.ef-intro-row { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:flex-end; }
+.ef-intro label { font-size:13px; font-weight:600; color:#344554; margin-bottom:4px; display:block; }
+.ef-intro select { display:block; min-width:240px; min-height:38px; border:1px solid #e9ecef; border-radius:2px;
+  padding:.375rem 1.75rem .375rem .75rem; background-color:#fff; }
+
+.ef-layout { display:grid; grid-template-columns:minmax(0, 1fr) 250px; gap:20px; align-items:start; }
+.ef-layout.is-single { grid-template-columns:minmax(0, 1fr); max-width:1080px; }
+.ef-layout.is-single .ef-aside { display:none; }
+/* Tema ima #main-wrapper { overflow:hidden }, pa position:sticky ne radi; kartica se drži skriptom. */
+.ef-aside { position:relative; align-self:stretch; }
+.ef-nav { background:#fff; border:1px solid var(--ef-line); border-radius:10px; padding:8px; box-shadow:0 2px 10px rgba(24,50,71,.06); }
+.ef-nav.is-fixed { position:fixed; z-index:1010; overflow-y:auto; }
+.ef-nav-title { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ef-muted); padding:4px 10px 6px; }
+.ef-nav a { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; color:#3a4a57;
+  text-decoration:none; font-size:13.5px; font-weight:500; }
+.ef-nav a[hidden] { display:none; }
+.ef-nav a i { font-size:18px; color:#8a98a5; }
+.ef-nav a:hover { background:#f3f6f9; }
+.ef-nav a.is-active { background:#e8f1fb; color:var(--ef-accent); }
+.ef-nav a.is-active i { color:var(--ef-accent); }
+.ef-nav .ef-nav-err { margin-left:auto; background:#fde8e6; color:#b3261e; font-size:11px; font-weight:700; border-radius:9px; padding:0 7px; }
+.ef-nav-foot { border-top:1px solid var(--ef-line); margin-top:6px; padding:8px 10px 2px; font-size:12px; color:var(--ef-muted); }
+.ef-nav-foot > div { display:flex; align-items:center; gap:4px; }
+
+.ef-section { background:#fff; border:1px solid var(--ef-line); border-radius:10px; margin-bottom:16px; scroll-margin-top:20px;
+  box-shadow:0 1px 3px rgba(24,50,71,.04); }
+.ef-section.has-errors { border-color:#f1b8b2; }
+.ef-section-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:14px 18px; border-bottom:1px solid var(--ef-line); }
+.ef-section-title { display:flex; gap:12px; align-items:flex-start; }
+.ef-section-icon { width:36px; height:36px; border-radius:9px; background:#eef4fb; color:var(--ef-accent); display:flex;
+  align-items:center; justify-content:center; font-size:20px; flex:0 0 auto; }
+.ef-section h2 { font-size:16px; font-weight:700; color:var(--ef-ink); margin:1px 0 2px; }
+.ef-section-head p { margin:0; font-size:13px; color:var(--ef-muted); }
+.ef-section-tools { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.ef-help-toggle { white-space:nowrap; }
+.ef-help-toggle i { transition:transform .2s; display:inline-block; }
+.ef-help-toggle[aria-expanded="true"] i.mdi-chevron-down { transform:rotate(180deg); }
+.ef-help { margin:0; padding:12px 18px; background:#f5f9fd; border-bottom:1px solid var(--ef-line); font-size:13px; color:#34506a; line-height:1.55; }
+.ef-help i { color:var(--ef-accent); margin-right:6px; }
+.ef-body { padding:16px 18px 4px; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 20px; }
+.ef-body-free { padding:14px 18px; }
+.ef-body > .ef-full, .ef-body > .ef-note-line { grid-column:1 / -1; }
+.ef-note-line { font-size:12.5px; color:var(--ef-muted); margin:0 0 14px; }
+.ef-subgrid { grid-column:1 / -1; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 20px; }
+.ef-subpanel { grid-column:1 / -1; border:1px dashed #cfd8e2; border-radius:8px; padding:12px 14px 2px; margin-bottom:14px; background:#fbfcfd; }
+.ef-subpanel > summary { cursor:pointer; font-size:13px; font-weight:600; color:var(--ef-accent); margin-bottom:10px; }
+.ef-subpanel-title { grid-column:1 / -1; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ef-muted); margin:2px 0 8px; }
+.ef-toolbar-row { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.ef-status { grid-column:1 / -1; font-size:12.5px; margin:-4px 0 12px; }
+
+.ef-field { margin-bottom:14px; min-width:0; }
+.ef-field.is-wide { grid-column:1 / -1; }
+.ef-field label.form-label { font-size:13px; font-weight:600; color:#344554; margin-bottom:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ef-required { color:#b3261e; }
+.ef-hr { font-size:10.5px; font-weight:600; color:#7a5b12; background:#fff4d6; border:1px solid #f0dc9f; border-radius:8px; padding:0 6px; cursor:help; }
+.ef-field .form-text { font-size:12px; margin-top:4px; }
+.ef-field select { display:block; width:100%; min-height:38px; border:1px solid #e9ecef; border-radius:2px;
+  padding:.375rem 1.75rem .375rem .75rem; background-color:#fff; }
+.ef-field select[multiple] { min-height:120px; padding-right:.75rem; }
+.ef-field .select2-container { width:100% !important; }
+.ef-field .select2-container--bootstrap-5 .select2-selection { min-height:38px; font-size:.875rem; border-color:#e9ecef; }
+.ef-field .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { line-height:1.5; padding-top:1px; }
+.ef-field textarea.form-control { min-height:84px; }
+.ef-switch { display:flex; align-items:flex-start; gap:12px; padding:10px 12px; border:1px solid var(--ef-line); border-radius:8px; background:#fbfcfd; }
+/* Sopstveni prekidač, nezavisan od stilova teme za form-check i form-switch. */
+.ef-switch input.ef-toggle { -webkit-appearance:none; appearance:none; position:static !important; opacity:1 !important; float:none;
+  flex:0 0 auto; width:42px; height:24px; margin:0; border:0; border-radius:12px; cursor:pointer;
+  background:#c9d2db radial-gradient(circle at 12px 12px, #fff 8.5px, transparent 9.5px) no-repeat; transition:background-color .15s; }
+.ef-switch input.ef-toggle:checked { background:#1f6fb2 radial-gradient(circle at 30px 12px, #fff 8.5px, transparent 9.5px) no-repeat; }
+.ef-switch input.ef-toggle:focus-visible { outline:2px solid #86b7fe; outline-offset:2px; }
+.ef-switch input.ef-toggle:disabled { opacity:.5 !important; cursor:not-allowed; }
+.ef-switch label { font-size:13.5px; font-weight:600; color:#344554; cursor:pointer; margin:0; }
+.ef-switch .form-text { margin:2px 0 0; }
+.ef-predlog { border-color:#9cc3ea !important; background:#f0f7ff !important; }
+
+.ef-table { width:100%; margin:0; }
+.ef-table th { font-size:12px; color:#526170; background:#f6f8fa; white-space:nowrap; }
+.ef-table td { vertical-align:middle; }
+.ef-scroll { max-height:520px; overflow:auto; border:1px solid var(--ef-line); border-radius:8px; }
+
+.ef-actions { position:fixed; left:0; right:0; bottom:0; z-index:1020; background:rgba(255,255,255,.96); border-top:1px solid var(--ef-line);
+  box-shadow:0 -2px 10px rgba(24,50,71,.06); }
+.ef-actions-inner { display:flex; justify-content:flex-end; align-items:center; gap:10px; padding:10px 24px; flex-wrap:wrap; }
+.ef-actions-note { margin-right:auto; font-size:12.5px; color:var(--ef-muted); }
+.ef-actions-note.has-errors { color:#b3261e; font-weight:600; }
+@media (min-width: 1170px) { .ef-actions { left:250px; } }
+@media (max-width: 991px) {
+  .ef-layout { grid-template-columns:1fr; }
+  .ef-aside { order:-1; }
+  .ef-nav { position:static !important; display:flex; flex-wrap:wrap; gap:4px; }
+  .ef-nav-title, .ef-nav-foot { display:none; }
+  #ef-nav-links { display:flex; flex-wrap:wrap; gap:4px; }
+  .ef-nav a { padding:6px 9px; }
+}
+@media (max-width: 640px) { .ef-body { grid-template-columns:1fr; } .ef-section-head { flex-direction:column; } }

@@ -50,7 +50,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 | Celina | Šta obuhvata |
 |---|---|
 | **Zaposleni** | Evidencija, CV stavke, ispravka prikaza imena |
-| **Radna lista** | Mesečna evidencija sati po šiframa posla, topli obrok, terenski dodatak |
+| **Radna lista** | Mesečna evidencija sati po šiframa posla, topli obrok, terenski dodatak; predlog popunjavanja iz prolazaka, putnih naloga, bolovanja, praznika i slave (K-11) |
 | **Evidencija prolazaka** | Prikaz dnevnih sati iz sistema kontrole pristupa, uz spisak problema |
 | **Godišnji odmori** | Dodele i rešenja preuzeti iz obračuna zarada |
 | **Bolovanja** | Uvoz RFZO Excel izvoza, povezivanje po JMBG |
@@ -104,7 +104,8 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** |
 | Vrsta rada / odsustva po redu | Radna lista | Zaposleni |
 | Topli obrok — broj dana i šifra posla | Radna lista | Zaposleni |
-| Terenski dodatak — broj dana | Radna lista | Zaposleni |
+| Terenski dodatak — broj dana | Radna lista | Zaposleni (predlaže se iz putnih naloga) |
+| **Datum slave** | Izmena zaposlenog, sekcija „Obrazovanje i slava“ | Kadrovska služba; predlaže se iz naziva slave, koriste se dan i mesec |
 | Ispravka imena za prikaz | Moj profil | Zaposleni |
 | CV stavke | Moj profil | Zaposleni |
 | **Bodovi po merilima i komentari** | Ocenjivanje | Neposredni rukovodilac |
@@ -147,6 +148,7 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 | **`fleet_employee`** | Zaposleni — ključ je `employee_code` |
 | `fleet_employeecvitem` | CV stavke |
 | `hr_worktimesheet`, `hr_worktimesheetline` | Radna lista i redovi (31 kolona sati) |
+| `fleet_employee.slava_datum` | Datum krsne slave (koriste se dan i mesec); HR sinhronizacija ga ne menja, naziv slave dolazi iz HR-a |
 | `hr_worktimecategory`, `hr_worktimeelement`, `hr_recipienttype` | Šifarnici radne liste |
 | `hr_annualleaveallowance`, `hr_annualleavedecision`, `hr_annualleavesync` | Godišnji odmori |
 | `hr_sickleave`, `hr_sickleaveimport` | Bolovanja |
@@ -193,6 +195,7 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 | Šifarnik radne liste | [`hr/services/work_time_catalog.py`](../../../hr/services/work_time_catalog.py) |
 | Sinhronizacija zaposlenih | [`hr/sync.py`](../../../hr/sync.py) |
 | Radna lista | [`hr/views.py: MyWorkTimeSheetView`](../../../hr/views.py) |
+| **Predlog radne liste** | [`hr/services/work_time_prefill.py`](../../../hr/services/work_time_prefill.py), praznici i slave: [`hr/services/praznici.py`](../../../hr/services/praznici.py) |
 
 Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 `test_sick_leave.py`, `test_work_time_catalog.py`, `test_resenja.py`, `test_zahtevi.py`. [P]
@@ -289,6 +292,29 @@ odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i p
 unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Kadrovske OJ biraju se
 u Administracija → Korisnici → Uloge i dozvole. Ograničenja podataka ne menjaju obračune
 ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
+
+### Forme Kadrova u sekcijama
+
+Sve forme za unos u Kadrovima imaju isti raspored (`hr/templates/hr/forms/base.html`,
+stilovi `hr/static/hr/forme.css`, ponašanje `hr/static/hr/forme.js`):
+
+- polja su podeljena u **sekcije**; svaka sekcija ima kratak opis i dugme **Uputstvo** koje klizno
+  otvara objašnjenje, a sva uputstva su zajedno u prozoru „Uputstvo“ u zaglavlju;
+- **kartica „Sekcije forme“ desno** ostaje na ekranu pri pomeranju, pokazuje sekciju koja se gleda
+  i broj grešaka po sekciji; sekcija koja se sakrije (npr. „Pojedinačni dani“ kada ih izabrana vrsta
+  rešenja ne traži) nestaje i iz kartice; forma sa jednom sekcijom nema karticu;
+- da/ne polja su **prekidači**; polja koja HR sinhronizacija prepisuje nose oznaku **„iz HR-a“**;
+- traka **Odustani / Sačuvaj** stoji na dnu ekrana.
+
+Forma navodi sekcije u `SECTIONS` (`hr/form_layout.py: SekcijeMixin`): oznaka, naslov, opis, polja,
+uputstvo i ikonica. Polje koje nije razvrstano ide u „Ostalo“, pa novo polje modela ne nestaje iz
+forme; forma bez `SECTIONS` prikazuje se kao jedna sekcija. Posebni delovi (tabela dana, spisak
+zaposlenih, merila ocenjivanja) prave se oznakom `{% sekcija %}` iz `hr_forme`.
+
+Na ovaj način su uređene: zaposleni (unos i izmena), ispravka imena, stavka CV-a, uvoz bolovanja,
+šifarnici elemenata radne liste i ocenjivanja, obrazac ocenjivanja, rešenje, zahtev, isti zahtev za
+više zaposlenih i šifarnik rešenja (vrste rešenja i zahteva, potpisnici, brojač). Radna lista je
+tabela za unos sati i ima svoj raspored.
 
 ### Zahtev → rešenje
 

@@ -5,16 +5,26 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import FormView, ListView
 
 from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
 from hr.access import scope_employee_records
+from hr.form_layout import SekcijeMixin
 from .models import SickLeave, SickLeaveImport
 from .services.sick_leave import import_rfzo_workbook
 
 
-class SickLeaveImportForm(forms.Form):
+class SickLeaveImportForm(SekcijeMixin, forms.Form):
+    SECTIONS = (
+        ('datoteka', 'RFZO datoteka', 'Excel izvoz bolovanja i datum kada je napravljen.', ('source_date', 'file'),
+         'Ponovni uvoz ažurira bolovanje sa istim RFZO ID-jem. Zaposleni se pronalazi po JMBG-u; ako nema '
+         'jednoznačnog podudaranja, bolovanje ostaje na proveri. Oznaka „Bolovanje“ pojavljuje se uz prolaske '
+         'za obuhvaćene datume, a radna lista je dobija kao predlog; sam uvoz ne menja sate u radnoj listi.',
+         'mdi-file-excel-outline'),
+    )
+
     source_date = forms.DateField(label='Datum RFZO izvoza', initial=timezone.localdate,
         input_formats=['%Y-%m-%d','%d.%m.%Y'],
         widget=forms.DateInput(format='%Y-%m-%d',attrs={'type':'date','class':'form-control'}))
@@ -70,7 +80,9 @@ class SickLeaveImportView(LoginRequiredMixin, RolePermissionRequiredMixin, FormV
 
     def get_context_data(self, **kwargs):
         ctx=super().get_context_data(**kwargs)
-        ctx.update(title='Uvoz bolovanja iz RFZO',sidebar_template='sidebar_kadrovi.html')
+        ctx.update(title='Uvoz bolovanja iz RFZO',sidebar_template='sidebar_kadrovi.html',
+            submit_button_label='Uvezi bolovanja',
+            cancel_url=reverse('hr:sick_leave_list') if user_has_role_permission(self.request.user,'hr:sick_leave_list') else '')
         return ctx
 
     def form_valid(self, form):

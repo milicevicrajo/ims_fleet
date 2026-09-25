@@ -1,0 +1,31 @@
+{% load form_filters %}{% comment %}
+Jedno polje u sekciji. Ulaz: `field`, opciono `sirina="wide"` (cela širina sekcije).
+Da/ne polje je prekidač; polje sa atributom hr_sync dobija oznaku „iz HR-a“.
+{% endcomment %}{% with input_type=field.field.widget.input_type %}
+{% if field.is_hidden %}{{ field }}{% elif input_type == "checkbox" %}
+<div class="ef-field is-wide">
+  <div class="ef-switch">
+    {{ field|add_class:"ef-toggle" }}
+    <div>
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {% if field.field.hr_sync %}<span class="ef-hr" title="HR sinhronizacija prepisuje ovo polje">iz HR-a</span>{% endif %}
+      {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="ef-field{% if sirina == 'wide' or field.field.widget.template_name == 'django/forms/widgets/textarea.html' %} is-wide{% endif %}">
+  <label class="form-label" for="{{ field.id_for_label }}">
+    {{ field.label }}{% if field.field.required %}<span class="ef-required" title="Obavezno polje" aria-label="obavezno">*</span>{% endif %}
+    {% if field.field.hr_sync %}<span class="ef-hr" title="HR sinhronizacija prepisuje ovo polje">iz HR-a</span>{% endif %}
+  </label>
+  {% if input_type == "select" or input_type == "select-multiple" %}
+    {% if field.errors %}{{ field|add_class:"form-select is-invalid" }}{% else %}{{ field|add_class:"form-select" }}{% endif %}
+  {% else %}
+    {% if field.errors %}{{ field|add_class:"form-control is-invalid" }}{% else %}{{ field|add_class:"form-control" }}{% endif %}
+  {% endif %}
+  {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+  {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+</div>
+{% endif %}{% endwith %}

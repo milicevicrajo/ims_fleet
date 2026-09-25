@@ -4,8 +4,10 @@ import unicodedata
 from django import forms
 from django.forms import inlineformset_factory
 from django.db.models import Q
+from django.utils import timezone
 
 from core.models import OrganizationalUnit
+from .form_layout import SekcijeMixin
 
 from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeCategory
 
@@ -13,15 +15,62 @@ from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, 
 WORK_TIME_SHEET_LINE_COUNT = 12
 WORK_TIME_SHEET_DAY_FIELDS = [f"day_{day}" for day in range(1, 32)]
 
+# Polja koja HR sinhronizacija (hr/sync.py) prepisuje pri svakom pokretanju. Forma ih označava,
+# da korisnik zna da će ručna izmena trajati samo do sledeće sinhronizacije.
+HR_SYNC_FIELDS = frozenset({
+    "title", "original_full_name", "first_name", "last_name", "position", "department_code", "org_unit_code",
+    "system_code", "system_name", "gender", "date_of_birth", "date_of_joining", "phone_number", "mobile_phone",
+    "is_active", "personal_number", "account_number", "address", "education", "job_code", "job_title",
+    "status_code", "status_name", "slava", "residence_municipality", "recipient_code", "recipient_name",
+})
 
-class EmployeeForm(forms.ModelForm):
+
+class EmployeeForm(SekcijeMixin, forms.ModelForm):
+    # (naslov, kratak opis, polja, uputstvo, ikonica)
+    SECTIONS = (
+        ("identitet", "Identitet", "Ko je zaposleni.", (
+            "employee_code", "title", "first_name", "last_name", "gender", "date_of_birth", "personal_number",
+            "is_active"),
+         "Šifra zaposlenog je ključ za HR sinhronizaciju, radne liste i prolaze — ne menja se posle unosa. "
+         "Ime, pol, datum rođenja i JMBG dolaze iz HR-a i biće vraćeni pri sledećoj sinhronizaciji, osim ako "
+         "je u sekciji „Prikaz imena“ uključeno „Ne ažuriraj ime, prezime, titulu i pol iz HR-a“.",
+         "mdi-account-outline"),
+        ("prikaz", "Prikaz imena i ćirilica", "Kako se ime prikazuje u aplikaciji i u rešenjima.", (
+            "display_first_name_override", "display_last_name_override", "full_name_cyrillic",
+            "original_full_name", "skip_hr_identity_update"),
+         "Ime i prezime za prikaz služe samo za ispravku kvačica (npr. Petrovic → Petrović); HR ih ne prepisuje. "
+         "Ime ćirilicom koristi se u rešenjima kada automatsko preslovljavanje pogreši kod lj, nj i dž.",
+         "mdi-format-letter-case"),
+        ("zaposlenje", "Zaposlenje i organizacija", "Gde radi i na kom radnom mestu.", (
+            "date_of_joining", "position", "org_unit_code", "department_code", "job_code", "job_title",
+            "status_code", "status_name", "system_code", "system_name"),
+         "OJ određuje centar zaposlenog, obuhvat pristupa i podrazumevanu šifru posla na radnoj listi. "
+         "Svi podaci ove sekcije dolaze iz HR-a.",
+         "mdi-office-building-outline"),
+        ("obracun", "Obračun zarada", "Veza sa obračunom i vrste rada na radnoj listi.", (
+            "recipient_code", "recipient_name", "account_number"),
+         "Vrsta primaoca određuje koje vrste rada i odsustva zaposleni vidi u radnoj listi (Elementi RL).",
+         "mdi-cash-multiple"),
+        ("kontakt", "Kontakt i adresa", None, (
+            "phone_number", "mobile_phone", "address", "residence_municipality"),
+         "Kontakt podaci dolaze iz HR-a; izmena ovde traje do sledeće sinhronizacije.",
+         "mdi-phone-outline"),
+        ("dodatno", "Obrazovanje i slava", "Slava se u radnoj listi predlaže kao verski praznik.", (
+            "education", "slava", "slava_datum"),
+         "Naziv slave dolazi iz HR-a, a datum slave se upisuje ovde i HR ga ne menja. Od datuma se koriste samo "
+         "dan i mesec. Za poznate slave sa stalnim datumom (Sv. Nikola, Đurđevdan, Aranđelovdan…) datum se "
+         "predlaže iz naziva; pokretne slave (Spasovdan, Trojice) upišite ručno.",
+         "mdi-church"),
+    )
+
     class Meta:
         model = Employee
         fields = "__all__"
         labels = {
             "display_first_name_override": "Ime za prikaz",
             "display_last_name_override": "Prezime za prikaz",
-            "skip_hr_identity_update": "Ne azuriraj ime, prezime, titulu i pol iz HR-a",
+            "skip_hr_identity_update": "Ne ažuriraj ime, prezime, titulu i pol iz HR-a",
+            "is_active": "Aktivan zaposleni",
         }
         help_texts = {
             "recipient_code": "Preuzima se iz polja sif_prim u HR izvoru; sinhronizacija ažurira ovu vrednost.",
@@ -42,6 +91,27 @@ class EmployeeForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.access_user = user
+        for name in ("date_of_birth", "date_of_joining", "slava_datum"):
+            if name in self.fields:
+                self.fields[name].input_formats = ["%d.%m.%Y", "%d.%m.%Y.", "%Y-%m-%d"]
+                self.fields[name].widget = forms.DateInput(format="%d.%m.%Y", attrs={
+                    "class": "form-control js-date", "autocomplete": "off", "placeholder": "dd.mm.gggg"})
+        for name in HR_SYNC_FIELDS:
+            if name in self.fields:
+                self.fields[name].hr_sync = True
+        self.slava_predlog = False
+        if self.instance.pk and not self.instance.slava_datum and "slava_datum" in self.fields:
+            from datetime import date
+            from hr.services.praznici import predlog_datuma_slave
+            predlog = predlog_datuma_slave(self.instance.slava)
+            if predlog:
+                # Samo predlog u formi; upisuje se tek kada korisnik sačuva.
+                self.initial["slava_datum"] = date(timezone.localdate().year, predlog[1], predlog[0])
+                self.slava_predlog = True
+                attrs = self.fields["slava_datum"].widget.attrs
+                attrs["class"] = f'{attrs.get("class", "")} ef-predlog'.strip()
+                self.fields["slava_datum"].help_text = (f"Predloženo iz naziva slave „{self.instance.slava}“ — "
+                                                        "proverite i sačuvajte. Godina nije bitna.")
         if not getattr(user, "is_superuser", False):
             self.fields.pop("display_first_name_override", None)
             self.fields.pop("display_last_name_override", None)
@@ -57,7 +127,17 @@ class EmployeeForm(forms.ModelForm):
         return data
 
 
-class EmployeeCVItemForm(forms.ModelForm):
+class EmployeeCVItemForm(SekcijeMixin, forms.ModelForm):
+    SECTIONS = (
+        ("posao", "Posao ili projekat", "Gde ste radili i na kojoj ulozi.", ("title", "organization", "role"),
+         "Naziv je ono što se vidi u pregledu CV-a (npr. „Nadzor nad izgradnjom mosta“). Organizacija može biti "
+         "Institut IMS ili drugi poslodavac, a uloga je vaša funkcija na tom poslu.", "mdi-briefcase-outline"),
+        ("period", "Period", "Od kada do kada.", ("start_date", "end_date"),
+         "Za posao koji još traje ostavite datum završetka prazan.", "mdi-calendar-range"),
+        ("opis", "Opis i veštine", None, ("description", "skills"),
+         "Opišite zadatke i rezultate u nekoliko rečenica; veštine navedite odvojene zarezom.", "mdi-text-box-outline"),
+    )
+
     class Meta:
         model = EmployeeCVItem
         fields = [
@@ -95,7 +175,13 @@ def _normalize_name_without_diacritics(value):
     return re.sub(r"\s+", " ", value)
 
 
-class EmployeeNameCorrectionForm(forms.ModelForm):
+class EmployeeNameCorrectionForm(SekcijeMixin, forms.ModelForm):
+    SECTIONS = (
+        ("ime", "Ime i prezime", "Ispravka kvačica u prikazu imena.", ("display_first_name_override", "display_last_name_override"),
+         "Možete ispraviti samo dijakritike (npr. Petrovic → Petrović), bez izmene slova ili redosleda. Izvorna HR "
+         "vrednost ostaje sačuvana, a naredna sinhronizacija neće pregaziti ovu korekciju.", "mdi-format-letter-case"),
+    )
+
     class Meta:
         model = Employee
         fields = ["display_first_name_override", "display_last_name_override"]

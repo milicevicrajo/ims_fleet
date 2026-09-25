@@ -1,14 +1,7 @@
-{% extends 'hr/list_base.html' %}
-{% block hr_content %}
-<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3"><div><div class="hr-kicker">Kadrovi · RFZO evidencija</div><h1><i class="mdi mdi-file-import me-2"></i>Uvoz bolovanja</h1><p>Učitavanje odsustava iz Excel datoteke i povezivanje sa zaposlenima.</p></div>{% if hr_permissions.sick_leave_list %}<a class="btn btn-outline-light btn-sm" href="{% url 'hr:sick_leave_list' %}"><i class="mdi mdi-arrow-left"></i> Pregled bolovanja</a>{% endif %}</div>
-<div class="card" style="max-width:900px"><div class="card-body p-4">
-  <p>Ponovni uvoz ažurira bolovanje sa istim RFZO ID-jem. Zaposleni se pronalazi po JMBG-u; ako nema jednoznačnog podudaranja, bolovanje ostaje na proveri.</p>
-  <form method="post" enctype="multipart/form-data">{% csrf_token %}
-    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-    <div class="row g-3 mb-4"><div class="col-4"><label class="form-label" for="{{ form.source_date.id_for_label }}">{{ form.source_date.label }}</label>{{ form.source_date }}{{ form.source_date.errors }}</div><div class="col-8"><label class="form-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>{{ form.file }}{{ form.file.errors }}</div></div>
-    <p class="small text-muted">Oznaka „Bolovanje“ pojavljuje se u napomeni uz prolaske za obuhvaćene datume. Uvoz ne popunjava niti menja sate u radnoj listi.</p>
-    <button type="submit" class="btn btn-primary"><i class="mdi mdi-upload"></i> Uvezi bolovanja</button>
-    {% if hr_permissions.sick_leave_list %}<a class="btn btn-outline-secondary ms-2" href="{% url 'hr:sick_leave_list' %}">Pregled bolovanja</a>{% endif %}
-  </form>
-</div></div>
+{% extends "hr/forms/base.html" %}
+{% block ef_subtitle %}Učitavanje odsustava iz Excel datoteke RFZO i povezivanje sa zaposlenima{% endblock %}
+{% block ef_form_attrs %}method="post" enctype="multipart/form-data" novalidate{% endblock %}
+{% block ef_actions %}
+  {% if cancel_url %}<a href="{{ cancel_url }}" class="btn btn-outline-secondary">Pregled bolovanja</a>{% endif %}
+  <button type="submit" class="btn btn-primary"><i class="mdi mdi-upload"></i> Uvezi bolovanja</button>
 {% endblock %}

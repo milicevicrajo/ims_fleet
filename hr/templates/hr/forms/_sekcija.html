@@ -1,0 +1,20 @@
+{% comment %}Okvir jedne sekcije; poziva ga oznaka {% sekcija %} iz hr_forme. Desna kartica se pravi iz data-ef-* atributa.{% endcomment %}
+<section class="ef-section" id="ef-{{ key }}" data-ef-section="{{ key }}" data-ef-title="{{ title }}" data-ef-icon="{{ icon|default:'mdi-form-select' }}"{% if grupa %} data-grupa="{{ grupa }}"{% endif %}>
+  <div class="ef-section-head">
+    <div class="ef-section-title">
+      <span class="ef-section-icon"><i class="mdi {{ icon|default:'mdi-form-select' }}"></i></span>
+      <div><h2>{{ title }}</h2>{% if description %}<p>{{ description }}</p>{% endif %}</div>
+    </div>
+    <div class="ef-section-tools">
+      {{ tools|default:'' }}
+      {% if help %}
+      <button type="button" class="btn btn-sm btn-outline-secondary ef-help-toggle" data-bs-toggle="collapse"
+              data-bs-target="#ef-help-{{ key }}" aria-expanded="false" aria-controls="ef-help-{{ key }}">
+        <i class="mdi mdi-lightbulb-on-outline"></i> Uputstvo <i class="mdi mdi-chevron-down"></i>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+  {% if help %}<div class="collapse" id="ef-help-{{ key }}"><p class="ef-help" data-ef-help-title="{{ title }}"><i class="mdi mdi-information-outline"></i>{{ help }}</p></div>{% endif %}
+  <div class="{% if telo == 'slobodno' %}ef-body-free{% else %}ef-body{% endif %}">{{ body }}</div>
+</section>

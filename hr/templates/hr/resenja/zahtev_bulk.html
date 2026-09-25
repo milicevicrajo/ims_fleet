@@ -1,63 +1,72 @@
-{% extends 'hr/resenja/base.html' %}
-{% block resenja_page_class %}zahtevi-page{% endblock %}
-{% block resenja_content %}
-<div class="fleet-list-hero">
-  <div>
-  <div class="hr-kicker">Kadrovi - Zahtevi zaposlenih</div>
-  <h1><i class="mdi mdi-account-multiple-plus me-2"></i>Isti zahtev za više zaposlenih</h1>
-  <p>Za svakog označenog zaposlenog pravi se poseban zahtev sa svojim brojem. Rešenja se zatim prave iz liste zahteva.</p>
-  </div>
-  <a class="btn btn-outline-light btn-sm" href="{% url 'hr:zahtev_list' %}"><i class="mdi mdi-arrow-left"></i> Zahtevi</a>
-</div>
+{% extends "hr/forms/base.html" %}
+{% load hr_forme %}
+{% comment %}
+Isti zahtev za više zaposlenih. Filter centra je posebna GET forma iznad; zajednički podaci su u
+sekcijama, a sekcije sa `grupa` se prikazuju prema izabranoj vrsti zahteva.
+{% endcomment %}
+{% block ef_subtitle %}Za svakog označenog zaposlenog pravi se poseban zahtev sa svojim brojem; rešenja se zatim prave iz liste zahteva.{% endblock %}
 
-<div class="card shadow-sm mb-3"><div class="card-body">
-  <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+{% block ef_intro %}
+<form method="get" class="ef-intro">
+  <div class="ef-intro-row">
     <div><label class="form-label" for="bulk-centar">Centar</label>
       <select class="form-select" id="bulk-centar" name="centar"><option value="">Svi dostupni centri</option>
         {% for kod in centri %}<option value="{{ kod }}" {% if izabran_centar == kod %}selected{% endif %}>{{ kod }}</option>{% endfor %}
       </select></div>
-    <button class="btn btn-primary" type="submit">Prikaži zaposlene</button>
-  </form>
-</div></div>
-
-<form method="post" novalidate>{% csrf_token %}
-{% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-<input type="hidden" name="centar" value="{{ izabran_centar }}">
-
-<div class="card shadow-sm mb-3">
-  <div class="card-header"><h5><i class="mdi mdi-file-document-multiple-outline"></i>Podaci zajednički za sve zahteve</h5></div>
-  <div class="card-body"><div class="row g-3">
-    {% include 'hr/resenja/_polje.html' with polje=form.vrsta %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_zahteva %}
-    {% include 'hr/resenja/_polje.html' with polje=form.pismo %}
-    <div class="col-12"><hr class="my-1"></div>
-    {% include 'hr/resenja/_polje.html' with polje=form.podnosilac sirina='col-md-6' %}
-    {% include 'hr/resenja/_polje.html' with polje=form.podnosilac_funkcija sirina='col-md-6' %}
-    {% include 'hr/resenja/_polje.html' with polje=form.odobrava sirina='col-md-6' %}
-    {% include 'hr/resenja/_polje.html' with polje=form.odobrava_funkcija sirina='col-md-6' %}
-    <div class="col-12"><hr class="my-1"></div>
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_od %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_do %}
-    {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
-    {% include 'hr/resenja/_polje.html' with polje=form.vreme_od %}
-    {% include 'hr/resenja/_polje.html' with polje=form.vreme_do %}
-    {% include 'hr/resenja/_polje.html' with polje=form.dani sirina='col-md-8' %}
-    {% include 'hr/resenja/_polje.html' with polje=form.vrsta_dana %}
-    {% include 'hr/resenja/_polje.html' with polje=form.broj_radnih_dana %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_povratka %}
-    <div class="col-12"><hr class="my-1"></div>
-    {% for polje in form.dodatna_polja_forme %}{% include 'hr/resenja/_polje.html' with polje=polje sirina='col-md-6' %}{% endfor %}
-    {% include 'hr/resenja/_polje.html' with polje=form.razlog sirina='col-12' %}
-  </div></div>
-</div>
-
-<div class="card shadow-sm mb-3">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5><i class="mdi mdi-account-multiple-outline"></i>Zaposleni ({{ zaposleni|length }})</h5>
-    <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="bulk-select-all"><label class="form-check-label" for="bulk-select-all">Označi sve</label></div>
+    <button class="btn btn-outline-primary" type="submit"><i class="mdi mdi-filter"></i> Prikaži zaposlene</button>
+    <span class="ef-note-line mb-0">Spisak zaposlenih ispod prati izabrani centar.</span>
   </div>
-  <div class="card-body"><div class="resenja-scroll-table">
-    <table class="table table-sm table-hover align-middle resenja-table">
+</form>
+{% endblock %}
+
+{% block ef_errors %}{{ block.super }}<input type="hidden" name="centar" value="{{ izabran_centar }}">{% endblock %}
+
+{% block ef_sections %}
+{% sekcija key="osnovno" title="Vrsta i datum" icon="mdi-file-document-multiple-outline" description="Zajedničko za sve zahteve." help="Vrsta zahteva određuje tekst i rešenje koje se izdaje; posle izbora vrste prikazuju se samo potrebne sekcije. Svaki zaposleni dobija svoj zahtev i svoj broj." %}
+  {% include "hr/forms/_polje.html" with field=form.vrsta %}
+  {% include "hr/forms/_polje.html" with field=form.datum_zahteva %}
+  {% include "hr/forms/_polje.html" with field=form.pismo %}
+{% endsekcija %}
+
+{% sekcija key="potpisi" title="Podnosilac i odobrenje" icon="mdi-draw" description="Isti podnosilac i odobravalac za sve zahteve." help="Ako „Ko odobrava“ ostane prazno, uzima se potpisnik rešenja koji važi na datum zahteva." %}
+  {% include "hr/forms/_polje.html" with field=form.podnosilac %}
+  {% include "hr/forms/_polje.html" with field=form.podnosilac_funkcija %}
+  {% include "hr/forms/_polje.html" with field=form.odobrava %}
+  {% include "hr/forms/_polje.html" with field=form.odobrava_funkcija %}
+{% endsekcija %}
+
+{% sekcija key="period" title="Period od–do" icon="mdi-calendar-range" grupa="period" description="Na koje vreme se zahtevi odnose." %}
+  {% include "hr/forms/_polje.html" with field=form.datum_od %}
+  {% include "hr/forms/_polje.html" with field=form.datum_do %}
+  {% include "hr/forms/_polje.html" with field=form.do_zavrsetka_posla %}
+  <div class="ef-subgrid" data-grupa="vreme">
+    {% include "hr/forms/_polje.html" with field=form.vreme_od %}
+    {% include "hr/forms/_polje.html" with field=form.vreme_do %}
+  </div>
+{% endsekcija %}
+
+{% sekcija key="dani" title="Pojedinačni dani" icon="mdi-calendar-multiple" grupa="dani" description="Isti dani za sve zaposlene." %}
+  {% include "hr/forms/_polje.html" with field=form.dani %}
+  {% include "hr/forms/_polje.html" with field=form.vrsta_dana %}
+{% endsekcija %}
+
+{% sekcija key="odsustvo" title="Plaćeno odsustvo" icon="mdi-calendar-check" grupa="radni_dani" %}
+  {% include "hr/forms/_polje.html" with field=form.broj_radnih_dana %}
+  {% include "hr/forms/_polje.html" with field=form.datum_povratka %}
+{% endsekcija %}
+
+{% sekcija key="tekst" title="Razlog i dodatni podaci" icon="mdi-text-box-outline" description="Ulazi u tekst svakog zahteva." %}
+  {% for field in form.dodatna_polja_forme %}{% include "hr/forms/_polje.html" %}{% endfor %}
+  {% include "hr/forms/_polje.html" with field=form.razlog %}
+{% endsekcija %}
+
+{% sekcija key="zaposleni" title="Zaposleni" icon="mdi-account-multiple-outline" telo="slobodno" description="Za koga se pravi zahtev." help="Označite zaposlene; za svakog se pravi poseban zahtev. Spisak prati centar izabran iznad forme i vaš obuhvat pristupa." %}
+  <div class="ef-toolbar-row">
+    <span class="ef-note-line mb-0">{{ zaposleni|length }} zaposlenih · označeno <strong id="bulk-count">0</strong></span>
+    <div class="ef-switch py-1"><input class="ef-toggle" type="checkbox" id="bulk-select-all"><label for="bulk-select-all">Označi sve</label></div>
+  </div>
+  <div class="ef-scroll">
+    <table class="table table-sm table-hover align-middle ef-table">
       <thead><tr><th style="width:60px"></th><th>Šifra</th><th>Zaposleni</th><th>OJ</th></tr></thead>
       <tbody>
       {% for row in employee_rows %}{% with employee=row.employee %}<tr>
@@ -70,39 +79,36 @@
       {% endfor %}
       </tbody>
     </table>
-  </div></div>
-</div>
-
-<div class="resenja-form-actions">
-  <span class="resenja-form-note">Svaki zahtev dobija svoj broj automatski i nastaje kao nacrt.</span>
-  <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save-all"></i> Napravi zahteve</button>
-  <a class="btn btn-outline-secondary" href="{% url 'hr:zahtev_list' %}">Odustani</a>
-</div>
-</form>
+  </div>
+{% endsekcija %}
 {% endblock %}
-{% block extra_js %}
+
+{% block ef_note %}{% if form.errors %}Forma ima greške — sekcije sa greškom su označene desno.{% else %}Svaki zahtev dobija svoj broj automatski i nastaje kao nacrt.{% endif %}{% endblock %}
+
+{% block ef_js %}
 {{ vrste_meta|json_script:"vrste-meta" }}
 <script>jQuery(function ($) {
   var meta = JSON.parse(document.getElementById('vrste-meta').textContent);
   var vrsta = $('#id_vrsta');
-
   function prikazi() {
     var podaci = meta[vrsta.val()] || {period: false, dani: false, radni_dani: false, polja: []};
-    $('#id_datum_od, #id_datum_do, #id_do_zavrsetka_posla').closest('div[class^="col-"]').toggle(!!podaci.period);
-    $('#id_dani, #id_vrsta_dana').closest('div[class^="col-"]').toggle(!!podaci.dani);
-    $('#id_broj_radnih_dana, #id_datum_povratka').closest('div[class^="col-"]').toggle(!!podaci.radni_dani);
-    $('#id_vreme_od, #id_vreme_do').closest('div[class^="col-"]').toggle(!!podaci.vreme);
+    $('[data-grupa="period"]').toggle(!!podaci.period);
+    $('[data-grupa="dani"]').toggle(!!podaci.dani);
+    $('[data-grupa="radni_dani"]').toggle(!!podaci.radni_dani);
+    $('[data-grupa="vreme"]').toggle(!!podaci.vreme);
     $('[id^="id_dp_"]').each(function () {
-      $(this).closest('.resenja-field').toggle((podaci.polja || []).indexOf(this.id.slice('id_dp_'.length)) !== -1);
+      $(this).closest('.ef-field').toggle((podaci.polja || []).indexOf(this.id.slice('id_dp_'.length)) !== -1);
     });
   }
-
+  function prebroj() { $('#bulk-count').text($('.bulk-select:checked').length); }
   vrsta.on('change', function () {
     prikazi();
     var podaci = meta[vrsta.val()];
     if (podaci && podaci.pismo) { $('#id_pismo').val(podaci.pismo); }
   });
-  $('#bulk-select-all').on('change', function () { $('.bulk-select').prop('checked', this.checked); });
+  $('#bulk-select-all').on('change', function () { $('.bulk-select').prop('checked', this.checked); prebroj(); });
+  $(document).on('change', '.bulk-select', prebroj);
   prikazi();
+  prebroj();
 });</script>
 {% endblock %}

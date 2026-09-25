@@ -1,10 +1,2 @@
-{% extends 'hr/list_base.html' %}
-{% block hr_content %}
-<div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3"><div><div class="hr-kicker">Kadrovi · Elementi radne liste</div><h1><i class="mdi mdi-pencil-box-outline me-2"></i>{% if form.instance.pk %}Izmena{% else %}Dodavanje{% endif %} · {{ title }}</h1><p>Podesite nazive, veze i dostupnost u radnoj listi.</p></div><a class="btn btn-outline-light btn-sm" href="{% url 'hr:work_time_catalog' %}"><i class="mdi mdi-arrow-left"></i> Nazad na šifrarnik</a></div>
-<div class="card" style="max-width:960px"><div class="card-body p-4"><form method="post">{% csrf_token %}
-  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-  {% for field in form %}<div class="mb-3">{% if field.field.widget.input_type == 'checkbox' %}<div class="form-check">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>{% else %}<label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>{{ field }}{% endif %}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% if field.errors %}<div class="text-danger small">{{ field.errors|striptags }}</div>{% endif %}</div>{% endfor %}
-  <p class="small text-muted">Isključivanjem statusa „Aktivan“ stavka prestaje da se nudi za novi unos. Ranije sačuvane radne liste zadržavaju postojeću vezu.</p>
-  <div class="d-flex gap-2 pt-3 border-top"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button><a class="btn btn-outline-secondary" href="{% url 'hr:work_time_catalog' %}">Odustani</a></div>
-</form></div></div>
-{% endblock %}
+{% extends "hr/forms/base.html" %}
+{% block ef_subtitle %}Elementi radne liste · isključivanjem „Aktivan“ stavka prestaje da se nudi za novi unos; sačuvane radne liste zadržavaju postojeću vezu{% endblock %}

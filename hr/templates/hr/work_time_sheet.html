@@ -69,6 +69,39 @@
         </div>
       </div>
 
+      {% if prefill.ima_predlog or prefill.napomene %}
+      <div class="prefill-card" id="prefill-card">
+        <div class="prefill-head">
+          <div>
+            <strong><i class="mdi mdi-auto-fix"></i> Predlog popunjavanja</strong>
+            <span class="prefill-hint"><span class="prefill-swatch"></span> plava polja su predlog, iz prolazaka, putnih naloga, bolovanja, praznika i slave — upisuje se samo u prazna polja i čuva tek na „Sacuvaj“</span>
+          </div>
+          <div class="prefill-actions">
+            {% if prefill.ima_predlog %}
+            <button type="button" class="btn btn-sm btn-outline-primary" id="prefill-apply"><i class="mdi mdi-table-arrow-down"></i> Popuni prazna polja</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="prefill-undo" hidden><i class="mdi mdi-undo"></i> Poništi predlog</button>
+            {% endif %}
+            <button type="button" class="btn btn-sm btn-outline-danger js-sheet-clear-all" title="Isprazni celu radnu listu (čuva se tek na „Sacuvaj“)"><i class="mdi mdi-eraser"></i> Poništi sve</button>
+          </div>
+        </div>
+        {% if prefill.ima_predlog %}
+        <div class="prefill-chips">
+          {% for red in prefill.redovi %}<span class="prefill-chip prefill-chip-{{ red.kljuc }}">{{ red.naziv }}: {{ red.dana }} dan{% if red.dana != 1 %}a{% endif %}, {{ red.ukupno }} h{% if red.sifra %} · šifra {{ red.sifra }}{% endif %}</span>{% endfor %}
+          {% if prefill.teren_dana %}<span class="prefill-chip prefill-chip-teren">Teren (putni nalog): {{ prefill.teren_dana }} dan{% if prefill.teren_dana != 1 %}a{% endif %}</span>{% endif %}
+          <span class="prefill-source">prolazi {{ prefill.brojaci.prolazi }} · putni nalog {{ prefill.brojaci.putni_nalog }} · bolovanje {{ prefill.brojaci.bolovanje }} · praznik {{ prefill.brojaci.praznik }} · slava {{ prefill.brojaci.slava }}</span>
+        </div>
+        {% endif %}
+        <div class="prefill-status" id="prefill-status" role="status" hidden></div>
+        {% if prefill.napomene %}
+        <details class="prefill-notes"{% if not prefill.ima_predlog %} open{% endif %}>
+          <summary>Napomene ({{ prefill.napomene|length }})</summary>
+          <ul>{% for napomena in prefill.napomene %}<li>{{ napomena }}</li>{% endfor %}</ul>
+        </details>
+        {% endif %}
+      </div>
+      {{ prefill|json_script:"prefill-data" }}
+      {% endif %}
+
       <div class="table-responsive work-sheet-table-wrap">
         {{ line_formset.management_form }}
         <table class="table table-bordered table-sm align-middle work-sheet-table mb-0">
@@ -77,7 +110,7 @@
               <th class="text-center sticky-col row-number-col">R.b.</th>
               <th class="sticky-col work-code-col">Sifra posla</th>
               {% for day in day_fields %}
-                <th class="text-center day-col {% if day.is_weekend %}weekend-day{% endif %} {% if not day.active %}inactive-day{% endif %}">
+                <th class="text-center day-col {% if day.is_weekend %}weekend-day{% endif %} {% if not day.active %}inactive-day{% endif %}" data-day-head="{{ day.day }}">
                   {{ day.day }}
                 </th>
               {% endfor %}
@@ -132,6 +165,8 @@
       </div>
 
       <div class="d-flex justify-content-end gap-2 mt-3">
+        <span class="sheet-action-status small text-muted align-self-center" id="sheet-action-status" role="status"></span>
+        <button type="button" class="btn btn-outline-danger js-sheet-clear-all" title="Isprazni celu radnu listu (čuva se tek na „Sacuvaj“)"><i class="mdi mdi-eraser"></i> Poništi sve</button>
         <a href="{% url 'hr:work_time_sheet_print' sheet.pk %}" class="btn btn-outline-secondary" target="_blank" rel="noopener">Stampaj</a>
         <button type="submit" class="btn btn-primary" name="action" value="save">Sacuvaj</button>
         <button type="submit" class="btn btn-success" name="action" value="submit_print" formtarget="_blank">Predaj</button>
@@ -197,6 +232,7 @@
                   <span class="attendance-status attendance-status-{{ row.status_class }}">{{ row.status }}</span>
                 </td>
                 <td>
+                  {% if row.holiday %}<div class="attendance-holiday">Praznik · {{ row.holiday }}</div>{% endif %}
                   {% for leave in row.sick_leaves %}
                     <div class="attendance-sick-leave">Bolovanje · RFZO {{ leave.rfzo_id }} · {{ leave.start_date|date:"d.m.Y" }}–{% if leave.end_date %}{{ leave.end_date|date:"d.m.Y" }}{% else %}otvoreno (evidentirano do {{ leave.source_date|date:"d.m.Y" }}){% endif %}</div>
                   {% endfor %}
@@ -211,7 +247,7 @@
                     {% for message in row.issue_messages %}
                       <div>{{ message }}</div>
                     {% endfor %}
-                  {% elif not row.travel_orders and not row.sick_leaves %}
+                  {% elif not row.travel_orders and not row.sick_leaves and not row.holiday %}
                     <span class="text-muted">-</span>
                   {% endif %}
                 </td>
@@ -228,6 +264,26 @@
 </div>
 
 <style>
+  .prefill-card { border:1px solid #cfe0f3; background:#f5f9fe; border-radius:8px; padding:10px 14px; margin:0 0 12px; }
+  .prefill-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px 16px; }
+  .prefill-head strong { color:#1d4f86; margin-right:8px; }
+  .prefill-hint { font-size:12px; color:#5f6f7c; }
+  .prefill-actions { display:flex; gap:6px; }
+  .prefill-swatch { display:inline-block; width:12px; height:12px; vertical-align:-2px; border-radius:2px; background:#e4efff; box-shadow:inset 0 -2px 0 #3d7fd6; }
+  .prefill-chips { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; }
+  .prefill-chip { font-size:12px; padding:2px 10px; border-radius:12px; background:#fff; border:1px solid #c9d8ea; color:#29425c; }
+  .prefill-chip-bolovanje { border-color:#e3b3b3; background:#fff6f6; }
+  .prefill-chip-drzavni_i_verski_praznik { border-color:#d9c07a; background:#fffaf0; }
+  .prefill-chip-teren { border-color:#9ccab8; background:#f3fbf8; }
+  .prefill-source { font-size:11px; color:#7a8793; margin-left:4px; }
+  .prefill-status { font-size:12.5px; color:#1d6b4a; margin-top:6px; }
+  .prefill-notes { margin-top:6px; font-size:12.5px; }
+  .prefill-notes summary { cursor:pointer; color:#8a5a00; }
+  .prefill-notes ul { margin:6px 0 0; padding-left:18px; }
+  .hours-input.is-prefill, .work-sheet-control .is-prefill, .work-sheet-table select.is-prefill, .select2.is-prefill .select2-selection {
+    background:#e4efff !important; box-shadow:inset 0 -2px 0 #3d7fd6; color:#123e73; font-weight:600; }
+  .day-col.is-holiday { background:#ffdcb8 !important; color:#8a4300; font-weight:700; }
+  .attendance-holiday { color:#7a5300; font-weight:600; }
   .period-picker {
     display: flex;
     align-items: center;
@@ -273,16 +329,21 @@
     border: 1px solid #d9e2ec;
     border-radius: 6px;
   }
+  /* Tabela staje u širinu ekrana: kolone oko dana imaju svoju širinu, 31 dan deli ostatak.
+     Tek na uskim ekranima (manje od ~940 px za tabelu) pojavljuje se bočno pomeranje. */
   .work-sheet-table {
-    min-width: 1640px;
+    width: 100%;
+    min-width: 940px;
     table-layout: fixed;
   }
   .work-sheet-table th,
   .work-sheet-table td {
-    height: 42px;
-    padding: 4px;
+    height: 38px;
+    padding: 3px 2px;
     vertical-align: middle;
   }
+  .work-sheet-table thead th { font-size: 12px; padding: 6px 1px; }
+  .work-sheet-table tfoot th { font-size: 12px; padding: 4px 2px; }
   .work-sheet-table thead th {
     position: sticky;
     top: 0;
@@ -297,14 +358,14 @@
     font-weight: 700;
   }
   .row-number-col {
-    width: 56px;
+    width: 34px;
     left: 0;
     z-index: 3;
     background: #fff;
   }
   .work-code-col {
-    width: 116px;
-    left: 56px;
+    width: 80px;
+    left: 34px;
     z-index: 3;
     background: #fff;
   }
@@ -315,15 +376,16 @@
   }
   .day-col,
   .day-cell {
-    width: 46px;
+    width: auto;
   }
   .hours-input {
     width: 100%;
     min-width: 0;
-    height: 32px;
-    padding-left: 4px;
-    padding-right: 4px;
-    text-align: right;
+    height: 30px;
+    padding-left: 1px;
+    padding-right: 2px;
+    font-size: 12.5px;
+    text-align: center;
     box-sizing: border-box;
   }
   .work-code-select,
@@ -365,19 +427,23 @@
     font-weight: 600;
   }
   .total-col {
-    width: 70px;
+    width: 46px;
   }
   .conditions-col {
-    width: 140px;
+    width: 68px;
   }
   .note-col {
-    width: 290px;
-    min-width: 290px;
+    width: 150px;
   }
+  .work-condition-input { font-size: 12px; padding: 2px 4px; }
   .note-col .select2-selection__rendered {
     text-align: left;
-    font-size: 0.8rem;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+  .work-code-col .select2-container--bootstrap-5 .select2-selection { font-size: 0.8rem; }
   .weekend-day {
     background: #fff4d6;
   }
@@ -548,6 +614,124 @@ document.addEventListener("DOMContentLoaded", function () {
     input.addEventListener("input", recalculate);
   });
   recalculate();
+});
+</script>
+<script>
+/* Meko popunjavanje: predlog ide samo u prazna polja, nije sačuvan dok korisnik ne klikne „Sacuvaj". */
+document.addEventListener("DOMContentLoaded", function () {
+  var dataElement = document.getElementById("prefill-data");
+  var predlog = dataElement ? JSON.parse(dataElement.textContent) : {redovi: [], oznake_dana: {}};
+  var status = document.getElementById("prefill-status");
+  function javi(poruka) {
+    var mesta = [status, document.getElementById("sheet-action-status")];
+    mesta.forEach(function (mesto) { if (mesto) { mesto.textContent = poruka; mesto.hidden = false; } });
+  }
+  var undoButton = document.getElementById("prefill-undo");
+  var applyButton = document.getElementById("prefill-apply");
+  var upisano = [];
+
+  Object.keys(predlog.oznake_dana || {}).forEach(function (day) {
+    var head = document.querySelector('[data-day-head="' + day + '"]');
+    if (head) { head.classList.add("is-holiday"); head.title = predlog.oznake_dana[day]; }
+  });
+
+  function setSelect(select, value) {
+    if (window.jQuery) jQuery(select).val(value).trigger("change");
+    else { select.value = value; select.dispatchEvent(new Event("change", {bubbles: true})); }
+  }
+  function mark(element) {
+    element.classList.add("is-prefill");
+    var shell = element.nextElementSibling;
+    if (shell && shell.classList.contains("select2")) shell.classList.add("is-prefill");
+  }
+  function unmark(element) {
+    element.classList.remove("is-prefill");
+    var shell = element.nextElementSibling;
+    if (shell && shell.classList.contains("select2")) shell.classList.remove("is-prefill");
+  }
+  function rows() { return Array.prototype.slice.call(document.querySelectorAll(".work-sheet-table tbody tr")); }
+  function unit(row) { return row.querySelector('select[name$="-organizational_unit"]'); }
+  function category(row) { return row.querySelector('select[name$="-work_category"]'); }
+  function isEmpty(row) {
+    var hours = Array.prototype.some.call(row.querySelectorAll(".hours-input"), function (input) { return input.value.trim() !== ""; });
+    return !hours && !unit(row).value && !(category(row) && category(row).value);
+  }
+  function matches(row, red) {
+    var sameUnit = (unit(row).value || "") === String(red.sifra_id || "");
+    var sameCategory = ((category(row) && category(row).value) || "") === String(red.vrsta_id || "");
+    return sameUnit && sameCategory && !isEmpty(row);
+  }
+
+  function primeni() {
+    var cells = 0, missing = [];
+    predlog.redovi.forEach(function (red) {
+      var target = rows().filter(function (row) { return matches(row, red); })[0] || rows().filter(isEmpty)[0];
+      if (!target) { missing.push(red.naziv); return; }
+      if (red.sifra_id && !unit(target).value) { setSelect(unit(target), String(red.sifra_id)); mark(unit(target)); upisano.push(unit(target)); }
+      var cat = category(target);
+      if (cat && red.vrsta_id && !cat.value) { setSelect(cat, String(red.vrsta_id)); mark(cat); upisano.push(cat); }
+      Object.keys(red.sati).forEach(function (day) {
+        var input = target.querySelector('input[name$="-day_' + day + '"]');
+        if (!input || input.disabled || input.value.trim() !== "") return;
+        input.value = red.sati[day];
+        mark(input);
+        upisano.push(input);
+        input.dispatchEvent(new Event("input", {bubbles: true}));
+        cells += 1;
+      });
+    });
+    var teren = document.getElementById("id_field_allowance_days");
+    var terenUpisan = false;
+    if (teren && predlog.teren_dana && teren.value.trim() === "") {
+      teren.value = predlog.teren_dana; mark(teren); upisano.push(teren); terenUpisan = true;
+    }
+    var poruka = cells || terenUpisan
+      ? "Predlog je upisan u " + cells + " praznih polja" + (terenUpisan ? " i terenski dodatak" : "") + ". Proverite ga i kliknite „Sacuvaj“."
+      : "Sva polja iz predloga su već popunjena — ništa nije promenjeno.";
+    if (missing.length) poruka += " Nema slobodnog reda za: " + missing.join(", ") + ".";
+    javi(poruka);
+    if (undoButton) undoButton.hidden = !upisano.length;
+  }
+
+  function ponisti() {
+    upisano.forEach(function (element) {
+      unmark(element);
+      if (element.tagName === "SELECT") setSelect(element, "");
+      else { element.value = ""; element.dispatchEvent(new Event("input", {bubbles: true})); }
+    });
+    upisano = [];
+    javi("Predlog je poništen.");
+    if (undoButton) undoButton.hidden = true;
+  }
+
+  document.getElementById("work-time-sheet-form").addEventListener("input", function (event) {
+    if (event.isTrusted && event.target.classList.contains("is-prefill")) unmark(event.target);
+  });
+  document.querySelectorAll(".js-sheet-clear-all").forEach(function (clearAll) { clearAll.addEventListener("click", function () {
+    if (!confirm("Isprazniti celu radnu listu? Brišu se svi sati, šifre, vrste rada, topli obrok i teren. Promena se čuva tek kada kliknete „Sacuvaj“.")) return;
+    var form = document.getElementById("work-time-sheet-form");
+    form.querySelectorAll(".hours-input, .work-condition-input").forEach(function (input) {
+      if (input.disabled) return;
+      input.value = "";
+      unmark(input);
+      input.dispatchEvent(new Event("input", {bubbles: true}));
+    });
+    form.querySelectorAll('select[name$="-organizational_unit"], select[name$="-work_category"], #id_meal_organizational_unit').forEach(function (select) {
+      unmark(select);
+      if (select.value) setSelect(select, "");
+    });
+    ["id_meal_days", "id_field_allowance_days"].forEach(function (id) {
+      var input = document.getElementById(id);
+      if (input) { input.value = ""; unmark(input); }
+    });
+    upisano = [];
+    if (undoButton) undoButton.hidden = true;
+    javi("Radna lista je ispražnjena. Kliknite „Sacuvaj“ da se promena upiše" +
+         (applyButton ? ", ili „Popuni prazna polja“ za novi predlog." : "."));
+  }); });
+  if (applyButton) applyButton.addEventListener("click", primeni);
+  if (undoButton) undoButton.addEventListener("click", ponisti);
+  {% if prefill_auto %}primeni();{% endif %}
 });
 </script>
 {% endblock %}

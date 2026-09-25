@@ -1,0 +1,8 @@
+{% extends "hr/forms/base.html" %}
+{% comment %}Forma zaposlenog: sekcije su u EmployeeForm.SECTIONS, izgled u hr/forms/base.html.{% endcomment %}
+{% block ef_subtitle %}{% if object %}{{ object.employee_code }} · {{ object }}{% if object.org_unit_code %} · OJ {{ object.org_unit_code }}{% endif %}{% else %}Novi zaposleni u kadrovskoj evidenciji{% endif %}{% endblock %}
+{% block ef_nav_foot %}<div><span class="ef-hr">iz HR-a</span> prepisuje sinhronizacija</div>{% endblock %}
+{% block ef_manual %}
+  <p>Većina podataka o zaposlenom dolazi iz kadrovske evidencije (HR) i osvežava se noćnom sinhronizacijom. Polja označena sa <span class="ef-hr">iz HR-a</span> sinhronizacija prepisuje, pa njihova ručna izmena traje samo do sledećeg preuzimanja. Trajnu ispravku treba uneti u HR.</p>
+  <p class="mb-0">Samo u aplikaciji se čuvaju: ime i prezime za prikaz, ime ćirilicom, prekidač „Ne ažuriraj ime, prezime, titulu i pol iz HR-a“ i datum slave.</p>
+{% endblock %}

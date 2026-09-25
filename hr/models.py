@@ -78,6 +78,10 @@ class Employee(models.Model):
     status_code = models.CharField(max_length=10, verbose_name=_("Šifra statusa"), blank=True, null=True)
     status_name = models.CharField(max_length=255, verbose_name=_("Naziv statusa"), blank=True, null=True)
     slava = models.CharField(max_length=100, verbose_name=_("Slava"), blank=True, null=True)
+    # Slava se slavi svake godine istog dana: koriste se dan i mesec, godina iz datuma nije bitna.
+    # HR sinhronizacija ga ne dira; naziv slave i dalje dolazi iz HR-a.
+    slava_datum = models.DateField(blank=True, null=True, verbose_name=_("Datum slave"),
+        help_text=_("Npr. Sveti Nikola: 19.12. Godina nije bitna. Ako je prazno, radna lista predlaže datum iz naziva slave."))
     recipient_code = models.CharField(max_length=20, blank=True, default="", verbose_name=_("Šifra vrste primaoca"))
     recipient_name = models.CharField(max_length=255, blank=True, default="", verbose_name=_("Vrsta primaoca iz HR-a"))
 

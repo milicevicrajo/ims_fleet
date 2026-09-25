@@ -99,7 +99,9 @@ class ResenjeFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateV
         ctx = super().get_context_data(**kwargs)
         ctx.update(title='Izmena rešenja' if resenje else 'Novo rešenje', sidebar_template=SIDEBAR,
             form=form, formset=formset, resenje=resenje, vrste_meta=_vrste_meta(),
-            potpisnici_meta=_potpisnici_meta(), can_add_signer=form.can_add_signer)
+            potpisnici_meta=_potpisnici_meta(), can_add_signer=form.can_add_signer,
+            submit_button_label='Sačuvaj nacrt',
+            cancel_url=reverse('hr:resenje_detail', args=[resenje.pk]) if resenje else reverse('hr:resenje_list'))
         return ctx
 
     @transaction.atomic
@@ -265,7 +267,9 @@ class ResenjeCatalogEditView(LoginRequiredMixin, RolePermissionRequiredMixin, Te
             form, label = self.get_form()
         else:
             label = CATALOGS[self.kwargs['kind']][2]
-        ctx.update(form=form, title=label, sidebar_template=SIDEBAR, kind=self.kwargs['kind'])
+        ctx.update(form=form, title=('Izmena · ' if form.instance.pk else 'Dodavanje · ') + label, section_title=label,
+            submit_button_label='Sačuvaj', cancel_url=reverse('hr:resenje_catalog') + '#' + self.kwargs['kind'],
+            sidebar_template=SIDEBAR, kind=self.kwargs['kind'])
         return ctx
 
     @transaction.atomic

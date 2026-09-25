@@ -1,105 +1,77 @@
-{% extends 'hr/resenja/base.html' %}
-{% block resenja_page_class %}zahtevi-page{% endblock %}
-{% block resenja_content %}
-<div class="fleet-list-hero">
-  <div>
-  <div class="hr-kicker">Kadrovi - Zahtevi zaposlenih</div>
-  <h1><i class="mdi mdi-file-send-outline me-2"></i>{{ title }}{% if zahtev %} {{ zahtev.broj }}{% endif %}</h1>
-  <p>{% if zahtev %}Broj {{ zahtev.broj }} je dodeljen automatski i ne menja se.{% else %}Broj zahteva se dodeljuje automatski pri čuvanju.{% endif %} Iz sačuvanog zahteva pravi se rešenje.</p>
-  </div>
-  <a class="btn btn-outline-light btn-sm" href="{% if zahtev %}{% url 'hr:zahtev_detail' zahtev.pk %}{% else %}{% url 'hr:zahtev_list' %}{% endif %}"><i class="mdi mdi-arrow-left"></i> Nazad</a>
-</div>
+{% extends "hr/forms/base.html" %}
+{% load hr_forme %}
+{% comment %}
+Forma zahteva u sekcijama. Sekcije sa `grupa` (period, dani, odsustvo) prikazuju se prema izabranoj
+vrsti zahteva (_obrazac_script.html).
+{% endcomment %}
+{% block ef_title %}{{ title }}{% if zahtev %} {{ zahtev.broj }}{% endif %}{% endblock %}
+{% block ef_subtitle %}{% if zahtev %}Broj {{ zahtev.broj }} je dodeljen automatski i ne menja se.{% else %}Broj zahteva se dodeljuje automatski pri čuvanju.{% endif %} Iz sačuvanog zahteva pravi se rešenje.{% endblock %}
 
-<form method="post" novalidate>{% csrf_token %}
-{% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-
-<div class="card shadow-sm mb-3">
-  <div class="card-header"><h5><i class="mdi mdi-file-document-outline"></i>Osnovni podaci</h5><span class="small text-muted">Polja označena * su obavezna.</span></div>
-  <div class="card-body"><div class="row g-3">
-    {% include 'hr/resenja/_polje.html' with polje=form.vrsta %}
-    {% include 'hr/resenja/_polje.html' with polje=form.zaposleni %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_zahteva %}
-    {% include 'hr/resenja/_polje.html' with polje=form.pismo %}
-    {% include 'hr/resenja/_polje.html' with polje=form.pol %}
-    {% include 'hr/resenja/_polje.html' with polje=form.oj_kod %}
-  </div></div>
-</div>
-
-<div class="card shadow-sm mb-3">
-  <div class="card-header"><h5><i class="mdi mdi-pen"></i>Podnosilac i odobrenje</h5></div>
-  <div class="card-body"><div class="zahtev-signers">
-    <section class="zahtev-form-panel"><h6><i class="mdi mdi-account-arrow-right-outline"></i> Podnosilac zahteva</h6><div class="row g-3">
-      {% include 'hr/resenja/_polje.html' with polje=form.podnosilac sirina='col-12' %}
-      {% include 'hr/resenja/_polje.html' with polje=form.podnosilac_funkcija sirina='col-12' %}
-    </div></section>
-    <section class="zahtev-form-panel"><h6><i class="mdi mdi-account-check-outline"></i> Odobrava zahtev</h6><div class="row g-3">
-      {% include 'hr/resenja/_polje.html' with polje=form.odobrava sirina='col-12' %}
-      {% include 'hr/resenja/_polje.html' with polje=form.odobrava_funkcija sirina='col-12' %}
-    </div></section>
-  </div></div>
-</div>
-
-<div class="card shadow-sm mb-3">
-  <div class="card-header"><h5><i class="mdi mdi-text-box-outline"></i>Tekst zahteva</h5></div>
-  <div class="card-body">
-    <p class="text-muted small">Ime, organizaciona jedinica i radno mesto preuzimaju se iz evidencije zaposlenih. Po potrebi prilagodite tekst i padež.</p>
-    <div class="row g-3">
-      {% include 'hr/resenja/_polje.html' with polje=form.zaposleni_tekst sirina='col-md-6' %}
-      {% include 'hr/resenja/_polje.html' with polje=form.oj_naziv sirina='col-md-6' %}
-      {% include 'hr/resenja/_polje.html' with polje=form.radno_mesto sirina='col-md-6' %}
-      {% for polje in form.dodatna_polja_forme %}{% include 'hr/resenja/_polje.html' with polje=polje sirina='col-md-6' %}{% endfor %}
-      {% include 'hr/resenja/_polje.html' with polje=form.razlog sirina='col-12' %}
-      {% include 'hr/resenja/_polje.html' with polje=form.napomena sirina='col-12' %}
-    </div>
-  </div>
-</div>
-
-<div class="card shadow-sm mb-3" data-grupa="period">
-  <div class="card-header"><h5><i class="mdi mdi-calendar-range"></i>Period od–do</h5></div>
-  <div class="card-body"><div class="row g-3">
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_od %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_do %}
-    {% include 'hr/resenja/_polje.html' with polje=form.do_zavrsetka_posla %}
-    <div class="col-12 small text-muted">Unesite period ili pojedinačne dane ispod. Za praznike navedite pojedinačne datume i vrstu praznika.</div>
-    <div class="col-12" data-grupa="vreme"><div class="row g-3">
-      {% include 'hr/resenja/_polje.html' with polje=form.vreme_od %}
-      {% include 'hr/resenja/_polje.html' with polje=form.vreme_do %}
-      <div class="col-12 small text-muted">Opciono vreme smene. Kada je kraj pre početka, smena se završava narednog dana.</div>
-    </div></div>
-  </div></div>
-</div>
-
-<div class="card shadow-sm mb-3" data-grupa="radni_dani">
-  <div class="card-header"><h5><i class="mdi mdi-calendar-check"></i>Plaćeno odsustvo</h5></div>
-  <div class="card-body"><div class="row g-3">
-    {% include 'hr/resenja/_polje.html' with polje=form.broj_radnih_dana %}
-    {% include 'hr/resenja/_polje.html' with polje=form.datum_povratka %}
-  </div></div>
-</div>
-
-<div class="card shadow-sm mb-3" data-grupa="dani">
-  <div class="card-header"><h5><i class="mdi mdi-calendar-multiple"></i>Pojedinačni dani</h5><button type="button" class="btn btn-outline-primary btn-sm" id="resenje-add-day"><i class="mdi mdi-plus"></i> Dodaj dan</button></div>
-  <div class="card-body">
-    {{ formset.management_form }}
-    {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
-    <div class="table-responsive"><table class="table table-bordered align-middle">
-      <thead><tr><th style="width:220px">Datum</th><th>Vrsta dana</th><th style="width:110px">Ukloni</th></tr></thead>
-      <tbody id="resenje-days">
-      {% for dan in formset %}{% include 'hr/resenja/_dan.html' %}{% endfor %}
-      </tbody>
-    </table></div>
-    <template id="resenje-empty-day">{% include 'hr/resenja/_dan.html' with dan=formset.empty_form %}</template>
-  </div>
-</div>
-
-<div class="resenja-form-actions">
-  <span class="resenja-form-note">Nacrt možete menjati dok ga ne podnesete.</span>
-  <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj nacrt</button>
-  <a class="btn btn-outline-secondary" href="{% if zahtev %}{% url 'hr:zahtev_detail' zahtev.pk %}{% else %}{% url 'hr:zahtev_list' %}{% endif %}">Odustani</a>
-</div>
-</form>
+{% block ef_errors %}
+  {{ block.super }}
+  {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
 {% endblock %}
-{% block extra_js %}
+
+{% block ef_sections %}
+{% sekcija key="osnovno" title="Osnovni podaci" icon="mdi-file-document-outline" description="Vrsta zahteva, zaposleni i datum." help="Jedan zahtev se odnosi na jednog zaposlenog; za više zaposlenih koristite „Više zaposlenih“ u listi zahteva. Vrsta određuje tekst zahteva i rešenje koje se po njemu izdaje. Datum određuje godinu broja zahteva i ne menja se posle čuvanja." %}
+  {% include "hr/forms/_polje.html" with field=form.vrsta %}
+  {% include "hr/forms/_polje.html" with field=form.zaposleni %}
+  {% include "hr/forms/_polje.html" with field=form.datum_zahteva %}
+  {% include "hr/forms/_polje.html" with field=form.pismo %}
+  {% include "hr/forms/_polje.html" with field=form.pol %}
+  {% include "hr/forms/_polje.html" with field=form.oj_kod %}
+{% endsekcija %}
+
+{% sekcija key="potpisi" title="Podnosilac i odobrenje" icon="mdi-draw" description="Ko podnosi zahtev i kome se upućuje." help="Podnosilac potpisuje zahtev (npr. direktor centra ili finansijski direktor). Ako „Ko odobrava“ ostane prazno, uzima se potpisnik rešenja koji važi na datum zahteva, najčešće generalni direktor." %}
+  <div class="ef-subpanel-title"><i class="mdi mdi-account-arrow-right-outline"></i> Podnosilac zahteva</div>
+  {% include "hr/forms/_polje.html" with field=form.podnosilac %}
+  {% include "hr/forms/_polje.html" with field=form.podnosilac_funkcija %}
+  <div class="ef-subpanel-title"><i class="mdi mdi-account-check-outline"></i> Odobrava zahtev</div>
+  {% include "hr/forms/_polje.html" with field=form.odobrava %}
+  {% include "hr/forms/_polje.html" with field=form.odobrava_funkcija %}
+{% endsekcija %}
+
+{% sekcija key="tekst" title="Tekst zahteva" icon="mdi-text-box-outline" description="Ime, organizaciona jedinica, razlog i napomena." help="Ime, OJ i radno mesto preuzimaju se iz evidencije zaposlenih; po potrebi prilagodite padež. Razlog ulazi u tekst zahteva i rešenja (npr. „потребе за радом већим од четрдесет сати недељно“). Interna napomena se ne štampa." %}
+  {% include "hr/forms/_polje.html" with field=form.zaposleni_tekst %}
+  {% include "hr/forms/_polje.html" with field=form.oj_naziv %}
+  {% include "hr/forms/_polje.html" with field=form.radno_mesto %}
+  {% for field in form.dodatna_polja_forme %}{% include "hr/forms/_polje.html" %}{% endfor %}
+  {% include "hr/forms/_polje.html" with field=form.razlog %}
+  {% include "hr/forms/_polje.html" with field=form.napomena %}
+{% endsekcija %}
+
+{% sekcija key="period" title="Period od–do" icon="mdi-calendar-range" grupa="period" description="Na koje vreme se zahtev odnosi." help="Unesite period ili pojedinačne dane u sekciji ispod. Za praznike navedite pojedinačne datume i vrstu praznika. Vreme smene je opciono; kada je kraj pre početka, smena se završava narednog dana." %}
+  {% include "hr/forms/_polje.html" with field=form.datum_od %}
+  {% include "hr/forms/_polje.html" with field=form.datum_do %}
+  {% include "hr/forms/_polje.html" with field=form.do_zavrsetka_posla %}
+  <div class="ef-subgrid" data-grupa="vreme">
+    {% include "hr/forms/_polje.html" with field=form.vreme_od %}
+    {% include "hr/forms/_polje.html" with field=form.vreme_do %}
+  </div>
+{% endsekcija %}
+
+{% sekcija key="odsustvo" title="Plaćeno odsustvo" icon="mdi-calendar-check" grupa="radni_dani" description="Trajanje odsustva i povratak na posao." %}
+  {% include "hr/forms/_polje.html" with field=form.broj_radnih_dana %}
+  {% include "hr/forms/_polje.html" with field=form.datum_povratka %}
+{% endsekcija %}
+
+{% sekcija key="dani" title="Pojedinačni dani" icon="mdi-calendar-multiple" grupa="dani" telo="slobodno" description="Dani vikenda, praznika ili prekovremenog rada." help="Dan se dodaje dugmetom „Dodaj dan“, a označavanjem „Ukloni“ izostavlja se pri čuvanju nacrta. Dani prelaze u rešenje napravljeno iz zahteva." %}
+  <div class="ef-toolbar-row">
+    <span class="ef-note-line mb-0">Datum i vrsta dana za svaki dan na koji se zahtev odnosi.</span>
+    <button type="button" class="btn btn-outline-primary btn-sm" id="resenje-add-day"><i class="mdi mdi-plus"></i> Dodaj dan</button>
+  </div>
+  {{ formset.management_form }}
+  <div class="table-responsive"><table class="table table-bordered align-middle ef-table">
+    <thead><tr><th style="width:220px">Datum</th><th>Vrsta dana</th><th style="width:110px">Ukloni</th></tr></thead>
+    <tbody id="resenje-days">{% for dan in formset %}{% include 'hr/resenja/_dan.html' %}{% endfor %}</tbody>
+  </table></div>
+  <template id="resenje-empty-day">{% include 'hr/resenja/_dan.html' with dan=formset.empty_form %}</template>
+{% endsekcija %}
+{% endblock %}
+
+{% block ef_note %}{% if form.errors or formset.total_error_count %}Forma ima greške — sekcije sa greškom su označene desno.{% else %}Nacrt možete menjati dok ga ne podnesete.{% endif %}{% endblock %}
+
+{% block ef_js %}
 {{ vrste_meta|json_script:"vrste-meta" }}
 {% include 'hr/resenja/_obrazac_script.html' with predlog_url='hr:zahtev_predlog' %}
 {% endblock %}

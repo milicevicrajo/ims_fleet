@@ -99,7 +99,8 @@ class ZahtevFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateVi
         formset = kwargs.pop('formset', None) or ZahtevDanFormSet(instance=zahtev)
         ctx = super().get_context_data(**kwargs)
         ctx.update(title='Izmena zahteva' if zahtev else 'Novi zahtev', sidebar_template=SIDEBAR,
-            form=form, formset=formset, zahtev=zahtev, vrste_meta=_vrste_meta())
+            form=form, formset=formset, zahtev=zahtev, vrste_meta=_vrste_meta(), submit_button_label='Sačuvaj nacrt',
+            cancel_url=reverse('hr:zahtev_detail', args=[zahtev.pk]) if zahtev else reverse('hr:zahtev_list'))
         return ctx
 
     @transaction.atomic
@@ -271,7 +272,8 @@ class ZahtevBulkCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, Temp
         form = kwargs.pop('form', None) or GrupniZahtevForm(initial={'pismo': Pismo.CIRILICA})
         ctx = super().get_context_data(**kwargs)
         selected = set(self.request.POST.getlist('zaposleni'))
-        ctx.update(title='Grupni unos zahteva', sidebar_template=SIDEBAR, form=form, zaposleni=zaposleni,
+        ctx.update(title='Isti zahtev za više zaposlenih', sidebar_template=SIDEBAR, form=form, zaposleni=zaposleni,
+            submit_button_label='Napravi zahteve', cancel_url=reverse('hr:zahtev_list'),
             employee_rows=[{'employee': employee, 'selected': str(employee.pk) in selected} for employee in zaposleni],
             izabran_centar=centar, vrste_meta=_vrste_meta(),
             centri=sorted({kod for kod in OrganizationalUnit.objects.values_list('center', flat=True) if kod}))

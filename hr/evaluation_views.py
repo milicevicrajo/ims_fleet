@@ -71,7 +71,8 @@ class EvaluationCreateView(LoginRequiredMixin, RolePermissionRequiredMixin, Temp
 
     def get_context_data(self,**kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx.update(title='Novi obrazac ocenjivanja',sidebar_template='sidebar_kadrovi.html')
+        ctx.update(title='Novi obrazac ocenjivanja',sidebar_template='sidebar_kadrovi.html',
+            cancel_url=reverse('hr:evaluation_list'),submit_button_label='Sačuvaj obrazac')
         return ctx
 
     def get(self, request, *args, **kwargs):
@@ -243,7 +244,9 @@ class EvaluationCatalogEditView(LoginRequiredMixin,RolePermissionRequiredMixin,T
     def get_context_data(self,**kwargs):
         ctx = super().get_context_data(**kwargs)
         form,label = self.get_form(self.request.POST if self.request.method=='POST' else None)
-        ctx.update(form=form,title=label,kind=self.kwargs['kind'],sidebar_template='sidebar_kadrovi.html')
+        ctx.update(form=form,title=('Izmena · ' if form.instance.pk else 'Dodavanje · ')+label,section_title=label,
+            submit_button_label='Sačuvaj',cancel_url=reverse('hr:evaluation_catalog')+'?kind='+self.kwargs['kind'],
+            kind=self.kwargs['kind'],sidebar_template='sidebar_kadrovi.html')
         return ctx
 
     @transaction.atomic

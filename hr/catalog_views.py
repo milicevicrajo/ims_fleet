@@ -53,7 +53,9 @@ class WorkTimeCatalogEditView(LoginRequiredMixin,RolePermissionRequiredMixin,Tem
         ctx=super().get_context_data(**kwargs)
         if form is None:form,label=self.get_form()
         else:label=CATALOGS[self.kwargs['kind']][2]
-        ctx.update(form=form,title=label,sidebar_template='sidebar_kadrovi.html')
+        ctx.update(form=form,title=('Izmena · ' if form.instance.pk else 'Dodavanje · ')+label,section_title=label,
+            submit_button_label='Sačuvaj',cancel_url=reverse('hr:work_time_catalog')+'#'+self.kwargs['kind'],
+            sidebar_template='sidebar_kadrovi.html')
         return ctx
 
     @transaction.atomic

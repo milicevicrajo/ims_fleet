@@ -101,6 +101,7 @@
               <p><strong>Partija:</strong> {{ employee.account_number|default:"-" }}</p>
               <p><strong>Skola:</strong> {{ employee.education|default:"-" }}</p>
               <p class="mb-0"><strong>Slava:</strong> {{ employee.slava|default:"-" }}</p>
+              <p class="mb-0"><strong>Datum slave:</strong> {% if employee.slava_datum %}{{ employee.slava_datum|date:"d.m." }}{% else %}<span class="text-muted">nije upisan</span>{% endif %}</p>
             </div></div>
           </div>
         </div>

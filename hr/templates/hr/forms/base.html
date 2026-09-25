@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static hr_forme %}
+{% comment %}
+Osnovni šablon formi Kadrova: sekcije levo, kartica sa sekcijama desno (ostaje na ekranu pri
+pomeranju), uputstvo uz sekcije i traka sa dugmadima na dnu ekrana.
+
+Blokovi: ef_subtitle, ef_head_actions, ef_intro (iznad forme, npr. filter), ef_form_attrs,
+ef_form_id, ef_sections (podrazumevano: sekcije forme), ef_note, ef_actions, ef_manual, ef_js.
+Kartica desno i prozor „Uputstvo“ prave se iz sekcija na stranici (hr/static/hr/forme.js).
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'hr/forme.css' %}?v=20260925">
+<div class="ef">
+  <div class="ef-head">
+    <div>
+      <h1>{% block ef_title %}{{ title }}{% endblock %}</h1>
+      <p>{% block ef_subtitle %}{% endblock %}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      {% block ef_head_actions %}{% endblock %}
+      <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#efManual" id="ef-manual-button"><i class="mdi mdi-help-circle-outline"></i> Uputstvo</button>
+      {% if cancel_url %}<a href="{{ cancel_url }}" class="btn btn-outline-secondary btn-sm"><i class="mdi mdi-arrow-left"></i> Nazad</a>{% endif %}
+    </div>
+  </div>
+
+  {% block ef_intro %}{% endblock %}
+
+  <form {% block ef_form_attrs %}method="post" novalidate{% endblock %} id="{% block ef_form_id %}ef-form{% endblock %}" class="ef-form">
+    {% block ef_csrf %}{% csrf_token %}{% endblock %}
+    {% block ef_errors %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>{% endif %}
+    {% endblock %}
+
+    <div class="ef-layout" id="ef-layout">
+      <div class="ef-main">
+        {% block ef_sections %}
+          {% firstof section_title "Podaci" as naslov_sekcije %}
+          {% for section in form|sekcije:naslov_sekcije %}
+            {% sekcija key=section.key title=section.title description=section.description help=section.help icon=section.icon %}
+              {% for field in section.fields %}{% include "hr/forms/_polje.html" %}{% endfor %}
+            {% endsekcija %}
+          {% endfor %}
+        {% endblock %}
+      </div>
+      <aside class="ef-aside" id="ef-aside">
+        <nav class="ef-nav" id="ef-nav" aria-label="Sekcije forme">
+          <div class="ef-nav-title">Sekcije forme</div>
+          <div id="ef-nav-links"></div>
+          <div class="ef-nav-foot">
+            <div><span class="ef-required">*</span> obavezno polje</div>
+            {% block ef_nav_foot %}{% endblock %}
+          </div>
+        </nav>
+      </aside>
+    </div>
+
+    <div class="ef-actions">
+      <div class="ef-actions-inner">
+        <span class="ef-actions-note{% if form.errors %} has-errors{% endif %}" id="ef-note">{% block ef_note %}{% if form.errors %}Forma ima greške — sekcije sa greškom su označene desno.{% else %}Izmene se čuvaju tek klikom na „{{ submit_button_label|default:"Sačuvaj" }}“.{% endif %}{% endblock %}</span>
+        {% block ef_actions %}
+          {% if cancel_url %}<a href="{{ cancel_url }}" class="btn btn-outline-secondary">Odustani</a>{% endif %}
+          <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save"></i> {{ submit_button_label|default:"Sačuvaj" }}</button>
+        {% endblock %}
+      </div>
+    </div>
+  </form>
+  {% block ef_after_form %}{% endblock %}
+</div>
+
+<div class="modal fade" id="efManual" tabindex="-1" aria-labelledby="efManualLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="efManualLabel">Uputstvo — {{ title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body" id="ef-manual-body">{% block ef_manual %}{% endblock %}</div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'hr/forme.js' %}?v=20260925"></script>
+{% block ef_js %}{% endblock %}
+{% endblock %}

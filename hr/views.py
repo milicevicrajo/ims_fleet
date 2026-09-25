@@ -36,6 +36,8 @@ from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, 
 from .querysets import employee_list_queryset
 from .services.attendance import calculate_daily_hours_from_clock_events, get_clock_events, month_period
 from .services.sick_leave import sick_leaves_by_day
+from .services.praznici import neradni_praznici
+from .services.work_time_prefill import predlog as predlog_radne_liste
 from .sync import sync_employees_from_hr_view
 
 
@@ -305,7 +307,7 @@ def employee_sync_view(request):
 class EmployeeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Employee
     form_class = EmployeeForm
-    template_name = "fleet/generic_form.html"
+    template_name = "hr/employee_form.html"
     success_url = reverse_lazy("employee_list")
 
     def get_form_kwargs(self):
@@ -315,15 +317,16 @@ class EmployeeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Create
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Kreiraj novog zaposlenog"
+        context["title"] = "Novi zaposleni"
         context["submit_button_label"] = "Dodaj zaposlenog"
+        context["cancel_url"] = reverse("employee_list")
         return context
 
 
 class EmployeeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Employee
     form_class = EmployeeForm
-    template_name = "fleet/generic_form.html"
+    template_name = "hr/employee_form.html"
     success_url = reverse_lazy("employee_list")
 
     def get_queryset(self):
@@ -336,8 +339,9 @@ class EmployeeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Update
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Izmeni podatke zaposlenog"
-        context["submit_button_label"] = "Sacuvaj izmene"
+        context["title"] = "Izmena podataka zaposlenog"
+        context["submit_button_label"] = "Sačuvaj izmene"
+        context["cancel_url"] = reverse("employee_detail", args=[self.object.pk])
         return context
 
 
@@ -386,6 +390,12 @@ class MyEmployeeNameCorrectionView(LoginRequiredMixin, UpdateView):
             raise PermissionDenied("Korisnicki nalog nije povezan sa zaposlenim.")
         return self.request.user.employee
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(title="Ispravka imena i prezimena", submit_button_label="Sačuvaj korekciju",
+                       cancel_url=reverse("my_employee_profile"))
+        return context
+
     def get_success_url(self):
         return reverse("my_employee_profile")
 
@@ -414,7 +424,8 @@ class EmployeeCVItemCreateView(OwnEmployeeCVMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Dodaj CV stavku"
+        context.update(title="Nova CV stavka", submit_button_label="Sačuvaj stavku",
+                       cancel_url=f"{reverse('my_employee_profile')}#cv")
         return context
 
 
@@ -425,7 +436,8 @@ class EmployeeCVItemUpdateView(OwnEmployeeCVMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Izmeni CV stavku"
+        context.update(title="Izmena CV stavke", submit_button_label="Sačuvaj stavku",
+                       cancel_url=f"{reverse('my_employee_profile')}#cv")
         return context
 
 
@@ -517,6 +529,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         daily_by_date = {item.date: item for item in daily_hours}
         travel_orders_by_day = _travel_orders_by_day(employee, year, month)
         leaves_by_day = sick_leaves_by_day(employee, year, month)
+        holidays = neradni_praznici(year)
         notes_by_date = {}
         for issue in issues:
             notes_by_date.setdefault(issue.date, []).append(issue)
@@ -572,6 +585,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                     "issue_messages": issue_messages,
                     "travel_orders": travel_orders,
                     "sick_leaves": sick_leaves,
+                    "holiday": holidays.get(work_date, ""),
                 }
             )
 
@@ -583,6 +597,13 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                 "day_count": len([item for item in daily_hours if item.pair_count or item.issue_count]),
                 "total_label": "—" if attendance_error else f"{total_minutes // 60}:{total_minutes % 60:02d}",
                 "issue_count": len([issue for issue in issues if issue.is_problem]),
+            },
+            # Isti podaci služe i za predlog popunjavanja, da se izvor prolazaka ne čita dvaput.
+            "_prefill_sources": {
+                "prolazi_po_danu": daily_by_date,
+                "putni_nalozi_po_danu": travel_orders_by_day,
+                "bolovanja_po_danu": leaves_by_day,
+                "prolazi_ucitani": attendance_error is None,
             },
         }
 
@@ -600,6 +621,14 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                 form_kwargs={"employee": employee},
             )
         attendance_context = self.build_clock_attendance_context(employee, year, month, days_in_month)
+        prefill = predlog_radne_liste(employee, year, month, days_in_month, **attendance_context.pop("_prefill_sources"))
+        filled_line = Q(organizational_unit__isnull=False) | Q(work_category__isnull=False)
+        for field in WORK_TIME_SHEET_DAY_FIELDS:
+            filled_line |= Q(**{f"{field}__isnull": False})
+        sheet_is_empty = (
+            not sheet.meal_days and not sheet.field_allowance_days and not sheet.meal_organizational_unit_id
+            and not sheet.lines.filter(filled_line).exists()
+        )
 
         context = {
             "title": "Radna lista",
@@ -622,6 +651,9 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             "month_name": self.MONTH_LABELS[month - 1],
             "days_in_month": days_in_month,
             "is_other_employee_sheet": employee.pk != self.request.user.employee_id,
+            "prefill": prefill,
+            # Prazna lista u pripremi dobija predlog odmah; inače se predlog primenjuje dugmetom.
+            "prefill_auto": prefill["ima_predlog"] and sheet_is_empty and sheet.status == WorkTimeSheet.Status.DRAFT,
             "has_work_categories": WorkTimeElement.objects.filter(
                 recipient_type__code=employee.recipient_code, recipient_type__is_active=True,
                 is_active=True, category__is_active=True, category__employee_selectable=True,

@@ -18,6 +18,7 @@
 | [K-08](#k-08--ocenjivanje-zaposlenih--stimulacija-i-lični-koeficijent) | **Ocenjivanje — stimulacija i lični koeficijent** | — |
 | [K-09](#k-09--tok-saglasnosti-na-ocenu) | Tok saglasnosti na ocenu | — |
 | [K-10](#k-10--rešenja-zaposlenih--izrada-teksta-dokumenta) | **Rešenja zaposlenih — izrada teksta dokumenta** | — |
+| [K-11](#k-11--predlog-popunjavanja-radne-liste) | **Predlog popunjavanja radne liste („meko popunjavanje“)** | — |
 
 ---
 
@@ -1343,6 +1344,81 @@ proveru prekovremenih i prazničnih sati u radnoj listi.
 | Prazan uslovni segment ne ostavlja praznu tačku | Potvrđeno | `resenja.py: _neprazni()` |
 | Izdato rešenje se ne menja izmenom šifarnika | Potvrđeno | `test_resenja.py: test_izmena_sifrarnika_ne_menja_vec_izdato_resenje` |
 | Potpisnik se bira po datumu rešenja | Potvrđeno | `resenja_models.py: Potpisnik.za_datum()` |
+
+---
+
+## K-11 — Predlog popunjavanja radne liste
+
+> **Predlog, ne obračun.** Ništa se ne upisuje u bazu dok zaposleni ili kadrovik ne klikne
+> „Sacuvaj“. Predlog ide **samo u prazna polja** i nikad ne prepisuje uneto.
+
+### 1. Naziv
+
+| | |
+|---|---|
+| Naziv na ekranu | „Predlog popunjavanja“ na radnoj listi, dugmad „Popuni prazna polja“ i „Poništi predlog“ |
+| Tehnički naziv | `hr.services.work_time_prefill.predlog()`, `hr.services.praznici.neradni_praznici()` |
+| Adresa | `/hr/radna-lista/`, `/hr/zaposleni/<id>/radna-lista/` |
+
+### 2. Ulazni podaci i poreklo
+
+| Podatak | Odakle |
+|---|---|
+| Dnevni sati iz prolazaka | K-01 (`INFORMATIKA23`, isti upit kao „Evidencija prolaza“) |
+| Dani na putnom nalogu | `fleet_putninalog` (datum puta + broj dana, bez storniranih) |
+| Dani bolovanja | `hr_sickleave` (uvoz RFZO, K-07) |
+| Neradni praznici | Izračunato po Zakonu o državnim i drugim praznicima (bez spoljnog izvora) |
+| Datum slave | `fleet_employee.slava_datum` (dan i mesec); ako nije upisan, predlog iz naziva slave |
+| Podrazumevana šifra posla | `fleet_organizationalunit` sa šifrom = OJ zaposlenog (`org_unit_code`, pa `department_code`) |
+| Dozvoljene vrste rada | `hr_worktimeelement` za vrstu primaoca zaposlenog (isto kao forma radne liste) |
+
+### 3. Postupak [P]
+
+Za svaki **radni dan** (ponedeljak–petak) važi prvo pravilo koje se poklapa:
+
+| # | Uslov | Predlog |
+|---|---|---|
+| 1 | Bolovanje | 8 h, „Bolovanje“ |
+| 2 | Neradni praznik | 8 h, „Državni i verski praznik“ |
+| 3 | Krsna slava zaposlenog | 8 h, „Državni i verski praznik“ |
+| 4 | Prolazi (bar jedan par ulaz–izlaz) | **8 h, pun dan**, bez obzira na stvarno trajanje, „Redovan rad“ |
+| 5 | Putni nalog bez prolazaka | 8 h, „Redovan rad“ |
+
+- **Terenski dodatak** = broj dana u mesecu pokrivenih putnim nalogom, i vikendom.
+- Svi redovi dobijaju podrazumevanu šifru posla; ako je nema u šifarniku, šifra ostaje prazna.
+- **Vikend i rad na praznik se ne predlažu** (za njih treba rešenje); navode se u napomenama.
+- Vrsta koja nije dozvoljena za vrstu primaoca zaposlenog se ne predlaže (napomena). Za redovan
+  rad bez dozvoljene vrste red ostaje bez oznake vrste.
+- Dan sa bolovanjem i prolazima dobija napomenu.
+
+**Neradni praznici:** 1. i 2. januar, 7. januar (Božić), 15. i 16. februar, 1. i 2. maj,
+11. novembar i Veliki petak do Vaskrsnog ponedeljka po pravoslavnom Vaskrsu (računa se za
+svaku godinu). Kada državni praznik padne u nedelju, ne radi se prvi naredni radni dan
+(npr. 17.02.2026). Verski praznici drugih zajednica se ne predlažu — unose se ručno.
+
+**Slava:** datum iz naziva se predlaže samo za slave sa stalnim datumom (Sv. Nikola 19.12,
+Sv. Jovan 20.01, Đurđevdan 06.05, Aranđelovdan 21.11 …). Pokretne slave i nazivi koji ne
+određuju jedan datum (Sv. Grigorije, Sv. Kliment, Bajram) traže ručni unos datuma.
+
+### 4. Primena na ekranu
+
+- **Prazna radna lista u statusu „Popunjava se“** dobija predlog odmah pri otvaranju.
+- Inače se predlog primenjuje dugmetom **„Popuni prazna polja“**.
+- Predložena polja su obojena plavo dok ih korisnik ne izmeni; **„Poništi predlog“** briše samo
+  ono što je predlog upisao.
+- **„Poništi sve“** prazni celu radnu listu u formi: sate, šifre posla, vrste rada, uslove rada,
+  topli obrok i terenski dodatak. Kao i predlog, u bazu se upisuje tek na „Sacuvaj“.
+- Red za predlog je prvi red sa istom šifrom i vrstom, ili prvi potpuno prazan red.
+
+### 5. Status pouzdanosti
+
+| Tvrdnja | Status | Dokaz |
+|---|---|---|
+| Predlog ne menja bazu | Potvrđeno | `test_work_time_prefill.py: test_prazna_lista_dobija_predlog_odmah` |
+| Pravoslavni Vaskrs 2024–2026 i prenos sa nedelje | Potvrđeno | `PrazniciTests` |
+| Redosled pravila po danu | Potvrđeno | `PredlogTests.test_pravila_po_danima`, `test_bolovanje_ima_prednost_nad_prolazima` |
+| Slava se plaća kao verski praznik | **[N] za potvrdu** | Pravilo je uzeto kao predlog; treba potvrda kadrovske i obračuna zarada |
+| Dan sa prolazima = pun dan od 8 h | **[N] za potvrdu** | Pravilo predloga, ne obračun zarade; kraći dan se ispravlja ručno |
 
 ---
 
