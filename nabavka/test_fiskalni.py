@@ -206,3 +206,63 @@ class EufNazivIBankeTests(TestCase):
         self.assertIn("Banka", po_broju["B1"]["document_type"])
         self.assertEqual(po_broju["F1"]["DT_RowClass"], "")
         self.assertContains(self.client.get(reverse("nabavka:euf_invoice_list")), "<th>Naziv</th>")
+
+
+class ObradaFiskalnogRacunaTests(TestCase):
+    """Kao kod Preuzetih EUF: garaza (vozilo), magacin, vise sifara posla i „vraceno” po sifri."""
+
+    def setUp(self):
+        import datetime
+
+        from fleet.models import JobCode
+        from fleet.test_vehicle_onboarding import vehicle
+
+        self.glavna = OrganizationalUnit.objects.create(code="430111", name="Strucni nadzor", center="43")
+        self.dodatna = OrganizationalUnit.objects.create(code="410001", name="Materijali", center="41")
+        self.vozilo = vehicle("9")
+        JobCode.objects.create(vehicle=self.vozilo, organizational_unit=self.dodatna, assigned_date=datetime.date(2026, 1, 1))
+        uloga = Role.objects.create(name="Nabavka obrada", slug="nabavka-obrada")
+        for kod in ("nabavka:fiskalni_detail", "nabavka:fiskalni_update", "nabavka:fiskalni_returned",
+                    "nabavka:fiskalni_data", "nabavka:fiskalni_list"):
+            uloga.permissions.add(PermissionCode.objects.get_or_create(code=kod)[0])
+        self.korisnik = get_user_model().objects.create_user("nabavka-obrada", password="x")
+        self.korisnik.roles.add(uloga)
+        self.client.force_login(self.korisnik)
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            self.racun, _ = fiskalni.upisi(LINK, self.glavna, self.korisnik)
+        self.izmena = reverse("nabavka:fiskalni_update", args=[self.racun.pk])
+
+    def test_glavna_sifra_je_medju_siframa(self):
+        self.assertEqual(list(self.racun.sifre.values_list("job_code__code", "vrsta")), [("430111", "osnovna")])
+
+    def test_garaza_sa_vozilom_i_magacin(self):
+        odgovor = self.client.post(self.izmena, {"akcija": "obrada", "job_code": self.glavna.pk, "is_garage": "on",
+                                                 "vehicle": self.vozilo.pk, "work_type": "popravka", "goes_to_warehouse": "on"})
+        self.assertEqual(odgovor.status_code, 302)
+        self.racun.refresh_from_db()
+        self.assertEqual((self.racun.is_garage, self.racun.goes_to_warehouse, self.racun.work_type), (True, True, "popravka"))
+        self.assertEqual(self.racun.job_code, self.dodatna)  # garazni racun ide na sifru na kojoj je vozilo
+        self.assertEqual(self.racun.sifre.get(vrsta="osnovna").job_code, self.dodatna)
+        self.client.post(self.izmena, {"akcija": "obrada", "job_code": self.glavna.pk, "vehicle": self.vozilo.pk})
+        self.racun.refresh_from_db()
+        self.assertEqual((self.racun.is_garage, self.racun.vehicle), (False, None))  # bez garaze nema vozila
+
+    def test_vise_sifara_i_vraceno_po_sifri(self):
+        self.client.post(self.izmena, {"akcija": "dodaj_sifru", "job_code": self.dodatna.pk, "note": "pola troska"})
+        self.client.post(self.izmena, {"akcija": "dodaj_sifru", "job_code": self.dodatna.pk})  # ista sifra se ne dodaje dvaput
+        self.assertEqual(self.racun.sifre.count(), 2)
+        osnovna = self.racun.sifre.get(vrsta="osnovna")
+        self.client.post(self.izmena, {"akcija": "obrisi_sifru", "sifra": osnovna.pk})
+        self.assertTrue(self.racun.sifre.filter(pk=osnovna.pk).exists())  # glavna se ne brise
+        vraceno = reverse("nabavka:fiskalni_returned", args=[self.racun.pk])
+        self.assertEqual(len(self.client.get(vraceno).json()["job_codes"]), 2)
+        dodatna = self.racun.sifre.get(vrsta="dodatna")
+        self.assertTrue(self.client.post(vraceno, {"returned_links": [dodatna.pk]}).json()["ok"])
+        dodatna.refresh_from_db()
+        self.racun.refresh_from_db()
+        self.assertTrue(dodatna.is_returned and self.racun.is_returned)
+        self.assertEqual(dodatna.returned_by, self.korisnik)
+        red = self.client.get(reverse("nabavka:fiskalni_data"), {"draw": 1, "start": 0, "length": 10}).json()["data"][0]
+        self.assertIn("410001", red["vraceno"])
+        self.assertIn("430111, 410001", red["sifra"])
+        self.assertContains(self.client.get(reverse("nabavka:fiskalni_detail", args=[self.racun.pk])), "Obrada računa")

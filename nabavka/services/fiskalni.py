@@ -265,6 +265,7 @@ def upisi(tekst, job_code, korisnik, napomena=""):
         pfr_vreme=zaglavlje.pfr_vreme, vrsta_racuna=zaglavlje.vrsta_racuna, vrsta_transakcije=zaglavlje.vrsta_transakcije,
         id_kupca=zaglavlje.id_kupca, pib_kupca=zaglavlje.pib_kupca, na_ims=zaglavlje.pib_kupca == pib_ims,
         job_code=job_code, napomena=napomena, created_by=korisnik)
+    racun.uskladi_glavnu_sifru(korisnik)
     preuzmi(racun)
     return racun, upozorenja(racun)
 

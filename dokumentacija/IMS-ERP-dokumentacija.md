@@ -3078,8 +3078,8 @@ reda su druge boje, uz legendu iznad tabele (isto i u izvozu u Excel):
 
 | Isticanje | Kako se prepoznaje |
 |---|---|
-| **Avans** (plavo) | `Naziv` dokumenta je „Avans” |
-| **Banka** (ljubičasto, oznaka „Banka” uz naziv) | PIB partnera je u `select pib from partneri where grupa = 11` |
+| **Avans** (plavo, plava oznaka „Avans”) | `Naziv` dokumenta je „Avans” |
+| **Banka** (crveno, crvena oznaka „Banka” uz naziv) | PIB partnera je u `select pib from partneri where grupa = 11` |
 
 Pogled `nbv_preuzete_EUF` ne daje PIB partnera, pa ga preuzimanje čita (samo čitanjem) iz izvorne
 tabele `[putgeo-server].[EFaktura].[dbo].[EUL_Dok]` po broju fakture i partneru i čuva u
@@ -3125,8 +3125,15 @@ refundacije, kao i račun čiji zbir stavki nije jednak iznosu.
 stavke se preuzimaju dugmetom **Ponovo preuzmi** na detalju ili noćnim zadatkom u 07:30
 (`nabavka.tasks.fiskalni_ponovi_task`). Obuhvat: račun se vezuje za šifru posla i registar
 (`org_node`), pa ga vidi ko ima tu šifru u obuhvatu dodela (i onaj ko ga je učitao). Dozvole:
-`nabavka:fiskalni_list`, `_data`, `_scan`, `_detail`, `_refresh`, `_update` (šifra posla i
-napomena), `_delete`.
+`nabavka:fiskalni_list`, `_data`, `_scan`, `_detail`, `_refresh`, `_update` (obrada i šifre posla),
+`_returned` („vraćeno”), `_delete`.
+
+**Obrada kao kod Preuzetih EUF (od 28.09.2026.):** na detalju, kartica *Obrada računa* — glavna
+šifra posla, **Ide u magacin**, **Garaža** (vozilo i vrsta intervencije; garažni račun sa vozilom ide
+na šifru posla na kojoj je vozilo danas, kao EUF faktura) i napomena. Kartica *Šifre posla* — glavna
+(„Osnovna”) i **dodatne** šifre (`FiskalniRacunSifra`, svaka vezana i za registar); glavna se ne
+briše, menja se u obradi. **Vraćeno** se označava po šifri posla dugmetom u spisku, kao u Preuzetim
+EUF. Spisak ima kolone i filtere Magacin i Garaža i kolonu Vraćeno.
 
 #### Kupovni ugovori — nabavni pogled na modul Ugovori [P]
 

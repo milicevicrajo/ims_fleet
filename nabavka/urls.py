@@ -26,6 +26,7 @@ from .views.fiskalni import (
     FiskalniRacunDetailView,
     FiskalniRacunListView,
     FiskalniRacunRefreshView,
+    FiskalniRacunReturnedView,
     FiskalniRacunScanView,
     FiskalniRacunUpdateView,
 )
@@ -101,6 +102,7 @@ urlpatterns = [
     path("fiskalni-racuni/<int:pk>/preuzmi/", FiskalniRacunRefreshView.as_view(), name="fiskalni_refresh"),
     path("fiskalni-racuni/<int:pk>/izmeni/", FiskalniRacunUpdateView.as_view(), name="fiskalni_update"),
     path("fiskalni-racuni/<int:pk>/obrisi/", FiskalniRacunDeleteView.as_view(), name="fiskalni_delete"),
+    path("fiskalni-racuni/<int:pk>/vraceno/", FiskalniRacunReturnedView.as_view(), name="fiskalni_returned"),
     path("uf-stavke/", EufItemSnapshotListView.as_view(), name="euf_item_list"),
     path("uf-stavke/data/", EufItemSnapshotDataView.as_view(), name="euf_item_data"),
     path("uf-stavke/sync/", EufItemSnapshotSyncView.as_view(), name="euf_item_sync"),

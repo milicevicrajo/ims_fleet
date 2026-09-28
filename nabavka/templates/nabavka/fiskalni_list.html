@@ -50,7 +50,7 @@ otvara se detalj računa.
   <div class="card-body">
     <form method="get" class="invoice-filter">
       <div class="row g-2 align-items-end">
-        <div class="col-12 col-xl-5">
+        <div class="col-12 col-xl-4">
           <label class="form-label mb-1" for="id_q">Pretraga</label>
           <input id="id_q" class="form-control" type="search" name="q" value="{{ q }}"
                  placeholder="Broj računa, prodavac, PIB, šifra posla ili artikal"
@@ -71,7 +71,23 @@ otvara se detalj računa.
             {% for kljuc, naziv in statusi %}<option value="{{ kljuc }}" {% if status == kljuc %}selected{% endif %}>{{ naziv }}</option>{% endfor %}
           </select>
         </div>
-        <div class="col-12 col-xl-3 d-flex flex-wrap gap-2 justify-content-end">
+        <div class="col-12 col-sm-6 col-xl-2">
+          <label class="form-label mb-1" for="id_magacin">Magacin</label>
+          <select id="id_magacin" class="form-select form-control select2-method" name="magacin">
+            <option value="">Svi</option>
+            <option value="1" {% if magacin == "1" %}selected{% endif %}>Ide u magacin</option>
+            <option value="0" {% if magacin == "0" %}selected{% endif %}>Ne ide u magacin</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-2">
+          <label class="form-label mb-1" for="id_garaza">Garaža</label>
+          <select id="id_garaza" class="form-select form-control select2-method" name="garaza">
+            <option value="">Sve</option>
+            <option value="1" {% if garaza == "1" %}selected{% endif %}>Garaža</option>
+            <option value="0" {% if garaza == "0" %}selected{% endif %}>Nije garaža</option>
+          </select>
+        </div>
+        <div class="col-12 d-flex flex-wrap gap-2 justify-content-end">
           <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify" aria-hidden="true"></i> Pretraži</button>
           <a class="btn btn-outline-secondary" href="{% url 'nabavka:fiskalni_list' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
         </div>
@@ -85,8 +101,8 @@ otvara se detalj računa.
     <table id="FiskalniTable" class="display compact table table-hover table-bordered align-middle w-100">
       <thead>
         <tr>
-          <th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th>Iznos</th><th>Šifra posla</th>
-          <th>Kupac</th><th>Status</th><th class="text-center">Akcije</th>
+          <th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th>Iznos</th><th>Šifre posla</th>
+          <th>Magacin</th><th>Garaža</th><th class="text-center">Vraćeno</th><th>Kupac</th><th>Status</th><th class="text-center">Akcije</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -127,8 +143,35 @@ otvara se detalj računa.
   </div>
 </div>
 
+<div class="modal fade" id="fiskalniVracenoModal" tabindex="-1" aria-labelledby="fiskalniVracenoNaslov" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="fiskalniVracenoNaslov">Vraćeno po šifri posla</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-muted small mb-3" id="fiskalniVracenoRacun"></div>
+        <div class="d-flex justify-content-end mb-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="fiskalniVracenoSve"><i class="mdi mdi-check-all"></i> Označi sve</button>
+        </div>
+        <div id="fiskalniVracenoSifre" class="list-group"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
+        <button type="button" class="btn btn-primary" id="fiskalniVracenoSacuvaj"><i class="mdi mdi-content-save"></i> Sačuvaj</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  function escapeHtml(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
   var tabela = null;
   if (window.jQuery && jQuery.fn.DataTable) {
     tabela = jQuery('#FiskalniTable').DataTable({
@@ -138,18 +181,57 @@ document.addEventListener('DOMContentLoaded', function () {
       columns: [
         { data: 'pfr_vreme' }, { data: 'prodavac' }, { data: 'broj_racuna' },
         { data: 'iznos', className: 'text-end text-nowrap' }, { data: 'sifra' },
+        { data: 'magacin' }, { data: 'garaza' },
+        { data: 'vraceno', orderable: true, searchable: false, className: 'text-center' },
         { data: 'na_ims' }, { data: 'status' },
         { data: 'akcije', orderable: false, searchable: false, className: 'text-center text-nowrap' }
       ],
-      columnDefs: [{ targets: 0, width: '11%' }, { targets: 1, width: '22%' }, { targets: 2, width: '16%' },
-                   { targets: 3, width: '9%' }, { targets: 4, width: '16%' }, { targets: [5, 6], width: '9%' },
-                   { targets: 7, width: '8%' }],
+      columnDefs: [{ targets: 0, width: '9%' }, { targets: 1, width: '17%' }, { targets: 2, width: '13%' },
+                   { targets: 3, width: '7%' }, { targets: 4, width: '11%' }, { targets: [5, 6], width: '7%' },
+                   { targets: 7, width: '8%' }, { targets: [8, 9], width: '7%' }, { targets: 10, width: '7%' }],
       language: { processing: 'Učitavanje...', search: 'Pretraga:', lengthMenu: 'Prikaži _MENU_ redova',
         info: 'Prikaz _START_ do _END_ od _TOTAL_ računa', infoEmpty: 'Nema računa',
         infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema rezultata',
         paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
     });
   }
+
+  // „Vraceno” po sifri posla — isto kao u Preuzetim EUF.
+  var vModalEl = document.getElementById('fiskalniVracenoModal');
+  var vModal = vModalEl && window.bootstrap ? new bootstrap.Modal(vModalEl) : null;
+  var vSifre = document.getElementById('fiskalniVracenoSifre');
+  var vRacun = document.getElementById('fiskalniVracenoRacun');
+  var vUrl = '';
+  function prikaziSifre(d) {
+    vRacun.textContent = 'Račun: ' + (d.racun || '');
+    if (!d.job_codes || !d.job_codes.length) { vSifre.innerHTML = '<div class="text-muted border rounded p-3">Račun nema šifre posla.</div>'; return; }
+    vSifre.innerHTML = d.job_codes.map(function (s) {
+      return '<label class="list-group-item d-flex align-items-start gap-2">' +
+        '<input class="form-check-input mt-1 js-vraceno" type="checkbox" value="' + s.id + '" ' + (s.is_returned ? 'checked' : '') + '>' +
+        '<span class="flex-grow-1"><span class="fw-bold">' + escapeHtml(s.code) + '</span>' +
+        '<span class="badge bg-light text-dark border ms-2">' + escapeHtml(s.kind_label) + '</span>' +
+        '<span class="d-block text-muted small">' + escapeHtml(s.name) + '</span></span></label>';
+    }).join('');
+  }
+  jQuery('#FiskalniTable').on('click', '.js-fiskalni-vraceno', function () {
+    vUrl = this.dataset.url || '';
+    vSifre.innerHTML = '<div class="text-muted border rounded p-3">Učitavanje…</div>';
+    if (vModal) { vModal.show(); }
+    fetch(vUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).then(function (r) { return r.json(); })
+      .then(prikaziSifre).catch(function () { vSifre.innerHTML = '<div class="text-danger border rounded p-3">Šifre posla nisu učitane.</div>'; });
+  });
+  document.getElementById('fiskalniVracenoSve').addEventListener('click', function () {
+    vSifre.querySelectorAll('.js-vraceno').forEach(function (c) { c.checked = true; });
+  });
+  document.getElementById('fiskalniVracenoSacuvaj').addEventListener('click', function () {
+    if (!vUrl) return;
+    var telo = new URLSearchParams();
+    vSifre.querySelectorAll('.js-vraceno:checked').forEach(function (c) { telo.append('returned_links', c.value); });
+    fetch(vUrl, { method: 'POST', body: telo, headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded' } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function () { if (vModal) vModal.hide(); if (tabela) tabela.ajax.reload(null, false); })
+      .catch(function () { if (window.toastr) toastr.error('Status Vraćeno nije sačuvan.'); });
+  });
 
   var modal = document.getElementById('fiskalniModal');
   var forma = document.getElementById('fiskalniForma');
@@ -159,11 +241,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var dugme = document.getElementById('fiskalniObradi');
   var KLJUC = 'nabavka.fiskalni.sifra';
 
-  function escapeHtml(v) {
-    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
-      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-    });
-  }
   try {
     var zapamcena = window.localStorage.getItem(KLJUC);
     if (zapamcena && sifra.querySelector('option[value="' + zapamcena + '"]')) { sifra.value = zapamcena; }

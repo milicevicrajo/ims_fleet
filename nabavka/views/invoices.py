@@ -279,9 +279,11 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                 {
                     # DataTables sam dodaje ovu klasu redu: avansi i banke su druge boje.
                     "DT_RowClass": " ".join(f"euf-red-{o}" for o in oznake),
-                    "document_type": escape(invoice.document_type or "")
-                    + (' <span class="invoice-badge bank" title="PIB banke: ' + escape(invoice.partner_pib or "") + '">'
-                       '<i class="mdi mdi-bank"></i> Banka</span>' if "banka" in oznake else ""),
+                    "document_type": (
+                        ('<span class="invoice-badge avans"><i class="mdi mdi-cash-fast"></i> ' + escape(invoice.document_type or "") + "</span>")
+                        if "avans" in oznake else escape(invoice.document_type or "")
+                    ) + (' <span class="invoice-badge bank" title="PIB banke: ' + escape(invoice.partner_pib or "") + '">'
+                         '<i class="mdi mdi-bank"></i> Banka</span>' if "banka" in oznake else ""),
                     "invoice_date": (
                         invoice.invoice_date.strftime("%d.%m.%Y")
                         if invoice.invoice_date
@@ -350,7 +352,7 @@ class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
             cell.fill = header_fill
 
         banke = pib_banaka()
-        boje = {"avans": PatternFill("solid", fgColor="DCEBFF"), "banka": PatternFill("solid", fgColor="EDE3FF")}
+        boje = {"avans": PatternFill("solid", fgColor="DCEBFF"), "banka": PatternFill("solid", fgColor="FDE2E2")}
         for invoice in invoices:
             worksheet.append(
                 [

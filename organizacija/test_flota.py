@@ -732,7 +732,7 @@ class NabavkaURegistruTests(FlotaTestCase):
         from nabavka.models import ProcurementCase, ProcurementInvoiceJobCodeLink
 
         zbirovi = {z["kljuc"]: z for z in flota.povezi(modul="nabavka")}
-        self.assertEqual(set(zbirovi), {"predmeti", "fakture", "veze_faktura", "fiskalni"})
+        self.assertEqual(set(zbirovi), {"predmeti", "fakture", "veze_faktura", "fiskalni", "fiskalni_sifre"})
         self.assertEqual(ProcurementCase.objects.get(pk=self.predmet.pk).org_node_id, cvor("430111"))
         self.assertEqual(ProcurementInvoiceJobCodeLink.objects.get(pk=self.veza.pk).org_node_id, cvor("410001"))
         # Broj predmeta i staro polje ostaju.

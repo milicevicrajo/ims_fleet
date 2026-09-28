@@ -1116,6 +1116,15 @@ class FiskalniRacun(models.Model):
     org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
                                  editable=False, related_name="fiskalni_racuni")
     napomena = models.CharField(max_length=500, blank=True, verbose_name=_("Napomena"))
+    # Obrada kao kod EUF faktura: garaza (vozilo, vrsta intervencije), magacin i vraceno po sifri posla.
+    is_garage = models.BooleanField(default=False, verbose_name=_("Garaža"))
+    vehicle = models.ForeignKey("fleet.Vehicle", on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name="nabavka_fiskalni_racuni", verbose_name=_("Vozilo"))
+    work_type = models.CharField(max_length=20, blank=True, default="", choices=[
+        ("mali_servis", _("Mali servis")), ("veliki_servis", _("Veliki servis")), ("popravka", _("Popravka")),
+    ], verbose_name=_("Vrsta intervencije"))
+    goes_to_warehouse = models.BooleanField(default=False, verbose_name=_("Ide u magacin"))
+    is_returned = models.BooleanField(default=False, verbose_name=_("Vraćeno"))
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name="nabavka_fiskalni_racuni", verbose_name=_("Učitao"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Učitano"))
@@ -1140,6 +1149,18 @@ class FiskalniRacun(models.Model):
     def je_promet_prodaja(self):
         return self.vrsta_racuna == 0 and self.vrsta_transakcije == 0
 
+    def uskladi_glavnu_sifru(self, korisnik=None):
+        """Glavna sifra posla je uvek i medju siframa racuna (vrsta „Osnovna”), kao kod EUF faktura."""
+        FiskalniRacunSifra.objects.filter(racun=self, vrsta=FiskalniRacunSifra.OSNOVNA).exclude(
+            job_code_id=self.job_code_id).update(vrsta=FiskalniRacunSifra.DODATNA)
+        veza, napravljena = FiskalniRacunSifra.objects.get_or_create(
+            racun=self, job_code_id=self.job_code_id,
+            defaults={"vrsta": FiskalniRacunSifra.OSNOVNA, "created_by": korisnik})
+        if not napravljena and veza.vrsta != FiskalniRacunSifra.OSNOVNA:
+            veza.vrsta = FiskalniRacunSifra.OSNOVNA
+            veza.save(update_fields=["vrsta"])
+        return veza
+
 
 class FiskalniRacunStavka(models.Model):
     racun = models.ForeignKey(FiskalniRacun, on_delete=models.CASCADE, related_name="stavke")
@@ -1162,3 +1183,34 @@ class FiskalniRacunStavka(models.Model):
 
     def __str__(self):
         return f"{self.redni_broj}. {self.naziv}"
+
+
+class FiskalniRacunSifra(models.Model):
+    """Sifra posla na fiskalnom racunu — osnovna i dodatne, sa oznakom „vraceno” (kao kod EUF faktura)."""
+
+    OSNOVNA = "osnovna"
+    DODATNA = "dodatna"
+
+    racun = models.ForeignKey(FiskalniRacun, on_delete=models.CASCADE, related_name="sifre")
+    job_code = models.ForeignKey("fleet.OrganizationalUnit", on_delete=models.PROTECT, related_name="fiskalni_racuni_sifre",
+                                 verbose_name=_("Šifra posla"))
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="fiskalni_racuni_sifre")
+    vrsta = models.CharField(max_length=10, choices=[(OSNOVNA, _("Osnovna")), (DODATNA, _("Dodatna"))], default=DODATNA)
+    is_returned = models.BooleanField(default=False, verbose_name=_("Vraćeno"))
+    returned_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Vraćeno u"))
+    returned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="+", verbose_name=_("Označio kao vraćeno"))
+    note = models.CharField(max_length=255, blank=True, verbose_name=_("Napomena"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+")
+
+    class Meta:
+        verbose_name = _("Šifra posla fiskalnog računa")
+        verbose_name_plural = _("Šifre posla fiskalnih računa")
+        ordering = ["racun", "-vrsta", "job_code__code"]
+        constraints = [models.UniqueConstraint(fields=["racun", "job_code"], name="nabavka_fiskalni_sifra_jedinstvena")]
+
+    def __str__(self):
+        return f"{self.racun.broj_racuna} — {self.job_code}"

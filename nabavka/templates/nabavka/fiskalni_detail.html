@@ -1,9 +1,18 @@
 {% extends "base.html" %}
 {% comment %}
 Detalj fiskalnog računa: gore pregled (iznos, PDV, stavke, kupac, status), levo podaci o prodavcu i
-računu, šifra posla i stavke; desno ceo tekst računa u širini pravog računa.
+računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno ceo tekst računa.
 {% endcomment %}
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ title }}<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var garaza = document.getElementById('id_is_garage');
+  if (!garaza) return;
+  function prikazi() { document.querySelectorAll('.js-garaza').forEach(function (el) { el.style.display = garaza.checked ? '' : 'none'; }); }
+  garaza.addEventListener('change', prikazi);
+  prikazi();
+});
+</script>
+{% endblock %}
 
 {% block content %}
 <style>
@@ -78,6 +87,11 @@ računu, šifra posla i stavke; desno ceo tekst računa u širini pravog računa
         {% if racun.na_ims %}<span class="invoice-badge ok"><i class="mdi mdi-domain"></i> IMS</span>
         {% else %}<span class="invoice-badge warn"><i class="mdi mdi-account-alert"></i> {% if racun.id_kupca %}Drugi kupac{% else %}Fizičko lice{% endif %}</span>{% endif %}
       </div>
+      <div class="fiskalni-plocica"><small>Magacin · garaža</small>
+        {% if racun.goes_to_warehouse %}<span class="invoice-badge ok"><i class="mdi mdi-warehouse"></i> Magacin</span>{% endif %}
+        {% if racun.is_garage %}<span class="invoice-badge warn"><i class="mdi mdi-car-wrench"></i> Garaža</span>{% endif %}
+        {% if not racun.goes_to_warehouse and not racun.is_garage %}<span class="invoice-badge muted">Ne</span>{% endif %}
+      </div>
       <div class="fiskalni-plocica"><small>Status</small>
         {% if racun.status == "potvrdjen" %}<span class="invoice-badge ok"><i class="mdi mdi-check-circle"></i> Potvrđen</span>
         {% else %}<span class="invoice-badge muted" title="{{ racun.greska }}"><i class="mdi mdi-timer-sand"></i> Čeka proveru</span>{% endif %}
@@ -107,17 +121,69 @@ računu, šifra posla i stavke; desno ceo tekst računa u širini pravog računa
     </section>
 
     <section class="fiskalni-kartica">
-      <header>Šifra posla</header>
+      <header>Obrada računa</header>
       <div>
         {% if nabavka_permissions.fiskalni_update %}
-          <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" class="row g-2 align-items-end">{% csrf_token %}
-            <div class="col-md-6"><label class="form-label mb-1" for="{{ sifra_form.job_code.id_for_label }}">{{ sifra_form.job_code.label }}</label>{{ sifra_form.job_code }}</div>
-            <div class="col-md-4"><label class="form-label mb-1" for="{{ sifra_form.napomena.id_for_label }}">{{ sifra_form.napomena.label }}</label>{{ sifra_form.napomena }}</div>
-            <div class="col-md-2 d-grid"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button></div>
+          <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" class="row g-3 align-items-end">{% csrf_token %}
+            <input type="hidden" name="akcija" value="obrada">
+            <div class="col-md-6"><label class="form-label mb-1" for="{{ obrada_form.job_code.id_for_label }}">{{ obrada_form.job_code.label }}</label>{{ obrada_form.job_code }}
+              <div class="form-text">Garažni račun sa vozilom ide na šifru posla na kojoj je vozilo danas.</div></div>
+            <div class="col-md-6"><label class="form-label mb-1" for="{{ obrada_form.napomena.id_for_label }}">{{ obrada_form.napomena.label }}</label>{{ obrada_form.napomena }}</div>
+            <div class="col-sm-6 col-md-3">
+              <div class="form-check">{{ obrada_form.goes_to_warehouse }}<label class="form-check-label" for="{{ obrada_form.goes_to_warehouse.id_for_label }}"><i class="mdi mdi-warehouse"></i> Ide u magacin</label></div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <div class="form-check">{{ obrada_form.is_garage }}<label class="form-check-label" for="{{ obrada_form.is_garage.id_for_label }}"><i class="mdi mdi-car-wrench"></i> Garaža</label></div>
+            </div>
+            <div class="col-md-6 js-garaza"><label class="form-label mb-1" for="{{ obrada_form.vehicle.id_for_label }}">{{ obrada_form.vehicle.label }}</label>{{ obrada_form.vehicle }}</div>
+            <div class="col-md-6 js-garaza"><label class="form-label mb-1" for="{{ obrada_form.work_type.id_for_label }}">{{ obrada_form.work_type.label }}</label>{{ obrada_form.work_type }}</div>
+            <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj obradu</button></div>
           </form>
         {% else %}
-          <p class="mb-0"><strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}</p>
-          {% if racun.napomena %}<p class="small text-muted mb-0 mt-1">{{ racun.napomena }}</p>{% endif %}
+          <dl class="fiskalni-podaci">
+            <dt>Glavna šifra</dt><dd><strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}</dd>
+            <dt>Magacin</dt><dd>{{ racun.goes_to_warehouse|yesno:"Ide u magacin,Ne" }}</dd>
+            <dt>Garaža</dt><dd>{% if racun.is_garage %}Da{% if racun.vehicle %} · {{ racun.vehicle }}{% endif %}{% if racun.work_type %} · {{ racun.get_work_type_display }}{% endif %}{% else %}Ne{% endif %}</dd>
+            <dt>Napomena</dt><dd>{{ racun.napomena|default:"—" }}</dd>
+          </dl>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="fiskalni-kartica">
+      <header>Šifre posla</header>
+      <div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-2">
+            <thead><tr><th>Šifra posla</th><th>Vrsta</th><th>Vraćeno</th><th>Napomena</th>{% if nabavka_permissions.fiskalni_update %}<th></th>{% endif %}</tr></thead>
+            <tbody>
+              {% for s in sifre %}
+                <tr>
+                  <td><strong>{{ s.job_code.code }}</strong> · {{ s.job_code.name }}</td>
+                  <td>{% if s.vrsta == "osnovna" %}<span class="invoice-badge ok">Osnovna</span>{% else %}<span class="invoice-badge muted">Dodatna</span>{% endif %}</td>
+                  <td>{% if s.is_returned %}<span class="invoice-badge warn"><i class="mdi mdi-clipboard-check-outline"></i> Vraćeno</span><div class="small text-muted">{{ s.returned_by.username|default:"" }} {{ s.returned_at|date:"d.m.Y." }}</div>{% else %}—{% endif %}</td>
+                  <td class="small">{{ s.note|default:"" }}</td>
+                  {% if nabavka_permissions.fiskalni_update %}<td class="text-end">
+                    {% if s.vrsta != "osnovna" %}
+                      <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" onsubmit="return confirm('Ukloniti šifru {{ s.job_code.code }} sa računa?');">{% csrf_token %}
+                        <input type="hidden" name="akcija" value="obrisi_sifru"><input type="hidden" name="sifra" value="{{ s.pk }}">
+                        <button class="btn btn-outline-danger btn-sm" type="submit" title="Ukloni šifru"><i class="mdi mdi-close"></i></button>
+                      </form>
+                    {% endif %}
+                  </td>{% endif %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="small text-muted mb-2">„Vraćeno” se označava po šifri posla dugmetom <strong>Vraćeno</strong> u spisku računa.</p>
+        {% if nabavka_permissions.fiskalni_update %}
+          <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" class="row g-2 align-items-end">{% csrf_token %}
+            <input type="hidden" name="akcija" value="dodaj_sifru">
+            <div class="col-md-6"><label class="form-label mb-1" for="{{ sifra_form.job_code.id_for_label }}">{{ sifra_form.job_code.label }}</label>{{ sifra_form.job_code }}</div>
+            <div class="col-md-4"><label class="form-label mb-1" for="{{ sifra_form.note.id_for_label }}">{{ sifra_form.note.label }}</label>{{ sifra_form.note }}</div>
+            <div class="col-md-2 d-grid"><button class="btn btn-outline-primary" type="submit"><i class="mdi mdi-plus"></i> Dodaj</button></div>
+          </form>
         {% endif %}
       </div>
     </section>
@@ -160,4 +226,13 @@ računu, šifra posla i stavke; desno ceo tekst računa u širini pravog računa
     <div>{% if racun.zurnal %}<pre>{{ racun.zurnal }}</pre>{% else %}<span class="text-muted small">Tekst računa još nije preuzet.</span>{% endif %}</div>
   </section>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var garaza = document.getElementById('id_is_garage');
+  if (!garaza) return;
+  function prikazi() { document.querySelectorAll('.js-garaza').forEach(function (el) { el.style.display = garaza.checked ? '' : 'none'; }); }
+  garaza.addEventListener('change', prikazi);
+  prikazi();
+});
+</script>
 {% endblock %}

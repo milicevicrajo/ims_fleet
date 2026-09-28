@@ -29,6 +29,7 @@ def current_app(request):
         "fiskalni_refresh",
         "fiskalni_update",
         "fiskalni_delete",
+        "fiskalni_returned",
         "purchase_contract_list",
         "public_procurement_list",
         "purchase_order_list",

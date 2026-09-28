@@ -33,12 +33,13 @@
   .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
   .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
   .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
-  .invoice-badge.bank { background: #ede3ff; color: #4b2a8a; border: 1px solid #cdb8f5; padding: 2px 7px; font-size: .74rem; }
-  /* Avansi (po nazivu dokumenta) i banke (PIB u partneri, grupa 11) — druga boja reda. */
+  .invoice-badge.bank { background: #fde2e2; color: #9b1c1c; border: 1px solid #f5b5b5; padding: 2px 7px; font-size: .74rem; }
+  .invoice-badge.avans { background: #dcebff; color: #1d4f91; border: 1px solid #a9c8f2; padding: 2px 7px; font-size: .74rem; }
+  /* Avansi (po nazivu dokumenta) i banke (PIB u partneri, grupa 11) — druga boja reda; banka crvena. */
   #EufInvoicesTable tbody tr.euf-red-avans > td { background-color: #e6f0ff !important; }
-  #EufInvoicesTable tbody tr.euf-red-banka > td { background-color: #f1e9ff !important; }
+  #EufInvoicesTable tbody tr.euf-red-banka > td { background-color: #fde8e8 !important; }
   #EufInvoicesTable tbody tr.euf-red-avans > td:first-child { box-shadow: inset 4px 0 0 #3b7ddd; }
-  #EufInvoicesTable tbody tr.euf-red-banka > td:first-child { box-shadow: inset 4px 0 0 #7b52c9; }
+  #EufInvoicesTable tbody tr.euf-red-banka > td:first-child { box-shadow: inset 4px 0 0 #d64545; }
   .euf-legenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: .8rem; color: #526170; margin-bottom: 8px; }
   .euf-legenda span { display: inline-flex; align-items: center; gap: 6px; }
   .euf-legenda i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
@@ -155,7 +156,7 @@
   <div class="card-body">
     <div class="euf-legenda" aria-label="Legenda boja">
       <span><i style="background:#e6f0ff;box-shadow:inset 4px 0 0 #3b7ddd"></i> Avans</span>
-      <span><i style="background:#f1e9ff;box-shadow:inset 4px 0 0 #7b52c9"></i> Banka</span>
+      <span><i style="background:#fde8e8;box-shadow:inset 4px 0 0 #d64545"></i> Banka</span>
     </div>
     <div class="invoice-table-wrap">
       <table id="EufInvoicesTable" class="display compact table table-hover table-bordered align-middle w-100">
