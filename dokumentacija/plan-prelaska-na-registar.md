@@ -1,12 +1,58 @@
 # Plan prelaska na registar organizacije — čitanje, prava i gašenje stare organizacije
 
-Datum: **25.09.2026.** · Status: **u realizaciji** — koraci 1, 2 i 3 izvedeni, korak 4 izveden (senka: 4 razlike, sve potvrđene); ništa od toga još ne odlučuje o pristupu
+Datum: **25.09.2026.** · Status: **u realizaciji** — koraci 1–4 izvedeni (senka: 4 razlike, sve potvrđene); ništa od toga još ne odlučuje o pristupu. Šta je ostalo: poglavlje 0
 
 Ovaj plan je nastavak [plana registra šifara posla](plan-registra-sifara-posla.md) i razrađuje
 preostale korake **2–9** iz [plana organizacije i dozvola V2](plan-organizacije-i-dozvola-v2.md),
 sada kada su svi moduli sa šifrom posla povezani sa registrom.
 
 > Status tvrdnji: **[P]** izmereno ili provereno u kodu, **[Z]** zaključeno, **[N]** nepotvrđeno.
+
+---
+
+## 0. Šta je ostalo (stanje 28.09.2026.)
+
+**Urađeno:** koraci 1–4 — putanja čvora, model prava sa obuhvatom, ekran **Organizacija → Dodele
+uloga**, prevod starih prava (438 dodela u nacrtu) i senka bez nepotvrđenih razlika. Odluke 2–8
+donete. Ništa od toga još ne odlučuje o pristupu.
+
+### 0.1. Odmah — isporuka
+
+| # | Posao | Ko | Napomena |
+|---|---|---|---|
+| 1 | ✅ Obrisan dupli profil `biljana.zizic`; `bilja` vezana za zaposlenu Zizić Biljana (šifra 1010) — 28.09.2026. | — | Brisanje je diralo samo vezu sa ulogom i jednu dodelu u nacrtu |
+| 1a | ✅ Potraživanja osvežena (poslednja uspešna sinhronizacija bila je 18.09.) i **zakazana noću u 03:00** — 28.09.2026. | — | Raspored je upisan u bazu; zadatak već postoji na serveru, pa radi od noćas |
+| 1b | **Zaposleni iz Kadrova se ne preuzimaju od 24.09.** — povezani server `serfin` nije dostupan („SQL Server does not exist or access denied”), 4 noći zaredom | Održavanje servera | Nije greška aplikacije; posao 01:10 nastavlja sam čim veza proradi |
+| 2 | Commit rada posle `01ea34e` — ekran dodela, uklanjanje kadrovskih OJ, senka Flote, Nabavka i Blagajna cela firma, noćna Potraživanja | Naručilac | |
+| 3 | Isporuka na server: kod → **odmah `migrate`** → restart Celery workera → `sync_celery_periodic_tasks` | Naručilac | `fleet.0086` briše kolonu `allowed_hr_unit_codes`; bez nje novi kod ne može da napravi korisnika, a stari je čita — zato zajedno. Upisuje se i noćni posao 01:40 |
+
+### 0.2. Posle isporuke — korak 0 i pilot
+
+| # | Posao | Uslov završetka |
+|---|---|---|
+| 4 | Nedelja praćenja noćne sinhronizacije organizacije (korak 0) — **3 od 7 noći prošle** (26–28.09.: svi uporedni izveštaji prolaze, 0 izmena; 584 knjiženja bez veze su tehnička šifra `111111`) | 7 noći zaredom: svi uporedni izveštaji prolaze, nijedno knjiženje ni stavka potraživanja bez veze |
+| 5 | Odobravanje nacrta na ekranu Dodele uloga — prvo korisnici Finansija (3) i Potraživanja (7); odobreni su dosad `ana.andjelkovic` i `milena.stojanovski` | Svi korisnici pilota odobreni |
+| 6 | **Pilot Finansije + Potraživanja** (korak 5): filteri, zbirovi i prava iz registra i dodela, uz prekidač za povratak | Isti iznosi za isti skup; tuđi podaci nedostupni; opoziv dodele gasi pristup |
+
+### 0.3. Dalji koraci
+
+| # | Korak | Šta obuhvata |
+|---|---|---|
+| 7 | Flota (korak 6) | ~30 mesta filtera i zbirova na registar, dodela vozila na datum; **spisak vozila dobija ograničenje po centru** (osim Uprave, Garaže, Nabavke i Blagajne) — odluka 25.09.2026. |
+| 8 | Nabavka, pa Kadrovi (korak 7) | Zaposleni dobija vezu na čvor registra na kartici; Uprava tada vidi sve zaposlene; nema posebne kadrovske organizacije (3.3) |
+| 9 | Sistematizacija (korak 8) | Ko koga vodi, objava od datuma; promena naziva, šifre ili roditelja bez gubitka istorije |
+| 10 | Gašenje stare organizacije (korak 9) | Uslovi iz 3.4; gasi se `fetch_job_codes` (01:30), tabela `OrganizationalUnit` ostaje za istoriju |
+
+### 0.4. Podaci za proveru (ne koče korake 1–6)
+
+| Stavka | Šta treba |
+|---|---|
+| 11 naziva jedinica označenih „proveriti” i naziv centra 2 | Potvrda naziva (`organizacija/services/pravilnik.py`, `PROVERITI`) |
+| Lični brojevi 657, 998, 999 kod naučnih šifara | Ko su — nisu u Kadrovima |
+| Projekti P36014 i P36017 pod dva broja | Koji broj projekta važi |
+| Šifre `vranj`, `vranjs`, `960001` | Šta su i kom centru pripadaju; `vranjs` danas u senci ide kao „manje” za korisnike centra 43 |
+| Oznaka centra `96` (Test centar) kod 2 korisnika | Ukloniti oznaku ili reći čemu služi |
+| 7 lizinga bez osnova plaćanja (`payment_basis`) | Upisati osnov |
 
 ---
 

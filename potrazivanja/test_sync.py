@@ -226,3 +226,25 @@ class ParallelViewsTests(TestCase):
         self.client.force_login(self.user)
         response=self.client.get(reverse('potrazivanja:table_data'),{'kind':'postings'})
         self.assertEqual(response.json()['recordsTotal'],1)
+
+
+class NocnaSinhronizacijaTests(TestCase):
+    """Od 28.09.2026. Potrazivanja se sinhronizuju i nocu (03:00), a ne samo rucno."""
+
+    def test_zakazana_u_tri_i_poruka_za_istoriju(self):
+        from core.management.commands.sync_celery_periodic_tasks import EXPECTED_PERIODIC_TASKS
+        from .tasks import poruka
+
+        zadatak = next(s for s in EXPECTED_PERIODIC_TASKS if s["task"] == "potrazivanja.tasks.sync_collections_task")
+        self.assertEqual((zadatak["hour"], zadatak["minute"]), ("3", "0"))
+        run = CollectionSyncRun(control_totals={"positions": {"groups": 2, "differences": 0},
+                                                "totals": {"positions": 2, "partners": 1, "balance": "10.00"}})
+        self.assertEqual(poruka(run), "Potrazivanja: pozicija 2, partnera 1, saldo 10.00; kontrole: bez razlika.")
+        run.control_totals["positions"]["differences"] = 3
+        self.assertIn("3 RAZLIKA", poruka(run))
+
+    def test_zadatak_vraca_poruku_a_zauzeta_sinhronizacija_se_preskace(self):
+        from . import tasks
+
+        with patch.object(tasks, "sync_collections", side_effect=SyncBusy("zauzeto")):
+            self.assertTrue(tasks.sync_collections_task.apply().get().startswith("SKIP"))

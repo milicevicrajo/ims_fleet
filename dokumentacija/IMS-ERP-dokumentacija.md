@@ -766,7 +766,7 @@ nema REST API-ja, nema odvojenog frontend okvira.
 | Obračuni | Obični Python moduli (`services/`, `support/`) | Bez okvira, bez klasa gde nisu potrebne |
 | Pristup podacima | Django ORM (`default`) + sirovi SQL (`server_db`) | Dva aliasa, ista baza |
 | Baza | Microsoft SQL Server, `mssql-django` 1.5, ODBC Driver 17 | Baza `IMS_ERP` |
-| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 19 zakazanih poslova |
+| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 20 zakazanih poslova |
 | Okruženje | Windows server, NSSM servisi | Tri servisa |
 
 `djangorestframework` i `psycopg2-binary` postoje u `requirements.txt`, ali **nisu**
@@ -3264,9 +3264,11 @@ ekrana** — sporo i bez istorije. Potraživanja umesto toga:
 | Šifre posla i centri | `[PUTGEO-SERVER].[bazaims].dbo.posao` | u pozicije |
 | Nasleđene operativne evidencije | `kontakti`, `napomene`, `opomene`, `poziv_pismo`, `pozivi_tel`, `tuzbe` | Jednokratni prenos |
 
-> **[P] Sinhronizacija se pokreće ručno** — nije u rasporedu zakazanih poslova. Postoji
-> Celery zadatak `potrazivanja.tasks.sync_collections_task`, u redu **`sync`**, ali za
-> automatski rad trebalo bi uključiti **broker, radnika i Beat raspored**.
+> **[P] Sinhronizacija je zakazana noću u 03:00** (od 28.09.2026.) — Celery zadatak
+> `potrazivanja.tasks.sync_collections_task`, u redu **`sync`**; u istoriju zadataka upisuje broj
+> pozicija, partnera, saldo i da li kontrole imaju razlike. Ručno pokretanje sa ekrana
+> `/potrazivanja/sinhronizacija/` i komanda `manage.py sync_potrazivanja` ostaju. Do tada se
+> pokretala samo ručno, pa podaci nisu osveženi od 18. do 28.09.2026.
 
 #### Centar posla — tačna šifra, nikad prefiks [P]
 
@@ -3578,7 +3580,7 @@ ostaju u razredu `0.1`, a zbirna kartica ih **prikazuje zasebno**. [P]
 | 1 | Sadržaj pogleda `baza`, `ispravke`, `dodela_baketa` | DDL |
 | 2 | Da li „Nedospelo“ treba razdvojiti od „Nepoznato dospeće“ | **Q33** |
 | 3 | **Datum gašenja nasleđene Naplate** | **Q34** |
-| 4 | Da li sinhronizacija treba da bude zakazana | **[N]** |
+| 4 | Da li sinhronizacija treba da bude zakazana | ✅ **Da — noću u 03:00** (odluka 28.09.2026.) |
 | 5 | Da li pravna služba u celini prelazi u Potraživanja | **Q12** |
 | 6 | **Definicija `v_duplikati` u preuzetom DDL-u je sumnjiva** — vidi niže | **[N]** |
 | 7 | Tačno ponašanje granice „119 dana“ oko 29/30.04. i u prestupnoj godini | **[N]** |
@@ -17656,6 +17658,7 @@ chrome-for-testing/  Chrome za Selenium
  02:00  Polise osiguranja
  02:20  EUF fakture (Nabavka)
  02:45  UF stavke (Nabavka)
+ 03:00  Potraživanja — puna sinhronizacija   ← od 28.09.2026.
  03:15  Servisi vozila
  03:35  Knjiženja osiguranja DDOR
  03:50  Finansije — sve godine od 2025.
@@ -17670,7 +17673,7 @@ chrome-for-testing/  Chrome za Selenium
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 19 zakazanih poslova.** [P]
+**Ukupno 20 zakazanih poslova.** [P]
 
 ---
 
@@ -17706,7 +17709,7 @@ chrome-for-testing/  Chrome za Selenium
 | Posao | Pokreće se |
 |---|---|
 | Sinhronizacija godišnjih odmora | Ručno, sa ekrana |
-| Sinhronizacija Potraživanja | Ručno (zadatak postoji, ali nije u rasporedu) |
+| Sinhronizacija Potraživanja | Noću u 03:00 (od 28.09.2026.), a po potrebi i ručno sa ekrana |
 | Preuzimanje menica iz NBS-a | Ručno |
 | APR provera partnera | Ručno |
 | Sinhronizacija partnera iz Finansija | Ručno |

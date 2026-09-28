@@ -17,6 +17,7 @@
  02:00  Polise osiguranja
  02:20  EUF fakture (Nabavka)
  02:45  UF stavke (Nabavka)
+ 03:00  Potraživanja — puna sinhronizacija   ← od 28.09.2026.
  03:15  Servisi vozila
  03:35  Knjiženja osiguranja DDOR
  03:50  Finansije — sve godine od 2025.
@@ -31,7 +32,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 19 zakazanih poslova.** [P]
+**Ukupno 20 zakazanih poslova.** [P]
 
 ---
 
@@ -67,7 +68,7 @@
 | Posao | Pokreće se |
 |---|---|
 | Sinhronizacija godišnjih odmora | Ručno, sa ekrana |
-| Sinhronizacija Potraživanja | Ručno (zadatak postoji, ali nije u rasporedu) |
+| Sinhronizacija Potraživanja | Noću u 03:00 (od 28.09.2026.), a po potrebi i ručno sa ekrana |
 | Preuzimanje menica iz NBS-a | Ručno |
 | APR provera partnera | Ručno |
 | Sinhronizacija partnera iz Finansija | Ručno |

@@ -73,6 +73,13 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "0",
     },
     {
+        # Od 28.09.2026.; do tada samo rucno sa ekrana Potrazivanja.
+        "name": "Potrazivanja - puna sinhronizacija",
+        "task": "potrazivanja.tasks.sync_collections_task",
+        "hour": "3",
+        "minute": "0",
+    },
+    {
         "name": "Flota - sinhronizacija servisa",
         "aliases": ["Servisi"],
         "task": "fleet.tasks.fetch_service_data_task",
