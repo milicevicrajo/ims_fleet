@@ -170,6 +170,17 @@ class EkraniTests(TestCase):
         self.assertEqual(podaci["recordsTotal"], 1)
         self.assertContains(self.client.get(reverse("nabavka:fiskalni_detail", args=[racun.pk])), "Zemlja za cveće")
 
+    def test_vise_sifara_pri_ocitavanju_prva_je_glavna(self):
+        druga = OrganizationalUnit.objects.create(code="410001", name="Materijali", center="41")
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            odgovor = self.client.post(reverse("nabavka:fiskalni_scan"), {"link": LINK, "job_code": [druga.pk, self.aktivna.pk]},
+                                       HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertTrue(odgovor.json()["ok"], odgovor.content)
+        racun = FiskalniRacun.objects.get()
+        self.assertEqual(racun.job_code, druga)  # prva izabrana
+        self.assertEqual(sorted(racun.sifre.values_list("job_code__code", "vrsta")),
+                         [("410001", "osnovna"), ("430111", "dodatna")])
+
     def test_sifra_posla_je_obavezna_i_bez_dozvole_nema_pristupa(self):
         odgovor = self.client.post(reverse("nabavka:fiskalni_scan"), {"link": LINK}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
         self.assertEqual(odgovor.status_code, 400)

@@ -30,9 +30,10 @@ def _izbor_sifara(field, user, zadrzi=None):
 
 
 class FiskalniRacunForm(forms.Form):
-    job_code = forms.ModelChoiceField(queryset=OrganizationalUnit.objects.none(), label="Šifra posla",
-                                      empty_label="— izaberite šifru posla —",
-                                      widget=forms.Select(attrs={"class": "form-select", "id": "fiskalniSifra"}))
+    # Jedna ili vise sifara posla; prva izabrana je glavna, ostale dodatne.
+    job_code = forms.ModelMultipleChoiceField(queryset=OrganizationalUnit.objects.none(), label="Šifre posla",
+                                              error_messages={"required": "Izaberite bar jednu šifru posla."},
+                                              widget=forms.SelectMultiple(attrs={"class": "form-select", "id": "fiskalniSifra"}))
     link = forms.CharField(label="Link sa QR koda računa", widget=forms.Textarea(attrs={
         "class": "form-control font-monospace", "rows": 4, "id": "fiskalniLink", "autocomplete": "off",
         "spellcheck": "false", "placeholder": "Očitajte QR kod računa čitačem…"}))
@@ -42,6 +43,12 @@ class FiskalniRacunForm(forms.Form):
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         _izbor_sifara(self.fields["job_code"], user)
+
+    def sifre_redom(self):
+        """Izabrane sifre redom kojim su izabrane (prva je glavna)."""
+        izabrane = {s.pk: s for s in self.cleaned_data["job_code"]}
+        redom = [izabrane[int(pk)] for pk in self.data.getlist("job_code") if str(pk).isdigit() and int(pk) in izabrane]
+        return list(dict.fromkeys(redom))
 
 
 class ObradaRacunaForm(forms.ModelForm):
@@ -204,9 +211,10 @@ class FiskalniRacunScanView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
         if not form.is_valid():
             greska = " ".join(e for greske in form.errors.values() for e in greske)
             return self._odgovor(request, ajax, ok=False, poruka=greska or "Proverite unos.")
+        sifre = form.sifre_redom()
         try:
-            racun, upozorenja = fiskalni.upisi(form.cleaned_data["link"], form.cleaned_data["job_code"], request.user,
-                                               form.cleaned_data["napomena"])
+            racun, upozorenja = fiskalni.upisi(form.cleaned_data["link"], sifre[0], request.user,
+                                               form.cleaned_data["napomena"], dodatne=sifre[1:])
         except fiskalni.GreskaOcitavanja as exc:
             return self._odgovor(request, ajax, ok=False, poruka=str(exc))
         return self._odgovor(request, ajax, ok=True, racun=racun, upozorenja=upozorenja)

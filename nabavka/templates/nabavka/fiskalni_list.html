@@ -122,7 +122,7 @@ otvara se detalj računa.
         <div class="mb-3">
           <label class="form-label" for="fiskalniSifra">{{ form.job_code.label }} <span class="text-danger">*</span></label>
           {{ form.job_code }}
-          <div class="form-text">Nude se samo aktivne šifre posla. Izabrana šifra ostaje zapamćena za sledeći račun.</div>
+          <div class="form-text">Može više šifara posla — <strong>prva izabrana je glavna</strong>, ostale su dodatne. Nude se samo aktivne šifre; izbor ostaje zapamćen za sledeći račun.</div>
         </div>
         <div class="mb-2">
           <label class="form-label" for="fiskalniLink">{{ form.link.label }}</label>
@@ -241,15 +241,31 @@ document.addEventListener('DOMContentLoaded', function () {
   var dugme = document.getElementById('fiskalniObradi');
   var KLJUC = 'nabavka.fiskalni.sifra';
 
+  // Redosled izbora sifara: prva izabrana je glavna (padajuci spisak sam cuva redosled opcija, ne izbora).
+  var redosled = [];
+  function izabrane() { return Array.prototype.filter.call(sifra.options, function (o) { return o.selected; }).map(function (o) { return o.value; }); }
+  function uskladiRedosled() {
+    var sada = izabrane();
+    redosled = redosled.filter(function (v) { return sada.indexOf(v) >= 0; });
+    sada.forEach(function (v) { if (redosled.indexOf(v) < 0) { redosled.push(v); } });
+  }
   try {
-    var zapamcena = window.localStorage.getItem(KLJUC);
-    if (zapamcena && sifra.querySelector('option[value="' + zapamcena + '"]')) { sifra.value = zapamcena; }
+    var zapamcene = JSON.parse(window.localStorage.getItem(KLJUC) || '[]');
+    if (!Array.isArray(zapamcene)) { zapamcene = [String(zapamcene)]; }
+    zapamcene.forEach(function (v) {
+      var o = sifra.querySelector('option[value="' + v + '"]');
+      if (o) { o.selected = true; redosled.push(String(v)); }
+    });
   } catch (e) {}
   if (window.jQuery && jQuery.fn.select2) {
-    jQuery(sifra).select2({ dropdownParent: jQuery(modal), width: '100%', theme: 'bootstrap-5' })
+    jQuery(sifra).select2({ dropdownParent: jQuery(modal), width: '100%', theme: 'bootstrap-5',
+                            placeholder: 'Izaberite jednu ili više šifara posla' })
+      .on('select2:select select2:unselect', uskladiRedosled)
       .on('select2:close', function () { link.focus(); });
+  } else {
+    sifra.addEventListener('change', uskladiRedosled);
   }
-  modal.addEventListener('shown.bs.modal', function () { (sifra.value ? link : sifra).focus(); });
+  modal.addEventListener('shown.bs.modal', function () { (redosled.length ? link : sifra).focus(); });
 
   // Citac zavrsava Enterom: u polju za link Enter salje obradu umesto novog reda.
   link.addEventListener('keydown', function (e) {
@@ -258,16 +274,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
   forma.addEventListener('submit', function (e) {
     e.preventDefault();
-    if (!sifra.value) {
-      rezultat.innerHTML = '<div class="fiskalni-rezultat greska">Izaberite šifru posla, pa pritisnite „Obradi”. Očitani link je sačuvan u polju.</div>';
+    uskladiRedosled();
+    if (!redosled.length) {
+      rezultat.innerHTML = '<div class="fiskalni-rezultat greska">Izaberite bar jednu šifru posla, pa pritisnite „Obradi”. Očitani link je sačuvan u polju.</div>';
       if (window.jQuery && jQuery.fn.select2) { jQuery(sifra).select2('open'); } else { sifra.focus(); }
       return;
     }
     if (!link.value.trim()) { link.focus(); return; }
-    try { window.localStorage.setItem(KLJUC, sifra.value); } catch (e2) {}
+    try { window.localStorage.setItem(KLJUC, JSON.stringify(redosled)); } catch (e2) {}
     dugme.disabled = true;
     rezultat.innerHTML = '<div class="fiskalni-rezultat" style="background:#eef1f6">Obrada računa…</div>';
-    fetch(forma.action, { method: 'POST', body: new FormData(forma), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    var podaci = new FormData(forma);
+    podaci.delete('job_code');
+    redosled.forEach(function (v) { podaci.append('job_code', v); });  // redom izbora — prva je glavna
+    fetch(forma.action, { method: 'POST', body: podaci, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d.ok) {

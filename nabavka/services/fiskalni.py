@@ -250,9 +250,12 @@ def preuzmi(racun):
     return True
 
 
-def upisi(tekst, job_code, korisnik, napomena=""):
-    """Novi racun iz ocitanog linka. Vraca (racun, upozorenja). Isti racun se ne upisuje dva puta."""
-    from nabavka.models import FiskalniRacun
+def upisi(tekst, job_code, korisnik, napomena="", dodatne=()):
+    """Novi racun iz ocitanog linka. Vraca (racun, upozorenja). Isti racun se ne upisuje dva puta.
+
+    `job_code` je glavna sifra posla, `dodatne` ostale sifre na koje se racun vezuje.
+    """
+    from nabavka.models import FiskalniRacun, FiskalniRacunSifra
 
     zaglavlje = ocitaj_link(tekst)
     postojeci = FiskalniRacun.objects.filter(broj_racuna=zaglavlje.broj_racuna).first()
@@ -266,6 +269,9 @@ def upisi(tekst, job_code, korisnik, napomena=""):
         id_kupca=zaglavlje.id_kupca, pib_kupca=zaglavlje.pib_kupca, na_ims=zaglavlje.pib_kupca == pib_ims,
         job_code=job_code, napomena=napomena, created_by=korisnik)
     racun.uskladi_glavnu_sifru(korisnik)
+    for sifra in dodatne:
+        if sifra.pk != job_code.pk:
+            FiskalniRacunSifra.objects.get_or_create(racun=racun, job_code=sifra, defaults={"created_by": korisnik})
     preuzmi(racun)
     return racun, upozorenja(racun)
 
