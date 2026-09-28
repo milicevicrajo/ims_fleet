@@ -505,7 +505,8 @@ def get_daily_work_hours(
                     END
                 ) AS total_hours
             FROM INFORMATIKA23.ID.dbo.c_parovi_radnika_detalji AS c
-            INNER JOIN SERFIN.bazaldims.dbo.radnik AS r
+            -- Kadrovska baza je 28.09.2026. premestena sa SERFIN na PUTGEO-SERVER (isti bazaldims).
+            INNER JOIN [PUTGEO-SERVER].[bazaldims].dbo.radnik AS r
                 ON c.Radnik = r.rasif
             WHERE c.Vreme_Od >= @date_from
               AND c.Vreme_Od < @date_to

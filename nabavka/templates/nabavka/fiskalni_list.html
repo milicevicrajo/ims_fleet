@@ -50,28 +50,30 @@ otvara se detalj računa.
   <div class="card-body">
     <form method="get" class="invoice-filter">
       <div class="row g-2 align-items-end">
-        <div class="col-12 col-md-5">
-          <label class="form-label mb-1" for="id_q">Pretraga (broj računa, prodavac, PIB, šifra posla, artikal)</label>
-          <input id="id_q" class="form-control" type="text" name="q" value="{{ q }}">
+        <div class="col-12 col-xl-5">
+          <label class="form-label mb-1" for="id_q">Pretraga</label>
+          <input id="id_q" class="form-control" type="search" name="q" value="{{ q }}"
+                 placeholder="Broj računa, prodavac, PIB, šifra posla ili artikal"
+                 title="Pretraga po broju računa, prodavcu, PIB-u, šifri posla ili artiklu">
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-12 col-sm-6 col-xl-2">
           <label class="form-label mb-1" for="id_na_ims">Kupac</label>
-          <select id="id_na_ims" class="form-select" name="na_ims">
+          <select id="id_na_ims" class="form-select form-control select2-method" name="na_ims">
             <option value="">Svi</option>
             <option value="1" {% if na_ims == "1" %}selected{% endif %}>Izdat na IMS</option>
             <option value="0" {% if na_ims == "0" %}selected{% endif %}>Nije na IMS</option>
           </select>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-12 col-sm-6 col-xl-2">
           <label class="form-label mb-1" for="id_status">Status</label>
-          <select id="id_status" class="form-select" name="status">
+          <select id="id_status" class="form-select form-control select2-method" name="status">
             <option value="">Svi</option>
             {% for kljuc, naziv in statusi %}<option value="{{ kljuc }}" {% if status == kljuc %}selected{% endif %}>{{ naziv }}</option>{% endfor %}
           </select>
         </div>
-        <div class="col-12 col-md-3 d-flex gap-2 justify-content-end">
-          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretraži</button>
-          <a class="btn btn-outline-secondary" href="{% url 'nabavka:fiskalni_list' %}">Reset</a>
+        <div class="col-12 col-xl-3 d-flex flex-wrap gap-2 justify-content-end">
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify" aria-hidden="true"></i> Pretraži</button>
+          <a class="btn btn-outline-secondary" href="{% url 'nabavka:fiskalni_list' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
         </div>
       </div>
     </form>

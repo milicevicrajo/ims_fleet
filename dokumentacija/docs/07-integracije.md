@@ -11,7 +11,7 @@ IMS ERP razmenjuje podatke sa **devet spoljnih sistema**, na **pet različitih n
 
 | Način | Sistemi | Rizik |
 |---|---|---|
-| **Povezani server (SQL)** | `PUTGEO-SERVER` (dve baze), `INFORMATIKA23`, `SERFIN` | Nedostupnost servera zaustavlja modul |
+| **Povezani server (SQL)** | `PUTGEO-SERVER` (dve baze; od 28.09.2026. i kadrovska, ranije `SERFIN`), `INFORMATIKA23` | Nedostupnost servera zaustavlja modul |
 | **Automatsko preuzimanje sa portala (Selenium)** | NIS, OMV | **Promena izgleda stranice zaustavlja preuzimanje** |
 | **Čitanje web stranice (HTTP + HTML)** | Registar menica NBS | Isti rizik |
 | **Programski interfejs (HTTP + JSON)** | APR OpenAPI | Najstabilnije |
@@ -32,7 +32,7 @@ IMS ERP razmenjuje podatke sa **devet spoljnih sistema**, na **pet različitih n
  │  PUTGEO-SERVER.bazaims ────┐                                │
  │  PUTGEO-SERVER.bazaldims ──┼── SQL (povezani server)        │
  │  INFORMATIKA23.ID ─────────┤                                │
- │  SERFIN.bazaldims ─────────┘                                │
+ │  (SERFIN — premešten na PUTGEO-SERVER.bazaldims 28.09.2026.)│
  └─────────────────────────────────────────────────────────────┘
                               │
  ┌── IZLAZ ─────────────────────────────────────────────────────┐
@@ -71,11 +71,18 @@ IMS ERP razmenjuje podatke sa **devet spoljnih sistema**, na **pet različitih n
 
 Čita se **pri svakom otvaranju radne liste**. [P]
 
-### 7.2.3. `SERFIN.bazaldims` — kadrovska
+### 7.2.3. Kadrovska — `PUTGEO-SERVER.bazaldims` (ranije `SERFIN`)
 
 | Objekat | Sadržaj |
 |---|---|
 | `radnik` | OJ i ime, uz uparena trajanja |
+
+> **[P] 28.09.2026.:** kadrovska baza je premeštena sa povezanog servera `SERFIN` na
+> `PUTGEO-SERVER` (ista baza `bazaldims`). Od 24.09. sinhronizacija zaposlenih (01:10) pada jer
+> `dbo.hr_employee` čita `SERFIN`. Kod aplikacije (`hr/services/attendance.py`) je prebačen; pet
+> `dbo` objekata prebacuje skript `dokumentacija/sql/2026-09-28-serfin-na-putgeo-server.sql`, koji
+> pokreće administrator baze. U `hr_employee` spoj sa `Sistemat` dobija i `sif_pred` — na novoj
+> lokaciji sistematizacija vodi dva preduzeća, pa bi svaki zaposleni bio dvaput (1.682 umesto 841).
 
 ### 7.2.4. Šta se dešava kada server nije dostupan [P]
 

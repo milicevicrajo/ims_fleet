@@ -893,7 +893,7 @@ Sistem **ne čita sve iz lokalne baze**. Ključni podaci dolaze sa udaljenih ser
 | `PUTGEO-SERVER` | `bazaims` | `nalog_z`, `posao`, `konto`, `ob_jedin`, `partner` | `finansije/services/source.py`, `potrazivanja/services/source.py` |
 | `PUTGEO-SERVER` | `bazaldims` | `Zarada`, `PomLD`, `Radnik`, `element` | `finansije/services/job_people.py`, `cash_flow.py` |
 | `INFORMATIKA23` | `ID` | `Radnici`, `C_Prolasci_Radnika`, `C_Tasteri`, `c_parovi_radnika_detalji` | `hr/services/attendance.py` |
-| `SERFIN` | `bazaldims` | `radnik` | `hr/services/attendance.py` |
+| ~~`SERFIN`~~ | `bazaldims` | — | **Premešteno 28.09.2026. na `PUTGEO-SERVER.bazaldims`** (`radnik` za radne sate: `hr/services/attendance.py`). Pet `dbo` objekata (`hr_employee`, `hr_ugovori`, `hr_radni_sati_dan`, `fn_hr_radni_sati_dan`, `sp_bonusi_PR`) prebacuje skript `dokumentacija/sql/2026-09-28-serfin-na-putgeo-server.sql` (pokreće administrator baze) |
 
 **Posledice [Z]:**
 
@@ -1212,7 +1212,7 @@ Raspored po modulima:
                              ┌───────────▼───────────┐
                              │  PUTGEO-SERVER        │ knjigovodstvo, zarade
                              │  INFORMATIKA23        │ kontrola pristupa
-                             │  SERFIN               │ kadrovska
+                             │  (SERFIN → PUTGEO)    │ kadrovska, od 28.09.2026.
                              └───────────────────────┘
 ```
 
@@ -5190,7 +5190,7 @@ Deo `dbo.*` pogleda u `IMS_ERP` interno čita udaljene servere, a neki moduli ih
 | `PUTGEO-SERVER` | `bazaims` | `nalog_z`, `posao`, `konto`, `ob_jedin`, `partner` | `finansije/services/source.py`, `potrazivanja/services/source.py` |
 | `PUTGEO-SERVER` | `bazaldims` | `Zarada`, `PomLD`, `Radnik`, `element` | `finansije/services/job_people.py`, `cash_flow.py` |
 | `INFORMATIKA23` | `ID` | `Radnici`, `C_Prolasci_Radnika`, `C_Tasteri`, `c_parovi_radnika_detalji` | `hr/services/attendance.py` |
-| `SERFIN` | `bazaldims` | `radnik` | `hr/services/attendance.py` |
+| ~~`SERFIN`~~ | `bazaldims` | — | **Premešteno 28.09.2026. na `PUTGEO-SERVER.bazaldims`** (`radnik` za radne sate: `hr/services/attendance.py`). Pet `dbo` objekata (`hr_employee`, `hr_ugovori`, `hr_radni_sati_dan`, `fn_hr_radni_sati_dan`, `sp_bonusi_PR`) prebacuje skript `dokumentacija/sql/2026-09-28-serfin-na-putgeo-server.sql` (pokreće administrator baze) |
 
 ---
 
@@ -17383,7 +17383,7 @@ IMS ERP razmenjuje podatke sa **devet spoljnih sistema**, na **pet različitih n
 
 | Način | Sistemi | Rizik |
 |---|---|---|
-| **Povezani server (SQL)** | `PUTGEO-SERVER` (dve baze), `INFORMATIKA23`, `SERFIN` | Nedostupnost servera zaustavlja modul |
+| **Povezani server (SQL)** | `PUTGEO-SERVER` (dve baze; od 28.09.2026. i kadrovska, ranije `SERFIN`), `INFORMATIKA23` | Nedostupnost servera zaustavlja modul |
 | **Automatsko preuzimanje sa portala (Selenium)** | NIS, OMV | **Promena izgleda stranice zaustavlja preuzimanje** |
 | **Čitanje web stranice (HTTP + HTML)** | Registar menica NBS | Isti rizik |
 | **Programski interfejs (HTTP + JSON)** | APR OpenAPI | Najstabilnije |
@@ -17404,7 +17404,7 @@ IMS ERP razmenjuje podatke sa **devet spoljnih sistema**, na **pet različitih n
  │  PUTGEO-SERVER.bazaims ────┐                                │
  │  PUTGEO-SERVER.bazaldims ──┼── SQL (povezani server)        │
  │  INFORMATIKA23.ID ─────────┤                                │
- │  SERFIN.bazaldims ─────────┘                                │
+ │  (SERFIN — premešten na PUTGEO-SERVER.bazaldims 28.09.2026.)│
  └─────────────────────────────────────────────────────────────┘
                               │
  ┌── IZLAZ ─────────────────────────────────────────────────────┐
@@ -17443,11 +17443,18 @@ IMS ERP razmenjuje podatke sa **devet spoljnih sistema**, na **pet različitih n
 
 Čita se **pri svakom otvaranju radne liste**. [P]
 
-#### 7.2.3. `SERFIN.bazaldims` — kadrovska
+#### 7.2.3. Kadrovska — `PUTGEO-SERVER.bazaldims` (ranije `SERFIN`)
 
 | Objekat | Sadržaj |
 |---|---|
 | `radnik` | OJ i ime, uz uparena trajanja |
+
+> **[P] 28.09.2026.:** kadrovska baza je premeštena sa povezanog servera `SERFIN` na
+> `PUTGEO-SERVER` (ista baza `bazaldims`). Od 24.09. sinhronizacija zaposlenih (01:10) pada jer
+> `dbo.hr_employee` čita `SERFIN`. Kod aplikacije (`hr/services/attendance.py`) je prebačen; pet
+> `dbo` objekata prebacuje skript `dokumentacija/sql/2026-09-28-serfin-na-putgeo-server.sql`, koji
+> pokreće administrator baze. U `hr_employee` spoj sa `Sistemat` dobija i `sif_pred` — na novoj
+> lokaciji sistematizacija vodi dva preduzeća, pa bi svaki zaposleni bio dvaput (1.682 umesto 841).
 
 #### 7.2.4. Šta se dešava kada server nije dostupan [P]
 

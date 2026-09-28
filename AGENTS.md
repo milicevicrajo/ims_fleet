@@ -78,7 +78,7 @@ Ovo je najvažnija stvar za razumevanje sistema. **Podaci nisu svi lokalni.**
 │  PUTGEO-SERVER.bazaims     nalog_z, posao, konto, partner      │  ← knjigovodstvo
 │  PUTGEO-SERVER.bazaldims   Zarada, PomLD, Radnik, element      │  ← zarade
 │  INFORMATIKA23.ID          Radnici, C_Prolasci_Radnika         │  ← kontrola pristupa
-│  SERFIN.bazaldims          radnik                              │  ← kadrovska
+│  (SERFIN → PUTGEO-SERVER.bazaldims od 28.09.2026.)             │  ← kadrovska
 └────────────────────────────────────────────────────────────────┘
 ```
 

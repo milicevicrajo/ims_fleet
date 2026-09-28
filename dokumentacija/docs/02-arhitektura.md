@@ -143,7 +143,7 @@ Sistem **ne čita sve iz lokalne baze**. Ključni podaci dolaze sa udaljenih ser
 | `PUTGEO-SERVER` | `bazaims` | `nalog_z`, `posao`, `konto`, `ob_jedin`, `partner` | `finansije/services/source.py`, `potrazivanja/services/source.py` |
 | `PUTGEO-SERVER` | `bazaldims` | `Zarada`, `PomLD`, `Radnik`, `element` | `finansije/services/job_people.py`, `cash_flow.py` |
 | `INFORMATIKA23` | `ID` | `Radnici`, `C_Prolasci_Radnika`, `C_Tasteri`, `c_parovi_radnika_detalji` | `hr/services/attendance.py` |
-| `SERFIN` | `bazaldims` | `radnik` | `hr/services/attendance.py` |
+| ~~`SERFIN`~~ | `bazaldims` | — | **Premešteno 28.09.2026. na `PUTGEO-SERVER.bazaldims`** (`radnik` za radne sate: `hr/services/attendance.py`). Pet `dbo` objekata (`hr_employee`, `hr_ugovori`, `hr_radni_sati_dan`, `fn_hr_radni_sati_dan`, `sp_bonusi_PR`) prebacuje skript `dokumentacija/sql/2026-09-28-serfin-na-putgeo-server.sql` (pokreće administrator baze) |
 
 **Posledice [Z]:**
 
@@ -462,7 +462,7 @@ Raspored po modulima:
                              ┌───────────▼───────────┐
                              │  PUTGEO-SERVER        │ knjigovodstvo, zarade
                              │  INFORMATIKA23        │ kontrola pristupa
-                             │  SERFIN               │ kadrovska
+                             │  (SERFIN → PUTGEO)    │ kadrovska, od 28.09.2026.
                              └───────────────────────┘
 ```
 
