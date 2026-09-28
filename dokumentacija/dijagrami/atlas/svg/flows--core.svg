@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="189pt" height="99pt" viewBox="0.00 0.00 189.00 99.00" role="img" aria-label="Tokovi rada · Administracija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-core--pristup" class="node" data-key="core/pristup" data-route="flow/core/pristup">
+<title>n0</title>
+<g id="a_node-core--pristup"><a xlink:href="../../index.html#flow/core/pristup" xlink:title="Tokovi rada · Administracija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M134.1,-56.28C134.1,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 134.1,0 134.1,0 140.1,0 146.1,-6 146.1,-12 146.1,-12 146.1,-44.28 146.1,-44.28 146.1,-50.28 140.1,-56.28 134.1,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="73.05" y="-34.34" font-family="Segoe UI" font-size="14.00">Provera pristupa ruti</text>
+<text xml:space="preserve" text-anchor="middle" x="73.05" y="-14.84" font-family="Segoe UI" font-size="14.00">Administracija</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

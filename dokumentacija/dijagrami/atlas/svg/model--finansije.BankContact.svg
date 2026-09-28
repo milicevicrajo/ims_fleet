@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="207pt" height="364pt" viewBox="0.00 0.00 207.00 364.00" role="img" aria-label="BankContact · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 342.38)">
+<title>G</title>
+
+<g id="node-finansije.BankContact" class="node" data-key="finansije.BankContact" data-route="model/finansije.BankContact">
+<title>n0</title>
+<g id="a_node-finansije.BankContact"><a xlink:href="../../index.html#model/finansije.BankContact" xlink:title="finansije.BankContact" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M151.85,-320.78C151.85,-320.78 12,-320.78 12,-320.78 6,-320.78 0,-314.78 0,-308.78 0,-308.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 151.85,0 151.85,0 157.85,0 163.85,-6 163.85,-12 163.85,-12 163.85,-308.78 163.85,-308.78 163.85,-314.78 157.85,-320.78 151.85,-320.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-297.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-272.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankContact</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">bank_code : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">segment : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">position : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">email : Email</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">phone : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">shared_emails : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">note : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

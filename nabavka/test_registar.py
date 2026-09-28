@@ -80,3 +80,18 @@ class NabavkaNaRegistruTests(ImportTestCase):
         self.assertEqual(self.client.get(reverse("nabavka:case_print", args=[self.predmet_41.pk])).status_code, 404)
         podaci = self.client.get(reverse("nabavka:case_data"), {"draw": 1, "start": 0, "length": 10}).json()
         self.assertEqual((podaci["recordsTotal"], podaci["recordsFiltered"]), (1, 1))
+
+    def test_fiskalni_racuni_po_obuhvatu_i_izbor_sifara(self):
+        from datetime import datetime, timezone as dt_timezone
+
+        from nabavka.access import fiskalni_racuni, sifre_za_izbor
+        from nabavka.models import FiskalniRacun
+
+        vreme = datetime(2026, 9, 18, tzinfo=dt_timezone.utc)
+        r41 = FiskalniRacun.objects.create(link="x", broj_racuna="A-A-1", iznos="10", pfr_vreme=vreme,
+                                           job_code=self.predmet_41.job_code)
+        FiskalniRacun.objects.create(link="x", broj_racuna="A-A-2", iznos="10", pfr_vreme=vreme, job_code=self.predmet_43.job_code)
+        self.assertIsNotNone(r41.org_node_id)  # veza sa registrom pri cuvanju
+        self.dodeli(cvor_id=centar("41"))
+        self.assertEqual(list(fiskalni_racuni(FiskalniRacun.objects.all(), self.svez())), [r41])
+        self.assertEqual(set(sifre_za_izbor(OrganizationalUnit.objects.all(), self.svez())), {self.predmet_41.job_code})

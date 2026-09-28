@@ -24,6 +24,7 @@
  05:10  Gorivo OMV putnička            ← Selenium, do 4 h
  06:10  Gorivo OMV teretna             ← Selenium, do 4 h
  07:10  Roba (Nabavka)
+ 07:30  Fiskalni računi koji čekaju proveru (Nabavka)   ← od 28.09.2026.
  ────────────────── radni dan ──────────────────
  10:00  Osvežavanje lokalnog nalog_z
  11:00  Osvežavanje lokalnog nalog_z
@@ -31,7 +32,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 19 zakazanih poslova.** [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 20 zakazanih poslova.** [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -54,6 +55,7 @@
 | **05:10** | **Gorivo — OMV putnička** | `fleet.tasks.run_omv_putnicka_command` | **`selenium`** | **4 h** |
 | **06:10** | **Gorivo — OMV teretna** | `fleet.tasks.run_omv_teretna_command` | **`selenium`** | **4 h** |
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
+| 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | **10:00 i 11:00** | **Finansije — osvežavanje `nalog_z`** | `finansije.tasks.refresh_nalog_z_task` | `sync` | SQL lock |
 | 12:30 | Putni nalozi — isplaćeno | `fleet.tasks.sync_putni_nalozi_isplaceno_task` | `sync` | 90 min |
 | svaki sat u :20 | Finansije — tekuća godina | `finansije.tasks.sync_current_year` | `sync` | SQL lock |

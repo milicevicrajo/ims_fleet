@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="470pt" height="387pt" viewBox="0.00 0.00 470.00 387.00" role="img" aria-label="LegacyImportMap · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 365.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.CollectionSyncRun" class="node" data-key="potrazivanja.CollectionSyncRun" data-route="model/potrazivanja.CollectionSyncRun">
+<title>n0</title>
+<g id="a_node-potrazivanja.CollectionSyncRun"><a xlink:href="../../index.html#model/potrazivanja.CollectionSyncRun" xlink:title="potrazivanja.CollectionSyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M414.95,-217.28C414.95,-217.28 281.85,-217.28 281.85,-217.28 275.85,-217.28 269.85,-211.28 269.85,-205.28 269.85,-205.28 269.85,-138.5 269.85,-138.5 269.85,-132.5 275.85,-126.5 281.85,-126.5 281.85,-126.5 414.95,-126.5 414.95,-126.5 420.95,-126.5 426.95,-132.5 426.95,-138.5 426.95,-138.5 426.95,-205.28 426.95,-205.28 426.95,-211.28 420.95,-217.28 414.95,-217.28" />
+<text xml:space="preserve" text-anchor="start" x="284.65" y="-194.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="284.65" y="-169.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionSyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="284.65" y="-143.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.LegacyImportMap" class="node" data-key="potrazivanja.LegacyImportMap" data-route="model/potrazivanja.LegacyImportMap">
+<title>n1</title>
+<g id="a_node-potrazivanja.LegacyImportMap"><a xlink:href="../../index.html#model/potrazivanja.LegacyImportMap" xlink:title="potrazivanja.LegacyImportMap" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M160.85,-343.78C160.85,-343.78 12,-343.78 12,-343.78 6,-343.78 0,-337.78 0,-331.78 0,-331.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 160.85,0 160.85,0 166.85,0 172.85,-6 172.85,-12 172.85,-12 172.85,-331.78 172.85,-331.78 172.85,-337.78 166.85,-343.78 160.85,-343.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-320.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-295.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">LegacyImportMap</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">source_system : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">source_table : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">source_key : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">target_model : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">target_pk : PositiveBigInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">source_hash : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">raw_data : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">first_run : CollectionSyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">last_run : CollectionSyncRun</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.LegacyImportMap" data-to="potrazivanja.CollectionSyncRun">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.LegacyImportMap.first_run → potrazivanja.CollectionSyncRun | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M173.27,-171.89C201.54,-171.89 232.97,-171.89 261.26,-171.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="261.03,-174.34 268.03,-171.89 261.03,-169.44 261.03,-174.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="221.35" y="-176.44" font-family="Segoe UI" font-size="11.00">first_run</text>
+<text xml:space="preserve" text-anchor="middle" x="255.94" y="-175.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="186.87" y="-162.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja.LegacyImportMap" data-to="potrazivanja.CollectionSyncRun">
+<title>n1-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="potrazivanja.LegacyImportMap.last_run → potrazivanja.CollectionSyncRun | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M173.31,-153.9C195.3,-151.17 218.92,-149.85 240.85,-151.89 247.52,-152.51 254.39,-153.34 261.28,-154.32" />
+<polygon fill="#7297ab" stroke="#7297ab" points="260.59,-156.69 267.87,-155.31 261.31,-151.85 260.59,-156.69" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="221.35" y="-156.44" font-family="Segoe UI" font-size="11.00">last_run</text>
+<text xml:space="preserve" text-anchor="middle" x="254.99" y="-156.84" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="186.08" y="-143.08" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

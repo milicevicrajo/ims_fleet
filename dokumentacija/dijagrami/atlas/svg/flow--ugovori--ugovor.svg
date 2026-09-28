@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="345pt" height="729pt" viewBox="0.00 0.00 345.00 729.00" role="img" aria-label="Evidentiranje ugovora i povezanih dokumenata">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 707.46)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="150.68" cy="-658.44" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="118.76" y="-672.56" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/ugovori.Partner">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/ugovori.Partner" xlink:title="ugovori.Partner" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M289.35,-592.52C289.35,-592.52 12,-592.52 12,-592.52 6,-592.52 0,-586.52 0,-580.52 0,-580.52 0,-567.74 0,-567.74 0,-561.74 6,-555.74 12,-555.74 12,-555.74 289.35,-555.74 289.35,-555.74 295.35,-555.74 301.35,-561.74 301.35,-567.74 301.35,-567.74 301.35,-580.52 301.35,-580.52 301.35,-586.52 295.35,-592.52 289.35,-592.52" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-570.58" font-family="Segoe UI" font-size="14.00">Izbor / unos partnera; APR provera po potrebi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-650.14C150.68,-639.28 150.68,-618.34 150.68,-601.34" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-601.4 150.68,-594.4 148.23,-601.4 153.13,-601.4" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/ugovori.Contract">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/ugovori.Contract" xlink:title="ugovori.Contract" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M240.23,-497.74C240.23,-497.74 61.12,-497.74 61.12,-497.74 55.12,-497.74 49.13,-491.74 49.13,-485.74 49.13,-485.74 49.13,-472.96 49.13,-472.96 49.13,-466.96 55.13,-460.96 61.13,-460.96 61.13,-460.96 240.23,-460.96 240.23,-460.96 246.23,-460.96 252.23,-466.96 252.23,-472.96 252.23,-472.96 252.23,-485.74 252.23,-485.74 252.23,-491.74 246.23,-497.74 240.23,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-475.8" font-family="Segoe UI" font-size="14.00">Unos ugovora, vrste i perioda</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-555.24C150.68,-541.38 150.68,-521.97 150.68,-506.39" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-506.7 150.68,-499.7 148.23,-506.7 153.13,-506.7" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/ugovori.ContractParty">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/ugovori.ContractParty" xlink:title="ugovori.ContractParty" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M240.23,-402.96C240.23,-402.96 61.12,-402.96 61.12,-402.96 55.12,-402.96 49.13,-396.96 49.13,-390.96 49.13,-390.96 49.13,-378.18 49.13,-378.18 49.13,-372.18 55.13,-366.18 61.13,-366.18 61.13,-366.18 240.23,-366.18 240.23,-366.18 246.23,-366.18 252.23,-372.18 252.23,-378.18 252.23,-378.18 252.23,-390.96 252.23,-390.96 252.23,-396.96 246.23,-402.96 240.23,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-381.02" font-family="Segoe UI" font-size="14.00">Povezivanje ugovornih strana</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-460.46C150.68,-446.6 150.68,-427.19 150.68,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-411.92 150.68,-404.92 148.23,-411.92 153.13,-411.92" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/ugovori.ContractDocument">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/ugovori.ContractDocument" xlink:title="ugovori.ContractDocument" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M250.35,-308.18C250.35,-308.18 51,-308.18 51,-308.18 45,-308.18 39,-302.18 39,-296.18 39,-296.18 39,-283.4 39,-283.4 39,-277.4 45,-271.4 51,-271.4 51,-271.4 250.35,-271.4 250.35,-271.4 256.35,-271.4 262.35,-277.4 262.35,-283.4 262.35,-283.4 262.35,-296.18 262.35,-296.18 262.35,-302.18 256.35,-308.18 250.35,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-286.24" font-family="Segoe UI" font-size="14.00">Dodavanje priloga i dokumenata</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-365.68C150.68,-351.82 150.68,-332.41 150.68,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-317.14 150.68,-310.14 148.23,-317.14 153.13,-317.14" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/ugovori.ContractMenicaLink">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/ugovori.ContractMenicaLink" xlink:title="ugovori.ContractMenicaLink" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M278.85,-213.4C278.85,-213.4 22.5,-213.4 22.5,-213.4 16.5,-213.4 10.5,-207.4 10.5,-201.4 10.5,-201.4 10.5,-188.62 10.5,-188.62 10.5,-182.62 16.5,-176.62 22.5,-176.62 22.5,-176.62 278.85,-176.62 278.85,-176.62 284.85,-176.62 290.85,-182.62 290.85,-188.62 290.85,-188.62 290.85,-201.4 290.85,-201.4 290.85,-207.4 284.85,-213.4 278.85,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-191.46" font-family="Segoe UI" font-size="14.00">Povezivanje menica / garancija po potrebi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-270.9C150.68,-257.04 150.68,-237.63 150.68,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-222.36 150.68,-215.36 148.23,-222.36 153.13,-222.36" />
+</g>
+
+<g id="node-5" class="node" data-key="5" data-route="model/ugovori.Contract">
+<title>n6</title>
+<g id="a_node-5"><a xlink:href="../../index.html#model/ugovori.Contract" xlink:title="ugovori.Contract" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M266.48,-118.62C266.48,-118.62 34.88,-118.62 34.88,-118.62 28.88,-118.62 22.88,-112.62 22.88,-106.62 22.88,-106.62 22.88,-93.84 22.88,-93.84 22.88,-87.84 28.88,-81.84 34.88,-81.84 34.88,-81.84 266.48,-81.84 266.48,-81.84 272.48,-81.84 278.48,-87.84 278.48,-93.84 278.48,-93.84 278.48,-106.62 278.48,-106.62 278.48,-112.62 272.48,-118.62 266.48,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-96.68" font-family="Segoe UI" font-size="14.00">Pregled ugovora iz povezanih modula</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="5">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-176.12C150.68,-162.26 150.68,-142.85 150.68,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-127.58 150.68,-120.58 148.23,-127.58 153.13,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n7</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="150.68" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#8a6933" cx="150.68" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="127.13" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-6" class="edge" data-from="5" data-to="end">
+<title>n6-&gt;n7</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-81.35C150.68,-67.12 150.68,-47.23 150.68,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-32.71 150.68,-25.71 148.23,-32.71 153.13,-32.71" />
+</g>
+</g>
+</svg>

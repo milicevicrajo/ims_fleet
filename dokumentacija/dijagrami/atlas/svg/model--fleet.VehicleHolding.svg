@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="524pt" height="362pt" viewBox="0.00 0.00 524.00 362.00" role="img" aria-label="VehicleHolding · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 340.38)">
+<title>G</title>
+
+<g id="node-fleet.Lease" class="node" data-key="fleet.Lease" data-route="model/fleet.Lease">
+<title>n0</title>
+<g id="a_node-fleet.Lease"><a xlink:href="../../index.html#model/fleet.Lease" xlink:title="fleet.Lease" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M468.95,-318.78C468.95,-318.78 335.85,-318.78 335.85,-318.78 329.85,-318.78 323.85,-312.78 323.85,-306.78 323.85,-306.78 323.85,-240 323.85,-240 323.85,-234 329.85,-228 335.85,-228 335.85,-228 468.95,-228 468.95,-228 474.95,-228 480.95,-234 480.95,-240 480.95,-240 480.95,-306.78 480.95,-306.78 480.95,-312.78 474.95,-318.78 468.95,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Lease</text>
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">13 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.Vehicle" class="node" data-key="fleet.Vehicle" data-route="model/fleet.Vehicle">
+<title>n1</title>
+<g id="a_node-fleet.Vehicle"><a xlink:href="../../index.html#model/fleet.Vehicle" xlink:title="fleet.Vehicle" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M468.95,-204.78C468.95,-204.78 335.85,-204.78 335.85,-204.78 329.85,-204.78 323.85,-198.78 323.85,-192.78 323.85,-192.78 323.85,-126 323.85,-126 323.85,-120 329.85,-114 335.85,-114 335.85,-114 468.95,-114 468.95,-114 474.95,-114 480.95,-120 480.95,-126 480.95,-126 480.95,-192.78 480.95,-192.78 480.95,-198.78 474.95,-204.78 468.95,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">28 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.VehicleHolding" class="node" data-key="fleet.VehicleHolding" data-route="model/fleet.VehicleHolding">
+<title>n2</title>
+<g id="a_node-fleet.VehicleHolding"><a xlink:href="../../index.html#model/fleet.VehicleHolding" xlink:title="fleet.VehicleHolding" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M164.6,-308.28C164.6,-308.28 12,-308.28 12,-308.28 6,-308.28 0,-302.28 0,-296.28 0,-296.28 0,-22.5 0,-22.5 0,-16.5 6,-10.5 12,-10.5 12,-10.5 164.6,-10.5 164.6,-10.5 170.6,-10.5 176.6,-16.5 176.6,-22.5 176.6,-22.5 176.6,-296.28 176.6,-296.28 176.6,-302.28 170.6,-308.28 164.6,-308.28" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-285.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-260.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleHolding</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-234.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-211.69" font-family="Segoe UI" font-size="11.00">vehicle : Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-188.69" font-family="Segoe UI" font-size="11.00">basis : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-165.69" font-family="Segoe UI" font-size="11.00">start_date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-142.69" font-family="Segoe UI" font-size="11.00">end_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-119.69" font-family="Segoe UI" font-size="11.00">lease : Lease ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-96.69" font-family="Segoe UI" font-size="11.00">financing : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-73.69" font-family="Segoe UI" font-size="11.00">financing_contract : Contract ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-50.69" font-family="Segoe UI" font-size="11.00">evidence : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-27.69" font-family="Segoe UI" font-size="11.00">note : Text</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="fleet.VehicleHolding" data-to="fleet.Lease">
+<title>n2-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="fleet.VehicleHolding.lease → fleet.Lease | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M177.07,-191.45C220.43,-207.29 272.56,-226.33 315.65,-242.07" />
+<polygon fill="#7297ab" stroke="#7297ab" points="314.75,-244.35 322.17,-244.45 316.43,-239.75 314.75,-244.35" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="250.22" y="-237.81" font-family="Segoe UI" font-size="11.00">lease</text>
+<text xml:space="preserve" text-anchor="middle" x="308.65" y="-243.31" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="192.01" y="-187.21" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.VehicleHolding" data-to="fleet.Vehicle">
+<title>n2-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="fleet.VehicleHolding.vehicle → fleet.Vehicle | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M177.07,-159.39C220.25,-159.39 272.13,-159.39 315.12,-159.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="315.08,-161.84 322.08,-159.39 315.08,-156.94 315.08,-161.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="250.22" y="-163.94" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="309.99" y="-162.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="190.66" y="-150.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-ugovori.Contract" class="node" data-key="ugovori.Contract" data-route="model/ugovori.Contract">
+<title>n3</title>
+<g id="a_node-ugovori.Contract"><a xlink:href="../../index.html#model/ugovori.Contract" xlink:title="ugovori.Contract" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M468.95,-90.78C468.95,-90.78 335.85,-90.78 335.85,-90.78 329.85,-90.78 323.85,-84.78 323.85,-78.78 323.85,-78.78 323.85,-12 323.85,-12 323.85,-6 329.85,0 335.85,0 335.85,0 468.95,0 468.95,0 474.95,0 480.95,-6 480.95,-12 480.95,-12 480.95,-78.78 480.95,-78.78 480.95,-84.78 474.95,-90.78 468.95,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Contract</text>
+<text xml:space="preserve" text-anchor="start" x="338.65" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">23 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="fleet.VehicleHolding" data-to="ugovori.Contract">
+<title>n2-&gt;n3</title>
+<g id="a_edge-2"><a xlink:title="fleet.VehicleHolding.financing_contract → ugovori.Contract | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M177.07,-127.33C220.43,-111.49 272.56,-92.45 315.65,-76.71" />
+<polygon fill="#a27631" stroke="#a27631" points="316.43,-79.03 322.17,-74.33 314.75,-74.43 316.43,-79.03" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="250.22" y="-120.5" font-family="Segoe UI" font-size="11.00">financing_contract</text>
+<text xml:space="preserve" text-anchor="middle" x="313" y="-81.48" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="187.66" y="-113.76" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

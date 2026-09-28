@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="188pt" height="318pt" viewBox="0.00 0.00 188.00 318.00" role="img" aria-label="Opomene · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 296.38)">
+<title>G</title>
+
+<g id="node-naplata.Opomene" class="node" data-key="naplata.Opomene" data-route="model/naplata.Opomene">
+<title>n0</title>
+<g id="a_node-naplata.Opomene"><a xlink:href="../../index.html#model/naplata.Opomene" xlink:title="naplata.Opomene" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M132.35,-274.78C132.35,-274.78 12,-274.78 12,-274.78 6,-274.78 0,-268.78 0,-262.78 0,-262.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 132.35,0 132.35,0 138.35,0 144.35,-6 144.35,-12 144.35,-12 144.35,-262.78 144.35,-262.78 144.35,-268.78 138.35,-274.78 132.35,-274.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-251.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-226.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Opomene</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">sif_par : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">god : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">br_opomene : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">datum : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">iznos : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">fakture : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">napomene : Char ?</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

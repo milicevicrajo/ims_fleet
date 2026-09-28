@@ -79,6 +79,7 @@ NABAVKA = (
     Veza("predmeti", "Predmeti nabavke", "ProcurementCase", "job_code", app="nabavka"),
     Veza("fakture", "Fakture — glavna šifra posla", "ProcurementInvoice", "job_code", iznos="amount", app="nabavka"),
     Veza("veze_faktura", "Veze faktura sa šiframa posla", "ProcurementInvoiceJobCodeLink", "job_code", app="nabavka"),
+    Veza("fiskalni", "Fiskalni računi", "FiskalniRacun", "job_code", iznos="iznos", app="nabavka"),
 )
 # Finansije (faza 2, treci modul): tekstualna sifra posla na knjizenju; stari centar je
 # `LedgerEntry.center` (prepisan iz `posao.blok`), po kome Finansije grupisu i ogranicavaju pristup.
@@ -391,6 +392,7 @@ def _polje_datuma(veza):
         "ProcurementCase": "created_at",
         "ProcurementInvoice": "invoice_date",
         "ProcurementInvoiceJobCodeLink": "invoice__invoice_date",
+        "FiskalniRacun": "pfr_vreme",
         "LedgerEntry": "booking_date",
         "ReceivablePosting": "booking_date",
     }.get(veza.model)

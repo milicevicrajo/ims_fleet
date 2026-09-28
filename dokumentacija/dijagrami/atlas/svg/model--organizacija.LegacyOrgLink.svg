@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="413pt" height="226pt" viewBox="0.00 0.00 413.00 226.00" role="img" aria-label="LegacyOrgLink · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 204.38)">
+<title>G</title>
+
+<g id="node-organizacija.LegacyOrgLink" class="node" data-key="organizacija.LegacyOrgLink" data-route="model/organizacija.LegacyOrgLink">
+<title>n0</title>
+<g id="a_node-organizacija.LegacyOrgLink"><a xlink:href="../../index.html#model/organizacija.LegacyOrgLink" xlink:title="organizacija.LegacyOrgLink" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M123.35,-182.78C123.35,-182.78 12,-182.78 12,-182.78 6,-182.78 0,-176.78 0,-170.78 0,-170.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 123.35,0 123.35,0 129.35,0 135.35,-6 135.35,-12 135.35,-12 135.35,-170.78 135.35,-170.78 135.35,-176.78 129.35,-182.78 123.35,-182.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-159.69" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-134.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">LegacyOrgLink</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">legacy_label : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">legacy_id : BigInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">node : OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="node-organizacija.OrgNode" class="node" data-key="organizacija.OrgNode" data-route="model/organizacija.OrgNode">
+<title>n1</title>
+<g id="a_node-organizacija.OrgNode"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M357.95,-136.78C357.95,-136.78 230.85,-136.78 230.85,-136.78 224.85,-136.78 218.85,-130.78 218.85,-124.78 218.85,-124.78 218.85,-58 218.85,-58 218.85,-52 224.85,-46 230.85,-46 230.85,-46 357.95,-46 357.95,-46 363.95,-46 369.95,-52 369.95,-58 369.95,-58 369.95,-124.78 369.95,-124.78 369.95,-130.78 363.95,-136.78 357.95,-136.78" />
+<text xml:space="preserve" text-anchor="start" x="233.65" y="-113.69" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="233.65" y="-88.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="233.65" y="-63.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="organizacija.LegacyOrgLink" data-to="organizacija.OrgNode">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="organizacija.LegacyOrgLink.node → organizacija.OrgNode | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M135.8,-91.39C159.15,-91.39 185.64,-91.39 210.14,-91.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="209.85,-93.84 216.85,-91.39 209.85,-88.94 209.85,-93.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="177.1" y="-95.94" font-family="Segoe UI" font-size="11.00">node</text>
+<text xml:space="preserve" text-anchor="middle" x="204.77" y="-94.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="149.39" y="-82.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

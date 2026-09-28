@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="433pt" height="248pt" viewBox="0.00 0.00 433.00 248.00" role="img" aria-label="Kadrovi · Pomoćne evidencije">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 226.38)">
+<title>G</title>
+
+<g id="node-hr.Resenje" class="node" data-key="hr.Resenje" data-route="model/hr.Resenje">
+<title>n0</title>
+<g id="a_node-hr.Resenje"><a xlink:href="../../index.html#model/hr.Resenje" xlink:title="hr.Resenje" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M145.1,-204.78C145.1,-204.78 12,-204.78 12,-204.78 6,-204.78 0,-198.78 0,-192.78 0,-192.78 0,-126 0,-126 0,-120 6,-114 12,-114 12,-114 145.1,-114 145.1,-114 151.1,-114 157.1,-120 157.1,-126 157.1,-126 157.1,-192.78 157.1,-192.78 157.1,-198.78 151.1,-204.78 145.1,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Resenje</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">31 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.VrstaResenja" class="node" data-key="hr.VrstaResenja" data-route="model/hr.VrstaResenja">
+<title>n1</title>
+<g id="a_node-hr.VrstaResenja"><a xlink:href="../../index.html#model/hr.VrstaResenja" xlink:title="hr.VrstaResenja" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M377.45,-147.78C377.45,-147.78 288.6,-147.78 288.6,-147.78 282.6,-147.78 276.6,-141.78 276.6,-135.78 276.6,-135.78 276.6,-69 276.6,-69 276.6,-63 282.6,-57 288.6,-57 288.6,-57 377.45,-57 377.45,-57 383.45,-57 389.45,-63 389.45,-69 389.45,-69 389.45,-135.78 389.45,-135.78 389.45,-141.78 383.45,-147.78 377.45,-147.78" />
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-124.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-99.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VrstaResenja</text>
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-74.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">16 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.Resenje" data-to="hr.VrstaResenja">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="hr.Resenje.vrsta → hr.VrstaResenja | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M157.36,-141.82C192.91,-133.8 234.49,-124.41 268.16,-116.81" />
+<polygon fill="#7297ab" stroke="#7297ab" points="268.34,-119.28 274.63,-115.35 267.26,-114.5 268.34,-119.28" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="216.85" y="-138.85" font-family="Segoe UI" font-size="11.00">vrsta</text>
+<text xml:space="preserve" text-anchor="middle" x="264.24" y="-121.24" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="169.23" y="-129.7" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.VrstaZahteva" class="node" data-key="hr.VrstaZahteva" data-route="model/hr.VrstaZahteva">
+<title>n2</title>
+<g id="a_node-hr.VrstaZahteva"><a xlink:href="../../index.html#model/hr.VrstaZahteva" xlink:title="hr.VrstaZahteva" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M145.1,-90.78C145.1,-90.78 12,-90.78 12,-90.78 6,-90.78 0,-84.78 0,-78.78 0,-78.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 145.1,0 145.1,0 151.1,0 157.1,-6 157.1,-12 157.1,-12 157.1,-78.78 157.1,-78.78 157.1,-84.78 151.1,-90.78 145.1,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VrstaZahteva</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">12 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr.VrstaZahteva" data-to="hr.VrstaResenja">
+<title>n2-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="hr.VrstaZahteva.vrsta_resenja → hr.VrstaResenja | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M157.36,-62.96C192.91,-70.98 234.49,-80.37 268.16,-87.97" />
+<polygon fill="#7297ab" stroke="#7297ab" points="267.26,-90.28 274.63,-89.43 268.34,-85.5 267.26,-90.28" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="216.85" y="-86.88" font-family="Segoe UI" font-size="11.00">vrsta_resenja</text>
+<text xml:space="preserve" text-anchor="middle" x="261.45" y="-90" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="172.02" y="-56.82" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="476pt" height="525pt" viewBox="0.00 0.00 476.00 525.00" role="img" aria-label="ActivityLog · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 503.38)">
+<title>G</title>
+
+<g id="node-core.ActivityLog" class="node" data-key="core.ActivityLog" data-route="model/core.ActivityLog">
+<title>n0</title>
+<g id="a_node-core.ActivityLog"><a xlink:href="../../index.html#model/core.ActivityLog" xlink:title="core.ActivityLog" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M191.6,-481.78C191.6,-481.78 12,-481.78 12,-481.78 6,-481.78 0,-475.78 0,-469.78 0,-469.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 191.6,0 191.6,0 197.6,0 203.6,-6 203.6,-12 203.6,-12 203.6,-469.78 203.6,-469.78 203.6,-475.78 197.6,-481.78 191.6,-481.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-458.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-433.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ActivityLog</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-408.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-385.19" font-family="Segoe UI" font-size="11.00">user : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">actor_username : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">actor_display_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">action : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">description : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">app_label : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">view_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">method : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">path : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">status_code : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">object_model : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">object_pk : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">object_repr : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">changes : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">ip_address : GenericIPAddress ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">user_agent : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n1</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M420.95,-286.28C420.95,-286.28 293.85,-286.28 293.85,-286.28 287.85,-286.28 281.85,-280.28 281.85,-274.28 281.85,-274.28 281.85,-207.5 281.85,-207.5 281.85,-201.5 287.85,-195.5 293.85,-195.5 293.85,-195.5 420.95,-195.5 420.95,-195.5 426.95,-195.5 432.95,-201.5 432.95,-207.5 432.95,-207.5 432.95,-274.28 432.95,-274.28 432.95,-280.28 426.95,-286.28 420.95,-286.28" />
+<text xml:space="preserve" text-anchor="start" x="296.65" y="-263.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="296.65" y="-238.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="296.65" y="-212.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="core.ActivityLog" data-to="core.CustomUser">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="core.ActivityLog.user → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M203.76,-240.89C226.78,-240.89 251,-240.89 273.18,-240.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="273.07,-243.34 280.07,-240.89 273.07,-238.44 273.07,-243.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="242.72" y="-245.44" font-family="Segoe UI" font-size="11.00">user</text>
+<text xml:space="preserve" text-anchor="middle" x="267.99" y="-244.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="217.35" y="-231.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

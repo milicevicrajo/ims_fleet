@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="274pt" height="99pt" viewBox="0.00 0.00 274.00 99.00" role="img" aria-label="Tokovi rada · Pravna služba">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-pravna--disciplinski" class="node" data-key="pravna/disciplinski" data-route="flow/pravna/disciplinski">
+<title>n0</title>
+<g id="a_node-pravna--disciplinski"><a xlink:href="../../index.html#flow/pravna/disciplinski" xlink:title="Tokovi rada · Pravna služba" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M218.85,-56.28C218.85,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 218.85,0 218.85,0 224.85,0 230.85,-6 230.85,-12 230.85,-12 230.85,-44.28 230.85,-44.28 230.85,-50.28 224.85,-56.28 218.85,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="115.42" y="-34.34" font-family="Segoe UI" font-size="14.00">Tok disciplinskog postupka i mera</text>
+<text xml:space="preserve" text-anchor="middle" x="115.42" y="-14.84" font-family="Segoe UI" font-size="14.00">Pravna služba</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

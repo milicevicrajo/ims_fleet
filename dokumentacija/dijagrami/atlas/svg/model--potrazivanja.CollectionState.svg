@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="568pt" height="249pt" viewBox="0.00 0.00 568.00 249.00" role="img" aria-label="CollectionState · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 227.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.BalanceSnapshot" class="node" data-key="potrazivanja.BalanceSnapshot" data-route="model/potrazivanja.BalanceSnapshot">
+<title>n0</title>
+<g id="a_node-potrazivanja.BalanceSnapshot"><a xlink:href="../../index.html#model/potrazivanja.BalanceSnapshot" xlink:title="potrazivanja.BalanceSnapshot" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M512.45,-148.28C512.45,-148.28 379.35,-148.28 379.35,-148.28 373.35,-148.28 367.35,-142.28 367.35,-136.28 367.35,-136.28 367.35,-69.5 367.35,-69.5 367.35,-63.5 373.35,-57.5 379.35,-57.5 379.35,-57.5 512.45,-57.5 512.45,-57.5 518.45,-57.5 524.45,-63.5 524.45,-69.5 524.45,-69.5 524.45,-136.28 524.45,-136.28 524.45,-142.28 518.45,-148.28 512.45,-148.28" />
+<text xml:space="preserve" text-anchor="start" x="382.15" y="-125.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="382.15" y="-100.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">BalanceSnapshot</text>
+<text xml:space="preserve" text-anchor="start" x="382.15" y="-74.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">10 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.CollectionState" class="node" data-key="potrazivanja.CollectionState" data-route="model/potrazivanja.CollectionState">
+<title>n1</title>
+<g id="a_node-potrazivanja.CollectionState"><a xlink:href="../../index.html#model/potrazivanja.CollectionState" xlink:title="potrazivanja.CollectionState" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M214.85,-205.78C214.85,-205.78 12,-205.78 12,-205.78 6,-205.78 0,-199.78 0,-193.78 0,-193.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 214.85,0 214.85,0 220.85,0 226.85,-6 226.85,-12 226.85,-12 226.85,-193.78 226.85,-193.78 226.85,-199.78 220.85,-205.78 214.85,-205.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-182.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-157.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionState</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">current_snapshot : BalanceSnapshot ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">operations_independent_at : DateTime ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.CollectionState" data-to="potrazivanja.BalanceSnapshot">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.CollectionState.current_snapshot → potrazivanja.BalanceSnapshot | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M227.23,-102.89C270.18,-102.89 318.39,-102.89 358.51,-102.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="358.42,-105.34 365.42,-102.89 358.42,-100.44 358.42,-105.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="297.1" y="-107.44" font-family="Segoe UI" font-size="11.00">current_snapshot</text>
+<text xml:space="preserve" text-anchor="middle" x="353.34" y="-106.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="240.83" y="-93.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

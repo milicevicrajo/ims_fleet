@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="356pt" height="99pt" viewBox="0.00 0.00 356.00 99.00" role="img" aria-label="Tokovi rada · Ugovori">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-ugovori--ugovor" class="node" data-key="ugovori/ugovor" data-route="flow/ugovori/ugovor">
+<title>n0</title>
+<g id="a_node-ugovori--ugovor"><a xlink:href="../../index.html#flow/ugovori/ugovor" xlink:title="Tokovi rada · Ugovori" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M300.6,-56.28C300.6,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 300.6,0 300.6,0 306.6,0 312.6,-6 312.6,-12 312.6,-12 312.6,-44.28 312.6,-44.28 312.6,-50.28 306.6,-56.28 300.6,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="156.3" y="-34.34" font-family="Segoe UI" font-size="14.00">Evidentiranje ugovora i povezanih dokumenata</text>
+<text xml:space="preserve" text-anchor="middle" x="156.3" y="-14.84" font-family="Segoe UI" font-size="14.00">Ugovori</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

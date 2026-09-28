@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="339pt" height="99pt" viewBox="0.00 0.00 339.00 99.00" role="img" aria-label="Tokovi rada · Finansije">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-finansije--sinhronizacija" class="node" data-key="finansije/sinhronizacija" data-route="flow/finansije/sinhronizacija">
+<title>n0</title>
+<g id="a_node-finansije--sinhronizacija"><a xlink:href="../../index.html#flow/finansije/sinhronizacija" xlink:title="Tokovi rada · Finansije" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M283.35,-56.28C283.35,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 283.35,0 283.35,0 289.35,0 295.35,-6 295.35,-12 295.35,-12 295.35,-44.28 295.35,-44.28 295.35,-50.28 289.35,-56.28 283.35,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="147.68" y="-34.34" font-family="Segoe UI" font-size="14.00">Od izvora knjiženja do finansijskog pregleda</text>
+<text xml:space="preserve" text-anchor="middle" x="147.68" y="-14.84" font-family="Segoe UI" font-size="14.00">Finansije</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

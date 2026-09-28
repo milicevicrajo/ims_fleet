@@ -1,0 +1,331 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="797pt" height="1274pt" viewBox="0.00 0.00 797.00 1274.00" role="img" aria-label="FinancePartnerIdentity · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 1252.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.CollectionActivity" class="node" data-key="potrazivanja.CollectionActivity" data-route="model/potrazivanja.CollectionActivity">
+<title>n0</title>
+<g id="a_node-potrazivanja.CollectionActivity"><a xlink:href="../../index.html#model/potrazivanja.CollectionActivity" xlink:title="potrazivanja.CollectionActivity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M155.97,-1230.78C155.97,-1230.78 22.87,-1230.78 22.87,-1230.78 16.87,-1230.78 10.87,-1224.78 10.87,-1218.78 10.87,-1218.78 10.87,-1152 10.87,-1152 10.87,-1146 16.87,-1140 22.87,-1140 22.87,-1140 155.97,-1140 155.97,-1140 161.97,-1140 167.97,-1146 167.97,-1152 167.97,-1152 167.97,-1218.78 167.97,-1218.78 167.97,-1224.78 161.97,-1230.78 155.97,-1230.78" />
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-1207.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-1182.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionActivity</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-1157.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">13 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.FinancePartnerIdentity" class="node" data-key="potrazivanja.FinancePartnerIdentity" data-route="model/potrazivanja.FinancePartnerIdentity">
+<title>n8</title>
+<g id="a_node-potrazivanja.FinancePartnerIdentity"><a xlink:href="../../index.html#model/potrazivanja.FinancePartnerIdentity" xlink:title="potrazivanja.FinancePartnerIdentity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M462.95,-844.78C462.95,-844.78 286.35,-844.78 286.35,-844.78 280.35,-844.78 274.35,-838.78 274.35,-832.78 274.35,-832.78 274.35,-398 274.35,-398 274.35,-392 280.35,-386 286.35,-386 286.35,-386 462.95,-386 462.95,-386 468.95,-386 474.95,-392 474.95,-398 474.95,-398 474.95,-832.78 474.95,-832.78 474.95,-838.78 468.95,-844.78 462.95,-844.78" />
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-821.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-796.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinancePartnerIdentity</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-771.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-748.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-725.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-702.19" font-family="Segoe UI" font-size="11.00">source_system : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-679.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-656.19" font-family="Segoe UI" font-size="11.00">partner_group : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-633.19" font-family="Segoe UI" font-size="11.00">partner_code : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-610.19" font-family="Segoe UI" font-size="11.00">partner : Partner ?</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-587.19" font-family="Segoe UI" font-size="11.00">source_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-564.19" font-family="Segoe UI" font-size="11.00">source_tax_id : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-541.19" font-family="Segoe UI" font-size="11.00">source_registration_number : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-518.19" font-family="Segoe UI" font-size="11.00">source_address : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-495.19" font-family="Segoe UI" font-size="11.00">source_city : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-472.19" font-family="Segoe UI" font-size="11.00">source_country : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-449.19" font-family="Segoe UI" font-size="11.00">source_hash : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-426.19" font-family="Segoe UI" font-size="11.00">active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="289.15" y="-403.19" font-family="Segoe UI" font-size="11.00">last_seen_run : CollectionSyncRun ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-8" class="edge" data-from="potrazivanja.CollectionActivity" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n0-&gt;n8</title>
+<g id="a_edge-8"><a xlink:title="potrazivanja.CollectionActivity.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M167.33,-1139.7C171.42,-1136.1 175.3,-1132.32 178.85,-1128.39 248.21,-1051.5 293.79,-947.42 323.28,-853.11" />
+<polygon fill="#7297ab" stroke="#7297ab" points="325.56,-854.03 325.28,-846.62 320.87,-852.59 325.56,-854.03" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-1086.83" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="327.77" y="-857.09" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="173.28" y="-1122.98" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionContact" class="node" data-key="potrazivanja.CollectionContact" data-route="model/potrazivanja.CollectionContact">
+<title>n1</title>
+<g id="a_node-potrazivanja.CollectionContact"><a xlink:href="../../index.html#model/potrazivanja.CollectionContact" xlink:title="potrazivanja.CollectionContact" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M155.97,-1116.78C155.97,-1116.78 22.87,-1116.78 22.87,-1116.78 16.87,-1116.78 10.87,-1110.78 10.87,-1104.78 10.87,-1104.78 10.87,-1038 10.87,-1038 10.87,-1032 16.87,-1026 22.87,-1026 22.87,-1026 155.97,-1026 155.97,-1026 161.97,-1026 167.97,-1032 167.97,-1038 167.97,-1038 167.97,-1104.78 167.97,-1104.78 167.97,-1110.78 161.97,-1116.78 155.97,-1116.78" />
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-1093.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-1068.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionContact</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-1043.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-7" class="edge" data-from="potrazivanja.CollectionContact" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n1-&gt;n8</title>
+<g id="a_edge-7"><a xlink:title="potrazivanja.CollectionContact.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M167.29,-1025.66C171.39,-1022.07 175.28,-1018.31 178.85,-1014.39 221.53,-967.52 256.89,-909.59 285.23,-852.55" />
+<polygon fill="#7297ab" stroke="#7297ab" points="287.27,-853.95 288.16,-846.59 282.87,-851.79 287.27,-853.95" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-982.05" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="288.52" y="-857.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="173.28" y="-1008.95" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionLegalCase" class="node" data-key="potrazivanja.CollectionLegalCase" data-route="model/potrazivanja.CollectionLegalCase">
+<title>n2</title>
+<g id="a_node-potrazivanja.CollectionLegalCase"><a xlink:href="../../index.html#model/potrazivanja.CollectionLegalCase" xlink:title="potrazivanja.CollectionLegalCase" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M157.1,-1002.78C157.1,-1002.78 21.75,-1002.78 21.75,-1002.78 15.75,-1002.78 9.75,-996.78 9.75,-990.78 9.75,-990.78 9.75,-924 9.75,-924 9.75,-918 15.75,-912 21.75,-912 21.75,-912 157.1,-912 157.1,-912 163.1,-912 169.1,-918 169.1,-924 169.1,-924 169.1,-990.78 169.1,-990.78 169.1,-996.78 163.1,-1002.78 157.1,-1002.78" />
+<text xml:space="preserve" text-anchor="start" x="24.55" y="-979.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="24.55" y="-954.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionLegalCase</text>
+<text xml:space="preserve" text-anchor="start" x="24.55" y="-929.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">29 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-12" class="edge" data-from="potrazivanja.CollectionLegalCase" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n2-&gt;n8</title>
+<g id="a_edge-12"><a xlink:title="potrazivanja.CollectionLegalCase.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M165.87,-911.85C170.42,-908.17 174.79,-904.34 178.85,-900.39 211.84,-868.28 242.56,-829.79 269.42,-791.63" />
+<polygon fill="#7297ab" stroke="#7297ab" points="271.18,-793.39 273.17,-786.25 267.16,-790.59 271.18,-793.39" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-870.96" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="271.45" y="-796.83" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="172.4" y="-895.39" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionNotice" class="node" data-key="potrazivanja.CollectionNotice" data-route="model/potrazivanja.CollectionNotice">
+<title>n3</title>
+<g id="a_node-potrazivanja.CollectionNotice"><a xlink:href="../../index.html#model/potrazivanja.CollectionNotice" xlink:title="potrazivanja.CollectionNotice" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M155.97,-888.78C155.97,-888.78 22.87,-888.78 22.87,-888.78 16.87,-888.78 10.87,-882.78 10.87,-876.78 10.87,-876.78 10.87,-810 10.87,-810 10.87,-804 16.87,-798 22.87,-798 22.87,-798 155.97,-798 155.97,-798 161.97,-798 167.97,-804 167.97,-810 167.97,-810 167.97,-876.78 167.97,-876.78 167.97,-882.78 161.97,-888.78 155.97,-888.78" />
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-865.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-840.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionNotice</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-815.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-9" class="edge" data-from="potrazivanja.CollectionNotice" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n3-&gt;n8</title>
+<g id="a_edge-9"><a xlink:title="potrazivanja.CollectionNotice.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M163.4,-797.58C168.69,-793.88 173.89,-790.13 178.85,-786.39 208.57,-763.96 239.43,-738.17 267.59,-713.52" />
+<polygon fill="#7297ab" stroke="#7297ab" points="269.15,-715.41 272.79,-708.95 265.91,-711.73 269.15,-715.41" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-764.8" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="267.89" y="-718.74" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="170.9" y="-781.64" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionProfile" class="node" data-key="potrazivanja.CollectionProfile" data-route="model/potrazivanja.CollectionProfile">
+<title>n4</title>
+<g id="a_node-potrazivanja.CollectionProfile"><a xlink:href="../../index.html#model/potrazivanja.CollectionProfile" xlink:title="potrazivanja.CollectionProfile" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M152.97,-774.78C152.97,-774.78 25.87,-774.78 25.87,-774.78 19.87,-774.78 13.87,-768.78 13.87,-762.78 13.87,-762.78 13.87,-696 13.87,-696 13.87,-690 19.87,-684 25.87,-684 25.87,-684 152.97,-684 152.97,-684 158.97,-684 164.97,-690 164.97,-696 164.97,-696 164.97,-762.78 164.97,-762.78 164.97,-768.78 158.97,-774.78 152.97,-774.78" />
+<text xml:space="preserve" text-anchor="start" x="28.67" y="-751.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="28.67" y="-726.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionProfile</text>
+<text xml:space="preserve" text-anchor="start" x="28.67" y="-701.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">9 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="potrazivanja.CollectionProfile" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n4-&gt;n8</title>
+<g id="a_edge-2"><a xlink:title="potrazivanja.CollectionProfile.identity → potrazivanja.FinancePartnerIdentity | OneToOneField | 0..1 : 1">
+<path fill="none" stroke="#7297ab" d="M165.21,-699.29C196.14,-686.84 232.59,-672.17 266.29,-658.6" />
+<polygon fill="#7297ab" stroke="#7297ab" points="266.9,-661 272.48,-656.11 265.07,-656.45 266.9,-661" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-683.77" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="263.64" y="-663.55" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="175.45" y="-685.38" font-family="Segoe UI" font-size="11.00">0..1</text>
+</g>
+
+<g id="node-potrazivanja.CollectionSyncRun" class="node" data-key="potrazivanja.CollectionSyncRun" data-route="model/potrazivanja.CollectionSyncRun">
+<title>n5</title>
+<g id="a_node-potrazivanja.CollectionSyncRun"><a xlink:href="../../index.html#model/potrazivanja.CollectionSyncRun" xlink:title="potrazivanja.CollectionSyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M741.8,-717.78C741.8,-717.78 608.7,-717.78 608.7,-717.78 602.7,-717.78 596.7,-711.78 596.7,-705.78 596.7,-705.78 596.7,-639 596.7,-639 596.7,-633 602.7,-627 608.7,-627 608.7,-627 741.8,-627 741.8,-627 747.8,-627 753.8,-633 753.8,-639 753.8,-639 753.8,-705.78 753.8,-705.78 753.8,-711.78 747.8,-717.78 741.8,-717.78" />
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-694.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-669.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionSyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-644.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.DueDateEvidence" class="node" data-key="potrazivanja.DueDateEvidence" data-route="model/potrazivanja.DueDateEvidence">
+<title>n6</title>
+<g id="a_node-potrazivanja.DueDateEvidence"><a xlink:href="../../index.html#model/potrazivanja.DueDateEvidence" xlink:title="potrazivanja.DueDateEvidence" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M155.97,-660.78C155.97,-660.78 22.87,-660.78 22.87,-660.78 16.87,-660.78 10.87,-654.78 10.87,-648.78 10.87,-648.78 10.87,-582 10.87,-582 10.87,-576 16.87,-570 22.87,-570 22.87,-570 155.97,-570 155.97,-570 161.97,-570 167.97,-576 167.97,-582 167.97,-582 167.97,-648.78 167.97,-648.78 167.97,-654.78 161.97,-660.78 155.97,-660.78" />
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-637.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-612.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">DueDateEvidence</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-587.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">19 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="potrazivanja.DueDateEvidence" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n6-&gt;n8</title>
+<g id="a_edge-5"><a xlink:title="potrazivanja.DueDateEvidence.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M168.19,-615.39C198.31,-615.39 233.3,-615.39 265.78,-615.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="265.46,-617.84 272.46,-615.39 265.46,-612.94 265.46,-617.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-619.94" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="260.38" y="-618.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="181.79" y="-606.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.ElectronicInvoiceStatus" class="node" data-key="potrazivanja.ElectronicInvoiceStatus" data-route="model/potrazivanja.ElectronicInvoiceStatus">
+<title>n7</title>
+<g id="a_node-potrazivanja.ElectronicInvoiceStatus"><a xlink:href="../../index.html#model/potrazivanja.ElectronicInvoiceStatus" xlink:title="potrazivanja.ElectronicInvoiceStatus" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M166.85,-546.78C166.85,-546.78 12,-546.78 12,-546.78 6,-546.78 0,-540.78 0,-534.78 0,-534.78 0,-468 0,-468 0,-462 6,-456 12,-456 12,-456 166.85,-456 166.85,-456 172.85,-456 178.85,-462 178.85,-468 178.85,-468 178.85,-534.78 178.85,-534.78 178.85,-540.78 172.85,-546.78 166.85,-546.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-523.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-498.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ElectronicInvoiceStatus</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-473.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">20 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-10" class="edge" data-from="potrazivanja.ElectronicInvoiceStatus" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n7-&gt;n8</title>
+<g id="a_edge-10"><a xlink:title="potrazivanja.ElectronicInvoiceStatus.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M179.26,-537.15C206.96,-548.3 237.8,-560.71 266.61,-572.31" />
+<polygon fill="#7297ab" stroke="#7297ab" points="265.47,-574.49 272.88,-574.83 267.3,-569.94 265.47,-574.49" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-566.36" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="259.31" y="-573.25" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="194.24" y="-533.39" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja.FinancePartnerIdentity" data-to="potrazivanja.CollectionSyncRun">
+<title>n8-&gt;n5</title>
+<g id="a_edge-1"><a xlink:title="potrazivanja.FinancePartnerIdentity.last_seen_run → potrazivanja.CollectionSyncRun | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M475.08,-634.37C511.83,-641.39 553.13,-649.27 588.56,-656.03" />
+<polygon fill="#7297ab" stroke="#7297ab" points="587.67,-658.36 595.01,-657.26 588.59,-653.54 587.67,-658.36" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="535.82" y="-655.22" font-family="Segoe UI" font-size="11.00">last_seen_run</text>
+<text xml:space="preserve" text-anchor="middle" x="581.95" y="-658.27" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="489.62" y="-627.74" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-ugovori.Partner" class="node" data-key="ugovori.Partner" data-route="model/ugovori.Partner">
+<title>n13</title>
+<g id="a_node-ugovori.Partner"><a xlink:href="../../index.html#model/ugovori.Partner" xlink:title="ugovori.Partner" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M741.8,-603.78C741.8,-603.78 608.7,-603.78 608.7,-603.78 602.7,-603.78 596.7,-597.78 596.7,-591.78 596.7,-591.78 596.7,-525 596.7,-525 596.7,-519 602.7,-513 608.7,-513 608.7,-513 741.8,-513 741.8,-513 747.8,-513 753.8,-519 753.8,-525 753.8,-525 753.8,-591.78 753.8,-591.78 753.8,-597.78 747.8,-603.78 741.8,-603.78" />
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-580.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-555.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Partner</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-530.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">25 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.FinancePartnerIdentity" data-to="ugovori.Partner">
+<title>n8-&gt;n13</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.FinancePartnerIdentity.partner → ugovori.Partner | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M475.08,-596.41C511.83,-589.39 553.13,-581.51 588.56,-574.75" />
+<polygon fill="#a27631" stroke="#a27631" points="588.59,-577.24 595.01,-573.52 587.67,-572.42 588.59,-577.24" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="535.82" y="-594.85" font-family="Segoe UI" font-size="11.00">partner</text>
+<text xml:space="preserve" text-anchor="middle" x="584.33" y="-579.06" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="487.24" y="-584.68" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.InvoiceDocument" class="node" data-key="potrazivanja.InvoiceDocument" data-route="model/potrazivanja.InvoiceDocument">
+<title>n9</title>
+<g id="a_node-potrazivanja.InvoiceDocument"><a xlink:href="../../index.html#model/potrazivanja.InvoiceDocument" xlink:title="potrazivanja.InvoiceDocument" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M155.97,-432.78C155.97,-432.78 22.87,-432.78 22.87,-432.78 16.87,-432.78 10.87,-426.78 10.87,-420.78 10.87,-420.78 10.87,-354 10.87,-354 10.87,-348 16.87,-342 22.87,-342 22.87,-342 155.97,-342 155.97,-342 161.97,-342 167.97,-348 167.97,-354 167.97,-354 167.97,-420.78 167.97,-420.78 167.97,-426.78 161.97,-432.78 155.97,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">InvoiceDocument</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="potrazivanja.InvoiceDocument" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n9-&gt;n8</title>
+<g id="a_edge-3"><a xlink:title="potrazivanja.InvoiceDocument.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M163.4,-433.2C168.69,-436.9 173.89,-440.65 178.85,-444.39 208.57,-466.82 239.43,-492.61 267.59,-517.26" />
+<polygon fill="#7297ab" stroke="#7297ab" points="265.91,-519.05 272.79,-521.83 269.15,-515.37 265.91,-519.05" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-497.99" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="259.53" y="-515.67" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="178.17" y="-432.86" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.LegalCaseLink" class="node" data-key="potrazivanja.LegalCaseLink" data-route="model/potrazivanja.LegalCaseLink">
+<title>n10</title>
+<g id="a_node-potrazivanja.LegalCaseLink"><a xlink:href="../../index.html#model/potrazivanja.LegalCaseLink" xlink:title="potrazivanja.LegalCaseLink" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M152.97,-318.78C152.97,-318.78 25.87,-318.78 25.87,-318.78 19.87,-318.78 13.87,-312.78 13.87,-306.78 13.87,-306.78 13.87,-240 13.87,-240 13.87,-234 19.87,-228 25.87,-228 25.87,-228 152.97,-228 152.97,-228 158.97,-228 164.97,-234 164.97,-240 164.97,-240 164.97,-306.78 164.97,-306.78 164.97,-312.78 158.97,-318.78 152.97,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="28.67" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="28.67" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">LegalCaseLink</text>
+<text xml:space="preserve" text-anchor="start" x="28.67" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">7 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-11" class="edge" data-from="potrazivanja.LegalCaseLink" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n10-&gt;n8</title>
+<g id="a_edge-11"><a xlink:title="potrazivanja.LegalCaseLink.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M165.43,-318.58C170.14,-322.37 174.66,-326.31 178.85,-330.39 211.84,-362.5 242.56,-400.99 269.42,-439.15" />
+<polygon fill="#7297ab" stroke="#7297ab" points="267.16,-440.19 273.17,-444.53 271.18,-437.39 267.16,-440.19" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-405.67" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="261.06" y="-435.31" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="179.98" y="-319.27" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.ReceivablePosition" class="node" data-key="potrazivanja.ReceivablePosition" data-route="model/potrazivanja.ReceivablePosition">
+<title>n11</title>
+<g id="a_node-potrazivanja.ReceivablePosition"><a xlink:href="../../index.html#model/potrazivanja.ReceivablePosition" xlink:title="potrazivanja.ReceivablePosition" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M155.97,-204.78C155.97,-204.78 22.87,-204.78 22.87,-204.78 16.87,-204.78 10.87,-198.78 10.87,-192.78 10.87,-192.78 10.87,-126 10.87,-126 10.87,-120 16.87,-114 22.87,-114 22.87,-114 155.97,-114 155.97,-114 161.97,-114 167.97,-120 167.97,-126 167.97,-126 167.97,-192.78 167.97,-192.78 167.97,-198.78 161.97,-204.78 155.97,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ReceivablePosition</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="potrazivanja.ReceivablePosition" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n11-&gt;n8</title>
+<g id="a_edge-6"><a xlink:title="potrazivanja.ReceivablePosition.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M167.29,-205.12C171.39,-208.71 175.28,-212.47 178.85,-216.39 221.53,-263.26 256.89,-321.19 285.23,-378.23" />
+<polygon fill="#7297ab" stroke="#7297ab" points="282.87,-378.99 288.16,-384.19 287.27,-376.83 282.87,-378.99" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-308.05" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="277.14" y="-373.2" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="181.67" y="-206.43" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.ReceivablePosting" class="node" data-key="potrazivanja.ReceivablePosting" data-route="model/potrazivanja.ReceivablePosting">
+<title>n12</title>
+<g id="a_node-potrazivanja.ReceivablePosting"><a xlink:href="../../index.html#model/potrazivanja.ReceivablePosting" xlink:title="potrazivanja.ReceivablePosting" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M155.97,-90.78C155.97,-90.78 22.87,-90.78 22.87,-90.78 16.87,-90.78 10.87,-84.78 10.87,-78.78 10.87,-78.78 10.87,-12 10.87,-12 10.87,-6 16.87,0 22.87,0 22.87,0 155.97,0 155.97,0 161.97,0 167.97,-6 167.97,-12 167.97,-12 167.97,-78.78 167.97,-78.78 167.97,-84.78 161.97,-90.78 155.97,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ReceivablePosting</text>
+<text xml:space="preserve" text-anchor="start" x="25.67" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">32 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="potrazivanja.ReceivablePosting" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n12-&gt;n8</title>
+<g id="a_edge-4"><a xlink:title="potrazivanja.ReceivablePosting.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M167.33,-91.08C171.42,-94.68 175.3,-98.46 178.85,-102.39 248.21,-179.28 293.79,-283.36 323.28,-377.67" />
+<polygon fill="#7297ab" stroke="#7297ab" points="320.87,-378.19 325.28,-384.16 325.56,-376.75 320.87,-378.19" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="226.6" y="-190.54" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="315.66" y="-371.53" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="181.71" y="-92.43" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

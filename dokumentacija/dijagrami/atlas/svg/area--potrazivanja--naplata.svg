@@ -1,0 +1,320 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="769pt" height="676pt" viewBox="0.00 0.00 769.00 676.00" role="img" aria-label="Potraživanja · Operativna naplata">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 654.76)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M700.55,-534.78C700.55,-534.78 573.45,-534.78 573.45,-534.78 567.45,-534.78 561.45,-528.78 561.45,-522.78 561.45,-522.78 561.45,-456 561.45,-456 561.45,-450 567.45,-444 573.45,-444 573.45,-444 700.55,-444 700.55,-444 706.55,-444 712.55,-450 712.55,-456 712.55,-456 712.55,-522.78 712.55,-522.78 712.55,-528.78 706.55,-534.78 700.55,-534.78" />
+<text xml:space="preserve" text-anchor="start" x="576.25" y="-511.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="576.25" y="-486.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="576.25" y="-461.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.CollectionActivity" class="node" data-key="potrazivanja.CollectionActivity" data-route="model/potrazivanja.CollectionActivity">
+<title>n1</title>
+<g id="a_node-potrazivanja.CollectionActivity"><a xlink:href="../../index.html#model/potrazivanja.CollectionActivity" xlink:title="potrazivanja.CollectionActivity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M143.22,-529.78C143.22,-529.78 23.62,-529.78 23.62,-529.78 17.62,-529.78 11.62,-523.78 11.62,-517.78 11.62,-517.78 11.62,-451 11.62,-451 11.62,-445 17.62,-439 23.62,-439 23.62,-439 143.22,-439 143.22,-439 149.22,-439 155.22,-445 155.22,-451 155.22,-451 155.22,-517.78 155.22,-517.78 155.22,-523.78 149.22,-529.78 143.22,-529.78" />
+<text xml:space="preserve" text-anchor="start" x="26.42" y="-506.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="26.42" y="-481.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionActivity</text>
+<text xml:space="preserve" text-anchor="start" x="26.42" y="-456.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">13 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-9" class="edge" data-from="potrazivanja.CollectionActivity" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-9"><a xlink:title="potrazivanja.CollectionActivity.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M155.34,-524.55C190.23,-542.05 233.62,-560.56 275.1,-569.39 381.36,-592 416.66,-588.99 518.95,-552.39 530.45,-548.28 542.19,-543.17 553.59,-537.66" />
+<polygon fill="#a27631" stroke="#a27631" points="554.48,-539.96 559.67,-534.66 552.31,-535.56 554.48,-539.96" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="353.65" y="-588.28" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="551.64" y="-542.74" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="170.34" y="-521.91" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-10" class="edge" data-from="potrazivanja.CollectionActivity" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-10"><a xlink:title="potrazivanja.CollectionActivity.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M134.99,-530.02C171.07,-558.82 222.35,-592.55 275.1,-603.39 381.82,-625.32 421.59,-627.28 518.95,-578.39 539.37,-568.14 559.82,-554.17 577.78,-540.35" />
+<polygon fill="#a27631" stroke="#a27631" points="579.08,-542.44 583.09,-536.2 576.07,-538.58 579.08,-542.44" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="353.65" y="-622.71" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="577.48" y="-545.68" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="149.62" y="-530.41" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionContact" class="node" data-key="potrazivanja.CollectionContact" data-route="model/potrazivanja.CollectionContact">
+<title>n2</title>
+<g id="a_node-potrazivanja.CollectionContact"><a xlink:href="../../index.html#model/potrazivanja.CollectionContact" xlink:title="potrazivanja.CollectionContact" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M413.82,-405.78C413.82,-405.78 293.47,-405.78 293.47,-405.78 287.47,-405.78 281.47,-399.78 281.47,-393.78 281.47,-393.78 281.47,-327 281.47,-327 281.47,-321 287.47,-315 293.47,-315 293.47,-315 413.82,-315 413.82,-315 419.82,-315 425.82,-321 425.82,-327 425.82,-327 425.82,-393.78 425.82,-393.78 425.82,-399.78 419.82,-405.78 413.82,-405.78" />
+<text xml:space="preserve" text-anchor="start" x="296.27" y="-382.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="296.27" y="-357.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionContact</text>
+<text xml:space="preserve" text-anchor="start" x="296.27" y="-332.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-12" class="edge" data-from="potrazivanja.CollectionActivity" data-to="potrazivanja.CollectionContact">
+<title>n1-&gt;n2</title>
+<g id="a_edge-12"><a xlink:title="potrazivanja.CollectionActivity.contact → potrazivanja.CollectionContact | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M155.6,-451.49C191.98,-434.67 236.34,-414.16 273.76,-396.86" />
+<polygon fill="#7297ab" stroke="#7297ab" points="274.44,-399.24 279.77,-394.08 272.39,-394.8 274.44,-399.24" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="220.97" y="-434.36" font-family="Segoe UI" font-size="11.00">contact</text>
+<text xml:space="preserve" text-anchor="middle" x="271.46" y="-401.96" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="165.28" y="-437.08" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.FinancePartnerIdentity" class="node" data-key="potrazivanja.FinancePartnerIdentity" data-route="model/potrazivanja.FinancePartnerIdentity">
+<title>n7</title>
+<g id="a_node-potrazivanja.FinancePartnerIdentity"><a xlink:href="../../index.html#model/potrazivanja.FinancePartnerIdentity" xlink:title="potrazivanja.FinancePartnerIdentity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M714.05,-256.78C714.05,-256.78 559.95,-256.78 559.95,-256.78 553.95,-256.78 547.95,-250.78 547.95,-244.78 547.95,-244.78 547.95,-178 547.95,-178 547.95,-172 553.95,-166 559.95,-166 559.95,-166 714.05,-166 714.05,-166 720.05,-166 726.05,-172 726.05,-178 726.05,-178 726.05,-244.78 726.05,-244.78 726.05,-250.78 720.05,-256.78 714.05,-256.78" />
+<text xml:space="preserve" text-anchor="start" x="562.75" y="-233.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="562.75" y="-208.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinancePartnerIdentity</text>
+<text xml:space="preserve" text-anchor="start" x="562.75" y="-183.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">16 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-11" class="edge" data-from="potrazivanja.CollectionActivity" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n1-&gt;n7</title>
+<g id="a_edge-11"><a xlink:title="potrazivanja.CollectionActivity.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M120.07,-438.55C155.6,-395.3 213.59,-330.91 275.1,-288.39 293.65,-275.57 439.12,-211.99 461.2,-207.39 486.33,-202.16 493.29,-206.95 518.95,-207.39 525.6,-207.5 532.46,-207.65 539.37,-207.83" />
+<polygon fill="#7297ab" stroke="#7297ab" points="538.92,-210.27 545.98,-208 539.05,-205.37 538.92,-210.27" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="353.65" y="-292.94" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="533.73" y="-211.07" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="123.91" y="-421.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="potrazivanja.CollectionContact" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-4"><a xlink:title="potrazivanja.CollectionContact.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M426.02,-347.99C455.89,-345.9 490.26,-347.68 518.95,-360.39 554.4,-376.09 583.71,-408.43 604.12,-436.79" />
+<polygon fill="#a27631" stroke="#a27631" points="601.96,-437.98 607.99,-442.29 605.97,-435.16 601.96,-437.98" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-364.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="595.86" y="-433.11" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="439.24" y="-337.96" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-5" class="edge" data-from="potrazivanja.CollectionContact" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-5"><a xlink:title="potrazivanja.CollectionContact.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M426.26,-372.96C455.85,-379.71 489.94,-389.56 518.95,-403.39 538.82,-412.86 558.74,-425.87 576.38,-438.9" />
+<polygon fill="#a27631" stroke="#a27631" points="574.49,-440.55 581.56,-442.79 577.43,-436.63 574.49,-440.55" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-407.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="568.09" y="-437.66" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="440.94" y="-366.96" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-7" class="edge" data-from="potrazivanja.CollectionContact" data-to="potrazivanja.CollectionContact">
+<title>n2-&gt;n2</title>
+<g id="a_edge-7"><a xlink:title="potrazivanja.CollectionContact.import_parent → potrazivanja.CollectionContact | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M328.9,-406.09C329.98,-418.93 338.23,-428.78 353.65,-428.78 365.58,-428.78 373.21,-422.89 376.56,-414.28" />
+<polygon fill="#7297ab" stroke="#7297ab" points="378.93,-414.94 378.07,-407.57 374.15,-413.86 378.93,-414.94" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="353.65" y="-433.33" font-family="Segoe UI" font-size="11.00">import_parent</text>
+<text xml:space="preserve" text-anchor="middle" x="381.61" y="-417.8" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="337.11" y="-415.7" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-6" class="edge" data-from="potrazivanja.CollectionContact" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n2-&gt;n7</title>
+<g id="a_edge-6"><a xlink:title="potrazivanja.CollectionContact.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M395.15,-314.68C407.28,-300.65 420.47,-285.04 432.2,-270.39 445.7,-253.53 442.48,-242.17 461.2,-231.39 484.59,-217.92 512.65,-211.36 539.38,-208.55" />
+<polygon fill="#7297ab" stroke="#7297ab" points="539.37,-211.02 546.12,-207.94 538.93,-206.14 539.37,-211.02" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-235.94" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="534.67" y="-212.4" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="399.22" y="-297.29" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionNotice" class="node" data-key="potrazivanja.CollectionNotice" data-route="model/potrazivanja.CollectionNotice">
+<title>n3</title>
+<g id="a_node-potrazivanja.CollectionNotice"><a xlink:href="../../index.html#model/potrazivanja.CollectionNotice" xlink:title="potrazivanja.CollectionNotice" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M410.07,-204.78C410.07,-204.78 297.22,-204.78 297.22,-204.78 291.22,-204.78 285.22,-198.78 285.22,-192.78 285.22,-192.78 285.22,-126 285.22,-126 285.22,-120 291.22,-114 297.22,-114 297.22,-114 410.07,-114 410.07,-114 416.07,-114 422.07,-120 422.07,-126 422.07,-126 422.07,-192.78 422.07,-192.78 422.07,-198.78 416.07,-204.78 410.07,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="300.02" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="300.02" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionNotice</text>
+<text xml:space="preserve" text-anchor="start" x="300.02" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-13" class="edge" data-from="potrazivanja.CollectionNotice" data-to="core.CustomUser">
+<title>n3-&gt;n0</title>
+<g id="a_edge-13"><a xlink:title="potrazivanja.CollectionNotice.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M411.14,-204.96C418.26,-210.8 425.42,-216.71 432.2,-222.39 445.25,-233.31 446.91,-238.14 461.2,-247.39 484.99,-262.78 498.31,-254.98 518.95,-274.39 566.75,-319.35 599.47,-388.29 617.91,-435.92" />
+<polygon fill="#a27631" stroke="#a27631" points="615.54,-436.59 620.32,-442.26 620.12,-434.85 615.54,-436.59" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-278.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="610.1" y="-430.27" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="425.67" y="-205.74" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-14" class="edge" data-from="potrazivanja.CollectionNotice" data-to="core.CustomUser">
+<title>n3-&gt;n0</title>
+<g id="a_edge-14"><a xlink:title="potrazivanja.CollectionNotice.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M416.66,-204.91C422.3,-210.43 427.61,-216.29 432.2,-222.39 451.97,-248.63 439.98,-265.3 461.2,-290.39 480.89,-313.66 496.8,-306.45 518.95,-327.39 552.96,-359.55 583.63,-402.8 605.04,-436.53" />
+<polygon fill="#a27631" stroke="#a27631" points="602.86,-437.66 608.66,-442.29 607.01,-435.06 602.86,-437.66" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-331.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="596.86" y="-432.48" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="430.78" y="-207.03" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-15" class="edge" data-from="potrazivanja.CollectionNotice" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n3-&gt;n7</title>
+<g id="a_edge-15"><a xlink:title="potrazivanja.CollectionNotice.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M422.46,-153.1C452.34,-151.93 487.7,-152.76 518.95,-159.39 525.75,-160.83 532.64,-162.7 539.48,-164.86" />
+<polygon fill="#7297ab" stroke="#7297ab" points="538.65,-167.17 546.06,-167.05 540.2,-162.52 538.65,-167.17" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-163.94" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="532.6" y="-166.3" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="435.85" y="-143.38" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionNoticeItem" class="node" data-key="potrazivanja.CollectionNoticeItem" data-route="model/potrazivanja.CollectionNoticeItem">
+<title>n4</title>
+<g id="a_node-potrazivanja.CollectionNoticeItem"><a xlink:href="../../index.html#model/potrazivanja.CollectionNoticeItem" xlink:title="potrazivanja.CollectionNoticeItem" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M154.85,-120.78C154.85,-120.78 12,-120.78 12,-120.78 6,-120.78 0,-114.78 0,-108.78 0,-108.78 0,-42 0,-42 0,-36 6,-30 12,-30 12,-30 154.85,-30 154.85,-30 160.85,-30 166.85,-36 166.85,-42 166.85,-42 166.85,-108.78 166.85,-108.78 166.85,-114.78 160.85,-120.78 154.85,-120.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-97.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-72.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionNoticeItem</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-47.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">7 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-16" class="edge" data-from="potrazivanja.CollectionNoticeItem" data-to="potrazivanja.CollectionNotice">
+<title>n4-&gt;n3</title>
+<g id="a_edge-16"><a xlink:title="potrazivanja.CollectionNoticeItem.notice → potrazivanja.CollectionNotice | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M167.09,-101.28C202.15,-112.26 242.73,-124.97 276.99,-135.69" />
+<polygon fill="#7297ab" stroke="#7297ab" points="276.24,-138.03 283.65,-137.78 277.71,-133.35 276.24,-138.03" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="220.97" y="-129.46" font-family="Segoe UI" font-size="11.00">notice</text>
+<text xml:space="preserve" text-anchor="middle" x="270.23" y="-137.27" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="181.96" y="-96.34" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.InvoiceDocument" class="node" data-key="potrazivanja.InvoiceDocument" data-route="model/potrazivanja.InvoiceDocument">
+<title>n8</title>
+<g id="a_node-potrazivanja.InvoiceDocument"><a xlink:href="../../index.html#model/potrazivanja.InvoiceDocument" xlink:title="potrazivanja.InvoiceDocument" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M420.2,-90.78C420.2,-90.78 287.1,-90.78 287.1,-90.78 281.1,-90.78 275.1,-84.78 275.1,-78.78 275.1,-78.78 275.1,-12 275.1,-12 275.1,-6 281.1,0 287.1,0 287.1,0 420.2,0 420.2,0 426.2,0 432.2,-6 432.2,-12 432.2,-12 432.2,-78.78 432.2,-78.78 432.2,-84.78 426.2,-90.78 420.2,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">InvoiceDocument</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-17" class="edge" data-from="potrazivanja.CollectionNoticeItem" data-to="potrazivanja.InvoiceDocument">
+<title>n4-&gt;n8</title>
+<g id="a_edge-17"><a xlink:title="potrazivanja.CollectionNoticeItem.document → potrazivanja.InvoiceDocument | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M167.09,-66.14C198.6,-62.62 234.58,-58.6 266.41,-55.04" />
+<polygon fill="#7297ab" stroke="#7297ab" points="266.65,-57.47 273.33,-54.26 266.11,-52.6 266.65,-57.47" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="220.97" y="-66.74" font-family="Segoe UI" font-size="11.00">document</text>
+<text xml:space="preserve" text-anchor="middle" x="262.03" y="-58.95" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="179.9" y="-55.38" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionProfile" class="node" data-key="potrazivanja.CollectionProfile" data-route="model/potrazivanja.CollectionProfile">
+<title>n5</title>
+<g id="a_node-potrazivanja.CollectionProfile"><a xlink:href="../../index.html#model/potrazivanja.CollectionProfile" xlink:title="potrazivanja.CollectionProfile" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M409.7,-557.78C409.7,-557.78 297.6,-557.78 297.6,-557.78 291.6,-557.78 285.6,-551.78 285.6,-545.78 285.6,-545.78 285.6,-479 285.6,-479 285.6,-473 291.6,-467 297.6,-467 297.6,-467 409.7,-467 409.7,-467 415.7,-467 421.7,-473 421.7,-479 421.7,-479 421.7,-545.78 421.7,-545.78 421.7,-551.78 415.7,-557.78 409.7,-557.78" />
+<text xml:space="preserve" text-anchor="start" x="300.4" y="-534.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="300.4" y="-509.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionProfile</text>
+<text xml:space="preserve" text-anchor="start" x="300.4" y="-484.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">9 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.CollectionProfile" data-to="core.CustomUser">
+<title>n5-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.CollectionProfile.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M421.89,-510.94C451.67,-509.93 487.1,-508.24 518.95,-505.39 529.96,-504.4 541.53,-503.12 552.93,-501.72" />
+<polygon fill="#a27631" stroke="#a27631" points="553.05,-504.17 559.69,-500.86 552.43,-499.31 553.05,-504.17" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-513.66" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="548.49" y="-505.72" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="435.25" y="-501.17" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja.CollectionProfile" data-to="core.CustomUser">
+<title>n5-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="potrazivanja.CollectionProfile.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M422.09,-492.62C434.97,-489.61 448.42,-486.98 461.2,-485.39 490.95,-481.68 523.75,-481.43 552.83,-482.52" />
+<polygon fill="#a27631" stroke="#a27631" points="552.72,-484.96 559.82,-482.81 552.93,-480.07 552.72,-484.96" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-489.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="547.48" y="-485.69" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="433.92" y="-480.45" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-3" class="edge" data-from="potrazivanja.CollectionProfile" data-to="core.CustomUser">
+<title>n5-&gt;n0</title>
+<g id="a_edge-3"><a xlink:title="potrazivanja.CollectionProfile.owner → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M422.05,-527.47C451.86,-532.06 487.27,-534.65 518.95,-529.39 530.12,-527.53 541.65,-524.75 552.92,-521.49" />
+<polygon fill="#a27631" stroke="#a27631" points="553.62,-523.84 559.62,-519.48 552.21,-519.15 553.62,-523.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-536.85" font-family="Segoe UI" font-size="11.00">owner</text>
+<text xml:space="preserve" text-anchor="middle" x="549.87" y="-526.07" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="436.41" y="-520.18" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-2" class="edge" data-from="potrazivanja.CollectionProfile" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n5-&gt;n7</title>
+<g id="a_edge-2"><a xlink:title="potrazivanja.CollectionProfile.identity → potrazivanja.FinancePartnerIdentity | OneToOneField | 0..1 : 1">
+<path fill="none" stroke="#7297ab" d="M422.2,-478.85C460.47,-458.95 503.67,-434.71 518.95,-419.39 563.35,-374.88 596.23,-310.07 615.66,-264.65" />
+<polygon fill="#7297ab" stroke="#7297ab" points="617.85,-265.77 618.31,-258.37 613.33,-263.87 617.85,-265.77" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="490.07" y="-462.08" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="619.46" y="-269.01" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="431.29" y="-463.97" font-family="Segoe UI" font-size="11.00">0..1</text>
+</g>
+
+<g id="node-potrazivanja.ContactPoint" class="node" data-key="potrazivanja.ContactPoint" data-route="model/potrazivanja.ContactPoint">
+<title>n6</title>
+<g id="a_node-potrazivanja.ContactPoint"><a xlink:href="../../index.html#model/potrazivanja.ContactPoint" xlink:title="potrazivanja.ContactPoint" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M128.22,-263.78C128.22,-263.78 38.62,-263.78 38.62,-263.78 32.62,-263.78 26.62,-257.78 26.62,-251.78 26.62,-251.78 26.62,-185 26.62,-185 26.62,-179 32.62,-173 38.62,-173 38.62,-173 128.22,-173 128.22,-173 134.22,-173 140.22,-179 140.22,-185 140.22,-185 140.22,-251.78 140.22,-251.78 140.22,-257.78 134.22,-263.78 128.22,-263.78" />
+<text xml:space="preserve" text-anchor="start" x="41.42" y="-240.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="41.42" y="-215.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ContactPoint</text>
+<text xml:space="preserve" text-anchor="start" x="41.42" y="-190.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-8" class="edge" data-from="potrazivanja.ContactPoint" data-to="potrazivanja.CollectionContact">
+<title>n6-&gt;n2</title>
+<g id="a_edge-8"><a xlink:title="potrazivanja.ContactPoint.contact → potrazivanja.CollectionContact | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M140.65,-248.16C179.28,-268.61 231.1,-296.04 273.84,-318.67" />
+<polygon fill="#7297ab" stroke="#7297ab" points="272.49,-320.72 279.82,-321.83 274.78,-316.39 272.49,-320.72" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="220.97" y="-306.66" font-family="Segoe UI" font-size="11.00">contact</text>
+<text xml:space="preserve" text-anchor="middle" x="266.18" y="-318.83" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="155.63" y="-245.97" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

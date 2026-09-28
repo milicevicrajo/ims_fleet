@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="499pt" height="318pt" viewBox="0.00 0.00 499.00 318.00" role="img" aria-label="EvaluationApproval · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 296.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M438.57,-239.78C438.57,-239.78 311.47,-239.78 311.47,-239.78 305.47,-239.78 299.47,-233.78 299.47,-227.78 299.47,-227.78 299.47,-161 299.47,-161 299.47,-155 305.47,-149 311.47,-149 311.47,-149 438.57,-149 438.57,-149 444.57,-149 450.57,-155 450.57,-161 450.57,-161 450.57,-227.78 450.57,-227.78 450.57,-233.78 444.57,-239.78 438.57,-239.78" />
+<text xml:space="preserve" text-anchor="start" x="314.27" y="-216.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="314.27" y="-191.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="314.27" y="-166.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.EmployeeEvaluation" class="node" data-key="hr.EmployeeEvaluation" data-route="model/hr.EmployeeEvaluation">
+<title>n1</title>
+<g id="a_node-hr.EmployeeEvaluation"><a xlink:href="../../index.html#model/hr.EmployeeEvaluation" xlink:title="hr.EmployeeEvaluation" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M443.45,-125.78C443.45,-125.78 306.6,-125.78 306.6,-125.78 300.6,-125.78 294.6,-119.78 294.6,-113.78 294.6,-113.78 294.6,-47 294.6,-47 294.6,-41 300.6,-35 306.6,-35 306.6,-35 443.45,-35 443.45,-35 449.45,-35 455.45,-41 455.45,-47 455.45,-47 455.45,-113.78 455.45,-113.78 455.45,-119.78 449.45,-125.78 443.45,-125.78" />
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-102.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-77.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EmployeeEvaluation</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-52.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.EvaluationApproval" class="node" data-key="hr.EvaluationApproval" data-route="model/hr.EvaluationApproval">
+<title>n2</title>
+<g id="a_node-hr.EvaluationApproval"><a xlink:href="../../index.html#model/hr.EvaluationApproval" xlink:title="hr.EvaluationApproval" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M174.35,-274.78C174.35,-274.78 12,-274.78 12,-274.78 6,-274.78 0,-268.78 0,-262.78 0,-262.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 174.35,0 174.35,0 180.35,0 186.35,-6 186.35,-12 186.35,-12 186.35,-262.78 186.35,-262.78 186.35,-268.78 180.35,-274.78 174.35,-274.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-251.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-226.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EvaluationApproval</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">evaluation : EmployeeEvaluation</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">stage : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">actor : CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">actor_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">document_date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">coefficient : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">comment : Text</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr.EvaluationApproval" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="hr.EvaluationApproval.actor → core.CustomUser | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M186.58,-156.21C220.34,-163.09 258.28,-170.82 291.16,-177.51" />
+<polygon fill="#a27631" stroke="#a27631" points="290.57,-179.89 297.92,-178.89 291.55,-175.09 290.57,-179.89" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="240.48" y="-175.55" font-family="Segoe UI" font-size="11.00">actor</text>
+<text xml:space="preserve" text-anchor="middle" x="284.81" y="-179.74" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="201.17" y="-149.76" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.EvaluationApproval" data-to="hr.EmployeeEvaluation">
+<title>n2-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="hr.EvaluationApproval.evaluation → hr.EmployeeEvaluation | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M186.58,-118.57C218.73,-112.02 254.66,-104.7 286.41,-98.24" />
+<polygon fill="#7297ab" stroke="#7297ab" points="286.53,-100.71 292.9,-96.91 285.55,-95.91 286.53,-100.71" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="240.48" y="-116.85" font-family="Segoe UI" font-size="11.00">evaluation</text>
+<text xml:space="preserve" text-anchor="middle" x="282.33" y="-102.59" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="198.64" y="-106.69" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="446pt" height="295pt" viewBox="0.00 0.00 446.00 295.00" role="img" aria-label="Incident · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 273.38)">
+<title>G</title>
+
+<g id="node-fleet.Incident" class="node" data-key="fleet.Incident" data-route="model/fleet.Incident">
+<title>n0</title>
+<g id="a_node-fleet.Incident"><a xlink:href="../../index.html#model/fleet.Incident" xlink:title="fleet.Incident" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M126.35,-251.78C126.35,-251.78 12,-251.78 12,-251.78 6,-251.78 0,-245.78 0,-239.78 0,-239.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 126.35,0 126.35,0 132.35,0 138.35,-6 138.35,-12 138.35,-12 138.35,-239.78 138.35,-239.78 138.35,-245.78 132.35,-251.78 126.35,-251.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-228.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-203.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Incident</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">employee : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">vehicle : Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">violation : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">location : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">fine_amount : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">note : Text ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.Vehicle" class="node" data-key="fleet.Vehicle" data-route="model/fleet.Vehicle">
+<title>n1</title>
+<g id="a_node-fleet.Vehicle"><a xlink:href="../../index.html#model/fleet.Vehicle" xlink:title="fleet.Vehicle" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M390.95,-228.28C390.95,-228.28 257.85,-228.28 257.85,-228.28 251.85,-228.28 245.85,-222.28 245.85,-216.28 245.85,-216.28 245.85,-149.5 245.85,-149.5 245.85,-143.5 251.85,-137.5 257.85,-137.5 257.85,-137.5 390.95,-137.5 390.95,-137.5 396.95,-137.5 402.95,-143.5 402.95,-149.5 402.95,-149.5 402.95,-216.28 402.95,-216.28 402.95,-222.28 396.95,-228.28 390.95,-228.28" />
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-205.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-180.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-154.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">28 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="fleet.Incident" data-to="fleet.Vehicle">
+<title>n0-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="fleet.Incident.vehicle → fleet.Vehicle | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M138.7,-141.32C169.08,-148.15 205.16,-156.27 237.33,-163.52" />
+<polygon fill="#7297ab" stroke="#7297ab" points="236.58,-165.86 243.95,-165.01 237.66,-161.08 236.58,-165.86" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="192.1" y="-162.35" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="230.77" y="-165.59" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="153.36" y="-135.17" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n2</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M390.95,-114.28C390.95,-114.28 257.85,-114.28 257.85,-114.28 251.85,-114.28 245.85,-108.28 245.85,-102.28 245.85,-102.28 245.85,-35.5 245.85,-35.5 245.85,-29.5 251.85,-23.5 257.85,-23.5 257.85,-23.5 390.95,-23.5 390.95,-23.5 396.95,-23.5 402.95,-29.5 402.95,-35.5 402.95,-35.5 402.95,-102.28 402.95,-102.28 402.95,-108.28 396.95,-114.28 390.95,-114.28" />
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-91.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-66.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-40.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.Incident" data-to="hr.Employee">
+<title>n0-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="fleet.Incident.employee → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M138.7,-110.46C169.08,-103.63 205.16,-95.51 237.33,-88.26" />
+<polygon fill="#a27631" stroke="#a27631" points="237.66,-90.7 243.95,-86.77 236.58,-85.92 237.66,-90.7" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="192.1" y="-107.05" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="233.55" y="-92.66" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="150.57" y="-98.35" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="182pt" height="617pt" viewBox="0.00 0.00 182.00 617.00" role="img" aria-label="Baza · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 595.38)">
+<title>G</title>
+
+<g id="node-naplata.Baza" class="node" data-key="naplata.Baza" data-route="model/naplata.Baza">
+<title>n0</title>
+<g id="a_node-naplata.Baza"><a xlink:href="../../index.html#model/naplata.Baza" xlink:title="naplata.Baza" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M126.35,-573.78C126.35,-573.78 12,-573.78 12,-573.78 6,-573.78 0,-567.78 0,-561.78 0,-561.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 126.35,0 126.35,0 132.35,0 138.35,-6 138.35,-12 138.35,-12 138.35,-561.78 138.35,-561.78 138.35,-567.78 132.35,-573.78 126.35,-573.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-550.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-525.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Baza</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-500.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-477.19" font-family="Segoe UI" font-size="11.00">god : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-454.19" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-431.19" font-family="Segoe UI" font-size="11.00">naz_par : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-408.19" font-family="Segoe UI" font-size="11.00">sif_vrs : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-385.19" font-family="Segoe UI" font-size="11.00">br_naloga : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">dat_naloga : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">stavka : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">vez_dok : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">datum : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">oj : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">dpo : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">kom : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">skr_naz : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">deviza : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">promena : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">stavka_k : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">d_p : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">knt : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">dug : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">pot : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">sif_pos : Char ?</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

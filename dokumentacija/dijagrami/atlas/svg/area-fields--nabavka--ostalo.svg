@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="769pt" height="893pt" viewBox="0.00 0.00 769.00 893.00" role="img" aria-label="Nabavka · Pomoćne evidencije · polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 871.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M712.92,-584.28C712.92,-584.28 585.83,-584.28 585.83,-584.28 579.83,-584.28 573.83,-578.28 573.83,-572.28 573.83,-572.28 573.83,-505.5 573.83,-505.5 573.83,-499.5 579.83,-493.5 585.83,-493.5 585.83,-493.5 712.92,-493.5 712.92,-493.5 718.92,-493.5 724.92,-499.5 724.92,-505.5 724.92,-505.5 724.92,-572.28 724.92,-572.28 724.92,-578.28 718.92,-584.28 712.92,-584.28" />
+<text xml:space="preserve" text-anchor="start" x="588.62" y="-561.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="588.62" y="-536.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="588.62" y="-510.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-core.OrganizationalUnit" class="node" data-key="core.OrganizationalUnit" data-route="model/core.OrganizationalUnit">
+<title>n1</title>
+<g id="a_node-core.OrganizationalUnit"><a xlink:href="../../index.html#model/core.OrganizationalUnit" xlink:title="core.OrganizationalUnit" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M713.3,-470.28C713.3,-470.28 585.45,-470.28 585.45,-470.28 579.45,-470.28 573.45,-464.28 573.45,-458.28 573.45,-458.28 573.45,-391.5 573.45,-391.5 573.45,-385.5 579.45,-379.5 585.45,-379.5 585.45,-379.5 713.3,-379.5 713.3,-379.5 719.3,-379.5 725.3,-385.5 725.3,-391.5 725.3,-391.5 725.3,-458.28 725.3,-458.28 725.3,-464.28 719.3,-470.28 713.3,-470.28" />
+<text xml:space="preserve" text-anchor="start" x="588.25" y="-447.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="588.25" y="-422.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrganizationalUnit</text>
+<text xml:space="preserve" text-anchor="start" x="588.25" y="-396.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-nabavka.FiskalniRacun" class="node" data-key="nabavka.FiskalniRacun" data-route="model/nabavka.FiskalniRacun">
+<title>n2</title>
+<g id="a_node-nabavka.FiskalniRacun"><a xlink:href="../../index.html#model/nabavka.FiskalniRacun" xlink:title="nabavka.FiskalniRacun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M450.2,-849.78C450.2,-849.78 257.85,-849.78 257.85,-849.78 251.85,-849.78 245.85,-843.78 245.85,-837.78 245.85,-837.78 245.85,-12 245.85,-12 245.85,-6 251.85,0 257.85,0 257.85,0 450.2,0 450.2,0 456.2,0 462.2,-6 462.2,-12 462.2,-12 462.2,-837.78 462.2,-837.78 462.2,-843.78 456.2,-849.78 450.2,-849.78" />
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-826.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-801.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FiskalniRacun</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-776.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-753.19" font-family="Segoe UI" font-size="11.00">link : Text</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-730.19" font-family="Segoe UI" font-size="11.00">broj_racuna : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-707.19" font-family="Segoe UI" font-size="11.00">zatrazio : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-684.19" font-family="Segoe UI" font-size="11.00">potpisao : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-661.19" font-family="Segoe UI" font-size="11.00">brojac_ukupno : PositiveInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-638.19" font-family="Segoe UI" font-size="11.00">brojac_vrste : PositiveInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-615.19" font-family="Segoe UI" font-size="11.00">oznaka_brojaca : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-592.19" font-family="Segoe UI" font-size="11.00">vrsta_racuna : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-569.19" font-family="Segoe UI" font-size="11.00">vrsta_transakcije : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-546.19" font-family="Segoe UI" font-size="11.00">iznos : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-523.19" font-family="Segoe UI" font-size="11.00">pdv_ukupno : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-500.19" font-family="Segoe UI" font-size="11.00">pfr_vreme : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-477.19" font-family="Segoe UI" font-size="11.00">id_kupca : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-454.19" font-family="Segoe UI" font-size="11.00">pib_kupca : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-431.19" font-family="Segoe UI" font-size="11.00">na_ims : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-408.19" font-family="Segoe UI" font-size="11.00">pib_prodavca : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-385.19" font-family="Segoe UI" font-size="11.00">naziv_prodavca : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-362.19" font-family="Segoe UI" font-size="11.00">prodajno_mesto : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-339.19" font-family="Segoe UI" font-size="11.00">adresa : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-316.19" font-family="Segoe UI" font-size="11.00">grad : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-293.19" font-family="Segoe UI" font-size="11.00">opstina : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-270.19" font-family="Segoe UI" font-size="11.00">kasir : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-247.19" font-family="Segoe UI" font-size="11.00">esir_broj : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-224.19" font-family="Segoe UI" font-size="11.00">nacin_placanja : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-201.19" font-family="Segoe UI" font-size="11.00">zurnal : Text</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-178.19" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-155.19" font-family="Segoe UI" font-size="11.00">greska : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-132.19" font-family="Segoe UI" font-size="11.00">preuzeto : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-109.19" font-family="Segoe UI" font-size="11.00">job_code : OrganizationalUnit</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-86.19" font-family="Segoe UI" font-size="11.00">org_node : OrgNode ?</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-63.19" font-family="Segoe UI" font-size="11.00">napomena : Char</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-40.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="260.65" y="-17.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="nabavka.FiskalniRacun" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-2"><a xlink:title="nabavka.FiskalniRacun.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M462.59,-466.69C496.65,-479.93 533.75,-494.35 565.77,-506.79" />
+<polygon fill="#a27631" stroke="#a27631" points="564.55,-508.94 571.96,-509.2 566.33,-504.38 564.55,-508.94" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="517.83" y="-500" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="558.41" y="-507.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="477.56" y="-462.76" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="nabavka.FiskalniRacun" data-to="core.OrganizationalUnit">
+<title>n2-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="nabavka.FiskalniRacun.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M462.59,-424.89C496.37,-424.89 533.12,-424.89 564.96,-424.89" />
+<polygon fill="#a27631" stroke="#a27631" points="564.86,-427.34 571.86,-424.89 564.86,-422.44 564.86,-427.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="517.83" y="-429.44" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="559.78" y="-428.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="476.19" y="-415.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-organizacija.OrgNode" class="node" data-key="organizacija.OrgNode" data-route="model/organizacija.OrgNode">
+<title>n4</title>
+<g id="a_node-organizacija.OrgNode"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M712.92,-356.28C712.92,-356.28 585.83,-356.28 585.83,-356.28 579.83,-356.28 573.83,-350.28 573.83,-344.28 573.83,-344.28 573.83,-277.5 573.83,-277.5 573.83,-271.5 579.83,-265.5 585.83,-265.5 585.83,-265.5 712.92,-265.5 712.92,-265.5 718.92,-265.5 724.92,-271.5 724.92,-277.5 724.92,-277.5 724.92,-344.28 724.92,-344.28 724.92,-350.28 718.92,-356.28 712.92,-356.28" />
+<text xml:space="preserve" text-anchor="start" x="588.62" y="-333.19" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="588.62" y="-308.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="588.62" y="-282.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="nabavka.FiskalniRacun" data-to="organizacija.OrgNode">
+<title>n2-&gt;n4</title>
+<g id="a_edge-1"><a xlink:title="nabavka.FiskalniRacun.org_node → organizacija.OrgNode | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M462.59,-383.09C496.65,-369.85 533.75,-355.43 565.77,-342.99" />
+<polygon fill="#a27631" stroke="#a27631" points="566.33,-345.4 571.96,-340.58 564.55,-340.84 566.33,-345.4" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="517.83" y="-375.86" font-family="Segoe UI" font-size="11.00">org_node</text>
+<text xml:space="preserve" text-anchor="middle" x="563" y="-347.92" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="472.97" y="-369.3" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-nabavka.FiskalniRacunStavka" class="node" data-key="nabavka.FiskalniRacunStavka" data-route="model/nabavka.FiskalniRacunStavka">
+<title>n3</title>
+<g id="a_node-nabavka.FiskalniRacunStavka"><a xlink:href="../../index.html#model/nabavka.FiskalniRacunStavka" xlink:title="nabavka.FiskalniRacunStavka" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M149.6,-596.78C149.6,-596.78 12,-596.78 12,-596.78 6,-596.78 0,-590.78 0,-584.78 0,-584.78 0,-265 0,-265 0,-259 6,-253 12,-253 12,-253 149.6,-253 149.6,-253 155.6,-253 161.6,-259 161.6,-265 161.6,-265 161.6,-584.78 161.6,-584.78 161.6,-590.78 155.6,-596.78 149.6,-596.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-573.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-548.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FiskalniRacunStavka</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-523.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-500.19" font-family="Segoe UI" font-size="11.00">racun : FiskalniRacun</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-477.19" font-family="Segoe UI" font-size="11.00">redni_broj : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-454.19" font-family="Segoe UI" font-size="11.00">gtin : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-431.19" font-family="Segoe UI" font-size="11.00">naziv : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-408.19" font-family="Segoe UI" font-size="11.00">kolicina : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-385.19" font-family="Segoe UI" font-size="11.00">jedinicna_cena : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">ukupno : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">oznaka_pdv : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">stopa_pdv : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">osnovica : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">pdv : Decimal ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="nabavka.FiskalniRacunStavka" data-to="nabavka.FiskalniRacun">
+<title>n3-&gt;n2</title>
+<g id="a_edge-3"><a xlink:title="nabavka.FiskalniRacunStavka.racun → nabavka.FiskalniRacun | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M162.08,-424.89C185.76,-424.89 212.15,-424.89 237.58,-424.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="237.29,-427.34 244.29,-424.89 237.29,-422.44 237.29,-427.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="203.72" y="-429.44" font-family="Segoe UI" font-size="11.00">racun</text>
+<text xml:space="preserve" text-anchor="middle" x="232.2" y="-428.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="175.67" y="-415.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

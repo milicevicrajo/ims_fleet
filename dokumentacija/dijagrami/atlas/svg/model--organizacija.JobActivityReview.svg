@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="427pt" height="341pt" viewBox="0.00 0.00 427.00 341.00" role="img" aria-label="JobActivityReview · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 319.38)">
+<title>G</title>
+
+<g id="node-organizacija.JobActivityReview" class="node" data-key="organizacija.JobActivityReview" data-route="model/organizacija.JobActivityReview">
+<title>n0</title>
+<g id="a_node-organizacija.JobActivityReview"><a xlink:href="../../index.html#model/organizacija.JobActivityReview" xlink:title="organizacija.JobActivityReview" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M136.85,-297.78C136.85,-297.78 12,-297.78 12,-297.78 6,-297.78 0,-291.78 0,-285.78 0,-285.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 136.85,0 136.85,0 142.85,0 148.85,-6 148.85,-12 148.85,-12 148.85,-285.78 148.85,-285.78 148.85,-291.78 142.85,-297.78 136.85,-297.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-274.69" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-249.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">JobActivityReview</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">node : OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">window_from : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">window_to : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">has_turnover : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">rows : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">debit : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">credit : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">decided_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">note : Char</text>
+</a>
+</g>
+</g>
+
+<g id="node-organizacija.OrgNode" class="node" data-key="organizacija.OrgNode" data-route="model/organizacija.OrgNode">
+<title>n1</title>
+<g id="a_node-organizacija.OrgNode"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M371.45,-194.28C371.45,-194.28 244.35,-194.28 244.35,-194.28 238.35,-194.28 232.35,-188.28 232.35,-182.28 232.35,-182.28 232.35,-115.5 232.35,-115.5 232.35,-109.5 238.35,-103.5 244.35,-103.5 244.35,-103.5 371.45,-103.5 371.45,-103.5 377.45,-103.5 383.45,-109.5 383.45,-115.5 383.45,-115.5 383.45,-182.28 383.45,-182.28 383.45,-188.28 377.45,-194.28 371.45,-194.28" />
+<text xml:space="preserve" text-anchor="start" x="247.15" y="-171.19" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="247.15" y="-146.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="247.15" y="-120.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="organizacija.JobActivityReview" data-to="organizacija.OrgNode">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="organizacija.JobActivityReview.node → organizacija.OrgNode | OneToOneField | 0..1 : 1">
+<path fill="none" stroke="#7297ab" d="M149.3,-148.89C172.97,-148.89 199.34,-148.89 223.64,-148.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="223.62,-151.34 230.62,-148.89 223.62,-146.44 223.62,-151.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="190.6" y="-153.44" font-family="Segoe UI" font-size="11.00">node</text>
+<text xml:space="preserve" text-anchor="middle" x="218.54" y="-152.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="162.9" y="-139.6" font-family="Segoe UI" font-size="11.00">0..1</text>
+</g>
+</g>
+</svg>

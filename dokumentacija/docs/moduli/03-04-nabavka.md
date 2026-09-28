@@ -148,6 +148,34 @@ Primer: `ZNG-43/2026-7`. Bez centra u organizacionoj jedinici broj se **ne može
 Naziv partnera na spiskovima skraćuje se na **50 znakova**, a pun naziv se vidi kao
 `title` atribut (na prelazak mišem). [P]
 
+### Fiskalni računi — učitavanje čitačem QR koda (od 28.09.2026.) [P]
+
+**Nabavka → Fiskalni računi** (`/nabavka/fiskalni-racuni/`) je spisak učitanih fiskalnih računa sa
+pregledom detalja. Dugme **Očitaj QR kod računa** otvara prozor: izabere se **šifra posla**
+(obavezna; nude se samo aktivne šifre iz obuhvata korisnika, izabrana ostaje za sledeće račune),
+čitač — koji radi kao tastatura — upiše link sa QR koda i pritisne Enter, i obrada kreće odmah.
+Rezultat se vidi u prozoru, a polje je spremno za sledeći račun.
+
+| Korak | Šta se radi |
+|---|---|
+| Očitavanje | Iz linka se čita parametar `vl` (QR sadržaj). Njegov **kontrolni zbir (MD5 na kraju)** mora da odgovara; ako čitač radi na srpskom latiničnom ili ćiriličnom rasporedu tastature (zamenjeni `y`/`z`, `/`, `:`, `+`, `=`), aplikacija link sama vraća na US raspored. Pogrešno očitan link se odbija i ništa se ne upisuje |
+| Zaglavlje iz QR koda | Broj računa (PFR), brojači, iznos, vreme, vrsta računa i transakcije, ID kupca |
+| Stranica za proveru | `suf.purs.gov.rs/v/?vl=…`: PIB i naziv prodavca, prodajno mesto, adresa, kasir, ESIR broj, način plaćanja, ukupan PDV, ceo tekst računa, token |
+| Stavke | `POST suf.purs.gov.rs/specifications` (broj računa + token): GTIN, naziv, količina, jedinična cena, ukupno, oznaka i stopa PDV-a, osnovica, PDV |
+| Upis | `FiskalniRacun` + `FiskalniRacunStavka`; link se čuva u celosti. Isti račun (PFR broj) se ne upisuje dva puta |
+
+**Kupac:** račun izdat na IMS (PIB 100223617, `IMS_PIB` u postavkama) je označen „IMS”; račun na
+drugog kupca ili na fizičko lice (bez ID kupca) se upisuje, ali odmah dobija **upozorenje** i
+oznaku u spisku. Upozorenje dobijaju i računi koji nisu promet (predračun, kopija, obuka, avans) i
+refundacije, kao i račun čiji zbir stavki nije jednak iznosu.
+
+**Kad stranica Poreske uprave ne radi**, račun se upisuje iz QR koda u statusu „Čeka proveru”;
+stavke se preuzimaju dugmetom **Ponovo preuzmi** na detalju ili noćnim zadatkom u 07:30
+(`nabavka.tasks.fiskalni_ponovi_task`). Obuhvat: račun se vezuje za šifru posla i registar
+(`org_node`), pa ga vidi ko ima tu šifru u obuhvatu dodela (i onaj ko ga je učitao). Dozvole:
+`nabavka:fiskalni_list`, `_data`, `_scan`, `_detail`, `_refresh`, `_update` (šifra posla i
+napomena), `_delete`.
+
 ### Kupovni ugovori — nabavni pogled na modul Ugovori [P]
 
 Lista **ne duplira ugovore** — čita ih iz aplikacije `ugovori`.

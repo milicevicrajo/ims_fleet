@@ -130,6 +130,13 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "45",
     },
     {
+        # Od 28.09.2026.: fiskalni racuni cije stavke nisu preuzete jer stranica za proveru nije radila.
+        "name": "Nabavka - fiskalni racuni koji cekaju proveru",
+        "task": "nabavka.tasks.fiskalni_ponovi_task",
+        "hour": "7",
+        "minute": "30",
+    },
+    {
         "name": "Nabavka - roba",
         "aliases": ["Nabavka roba"],
         "task": "nabavka.tasks.sync_goods_task",

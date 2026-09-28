@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="345pt" height="257pt" viewBox="0.00 0.00 345.00 257.00" role="img" aria-label="Administracija · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 235.88)">
+<title>G</title>
+
+<g id="node-core" class="node" data-key="core" data-route="models/core">
+<title>n0</title>
+<g id="a_node-core"><a xlink:href="../../index.html#models/core" xlink:title="Administracija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M97.35,-125.53C97.35,-125.53 12,-125.53 12,-125.53 6,-125.53 0,-119.53 0,-113.53 0,-113.53 0,-100.75 0,-100.75 0,-94.75 6,-88.75 12,-88.75 12,-88.75 97.35,-88.75 97.35,-88.75 103.35,-88.75 109.35,-94.75 109.35,-100.75 109.35,-100.75 109.35,-113.53 109.35,-113.53 109.35,-119.53 103.35,-125.53 97.35,-125.53" />
+<text xml:space="preserve" text-anchor="middle" x="54.68" y="-103.59" font-family="Segoe UI" font-size="14.00">Administracija</text>
+</a>
+</g>
+</g>
+
+<g id="node-pristup" class="node" data-key="pristup" data-route="area/core/pristup">
+<title>n1</title>
+<g id="a_node-pristup"><a xlink:href="../../index.html#area/core/pristup" xlink:title="Administracija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M289.45,-214.28C289.45,-214.28 179.35,-214.28 179.35,-214.28 173.35,-214.28 167.35,-208.28 167.35,-202.28 167.35,-202.28 167.35,-170 167.35,-170 167.35,-164 173.35,-158 179.35,-158 179.35,-158 289.45,-158 289.45,-158 295.45,-158 301.45,-164 301.45,-170 301.45,-170 301.45,-202.28 301.45,-202.28 301.45,-208.28 295.45,-214.28 289.45,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="234.4" y="-192.34" font-family="Segoe UI" font-size="14.00">Korisnici i dozvole</text>
+<text xml:space="preserve" text-anchor="middle" x="234.4" y="-172.84" font-family="Segoe UI" font-size="14.00">4 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="core" data-to="pristup">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M97.79,-125.86C116.8,-134.31 139.8,-144.53 161.41,-154.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="160.21,-156.29 167.6,-156.89 162.2,-151.81 160.21,-156.29" />
+</g>
+
+<g id="node-evidencija" class="node" data-key="evidencija" data-route="area/core/evidencija">
+<title>n2</title>
+<g id="a_node-evidencija"><a xlink:href="../../index.html#area/core/evidencija" xlink:title="Administracija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M273.32,-135.28C273.32,-135.28 195.47,-135.28 195.47,-135.28 189.47,-135.28 183.47,-129.28 183.47,-123.28 183.47,-123.28 183.47,-91 183.47,-91 183.47,-85 189.47,-79 195.47,-79 195.47,-79 273.32,-79 273.32,-79 279.32,-79 285.32,-85 285.32,-91 285.32,-91 285.32,-123.28 285.32,-123.28 285.32,-129.28 279.32,-135.28 273.32,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="234.4" y="-113.34" font-family="Segoe UI" font-size="14.00">Šifre i istorija</text>
+<text xml:space="preserve" text-anchor="middle" x="234.4" y="-93.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="core" data-to="evidencija">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M109.48,-107.14C130.13,-107.14 153.8,-107.14 174.87,-107.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="174.6,-109.59 181.6,-107.14 174.6,-104.69 174.6,-109.59" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/core">
+<title>n3</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/core" xlink:title="Administracija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M283.82,-56.28C283.82,-56.28 184.97,-56.28 184.97,-56.28 178.97,-56.28 172.97,-50.28 172.97,-44.28 172.97,-44.28 172.97,-12 172.97,-12 172.97,-6 178.97,0 184.97,0 184.97,0 283.82,0 283.82,0 289.82,0 295.82,-6 295.82,-12 295.82,-12 295.82,-44.28 295.82,-44.28 295.82,-50.28 289.82,-56.28 283.82,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="234.4" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="234.4" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="core" data-to="flows">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M97.79,-88.42C117.9,-79.48 142.46,-68.56 165.14,-58.48" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="165.96,-60.8 171.36,-55.72 163.97,-56.32 165.96,-60.8" />
+</g>
+</g>
+</svg>

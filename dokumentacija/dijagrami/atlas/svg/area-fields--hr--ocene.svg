@@ -1,0 +1,327 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="896pt" height="1196pt" viewBox="0.00 0.00 896.00 1196.00" role="img" aria-label="Kadrovi · Ocenjivanje · polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 1174.12)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M822.05,-1073.78C822.05,-1073.78 694.95,-1073.78 694.95,-1073.78 688.95,-1073.78 682.95,-1067.78 682.95,-1061.78 682.95,-1061.78 682.95,-995 682.95,-995 682.95,-989 688.95,-983 694.95,-983 694.95,-983 822.05,-983 822.05,-983 828.05,-983 834.05,-989 834.05,-995 834.05,-995 834.05,-1061.78 834.05,-1061.78 834.05,-1067.78 828.05,-1073.78 822.05,-1073.78" />
+<text xml:space="preserve" text-anchor="start" x="697.75" y="-1050.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="697.75" y="-1025.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="697.75" y="-1000.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n1</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M825.05,-716.78C825.05,-716.78 691.95,-716.78 691.95,-716.78 685.95,-716.78 679.95,-710.78 679.95,-704.78 679.95,-704.78 679.95,-638 679.95,-638 679.95,-632 685.95,-626 691.95,-626 691.95,-626 825.05,-626 825.05,-626 831.05,-626 837.05,-632 837.05,-638 837.05,-638 837.05,-704.78 837.05,-704.78 837.05,-710.78 831.05,-716.78 825.05,-716.78" />
+<text xml:space="preserve" text-anchor="start" x="694.75" y="-693.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="694.75" y="-668.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="694.75" y="-643.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.EmployeeEvaluation" class="node" data-key="hr.EmployeeEvaluation" data-route="model/hr.EmployeeEvaluation">
+<title>n2</title>
+<g id="a_node-hr.EmployeeEvaluation"><a xlink:href="../../index.html#model/hr.EmployeeEvaluation" xlink:title="hr.EmployeeEvaluation" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M513.95,-1076.28C513.95,-1076.28 306.6,-1076.28 306.6,-1076.28 300.6,-1076.28 294.6,-1070.28 294.6,-1064.28 294.6,-1064.28 294.6,-652.5 294.6,-652.5 294.6,-646.5 300.6,-640.5 306.6,-640.5 306.6,-640.5 513.95,-640.5 513.95,-640.5 519.95,-640.5 525.95,-646.5 525.95,-652.5 525.95,-652.5 525.95,-1064.28 525.95,-1064.28 525.95,-1070.28 519.95,-1076.28 513.95,-1076.28" />
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-1053.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-1028.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">EmployeeEvaluation</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-1002.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-979.69" font-family="Segoe UI" font-size="11.00">employee : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-956.69" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-933.69" font-family="Segoe UI" font-size="11.00">month : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-910.69" font-family="Segoe UI" font-size="11.00">revision : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-887.69" font-family="Segoe UI" font-size="11.00">unit_code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-864.69" font-family="Segoe UI" font-size="11.00">supervisor : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-841.69" font-family="Segoe UI" font-size="11.00">director : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-818.69" font-family="Segoe UI" font-size="11.00">general_director : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-795.69" font-family="Segoe UI" font-size="11.00">snapshot : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-772.69" font-family="Segoe UI" font-size="11.00">stimulation : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-749.69" font-family="Segoe UI" font-size="11.00">personal_coefficient : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-726.69" font-family="Segoe UI" font-size="11.00">request_key : UUID [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-703.69" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-680.69" font-family="Segoe UI" font-size="11.00">created_by : CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="309.4" y="-657.69" font-family="Segoe UI" font-size="11.00">source_evaluation : EmployeeEvaluation ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-11" class="edge" data-from="hr.EmployeeEvaluation" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-11"><a xlink:title="hr.EmployeeEvaluation.created_by → core.CustomUser | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M526.08,-914.76C574.74,-938.65 630.36,-965.96 674.87,-987.82" />
+<polygon fill="#a27631" stroke="#a27631" points="673.76,-990 681.13,-990.89 675.92,-985.6 673.76,-990" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-968.17" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="667.49" y="-988.3" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="541.08" y="-912.11" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-7" class="edge" data-from="hr.EmployeeEvaluation" data-to="hr.Employee">
+<title>n2-&gt;n1</title>
+<g id="a_edge-7"><a xlink:title="hr.EmployeeEvaluation.employee → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M526.33,-721.73C535.51,-714.87 545.08,-708.66 554.95,-703.39 590.29,-684.54 633.68,-676.08 671.22,-672.52" />
+<polygon fill="#7297ab" stroke="#7297ab" points="671.36,-674.96 678.13,-671.92 670.94,-670.08 671.36,-674.96" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-707.94" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="666.64" y="-676.32" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="533.52" y="-705.61" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-8" class="edge" data-from="hr.EmployeeEvaluation" data-to="hr.Employee">
+<title>n2-&gt;n1</title>
+<g id="a_edge-8"><a xlink:title="hr.EmployeeEvaluation.supervisor → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M526.31,-847.44C562.93,-840.32 602.42,-828.62 635.2,-809.39 671.01,-788.38 701.93,-753.24 723.71,-723.68" />
+<polygon fill="#7297ab" stroke="#7297ab" points="725.49,-725.41 727.61,-718.3 721.52,-722.53 725.49,-725.41" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-844.17" font-family="Segoe UI" font-size="11.00">supervisor</text>
+<text xml:space="preserve" text-anchor="middle" x="725.66" y="-728.85" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="538.35" y="-835.54" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-9" class="edge" data-from="hr.EmployeeEvaluation" data-to="hr.Employee">
+<title>n2-&gt;n1</title>
+<g id="a_edge-9"><a xlink:title="hr.EmployeeEvaluation.director → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M526.25,-801.24C535.88,-797.04 545.53,-793.03 554.95,-789.39 589.67,-775.96 602.06,-782.35 635.2,-765.39 657.9,-753.77 680.64,-737.79 700.24,-722.3" />
+<polygon fill="#7297ab" stroke="#7297ab" points="701.66,-724.31 705.59,-718.02 698.59,-720.48 701.66,-724.31" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-793.94" font-family="Segoe UI" font-size="11.00">director</text>
+<text xml:space="preserve" text-anchor="middle" x="700.12" y="-727.57" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="536.2" y="-787.06" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-10" class="edge" data-from="hr.EmployeeEvaluation" data-to="hr.Employee">
+<title>n2-&gt;n1</title>
+<g id="a_edge-10"><a xlink:title="hr.EmployeeEvaluation.general_director → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M526.13,-762.56C535.62,-756.36 545.29,-750.54 554.95,-745.39 588.03,-727.75 599.9,-732.02 635.2,-719.39 647.12,-715.13 659.61,-710.46 671.88,-705.75" />
+<polygon fill="#7297ab" stroke="#7297ab" points="672.41,-708.17 678.06,-703.37 670.65,-703.6 672.41,-708.17" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-749.94" font-family="Segoe UI" font-size="11.00">general_director</text>
+<text xml:space="preserve" text-anchor="middle" x="669.07" y="-710.68" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="534.09" y="-746.9" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-12" class="edge" data-from="hr.EmployeeEvaluation" data-to="hr.EmployeeEvaluation">
+<title>n2-&gt;n2</title>
+<g id="a_edge-12"><a xlink:title="hr.EmployeeEvaluation.source_evaluation → hr.EmployeeEvaluation | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M387.69,-1076.64C392.96,-1090.75 400.49,-1099.28 410.27,-1099.28 418.15,-1099.28 424.56,-1093.76 429.51,-1084.25" />
+<polygon fill="#7297ab" stroke="#7297ab" points="431.67,-1085.42 432.25,-1078.02 427.19,-1083.44 431.67,-1085.42" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="410.27" y="-1103.83" font-family="Segoe UI" font-size="11.00">source_evaluation</text>
+<text xml:space="preserve" text-anchor="middle" x="433.19" y="-1088.69" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="398.68" y="-1083.9" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.EvaluationApproval" class="node" data-key="hr.EvaluationApproval" data-route="model/hr.EvaluationApproval">
+<title>n3</title>
+<g id="a_node-hr.EvaluationApproval"><a xlink:href="../../index.html#model/hr.EvaluationApproval" xlink:title="hr.EvaluationApproval" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M174.35,-1144.78C174.35,-1144.78 12,-1144.78 12,-1144.78 6,-1144.78 0,-1138.78 0,-1132.78 0,-1132.78 0,-882 0,-882 0,-876 6,-870 12,-870 12,-870 174.35,-870 174.35,-870 180.35,-870 186.35,-876 186.35,-882 186.35,-882 186.35,-1132.78 186.35,-1132.78 186.35,-1138.78 180.35,-1144.78 174.35,-1144.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1121.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1096.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EvaluationApproval</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1071.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1048.19" font-family="Segoe UI" font-size="11.00">evaluation : EmployeeEvaluation</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1025.19" font-family="Segoe UI" font-size="11.00">stage : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1002.19" font-family="Segoe UI" font-size="11.00">actor : CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-979.19" font-family="Segoe UI" font-size="11.00">actor_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-956.19" font-family="Segoe UI" font-size="11.00">document_date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-933.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-910.19" font-family="Segoe UI" font-size="11.00">coefficient : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-887.19" font-family="Segoe UI" font-size="11.00">comment : Text</text>
+</a>
+</g>
+</g>
+
+<g id="edge-14" class="edge" data-from="hr.EvaluationApproval" data-to="core.CustomUser">
+<title>n3-&gt;n0</title>
+<g id="a_edge-14"><a xlink:title="hr.EvaluationApproval.actor → core.CustomUser | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M186.71,-1072.63C219.27,-1091.95 257.12,-1110.55 294.6,-1120.39 394.05,-1146.49 424.96,-1139.72 525.95,-1120.39 577.25,-1110.57 631.67,-1089.55 674.86,-1070.07" />
+<polygon fill="#a27631" stroke="#a27631" points="675.78,-1072.34 681.13,-1067.21 673.75,-1067.89 675.78,-1072.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="410.27" y="-1142.07" font-family="Segoe UI" font-size="11.00">actor</text>
+<text xml:space="preserve" text-anchor="middle" x="672.77" y="-1075.04" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="201.65" y="-1071.03" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-13" class="edge" data-from="hr.EvaluationApproval" data-to="hr.EmployeeEvaluation">
+<title>n3-&gt;n2</title>
+<g id="a_edge-13"><a xlink:title="hr.EvaluationApproval.evaluation → hr.EmployeeEvaluation | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M186.59,-963.69C217.9,-948.88 253.39,-932.1 286.68,-916.36" />
+<polygon fill="#7297ab" stroke="#7297ab" points="287.55,-918.66 292.83,-913.45 285.45,-914.23 287.55,-918.66" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="240.47" y="-950.79" font-family="Segoe UI" font-size="11.00">evaluation</text>
+<text xml:space="preserve" text-anchor="middle" x="284.61" y="-921.4" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="196.17" y="-949.2" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.EvaluationCriterion" class="node" data-key="hr.EvaluationCriterion" data-route="model/hr.EvaluationCriterion">
+<title>n4</title>
+<g id="a_node-hr.EvaluationCriterion"><a xlink:href="../../index.html#model/hr.EvaluationCriterion" xlink:title="hr.EvaluationCriterion" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M840.8,-205.78C840.8,-205.78 676.2,-205.78 676.2,-205.78 670.2,-205.78 664.2,-199.78 664.2,-193.78 664.2,-193.78 664.2,-35 664.2,-35 664.2,-29 670.2,-23 676.2,-23 676.2,-23 840.8,-23 840.8,-23 846.8,-23 852.8,-29 852.8,-35 852.8,-35 852.8,-193.78 852.8,-193.78 852.8,-199.78 846.8,-205.78 840.8,-205.78" />
+<text xml:space="preserve" text-anchor="start" x="679" y="-182.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="679" y="-157.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EvaluationCriterion</text>
+<text xml:space="preserve" text-anchor="start" x="679" y="-132.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="679" y="-109.19" font-family="Segoe UI" font-size="11.00">code : PositiveSmallInteger [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="679" y="-86.19" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="679" y="-63.19" font-family="Segoe UI" font-size="11.00">sort_order : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="679" y="-40.19" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.EvaluationEmployeeSetup" class="node" data-key="hr.EvaluationEmployeeSetup" data-route="model/hr.EvaluationEmployeeSetup">
+<title>n5</title>
+<g id="a_node-hr.EvaluationEmployeeSetup"><a xlink:href="../../index.html#model/hr.EvaluationEmployeeSetup" xlink:title="hr.EvaluationEmployeeSetup" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M497.45,-388.78C497.45,-388.78 323.1,-388.78 323.1,-388.78 317.1,-388.78 311.1,-382.78 311.1,-376.78 311.1,-376.78 311.1,-264 311.1,-264 311.1,-258 317.1,-252 323.1,-252 323.1,-252 497.45,-252 497.45,-252 503.45,-252 509.45,-258 509.45,-264 509.45,-264 509.45,-376.78 509.45,-376.78 509.45,-382.78 503.45,-388.78 497.45,-388.78" />
+<text xml:space="preserve" text-anchor="start" x="325.9" y="-365.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="325.9" y="-340.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EvaluationEmployeeSetup</text>
+<text xml:space="preserve" text-anchor="start" x="325.9" y="-315.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="325.9" y="-292.19" font-family="Segoe UI" font-size="11.00">employee : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="325.9" y="-269.19" font-family="Segoe UI" font-size="11.00">group : EvaluationGroup</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="hr.EvaluationEmployeeSetup" data-to="hr.Employee">
+<title>n5-&gt;n1</title>
+<g id="a_edge-5"><a xlink:title="hr.EvaluationEmployeeSetup.employee → hr.Employee | OneToOneField | 0..1 : 1">
+<path fill="none" stroke="#7297ab" d="M509.86,-387.78C515.36,-391.97 520.76,-396.19 525.95,-400.39 577.6,-442.17 591.24,-452.58 635.2,-502.39 667.78,-539.3 700.24,-584.67 723.53,-619.1" />
+<polygon fill="#7297ab" stroke="#7297ab" points="721.27,-620.14 727.21,-624.58 725.34,-617.4 721.27,-620.14" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-506.94" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="715.21" y="-615.14" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="524.51" y="-388.04" font-family="Segoe UI" font-size="11.00">0..1</text>
+</g>
+
+<g id="node-hr.EvaluationGroup" class="node" data-key="hr.EvaluationGroup" data-route="model/hr.EvaluationGroup">
+<title>n6</title>
+<g id="a_node-hr.EvaluationGroup"><a xlink:href="../../index.html#model/hr.EvaluationGroup" xlink:title="hr.EvaluationGroup" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M815.3,-394.28C815.3,-394.28 701.7,-394.28 701.7,-394.28 695.7,-394.28 689.7,-388.28 689.7,-382.28 689.7,-382.28 689.7,-246.5 689.7,-246.5 689.7,-240.5 695.7,-234.5 701.7,-234.5 701.7,-234.5 815.3,-234.5 815.3,-234.5 821.3,-234.5 827.3,-240.5 827.3,-246.5 827.3,-246.5 827.3,-382.28 827.3,-382.28 827.3,-388.28 821.3,-394.28 815.3,-394.28" />
+<text xml:space="preserve" text-anchor="start" x="704.5" y="-371.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="704.5" y="-346.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">EvaluationGroup</text>
+<text xml:space="preserve" text-anchor="start" x="704.5" y="-320.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="704.5" y="-297.69" font-family="Segoe UI" font-size="11.00">code : Slug [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="704.5" y="-274.69" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="704.5" y="-251.69" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="hr.EvaluationEmployeeSetup" data-to="hr.EvaluationGroup">
+<title>n5-&gt;n6</title>
+<g id="a_edge-6"><a xlink:title="hr.EvaluationEmployeeSetup.group → hr.EvaluationGroup | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M509.56,-318.69C564.01,-317.74 630.68,-316.59 681.17,-315.71" />
+<polygon fill="#7297ab" stroke="#7297ab" points="680.98,-318.17 687.94,-315.6 680.89,-313.27 680.98,-318.17" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-322.3" font-family="Segoe UI" font-size="11.00">group</text>
+<text xml:space="preserve" text-anchor="middle" x="675.97" y="-319.19" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="523.05" y="-309.16" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.EvaluationScale" class="node" data-key="hr.EvaluationScale" data-route="model/hr.EvaluationScale">
+<title>n7</title>
+<g id="a_node-hr.EvaluationScale"><a xlink:href="../../index.html#model/hr.EvaluationScale" xlink:title="hr.EvaluationScale" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M483.95,-228.78C483.95,-228.78 336.6,-228.78 336.6,-228.78 330.6,-228.78 324.6,-222.78 324.6,-216.78 324.6,-216.78 324.6,-12 324.6,-12 324.6,-6 330.6,0 336.6,0 336.6,0 483.95,0 483.95,0 489.95,0 495.95,-6 495.95,-12 495.95,-12 495.95,-216.78 495.95,-216.78 495.95,-222.78 489.95,-228.78 483.95,-228.78" />
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-205.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-180.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EvaluationScale</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-155.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-132.19" font-family="Segoe UI" font-size="11.00">group : EvaluationGroup</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-109.19" font-family="Segoe UI" font-size="11.00">criterion : EvaluationCriterion</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-86.19" font-family="Segoe UI" font-size="11.00">points : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-63.19" font-family="Segoe UI" font-size="11.00">coefficient : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-40.19" font-family="Segoe UI" font-size="11.00">description : Text</text>
+<text xml:space="preserve" text-anchor="start" x="339.4" y="-17.19" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr.EvaluationScale" data-to="hr.EvaluationCriterion">
+<title>n7-&gt;n4</title>
+<g id="a_edge-1"><a xlink:title="hr.EvaluationScale.criterion → hr.EvaluationCriterion | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M496.41,-114.39C544.49,-114.39 604.91,-114.39 655.5,-114.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="655.35,-116.84 662.35,-114.39 655.35,-111.94 655.35,-116.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-118.94" font-family="Segoe UI" font-size="11.00">criterion</text>
+<text xml:space="preserve" text-anchor="middle" x="650.26" y="-117.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="510.01" y="-105.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.EvaluationScale" data-to="hr.EvaluationGroup">
+<title>n7-&gt;n6</title>
+<g id="a_edge-0"><a xlink:title="hr.EvaluationScale.group → hr.EvaluationGroup | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M496.41,-163.57C553.23,-196.39 627.26,-239.16 681.98,-270.76" />
+<polygon fill="#7297ab" stroke="#7297ab" points="680.63,-272.82 687.92,-274.2 683.08,-268.57 680.63,-272.82" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-242.74" font-family="Segoe UI" font-size="11.00">group</text>
+<text xml:space="preserve" text-anchor="middle" x="674.29" y="-270.69" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="511.36" y="-161.93" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.EvaluationUnitSetup" class="node" data-key="hr.EvaluationUnitSetup" data-route="model/hr.EvaluationUnitSetup">
+<title>n8</title>
+<g id="a_node-hr.EvaluationUnitSetup"><a xlink:href="../../index.html#model/hr.EvaluationUnitSetup" xlink:title="hr.EvaluationUnitSetup" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M481.7,-617.28C481.7,-617.28 338.85,-617.28 338.85,-617.28 332.85,-617.28 326.85,-611.28 326.85,-605.28 326.85,-605.28 326.85,-423.5 326.85,-423.5 326.85,-417.5 332.85,-411.5 338.85,-411.5 338.85,-411.5 481.7,-411.5 481.7,-411.5 487.7,-411.5 493.7,-417.5 493.7,-423.5 493.7,-423.5 493.7,-605.28 493.7,-605.28 493.7,-611.28 487.7,-617.28 481.7,-617.28" />
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-594.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-569.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">EvaluationUnitSetup</text>
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-543.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-520.69" font-family="Segoe UI" font-size="11.00">unit_code : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-497.69" font-family="Segoe UI" font-size="11.00">supervisor : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-474.69" font-family="Segoe UI" font-size="11.00">director : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-451.69" font-family="Segoe UI" font-size="11.00">general_director : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="341.65" y="-428.69" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="hr.EvaluationUnitSetup" data-to="hr.Employee">
+<title>n8-&gt;n1</title>
+<g id="a_edge-2"><a xlink:title="hr.EvaluationUnitSetup.supervisor → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M494.15,-543.23C536.92,-558.95 589.56,-579.61 635.2,-601.39 648.05,-607.52 661.39,-614.49 674.32,-621.59" />
+<polygon fill="#7297ab" stroke="#7297ab" points="672.82,-623.56 680.13,-624.81 675.19,-619.27 672.82,-623.56" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-605.94" font-family="Segoe UI" font-size="11.00">supervisor</text>
+<text xml:space="preserve" text-anchor="middle" x="666.49" y="-621.55" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="509.1" y="-539.06" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-3" class="edge" data-from="hr.EvaluationUnitSetup" data-to="hr.Employee">
+<title>n8-&gt;n1</title>
+<g id="a_edge-3"><a xlink:title="hr.EvaluationUnitSetup.director → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M494.09,-514.1C538.06,-516.96 591.83,-525.4 635.2,-547.39 668.26,-564.16 697.71,-593.31 719.42,-619.13" />
+<polygon fill="#7297ab" stroke="#7297ab" points="717.46,-620.61 723.81,-624.45 721.24,-617.49 717.46,-620.61" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-551.94" font-family="Segoe UI" font-size="11.00">director</text>
+<text xml:space="preserve" text-anchor="middle" x="711.23" y="-616.22" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="508.13" y="-505.87" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="hr.EvaluationUnitSetup" data-to="hr.Employee">
+<title>n8-&gt;n1</title>
+<g id="a_edge-4"><a xlink:title="hr.EvaluationUnitSetup.general_director → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M493.97,-581.31C513.19,-594.65 534.14,-607.56 554.95,-617.39 591.51,-634.66 634.48,-647.11 671.42,-655.67" />
+<polygon fill="#7297ab" stroke="#7297ab" points="670.85,-658.05 678.22,-657.21 671.93,-653.27 670.85,-658.05" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="595.07" y="-649.6" font-family="Segoe UI" font-size="11.00">general_director</text>
+<text xml:space="preserve" text-anchor="middle" x="665.03" y="-657.77" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="508.76" y="-580.81" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

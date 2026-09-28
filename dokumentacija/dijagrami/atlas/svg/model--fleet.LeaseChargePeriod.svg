@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="438pt" height="272pt" viewBox="0.00 0.00 438.00 272.00" role="img" aria-label="LeaseChargePeriod · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 250.38)">
+<title>G</title>
+
+<g id="node-fleet.Lease" class="node" data-key="fleet.Lease" data-route="model/fleet.Lease">
+<title>n0</title>
+<g id="a_node-fleet.Lease"><a xlink:href="../../index.html#model/fleet.Lease" xlink:title="fleet.Lease" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M382.7,-159.78C382.7,-159.78 249.6,-159.78 249.6,-159.78 243.6,-159.78 237.6,-153.78 237.6,-147.78 237.6,-147.78 237.6,-81 237.6,-81 237.6,-75 243.6,-69 249.6,-69 249.6,-69 382.7,-69 382.7,-69 388.7,-69 394.7,-75 394.7,-81 394.7,-81 394.7,-147.78 394.7,-147.78 394.7,-153.78 388.7,-159.78 382.7,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="252.4" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="252.4" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Lease</text>
+<text xml:space="preserve" text-anchor="start" x="252.4" y="-86.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">13 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.LeaseChargePeriod" class="node" data-key="fleet.LeaseChargePeriod" data-route="model/fleet.LeaseChargePeriod">
+<title>n1</title>
+<g id="a_node-fleet.LeaseChargePeriod"><a xlink:href="../../index.html#model/fleet.LeaseChargePeriod" xlink:title="fleet.LeaseChargePeriod" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M142.85,-228.78C142.85,-228.78 12,-228.78 12,-228.78 6,-228.78 0,-222.78 0,-216.78 0,-216.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 142.85,0 142.85,0 148.85,0 154.85,-6 154.85,-12 154.85,-12 154.85,-216.78 154.85,-216.78 154.85,-222.78 148.85,-228.78 142.85,-228.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-205.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-180.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">LeaseChargePeriod</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">lease : Lease</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">start : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">end : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">amount : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">basis : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">evidence : Char</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.LeaseChargePeriod" data-to="fleet.Lease">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="fleet.LeaseChargePeriod.lease → fleet.Lease | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M155.28,-114.39C178.83,-114.39 204.89,-114.39 229.02,-114.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="228.95,-116.84 235.95,-114.39 228.95,-111.94 228.95,-116.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="196.22" y="-118.94" font-family="Segoe UI" font-size="11.00">lease</text>
+<text xml:space="preserve" text-anchor="middle" x="223.87" y="-117.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="168.88" y="-105.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="482pt" height="295pt" viewBox="0.00 0.00 482.00 295.00" role="img" aria-label="BankAccountRule · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 273.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M426.95,-171.28C426.95,-171.28 299.85,-171.28 299.85,-171.28 293.85,-171.28 287.85,-165.28 287.85,-159.28 287.85,-159.28 287.85,-92.5 287.85,-92.5 287.85,-86.5 293.85,-80.5 299.85,-80.5 299.85,-80.5 426.95,-80.5 426.95,-80.5 432.95,-80.5 438.95,-86.5 438.95,-92.5 438.95,-92.5 438.95,-159.28 438.95,-159.28 438.95,-165.28 432.95,-171.28 426.95,-171.28" />
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-148.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-123.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-97.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.BankAccountRule" class="node" data-key="finansije.BankAccountRule" data-route="model/finansije.BankAccountRule">
+<title>n1</title>
+<g id="a_node-finansije.BankAccountRule"><a xlink:href="../../index.html#model/finansije.BankAccountRule" xlink:title="finansije.BankAccountRule" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M160.1,-251.78C160.1,-251.78 12,-251.78 12,-251.78 6,-251.78 0,-245.78 0,-239.78 0,-239.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 160.1,0 160.1,0 166.1,0 172.1,-6 172.1,-12 172.1,-12 172.1,-239.78 172.1,-239.78 172.1,-245.78 166.1,-251.78 160.1,-251.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-228.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-203.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankAccountRule</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">account : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">bank_code : PositiveInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">segment : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">note : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_by : CustomUser ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="finansije.BankAccountRule" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="finansije.BankAccountRule.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M172.29,-125.89C206.21,-125.89 245.13,-125.89 278.89,-125.89" />
+<polygon fill="#a27631" stroke="#a27631" points="278.84,-128.34 285.84,-125.89 278.84,-123.44 278.84,-128.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="229.97" y="-130.44" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="273.76" y="-129.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="185.88" y="-116.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

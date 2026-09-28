@@ -1,0 +1,303 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="801pt" height="1388pt" viewBox="0.00 0.00 801.00 1388.00" role="img" aria-label="Administracija · Šifre i istorija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 1366.38)">
+<title>G</title>
+
+<g id="node-core.ActivityLog" class="node" data-key="core.ActivityLog" data-route="model/core.ActivityLog">
+<title>n0</title>
+<g id="a_node-core.ActivityLog"><a xlink:href="../../index.html#model/core.ActivityLog" xlink:title="core.ActivityLog" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M92.22,-1230.78C92.22,-1230.78 12.37,-1230.78 12.37,-1230.78 6.37,-1230.78 0.37,-1224.78 0.37,-1218.78 0.37,-1218.78 0.37,-1152 0.37,-1152 0.37,-1146 6.37,-1140 12.37,-1140 12.37,-1140 92.22,-1140 92.22,-1140 98.22,-1140 104.22,-1146 104.22,-1152 104.22,-1152 104.22,-1218.78 104.22,-1218.78 104.22,-1224.78 98.22,-1230.78 92.22,-1230.78" />
+<text xml:space="preserve" text-anchor="start" x="15.17" y="-1207.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="15.17" y="-1182.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ActivityLog</text>
+<text xml:space="preserve" text-anchor="start" x="15.17" y="-1157.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">17 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n1</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M368.07,-1230.78C368.07,-1230.78 240.97,-1230.78 240.97,-1230.78 234.97,-1230.78 228.97,-1224.78 228.97,-1218.78 228.97,-1218.78 228.97,-1152 228.97,-1152 228.97,-1146 234.97,-1140 240.97,-1140 240.97,-1140 368.07,-1140 368.07,-1140 374.07,-1140 380.07,-1146 380.07,-1152 380.07,-1152 380.07,-1218.78 380.07,-1218.78 380.07,-1224.78 374.07,-1230.78 368.07,-1230.78" />
+<text xml:space="preserve" text-anchor="start" x="243.77" y="-1207.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="243.77" y="-1182.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="243.77" y="-1157.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-11" class="edge" data-from="core.ActivityLog" data-to="core.CustomUser">
+<title>n0-&gt;n1</title>
+<g id="a_edge-11"><a xlink:title="core.ActivityLog.user → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M104.54,-1185.39C137.91,-1185.39 182.21,-1185.39 220.53,-1185.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="220.1,-1187.84 227.1,-1185.39 220.1,-1182.94 220.1,-1187.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="143.72" y="-1189.94" font-family="Segoe UI" font-size="11.00">user</text>
+<text xml:space="preserve" text-anchor="middle" x="215.02" y="-1188.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="118.14" y="-1176.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-core.OrganizationalUnit" class="node" data-key="core.OrganizationalUnit" data-route="model/core.OrganizationalUnit">
+<title>n2</title>
+<g id="a_node-core.OrganizationalUnit"><a xlink:href="../../index.html#model/core.OrganizationalUnit" xlink:title="core.OrganizationalUnit" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M745.55,-660.78C745.55,-660.78 617.7,-660.78 617.7,-660.78 611.7,-660.78 605.7,-654.78 605.7,-648.78 605.7,-648.78 605.7,-582 605.7,-582 605.7,-576 611.7,-570 617.7,-570 617.7,-570 745.55,-570 745.55,-570 751.55,-570 757.55,-576 757.55,-582 757.55,-582 757.55,-648.78 757.55,-648.78 757.55,-654.78 751.55,-660.78 745.55,-660.78" />
+<text xml:space="preserve" text-anchor="start" x="620.5" y="-637.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="620.5" y="-612.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrganizationalUnit</text>
+<text xml:space="preserve" text-anchor="start" x="620.5" y="-587.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-10" class="edge" data-from="core.CustomUser" data-to="core.OrganizationalUnit">
+<title>n1-&gt;n2</title>
+<g id="a_edge-10"><a xlink:title="core.CustomUser.allowed_centers → core.OrganizationalUnit | ManyToManyField | 0..* : 0..*">
+<path fill="none" stroke="#7297ab" d="M380.27,-1160.45C442.88,-1135.56 529.39,-1091.02 576.7,-1022.39 652.34,-912.68 672.94,-752.23 678.55,-669.37" />
+<polygon fill="#7297ab" stroke="#7297ab" points="680.98,-669.77 678.98,-662.62 676.09,-669.45 680.98,-669.77" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-1126.32" font-family="Segoe UI" font-size="11.00">allowed_centers</text>
+<text xml:space="preserve" text-anchor="middle" x="684.53" y="-672.13" font-family="Segoe UI" font-size="11.00">0..*</text>
+<text xml:space="preserve" text-anchor="middle" x="390.4" y="-1146.44" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-core.TaskHistory" class="node" data-key="core.TaskHistory" data-route="model/core.TaskHistory">
+<title>n3</title>
+<g id="a_node-core.TaskHistory"><a xlink:href="../../index.html#model/core.TaskHistory" xlink:title="core.TaskHistory" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M92.6,-1344.78C92.6,-1344.78 12,-1344.78 12,-1344.78 6,-1344.78 0,-1338.78 0,-1332.78 0,-1332.78 0,-1266 0,-1266 0,-1260 6,-1254 12,-1254 12,-1254 92.6,-1254 92.6,-1254 98.6,-1254 104.6,-1260 104.6,-1266 104.6,-1266 104.6,-1332.78 104.6,-1332.78 104.6,-1338.78 98.6,-1344.78 92.6,-1344.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1321.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1296.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">TaskHistory</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1271.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.JobCode" class="node" data-key="fleet.JobCode" data-route="model/fleet.JobCode">
+<title>n4</title>
+<g id="a_node-fleet.JobCode"><a xlink:href="../../index.html#model/fleet.JobCode" xlink:title="fleet.JobCode" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M368.07,-1116.78C368.07,-1116.78 240.97,-1116.78 240.97,-1116.78 234.97,-1116.78 228.97,-1110.78 228.97,-1104.78 228.97,-1104.78 228.97,-1038 228.97,-1038 228.97,-1032 234.97,-1026 240.97,-1026 240.97,-1026 368.07,-1026 368.07,-1026 374.07,-1026 380.07,-1032 380.07,-1038 380.07,-1038 380.07,-1104.78 380.07,-1104.78 380.07,-1110.78 374.07,-1116.78 368.07,-1116.78" />
+<text xml:space="preserve" text-anchor="start" x="243.77" y="-1093.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="243.77" y="-1068.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">JobCode</text>
+<text xml:space="preserve" text-anchor="start" x="243.77" y="-1043.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">4 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.JobCode" data-to="core.OrganizationalUnit">
+<title>n4-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="fleet.JobCode.organizational_unit → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M380.37,-1042.81C441.95,-1015.53 526.92,-968.58 576.7,-901.39 629.3,-830.4 657.53,-730.1 670.78,-669.09" />
+<polygon fill="#a27631" stroke="#a27631" points="673.1,-669.95 672.16,-662.59 668.31,-668.93 673.1,-669.95" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-1006.73" font-family="Segoe UI" font-size="11.00">organizational_unit</text>
+<text xml:space="preserve" text-anchor="middle" x="675.85" y="-672.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="390.08" y="-1028.42" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.ProcurementRequest" class="node" data-key="fleet.ProcurementRequest" data-route="model/fleet.ProcurementRequest">
+<title>n5</title>
+<g id="a_node-fleet.ProcurementRequest"><a xlink:href="../../index.html#model/fleet.ProcurementRequest" xlink:title="fleet.ProcurementRequest" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M375.2,-1002.78C375.2,-1002.78 233.85,-1002.78 233.85,-1002.78 227.85,-1002.78 221.85,-996.78 221.85,-990.78 221.85,-990.78 221.85,-924 221.85,-924 221.85,-918 227.85,-912 233.85,-912 233.85,-912 375.2,-912 375.2,-912 381.2,-912 387.2,-918 387.2,-924 387.2,-924 387.2,-990.78 387.2,-990.78 387.2,-996.78 381.2,-1002.78 375.2,-1002.78" />
+<text xml:space="preserve" text-anchor="start" x="236.65" y="-979.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="236.65" y="-954.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementRequest</text>
+<text xml:space="preserve" text-anchor="start" x="236.65" y="-929.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="fleet.ProcurementRequest" data-to="core.OrganizationalUnit">
+<title>n5-&gt;n2</title>
+<g id="a_edge-3"><a xlink:title="fleet.ProcurementRequest.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M387.54,-922.1C446.23,-893.52 523.89,-848.49 576.7,-790.39 609.9,-753.87 637.81,-705.1 656.32,-668.32" />
+<polygon fill="#a27631" stroke="#a27631" points="658.3,-669.85 659.22,-662.49 653.91,-667.66 658.3,-669.85" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-886.26" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="659.52" y="-673.18" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="396.86" y="-907.4" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.PutniNalog" class="node" data-key="fleet.PutniNalog" data-route="model/fleet.PutniNalog">
+<title>n6</title>
+<g id="a_node-fleet.PutniNalog"><a xlink:href="../../index.html#model/fleet.PutniNalog" xlink:title="fleet.PutniNalog" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M371.07,-888.78C371.07,-888.78 237.97,-888.78 237.97,-888.78 231.97,-888.78 225.97,-882.78 225.97,-876.78 225.97,-876.78 225.97,-810 225.97,-810 225.97,-804 231.97,-798 237.97,-798 237.97,-798 371.07,-798 371.07,-798 377.07,-798 383.07,-804 383.07,-810 383.07,-810 383.07,-876.78 383.07,-876.78 383.07,-882.78 377.07,-888.78 371.07,-888.78" />
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-865.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-840.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PutniNalog</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-815.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">24 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="fleet.PutniNalog" data-to="core.OrganizationalUnit">
+<title>n6-&gt;n2</title>
+<g id="a_edge-1"><a xlink:title="fleet.PutniNalog.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M383.52,-809.14C439.34,-783.15 515.19,-744.75 576.7,-702.39 592.47,-691.53 608.72,-678.78 623.54,-666.45" />
+<polygon fill="#a27631" stroke="#a27631" points="624.86,-668.54 628.64,-662.17 621.71,-664.79 624.86,-668.54" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-775.21" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="623.46" y="-671.84" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="393.11" y="-794.66" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.VehicleTravelOrder" class="node" data-key="fleet.VehicleTravelOrder" data-route="model/fleet.VehicleTravelOrder">
+<title>n7</title>
+<g id="a_node-fleet.VehicleTravelOrder"><a xlink:href="../../index.html#model/fleet.VehicleTravelOrder" xlink:title="fleet.VehicleTravelOrder" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M371.07,-774.78C371.07,-774.78 237.97,-774.78 237.97,-774.78 231.97,-774.78 225.97,-768.78 225.97,-762.78 225.97,-762.78 225.97,-696 225.97,-696 225.97,-690 231.97,-684 237.97,-684 237.97,-684 371.07,-684 371.07,-684 377.07,-684 383.07,-690 383.07,-696 383.07,-696 383.07,-762.78 383.07,-762.78 383.07,-768.78 377.07,-774.78 371.07,-774.78" />
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-751.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-726.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleTravelOrder</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-701.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">10 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="fleet.VehicleTravelOrder" data-to="core.OrganizationalUnit">
+<title>n7-&gt;n2</title>
+<g id="a_edge-2"><a xlink:title="fleet.VehicleTravelOrder.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M383.25,-705.77C445.7,-686.79 533.25,-660.18 597.18,-640.75" />
+<polygon fill="#a27631" stroke="#a27631" points="597.81,-643.12 603.8,-638.74 596.39,-638.43 597.81,-643.12" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-687.15" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="594.08" y="-645.37" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="394.41" y="-692.8" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.WorkTimeSheet" class="node" data-key="hr.WorkTimeSheet" data-route="model/hr.WorkTimeSheet">
+<title>n8</title>
+<g id="a_node-hr.WorkTimeSheet"><a xlink:href="../../index.html#model/hr.WorkTimeSheet" xlink:title="hr.WorkTimeSheet" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M371.07,-660.78C371.07,-660.78 237.97,-660.78 237.97,-660.78 231.97,-660.78 225.97,-654.78 225.97,-648.78 225.97,-648.78 225.97,-582 225.97,-582 225.97,-576 231.97,-570 237.97,-570 237.97,-570 371.07,-570 371.07,-570 377.07,-570 383.07,-576 383.07,-582 383.07,-582 383.07,-648.78 383.07,-648.78 383.07,-654.78 377.07,-660.78 371.07,-660.78" />
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-637.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-612.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">WorkTimeSheet</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-587.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">11 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="hr.WorkTimeSheet" data-to="core.OrganizationalUnit">
+<title>n8-&gt;n2</title>
+<g id="a_edge-4"><a xlink:title="hr.WorkTimeSheet.meal_organizational_unit → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M383.25,-615.39C445.58,-615.39 532.89,-615.39 596.78,-615.39" />
+<polygon fill="#a27631" stroke="#a27631" points="596.73,-617.84 603.73,-615.39 596.73,-612.94 596.73,-617.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-619.94" font-family="Segoe UI" font-size="11.00">meal_organizational_unit</text>
+<text xml:space="preserve" text-anchor="middle" x="591.65" y="-618.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="396.84" y="-606.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.WorkTimeSheetLine" class="node" data-key="hr.WorkTimeSheetLine" data-route="model/hr.WorkTimeSheetLine">
+<title>n9</title>
+<g id="a_node-hr.WorkTimeSheetLine"><a xlink:href="../../index.html#model/hr.WorkTimeSheetLine" xlink:title="hr.WorkTimeSheetLine" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M372.2,-546.78C372.2,-546.78 236.85,-546.78 236.85,-546.78 230.85,-546.78 224.85,-540.78 224.85,-534.78 224.85,-534.78 224.85,-468 224.85,-468 224.85,-462 230.85,-456 236.85,-456 236.85,-456 372.2,-456 372.2,-456 378.2,-456 384.2,-462 384.2,-468 384.2,-468 384.2,-534.78 384.2,-534.78 384.2,-540.78 378.2,-546.78 372.2,-546.78" />
+<text xml:space="preserve" text-anchor="start" x="239.65" y="-523.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="239.65" y="-498.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">WorkTimeSheetLine</text>
+<text xml:space="preserve" text-anchor="start" x="239.65" y="-473.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">37 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="hr.WorkTimeSheetLine" data-to="core.OrganizationalUnit">
+<title>n9-&gt;n2</title>
+<g id="a_edge-5"><a xlink:title="hr.WorkTimeSheetLine.organizational_unit → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M384.62,-525.43C447.07,-544.41 533.98,-570.82 597.46,-590.12" />
+<polygon fill="#a27631" stroke="#a27631" points="596.62,-592.42 604.03,-592.11 598.04,-587.73 596.62,-592.42" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-586.25" font-family="Segoe UI" font-size="11.00">organizational_unit</text>
+<text xml:space="preserve" text-anchor="middle" x="590.63" y="-591.71" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="399.47" y="-520.36" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-nabavka.FiskalniRacun" class="node" data-key="nabavka.FiskalniRacun" data-route="model/nabavka.FiskalniRacun">
+<title>n10</title>
+<g id="a_node-nabavka.FiskalniRacun"><a xlink:href="../../index.html#model/nabavka.FiskalniRacun" xlink:title="nabavka.FiskalniRacun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M371.07,-432.78C371.07,-432.78 237.97,-432.78 237.97,-432.78 231.97,-432.78 225.97,-426.78 225.97,-420.78 225.97,-420.78 225.97,-354 225.97,-354 225.97,-348 231.97,-342 237.97,-342 237.97,-342 371.07,-342 371.07,-342 377.07,-342 383.07,-348 383.07,-354 383.07,-354 383.07,-420.78 383.07,-420.78 383.07,-426.78 377.07,-432.78 371.07,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FiskalniRacun</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">33 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-9" class="edge" data-from="nabavka.FiskalniRacun" data-to="core.OrganizationalUnit">
+<title>n10-&gt;n2</title>
+<g id="a_edge-9"><a xlink:title="nabavka.FiskalniRacun.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M383.52,-421.64C439.34,-447.63 515.19,-486.03 576.7,-528.39 592.47,-539.25 608.72,-552 623.54,-564.33" />
+<polygon fill="#a27631" stroke="#a27631" points="621.71,-565.99 628.64,-568.61 624.86,-562.24 621.71,-565.99" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-532.94" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="615.31" y="-562.75" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="398.52" y="-418.75" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-nabavka.ProcurementCase" class="node" data-key="nabavka.ProcurementCase" data-route="model/nabavka.ProcurementCase">
+<title>n11</title>
+<g id="a_node-nabavka.ProcurementCase"><a xlink:href="../../index.html#model/nabavka.ProcurementCase" xlink:title="nabavka.ProcurementCase" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M371.07,-318.78C371.07,-318.78 237.97,-318.78 237.97,-318.78 231.97,-318.78 225.97,-312.78 225.97,-306.78 225.97,-306.78 225.97,-240 225.97,-240 225.97,-234 231.97,-228 237.97,-228 237.97,-228 371.07,-228 371.07,-228 377.07,-228 383.07,-234 383.07,-240 383.07,-240 383.07,-306.78 383.07,-306.78 383.07,-312.78 377.07,-318.78 371.07,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementCase</text>
+<text xml:space="preserve" text-anchor="start" x="240.77" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">21 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="nabavka.ProcurementCase" data-to="core.OrganizationalUnit">
+<title>n11-&gt;n2</title>
+<g id="a_edge-6"><a xlink:title="nabavka.ProcurementCase.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M383.54,-306.75C442.66,-335.21 522.68,-380.96 576.7,-440.39 609.9,-476.91 637.81,-525.68 656.32,-562.46" />
+<polygon fill="#a27631" stroke="#a27631" points="653.91,-563.12 659.22,-568.29 658.3,-560.93 653.91,-563.12" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-444.94" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="648.17" y="-557.35" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="398.54" y="-304.14" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-nabavka.ProcurementInvoice" class="node" data-key="nabavka.ProcurementInvoice" data-route="model/nabavka.ProcurementInvoice">
+<title>n12</title>
+<g id="a_node-nabavka.ProcurementInvoice"><a xlink:href="../../index.html#model/nabavka.ProcurementInvoice" xlink:title="nabavka.ProcurementInvoice" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M372.2,-204.78C372.2,-204.78 236.85,-204.78 236.85,-204.78 230.85,-204.78 224.85,-198.78 224.85,-192.78 224.85,-192.78 224.85,-126 224.85,-126 224.85,-120 230.85,-114 236.85,-114 236.85,-114 372.2,-114 372.2,-114 378.2,-114 384.2,-120 384.2,-126 384.2,-126 384.2,-192.78 384.2,-192.78 384.2,-198.78 378.2,-204.78 372.2,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="239.65" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="239.65" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementInvoice</text>
+<text xml:space="preserve" text-anchor="start" x="239.65" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">24 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-7" class="edge" data-from="nabavka.ProcurementInvoice" data-to="core.OrganizationalUnit">
+<title>n12-&gt;n2</title>
+<g id="a_edge-7"><a xlink:title="nabavka.ProcurementInvoice.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M384.7,-189.91C445.88,-217.45 528.07,-263.76 576.7,-329.39 629.3,-400.38 657.53,-500.68 670.78,-561.69" />
+<polygon fill="#a27631" stroke="#a27631" points="668.31,-561.85 672.16,-568.19 673.1,-560.83 668.31,-561.85" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-333.94" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="663.45" y="-554.74" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="399.7" y="-186.96" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-nabavka.ProcurementInvoiceJobCodeLink" class="node" data-key="nabavka.ProcurementInvoiceJobCodeLink" data-route="model/nabavka.ProcurementInvoiceJobCodeLink">
+<title>n13</title>
+<g id="a_node-nabavka.ProcurementInvoiceJobCodeLink"><a xlink:href="../../index.html#model/nabavka.ProcurementInvoiceJobCodeLink" xlink:title="nabavka.ProcurementInvoiceJobCodeLink" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M414.2,-90.78C414.2,-90.78 194.85,-90.78 194.85,-90.78 188.85,-90.78 182.85,-84.78 182.85,-78.78 182.85,-78.78 182.85,-12 182.85,-12 182.85,-6 188.85,0 194.85,0 194.85,0 414.2,0 414.2,0 420.2,0 426.2,-6 426.2,-12 426.2,-12 426.2,-78.78 426.2,-78.78 426.2,-84.78 420.2,-90.78 414.2,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="197.65" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="197.65" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementInvoiceJobCodeLink</text>
+<text xml:space="preserve" text-anchor="start" x="197.65" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">10 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-8" class="edge" data-from="nabavka.ProcurementInvoiceJobCodeLink" data-to="core.OrganizationalUnit">
+<title>n13-&gt;n2</title>
+<g id="a_edge-8"><a xlink:title="nabavka.ProcurementInvoiceJobCodeLink.job_code → core.OrganizationalUnit | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M426.63,-90.74C480.7,-117.05 540.3,-155.59 576.7,-208.39 652.34,-318.1 672.94,-478.55 678.55,-561.41" />
+<polygon fill="#a27631" stroke="#a27631" points="676.09,-561.33 678.98,-568.16 680.98,-561.01 676.09,-561.33" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="515.95" y="-212.94" font-family="Segoe UI" font-size="11.00">job_code</text>
+<text xml:space="preserve" text-anchor="middle" x="671.88" y="-553.55" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="441.62" y="-88.26" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

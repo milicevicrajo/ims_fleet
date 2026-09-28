@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="294pt" height="634pt" viewBox="0.00 0.00 294.00 634.00" role="img" aria-label="Registar menica i povezivanje">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 612.68)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="125.17" cy="-563.66" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="93.25" y="-577.78" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/menice.Menica">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/menice.Menica" xlink:title="menice.Menica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M238.35,-497.74C238.35,-497.74 12,-497.74 12,-497.74 6,-497.74 0,-491.74 0,-485.74 0,-485.74 0,-472.96 0,-472.96 0,-466.96 6,-460.96 12,-460.96 12,-460.96 238.35,-460.96 238.35,-460.96 244.35,-460.96 250.35,-466.96 250.35,-472.96 250.35,-472.96 250.35,-485.74 250.35,-485.74 250.35,-491.74 244.35,-497.74 238.35,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="125.17" y="-475.8" font-family="Segoe UI" font-size="14.00">Preuzimanje podataka iz NBS registra</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M125.17,-555.36C125.17,-544.5 125.17,-523.56 125.17,-506.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="127.63,-506.62 125.18,-499.62 122.73,-506.62 127.63,-506.62" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/menice.Menica">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/menice.Menica" xlink:title="menice.Menica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M214.72,-402.96C214.72,-402.96 35.62,-402.96 35.62,-402.96 29.62,-402.96 23.62,-396.96 23.62,-390.96 23.62,-390.96 23.62,-378.18 23.62,-378.18 23.62,-372.18 29.62,-366.18 35.62,-366.18 35.62,-366.18 214.72,-366.18 214.72,-366.18 220.72,-366.18 226.72,-372.18 226.72,-378.18 226.72,-378.18 226.72,-390.96 226.72,-390.96 226.72,-396.96 220.72,-402.96 214.72,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="125.17" y="-381.02" font-family="Segoe UI" font-size="14.00">Pregled evidentiranih menica</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M125.17,-460.46C125.17,-446.6 125.17,-427.19 125.17,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="127.63,-411.92 125.18,-404.92 122.73,-411.92 127.63,-411.92" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/menice.Menica">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/menice.Menica" xlink:title="menice.Menica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M234.22,-308.18C234.22,-308.18 16.12,-308.18 16.12,-308.18 10.12,-308.18 4.12,-302.18 4.12,-296.18 4.12,-296.18 4.12,-283.4 4.12,-283.4 4.12,-277.4 10.12,-271.4 16.12,-271.4 16.12,-271.4 234.22,-271.4 234.22,-271.4 240.22,-271.4 246.22,-277.4 246.22,-283.4 246.22,-283.4 246.22,-296.18 246.22,-296.18 246.22,-302.18 240.22,-308.18 234.22,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="125.17" y="-286.24" font-family="Segoe UI" font-size="14.00">Dopuna internih podataka i lokacije</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M125.17,-365.68C125.17,-351.82 125.17,-332.41 125.17,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="127.63,-317.14 125.18,-310.14 122.73,-317.14 127.63,-317.14" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/ugovori.ContractMenicaLink">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/ugovori.ContractMenicaLink" xlink:title="ugovori.ContractMenicaLink" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M237.22,-213.4C237.22,-213.4 13.12,-213.4 13.12,-213.4 7.12,-213.4 1.12,-207.4 1.12,-201.4 1.12,-201.4 1.12,-188.62 1.12,-188.62 1.12,-182.62 7.12,-176.62 13.12,-176.62 13.12,-176.62 237.22,-176.62 237.22,-176.62 243.22,-176.62 249.22,-182.62 249.22,-188.62 249.22,-188.62 249.22,-201.4 249.22,-201.4 249.22,-207.4 243.22,-213.4 237.22,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="125.17" y="-191.46" font-family="Segoe UI" font-size="14.00">Povezivanje sa ugovorom po potrebi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M125.17,-270.9C125.17,-257.04 125.17,-237.63 125.17,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="127.63,-222.36 125.18,-215.36 122.73,-222.36 127.63,-222.36" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/finansije.BankBillPlacement">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/finansije.BankBillPlacement" xlink:title="finansije.BankBillPlacement" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M236.1,-118.62C236.1,-118.62 14.25,-118.62 14.25,-118.62 8.25,-118.62 2.25,-112.62 2.25,-106.62 2.25,-106.62 2.25,-93.84 2.25,-93.84 2.25,-87.84 8.25,-81.84 14.25,-81.84 14.25,-81.84 236.1,-81.84 236.1,-81.84 242.1,-81.84 248.1,-87.84 248.1,-93.84 248.1,-93.84 248.1,-106.62 248.1,-106.62 248.1,-112.62 242.1,-118.62 236.1,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="125.17" y="-96.68" font-family="Segoe UI" font-size="14.00">Pregled veze / bankarskog plasmana</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M125.17,-176.12C125.17,-162.26 125.17,-142.85 125.17,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="127.63,-127.58 125.18,-120.58 122.73,-127.58 127.63,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n6</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="125.17" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#8a6933" cx="125.17" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="101.63" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="end">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M125.17,-81.35C125.17,-67.12 125.17,-47.23 125.17,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="127.63,-32.71 125.18,-25.71 122.73,-32.71 127.63,-32.71" />
+</g>
+</g>
+</svg>

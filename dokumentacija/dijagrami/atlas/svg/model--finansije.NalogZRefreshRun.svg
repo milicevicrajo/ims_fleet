@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="248pt" height="387pt" viewBox="0.00 0.00 248.00 387.00" role="img" aria-label="NalogZRefreshRun · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 365.38)">
+<title>G</title>
+
+<g id="node-finansije.NalogZRefreshRun" class="node" data-key="finansije.NalogZRefreshRun" data-route="model/finansije.NalogZRefreshRun">
+<title>n0</title>
+<g id="a_node-finansije.NalogZRefreshRun"><a xlink:href="../../index.html#model/finansije.NalogZRefreshRun" xlink:title="finansije.NalogZRefreshRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M192.35,-343.78C192.35,-343.78 12,-343.78 12,-343.78 6,-343.78 0,-337.78 0,-331.78 0,-331.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 192.35,0 192.35,0 198.35,0 204.35,-6 204.35,-12 204.35,-12 204.35,-331.78 204.35,-331.78 204.35,-337.78 198.35,-343.78 192.35,-343.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-320.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-295.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">NalogZRefreshRun</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">started_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">finished_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">trigger : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">requested_by : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">task_id : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">year_from : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">year_to : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">updated_rows : PositiveBigInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">inserted_rows : PositiveBigInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">error : Text</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

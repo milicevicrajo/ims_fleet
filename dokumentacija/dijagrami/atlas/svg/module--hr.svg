@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="317pt" height="573pt" viewBox="0.00 0.00 317.00 573.00" role="img" aria-label="Kadrovi · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 551.88)">
+<title>G</title>
+
+<g id="node-hr" class="node" data-key="hr" data-route="models/hr">
+<title>n0</title>
+<g id="a_node-hr"><a xlink:href="../../index.html#models/hr" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M56.1,-283.53C56.1,-283.53 12,-283.53 12,-283.53 6,-283.53 0,-277.53 0,-271.53 0,-271.53 0,-258.75 0,-258.75 0,-252.75 6,-246.75 12,-246.75 12,-246.75 56.1,-246.75 56.1,-246.75 62.1,-246.75 68.1,-252.75 68.1,-258.75 68.1,-258.75 68.1,-271.53 68.1,-271.53 68.1,-277.53 62.1,-283.53 56.1,-283.53" />
+<text xml:space="preserve" text-anchor="middle" x="34.05" y="-261.59" font-family="Segoe UI" font-size="14.00">Kadrovi</text>
+</a>
+</g>
+</g>
+
+<g id="node-zaposleni" class="node" data-key="zaposleni" data-route="area/hr/zaposleni">
+<title>n1</title>
+<g id="a_node-zaposleni"><a xlink:href="../../index.html#area/hr/zaposleni" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M229.07,-530.28C229.07,-530.28 170.72,-530.28 170.72,-530.28 164.72,-530.28 158.72,-524.28 158.72,-518.28 158.72,-518.28 158.72,-486 158.72,-486 158.72,-480 164.72,-474 170.72,-474 170.72,-474 229.07,-474 229.07,-474 235.07,-474 241.07,-480 241.07,-486 241.07,-486 241.07,-518.28 241.07,-518.28 241.07,-524.28 235.07,-530.28 229.07,-530.28" />
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-508.34" font-family="Segoe UI" font-size="14.00">Zaposleni</text>
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-488.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr" data-to="zaposleni">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M39.34,-283.77C48.91,-321.76 75.28,-409.13 126.1,-463.14 133.16,-470.64 141.98,-477 151.03,-482.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="149.66,-484.31 156.97,-485.53 152.02,-480.02 149.66,-484.31" />
+</g>
+
+<g id="node-dokumenti" class="node" data-key="dokumenti" data-route="area/hr/dokumenti">
+<title>n2</title>
+<g id="a_node-dokumenti"><a xlink:href="../../index.html#area/hr/dokumenti" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M249.32,-451.28C249.32,-451.28 150.47,-451.28 150.47,-451.28 144.47,-451.28 138.47,-445.28 138.47,-439.28 138.47,-439.28 138.47,-407 138.47,-407 138.47,-401 144.47,-395 150.47,-395 150.47,-395 249.32,-395 249.32,-395 255.32,-395 261.32,-401 261.32,-407 261.32,-407 261.32,-439.28 261.32,-439.28 261.32,-445.28 255.32,-451.28 249.32,-451.28" />
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-429.34" font-family="Segoe UI" font-size="14.00">Zahtevi i rešenja</text>
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-409.84" font-family="Segoe UI" font-size="14.00">7 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr" data-to="dokumenti">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M45.69,-283.62C60.93,-308.84 91.03,-354.31 126.1,-384.14 128.42,-386.11 130.86,-388.03 133.38,-389.88" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="131.82,-391.78 138.97,-393.77 134.62,-387.76 131.82,-391.78" />
+</g>
+
+<g id="node-rad" class="node" data-key="rad" data-route="area/hr/rad">
+<title>n3</title>
+<g id="a_node-rad"><a xlink:href="../../index.html#area/hr/rad" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M239.57,-372.28C239.57,-372.28 160.22,-372.28 160.22,-372.28 154.22,-372.28 148.22,-366.28 148.22,-360.28 148.22,-360.28 148.22,-328 148.22,-328 148.22,-322 154.22,-316 160.22,-316 160.22,-316 239.57,-316 239.57,-316 245.57,-316 251.57,-322 251.57,-328 251.57,-328 251.57,-360.28 251.57,-360.28 251.57,-366.28 245.57,-372.28 239.57,-372.28" />
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-350.34" font-family="Segoe UI" font-size="14.00">Radno vreme</text>
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-330.84" font-family="Segoe UI" font-size="14.00">4 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="hr" data-to="rad">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M68.21,-281.13C88.97,-291.14 116.3,-304.32 140.6,-316.03" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="139.3,-318.13 146.67,-318.96 141.43,-313.71 139.3,-318.13" />
+</g>
+
+<g id="node-odsustva" class="node" data-key="odsustva" data-route="area/hr/odsustva">
+<title>n4</title>
+<g id="a_node-odsustva"><a xlink:href="../../index.html#area/hr/odsustva" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M258.32,-293.28C258.32,-293.28 141.47,-293.28 141.47,-293.28 135.47,-293.28 129.47,-287.28 129.47,-281.28 129.47,-281.28 129.47,-249 129.47,-249 129.47,-243 135.47,-237 141.47,-237 141.47,-237 258.32,-237 258.32,-237 264.32,-237 270.32,-243 270.32,-249 270.32,-249 270.32,-281.28 270.32,-281.28 270.32,-287.28 264.32,-293.28 258.32,-293.28" />
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-271.34" font-family="Segoe UI" font-size="14.00">Odmori i bolovanja</text>
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-251.84" font-family="Segoe UI" font-size="14.00">6 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="hr" data-to="odsustva">
+<title>n0-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M68.21,-265.14C83.45,-265.14 102.24,-265.14 120.77,-265.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="120.74,-267.59 127.74,-265.14 120.74,-262.69 120.74,-267.59" />
+</g>
+
+<g id="node-ocene" class="node" data-key="ocene" data-route="area/hr/ocene">
+<title>n5</title>
+<g id="a_node-ocene"><a xlink:href="../../index.html#area/hr/ocene" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M235.45,-214.28C235.45,-214.28 164.35,-214.28 164.35,-214.28 158.35,-214.28 152.35,-208.28 152.35,-202.28 152.35,-202.28 152.35,-170 152.35,-170 152.35,-164 158.35,-158 164.35,-158 164.35,-158 235.45,-158 235.45,-158 241.45,-158 247.45,-164 247.45,-170 247.45,-170 247.45,-202.28 247.45,-202.28 247.45,-208.28 241.45,-214.28 235.45,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-192.34" font-family="Segoe UI" font-size="14.00">Ocenjivanje</text>
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-172.84" font-family="Segoe UI" font-size="14.00">7 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="hr" data-to="ocene">
+<title>n0-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M68.21,-249.15C90.17,-238.57 119.47,-224.44 144.77,-212.24" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="145.53,-214.59 150.77,-209.35 143.4,-210.18 145.53,-214.59" />
+</g>
+
+<g id="node-ostalo" class="node" data-key="ostalo" data-route="area/hr/ostalo">
+<title>n6</title>
+<g id="a_node-ostalo"><a xlink:href="../../index.html#area/hr/ostalo" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M261.7,-135.28C261.7,-135.28 138.1,-135.28 138.1,-135.28 132.1,-135.28 126.1,-129.28 126.1,-123.28 126.1,-123.28 126.1,-91 126.1,-91 126.1,-85 132.1,-79 138.1,-79 138.1,-79 261.7,-79 261.7,-79 267.7,-79 273.7,-85 273.7,-91 273.7,-91 273.7,-123.28 273.7,-123.28 273.7,-129.28 267.7,-135.28 261.7,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-113.34" font-family="Segoe UI" font-size="14.00">Pomoćne evidencije</text>
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-93.84" font-family="Segoe UI" font-size="14.00">1 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="hr" data-to="ostalo">
+<title>n0-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M45.69,-246.66C60.93,-221.44 91.03,-175.97 126.1,-146.14 128.42,-144.17 130.86,-142.25 133.38,-140.4" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="134.62,-142.52 138.97,-136.51 131.82,-138.5 134.62,-142.52" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/hr">
+<title>n7</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/hr" xlink:title="Kadrovi · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M249.32,-56.28C249.32,-56.28 150.47,-56.28 150.47,-56.28 144.47,-56.28 138.47,-50.28 138.47,-44.28 138.47,-44.28 138.47,-12 138.47,-12 138.47,-6 144.47,0 150.47,0 150.47,0 249.32,0 249.32,0 255.32,0 261.32,-6 261.32,-12 261.32,-12 261.32,-44.28 261.32,-44.28 261.32,-50.28 255.32,-56.28 249.32,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="199.9" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="hr" data-to="flows">
+<title>n0-&gt;n7</title>
+<path fill="none" stroke="#8b9ead" d="M39.34,-246.51C48.91,-208.52 75.28,-121.15 126.1,-67.14 127.92,-65.21 129.85,-63.35 131.88,-61.57" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="133.13,-63.71 137.03,-57.4 130.05,-59.9 133.13,-63.71" />
+</g>
+</g>
+</svg>

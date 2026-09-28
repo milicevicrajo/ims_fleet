@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="728pt" height="387pt" viewBox="0.00 0.00 728.00 387.00" role="img" aria-label="DisciplinskiPostupak · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 365.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M669.8,-288.28C669.8,-288.28 542.7,-288.28 542.7,-288.28 536.7,-288.28 530.7,-282.28 530.7,-276.28 530.7,-276.28 530.7,-209.5 530.7,-209.5 530.7,-203.5 536.7,-197.5 542.7,-197.5 542.7,-197.5 669.8,-197.5 669.8,-197.5 675.8,-197.5 681.8,-203.5 681.8,-209.5 681.8,-209.5 681.8,-276.28 681.8,-276.28 681.8,-282.28 675.8,-288.28 669.8,-288.28" />
+<text xml:space="preserve" text-anchor="start" x="545.5" y="-265.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="545.5" y="-240.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="545.5" y="-214.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n1</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M672.8,-174.28C672.8,-174.28 539.7,-174.28 539.7,-174.28 533.7,-174.28 527.7,-168.28 527.7,-162.28 527.7,-162.28 527.7,-95.5 527.7,-95.5 527.7,-89.5 533.7,-83.5 539.7,-83.5 539.7,-83.5 672.8,-83.5 672.8,-83.5 678.8,-83.5 684.8,-89.5 684.8,-95.5 684.8,-95.5 684.8,-162.28 684.8,-162.28 684.8,-168.28 678.8,-174.28 672.8,-174.28" />
+<text xml:space="preserve" text-anchor="start" x="542.5" y="-151.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="542.5" y="-126.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="542.5" y="-100.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-pravna.DisciplinskiPostupak" class="node" data-key="pravna.DisciplinskiPostupak" data-route="model/pravna.DisciplinskiPostupak">
+<title>n2</title>
+<g id="a_node-pravna.DisciplinskiPostupak"><a xlink:href="../../index.html#model/pravna.DisciplinskiPostupak" xlink:title="pravna.DisciplinskiPostupak" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M403.7,-343.78C403.7,-343.78 266.1,-343.78 266.1,-343.78 260.1,-343.78 254.1,-337.78 254.1,-331.78 254.1,-331.78 254.1,-12 254.1,-12 254.1,-6 260.1,0 266.1,0 266.1,0 403.7,0 403.7,0 409.7,0 415.7,-6 415.7,-12 415.7,-12 415.7,-331.78 415.7,-331.78 415.7,-337.78 409.7,-343.78 403.7,-343.78" />
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-320.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">pravna</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-295.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">DisciplinskiPostupak</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-270.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-247.19" font-family="Segoe UI" font-size="11.00">zaposleni : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-224.19" font-family="Segoe UI" font-size="11.00">centar : Char</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-201.19" font-family="Segoe UI" font-size="11.00">datum_podnosenja : Date</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-178.19" font-family="Segoe UI" font-size="11.00">podnosilac : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-155.19" font-family="Segoe UI" font-size="11.00">mera_datum : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-132.19" font-family="Segoe UI" font-size="11.00">mera_opis : Text</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-109.19" font-family="Segoe UI" font-size="11.00">mera_vrsta : Char</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-86.19" font-family="Segoe UI" font-size="11.00">arhivirano : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-63.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-40.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="268.9" y="-17.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="pravna.DisciplinskiPostupak" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-2"><a xlink:title="pravna.DisciplinskiPostupak.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M415.98,-193C449.58,-201.86 488.63,-212.15 522.5,-221.08" />
+<polygon fill="#a27631" stroke="#a27631" points="521.69,-223.4 529.08,-222.81 522.93,-218.66 521.69,-223.4" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="471.7" y="-218.3" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="515.78" y="-222.91" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="430.75" y="-187.39" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="pravna.DisciplinskiPostupak" data-to="hr.Employee">
+<title>n2-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="pravna.DisciplinskiPostupak.zaposleni → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M415.98,-159.11C448.44,-153.92 485.98,-147.93 519.03,-142.65" />
+<polygon fill="#a27631" stroke="#a27631" points="519.31,-145.09 525.83,-141.57 518.53,-140.25 519.31,-145.09" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="471.7" y="-158.79" font-family="Segoe UI" font-size="11.00">zaposleni</text>
+<text xml:space="preserve" text-anchor="middle" x="514.9" y="-146.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="428.41" y="-147.75" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="pravna.DisciplinskiPostupak" data-to="hr.Employee">
+<title>n2-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="pravna.DisciplinskiPostupak.podnosilac → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M415.9,-134.73C425.44,-131.52 435.18,-128.78 444.7,-126.89 468.55,-122.15 494.78,-120.88 519,-121.25" />
+<polygon fill="#a27631" stroke="#a27631" points="518.91,-123.7 525.97,-121.41 519.03,-118.8 518.91,-123.7" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="471.7" y="-131.44" font-family="Segoe UI" font-size="11.00">podnosilac</text>
+<text xml:space="preserve" text-anchor="middle" x="513.74" y="-124.52" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="426.82" y="-121.49" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-pravna.TokPostupka" class="node" data-key="pravna.TokPostupka" data-route="model/pravna.TokPostupka">
+<title>n3</title>
+<g id="a_node-pravna.TokPostupka"><a xlink:href="../../index.html#model/pravna.TokPostupka" xlink:title="pravna.TokPostupka" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M139.1,-217.28C139.1,-217.28 12,-217.28 12,-217.28 6,-217.28 0,-211.28 0,-205.28 0,-205.28 0,-138.5 0,-138.5 0,-132.5 6,-126.5 12,-126.5 12,-126.5 139.1,-126.5 139.1,-126.5 145.1,-126.5 151.1,-132.5 151.1,-138.5 151.1,-138.5 151.1,-205.28 151.1,-205.28 151.1,-211.28 145.1,-217.28 139.1,-217.28" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-194.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">pravna</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-169.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">TokPostupka</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-143.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="pravna.TokPostupka" data-to="pravna.DisciplinskiPostupak">
+<title>n3-&gt;n2</title>
+<g id="a_edge-3"><a xlink:title="pravna.TokPostupka.postupak → pravna.DisciplinskiPostupak | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M151.33,-171.89C180.89,-171.89 215.09,-171.89 245.84,-171.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="245.48,-174.34 252.48,-171.89 245.48,-169.44 245.48,-174.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="202.6" y="-176.44" font-family="Segoe UI" font-size="11.00">postupak</text>
+<text xml:space="preserve" text-anchor="middle" x="240.4" y="-175.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="164.93" y="-162.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

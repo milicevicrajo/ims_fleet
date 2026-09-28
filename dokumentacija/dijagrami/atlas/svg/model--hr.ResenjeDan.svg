@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="404pt" height="203pt" viewBox="0.00 0.00 404.00 203.00" role="img" aria-label="ResenjeDan · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 181.38)">
+<title>G</title>
+
+<g id="node-hr.Resenje" class="node" data-key="hr.Resenje" data-route="model/hr.Resenje">
+<title>n0</title>
+<g id="a_node-hr.Resenje"><a xlink:href="../../index.html#model/hr.Resenje" xlink:title="hr.Resenje" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M348.95,-125.28C348.95,-125.28 215.85,-125.28 215.85,-125.28 209.85,-125.28 203.85,-119.28 203.85,-113.28 203.85,-113.28 203.85,-46.5 203.85,-46.5 203.85,-40.5 209.85,-34.5 215.85,-34.5 215.85,-34.5 348.95,-34.5 348.95,-34.5 354.95,-34.5 360.95,-40.5 360.95,-46.5 360.95,-46.5 360.95,-113.28 360.95,-113.28 360.95,-119.28 354.95,-125.28 348.95,-125.28" />
+<text xml:space="preserve" text-anchor="start" x="218.65" y="-102.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="218.65" y="-77.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Resenje</text>
+<text xml:space="preserve" text-anchor="start" x="218.65" y="-51.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">31 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.ResenjeDan" class="node" data-key="hr.ResenjeDan" data-route="model/hr.ResenjeDan">
+<title>n1</title>
+<g id="a_node-hr.ResenjeDan"><a xlink:href="../../index.html#model/hr.ResenjeDan" xlink:title="hr.ResenjeDan" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M98.6,-159.78C98.6,-159.78 12,-159.78 12,-159.78 6,-159.78 0,-153.78 0,-147.78 0,-147.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 98.6,0 98.6,0 104.6,0 110.6,-6 110.6,-12 110.6,-12 110.6,-147.78 110.6,-147.78 110.6,-153.78 104.6,-159.78 98.6,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ResenjeDan</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">resenje : Resenje</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">datum : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">vrsta_dana : Char</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.ResenjeDan" data-to="hr.Resenje">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="hr.ResenjeDan.resenje → hr.Resenje | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M111.08,-79.89C136.43,-79.89 167.14,-79.89 195.46,-79.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="195.26,-82.34 202.26,-79.89 195.26,-77.44 195.26,-82.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="157.22" y="-84.44" font-family="Segoe UI" font-size="11.00">resenje</text>
+<text xml:space="preserve" text-anchor="middle" x="190.18" y="-83.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="124.67" y="-70.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="326pt" height="824pt" viewBox="0.00 0.00 326.00 824.00" role="img" aria-label="Od zahteva do izdatog rešenja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 802.24)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#3778a3" stroke="#3778a3" cx="141.3" cy="-753.22" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="109.38" y="-767.34" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/hr.Zahtev">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/hr.Zahtev" xlink:title="hr.Zahtev" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M270.6,-687.3C270.6,-687.3 12,-687.3 12,-687.3 6,-687.3 0,-681.3 0,-675.3 0,-675.3 0,-662.52 0,-662.52 0,-656.52 6,-650.52 12,-650.52 12,-650.52 270.6,-650.52 270.6,-650.52 276.6,-650.52 282.6,-656.52 282.6,-662.52 282.6,-662.52 282.6,-675.3 282.6,-675.3 282.6,-681.3 276.6,-687.3 270.6,-687.3" />
+<text xml:space="preserve" text-anchor="middle" x="141.3" y="-665.36" font-family="Segoe UI" font-size="14.00">Unos zaposlenog, vrste i podataka zahteva</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-744.92C141.3,-734.06 141.3,-713.12 141.3,-696.12" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-696.18 141.3,-689.18 138.85,-696.18 143.75,-696.18" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/hr.Zahtev">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/hr.Zahtev" xlink:title="hr.Zahtev" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M266.48,-592.52C266.48,-592.52 16.12,-592.52 16.12,-592.52 10.12,-592.52 4.12,-586.52 4.12,-580.52 4.12,-580.52 4.12,-567.74 4.12,-567.74 4.12,-561.74 10.12,-555.74 16.12,-555.74 16.12,-555.74 266.48,-555.74 266.48,-555.74 272.48,-555.74 278.48,-561.74 278.48,-567.74 278.48,-567.74 278.48,-580.52 278.48,-580.52 278.48,-586.52 272.48,-592.52 266.48,-592.52" />
+<text xml:space="preserve" text-anchor="middle" x="141.3" y="-570.58" font-family="Segoe UI" font-size="14.00">Sačuvaj zahtev; pripremi broj i dokument</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-650.02C141.3,-636.16 141.3,-616.75 141.3,-601.17" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-601.48 141.3,-594.48 138.85,-601.48 143.75,-601.48" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/hr.Resenje">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/hr.Resenje" xlink:title="hr.Resenje" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M251.1,-497.74C251.1,-497.74 31.5,-497.74 31.5,-497.74 25.5,-497.74 19.5,-491.74 19.5,-485.74 19.5,-485.74 19.5,-472.96 19.5,-472.96 19.5,-466.96 25.5,-460.96 31.5,-460.96 31.5,-460.96 251.1,-460.96 251.1,-460.96 257.1,-460.96 263.1,-466.96 263.1,-472.96 263.1,-472.96 263.1,-485.74 263.1,-485.74 263.1,-491.74 257.1,-497.74 251.1,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="141.3" y="-475.8" font-family="Segoe UI" font-size="14.00">Dodaj rešenje iz postojećeg zahteva</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-555.24C141.3,-541.38 141.3,-521.97 141.3,-506.39" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-506.7 141.3,-499.7 138.85,-506.7 143.75,-506.7" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/hr.Resenje">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/hr.Resenje" xlink:title="hr.Resenje" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M246.23,-402.96C246.23,-402.96 36.38,-402.96 36.38,-402.96 30.38,-402.96 24.38,-396.96 24.38,-390.96 24.38,-390.96 24.38,-378.18 24.38,-378.18 24.38,-372.18 30.38,-366.18 36.38,-366.18 36.38,-366.18 246.23,-366.18 246.23,-366.18 252.23,-366.18 258.23,-372.18 258.23,-378.18 258.23,-378.18 258.23,-390.96 258.23,-390.96 258.23,-396.96 252.23,-402.96 246.23,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="141.3" y="-381.02" font-family="Segoe UI" font-size="14.00">Proveri zahtev i jedinstvenost veze</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-460.46C141.3,-446.6 141.3,-427.19 141.3,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-411.92 141.3,-404.92 138.85,-411.92 143.75,-411.92" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/hr.Potpisnik">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/hr.Potpisnik" xlink:title="hr.Potpisnik" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M242.48,-308.18C242.48,-308.18 40.12,-308.18 40.12,-308.18 34.12,-308.18 28.13,-302.18 28.13,-296.18 28.13,-296.18 28.13,-283.4 28.13,-283.4 28.13,-277.4 34.13,-271.4 40.13,-271.4 40.13,-271.4 242.48,-271.4 242.48,-271.4 248.48,-271.4 254.48,-277.4 254.48,-283.4 254.48,-283.4 254.48,-296.18 254.48,-296.18 254.48,-302.18 248.48,-308.18 242.48,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="141.3" y="-286.24" font-family="Segoe UI" font-size="14.00">Dopuni nacrt rešenja i potpisnika</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-365.68C141.3,-351.82 141.3,-332.41 141.3,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-317.14 141.3,-310.14 138.85,-317.14 143.75,-317.14" />
+</g>
+
+<g id="node-5" class="node" data-key="5" data-route="model/hr.Resenje">
+<title>n6</title>
+<g id="a_node-5"><a xlink:href="../../index.html#model/hr.Resenje" xlink:title="hr.Resenje" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M266.1,-213.4C266.1,-213.4 16.5,-213.4 16.5,-213.4 10.5,-213.4 4.5,-207.4 4.5,-201.4 4.5,-201.4 4.5,-188.62 4.5,-188.62 4.5,-182.62 10.5,-176.62 16.5,-176.62 16.5,-176.62 266.1,-176.62 266.1,-176.62 272.1,-176.62 278.1,-182.62 278.1,-188.62 278.1,-188.62 278.1,-201.4 278.1,-201.4 278.1,-207.4 272.1,-213.4 266.1,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="141.3" y="-191.46" font-family="Segoe UI" font-size="14.00">Validacija izdavanja i čuvanje dokumenta</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="5">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-270.9C141.3,-257.04 141.3,-237.63 141.3,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-222.36 141.3,-215.36 138.85,-222.36 143.75,-222.36" />
+</g>
+
+<g id="node-6" class="node" data-key="6" data-route="model/hr.Resenje">
+<title>n7</title>
+<g id="a_node-6"><a xlink:href="../../index.html#model/hr.Resenje" xlink:title="hr.Resenje" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M240.23,-118.62C240.23,-118.62 42.38,-118.62 42.38,-118.62 36.38,-118.62 30.38,-112.62 30.38,-106.62 30.38,-106.62 30.38,-93.84 30.38,-93.84 30.38,-87.84 36.38,-81.84 42.38,-81.84 42.38,-81.84 240.23,-81.84 240.23,-81.84 246.23,-81.84 252.23,-87.84 252.23,-93.84 252.23,-93.84 252.23,-106.62 252.23,-106.62 252.23,-112.62 246.23,-118.62 240.23,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="141.3" y="-96.68" font-family="Segoe UI" font-size="14.00">Pregled i štampa izdatog rešenja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="5" data-to="6">
+<title>n6-&gt;n7</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-176.12C141.3,-162.26 141.3,-142.85 141.3,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-127.58 141.3,-120.58 138.85,-127.58 143.75,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n8</title>
+<ellipse fill="#3778a3" stroke="#3778a3" cx="141.3" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#3778a3" cx="141.3" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="117.76" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-7" class="edge" data-from="6" data-to="end">
+<title>n7-&gt;n8</title>
+<path fill="none" stroke="#8b9ead" d="M141.3,-81.35C141.3,-67.12 141.3,-47.23 141.3,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="143.75,-32.71 141.3,-25.71 138.85,-32.71 143.75,-32.71" />
+</g>
+</g>
+</svg>

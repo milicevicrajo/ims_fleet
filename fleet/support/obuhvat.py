@@ -56,22 +56,9 @@ def _kes(user, kljuc, izracunaj):
 def jedinice(user):
     """Organizacione jedinice Flote (sifre posla) u obuhvatu danas; None znaci cela firma."""
     def izracunaj():
-        from core.models import OrganizationalUnit
-        from organizacija.models import LegacyOrgLink
-        from organizacija.services.prava import sifre_obuhvata
+        from organizacija.services.prava import jedinice_obuhvata
 
-        o = obuhvat(user)
-        sifre_registra = sifre_obuhvata(o)
-        if sifre_registra is None:
-            return None
-        from organizacija.services.prava import poslovi_obuhvata
-
-        ids = set(LegacyOrgLink.objects.filter(legacy_label=LegacyOrgLink.LEGACY_FLEET_UNIT,
-                                               node_id__in=poslovi_obuhvata(o)).values_list("legacy_id", flat=True))
-        # Jedinica napravljena posle poslednjeg uvoza registra jos nema vezu — nalazi se po sifri.
-        ids.update(pk for pk, code in OrganizationalUnit.objects.values_list("pk", "code")
-                   if (code or "").strip() in sifre_registra)
-        return ids
+        return jedinice_obuhvata(obuhvat(user))
 
     return _kes(user, "jedinice", izracunaj)
 

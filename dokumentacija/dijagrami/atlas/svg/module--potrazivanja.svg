@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="334pt" height="415pt" viewBox="0.00 0.00 334.00 415.00" role="img" aria-label="Potraživanja · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 393.88)">
+<title>G</title>
+
+<g id="node-potrazivanja" class="node" data-key="potrazivanja" data-route="models/potrazivanja">
+<title>n0</title>
+<g id="a_node-potrazivanja"><a xlink:href="../../index.html#models/potrazivanja" xlink:title="Potraživanja · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M83.1,-204.53C83.1,-204.53 12,-204.53 12,-204.53 6,-204.53 0,-198.53 0,-192.53 0,-192.53 0,-179.75 0,-179.75 0,-173.75 6,-167.75 12,-167.75 12,-167.75 83.1,-167.75 83.1,-167.75 89.1,-167.75 95.1,-173.75 95.1,-179.75 95.1,-179.75 95.1,-192.53 95.1,-192.53 95.1,-198.53 89.1,-204.53 83.1,-204.53" />
+<text xml:space="preserve" text-anchor="middle" x="47.55" y="-182.59" font-family="Segoe UI" font-size="14.00">Potraživanja</text>
+</a>
+</g>
+</g>
+
+<g id="node-dugovanja" class="node" data-key="dugovanja" data-route="area/potrazivanja/dugovanja">
+<title>n1</title>
+<g id="a_node-dugovanja"><a xlink:href="../../index.html#area/potrazivanja/dugovanja" xlink:title="Potraživanja · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M276.7,-372.28C276.7,-372.28 167.35,-372.28 167.35,-372.28 161.35,-372.28 155.35,-366.28 155.35,-360.28 155.35,-360.28 155.35,-328 155.35,-328 155.35,-322 161.35,-316 167.35,-316 167.35,-316 276.7,-316 276.7,-316 282.7,-316 288.7,-322 288.7,-328 288.7,-328 288.7,-360.28 288.7,-360.28 288.7,-366.28 282.7,-372.28 276.7,-372.28" />
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-350.34" font-family="Segoe UI" font-size="14.00">Dokumenti i salda</text>
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-330.84" font-family="Segoe UI" font-size="14.00">9 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja" data-to="dugovanja">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M61.82,-204.76C80.27,-229.74 115.63,-274.5 153.1,-305.14 155.45,-307.06 157.9,-308.94 160.43,-310.78" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="158.86,-312.68 166.01,-314.66 161.66,-308.65 158.86,-312.68" />
+</g>
+
+<g id="node-naplata" class="node" data-key="naplata" data-route="area/potrazivanja/naplata">
+<title>n2</title>
+<g id="a_node-naplata"><a xlink:href="../../index.html#area/potrazivanja/naplata" xlink:title="Potraživanja · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M278.95,-293.28C278.95,-293.28 165.1,-293.28 165.1,-293.28 159.1,-293.28 153.1,-287.28 153.1,-281.28 153.1,-281.28 153.1,-249 153.1,-249 153.1,-243 159.1,-237 165.1,-237 165.1,-237 278.95,-237 278.95,-237 284.95,-237 290.95,-243 290.95,-249 290.95,-249 290.95,-281.28 290.95,-281.28 290.95,-287.28 284.95,-293.28 278.95,-293.28" />
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-271.34" font-family="Segoe UI" font-size="14.00">Operativna naplata</text>
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-251.84" font-family="Segoe UI" font-size="14.00">6 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja" data-to="naplata">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M89.42,-204.86C107.79,-213.27 129.99,-223.44 150.89,-233.01" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="149.76,-235.19 157.14,-235.88 151.8,-230.74 149.76,-235.19" />
+</g>
+
+<g id="node-predmeti" class="node" data-key="predmeti" data-route="area/potrazivanja/predmeti">
+<title>n3</title>
+<g id="a_node-predmeti"><a xlink:href="../../index.html#area/potrazivanja/predmeti" xlink:title="Potraživanja · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M269.57,-214.28C269.57,-214.28 174.47,-214.28 174.47,-214.28 168.47,-214.28 162.47,-208.28 162.47,-202.28 162.47,-202.28 162.47,-170 162.47,-170 162.47,-164 168.47,-158 174.47,-158 174.47,-158 269.57,-158 269.57,-158 275.57,-158 281.57,-164 281.57,-170 281.57,-170 281.57,-202.28 281.57,-202.28 281.57,-208.28 275.57,-214.28 269.57,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-192.34" font-family="Segoe UI" font-size="14.00">Pravni predmeti</text>
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-172.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="potrazivanja" data-to="predmeti">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M95.22,-186.14C113.29,-186.14 134.32,-186.14 153.96,-186.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.76,-188.59 160.76,-186.14 153.76,-183.69 153.76,-188.59" />
+</g>
+
+<g id="node-uvoz" class="node" data-key="uvoz" data-route="area/potrazivanja/uvoz">
+<title>n4</title>
+<g id="a_node-uvoz"><a xlink:href="../../index.html#area/potrazivanja/uvoz" xlink:title="Potraživanja · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M263.2,-135.28C263.2,-135.28 180.85,-135.28 180.85,-135.28 174.85,-135.28 168.85,-129.28 168.85,-123.28 168.85,-123.28 168.85,-91 168.85,-91 168.85,-85 174.85,-79 180.85,-79 180.85,-79 263.2,-79 263.2,-79 269.2,-79 275.2,-85 275.2,-91 275.2,-91 275.2,-123.28 275.2,-123.28 275.2,-129.28 269.2,-135.28 263.2,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-113.34" font-family="Segoe UI" font-size="14.00">Uvoz i revizija</text>
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-93.84" font-family="Segoe UI" font-size="14.00">10 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="potrazivanja" data-to="uvoz">
+<title>n0-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M89.42,-167.42C110.82,-157.62 137.42,-145.44 161.09,-134.59" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="161.95,-136.9 167.29,-131.75 159.91,-132.44 161.95,-136.9" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/potrazivanja">
+<title>n5</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/potrazivanja" xlink:title="Potraživanja · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M271.45,-56.28C271.45,-56.28 172.6,-56.28 172.6,-56.28 166.6,-56.28 160.6,-50.28 160.6,-44.28 160.6,-44.28 160.6,-12 160.6,-12 160.6,-6 166.6,0 172.6,0 172.6,0 271.45,0 271.45,0 277.45,0 283.45,-6 283.45,-12 283.45,-12 283.45,-44.28 283.45,-44.28 283.45,-50.28 277.45,-56.28 271.45,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="222.02" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="potrazivanja" data-to="flows">
+<title>n0-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M61.82,-167.52C80.27,-142.54 115.63,-97.78 153.1,-67.14 155.45,-65.22 157.9,-63.34 160.43,-61.5" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="161.66,-63.63 166.01,-57.62 158.86,-59.6 161.66,-63.63" />
+</g>
+</g>
+</svg>

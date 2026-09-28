@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="336pt" height="178pt" viewBox="0.00 0.00 336.00 178.00" role="img" aria-label="Isplate · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 156.88)">
+<title>G</title>
+
+<g id="node-isplate" class="node" data-key="isplate" data-route="models/isplate">
+<title>n0</title>
+<g id="a_node-isplate"><a xlink:href="../../index.html#models/isplate" xlink:title="Isplate · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M50.1,-85.53C50.1,-85.53 12,-85.53 12,-85.53 6,-85.53 0,-79.53 0,-73.53 0,-73.53 0,-60.75 0,-60.75 0,-54.75 6,-48.75 12,-48.75 12,-48.75 50.1,-48.75 50.1,-48.75 56.1,-48.75 62.1,-54.75 62.1,-60.75 62.1,-60.75 62.1,-73.53 62.1,-73.53 62.1,-79.53 56.1,-85.53 50.1,-85.53" />
+<text xml:space="preserve" text-anchor="middle" x="31.05" y="-63.59" font-family="Segoe UI" font-size="14.00">Isplate</text>
+</a>
+</g>
+</g>
+
+<g id="node-podaci" class="node" data-key="podaci" data-route="area/isplate/podaci">
+<title>n1</title>
+<g id="a_node-podaci"><a xlink:href="../../index.html#area/isplate/podaci" xlink:title="Isplate · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M280.45,-135.28C280.45,-135.28 132.1,-135.28 132.1,-135.28 126.1,-135.28 120.1,-129.28 120.1,-123.28 120.1,-123.28 120.1,-91 120.1,-91 120.1,-85 126.1,-79 132.1,-79 132.1,-79 280.45,-79 280.45,-79 286.45,-79 292.45,-85 292.45,-91 292.45,-91 292.45,-123.28 292.45,-123.28 292.45,-129.28 286.45,-135.28 280.45,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="206.27" y="-113.34" font-family="Segoe UI" font-size="14.00">Podaci iz drugih modula</text>
+<text xml:space="preserve" text-anchor="middle" x="206.27" y="-93.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="isplate" data-to="podaci">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M62.22,-74.11C76.18,-77.33 93.59,-81.35 111.42,-85.47" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="110.78,-87.84 118.16,-87.02 111.89,-83.06 110.78,-87.84" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/isplate">
+<title>n2</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/isplate" xlink:title="Isplate · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M255.7,-56.28C255.7,-56.28 156.85,-56.28 156.85,-56.28 150.85,-56.28 144.85,-50.28 144.85,-44.28 144.85,-44.28 144.85,-12 144.85,-12 144.85,-6 150.85,0 156.85,0 156.85,0 255.7,0 255.7,0 261.7,0 267.7,-6 267.7,-12 267.7,-12 267.7,-44.28 267.7,-44.28 267.7,-50.28 261.7,-56.28 255.7,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="206.27" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="206.27" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="isplate" data-to="flows">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M62.22,-60.35C82.69,-55.74 110.61,-49.45 136.35,-43.66" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="136.85,-46.06 143.14,-42.13 135.77,-41.28 136.85,-46.06" />
+</g>
+</g>
+</svg>

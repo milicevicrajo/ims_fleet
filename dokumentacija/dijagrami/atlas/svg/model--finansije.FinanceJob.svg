@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="272pt" viewBox="0.00 0.00 200.00 272.00" role="img" aria-label="FinanceJob · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 250.38)">
+<title>G</title>
+
+<g id="node-finansije.FinanceJob" class="node" data-key="finansije.FinanceJob" data-route="model/finansije.FinanceJob">
+<title>n0</title>
+<g id="a_node-finansije.FinanceJob"><a xlink:href="../../index.html#model/finansije.FinanceJob" xlink:title="finansije.FinanceJob" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M144.35,-228.78C144.35,-228.78 12,-228.78 12,-228.78 6,-228.78 0,-222.78 0,-216.78 0,-216.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 144.35,0 144.35,0 150.35,0 156.35,-6 156.35,-12 156.35,-12 156.35,-216.78 156.35,-216.78 156.35,-222.78 150.35,-228.78 144.35,-228.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-205.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-180.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinanceJob</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">center : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">profit_type : Char</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="218pt" height="203pt" viewBox="0.00 0.00 218.00 203.00" role="img" aria-label="PutniNalogSequence · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 181.38)">
+<title>G</title>
+
+<g id="node-fleet.PutniNalogSequence" class="node" data-key="fleet.PutniNalogSequence" data-route="model/fleet.PutniNalogSequence">
+<title>n0</title>
+<g id="a_node-fleet.PutniNalogSequence"><a xlink:href="../../index.html#model/fleet.PutniNalogSequence" xlink:title="fleet.PutniNalogSequence" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M163.1,-159.78C163.1,-159.78 12,-159.78 12,-159.78 6,-159.78 0,-153.78 0,-147.78 0,-147.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 163.1,0 163.1,0 169.1,0 175.1,-6 175.1,-12 175.1,-12 175.1,-147.78 175.1,-147.78 175.1,-153.78 169.1,-159.78 163.1,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PutniNalogSequence</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">center_code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">year : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">next_number : PositiveInteger</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

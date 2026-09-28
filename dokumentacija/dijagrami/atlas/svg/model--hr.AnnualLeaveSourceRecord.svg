@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="510pt" height="272pt" viewBox="0.00 0.00 510.00 272.00" role="img" aria-label="AnnualLeaveSourceRecord · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 250.38)">
+<title>G</title>
+
+<g id="node-hr.AnnualLeaveSourceRecord" class="node" data-key="hr.AnnualLeaveSourceRecord" data-route="model/hr.AnnualLeaveSourceRecord">
+<title>n0</title>
+<g id="a_node-hr.AnnualLeaveSourceRecord"><a xlink:href="../../index.html#model/hr.AnnualLeaveSourceRecord" xlink:title="hr.AnnualLeaveSourceRecord" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M190.1,-228.78C190.1,-228.78 12,-228.78 12,-228.78 6,-228.78 0,-222.78 0,-216.78 0,-216.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 190.1,0 190.1,0 196.1,0 202.1,-6 202.1,-12 202.1,-12 202.1,-216.78 202.1,-216.78 202.1,-222.78 196.1,-228.78 190.1,-228.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-205.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr · abstraktno</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-180.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">AnnualLeaveSourceRecord</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">company_code : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">employee_code : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">employee : Employee ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">source_present : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">last_seen_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">last_sync : AnnualLeaveSync ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.AnnualLeaveSync" class="node" data-key="hr.AnnualLeaveSync" data-route="model/hr.AnnualLeaveSync">
+<title>n1</title>
+<g id="a_node-hr.AnnualLeaveSync"><a xlink:href="../../index.html#model/hr.AnnualLeaveSync" xlink:title="hr.AnnualLeaveSync" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M451.7,-216.78C451.7,-216.78 324.6,-216.78 324.6,-216.78 318.6,-216.78 312.6,-210.78 312.6,-204.78 312.6,-204.78 312.6,-138 312.6,-138 312.6,-132 318.6,-126 324.6,-126 324.6,-126 451.7,-126 451.7,-126 457.7,-126 463.7,-132 463.7,-138 463.7,-138 463.7,-204.78 463.7,-204.78 463.7,-210.78 457.7,-216.78 451.7,-216.78" />
+<text xml:space="preserve" text-anchor="start" x="327.4" y="-193.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="327.4" y="-168.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">AnnualLeaveSync</text>
+<text xml:space="preserve" text-anchor="start" x="327.4" y="-143.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">4 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr.AnnualLeaveSourceRecord" data-to="hr.AnnualLeaveSync">
+<title>n0-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="hr.AnnualLeaveSourceRecord.last_sync → hr.AnnualLeaveSync | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M202.57,-134.49C235.82,-141.13 272.42,-148.45 304.21,-154.81" />
+<polygon fill="#7297ab" stroke="#7297ab" points="303.35,-157.13 310.69,-156.1 304.31,-152.33 303.35,-157.13" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="255.85" y="-154.22" font-family="Segoe UI" font-size="11.00">last_sync</text>
+<text xml:space="preserve" text-anchor="middle" x="297.6" y="-157" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="217.14" y="-127.99" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n2</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M454.7,-102.78C454.7,-102.78 321.6,-102.78 321.6,-102.78 315.6,-102.78 309.6,-96.78 309.6,-90.78 309.6,-90.78 309.6,-24 309.6,-24 309.6,-18 315.6,-12 321.6,-12 321.6,-12 454.7,-12 454.7,-12 460.7,-12 466.7,-18 466.7,-24 466.7,-24 466.7,-90.78 466.7,-90.78 466.7,-96.78 460.7,-102.78 454.7,-102.78" />
+<text xml:space="preserve" text-anchor="start" x="324.4" y="-79.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="324.4" y="-54.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="324.4" y="-29.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.AnnualLeaveSourceRecord" data-to="hr.Employee">
+<title>n0-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="hr.AnnualLeaveSourceRecord.employee → hr.Employee | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M202.57,-94.29C234.79,-87.85 270.17,-80.78 301.26,-74.56" />
+<polygon fill="#7297ab" stroke="#7297ab" points="301.61,-76.99 308,-73.21 300.65,-72.18 301.61,-76.99" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="255.85" y="-92.15" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="297.39" y="-78.85" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="214.65" y="-82.46" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

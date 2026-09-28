@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="444pt" height="203pt" viewBox="0.00 0.00 444.00 203.00" role="img" aria-label="RecipientType · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 181.38)">
+<title>G</title>
+
+<g id="node-hr.RecipientType" class="node" data-key="hr.RecipientType" data-route="model/hr.RecipientType">
+<title>n0</title>
+<g id="a_node-hr.RecipientType"><a xlink:href="../../index.html#model/hr.RecipientType" xlink:title="hr.RecipientType" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M388.7,-159.78C388.7,-159.78 290.85,-159.78 290.85,-159.78 284.85,-159.78 278.85,-153.78 278.85,-147.78 278.85,-147.78 278.85,-12 278.85,-12 278.85,-6 284.85,0 290.85,0 290.85,0 388.7,0 388.7,0 394.7,0 400.7,-6 400.7,-12 400.7,-12 400.7,-147.78 400.7,-147.78 400.7,-153.78 394.7,-159.78 388.7,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="293.65" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="293.65" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">RecipientType</text>
+<text xml:space="preserve" text-anchor="start" x="293.65" y="-86.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="293.65" y="-63.19" font-family="Segoe UI" font-size="11.00">code : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="293.65" y="-40.19" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="293.65" y="-17.19" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.WorkTimeElement" class="node" data-key="hr.WorkTimeElement" data-route="model/hr.WorkTimeElement">
+<title>n1</title>
+<g id="a_node-hr.WorkTimeElement"><a xlink:href="../../index.html#model/hr.WorkTimeElement" xlink:title="hr.WorkTimeElement" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M139.1,-125.28C139.1,-125.28 12,-125.28 12,-125.28 6,-125.28 0,-119.28 0,-113.28 0,-113.28 0,-46.5 0,-46.5 0,-40.5 6,-34.5 12,-34.5 12,-34.5 139.1,-34.5 139.1,-34.5 145.1,-34.5 151.1,-40.5 151.1,-46.5 151.1,-46.5 151.1,-113.28 151.1,-113.28 151.1,-119.28 145.1,-125.28 139.1,-125.28" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-102.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-77.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">WorkTimeElement</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-51.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.WorkTimeElement" data-to="hr.RecipientType">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="hr.WorkTimeElement.recipient_type → hr.RecipientType | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M151.34,-79.89C188.78,-79.89 233.78,-79.89 270.3,-79.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="269.92,-82.34 276.92,-79.89 269.92,-77.44 269.92,-82.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="214.97" y="-84.44" font-family="Segoe UI" font-size="11.00">recipient_type</text>
+<text xml:space="preserve" text-anchor="middle" x="264.84" y="-83.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="164.94" y="-70.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

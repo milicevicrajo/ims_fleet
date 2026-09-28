@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="584pt" height="99pt" viewBox="0.00 0.00 584.00 99.00" role="img" aria-label="Tokovi rada · Flota">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-fleet--zaduzenje" class="node" data-key="fleet/zaduzenje" data-route="flow/fleet/zaduzenje">
+<title>n0</title>
+<g id="a_node-fleet--zaduzenje"><a xlink:href="../../index.html#flow/fleet/zaduzenje" xlink:title="Tokovi rada · Flota" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M281.1,-56.28C281.1,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 281.1,0 281.1,0 287.1,0 293.1,-6 293.1,-12 293.1,-12 293.1,-44.28 293.1,-44.28 293.1,-50.28 287.1,-56.28 281.1,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="146.55" y="-34.34" font-family="Segoe UI" font-size="14.00">Zaduženje i zatvaranje putnog naloga vozila</text>
+<text xml:space="preserve" text-anchor="middle" x="146.55" y="-14.84" font-family="Segoe UI" font-size="14.00">Flota</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet--gorivo" class="node" data-key="fleet/gorivo" data-route="flow/fleet/gorivo">
+<title>n1</title>
+<g id="a_node-fleet--gorivo"><a xlink:href="../../index.html#flow/fleet/gorivo" xlink:title="Tokovi rada · Flota" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M528.6,-56.28C528.6,-56.28 328.5,-56.28 328.5,-56.28 322.5,-56.28 316.5,-50.28 316.5,-44.28 316.5,-44.28 316.5,-12 316.5,-12 316.5,-6 322.5,0 328.5,0 328.5,0 528.6,0 528.6,0 534.6,0 540.6,-6 540.6,-12 540.6,-12 540.6,-44.28 540.6,-44.28 540.6,-50.28 534.6,-56.28 528.6,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="428.55" y="-34.34" font-family="Segoe UI" font-size="14.00">Uvoz goriva i priprema potrošnje</text>
+<text xml:space="preserve" text-anchor="middle" x="428.55" y="-14.84" font-family="Segoe UI" font-size="14.00">Flota</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

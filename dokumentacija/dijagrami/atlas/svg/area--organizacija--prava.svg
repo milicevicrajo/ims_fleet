@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="409pt" height="362pt" viewBox="0.00 0.00 409.00 362.00" role="img" aria-label="Organizacija · Dodele uloga">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 340.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M354.2,-318.78C354.2,-318.78 227.1,-318.78 227.1,-318.78 221.1,-318.78 215.1,-312.78 215.1,-306.78 215.1,-306.78 215.1,-240 215.1,-240 215.1,-234 221.1,-228 227.1,-228 227.1,-228 354.2,-228 354.2,-228 360.2,-228 366.2,-234 366.2,-240 366.2,-240 366.2,-306.78 366.2,-306.78 366.2,-312.78 360.2,-318.78 354.2,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-core.Role" class="node" data-key="core.Role" data-route="model/core.Role">
+<title>n1</title>
+<g id="a_node-core.Role"><a xlink:href="../../index.html#model/core.Role" xlink:title="core.Role" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M354.2,-204.78C354.2,-204.78 227.1,-204.78 227.1,-204.78 221.1,-204.78 215.1,-198.78 215.1,-192.78 215.1,-192.78 215.1,-126 215.1,-126 215.1,-120 221.1,-114 227.1,-114 227.1,-114 354.2,-114 354.2,-114 360.2,-114 366.2,-120 366.2,-126 366.2,-126 366.2,-192.78 366.2,-192.78 366.2,-198.78 360.2,-204.78 354.2,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Role</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-organizacija.DodelaUloge" class="node" data-key="organizacija.DodelaUloge" data-route="model/organizacija.DodelaUloge">
+<title>n2</title>
+<g id="a_node-organizacija.DodelaUloge"><a xlink:href="../../index.html#model/organizacija.DodelaUloge" xlink:title="organizacija.DodelaUloge" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M102.35,-247.78C102.35,-247.78 12,-247.78 12,-247.78 6,-247.78 0,-241.78 0,-235.78 0,-235.78 0,-169 0,-169 0,-163 6,-157 12,-157 12,-157 102.35,-157 102.35,-157 108.35,-157 114.35,-163 114.35,-169 114.35,-169 114.35,-235.78 114.35,-235.78 114.35,-241.78 108.35,-247.78 102.35,-247.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.69" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-199.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">DodelaUloge</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-174.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="organizacija.DodelaUloge" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="organizacija.DodelaUloge.korisnik → core.CustomUser | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M114.59,-247.37C123.78,-252.92 133.53,-257.87 143.35,-261.39 163.15,-268.48 185.4,-272.25 206.45,-274.09" />
+<polygon fill="#a27631" stroke="#a27631" points="206.08,-276.52 213.25,-274.62 206.46,-271.64 206.08,-276.52" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="164.72" y="-275.63" font-family="Segoe UI" font-size="11.00">korisnik</text>
+<text xml:space="preserve" text-anchor="middle" x="200.72" y="-277.06" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="129.51" y="-245.91" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-3" class="edge" data-from="organizacija.DodelaUloge" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-3"><a xlink:title="organizacija.DodelaUloge.odobrio → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M114.55,-219.53C136.84,-226.32 162.68,-234.2 186.1,-241.39 192.76,-243.43 199.66,-245.56 206.58,-247.69" />
+<polygon fill="#a27631" stroke="#a27631" points="205.86,-250.03 213.27,-249.75 207.31,-245.35 205.86,-250.03" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="164.72" y="-245.94" font-family="Segoe UI" font-size="11.00">odobrio</text>
+<text xml:space="preserve" text-anchor="middle" x="199.86" y="-249.3" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="129.4" y="-214.47" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="organizacija.DodelaUloge" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-4"><a xlink:title="organizacija.DodelaUloge.opozvao → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M114.67,-198.89C137.33,-199.06 163.4,-201.28 186.1,-208.39 197.81,-212.06 209.52,-217.39 220.62,-223.44" />
+<polygon fill="#a27631" stroke="#a27631" points="219.21,-225.46 226.51,-226.77 221.62,-221.19 219.21,-225.46" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="164.72" y="-212.94" font-family="Segoe UI" font-size="11.00">opozvao</text>
+<text xml:space="preserve" text-anchor="middle" x="212.87" y="-223.39" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="128.36" y="-189.83" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="organizacija.DodelaUloge" data-to="core.Role">
+<title>n2-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="organizacija.DodelaUloge.uloga → core.Role | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M114.5,-169.42C123.87,-165.28 133.68,-161.69 143.35,-159.39 163.44,-154.61 185.52,-152.86 206.31,-152.71" />
+<polygon fill="#a27631" stroke="#a27631" points="206.3,-155.16 213.3,-152.73 206.31,-150.26 206.3,-155.16" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="164.72" y="-163.94" font-family="Segoe UI" font-size="11.00">uloga</text>
+<text xml:space="preserve" text-anchor="middle" x="201.21" y="-156.08" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="124.45" y="-155.24" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-organizacija.OrgNode" class="node" data-key="organizacija.OrgNode" data-route="model/organizacija.OrgNode">
+<title>n3</title>
+<g id="a_node-organizacija.OrgNode"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M354.2,-90.78C354.2,-90.78 227.1,-90.78 227.1,-90.78 221.1,-90.78 215.1,-84.78 215.1,-78.78 215.1,-78.78 215.1,-12 215.1,-12 215.1,-6 221.1,0 227.1,0 227.1,0 354.2,0 354.2,0 360.2,0 366.2,-6 366.2,-12 366.2,-12 366.2,-78.78 366.2,-78.78 366.2,-84.78 360.2,-90.78 354.2,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="organizacija.DodelaUloge" data-to="organizacija.OrgNode">
+<title>n2-&gt;n3</title>
+<g id="a_edge-2"><a xlink:title="organizacija.DodelaUloge.cvor → organizacija.OrgNode | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M112.29,-156.69C122.42,-148.68 133.06,-140.6 143.35,-133.39 163.63,-119.18 186.26,-104.87 207.54,-92.04" />
+<polygon fill="#7297ab" stroke="#7297ab" points="208.66,-94.23 213.4,-88.53 206.14,-90.02 208.66,-94.23" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="164.72" y="-137.94" font-family="Segoe UI" font-size="11.00">cvor</text>
+<text xml:space="preserve" text-anchor="middle" x="206.3" y="-97.22" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="119.04" y="-140.35" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

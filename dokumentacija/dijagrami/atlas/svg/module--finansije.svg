@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="309pt" height="336pt" viewBox="0.00 0.00 309.00 336.00" role="img" aria-label="Finansije · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 314.88)">
+<title>G</title>
+
+<g id="node-finansije" class="node" data-key="finansije" data-route="models/finansije">
+<title>n0</title>
+<g id="a_node-finansije"><a xlink:href="../../index.html#models/finansije" xlink:title="Finansije · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M64.35,-164.53C64.35,-164.53 12,-164.53 12,-164.53 6,-164.53 0,-158.53 0,-152.53 0,-152.53 0,-139.75 0,-139.75 0,-133.75 6,-127.75 12,-127.75 12,-127.75 64.35,-127.75 64.35,-127.75 70.35,-127.75 76.35,-133.75 76.35,-139.75 76.35,-139.75 76.35,-152.53 76.35,-152.53 76.35,-158.53 70.35,-164.53 64.35,-164.53" />
+<text xml:space="preserve" text-anchor="middle" x="38.18" y="-142.59" font-family="Segoe UI" font-size="14.00">Finansije</text>
+</a>
+</g>
+</g>
+
+<g id="node-knjizenja" class="node" data-key="knjizenja" data-route="area/finansije/knjizenja">
+<title>n1</title>
+<g id="a_node-knjizenja"><a xlink:href="../../index.html#area/finansije/knjizenja" xlink:title="Finansije · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M254.2,-293.28C254.2,-293.28 146.35,-293.28 146.35,-293.28 140.35,-293.28 134.35,-287.28 134.35,-281.28 134.35,-281.28 134.35,-249 134.35,-249 134.35,-243 140.35,-237 146.35,-237 146.35,-237 254.2,-237 254.2,-237 260.2,-237 266.2,-243 266.2,-249 266.2,-249 266.2,-281.28 266.2,-281.28 266.2,-287.28 260.2,-293.28 254.2,-293.28" />
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-271.34" font-family="Segoe UI" font-size="14.00">Poslovi i knjiženja</text>
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-251.84" font-family="Segoe UI" font-size="14.00">2 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="finansije" data-to="knjizenja">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M59.58,-164.92C78.35,-181.8 107.29,-206.83 134.35,-226.14 137.12,-228.12 139.99,-230.09 142.92,-232.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="141.36,-233.95 148.56,-235.73 144.04,-229.85 141.36,-233.95" />
+</g>
+
+<g id="node-sinhronizacija" class="node" data-key="sinhronizacija" data-route="area/finansije/sinhronizacija">
+<title>n2</title>
+<g id="a_node-sinhronizacija"><a xlink:href="../../index.html#area/finansije/sinhronizacija" xlink:title="Finansije · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M242.57,-214.28C242.57,-214.28 157.97,-214.28 157.97,-214.28 151.97,-214.28 145.97,-208.28 145.97,-202.28 145.97,-202.28 145.97,-170 145.97,-170 145.97,-164 151.97,-158 157.97,-158 157.97,-158 242.57,-158 242.57,-158 248.57,-158 254.57,-164 254.57,-170 254.57,-170 254.57,-202.28 254.57,-202.28 254.57,-208.28 248.57,-214.28 242.57,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-192.34" font-family="Segoe UI" font-size="14.00">Sinhronizacije</text>
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-172.84" font-family="Segoe UI" font-size="14.00">2 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="finansije" data-to="sinhronizacija">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M76.71,-155.52C94.82,-160.04 117.03,-165.59 137.54,-170.72" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="136.75,-173.04 144.14,-172.36 137.94,-168.29 136.75,-173.04" />
+</g>
+
+<g id="node-banke" class="node" data-key="banke" data-route="area/finansije/banke">
+<title>n3</title>
+<g id="a_node-banke"><a xlink:href="../../index.html#area/finansije/banke" xlink:title="Finansije · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M251.2,-135.28C251.2,-135.28 149.35,-135.28 149.35,-135.28 143.35,-135.28 137.35,-129.28 137.35,-123.28 137.35,-123.28 137.35,-91 137.35,-91 137.35,-85 143.35,-79 149.35,-79 149.35,-79 251.2,-79 251.2,-79 257.2,-79 263.2,-85 263.2,-91 263.2,-91 263.2,-123.28 263.2,-123.28 263.2,-129.28 257.2,-135.28 251.2,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-113.34" font-family="Segoe UI" font-size="14.00">Banke i plasmani</text>
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-93.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="finansije" data-to="banke">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M76.71,-137C92.26,-133.21 110.82,-128.69 128.74,-124.32" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="129.22,-126.73 135.45,-122.69 128.06,-121.97 129.22,-126.73" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/finansije">
+<title>n4</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/finansije" xlink:title="Finansije · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M249.7,-56.28C249.7,-56.28 150.85,-56.28 150.85,-56.28 144.85,-56.28 138.85,-50.28 138.85,-44.28 138.85,-44.28 138.85,-12 138.85,-12 138.85,-6 144.85,0 150.85,0 150.85,0 249.7,0 249.7,0 255.7,0 261.7,-6 261.7,-12 261.7,-12 261.7,-44.28 261.7,-44.28 261.7,-50.28 255.7,-56.28 249.7,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="200.27" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="finansije" data-to="flows">
+<title>n0-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M59.98,-127.3C78.79,-110.65 107.55,-86.15 134.35,-67.14 137.13,-65.17 140,-63.2 142.93,-61.25" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="144.05,-63.45 148.58,-57.58 141.37,-59.35 144.05,-63.45" />
+</g>
+</g>
+</svg>

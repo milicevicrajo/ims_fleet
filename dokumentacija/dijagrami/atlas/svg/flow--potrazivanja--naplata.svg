@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="316pt" height="824pt" viewBox="0.00 0.00 316.00 824.00" role="img" aria-label="Od salda do aktivnosti naplate">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 802.24)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="136.43" cy="-753.22" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="104.51" y="-767.34" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/potrazivanja.CollectionSyncRun">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/potrazivanja.CollectionSyncRun" xlink:title="potrazivanja.CollectionSyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M240.98,-687.3C240.98,-687.3 31.88,-687.3 31.88,-687.3 25.88,-687.3 19.88,-681.3 19.88,-675.3 19.88,-675.3 19.88,-662.52 19.88,-662.52 19.88,-656.52 25.88,-650.52 31.88,-650.52 31.88,-650.52 240.98,-650.52 240.98,-650.52 246.98,-650.52 252.98,-656.52 252.98,-662.52 252.98,-662.52 252.98,-675.3 252.98,-675.3 252.98,-681.3 246.98,-687.3 240.98,-687.3" />
+<text xml:space="preserve" text-anchor="middle" x="136.43" y="-665.36" font-family="Segoe UI" font-size="14.00">Sinhronizuj dokumente i knjiženja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-744.92C136.43,-734.06 136.43,-713.12 136.43,-696.12" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-696.18 136.43,-689.18 133.98,-696.18 138.88,-696.18" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/potrazivanja.FinancePartnerIdentity">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/potrazivanja.FinancePartnerIdentity" xlink:title="potrazivanja.FinancePartnerIdentity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M243.98,-592.52C243.98,-592.52 28.88,-592.52 28.88,-592.52 22.88,-592.52 16.88,-586.52 16.88,-580.52 16.88,-580.52 16.88,-567.74 16.88,-567.74 16.88,-561.74 22.88,-555.74 28.88,-555.74 28.88,-555.74 243.98,-555.74 243.98,-555.74 249.98,-555.74 255.98,-561.74 255.98,-567.74 255.98,-567.74 255.98,-580.52 255.98,-580.52 255.98,-586.52 249.98,-592.52 243.98,-592.52" />
+<text xml:space="preserve" text-anchor="middle" x="136.43" y="-570.58" font-family="Segoe UI" font-size="14.00">Razreši identitet partnera i dospeće</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-650.02C136.43,-636.16 136.43,-616.75 136.43,-601.17" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-601.48 136.43,-594.48 133.98,-601.48 138.88,-601.48" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/potrazivanja.BalanceSnapshot">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/potrazivanja.BalanceSnapshot" xlink:title="potrazivanja.BalanceSnapshot" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M231.97,-497.74C231.97,-497.74 40.88,-497.74 40.88,-497.74 34.88,-497.74 28.88,-491.74 28.88,-485.74 28.88,-485.74 28.88,-472.96 28.88,-472.96 28.88,-466.96 34.88,-460.96 40.88,-460.96 40.88,-460.96 231.97,-460.96 231.97,-460.96 237.97,-460.96 243.97,-466.96 243.97,-472.96 243.97,-472.96 243.97,-485.74 243.97,-485.74 243.97,-491.74 237.97,-497.74 231.97,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="136.43" y="-475.8" font-family="Segoe UI" font-size="14.00">Pripremi snimak salda i pozicije</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-555.24C136.43,-541.38 136.43,-521.97 136.43,-506.39" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-506.7 136.43,-499.7 133.98,-506.7 138.88,-506.7" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/potrazivanja.ReceivablePosition">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/potrazivanja.ReceivablePosition" xlink:title="potrazivanja.ReceivablePosition" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M250.73,-402.96C250.73,-402.96 22.12,-402.96 22.12,-402.96 16.12,-402.96 10.13,-396.96 10.13,-390.96 10.13,-390.96 10.13,-378.18 10.13,-378.18 10.13,-372.18 16.13,-366.18 22.13,-366.18 22.13,-366.18 250.73,-366.18 250.73,-366.18 256.73,-366.18 262.73,-372.18 262.73,-378.18 262.73,-378.18 262.73,-390.96 262.73,-390.96 262.73,-396.96 256.73,-402.96 250.73,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="136.43" y="-381.02" font-family="Segoe UI" font-size="14.00">Pregledaj partnera i otvorene pozicije</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-460.46C136.43,-446.6 136.43,-427.19 136.43,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-411.92 136.43,-404.92 133.98,-411.92 138.88,-411.92" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/potrazivanja.CollectionActivity">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/potrazivanja.CollectionActivity" xlink:title="potrazivanja.CollectionActivity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M260.85,-308.18C260.85,-308.18 12,-308.18 12,-308.18 6,-308.18 0,-302.18 0,-296.18 0,-296.18 0,-283.4 0,-283.4 0,-277.4 6,-271.4 12,-271.4 12,-271.4 260.85,-271.4 260.85,-271.4 266.85,-271.4 272.85,-277.4 272.85,-283.4 272.85,-283.4 272.85,-296.18 272.85,-296.18 272.85,-302.18 266.85,-308.18 260.85,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="136.43" y="-286.24" font-family="Segoe UI" font-size="14.00">Evidentiraj kontakt / aktivnost po potrebi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-365.68C136.43,-351.82 136.43,-332.41 136.43,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-317.14 136.43,-310.14 133.98,-317.14 138.88,-317.14" />
+</g>
+
+<g id="node-5" class="node" data-key="5" data-route="model/potrazivanja.CollectionNotice">
+<title>n6</title>
+<g id="a_node-5"><a xlink:href="../../index.html#model/potrazivanja.CollectionNotice" xlink:title="potrazivanja.CollectionNotice" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M245.85,-213.4C245.85,-213.4 27,-213.4 27,-213.4 21,-213.4 15,-207.4 15,-201.4 15,-201.4 15,-188.62 15,-188.62 15,-182.62 21,-176.62 27,-176.62 27,-176.62 245.85,-176.62 245.85,-176.62 251.85,-176.62 257.85,-182.62 257.85,-188.62 257.85,-188.62 257.85,-201.4 257.85,-201.4 257.85,-207.4 251.85,-213.4 245.85,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="136.43" y="-191.46" font-family="Segoe UI" font-size="14.00">Pripremi opomenu i izabrane stavke</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="5">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-270.9C136.43,-257.04 136.43,-237.63 136.43,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-222.36 136.43,-215.36 133.98,-222.36 138.88,-222.36" />
+</g>
+
+<g id="node-6" class="node" data-key="6" data-route="model/potrazivanja.CollectionAudit">
+<title>n7</title>
+<g id="a_node-6"><a xlink:href="../../index.html#model/potrazivanja.CollectionAudit" xlink:title="potrazivanja.CollectionAudit" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M221.1,-118.62C221.1,-118.62 51.75,-118.62 51.75,-118.62 45.75,-118.62 39.75,-112.62 39.75,-106.62 39.75,-106.62 39.75,-93.84 39.75,-93.84 39.75,-87.84 45.75,-81.84 51.75,-81.84 51.75,-81.84 221.1,-81.84 221.1,-81.84 227.1,-81.84 233.1,-87.84 233.1,-93.84 233.1,-93.84 233.1,-106.62 233.1,-106.62 233.1,-112.62 227.1,-118.62 221.1,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="136.43" y="-96.68" font-family="Segoe UI" font-size="14.00">Prati dalji rad i revizioni trag</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="5" data-to="6">
+<title>n6-&gt;n7</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-176.12C136.43,-162.26 136.43,-142.85 136.43,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-127.58 136.43,-120.58 133.98,-127.58 138.88,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n8</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="136.43" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#8a6933" cx="136.43" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="112.88" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-7" class="edge" data-from="6" data-to="end">
+<title>n7-&gt;n8</title>
+<path fill="none" stroke="#8b9ead" d="M136.43,-81.35C136.43,-67.12 136.43,-47.23 136.43,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.88,-32.71 136.43,-25.71 133.98,-32.71 138.88,-32.71" />
+</g>
+</g>
+</svg>

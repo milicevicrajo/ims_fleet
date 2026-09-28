@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="395pt" height="257pt" viewBox="0.00 0.00 395.00 257.00" role="img" aria-label="Nasleđena naplata · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 235.88)">
+<title>G</title>
+
+<g id="node-naplata" class="node" data-key="naplata" data-route="models/naplata">
+<title>n0</title>
+<g id="a_node-naplata"><a xlink:href="../../index.html#models/naplata" xlink:title="Nasleđena naplata · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M123.6,-125.53C123.6,-125.53 12,-125.53 12,-125.53 6,-125.53 0,-119.53 0,-113.53 0,-113.53 0,-100.75 0,-100.75 0,-94.75 6,-88.75 12,-88.75 12,-88.75 123.6,-88.75 123.6,-88.75 129.6,-88.75 135.6,-94.75 135.6,-100.75 135.6,-100.75 135.6,-113.53 135.6,-113.53 135.6,-119.53 129.6,-125.53 123.6,-125.53" />
+<text xml:space="preserve" text-anchor="middle" x="67.8" y="-103.59" font-family="Segoe UI" font-size="14.00">Nasleđena naplata</text>
+</a>
+</g>
+</g>
+
+<g id="node-evidencija" class="node" data-key="evidencija" data-route="area/naplata/evidencija">
+<title>n1</title>
+<g id="a_node-evidencija"><a xlink:href="../../index.html#area/naplata/evidencija" xlink:title="Nasleđena naplata · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M319.82,-214.28C319.82,-214.28 225.47,-214.28 225.47,-214.28 219.47,-214.28 213.47,-208.28 213.47,-202.28 213.47,-202.28 213.47,-170 213.47,-170 213.47,-164 219.47,-158 225.47,-158 225.47,-158 319.82,-158 319.82,-158 325.82,-158 331.82,-164 331.82,-170 331.82,-170 331.82,-202.28 331.82,-202.28 331.82,-208.28 325.82,-214.28 319.82,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="272.65" y="-192.34" font-family="Segoe UI" font-size="14.00">Kontakti i akcije</text>
+<text xml:space="preserve" text-anchor="middle" x="272.65" y="-172.84" font-family="Segoe UI" font-size="14.00">7 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="naplata" data-to="evidencija">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M117.13,-125.96C143.59,-136.27 176.77,-149.19 205.59,-160.41" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="204.39,-162.57 211.8,-162.83 206.16,-158.01 204.39,-162.57" />
+</g>
+
+<g id="node-izvori" class="node" data-key="izvori" data-route="area/naplata/izvori">
+<title>n2</title>
+<g id="a_node-izvori"><a xlink:href="../../index.html#area/naplata/izvori" xlink:title="Nasleđena naplata · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M339.7,-135.28C339.7,-135.28 205.6,-135.28 205.6,-135.28 199.6,-135.28 193.6,-129.28 193.6,-123.28 193.6,-123.28 193.6,-91 193.6,-91 193.6,-85 199.6,-79 205.6,-79 205.6,-79 339.7,-79 339.7,-79 345.7,-79 351.7,-85 351.7,-91 351.7,-91 351.7,-123.28 351.7,-123.28 351.7,-129.28 345.7,-135.28 339.7,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="272.65" y="-113.34" font-family="Segoe UI" font-size="14.00">Nasleđeni izvori i šifre</text>
+<text xml:space="preserve" text-anchor="middle" x="272.65" y="-93.84" font-family="Segoe UI" font-size="14.00">6 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="naplata" data-to="izvori">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M136.06,-107.14C151.68,-107.14 168.52,-107.14 184.84,-107.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="184.81,-109.59 191.81,-107.14 184.81,-104.69 184.81,-109.59" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/naplata">
+<title>n3</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/naplata" xlink:title="Nasleđena naplata · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M322.07,-56.28C322.07,-56.28 223.22,-56.28 223.22,-56.28 217.22,-56.28 211.22,-50.28 211.22,-44.28 211.22,-44.28 211.22,-12 211.22,-12 211.22,-6 217.22,0 223.22,0 223.22,0 322.07,0 322.07,0 328.07,0 334.07,-6 334.07,-12 334.07,-12 334.07,-44.28 334.07,-44.28 334.07,-50.28 328.07,-56.28 322.07,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="272.65" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="272.65" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="naplata" data-to="flows">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M117.13,-88.32C142.84,-78.31 174.88,-65.83 203.12,-54.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="203.92,-57.14 209.56,-52.32 202.15,-52.58 203.92,-57.14" />
+</g>
+</g>
+</svg>

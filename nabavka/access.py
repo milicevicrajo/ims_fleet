@@ -35,6 +35,25 @@ def predmeti(queryset, user):
     return ogranici(queryset, _obuhvat(user, PREDMETI), "org_node", ili=Q(created_by=user))
 
 
+def fiskalni_racuni(queryset, user):
+    """Fiskalni racuni cija je sifra posla u obuhvatu korisnika (i oni koje je sam ucitao)."""
+    if not na_registru() or not user.is_authenticated:
+        return queryset
+    from organizacija.services.prava import ogranici
+
+    return ogranici(queryset, _obuhvat(user, FAKTURE), "org_node", ili=Q(created_by=user))
+
+
+def sifre_za_izbor(queryset, user):
+    """Izbor sifre posla u Nabavci: samo iz obuhvata korisnika (na registru)."""
+    if not na_registru() or not user.is_authenticated or user.is_superuser:
+        return queryset
+    from organizacija.services.prava import jedinice_obuhvata
+
+    ids = jedinice_obuhvata(_obuhvat(user, PREDMETI))
+    return queryset if ids is None else queryset.filter(pk__in=ids)
+
+
 def fakture(queryset, user):
     """Fakture u obuhvatu korisnika."""
     if not na_registru() or not user.is_authenticated:

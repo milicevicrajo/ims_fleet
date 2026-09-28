@@ -1,7 +1,7 @@
 """Render UML locally using Java and the installed VS Code PlantUML extension.
 
 Usage: python dokumentacija/dijagrami/render.py [--java PATH] [--jar PATH]
-No Django initialization, database connection, or external rendering service.
+SVG only. Also rebuilds the linked atlas. No Django initialization or database connection.
 """
 import argparse
 import html
@@ -54,7 +54,7 @@ def build_gallery(fleet_only=False):
 <a class="preview" href="svg/{stem}.svg"><img src="svg/{stem}.svg" alt="{html.escape(title)}"></a>
 <div class="card-body"><h2>{html.escape(title)}</h2><p>{html.escape(description)}</p>
 <nav aria-label="Formati: {html.escape(title)}"><a href="svg/{stem}.svg">Otvori SVG</a>
-<a href="png/{stem}.png">PNG</a><a href="{stem}.puml" download>PlantUML izvor</a></nav></div></article>''')
+<a href="{stem}.puml" download>PlantUML izvor</a></nav></div></article>''')
     page = '''<!doctype html><html lang="sr-Latn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>IMS ERP | UML arhitektura</title>
 <style>
@@ -70,7 +70,7 @@ a{color:#176087;text-decoration:none}a:hover{text-decoration:underline}a:focus-v
 footer{margin-top:30px;font-size:13px;color:#607586}@media(max-width:500px){h1{font-size:28px}.preview img{height:200px}}
 </style></head><body><header><small>IMS ERP · TEHNIČKA DOKUMENTACIJA</small>
 <h1>Kako je sistem organizovan</h1><p>Pregled aplikacije, moduli, modeli podataka i poslovni tokovi.</p></header>
-<main><nav class="sections" aria-label="Oblasti"><a href="cela-aplikacija.html">Velika mapa aplikacije</a><a href="index.html" ALL_CURRENT>Svi dijagrami</a><a href="flota.html" FLEET_CURRENT>Flota · 6 dijagrama</a></nav>
+<main><nav class="sections" aria-label="Oblasti"><a href="index.html">Interaktivni atlas</a><a href="cela-aplikacija.html">Ranija velika mapa</a><a href="galerija.html" ALL_CURRENT>Raniji dijagrami</a><a href="flota.html" FLEET_CURRENT>Flota · 6 dijagrama</a></nav>
 <p class="intro">Počnite od pregleda sistema. Za uvećanje otvorite SVG; za izmene koristite PlantUML izvor i Alt+D u VS Code-u.</p>
 <div class="grid">''' + '\n'.join(cards) + '''</div>
 <footer>Stanje repozitorijuma: 28.09.2026. · Dijagrami se generišu lokalno.
@@ -83,7 +83,7 @@ Raspored servera zasnovan je na konfiguraciji i dokumentaciji, bez provere živi
         page = page.replace('Pregled aplikacije, moduli, modeli podataka i poslovni tokovi.',
                             'Vozila, garaža, gorivo, zakup, osiguranje, putni nalozi i ekonomske analize.')
         page = page.replace('Počnite od pregleda sistema.', 'Počnite od organizacije modula, pa otvorite oblast koju želite da istražite.')
-    (ROOT / ('flota.html' if fleet_only else 'index.html')).write_text(page, encoding='utf-8')
+    (ROOT / ('flota.html' if fleet_only else 'galerija.html')).write_text(page, encoding='utf-8')
 
 
 def main():
@@ -96,7 +96,7 @@ def main():
     sources = [f'{stem}.puml' for stem, _, _ in DIAGRAMS]
     command = [args.java, '-Djava.awt.headless=true', '-DPLANTUML_LIMIT_SIZE=8192', '-jar', args.jar, '-charset', 'UTF-8']
     subprocess.run(command + ['-checkonly', *sources], cwd=ROOT, check=True)
-    for output in ('svg', 'png'):
+    for output in ('svg',):
         (ROOT / output).mkdir(exist_ok=True)
         subprocess.run(command + ['-failfast2', f'-t{output}', '-o', output, *sources], cwd=ROOT, check=True)
     for stem, _, _ in DIAGRAMS:
@@ -104,11 +104,11 @@ def main():
         root = ET.parse(svg).getroot()
         if root.tag != '{http://www.w3.org/2000/svg}svg' or 'Syntax Error' in svg.read_text(encoding='utf-8'):
             raise RuntimeError(f'Invalid diagram: {stem}')
-        if not (ROOT / 'png' / f'{stem}.png').is_file():
-            raise RuntimeError(f'Missing PNG: {stem}')
     build_gallery()
     build_gallery(fleet_only=True)
-    print(f'OK: {len(DIAGRAMS)} diagrams, SVG + PNG. Gallery: {ROOT / "index.html"}')
+    from build_atlas import Atlas
+    Atlas(shutil.which('dot') or 'C:/Program Files (x86)/Graphviz/bin/dot.exe').build()
+    print(f'OK: {len(DIAGRAMS)} original SVG diagrams + interactive atlas: {ROOT / "index.html"}')
 
 
 if __name__ == '__main__':

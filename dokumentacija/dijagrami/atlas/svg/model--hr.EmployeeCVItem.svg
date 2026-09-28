@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="449pt" height="364pt" viewBox="0.00 0.00 449.00 364.00" role="img" aria-label="EmployeeCVItem · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 342.38)">
+<title>G</title>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n0</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M393.95,-205.78C393.95,-205.78 260.85,-205.78 260.85,-205.78 254.85,-205.78 248.85,-199.78 248.85,-193.78 248.85,-193.78 248.85,-127 248.85,-127 248.85,-121 254.85,-115 260.85,-115 260.85,-115 393.95,-115 393.95,-115 399.95,-115 405.95,-121 405.95,-127 405.95,-127 405.95,-193.78 405.95,-193.78 405.95,-199.78 399.95,-205.78 393.95,-205.78" />
+<text xml:space="preserve" text-anchor="start" x="263.65" y="-182.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="263.65" y="-157.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="263.65" y="-132.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.EmployeeCVItem" class="node" data-key="hr.EmployeeCVItem" data-route="model/hr.EmployeeCVItem">
+<title>n1</title>
+<g id="a_node-hr.EmployeeCVItem"><a xlink:href="../../index.html#model/hr.EmployeeCVItem" xlink:title="hr.EmployeeCVItem" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M129.35,-320.78C129.35,-320.78 12,-320.78 12,-320.78 6,-320.78 0,-314.78 0,-308.78 0,-308.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 129.35,0 129.35,0 135.35,0 141.35,-6 141.35,-12 141.35,-12 141.35,-308.78 141.35,-308.78 141.35,-314.78 135.35,-320.78 129.35,-320.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-297.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-272.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EmployeeCVItem</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">employee : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">title : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">organization : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">role : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">start_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">end_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">description : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">skills : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.EmployeeCVItem" data-to="hr.Employee">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="hr.EmployeeCVItem.employee → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M141.62,-160.39C172.04,-160.39 207.98,-160.39 240.05,-160.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="240.03,-162.84 247.03,-160.39 240.03,-157.94 240.03,-162.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="195.1" y="-164.94" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="234.95" y="-163.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="155.21" y="-151.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

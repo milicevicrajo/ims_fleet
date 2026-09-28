@@ -43,6 +43,7 @@
     - [2.12. Šta arhitektura dobro rešava, a šta ne](#212-šta-arhitektura-dobro-rešava-a-šta-ne)
     - [2.13. Gde dalje](#213-gde-dalje)
     - [2.14. UML dijagrami aplikacije](#214-uml-dijagrami-aplikacije)
+    - [2.15. Interaktivni SVG atlas: od aplikacije do modela](#215-interaktivni-svg-atlas-od-aplikacije-do-modela)
 - [3. Moduli — sadržaj i veze](#3-moduli--sadržaj-i-veze)
     - [3.0.1. Sadržaj](#301-sadržaj)
     - [3.0.2. Šta koji modul radi — u jednoj rečenici](#302-šta-koji-modul-radi--u-jednoj-rečenici)
@@ -767,7 +768,7 @@ nema REST API-ja, nema odvojenog frontend okvira.
 | Obračuni | Obični Python moduli (`services/`, `support/`) | Bez okvira, bez klasa gde nisu potrebne |
 | Pristup podacima | Django ORM (`default`) + sirovi SQL (`server_db`) | Dva aliasa, ista baza |
 | Baza | Microsoft SQL Server, `mssql-django` 1.5, ODBC Driver 17 | Baza `IMS_ERP` |
-| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 19 zakazanih poslova |
+| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 20 zakazanih poslova |
 | Okruženje | Windows server, NSSM servisi | Tri servisa |
 
 `djangorestframework` i `psycopg2-binary` postoje u `requirements.txt`, ali **nisu**
@@ -1257,11 +1258,12 @@ Stanje provereno prema repozitorijumu **28.09.2026.** Dijagrami su ručno obliko
 na osnovu koda i konfiguracije. Prikazuju ključne delove arhitekture; nisu automatski
 inventar svih klasa, importovanja ili tabela.
 
-**Početna stranica:** [Galerija UML dijagrama](dijagrami/index.html).
+**Početna stranica:** [Interaktivni SVG atlas](dijagrami/index.html).
+**Raniji ručno pripremljeni dijagrami:** [Galerija](dijagrami/galerija.html).
 **Cela aplikacija na jednom dijagramu:** [Velika mapa sa zumiranjem](dijagrami/cela-aplikacija.html).
 **Poseban pregled Flote:** [Flota — šest detaljnih dijagrama](dijagrami/flota.html).
 Otvara se lokalno u pregledaču, bez pokretanja Django aplikacije. SVG omogućava
-uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređivanje.
+uvećavanje, a `.puml` je izvor za uređivanje ranijih dijagrama. Generiše se samo SVG.
 
 | Prikaz | Slika | PlantUML izvor | Osnova za prikaz |
 |---|---|---|---|
@@ -1282,7 +1284,7 @@ komponentni pregled cele aplikacije, a ne inventar svih klasa ili kompletan ER m
 Stranica `cela-aplikacija.html` radi lokalno: **Cela mapa** uklapa dijagram u ekran,
 **100%** daje čitljiv prikaz, a **+ / −** i **Ctrl + točkić** menjaju uvećanje.
 Pomeranje je moguće prevlačenjem miša, klizačima i strelicama kada mapa ima fokus.
-SVG, PNG i PlantUML izvor dostupni su iz iste trake alata.
+SVG i PlantUML izvor dostupni su iz iste trake alata.
 
 Detaljni dijagrami Flote dopunjuju opšti pregled sistema:
 
@@ -1320,7 +1322,7 @@ Detaljni dijagrami Flote dopunjuju opšti pregled sistema:
 1. Otvoriti direktorijum projekta i bilo koji `.puml` iz `dokumentacija/dijagrami/`.
 2. Pritisnuti **Alt+D** za pregled pomoću dodatka `jebbs.plantuml`.
 3. Izmeniti opis i sačuvati fajl. Zajednički izgled je u `_stil.iuml`.
-4. Iz korena projekta ponovo generisati SVG, PNG i galeriju:
+4. Iz korena projekta ponovo generisati SVG, galeriju i interaktivni atlas:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 dokumentacija/dijagrami/render.py
@@ -1333,6 +1335,74 @@ sa putanjama do izvršnog fajla Jave i PlantUML JAR-a. Nova instalacija Jave mo�
 zahtevati ponovno otvaranje VS Code-a ili podešavanje `plantuml.java`.
 
 Posle izmene ovog poglavlja pokrenuti i `python dokumentacija/spoji-dokumentaciju.py`.
+
+### 2.15. Interaktivni SVG atlas: od aplikacije do modela
+
+[Otvoriti atlas](dijagrami/index.html) direktno u pregledaču. Radi i preko `file://`,
+bez Django procesa, baze, CDN-a ili internet veze. Novi dijagrami su isključivo SVG.
+
+#### Organizacija prikaza
+
+1. **Mapa aplikacije**: čitljive kartice svih modula; klik otvara organizaciju modula.
+   Zaseban prikaz **Zavisnosti modula** prikazuje agregirane međumodulske FK / M2M
+   veze. Isplate ima označenu servisnu vezu prema Floti, pošto nema sopstvene modele.
+2. **Organizacija modula**: funkcionalne oblasti. Klik vodi na izdvojene modele oblasti.
+3. **Modeli**: modeli modula ili oblasti i neposredni povezani modeli drugih modula.
+   Opcija **Prikaži polja** menja nivo detalja, bez promene poslovnih podataka.
+4. **Detalj modela**: neposredne ulazne i izlazne veze, polja, obaveznost, jedinstvenost,
+   lokalne apstraktne osnove, ograničenja, definisane vrednosti i izvorni fajl / red.
+5. **Tokovi rada**: izbor poslovnog procesa i dijagram aktivnosti. Klikabilni koraci
+   vode na konkretne modele. Tokovi su uređeni prema navedenim izvorima; nisu
+   automatski izvedeni iz naziva statusa.
+6. **Svi modeli**: jedan SVG celog inventara, grupisanog po modulu, sa opcijom polja.
+   **Servisi i izvori** prikazuje dokumentovanu infrastrukturu.
+
+Pretraga pronalazi module, modele i tokove, uz podršku za unos bez dijakritika.
+Putanja na vrhu i **Nazad** vraćaju na prethodne nivoe. Položaj i zum se pamte za
+posećene prikaze tokom sesije. Prelazak mišem ili fokus tastature na element
+ističe njegove neposredne veze. Pomeranje: prevlačenje, točkić ili strelice;
+zum: **+ / −**, **Ctrl + točkić**, **100%** ili **Uklopi**.
+Svaki generisani SVG ima stvarne linkove ka atlasu, pa navigacija radi i kada je SVG
+otvoren zasebno. Kopirati ceo direktorijum `dokumentacija/dijagrami/`, ne samo jednu sliku.
+
+#### Izvori i preciznost inventara
+
+`atlas/models.py` statički čita `models.py` i `*_models.py` poslovnih modula.
+Ne importuje Django i ne pristupa bazi. Razrešava oznake poput `fleet.Employee`
+na stvarni izvor `hr.Employee`, kopira polja lokalnih apstraktnih osnova i razlikuje
+`managed=False`, apstraktne modele i konkretne modele. Zajedničke tekstualne šifre
+ne pretvara u izmišljene strane ključeve. Framework polja `AbstractUser` su navedena
+kao nasleđena u napomeni; nisu predstavljena kao kompletan inventar Django internih modela.
+
+Kardinalnosti koriste tip polja, `null`, `unique` i bezuslovne jednopolične
+`UniqueConstraint` uslove. Uslovna jedinstvenost aktivne verzije ne briše istorijsku
+vezu jedan-prema-više. Kompozitni i uslovni uslovi ostaju vidljivi u detalju modela.
+Broj veza označava FK / M2M polja inventara, uključujući nasleđene definicije;
+ne predstavlja broj fizičkih SQL ograničenja ili automatskih M2M tabela.
+
+Sistem prikazuje poznato odstupanje modela `naplata.DodelaBucketa` od stvarnog pogleda
+`dodela_baketa`. Nazivi tabela bez eksplicitnog `db_table` izvedeni su prema Django
+konvenciji i nisu provereni prema živoj bazi. Izabrani tokovi su sažeti poslovni
+putevi, sa napomenama o opcionim koracima i granicama automatizacije.
+
+#### Obnavljanje i provere
+
+Potrebni su Python i lokalni Graphviz (`dot`). Java je potrebna samo za ranije PlantUML
+prikaze, preko `render.py`. Za obnavljanje atlasa iz aktuelnog izvornog koda:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 dokumentacija/dijagrami/build_atlas.py
+.\.venv\Scripts\python.exe -X utf8 -m unittest discover -s dokumentacija/dijagrami/atlas -p test_inventory.py
+```
+
+`atlas/catalog.py` uređuje nazive, oblasti i poslovne tokove; `atlas/viewer.html`,
+`viewer.css` i `viewer.js` uređuju navigaciju. `index.html`, `atlas/data.js`,
+`atlas/manifest.json` i `atlas/svg/` su generisani izlazi. Izvor za svaki poslovni
+tok i model dostupan je i u bočnom panelu. Ne menjati poslovne formule kroz dijagrame.
+
+Prikaz je tehnička dokumentacija repozitorijuma; nije novi poslovni ekran niti
+zamena za dozvole u aplikaciji. Za ponovno generisanje nisu potrebne migracije,
+sinhronizacija dozvola ni restart produkcionih servisa.
 
 ---
 
@@ -2027,7 +2097,9 @@ ispravke i provere. [P]
 [Otvoriti UML galeriju Flote](dijagrami/flota.html) lokalno u pregledaču.
 Šest dijagrama obuhvata organizaciju koda, vozila i dodele, putne naloge,
 održavanje, zakup, osiguranje, uvoz goriva i ekonomske analize.
-Svaki ima SVG za uvećavanje, PNG i PlantUML izvor za izmene u VS Code-u (Alt+D).
+Svaki ima SVG za uvećavanje i PlantUML izvor za izmene u VS Code-u (Alt+D).
+Novi [interaktivni atlas Flote](dijagrami/index.html#module/fleet) omogućava
+prelazak od oblasti do modela, njegovih polja, veza i poslovnih tokova.
 Prikaz je zasnovan na repozitorijumu od **28.09.2026.**, bez pristupa živoj bazi.
 
 Početi od **07 — Organizacija Flote**, zatim otvoriti modele **08–09** ili tokove
@@ -3009,6 +3081,34 @@ Primer: `ZNG-43/2026-7`. Bez centra u organizacionoj jedinici broj se **ne može
 
 Naziv partnera na spiskovima skraćuje se na **50 znakova**, a pun naziv se vidi kao
 `title` atribut (na prelazak mišem). [P]
+
+#### Fiskalni računi — učitavanje čitačem QR koda (od 28.09.2026.) [P]
+
+**Nabavka → Fiskalni računi** (`/nabavka/fiskalni-racuni/`) je spisak učitanih fiskalnih računa sa
+pregledom detalja. Dugme **Očitaj QR kod računa** otvara prozor: izabere se **šifra posla**
+(obavezna; nude se samo aktivne šifre iz obuhvata korisnika, izabrana ostaje za sledeće račune),
+čitač — koji radi kao tastatura — upiše link sa QR koda i pritisne Enter, i obrada kreće odmah.
+Rezultat se vidi u prozoru, a polje je spremno za sledeći račun.
+
+| Korak | Šta se radi |
+|---|---|
+| Očitavanje | Iz linka se čita parametar `vl` (QR sadržaj). Njegov **kontrolni zbir (MD5 na kraju)** mora da odgovara; ako čitač radi na srpskom latiničnom ili ćiriličnom rasporedu tastature (zamenjeni `y`/`z`, `/`, `:`, `+`, `=`), aplikacija link sama vraća na US raspored. Pogrešno očitan link se odbija i ništa se ne upisuje |
+| Zaglavlje iz QR koda | Broj računa (PFR), brojači, iznos, vreme, vrsta računa i transakcije, ID kupca |
+| Stranica za proveru | `suf.purs.gov.rs/v/?vl=…`: PIB i naziv prodavca, prodajno mesto, adresa, kasir, ESIR broj, način plaćanja, ukupan PDV, ceo tekst računa, token |
+| Stavke | `POST suf.purs.gov.rs/specifications` (broj računa + token): GTIN, naziv, količina, jedinična cena, ukupno, oznaka i stopa PDV-a, osnovica, PDV |
+| Upis | `FiskalniRacun` + `FiskalniRacunStavka`; link se čuva u celosti. Isti račun (PFR broj) se ne upisuje dva puta |
+
+**Kupac:** račun izdat na IMS (PIB 100223617, `IMS_PIB` u postavkama) je označen „IMS”; račun na
+drugog kupca ili na fizičko lice (bez ID kupca) se upisuje, ali odmah dobija **upozorenje** i
+oznaku u spisku. Upozorenje dobijaju i računi koji nisu promet (predračun, kopija, obuka, avans) i
+refundacije, kao i račun čiji zbir stavki nije jednak iznosu.
+
+**Kad stranica Poreske uprave ne radi**, račun se upisuje iz QR koda u statusu „Čeka proveru”;
+stavke se preuzimaju dugmetom **Ponovo preuzmi** na detalju ili noćnim zadatkom u 07:30
+(`nabavka.tasks.fiskalni_ponovi_task`). Obuhvat: račun se vezuje za šifru posla i registar
+(`org_node`), pa ga vidi ko ima tu šifru u obuhvatu dodela (i onaj ko ga je učitao). Dozvole:
+`nabavka:fiskalni_list`, `_data`, `_scan`, `_detail`, `_refresh`, `_update` (šifra posla i
+napomena), `_delete`.
 
 #### Kupovni ugovori — nabavni pogled na modul Ugovori [P]
 
@@ -17840,6 +17940,7 @@ chrome-for-testing/  Chrome za Selenium
  05:10  Gorivo OMV putnička            ← Selenium, do 4 h
  06:10  Gorivo OMV teretna             ← Selenium, do 4 h
  07:10  Roba (Nabavka)
+ 07:30  Fiskalni računi koji čekaju proveru (Nabavka)   ← od 28.09.2026.
  ────────────────── radni dan ──────────────────
  10:00  Osvežavanje lokalnog nalog_z
  11:00  Osvežavanje lokalnog nalog_z
@@ -17847,7 +17948,7 @@ chrome-for-testing/  Chrome za Selenium
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 19 zakazanih poslova.** [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 20 zakazanih poslova.** [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -17870,6 +17971,7 @@ chrome-for-testing/  Chrome za Selenium
 | **05:10** | **Gorivo — OMV putnička** | `fleet.tasks.run_omv_putnicka_command` | **`selenium`** | **4 h** |
 | **06:10** | **Gorivo — OMV teretna** | `fleet.tasks.run_omv_teretna_command` | **`selenium`** | **4 h** |
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
+| 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | **10:00 i 11:00** | **Finansije — osvežavanje `nalog_z`** | `finansije.tasks.refresh_nalog_z_task` | `sync` | SQL lock |
 | 12:30 | Putni nalozi — isplaćeno | `fleet.tasks.sync_putni_nalozi_isplaceno_task` | `sync` | 90 min |
 | svaki sat u :20 | Finansije — tekuća godina | `finansije.tasks.sync_current_year` | `sync` | SQL lock |

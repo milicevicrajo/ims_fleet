@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="480pt" height="341pt" viewBox="0.00 0.00 480.00 341.00" role="img" aria-label="VehicleTenderDocument · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 319.38)">
+<title>G</title>
+
+<g id="node-fleet.Vehicle" class="node" data-key="fleet.Vehicle" data-route="model/fleet.Vehicle">
+<title>n0</title>
+<g id="a_node-fleet.Vehicle"><a xlink:href="../../index.html#model/fleet.Vehicle" xlink:title="fleet.Vehicle" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M424.7,-194.28C424.7,-194.28 291.6,-194.28 291.6,-194.28 285.6,-194.28 279.6,-188.28 279.6,-182.28 279.6,-182.28 279.6,-115.5 279.6,-115.5 279.6,-109.5 285.6,-103.5 291.6,-103.5 291.6,-103.5 424.7,-103.5 424.7,-103.5 430.7,-103.5 436.7,-109.5 436.7,-115.5 436.7,-115.5 436.7,-182.28 436.7,-182.28 436.7,-188.28 430.7,-194.28 424.7,-194.28" />
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-171.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-146.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-120.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">28 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.VehicleTenderDocument" class="node" data-key="fleet.VehicleTenderDocument" data-route="model/fleet.VehicleTenderDocument">
+<title>n1</title>
+<g id="a_node-fleet.VehicleTenderDocument"><a xlink:href="../../index.html#model/fleet.VehicleTenderDocument" xlink:title="fleet.VehicleTenderDocument" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M175.1,-297.78C175.1,-297.78 12,-297.78 12,-297.78 6,-297.78 0,-291.78 0,-285.78 0,-285.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 175.1,0 175.1,0 181.1,0 187.1,-6 187.1,-12 187.1,-12 187.1,-285.78 187.1,-285.78 187.1,-291.78 181.1,-297.78 175.1,-297.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-274.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-249.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleTenderDocument</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">vehicle : Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">document_type : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">title : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">image : Image</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">description : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">taken_at : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.VehicleTenderDocument" data-to="fleet.Vehicle">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="fleet.VehicleTenderDocument.vehicle → fleet.Vehicle | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M187.5,-148.89C214.78,-148.89 244.48,-148.89 271.29,-148.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="271,-151.34 278,-148.89 271,-146.44 271,-151.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="233.35" y="-153.44" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="265.92" y="-152.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="201.1" y="-139.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="477pt" height="875pt" viewBox="0.00 0.00 477.00 875.00" role="img" aria-label="Finansije · modeli">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 853.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M418.7,-90.78C418.7,-90.78 291.6,-90.78 291.6,-90.78 285.6,-90.78 279.6,-84.78 279.6,-78.78 279.6,-78.78 279.6,-12 279.6,-12 279.6,-6 285.6,0 291.6,0 291.6,0 418.7,0 418.7,0 424.7,0 430.7,-6 430.7,-12 430.7,-12 430.7,-78.78 430.7,-78.78 430.7,-84.78 424.7,-90.78 418.7,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.BankAccountRule" class="node" data-key="finansije.BankAccountRule" data-route="model/finansije.BankAccountRule">
+<title>n1</title>
+<g id="a_node-finansije.BankAccountRule"><a xlink:href="../../index.html#model/finansije.BankAccountRule" xlink:title="finansije.BankAccountRule" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M135.72,-90.78C135.72,-90.78 16.12,-90.78 16.12,-90.78 10.12,-90.78 4.12,-84.78 4.12,-78.78 4.12,-78.78 4.12,-12 4.12,-12 4.12,-6 10.12,0 16.12,0 16.12,0 135.72,0 135.72,0 141.72,0 147.72,-6 147.72,-12 147.72,-12 147.72,-78.78 147.72,-78.78 147.72,-84.78 141.72,-90.78 135.72,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="18.92" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="18.92" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankAccountRule</text>
+<text xml:space="preserve" text-anchor="start" x="18.92" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">7 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="finansije.BankAccountRule" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="finansije.BankAccountRule.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M147.96,-45.39C185.55,-45.39 231.92,-45.39 271.17,-45.39" />
+<polygon fill="#a27631" stroke="#a27631" points="270.91,-47.84 277.91,-45.39 270.91,-42.94 270.91,-47.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="214.22" y="-49.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="265.83" y="-48.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="161.55" y="-36.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-finansije.BankBillPlacement" class="node" data-key="finansije.BankBillPlacement" data-route="model/finansije.BankBillPlacement">
+<title>n2</title>
+<g id="a_node-finansije.BankBillPlacement"><a xlink:href="../../index.html#model/finansije.BankBillPlacement" xlink:title="finansije.BankBillPlacement" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M138.72,-261.78C138.72,-261.78 13.12,-261.78 13.12,-261.78 7.12,-261.78 1.12,-255.78 1.12,-249.78 1.12,-249.78 1.12,-183 1.12,-183 1.12,-177 7.12,-171 13.12,-171 13.12,-171 138.72,-171 138.72,-171 144.72,-171 150.72,-177 150.72,-183 150.72,-183 150.72,-249.78 150.72,-249.78 150.72,-255.78 144.72,-261.78 138.72,-261.78" />
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-238.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-213.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankBillPlacement</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-188.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">7 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-menice.Menica" class="node" data-key="menice.Menica" data-route="model/menice.Menica">
+<title>n8</title>
+<g id="a_node-menice.Menica"><a xlink:href="../../index.html#model/menice.Menica" xlink:title="menice.Menica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M421.7,-318.78C421.7,-318.78 288.6,-318.78 288.6,-318.78 282.6,-318.78 276.6,-312.78 276.6,-306.78 276.6,-306.78 276.6,-240 276.6,-240 276.6,-234 282.6,-228 288.6,-228 288.6,-228 421.7,-228 421.7,-228 427.7,-228 433.7,-234 433.7,-240 433.7,-240 433.7,-306.78 433.7,-306.78 433.7,-312.78 427.7,-318.78 421.7,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Menica</text>
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">30 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="finansije.BankBillPlacement" data-to="menice.Menica">
+<title>n2-&gt;n8</title>
+<g id="a_edge-2"><a xlink:title="finansije.BankBillPlacement.bill → menice.Menica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M151.22,-231.66C187.3,-239.08 230.86,-248.04 268.36,-255.75" />
+<polygon fill="#a27631" stroke="#a27631" points="267.43,-258.06 274.78,-257.07 268.42,-253.26 267.43,-258.06" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="214.22" y="-254.55" font-family="Segoe UI" font-size="11.00">bill</text>
+<text xml:space="preserve" text-anchor="middle" x="261.67" y="-257.9" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="165.81" y="-225.24" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-menice.UlaznaMenica" class="node" data-key="menice.UlaznaMenica" data-route="model/menice.UlaznaMenica">
+<title>n9</title>
+<g id="a_node-menice.UlaznaMenica"><a xlink:href="../../index.html#model/menice.UlaznaMenica" xlink:title="menice.UlaznaMenica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M421.7,-204.78C421.7,-204.78 288.6,-204.78 288.6,-204.78 282.6,-204.78 276.6,-198.78 276.6,-192.78 276.6,-192.78 276.6,-126 276.6,-126 276.6,-120 282.6,-114 288.6,-114 288.6,-114 421.7,-114 421.7,-114 427.7,-114 433.7,-120 433.7,-126 433.7,-126 433.7,-192.78 433.7,-192.78 433.7,-198.78 427.7,-204.78 421.7,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">UlaznaMenica</text>
+<text xml:space="preserve" text-anchor="start" x="291.4" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">14 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="finansije.BankBillPlacement" data-to="menice.UlaznaMenica">
+<title>n2-&gt;n9</title>
+<g id="a_edge-3"><a xlink:title="finansije.BankBillPlacement.incoming_bill → menice.UlaznaMenica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M151.22,-201.12C187.3,-193.7 230.86,-184.74 268.36,-177.03" />
+<polygon fill="#a27631" stroke="#a27631" points="268.42,-179.52 274.78,-175.71 267.43,-174.72 268.42,-179.52" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="214.22" y="-199.22" font-family="Segoe UI" font-size="11.00">incoming_bill</text>
+<text xml:space="preserve" text-anchor="middle" x="264.22" y="-181.4" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="163.26" y="-189.22" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-finansije.BankContact" class="node" data-key="finansije.BankContact" data-route="model/finansije.BankContact">
+<title>n3</title>
+<g id="a_node-finansije.BankContact"><a xlink:href="../../index.html#model/finansije.BankContact" xlink:title="finansije.BankContact" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M119.97,-375.78C119.97,-375.78 31.87,-375.78 31.87,-375.78 25.87,-375.78 19.87,-369.78 19.87,-363.78 19.87,-363.78 19.87,-297 19.87,-297 19.87,-291 25.87,-285 31.87,-285 31.87,-285 119.97,-285 119.97,-285 125.97,-285 131.97,-291 131.97,-297 131.97,-297 131.97,-363.78 131.97,-363.78 131.97,-369.78 125.97,-375.78 119.97,-375.78" />
+<text xml:space="preserve" text-anchor="start" x="34.67" y="-352.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="34.67" y="-327.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankContact</text>
+<text xml:space="preserve" text-anchor="start" x="34.67" y="-302.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">10 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.FinanceJob" class="node" data-key="finansije.FinanceJob" data-route="model/finansije.FinanceJob">
+<title>n4</title>
+<g id="a_node-finansije.FinanceJob"><a xlink:href="../../index.html#model/finansije.FinanceJob" xlink:title="finansije.FinanceJob" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M115.1,-489.78C115.1,-489.78 36.75,-489.78 36.75,-489.78 30.75,-489.78 24.75,-483.78 24.75,-477.78 24.75,-477.78 24.75,-411 24.75,-411 24.75,-405 30.75,-399 36.75,-399 36.75,-399 115.1,-399 115.1,-399 121.1,-399 127.1,-405 127.1,-411 127.1,-411 127.1,-477.78 127.1,-477.78 127.1,-483.78 121.1,-489.78 115.1,-489.78" />
+<text xml:space="preserve" text-anchor="start" x="39.55" y="-466.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="39.55" y="-441.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinanceJob</text>
+<text xml:space="preserve" text-anchor="start" x="39.55" y="-416.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.LedgerEntry" class="node" data-key="finansije.LedgerEntry" data-route="model/finansije.LedgerEntry">
+<title>n5</title>
+<g id="a_node-finansije.LedgerEntry"><a xlink:href="../../index.html#model/finansije.LedgerEntry" xlink:title="finansije.LedgerEntry" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M118.85,-603.78C118.85,-603.78 33,-603.78 33,-603.78 27,-603.78 21,-597.78 21,-591.78 21,-591.78 21,-525 21,-525 21,-519 27,-513 33,-513 33,-513 118.85,-513 118.85,-513 124.85,-513 130.85,-519 130.85,-525 130.85,-525 130.85,-591.78 130.85,-591.78 130.85,-597.78 124.85,-603.78 118.85,-603.78" />
+<text xml:space="preserve" text-anchor="start" x="35.8" y="-580.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="35.8" y="-555.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">LedgerEntry</text>
+<text xml:space="preserve" text-anchor="start" x="35.8" y="-530.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-organizacija.OrgNode" class="node" data-key="organizacija.OrgNode" data-route="model/organizacija.OrgNode">
+<title>n10</title>
+<g id="a_node-organizacija.OrgNode"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M418.7,-603.78C418.7,-603.78 291.6,-603.78 291.6,-603.78 285.6,-603.78 279.6,-597.78 279.6,-591.78 279.6,-591.78 279.6,-525 279.6,-525 279.6,-519 285.6,-513 291.6,-513 291.6,-513 418.7,-513 418.7,-513 424.7,-513 430.7,-519 430.7,-525 430.7,-525 430.7,-591.78 430.7,-591.78 430.7,-597.78 424.7,-603.78 418.7,-603.78" />
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-580.69" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-555.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="294.4" y="-530.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="finansije.LedgerEntry" data-to="organizacija.OrgNode">
+<title>n5-&gt;n10</title>
+<g id="a_edge-0"><a xlink:title="finansije.LedgerEntry.org_node → organizacija.OrgNode | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M131.03,-558.39C170.79,-558.39 225.54,-558.39 270.86,-558.39" />
+<polygon fill="#a27631" stroke="#a27631" points="270.69,-560.84 277.69,-558.39 270.69,-555.94 270.69,-560.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="214.22" y="-562.94" font-family="Segoe UI" font-size="11.00">org_node</text>
+<text xml:space="preserve" text-anchor="middle" x="265.61" y="-561.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="144.63" y="-549.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-finansije.NalogZRefreshRun" class="node" data-key="finansije.NalogZRefreshRun" data-route="model/finansije.NalogZRefreshRun">
+<title>n6</title>
+<g id="a_node-finansije.NalogZRefreshRun"><a xlink:href="../../index.html#model/finansije.NalogZRefreshRun" xlink:title="finansije.NalogZRefreshRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M139.85,-717.78C139.85,-717.78 12,-717.78 12,-717.78 6,-717.78 0,-711.78 0,-705.78 0,-705.78 0,-639 0,-639 0,-633 6,-627 12,-627 12,-627 139.85,-627 139.85,-627 145.85,-627 151.85,-633 151.85,-639 151.85,-639 151.85,-705.78 151.85,-705.78 151.85,-711.78 145.85,-717.78 139.85,-717.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-694.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-669.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">NalogZRefreshRun</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-644.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">11 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.SyncRun" class="node" data-key="finansije.SyncRun" data-route="model/finansije.SyncRun">
+<title>n7</title>
+<g id="a_node-finansije.SyncRun"><a xlink:href="../../index.html#model/finansije.SyncRun" xlink:title="finansije.SyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M106.47,-831.78C106.47,-831.78 45.37,-831.78 45.37,-831.78 39.37,-831.78 33.37,-825.78 33.37,-819.78 33.37,-819.78 33.37,-753 33.37,-753 33.37,-747 39.37,-741 45.37,-741 45.37,-741 106.47,-741 106.47,-741 112.47,-741 118.47,-747 118.47,-753 118.47,-753 118.47,-819.78 118.47,-819.78 118.47,-825.78 112.47,-831.78 106.47,-831.78" />
+<text xml:space="preserve" text-anchor="start" x="48.17" y="-808.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="48.17" y="-783.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">SyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="48.17" y="-758.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">14 polja</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

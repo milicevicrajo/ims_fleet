@@ -54,3 +54,17 @@ def sync_goods_task(q=None, limit=10000):
         lock_ttl_seconds=3 * 60 * 60,
         fn=_runner,
     )
+
+
+@shared_task
+def fiskalni_ponovi_task():
+    """Fiskalni racuni koji cekaju proveru (stranica Poreske uprave nije bila dostupna): nov pokusaj."""
+    def _runner():
+        from .models import FiskalniRacun
+        from .services.fiskalni import preuzmi
+
+        cekaju = list(FiskalniRacun.objects.filter(status=FiskalniRacun.Status.CEKA))
+        uspelo = sum(1 for racun in cekaju if preuzmi(racun))
+        return f"Fiskalni racuni: cekalo {len(cekaju)}, preuzeto {uspelo}, i dalje ceka {len(cekaju) - uspelo}"
+
+    return _run_with_singleton_lock(task_name="nabavka_fiskalni_ponovi_task", lock_ttl_seconds=60 * 60, fn=_runner)

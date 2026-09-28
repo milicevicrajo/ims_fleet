@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="409pt" height="248pt" viewBox="0.00 0.00 409.00 248.00" role="img" aria-label="Finansije · Poslovi i knjiženja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 226.38)">
+<title>G</title>
+
+<g id="node-finansije.FinanceJob" class="node" data-key="finansije.FinanceJob" data-route="model/finansije.FinanceJob">
+<title>n0</title>
+<g id="a_node-finansije.FinanceJob"><a xlink:href="../../index.html#model/finansije.FinanceJob" xlink:title="finansije.FinanceJob" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M94.1,-90.78C94.1,-90.78 15.75,-90.78 15.75,-90.78 9.75,-90.78 3.75,-84.78 3.75,-78.78 3.75,-78.78 3.75,-12 3.75,-12 3.75,-6 9.75,0 15.75,0 15.75,0 94.1,0 94.1,0 100.1,0 106.1,-6 106.1,-12 106.1,-12 106.1,-78.78 106.1,-78.78 106.1,-84.78 100.1,-90.78 94.1,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="18.55" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="18.55" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinanceJob</text>
+<text xml:space="preserve" text-anchor="start" x="18.55" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.LedgerEntry" class="node" data-key="finansije.LedgerEntry" data-route="model/finansije.LedgerEntry">
+<title>n1</title>
+<g id="a_node-finansije.LedgerEntry"><a xlink:href="../../index.html#model/finansije.LedgerEntry" xlink:title="finansije.LedgerEntry" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M97.85,-204.78C97.85,-204.78 12,-204.78 12,-204.78 6,-204.78 0,-198.78 0,-192.78 0,-192.78 0,-126 0,-126 0,-120 6,-114 12,-114 12,-114 97.85,-114 97.85,-114 103.85,-114 109.85,-120 109.85,-126 109.85,-126 109.85,-192.78 109.85,-192.78 109.85,-198.78 103.85,-204.78 97.85,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">LedgerEntry</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-organizacija.OrgNode" class="node" data-key="organizacija.OrgNode" data-route="model/organizacija.OrgNode">
+<title>n2</title>
+<g id="a_node-organizacija.OrgNode"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M354.2,-204.78C354.2,-204.78 227.1,-204.78 227.1,-204.78 221.1,-204.78 215.1,-198.78 215.1,-192.78 215.1,-192.78 215.1,-126 215.1,-126 215.1,-120 221.1,-114 227.1,-114 227.1,-114 354.2,-114 354.2,-114 360.2,-114 366.2,-120 366.2,-126 366.2,-126 366.2,-192.78 366.2,-192.78 366.2,-198.78 360.2,-204.78 354.2,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="229.9" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="finansije.LedgerEntry" data-to="organizacija.OrgNode">
+<title>n1-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="finansije.LedgerEntry.org_node → organizacija.OrgNode | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M110.13,-159.39C138.73,-159.39 174.43,-159.39 206.45,-159.39" />
+<polygon fill="#a27631" stroke="#a27631" points="206.42,-161.84 213.42,-159.39 206.42,-156.94 206.42,-161.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="162.48" y="-163.94" font-family="Segoe UI" font-size="11.00">org_node</text>
+<text xml:space="preserve" text-anchor="middle" x="201.34" y="-162.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="123.73" y="-150.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

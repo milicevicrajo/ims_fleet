@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="451pt" height="248pt" viewBox="0.00 0.00 451.00 248.00" role="img" aria-label="Menice · Ulazne menice">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 226.38)">
+<title>G</title>
+
+<g id="node-finansije.BankBillPlacement" class="node" data-key="finansije.BankBillPlacement" data-route="model/finansije.BankBillPlacement">
+<title>n0</title>
+<g id="a_node-finansije.BankBillPlacement"><a xlink:href="../../index.html#model/finansije.BankBillPlacement" xlink:title="finansije.BankBillPlacement" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M143.23,-204.78C143.23,-204.78 16.12,-204.78 16.12,-204.78 10.12,-204.78 4.13,-198.78 4.13,-192.78 4.13,-192.78 4.13,-126 4.13,-126 4.13,-120 10.13,-114 16.13,-114 16.13,-114 143.23,-114 143.23,-114 149.23,-114 155.23,-120 155.23,-126 155.23,-126 155.23,-192.78 155.23,-192.78 155.23,-198.78 149.23,-204.78 143.23,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="18.93" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="18.93" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankBillPlacement</text>
+<text xml:space="preserve" text-anchor="start" x="18.93" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">7 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-menice.UlaznaMenica" class="node" data-key="menice.UlaznaMenica" data-route="model/menice.UlaznaMenica">
+<title>n1</title>
+<g id="a_node-menice.UlaznaMenica"><a xlink:href="../../index.html#model/menice.UlaznaMenica" xlink:title="menice.UlaznaMenica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M396.2,-147.78C396.2,-147.78 299.85,-147.78 299.85,-147.78 293.85,-147.78 287.85,-141.78 287.85,-135.78 287.85,-135.78 287.85,-69 287.85,-69 287.85,-63 293.85,-57 299.85,-57 299.85,-57 396.2,-57 396.2,-57 402.2,-57 408.2,-63 408.2,-69 408.2,-69 408.2,-135.78 408.2,-135.78 408.2,-141.78 402.2,-147.78 396.2,-147.78" />
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-124.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-99.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">UlaznaMenica</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-74.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">14 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="finansije.BankBillPlacement" data-to="menice.UlaznaMenica">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="finansije.BankBillPlacement.incoming_bill → menice.UlaznaMenica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M155.58,-143.36C194.51,-135.03 241.71,-124.93 279.5,-116.84" />
+<polygon fill="#a27631" stroke="#a27631" points="279.61,-119.32 285.94,-115.46 278.58,-114.53 279.61,-119.32" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-140.55" font-family="Segoe UI" font-size="11.00">incoming_bill</text>
+<text xml:space="preserve" text-anchor="middle" x="275.45" y="-121.24" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="167.54" y="-131.37" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-ugovori.ContractMenicaLink" class="node" data-key="ugovori.ContractMenicaLink" data-route="model/ugovori.ContractMenicaLink">
+<title>n2</title>
+<g id="a_node-ugovori.ContractMenicaLink"><a xlink:href="../../index.html#model/ugovori.ContractMenicaLink" xlink:title="ugovori.ContractMenicaLink" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M147.35,-90.78C147.35,-90.78 12,-90.78 12,-90.78 6,-90.78 0,-84.78 0,-78.78 0,-78.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 147.35,0 147.35,0 153.35,0 159.35,-6 159.35,-12 159.35,-12 159.35,-78.78 159.35,-78.78 159.35,-84.78 153.35,-90.78 147.35,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ContractMenicaLink</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="ugovori.ContractMenicaLink" data-to="menice.UlaznaMenica">
+<title>n2-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="ugovori.ContractMenicaLink.ulazna_menica → menice.UlaznaMenica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M159.51,-62.26C197.59,-70.41 242.82,-80.09 279.32,-87.9" />
+<polygon fill="#a27631" stroke="#a27631" points="278.6,-90.25 285.96,-89.32 279.63,-85.46 278.6,-90.25" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-86.88" font-family="Segoe UI" font-size="11.00">ulazna_menica</text>
+<text xml:space="preserve" text-anchor="middle" x="272.82" y="-90.04" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="174.13" y="-55.96" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

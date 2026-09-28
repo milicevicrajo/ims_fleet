@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="468pt" height="272pt" viewBox="0.00 0.00 468.00 272.00" role="img" aria-label="CollectionFileImport · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 250.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M412.7,-159.78C412.7,-159.78 285.6,-159.78 285.6,-159.78 279.6,-159.78 273.6,-153.78 273.6,-147.78 273.6,-147.78 273.6,-81 273.6,-81 273.6,-75 279.6,-69 285.6,-69 285.6,-69 412.7,-69 412.7,-69 418.7,-69 424.7,-75 424.7,-81 424.7,-81 424.7,-147.78 424.7,-147.78 424.7,-153.78 418.7,-159.78 412.7,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-86.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.CollectionFileImport" class="node" data-key="potrazivanja.CollectionFileImport" data-route="model/potrazivanja.CollectionFileImport">
+<title>n1</title>
+<g id="a_node-potrazivanja.CollectionFileImport"><a xlink:href="../../index.html#model/potrazivanja.CollectionFileImport" xlink:title="potrazivanja.CollectionFileImport" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M150.35,-228.78C150.35,-228.78 12,-228.78 12,-228.78 6,-228.78 0,-222.78 0,-216.78 0,-216.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 150.35,0 150.35,0 156.35,0 162.35,-6 162.35,-12 162.35,-12 162.35,-216.78 162.35,-216.78 162.35,-222.78 156.35,-228.78 150.35,-228.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-205.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-180.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionFileImport</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">fingerprint : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">filename : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">row_count : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">notice_ids : JSON</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.CollectionFileImport" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.CollectionFileImport.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M162.7,-114.39C195.12,-114.39 232.49,-114.39 265.15,-114.39" />
+<polygon fill="#a27631" stroke="#a27631" points="264.84,-116.84 271.84,-114.39 264.84,-111.94 264.84,-116.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="217.98" y="-118.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="259.76" y="-117.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="176.29" y="-105.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

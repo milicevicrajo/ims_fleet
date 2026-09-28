@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="491pt" height="295pt" viewBox="0.00 0.00 491.00 295.00" role="img" aria-label="CollectionNoticeItem · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 273.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.CollectionNotice" class="node" data-key="potrazivanja.CollectionNotice" data-route="model/potrazivanja.CollectionNotice">
+<title>n0</title>
+<g id="a_node-potrazivanja.CollectionNotice"><a xlink:href="../../index.html#model/potrazivanja.CollectionNotice" xlink:title="potrazivanja.CollectionNotice" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M435.95,-228.28C435.95,-228.28 302.85,-228.28 302.85,-228.28 296.85,-228.28 290.85,-222.28 290.85,-216.28 290.85,-216.28 290.85,-149.5 290.85,-149.5 290.85,-143.5 296.85,-137.5 302.85,-137.5 302.85,-137.5 435.95,-137.5 435.95,-137.5 441.95,-137.5 447.95,-143.5 447.95,-149.5 447.95,-149.5 447.95,-216.28 447.95,-216.28 447.95,-222.28 441.95,-228.28 435.95,-228.28" />
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-205.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-180.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionNotice</text>
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-154.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.CollectionNoticeItem" class="node" data-key="potrazivanja.CollectionNoticeItem" data-route="model/potrazivanja.CollectionNoticeItem">
+<title>n1</title>
+<g id="a_node-potrazivanja.CollectionNoticeItem"><a xlink:href="../../index.html#model/potrazivanja.CollectionNoticeItem" xlink:title="potrazivanja.CollectionNoticeItem" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M170.6,-251.78C170.6,-251.78 12,-251.78 12,-251.78 6,-251.78 0,-245.78 0,-239.78 0,-239.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 170.6,0 170.6,0 176.6,0 182.6,-6 182.6,-12 182.6,-12 182.6,-239.78 182.6,-239.78 182.6,-245.78 176.6,-251.78 170.6,-251.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-228.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-203.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionNoticeItem</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">notice : CollectionNotice</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">line_number : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">document : InvoiceDocument ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">original_reference : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">job_code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">due_date_snapshot : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">amount_snapshot : Decimal ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.CollectionNoticeItem" data-to="potrazivanja.CollectionNotice">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.CollectionNoticeItem.notice → potrazivanja.CollectionNotice | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M183.09,-144.63C215.11,-151.24 250.99,-158.65 282.59,-165.17" />
+<polygon fill="#7297ab" stroke="#7297ab" points="281.69,-167.49 289.04,-166.51 282.68,-162.69 281.69,-167.49" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="236.73" y="-164.05" font-family="Segoe UI" font-size="11.00">notice</text>
+<text xml:space="preserve" text-anchor="middle" x="275.93" y="-167.32" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="197.68" y="-138.22" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.InvoiceDocument" class="node" data-key="potrazivanja.InvoiceDocument" data-route="model/potrazivanja.InvoiceDocument">
+<title>n2</title>
+<g id="a_node-potrazivanja.InvoiceDocument"><a xlink:href="../../index.html#model/potrazivanja.InvoiceDocument" xlink:title="potrazivanja.InvoiceDocument" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M435.95,-114.28C435.95,-114.28 302.85,-114.28 302.85,-114.28 296.85,-114.28 290.85,-108.28 290.85,-102.28 290.85,-102.28 290.85,-35.5 290.85,-35.5 290.85,-29.5 296.85,-23.5 302.85,-23.5 302.85,-23.5 435.95,-23.5 435.95,-23.5 441.95,-23.5 447.95,-29.5 447.95,-35.5 447.95,-35.5 447.95,-102.28 447.95,-102.28 447.95,-108.28 441.95,-114.28 435.95,-114.28" />
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-91.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-66.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">InvoiceDocument</text>
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-40.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja.CollectionNoticeItem" data-to="potrazivanja.InvoiceDocument">
+<title>n1-&gt;n2</title>
+<g id="a_edge-1"><a xlink:title="potrazivanja.CollectionNoticeItem.document → potrazivanja.InvoiceDocument | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M183.09,-107.15C215.11,-100.54 250.99,-93.13 282.59,-86.61" />
+<polygon fill="#7297ab" stroke="#7297ab" points="282.68,-89.09 289.04,-85.27 281.69,-84.29 282.68,-89.09" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="236.73" y="-105.35" font-family="Segoe UI" font-size="11.00">document</text>
+<text xml:space="preserve" text-anchor="middle" x="278.49" y="-90.97" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="195.12" y="-95.24" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

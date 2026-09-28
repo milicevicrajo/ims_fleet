@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="248pt" height="99pt" viewBox="0.00 0.00 248.00 99.00" role="img" aria-label="Tokovi rada · Menice">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-menice--registar" class="node" data-key="menice/registar" data-route="flow/menice/registar">
+<title>n0</title>
+<g id="a_node-menice--registar"><a xlink:href="../../index.html#flow/menice/registar" xlink:title="Tokovi rada · Menice" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M192.6,-56.28C192.6,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 192.6,0 192.6,0 198.6,0 204.6,-6 204.6,-12 204.6,-12 204.6,-44.28 204.6,-44.28 204.6,-50.28 198.6,-56.28 192.6,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="102.3" y="-34.34" font-family="Segoe UI" font-size="14.00">Registar menica i povezivanje</text>
+<text xml:space="preserve" text-anchor="middle" x="102.3" y="-14.84" font-family="Segoe UI" font-size="14.00">Menice</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

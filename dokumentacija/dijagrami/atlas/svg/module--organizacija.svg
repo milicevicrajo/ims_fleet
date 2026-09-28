@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="372pt" height="336pt" viewBox="0.00 0.00 372.00 336.00" role="img" aria-label="Organizacija · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 314.88)">
+<title>G</title>
+
+<g id="node-organizacija" class="node" data-key="organizacija" data-route="models/organizacija">
+<title>n0</title>
+<g id="a_node-organizacija"><a xlink:href="../../index.html#models/organizacija" xlink:title="Organizacija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M85.35,-164.53C85.35,-164.53 12,-164.53 12,-164.53 6,-164.53 0,-158.53 0,-152.53 0,-152.53 0,-139.75 0,-139.75 0,-133.75 6,-127.75 12,-127.75 12,-127.75 85.35,-127.75 85.35,-127.75 91.35,-127.75 97.35,-133.75 97.35,-139.75 97.35,-139.75 97.35,-152.53 97.35,-152.53 97.35,-158.53 91.35,-164.53 85.35,-164.53" />
+<text xml:space="preserve" text-anchor="middle" x="48.68" y="-142.59" font-family="Segoe UI" font-size="14.00">Organizacija</text>
+</a>
+</g>
+</g>
+
+<g id="node-registar" class="node" data-key="registar" data-route="area/organizacija/registar">
+<title>n1</title>
+<g id="a_node-registar"><a xlink:href="../../index.html#area/organizacija/registar" xlink:title="Organizacija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M317.2,-293.28C317.2,-293.28 167.35,-293.28 167.35,-293.28 161.35,-293.28 155.35,-287.28 155.35,-281.28 155.35,-281.28 155.35,-249 155.35,-249 155.35,-243 161.35,-237 167.35,-237 167.35,-237 317.2,-237 317.2,-237 323.2,-237 329.2,-243 329.2,-249 329.2,-249 329.2,-281.28 329.2,-281.28 329.2,-287.28 323.2,-293.28 317.2,-293.28" />
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-271.34" font-family="Segoe UI" font-size="14.00">Čvorovi, verzije i putanje</text>
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-251.84" font-family="Segoe UI" font-size="14.00">4 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="organizacija" data-to="registar">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M71.33,-164.82C92.01,-182.09 124.51,-207.78 155.35,-226.14 159.13,-228.39 163.07,-230.6 167.08,-232.75" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="165.7,-234.79 173.04,-235.86 167.96,-230.45 165.7,-234.79" />
+</g>
+
+<g id="node-prava" class="node" data-key="prava" data-route="area/organizacija/prava">
+<title>n2</title>
+<g id="a_node-prava"><a xlink:href="../../index.html#area/organizacija/prava" xlink:title="Organizacija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M283.07,-214.28C283.07,-214.28 201.47,-214.28 201.47,-214.28 195.47,-214.28 189.47,-208.28 189.47,-202.28 189.47,-202.28 189.47,-170 189.47,-170 189.47,-164 195.47,-158 201.47,-158 201.47,-158 283.07,-158 283.07,-158 289.07,-158 295.07,-164 295.07,-170 295.07,-170 295.07,-202.28 295.07,-202.28 295.07,-208.28 289.07,-214.28 283.07,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-192.34" font-family="Segoe UI" font-size="14.00">Dodele uloga</text>
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-172.84" font-family="Segoe UI" font-size="14.00">1 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="organizacija" data-to="prava">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M97.53,-156.13C122.74,-161.39 153.92,-167.9 180.8,-173.51" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="180.15,-175.88 187.5,-174.91 181.15,-171.09 180.15,-175.88" />
+</g>
+
+<g id="node-uvoz" class="node" data-key="uvoz" data-route="area/organizacija/uvoz">
+<title>n3</title>
+<g id="a_node-uvoz"><a xlink:href="../../index.html#area/organizacija/uvoz" xlink:title="Organizacija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M292.07,-135.28C292.07,-135.28 192.47,-135.28 192.47,-135.28 186.47,-135.28 180.47,-129.28 180.47,-123.28 180.47,-123.28 180.47,-91 180.47,-91 180.47,-85 186.47,-79 192.47,-79 192.47,-79 292.07,-79 292.07,-79 298.07,-79 304.07,-85 304.07,-91 304.07,-91 304.07,-123.28 304.07,-123.28 304.07,-129.28 298.07,-135.28 292.07,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-113.34" font-family="Segoe UI" font-size="14.00">Mapiranja i uvoz</text>
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-93.84" font-family="Segoe UI" font-size="14.00">4 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="organizacija" data-to="uvoz">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M97.53,-136.4C120.04,-131.82 147.3,-126.27 172,-121.24" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.42,-123.66 178.79,-119.86 171.44,-118.85 172.42,-123.66" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/organizacija">
+<title>n4</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/organizacija" xlink:title="Organizacija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M291.7,-56.28C291.7,-56.28 192.85,-56.28 192.85,-56.28 186.85,-56.28 180.85,-50.28 180.85,-44.28 180.85,-44.28 180.85,-12 180.85,-12 180.85,-6 186.85,0 192.85,0 192.85,0 291.7,0 291.7,0 297.7,0 303.7,-6 303.7,-12 303.7,-12 303.7,-44.28 303.7,-44.28 303.7,-50.28 297.7,-56.28 291.7,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="242.27" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="organizacija" data-to="flows">
+<title>n0-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M71.77,-127.39C92.5,-110.36 124.79,-85.21 155.35,-67.14 161.13,-63.72 167.26,-60.4 173.48,-57.23" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="174.27,-59.57 179.45,-54.26 172.09,-55.19 174.27,-59.57" />
+</g>
+</g>
+</svg>

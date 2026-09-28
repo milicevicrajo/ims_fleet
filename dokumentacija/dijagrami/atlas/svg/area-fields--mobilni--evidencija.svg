@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1070pt" height="791pt" viewBox="0.00 0.00 1070.00 791.00" role="img" aria-label="Mobilna telefonija · Paketi i zaduženja · polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 769.88)">
+<title>G</title>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n0</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M1014.65,-495.28C1014.65,-495.28 881.55,-495.28 881.55,-495.28 875.55,-495.28 869.55,-489.28 869.55,-483.28 869.55,-483.28 869.55,-416.5 869.55,-416.5 869.55,-410.5 875.55,-404.5 881.55,-404.5 881.55,-404.5 1014.65,-404.5 1014.65,-404.5 1020.65,-404.5 1026.65,-410.5 1026.65,-416.5 1026.65,-416.5 1026.65,-483.28 1026.65,-483.28 1026.65,-489.28 1020.65,-495.28 1014.65,-495.28" />
+<text xml:space="preserve" text-anchor="start" x="884.35" y="-472.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="884.35" y="-447.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="884.35" y="-421.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-mobilni.MobileAssignment" class="node" data-key="mobilni.MobileAssignment" data-route="model/mobilni.MobileAssignment">
+<title>n1</title>
+<g id="a_node-mobilni.MobileAssignment"><a xlink:href="../../index.html#model/mobilni.MobileAssignment" xlink:title="mobilni.MobileAssignment" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M455.45,-561.78C455.45,-561.78 282.6,-561.78 282.6,-561.78 276.6,-561.78 270.6,-555.78 270.6,-549.78 270.6,-549.78 270.6,-230 270.6,-230 270.6,-224 276.6,-218 282.6,-218 282.6,-218 455.45,-218 455.45,-218 461.45,-218 467.45,-224 467.45,-230 467.45,-230 467.45,-549.78 467.45,-549.78 467.45,-555.78 461.45,-561.78 455.45,-561.78" />
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-538.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-513.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileAssignment</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-488.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-465.19" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-442.19" font-family="Segoe UI" font-size="11.00">month : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-419.19" font-family="Segoe UI" font-size="11.00">phone_number : Char</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-396.19" font-family="Segoe UI" font-size="11.00">number_active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-373.19" font-family="Segoe UI" font-size="11.00">package : MobilePackage ?</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-350.19" font-family="Segoe UI" font-size="11.00">mobile_user : MobileUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-327.19" font-family="Segoe UI" font-size="11.00">source_employee_code : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-304.19" font-family="Segoe UI" font-size="11.00">source_full_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-281.19" font-family="Segoe UI" font-size="11.00">employee : Employee ?</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-258.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="285.4" y="-235.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="mobilni.MobileAssignment" data-to="hr.Employee">
+<title>n1-&gt;n0</title>
+<g id="a_edge-4"><a xlink:title="mobilni.MobileAssignment.employee → hr.Employee | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M467.62,-386.41C547.26,-385.06 662.49,-386.51 762.05,-400.89 794.81,-405.62 830.09,-414.09 860.97,-422.67" />
+<polygon fill="#a27631" stroke="#a27631" points="860.28,-425.02 867.68,-424.56 861.61,-420.3 860.28,-425.02" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="673.75" y="-405.44" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="854.33" y="-424.44" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="481.14" y="-376.95" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-mobilni.MobilePackage" class="node" data-key="mobilni.MobilePackage" data-route="model/mobilni.MobilePackage">
+<title>n2</title>
+<g id="a_node-mobilni.MobilePackage"><a xlink:href="../../index.html#model/mobilni.MobilePackage" xlink:title="mobilni.MobilePackage" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M738.8,-343.78C738.8,-343.78 608.7,-343.78 608.7,-343.78 602.7,-343.78 596.7,-337.78 596.7,-331.78 596.7,-331.78 596.7,-12 596.7,-12 596.7,-6 602.7,0 608.7,0 608.7,0 738.8,0 738.8,0 744.8,0 750.8,-6 750.8,-12 750.8,-12 750.8,-331.78 750.8,-331.78 750.8,-337.78 744.8,-343.78 738.8,-343.78" />
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-320.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-295.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobilePackage</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-270.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-247.19" font-family="Segoe UI" font-size="11.00">partner_code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-224.19" font-family="Segoe UI" font-size="11.00">partner_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-201.19" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-178.19" font-family="Segoe UI" font-size="11.00">valid_from : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-155.19" font-family="Segoe UI" font-size="11.00">valid_to : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-132.19" font-family="Segoe UI" font-size="11.00">net_amount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-109.19" font-family="Segoe UI" font-size="11.00">gross_amount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-86.19" font-family="Segoe UI" font-size="11.00">description : Text</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-63.19" font-family="Segoe UI" font-size="11.00">contract : Contract ?</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="611.5" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="mobilni.MobileAssignment" data-to="mobilni.MobilePackage">
+<title>n1-&gt;n2</title>
+<g id="a_edge-2"><a xlink:title="mobilni.MobileAssignment.package → mobilni.MobilePackage | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M467.89,-319.41C507.25,-291.07 552.14,-258.74 589.85,-231.59" />
+<polygon fill="#7297ab" stroke="#7297ab" points="590.84,-233.89 595.09,-227.81 587.98,-229.92 590.84,-233.89" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="526.45" y="-298.49" font-family="Segoe UI" font-size="11.00">package</text>
+<text xml:space="preserve" text-anchor="middle" x="588.99" y="-237.07" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="475.22" y="-303.37" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-mobilni.MobileUser" class="node" data-key="mobilni.MobileUser" data-route="model/mobilni.MobileUser">
+<title>n4</title>
+<g id="a_node-mobilni.MobileUser"><a xlink:href="../../index.html#model/mobilni.MobileUser" xlink:title="mobilni.MobileUser" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M750.05,-748.28C750.05,-748.28 597.45,-748.28 597.45,-748.28 591.45,-748.28 585.45,-742.28 585.45,-736.28 585.45,-736.28 585.45,-439.5 585.45,-439.5 585.45,-433.5 591.45,-427.5 597.45,-427.5 597.45,-427.5 750.05,-427.5 750.05,-427.5 756.05,-427.5 762.05,-433.5 762.05,-439.5 762.05,-439.5 762.05,-736.28 762.05,-736.28 762.05,-742.28 756.05,-748.28 750.05,-748.28" />
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-725.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-700.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileUser</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-674.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-651.69" font-family="Segoe UI" font-size="11.00">organizational_unit : Char</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-628.69" font-family="Segoe UI" font-size="11.00">employee_code : Integer [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-605.69" font-family="Segoe UI" font-size="11.00">full_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-582.69" font-family="Segoe UI" font-size="11.00">personal_number : Char</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-559.69" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-536.69" font-family="Segoe UI" font-size="11.00">departure_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-513.69" font-family="Segoe UI" font-size="11.00">employee : Employee ?</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-490.69" font-family="Segoe UI" font-size="11.00">link_status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-467.69" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-444.69" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="mobilni.MobileAssignment" data-to="mobilni.MobileUser">
+<title>n1-&gt;n4</title>
+<g id="a_edge-3"><a xlink:title="mobilni.MobileAssignment.mobile_user → mobilni.MobileUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M467.89,-453.9C503.28,-477.05 543.14,-503.12 578.23,-526.07" />
+<polygon fill="#7297ab" stroke="#7297ab" points="576.72,-528.01 583.92,-529.79 579.4,-523.91 576.72,-528.01" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="526.45" y="-511.17" font-family="Segoe UI" font-size="11.00">mobile_user</text>
+<text xml:space="preserve" text-anchor="middle" x="570.34" y="-525.53" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="482.74" y="-453.09" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-ugovori.Contract" class="node" data-key="ugovori.Contract" data-route="model/ugovori.Contract">
+<title>n5</title>
+<g id="a_node-ugovori.Contract"><a xlink:href="../../index.html#model/ugovori.Contract" xlink:title="ugovori.Contract" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M1014.65,-217.28C1014.65,-217.28 881.55,-217.28 881.55,-217.28 875.55,-217.28 869.55,-211.28 869.55,-205.28 869.55,-205.28 869.55,-138.5 869.55,-138.5 869.55,-132.5 875.55,-126.5 881.55,-126.5 881.55,-126.5 1014.65,-126.5 1014.65,-126.5 1020.65,-126.5 1026.65,-132.5 1026.65,-138.5 1026.65,-138.5 1026.65,-205.28 1026.65,-205.28 1026.65,-211.28 1020.65,-217.28 1014.65,-217.28" />
+<text xml:space="preserve" text-anchor="start" x="884.35" y="-194.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="884.35" y="-169.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Contract</text>
+<text xml:space="preserve" text-anchor="start" x="884.35" y="-143.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">23 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="mobilni.MobilePackage" data-to="ugovori.Contract">
+<title>n2-&gt;n5</title>
+<g id="a_edge-0"><a xlink:title="mobilni.MobilePackage.contract → ugovori.Contract | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M750.98,-171.89C785.21,-171.89 825.77,-171.89 861.08,-171.89" />
+<polygon fill="#a27631" stroke="#a27631" points="860.96,-174.34 867.96,-171.89 860.96,-169.44 860.96,-174.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="815.8" y="-176.44" font-family="Segoe UI" font-size="11.00">contract</text>
+<text xml:space="preserve" text-anchor="middle" x="855.88" y="-175.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="764.57" y="-162.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-mobilni.MobileUsage" class="node" data-key="mobilni.MobileUsage" data-route="model/mobilni.MobileUsage">
+<title>n3</title>
+<g id="a_node-mobilni.MobileUsage"><a xlink:href="../../index.html#model/mobilni.MobileUsage" xlink:title="mobilni.MobileUsage" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M145.1,-435.28C145.1,-435.28 12,-435.28 12,-435.28 6,-435.28 0,-429.28 0,-423.28 0,-423.28 0,-356.5 0,-356.5 0,-350.5 6,-344.5 12,-344.5 12,-344.5 145.1,-344.5 145.1,-344.5 151.1,-344.5 157.1,-350.5 157.1,-356.5 157.1,-356.5 157.1,-423.28 157.1,-423.28 157.1,-429.28 151.1,-435.28 145.1,-435.28" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-412.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-387.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileUsage</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-361.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">31 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="mobilni.MobileUsage" data-to="mobilni.MobileAssignment">
+<title>n3-&gt;n1</title>
+<g id="a_edge-5"><a xlink:title="mobilni.MobileUsage.assignment → mobilni.MobileAssignment | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M157.24,-389.89C189.45,-389.89 227.33,-389.89 262.03,-389.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="261.8,-392.34 268.8,-389.89 261.8,-387.44 261.8,-392.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="213.85" y="-394.44" font-family="Segoe UI" font-size="11.00">assignment</text>
+<text xml:space="preserve" text-anchor="middle" x="256.72" y="-393.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="170.83" y="-380.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="mobilni.MobileUser" data-to="hr.Employee">
+<title>n4-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="mobilni.MobileUser.employee → hr.Employee | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M762.42,-543.47C794.24,-527.35 830.12,-509.17 861.73,-493.15" />
+<polygon fill="#a27631" stroke="#a27631" points="862.76,-495.37 867.9,-490.02 860.54,-491 862.76,-495.37" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="815.8" y="-531.7" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="859.98" y="-498.19" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="771.68" y="-528.72" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

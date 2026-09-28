@@ -269,6 +269,8 @@ FLOTA_REGISTAR_ORGANIZACIJE = True
 # registar, korak 5, od 28.09.2026.): obuhvat = odobrene dodele (Organizacija → Dodele uloga),
 # centar = centar sifre posla u registru. Brisanje modula iz recnika vraca stara prava i stari
 # centar (`allowed_center_codes`, `allowed_centers`, `center`) bez druge promene.
+# PIB Instituta: fiskalni racun izdat na drugog kupca (ili fizicko lice) dobija upozorenje (Nabavka).
+IMS_PIB = "100223617"
 PRAVA_PO_REGISTRU = {"finansije": True, "nabavka": True, "potrazivanja": True, "flota": True, "kadrovi": True}
 
 CELERY_TASK_ROUTES = {
@@ -288,6 +290,7 @@ CELERY_TASK_ROUTES = {
     'nabavka.tasks.sync_euf_invoices_task': {'queue': 'sync'},
     'nabavka.tasks.sync_uf_items_task': {'queue': 'sync'},
     'nabavka.tasks.sync_goods_task': {'queue': 'sync'},
+    'nabavka.tasks.fiskalni_ponovi_task': {'queue': 'sync'},
     'finansije.tasks.sync_current_year': {'queue': 'sync'},
     'finansije.tasks.sync_ledger_task': {'queue': 'sync'},
     'finansije.tasks.sync_all_years': {'queue': 'sync'},

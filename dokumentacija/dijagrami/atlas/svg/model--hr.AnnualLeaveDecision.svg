@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="493pt" height="410pt" viewBox="0.00 0.00 493.00 410.00" role="img" aria-label="AnnualLeaveDecision · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 388.38)">
+<title>G</title>
+
+<g id="node-hr.AnnualLeaveDecision" class="node" data-key="hr.AnnualLeaveDecision" data-route="model/hr.AnnualLeaveDecision">
+<title>n0</title>
+<g id="a_node-hr.AnnualLeaveDecision"><a xlink:href="../../index.html#model/hr.AnnualLeaveDecision" xlink:title="hr.AnnualLeaveDecision" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M173.6,-366.78C173.6,-366.78 12,-366.78 12,-366.78 6,-366.78 0,-360.78 0,-354.78 0,-354.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 173.6,0 173.6,0 179.6,0 185.6,-6 185.6,-12 185.6,-12 185.6,-354.78 185.6,-354.78 185.6,-360.78 179.6,-366.78 173.6,-366.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-343.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-318.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">AnnualLeaveDecision</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">company_code : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">employee_code : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">employee : Employee ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">source_present : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">last_seen_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">last_sync : AnnualLeaveSync ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">source_start_key : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">start_date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">end_date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">approved_days : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">source_comment : Char</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.AnnualLeaveSync" class="node" data-key="hr.AnnualLeaveSync" data-route="model/hr.AnnualLeaveSync">
+<title>n1</title>
+<g id="a_node-hr.AnnualLeaveSync"><a xlink:href="../../index.html#model/hr.AnnualLeaveSync" xlink:title="hr.AnnualLeaveSync" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M435.2,-285.78C435.2,-285.78 308.1,-285.78 308.1,-285.78 302.1,-285.78 296.1,-279.78 296.1,-273.78 296.1,-273.78 296.1,-207 296.1,-207 296.1,-201 302.1,-195 308.1,-195 308.1,-195 435.2,-195 435.2,-195 441.2,-195 447.2,-201 447.2,-207 447.2,-207 447.2,-273.78 447.2,-273.78 447.2,-279.78 441.2,-285.78 435.2,-285.78" />
+<text xml:space="preserve" text-anchor="start" x="310.9" y="-262.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="310.9" y="-237.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">AnnualLeaveSync</text>
+<text xml:space="preserve" text-anchor="start" x="310.9" y="-212.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">4 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr.AnnualLeaveDecision" data-to="hr.AnnualLeaveSync">
+<title>n0-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="hr.AnnualLeaveDecision.last_sync → hr.AnnualLeaveSync | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M185.99,-202.37C218.9,-209.15 255.76,-216.74 287.84,-223.34" />
+<polygon fill="#7297ab" stroke="#7297ab" points="287.05,-225.68 294.4,-224.69 288.04,-220.88 287.05,-225.68" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="239.35" y="-221.55" font-family="Segoe UI" font-size="11.00">last_sync</text>
+<text xml:space="preserve" text-anchor="middle" x="281.29" y="-225.51" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="200.58" y="-195.95" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n2</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M438.2,-171.78C438.2,-171.78 305.1,-171.78 305.1,-171.78 299.1,-171.78 293.1,-165.78 293.1,-159.78 293.1,-159.78 293.1,-93 293.1,-93 293.1,-87 299.1,-81 305.1,-81 305.1,-81 438.2,-81 438.2,-81 444.2,-81 450.2,-87 450.2,-93 450.2,-93 450.2,-159.78 450.2,-159.78 450.2,-165.78 444.2,-171.78 438.2,-171.78" />
+<text xml:space="preserve" text-anchor="start" x="307.9" y="-148.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="307.9" y="-123.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="307.9" y="-98.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.AnnualLeaveDecision" data-to="hr.Employee">
+<title>n0-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="hr.AnnualLeaveDecision.employee → hr.Employee | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M185.99,-164.41C217.75,-157.87 253.19,-150.57 284.46,-144.14" />
+<polygon fill="#7297ab" stroke="#7297ab" points="284.89,-146.55 291.26,-142.74 283.9,-141.75 284.89,-146.55" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="239.35" y="-162.85" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="280.7" y="-148.43" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="198.02" y="-152.51" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

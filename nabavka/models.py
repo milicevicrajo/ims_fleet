@@ -1060,3 +1060,101 @@ class ProcurementStatusLog(models.Model):
 
     def __str__(self):
         return f"{self.procurement_case} -> {self.new_status}"
+
+
+class FiskalniRacun(models.Model):
+    """Fiskalni racun ucitan citacem QR koda (Nabavka, od 28.09.2026.).
+
+    Zaglavlje se cita iz QR koda (parametar `vl` linka ka stranici za proveru, sa kontrolnim
+    zbirom), a prodavac, tekst racuna i stavke sa stranice za proveru Poreske uprave
+    (`suf.purs.gov.rs`). Link se cuva u celosti. Racun se vezuje za sifru posla, a time i za
+    registar organizacije i obuhvat dodela.
+    """
+
+    class Status(models.TextChoices):
+        POTVRDJEN = "potvrdjen", _("Potvrđen")
+        CEKA = "ceka", _("Čeka proveru")
+
+    VRSTE_RACUNA = {0: "Promet", 1: "Predračun", 2: "Kopija", 3: "Obuka", 4: "Avans"}
+    VRSTE_TRANSAKCIJE = {0: "Prodaja", 1: "Refundacija"}
+
+    link = models.TextField(verbose_name=_("Link sa QR koda"))
+    broj_racuna = models.CharField(max_length=60, unique=True, verbose_name=_("PFR broj računa"))
+    zatrazio = models.CharField(max_length=20, blank=True, verbose_name=_("Zatražio (ESIR)"))
+    potpisao = models.CharField(max_length=20, blank=True, verbose_name=_("Potpisao (PFR)"))
+    brojac_ukupno = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Ukupan brojač"))
+    brojac_vrste = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Brojač vrste"))
+    oznaka_brojaca = models.CharField(max_length=10, blank=True, verbose_name=_("Oznaka brojača"))
+    vrsta_racuna = models.PositiveSmallIntegerField(default=0, verbose_name=_("Vrsta računa"))
+    vrsta_transakcije = models.PositiveSmallIntegerField(default=0, verbose_name=_("Vrsta transakcije"))
+    iznos = models.DecimalField(max_digits=16, decimal_places=2, verbose_name=_("Ukupan iznos"))
+    pdv_ukupno = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True, verbose_name=_("Ukupan PDV"))
+    pfr_vreme = models.DateTimeField(db_index=True, verbose_name=_("PFR vreme"))
+    id_kupca = models.CharField(max_length=60, blank=True, verbose_name=_("ID kupca"))
+    pib_kupca = models.CharField(max_length=20, blank=True, verbose_name=_("PIB kupca"))
+    na_ims = models.BooleanField(default=False, verbose_name=_("Izdat na IMS"))
+    pib_prodavca = models.CharField(max_length=20, blank=True, db_index=True, verbose_name=_("PIB prodavca"))
+    naziv_prodavca = models.CharField(max_length=255, blank=True, verbose_name=_("Prodavac"))
+    prodajno_mesto = models.CharField(max_length=255, blank=True, verbose_name=_("Prodajno mesto"))
+    adresa = models.CharField(max_length=255, blank=True, verbose_name=_("Adresa"))
+    grad = models.CharField(max_length=120, blank=True, verbose_name=_("Grad"))
+    opstina = models.CharField(max_length=120, blank=True, verbose_name=_("Opština"))
+    kasir = models.CharField(max_length=120, blank=True, verbose_name=_("Kasir"))
+    esir_broj = models.CharField(max_length=60, blank=True, verbose_name=_("ESIR broj"))
+    nacin_placanja = models.CharField(max_length=255, blank=True, verbose_name=_("Način plaćanja"))
+    zurnal = models.TextField(blank=True, verbose_name=_("Tekst računa"))
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.CEKA, verbose_name=_("Status"))
+    greska = models.CharField(max_length=500, blank=True, verbose_name=_("Poslednja greška preuzimanja"))
+    preuzeto = models.DateTimeField(null=True, blank=True, verbose_name=_("Preuzeto sa stranice za proveru"))
+    job_code = models.ForeignKey("fleet.OrganizationalUnit", on_delete=models.PROTECT, related_name="fiskalni_racuni",
+                                 verbose_name=_("Šifra posla"))
+    # Registar organizacije: izvodi se iz `job_code` (organizacija/signals.py), po njemu ide obuhvat.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="fiskalni_racuni")
+    napomena = models.CharField(max_length=500, blank=True, verbose_name=_("Napomena"))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="nabavka_fiskalni_racuni", verbose_name=_("Učitao"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Učitano"))
+
+    class Meta:
+        verbose_name = _("Fiskalni račun")
+        verbose_name_plural = _("Fiskalni računi")
+        ordering = ["-pfr_vreme", "-id"]
+
+    def __str__(self):
+        return f"{self.broj_racuna} — {self.naziv_prodavca or self.pib_prodavca} — {self.iznos}"
+
+    @property
+    def vrsta_racuna_naziv(self):
+        return self.VRSTE_RACUNA.get(self.vrsta_racuna, str(self.vrsta_racuna))
+
+    @property
+    def vrsta_transakcije_naziv(self):
+        return self.VRSTE_TRANSAKCIJE.get(self.vrsta_transakcije, str(self.vrsta_transakcije))
+
+    @property
+    def je_promet_prodaja(self):
+        return self.vrsta_racuna == 0 and self.vrsta_transakcije == 0
+
+
+class FiskalniRacunStavka(models.Model):
+    racun = models.ForeignKey(FiskalniRacun, on_delete=models.CASCADE, related_name="stavke")
+    redni_broj = models.PositiveIntegerField(verbose_name=_("R. br."))
+    gtin = models.CharField(max_length=40, blank=True, verbose_name=_("GTIN / bar kod"))
+    naziv = models.CharField(max_length=500, verbose_name=_("Naziv"))
+    kolicina = models.DecimalField(max_digits=16, decimal_places=3, verbose_name=_("Količina"))
+    jedinicna_cena = models.DecimalField(max_digits=16, decimal_places=2, verbose_name=_("Jed. cena sa PDV"))
+    ukupno = models.DecimalField(max_digits=16, decimal_places=2, verbose_name=_("Ukupno"))
+    oznaka_pdv = models.CharField(max_length=5, blank=True, verbose_name=_("Oznaka PDV"))
+    stopa_pdv = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name=_("Stopa PDV %"))
+    osnovica = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True, verbose_name=_("Osnovica"))
+    pdv = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True, verbose_name=_("PDV"))
+
+    class Meta:
+        verbose_name = _("Stavka fiskalnog računa")
+        verbose_name_plural = _("Stavke fiskalnog računa")
+        ordering = ["racun", "redni_broj"]
+        constraints = [models.UniqueConstraint(fields=["racun", "redni_broj"], name="nabavka_fiskalni_stavka_rb")]
+
+    def __str__(self):
+        return f"{self.redni_broj}. {self.naziv}"

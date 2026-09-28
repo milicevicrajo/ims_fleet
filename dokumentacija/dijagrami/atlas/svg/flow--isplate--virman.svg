@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="340pt" height="634pt" viewBox="0.00 0.00 340.00 634.00" role="img" aria-label="Priprema bankarske datoteke za putne naloge">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 612.68)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#277b75" stroke="#277b75" cx="148.43" cy="-563.66" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="116.51" y="-577.78" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/fleet.PutniNalog">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/fleet.PutniNalog" xlink:title="fleet.PutniNalog" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M268.73,-497.74C268.73,-497.74 28.12,-497.74 28.12,-497.74 22.12,-497.74 16.12,-491.74 16.12,-485.74 16.12,-485.74 16.12,-472.96 16.12,-472.96 16.12,-466.96 22.12,-460.96 28.12,-460.96 28.12,-460.96 268.73,-460.96 268.73,-460.96 274.73,-460.96 280.73,-466.96 280.73,-472.96 280.73,-472.96 280.73,-485.74 280.73,-485.74 280.73,-491.74 274.73,-497.74 268.73,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="148.43" y="-475.8" font-family="Segoe UI" font-size="14.00">Izbor službenih putnih naloga i datuma</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M148.43,-555.36C148.43,-544.5 148.43,-523.56 148.43,-506.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="150.88,-506.62 148.43,-499.62 145.98,-506.62 150.88,-506.62" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/hr.Employee">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M284.48,-402.96C284.48,-402.96 12.38,-402.96 12.38,-402.96 6.38,-402.96 0.38,-396.96 0.38,-390.96 0.38,-390.96 0.38,-378.18 0.38,-378.18 0.38,-372.18 6.38,-366.18 12.38,-366.18 12.38,-366.18 284.48,-366.18 284.48,-366.18 290.48,-366.18 296.48,-372.18 296.48,-378.18 296.48,-378.18 296.48,-390.96 296.48,-390.96 296.48,-396.96 290.48,-402.96 284.48,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="148.43" y="-381.02" font-family="Segoe UI" font-size="14.00">Proveri status, RSD, iznos i račun zaposlenog</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M148.43,-460.46C148.43,-446.6 148.43,-427.19 148.43,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="150.88,-411.92 148.43,-404.92 145.98,-411.92 150.88,-411.92" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/fleet.PutniNalog">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/fleet.PutniNalog" xlink:title="fleet.PutniNalog" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M252.23,-308.18C252.23,-308.18 44.62,-308.18 44.62,-308.18 38.62,-308.18 32.63,-302.18 32.63,-296.18 32.63,-296.18 32.63,-283.4 32.63,-283.4 32.63,-277.4 38.63,-271.4 44.63,-271.4 44.63,-271.4 252.23,-271.4 252.23,-271.4 258.23,-271.4 264.23,-277.4 264.23,-283.4 264.23,-283.4 264.23,-296.18 264.23,-296.18 264.23,-302.18 258.23,-308.18 252.23,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="148.43" y="-286.24" font-family="Segoe UI" font-size="14.00">Generiši zaglavlje i stavke virmana</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M148.43,-365.68C148.43,-351.82 148.43,-332.41 148.43,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="150.88,-317.14 148.43,-310.14 145.98,-317.14 150.88,-317.14" />
+</g>
+
+<g id="node-3" class="node" data-key="3">
+<title>n4</title>
+<path fill="#f3f8fb" stroke="#277b75" d="M247.73,-213.4C247.73,-213.4 49.12,-213.4 49.12,-213.4 43.12,-213.4 37.13,-207.4 37.13,-201.4 37.13,-201.4 37.13,-188.62 37.13,-188.62 37.13,-182.62 43.13,-176.62 49.13,-176.62 49.13,-176.62 247.73,-176.62 247.73,-176.62 253.73,-176.62 259.73,-182.62 259.73,-188.62 259.73,-188.62 259.73,-201.4 259.73,-201.4 259.73,-207.4 253.73,-213.4 247.73,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="148.43" y="-191.46" font-family="Segoe UI" font-size="14.00">Preuzmi bankarsku TXT datoteku</text>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M148.43,-270.9C148.43,-257.04 148.43,-237.63 148.43,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="150.88,-222.36 148.43,-215.36 145.98,-222.36 150.88,-222.36" />
+</g>
+
+<g id="node-4" class="node" data-key="4">
+<title>n5</title>
+<path fill="#f3f8fb" stroke="#277b75" d="M284.85,-118.62C284.85,-118.62 12,-118.62 12,-118.62 6,-118.62 0,-112.62 0,-106.62 0,-106.62 0,-93.84 0,-93.84 0,-87.84 6,-81.84 12,-81.84 12,-81.84 284.85,-81.84 284.85,-81.84 290.85,-81.84 296.85,-87.84 296.85,-93.84 296.85,-93.84 296.85,-106.62 296.85,-106.62 296.85,-112.62 290.85,-118.62 284.85,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="148.43" y="-96.68" font-family="Segoe UI" font-size="14.00">Ručni uvoz u bankarski sistem, van aplikacije</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M148.43,-176.12C148.43,-162.26 148.43,-142.85 148.43,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="150.88,-127.58 148.43,-120.58 145.98,-127.58 150.88,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n6</title>
+<ellipse fill="#277b75" stroke="#277b75" cx="148.43" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#277b75" cx="148.43" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="124.88" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="end">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M148.43,-81.35C148.43,-67.12 148.43,-47.23 148.43,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="150.88,-32.71 148.43,-25.71 145.98,-32.71 150.88,-32.71" />
+</g>
+</g>
+</svg>

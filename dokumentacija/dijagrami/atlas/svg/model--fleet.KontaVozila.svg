@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="149pt" height="157pt" viewBox="0.00 0.00 149.00 157.00" role="img" aria-label="KontaVozila · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 135.38)">
+<title>G</title>
+
+<g id="node-fleet.KontaVozila" class="node" data-key="fleet.KontaVozila" data-route="model/fleet.KontaVozila">
+<title>n0</title>
+<g id="a_node-fleet.KontaVozila"><a xlink:href="../../index.html#model/fleet.KontaVozila" xlink:title="fleet.KontaVozila" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M94.1,-113.78C94.1,-113.78 12,-113.78 12,-113.78 6,-113.78 0,-107.78 0,-101.78 0,-101.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 94.1,0 94.1,0 100.1,0 106.1,-6 106.1,-12 106.1,-12 106.1,-101.78 106.1,-101.78 106.1,-107.78 100.1,-113.78 94.1,-113.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-90.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-65.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">KontaVozila</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">knt : Char [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">naz_knt : Char</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="456pt" height="272pt" viewBox="0.00 0.00 456.00 272.00" role="img" aria-label="ContactPoint · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 250.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.CollectionContact" class="node" data-key="potrazivanja.CollectionContact" data-route="model/potrazivanja.CollectionContact">
+<title>n0</title>
+<g id="a_node-potrazivanja.CollectionContact"><a xlink:href="../../index.html#model/potrazivanja.CollectionContact" xlink:title="potrazivanja.CollectionContact" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M400.7,-159.78C400.7,-159.78 267.6,-159.78 267.6,-159.78 261.6,-159.78 255.6,-153.78 255.6,-147.78 255.6,-147.78 255.6,-81 255.6,-81 255.6,-75 261.6,-69 267.6,-69 267.6,-69 400.7,-69 400.7,-69 406.7,-69 412.7,-75 412.7,-81 412.7,-81 412.7,-147.78 412.7,-147.78 412.7,-153.78 406.7,-159.78 400.7,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionContact</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-86.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.ContactPoint" class="node" data-key="potrazivanja.ContactPoint" data-route="model/potrazivanja.ContactPoint">
+<title>n1</title>
+<g id="a_node-potrazivanja.ContactPoint"><a xlink:href="../../index.html#model/potrazivanja.ContactPoint" xlink:title="potrazivanja.ContactPoint" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M149.6,-228.78C149.6,-228.78 12,-228.78 12,-228.78 6,-228.78 0,-222.78 0,-216.78 0,-216.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 149.6,0 149.6,0 155.6,0 161.6,-6 161.6,-12 161.6,-12 161.6,-216.78 161.6,-216.78 161.6,-222.78 155.6,-228.78 149.6,-228.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-205.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-180.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ContactPoint</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">contact : CollectionContact</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">kind : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">value : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">label : Char</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.ContactPoint" data-to="potrazivanja.CollectionContact">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.ContactPoint.contact → potrazivanja.CollectionContact | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M162.02,-114.39C189.1,-114.39 219.44,-114.39 246.96,-114.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="246.89,-116.84 253.89,-114.39 246.89,-111.94 246.89,-116.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="208.6" y="-118.94" font-family="Segoe UI" font-size="11.00">contact</text>
+<text xml:space="preserve" text-anchor="middle" x="241.81" y="-117.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="175.61" y="-105.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

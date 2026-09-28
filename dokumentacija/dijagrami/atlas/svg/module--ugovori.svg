@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="403pt" height="257pt" viewBox="0.00 0.00 403.00 257.00" role="img" aria-label="Ugovori · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 235.88)">
+<title>G</title>
+
+<g id="node-ugovori" class="node" data-key="ugovori" data-route="area/ugovori/ugovori">
+<title>n2</title>
+<g id="a_node-ugovori"><a xlink:href="../../index.html#area/ugovori/ugovori" xlink:title="Ugovori · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M107.85,-135.28C107.85,-135.28 12,-135.28 12,-135.28 6,-135.28 0,-129.28 0,-123.28 0,-123.28 0,-91 0,-91 0,-85 6,-79 12,-79 12,-79 107.85,-79 107.85,-79 113.85,-79 119.85,-85 119.85,-91 119.85,-91 119.85,-123.28 119.85,-123.28 119.85,-129.28 113.85,-135.28 107.85,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="59.93" y="-113.34" font-family="Segoe UI" font-size="14.00">Ugovori i strane</text>
+<text xml:space="preserve" text-anchor="middle" x="59.93" y="-93.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="ugovori" data-to="ugovori">
+<title>n2-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M21.21,-135.54C18.04,-147.79 30.95,-158.28 59.93,-158.28 81.89,-158.28 94.62,-152.26 98.11,-144.01" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="100.56,-144.19 98.55,-137.05 95.67,-143.88 100.56,-144.19" />
+</g>
+
+<g id="node-partneri" class="node" data-key="partneri" data-route="area/ugovori/partneri">
+<title>n1</title>
+<g id="a_node-partneri"><a xlink:href="../../index.html#area/ugovori/partneri" xlink:title="Ugovori · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M346.45,-214.28C346.45,-214.28 191.35,-214.28 191.35,-214.28 185.35,-214.28 179.35,-208.28 179.35,-202.28 179.35,-202.28 179.35,-170 179.35,-170 179.35,-164 185.35,-158 191.35,-158 191.35,-158 346.45,-158 346.45,-158 352.45,-158 358.45,-164 358.45,-170 358.45,-170 358.45,-202.28 358.45,-202.28 358.45,-208.28 352.45,-214.28 346.45,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="268.9" y="-192.34" font-family="Segoe UI" font-size="14.00">Partneri, zahtevi i ponude</text>
+<text xml:space="preserve" text-anchor="middle" x="268.9" y="-172.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="ugovori" data-to="partneri">
+<title>n2-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M120.24,-129.78C140.45,-137.49 163.43,-146.27 185.14,-154.55" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="184.25,-156.83 191.66,-157.04 186,-152.26 184.25,-156.83" />
+</g>
+
+<g id="node-dokumenti" class="node" data-key="dokumenti" data-route="area/ugovori/dokumenti">
+<title>n3</title>
+<g id="a_node-dokumenti"><a xlink:href="../../index.html#area/ugovori/dokumenti" xlink:title="Ugovori · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M347.95,-135.28C347.95,-135.28 189.85,-135.28 189.85,-135.28 183.85,-135.28 177.85,-129.28 177.85,-123.28 177.85,-123.28 177.85,-91 177.85,-91 177.85,-85 183.85,-79 189.85,-79 189.85,-79 347.95,-79 347.95,-79 353.95,-79 359.95,-85 359.95,-91 359.95,-91 359.95,-123.28 359.95,-123.28 359.95,-129.28 353.95,-135.28 347.95,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="268.9" y="-113.34" font-family="Segoe UI" font-size="14.00">Dokumenti i obezbeđenja</text>
+<text xml:space="preserve" text-anchor="middle" x="268.9" y="-93.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="ugovori" data-to="dokumenti">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M120.24,-107.14C135.63,-107.14 152.64,-107.14 169.47,-107.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="169.19,-109.59 176.19,-107.14 169.19,-104.69 169.19,-109.59" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/ugovori">
+<title>n4</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/ugovori" xlink:title="Ugovori · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M318.33,-56.28C318.33,-56.28 219.48,-56.28 219.48,-56.28 213.48,-56.28 207.48,-50.28 207.48,-44.28 207.48,-44.28 207.48,-12 207.48,-12 207.48,-6 213.48,0 219.48,0 219.48,0 318.33,0 318.33,0 324.33,0 330.33,-6 330.33,-12 330.33,-12 330.33,-44.28 330.33,-44.28 330.33,-50.28 324.33,-56.28 318.33,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="268.9" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="268.9" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="ugovori" data-to="flows">
+<title>n2-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M120.24,-84.5C144.92,-75.08 173.73,-64.08 199.31,-54.32" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="200.06,-56.66 205.73,-51.87 198.31,-52.08 200.06,-56.66" />
+</g>
+</g>
+</svg>

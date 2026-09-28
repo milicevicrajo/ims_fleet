@@ -464,7 +464,9 @@ ispravke i provere. [P]
 [Otvoriti UML galeriju Flote](../../dijagrami/flota.html) lokalno u pregledaču.
 Šest dijagrama obuhvata organizaciju koda, vozila i dodele, putne naloge,
 održavanje, zakup, osiguranje, uvoz goriva i ekonomske analize.
-Svaki ima SVG za uvećavanje, PNG i PlantUML izvor za izmene u VS Code-u (Alt+D).
+Svaki ima SVG za uvećavanje i PlantUML izvor za izmene u VS Code-u (Alt+D).
+Novi [interaktivni atlas Flote](../../dijagrami/index.html#module/fleet) omogućava
+prelazak od oblasti do modela, njegovih polja, veza i poslovnih tokova.
 Prikaz je zasnovan na repozitorijumu od **28.09.2026.**, bez pristupa živoj bazi.
 
 Početi od **07 — Organizacija Flote**, zatim otvoriti modele **08–09** ili tokove

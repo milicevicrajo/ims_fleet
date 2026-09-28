@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="164pt" height="226pt" viewBox="0.00 0.00 164.00 226.00" role="img" aria-label="Napomene · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 204.38)">
+<title>G</title>
+
+<g id="node-naplata.Napomene" class="node" data-key="naplata.Napomene" data-route="model/naplata.Napomene">
+<title>n0</title>
+<g id="a_node-naplata.Napomene"><a xlink:href="../../index.html#model/naplata.Napomene" xlink:title="naplata.Napomene" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M108.35,-182.78C108.35,-182.78 12,-182.78 12,-182.78 6,-182.78 0,-176.78 0,-170.78 0,-170.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 108.35,0 108.35,0 114.35,0 120.35,-6 120.35,-12 120.35,-12 120.35,-170.78 120.35,-170.78 120.35,-176.78 114.35,-182.78 108.35,-182.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-159.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-134.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Napomene</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">sif_par : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">napomene : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">veliki : Char ?</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="928pt" height="590pt" viewBox="0.00 0.00 928.00 590.00" role="img" aria-label="ProcurementItem · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 568.38)">
+<title>G</title>
+
+<g id="node-nabavka.EufItemSnapshot" class="node" data-key="nabavka.EufItemSnapshot" data-route="model/nabavka.EufItemSnapshot">
+<title>n0</title>
+<g id="a_node-nabavka.EufItemSnapshot"><a xlink:href="../../index.html#model/nabavka.EufItemSnapshot" xlink:title="nabavka.EufItemSnapshot" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M871.17,-546.78C871.17,-546.78 738.08,-546.78 738.08,-546.78 732.08,-546.78 726.08,-540.78 726.08,-534.78 726.08,-534.78 726.08,-468 726.08,-468 726.08,-462 732.08,-456 738.08,-456 738.08,-456 871.17,-456 871.17,-456 877.17,-456 883.17,-462 883.17,-468 883.17,-468 883.17,-534.78 883.17,-534.78 883.17,-540.78 877.17,-546.78 871.17,-546.78" />
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-523.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-498.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">EufItemSnapshot</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-473.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">25 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-nabavka.GoodsSnapshot" class="node" data-key="nabavka.GoodsSnapshot" data-route="model/nabavka.GoodsSnapshot">
+<title>n1</title>
+<g id="a_node-nabavka.GoodsSnapshot"><a xlink:href="../../index.html#model/nabavka.GoodsSnapshot" xlink:title="nabavka.GoodsSnapshot" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M871.17,-432.78C871.17,-432.78 738.08,-432.78 738.08,-432.78 732.08,-432.78 726.08,-426.78 726.08,-420.78 726.08,-420.78 726.08,-354 726.08,-354 726.08,-348 732.08,-342 738.08,-342 738.08,-342 871.17,-342 871.17,-342 877.17,-342 883.17,-348 883.17,-354 883.17,-354 883.17,-420.78 883.17,-420.78 883.17,-426.78 877.17,-432.78 871.17,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">GoodsSnapshot</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">22 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-nabavka.ProcurementCase" class="node" data-key="nabavka.ProcurementCase" data-route="model/nabavka.ProcurementCase">
+<title>n2</title>
+<g id="a_node-nabavka.ProcurementCase"><a xlink:href="../../index.html#model/nabavka.ProcurementCase" xlink:title="nabavka.ProcurementCase" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M871.17,-318.78C871.17,-318.78 738.08,-318.78 738.08,-318.78 732.08,-318.78 726.08,-312.78 726.08,-306.78 726.08,-306.78 726.08,-240 726.08,-240 726.08,-234 732.08,-228 738.08,-228 738.08,-228 871.17,-228 871.17,-228 877.17,-228 883.17,-234 883.17,-240 883.17,-240 883.17,-306.78 883.17,-306.78 883.17,-312.78 877.17,-318.78 871.17,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementCase</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">21 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-nabavka.ProcurementInvoice" class="node" data-key="nabavka.ProcurementInvoice" data-route="model/nabavka.ProcurementInvoice">
+<title>n3</title>
+<g id="a_node-nabavka.ProcurementInvoice"><a xlink:href="../../index.html#model/nabavka.ProcurementInvoice" xlink:title="nabavka.ProcurementInvoice" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M872.3,-204.78C872.3,-204.78 736.95,-204.78 736.95,-204.78 730.95,-204.78 724.95,-198.78 724.95,-192.78 724.95,-192.78 724.95,-126 724.95,-126 724.95,-120 730.95,-114 736.95,-114 736.95,-114 872.3,-114 872.3,-114 878.3,-114 884.3,-120 884.3,-126 884.3,-126 884.3,-192.78 884.3,-192.78 884.3,-198.78 878.3,-204.78 872.3,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="739.75" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="739.75" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementInvoice</text>
+<text xml:space="preserve" text-anchor="start" x="739.75" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">24 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-nabavka.ProcurementItem" class="node" data-key="nabavka.ProcurementItem" data-route="model/nabavka.ProcurementItem">
+<title>n4</title>
+<g id="a_node-nabavka.ProcurementItem"><a xlink:href="../../index.html#model/nabavka.ProcurementItem" xlink:title="nabavka.ProcurementItem" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M565.7,-445.28C565.7,-445.28 377.1,-445.28 377.1,-445.28 371.1,-445.28 365.1,-439.28 365.1,-433.28 365.1,-433.28 365.1,-113.5 365.1,-113.5 365.1,-107.5 371.1,-101.5 377.1,-101.5 377.1,-101.5 565.7,-101.5 565.7,-101.5 571.7,-101.5 577.7,-107.5 577.7,-113.5 577.7,-113.5 577.7,-433.28 577.7,-433.28 577.7,-439.28 571.7,-445.28 565.7,-445.28" />
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-422.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-397.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementItem</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-371.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-348.69" font-family="Segoe UI" font-size="11.00">procurement_case : ProcurementCase</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-325.69" font-family="Segoe UI" font-size="11.00">source_type : Char</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-302.69" font-family="Segoe UI" font-size="11.00">euf_invoice : ProcurementInvoice ?</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-279.69" font-family="Segoe UI" font-size="11.00">uf_item : EufItemSnapshot ?</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-256.69" font-family="Segoe UI" font-size="11.00">uf_invoice : UfInvoiceSnapshot ?</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-233.69" font-family="Segoe UI" font-size="11.00">goods_item : GoodsSnapshot ?</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-210.69" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-187.69" font-family="Segoe UI" font-size="11.00">uom : Char</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-164.69" font-family="Segoe UI" font-size="11.00">quantity : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-141.69" font-family="Segoe UI" font-size="11.00">estimated_unit_price : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="379.9" y="-118.69" font-family="Segoe UI" font-size="11.00">note : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="nabavka.ProcurementItem" data-to="nabavka.EufItemSnapshot">
+<title>n4-&gt;n0</title>
+<g id="a_edge-2"><a xlink:title="nabavka.ProcurementItem.uf_item → nabavka.EufItemSnapshot | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M577.88,-347.41C587.61,-354.18 597.33,-360.92 606.7,-367.39 647.07,-395.25 692.31,-426.06 729.23,-451.11" />
+<polygon fill="#7297ab" stroke="#7297ab" points="727.61,-452.97 734.78,-454.87 730.36,-448.91 727.61,-452.97" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="651.32" y="-431.02" font-family="Segoe UI" font-size="11.00">uf_item</text>
+<text xml:space="preserve" text-anchor="middle" x="721.22" y="-450.38" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="592.66" y="-347.02" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="nabavka.ProcurementItem" data-to="nabavka.GoodsSnapshot">
+<title>n4-&gt;n1</title>
+<g id="a_edge-4"><a xlink:title="nabavka.ProcurementItem.goods_item → nabavka.GoodsSnapshot | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M578.11,-309.77C623.21,-325.29 675.15,-343.17 717.8,-357.85" />
+<polygon fill="#7297ab" stroke="#7297ab" points="716.81,-360.1 724.23,-360.06 718.41,-355.47 716.81,-360.1" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="651.32" y="-351.81" font-family="Segoe UI" font-size="11.00">goods_item</text>
+<text xml:space="preserve" text-anchor="middle" x="710.74" y="-359.18" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="593.03" y="-305.25" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="nabavka.ProcurementItem" data-to="nabavka.ProcurementCase">
+<title>n4-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="nabavka.ProcurementItem.procurement_case → nabavka.ProcurementCase | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M578.11,-273.39C623.02,-273.39 674.71,-273.39 717.27,-273.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="717.14,-275.84 724.14,-273.39 717.14,-270.94 717.14,-275.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="651.32" y="-277.94" font-family="Segoe UI" font-size="11.00">procurement_case</text>
+<text xml:space="preserve" text-anchor="middle" x="712.06" y="-276.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="591.71" y="-264.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="nabavka.ProcurementItem" data-to="nabavka.ProcurementInvoice">
+<title>n4-&gt;n3</title>
+<g id="a_edge-1"><a xlink:title="nabavka.ProcurementItem.euf_invoice → nabavka.ProcurementInvoice | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M578.11,-237.01C622.85,-221.61 674.32,-203.89 716.79,-189.28" />
+<polygon fill="#7297ab" stroke="#7297ab" points="717.36,-191.67 723.18,-187.08 715.76,-187.04 717.36,-191.67" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="651.32" y="-231.15" font-family="Segoe UI" font-size="11.00">euf_invoice</text>
+<text xml:space="preserve" text-anchor="middle" x="713.82" y="-194.05" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="588.9" y="-223.64" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-nabavka.UfInvoiceSnapshot" class="node" data-key="nabavka.UfInvoiceSnapshot" data-route="model/nabavka.UfInvoiceSnapshot">
+<title>n6</title>
+<g id="a_node-nabavka.UfInvoiceSnapshot"><a xlink:href="../../index.html#model/nabavka.UfInvoiceSnapshot" xlink:title="nabavka.UfInvoiceSnapshot" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M871.17,-90.78C871.17,-90.78 738.08,-90.78 738.08,-90.78 732.08,-90.78 726.08,-84.78 726.08,-78.78 726.08,-78.78 726.08,-12 726.08,-12 726.08,-6 732.08,0 738.08,0 738.08,0 871.17,0 871.17,0 877.17,0 883.17,-6 883.17,-12 883.17,-12 883.17,-78.78 883.17,-78.78 883.17,-84.78 877.17,-90.78 871.17,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">UfInvoiceSnapshot</text>
+<text xml:space="preserve" text-anchor="start" x="740.88" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="nabavka.ProcurementItem" data-to="nabavka.UfInvoiceSnapshot">
+<title>n4-&gt;n6</title>
+<g id="a_edge-3"><a xlink:title="nabavka.ProcurementItem.uf_invoice → nabavka.UfInvoiceSnapshot | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M577.88,-199.37C587.61,-192.6 597.33,-185.86 606.7,-179.39 647.07,-151.53 692.31,-120.72 729.23,-95.67" />
+<polygon fill="#7297ab" stroke="#7297ab" points="730.36,-97.87 734.78,-91.91 727.61,-93.81 730.36,-97.87" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="651.32" y="-183.94" font-family="Segoe UI" font-size="11.00">uf_invoice</text>
+<text xml:space="preserve" text-anchor="middle" x="728.34" y="-100.99" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="585.42" y="-183.45" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-nabavka.ProcurementItemInvoiceLink" class="node" data-key="nabavka.ProcurementItemInvoiceLink" data-route="model/nabavka.ProcurementItemInvoiceLink">
+<title>n5</title>
+<g id="a_node-nabavka.ProcurementItemInvoiceLink"><a xlink:href="../../index.html#model/nabavka.ProcurementItemInvoiceLink" xlink:title="nabavka.ProcurementItemInvoiceLink" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M204.35,-318.78C204.35,-318.78 12,-318.78 12,-318.78 6,-318.78 0,-312.78 0,-306.78 0,-306.78 0,-240 0,-240 0,-234 6,-228 12,-228 12,-228 204.35,-228 204.35,-228 210.35,-228 216.35,-234 216.35,-240 216.35,-240 216.35,-306.78 216.35,-306.78 216.35,-312.78 210.35,-318.78 204.35,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementItemInvoiceLink</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="nabavka.ProcurementItemInvoiceLink" data-to="nabavka.ProcurementItem">
+<title>n5-&gt;n4</title>
+<g id="a_edge-5"><a xlink:title="nabavka.ProcurementItemInvoiceLink.procurement_item → nabavka.ProcurementItem | OneToOneField | 0..1 : 1">
+<path fill="none" stroke="#7297ab" d="M216.58,-273.39C260.63,-273.39 311.67,-273.39 356.39,-273.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="356.14,-275.84 363.14,-273.39 356.14,-270.94 356.14,-275.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="290.73" y="-277.94" font-family="Segoe UI" font-size="11.00">procurement_item</text>
+<text xml:space="preserve" text-anchor="middle" x="351.06" y="-276.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="230.17" y="-264.1" font-family="Segoe UI" font-size="11.00">0..1</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="270pt" height="99pt" viewBox="0.00 0.00 270.00 99.00" role="img" aria-label="Tokovi rada · Nabavka">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-nabavka--predmet" class="node" data-key="nabavka/predmet" data-route="flow/nabavka/predmet">
+<title>n0</title>
+<g id="a_node-nabavka--predmet"><a xlink:href="../../index.html#flow/nabavka/predmet" xlink:title="Tokovi rada · Nabavka" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M215.1,-56.28C215.1,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 215.1,0 215.1,0 221.1,0 227.1,-6 227.1,-12 227.1,-12 227.1,-44.28 227.1,-44.28 227.1,-50.28 221.1,-56.28 215.1,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="113.55" y="-34.34" font-family="Segoe UI" font-size="14.00">Predmet nabavke, stavke i fakture</text>
+<text xml:space="preserve" text-anchor="middle" x="113.55" y="-14.84" font-family="Segoe UI" font-size="14.00">Nabavka</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="192pt" height="709pt" viewBox="0.00 0.00 192.00 709.00" role="img" aria-label="Partneri · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 687.38)">
+<title>G</title>
+
+<g id="node-naplata.Partneri" class="node" data-key="naplata.Partneri" data-route="model/naplata.Partneri">
+<title>n0</title>
+<g id="a_node-naplata.Partneri"><a xlink:href="../../index.html#model/naplata.Partneri" xlink:title="naplata.Partneri" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M136.85,-665.78C136.85,-665.78 12,-665.78 12,-665.78 6,-665.78 0,-659.78 0,-653.78 0,-653.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 136.85,0 136.85,0 142.85,0 148.85,-6 148.85,-12 148.85,-12 148.85,-653.78 148.85,-653.78 148.85,-659.78 142.85,-665.78 136.85,-665.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-642.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-617.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Partneri</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-592.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-569.19" font-family="Segoe UI" font-size="11.00">sif_pred : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-546.19" font-family="Segoe UI" font-size="11.00">grupa : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-523.19" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-500.19" font-family="Segoe UI" font-size="11.00">naz_par : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-477.19" font-family="Segoe UI" font-size="11.00">ulica_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-454.19" font-family="Segoe UI" font-size="11.00">p_b_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-431.19" font-family="Segoe UI" font-size="11.00">mesto_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-408.19" font-family="Segoe UI" font-size="11.00">zr : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-385.19" font-family="Segoe UI" font-size="11.00">mb : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">telefon : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">fax : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">email : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">lice : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">web : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">proc_rabata : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">br_dana : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">vlasnik : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">pib : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">zemlja : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">proc_rabata1 : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">proc_rabata2 : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">pdv_obveznik : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">sif_ter : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">JBKJS : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">CRF : Char ?</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

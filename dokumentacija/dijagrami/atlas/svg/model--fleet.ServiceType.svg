@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="505pt" height="476pt" viewBox="0.00 0.00 505.00 476.00" role="img" aria-label="ServiceType · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 454.38)">
+<title>G</title>
+
+<g id="node-fleet.DraftServiceTransaction" class="node" data-key="fleet.DraftServiceTransaction" data-route="model/fleet.DraftServiceTransaction">
+<title>n0</title>
+<g id="a_node-fleet.DraftServiceTransaction"><a xlink:href="../../index.html#model/fleet.DraftServiceTransaction" xlink:title="fleet.DraftServiceTransaction" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M172.85,-432.78C172.85,-432.78 12,-432.78 12,-432.78 6,-432.78 0,-426.78 0,-420.78 0,-420.78 0,-354 0,-354 0,-348 6,-342 12,-342 12,-342 172.85,-342 172.85,-342 178.85,-342 184.85,-348 184.85,-354 184.85,-354 184.85,-420.78 184.85,-420.78 184.85,-426.78 178.85,-432.78 172.85,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">DraftServiceTransaction</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">19 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.ServiceType" class="node" data-key="fleet.ServiceType" data-route="model/fleet.ServiceType">
+<title>n4</title>
+<g id="a_node-fleet.ServiceType"><a xlink:href="../../index.html#model/fleet.ServiceType" xlink:title="fleet.ServiceType" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M450.2,-284.78C450.2,-284.78 353.1,-284.78 353.1,-284.78 347.1,-284.78 341.1,-278.78 341.1,-272.78 341.1,-272.78 341.1,-160 341.1,-160 341.1,-154 347.1,-148 353.1,-148 353.1,-148 450.2,-148 450.2,-148 456.2,-148 462.2,-154 462.2,-160 462.2,-160 462.2,-272.78 462.2,-272.78 462.2,-278.78 456.2,-284.78 450.2,-284.78" />
+<text xml:space="preserve" text-anchor="start" x="355.9" y="-261.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="355.9" y="-236.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ServiceType</text>
+<text xml:space="preserve" text-anchor="start" x="355.9" y="-211.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="355.9" y="-188.19" font-family="Segoe UI" font-size="11.00">name : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="355.9" y="-165.19" font-family="Segoe UI" font-size="11.00">description : Text ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="fleet.DraftServiceTransaction" data-to="fleet.ServiceType">
+<title>n0-&gt;n4</title>
+<g id="a_edge-2"><a xlink:title="fleet.DraftServiceTransaction.popravka_kategorija → fleet.ServiceType | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M181.83,-341.54C221.89,-320.4 269.68,-294.65 312.1,-270.39 319.13,-266.37 326.43,-262.09 333.68,-257.77" />
+<polygon fill="#7297ab" stroke="#7297ab" points="334.86,-259.92 339.61,-254.23 332.34,-255.72 334.86,-259.92" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="262.98" y="-327.5" font-family="Segoe UI" font-size="11.00">popravka_kategorija</text>
+<text xml:space="preserve" text-anchor="middle" x="332.5" y="-262.92" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="190.88" y="-326.63" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.Requisition" class="node" data-key="fleet.Requisition" data-route="model/fleet.Requisition">
+<title>n1</title>
+<g id="a_node-fleet.Requisition"><a xlink:href="../../index.html#model/fleet.Requisition" xlink:title="fleet.Requisition" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M158.98,-318.78C158.98,-318.78 25.88,-318.78 25.88,-318.78 19.88,-318.78 13.88,-312.78 13.88,-306.78 13.88,-306.78 13.88,-240 13.88,-240 13.88,-234 19.88,-228 25.88,-228 25.88,-228 158.98,-228 158.98,-228 164.98,-228 170.98,-234 170.98,-240 170.98,-240 170.98,-306.78 170.98,-306.78 170.98,-312.78 164.98,-318.78 158.98,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="28.68" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="28.68" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Requisition</text>
+<text xml:space="preserve" text-anchor="start" x="28.68" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">18 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="fleet.Requisition" data-to="fleet.ServiceType">
+<title>n1-&gt;n4</title>
+<g id="a_edge-3"><a xlink:title="fleet.Requisition.popravka_kategorija → fleet.ServiceType | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M171.35,-258.93C221.09,-249.7 284.95,-237.86 332.64,-229.01" />
+<polygon fill="#7297ab" stroke="#7297ab" points="332.82,-231.47 339.26,-227.78 331.93,-226.65 332.82,-231.47" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="262.98" y="-254.55" font-family="Segoe UI" font-size="11.00">popravka_kategorija</text>
+<text xml:space="preserve" text-anchor="middle" x="328.54" y="-233.27" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="183.56" y="-247.27" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.Service" class="node" data-key="fleet.Service" data-route="model/fleet.Service">
+<title>n2</title>
+<g id="a_node-fleet.Service"><a xlink:href="../../index.html#model/fleet.Service" xlink:title="fleet.Service" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M155.98,-204.78C155.98,-204.78 28.88,-204.78 28.88,-204.78 22.88,-204.78 16.88,-198.78 16.88,-192.78 16.88,-192.78 16.88,-126 16.88,-126 16.88,-120 22.88,-114 28.88,-114 28.88,-114 155.98,-114 155.98,-114 161.98,-114 167.98,-120 167.98,-126 167.98,-126 167.98,-192.78 167.98,-192.78 167.98,-198.78 161.98,-204.78 155.98,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="31.68" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="31.68" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Service</text>
+<text xml:space="preserve" text-anchor="start" x="31.68" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.Service" data-to="fleet.ServiceType">
+<title>n2-&gt;n4</title>
+<g id="a_edge-0"><a xlink:title="fleet.Service.service_type → fleet.ServiceType | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M168.19,-173.26C218.39,-182.58 284.01,-194.75 332.72,-203.79" />
+<polygon fill="#7297ab" stroke="#7297ab" points="332.18,-206.18 339.51,-205.05 333.08,-201.36 332.18,-206.18" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="262.98" y="-204.1" font-family="Segoe UI" font-size="11.00">service_type</text>
+<text xml:space="preserve" text-anchor="middle" x="326.48" y="-206.13" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="182.71" y="-166.56" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.ServiceTransaction" class="node" data-key="fleet.ServiceTransaction" data-route="model/fleet.ServiceTransaction">
+<title>n3</title>
+<g id="a_node-fleet.ServiceTransaction"><a xlink:href="../../index.html#model/fleet.ServiceTransaction" xlink:title="fleet.ServiceTransaction" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M158.98,-90.78C158.98,-90.78 25.88,-90.78 25.88,-90.78 19.88,-90.78 13.88,-84.78 13.88,-78.78 13.88,-78.78 13.88,-12 13.88,-12 13.88,-6 19.88,0 25.88,0 25.88,0 158.98,0 158.98,0 164.98,0 170.98,-6 170.98,-12 170.98,-12 170.98,-78.78 170.98,-78.78 170.98,-84.78 164.98,-90.78 158.98,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="28.68" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="28.68" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ServiceTransaction</text>
+<text xml:space="preserve" text-anchor="start" x="28.68" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">19 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="fleet.ServiceTransaction" data-to="fleet.ServiceType">
+<title>n3-&gt;n4</title>
+<g id="a_edge-1"><a xlink:title="fleet.ServiceTransaction.popravka_kategorija → fleet.ServiceType | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M171.43,-85.76C213.42,-107.84 265.94,-135.99 312.1,-162.39 319.13,-166.41 326.43,-170.69 333.68,-175.01" />
+<polygon fill="#7297ab" stroke="#7297ab" points="332.34,-177.06 339.61,-178.55 334.86,-172.86 332.34,-177.06" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="262.98" y="-166.94" font-family="Segoe UI" font-size="11.00">popravka_kategorija</text>
+<text xml:space="preserve" text-anchor="middle" x="325.98" y="-174.84" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="186.41" y="-83.54" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="230pt" height="456pt" viewBox="0.00 0.00 230.00 456.00" role="img" aria-label="SyncRun · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 434.38)">
+<title>G</title>
+
+<g id="node-finansije.SyncRun" class="node" data-key="finansije.SyncRun" data-route="model/finansije.SyncRun">
+<title>n0</title>
+<g id="a_node-finansije.SyncRun"><a xlink:href="../../index.html#model/finansije.SyncRun" xlink:title="finansije.SyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M175.1,-412.78C175.1,-412.78 12,-412.78 12,-412.78 6,-412.78 0,-406.78 0,-400.78 0,-400.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 175.1,0 175.1,0 181.1,0 187.1,-6 187.1,-12 187.1,-12 187.1,-400.78 187.1,-400.78 187.1,-406.78 181.1,-412.78 175.1,-412.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-389.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-364.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">SyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">started_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">finished_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">year_from : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">year_to : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">source_rows : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">created : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">updated : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">unchanged : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">removed : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">source_totals : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">latest_booking_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">error : Text</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

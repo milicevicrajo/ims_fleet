@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% comment %}
+Fiskalni računi (Nabavka). Dugme „Očitaj QR kod računa” otvara prozor: izabere se šifra posla
+(samo aktivne), čitač upiše link i pritisne Enter — obrada kreće odmah, rezultat se vidi u prozoru,
+a polje je spremno za sledeći račun.
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .invoice-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .invoice-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .invoice-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .invoice-filter { background: #f8fafc; border: 1px solid #e6ebf1; border-radius: 8px; padding: 14px; }
+  .invoice-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 9px;
+    font-weight: 600; font-size: .82rem; white-space: nowrap; }
+  .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .fiskalni-small { color: #6b7785; font-size: .72rem; line-height: 1.15; margin-top: 3px; }
+  #FiskalniTable { table-layout: fixed; width: 100% !important; font-size: .82rem; }
+  #FiskalniTable th, #FiskalniTable td { white-space: normal !important; overflow-wrap: anywhere; padding: 5px 6px; }
+  #fiskalniLink { font-size: .78rem; }
+  .fiskalni-rezultat { border-radius: 8px; padding: 12px 14px; margin-top: 12px; font-size: .9rem; }
+  .fiskalni-rezultat.ok { background: #e7f7ef; border: 1px solid #b7e3cb; color: #0f5132; }
+  .fiskalni-rezultat.greska { background: #fdecec; border: 1px solid #f3c2c2; color: #842029; }
+  .fiskalni-rezultat ul { margin: 6px 0 0; padding-left: 18px; color: #7a4d00; }
+</style>
+
+<div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Fiskalni računi</h1>
+    <p>Računi učitani čitačem QR koda; zaglavlje iz QR koda, prodavac i stavke sa stranice za proveru Poreske uprave.</p>
+  </div>
+  {% if nabavka_permissions.fiskalni_scan %}
+  <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#fiskalniModal">
+    <i class="mdi mdi-qrcode-scan"></i> Očitaj QR kod računa
+  </button>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="invoice-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-5">
+          <label class="form-label mb-1" for="id_q">Pretraga (broj računa, prodavac, PIB, šifra posla, artikal)</label>
+          <input id="id_q" class="form-control" type="text" name="q" value="{{ q }}">
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label mb-1" for="id_na_ims">Kupac</label>
+          <select id="id_na_ims" class="form-select" name="na_ims">
+            <option value="">Svi</option>
+            <option value="1" {% if na_ims == "1" %}selected{% endif %}>Izdat na IMS</option>
+            <option value="0" {% if na_ims == "0" %}selected{% endif %}>Nije na IMS</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label mb-1" for="id_status">Status</label>
+          <select id="id_status" class="form-select" name="status">
+            <option value="">Svi</option>
+            {% for kljuc, naziv in statusi %}<option value="{{ kljuc }}" {% if status == kljuc %}selected{% endif %}>{{ naziv }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2 justify-content-end">
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Pretraži</button>
+          <a class="btn btn-outline-secondary" href="{% url 'nabavka:fiskalni_list' %}">Reset</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table id="FiskalniTable" class="display compact table table-hover table-bordered align-middle w-100">
+      <thead>
+        <tr>
+          <th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th>Iznos</th><th>Šifra posla</th>
+          <th>Kupac</th><th>Status</th><th class="text-center">Akcije</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="fiskalniModal" tabindex="-1" aria-labelledby="fiskalniModalNaslov" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" method="post" action="{% url 'nabavka:fiskalni_scan' %}" id="fiskalniForma">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="fiskalniModalNaslov"><i class="mdi mdi-qrcode-scan"></i> Očitaj QR kod računa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" for="fiskalniSifra">{{ form.job_code.label }} <span class="text-danger">*</span></label>
+          {{ form.job_code }}
+          <div class="form-text">Nude se samo aktivne šifre posla. Izabrana šifra ostaje za sledeće račune.</div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label" for="fiskalniLink">{{ form.link.label }}</label>
+          {{ form.link }}
+          <div class="form-text">Postavite kursor u polje i očitajte QR kod — čitač sam pritiska Enter i obrada kreće.</div>
+        </div>
+        <div class="mb-1">
+          <label class="form-label" for="{{ form.napomena.id_for_label }}">{{ form.napomena.label }}</label>
+          {{ form.napomena }}
+        </div>
+        <div id="fiskalniRezultat" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
+        <button type="submit" class="btn btn-primary" id="fiskalniObradi"><i class="mdi mdi-cog-play"></i> Obradi</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var tabela = null;
+  if (window.jQuery && jQuery.fn.DataTable) {
+    tabela = jQuery('#FiskalniTable').DataTable({
+      serverSide: true, processing: true, autoWidth: false, pageLength: 50,
+      lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[0, 'desc']],
+      ajax: { url: "{% url 'nabavka:fiskalni_data' %}" + window.location.search, type: 'GET' },
+      columns: [
+        { data: 'pfr_vreme' }, { data: 'prodavac' }, { data: 'broj_racuna' },
+        { data: 'iznos', className: 'text-end text-nowrap' }, { data: 'sifra' },
+        { data: 'na_ims' }, { data: 'status' },
+        { data: 'akcije', orderable: false, searchable: false, className: 'text-center text-nowrap' }
+      ],
+      columnDefs: [{ targets: 0, width: '11%' }, { targets: 1, width: '22%' }, { targets: 2, width: '16%' },
+                   { targets: 3, width: '9%' }, { targets: 4, width: '16%' }, { targets: [5, 6], width: '9%' },
+                   { targets: 7, width: '8%' }],
+      language: { processing: 'Učitavanje...', search: 'Pretraga:', lengthMenu: 'Prikaži _MENU_ redova',
+        info: 'Prikaz _START_ do _END_ od _TOTAL_ računa', infoEmpty: 'Nema računa',
+        infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema rezultata',
+        paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
+    });
+  }
+
+  var modal = document.getElementById('fiskalniModal');
+  var forma = document.getElementById('fiskalniForma');
+  var sifra = document.getElementById('fiskalniSifra');
+  var link = document.getElementById('fiskalniLink');
+  var rezultat = document.getElementById('fiskalniRezultat');
+  var dugme = document.getElementById('fiskalniObradi');
+  var KLJUC = 'nabavka.fiskalni.sifra';
+
+  function escapeHtml(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  try {
+    var zapamcena = window.localStorage.getItem(KLJUC);
+    if (zapamcena && sifra.querySelector('option[value="' + zapamcena + '"]')) { sifra.value = zapamcena; }
+  } catch (e) {}
+  if (window.jQuery && jQuery.fn.select2) {
+    jQuery(sifra).select2({ dropdownParent: jQuery(modal), width: '100%', theme: 'bootstrap-5' })
+      .on('select2:close', function () { link.focus(); });
+  }
+  modal.addEventListener('shown.bs.modal', function () { (sifra.value ? link : sifra).focus(); });
+
+  // Citac zavrsava Enterom: u polju za link Enter salje obradu umesto novog reda.
+  link.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); forma.requestSubmit ? forma.requestSubmit() : forma.submit(); }
+  });
+
+  forma.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!sifra.value) {
+      rezultat.innerHTML = '<div class="fiskalni-rezultat greska">Izaberite šifru posla, pa pritisnite „Obradi”. Očitani link je sačuvan u polju.</div>';
+      if (window.jQuery && jQuery.fn.select2) { jQuery(sifra).select2('open'); } else { sifra.focus(); }
+      return;
+    }
+    if (!link.value.trim()) { link.focus(); return; }
+    try { window.localStorage.setItem(KLJUC, sifra.value); } catch (e2) {}
+    dugme.disabled = true;
+    rezultat.innerHTML = '<div class="fiskalni-rezultat" style="background:#eef1f6">Obrada računa…</div>';
+    fetch(forma.action, { method: 'POST', body: new FormData(forma), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) {
+          rezultat.innerHTML = '<div class="fiskalni-rezultat greska"><strong>Račun nije učitan.</strong> ' + escapeHtml(d.poruka) + '</div>';
+          link.select();
+          return;
+        }
+        var upozorenja = (d.upozorenja || []).map(function (u) { return '<li>' + escapeHtml(u) + '</li>'; }).join('');
+        rezultat.innerHTML = '<div class="fiskalni-rezultat ok"><strong>Učitan račun ' + escapeHtml(d.broj) + '</strong> · ' +
+          escapeHtml(d.prodavac) + ' · ' + escapeHtml(d.iznos) + ' din · stavki: ' + escapeHtml(d.stavki) +
+          ' · <a href="' + escapeHtml(d.url) + '">Otvori detalj</a>' + (upozorenja ? '<ul>' + upozorenja + '</ul>' : '') + '</div>';
+        link.value = '';
+        link.focus();
+        if (tabela) { tabela.ajax.reload(null, false); }
+      })
+      .catch(function () {
+        rezultat.innerHTML = '<div class="fiskalni-rezultat greska">Obrada nije uspela (veza sa serverom). Pokušajte ponovo.</div>';
+      })
+      .finally(function () { dugme.disabled = false; });
+  });
+});
+</script>
+{% endblock %}

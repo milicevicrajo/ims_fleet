@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="496pt" height="364pt" viewBox="0.00 0.00 496.00 364.00" role="img" aria-label="MobileImportLog · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 342.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M440.45,-205.78C440.45,-205.78 313.35,-205.78 313.35,-205.78 307.35,-205.78 301.35,-199.78 301.35,-193.78 301.35,-193.78 301.35,-127 301.35,-127 301.35,-121 307.35,-115 313.35,-115 313.35,-115 440.45,-115 440.45,-115 446.45,-115 452.45,-121 452.45,-127 452.45,-127 452.45,-193.78 452.45,-193.78 452.45,-199.78 446.45,-205.78 440.45,-205.78" />
+<text xml:space="preserve" text-anchor="start" x="316.15" y="-182.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="316.15" y="-157.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="316.15" y="-132.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-mobilni.MobileImportLog" class="node" data-key="mobilni.MobileImportLog" data-route="model/mobilni.MobileImportLog">
+<title>n1</title>
+<g id="a_node-mobilni.MobileImportLog"><a xlink:href="../../index.html#model/mobilni.MobileImportLog" xlink:title="mobilni.MobileImportLog" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M178.1,-320.78C178.1,-320.78 12,-320.78 12,-320.78 6,-320.78 0,-314.78 0,-308.78 0,-308.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 178.1,0 178.1,0 184.1,0 190.1,-6 190.1,-12 190.1,-12 190.1,-308.78 190.1,-308.78 190.1,-314.78 184.1,-320.78 178.1,-320.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-297.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-272.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileImportLog</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">import_type : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">month : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">source_file : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">imported_count : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">updated_count : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">skipped_count : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">error_message : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="mobilni.MobileImportLog" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="mobilni.MobileImportLog.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M190.4,-160.39C223.47,-160.39 260.35,-160.39 292.45,-160.39" />
+<polygon fill="#a27631" stroke="#a27631" points="292.43,-162.84 299.43,-160.39 292.43,-157.94 292.43,-162.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="245.72" y="-164.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="287.35" y="-163.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="204" y="-151.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="835pt" height="571pt" viewBox="0.00 0.00 835.00 571.00" role="img" aria-label="DueDateEvidence · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 549.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.CollectionSyncRun" class="node" data-key="potrazivanja.CollectionSyncRun" data-route="model/potrazivanja.CollectionSyncRun">
+<title>n0</title>
+<g id="a_node-potrazivanja.CollectionSyncRun"><a xlink:href="../../index.html#model/potrazivanja.CollectionSyncRun" xlink:title="potrazivanja.CollectionSyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M768.8,-366.28C768.8,-366.28 635.7,-366.28 635.7,-366.28 629.7,-366.28 623.7,-360.28 623.7,-354.28 623.7,-354.28 623.7,-287.5 623.7,-287.5 623.7,-281.5 629.7,-275.5 635.7,-275.5 635.7,-275.5 768.8,-275.5 768.8,-275.5 774.8,-275.5 780.8,-281.5 780.8,-287.5 780.8,-287.5 780.8,-354.28 780.8,-354.28 780.8,-360.28 774.8,-366.28 768.8,-366.28" />
+<text xml:space="preserve" text-anchor="start" x="638.5" y="-343.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="638.5" y="-318.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionSyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="638.5" y="-292.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.DueDateEvidence" class="node" data-key="potrazivanja.DueDateEvidence" data-route="model/potrazivanja.DueDateEvidence">
+<title>n1</title>
+<g id="a_node-potrazivanja.DueDateEvidence"><a xlink:href="../../index.html#model/potrazivanja.DueDateEvidence" xlink:title="potrazivanja.DueDateEvidence" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M489.2,-527.78C489.2,-527.78 320.85,-527.78 320.85,-527.78 314.85,-527.78 308.85,-521.78 308.85,-515.78 308.85,-515.78 308.85,-12 308.85,-12 308.85,-6 314.85,0 320.85,0 320.85,0 489.2,0 489.2,0 495.2,0 501.2,-6 501.2,-12 501.2,-12 501.2,-515.78 501.2,-515.78 501.2,-521.78 495.2,-527.78 489.2,-527.78" />
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-504.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-479.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">DueDateEvidence</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-454.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-431.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-408.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-385.19" font-family="Segoe UI" font-size="11.00">import_run : CollectionSyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-362.19" font-family="Segoe UI" font-size="11.00">source_system : Char</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-339.19" font-family="Segoe UI" font-size="11.00">source_table : Char</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-316.19" font-family="Segoe UI" font-size="11.00">source_key : Char</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-293.19" font-family="Segoe UI" font-size="11.00">occurrence : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-270.19" font-family="Segoe UI" font-size="11.00">identity : FinancePartnerIdentity ?</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-247.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-224.19" font-family="Segoe UI" font-size="11.00">partner_group : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-201.19" font-family="Segoe UI" font-size="11.00">partner_code : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-178.19" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-155.19" font-family="Segoe UI" font-size="11.00">reference : Char</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-132.19" font-family="Segoe UI" font-size="11.00">job_code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-109.19" font-family="Segoe UI" font-size="11.00">organizational_unit : Char</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-86.19" font-family="Segoe UI" font-size="11.00">document_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-63.19" font-family="Segoe UI" font-size="11.00">due_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-40.19" font-family="Segoe UI" font-size="11.00">legacy_balance : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="323.65" y="-17.19" font-family="Segoe UI" font-size="11.00">raw_data : JSON</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.DueDateEvidence" data-to="potrazivanja.CollectionSyncRun">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.DueDateEvidence.import_run → potrazivanja.CollectionSyncRun | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M501.47,-282.32C538.12,-289.39 579.69,-297.42 615.39,-304.31" />
+<polygon fill="#7297ab" stroke="#7297ab" points="614.56,-306.65 621.89,-305.57 615.49,-301.84 614.56,-306.65" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="557.2" y="-302.05" font-family="Segoe UI" font-size="11.00">import_run</text>
+<text xml:space="preserve" text-anchor="middle" x="608.83" y="-306.55" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="516.02" y="-275.72" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.FinancePartnerIdentity" class="node" data-key="potrazivanja.FinancePartnerIdentity" data-route="model/potrazivanja.FinancePartnerIdentity">
+<title>n2</title>
+<g id="a_node-potrazivanja.FinancePartnerIdentity"><a xlink:href="../../index.html#model/potrazivanja.FinancePartnerIdentity" xlink:title="potrazivanja.FinancePartnerIdentity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M779.3,-252.28C779.3,-252.28 625.2,-252.28 625.2,-252.28 619.2,-252.28 613.2,-246.28 613.2,-240.28 613.2,-240.28 613.2,-173.5 613.2,-173.5 613.2,-167.5 619.2,-161.5 625.2,-161.5 625.2,-161.5 779.3,-161.5 779.3,-161.5 785.3,-161.5 791.3,-167.5 791.3,-173.5 791.3,-173.5 791.3,-240.28 791.3,-240.28 791.3,-246.28 785.3,-252.28 779.3,-252.28" />
+<text xml:space="preserve" text-anchor="start" x="628" y="-229.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="628" y="-204.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinancePartnerIdentity</text>
+<text xml:space="preserve" text-anchor="start" x="628" y="-178.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">16 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja.DueDateEvidence" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n1-&gt;n2</title>
+<g id="a_edge-1"><a xlink:title="potrazivanja.DueDateEvidence.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M501.47,-245.46C534.55,-239.08 571.64,-231.91 604.8,-225.51" />
+<polygon fill="#7297ab" stroke="#7297ab" points="605.25,-227.92 611.65,-224.19 604.32,-223.11 605.25,-227.92" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="557.2" y="-243.35" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="600.99" y="-229.75" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="513.61" y="-233.71" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.ReceivablePosition" class="node" data-key="potrazivanja.ReceivablePosition" data-route="model/potrazivanja.ReceivablePosition">
+<title>n3</title>
+<g id="a_node-potrazivanja.ReceivablePosition"><a xlink:href="../../index.html#model/potrazivanja.ReceivablePosition" xlink:title="potrazivanja.ReceivablePosition" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M145.1,-309.28C145.1,-309.28 12,-309.28 12,-309.28 6,-309.28 0,-303.28 0,-297.28 0,-297.28 0,-230.5 0,-230.5 0,-224.5 6,-218.5 12,-218.5 12,-218.5 145.1,-218.5 145.1,-218.5 151.1,-218.5 157.1,-224.5 157.1,-230.5 157.1,-230.5 157.1,-297.28 157.1,-297.28 157.1,-303.28 151.1,-309.28 145.1,-309.28" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-286.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-261.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">ReceivablePosition</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-235.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">15 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="potrazivanja.ReceivablePosition" data-to="potrazivanja.DueDateEvidence">
+<title>n3-&gt;n1</title>
+<g id="a_edge-2"><a xlink:title="potrazivanja.ReceivablePosition.due_date_evidence → potrazivanja.DueDateEvidence | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M157.27,-263.89C200.07,-263.89 253.76,-263.89 300.12,-263.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="299.88,-266.34 306.88,-263.89 299.88,-261.44 299.88,-266.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="232.98" y="-268.44" font-family="Segoe UI" font-size="11.00">due_date_evidence</text>
+<text xml:space="preserve" text-anchor="middle" x="294.79" y="-267.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="170.86" y="-254.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

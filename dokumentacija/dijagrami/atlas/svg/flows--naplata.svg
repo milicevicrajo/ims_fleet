@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="300pt" height="99pt" viewBox="0.00 0.00 300.00 99.00" role="img" aria-label="Tokovi rada · Nasleđena naplata">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-naplata--nasledjeni-pregled" class="node" data-key="naplata/nasledjeni-pregled" data-route="flow/naplata/nasledjeni-pregled">
+<title>n0</title>
+<g id="a_node-naplata--nasledjeni-pregled"><a xlink:href="../../index.html#flow/naplata/nasledjeni-pregled" xlink:title="Tokovi rada · Nasleđena naplata" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M245.1,-56.28C245.1,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 245.1,0 245.1,0 251.1,0 257.1,-6 257.1,-12 257.1,-12 257.1,-44.28 257.1,-44.28 257.1,-50.28 251.1,-56.28 245.1,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="128.55" y="-34.34" font-family="Segoe UI" font-size="14.00">Pregled nasleđenih evidencija naplate</text>
+<text xml:space="preserve" text-anchor="middle" x="128.55" y="-14.84" font-family="Segoe UI" font-size="14.00">Nasleđena naplata</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

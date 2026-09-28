@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="786pt" height="847pt" viewBox="0.00 0.00 786.00 847.00" role="img" aria-label="Resenje · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 825.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M727.55,-675.28C727.55,-675.28 600.45,-675.28 600.45,-675.28 594.45,-675.28 588.45,-669.28 588.45,-663.28 588.45,-663.28 588.45,-596.5 588.45,-596.5 588.45,-590.5 594.45,-584.5 600.45,-584.5 600.45,-584.5 727.55,-584.5 727.55,-584.5 733.55,-584.5 739.55,-590.5 739.55,-596.5 739.55,-596.5 739.55,-663.28 739.55,-663.28 739.55,-669.28 733.55,-675.28 727.55,-675.28" />
+<text xml:space="preserve" text-anchor="start" x="603.25" y="-652.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="603.25" y="-627.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="603.25" y="-601.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n1</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M730.55,-561.28C730.55,-561.28 597.45,-561.28 597.45,-561.28 591.45,-561.28 585.45,-555.28 585.45,-549.28 585.45,-549.28 585.45,-482.5 585.45,-482.5 585.45,-476.5 591.45,-470.5 597.45,-470.5 597.45,-470.5 730.55,-470.5 730.55,-470.5 736.55,-470.5 742.55,-476.5 742.55,-482.5 742.55,-482.5 742.55,-549.28 742.55,-549.28 742.55,-555.28 736.55,-561.28 730.55,-561.28" />
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-538.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-513.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-487.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.Potpisnik" class="node" data-key="hr.Potpisnik" data-route="model/hr.Potpisnik">
+<title>n2</title>
+<g id="a_node-hr.Potpisnik"><a xlink:href="../../index.html#model/hr.Potpisnik" xlink:title="hr.Potpisnik" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M727.55,-447.28C727.55,-447.28 600.45,-447.28 600.45,-447.28 594.45,-447.28 588.45,-441.28 588.45,-435.28 588.45,-435.28 588.45,-368.5 588.45,-368.5 588.45,-362.5 594.45,-356.5 600.45,-356.5 600.45,-356.5 727.55,-356.5 727.55,-356.5 733.55,-356.5 739.55,-362.5 739.55,-368.5 739.55,-368.5 739.55,-435.28 739.55,-435.28 739.55,-441.28 733.55,-447.28 727.55,-447.28" />
+<text xml:space="preserve" text-anchor="start" x="603.25" y="-424.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="603.25" y="-399.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Potpisnik</text>
+<text xml:space="preserve" text-anchor="start" x="603.25" y="-373.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.Resenje" class="node" data-key="hr.Resenje" data-route="model/hr.Resenje">
+<title>n3</title>
+<g id="a_node-hr.Resenje"><a xlink:href="../../index.html#model/hr.Resenje" xlink:title="hr.Resenje" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M462.2,-803.78C462.2,-803.78 256.35,-803.78 256.35,-803.78 250.35,-803.78 244.35,-797.78 244.35,-791.78 244.35,-791.78 244.35,-12 244.35,-12 244.35,-6 250.35,0 256.35,0 256.35,0 462.2,0 462.2,0 468.2,0 474.2,-6 474.2,-12 474.2,-12 474.2,-791.78 474.2,-791.78 474.2,-797.78 468.2,-803.78 462.2,-803.78" />
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-780.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-755.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Resenje</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-730.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-707.19" font-family="Segoe UI" font-size="11.00">zaposleni : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-684.19" font-family="Segoe UI" font-size="11.00">vrsta : VrstaResenja</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-661.19" font-family="Segoe UI" font-size="11.00">zahtev : Zahtev [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-638.19" font-family="Segoe UI" font-size="11.00">podbroj : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-615.19" font-family="Segoe UI" font-size="11.00">broj : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-592.19" font-family="Segoe UI" font-size="11.00">datum_resenja : Date</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-569.19" font-family="Segoe UI" font-size="11.00">pismo : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-546.19" font-family="Segoe UI" font-size="11.00">pol : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-523.19" font-family="Segoe UI" font-size="11.00">zaposleni_tekst : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-500.19" font-family="Segoe UI" font-size="11.00">oj_naziv : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-477.19" font-family="Segoe UI" font-size="11.00">radno_mesto : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-454.19" font-family="Segoe UI" font-size="11.00">oj_kod : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-431.19" font-family="Segoe UI" font-size="11.00">centar : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-408.19" font-family="Segoe UI" font-size="11.00">datum_od : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-385.19" font-family="Segoe UI" font-size="11.00">datum_do : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-362.19" font-family="Segoe UI" font-size="11.00">vreme_od : Time ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-339.19" font-family="Segoe UI" font-size="11.00">vreme_do : Time ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-316.19" font-family="Segoe UI" font-size="11.00">do_zavrsetka_posla : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-293.19" font-family="Segoe UI" font-size="11.00">broj_radnih_dana : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-270.19" font-family="Segoe UI" font-size="11.00">datum_povratka : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-247.19" font-family="Segoe UI" font-size="11.00">zahtev_broj : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-224.19" font-family="Segoe UI" font-size="11.00">zahtev_datum : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-201.19" font-family="Segoe UI" font-size="11.00">potpisnik : Potpisnik ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-178.19" font-family="Segoe UI" font-size="11.00">napomena : Text</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-155.19" font-family="Segoe UI" font-size="11.00">dodatni_podaci : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-132.19" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-109.19" font-family="Segoe UI" font-size="11.00">dokument : JSON ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-86.19" font-family="Segoe UI" font-size="11.00">izdato_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-63.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="259.15" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="hr.Resenje" data-to="core.CustomUser">
+<title>n3-&gt;n0</title>
+<g id="a_edge-4"><a xlink:title="hr.Resenje.created_by → core.CustomUser | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#a27631" d="M474.57,-489.23C510.02,-516.17 549.27,-545.86 585.45,-572.89 588.24,-574.97 591.08,-577.09 593.96,-579.23" />
+<polygon fill="#a27631" stroke="#a27631" points="592.42,-581.14 599.5,-583.34 595.34,-577.2 592.42,-581.14" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="529.82" y="-554.37" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="586.02" y="-578.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="489.23" y="-489.45" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.Resenje" data-to="hr.Employee">
+<title>n3-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="hr.Resenje.zaposleni → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M474.29,-444.83C508.58,-457.74 545.6,-471.68 577.69,-483.77" />
+<polygon fill="#7297ab" stroke="#7297ab" points="576.48,-485.93 583.9,-486.1 578.21,-481.34 576.48,-485.93" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="529.82" y="-480.31" font-family="Segoe UI" font-size="11.00">zaposleni</text>
+<text xml:space="preserve" text-anchor="middle" x="570.36" y="-484.83" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="489.25" y="-440.73" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-3" class="edge" data-from="hr.Resenje" data-to="hr.Potpisnik">
+<title>n3-&gt;n2</title>
+<g id="a_edge-3"><a xlink:title="hr.Resenje.potpisnik → hr.Potpisnik | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M474.29,-401.89C509.36,-401.89 547.29,-401.89 579.88,-401.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="579.53,-404.34 586.53,-401.89 579.53,-399.44 579.53,-404.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="529.82" y="-406.44" font-family="Segoe UI" font-size="11.00">potpisnik</text>
+<text xml:space="preserve" text-anchor="middle" x="574.45" y="-405.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="487.89" y="-392.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.VrstaResenja" class="node" data-key="hr.VrstaResenja" data-route="model/hr.VrstaResenja">
+<title>n5</title>
+<g id="a_node-hr.VrstaResenja"><a xlink:href="../../index.html#model/hr.VrstaResenja" xlink:title="hr.VrstaResenja" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M730.55,-333.28C730.55,-333.28 597.45,-333.28 597.45,-333.28 591.45,-333.28 585.45,-327.28 585.45,-321.28 585.45,-321.28 585.45,-254.5 585.45,-254.5 585.45,-248.5 591.45,-242.5 597.45,-242.5 597.45,-242.5 730.55,-242.5 730.55,-242.5 736.55,-242.5 742.55,-248.5 742.55,-254.5 742.55,-254.5 742.55,-321.28 742.55,-321.28 742.55,-327.28 736.55,-333.28 730.55,-333.28" />
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-310.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-285.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">VrstaResenja</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-259.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">16 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr.Resenje" data-to="hr.VrstaResenja">
+<title>n3-&gt;n5</title>
+<g id="a_edge-1"><a xlink:title="hr.Resenje.vrsta → hr.VrstaResenja | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M474.29,-358.95C508.58,-346.04 545.6,-332.1 577.69,-320.01" />
+<polygon fill="#7297ab" stroke="#7297ab" points="578.21,-322.44 583.9,-317.68 576.48,-317.85 578.21,-322.44" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="529.82" y="-349.44" font-family="Segoe UI" font-size="11.00">vrsta</text>
+<text xml:space="preserve" text-anchor="middle" x="574.82" y="-324.92" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="484.78" y="-345.28" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.Zahtev" class="node" data-key="hr.Zahtev" data-route="model/hr.Zahtev">
+<title>n6</title>
+<g id="a_node-hr.Zahtev"><a xlink:href="../../index.html#model/hr.Zahtev" xlink:title="hr.Zahtev" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M730.55,-219.28C730.55,-219.28 597.45,-219.28 597.45,-219.28 591.45,-219.28 585.45,-213.28 585.45,-207.28 585.45,-207.28 585.45,-140.5 585.45,-140.5 585.45,-134.5 591.45,-128.5 597.45,-128.5 597.45,-128.5 730.55,-128.5 730.55,-128.5 736.55,-128.5 742.55,-134.5 742.55,-140.5 742.55,-140.5 742.55,-207.28 742.55,-207.28 742.55,-213.28 736.55,-219.28 730.55,-219.28" />
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-196.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-171.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Zahtev</text>
+<text xml:space="preserve" text-anchor="start" x="600.25" y="-145.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="hr.Resenje" data-to="hr.Zahtev">
+<title>n3-&gt;n6</title>
+<g id="a_edge-2"><a xlink:title="hr.Resenje.zahtev → hr.Zahtev | ForeignKey | 0..1 : 1">
+<path fill="none" stroke="#7297ab" d="M474.57,-314.55C510.02,-287.61 549.27,-257.92 585.45,-230.89 588.24,-228.81 591.08,-226.69 593.96,-224.55" />
+<polygon fill="#7297ab" stroke="#7297ab" points="595.34,-226.58 599.5,-220.44 592.42,-222.64 595.34,-226.58" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="529.82" y="-296.23" font-family="Segoe UI" font-size="11.00">zahtev</text>
+<text xml:space="preserve" text-anchor="middle" x="593.57" y="-229.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="481.56" y="-298.33" font-family="Segoe UI" font-size="11.00">0..1</text>
+</g>
+
+<g id="node-hr.ResenjeDan" class="node" data-key="hr.ResenjeDan" data-route="model/hr.ResenjeDan">
+<title>n4</title>
+<g id="a_node-hr.ResenjeDan"><a xlink:href="../../index.html#model/hr.ResenjeDan" xlink:title="hr.ResenjeDan" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M139.1,-447.28C139.1,-447.28 12,-447.28 12,-447.28 6,-447.28 0,-441.28 0,-435.28 0,-435.28 0,-368.5 0,-368.5 0,-362.5 6,-356.5 12,-356.5 12,-356.5 139.1,-356.5 139.1,-356.5 145.1,-356.5 151.1,-362.5 151.1,-368.5 151.1,-368.5 151.1,-435.28 151.1,-435.28 151.1,-441.28 145.1,-447.28 139.1,-447.28" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-424.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-399.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">ResenjeDan</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-373.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="hr.ResenjeDan" data-to="hr.Resenje">
+<title>n4-&gt;n3</title>
+<g id="a_edge-5"><a xlink:title="hr.ResenjeDan.resenje → hr.Resenje | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M151.31,-401.89C177.12,-401.89 206.77,-401.89 235.41,-401.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="235.34,-404.34 242.34,-401.89 235.34,-399.44 235.34,-404.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="197.72" y="-406.44" font-family="Segoe UI" font-size="11.00">resenje</text>
+<text xml:space="preserve" text-anchor="middle" x="230.26" y="-405.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="164.9" y="-392.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

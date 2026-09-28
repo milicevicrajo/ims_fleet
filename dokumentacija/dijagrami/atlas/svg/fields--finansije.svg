@@ -1,0 +1,263 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="529pt" height="2863pt" viewBox="0.00 0.00 529.00 2863.00" role="img" aria-label="Finansije · modeli i polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 2841.88)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M471.2,-171.28C471.2,-171.28 344.1,-171.28 344.1,-171.28 338.1,-171.28 332.1,-165.28 332.1,-159.28 332.1,-159.28 332.1,-92.5 332.1,-92.5 332.1,-86.5 338.1,-80.5 344.1,-80.5 344.1,-80.5 471.2,-80.5 471.2,-80.5 477.2,-80.5 483.2,-86.5 483.2,-92.5 483.2,-92.5 483.2,-159.28 483.2,-159.28 483.2,-165.28 477.2,-171.28 471.2,-171.28" />
+<text xml:space="preserve" text-anchor="start" x="346.9" y="-148.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="346.9" y="-123.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="346.9" y="-97.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.BankAccountRule" class="node" data-key="finansije.BankAccountRule" data-route="model/finansije.BankAccountRule">
+<title>n1</title>
+<g id="a_node-finansije.BankAccountRule"><a xlink:href="../../index.html#model/finansije.BankAccountRule" xlink:title="finansije.BankAccountRule" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M176.23,-251.78C176.23,-251.78 28.12,-251.78 28.12,-251.78 22.12,-251.78 16.13,-245.78 16.13,-239.78 16.13,-239.78 16.13,-12 16.13,-12 16.13,-6 22.13,0 28.13,0 28.13,0 176.23,0 176.23,0 182.23,0 188.23,-6 188.23,-12 188.23,-12 188.23,-239.78 188.23,-239.78 188.23,-245.78 182.23,-251.78 176.23,-251.78" />
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-228.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-203.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankAccountRule</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-178.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-155.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-132.19" font-family="Segoe UI" font-size="11.00">account : Char</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-109.19" font-family="Segoe UI" font-size="11.00">bank_code : PositiveInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-86.19" font-family="Segoe UI" font-size="11.00">segment : Char</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-63.19" font-family="Segoe UI" font-size="11.00">note : Char</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-40.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="30.93" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_by : CustomUser ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="finansije.BankAccountRule" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="finansije.BankAccountRule.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M188.52,-125.89C230.76,-125.89 281.55,-125.89 323.49,-125.89" />
+<polygon fill="#a27631" stroke="#a27631" points="323.24,-128.34 330.24,-125.89 323.24,-123.44 323.24,-128.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="266.73" y="-130.44" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="318.16" y="-129.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="202.11" y="-116.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-finansije.BankBillPlacement" class="node" data-key="finansije.BankBillPlacement" data-route="model/finansije.BankBillPlacement">
+<title>n2</title>
+<g id="a_node-finansije.BankBillPlacement"><a xlink:href="../../index.html#model/finansije.BankBillPlacement" xlink:title="finansije.BankBillPlacement" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M180.35,-526.78C180.35,-526.78 24,-526.78 24,-526.78 18,-526.78 12,-520.78 12,-514.78 12,-514.78 12,-287 12,-287 12,-281 18,-275 24,-275 24,-275 180.35,-275 180.35,-275 186.35,-275 192.35,-281 192.35,-287 192.35,-287 192.35,-514.78 192.35,-514.78 192.35,-520.78 186.35,-526.78 180.35,-526.78" />
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-503.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-478.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankBillPlacement</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-453.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-430.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-407.19" font-family="Segoe UI" font-size="11.00">bank_code : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-384.19" font-family="Segoe UI" font-size="11.00">bill : Menica ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-361.19" font-family="Segoe UI" font-size="11.00">incoming_bill : UlaznaMenica ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-338.19" font-family="Segoe UI" font-size="11.00">delivered_on : Date</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-315.19" font-family="Segoe UI" font-size="11.00">returned_on : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.8" y="-292.19" font-family="Segoe UI" font-size="11.00">note : Text</text>
+</a>
+</g>
+</g>
+
+<g id="node-menice.Menica" class="node" data-key="menice.Menica" data-route="model/menice.Menica">
+<title>n8</title>
+<g id="a_node-menice.Menica"><a xlink:href="../../index.html#model/menice.Menica" xlink:title="menice.Menica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M474.2,-503.28C474.2,-503.28 341.1,-503.28 341.1,-503.28 335.1,-503.28 329.1,-497.28 329.1,-491.28 329.1,-491.28 329.1,-424.5 329.1,-424.5 329.1,-418.5 335.1,-412.5 341.1,-412.5 341.1,-412.5 474.2,-412.5 474.2,-412.5 480.2,-412.5 486.2,-418.5 486.2,-424.5 486.2,-424.5 486.2,-491.28 486.2,-491.28 486.2,-497.28 480.2,-503.28 474.2,-503.28" />
+<text xml:space="preserve" text-anchor="start" x="343.9" y="-480.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="343.9" y="-455.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Menica</text>
+<text xml:space="preserve" text-anchor="start" x="343.9" y="-429.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">30 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="finansije.BankBillPlacement" data-to="menice.Menica">
+<title>n2-&gt;n8</title>
+<g id="a_edge-2"><a xlink:title="finansije.BankBillPlacement.bill → menice.Menica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M192.59,-417.68C232.99,-425.27 280.53,-434.2 320.53,-441.71" />
+<polygon fill="#a27631" stroke="#a27631" points="319.86,-444.08 327.19,-442.97 320.77,-439.27 319.86,-444.08" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="266.73" y="-442.38" font-family="Segoe UI" font-size="11.00">bill</text>
+<text xml:space="preserve" text-anchor="middle" x="314.15" y="-444.02" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="207.12" y="-411.01" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-menice.UlaznaMenica" class="node" data-key="menice.UlaznaMenica" data-route="model/menice.UlaznaMenica">
+<title>n9</title>
+<g id="a_node-menice.UlaznaMenica"><a xlink:href="../../index.html#model/menice.UlaznaMenica" xlink:title="menice.UlaznaMenica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M474.2,-389.28C474.2,-389.28 341.1,-389.28 341.1,-389.28 335.1,-389.28 329.1,-383.28 329.1,-377.28 329.1,-377.28 329.1,-310.5 329.1,-310.5 329.1,-304.5 335.1,-298.5 341.1,-298.5 341.1,-298.5 474.2,-298.5 474.2,-298.5 480.2,-298.5 486.2,-304.5 486.2,-310.5 486.2,-310.5 486.2,-377.28 486.2,-377.28 486.2,-383.28 480.2,-389.28 474.2,-389.28" />
+<text xml:space="preserve" text-anchor="start" x="343.9" y="-366.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="343.9" y="-341.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">UlaznaMenica</text>
+<text xml:space="preserve" text-anchor="start" x="343.9" y="-315.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">14 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="finansije.BankBillPlacement" data-to="menice.UlaznaMenica">
+<title>n2-&gt;n9</title>
+<g id="a_edge-3"><a xlink:title="finansije.BankBillPlacement.incoming_bill → menice.UlaznaMenica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M192.59,-384.1C232.99,-376.51 280.53,-367.58 320.53,-360.07" />
+<polygon fill="#a27631" stroke="#a27631" points="320.77,-362.51 327.19,-358.81 319.86,-357.7 320.77,-362.51" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="266.73" y="-380.35" font-family="Segoe UI" font-size="11.00">incoming_bill</text>
+<text xml:space="preserve" text-anchor="middle" x="316.49" y="-364.32" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="204.78" y="-372.41" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-finansije.BankContact" class="node" data-key="finansije.BankContact" data-route="model/finansije.BankContact">
+<title>n3</title>
+<g id="a_node-finansije.BankContact"><a xlink:href="../../index.html#model/finansije.BankContact" xlink:title="finansije.BankContact" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M172.1,-870.28C172.1,-870.28 32.25,-870.28 32.25,-870.28 26.25,-870.28 20.25,-864.28 20.25,-858.28 20.25,-858.28 20.25,-561.5 20.25,-561.5 20.25,-555.5 26.25,-549.5 32.25,-549.5 32.25,-549.5 172.1,-549.5 172.1,-549.5 178.1,-549.5 184.1,-555.5 184.1,-561.5 184.1,-561.5 184.1,-858.28 184.1,-858.28 184.1,-864.28 178.1,-870.28 172.1,-870.28" />
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-847.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-822.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankContact</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-796.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-773.69" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-750.69" font-family="Segoe UI" font-size="11.00">bank_code : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-727.69" font-family="Segoe UI" font-size="11.00">segment : Char</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-704.69" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-681.69" font-family="Segoe UI" font-size="11.00">position : Char</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-658.69" font-family="Segoe UI" font-size="11.00">email : Email</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-635.69" font-family="Segoe UI" font-size="11.00">phone : Char</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-612.69" font-family="Segoe UI" font-size="11.00">shared_emails : Text</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-589.69" font-family="Segoe UI" font-size="11.00">note : Text</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-566.69" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.FinanceJob" class="node" data-key="finansije.FinanceJob" data-route="model/finansije.FinanceJob">
+<title>n4</title>
+<g id="a_node-finansije.FinanceJob"><a xlink:href="../../index.html#model/finansije.FinanceJob" xlink:title="finansije.FinanceJob" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M168.35,-1122.28C168.35,-1122.28 36,-1122.28 36,-1122.28 30,-1122.28 24,-1116.28 24,-1110.28 24,-1110.28 24,-905.5 24,-905.5 24,-899.5 30,-893.5 36,-893.5 36,-893.5 168.35,-893.5 168.35,-893.5 174.35,-893.5 180.35,-899.5 180.35,-905.5 180.35,-905.5 180.35,-1110.28 180.35,-1110.28 180.35,-1116.28 174.35,-1122.28 168.35,-1122.28" />
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-1099.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-1074.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinanceJob</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-1048.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-1025.69" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-1002.69" font-family="Segoe UI" font-size="11.00">code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-979.69" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-956.69" font-family="Segoe UI" font-size="11.00">center : Char</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-933.69" font-family="Segoe UI" font-size="11.00">active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="38.8" y="-910.69" font-family="Segoe UI" font-size="11.00">profit_type : Char</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.LedgerEntry" class="node" data-key="finansije.LedgerEntry" data-route="model/finansije.LedgerEntry">
+<title>n5</title>
+<g id="a_node-finansije.LedgerEntry"><a xlink:href="../../index.html#model/finansije.LedgerEntry" xlink:title="finansije.LedgerEntry" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M183.35,-2018.28C183.35,-2018.28 21,-2018.28 21,-2018.28 15,-2018.28 9,-2012.28 9,-2006.28 9,-2006.28 9,-1157.5 9,-1157.5 9,-1151.5 15,-1145.5 21,-1145.5 21,-1145.5 183.35,-1145.5 183.35,-1145.5 189.35,-1145.5 195.35,-1151.5 195.35,-1157.5 195.35,-1157.5 195.35,-2006.28 195.35,-2006.28 195.35,-2012.28 189.35,-2018.28 183.35,-2018.28" />
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1995.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1970.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">LedgerEntry</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1944.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1921.69" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1898.69" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1875.69" font-family="Segoe UI" font-size="11.00">journal_type : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1852.69" font-family="Segoe UI" font-size="11.00">journal_number : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1829.69" font-family="Segoe UI" font-size="11.00">line_number : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1806.69" font-family="Segoe UI" font-size="11.00">organizational_unit : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1783.69" font-family="Segoe UI" font-size="11.00">organizational_unit_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1760.69" font-family="Segoe UI" font-size="11.00">account : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1737.69" font-family="Segoe UI" font-size="11.00">account_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1714.69" font-family="Segoe UI" font-size="11.00">partner_group : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1691.69" font-family="Segoe UI" font-size="11.00">partner_code : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1668.69" font-family="Segoe UI" font-size="11.00">partner_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1645.69" font-family="Segoe UI" font-size="11.00">document_date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1622.69" font-family="Segoe UI" font-size="11.00">document_reference : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1599.69" font-family="Segoe UI" font-size="11.00">debit : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1576.69" font-family="Segoe UI" font-size="11.00">credit : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1553.69" font-family="Segoe UI" font-size="11.00">currency : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1530.69" font-family="Segoe UI" font-size="11.00">foreign_amount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1507.69" font-family="Segoe UI" font-size="11.00">description : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1484.69" font-family="Segoe UI" font-size="11.00">linked_line : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1461.69" font-family="Segoe UI" font-size="11.00">due_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1438.69" font-family="Segoe UI" font-size="11.00">change_status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1415.69" font-family="Segoe UI" font-size="11.00">job_code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1392.69" font-family="Segoe UI" font-size="11.00">job_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1369.69" font-family="Segoe UI" font-size="11.00">center : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1346.69" font-family="Segoe UI" font-size="11.00">org_node : OrgNode ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1323.69" font-family="Segoe UI" font-size="11.00">org_centar : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1300.69" font-family="Segoe UI" font-size="11.00">booking_date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1277.69" font-family="Segoe UI" font-size="11.00">debit_credit_flag : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1254.69" font-family="Segoe UI" font-size="11.00">source_paid_amount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1231.69" font-family="Segoe UI" font-size="11.00">source_hash : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1208.69" font-family="Segoe UI" font-size="11.00">active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1185.69" font-family="Segoe UI" font-size="11.00">changed_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-1162.69" font-family="Segoe UI" font-size="11.00">removed_at : DateTime ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-organizacija.OrgNode" class="node" data-key="organizacija.OrgNode" data-route="model/organizacija.OrgNode">
+<title>n10</title>
+<g id="a_node-organizacija.OrgNode"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M471.2,-1627.28C471.2,-1627.28 344.1,-1627.28 344.1,-1627.28 338.1,-1627.28 332.1,-1621.28 332.1,-1615.28 332.1,-1615.28 332.1,-1548.5 332.1,-1548.5 332.1,-1542.5 338.1,-1536.5 344.1,-1536.5 344.1,-1536.5 471.2,-1536.5 471.2,-1536.5 477.2,-1536.5 483.2,-1542.5 483.2,-1548.5 483.2,-1548.5 483.2,-1615.28 483.2,-1615.28 483.2,-1621.28 477.2,-1627.28 471.2,-1627.28" />
+<text xml:space="preserve" text-anchor="start" x="346.9" y="-1604.19" font-family="Segoe UI" font-size="11.00" fill="#526687">organizacija</text>
+<text xml:space="preserve" text-anchor="start" x="346.9" y="-1579.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrgNode</text>
+<text xml:space="preserve" text-anchor="start" x="346.9" y="-1553.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="finansije.LedgerEntry" data-to="organizacija.OrgNode">
+<title>n5-&gt;n10</title>
+<g id="a_edge-0"><a xlink:title="finansije.LedgerEntry.org_node → organizacija.OrgNode | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M195.46,-1581.89C236.33,-1581.89 284.02,-1581.89 323.74,-1581.89" />
+<polygon fill="#a27631" stroke="#a27631" points="323.57,-1584.34 330.57,-1581.89 323.57,-1579.44 323.57,-1584.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="266.73" y="-1586.44" font-family="Segoe UI" font-size="11.00">org_node</text>
+<text xml:space="preserve" text-anchor="middle" x="318.49" y="-1585.28" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="209.06" y="-1572.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-finansije.NalogZRefreshRun" class="node" data-key="finansije.NalogZRefreshRun" data-route="model/finansije.NalogZRefreshRun">
+<title>n6</title>
+<g id="a_node-finansije.NalogZRefreshRun"><a xlink:href="../../index.html#model/finansije.NalogZRefreshRun" xlink:title="finansije.NalogZRefreshRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M192.35,-2384.78C192.35,-2384.78 12,-2384.78 12,-2384.78 6,-2384.78 0,-2378.78 0,-2372.78 0,-2372.78 0,-2053 0,-2053 0,-2047 6,-2041 12,-2041 12,-2041 192.35,-2041 192.35,-2041 198.35,-2041 204.35,-2047 204.35,-2053 204.35,-2053 204.35,-2372.78 204.35,-2372.78 204.35,-2378.78 198.35,-2384.78 192.35,-2384.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2361.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2336.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">NalogZRefreshRun</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2311.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2288.19" font-family="Segoe UI" font-size="11.00">started_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2265.19" font-family="Segoe UI" font-size="11.00">finished_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2242.19" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2219.19" font-family="Segoe UI" font-size="11.00">trigger : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2196.19" font-family="Segoe UI" font-size="11.00">requested_by : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2173.19" font-family="Segoe UI" font-size="11.00">task_id : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2150.19" font-family="Segoe UI" font-size="11.00">year_from : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2127.19" font-family="Segoe UI" font-size="11.00">year_to : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2104.19" font-family="Segoe UI" font-size="11.00">updated_rows : PositiveBigInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2081.19" font-family="Segoe UI" font-size="11.00">inserted_rows : PositiveBigInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-2058.19" font-family="Segoe UI" font-size="11.00">error : Text</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije.SyncRun" class="node" data-key="finansije.SyncRun" data-route="model/finansije.SyncRun">
+<title>n7</title>
+<g id="a_node-finansije.SyncRun"><a xlink:href="../../index.html#model/finansije.SyncRun" xlink:title="finansije.SyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M183.73,-2820.28C183.73,-2820.28 20.62,-2820.28 20.62,-2820.28 14.62,-2820.28 8.63,-2814.28 8.63,-2808.28 8.63,-2808.28 8.63,-2419.5 8.63,-2419.5 8.63,-2413.5 14.63,-2407.5 20.63,-2407.5 20.63,-2407.5 183.73,-2407.5 183.73,-2407.5 189.73,-2407.5 195.73,-2413.5 195.73,-2419.5 195.73,-2419.5 195.73,-2808.28 195.73,-2808.28 195.73,-2814.28 189.73,-2820.28 183.73,-2820.28" />
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2797.19" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2772.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">SyncRun</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2746.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2723.69" font-family="Segoe UI" font-size="11.00">started_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2700.69" font-family="Segoe UI" font-size="11.00">finished_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2677.69" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2654.69" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2631.69" font-family="Segoe UI" font-size="11.00">year_from : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2608.69" font-family="Segoe UI" font-size="11.00">year_to : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2585.69" font-family="Segoe UI" font-size="11.00">source_rows : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2562.69" font-family="Segoe UI" font-size="11.00">created : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2539.69" font-family="Segoe UI" font-size="11.00">updated : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2516.69" font-family="Segoe UI" font-size="11.00">unchanged : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2493.69" font-family="Segoe UI" font-size="11.00">removed : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2470.69" font-family="Segoe UI" font-size="11.00">source_totals : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2447.69" font-family="Segoe UI" font-size="11.00">latest_booking_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.43" y="-2424.69" font-family="Segoe UI" font-size="11.00">error : Text</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

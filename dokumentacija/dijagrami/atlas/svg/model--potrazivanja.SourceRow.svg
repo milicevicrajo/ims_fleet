@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="433pt" height="249pt" viewBox="0.00 0.00 433.00 249.00" role="img" aria-label="SourceRow · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 227.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.SourceDataset" class="node" data-key="potrazivanja.SourceDataset" data-route="model/potrazivanja.SourceDataset">
+<title>n0</title>
+<g id="a_node-potrazivanja.SourceDataset"><a xlink:href="../../index.html#model/potrazivanja.SourceDataset" xlink:title="potrazivanja.SourceDataset" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M378.2,-148.28C378.2,-148.28 251.1,-148.28 251.1,-148.28 245.1,-148.28 239.1,-142.28 239.1,-136.28 239.1,-136.28 239.1,-69.5 239.1,-69.5 239.1,-63.5 245.1,-57.5 251.1,-57.5 251.1,-57.5 378.2,-57.5 378.2,-57.5 384.2,-57.5 390.2,-63.5 390.2,-69.5 390.2,-69.5 390.2,-136.28 390.2,-136.28 390.2,-142.28 384.2,-148.28 378.2,-148.28" />
+<text xml:space="preserve" text-anchor="start" x="253.9" y="-125.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="253.9" y="-100.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">SourceDataset</text>
+<text xml:space="preserve" text-anchor="start" x="253.9" y="-74.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.SourceRow" class="node" data-key="potrazivanja.SourceRow" data-route="model/potrazivanja.SourceRow">
+<title>n1</title>
+<g id="a_node-potrazivanja.SourceRow"><a xlink:href="../../index.html#model/potrazivanja.SourceRow" xlink:title="potrazivanja.SourceRow" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M133.85,-205.78C133.85,-205.78 12,-205.78 12,-205.78 6,-205.78 0,-199.78 0,-193.78 0,-193.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 133.85,0 133.85,0 139.85,0 145.85,-6 145.85,-12 145.85,-12 145.85,-193.78 145.85,-193.78 145.85,-199.78 139.85,-205.78 133.85,-205.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-182.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-157.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">SourceRow</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">dataset : SourceDataset</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">ordinal : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">partner_code : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">job_code : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">raw_data : JSON</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.SourceRow" data-to="potrazivanja.SourceDataset">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.SourceRow.dataset → potrazivanja.SourceDataset | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M146.18,-102.89C172.66,-102.89 202.85,-102.89 230.24,-102.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="230.13,-105.34 237.13,-102.89 230.13,-100.44 230.13,-105.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="192.47" y="-107.44" font-family="Segoe UI" font-size="11.00">dataset</text>
+<text xml:space="preserve" text-anchor="middle" x="225.04" y="-106.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="159.77" y="-93.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

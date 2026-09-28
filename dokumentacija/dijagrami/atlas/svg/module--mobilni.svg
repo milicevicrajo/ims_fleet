@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="368pt" height="257pt" viewBox="0.00 0.00 368.00 257.00" role="img" aria-label="Mobilna telefonija · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 235.88)">
+<title>G</title>
+
+<g id="node-mobilni" class="node" data-key="mobilni" data-route="models/mobilni">
+<title>n0</title>
+<g id="a_node-mobilni"><a xlink:href="../../index.html#models/mobilni" xlink:title="Mobilna telefonija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M123.6,-125.53C123.6,-125.53 12,-125.53 12,-125.53 6,-125.53 0,-119.53 0,-113.53 0,-113.53 0,-100.75 0,-100.75 0,-94.75 6,-88.75 12,-88.75 12,-88.75 123.6,-88.75 123.6,-88.75 129.6,-88.75 135.6,-94.75 135.6,-100.75 135.6,-100.75 135.6,-113.53 135.6,-113.53 135.6,-119.53 129.6,-125.53 123.6,-125.53" />
+<text xml:space="preserve" text-anchor="middle" x="67.8" y="-103.59" font-family="Segoe UI" font-size="14.00">Mobilna telefonija</text>
+</a>
+</g>
+</g>
+
+<g id="node-evidencija" class="node" data-key="evidencija" data-route="area/mobilni/evidencija">
+<title>n1</title>
+<g id="a_node-evidencija"><a xlink:href="../../index.html#area/mobilni/evidencija" xlink:title="Mobilna telefonija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M312.7,-214.28C312.7,-214.28 205.6,-214.28 205.6,-214.28 199.6,-214.28 193.6,-208.28 193.6,-202.28 193.6,-202.28 193.6,-170 193.6,-170 193.6,-164 199.6,-158 205.6,-158 205.6,-158 312.7,-158 312.7,-158 318.7,-158 324.7,-164 324.7,-170 324.7,-170 324.7,-202.28 324.7,-202.28 324.7,-208.28 318.7,-214.28 312.7,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="259.15" y="-192.34" font-family="Segoe UI" font-size="14.00">Paketi i zaduženja</text>
+<text xml:space="preserve" text-anchor="middle" x="259.15" y="-172.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="mobilni" data-to="evidencija">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M113.67,-125.86C135.09,-134.8 161.25,-145.71 185.4,-155.79" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="184.37,-158.01 191.77,-158.45 186.25,-153.49 184.37,-158.01" />
+</g>
+
+<g id="node-potrosnja" class="node" data-key="potrosnja" data-route="area/mobilni/potrosnja">
+<title>n2</title>
+<g id="a_node-potrosnja"><a xlink:href="../../index.html#area/mobilni/potrosnja" xlink:title="Mobilna telefonija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M307.07,-135.28C307.07,-135.28 211.22,-135.28 211.22,-135.28 205.22,-135.28 199.22,-129.28 199.22,-123.28 199.22,-123.28 199.22,-91 199.22,-91 199.22,-85 205.22,-79 211.22,-79 211.22,-79 307.07,-79 307.07,-79 313.07,-79 319.07,-85 319.07,-91 319.07,-91 319.07,-123.28 319.07,-123.28 319.07,-129.28 313.07,-135.28 307.07,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="259.15" y="-113.34" font-family="Segoe UI" font-size="14.00">Potrošnja i uvoz</text>
+<text xml:space="preserve" text-anchor="middle" x="259.15" y="-93.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="mobilni" data-to="potrosnja">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M136.09,-107.14C153.88,-107.14 173.08,-107.14 190.87,-107.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="190.42,-109.59 197.42,-107.14 190.42,-104.69 190.42,-109.59" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/mobilni">
+<title>n3</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/mobilni" xlink:title="Mobilna telefonija · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M308.57,-56.28C308.57,-56.28 209.72,-56.28 209.72,-56.28 203.72,-56.28 197.72,-50.28 197.72,-44.28 197.72,-44.28 197.72,-12 197.72,-12 197.72,-6 203.72,0 209.72,0 209.72,0 308.57,0 308.57,0 314.57,0 320.57,-6 320.57,-12 320.57,-12 320.57,-44.28 320.57,-44.28 320.57,-50.28 314.57,-56.28 308.57,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="259.15" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="259.15" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="mobilni" data-to="flows">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M113.67,-88.42C136.37,-78.95 164.4,-67.25 189.72,-56.69" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="190.57,-58.99 196.08,-54.04 188.68,-54.47 190.57,-58.99" />
+</g>
+</g>
+</svg>

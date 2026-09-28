@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="353pt" height="634pt" viewBox="0.00 0.00 353.00 634.00" role="img" aria-label="Od dodele uloge do obuhvata podataka">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 612.68)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#526687" stroke="#526687" cx="154.8" cy="-563.66" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="122.88" y="-577.78" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/organizacija.DodelaUloge">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/organizacija.DodelaUloge" xlink:title="organizacija.DodelaUloge" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M277.73,-497.74C277.73,-497.74 31.88,-497.74 31.88,-497.74 25.88,-497.74 19.88,-491.74 19.88,-485.74 19.88,-485.74 19.88,-472.96 19.88,-472.96 19.88,-466.96 25.88,-460.96 31.88,-460.96 31.88,-460.96 277.73,-460.96 277.73,-460.96 283.73,-460.96 289.73,-466.96 289.73,-472.96 289.73,-472.96 289.73,-485.74 289.73,-485.74 289.73,-491.74 283.73,-497.74 277.73,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="154.8" y="-475.8" font-family="Segoe UI" font-size="14.00">Korisnik, uloga, čvor / cela firma i period</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M154.8,-555.36C154.8,-544.5 154.8,-523.56 154.8,-506.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="157.25,-506.62 154.8,-499.62 152.35,-506.62 157.25,-506.62" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/organizacija.DodelaUloge">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/organizacija.DodelaUloge" xlink:title="organizacija.DodelaUloge" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M267.98,-402.96C267.98,-402.96 41.63,-402.96 41.63,-402.96 35.63,-402.96 29.63,-396.96 29.63,-390.96 29.63,-390.96 29.63,-378.18 29.63,-378.18 29.63,-372.18 35.63,-366.18 41.63,-366.18 41.63,-366.18 267.98,-366.18 267.98,-366.18 273.98,-366.18 279.98,-372.18 279.98,-378.18 279.98,-378.18 279.98,-390.96 279.98,-390.96 279.98,-396.96 273.98,-402.96 267.98,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="154.8" y="-381.02" font-family="Segoe UI" font-size="14.00">Izbor aktivnih dodela i aktivnih uloga</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M154.8,-460.46C154.8,-446.6 154.8,-427.19 154.8,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="157.25,-411.92 154.8,-404.92 152.35,-411.92 157.25,-411.92" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/organizacija.OrgNode">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M266.1,-308.18C266.1,-308.18 43.5,-308.18 43.5,-308.18 37.5,-308.18 31.5,-302.18 31.5,-296.18 31.5,-296.18 31.5,-283.4 31.5,-283.4 31.5,-277.4 37.5,-271.4 43.5,-271.4 43.5,-271.4 266.1,-271.4 266.1,-271.4 272.1,-271.4 278.1,-277.4 278.1,-283.4 278.1,-283.4 278.1,-296.18 278.1,-296.18 278.1,-302.18 272.1,-308.18 266.1,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="154.8" y="-286.24" font-family="Segoe UI" font-size="14.00">Odredi obuhvat na relevantni datum</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M154.8,-365.68C154.8,-351.82 154.8,-332.41 154.8,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="157.25,-317.14 154.8,-310.14 152.35,-317.14 157.25,-317.14" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/organizacija.OrgPutanja">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/organizacija.OrgPutanja" xlink:title="organizacija.OrgPutanja" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M291.6,-213.4C291.6,-213.4 18,-213.4 18,-213.4 12,-213.4 6,-207.4 6,-201.4 6,-201.4 6,-188.62 6,-188.62 6,-182.62 12,-176.62 18,-176.62 18,-176.62 291.6,-176.62 291.6,-176.62 297.6,-176.62 303.6,-182.62 303.6,-188.62 303.6,-188.62 303.6,-201.4 303.6,-201.4 303.6,-207.4 297.6,-213.4 291.6,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="154.8" y="-191.46" font-family="Segoe UI" font-size="14.00">Razreši poslove preko organizacione putanje</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M154.8,-270.9C154.8,-257.04 154.8,-237.63 154.8,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="157.25,-222.36 154.8,-215.36 152.35,-222.36 157.25,-222.36" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/organizacija.OrgNode">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/organizacija.OrgNode" xlink:title="organizacija.OrgNode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M297.6,-118.62C297.6,-118.62 12,-118.62 12,-118.62 6,-118.62 0,-112.62 0,-106.62 0,-106.62 0,-93.84 0,-93.84 0,-87.84 6,-81.84 12,-81.84 12,-81.84 297.6,-81.84 297.6,-81.84 303.6,-81.84 309.6,-87.84 309.6,-93.84 309.6,-93.84 309.6,-106.62 309.6,-106.62 309.6,-112.62 303.6,-118.62 297.6,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="154.8" y="-96.68" font-family="Segoe UI" font-size="14.00">Ograniči podatke u modulu koji koristi registar</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M154.8,-176.12C154.8,-162.26 154.8,-142.85 154.8,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="157.25,-127.58 154.8,-120.58 152.35,-127.58 157.25,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n6</title>
+<ellipse fill="#526687" stroke="#526687" cx="154.8" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#526687" cx="154.8" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="131.25" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="end">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M154.8,-81.35C154.8,-67.12 154.8,-47.23 154.8,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="157.25,-32.71 154.8,-25.71 152.35,-32.71 157.25,-32.71" />
+</g>
+</g>
+</svg>

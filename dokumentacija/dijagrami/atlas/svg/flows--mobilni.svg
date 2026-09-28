@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="218pt" height="99pt" viewBox="0.00 0.00 218.00 99.00" role="img" aria-label="Tokovi rada · Mobilna telefonija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-mobilni--obustave" class="node" data-key="mobilni/obustave" data-route="flow/mobilni/obustave">
+<title>n0</title>
+<g id="a_node-mobilni--obustave"><a xlink:href="../../index.html#flow/mobilni/obustave" xlink:title="Tokovi rada · Mobilna telefonija" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M162.6,-56.28C162.6,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 162.6,0 162.6,0 168.6,0 174.6,-6 174.6,-12 174.6,-12 174.6,-44.28 174.6,-44.28 174.6,-50.28 168.6,-56.28 162.6,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="87.3" y="-34.34" font-family="Segoe UI" font-size="14.00">Mesečni uvoz i obustave</text>
+<text xml:space="preserve" text-anchor="middle" x="87.3" y="-14.84" font-family="Segoe UI" font-size="14.00">Mobilna telefonija</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

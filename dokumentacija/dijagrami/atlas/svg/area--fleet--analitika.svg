@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="830pt" height="476pt" viewBox="0.00 0.00 830.00 476.00" role="img" aria-label="Flota · Ekonomske analize">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 454.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M771.8,-90.78C771.8,-90.78 644.7,-90.78 644.7,-90.78 638.7,-90.78 632.7,-84.78 632.7,-78.78 632.7,-78.78 632.7,-12 632.7,-12 632.7,-6 638.7,0 644.7,0 644.7,0 771.8,0 771.8,0 777.8,0 783.8,-6 783.8,-12 783.8,-12 783.8,-78.78 783.8,-78.78 783.8,-84.78 777.8,-90.78 771.8,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="647.5" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="647.5" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="647.5" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.Kvar" class="node" data-key="fleet.Kvar" data-route="model/fleet.Kvar">
+<title>n1</title>
+<g id="a_node-fleet.Kvar"><a xlink:href="../../index.html#model/fleet.Kvar" xlink:title="fleet.Kvar" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M771.8,-432.78C771.8,-432.78 644.7,-432.78 644.7,-432.78 638.7,-432.78 632.7,-426.78 632.7,-420.78 632.7,-420.78 632.7,-354 632.7,-354 632.7,-348 638.7,-342 644.7,-342 644.7,-342 771.8,-342 771.8,-342 777.8,-342 783.8,-348 783.8,-354 783.8,-354 783.8,-420.78 783.8,-420.78 783.8,-426.78 777.8,-432.78 771.8,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="647.5" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="647.5" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Kvar</text>
+<text xml:space="preserve" text-anchor="start" x="647.5" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">8 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.Vehicle" class="node" data-key="fleet.Vehicle" data-route="model/fleet.Vehicle">
+<title>n2</title>
+<g id="a_node-fleet.Vehicle"><a xlink:href="../../index.html#model/fleet.Vehicle" xlink:title="fleet.Vehicle" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M774.8,-261.78C774.8,-261.78 641.7,-261.78 641.7,-261.78 635.7,-261.78 629.7,-255.78 629.7,-249.78 629.7,-249.78 629.7,-183 629.7,-183 629.7,-177 635.7,-171 641.7,-171 641.7,-171 774.8,-171 774.8,-171 780.8,-171 786.8,-177 786.8,-183 786.8,-183 786.8,-249.78 786.8,-249.78 786.8,-255.78 780.8,-261.78 774.8,-261.78" />
+<text xml:space="preserve" text-anchor="start" x="644.5" y="-238.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="644.5" y="-213.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="644.5" y="-188.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">28 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.VehicleAnalysisProfile" class="node" data-key="fleet.VehicleAnalysisProfile" data-route="model/fleet.VehicleAnalysisProfile">
+<title>n3</title>
+<g id="a_node-fleet.VehicleAnalysisProfile"><a xlink:href="../../index.html#model/fleet.VehicleAnalysisProfile" xlink:title="fleet.VehicleAnalysisProfile" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M485.07,-204.78C485.07,-204.78 339.22,-204.78 339.22,-204.78 333.22,-204.78 327.22,-198.78 327.22,-192.78 327.22,-192.78 327.22,-126 327.22,-126 327.22,-120 333.22,-114 339.22,-114 339.22,-114 485.07,-114 485.07,-114 491.07,-114 497.07,-120 497.07,-126 497.07,-126 497.07,-192.78 497.07,-192.78 497.07,-198.78 491.07,-204.78 485.07,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="342.02" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="342.02" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleAnalysisProfile</text>
+<text xml:space="preserve" text-anchor="start" x="342.02" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">11 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="fleet.VehicleAnalysisProfile" data-to="fleet.Vehicle">
+<title>n3-&gt;n2</title>
+<g id="a_edge-1"><a xlink:title="fleet.VehicleAnalysisProfile.vehicle → fleet.Vehicle | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M497.43,-175.72C536.25,-183.25 582.26,-192.17 621.29,-199.73" />
+<polygon fill="#7297ab" stroke="#7297ab" points="620.68,-202.11 628.02,-201.03 621.62,-197.3 620.68,-202.11" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="574.07" y="-199.22" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="614.96" y="-202.01" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="511.98" y="-169.14" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.VehicleDowntime" class="node" data-key="fleet.VehicleDowntime" data-route="model/fleet.VehicleDowntime">
+<title>n4</title>
+<g id="a_node-fleet.VehicleDowntime"><a xlink:href="../../index.html#model/fleet.VehicleDowntime" xlink:title="fleet.VehicleDowntime" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M471.57,-432.78C471.57,-432.78 352.72,-432.78 352.72,-432.78 346.72,-432.78 340.72,-426.78 340.72,-420.78 340.72,-420.78 340.72,-354 340.72,-354 340.72,-348 346.72,-342 352.72,-342 352.72,-342 471.57,-342 471.57,-342 477.57,-342 483.57,-348 483.57,-354 483.57,-354 483.57,-420.78 483.57,-420.78 483.57,-426.78 477.57,-432.78 471.57,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="355.52" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="355.52" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleDowntime</text>
+<text xml:space="preserve" text-anchor="start" x="355.52" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="fleet.VehicleDowntime" data-to="fleet.Kvar">
+<title>n4-&gt;n1</title>
+<g id="a_edge-3"><a xlink:title="fleet.VehicleDowntime.incident → fleet.Kvar | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M483.97,-387.39C526.12,-387.39 579.83,-387.39 624.01,-387.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="623.91,-389.84 630.91,-387.39 623.91,-384.94 623.91,-389.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="574.07" y="-391.94" font-family="Segoe UI" font-size="11.00">incident</text>
+<text xml:space="preserve" text-anchor="middle" x="618.83" y="-390.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="497.56" y="-378.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-2" class="edge" data-from="fleet.VehicleDowntime" data-to="fleet.Vehicle">
+<title>n4-&gt;n2</title>
+<g id="a_edge-2"><a xlink:title="fleet.VehicleDowntime.vehicle → fleet.Vehicle | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M483.92,-349.67C495.51,-343.33 507.35,-336.74 518.45,-330.39 554.13,-309.98 593.09,-286.63 626.3,-266.41" />
+<polygon fill="#7297ab" stroke="#7297ab" points="627.31,-268.67 632.01,-262.93 624.76,-264.48 627.31,-268.67" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="574.07" y="-316.84" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="624.99" y="-271.68" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="492.79" y="-334.63" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.VehicleEconomicAssessment" class="node" data-key="fleet.VehicleEconomicAssessment" data-route="model/fleet.VehicleEconomicAssessment">
+<title>n5</title>
+<g id="a_node-fleet.VehicleEconomicAssessment"><a xlink:href="../../index.html#model/fleet.VehicleEconomicAssessment" xlink:title="fleet.VehicleEconomicAssessment" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M506.45,-90.78C506.45,-90.78 317.85,-90.78 317.85,-90.78 311.85,-90.78 305.85,-84.78 305.85,-78.78 305.85,-78.78 305.85,-12 305.85,-12 305.85,-6 311.85,0 317.85,0 317.85,0 506.45,0 506.45,0 512.45,0 518.45,-6 518.45,-12 518.45,-12 518.45,-78.78 518.45,-78.78 518.45,-84.78 512.45,-90.78 506.45,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="320.65" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="320.65" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleEconomicAssessment</text>
+<text xml:space="preserve" text-anchor="start" x="320.65" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">13 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="fleet.VehicleEconomicAssessment" data-to="core.CustomUser">
+<title>n5-&gt;n0</title>
+<g id="a_edge-5"><a xlink:title="fleet.VehicleEconomicAssessment.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M518.91,-45.39C553.52,-45.39 591.46,-45.39 624.16,-45.39" />
+<polygon fill="#a27631" stroke="#a27631" points="623.84,-47.84 630.84,-45.39 623.84,-42.94 623.84,-47.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="574.07" y="-49.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="618.75" y="-48.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="532.51" y="-36.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="fleet.VehicleEconomicAssessment" data-to="fleet.Vehicle">
+<title>n5-&gt;n2</title>
+<g id="a_edge-4"><a xlink:title="fleet.VehicleEconomicAssessment.vehicle → fleet.Vehicle | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M498.68,-91.25C505.39,-94.98 512.04,-98.73 518.45,-102.39 554.13,-122.8 593.09,-146.15 626.3,-166.37" />
+<polygon fill="#7297ab" stroke="#7297ab" points="624.76,-168.3 632.01,-169.85 627.31,-164.11 624.76,-168.3" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="574.07" y="-153.03" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="618.39" y="-166.02" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="513.64" y="-89.37" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.VehicleEconomicScenario" class="node" data-key="fleet.VehicleEconomicScenario" data-route="model/fleet.VehicleEconomicScenario">
+<title>n6</title>
+<g id="a_node-fleet.VehicleEconomicScenario"><a xlink:href="../../index.html#model/fleet.VehicleEconomicScenario" xlink:title="fleet.VehicleEconomicScenario" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M181.1,-90.78C181.1,-90.78 12,-90.78 12,-90.78 6,-90.78 0,-84.78 0,-78.78 0,-78.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 181.1,0 181.1,0 187.1,0 193.1,-6 193.1,-12 193.1,-12 193.1,-78.78 193.1,-78.78 193.1,-84.78 187.1,-90.78 181.1,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleEconomicScenario</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">8 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="fleet.VehicleEconomicScenario" data-to="fleet.VehicleEconomicAssessment">
+<title>n6-&gt;n5</title>
+<g id="a_edge-6"><a xlink:title="fleet.VehicleEconomicScenario.assessment → fleet.VehicleEconomicAssessment | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M193.34,-45.39C226.2,-45.39 263.28,-45.39 297.41,-45.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="297.05,-47.84 304.05,-45.39 297.05,-42.94 297.05,-47.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="249.48" y="-49.94" font-family="Segoe UI" font-size="11.00">assessment</text>
+<text xml:space="preserve" text-anchor="middle" x="291.97" y="-48.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="206.94" y="-36.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-fleet.VehicleEvidence" class="node" data-key="fleet.VehicleEvidence" data-route="model/fleet.VehicleEvidence">
+<title>n7</title>
+<g id="a_node-fleet.VehicleEvidence"><a xlink:href="../../index.html#model/fleet.VehicleEvidence" xlink:title="fleet.VehicleEvidence" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M466.7,-318.78C466.7,-318.78 357.6,-318.78 357.6,-318.78 351.6,-318.78 345.6,-312.78 345.6,-306.78 345.6,-306.78 345.6,-240 345.6,-240 345.6,-234 351.6,-228 357.6,-228 357.6,-228 466.7,-228 466.7,-228 472.7,-228 478.7,-234 478.7,-240 478.7,-240 478.7,-306.78 478.7,-306.78 478.7,-312.78 472.7,-318.78 466.7,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="360.4" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet · abstraktno</text>
+<text xml:space="preserve" text-anchor="start" x="360.4" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">VehicleEvidence</text>
+<text xml:space="preserve" text-anchor="start" x="360.4" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">1 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.VehicleEvidence" data-to="fleet.Vehicle">
+<title>n7-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="fleet.VehicleEvidence.vehicle → fleet.Vehicle | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M479.15,-260.6C521,-252.49 575.59,-241.91 620.87,-233.13" />
+<polygon fill="#7297ab" stroke="#7297ab" points="621.32,-235.54 627.73,-231.8 620.39,-230.73 621.32,-235.54" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="574.07" y="-251.15" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="617.07" y="-237.37" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="491.29" y="-248.84" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

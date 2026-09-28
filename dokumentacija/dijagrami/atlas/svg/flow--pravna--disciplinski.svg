@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="354pt" height="634pt" viewBox="0.00 0.00 354.00 634.00" role="img" aria-label="Tok disciplinskog postupka i mera">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 612.68)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="155.55" cy="-563.66" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="123.63" y="-577.78" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/pravna.DisciplinskiPostupak">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/pravna.DisciplinskiPostupak" xlink:title="pravna.DisciplinskiPostupak" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M299.1,-497.74C299.1,-497.74 12,-497.74 12,-497.74 6,-497.74 0,-491.74 0,-485.74 0,-485.74 0,-472.96 0,-472.96 0,-466.96 6,-460.96 12,-460.96 12,-460.96 299.1,-460.96 299.1,-460.96 305.1,-460.96 311.1,-466.96 311.1,-472.96 311.1,-472.96 311.1,-485.74 311.1,-485.74 311.1,-491.74 305.1,-497.74 299.1,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="155.55" y="-475.8" font-family="Segoe UI" font-size="14.00">Unos zaposlenog, podnosioca, datuma i centra</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M155.55,-555.36C155.55,-544.5 155.55,-523.56 155.55,-506.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="158,-506.62 155.55,-499.62 153.1,-506.62 158,-506.62" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/pravna.DisciplinskiPostupak">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/pravna.DisciplinskiPostupak" xlink:title="pravna.DisciplinskiPostupak" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M264.98,-402.96C264.98,-402.96 46.12,-402.96 46.12,-402.96 40.12,-402.96 34.13,-396.96 34.13,-390.96 34.13,-390.96 34.13,-378.18 34.13,-378.18 34.13,-372.18 40.13,-366.18 46.13,-366.18 46.13,-366.18 264.98,-366.18 264.98,-366.18 270.98,-366.18 276.98,-372.18 276.98,-378.18 276.98,-378.18 276.98,-390.96 276.98,-390.96 276.98,-396.96 270.98,-402.96 264.98,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="155.55" y="-381.02" font-family="Segoe UI" font-size="14.00">Pregled detalja otvorenog postupka</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M155.55,-460.46C155.55,-446.6 155.55,-427.19 155.55,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="158,-411.92 155.55,-404.92 153.1,-411.92 158,-411.92" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/pravna.TokPostupka">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/pravna.TokPostupka" xlink:title="pravna.TokPostupka" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M264.98,-308.18C264.98,-308.18 46.12,-308.18 46.12,-308.18 40.12,-308.18 34.13,-302.18 34.13,-296.18 34.13,-296.18 34.13,-283.4 34.13,-283.4 34.13,-277.4 40.13,-271.4 46.13,-271.4 46.13,-271.4 264.98,-271.4 264.98,-271.4 270.98,-271.4 276.98,-277.4 276.98,-283.4 276.98,-283.4 276.98,-296.18 276.98,-296.18 276.98,-302.18 270.98,-308.18 264.98,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="155.55" y="-286.24" font-family="Segoe UI" font-size="14.00">Dodavanje promena u tok postupka</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M155.55,-365.68C155.55,-351.82 155.55,-332.41 155.55,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="158,-317.14 155.55,-310.14 153.1,-317.14 158,-317.14" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/pravna.DisciplinskiPostupak">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/pravna.DisciplinskiPostupak" xlink:title="pravna.DisciplinskiPostupak" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M251.48,-213.4C251.48,-213.4 59.62,-213.4 59.62,-213.4 53.62,-213.4 47.63,-207.4 47.63,-201.4 47.63,-201.4 47.63,-188.62 47.63,-188.62 47.63,-182.62 53.63,-176.62 59.63,-176.62 59.63,-176.62 251.48,-176.62 251.48,-176.62 257.48,-176.62 263.48,-182.62 263.48,-188.62 263.48,-188.62 263.48,-201.4 263.48,-201.4 263.48,-207.4 257.48,-213.4 251.48,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="155.55" y="-191.46" font-family="Segoe UI" font-size="14.00">Zatvaranje: izbor mere i datuma</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M155.55,-270.9C155.55,-257.04 155.55,-237.63 155.55,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="158,-222.36 155.55,-215.36 153.1,-222.36 158,-222.36" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/pravna.DisciplinskiPostupak">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/pravna.DisciplinskiPostupak" xlink:title="pravna.DisciplinskiPostupak" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M275.85,-118.62C275.85,-118.62 35.25,-118.62 35.25,-118.62 29.25,-118.62 23.25,-112.62 23.25,-106.62 23.25,-106.62 23.25,-93.84 23.25,-93.84 23.25,-87.84 29.25,-81.84 35.25,-81.84 35.25,-81.84 275.85,-81.84 275.85,-81.84 281.85,-81.84 287.85,-87.84 287.85,-93.84 287.85,-93.84 287.85,-106.62 287.85,-106.62 287.85,-112.62 281.85,-118.62 275.85,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="155.55" y="-96.68" font-family="Segoe UI" font-size="14.00">Čuvanje i pregled zatvorenog postupka</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M155.55,-176.12C155.55,-162.26 155.55,-142.85 155.55,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="158,-127.58 155.55,-120.58 153.1,-127.58 158,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n6</title>
+<ellipse fill="#8a6933" stroke="#8a6933" cx="155.55" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#8a6933" cx="155.55" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="132" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="end">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M155.55,-81.35C155.55,-67.12 155.55,-47.23 155.55,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="158,-32.71 155.55,-25.71 153.1,-32.71 158,-32.71" />
+</g>
+</g>
+</svg>

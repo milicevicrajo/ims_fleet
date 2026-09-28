@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="292pt" height="257pt" viewBox="0.00 0.00 292.00 257.00" role="img" aria-label="Menice · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 235.88)">
+<title>G</title>
+
+<g id="node-menice" class="node" data-key="menice" data-route="models/menice">
+<title>n0</title>
+<g id="a_node-menice"><a xlink:href="../../index.html#models/menice" xlink:title="Menice · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M56.1,-125.53C56.1,-125.53 12,-125.53 12,-125.53 6,-125.53 0,-119.53 0,-113.53 0,-113.53 0,-100.75 0,-100.75 0,-94.75 6,-88.75 12,-88.75 12,-88.75 56.1,-88.75 56.1,-88.75 62.1,-88.75 68.1,-94.75 68.1,-100.75 68.1,-100.75 68.1,-113.53 68.1,-113.53 68.1,-119.53 62.1,-125.53 56.1,-125.53" />
+<text xml:space="preserve" text-anchor="middle" x="34.05" y="-103.59" font-family="Segoe UI" font-size="14.00">Menice</text>
+</a>
+</g>
+</g>
+
+<g id="node-izlazne" class="node" data-key="izlazne" data-route="area/menice/izlazne">
+<title>n1</title>
+<g id="a_node-izlazne"><a xlink:href="../../index.html#area/menice/izlazne" xlink:title="Menice · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M232.07,-214.28C232.07,-214.28 142.97,-214.28 142.97,-214.28 136.97,-214.28 130.97,-208.28 130.97,-202.28 130.97,-202.28 130.97,-170 130.97,-170 130.97,-164 136.97,-158 142.97,-158 142.97,-158 232.07,-158 232.07,-158 238.07,-158 244.07,-164 244.07,-170 244.07,-170 244.07,-202.28 244.07,-202.28 244.07,-208.28 238.07,-214.28 232.07,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="187.52" y="-192.34" font-family="Segoe UI" font-size="14.00">Izlazne menice</text>
+<text xml:space="preserve" text-anchor="middle" x="187.52" y="-172.84" font-family="Segoe UI" font-size="14.00">1 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="menice" data-to="izlazne">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M68.29,-124.48C84.67,-133.02 104.96,-143.6 124.09,-153.58" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="122.95,-155.75 130.29,-156.81 125.22,-151.4 122.95,-155.75" />
+</g>
+
+<g id="node-ulazne" class="node" data-key="ulazne" data-route="area/menice/ulazne">
+<title>n2</title>
+<g id="a_node-ulazne"><a xlink:href="../../index.html#area/menice/ulazne" xlink:title="Menice · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M232.07,-135.28C232.07,-135.28 142.97,-135.28 142.97,-135.28 136.97,-135.28 130.97,-129.28 130.97,-123.28 130.97,-123.28 130.97,-91 130.97,-91 130.97,-85 136.97,-79 142.97,-79 142.97,-79 232.07,-79 232.07,-79 238.07,-79 244.07,-85 244.07,-91 244.07,-91 244.07,-123.28 244.07,-123.28 244.07,-129.28 238.07,-135.28 232.07,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="187.52" y="-113.34" font-family="Segoe UI" font-size="14.00">Ulazne menice</text>
+<text xml:space="preserve" text-anchor="middle" x="187.52" y="-93.84" font-family="Segoe UI" font-size="14.00">1 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="menice" data-to="ulazne">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M68.29,-107.14C84.15,-107.14 103.69,-107.14 122.28,-107.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="122.22,-109.59 129.22,-107.14 122.22,-104.69 122.22,-109.59" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/menice">
+<title>n3</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/menice" xlink:title="Menice · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M236.95,-56.28C236.95,-56.28 138.1,-56.28 138.1,-56.28 132.1,-56.28 126.1,-50.28 126.1,-44.28 126.1,-44.28 126.1,-12 126.1,-12 126.1,-6 132.1,0 138.1,0 138.1,0 236.95,0 236.95,0 242.95,0 248.95,-6 248.95,-12 248.95,-12 248.95,-44.28 248.95,-44.28 248.95,-50.28 242.95,-56.28 236.95,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="187.52" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="187.52" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="menice" data-to="flows">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M68.29,-89.8C84.67,-81.26 104.96,-70.68 124.09,-60.7" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="125.22,-62.88 130.29,-57.47 122.95,-58.53 125.22,-62.88" />
+</g>
+</g>
+</svg>

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="295pt" height="573pt" viewBox="0.00 0.00 295.00 573.00" role="img" aria-label="Flota · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 551.88)">
+<title>G</title>
+
+<g id="node-fleet" class="node" data-key="fleet" data-route="models/fleet">
+<title>n0</title>
+<g id="a_node-fleet"><a xlink:href="../../index.html#models/fleet" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M42,-283.53C42,-283.53 12,-283.53 12,-283.53 6,-283.53 0,-277.53 0,-271.53 0,-271.53 0,-258.75 0,-258.75 0,-252.75 6,-246.75 12,-246.75 12,-246.75 42,-246.75 42,-246.75 48,-246.75 54,-252.75 54,-258.75 54,-258.75 54,-271.53 54,-271.53 54,-277.53 48,-283.53 42,-283.53" />
+<text xml:space="preserve" text-anchor="middle" x="27" y="-261.59" font-family="Segoe UI" font-size="14.00">Flota</text>
+</a>
+</g>
+</g>
+
+<g id="node-vozila" class="node" data-key="vozila" data-route="area/fleet/vozila">
+<title>n1</title>
+<g id="a_node-vozila"><a xlink:href="../../index.html#area/fleet/vozila" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M226.23,-530.28C226.23,-530.28 137.88,-530.28 137.88,-530.28 131.88,-530.28 125.88,-524.28 125.88,-518.28 125.88,-518.28 125.88,-486 125.88,-486 125.88,-480 131.88,-474 137.88,-474 137.88,-474 226.23,-474 226.23,-474 232.23,-474 238.23,-480 238.23,-486 238.23,-486 238.23,-518.28 238.23,-518.28 238.23,-524.28 232.23,-530.28 226.23,-530.28" />
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-508.34" font-family="Segoe UI" font-size="14.00">Vozila i dodele</text>
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-488.84" font-family="Segoe UI" font-size="14.00">5 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet" data-to="vozila">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M31.71,-283.97C40.03,-321.93 63.38,-408.69 112,-463.14 114.22,-465.62 116.63,-467.99 119.19,-470.23" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="117.22,-471.79 124.2,-474.29 120.31,-467.98 117.22,-471.79" />
+</g>
+
+<g id="node-gorivo" class="node" data-key="gorivo" data-route="area/fleet/gorivo">
+<title>n2</title>
+<g id="a_node-gorivo"><a xlink:href="../../index.html#area/fleet/gorivo" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M236.35,-451.28C236.35,-451.28 127.75,-451.28 127.75,-451.28 121.75,-451.28 115.75,-445.28 115.75,-439.28 115.75,-439.28 115.75,-407 115.75,-407 115.75,-401 121.75,-395 127.75,-395 127.75,-395 236.35,-395 236.35,-395 242.35,-395 248.35,-401 248.35,-407 248.35,-407 248.35,-439.28 248.35,-439.28 248.35,-445.28 242.35,-451.28 236.35,-451.28" />
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-429.34" font-family="Segoe UI" font-size="14.00">Gorivo i potrošnja</text>
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-409.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="fleet" data-to="gorivo">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M37.81,-283.99C51.66,-309.24 78.99,-354.29 112,-384.14 114.17,-386.1 116.46,-388.01 118.82,-389.85" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="116.95,-391.51 124.04,-393.69 119.85,-387.57 116.95,-391.51" />
+</g>
+
+<g id="node-garaza" class="node" data-key="garaza" data-route="area/fleet/garaza">
+<title>n3</title>
+<g id="a_node-garaza"><a xlink:href="../../index.html#area/fleet/garaza" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M240.1,-372.28C240.1,-372.28 124,-372.28 124,-372.28 118,-372.28 112,-366.28 112,-360.28 112,-360.28 112,-328 112,-328 112,-322 118,-316 124,-316 124,-316 240.1,-316 240.1,-316 246.1,-316 252.1,-322 252.1,-328 252.1,-328 252.1,-360.28 252.1,-360.28 252.1,-366.28 246.1,-372.28 240.1,-372.28" />
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-350.34" font-family="Segoe UI" font-size="14.00">Garaža i održavanje</text>
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-330.84" font-family="Segoe UI" font-size="14.00">9 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="fleet" data-to="garaza">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M54.31,-278.72C71.89,-287.8 95.81,-300.14 118.13,-311.66" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="116.94,-313.81 124.29,-314.84 119.19,-309.45 116.94,-313.81" />
+</g>
+
+<g id="node-ugovori" class="node" data-key="ugovori" data-route="area/fleet/ugovori">
+<title>n4</title>
+<g id="a_node-ugovori"><a xlink:href="../../index.html#area/fleet/ugovori" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M238.23,-293.28C238.23,-293.28 125.88,-293.28 125.88,-293.28 119.88,-293.28 113.88,-287.28 113.88,-281.28 113.88,-281.28 113.88,-249 113.88,-249 113.88,-243 119.88,-237 125.88,-237 125.88,-237 238.23,-237 238.23,-237 244.23,-237 250.23,-243 250.23,-249 250.23,-249 250.23,-281.28 250.23,-281.28 250.23,-287.28 244.23,-293.28 238.23,-293.28" />
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-271.34" font-family="Segoe UI" font-size="14.00">Zakup i osiguranje</text>
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-251.84" font-family="Segoe UI" font-size="14.00">9 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="fleet" data-to="ugovori">
+<title>n0-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M54.31,-265.14C68.54,-265.14 86.92,-265.14 105.24,-265.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="105.13,-267.59 112.13,-265.14 105.13,-262.69 105.13,-267.59" />
+</g>
+
+<g id="node-nalozi" class="node" data-key="nalozi" data-route="area/fleet/nalozi">
+<title>n5</title>
+<g id="a_node-nalozi"><a xlink:href="../../index.html#area/fleet/nalozi" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M217.23,-214.28C217.23,-214.28 146.88,-214.28 146.88,-214.28 140.88,-214.28 134.88,-208.28 134.88,-202.28 134.88,-202.28 134.88,-170 134.88,-170 134.88,-164 140.88,-158 146.88,-158 146.88,-158 217.23,-158 217.23,-158 223.23,-158 229.23,-164 229.23,-170 229.23,-170 229.23,-202.28 229.23,-202.28 229.23,-208.28 223.23,-214.28 217.23,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-192.34" font-family="Segoe UI" font-size="14.00">Putni nalozi</text>
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-172.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="fleet" data-to="nalozi">
+<title>n0-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M54.31,-251.56C74.22,-241.28 102.24,-226.82 126.87,-214.1" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="127.96,-216.3 133.05,-210.92 125.71,-211.95 127.96,-216.3" />
+</g>
+
+<g id="node-analitika" class="node" data-key="analitika" data-route="area/fleet/analitika">
+<title>n6</title>
+<g id="a_node-analitika"><a xlink:href="../../index.html#area/fleet/analitika" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M239.35,-135.28C239.35,-135.28 124.75,-135.28 124.75,-135.28 118.75,-135.28 112.75,-129.28 112.75,-123.28 112.75,-123.28 112.75,-91 112.75,-91 112.75,-85 118.75,-79 124.75,-79 124.75,-79 239.35,-79 239.35,-79 245.35,-79 251.35,-85 251.35,-91 251.35,-91 251.35,-123.28 251.35,-123.28 251.35,-129.28 245.35,-135.28 239.35,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-113.34" font-family="Segoe UI" font-size="14.00">Ekonomske analize</text>
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-93.84" font-family="Segoe UI" font-size="14.00">5 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="fleet" data-to="analitika">
+<title>n0-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M37.81,-246.29C51.66,-221.04 78.99,-175.99 112,-146.14 114.17,-144.18 116.46,-142.27 118.82,-140.43" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="119.85,-142.71 124.04,-136.59 116.95,-138.77 119.85,-142.71" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/fleet">
+<title>n7</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/fleet" xlink:title="Flota · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M231.48,-56.28C231.48,-56.28 132.62,-56.28 132.62,-56.28 126.63,-56.28 120.63,-50.28 120.63,-44.28 120.63,-44.28 120.63,-12 120.63,-12 120.63,-6 126.63,0 132.62,0 132.62,0 231.48,0 231.48,0 237.48,0 243.48,-6 243.48,-12 243.48,-12 243.48,-44.28 243.48,-44.28 243.48,-50.28 237.48,-56.28 231.48,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="182.05" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="fleet" data-to="flows">
+<title>n0-&gt;n7</title>
+<path fill="none" stroke="#8b9ead" d="M31.71,-246.31C40.03,-208.35 63.38,-121.59 112,-67.14 113.59,-65.36 115.28,-63.64 117.05,-61.98" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="118.48,-63.99 122.21,-57.57 115.3,-60.26 118.48,-63.99" />
+</g>
+</g>
+</svg>

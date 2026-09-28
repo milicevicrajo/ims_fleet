@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="348pt" height="494pt" viewBox="0.00 0.00 348.00 494.00" role="img" aria-label="Nabavka · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 472.88)">
+<title>G</title>
+
+<g id="node-nabavka" class="node" data-key="nabavka" data-route="models/nabavka">
+<title>n0</title>
+<g id="a_node-nabavka"><a xlink:href="../../index.html#models/nabavka" xlink:title="Nabavka · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M62.1,-243.53C62.1,-243.53 12,-243.53 12,-243.53 6,-243.53 0,-237.53 0,-231.53 0,-231.53 0,-218.75 0,-218.75 0,-212.75 6,-206.75 12,-206.75 12,-206.75 62.1,-206.75 62.1,-206.75 68.1,-206.75 74.1,-212.75 74.1,-218.75 74.1,-218.75 74.1,-231.53 74.1,-231.53 74.1,-237.53 68.1,-243.53 62.1,-243.53" />
+<text xml:space="preserve" text-anchor="middle" x="37.05" y="-221.59" font-family="Segoe UI" font-size="14.00">Nabavka</text>
+</a>
+</g>
+</g>
+
+<g id="node-predmeti" class="node" data-key="predmeti" data-route="area/nabavka/predmeti">
+<title>n1</title>
+<g id="a_node-predmeti"><a xlink:href="../../index.html#area/nabavka/predmeti" xlink:title="Nabavka · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M292.45,-451.28C292.45,-451.28 144.1,-451.28 144.1,-451.28 138.1,-451.28 132.1,-445.28 132.1,-439.28 132.1,-439.28 132.1,-407 132.1,-407 132.1,-401 138.1,-395 144.1,-395 144.1,-395 292.45,-395 292.45,-395 298.45,-395 304.45,-401 304.45,-407 304.45,-407 304.45,-439.28 304.45,-439.28 304.45,-445.28 298.45,-451.28 292.45,-451.28" />
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-429.34" font-family="Segoe UI" font-size="14.00">Predmeti i narudžbenice</text>
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-409.84" font-family="Segoe UI" font-size="14.00">4 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="nabavka" data-to="predmeti">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M44.75,-243.78C57.26,-276.25 87.05,-343.58 132.1,-384.14 134.35,-386.16 136.72,-388.1 139.18,-389.95" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="137.52,-391.77 144.66,-393.78 140.32,-387.76 137.52,-391.77" />
+</g>
+
+<g id="node-fakture" class="node" data-key="fakture" data-route="area/nabavka/fakture">
+<title>n2</title>
+<g id="a_node-fakture"><a xlink:href="../../index.html#area/nabavka/fakture" xlink:title="Nabavka · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M281.57,-372.28C281.57,-372.28 154.97,-372.28 154.97,-372.28 148.97,-372.28 142.97,-366.28 142.97,-360.28 142.97,-360.28 142.97,-328 142.97,-328 142.97,-322 148.97,-316 154.97,-316 154.97,-316 281.57,-316 281.57,-316 287.57,-316 293.57,-322 293.57,-328 293.57,-328 293.57,-360.28 293.57,-360.28 293.57,-366.28 287.57,-372.28 281.57,-372.28" />
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-350.34" font-family="Segoe UI" font-size="14.00">Fakture i povezivanje</text>
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-330.84" font-family="Segoe UI" font-size="14.00">6 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="nabavka" data-to="fakture">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M56.98,-244C75.14,-261.4 103.89,-287.18 132.1,-305.14 135.61,-307.38 139.27,-309.55 143.02,-311.67" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="141.66,-313.71 148.97,-314.91 144,-309.41 141.66,-313.71" />
+</g>
+
+<g id="node-izvori" class="node" data-key="izvori" data-route="area/nabavka/izvori">
+<title>n3</title>
+<g id="a_node-izvori"><a xlink:href="../../index.html#area/nabavka/izvori" xlink:title="Nabavka · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M257.95,-293.28C257.95,-293.28 178.6,-293.28 178.6,-293.28 172.6,-293.28 166.6,-287.28 166.6,-281.28 166.6,-281.28 166.6,-249 166.6,-249 166.6,-243 172.6,-237 178.6,-237 178.6,-237 257.95,-237 257.95,-237 263.95,-237 269.95,-243 269.95,-249 269.95,-249 269.95,-281.28 269.95,-281.28 269.95,-287.28 263.95,-293.28 257.95,-293.28" />
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-271.34" font-family="Segoe UI" font-size="14.00">Snimci izvora</text>
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-251.84" font-family="Segoe UI" font-size="14.00">3 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="nabavka" data-to="izvori">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M74.32,-233.23C98.34,-238.6 130.39,-245.75 158.06,-251.93" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="157.28,-254.26 164.64,-253.39 158.34,-249.48 157.28,-254.26" />
+</g>
+
+<g id="node-plan" class="node" data-key="plan" data-route="area/nabavka/plan">
+<title>n4</title>
+<g id="a_node-plan"><a xlink:href="../../index.html#area/nabavka/plan" xlink:title="Nabavka · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M276.32,-214.28C276.32,-214.28 160.22,-214.28 160.22,-214.28 154.22,-214.28 148.22,-208.28 148.22,-202.28 148.22,-202.28 148.22,-170 148.22,-170 148.22,-164 154.22,-158 160.22,-158 160.22,-158 276.32,-158 276.32,-158 282.32,-158 288.32,-164 288.32,-170 288.32,-170 288.32,-202.28 288.32,-202.28 288.32,-208.28 282.32,-214.28 276.32,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-192.34" font-family="Segoe UI" font-size="14.00">Plan javnih nabavki</text>
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-172.84" font-family="Segoe UI" font-size="14.00">2 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="nabavka" data-to="plan">
+<title>n0-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M74.32,-217.25C93.26,-213.13 117.2,-207.92 140.04,-202.95" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="140.27,-205.4 146.59,-201.52 139.23,-200.62 140.27,-205.4" />
+</g>
+
+<g id="node-ostalo" class="node" data-key="ostalo" data-route="area/nabavka/ostalo">
+<title>n5</title>
+<g id="a_node-ostalo"><a xlink:href="../../index.html#area/nabavka/ostalo" xlink:title="Nabavka · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M280.07,-135.28C280.07,-135.28 156.47,-135.28 156.47,-135.28 150.47,-135.28 144.47,-129.28 144.47,-123.28 144.47,-123.28 144.47,-91 144.47,-91 144.47,-85 150.47,-79 156.47,-79 156.47,-79 280.07,-79 280.07,-79 286.07,-79 292.07,-85 292.07,-91 292.07,-91 292.07,-123.28 292.07,-123.28 292.07,-129.28 286.07,-135.28 280.07,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-113.34" font-family="Segoe UI" font-size="14.00">Pomoćne evidencije</text>
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-93.84" font-family="Segoe UI" font-size="14.00">2 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="nabavka" data-to="ostalo">
+<title>n0-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M57.02,-206.53C75.21,-189.37 103.99,-163.92 132.1,-146.14 135.62,-143.91 139.28,-141.74 143.03,-139.64" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="144.01,-141.9 149,-136.4 141.68,-137.59 144.01,-141.9" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/nabavka">
+<title>n6</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/nabavka" xlink:title="Nabavka · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M267.7,-56.28C267.7,-56.28 168.85,-56.28 168.85,-56.28 162.85,-56.28 156.85,-50.28 156.85,-44.28 156.85,-44.28 156.85,-12 156.85,-12 156.85,-6 162.85,0 168.85,0 168.85,0 267.7,0 267.7,0 273.7,0 279.7,-6 279.7,-12 279.7,-12 279.7,-44.28 279.7,-44.28 279.7,-50.28 273.7,-56.28 267.7,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="218.27" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="nabavka" data-to="flows">
+<title>n0-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M44.88,-206.36C57.5,-174 87.33,-107.34 132.1,-67.14 137.32,-62.45 143.2,-58.24 149.36,-54.47" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="150.55,-56.62 155.4,-51.01 148.11,-52.37 150.55,-56.62" />
+</g>
+</g>
+</svg>

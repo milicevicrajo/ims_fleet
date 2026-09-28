@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="490pt" height="870pt" viewBox="0.00 0.00 490.00 870.00" role="img" aria-label="TransactionNIS · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 848.38)">
+<title>G</title>
+
+<g id="node-fleet.TransactionNIS" class="node" data-key="fleet.TransactionNIS" data-route="model/fleet.TransactionNIS">
+<title>n0</title>
+<g id="a_node-fleet.TransactionNIS"><a xlink:href="../../index.html#model/fleet.TransactionNIS" xlink:title="fleet.TransactionNIS" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M184.85,-826.78C184.85,-826.78 12,-826.78 12,-826.78 6,-826.78 0,-820.78 0,-814.78 0,-814.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 184.85,0 184.85,0 190.85,0 196.85,-6 196.85,-12 196.85,-12 196.85,-814.78 196.85,-814.78 196.85,-820.78 190.85,-826.78 184.85,-826.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-803.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-778.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">TransactionNIS</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-753.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-730.19" font-family="Segoe UI" font-size="11.00">vehicle : Vehicle ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-707.19" font-family="Segoe UI" font-size="11.00">kupac : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-684.19" font-family="Segoe UI" font-size="11.00">sifra_kupca : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-661.19" font-family="Segoe UI" font-size="11.00">broj_kartice : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-638.19" font-family="Segoe UI" font-size="11.00">kompanijski_kod_kupca : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-615.19" font-family="Segoe UI" font-size="11.00">zemlja_sipanja : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-592.19" font-family="Segoe UI" font-size="11.00">benzinska_stanica : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-569.19" font-family="Segoe UI" font-size="11.00">id_transakcije : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-546.19" font-family="Segoe UI" font-size="11.00">app_kod : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-523.19" font-family="Segoe UI" font-size="11.00">datum_transakcije : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-500.19" font-family="Segoe UI" font-size="11.00">tociono_mesto : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-477.19" font-family="Segoe UI" font-size="11.00">naziv_kartice : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-454.19" font-family="Segoe UI" font-size="11.00">licenca : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-431.19" font-family="Segoe UI" font-size="11.00">broj_gazdinstva : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-408.19" font-family="Segoe UI" font-size="11.00">registarska_oznaka_vozila : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-385.19" font-family="Segoe UI" font-size="11.00">broj_racuna : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">kilometraza : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">sipanje_van_rezervoara : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">naziv_proizvoda : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">kolicina : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">kolicina_kg : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">popust : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">primenjen_popust : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">cena_sa_kase : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">cena : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">total_sa_kase : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">total : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">valuta : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">aktivirano_prekoracenje : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">kolicinsko_prekoracenje : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">finansijsko_prekoracenje : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">nacin_ocitavanja_kartice : Char</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.Vehicle" class="node" data-key="fleet.Vehicle" data-route="model/fleet.Vehicle">
+<title>n1</title>
+<g id="a_node-fleet.Vehicle"><a xlink:href="../../index.html#model/fleet.Vehicle" xlink:title="fleet.Vehicle" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M434.45,-458.78C434.45,-458.78 301.35,-458.78 301.35,-458.78 295.35,-458.78 289.35,-452.78 289.35,-446.78 289.35,-446.78 289.35,-380 289.35,-380 289.35,-374 295.35,-368 301.35,-368 301.35,-368 434.45,-368 434.45,-368 440.45,-368 446.45,-374 446.45,-380 446.45,-380 446.45,-446.78 446.45,-446.78 446.45,-452.78 440.45,-458.78 434.45,-458.78" />
+<text xml:space="preserve" text-anchor="start" x="304.15" y="-435.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="304.15" y="-410.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="304.15" y="-385.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">28 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.TransactionNIS" data-to="fleet.Vehicle">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="fleet.TransactionNIS.vehicle → fleet.Vehicle | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M197.12,-413.39C224.58,-413.39 254.22,-413.39 280.94,-413.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="280.62,-415.84 287.62,-413.39 280.62,-410.94 280.62,-415.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="243.1" y="-417.94" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="275.54" y="-416.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="210.72" y="-404.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

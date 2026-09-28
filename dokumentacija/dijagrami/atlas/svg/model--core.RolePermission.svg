@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="478pt" height="248pt" viewBox="0.00 0.00 478.00 248.00" role="img" aria-label="RolePermission · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 226.38)">
+<title>G</title>
+
+<g id="node-core.PermissionCode" class="node" data-key="core.PermissionCode" data-route="model/core.PermissionCode">
+<title>n0</title>
+<g id="a_node-core.PermissionCode"><a xlink:href="../../index.html#model/core.PermissionCode" xlink:title="core.PermissionCode" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M422.45,-204.78C422.45,-204.78 295.35,-204.78 295.35,-204.78 289.35,-204.78 283.35,-198.78 283.35,-192.78 283.35,-192.78 283.35,-126 283.35,-126 283.35,-120 289.35,-114 295.35,-114 295.35,-114 422.45,-114 422.45,-114 428.45,-114 434.45,-120 434.45,-126 434.45,-126 434.45,-192.78 434.45,-192.78 434.45,-198.78 428.45,-204.78 422.45,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="298.15" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="298.15" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PermissionCode</text>
+<text xml:space="preserve" text-anchor="start" x="298.15" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">2 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-core.Role" class="node" data-key="core.Role" data-route="model/core.Role">
+<title>n1</title>
+<g id="a_node-core.Role"><a xlink:href="../../index.html#model/core.Role" xlink:title="core.Role" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M422.45,-90.78C422.45,-90.78 295.35,-90.78 295.35,-90.78 289.35,-90.78 283.35,-84.78 283.35,-78.78 283.35,-78.78 283.35,-12 283.35,-12 283.35,-6 289.35,0 295.35,0 295.35,0 422.45,0 422.45,0 428.45,0 434.45,-6 434.45,-12 434.45,-12 434.45,-78.78 434.45,-78.78 434.45,-84.78 428.45,-90.78 422.45,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="298.15" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="298.15" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Role</text>
+<text xml:space="preserve" text-anchor="start" x="298.15" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-core.RolePermission" class="node" data-key="core.RolePermission" data-route="model/core.RolePermission">
+<title>n2</title>
+<g id="a_node-core.RolePermission"><a xlink:href="../../index.html#model/core.RolePermission" xlink:title="core.RolePermission" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M159.35,-170.78C159.35,-170.78 12,-170.78 12,-170.78 6,-170.78 0,-164.78 0,-158.78 0,-158.78 0,-46 0,-46 0,-40 6,-34 12,-34 12,-34 159.35,-34 159.35,-34 165.35,-34 171.35,-40 171.35,-46 171.35,-46 171.35,-158.78 171.35,-158.78 171.35,-164.78 165.35,-170.78 159.35,-170.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-147.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-122.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">RolePermission</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-97.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-74.19" font-family="Segoe UI" font-size="11.00">role : Role</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-51.19" font-family="Segoe UI" font-size="11.00">permission : PermissionCode</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="core.RolePermission" data-to="core.PermissionCode">
+<title>n2-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="core.RolePermission.permission → core.PermissionCode | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M171.75,-120.27C204.69,-127.19 242.27,-135.09 275,-141.97" />
+<polygon fill="#7297ab" stroke="#7297ab" points="274.38,-144.34 281.73,-143.38 275.38,-139.55 274.38,-144.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="227.35" y="-140.55" font-family="Segoe UI" font-size="11.00">permission</text>
+<text xml:space="preserve" text-anchor="middle" x="268.6" y="-144.15" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="186.36" y="-113.91" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="core.RolePermission" data-to="core.Role">
+<title>n2-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="core.RolePermission.role → core.Role | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M171.75,-84.51C204.69,-77.59 242.27,-69.69 275,-62.81" />
+<polygon fill="#7297ab" stroke="#7297ab" points="275.38,-65.23 281.73,-61.4 274.38,-60.44 275.38,-65.23" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="227.35" y="-81.85" font-family="Segoe UI" font-size="11.00">role</text>
+<text xml:space="preserve" text-anchor="middle" x="271.21" y="-67.14" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="183.75" y="-72.56" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

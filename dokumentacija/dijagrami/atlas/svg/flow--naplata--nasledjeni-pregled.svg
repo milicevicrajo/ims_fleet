@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="364pt" height="539pt" viewBox="0.00 0.00 364.00 539.00" role="img" aria-label="Pregled nasleđenih evidencija naplate">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 517.9)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#8b7770" stroke="#8b7770" cx="160.43" cy="-468.88" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="128.5" y="-483" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/naplata.Partneri">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/naplata.Partneri" xlink:title="naplata.Partneri" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M281.85,-402.96C281.85,-402.96 39,-402.96 39,-402.96 33,-402.96 27,-396.96 27,-390.96 27,-390.96 27,-378.18 27,-378.18 27,-372.18 33,-366.18 39,-366.18 39,-366.18 281.85,-366.18 281.85,-366.18 287.85,-366.18 293.85,-372.18 293.85,-378.18 293.85,-378.18 293.85,-390.96 293.85,-390.96 293.85,-396.96 287.85,-402.96 281.85,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="160.43" y="-381.02" font-family="Segoe UI" font-size="14.00">Otvaranje postojećeg pregleda partnera</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M160.43,-460.58C160.43,-449.72 160.43,-428.78 160.43,-411.78" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="162.88,-411.84 160.43,-404.84 157.98,-411.84 162.88,-411.84" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/naplata.DodelaBucketa">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/naplata.DodelaBucketa" xlink:title="naplata.DodelaBucketa" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M273.98,-308.18C273.98,-308.18 46.88,-308.18 46.88,-308.18 40.88,-308.18 34.88,-302.18 34.88,-296.18 34.88,-296.18 34.88,-283.4 34.88,-283.4 34.88,-277.4 40.88,-271.4 46.88,-271.4 46.88,-271.4 273.98,-271.4 273.98,-271.4 279.98,-271.4 285.98,-277.4 285.98,-283.4 285.98,-283.4 285.98,-296.18 285.98,-296.18 285.98,-302.18 279.98,-308.18 273.98,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="160.43" y="-286.24" font-family="Segoe UI" font-size="14.00">Čitanje nasleđenog salda / kategorije</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M160.43,-365.68C160.43,-351.82 160.43,-332.41 160.43,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="162.88,-317.14 160.43,-310.14 157.98,-317.14 162.88,-317.14" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/naplata.Opomene">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/naplata.Opomene" xlink:title="naplata.Opomene" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M284.1,-213.4C284.1,-213.4 36.75,-213.4 36.75,-213.4 30.75,-213.4 24.75,-207.4 24.75,-201.4 24.75,-201.4 24.75,-188.62 24.75,-188.62 24.75,-182.62 30.75,-176.62 36.75,-176.62 36.75,-176.62 284.1,-176.62 284.1,-176.62 290.1,-176.62 296.1,-182.62 296.1,-188.62 296.1,-188.62 296.1,-201.4 296.1,-201.4 296.1,-207.4 290.1,-213.4 284.1,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="160.43" y="-191.46" font-family="Segoe UI" font-size="14.00">Pregled postojećih kontakata i opomena</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M160.43,-270.9C160.43,-257.04 160.43,-237.63 160.43,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="162.88,-222.36 160.43,-215.36 157.98,-222.36 162.88,-222.36" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/potrazivanja.FinancePartnerIdentity">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/potrazivanja.FinancePartnerIdentity" xlink:title="potrazivanja.FinancePartnerIdentity" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M308.85,-118.62C308.85,-118.62 12,-118.62 12,-118.62 6,-118.62 0,-112.62 0,-106.62 0,-106.62 0,-93.84 0,-93.84 0,-87.84 6,-81.84 12,-81.84 12,-81.84 308.85,-81.84 308.85,-81.84 314.85,-81.84 320.85,-87.84 320.85,-93.84 320.85,-93.84 320.85,-106.62 320.85,-106.62 320.85,-112.62 314.85,-118.62 308.85,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="160.43" y="-96.68" font-family="Segoe UI" font-size="14.00">Novi razvoj i operativni pregled u Potraživanjima</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M160.43,-176.12C160.43,-162.26 160.43,-142.85 160.43,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="162.88,-127.58 160.43,-120.58 157.98,-127.58 162.88,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n5</title>
+<ellipse fill="#8b7770" stroke="#8b7770" cx="160.43" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#8b7770" cx="160.43" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="136.88" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="end">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M160.43,-81.35C160.43,-67.12 160.43,-47.23 160.43,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="162.88,-32.71 160.43,-25.71 157.98,-32.71 162.88,-32.71" />
+</g>
+</g>
+</svg>

@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="999pt" height="1236pt" viewBox="0.00 0.00 999.00 1236.00" role="img" aria-label="Kadrovi · Radno vreme · polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 1214.88)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M940.55,-775.78C940.55,-775.78 813.45,-775.78 813.45,-775.78 807.45,-775.78 801.45,-769.78 801.45,-763.78 801.45,-763.78 801.45,-697 801.45,-697 801.45,-691 807.45,-685 813.45,-685 813.45,-685 940.55,-685 940.55,-685 946.55,-685 952.55,-691 952.55,-697 952.55,-697 952.55,-763.78 952.55,-763.78 952.55,-769.78 946.55,-775.78 940.55,-775.78" />
+<text xml:space="preserve" text-anchor="start" x="816.25" y="-752.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="816.25" y="-727.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="816.25" y="-702.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-core.OrganizationalUnit" class="node" data-key="core.OrganizationalUnit" data-route="model/core.OrganizationalUnit">
+<title>n1</title>
+<g id="a_node-core.OrganizationalUnit"><a xlink:href="../../index.html#model/core.OrganizationalUnit" xlink:title="core.OrganizationalUnit" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M940.92,-920.78C940.92,-920.78 813.08,-920.78 813.08,-920.78 807.08,-920.78 801.08,-914.78 801.08,-908.78 801.08,-908.78 801.08,-842 801.08,-842 801.08,-836 807.08,-830 813.08,-830 813.08,-830 940.92,-830 940.92,-830 946.92,-830 952.92,-836 952.92,-842 952.92,-842 952.92,-908.78 952.92,-908.78 952.92,-914.78 946.92,-920.78 940.92,-920.78" />
+<text xml:space="preserve" text-anchor="start" x="815.88" y="-897.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="815.88" y="-872.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">OrganizationalUnit</text>
+<text xml:space="preserve" text-anchor="start" x="815.88" y="-847.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n2</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M943.55,-661.78C943.55,-661.78 810.45,-661.78 810.45,-661.78 804.45,-661.78 798.45,-655.78 798.45,-649.78 798.45,-649.78 798.45,-583 798.45,-583 798.45,-577 804.45,-571 810.45,-571 810.45,-571 943.55,-571 943.55,-571 949.55,-571 955.55,-577 955.55,-583 955.55,-583 955.55,-649.78 955.55,-649.78 955.55,-655.78 949.55,-661.78 943.55,-661.78" />
+<text xml:space="preserve" text-anchor="start" x="813.25" y="-638.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="813.25" y="-613.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="813.25" y="-588.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.RecipientType" class="node" data-key="hr.RecipientType" data-route="model/hr.RecipientType">
+<title>n3</title>
+<g id="a_node-hr.RecipientType"><a xlink:href="../../index.html#model/hr.RecipientType" xlink:title="hr.RecipientType" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M552.95,-159.78C552.95,-159.78 425.85,-159.78 425.85,-159.78 419.85,-159.78 413.85,-153.78 413.85,-147.78 413.85,-147.78 413.85,-81 413.85,-81 413.85,-75 419.85,-69 425.85,-69 425.85,-69 552.95,-69 552.95,-69 558.95,-69 564.95,-75 564.95,-81 564.95,-81 564.95,-147.78 564.95,-147.78 564.95,-153.78 558.95,-159.78 552.95,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="428.65" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="428.65" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">RecipientType</text>
+<text xml:space="preserve" text-anchor="start" x="428.65" y="-86.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">3 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.WorkTimeCategory" class="node" data-key="hr.WorkTimeCategory" data-route="model/hr.WorkTimeCategory">
+<title>n4</title>
+<g id="a_node-hr.WorkTimeCategory"><a xlink:href="../../index.html#model/hr.WorkTimeCategory" xlink:title="hr.WorkTimeCategory" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M571.7,-457.28C571.7,-457.28 407.1,-457.28 407.1,-457.28 401.1,-457.28 395.1,-451.28 395.1,-445.28 395.1,-445.28 395.1,-263.5 395.1,-263.5 395.1,-257.5 401.1,-251.5 407.1,-251.5 407.1,-251.5 571.7,-251.5 571.7,-251.5 577.7,-251.5 583.7,-257.5 583.7,-263.5 583.7,-263.5 583.7,-445.28 583.7,-445.28 583.7,-451.28 577.7,-457.28 571.7,-457.28" />
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-434.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-409.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">WorkTimeCategory</text>
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-383.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-360.69" font-family="Segoe UI" font-size="11.00">code : Slug [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-337.69" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-314.69" font-family="Segoe UI" font-size="11.00">employee_selectable : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-291.69" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="409.9" y="-268.69" font-family="Segoe UI" font-size="11.00">sort_order : PositiveSmallInteger</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.WorkTimeElement" class="node" data-key="hr.WorkTimeElement" data-route="model/hr.WorkTimeElement">
+<title>n5</title>
+<g id="a_node-hr.WorkTimeElement"><a xlink:href="../../index.html#model/hr.WorkTimeElement" xlink:title="hr.WorkTimeElement" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M191.6,-228.78C191.6,-228.78 39,-228.78 39,-228.78 33,-228.78 27,-222.78 27,-216.78 27,-216.78 27,-12 27,-12 27,-6 33,0 39,0 39,0 191.6,0 191.6,0 197.6,0 203.6,-6 203.6,-12 203.6,-12 203.6,-216.78 203.6,-216.78 203.6,-222.78 197.6,-228.78 191.6,-228.78" />
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-205.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-180.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">WorkTimeElement</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-155.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-132.19" font-family="Segoe UI" font-size="11.00">recipient_type : RecipientType</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-109.19" font-family="Segoe UI" font-size="11.00">category : WorkTimeCategory</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-86.19" font-family="Segoe UI" font-size="11.00">payroll_code : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-63.19" font-family="Segoe UI" font-size="11.00">payroll_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-40.19" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="41.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-7" class="edge" data-from="hr.WorkTimeElement" data-to="hr.RecipientType">
+<title>n5-&gt;n3</title>
+<g id="a_edge-7"><a xlink:title="hr.WorkTimeElement.recipient_type → hr.RecipientType | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M204.01,-114.39C264.86,-114.39 345.39,-114.39 405.22,-114.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="405.01,-116.84 412.01,-114.39 405.01,-111.94 405.01,-116.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="295.22" y="-118.94" font-family="Segoe UI" font-size="11.00">recipient_type</text>
+<text xml:space="preserve" text-anchor="middle" x="399.93" y="-117.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="217.61" y="-105.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-8" class="edge" data-from="hr.WorkTimeElement" data-to="hr.WorkTimeCategory">
+<title>n5-&gt;n4</title>
+<g id="a_edge-8"><a xlink:title="hr.WorkTimeElement.category → hr.WorkTimeCategory | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M204.01,-170.96C259.14,-206.52 330.43,-252.5 387.84,-289.53" />
+<polygon fill="#7297ab" stroke="#7297ab" points="386.29,-291.45 393.5,-293.18 388.95,-287.33 386.29,-291.45" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="295.22" y="-253.31" font-family="Segoe UI" font-size="11.00">category</text>
+<text xml:space="preserve" text-anchor="middle" x="379.91" y="-289.01" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="218.87" y="-170.05" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.WorkTimeSheet" class="node" data-key="hr.WorkTimeSheet" data-route="model/hr.WorkTimeSheet">
+<title>n6</title>
+<g id="a_node-hr.WorkTimeSheet"><a xlink:href="../../index.html#model/hr.WorkTimeSheet" xlink:title="hr.WorkTimeSheet" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M606.95,-859.28C606.95,-859.28 371.85,-859.28 371.85,-859.28 365.85,-859.28 359.85,-853.28 359.85,-847.28 359.85,-847.28 359.85,-527.5 359.85,-527.5 359.85,-521.5 365.85,-515.5 371.85,-515.5 371.85,-515.5 606.95,-515.5 606.95,-515.5 612.95,-515.5 618.95,-521.5 618.95,-527.5 618.95,-527.5 618.95,-847.28 618.95,-847.28 618.95,-853.28 612.95,-859.28 606.95,-859.28" />
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-836.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-811.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">WorkTimeSheet</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-785.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-762.69" font-family="Segoe UI" font-size="11.00">employee : Employee</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-739.69" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-716.69" font-family="Segoe UI" font-size="11.00">month : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-693.69" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-670.69" font-family="Segoe UI" font-size="11.00">meal_days : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-647.69" font-family="Segoe UI" font-size="11.00">meal_organizational_unit : OrganizationalUnit ?</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-624.69" font-family="Segoe UI" font-size="11.00">field_allowance_days : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-601.69" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-578.69" font-family="Segoe UI" font-size="11.00">updated_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-555.69" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="374.65" y="-532.69" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="hr.WorkTimeSheet" data-to="core.CustomUser">
+<title>n6-&gt;n0</title>
+<g id="a_edge-2"><a xlink:title="hr.WorkTimeSheet.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M619.34,-701.77C676.58,-708.15 742.28,-715.48 792.89,-721.12" />
+<polygon fill="#a27631" stroke="#a27631" points="792.46,-723.54 799.69,-721.88 793,-718.67 792.46,-723.54" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="708.7" y="-722.23" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="786.98" y="-723.89" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="633.55" y="-694.02" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-3" class="edge" data-from="hr.WorkTimeSheet" data-to="core.CustomUser">
+<title>n6-&gt;n0</title>
+<g id="a_edge-3"><a xlink:title="hr.WorkTimeSheet.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M619.27,-675.44C666.88,-673.91 721.02,-675.58 769.45,-685.39 777.35,-686.99 785.39,-689.19 793.33,-691.77" />
+<polygon fill="#a27631" stroke="#a27631" points="792.38,-694.04 799.8,-693.98 793.96,-689.4 792.38,-694.04" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="708.7" y="-689.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="786.32" y="-693.13" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="632.7" y="-665.82" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="hr.WorkTimeSheet" data-to="core.OrganizationalUnit">
+<title>n6-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="hr.WorkTimeSheet.meal_organizational_unit → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M619.34,-750.25C676.72,-778.23 742.62,-810.36 793.27,-835.06" />
+<polygon fill="#a27631" stroke="#a27631" points="791.9,-837.11 799.27,-837.98 794.05,-832.71 791.9,-837.11" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="708.7" y="-824.39" font-family="Segoe UI" font-size="11.00">meal_organizational_unit</text>
+<text xml:space="preserve" text-anchor="middle" x="785.63" y="-835.43" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="634.33" y="-747.56" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.WorkTimeSheet" data-to="hr.Employee">
+<title>n6-&gt;n2</title>
+<g id="a_edge-0"><a xlink:title="hr.WorkTimeSheet.employee → hr.Employee | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M619.31,-660.87C628.99,-658.98 638.62,-657.13 647.95,-655.39 694.78,-646.63 747.17,-637.62 789.91,-630.47" />
+<polygon fill="#7297ab" stroke="#7297ab" points="790.06,-632.92 796.56,-629.36 789.25,-628.09 790.06,-632.92" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="708.7" y="-659.94" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="785.69" y="-634.65" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="631.44" y="-649.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-hr.WorkTimeSheetLine" class="node" data-key="hr.WorkTimeSheetLine" data-route="model/hr.WorkTimeSheetLine">
+<title>n7</title>
+<g id="a_node-hr.WorkTimeSheetLine"><a xlink:href="../../index.html#model/hr.WorkTimeSheetLine" xlink:title="hr.WorkTimeSheetLine" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M218.6,-1193.28C218.6,-1193.28 12,-1193.28 12,-1193.28 6,-1193.28 0,-1187.28 0,-1181.28 0,-1181.28 0,-263.5 0,-263.5 0,-257.5 6,-251.5 12,-251.5 12,-251.5 218.6,-251.5 218.6,-251.5 224.6,-251.5 230.6,-257.5 230.6,-263.5 230.6,-263.5 230.6,-1181.28 230.6,-1181.28 230.6,-1187.28 224.6,-1193.28 218.6,-1193.28" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1170.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1145.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">WorkTimeSheetLine</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1119.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1096.69" font-family="Segoe UI" font-size="11.00">sheet : WorkTimeSheet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1073.69" font-family="Segoe UI" font-size="11.00">line_number : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1050.69" font-family="Segoe UI" font-size="11.00">organizational_unit : OrganizationalUnit ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1027.69" font-family="Segoe UI" font-size="11.00">day_1 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1004.69" font-family="Segoe UI" font-size="11.00">day_2 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-981.69" font-family="Segoe UI" font-size="11.00">day_3 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-958.69" font-family="Segoe UI" font-size="11.00">day_4 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-935.69" font-family="Segoe UI" font-size="11.00">day_5 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-912.69" font-family="Segoe UI" font-size="11.00">day_6 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-889.69" font-family="Segoe UI" font-size="11.00">day_7 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-866.69" font-family="Segoe UI" font-size="11.00">day_8 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-843.69" font-family="Segoe UI" font-size="11.00">day_9 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-820.69" font-family="Segoe UI" font-size="11.00">day_10 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-797.69" font-family="Segoe UI" font-size="11.00">day_11 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-774.69" font-family="Segoe UI" font-size="11.00">day_12 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-751.69" font-family="Segoe UI" font-size="11.00">day_13 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-728.69" font-family="Segoe UI" font-size="11.00">day_14 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-705.69" font-family="Segoe UI" font-size="11.00">day_15 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-682.69" font-family="Segoe UI" font-size="11.00">day_16 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-659.69" font-family="Segoe UI" font-size="11.00">day_17 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-636.69" font-family="Segoe UI" font-size="11.00">day_18 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-613.69" font-family="Segoe UI" font-size="11.00">day_19 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-590.69" font-family="Segoe UI" font-size="11.00">day_20 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-567.69" font-family="Segoe UI" font-size="11.00">day_21 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-544.69" font-family="Segoe UI" font-size="11.00">day_22 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-521.69" font-family="Segoe UI" font-size="11.00">day_23 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-498.69" font-family="Segoe UI" font-size="11.00">day_24 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-475.69" font-family="Segoe UI" font-size="11.00">day_25 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-452.69" font-family="Segoe UI" font-size="11.00">day_26 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-429.69" font-family="Segoe UI" font-size="11.00">day_27 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-406.69" font-family="Segoe UI" font-size="11.00">day_28 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-383.69" font-family="Segoe UI" font-size="11.00">day_29 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-360.69" font-family="Segoe UI" font-size="11.00">day_30 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-337.69" font-family="Segoe UI" font-size="11.00">day_31 : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-314.69" font-family="Segoe UI" font-size="11.00">work_conditions : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-291.69" font-family="Segoe UI" font-size="11.00">note : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-268.69" font-family="Segoe UI" font-size="11.00">work_category : WorkTimeCategory ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="hr.WorkTimeSheetLine" data-to="core.OrganizationalUnit">
+<title>n7-&gt;n1</title>
+<g id="a_edge-5"><a xlink:title="hr.WorkTimeSheetLine.organizational_unit → core.OrganizationalUnit | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M230.8,-809.27C269.69,-833.92 314.77,-857.53 359.85,-870.39 507.52,-912.51 688.76,-900.48 792.47,-887.93" />
+<polygon fill="#a27631" stroke="#a27631" points="792.57,-890.38 799.22,-887.09 791.97,-885.52 792.57,-890.38" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="489.4" y="-904.26" font-family="Segoe UI" font-size="11.00">organizational_unit</text>
+<text xml:space="preserve" text-anchor="middle" x="788.01" y="-891.91" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="245.69" y="-808.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-6" class="edge" data-from="hr.WorkTimeSheetLine" data-to="hr.WorkTimeCategory">
+<title>n7-&gt;n4</title>
+<g id="a_edge-6"><a xlink:title="hr.WorkTimeSheetLine.work_category → hr.WorkTimeCategory | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M230.98,-608.98C281.46,-559.05 340.2,-500.96 388.81,-452.88" />
+<polygon fill="#7297ab" stroke="#7297ab" points="390.36,-454.8 393.61,-448.13 386.91,-451.31 390.36,-454.8" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="295.22" y="-575.9" font-family="Segoe UI" font-size="11.00">work_category</text>
+<text xml:space="preserve" text-anchor="middle" x="389.48" y="-458.19" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="236.19" y="-591.96" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="hr.WorkTimeSheetLine" data-to="hr.WorkTimeSheet">
+<title>n7-&gt;n6</title>
+<g id="a_edge-4"><a xlink:title="hr.WorkTimeSheetLine.sheet → hr.WorkTimeSheet | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M230.98,-711.6C268.96,-708.03 311.61,-704.02 351.11,-700.3" />
+<polygon fill="#7297ab" stroke="#7297ab" points="351.24,-702.75 357.98,-699.66 350.78,-697.87 351.24,-702.75" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="295.22" y="-712.57" font-family="Segoe UI" font-size="11.00">sheet</text>
+<text xml:space="preserve" text-anchor="middle" x="346.55" y="-704.15" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="243.92" y="-701.07" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

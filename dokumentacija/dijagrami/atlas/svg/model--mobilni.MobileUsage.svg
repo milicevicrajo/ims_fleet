@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="508pt" height="847pt" viewBox="0.00 0.00 508.00 847.00" role="img" aria-label="MobileUsage · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 825.38)">
+<title>G</title>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n0</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M452.45,-504.28C452.45,-504.28 319.35,-504.28 319.35,-504.28 313.35,-504.28 307.35,-498.28 307.35,-492.28 307.35,-492.28 307.35,-425.5 307.35,-425.5 307.35,-419.5 313.35,-413.5 319.35,-413.5 319.35,-413.5 452.45,-413.5 452.45,-413.5 458.45,-413.5 464.45,-419.5 464.45,-425.5 464.45,-425.5 464.45,-492.28 464.45,-492.28 464.45,-498.28 458.45,-504.28 452.45,-504.28" />
+<text xml:space="preserve" text-anchor="start" x="322.15" y="-481.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="322.15" y="-456.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="322.15" y="-430.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-mobilni.MobileAssignment" class="node" data-key="mobilni.MobileAssignment" data-route="model/mobilni.MobileAssignment">
+<title>n1</title>
+<g id="a_node-mobilni.MobileAssignment"><a xlink:href="../../index.html#model/mobilni.MobileAssignment" xlink:title="mobilni.MobileAssignment" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M452.45,-390.28C452.45,-390.28 319.35,-390.28 319.35,-390.28 313.35,-390.28 307.35,-384.28 307.35,-378.28 307.35,-378.28 307.35,-311.5 307.35,-311.5 307.35,-305.5 313.35,-299.5 319.35,-299.5 319.35,-299.5 452.45,-299.5 452.45,-299.5 458.45,-299.5 464.45,-305.5 464.45,-311.5 464.45,-311.5 464.45,-378.28 464.45,-378.28 464.45,-384.28 458.45,-390.28 452.45,-390.28" />
+<text xml:space="preserve" text-anchor="start" x="322.15" y="-367.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="322.15" y="-342.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileAssignment</text>
+<text xml:space="preserve" text-anchor="start" x="322.15" y="-316.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">11 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-mobilni.MobileUsage" class="node" data-key="mobilni.MobileUsage" data-route="model/mobilni.MobileUsage">
+<title>n2</title>
+<g id="a_node-mobilni.MobileUsage"><a xlink:href="../../index.html#model/mobilni.MobileUsage" xlink:title="mobilni.MobileUsage" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M181.85,-803.78C181.85,-803.78 12,-803.78 12,-803.78 6,-803.78 0,-797.78 0,-791.78 0,-791.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 181.85,0 181.85,0 187.85,0 193.85,-6 193.85,-12 193.85,-12 193.85,-791.78 193.85,-791.78 193.85,-797.78 187.85,-803.78 181.85,-803.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-780.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-755.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileUsage</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-730.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-707.19" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-684.19" font-family="Segoe UI" font-size="11.00">month : PositiveSmallInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-661.19" font-family="Segoe UI" font-size="11.00">phone_number : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-638.19" font-family="Segoe UI" font-size="11.00">assignment : MobileAssignment ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-615.19" font-family="Segoe UI" font-size="11.00">employee : Employee ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-592.19" font-family="Segoe UI" font-size="11.00">onnet : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-569.19" font-family="Segoe UI" font-size="11.00">mts_network : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-546.19" font-family="Segoe UI" font-size="11.00">outside_mts : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-523.19" font-family="Segoe UI" font-size="11.00">kim : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-500.19" font-family="Segoe UI" font-size="11.00">special : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-477.19" font-family="Segoe UI" font-size="11.00">international : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-454.19" font-family="Segoe UI" font-size="11.00">roaming : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-431.19" font-family="Segoe UI" font-size="11.00">gprs : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-408.19" font-family="Segoe UI" font-size="11.00">sms : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-385.19" font-family="Segoe UI" font-size="11.00">sms_international : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">sms_roaming : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">mms : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">vas_sms : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">discount_traffic : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">fixed_discount : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">variable_discount : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">services : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">dispatch_notes : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">parking : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">nzrd : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">vat_base : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">vat : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">installments : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">total : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="mobilni.MobileUsage" data-to="hr.Employee">
+<title>n2-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="mobilni.MobileUsage.employee → hr.Employee | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M194.28,-421.03C228.06,-427.74 265.75,-435.22 298.64,-441.76" />
+<polygon fill="#a27631" stroke="#a27631" points="298.07,-444.14 305.41,-443.1 299.03,-439.34 298.07,-444.14" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="250.6" y="-441.72" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="292.33" y="-444.02" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="208.85" y="-414.51" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="mobilni.MobileUsage" data-to="mobilni.MobileAssignment">
+<title>n2-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="mobilni.MobileUsage.assignment → mobilni.MobileAssignment | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M194.28,-382.75C228.06,-376.04 265.75,-368.56 298.64,-362.02" />
+<polygon fill="#7297ab" stroke="#7297ab" points="299.03,-364.44 305.41,-360.68 298.07,-359.64 299.03,-364.44" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="250.6" y="-381.35" font-family="Segoe UI" font-size="11.00">assignment</text>
+<text xml:space="preserve" text-anchor="middle" x="294.8" y="-366.3" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="206.38" y="-370.93" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

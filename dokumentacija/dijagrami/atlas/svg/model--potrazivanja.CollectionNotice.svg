@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="785pt" height="548pt" viewBox="0.00 0.00 785.00 548.00" role="img" aria-label="CollectionNotice · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 526.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M716.3,-340.78C716.3,-340.78 589.2,-340.78 589.2,-340.78 583.2,-340.78 577.2,-334.78 577.2,-328.78 577.2,-328.78 577.2,-262 577.2,-262 577.2,-256 583.2,-250 589.2,-250 589.2,-250 716.3,-250 716.3,-250 722.3,-250 728.3,-256 728.3,-262 728.3,-262 728.3,-328.78 728.3,-328.78 728.3,-334.78 722.3,-340.78 716.3,-340.78" />
+<text xml:space="preserve" text-anchor="start" x="592" y="-317.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="592" y="-292.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="592" y="-267.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.CollectionNotice" class="node" data-key="potrazivanja.CollectionNotice" data-route="model/potrazivanja.CollectionNotice">
+<title>n1</title>
+<g id="a_node-potrazivanja.CollectionNotice"><a xlink:href="../../index.html#model/potrazivanja.CollectionNotice" xlink:title="potrazivanja.CollectionNotice" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M435.95,-504.78C435.95,-504.78 267.6,-504.78 267.6,-504.78 261.6,-504.78 255.6,-498.78 255.6,-492.78 255.6,-492.78 255.6,-12 255.6,-12 255.6,-6 261.6,0 267.6,0 267.6,0 435.95,0 435.95,0 441.95,0 447.95,-6 447.95,-12 447.95,-12 447.95,-492.78 447.95,-492.78 447.95,-498.78 441.95,-504.78 435.95,-504.78" />
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-481.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-456.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionNotice</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-431.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-408.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-385.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-362.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-339.19" font-family="Segoe UI" font-size="11.00">updated_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-316.19" font-family="Segoe UI" font-size="11.00">identity : FinancePartnerIdentity ?</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-293.19" font-family="Segoe UI" font-size="11.00">kind : Char</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-270.19" font-family="Segoe UI" font-size="11.00">year : PositiveSmallInteger ?</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-247.19" font-family="Segoe UI" font-size="11.00">number : Char</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-224.19" font-family="Segoe UI" font-size="11.00">issued_on : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-201.19" font-family="Segoe UI" font-size="11.00">total_amount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-178.19" font-family="Segoe UI" font-size="11.00">currency : Char</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-155.19" font-family="Segoe UI" font-size="11.00">partner_name_snapshot : Char</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-132.19" font-family="Segoe UI" font-size="11.00">original_invoice_text : Text</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-109.19" font-family="Segoe UI" font-size="11.00">note : Text</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-86.19" font-family="Segoe UI" font-size="11.00">archived : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-63.19" font-family="Segoe UI" font-size="11.00">recipient : Char</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-40.19" font-family="Segoe UI" font-size="11.00">body : Text</text>
+<text xml:space="preserve" text-anchor="start" x="270.4" y="-17.19" font-family="Segoe UI" font-size="11.00">response_due_date : Date ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.CollectionNotice" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.CollectionNotice.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M448.19,-266.11C486.96,-271.69 531.33,-278.07 568.73,-283.45" />
+<polygon fill="#a27631" stroke="#a27631" points="568.32,-285.87 575.6,-284.44 569.02,-281.02 568.32,-285.87" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="505.82" y="-282.29" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="562.74" y="-286.04" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="462.55" y="-258.82" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja.CollectionNotice" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="potrazivanja.CollectionNotice.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M448.24,-245.26C476.29,-244.94 506.89,-246.34 534.7,-251.39 546.07,-253.46 557.77,-256.56 569.17,-260.19" />
+<polygon fill="#a27631" stroke="#a27631" points="568.16,-262.44 575.57,-262.31 569.69,-257.79 568.16,-262.44" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="505.82" y="-255.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="562.11" y="-261.59" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="461.81" y="-235.9" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.FinancePartnerIdentity" class="node" data-key="potrazivanja.FinancePartnerIdentity" data-route="model/potrazivanja.FinancePartnerIdentity">
+<title>n3</title>
+<g id="a_node-potrazivanja.FinancePartnerIdentity"><a xlink:href="../../index.html#model/potrazivanja.FinancePartnerIdentity" xlink:title="potrazivanja.FinancePartnerIdentity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M729.8,-226.78C729.8,-226.78 575.7,-226.78 575.7,-226.78 569.7,-226.78 563.7,-220.78 563.7,-214.78 563.7,-214.78 563.7,-148 563.7,-148 563.7,-142 569.7,-136 575.7,-136 575.7,-136 729.8,-136 729.8,-136 735.8,-136 741.8,-142 741.8,-148 741.8,-148 741.8,-214.78 741.8,-214.78 741.8,-220.78 735.8,-226.78 729.8,-226.78" />
+<text xml:space="preserve" text-anchor="start" x="578.5" y="-203.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="578.5" y="-178.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinancePartnerIdentity</text>
+<text xml:space="preserve" text-anchor="start" x="578.5" y="-153.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">16 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="potrazivanja.CollectionNotice" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n1-&gt;n3</title>
+<g id="a_edge-2"><a xlink:title="potrazivanja.CollectionNotice.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M448.19,-229.73C482.37,-221.61 520.9,-212.46 555.17,-204.33" />
+<polygon fill="#7297ab" stroke="#7297ab" points="555.61,-206.74 561.85,-202.74 554.47,-201.97 555.61,-206.74" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="505.82" y="-225.69" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="551.56" y="-208.75" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="459.96" y="-217.47" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionNoticeItem" class="node" data-key="potrazivanja.CollectionNoticeItem" data-route="model/potrazivanja.CollectionNoticeItem">
+<title>n2</title>
+<g id="a_node-potrazivanja.CollectionNoticeItem"><a xlink:href="../../index.html#model/potrazivanja.CollectionNoticeItem" xlink:title="potrazivanja.CollectionNoticeItem" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M154.85,-297.78C154.85,-297.78 12,-297.78 12,-297.78 6,-297.78 0,-291.78 0,-285.78 0,-285.78 0,-219 0,-219 0,-213 6,-207 12,-207 12,-207 154.85,-207 154.85,-207 160.85,-207 166.85,-213 166.85,-219 166.85,-219 166.85,-285.78 166.85,-285.78 166.85,-291.78 160.85,-297.78 154.85,-297.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-274.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-249.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionNoticeItem</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">7 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="potrazivanja.CollectionNoticeItem" data-to="potrazivanja.CollectionNotice">
+<title>n2-&gt;n1</title>
+<g id="a_edge-3"><a xlink:title="potrazivanja.CollectionNoticeItem.notice → potrazivanja.CollectionNotice | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M167.24,-252.39C192.57,-252.39 220.74,-252.39 247.26,-252.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="246.92,-254.84 253.92,-252.39 246.92,-249.94 246.92,-254.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="211.22" y="-256.94" font-family="Segoe UI" font-size="11.00">notice</text>
+<text xml:space="preserve" text-anchor="middle" x="241.84" y="-255.78" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="180.83" y="-243.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

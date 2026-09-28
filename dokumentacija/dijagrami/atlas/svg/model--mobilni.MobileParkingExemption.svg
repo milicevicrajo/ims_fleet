@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="238pt" height="203pt" viewBox="0.00 0.00 238.00 203.00" role="img" aria-label="MobileParkingExemption · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 181.38)">
+<title>G</title>
+
+<g id="node-mobilni.MobileParkingExemption" class="node" data-key="mobilni.MobileParkingExemption" data-route="model/mobilni.MobileParkingExemption">
+<title>n0</title>
+<g id="a_node-mobilni.MobileParkingExemption"><a xlink:href="../../index.html#model/mobilni.MobileParkingExemption" xlink:title="mobilni.MobileParkingExemption" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M182.6,-159.78C182.6,-159.78 12,-159.78 12,-159.78 6,-159.78 0,-153.78 0,-147.78 0,-147.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 182.6,0 182.6,0 188.6,0 194.6,-6 194.6,-12 194.6,-12 194.6,-147.78 194.6,-147.78 194.6,-153.78 188.6,-159.78 182.6,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileParkingExemption</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">phone_number : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

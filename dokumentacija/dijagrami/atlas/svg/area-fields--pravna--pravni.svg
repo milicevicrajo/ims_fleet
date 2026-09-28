@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="762pt" height="757pt" viewBox="0.00 0.00 762.00 757.00" role="img" aria-label="Pravna služba · Pravni postupci · polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 735.68)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M706.55,-568.28C706.55,-568.28 579.45,-568.28 579.45,-568.28 573.45,-568.28 567.45,-562.28 567.45,-556.28 567.45,-556.28 567.45,-489.5 567.45,-489.5 567.45,-483.5 573.45,-477.5 579.45,-477.5 579.45,-477.5 706.55,-477.5 706.55,-477.5 712.55,-477.5 718.55,-483.5 718.55,-489.5 718.55,-489.5 718.55,-556.28 718.55,-556.28 718.55,-562.28 712.55,-568.28 706.55,-568.28" />
+<text xml:space="preserve" text-anchor="start" x="582.25" y="-545.19" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="582.25" y="-520.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="582.25" y="-494.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-pravna.Postupak" class="node" data-key="pravna.Postupak" data-route="model/pravna.Postupak">
+<title>n1</title>
+<g id="a_node-pravna.Postupak"><a xlink:href="../../index.html#model/pravna.Postupak" xlink:title="pravna.Postupak" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M444.2,-665.78C444.2,-665.78 273.6,-665.78 273.6,-665.78 267.6,-665.78 261.6,-659.78 261.6,-653.78 261.6,-653.78 261.6,-12 261.6,-12 261.6,-6 267.6,0 273.6,0 273.6,0 444.2,0 444.2,0 450.2,0 456.2,-6 456.2,-12 456.2,-12 456.2,-653.78 456.2,-653.78 456.2,-659.78 450.2,-665.78 444.2,-665.78" />
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-642.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">pravna</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-617.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Postupak</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-592.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-569.19" font-family="Segoe UI" font-size="11.00">tip : Char</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-546.19" font-family="Segoe UI" font-size="11.00">sud : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-523.19" font-family="Segoe UI" font-size="11.00">broj_predmeta : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-500.19" font-family="Segoe UI" font-size="11.00">sifra_partnera : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-477.19" font-family="Segoe UI" font-size="11.00">naziv_partnera : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-454.19" font-family="Segoe UI" font-size="11.00">valuta : Char</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-431.19" font-family="Segoe UI" font-size="11.00">osnovni_dug : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-408.19" font-family="Segoe UI" font-size="11.00">arhivirano : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-385.19" font-family="Segoe UI" font-size="11.00">izvrsiteljski_broj : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-362.19" font-family="Segoe UI" font-size="11.00">datum_pokretanja : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-339.19" font-family="Segoe UI" font-size="11.00">predmet_spora : Text ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-316.19" font-family="Segoe UI" font-size="11.00">tuzilac : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-293.19" font-family="Segoe UI" font-size="11.00">vrednost_spora : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-270.19" font-family="Segoe UI" font-size="11.00">datum_podnosenja_tuzbe : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-247.19" font-family="Segoe UI" font-size="11.00">vece : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-224.19" font-family="Segoe UI" font-size="11.00">kamata : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-201.19" font-family="Segoe UI" font-size="11.00">troskovi : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-178.19" font-family="Segoe UI" font-size="11.00">ukupan_dug : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-155.19" font-family="Segoe UI" font-size="11.00">datum_otvaranja_stecaja : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-132.19" font-family="Segoe UI" font-size="11.00">prijava_potrazivanja : Text ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-109.19" font-family="Segoe UI" font-size="11.00">novi_broj : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-86.19" font-family="Segoe UI" font-size="11.00">pib : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-63.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-40.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="276.4" y="-17.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="pravna.Postupak" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="pravna.Postupak.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M456.59,-398.01C492.77,-422.38 533.3,-449.68 567.21,-472.52" />
+<polygon fill="#a27631" stroke="#a27631" points="565.47,-474.3 572.64,-476.18 568.21,-470.23 565.47,-474.3" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="511.82" y="-455.05" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="559.08" y="-471.74" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="471.41" y="-397.4" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-pravna.PromenaPostupka" class="node" data-key="pravna.PromenaPostupka" data-route="model/pravna.PromenaPostupka">
+<title>n2</title>
+<g id="a_node-pravna.PromenaPostupka"><a xlink:href="../../index.html#model/pravna.PromenaPostupka" xlink:title="pravna.PromenaPostupka" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M146.6,-625.78C146.6,-625.78 12,-625.78 12,-625.78 6,-625.78 0,-619.78 0,-613.78 0,-613.78 0,-432 0,-432 0,-426 6,-420 12,-420 12,-420 146.6,-420 146.6,-420 152.6,-420 158.6,-426 158.6,-432 158.6,-432 158.6,-613.78 158.6,-613.78 158.6,-619.78 152.6,-625.78 146.6,-625.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-602.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">pravna</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-577.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PromenaPostupka</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-552.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-529.19" font-family="Segoe UI" font-size="11.00">postupak : Postupak</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-506.19" font-family="Segoe UI" font-size="11.00">datum : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-483.19" font-family="Segoe UI" font-size="11.00">promena : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-460.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-437.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="pravna.PromenaPostupka" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-2"><a xlink:title="pravna.PromenaPostupka.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M158.82,-610.52C188.14,-637.09 223.61,-662.93 261.6,-676.89 342.78,-706.72 374.84,-706.23 456.2,-676.89 512.46,-656.61 563.75,-611.06 598.11,-574.74" />
+<polygon fill="#a27631" stroke="#a27631" points="599.89,-576.43 602.87,-569.64 596.31,-573.08 599.89,-576.43" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="358.9" y="-703.63" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="599.26" y="-579.84" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="173.21" y="-611.82" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="pravna.PromenaPostupka" data-to="pravna.Postupak">
+<title>n2-&gt;n1</title>
+<g id="a_edge-1"><a xlink:title="pravna.PromenaPostupka.postupak → pravna.Postupak | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M158.74,-469.21C188.45,-448.87 222.74,-425.4 254.41,-403.72" />
+<polygon fill="#7297ab" stroke="#7297ab" points="255.49,-405.96 259.88,-399.98 252.72,-401.91 255.49,-405.96" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="210.1" y="-449.46" font-family="Segoe UI" font-size="11.00">postupak</text>
+<text xml:space="preserve" text-anchor="middle" x="253.49" y="-409.08" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="166.37" y="-453.35" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

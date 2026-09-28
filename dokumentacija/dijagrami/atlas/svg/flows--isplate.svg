@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="346pt" height="99pt" viewBox="0.00 0.00 346.00 99.00" role="img" aria-label="Tokovi rada · Isplate">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-isplate--virman" class="node" data-key="isplate/virman" data-route="flow/isplate/virman">
+<title>n0</title>
+<g id="a_node-isplate--virman"><a xlink:href="../../index.html#flow/isplate/virman" xlink:title="Tokovi rada · Isplate" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M290.85,-56.28C290.85,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 290.85,0 290.85,0 296.85,0 302.85,-6 302.85,-12 302.85,-12 302.85,-44.28 302.85,-44.28 302.85,-50.28 296.85,-56.28 290.85,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="151.43" y="-34.34" font-family="Segoe UI" font-size="14.00">Priprema bankarske datoteke za putne naloge</text>
+<text xml:space="preserve" text-anchor="middle" x="151.43" y="-14.84" font-family="Segoe UI" font-size="14.00">Isplate</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

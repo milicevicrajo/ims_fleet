@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="526pt" height="640pt" viewBox="0.00 0.00 526.00 640.00" role="img" aria-label="GoodsSnapshot · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 618.38)">
+<title>G</title>
+
+<g id="node-nabavka.GoodsSnapshot" class="node" data-key="nabavka.GoodsSnapshot" data-route="model/nabavka.GoodsSnapshot">
+<title>n0</title>
+<g id="a_node-nabavka.GoodsSnapshot"><a xlink:href="../../index.html#model/nabavka.GoodsSnapshot" xlink:title="nabavka.GoodsSnapshot" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M471.2,-596.78C471.2,-596.78 285.6,-596.78 285.6,-596.78 279.6,-596.78 273.6,-590.78 273.6,-584.78 273.6,-584.78 273.6,-12 273.6,-12 273.6,-6 279.6,0 285.6,0 285.6,0 471.2,0 471.2,0 477.2,0 483.2,-6 483.2,-12 483.2,-12 483.2,-584.78 483.2,-584.78 483.2,-590.78 477.2,-596.78 471.2,-596.78" />
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-573.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-548.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">GoodsSnapshot</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-523.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-500.19" font-family="Segoe UI" font-size="11.00">source_key : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-477.19" font-family="Segoe UI" font-size="11.00">year : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-454.19" font-family="Segoe UI" font-size="11.00">document_number : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-431.19" font-family="Segoe UI" font-size="11.00">document_type : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-408.19" font-family="Segoe UI" font-size="11.00">organizational_unit : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-385.19" font-family="Segoe UI" font-size="11.00">partner_code : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-362.19" font-family="Segoe UI" font-size="11.00">partner_name : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-339.19" font-family="Segoe UI" font-size="11.00">document_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-316.19" font-family="Segoe UI" font-size="11.00">linked_document : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-293.19" font-family="Segoe UI" font-size="11.00">debit : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-270.19" font-family="Segoe UI" font-size="11.00">currency : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-247.19" font-family="Segoe UI" font-size="11.00">foreign_currency_amount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-224.19" font-family="Segoe UI" font-size="11.00">subject_code : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-201.19" font-family="Segoe UI" font-size="11.00">line_number : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-178.19" font-family="Segoe UI" font-size="11.00">article_code : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-155.19" font-family="Segoe UI" font-size="11.00">article_type : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-132.19" font-family="Segoe UI" font-size="11.00">article_name : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-109.19" font-family="Segoe UI" font-size="11.00">quantity : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-86.19" font-family="Segoe UI" font-size="11.00">price : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-63.19" font-family="Segoe UI" font-size="11.00">synced_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="288.4" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="node-nabavka.ProcurementItem" class="node" data-key="nabavka.ProcurementItem" data-route="model/nabavka.ProcurementItem">
+<title>n1</title>
+<g id="a_node-nabavka.ProcurementItem"><a xlink:href="../../index.html#model/nabavka.ProcurementItem" xlink:title="nabavka.ProcurementItem" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M145.1,-343.78C145.1,-343.78 12,-343.78 12,-343.78 6,-343.78 0,-337.78 0,-331.78 0,-331.78 0,-265 0,-265 0,-259 6,-253 12,-253 12,-253 145.1,-253 145.1,-253 151.1,-253 157.1,-259 157.1,-265 157.1,-265 157.1,-331.78 157.1,-331.78 157.1,-337.78 151.1,-343.78 145.1,-343.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-320.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">nabavka</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-295.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ProcurementItem</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">11 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="nabavka.ProcurementItem" data-to="nabavka.GoodsSnapshot">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="nabavka.ProcurementItem.goods_item → nabavka.GoodsSnapshot | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M157.42,-298.39C190.35,-298.39 229.33,-298.39 265.27,-298.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="264.85,-300.84 271.85,-298.39 264.85,-295.94 264.85,-300.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="215.35" y="-302.94" font-family="Segoe UI" font-size="11.00">goods_item</text>
+<text xml:space="preserve" text-anchor="middle" x="259.77" y="-301.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="171.01" y="-289.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

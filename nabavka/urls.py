@@ -20,6 +20,15 @@ from .views.cases import (
     ProcurementStatusLogCreateView,
 )
 from .views.contracts import PurchaseContractListView
+from .views.fiskalni import (
+    FiskalniRacunDataView,
+    FiskalniRacunDeleteView,
+    FiskalniRacunDetailView,
+    FiskalniRacunListView,
+    FiskalniRacunRefreshView,
+    FiskalniRacunScanView,
+    FiskalniRacunUpdateView,
+)
 from .views.invoices import (
     EufInvoiceDataView,
     EufInvoiceDetailView,
@@ -85,6 +94,13 @@ urlpatterns = [
     path("euf-fakture/veze/<int:pk>/obrisi/", ProcurementInvoiceLinkDeleteView.as_view(), name="invoice_link_delete"),
     path("euf-fakture/ugovori/<int:pk>/obrisi/", ProcurementInvoiceContractLinkDeleteView.as_view(), name="invoice_contract_link_delete"),
     path("euf-fakture/sifre-posla/<int:pk>/obrisi/", ProcurementInvoiceJobCodeLinkDeleteView.as_view(), name="invoice_job_code_link_delete"),
+    path("fiskalni-racuni/", FiskalniRacunListView.as_view(), name="fiskalni_list"),
+    path("fiskalni-racuni/data/", FiskalniRacunDataView.as_view(), name="fiskalni_data"),
+    path("fiskalni-racuni/ocitaj/", FiskalniRacunScanView.as_view(), name="fiskalni_scan"),
+    path("fiskalni-racuni/<int:pk>/", FiskalniRacunDetailView.as_view(), name="fiskalni_detail"),
+    path("fiskalni-racuni/<int:pk>/preuzmi/", FiskalniRacunRefreshView.as_view(), name="fiskalni_refresh"),
+    path("fiskalni-racuni/<int:pk>/izmeni/", FiskalniRacunUpdateView.as_view(), name="fiskalni_update"),
+    path("fiskalni-racuni/<int:pk>/obrisi/", FiskalniRacunDeleteView.as_view(), name="fiskalni_delete"),
     path("uf-stavke/", EufItemSnapshotListView.as_view(), name="euf_item_list"),
     path("uf-stavke/data/", EufItemSnapshotDataView.as_view(), name="euf_item_data"),
     path("uf-stavke/sync/", EufItemSnapshotSyncView.as_view(), name="euf_item_sync"),

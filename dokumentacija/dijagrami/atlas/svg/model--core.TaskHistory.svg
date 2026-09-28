@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="196pt" height="479pt" viewBox="0.00 0.00 196.00 479.00" role="img" aria-label="TaskHistory · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 457.38)">
+<title>G</title>
+
+<g id="node-core.TaskHistory" class="node" data-key="core.TaskHistory" data-route="model/core.TaskHistory">
+<title>n0</title>
+<g id="a_node-core.TaskHistory"><a xlink:href="../../index.html#model/core.TaskHistory" xlink:title="core.TaskHistory" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M140.6,-435.78C140.6,-435.78 12,-435.78 12,-435.78 6,-435.78 0,-429.78 0,-423.78 0,-423.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 140.6,0 140.6,0 146.6,0 152.6,-6 152.6,-12 152.6,-12 152.6,-423.78 152.6,-423.78 152.6,-429.78 146.6,-435.78 140.6,-435.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-412.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-387.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">TaskHistory</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">task_id : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">task_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">display_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">short_message : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">result : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">error : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">args : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">kwargs : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">started_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">finished_at : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">elapsed_seconds : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">details : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

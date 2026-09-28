@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="356pt" height="257pt" viewBox="0.00 0.00 356.00 257.00" role="img" aria-label="Pravna služba · organizacija">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 235.88)">
+<title>G</title>
+
+<g id="node-pravna" class="node" data-key="pravna" data-route="models/pravna">
+<title>n0</title>
+<g id="a_node-pravna"><a xlink:href="../../index.html#models/pravna" xlink:title="Pravna služba · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M92.85,-125.53C92.85,-125.53 12,-125.53 12,-125.53 6,-125.53 0,-119.53 0,-113.53 0,-113.53 0,-100.75 0,-100.75 0,-94.75 6,-88.75 12,-88.75 12,-88.75 92.85,-88.75 92.85,-88.75 98.85,-88.75 104.85,-94.75 104.85,-100.75 104.85,-100.75 104.85,-113.53 104.85,-113.53 104.85,-119.53 98.85,-125.53 92.85,-125.53" />
+<text xml:space="preserve" text-anchor="middle" x="52.43" y="-103.59" font-family="Segoe UI" font-size="14.00">Pravna služba</text>
+</a>
+</g>
+</g>
+
+<g id="node-pravni" class="node" data-key="pravni" data-route="area/pravna/pravni">
+<title>n1</title>
+<g id="a_node-pravni"><a xlink:href="../../index.html#area/pravna/pravni" xlink:title="Pravna služba · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M284.2,-214.28C284.2,-214.28 191.35,-214.28 191.35,-214.28 185.35,-214.28 179.35,-208.28 179.35,-202.28 179.35,-202.28 179.35,-170 179.35,-170 179.35,-164 185.35,-158 191.35,-158 191.35,-158 284.2,-158 284.2,-158 290.2,-158 296.2,-164 296.2,-170 296.2,-170 296.2,-202.28 296.2,-202.28 296.2,-208.28 290.2,-214.28 284.2,-214.28" />
+<text xml:space="preserve" text-anchor="middle" x="237.77" y="-192.34" font-family="Segoe UI" font-size="14.00">Pravni postupci</text>
+<text xml:space="preserve" text-anchor="middle" x="237.77" y="-172.84" font-family="Segoe UI" font-size="14.00">2 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="pravna" data-to="pravni">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M96.88,-125.86C119.14,-135.46 146.71,-147.33 171.47,-158" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="170.27,-160.15 177.67,-160.67 172.21,-155.65 170.27,-160.15" />
+</g>
+
+<g id="node-disciplinski" class="node" data-key="disciplinski" data-route="area/pravna/disciplinski">
+<title>n2</title>
+<g id="a_node-disciplinski"><a xlink:href="../../index.html#area/pravna/disciplinski" xlink:title="Pravna služba · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M300.7,-135.28C300.7,-135.28 174.85,-135.28 174.85,-135.28 168.85,-135.28 162.85,-129.28 162.85,-123.28 162.85,-123.28 162.85,-91 162.85,-91 162.85,-85 168.85,-79 174.85,-79 174.85,-79 300.7,-79 300.7,-79 306.7,-79 312.7,-85 312.7,-91 312.7,-91 312.7,-123.28 312.7,-123.28 312.7,-129.28 306.7,-135.28 300.7,-135.28" />
+<text xml:space="preserve" text-anchor="middle" x="237.77" y="-113.34" font-family="Segoe UI" font-size="14.00">Disciplinski postupci</text>
+<text xml:space="preserve" text-anchor="middle" x="237.77" y="-93.84" font-family="Segoe UI" font-size="14.00">2 modela</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="pravna" data-to="disciplinski">
+<title>n0-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M104.99,-107.14C120.37,-107.14 137.63,-107.14 154.46,-107.14" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="154.17,-109.59 161.17,-107.14 154.17,-104.69 154.17,-109.59" />
+</g>
+
+<g id="node-flows" class="node" data-key="flows" data-route="flows/pravna">
+<title>n3</title>
+<g id="a_node-flows"><a xlink:href="../../index.html#flows/pravna" xlink:title="Pravna služba · organizacija" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M287.2,-56.28C287.2,-56.28 188.35,-56.28 188.35,-56.28 182.35,-56.28 176.35,-50.28 176.35,-44.28 176.35,-44.28 176.35,-12 176.35,-12 176.35,-6 182.35,0 188.35,0 188.35,0 287.2,0 287.2,0 293.2,0 299.2,-6 299.2,-12 299.2,-12 299.2,-44.28 299.2,-44.28 299.2,-50.28 293.2,-56.28 287.2,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="237.77" y="-34.34" font-family="Segoe UI" font-size="14.00">Tokovi rada</text>
+<text xml:space="preserve" text-anchor="middle" x="237.77" y="-14.84" font-family="Segoe UI" font-size="14.00">Poslovni procesi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="pravna" data-to="flows">
+<title>n0-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M96.88,-88.42C118.19,-79.24 144.35,-67.96 168.27,-57.66" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="169.1,-59.97 174.56,-54.95 167.16,-55.47 169.1,-59.97" />
+</g>
+</g>
+</svg>

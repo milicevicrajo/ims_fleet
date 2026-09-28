@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="470pt" height="1008pt" viewBox="0.00 0.00 470.00 1008.00" role="img" aria-label="TransactionOMV · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 986.38)">
+<title>G</title>
+
+<g id="node-fleet.TransactionOMV" class="node" data-key="fleet.TransactionOMV" data-route="model/fleet.TransactionOMV">
+<title>n0</title>
+<g id="a_node-fleet.TransactionOMV"><a xlink:href="../../index.html#model/fleet.TransactionOMV" xlink:title="fleet.TransactionOMV" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M165.35,-964.78C165.35,-964.78 12,-964.78 12,-964.78 6,-964.78 0,-958.78 0,-952.78 0,-952.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 165.35,0 165.35,0 171.35,0 177.35,-6 177.35,-12 177.35,-12 177.35,-952.78 177.35,-952.78 177.35,-958.78 171.35,-964.78 165.35,-964.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-941.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-916.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">TransactionOMV</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-891.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-868.19" font-family="Segoe UI" font-size="11.00">vehicle : Vehicle ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-845.19" font-family="Segoe UI" font-size="11.00">issuer : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-822.19" font-family="Segoe UI" font-size="11.00">customer : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-799.19" font-family="Segoe UI" font-size="11.00">card : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-776.19" font-family="Segoe UI" font-size="11.00">license_plate_no : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-753.19" font-family="Segoe UI" font-size="11.00">transaction_date : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-730.19" font-family="Segoe UI" font-size="11.00">product_inv : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-707.19" font-family="Segoe UI" font-size="11.00">quantity : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-684.19" font-family="Segoe UI" font-size="11.00">gross_cc : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-661.19" font-family="Segoe UI" font-size="11.00">vat : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-638.19" font-family="Segoe UI" font-size="11.00">voucher : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-615.19" font-family="Segoe UI" font-size="11.00">mileage : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-592.19" font-family="Segoe UI" font-size="11.00">corrected_mileage : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-569.19" font-family="Segoe UI" font-size="11.00">additional_info : Text ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-546.19" font-family="Segoe UI" font-size="11.00">supply_country : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-523.19" font-family="Segoe UI" font-size="11.00">site_town : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-500.19" font-family="Segoe UI" font-size="11.00">product_del : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-477.19" font-family="Segoe UI" font-size="11.00">unit_price : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-454.19" font-family="Segoe UI" font-size="11.00">amount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-431.19" font-family="Segoe UI" font-size="11.00">discount : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-408.19" font-family="Segoe UI" font-size="11.00">surcharge : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-385.19" font-family="Segoe UI" font-size="11.00">vat_2010 : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-362.19" font-family="Segoe UI" font-size="11.00">supplier_currency : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-339.19" font-family="Segoe UI" font-size="11.00">invoice_no : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-316.19" font-family="Segoe UI" font-size="11.00">invoice_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-293.19" font-family="Segoe UI" font-size="11.00">invoiced : Boolean ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.19" font-family="Segoe UI" font-size="11.00">state : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">supplier : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">cost_1 : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">cost_2 : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">reference_no : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">record_type : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">amount_other : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">is_list_price : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">approval_code : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">date_to : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">final_trx : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">lpi : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet.Vehicle" class="node" data-key="fleet.Vehicle" data-route="model/fleet.Vehicle">
+<title>n1</title>
+<g id="a_node-fleet.Vehicle"><a xlink:href="../../index.html#model/fleet.Vehicle" xlink:title="fleet.Vehicle" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M414.95,-527.78C414.95,-527.78 281.85,-527.78 281.85,-527.78 275.85,-527.78 269.85,-521.78 269.85,-515.78 269.85,-515.78 269.85,-449 269.85,-449 269.85,-443 275.85,-437 281.85,-437 281.85,-437 414.95,-437 414.95,-437 420.95,-437 426.95,-443 426.95,-449 426.95,-449 426.95,-515.78 426.95,-515.78 426.95,-521.78 420.95,-527.78 414.95,-527.78" />
+<text xml:space="preserve" text-anchor="start" x="284.65" y="-504.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">fleet</text>
+<text xml:space="preserve" text-anchor="start" x="284.65" y="-479.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Vehicle</text>
+<text xml:space="preserve" text-anchor="start" x="284.65" y="-454.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">28 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="fleet.TransactionOMV" data-to="fleet.Vehicle">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="fleet.TransactionOMV.vehicle → fleet.Vehicle | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M177.65,-482.39C204.74,-482.39 234.52,-482.39 261.47,-482.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="261.23,-484.84 268.23,-482.39 261.23,-479.94 261.23,-484.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-486.94" font-family="Segoe UI" font-size="11.00">vehicle</text>
+<text xml:space="preserve" text-anchor="middle" x="256.14" y="-485.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="191.24" y="-473.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

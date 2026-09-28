@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="845pt" height="1274pt" viewBox="0.00 0.00 845.00 1274.00" role="img" aria-label="Potraživanja · Pravni predmeti · polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 1252.88)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M776.3,-351.78C776.3,-351.78 649.2,-351.78 649.2,-351.78 643.2,-351.78 637.2,-345.78 637.2,-339.78 637.2,-339.78 637.2,-273 637.2,-273 637.2,-267 643.2,-261 649.2,-261 649.2,-261 776.3,-261 776.3,-261 782.3,-261 788.3,-267 788.3,-273 788.3,-273 788.3,-339.78 788.3,-339.78 788.3,-345.78 782.3,-351.78 776.3,-351.78" />
+<text xml:space="preserve" text-anchor="start" x="652" y="-328.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="652" y="-303.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="652" y="-278.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja.CollectionLegalCase" class="node" data-key="potrazivanja.CollectionLegalCase" data-route="model/potrazivanja.CollectionLegalCase">
+<title>n1</title>
+<g id="a_node-potrazivanja.CollectionLegalCase"><a xlink:href="../../index.html#model/potrazivanja.CollectionLegalCase" xlink:title="potrazivanja.CollectionLegalCase" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M487.32,-1231.28C487.32,-1231.28 305.47,-1231.28 305.47,-1231.28 299.47,-1231.28 293.47,-1225.28 293.47,-1219.28 293.47,-1219.28 293.47,-485.5 293.47,-485.5 293.47,-479.5 299.47,-473.5 305.47,-473.5 305.47,-473.5 487.32,-473.5 487.32,-473.5 493.32,-473.5 499.32,-479.5 499.32,-485.5 499.32,-485.5 499.32,-1219.28 499.32,-1219.28 499.32,-1225.28 493.32,-1231.28 487.32,-1231.28" />
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1208.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1183.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionLegalCase</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1157.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1134.69" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1111.69" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1088.69" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1065.69" font-family="Segoe UI" font-size="11.00">updated_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1042.69" font-family="Segoe UI" font-size="11.00">identity : FinancePartnerIdentity ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-1019.69" font-family="Segoe UI" font-size="11.00">legacy_id : PositiveBigInteger [UQ] ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-996.69" font-family="Segoe UI" font-size="11.00">original_data : JSON</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-973.69" font-family="Segoe UI" font-size="11.00">tip : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-950.69" font-family="Segoe UI" font-size="11.00">sud : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-927.69" font-family="Segoe UI" font-size="11.00">broj_predmeta : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-904.69" font-family="Segoe UI" font-size="11.00">sifra_partnera : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-881.69" font-family="Segoe UI" font-size="11.00">naziv_partnera : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-858.69" font-family="Segoe UI" font-size="11.00">valuta : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-835.69" font-family="Segoe UI" font-size="11.00">osnovni_dug : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-812.69" font-family="Segoe UI" font-size="11.00">arhivirano : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-789.69" font-family="Segoe UI" font-size="11.00">izvrsiteljski_broj : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-766.69" font-family="Segoe UI" font-size="11.00">datum_pokretanja : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-743.69" font-family="Segoe UI" font-size="11.00">predmet_spora : Text</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-720.69" font-family="Segoe UI" font-size="11.00">tuzilac : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-697.69" font-family="Segoe UI" font-size="11.00">vrednost_spora : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-674.69" font-family="Segoe UI" font-size="11.00">datum_podnosenja_tuzbe : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-651.69" font-family="Segoe UI" font-size="11.00">vece : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-628.69" font-family="Segoe UI" font-size="11.00">kamata : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-605.69" font-family="Segoe UI" font-size="11.00">troskovi : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-582.69" font-family="Segoe UI" font-size="11.00">ukupan_dug : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-559.69" font-family="Segoe UI" font-size="11.00">datum_otvaranja_stecaja : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-536.69" font-family="Segoe UI" font-size="11.00">prijava_potrazivanja : Text</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-513.69" font-family="Segoe UI" font-size="11.00">novi_broj : Char</text>
+<text xml:space="preserve" text-anchor="start" x="308.27" y="-490.69" font-family="Segoe UI" font-size="11.00">pib : Char</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="potrazivanja.CollectionLegalCase" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-3"><a xlink:title="potrazivanja.CollectionLegalCase.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M499.7,-577.75C533.13,-507.14 574.56,-434.05 623.7,-373.39 628.05,-368.03 632.91,-362.85 638.05,-357.91" />
+<polygon fill="#a27631" stroke="#a27631" points="639.62,-359.8 643.1,-353.25 636.29,-356.2 639.62,-359.8" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="565.82" y="-498.01" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="638.52" y="-363.15" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="499.91" y="-559.8" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="potrazivanja.CollectionLegalCase" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-4"><a xlink:title="potrazivanja.CollectionLegalCase.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M499.75,-700.69C534.21,-643.94 570.11,-577.62 594.7,-513.39 617.42,-454.05 589.82,-427.15 623.7,-373.39 627.08,-368.02 631.06,-362.92 635.42,-358.11" />
+<polygon fill="#a27631" stroke="#a27631" points="637,-360 640.09,-353.26 633.47,-356.61 637,-360" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="565.82" y="-634.85" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="636.28" y="-363.41" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="501.3" y="-682.82" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.FinancePartnerIdentity" class="node" data-key="potrazivanja.FinancePartnerIdentity" data-route="model/potrazivanja.FinancePartnerIdentity">
+<title>n3</title>
+<g id="a_node-potrazivanja.FinancePartnerIdentity"><a xlink:href="../../index.html#model/potrazivanja.FinancePartnerIdentity" xlink:title="potrazivanja.FinancePartnerIdentity" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M789.8,-475.78C789.8,-475.78 635.7,-475.78 635.7,-475.78 629.7,-475.78 623.7,-469.78 623.7,-463.78 623.7,-463.78 623.7,-397 623.7,-397 623.7,-391 629.7,-385 635.7,-385 635.7,-385 789.8,-385 789.8,-385 795.8,-385 801.8,-391 801.8,-397 801.8,-397 801.8,-463.78 801.8,-463.78 801.8,-469.78 795.8,-475.78 789.8,-475.78" />
+<text xml:space="preserve" text-anchor="start" x="638.5" y="-452.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="638.5" y="-427.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">FinancePartnerIdentity</text>
+<text xml:space="preserve" text-anchor="start" x="638.5" y="-402.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">16 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="potrazivanja.CollectionLegalCase" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n1-&gt;n3</title>
+<g id="a_edge-5"><a xlink:title="potrazivanja.CollectionLegalCase.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M499.79,-818.7C533.74,-803.3 569.3,-781.96 594.7,-753.39 663.72,-675.75 693,-554.25 704.67,-484.5" />
+<polygon fill="#7297ab" stroke="#7297ab" points="707.07,-485.05 705.77,-477.75 702.23,-484.27 707.07,-485.05" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="565.82" y="-802.8" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="710.09" y="-487.74" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="509.4" y="-804.23" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.CollectionLegalEvent" class="node" data-key="potrazivanja.CollectionLegalEvent" data-route="model/potrazivanja.CollectionLegalEvent">
+<title>n2</title>
+<g id="a_node-potrazivanja.CollectionLegalEvent"><a xlink:href="../../index.html#model/potrazivanja.CollectionLegalEvent" xlink:title="potrazivanja.CollectionLegalEvent" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M193.85,-320.78C193.85,-320.78 12,-320.78 12,-320.78 6,-320.78 0,-314.78 0,-308.78 0,-308.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 193.85,0 193.85,0 199.85,0 205.85,-6 205.85,-12 205.85,-12 205.85,-308.78 205.85,-308.78 205.85,-314.78 199.85,-320.78 193.85,-320.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-297.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-272.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CollectionLegalEvent</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-247.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-224.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">updated_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">case : CollectionLegalCase</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">legacy_id : PositiveBigInteger [UQ] ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">date : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">text : Text</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">archived : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">original_data : JSON</text>
+</a>
+</g>
+</g>
+
+<g id="edge-6" class="edge" data-from="potrazivanja.CollectionLegalEvent" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-6"><a xlink:title="potrazivanja.CollectionLegalEvent.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M206.09,-148.31C289.35,-142.01 408.91,-141.14 507.95,-172.39 561.97,-189.43 615.17,-225.25 653.67,-255.57" />
+<polygon fill="#a27631" stroke="#a27631" points="652.02,-257.38 659.02,-259.83 655.07,-253.55 652.02,-257.38" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="396.4" y="-176.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="645.62" y="-254.31" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="219.25" y="-138.15" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-7" class="edge" data-from="potrazivanja.CollectionLegalEvent" data-to="core.CustomUser">
+<title>n2-&gt;n0</title>
+<g id="a_edge-7"><a xlink:title="potrazivanja.CollectionLegalEvent.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M205.95,-130.96C288.86,-111.85 408.03,-95.38 507.95,-124.39 578.94,-145 639.02,-207.96 675.17,-254.07" />
+<polygon fill="#a27631" stroke="#a27631" points="673.18,-255.51 679.4,-259.55 677.06,-252.51 673.18,-255.51" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="396.4" y="-128.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="667" y="-250.92" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="217.9" y="-118.94" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-8" class="edge" data-from="potrazivanja.CollectionLegalEvent" data-to="potrazivanja.CollectionLegalCase">
+<title>n2-&gt;n1</title>
+<g id="a_edge-8"><a xlink:title="potrazivanja.CollectionLegalEvent.case → potrazivanja.CollectionLegalCase | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M171.53,-320.89C206.65,-404.27 250.37,-508.06 289.83,-601.74" />
+<polygon fill="#7297ab" stroke="#7297ab" points="287.46,-602.43 292.43,-607.93 291.97,-600.53 287.46,-602.43" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="245.35" y="-510.94" font-family="Segoe UI" font-size="11.00">case</text>
+<text xml:space="preserve" text-anchor="middle" x="281.9" y="-596.31" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="182.65" y="-328.01" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-potrazivanja.LegalCaseLink" class="node" data-key="potrazivanja.LegalCaseLink" data-route="model/potrazivanja.LegalCaseLink">
+<title>n4</title>
+<g id="a_node-potrazivanja.LegalCaseLink"><a xlink:href="../../index.html#model/potrazivanja.LegalCaseLink" xlink:title="potrazivanja.LegalCaseLink" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M495.95,-450.28C495.95,-450.28 296.85,-450.28 296.85,-450.28 290.85,-450.28 284.85,-444.28 284.85,-438.28 284.85,-438.28 284.85,-210.5 284.85,-210.5 284.85,-204.5 290.85,-198.5 296.85,-198.5 296.85,-198.5 495.95,-198.5 495.95,-198.5 501.95,-198.5 507.95,-204.5 507.95,-210.5 507.95,-210.5 507.95,-438.28 507.95,-438.28 507.95,-444.28 501.95,-450.28 495.95,-450.28" />
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-427.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-402.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">LegalCaseLink</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-376.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-353.69" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-330.69" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-307.69" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-284.69" font-family="Segoe UI" font-size="11.00">updated_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-261.69" font-family="Segoe UI" font-size="11.00">legacy_case_id : PositiveBigInteger [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-238.69" font-family="Segoe UI" font-size="11.00">identity : FinancePartnerIdentity</text>
+<text xml:space="preserve" text-anchor="start" x="299.65" y="-215.69" font-family="Segoe UI" font-size="11.00">note : Text</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="potrazivanja.LegalCaseLink" data-to="core.CustomUser">
+<title>n4-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="potrazivanja.LegalCaseLink.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M508.23,-318.04C547.83,-315.78 591.75,-313.26 628.62,-311.15" />
+<polygon fill="#a27631" stroke="#a27631" points="628.5,-313.61 635.35,-310.76 628.22,-308.72 628.5,-313.61" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="565.82" y="-320.48" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="623.65" y="-314.83" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="521.44" y="-307.99" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="potrazivanja.LegalCaseLink" data-to="core.CustomUser">
+<title>n4-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="potrazivanja.LegalCaseLink.updated_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M508.24,-297.47C517.91,-295.83 527.58,-294.42 536.95,-293.39 562.46,-290.59 569.07,-291.97 594.7,-293.39 605.71,-294 617.27,-294.93 628.66,-296.02" />
+<polygon fill="#a27631" stroke="#a27631" points="628.21,-298.43 635.42,-296.68 628.69,-293.56 628.21,-298.43" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="565.82" y="-297.94" font-family="Segoe UI" font-size="11.00">updated_by</text>
+<text xml:space="preserve" text-anchor="middle" x="622.77" y="-298.85" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="520.6" y="-286.02" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-2" class="edge" data-from="potrazivanja.LegalCaseLink" data-to="potrazivanja.FinancePartnerIdentity">
+<title>n4-&gt;n3</title>
+<g id="a_edge-2"><a xlink:title="potrazivanja.LegalCaseLink.identity → potrazivanja.FinancePartnerIdentity | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M508.23,-361.76C543.17,-373.54 581.46,-386.46 615.31,-397.87" />
+<polygon fill="#7297ab" stroke="#7297ab" points="614.51,-400.19 621.93,-400.1 616.08,-395.54 614.51,-400.19" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="565.82" y="-394.55" font-family="Segoe UI" font-size="11.00">identity</text>
+<text xml:space="preserve" text-anchor="middle" x="608.46" y="-399.3" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="523.14" y="-357.15" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

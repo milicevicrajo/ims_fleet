@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="358pt" height="729pt" viewBox="0.00 0.00 358.00 729.00" role="img" aria-label="Od izvora knjiženja do finansijskog pregleda">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 707.46)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#277b75" stroke="#277b75" cx="157.43" cy="-658.44" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="125.51" y="-672.56" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/finansije.SyncRun">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/finansije.SyncRun" xlink:title="finansije.SyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M263.48,-592.52C263.48,-592.52 51.38,-592.52 51.38,-592.52 45.38,-592.52 39.38,-586.52 39.38,-580.52 39.38,-580.52 39.38,-567.74 39.38,-567.74 39.38,-561.74 45.38,-555.74 51.38,-555.74 51.38,-555.74 263.48,-555.74 263.48,-555.74 269.48,-555.74 275.48,-561.74 275.48,-567.74 275.48,-567.74 275.48,-580.52 275.48,-580.52 275.48,-586.52 269.48,-592.52 263.48,-592.52" />
+<text xml:space="preserve" text-anchor="middle" x="157.43" y="-570.58" font-family="Segoe UI" font-size="14.00">Izbor firme i perioda sinhronizacije</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M157.43,-650.14C157.43,-639.28 157.43,-618.34 157.43,-601.34" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="159.88,-601.4 157.43,-594.4 154.98,-601.4 159.88,-601.4" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/finansije.FinanceJob">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/finansije.FinanceJob" xlink:title="finansije.FinanceJob" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M260.85,-497.74C260.85,-497.74 54,-497.74 54,-497.74 48,-497.74 42,-491.74 42,-485.74 42,-485.74 42,-472.96 42,-472.96 42,-466.96 48,-460.96 54,-460.96 54,-460.96 260.85,-460.96 260.85,-460.96 266.85,-460.96 272.85,-466.96 272.85,-472.96 272.85,-472.96 272.85,-485.74 272.85,-485.74 272.85,-491.74 266.85,-497.74 260.85,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="157.43" y="-475.8" font-family="Segoe UI" font-size="14.00">Čitanje udaljenog izvora i poslova</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M157.43,-555.24C157.43,-541.38 157.43,-521.97 157.43,-506.39" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="159.88,-506.7 157.43,-499.7 154.98,-506.7 159.88,-506.7" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/finansije.LedgerEntry">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/finansije.LedgerEntry" xlink:title="finansije.LedgerEntry" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M302.85,-402.96C302.85,-402.96 12,-402.96 12,-402.96 6,-402.96 0,-396.96 0,-390.96 0,-390.96 0,-378.18 0,-378.18 0,-372.18 6,-366.18 12,-366.18 12,-366.18 302.85,-366.18 302.85,-366.18 308.85,-366.18 314.85,-372.18 314.85,-378.18 314.85,-378.18 314.85,-390.96 314.85,-390.96 314.85,-396.96 308.85,-402.96 302.85,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="157.43" y="-381.02" font-family="Segoe UI" font-size="14.00">Usklađivanje lokalnih stavki i kontrolnih zbirova</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M157.43,-460.46C157.43,-446.6 157.43,-427.19 157.43,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="159.88,-411.92 157.43,-404.92 154.98,-411.92 159.88,-411.92" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/finansije.SyncRun">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/finansije.SyncRun" xlink:title="finansije.SyncRun" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M251.48,-308.18C251.48,-308.18 63.38,-308.18 63.38,-308.18 57.38,-308.18 51.38,-302.18 51.38,-296.18 51.38,-296.18 51.38,-283.4 51.38,-283.4 51.38,-277.4 57.38,-271.4 63.38,-271.4 63.38,-271.4 251.48,-271.4 251.48,-271.4 257.48,-271.4 263.48,-277.4 263.48,-283.4 263.48,-283.4 263.48,-296.18 263.48,-296.18 263.48,-302.18 257.48,-308.18 251.48,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="157.43" y="-286.24" font-family="Segoe UI" font-size="14.00">Zabeleži rezultat sinhronizacije</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M157.43,-365.68C157.43,-351.82 157.43,-332.41 157.43,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="159.88,-317.14 157.43,-310.14 154.98,-317.14 159.88,-317.14" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/finansije.FinanceJob">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/finansije.FinanceJob" xlink:title="finansije.FinanceJob" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M278.1,-213.4C278.1,-213.4 36.75,-213.4 36.75,-213.4 30.75,-213.4 24.75,-207.4 24.75,-201.4 24.75,-201.4 24.75,-188.62 24.75,-188.62 24.75,-182.62 30.75,-176.62 36.75,-176.62 36.75,-176.62 278.1,-176.62 278.1,-176.62 284.1,-176.62 290.1,-182.62 290.1,-188.62 290.1,-188.62 290.1,-201.4 290.1,-201.4 290.1,-207.4 284.1,-213.4 278.1,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="157.43" y="-191.46" font-family="Segoe UI" font-size="14.00">Izbor posla, centra i perioda za analitiku</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M157.43,-270.9C157.43,-257.04 157.43,-237.63 157.43,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="159.88,-222.36 157.43,-215.36 154.98,-222.36 159.88,-222.36" />
+</g>
+
+<g id="node-5" class="node" data-key="5" data-route="model/finansije.LedgerEntry">
+<title>n6</title>
+<g id="a_node-5"><a xlink:href="../../index.html#model/finansije.LedgerEntry" xlink:title="finansije.LedgerEntry" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M287.85,-118.62C287.85,-118.62 27,-118.62 27,-118.62 21,-118.62 15,-112.62 15,-106.62 15,-106.62 15,-93.84 15,-93.84 15,-87.84 21,-81.84 27,-81.84 27,-81.84 287.85,-81.84 287.85,-81.84 293.85,-81.84 299.85,-87.84 299.85,-93.84 299.85,-93.84 299.85,-106.62 299.85,-106.62 299.85,-112.62 293.85,-118.62 287.85,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="157.43" y="-96.68" font-family="Segoe UI" font-size="14.00">Prikaz prihoda, rashoda i povezanih analiza</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="5">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M157.43,-176.12C157.43,-162.26 157.43,-142.85 157.43,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="159.88,-127.58 157.43,-120.58 154.98,-127.58 159.88,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n7</title>
+<ellipse fill="#277b75" stroke="#277b75" cx="157.43" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#277b75" cx="157.43" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="133.88" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-6" class="edge" data-from="5" data-to="end">
+<title>n6-&gt;n7</title>
+<path fill="none" stroke="#8b9ead" d="M157.43,-81.35C157.43,-67.12 157.43,-47.23 157.43,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="159.88,-32.71 157.43,-25.71 154.98,-32.71 159.88,-32.71" />
+</g>
+</g>
+</svg>

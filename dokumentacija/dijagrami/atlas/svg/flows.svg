@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="3885pt" height="99pt" viewBox="0.00 0.00 3885.00 99.00" role="img" aria-label="Tokovi rada">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-hr--zahtev-resenje" class="node" data-key="hr/zahtev-resenje" data-route="flow/hr/zahtev-resenje">
+<title>n0</title>
+<g id="a_node-hr--zahtev-resenje"><a xlink:href="../../index.html#flow/hr/zahtev-resenje" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M196.35,-56.28C196.35,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 196.35,0 196.35,0 202.35,0 208.35,-6 208.35,-12 208.35,-12 208.35,-44.28 208.35,-44.28 208.35,-50.28 202.35,-56.28 196.35,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="104.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Od zahteva do izdatog rešenja</text>
+<text xml:space="preserve" text-anchor="middle" x="104.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Kadrovi</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr--radna-lista" class="node" data-key="hr/radna-lista" data-route="flow/hr/radna-lista">
+<title>n1</title>
+<g id="a_node-hr--radna-lista"><a xlink:href="../../index.html#flow/hr/radna-lista" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M382.85,-56.28C382.85,-56.28 243.5,-56.28 243.5,-56.28 237.5,-56.28 231.5,-50.28 231.5,-44.28 231.5,-44.28 231.5,-12 231.5,-12 231.5,-6 237.5,0 243.5,0 243.5,0 382.85,0 382.85,0 388.85,0 394.85,-6 394.85,-12 394.85,-12 394.85,-44.28 394.85,-44.28 394.85,-50.28 388.85,-56.28 382.85,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="313.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Radna lista zaposlenog</text>
+<text xml:space="preserve" text-anchor="middle" x="313.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Kadrovi</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet--zaduzenje" class="node" data-key="fleet/zaduzenje" data-route="flow/fleet/zaduzenje">
+<title>n2</title>
+<g id="a_node-fleet--zaduzenje"><a xlink:href="../../index.html#flow/fleet/zaduzenje" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M698.72,-56.28C698.72,-56.28 429.62,-56.28 429.62,-56.28 423.62,-56.28 417.62,-50.28 417.62,-44.28 417.62,-44.28 417.62,-12 417.62,-12 417.62,-6 423.62,0 429.62,0 429.62,0 698.72,0 698.72,0 704.72,0 710.72,-6 710.72,-12 710.72,-12 710.72,-44.28 710.72,-44.28 710.72,-50.28 704.72,-56.28 698.72,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="564.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Zaduženje i zatvaranje putnog naloga vozila</text>
+<text xml:space="preserve" text-anchor="middle" x="564.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Flota</text>
+</a>
+</g>
+</g>
+
+<g id="node-fleet--gorivo" class="node" data-key="fleet/gorivo" data-route="flow/fleet/gorivo">
+<title>n3</title>
+<g id="a_node-fleet--gorivo"><a xlink:href="../../index.html#flow/fleet/gorivo" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M946.22,-56.28C946.22,-56.28 746.12,-56.28 746.12,-56.28 740.12,-56.28 734.12,-50.28 734.12,-44.28 734.12,-44.28 734.12,-12 734.12,-12 734.12,-6 740.12,0 746.12,0 746.12,0 946.22,0 946.22,0 952.22,0 958.22,-6 958.22,-12 958.22,-12 958.22,-44.28 958.22,-44.28 958.22,-50.28 952.22,-56.28 946.22,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="846.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Uvoz goriva i priprema potrošnje</text>
+<text xml:space="preserve" text-anchor="middle" x="846.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Flota</text>
+</a>
+</g>
+</g>
+
+<g id="node-finansije--sinhronizacija" class="node" data-key="finansije/sinhronizacija" data-route="flow/finansije/sinhronizacija">
+<title>n4</title>
+<g id="a_node-finansije--sinhronizacija"><a xlink:href="../../index.html#flow/finansije/sinhronizacija" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M1264.85,-56.28C1264.85,-56.28 993.5,-56.28 993.5,-56.28 987.5,-56.28 981.5,-50.28 981.5,-44.28 981.5,-44.28 981.5,-12 981.5,-12 981.5,-6 987.5,0 993.5,0 993.5,0 1264.85,0 1264.85,0 1270.85,0 1276.85,-6 1276.85,-12 1276.85,-12 1276.85,-44.28 1276.85,-44.28 1276.85,-50.28 1270.85,-56.28 1264.85,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="1129.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Od izvora knjiženja do finansijskog pregleda</text>
+<text xml:space="preserve" text-anchor="middle" x="1129.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Finansije</text>
+</a>
+</g>
+</g>
+
+<g id="node-nabavka--predmet" class="node" data-key="nabavka/predmet" data-route="flow/nabavka/predmet">
+<title>n5</title>
+<g id="a_node-nabavka--predmet"><a xlink:href="../../index.html#flow/nabavka/predmet" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M1514.72,-56.28C1514.72,-56.28 1311.62,-56.28 1311.62,-56.28 1305.62,-56.28 1299.62,-50.28 1299.62,-44.28 1299.62,-44.28 1299.62,-12 1299.62,-12 1299.62,-6 1305.62,0 1311.62,0 1311.62,0 1514.72,0 1514.72,0 1520.72,0 1526.72,-6 1526.72,-12 1526.72,-12 1526.72,-44.28 1526.72,-44.28 1526.72,-50.28 1520.72,-56.28 1514.72,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="1413.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Predmet nabavke, stavke i fakture</text>
+<text xml:space="preserve" text-anchor="middle" x="1413.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Nabavka</text>
+</a>
+</g>
+</g>
+
+<g id="node-potrazivanja--naplata" class="node" data-key="potrazivanja/naplata" data-route="flow/potrazivanja/naplata">
+<title>n6</title>
+<g id="a_node-potrazivanja--naplata"><a xlink:href="../../index.html#flow/potrazivanja/naplata" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M1746.35,-56.28C1746.35,-56.28 1562,-56.28 1562,-56.28 1556,-56.28 1550,-50.28 1550,-44.28 1550,-44.28 1550,-12 1550,-12 1550,-6 1556,0 1562,0 1562,0 1746.35,0 1746.35,0 1752.35,0 1758.35,-6 1758.35,-12 1758.35,-12 1758.35,-44.28 1758.35,-44.28 1758.35,-50.28 1752.35,-56.28 1746.35,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="1654.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Od salda do aktivnosti naplate</text>
+<text xml:space="preserve" text-anchor="middle" x="1654.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Potraživanja</text>
+</a>
+</g>
+</g>
+
+<g id="node-pravna--disciplinski" class="node" data-key="pravna/disciplinski" data-route="flow/pravna/disciplinski">
+<title>n7</title>
+<g id="a_node-pravna--disciplinski"><a xlink:href="../../index.html#flow/pravna/disciplinski" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M2000.6,-56.28C2000.6,-56.28 1793.75,-56.28 1793.75,-56.28 1787.75,-56.28 1781.75,-50.28 1781.75,-44.28 1781.75,-44.28 1781.75,-12 1781.75,-12 1781.75,-6 1787.75,0 1793.75,0 1793.75,0 2000.6,0 2000.6,0 2006.6,0 2012.6,-6 2012.6,-12 2012.6,-12 2012.6,-44.28 2012.6,-44.28 2012.6,-50.28 2006.6,-56.28 2000.6,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="1897.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Tok disciplinskog postupka i mera</text>
+<text xml:space="preserve" text-anchor="middle" x="1897.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Pravna služba</text>
+</a>
+</g>
+</g>
+
+<g id="node-ugovori--ugovor" class="node" data-key="ugovori/ugovor" data-route="flow/ugovori/ugovor">
+<title>n8</title>
+<g id="a_node-ugovori--ugovor"><a xlink:href="../../index.html#flow/ugovori/ugovor" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M2336.48,-56.28C2336.48,-56.28 2047.88,-56.28 2047.88,-56.28 2041.88,-56.28 2035.88,-50.28 2035.88,-44.28 2035.88,-44.28 2035.88,-12 2035.88,-12 2035.88,-6 2041.88,0 2047.88,0 2047.88,0 2336.48,0 2336.48,0 2342.48,0 2348.48,-6 2348.48,-12 2348.48,-12 2348.48,-44.28 2348.48,-44.28 2348.48,-50.28 2342.48,-56.28 2336.48,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="2192.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Evidentiranje ugovora i povezanih dokumenata</text>
+<text xml:space="preserve" text-anchor="middle" x="2192.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Ugovori</text>
+</a>
+</g>
+</g>
+
+<g id="node-menice--registar" class="node" data-key="menice/registar" data-route="flow/menice/registar">
+<title>n9</title>
+<g id="a_node-menice--registar"><a xlink:href="../../index.html#flow/menice/registar" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M2564.48,-56.28C2564.48,-56.28 2383.88,-56.28 2383.88,-56.28 2377.88,-56.28 2371.88,-50.28 2371.88,-44.28 2371.88,-44.28 2371.88,-12 2371.88,-12 2371.88,-6 2377.88,0 2383.88,0 2383.88,0 2564.48,0 2564.48,0 2570.48,0 2576.48,-6 2576.48,-12 2576.48,-12 2576.48,-44.28 2576.48,-44.28 2576.48,-50.28 2570.48,-56.28 2564.48,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="2474.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Registar menica i povezivanje</text>
+<text xml:space="preserve" text-anchor="middle" x="2474.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Menice</text>
+</a>
+</g>
+</g>
+
+<g id="node-mobilni--obustave" class="node" data-key="mobilni/obustave" data-route="flow/mobilni/obustave">
+<title>n10</title>
+<g id="a_node-mobilni--obustave"><a xlink:href="../../index.html#flow/mobilni/obustave" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M2762.48,-56.28C2762.48,-56.28 2611.88,-56.28 2611.88,-56.28 2605.88,-56.28 2599.88,-50.28 2599.88,-44.28 2599.88,-44.28 2599.88,-12 2599.88,-12 2599.88,-6 2605.88,0 2611.88,0 2611.88,0 2762.48,0 2762.48,0 2768.48,0 2774.48,-6 2774.48,-12 2774.48,-12 2774.48,-44.28 2774.48,-44.28 2774.48,-50.28 2768.48,-56.28 2762.48,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="2687.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Mesečni uvoz i obustave</text>
+<text xml:space="preserve" text-anchor="middle" x="2687.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Mobilna telefonija</text>
+</a>
+</g>
+</g>
+
+<g id="node-isplate--virman" class="node" data-key="isplate/virman" data-route="flow/isplate/virman">
+<title>n11</title>
+<g id="a_node-isplate--virman"><a xlink:href="../../index.html#flow/isplate/virman" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M3088.6,-56.28C3088.6,-56.28 2809.75,-56.28 2809.75,-56.28 2803.75,-56.28 2797.75,-50.28 2797.75,-44.28 2797.75,-44.28 2797.75,-12 2797.75,-12 2797.75,-6 2803.75,0 2809.75,0 2809.75,0 3088.6,0 3088.6,0 3094.6,0 3100.6,-6 3100.6,-12 3100.6,-12 3100.6,-44.28 3100.6,-44.28 3100.6,-50.28 3094.6,-56.28 3088.6,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="2949.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Priprema bankarske datoteke za putne naloge</text>
+<text xml:space="preserve" text-anchor="middle" x="2949.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Isplate</text>
+</a>
+</g>
+</g>
+
+<g id="node-organizacija--obuhvat" class="node" data-key="organizacija/obuhvat" data-route="flow/organizacija/obuhvat">
+<title>n12</title>
+<g id="a_node-organizacija--obuhvat"><a xlink:href="../../index.html#flow/organizacija/obuhvat" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M3380.73,-56.28C3380.73,-56.28 3135.62,-56.28 3135.62,-56.28 3129.62,-56.28 3123.62,-50.28 3123.62,-44.28 3123.62,-44.28 3123.62,-12 3123.62,-12 3123.62,-6 3129.62,0 3135.62,0 3135.62,0 3380.73,0 3380.73,0 3386.73,0 3392.73,-6 3392.73,-12 3392.73,-12 3392.73,-44.28 3392.73,-44.28 3392.73,-50.28 3386.73,-56.28 3380.73,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="3258.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Od dodele uloge do obuhvata podataka</text>
+<text xml:space="preserve" text-anchor="middle" x="3258.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Organizacija</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata--nasledjeni-pregled" class="node" data-key="naplata/nasledjeni-pregled" data-route="flow/naplata/nasledjeni-pregled">
+<title>n13</title>
+<g id="a_node-naplata--nasledjeni-pregled"><a xlink:href="../../index.html#flow/naplata/nasledjeni-pregled" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M3660.73,-56.28C3660.73,-56.28 3427.62,-56.28 3427.62,-56.28 3421.62,-56.28 3415.62,-50.28 3415.62,-44.28 3415.62,-44.28 3415.62,-12 3415.62,-12 3415.62,-6 3421.62,0 3427.62,0 3427.62,0 3660.73,0 3660.73,0 3666.73,0 3672.73,-6 3672.73,-12 3672.73,-12 3672.73,-44.28 3672.73,-44.28 3672.73,-50.28 3666.73,-56.28 3660.73,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="3544.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Pregled nasleđenih evidencija naplate</text>
+<text xml:space="preserve" text-anchor="middle" x="3544.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Nasleđena naplata</text>
+</a>
+</g>
+</g>
+
+<g id="node-core--pristup" class="node" data-key="core/pristup" data-route="flow/core/pristup">
+<title>n14</title>
+<g id="a_node-core--pristup"><a xlink:href="../../index.html#flow/core/pristup" xlink:title="Tokovi rada" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M3830.23,-56.28C3830.23,-56.28 3708.12,-56.28 3708.12,-56.28 3702.12,-56.28 3696.12,-50.28 3696.12,-44.28 3696.12,-44.28 3696.12,-12 3696.12,-12 3696.12,-6 3702.12,0 3708.12,0 3708.12,0 3830.23,0 3830.23,0 3836.23,0 3842.23,-6 3842.23,-12 3842.23,-12 3842.23,-44.28 3842.23,-44.28 3842.23,-50.28 3836.23,-56.28 3830.23,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="3769.18" y="-34.34" font-family="Segoe UI" font-size="14.00">Provera pristupa ruti</text>
+<text xml:space="preserve" text-anchor="middle" x="3769.18" y="-14.84" font-family="Segoe UI" font-size="14.00">Administracija</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

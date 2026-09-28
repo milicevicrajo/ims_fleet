@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="383pt" height="729pt" viewBox="0.00 0.00 383.00 729.00" role="img" aria-label="Zaduženje i zatvaranje putnog naloga vozila">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 707.46)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#277b75" stroke="#277b75" cx="169.8" cy="-658.44" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="137.88" y="-672.56" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/fleet.VehicleTravelOrder">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/fleet.VehicleTravelOrder" xlink:title="fleet.VehicleTravelOrder" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M273.6,-592.52C273.6,-592.52 66,-592.52 66,-592.52 60,-592.52 54,-586.52 54,-580.52 54,-580.52 54,-567.74 54,-567.74 54,-561.74 60,-555.74 66,-555.74 66,-555.74 273.6,-555.74 273.6,-555.74 279.6,-555.74 285.6,-561.74 285.6,-567.74 285.6,-567.74 285.6,-580.52 285.6,-580.52 285.6,-586.52 279.6,-592.52 273.6,-592.52" />
+<text xml:space="preserve" text-anchor="middle" x="169.8" y="-570.58" font-family="Segoe UI" font-size="14.00">Izaberi vozilo, zaposlenog i datum</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M169.8,-650.14C169.8,-639.28 169.8,-618.34 169.8,-601.34" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.25,-601.4 169.8,-594.4 167.35,-601.4 172.25,-601.4" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/fleet.VehicleTravelOrder">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/fleet.VehicleTravelOrder" xlink:title="fleet.VehicleTravelOrder" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M277.73,-497.74C277.73,-497.74 61.88,-497.74 61.88,-497.74 55.88,-497.74 49.88,-491.74 49.88,-485.74 49.88,-485.74 49.88,-472.96 49.88,-472.96 49.88,-466.96 55.88,-460.96 61.88,-460.96 61.88,-460.96 277.73,-460.96 277.73,-460.96 283.73,-460.96 289.73,-466.96 289.73,-472.96 289.73,-472.96 289.73,-485.74 289.73,-485.74 289.73,-491.74 283.73,-497.74 277.73,-497.74" />
+<text xml:space="preserve" text-anchor="middle" x="169.8" y="-475.8" font-family="Segoe UI" font-size="14.00">Provera datuma i postojećih naloga</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M169.8,-555.24C169.8,-541.38 169.8,-521.97 169.8,-506.39" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.25,-506.7 169.8,-499.7 167.35,-506.7 172.25,-506.7" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/fleet.VehicleTravelOrder">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/fleet.VehicleTravelOrder" xlink:title="fleet.VehicleTravelOrder" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M267.98,-402.96C267.98,-402.96 71.62,-402.96 71.62,-402.96 65.62,-402.96 59.63,-396.96 59.63,-390.96 59.63,-390.96 59.63,-378.18 59.63,-378.18 59.63,-372.18 65.63,-366.18 71.63,-366.18 71.63,-366.18 267.98,-366.18 267.98,-366.18 273.98,-366.18 279.98,-372.18 279.98,-378.18 279.98,-378.18 279.98,-390.96 279.98,-390.96 279.98,-396.96 273.98,-402.96 267.98,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="169.8" y="-381.02" font-family="Segoe UI" font-size="14.00">Sačuvaj novi nalog i njegov broj</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M169.8,-460.46C169.8,-446.6 169.8,-427.19 169.8,-411.61" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.25,-411.92 169.8,-404.92 167.35,-411.92 172.25,-411.92" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/fleet.VehicleTravelOrder">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/fleet.VehicleTravelOrder" xlink:title="fleet.VehicleTravelOrder" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M298.73,-308.18C298.73,-308.18 40.88,-308.18 40.88,-308.18 34.88,-308.18 28.88,-302.18 28.88,-296.18 28.88,-296.18 28.88,-283.4 28.88,-283.4 28.88,-277.4 34.88,-271.4 40.88,-271.4 40.88,-271.4 298.73,-271.4 298.73,-271.4 304.73,-271.4 310.73,-277.4 310.73,-283.4 310.73,-283.4 310.73,-296.18 310.73,-296.18 310.73,-302.18 304.73,-308.18 298.73,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="169.8" y="-286.24" font-family="Segoe UI" font-size="14.00">Zatvori ranije otvorene naloge istog vozila</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M169.8,-365.68C169.8,-351.82 169.8,-332.41 169.8,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.25,-317.14 169.8,-310.14 167.35,-317.14 172.25,-317.14" />
+</g>
+
+<g id="node-4" class="node" data-key="4" data-route="model/fleet.VehicleTravelOrder">
+<title>n5</title>
+<g id="a_node-4"><a xlink:href="../../index.html#model/fleet.VehicleTravelOrder" xlink:title="fleet.VehicleTravelOrder" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M308.48,-213.4C308.48,-213.4 31.12,-213.4 31.12,-213.4 25.12,-213.4 19.12,-207.4 19.12,-201.4 19.12,-201.4 19.12,-188.62 19.12,-188.62 19.12,-182.62 25.12,-176.62 31.12,-176.62 31.12,-176.62 308.48,-176.62 308.48,-176.62 314.48,-176.62 320.48,-182.62 320.48,-188.62 320.48,-188.62 320.48,-201.4 320.48,-201.4 320.48,-207.4 314.48,-213.4 308.48,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="169.8" y="-191.46" font-family="Segoe UI" font-size="14.00">Korišćenje vozila; ručno zatvaranje po potrebi</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="4">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M169.8,-270.9C169.8,-257.04 169.8,-237.63 169.8,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.25,-222.36 169.8,-215.36 167.35,-222.36 172.25,-222.36" />
+</g>
+
+<g id="node-5" class="node" data-key="5" data-route="model/fleet.TransactionOMV">
+<title>n6</title>
+<g id="a_node-5"><a xlink:href="../../index.html#model/fleet.TransactionOMV" xlink:title="fleet.TransactionOMV" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M327.6,-118.62C327.6,-118.62 12,-118.62 12,-118.62 6,-118.62 0,-112.62 0,-106.62 0,-106.62 0,-93.84 0,-93.84 0,-87.84 6,-81.84 12,-81.84 12,-81.84 327.6,-81.84 327.6,-81.84 333.6,-81.84 339.6,-87.84 339.6,-93.84 339.6,-93.84 339.6,-106.62 339.6,-106.62 339.6,-112.62 333.6,-118.62 327.6,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="169.8" y="-96.68" font-family="Segoe UI" font-size="14.00">Gorivo za vozilo / tablicu i period, obračun i štampa</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="4" data-to="5">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M169.8,-176.12C169.8,-162.26 169.8,-142.85 169.8,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.25,-127.58 169.8,-120.58 167.35,-127.58 172.25,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n7</title>
+<ellipse fill="#277b75" stroke="#277b75" cx="169.8" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#277b75" cx="169.8" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="146.25" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-6" class="edge" data-from="5" data-to="end">
+<title>n6-&gt;n7</title>
+<path fill="none" stroke="#8b9ead" d="M169.8,-81.35C169.8,-67.12 169.8,-47.23 169.8,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="172.25,-32.71 169.8,-25.71 167.35,-32.71 172.25,-32.71" />
+</g>
+</g>
+</svg>

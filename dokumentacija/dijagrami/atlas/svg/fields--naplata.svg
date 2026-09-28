@@ -1,0 +1,299 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="466pt" height="4442pt" viewBox="0.00 0.00 466.00 4442.00" role="img" aria-label="Nasleđena naplata · modeli i polja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 4420.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M411.2,-136.78C411.2,-136.78 284.1,-136.78 284.1,-136.78 278.1,-136.78 272.1,-130.78 272.1,-124.78 272.1,-124.78 272.1,-58 272.1,-58 272.1,-52 278.1,-46 284.1,-46 284.1,-46 411.2,-46 411.2,-46 417.2,-46 423.2,-52 423.2,-58 423.2,-58 423.2,-124.78 423.2,-124.78 423.2,-130.78 417.2,-136.78 411.2,-136.78" />
+<text xml:space="preserve" text-anchor="start" x="286.9" y="-113.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="286.9" y="-88.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="286.9" y="-63.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.AvansKlijent" class="node" data-key="naplata.AvansKlijent" data-route="model/naplata.AvansKlijent">
+<title>n1</title>
+<g id="a_node-naplata.AvansKlijent"><a xlink:href="../../index.html#model/naplata.AvansKlijent" xlink:title="naplata.AvansKlijent" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M147.72,-182.78C147.72,-182.78 13.12,-182.78 13.12,-182.78 7.12,-182.78 1.12,-176.78 1.12,-170.78 1.12,-170.78 1.12,-12 1.12,-12 1.12,-6 7.12,0 13.12,0 13.12,0 147.72,0 147.72,0 153.72,0 159.72,-6 159.72,-12 159.72,-12 159.72,-170.78 159.72,-170.78 159.72,-176.78 153.72,-182.78 147.72,-182.78" />
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-159.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-134.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">AvansKlijent</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-109.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-86.19" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-63.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-40.19" font-family="Segoe UI" font-size="11.00">created_by : CustomUser ?</text>
+<text xml:space="preserve" text-anchor="start" x="15.92" y="-17.19" font-family="Segoe UI" font-size="11.00">note : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="naplata.AvansKlijent" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="naplata.AvansKlijent.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M159.92,-91.39C192.59,-91.39 230.55,-91.39 263.68,-91.39" />
+<polygon fill="#a27631" stroke="#a27631" points="263.48,-93.84 270.48,-91.39 263.48,-88.94 263.48,-93.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="216.47" y="-95.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="258.4" y="-94.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="173.52" y="-82.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-naplata.Baza" class="node" data-key="naplata.Baza" data-route="model/naplata.Baza">
+<title>n2</title>
+<g id="a_node-naplata.Baza"><a xlink:href="../../index.html#model/naplata.Baza" xlink:title="naplata.Baza" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M137.6,-779.28C137.6,-779.28 23.25,-779.28 23.25,-779.28 17.25,-779.28 11.25,-773.28 11.25,-767.28 11.25,-767.28 11.25,-217.5 11.25,-217.5 11.25,-211.5 17.25,-205.5 23.25,-205.5 23.25,-205.5 137.6,-205.5 137.6,-205.5 143.6,-205.5 149.6,-211.5 149.6,-217.5 149.6,-217.5 149.6,-767.28 149.6,-767.28 149.6,-773.28 143.6,-779.28 137.6,-779.28" />
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-756.19" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-731.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Baza</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-705.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-682.69" font-family="Segoe UI" font-size="11.00">god : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-659.69" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-636.69" font-family="Segoe UI" font-size="11.00">naz_par : Char</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-613.69" font-family="Segoe UI" font-size="11.00">sif_vrs : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-590.69" font-family="Segoe UI" font-size="11.00">br_naloga : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-567.69" font-family="Segoe UI" font-size="11.00">dat_naloga : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-544.69" font-family="Segoe UI" font-size="11.00">stavka : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-521.69" font-family="Segoe UI" font-size="11.00">vez_dok : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-498.69" font-family="Segoe UI" font-size="11.00">datum : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-475.69" font-family="Segoe UI" font-size="11.00">oj : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-452.69" font-family="Segoe UI" font-size="11.00">dpo : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-429.69" font-family="Segoe UI" font-size="11.00">kom : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-406.69" font-family="Segoe UI" font-size="11.00">skr_naz : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-383.69" font-family="Segoe UI" font-size="11.00">deviza : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-360.69" font-family="Segoe UI" font-size="11.00">promena : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-337.69" font-family="Segoe UI" font-size="11.00">stavka_k : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-314.69" font-family="Segoe UI" font-size="11.00">d_p : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-291.69" font-family="Segoe UI" font-size="11.00">knt : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-268.69" font-family="Segoe UI" font-size="11.00">dug : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-245.69" font-family="Segoe UI" font-size="11.00">pot : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-222.69" font-family="Segoe UI" font-size="11.00">sif_pos : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.DodelaBucketa" class="node" data-key="naplata.DodelaBucketa" data-route="model/naplata.DodelaBucketa">
+<title>n3</title>
+<g id="a_node-naplata.DodelaBucketa"><a xlink:href="../../index.html#model/naplata.DodelaBucketa" xlink:title="naplata.DodelaBucketa" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M148.85,-1168.78C148.85,-1168.78 12,-1168.78 12,-1168.78 6,-1168.78 0,-1162.78 0,-1156.78 0,-1156.78 0,-814 0,-814 0,-808 6,-802 12,-802 12,-802 148.85,-802 148.85,-802 154.85,-802 160.85,-808 160.85,-814 160.85,-814 160.85,-1156.78 160.85,-1156.78 160.85,-1162.78 154.85,-1168.78 148.85,-1168.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1145.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1120.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">DodelaBucketa</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1095.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1072.19" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1049.19" font-family="Segoe UI" font-size="11.00">naz_par : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1026.19" font-family="Segoe UI" font-size="11.00">vez_dok : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-1003.19" font-family="Segoe UI" font-size="11.00">sif_pos : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-980.19" font-family="Segoe UI" font-size="11.00">duguje : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-957.19" font-family="Segoe UI" font-size="11.00">potrazuje : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-934.19" font-family="Segoe UI" font-size="11.00">saldo : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-911.19" font-family="Segoe UI" font-size="11.00">dpo : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-888.19" font-family="Segoe UI" font-size="11.00">danasnji_datum : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-865.19" font-family="Segoe UI" font-size="11.00">broj_dana : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-842.19" font-family="Segoe UI" font-size="11.00">baket : Float</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-819.19" font-family="Segoe UI" font-size="11.00">kategorija : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Ispravke" class="node" data-key="naplata.Ispravke" data-route="model/naplata.Ispravke">
+<title>n4</title>
+<g id="a_node-naplata.Ispravke"><a xlink:href="../../index.html#model/naplata.Ispravke" xlink:title="naplata.Ispravke" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M137.6,-1788.78C137.6,-1788.78 23.25,-1788.78 23.25,-1788.78 17.25,-1788.78 11.25,-1782.78 11.25,-1776.78 11.25,-1776.78 11.25,-1204 11.25,-1204 11.25,-1198 17.25,-1192 23.25,-1192 23.25,-1192 137.6,-1192 137.6,-1192 143.6,-1192 149.6,-1198 149.6,-1204 149.6,-1204 149.6,-1776.78 149.6,-1776.78 149.6,-1782.78 143.6,-1788.78 137.6,-1788.78" />
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1765.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1740.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Ispravke</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1715.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1692.19" font-family="Segoe UI" font-size="11.00">god : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1669.19" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1646.19" font-family="Segoe UI" font-size="11.00">naz_par : Char</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1623.19" font-family="Segoe UI" font-size="11.00">sif_vrs : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1600.19" font-family="Segoe UI" font-size="11.00">br_naloga : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1577.19" font-family="Segoe UI" font-size="11.00">dat_naloga : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1554.19" font-family="Segoe UI" font-size="11.00">stavka : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1531.19" font-family="Segoe UI" font-size="11.00">vez_dok : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1508.19" font-family="Segoe UI" font-size="11.00">datum : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1485.19" font-family="Segoe UI" font-size="11.00">oj : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1462.19" font-family="Segoe UI" font-size="11.00">dpo : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1439.19" font-family="Segoe UI" font-size="11.00">kom : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1416.19" font-family="Segoe UI" font-size="11.00">skr_naz : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1393.19" font-family="Segoe UI" font-size="11.00">deviza : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1370.19" font-family="Segoe UI" font-size="11.00">promena : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1347.19" font-family="Segoe UI" font-size="11.00">stavka_k : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1324.19" font-family="Segoe UI" font-size="11.00">d_p : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1301.19" font-family="Segoe UI" font-size="11.00">knt : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1278.19" font-family="Segoe UI" font-size="11.00">naz_knt : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1255.19" font-family="Segoe UI" font-size="11.00">dug : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1232.19" font-family="Segoe UI" font-size="11.00">pot : Decimal</text>
+<text xml:space="preserve" text-anchor="start" x="26.05" y="-1209.19" font-family="Segoe UI" font-size="11.00">sif_pos : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Kontakti" class="node" data-key="naplata.Kontakti" data-route="model/naplata.Kontakti">
+<title>n5</title>
+<g id="a_node-naplata.Kontakti"><a xlink:href="../../index.html#model/naplata.Kontakti" xlink:title="naplata.Kontakti" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M128.22,-2017.28C128.22,-2017.28 32.62,-2017.28 32.62,-2017.28 26.62,-2017.28 20.62,-2011.28 20.62,-2005.28 20.62,-2005.28 20.62,-1823.5 20.62,-1823.5 20.62,-1817.5 26.62,-1811.5 32.62,-1811.5 32.62,-1811.5 128.22,-1811.5 128.22,-1811.5 134.22,-1811.5 140.22,-1817.5 140.22,-1823.5 140.22,-1823.5 140.22,-2005.28 140.22,-2005.28 140.22,-2011.28 134.22,-2017.28 128.22,-2017.28" />
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1994.19" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1969.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Kontakti</text>
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1943.69" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1920.69" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1897.69" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1874.69" font-family="Segoe UI" font-size="11.00">kontakt : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1851.69" font-family="Segoe UI" font-size="11.00">email : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="35.42" y="-1828.69" font-family="Segoe UI" font-size="11.00">napomena : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Napomene" class="node" data-key="naplata.Napomene" data-route="model/naplata.Napomene">
+<title>n6</title>
+<g id="a_node-naplata.Napomene"><a xlink:href="../../index.html#model/naplata.Napomene" xlink:title="naplata.Napomene" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M128.6,-2222.78C128.6,-2222.78 32.25,-2222.78 32.25,-2222.78 26.25,-2222.78 20.25,-2216.78 20.25,-2210.78 20.25,-2210.78 20.25,-2052 20.25,-2052 20.25,-2046 26.25,-2040 32.25,-2040 32.25,-2040 128.6,-2040 128.6,-2040 134.6,-2040 140.6,-2046 140.6,-2052 140.6,-2052 140.6,-2210.78 140.6,-2210.78 140.6,-2216.78 134.6,-2222.78 128.6,-2222.78" />
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-2199.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-2174.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Napomene</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-2149.19" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-2126.19" font-family="Segoe UI" font-size="11.00">sif_par : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-2103.19" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-2080.19" font-family="Segoe UI" font-size="11.00">napomene : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="35.05" y="-2057.19" font-family="Segoe UI" font-size="11.00">veliki : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Opomene" class="node" data-key="naplata.Opomene" data-route="model/naplata.Opomene">
+<title>n7</title>
+<g id="a_node-naplata.Opomene"><a xlink:href="../../index.html#model/naplata.Opomene" xlink:title="naplata.Opomene" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M140.6,-2520.78C140.6,-2520.78 20.25,-2520.78 20.25,-2520.78 14.25,-2520.78 8.25,-2514.78 8.25,-2508.78 8.25,-2508.78 8.25,-2258 8.25,-2258 8.25,-2252 14.25,-2246 20.25,-2246 20.25,-2246 140.6,-2246 140.6,-2246 146.6,-2246 152.6,-2252 152.6,-2258 152.6,-2258 152.6,-2508.78 152.6,-2508.78 152.6,-2514.78 146.6,-2520.78 140.6,-2520.78" />
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2497.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2472.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Opomene</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2447.19" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2424.19" font-family="Segoe UI" font-size="11.00">sif_par : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2401.19" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2378.19" font-family="Segoe UI" font-size="11.00">god : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2355.19" font-family="Segoe UI" font-size="11.00">br_opomene : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2332.19" font-family="Segoe UI" font-size="11.00">datum : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2309.19" font-family="Segoe UI" font-size="11.00">iznos : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2286.19" font-family="Segoe UI" font-size="11.00">fakture : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-2263.19" font-family="Segoe UI" font-size="11.00">napomene : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Partneri" class="node" data-key="naplata.Partneri" data-route="model/naplata.Partneri">
+<title>n8</title>
+<g id="a_node-naplata.Partneri"><a xlink:href="../../index.html#model/naplata.Partneri" xlink:title="naplata.Partneri" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M142.85,-3209.28C142.85,-3209.28 18,-3209.28 18,-3209.28 12,-3209.28 6,-3203.28 6,-3197.28 6,-3197.28 6,-2555.5 6,-2555.5 6,-2549.5 12,-2543.5 18,-2543.5 18,-2543.5 142.85,-2543.5 142.85,-2543.5 148.85,-2543.5 154.85,-2549.5 154.85,-2555.5 154.85,-2555.5 154.85,-3197.28 154.85,-3197.28 154.85,-3203.28 148.85,-3209.28 142.85,-3209.28" />
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3186.19" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3161.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Partneri</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3135.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3112.69" font-family="Segoe UI" font-size="11.00">sif_pred : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3089.69" font-family="Segoe UI" font-size="11.00">grupa : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3066.69" font-family="Segoe UI" font-size="11.00">sif_par : Integer</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3043.69" font-family="Segoe UI" font-size="11.00">naz_par : Char</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-3020.69" font-family="Segoe UI" font-size="11.00">ulica_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2997.69" font-family="Segoe UI" font-size="11.00">p_b_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2974.69" font-family="Segoe UI" font-size="11.00">mesto_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2951.69" font-family="Segoe UI" font-size="11.00">zr : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2928.69" font-family="Segoe UI" font-size="11.00">mb : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2905.69" font-family="Segoe UI" font-size="11.00">telefon : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2882.69" font-family="Segoe UI" font-size="11.00">fax : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2859.69" font-family="Segoe UI" font-size="11.00">email : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2836.69" font-family="Segoe UI" font-size="11.00">lice : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2813.69" font-family="Segoe UI" font-size="11.00">web : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2790.69" font-family="Segoe UI" font-size="11.00">proc_rabata : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2767.69" font-family="Segoe UI" font-size="11.00">br_dana : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2744.69" font-family="Segoe UI" font-size="11.00">vlasnik : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2721.69" font-family="Segoe UI" font-size="11.00">pib : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2698.69" font-family="Segoe UI" font-size="11.00">zemlja : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2675.69" font-family="Segoe UI" font-size="11.00">proc_rabata1 : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2652.69" font-family="Segoe UI" font-size="11.00">proc_rabata2 : Decimal ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2629.69" font-family="Segoe UI" font-size="11.00">pdv_obveznik : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2606.69" font-family="Segoe UI" font-size="11.00">sif_ter : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2583.69" font-family="Segoe UI" font-size="11.00">JBKJS : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="20.8" y="-2560.69" font-family="Segoe UI" font-size="11.00">CRF : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.PozivPismo" class="node" data-key="naplata.PozivPismo" data-route="model/naplata.PozivPismo">
+<title>n9</title>
+<g id="a_node-naplata.PozivPismo"><a xlink:href="../../index.html#model/naplata.PozivPismo" xlink:title="naplata.PozivPismo" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M131.22,-3506.78C131.22,-3506.78 29.62,-3506.78 29.62,-3506.78 23.62,-3506.78 17.62,-3500.78 17.62,-3494.78 17.62,-3494.78 17.62,-3244 17.62,-3244 17.62,-3238 23.62,-3232 29.62,-3232 29.62,-3232 131.22,-3232 131.22,-3232 137.22,-3232 143.22,-3238 143.22,-3244 143.22,-3244 143.22,-3494.78 143.22,-3494.78 143.22,-3500.78 137.22,-3506.78 131.22,-3506.78" />
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3483.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3458.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PozivPismo</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3433.19" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3410.19" font-family="Segoe UI" font-size="11.00">sif_par : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3387.19" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3364.19" font-family="Segoe UI" font-size="11.00">god : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3341.19" font-family="Segoe UI" font-size="11.00">br_pisma : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3318.19" font-family="Segoe UI" font-size="11.00">datum : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3295.19" font-family="Segoe UI" font-size="11.00">iznos : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3272.19" font-family="Segoe UI" font-size="11.00">fakture : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.42" y="-3249.19" font-family="Segoe UI" font-size="11.00">napomene : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.PoziviTel" class="node" data-key="naplata.PoziviTel" data-route="model/naplata.PoziviTel">
+<title>n10</title>
+<g id="a_node-naplata.PoziviTel"><a xlink:href="../../index.html#model/naplata.PoziviTel" xlink:title="naplata.PoziviTel" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M130.85,-3712.78C130.85,-3712.78 30,-3712.78 30,-3712.78 24,-3712.78 18,-3706.78 18,-3700.78 18,-3700.78 18,-3542 18,-3542 18,-3536 24,-3530 30,-3530 30,-3530 130.85,-3530 130.85,-3530 136.85,-3530 142.85,-3536 142.85,-3542 142.85,-3542 142.85,-3700.78 142.85,-3700.78 142.85,-3706.78 136.85,-3712.78 130.85,-3712.78" />
+<text xml:space="preserve" text-anchor="start" x="32.8" y="-3689.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="32.8" y="-3664.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PoziviTel</text>
+<text xml:space="preserve" text-anchor="start" x="32.8" y="-3639.19" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="32.8" y="-3616.19" font-family="Segoe UI" font-size="11.00">sif_par : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.8" y="-3593.19" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.8" y="-3570.19" font-family="Segoe UI" font-size="11.00">datum : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="32.8" y="-3547.19" font-family="Segoe UI" font-size="11.00">napomena : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.SifBaket" class="node" data-key="naplata.SifBaket" data-route="model/naplata.SifBaket">
+<title>n11</title>
+<g id="a_node-naplata.SifBaket"><a xlink:href="../../index.html#model/naplata.SifBaket" xlink:title="naplata.SifBaket" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M135.72,-3941.28C135.72,-3941.28 25.12,-3941.28 25.12,-3941.28 19.12,-3941.28 13.12,-3935.28 13.12,-3929.28 13.12,-3929.28 13.12,-3747.5 13.12,-3747.5 13.12,-3741.5 19.12,-3735.5 25.12,-3735.5 25.12,-3735.5 135.72,-3735.5 135.72,-3735.5 141.72,-3735.5 147.72,-3741.5 147.72,-3747.5 147.72,-3747.5 147.72,-3929.28 147.72,-3929.28 147.72,-3935.28 141.72,-3941.28 135.72,-3941.28" />
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3918.19" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3893.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">SifBaket</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3867.69" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3844.69" font-family="Segoe UI" font-size="11.00">br_kategorije : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3821.69" font-family="Segoe UI" font-size="11.00">baket : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3798.69" font-family="Segoe UI" font-size="11.00">baket_rang : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3775.69" font-family="Segoe UI" font-size="11.00">opis : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3752.69" font-family="Segoe UI" font-size="11.00">akcija : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.SifKategorija" class="node" data-key="naplata.SifKategorija" data-route="model/naplata.SifKategorija">
+<title>n12</title>
+<g id="a_node-naplata.SifKategorija"><a xlink:href="../../index.html#model/naplata.SifKategorija" xlink:title="naplata.SifKategorija" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M135.72,-4100.78C135.72,-4100.78 25.12,-4100.78 25.12,-4100.78 19.12,-4100.78 13.12,-4094.78 13.12,-4088.78 13.12,-4088.78 13.12,-3976 13.12,-3976 13.12,-3970 19.12,-3964 25.12,-3964 25.12,-3964 135.72,-3964 135.72,-3964 141.72,-3964 147.72,-3970 147.72,-3976 147.72,-3976 147.72,-4088.78 147.72,-4088.78 147.72,-4094.78 141.72,-4100.78 135.72,-4100.78" />
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-4077.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-4052.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">SifKategorija</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-4027.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-4004.19" font-family="Segoe UI" font-size="11.00">br_kategorije : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="27.92" y="-3981.19" font-family="Segoe UI" font-size="11.00">kategorija : Char ?</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Tuzbe" class="node" data-key="naplata.Tuzbe" data-route="model/naplata.Tuzbe">
+<title>n13</title>
+<g id="a_node-naplata.Tuzbe"><a xlink:href="../../index.html#model/naplata.Tuzbe" xlink:title="naplata.Tuzbe" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M140.6,-4398.78C140.6,-4398.78 20.25,-4398.78 20.25,-4398.78 14.25,-4398.78 8.25,-4392.78 8.25,-4386.78 8.25,-4386.78 8.25,-4136 8.25,-4136 8.25,-4130 14.25,-4124 20.25,-4124 20.25,-4124 140.6,-4124 140.6,-4124 146.6,-4124 152.6,-4130 152.6,-4136 152.6,-4136 152.6,-4386.78 152.6,-4386.78 152.6,-4392.78 146.6,-4398.78 140.6,-4398.78" />
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4375.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4350.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Tuzbe</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4325.19" font-family="Segoe UI" font-size="11.00">id : Auto [PK]</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4302.19" font-family="Segoe UI" font-size="11.00">sif_par : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4279.19" font-family="Segoe UI" font-size="11.00">naz_par : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4256.19" font-family="Segoe UI" font-size="11.00">god : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4233.19" font-family="Segoe UI" font-size="11.00">br_opomene : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4210.19" font-family="Segoe UI" font-size="11.00">datum : DateTime ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4187.19" font-family="Segoe UI" font-size="11.00">iznos : Float ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4164.19" font-family="Segoe UI" font-size="11.00">fakture : Char ?</text>
+<text xml:space="preserve" text-anchor="start" x="23.05" y="-4141.19" font-family="Segoe UI" font-size="11.00">napomene : Char ?</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

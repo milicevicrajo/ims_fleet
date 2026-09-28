@@ -1,0 +1,2962 @@
+{
+  "system": {
+    "id": "system",
+    "title": "Cela aplikacija",
+    "description": "Od celine do detalja: modul → oblast → model → povezani model. Izaberite karticu za početak.",
+    "file": "atlas/svg/system.svg",
+    "sources": [
+      "ims_erp/urls.py"
+    ]
+  },
+  "dependencies": {
+    "id": "dependencies",
+    "title": "Zavisnosti modula",
+    "description": "Kliknite modul. Pune veze su agregirane FK / M2M zavisnosti modela iz koda; isprekidano je servisna zavisnost.",
+    "file": "atlas/svg/dependencies.svg",
+    "sources": [
+      "ims_erp/urls.py"
+    ]
+  },
+  "all-models": {
+    "id": "all-models",
+    "title": "Svi modeli aplikacije",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/all-models.svg",
+    "sources": [
+      "core/models.py",
+      "finansije/models.py",
+      "fleet/economics_models.py",
+      "fleet/models.py",
+      "hr/evaluation_models.py",
+      "hr/models.py",
+      "hr/resenja_models.py",
+      "hr/zahtevi_models.py",
+      "menice/models.py",
+      "mobilni/models.py",
+      "nabavka/models.py",
+      "naplata/models.py",
+      "organizacija/models.py",
+      "potrazivanja/models.py",
+      "pravna/models.py",
+      "ugovori/models.py"
+    ]
+  },
+  "all-fields": {
+    "id": "all-fields",
+    "title": "Svi modeli i sva lokalno definisana polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/all-fields.svg",
+    "sources": [
+      "core/models.py",
+      "finansije/models.py",
+      "fleet/economics_models.py",
+      "fleet/models.py",
+      "hr/evaluation_models.py",
+      "hr/models.py",
+      "hr/resenja_models.py",
+      "hr/zahtevi_models.py",
+      "menice/models.py",
+      "mobilni/models.py",
+      "nabavka/models.py",
+      "naplata/models.py",
+      "organizacija/models.py",
+      "potrazivanja/models.py",
+      "pravna/models.py",
+      "ugovori/models.py"
+    ]
+  },
+  "module/fleet": {
+    "id": "module/fleet",
+    "title": "Flota · organizacija",
+    "description": "Vozila, garaža, gorivo, putni nalozi i ekonomika",
+    "file": "atlas/svg/module--fleet.svg",
+    "sources": [
+      "fleet/urls.py",
+      "fleet/models.py",
+      "fleet/views",
+      "fleet/services",
+      "fleet/support",
+      "fleet/sync"
+    ]
+  },
+  "models/fleet": {
+    "id": "models/fleet",
+    "title": "Flota · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--fleet.svg",
+    "sources": [
+      "fleet/economics_models.py",
+      "fleet/models.py"
+    ]
+  },
+  "fields/fleet": {
+    "id": "fields/fleet",
+    "title": "Flota · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--fleet.svg",
+    "sources": [
+      "fleet/economics_models.py",
+      "fleet/models.py"
+    ]
+  },
+  "area/fleet/vozila": {
+    "id": "area/fleet/vozila",
+    "title": "Flota · Vozila i dodele",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--fleet--vozila.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area-fields/fleet/vozila": {
+    "id": "area-fields/fleet/vozila",
+    "title": "Flota · Vozila i dodele · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--fleet--vozila.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area/fleet/gorivo": {
+    "id": "area/fleet/gorivo",
+    "title": "Flota · Gorivo i potrošnja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--fleet--gorivo.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area-fields/fleet/gorivo": {
+    "id": "area-fields/fleet/gorivo",
+    "title": "Flota · Gorivo i potrošnja · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--fleet--gorivo.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area/fleet/garaza": {
+    "id": "area/fleet/garaza",
+    "title": "Flota · Garaža i održavanje",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--fleet--garaza.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area-fields/fleet/garaza": {
+    "id": "area-fields/fleet/garaza",
+    "title": "Flota · Garaža i održavanje · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--fleet--garaza.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area/fleet/ugovori": {
+    "id": "area/fleet/ugovori",
+    "title": "Flota · Zakup i osiguranje",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--fleet--ugovori.svg",
+    "sources": [
+      "fleet/economics_models.py",
+      "fleet/models.py"
+    ]
+  },
+  "area-fields/fleet/ugovori": {
+    "id": "area-fields/fleet/ugovori",
+    "title": "Flota · Zakup i osiguranje · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--fleet--ugovori.svg",
+    "sources": [
+      "fleet/economics_models.py",
+      "fleet/models.py"
+    ]
+  },
+  "area/fleet/nalozi": {
+    "id": "area/fleet/nalozi",
+    "title": "Flota · Putni nalozi",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--fleet--nalozi.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area-fields/fleet/nalozi": {
+    "id": "area-fields/fleet/nalozi",
+    "title": "Flota · Putni nalozi · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--fleet--nalozi.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "area/fleet/analitika": {
+    "id": "area/fleet/analitika",
+    "title": "Flota · Ekonomske analize",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--fleet--analitika.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "area-fields/fleet/analitika": {
+    "id": "area-fields/fleet/analitika",
+    "title": "Flota · Ekonomske analize · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--fleet--analitika.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "module/hr": {
+    "id": "module/hr",
+    "title": "Kadrovi · organizacija",
+    "description": "Zaposleni, radno vreme, odsustva, zahtevi i rešenja",
+    "file": "atlas/svg/module--hr.svg",
+    "sources": [
+      "hr/urls.py",
+      "hr/models.py",
+      "hr/views.py",
+      "hr/services"
+    ]
+  },
+  "models/hr": {
+    "id": "models/hr",
+    "title": "Kadrovi · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--hr.svg",
+    "sources": [
+      "hr/evaluation_models.py",
+      "hr/models.py",
+      "hr/resenja_models.py",
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "fields/hr": {
+    "id": "fields/hr",
+    "title": "Kadrovi · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--hr.svg",
+    "sources": [
+      "hr/evaluation_models.py",
+      "hr/models.py",
+      "hr/resenja_models.py",
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "area/hr/zaposleni": {
+    "id": "area/hr/zaposleni",
+    "title": "Kadrovi · Zaposleni",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--hr--zaposleni.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "area-fields/hr/zaposleni": {
+    "id": "area-fields/hr/zaposleni",
+    "title": "Kadrovi · Zaposleni · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--hr--zaposleni.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "area/hr/dokumenti": {
+    "id": "area/hr/dokumenti",
+    "title": "Kadrovi · Zahtevi i rešenja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--hr--dokumenti.svg",
+    "sources": [
+      "hr/resenja_models.py",
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "area-fields/hr/dokumenti": {
+    "id": "area-fields/hr/dokumenti",
+    "title": "Kadrovi · Zahtevi i rešenja · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--hr--dokumenti.svg",
+    "sources": [
+      "hr/resenja_models.py",
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "area/hr/rad": {
+    "id": "area/hr/rad",
+    "title": "Kadrovi · Radno vreme",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--hr--rad.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "area-fields/hr/rad": {
+    "id": "area-fields/hr/rad",
+    "title": "Kadrovi · Radno vreme · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--hr--rad.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "area/hr/odsustva": {
+    "id": "area/hr/odsustva",
+    "title": "Kadrovi · Odmori i bolovanja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--hr--odsustva.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "area-fields/hr/odsustva": {
+    "id": "area-fields/hr/odsustva",
+    "title": "Kadrovi · Odmori i bolovanja · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--hr--odsustva.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "area/hr/ocene": {
+    "id": "area/hr/ocene",
+    "title": "Kadrovi · Ocenjivanje",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--hr--ocene.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "area-fields/hr/ocene": {
+    "id": "area-fields/hr/ocene",
+    "title": "Kadrovi · Ocenjivanje · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--hr--ocene.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "area/hr/ostalo": {
+    "id": "area/hr/ostalo",
+    "title": "Kadrovi · Pomoćne evidencije",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--hr--ostalo.svg",
+    "sources": [
+      "hr/resenja_models.py"
+    ]
+  },
+  "area-fields/hr/ostalo": {
+    "id": "area-fields/hr/ostalo",
+    "title": "Kadrovi · Pomoćne evidencije · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--hr--ostalo.svg",
+    "sources": [
+      "hr/resenja_models.py"
+    ]
+  },
+  "module/finansije": {
+    "id": "module/finansije",
+    "title": "Finansije · organizacija",
+    "description": "Analitika poslova, knjiženja, tok gotovine i banke",
+    "file": "atlas/svg/module--finansije.svg",
+    "sources": [
+      "finansije/urls.py",
+      "finansije/models.py",
+      "finansije/views.py",
+      "finansije/services"
+    ]
+  },
+  "models/finansije": {
+    "id": "models/finansije",
+    "title": "Finansije · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--finansije.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "fields/finansije": {
+    "id": "fields/finansije",
+    "title": "Finansije · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--finansije.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "area/finansije/knjizenja": {
+    "id": "area/finansije/knjizenja",
+    "title": "Finansije · Poslovi i knjiženja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--finansije--knjizenja.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "area-fields/finansije/knjizenja": {
+    "id": "area-fields/finansije/knjizenja",
+    "title": "Finansije · Poslovi i knjiženja · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--finansije--knjizenja.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "area/finansije/sinhronizacija": {
+    "id": "area/finansije/sinhronizacija",
+    "title": "Finansije · Sinhronizacije",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--finansije--sinhronizacija.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "area-fields/finansije/sinhronizacija": {
+    "id": "area-fields/finansije/sinhronizacija",
+    "title": "Finansije · Sinhronizacije · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--finansije--sinhronizacija.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "area/finansije/banke": {
+    "id": "area/finansije/banke",
+    "title": "Finansije · Banke i plasmani",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--finansije--banke.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "area-fields/finansije/banke": {
+    "id": "area-fields/finansije/banke",
+    "title": "Finansije · Banke i plasmani · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--finansije--banke.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "module/nabavka": {
+    "id": "module/nabavka",
+    "title": "Nabavka · organizacija",
+    "description": "Predmeti, stavke, fakture, narudžbenice i plan nabavki",
+    "file": "atlas/svg/module--nabavka.svg",
+    "sources": [
+      "nabavka/urls.py",
+      "nabavka/models.py",
+      "nabavka/views",
+      "nabavka/services"
+    ]
+  },
+  "models/nabavka": {
+    "id": "models/nabavka",
+    "title": "Nabavka · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--nabavka.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "fields/nabavka": {
+    "id": "fields/nabavka",
+    "title": "Nabavka · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--nabavka.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area/nabavka/predmeti": {
+    "id": "area/nabavka/predmeti",
+    "title": "Nabavka · Predmeti i narudžbenice",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--nabavka--predmeti.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area-fields/nabavka/predmeti": {
+    "id": "area-fields/nabavka/predmeti",
+    "title": "Nabavka · Predmeti i narudžbenice · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--nabavka--predmeti.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area/nabavka/fakture": {
+    "id": "area/nabavka/fakture",
+    "title": "Nabavka · Fakture i povezivanje",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--nabavka--fakture.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area-fields/nabavka/fakture": {
+    "id": "area-fields/nabavka/fakture",
+    "title": "Nabavka · Fakture i povezivanje · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--nabavka--fakture.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area/nabavka/izvori": {
+    "id": "area/nabavka/izvori",
+    "title": "Nabavka · Snimci izvora",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--nabavka--izvori.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area-fields/nabavka/izvori": {
+    "id": "area-fields/nabavka/izvori",
+    "title": "Nabavka · Snimci izvora · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--nabavka--izvori.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area/nabavka/plan": {
+    "id": "area/nabavka/plan",
+    "title": "Nabavka · Plan javnih nabavki",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--nabavka--plan.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area-fields/nabavka/plan": {
+    "id": "area-fields/nabavka/plan",
+    "title": "Nabavka · Plan javnih nabavki · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--nabavka--plan.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area/nabavka/ostalo": {
+    "id": "area/nabavka/ostalo",
+    "title": "Nabavka · Pomoćne evidencije",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--nabavka--ostalo.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "area-fields/nabavka/ostalo": {
+    "id": "area-fields/nabavka/ostalo",
+    "title": "Nabavka · Pomoćne evidencije · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--nabavka--ostalo.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "module/potrazivanja": {
+    "id": "module/potrazivanja",
+    "title": "Potraživanja · organizacija",
+    "description": "Dugovanja, dospeća, kontakti, opomene i pravni predmeti",
+    "file": "atlas/svg/module--potrazivanja.svg",
+    "sources": [
+      "potrazivanja/urls.py",
+      "potrazivanja/models.py",
+      "potrazivanja/views.py",
+      "potrazivanja/services"
+    ]
+  },
+  "models/potrazivanja": {
+    "id": "models/potrazivanja",
+    "title": "Potraživanja · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--potrazivanja.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "fields/potrazivanja": {
+    "id": "fields/potrazivanja",
+    "title": "Potraživanja · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--potrazivanja.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area/potrazivanja/dugovanja": {
+    "id": "area/potrazivanja/dugovanja",
+    "title": "Potraživanja · Dokumenti i salda",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--potrazivanja--dugovanja.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area-fields/potrazivanja/dugovanja": {
+    "id": "area-fields/potrazivanja/dugovanja",
+    "title": "Potraživanja · Dokumenti i salda · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--potrazivanja--dugovanja.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area/potrazivanja/naplata": {
+    "id": "area/potrazivanja/naplata",
+    "title": "Potraživanja · Operativna naplata",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--potrazivanja--naplata.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area-fields/potrazivanja/naplata": {
+    "id": "area-fields/potrazivanja/naplata",
+    "title": "Potraživanja · Operativna naplata · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--potrazivanja--naplata.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area/potrazivanja/predmeti": {
+    "id": "area/potrazivanja/predmeti",
+    "title": "Potraživanja · Pravni predmeti",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--potrazivanja--predmeti.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area-fields/potrazivanja/predmeti": {
+    "id": "area-fields/potrazivanja/predmeti",
+    "title": "Potraživanja · Pravni predmeti · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--potrazivanja--predmeti.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area/potrazivanja/uvoz": {
+    "id": "area/potrazivanja/uvoz",
+    "title": "Potraživanja · Uvoz i revizija",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--potrazivanja--uvoz.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "area-fields/potrazivanja/uvoz": {
+    "id": "area-fields/potrazivanja/uvoz",
+    "title": "Potraživanja · Uvoz i revizija · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--potrazivanja--uvoz.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "module/pravna": {
+    "id": "module/pravna",
+    "title": "Pravna služba · organizacija",
+    "description": "Pravni i disciplinski postupci, tok i mere",
+    "file": "atlas/svg/module--pravna.svg",
+    "sources": [
+      "pravna/urls.py",
+      "pravna/models.py",
+      "pravna/views.py"
+    ]
+  },
+  "models/pravna": {
+    "id": "models/pravna",
+    "title": "Pravna služba · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--pravna.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "fields/pravna": {
+    "id": "fields/pravna",
+    "title": "Pravna služba · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--pravna.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "area/pravna/pravni": {
+    "id": "area/pravna/pravni",
+    "title": "Pravna služba · Pravni postupci",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--pravna--pravni.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "area-fields/pravna/pravni": {
+    "id": "area-fields/pravna/pravni",
+    "title": "Pravna služba · Pravni postupci · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--pravna--pravni.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "area/pravna/disciplinski": {
+    "id": "area/pravna/disciplinski",
+    "title": "Pravna služba · Disciplinski postupci",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--pravna--disciplinski.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "area-fields/pravna/disciplinski": {
+    "id": "area-fields/pravna/disciplinski",
+    "title": "Pravna služba · Disciplinski postupci · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--pravna--disciplinski.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "module/ugovori": {
+    "id": "module/ugovori",
+    "title": "Ugovori · organizacija",
+    "description": "Partneri, zahtevi, ponude, ugovori, dokumenti i garancije",
+    "file": "atlas/svg/module--ugovori.svg",
+    "sources": [
+      "ugovori/urls.py",
+      "ugovori/models.py",
+      "ugovori/views.py"
+    ]
+  },
+  "models/ugovori": {
+    "id": "models/ugovori",
+    "title": "Ugovori · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--ugovori.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "fields/ugovori": {
+    "id": "fields/ugovori",
+    "title": "Ugovori · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--ugovori.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "area/ugovori/partneri": {
+    "id": "area/ugovori/partneri",
+    "title": "Ugovori · Partneri, zahtevi i ponude",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--ugovori--partneri.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "area-fields/ugovori/partneri": {
+    "id": "area-fields/ugovori/partneri",
+    "title": "Ugovori · Partneri, zahtevi i ponude · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--ugovori--partneri.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "area/ugovori/ugovori": {
+    "id": "area/ugovori/ugovori",
+    "title": "Ugovori · Ugovori i strane",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--ugovori--ugovori.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "area-fields/ugovori/ugovori": {
+    "id": "area-fields/ugovori/ugovori",
+    "title": "Ugovori · Ugovori i strane · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--ugovori--ugovori.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "area/ugovori/dokumenti": {
+    "id": "area/ugovori/dokumenti",
+    "title": "Ugovori · Dokumenti i obezbeđenja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--ugovori--dokumenti.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "area-fields/ugovori/dokumenti": {
+    "id": "area-fields/ugovori/dokumenti",
+    "title": "Ugovori · Dokumenti i obezbeđenja · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--ugovori--dokumenti.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "module/menice": {
+    "id": "module/menice",
+    "title": "Menice · organizacija",
+    "description": "Ulazne i izlazne menice i registar NBS",
+    "file": "atlas/svg/module--menice.svg",
+    "sources": [
+      "menice/urls.py",
+      "menice/models.py",
+      "menice/views.py"
+    ]
+  },
+  "models/menice": {
+    "id": "models/menice",
+    "title": "Menice · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--menice.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "fields/menice": {
+    "id": "fields/menice",
+    "title": "Menice · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--menice.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "area/menice/izlazne": {
+    "id": "area/menice/izlazne",
+    "title": "Menice · Izlazne menice",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--menice--izlazne.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "area-fields/menice/izlazne": {
+    "id": "area-fields/menice/izlazne",
+    "title": "Menice · Izlazne menice · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--menice--izlazne.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "area/menice/ulazne": {
+    "id": "area/menice/ulazne",
+    "title": "Menice · Ulazne menice",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--menice--ulazne.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "area-fields/menice/ulazne": {
+    "id": "area-fields/menice/ulazne",
+    "title": "Menice · Ulazne menice · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--menice--ulazne.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "module/mobilni": {
+    "id": "module/mobilni",
+    "title": "Mobilna telefonija · organizacija",
+    "description": "Paketi, korisnici, zaduženja, potrošnja i obustave",
+    "file": "atlas/svg/module--mobilni.svg",
+    "sources": [
+      "mobilni/urls.py",
+      "mobilni/models.py",
+      "mobilni/views",
+      "mobilni/support"
+    ]
+  },
+  "models/mobilni": {
+    "id": "models/mobilni",
+    "title": "Mobilna telefonija · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--mobilni.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "fields/mobilni": {
+    "id": "fields/mobilni",
+    "title": "Mobilna telefonija · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--mobilni.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "area/mobilni/evidencija": {
+    "id": "area/mobilni/evidencija",
+    "title": "Mobilna telefonija · Paketi i zaduženja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--mobilni--evidencija.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "area-fields/mobilni/evidencija": {
+    "id": "area-fields/mobilni/evidencija",
+    "title": "Mobilna telefonija · Paketi i zaduženja · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--mobilni--evidencija.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "area/mobilni/potrosnja": {
+    "id": "area/mobilni/potrosnja",
+    "title": "Mobilna telefonija · Potrošnja i uvoz",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--mobilni--potrosnja.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "area-fields/mobilni/potrosnja": {
+    "id": "area-fields/mobilni/potrosnja",
+    "title": "Mobilna telefonija · Potrošnja i uvoz · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--mobilni--potrosnja.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "module/isplate": {
+    "id": "module/isplate",
+    "title": "Isplate · organizacija",
+    "description": "Virmani i konverzije bankarskih datoteka",
+    "file": "atlas/svg/module--isplate.svg",
+    "sources": [
+      "isplate/urls.py",
+      "isplate/views.py",
+      "isplate/services"
+    ]
+  },
+  "models/isplate": {
+    "id": "models/isplate",
+    "title": "Isplate · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--isplate.svg",
+    "sources": [
+      "core/models.py",
+      "fleet/models.py",
+      "hr/models.py"
+    ]
+  },
+  "fields/isplate": {
+    "id": "fields/isplate",
+    "title": "Isplate · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--isplate.svg",
+    "sources": [
+      "core/models.py",
+      "fleet/models.py",
+      "hr/models.py"
+    ]
+  },
+  "area/isplate/podaci": {
+    "id": "area/isplate/podaci",
+    "title": "Isplate · Podaci iz drugih modula",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--isplate--podaci.svg",
+    "sources": [
+      "core/models.py",
+      "fleet/models.py",
+      "hr/models.py"
+    ]
+  },
+  "area-fields/isplate/podaci": {
+    "id": "area-fields/isplate/podaci",
+    "title": "Isplate · Podaci iz drugih modula · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--isplate--podaci.svg",
+    "sources": [
+      "core/models.py",
+      "fleet/models.py",
+      "hr/models.py"
+    ]
+  },
+  "module/core": {
+    "id": "module/core",
+    "title": "Administracija · organizacija",
+    "description": "Korisnici, uloge, dozvole, organizacione šifre i istorija",
+    "file": "atlas/svg/module--core.svg",
+    "sources": [
+      "core/urls.py",
+      "core/models.py",
+      "core/views.py"
+    ]
+  },
+  "models/core": {
+    "id": "models/core",
+    "title": "Administracija · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--core.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "fields/core": {
+    "id": "fields/core",
+    "title": "Administracija · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--core.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "area/core/pristup": {
+    "id": "area/core/pristup",
+    "title": "Administracija · Korisnici i dozvole",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--core--pristup.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "area-fields/core/pristup": {
+    "id": "area-fields/core/pristup",
+    "title": "Administracija · Korisnici i dozvole · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--core--pristup.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "area/core/evidencija": {
+    "id": "area/core/evidencija",
+    "title": "Administracija · Šifre i istorija",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--core--evidencija.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "area-fields/core/evidencija": {
+    "id": "area-fields/core/evidencija",
+    "title": "Administracija · Šifre i istorija · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--core--evidencija.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "module/organizacija": {
+    "id": "module/organizacija",
+    "title": "Organizacija · organizacija",
+    "description": "Registar centara, OJ i poslova, verzije i obuhvat prava",
+    "file": "atlas/svg/module--organizacija.svg",
+    "sources": [
+      "organizacija/urls.py",
+      "organizacija/models.py",
+      "organizacija/views.py",
+      "organizacija/services"
+    ]
+  },
+  "models/organizacija": {
+    "id": "models/organizacija",
+    "title": "Organizacija · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--organizacija.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "fields/organizacija": {
+    "id": "fields/organizacija",
+    "title": "Organizacija · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--organizacija.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "area/organizacija/registar": {
+    "id": "area/organizacija/registar",
+    "title": "Organizacija · Čvorovi, verzije i putanje",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--organizacija--registar.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "area-fields/organizacija/registar": {
+    "id": "area-fields/organizacija/registar",
+    "title": "Organizacija · Čvorovi, verzije i putanje · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--organizacija--registar.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "area/organizacija/prava": {
+    "id": "area/organizacija/prava",
+    "title": "Organizacija · Dodele uloga",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--organizacija--prava.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "area-fields/organizacija/prava": {
+    "id": "area-fields/organizacija/prava",
+    "title": "Organizacija · Dodele uloga · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--organizacija--prava.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "area/organizacija/uvoz": {
+    "id": "area/organizacija/uvoz",
+    "title": "Organizacija · Mapiranja i uvoz",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--organizacija--uvoz.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "area-fields/organizacija/uvoz": {
+    "id": "area-fields/organizacija/uvoz",
+    "title": "Organizacija · Mapiranja i uvoz · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--organizacija--uvoz.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "module/naplata": {
+    "id": "module/naplata",
+    "title": "Nasleđena naplata · organizacija",
+    "description": "Postojeće evidencije; novi razvoj ide u Potraživanja",
+    "file": "atlas/svg/module--naplata.svg",
+    "sources": [
+      "naplata/urls.py",
+      "naplata/models.py",
+      "naplata/views.py"
+    ]
+  },
+  "models/naplata": {
+    "id": "models/naplata",
+    "title": "Nasleđena naplata · modeli",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/models--naplata.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "fields/naplata": {
+    "id": "fields/naplata",
+    "title": "Nasleđena naplata · modeli i polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/fields--naplata.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "area/naplata/evidencija": {
+    "id": "area/naplata/evidencija",
+    "title": "Nasleđena naplata · Kontakti i akcije",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--naplata--evidencija.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "area-fields/naplata/evidencija": {
+    "id": "area-fields/naplata/evidencija",
+    "title": "Nasleđena naplata · Kontakti i akcije · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--naplata--evidencija.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "area/naplata/izvori": {
+    "id": "area/naplata/izvori",
+    "title": "Nasleđena naplata · Nasleđeni izvori i šifre",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area--naplata--izvori.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "area-fields/naplata/izvori": {
+    "id": "area-fields/naplata/izvori",
+    "title": "Nasleđena naplata · Nasleđeni izvori i šifre · polja",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/area-fields--naplata--izvori.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/fleet.VehicleEvidence": {
+    "id": "model/fleet.VehicleEvidence",
+    "title": "VehicleEvidence · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleEvidence.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "model/fleet.VehicleAnalysisProfile": {
+    "id": "model/fleet.VehicleAnalysisProfile",
+    "title": "VehicleAnalysisProfile · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleAnalysisProfile.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "model/fleet.LeaseChargePeriod": {
+    "id": "model/fleet.LeaseChargePeriod",
+    "title": "LeaseChargePeriod · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.LeaseChargePeriod.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "model/fleet.VehicleDowntime": {
+    "id": "model/fleet.VehicleDowntime",
+    "title": "VehicleDowntime · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleDowntime.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "model/fleet.VehicleEconomicAssessment": {
+    "id": "model/fleet.VehicleEconomicAssessment",
+    "title": "VehicleEconomicAssessment · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleEconomicAssessment.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "model/fleet.VehicleEconomicScenario": {
+    "id": "model/fleet.VehicleEconomicScenario",
+    "title": "VehicleEconomicScenario · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleEconomicScenario.svg",
+    "sources": [
+      "fleet/economics_models.py"
+    ]
+  },
+  "model/fleet.Vehicle": {
+    "id": "model/fleet.Vehicle",
+    "title": "Vehicle · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Vehicle.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.TrafficCard": {
+    "id": "model/fleet.TrafficCard",
+    "title": "TrafficCard · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.TrafficCard.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.VehicleTenderDocument": {
+    "id": "model/fleet.VehicleTenderDocument",
+    "title": "VehicleTenderDocument · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleTenderDocument.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.JobCode": {
+    "id": "model/fleet.JobCode",
+    "title": "JobCode · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.JobCode.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.Lease": {
+    "id": "model/fleet.Lease",
+    "title": "Lease · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Lease.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.VehicleHolding": {
+    "id": "model/fleet.VehicleHolding",
+    "title": "VehicleHolding · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleHolding.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.LeaseInterest": {
+    "id": "model/fleet.LeaseInterest",
+    "title": "LeaseInterest · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.LeaseInterest.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.Policy": {
+    "id": "model/fleet.Policy",
+    "title": "Policy · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Policy.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.FuelConsumption": {
+    "id": "model/fleet.FuelConsumption",
+    "title": "FuelConsumption · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.FuelConsumption.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.Incident": {
+    "id": "model/fleet.Incident",
+    "title": "Incident · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Incident.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.PutniNalog": {
+    "id": "model/fleet.PutniNalog",
+    "title": "PutniNalog · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.PutniNalog.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.PutniNalogSequence": {
+    "id": "model/fleet.PutniNalogSequence",
+    "title": "PutniNalogSequence · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.PutniNalogSequence.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.VehicleTravelOrder": {
+    "id": "model/fleet.VehicleTravelOrder",
+    "title": "VehicleTravelOrder · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.VehicleTravelOrder.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.ServiceType": {
+    "id": "model/fleet.ServiceType",
+    "title": "ServiceType · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.ServiceType.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.Service": {
+    "id": "model/fleet.Service",
+    "title": "Service · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Service.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.ServiceTransaction": {
+    "id": "model/fleet.ServiceTransaction",
+    "title": "ServiceTransaction · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.ServiceTransaction.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.Kvar": {
+    "id": "model/fleet.Kvar",
+    "title": "Kvar · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Kvar.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.KvarPart": {
+    "id": "model/fleet.KvarPart",
+    "title": "KvarPart · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.KvarPart.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.ProcurementRequest": {
+    "id": "model/fleet.ProcurementRequest",
+    "title": "ProcurementRequest · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.ProcurementRequest.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.ProcurementItem": {
+    "id": "model/fleet.ProcurementItem",
+    "title": "ProcurementItem · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.ProcurementItem.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.DraftServiceTransaction": {
+    "id": "model/fleet.DraftServiceTransaction",
+    "title": "DraftServiceTransaction · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.DraftServiceTransaction.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.Requisition": {
+    "id": "model/fleet.Requisition",
+    "title": "Requisition · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Requisition.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.TransactionOMV": {
+    "id": "model/fleet.TransactionOMV",
+    "title": "TransactionOMV · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.TransactionOMV.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.TransactionNIS": {
+    "id": "model/fleet.TransactionNIS",
+    "title": "TransactionNIS · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.TransactionNIS.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.KaskoRate": {
+    "id": "model/fleet.KaskoRate",
+    "title": "KaskoRate · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.KaskoRate.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.KontaVozila": {
+    "id": "model/fleet.KontaVozila",
+    "title": "KontaVozila · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.KontaVozila.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.DraftInsurance": {
+    "id": "model/fleet.DraftInsurance",
+    "title": "DraftInsurance · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.DraftInsurance.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/fleet.Insurance": {
+    "id": "model/fleet.Insurance",
+    "title": "Insurance · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--fleet.Insurance.svg",
+    "sources": [
+      "fleet/models.py"
+    ]
+  },
+  "model/hr.EvaluationGroup": {
+    "id": "model/hr.EvaluationGroup",
+    "title": "EvaluationGroup · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EvaluationGroup.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "model/hr.EvaluationCriterion": {
+    "id": "model/hr.EvaluationCriterion",
+    "title": "EvaluationCriterion · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EvaluationCriterion.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "model/hr.EvaluationScale": {
+    "id": "model/hr.EvaluationScale",
+    "title": "EvaluationScale · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EvaluationScale.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "model/hr.EvaluationUnitSetup": {
+    "id": "model/hr.EvaluationUnitSetup",
+    "title": "EvaluationUnitSetup · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EvaluationUnitSetup.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "model/hr.EvaluationEmployeeSetup": {
+    "id": "model/hr.EvaluationEmployeeSetup",
+    "title": "EvaluationEmployeeSetup · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EvaluationEmployeeSetup.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "model/hr.EmployeeEvaluation": {
+    "id": "model/hr.EmployeeEvaluation",
+    "title": "EmployeeEvaluation · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EmployeeEvaluation.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "model/hr.EvaluationApproval": {
+    "id": "model/hr.EvaluationApproval",
+    "title": "EvaluationApproval · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EvaluationApproval.svg",
+    "sources": [
+      "hr/evaluation_models.py"
+    ]
+  },
+  "model/hr.Employee": {
+    "id": "model/hr.Employee",
+    "title": "Employee · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.Employee.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.EmployeeCVItem": {
+    "id": "model/hr.EmployeeCVItem",
+    "title": "EmployeeCVItem · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.EmployeeCVItem.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.WorkTimeSheet": {
+    "id": "model/hr.WorkTimeSheet",
+    "title": "WorkTimeSheet · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.WorkTimeSheet.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.WorkTimeSheetLine": {
+    "id": "model/hr.WorkTimeSheetLine",
+    "title": "WorkTimeSheetLine · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.WorkTimeSheetLine.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.AnnualLeaveSync": {
+    "id": "model/hr.AnnualLeaveSync",
+    "title": "AnnualLeaveSync · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.AnnualLeaveSync.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.AnnualLeaveSourceRecord": {
+    "id": "model/hr.AnnualLeaveSourceRecord",
+    "title": "AnnualLeaveSourceRecord · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.AnnualLeaveSourceRecord.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.AnnualLeaveAllowance": {
+    "id": "model/hr.AnnualLeaveAllowance",
+    "title": "AnnualLeaveAllowance · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.AnnualLeaveAllowance.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.AnnualLeaveDecision": {
+    "id": "model/hr.AnnualLeaveDecision",
+    "title": "AnnualLeaveDecision · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.AnnualLeaveDecision.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.RecipientType": {
+    "id": "model/hr.RecipientType",
+    "title": "RecipientType · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.RecipientType.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.WorkTimeCategory": {
+    "id": "model/hr.WorkTimeCategory",
+    "title": "WorkTimeCategory · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.WorkTimeCategory.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.WorkTimeElement": {
+    "id": "model/hr.WorkTimeElement",
+    "title": "WorkTimeElement · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.WorkTimeElement.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.SickLeaveImport": {
+    "id": "model/hr.SickLeaveImport",
+    "title": "SickLeaveImport · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.SickLeaveImport.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.SickLeave": {
+    "id": "model/hr.SickLeave",
+    "title": "SickLeave · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.SickLeave.svg",
+    "sources": [
+      "hr/models.py"
+    ]
+  },
+  "model/hr.VrstaResenja": {
+    "id": "model/hr.VrstaResenja",
+    "title": "VrstaResenja · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.VrstaResenja.svg",
+    "sources": [
+      "hr/resenja_models.py"
+    ]
+  },
+  "model/hr.Potpisnik": {
+    "id": "model/hr.Potpisnik",
+    "title": "Potpisnik · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.Potpisnik.svg",
+    "sources": [
+      "hr/resenja_models.py"
+    ]
+  },
+  "model/hr.Resenje": {
+    "id": "model/hr.Resenje",
+    "title": "Resenje · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.Resenje.svg",
+    "sources": [
+      "hr/resenja_models.py"
+    ]
+  },
+  "model/hr.ResenjeDan": {
+    "id": "model/hr.ResenjeDan",
+    "title": "ResenjeDan · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.ResenjeDan.svg",
+    "sources": [
+      "hr/resenja_models.py"
+    ]
+  },
+  "model/hr.VrstaZahteva": {
+    "id": "model/hr.VrstaZahteva",
+    "title": "VrstaZahteva · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.VrstaZahteva.svg",
+    "sources": [
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "model/hr.BrojacZahteva": {
+    "id": "model/hr.BrojacZahteva",
+    "title": "BrojacZahteva · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.BrojacZahteva.svg",
+    "sources": [
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "model/hr.Zahtev": {
+    "id": "model/hr.Zahtev",
+    "title": "Zahtev · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.Zahtev.svg",
+    "sources": [
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "model/hr.ZahtevDan": {
+    "id": "model/hr.ZahtevDan",
+    "title": "ZahtevDan · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--hr.ZahtevDan.svg",
+    "sources": [
+      "hr/zahtevi_models.py"
+    ]
+  },
+  "model/finansije.FinanceJob": {
+    "id": "model/finansije.FinanceJob",
+    "title": "FinanceJob · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--finansije.FinanceJob.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "model/finansije.LedgerEntry": {
+    "id": "model/finansije.LedgerEntry",
+    "title": "LedgerEntry · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--finansije.LedgerEntry.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "model/finansije.SyncRun": {
+    "id": "model/finansije.SyncRun",
+    "title": "SyncRun · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--finansije.SyncRun.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "model/finansije.NalogZRefreshRun": {
+    "id": "model/finansije.NalogZRefreshRun",
+    "title": "NalogZRefreshRun · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--finansije.NalogZRefreshRun.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "model/finansije.BankContact": {
+    "id": "model/finansije.BankContact",
+    "title": "BankContact · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--finansije.BankContact.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "model/finansije.BankAccountRule": {
+    "id": "model/finansije.BankAccountRule",
+    "title": "BankAccountRule · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--finansije.BankAccountRule.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "model/finansije.BankBillPlacement": {
+    "id": "model/finansije.BankBillPlacement",
+    "title": "BankBillPlacement · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--finansije.BankBillPlacement.svg",
+    "sources": [
+      "finansije/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementCase": {
+    "id": "model/nabavka.ProcurementCase",
+    "title": "ProcurementCase · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementCase.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementItem": {
+    "id": "model/nabavka.ProcurementItem",
+    "title": "ProcurementItem · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementItem.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementInvoiceLink": {
+    "id": "model/nabavka.ProcurementInvoiceLink",
+    "title": "ProcurementInvoiceLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementInvoiceLink.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementInvoice": {
+    "id": "model/nabavka.ProcurementInvoice",
+    "title": "ProcurementInvoice · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementInvoice.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.EufItemSnapshot": {
+    "id": "model/nabavka.EufItemSnapshot",
+    "title": "EufItemSnapshot · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.EufItemSnapshot.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.UfInvoiceSnapshot": {
+    "id": "model/nabavka.UfInvoiceSnapshot",
+    "title": "UfInvoiceSnapshot · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.UfInvoiceSnapshot.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.GoodsSnapshot": {
+    "id": "model/nabavka.GoodsSnapshot",
+    "title": "GoodsSnapshot · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.GoodsSnapshot.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementItemInvoiceLink": {
+    "id": "model/nabavka.ProcurementItemInvoiceLink",
+    "title": "ProcurementItemInvoiceLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementItemInvoiceLink.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementInvoiceJobCodeLink": {
+    "id": "model/nabavka.ProcurementInvoiceJobCodeLink",
+    "title": "ProcurementInvoiceJobCodeLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementInvoiceJobCodeLink.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementContractLink": {
+    "id": "model/nabavka.ProcurementContractLink",
+    "title": "ProcurementContractLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementContractLink.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementInvoiceContractLink": {
+    "id": "model/nabavka.ProcurementInvoiceContractLink",
+    "title": "ProcurementInvoiceContractLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementInvoiceContractLink.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.PublicProcurementPlanVersion": {
+    "id": "model/nabavka.PublicProcurementPlanVersion",
+    "title": "PublicProcurementPlanVersion · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.PublicProcurementPlanVersion.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.PublicProcurementPlanItem": {
+    "id": "model/nabavka.PublicProcurementPlanItem",
+    "title": "PublicProcurementPlanItem · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.PublicProcurementPlanItem.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.PurchaseOrder": {
+    "id": "model/nabavka.PurchaseOrder",
+    "title": "PurchaseOrder · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.PurchaseOrder.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.ProcurementStatusLog": {
+    "id": "model/nabavka.ProcurementStatusLog",
+    "title": "ProcurementStatusLog · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.ProcurementStatusLog.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.FiskalniRacun": {
+    "id": "model/nabavka.FiskalniRacun",
+    "title": "FiskalniRacun · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.FiskalniRacun.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/nabavka.FiskalniRacunStavka": {
+    "id": "model/nabavka.FiskalniRacunStavka",
+    "title": "FiskalniRacunStavka · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--nabavka.FiskalniRacunStavka.svg",
+    "sources": [
+      "nabavka/models.py"
+    ]
+  },
+  "model/potrazivanja.Timestamped": {
+    "id": "model/potrazivanja.Timestamped",
+    "title": "Timestamped · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.Timestamped.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.UserTracked": {
+    "id": "model/potrazivanja.UserTracked",
+    "title": "UserTracked · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.UserTracked.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionSyncRun": {
+    "id": "model/potrazivanja.CollectionSyncRun",
+    "title": "CollectionSyncRun · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionSyncRun.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionSyncStep": {
+    "id": "model/potrazivanja.CollectionSyncStep",
+    "title": "CollectionSyncStep · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionSyncStep.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.FinancePartnerIdentity": {
+    "id": "model/potrazivanja.FinancePartnerIdentity",
+    "title": "FinancePartnerIdentity · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.FinancePartnerIdentity.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionProfile": {
+    "id": "model/potrazivanja.CollectionProfile",
+    "title": "CollectionProfile · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionProfile.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.InvoiceDocument": {
+    "id": "model/potrazivanja.InvoiceDocument",
+    "title": "InvoiceDocument · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.InvoiceDocument.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.ReceivablePosting": {
+    "id": "model/potrazivanja.ReceivablePosting",
+    "title": "ReceivablePosting · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.ReceivablePosting.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.DueDateEvidence": {
+    "id": "model/potrazivanja.DueDateEvidence",
+    "title": "DueDateEvidence · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.DueDateEvidence.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.BalanceSnapshot": {
+    "id": "model/potrazivanja.BalanceSnapshot",
+    "title": "BalanceSnapshot · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.BalanceSnapshot.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionState": {
+    "id": "model/potrazivanja.CollectionState",
+    "title": "CollectionState · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionState.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.ReceivablePosition": {
+    "id": "model/potrazivanja.ReceivablePosition",
+    "title": "ReceivablePosition · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.ReceivablePosition.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.AgingRule": {
+    "id": "model/potrazivanja.AgingRule",
+    "title": "AgingRule · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.AgingRule.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionContact": {
+    "id": "model/potrazivanja.CollectionContact",
+    "title": "CollectionContact · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionContact.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.ContactPoint": {
+    "id": "model/potrazivanja.ContactPoint",
+    "title": "ContactPoint · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.ContactPoint.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionActivity": {
+    "id": "model/potrazivanja.CollectionActivity",
+    "title": "CollectionActivity · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionActivity.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionNotice": {
+    "id": "model/potrazivanja.CollectionNotice",
+    "title": "CollectionNotice · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionNotice.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionNoticeItem": {
+    "id": "model/potrazivanja.CollectionNoticeItem",
+    "title": "CollectionNoticeItem · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionNoticeItem.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.ElectronicInvoiceStatus": {
+    "id": "model/potrazivanja.ElectronicInvoiceStatus",
+    "title": "ElectronicInvoiceStatus · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.ElectronicInvoiceStatus.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.LegalCaseLink": {
+    "id": "model/potrazivanja.LegalCaseLink",
+    "title": "LegalCaseLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.LegalCaseLink.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.LegacyImportMap": {
+    "id": "model/potrazivanja.LegacyImportMap",
+    "title": "LegacyImportMap · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.LegacyImportMap.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.ImportIssue": {
+    "id": "model/potrazivanja.ImportIssue",
+    "title": "ImportIssue · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.ImportIssue.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.SourceDataset": {
+    "id": "model/potrazivanja.SourceDataset",
+    "title": "SourceDataset · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.SourceDataset.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.SourceRow": {
+    "id": "model/potrazivanja.SourceRow",
+    "title": "SourceRow · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.SourceRow.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionLegalCase": {
+    "id": "model/potrazivanja.CollectionLegalCase",
+    "title": "CollectionLegalCase · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionLegalCase.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionLegalEvent": {
+    "id": "model/potrazivanja.CollectionLegalEvent",
+    "title": "CollectionLegalEvent · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionLegalEvent.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionAudit": {
+    "id": "model/potrazivanja.CollectionAudit",
+    "title": "CollectionAudit · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionAudit.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/potrazivanja.CollectionFileImport": {
+    "id": "model/potrazivanja.CollectionFileImport",
+    "title": "CollectionFileImport · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--potrazivanja.CollectionFileImport.svg",
+    "sources": [
+      "potrazivanja/models.py"
+    ]
+  },
+  "model/pravna.Postupak": {
+    "id": "model/pravna.Postupak",
+    "title": "Postupak · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--pravna.Postupak.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "model/pravna.PromenaPostupka": {
+    "id": "model/pravna.PromenaPostupka",
+    "title": "PromenaPostupka · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--pravna.PromenaPostupka.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "model/pravna.DisciplinskiPostupak": {
+    "id": "model/pravna.DisciplinskiPostupak",
+    "title": "DisciplinskiPostupak · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--pravna.DisciplinskiPostupak.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "model/pravna.TokPostupka": {
+    "id": "model/pravna.TokPostupka",
+    "title": "TokPostupka · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--pravna.TokPostupka.svg",
+    "sources": [
+      "pravna/models.py"
+    ]
+  },
+  "model/ugovori.Partner": {
+    "id": "model/ugovori.Partner",
+    "title": "Partner · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.Partner.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.ContractType": {
+    "id": "model/ugovori.ContractType",
+    "title": "ContractType · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.ContractType.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.BusinessRequest": {
+    "id": "model/ugovori.BusinessRequest",
+    "title": "BusinessRequest · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.BusinessRequest.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.Offer": {
+    "id": "model/ugovori.Offer",
+    "title": "Offer · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.Offer.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.Contract": {
+    "id": "model/ugovori.Contract",
+    "title": "Contract · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.Contract.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.ContractDocument": {
+    "id": "model/ugovori.ContractDocument",
+    "title": "ContractDocument · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.ContractDocument.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.ContractParty": {
+    "id": "model/ugovori.ContractParty",
+    "title": "ContractParty · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.ContractParty.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.ContractMenicaLink": {
+    "id": "model/ugovori.ContractMenicaLink",
+    "title": "ContractMenicaLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.ContractMenicaLink.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/ugovori.ContractGuarantee": {
+    "id": "model/ugovori.ContractGuarantee",
+    "title": "ContractGuarantee · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--ugovori.ContractGuarantee.svg",
+    "sources": [
+      "ugovori/models.py"
+    ]
+  },
+  "model/menice.Menica": {
+    "id": "model/menice.Menica",
+    "title": "Menica · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--menice.Menica.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "model/menice.UlaznaMenica": {
+    "id": "model/menice.UlaznaMenica",
+    "title": "UlaznaMenica · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--menice.UlaznaMenica.svg",
+    "sources": [
+      "menice/models.py"
+    ]
+  },
+  "model/mobilni.MobilePackage": {
+    "id": "model/mobilni.MobilePackage",
+    "title": "MobilePackage · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--mobilni.MobilePackage.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "model/mobilni.MobileUser": {
+    "id": "model/mobilni.MobileUser",
+    "title": "MobileUser · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--mobilni.MobileUser.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "model/mobilni.MobileAssignment": {
+    "id": "model/mobilni.MobileAssignment",
+    "title": "MobileAssignment · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--mobilni.MobileAssignment.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "model/mobilni.MobileUsage": {
+    "id": "model/mobilni.MobileUsage",
+    "title": "MobileUsage · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--mobilni.MobileUsage.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "model/mobilni.MobileParkingExemption": {
+    "id": "model/mobilni.MobileParkingExemption",
+    "title": "MobileParkingExemption · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--mobilni.MobileParkingExemption.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "model/mobilni.MobileImportLog": {
+    "id": "model/mobilni.MobileImportLog",
+    "title": "MobileImportLog · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--mobilni.MobileImportLog.svg",
+    "sources": [
+      "mobilni/models.py"
+    ]
+  },
+  "model/core.OrganizationalUnit": {
+    "id": "model/core.OrganizationalUnit",
+    "title": "OrganizationalUnit · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--core.OrganizationalUnit.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "model/core.Role": {
+    "id": "model/core.Role",
+    "title": "Role · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--core.Role.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "model/core.PermissionCode": {
+    "id": "model/core.PermissionCode",
+    "title": "PermissionCode · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--core.PermissionCode.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "model/core.RolePermission": {
+    "id": "model/core.RolePermission",
+    "title": "RolePermission · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--core.RolePermission.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "model/core.CustomUser": {
+    "id": "model/core.CustomUser",
+    "title": "CustomUser · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--core.CustomUser.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "model/core.ActivityLog": {
+    "id": "model/core.ActivityLog",
+    "title": "ActivityLog · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--core.ActivityLog.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "model/core.TaskHistory": {
+    "id": "model/core.TaskHistory",
+    "title": "TaskHistory · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--core.TaskHistory.svg",
+    "sources": [
+      "core/models.py"
+    ]
+  },
+  "model/organizacija.OrgNode": {
+    "id": "model/organizacija.OrgNode",
+    "title": "OrgNode · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.OrgNode.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.OrgNodeVersion": {
+    "id": "model/organizacija.OrgNodeVersion",
+    "title": "OrgNodeVersion · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.OrgNodeVersion.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.ExternalOrgMapping": {
+    "id": "model/organizacija.ExternalOrgMapping",
+    "title": "ExternalOrgMapping · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.ExternalOrgMapping.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.LegacyOrgLink": {
+    "id": "model/organizacija.LegacyOrgLink",
+    "title": "LegacyOrgLink · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.LegacyOrgLink.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.OrgImportRun": {
+    "id": "model/organizacija.OrgImportRun",
+    "title": "OrgImportRun · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.OrgImportRun.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.UnresolvedOrgCode": {
+    "id": "model/organizacija.UnresolvedOrgCode",
+    "title": "UnresolvedOrgCode · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.UnresolvedOrgCode.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.JobActivityReview": {
+    "id": "model/organizacija.JobActivityReview",
+    "title": "JobActivityReview · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.JobActivityReview.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.OrgPutanja": {
+    "id": "model/organizacija.OrgPutanja",
+    "title": "OrgPutanja · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.OrgPutanja.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/organizacija.DodelaUloge": {
+    "id": "model/organizacija.DodelaUloge",
+    "title": "DodelaUloge · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--organizacija.DodelaUloge.svg",
+    "sources": [
+      "organizacija/models.py"
+    ]
+  },
+  "model/naplata.Kontakti": {
+    "id": "model/naplata.Kontakti",
+    "title": "Kontakti · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.Kontakti.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.Napomene": {
+    "id": "model/naplata.Napomene",
+    "title": "Napomene · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.Napomene.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.Opomene": {
+    "id": "model/naplata.Opomene",
+    "title": "Opomene · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.Opomene.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.PozivPismo": {
+    "id": "model/naplata.PozivPismo",
+    "title": "PozivPismo · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.PozivPismo.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.PoziviTel": {
+    "id": "model/naplata.PoziviTel",
+    "title": "PoziviTel · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.PoziviTel.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.SifBaket": {
+    "id": "model/naplata.SifBaket",
+    "title": "SifBaket · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.SifBaket.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.SifKategorija": {
+    "id": "model/naplata.SifKategorija",
+    "title": "SifKategorija · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.SifKategorija.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.Tuzbe": {
+    "id": "model/naplata.Tuzbe",
+    "title": "Tuzbe · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.Tuzbe.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.Baza": {
+    "id": "model/naplata.Baza",
+    "title": "Baza · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.Baza.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.DodelaBucketa": {
+    "id": "model/naplata.DodelaBucketa",
+    "title": "DodelaBucketa · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.DodelaBucketa.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.Ispravke": {
+    "id": "model/naplata.Ispravke",
+    "title": "Ispravke · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.Ispravke.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.Partneri": {
+    "id": "model/naplata.Partneri",
+    "title": "Partneri · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.Partneri.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "model/naplata.AvansKlijent": {
+    "id": "model/naplata.AvansKlijent",
+    "title": "AvansKlijent · neposredne veze",
+    "description": "Puna strelica: polje vlasnika → ciljni model. Zlatno: veza između modula. ? = NULL; UQ = jedinstveno. Nasleđena lokalna polja su uključena.",
+    "file": "atlas/svg/model--naplata.AvansKlijent.svg",
+    "sources": [
+      "naplata/models.py"
+    ]
+  },
+  "flow/hr/zahtev-resenje": {
+    "id": "flow/hr/zahtev-resenje",
+    "title": "Od zahteva do izdatog rešenja",
+    "description": "Dijagram aktivnosti. Sažet uspešan tok. Storniran zahtev i zauzeta veza sprečavaju novo rešenje; potpisnik se proverava pri izdavanju.",
+    "file": "atlas/svg/flow--hr--zahtev-resenje.svg",
+    "sources": [
+      "hr/services/zahtevi.py",
+      "hr/services/resenja.py",
+      "hr/resenja_views.py"
+    ]
+  },
+  "flow/hr/radna-lista": {
+    "id": "flow/hr/radna-lista",
+    "title": "Radna lista zaposlenog",
+    "description": "Dijagram aktivnosti. Izvor kontrole pristupa je spoljni sistem. Nedostajući prolasci nisu isto što i nula radnih sati.",
+    "file": "atlas/svg/flow--hr--radna-lista.svg",
+    "sources": [
+      "hr/services/attendance.py",
+      "hr/services/work_time_prefill.py",
+      "hr/views.py"
+    ]
+  },
+  "flow/fleet/zaduzenje": {
+    "id": "flow/fleet/zaduzenje",
+    "title": "Zaduženje i zatvaranje putnog naloga vozila",
+    "description": "Dijagram aktivnosti. Novi nalog zatvara ranije otvorene datumom svog početka; prenosi kilometražu ako je uneta. Gorivo nema FK na nalog.",
+    "file": "atlas/svg/flow--fleet--zaduzenje.svg",
+    "sources": [
+      "fleet/views/vehicle_travel_orders.py",
+      "fleet/forms/putni_nalozi.py",
+      "fleet/support/fuel.py"
+    ]
+  },
+  "flow/fleet/gorivo": {
+    "id": "flow/fleet/gorivo",
+    "title": "Uvoz goriva i priprema potrošnje",
+    "description": "Dijagram aktivnosti. Ne pogađa se vozilo za nejednoznačnu tablicu. Profil ekonomike bira transactions ili legacy izvor; evidencije se ne sabiraju dvostruko.",
+    "file": "atlas/svg/flow--fleet--gorivo.svg",
+    "sources": [
+      "fleet/sync/selenium.py",
+      "fleet/support/assignments.py",
+      "fleet/support/fuel.py"
+    ]
+  },
+  "flow/finansije/sinhronizacija": {
+    "id": "flow/finansije/sinhronizacija",
+    "title": "Od izvora knjiženja do finansijskog pregleda",
+    "description": "Dijagram aktivnosti. Deo analiza čita udaljene izvore pri otvaranju. Osvežavanje lokalnog nalog_z je poseban, kontrolisan servis.",
+    "file": "atlas/svg/flow--finansije--sinhronizacija.svg",
+    "sources": [
+      "finansije/services/source.py",
+      "finansije/services/sync.py",
+      "finansije/services/reports.py"
+    ]
+  },
+  "flow/nabavka/predmet": {
+    "id": "flow/nabavka/predmet",
+    "title": "Predmet nabavke, stavke i fakture",
+    "description": "Dijagram aktivnosti. Tipičan poslovni put, ne obavezni redosled svih ekrana niti automat svih statusa. Ugovori i garaža su opcione veze.",
+    "file": "atlas/svg/flow--nabavka--predmet.svg",
+    "sources": [
+      "nabavka/models.py",
+      "nabavka/views",
+      "nabavka/services/source_snapshots.py"
+    ]
+  },
+  "flow/potrazivanja/naplata": {
+    "id": "flow/potrazivanja/naplata",
+    "title": "Od salda do aktivnosti naplate",
+    "description": "Dijagram aktivnosti. Aktivnosti i opomene su operativni koraci; nisu automatska posledica sinhronizacije salda.",
+    "file": "atlas/svg/flow--potrazivanja--naplata.svg",
+    "sources": [
+      "potrazivanja/services/sync.py",
+      "potrazivanja/services/operations.py",
+      "potrazivanja/services/partner_detail.py"
+    ]
+  },
+  "flow/pravna/disciplinski": {
+    "id": "flow/pravna/disciplinski",
+    "title": "Tok disciplinskog postupka i mera",
+    "description": "Dijagram aktivnosti. Mera i datum se validiraju u formi. Postupci ovog modula nisu isti model kao CollectionLegalCase u Potraživanjima.",
+    "file": "atlas/svg/flow--pravna--disciplinski.svg",
+    "sources": [
+      "pravna/views_disciplinski.py",
+      "pravna/forms.py",
+      "pravna/models.py"
+    ]
+  },
+  "flow/ugovori/ugovor": {
+    "id": "flow/ugovori/ugovor",
+    "title": "Evidentiranje ugovora i povezanih dokumenata",
+    "description": "Dijagram aktivnosti. BusinessRequest i Offer postoje kao posebne evidencije. Ovaj tok ne pretpostavlja automatsko pretvaranje ponude u ugovor.",
+    "file": "atlas/svg/flow--ugovori--ugovor.svg",
+    "sources": [
+      "ugovori/views.py",
+      "ugovori/models.py",
+      "ugovori/apr_openapi.py"
+    ]
+  },
+  "flow/menice/registar": {
+    "id": "flow/menice/registar",
+    "title": "Registar menica i povezivanje",
+    "description": "Dijagram aktivnosti. UlaznaMenica je zasebna evidencija. Povezivanje ugovora i banke predstavlja naknadni operativni korak.",
+    "file": "atlas/svg/flow--menice--registar.svg",
+    "sources": [
+      "menice/scraper.py",
+      "menice/views.py",
+      "ugovori/models.py",
+      "finansije/models.py"
+    ]
+  },
+  "flow/mobilni/obustave": {
+    "id": "flow/mobilni/obustave",
+    "title": "Mesečni uvoz i obustave",
+    "description": "Dijagram aktivnosti. Broj telefona i period učestvuju u uparivanju. Obračun zadržava postojeća pravila i izuzetke.",
+    "file": "atlas/svg/flow--mobilni--obustave.svg",
+    "sources": [
+      "mobilni/views/mobile.py",
+      "mobilni/withholdings.py",
+      "mobilni/models.py"
+    ]
+  },
+  "flow/isplate/virman": {
+    "id": "flow/isplate/virman",
+    "title": "Priprema bankarske datoteke za putne naloge",
+    "description": "Dijagram aktivnosti. Isplate nema sopstvene Django modele. Generisanje datoteke nije slanje novca banci. Račun se proverava na 18 cifara.",
+    "file": "atlas/svg/flow--isplate--virman.svg",
+    "sources": [
+      "isplate/services/virman.py",
+      "isplate/views.py",
+      "fleet/services/putni_nalozi_payments.py"
+    ]
+  },
+  "flow/organizacija/obuhvat": {
+    "id": "flow/organizacija/obuhvat",
+    "title": "Od dodele uloge do obuhvata podataka",
+    "description": "Dijagram aktivnosti. Primena novog registra zavisi od modula i postavki. Postojeća ograničenja centara i OJ još postoje.",
+    "file": "atlas/svg/flow--organizacija--obuhvat.svg",
+    "sources": [
+      "organizacija/services/prava.py",
+      "organizacija/services/putanja.py",
+      "organizacija/models.py"
+    ]
+  },
+  "flow/naplata/nasledjeni-pregled": {
+    "id": "flow/naplata/nasledjeni-pregled",
+    "title": "Pregled nasleđenih evidencija naplate",
+    "description": "Dijagram aktivnosti. Prelaz ka Potraživanjima je smer razvoja, ne automatsko prebacivanje podataka. Stvarni pogled je dodela_baketa; stari model navodi dodela_bucketa.",
+    "file": "atlas/svg/flow--naplata--nasledjeni-pregled.svg",
+    "sources": [
+      "naplata/models.py",
+      "naplata/urls.py",
+      "potrazivanja/models.py"
+    ]
+  },
+  "flow/core/pristup": {
+    "id": "flow/core/pristup",
+    "title": "Provera pristupa ruti",
+    "description": "Dijagram aktivnosti. RolePermissionRequiredMixin: eksplicitni kod ili resolver_match.view_name. Obuhvat i superuser izuzeci na nivou podataka zavise od konkretnog modula.",
+    "file": "atlas/svg/flow--core--pristup.svg",
+    "sources": [
+      "core/mixins.py",
+      "core/permissions.py",
+      "organizacija/services/prava.py"
+    ]
+  },
+  "flows": {
+    "id": "flows",
+    "title": "Tokovi rada",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows.svg",
+    "sources": []
+  },
+  "flows/fleet": {
+    "id": "flows/fleet",
+    "title": "Tokovi rada · Flota",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--fleet.svg",
+    "sources": []
+  },
+  "flows/hr": {
+    "id": "flows/hr",
+    "title": "Tokovi rada · Kadrovi",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--hr.svg",
+    "sources": []
+  },
+  "flows/finansije": {
+    "id": "flows/finansije",
+    "title": "Tokovi rada · Finansije",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--finansije.svg",
+    "sources": []
+  },
+  "flows/nabavka": {
+    "id": "flows/nabavka",
+    "title": "Tokovi rada · Nabavka",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--nabavka.svg",
+    "sources": []
+  },
+  "flows/potrazivanja": {
+    "id": "flows/potrazivanja",
+    "title": "Tokovi rada · Potraživanja",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--potrazivanja.svg",
+    "sources": []
+  },
+  "flows/pravna": {
+    "id": "flows/pravna",
+    "title": "Tokovi rada · Pravna služba",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--pravna.svg",
+    "sources": []
+  },
+  "flows/ugovori": {
+    "id": "flows/ugovori",
+    "title": "Tokovi rada · Ugovori",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--ugovori.svg",
+    "sources": []
+  },
+  "flows/menice": {
+    "id": "flows/menice",
+    "title": "Tokovi rada · Menice",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--menice.svg",
+    "sources": []
+  },
+  "flows/mobilni": {
+    "id": "flows/mobilni",
+    "title": "Tokovi rada · Mobilna telefonija",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--mobilni.svg",
+    "sources": []
+  },
+  "flows/isplate": {
+    "id": "flows/isplate",
+    "title": "Tokovi rada · Isplate",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--isplate.svg",
+    "sources": []
+  },
+  "flows/core": {
+    "id": "flows/core",
+    "title": "Tokovi rada · Administracija",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--core.svg",
+    "sources": []
+  },
+  "flows/organizacija": {
+    "id": "flows/organizacija",
+    "title": "Tokovi rada · Organizacija",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--organizacija.svg",
+    "sources": []
+  },
+  "flows/naplata": {
+    "id": "flows/naplata",
+    "title": "Tokovi rada · Nasleđena naplata",
+    "description": "Izaberite proces. Klikabilni koraci vode na povezane modele.",
+    "file": "atlas/svg/flows--naplata.svg",
+    "sources": []
+  },
+  "infrastructure": {
+    "id": "infrastructure",
+    "title": "Servisi i izvori podataka",
+    "description": "Dokumentovana konfiguracija; živi servisi nisu proveravani.",
+    "file": "svg/03-serveri-i-podaci.svg",
+    "sources": [
+      "ims_erp/celery.py",
+      "nssm.bat"
+    ]
+  }
+}

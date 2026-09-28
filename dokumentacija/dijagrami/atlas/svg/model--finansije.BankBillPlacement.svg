@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="505pt" height="295pt" viewBox="0.00 0.00 505.00 295.00" role="img" aria-label="BankBillPlacement · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 273.38)">
+<title>G</title>
+
+<g id="node-finansije.BankBillPlacement" class="node" data-key="finansije.BankBillPlacement" data-route="model/finansije.BankBillPlacement">
+<title>n0</title>
+<g id="a_node-finansije.BankBillPlacement"><a xlink:href="../../index.html#model/finansije.BankBillPlacement" xlink:title="finansije.BankBillPlacement" target="_top">
+<path fill="#f3f8fb" stroke="#277b75" d="M168.35,-251.78C168.35,-251.78 12,-251.78 12,-251.78 6,-251.78 0,-245.78 0,-239.78 0,-239.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 168.35,0 168.35,0 174.35,0 180.35,-6 180.35,-12 180.35,-12 180.35,-239.78 180.35,-239.78 180.35,-245.78 174.35,-251.78 168.35,-251.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-228.69" font-family="Segoe UI" font-size="11.00" fill="#277b75">finansije</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-203.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">BankBillPlacement</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">company : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">bank_code : PositiveInteger</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">bill : Menica ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">incoming_bill : UlaznaMenica ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">delivered_on : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">returned_on : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">note : Text</text>
+</a>
+</g>
+</g>
+
+<g id="node-menice.Menica" class="node" data-key="menice.Menica" data-route="model/menice.Menica">
+<title>n1</title>
+<g id="a_node-menice.Menica"><a xlink:href="../../index.html#model/menice.Menica" xlink:title="menice.Menica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M450.2,-228.28C450.2,-228.28 317.1,-228.28 317.1,-228.28 311.1,-228.28 305.1,-222.28 305.1,-216.28 305.1,-216.28 305.1,-149.5 305.1,-149.5 305.1,-143.5 311.1,-137.5 317.1,-137.5 317.1,-137.5 450.2,-137.5 450.2,-137.5 456.2,-137.5 462.2,-143.5 462.2,-149.5 462.2,-149.5 462.2,-216.28 462.2,-216.28 462.2,-222.28 456.2,-228.28 450.2,-228.28" />
+<text xml:space="preserve" text-anchor="start" x="319.9" y="-205.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="319.9" y="-180.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Menica</text>
+<text xml:space="preserve" text-anchor="start" x="319.9" y="-154.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">30 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="finansije.BankBillPlacement" data-to="menice.Menica">
+<title>n0-&gt;n1</title>
+<g id="a_edge-0"><a xlink:title="finansije.BankBillPlacement.bill → menice.Menica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M180.61,-143.38C217.48,-150.59 260.03,-158.91 296.55,-166.05" />
+<polygon fill="#a27631" stroke="#a27631" points="295.9,-168.42 303.24,-167.36 296.84,-163.61 295.9,-168.42" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="242.73" y="-165.72" font-family="Segoe UI" font-size="11.00">bill</text>
+<text xml:space="preserve" text-anchor="middle" x="290.17" y="-168.31" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="195.17" y="-136.82" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-menice.UlaznaMenica" class="node" data-key="menice.UlaznaMenica" data-route="model/menice.UlaznaMenica">
+<title>n2</title>
+<g id="a_node-menice.UlaznaMenica"><a xlink:href="../../index.html#model/menice.UlaznaMenica" xlink:title="menice.UlaznaMenica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M450.2,-114.28C450.2,-114.28 317.1,-114.28 317.1,-114.28 311.1,-114.28 305.1,-108.28 305.1,-102.28 305.1,-102.28 305.1,-35.5 305.1,-35.5 305.1,-29.5 311.1,-23.5 317.1,-23.5 317.1,-23.5 450.2,-23.5 450.2,-23.5 456.2,-23.5 462.2,-29.5 462.2,-35.5 462.2,-35.5 462.2,-102.28 462.2,-102.28 462.2,-108.28 456.2,-114.28 450.2,-114.28" />
+<text xml:space="preserve" text-anchor="start" x="319.9" y="-91.19" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="319.9" y="-66.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">UlaznaMenica</text>
+<text xml:space="preserve" text-anchor="start" x="319.9" y="-40.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">14 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="finansije.BankBillPlacement" data-to="menice.UlaznaMenica">
+<title>n0-&gt;n2</title>
+<g id="a_edge-1"><a xlink:title="finansije.BankBillPlacement.incoming_bill → menice.UlaznaMenica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M180.61,-108.4C217.48,-101.19 260.03,-92.87 296.55,-85.73" />
+<polygon fill="#a27631" stroke="#a27631" points="296.84,-88.17 303.24,-84.42 295.9,-83.36 296.84,-88.17" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="242.73" y="-107.05" font-family="Segoe UI" font-size="11.00">incoming_bill</text>
+<text xml:space="preserve" text-anchor="middle" x="292.6" y="-90.01" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="192.73" y="-96.62" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

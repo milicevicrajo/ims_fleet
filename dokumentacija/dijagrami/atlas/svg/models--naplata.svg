@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="433pt" height="1502pt" viewBox="0.00 0.00 433.00 1502.00" role="img" aria-label="Nasleđena naplata · modeli">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 1480.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M378.2,-90.78C378.2,-90.78 251.1,-90.78 251.1,-90.78 245.1,-90.78 239.1,-84.78 239.1,-78.78 239.1,-78.78 239.1,-12 239.1,-12 239.1,-6 245.1,0 251.1,0 251.1,0 378.2,0 378.2,0 384.2,0 390.2,-6 390.2,-12 390.2,-12 390.2,-78.78 390.2,-78.78 390.2,-84.78 384.2,-90.78 378.2,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="253.9" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="253.9" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="253.9" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.AvansKlijent" class="node" data-key="naplata.AvansKlijent" data-route="model/naplata.AvansKlijent">
+<title>n1</title>
+<g id="a_node-naplata.AvansKlijent"><a xlink:href="../../index.html#model/naplata.AvansKlijent" xlink:title="naplata.AvansKlijent" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M106.85,-90.78C106.85,-90.78 21,-90.78 21,-90.78 15,-90.78 9,-84.78 9,-78.78 9,-78.78 9,-12 9,-12 9,-6 15,0 21,0 21,0 106.85,0 106.85,0 112.85,0 118.85,-6 118.85,-12 118.85,-12 118.85,-78.78 118.85,-78.78 118.85,-84.78 112.85,-90.78 106.85,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">AvansKlijent</text>
+<text xml:space="preserve" text-anchor="start" x="23.8" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">4 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="naplata.AvansKlijent" data-to="core.CustomUser">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="naplata.AvansKlijent.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M119.2,-45.39C151.76,-45.39 193.83,-45.39 230.51,-45.39" />
+<polygon fill="#a27631" stroke="#a27631" points="230.22,-47.84 237.22,-45.39 230.22,-42.94 230.22,-47.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="183.48" y="-49.94" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="225.14" y="-48.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="132.8" y="-36.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-naplata.Baza" class="node" data-key="naplata.Baza" data-route="model/naplata.Baza">
+<title>n2</title>
+<g id="a_node-naplata.Baza"><a xlink:href="../../index.html#model/naplata.Baza" xlink:title="naplata.Baza" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M86.6,-204.78C86.6,-204.78 41.25,-204.78 41.25,-204.78 35.25,-204.78 29.25,-198.78 29.25,-192.78 29.25,-192.78 29.25,-126 29.25,-126 29.25,-120 35.25,-114 41.25,-114 41.25,-114 86.6,-114 86.6,-114 92.6,-114 98.6,-120 98.6,-126 98.6,-126 98.6,-192.78 98.6,-192.78 98.6,-198.78 92.6,-204.78 86.6,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="44.05" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="44.05" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Baza</text>
+<text xml:space="preserve" text-anchor="start" x="44.05" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">21 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.DodelaBucketa" class="node" data-key="naplata.DodelaBucketa" data-route="model/naplata.DodelaBucketa">
+<title>n3</title>
+<g id="a_node-naplata.DodelaBucketa"><a xlink:href="../../index.html#model/naplata.DodelaBucketa" xlink:title="naplata.DodelaBucketa" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M115.85,-318.78C115.85,-318.78 12,-318.78 12,-318.78 6,-318.78 0,-312.78 0,-306.78 0,-306.78 0,-240 0,-240 0,-234 6,-228 12,-228 12,-228 115.85,-228 115.85,-228 121.85,-228 127.85,-234 127.85,-240 127.85,-240 127.85,-306.78 127.85,-306.78 127.85,-312.78 121.85,-318.78 115.85,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">DodelaBucketa</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">12 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Ispravke" class="node" data-key="naplata.Ispravke" data-route="model/naplata.Ispravke">
+<title>n4</title>
+<g id="a_node-naplata.Ispravke"><a xlink:href="../../index.html#model/naplata.Ispravke" xlink:title="naplata.Ispravke" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M94.1,-432.78C94.1,-432.78 33.75,-432.78 33.75,-432.78 27.75,-432.78 21.75,-426.78 21.75,-420.78 21.75,-420.78 21.75,-354 21.75,-354 21.75,-348 27.75,-342 33.75,-342 33.75,-342 94.1,-342 94.1,-342 100.1,-342 106.1,-348 106.1,-354 106.1,-354 106.1,-420.78 106.1,-420.78 106.1,-426.78 100.1,-432.78 94.1,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="36.55" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="36.55" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Ispravke</text>
+<text xml:space="preserve" text-anchor="start" x="36.55" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">22 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Kontakti" class="node" data-key="naplata.Kontakti" data-route="model/naplata.Kontakti">
+<title>n5</title>
+<g id="a_node-naplata.Kontakti"><a xlink:href="../../index.html#model/naplata.Kontakti" xlink:title="naplata.Kontakti" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M94.1,-546.78C94.1,-546.78 33.75,-546.78 33.75,-546.78 27.75,-546.78 21.75,-540.78 21.75,-534.78 21.75,-534.78 21.75,-468 21.75,-468 21.75,-462 27.75,-456 33.75,-456 33.75,-456 94.1,-456 94.1,-456 100.1,-456 106.1,-462 106.1,-468 106.1,-468 106.1,-534.78 106.1,-534.78 106.1,-540.78 100.1,-546.78 94.1,-546.78" />
+<text xml:space="preserve" text-anchor="start" x="36.55" y="-523.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="36.55" y="-498.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Kontakti</text>
+<text xml:space="preserve" text-anchor="start" x="36.55" y="-473.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Napomene" class="node" data-key="naplata.Napomene" data-route="model/naplata.Napomene">
+<title>n6</title>
+<g id="a_node-naplata.Napomene"><a xlink:href="../../index.html#model/naplata.Napomene" xlink:title="naplata.Napomene" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M102.73,-660.78C102.73,-660.78 25.13,-660.78 25.13,-660.78 19.13,-660.78 13.13,-654.78 13.13,-648.78 13.13,-648.78 13.13,-582 13.13,-582 13.13,-576 19.13,-570 25.13,-570 25.13,-570 102.73,-570 102.73,-570 108.73,-570 114.73,-576 114.73,-582 114.73,-582 114.73,-648.78 114.73,-648.78 114.73,-654.78 108.73,-660.78 102.73,-660.78" />
+<text xml:space="preserve" text-anchor="start" x="27.93" y="-637.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="27.93" y="-612.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Napomene</text>
+<text xml:space="preserve" text-anchor="start" x="27.93" y="-587.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Opomene" class="node" data-key="naplata.Opomene" data-route="model/naplata.Opomene">
+<title>n7</title>
+<g id="a_node-naplata.Opomene"><a xlink:href="../../index.html#model/naplata.Opomene" xlink:title="naplata.Opomene" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M98.6,-774.78C98.6,-774.78 29.25,-774.78 29.25,-774.78 23.25,-774.78 17.25,-768.78 17.25,-762.78 17.25,-762.78 17.25,-696 17.25,-696 17.25,-690 23.25,-684 29.25,-684 29.25,-684 98.6,-684 98.6,-684 104.6,-684 110.6,-690 110.6,-696 110.6,-696 110.6,-762.78 110.6,-762.78 110.6,-768.78 104.6,-774.78 98.6,-774.78" />
+<text xml:space="preserve" text-anchor="start" x="32.05" y="-751.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="32.05" y="-726.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Opomene</text>
+<text xml:space="preserve" text-anchor="start" x="32.05" y="-701.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">9 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Partneri" class="node" data-key="naplata.Partneri" data-route="model/naplata.Partneri">
+<title>n8</title>
+<g id="a_node-naplata.Partneri"><a xlink:href="../../index.html#model/naplata.Partneri" xlink:title="naplata.Partneri" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M92.98,-888.78C92.98,-888.78 34.88,-888.78 34.88,-888.78 28.88,-888.78 22.88,-882.78 22.88,-876.78 22.88,-876.78 22.88,-810 22.88,-810 22.88,-804 28.88,-798 34.88,-798 34.88,-798 92.98,-798 92.98,-798 98.98,-798 104.98,-804 104.98,-810 104.98,-810 104.98,-876.78 104.98,-876.78 104.98,-882.78 98.98,-888.78 92.98,-888.78" />
+<text xml:space="preserve" text-anchor="start" x="37.68" y="-865.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="37.68" y="-840.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Partneri</text>
+<text xml:space="preserve" text-anchor="start" x="37.68" y="-815.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">25 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.PozivPismo" class="node" data-key="naplata.PozivPismo" data-route="model/naplata.PozivPismo">
+<title>n9</title>
+<g id="a_node-naplata.PozivPismo"><a xlink:href="../../index.html#model/naplata.PozivPismo" xlink:title="naplata.PozivPismo" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M103.48,-1002.78C103.48,-1002.78 24.38,-1002.78 24.38,-1002.78 18.38,-1002.78 12.38,-996.78 12.38,-990.78 12.38,-990.78 12.38,-924 12.38,-924 12.38,-918 18.38,-912 24.38,-912 24.38,-912 103.48,-912 103.48,-912 109.48,-912 115.48,-918 115.48,-924 115.48,-924 115.48,-990.78 115.48,-990.78 115.48,-996.78 109.48,-1002.78 103.48,-1002.78" />
+<text xml:space="preserve" text-anchor="start" x="27.18" y="-979.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="27.18" y="-954.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PozivPismo</text>
+<text xml:space="preserve" text-anchor="start" x="27.18" y="-929.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">9 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.PoziviTel" class="node" data-key="naplata.PoziviTel" data-route="model/naplata.PoziviTel">
+<title>n10</title>
+<g id="a_node-naplata.PoziviTel"><a xlink:href="../../index.html#model/naplata.PoziviTel" xlink:title="naplata.PoziviTel" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M94.85,-1116.78C94.85,-1116.78 33,-1116.78 33,-1116.78 27,-1116.78 21,-1110.78 21,-1104.78 21,-1104.78 21,-1038 21,-1038 21,-1032 27,-1026 33,-1026 33,-1026 94.85,-1026 94.85,-1026 100.85,-1026 106.85,-1032 106.85,-1038 106.85,-1038 106.85,-1104.78 106.85,-1104.78 106.85,-1110.78 100.85,-1116.78 94.85,-1116.78" />
+<text xml:space="preserve" text-anchor="start" x="35.8" y="-1093.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="35.8" y="-1068.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">PoziviTel</text>
+<text xml:space="preserve" text-anchor="start" x="35.8" y="-1043.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.SifBaket" class="node" data-key="naplata.SifBaket" data-route="model/naplata.SifBaket">
+<title>n11</title>
+<g id="a_node-naplata.SifBaket"><a xlink:href="../../index.html#model/naplata.SifBaket" xlink:title="naplata.SifBaket" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M93.35,-1230.78C93.35,-1230.78 34.5,-1230.78 34.5,-1230.78 28.5,-1230.78 22.5,-1224.78 22.5,-1218.78 22.5,-1218.78 22.5,-1152 22.5,-1152 22.5,-1146 28.5,-1140 34.5,-1140 34.5,-1140 93.35,-1140 93.35,-1140 99.35,-1140 105.35,-1146 105.35,-1152 105.35,-1152 105.35,-1218.78 105.35,-1218.78 105.35,-1224.78 99.35,-1230.78 93.35,-1230.78" />
+<text xml:space="preserve" text-anchor="start" x="37.3" y="-1207.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="37.3" y="-1182.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">SifBaket</text>
+<text xml:space="preserve" text-anchor="start" x="37.3" y="-1157.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.SifKategorija" class="node" data-key="naplata.SifKategorija" data-route="model/naplata.SifKategorija">
+<title>n12</title>
+<g id="a_node-naplata.SifKategorija"><a xlink:href="../../index.html#model/naplata.SifKategorija" xlink:title="naplata.SifKategorija" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M108.73,-1344.78C108.73,-1344.78 19.13,-1344.78 19.13,-1344.78 13.13,-1344.78 7.13,-1338.78 7.13,-1332.78 7.13,-1332.78 7.13,-1266 7.13,-1266 7.13,-1260 13.13,-1254 19.13,-1254 19.13,-1254 108.73,-1254 108.73,-1254 114.73,-1254 120.73,-1260 120.73,-1266 120.73,-1266 120.73,-1332.78 120.73,-1332.78 120.73,-1338.78 114.73,-1344.78 108.73,-1344.78" />
+<text xml:space="preserve" text-anchor="start" x="21.93" y="-1321.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="21.93" y="-1296.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">SifKategorija</text>
+<text xml:space="preserve" text-anchor="start" x="21.93" y="-1271.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">2 polja</text>
+</a>
+</g>
+</g>
+
+<g id="node-naplata.Tuzbe" class="node" data-key="naplata.Tuzbe" data-route="model/naplata.Tuzbe">
+<title>n13</title>
+<g id="a_node-naplata.Tuzbe"><a xlink:href="../../index.html#model/naplata.Tuzbe" xlink:title="naplata.Tuzbe" target="_top">
+<path fill="#f3f8fb" stroke="#8b7770" d="M86.23,-1458.78C86.23,-1458.78 41.63,-1458.78 41.63,-1458.78 35.63,-1458.78 29.63,-1452.78 29.63,-1446.78 29.63,-1446.78 29.63,-1380 29.63,-1380 29.63,-1374 35.63,-1368 41.63,-1368 41.63,-1368 86.23,-1368 86.23,-1368 92.22,-1368 98.23,-1374 98.23,-1380 98.23,-1380 98.23,-1446.78 98.23,-1446.78 98.23,-1452.78 92.23,-1458.78 86.23,-1458.78" />
+<text xml:space="preserve" text-anchor="start" x="44.43" y="-1435.69" font-family="Segoe UI" font-size="11.00" fill="#8b7770">naplata</text>
+<text xml:space="preserve" text-anchor="start" x="44.43" y="-1410.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Tuzbe</text>
+<text xml:space="preserve" text-anchor="start" x="44.43" y="-1385.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">9 polja</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

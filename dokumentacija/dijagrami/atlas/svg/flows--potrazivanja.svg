@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="252pt" height="99pt" viewBox="0.00 0.00 252.00 99.00" role="img" aria-label="Tokovi rada · Potraživanja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 77.88)">
+<title>G</title>
+
+<g id="node-potrazivanja--naplata" class="node" data-key="potrazivanja/naplata" data-route="flow/potrazivanja/naplata">
+<title>n0</title>
+<g id="a_node-potrazivanja--naplata"><a xlink:href="../../index.html#flow/potrazivanja/naplata" xlink:title="Tokovi rada · Potraživanja" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M196.35,-56.28C196.35,-56.28 12,-56.28 12,-56.28 6,-56.28 0,-50.28 0,-44.28 0,-44.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 196.35,0 196.35,0 202.35,0 208.35,-6 208.35,-12 208.35,-12 208.35,-44.28 208.35,-44.28 208.35,-50.28 202.35,-56.28 196.35,-56.28" />
+<text xml:space="preserve" text-anchor="middle" x="104.17" y="-34.34" font-family="Segoe UI" font-size="14.00">Od salda do aktivnosti naplate</text>
+<text xml:space="preserve" text-anchor="middle" x="104.17" y="-14.84" font-family="Segoe UI" font-size="14.00">Potraživanja</text>
+</a>
+</g>
+</g>
+</g>
+</svg>

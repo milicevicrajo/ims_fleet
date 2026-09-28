@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="345pt" height="539pt" viewBox="0.00 0.00 345.00 539.00" role="img" aria-label="Radna lista zaposlenog">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 517.9)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#3778a3" stroke="#3778a3" cx="150.68" cy="-468.88" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="118.76" y="-483" font-family="Segoe UI" font-size="14.00">Početak</text>
+</g>
+
+<g id="node-0" class="node" data-key="0" data-route="model/hr.Employee">
+<title>n1</title>
+<g id="a_node-0"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M267.6,-402.96C267.6,-402.96 33.75,-402.96 33.75,-402.96 27.75,-402.96 21.75,-396.96 21.75,-390.96 21.75,-390.96 21.75,-378.18 21.75,-378.18 21.75,-372.18 27.75,-366.18 33.75,-366.18 33.75,-366.18 267.6,-366.18 267.6,-366.18 273.6,-366.18 279.6,-372.18 279.6,-378.18 279.6,-378.18 279.6,-390.96 279.6,-390.96 279.6,-396.96 273.6,-402.96 267.6,-402.96" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-381.02" font-family="Segoe UI" font-size="14.00">Izbor perioda i dozvoljenih zaposlenih</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="0">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-460.58C150.68,-449.72 150.68,-428.78 150.68,-411.78" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-411.84 150.68,-404.84 148.23,-411.84 153.13,-411.84" />
+</g>
+
+<g id="node-1" class="node" data-key="1" data-route="model/hr.WorkTimeSheet">
+<title>n2</title>
+<g id="a_node-1"><a xlink:href="../../index.html#model/hr.WorkTimeSheet" xlink:title="hr.WorkTimeSheet" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M280.73,-308.18C280.73,-308.18 20.62,-308.18 20.62,-308.18 14.62,-308.18 8.62,-302.18 8.62,-296.18 8.62,-296.18 8.62,-283.4 8.62,-283.4 8.62,-277.4 14.62,-271.4 20.62,-271.4 20.62,-271.4 280.73,-271.4 280.73,-271.4 286.73,-271.4 292.73,-277.4 292.73,-283.4 292.73,-283.4 292.73,-296.18 292.73,-296.18 292.73,-302.18 286.73,-308.18 280.73,-308.18" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-286.24" font-family="Segoe UI" font-size="14.00">Čitanje izvora prolazaka i radnih evidencija</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="0" data-to="1">
+<title>n1-&gt;n2</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-365.68C150.68,-351.82 150.68,-332.41 150.68,-316.83" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-317.14 150.68,-310.14 148.23,-317.14 153.13,-317.14" />
+</g>
+
+<g id="node-2" class="node" data-key="2" data-route="model/hr.WorkTimeSheetLine">
+<title>n3</title>
+<g id="a_node-2"><a xlink:href="../../index.html#model/hr.WorkTimeSheetLine" xlink:title="hr.WorkTimeSheetLine" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M249.98,-213.4C249.98,-213.4 51.38,-213.4 51.38,-213.4 45.38,-213.4 39.38,-207.4 39.38,-201.4 39.38,-201.4 39.38,-188.62 39.38,-188.62 39.38,-182.62 45.38,-176.62 51.38,-176.62 51.38,-176.62 249.98,-176.62 249.98,-176.62 255.98,-176.62 261.98,-182.62 261.98,-188.62 261.98,-188.62 261.98,-201.4 261.98,-201.4 261.98,-207.4 255.98,-213.4 249.98,-213.4" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-191.46" font-family="Segoe UI" font-size="14.00">Priprema podataka za radnu listu</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="1" data-to="2">
+<title>n2-&gt;n3</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-270.9C150.68,-257.04 150.68,-237.63 150.68,-222.05" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-222.36 150.68,-215.36 148.23,-222.36 153.13,-222.36" />
+</g>
+
+<g id="node-3" class="node" data-key="3" data-route="model/hr.WorkTimeSheet">
+<title>n4</title>
+<g id="a_node-3"><a xlink:href="../../index.html#model/hr.WorkTimeSheet" xlink:title="hr.WorkTimeSheet" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M289.35,-118.62C289.35,-118.62 12,-118.62 12,-118.62 6,-118.62 0,-112.62 0,-106.62 0,-106.62 0,-93.84 0,-93.84 0,-87.84 6,-81.84 12,-81.84 12,-81.84 289.35,-81.84 289.35,-81.84 295.35,-81.84 301.35,-87.84 301.35,-93.84 301.35,-93.84 301.35,-106.62 301.35,-106.62 301.35,-112.62 295.35,-118.62 289.35,-118.62" />
+<text xml:space="preserve" text-anchor="middle" x="150.68" y="-96.68" font-family="Segoe UI" font-size="14.00">Pregled i dopuna evidencije u okviru dozvola</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="2" data-to="3">
+<title>n3-&gt;n4</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-176.12C150.68,-162.26 150.68,-142.85 150.68,-127.27" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-127.58 150.68,-120.58 148.23,-127.58 153.13,-127.58" />
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n5</title>
+<ellipse fill="#3778a3" stroke="#3778a3" cx="150.68" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#3778a3" cx="150.68" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="127.13" y="-30.04" font-family="Segoe UI" font-size="14.00">Kraj</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="3" data-to="end">
+<title>n4-&gt;n5</title>
+<path fill="none" stroke="#8b9ead" d="M150.68,-81.35C150.68,-67.12 150.68,-47.23 150.68,-32.56" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="153.13,-32.71 150.68,-25.71 148.23,-32.71 153.13,-32.71" />
+</g>
+</g>
+</svg>

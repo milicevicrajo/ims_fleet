@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="488pt" height="489pt" viewBox="0.00 0.00 488.00 489.00" role="img" aria-label="Ugovori · Dokumenti i obezbeđenja">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 467.38)">
+<title>G</title>
+
+<g id="node-core.CustomUser" class="node" data-key="core.CustomUser" data-route="model/core.CustomUser">
+<title>n0</title>
+<g id="a_node-core.CustomUser"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M429.95,-318.78C429.95,-318.78 302.85,-318.78 302.85,-318.78 296.85,-318.78 290.85,-312.78 290.85,-306.78 290.85,-306.78 290.85,-240 290.85,-240 290.85,-234 296.85,-228 302.85,-228 302.85,-228 429.95,-228 429.95,-228 435.95,-228 441.95,-234 441.95,-240 441.95,-240 441.95,-306.78 441.95,-306.78 441.95,-312.78 435.95,-318.78 429.95,-318.78" />
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-295.69" font-family="Segoe UI" font-size="11.00" fill="#526687">core</text>
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-270.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">CustomUser</text>
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-245.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">5 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-menice.Menica" class="node" data-key="menice.Menica" data-route="model/menice.Menica">
+<title>n1</title>
+<g id="a_node-menice.Menica"><a xlink:href="../../index.html#model/menice.Menica" xlink:title="menice.Menica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M432.95,-90.78C432.95,-90.78 299.85,-90.78 299.85,-90.78 293.85,-90.78 287.85,-84.78 287.85,-78.78 287.85,-78.78 287.85,-12 287.85,-12 287.85,-6 293.85,0 299.85,0 299.85,0 432.95,0 432.95,0 438.95,0 444.95,-6 444.95,-12 444.95,-12 444.95,-78.78 444.95,-78.78 444.95,-84.78 438.95,-90.78 432.95,-90.78" />
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-67.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-42.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Menica</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-17.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">30 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-menice.UlaznaMenica" class="node" data-key="menice.UlaznaMenica" data-route="model/menice.UlaznaMenica">
+<title>n2</title>
+<g id="a_node-menice.UlaznaMenica"><a xlink:href="../../index.html#model/menice.UlaznaMenica" xlink:title="menice.UlaznaMenica" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M432.95,-204.78C432.95,-204.78 299.85,-204.78 299.85,-204.78 293.85,-204.78 287.85,-198.78 287.85,-192.78 287.85,-192.78 287.85,-126 287.85,-126 287.85,-120 293.85,-114 299.85,-114 299.85,-114 432.95,-114 432.95,-114 438.95,-114 444.95,-120 444.95,-126 444.95,-126 444.95,-192.78 444.95,-192.78 444.95,-198.78 438.95,-204.78 432.95,-204.78" />
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-181.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">menice</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-156.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">UlaznaMenica</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-131.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">14 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-ugovori.Contract" class="node" data-key="ugovori.Contract" data-route="model/ugovori.Contract">
+<title>n3</title>
+<g id="a_node-ugovori.Contract"><a xlink:href="../../index.html#model/ugovori.Contract" xlink:title="ugovori.Contract" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M432.95,-432.78C432.95,-432.78 299.85,-432.78 299.85,-432.78 293.85,-432.78 287.85,-426.78 287.85,-420.78 287.85,-420.78 287.85,-354 287.85,-354 287.85,-348 293.85,-342 299.85,-342 299.85,-342 432.95,-342 432.95,-342 438.95,-342 444.95,-348 444.95,-354 444.95,-354 444.95,-420.78 444.95,-420.78 444.95,-426.78 438.95,-432.78 432.95,-432.78" />
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-409.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-384.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Contract</text>
+<text xml:space="preserve" text-anchor="start" x="302.65" y="-359.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">23 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-ugovori.ContractDocument" class="node" data-key="ugovori.ContractDocument" data-route="model/ugovori.ContractDocument">
+<title>n4</title>
+<g id="a_node-ugovori.ContractDocument"><a xlink:href="../../index.html#model/ugovori.ContractDocument" xlink:title="ugovori.ContractDocument" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M143.98,-329.78C143.98,-329.78 15.38,-329.78 15.38,-329.78 9.38,-329.78 3.38,-323.78 3.38,-317.78 3.38,-317.78 3.38,-251 3.38,-251 3.38,-245 9.38,-239 15.38,-239 15.38,-239 143.98,-239 143.98,-239 149.98,-239 155.98,-245 155.98,-251 155.98,-251 155.98,-317.78 155.98,-317.78 155.98,-323.78 149.98,-329.78 143.98,-329.78" />
+<text xml:space="preserve" text-anchor="start" x="18.18" y="-306.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="18.18" y="-281.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ContractDocument</text>
+<text xml:space="preserve" text-anchor="start" x="18.18" y="-256.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">7 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="ugovori.ContractDocument" data-to="core.CustomUser">
+<title>n4-&gt;n0</title>
+<g id="a_edge-1"><a xlink:title="ugovori.ContractDocument.uploaded_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M156.34,-269.33C167.05,-267.7 177.95,-266.3 188.35,-265.39 218.89,-262.72 252.48,-263.34 282.11,-265.09" />
+<polygon fill="#a27631" stroke="#a27631" points="281.71,-267.52 288.85,-265.52 282.02,-262.63 281.71,-267.52" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-269.94" font-family="Segoe UI" font-size="11.00">uploaded_by</text>
+<text xml:space="preserve" text-anchor="middle" x="276.39" y="-268.13" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="168.85" y="-258.09" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="ugovori.ContractDocument" data-to="ugovori.Contract">
+<title>n4-&gt;n3</title>
+<g id="a_edge-0"><a xlink:title="ugovori.ContractDocument.contract → ugovori.Contract | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M156.22,-312.6C167,-316.59 177.95,-320.61 188.35,-324.39 218.19,-335.24 250.92,-346.94 280.04,-357.28" />
+<polygon fill="#7297ab" stroke="#7297ab" points="278.91,-359.48 286.33,-359.52 280.55,-354.87 278.91,-359.48" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-353.42" font-family="Segoe UI" font-size="11.00">contract</text>
+<text xml:space="preserve" text-anchor="middle" x="272.82" y="-358.5" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="171.17" y="-308.42" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-ugovori.ContractGuarantee" class="node" data-key="ugovori.ContractGuarantee" data-route="model/ugovori.ContractGuarantee">
+<title>n5</title>
+<g id="a_node-ugovori.ContractGuarantee"><a xlink:href="../../index.html#model/ugovori.ContractGuarantee" xlink:title="ugovori.ContractGuarantee" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M143.6,-445.78C143.6,-445.78 15.75,-445.78 15.75,-445.78 9.75,-445.78 3.75,-439.78 3.75,-433.78 3.75,-433.78 3.75,-367 3.75,-367 3.75,-361 9.75,-355 15.75,-355 15.75,-355 143.6,-355 143.6,-355 149.6,-355 155.6,-361 155.6,-367 155.6,-367 155.6,-433.78 155.6,-433.78 155.6,-439.78 149.6,-445.78 143.6,-445.78" />
+<text xml:space="preserve" text-anchor="start" x="18.55" y="-422.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="18.55" y="-397.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ContractGuarantee</text>
+<text xml:space="preserve" text-anchor="start" x="18.55" y="-372.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">12 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-7" class="edge" data-from="ugovori.ContractGuarantee" data-to="core.CustomUser">
+<title>n5-&gt;n0</title>
+<g id="a_edge-7"><a xlink:title="ugovori.ContractGuarantee.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M155.9,-391.84C196.39,-386.2 241.49,-377.9 258.85,-367.39 276.72,-356.57 272.85,-344.93 287.85,-330.39 289.95,-328.35 292.13,-326.32 294.37,-324.32" />
+<polygon fill="#a27631" stroke="#a27631" points="295.59,-326.5 299.26,-320.05 292.37,-322.81 295.59,-326.5" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-390.92" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="294.32" y="-329.82" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="168.45" y="-380.67" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-6" class="edge" data-from="ugovori.ContractGuarantee" data-to="ugovori.Contract">
+<title>n5-&gt;n3</title>
+<g id="a_edge-6"><a xlink:title="ugovori.ContractGuarantee.contract → ugovori.Contract | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M155.8,-410C187.64,-412.68 225.12,-413.99 258.85,-410.39 265.54,-409.68 272.44,-408.72 279.34,-407.59" />
+<polygon fill="#7297ab" stroke="#7297ab" points="279.47,-410.06 285.95,-406.46 278.64,-405.23 279.47,-410.06" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-417.14" font-family="Segoe UI" font-size="11.00">contract</text>
+<text xml:space="preserve" text-anchor="middle" x="275.12" y="-411.8" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="169.85" y="-401.79" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="node-ugovori.ContractMenicaLink" class="node" data-key="ugovori.ContractMenicaLink" data-route="model/ugovori.ContractMenicaLink">
+<title>n6</title>
+<g id="a_node-ugovori.ContractMenicaLink"><a xlink:href="../../index.html#model/ugovori.ContractMenicaLink" xlink:title="ugovori.ContractMenicaLink" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M147.35,-211.78C147.35,-211.78 12,-211.78 12,-211.78 6,-211.78 0,-205.78 0,-199.78 0,-199.78 0,-133 0,-133 0,-127 6,-121 12,-121 12,-121 147.35,-121 147.35,-121 153.35,-121 159.35,-127 159.35,-133 159.35,-133 159.35,-199.78 159.35,-199.78 159.35,-205.78 153.35,-211.78 147.35,-211.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-188.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">ugovori</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-163.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ContractMenicaLink</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-138.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">6 polja</text>
+</a>
+</g>
+</g>
+
+<g id="edge-5" class="edge" data-from="ugovori.ContractMenicaLink" data-to="core.CustomUser">
+<title>n6-&gt;n0</title>
+<g id="a_edge-5"><a xlink:title="ugovori.ContractMenicaLink.created_by → core.CustomUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M159.61,-196.05C198.03,-210.49 244.19,-227.84 283.05,-242.44" />
+<polygon fill="#a27631" stroke="#a27631" points="281.89,-244.62 289.31,-244.79 283.62,-240.04 281.89,-244.62" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-237.17" font-family="Segoe UI" font-size="11.00">created_by</text>
+<text xml:space="preserve" text-anchor="middle" x="275.77" y="-243.53" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="174.56" y="-191.95" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-3" class="edge" data-from="ugovori.ContractMenicaLink" data-to="menice.Menica">
+<title>n6-&gt;n1</title>
+<g id="a_edge-3"><a xlink:title="ugovori.ContractMenicaLink.menica → menice.Menica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M159.61,-132.85C197.1,-116.91 241.97,-97.84 280.23,-81.58" />
+<polygon fill="#a27631" stroke="#a27631" points="280.91,-83.96 286.4,-78.96 279,-79.45 280.91,-83.96" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-124.84" font-family="Segoe UI" font-size="11.00">menica</text>
+<text xml:space="preserve" text-anchor="middle" x="277.76" y="-86.57" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="169.64" y="-118.74" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-4" class="edge" data-from="ugovori.ContractMenicaLink" data-to="menice.UlaznaMenica">
+<title>n6-&gt;n2</title>
+<g id="a_edge-4"><a xlink:title="ugovori.ContractMenicaLink.ulazna_menica → menice.UlaznaMenica | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M159.61,-164.45C196.94,-163.53 241.6,-162.43 279.75,-161.5" />
+<polygon fill="#a27631" stroke="#a27631" points="279.34,-163.96 286.28,-161.34 279.22,-159.06 279.34,-163.96" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-168.27" font-family="Segoe UI" font-size="11.00">ulazna_menica</text>
+<text xml:space="preserve" text-anchor="middle" x="274.36" y="-165.02" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="173.04" y="-154.83" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-2" class="edge" data-from="ugovori.ContractMenicaLink" data-to="ugovori.Contract">
+<title>n6-&gt;n3</title>
+<g id="a_edge-2"><a xlink:title="ugovori.ContractMenicaLink.contract → ugovori.Contract | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M144.65,-212.11C149.9,-216.99 154.89,-222.11 159.35,-227.39 176.94,-248.19 167.46,-263.91 188.35,-281.39 213.63,-302.54 230.3,-287.92 258.85,-304.39 273.85,-313.04 274.42,-319.47 287.85,-330.39 290.26,-332.35 292.73,-334.32 295.24,-336.3" />
+<polygon fill="#7297ab" stroke="#7297ab" points="293.73,-338.23 300.76,-340.61 296.75,-334.37 293.73,-338.23" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="223.6" y="-308.94" font-family="Segoe UI" font-size="11.00">contract</text>
+<text xml:space="preserve" text-anchor="middle" x="287.33" y="-335.22" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="158.9" y="-213.86" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

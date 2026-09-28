@@ -351,3 +351,21 @@ def ogranici(queryset, obuhvat_, polje_cvora="org_node", polje_datuma=None, ili=
     if ili is not None:
         uslov |= ili
     return queryset.filter(uslov)
+
+
+def jedinice_obuhvata(obuhvat_):
+    """`OrganizationalUnit` (sifre posla u formama) u obuhvatu danas; None znaci cela firma.
+
+    Veza stare jedinice sa cvorom (`LegacyOrgLink`), a za jedinicu napravljenu posle poslednjeg
+    uvoza registra — po sifri.
+    """
+    from core.models import OrganizationalUnit
+    from organizacija.models import LegacyOrgLink
+
+    sifre = sifre_obuhvata(obuhvat_)
+    if sifre is None:
+        return None
+    ids = set(LegacyOrgLink.objects.filter(legacy_label=LegacyOrgLink.LEGACY_FLEET_UNIT,
+                                           node_id__in=poslovi_obuhvata(obuhvat_)).values_list("legacy_id", flat=True))
+    ids.update(pk for pk, code in OrganizationalUnit.objects.values_list("pk", "code") if (code or "").strip() in sifre)
+    return ids

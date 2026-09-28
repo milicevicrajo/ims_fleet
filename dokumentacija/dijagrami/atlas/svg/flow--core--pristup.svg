@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="704pt" height="697pt" viewBox="0.00 0.00 704.00 697.00" role="img" aria-label="Provera pristupa ruti">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 675.24)">
+<title>G</title>
+
+<g id="node-start" class="node" data-key="start">
+<title>n0</title>
+<ellipse fill="#526687" stroke="#526687" cx="135.6" cy="-626.22" rx="7.92" ry="7.92" />
+<text xml:space="preserve" text-anchor="middle" x="83.8" y="-640.34" font-family="Segoe UI" font-size="14.00">Otvaranje rute</text>
+</g>
+
+<g id="node-auth" class="node" data-key="auth" data-route="model/core.CustomUser">
+<title>n1</title>
+<g id="a_node-auth"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M124.02,-556.16C124.02,-556.16 11.58,-525.66 11.58,-525.66 5.79,-524.09 5.79,-520.95 11.58,-519.38 11.58,-519.38 124.02,-488.88 124.02,-488.88 129.81,-487.31 141.39,-487.31 147.18,-488.88 147.18,-488.88 259.62,-519.38 259.62,-519.38 265.41,-520.95 265.41,-524.09 259.62,-525.66 259.62,-525.66 147.18,-556.16 147.18,-556.16 141.39,-557.73 129.81,-557.73 124.02,-556.16" />
+<text xml:space="preserve" text-anchor="middle" x="135.6" y="-518.97" font-family="Segoe UI" font-size="14.00">Prijavljen korisnik?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="start" data-to="auth">
+<title>n0-&gt;n1</title>
+<path fill="none" stroke="#8b9ead" d="M135.6,-617.91C135.6,-607.35 135.6,-587.02 135.6,-567.92" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="138.05,-568.07 135.6,-561.07 133.15,-568.07 138.05,-568.07" />
+</g>
+
+<g id="node-deny" class="node" data-key="deny">
+<title>n2</title>
+<path fill="#f3f8fb" stroke="#526687" d="M292.77,-119.62C292.77,-119.62 168.43,-119.62 168.43,-119.62 162.43,-119.62 156.43,-113.62 156.43,-107.62 156.43,-107.62 156.43,-94.84 156.43,-94.84 156.43,-88.84 162.43,-82.84 168.43,-82.84 168.43,-82.84 292.77,-82.84 292.77,-82.84 298.77,-82.84 304.77,-88.84 304.77,-94.84 304.77,-94.84 304.77,-107.62 304.77,-107.62 304.77,-113.62 298.77,-119.62 292.77,-119.62" />
+<text xml:space="preserve" text-anchor="middle" x="230.6" y="-97.68" font-family="Segoe UI" font-size="14.00">Pristup nije odobren</text>
+</g>
+
+<g id="edge-1" class="edge" data-from="auth" data-to="deny">
+<title>n1-&gt;n2</title>
+<g id="a_edge-1"><a xlink:title="ne">
+<path fill="none" stroke="#8b9ead" d="M127.74,-487.61C115.18,-425.98 96.07,-292.74 138.6,-192.62 150.45,-164.73 175.49,-141.06 196.45,-124.95" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="197.74,-127.04 201.88,-120.89 194.81,-123.12 197.74,-127.04" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="120.46" y="-299.73" font-family="Segoe UI" font-size="11.00">ne</text>
+</g>
+
+<g id="node-super" class="node" data-key="super" data-route="model/core.CustomUser">
+<title>n3</title>
+<g id="a_node-super"><a xlink:href="../../index.html#model/core.CustomUser" xlink:title="core.CustomUser" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M333.49,-408.19C333.49,-408.19 265.86,-380.51 265.86,-380.51 260.3,-378.23 260.3,-373.69 265.86,-371.41 265.86,-371.41 333.49,-343.73 333.49,-343.73 339.05,-341.45 350.15,-341.45 355.71,-343.73 355.71,-343.73 423.34,-371.41 423.34,-371.41 428.9,-373.69 428.9,-378.23 423.34,-380.51 423.34,-380.51 355.71,-408.19 355.71,-408.19 350.15,-410.47 339.05,-410.47 333.49,-408.19" />
+<text xml:space="preserve" text-anchor="middle" x="344.6" y="-372.41" font-family="Segoe UI" font-size="14.00">Superuser?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-2" class="edge" data-from="auth" data-to="super">
+<title>n1-&gt;n3</title>
+<g id="a_edge-2"><a xlink:title="da">
+<path fill="none" stroke="#8b9ead" d="M172.97,-495.68C210.1,-469.99 266.86,-430.73 304.82,-404.47" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="306.08,-406.58 310.44,-400.59 303.29,-402.55 306.08,-406.58" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="252.37" y="-446.29" font-family="Segoe UI" font-size="11.00">da</text>
+</g>
+
+<g id="node-role" class="node" data-key="role" data-route="model/core.RolePermission">
+<title>n4</title>
+<g id="a_node-role"><a xlink:href="../../index.html#model/core.RolePermission" xlink:title="core.RolePermission" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M332.81,-263.95C332.81,-263.95 162.29,-231.63 162.29,-231.63 156.4,-230.52 156.4,-228.28 162.29,-227.17 162.29,-227.17 332.81,-194.85 332.81,-194.85 338.7,-193.74 350.5,-193.74 356.39,-194.85 356.39,-194.85 526.91,-227.17 526.91,-227.17 532.8,-228.28 532.8,-230.52 526.91,-231.63 526.91,-231.63 356.39,-263.95 356.39,-263.95 350.5,-265.06 338.7,-265.06 332.81,-263.95" />
+<text xml:space="preserve" text-anchor="middle" x="344.6" y="-225.85" font-family="Segoe UI" font-size="14.00">Aktivna uloga ima kod rute?</text>
+</a>
+</g>
+</g>
+
+<g id="edge-4" class="edge" data-from="super" data-to="role">
+<title>n3-&gt;n4</title>
+<g id="a_edge-4"><a xlink:title="ne">
+<path fill="none" stroke="#8b9ead" d="M344.6,-338.85C344.6,-319.45 344.6,-295.36 344.6,-274.81" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="347.05,-275.06 344.6,-268.06 342.15,-275.06 347.05,-275.06" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="350.6" y="-299.73" font-family="Segoe UI" font-size="11.00">ne</text>
+</g>
+
+<g id="node-scope" class="node" data-key="scope" data-route="model/organizacija.DodelaUloge">
+<title>n5</title>
+<g id="a_node-scope"><a xlink:href="../../index.html#model/organizacija.DodelaUloge" xlink:title="organizacija.DodelaUloge" target="_top">
+<path fill="#f3f8fb" stroke="#526687" d="M648.65,-119.62C648.65,-119.62 400.55,-119.62 400.55,-119.62 394.55,-119.62 388.55,-113.62 388.55,-107.62 388.55,-107.62 388.55,-94.84 388.55,-94.84 388.55,-88.84 394.55,-82.84 400.55,-82.84 400.55,-82.84 648.65,-82.84 648.65,-82.84 654.65,-82.84 660.65,-88.84 660.65,-94.84 660.65,-94.84 660.65,-107.62 660.65,-107.62 660.65,-113.62 654.65,-119.62 648.65,-119.62" />
+<text xml:space="preserve" text-anchor="middle" x="524.6" y="-97.68" font-family="Segoe UI" font-size="14.00">Provera obuhvata u konkretnom modulu</text>
+</a>
+</g>
+</g>
+
+<g id="edge-3" class="edge" data-from="super" data-to="scope">
+<title>n3-&gt;n5</title>
+<g id="a_edge-3"><a xlink:title="da">
+<path fill="none" stroke="#8b9ead" d="M401.81,-362.18C450.87,-347.87 518.55,-319.35 550.6,-266.18 576.88,-222.58 554.52,-161.09 538.12,-127.16" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="540.52,-126.48 535.21,-121.31 536.14,-128.66 540.52,-126.48" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="568.69" y="-226.45" font-family="Segoe UI" font-size="11.00">da</text>
+</g>
+
+<g id="edge-5" class="edge" data-from="role" data-to="deny">
+<title>n4-&gt;n2</title>
+<g id="a_edge-5"><a xlink:title="ne">
+<path fill="none" stroke="#8b9ead" d="M316.71,-197.54C296.85,-175.55 270.53,-146.42 252.24,-126.18" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="254.13,-124.62 247.62,-121.07 250.49,-127.9 254.13,-124.62" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="290.18" y="-153.17" font-family="Segoe UI" font-size="11.00">ne</text>
+</g>
+
+<g id="edge-6" class="edge" data-from="role" data-to="scope">
+<title>n4-&gt;n5</title>
+<g id="a_edge-6"><a xlink:title="da">
+<path fill="none" stroke="#8b9ead" d="M385,-200.08C417.43,-177.35 462.36,-145.85 492.4,-124.8" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="493.76,-126.84 498.09,-120.81 490.95,-122.83 493.76,-126.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="462.02" y="-153.17" font-family="Segoe UI" font-size="11.00">da</text>
+</g>
+
+<g id="node-end" class="node" data-key="end">
+<title>n6</title>
+<ellipse fill="#526687" stroke="#526687" cx="524.6" cy="-11.92" rx="7.92" ry="7.92" />
+<ellipse fill="none" stroke="#526687" cx="524.6" cy="-11.92" rx="11.92" ry="11.92" />
+<text xml:space="preserve" text-anchor="middle" x="456.8" y="-30.04" font-family="Segoe UI" font-size="14.00">Dozvoljeni podaci</text>
+</g>
+
+<g id="edge-7" class="edge" data-from="scope" data-to="end">
+<title>n5-&gt;n6</title>
+<path fill="none" stroke="#8b9ead" d="M524.6,-82.56C524.6,-67.98 524.6,-47.32 524.6,-32.3" />
+<polygon fill="#8b9ead" stroke="#8b9ead" points="527.05,-32.7 524.6,-25.7 522.15,-32.7 527.05,-32.7" />
+</g>
+</g>
+</svg>

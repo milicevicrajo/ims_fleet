@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .invoice-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18); }
+  .invoice-hero h1 { font-size: 1.5rem; margin: 0; }
+  .invoice-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .invoice-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 9px;
+    font-weight: 600; font-size: .82rem; white-space: nowrap; }
+  .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .fiskalni-podaci { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: .9rem; }
+  .fiskalni-podaci dt { color: #6b7785; font-weight: 400; }
+  .fiskalni-podaci dd { margin: 0; }
+  .fiskalni-zurnal { font-size: .78rem; line-height: 1.25; background: #f8fafc; border: 1px solid #e6ebf1;
+    border-radius: 8px; padding: 12px; max-height: 520px; overflow: auto; }
+  .fiskalni-link { font-size: .75rem; }
+</style>
+
+<div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ racun.naziv_prodavca|default:racun.pib_prodavca|default:"Fiskalni račun" }}</h1>
+    <p>{{ racun.broj_racuna }} · {{ racun.pfr_vreme|date:"d.m.Y. H:i" }} · <strong>{{ racun.iznos|floatformat:"2g" }} din</strong></p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:fiskalni_list' %}"><i class="mdi mdi-arrow-left"></i> Spisak</a>
+    <a class="btn btn-outline-light btn-sm" href="{{ racun.link }}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> Stranica Poreske uprave</a>
+    {% if nabavka_permissions.fiskalni_refresh %}
+    <form method="post" action="{% url 'nabavka:fiskalni_refresh' racun.pk %}">{% csrf_token %}
+      <button class="btn btn-light btn-sm" type="submit"><i class="mdi mdi-refresh"></i> Ponovo preuzmi</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if upozorenja %}
+  <div class="alert alert-warning"><i class="mdi mdi-alert"></i>
+    {% for u in upozorenja %}{{ u }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h5 class="card-title">Račun</h5>
+      <dl class="fiskalni-podaci">
+        <dt>Prodavac</dt><dd>{{ racun.naziv_prodavca|default:"—" }} · PIB {{ racun.pib_prodavca|default:"—" }}</dd>
+        <dt>Prodajno mesto</dt><dd>{{ racun.prodajno_mesto|default:"—" }}</dd>
+        <dt>Adresa</dt><dd>{{ racun.adresa|default:"—" }}{% if racun.grad %}, {{ racun.grad }}{% endif %}{% if racun.opstina %} ({{ racun.opstina }}){% endif %}</dd>
+        <dt>Kupac</dt><dd>{% if racun.na_ims %}<span class="invoice-badge ok"><i class="mdi mdi-domain"></i> IMS</span>{% else %}<span class="invoice-badge warn"><i class="mdi mdi-account-alert"></i> {% if racun.id_kupca %}Drugi kupac{% else %}Fizičko lice{% endif %}</span>{% endif %} {{ racun.id_kupca }}</dd>
+        <dt>Vrsta</dt><dd>{{ racun.vrsta_racuna_naziv }} · {{ racun.vrsta_transakcije_naziv }}</dd>
+        <dt>Iznos</dt><dd><strong>{{ racun.iznos|floatformat:"2g" }}</strong>{% if racun.pdv_ukupno is not None %} · PDV {{ racun.pdv_ukupno|floatformat:"2g" }}{% endif %}</dd>
+        <dt>Način plaćanja</dt><dd>{{ racun.nacin_placanja|default:"—" }}</dd>
+        <dt>Kasir · ESIR</dt><dd>{{ racun.kasir|default:"—" }} · {{ racun.esir_broj|default:"—" }}</dd>
+        <dt>Brojač</dt><dd>{{ racun.brojac_vrste|default:"—" }}/{{ racun.brojac_ukupno|default:"—" }}{{ racun.oznaka_brojaca }}</dd>
+        <dt>Status</dt><dd>{% if racun.status == "potvrdjen" %}<span class="invoice-badge ok">Potvrđen</span> {{ racun.preuzeto|date:"d.m.Y. H:i" }}{% else %}<span class="invoice-badge muted">Čeka proveru</span> <span class="small text-muted">{{ racun.greska }}</span>{% endif %}</dd>
+        <dt>Učitao</dt><dd>{{ racun.created_by.get_full_name|default:racun.created_by.username|default:"—" }} · {{ racun.created_at|date:"d.m.Y. H:i" }}</dd>
+      </dl>
+    </div></div>
+
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h5 class="card-title">Stavke</h5>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead><tr><th>#</th><th>Naziv</th><th class="text-end">Kol.</th><th class="text-end">Jed. cena</th><th class="text-end">Ukupno</th><th>PDV</th><th class="text-end">Osnovica</th><th class="text-end">PDV iznos</th></tr></thead>
+          <tbody>
+            {% for s in racun.stavke.all %}
+              <tr><td>{{ s.redni_broj }}</td><td>{{ s.naziv }}{% if s.gtin %}<div class="small text-muted">{{ s.gtin }}</div>{% endif %}</td>
+                <td class="text-end">{{ s.kolicina|floatformat:"-3" }}</td><td class="text-end">{{ s.jedinicna_cena|floatformat:"2g" }}</td>
+                <td class="text-end">{{ s.ukupno|floatformat:"2g" }}</td><td>{{ s.oznaka_pdv }}{% if s.stopa_pdv is not None %} {{ s.stopa_pdv|floatformat:"-2" }}%{% endif %}</td>
+                <td class="text-end">{{ s.osnovica|floatformat:"2g" }}</td><td class="text-end">{{ s.pdv|floatformat:"2g" }}</td></tr>
+            {% empty %}
+              <tr><td colspan="8" class="text-muted">Stavke još nisu preuzete sa stranice za proveru.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="col-lg-5">
+    {% if nabavka_permissions.fiskalni_update %}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h5 class="card-title">Šifra posla</h5>
+      <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}">{% csrf_token %}
+        <div class="mb-2"><label class="form-label" for="{{ sifra_form.job_code.id_for_label }}">{{ sifra_form.job_code.label }}</label>{{ sifra_form.job_code }}</div>
+        <div class="mb-2"><label class="form-label" for="{{ sifra_form.napomena.id_for_label }}">{{ sifra_form.napomena.label }}</label>{{ sifra_form.napomena }}</div>
+        <button class="btn btn-primary btn-sm" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button>
+      </form>
+    </div></div>
+    {% else %}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h5 class="card-title">Šifra posla</h5>
+      <p class="mb-0">{{ racun.job_code.code }} · {{ racun.job_code.name }}</p>
+      {% if racun.napomena %}<p class="small text-muted mb-0 mt-1">{{ racun.napomena }}</p>{% endif %}
+    </div></div>
+    {% endif %}
+
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h5 class="card-title">Link sa QR koda</h5>
+      <textarea class="form-control font-monospace fiskalni-link" rows="4" readonly aria-label="Link sa QR koda">{{ racun.link }}</textarea>
+    </div></div>
+
+    {% if racun.zurnal %}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h5 class="card-title">Tekst računa</h5>
+      <pre class="fiskalni-zurnal">{{ racun.zurnal }}</pre>
+    </div></div>
+    {% endif %}
+
+    {% if nabavka_permissions.fiskalni_delete %}
+    <form method="post" action="{% url 'nabavka:fiskalni_delete' racun.pk %}" onsubmit="return confirm('Obrisati ovaj račun iz evidencije?');">{% csrf_token %}
+      <button class="btn btn-outline-danger btn-sm" type="submit"><i class="mdi mdi-delete"></i> Obriši račun</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

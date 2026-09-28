@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="760pt" height="364pt" viewBox="0.00 0.00 760.00 364.00" role="img" aria-label="MobileUser · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 342.38)">
+<title>G</title>
+
+<g id="node-hr.Employee" class="node" data-key="hr.Employee" data-route="model/hr.Employee">
+<title>n0</title>
+<g id="a_node-hr.Employee"><a xlink:href="../../index.html#model/hr.Employee" xlink:title="hr.Employee" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M704.3,-205.78C704.3,-205.78 571.2,-205.78 571.2,-205.78 565.2,-205.78 559.2,-199.78 559.2,-193.78 559.2,-193.78 559.2,-127 559.2,-127 559.2,-121 565.2,-115 571.2,-115 571.2,-115 704.3,-115 704.3,-115 710.3,-115 716.3,-121 716.3,-127 716.3,-127 716.3,-193.78 716.3,-193.78 716.3,-199.78 710.3,-205.78 704.3,-205.78" />
+<text xml:space="preserve" text-anchor="start" x="574" y="-182.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="574" y="-157.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">Employee</text>
+<text xml:space="preserve" text-anchor="start" x="574" y="-132.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-mobilni.MobileAssignment" class="node" data-key="mobilni.MobileAssignment" data-route="model/mobilni.MobileAssignment">
+<title>n1</title>
+<g id="a_node-mobilni.MobileAssignment"><a xlink:href="../../index.html#model/mobilni.MobileAssignment" xlink:title="mobilni.MobileAssignment" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M145.1,-205.78C145.1,-205.78 12,-205.78 12,-205.78 6,-205.78 0,-199.78 0,-193.78 0,-193.78 0,-127 0,-127 0,-121 6,-115 12,-115 12,-115 145.1,-115 145.1,-115 151.1,-115 157.1,-121 157.1,-127 157.1,-127 157.1,-193.78 157.1,-193.78 157.1,-199.78 151.1,-205.78 145.1,-205.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-182.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-157.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileAssignment</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00" fill="#5c7282">11 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-mobilni.MobileUser" class="node" data-key="mobilni.MobileUser" data-route="model/mobilni.MobileUser">
+<title>n2</title>
+<g id="a_node-mobilni.MobileUser"><a xlink:href="../../index.html#model/mobilni.MobileUser" xlink:title="mobilni.MobileUser" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M439.7,-320.78C439.7,-320.78 287.1,-320.78 287.1,-320.78 281.1,-320.78 275.1,-314.78 275.1,-308.78 275.1,-308.78 275.1,-12 275.1,-12 275.1,-6 281.1,0 287.1,0 287.1,0 439.7,0 439.7,0 445.7,0 451.7,-6 451.7,-12 451.7,-12 451.7,-308.78 451.7,-308.78 451.7,-314.78 445.7,-320.78 439.7,-320.78" />
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-297.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">mobilni</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-272.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">MobileUser</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-247.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-224.19" font-family="Segoe UI" font-size="11.00">organizational_unit : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-201.19" font-family="Segoe UI" font-size="11.00">employee_code : Integer [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-178.19" font-family="Segoe UI" font-size="11.00">full_name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-155.19" font-family="Segoe UI" font-size="11.00">personal_number : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-132.19" font-family="Segoe UI" font-size="11.00">is_active : Boolean</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-109.19" font-family="Segoe UI" font-size="11.00">departure_date : Date ?</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-86.19" font-family="Segoe UI" font-size="11.00">employee : Employee ?</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-63.19" font-family="Segoe UI" font-size="11.00">link_status : Char</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-40.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="289.9" y="-17.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+</a>
+</g>
+</g>
+
+<g id="edge-1" class="edge" data-from="mobilni.MobileAssignment" data-to="mobilni.MobileUser">
+<title>n1-&gt;n2</title>
+<g id="a_edge-1"><a xlink:title="mobilni.MobileAssignment.mobile_user → mobilni.MobileUser | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#7297ab" d="M157.59,-160.39C191.2,-160.39 230.82,-160.39 266.22,-160.39" />
+<polygon fill="#7297ab" stroke="#7297ab" points="266.14,-162.84 273.14,-160.39 266.14,-157.94 266.14,-162.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="216.1" y="-164.94" font-family="Segoe UI" font-size="11.00">mobile_user</text>
+<text xml:space="preserve" text-anchor="middle" x="261.06" y="-163.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="171.18" y="-151.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+
+<g id="edge-0" class="edge" data-from="mobilni.MobileUser" data-to="hr.Employee">
+<title>n2-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="mobilni.MobileUser.employee → hr.Employee | ForeignKey | 0..* : 0..1">
+<path fill="none" stroke="#a27631" d="M452.07,-160.39C483.62,-160.39 519.16,-160.39 550.58,-160.39" />
+<polygon fill="#a27631" stroke="#a27631" points="550.38,-162.84 557.38,-160.39 550.38,-157.94 550.38,-162.84" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="505.45" y="-164.94" font-family="Segoe UI" font-size="11.00">employee</text>
+<text xml:space="preserve" text-anchor="middle" x="545.3" y="-163.78" font-family="Segoe UI" font-size="11.00">0..1</text>
+<text xml:space="preserve" text-anchor="middle" x="465.67" y="-151.1" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400pt" height="203pt" viewBox="0.00 0.00 400.00 203.00" role="img" aria-label="ZahtevDan · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 181.38)">
+<title>G</title>
+
+<g id="node-hr.Zahtev" class="node" data-key="hr.Zahtev" data-route="model/hr.Zahtev">
+<title>n0</title>
+<g id="a_node-hr.Zahtev"><a xlink:href="../../index.html#model/hr.Zahtev" xlink:title="hr.Zahtev" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M344.45,-125.28C344.45,-125.28 211.35,-125.28 211.35,-125.28 205.35,-125.28 199.35,-119.28 199.35,-113.28 199.35,-113.28 199.35,-46.5 199.35,-46.5 199.35,-40.5 205.35,-34.5 211.35,-34.5 211.35,-34.5 344.45,-34.5 344.45,-34.5 350.45,-34.5 356.45,-40.5 356.45,-46.5 356.45,-46.5 356.45,-113.28 356.45,-113.28 356.45,-119.28 350.45,-125.28 344.45,-125.28" />
+<text xml:space="preserve" text-anchor="start" x="214.15" y="-102.19" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="214.15" y="-77.34" font-family="Segoe UI" font-weight="bold" font-size="14.00">Zahtev</text>
+<text xml:space="preserve" text-anchor="start" x="214.15" y="-51.69" font-family="Segoe UI" font-size="11.00" fill="#5c7282">34 polja · povezani model</text>
+</a>
+</g>
+</g>
+
+<g id="node-hr.ZahtevDan" class="node" data-key="hr.ZahtevDan" data-route="model/hr.ZahtevDan">
+<title>n1</title>
+<g id="a_node-hr.ZahtevDan"><a xlink:href="../../index.html#model/hr.ZahtevDan" xlink:title="hr.ZahtevDan" target="_top">
+<path fill="#f3f8fb" stroke="#3778a3" d="M97.85,-159.78C97.85,-159.78 12,-159.78 12,-159.78 6,-159.78 0,-153.78 0,-147.78 0,-147.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 97.85,0 97.85,0 103.85,0 109.85,-6 109.85,-12 109.85,-12 109.85,-147.78 109.85,-147.78 109.85,-153.78 103.85,-159.78 97.85,-159.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-136.69" font-family="Segoe UI" font-size="11.00" fill="#3778a3">hr</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-111.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">ZahtevDan</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">zahtev : Zahtev</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">datum : Date</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">vrsta_dana : Char</text>
+</a>
+</g>
+</g>
+
+<g id="edge-0" class="edge" data-from="hr.ZahtevDan" data-to="hr.Zahtev">
+<title>n1-&gt;n0</title>
+<g id="a_edge-0"><a xlink:title="hr.ZahtevDan.zahtev → hr.Zahtev | ForeignKey | 0..* : 1">
+<path fill="none" stroke="#7297ab" d="M110.26,-79.89C134.47,-79.89 163.57,-79.89 190.63,-79.89" />
+<polygon fill="#7297ab" stroke="#7297ab" points="190.44,-82.34 197.44,-79.89 190.44,-77.44 190.44,-82.34" />
+</a>
+</g>
+<text xml:space="preserve" text-anchor="middle" x="154.6" y="-84.44" font-family="Segoe UI" font-size="11.00">zahtev</text>
+<text xml:space="preserve" text-anchor="middle" x="185.36" y="-83.28" font-family="Segoe UI" font-size="11.00">1</text>
+<text xml:space="preserve" text-anchor="middle" x="123.86" y="-70.6" font-family="Segoe UI" font-size="11.00">0..*</text>
+</g>
+</g>
+</svg>

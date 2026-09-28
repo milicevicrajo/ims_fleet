@@ -28,6 +28,11 @@
             <i class="mdi mdi-package-variant"></i><span class="hide-menu">Roba</span>
           </a>
         </li>{% endif %}
+        {% if nabavka_permissions.fiskalni_list %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:fiskalni_list' %}">
+            <i class="mdi mdi-qrcode-scan"></i><span class="hide-menu">Fiskalni računi</span>
+          </a>
+        </li>{% endif %}
         {% if nabavka_permissions.purchase_contract_list %}<li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:purchase_contract_list' %}">
             <i class="mdi mdi-file-document"></i><span class="hide-menu">Kupovni ugovori</span>

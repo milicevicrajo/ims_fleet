@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="257pt" height="318pt" viewBox="0.00 0.00 257.00 318.00" role="img" aria-label="AgingRule · neposredne veze">
+<style>.node:hover polygon,.node:hover path{stroke-width:2.5}.node a:focus{outline:2px solid #287b75}text{font-family:"Segoe UI",Arial,sans-serif}</style><g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 296.38)">
+<title>G</title>
+
+<g id="node-potrazivanja.AgingRule" class="node" data-key="potrazivanja.AgingRule" data-route="model/potrazivanja.AgingRule">
+<title>n0</title>
+<g id="a_node-potrazivanja.AgingRule"><a xlink:href="../../index.html#model/potrazivanja.AgingRule" xlink:title="potrazivanja.AgingRule" target="_top">
+<path fill="#f3f8fb" stroke="#8a6933" d="M201.35,-274.78C201.35,-274.78 12,-274.78 12,-274.78 6,-274.78 0,-268.78 0,-262.78 0,-262.78 0,-12 0,-12 0,-6 6,0 12,0 12,0 201.35,0 201.35,0 207.35,0 213.35,-6 213.35,-12 213.35,-12 213.35,-262.78 213.35,-262.78 213.35,-268.78 207.35,-274.78 201.35,-274.78" />
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-251.69" font-family="Segoe UI" font-size="11.00" fill="#8a6933">potrazivanja</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-226.84" font-family="Segoe UI" font-weight="bold" font-size="14.00">AgingRule</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-201.19" font-family="Segoe UI" font-size="11.00">id : PK (Django)</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-178.19" font-family="Segoe UI" font-size="11.00">created_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-155.19" font-family="Segoe UI" font-size="11.00">updated_at : DateTime</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-132.19" font-family="Segoe UI" font-size="11.00">code : Char [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-109.19" font-family="Segoe UI" font-size="11.00">name : Char</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-86.19" font-family="Segoe UI" font-size="11.00">min_days : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-63.19" font-family="Segoe UI" font-size="11.00">max_days : Integer ?</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-40.19" font-family="Segoe UI" font-size="11.00">sort_order : PositiveSmallInteger [UQ]</text>
+<text xml:space="preserve" text-anchor="start" x="14.8" y="-17.19" font-family="Segoe UI" font-size="11.00">suggested_action : Char</text>
+</a>
+</g>
+</g>
+</g>
+</svg>
