@@ -3,16 +3,7 @@
 Detalj fiskalnog računa: gore pregled (iznos, PDV, stavke, kupac, status), levo podaci o prodavcu i
 računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno ceo tekst računa.
 {% endcomment %}
-{% block title %}{{ title }}<script>
-document.addEventListener('DOMContentLoaded', function () {
-  var garaza = document.getElementById('id_is_garage');
-  if (!garaza) return;
-  function prikazi() { document.querySelectorAll('.js-garaza').forEach(function (el) { el.style.display = garaza.checked ? '' : 'none'; }); }
-  garaza.addEventListener('change', prikazi);
-  prikazi();
-});
-</script>
-{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
 <style>
@@ -43,6 +34,47 @@ document.addEventListener('DOMContentLoaded', function () {
   .fiskalni-podaci { display: grid; grid-template-columns: 130px 1fr; gap: 7px 12px; margin: 0; font-size: .9rem; }
   .fiskalni-podaci dt { color: #6b7785; font-weight: 400; }
   .fiskalni-podaci dd { margin: 0; overflow-wrap: anywhere; }
+
+  /* Obrada: prekidaci za magacin i garazu, polja garaze u zasebnom delu. */
+  .fiskalni-obrada { min-width: 0; }
+  .fiskalni-obrada .form-label { font-weight: 600; font-size: .85rem; color: #3b4652; }
+  .fiskalni-obrada .form-control,
+  .fiskalni-obrada .select2-container--bootstrap-5 .select2-selection { min-height: 38px; border-radius: 6px; font-size: .9rem; }
+  .fiskalni-obrada .select2-container { max-width: 100%; }
+  .fiskalni-obrada .row { margin-right: -6px; margin-left: -6px; row-gap: 12px; }
+  .fiskalni-obrada .row > [class*="col-"] { padding-right: 6px; padding-left: 6px; min-width: 0; }
+  .fiskalni-obrada .form-text { display: block; margin-top: 6px; font-size: .8rem; color: #6b7785; }
+  .fiskalni-prekidaci { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; margin: 16px 0; }
+  .fiskalni-prekidac { display: flex; align-items: center; gap: 12px; margin: 0; padding: 12px 14px; cursor: pointer;
+    border: 1px solid #dfe3ea; border-radius: 8px; background: #fbfcfd; transition: border-color .15s, background .15s; }
+  .fiskalni-prekidac:hover { border-color: #b9c3d0; }
+  .fiskalni-prekidac .ikona { flex: 0 0 38px; height: 38px; border-radius: 8px; display: grid; place-items: center;
+    font-size: 1.3rem; background: #edf1f5; color: #6b7785; transition: background .15s, color .15s; }
+  .fiskalni-prekidac .tekst { flex: 1; min-width: 0; line-height: 1.25; }
+  .fiskalni-prekidac .tekst strong { display: block; font-size: .92rem; }
+  .fiskalni-prekidac .tekst small { color: #6b7785; font-size: .78rem; }
+  /* Tema je Bootstrap 4: prekidac ima sopstveni izgled, a ostaje izvorni checkbox. */
+  .fiskalni-prekidac .form-switch { display: flex; flex: 0 0 auto; padding-left: 0; margin: 0; min-height: 0; }
+  .fiskalni-prekidac .form-switch .form-check-input { appearance: none; -webkit-appearance: none;
+    position: relative; display: block; width: 46px; height: 26px; margin: 0; float: none;
+    border: 2px solid #a5afbb; border-radius: 999px; background: #a5afbb; cursor: pointer;
+    transition: background-color .15s, border-color .15s; }
+  .fiskalni-prekidac .form-check-input::before { content: ""; position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    transition: transform .15s; }
+  .fiskalni-prekidac .form-check-input:checked { background-color: #147044; border-color: #147044; }
+  .fiskalni-prekidac .form-check-input:checked::before { transform: translateX(20px); }
+  .fiskalni-prekidac .form-check-input:focus-visible { outline: 3px solid #2962ff; outline-offset: 3px; }
+  .fiskalni-prekidac .form-check-input:disabled { opacity: .55; cursor: not-allowed; }
+  .fiskalni-prekidac.ukljucen { border-color: #9fd3b8; background: #f2fbf6; }
+  .fiskalni-prekidac.ukljucen .ikona { background: #d9f2e5; color: #147044; }
+  .fiskalni-prekidac.garaza.ukljucen { border-color: #f1d28d; background: #fffaf0; }
+  .fiskalni-prekidac.garaza.ukljucen .ikona { background: #fff0cc; color: #7a4d00; }
+  .fiskalni-prekidac.garaza.ukljucen .form-check-input:checked { background-color: #d99a00; border-color: #d99a00; }
+  .fiskalni-garaza { border: 1px dashed #f1d28d; background: #fffcf5; border-radius: 8px; padding: 12px 14px 14px; margin-bottom: 16px; }
+  .fiskalni-garaza > header { font-weight: 600; font-size: .85rem; color: #7a4d00; margin-bottom: 10px; }
+  .fiskalni-sifra-vozila { font-size: .82rem; margin-top: 8px; color: #7a4d00; }
+  .fiskalni-obrada-dno { display: flex; justify-content: flex-end; border-top: 1px solid #eef0f4; padding-top: 12px; margin-top: 4px; }
 
   .fiskalni-stavke { font-size: .88rem; }
   .fiskalni-stavke td, .fiskalni-stavke th { vertical-align: top; }
@@ -124,21 +156,48 @@ document.addEventListener('DOMContentLoaded', function () {
       <header>Obrada računa</header>
       <div>
         {% if nabavka_permissions.fiskalni_update %}
-          <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" class="row g-3 align-items-end">{% csrf_token %}
+          <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" class="fiskalni-obrada">{% csrf_token %}
             <input type="hidden" name="akcija" value="obrada">
-            <div class="col-md-6"><label class="form-label mb-1" for="{{ obrada_form.job_code.id_for_label }}">{{ obrada_form.job_code.label }}</label>{{ obrada_form.job_code }}
-              <div class="form-text">Garažni račun sa vozilom ide na šifru posla na kojoj je vozilo danas.</div></div>
-            <div class="col-md-6"><label class="form-label mb-1" for="{{ obrada_form.napomena.id_for_label }}">{{ obrada_form.napomena.label }}</label>{{ obrada_form.napomena }}</div>
-            <div class="col-sm-6 col-md-3">
-              <div class="form-check">{{ obrada_form.goes_to_warehouse }}<label class="form-check-label" for="{{ obrada_form.goes_to_warehouse.id_for_label }}"><i class="mdi mdi-warehouse"></i> Ide u magacin</label></div>
+            {% if obrada_form.non_field_errors %}<div class="alert alert-danger py-2">{{ obrada_form.non_field_errors|join:" " }}</div>{% endif %}
+
+            <div class="mb-3">
+              <label class="form-label mb-1" for="{{ obrada_form.job_code.id_for_label }}">{{ obrada_form.job_code.label }}</label>
+              {{ obrada_form.job_code }}
+              {% for e in obrada_form.job_code.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              <div class="form-text">Nude se samo aktivne šifre posla. Ostale šifre dodaju se u kartici „Šifre posla”.</div>
             </div>
-            <div class="col-sm-6 col-md-3">
-              <div class="form-check">{{ obrada_form.is_garage }}<label class="form-check-label" for="{{ obrada_form.is_garage.id_for_label }}"><i class="mdi mdi-car-wrench"></i> Garaža</label></div>
+
+            <div class="fiskalni-prekidaci">
+              <label class="fiskalni-prekidac js-prekidac" for="{{ obrada_form.goes_to_warehouse.id_for_label }}">
+                <span class="ikona"><i class="mdi mdi-warehouse"></i></span>
+                <span class="tekst"><strong>Ide u magacin</strong><small>Roba sa računa se zaprima u magacin</small></span>
+                <span class="form-check form-switch">{{ obrada_form.goes_to_warehouse }}</span>
+              </label>
+              <label class="fiskalni-prekidac garaza js-prekidac" for="{{ obrada_form.is_garage.id_for_label }}">
+                <span class="ikona"><i class="mdi mdi-car-wrench"></i></span>
+                <span class="tekst"><strong>Garaža</strong><small>Trošak vozila — bira se vozilo i vrsta intervencije</small></span>
+                <span class="form-check form-switch">{{ obrada_form.is_garage }}</span>
+              </label>
             </div>
-            <div class="col-md-6 js-garaza"><label class="form-label mb-1" for="{{ obrada_form.vehicle.id_for_label }}">{{ obrada_form.vehicle.label }}</label>{{ obrada_form.vehicle }}</div>
-            <div class="col-md-6 js-garaza"><label class="form-label mb-1" for="{{ obrada_form.work_type.id_for_label }}">{{ obrada_form.work_type.label }}</label>{{ obrada_form.work_type }}</div>
-            <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj obradu</button></div>
+
+            <div class="fiskalni-garaza js-garaza">
+              <header><i class="mdi mdi-car-wrench"></i> Podaci za garažu</header>
+              <div class="row g-3">
+                <div class="col-12 col-xl-7"><label class="form-label mb-1" for="{{ obrada_form.vehicle.id_for_label }}">{{ obrada_form.vehicle.label }}</label>{{ obrada_form.vehicle }}
+                  {% for e in obrada_form.vehicle.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+                <div class="col-12 col-xl-5"><label class="form-label mb-1" for="{{ obrada_form.work_type.id_for_label }}">{{ obrada_form.work_type.label }}</label>{{ obrada_form.work_type }}
+                  {% for e in obrada_form.work_type.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+              </div>
+              <div class="fiskalni-sifra-vozila js-sifra-vozila"><i class="mdi mdi-information-outline"></i>
+                Garažni račun sa vozilom ide na šifru posla na kojoj je vozilo danas<span class="js-sifra-vozila-tekst"></span>.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label mb-1" for="{{ obrada_form.napomena.id_for_label }}">{{ obrada_form.napomena.label }}</label>{{ obrada_form.napomena }}
+            </div>
+            <div class="fiskalni-obrada-dno"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj obradu</button></div>
           </form>
+          {{ sifre_vozila|json_script:"fiskalni-sifre-vozila" }}
         {% else %}
           <dl class="fiskalni-podaci">
             <dt>Glavna šifra</dt><dd><strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}</dd>
@@ -230,8 +289,38 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
   var garaza = document.getElementById('id_is_garage');
   if (!garaza) return;
-  function prikazi() { document.querySelectorAll('.js-garaza').forEach(function (el) { el.style.display = garaza.checked ? '' : 'none'; }); }
+  var vozilo = document.getElementById('id_vehicle');
+  var sifra = document.getElementById('id_job_code');
+  var podaci = document.getElementById('fiskalni-sifre-vozila');
+  var sifreVozila = podaci ? JSON.parse(podaci.textContent) : {};
+
+  // Prekidaci: uokviren red je ukljucen.
+  document.querySelectorAll('.js-prekidac').forEach(function (red) {
+    var polje = red.querySelector('input[type="checkbox"]');
+    function oznaci() { red.classList.toggle('ukljucen', polje.checked); }
+    polje.addEventListener('change', oznaci);
+    oznaci();
+  });
+
+  // Garazni racun sa vozilom ide na sifru na kojoj je vozilo danas — prikazi je i izaberi.
+  function sifraVozila() {
+    var nadjena = vozilo && garaza.checked ? sifreVozila[vozilo.value] : null;
+    var tekst = document.querySelector('.js-sifra-vozila-tekst');
+    if (tekst) { tekst.textContent = nadjena ? ': ' + nadjena.tekst : ''; }
+    if (nadjena && sifra && sifra.querySelector('option[value="' + nadjena.id + '"]') && sifra.value !== String(nadjena.id)) {
+      sifra.value = String(nadjena.id);
+      if (window.jQuery) { jQuery(sifra).trigger('change'); }
+    }
+  }
+  function prikazi() {
+    document.querySelectorAll('.js-garaza').forEach(function (el) { el.style.display = garaza.checked ? '' : 'none'; });
+    sifraVozila();
+  }
   garaza.addEventListener('change', prikazi);
+  if (vozilo) {
+    vozilo.addEventListener('change', sifraVozila);
+    if (window.jQuery) { jQuery(vozilo).on('select2:select select2:clear', sifraVozila); }
+  }
   prikazi();
 });
 </script>

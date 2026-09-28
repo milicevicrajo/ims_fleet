@@ -10,10 +10,9 @@ from django.utils import timezone
 from django.utils.html import escape
 from django.views import View
 from django.views.generic import DetailView, TemplateView
-from django_select2.forms import Select2Widget
 
 from core.mixins import RolePermissionRequiredMixin
-from fleet.models import JobCode, OrganizationalUnit, Vehicle
+from fleet.models import JobCode, OrganizationalUnit, TrafficCard, Vehicle
 from nabavka.access import fiskalni_racuni, sifre_za_izbor
 
 from ..models import FiskalniRacun, FiskalniRacunSifra
@@ -58,19 +57,41 @@ class ObradaRacunaForm(forms.ModelForm):
         model = FiskalniRacun
         fields = ["job_code", "is_garage", "vehicle", "work_type", "goes_to_warehouse", "napomena"]
         labels = {"job_code": "Glavna šifra posla"}
-        widgets = {"job_code": Select2Widget(attrs={"class": "select2-method"}),
-                   "vehicle": Select2Widget(attrs={"class": "select2-method"}),
-                   "work_type": forms.Select(attrs={"class": "form-select"}),
-                   "is_garage": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-                   "goes_to_warehouse": forms.CheckboxInput(attrs={"class": "form-check-input"}),
-                   "napomena": forms.TextInput(attrs={"class": "form-control"})}
+        widgets = {"job_code": forms.Select(attrs={"class": "form-control select2-method"}),
+                   "vehicle": forms.Select(attrs={"class": "form-control select2-method", "data-placeholder": "Izaberite vozilo (tablica, marka, model)", "data-allow-clear": "true"}),
+                   "work_type": forms.Select(attrs={"class": "form-control select2-method"}),
+                   "is_garage": forms.CheckboxInput(attrs={"class": "form-check-input", "role": "switch"}),
+                   "goes_to_warehouse": forms.CheckboxInput(attrs={"class": "form-check-input", "role": "switch"}),
+                   "napomena": forms.TextInput(attrs={"class": "form-control",
+                                                      "placeholder": "Napomena uz obradu (nije obavezna)"})}
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         _izbor_sifara(self.fields["job_code"], user, self.instance.job_code_id)
-        self.fields["vehicle"].required = False
-        self.fields["vehicle"].queryset = Vehicle.objects.order_by("brand", "model")
+        self.fields["job_code"].empty_label = "— izaberite glavnu šifru posla —"
+        vozilo = self.fields["vehicle"]
+        vozilo.required = False
+        vozilo.empty_label = ""  # Select2 koristi praznu opciju za placeholder i brisanje izbora.
+        # Vozila koja nisu otpisana (uz vec upisano), po tablici sa poslednje saobracajne.
+        vozilo.queryset = Vehicle.objects.filter(Q(otpis=False) | Q(pk=self.instance.vehicle_id)).order_by("brand", "model")
+        tablice = {}
+        for vozilo_id, tablica in (TrafficCard.objects.issued().order_by("vehicle_id", "-issue_date", "-pk")
+                                   .values_list("vehicle_id", "registration_number")):
+            tablice.setdefault(vozilo_id, tablica)
+        vozilo.label_from_instance = lambda v: " · ".join(filter(None, [tablice.get(v.pk) or v.chassis_number,
+                                                                          f"{v.brand} {v.model}".strip()]))
         self.fields["work_type"].required = False
+        self.fields["work_type"].choices = [("", "— vrsta intervencije —")] + [c for c in self.fields["work_type"].choices if c[0]]
+
+    def sifre_vozila(self):
+        """Za prikaz: vozilo -> sifra posla na kojoj je danas (garazni racun ide na nju)."""
+        sifre = {}
+        for dodela in (JobCode.objects.select_related("organizational_unit")
+                       .filter(organizational_unit__isnull=False, assigned_date__lte=timezone.localdate())
+                       .order_by("vehicle_id", "-assigned_date", "-pk")):
+            sifre.setdefault(str(dodela.vehicle_id), {"id": dodela.organizational_unit_id,
+                                                      "tekst": f"{dodela.organizational_unit.code} · {dodela.organizational_unit.name}"})
+        return sifre
 
     def clean(self):
         data = super().clean()
@@ -88,7 +109,7 @@ class ObradaRacunaForm(forms.ModelForm):
 
 class DodatnaSifraForm(forms.Form):
     job_code = forms.ModelChoiceField(queryset=OrganizationalUnit.objects.none(), label="Dodatna šifra posla",
-                                      widget=Select2Widget(attrs={"class": "select2-method"}))
+                                      widget=forms.Select(attrs={"class": "form-control select2-method", "id": "id_dodatna_job_code"}))
     note = forms.CharField(label="Napomena", required=False, max_length=255,
                            widget=forms.TextInput(attrs={"class": "form-control"}))
 
@@ -247,8 +268,9 @@ class FiskalniRacunDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         self.object.uskladi_glavnu_sifru(self.request.user)
+        obrada_form = kwargs.get("obrada_form") or ObradaRacunaForm(instance=self.object, user=self.request.user)
         ctx.update(title=f"Fiskalni račun {self.object.broj_racuna}", upozorenja=fiskalni.upozorenja(self.object),
-                   obrada_form=kwargs.get("obrada_form") or ObradaRacunaForm(instance=self.object, user=self.request.user),
+                   obrada_form=obrada_form, sifre_vozila=obrada_form.sifre_vozila(),
                    sifra_form=kwargs.get("sifra_form") or DodatnaSifraForm(user=self.request.user, racun=self.object),
                    sifre=sorted(self.object.sifre.all(), key=lambda s: (s.vrsta != FiskalniRacunSifra.OSNOVNA, s.job_code.code)))
         return ctx

@@ -258,6 +258,19 @@ class ObradaFiskalnogRacunaTests(TestCase):
         self.racun.refresh_from_db()
         self.assertEqual((self.racun.is_garage, self.racun.vehicle), (False, None))  # bez garaze nema vozila
 
+    def test_obrada_prekidaci_vozilo_po_tablici_i_sifra_vozila(self):
+        import datetime
+
+        from fleet.test_vehicle_onboarding import card
+
+        card(self.vozilo, plate="BG111-AA", issued=datetime.date(2020, 1, 1))
+        card(self.vozilo, "2", plate="BG222-BB", issued=datetime.date(2024, 1, 1))
+        odgovor = self.client.get(reverse("nabavka:fiskalni_detail", args=[self.racun.pk]))
+        self.assertContains(odgovor, 'role="switch"', count=2)
+        self.assertContains(odgovor, "BG222-BB · VW Test")  # poslednja saobracajna
+        self.assertEqual(odgovor.context["sifre_vozila"][str(self.vozilo.pk)]["id"], self.dodatna.pk)
+        self.assertNotIn("<script", odgovor.content.decode().split("<title>", 1)[1].split("</title>", 1)[0])
+
     def test_vise_sifara_i_vraceno_po_sifri(self):
         self.client.post(self.izmena, {"akcija": "dodaj_sifru", "job_code": self.dodatna.pk, "note": "pola troska"})
         self.client.post(self.izmena, {"akcija": "dodaj_sifru", "job_code": self.dodatna.pk})  # ista sifra se ne dodaje dvaput

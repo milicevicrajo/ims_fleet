@@ -3103,8 +3103,9 @@ Naziv partnera na spiskovima skraćuje se na **50 znakova**, a pun naziv se vidi
 #### Fiskalni računi — učitavanje čitačem QR koda (od 28.09.2026.) [P]
 
 **Nabavka → Fiskalni računi** (`/nabavka/fiskalni-racuni/`) je spisak učitanih fiskalnih računa sa
-pregledom detalja. Dugme **Očitaj QR kod računa** otvara prozor: izabere se **šifra posla**
-(obavezna; nude se samo aktivne šifre iz obuhvata korisnika, izabrana ostaje za sledeće račune),
+pregledom detalja. Dugme **Očitaj QR kod računa** otvara prozor: izabere se **jedna ili više šifara
+posla** (bar jedna je obavezna; **prva izabrana je glavna**, ostale dodatne; nude se samo aktivne
+šifre iz obuhvata korisnika, izbor ostaje zapamćen za sledeći račun),
 čitač — koji radi kao tastatura — upiše link sa QR koda i pritisne Enter, i obrada kreće odmah.
 Rezultat se vidi u prozoru, a polje je spremno za sledeći račun.
 
