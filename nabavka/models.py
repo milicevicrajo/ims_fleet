@@ -410,6 +410,10 @@ class ProcurementInvoice(models.Model):
     warehouse = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Magacin"))
     registration = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Registracija"))
     center_name = models.CharField(max_length=150, blank=True, null=True, verbose_name=_("Naziv centra"))
+    # Vrsta dokumenta iz EUF (`Naziv` u dbo.nbv_preuzete_EUF: Faktura, Avans, Knjižno odobrenje, …) —
+    # razlicite vrste razlicito prolaze proceduru. PIB partnera iz izvorne EUF tabele (za banke).
+    document_type = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Naziv dokumenta"))
+    partner_pib = models.CharField(max_length=20, blank=True, null=True, db_index=True, verbose_name=_("PIB partnera"))
     job_code = models.ForeignKey(
         "fleet.OrganizationalUnit",
         on_delete=models.SET_NULL,

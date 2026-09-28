@@ -177,3 +177,32 @@ class EkraniTests(TestCase):
         drugi = get_user_model().objects.create_user("bez-dozvole", password="x")
         self.client.force_login(drugi)
         self.assertEqual(self.client.get(reverse("nabavka:fiskalni_list")).status_code, 403)
+
+
+class EufNazivIBankeTests(TestCase):
+    """Preuzete EUF: kolona Naziv (vrsta dokumenta) i druga boja za avanse i banke (28.09.2026.)."""
+
+    def setUp(self):
+        from nabavka.models import ProcurementInvoice
+
+        uloga = Role.objects.create(name="EUF test", slug="euf-test")
+        for kod in ("nabavka:euf_invoice_list", "nabavka:euf_invoice_data", "nabavka:euf_invoice_export"):
+            uloga.permissions.add(PermissionCode.objects.get_or_create(code=kod)[0])
+        self.korisnik = get_user_model().objects.create_user("euf-boje", password="x")
+        self.korisnik.roles.add(uloga)
+        self.client.force_login(self.korisnik)
+        napravi = lambda kljuc, vrsta, pib: ProcurementInvoice.objects.create(
+            source=ProcurementInvoice.SOURCE_EUF, euf_key=kljuc, invoice_number=kljuc, supplier_name="Partner",
+            amount="10.00", document_type=vrsta, partner_pib=pib)
+        self.faktura, self.avans, self.banka = napravi("F1", "Faktura", "111"), napravi("A1", "Avans", "111"), napravi("B1", "Faktura", "999")
+
+    def test_kolona_naziv_i_oznake_redova(self):
+        with mock.patch("nabavka.views.invoices.pib_banaka", return_value={"999"}):
+            podaci = self.client.get(reverse("nabavka:euf_invoice_data"), {"draw": 1, "start": 0, "length": 10}).json()
+        po_broju = {r["invoice_number"]: r for r in podaci["data"]}
+        self.assertIn("Avans", po_broju["A1"]["document_type"])
+        self.assertEqual(po_broju["A1"]["DT_RowClass"], "euf-red-avans")
+        self.assertEqual(po_broju["B1"]["DT_RowClass"], "euf-red-banka")
+        self.assertIn("Banka", po_broju["B1"]["document_type"])
+        self.assertEqual(po_broju["F1"]["DT_RowClass"], "")
+        self.assertContains(self.client.get(reverse("nabavka:euf_invoice_list")), "<th>Naziv</th>")

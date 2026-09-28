@@ -32,7 +32,7 @@ from ..models import (
     ProcurementInvoiceJobCodeLink,
     ProcurementItemInvoiceLink,
 )
-from ..services.euf import sync_euf_invoice_snapshots
+from ..services.euf import oznake_reda, pib_banaka, sync_euf_invoice_snapshots
 from .cases import NabavkaContextMixin
 
 
@@ -228,6 +228,7 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
             invoices = invoices.filter(
                 Q(invoice_number__icontains=search_value)
                 | Q(supplier_name__icontains=search_value)
+                | Q(document_type__icontains=search_value)
                 | Q(center_name__icontains=search_value)
                 | Q(center__icontains=search_value)
                 | Q(warehouse__icontains=search_value)
@@ -243,13 +244,14 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
         records_filtered = invoices.count()
         order_map = {
             "0": "invoice_date",
-            "1": "supplier_name",
-            "2": "invoice_number",
-            "3": "amount",
-            "4": "job_code__code",
-            "5": "goes_to_warehouse",
-            "6": "is_garage",
-            "7": "returned_job_code_links_total",
+            "1": "document_type",
+            "2": "supplier_name",
+            "3": "invoice_number",
+            "4": "amount",
+            "5": "job_code__code",
+            "6": "goes_to_warehouse",
+            "7": "is_garage",
+            "8": "returned_job_code_links_total",
         }
         order_field = order_map.get(request.GET.get("order[0][column]", "0"), "invoice_date")
         if request.GET.get("order[0][dir]", "desc") == "desc":
@@ -268,11 +270,18 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
             length = 50
         length = min(length, 200)
 
+        banke = pib_banaka()
         rows = []
         for invoice in invoices[start:start + length]:
             detail_url = reverse("nabavka:euf_invoice_detail", kwargs={"pk": invoice.pk})
+            oznake = oznake_reda(invoice, banke)
             rows.append(
                 {
+                    # DataTables sam dodaje ovu klasu redu: avansi i banke su druge boje.
+                    "DT_RowClass": " ".join(f"euf-red-{o}" for o in oznake),
+                    "document_type": escape(invoice.document_type or "")
+                    + (' <span class="invoice-badge bank" title="PIB banke: ' + escape(invoice.partner_pib or "") + '">'
+                       '<i class="mdi mdi-bank"></i> Banka</span>' if "banka" in oznake else ""),
                     "invoice_date": (
                         invoice.invoice_date.strftime("%d.%m.%Y")
                         if invoice.invoice_date
@@ -324,6 +333,7 @@ class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
         worksheet.title = "Preuzete EUF"
         headers = [
             "Datum",
+            "Naziv",
             "Partner",
             "Broj fakture",
             "Iznos",
@@ -339,10 +349,13 @@ class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
             cell.font = Font(bold=True)
             cell.fill = header_fill
 
+        banke = pib_banaka()
+        boje = {"avans": PatternFill("solid", fgColor="DCEBFF"), "banka": PatternFill("solid", fgColor="EDE3FF")}
         for invoice in invoices:
             worksheet.append(
                 [
                     invoice.invoice_date.strftime("%d.%m.%Y") if invoice.invoice_date else invoice.invoice_date_raw or "",
+                    invoice.document_type or "",
                     invoice.supplier_name or "",
                     invoice.invoice_number or "",
                     invoice.amount,
@@ -352,6 +365,11 @@ class EufInvoiceExportView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                     ", ".join(_invoice_returned_job_code_labels(invoice)) or ("Da" if invoice.is_returned else "Ne"),
                 ]
             )
+            oznake = oznake_reda(invoice, banke)
+            if oznake:  # isto isticanje kao u spisku: banka ima prednost u boji, avans ostaje u koloni Naziv
+                boja = boje["banka" if "banka" in oznake else "avans"]
+                for cell in worksheet[worksheet.max_row]:
+                    cell.fill = boja
 
         for column_cells in worksheet.columns:
             max_length = max(len(str(cell.value or "")) for cell in column_cells)

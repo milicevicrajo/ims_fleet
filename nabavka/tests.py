@@ -351,7 +351,8 @@ class EufInvoiceListControlsTests(TestCase):
         self.assertIn("Vraceno", headers)
         self.assertNotIn("Vozilo", headers)
         self.assertNotIn("Stavke", headers)
-        self.assertEqual(worksheet["C2"].value, "IF-CTRL-1")
+        self.assertEqual(headers[1], "Naziv")  # vrsta dokumenta posle datuma (28.09.2026.)
+        self.assertEqual(worksheet["D2"].value, "IF-CTRL-1")
 
 
 @override_settings(ALLOWED_HOSTS=["testserver"])

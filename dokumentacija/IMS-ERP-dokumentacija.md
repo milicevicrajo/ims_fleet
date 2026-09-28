@@ -3070,6 +3070,24 @@ Primer: `ZNG-43/2026-7`. Bez centra u organizacionoj jedinici broj se **ne može
 > ne postoji nijedan izračun. Raniji dokument ga je navodio; to nikad nije bilo u kodu ili
 > je uklonjeno.
 
+#### Preuzete EUF — vrsta dokumenta, avansi i banke (od 28.09.2026.) [P]
+
+Posle datuma je kolona **Naziv** — vrsta dokumenta iz `dbo.nbv_preuzete_EUF` (`Faktura`, `Avans`,
+`Knjižno odobrenje`, `Knjižno zaduženje`), jer različite vrste različito prolaze proceduru. Dva
+reda su druge boje, uz legendu iznad tabele (isto i u izvozu u Excel):
+
+| Isticanje | Kako se prepoznaje |
+|---|---|
+| **Avans** (plavo) | `Naziv` dokumenta je „Avans” |
+| **Banka** (ljubičasto, oznaka „Banka” uz naziv) | PIB partnera je u `select pib from partneri where grupa = 11` |
+
+Pogled `nbv_preuzete_EUF` ne daje PIB partnera, pa ga preuzimanje čita (samo čitanjem) iz izvorne
+tabele `[putgeo-server].[EFaktura].[dbo].[EUL_Dok]` po broju fakture i partneru i čuva u
+`ProcurementInvoice.partner_pib`; naziv dokumenta je u `document_type`. Oba se dopunjuju za **sve**
+fakture iz pogleda (ne samo poslednjih 2.000) pri svakom preuzimanju (`dopuni_vrstu_i_pib`).
+Spisak PIB-ova banaka se čuva u kešu sat vremena. Stanje 28.09.2026.: 3.257 faktura — 246 avansa,
+307 faktura banaka (11 PIB-ova banaka).
+
 #### Detalj EUF fakture — šta se vidi i dopunjuje [P]
 
 | Prikaz | Sadržaj |
