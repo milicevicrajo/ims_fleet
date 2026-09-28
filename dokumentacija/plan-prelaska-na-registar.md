@@ -1,6 +1,6 @@
 # Plan prelaska na registar organizacije — čitanje, prava i gašenje stare organizacije
 
-Datum: **25.09.2026.** · Status: **u realizaciji** — koraci 1–4 izvedeni (senka: 4 razlike, sve potvrđene); ništa od toga još ne odlučuje o pristupu. Šta je ostalo: poglavlje 0
+Datum: **25.09.2026.** · Status: **u realizaciji** — koraci 1–5 izvedeni — **Finansije i Nabavka na registru** (radi posle isporuke koda od 28.09.2026.); ostali moduli još na starim pravima. Šta je ostalo: poglavlje 0
 
 Ovaj plan je nastavak [plana registra šifara posla](plan-registra-sifara-posla.md) i razrađuje
 preostale korake **2–9** iz [plana organizacije i dozvola V2](plan-organizacije-i-dozvola-v2.md),
@@ -31,17 +31,19 @@ donete. Ništa od toga još ne odlučuje o pristupu.
 | # | Posao | Uslov završetka |
 |---|---|---|
 | 4 | Nedelja praćenja noćne sinhronizacije organizacije (korak 0) — **3 od 7 noći prošle** (26–28.09.: svi uporedni izveštaji prolaze, 0 izmena; 584 knjiženja bez veze su tehnička šifra `111111`) | 7 noći zaredom: svi uporedni izveštaji prolaze, nijedno knjiženje ni stavka potraživanja bez veze |
-| 5 | Odobravanje nacrta na ekranu Dodele uloga — prvo korisnici Finansija (3) i Potraživanja (7); odobreni su dosad `ana.andjelkovic` i `milena.stojanovski` | Svi korisnici pilota odobreni |
-| 6 | **Pilot Finansije + Potraživanja** (korak 5): filteri, zbirovi i prava iz registra i dodela, uz prekidač za povratak | Isti iznosi za isti skup; tuđi podaci nedostupni; opoziv dodele gasi pristup |
+| 5 | ✅ Odobren nacrt svim korisnicima Finansija i Nabavke (`bilja`, `milivoje.peric`, `helena.stevancevic`, `ana.andjelkovic` — cela firma) — 28.09.2026. | Svi korisnici pilota odobreni |
+| 6 | ✅ **Finansije i Nabavka prebačene na registar** (korak 5, odluka 28.09.2026. — umesto Potraživanja) — **u kodu, radi posle isporuke**. Obuhvat iz odobrenih dodela, uloga po čvoru na ekranu Dodele uloga, centar Finansija iz registra na datum knjiženja (`LedgerEntry.org_centar`, upisan za 149.195 knjiženja), prekidač `PRAVA_PO_REGISTRU` za povratak | Ukupni zbirovi isti (provereno za 2025. i 2026.); centar se menja samo za potvrđene šifre (`430001` → 43, `110002` → 11, `111111` bez centra); tuđi podaci nedostupni i opoziv skida pristup (testovi) |
+| 6a | Nedelju dana praćenja Finansija i Nabavke na serveru posle isporuke | Nema prijave da neko ne vidi svoje ili vidi tuđe |
 
 ### 0.3. Dalji koraci
 
 | # | Korak | Šta obuhvata |
 |---|---|---|
-| 7 | Flota (korak 6) | ~30 mesta filtera i zbirova na registar, dodela vozila na datum; **spisak vozila dobija ograničenje po centru** (osim Uprave, Garaže, Nabavke i Blagajne) — odluka 25.09.2026. |
-| 8 | Nabavka, pa Kadrovi (korak 7) | Zaposleni dobija vezu na čvor registra na kartici; Uprava tada vidi sve zaposlene; nema posebne kadrovske organizacije (3.3) |
+| 7 | Potraživanja | Isti obrazac kao Finansije: obuhvat iz dodela (7 korisnika, svi `view_all`), centar iz registra |
+| 7a | Flota (korak 6) | ~30 mesta filtera i zbirova na registar, dodela vozila na datum; **spisak vozila dobija ograničenje po centru** (osim Uprave, Garaže, Nabavke i Blagajne) — odluka 25.09.2026. |
+| 8 | Kadrovi (korak 7) | Zaposleni dobija vezu na čvor registra na kartici; Uprava tada vidi sve zaposlene; nema posebne kadrovske organizacije (3.3) |
 | 9 | Sistematizacija (korak 8) | Ko koga vodi, objava od datuma; promena naziva, šifre ili roditelja bez gubitka istorije |
-| 10 | Gašenje stare organizacije (korak 9) | Uslovi iz 3.4; gasi se `fetch_job_codes` (01:30), tabela `OrganizationalUnit` ostaje za istoriju |
+| 10 | Gašenje stare organizacije (korak 9) | Uslovi iz 3.4; gasi se `fetch_job_codes` (01:30), tabela `OrganizationalUnit` ostaje za istoriju. **Moguće tek kad pređu i Potraživanja, Flota (sa putnim nalozima) i Kadrovi** — oni još čitaju `allowed_center_codes`, `allowed_centers` i `OrganizationalUnit.center` |
 
 ### 0.4. Podaci za proveru (ne koče korake 1–6)
 
@@ -106,7 +108,9 @@ filtere i zbirove u bazi potreban je **jedan spoj** od zapisa do centra, i to **
 
 **Predlog [Z]:** tabela putanje `OrgPutanja(posao, jedinica, centar, vazi_od, vazi_do)` —
 jedan red po šifri posla i periodu u kome je važila ta pripadnost. Puni je uvoz registra
-(ponovljivo, isto kao verzije). Upit tada glasi:
+(ponovljivo, isto kao verzije). **Prvi snimak važi unazad** (odluka 28.09.2026., [P]): registar je
+prvi put uvezen 21.09.2026., a knjiženja počinju 01.01.2025.; prva verzija svakog čvora zato u
+putanji važi od 01.01.2000., kao i u staroj organizaciji. Upit tada glasi:
 
 ```text
 zapis.org_node → OrgPutanja (vazi_od ≤ datum dokumenta < vazi_do) → centar
@@ -231,7 +235,7 @@ Nasleđena Naplata ostaje na starom režimu dok se ne ugasi (AGENTS pravilo 7).
 | **2** ✅ | **Model prava sa obuhvatom i jedna provera** (3.2, tačke 1–2) — izgrađeno, nije uključeno | Testovi: obuhvat posla ne daje centar, istek dodele gasi pravo, prazan obuhvat ima jedno značenje | Srednja |
 | **3** ✅ | **Admin korisnika i uloga** (V2, korak 3) — izvedeno 25.09.2026.: **Organizacija → Dodele uloga** (spisak, kartica korisnika, odobravanje nacrta, ručna dodela, opoziv sa istorijom, senka) | Administrator održava pilot korisnike bez Django admina | Srednja |
 | **4** ✅ | **Prevod i senka** (3.2, tačke 3–4) — Finansije, Potraživanja, putni nalozi, vozila i kontrolna tabla: 4 razlike, sve potvrđene (Garaža, Pregled); Kadrovi van senke (3.3) | Izveštaj razlika po korisniku i modulu je prazan ili potvrđen | Srednja |
-| **5** | **Pilot: Potraživanja + Finansije** — filteri, zbirovi i prava zajedno | Isti iznosi za isti skup; tuđi podaci nedostupni; istorija i opoziv provereni | Srednja |
+| **5** ✅ | **Pilot: Finansije + Nabavka** (izmenjeno 28.09.2026.; Potraživanja idu sledeća) — filteri, zbirovi i prava zajedno; u kodu 28.09.2026., radi posle isporuke | Isti iznosi za isti skup; tuđi podaci nedostupni; istorija i opoziv provereni | Srednja |
 | **6** | **Flota** — ~30 mesta filtera i zbirova [P], sa pravilom dodele na datum | Nema promene brojeva dokumenata ni istorije zaduženja | Srednja |
 | **7** | **Nabavka**, pa **HR** — zaposleni dobija vezu na čvor registra, bez posebne kadrovske organizacije (3.3) | Kontrolni izveštaj modula prolazi | Srednja |
 | **8** | **Sistematizacija** (V2, korak 8) | Promena naziva, šifre ili roditelja bez gubitka istorije i bez neočekivanog pristupa | Visoka |
@@ -253,7 +257,7 @@ obuhvatu najveći, a modeli su najjednostavniji (tekstualna šifra, bez dodele v
 | 4 | Uloga „Uprava” | ✅ **Odlučeno 25.09.2026.:** obuhvat cele firme kroz dodelu, ne kao izuzetak u kodu (tako i radi: prevod joj pravi dodelu „cela firma”, provera nema izuzetak osim za superuser) |
 | 5 | Kadrovske OJ 4331, 4332, 423, 4110 | ✅ **Bespredmetno** — posebne kadrovske organizacije nema (3.3, odluka 25.09.2026.) |
 | 6 | Kadrovska oznaka `20` | ✅ **Bespredmetno** — posebne kadrovske organizacije nema (3.3) |
-| 7 | Pilot | Potraživanja + Finansije |
+| 7 | Pilot | ✅ **Finansije + Nabavka** (odluka 28.09.2026.) |
 | 8 | Neaktivne šifre | ✅ **Odlučeno 25.09.2026.: ne nude se nigde** — forme, filteri, povezivanje faktura, spisak šifara u Finansijama i šifre bez prometa. Već upisana vrednost i već dodeljeno pravo ostaju. **Šifra bez prometa u poslednjih 12 meseci je neaktivna** (primenjeno 25.09.2026.: 168 naučnih projekata koji nikad nisu knjiženi; noćna sinhronizacija 01:40 to od sada radi sama). Izveštaj Finansija **po šiframa posla** prikazuje samo aktivne šifre, a zbir ispod tabele računa se nad istim knjiženjima; izveštaj po centrima, kontima i mesecima ostaje ceo (za 2025. van pregleda po šiframa ostaje 47 knjiženja, rashod 1.071.763,60) |
 
 **Otvoreno iz registra, ne blokira korak 0–4:** 11 naziva jedinica „proveriti” i naziv centra 2;

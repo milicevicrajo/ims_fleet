@@ -356,6 +356,9 @@ class DodelaUloge(models.Model):
     odobreno = models.DateTimeField(null=True, blank=True)
     opozvao = models.ForeignKey("fleet.CustomUser", on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     opozvano = models.DateTimeField(null=True, blank=True)
+    # Dodela je korisniku dala i samu ulogu (nije je imao) — opoziv poslednje takve dodele je skida.
+    # Neobavezno polje, da stariji kod na serveru moze da upisuje dodele i pre isporuke.
+    dodala_ulogu = models.BooleanField(null=True, default=False)
 
     class Meta:
         verbose_name = "Dodela uloge sa obuhvatom"

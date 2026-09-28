@@ -218,6 +218,23 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | `uprava` | Sve dozvole |
 | `finansije` („Finansijska analitika“) | Pregled, knjiženja, izvoz — **ograničeno dozvoljenim centrima** |
 
+> **[P] Od 28.09.2026. Finansije su na registru organizacije** (plan prelaska, korak 5;
+> prekidač `PRAVA_PO_REGISTRU["finansije"]` u `ims_erp/settings/base.py`):
+>
+> - **Obuhvat** daju odobrene dodele uloga (Organizacija → Dodele uloga) za uloge sa bilo kojom
+>   dozvolom `finansije:…` — cela firma, centar, jedinica ili šifra posla. `allowed_center_codes`,
+>   `allowed_centers` i `finansije:view_all` više ne odlučuju; „vidi sve” znači obuhvat cele firme.
+>   Bez odobrene dodele korisnik ne vidi nijedno knjiženje. Nacrt ne odlučuje ni o čemu.
+> - **Centar** u filterima, izveštaju po centrima, grafikonima, tabeli knjiženja i izvozu je centar
+>   šifre posla u registru **na datum knjiženja** — snimak `LedgerEntry.org_centar`, koji upisuje
+>   objava sinhronizacije i osvežava noćna sinhronizacija organizacije (01:40). Izvorni `center`
+>   ostaje u tabeli. Zato `430001` (amortizacija) ide u centar 43, `110002` u centar 11, a tehnička
+>   `111111` i knjiženja bez šifre posla su „Neraspoređeno”. Ukupni zbirovi firme se ne menjaju;
+>   za 2025. rashod centra 43 je veći za 30.172.998,51, za 2026. za 17.567.623,55 (merenje 28.09.2026.).
+> - Prvi snimak registra (21.09.2026.) važi unazad, jer ranija istorija nije poznata.
+>
+> Pravila ispod opisuju stari režim, koji važi kad se prekidač isključi.
+
 **Posebna pravila [P]:**
 
 - **Prazan spisak dozvoljenih centara nije globalan pristup.**

@@ -67,12 +67,26 @@ class DodeleTests(ImportTestCase):
         dodela = DodelaUloge.objects.get(korisnik=self.korisnik, cvor_id=cvor("410001"))
         self.assertEqual((dodela.status, dodela.izvor), (DodelaUloge.STATUS_AKTIVNA, DodelaUloge.IZVOR_RUCNO))
         self.assertContains(self.client.post(adresa, podaci), "već ima tu ulogu")
-        # Neaktivna sifra se ne nudi (odluka 8), a uloga koju korisnik nema ne moze da se izabere.
+        # Neaktivna sifra se ne nudi (odluka 8).
         self.assertNotIn(str(cvor("431112")), {v for _, g in dodele.izbor_obuhvata()[1:] for v, _ in g})
-        tudja = uloga_sa_dozvolom("tudja", "potrazivanja:dashboard")
-        odgovor = self.client.post(adresa, {**podaci, "uloga": tudja.pk, "obuhvat": "firma"})
-        self.assertEqual(odgovor.status_code, 200)
-        self.assertFalse(DodelaUloge.objects.filter(uloga=tudja).exists())
+
+    def test_uloga_po_cvoru_daje_i_skida_ulogu(self):
+        """Korak 5: dodela daje ulogu koju korisnik nema; opoziv poslednje takve dodele je skida."""
+        self.client.force_login(self.admin)
+        adresa = reverse("organizacija:dodele_korisnika", args=[self.korisnik.pk])
+        nova = uloga_sa_dozvolom("nabavka-centra", "nabavka:case_list")
+        self.assertEqual(self.client.post(adresa, {"uloga": nova.pk, "obuhvat": str(centar("43")),
+                                                   "vazi_od": "2026-01-01"}).status_code, 302)
+        dodela = DodelaUloge.objects.get(korisnik=self.korisnik, uloga=nova)
+        self.assertTrue(dodela.dodala_ulogu)
+        self.assertTrue(self.korisnik.roles.filter(pk=nova.pk).exists())
+        dodele.opozovi(dodela, self.admin)
+        self.assertFalse(self.korisnik.roles.filter(pk=nova.pk).exists())
+        # Uloga koju je korisnik vec imao ostaje i posle opoziva.
+        rucna = dodele.dodaj(self.korisnik, self.uloga, centar("41"), False, datetime.date(2026, 1, 1), None, self.admin)
+        self.assertFalse(rucna.dodala_ulogu)
+        dodele.opozovi(rucna, self.admin)
+        self.assertTrue(self.korisnik.roles.filter(pk=self.uloga.pk).exists())
 
     def test_odobravanje_i_opoziv_kroz_ekran(self):
         self.client.force_login(self.admin)

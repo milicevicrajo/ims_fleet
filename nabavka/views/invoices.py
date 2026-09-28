@@ -7,6 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, OuterRef, Q, Subquery, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+
+from nabavka.access import fakture
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -75,7 +77,7 @@ def _filter_euf_invoices(request, invoices=None):
     date_to = _parse_filter_date(request.GET.get("date_to"))
     goes_to_warehouse = request.GET.get("goes_to_warehouse")
     is_garage = request.GET.get("is_garage")
-    invoices = invoices if invoices is not None else _euf_invoice_base_queryset()
+    invoices = invoices if invoices is not None else fakture(_euf_invoice_base_queryset(), request.user)
     if q:
         invoices = invoices.filter(
             Q(invoice_number__icontains=q)
@@ -237,7 +239,7 @@ class EufInvoiceDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Login
                 | Q(vehicle__model__icontains=search_value)
             ).distinct()
 
-        records_total = ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF).count()
+        records_total = fakture(ProcurementInvoice.objects.filter(source=ProcurementInvoice.SOURCE_EUF), request.user).count()
         records_filtered = invoices.count()
         order_map = {
             "0": "invoice_date",
@@ -373,7 +375,7 @@ class EufInvoiceReturnedToggleView(RolePermissionRequiredMixin, LoginRequiredMix
     required_permission_code = "nabavka:euf_invoice_list"
 
     def post(self, request, pk):
-        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        invoice = get_object_or_404(fakture(ProcurementInvoice.objects.all(), request.user), pk=pk, source=ProcurementInvoice.SOURCE_EUF)
         invoice.is_returned = (request.POST.get("is_returned") or "").lower() in {"1", "true", "on", "yes"}
         invoice.save(update_fields=["is_returned", "updated_at"])
         invoice.sync_primary_job_code_link(created_by=request.user)
@@ -408,7 +410,7 @@ class EufInvoiceReturnedJobCodesView(RolePermissionRequiredMixin, LoginRequiredM
         ]
 
     def get(self, request, pk):
-        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        invoice = get_object_or_404(fakture(ProcurementInvoice.objects.all(), request.user), pk=pk, source=ProcurementInvoice.SOURCE_EUF)
         invoice.sync_primary_job_code_link(created_by=request.user)
         _apply_legacy_returned_to_job_code_links(invoice, request.user)
         return JsonResponse(
@@ -420,7 +422,7 @@ class EufInvoiceReturnedJobCodesView(RolePermissionRequiredMixin, LoginRequiredM
         )
 
     def post(self, request, pk):
-        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        invoice = get_object_or_404(fakture(ProcurementInvoice.objects.all(), request.user), pk=pk, source=ProcurementInvoice.SOURCE_EUF)
         invoice.sync_primary_job_code_link(created_by=request.user)
         returned_ids = {
             int(value)
@@ -483,7 +485,7 @@ class EufInvoiceUpdateView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
     required_permission_code = "nabavka:euf_invoice_detail"
 
     def post(self, request, pk):
-        invoice = get_object_or_404(ProcurementInvoice, pk=pk, source=ProcurementInvoice.SOURCE_EUF)
+        invoice = get_object_or_404(fakture(ProcurementInvoice.objects.all(), request.user), pk=pk, source=ProcurementInvoice.SOURCE_EUF)
         form = ProcurementInvoiceForm(request.POST, instance=invoice)
         next_url = request.POST.get("next")
         if form.is_valid():
@@ -500,7 +502,7 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
     context_object_name = "invoice"
 
     def get_queryset(self):
-        return ProcurementInvoice.objects.prefetch_related(
+        return fakture(ProcurementInvoice.objects.all(), self.request.user).prefetch_related(
                 "item_links__procurement_item__procurement_case",
                 "item_links__created_by",
                 "contract_links__contract__contract_type",
@@ -677,7 +679,7 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
 
 class ProcurementInvoiceLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, pk):
-        link = get_object_or_404(ProcurementItemInvoiceLink, pk=pk)
+        link = get_object_or_404(ProcurementItemInvoiceLink, pk=pk, invoice__in=fakture(ProcurementInvoice.objects.all(), request.user))
         invoice_pk = link.invoice_id
         next_url = request.POST.get("next")
         link.delete()
@@ -687,7 +689,7 @@ class ProcurementInvoiceLinkDeleteView(RolePermissionRequiredMixin, LoginRequire
 
 class ProcurementInvoiceContractLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, pk):
-        link = get_object_or_404(ProcurementInvoiceContractLink, pk=pk)
+        link = get_object_or_404(ProcurementInvoiceContractLink, pk=pk, invoice__in=fakture(ProcurementInvoice.objects.all(), request.user))
         invoice_pk = link.invoice_id
         link.delete()
         messages.success(request, "Veza fakture i ugovora je obrisana.")
@@ -698,7 +700,7 @@ class ProcurementInvoiceJobCodeLinkDeleteView(RolePermissionRequiredMixin, Login
     required_permission_code = "nabavka:euf_invoice_detail"
 
     def post(self, request, pk):
-        link = get_object_or_404(ProcurementInvoiceJobCodeLink, pk=pk)
+        link = get_object_or_404(ProcurementInvoiceJobCodeLink, pk=pk, invoice__in=fakture(ProcurementInvoice.objects.all(), request.user))
         invoice_pk = link.invoice_id
         link.delete()
         messages.success(request, "Veza fakture i sifre posla je obrisana.")

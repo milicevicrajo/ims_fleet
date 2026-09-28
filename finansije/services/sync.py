@@ -105,6 +105,9 @@ def publish(rows, jobs, run):
     expected = totals_for(rows)
     now = timezone.now()
     cvorovi = _cvorovi_registra(run.company)
+    from organizacija.services.putanja import centar_za
+
+    centar_registra = centar_za(run.company)
     with transaction.atomic():
         scope = LedgerEntry.objects.filter(company=run.company, year__range=(run.year_from, run.year_to))
         old = {source_key(row): row for row in scope.values(*KEY_FIELDS, "pk", "source_hash", "active")}
@@ -130,8 +133,9 @@ def publish(rows, jobs, run):
             if previous and previous["source_hash"] == digest and previous["active"]:
                 unchanged += 1
                 continue
+            cvor = cvorovi.get((values.get("job_code") or "").strip())
             entry = LedgerEntry(**values, source_hash=digest, active=True, removed_at=None, changed_at=now,
-                                org_node_id=cvorovi.get((values.get("job_code") or "").strip()))
+                                org_node_id=cvor, org_centar=centar_registra(cvor, values["booking_date"]) if cvor else None)
             if previous:
                 entry.pk = previous["pk"]
                 updates.append(entry)

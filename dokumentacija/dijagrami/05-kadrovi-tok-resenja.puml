@@ -1,0 +1,51 @@
+@startuml
+!include _stil.iuml
+title Kadrovi — od zahteva do izdatog rešenja
+caption UML sekvenca | postojeći zahtev, jedan nacrt i zaključavanje dokumenta
+autonumber
+actor "Korisnik Kadrova" as User
+boundary "Django view\nzahtevi_views / resenja_views" as View
+control "Dozvole + obuhvat\ncore.mixins / visible_zahtevi" as Access
+control "Servisi\nzahtevi.py / resenja.py" as Service
+database "IMS_ERP\nDjango tabele" as DB
+
+User -> View : Dodaj rešenje na postojećem zahtevu
+View -> Access : Proveri dozvolu rute i vidljivost zahteva
+Access --> View : Dozvoljeno / zahtev u obuhvatu
+note over View, Access : Ako pristup nije dozvoljen, obrada se prekida.
+View -> View : Validacija datuma, vrste i potpisnika
+View -> Service : napravi_resenje(zahtev, korisnik)
+group Atomska transakcija
+  Service -> DB : Učitaj i zaključaj zahtev
+  DB --> Service : Zahtev i postojeća veza sa rešenjem
+  alt Zahtev je storniran ili već ima rešenje
+    Service --> View : ValidationError
+    View --> User : Poruka; bez novog rešenja
+  else Zahtev može dobiti rešenje
+    Service -> DB : Uvećaj podbroj; sačuvaj nacrt
+    note right of DB : NOT NULL + UNIQUE nad zahtev_id
+    Service -> DB : Kopiraj pojedinačne dane zahteva
+    Service --> View : Novo rešenje, status nacrt
+    View --> User : Detalj rešenja i A4 pregled
+  end
+end
+
+== Naknadno izdavanje nacrta ==
+User -> View : Izdaj rešenje
+View -> Access : Proveri dozvolu i vidljivost rešenja
+View -> Service : izdaj_resenje(rešenje, korisnik)
+group Atomska transakcija izdavanja
+  Service -> Service : Proveri status, pol i važenje potpisnika
+  Service -> Service : Formiraj razrešen tekst dokumenta
+  opt Zahtev je još nacrt
+    Service -> DB : Sačuvaj JSON zahteva; status podnet
+  end
+  Service -> DB : Sačuvaj JSON rešenja; status izdato
+end
+Service --> View : Izdato rešenje
+View --> User : Zaključan dokument za pregled i štampu
+note over Service, DB
+  Neuspešna validacija poništava transakciju.
+  Tekst izdatog rešenja prikazuje se iz sačuvanog JSON snimka.
+end note
+@enduml

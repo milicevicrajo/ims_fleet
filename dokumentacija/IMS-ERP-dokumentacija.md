@@ -42,6 +42,7 @@
     - [2.11. Sistemi izvan aplikacije](#211-sistemi-izvan-aplikacije)
     - [2.12. Šta arhitektura dobro rešava, a šta ne](#212-šta-arhitektura-dobro-rešava-a-šta-ne)
     - [2.13. Gde dalje](#213-gde-dalje)
+    - [2.14. UML dijagrami aplikacije](#214-uml-dijagrami-aplikacije)
 - [3. Moduli — sadržaj i veze](#3-moduli--sadržaj-i-veze)
     - [3.0.1. Sadržaj](#301-sadržaj)
     - [3.0.2. Šta koji modul radi — u jednoj rečenici](#302-šta-koji-modul-radi--u-jednoj-rečenici)
@@ -1249,6 +1250,59 @@ Detaljno: [7. Integracije](#7-integracije).
 | Koje tabele i kolone postoje? | [4. Baza podataka](#4-baza-podataka) |
 | Kako se računa određeni iznos? | [6. Analize i obračuni](#6-analize-i-obračuni--sadržaj) |
 | Kako se sistem pokreće i održava? | [8. Instalacija](#8-instalacija-i-pokretanje), [9. Održavanje](#9-održavanje) |
+
+### 2.14. UML dijagrami aplikacije
+
+Stanje provereno prema repozitorijumu **28.09.2026.** Dijagrami su ručno oblikovani
+na osnovu koda i konfiguracije. Prikazuju ključne delove arhitekture; nisu automatski
+inventar svih klasa, importovanja ili tabela.
+
+**Početna stranica:** [Galerija UML dijagrama](dijagrami/index.html).
+Otvara se lokalno u pregledaču, bez pokretanja Django aplikacije. SVG omogućava
+uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređivanje.
+
+| Prikaz | Slika | PlantUML izvor | Osnova za prikaz |
+|---|---|---|---|
+| Pregled sistema | [SVG](dijagrami/svg/01-pregled-sistema.svg) | [01-pregled-sistema.puml](dijagrami/01-pregled-sistema.puml) | `ims_erp/urls.py`, `ims_erp/celery.py`, poglavlje 7: Integracije |
+| Organizacija modula | [SVG](dijagrami/svg/02-organizacija-modula.svg) | [02-organizacija-modula.puml](dijagrami/02-organizacija-modula.puml) | `INSTALLED_APPS`, korenske rute i organizacija koda modula |
+| Servisi i izvori podataka | [SVG](dijagrami/svg/03-serveri-i-podaci.svg) | [03-serveri-i-podaci.puml](dijagrami/03-serveri-i-podaci.puml) | `nssm.bat`, `ims_erp/celery.py`, dokumentovana konfiguracija baza |
+| Kadrovi: model podataka | [SVG](dijagrami/svg/04-kadrovi-model-podataka.svg) | [04-kadrovi-model-podataka.puml](dijagrami/04-kadrovi-model-podataka.puml) | `hr/zahtevi_models.py`, `hr/resenja_models.py`, migracija `hr.0018` |
+| Kadrovi: tok rešenja | [SVG](dijagrami/svg/05-kadrovi-tok-resenja.svg) | [05-kadrovi-tok-resenja.puml](dijagrami/05-kadrovi-tok-resenja.puml) | `hr/zahtevi_views.py`, `hr/resenja_views.py`, `hr/services/zahtevi.py`, `hr/services/resenja.py` |
+| Korisnici i dozvole | [SVG](dijagrami/svg/06-korisnici-i-dozvole.svg) | [06-korisnici-i-dozvole.puml](dijagrami/06-korisnici-i-dozvole.puml) | `core/models.py`, `core/mixins.py`, `hr/access.py`, `organizacija/models.py` |
+
+**Kako se čitaju dijagrami:**
+
+- Dijagram 01 je pregled sistema i integracija u UML komponentnoj notaciji.
+  Dijagram 02 grupiše module po poslovnoj nameni; grupe nisu zasebne aplikacije ili servisi.
+- Dijagram 03 prikazuje dokumentovano raspoređivanje. Adresa aplikacije `192.168.6.7`
+  potiče od korisnika. Nije provereno da li je to isti računar kao `SMS-SERVER`.
+  `nssm.bat` potvrđuje Redis, Worker i Beat; konkretan web server i naziv njegovog
+  Windows servisa nisu potvrđeni ovim dijagramom. Živi servisi nisu pregledani.
+- `default` i `server_db` predstavljaju dva pristupna aliasa **iste** baze `IMS_ERP`.
+- U dijagramu 04 veza `Zahtev 1 — 0..1 Resenje` znači: zahtev sme da čeka rešenje,
+  a svako rešenje ima tačno jedan zahtev. `NOT NULL` i `UNIQUE` ograničenja obezbeđuju
+  obaveznu i jedinstvenu vezu, uključujući stornirana rešenja.
+- Dijagram 06 razdvaja dozvolu rute od obuhvata podataka. Primena starog obuhvata i
+  novog registra Organizacije zavisi od konkretnog modula i njegovih podešavanja.
+
+**Pregled i izmene u VS Code-u:**
+
+1. Otvoriti direktorijum projekta i bilo koji `.puml` iz `dokumentacija/dijagrami/`.
+2. Pritisnuti **Alt+D** za pregled pomoću dodatka `jebbs.plantuml`.
+3. Izmeniti opis i sačuvati fajl. Zajednički izgled je u `_stil.iuml`.
+4. Iz korena projekta ponovo generisati SVG, PNG i galeriju:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 dokumentacija/dijagrami/render.py
+```
+
+Skripta prvo proverava PlantUML sintaksu, zatim generiše slike. Koristi lokalnu
+Javu i `plantuml.jar` iz instaliranog VS Code dodatka; ne pokreće Django, ne otvara
+bazu i ne šalje dijagrame javnom servisu. Po potrebi proslediti `--java` i `--jar`
+sa putanjama do izvršnog fajla Jave i PlantUML JAR-a. Nova instalacija Jave može
+zahtevati ponovno otvaranje VS Code-a ili podešavanje `plantuml.java`.
+
+Posle izmene ovog poglavlja pokrenuti i `python dokumentacija/spoji-dokumentaciju.py`.
 
 ---
 
@@ -2597,6 +2651,23 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | `uprava` | Sve dozvole |
 | `finansije` („Finansijska analitika“) | Pregled, knjiženja, izvoz — **ograničeno dozvoljenim centrima** |
 
+> **[P] Od 28.09.2026. Finansije su na registru organizacije** (plan prelaska, korak 5;
+> prekidač `PRAVA_PO_REGISTRU["finansije"]` u `ims_erp/settings/base.py`):
+>
+> - **Obuhvat** daju odobrene dodele uloga (Organizacija → Dodele uloga) za uloge sa bilo kojom
+>   dozvolom `finansije:…` — cela firma, centar, jedinica ili šifra posla. `allowed_center_codes`,
+>   `allowed_centers` i `finansije:view_all` više ne odlučuju; „vidi sve” znači obuhvat cele firme.
+>   Bez odobrene dodele korisnik ne vidi nijedno knjiženje. Nacrt ne odlučuje ni o čemu.
+> - **Centar** u filterima, izveštaju po centrima, grafikonima, tabeli knjiženja i izvozu je centar
+>   šifre posla u registru **na datum knjiženja** — snimak `LedgerEntry.org_centar`, koji upisuje
+>   objava sinhronizacije i osvežava noćna sinhronizacija organizacije (01:40). Izvorni `center`
+>   ostaje u tabeli. Zato `430001` (amortizacija) ide u centar 43, `110002` u centar 11, a tehnička
+>   `111111` i knjiženja bez šifre posla su „Neraspoređeno”. Ukupni zbirovi firme se ne menjaju;
+>   za 2025. rashod centra 43 je veći za 30.172.998,51, za 2026. za 17.567.623,55 (merenje 28.09.2026.).
+> - Prvi snimak registra (21.09.2026.) važi unazad, jer ranija istorija nije poznata.
+>
+> Pravila ispod opisuju stari režim, koji važi kad se prekidač isključi.
+
 **Posebna pravila [P]:**
 
 - **Prazan spisak dozvoljenih centara nije globalan pristup.**
@@ -3077,6 +3148,16 @@ Detaljno: [4.7. Nabavka](#47-nabavka--nabavka). **13 tabela.**
 
 > **[P]** Uloga `zahtev` **ne može** povezivati fakture, izdavati narudžbenice ni menjati
 > statuse.
+
+> **[P] Od 28.09.2026. Nabavka je na registru organizacije** (plan prelaska, korak 5; prekidač
+> `PRAVA_PO_REGISTRU["nabavka"]`, `nabavka/access.py`). Do tada Nabavka nije ograničavala po centru.
+> Sada **predmete i EUF fakture** korisnik vidi ako im je šifra posla u obuhvatu njegovih odobrenih
+> dodela (uloge sa bilo kojom dozvolom `nabavka:…`), po današnjoj pripadnosti šifre u registru —
+> u spiskovima, detalju, izmeni, štampi, brisanju, ponavljanju, stavkama, vezama faktura, kontrolnoj
+> tabli, alarmima i izveštajima. Predmet koji je korisnik sam napravio uvek vidi. Zapis bez šifre
+> posla vidi samo obuhvat cele firme. **Broj predmeta** (`ZN-43/2026-…`) i dalje se pravi iz starog
+> polja — nijedan broj se ne menja. UF stavke, roba, ugovori, javne nabavke i narudžbenice nisu
+> vezani za šifru posla i ne ograničavaju se.
 
 ---
 
@@ -4771,13 +4852,14 @@ pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
 | Spisak | Korisnici sa brojem dodela u nacrtu i odobrenih; filter „Ima nacrt / Odobreni / Bez dodela”; **Proveri razlike (senka)** poredi sve korisnike (traje ~10 s) |
 | Kartica korisnika | Sve dodele sa istorijom, stara prava koja danas odlučuju i senka samo za tog korisnika |
 | **Odobri nacrt** | Nacrt iz prevoda starih prava postaje odobren; beleži se ko i kada. Odobrenog korisnika prevod (`prava_u_senci`) više ne menja |
-| **Nova dodela** | Ručna dodela, odmah odobrena; nude se samo uloge koje korisnik već ima i samo **aktivne** šifre; ista uloga sa istim obuhvatom u preklopljenom periodu se odbija |
-| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; neodobren nacrt se briše |
+| **Nova dodela** | Ručna dodela, odmah odobrena; nudi se svaka aktivna uloga i samo **aktivne** šifre. **Uloga po čvoru** (od 28.09.2026.): ako korisnik ulogu nema, dodela mu je daje. Ista uloga sa istim obuhvatom u preklopljenom periodu se odbija |
+| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; ako je dodela dala ulogu, opoziv poslednje takve dodele je i skida. Neodobren nacrt se briše |
 
 Dozvole: `organizacija:dodele`, `organizacija:dodele_korisnika`, `organizacija:dodele_odobri`,
-`organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Dodele još ne odlučuju o pristupu**:
-moduli rade po starim pravima (`allowed_center_codes`, `allowed_centers`) do pilota Finansija i
-Potraživanja. Uloga Uprava dobija celu firmu kao običnu dodelu, ne kao izuzetak u proveri.
+`organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Odobrene dodele odlučuju o pristupu u
+Finansijama i Nabavci** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
+pravima (`allowed_center_codes`, `allowed_centers`). Uloga Uprava dobija celu firmu kao običnu
+dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka i Blagajna.
 
 ---
 
@@ -17685,7 +17767,7 @@ chrome-for-testing/  Chrome za Selenium
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
 | 01:30 | Flota — šifre poslova i OJ | `fleet.tasks.fetch_job_codes` | `sync` | 60 min |
-| 01:40 | Organizacija — registar i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
+| 01:40 | Organizacija — registar, obrt šifara, veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
 | 02:20 | Nabavka — EUF fakture | `nabavka.tasks.sync_euf_invoices_task` | `sync` | — |

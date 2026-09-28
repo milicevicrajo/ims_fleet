@@ -7,5 +7,8 @@ ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
 CELERY_TASK_ALWAYS_EAGER = True
+# Postojeci testovi opisuju stara prava; novi put se proverava sa `override_settings`
+# (finansije/test_registar.py, nabavka/test_registar.py).
+PRAVA_PO_REGISTRU = {}
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'

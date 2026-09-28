@@ -265,6 +265,11 @@ CELERY_TASK_DEFAULT_QUEUE = 'default'
 # Flota cita spiskove i nazive sifara posla iz registra organizacije (faza 2, korak 4).
 # False vraca stare spiskove bez druge promene (fleet/support/registar.py).
 FLOTA_REGISTAR_ORGANIZACIJE = True
+# Moduli u kojima prava i centar dolaze iz registra organizacije i dodela uloga (plan prelaska na
+# registar, korak 5, od 28.09.2026.): obuhvat = odobrene dodele (Organizacija → Dodele uloga),
+# centar = centar sifre posla u registru. Brisanje modula iz recnika vraca stara prava i stari
+# centar (`allowed_center_codes`, `allowed_centers`, `center`) bez druge promene.
+PRAVA_PO_REGISTRU = {"finansije": True, "nabavka": True}
 
 CELERY_TASK_ROUTES = {
     'fleet.tasks.run_nis_command': {'queue': 'selenium'},

@@ -40,7 +40,8 @@ class PutanjaTests(ImportTestCase):
     def test_svaki_posao_ima_putanju_do_centra(self):
         self.assertEqual(putanja.centar_na_dan(cvor("430111"), datetime.date(2026, 3, 1)), "43")
         self.assertEqual(putanja.centar_na_dan(cvor("3154190170"), datetime.date(2026, 3, 1)), "3")
-        self.assertIsNone(putanja.centar_na_dan(cvor("430111"), datetime.date(2025, 12, 31)))  # pre snimka
+        # Prvi snimak vazi unazad (odluka 28.09.2026.): istorija pre uvoza nije poznata.
+        self.assertEqual(putanja.centar_na_dan(cvor("430111"), datetime.date(2024, 12, 31)), "43")
 
     def test_ponovljena_izgradnja_ne_menja_nista(self):
         self.assertFalse(putanja.izgradi(1)[2])

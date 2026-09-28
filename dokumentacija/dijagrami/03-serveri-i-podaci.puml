@@ -1,0 +1,51 @@
+@startuml
+!include _stil.iuml
+title IMS ERP — servisi i izvori podataka
+caption UML deployment | dokumentovana konfiguracija, bez provere živih servisa
+left to right direction
+node "Korisnički računar" as client {
+  artifact "Web pregledač" as browser
+}
+node "Windows aplikacioni server\n192.168.6.7 — adresa koju je naveo korisnik" as app {
+  component "Django web proces\nims_erp.wsgi / asgi\nC:/DjangoApps/ims_erp" as web
+  component "Celery Beat\nIMS_Fleet_Celery_Beat\nDatabaseScheduler" as beat
+  queue "Redis\nIMS_Fleet_Redis\nbroker, rezultati i zaključavanja" as redis
+  component "Celery Worker\nIMS_Fleet_Celery_Worker\n-P solo\ndefault, sync, selenium" as worker
+  folder "media/ i dnevnici rada" as disk
+  beat --> redis : objavljuje zadatke
+  web --> redis : šalje zadatke
+  redis --> worker : isporučuje zadatke
+  web --> disk
+  worker --> disk
+}
+node "SQL Server\nSMS-SERVER" as sql {
+  database "IMS_ERP — jedna fizička baza" as database {
+    rectangle "Django tabele\nfleet_*, hr_*, finansije_*, ...\nRaspored: django_celery_beat" as local
+    rectangle "Nasleđeni dbo objekti\npogledi / izvori starog ERP-a" as legacy
+  }
+}
+node "Povezani SQL serveri" {
+  database "PUTGEO-SERVER\nbazaims: knjigovodstvo\nbazaldims: zarade" as putgeo
+  database "INFORMATIKA23.ID\nKontrola pristupa / prolasci" as access
+  database "SERFIN.bazaldims\nKadrovski izvor" as serfin
+}
+browser --> web : HTTP(S)\nHTML stranice i forme
+web --> database : Django ORM + SQL
+worker --> database : sinhronizacije / upiti
+beat --> local : čita raspored
+database --> putgeo : linked server / čitanje
+database --> access : linked server / čitanje
+database --> serfin : linked server / čitanje
+note bottom of database
+  default i server_db su dva aliasa iste baze.
+  default: ORM; server_db: pristup nasleđenim objektima.
+  Aplikacija čita nasleđene izvore; posebne poslovne
+  procedure koriste se samo kroz predviđene servise.
+end note
+note bottom of app
+  nssm.bat definiše Redis, Worker i Beat.
+  Tačan web host i njegov NSSM naziv nisu potvrđeni tim fajlom.
+  Odnos adrese 192.168.6.7 i imena SMS-SERVER nije proveren.
+  Worker sa -P solo izvršava jedan posao u datom trenutku.
+end note
+@enduml

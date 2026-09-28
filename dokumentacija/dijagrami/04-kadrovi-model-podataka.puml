@@ -1,0 +1,68 @@
+@startuml
+!include _stil.iuml
+title Kadrovi — zahtevi i rešenja
+caption UML model podataka | ključne klase i stvarna ograničenja baze
+left to right direction
+class "Employee\nZaposleni" as Employee {
+  employee_code
+  ime, prezime, pol
+  org_unit_code
+}
+class "Zahtev" as Request {
+  broj, godina, redni_broj
+  datum_zahteva
+  status: nacrt / podnet / storniran
+  {field} centar, oj_kod (snimljeni podaci)
+  period, vreme, razlog, napomena
+  dokument: JSON snimak
+}
+class "Resenje" as Decision {
+  zahtev_id {NOT NULL, UNIQUE}
+  broj, podbroj, datum_resenja
+  status: nacrt / izdato / stornirano
+  {field} centar, oj_kod (snimljeni podaci)
+  period, vreme, napomena
+  dokument: JSON snimak
+}
+class "VrstaZahteva" as RequestType {
+  kod, naziv, tekst
+  vrsta_resenja_id (opciono)
+}
+class "VrstaResenja" as DecisionType {
+  kod, naziv, pravni_osnov
+  dispozitiv, obrazlozenje
+}
+class "ZahtevDan" as RequestDay {
+  datum
+  vrsta_dana
+}
+class "ResenjeDan" as DecisionDay {
+  datum
+  vrsta_dana
+}
+class "Potpisnik" as Signer {
+  funkcija
+  vazi_od, vazi_do
+}
+Employee "1" -- "0..*" Request : zaposleni
+Employee "1" -- "0..*" Decision : zaposleni
+RequestType "1" -- "0..*" Request
+RequestType "0..*" --> "0..1" DecisionType : podrazumevana vrsta
+DecisionType "1" -- "0..*" Decision
+Request "1" -- "0..1" Decision : osnov za rešenje
+Request "1" *-- "0..*" RequestDay
+Decision "1" *-- "0..*" DecisionDay
+Signer "0..1" -- "0..*" Decision : potpisuje
+Employee "1" -- "0..*" Signer
+note bottom of Request
+  podnosilac i odobrava su takođe veze na Employee.
+  created_by u zahtevu i rešenju pokazuje na CustomUser.
+  BrojacZahteva dodeljuje sledeći redni broj u godini.
+end note
+note bottom of Decision
+  Zahtev može čekati rešenje: 0..1 na strani Resenje.
+  Svako rešenje mora imati tačno jedan zahtev.
+  Stornirano rešenje i dalje zauzima tu vezu.
+  Potpisnik je opcion u nacrtu, obavezan pri izdavanju.
+end note
+@enduml

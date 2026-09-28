@@ -98,7 +98,11 @@ class ReportFilters(forms.Form):
             if key not in values:
                 values[key] = value
         super().__init__(values)
-        centers = set(jobs.values_list("center", flat=True)) | set(entries.order_by().values_list("center", flat=True).distinct())
+        from finansije.access import centar_sifre, centri_sifara, na_registru, polje_centra
+
+        mapa = centri_sifara() if na_registru() else None
+        centers = {centar_sifre(j, mapa) for j in jobs} | {
+            c or "" for c in entries.order_by().values_list(polje_centra(), flat=True).distinct()}
         from fleet.support.registar import Registar
 
         registar = Registar()

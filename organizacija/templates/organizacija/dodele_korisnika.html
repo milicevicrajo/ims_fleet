@@ -28,8 +28,8 @@ Opozvana dodela ostaje u tabeli sa krajem važenja; briše se samo neodobren nac
   </header>
 
   <p class="org-note mt-3">
-    <strong>Dodele još ne odlučuju o pristupu</strong> — do pilota korisnik radi po starim pravima. Odobren korisnik se više ne menja
-    prevodom starih prava. Obuhvat centra pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
+    <strong>Odobrene dodele odlučuju o pristupu u Finansijama i Nabavci</strong>; ostali moduli još rade po starim pravima.
+    Odobren korisnik se više ne menja prevodom starih prava. Obuhvat centra pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
   </p>
 
   <div class="dd-grid">
@@ -92,6 +92,7 @@ Opozvana dodela ostaje u tabeli sa krajem važenja; briše se samo neodobren nac
 
       <section class="dd-card">
         <h2>Nova dodela</h2>
+        <p class="org-note mt-0">Uloga daje dozvole, obuhvat određuje čiji se podaci vide. Ako korisnik ulogu još nema, dodela mu je daje; opoziv poslednje takve dodele je skida.</p>
         {% if form.fields.uloga.queryset.exists %}
           <form method="post">{% csrf_token %}
             {% if form.non_field_errors %}<div class="alert alert-danger py-2 small">{{ form.non_field_errors|join:" " }}</div>{% endif %}
@@ -105,7 +106,7 @@ Opozvana dodela ostaje u tabeli sa krajem važenja; briše se samo neodobren nac
             <button class="btn btn-primary btn-sm" type="submit">Upiši i odobri</button>
           </form>
         {% else %}
-          <p class="small text-muted mb-0">Korisnik nema nijednu aktivnu ulogu. Uloga se dodaje u uređivanju korisnika; ovde joj se određuje obuhvat.</p>
+          <p class="small text-muted mb-0">Nema nijedne aktivne uloge.</p>
         {% endif %}
       </section>
     </div>

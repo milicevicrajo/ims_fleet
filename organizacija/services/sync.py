@@ -16,7 +16,7 @@ from django.utils import timezone
 from organizacija.models import LegacyOrgLink, OrgNode, OrgNodeVersion
 from organizacija.services import activity
 from organizacija.services import classification as klas
-from organizacija.services import flota
+from organizacija.services import flota, putanja
 from organizacija.services.importer import DEFAULT_COMPANY, run_import
 from organizacija.services.report import job_code_to_node, node_center_map
 
@@ -32,12 +32,17 @@ def sinhronizuj(company=DEFAULT_COMPANY):
     # nove sifre iz izvora tako ne ostaju aktivne samo zato sto ih izvor tako oznacava.
     aktivnost = activity.apply_reviews(company)
     veze = flota.povezi(company, modul="sve")
+    # Snimak centra iz registra na knjizenjima (Finansije na registru, korak 5): posle promene
+    # pripadnosti sifre stara knjizenja zadrzavaju stari centar, nova dobijaju novi.
+    from finansije.models import LedgerEntry
+
+    centri_knjizenja = putanja.osvezi_centre(LedgerEntry.objects.filter(company=company))
     kontrola = uporedi_jedinice(company)
     izvestaj = flota.uporedni_izvestaj(company)
     nabavka = flota.uporedni_izvestaj(company, modul="nabavka")
     finansije = flota.uporedni_izvestaj(company, modul="finansije")
     potrazivanja = flota.uporedni_izvestaj(company, modul="potrazivanja")
-    return {"svezina": svezina, "run": run, "aktivnost": aktivnost, "veze": veze, "kontrola": kontrola, "izvestaj": izvestaj,
+    return {"svezina": svezina, "run": run, "aktivnost": aktivnost, "veze": veze, "centri_knjizenja": centri_knjizenja, "kontrola": kontrola, "izvestaj": izvestaj,
             "izvestaj_nabavke": nabavka, "izvestaj_finansija": finansije, "izvestaj_potrazivanja": potrazivanja}
 
 
@@ -117,7 +122,8 @@ def poruka(rezultat):
         f"Aktivnost po obrtu: izmenjenih {rezultat['aktivnost']['versions_changed']}.",
         f"OJ stara/nova: {kontrola['povezano']}/{kontrola['jedinica']} povezano, "
         f"razlika centra {len(kontrola['razlika_centra'])}, van stabla {len(kontrola['van_stabla'])}.",
-        f"Moduli: izmenjenih veza {izmena}, bez para {bez_para}.",
+        f"Moduli: izmenjenih veza {izmena}, bez para {bez_para}; centar iz registra osvezen na "
+        f"{rezultat.get('centri_knjizenja', 0)} knjizenja.",
         "Uporedni izvestaj Flote: " + ("PROLAZI." if izvestaj["prolazi"] else
                                        f"NE PROLAZI ({razlike} razlika, od toga van stabla {van_stabla})."),
     ]

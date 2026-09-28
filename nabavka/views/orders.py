@@ -11,6 +11,7 @@ from ..filters import PurchaseOrderFilter
 from ..forms import PurchaseOrderForm
 from ..models import ProcurementCase, PurchaseOrder
 from .cases import NabavkaContextMixin
+from ..access import predmeti
 
 
 class PurchaseOrderListView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, FilterView):
@@ -36,7 +37,7 @@ class PurchaseOrderCreateView(NabavkaContextMixin, RolePermissionRequiredMixin, 
 
     def dispatch(self, request, *args, **kwargs):
         case_id = request.GET.get("case") or request.POST.get("procurement_case")
-        self.procurement_case = ProcurementCase.objects.filter(pk=case_id).first() if case_id else None
+        self.procurement_case = predmeti(ProcurementCase.objects.all(), request.user).filter(pk=case_id).first() if case_id else None
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):

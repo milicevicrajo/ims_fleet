@@ -1,0 +1,39 @@
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 14
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam ArrowColor #527086
+skinparam ArrowThickness 1.2
+skinparam Padding 8
+skinparam nodesep 35
+skinparam ranksep 45
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam titleFontSize 24
+skinparam titleFontColor #163B55
+skinparam captionFontColor #64748B
+skinparam captionFontSize 12
+skinparam footerFontColor #64748B
+skinparam footerFontSize 11
+skinparam componentBackgroundColor #EDF5FA
+skinparam componentBorderColor #5683A0
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #CBD5E1
+skinparam databaseBackgroundColor #E8F4EF
+skinparam databaseBorderColor #4D8A75
+skinparam nodeBackgroundColor #F1F5FA
+skinparam nodeBorderColor #5683A0
+skinparam classBackgroundColor #EDF5FA
+skinparam classBorderColor #5683A0
+skinparam classHeaderBackgroundColor #DCEBF5
+skinparam noteBackgroundColor #FFF8E5
+skinparam noteBorderColor #D8BA70
+skinparam noteFontSize 12
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam sequenceParticipantBorderColor #5683A0
+skinparam sequenceLifeLineBorderColor #A6B9C8
+skinparam sequenceGroupBackgroundColor #F8FAFC
+hide stereotype
+footer IMS ERP | Arhitektura prema repozitorijumu | 28.09.2026.

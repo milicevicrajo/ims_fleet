@@ -1,0 +1,32 @@
+@startuml
+!include _stil.iuml
+title IMS ERP — pregled sistema
+caption Granica aplikacije, korisnici i spoljne integracije
+left to right direction
+
+actor "Poslovni korisnici\nKadrovi, Pravna, Finansije,\nFlota, Uprava i druge službe" as users
+rectangle "IMS ERP" as boundary #F1F7FB {
+  component "Web aplikacija\nDjango monolit\nHTML forme, dokumenti i izveštaji" as web
+  component "Pozadinski poslovi\nCelery + raspored poslova" as jobs
+  database "IMS_ERP\nDjango tabele i\nnasleđeni SQL objekti" as db
+  folder "Dokumenti i datoteke\nmedia/" as files
+  web -down-> jobs : zakazuje zadatke
+  web --> db : ORM / SQL
+  jobs --> db : sinhronizacije
+  web --> files : čitanje / čuvanje
+}
+rectangle "Izvori starog ERP-a\nPUTGEO-SERVER\nINFORMATIKA23\nSERFIN" as legacy #FFF5E8
+rectangle "Portali goriva\nNIS / OMV" as fuel #FFF5E8
+rectangle "Javni registri\nAPR / NBS" as public #FFF5E8
+artifact "Datoteke za razmenu\nExcel / CSV / bankarski formati" as exchange
+
+users --> web : koristi kroz pregledač
+db --> legacy : čitanje preko\npovezanih SQL servera
+jobs --> fuel : Selenium preuzimanje
+web --> public : HTTP upiti / preuzimanje
+web -- exchange : uvoz / izvoz
+note bottom of boundary
+  Poslovni moduli su delovi jedne aplikacije.
+  Detalji procesa i servisa prikazani su na dijagramu 03.
+end note
+@enduml

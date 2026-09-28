@@ -10,9 +10,11 @@ METRICS = (("revenue", "Prihodi"), ("expense", "Rashodi"), ("result", "Neto rezu
 
 
 def overview_data(entries, totals):
+    from finansije.access import polje_centra
+
     groups = []
     for dimension, field, heading in (
-        ("center", "center", "Centri / organizacione jedinice"),
+        ("center", polje_centra(), "Centri / organizacione jedinice"),
         ("job", "job_code", "Šifre posla"),
     ):
         annotations = expressions()

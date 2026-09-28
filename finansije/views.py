@@ -21,7 +21,7 @@ from openpyxl.cell import WriteOnlyCell
 
 from core.mixins import role_permission_required, user_has_role_permission
 from fleet.support.registar import Registar
-from .access import can_view_all
+from .access import can_view_all, centar_sifre, centri_sifara, na_registru, polje_centra
 from .forms import JobMonthForm, ReportFilters, SyncForm
 from .models import SyncRun, NalogZRefreshRun
 from .services.charts import overview_data
@@ -206,8 +206,9 @@ def jobs_data(request):
 def job_card(request):
     request.session["current_app"] = "finansije"
     entries, jobs = base_querysets(request.user)
-    directory = {j.code: {"name": j.name, "center": j.center} for j in jobs if j.code}
-    for code, name, center in entries.order_by().values_list("job_code", "job_name", "center").distinct():
+    mapa = centri_sifara() if na_registru() else None
+    directory = {j.code: {"name": j.name, "center": centar_sifre(j, mapa)} for j in jobs if j.code}
+    for code, name, center in entries.order_by().values_list("job_code", "job_name", polje_centra()).distinct():
         if code:
             directory.setdefault(code, {"name": name, "center": center})
     # Nude se samo aktivne sifre (odluka 25.09.2026.); sifra iz adrese ostaje, da link ka detalju radi.
@@ -348,7 +349,7 @@ def export(request):
     sheet.append(safe_excel_row(sheet, ["Filteri", context["params"]]))
     if is_ledger:
         headers = ["Datum knjiženja", "Godina", "Vrsta", "Broj naloga", "Stavka", "Centar", "Šifra posla", "Naziv posla", "OJ knjiženja", "Konto", "Naziv konta", "Partner", "Naziv partnera", "Veza dokumenta", "Datum dokumenta", "Duguje", "Potražuje", "Valuta", "Devizni iznos", "Opis"]
-        fields = ["booking_date", "year", "journal_type", "journal_number", "line_number", "center", "job_code", "job_name", "organizational_unit", "account", "account_name", "partner_code", "partner_name", "document_reference", "document_date", "debit", "credit", "currency", "foreign_amount", "description"]
+        fields = ["booking_date", "year", "journal_type", "journal_number", "line_number", polje_centra(), "job_code", "job_name", "organizational_unit", "account", "account_name", "partner_code", "partner_name", "document_reference", "document_date", "debit", "credit", "currency", "foreign_amount", "description"]
         records = entries.order_by("booking_date", "pk").values_list(*fields).iterator(chunk_size=2000)
     elif is_jobs:
         _, rows = grouped_report(entries, jobs, context["form"].cleaned_data)

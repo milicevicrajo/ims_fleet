@@ -44,7 +44,7 @@
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
 | 01:30 | Flota — šifre poslova i OJ | `fleet.tasks.fetch_job_codes` | `sync` | 60 min |
-| 01:40 | Organizacija — registar i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
+| 01:40 | Organizacija — registar, obrt šifara, veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
 | 02:20 | Nabavka — EUF fakture | `nabavka.tasks.sync_euf_invoices_task` | `sync` | — |

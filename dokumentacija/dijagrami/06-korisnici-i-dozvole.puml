@@ -1,0 +1,59 @@
+@startuml
+!include _stil.iuml
+title IMS ERP — korisnici i dozvole
+caption UML klase | dozvola ekrana i obuhvat podataka su odvojene provere
+left to right direction
+class CustomUser {
+  username
+  is_superuser
+  allowed_center_codes
+  employee_id (opciono)
+}
+class Role {
+  name, slug
+  is_active
+}
+class RolePermission
+class PermissionCode {
+  code: naziv URL rute
+  label
+}
+class OrganizationalUnit {
+  code
+  name
+  center
+}
+class "Employee" as Employee
+class "DodelaUloge\norganizacija" as Assignment {
+  korisnik, uloga, cvor
+}
+class "OrgNode\norganizacija" as Node {
+  company
+  level: centar / OJ / posao
+}
+CustomUser "0..*" -- "0..*" Role : roles
+Role "1" -- "0..*" RolePermission
+PermissionCode "1" -- "0..*" RolePermission
+CustomUser "0..*" -- "0..*" OrganizationalUnit : allowed_centers
+CustomUser "0..1" -- "0..1" Employee
+CustomUser "1" -- "0..*" Assignment
+Role "1" -- "0..*" Assignment
+Node "0..1" -- "0..*" Assignment
+note top of PermissionCode
+  Primer: hr:zahtev_resenje_create
+  RolePermissionRequiredMixin i dekorator proveravaju
+  aktivnu ulogu sa kodom tražene rute.
+  Superuser prolazi proveru poslovnih dozvola.
+end note
+note bottom of OrganizationalUnit
+  Obuhvat se dodatno primenjuje u pojedinačnim modulima.
+  Za HR dokumente koriste se snimljeni centar i OJ.
+  Organizacija uvodi dodele uz čvor registra;
+  primena obuhvata zavisi od modula i njegovih podešavanja.
+end note
+note bottom of CustomUser
+  Ovo su poslovne dozvole aplikacije.
+  Django auth.Permission nije njihov glavni mehanizam.
+  Modeli core ovde imaju app_label="fleet".
+end note
+@enduml

@@ -6,6 +6,8 @@ from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+
+from nabavka.access import fakture, predmeti
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.html import escape
@@ -56,18 +58,19 @@ class DashboardView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequi
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        vidljivi = predmeti(ProcurementCase.objects.all(), self.request.user)
         ctx.update(
             {
                 "title": "Nabavka",
-                "total_cases": ProcurementCase.objects.count(),
-                "open_cases": ProcurementCase.objects.exclude(
+                "total_cases": vidljivi.count(),
+                "open_cases": vidljivi.exclude(
                     status__in=[ProcurementCase.Status.COMPLETED, ProcurementCase.Status.CANCELLED]
                 ).count(),
-                "waiting_invoice": ProcurementCase.objects.filter(
+                "waiting_invoice": vidljivi.filter(
                     status=ProcurementCase.Status.WAITING_INVOICE
                 ).count(),
-                "garage_cases": ProcurementCase.objects.filter(is_garage=True).count(),
-                "recent_cases": ProcurementCase.objects.select_related(
+                "garage_cases": vidljivi.filter(is_garage=True).count(),
+                "recent_cases": vidljivi.select_related(
                     "supplier", "job_code", "responsible"
                 ).order_by("-created_at", "-id")[:8],
             }
@@ -184,7 +187,7 @@ class ProcurementCaseDataView(NabavkaContextMixin, RolePermissionRequiredMixin, 
     required_permission_code = "nabavka:case_list"
 
     def get(self, request):
-        cases = ProcurementCaseFilter(request.GET, queryset=_procurement_case_base_queryset()).qs
+        cases = ProcurementCaseFilter(request.GET, queryset=predmeti(_procurement_case_base_queryset(), request.user)).qs
         search_value = request.GET.get("search[value]", "").strip()
         if search_value:
             cases = cases.filter(
@@ -197,7 +200,7 @@ class ProcurementCaseDataView(NabavkaContextMixin, RolePermissionRequiredMixin, 
                 | Q(vehicle__traffic_cards__registration_number__icontains=search_value)
             ).distinct()
 
-        records_total = ProcurementCase.objects.count()
+        records_total = predmeti(ProcurementCase.objects.all(), request.user).count()
         records_filtered = cases.count()
         order_map = {
             "0": "case_number",
@@ -333,6 +336,9 @@ class ProcurementCaseUpdateView(NabavkaContextMixin, RolePermissionRequiredMixin
     form_class = ProcurementCaseForm
     template_name = "nabavka/case_form.html"
 
+    def get_queryset(self):
+        return predmeti(ProcurementCase.objects.all(), self.request.user)
+
     def dispatch(self, request, *args, **kwargs):
         self.old_status = self.get_object().status
         return super().dispatch(request, *args, **kwargs)
@@ -366,7 +372,7 @@ class ProcurementCaseDetailView(NabavkaContextMixin, RolePermissionRequiredMixin
     context_object_name = "case"
 
     def get_queryset(self):
-        return ProcurementCase.objects.select_related(
+        return predmeti(ProcurementCase.objects.all(), self.request.user).select_related(
             "supplier",
             "contract",
             "vehicle",
@@ -419,7 +425,7 @@ class ProcurementCasePrintView(NabavkaContextMixin, RolePermissionRequiredMixin,
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         procurement_case = get_object_or_404(
-            ProcurementCase.objects.select_related("job_code"),
+            predmeti(ProcurementCase.objects.select_related("job_code"), self.request.user),
             pk=kwargs.get("pk"),
         )
 
@@ -465,13 +471,16 @@ class ProcurementCaseDeleteView(NabavkaContextMixin, RolePermissionRequiredMixin
     success_url = reverse_lazy("nabavka:case_list")
     context_object_name = "object"
 
+    def get_queryset(self):
+        return predmeti(ProcurementCase.objects.all(), self.request.user)
+
 
 class ProcurementCaseRepeatView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     required_permission_code = "nabavka:case_create"
 
     def post(self, request, pk):
         source = get_object_or_404(
-            ProcurementCase.objects.select_related(
+            predmeti(ProcurementCase.objects.all(), request.user).select_related(
                 "supplier",
                 "contract",
                 "vehicle",
@@ -534,7 +543,7 @@ class ProcurementItemCreateView(NabavkaContextMixin, RolePermissionRequiredMixin
     template_name = "nabavka/item_form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.procurement_case = get_object_or_404(ProcurementCase, pk=kwargs["case_pk"])
+        self.procurement_case = get_object_or_404(predmeti(ProcurementCase.objects.all(), self.request.user), pk=kwargs["case_pk"])
         if (
             _is_zahtev_only_user(request.user)
             and (
@@ -583,7 +592,7 @@ class ProcurementItemSourceDataView(RolePermissionRequiredMixin, LoginRequiredMi
             return items[:limit], len(items) > limit
 
         if source_type == ProcurementItem.SOURCE_EUF:
-            queryset = ProcurementInvoice.objects.all()
+            queryset = fakture(ProcurementInvoice.objects.all(), request.user)
             if query:
                 queryset = queryset.filter(
                     Q(invoice_number__icontains=query) | Q(supplier_name__icontains=query)
@@ -651,7 +660,7 @@ class ProcurementItemSourceLinkView(RolePermissionRequiredMixin, LoginRequiredMi
     required_permission_code = "nabavka:euf_invoice_list"
 
     def post(self, request, case_pk, item_pk):
-        procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
+        procurement_case = get_object_or_404(predmeti(ProcurementCase.objects.all(), self.request.user), pk=case_pk)
         procurement_item = get_object_or_404(
             ProcurementItem,
             pk=item_pk,
@@ -685,7 +694,7 @@ class ProcurementCaseSourceLinkView(RolePermissionRequiredMixin, LoginRequiredMi
     required_permission_code = "nabavka:euf_invoice_list"
 
     def post(self, request, case_pk):
-        procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
+        procurement_case = get_object_or_404(predmeti(ProcurementCase.objects.all(), self.request.user), pk=case_pk)
         form = ProcurementItemSourceLinkForm(request.POST)
         if not form.is_valid() or not form.cleaned_data.get("source_type"):
             messages.error(request, "Veza nije sacuvana. Izaberite tip i zapis.")
@@ -714,7 +723,7 @@ class ProcurementCaseSourceLinkView(RolePermissionRequiredMixin, LoginRequiredMi
 
 class ProcurementItemDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, case_pk, item_pk):
-        procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
+        procurement_case = get_object_or_404(predmeti(ProcurementCase.objects.all(), self.request.user), pk=case_pk)
         if (
             _is_zahtev_only_user(request.user)
             and (
@@ -730,7 +739,7 @@ class ProcurementItemDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin,
 
 class ProcurementStatusLogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, case_pk):
-        procurement_case = get_object_or_404(ProcurementCase, pk=case_pk)
+        procurement_case = get_object_or_404(predmeti(ProcurementCase.objects.all(), self.request.user), pk=case_pk)
         form = ProcurementStatusLogForm(request.POST)
         if form.is_valid():
             old_status = procurement_case.status

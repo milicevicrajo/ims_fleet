@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% comment %}
-Dodele uloga sa obuhvatom — spisak korisnika (plan prelaska na registar, korak 3).
-Nijedna dodela još ne odlučuje o pristupu; moduli čitaju stara prava do pilota.
+Dodele uloga sa obuhvatom — spisak korisnika (plan prelaska na registar, koraci 3 i 5).
+Odobrene dodele odlučuju o pristupu u Finansijama i Nabavci; ostali moduli čitaju stara prava.
 {% endcomment %}
 {% block title %}Dodele uloga — IMS{% endblock %}
 
@@ -27,7 +27,8 @@ Nijedna dodela još ne odlučuje o pristupu; moduli čitaju stara prava do pilot
 
   <p class="org-note mt-3">
     Nacrt pravi prevod starih prava (<code>python manage.py prava_u_senci</code>). Odobrena dodela se više ne menja prevodom.
-    <strong>Dodele još ne odlučuju o pristupu</strong> — moduli rade po starim pravima dok se ne uključi pilot Finansija i Potraživanja.
+    <strong>Odobrene dodele odlučuju o pristupu u Finansijama i Nabavci</strong> (od 28.09.2026.); ostali moduli još rade po starim pravima.
+    Nacrt ne odlučuje ni o čemu dok se ne odobri.
     Senka poredi šta korisnik danas vidi u Finansijama, Potraživanjima i putnim nalozima sa onim što bi video po dodelama.
   </p>
 

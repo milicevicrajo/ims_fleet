@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Case, Count, DecimalField, F, Q, Sum, Value, When
 from django.db.models.functions import ExtractMonth, ExtractYear
 
-from finansije.access import visible_scope
+from finansije.access import centar_sifre, centri_sifara, na_registru, polje_centra, uslov_centra, visible_scope
 from finansije.models import FinanceJob, LedgerEntry
 
 
@@ -26,9 +26,10 @@ def apply_filters(entries, filters):
     entries = entries.filter(booking_date__range=(filters["date_from"], filters["date_to"]))
     if filters["kind"] != "all":
         entries = entries.exclude(CLOSING_POSTINGS)
-    for name, field in (("center", "center"), ("job", "job_code")):
-        if filters.get(name):
-            entries = entries.filter(**{field: "" if filters[name] == "__none__" else filters[name]})
+    if filters.get("center"):
+        entries = entries.filter(uslov_centra(filters["center"]))
+    if filters.get("job"):
+        entries = entries.filter(job_code="" if filters["job"] == "__none__" else filters["job"])
     if filters.get("unit"):
         entries = entries.filter(organizational_unit=int(filters["unit"]))
     if filters.get("account"):
@@ -77,7 +78,8 @@ def grouped_report(entries, jobs, filters):
     group = filters["group"]
     if group == "job":
         entries = samo_aktivne_sifre(entries)
-    fields = {"center": ["center"], "job": ["job_code", "job_name", "center"], "account": ["account", "account_name"]}
+    centar = polje_centra()
+    fields = {"center": [centar], "job": ["job_code", "job_name", centar], "account": ["account", "account_name"]}
     if group == "month":
         grouped = entries.annotate(report_year=ExtractYear("booking_date"), report_month=ExtractMonth("booking_date")).values("report_year", "report_month").annotate(**expressions()).order_by("report_year", "report_month")
     else:
@@ -90,10 +92,11 @@ def grouped_report(entries, jobs, filters):
         registar = Registar()
     for item in grouped:
         if group == "center":
-            # Kljuc je i dalje `center` sa knjizenja; iz registra je samo naziv centra.
-            code, label = item["center"], (registar.oznaka_centra(item["center"]) if item["center"] else "Neraspoređeno")
+            # Na registru je kljuc centar iz registra na datum knjizenja (`org_centar`), inace `center`.
+            code, label = item[centar] or "", (registar.oznaka_centra(item[centar]) if item[centar] else "Neraspoređeno")
         elif group == "job":
             code, label = item["job_code"], item["job_name"] or "Bez naziva"
+            item = dict(item, center=item[centar] or "")
         elif group == "account":
             code, label = item["account"], item["account_name"] or "Bez naziva konta"
         else:
@@ -101,8 +104,15 @@ def grouped_report(entries, jobs, filters):
         rows.append(dict(item, code=code, label=label))
     if group == "job" and filters.get("include_empty"):
         present = {row["code"] for row in rows}
+        mapa = centri_sifara() if na_registru() else None
         if filters.get("center"):
-            jobs = jobs.filter(center="" if filters["center"] == "__none__" else filters["center"])
+            trazeni = "" if filters["center"] == "__none__" else filters["center"]
+            if mapa is None:
+                jobs = jobs.filter(center=trazeni)
+            elif trazeni:
+                jobs = jobs.filter(code__in=[sifra for sifra, c in mapa.items() if c == trazeni])
+            else:
+                jobs = jobs.exclude(code__in=[sifra for sifra, c in mapa.items() if c])
         if filters.get("job"):
             jobs = jobs.filter(code="" if filters["job"] == "__none__" else filters["job"])
         # Units are posting attributes, not job attributes. Never invent a job→OJ mapping.
@@ -111,7 +121,7 @@ def grouped_report(entries, jobs, filters):
         from fleet.support.registar import Registar
 
         registar = Registar()
-        rows.extend(dict(code=job.code, label=job.name or "Bez naziva", center=job.center, revenue=ZERO, expense=ZERO, count=0)
+        rows.extend(dict(code=job.code, label=job.name or "Bez naziva", center=centar_sifre(job, mapa), revenue=ZERO, expense=ZERO, count=0)
                     for job in jobs if job.code not in present and registar.aktivna_sifra(job.code))
         rows.sort(key=lambda row: row["code"])
     for row in rows:

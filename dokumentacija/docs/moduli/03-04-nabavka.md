@@ -359,6 +359,16 @@ Detaljno: [4.7. Nabavka](../04-baza-podataka.md#47-nabavka--nabavka). **13 tabel
 > **[P]** Uloga `zahtev` **ne može** povezivati fakture, izdavati narudžbenice ni menjati
 > statuse.
 
+> **[P] Od 28.09.2026. Nabavka je na registru organizacije** (plan prelaska, korak 5; prekidač
+> `PRAVA_PO_REGISTRU["nabavka"]`, `nabavka/access.py`). Do tada Nabavka nije ograničavala po centru.
+> Sada **predmete i EUF fakture** korisnik vidi ako im je šifra posla u obuhvatu njegovih odobrenih
+> dodela (uloge sa bilo kojom dozvolom `nabavka:…`), po današnjoj pripadnosti šifre u registru —
+> u spiskovima, detalju, izmeni, štampi, brisanju, ponavljanju, stavkama, vezama faktura, kontrolnoj
+> tabli, alarmima i izveštajima. Predmet koji je korisnik sam napravio uvek vidi. Zapis bez šifre
+> posla vidi samo obuhvat cele firme. **Broj predmeta** (`ZN-43/2026-…`) i dalje se pravi iz starog
+> polja — nijedan broj se ne menja. UF stavke, roba, ugovori, javne nabavke i narudžbenice nisu
+> vezani za šifru posla i ne ograničavaju se.
+
 ---
 
 ## 15. Validacije i kontrole

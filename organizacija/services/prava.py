@@ -1,6 +1,7 @@
 """Prava sa obuhvatom u stablu (plan prelaska na registar, 3.2; V2, koraci 2 i 4).
 
-Tri dela, nijedan jos ne odlucuje o pristupu:
+Tri dela; o pristupu odlucuje samo `obuhvat` odobrenih dodela, i to u modulima na registru
+(`modul_na_registru`, `settings.PRAVA_PO_REGISTRU` — od 28.09.2026. Finansije i Nabavka):
 
 - `obuhvat` / `q_obuhvata` / `ima_pravo` — jedna provera: cela firma, ili skup cvorova
   (centar pokriva svoje jedinice i poslove, jedinica svoje poslove, posao samo sebe), na datum;
@@ -56,13 +57,16 @@ def obuhvat(korisnik, kod_dozvole=None, status=DodelaUloge.STATUS_AKTIVNA, dan=N
 
     Prazan obuhvat znaci **nema pristupa** (odluka 2 u planu). Superuser ima celu firmu.
     `status` je jedan status ili vise njih (senka gleda nacrt i odobrene dodele zajedno).
+    `kod_dozvole` koji se zavrsava sa `:` (npr. `"nabavka:"`) znaci bilo koju dozvolu tog modula.
     """
     dan = dan or timezone.localdate()
     if korisnik.is_superuser:
         return Obuhvat(cela_firma=True)
     statusi = [status] if isinstance(status, str) else list(status)
     dodele = _vazece(DodelaUloge.objects.filter(korisnik=korisnik, status__in=statusi, uloga__is_active=True), dan)
-    if kod_dozvole:
+    if kod_dozvole and kod_dozvole.endswith(":"):
+        dodele = dodele.filter(uloga__permissions__code__startswith=kod_dozvole)
+    elif kod_dozvole:
         dodele = dodele.filter(uloga__permissions__code=kod_dozvole)
     rezultat = Obuhvat()
     for cela, cvor, nivo in dodele.values_list("cela_firma", "cvor_id", "cvor__level").distinct():
@@ -299,3 +303,48 @@ def _razlika(broj, staro, novo):
         "vise": sorted(vise), "manje": sorted(manje),
         "vise_zapisa": sum(broj[s] for s in vise), "manje_zapisa": sum(broj[s] for s in manje),
     }
+
+
+# --------------------------------------------------------------------------- moduli na registru
+
+
+def modul_na_registru(modul):
+    """Da li modul cita prava i centar iz registra i dodela (`settings.PRAVA_PO_REGISTRU`)."""
+    from django.conf import settings
+
+    return bool(getattr(settings, "PRAVA_PO_REGISTRU", {}).get(modul))
+
+
+def obuhvat_zahteva(korisnik, kod_dozvole):
+    """`obuhvat` odobrenih dodela, zapamcen na objektu korisnika za trajanje zahteva."""
+    if not getattr(korisnik, "is_authenticated", False):
+        return Obuhvat()
+    kes = korisnik.__dict__.setdefault("_obuhvati_po_dozvoli", {})
+    if kod_dozvole not in kes:
+        kes[kod_dozvole] = obuhvat(korisnik, kod_dozvole)
+    return kes[kod_dozvole]
+
+
+def sifre_obuhvata(obuhvat_, dan=None):
+    """Sifre posla (kako ih vode Finansije) u obuhvatu na dan; None znaci cela firma."""
+    from organizacija.models import ExternalOrgMapping
+
+    poslovi = poslovi_obuhvata(obuhvat_, dan)
+    if poslovi is None:
+        return None
+    return set(ExternalOrgMapping.objects.filter(source=ExternalOrgMapping.SOURCE_FINANCE_JOB, valid_to__isnull=True,
+                                                 node_id__in=poslovi).values_list("source_key", flat=True))
+
+
+def ogranici(queryset, obuhvat_, polje_cvora="org_node", polje_datuma=None, ili=None):
+    """Zapisi u obuhvatu (uz `ili`, npr. sopstveni zahtevi). Prazan obuhvat — nista (odluka 2).
+
+    Uslov ide kroz `pk__in`, pa spoj sa putanjama ne umnozava redove.
+    """
+    if obuhvat_.cela_firma:
+        return queryset
+    uslov = Q(pk__in=[]) if obuhvat_.prazan else Q(
+        pk__in=queryset.model.objects.filter(q_obuhvata(obuhvat_, polje_cvora, polje_datuma)).values("pk"))
+    if ili is not None:
+        uslov |= ili
+    return queryset.filter(uslov)

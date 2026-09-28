@@ -5,6 +5,7 @@ from core.mixins import RolePermissionRequiredMixin
 
 from ..models import ProcurementCase
 from .cases import NabavkaContextMixin
+from ..access import predmeti
 
 
 class AlertsView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
@@ -15,7 +16,7 @@ class AlertsView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequired
         ctx.update(
             {
                 "title": "Alarmi nabavke",
-                "waiting_invoice_cases": ProcurementCase.objects.filter(
+                "waiting_invoice_cases": predmeti(ProcurementCase.objects.all(), self.request.user).filter(
                     status=ProcurementCase.Status.WAITING_INVOICE
                 ).select_related("supplier", "responsible", "job_code"),
             }

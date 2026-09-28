@@ -20,8 +20,10 @@ class DodelaForm(forms.Form):
     def __init__(self, *args, korisnik, **kwargs):
         super().__init__(*args, **kwargs)
         self.korisnik = korisnik
-        # Samo uloge koje korisnik vec ima: dozvole i dalje daju stare uloge, dodela im dodaje obuhvat.
-        self.fields["uloga"].queryset = korisnik.roles.filter(is_active=True).order_by("name")
+        # Svaka aktivna uloga (korak 5): ako je korisnik nema, dodela mu je daje zajedno sa obuhvatom.
+        from core.models import Role
+
+        self.fields["uloga"].queryset = Role.objects.filter(is_active=True).order_by("name")
         self.fields["obuhvat"].choices = [("", "— izaberite —")] + dodele_service.izbor_obuhvata()
         self.fields["vazi_od"].initial = timezone.localdate()
 

@@ -46,11 +46,15 @@ class LedgerEntry(models.Model):
     job_code = models.CharField(max_length=10, blank=True)
     job_name = models.CharField(max_length=100, blank=True)
     center = models.CharField(max_length=10, blank=True)
-    # Registar organizacije, faza 2: cvor sifre posla, postavlja se pri objavi sinhronizacije
-    # (services/sync.py) i komandom `povezi_flotu --modul finansije`. Izvestaji i pristup i
-    # dalje rade preko `center` i `job_code`; ovu vezu niko ne cita u obracunu.
+    # Registar organizacije: cvor sifre posla, postavlja se pri objavi sinhronizacije
+    # (services/sync.py) i komandom `povezi_flotu --modul finansije`. Od 28.09.2026. (korak 5)
+    # pristup ide kroz ovu vezu i dodele uloga, a `center` ostaje izvorni podatak.
     org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
                                  editable=False, related_name="finansije_knjizenja", db_index=True)
+    # Snimak centra iz registra na datum knjizenja (organizacija.services.putanja.osvezi_centre);
+    # po njemu Finansije filtriraju i sabiraju kad su na registru (`finansije.access.polje_centra`).
+    # Neobavezno polje, da stariji kod na serveru moze da upisuje knjizenja i pre isporuke.
+    org_centar = models.CharField(max_length=40, null=True, blank=True, editable=False)
     booking_date = models.DateField()
     debit_credit_flag = models.CharField(max_length=1, blank=True)
     source_paid_amount = models.DecimalField(max_digits=18, decimal_places=2, null=True)
@@ -67,6 +71,7 @@ class LedgerEntry(models.Model):
         indexes = [
             models.Index(fields=["company", "active", "booking_date"], name="fin_ledger_period"),
             models.Index(fields=["company", "center", "booking_date"], name="fin_ledger_center"),
+            models.Index(fields=["company", "org_centar", "booking_date"], name="fin_ledger_org_centar"),
             models.Index(fields=["company", "job_code", "booking_date"], name="fin_ledger_job"),
             models.Index(fields=["company", "account", "booking_date"], name="fin_ledger_account"),
             models.Index(fields=["company", "partner_code", "document_reference"], name="fin_ledger_document"),

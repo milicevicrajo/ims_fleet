@@ -4,8 +4,9 @@ Administrator ovde, bez Django admina, pregleda nacrt koji je napravio prevod st
 odobrava ga, dodaje rucne dodele i opoziva ih. Istorija ostaje u tabeli: opozvana dodela dobija
 kraj vazenja i ime onoga ko ju je opozvao, ne brise se. Brise se samo neodobren nacrt.
 
-**Ni odobrena dodela jos ne odlucuje o pristupu** — moduli citaju stara prava dok se ne ukljuci
-pilot Finansija i Potrazivanja (korak 5). Zato ovaj ekran nikome nista ne otvara ni ne zatvara.
+**Odobrena dodela odlucuje o pristupu u modulima na registru** (`settings.PRAVA_PO_REGISTRU`: od
+28.09.2026. Finansije i Nabavka); ostali moduli jos citaju stara prava. Nacrt ne odlucuje ni o cemu.
+Dodela moze dati i ulogu koju korisnik nema (uloga po cvoru); opoziv poslednje takve dodele je skida.
 """
 
 from collections import defaultdict
@@ -147,7 +148,19 @@ def opozovi(dodela, ko, dan=None):
         dodela.vazi_do = kraj
     dodela.opozvao, dodela.opozvano = ko, timezone.now()
     dodela.save(update_fields=["vazi_do", "opozvao", "opozvano"])
+    _skini_ulogu_ako_treba(dodela, dan)
     return "opozvana"
+
+
+def _skini_ulogu_ako_treba(dodela, dan):
+    """Uloga koju je dala dodela skida se kad nijedna dodela te uloge vise ne vazi ni ne pocinje kasnije."""
+    if not dodela.dodala_ulogu:
+        return
+    jos = (DodelaUloge.objects.filter(korisnik_id=dodela.korisnik_id, uloga_id=dodela.uloga_id,
+                                      status=DodelaUloge.STATUS_AKTIVNA)
+           .filter(Q(vazi_do__isnull=True) | Q(vazi_do__gt=dan)).exists())
+    if not jos:
+        dodela.korisnik.roles.remove(dodela.uloga)
 
 
 def preklapanje(korisnik, uloga, cvor_id, cela_firma, vazi_od, vazi_do):
@@ -163,8 +176,16 @@ def preklapanje(korisnik, uloga, cvor_id, cela_firma, vazi_od, vazi_do):
 
 @transaction.atomic
 def dodaj(korisnik, uloga, cvor_id, cela_firma, vazi_od, vazi_do, ko, napomena=""):
-    """Rucna dodela, odmah odobrena — administrator je ta koji odlucuje."""
+    """Rucna dodela, odmah odobrena — administrator je ta koji odlucuje.
+
+    Uloga po cvoru (korak 5): ako korisnik ulogu jos nema, dodela mu je daje — dozvole idu kroz
+    ulogu, obuhvat kroz dodelu. Opoziv poslednje takve dodele ulogu skida.
+    """
+    nova_uloga = not korisnik.roles.filter(pk=uloga.pk).exists()
+    if nova_uloga:
+        korisnik.roles.add(uloga)
     return DodelaUloge.objects.create(
         korisnik=korisnik, uloga=uloga, cvor_id=None if cela_firma else cvor_id, cela_firma=cela_firma,
         vazi_od=vazi_od, vazi_do=vazi_do, status=DodelaUloge.STATUS_AKTIVNA, izvor=DodelaUloge.IZVOR_RUCNO,
-        napomena=napomena or f"ručno, {ko.get_username()}", odobrio=ko, odobreno=timezone.now())
+        napomena=napomena or f"ručno, {ko.get_username()}", odobrio=ko, odobreno=timezone.now(),
+        dodala_ulogu=nova_uloga)

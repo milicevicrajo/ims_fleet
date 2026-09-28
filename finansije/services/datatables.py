@@ -54,17 +54,20 @@ def display_date(value, with_time=False):
 
 
 def ledger_response(request, entries):
+    from finansije.access import polje_centra
+
     can_detail = user_has_role_permission(request.user, "finansije:dashboard")
+    centar = polje_centra()
     columns = [
         ("booking_date",), ("year", "journal_type", "journal_number", "line_number"),
-        ("center",), ("job_code",), ("organizational_unit",), ("account",),
+        (centar,), ("job_code",), ("organizational_unit",), ("account",),
         ("partner_name", "partner_code"), ("document_reference",), ("document_date",),
         ("debit",), ("credit",),
     ]
 
     def search(term):
         query = Q()
-        for field in ("journal_type", "center", "job_code", "job_name", "organizational_unit_name", "account", "account_name", "partner_name", "document_reference", "description"):
+        for field in ("journal_type", centar, "job_code", "job_name", "organizational_unit_name", "account", "account_name", "partner_name", "document_reference", "description"):
             query |= Q(**{f"{field}__icontains": term})
         if term.isdecimal() and len(term) <= 9:
             query |= Q(journal_number=int(term)) | Q(organizational_unit=int(term)) | Q(partner_code=int(term))
@@ -84,7 +87,7 @@ def ledger_response(request, entries):
         return [
             display_date(item.booking_date),
             two_lines(f"{item.year}/{item.journal_type}/{item.journal_number}", f"Stavka {item.line_number}"),
-            format_html('<span class="finance-code-badge">{}</span>', item.center or "—"),
+            format_html('<span class="finance-code-badge">{}</span>', getattr(item, centar) or "—"),
             two_lines(job_label, item.job_name),
             format_html('<span title="{}">{}</span>', item.organizational_unit_name, item.organizational_unit),
             two_lines(item.account, item.account_name), two_lines(item.partner_name, item.partner_code),

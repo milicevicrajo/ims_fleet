@@ -1,0 +1,56 @@
+@startuml
+!include _stil.iuml
+title IMS ERP — organizacija modula
+caption UML paketi i komponente | grupe predstavljaju poslovne oblasti
+top to bottom direction
+
+package "Django projekat: ims_erp" {
+  component "Ulaz u aplikaciju\nurls.py · settings/ · WSGI/ASGI" as entry #DCEBF5
+  package "Zaposleni i organizacija" as people {
+    component "Kadrovi · hr\nZaposleni, radne liste, odsustva,\nocenjivanje, zahtevi i rešenja" as hr
+    component "Organizacija · organizacija\nRegistar centara, OJ i poslova;\nverzije i dodele uloga" as org
+    component "Mobilna telefonija · mobilni\nBrojevi, paketi, potrošnja, obustave" as mobile
+    hr -[hidden]down-> org
+    org -[hidden]down-> mobile
+  }
+  package "Finansijsko poslovanje" as business {
+    component "Finansije · finansije\nAnalitika, troškovi i novčani tokovi" as finance
+    component "Nabavka · nabavka\nZahtevi, narudžbenice i fakture" as procurement
+    component "Potraživanja · potrazivanja\nDužnici, dokumenti i naplata" as receivables
+    component "Isplate · isplate\nVirmani i bankarski izvozi" as payments
+    finance -[hidden]down-> procurement
+    procurement -[hidden]down-> receivables
+    receivables -[hidden]down-> payments
+  }
+  package "Pravna dokumentacija" as legal {
+    component "Pravna služba · pravna\nPravni i disciplinski postupci" as law
+    component "Ugovori · ugovori\nPartneri, ponude, ugovori i garancije" as contracts
+    component "Menice · menice\nUlazne i izlazne menice" as bills
+    law -[hidden]down-> contracts
+    contracts -[hidden]down-> bills
+  }
+  package "Vozila i nasleđeni deo" as other {
+    component "Flota · fleet\nVozila, nalozi, gorivo, troškovi\n+ deo zajedničkih ruta i modela" as fleet
+    component "Nasleđena naplata · naplata\nPostojeći deo; novi razvoj\nide u potrazivanja" as old #FFF5E8
+    fleet -[hidden]down-> old
+  }
+  component "Zajednička osnova · core\nKorisnici · uloge · dozvole ruta · evidencija rada\nZajednički šabloni i administracija kroz core / fleet" as core #D9EEE7
+  entry --> people
+  entry --> business
+  entry --> legal
+  entry --> other
+  people ..> core : zajedničke funkcije
+  business ..> core
+  legal ..> core
+  other ..> core
+  mobile -[hidden]down-> core
+  payments -[hidden]down-> core
+  bills -[hidden]down-> core
+  old -[hidden]down-> core
+}
+legend bottom left
+  Unutar modula: urls → views / forme → services / support → modeli / izvori.
+  Prikazana je logička organizacija, ne potpuni graf Python importovanja.
+  Deo modela iz core i hr ima app_label="fleet" i tabele fleet_*.
+endlegend
+@enduml

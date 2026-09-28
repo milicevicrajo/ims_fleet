@@ -204,13 +204,14 @@ pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
 | Spisak | Korisnici sa brojem dodela u nacrtu i odobrenih; filter „Ima nacrt / Odobreni / Bez dodela”; **Proveri razlike (senka)** poredi sve korisnike (traje ~10 s) |
 | Kartica korisnika | Sve dodele sa istorijom, stara prava koja danas odlučuju i senka samo za tog korisnika |
 | **Odobri nacrt** | Nacrt iz prevoda starih prava postaje odobren; beleži se ko i kada. Odobrenog korisnika prevod (`prava_u_senci`) više ne menja |
-| **Nova dodela** | Ručna dodela, odmah odobrena; nude se samo uloge koje korisnik već ima i samo **aktivne** šifre; ista uloga sa istim obuhvatom u preklopljenom periodu se odbija |
-| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; neodobren nacrt se briše |
+| **Nova dodela** | Ručna dodela, odmah odobrena; nudi se svaka aktivna uloga i samo **aktivne** šifre. **Uloga po čvoru** (od 28.09.2026.): ako korisnik ulogu nema, dodela mu je daje. Ista uloga sa istim obuhvatom u preklopljenom periodu se odbija |
+| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; ako je dodela dala ulogu, opoziv poslednje takve dodele je i skida. Neodobren nacrt se briše |
 
 Dozvole: `organizacija:dodele`, `organizacija:dodele_korisnika`, `organizacija:dodele_odobri`,
-`organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Dodele još ne odlučuju o pristupu**:
-moduli rade po starim pravima (`allowed_center_codes`, `allowed_centers`) do pilota Finansija i
-Potraživanja. Uloga Uprava dobija celu firmu kao običnu dodelu, ne kao izuzetak u proveri.
+`organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Odobrene dodele odlučuju o pristupu u
+Finansijama i Nabavci** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
+pravima (`allowed_center_codes`, `allowed_centers`). Uloga Uprava dobija celu firmu kao običnu
+dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka i Blagajna.
 
 ---
 

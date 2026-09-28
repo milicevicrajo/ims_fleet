@@ -4,6 +4,11 @@ Verzija posla kaze kojoj jedinici posao pripada i od kada do kada; verzija jedin
 centru pripada jedinica. Presek ta dva perioda (i perioda verzije centra, zbog oznake) je
 jedan red `OrgPutanja`. Tabela se pravi iz verzija pri svakom uvozu i menja se samo kad se
 verzije promene — ponovljen uvoz je ne dira.
+
+**Prvi snimak vazi unazad** (odluka 28.09.2026.): registar je prvi put uvezen 21.09.2026., a istorija
+pre toga nije poznata. Prva verzija svakog cvora zato vazi od `POCETAK`, pa se starija knjizenja i
+dokumenti vode po prvom poznatom stanju — isto kao u staroj organizaciji. Verzije se ne menjaju;
+promena posle uvoza (nova verzija od datuma) i dalje razdvaja stare i nove dokumente.
 """
 
 import datetime
@@ -15,6 +20,7 @@ from django.db.models import F, Q
 from organizacija.models import OrgNode, OrgNodeVersion, OrgPutanja
 
 KRAJ = datetime.date.max
+POCETAK = datetime.date(2000, 1, 1)
 
 
 def _preklapanje(od1, do1, od2, do2):
@@ -30,17 +36,20 @@ def zeljene_putanje(company=1):
         po_cvoru[v.node_id].append(v)
         nivo[v.node_id] = v.node.level
 
+    def od(verzija):
+        return POCETAK if verzija is po_cvoru[verzija.node_id][0] else verzija.valid_from
+
     redovi = []
     for posao, verzije_posla in po_cvoru.items():
         if nivo[posao] != OrgNode.LEVEL_JOB:
             continue
         for vp in verzije_posla:
             for vj in po_cvoru.get(vp.parent_id, []):
-                period = _preklapanje(vp.valid_from, vp.valid_to, vj.valid_from, vj.valid_to)
+                period = _preklapanje(od(vp), vp.valid_to, od(vj), vj.valid_to)
                 if not period:
                     continue
                 for vc in po_cvoru.get(vj.parent_id, []):
-                    presek = _preklapanje(period[0], period[1], vc.valid_from, vc.valid_to)
+                    presek = _preklapanje(period[0], period[1], od(vc), vc.valid_to)
                     if presek:
                         redovi.append((posao, vp.parent_id, vj.parent_id, vc.full_code, presek[0], presek[1]))
     return _spoji(sorted(redovi, key=lambda r: (r[0], r[4])))
@@ -103,3 +112,36 @@ def filter_na_dan(polje_cvora, polje_datuma, **uslovi):
     for kljuc, vrednost in uslovi.items():
         q &= Q(**{f"{prefiks}{kljuc}": vrednost})
     return q
+
+
+def centar_za(company=1):
+    """Funkcija (cvor, dan) → oznaka centra ili None, iz jednog citanja tabele putanja."""
+    periodi = defaultdict(list)
+    for posao, sifra, od, do in OrgPutanja.objects.filter(posao__company=company).values_list(
+            "posao_id", "centar_sifra", "vazi_od", "vazi_do"):
+        periodi[posao].append((od, do, sifra))
+
+    def centar(cvor, dan):
+        for od, do, sifra in periodi.get(cvor, ()):
+            if od <= dan and (do is None or dan < do):
+                return sifra
+        return None
+
+    return centar
+
+
+def osvezi_centre(queryset, polje_cvora="org_node", polje_datuma="booking_date", polje_centra="org_centar"):
+    """Snimak centra iz registra na dokumentu: `polje_centra` = centar sifre posla na datum dokumenta.
+
+    Menja samo redove koji se razlikuju, pa je ponovljeno pokretanje bez upisa. Zapis bez cvora
+    nema centar. Vraca broj izmenjenih redova.
+    """
+    promenjeno = 0
+    for posao, sifra, od, do in OrgPutanja.objects.values_list("posao_id", "centar_sifra", "vazi_od", "vazi_do"):
+        uslov = Q(**{polje_cvora: posao, f"{polje_datuma}__gte": od})
+        if do:
+            uslov &= Q(**{f"{polje_datuma}__lt": do})
+        promenjeno += queryset.filter(uslov).exclude(**{polje_centra: sifra}).update(**{polje_centra: sifra})
+    promenjeno += (queryset.filter(**{f"{polje_cvora}__isnull": True})
+                   .exclude(**{f"{polje_centra}__isnull": True}).update(**{polje_centra: None}))
+    return promenjeno
