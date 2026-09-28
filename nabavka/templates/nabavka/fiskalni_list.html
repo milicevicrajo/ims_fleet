@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% comment %}
 Fiskalni računi (Nabavka). Dugme „Očitaj QR kod računa” otvara prozor: izabere se šifra posla
-(samo aktivne), čitač upiše link i pritisne Enter — obrada kreće odmah, rezultat se vidi u prozoru,
-a polje je spremno za sledeći račun.
+(samo aktivne), čitač upiše link i pritisne Enter — obrada kreće odmah, a posle uspešne obrade
+otvara se detalj računa.
 {% endcomment %}
 {% block title %}{{ title }}{% endblock %}
 
@@ -104,7 +104,7 @@ a polje je spremno za sledeći račun.
         <div class="mb-3">
           <label class="form-label" for="fiskalniSifra">{{ form.job_code.label }} <span class="text-danger">*</span></label>
           {{ form.job_code }}
-          <div class="form-text">Nude se samo aktivne šifre posla. Izabrana šifra ostaje za sledeće račune.</div>
+          <div class="form-text">Nude se samo aktivne šifre posla. Izabrana šifra ostaje zapamćena za sledeći račun.</div>
         </div>
         <div class="mb-2">
           <label class="form-label" for="fiskalniLink">{{ form.link.label }}</label>
@@ -196,13 +196,10 @@ document.addEventListener('DOMContentLoaded', function () {
           link.select();
           return;
         }
-        var upozorenja = (d.upozorenja || []).map(function (u) { return '<li>' + escapeHtml(u) + '</li>'; }).join('');
+        // Posle uspesne obrade odmah se otvara detalj racuna (upozorenja su i tamo).
         rezultat.innerHTML = '<div class="fiskalni-rezultat ok"><strong>Učitan račun ' + escapeHtml(d.broj) + '</strong> · ' +
-          escapeHtml(d.prodavac) + ' · ' + escapeHtml(d.iznos) + ' din · stavki: ' + escapeHtml(d.stavki) +
-          ' · <a href="' + escapeHtml(d.url) + '">Otvori detalj</a>' + (upozorenja ? '<ul>' + upozorenja + '</ul>' : '') + '</div>';
-        link.value = '';
-        link.focus();
-        if (tabela) { tabela.ajax.reload(null, false); }
+          escapeHtml(d.prodavac) + ' · ' + escapeHtml(d.iznos) + ' din — otvaram detalj…</div>';
+        window.location.href = d.url;
       })
       .catch(function () {
         rezultat.innerHTML = '<div class="fiskalni-rezultat greska">Obrada nije uspela (veza sa serverom). Pokušajte ponovo.</div>';
