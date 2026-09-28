@@ -23,6 +23,7 @@ from ..filters import PutniNalogFilter
 from ..mixins import CenterMixin
 from ..models import PutniNalog
 from ..forms.putni_nalozi import PutniNalogForm
+from fleet.support import obuhvat as obuhvat_flote
 
 
 def _is_uprava(user):
@@ -72,7 +73,10 @@ def _putninalog_base_qs(request, include_stornirani=False):
         qs = qs.filter(storniran=False)
     user = request.user
 
-    if not user.is_superuser and not _is_uprava(user):
+    if obuhvat_flote.aktivno(user):
+        # Na registru: sifra posla naloga u obuhvatu odobrenih dodela (Uprava — cela firma kroz dodelu).
+        qs = obuhvat_flote.putni_nalozi(qs, user)
+    elif not user.is_superuser and not _is_uprava(user):
         allowed_centers = _get_allowed_centers(user)
         if allowed_centers:
             qs = qs.filter(job_code__center__in=allowed_centers)
@@ -517,7 +521,13 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
 
     def form_valid(self, form):
         user = self.request.user
-        if not user.is_superuser:
+        if obuhvat_flote.aktivno(user):
+            dozvoljene = obuhvat_flote.jedinice(user)
+            nova = form.cleaned_data.get("job_code")
+            if dozvoljene is not None and (nova is None or nova.pk not in dozvoljene):
+                form.add_error("job_code", "Nalog može da ostane samo na šifri posla iz vašeg obuhvata.")
+                return self.form_invalid(form)
+        elif not user.is_superuser:
             # Nalog se ne sme prebaciti na sifru van centara korisnika: posle toga ni on
             # vise ne bi mogao da ga menja, a trosak bi presao na tudji centar.
             novi_centar = str(getattr(form.cleaned_data.get("job_code"), "center", "") or "").strip()
@@ -539,6 +549,8 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         qs = PutniNalog.objects.select_related("job_code")
         if self.request.user.is_superuser:
             return qs
+        if obuhvat_flote.aktivno(self.request.user):
+            return obuhvat_flote.putni_nalozi(qs, self.request.user)
         return qs.filter(job_code__center__in=_get_allowed_centers(self.request.user))
 
     def get_object(self, queryset=None):
@@ -546,7 +558,8 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         if obj.storniran:
             raise PermissionDenied("Nalog je storniran i zakljucan za izmene.")
         user = self.request.user
-        if user.is_superuser:
+        if user.is_superuser or obuhvat_flote.aktivno(user):
+            # Na registru je obuhvat vec proveren u `get_queryset` (sifra posla u obuhvatu dodela).
             if obj.opravdan:
                 raise PermissionDenied("Nalog je opravdan i zakljucan za izmene.")
             return obj
@@ -571,6 +584,7 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
         raise PermissionDenied("Ne možete menjati naloge iz ovog centra.")
 
 
+@obuhvat_flote.ogranici_putne_naloge
 class PutniNalogDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = PutniNalog
 
@@ -579,6 +593,7 @@ class PutniNalogDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Deta
         return redirect("putninalog_print", pk=putni_nalog.pk)
 
 
+@obuhvat_flote.ogranici_putne_naloge
 class PutniNalogPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = PutniNalog
     template_name = "fleet/putni_nalog_print.html"
@@ -592,6 +607,7 @@ class PutniNalogPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, Detai
         return context
 
 
+@obuhvat_flote.ogranici_putne_naloge
 class PutniNalogForeignPrintView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = PutniNalog
     template_name = "fleet/putni_nalog_print_foreign.html"
@@ -605,6 +621,7 @@ class PutniNalogForeignPrintView(RolePermissionRequiredMixin, LoginRequiredMixin
         return context
 
 
+@obuhvat_flote.ogranici_putne_naloge
 class PutniNalogDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = PutniNalog
     success_url = reverse_lazy("putninalog_list")

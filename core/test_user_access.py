@@ -29,43 +29,41 @@ class UserAccessTests(TestCase):
 
     def payload(self, **extra):
         return {'first_name':'Novo', 'last_name':'Ime', 'email':'', 'is_active':'on',
-                'roles':[self.role.pk], 'center_codes':['43'], 'allowed_centers':[self.unit.pk], **extra}
+                'roles':[self.role.pk], **extra}
 
     def test_screen_uses_application_form_and_normalized_choices(self):
         response = self.client.get(self.url)
         self.assertContains(response,'Sačuvaj pristup')
         self.assertNotContains(response,'Kadrovske organizacione jedinice')  # uklonjeno 25.09.2026.
-        self.assertIn(('43','Centar 43'),response.context['form'].fields['center_codes'].choices)
+        self.assertNotIn('center_codes', response.context['form'].fields)  # obuhvat je na ekranu Dodele uloga (28.09.2026.)
+        self.assertContains(response, reverse('organizacija:dodele_korisnika', args=[self.account.pk]))
         self.assertNotContains(response,'name="is_superuser"')
 
     def test_save_roles_scopes_status_and_audit_without_privilege_escalation(self):
         response = self.client.post(self.url,self.payload(is_superuser='on',is_staff='on'))
         self.assertRedirects(response,self.url)
         self.account.refresh_from_db()
-        self.assertEqual(self.account.allowed_center_codes,'43')
         self.assertEqual(list(self.account.roles.all()),[self.role])
-        self.assertEqual(list(self.account.allowed_centers.all()),[self.unit])
         self.assertFalse(self.account.is_superuser)
         self.assertFalse(self.account.is_staff)
         log=ActivityLog.objects.get(action=ActivityLog.ACTION_MANUAL,object_pk=str(self.account.pk))
         self.assertEqual(log.changes['before']['roles'],[])
         self.assertEqual(log.changes['after']['roles'],['test-uloga'])
 
-    def test_unknown_center_and_unit_leave_entire_account_unchanged(self):
-        response=self.client.post(self.url,self.payload(center_codes=['999'],allowed_centers=['999999']))
+    def test_unknown_role_leaves_entire_account_unchanged(self):
+        response=self.client.post(self.url,self.payload(roles=['999999']))
         self.assertEqual(response.status_code,200)
         self.account.refresh_from_db()
         self.assertEqual(self.account.first_name,'')
         self.assertFalse(self.account.roles.exists())
-        self.assertFalse(self.account.allowed_centers.exists())
 
-    def test_existing_outdated_center_is_preserved_on_round_trip(self):
+    def test_old_scope_fields_are_no_longer_changed(self):
         self.account.allowed_center_codes=' 99;43, '
         self.account.save()
-        response=self.client.post(self.url,self.payload(center_codes=['99','43']))
+        response=self.client.post(self.url,self.payload(center_codes=['41']))
         self.assertEqual(response.status_code,302)
         self.account.refresh_from_db()
-        self.assertEqual(self.account.allowed_center_codes,'43,99')
+        self.assertEqual(self.account.allowed_center_codes,' 99;43, ')  # istorija ostaje, forma je ne dira
 
     def test_regular_staff_and_role_grant_do_not_allow_account_changes(self):
         self.account.is_staff=True

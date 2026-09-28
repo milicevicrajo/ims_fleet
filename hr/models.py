@@ -50,6 +50,10 @@ class Employee(models.Model):
     position = models.CharField(max_length=100, verbose_name=_("Pozicija"))
     department_code = models.IntegerField(verbose_name=_("Šifra odeljenja"))
     org_unit_code = models.CharField(max_length=20, verbose_name=_("OJ"), blank=True, null=True)
+    # Registar organizacije (korak 7, 28.09.2026.): cvor kome zaposleni pripada — izvodi se iz OJ
+    # kadrovske baze (organizacija/services/zaposleni.py); po njemu Kadrovi ogranicavaju pristup.
+    org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
+                                 editable=False, related_name="zaposleni", verbose_name=_("Organizaciona jedinica (registar)"))
     system_code = models.CharField(max_length=10, verbose_name=_("Šifra sistema"), blank=True, null=True)
     system_name = models.CharField(max_length=255, verbose_name=_("Naziv sistema"), blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name=_("Pol"))

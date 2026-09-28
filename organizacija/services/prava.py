@@ -27,8 +27,8 @@ from organizacija.services import classification as klas
 
 ULOGA_CELE_FIRME = "uprava"
 # Uloge koje po prirodi posla rade za sve centre (odluke 25.09.2026.: Garaza radi sa svim centrima;
-# Nabavka i Blagajna vide sve).
-ULOGE_CELE_FIRME = {ULOGA_CELE_FIRME, "garaza", "nabavka", "blagajna"}
+# Nabavka i Blagajna vide sve; 28.09.2026.: Pravna sluzba vidi sva potrazivanja, kao danas `view_all`).
+ULOGE_CELE_FIRME = {ULOGA_CELE_FIRME, "garaza", "nabavka", "blagajna", "pravna"}
 # Dozvola bez koje korisnik ne otvara modul — senka poredi samo module koje korisnik vidi.
 ULAZ_MODULA = {"finansije": "finansije:dashboard", "potrazivanja": "potrazivanja:dashboard",
                "putni_nalozi": "putninalog_list", "vozila": "vehicle_list", "kontrolna_tabla": "dashboard"}
@@ -57,14 +57,17 @@ def obuhvat(korisnik, kod_dozvole=None, status=DodelaUloge.STATUS_AKTIVNA, dan=N
 
     Prazan obuhvat znaci **nema pristupa** (odluka 2 u planu). Superuser ima celu firmu.
     `status` je jedan status ili vise njih (senka gleda nacrt i odobrene dodele zajedno).
-    `kod_dozvole` koji se zavrsava sa `:` (npr. `"nabavka:"`) znaci bilo koju dozvolu tog modula.
+    `kod_dozvole` koji se zavrsava sa `:` (npr. `"nabavka:"`) znaci bilo koju dozvolu tog modula,
+    a skup kodova — bilo koju od njih (Flota nema prefiks dozvola).
     """
     dan = dan or timezone.localdate()
     if korisnik.is_superuser:
         return Obuhvat(cela_firma=True)
     statusi = [status] if isinstance(status, str) else list(status)
     dodele = _vazece(DodelaUloge.objects.filter(korisnik=korisnik, status__in=statusi, uloga__is_active=True), dan)
-    if kod_dozvole and kod_dozvole.endswith(":"):
+    if isinstance(kod_dozvole, (set, frozenset, list, tuple)):
+        dodele = dodele.filter(uloga__permissions__code__in=list(kod_dozvole))
+    elif kod_dozvole and kod_dozvole.endswith(":"):
         dodele = dodele.filter(uloga__permissions__code__startswith=kod_dozvole)
     elif kod_dozvole:
         dodele = dodele.filter(uloga__permissions__code=kod_dozvole)

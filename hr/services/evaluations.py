@@ -105,6 +105,10 @@ def import_evaluation_catalog(path):
 
 
 def can_view_all(user):
+    from hr.access import cela_firma, na_registru
+
+    if na_registru():  # na registru: „sva ocenjivanja” je obuhvat cele firme u dodelama
+        return cela_firma(user)
     return user_has_role_permission(user, 'hr:evaluation_view_all')
 
 

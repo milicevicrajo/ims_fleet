@@ -96,7 +96,7 @@ otvara dozvole, a **Poveži zaposlenog** otvara prozor za izbor zaposlenog.
 
 | Podatak | Izvor | Kada |
 |---|---|---|
-| **Organizacione jedinice i centri** | `dbo.v_organizationalunit` | Dnevno 01:30 |
+| **Organizacione jedinice i centri** | Registar organizacije (od 28.09.2026.) | Dnevno 01:40 |
 | **Kodovi dozvola** | Automatski iz `urlpatterns` svih aplikacija | Dnevno 01:00 |
 | Evidencija rada | Sam sistem, kroz `ActivityLogMiddleware` | Pri svakom zahtevu |
 | Istorija zadataka | Celery signali | Pri svakom zadatku |
@@ -164,15 +164,18 @@ Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u
 
 ### Upravljanje pristupom kroz aplikaciju
 
-U **Administracija → Korisnici → Uloge i dozvole**, superuser bira uloge,
-centre iz pretraživih spiskova. Tu se menjaju ime, prezime,
+U **Administracija → Korisnici → Uloge i dozvole**, superuser bira uloge
+iz pretraživog spiska; **obuhvat podataka se od 28.09.2026. dodeljuje na ekranu Organizacija →
+Dodele uloga** (forma ima vezu ka njemu), a izbor starih centara i OJ je uklonjen. Tu se menjaju ime, prezime,
 e-pošta i aktivnost naloga. Pregled dozvola prati izabrane uloge, a primena je
 tek nakon **Sačuvaj pristup**. Pristup listi traži `user_list`; izmene naloga su
 i dalje samo za superuser, uključujući direktan POST. Nije moguće ugasiti sopstveni
 nalog niti kroz ovu formu dodeliti `is_superuser` ili `is_staff`.
 
-Centri se čuvaju u `allowed_center_codes`. Izbor pojedinačnih kadrovskih OJ
-(`allowed_hr_unit_codes`) **uklonjen je 25.09.2026.** — nijedan korisnik ga nije imao.
+Stara polja `allowed_center_codes` i `allowed_centers` ostaju u bazi kao istorija; forma ih više
+ne menja i nijedan modul ih ne čita (osim nasleđene Naplate). Izbor pojedinačnih kadrovskih OJ
+(`allowed_hr_unit_codes`) **uklonjen je 25.09.2026.** Novi nalog zaposlenog dobija odobrenu dodelu
+uloge „Zaposleni” za svoj centar. Spisak korisnika prikazuje obuhvat iz odobrenih dodela.
 Postojeći M2M `allowed_centers` je u zasebnom odeljku jer sadrži i šifre poslova,
 a pojedini moduli iz njega izvode pristup celom centru. Dodele se sabiraju.
 
@@ -209,9 +212,9 @@ pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
 
 Dozvole: `organizacija:dodele`, `organizacija:dodele_korisnika`, `organizacija:dodele_odobri`,
 `organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Odobrene dodele odlučuju o pristupu u
-Finansijama i Nabavci** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
+Finansijama, Nabavci, Potraživanjima i Floti** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
 pravima (`allowed_center_codes`, `allowed_centers`). Uloga Uprava dobija celu firmu kao običnu
-dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka i Blagajna.
+dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka, Blagajna i Pravna služba.
 
 ---
 

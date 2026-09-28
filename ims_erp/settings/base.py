@@ -269,7 +269,7 @@ FLOTA_REGISTAR_ORGANIZACIJE = True
 # registar, korak 5, od 28.09.2026.): obuhvat = odobrene dodele (Organizacija → Dodele uloga),
 # centar = centar sifre posla u registru. Brisanje modula iz recnika vraca stara prava i stari
 # centar (`allowed_center_codes`, `allowed_centers`, `center`) bez druge promene.
-PRAVA_PO_REGISTRU = {"finansije": True, "nabavka": True}
+PRAVA_PO_REGISTRU = {"finansije": True, "nabavka": True, "potrazivanja": True, "flota": True, "kadrovi": True}
 
 CELERY_TASK_ROUTES = {
     'fleet.tasks.run_nis_command': {'queue': 'selenium'},

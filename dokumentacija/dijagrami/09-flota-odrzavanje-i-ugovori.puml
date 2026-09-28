@@ -1,0 +1,71 @@
+@startuml
+!include _stil.iuml
+title Flota — održavanje, zakup i osiguranje
+caption UML model podataka | glavne veze prema fleet/models.py i economics_models.py
+class Vehicle
+package "Garaža i održavanje" {
+  class Kvar {
+    work_type, kilometraza
+    opis, van_ims, rbz
+  }
+  class KvarPart {
+    name, quantity, uom
+  }
+  class Requisition
+  class Service
+  class ServiceTransaction
+  class ServiceType
+  class VehicleDowntime {
+    period zastoja, razlog
+  }
+  Kvar "1" *-- "0..*" KvarPart
+  Kvar "0..1" -- "0..*" Requisition : kvar
+  ServiceType "0..1" -- "0..*" Service
+  ServiceType "0..1" -- "0..*" ServiceTransaction
+  ServiceType "0..1" -- "0..*" Requisition
+  Kvar "0..1" -- "0..*" VehicleDowntime : incident
+}
+package "Osnov korišćenja i ugovori" {
+  class VehicleHolding {
+    basis, start_date, end_date
+  }
+  class Lease {
+    lease_type, period
+    current_payment_amount
+    payment_basis
+  }
+  class LeaseInterest
+  class LeaseChargePeriod
+  class "ugovori.Contract" as Contract
+  Lease "0..1" -- "0..*" VehicleHolding : lease
+  Contract "0..1" -- "0..*" VehicleHolding : financing_contract
+  Contract "0..1" -- "0..*" Lease : contract
+  Lease "1" -- "0..*" LeaseInterest
+  Lease "1" -- "0..*" LeaseChargePeriod
+}
+package "Osiguranje" {
+  class Policy {
+    polisa i period pokrića
+  }
+  class Insurance {
+    knjižene naknade osiguranja
+  }
+}
+Vehicle "1" -- "0..*" Kvar
+Vehicle "0..1" -- "0..*" Requisition
+Vehicle "0..1" -- "0..*" Service
+Vehicle "1" -- "0..*" ServiceTransaction
+Vehicle "1" -- "0..*" VehicleDowntime
+Vehicle "1" -- "0..*" VehicleHolding
+Vehicle "1" -- "0..*" Lease
+Vehicle "0..1" -- "0..*" Policy
+Vehicle "1" -- "0..*" Insurance
+legend bottom
+  Service = evidencija servisa; ServiceTransaction = knjižene servisne transakcije.
+  Policy i Insurance su odvojene evidencije: nema direktne veze polisa–knjiženje.
+  VehicleDowntime.incident pokazuje na Kvar, ne na model Incident.
+  VehicleDowntime i LeaseChargePeriod postoje kao modeli, ali ih aktuelni period_analysis() ne koristi.
+  Radni nalog garaže je prikaz Kvar-a; GZN (ProcurementRequest + ProcurementItem)
+  je posebna evidencija bez direktnog stranog ključa na vozilo ili kvar.
+endlegend
+@enduml

@@ -178,7 +178,7 @@ istorija zakazanih poslova.
 01:00  Sinhronizacija dozvola
 01:10  Zaposleni iz kadrovske baze
 01:20  Provera otpisanih vozila
-01:30  Šifre poslova i organizacione jedinice
+01:40  Organizacija — registar, OJ, veze svih modula (stara sinhronizacija u 01:30 ugašena 28.09.2026.)
 01:45  Trebovanja
 02:00  Polise osiguranja
 02:20  EUF fakture (nabavka)

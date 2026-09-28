@@ -57,8 +57,12 @@ class OrderJobForm(StyledModelForm):
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
+        from fleet.support import obuhvat as obuhvat_flote
         from fleet.support.management_reports import allowed_centers
-        centers = allowed_centers(user)
+        if obuhvat_flote.aktivno(user):
+            self.fields['job_code'].queryset = obuhvat_flote.ogranici_jedinice(
+                self.fields['job_code'].queryset, user, getattr(self.instance, 'job_code_id', None))
+        centers = set() if obuhvat_flote.aktivno(user) else allowed_centers(user)
         if centers:
             # Postojeca sifra ostaje ponudjena i kada je van korisnikovih centara,
             # inace bi je ekran za potvrdu sifre posla tiho obrisao.

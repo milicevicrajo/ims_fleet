@@ -18,7 +18,7 @@ nema REST API-ja, nema odvojenog frontend okvira.
 | Obračuni | Obični Python moduli (`services/`, `support/`) | Bez okvira, bez klasa gde nisu potrebne |
 | Pristup podacima | Django ORM (`default`) + sirovi SQL (`server_db`) | Dva aliasa, ista baza |
 | Baza | Microsoft SQL Server, `mssql-django` 1.5, ODBC Driver 17 | Baza `IMS_ERP` |
-| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 20 zakazanih poslova |
+| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 19 zakazanih poslova |
 | Okruženje | Windows server, NSSM servisi | Tri servisa |
 
 `djangorestframework` i `psycopg2-binary` postoje u `requirements.txt`, ali **nisu**
@@ -509,11 +509,14 @@ na osnovu koda i konfiguracije. Prikazuju ključne delove arhitekture; nisu auto
 inventar svih klasa, importovanja ili tabela.
 
 **Početna stranica:** [Galerija UML dijagrama](../dijagrami/index.html).
+**Cela aplikacija na jednom dijagramu:** [Velika mapa sa zumiranjem](../dijagrami/cela-aplikacija.html).
+**Poseban pregled Flote:** [Flota — šest detaljnih dijagrama](../dijagrami/flota.html).
 Otvara se lokalno u pregledaču, bez pokretanja Django aplikacije. SVG omogućava
 uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređivanje.
 
 | Prikaz | Slika | PlantUML izvor | Osnova za prikaz |
 |---|---|---|---|
+| Kompletna aplikacija | [SVG](../dijagrami/svg/13-kompletna-aplikacija.svg) | [13-kompletna-aplikacija.puml](../dijagrami/13-kompletna-aplikacija.puml) | Korenske rute, modeli i servisi modula, `ims_erp/celery.py`, dokumentovana infrastruktura i integracije |
 | Pregled sistema | [SVG](../dijagrami/svg/01-pregled-sistema.svg) | [01-pregled-sistema.puml](../dijagrami/01-pregled-sistema.puml) | `ims_erp/urls.py`, `ims_erp/celery.py`, poglavlje 7: Integracije |
 | Organizacija modula | [SVG](../dijagrami/svg/02-organizacija-modula.svg) | [02-organizacija-modula.puml](../dijagrami/02-organizacija-modula.puml) | `INSTALLED_APPS`, korenske rute i organizacija koda modula |
 | Servisi i izvori podataka | [SVG](../dijagrami/svg/03-serveri-i-podaci.svg) | [03-serveri-i-podaci.puml](../dijagrami/03-serveri-i-podaci.puml) | `nssm.bat`, `ims_erp/celery.py`, dokumentovana konfiguracija baza |
@@ -522,6 +525,26 @@ uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređ
 | Korisnici i dozvole | [SVG](../dijagrami/svg/06-korisnici-i-dozvole.svg) | [06-korisnici-i-dozvole.puml](../dijagrami/06-korisnici-i-dozvole.puml) | `core/models.py`, `core/mixins.py`, `hr/access.py`, `organizacija/models.py` |
 
 **Kako se čitaju dijagrami:**
+
+Velika mapa **13 — Kompletna aplikacija** objedinjuje sve poslovne module,
+Organizaciju i nasleđenu Naplatu, ključne evidencije i primere međumodulskih veza.
+Ispod njih su izvršavanje, zajednička baza, datoteke i spoljni izvori. To je
+komponentni pregled cele aplikacije, a ne inventar svih klasa ili kompletan ER model.
+Stranica `cela-aplikacija.html` radi lokalno: **Cela mapa** uklapa dijagram u ekran,
+**100%** daje čitljiv prikaz, a **+ / −** i **Ctrl + točkić** menjaju uvećanje.
+Pomeranje je moguće prevlačenjem miša, klizačima i strelicama kada mapa ima fokus.
+SVG, PNG i PlantUML izvor dostupni su iz iste trake alata.
+
+Detaljni dijagrami Flote dopunjuju opšti pregled sistema:
+
+| Prikaz | Slika | PlantUML izvor | Osnova za prikaz |
+|---|---|---|---|
+| Organizacija Flote | [SVG](../dijagrami/svg/07-flota-organizacija.svg) | [07-flota-organizacija.puml](../dijagrami/07-flota-organizacija.puml) | `fleet/urls.py`, `fleet/views/`, `fleet/support/`, `fleet/services/`, `fleet/sync/` |
+| Vozila, dodele i nalozi | [SVG](../dijagrami/svg/08-flota-vozila-i-nalozi.svg) | [08-flota-vozila-i-nalozi.puml](../dijagrami/08-flota-vozila-i-nalozi.puml) | `fleet/models.py` |
+| Održavanje, zakup i osiguranje | [SVG](../dijagrami/svg/09-flota-odrzavanje-i-ugovori.svg) | [09-flota-odrzavanje-i-ugovori.puml](../dijagrami/09-flota-odrzavanje-i-ugovori.puml) | `fleet/models.py`, `fleet/economics_models.py` |
+| Tok goriva | [SVG](../dijagrami/svg/10-flota-tok-goriva.svg) | [10-flota-tok-goriva.puml](../dijagrami/10-flota-tok-goriva.puml) | `fleet/sync/selenium.py`, `fleet/support/fuel.py`, `fleet/support/assignments.py` |
+| Tok zaduženja vozila | [SVG](../dijagrami/svg/11-flota-tok-putnog-naloga.svg) | [11-flota-tok-putnog-naloga.puml](../dijagrami/11-flota-tok-putnog-naloga.puml) | `fleet/views/vehicle_travel_orders.py`, `fleet/forms/`, `fleet/models.py` |
+| Ekonomske analize | [SVG](../dijagrami/svg/12-flota-ekonomika.svg) | [12-flota-ekonomika.puml](../dijagrami/12-flota-ekonomika.puml) | `fleet/services/economics.py`, `fleet/views/analytics.py`, `fleet/economics_models.py` |
 
 - Dijagram 01 je pregled sistema i integracija u UML komponentnoj notaciji.
   Dijagram 02 grupiše module po poslovnoj nameni; grupe nisu zasebne aplikacije ili servisi.
@@ -535,6 +558,13 @@ uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređ
   obaveznu i jedinstvenu vezu, uključujući stornirana rešenja.
 - Dijagram 06 razdvaja dozvolu rute od obuhvata podataka. Primena starog obuhvata i
   novog registra Organizacije zavisi od konkretnog modula i njegovih podešavanja.
+- Dijagrami 08–09 prikazuju izdvojene strane ključeve, sa obaveznošću veza.
+  Zaduženje vozila (`VehicleTravelOrder`) i službeni put (`PutniNalog`) su odvojeni modeli.
+  Polisa (`Policy`) i knjižena naknada osiguranja (`Insurance`) nemaju direktnu vezu.
+- Dijagrami 10 i 12 prikazuju tok podataka, ne strane ključeve. Gorivo za putni nalog
+  bira se po vozilu / tablici i periodu. Modeli `VehicleDowntime` i `LeaseChargePeriod`
+  postoje, ali ih aktuelni `period_analysis()` ne koristi; prikaz modela nije dokaz
+  da model učestvuje u tekućem obračunu.
 
 **Pregled i izmene u VS Code-u:**
 

@@ -9,7 +9,7 @@ from django.urls import reverse
 from core.exporting import create_xlsx_workbook, style_header_row, autofit_columns, workbook_response
 from core.mixins import role_permission_required
 from fleet.forms.management_reports import VehicleInsuranceReportForm, FleetFuelReportForm, SupplierPartsReportForm
-from fleet.support.management_reports import vehicle_insurance_rows, fuel_report_rows, group_fuel_rows, supplier_choices, supplier_parts_rows, FUEL_GROUPS, allowed_centers
+from fleet.support.management_reports import ograniceno, vehicle_insurance_rows, fuel_report_rows, group_fuel_rows, supplier_choices, supplier_parts_rows, FUEL_GROUPS, allowed_centers
 
 
 def _sr_number(value):
@@ -121,7 +121,7 @@ def fleet_fuel_report(request):
         'Ovo je detaljni pregled kartičnih kupovina NIS/OMV. Gorivo iz magacina i preko zaposlenih obuhvaćeno je zasebnim pregledom Knjiženi troškovi goriva po mesecima; nema pouzdane raspodele tih stavki po proizvodu u ovom izvoru.',
         'Količine su točenja/kupovine iz izvora, ne izmerena potrošnja u motoru. Proizvodi i valute ostaju odvojeni; količine različitih proizvoda se ne sabiraju u jedan pokazatelj.',
         'AdBlue i ostale kupovine nisu deo početnog izbora Gorivo. Izaberite vrstu ili Svi proizvodi za njihov prikaz. Prazan iznos nije nula.']
-    if allowed_centers(request.user): notes.append('Prikaz je ograničen na dozvoljene centre; stavke bez istorijskog centra nisu u ovom korisničkom obuhvatu.')
+    if ograniceno(request.user): notes.append('Prikaz je ograničen na dozvoljene centre; stavke bez istorijskog centra nisu u ovom korisničkom obuhvatu.')
     amounts={}
     for row in raw:
         if row['gross'] is not None: amounts[row['currency']]=amounts.get(row['currency'],Decimal('0'))+row['gross']

@@ -1,12 +1,13 @@
-"""Nova sinhronizacija organizacije — radi paralelno sa starom, ne umesto nje.
+"""Sinhronizacija organizacije (01:40) — jedini vlasnik organizacije od 28.09.2026.
 
-Stara (`fleet.tasks.fetch_job_codes`, 01:30) i dalje puni `OrganizationalUnit` iz
-`dbo.v_organizationalunit` i ostaje merodavna. Nova (01:40) iz istog izvora — tabele `posao`,
-koju Finansije svakog sata preuzimaju u `FinanceJob` — osvezava registar, povezuje jedinice
-Flote sa cvorovima, popunjava `org_node` i poredi staro i novo.
+Iz tabele `posao` (koju Finansije svakog sata preuzimaju u `FinanceJob`) osvezava registar, gasi
+sifre bez prometa, povezuje sve module sa cvorovima, upisuje centar iz registra na knjizenja,
+vezuje zaposlene za cvorove i **odrzava `OrganizationalUnit`** (nove aktivne sifre, nazivi i
+centri iz registra) — jer stari dokumenti i forme i dalje pokazuju na tu tabelu.
 
-Nova sinhronizacija **ne pise** ni u jednu tabelu stare organizacije. Ako padne, stara radi
-kao i do sada; ako se iskljuci, nista u modulima se ne menja.
+Stara sinhronizacija (`fleet.tasks.fetch_job_codes` iz `dbo.v_organizationalunit`, 01:30) je
+**ugasena** 28.09.2026. (plan prelaska na registar, korak 9): nije vise u rasporedu, a zadatak
+ostaje u kodu samo za rucno pokretanje u nuzdi.
 """
 
 from datetime import timedelta
@@ -31,18 +32,23 @@ def sinhronizuj(company=DEFAULT_COMPANY):
     # Sifra bez prometa u poslednjih 12 meseci je neaktivna, sa prometom aktivna (odluka 21.09.2026.);
     # nove sifre iz izvora tako ne ostaju aktivne samo zato sto ih izvor tako oznacava.
     aktivnost = activity.apply_reviews(company)
+    jedinice_flote = odrzavaj_organizacione_jedinice(company)
     veze = flota.povezi(company, modul="sve")
     # Snimak centra iz registra na knjizenjima (Finansije na registru, korak 5): posle promene
     # pripadnosti sifre stara knjizenja zadrzavaju stari centar, nova dobijaju novi.
     from finansije.models import LedgerEntry
 
     centri_knjizenja = putanja.osvezi_centre(LedgerEntry.objects.filter(company=company))
+    # Zaposleni → cvor registra iz OJ kadrovske baze (preuzete u 01:10).
+    from organizacija.services import zaposleni
+
+    zaposleni_veze = zaposleni.povezi_zaposlene(company)
     kontrola = uporedi_jedinice(company)
     izvestaj = flota.uporedni_izvestaj(company)
     nabavka = flota.uporedni_izvestaj(company, modul="nabavka")
     finansije = flota.uporedni_izvestaj(company, modul="finansije")
     potrazivanja = flota.uporedni_izvestaj(company, modul="potrazivanja")
-    return {"svezina": svezina, "run": run, "aktivnost": aktivnost, "veze": veze, "centri_knjizenja": centri_knjizenja, "kontrola": kontrola, "izvestaj": izvestaj,
+    return {"svezina": svezina, "run": run, "aktivnost": aktivnost, "veze": veze, "centri_knjizenja": centri_knjizenja, "zaposleni": zaposleni_veze, "jedinice_flote": jedinice_flote, "kontrola": kontrola, "izvestaj": izvestaj,
             "izvestaj_nabavke": nabavka, "izvestaj_finansija": finansije, "izvestaj_potrazivanja": potrazivanja}
 
 
@@ -119,11 +125,12 @@ def poruka(rezultat):
     delovi = [
         f"Registar: novih cvorova {run.nodes_created}, novih verzija {run.versions_created}, "
         f"za razresenje {run.unresolved}.",
+        "OJ iz registra: novih {0}, izmenjenih {1}.".format(*rezultat.get("jedinice_flote", (0, 0))),
         f"Aktivnost po obrtu: izmenjenih {rezultat['aktivnost']['versions_changed']}.",
         f"OJ stara/nova: {kontrola['povezano']}/{kontrola['jedinica']} povezano, "
         f"razlika centra {len(kontrola['razlika_centra'])}, van stabla {len(kontrola['van_stabla'])}.",
         f"Moduli: izmenjenih veza {izmena}, bez para {bez_para}; centar iz registra osvezen na "
-        f"{rezultat.get('centri_knjizenja', 0)} knjizenja.",
+        f"{rezultat.get('centri_knjizenja', 0)} knjizenja; veza zaposlenih izmenjena {rezultat.get('zaposleni', 0)}.",
         "Uporedni izvestaj Flote: " + ("PROLAZI." if izvestaj["prolazi"] else
                                        f"NE PROLAZI ({razlike} razlika, od toga van stabla {van_stabla})."),
     ]
@@ -136,3 +143,36 @@ def poruka(rezultat):
     if rezultat["svezina"]["kasni"]:
         delovi.insert(0, "UPOZORENJE: sifarnik iz Finansija nije osvezen u poslednjih 26 h.")
     return " ".join(delovi)
+
+
+def odrzavaj_organizacione_jedinice(company=DEFAULT_COMPANY):
+    """`OrganizationalUnit` iz registra (umesto stare sinhronizacije iz `dbo.v_organizationalunit`).
+
+    Nova **aktivna** sifra posla sa centrom dobija organizacionu jedinicu (i vezu sa cvorom), da bi
+    mogla da se izabere u formama; postojecoj jedinici se naziv i centar uskladjuju sa registrom.
+    Nista se ne brise — stari dokumenti i dalje pokazuju na svoje jedinice. Vraca (novih, izmenjenih).
+    """
+    from core.models import OrganizationalUnit
+    from organizacija.services.putanja import centri_sifara
+
+    centri = centri_sifara(company)
+    postojece = {(o.code or "").strip(): o for o in OrganizationalUnit.objects.all()}
+    novih = izmenjenih = 0
+    for verzija in OrgNodeVersion.objects.filter(valid_to__isnull=True, node__level=OrgNode.LEVEL_JOB,
+                                                 node__company=company).order_by("full_code"):
+        sifra, centar = verzija.full_code, centri.get(verzija.full_code, "")
+        if not centar:  # tehnicka sifra i sifre bez centra nemaju organizacionu jedinicu
+            continue
+        naziv = (verzija.name or sifra)[:100]
+        jedinica = postojece.get(sifra)
+        if jedinica is None:
+            if not verzija.is_active:
+                continue
+            jedinica = OrganizationalUnit.objects.create(code=sifra, name=naziv, center=centar)
+            LegacyOrgLink.objects.get_or_create(legacy_label=LegacyOrgLink.LEGACY_FLEET_UNIT, legacy_id=jedinica.pk,
+                                                defaults={"node_id": verzija.node_id})
+            novih += 1
+        elif ((jedinica.name or "").strip(), (jedinica.center or "").strip()) != (naziv, centar):
+            OrganizationalUnit.objects.filter(pk=jedinica.pk).update(name=naziv, center=centar)
+            izmenjenih += 1
+    return novih, izmenjenih

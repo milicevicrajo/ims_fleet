@@ -410,7 +410,7 @@ Raspored — Celery Beat.
  01:00  Dozvole            →  nove rute postaju vidljive
  01:10  Zaposleni          →  fleet_employee
  01:20  Otpis vozila       →  fleet_vehicle.otpis
- 01:30  Šifre poslova      →  fleet_organizationalunit, fleet_jobcode
+ 01:40  Organizacija       →  registar, fleet_organizationalunit, org_node svih modula, fleet_employee.org_node
  01:45  Trebovanja         →  fleet_requisition
  02:00  Polise             →  fleet_policy
  02:20  EUF fakture        →  nabavka_invoice

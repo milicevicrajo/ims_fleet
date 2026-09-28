@@ -13,6 +13,7 @@ from ..filters import TrafficCardFilterForm
 from ..forms.reference import OrganizationalUnitForm
 from ..models import JobCode, KontaVozila, TrafficCard, Vehicle, VehicleTenderDocument
 from ..forms.vehicles import JobCodeForm, TrafficCardForm, VehicleTenderDocumentForm
+from fleet.support import obuhvat as obuhvat_flote
 
 
 class OrganizationalUnitListView(LoginRequiredMixin, ListView):
@@ -47,6 +48,7 @@ class OrganizationalUnitUpdateView(RolePermissionRequiredMixin, LoginRequiredMix
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class VehicleTenderDocumentListView(LoginRequiredMixin, ListView):
     model = VehicleTenderDocument
     template_name = "fleet/vehicle_tender_document_list.html"
@@ -71,6 +73,7 @@ class VehicleTenderDocumentListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class VehicleTenderDocumentCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = VehicleTenderDocument
     form_class = VehicleTenderDocumentForm
@@ -95,6 +98,7 @@ class VehicleTenderDocumentCreateView(RolePermissionRequiredMixin, LoginRequired
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class VehicleTenderDocumentUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = VehicleTenderDocument
     form_class = VehicleTenderDocumentForm
@@ -112,6 +116,7 @@ class VehicleTenderDocumentUpdateView(RolePermissionRequiredMixin, LoginRequired
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class VehicleTenderDocumentDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = VehicleTenderDocument
     template_name = "fleet/vehicle_tender_document_detail.html"
@@ -123,6 +128,7 @@ class VehicleTenderDocumentDetailView(RolePermissionRequiredMixin, LoginRequired
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class VehicleTenderDocumentDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = VehicleTenderDocument
     template_name = "fleet/vehicle_tender_document_confirm_delete.html"
@@ -143,6 +149,7 @@ class VehicleTenderDocumentDeleteView(RolePermissionRequiredMixin, LoginRequired
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class TrafficCardListView(LoginRequiredMixin, ListView):
     model = TrafficCard
     template_name = "fleet/trafficcard_list.html"
@@ -160,6 +167,7 @@ class TrafficCardListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class TrafficCardCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = TrafficCard
     form_class = TrafficCardForm
@@ -173,7 +181,7 @@ class TrafficCardCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Cre
         form = super().get_form(form_class)
         vehicle_id = self.kwargs.get('vehicle_id')
         if vehicle_id:
-            vehicle = get_object_or_404(Vehicle, pk=vehicle_id)
+            vehicle = get_object_or_404(obuhvat_flote.po_vozilu(Vehicle.objects.all(), self.request.user, "pk"), pk=vehicle_id)
             form.fields['vehicle'].queryset = Vehicle.objects.filter(pk=vehicle_id)
             form.fields['vehicle'].initial = vehicle
             form.fields['vehicle'].disabled = True
@@ -194,6 +202,7 @@ class TrafficCardCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Cre
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class TrafficCardUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = TrafficCard
     form_class = TrafficCardForm
@@ -216,6 +225,7 @@ class TrafficCardUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class TrafficCardDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = TrafficCard
     template_name = "fleet/trafficcard_detail.html"
@@ -227,6 +237,7 @@ class TrafficCardDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Det
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class TrafficCardDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = TrafficCard
     success_url = reverse_lazy("trafficcard_list")
@@ -239,6 +250,7 @@ class TrafficCardDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, Del
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class JobCodeListView(LoginRequiredMixin, ListView):
     model = JobCode
     template_name = "fleet/jobcode_list.html"
@@ -254,6 +266,7 @@ class JobCodeListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class JobCodeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = JobCode
     form_class = JobCodeForm
@@ -274,6 +287,7 @@ class JobCodeCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class JobCodeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = JobCode
     form_class = JobCodeForm
@@ -287,6 +301,7 @@ class JobCodeUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class JobCodeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = JobCode
     template_name = "fleet/jobcode_detail.html"
@@ -299,6 +314,7 @@ class JobCodeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class JobCodeDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = JobCode
     success_url = reverse_lazy("jobcode_list")

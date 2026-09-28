@@ -4,7 +4,7 @@
 *{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:#213b50;font:16px/1.6 "Segoe UI",sans-serif}
 header{background:linear-gradient(120deg,#163b55,#237f79);color:white;padding:42px max(24px,calc((100vw - 1280px)/2))}
 header small{letter-spacing:.12em}h1{font-size:34px;line-height:1.2;margin:10px 0}header p{margin:0;max-width:850px;color:#dcecf2}
-main{max-width:1328px;padding:28px 24px 48px;margin:auto}.intro{margin-bottom:24px;color:#536b7d}
+main{max-width:1328px;padding:28px 24px 48px;margin:auto}.intro{margin-bottom:24px;color:#536b7d}.sections{margin-bottom:24px}.sections a{background:#fff;border:1px solid #c6d9e5;padding:8px 18px;border-radius:24px}.sections a[aria-current="page"]{background:#163b55;color:white}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px}
 article{background:white;border:1px solid #dce5ed;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px #163b5508}
 .preview{display:block;background:#fff;padding:16px;border-bottom:1px solid #e6edf2}.preview img{display:block;width:100%;height:240px;object-fit:contain}
@@ -12,9 +12,15 @@ article{background:white;border:1px solid #dce5ed;border-radius:12px;overflow:hi
 a{color:#176087;text-decoration:none}a:hover{text-decoration:underline}a:focus-visible{outline:3px solid #298c94;outline-offset:4px}
 footer{margin-top:30px;font-size:13px;color:#607586}@media(max-width:500px){h1{font-size:28px}.preview img{height:200px}}
 </style></head><body><header><small>IMS ERP · TEHNIČKA DOKUMENTACIJA</small>
-<h1>Kako je sistem organizovan</h1><p>Od pregleda aplikacije i njenih modula do servisa, modela podataka i toka izdavanja rešenja.</p></header>
-<main><p class="intro">Počnite od pregleda sistema. Za uvećanje otvorite SVG; za izmene koristite PlantUML izvor i Alt+D u VS Code-u.</p>
+<h1>Kako je sistem organizovan</h1><p>Pregled aplikacije, moduli, modeli podataka i poslovni tokovi.</p></header>
+<main><nav class="sections" aria-label="Oblasti"><a href="cela-aplikacija.html">Velika mapa aplikacije</a><a href="index.html" aria-current="page">Svi dijagrami</a><a href="flota.html" >Flota · 6 dijagrama</a></nav>
+<p class="intro">Počnite od pregleda sistema. Za uvećanje otvorite SVG; za izmene koristite PlantUML izvor i Alt+D u VS Code-u.</p>
 <div class="grid"><article>
+<a class="preview" href="svg/13-kompletna-aplikacija.svg"><img src="svg/13-kompletna-aplikacija.svg" alt="Kompletna aplikacija — velika mapa"></a>
+<div class="card-body"><h2>Kompletna aplikacija — velika mapa</h2><p>Svi moduli, ključne evidencije, dozvole, servisi, baze i integracije na jednom dijagramu.</p>
+<nav aria-label="Formati: Kompletna aplikacija — velika mapa"><a href="svg/13-kompletna-aplikacija.svg">Otvori SVG</a>
+<a href="png/13-kompletna-aplikacija.png">PNG</a><a href="13-kompletna-aplikacija.puml" download>PlantUML izvor</a></nav></div></article>
+<article>
 <a class="preview" href="svg/01-pregled-sistema.svg"><img src="svg/01-pregled-sistema.svg" alt="Pregled sistema"></a>
 <div class="card-body"><h2>Pregled sistema</h2><p>Korisnici, IMS ERP i spoljni izvori podataka.</p>
 <nav aria-label="Formati: Pregled sistema"><a href="svg/01-pregled-sistema.svg">Otvori SVG</a>
@@ -43,6 +49,36 @@ footer{margin-top:30px;font-size:13px;color:#607586}@media(max-width:500px){h1{f
 <a class="preview" href="svg/06-korisnici-i-dozvole.svg"><img src="svg/06-korisnici-i-dozvole.svg" alt="Korisnici i dozvole"></a>
 <div class="card-body"><h2>Korisnici i dozvole</h2><p>Uloge, dozvole ruta i organizacioni obuhvat.</p>
 <nav aria-label="Formati: Korisnici i dozvole"><a href="svg/06-korisnici-i-dozvole.svg">Otvori SVG</a>
-<a href="png/06-korisnici-i-dozvole.png">PNG</a><a href="06-korisnici-i-dozvole.puml" download>PlantUML izvor</a></nav></div></article></div>
+<a href="png/06-korisnici-i-dozvole.png">PNG</a><a href="06-korisnici-i-dozvole.puml" download>PlantUML izvor</a></nav></div></article>
+<article>
+<a class="preview" href="svg/07-flota-organizacija.svg"><img src="svg/07-flota-organizacija.svg" alt="Flota: organizacija modula"></a>
+<div class="card-body"><h2>Flota: organizacija modula</h2><p>Ekrani, poslovna logika, modeli i spoljni izvori.</p>
+<nav aria-label="Formati: Flota: organizacija modula"><a href="svg/07-flota-organizacija.svg">Otvori SVG</a>
+<a href="png/07-flota-organizacija.png">PNG</a><a href="07-flota-organizacija.puml" download>PlantUML izvor</a></nav></div></article>
+<article>
+<a class="preview" href="svg/08-flota-vozila-i-nalozi.svg"><img src="svg/08-flota-vozila-i-nalozi.svg" alt="Flota: vozila i putni nalozi"></a>
+<div class="card-body"><h2>Flota: vozila i putni nalozi</h2><p>Vozila, saobraćajne dozvole, istorija dodela i dve vrste naloga.</p>
+<nav aria-label="Formati: Flota: vozila i putni nalozi"><a href="svg/08-flota-vozila-i-nalozi.svg">Otvori SVG</a>
+<a href="png/08-flota-vozila-i-nalozi.png">PNG</a><a href="08-flota-vozila-i-nalozi.puml" download>PlantUML izvor</a></nav></div></article>
+<article>
+<a class="preview" href="svg/09-flota-odrzavanje-i-ugovori.svg"><img src="svg/09-flota-odrzavanje-i-ugovori.svg" alt="Flota: održavanje i ugovori"></a>
+<div class="card-body"><h2>Flota: održavanje i ugovori</h2><p>Garaža, servisi, trebovanja, zastoji, zakup i osiguranje.</p>
+<nav aria-label="Formati: Flota: održavanje i ugovori"><a href="svg/09-flota-odrzavanje-i-ugovori.svg">Otvori SVG</a>
+<a href="png/09-flota-odrzavanje-i-ugovori.png">PNG</a><a href="09-flota-odrzavanje-i-ugovori.puml" download>PlantUML izvor</a></nav></div></article>
+<article>
+<a class="preview" href="svg/10-flota-tok-goriva.svg"><img src="svg/10-flota-tok-goriva.svg" alt="Flota: tok goriva"></a>
+<div class="card-body"><h2>Flota: tok goriva</h2><p>NIS / OMV, uvoz, razrešavanje vozila, čišćenje i izveštaji.</p>
+<nav aria-label="Formati: Flota: tok goriva"><a href="svg/10-flota-tok-goriva.svg">Otvori SVG</a>
+<a href="png/10-flota-tok-goriva.png">PNG</a><a href="10-flota-tok-goriva.puml" download>PlantUML izvor</a></nav></div></article>
+<article>
+<a class="preview" href="svg/11-flota-tok-putnog-naloga.svg"><img src="svg/11-flota-tok-putnog-naloga.svg" alt="Flota: tok zaduženja vozila"></a>
+<div class="card-body"><h2>Flota: tok zaduženja vozila</h2><p>Otvaranje, automatsko i ručno zatvaranje, obračun i štampa.</p>
+<nav aria-label="Formati: Flota: tok zaduženja vozila"><a href="svg/11-flota-tok-putnog-naloga.svg">Otvori SVG</a>
+<a href="png/11-flota-tok-putnog-naloga.png">PNG</a><a href="11-flota-tok-putnog-naloga.puml" download>PlantUML izvor</a></nav></div></article>
+<article>
+<a class="preview" href="svg/12-flota-ekonomika.svg"><img src="svg/12-flota-ekonomika.svg" alt="Flota: ekonomske analize"></a>
+<div class="card-body"><h2>Flota: ekonomske analize</h2><p>Izvori troškova, profil vozila, period analize i poređenje scenarija.</p>
+<nav aria-label="Formati: Flota: ekonomske analize"><a href="svg/12-flota-ekonomika.svg">Otvori SVG</a>
+<a href="png/12-flota-ekonomika.png">PNG</a><a href="12-flota-ekonomika.puml" download>PlantUML izvor</a></nav></div></article></div>
 <footer>Stanje repozitorijuma: 28.09.2026. · Dijagrami se generišu lokalno.
 Raspored servera zasnovan je na konfiguraciji i dokumentaciji, bez provere živih servisa.</footer></main></body></html>

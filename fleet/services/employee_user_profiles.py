@@ -154,8 +154,26 @@ def create_user_profile_for_employee(
     role = get_or_create_role(role_slug)
     if role is not None:
         user.roles.add(role)
+        dodeli_centar(user, role, center)
 
     return user, center, reason
+
+
+def dodeli_centar(user, role, center):
+    """Novi nalog zaposlenog dobija odobrenu dodelu uloge za svoj centar u registru (od 28.09.2026.)."""
+    if not center:
+        return
+    from django.utils import timezone
+
+    from organizacija.models import DodelaUloge, OrgNode, OrgNodeVersion
+    from organizacija.services.classification import oznaka_centra
+
+    cvor = (OrgNodeVersion.objects.filter(valid_to__isnull=True, node__level=OrgNode.LEVEL_CENTER,
+                                          full_code=oznaka_centra(center)).values_list("node_id", flat=True).first())
+    if cvor:
+        DodelaUloge.objects.create(korisnik=user, uloga=role, cvor_id=cvor, vazi_od=timezone.localdate(),
+                                   status=DodelaUloge.STATUS_AKTIVNA, izvor=DodelaUloge.IZVOR_PREVOD,
+                                   napomena=f"nalog zaposlenog — centar {center}", odobreno=timezone.now())
 
 
 def create_user_profiles_for_missing_employees(queryset=None, **kwargs):

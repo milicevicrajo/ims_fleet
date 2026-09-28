@@ -39,6 +39,7 @@ from ..sync import (
     fetch_service_data,
     migrate_draft_to_service_transaction,
 )
+from fleet.support import obuhvat as obuhvat_flote
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,7 @@ class ServiceTypeDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, Del
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
     template_name = "fleet/service_list.html"
@@ -114,6 +116,7 @@ class ServiceListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceFixingListView(LoginRequiredMixin, FilterView):
     model = DraftServiceTransaction
     template_name = "fleet/draft_service_transactions_list.html"
@@ -132,6 +135,7 @@ class ServiceFixingListView(LoginRequiredMixin, FilterView):
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Service
     form_class = ServiceForm
@@ -145,6 +149,7 @@ class ServiceCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Service
     form_class = ServiceForm
@@ -158,6 +163,7 @@ class ServiceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Service
     template_name = "fleet/service_detail.html"
@@ -169,6 +175,7 @@ class ServiceDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Service
     success_url = reverse_lazy("service_list")
@@ -181,6 +188,7 @@ class ServiceDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceTransactionListView(LoginRequiredMixin, ListView):
     model = ServiceTransaction
     template_name = "fleet/service_transactions_list.html"
@@ -192,6 +200,7 @@ class ServiceTransactionListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 @method_decorator(never_cache, name="dispatch")
 class ServiceTransactionFixingListView(LoginRequiredMixin, FilterView):
     model = DraftServiceTransaction
@@ -212,6 +221,7 @@ class ServiceTransactionFixingListView(LoginRequiredMixin, FilterView):
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceTransactionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = ServiceTransaction
     form_class = ServiceTransactionForm
@@ -225,6 +235,7 @@ class ServiceTransactionCreateView(RolePermissionRequiredMixin, LoginRequiredMix
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = ServiceTransaction
     form_class = ServiceTransactionForm
@@ -238,12 +249,14 @@ class ServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequiredMix
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ServiceTransactionDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = ServiceTransaction
     template_name = "service_transaction_confirm_delete.html"
     success_url = reverse_lazy("service_transaction_list")
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class DraftServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = DraftServiceTransaction
     form_class = DraftServiceTransactionForm
@@ -303,6 +316,7 @@ class DraftServiceTransactionUpdateView(RolePermissionRequiredMixin, LoginRequir
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class RequisitionListView(LoginRequiredMixin, ListView):
     model = Requisition
     template_name = "fleet/requisition_list.html"
@@ -337,6 +351,7 @@ class RequisitionListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class RequisitionDetailView(LoginRequiredMixin, ListView):
     model = Requisition
     template_name = "fleet/requisition_detail.html"
@@ -365,6 +380,7 @@ class RequisitionDetailView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class RequisitionFixingListView(LoginRequiredMixin, ListView):
     model = Requisition
     template_name = "fleet/requisition_fixing_list.html"
@@ -384,6 +400,7 @@ class RequisitionFixingListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class RequisitionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Requisition
     form_class = RequisitionForm
@@ -392,6 +409,7 @@ class RequisitionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Cre
     success_message = "Requisition successfully created."
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class RequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Requisition
     form_class = RequisitionForm
@@ -416,6 +434,7 @@ class RequisitionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Upd
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class RequisitionDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Requisition
     template_name = "requisition/requisition_confirm_delete.html"

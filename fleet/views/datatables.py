@@ -28,6 +28,7 @@ from .vehicle_travel_orders import (
     can_print_previous_vehicle_travel_order_report,
     get_previous_vehicle_travel_order,
 )
+from fleet.support import obuhvat as obuhvat_flote
 
 
 def _int_param(request, name, default=0):
@@ -288,8 +289,9 @@ def vehicle_travel_order_datatable_data(request):
 def fuel_transactions_datatable_data(request):
     vehicle_id = request.GET.get("vehicle") or None
     search_value = request.GET.get("search[value]", "").strip()
-    base_qs = get_fuel_invoice_queryset(vehicle_id=vehicle_id)
-    qs = get_fuel_invoice_queryset(vehicle_id=vehicle_id, search_value=search_value)
+    vozila = obuhvat_flote.vozila(request.user) if obuhvat_flote.aktivno(request.user) else None
+    base_qs = get_fuel_invoice_queryset(vehicle_id=vehicle_id, vozila=vozila)
+    qs = get_fuel_invoice_queryset(vehicle_id=vehicle_id, search_value=search_value, vozila=vozila)
 
     columns = {
         "0": "registration_number",
@@ -365,7 +367,7 @@ def fuel_transactions_datatable_data(request):
 
 @login_required
 def service_transactions_datatable_data(request):
-    qs = ServiceTransaction.objects.select_related("vehicle", "popravka_kategorija")
+    qs = obuhvat_flote.po_vozilu(ServiceTransaction.objects.select_related("vehicle", "popravka_kategorija"), request.user)
 
     def search(value):
         return (
@@ -403,7 +405,7 @@ def service_transactions_datatable_data(request):
 
 @login_required
 def policies_datatable_data(request):
-    qs = Policy.objects.select_related("vehicle")
+    qs = obuhvat_flote.po_vozilu(Policy.objects.select_related("vehicle"), request.user)
     vehicle_id = request.GET.get("vehicle")
     partner = (request.GET.get("partner") or "").strip()
     insurance_type = (request.GET.get("insurance_type") or "").strip()
@@ -493,7 +495,7 @@ def policies_datatable_data(request):
 
 @login_required
 def leases_datatable_data(request):
-    qs = Lease.objects.select_related("vehicle")
+    qs = obuhvat_flote.po_vozilu(Lease.objects.select_related("vehicle"), request.user)
     tip = request.GET.get("tip")
     if tip == "dugorocni":
         qs = qs.filter(lease_type__in=LONG_TERM_LEASE_TYPES)
@@ -556,7 +558,7 @@ def leases_datatable_data(request):
 
 @login_required
 def kvar_datatable_data(request):
-    base_qs = Kvar.objects.select_related("vehicle").prefetch_related("vehicle__traffic_cards")
+    base_qs = obuhvat_flote.po_vozilu(Kvar.objects.select_related("vehicle").prefetch_related("vehicle__traffic_cards"), request.user)
     qs = KvarFilter(request.GET, queryset=base_qs).qs
 
     def search(value):
@@ -616,7 +618,7 @@ def kvar_datatable_data(request):
 
 @login_required
 def requisitions_datatable_data(request):
-    qs = Requisition.objects.select_related("vehicle", "popravka_kategorija")
+    qs = obuhvat_flote.po_vozilu(Requisition.objects.select_related("vehicle", "popravka_kategorija"), request.user)
     vehicle_id = request.GET.get("vehicle")
     year = request.GET.get("year")
     document = (request.GET.get("document") or "").strip()
@@ -714,7 +716,9 @@ def traffic_cards_datatable_data(request):
     if request.GET.get('history') != '1':
         from django.db.models import F
         qs = qs.filter(pk=F('latest_card_id'))
-    if request.user.allowed_centers.exists():
+    if obuhvat_flote.aktivno(request.user):
+        qs = obuhvat_flote.po_vozilu(qs, request.user)
+    elif request.user.allowed_centers.exists():
         qs = qs.filter(latest_center__in=request.user.allowed_centers.values_list('center', flat=True))
 
     filter_form = TrafficCardFilterForm(request.GET or None)

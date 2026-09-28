@@ -24,7 +24,14 @@ def create_vehicle_from_steps(forms, user):
     for key in ['assigned_date', 'created_at']:
         if assignment.get(key) and assignment[key] < basis['start_date']:
             raise ValidationError('Raspoređivanje i prvo zaduženje ne mogu biti pre početka raspolaganja vozilom.')
-    if user.allowed_centers.exists():
+    from fleet.support import obuhvat as obuhvat_flote
+
+    if obuhvat_flote.aktivno(user):
+        dozvoljene = obuhvat_flote.jedinice(user)
+        unit = assignment.get('organizational_unit')
+        if dozvoljene is not None and (not unit or unit.pk not in dozvoljene):
+            raise PermissionDenied('Vozilo mora biti raspoređeno na šifru posla iz vašeg obuhvata.')
+    elif user.allowed_centers.exists():
         unit = assignment.get('organizational_unit')
         if not unit or not user.allowed_centers.filter(center=unit.center).exists():
             raise PermissionDenied('Vozilo mora biti raspoređeno u dozvoljeni centar.')

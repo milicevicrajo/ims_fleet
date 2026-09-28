@@ -36,13 +36,9 @@ def centri_sifara(company=1):
     """Sifra posla → oznaka centra u registru danas (za sifarnik poslova, koji nema datum)."""
     from django.utils import timezone
 
-    from organizacija.models import ExternalOrgMapping
-    from organizacija.services.putanja import centar_za
+    from organizacija.services import putanja
 
-    centar, dan = centar_za(company), timezone.localdate()
-    return {sifra: centar(cvor, dan) or "" for sifra, cvor in ExternalOrgMapping.objects.filter(
-        source=ExternalOrgMapping.SOURCE_FINANCE_JOB, company=company, valid_to__isnull=True)
-        .values_list("source_key", "node_id")}
+    return putanja.centri_sifara(company, timezone.localdate())
 
 
 def centar_sifre(job, mapa=None):

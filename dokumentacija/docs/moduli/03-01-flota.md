@@ -216,8 +216,8 @@ i tenderski dokument (7).
 
 | Podatak | Izvor | Kada | Tabela |
 |---|---|---|---|
-| Organizacione jedinice | `dbo.v_organizationalunit` | 01:30 | `fleet_organizationalunit` |
-| **Tekuća šifra posla vozila** | `dbo.sif_pos_trenutno` | 01:30 | `fleet_jobcode` |
+| Organizacione jedinice | **Registar organizacije** (od 28.09.2026.; ranije `dbo.v_organizationalunit`) | 01:40 | `fleet_organizationalunit` |
+| **Tekuća šifra posla vozila** | `dbo.sif_pos_trenutno` | Ručno, `update_job_codes` (nije u rasporedu) | `fleet_jobcode` |
 | Otpisana vozila | `dbo.fleet_otpis` | 01:20 | `fleet_vehicle.otpis` |
 | **Knjigovodstvena vrednost** | `dbo.vrednost_vozila` | Ručno | `fleet_vehicle.value` |
 | Trebovanja | `dbo.fleet_trebovanja` | 01:45 | `fleet_requisition` |
@@ -272,9 +272,28 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 > kartica posla, izveštaj po šiframa); u pravima pristupa ostaju samo već dodeljene. Šifra bez
 > prometa u poslednjih 12 meseci je neaktivna — to noćna sinhronizacija organizacije (01:40)
 > proverava sama. Uloga **Garaža** radi sa celom Flotom svih centara, a putne naloge samo gleda.
-> Filteri, zbirovi, ograničenje pristupa i broj putnog naloga i dalje rade preko starog polja
-> (centar je isti u oba izvora). Prekidač `FLOTA_REGISTAR_ORGANIZACIJE = False` u postavkama vraća
-> stare spiskove; dok je registar prazan, stari spiskovi se koriste sami.
+> Broj putnog naloga i dalje se pravi iz starog polja (centar je isti u oba izvora). Prekidač
+> `FLOTA_REGISTAR_ORGANIZACIJE = False` u postavkama vraća stare spiskove; dok je registar prazan,
+> stari spiskovi se koriste sami.
+
+> **[P] Pristup od 28.09.2026. — Flota na registru** (plan prelaska, korak 6; prekidač
+> `PRAVA_PO_REGISTRU["flota"]`, pravila u `fleet/support/obuhvat.py`). Obuhvat daju **odobrene
+> dodele uloga** koje imaju bilo koju dozvolu Flote (bez dozvola za zaposlene, naloge za vozilo i
+> korisnički nalog). `allowed_center_codes`, `allowed_centers` i izuzetak za Upravu više ne odlučuju.
+>
+> | Šta | Ko vidi |
+> |---|---|
+> | **Vozilo** i sve vezano za njega — saobraćajne, polise, lizing, gorivo i računi goriva, servisi, kvarovi, trebovanja, osiguranje, dokumenti za tender, dodele, kontrolna tabla | Ako je **današnja dodela vozila** u obuhvatu; vozilo bez ijedne dodele vidi svako ko ima obuhvat (da tek uneto vozilo ne nestane); zapis bez vozila (npr. nacrti za povezivanje) samo cela firma |
+> | **Putni nalog** | Ako mu je šifra posla u obuhvatu; nalog se ne može prebaciti na šifru van obuhvata |
+> | Izveštaji po istorijskoj dodeli (osiguranje, gorivo po šifri) | Po šiframa posla u obuhvatu |
+> | Analiza centra | Samo za centre koji su celi u obuhvatu |
+> | Izbor šifre posla (garaža, ekonomika, prijem vozila) | Samo šifre iz obuhvata, uz već upisanu |
+>
+> **Nalozi za vozilo** ne zavise od organizacije (zaposleni vidi svoje) i ne menjaju se. Uprava,
+> Garaža, Nabavka i Blagajna imaju obuhvat cele firme. Merenje 28.09.2026. (19 korisnika Flote):
+> putne naloge svi vide isto kao ranije, osim Garaže (0 → 3.746, samo čitanje, potvrđeno); vozila —
+> Pregled (3) i Sekretarijat (10) sada samo vozila svog centra (npr. 98 od 164 za centar 43), po
+> odluci 25.09.2026. „samo svoj centar”.
 
 ---
 
@@ -439,6 +458,19 @@ ispravke i provere. [P]
 ---
 
 ## Gde dalje
+
+### Vizuelni pregled Flote
+
+[Otvoriti UML galeriju Flote](../../dijagrami/flota.html) lokalno u pregledaču.
+Šest dijagrama obuhvata organizaciju koda, vozila i dodele, putne naloge,
+održavanje, zakup, osiguranje, uvoz goriva i ekonomske analize.
+Svaki ima SVG za uvećavanje, PNG i PlantUML izvor za izmene u VS Code-u (Alt+D).
+Prikaz je zasnovan na repozitorijumu od **28.09.2026.**, bez pristupa živoj bazi.
+
+Početi od **07 — Organizacija Flote**, zatim otvoriti modele **08–09** ili tokove
+**10–12**. `VehicleTravelOrder` i `PutniNalog` prikazani su zasebno; pomoćne
+evidencije nisu automatski ulazi u obračune. Detalji izvora i regenerisanja
+nalaze se u [poglavlju 2.14](../02-arhitektura.md#214-uml-dijagrami-aplikacije).
 
 | Poglavlje | Sadržaj |
 |---|---|

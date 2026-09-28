@@ -463,7 +463,7 @@ def get_fuel_consumption_queryset(start_date=None, end_date=None):
     return omv_queryset.union(nis_queryset)
 
 
-def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
+def get_fuel_invoice_queryset(vehicle_id=None, search_value="", vozila=None):
     latest_traffic_card_subquery = TrafficCard.objects.issued().filter(
         vehicle=OuterRef("vehicle")
     ).order_by("-issue_date", "-id").values("registration_number")[:1]
@@ -492,6 +492,9 @@ def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
     if vehicle_id:
         omv_queryset = omv_queryset.filter(vehicle_id=vehicle_id)
         nis_queryset = nis_queryset.filter(vehicle_id=vehicle_id)
+    if vozila is not None:  # obuhvat Flote na registru (fleet/support/obuhvat.py)
+        omv_queryset = omv_queryset.filter(vehicle_id__in=vozila)
+        nis_queryset = nis_queryset.filter(vehicle_id__in=vozila)
 
     if search_value:
         omv_queryset = omv_queryset.filter(
@@ -557,7 +560,7 @@ def get_fuel_invoice_queryset(vehicle_id=None, search_value=""):
     return omv_invoices.union(nis_invoices)
 
 
-def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
+def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None, vozila=None):
     supplier = str(supplier or "").strip().upper()
     receipt_number = str(receipt_number or "").strip()
 
@@ -570,6 +573,8 @@ def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
             queryset = queryset.filter(Q(invoice_no=receipt_number) | Q(voucher=receipt_number))
         if vehicle_id:
             queryset = queryset.filter(vehicle_id=vehicle_id)
+        if vozila is not None:
+            queryset = queryset.filter(vehicle_id__in=vozila)
         rows = []
         for row in queryset.order_by("transaction_date", "id"):
             total_gross, total_net = omv_charged_gross_net_amounts(row.gross_cc, row.vat)
@@ -595,6 +600,8 @@ def get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=None):
         )
         if vehicle_id:
             queryset = queryset.filter(vehicle_id=vehicle_id)
+        if vozila is not None:
+            queryset = queryset.filter(vehicle_id__in=vozila)
         rows = []
         for row in queryset.order_by("datum_transakcije", "id"):
             total_gross, total_net = nis_charged_gross_net_amounts(row.total)

@@ -693,7 +693,7 @@ istorija zakazanih poslova.
 01:00  Sinhronizacija dozvola
 01:10  Zaposleni iz kadrovske baze
 01:20  Provera otpisanih vozila
-01:30  Šifre poslova i organizacione jedinice
+01:40  Organizacija — registar, OJ, veze svih modula (stara sinhronizacija u 01:30 ugašena 28.09.2026.)
 01:45  Trebovanja
 02:00  Polise osiguranja
 02:20  EUF fakture (nabavka)
@@ -767,7 +767,7 @@ nema REST API-ja, nema odvojenog frontend okvira.
 | Obračuni | Obični Python moduli (`services/`, `support/`) | Bez okvira, bez klasa gde nisu potrebne |
 | Pristup podacima | Django ORM (`default`) + sirovi SQL (`server_db`) | Dva aliasa, ista baza |
 | Baza | Microsoft SQL Server, `mssql-django` 1.5, ODBC Driver 17 | Baza `IMS_ERP` |
-| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 20 zakazanih poslova |
+| Pozadinski poslovi | Celery 5.4 + Redis + `django-celery-beat` | 19 zakazanih poslova |
 | Okruženje | Windows server, NSSM servisi | Tri servisa |
 
 `djangorestframework` i `psycopg2-binary` postoje u `requirements.txt`, ali **nisu**
@@ -1258,11 +1258,14 @@ na osnovu koda i konfiguracije. Prikazuju ključne delove arhitekture; nisu auto
 inventar svih klasa, importovanja ili tabela.
 
 **Početna stranica:** [Galerija UML dijagrama](dijagrami/index.html).
+**Cela aplikacija na jednom dijagramu:** [Velika mapa sa zumiranjem](dijagrami/cela-aplikacija.html).
+**Poseban pregled Flote:** [Flota — šest detaljnih dijagrama](dijagrami/flota.html).
 Otvara se lokalno u pregledaču, bez pokretanja Django aplikacije. SVG omogućava
 uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređivanje.
 
 | Prikaz | Slika | PlantUML izvor | Osnova za prikaz |
 |---|---|---|---|
+| Kompletna aplikacija | [SVG](dijagrami/svg/13-kompletna-aplikacija.svg) | [13-kompletna-aplikacija.puml](dijagrami/13-kompletna-aplikacija.puml) | Korenske rute, modeli i servisi modula, `ims_erp/celery.py`, dokumentovana infrastruktura i integracije |
 | Pregled sistema | [SVG](dijagrami/svg/01-pregled-sistema.svg) | [01-pregled-sistema.puml](dijagrami/01-pregled-sistema.puml) | `ims_erp/urls.py`, `ims_erp/celery.py`, poglavlje 7: Integracije |
 | Organizacija modula | [SVG](dijagrami/svg/02-organizacija-modula.svg) | [02-organizacija-modula.puml](dijagrami/02-organizacija-modula.puml) | `INSTALLED_APPS`, korenske rute i organizacija koda modula |
 | Servisi i izvori podataka | [SVG](dijagrami/svg/03-serveri-i-podaci.svg) | [03-serveri-i-podaci.puml](dijagrami/03-serveri-i-podaci.puml) | `nssm.bat`, `ims_erp/celery.py`, dokumentovana konfiguracija baza |
@@ -1271,6 +1274,26 @@ uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređ
 | Korisnici i dozvole | [SVG](dijagrami/svg/06-korisnici-i-dozvole.svg) | [06-korisnici-i-dozvole.puml](dijagrami/06-korisnici-i-dozvole.puml) | `core/models.py`, `core/mixins.py`, `hr/access.py`, `organizacija/models.py` |
 
 **Kako se čitaju dijagrami:**
+
+Velika mapa **13 — Kompletna aplikacija** objedinjuje sve poslovne module,
+Organizaciju i nasleđenu Naplatu, ključne evidencije i primere međumodulskih veza.
+Ispod njih su izvršavanje, zajednička baza, datoteke i spoljni izvori. To je
+komponentni pregled cele aplikacije, a ne inventar svih klasa ili kompletan ER model.
+Stranica `cela-aplikacija.html` radi lokalno: **Cela mapa** uklapa dijagram u ekran,
+**100%** daje čitljiv prikaz, a **+ / −** i **Ctrl + točkić** menjaju uvećanje.
+Pomeranje je moguće prevlačenjem miša, klizačima i strelicama kada mapa ima fokus.
+SVG, PNG i PlantUML izvor dostupni su iz iste trake alata.
+
+Detaljni dijagrami Flote dopunjuju opšti pregled sistema:
+
+| Prikaz | Slika | PlantUML izvor | Osnova za prikaz |
+|---|---|---|---|
+| Organizacija Flote | [SVG](dijagrami/svg/07-flota-organizacija.svg) | [07-flota-organizacija.puml](dijagrami/07-flota-organizacija.puml) | `fleet/urls.py`, `fleet/views/`, `fleet/support/`, `fleet/services/`, `fleet/sync/` |
+| Vozila, dodele i nalozi | [SVG](dijagrami/svg/08-flota-vozila-i-nalozi.svg) | [08-flota-vozila-i-nalozi.puml](dijagrami/08-flota-vozila-i-nalozi.puml) | `fleet/models.py` |
+| Održavanje, zakup i osiguranje | [SVG](dijagrami/svg/09-flota-odrzavanje-i-ugovori.svg) | [09-flota-odrzavanje-i-ugovori.puml](dijagrami/09-flota-odrzavanje-i-ugovori.puml) | `fleet/models.py`, `fleet/economics_models.py` |
+| Tok goriva | [SVG](dijagrami/svg/10-flota-tok-goriva.svg) | [10-flota-tok-goriva.puml](dijagrami/10-flota-tok-goriva.puml) | `fleet/sync/selenium.py`, `fleet/support/fuel.py`, `fleet/support/assignments.py` |
+| Tok zaduženja vozila | [SVG](dijagrami/svg/11-flota-tok-putnog-naloga.svg) | [11-flota-tok-putnog-naloga.puml](dijagrami/11-flota-tok-putnog-naloga.puml) | `fleet/views/vehicle_travel_orders.py`, `fleet/forms/`, `fleet/models.py` |
+| Ekonomske analize | [SVG](dijagrami/svg/12-flota-ekonomika.svg) | [12-flota-ekonomika.puml](dijagrami/12-flota-ekonomika.puml) | `fleet/services/economics.py`, `fleet/views/analytics.py`, `fleet/economics_models.py` |
 
 - Dijagram 01 je pregled sistema i integracija u UML komponentnoj notaciji.
   Dijagram 02 grupiše module po poslovnoj nameni; grupe nisu zasebne aplikacije ili servisi.
@@ -1284,6 +1307,13 @@ uvećavanje, PNG je namenjen ubacivanju u dokumente, a `.puml` je izvor za uređ
   obaveznu i jedinstvenu vezu, uključujući stornirana rešenja.
 - Dijagram 06 razdvaja dozvolu rute od obuhvata podataka. Primena starog obuhvata i
   novog registra Organizacije zavisi od konkretnog modula i njegovih podešavanja.
+- Dijagrami 08–09 prikazuju izdvojene strane ključeve, sa obaveznošću veza.
+  Zaduženje vozila (`VehicleTravelOrder`) i službeni put (`PutniNalog`) su odvojeni modeli.
+  Polisa (`Policy`) i knjižena naknada osiguranja (`Insurance`) nemaju direktnu vezu.
+- Dijagrami 10 i 12 prikazuju tok podataka, ne strane ključeve. Gorivo za putni nalog
+  bira se po vozilu / tablici i periodu. Modeli `VehicleDowntime` i `LeaseChargePeriod`
+  postoje, ali ih aktuelni `period_analysis()` ne koristi; prikaz modela nije dokaz
+  da model učestvuje u tekućem obračunu.
 
 **Pregled i izmene u VS Code-u:**
 
@@ -1749,8 +1779,8 @@ i tenderski dokument (7).
 
 | Podatak | Izvor | Kada | Tabela |
 |---|---|---|---|
-| Organizacione jedinice | `dbo.v_organizationalunit` | 01:30 | `fleet_organizationalunit` |
-| **Tekuća šifra posla vozila** | `dbo.sif_pos_trenutno` | 01:30 | `fleet_jobcode` |
+| Organizacione jedinice | **Registar organizacije** (od 28.09.2026.; ranije `dbo.v_organizationalunit`) | 01:40 | `fleet_organizationalunit` |
+| **Tekuća šifra posla vozila** | `dbo.sif_pos_trenutno` | Ručno, `update_job_codes` (nije u rasporedu) | `fleet_jobcode` |
 | Otpisana vozila | `dbo.fleet_otpis` | 01:20 | `fleet_vehicle.otpis` |
 | **Knjigovodstvena vrednost** | `dbo.vrednost_vozila` | Ručno | `fleet_vehicle.value` |
 | Trebovanja | `dbo.fleet_trebovanja` | 01:45 | `fleet_requisition` |
@@ -1805,9 +1835,28 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 > kartica posla, izveštaj po šiframa); u pravima pristupa ostaju samo već dodeljene. Šifra bez
 > prometa u poslednjih 12 meseci je neaktivna — to noćna sinhronizacija organizacije (01:40)
 > proverava sama. Uloga **Garaža** radi sa celom Flotom svih centara, a putne naloge samo gleda.
-> Filteri, zbirovi, ograničenje pristupa i broj putnog naloga i dalje rade preko starog polja
-> (centar je isti u oba izvora). Prekidač `FLOTA_REGISTAR_ORGANIZACIJE = False` u postavkama vraća
-> stare spiskove; dok je registar prazan, stari spiskovi se koriste sami.
+> Broj putnog naloga i dalje se pravi iz starog polja (centar je isti u oba izvora). Prekidač
+> `FLOTA_REGISTAR_ORGANIZACIJE = False` u postavkama vraća stare spiskove; dok je registar prazan,
+> stari spiskovi se koriste sami.
+
+> **[P] Pristup od 28.09.2026. — Flota na registru** (plan prelaska, korak 6; prekidač
+> `PRAVA_PO_REGISTRU["flota"]`, pravila u `fleet/support/obuhvat.py`). Obuhvat daju **odobrene
+> dodele uloga** koje imaju bilo koju dozvolu Flote (bez dozvola za zaposlene, naloge za vozilo i
+> korisnički nalog). `allowed_center_codes`, `allowed_centers` i izuzetak za Upravu više ne odlučuju.
+>
+> | Šta | Ko vidi |
+> |---|---|
+> | **Vozilo** i sve vezano za njega — saobraćajne, polise, lizing, gorivo i računi goriva, servisi, kvarovi, trebovanja, osiguranje, dokumenti za tender, dodele, kontrolna tabla | Ako je **današnja dodela vozila** u obuhvatu; vozilo bez ijedne dodele vidi svako ko ima obuhvat (da tek uneto vozilo ne nestane); zapis bez vozila (npr. nacrti za povezivanje) samo cela firma |
+> | **Putni nalog** | Ako mu je šifra posla u obuhvatu; nalog se ne može prebaciti na šifru van obuhvata |
+> | Izveštaji po istorijskoj dodeli (osiguranje, gorivo po šifri) | Po šiframa posla u obuhvatu |
+> | Analiza centra | Samo za centre koji su celi u obuhvatu |
+> | Izbor šifre posla (garaža, ekonomika, prijem vozila) | Samo šifre iz obuhvata, uz već upisanu |
+>
+> **Nalozi za vozilo** ne zavise od organizacije (zaposleni vidi svoje) i ne menjaju se. Uprava,
+> Garaža, Nabavka i Blagajna imaju obuhvat cele firme. Merenje 28.09.2026. (19 korisnika Flote):
+> putne naloge svi vide isto kao ranije, osim Garaže (0 → 3.746, samo čitanje, potvrđeno); vozila —
+> Pregled (3) i Sekretarijat (10) sada samo vozila svog centra (npr. 98 od 164 za centar 43), po
+> odluci 25.09.2026. „samo svoj centar”.
 
 ---
 
@@ -1972,6 +2021,19 @@ ispravke i provere. [P]
 ---
 
 ### Gde dalje
+
+#### Vizuelni pregled Flote
+
+[Otvoriti UML galeriju Flote](dijagrami/flota.html) lokalno u pregledaču.
+Šest dijagrama obuhvata organizaciju koda, vozila i dodele, putne naloge,
+održavanje, zakup, osiguranje, uvoz goriva i ekonomske analize.
+Svaki ima SVG za uvećavanje, PNG i PlantUML izvor za izmene u VS Code-u (Alt+D).
+Prikaz je zasnovan na repozitorijumu od **28.09.2026.**, bez pristupa živoj bazi.
+
+Početi od **07 — Organizacija Flote**, zatim otvoriti modele **08–09** ili tokove
+**10–12**. `VehicleTravelOrder` i `PutniNalog` prikazani su zasebno; pomoćne
+evidencije nisu automatski ulazi u obračune. Detalji izvora i regenerisanja
+nalaze se u [poglavlju 2.14](#214-uml-dijagrami-aplikacije).
 
 | Poglavlje | Sadržaj |
 |---|---|
@@ -2273,9 +2335,19 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 Od 24.09.2026. `hr/access.py` ograničava spisak, detalje i izmenu zaposlenih, radne liste,
 odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i pojedinačni
-unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Obuhvat se bira po centrima
-u Administracija → Korisnici → Uloge i dozvole (izbor pojedinačnih kadrovskih OJ uklonjen je
-25.09.2026. — niko ga nije koristio). Ograničenja podataka ne menjaju obračune
+unos, grupni unos, predlog teksta i snimljene šifre OJ/centra.
+
+> **[P] Od 28.09.2026. Kadrovi su na registru organizacije** (prekidač `PRAVA_PO_REGISTRU["kadrovi"]`).
+> Nema posebne kadrovske organizacije: zaposleni pripada **čvoru registra** (`Employee.org_node`),
+> koji se izvodi iz OJ kadrovske baze — OJ istog broja kao jedinica → ta jedinica; kao centar →
+> centar (`20` → `2`); inače centar po prefiksu (4331 i 4332 → 43, 4110 → 41, 423 → 42); `1` i `10`
+> (Institut kao celina) nemaju čvor. Veza se postavlja pri čuvanju i noću u 01:40 (361 od 371
+> zaposlenog vezano 28.09.2026.). Obuhvat daju odobrene dodele uloga sa dozvolama `hr:…` ili
+> `employee_…`: dodeljen centar daje sve svoje jedinice, šifra posla ne daje ljude. „Sva rešenja”
+> i „sva ocenjivanja” su obuhvat cele firme. Merenje 28.09.2026.: 18 korisnika sa spiskom
+> zaposlenih vidi isto kao ranije, osim Uprave, koja sada vidi sve zaposlene (odluka 28.09.2026.).
+
+Ograničenja podataka ne menjaju obračune
 ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
 
 #### Forme Kadrova u sekcijama
@@ -3358,6 +3430,12 @@ Centar se preuzima iz **`posao.blok` po tačnoj šifri**, sa `sif_pred=1`.
 > **Centar se ne zaključuje iz prve dve cifre šifre**, i **ne uzima se** iz opšteg registra
 > organizacionih jedinica — taj registar nije potpun izvor za sve šifre poslova.
 
+> **[P] Od 28.09.2026. Potraživanja su na registru organizacije** (prekidač
+> `PRAVA_PO_REGISTRU["potrazivanja"]`): sinhronizacija upisuje centar pozicije i stavke iz
+> **registra organizacije** po tačnoj šifri posla, umesto `posao.blok` — i dalje nikad po prefiksu.
+> Na snimku od 28.09.2026. to menja jednu poziciju od 1.583: `110002` (saldo 318.352,18) ide u
+> centar 11. Tehnička `111111` i šifre van registra su bez centra. Isključen prekidač vraća `posao.blok`.
+
 Ako u izvornom šifarniku postoji duplirana ili prazna šifra posla, prenos se **prekida**
 porukom *„Duplirana/prazna šifra posla u izvornom šifarniku.“* [P]
 
@@ -3522,6 +3600,13 @@ Testovi: **59 testova** u 5 fajlova, uključujući **proveru brzine čitanja**. 
 ---
 
 ### 14. Uloge i prava pristupa
+
+> **[P] Obuhvat od 28.09.2026. (na registru):** vidljive pozicije, stavke i izvori po šifri posla
+> određuju **odobrene dodele uloga** sa bilo kojom dozvolom `potrazivanja:…` (Organizacija → Dodele
+> uloga). „Vidi sve” (`view_all`) je sada obuhvat cele firme — dobijaju ga Uprava i **Pravna služba**
+> (odluka 28.09.2026., kao i dosad). Izmene, pregled „za proveru” i sinhronizacija i dalje traže
+> „vidi sve”. Bez odobrene dodele korisnik ne vidi ništa. Provera na živim podacima 28.09.2026.:
+> svih 8 korisnika Potraživanja vidi isti broj pozicija i isti saldo kao po starim pravima.
 
 Modul ima **sopstveni sistem dozvola** (`potrazivanja/permissions.py`), uz uobičajeni. [P]
 
@@ -4744,7 +4829,7 @@ otvara dozvole, a **Poveži zaposlenog** otvara prozor za izbor zaposlenog.
 
 | Podatak | Izvor | Kada |
 |---|---|---|
-| **Organizacione jedinice i centri** | `dbo.v_organizationalunit` | Dnevno 01:30 |
+| **Organizacione jedinice i centri** | Registar organizacije (od 28.09.2026.) | Dnevno 01:40 |
 | **Kodovi dozvola** | Automatski iz `urlpatterns` svih aplikacija | Dnevno 01:00 |
 | Evidencija rada | Sam sistem, kroz `ActivityLogMiddleware` | Pri svakom zahtevu |
 | Istorija zadataka | Celery signali | Pri svakom zadatku |
@@ -4812,15 +4897,18 @@ Nova ruta = nova dozvola, ali tek posle pokretanja komande ili noćnog zadatka u
 
 #### Upravljanje pristupom kroz aplikaciju
 
-U **Administracija → Korisnici → Uloge i dozvole**, superuser bira uloge,
-centre iz pretraživih spiskova. Tu se menjaju ime, prezime,
+U **Administracija → Korisnici → Uloge i dozvole**, superuser bira uloge
+iz pretraživog spiska; **obuhvat podataka se od 28.09.2026. dodeljuje na ekranu Organizacija →
+Dodele uloga** (forma ima vezu ka njemu), a izbor starih centara i OJ je uklonjen. Tu se menjaju ime, prezime,
 e-pošta i aktivnost naloga. Pregled dozvola prati izabrane uloge, a primena je
 tek nakon **Sačuvaj pristup**. Pristup listi traži `user_list`; izmene naloga su
 i dalje samo za superuser, uključujući direktan POST. Nije moguće ugasiti sopstveni
 nalog niti kroz ovu formu dodeliti `is_superuser` ili `is_staff`.
 
-Centri se čuvaju u `allowed_center_codes`. Izbor pojedinačnih kadrovskih OJ
-(`allowed_hr_unit_codes`) **uklonjen je 25.09.2026.** — nijedan korisnik ga nije imao.
+Stara polja `allowed_center_codes` i `allowed_centers` ostaju u bazi kao istorija; forma ih više
+ne menja i nijedan modul ih ne čita (osim nasleđene Naplate). Izbor pojedinačnih kadrovskih OJ
+(`allowed_hr_unit_codes`) **uklonjen je 25.09.2026.** Novi nalog zaposlenog dobija odobrenu dodelu
+uloge „Zaposleni” za svoj centar. Spisak korisnika prikazuje obuhvat iz odobrenih dodela.
 Postojeći M2M `allowed_centers` je u zasebnom odeljku jer sadrži i šifre poslova,
 a pojedini moduli iz njega izvode pristup celom centru. Dodele se sabiraju.
 
@@ -4857,9 +4945,9 @@ pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
 
 Dozvole: `organizacija:dodele`, `organizacija:dodele_korisnika`, `organizacija:dodele_odobri`,
 `organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Odobrene dodele odlučuju o pristupu u
-Finansijama i Nabavci** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
+Finansijama, Nabavci, Potraživanjima i Floti** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
 pravima (`allowed_center_codes`, `allowed_centers`). Uloga Uprava dobija celu firmu kao običnu
-dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka i Blagajna.
+dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka, Blagajna i Pravna služba.
 
 ---
 
@@ -5042,8 +5130,13 @@ Centralni šifarnik na koji se vezuju vozila, putni nalozi, radne liste, nabavka
 | `name` | `char(100)` | Naziv |
 | `center` | `char(10)` | **Šifra centra** — koristi se za ograničenje pristupa i brojanje dokumenata |
 
-Puni ga sinhronizacija iz `dbo.v_organizationalunit` (`sif_pos`, `naz_pos`, `blok`),
-dnevno u 01:30. [P] Redovi sa praznim poljima se **preskaču**, ne upisuju. [P]
+Od 28.09.2026. tabelu **održava registar organizacije** (sinhronizacija u 01:40,
+`organizacija.services.sync.odrzavaj_organizacione_jedinice`): nova aktivna šifra posla sa centrom
+dobija OJ, a naziv i centar postojeće prate registar; ništa se ne briše. [P] Do tada ju je punila
+stara sinhronizacija iz `dbo.v_organizationalunit` (01:30), koja je preskakala šifre bez upisanog
+bloka — zato pet aktivnih šifara (npr. `412113`, `707003`) nije moglo da se izabere u Floti. Tabela
+ostaje, jer postojeći dokumenti pokazuju na nju; stara prava `allowed_center_codes` i
+`allowed_centers` ostaju kao istorija i više ih ne čita nijedan modul (osim nasleđene Naplate).
 
 > **Pažnja [P]:** u Finansijama centar **ne dolazi** iz ove tabele nego iz aktuelnog
 > `posao.blok` na izvoru. Promena centra u šifarniku pregrupiše celu istoriju.
@@ -6425,7 +6518,7 @@ Raspored — Celery Beat.
  01:00  Dozvole            →  nove rute postaju vidljive
  01:10  Zaposleni          →  fleet_employee
  01:20  Otpis vozila       →  fleet_vehicle.otpis
- 01:30  Šifre poslova      →  fleet_organizationalunit, fleet_jobcode
+ 01:40  Organizacija       →  registar, fleet_organizationalunit, org_node svih modula, fleet_employee.org_node
  01:45  Trebovanja         →  fleet_requisition
  02:00  Polise             →  fleet_policy
  02:20  EUF fakture        →  nabavka_invoice
@@ -17623,8 +17716,8 @@ rotacija dnevnika na 10 MB. [P]
 # 1. Baza i struktura
 .\.venv\Scripts\python.exe manage.py migrate
 
-# 2. Šifarnik organizacionih jedinica
-.\.venv\Scripts\python.exe manage.py fetch_job_codes
+# 2. Šifarnik organizacionih jedinica i registar organizacije
+.\.venv\Scripts\python.exe manage.py sync_organizacija
 
 # 3. Zaposleni
 .\.venv\Scripts\python.exe manage.py sync_hr_employees
@@ -17734,8 +17827,7 @@ chrome-for-testing/  Chrome za Selenium
  01:00  Dozvole i uloge
  01:10  Zaposleni iz kadrovske baze
  01:20  Provera otpisanih vozila
- 01:30  Šifre poslova i organizacione jedinice   ← stara organizacija
- 01:40  Registar organizacije i poređenje      ← nova, paralelno sa starom
+ 01:40  Organizacija: registar, OJ, veze modula ← jedina (stara u 01:30 ugašena 28.09.2026.)
  01:45  Trebovanja
  02:00  Polise osiguranja
  02:20  EUF fakture (Nabavka)
@@ -17755,7 +17847,7 @@ chrome-for-testing/  Chrome za Selenium
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 20 zakazanih poslova.** [P]
+**Ukupno 19 zakazanih poslova.** [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -17766,7 +17858,6 @@ chrome-for-testing/  Chrome za Selenium
 | 01:00 | Administracija — sinhronizacija dozvola | `core.tasks.sync_permission_codes_task` | `sync` | — |
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
-| 01:30 | Flota — šifre poslova i OJ | `fleet.tasks.fetch_job_codes` | `sync` | 60 min |
 | 01:40 | Organizacija — registar, obrt šifara, veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
@@ -18001,7 +18092,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py import_rfzo_sick_leave <putanja>
 
 # Flota
-.\.venv\Scripts\python.exe manage.py fetch_job_codes
+.\.venv\Scripts\python.exe manage.py fetch_job_codes      # UGAŠENO 28.09.2026. — samo u nuždi; OJ održava sync_organizacija
 .\.venv\Scripts\python.exe manage.py otpis
 .\.venv\Scripts\python.exe manage.py nis_command
 .\.venv\Scripts\python.exe manage.py omv_command_putnicka
@@ -18010,7 +18101,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates --apply  # brisanje
 .\.venv\Scripts\python.exe manage.py ispravi_sifre_goriva --proba         # šifra posla goriva na dan točenja
 
-# Registar organizacije (nova sinhronizacija, paralelno sa fetch_job_codes)
+# Registar organizacije — jedini vlasnik organizacije (od 28.09.2026.)
 .\.venv\Scripts\python.exe manage.py sync_organizacija                 # isto što i zadatak u 01:40
 .\.venv\Scripts\python.exe manage.py uvezi_organizaciju
 .\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa
@@ -20623,7 +20714,7 @@ Razrada: [`plan-registra-sifara-posla.md`](plan-registra-sifara-posla.md).
 |---|---|
 | Faza 1 — registar (`organizacija`), uvoz, stablo, kontrolni izveštaj | Izvedeno; otvorena pitanja o šiframa `111111`, `432`, `vranj`, `vranjs` i `960001` |
 | Faza 2, Flota — koraci 1–3 (veza `org_node`, popunjavanje, uporedni izveštaj) | Izvedeno 25.09.2026. **Čitanje iz registra (korak 4) nije uključeno** |
-| Nova sinhronizacija (01:40) | Radi paralelno sa starom (`fetch_job_codes`, 01:30): osvežava registar, povezuje Flotu i poredi staro i novo. Staru ne menja |
+| Sinhronizacija organizacije (01:40) | Od 28.09.2026. jedini vlasnik organizacije: registar, OJ, veze svih modula, centar na knjiženjima, zaposleni. Stara (`fetch_job_codes`, 01:30) ugašena |
 | Faza 2, Nabavka — koraci 1–4 | Izvedeno 25.09.2026.: 1.784 veze, uporedni izveštaj prolazi; spiskovi i nazivi iz registra |
 | Faza 2, Finansije — koraci 1–3 | Izvedeno 25.09.2026.: 149.195 knjiženja povezano; posle odluka (`110002`/`430001` → 11/43, `111111` tehnička) uporedni izveštaj prolazi |
 | Faza 2, Potraživanja — koraci 1–3 | Izvedeno 25.09.2026.: 21.961 veza, uporedni izveštaj prolazi |

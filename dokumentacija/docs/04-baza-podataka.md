@@ -80,8 +80,13 @@ Centralni šifarnik na koji se vezuju vozila, putni nalozi, radne liste, nabavka
 | `name` | `char(100)` | Naziv |
 | `center` | `char(10)` | **Šifra centra** — koristi se za ograničenje pristupa i brojanje dokumenata |
 
-Puni ga sinhronizacija iz `dbo.v_organizationalunit` (`sif_pos`, `naz_pos`, `blok`),
-dnevno u 01:30. [P] Redovi sa praznim poljima se **preskaču**, ne upisuju. [P]
+Od 28.09.2026. tabelu **održava registar organizacije** (sinhronizacija u 01:40,
+`organizacija.services.sync.odrzavaj_organizacione_jedinice`): nova aktivna šifra posla sa centrom
+dobija OJ, a naziv i centar postojeće prate registar; ništa se ne briše. [P] Do tada ju je punila
+stara sinhronizacija iz `dbo.v_organizationalunit` (01:30), koja je preskakala šifre bez upisanog
+bloka — zato pet aktivnih šifara (npr. `412113`, `707003`) nije moglo da se izabere u Floti. Tabela
+ostaje, jer postojeći dokumenti pokazuju na nju; stara prava `allowed_center_codes` i
+`allowed_centers` ostaju kao istorija i više ih ne čita nijedan modul (osim nasleđene Naplate).
 
 > **Pažnja [P]:** u Finansijama centar **ne dolazi** iz ove tabele nego iz aktuelnog
 > `posao.blok` na izvoru. Promena centra u šifarniku pregrupiše celu istoriju.

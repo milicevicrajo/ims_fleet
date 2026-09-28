@@ -12,8 +12,10 @@ from ..filters import KvarFilter
 from ..forms.garaza import KvarForm, KvarPartForm
 from ..models import JobCode, Kvar, KvarPart, Vehicle
 from ..support.garaza import ensure_auto_parts
+from fleet.support import obuhvat as obuhvat_flote
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class KvarListView(LoginRequiredMixin, FilterView):
     model = Kvar
     template_name = "fleet/kvar_list.html"
@@ -102,7 +104,7 @@ class KvarWorkOrderView(RolePermissionRequiredMixin, LoginRequiredMixin, Templat
     template_name = "fleet/kvar_workorder.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.kvar_obj = get_object_or_404(Kvar, pk=kwargs.get("pk"))
+        self.kvar_obj = get_object_or_404(obuhvat_flote.po_vozilu(Kvar.objects.all(), request.user), pk=kwargs.get("pk"))
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -144,7 +146,7 @@ class KvarTrebovanjeView(RolePermissionRequiredMixin, LoginRequiredMixin, Templa
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        kvar = get_object_or_404(Kvar.objects.select_related("vehicle"), pk=kwargs.get("pk"))
+        kvar = get_object_or_404(obuhvat_flote.po_vozilu(Kvar.objects.select_related("vehicle"), self.request.user), pk=kwargs.get("pk"))
         vehicle = kvar.vehicle
         traffic_card = vehicle.traffic_cards.order_by("-issue_date", "-id").first()
         latest_jobcode = (
@@ -191,7 +193,7 @@ class KvarDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateVi
 
     def dispatch(self, request, *args, **kwargs):
         self.kvar = get_object_or_404(
-            Kvar.objects.select_related("vehicle"), pk=kwargs.get("pk")
+            obuhvat_flote.po_vozilu(Kvar.objects.select_related("vehicle"), request.user), pk=kwargs.get("pk")
         )
         return super().dispatch(request, *args, **kwargs)
 
@@ -245,6 +247,7 @@ class KvarDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateVi
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class KvarCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Kvar
     form_class = KvarForm
@@ -262,6 +265,7 @@ class KvarCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView
         return redirect("kvar_detail", pk=self.object.pk)
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class KvarUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Kvar
     form_class = KvarForm
@@ -279,7 +283,7 @@ class KvarDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     success_url = reverse_lazy("kvar_list")
 
     def post(self, request, *args, **kwargs):
-        kvar = get_object_or_404(Kvar, pk=kwargs.get("pk"))
+        kvar = get_object_or_404(obuhvat_flote.po_vozilu(Kvar.objects.all(), request.user), pk=kwargs.get("pk"))
         kvar.delete()
         messages.success(request, "Kvar je obrisan.")
         return redirect(self.success_url)

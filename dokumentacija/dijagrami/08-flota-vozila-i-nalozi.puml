@@ -1,0 +1,51 @@
+@startuml
+!include _stil.iuml
+title Flota — vozila, dodele i putni nalozi
+caption UML model podataka | izdvojene veze, bez pomoćnih i revizionih polja
+class Vehicle {
+  identitet vozila / broj šasije
+  kategorija i otpis
+}
+class TrafficCard {
+  registration_number
+  issue_date
+}
+class VehicleTenderDocument
+class JobCode {
+  assigned_date
+  istorija dodele vozila
+}
+class "OrganizationalUnit\nŠifra posla / OJ" as Unit
+class "Employee\nZaposleni" as Employee
+class VehicleTravelOrder {
+  pn_number, rbz
+  created_at, closed_at
+  start_mileage, end_mileage
+}
+class PutniNalog {
+  službeni put zaposlenog
+  akontacija, dnevnice i troškovi
+}
+class Incident {
+  saobraćajni incident
+}
+Vehicle "1" -- "0..*" TrafficCard
+Vehicle "1" -- "0..*" VehicleTenderDocument
+Vehicle "0..1" -- "0..*" JobCode
+Unit "0..1" -- "0..*" JobCode : organizational_unit
+Vehicle "1" -- "0..*" VehicleTravelOrder
+Employee "1" -- "0..*" VehicleTravelOrder
+Unit "0..1" -- "0..*" VehicleTravelOrder : job_code
+Vehicle "0..1" -- "0..*" PutniNalog
+Employee "0..1" -- "0..*" PutniNalog
+Unit "1" -- "0..*" PutniNalog : job_code
+Vehicle "1" -- "0..*" Incident
+Employee "1" -- "0..*" Incident
+legend bottom
+  Puna linija = veza stranog ključa; oznaka 0..1 = opciona veza.
+  VehicleTravelOrder je zaduženje vozila; PutniNalog je službeni put zaposlenog.
+  Između te dve vrste naloga nema direktnog stranog ključa.
+  JobCode, VehicleTravelOrder i PutniNalog imaju i opcioni org_node ka registru Organizacije.
+  Tablica je istorijski podatak saobraćajne dozvole, ne stabilan identitet vozila.
+endlegend
+@enduml

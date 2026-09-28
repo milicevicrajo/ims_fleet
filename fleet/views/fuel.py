@@ -14,8 +14,10 @@ from ..filters import FuelFilterForm, FuelTransactionFilterForm
 from ..forms.fuel import FuelConsumptionForm
 from ..models import FuelConsumption, TrafficCard
 from ..support.fuel import date_range_for_datetime_field, format_receipt_identifier, get_fuel_invoice_lines
+from fleet.support import obuhvat as obuhvat_flote
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class FuelConsumptionListView(LoginRequiredMixin, FilterView):
     model = FuelConsumption
     filterset_class = FuelFilterForm
@@ -72,7 +74,8 @@ class FuelTransactionDetailView(LoginRequiredMixin, TemplateView):
         supplier = self.request.GET.get("supplier", "")
         receipt_number = self.request.GET.get("receipt", "")
         vehicle_id = self.request.GET.get("vehicle") or None
-        rows = get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=vehicle_id)
+        vozila = obuhvat_flote.vozila(self.request.user) if obuhvat_flote.aktivno(self.request.user) else None
+        rows = get_fuel_invoice_lines(supplier, receipt_number, vehicle_id=vehicle_id, vozila=vozila)
         display_receipt_number = format_receipt_identifier(receipt_number)
         vehicle = rows[0]["vehicle"] if rows else None
         back_params = {"vehicle": vehicle_id} if vehicle_id else {}
@@ -93,6 +96,7 @@ class FuelTransactionDetailView(LoginRequiredMixin, TemplateView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class FuelConsumptionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = FuelConsumption
     form_class = FuelConsumptionForm
@@ -106,6 +110,7 @@ class FuelConsumptionCreateView(RolePermissionRequiredMixin, LoginRequiredMixin,
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class FuelConsumptionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = FuelConsumption
     form_class = FuelConsumptionForm
@@ -119,6 +124,7 @@ class FuelConsumptionUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin,
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class FuelConsumptionDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = FuelConsumption
     template_name = "fleet/fuelconsumption_detail.html"
@@ -130,6 +136,7 @@ class FuelConsumptionDetailView(RolePermissionRequiredMixin, LoginRequiredMixin,
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class FuelConsumptionDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = FuelConsumption
     success_url = reverse_lazy("fuelconsumption_list")

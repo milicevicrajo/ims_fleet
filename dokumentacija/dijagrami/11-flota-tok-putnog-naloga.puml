@@ -1,0 +1,49 @@
+@startuml
+!include _stil.iuml
+title Flota — životni ciklus zaduženja vozila
+caption Sekvencijalni dijagram | VehicleTravelOrder, ne službeni PutniNalog zaposlenog
+actor "Ovlašćeni korisnik" as user
+participant "Forma i view\nvehicle_travel_orders.py" as view
+database "VehicleTravelOrder" as orders
+participant "Obračun goriva\nfleet/support/fuel.py" as fuel
+database "TransactionOMV\nTransactionNIS" as transactions
+user -> view : Novo zaduženje: vozilo, zaposleni,\ndatum i početna kilometraža
+view -> view : Provera pristupa i forme
+note right of view
+  Ne prihvata isti dan za isto vozilo,
+  ni drugi otvoren nalog sa istim
+  ili kasnijim datumom početka.
+end note
+alt Forma nije ispravna
+  view --> user : Prikaz grešaka, bez novog naloga
+else Forma je ispravna
+  view -> orders : Sačuvaj novi nalog
+  orders -> orders : Dodeli pn_number i rbz
+  view -> orders : Zatvori ranije otvorene naloge istog vozila\ndatumom početka novog naloga
+  note right of orders
+    Ako je uneta početna kilometraža,
+    postaje završna na ranijim nalozima.
+  end note
+  view --> user : Detalj novog naloga
+end
+group Ručno zatvaranje otvorenog naloga
+  user -> view : Datum zatvaranja + opciona završna kilometraža
+  view -> view : Datum zatvaranja nije pre početka
+  view -> orders : Sačuvaj closed_at i end_mileage\nako je forma ispravna
+  view --> user : Detalj naloga
+end
+group Detalj i štampa obračuna goriva
+  user -> view : Otvori detalj / obračun
+  view -> orders : Učitaj vozilo, datume i kilometražu
+  view -> transactions : Izaberi transakcije za vozilo / tablicu i period
+  transactions --> view : OMV i NIS zapisi
+  view -> fuel : Filteri goriva za putni nalog
+  fuel --> view : Očišćene stavke, bez AdBlue
+  view -> view : Litri i iznosi; l/100 km samo uz\npoznatu i pozitivnu pređenu kilometražu
+  view --> user : Detalj / obrazac za štampu
+end
+note over view, transactions
+  Otvoren nalog: period obračuna traje do današnjeg dana.
+  Zatvoren nalog: do datuma zatvaranja. Obračun se dobija čitanjem aktuelnih zapisa.
+end note
+@enduml

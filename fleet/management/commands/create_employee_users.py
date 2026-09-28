@@ -7,6 +7,7 @@ from django.db import transaction
 
 from core.models import OrganizationalUnit, Role
 from fleet.models import Employee
+from fleet.services.employee_user_profiles import dodeli_centar
 
 
 def clean(value):
@@ -169,6 +170,8 @@ class Command(BaseCommand):
                 user.save()
                 if role is not None:
                     user.roles.add(role)
+                    # Obuhvat svog centra kroz odobrenu dodelu (stara organizacija ugasena 28.09.2026.).
+                    dodeli_centar(user, role, center)
                 created_count += 1
 
         self.write(self.style.SUCCESS(f"KREIRANO KORISNIKA: {created_count}"))

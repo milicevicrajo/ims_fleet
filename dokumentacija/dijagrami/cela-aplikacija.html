@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>IMS ERP | Kompletna mapa aplikacije</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;height:100dvh;display:flex;flex-direction:column;background:#eef3f7;color:#213b50;font:15px/1.5 "Segoe UI",sans-serif}
+    header{padding:18px 24px;background:linear-gradient(110deg,#163b55,#237f79);color:white}
+    h1{font-size:24px;margin:0 0 4px}header p{margin:0;color:#dcecf2}
+    .toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 24px;background:white;border-bottom:1px solid #ccdbe5}
+    button,.toolbar a{font:inherit;border:1px solid #c5d7e3;border-radius:7px;background:white;color:#176087;padding:7px 12px;cursor:pointer;text-decoration:none}
+    button:hover,.toolbar a:hover{background:#edf5fa}
+    button:focus-visible,a:focus-visible,#viewport:focus-visible{outline:3px solid #298c94;outline-offset:-3px}
+    button:disabled{opacity:.45;cursor:default}
+    output{min-width:54px;text-align:center;font-variant-numeric:tabular-nums}
+    .spacer{flex:1}
+    #viewport{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;position:relative;background:#e5edf3;cursor:grab}
+    #viewport.dragging{cursor:grabbing;user-select:none}
+    #map{display:block;max-width:none;margin:0 auto;user-select:none;background:white;box-shadow:0 0 18px #163b5515}
+    footer{padding:7px 24px;background:white;border-top:1px solid #ccdbe5;color:#5c7181;font-size:12px}
+    @media(max-width:600px){header{padding:14px 16px}h1{font-size:21px}.toolbar{padding:10px 12px;gap:7px}.spacer{display:none}footer{padding:7px 12px}}
+  </style>
+</head>
+<body>
+  <header><h1>IMS ERP — kompletna mapa aplikacije</h1><p>Svi moduli, ključne evidencije, zajedničke funkcije, baze i integracije na jednom dijagramu.</p></header>
+  <nav class="toolbar" aria-label="Kontrole mape">
+    <button id="out" type="button" aria-label="Umanji mapu">−</button>
+    <output id="level" aria-live="polite" aria-label="Uvećanje">…</output>
+    <button id="in" type="button" aria-label="Uvećaj mapu">+</button>
+    <button id="fit" type="button">Cela mapa</button>
+    <button id="actual" type="button">100%</button>
+    <span class="spacer"></span>
+    <a href="svg/13-kompletna-aplikacija.svg">SVG</a>
+    <a href="png/13-kompletna-aplikacija.png">PNG</a>
+    <a href="13-kompletna-aplikacija.puml" download>PlantUML</a>
+    <a href="index.html">Svi dijagrami</a>
+  </nav>
+  <main id="viewport" tabindex="0" aria-label="Mapa aplikacije. Pomerajte strelicama, klizačima ili prevlačenjem mišem. Plus i minus menjaju uvećanje.">
+    <img id="map" src="svg/13-kompletna-aplikacija.svg" draggable="false" alt="Velika arhitektonska mapa IMS ERP-a: Flota, Kadrovi, Mobilni, Finansije, Nabavka, Potraživanja, Isplate, Pravna služba, Ugovori, Menice, Organizacija i Administracija, sa bazama i spoljnim sistemima.">
+  </main>
+  <footer id="hint">Uvećanje: + / − ili Ctrl + točkić iznad mape. Pomeranje: prevlačenje mišem, klizači ili strelice. Stanje koda: 28.09.2026.</footer>
+  <script>
+    const viewport = document.getElementById('viewport');
+    const map = document.getElementById('map');
+    const level = document.getElementById('level');
+    let zoom = 1, fitted = true, ready = false, drag = null;
+    const minimum = 0.02, maximum = 3;
+    function setZoom(value, x = viewport.clientWidth / 2, y = viewport.clientHeight / 2) {
+      if (!ready) return;
+      const pointX = (viewport.scrollLeft + x - map.offsetLeft) / zoom;
+      const pointY = (viewport.scrollTop + y) / zoom;
+      zoom = Math.max(minimum, Math.min(maximum, value));
+      map.style.width = `${map.naturalWidth * zoom}px`;
+      map.style.height = `${map.naturalHeight * zoom}px`;
+      viewport.scrollLeft = pointX * zoom + map.offsetLeft - x;
+      viewport.scrollTop = pointY * zoom - y;
+      level.textContent = `${Math.round(zoom * 100)}%`;
+      document.getElementById('out').disabled = zoom <= minimum;
+      document.getElementById('in').disabled = zoom >= maximum;
+    }
+    function fit() {
+      if (!ready) return;
+      fitted = true;
+      setZoom(Math.min((viewport.clientWidth - 20) / map.naturalWidth,
+        (viewport.clientHeight - 20) / map.naturalHeight, 1));
+      viewport.scrollTo(0, 0);
+    }
+    function step(factor) { fitted = false; setZoom(zoom * factor); }
+    document.getElementById('in').addEventListener('click', () => step(1.25));
+    document.getElementById('out').addEventListener('click', () => step(0.8));
+    document.getElementById('fit').addEventListener('click', fit);
+    document.getElementById('actual').addEventListener('click', () => { fitted = false; setZoom(1); });
+    viewport.addEventListener('wheel', event => {
+      if (!event.ctrlKey) return;
+      event.preventDefault(); fitted = false;
+      const bounds = viewport.getBoundingClientRect();
+      setZoom(zoom * (event.deltaY < 0 ? 1.15 : 1 / 1.15), event.clientX - bounds.left, event.clientY - bounds.top);
+    }, {passive:false});
+    viewport.addEventListener('keydown', event => {
+      if (event.key === '+' || event.key === '=') { event.preventDefault(); step(1.25); }
+      if (event.key === '-') { event.preventDefault(); step(0.8); }
+      if (event.key === '0') { event.preventDefault(); fit(); }
+    });
+    viewport.addEventListener('pointerdown', event => {
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      // Leave the native scrollbars and touch scrolling to the browser.
+      const bounds = viewport.getBoundingClientRect();
+      if (event.clientX - bounds.left >= viewport.clientWidth || event.clientY - bounds.top >= viewport.clientHeight) return;
+      drag = {x:event.clientX, y:event.clientY, left:viewport.scrollLeft, top:viewport.scrollTop};
+      viewport.setPointerCapture(event.pointerId); viewport.classList.add('dragging'); event.preventDefault();
+    });
+    viewport.addEventListener('pointermove', event => {
+      if (!drag) return;
+      viewport.scrollLeft = drag.left - (event.clientX - drag.x);
+      viewport.scrollTop = drag.top - (event.clientY - drag.y);
+    });
+    function endDrag() { drag = null; viewport.classList.remove('dragging'); }
+    viewport.addEventListener('pointerup', endDrag);
+    viewport.addEventListener('pointercancel', endDrag);
+    viewport.addEventListener('lostpointercapture', endDrag);
+    window.addEventListener('resize', () => { if (fitted) fit(); });
+    function initialize() { ready = map.naturalWidth > 0; if (ready) fit(); }
+    map.addEventListener('load', initialize);
+    map.addEventListener('error', () => { document.getElementById('hint').textContent = 'Slika nije dostupna. Ponovo generišite dijagrame pomoću render.py.'; });
+    if (map.complete) initialize();
+  </script>
+</body>
+</html>

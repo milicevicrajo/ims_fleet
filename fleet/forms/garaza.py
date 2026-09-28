@@ -61,8 +61,12 @@ class VehicleTravelOrderForm(forms.ModelForm):
         self.limit_to_user_employee = kwargs.pop("limit_to_user_employee", False)
         super().__init__(*args, **kwargs)
         if self.user:
+            from fleet.support import obuhvat as obuhvat_flote
             from fleet.support.management_reports import allowed_centers
-            centers = allowed_centers(self.user)
+            if obuhvat_flote.aktivno(self.user):
+                self.fields['job_code'].queryset = obuhvat_flote.ogranici_jedinice(
+                    self.fields['job_code'].queryset, self.user, getattr(self.instance, 'job_code_id', None))
+            centers = set() if obuhvat_flote.aktivno(self.user) else allowed_centers(self.user)
             if centers:
                 # Postojeca sifra naloga ostaje u izboru i kada je van korisnikovih
                 # centara; bez toga bi se pri izmeni tiho obrisala (polje nije obavezno).
@@ -207,8 +211,11 @@ class PreviousVehicleTravelOrderForm(forms.ModelForm):
         self.next_order = next_order
         super().__init__(*args, **kwargs)
         if user:
+            from fleet.support import obuhvat as obuhvat_flote
             from fleet.support.management_reports import allowed_centers
-            centers = allowed_centers(user)
+            if obuhvat_flote.aktivno(user):
+                self.fields['job_code'].queryset = obuhvat_flote.ogranici_jedinice(self.fields['job_code'].queryset, user)
+            centers = set() if obuhvat_flote.aktivno(user) else allowed_centers(user)
             if centers:
                 self.fields['job_code'].queryset = self.fields['job_code'].queryset.filter(center__in=centers)
         from fleet.support.registar import ogranici_izbor

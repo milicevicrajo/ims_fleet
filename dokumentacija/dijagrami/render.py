@@ -13,12 +13,19 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent
 DIAGRAMS = [
+    ('13-kompletna-aplikacija', 'Kompletna aplikacija — velika mapa', 'Svi moduli, ključne evidencije, dozvole, servisi, baze i integracije na jednom dijagramu.'),
     ('01-pregled-sistema', 'Pregled sistema', 'Korisnici, IMS ERP i spoljni izvori podataka.'),
     ('02-organizacija-modula', 'Organizacija modula', 'Poslovne oblasti, Django moduli i zajedničke funkcije.'),
     ('03-serveri-i-podaci', 'Servisi i izvori podataka', 'Windows, NSSM, Django, Celery, Redis i SQL Server.'),
     ('04-kadrovi-model-podataka', 'Kadrovi: model podataka', 'Zaposleni, zahtevi, rešenja, vrste, dani i potpisnici.'),
     ('05-kadrovi-tok-resenja', 'Kadrovi: tok rešenja', 'Provere, kreiranje nacrta i izdavanje dokumenta.'),
     ('06-korisnici-i-dozvole', 'Korisnici i dozvole', 'Uloge, dozvole ruta i organizacioni obuhvat.'),
+    ('07-flota-organizacija', 'Flota: organizacija modula', 'Ekrani, poslovna logika, modeli i spoljni izvori.'),
+    ('08-flota-vozila-i-nalozi', 'Flota: vozila i putni nalozi', 'Vozila, saobraćajne dozvole, istorija dodela i dve vrste naloga.'),
+    ('09-flota-odrzavanje-i-ugovori', 'Flota: održavanje i ugovori', 'Garaža, servisi, trebovanja, zastoji, zakup i osiguranje.'),
+    ('10-flota-tok-goriva', 'Flota: tok goriva', 'NIS / OMV, uvoz, razrešavanje vozila, čišćenje i izveštaji.'),
+    ('11-flota-tok-putnog-naloga', 'Flota: tok zaduženja vozila', 'Otvaranje, automatsko i ručno zatvaranje, obračun i štampa.'),
+    ('12-flota-ekonomika', 'Flota: ekonomske analize', 'Izvori troškova, profil vozila, period analize i poređenje scenarija.'),
 ]
 
 
@@ -39,9 +46,10 @@ def find_jar():
     return str(max(jars, key=lambda path: path.stat().st_mtime)) if jars else None
 
 
-def build_gallery():
+def build_gallery(fleet_only=False):
     cards = []
-    for stem, title, description in DIAGRAMS:
+    diagrams = [item for item in DIAGRAMS if '-flota-' in item[0]] if fleet_only else DIAGRAMS
+    for stem, title, description in diagrams:
         cards.append(f'''<article>
 <a class="preview" href="svg/{stem}.svg"><img src="svg/{stem}.svg" alt="{html.escape(title)}"></a>
 <div class="card-body"><h2>{html.escape(title)}</h2><p>{html.escape(description)}</p>
@@ -53,7 +61,7 @@ def build_gallery():
 *{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:#213b50;font:16px/1.6 "Segoe UI",sans-serif}
 header{background:linear-gradient(120deg,#163b55,#237f79);color:white;padding:42px max(24px,calc((100vw - 1280px)/2))}
 header small{letter-spacing:.12em}h1{font-size:34px;line-height:1.2;margin:10px 0}header p{margin:0;max-width:850px;color:#dcecf2}
-main{max-width:1328px;padding:28px 24px 48px;margin:auto}.intro{margin-bottom:24px;color:#536b7d}
+main{max-width:1328px;padding:28px 24px 48px;margin:auto}.intro{margin-bottom:24px;color:#536b7d}.sections{margin-bottom:24px}.sections a{background:#fff;border:1px solid #c6d9e5;padding:8px 18px;border-radius:24px}.sections a[aria-current="page"]{background:#163b55;color:white}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px}
 article{background:white;border:1px solid #dce5ed;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px #163b5508}
 .preview{display:block;background:#fff;padding:16px;border-bottom:1px solid #e6edf2}.preview img{display:block;width:100%;height:240px;object-fit:contain}
@@ -61,12 +69,21 @@ article{background:white;border:1px solid #dce5ed;border-radius:12px;overflow:hi
 a{color:#176087;text-decoration:none}a:hover{text-decoration:underline}a:focus-visible{outline:3px solid #298c94;outline-offset:4px}
 footer{margin-top:30px;font-size:13px;color:#607586}@media(max-width:500px){h1{font-size:28px}.preview img{height:200px}}
 </style></head><body><header><small>IMS ERP · TEHNIČKA DOKUMENTACIJA</small>
-<h1>Kako je sistem organizovan</h1><p>Od pregleda aplikacije i njenih modula do servisa, modela podataka i toka izdavanja rešenja.</p></header>
-<main><p class="intro">Počnite od pregleda sistema. Za uvećanje otvorite SVG; za izmene koristite PlantUML izvor i Alt+D u VS Code-u.</p>
+<h1>Kako je sistem organizovan</h1><p>Pregled aplikacije, moduli, modeli podataka i poslovni tokovi.</p></header>
+<main><nav class="sections" aria-label="Oblasti"><a href="cela-aplikacija.html">Velika mapa aplikacije</a><a href="index.html" ALL_CURRENT>Svi dijagrami</a><a href="flota.html" FLEET_CURRENT>Flota · 6 dijagrama</a></nav>
+<p class="intro">Počnite od pregleda sistema. Za uvećanje otvorite SVG; za izmene koristite PlantUML izvor i Alt+D u VS Code-u.</p>
 <div class="grid">''' + '\n'.join(cards) + '''</div>
 <footer>Stanje repozitorijuma: 28.09.2026. · Dijagrami se generišu lokalno.
 Raspored servera zasnovan je na konfiguraciji i dokumentaciji, bez provere živih servisa.</footer></main></body></html>'''
-    (ROOT / 'index.html').write_text(page, encoding='utf-8')
+    page = page.replace('ALL_CURRENT', '' if fleet_only else 'aria-current="page"')
+    page = page.replace('FLEET_CURRENT', 'aria-current="page"' if fleet_only else '')
+    if fleet_only:
+        page = page.replace('IMS ERP | UML arhitektura', 'IMS ERP | Flota — UML')
+        page = page.replace('Kako je sistem organizovan', 'Flota — kako je modul organizovan')
+        page = page.replace('Pregled aplikacije, moduli, modeli podataka i poslovni tokovi.',
+                            'Vozila, garaža, gorivo, zakup, osiguranje, putni nalozi i ekonomske analize.')
+        page = page.replace('Počnite od pregleda sistema.', 'Počnite od organizacije modula, pa otvorite oblast koju želite da istražite.')
+    (ROOT / ('flota.html' if fleet_only else 'index.html')).write_text(page, encoding='utf-8')
 
 
 def main():
@@ -77,7 +94,7 @@ def main():
     if not args.java or not args.jar:
         parser.error('Install Java and jebbs.plantuml, or supply --java and --jar paths.')
     sources = [f'{stem}.puml' for stem, _, _ in DIAGRAMS]
-    command = [args.java, '-Djava.awt.headless=true', '-jar', args.jar, '-charset', 'UTF-8']
+    command = [args.java, '-Djava.awt.headless=true', '-DPLANTUML_LIMIT_SIZE=8192', '-jar', args.jar, '-charset', 'UTF-8']
     subprocess.run(command + ['-checkonly', *sources], cwd=ROOT, check=True)
     for output in ('svg', 'png'):
         (ROOT / output).mkdir(exist_ok=True)
@@ -90,6 +107,7 @@ def main():
         if not (ROOT / 'png' / f'{stem}.png').is_file():
             raise RuntimeError(f'Missing PNG: {stem}')
     build_gallery()
+    build_gallery(fleet_only=True)
     print(f'OK: {len(DIAGRAMS)} diagrams, SVG + PNG. Gallery: {ROOT / "index.html"}')
 
 

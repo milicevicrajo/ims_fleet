@@ -146,8 +146,8 @@ rotacija dnevnika na 10 MB. [P]
 # 1. Baza i struktura
 .\.venv\Scripts\python.exe manage.py migrate
 
-# 2. Šifarnik organizacionih jedinica
-.\.venv\Scripts\python.exe manage.py fetch_job_codes
+# 2. Šifarnik organizacionih jedinica i registar organizacije
+.\.venv\Scripts\python.exe manage.py sync_organizacija
 
 # 3. Zaposleni
 .\.venv\Scripts\python.exe manage.py sync_hr_employees

@@ -34,26 +34,22 @@ class UserListView(LoginRequiredMixin, RolePermissionRequiredMixin, ListView):
     def get_queryset(self):
         users = (
             CustomUser.objects.select_related("employee")
-            .prefetch_related("roles", "allowed_centers")
+            .prefetch_related("roles", "dodele_uloga")
             .order_by("username")
         )
+        from organizacija.services.dodele import oznake_cvorova
+
+        oznake = oznake_cvorova()
         for user in users:
             role_names = [role.name + ('' if role.is_active else ' (neaktivna)') for role in user.roles.all()]
-            center_codes = [
-                part.strip()
-                for part in (user.allowed_center_codes or "").replace(';', ',').split(",")
-                if part.strip()
-            ]
-            unit_centers = sorted(
-                {
-                    str(center or "").strip()
-                    for center in (unit.center for unit in user.allowed_centers.all())
-                    if str(center or "").strip()
-                }
-            )
-            all_centers = sorted(set(center_codes + unit_centers), key=lambda value: (len(value), value))
+            # Obuhvat iz odobrenih dodela uloga (Organizacija → Dodele uloga), ne iz starih centara.
+            danas = timezone.localdate()
+            vazece = [d for d in user.dodele_uloga.all() if d.status == "aktivna" and d.vazi_od <= danas
+                      and (d.vazi_do is None or d.vazi_do > danas)]
+            obuhvat = sorted({"cela firma" if d.cela_firma else oznake.get(d.cvor_id, (None, str(d.cvor_id)))[1]
+                              for d in vazece})
             user.roles_display = ", ".join(role_names) or "-"
-            user.centers_display = ", ".join(all_centers) or "-"
+            user.centers_display = ", ".join(obuhvat) or "-"
             user.login_status_display = "Ulazio" if user.last_login else "Nije ulazio"
             user.password_status_display = (
                 "Nije promenio inicijalnu lozinku"

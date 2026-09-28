@@ -13,8 +13,10 @@ from core.mixins import RolePermissionRequiredMixin
 from ..forms.insurance import DraftInsuranceForm, InsuranceForm
 from ..models import DraftInsurance, Insurance
 from ..sync import fetch_ddor_insurance_data, migrate_draft_to_insurance_single
+from fleet.support import obuhvat as obuhvat_flote
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class InsuranceListView(LoginRequiredMixin, ListView):
     model = Insurance
     template_name = "fleet/insurance_list.html"
@@ -26,6 +28,7 @@ class InsuranceListView(LoginRequiredMixin, ListView):
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class InsuranceDetailView(LoginRequiredMixin, ListView):
     """
     Prikaz svih stavki jednog naloga (br_naloga, god).
@@ -51,6 +54,7 @@ class InsuranceDetailView(LoginRequiredMixin, ListView):
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class InsuranceFixingListView(LoginRequiredMixin, ListView):
     """
     Draft zapisi kojima nedostaju kljucni podaci.
@@ -75,6 +79,7 @@ class InsuranceFixingListView(LoginRequiredMixin, ListView):
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class InsuranceCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Insurance
     form_class = InsuranceForm
@@ -89,6 +94,7 @@ class InsuranceCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Creat
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class InsuranceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Insurance
     form_class = InsuranceForm
@@ -103,6 +109,7 @@ class InsuranceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, Updat
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class InsuranceDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Insurance
     template_name = "fleet/insurance_confirm_delete.html"
@@ -150,6 +157,7 @@ def delete_complete_draft_insurances():
     return
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class DraftInsuranceUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = DraftInsurance
     form_class = DraftInsuranceForm

@@ -300,7 +300,8 @@ class ParalelnaSinhronizacijaTests(FlotaTestCase):
         rezultat = self.sync.sinhronizuj()
         self.assertEqual(rezultat["run"].nodes_created, 1)
         self.assertEqual(PutniNalog.objects.get(pk=nalog.pk).org_node_id, cvor("431113"))
-        self.assertEqual(rezultat["kontrola"]["povezano"], 3)
+        # Posle gasenja stare organizacije registar sam dodaje OJ aktivnim siframa, pa su sve povezane.
+        self.assertEqual(rezultat["kontrola"]["povezano"], rezultat["kontrola"]["jedinica"] - 1)  # 960001 van registra
 
     def test_ponovljena_sinhronizacija_ne_pravi_nista_novo(self):
         self.sync.sinhronizuj()
@@ -308,15 +309,16 @@ class ParalelnaSinhronizacijaTests(FlotaTestCase):
         self.assertEqual((drugi["run"].nodes_created, drugi["run"].versions_created), (0, 0))
         self.assertEqual(sum(z["postavljeno"] + z["promenjeno"] + z["ocisceno"] for z in drugi["veze"]), 0)
 
-    def test_stara_organizacija_i_sifarnik_ostaju_netaknuti(self):
+    def test_sifarnik_ostaje_netaknut_a_oj_prati_registar(self):
+        """Sifarnik poslova (izvor) se ne dira; OJ posle gasenja stare organizacije odrzava registar."""
         from finansije.models import FinanceJob
 
-        pre = (sorted(OrganizationalUnit.objects.values_list("pk", "code", "name", "center")),
-               sorted(FinanceJob.objects.values_list("code", "name", "center", "active")))
+        pre = sorted(FinanceJob.objects.values_list("code", "name", "center", "active"))
+        stare = set(OrganizationalUnit.objects.values_list("pk", flat=True))
         self.sync.sinhronizuj()
-        posle = (sorted(OrganizationalUnit.objects.values_list("pk", "code", "name", "center")),
-                 sorted(FinanceJob.objects.values_list("code", "name", "center", "active")))
-        self.assertEqual(pre, posle)
+        self.assertEqual(sorted(FinanceJob.objects.values_list("code", "name", "center", "active")), pre)
+        self.assertLessEqual(stare, set(OrganizationalUnit.objects.values_list("pk", flat=True)))  # nista se ne brise
+        self.assertEqual(OrganizationalUnit.objects.get(pk=self.materijali.pk).name, "Troskovi amortizacije")
 
     def test_poredjenje_jedinica_stare_i_nove(self):
         OrganizationalUnit.objects.create(code="111111", name="Nepoznato", center="3")
@@ -342,16 +344,31 @@ class ParalelnaSinhronizacijaTests(FlotaTestCase):
         SyncRun.objects.create(company=1, year_from=2026, year_to=2026, status="success", finished_at=timezone.now())
         self.assertNotIn("UPOZORENJE", self.sync.poruka(self.sync.sinhronizuj()))
 
-    def test_zadatak_je_zakazan_posle_stare_sinhronizacije(self):
+    def test_stara_sinhronizacija_je_ugasena_a_nova_zakazana(self):
         from django.conf import settings
 
-        from core.management.commands.sync_celery_periodic_tasks import EXPECTED_PERIODIC_TASKS
+        from core.management.commands.sync_celery_periodic_tasks import EXPECTED_PERIODIC_TASKS, STALE_TASK_NAMES
 
         zadaci = {spec["task"]: spec for spec in EXPECTED_PERIODIC_TASKS}
-        nova, stara = zadaci["organizacija.tasks.sync_organizacija_task"], zadaci["fleet.tasks.fetch_job_codes"]
-        self.assertEqual(nova["hour"], stara["hour"])
-        self.assertGreater(int(nova["minute"]), int(stara["minute"]))
+        self.assertNotIn("fleet.tasks.fetch_job_codes", zadaci)  # ugasena 28.09.2026.
+        self.assertIn("Flota - sinhronizacija sifri poslova i OJ", STALE_TASK_NAMES)
+        self.assertEqual((zadaci["organizacija.tasks.sync_organizacija_task"]["hour"],
+                          zadaci["organizacija.tasks.sync_organizacija_task"]["minute"]), ("1", "40"))
         self.assertEqual(settings.CELERY_TASK_ROUTES["organizacija.tasks.sync_organizacija_task"], {"queue": "sync"})
+
+    def test_registar_odrzava_organizacione_jedinice(self):
+        """Nova aktivna sifra dobija OJ; naziv i centar postojece prate registar; neaktivna se ne dodaje."""
+        from organizacija.services import sync
+
+        OrganizationalUnit.objects.filter(code="430111").update(name="Stari naziv")
+        novih, izmenjenih = sync.odrzavaj_organizacione_jedinice()
+        self.assertEqual(OrganizationalUnit.objects.get(code="430111").name, "Strucni nadzor")
+        self.assertTrue(OrganizationalUnit.objects.filter(code="209001", center="2").exists())
+        self.assertFalse(OrganizationalUnit.objects.filter(code="431112").exists())  # neaktivna
+        self.assertFalse(OrganizationalUnit.objects.filter(code="111111").exists())  # tehnicka, bez centra
+        self.assertGreater(novih, 0)
+        self.assertGreaterEqual(izmenjenih, 1)
+        self.assertEqual(sync.odrzavaj_organizacione_jedinice(), (0, 0))  # ponovljeno — bez upisa
 
     def test_zadatak_i_komanda(self):
         from unittest import mock
@@ -676,18 +693,14 @@ class CitanjeRegistraUFlotiTests(FlotaTestCase):
         centri = fleet_snapshot(admin, datetime.date(2026, 9, 25))["centers"]
         self.assertIn("Centar 43 — Centar za puteve i geotehniku", [c["label"] for c in centri])
 
-    def test_forma_prava_pristupa_imenuje_centre_i_sifre(self):
+    def test_forma_prava_pristupa_vise_nema_stare_organizacije(self):
+        """Gasenje stare organizacije (28.09.2026.): obuhvat se dodeljuje na ekranu Dodele uloga."""
         from core.user_access import UserAccessForm
 
         admin = get_user_model().objects.create_superuser("prava-admin", "p@example.com", "x")
-        admin.allowed_centers.add(self.test_centar)  # vec dodeljeno pravo, sifra van registra
         forma = UserAccessForm(instance=admin, actor=admin)
-        self.assertIn(("43", "Centar 43 — Centar za puteve i geotehniku"), forma.fields["center_codes"].choices)
-        self.assertEqual(forma.fields["allowed_centers"].label_from_instance(self.nadzor),
-                         "430111 — Strucni nadzor · centar 43")
-        # Postojeca prava ne nestaju: vec dodeljena ostaje u izboru, a neaktivne se ne nude.
-        self.assertIn(self.test_centar, forma.fields["allowed_centers"].queryset)
-        self.assertNotIn(self.neaktivna, forma.fields["allowed_centers"].queryset)
+        self.assertNotIn("center_codes", forma.fields)
+        self.assertNotIn("allowed_centers", forma.fields)
 
     def test_forme_ne_prikazuju_polje_org_node(self):
         from fleet.forms.fuel import FuelConsumptionForm

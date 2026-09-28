@@ -31,14 +31,8 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "20",
     },
     {
-        "name": "Flota - sinhronizacija sifri poslova i OJ",
-        "aliases": ["Povlacenje sifri posla"],
-        "task": "fleet.tasks.fetch_job_codes",
-        "hour": "1",
-        "minute": "30",
-    },
-    {
-        # Nova sinhronizacija radi paralelno sa starom (iznad) i posle nje; staru ne menja.
+        # Jedini vlasnik organizacije od 28.09.2026.: registar, veze modula i OrganizationalUnit.
+        # Stara sinhronizacija sifara i OJ (01:30, fleet.tasks.fetch_job_codes) je ugasena.
         "name": "Organizacija - sinhronizacija registra i poredjenje sa starom",
         "task": "organizacija.tasks.sync_organizacija_task",
         "hour": "1",
@@ -144,7 +138,9 @@ EXPECTED_PERIODIC_TASKS = [
     },
 ]
 
-STALE_TASK_NAMES = ["dodaj grupe One time"]
+STALE_TASK_NAMES = ["dodaj grupe One time",
+                    # Stara organizacija ugasena 28.09.2026. — registar sam odrzava OrganizationalUnit.
+                    "Flota - sinhronizacija sifri poslova i OJ", "Povlacenje sifri posla"]
 
 
 class Command(BaseCommand):

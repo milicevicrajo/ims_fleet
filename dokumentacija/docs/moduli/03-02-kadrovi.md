@@ -289,9 +289,19 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 Od 24.09.2026. `hr/access.py` ograničava spisak, detalje i izmenu zaposlenih, radne liste,
 odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i pojedinačni
-unos, grupni unos, predlog teksta i snimljene šifre OJ/centra. Obuhvat se bira po centrima
-u Administracija → Korisnici → Uloge i dozvole (izbor pojedinačnih kadrovskih OJ uklonjen je
-25.09.2026. — niko ga nije koristio). Ograničenja podataka ne menjaju obračune
+unos, grupni unos, predlog teksta i snimljene šifre OJ/centra.
+
+> **[P] Od 28.09.2026. Kadrovi su na registru organizacije** (prekidač `PRAVA_PO_REGISTRU["kadrovi"]`).
+> Nema posebne kadrovske organizacije: zaposleni pripada **čvoru registra** (`Employee.org_node`),
+> koji se izvodi iz OJ kadrovske baze — OJ istog broja kao jedinica → ta jedinica; kao centar →
+> centar (`20` → `2`); inače centar po prefiksu (4331 i 4332 → 43, 4110 → 41, 423 → 42); `1` i `10`
+> (Institut kao celina) nemaju čvor. Veza se postavlja pri čuvanju i noću u 01:40 (361 od 371
+> zaposlenog vezano 28.09.2026.). Obuhvat daju odobrene dodele uloga sa dozvolama `hr:…` ili
+> `employee_…`: dodeljen centar daje sve svoje jedinice, šifra posla ne daje ljude. „Sva rešenja”
+> i „sva ocenjivanja” su obuhvat cele firme. Merenje 28.09.2026.: 18 korisnika sa spiskom
+> zaposlenih vidi isto kao ranije, osim Uprave, koja sada vidi sve zaposlene (odluka 28.09.2026.).
+
+Ograničenja podataka ne menjaju obračune
 ni pravilo da saglasnost na ocenu daje imenovani ocenjivač.
 
 ### Forme Kadrova u sekcijama

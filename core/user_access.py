@@ -5,25 +5,15 @@ from django.db import transaction
 from django.db.models import Q
 
 from core.activity import log_activity
-from core.models import CustomUser, OrganizationalUnit, Role
-
-
-def split_codes(raw):
-    return sorted({part.strip() for part in (raw or '').replace(';', ',').split(',') if part.strip()})
+from core.models import CustomUser, Role
 
 
 def access_snapshot(account):
+    # Obuhvat se od 28.09.2026. vodi na ekranu Organizacija → Dodele uloga (sopstvena istorija).
     return {
         'roles': list(account.roles.order_by('slug').values_list('slug', flat=True)),
-        'centers': split_codes(account.allowed_center_codes),
-        'units': list(account.allowed_centers.order_by('pk').values_list('pk', flat=True)),
         'is_active': account.is_active,
     }
-
-
-class UnitChoiceField(forms.ModelMultipleChoiceField):
-    def label_from_instance(self, obj):
-        return f'{obj.code.strip()} — {obj.name.strip()} (centar {obj.center.strip()})'
 
 
 class RoleChoiceField(forms.ModelMultipleChoiceField):
@@ -48,14 +38,14 @@ def permission_label(permission):
 
 
 class UserAccessForm(forms.ModelForm):
-    center_codes = forms.MultipleChoiceField(label='Centri', required=False)
+    """Nalog i uloge. Obuhvat podataka (centri, jedinice, sifre) se od 28.09.2026. dodeljuje na ekranu
+    Organizacija → Dodele uloga; stara polja `allowed_center_codes` i `allowed_centers` se ovde vise
+    ne menjaju (stara organizacija je ugasena)."""
     roles = RoleChoiceField(label='Uloge', queryset=Role.objects.none(), required=False)
-    allowed_centers = UnitChoiceField(label='Organizacione jedinice i poslovi iz postojećeg šifarnika',
-                                     queryset=OrganizationalUnit.objects.none(), required=False)
 
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'email', 'is_active', 'roles', 'allowed_centers')
+        fields = ('first_name', 'last_name', 'email', 'is_active', 'roles')
         labels = {'first_name': 'Ime', 'last_name': 'Prezime', 'email': 'E-pošta', 'is_active': 'Aktivan nalog'}
 
     def __init__(self, *args, actor, **kwargs):
@@ -63,30 +53,11 @@ class UserAccessForm(forms.ModelForm):
         self.actor = actor
         self.fields['roles'].queryset = Role.objects.filter(
             Q(is_active=True) | Q(users=self.instance)).distinct().order_by('name')
-        self.fields['allowed_centers'].queryset = OrganizationalUnit.objects.order_by('center','code')
-        centers = {str(c).strip() for c in OrganizationalUnit.objects.values_list('center',flat=True) if c and str(c).strip()}
-        centers.update(split_codes(self.instance.allowed_center_codes))
-        from fleet.support.registar import Registar
-        registar = Registar()
-        self.fields['center_codes'].choices = [
-            (c, f'Centar {registar.oznaka_centra(c)}') for c in sorted(centers, key=lambda x: (len(x), x))]
-        if registar.dostupan:
-            # Aktivne sifre iz registra; vec dodeljene ostaju u izboru, jer postojeca prava ne smeju da nestanu.
-            from fleet.support.registar import ogranici_izbor
-            dodeljene = set(self.instance.allowed_centers.values_list('pk', flat=True)) if self.instance.pk else set()
-            ogranici_izbor(self.fields['allowed_centers'], registar=registar, zadrzi=dodeljene)
-        self.initial['center_codes'] = split_codes(self.instance.allowed_center_codes)
         for name, field in self.fields.items():
             field.widget.attrs['class'] = ('form-check-input' if name=='is_active' else
                 'form-select select2-method' if isinstance(field, forms.MultipleChoiceField) or isinstance(field, forms.ModelMultipleChoiceField) else 'form-control')
         if self.instance.pk == actor.pk:
             self.fields['is_active'].disabled = True
-
-    def clean_center_codes(self):
-        values = sorted(set(self.cleaned_data['center_codes']))
-        if len(','.join(values)) > 255:
-            raise forms.ValidationError('Izabrane šifre prelaze dozvoljenu dužinu od 255 znakova.')
-        return values
 
     @transaction.atomic
     def save(self, commit=True, *, request=None):
@@ -96,8 +67,7 @@ class UserAccessForm(forms.ModelForm):
         previous = CustomUser.objects.select_for_update().get(pk=self.instance.pk)
         before = access_snapshot(previous)
         account = super().save(commit=False)
-        account.allowed_center_codes = ','.join(self.cleaned_data['center_codes'])
-        account.save(update_fields=['first_name','last_name','email','is_active','allowed_center_codes'])
+        account.save(update_fields=['first_name','last_name','email','is_active'])
         self.save_m2m()
         # Noćni sync prevodi ove stare Django grupe u uloge; uklanjanje uloge mora opstati.
         selected = set(account.roles.values_list('slug', flat=True))

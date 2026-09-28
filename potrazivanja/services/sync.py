@@ -363,6 +363,15 @@ def sync_collections(*, trigger="manual", requested_by=None, task_id="", progres
                 if not code or code in centers:
                     raise ValueError("Duplirana/prazna šifra posla u izvornom šifarniku.")
                 centers[code] = text(job.get("blok"))
+            from potrazivanja.access import na_registru
+
+            if na_registru():
+                # Na registru je centar pozicije i stavke centar sifre posla u registru, ne `posao.blok`
+                # (npr. 110002 → 11, 430001 → 43; 111111 i sifre van registra — bez centra).
+                from organizacija.services.putanja import centri_sifara
+
+                registar = centri_sifara()
+                centers = {code: registar.get(code, "") for code in centers}
             with transaction.atomic():
                 archive_sources(data, run, progress)
                 partners = sync_partners(data, run)

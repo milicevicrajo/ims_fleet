@@ -61,7 +61,7 @@ Razrada: [`plan-registra-sifara-posla.md`](../plan-registra-sifara-posla.md).
 |---|---|
 | Faza 1 — registar (`organizacija`), uvoz, stablo, kontrolni izveštaj | Izvedeno; otvorena pitanja o šiframa `111111`, `432`, `vranj`, `vranjs` i `960001` |
 | Faza 2, Flota — koraci 1–3 (veza `org_node`, popunjavanje, uporedni izveštaj) | Izvedeno 25.09.2026. **Čitanje iz registra (korak 4) nije uključeno** |
-| Nova sinhronizacija (01:40) | Radi paralelno sa starom (`fetch_job_codes`, 01:30): osvežava registar, povezuje Flotu i poredi staro i novo. Staru ne menja |
+| Sinhronizacija organizacije (01:40) | Od 28.09.2026. jedini vlasnik organizacije: registar, OJ, veze svih modula, centar na knjiženjima, zaposleni. Stara (`fetch_job_codes`, 01:30) ugašena |
 | Faza 2, Nabavka — koraci 1–4 | Izvedeno 25.09.2026.: 1.784 veze, uporedni izveštaj prolazi; spiskovi i nazivi iz registra |
 | Faza 2, Finansije — koraci 1–3 | Izvedeno 25.09.2026.: 149.195 knjiženja povezano; posle odluka (`110002`/`430001` → 11/43, `111111` tehnička) uporedni izveštaj prolazi |
 | Faza 2, Potraživanja — koraci 1–3 | Izvedeno 25.09.2026.: 21.961 veza, uporedni izveštaj prolazi |

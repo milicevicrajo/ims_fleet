@@ -1,6 +1,6 @@
 # Plan prelaska na registar organizacije — čitanje, prava i gašenje stare organizacije
 
-Datum: **25.09.2026.** · Status: **u realizaciji** — koraci 1–5 izvedeni — **Finansije i Nabavka na registru** (radi posle isporuke koda od 28.09.2026.); ostali moduli još na starim pravima. Šta je ostalo: poglavlje 0
+Datum: **25.09.2026.** · Status: **u realizaciji** — **svi koraci izvedeni (28.09.2026.) — stara organizacija ugašena**, svi moduli na registru; radi po isporuci koda (radi posle isporuke koda od 28.09.2026.); ostali moduli još na starim pravima. Šta je ostalo: poglavlje 0
 
 Ovaj plan je nastavak [plana registra šifara posla](plan-registra-sifara-posla.md) i razrađuje
 preostale korake **2–9** iz [plana organizacije i dozvola V2](plan-organizacije-i-dozvola-v2.md),
@@ -39,11 +39,11 @@ donete. Ništa od toga još ne odlučuje o pristupu.
 
 | # | Korak | Šta obuhvata |
 |---|---|---|
-| 7 | Potraživanja | Isti obrazac kao Finansije: obuhvat iz dodela (7 korisnika, svi `view_all`), centar iz registra |
-| 7a | Flota (korak 6) | ~30 mesta filtera i zbirova na registar, dodela vozila na datum; **spisak vozila dobija ograničenje po centru** (osim Uprave, Garaže, Nabavke i Blagajne) — odluka 25.09.2026. |
-| 8 | Kadrovi (korak 7) | Zaposleni dobija vezu na čvor registra na kartici; Uprava tada vidi sve zaposlene; nema posebne kadrovske organizacije (3.3) |
+| 7 | ✅ **Potraživanja na registru** (28.09.2026., u kodu, radi posle isporuke) — obuhvat iz dodela; Pravna služba cela firma; centar pozicija iz registra. Svih 8 korisnika vidi isti broj pozicija i saldo kao danas; centar menja 1 pozicija od 1.583 (`110002` → 11) | — |
+| 7a | ✅ **Flota na registru** (korak 6, 28.09.2026., u kodu, radi posle isporuke) — `fleet/support/obuhvat.py`: vozila i sve vezano za njih po današnjoj dodeli vozila, putni nalozi po šifri posla, izveštaji po šiframa u obuhvatu; 70 prikaza i sve funkcijske tabele. Odobren obuhvat svih 19 korisnika Flote. Putni nalozi isti za sve (osim potvrđene Garaže); vozila samo svog centra za Pregled (3) i Sekretarijat (10) | — |
+| 8 | ✅ **Kadrovi na registru** (korak 7, 28.09.2026.) — `Employee.org_node` iz OJ kadrovske baze (361 od 371; `1`/`10` bez čvora); obuhvat iz dodela; 18 korisnika vidi isto, Uprava sve zaposlene. Novi nalog zaposlenog dobija dodelu svog centra | — |
 | 9 | Sistematizacija (korak 8) | Ko koga vodi, objava od datuma; promena naziva, šifre ili roditelja bez gubitka istorije |
-| 10 | Gašenje stare organizacije (korak 9) | Uslovi iz 3.4; gasi se `fetch_job_codes` (01:30), tabela `OrganizationalUnit` ostaje za istoriju. **Moguće tek kad pređu i Potraživanja, Flota (sa putnim nalozima) i Kadrovi** — oni još čitaju `allowed_center_codes`, `allowed_centers` i `OrganizationalUnit.center` |
+| 10 | ✅ **Stara organizacija ugašena** (korak 9, 28.09.2026., u kodu; raspored se menja pri isporuci) — `fetch_job_codes` (01:30) izlazi iz rasporeda; `OrganizationalUnit` održava registar (dodato 5 aktivnih šifara koje stara sinhronizacija nije prenosila); forma korisnika više nema stare centre/OJ; sve dodele odobrene (0 u nacrtu). Tabela `OrganizationalUnit` i stara polja prava ostaju kao istorija | Nijedan modul ne čita `allowed_center_codes`/`allowed_centers` (osim nasleđene Naplate, pravilo 7) |
 
 ### 0.4. Podaci za proveru (ne koče korake 1–6)
 

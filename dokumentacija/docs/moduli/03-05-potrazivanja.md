@@ -116,6 +116,12 @@ Centar se preuzima iz **`posao.blok` po tačnoj šifri**, sa `sif_pred=1`.
 > **Centar se ne zaključuje iz prve dve cifre šifre**, i **ne uzima se** iz opšteg registra
 > organizacionih jedinica — taj registar nije potpun izvor za sve šifre poslova.
 
+> **[P] Od 28.09.2026. Potraživanja su na registru organizacije** (prekidač
+> `PRAVA_PO_REGISTRU["potrazivanja"]`): sinhronizacija upisuje centar pozicije i stavke iz
+> **registra organizacije** po tačnoj šifri posla, umesto `posao.blok` — i dalje nikad po prefiksu.
+> Na snimku od 28.09.2026. to menja jednu poziciju od 1.583: `110002` (saldo 318.352,18) ide u
+> centar 11. Tehnička `111111` i šifre van registra su bez centra. Isključen prekidač vraća `posao.blok`.
+
 Ako u izvornom šifarniku postoji duplirana ili prazna šifra posla, prenos se **prekida**
 porukom *„Duplirana/prazna šifra posla u izvornom šifarniku.“* [P]
 
@@ -280,6 +286,13 @@ Testovi: **59 testova** u 5 fajlova, uključujući **proveru brzine čitanja**. 
 ---
 
 ## 14. Uloge i prava pristupa
+
+> **[P] Obuhvat od 28.09.2026. (na registru):** vidljive pozicije, stavke i izvori po šifri posla
+> određuju **odobrene dodele uloga** sa bilo kojom dozvolom `potrazivanja:…` (Organizacija → Dodele
+> uloga). „Vidi sve” (`view_all`) je sada obuhvat cele firme — dobijaju ga Uprava i **Pravna služba**
+> (odluka 28.09.2026., kao i dosad). Izmene, pregled „za proveru” i sinhronizacija i dalje traže
+> „vidi sve”. Bez odobrene dodele korisnik ne vidi ništa. Provera na živim podacima 28.09.2026.:
+> svih 8 korisnika Potraživanja vidi isti broj pozicija i isti saldo kao po starim pravima.
 
 Modul ima **sopstveni sistem dozvola** (`potrazivanja/permissions.py`), uz uobičajeni. [P]
 

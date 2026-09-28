@@ -22,6 +22,7 @@ from core.mixins import RolePermissionRequiredMixin
 from ..forms.onboarding import VehicleIdentityForm, VehicleBasisForm, VehicleTechnicalForm, OnboardingTrafficCardForm, VehicleAssignmentForm, VehicleHoldingForm
 from ..models import Vehicle, VehicleHolding
 from ..services.vehicle_onboarding import create_vehicle_from_steps
+from fleet.support import obuhvat as obuhvat_flote
 
 
 STEPS = [
@@ -126,7 +127,12 @@ class VehicleOnboardingView(RolePermissionRequiredMixin, LoginRequiredMixin, Vie
         if data is not None and ((index == 3 and data.get('add_document')) or (index == 0 and not data.get('remove_photo'))):
             for key in missing_files:
                 form.add_error(key, 'Privremeni prilog više nije dostupan. Izaberite datoteku ponovo.')
-        if index == 4 and self.request.user.allowed_centers.exists():
+        if index == 4 and obuhvat_flote.aktivno(self.request.user) and obuhvat_flote.jedinice(self.request.user) is not None:
+            form.fields['organizational_unit'].queryset = obuhvat_flote.ogranici_jedinice(
+                form.fields['organizational_unit'].queryset, self.request.user)
+            form.fields['organizational_unit'].required = True
+            form.fields['organizational_unit'].help_text = 'Vozilo mora biti raspoređeno na šifru posla iz vašeg obuhvata.'
+        elif index == 4 and not obuhvat_flote.aktivno(self.request.user) and self.request.user.allowed_centers.exists():
             form.fields['organizational_unit'].queryset = form.fields['organizational_unit'].queryset.filter(center__in=self.request.user.allowed_centers.values_list('center', flat=True))
             form.fields['organizational_unit'].required = True
             form.fields['organizational_unit'].help_text = 'Vozilo mora biti raspoređeno u jedan od centara kojima imate pristup.'
@@ -247,6 +253,7 @@ class VehicleOnboardingView(RolePermissionRequiredMixin, LoginRequiredMixin, Vie
         return redirect(f'{reverse("vehicle_create")}?draft={token}')
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class HoldingViewMixin(RolePermissionRequiredMixin, LoginRequiredMixin):
     required_permission_code = 'vehicle_update'
     model = VehicleHolding
@@ -255,9 +262,9 @@ class HoldingViewMixin(RolePermissionRequiredMixin, LoginRequiredMixin):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        vehicle = get_object_or_404(Vehicle, pk=self.kwargs['vehicle_id'])
+        vehicle = get_object_or_404(obuhvat_flote.po_vozilu(Vehicle.objects.all(), self.request.user, "pk"), pk=self.kwargs['vehicle_id'])
         assignment = vehicle.job_codes.filter(assigned_date__lte=timezone.localdate()).select_related('organizational_unit').order_by('-assigned_date', '-id').first()
-        if self.request.user.allowed_centers.exists() and assignment and assignment.organizational_unit and not self.request.user.allowed_centers.filter(center=assignment.organizational_unit.center).exists():
+        if not obuhvat_flote.aktivno(self.request.user) and self.request.user.allowed_centers.exists() and assignment and assignment.organizational_unit and not self.request.user.allowed_centers.filter(center=assignment.organizational_unit.center).exists():
             raise PermissionDenied('Nemate pristup ovom vozilu.')
         kwargs['vehicle'] = vehicle
         return kwargs

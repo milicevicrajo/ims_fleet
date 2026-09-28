@@ -22,13 +22,9 @@
         <p class="text-muted small mt-2 mb-0">Dozvole aktivnih uloga se sabiraju. Kadrovi obuhvataju ceo kadrovski modul. Promena važi za ovog korisnika.</p>
       </div></div>
       <div class="card shadow-sm"><div class="card-header"><h4 class="mb-0">Obuhvat podataka</h4></div><div class="card-body">
-        <div class="d-flex justify-content-between"><label class="form-label" for="id_center_codes">Centri</label><button type="button" class="btn btn-link btn-sm p-0" data-select-all="id_center_codes">Izaberi sve centre</button></div>{{ form.center_codes }}{{ form.center_codes.errors }}
-        <p class="text-muted small mt-2">Centar daje pristup pripadajućim jedinicama. Pretražite šifru i dodajte više centara.</p>
-        <details class="mt-3" {% if form.allowed_centers.errors %}open{% endif %}><summary>Organizacione jedinice i poslovi iz postojećeg šifarnika</summary>
-          <div class="mt-2">{{ form.allowed_centers }}{{ form.allowed_centers.errors }}</div>
-          <p class="text-muted small mt-2">Postojeće dodele za Flotu i druge module. Neki moduli iz ove dodele izvode pristup celom centru.</p>
-        </details>
-        <p class="small text-muted mt-3 mb-0">Kadrovi bez izabranog obuhvata nemaju pristup tuđim kadrovskim podacima. Posebne dozvole za sve centre imaju prednost. Kod ostalih modula prazan izbor prati njihova postojeća pravila i ne znači automatski zabranu.</p>
+        <p class="mb-2">Čiji se podaci vide — cela firma, centar, jedinica ili šifra posla — određuje se za svaku ulogu posebno, na ekranu <strong>Organizacija → Dodele uloga</strong>.</p>
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'organizacija:dodele_korisnika' form.instance.pk %}"><i class="mdi mdi-account-key"></i> Dodele uloga ovog korisnika</a>
+        <p class="small text-muted mt-3 mb-0">Uloga bez odobrene dodele ne daje pristup ničijim podacima u Finansijama, Nabavci, Potraživanjima, Floti i Kadrovima. Stari izbor centara i OJ je ugašen 28.09.2026.</p>
       </div></div>
       <div class="d-flex gap-2 mb-4"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj pristup</button><a href="{% url 'user_list' %}" class="btn btn-outline-secondary">Odustani</a></div>
     </div>

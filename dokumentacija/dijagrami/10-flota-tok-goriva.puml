@@ -1,0 +1,35 @@
+@startuml
+!include _stil.iuml
+title Flota — od preuzimanja goriva do izveštaja
+caption Tok podataka | strelice označavaju obradu i čitanje, ne strane ključeve
+top to bottom direction
+cloud "NIS / OMV portali\nizveštaji dobavljača" as portals
+component "Preuzimanje i uvoz\nfleet/sync/selenium.py" as importer
+component "Razrešavanje vozila i dodele\nnormalizacija registarske oznake\nTrafficCard.for_plate()\nsifra_vozila_na_dan()" as resolve
+database "TransactionNIS / TransactionOMV\ntransakcije dobavljača\nopciona veza na Vehicle" as raw
+database "FuelConsumption\nevidencija potrošnje\nobavezna veza na Vehicle" as legacy
+component "Čišćenje za prikaz\nfleet/support/fuel.py\nOMV: duplikati i odjeci računa\nNIS / OMV: izbor proizvoda" as clean
+component "Računi i analitika goriva\ntransakcije, litri, iznosi\npotrošnja po vozilu" as reports
+component "Obračun putnog naloga vozila\nvozilo / tablica + period\nposebni filteri isključuju AdBlue" as travel
+component "Ekonomika vozila\nVehicleAnalysisProfile.fuel_source\ntransactions ili legacy" as economics
+portals --> importer
+importer --> resolve
+resolve --> raw : uvoz transakcija
+resolve --> legacy : uvoz potrošnje
+raw --> clean
+clean --> reports
+clean --> travel
+clean --> economics : transakcioni izvor
+legacy --> economics : nasleđeni izvor
+note right of resolve
+  Dodela šifri posla određuje se
+  prema datumu točenja.
+  Ne pogađa se vozilo kada tablica
+  pripada većem broju vozila.
+end note
+legend bottom
+  Gorivo se ne vezuje direktnim stranim ključem za VehicleTravelOrder.
+  Prikaz naloga bira transakcije po vozilu / tablici i vremenskom opsegu.
+  U ekonomici profil bira izvor: dve evidencije ne treba sabirati kao dva troška.
+endlegend
+@enduml

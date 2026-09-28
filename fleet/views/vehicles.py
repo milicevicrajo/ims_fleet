@@ -37,6 +37,7 @@ from ..support.fuel import (
     calculate_average_fuel_consumption,
 )
 from ..forms.vehicles import VehicleForm
+from fleet.support import obuhvat as obuhvat_flote
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 
@@ -81,6 +82,7 @@ def _write_storage_file(zip_file, file_field, archive_name):
     return True
 
 
+@obuhvat_flote.ogranici_po_vozilu("pk")
 class VehicleListView(LoginRequiredMixin, FilterView):
     model = Vehicle
     template_name = "fleet/vehicle_list.html"
@@ -153,7 +155,7 @@ def _vehicle_list_base_queryset(request):
     get = request.GET
     if "status" not in get and "show_archived" not in get:
         qs = qs.filter(otpis=False)
-    return qs
+    return obuhvat_flote.po_vozilu(qs, request.user, "pk")
 
 
 @role_permission_required()
@@ -203,7 +205,7 @@ def vehicle_export_csv(request):
 
 @role_permission_required("vehicle_detail")
 def vehicle_tender_documentation_zip(request, pk):
-    vehicle = get_object_or_404(Vehicle, pk=pk)
+    vehicle = get_object_or_404(obuhvat_flote.po_vozilu(Vehicle.objects.all(), request.user, "pk"), pk=pk)
 
     latest_org_unit_subquery = JobCode.objects.filter(vehicle_id=OuterRef("pk")).order_by("-assigned_date").values("organizational_unit__center")[:1]
     vehicle_with_latest_org_unit = Vehicle.objects.annotate(
@@ -211,7 +213,7 @@ def vehicle_tender_documentation_zip(request, pk):
     ).get(pk=vehicle.pk)
 
     user_allowed_centers_manager = request.user.allowed_centers
-    if user_allowed_centers_manager.exists():
+    if not obuhvat_flote.aktivno(request.user) and user_allowed_centers_manager.exists():
         allowed_centers_codes = user_allowed_centers_manager.values_list("center", flat=True)
         if (
             vehicle_with_latest_org_unit.latest_org_unit is not None
@@ -261,6 +263,7 @@ def vehicle_tender_documentation_zip(request, pk):
     return response
 
 
+@obuhvat_flote.ogranici_po_vozilu("pk")
 class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Vehicle
     template_name = "fleet/vehicle_detail.html"
@@ -344,6 +347,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu("pk")
 class VehicleCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Vehicle
     form_class = VehicleForm
@@ -361,6 +365,7 @@ class VehicleCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateV
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu("pk")
 class VehicleUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Vehicle
     form_class = VehicleForm
@@ -376,7 +381,7 @@ class VehicleUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateV
 
 class VehicleTogleStatusView(RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, pk):
-        vehicle = get_object_or_404(Vehicle, pk=pk)
+        vehicle = get_object_or_404(obuhvat_flote.po_vozilu(Vehicle.objects.all(), request.user, "pk"), pk=pk)
         if vehicle.otpis and not request.user.is_superuser:
             return HttpResponseForbidden("Samo superuser moze da vrati vozilo u upotrebu.")
 
@@ -416,6 +421,7 @@ class VehicleRestoreView(LoginRequiredMixin, View):
         return redirect("vehicle_list")
 
 
+@obuhvat_flote.ogranici_po_vozilu("pk")
 class VehicleDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Vehicle
     success_url = reverse_lazy("vehicle_list")

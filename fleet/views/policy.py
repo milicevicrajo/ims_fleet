@@ -19,8 +19,10 @@ from ..support.policy_queries import (
     expiring_policy_qs,
     policies_monthly_costs_qs,
 )
+from fleet.support import obuhvat as obuhvat_flote
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class PolicyListView(LoginRequiredMixin, ListView):
     model = Policy
     template_name = "fleet/policy_list.html"
@@ -51,6 +53,7 @@ class PolicyListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class PolicyFixingListView(LoginRequiredMixin, ListView):
     model = Policy
     template_name = "fleet/policy_fixing_list.html"
@@ -65,6 +68,7 @@ class PolicyFixingListView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class ExpiringAndNotRenewedPolicyView(LoginRequiredMixin, ListView):
     template_name = "fleet/policy_expiring.html"
     model = Policy
@@ -79,6 +83,7 @@ class ExpiringAndNotRenewedPolicyView(LoginRequiredMixin, ListView):
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class PolicyCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Policy
     form_class = PolicyForm
@@ -92,6 +97,7 @@ class PolicyCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateVi
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class PolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Policy
     form_class = PolicyForm
@@ -112,6 +118,7 @@ class PolicyUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateVi
         return response
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class PolicyDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Policy
     template_name = "fleet/policy_detail.html"
@@ -146,6 +153,7 @@ class PolicyDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailVi
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class PolicyDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Policy
     success_url = reverse_lazy("policy_list")

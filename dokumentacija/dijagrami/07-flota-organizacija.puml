@@ -1,0 +1,43 @@
+@startuml
+!include _stil.iuml
+title Flota — organizacija modula
+caption Funkcionalne oblasti i slojevi postojećeg Django modula
+top to bottom direction
+package "Ekrani i poslovne oblasti · fleet/urls.py + fleet/views/" {
+  component "Vozila i dodele\nRegistracija, dokumenti, centar / OJ\nviews/vehicles.py, vehicle_onboarding.py" as vehicles
+  component "Garaža i održavanje\nKvarovi, radni nalozi, trebovanja\nviews/kvar.py, services.py" as garage
+  component "Gorivo\nNIS / OMV, računi, potrošnja\nviews/fuel.py" as fuel
+  component "Zakup i osiguranje\nOsnov korišćenja, polise, knjiženja\nviews/lease.py, policy.py, insurance.py" as contracts
+  component "Putni nalozi\nZaduženje vozila + službeni put\nviews/vehicle_travel_orders.py, putni_nalozi.py" as orders
+  component "Analitika i izveštaji\nFlota, centar, pojedinačno vozilo\nviews/analytics.py, reports.py" as analytics
+  vehicles -[hidden]right-> garage
+  garage -[hidden]right-> fuel
+  contracts -[hidden]right-> orders
+  orders -[hidden]right-> analytics
+  vehicles -[hidden]down-> contracts
+}
+package "Poslovna logika" {
+  component "fleet/support/\nDodele na datum, gorivo, kilometraža,\nzakup, održavanje i izveštaji" as support
+  component "fleet/services/\nEkonomika, prijem vozila,\nisplate putnih naloga" as services
+  component "fleet/sync/\nSQL izvori i Selenium uvoz\nexternal.py, services.py, selenium.py" as sync
+}
+database "Lokalni modeli Flote\nfleet/models.py\nfleet/economics_models.py" as data
+component "Zajednički delovi\ncore: korisnici i dozvole\nhr: zaposleni · organizacija: obuhvat\nugovori: ugovor o zakupu / finansiranju" as shared
+cloud "Spoljni izvori\nNIS / OMV portali\nnasleđeni SQL pogledi" as external
+vehicles --> services
+garage --> support
+fuel --> support
+contracts --> support
+orders --> services
+analytics --> services
+support --> data
+services --> data
+sync --> data : uvoz
+external --> sync : čitanje
+data ..> shared : veze modela
+legend bottom
+  Prikaz grupiše funkcije, ne zasebne servise: sve pripada Django monolitu.
+  Strelice pokazuju glavne zavisnosti, ne svaki poziv u kodu.
+  Deo validacije i toka putnog naloga ostaje u forms.py i views/.
+endlegend
+@enduml

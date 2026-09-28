@@ -1,0 +1,123 @@
+@startuml
+!include _stil.iuml
+title IMS ERP — kompletna mapa aplikacije
+caption Poslovni moduli, ključne evidencije, zajednička osnova, izvršavanje i izvori podataka
+top to bottom direction
+skinparam nodesep 45
+skinparam ranksep 55
+skinparam defaultFontSize 16
+skinparam packageFontSize 18
+skinparam titleFontSize 32
+
+actor "Korisnici Instituta IMS\nUprava i ovlašćene službe" as users
+component "WEB ULAZ\nPregledač → Django HTML stranice i forme\nims_erp/urls.py → rute pojedinačnih modula\nZajednički meni, šabloni, statički fajlovi i štampa" as web #DCEBF5
+users --> web : HTTP(S)
+
+package "IMS ERP · jedan Django monolit" as application {
+  component "ZAJEDNIČKA OSNOVA · core + deo fleet\nPrijava i sesija → provera dozvole rute → obuhvat podataka\nCustomUser → Role → RolePermission → PermissionCode\nDozvola = ime URL rute; superuser prolazi sve provere\nCentri / OJ: postojeći obuhvat + registar Organizacije, prema modulu\nActivityLog · zajedničke forme, šabloni i pomoćne funkcije" as core #D9EEE7
+
+  package "LJUDI I RESURSI" as resources #F1F7FB {
+    component "FLOTA · fleet\nVozila, dokumenti, saobraćajne dozvole i dodele\nGorivo NIS / OMV, garaža, servisi i trebovanja\nZakup, polise, naknade i ekonomske analize\nVehicle · TrafficCard · JobCode · Lease · Policy\nKvar · ServiceTransaction · Requisition · Insurance\nVehicleTravelOrder ≠ PutniNalog zaposlenog\nKod: views/ · support/ · services/ · sync/" as fleet
+    component "KADROVI · hr\nZaposleni, radne liste, odmori i bolovanja\nOcenjivanje, zahtevi, rešenja i potpisnici\nEmployee · WorkTimeSheet · SickLeave\nAnnualLeaveAllowance · EmployeeEvaluation\nZahtev 1 — 0..1 Resenje; rešenje zahteva zahtev\nKod: services/ · zahtevi_views.py · resenja_views.py" as hr
+    component "MOBILNA TELEFONIJA · mobilni\nPaketi, brojevi, zaduženja i mesečna potrošnja\nUvoz obračuna, parking i obustave za zarade\nMobilePackage · MobileUser · MobileAssignment\nMobileUsage · MobileImportLog\nKod: views/ · withholdings.py" as mobile
+    fleet -[hidden]down-> hr
+    hr -[hidden]down-> mobile
+  }
+
+  package "FINANSIJSKO POSLOVANJE" as business #F0F8F3 {
+    component "FINANSIJSKA ANALITIKA · finansije\nPrihodi, rashodi, zajednički troškovi i tok gotovine\nKartica posla, zaposleni, banke i izveštaji\nFinanceJob · LedgerEntry · SyncRun\nBankContact · BankAccountRule · BankBillPlacement\nKod: services/; kontrolisano osvežavanje nalog_z" as finance
+    component "NABAVKA · nabavka\nPredmeti, stavke, narudžbenice i fakture\nPlan javnih nabavki, veze ugovora i šifri posla\nProcurementCase · ProcurementItem · PurchaseOrder\nProcurementInvoice · PublicProcurementPlanItem\nEUF / UF / roba: lokalni snimci izvora\nKod: services/ · source_snapshots.py · euf.py" as procurement
+    component "POTRAŽIVANJA · potrazivanja\nPartneri, dugovanja, dospeća i starosna struktura\nKontakti, aktivnosti naplate, opomene i predmeti\nFinancePartnerIdentity · InvoiceDocument\nReceivablePosting · BalanceSnapshot\nCollectionNotice · CollectionLegalCase · CollectionAudit\nKod: services/sync.py, source.py, operations.py" as receivables
+    component "ISPLATE · isplate\nPriprema i konverzija podataka za plaćanje\nGenerisanje virmana i datoteke za banku\nKod: services/virman.py · converters.py\nIzvoz datoteke; nema automatskog slanja banci" as payments
+    finance -[hidden]down-> procurement
+    procurement -[hidden]down-> receivables
+    receivables -[hidden]down-> payments
+  }
+
+  package "PRAVNI POSLOVI" as legal #F7F3FC {
+    component "PRAVNA SLUŽBA · pravna\nPravni i disciplinski postupci\nZaposleni, tok postupka, mere i zatvaranje\nPostupak · PromenaPostupka\nDisciplinskiPostupak · TokPostupka\nKod: views.py · views_disciplinski.py" as law
+    component "UGOVORI · ugovori\nPartneri, poslovni zahtevi, ponude i ugovori\nDokumenti, ugovorne strane, menice i garancije\nPartner · BusinessRequest · Offer · Contract\nContractDocument · ContractParty\nContractMenicaLink · ContractGuarantee\nKod: views.py · apr_openapi.py" as contracts
+    component "MENICE · menice\nUlazne i izlazne menice\nPreuzimanje podataka iz registra NBS\nMenica · UlaznaMenica\nVeza ugovora preko ContractMenicaLink\nKod: views.py · scraper.py" as bills
+    law -[hidden]down-> contracts
+    contracts -[hidden]down-> bills
+  }
+
+  package "ORGANIZACIJA I UPRAVLJANJE" as management #FFF8EA {
+    component "ORGANIZACIJA · organizacija\nRegistar centara, OJ i poslova; istorija važenja\nOrgNode · OrgNodeVersion · OrgPutanja\nExternalOrgMapping · LegacyOrgLink\nDodelaUloge: uloga i organizacioni obuhvat\nUvoz, provera šifri i veza sa starim registrom\nKod: services/prava.py · putanja.py" as org
+    component "ADMINISTRACIJA · core / fleet\nKorisnici, uloge, dozvole, centri i OJ\nEvidencija aktivnosti i izvršavanja zadataka\nActivityLog · TaskHistory\nSinhronizacije i raspored pozadinskih poslova\nDjango admin postoji kao zaseban tehnički ulaz\nKomande: sync_permission_codes,\nsync_celery_periodic_tasks" as admin
+    component "NASLEĐENA NAPLATA · naplata\nPostojeće rute i modeli starog modula\nZadržano radi prelaznog rada\nNovi razvoj naplate: potrazivanja\nNe predstavlja novi modul sistema" as old #FFF0DC
+    org -[hidden]down-> admin
+    admin -[hidden]down-> old
+  }
+
+  core --> resources : pristup i zajedničke funkcije
+  core --> business
+  core --> legal
+  core --> management
+  fleet -[hidden]right-> finance
+  finance -[hidden]right-> law
+  law -[hidden]right-> org
+
+  component "VEZE IZMEĐU OBLASTI · odabrani primeri iz modela\nEmployee (hr) koriste Flota, Pravna služba i Mobilna telefonija.\nContract (ugovori) povezuju zakup / finansiranje vozila, Nabavka i mobilni paketi.\nContractMenicaLink povezuje ugovore sa ulaznim i izlaznim menicama.\nKorisnici i organizacioni podaci zajednički su modulima; obuhvat se proverava po modulu.\nPravni predmeti Potraživanja i postupci Pravne službe ostaju zasebne evidencije." as relations #F8FAFC
+  resources ..> relations
+  business ..> relations
+  legal ..> relations
+  management ..> relations
+  mobile -[hidden]down-> relations
+  payments -[hidden]down-> relations
+  bills -[hidden]down-> relations
+  old -[hidden]down-> relations
+
+  component "POSLOVNA OBRADA I PRISTUP PODACIMA\nurls → views / forme → services / support → modeli i izvori\nDjango ORM za lokalne evidencije; namenski SQL za nasleđene izvore\nSinhronizacija pravi lokalne evidencije / snimke; deo analiza čita izvor pri otvaranju\nIzveštaji i dokumenti: HTML za štampu, Excel, CSV i bankarski formati\nObrazac zavisi od modula: deo logike ostaje u views i forms" as logic #D9EEE7
+  relations --> logic
+}
+web --> core
+
+package "IZVRŠAVANJE · Windows / NSSM" as runtime #F1F5FA {
+  component "Django web proces\nWSGI / ASGI ulaz\nC:/DjangoApps/ims_erp\nAdresa korisnika: 192.168.6.7" as django
+  component "Celery Beat\nDatabaseScheduler\nraspored u django_celery_beat" as beat
+  queue "Redis\nbroker i rezultati\nzaključavanje zadataka" as redis
+  component "Celery Worker\n-P solo: jedan zadatak odjednom\nredovi: default, sync, selenium\nsinhronizacije i preuzimanja" as worker
+  django --> redis : zakazuje
+  beat --> redis : periodični zadaci
+  redis --> worker : isporučuje
+}
+
+database "SQL SERVER · SMS-SERVER · IMS_ERP\nJEDNA FIZIČKA BAZA" as db #E8F4EF {
+  rectangle "LOKALNE DJANGO TABELE\nPoslovne evidencije, korisnici i uloge\nLokalni snimci finansija / nabavke / potraživanja\nIstorije uvoza, aktivnosti i zadataka\nPristup: default (ORM)" as local
+  rectangle "NASLEĐENI dbo.* OBJEKTI\nPogledi / tabele koje poseduje stari ERP\nPristup: server_db (namenski SQL)\nMnogi pogledi interno čitaju linked servers\ndefault i server_db nisu dve fizičke baze" as legacy #FFF5E8
+  local -[hidden]right-> legacy
+}
+folder "LOKALNE DATOTEKE\nmedia/: prilozi i dokumenti\nstatic/: izgled aplikacije\nlogovi i preuzete datoteke" as disk
+
+logic --> db : ORM / SQL
+logic --> django : izvršavanje web koda
+logic --> disk : dokumenti i prilozi
+worker --> db : uvoz / čitanje / istorija
+beat --> local : raspored
+
+package "SPOLJNI SISTEMI I RAZMENA" as external #FFF9F0 {
+  database "POVEZANI SQL SERVERI\nPUTGEO-SERVER.bazaims: knjigovodstvo\nPUTGEO-SERVER.bazaldims: zarade / odmori\nINFORMATIKA23.ID: kontrola pristupa\nSERFIN.bazaldims: kadrovski podaci" as sqlsources
+  cloud "PORTALI GORIVA\nNIS / OMV\nSelenium → datoteka → uvoz\nKorisnik podataka: Flota" as fuel
+  cloud "JAVNI REGISTRI\nAPR OpenAPI → Ugovori / partneri\nNBS HTTP + HTML → Menice" as registries
+  artifact "DATOTEKE ZA RAZMENU\nUlaz: RFZO, mobilni operater, Excel planovi\nIzlaz: banka, CSV obustava za zarade, izveštaji\nRučni uvoz / preuzimanje datoteka" as exchange
+  sqlsources -[hidden]right-> fuel
+  fuel -[hidden]right-> registries
+  registries -[hidden]right-> exchange
+}
+db --> sqlsources : čitanje preko povezanih servera
+worker --> fuel : preuzimanje
+logic --> registries : HTTP upiti
+disk -- exchange : uvoz / izvoz
+
+legend bottom left
+  KAKO ČITATI MAPU
+  Paketi grupišu poslovne oblasti; nisu zasebne aplikacije ni mikroservisi.
+  Puna strelica: pristup, obrada ili izvršavanje. Isprekidana: sažetak veza oblasti.
+  Imena modela su ključni primeri, ne inventar svih klasa i stranih ključeva.
+  core i deo hr modela imaju app_label="fleet"; naziv modula ne određuje uvek prefiks tabele.
+  NSSM konfiguracija potvrđuje Redis, Worker i Beat; web servis i odnos IP adrese prema SMS-SERVER nisu provereni.
+  Nasleđeni izvori se čitaju; kontrolisani izuzetak osvežavanja ide kroz finansije.services.nalog_z.
+  Prikaz je zasnovan na repozitorijumu i dokumentaciji, bez pristupa produkcionim podacima.
+endlegend
+@enduml

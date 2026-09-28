@@ -1,0 +1,34 @@
+@startuml
+!include _stil.iuml
+title Flota — organizacija ekonomskih analiza
+caption Tok podataka i modeli procene | fleet/services/economics.py + economics_models.py
+top to bottom direction
+database "Troškovi i naknade\nGorivo: transakcije / FuelConsumption\nServiceTransaction · Requisition\nPolicy: premije · Insurance: naknade\nLease · LeaseInterest" as costs
+database "Kontekst vozila\nVehicle · TrafficCard\nJobCode: dodele kroz vreme\nVehicleTravelOrder: upotreba" as context
+database "VehicleAnalysisProfile\nProfil po datumu važenja\nnamena, izvor goriva, kriterijum\nprag i izvor kriterijuma" as profile
+component "Pristup i period\nvisible_vehicles()\nizbor perioda i centra" as scope
+component "Analiza vozila\nperiod_analysis()\nvremensko povezivanje podataka\ni obračun za odabrani period" as analysis
+component "Zbirni prikaz\nfleet_summary()\nflota / centar / vozilo\ntroškovi, korišćenje, upozorenja" as summary
+database "VehicleEconomicAssessment\nVozilo, datum i pretpostavke\nsnapshot, methodology_version" as assessment
+database "VehicleEconomicScenario\nVarijante procene\nzadržati / kupiti / zakupiti / angažovati" as scenarios
+component "Poređenje varijanti\ncompare_scenarios()\nrezultati zavise od unetih pretpostavki" as compare
+component "Detalj sačuvane procene\nvehicle_assessment_detail()\nprikaz snapshot-a" as detail
+scope --> analysis
+costs --> analysis
+context --> analysis
+profile --> analysis
+analysis --> summary
+assessment --> analysis : dostupna procena
+assessment "1" -- "0..*" scenarios : strani ključ
+scenarios --> compare
+assessment --> compare : parametri procene
+compare --> assessment : čuvanje snapshot-a
+assessment --> detail
+legend bottom
+  Prikazane su glavne grupe ulaza, ne svi pomoćni upiti ni kompletna formula.
+  Istorija dodela i profila utiče na tumačenje podataka u izabranom periodu.
+  Sačuvana procena i scenariji su odvojeni od evidencije stvarnih troškova.
+  Naknade osiguranja prikazuju se odvojeno od troškova; zastoji se trenutno ne obračunavaju.
+  Nedostajuća osnova zakupa ili kriterijum nisu dokaz nultog troška / isplativosti.
+endlegend
+@enduml

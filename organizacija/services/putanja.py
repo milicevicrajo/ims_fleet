@@ -130,6 +130,16 @@ def centar_za(company=1):
     return centar
 
 
+def centri_sifara(company=1, dan=None):
+    """Sifra posla (kako je vode Finansije i Potrazivanja) → oznaka centra u registru na dan ("" bez centra)."""
+    from organizacija.models import ExternalOrgMapping
+
+    centar, dan = centar_za(company), dan or datetime.date.today()
+    return {sifra: centar(cvor, dan) or "" for sifra, cvor in ExternalOrgMapping.objects.filter(
+        source=ExternalOrgMapping.SOURCE_FINANCE_JOB, company=company, valid_to__isnull=True)
+        .values_list("source_key", "node_id")}
+
+
 def osvezi_centre(queryset, polje_cvora="org_node", polje_datuma="booking_date", polje_centra="org_centar"):
     """Snimak centra iz registra na dokumentu: `polje_centra` = centar sifre posla na datum dokumenta.
 

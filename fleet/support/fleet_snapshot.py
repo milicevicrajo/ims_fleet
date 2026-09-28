@@ -22,9 +22,16 @@ def fleet_snapshot(user, today=None):
         plate=Subquery(card.values('registration_number')[:1]),
         registration_until=Subquery(card.values('registration_valid_until')[:1]),
     )
-    allowed = list(user.allowed_centers.values_list('center', flat=True).distinct())
-    if allowed:
-        scoped = scoped.filter(current_center__in=allowed)
+    from fleet.support import obuhvat as obuhvat_flote
+
+    if obuhvat_flote.aktivno(user):
+        scoped = obuhvat_flote.po_vozilu(scoped, user, "pk")
+        # `allowed` ispod znaci samo „prikaz je ogranicen na deo firme”.
+        allowed = [] if obuhvat_flote.vozila(user) is None else ["obuhvat"]
+    else:
+        allowed = list(user.allowed_centers.values_list('center', flat=True).distinct())
+        if allowed:
+            scoped = scoped.filter(current_center__in=allowed)
     archived_count = scoped.filter(otpis=True).count()
     vehicles = list(scoped.filter(otpis=False).order_by('brand', 'model', 'pk'))
     by_id = {v.pk: v for v in vehicles}

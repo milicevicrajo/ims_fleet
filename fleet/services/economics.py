@@ -61,7 +61,10 @@ def visible_vehicles(user, include_retired=False):
     today = timezone.localdate()
     assignment = JobCode.objects.filter(vehicle_id=OuterRef('pk'), assigned_date__lte=today).order_by('-assigned_date', '-pk')
     qs = Vehicle.objects.annotate(access_center=Subquery(assignment.values('organizational_unit__center')[:1]))
-    centers = allowed_centers(user)
+    from fleet.support import obuhvat as obuhvat_flote
+
+    centers = set() if obuhvat_flote.aktivno(user) else allowed_centers(user)
+    qs = obuhvat_flote.po_vozilu(qs, user, "pk")  # na registru: danasnja dodela u obuhvatu (i vozila bez dodele)
     if centers:
         # Vozilo bez ijedne dodele nema centar i ne sme da nestane: tek uneto vozilo
         # jos nije rasporedjeno. Ranija provera je NULL izricito propustala.

@@ -13,6 +13,27 @@ ZERO = Decimal('0')
 FUEL_LABELS = {'diesel': 'Dizel', 'petrol': 'Benzin', 'lpg': 'TNG / LPG', 'cng': 'CNG', 'adblue': 'AdBlue', 'other': 'Ostalo / nerazvrstano'}
 
 
+def ogranici_izvestaj(qs, user, polje_centra="report_center", polje_sifre="report_job"):
+    """Izvestaji po istorijskoj dodeli: na registru po siframa posla u obuhvatu dodela, inace po
+    starim centrima korisnika (prazno = bez ogranicenja, kao i do sada)."""
+    from fleet.support import obuhvat as obuhvat_flote
+
+    if obuhvat_flote.aktivno(user):
+        sifre = obuhvat_flote.sifre(user)
+        return qs if sifre is None else qs.filter(**{f"{polje_sifre}__in": sifre})
+    centers = allowed_centers(user)
+    return qs.filter(**{f"{polje_centra}__in": centers}) if centers else qs
+
+
+def ograniceno(user):
+    """Da li je prikaz izvestaja ogranicen na deo firme."""
+    from fleet.support import obuhvat as obuhvat_flote
+
+    if obuhvat_flote.aktivno(user):
+        return obuhvat_flote.sifre(user) is not None
+    return bool(allowed_centers(user))
+
+
 def allowed_centers(user):
     if user.is_superuser:
         return set()
@@ -35,9 +56,7 @@ def vehicle_insurance_rows(user, data, *, casco=False):
         report_basis=Subquery(holding.values('basis')[:1]),
         report_lease=Exists(lease),
     )
-    centers = allowed_centers(user)
-    if centers:
-        qs = qs.filter(report_center__in=centers)
+    qs = ogranici_izvestaj(qs, user)
     if data.get('center'):
         qs = qs.filter(report_center=data['center'])
     if data.get('category'):
@@ -90,7 +109,6 @@ def fuel_report_rows(user, data):
     tz = timezone.get_current_timezone()
     start = timezone.make_aware(datetime.combine(data['date_from'], time.min), tz)
     end = timezone.make_aware(datetime.combine(data['date_to'] + timedelta(days=1), time.min), tz)
-    centers = allowed_centers(user)
     result = []
     for supplier, model, date_field, product_field, amount_field, qty_field, plate_field, currency_field in [
         ('nis', TransactionNIS, 'datum_transakcije', 'naziv_proizvoda', 'total', 'kolicina', 'registarska_oznaka_vozila', 'valuta'),
@@ -108,8 +126,7 @@ def fuel_report_rows(user, data):
             report_center=Subquery(history.values('organizational_unit__center')[:1]),
             report_job=Subquery(history.values('organizational_unit__code')[:1]),
         )
-        if centers:
-            qs = qs.filter(report_center__in=centers)
+        qs = ogranici_izvestaj(qs, user)
         if data.get('center'):
             qs = qs.filter(report_center=data['center'])
         if data.get('job_code'):

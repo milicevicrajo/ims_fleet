@@ -12,7 +12,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_GET
 from core.mixins import user_has_role_permission as has
 
-from .access import can_sync, can_view_all, check_access, scoped, can_edit, _allowed_sif_pos_from_user, _allowed_centers_from_user
+from .access import can_sync, can_view_all, check_access, scoped, can_edit, na_registru, sifre_u_obuhvatu, _allowed_centers_from_user
 from .models import (BalanceSnapshot, CollectionState, CollectionSyncRun, FinancePartnerIdentity,
                      CollectionContact, CollectionActivity, CollectionNotice, SourceRow,
                      ReceivablePosting, ReceivablePosition, CollectionLegalCase, ImportIssue)
@@ -199,6 +199,13 @@ def dataset_rows(snapshot, code):
 
 
 def job_centers(snapshot):
+    """Sifra posla → centar: iz registra kad su Potrazivanja na registru, inace `posao.blok` snimka."""
+    from .access import na_registru
+
+    if na_registru():
+        from organizacija.services.putanja import centri_sifara
+
+        return centri_sifara()
     return {text(r["sif_pos"]): text(r.get("blok")) for r in dataset_rows(snapshot, "posao").values_list("raw_data", flat=True)}
 
 
@@ -286,9 +293,10 @@ def rows_for(request, snapshot, kind):
         if not can_view_all(request.user):
             if kind in ("sef", "cases"):
                 raise PermissionDenied("Izveštaj nema raspodelu po šiframa posla.")
-            allowed_centers = set(_allowed_centers_from_user(request.user))
-            jobs = set(_allowed_sif_pos_from_user(request.user))
-            jobs.update(code for code, center in job_centers(snapshot).items() if center in allowed_centers)
+            jobs = sifre_u_obuhvatu(request.user)
+            if not na_registru():
+                allowed_centers = set(_allowed_centers_from_user(request.user))
+                jobs.update(code for code, center in job_centers(snapshot).items() if center in allowed_centers)
             records = records.filter(job_code__in=jobs)
         if request.GET.get("center"):
             jobs = [code for code, center in job_centers(snapshot).items() if center == request.GET["center"]]

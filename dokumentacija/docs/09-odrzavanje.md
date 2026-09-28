@@ -11,8 +11,7 @@
  01:00  Dozvole i uloge
  01:10  Zaposleni iz kadrovske baze
  01:20  Provera otpisanih vozila
- 01:30  Šifre poslova i organizacione jedinice   ← stara organizacija
- 01:40  Registar organizacije i poređenje      ← nova, paralelno sa starom
+ 01:40  Organizacija: registar, OJ, veze modula ← jedina (stara u 01:30 ugašena 28.09.2026.)
  01:45  Trebovanja
  02:00  Polise osiguranja
  02:20  EUF fakture (Nabavka)
@@ -32,7 +31,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 20 zakazanih poslova.** [P]
+**Ukupno 19 zakazanih poslova.** [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -43,7 +42,6 @@
 | 01:00 | Administracija — sinhronizacija dozvola | `core.tasks.sync_permission_codes_task` | `sync` | — |
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
-| 01:30 | Flota — šifre poslova i OJ | `fleet.tasks.fetch_job_codes` | `sync` | 60 min |
 | 01:40 | Organizacija — registar, obrt šifara, veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
@@ -278,7 +276,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py import_rfzo_sick_leave <putanja>
 
 # Flota
-.\.venv\Scripts\python.exe manage.py fetch_job_codes
+.\.venv\Scripts\python.exe manage.py fetch_job_codes      # UGAŠENO 28.09.2026. — samo u nuždi; OJ održava sync_organizacija
 .\.venv\Scripts\python.exe manage.py otpis
 .\.venv\Scripts\python.exe manage.py nis_command
 .\.venv\Scripts\python.exe manage.py omv_command_putnicka
@@ -287,7 +285,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 .\.venv\Scripts\python.exe manage.py cleanup_omv_fuel_duplicates --apply  # brisanje
 .\.venv\Scripts\python.exe manage.py ispravi_sifre_goriva --proba         # šifra posla goriva na dan točenja
 
-# Registar organizacije (nova sinhronizacija, paralelno sa fetch_job_codes)
+# Registar organizacije — jedini vlasnik organizacije (od 28.09.2026.)
 .\.venv\Scripts\python.exe manage.py sync_organizacija                 # isto što i zadatak u 01:40
 .\.venv\Scripts\python.exe manage.py uvezi_organizaciju
 .\.venv\Scripts\python.exe manage.py povezi_flotu --proba --izvestaj   # pregled, bez upisa

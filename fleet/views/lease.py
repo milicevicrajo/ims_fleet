@@ -12,10 +12,12 @@ from core.mixins import RolePermissionRequiredMixin
 from ..forms.lease import LeaseForm
 from ..models import Lease
 from ..support.lease_queries import lease_monthly_costs_rows
+from fleet.support import obuhvat as obuhvat_flote
 
 LONG_TERM_LEASE_TYPES = set(Lease.LONG_TERM_LEASE_TYPE_VALUES)
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class LeaseListView(LoginRequiredMixin, ListView):
     model = Lease
     template_name = "fleet/lease_list.html"
@@ -73,6 +75,7 @@ class LeaseListView(LoginRequiredMixin, ListView):
         return ctx
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class LeaseCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, CreateView):
     model = Lease
     form_class = LeaseForm
@@ -145,6 +148,7 @@ def export_leases_to_excel(request):
     return rows_to_xlsx_response(fname, "Lizing ugovori", headers, rows, quoted=True)
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class LeaseUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
     model = Lease
     form_class = LeaseForm
@@ -158,6 +162,7 @@ class LeaseUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateVie
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class LeaseDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailView):
     model = Lease
     template_name = "fleet/lease_detail.html"
@@ -169,6 +174,7 @@ class LeaseDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailVie
         return context
 
 
+@obuhvat_flote.ogranici_po_vozilu()
 class LeaseDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, DeleteView):
     model = Lease
     success_url = reverse_lazy("lease_list")
