@@ -31,7 +31,7 @@
 │  C_Tasteri                      │ ← šifarnik tastera
 │  c_parovi_radnika_detalji       │ ← već uparena trajanja (K-02)
 └─────────────────────────────────┘
-┌─ SERFIN.bazaldims ──────────────┐
+┌─ PUTGEO-SERVER.bazaldims ───────┐
 │  radnik                         │ ← OJ i ime uz parove (K-02)
 └─────────────────────────────────┘
 ┌─ PUTGEO-SERVER.BazaLDIMS ───────┐   obračun zarada
@@ -283,7 +283,10 @@ Sve se izvršava **jednim SQL upitom** nad povezanim serverima. [P]
 **Izvor:**
 
 > `INFORMATIKA23.ID.dbo.c_parovi_radnika_detalji`
-> spojeno sa `SERFIN.bazaldims.dbo.radnik` preko `Radnik = rasif`
+> spojeno sa `PUTGEO-SERVER.bazaldims.dbo.radnik` preko `Radnik = rasif`
+
+Kod je prebačen sa ugašenog SERFIN-a 28.09.2026. Produkcione SQL objekte i rezultate
+treba potvrditi prema [kontrolnoj listi prelaska](../07-integracije.md#7231-provere-nakon-gašenja-serfin-a).
 
 **Isključenje neispravnih zapisa [P]:**
 
@@ -334,7 +337,7 @@ sa **C** već u upitu.
 |---|---|
 | `Trajanje_1 >= 20` | **Ceo red se izuzima** |
 | Pauza duža od 30 minuta | Priznaje se samo 0,5 sata |
-| Radnik nije u `SERFIN.bazaldims.dbo.radnik` | **Red se gubi** — spajanje je `INNER JOIN` |
+| Radnik nije u `PUTGEO-SERVER.bazaldims.dbo.radnik` | **Red se gubi** — spajanje je `INNER JOIN` |
 
 ### 13. Status pouzdanosti
 

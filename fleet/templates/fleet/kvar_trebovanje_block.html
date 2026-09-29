@@ -9,8 +9,8 @@
   </div>
 </div>
 <div class="top-line" style="gap:1.5mm; margin:0.3mm 0 0.3mm 0; font-size:11pt; display:flex; flex-wrap:wrap; row-gap:1mm;">
-  <div style="min-width:45mm;">O.J.: <strong>{{ organizational_unit.code|default:"" }}</strong></div>
-  <div style="min-width:45mm;">Šifra posla: <strong>{{ center }}</strong></div>
+  <div style="min-width:45mm;">O.J.: <strong>{{ center }}</strong></div>
+  <div style="min-width:45mm;">Šifra posla: <strong>{{ organizational_unit.code|default:"" }}</strong></div>
   <div style="min-width:35mm;">Datum: <strong>{{ kvar.created_at|date:"d.m.Y" }}</strong></div>
   <div style="min-width:45mm;">Vozilo: <strong>{{ vehicle }}</strong></div>
 

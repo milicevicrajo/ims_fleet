@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% comment %}
+Prijava kvara: vozilo (uz tablicu, šifru posla i poslednju poznatu kilometražu), vrsta
+intervencije i mesto popravke kao kartice, kilometraža sa proverom i opis. Kilometraža koja
+odstupa od poslednjeg očitavanja čuva se tek uz potvrdu (forma i server koriste isto pravilo).
+{% endcomment %}
+{% block title %}{{ title }} | IMS{% endblock %}
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+<style>
+  .kvar-form .card { border: 1px solid #e3e6ec; border-radius: 10px; margin-bottom: 16px; }
+  .kvar-form .card > header { padding: 12px 18px; border-bottom: 1px solid #eef0f4; background: #fafbfd; border-radius: 10px 10px 0 0;
+    font-weight: 600; color: #14395b; display: flex; align-items: center; gap: 8px; }
+  .kvar-form .card > header .broj { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    background: #1f6f8b; color: #fff; font-size: .8rem; }
+  .kvar-form .card > div { padding: 16px 18px; }
+  .kvar-form .form-label { font-weight: 600; font-size: .86rem; color: #3b4652; margin-bottom: 4px; }
+  .kvar-vozilo-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; }
+  .kvar-vozilo-info div { background: #f7f9fc; border: 1px solid #e6ebf1; border-radius: 8px; padding: 8px 12px; }
+  .kvar-vozilo-info small { display: block; color: #64748b; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+  .kvar-vozilo-info strong { color: #14395b; font-size: .95rem; }
+  .kvar-izbor { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .kvar-izbor label { display: flex; gap: 10px; align-items: flex-start; border: 1px solid #dfe3ea; border-radius: 8px; padding: 12px 14px;
+    cursor: pointer; margin: 0; background: #fbfcfd; transition: border-color .15s, background .15s; }
+  .kvar-izbor label:hover { border-color: #b9c3d0; }
+  .kvar-izbor input { margin-top: 4px; }
+  .kvar-izbor .mdi { font-size: 1.4rem; color: #6b7785; line-height: 1; }
+  .kvar-izbor strong { display: block; font-size: .92rem; color: #243447; }
+  .kvar-izbor small { color: #64748b; font-size: .78rem; }
+  .kvar-izbor label.izabran { border-color: #1f6f8b; background: #eef7fa; }
+  .kvar-izbor label.izabran .mdi { color: #1f6f8b; }
+  .kvar-km { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  .kvar-km .polje { flex: 0 0 240px; }
+  .kvar-km-info { flex: 1; min-width: 240px; font-size: .88rem; color: #526170; padding-bottom: 6px; }
+  .kvar-km-upozorenje { border: 1px solid #f1d28d; background: #fff8e6; color: #7a4d00; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: .88rem; }
+  .kvar-dno { display: flex; justify-content: flex-end; gap: 8px; }
+</style>
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-car-wrench me-2"></i>{{ title }}</h1>
+    <p>Posle čuvanja otvara se detalj sa prijavom kvara, {% if form.instance.van_ims %}zahtevom za uslugu{% else %}trebovanjem{% endif %} i radnim nalogom.</p>
+  </div>
+  <a class="btn btn-outline-light btn-sm" href="{{ cancel_url }}"><i class="mdi mdi-arrow-left"></i> Nazad</a>
+</div>
+
+<form method="post" class="kvar-form" novalidate>{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+  <section class="card">
+    <header><span class="broj">1</span> Vozilo</header>
+    <div>
+      <label class="form-label" for="{{ form.vehicle.id_for_label }}">{{ form.vehicle.label }}</label>
+      {{ form.vehicle }}
+      {% for e in form.vehicle.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      <div class="kvar-vozilo-info" id="kvar-vozilo-info" style="display:none">
+        <div><small>Registracija</small><strong data-polje="tablica">—</strong></div>
+        <div><small>Šifra posla</small><strong data-polje="sifra_posla">—</strong></div>
+        <div><small>Poslednja poznata kilometraža</small><strong data-polje="kilometraza">—</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <header><span class="broj">2</span> Intervencija</header>
+    <div>
+      <label class="form-label">{{ form.work_type.label }}</label>
+      <div class="kvar-izbor mb-3">
+        {% for radio in form.work_type %}
+        <label for="{{ radio.id_for_label }}">{{ radio.tag }}
+          <span class="mdi {% if radio.data.value == 'mali_servis' %}mdi-oil{% elif radio.data.value == 'veliki_servis' %}mdi-cog-transfer{% else %}mdi-wrench{% endif %}"></span>
+          <span><strong>{{ radio.choice_label }}</strong><small>{% if radio.data.value == 'mali_servis' %}ulje, filteri — delovi se predlože sami{% elif radio.data.value == 'veliki_servis' %}kaiševi, pumpa, tečnosti — delovi se predlože sami{% else %}kvar koji treba popraviti{% endif %}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+      <label class="form-label">{{ form.van_ims.label }}</label>
+      <div class="kvar-izbor">
+        {% for radio in form.van_ims %}
+        <label for="{{ radio.id_for_label }}">{{ radio.tag }}
+          <span class="mdi {% if radio.data.value == 'True' %}mdi-store-outline{% else %}mdi-garage{% endif %}"></span>
+          <span><strong>{{ radio.choice_label }}</strong><small>{% if radio.data.value == 'True' %}spoljni servis — zahtev za uslugu{% else %}naša garaža — trebovanje i zahtev za nabavku{% endif %}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+      {% for e in form.van_ims.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <header><span class="broj">3</span> Kilometraža</header>
+    <div>
+      <div class="kvar-km">
+        <div class="polje"><label class="form-label" for="{{ form.kilometraza.id_for_label }}">{{ form.kilometraza.label }} (km)</label>{{ form.kilometraza }}</div>
+        <div class="kvar-km-info" id="kvar-km-info">{{ form.kilometraza.help_text }}</div>
+      </div>
+      {% for e in form.kilometraza.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      <div class="kvar-km-upozorenje" id="kvar-km-upozorenje" {% if not form.upozorenja_kilometraze %}style="display:none"{% endif %}>
+        <div id="kvar-km-tekst"><i class="mdi mdi-alert"></i> {{ form.upozorenja_kilometraze|join:" " }}</div>
+        <div class="form-check mt-2">{{ form.potvrda_kilometraze }}
+          <label class="form-check-label" for="{{ form.potvrda_kilometraze.id_for_label }}">{{ form.potvrda_kilometraze.label }}</label>
+          <div class="form-text">{{ form.potvrda_kilometraze.help_text }}</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <header><span class="broj">4</span> Opis kvara</header>
+    <div>
+      <label class="form-label" for="{{ form.opis.id_for_label }}">{{ form.opis.label }}</label>{{ form.opis }}
+      {% for e in form.opis.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+      <div class="form-text mb-3">{{ form.opis.help_text }}</div>
+      <label class="form-label" for="{{ form.napomena.id_for_label }}">{{ form.napomena.label }} <span class="text-muted fw-normal">(nije obavezno)</span></label>{{ form.napomena }}
+    </div>
+  </section>
+
+  <div class="kvar-dno">
+    <a class="btn btn-outline-secondary" href="{{ cancel_url }}">Odustani</a>
+    <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> {{ submit_button_label }}</button>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}<script>
+jQuery(function ($) {
+  // Kartice izbora: uokvirena je izabrana.
+  $('.kvar-izbor').each(function () {
+    var grupa = $(this);
+    function oznaci() { grupa.find('label').each(function () { $(this).toggleClass('izabran', $(this).find('input').prop('checked')); }); }
+    grupa.on('change', 'input', oznaci);
+    oznaci();
+  });
+
+  var vozilo = $('#id_vehicle'), km = $('#id_kilometraza'), info = $('#kvar-vozilo-info');
+  var upozorenje = $('#kvar-km-upozorenje'), tekst = $('#kvar-km-tekst'), potvrda = $('#id_potvrda_kilometraze');
+  var serverUpozorenje = upozorenje.is(':visible');
+  var poslednja = null, pravilo = null;
+
+  function hiljade(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function proveri() {
+    // Isto pravilo kao na serveru: manje od poslednjeg, ili skok veći od dozvoljenog za protekle dane.
+    var vrednost = parseInt(km.val(), 10), poruka = '';
+    if (poslednja && pravilo && !isNaN(vrednost)) {
+      var opis = hiljade(poslednja.km) + ' km (' + poslednja.datum + ', ' + poslednja.izvor + ')';
+      var dana = Math.max(Math.round((new Date() - new Date(poslednja.datum_iso)) / 86400000), 1);
+      var dozvoljeno = Math.max(pravilo.najmanji_skok, dana * pravilo.km_dnevno);
+      if (vrednost < poslednja.km) { poruka = 'Kilometraža je manja od poslednjeg poznatog očitavanja: ' + opis + '.'; }
+      else if (vrednost - poslednja.km > dozvoljeno) { poruka = 'Kilometraža je za ' + hiljade(vrednost - poslednja.km) + ' km veća od poslednjeg poznatog očitavanja ' + opis + '.'; }
+    }
+    if (poruka) { tekst.html('<i class="mdi mdi-alert"></i> ').append(document.createTextNode(poruka)); upozorenje.show(); }
+    else if (!serverUpozorenje) { upozorenje.hide(); potvrda.prop('checked', false); }
+  }
+  function ucitaj() {
+    if (!vozilo.val()) { info.hide(); poslednja = null; return; }
+    $.getJSON("{{ kilometraza_url }}", { vozilo: vozilo.val(){% if form.instance.pk %}, kvar: {{ form.instance.pk }}{% endif %} }).done(function (d) {
+      poslednja = d.kilometraza || null; pravilo = d.pravilo || null;
+      info.find('[data-polje="tablica"]').text(d.tablica || '—');
+      info.find('[data-polje="sifra_posla"]').text(d.sifra_posla || 'nema šifre posla');
+      info.find('[data-polje="kilometraza"]').text(poslednja ? hiljade(poslednja.km) + ' km · ' + poslednja.datum : 'nema očitavanja');
+      $('#kvar-km-info').text(poslednja ? 'Poslednje očitavanje: ' + hiljade(poslednja.km) + ' km, ' + poslednja.datum + ' (' + poslednja.izvor + ').' : 'Za ovo vozilo nema ranijih očitavanja brojila.');
+      info.show();
+      proveri();
+    });
+  }
+  vozilo.on('change', function () { serverUpozorenje = false; ucitaj(); });
+  km.on('input', function () { serverUpozorenje = false; proveri(); });
+  ucitaj();
+});
+</script>{% endblock %}

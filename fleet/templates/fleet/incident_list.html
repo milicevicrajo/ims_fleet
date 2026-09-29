@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% comment %}
+Flota → Incidenti: saobraćajni prekršaji i kazne po vozilu i vozaču. Tabela se puni sa servera
+(incident_data), sa filterom po periodu, vozilu i prilogu i zbirom kazni za filtrirane incidente.
+{% endcomment %}
+{% block title %}{{ title }} | IMS{% endblock %}
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+<style>
+  .incident-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+  .incident-zbir { display: flex; flex-wrap: wrap; gap: 28px; padding: 14px 20px; border-bottom: 1px solid #e6ebf1; }
+  .incident-zbir small { display: block; color: #64748b; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+  .incident-zbir strong { font-size: 1.3rem; color: #14395b; font-variant-numeric: tabular-nums; }
+  .incident-table td { vertical-align: top; font-size: .9rem; }
+  .incident-small { color: #64748b; font-size: .78rem; }
+</style>
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-alert-octagon me-2"></i>{{ title }}</h1>
+    <p>Saobraćajni prekršaji i kazne po vozilu i vozaču, sa prilogom (zapisnik, rešenje). Unosi Garaža.</p>
+  </div>
+  {% if can_create %}<a href="{% url 'incident_create' %}" class="btn btn-light btn-sm"><i class="mdi mdi-plus"></i> Novi incident</a>{% endif %}
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body border-bottom">
+    <form method="get" class="incident-filter">
+      <div><label class="form-label mb-1" for="f-od">Od datuma</label>
+        <input class="form-control js-date" id="f-od" name="od" value="{{ filteri.od }}" placeholder="dd.mm.gggg"></div>
+      <div><label class="form-label mb-1" for="f-do">Do datuma</label>
+        <input class="form-control js-date" id="f-do" name="do" value="{{ filteri.do }}" placeholder="dd.mm.gggg"></div>
+      <div><label class="form-label mb-1" for="f-vozilo">Vozilo</label>
+        <select class="form-select select2-method" id="f-vozilo" name="vozilo"><option value="">Sva vozila</option>
+          {% for v in vozila %}<option value="{{ v.pk }}" {% if filteri.vozilo == v.pk|stringformat:'s' %}selected{% endif %}>{{ v }}</option>{% endfor %}
+        </select></div>
+      <div><label class="form-label mb-1" for="f-prilog">Prilog</label>
+        <select class="form-select" id="f-prilog" name="prilog">
+          <option value="">Svi</option>
+          <option value="da" {% if filteri.prilog == 'da' %}selected{% endif %}>Sa prilogom</option>
+          <option value="ne" {% if filteri.prilog == 'ne' %}selected{% endif %}>Bez priloga</option>
+        </select></div>
+      <div class="d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="mdi mdi-filter"></i> Prikaži</button>
+        <a class="btn btn-outline-secondary" href="{% url 'incident_list' %}" title="Poništi filtere" aria-label="Poništi filtere"><i class="mdi mdi-filter-remove"></i></a></div>
+    </form>
+  </div>
+  <div class="incident-zbir">
+    <div><small>Incidenata</small><strong id="zbir-broj">—</strong></div>
+    <div><small>Ukupno kazni</small><strong><span id="zbir-iznos">—</span> RSD</strong></div>
+  </div>
+  <div class="card-body"><div class="table-responsive">
+    <table id="IncidentTable" class="table table-hover align-middle incident-table mb-0" style="width:100%">
+      <thead><tr><th>Datum</th><th>Vozilo</th><th>Vozač</th><th>Prekršaj</th><th>Mesto</th><th class="text-end">Kazna (RSD)</th><th class="text-center">Prilog</th><th class="text-end">Radnje</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script>
+jQuery(function ($) {
+  if (!$.fn.DataTable) return;
+  $('#IncidentTable').on('xhr.dt', function (e, settings, json) {
+    if (json && json.zbir) { $('#zbir-broj').text(json.zbir.broj); $('#zbir-iznos').text(json.zbir.iznos); }
+  }).DataTable({
+    serverSide: true, processing: true, autoWidth: false, pageLength: 50, searchDelay: 400,
+    lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[0, 'desc']],
+    ajax: { url: "{% url 'incident_data' %}" + window.location.search, type: 'GET' },
+    columns: [
+      { data: 'datum' }, { data: 'vozilo' }, { data: 'vozac' }, { data: 'prekrsaj' }, { data: 'mesto' },
+      { data: 'kazna', className: 'text-end text-nowrap' }, { data: 'prilog', className: 'text-center' },
+      { data: 'akcije', orderable: false, searchable: false, className: 'text-end text-nowrap' }
+    ],
+    language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: 'tablica, vozač, prekršaj, mesto',
+      lengthMenu: 'Prikaži _MENU_ redova', info: 'Prikaz _START_ do _END_ od _TOTAL_ incidenata', infoEmpty: 'Nema incidenata',
+      infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema upisanih incidenata',
+      paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
+  });
+});
+</script>{% endblock %}

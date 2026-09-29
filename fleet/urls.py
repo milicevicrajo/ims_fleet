@@ -141,6 +141,8 @@ from .views.vehicles import (
     vehicle_tender_documentation_zip,
 )
 from .views.vehicle_onboarding import VehicleOnboardingView, VehicleHoldingCreateView, VehicleHoldingUpdateView
+from .views.incidenti import (IncidentCreateView, IncidentDataView, IncidentDeleteView, IncidentDetailView,
+                               IncidentListView, IncidentPrilogView, IncidentUpdateView, IncidentVozaciView)
 from .views.kvar import (
     KvarCreateView,
     KvarDeleteView,
@@ -152,6 +154,9 @@ from .views.kvar import (
     KvarUpdateView,
     KvarVanIMSListView,
     KvarWorkOrderView,
+    KvarKilometrazaView,
+    KvarStampaSveView,
+    KvarZahtevView,
 )
 from .views.vehicle_travel_orders import (
     PreviousVehicleTravelOrderCreateView,
@@ -294,6 +299,14 @@ urlpatterns = [
     path('moj-profil/cv/<int:pk>/izmeni/', EmployeeCVItemUpdateView.as_view(), name='employee_cv_item_update'),
     path('moj-profil/cv/<int:pk>/obrisi/', EmployeeCVItemDeleteView.as_view(), name='employee_cv_item_delete'),
 
+    path('incidenti/', IncidentListView.as_view(), name='incident_list'),
+    path('incidenti/novo/', IncidentCreateView.as_view(), name='incident_create'),
+    path('incidenti/vozaci/', IncidentVozaciView.as_view(), name='incident_vozaci'),
+    path('incidenti/podaci/', IncidentDataView.as_view(), name='incident_data'),
+    path('incidenti/<int:pk>/', IncidentDetailView.as_view(), name='incident_detail'),
+    path('incidenti/<int:pk>/prilog/', IncidentPrilogView.as_view(), name='incident_prilog'),
+    path('incidenti/<int:pk>/izmena/', IncidentUpdateView.as_view(), name='incident_update'),
+    path('incidenti/<int:pk>/brisanje/', IncidentDeleteView.as_view(), name='incident_delete'),
     path('garaza/kvarovi/', KvarListView.as_view(), name='kvar_list'),
     path('garaza/kvarovi/data/', kvar_datatable_data, name='kvar_data'),
     path('garaza/kvarovi/novo/', KvarCreateView.as_view(), name='kvar_create'),
@@ -305,6 +318,9 @@ urlpatterns = [
     path('garaza/kvarovi/ims/', KvarIMSListView.as_view(), name='kvar_list_ims'),
     path('garaza/kvarovi/van-ims/', KvarVanIMSListView.as_view(), name='kvar_list_van_ims'),
     path('garaza/kvarovi/<int:pk>/trebovanje/', KvarTrebovanjeView.as_view(), name='kvar_trebovanje'),
+    path('garaza/kvarovi/<int:pk>/zahtev/', KvarZahtevView.as_view(), name='kvar_zahtev'),
+    path('garaza/kvarovi/<int:pk>/stampa/', KvarStampaSveView.as_view(), name='kvar_stampa_sve'),
+    path('garaza/kvarovi/kilometraza/', KvarKilometrazaView.as_view(), name='kvar_kilometraza'),
 
     path('garaza/putni-nalozi-vozila/', VehicleTravelOrderListView.as_view(), name='vehicle_travel_order_list'),
     path('garaza/putni-nalozi-vozila/data/', vehicle_travel_order_datatable_data, name='vehicle_travel_order_data'),

@@ -233,6 +233,9 @@ class PreviousVehicleTravelOrderForm(forms.ModelForm):
 
 
 class KvarForm(forms.ModelForm):
+    """Prijava kvara. Kilometraza se poredi sa poslednjim poznatim ocitavanjem vozila
+    (`fleet/support/garaza.py: proveri_kilometrazu`); odstupanje se cuva tek uz potvrdu."""
+
     VAN_IMS_CHOICES = [
         ("False", "IMS garaža"),
         ("True", "Van IMS-a"),
@@ -250,31 +253,41 @@ class KvarForm(forms.ModelForm):
     )
     work_type = forms.ChoiceField(
         choices=WORK_TYPE_CHOICES,
-        widget=Select2Widget(attrs={"class": "select2-method", "data-minimum-results-for-search": "Infinity"}),
+        widget=forms.RadioSelect,
         label="Vrsta intervencije",
         initial="popravka",
     )
     kilometraza = forms.IntegerField(
-        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        min_value=1,
+        max_value=3_000_000,
+        widget=forms.NumberInput(attrs={"class": "form-control", "inputmode": "numeric", "placeholder": "npr. 125400"}),
         label="Kilometraža",
+        error_messages={"min_value": "Kilometraža mora biti veća od nule.",
+                        "max_value": "Kilometraža nije realna — proverite unos."},
     )
     opis = forms.CharField(
-        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 4,
+                                     "placeholder": "Šta je primećeno: zvuk, lampica, curenje, kada se javlja…"}),
         label="Opis kvara",
     )
     napomena = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         label="Napomena",
     )
     van_ims = forms.TypedChoiceField(
         choices=VAN_IMS_CHOICES,
         coerce=lambda val: val == "True",
         empty_value=False,
-        widget=forms.Select(attrs={"class": "form-control"}),
+        widget=forms.RadioSelect,
         label="Gde se kvar rešava",
         # Objasnjenje postoji na modelu, ali se gubi jer je polje ovde redeklarisano.
-        help_text="Izaberite „Van IMS-a“ ako popravku radi spoljni servis. Od toga zavisi da li se stavka vodi kao garažni rad.",
+        help_text="Od toga zavisi dokument: u IMS garaži trebovanje materijala i zahtev za nabavku, van IMS-a zahtev za uslugu.",
+    )
+    potvrda_kilometraze = forms.BooleanField(
+        required=False,
+        label="Potvrđujem unetu kilometražu",
+        help_text="Označite samo ako ste proverili brojilo, a kilometraža ipak odstupa od poslednjeg očitavanja.",
     )
 
     class Meta:
@@ -289,6 +302,23 @@ class KvarForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.initial.get("van_ims") is None:
             self.initial["van_ims"] = "False"
+        else:
+            self.initial["van_ims"] = str(bool(self.initial["van_ims"]))
+        self.upozorenja_kilometraze = []
+
+    def clean(self):
+        from ..support.garaza import proveri_kilometrazu
+
+        data = super().clean()
+        vozilo, km = data.get("vehicle"), data.get("kilometraza")
+        if vozilo and km:
+            menja_km = not self.instance.pk or self.instance.kilometraza != km or self.instance.vehicle_id != vozilo.pk
+            if menja_km:
+                self.upozorenja_kilometraze = proveri_kilometrazu(vozilo, km, iskljuci_kvar=self.instance if self.instance.pk else None)
+            if self.upozorenja_kilometraze and not data.get("potvrda_kilometraze"):
+                self.add_error("kilometraza", " ".join(self.upozorenja_kilometraze)
+                               + " Ispravite kilometražu ili označite potvrdu ispod.")
+        return data
 
 
 class KvarPartForm(forms.ModelForm):

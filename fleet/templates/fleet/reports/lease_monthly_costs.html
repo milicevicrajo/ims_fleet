@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 {% comment %}
 Lizing — mesečni troškovi (fleet/support/lease_queries.py). Jedan red je jedan lizing (jedno vozilo)
 u jednom mesecu u kome traje. Filteri su GET parametri: year, month, center, oj, vrsta.
@@ -39,7 +40,7 @@ u jednom mesecu u kome traje. Filteri su GET parametri: year, month, center, oj,
             <td>{{ r.month }}</td>
             <td>{{ r.center|default:"—" }}</td>
             <td>{% if r.oj_code %}{{ r.oj_code }} — {{ r.oj_name }}{% else %}—{% endif %}</td>
-            <td><a href="{% url 'vehicle_detail' r.vehicle.pk %}">{{ r.vehicle }}</a></td>
+            <td>{{ r.vehicle|vozilo_link }}</td>
             <td>{{ r.contract_number|default:"—" }}</td>
             <td>{{ r.lease_type|default:"—" }}</td>
             <td class="text-end">{% if r.lease_amount is not None %}{{ r.lease_amount|floatformat:"2g" }}{% else %}<span title="Nije određeno da li je iznos mesečni ili ukupan">—</span>{% endif %}</td>

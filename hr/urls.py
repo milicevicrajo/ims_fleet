@@ -11,6 +11,7 @@ from .resenja_views import (ResenjeListView, ResenjeFormView, ResenjeDetailView,
     resenje_izdaj, resenje_storniraj, resenje_obrisi, resenje_predlog)
 from .zahtevi_views import (ZahtevListView, ZahtevFormView, ZahtevDetailView, ZahtevPrintView, ZahtevBulkPrintView,
     ZahtevBulkCreateView, zahtev_podnesi, zahtev_storniraj, zahtev_resenje_create, zahtev_bulk_resenja, zahtev_predlog)
+from .ugovori_views import UgovorListView, UgovorDataView, UgovorDetailView, ugovor_update, ugovor_dokument, ugovor_sync
 
 app_name = "hr"
 
@@ -60,4 +61,10 @@ urlpatterns = [
     path("radna-lista/", MyWorkTimeSheetView.as_view(), name="work_time_sheet"),
     path("zaposleni/<int:employee_pk>/radna-lista/", MyWorkTimeSheetView.as_view(), name="employee_work_time_sheet"),
     path("radna-lista/<int:pk>/stampa/", WorkTimeSheetPrintView.as_view(), name="work_time_sheet_print"),
+    path("ugovori/", UgovorListView.as_view(), name="ugovor_list"),
+    path("ugovori/podaci/", UgovorDataView.as_view(), name="ugovor_data"),
+    path("ugovori/sinhronizacija/", ugovor_sync, name="ugovor_sync"),
+    path("ugovori/<int:pk>/", UgovorDetailView.as_view(), name="ugovor_detail"),
+    path("ugovori/<int:pk>/izmena/", ugovor_update, name="ugovor_update"),
+    path("ugovori/<int:pk>/dokument/", ugovor_dokument, name="ugovor_dokument"),
 ]

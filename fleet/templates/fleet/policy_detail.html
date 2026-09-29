@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 {% load humanize %}
 
 {% block content %}
@@ -136,7 +137,7 @@
       <div class="card-body">
         <table class="table table-bordered table-hover align-middle mb-0 policy-detail-table">
           <tbody>
-            <tr><td>Automobil</td><td>{% if policy.vehicle %}<a href="{% url 'vehicle_detail' policy.vehicle_id %}">{{ policy.vehicle }}</a>{% else %}<span class="text-danger">Nedostaje</span>{% endif %}</td></tr>
+            <tr><td>Automobil</td><td>{% if policy.vehicle %}{{ policy.vehicle|vozilo_link }}{% else %}<span class="text-danger">Nedostaje</span>{% endif %}</td></tr>
             <tr><td>Partner</td><td>{{ policy.partner_name|default:"Nedostaje" }}</td></tr>
             <tr><td>PIB partnera</td><td>{{ policy.partner_pib|default:"Nedostaje" }}</td></tr>
             <tr><td>Tip osiguranja</td><td>{{ policy.insurance_type|default:"Nedostaje" }}</td></tr>

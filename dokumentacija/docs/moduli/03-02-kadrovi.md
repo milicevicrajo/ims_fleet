@@ -94,6 +94,27 @@ Vodi **zaposlene i njihovo radno vreme**:
 | Štampa rešenja | `/hr/resenja/<id>/stampa/`, `/hr/resenja/stampa/` | Kadrovska služba |
 | Šifarnik rešenja | `/hr/resenja/sifrarnik/` | **Samo Uprava** |
 | Elementi radne liste | `/hr/sifrarnici/elementi-rl/` | Kadrovska služba |
+| **Ugovori zaposlenih** | `/hr/ugovori/` | Kadrovska služba, Uprava |
+| Unos ugovora za period | `/hr/ugovori/<id>/` (čuvanje: `/hr/ugovori/<id>/izmena/`) | Kadrovska služba |
+| Skeniran ugovor | `/hr/ugovori/<id>/dokument/` | Kadrovska služba, Uprava (samo zaposleni u obuhvatu) |
+| Sinhronizacija ugovora | `/hr/ugovori/sinhronizacija/` | Kadrovska služba |
+
+### Ugovori zaposlenih (od 29.09.2026.) [P]
+
+**Jedan red je jedan period rada iz kadrovske baze**, a Kadrovi uz njega unose broj ugovora,
+broj aneksa (nije obavezan — prvi ugovor nema aneks), skeniran dokument i napomenu. Ugovori
+sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa partnerima
+(vrsta „Ugovori o radu“ tamo sadrži ugovore o delu sa spoljnim licima).
+
+| Tema | Pravilo |
+|---|---|
+| Izvor | `dbo.v_hr_RadStaz` (IMS_ERP) → `RadStaz` na `PUTGEO-SERVER.bazaldims`, samo `u_firmi = 'DA'`. Ključ je šifra radnika + redni broj (`rasif`, `rb`). Kategorija „Radni odnos“ je preduzeće 1, „Van radnog odnosa“ preduzeće 2. Datum 01.01.3000. znači na neodređeno. |
+| Sinhronizacija | Noću u **01:15** (`hr.tasks.sync_ugovori_zaposlenih_task`, posle zaposlenih) i dugmetom „Osveži iz kadrovske baze“. Menja samo polja iz izvora (period, opis, staž, aktivnost radnika); unete podatke ne dira. Svako pokretanje se beleži (`hr_ugovori_sinhronizacija`). Prazan izvor zaustavlja sinhronizaciju. |
+| OJ i radno mesto | Šifre i nazivi OJ (`radnik.oj` + `ob_jedin`, naziv za tekuću godinu) i radnog mesta po sistematizaciji (`radnik.sif_sis` + `Sistemat`, po preduzeću) **upisuju se kada se period prvi put pojavi i posle se sami ne menjaju** — ostaju kao istorija. Kadrovska baza nema istoriju OJ i radnog mesta, pa su periodi zatečeni pri prvoj sinhronizaciji (29.09.2026.) dobili današnje stanje. Ručna izmena se beleži kao „Uneto ručno“; dugme „Preuzmi trenutnu OJ i radno mesto“ ponovo upisuje stanje iz kadrovske baze. |
+| Aneks | Kada je unet broj aneksa, može se izabrati glavni ugovor — raniji period istog radnika koji nije i sam aneks. Veza nije obavezna. |
+| Dokument | PDF ili slika (JPG, PNG, TIFF), najviše 20 MB, u `media/hr/ugovori/`. Otvara se samo kroz aplikaciju (`hr:ugovor_dokument`), uz proveru obuhvata. |
+| Nestao ili izmenjen period | Period koji nestane iz kadrovske baze se ne briše, nego dobija oznaku „Nema u kadrovskoj bazi“. Ako se posle unosa promeni datum početka, raniji datum se čuva i red je označen „Proveriti“ dok ga Kadrovi ne potvrde. |
+| Obuhvat | Kao spisak zaposlenih: vide se periodi zaposlenih u obuhvatu korisnika. Periodi bivših radnika koji nemaju karticu u aplikaciji i radnika bez čvora registra (OJ `1`) vidi samo obuhvat cele firme. |
 
 ---
 
@@ -129,7 +150,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Zaposleni** | `IMS_ERP.dbo.hr_employee` | Dnevno 01:10 |
 | **Prolasci radnika** | `INFORMATIKA23.ID.dbo.C_Prolasci_Radnika` | **Pri otvaranju radne liste** |
 | Šifarnik tastera | `INFORMATIKA23.ID.dbo.C_Tasteri` | Pri otvaranju |
-| Obračunati parovi prolazaka | `INFORMATIKA23.ID.dbo.c_parovi_radnika_detalji` + `SERFIN.bazaldims.dbo.radnik` | Komanda `hr_attendance_summary` |
+| Obračunati parovi prolazaka | `INFORMATIKA23.ID.dbo.c_parovi_radnika_detalji` + `PUTGEO-SERVER.bazaldims.dbo.radnik` | Komanda `hr_attendance_summary`; kod prebačen 28.09.2026. |
 | **Godišnji odmori** | `[putgeo-server].[BazaLDIMS].[dbo].[Godmor]`, `[GodmorKor]` | **Ručno** |
 | Vrste primalaca | `dbo.hr_employee` | Uz šifarnik |
 
@@ -173,8 +194,10 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 |---|---|---|---|
 | `dbo.hr_employee` | `IMS_ERP` | Zaposleni | **[N]** Sadržaj nije potvrđen |
 | `Radnici`, `C_Prolasci_Radnika`, `C_Tasteri`, `c_parovi_radnika_detalji` | **`INFORMATIKA23.ID`** | Kontrola pristupa | Kolone poznate iz upita |
-| `radnik` | **`SERFIN.bazaldims`** | OJ i ime uz parove | Kolone poznate |
+| `radnik` | **`PUTGEO-SERVER.bazaldims`** | OJ i ime uz parove | SERFIN je ugašen; [provera produkcionog prelaska](../07-integracije.md#7231-provere-nakon-gašenja-serfin-a) |
 | `Godmor`, `GodmorKor` | **`PUTGEO-SERVER.BazaLDIMS`** | Godišnji odmori | Kolone poznate |
+| `dbo.v_hr_RadStaz` | `IMS_ERP` (čita `RadStaz` sa `PUTGEO-SERVER.bazaldims`) | Periodi rada za ugovore | Od 29.09.2026. [P] |
+| `radnik`, `ob_jedin`, `Sistemat` | **`PUTGEO-SERVER.bazaldims`** | Trenutna OJ i radno mesto sa nazivima (ugovori) | Od 29.09.2026. [P] |
 
 > **[P] Modul zavisi od tri udaljena servera.** Ako nisu dostupni, radna lista se
 > otvara, ali bez prolazaka, uz poruku *„Izvor prolazaka trenutno nije dostupan.“*

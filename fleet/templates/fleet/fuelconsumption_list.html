@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 {% load form_filters %}
 {% block content %}
 <h2>{{ title }}</h2>
@@ -35,7 +36,7 @@
               <tbody>
                 {% for consumption in filter.qs %}
                   <tr>                         
-                      <td>{{ consumption.registration_number|default:"N/A" }}</td>                    
+                      <td>{% vozilo_a consumption.vehicle_id consumption.registration_number|default:"N/A" %}</td>                    
                       <td>{{ consumption.date|date:"d.m.Y H:i:s"  }}</td>
                       <td data-order="{{ consumption.amount|default_if_none:'0' }}">{{ consumption.amount|default_if_none:"0"|floatformat:2 }}</td>
                       <td>{{ consumption.fuel_type }}</td>

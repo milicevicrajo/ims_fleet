@@ -1,0 +1,73 @@
+{% comment %}
+Zajednički A4 stil dokumenata Garaže (prijava kvara, trebovanje / zahtev za uslugu, radni nalog).
+Svaka `.a4-page` je jedan A4 list (210 × 297 mm): na ekranu kao papir, u štampi sa prelomom posle
+svakog lista — pa „Štampaj sve” i trebovanje sa više lista izlaze kao zasebne strane, bez preklapanja.
+Stilovi pojedinih dokumenata su ograničeni na `.dok-prijava`, `.dok-trebovanje` i `.dok-nalog`.
+{% endcomment %}
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  html, body { margin: 0; padding: 0; }
+  body { background: #e9edf2; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .a4-viewport { width: 210mm; margin: 0 auto; padding-bottom: 8mm; }
+  .a4-page { width: 210mm; height: 296mm; box-sizing: border-box; overflow: hidden; background: #fff; color: #000;
+    margin: 0 auto 8mm; box-shadow: 0 2px 12px rgba(20, 57, 91, .15); display: flex; flex-direction: column;
+    font-family: "Times New Roman", Georgia, serif; }
+  .print-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .print-toolbar .opis { color: #526170; font-size: 13px; }
+  .print-toolbar .dugmad { display: flex; gap: 8px; }
+  .print-toolbar a, .print-toolbar button { border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer; text-decoration: none;
+    border: 1px solid #cfd8e3; background: #fff; color: #243447; }
+  .print-toolbar button.glavno { background: #1f6f8b; border-color: #1f6f8b; color: #fff; }
+  {% if embed %}body { background: #fff; } .a4-viewport { padding: 0; } .print-toolbar { display: none !important; }
+  .a4-page { box-shadow: none; margin: 0 auto 6mm; outline: 1px solid #e3e6ec; }{% endif %}
+  @media print {
+    body { background: #fff; }
+    .print-toolbar { display: none !important; }
+    .a4-viewport { padding: 0; }
+    .a4-page { margin: 0; box-shadow: none; outline: none; break-after: page; page-break-after: always; }
+    .a4-page:last-child { break-after: auto; page-break-after: auto; }
+  }
+
+  /* --- Prijava kvara (IZ 053, prilog 1) --- */
+  .dok-prijava { padding: 8mm 12mm 8mm 12mm; font-size: 12pt; }
+  .dok-prijava .top-meta { display: flex; justify-content: space-between; font-size: 11pt; margin-bottom: 4mm; }
+  .dok-prijava .title-box, .dok-nalog .title-box { border: 1px solid #000; display: grid; grid-template-columns: 1fr 1.5fr .8fr; }
+  .dok-prijava .title-cell, .dok-nalog .title-cell { border-right: 1px solid #000; padding: 4mm; text-align: center; }
+  .dok-prijava .title-cell:last-child, .dok-nalog .title-cell:last-child { border-right: 0; }
+  .dok-prijava .org-name, .dok-nalog .org-name { font-weight: 700; font-size: 13pt; }
+  .dok-prijava .org-info, .dok-nalog .org-info { font-size: 11pt; line-height: 1.2; }
+  .dok-prijava .form-title, .dok-nalog .form-title { font-weight: 700; font-size: 14pt; }
+  .dok-prijava .sheet-grid, .dok-nalog .sheet-grid { width: 100%; border-collapse: collapse; }
+  .dok-prijava .sheet-grid td { border: 1px solid #000; padding: 2.6mm 3.5mm; vertical-align: top; }
+  .dok-prijava .sheet-grid .label, .dok-nalog .sheet-grid .label { width: 42mm; font-weight: 600; }
+  .dok-prijava .signature-line, .dok-nalog .signature-line { display: inline-block; width: 60mm; border-top: 1px solid #000; margin-top: 10mm; }
+  .dok-prijava .potpisi, .dok-nalog .potpisi { display: flex; justify-content: space-between; gap: 10mm; margin-top: 6mm; }
+  .dok-prijava .potpisi > div, .dok-nalog .potpisi > div { flex: 1; text-align: center; }
+  .dok-prijava .podnozje { margin-top: auto; display: flex; gap: 10mm; font-size: 10pt; }
+
+  /* --- Radni nalog (prilog 2) --- */
+  .dok-nalog { padding: 8mm 10mm; font-size: 10.5pt; }
+  .dok-nalog .sheet-grid td { border: 1px solid #000; padding: 1.6mm 2.4mm; vertical-align: top; }
+  .dok-nalog .delovi { margin-top: 3mm; border: 1px solid #000; }
+  .dok-nalog .delovi-naslov { padding: 2mm 3mm; font-weight: 700; border-bottom: 1px solid #000; }
+  .dok-nalog .delovi table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .dok-nalog .delovi td { border: 1px solid #000; padding: 1.1mm 1.6mm; height: 4.6mm; }
+  .dok-nalog .delovi tr > td:first-child { border-left: 0; }
+  .dok-nalog .delovi tr > td:last-child { border-right: 0; }
+  .dok-nalog .delovi tbody tr:last-child td { border-bottom: 0; }
+  .dok-nalog .c { text-align: center; }
+
+  /* --- Trebovanje materijala (IZ 051) / zahtev za uslugu (IZ 052): dve iste kopije na A4 --- */
+  .dok-trebovanje { padding: 6mm 8mm; }
+  .dok-trebovanje .kopija { flex: 1 1 0; display: flex; flex-direction: column; }
+  .dok-trebovanje .rez { border-top: 1px dashed #666; margin: 5mm 0; }
+  .dok-trebovanje .treb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .7mm; }
+  .dok-trebovanje .treb-title { font-weight: 700; text-align: center; }
+  .dok-trebovanje .top-line { display: flex; justify-content: space-between; }
+  .dok-trebovanje .list-table { width: 100%; border-collapse: collapse; margin-top: 1mm; }
+  .dok-trebovanje .list-table td { border: 1px solid #000; padding: .34mm .6mm; font-size: 8.8pt; height: 5.2mm; }
+  .dok-trebovanje .footer-sign { display: flex; justify-content: space-between; margin-top: auto; padding-top: 4mm; font-size: 8.5pt; }
+  .dok-trebovanje .signature { width: 30%; text-align: center; }
+  .dok-trebovanje .signature .line { display: block; border-bottom: 1px solid #000; margin-top: 7.2mm; }
+</style>

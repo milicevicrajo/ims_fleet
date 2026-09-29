@@ -40,7 +40,7 @@ Deo `dbo.*` pogleda u `IMS_ERP` interno čita udaljene servere, a neki moduli ih
 | `PUTGEO-SERVER` | `bazaims` | `nalog_z`, `posao`, `konto`, `ob_jedin`, `partner` | `finansije/services/source.py`, `potrazivanja/services/source.py` |
 | `PUTGEO-SERVER` | `bazaldims` | `Zarada`, `PomLD`, `Radnik`, `element` | `finansije/services/job_people.py`, `cash_flow.py` |
 | `INFORMATIKA23` | `ID` | `Radnici`, `C_Prolasci_Radnika`, `C_Tasteri`, `c_parovi_radnika_detalji` | `hr/services/attendance.py` |
-| ~~`SERFIN`~~ | `bazaldims` | — | **Premešteno 28.09.2026. na `PUTGEO-SERVER.bazaldims`** (`radnik` za radne sate: `hr/services/attendance.py`). Pet `dbo` objekata (`hr_employee`, `hr_ugovori`, `hr_radni_sati_dan`, `fn_hr_radni_sati_dan`, `sp_bonusi_PR`) prebacuje skript `dokumentacija/sql/2026-09-28-serfin-na-putgeo-server.sql` (pokreće administrator baze) |
+| ~~`SERFIN`~~ | `bazaldims` | — | **Server je ugašen.** Kod radnih sati od 28.09.2026. koristi `PUTGEO-SERVER.bazaldims`. Za pet `dbo` objekata pripremljen je SQL skript; primenu u produkciji i rezultate treba potvrditi prema [kontrolnoj listi](07-integracije.md#7231-provere-nakon-gašenja-serfin-a). |
 
 ---
 

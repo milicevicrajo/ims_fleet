@@ -1,0 +1,9 @@
+{% extends "fleet/kvar_dokumenti/_okvir.html" %}
+{% comment %}Sva dokumenta prijave kvara u jednoj štampi: prijava, trebovanje / zahtev za uslugu, radni nalog.{% endcomment %}
+{% block naslov %}Svi dokumenti{% endblock %}
+{% block opis_trake %}Sva dokumenta: prijava kvara, {% if is_van_ims %}zahtev za uslugu{% else %}trebovanje materijala{% endif %} ({{ rows_pages|length }} A4) i radni nalog — ukupno {{ rows_pages|length|add:2 }} A4 lista{% endblock %}
+{% block dokumenti %}
+  {% include "fleet/kvar_dokumenti/_prijava.html" %}
+  {% include "fleet/kvar_dokumenti/_trebovanje.html" %}
+  {% include "fleet/kvar_dokumenti/_nalog.html" %}
+{% endblock %}

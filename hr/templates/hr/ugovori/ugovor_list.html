@@ -1,0 +1,106 @@
+{% extends 'hr/list_base.html' %}
+{% comment %}
+Kadrovi → Ugovori: periodi rada iz kadrovske baze (v_hr_RadStaz) sa brojem ugovora, aneksom,
+skeniranim dokumentom i zabeleženom OJ i radnim mestom. Tabela se puni sa servera (hr:ugovor_data).
+{% endcomment %}
+{% block title %}{{ title }} | IMS{% endblock %}
+{% block hr_content %}
+{% include 'hr/ugovori/_styles.html' %}
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <div class="hr-kicker">Kadrovi - Ugovori</div>
+    <h1><i class="mdi mdi-file-sign me-2"></i>Ugovori zaposlenih</h1>
+    <p>Periodi rada iz kadrovske baze. Unose se broj ugovora, aneks i skeniran dokument; OJ i radno mesto se beleže kada se period pojavi i ostaju kao istorija.</p>
+  </div>
+  {% if can_sync %}
+  <form method="post" action="{% url 'hr:ugovor_sync' %}" onsubmit="this.querySelector('button').disabled = true;">{% csrf_token %}
+    <button class="btn btn-light btn-sm" type="submit"><i class="mdi mdi-sync"></i> Osveži iz kadrovske baze</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-sm-6 col-xl-3"><div class="card hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-account-tie"></i></span>
+    <div><strong>{{ brojevi.ukupno }}</strong><span class="hr-stat-label">Tekućih perioda aktivnih radnika</span></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-numeric"></i></span>
+    <div><strong>{{ brojevi.uneto }}</strong><span class="hr-stat-label">Od toga sa brojem ugovora</span></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-file-pdf-box"></i></span>
+    <div><strong>{{ brojevi.dokument }}</strong><span class="hr-stat-label">Od toga sa skeniranim dokumentom</span></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-sync"></i></span>
+    <div>{% if poslednja %}<strong class="hr-stat-date">{{ poslednja.created_at|date:"d.m.Y. H:i" }}</strong>
+      <span class="hr-stat-label">Poslednja sinhronizacija{% if poslednja.created_by %} · {{ poslednja.created_by.username }}{% else %} · noćna{% endif %}</span>
+      {% else %}<strong class="hr-stat-date">—</strong><span class="hr-stat-label">Sinhronizacija još nije rađena</span>{% endif %}
+      {% if za_proveru %}<a class="ugovor-badge warn mt-1" href="?unos=provera&radnici=svi"><i class="mdi mdi-alert"></i> {{ za_proveru }} za proveru</a>{% endif %}
+    </div></div></div>
+</div>
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <form method="get" class="ugovor-filteri" id="ugovor-filteri">
+    <div><label class="form-label" for="f-radnici">Radnici</label>
+      <select class="form-select" id="f-radnici" name="radnici">
+        <option value="aktivni" {% if filteri.radnici == 'aktivni' %}selected{% endif %}>Aktivni</option>
+        <option value="bivsi" {% if filteri.radnici == 'bivsi' %}selected{% endif %}>Bivši</option>
+        <option value="svi" {% if filteri.radnici == 'svi' %}selected{% endif %}>Svi</option>
+      </select></div>
+    <div><label class="form-label" for="f-period">Period</label>
+      <select class="form-select" id="f-period" name="tekuci">
+        <option value="">Svi periodi</option>
+        <option value="1" {% if filteri.tekuci == '1' %}selected{% endif %}>Samo tekući</option>
+      </select></div>
+    <div><label class="form-label" for="f-kategorija">Kategorija</label>
+      <select class="form-select" id="f-kategorija" name="kategorija"><option value="">Sve</option>
+        {% for vrednost, naziv in kategorije %}<option value="{{ vrednost }}" {% if filteri.kategorija == vrednost %}selected{% endif %}>{{ naziv }}</option>{% endfor %}
+      </select></div>
+    <div><label class="form-label" for="f-unos">Unos</label>
+      <select class="form-select" id="f-unos" name="unos">
+        <option value="">Svi</option>
+        <option value="nije" {% if filteri.unos == 'nije' %}selected{% endif %}>Bez broja ugovora</option>
+        <option value="uneto" {% if filteri.unos == 'uneto' %}selected{% endif %}>Sa brojem ugovora</option>
+        <option value="bez_dokumenta" {% if filteri.unos == 'bez_dokumenta' %}selected{% endif %}>Bez dokumenta</option>
+        <option value="dokument" {% if filteri.unos == 'dokument' %}selected{% endif %}>Sa dokumentom</option>
+        <option value="provera" {% if filteri.unos == 'provera' %}selected{% endif %}>Za proveru (promenjen period)</option>
+      </select></div>
+    <div><label class="form-label" for="f-izvor">Kadrovska baza</label>
+      <select class="form-select" id="f-izvor" name="izvor">
+        <option value="">Postoji u bazi</option>
+        <option value="nema" {% if filteri.izvor == 'nema' %}selected{% endif %}>Više ne postoji</option>
+        <option value="svi" {% if filteri.izvor == 'svi' %}selected{% endif %}>Sve</option>
+      </select></div>
+    <div class="d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="mdi mdi-filter"></i> Prikaži</button>
+      <a class="btn btn-outline-secondary" href="{% url 'hr:ugovor_list' %}" title="Poništi filtere" aria-label="Poništi filtere"><i class="mdi mdi-filter-remove"></i></a></div>
+  </form>
+</div></div>
+
+<div class="card shadow-sm">
+  <div class="card-body"><div class="table-responsive">
+    <table id="UgovorTable" class="table table-bordered table-hover align-middle ugovor-tabela" style="width:100%">
+      <thead><tr>
+        <th>Radnik</th><th>Period</th><th>Kategorija</th><th>OJ</th><th>Radno mesto</th>
+        <th>Broj ugovora</th><th>Aneks</th><th class="text-center">Dokument</th><th class="text-center">Radnje</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script>
+jQuery(function ($) {
+  if (!$.fn.DataTable) return;
+  $('#UgovorTable').DataTable({
+    serverSide: true, processing: true, autoWidth: false, pageLength: 50, searchDelay: 400,
+    lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[1, 'desc']],
+    ajax: { url: "{% url 'hr:ugovor_data' %}" + window.location.search, type: 'GET' },
+    columns: [
+      { data: 'radnik' }, { data: 'period' }, { data: 'kategorija' }, { data: 'oj' }, { data: 'radno_mesto' },
+      { data: 'broj_ugovora' }, { data: 'aneks' },
+      { data: 'dokument', className: 'text-center' },
+      { data: 'akcije', orderable: false, searchable: false, className: 'text-center text-nowrap' }
+    ],
+    language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: 'ime, šifra, broj ugovora, OJ…',
+      lengthMenu: 'Prikaži _MENU_ redova', info: 'Prikaz _START_ do _END_ od _TOTAL_ perioda', infoEmpty: 'Nema perioda',
+      infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema rezultata',
+      paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
+  });
+});
+</script>{% endblock %}

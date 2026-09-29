@@ -1,5 +1,6 @@
 <!-- requisition_fixing_list.html -->
 {% extends 'base.html' %}
+{% load vozila %}
 {% block content %}
 <h2>{{ title }}</h2>
 <div class="card">
@@ -22,7 +23,7 @@
                 <tbody>
                     {% for requisition in requisitions %}
                     <tr>
-                        <td>{{ requisition.vehicle }}</td>
+                        <td>{{ requisition.vehicle|vozilo_link }}</td>
                         <td>{{ requisition.god }}</td>
                         <td>{{ requisition.br_dok }}</td>
                         <td>{{ requisition.datum_trebovanja|date:"d.m.Y" }}</td>

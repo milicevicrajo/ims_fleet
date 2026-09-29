@@ -60,6 +60,13 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "10",
     },
     {
+        # Od 29.09.2026. (Kadrovi → Ugovori); posle zaposlenih, da se periodi vezu za kartice.
+        "name": "Kadrovi - ugovori zaposlenih",
+        "task": "hr.tasks.sync_ugovori_zaposlenih_task",
+        "hour": "1",
+        "minute": "15",
+    },
+    {
         "name": "Flota - sinhronizacija polisa",
         "aliases": ["Polise"],
         "task": "fleet.tasks.fetch_policy_data_task",

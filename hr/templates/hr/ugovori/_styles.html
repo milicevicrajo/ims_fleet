@@ -1,0 +1,28 @@
+<style>
+  .ugovor-filteri { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+  .ugovor-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 9px;
+    font-weight: 600; font-size: .78rem; white-space: nowrap; text-decoration: none; }
+  .ugovor-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .ugovor-badge.info { background: #e8f0fb; color: #174f83; border: 1px solid #c3d6f0; }
+  .ugovor-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .ugovor-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .ugovor-tabela { font-size: .88rem; }
+  .ugovor-tabela td .ugovor-badge { margin-top: 4px; }
+  .ugovor-small { color: #64748b; font-size: .76rem; margin-top: 2px; }
+  .ugovor-radnik { font-weight: 600; color: #14395b; }
+
+  .ugovor-raspored { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+  @media (max-width: 1200px) { .ugovor-raspored { grid-template-columns: minmax(0, 1fr); } }
+  .ugovor-kartica { background: #fff; border: 1px solid #e3e6ec; border-radius: 8px; margin-bottom: 16px; }
+  .ugovor-kartica > header { padding: 10px 16px; border-bottom: 1px solid #eef0f4; background: #fafbfd;
+    border-radius: 8px 8px 0 0; font-weight: 600; font-size: .95rem; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .ugovor-kartica > div { padding: 14px 16px; }
+  .ugovor-podaci { display: grid; grid-template-columns: 150px 1fr; gap: 7px 12px; margin: 0; font-size: .9rem; }
+  .ugovor-podaci dt { color: #6b7785; font-weight: 400; }
+  .ugovor-podaci dd { margin: 0; }
+  .ugovor-form .form-label { font-weight: 600; font-size: .85rem; color: #3b4652; margin-bottom: 4px; }
+  .ugovor-aneks { border: 1px dashed #c3d6f0; background: #f7faff; border-radius: 8px; padding: 12px 14px; }
+  .ugovor-dno { display: flex; justify-content: flex-end; border-top: 1px solid #eef0f4; padding-top: 12px; margin-top: 16px; }
+  .ugovor-periodi td { font-size: .85rem; vertical-align: top; }
+  .ugovor-periodi tr.izabran td { background: #eef5ff; }
+</style>

@@ -29,6 +29,7 @@ from .vehicle_travel_orders import (
     get_previous_vehicle_travel_order,
 )
 from fleet.support import obuhvat as obuhvat_flote
+from fleet.support.vehicle_links import vozilo_link
 
 
 def _int_param(request, name, default=0):
@@ -268,7 +269,7 @@ def vehicle_travel_order_datatable_data(request):
                 else '<span class="fleet-status open"><i class="mdi mdi-folder-open"></i> Otvoren</span>'
             ),
             "rbz": escape(order.rbz or "/"),
-            "vehicle": escape(str(order.vehicle)),
+            "vehicle": vozilo_link(order.vehicle),
             "employee": escape(str(order.employee)),
             "created_at": _date(order.created_at),
             "closed_at": _date(order.closed_at) or "/",
@@ -381,7 +382,7 @@ def service_transactions_datatable_data(request):
 
     def row(item):
         return {
-            "vehicle": escape(str(item.vehicle)),
+            "vehicle": vozilo_link(item.vehicle),
             "service_type": escape(str(item.popravka_kategorija or "")),
             "date": _date(item.datum, "%d.%m.%Y."),
             "cost": _money(item.potrazuje),
@@ -526,7 +527,7 @@ def leases_datatable_data(request):
         else:
             lease_type = escape(lease.lease_type_label or "-")
         return {
-            "vehicle": escape(str(lease.vehicle)),
+            "vehicle": vozilo_link(lease.vehicle),
             "partner": f'{escape(lease.partner_name or "")}<small class="text-muted d-block">{escape(lease.partner_code or "")}</small>',
             "contract": f'{escape(lease.contract_number or "")}<small class="text-muted d-block">{escape(lease.job_code or "")}</small>',
             "lease_type": lease_type,
@@ -581,7 +582,7 @@ def kvar_datatable_data(request):
                 f'<a href="{reverse("kvar_detail", args=[kvar.pk])}" class="btn btn-outline-primary btn-sm">'
                 '<i class="mdi mdi-eye"></i> Otvori</a>'
             ),
-            "vehicle": f'<a href="{reverse("vehicle_detail", args=[kvar.vehicle_id])}" class="fleet-table-link">{escape(str(kvar.vehicle))}</a>',
+            "vehicle": vozilo_link(kvar.vehicle),
             "work_type": escape(kvar.get_work_type_display()),
             "mileage": kvar.kilometraza,
             "description": escape(kvar.opis or ""),
@@ -752,7 +753,7 @@ def traffic_cards_datatable_data(request):
             else '<span class="text-muted">Nema PDF</span>'
         )
         return {
-            "vehicle": escape(str(card.vehicle)),
+            "vehicle": vozilo_link(card.vehicle),
             "registration_number": escape(card.registration_number or ""),
             "issue_date": _date(card.issue_date),
             "valid_until": _date(card.valid_until),

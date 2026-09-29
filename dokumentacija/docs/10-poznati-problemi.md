@@ -2465,7 +2465,7 @@ Ovo su svesna ograničenja sistema, navedena da bi se izbeglo pogrešno tumačen
 | Ograničenje | Objašnjenje |
 |---|---|
 | **Podaci nisu u realnom vremenu** | Većina se osvežava jednom dnevno, noću. Korisnik ujutru vidi stanje od sinoć. |
-| **Zavisnost od tri udaljena servera** | Finansije i Kadrovi ne rade ako `PUTGEO-SERVER`, `INFORMATIKA23` ili `SERFIN` nisu dostupni. |
+| **Udaljeni izvori i ugašen SERFIN** | Aktivni izvori su `PUTGEO-SERVER` i `INFORMATIKA23`; pojedini tokovi zavise od njihove dostupnosti. SERFIN je ugašen; primenu prelaska nasleđenih SQL objekata treba potvrditi prema [kontrolnoj listi](07-integracije.md#7231-provere-nakon-gašenja-serfin-a). |
 | **Zavisnost od portala dobavljača goriva** | Promena izgleda stranice NIS-a ili OMV-a zaustavlja automatsko preuzimanje. |
 | **Definicije nasleđenih pogleda nisu u projektu** | Promena pogleda u bazi menja rezultat na ekranu bez ijedne izmene u aplikaciji. |
 | **Nema povratne veze ka knjigovodstvu** | Sistem čita knjiženja; ne knjiži. Jedini izlaz je datoteka virmana. |

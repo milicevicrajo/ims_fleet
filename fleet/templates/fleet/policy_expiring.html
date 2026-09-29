@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 
 {% block content %}
 <h2>{{ title }}</h2>
@@ -24,7 +25,7 @@
                 <tbody>
                     {% for policy in expiring_policies %}
                     <tr>                        
-                        <td>{{ policy.vehicle }}</td>                      
+                        <td>{{ policy.vehicle|vozilo_link }}</td>                      
                         <td>{{ policy.partner_name }}</td>
                         <td>{{ policy.invoice_number }}</td>
                         <td>{{ policy.issue_date|date:"d.m.Y"}}</td>
@@ -79,7 +80,7 @@
                 <tbody>
                     {% for policy in expired_unrenewed_policies %}
                     <tr>                        
-                        <td>{{ policy.vehicle }}</td>                      
+                        <td>{{ policy.vehicle|vozilo_link }}</td>                      
                         <td>{{ policy.partner_name }}</td>
                         <td>{{ policy.invoice_number }}</td>
                         <td>{{ policy.issue_date|date:"d.m.Y"}}</td>

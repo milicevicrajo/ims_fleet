@@ -24,6 +24,7 @@ from ..mixins import CenterMixin
 from ..models import PutniNalog
 from ..forms.putni_nalozi import PutniNalogForm
 from fleet.support import obuhvat as obuhvat_flote
+from fleet.support.vehicle_links import vozilo_link
 
 
 def _is_uprava(user):
@@ -316,7 +317,8 @@ def putninalog_datatable_data(request):
             "job_code": escape(getattr(putni_nalog.job_code, "code", "") or ""),
             "travel_location": _datatable_hover_text(putni_nalog.travel_location),
             "contract_offer": _datatable_hover_text(putni_nalog.contract_offer),
-            "vehicle": escape(_putninalog_vehicle_label(putni_nalog)),
+            "vehicle": (vozilo_link(putni_nalog.vehicle, _putninalog_vehicle_label(putni_nalog)) if putni_nalog.vehicle_id
+                        else escape(_putninalog_vehicle_label(putni_nalog))),
             "travel_date": putni_nalog.travel_date.strftime("%d.%m.%Y") if putni_nalog.travel_date else "",
             "number_of_days": putni_nalog.number_of_days or "",
             "advance_payment": str(putni_nalog.advance_payment or ""),

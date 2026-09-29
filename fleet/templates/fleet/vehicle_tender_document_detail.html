@@ -1,4 +1,5 @@
 ﻿{% extends "base.html" %}
+{% load vozila %}
 
 {% block content %}
 <div class="row">
@@ -31,7 +32,7 @@
         <h4 class="card-title">Detalji dokumenta</h4>
         <dl class="row mb-0">
           <dt class="col-sm-5">Vozilo</dt>
-          <dd class="col-sm-7">{{ document.vehicle }}</dd>
+          <dd class="col-sm-7">{{ document.vehicle|vozilo_link }}</dd>
 
           <dt class="col-sm-5">Tip</dt>
           <dd class="col-sm-7">{{ document.get_document_type_display }}</dd>

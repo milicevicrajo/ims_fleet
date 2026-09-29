@@ -10,6 +10,7 @@
 ```
  01:00  Dozvole i uloge
  01:10  Zaposleni iz kadrovske baze
+ 01:15  Ugovori zaposlenih (Kadrovi)       ← od 29.09.2026.
  01:20  Provera otpisanih vozila
  01:40  Organizacija: registar, OJ, veze modula ← jedina (stara u 01:30 ugašena 28.09.2026.)
  01:45  Trebovanja
@@ -32,7 +33,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 20 zakazanih poslova.** [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 21 zakazan posao** (ugovori zaposlenih u 01:15 od 29.09.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -42,6 +43,7 @@
 |---|---|---|---|---|
 | 01:00 | Administracija — sinhronizacija dozvola | `core.tasks.sync_permission_codes_task` | `sync` | — |
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
+| 01:15 | Kadrovi — ugovori zaposlenih | `hr.tasks.sync_ugovori_zaposlenih_task` | `sync` | 30 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
 | 01:40 | Organizacija — registar, obrt šifara, veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
@@ -215,6 +217,7 @@ forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju do
 | **Nema novih podataka o gorivu** | Selenium ne uspeva | Pogledati `TaskHistory`; proveriti prijavu na portal i verziju Chrome-a; **uvesti datoteku ručno** |
 | **Finansije prazne za godinu** | Sinhronizacija nije prošla | `/finansije/sinhronizacija/` — pokrenuti ručno; proveriti `PUTGEO-SERVER` |
 | **Radna lista bez sati** | `INFORMATIKA23` nedostupan | Poruka to kaže; podaci se vraćaju kada server proradi |
+| **Zaposleni se ne osvežavaju; greška pominje SERFIN** | SERFIN je ugašen; nasleđeni SQL objekat ili produkcioni proces možda još koristi stari izvor | Pratiti [kontrolnu listu prelaska na PUTGEO-SERVER](07-integracije.md#7231-provere-nakon-gašenja-serfin-a), uključujući pet `dbo` objekata i zadatak u 01:10. Ne čekati ponovno uključivanje starog servera. |
 | **Zadatak stalno „Preskočen“** | Prethodni je ostao zaključan | Proveriti da li proces radi; zaključavanje ističe posle 4 h / 90 min |
 | **Novi ekran niko ne vidi** | Dozvola nije generisana | `sync_permission_codes`, pa dodeliti ulozi |
 | **Novi zadatak se ne izvršava** | Radnik ga ne poznaje | Restart radnika |

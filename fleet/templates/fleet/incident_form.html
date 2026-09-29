@@ -1,0 +1,51 @@
+{% extends "fleet/generic_form.html" %}
+{% comment %}
+Forma incidenta: posle izbora vozila i datuma prikazuje ko je tog dana imao vozilo (zaduženje
+vozila, putni nalog) i nudi izbor vozača jednim klikom. Kada je predlog jedan, a vozač nije
+izabran, bira ga sam.
+{% endcomment %}
+{% block extra_js %}
+<style>
+  .incident-vozaci { border: 1px dashed #c3d6f0; background: #f7faff; border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: .88rem; }
+  .incident-vozaci .btn { margin: 4px 6px 0 0; }
+  .incident-vozaci small { color: #64748b; }
+</style>
+<script>
+jQuery(function ($) {
+  var vozilo = $('#id_vehicle'), datum = $('#id_date'), vozac = $('#id_employee');
+  if (!vozilo.length || !datum.length || !vozac.length) return;
+  var okvir = $('<div class="incident-vozaci" style="display:none"></div>');
+  vozac.closest('.col-sm-8').append(okvir);
+  var poslednji = '';
+
+  function izaberi(id) {
+    if (vozac.find('option[value="' + id + '"]').length) { vozac.val(String(id)).trigger('change'); }
+  }
+  function osvezi() {
+    var kljuc = vozilo.val() + '|' + datum.val();
+    if (!vozilo.val() || !datum.val() || kljuc === poslednji) { if (!vozilo.val() || !datum.val()) okvir.hide(); return; }
+    poslednji = kljuc;
+    $.getJSON("{{ vozaci_url }}", { vozilo: vozilo.val(), datum: datum.val() }).done(function (odgovor) {
+      var vozaci = odgovor.vozaci || [];
+      okvir.empty();
+      if (!vozaci.length) {
+        okvir.append($('<small>').text('Za taj dan nema zaduženja vozila ni putnog naloga — vozača izaberite ručno.'));
+      } else {
+        okvir.append($('<div>').text('Tog dana vozilo su imali:'));
+        vozaci.forEach(function (v) {
+          $('<button type="button" class="btn btn-outline-primary btn-sm">')
+            .append($('<i class="mdi mdi-account-check"></i>'), ' ', document.createTextNode(v.ime), ' ', $('<small>').text('(' + v.izvor + ')'))
+            .on('click', function () { izaberi(v.id); })
+            .appendTo(okvir);
+        });
+        if (vozaci.length === 1 && !vozac.val()) { izaberi(vozaci[0].id); }
+      }
+      okvir.show();
+    });
+  }
+  vozilo.on('change', osvezi);
+  datum.on('change input', osvezi);
+  osvezi();
+});
+</script>
+{% endblock %}

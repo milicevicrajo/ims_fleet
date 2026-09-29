@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load vozila %}
 {% load form_filters %}
 {% load humanize %}
 
@@ -164,7 +165,7 @@
             <tr>
               <td>{{ row.datum|date:"d.m.Y H:i" }}</td>
               <td>{{ row.regozn }}</td>
-              <td>{{ row.vozilo }}</td>
+              <td>{% vozilo_a row.vehicle_id row.vozilo %}</td>
               <td>{{ row.kartica }}</td>
               <td>{{ row.proizvod }}</td>
               <td>{{ row.kolicina|floatformat:2|intcomma }}</td>

@@ -533,6 +533,12 @@ class Incident(models.Model):
     location = models.CharField(max_length=100, verbose_name=_("Lokacija"))
     fine_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Iznos kazne"))
     note = models.TextField(blank=True, null=True, verbose_name=_("Napomena"))
+    # Prilog (zapisnik, resenje o kazni, fotografija) — otvara se samo kroz aplikaciju (incident_prilog).
+    prilog = models.FileField(upload_to="fleet/incidenti/%Y/%m/", max_length=255, blank=True, verbose_name=_("Prilog"))
+    prilog_naziv = models.CharField(max_length=255, blank=True, default="", verbose_name=_("Naziv priloga"))
+    uneo = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name="uneti_incidenti", verbose_name=_("Uneo"))
+    uneto = models.DateTimeField(null=True, blank=True, verbose_name=_("Uneto"))
 
     def __str__(self):
         # Employee nema polje `name`, pa koristimo __str__ iz Employee

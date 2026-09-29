@@ -203,7 +203,8 @@ class ProcurementCaseDataView(NabavkaContextMixin, RolePermissionRequiredMixin, 
         records_total = predmeti(ProcurementCase.objects.all(), request.user).count()
         records_filtered = cases.count()
         order_map = {
-            "0": "case_number",
+            # Broj predmeta nosi prefiks (ZN, ZNG, ZU…), pa bi se po tekstu mesali tipovi; hronoloski je po kreiranju.
+            "0": "created_at",
             "1": "title",
             "2": "case_type",
             "3": "status",

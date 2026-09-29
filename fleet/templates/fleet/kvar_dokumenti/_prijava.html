@@ -1,0 +1,46 @@
+{% load static %}
+<section class="a4-page dok-prijava">
+  <div class="top-meta"><div>IU 05</div><div>2/8</div></div>
+
+  <div class="title-box">
+    <div class="title-cell" style="text-align:left;">
+      <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS logo" style="height:22mm; width:auto; display:block; margin-bottom:3mm;">
+      <div class="org-name">Institut IMS</div>
+      <div class="org-info">Bulevar vojvode Mišića 43<br>Beograd</div>
+    </div>
+    <div class="title-cell" style="display:flex; align-items:center; justify-content:center;">
+      <div class="form-title">PRIJAVA KVARA VOZILA</div>
+    </div>
+    <div class="title-cell" style="text-align:left;">
+      <div style="font-weight:700; text-align:right;">Prilog 1</div>
+      <div style="margin-top:6mm;">
+        <div>Oznaka:</div>
+        <div style="font-weight:700;">IZ 053</div>
+        <div style="margin-top:5mm;">R.b.z.: {{ kvar.rbz|default:"__________________" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <table class="sheet-grid" style="margin-top:5mm;">
+    <tr><td class="label">Datum prijave:</td><td>{{ kvar.created_at|date:"d.m.Y - H:i" }}</td></tr>
+    <tr><td class="label">Vozilo:</td><td>{{ vehicle.brand }} {{ vehicle.model }}</td></tr>
+    <tr><td class="label">Registracija:</td><td>{{ registration_number }}</td></tr>
+    <tr><td class="label">Vrsta intervencije:</td><td>{{ kvar.get_work_type_display }}</td></tr>
+    <tr><td class="label">Šifra troškova (OJ):</td>
+      <td>{% if organizational_unit %}{{ organizational_unit.code }} - {{ organizational_unit.name }}{% else %}{{ center }}{% endif %}</td></tr>
+    <tr><td class="label">Stanje brojila (km):</td><td>{{ kvar.kilometraza }}</td></tr>
+    <tr><td class="label"><em>Primedba na vozilo:</em></td><td style="height:62mm;">{{ kvar.opis|linebreaksbr }}</td></tr>
+    <tr><td class="label"><em>Napomena:</em></td><td style="height:38mm;">{{ kvar.napomena|default:""|linebreaksbr }}</td></tr>
+  </table>
+
+  <div class="potpisi">
+    <div><div>Prijavu podneo:</div><div class="signature-line"></div></div>
+    <div><div>Prijavu primio:</div><div class="signature-line"></div></div>
+  </div>
+
+  <div class="podnozje">
+    <div>Izdanje: treće</div>
+    <div>Datum odobrenja: 22.07.2009.</div>
+    <div>Datum revizije:</div>
+  </div>
+</section>

@@ -1,0 +1,30 @@
+{% comment %}
+Stranica za štampu dokumenata Garaže: traka (Štampaj, Nazad) i dokumenti iz bloka `dokumenti`.
+`?embed=1` — ugrađen prikaz na detalju kvara (bez trake); `?auto=1` — odmah otvara štampu.
+{% endcomment %}<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>{% block naslov %}Dokument{% endblock %} — {{ kvar.rbz }}</title>
+  {% include "fleet/kvar_dokumenti/_stil.html" %}
+</head>
+<body>
+  <div class="a4-viewport">
+    <div class="print-toolbar">
+      <span class="opis">{% block opis_trake %}{% endblock %}</span>
+      <div class="dugmad">
+        <a href="{{ next_url|default:'/' }}">← Nazad</a>
+        <button type="button" class="glavno" onclick="window.print()">Štampaj</button>
+      </div>
+    </div>
+    {% block dokumenti %}{% endblock %}
+  </div>
+  <script>
+    (function () {
+      if ({{ auto_print|yesno:"true,false" }}) {
+        window.addEventListener('load', function () { window.print(); });
+      }
+    })();
+  </script>
+</body>
+</html>

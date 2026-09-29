@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -6,7 +7,7 @@
     <div class="card shadow-sm">
       <div class="card-body">
         <h3 class="card-title">{{ title }}</h3>
-        <p>Da li ste sigurni da želite da obrišete vozilo <strong>{{ vehicle }}</strong>?</p>
+        <p>Da li ste sigurni da želite da obrišete vozilo <strong>{{ vehicle|vozilo_link }}</strong>?</p>
         <form method="post">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ next_url }}">

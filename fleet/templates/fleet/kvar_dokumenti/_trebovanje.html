@@ -1,0 +1,11 @@
+{% comment %}
+Trebovanje materijala / zahtev za uslugu: lista ima 12 redova i na A4 se štampa dva puta ista
+(jedna kopija se čuva). Preko 12 delova sledeća lista ide na sledeći A4 — opet dve iste kopije.
+{% endcomment %}
+{% for rows in rows_pages %}
+<section class="a4-page dok-trebovanje">
+  <div class="kopija">{% include "fleet/kvar_trebovanje_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}</div>
+  <div class="rez"></div>
+  <div class="kopija">{% include "fleet/kvar_trebovanje_block.html" with rows=rows page_number=forloop.counter total_pages=rows_pages|length %}</div>
+</section>
+{% endfor %}

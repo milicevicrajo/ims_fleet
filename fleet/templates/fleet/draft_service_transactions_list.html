@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 {% load widget_tweaks %}
 {% block content %}
 <h2>{{ title }}</h2>
@@ -59,7 +60,7 @@
               <tbody>
                 {% for service_transaction in service_transactions %}
                   <tr>                        
-                    <td>{{ service_transaction.vehicle }}</td>
+                    <td>{{ service_transaction.vehicle|vozilo_link }}</td>
                     <td>{{ service_transaction.popravka_kategorija }}</td>
                     <td>{{ service_transaction.datum|date:"d.m.Y." }}</td>
                     <td>{{ service_transaction.potrazuje|default_if_none:"0" }}</td>

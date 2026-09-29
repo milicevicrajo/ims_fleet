@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 {% comment %}Spisak dodela vozila šiframa posla (JobCode). Šifra je organizaciona jedinica dodele.{% endcomment %}
 {% block content %}
 <div class="card">
@@ -10,7 +11,7 @@
         <tbody>
         {% for code in job_codes %}
           <tr>
-            <td>{% if code.vehicle %}<a href="{% url 'vehicle_detail' code.vehicle.pk %}">{{ code.vehicle }}</a>{% else %}—{% endif %}</td>
+            <td>{{ code.vehicle|vozilo_link }}</td>
             <td>{{ code.organizational_unit|default:"—" }}</td>
             <td>{{ code.organizational_unit.center|default:"—" }}</td>
             <td>{{ code.assigned_date|date:"d.m.Y" }}</td>

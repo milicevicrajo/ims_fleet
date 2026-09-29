@@ -1,5 +1,6 @@
 <!-- draft_insurance_list.html -->
 {% extends 'base.html' %}
+{% load vozila %}
 {% block content %}
 <h2>{{ title }}</h2>
 <div class="card">
@@ -30,7 +31,7 @@
                 <tbody>
                     {% for insurance in insurances %}
                     <tr>
-                        <td>{{ insurance.vehicle }}</td>
+                        <td>{{ insurance.vehicle|vozilo_link }}</td>
                         <td>{{ insurance.god }}</td>
                         <td>{{ insurance.sif_vrs }}</td>
                         <td>{{ insurance.br_naloga }}</td>

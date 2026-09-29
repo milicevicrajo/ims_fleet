@@ -56,7 +56,7 @@ def current_app(request):
         "hr_permissions": {
             code: user_has_role_permission(request.user, f"hr:{code}")
             for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list",
-                         "evaluation_list", "resenje_list", "zahtev_list")
+                         "evaluation_list", "resenje_list", "zahtev_list", "ugovor_list")
         },
         "sidebar_template": sidebar_map.get(app, "sidebar_fleet.html"),
         # Organizaciju vide svi prijavljeni korisnici (organizacija/views.py); uporedni

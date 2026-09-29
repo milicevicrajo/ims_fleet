@@ -70,6 +70,12 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 
 ### Vozila i dokumenta
 
+> **Link na vozilo (od 29.09.2026.) [P].** Svuda na ekranima Flote (spiskovi, detalji, izveštaji,
+> kontrolna tabla, tabele sa servera) i na kartici zaposlenog vozilo je link na detalj vozila —
+> `fleet/support/vehicle_links.py` (`vozilo_link`, `vozilo_link_id`) i u šablonima `{% load vozila %}`
+> (`{{ x.vehicle|vozilo_link }}`, `{% vozilo_a id tekst %}`). Štampani dokumenti, forme i izvozi
+> namerno nemaju linkove. Novi ekran sa vozilom treba da koristi isti pomoćnik.
+
 | Ekran | Adresa | Napomena |
 |---|---|---|
 | Spisak vozila | `/vozila/` | DataTables preko AJAX-a |
@@ -130,6 +136,59 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
 | Štampa prijave kvara | `/garaza/kvarovi/<id>/prijava/` |
 | **Radni nalog** | `/garaza/kvarovi/<id>/radni-nalog/` |
 | **Trebovanje uz kvar** | `/garaza/kvarovi/<id>/trebovanje/` |
+| Formiranje zahteva u Nabavci (POST) | `/garaza/kvarovi/<id>/zahtev/` |
+| Poslednja kilometraža vozila (JSON za formu) | `/garaza/kvarovi/kilometraza/` |
+
+#### Prijava kvara i zahtev iz Garaže (od 29.09.2026.) [P]
+
+- **Forma prijave** (`fleet/kvar_form.html`): vozilo sa tablicom, šifrom posla i poslednjom poznatom
+  kilometražom; vrsta intervencije i mesto popravke (IMS garaža / van IMS-a) kao kartice; opis.
+- **Provera kilometraže** (`fleet/support/garaza.py: proveri_kilometrazu`): poredi se sa poslednjim
+  poznatim očitavanjem (točenja NIS/OMV, ranija evidencija goriva, nalozi vozila, ranije prijave
+  kvara). Manja vrednost ili skok veći od `max(2.000 km, 1.000 km × dana od očitavanja)` čuva se
+  samo uz oznaku „Potvrđujem unetu kilometražu“. Kilometraža mora biti 1–3.000.000. Izmena prijave
+  bez promene kilometraže se ne proverava ponovo.
+- **Detalj** odmah prikazuje sva tri dokumenta onako kako se štampaju (prijava kvara, trebovanje
+  materijala / zahtev za uslugu, radni nalog — ugrađene stranice `?embed=1`, `X-Frame-Options:
+  SAMEORIGIN` samo za te tri). Delovi (usluge) se upisuju direktno u tabelu koja izgleda kao
+  trebovanje; čuvaju se svi odjednom (dodavanje, izmena, uklanjanje reda).
+- **Štampa** (`fleet/templates/fleet/kvar_dokumenti/`): svaki list je tačno A4 (210 × 297 mm) sa
+  prelomom posle svakog lista. Lista trebovanja (zahteva za uslugu) ima 12 redova i na A4 se štampa
+  **dva puta ista** (jedna kopija se čuva); preko 12 delova sledeća lista ide na **sledeći A4**, opet
+  u dve kopije („Lista 1 od 2“, „Lista 2 od 2“). Prijava kvara i radni nalog su po jedan A4, bez okvira
+  oko stranice. **„Štampaj sve“** (`/garaza/kvarovi/<id>/stampa/`) štampa redom prijavu, sve liste
+  trebovanja i radni nalog (npr. 15 delova → 4 A4 lista; provereno štampom u PDF 29.09.2026.).
+  Na trebovanju je O.J. centar, a šifra posla šifra vozila.
+- **„Formiraj zahtev u Nabavci“** (`formiraj_zahtev`) pravi **nacrt** predmeta Nabavke: popravka u
+  IMS garaži → **Zahtev za nabavku** (`ZNG-<centar>/<godina>-<n>`), van IMS-a → **Zahtev za uslugu**
+  (`ZUG-…`). Broj se dodeljuje sam; popunjeni su garaža, vozilo, nalog garaže, vrsta intervencije,
+  šifra posla vozila (današnja, a ako je nema — poslednja dodeljena; Nabavka je po potrebi menja), naziv (intervencija + tablica), opis, napomena i stavke iz tabele
+  delova. Nabavka nacrt potvrđuje i dopunjuje. Dok postoji neotkazan zahtev za taj kvar, novi se ne
+  pravi; detalj kvara prikazuje njegov broj i status. Vozilo bez šifre posla ne može dobiti zahtev.
+  Izmene delova posle potvrde Nabavke ne menjaju stavke zahteva.
+- Ručni unos predmeta iz Nabavke i dalje radi kao ranije (`nabavka:case_create?garage_order=…`);
+  sa kartice vozila (Održavanje) predlaže se Zahtev za uslugu.
+
+### Incidenti (od 29.09.2026.) [P]
+
+| Ekran | Adresa |
+|---|---|
+| **Incidenti** — saobraćajni prekršaji i kazne (DataTable, podaci `/incidenti/podaci/`) | `/incidenti/` |
+| **Detalj incidenta** (prilog, ko je imao vozilo, raniji incidenti) | `/incidenti/<id>/` |
+| Prilog (otvaranje i preuzimanje, `?preuzmi=1`) | `/incidenti/<id>/prilog/` |
+| Novi incident / izmena / brisanje | `/incidenti/novo/`, `/incidenti/<id>/izmena/`, `/incidenti/<id>/brisanje/` |
+| Predlog vozača (JSON za formu) | `/incidenti/vozaci/` |
+
+Incident beleži vozilo, datum i mesto prekršaja, vozača, opis prekršaja, iznos kazne (RSD) i
+napomenu, i **prilog** (zapisnik, rešenje o kazni, fotografija — PDF ili slika do 20 MB, otvara se
+samo kroz aplikaciju uz proveru obuhvata; PDF i slika se na detalju prikazuju odmah). Beleži se ko je
+i kada uneo incident. Posle izbora vozila i datuma forma prikazuje ko je tog dana imao vozilo — iz zaduženja
+vozila (otvoreno do tog dana, nezatvoreno pre njega) i putnih naloga (dan u periodu putovanja,
+bez storniranih) — i vozača bira jednim klikom; kada je predlog jedan, bira ga sama
+(`fleet/support/incidenti.py`). Spisak se filtrira po periodu, vozilu i pretrazi (tablica, vozač,
+prekršaj, mesto), po prilogu, i prikazuje zbir kazni za filtrirane incidente. Vidljivost prati
+obuhvat Flote po vozilu. Incidenti zaposlenog vide se i na njegovoj kartici u Kadrovima.
+**Incidente unosi Garaža** — uloga Garaža ima sve dozvole `incident_*` (i Uprava).
 
 ### Putni nalozi
 

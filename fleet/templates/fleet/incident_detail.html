@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load vozila %}
+{% comment %}
+Detalj incidenta: podaci o prekršaju i kazni, prilog (PDF ili slika prikazani odmah), ko je imao
+vozilo tog dana (zaduženje, putni nalog) i raniji incidenti istog vozila i vozača.
+{% endcomment %}
+{% block title %}{{ title }} | IMS{% endblock %}
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+<style>
+  .inc-raspored { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+  @media (max-width: 1100px) { .inc-raspored { grid-template-columns: minmax(0, 1fr); } }
+  .inc-pregled { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .inc-plocica { background: #fff; border: 1px solid #e3e6ec; border-radius: 8px; padding: 12px 14px; }
+  .inc-plocica small { display: block; color: #6b7785; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+  .inc-plocica strong { display: block; color: #14395b; font-size: 1.1rem; margin-top: 2px; }
+  .inc-kartica { background: #fff; border: 1px solid #e3e6ec; border-radius: 8px; margin-bottom: 16px; }
+  .inc-kartica > header { padding: 10px 16px; border-bottom: 1px solid #eef0f4; background: #fafbfd; border-radius: 8px 8px 0 0;
+    font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .inc-kartica > div { padding: 14px 16px; }
+  .inc-podaci { display: grid; grid-template-columns: 140px 1fr; gap: 8px 12px; margin: 0; font-size: .92rem; }
+  .inc-podaci dt { color: #6b7785; font-weight: 400; }
+  .inc-podaci dd { margin: 0; }
+  .inc-prilog-okvir { width: 100%; height: 720px; border: 1px solid #e3e6ec; border-radius: 6px; background: #f7f9fc; }
+  .inc-prilog-slika { max-width: 100%; border: 1px solid #e3e6ec; border-radius: 6px; }
+  .inc-lista { margin: 0; padding: 0; list-style: none; font-size: .9rem; }
+  .inc-lista li { padding: 6px 0; border-bottom: 1px solid #f0f2f5; display: flex; justify-content: space-between; gap: 8px; }
+  .inc-lista li:last-child { border-bottom: 0; }
+</style>
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-alert-octagon me-2"></i>{{ title }}</h1>
+    <p>{{ tablica|default:incident.vehicle.chassis_number }} · {{ incident.vehicle.brand }} {{ incident.vehicle.model }} · vozač {{ incident.employee }}</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'incident_list' %}"><i class="mdi mdi-arrow-left"></i> Spisak</a>
+    {% if can_update %}<a class="btn btn-light btn-sm" href="{% url 'incident_update' incident.pk %}"><i class="mdi mdi-pencil"></i> Izmeni</a>{% endif %}
+    {% if can_delete %}<a class="btn btn-outline-light btn-sm" href="{% url 'incident_delete' incident.pk %}"><i class="mdi mdi-trash-can-outline"></i> Obriši</a>{% endif %}
+  </div>
+</div>
+
+<div class="inc-pregled">
+  <div class="inc-plocica"><small>Datum prekršaja</small><strong>{{ incident.date|date:"d.m.Y." }}</strong></div>
+  <div class="inc-plocica"><small>Kazna</small><strong>{{ incident.fine_amount|floatformat:"2g" }} RSD</strong></div>
+  <div class="inc-plocica"><small>Vozilo</small><strong>{% vozilo_a incident.vehicle_id tablica|default:"—" %}</strong></div>
+  <div class="inc-plocica"><small>Vozač</small><strong>{{ incident.employee }}</strong></div>
+  <div class="inc-plocica"><small>Prilog</small><strong>{% if incident.prilog %}<i class="mdi mdi-paperclip"></i> priložen{% else %}nema{% endif %}</strong></div>
+</div>
+
+<div class="inc-raspored">
+  <div>
+    <section class="inc-kartica">
+      <header>Prekršaj</header>
+      <div><dl class="inc-podaci">
+        <dt>Opis</dt><dd>{{ incident.violation|linebreaksbr }}</dd>
+        <dt>Mesto</dt><dd>{{ incident.location }}</dd>
+        <dt>Iznos kazne</dt><dd><strong>{{ incident.fine_amount|floatformat:"2g" }} RSD</strong></dd>
+        <dt>Napomena</dt><dd>{{ incident.note|default:"—"|linebreaksbr }}</dd>
+        <dt>Vozač</dt><dd>{{ incident.employee }} <span class="text-muted">({{ incident.employee.employee_code }})</span></dd>
+        <dt>Vozilo</dt><dd>{{ incident.vehicle|vozilo_link }}</dd>
+        <dt>Uneo</dt><dd>{% if incident.uneo %}{{ incident.uneo.get_full_name|default:incident.uneo.username }}{% else %}—{% endif %}{% if incident.uneto %} · {{ incident.uneto|date:"d.m.Y. H:i" }}{% endif %}</dd>
+      </dl></div>
+    </section>
+
+    <section class="inc-kartica">
+      <header>Ko je imao vozilo {{ incident.date|date:"d.m.Y." }}</header>
+      <div>
+        {% if vozaci %}
+          <ul class="inc-lista">{% for v in vozaci %}<li><span>{{ v.ime }}{% if v.id == incident.employee_id %} <span class="badge bg-success">upisan vozač</span>{% endif %}</span><span class="text-muted small">{{ v.izvor }}</span></li>{% endfor %}</ul>
+        {% else %}<p class="text-muted mb-0">Za taj dan nema zaduženja vozila ni putnog naloga.</p>{% endif %}
+      </div>
+    </section>
+
+    <section class="inc-kartica">
+      <header>Raniji incidenti</header>
+      <div class="row g-3">
+        <div class="col-md-6"><div class="small text-muted mb-1">Isto vozilo</div>
+          {% if incidenti_vozila %}<ul class="inc-lista">{% for x in incidenti_vozila %}<li><a href="{% url 'incident_detail' x.pk %}">{{ x.date|date:"d.m.Y." }}</a><span>{{ x.employee }} · {{ x.fine_amount|floatformat:"2g" }}</span></li>{% endfor %}</ul>
+          {% else %}<p class="text-muted small mb-0">Nema.</p>{% endif %}</div>
+        <div class="col-md-6"><div class="small text-muted mb-1">Isti vozač</div>
+          {% if incidenti_vozaca %}<ul class="inc-lista">{% for x in incidenti_vozaca %}<li><a href="{% url 'incident_detail' x.pk %}">{{ x.date|date:"d.m.Y." }}</a><span><a href="{% url 'vehicle_detail' x.vehicle_id %}" class="fleet-table-link vozilo-link" title="Detalj vozila">{{ x.vehicle.brand }} {{ x.vehicle.model }}</a> · {{ x.fine_amount|floatformat:"2g" }}</span></li>{% endfor %}</ul>
+          {% else %}<p class="text-muted small mb-0">Nema.</p>{% endif %}</div>
+      </div>
+    </section>
+  </div>
+
+  <section class="inc-kartica">
+    <header><span>Prilog{% if incident.prilog_naziv %} · <span class="fw-normal">{{ incident.prilog_naziv }}</span>{% endif %}</span>
+      {% if incident.prilog and can_prilog %}<span class="d-flex gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'incident_prilog' incident.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> Otvori</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'incident_prilog' incident.pk %}?preuzmi=1"><i class="mdi mdi-download"></i> Preuzmi</a></span>{% endif %}</header>
+    <div>
+      {% if not incident.prilog %}
+        <p class="text-muted mb-0">Prilog nije dodat.{% if can_update %} <a href="{% url 'incident_update' incident.pk %}">Dodaj prilog</a> (zapisnik, rešenje o kazni ili fotografija).{% endif %}</p>
+      {% elif not can_prilog %}<p class="text-muted mb-0"><i class="mdi mdi-paperclip"></i> Prilog je dodat.</p>
+      {% elif prilog_vrsta == "pdf" %}<iframe class="inc-prilog-okvir" src="{% url 'incident_prilog' incident.pk %}" title="Prilog"></iframe>
+      {% elif prilog_vrsta == "slika" %}<img class="inc-prilog-slika" src="{% url 'incident_prilog' incident.pk %}" alt="Prilog incidenta">
+      {% else %}<p class="mb-0"><i class="mdi mdi-file"></i> Prilog se ne prikazuje u pregledaču — otvorite ga ili preuzmite.</p>{% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

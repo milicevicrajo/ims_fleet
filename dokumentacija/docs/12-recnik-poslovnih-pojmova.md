@@ -125,7 +125,7 @@
 
 | Pojam | Značenje |
 |---|---|
-| **Povezani server** | Udaljeni SQL Server dostupan kroz upit — `PUTGEO-SERVER`, `INFORMATIKA23`, `SERFIN`. |
+| **Povezani server** | Udaljeni SQL Server dostupan kroz upit — `PUTGEO-SERVER`, `INFORMATIKA23`. Raniji `SERFIN` je ugašen; kadrovski izvor prebacuje se na `PUTGEO-SERVER.bazaldims`. |
 | **Nasleđeni pogled** | `dbo.*` objekat starog ERP-a koji sistem samo čita. |
 | **Draft (nedovršeno)** | Podatak preuzet spolja koji čeka dopunu korisnika. |
 | **Snimak (snapshot)** | Lokalna kopija spoljnog skupa po stabilnom ključu. |

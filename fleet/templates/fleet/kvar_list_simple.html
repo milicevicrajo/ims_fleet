@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 
 {% block content %}
 <div class="row">
@@ -27,7 +28,7 @@
               {% for kvar in kvarovi %}
               <tr>
                 <td><a href="{% url 'kvar_detail' kvar.pk %}" class="btn btn-outline-info btn-sm">Otvori</a></td>
-                <td><a href="{% url 'vehicle_detail' kvar.vehicle.id %}">{{ kvar.vehicle }}</a></td>
+                <td>{{ kvar.vehicle|vozilo_link }}</td>
                 <td>{{ kvar.get_work_type_display }}</td>
                 <td>{{ kvar.kilometraza }}</td>
                 <td>{{ kvar.opis }}</td>

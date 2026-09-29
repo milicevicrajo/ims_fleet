@@ -296,6 +296,7 @@ CELERY_TASK_ROUTES = {
     'finansije.tasks.sync_all_years': {'queue': 'sync'},
     'finansije.tasks.refresh_nalog_z_task': {'queue': 'sync'},
     'potrazivanja.tasks.sync_collections_task': {'queue': 'sync'},
+    'hr.tasks.sync_ugovori_zaposlenih_task': {'queue': 'sync'},
 }
 
 FINANSIJE_COMPANY = 1

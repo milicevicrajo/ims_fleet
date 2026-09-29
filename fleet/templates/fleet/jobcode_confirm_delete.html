@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load vozila %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-6">
@@ -6,7 +7,7 @@
       <div class="card-body">
         <h3 class="card-title">{{ title }}</h3>
         <p>Da li ste sigurni da želite da obrišete dodelu <strong>{{ job_code.organizational_unit|default:"—" }}</strong>
-          vozilu <strong>{{ job_code.vehicle|default:"—" }}</strong> od {{ job_code.assigned_date|date:"d.m.Y" }}?</p>
+          vozilu <strong>{{ job_code.vehicle|vozilo_link }}</strong> od {{ job_code.assigned_date|date:"d.m.Y" }}?</p>
         <p class="text-muted small">Brisanje menja istoriju dodela: troškovi tog perioda prelaze na prethodnu dodelu vozila.</p>
         <form method="post">
           {% csrf_token %}

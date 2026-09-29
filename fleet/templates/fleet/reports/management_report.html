@@ -30,7 +30,7 @@
   <h3 class="h5 mb-3">Pregled <span class="badge bg-light text-dark">{{ row_count }} redova</span></h3>
   <div class="table-responsive"><table id="FleetManagementReport" class="table table-bordered table-hover display compact w-100">
    <thead><tr>{% for label in headers %}<th>{{ label }}</th>{% endfor %}</tr></thead>
-   <tbody>{% for row in table_rows %}<tr>{% for cell in row %}<td data-order="{{ cell.sort }}" {% if cell.numeric %}class="text-end"{% endif %}>{% if cell.url %}<a href="{{ cell.url }}">{{ cell.display }}</a>{% else %}{{ cell.display }}{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+   <tbody>{% for row in table_rows %}<tr>{% for cell in row %}<td data-order="{{ cell.sort }}" {% if cell.numeric %}class="text-end"{% endif %}>{% if cell.url %}<a href="{{ cell.url }}" class="fleet-table-link vozilo-link" title="Detalj vozila">{{ cell.display }}</a>{% else %}{{ cell.display }}{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
   </table></div>
  </div></div>
 {% endif %}

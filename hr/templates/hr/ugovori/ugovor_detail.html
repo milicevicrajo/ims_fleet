@@ -1,0 +1,145 @@
+{% extends 'hr/list_base.html' %}
+{% comment %}
+Unos ugovora za jedan period rada: levo podaci iz kadrovske baze, ugovor (broj, aneks i veza sa
+glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi periodi radnika.
+{% endcomment %}
+{% block title %}{{ title }} | IMS{% endblock %}
+{% block hr_content %}
+{% include 'hr/ugovori/_styles.html' %}
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <div class="hr-kicker">Kadrovi - Ugovori</div>
+    <h1><i class="mdi mdi-file-sign me-2"></i>{{ ime }}</h1>
+    <p>Šifra {{ red.employee_code }} · period {{ red.redni_broj }}: {{ period }}{% if not red.radnik_aktivan %} · bivši radnik{% endif %}</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{% url 'hr:ugovor_list' %}"><i class="mdi mdi-arrow-left"></i> Spisak</a>
+    {% if can_view_employee %}<a class="btn btn-outline-light btn-sm" href="{% url 'employee_detail' red.employee_id %}"><i class="mdi mdi-account"></i> Karton zaposlenog</a>{% endif %}
+  </div>
+</div>
+
+{% if red.prethodni_datum_od %}
+<div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2">
+  <span><i class="mdi mdi-alert"></i> Datum početka ovog perioda promenio se u kadrovskoj bazi: ranije {{ red.prethodni_datum_od|date:"d.m.Y." }}, sada {{ red.datum_od|date:"d.m.Y." }}. Proverite da li uneti ugovor i dalje pripada ovom periodu.</span>
+  {% if can_update %}<form method="post" action="{% url 'hr:ugovor_update' red.pk %}">{% csrf_token %}<input type="hidden" name="akcija" value="potvrdi_period">
+    <button class="btn btn-outline-dark btn-sm" type="submit"><i class="mdi mdi-check"></i> Provereno</button></form>{% endif %}
+</div>
+{% endif %}
+{% if not red.u_izvoru %}<div class="alert alert-secondary"><i class="mdi mdi-information-outline"></i> Ovog perioda više nema u kadrovskoj bazi. Uneti podaci su sačuvani.</div>{% endif %}
+
+<div class="ugovor-raspored">
+  <div>
+    <section class="ugovor-kartica">
+      <header>Period iz kadrovske baze</header>
+      <div><dl class="ugovor-podaci">
+        <dt>Kategorija</dt><dd>{% if red.kategorija == 'van_radnog_odnosa' %}<span class="ugovor-badge info">Van radnog odnosa</span>{% else %}<span class="ugovor-badge ok">Radni odnos</span>{% endif %}</dd>
+        <dt>Period</dt><dd>{{ period }}</dd>
+        <dt>Opis</dt><dd>{{ red.opis|default:"—" }}</dd>
+        <dt>Staž u periodu</dt><dd>{{ red.staz|default:"—" }}</dd>
+      </dl></div>
+    </section>
+
+    {% if can_update %}
+    <form method="post" action="{% url 'hr:ugovor_update' red.pk %}" enctype="multipart/form-data" class="ugovor-form">{% csrf_token %}
+      <input type="hidden" name="akcija" value="sacuvaj">
+      {% if form.non_field_errors %}<div class="alert alert-danger py-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      <section class="ugovor-kartica">
+        <header>Ugovor</header>
+        <div>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="{{ form.broj_ugovora.id_for_label }}">{{ form.broj_ugovora.label }}</label>{{ form.broj_ugovora }}
+              {% for e in form.broj_ugovora.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.broj_aneksa.id_for_label }}">{{ form.broj_aneksa.label }} <span class="text-muted fw-normal">(nije obavezno)</span></label>{{ form.broj_aneksa }}
+              <div class="form-text">Prvi ugovor nema aneks.</div></div>
+            <div class="col-12 js-aneks">
+              <div class="ugovor-aneks">
+                <label class="form-label" for="{{ form.glavni_ugovor.id_for_label }}"><i class="mdi mdi-link-variant"></i> {{ form.glavni_ugovor.label }}</label>{{ form.glavni_ugovor }}
+                <div class="form-text">Aneks se vezuje za raniji ugovor istog radnika. Veza nije obavezna — period je ionako vezan za radnika.</div>
+              </div>
+            </div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.dokument.id_for_label }}">{{ form.dokument.label }}</label>
+              {% if red.dokument %}<div class="mb-2">{% if can_document %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'hr:ugovor_dokument' red.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-file-pdf-box"></i> {{ red.dokument_naziv|default:"Otvori dokument" }}</a>{% else %}<i class="mdi mdi-paperclip"></i> {{ red.dokument_naziv }}{% endif %}</div>{% endif %}
+              <input type="file" name="dokument" id="{{ form.dokument.id_for_label }}" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff">
+              {% if red.dokument %}<div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="dokument-clear" id="dokument-clear"><label class="form-check-label" for="dokument-clear">Ukloni priloženi dokument</label></div>{% endif %}
+              {% for e in form.dokument.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              <div class="form-text">PDF ili slika, najviše 20 MB. Novi fajl zamenjuje postojeći.</div></div>
+            <div class="col-md-6"><label class="form-label" for="{{ form.napomena.id_for_label }}">{{ form.napomena.label }}</label>{{ form.napomena }}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ugovor-kartica">
+        <header><span>OJ i radno mesto po sistematizaciji</span>
+          {% if red.podaci_zabelezeni %}<span class="ugovor-small">{{ red.get_podaci_poreklo_display }} · {{ red.podaci_zabelezeni|date:"d.m.Y." }}</span>{% endif %}</header>
+        <div>
+          <div class="row g-3">
+            <div class="col-md-3"><label class="form-label" for="{{ form.oj.id_for_label }}">{{ form.oj.label }}</label>{{ form.oj }}</div>
+            <div class="col-md-9"><label class="form-label" for="{{ form.naziv_oj.id_for_label }}">{{ form.naziv_oj.label }}</label>{{ form.naziv_oj }}</div>
+            <div class="col-md-3"><label class="form-label" for="{{ form.sifra_sistematizacije.id_for_label }}">{{ form.sifra_sistematizacije.label }}</label>{{ form.sifra_sistematizacije }}</div>
+            <div class="col-md-9"><label class="form-label" for="{{ form.naziv_radnog_mesta.id_for_label }}">{{ form.naziv_radnog_mesta.label }}</label>{{ form.naziv_radnog_mesta }}</div>
+          </div>
+          <div class="form-text mt-2">Beleže se iz kadrovske baze kada se period pojavi i posle se sami ne menjaju — ostaju kao istorijski podaci. Ručna izmena se beleži kao „Uneto ručno”.</div>
+          <div class="ugovor-dno">
+            <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button>
+          </div>
+        </div>
+      </section>
+    </form>
+    <form method="post" action="{% url 'hr:ugovor_update' red.pk %}" class="mb-3 text-end" onsubmit="return confirm('Zameniti zabeleženu OJ i radno mesto trenutnim stanjem iz kadrovske baze?');">{% csrf_token %}
+      <input type="hidden" name="akcija" value="preuzmi_trenutno">
+      <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="mdi mdi-download"></i> Preuzmi trenutnu OJ i radno mesto iz kadrovske baze</button>
+    </form>
+    {% else %}
+    <section class="ugovor-kartica">
+      <header>Ugovor</header>
+      <div><dl class="ugovor-podaci">
+        <dt>Broj ugovora</dt><dd>{{ red.broj_ugovora|default:"—" }}</dd>
+        <dt>Broj aneksa</dt><dd>{{ red.broj_aneksa|default:"—" }}{% if red.glavni_ugovor %} · uz {{ red.glavni_ugovor.broj_ugovora|default:"glavni ugovor" }}{% endif %}</dd>
+        <dt>Dokument</dt><dd>{% if red.dokument and can_document %}<a href="{% url 'hr:ugovor_dokument' red.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-file-pdf-box"></i> {{ red.dokument_naziv|default:"Otvori" }}</a>{% elif red.dokument %}priložen{% else %}—{% endif %}</dd>
+        <dt>OJ</dt><dd>{{ red.oj|default:"—" }} {{ red.naziv_oj }}</dd>
+        <dt>Radno mesto</dt><dd>{{ red.sifra_sistematizacije|default:"—" }} {{ red.naziv_radnog_mesta }}</dd>
+        <dt>Napomena</dt><dd>{{ red.napomena|default:"—"|linebreaksbr }}</dd>
+      </dl></div>
+    </section>
+    {% endif %}
+    {% if red.izmenjeno %}<p class="ugovor-small">Poslednja izmena: {{ red.izmenio.username|default:"—" }} · {{ red.izmenjeno|date:"d.m.Y. H:i" }}</p>{% endif %}
+  </div>
+
+  <aside>
+    <section class="ugovor-kartica">
+      <header>Svi periodi radnika</header>
+      <div class="p-0"><div class="table-responsive">
+        <table class="table table-sm mb-0 ugovor-periodi">
+          <thead><tr><th>Period</th><th>Ugovor</th><th></th></tr></thead>
+          <tbody>
+          {% for p in periodi %}
+            <tr class="{% if p.pk == red.pk %}izabran{% endif %}">
+              <td class="text-nowrap">{{ p.datum_od|date:"d.m.Y." }} –<br>{% if p.na_neodredjeno %}na neodređeno{% else %}{{ p.datum_do|date:"d.m.Y."|default:"—" }}{% endif %}</td>
+              <td>{{ p.broj_ugovora|default:"—" }}{% if p.broj_aneksa %}<div class="ugovor-small">aneks {{ p.broj_aneksa }}</div>{% endif %}{% if p.dokument %} <i class="mdi mdi-paperclip" title="Dokument priložen"></i>{% endif %}</td>
+              <td class="text-end">{% if p.pk != red.pk %}<a class="btn btn-outline-primary btn-sm" href="{% url 'hr:ugovor_detail' p.pk %}" title="Otvori"><i class="mdi mdi-chevron-right"></i></a>{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div></div>
+    </section>
+    {% if aneksi %}
+    <section class="ugovor-kartica">
+      <header>Aneksi ovog ugovora</header>
+      <div><ul class="mb-0 ps-3">{% for a in aneksi %}<li><a href="{% url 'hr:ugovor_detail' a.pk %}">{{ a.broj_aneksa }}</a> · {{ a.datum_od|date:"d.m.Y." }}</li>{% endfor %}</ul></div>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var aneks = document.getElementById('id_broj_aneksa');
+  if (!aneks) return;
+  // Veza sa glavnim ugovorom ima smisla samo za aneks.
+  function prikazi() { document.querySelectorAll('.js-aneks').forEach(function (el) { el.style.display = aneks.value.trim() ? '' : 'none'; }); }
+  aneks.addEventListener('input', prikazi);
+  prikazi();
+});
+</script>{% endblock %}

@@ -40,8 +40,8 @@ Uz to vodi **plan javnih nabavki sa verzijama**, da se vidi šta je i kada menja
 
 | Celina | Šta obuhvata |
 |---|---|
-| **Predmeti nabavke** | Zahtev za nabavku, zahtev za uslugu, predlog za opremu; stavke; statusi; štampa |
-| **Garažni predmeti** | Zahtevi vezani za kvar i vozilo, sa vrstom intervencije |
+| **Predmeti nabavke** | Zahtev za nabavku, zahtev za uslugu, predlog za opremu; stavke; statusi; štampa. Spisak je podrazumevano od najnovijeg ka najstarijem (po datumu kreiranja; i kolona „Broj“ sortira hronološki, jer bi se po tekstu mešali prefiksi ZN/ZNG/ZU/ZUG) |
+| **Garažni predmeti** | Zahtevi vezani za kvar i vozilo, sa vrstom intervencije. Od 29.09.2026. Garaža ih formira dugmetom „Formiraj zahtev u Nabavci“ na prijavi kvara: stižu kao **nacrt** sa brojem (ZNG/ZUG), vozilom, nalogom garaže, šifrom posla i stavkama, a Nabavka ih potvrđuje promenom statusa i dopunjuje ([3.1 Flota](03-01-flota.md)) |
 | **EUF fakture** | Snimak preuzetih elektronskih ulaznih faktura, sa operativnim oznakama |
 | **UF stavke i fakture** | Snimak stavki ulaznih faktura i izvedene fakture |
 | **Roba** | Snimak robnog prometa |
