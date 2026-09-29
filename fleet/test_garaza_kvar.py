@@ -182,3 +182,30 @@ class TrebovanjeIStampaTests(GarazaEkraniTests):
             self.assertContains(odgovor, "width: 210mm; height: 296mm")
             self.assertNotContains(odgovor, "border:1px solid #000;            /* ukloni")
             self.assertContains(odgovor, 'class="a4-page', count=1)
+
+
+class KilometrazaSvudaTests(KilometrazaTests):
+    def test_poslednja_ocitana_do_datuma_unosa(self):
+        korisnik = get_user_model().objects.create_superuser("km-svuda", password="x")
+        self.client.force_login(korisnik)
+        podaci = self.client.get(reverse("vozilo_kilometraza"), {"vozilo": self.vozilo.pk}).json()
+        self.assertEqual((podaci["kilometraza"]["km"], podaci["kilometraza"]["izvor"]), (120000, "Nalog vozila — početak"))
+        ranije = (DANAS - datetime.timedelta(days=20)).strftime("%d.%m.%Y")
+        self.assertIsNone(self.client.get(reverse("vozilo_kilometraza"), {"vozilo": self.vozilo.pk, "datum": ranije}).json()["kilometraza"])
+        self.assertEqual(self.client.get(reverse("vozilo_kilometraza"), {"vozilo": "x"}).json(), {})
+
+    def test_sva_polja_kilometraze_imaju_napomenu(self):
+        from fleet.forms import FuelConsumptionForm, VehicleTravelOrderCloseForm, VehicleTravelOrderForm
+        from fleet.forms.garaza import PreviousVehicleTravelOrderForm
+        from fleet.forms.services import DraftServiceTransactionForm, RequisitionForm, ServiceTransactionForm
+
+        nalog = VehicleTravelOrder.objects.get()
+        polja = [FuelConsumptionForm().fields["mileage"], VehicleTravelOrderForm().fields["start_mileage"],
+                 VehicleTravelOrderCloseForm(instance=nalog).fields["end_mileage"],
+                 PreviousVehicleTravelOrderForm(next_order=nalog).fields["start_mileage"],
+                 ServiceTransactionForm().fields["kilometraza"], DraftServiceTransactionForm().fields["kilometraza"],
+                 RequisitionForm().fields["kilometraza"]]
+        for polje in polja:
+            self.assertEqual(polje.widget.attrs["data-km-url"], reverse("vozilo_kilometraza"))
+            self.assertTrue(polje.widget.attrs.get("data-km-vozilo-polje") or polje.widget.attrs.get("data-km-vozilo"))
+        self.assertEqual(VehicleTravelOrderCloseForm(instance=nalog).fields["end_mileage"].widget.attrs["data-km-vozilo"], str(self.vozilo.pk))

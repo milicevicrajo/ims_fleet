@@ -141,6 +141,8 @@ from .views.vehicles import (
     vehicle_tender_documentation_zip,
 )
 from .views.vehicle_onboarding import VehicleOnboardingView, VehicleHoldingCreateView, VehicleHoldingUpdateView
+from .views.kilometraza import vozilo_kilometraza
+from .views.opomene import OpomenaListView, opomena_proveri
 from .views.incidenti import (IncidentCreateView, IncidentDataView, IncidentDeleteView, IncidentDetailView,
                                IncidentListView, IncidentPrilogView, IncidentUpdateView, IncidentVozaciView)
 from .views.kvar import (
@@ -299,6 +301,9 @@ urlpatterns = [
     path('moj-profil/cv/<int:pk>/izmeni/', EmployeeCVItemUpdateView.as_view(), name='employee_cv_item_update'),
     path('moj-profil/cv/<int:pk>/obrisi/', EmployeeCVItemDeleteView.as_view(), name='employee_cv_item_delete'),
 
+    path('vozila/kilometraza/', vozilo_kilometraza, name='vozilo_kilometraza'),
+    path('gorivo/opomene/', OpomenaListView.as_view(), name='opomena_list'),
+    path('gorivo/opomene/proveri/', opomena_proveri, name='opomena_proveri'),
     path('incidenti/', IncidentListView.as_view(), name='incident_list'),
     path('incidenti/novo/', IncidentCreateView.as_view(), name='incident_create'),
     path('incidenti/vozaci/', IncidentVozaciView.as_view(), name='incident_vozaci'),

@@ -4,6 +4,8 @@ from django_select2.forms import Select2Widget
 from core.form_fields import localized_date_field
 from hr.models import Employee
 
+from .kilometraza import oznaci_kilometrazu
+
 from ..models import (
     Kvar,
     KvarPart,
@@ -60,6 +62,7 @@ class VehicleTravelOrderForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         self.limit_to_user_employee = kwargs.pop("limit_to_user_employee", False)
         super().__init__(*args, **kwargs)
+        oznaci_kilometrazu(self.fields["start_mileage"], vozilo_polje="vehicle", datum_polje="created_at")
         if self.user:
             from fleet.support import obuhvat as obuhvat_flote
             from fleet.support.management_reports import allowed_centers
@@ -169,6 +172,10 @@ class VehicleTravelOrderCloseForm(forms.ModelForm):
         model = VehicleTravelOrder
         fields = ["closed_at", "end_mileage"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        oznaci_kilometrazu(self.fields["end_mileage"], vozilo_id=self.instance.vehicle_id, datum_polje="closed_at")
+
     def clean(self):
         cleaned_data = super().clean()
         closed_at = cleaned_data.get("closed_at")
@@ -210,6 +217,8 @@ class PreviousVehicleTravelOrderForm(forms.ModelForm):
     def __init__(self, *args, next_order=None, user=None, **kwargs):
         self.next_order = next_order
         super().__init__(*args, **kwargs)
+        if next_order is not None:
+            oznaci_kilometrazu(self.fields["start_mileage"], vozilo_id=next_order.vehicle_id, datum_polje="created_at")
         if user:
             from fleet.support import obuhvat as obuhvat_flote
             from fleet.support.management_reports import allowed_centers

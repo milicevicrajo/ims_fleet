@@ -13,6 +13,7 @@ from ..models import (
     ServiceType,
     Vehicle,
 )
+from .kilometraza import oznaci_kilometrazu
 from .layout import FieldsetMixin
 
 # Isti raspored i objasnjenja za konacnu i za nedovrsenu servisnu stavku.
@@ -82,6 +83,7 @@ class ServiceTransactionForm(FieldsetMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.datum:
             self.initial["datum"] = self.instance.datum.strftime("%d.%m.%Y")
+        oznaci_kilometrazu(self.fields["kilometraza"], vozilo_polje="vehicle", datum_polje="datum")
 
 
 class DraftServiceTransactionForm(FieldsetMixin, forms.ModelForm):
@@ -106,6 +108,7 @@ class DraftServiceTransactionForm(FieldsetMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.datum:
             self.initial["datum"] = self.instance.datum.strftime("%d.%m.%Y")
+        oznaci_kilometrazu(self.fields["kilometraza"], vozilo_polje="vehicle", datum_polje="datum")
 
         if not self.initial.get("sif_vrs") and not getattr(self.instance, "sif_vrs", None):
             self.initial["sif_vrs"] = "EUF"
@@ -186,3 +189,4 @@ class RequisitionForm(FieldsetMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk and self.instance.datum_trebovanja:
             self.initial["datum_trebovanja"] = self.instance.datum_trebovanja.strftime("%d.%m.%Y")
+        oznaci_kilometrazu(self.fields["kilometraza"], vozilo_polje="vehicle", datum_polje="datum_trebovanja")

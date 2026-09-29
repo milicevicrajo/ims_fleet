@@ -225,3 +225,16 @@ def sync_putni_nalozi_isplaceno_task():
         lock_ttl_seconds=90 * 60,
         fn=_runner,
     )
+
+
+@shared_task
+def opomene_goriva_task():
+    """Opomene za nepravilnu kilometražu pri točenju (od 29.09.2026.): priprema i, ako je kanal podešen, slanje."""
+    def _runner():
+        from .support.opomene import otkrij, posalji, poruka_zadatka
+
+        rezultat = otkrij()
+        poslato, bez_kontakta = posalji()
+        return poruka_zadatka(rezultat, poslato, bez_kontakta)
+
+    return _run_with_singleton_lock(task_name="opomene_goriva_task", lock_ttl_seconds=30 * 60, fn=_runner)

@@ -148,6 +148,14 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
   kvara). Manja vrednost ili skok veći od `max(2.000 km, 1.000 km × dana od očitavanja)` čuva se
   samo uz oznaku „Potvrđujem unetu kilometražu“. Kilometraža mora biti 1–3.000.000. Izmena prijave
   bez promene kilometraže se ne proverava ponovo.
+- **Poslednja očitana kilometraža svuda (od 29.09.2026.)**: ispod svakog polja kilometraže u Floti
+  (točenje goriva, otvaranje, zatvaranje i prethodno zaduženje vozila, servisna stavka i nedovršena
+  stavka, trebovanje) piše poslednja očitana kilometraža vozila do datuma unosa, sa datumom i izvorom;
+  kada je uneta manja ili skok veći od istog pravila kao kod prijave kvara, ispod stoji upozorenje.
+  Ovde upozorenje **ne sprečava čuvanje** (strogo — uz potvrdu — samo na prijavi kvara). Oznake dodaje
+  `fleet/forms/kilometraza.py: oznaci_kilometrazu`, podatke daje `vozilo_kilometraza`
+  (`/vozila/kilometraza/`, samo vozila u obuhvatu), prikaz `fleet/static/fleet/js/kilometraza.js`.
+  Preuzimanje novog vozila nema napomenu (vozilo još nema očitavanja).
 - **Detalj** odmah prikazuje sva tri dokumenta onako kako se štampaju (prijava kvara, trebovanje
   materijala / zahtev za uslugu, radni nalog — ugrađene stranice `?embed=1`, `X-Frame-Options:
   SAMEORIGIN` samo za te tri). Delovi (usluge) se upisuju direktno u tabelu koja izgleda kao
@@ -168,6 +176,22 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
   Izmene delova posle potvrde Nabavke ne menjaju stavke zahteva.
 - Ručni unos predmeta iz Nabavke i dalje radi kao ranije (`nabavka:case_create?garage_order=…`);
   sa kartice vozila (Održavanje) predlaže se Zahtev za uslugu.
+
+### Opomene za gorivo (od 29.09.2026.) [P]
+
+Ekran `/gorivo/opomene/` (Flota → **Ostalo** → Opomene za gorivo) i noćni posao u **07:45**
+(`fleet.tasks.opomene_goriva_task`, posle preuzimanja NIS i OMV). Logika: `fleet/support/opomene.py`.
+
+| Tema | Pravilo |
+|---|---|
+| Šta se proverava | Točenja goriva NIS i OMV iz poslednjih 14 dana (bez AdBlue-a; OMV bez duplikata i odjeka; točenje van rezervoara se preskače). Nepravilnosti: **kilometraža nije uneta** (0 ili prazno), **manja od prethodnog točenja**, **nerealan skok** (više od `max(2.000 km, 1.000 km × dana)`), **ista kao prethodno točenje** drugog dana. Poredi se sa prethodnim *ispravnim* točenjem istog vozila (NIS i OMV zajedno), pa jedno pogrešno točenje ne kvari poređenje sledećeg. |
+| Kome ide opomena | Samo vozaču: sa **putnog naloga** vozila za taj dan (nije storniran), a ako naloga nema — onom ko je **zadužio vozilo**. Bez oba: status „Vozač nije poznat“. |
+| Tekst | Npr. „IMS Flota — točenje 22.09.2026. u 09:13, BUBANJ POTOK, vozilo BG1017-OU, 38,72 l: kilometraža nije uneta. Molimo da pri svakom točenju unesete tačno stanje brojila.“ Za sada samo opomena, bez ispravke. |
+| Slanje | `settings.OPOMENE_GORIVA["kanal"]`: `""` (podrazumevano) — **slanje isključeno**, opomene se samo pripremaju i vide na ekranu; `"email"` — jedna zbirna poruka po vozaču na e-mail korisnika vezanog za zaposlenog (treba podesiti `EMAIL_*`; vozač bez e-maila dobija status „Vozač nema kontakt“). Viber zahteva posrednika (Viber poslovne poruke) — još nije uveden. |
+| Jedinstvenost | Jedno točenje = najviše jedna opomena (`izvor` + ID točenja). Izvorne transakcije NIS/OMV se ne menjaju. |
+| Prava | Ekran i „Proveri sada“: uloga Garaža (i Uprava). Vidljivost po obuhvatu Flote (vozilo). |
+
+Prvo pokretanje 29.09.2026.: 259 točenja u 14 dana, 78 opomena (73 bez kilometraže, 4 manja, 1 skok); vozač poznat za 60 (23 sa putnog naloga, 37 iz zaduženja).
 
 ### Incidenti (od 29.09.2026.) [P]
 

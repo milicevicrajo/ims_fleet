@@ -11,6 +11,7 @@ from core.models import ActivityLog, CustomUser, OrganizationalUnit, PermissionC
 from hr.models import Employee
 from .economics_models import (VehicleAnalysisProfile, LeaseChargePeriod, VehicleDowntime,
     VehicleEconomicAssessment, VehicleEconomicScenario)
+from .opomene_models import OpomenaGoriva
 
 # <!-- ======================================================================= -->
 #                 <!-- MODELI SAMOSTALNE APLIKACIJE -->

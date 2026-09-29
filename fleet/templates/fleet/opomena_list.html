@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load vozila %}
+{% comment %}
+Flota → Opomene za gorivo: točenja sa nepravilno unetom kilometražom i opomene vozačima
+(vozač sa putnog naloga za taj dan, a ako ga nema — ko je zadužio vozilo).
+{% endcomment %}
+{% block title %}{{ title }} | IMS{% endblock %}
+{% block content %}
+{% include "fleet/includes/list_styles.html" %}
+<style>
+  .opomena-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+  .opomena-zbir { display: flex; flex-wrap: wrap; gap: 26px; padding: 14px 20px; border-bottom: 1px solid #e6ebf1; }
+  .opomena-zbir small { display: block; color: #64748b; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+  .opomena-zbir strong { font-size: 1.25rem; color: #14395b; }
+  .opomena-table td { vertical-align: top; font-size: .88rem; }
+  .opomena-small { color: #64748b; font-size: .78rem; }
+  .opomena-badge { display: inline-flex; border-radius: 999px; padding: 3px 9px; font-weight: 600; font-size: .78rem; white-space: nowrap; }
+  .opomena-badge.bez_km, .opomena-badge.ista { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .opomena-badge.manja, .opomena-badge.skok { background: #fdecec; color: #9b1c1c; border: 1px solid #f5c2c2; }
+  .opomena-status { font-size: .8rem; font-weight: 600; }
+  .opomena-status.poslata { color: #147044; } .opomena-status.za_slanje { color: #174f83; }
+  .opomena-status.bez_vozaca, .opomena-status.bez_kontakta { color: #7a4d00; } .opomena-status.greska { color: #9b1c1c; }
+</style>
+
+<div class="fleet-list-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-gas-station-off me-2"></i>{{ title }}</h1>
+    <p>Točenja NIS i OMV sa nepravilno unetom kilometražom. Opomena ide vozaču sa putnog naloga za taj dan, a ako naloga nema — onom ko je zadužio vozilo.</p>
+  </div>
+  {% if can_check %}
+  <form method="post" action="{% url 'opomena_proveri' %}" onsubmit="this.querySelector('button').disabled = true;">{% csrf_token %}
+    <button class="btn btn-light btn-sm" type="submit"><i class="mdi mdi-magnify-scan"></i> Proveri sada</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if not kanal %}
+<div class="alert alert-info"><i class="mdi mdi-information-outline"></i> Slanje opomena još nije uključeno — opomene se svake noći pripremaju i vide ovde, ali se vozačima ne šalju dok se ne podesi kanal (e-mail ili Viber).</div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="card-body border-bottom">
+    <form method="get" class="opomena-filter">
+      <div><label class="form-label mb-1" for="f-od">Točenje od</label><input class="form-control js-date" id="f-od" name="od" value="{{ filteri.od }}" placeholder="dd.mm.gggg"></div>
+      <div><label class="form-label mb-1" for="f-do">Točenje do</label><input class="form-control js-date" id="f-do" name="do" value="{{ filteri.do }}" placeholder="dd.mm.gggg"></div>
+      <div><label class="form-label mb-1" for="f-vrsta">Nepravilnost</label>
+        <select class="form-select" id="f-vrsta" name="vrsta"><option value="">Sve</option>
+          {% for v, n in vrste %}<option value="{{ v }}" {% if filteri.vrsta == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+      <div><label class="form-label mb-1" for="f-status">Status</label>
+        <select class="form-select" id="f-status" name="status"><option value="">Svi</option>
+          {% for v, n in statusi %}<option value="{{ v }}" {% if filteri.status == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+      <div class="d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="mdi mdi-filter"></i> Prikaži</button>
+        <a class="btn btn-outline-secondary" href="{% url 'opomena_list' %}" title="Poništi filtere" aria-label="Poništi filtere"><i class="mdi mdi-filter-remove"></i></a></div>
+    </form>
+  </div>
+  <div class="opomena-zbir">
+    <div><small>Prikazano</small><strong>{{ ukupno }}</strong></div>
+    {% for naziv, broj in po_statusu %}<div><small>{{ naziv }}</small><strong>{{ broj }}</strong></div>{% endfor %}
+  </div>
+  <div class="card-body"><div class="table-responsive">
+    <table class="table table-hover align-middle opomena-table mb-0">
+      <thead><tr><th>Točenje</th><th>Vozilo</th><th>Nepravilnost</th><th>Vozač</th><th>Opomena</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for o in opomene %}
+        <tr>
+          <td class="text-nowrap">{{ o.vreme_tocenja|date:"d.m.Y. H:i" }}<div class="opomena-small">{{ o.get_izvor_display }} · {{ o.stanica }}{% if o.kolicina %} · {{ o.kolicina|floatformat:"2g" }} l{% endif %}</div></td>
+          <td>{{ o.vehicle|vozilo_link }}</td>
+          <td><span class="opomena-badge {{ o.vrsta }}">{{ o.get_vrsta_display }}</span>
+            {% if o.uneta_km %}<div class="opomena-small">uneto {{ o.uneta_km }} km{% if o.prethodna_km %}, prethodno {{ o.prethodna_km }} km ({{ o.prethodni_datum|date:"d.m.Y." }}){% endif %}</div>{% endif %}</td>
+          <td>{% if o.employee %}{{ o.employee }}<div class="opomena-small">{{ o.vozac_izvor }}</div>{% else %}<span class="text-muted">nije poznat</span>{% endif %}</td>
+          <td class="opomena-small" style="max-width:380px;">{{ o.poruka }}</td>
+          <td><span class="opomena-status {{ o.status }}">{{ o.get_status_display }}</span>{% if o.poslato %}<div class="opomena-small">{{ o.kanal }} · {{ o.poslato|date:"d.m.Y. H:i" }}</div>{% endif %}{% if o.greska %}<div class="opomena-small" title="{{ o.greska }}">greška</div>{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">Nema opomena{% if filteri.status or filteri.vrsta or filteri.od or filteri.do %} za izabrane filtere{% endif %}.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if ukupno > najvise %}<p class="small text-muted mt-2 mb-0">Prikazano je prvih {{ najvise }} — suzite filter.</p>{% endif %}
+  </div></div>
+</div>
+{% endblock %}

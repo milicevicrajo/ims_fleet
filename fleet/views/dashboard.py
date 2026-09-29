@@ -18,6 +18,12 @@ def fleet_other(request):
             "icon": "mdi-shield-alert",
         },
         {
+            "title": "Opomene za gorivo",
+            "description": "Tocenja sa nepravilno unetom kilometrazom i opomene vozacima (putni nalog, zaduzenje vozila).",
+            "url_name": "opomena_list",
+            "icon": "mdi-gas-station-off",
+        },
+        {
             "title": "Konta vozila",
             "description": "Sifarnik konta koja se koriste za prepoznavanje i klasifikaciju troskova vozila.",
             "url_name": "konta_list",

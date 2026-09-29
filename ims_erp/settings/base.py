@@ -297,6 +297,7 @@ CELERY_TASK_ROUTES = {
     'finansije.tasks.refresh_nalog_z_task': {'queue': 'sync'},
     'potrazivanja.tasks.sync_collections_task': {'queue': 'sync'},
     'hr.tasks.sync_ugovori_zaposlenih_task': {'queue': 'sync'},
+    'fleet.tasks.opomene_goriva_task': {'queue': 'sync'},
 }
 
 FINANSIJE_COMPANY = 1
@@ -304,3 +305,7 @@ FINANSIJE_SOURCE_DB = 'server_db'
 FINANSIJE_NALOG_Z_TIMEOUT = int(os.getenv('FINANSIJE_NALOG_Z_TIMEOUT', '900'))
 
 CELERY_WORKER_REDIRECT_STDOUTS = False
+
+# Opomene vozačima za kilometražu pri točenju (fleet/support/opomene.py). Kanal: "" = isključeno
+# (opomene se samo pripremaju), "email" = e-mail korisniku vezanom za vozača (treba EMAIL_* podešavanje).
+OPOMENE_GORIVA = {"kanal": ""}

@@ -1,6 +1,7 @@
 from django import forms
 
 from ..models import FuelConsumption
+from .kilometraza import oznaci_kilometrazu
 from .layout import FieldsetMixin
 
 
@@ -24,3 +25,7 @@ class FuelConsumptionForm(FieldsetMixin, forms.ModelForm):
             "fuel_type": "Na primer: dizel, benzin, TNG, AdBlue. Za električna vozila upisati „električno“ — sistem tu vrednost prepoznaje.",
             "job_code": "Šifra posla kao slobodan tekst. Ako se ne unese, trošak se vezuje samo za vozilo.",
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        oznaci_kilometrazu(self.fields["mileage"], vozilo_polje="vehicle", datum_polje="date")

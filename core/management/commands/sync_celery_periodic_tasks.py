@@ -144,6 +144,13 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "30",
     },
     {
+        # Od 29.09.2026.; posle preuzimanja NIS (04:20) i OMV (05:10, 06:10). Slanje zavisi od OPOMENE_GORIVA.
+        "name": "Flota - opomene za gorivo",
+        "task": "fleet.tasks.opomene_goriva_task",
+        "hour": "7",
+        "minute": "45",
+    },
+    {
         "name": "Nabavka - roba",
         "aliases": ["Nabavka roba"],
         "task": "nabavka.tasks.sync_goods_task",
