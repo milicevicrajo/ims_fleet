@@ -3049,10 +3049,13 @@ fakture, ne prihvata ih, ne odbija i ne stornira — to ostaje u sistemu u kome 
 | Obuhvat | Fakture nemaju centar ni šifru posla — vidi ih samo **obuhvat cele firme** (kao sinhronizaciju) |
 | Ograničenja SEF-a | Najviše **3 zahteva u sekundi** (inače 429): klijent čeka 0,4 s između poziva i posle 429 ponavlja. Izlazna faktura „u slanju” još nema UBL (`UBLFileNotFound`) — ostaje bez broja i UBL se traži pri sledećem preuzimanju. Sertifikat `efaktura.mfin.gov.rs` proverava se kroz skladište sertifikata Windows-a (`truststore`), jer izdavač nije u `certifi` |
 | Preuzimanje | Noću u **06:50** (`finansije.tasks.sync_sef_task`, posle noćne pauze SEF-a): fakture poslate u poslednjih 45 dana i promene statusa. Ručno — dugmetom na ekranu SEF fakture ili na strani Finansije → Sinhronizacija (sa istorijom preuzimanja) — najviše tri meseca; za duži period `manage.py sync_sef --od 2026-01-01`. `manage.py sync_sef --provera` proverava ključ i vezu (verzija SEF-a). Svako preuzimanje se beleži (`finansije_sef_sinhronizacija`) |
+| Svi PDF-ovi | **Svako preuzimanje sa SEF-a** (dugme, noćni posao, `manage.py sync_sef`) posle faktura i statusa preuzima i PDF svake fakture iz perioda koja ga nema — bez ograničenja broja; traje koliko traje. Prvi krug pokreće izradu na SEF-u, sledeći krugovi (na 15 s, najviše 4) preuzimaju gotove. Zapis čiji fajl ne postoji na disku (PDF preuzet sa drugog računara nad istom bazom) preuzima se ponovo. `sync_sef --bez-pdf` preskače PDF-ove; `manage.py sef_pdf --od … --do …` dopunjuje PDF-ove za već preuzete fakture |
+| Izvoz PDF-ova | **Izvezi PDF-ove (ZIP)** za mesec ili celu godinu, uz izabrani smer: `Ulazne|Izlazne/GGGG-MM/datum_broj_partner.pdf` i `spisak.csv` (sve fakture perioda, sa oznakom koje nemaju PDF). Period prati datum dokumenta (izdavanje; za ulazne promet ili dan slanja) |
+| Ručno preuzimanje | Dugme **Preuzimanje i status** (ekran SEF fakture i Finansije → Sinhronizacija) otvara modal. Kada preuzimanje radi, modal prikazuje njegov status; inače poslednje preuzimanje (sa dnevnikom) i izbor perioda za novo. Preuzimanje kreće **odmah**, u pozadinskoj niti web procesa (bez Celery-ja): prvo se prebroje fakture na SEF-u (ulazne, izlazne, novi UBL, PDF-ovi koji nedostaju) i proceni vreme, pa modal na 2 s prikazuje korak (1–5: spisak, ulazne, izlazne, promene statusa, PDF-ovi), napredak, preostalo vreme (iz preostalih poziva i stvarne brzine) i **dnevnik** — poslednjih 40 događaja (faktura, PDF, čekanje na SEF, greška). **Zaustavi** staje posle koraka koji upravo radi (status „Zaustavljeno“, preuzeto ostaje; novo preuzimanje nastavlja bez duplikata). Prozor se može zatvoriti — preuzimanje radi dalje. U isto vreme radi jedno preuzimanje; noćni posao se preskače dok ručno traje. Preuzimanje se javlja najmanje na 5 s; ako se ne javi 2 minuta (restart web procesa — npr. `runserver` posle izmene koda), označava se kao prekinuto. Merenje 30.09.2026.: 29.–30.09. (37 ulaznih, 35 izlaznih, 55 PDF-ova) — procena 66 s, stvarno 68 s |
 | Ključ | `SEF_API_KEY` u `.env` (SEF portal → Podešavanja → API management), `SEF_API_URL` (podrazumevano produkcija; test: `https://efakturatest.mfin.gov.rs`). Bez ključa ekran prikazuje upozorenje, a noćni posao se preskače |
 
 Dozvole: `finansije:sef_list`, `finansije:sef_detail`, `finansije:sef_dokument` (PDF i UBL),
-`finansije:sef_sync` (ručno preuzimanje) — Uprava ih dobija automatski. Kod:
+`finansije:sef_sync` (ručno preuzimanje i praćenje napretka), `finansije:sef_izvoz` (ZIP) — Uprava ih dobija automatski. Kod:
 `finansije/services/sef.py`, `finansije/sef_views.py`, `finansije/sef_models.py`; testovi u
 `finansije/test_sef.py` (lažni klijent, bez poziva SEF-a). Migracije Finansija 0006 i 0007 (PDF, `broj_knjizenja`, indeks knjiženja po broju dokumenta).
 
@@ -17750,13 +17753,12 @@ Njihova pravila su **prepisana u Python**.
 #### 7.4.1. Kako radi [P]
 
 ```
- 1. Prijava na internu mrežu    https://control.ims.rs:4081
- 2. Pokretanje pregledača       Chrome (chrome-for-testing)
- 3. Prijava na portal           cards.nis.rs  /  fleet.omv.com
- 4. Preuzimanje datoteke        CSV / Excel u lokalni direktorijum
- 5. Obrada datoteke             pandas / openpyxl
- 6. Upis                        TransactionNIS / TransactionOMV + FuelConsumption
- 7. Čišćenje duplikata          cleanup_omv_fuel_data(apply=True)   ← samo OMV
+ 1. Pokretanje pregledača       Chrome (chrome-for-testing)
+ 2. Prijava na portal           cards.nis.rs  /  fleet.omv.com
+ 3. Preuzimanje datoteke        CSV / Excel u lokalni direktorijum
+ 4. Obrada datoteke             pandas / openpyxl
+ 5. Upis                        TransactionNIS / TransactionOMV + FuelConsumption
+ 6. Čišćenje duplikata          cleanup_omv_fuel_data(apply=True)   ← samo OMV
 ```
 
 | Portal | Adresa | Zadatak | Vreme | Red |
@@ -17783,9 +17785,11 @@ Ako automatsko preuzimanje ne uspe, datoteka se može uvesti ručno:
 |---|---|
 | **Promena izgleda stranice** | Selenium traži elemente po izgledu — promena zaustavlja preuzimanje |
 | **Isticanje lozinke** | Prijava ne uspeva; posao pada uz grešku u `TaskHistory` |
-| **Mrežni portal** | Bez prijave na `control.ims.rs` nema pristupa internetu |
+| **Portal ne odgovara** | `ERR_CONNECTION_RESET` / `ERR_SSL_UNRECOGNIZED_NAME_ALERT` na otvaranju stranice za prijavu znači da portal (npr. OMV 30.09.2026.) privremeno odbija vezu — posao se ponovo pokreće ručno |
 | **Chrome verzija** | Mora odgovarati upravljaču (`chrome-for-testing` u projektu) |
 | **Duplikati OMV** | Rešeno čišćenjem pri uvozu i filterom pri čitanju — vidi [V-06](#62-flota--obračuni-goriva) |
+
+Prijava na mrežni portal Kerio (`control.ims.rs`) uklonjena je iz koda 30.09.2026. — nije se pozivala, a sadržala je pristupne podatke.
 
 > **[N] Q7:** gde se čuvaju pristupni podaci za portale i ko ih obnavlja nije zabeleženo.
 

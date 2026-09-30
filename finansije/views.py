@@ -410,6 +410,7 @@ def sync_status(request):
     from django_celery_beat.models import PeriodicTask
     schedules = PeriodicTask.objects.filter(task=TASK_NAME, enabled=True).select_related("crontab")
     from .sef_models import SefSinhronizacija
+    from .sef_views import _aktivno as _sef_aktivno
 
     danas = timezone.localdate()
     return render(request, "finansije/sync_status.html", {
@@ -417,6 +418,7 @@ def sync_status(request):
         "sef_runs": SefSinhronizacija.objects.select_related("korisnik")[:10],
         "sef_podesen": bool(settings.SEF_API_KEY), "sef_od": danas - timedelta(days=7), "sef_do": danas,
         "can_sef_sync": user_has_role_permission(request.user, "finansije:sef_sync"),
+        "aktivno_preuzimanje": _sef_aktivno(),
     })
 
 

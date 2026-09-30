@@ -1,0 +1,204 @@
+{% comment %}
+Preuzimanje sa SEF-a u modalu: status (preuzimanje u toku ili poslednje), izbor perioda i pokretanje
+(odmah, pozadinska nit web procesa), procena vremena po broju faktura, napredak po fazama, dnevnik
+i zaustavljanje. Ukljucuje se na ekranu SEF fakture i na strani Finansije → Sinhronizacija.
+Potrebno: sync_od, sync_do.
+{% endcomment %}
+<div class="modal fade" id="SefPreuzimanjeModal" tabindex="-1" aria-labelledby="SefPreuzimanjeNaslov" aria-hidden="true"
+     data-start-url="{% url 'finansije:sef_sync' %}" data-poslednje-url="{% url 'finansije:sef_sync_poslednje' %}">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="SefPreuzimanjeNaslov"><i class="mdi mdi-cloud-download me-1" aria-hidden="true"></i>Preuzimanje sa SEF-a</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+    </div>
+    <div class="modal-body">
+      <div id="SefUcitavanje" class="text-muted small">Učitavam stanje…</div>
+
+      <div id="SefPoslednje" class="sef-poslednje d-none"></div>
+
+      <form id="SefPreuzimanjeForma" class="d-none" novalidate>{% csrf_token %}
+        <p class="small text-muted">Preuzimaju se fakture poslate u izabranom periodu, promene statusa i PDF svake fakture koja ga još nema. Pre početka se prebroje fakture na SEF-u i proceni vreme (SEF prima 3 zahteva u sekundi). Već preuzeto se ne preuzima ponovo.</p>
+        <div class="row g-3">
+          <div class="col-sm-6"><label class="form-label" for="SefOd">Od</label><input id="SefOd" type="date" name="od" value="{{ sync_od }}" class="form-control" required></div>
+          <div class="col-sm-6"><label class="form-label" for="SefDo">Do</label><input id="SefDo" type="date" name="do" value="{{ sync_do }}" max="{{ sync_do }}" class="form-control" required></div>
+        </div>
+        <div class="alert alert-danger mt-3 mb-0 d-none" id="SefPreuzimanjeGreskaForme" role="alert"></div>
+      </form>
+
+      <div id="SefPreuzimanjeTok" class="d-none" aria-live="polite">
+        <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+          <strong id="SefFaza">Priprema…</strong>
+          <span class="text-muted small" id="SefPeriod"></span>
+        </div>
+        <div class="progress mb-2" style="height: 20px;" role="progressbar" aria-label="Napredak koraka">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" id="SefTraka" style="width: 0%">0%</div>
+        </div>
+        <div class="d-flex justify-content-between flex-wrap gap-2 small text-muted mb-3">
+          <span id="SefKoraci"></span><span id="SefVreme"></span>
+        </div>
+        <div class="sef-modal-procena d-none mb-3" id="SefProcena"></div>
+        <div class="alert alert-success mb-3 d-none" id="SefGotovo" role="status"></div>
+        <div class="alert alert-warning mb-3 d-none" id="SefTisina" role="status"></div>
+        <div class="alert alert-danger mb-3 d-none" id="SefGreska" role="alert"></div>
+        <div class="d-flex justify-content-between align-items-center mb-1"><span class="small fw-semibold">Šta se dešava</span><span class="small text-muted" id="SefPokrenuto"></span></div>
+        <ol class="sef-dnevnik" id="SefDnevnik"></ol>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span class="small text-muted me-auto" id="SefNapomena"></span>
+      <button type="button" class="btn btn-outline-danger d-none" id="SefZaustavi"><i class="mdi mdi-stop" aria-hidden="true"></i> Zaustavi</button>
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
+      <button type="button" class="btn btn-outline-primary d-none" id="SefNovo"><i class="mdi mdi-plus" aria-hidden="true"></i> Novo preuzimanje</button>
+      <button type="button" class="btn btn-primary d-none" id="SefPokreni"><i class="mdi mdi-play" aria-hidden="true"></i> Pokreni preuzimanje</button>
+      <button type="button" class="btn btn-primary d-none" id="SefOsvezi"><i class="mdi mdi-refresh" aria-hidden="true"></i> Osveži spisak</button>
+    </div>
+  </div></div>
+</div>
+<style>
+  .sef-modal-procena { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .sef-modal-procena > div { background: #f3f7fb; border-radius: 6px; padding: 10px 12px; }
+  .sef-modal-procena b { display: block; font-size: 1.15rem; color: #203d54; font-variant-numeric: tabular-nums; }
+  .sef-modal-procena span { font-size: .75rem; color: #6a7a8c; }
+  .sef-dnevnik { list-style: none; margin: 0; padding: 8px 10px; max-height: 220px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: .8rem; }
+  .sef-dnevnik li { display: flex; gap: 10px; padding: 2px 0; }
+  .sef-dnevnik time { color: #7b8797; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+  .sef-dnevnik:empty::before { content: "Još nema zapisa."; color: #7b8797; }
+  .sef-poslednje { background: #f3f7fb; border-radius: 6px; padding: 12px 14px; margin-bottom: 16px; font-size: .85rem; }
+</style>
+<script>
+(function () {
+  var modal = document.getElementById('SefPreuzimanjeModal');
+  if (!modal) return;
+  function el(id) { return document.getElementById(id); }
+  var forma = el('SefPreuzimanjeForma'), tok = el('SefPreuzimanjeTok'), pokreni = el('SefPokreni'), osvezi = el('SefOsvezi'),
+      novo = el('SefNovo'), zaustavi = el('SefZaustavi'), greskaForme = el('SefPreuzimanjeGreskaForme'),
+      tajmer = null, stanjeUrl = null, zaustaviUrl = null, otvoren = false;
+  function csrf() { return forma.elements.csrfmiddlewaretoken.value; }
+  function sakrij() { for (var i = 0; i < arguments.length; i++) el(arguments[i]).classList.add('d-none'); }
+  function pokazi() { for (var i = 0; i < arguments.length; i++) el(arguments[i]).classList.remove('d-none'); }
+  function trajanje(s) {
+    if (s === null || s === undefined) return '—';
+    s = Math.max(0, Math.round(s));
+    if (s < 60) return s + ' s';
+    var m = Math.floor(s / 60), h = Math.floor(m / 60);
+    return h ? h + ' h ' + (m % 60) + ' min' : m + ' min' + (m < 10 ? ' ' + (s % 60) + ' s' : '');
+  }
+  function dnevnik(redovi) {
+    var lista = el('SefDnevnik'), naDnu = lista.scrollTop + lista.clientHeight >= lista.scrollHeight - 8;
+    lista.innerHTML = '';
+    (redovi || []).forEach(function (r) {
+      var li = document.createElement('li'), t = document.createElement('time'), s = document.createElement('span');
+      t.textContent = r[0]; s.textContent = r[1]; li.appendChild(t); li.appendChild(s); lista.appendChild(li);
+    });
+    if (naDnu) lista.scrollTop = lista.scrollHeight;
+  }
+  function formaZaNovo(poslednje) {
+    clearTimeout(tajmer); stanjeUrl = null;
+    sakrij('SefUcitavanje', 'SefPreuzimanjeTok', 'SefZaustavi', 'SefNovo', 'SefOsvezi', 'SefPreuzimanjeGreskaForme');
+    pokazi('SefPreuzimanjeForma', 'SefPokreni'); el('SefNapomena').textContent = '';
+    var blok = el('SefPoslednje');
+    if (poslednje && poslednje.status && poslednje.status !== 'nema') {
+      blok.innerHTML = '';
+      var naslov = document.createElement('div'); naslov.className = 'fw-semibold mb-1';
+      naslov.textContent = 'Poslednje preuzimanje: ' + poslednje.status_naziv + ' · ' + poslednje.pokrenuto + ' · period ' + poslednje.od + '–' + poslednje.do + ' · ' + poslednje.pokrenuo;
+      var opis = document.createElement('div'); opis.className = 'text-muted';
+      opis.textContent = poslednje.poruka || poslednje.greska || '';
+      var prikazi = document.createElement('button'); prikazi.type = 'button'; prikazi.className = 'btn btn-link btn-sm p-0 mt-1';
+      prikazi.textContent = 'Prikaži detalje i dnevnik';
+      prikazi.addEventListener('click', function () { prikaziTok(poslednje); });
+      blok.appendChild(naslov); blok.appendChild(opis); blok.appendChild(prikazi); blok.classList.remove('d-none');
+    } else { blok.classList.add('d-none'); }
+  }
+  function prikaziTok(p) {
+    sakrij('SefUcitavanje', 'SefPreuzimanjeForma', 'SefPoslednje', 'SefPokreni'); pokazi('SefPreuzimanjeTok');
+    stanjeUrl = p.stanje_url; zaustaviUrl = p.zaustavi_url;
+    el('SefPeriod').textContent = 'Period ' + p.od + '–' + p.do;
+    el('SefPokrenuto').textContent = 'Pokrenuto ' + p.pokrenuto + ' · ' + p.pokrenuo;
+    el('SefFaza').textContent = p.status === 'running'
+      ? (p.redni ? ('Korak ' + p.redni + ' od ' + p.faza_ukupno + ': ' + p.faza) : (p.faza || 'Priprema…'))
+      : p.status_naziv;
+    var procenat = p.ukupno ? Math.min(100, Math.round(100 * p.obradjeno / p.ukupno)) : (p.status === 'success' ? 100 : 0);
+    var traka = el('SefTraka');
+    traka.className = 'progress-bar' + (p.status === 'running' ? ' progress-bar-striped progress-bar-animated' :
+      p.status === 'success' ? ' bg-success' : p.status === 'stopped' ? ' bg-secondary' : ' bg-danger');
+    traka.style.width = (p.status === 'success' ? 100 : procenat) + '%'; traka.textContent = (p.status === 'success' ? 100 : procenat) + '%';
+    el('SefKoraci').textContent = p.ukupno ? (p.faza + ': ' + p.obradjeno + ' od ' + p.ukupno) : '';
+    el('SefVreme').textContent = p.status === 'running'
+      ? ('Proteklo ' + trajanje(p.proteklo_s) + ' · preostalo oko ' + trajanje(p.preostalo_s)) : ('Trajalo ' + trajanje(p.proteklo_s));
+    if (p.procena) {
+      var pr = p.procena, blok = el('SefProcena'); blok.innerHTML = '';
+      [['Ulaznih faktura', pr.ulaznih], ['Izlaznih faktura', pr.izlaznih], ['Novih izlaznih (UBL)', pr.ubl],
+       ['PDF-ova za preuzimanje', pr.bez_pdf], ['Procena ukupno', trajanje((p.proteklo_s || 0) + (p.status === 'running' ? (p.preostalo_s || 0) : 0))]]
+        .forEach(function (x) { var d = document.createElement('div'), b = document.createElement('b'), s = document.createElement('span');
+          b.textContent = x[1]; s.textContent = x[0]; d.appendChild(b); d.appendChild(s); blok.appendChild(d); });
+      blok.classList.remove('d-none');
+    } else { sakrij('SefProcena'); }
+    dnevnik(p.dnevnik);
+    var tisina = el('SefTisina');
+    if (p.status === 'running' && p.tisina_s > 30) {
+      tisina.textContent = 'Preuzimanje se ne javlja već ' + trajanje(p.tisina_s) + '. Ako se ne javi ni posle 2 minuta, biće označeno kao prekinuto i moći ćete da ga pokrenete ponovo.';
+      tisina.classList.remove('d-none');
+    } else { tisina.classList.add('d-none'); }
+    sakrij('SefGotovo', 'SefGreska');
+    if (p.status === 'success') { el('SefGotovo').textContent = p.poruka; pokazi('SefGotovo'); }
+    if (p.status === 'error' || p.status === 'stopped') {
+      el('SefGreska').textContent = (p.greska || 'Preuzimanje nije uspelo.') + (p.poruka ? ' Do tada: ' + p.poruka : '');
+      el('SefGreska').className = 'alert mb-3 ' + (p.status === 'stopped' ? 'alert-secondary' : 'alert-danger');
+      pokazi('SefGreska');
+    }
+    if (p.status === 'running') {
+      pokazi('SefZaustavi'); sakrij('SefNovo', 'SefOsvezi');
+      zaustavi.disabled = !!p.zaustavljanje;
+      zaustavi.innerHTML = p.zaustavljanje ? '<span class="spinner-border spinner-border-sm me-1"></span> Zaustavljam…' : '<i class="mdi mdi-stop"></i> Zaustavi';
+      el('SefNapomena').textContent = 'Prozor možete zatvoriti: preuzimanje radi dalje, a napredak vidite ponovo preko „Status preuzimanja”.';
+    } else {
+      sakrij('SefZaustavi'); pokazi('SefNovo', 'SefOsvezi'); el('SefNapomena').textContent = '';
+    }
+    return p.status === 'running';
+  }
+  function prati() {
+    clearTimeout(tajmer);
+    if (!stanjeUrl || !otvoren) return;
+    fetch(stanjeUrl, {credentials: 'same-origin', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function (o) { return o.json(); })
+      .then(function (p) { if (prikaziTok(p)) tajmer = setTimeout(prati, 2000); })
+      .catch(function () { tajmer = setTimeout(prati, 5000); });
+  }
+  function ucitaj() {
+    pokazi('SefUcitavanje'); sakrij('SefPreuzimanjeForma', 'SefPreuzimanjeTok', 'SefPoslednje', 'SefPokreni', 'SefZaustavi', 'SefNovo', 'SefOsvezi');
+    fetch(modal.dataset.poslednjeUrl, {credentials: 'same-origin', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function (o) { return o.json(); })
+      .then(function (p) { if (p.status === 'running') { prikaziTok(p); tajmer = setTimeout(prati, 2000); } else { formaZaNovo(p); } })
+      .catch(function () { formaZaNovo(null); });
+  }
+  pokreni.addEventListener('click', function () {
+    greskaForme.classList.add('d-none');
+    if (forma.elements.od.value && forma.elements.do.value && forma.elements.od.value > forma.elements.do.value) {
+      greskaForme.textContent = 'Datum do ne može biti pre datuma od.'; greskaForme.classList.remove('d-none'); return;
+    }
+    pokreni.disabled = true;
+    fetch(modal.dataset.startUrl, {method: 'POST', body: new FormData(forma), credentials: 'same-origin',
+                                   headers: {'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function (o) { return o.json(); })
+      .then(function (p) {
+        pokreni.disabled = false;
+        if (p.greska && !p.stanje_url) { greskaForme.textContent = p.greska; greskaForme.classList.remove('d-none'); return; }
+        prikaziTok(p);
+        if (p.vec_u_toku) el('SefNapomena').textContent = 'Već je u toku ranije pokrenuto preuzimanje — prikazan je njegov napredak.';
+        tajmer = setTimeout(prati, 1500);
+      })
+      .catch(function () { pokreni.disabled = false; greskaForme.textContent = 'Veza sa serverom nije uspela.'; greskaForme.classList.remove('d-none'); });
+  });
+  zaustavi.addEventListener('click', function () {
+    if (!zaustaviUrl || !window.confirm('Zaustaviti preuzimanje? Ono što je već preuzeto ostaje; kasnije se može nastaviti.')) return;
+    zaustavi.disabled = true;
+    fetch(zaustaviUrl, {method: 'POST', credentials: 'same-origin', headers: {'X-CSRFToken': csrf(), 'X-Requested-With': 'XMLHttpRequest'}})
+      .then(function (o) { return o.json(); }).then(function (p) { prikaziTok(p); prati(); })
+      .catch(function () { zaustavi.disabled = false; });
+  });
+  novo.addEventListener('click', function () { formaZaNovo(null); });
+  osvezi.addEventListener('click', function () { window.location.reload(); });
+  modal.addEventListener('shown.bs.modal', function () { otvoren = true; ucitaj(); });
+  modal.addEventListener('hidden.bs.modal', function () { otvoren = false; clearTimeout(tajmer); });
+})();
+</script>

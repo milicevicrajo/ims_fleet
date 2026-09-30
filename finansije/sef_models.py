@@ -91,7 +91,7 @@ class SefPromena(models.Model):
 
 
 class SefSinhronizacija(models.Model):
-    STATUS = [("running", "U toku"), ("success", "Uspešno"), ("error", "Greška")]
+    STATUS = [("running", "U toku"), ("success", "Uspešno"), ("error", "Greška"), ("stopped", "Zaustavljeno")]
     started_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS, default="running")
@@ -101,6 +101,8 @@ class SefSinhronizacija(models.Model):
     do = models.DateField()
     counts = models.JSONField(default=dict)
     error = models.TextField(blank=True, default="")
+    # Korisnik je trazio zaustavljanje; preuzimanje staje posle koraka koji upravo radi.
+    zaustavi = models.BooleanField(default=False)
 
     class Meta:
         db_table = "finansije_sef_sinhronizacija"

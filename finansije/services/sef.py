@@ -21,6 +21,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db.models import Q
 from django.utils import timezone
 
 from finansije.models import LedgerEntry
@@ -54,6 +55,10 @@ class SefNijePodesen(Exception):
 
 class SefGreska(Exception):
     """SEF je vratio gresku ili nije odgovorio."""
+
+
+class Zaustavljeno(Exception):
+    """Korisnik je zaustavio preuzimanje (dugme u modalu)."""
 
 
 # --------------------------------------------------------------------------- klijent
@@ -95,6 +100,7 @@ class Klijent:
         self.timeout = timeout or settings.SEF_TIMEOUT
         self.session = session if session is not None else _sesija()
         self._poslednji = 0.0
+        self.poziva = 0  # za procenu preostalog vremena
         self.razmak = RAZMAK_POZIVA if session is None else 0.0  # lazna sesija u testovima ne ceka
 
     def _sacekaj(self, sekundi):
@@ -112,6 +118,7 @@ class Klijent:
                 raise SefGreska(f"SEF nije odgovorio ({type(exc).__name__}).") from exc
             finally:
                 self._poslednji = time.monotonic()
+                self.poziva += 1
             if odgovor.status_code != 429 or pokusaj == PONAVLJANJA_429:
                 break
             self._sacekaj(1.0 + pokusaj)  # previse zahteva — kratka pauza pa ponovo
@@ -299,48 +306,149 @@ def _upisi(smer, sef_id, vrednosti, sada, brojaci):
         brojaci["azurirano"] += 1
 
 
-def _ulazne(klijent, od, do, sada, brojaci):
+PULS_SEKUNDI = 5  # preuzimanje se javlja najmanje ovako cesto; bez javljanja 2 min smatra se prekinutim
+
+
+class Napredak:
+    """Napredak preuzimanja u `run.counts["napredak"]` — cita ga modal na ekranu SEF fakture.
+
+    Preostalo vreme racuna se iz broja poziva SEF-a koji jos predstoje i stvarne brzine do sada
+    (SEF prima 3 zahteva u sekundi, a PDF cesto tek priprema).
+    """
+    FAZE = ("Spisak faktura na SEF-u", "Ulazne fakture", "Izlazne fakture", "Promene statusa", "PDF-ovi")
+    CUVANJE_NA = 2.0  # sekundi (svaki korak cuva najvise ovako cesto; pojedinacan poziv SEF-a traje < 1 s)
+
+    def __init__(self, run, brojaci, klijent):
+        self.run, self.brojaci, self.klijent = run, brojaci, klijent
+        self.pocetak = time.monotonic()
+        self.planirano_poziva = 0
+        self.cekanja = 0.0
+        self.stanje = {"faza": "", "redni": 0, "faza_ukupno": len(self.FAZE), "obradjeno": 0, "ukupno": 0,
+                       "procena": None, "preostalo_s": None, "proteklo_s": 0, "dnevnik": []}
+        self._sacuvano = 0.0
+
+    def _poziva(self):
+        return getattr(self.klijent, "poziva", 0)
+
+    DNEVNIK = 40  # poslednjih dogadjaja u modalu
+
+    def dogadjaj(self, tekst):
+        """Red u dnevniku modala: sta se upravo radi (faktura, PDF, cekanje, greska)."""
+        dnevnik = self.stanje["dnevnik"]
+        dnevnik.append([timezone.localtime().strftime("%H:%M:%S"), tekst])
+        del dnevnik[:-self.DNEVNIK]
+
+    def faza(self, redni, ukupno):
+        self.stanje.update(faza=self.FAZE[redni - 1], redni=redni, obradjeno=0, ukupno=ukupno)
+        self.dogadjaj(f"Korak {redni}: {self.FAZE[redni - 1]}" + (f" ({ukupno})" if ukupno else ""))
+        self.sacuvaj(odmah=True)
+
+    def korak(self, n=1):
+        self.stanje["obradjeno"] += n
+        self.sacuvaj()
+
+    def plan(self, poziva, cekanja=0.0):
+        self.planirano_poziva += poziva
+        self.cekanja += cekanja
+
+    def cekaj(self, sekundi, spavaj=time.sleep, puls=PULS_SEKUNDI):
+        """Pauza (SEF priprema PDF) uz javljanje na svakih `puls` sekundi."""
+        preostalo = sekundi
+        while preostalo > 0:
+            korak = min(puls, preostalo)
+            spavaj(korak)
+            preostalo -= korak
+            self.cekanja = max(0.0, self.cekanja - korak)
+            self.sacuvaj(odmah=True)
+
+    def sacuvaj(self, odmah=False):
+        sada = time.monotonic()
+        if not odmah and sada - self._sacuvano < self.CUVANJE_NA:
+            return
+        self._sacuvano = sada
+        proteklo = sada - self.pocetak
+        obavljeno = self._poziva()
+        po_pozivu = max(RAZMAK_POZIVA, proteklo / obavljeno) if obavljeno else RAZMAK_POZIVA
+        preostalo = max(0, self.planirano_poziva - obavljeno) * po_pozivu + self.cekanja
+        self.stanje.update(proteklo_s=round(proteklo), preostalo_s=round(preostalo) if self.planirano_poziva else None,
+                           azurirano=timezone.now().isoformat())
+        self.run.counts = {**self.brojaci, "napredak": dict(self.stanje)}
+        self.run.save(update_fields=["counts"])
+        # Zahtev za zaustavljanje (dugme u modalu) proverava se pri svakom cuvanju, tj. najmanje na 5 s.
+        if SefSinhronizacija.objects.filter(pk=self.run.pk, zaustavi=True).exists():
+            raise Zaustavljeno("Zaustavljeno na zahtev korisnika.")
+
+
+def _ulazne(klijent, redovi, sada, brojaci, napredak=None):
+    for red in redovi:
+        brojaci["ulaznih"] += 1
+        _upisi(SefFaktura.Smer.ULAZNA, int(red["InvoiceId"]), _ulazna_iz_pregleda(red), sada, brojaci)
+        if napredak:
+            napredak.korak()
+
+
+def _spisak(klijent, od, do, napredak=None):
+    """Ulazne fakture (pregled) i ID-jevi izlaznih po statusu za period — prvi korak i osnova procene."""
+    ulazne, izlazne = [], {}
     for pocetak, kraj in periodi(od, do):
-        for red in klijent.ulazne_pregled(pocetak, kraj):
-            if red.get("InvoiceId") is None:
-                continue
-            brojaci["ulaznih"] += 1
-            _upisi(SefFaktura.Smer.ULAZNA, int(red["InvoiceId"]), _ulazna_iz_pregleda(red), sada, brojaci)
-
-
-def _izlazne(klijent, od, do, sada, brojaci):
-    postojece = dict(SefFaktura.objects.filter(smer=SefFaktura.Smer.IZLAZNA).values_list("sef_id", "status"))
-    # Faktura „u slanju” ponekad jos nema UBL; bez broja se UBL trazi ponovo.
-    bez_broja = set(SefFaktura.objects.filter(smer=SefFaktura.Smer.IZLAZNA, broj="").values_list("sef_id", flat=True))
-    for status in IZLAZNI_STATUSI:
-        for pocetak, kraj in periodi(od, do):
+        ulazne += [red for red in klijent.ulazne_pregled(pocetak, kraj) if red.get("InvoiceId") is not None]
+        if napredak:
+            napredak.dogadjaj(f"Ulazne {pocetak:%d.%m.}–{kraj:%d.%m.%Y.}: {len(ulazne)} do sada")
+            napredak.korak()
+        for status in IZLAZNI_STATUSI:
+            pre = len(izlazne)
             for sef_id in klijent.izlazne_ids(status, pocetak, kraj):
-                sef_id = int(sef_id)
-                brojaci["izlaznih"] += 1
-                if sef_id in postojece and sef_id not in bez_broja:
-                    if postojece[sef_id] != status:
-                        SefFaktura.objects.filter(smer=SefFaktura.Smer.IZLAZNA, sef_id=sef_id).update(
-                            status=status, sinhronizovano=sada)
-                        postojece[sef_id] = status
-                        brojaci["azurirano"] += 1
-                    continue
-                try:
-                    vrednosti = iz_ubl(klijent.ubl(SefFaktura.Smer.IZLAZNA, sef_id))
-                except (SefGreska, ET.ParseError) as exc:
-                    logger.warning("SEF izlazna %s: UBL nije procitan (%s)", sef_id, exc)
-                    brojaci["bez_ubl"] += 1
-                    vrednosti = {}
-                _upisi(SefFaktura.Smer.IZLAZNA, sef_id, {**vrednosti, "status": status}, sada, brojaci)
-                postojece[sef_id] = status
-                if vrednosti.get("broj"):
-                    bez_broja.discard(sef_id)
+                izlazne[int(sef_id)] = status
+            if napredak:
+                if len(izlazne) > pre:
+                    napredak.dogadjaj(f"Izlazne „{STATUSI.get(status, status)}” {pocetak:%d.%m.}–{kraj:%d.%m.%Y.}: {len(izlazne) - pre}")
+                napredak.korak()
+    return ulazne, izlazne
 
 
-def _promene(klijent, od, do, brojaci):
+def _izlazne_za_ubl(izlazne):
+    """ID-jevi izlaznih kojima treba UBL: nove i one bez broja (bile „u slanju”)."""
+    postojece = set(SefFaktura.objects.filter(smer=SefFaktura.Smer.IZLAZNA).exclude(broj="")
+                    .values_list("sef_id", flat=True))
+    return {sef_id for sef_id in izlazne if sef_id not in postojece}
+
+
+def _izlazne(klijent, izlazne, sada, brojaci, napredak=None):
+    za_ubl = _izlazne_za_ubl(izlazne)
+    statusi = dict(SefFaktura.objects.filter(smer=SefFaktura.Smer.IZLAZNA).values_list("sef_id", "status"))
+    for sef_id, status in izlazne.items():
+        brojaci["izlaznih"] += 1
+        if sef_id not in za_ubl:
+            if statusi.get(sef_id) != status:
+                SefFaktura.objects.filter(smer=SefFaktura.Smer.IZLAZNA, sef_id=sef_id).update(status=status, sinhronizovano=sada)
+                brojaci["azurirano"] += 1
+        else:
+            try:
+                vrednosti = iz_ubl(klijent.ubl(SefFaktura.Smer.IZLAZNA, sef_id))
+                if napredak:
+                    napredak.dogadjaj(f"Izlazna {vrednosti.get('broj') or sef_id} — {vrednosti.get('partner_naziv') or ''}".rstrip(" —"))
+            except (SefGreska, ET.ParseError) as exc:
+                logger.warning("SEF izlazna %s: UBL nije procitan (%s)", sef_id, exc)
+                brojaci["bez_ubl"] += 1
+                vrednosti = {}
+                if napredak:
+                    napredak.dogadjaj(f"Izlazna {sef_id}: SEF još nema UBL (pokušaće se sledeći put)")
+            _upisi(SefFaktura.Smer.IZLAZNA, sef_id, {**vrednosti, "status": status}, sada, brojaci)
+        if napredak:
+            napredak.korak()
+
+
+def _dani_promena(od, do, danas):
+    """Protekli dani perioda za koje SEF jos cuva promene (mesec dana, bez tekuceg dana)."""
+    pocetak = max(od, danas - datetime.timedelta(days=DANA_PROMENA))
+    kraj = min(do, danas - datetime.timedelta(days=1))
+    return [pocetak + datetime.timedelta(days=i) for i in range((kraj - pocetak).days + 1)] if pocetak <= kraj else []
+
+
+def _promene(klijent, dani, brojaci, napredak=None):
     for smer in (SefFaktura.Smer.ULAZNA, SefFaktura.Smer.IZLAZNA):
         kljuc_id = "PurchaseInvoiceId" if smer == SefFaktura.Smer.ULAZNA else "SalesInvoiceId"
-        dan = od
-        while dan <= do:
+        for dan in dani:
             for red in klijent.promene(smer, dan):
                 if red.get("EventId") is None or red.get(kljuc_id) is None:
                     continue
@@ -358,34 +466,87 @@ def _promene(klijent, od, do, brojaci):
                     # novija promena od poslednje upisane menja status (promene ne stizu uvek po redu)
                     faktura.status, faktura.izmenjeno_na_sefu = status, datum
                     faktura.save(update_fields=["status", "izmenjeno_na_sefu"])
-            dan += datetime.timedelta(days=1)
+            if napredak:
+                napredak.korak()
 
 
-def sinhronizuj(od=None, do=None, *, klijent=None, korisnik=None, danas=None):
-    """Preuzima fakture poslate u [od, do] i promene statusa za protekle dane. Vraca `SefSinhronizacija`."""
+def _fakture_perioda(od, do):
+    return sa_datumom(SefFaktura.objects.all()).filter(
+        Q(datum_slanja__date__gte=od, datum_slanja__date__lte=do) | Q(datum_dok__gte=od, datum_dok__lte=do))
+
+
+def _ima_pdf(faktura):
+    return bool(faktura.pdf) and faktura.pdf.storage.exists(faktura.pdf.name)
+
+
+def zapocni(od=None, do=None, *, korisnik=None, danas=None):
+    """Zapis sinhronizacije u stanju „u toku” (za pokretanje iz ekrana pre pozadinske niti)."""
     danas = danas or timezone.localdate()
     do = do or danas
     od = od or (do - datetime.timedelta(days=DANA_UNAZAD))
     if od > do:
         raise ValueError("Datum od je posle datuma do.")
-    klijent = klijent or Klijent()
-    run = SefSinhronizacija.objects.create(od=od, do=do, korisnik=korisnik)
+    return SefSinhronizacija.objects.create(od=od, do=do, korisnik=korisnik,
+                                            counts={"napredak": {"faza": "Priprema", "redni": 0,
+                                                                 "faza_ukupno": len(Napredak.FAZE),
+                                                                 "azurirano": timezone.now().isoformat()}})
+
+
+def sinhronizuj(od=None, do=None, *, klijent=None, korisnik=None, danas=None, pdf=True, run=None):
+    """Preuzima fakture poslate u [od, do], promene statusa za protekle dane i (`pdf`) PDF svake fakture
+    iz perioda koja ga jos nema — bez ogranicenja broja; traje koliko traje. Napredak i procena vremena
+    upisuju se u `run.counts["napredak"]` i `run.counts["procena"]`. Vraca `SefSinhronizacija`."""
+    danas = danas or timezone.localdate()
+    run = run or zapocni(od, do, korisnik=korisnik, danas=danas)
+    od, do = run.od, run.do
     brojaci = {"ulaznih": 0, "izlaznih": 0, "novih": 0, "azurirano": 0, "bez_ubl": 0, "promena": 0,
                "promena_bez_fakture": 0}
     sada = timezone.now()
     # Bez jedne velike transakcije oko mreznih poziva: upis po fakturi je ponovljiv, pa prekinuta
     # sinhronizacija zadrzava ono sto je preuzela, a ponovljena nastavlja bez duplikata.
     try:
-        _ulazne(klijent, od, do, sada, brojaci)
-        _izlazne(klijent, od, do, sada, brojaci)
-        # Promene samo za protekle dane (SEF ne daje tekuci dan), najvise mesec unazad.
-        juce = danas - datetime.timedelta(days=1)
-        _promene(klijent, max(od, danas - datetime.timedelta(days=DANA_PROMENA)), min(do, juce), brojaci)
+        klijent = klijent or Klijent()
+        napredak = Napredak(run, brojaci, klijent)
+        delova = len(list(periodi(od, do)))
+        napredak.plan(delova * (1 + len(IZLAZNI_STATUSI)))
+        napredak.faza(1, delova * (1 + len(IZLAZNI_STATUSI)))
+        ulazne, izlazne = _spisak(klijent, od, do, napredak)
+
+        # Procena posla: UBL za nove izlazne, promene statusa, PDF (obicno dva poziva: izrada, pa preuzimanje).
+        za_ubl = _izlazne_za_ubl(izlazne)
+        dani = _dani_promena(od, do, danas)
+        poznate = {(f.smer, f.sef_id): f for f in _fakture_perioda(od, do)}
+        kljucevi = {(SefFaktura.Smer.ULAZNA, int(r["InvoiceId"])) for r in ulazne} | {
+            (SefFaktura.Smer.IZLAZNA, i) for i in izlazne} | set(poznate)
+        bez_pdf = sum(1 for k in kljucevi if not (k in poznate and _ima_pdf(poznate[k]))) if pdf else 0
+        napredak.plan(len(za_ubl) + 2 * len(dani) + 2 * bez_pdf, cekanja=PDF_CEKANJE if bez_pdf else 0)
+        brojaci["procena"] = {"ulaznih": len(ulazne), "izlaznih": len(izlazne), "ubl": len(za_ubl),
+                              "dana_promena": len(dani), "bez_pdf": bez_pdf}
+
+        napredak.faza(2, len(ulazne))
+        _ulazne(klijent, ulazne, sada, brojaci, napredak)
+        napredak.faza(3, len(izlazne))
+        _izlazne(klijent, izlazne, sada, brojaci, napredak)
+        napredak.faza(4, 2 * len(dani))
+        _promene(klijent, dani, brojaci, napredak)
+        if pdf:
+            fakture = list(_fakture_perioda(od, do))
+            napredak.faza(5, sum(1 for f in fakture if not _ima_pdf(f)))
+            brojaci.update({f"pdf_{k}": v for k, v in preuzmi_pdfove(fakture, klijent=klijent, napredak=napredak).items()})
+    except Zaustavljeno as exc:
+        run.refresh_from_db(fields=["counts"])
+        run.status, run.error, run.finished_at = "stopped", str(exc), timezone.now()
+        run.counts = {**brojaci, "napredak": run.counts.get("napredak", {})}
+        run.save(update_fields=["status", "error", "counts", "finished_at"])
+        return run
     except Exception as exc:
-        run.status, run.error, run.counts, run.finished_at = "error", str(exc)[:2000], brojaci, timezone.now()
+        run.refresh_from_db(fields=["counts"])
+        run.status, run.error, run.finished_at = "error", str(exc)[:2000], timezone.now()
+        run.counts = {**brojaci, "napredak": run.counts.get("napredak", {})}
         run.save(update_fields=["status", "error", "counts", "finished_at"])
         raise
-    run.status, run.counts, run.finished_at = "success", brojaci, timezone.now()
+    napredak.dogadjaj("Završeno.")
+    run.status, run.counts, run.finished_at = "success", {**brojaci, "napredak": dict(napredak.stanje)}, timezone.now()
     run.save(update_fields=["status", "counts", "finished_at"])
     return run
 
@@ -412,11 +573,12 @@ PDF_KRUGOVA = 4          # SEF prvi poziv samo pokrene izradu PDF-a; ostali krug
 PDF_CEKANJE = 15         # sekundi izmedju krugova
 
 
-def preuzmi_pdfove(fakture, *, klijent=None, krugova=PDF_KRUGOVA, cekanje=PDF_CEKANJE, spavaj=time.sleep):
+def preuzmi_pdfove(fakture, *, klijent=None, krugova=PDF_KRUGOVA, cekanje=PDF_CEKANJE, spavaj=time.sleep,
+                   napredak=None):
     """PDF-ovi za fakture koje ga jos nemaju. Prvi krug pokrece izradu na SEF-u, sledeci krugovi
     preuzimaju gotove. Ogranicenje od 3 zahteva u sekundi postuje klijent. Vraca brojeve."""
     klijent = klijent or Klijent()
-    cekaju = [f for f in fakture if not (f.pdf and f.pdf.storage.exists(f.pdf.name))]
+    cekaju = [f for f in fakture if not _ima_pdf(f)]
     brojaci = {"bez_pdf": len(cekaju), "preuzeto": 0, "u_pripremi": 0, "gresaka": 0}
     for krug in range(krugova):
         ostali = []
@@ -426,16 +588,26 @@ def preuzmi_pdfove(fakture, *, klijent=None, krugova=PDF_KRUGOVA, cekanje=PDF_CE
             except SefGreska as exc:
                 logger.warning("SEF PDF %s %s: %s", faktura.smer, faktura.sef_id, exc)
                 brojaci["gresaka"] += 1
+                if napredak:
+                    napredak.dogadjaj(f"PDF {faktura.broj or faktura.sef_id}: greška — {str(exc)[:120]}")
                 continue
             if spreman:
                 brojaci["preuzeto"] += 1
+                if napredak:
+                    napredak.dogadjaj(f"PDF {faktura.broj or faktura.sef_id} — {faktura.partner_naziv[:50]}")
+                    napredak.korak()
             else:
                 ostali.append(faktura)
         cekaju = ostali
         if not cekaju:
             break
         if krug < krugova - 1:
-            spavaj(cekanje)
+            if napredak:  # jos jedan krug: po poziv za svaki PDF koji SEF jos priprema
+                napredak.plan(len(cekaju), cekanja=0)
+                napredak.dogadjaj(f"SEF priprema {len(cekaju)} PDF-ova — čekam {cekanje} s pa preuzimam (krug {krug + 2})")
+                napredak.cekaj(cekanje, spavaj)
+            else:
+                spavaj(cekanje)
     brojaci["u_pripremi"] = len(cekaju)
     return brojaci
 
@@ -495,7 +667,10 @@ def poruka(run):
     c = run.counts
     return (f"SEF {run.od:%d.%m.%Y.}–{run.do:%d.%m.%Y.}: ulaznih {c.get('ulaznih', 0)}, izlaznih {c.get('izlaznih', 0)}, "
             f"novih {c.get('novih', 0)}, ažurirano {c.get('azurirano', 0)}, promena statusa {c.get('promena', 0)}"
-            + (f", bez UBL-a {c['bez_ubl']}" if c.get("bez_ubl") else ""))
+            + (f", bez UBL-a {c['bez_ubl']}" if c.get("bez_ubl") else "")
+            + (f"; PDF preuzeto {c['pdf_preuzeto']} od {c['pdf_bez_pdf']} koji su nedostajali"
+               + (f", SEF još priprema {c['pdf_u_pripremi']}" if c.get("pdf_u_pripremi") else "")
+               + (f", grešaka {c['pdf_gresaka']}" if c.get("pdf_gresaka") else "") if "pdf_bez_pdf" in c else ""))
 
 
 # --------------------------------------------------------------------------- meka veza sa knjizenjima

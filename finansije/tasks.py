@@ -31,43 +31,22 @@ def sync_all_years():
 
 @shared_task(name="finansije.tasks.sync_sef_task")
 def sync_sef_task():
-    """SEF fakture (ulazne i izlazne, poslednjih 45 dana) i promene statusa; ujutru, posle nocne pauze SEF-a."""
+    """SEF fakture (ulazne i izlazne, poslednjih 45 dana), promene statusa i PDF-ovi; ujutru, posle nocne pauze SEF-a."""
     from core.tasks import _run_with_singleton_lock
 
     def _runner():
+        from .sef_views import _aktivno
         from .services import sef
 
+        rucno = _aktivno()
+        if rucno is not None:  # rucno preuzimanje iz ekrana (pozadinska nit) upravo radi
+            return f"Task skipped: rucno preuzimanje SEF-a {rucno.od:%d.%m.%Y.}–{rucno.do:%d.%m.%Y.} je u toku."
         try:
-            run = sef.sinhronizuj()
+            return sef.poruka(sef.sinhronizuj())  # fakture, statusi i PDF-ovi
         except sef.SefNijePodesen as exc:
             return f"Task skipped: {exc}"
-        # PDF-ovi za fakture iz istog perioda koje ga jos nemaju (nove, i ranije neuspele).
-        from .sef_models import SefFaktura
 
-        bez_pdf = sef.sa_datumom(SefFaktura.objects.filter(pdf="")).filter(datum_dok__gte=run.od, datum_dok__lte=run.do)
-        return f"{sef.poruka(run)}. {sef.poruka_pdf(sef.preuzmi_pdfove(list(bez_pdf[:1000])))}"
-
-    return _run_with_singleton_lock(task_name="finansije_sync_sef_task", lock_ttl_seconds=90 * 60, fn=_runner)
-
-
-@shared_task(name="finansije.tasks.sef_pdf_task")
-def sef_pdf_task(od, do, smer=""):
-    """PDF-ovi koji nedostaju za period (dugme „Preuzmi PDF-ove” u Finansije → SEF fakture)."""
-    from core.tasks import _run_with_singleton_lock
-
-    def _runner():
-        import datetime
-
-        from .sef_models import SefFaktura
-        from .services import sef
-
-        qs = sef.sa_datumom(SefFaktura.objects.filter(pdf="")).filter(
-            datum_dok__gte=datetime.date.fromisoformat(od), datum_dok__lte=datetime.date.fromisoformat(do))
-        if smer in SefFaktura.Smer.values:
-            qs = qs.filter(smer=smer)
-        return f"{od}–{do}: {sef.poruka_pdf(sef.preuzmi_pdfove(list(qs)))}"
-
-    return _run_with_singleton_lock(task_name="finansije_sef_pdf_task", lock_ttl_seconds=4 * 60 * 60, fn=_runner)
+    return _run_with_singleton_lock(task_name="finansije_sync_sef_task", lock_ttl_seconds=6 * 60 * 60, fn=_runner)
 
 
 @shared_task(bind=True)

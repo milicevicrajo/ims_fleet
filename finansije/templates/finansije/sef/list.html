@@ -33,6 +33,8 @@
   .sef-preuzimanje { margin-bottom: 18px; border: 1px solid var(--finance-border); border-radius: 8px; background: #fff; }
   .sef-preuzimanje summary { padding: 12px 16px; color: var(--finance-ink); font-size: .85rem; font-weight: 600; cursor: pointer; }
   .sef-preuzimanje > div { padding: 0 16px 16px; }
+  .sef-preuzimanje-traka { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
+  .sef-preuzimanje-traka > div { padding: 0; font-size: .85rem; }
   .sef-sync-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
   .sef-sync-form > div { flex: 0 1 180px; }
   .sef-results-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
@@ -110,11 +112,23 @@
   </div>{% endif %}
 </div></div>
 
-{% if can_izvoz or can_pdf_svi %}
-<details class="sef-preuzimanje" id="SefPdfIzvoz">
-  <summary><i class="mdi mdi-folder-zip" aria-hidden="true"></i> PDF-ovi i izvoz <span class="fw-normal text-muted">· PDF preuzet za {{ pdf_stanje.sa_pdf }} od {{ pdf_stanje.ukupno }} prikazanih faktura</span></summary>
+{% if can_sync and podesen %}
+<div class="sef-preuzimanje sef-preuzimanje-traka">
   <div>
-    <p class="small text-muted">Izvoz daje ZIP sa PDF-ovima po fasciklama <em>Ulazne/Izlazne → mesec</em> i spisak svih faktura perioda (<code>spisak.csv</code>, sa oznakom koje nemaju PDF). Izvoz prati izabrani smer ({% if filteri.smer == "ulazna" %}ulazne{% elif filteri.smer == "izlazna" %}izlazne{% else %}sve fakture{% endif %}). Noćni posao preuzima PDF-ove novih faktura; za stariji period pokrenite preuzimanje ovde.</p>
+    {% if aktivno_preuzimanje %}<strong><span class="spinner-border spinner-border-sm text-primary me-1" aria-hidden="true"></span>Preuzimanje sa SEF-a je u toku</strong>
+      <span class="small text-muted">· period {{ aktivno_preuzimanje.od|date:"d.m.Y." }}–{{ aktivno_preuzimanje.do|date:"d.m.Y." }}</span>
+    {% else %}<strong><i class="mdi mdi-cloud-download" aria-hidden="true"></i> Preuzimanje sa SEF-a</strong>
+      <span class="small text-muted">· fakture, promene statusa i PDF-ovi za izabrani period, uz procenu vremena{% if poslednja %} · poslednje: {{ poslednja.get_status_display|lower }} {{ poslednja.started_at|date:"d.m. H:i" }}{% endif %}</span>{% endif %}
+  </div>
+  <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#SefPreuzimanjeModal">
+    {% if aktivno_preuzimanje %}<i class="mdi mdi-progress-clock" aria-hidden="true"></i> Status preuzimanja{% else %}<i class="mdi mdi-cloud-download" aria-hidden="true"></i> Preuzimanje i status{% endif %}</button>
+</div>
+{% endif %}
+{% if can_izvoz %}
+<details class="sef-preuzimanje" id="SefPdfIzvoz">
+  <summary><i class="mdi mdi-folder-zip" aria-hidden="true"></i> Izvoz PDF-ova <span class="fw-normal text-muted">· PDF preuzet za {{ pdf_stanje.sa_pdf }} od {{ pdf_stanje.ukupno }} prikazanih faktura</span></summary>
+  <div>
+    <p class="small text-muted">ZIP sa PDF-ovima po fasciklama <em>Ulazne/Izlazne → mesec</em> i spisak svih faktura perioda (<code>spisak.csv</code>, sa oznakom koje nemaju PDF). Izvoz prati izabrani smer ({% if filteri.smer == "ulazna" %}ulazne{% elif filteri.smer == "izlazna" %}izlazne{% else %}sve fakture{% endif %}). PDF-ovi se preuzimaju pri svakom preuzimanju sa SEF-a.</p>
     <form method="get" action="{% url 'finansije:sef_izvoz' %}" id="SefIzvoz" class="sef-sync-form">
       {% if filteri.smer %}<input type="hidden" name="smer" value="{{ filteri.smer }}">{% endif %}
       <div><label for="iz-godina">Godina</label>
@@ -122,26 +136,8 @@
       <div><label for="iz-mesec">Mesec</label>
         <select id="iz-mesec" name="mesec" class="form-control"><option value="">Cela godina</option>
           {% for broj, naziv in meseci %}<option value="{{ broj }}" {% if broj == danas.month %}selected{% endif %}>{{ naziv }}</option>{% endfor %}</select></div>
-      {% if can_izvoz %}<button class="btn btn-primary" type="submit"><i class="mdi mdi-folder-zip" aria-hidden="true"></i> Izvezi PDF-ove (ZIP)</button>{% endif %}
-      {% if can_pdf_svi and podesen %}<button class="btn btn-outline-primary" type="button" id="SefPdfSviDugme" title="Preuzima sa SEF-a, u pozadini, PDF-ove koji nedostaju za izabrani period"><i class="mdi mdi-cloud-download" aria-hidden="true"></i> Preuzmi PDF-ove koji nedostaju</button>{% endif %}
+      <button class="btn btn-primary" type="submit"><i class="mdi mdi-folder-zip" aria-hidden="true"></i> Izvezi PDF-ove (ZIP)</button>
     </form>
-    {% if can_pdf_svi and podesen %}<form method="post" action="{% url 'finansije:sef_pdf_svi' %}" id="SefPdfSvi" class="d-none">{% csrf_token %}
-      <input type="hidden" name="godina"><input type="hidden" name="mesec"><input type="hidden" name="smer" value="{{ filteri.smer }}"></form>{% endif %}
-  </div>
-</details>
-{% endif %}
-{% if can_sync and podesen %}
-<details class="sef-preuzimanje">
-  <summary><i class="mdi mdi-cloud-download" aria-hidden="true"></i> Preuzimanje sa SEF-a</summary>
-  <div>
-    <p class="small text-muted">Preuzmi nove fakture i promene sa SEF-a za izabrani period. Ovi datumi se odnose na preuzimanje; filteri iznad određuju prikaz sačuvanih faktura.</p>
-    <form method="post" action="{% url 'finansije:sef_sync' %}" class="sef-sync-form">{% csrf_token %}
-      <input type="hidden" name="next" value="{% url 'finansije:sef_list' %}{% if params %}?{{ params }}{% endif %}">
-      <div><label for="sef-sync-od">Preuzimanje od</label><input id="sef-sync-od" type="date" name="od" value="{{ sync_od }}" class="form-control" required></div>
-      <div><label for="sef-sync-do">Preuzimanje do</label><input id="sef-sync-do" type="date" name="do" value="{{ sync_do }}" class="form-control" required></div>
-      <button class="btn btn-outline-primary" type="submit"><i class="mdi mdi-cloud-download" aria-hidden="true"></i> Preuzmi sa SEF-a</button>
-    </form>
-    <p class="small text-muted mt-2 mb-0">Najviše tri meseca po preuzimanju.</p>
   </div>
 </details>
 {% endif %}
@@ -158,6 +154,7 @@
   </table></div>
   <noscript>{% include "finansije/_pagination.html" %}</noscript>
 </div></div>
+{% if can_sync and podesen %}{% include "finansije/sef/_preuzimanje_modal.html" %}{% endif %}
 {% endblock %}
 {% block extra_js %}{{ block.super }}<script>
 (function () {
@@ -182,14 +179,6 @@
       if (!obicanKlik(e)) return;
       e.preventDefault(); form.elements.smer.value = a.dataset.sefSmer; form.requestSubmit();
     });
-  });
-  var syncOd = document.getElementById('sef-sync-od'), syncDo = document.getElementById('sef-sync-do');
-  if (syncOd && syncDo) proveriDatume(syncOd, syncDo);
-  var pdfDugme = document.getElementById('SefPdfSviDugme'), pdfForma = document.getElementById('SefPdfSvi');
-  if (pdfDugme && pdfForma) pdfDugme.addEventListener('click', function () {
-    pdfForma.elements.godina.value = document.getElementById('iz-godina').value;
-    pdfForma.elements.mesec.value = document.getElementById('iz-mesec').value;
-    pdfForma.submit();
   });
 })();
 </script>{% endblock %}

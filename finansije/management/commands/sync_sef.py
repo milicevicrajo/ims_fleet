@@ -12,6 +12,7 @@ class Command(BaseCommand):
         parser.add_argument("--od", type=datetime.date.fromisoformat, help="Datum od (YYYY-MM-DD)")
         parser.add_argument("--do", type=datetime.date.fromisoformat, help="Datum do (YYYY-MM-DD)")
         parser.add_argument("--provera", action="store_true", help="Samo proveri vezu i kljuc (verzija SEF-a)")
+        parser.add_argument("--bez-pdf", action="store_true", help="Bez preuzimanja PDF-ova (samo fakture i statusi)")
 
     def handle(self, *args, **opts):
         try:
@@ -19,7 +20,7 @@ class Command(BaseCommand):
             if opts["provera"]:
                 self.stdout.write(f"SEF {klijent.url} odgovara, verzija {klijent.verzija()}.")
                 return
-            run = sef.sinhronizuj(opts["od"], opts["do"], klijent=klijent)
+            run = sef.sinhronizuj(opts["od"], opts["do"], klijent=klijent, pdf=not opts["bez_pdf"])
         except (sef.SefNijePodesen, sef.SefGreska, ValueError) as exc:
             raise CommandError(str(exc)) from exc
         self.stdout.write(self.style.SUCCESS(sef.poruka(run)))

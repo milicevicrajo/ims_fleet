@@ -73,6 +73,7 @@ class LazniKlijent:
 
 class SinhronizacijaTests(TestCase):
     def sync(self, klijent, **kw):
+        kw.setdefault("pdf", False)  # PDF u sinhronizaciji proverava EkraniTests (privremen MEDIA_ROOT)
         return sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=klijent, danas=DANAS, **kw)
 
     def test_ulazne_iz_pregleda_i_izlazne_iz_ubl(self):
@@ -176,7 +177,7 @@ MEDIA_TEST = tempfile.mkdtemp(prefix="sef-test-")
 @override_settings(MEDIA_ROOT=MEDIA_TEST, SEF_API_KEY="test-kljuc")
 class EkraniTests(TestCase):
     KODOVI = ("finansije:sef_list", "finansije:sef_detail", "finansije:sef_dokument", "finansije:sef_sync",
-              "finansije:sef_izvoz", "finansije:sef_pdf_svi", "finansije:view_all")
+              "finansije:sef_izvoz", "finansije:view_all")
 
     @classmethod
     def tearDownClass(cls):
@@ -184,7 +185,7 @@ class EkraniTests(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=LazniKlijent(), danas=DANAS)
+        sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=LazniKlijent(), danas=DANAS, pdf=False)
         self.ulazna = SefFaktura.objects.get(smer="ulazna")
         uloga = Role.objects.create(name="Finansije SEF", slug="finansije-sef")
         for kod in self.KODOVI:
@@ -233,12 +234,17 @@ class EkraniTests(TestCase):
         self.ulazna.refresh_from_db()
         self.assertTrue(self.ulazna.pdf and self.ulazna.pdf_preuzet)
         # drugi put se ne ide na SEF
+        odgovor.close()
         with mock.patch.object(sef, "Klijent", side_effect=AssertionError("SEF se ne poziva")):
-            self.assertEqual(self.client.get(reverse("finansije:sef_dokument", args=[self.ulazna.pk, "pdf"])).status_code, 200)
+            drugi = self.client.get(reverse("finansije:sef_dokument", args=[self.ulazna.pk, "pdf"]))
+        self.assertEqual(drugi.status_code, 200)
+        drugi.close()  # Windows ne brise otvoren fajl
         # zapis postoji, a fajla nema na disku (preuzet sa drugog racunara): preuzima se ponovo
         self.ulazna.pdf.storage.delete(self.ulazna.pdf.name)
         with mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
-            self.assertEqual(self.client.get(reverse("finansije:sef_dokument", args=[self.ulazna.pk, "pdf"])).status_code, 200)
+            treci = self.client.get(reverse("finansije:sef_dokument", args=[self.ulazna.pk, "pdf"]))
+        self.assertEqual(treci.status_code, 200)
+        treci.close()
         self.assertTrue(self.ulazna.pdf.storage.exists(SefFaktura.objects.get(pk=self.ulazna.pk).pdf.name))
 
     def test_detalj_prikazuje_pdf_ili_ga_preuzima(self):
@@ -339,27 +345,123 @@ class EkraniTests(TestCase):
         self.korisnik.roles.first().permissions.remove(PermissionCode.objects.get(code="ugovori:partner_detail"))
         self.assertNotIn('<a ', cell())
 
-    def test_rucno_preuzimanje(self):
+    def test_rucno_preuzimanje_odmah_sa_napretkom(self):
+        from finansije import sef_views
+
+        pokrenuto = []
+        with mock.patch.object(sef_views, "pokreni", side_effect=lambda fn: pokrenuto.append(fn)):
+            podaci = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-08-20", "do": "2026-09-30"}).json()
+        run = SefSinhronizacija.objects.get(pk=podaci["id"])
+        self.assertEqual((podaci["status"], run.status, run.korisnik), ("running", "running", self.korisnik))
+        self.assertEqual(podaci["stanje_url"], reverse("finansije:sef_sync_stanje", args=[run.pk]))
+        # dok radi, drugo pokretanje prikazuje isto preuzimanje
+        with mock.patch.object(sef_views, "pokreni") as drugo:
+            ponovo = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-09-01", "do": "2026-09-30"}).json()
+        drugo.assert_not_called()
+        self.assertEqual((ponovo["id"], ponovo["vec_u_toku"]), (run.pk, True))
+        self.assertContains(self.client.get(reverse("finansije:sef_list")), "Preuzimanje sa SEF-a je u toku")
+        # nit: fakture, statusi i PDF-ovi, uz procenu i napredak po fazama
         with mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
-            odgovor = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-08-20", "do": "2026-09-30"}, follow=True)
-        self.assertContains(odgovor, "SEF 20.08.2026.")
-        self.assertEqual(SefSinhronizacija.objects.first().korisnik, self.korisnik)
-        odgovor = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-01-01", "do": "2026-09-30"}, follow=True)
-        self.assertContains(odgovor, "najviše tri meseca")
+            pokrenuto[0]()
+        stanje = self.client.get(podaci["stanje_url"]).json()
+        self.assertEqual(stanje["status"], "success")
+        self.assertIn("PDF preuzeto 2 od 2", stanje["poruka"])
+        self.assertEqual(stanje["procena"], {"ulaznih": 1, "izlaznih": 1, "ubl": 0, "dana_promena": 30, "bez_pdf": 2})
+
+    def test_procena_i_napredak_tokom_preuzimanja(self):
+        SefFaktura.objects.all().delete()
+        snimci = []
+        stari = sef.Napredak.sacuvaj
+
+        def sacuvaj(napredak, odmah=False):
+            stari(napredak, odmah=True)
+            snimci.append(dict(napredak.run.counts.get("napredak", {})))
+
+        with mock.patch.object(sef.Napredak, "sacuvaj", sacuvaj):
+            run = sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=LazniKlijent(), danas=DANAS)
+        self.assertEqual(run.counts["procena"], {"ulaznih": 1, "izlaznih": 1, "ubl": 1, "dana_promena": 30, "bez_pdf": 2})
+        self.assertEqual([s["redni"] for s in snimci if s.get("obradjeno") == 0],
+                         [1, 2, 3, 4, 5])  # svaka faza pocinje od nule
+        self.assertTrue(all(s["preostalo_s"] is not None for s in snimci))
+        self.assertEqual(snimci[-1]["faza"], "PDF-ovi")
+
+    def test_zaustavljanje_dnevnik_i_poslednje_stanje(self):
+        from finansije import sef_views
+
+        # bez preuzimanja u toku: poslednje zavrseno (iz setUp), sa nazivom statusa za modal
+        self.assertEqual(self.client.get(reverse("finansije:sef_sync_poslednje")).json()["status_naziv"], "Uspešno")
+        pokrenuto = []
+        with mock.patch.object(sef_views, "pokreni", side_effect=lambda fn: pokrenuto.append(fn)):
+            podaci = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-08-20", "do": "2026-09-30"}).json()
+        poslednje = self.client.get(reverse("finansije:sef_sync_poslednje")).json()
+        self.assertEqual((poslednje["id"], poslednje["status"], poslednje["pokrenuo"]), (podaci["id"], "running", "fin-sef"))
+        # zaustavljanje pre nego sto nit krene: staje na prvom koraku, sto je preuzeto ostaje
+        stanje = self.client.post(podaci["zaustavi_url"]).json()
+        self.assertTrue(stanje["zaustavljanje"])
+        with mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
+            pokrenuto[0]()
+        stanje = self.client.get(podaci["stanje_url"]).json()
+        self.assertEqual((stanje["status"], stanje["status_naziv"]), ("stopped", "Zaustavljeno"))
+        self.assertIn("Zaustavljeno na zahtev korisnika", stanje["greska"])
+        self.assertTrue(stanje["dnevnik"])  # prvi korak je upisan
+        # celo preuzimanje: dnevnik prati korake, PDF-ove i kraj
+        with mock.patch.object(sef_views, "pokreni", side_effect=lambda fn: fn()), \
+                mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
+            podaci = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-08-20", "do": "2026-09-30"}).json()
+        stanje = self.client.get(podaci["stanje_url"]).json()
+        tekstovi = [r[1] for r in stanje["dnevnik"]]
+        self.assertEqual(stanje["status"], "success")
+        self.assertIn("Korak 5: PDF-ovi (2)", tekstovi)
+        self.assertTrue(any(t.startswith("PDF MF3814/25") for t in tekstovi))
+        self.assertEqual(tekstovi[-1], "Završeno.")
+        # zavrseno preuzimanje se vise ne moze zaustaviti
+        self.assertFalse(self.client.post(stanje["zaustavi_url"]).json()["zaustavljanje"])
+
+    def test_rucno_preuzimanje_greske_i_prekid(self):
+        from finansije import sef_views
+
+        self.assertEqual(self.client.post(reverse("finansije:sef_sync"), {"od": "2026-09-30", "do": "2026-09-01"}).json()["greska"],
+                         "Datum od je posle datuma do.")
+        with override_settings(SEF_API_KEY=""):
+            self.assertIn("nije podešen", self.client.post(reverse("finansije:sef_sync"), {}).json()["greska"])
+        # greska SEF-a u niti se vidi u stanju
+        pokrenuto = []
+        with mock.patch.object(sef_views, "pokreni", side_effect=lambda fn: pokrenuto.append(fn)):
+            podaci = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-09-01", "do": "2026-09-30"}).json()
+        pao = LazniKlijent()
+        pao.ulazne_pregled = mock.Mock(side_effect=sef.SefGreska("SEF je vratio grešku 500"))
+        with mock.patch.object(sef, "Klijent", return_value=pao), self.assertRaises(sef.SefGreska):
+            pokrenuto[0]()
+        stanje = self.client.get(podaci["stanje_url"]).json()
+        self.assertEqual((stanje["status"], stanje["greska"]), ("error", "SEF je vratio grešku 500"))
+        # „u toku” koje se ne javlja 2 minuta (restart servera) zatvara se kao prekinuto
+        visi = sef.zapocni(datetime.date(2026, 9, 1), DANAS, danas=DANAS)
+        radi = self.client.get(reverse("finansije:sef_sync_stanje", args=[visi.pk])).json()
+        self.assertEqual((radi["status"], radi["tisina_s"] < 5), ("running", True))
+        visi.counts["napredak"]["azurirano"] = (timezone.now() - datetime.timedelta(minutes=3)).isoformat()
+        visi.save(update_fields=["counts"])
+        stanje = self.client.get(reverse("finansije:sef_sync_stanje", args=[visi.pk])).json()
+        self.assertEqual(stanje["status"], "error")
+        self.assertIn("Prekinuto", stanje["greska"])
 
     @override_settings(SEF_API_KEY="test-kljuc")
     def test_rucno_preuzimanje_sa_strane_sinhronizacije(self):
         self.korisnik.roles.first().permissions.add(PermissionCode.objects.get_or_create(code="finansije:sync_status")[0])
         strana = self.client.get(reverse("finansije:sync_status"))
         self.assertContains(strana, "SEF — ulazne i izlazne fakture")
+        self.assertContains(strana, 'id="SefPreuzimanjeModal"')
+        self.assertContains(strana, reverse("finansije:sef_sync_poslednje"))
         self.assertContains(strana, reverse("finansije:sef_sync"))
-        with mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
-            odgovor = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-08-20", "do": "2026-09-30",
-                                                                    "next": reverse("finansije:sync_status")})
-        self.assertRedirects(odgovor, reverse("finansije:sync_status"), fetch_redirect_response=False)
-        odgovor = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-01-01", "do": "2026-09-30",
-                                                                "next": "https://drugi-sajt.example/"})
-        self.assertRedirects(odgovor, reverse("finansije:sef_list"), fetch_redirect_response=False)
+
+    def test_sinhronizacija_odmah_preuzima_i_pdf(self):
+        run = sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=LazniKlijent(), danas=DANAS)
+        self.assertEqual((run.counts["pdf_bez_pdf"], run.counts["pdf_preuzeto"]), (2, 2))
+        self.assertEqual(SefFaktura.objects.filter(pdf="").count(), 0)
+        self.assertIn("PDF preuzeto 2 od 2", sef.poruka(run))
+        # ponovo: PDF-ovi postoje, SEF se za njih ne pita
+        klijent = LazniKlijent()
+        klijent.pdf = mock.Mock(side_effect=AssertionError("PDF se ne trazi ponovo"))
+        self.assertEqual(sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=klijent, danas=DANAS).counts["pdf_bez_pdf"], 0)
 
     def test_preuzimanje_svih_pdf_u_krugovima(self):
         klijent, pozivi = LazniKlijent(), []
@@ -373,6 +475,16 @@ class EkraniTests(TestCase):
         brojaci = sef.preuzmi_pdfove(list(SefFaktura.objects.all()), klijent=klijent, spavaj=spavanja.append)
         self.assertEqual(brojaci, {"bez_pdf": 2, "preuzeto": 2, "u_pripremi": 0, "gresaka": 0})
         self.assertEqual((len(pozivi), spavanja), (4, [sef.PDF_CEKANJE]))
+        # sa napretkom: ista pauza, ali u delovima od 5 s uz javljanje
+        SefFaktura.objects.update(pdf="")
+        pozivi.clear()
+        run = sef.zapocni(datetime.date(2026, 8, 20), DANAS, danas=DANAS)
+        napredak = sef.Napredak(run, {}, klijent)
+        spavanja = []
+        sef.preuzmi_pdfove(list(SefFaktura.objects.all()), klijent=klijent, spavaj=spavanja.append, napredak=napredak)
+        self.assertEqual(spavanja, [5, 5, 5])
+        run.refresh_from_db()
+        self.assertIn("azurirano", run.counts["napredak"])
         self.assertEqual(SefFaktura.objects.filter(pdf="").count(), 0)
         # ponovo: nista ne nedostaje, SEF se ne poziva
         self.assertEqual(sef.preuzmi_pdfove(list(SefFaktura.objects.all()), klijent=klijent)["bez_pdf"], 0)
@@ -406,22 +518,6 @@ class EkraniTests(TestCase):
                              reverse("finansije:sef_list"), fetch_redirect_response=False)
         self.assertRedirects(self.client.get(reverse("finansije:sef_izvoz"), {"godina": "x"}),
                              reverse("finansije:sef_list"), fetch_redirect_response=False)
-
-    def test_preuzmi_pdf_ove_koji_nedostaju_u_pozadini(self):
-        from finansije import tasks
-
-        with mock.patch.object(tasks.sef_pdf_task, "delay") as delay:
-            odgovor = self.client.post(reverse("finansije:sef_pdf_svi"), {"godina": "2026", "mesec": "9"}, follow=True)
-        delay.assert_called_once_with("2026-09-01", "2026-09-30", "")
-        self.assertContains(odgovor, "Pokrenuto preuzimanje 2 PDF-ova")
-        with mock.patch.object(tasks.sef_pdf_task, "delay", side_effect=OSError("redis")):
-            odgovor = self.client.post(reverse("finansije:sef_pdf_svi"), {"godina": "2026", "mesec": "9"}, follow=True)
-        self.assertContains(odgovor, "manage.py sef_pdf")
-        # sam zadatak preuzima samo fakture izabranog perioda i smera
-        with mock.patch("core.tasks._run_with_singleton_lock", side_effect=lambda task_name, lock_ttl_seconds, fn: fn()),                 mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
-            rezultat = tasks.sef_pdf_task("2026-09-01", "2026-09-30", "ulazna")
-        self.assertIn("preuzeto 1", rezultat)
-        self.assertEqual(SefFaktura.objects.filter(pdf="").get().smer, "izlazna")
 
     def test_bez_obuhvata_cele_firme_nema_pristupa(self):
         with mock.patch("finansije.sef_views.can_view_all", return_value=False):

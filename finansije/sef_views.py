@@ -8,6 +8,7 @@ import calendar
 import datetime
 import logging
 import tempfile
+import threading
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -20,7 +21,6 @@ from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_GET, require_POST
 
@@ -127,12 +127,12 @@ def sef_list(request):
         "aktivne_oznake": [(oznake[k], "?" + urlencode({ime: v for ime, v in filteri.items() if v and ime != k}))
                            for k in ("q", "status", "knjizenje", "od", "do") if filteri[k]],
         "sync_od": (danas - datetime.timedelta(days=7)).isoformat(), "sync_do": danas.isoformat(),
+        "aktivno_preuzimanje": _aktivno(),
         "statusi": _statusi(), "nazivi_statusa": servis.STATUSI, "vrste": servis.VRSTE,
         "poslednja": SefSinhronizacija.objects.select_related("korisnik").first(),
         "podesen": bool(settings.SEF_API_KEY),
         "can_sync": user_has_role_permission(request.user, "finansije:sef_sync"),
         "can_izvoz": user_has_role_permission(request.user, "finansije:sef_izvoz"),
-        "can_pdf_svi": user_has_role_permission(request.user, "finansije:sef_pdf_svi"),
         "godine": sorted({d.year for d in _sa_datumom(SefFaktura.objects.all()).values_list("datum_dok", flat=True)
                           .distinct() if d} or {danas.year}, reverse=True),
         "meseci": list(enumerate(MESECI, start=1)), "danas": danas,
@@ -269,56 +269,116 @@ def sef_izvoz(request):
     return odgovor
 
 
-@require_POST
-@login_required
-@role_permission_required("finansije:sef_pdf_svi")
-def sef_pdf_svi(request):
-    """Pokrece u pozadini preuzimanje PDF-ova koji nedostaju za mesec ili godinu."""
-    _pristup(request)
-    qs, period = _fakture_perioda(request.POST)
-    if qs is None:
-        messages.error(request, "Izaberite godinu (i po želji mesec).")
-        return redirect("finansije:sef_list")
-    od, do, oznaka = period
-    nedostaje = qs.filter(pdf="").count()
-    if not nedostaje:
-        messages.info(request, f"Za period {oznaka} svi PDF-ovi su već preuzeti.")
-        return redirect("finansije:sef_list")
-    from .tasks import sef_pdf_task
+PREKID_BEZ_JAVLJANJA = datetime.timedelta(minutes=2)
 
-    try:
-        sef_pdf_task.delay(od.isoformat(), do.isoformat(), request.POST.get("smer", ""))
-    except Exception:  # Redis ili worker nisu dostupni
-        logger.exception("SEF PDF zadatak nije pokrenut")
-        messages.error(request, "Pozadinski posao nije pokrenut (Celery nije dostupan). "
-                                f"Na serveru: manage.py sef_pdf --od {od} --do {do}")
-        return redirect("finansije:sef_list")
-    messages.success(request, f"Pokrenuto preuzimanje {nedostaje} PDF-ova za {oznaka} u pozadini "
-                              f"(oko {max(1, nedostaje // 100)} min). Rezultat je u istoriji zadataka.")
-    return redirect("finansije:sef_list")
+
+def pokreni(fn):
+    """Pozadinska nit web procesa (bez Celery-ja); u testovima se zamenjuje neposrednim pozivom."""
+    def _nit():
+        from django.db import connection
+
+        try:
+            fn()
+        except Exception:  # greska je vec upisana u zapis sinhronizacije
+            logger.exception("SEF rucno preuzimanje nije uspelo")
+        finally:
+            connection.close()
+
+    threading.Thread(target=_nit, name="sef-preuzimanje", daemon=True).start()
+
+
+def _aktivno():
+    """Preuzimanje u toku koje se javilo u poslednja 2 min; tiho „u toku” (restart servera) se zatvara."""
+    for run in SefSinhronizacija.objects.filter(status="running"):
+        javljeno = run.counts.get("napredak", {}).get("azurirano")
+        poslednje = datetime.datetime.fromisoformat(javljeno) if javljeno else run.started_at
+        if timezone.now() - poslednje > PREKID_BEZ_JAVLJANJA:
+            run.status, run.finished_at = "error", timezone.now()
+            run.error = ("Prekinuto: preuzimanje je prestalo da radi (restart servera ili prekid veze). "
+                         "Pokrenite ga ponovo — nastavlja gde je stalo, bez duplikata.")
+            run.save(update_fields=["status", "error", "finished_at"])
+            continue
+        return run
+    return None
+
+
+def _tisina(napredak, run):
+    """Sekundi od poslednjeg javljanja preuzimanja."""
+    javljeno = napredak.get("azurirano")
+    poslednje = datetime.datetime.fromisoformat(javljeno) if javljeno else run.started_at
+    return round((timezone.now() - poslednje).total_seconds())
+
+
+def _stanje(run):
+    napredak = run.counts.get("napredak", {})
+    return {
+        "id": run.pk, "status": run.status, "od": f"{run.od:%d.%m.%Y.}", "do": f"{run.do:%d.%m.%Y.}",
+        "faza": napredak.get("faza", ""), "redni": napredak.get("redni", 0), "faza_ukupno": napredak.get("faza_ukupno", 5),
+        "obradjeno": napredak.get("obradjeno", 0), "ukupno": napredak.get("ukupno", 0),
+        "preostalo_s": napredak.get("preostalo_s"), "proteklo_s": napredak.get("proteklo_s"),
+        "tisina_s": _tisina(napredak, run) if run.status == "running" else None,
+        "procena": run.counts.get("procena"),
+        "poruka": servis.poruka(run) if run.status in ("success", "stopped") else "",
+        "greska": run.error if run.status in ("error", "stopped") else "",
+        "status_naziv": run.get_status_display(), "zaustavljanje": run.zaustavi and run.status == "running",
+        "pokrenuto": timezone.localtime(run.started_at).strftime("%d.%m.%Y. %H:%M"),
+        "pokrenuo": run.korisnik.get_username() if run.korisnik_id else "noćni posao",
+        "dnevnik": napredak.get("dnevnik", []),
+        "stanje_url": reverse("finansije:sef_sync_stanje", args=[run.pk]),
+        "zaustavi_url": reverse("finansije:sef_sync_zaustavi", args=[run.pk]),
+    }
 
 
 @require_POST
 @login_required
 @role_permission_required("finansije:sef_sync")
 def sef_sync(request):
+    """Pokrece preuzimanje sa SEF-a odmah (pozadinska nit web procesa) i vraca stanje za modal."""
     _pristup(request)
-    nazad = request.POST.get("next", "")
-    if not url_has_allowed_host_and_scheme(nazad, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
-        nazad = ""
-    nazad = nazad or "finansije:sef_list"
     danas = timezone.localdate()
     od = _datum(request.POST.get("od")) or danas - datetime.timedelta(days=7)
     do = _datum(request.POST.get("do")) or danas
-    if (do - od).days > 92:
-        messages.error(request, "Ručno se preuzima najviše tri meseca odjednom. Za duži period: manage.py sync_sef.")
-        return redirect(nazad)
-    try:
-        run = servis.sinhronizuj(od, do, korisnik=request.user)
-    except servis.SefNijePodesen as exc:
-        messages.error(request, str(exc))
-    except (servis.SefGreska, ValueError) as exc:
-        messages.error(request, f"Preuzimanje sa SEF-a nije uspelo: {exc}")
-    else:
-        messages.success(request, servis.poruka(run))
-    return redirect(nazad)
+    greska = ""
+    if od > do:
+        greska = "Datum od je posle datuma do."
+    elif do > danas:
+        greska = "Datum do ne može biti u budućnosti."
+    elif not settings.SEF_API_KEY:
+        greska = "SEF nije podešen: u .env nedostaje SEF_API_KEY."
+    if greska:
+        return JsonResponse({"greska": greska}, status=400)
+    aktivno = _aktivno()
+    if aktivno is not None:  # jedno preuzimanje u isto vreme — prikazuje se ono koje vec radi
+        return JsonResponse({**_stanje(aktivno), "vec_u_toku": True})
+    run = servis.zapocni(od, do, korisnik=request.user, danas=danas)
+    pokreni(lambda: servis.sinhronizuj(korisnik=request.user, danas=danas, run=run))
+    return JsonResponse(_stanje(run))
+
+
+@require_GET
+@login_required
+@role_permission_required("finansije:sef_sync")
+def sef_sync_poslednje(request):
+    """Status za dugme „Status preuzimanja”: preuzimanje u toku, inace poslednje (ili nista)."""
+    _pristup(request)
+    run = _aktivno() or SefSinhronizacija.objects.select_related("korisnik").first()
+    return JsonResponse(_stanje(run) if run else {"status": "nema"})
+
+
+@require_POST
+@login_required
+@role_permission_required("finansije:sef_sync")
+def sef_sync_zaustavi(request, pk):
+    """Zahtev za zaustavljanje: preuzimanje staje posle koraka koji upravo radi (najviše nekoliko sekundi)."""
+    _pristup(request)
+    SefSinhronizacija.objects.filter(pk=pk, status="running").update(zaustavi=True)
+    return JsonResponse(_stanje(get_object_or_404(SefSinhronizacija, pk=pk)))
+
+
+@require_GET
+@login_required
+@role_permission_required("finansije:sef_sync")
+def sef_sync_stanje(request, pk):
+    _pristup(request)
+    _aktivno()  # zatvara zaboravljeno „u toku”
+    return JsonResponse(_stanje(get_object_or_404(SefSinhronizacija, pk=pk)))
