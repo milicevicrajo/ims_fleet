@@ -1,0 +1,114 @@
+{% extends "finansije/base.html" %}
+{% load finance %}
+{% block title %}{{ title }}{% endblock %}
+{% block hero_title %}{{ vrste|recnik:f.vrsta|default:"Faktura" }} {{ f.broj|default:f.sef_id }}{% endblock %}
+{% block hero_description %}{{ f.get_smer_display }} · SEF ID {{ f.sef_id }} · {{ nazivi_statusa|recnik:f.status|default:"bez statusa" }}{% endblock %}
+{% block hero_period %}{% endblock %}
+{% block hero_actions %}
+<a class="btn btn-light" href="{% url 'finansije:sef_list' %}{{ nazad }}"><i class="mdi mdi-arrow-left"></i> Spisak</a>
+{% if can_file %}
+<a class="btn btn-light" href="{% url 'finansije:sef_dokument' f.pk 'pdf' %}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> PDF u novom prozoru</a>
+<a class="btn btn-light" href="{% url 'finansije:sef_dokument' f.pk 'ubl' %}"><i class="mdi mdi-xml"></i> UBL</a>
+{% endif %}
+{% endblock %}
+{% block finance_content %}
+<style>
+  .sef-pdf { width: 100%; height: 85vh; min-height: 520px; border: 1px solid #dfe5ec; border-radius: 6px; background: #f6f8fa; }
+  .sef-pdf-cekanje { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; min-height: 260px; border: 1px dashed #c9d3de; border-radius: 6px; color: #5b6b7d; text-align: center; padding: 1rem; }
+</style>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h2 class="finance-job-heading">Faktura</h2>
+    <dl class="row mb-0">
+      <dt class="col-5">Broj dokumenta</dt><dd class="col-7">{{ f.broj|default:"—" }}</dd>
+      <dt class="col-5">Vrsta</dt><dd class="col-7">{{ vrste|recnik:f.vrsta|default:"—" }}</dd>
+      <dt class="col-5">Status</dt><dd class="col-7">{{ nazivi_statusa|recnik:f.status|default:"—" }}{% if f.izmenjeno_na_sefu %} <span class="text-muted small">· {{ f.izmenjeno_na_sefu|date:"d.m.Y. H:i" }}</span>{% endif %}</dd>
+      <dt class="col-5">{% if f.smer == "ulazna" %}Dobavljač{% else %}Kupac{% endif %}</dt><dd class="col-7">{{ f.partner_naziv|default:"—" }}</dd>
+      <dt class="col-5">PIB / matični broj</dt><dd class="col-7">{{ f.partner_pib|default:"—" }} / {{ f.partner_mb|default:"—" }}</dd>
+      <dt class="col-5">Datum izdavanja</dt><dd class="col-7">{{ f.datum_izdavanja|date:"d.m.Y."|default:"—" }}</dd>
+      <dt class="col-5">Datum prometa</dt><dd class="col-7">{{ f.datum_prometa|date:"d.m.Y."|default:"—" }}</dd>
+      <dt class="col-5">Datum dospeća</dt><dd class="col-7">{{ f.datum_dospeca|date:"d.m.Y."|default:"—" }}</dd>
+      <dt class="col-5">Poslata na SEF</dt><dd class="col-7">{{ f.datum_slanja|date:"d.m.Y. H:i"|default:"—" }}</dd>
+      <dt class="col-5">Osnovica / PDV</dt><dd class="col-7">{{ f.osnovica|floatformat:2|default:"—" }} / {{ f.pdv|floatformat:2|default:"—" }}</dd>
+      <dt class="col-5">Ukupno</dt><dd class="col-7"><strong>{{ f.iznos|floatformat:2|default:"—" }} {{ f.valuta }}</strong></dd>
+      {% if f.cir_id %}<dt class="col-5">CRF identifikator</dt><dd class="col-7">{{ f.cir_id }}</dd>{% endif %}
+      <dt class="col-5">Preuzeto</dt><dd class="col-7">{{ f.sinhronizovano|date:"d.m.Y. H:i" }}</dd>
+    </dl>
+  </div></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
+    <h2 class="finance-job-heading">Istorija statusa na SEF-u</h2>
+    {% if promene %}<ul class="list-unstyled mb-0">{% for p in promene %}<li class="mb-1"><strong>{{ nazivi_statusa|recnik:p.status }}</strong> · {{ p.datum|date:"d.m.Y. H:i"|default:"—" }}{% if p.komentar %}<div class="small text-muted">{{ p.komentar }}</div>{% endif %}</li>{% endfor %}</ul>
+    {% else %}<p class="text-muted mb-0">SEF čuva promene statusa mesec dana; starije promene nisu preuzete.</p>{% endif %}
+    {% if istog_broja %}<h2 class="finance-job-heading mt-3">Drugi dokumenti sa istim brojem</h2>
+      <ul class="mb-0">{% for d in istog_broja %}<li><a href="{% url 'finansije:sef_detail' d.pk %}">{{ d.get_smer_display }} · {{ d.partner_naziv|default:d.sef_id }}</a></li>{% endfor %}</ul>{% endif %}
+  </div></div></div>
+</div>
+
+{% if can_file %}
+<div class="card mt-3"><div class="card-body">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h2 class="finance-job-heading mb-0">PDF fakture</h2>
+    <span class="small text-muted" id="SefPdfStatus">{% if f.pdf %}Preuzet sa SEF-a {{ f.pdf_preuzet|date:"d.m.Y. H:i" }}{% endif %}</span>
+  </div>
+  {% if f.pdf %}
+  <iframe class="sef-pdf" src="{% url 'finansije:sef_dokument' f.pk 'pdf' %}" title="PDF fakture {{ f.broj }}"></iframe>
+  {% elif podesen %}
+  <div id="SefPdfCekanje" class="sef-pdf-cekanje" data-url="{% url 'finansije:sef_pdf_preuzmi' f.pk %}">
+    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+    <div id="SefPdfPoruka">Preuzimam PDF sa SEF-a…</div>
+    <button type="button" class="btn btn-outline-primary btn-sm d-none" id="SefPdfPonovo"><i class="mdi mdi-refresh"></i> Pokušaj ponovo</button>
+  </div>
+  <iframe class="sef-pdf d-none" id="SefPdfOkvir" title="PDF fakture {{ f.broj }}"></iframe>
+  {% else %}
+  <p class="text-muted mb-0">PDF nije preuzet, a SEF nije podešen (u <code>.env</code> nedostaje <code>SEF_API_KEY</code>).</p>
+  {% endif %}
+</div></div>
+{% endif %}
+
+<div class="card mt-3"><div class="card-body">
+  <h2 class="finance-job-heading">Knjiženja sa istim brojem dokumenta <small class="text-muted">· {{ knjizenja|length }}</small></h2>
+  <p class="finance-accounting-note">Veza je meka: traži se knjiženje čiji je broj dokumenta jednak broju fakture (polje u knjiženju ima najviše 20 znakova; izlazna faktura na SEF-u ima četiri cifre ispred broja iz knjiženja). Isti broj kod drugog partnera takođe se prikazuje — proverite partnera.</p>
+  {% if knjizenja %}<div class="table-responsive"><table class="table table-sm table-striped align-middle">
+    <thead><tr><th>Datum</th><th>Nalog</th><th>Konto</th><th>Partner</th><th>Šifra posla</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th>Opis</th></tr></thead>
+    <tbody>{% for k in knjizenja %}<tr>
+      <td>{{ k.booking_date|date:"d.m.Y." }}</td><td>{{ k.journal_type }} {{ k.journal_number }}/{{ k.line_number }}</td>
+      <td>{{ k.account }}<div class="small text-muted">{{ k.account_name }}</div></td><td>{{ k.partner_name|default:"—" }}</td>
+      <td>{{ k.job_code|default:"—" }}</td><td class="finance-number">{{ k.debit|floatformat:2 }}</td><td class="finance-number">{{ k.credit|floatformat:2 }}</td><td>{{ k.description }}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="text-muted mb-0">Nema knjiženja sa ovim brojem dokumenta.</p>{% endif %}
+</div></div>
+{% endblock %}
+{% block extra_js %}{{ block.super }}<script>
+(function () {
+  // PDF jos nije u aplikaciji: preuzima se sa SEF-a; dok ga SEF priprema, pokusava se ponovo na 5 s.
+  var cekanje = document.getElementById('SefPdfCekanje');
+  if (!cekanje) return;
+  var okvir = document.getElementById('SefPdfOkvir'), poruka = document.getElementById('SefPdfPoruka'),
+      ponovo = document.getElementById('SefPdfPonovo'), status = document.getElementById('SefPdfStatus'),
+      spiner = cekanje.querySelector('.spinner-border'), pokusaj = 0, NAJVISE = 12, RAZMAK = 5000;
+  function csrf() { var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/); return m ? decodeURIComponent(m[1]) : ''; }
+  function zaustavi(tekst) { spiner.classList.add('d-none'); poruka.textContent = tekst; ponovo.classList.remove('d-none'); }
+  function preuzmi() {
+    pokusaj += 1; spiner.classList.remove('d-none'); ponovo.classList.add('d-none');
+    fetch(cekanje.dataset.url, {method: 'POST', headers: {'X-CSRFToken': csrf(), 'X-Requested-With': 'XMLHttpRequest'}, credentials: 'same-origin'})
+      .then(function (odgovor) { return odgovor.json().catch(function () { return {status: 'greska', poruka: 'Neočekivan odgovor servera (' + odgovor.status + ').'}; }); })
+      .then(function (podaci) {
+        if (podaci.status === 'ok') {
+          okvir.src = podaci.url; okvir.classList.remove('d-none'); cekanje.classList.add('d-none');
+          status.textContent = 'Preuzet sa SEF-a ' + podaci.preuzet;
+        } else if (podaci.status === 'priprema' && pokusaj < NAJVISE) {
+          poruka.textContent = 'SEF priprema PDF… (' + pokusaj + '/' + NAJVISE + ')';
+          setTimeout(preuzmi, RAZMAK);
+        } else if (podaci.status === 'priprema') {
+          zaustavi('SEF još priprema PDF. Pokušajte ponovo za minut.');
+        } else {
+          zaustavi(podaci.poruka || 'PDF nije preuzet.');
+        }
+      })
+      .catch(function () { zaustavi('Veza sa serverom nije uspela.'); });
+  }
+  ponovo.addEventListener('click', function () { pokusaj = 0; preuzmi(); });
+  preuzmi();
+})();
+</script>{% endblock %}

@@ -73,6 +73,7 @@ class UgovorZaposlenog(models.Model):
 
     # --- unose Kadrovi ---
     broj_ugovora = models.CharField(max_length=100, blank=True, default="", db_index=True, verbose_name="Broj ugovora")
+    datum_ugovora = models.DateField(null=True, blank=True, verbose_name="Datum ugovora")
     broj_aneksa = models.CharField(max_length=100, blank=True, default="", verbose_name="Broj aneksa")
     glavni_ugovor = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL,
                                       related_name="aneksi", verbose_name="Glavni ugovor")

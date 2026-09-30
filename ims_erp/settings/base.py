@@ -271,6 +271,12 @@ FLOTA_REGISTAR_ORGANIZACIJE = True
 # centar (`allowed_center_codes`, `allowed_centers`, `center`) bez druge promene.
 # PIB Instituta: fiskalni racun izdat na drugog kupca (ili fizicko lice) dobija upozorenje (Nabavka).
 IMS_PIB = "100223617"
+# SEF — Sistem elektronskih faktura (Finansije → SEF fakture, od 30.09.2026.): samo citanje.
+# API kljuc (SEF portal → Podesavanja → API management) je samo u okruzenju (.env), nikad u kodu.
+# Test okruzenje: SEF_API_URL=https://efakturatest.mfin.gov.rs
+SEF_API_URL = os.getenv('SEF_API_URL', 'https://efaktura.mfin.gov.rs').rstrip('/')
+SEF_API_KEY = os.getenv('SEF_API_KEY', '').strip()
+SEF_TIMEOUT = int(os.getenv('SEF_TIMEOUT', '60'))
 PRAVA_PO_REGISTRU = {"finansije": True, "nabavka": True, "potrazivanja": True, "flota": True, "kadrovi": True}
 
 CELERY_TASK_ROUTES = {
@@ -298,6 +304,7 @@ CELERY_TASK_ROUTES = {
     'potrazivanja.tasks.sync_collections_task': {'queue': 'sync'},
     'hr.tasks.sync_ugovori_zaposlenih_task': {'queue': 'sync'},
     'fleet.tasks.opomene_goriva_task': {'queue': 'sync'},
+    'finansije.tasks.sync_sef_task': {'queue': 'sync'},
 }
 
 FINANSIJE_COMPANY = 1

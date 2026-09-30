@@ -29,6 +29,22 @@ def sync_all_years():
     return _sync(2025)
 
 
+@shared_task(name="finansije.tasks.sync_sef_task")
+def sync_sef_task():
+    """SEF fakture (ulazne i izlazne, poslednjih 45 dana) i promene statusa; ujutru, posle nocne pauze SEF-a."""
+    from core.tasks import _run_with_singleton_lock
+
+    def _runner():
+        from .services import sef
+
+        try:
+            return sef.poruka(sef.sinhronizuj())
+        except sef.SefNijePodesen as exc:
+            return f"Task skipped: {exc}"
+
+    return _run_with_singleton_lock(task_name="finansije_sync_sef_task", lock_ttl_seconds=90 * 60, fn=_runner)
+
+
 @shared_task(bind=True)
 def refresh_nalog_z_task(self):
     try:

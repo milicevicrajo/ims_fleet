@@ -153,6 +153,16 @@ class PrevodISenkaTests(ImportTestCase):
         self.assertEqual((centar_fin["vise"], centar_fin["manje"]), (["209001", "430001"], ["vranjs"]))
         self.assertNotIn("potrazivanja", redovi["samo-oj"]["moduli"])  # modul mu nije dostupan
 
+    def test_senka_gleda_obuhvat_uloge_koja_otvara_modul(self):
+        """Dodela druge uloge za celu firmu (npr. Pregled) ne siri obuhvat Finansija u senci."""
+        prava.prevedi()
+        pregled = uloga_sa_dozvolom("pregled-vozila", "vehicle_list")
+        self.sa_centrom.roles.add(pregled)
+        DodelaUloge.objects.create(korisnik=self.sa_centrom, uloga=pregled, cela_firma=True, vazi_od=datetime.date(2026, 1, 1),
+                                   status=DodelaUloge.STATUS_AKTIVNA)
+        fin = {r["korisnik"].username: r for r in prava.senka()}["sa-centrom"]["moduli"]["finansije"]
+        self.assertEqual((fin["vise"], fin["manje"]), (["209001", "430001"], ["vranjs"]))
+
 
 class SenkaFloteTests(ImportTestCase):
     """Korak 4: senka i za spisak vozila i kontrolnu tablu Flote. Kadrovi nemaju posebnu organizaciju."""

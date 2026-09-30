@@ -88,6 +88,29 @@ class DodeleTests(ImportTestCase):
         dodele.opozovi(rucna, self.admin)
         self.assertTrue(self.korisnik.roles.filter(pk=self.uloga.pk).exists())
 
+    def test_opoziv_poslednje_dodele_skida_i_ulogu_iz_prevoda_i_grupu(self):
+        from django.contrib.auth.models import Group
+
+        grupa = Group.objects.create(name=self.uloga.name.upper())
+        grupa.user_set.add(self.korisnik)
+        dodele.odobri(self.korisnik, self.admin)
+        prevod = DodelaUloge.objects.get(korisnik=self.korisnik)
+        self.assertFalse(prevod.dodala_ulogu)  # ulogu je imao pre dodela
+        rucna = dodele.dodaj(self.korisnik, self.uloga, centar("41"), False, datetime.date(2026, 1, 1), None, self.admin)
+        dodele.opozovi(prevod, self.admin)
+        self.assertTrue(self.korisnik.roles.filter(pk=self.uloga.pk).exists())  # vazi jos rucna dodela
+        dodele.opozovi(rucna, self.admin)
+        self.assertFalse(self.korisnik.roles.filter(pk=self.uloga.pk).exists())
+        self.assertFalse(grupa.user_set.filter(pk=self.korisnik.pk).exists())  # nocni posao je ne vraca
+
+    def test_pregled_dobija_celu_firmu(self):
+        pregled = uloga_sa_dozvolom("pregled", "vehicle_list")
+        korisnik = get_user_model().objects.create_user("pregled-43", password="x", allowed_center_codes="43")
+        korisnik.roles.add(pregled)
+        prava.prevedi(get_user_model().objects.filter(pk=korisnik.pk))
+        dodela = DodelaUloge.objects.get(korisnik=korisnik)
+        self.assertTrue(dodela.cela_firma)
+
     def test_odobravanje_i_opoziv_kroz_ekran(self):
         self.client.force_login(self.admin)
         self.client.post(reverse("organizacija:dodele_odobri", args=[self.korisnik.pk]))

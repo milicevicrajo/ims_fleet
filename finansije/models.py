@@ -75,6 +75,8 @@ class LedgerEntry(models.Model):
             models.Index(fields=["company", "job_code", "booking_date"], name="fin_ledger_job"),
             models.Index(fields=["company", "account", "booking_date"], name="fin_ledger_account"),
             models.Index(fields=["company", "partner_code", "document_reference"], name="fin_ledger_document"),
+            # SEF fakture: meka veza po broju dokumenta, bez partnera (od 30.09.2026.).
+            models.Index(fields=["company", "document_reference"], name="fin_ledger_doc_ref"),
         ]
 
 
@@ -173,3 +175,6 @@ class BankBillPlacement(models.Model):
             models.UniqueConstraint(fields=["company", "bill"], condition=models.Q(returned_on__isnull=True, bill__isnull=False), name="fin_bank_bill_held"),
             models.UniqueConstraint(fields=["company", "incoming_bill"], condition=models.Q(returned_on__isnull=True, incoming_bill__isnull=False), name="fin_bank_incoming_held"),
         ]
+
+# SEF fakture (samo citanje, od 30.09.2026.) — modeli u posebnom fajlu.
+from .sef_models import SefFaktura, SefPromena, SefSinhronizacija  # noqa: E402,F401

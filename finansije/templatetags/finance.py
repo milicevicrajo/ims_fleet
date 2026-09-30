@@ -5,11 +5,19 @@ from django.utils.html import format_html
 register = template.Library()
 
 
+@register.filter
+def recnik(mapa, kljuc):
+    """Naziv iz recnika (npr. statusi SEF-a); nepoznat kljuc ostaje kakav jeste."""
+    return (mapa or {}).get(kljuc, kljuc)
+
+
 @register.simple_tag
 def finance_sidebar_section(request):
     view = getattr(getattr(request, "resolver_match", None), "view_name", "")
     if view.startswith("finansije:bank_"):
         return "banks"
+    if view.startswith("finansije:sef_"):
+        return "sef"
     if view == "finansije:report":
         group = request.GET.get("group", "center")
         if group == 'job' and request.GET.get('analysis') == 'additional':

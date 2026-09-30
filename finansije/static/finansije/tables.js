@@ -29,7 +29,7 @@
         autoWidth: false,
         deferRender: true,
         scrollX: true,
-        order: [[0, table.attr('data-order-direction') || 'asc']],
+        order: [[Number(table.attr('data-order-column') || 0), table.attr('data-order-direction') || 'asc']],
         columnDefs: [
           { targets: 'no-sort', orderable: false, searchable: false },
           { targets: 'finance-number', type: 'finance-signed', className: 'text-end text-nowrap' },

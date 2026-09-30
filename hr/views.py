@@ -168,7 +168,7 @@ def _collect_user_activities(user):
     return sorted(activities, key=lambda item: item["created_at"], reverse=True)
 
 
-def _employee_detail_context(employee, *, is_self_profile=False):
+def _employee_detail_context(employee, *, is_self_profile=False, user=None):
     from fleet.models import Incident, PutniNalog, VehicleTravelOrder
     from ugovori.models import Contract
 
@@ -206,6 +206,9 @@ def _employee_detail_context(employee, *, is_self_profile=False):
         .order_by("-contract_date", "-id")
     )
 
+    # Ugovori o radu i van radnog odnosa iz kadrovske baze (Kadrovi → Ugovori), vezani za zaposlenog.
+    ugovori_zaposlenog = employee.ugovori.select_related("glavni_ugovor").order_by("-datum_od", "-redni_broj")
+
     resenja = employee.resenja.select_related("vrsta").order_by("-datum_resenja", "-pk")
     zahtevi = employee.zahtevi.select_related("vrsta", "podnosilac").prefetch_related("resenja").order_by("-datum_zahteva", "-redni_broj")
 
@@ -233,6 +236,10 @@ def _employee_detail_context(employee, *, is_self_profile=False):
         "incidents_count": incidents.count(),
         "contracts": contracts,
         "contracts_count": contracts.count(),
+        "ugovori_zaposlenog": ugovori_zaposlenog,
+        "ugovori_zaposlenog_count": ugovori_zaposlenog.count(),
+        "can_view_ugovor": bool(user) and not is_self_profile and user_has_role_permission(user, "hr:ugovor_detail"),
+        "can_open_ugovor_dokument": bool(user) and not is_self_profile and user_has_role_permission(user, "hr:ugovor_dokument"),
         "activities": activities,
         "activities_count": len(activities),
     }
@@ -355,7 +362,7 @@ class EmployeeDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, Detail
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(_employee_detail_context(self.object))
+        context.update(_employee_detail_context(self.object, user=self.request.user))
         context['can_manage_work_time'] = user_has_role_permission(self.request.user, 'hr:employee_work_time_sheet')
         return context
 
@@ -375,6 +382,7 @@ class MyEmployeeProfileView(LoginRequiredMixin, TemplateView):
                 _employee_detail_context(
                     self.request.user.employee,
                     is_self_profile=True,
+                    user=self.request.user,
                 )
             )
         return context

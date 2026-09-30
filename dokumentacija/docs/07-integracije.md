@@ -289,6 +289,25 @@ Ako automatsko preuzimanje ne uspe, datoteka se može uvesti ručno:
 
 ---
 
+## 7.6a. SEF — Sistem elektronskih faktura (od 30.09.2026.)
+
+| | |
+|---|---|
+| Adresa | `https://efaktura.mfin.gov.rs/api/publicApi/…` (test: `https://efakturatest.mfin.gov.rs`) |
+| Način | REST, `requests`; odgovor JSON, fakture u UBL (XML) |
+| Prijava | **API ključ** u zaglavlju `ApiKey` — `SEF_API_KEY` iz `.env`, nikad u kodu |
+| Pokretanje | Noću u 06:50 i ručno (Finansije → SEF fakture, `manage.py sync_sef`) |
+| Preuzima | ulazne fakture (pregled), izlazne (ID + UBL), promene statusa, na zahtev PDF i UBL |
+| Šalje | **Ništa** — nema slanja, prihvatanja, odbijanja ni storniranja |
+| Rok | 60 s po pozivu (`SEF_TIMEOUT`) |
+
+**Rizici [P]:** SEF ima noćnu pauzu (zato jutarnji termin); promene statusa čuva mesec dana,
+pa duži prekid noćnog posla ostavlja stare statuse do sledećeg preuzimanja pregleda. Ključ
+daje pristup SEF-u u ime Instituta — ako ga koristi i drugi sistem, radnje prihvatanja i
+odbijanja ostaju samo u tom sistemu. Specifikacija: „API dokumentacija SEF“, 31.07.2026.
+
+---
+
 ## 7.7. Ručni uvoz datoteka
 
 | Izvor | Oblik | Ekran / komanda | Učestalost |
@@ -353,7 +372,7 @@ namenjeni **čoveku**, ne drugom sistemu. [Z]
 | Ne radi | Napomena |
 |---|---|
 | **Nema REST API** | `djangorestframework` je u zavisnostima, ali se ne koristi |
-| **Ne šalje na SEF** | Statuse sa SEF-a samo čita, kroz Potraživanja |
+| **Ne šalje na SEF** | Fakture i statuse sa SEF-a samo čita — kroz Potraživanja i, od 30.09.2026., Finansije → SEF fakture (API) |
 | **Ne knjiži** | Sve knjiženje ostaje u nasleđenom ERP-u |
 | **Ne šalje e-poštu** | Nema podešenog slanja pošte |
 | **Ne prima podatke spolja programski** | Svaki ulaz je sinhronizacija ili ručni uvoz |

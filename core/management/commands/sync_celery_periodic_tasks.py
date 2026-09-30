@@ -18,6 +18,13 @@ EXPECTED_PERIODIC_TASKS = [
         "minute": "20",
     },
     {
+        # SEF ima nocnu pauzu; preuzimanje ide ujutru (od 30.09.2026.). Bez SEF_API_KEY posao se preskace.
+        "name": "Finansije - SEF fakture",
+        "task": "finansije.tasks.sync_sef_task",
+        "hour": "6",
+        "minute": "50",
+    },
+    {
         "name": "Finansije - sve godine od 2025",
         "task": "finansije.tasks.sync_all_years",
         "hour": "3",

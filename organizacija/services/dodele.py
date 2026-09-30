@@ -6,7 +6,8 @@ kraj vazenja i ime onoga ko ju je opozvao, ne brise se. Brise se samo neodobren 
 
 **Odobrena dodela odlucuje o pristupu u modulima na registru** (`settings.PRAVA_PO_REGISTRU`: od
 28.09.2026. Finansije i Nabavka); ostali moduli jos citaju stara prava. Nacrt ne odlucuje ni o cemu.
-Dodela moze dati i ulogu koju korisnik nema (uloga po cvoru); opoziv poslednje takve dodele je skida.
+Dodela moze dati i ulogu koju korisnik nema (uloga po cvoru); opoziv poslednje dodele neke uloge je skida
+(od 30.09.2026. i ulogu koju je korisnik imao pre dodela) i izvodi korisnika iz istoimene grupe.
 """
 
 from collections import defaultdict
@@ -153,14 +154,23 @@ def opozovi(dodela, ko, dan=None):
 
 
 def _skini_ulogu_ako_treba(dodela, dan):
-    """Uloga koju je dala dodela skida se kad nijedna dodela te uloge vise ne vazi ni ne pocinje kasnije."""
-    if not dodela.dodala_ulogu:
+    """Uloga se skida kad nijedna dodela te uloge vise ne vazi, ne pocinje kasnije i nije u nacrtu.
+
+    Vazi i za ulogu koju je korisnik imao pre dodela (prevod starih prava, 30.09.2026.): uloga bez
+    dodele u modulima na registru ne daje nista, a u ostalima (npr. Ugovori) bi i dalje davala
+    pristup. Korisnik izlazi i iz istoimene grupe, jer nocni `sync_permission_codes` clanovima
+    grupe ulogu vraca.
+    """
+    from django.contrib.auth.models import Group
+
+    vazeca = Q(status=DodelaUloge.STATUS_AKTIVNA) & (Q(vazi_do__isnull=True) | Q(vazi_do__gt=dan))
+    jos = (DodelaUloge.objects.filter(korisnik_id=dodela.korisnik_id, uloga_id=dodela.uloga_id)
+           .filter(vazeca | Q(status=DodelaUloge.STATUS_NACRT)).exists())
+    if jos:
         return
-    jos = (DodelaUloge.objects.filter(korisnik_id=dodela.korisnik_id, uloga_id=dodela.uloga_id,
-                                      status=DodelaUloge.STATUS_AKTIVNA)
-           .filter(Q(vazi_do__isnull=True) | Q(vazi_do__gt=dan)).exists())
-    if not jos:
-        dodela.korisnik.roles.remove(dodela.uloga)
+    dodela.korisnik.roles.remove(dodela.uloga)
+    for grupa in Group.objects.filter(name__iexact=dodela.uloga.name):
+        grupa.user_set.remove(dodela.korisnik)
 
 
 def preklapanje(korisnik, uloga, cvor_id, cela_firma, vazi_od, vazi_do):

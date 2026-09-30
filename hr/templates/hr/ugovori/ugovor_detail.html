@@ -47,9 +47,11 @@ glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi 
         <header>Ugovor</header>
         <div>
           <div class="row g-3">
-            <div class="col-md-6"><label class="form-label" for="{{ form.broj_ugovora.id_for_label }}">{{ form.broj_ugovora.label }}</label>{{ form.broj_ugovora }}
+            <div class="col-md-4"><label class="form-label" for="{{ form.broj_ugovora.id_for_label }}">{{ form.broj_ugovora.label }}</label>{{ form.broj_ugovora }}
               {% for e in form.broj_ugovora.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
-            <div class="col-md-6"><label class="form-label" for="{{ form.broj_aneksa.id_for_label }}">{{ form.broj_aneksa.label }} <span class="text-muted fw-normal">(nije obavezno)</span></label>{{ form.broj_aneksa }}
+            <div class="col-md-4"><label class="form-label" for="{{ form.datum_ugovora.id_for_label }}">{{ form.datum_ugovora.label }}</label>{{ form.datum_ugovora }}
+              {% for e in form.datum_ugovora.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+            <div class="col-md-4"><label class="form-label" for="{{ form.broj_aneksa.id_for_label }}">{{ form.broj_aneksa.label }} <span class="text-muted fw-normal">(nije obavezno)</span></label>{{ form.broj_aneksa }}
               <div class="form-text">Prvi ugovor nema aneks.</div></div>
             <div class="col-12 js-aneks">
               <div class="ugovor-aneks">
@@ -94,6 +96,7 @@ glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi 
       <header>Ugovor</header>
       <div><dl class="ugovor-podaci">
         <dt>Broj ugovora</dt><dd>{{ red.broj_ugovora|default:"—" }}</dd>
+        <dt>Datum ugovora</dt><dd>{{ red.datum_ugovora|date:"d.m.Y."|default:"—" }}</dd>
         <dt>Broj aneksa</dt><dd>{{ red.broj_aneksa|default:"—" }}{% if red.glavni_ugovor %} · uz {{ red.glavni_ugovor.broj_ugovora|default:"glavni ugovor" }}{% endif %}</dd>
         <dt>Dokument</dt><dd>{% if red.dokument and can_document %}<a href="{% url 'hr:ugovor_dokument' red.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-file-pdf-box"></i> {{ red.dokument_naziv|default:"Otvori" }}</a>{% elif red.dokument %}priložen{% else %}—{% endif %}</dd>
         <dt>OJ</dt><dd>{{ red.oj|default:"—" }} {{ red.naziv_oj }}</dd>
@@ -115,7 +118,7 @@ glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi 
           {% for p in periodi %}
             <tr class="{% if p.pk == red.pk %}izabran{% endif %}">
               <td class="text-nowrap">{{ p.datum_od|date:"d.m.Y." }} –<br>{% if p.na_neodredjeno %}na neodređeno{% else %}{{ p.datum_do|date:"d.m.Y."|default:"—" }}{% endif %}</td>
-              <td>{{ p.broj_ugovora|default:"—" }}{% if p.broj_aneksa %}<div class="ugovor-small">aneks {{ p.broj_aneksa }}</div>{% endif %}{% if p.dokument %} <i class="mdi mdi-paperclip" title="Dokument priložen"></i>{% endif %}</td>
+              <td>{{ p.broj_ugovora|default:"—" }}{% if p.datum_ugovora %}<div class="ugovor-small">od {{ p.datum_ugovora|date:"d.m.Y." }}</div>{% endif %}{% if p.broj_aneksa %}<div class="ugovor-small">aneks {{ p.broj_aneksa }}</div>{% endif %}{% if p.dokument %} <i class="mdi mdi-paperclip" title="Dokument priložen"></i>{% endif %}</td>
               <td class="text-end">{% if p.pk != red.pk %}<a class="btn btn-outline-primary btn-sm" href="{% url 'hr:ugovor_detail' p.pk %}" title="Otvori"><i class="mdi mdi-chevron-right"></i></a>{% endif %}</td>
             </tr>
           {% endfor %}

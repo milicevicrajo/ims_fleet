@@ -373,10 +373,11 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 > | Izbor šifre posla (garaža, ekonomika, prijem vozila) | Samo šifre iz obuhvata, uz već upisanu |
 >
 > **Nalozi za vozilo** ne zavise od organizacije (zaposleni vidi svoje) i ne menjaju se. Uprava,
-> Garaža, Nabavka i Blagajna imaju obuhvat cele firme. Merenje 28.09.2026. (19 korisnika Flote):
+> Garaža, Nabavka, Blagajna i (od 30.09.2026.) Pregled imaju obuhvat cele firme. Merenje 28.09.2026. (19 korisnika Flote):
 > putne naloge svi vide isto kao ranije, osim Garaže (0 → 3.746, samo čitanje, potvrđeno); vozila —
 > Pregled (3) i Sekretarijat (10) sada samo vozila svog centra (npr. 98 od 164 za centar 43), po
-> odluci 25.09.2026. „samo svoj centar”.
+> odluci 25.09.2026. „samo svoj centar”. Odluka 30.09.2026.: **Pregled vidi celu firmu** (sva vozila,
+> kao pre registra, a time i sve putne naloge: 3.819 umesto 2.285 za centar 43).
 
 ---
 

@@ -101,8 +101,9 @@ Vodi **zaposlene i njihovo radno vreme**:
 
 ### Ugovori zaposlenih (od 29.09.2026.) [P]
 
-**Jedan red je jedan period rada iz kadrovske baze**, a Kadrovi uz njega unose broj ugovora,
-broj aneksa (nije obavezan — prvi ugovor nema aneks), skeniran dokument i napomenu. Ugovori
+**Jedan red je jedan period rada iz kadrovske baze**, a Kadrovi uz njega unose broj i datum ugovora
+(datum od 30.09.2026., nije obavezan), broj aneksa (nije obavezan — prvi ugovor nema aneks), skeniran
+dokument i napomenu. Ugovori
 sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa partnerima
 (vrsta „Ugovori o radu“ tamo sadrži ugovore o delu sa spoljnim licima).
 
@@ -114,6 +115,7 @@ sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa 
 | Aneks | Kada je unet broj aneksa, može se izabrati glavni ugovor — raniji period istog radnika koji nije i sam aneks. Veza nije obavezna. |
 | Dokument | PDF ili slika (JPG, PNG, TIFF), najviše 20 MB, u `media/hr/ugovori/`. Otvara se samo kroz aplikaciju (`hr:ugovor_dokument`), uz proveru obuhvata. |
 | Nestao ili izmenjen period | Period koji nestane iz kadrovske baze se ne briše, nego dobija oznaku „Nema u kadrovskoj bazi“. Ako se posle unosa promeni datum početka, raniji datum se čuva i red je označen „Proveriti“ dok ga Kadrovi ne potvrde. |
+| Veza sa zaposlenim | Period je vezan za karticu zaposlenog (FK `employee`, po šifri radnika, pri svakoj sinhronizaciji). Na kartici zaposlenog, kartica **Ugovori** prikazuje njegove periode sa brojem i datumom ugovora, aneksom, OJ, radnim mestom i dokumentom (od 30.09.2026.); ispod su poslovni ugovori sa partnerom iste šifre. Na sopstvenom profilu zaposleni vidi svoje ugovore, bez ulaska u unos i bez otvaranja dokumenta. Periodi bivših radnika koji nemaju karticu u aplikaciji (1.291 od 4.142, 30.09.2026.) ostaju bez veze. |
 | Obuhvat | Kao spisak zaposlenih: vide se periodi zaposlenih u obuhvatu korisnika. Periodi bivših radnika koji nemaju karticu u aplikaciji i radnika bez čvora registra (OJ `1`) vidi samo obuhvat cele firme. |
 
 ---

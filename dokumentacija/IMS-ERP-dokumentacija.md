@@ -110,6 +110,7 @@
     - [16. Poznati izuzeci i granični slučajevi](#16-poznati-izuzeci-i-granični-slučajevi)
     - [17. Šta nije moguće objasniti bez dodatnih podataka](#17-šta-nije-moguće-objasniti-bez-dodatnih-podataka)
     - [18. Banke](#18-banke)
+    - [19. SEF fakture (od 30.09.2026.) [P]](#19-sef-fakture-od-30092026-p)
     - [Gde dalje](#gde-dalje)
 - [3.4. Nabavka](#34-nabavka)
     - [1. Naziv modula](#1-naziv-modula)
@@ -427,6 +428,7 @@
     - [7.4. NIS i OMV — gorivo (Selenium)](#74-nis-i-omv--gorivo-selenium)
     - [7.5. Registar menica NBS](#75-registar-menica-nbs)
     - [7.6. APR OpenAPI](#76-apr-openapi)
+    - [7.6a. SEF — Sistem elektronskih faktura (od 30.09.2026.)](#76a-sef--sistem-elektronskih-faktura-od-30092026)
     - [7.7. Ručni uvoz datoteka](#77-ručni-uvoz-datoteka)
     - [7.8. Izlaz iz sistema](#78-izlaz-iz-sistema)
     - [7.9. Šta sistem NE radi](#79-šta-sistem-ne-radi)
@@ -2006,10 +2008,11 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 > | Izbor šifre posla (garaža, ekonomika, prijem vozila) | Samo šifre iz obuhvata, uz već upisanu |
 >
 > **Nalozi za vozilo** ne zavise od organizacije (zaposleni vidi svoje) i ne menjaju se. Uprava,
-> Garaža, Nabavka i Blagajna imaju obuhvat cele firme. Merenje 28.09.2026. (19 korisnika Flote):
+> Garaža, Nabavka, Blagajna i (od 30.09.2026.) Pregled imaju obuhvat cele firme. Merenje 28.09.2026. (19 korisnika Flote):
 > putne naloge svi vide isto kao ranije, osim Garaže (0 → 3.746, samo čitanje, potvrđeno); vozila —
 > Pregled (3) i Sekretarijat (10) sada samo vozila svog centra (npr. 98 od 164 za centar 43), po
-> odluci 25.09.2026. „samo svoj centar”.
+> odluci 25.09.2026. „samo svoj centar”. Odluka 30.09.2026.: **Pregled vidi celu firmu** (sva vozila,
+> kao pre registra, a time i sve putne naloge: 3.819 umesto 2.285 za centar 43).
 
 ---
 
@@ -2302,8 +2305,9 @@ Vodi **zaposlene i njihovo radno vreme**:
 
 #### Ugovori zaposlenih (od 29.09.2026.) [P]
 
-**Jedan red je jedan period rada iz kadrovske baze**, a Kadrovi uz njega unose broj ugovora,
-broj aneksa (nije obavezan — prvi ugovor nema aneks), skeniran dokument i napomenu. Ugovori
+**Jedan red je jedan period rada iz kadrovske baze**, a Kadrovi uz njega unose broj i datum ugovora
+(datum od 30.09.2026., nije obavezan), broj aneksa (nije obavezan — prvi ugovor nema aneks), skeniran
+dokument i napomenu. Ugovori
 sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa partnerima
 (vrsta „Ugovori o radu“ tamo sadrži ugovore o delu sa spoljnim licima).
 
@@ -2315,6 +2319,7 @@ sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa 
 | Aneks | Kada je unet broj aneksa, može se izabrati glavni ugovor — raniji period istog radnika koji nije i sam aneks. Veza nije obavezna. |
 | Dokument | PDF ili slika (JPG, PNG, TIFF), najviše 20 MB, u `media/hr/ugovori/`. Otvara se samo kroz aplikaciju (`hr:ugovor_dokument`), uz proveru obuhvata. |
 | Nestao ili izmenjen period | Period koji nestane iz kadrovske baze se ne briše, nego dobija oznaku „Nema u kadrovskoj bazi“. Ako se posle unosa promeni datum početka, raniji datum se čuva i red je označen „Proveriti“ dok ga Kadrovi ne potvrde. |
+| Veza sa zaposlenim | Period je vezan za karticu zaposlenog (FK `employee`, po šifri radnika, pri svakoj sinhronizaciji). Na kartici zaposlenog, kartica **Ugovori** prikazuje njegove periode sa brojem i datumom ugovora, aneksom, OJ, radnim mestom i dokumentom (od 30.09.2026.); ispod su poslovni ugovori sa partnerom iste šifre. Na sopstvenom profilu zaposleni vidi svoje ugovore, bez ulaska u unos i bez otvaranja dokumenta. Periodi bivših radnika koji nemaju karticu u aplikaciji (1.291 od 4.142, 30.09.2026.) ostaju bez veze. |
 | Obuhvat | Kao spisak zaposlenih: vide se periodi zaposlenih u obuhvatu korisnika. Periodi bivših radnika koji nemaju karticu u aplikaciji i radnika bez čvora registra (OJ `1`) vidi samo obuhvat cele firme. |
 
 ---
@@ -3026,6 +3031,30 @@ Uloga Uprava dobija nove kodove kroz postojeću sinhronizaciju dozvola.
 Nova migracija Finansija 0003 dodaje samo lokalne tabele i ograničenja. Posle primene
 registrovati nove dozvole. Obračun i kontrolni primer su u odeljku 6.1.21;
 regresije su u `finansije/test_banks.py`.
+
+### 19. SEF fakture (od 30.09.2026.) [P]
+
+Ekran `/finansije/sef/` prikazuje **ulazne i izlazne fakture sa Sistema elektronskih faktura**
+(SEF, `efaktura.mfin.gov.rs`), preuzete kroz javni API SEF-a. Aplikacija **samo čita**: ne šalje
+fakture, ne prihvata ih, ne odbija i ne stornira — to ostaje u sistemu u kome se danas radi.
+
+| Tema | Pravilo |
+|---|---|
+| Ulazne | `GET purchase-invoice/overview` po periodu slanja (delovi od po 31 dan): broj, vrsta, status, dobavljač (naziv, PIB, matični broj), iznos, osnovica, PDV, valuta, datum prometa i dospeća, datum slanja |
+| Izlazne | `POST sales-invoice/ids` po statusu i periodu daje samo ID; broj, kupac i iznosi čitaju se iz UBL-a (`sales-invoice/xml`) **samo za fakture koje još nemamo**. Nacrti i obrisane se ne preuzimaju |
+| Statusi | `POST …/changes?date=` za protekle dane (SEF ih čuva mesec dana, tekući dan ne daje); svaki događaj se čuva (`finansije_sef_promena`), a novija promena menja status fakture |
+| PDF i UBL | **PDF se prikazuje na detalju**, ispod podataka o fakturi. Ako još nije preuzet, stranica ga sama preuzima sa SEF-a (`finansije:sef_pdf_preuzmi`): SEF prvi put samo pokrene izradu, pa stranica ponavlja na 5 s (najviše 12 puta). Preuzet PDF se **čuva u aplikaciji** (`media/finansije/sef/`, polje `pdf`, vreme `pdf_preuzet`) i sledeći put se ne traži sa SEF-a — ulazi u rezervne kopije direktorijuma `media/`. UBL se preuzima sa SEF-a u trenutku otvaranja |
+| Veza sa knjiženjima | **Meka, samo preko broja dokumenta**: `LedgerEntry.document_reference` jednak broju fakture (bez razmaka na krajevima; na SQL Serveru bez obzira na veličinu slova). Polje knjiženja ima 20 znakova, pa se duži broj poredi i skraćen na 20. **Izlazna** faktura na SEF-u ima ispred broja iz IF knjiženja još četiri cifre (godina + serija): SEF `2650707001-325` = knjiženje `707001-325`. Nema stranog ključa; isti broj kod drugog partnera se takođe prikazuje. Merenje 30.09.2026. (23.–30.09.): izlazne 94 od 101, ulazne 26 od 101 |
+| Filteri | Smer (dugmad sa brojem faktura), status na SEF-u, knjiženje (proknjižene / neproknjižene — `Exists` nad `LedgerEntry` po celom broju i po `broj_knjizenja`, uz indeks `fin_ledger_doc_ref`), period (datum izdavanja; za ulazne datum prometa, pa dan slanja) sa prečicama „Ovaj mesec / Prošli mesec / Ova godina“ i pretraga (broj, partner, PIB, matični broj, SEF ID). Detalj vraća na spisak sa istim filterima |
+| Obuhvat | Fakture nemaju centar ni šifru posla — vidi ih samo **obuhvat cele firme** (kao sinhronizaciju) |
+| Ograničenja SEF-a | Najviše **3 zahteva u sekundi** (inače 429): klijent čeka 0,4 s između poziva i posle 429 ponavlja. Izlazna faktura „u slanju” još nema UBL (`UBLFileNotFound`) — ostaje bez broja i UBL se traži pri sledećem preuzimanju. Sertifikat `efaktura.mfin.gov.rs` proverava se kroz skladište sertifikata Windows-a (`truststore`), jer izdavač nije u `certifi` |
+| Preuzimanje | Noću u **06:50** (`finansije.tasks.sync_sef_task`, posle noćne pauze SEF-a): fakture poslate u poslednjih 45 dana i promene statusa. Ručno — dugmetom na ekranu SEF fakture ili na strani Finansije → Sinhronizacija (sa istorijom preuzimanja) — najviše tri meseca; za duži period `manage.py sync_sef --od 2026-01-01`. `manage.py sync_sef --provera` proverava ključ i vezu (verzija SEF-a). Svako preuzimanje se beleži (`finansije_sef_sinhronizacija`) |
+| Ključ | `SEF_API_KEY` u `.env` (SEF portal → Podešavanja → API management), `SEF_API_URL` (podrazumevano produkcija; test: `https://efakturatest.mfin.gov.rs`). Bez ključa ekran prikazuje upozorenje, a noćni posao se preskače |
+
+Dozvole: `finansije:sef_list`, `finansije:sef_detail`, `finansije:sef_dokument` (PDF i UBL),
+`finansije:sef_sync` (ručno preuzimanje) — Uprava ih dobija automatski. Kod:
+`finansije/services/sef.py`, `finansije/sef_views.py`, `finansije/sef_models.py`; testovi u
+`finansije/test_sef.py` (lažni klijent, bez poziva SEF-a). Migracije Finansija 0006 i 0007 (PDF, `broj_knjizenja`, indeks knjiženja po broju dokumenta).
 
 ### Gde dalje
 
@@ -5173,13 +5202,15 @@ pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
 | Kartica korisnika | Sve dodele sa istorijom, stara prava koja danas odlučuju i senka samo za tog korisnika |
 | **Odobri nacrt** | Nacrt iz prevoda starih prava postaje odobren; beleži se ko i kada. Odobrenog korisnika prevod (`prava_u_senci`) više ne menja |
 | **Nova dodela** | Ručna dodela, odmah odobrena; nudi se svaka aktivna uloga i samo **aktivne** šifre. **Uloga po čvoru** (od 28.09.2026.): ako korisnik ulogu nema, dodela mu je daje. Ista uloga sa istim obuhvatom u preklopljenom periodu se odbija |
-| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; ako je dodela dala ulogu, opoziv poslednje takve dodele je i skida. Neodobren nacrt se briše |
+| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; opoziv poslednje važeće dodele neke uloge skida i ulogu — od 30.09.2026. i ulogu koju je korisnik imao pre dodela — i izvodi korisnika iz istoimene grupe (inače bi je noćni `sync_permission_codes` vratio). Uloga ostaje dok postoji nacrt te uloge. Neodobren nacrt se briše |
 
 Dozvole: `organizacija:dodele`, `organizacija:dodele_korisnika`, `organizacija:dodele_odobri`,
 `organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Odobrene dodele odlučuju o pristupu u
 Finansijama, Nabavci, Potraživanjima i Floti** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
 pravima (`allowed_center_codes`, `allowed_centers`). Uloga Uprava dobija celu firmu kao običnu
-dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka, Blagajna i Pravna služba.
+dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka, Blagajna, Pravna služba i
+(od 30.09.2026.) Pregled. Senka poredi obuhvat **uloge koja otvara modul** (dozvola ulaza u modul), kao
+i sami moduli; dodela druge uloge ne širi obuhvat u senci.
 
 ---
 
@@ -17796,6 +17827,25 @@ Ako automatsko preuzimanje ne uspe, datoteka se može uvesti ručno:
 
 ---
 
+### 7.6a. SEF — Sistem elektronskih faktura (od 30.09.2026.)
+
+| | |
+|---|---|
+| Adresa | `https://efaktura.mfin.gov.rs/api/publicApi/…` (test: `https://efakturatest.mfin.gov.rs`) |
+| Način | REST, `requests`; odgovor JSON, fakture u UBL (XML) |
+| Prijava | **API ključ** u zaglavlju `ApiKey` — `SEF_API_KEY` iz `.env`, nikad u kodu |
+| Pokretanje | Noću u 06:50 i ručno (Finansije → SEF fakture, `manage.py sync_sef`) |
+| Preuzima | ulazne fakture (pregled), izlazne (ID + UBL), promene statusa, na zahtev PDF i UBL |
+| Šalje | **Ništa** — nema slanja, prihvatanja, odbijanja ni storniranja |
+| Rok | 60 s po pozivu (`SEF_TIMEOUT`) |
+
+**Rizici [P]:** SEF ima noćnu pauzu (zato jutarnji termin); promene statusa čuva mesec dana,
+pa duži prekid noćnog posla ostavlja stare statuse do sledećeg preuzimanja pregleda. Ključ
+daje pristup SEF-u u ime Instituta — ako ga koristi i drugi sistem, radnje prihvatanja i
+odbijanja ostaju samo u tom sistemu. Specifikacija: „API dokumentacija SEF“, 31.07.2026.
+
+---
+
 ### 7.7. Ručni uvoz datoteka
 
 | Izvor | Oblik | Ekran / komanda | Učestalost |
@@ -17860,7 +17910,7 @@ namenjeni **čoveku**, ne drugom sistemu. [Z]
 | Ne radi | Napomena |
 |---|---|
 | **Nema REST API** | `djangorestframework` je u zavisnostima, ali se ne koristi |
-| **Ne šalje na SEF** | Statuse sa SEF-a samo čita, kroz Potraživanja |
+| **Ne šalje na SEF** | Fakture i statuse sa SEF-a samo čita — kroz Potraživanja i, od 30.09.2026., Finansije → SEF fakture (API) |
 | **Ne knjiži** | Sve knjiženje ostaje u nasleđenom ERP-u |
 | **Ne šalje e-poštu** | Nema podešenog slanja pošte |
 | **Ne prima podatke spolja programski** | Svaki ulaz je sinhronizacija ili ručni uvoz |
@@ -18173,7 +18223,7 @@ chrome-for-testing/  Chrome za Selenium
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 22 zakazana posla** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 23 zakazana posla** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -18196,6 +18246,7 @@ chrome-for-testing/  Chrome za Selenium
 | **04:20** | **Gorivo — NIS** | `fleet.tasks.run_nis_command` | **`selenium`** | **4 h** |
 | **05:10** | **Gorivo — OMV putnička** | `fleet.tasks.run_omv_putnicka_command` | **`selenium`** | **4 h** |
 | **06:10** | **Gorivo — OMV teretna** | `fleet.tasks.run_omv_teretna_command` | **`selenium`** | **4 h** |
+| 06:50 | Finansije — SEF fakture (preskače se bez `SEF_API_KEY`) | `finansije.tasks.sync_sef_task` | `sync` | 90 min |
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | 07:45 | Flota — opomene za gorivo | `fleet.tasks.opomene_goriva_task` | `sync` | 30 min |

@@ -53,6 +53,7 @@ Ako tražiš formulu, gledaj u `services/` ili `support/` — ne u `views/`.
 | Pravni i disciplinski postupci | `pravna/views.py`, `pravna/views_disciplinski.py` |
 | Preuzimanje menica iz registra NBS | `menice/scraper.py` |
 | Provera partnera u APR-u | `ugovori/apr_openapi.py` |
+| SEF fakture (samo čitanje, API ključ u `.env`) | `finansije/services/sef.py` |
 | Dozvole i uloge | `core/permissions.py`, `core/mixins.py` |
 | Zakazani poslovi | `core/management/commands/sync_celery_periodic_tasks.py` |
 
@@ -190,9 +191,9 @@ stari radnik odbacuje nepoznat zadatak.
 
 ---
 
-## 8. Zakazani poslovi (22 komada)
+## 8. Zakazani poslovi (23 komada)
 
-Noć: 01:00–07:30 sve sinhronizacije (ugovori zaposlenih u 01:15 — od 29.09.2026.; Potraživanja u 03:00; fiskalni računi koji čekaju proveru u 07:30 — od 28.09.2026.; opomene za gorivo u 07:45 — od 29.09.2026.; stara organizacija u 01:30 ugašena — OJ održava sinhronizacija organizacije u 01:40). Dan: 10:00 i 11:00 `nalog_z`, 12:30 putni nalozi,
+Noć: 01:00–07:30 sve sinhronizacije (ugovori zaposlenih u 01:15 — od 29.09.2026.; Potraživanja u 03:00; fiskalni računi koji čekaju proveru u 07:30 — od 28.09.2026.; SEF fakture u 06:50 — od 30.09.2026.; opomene za gorivo u 07:45 — od 29.09.2026.; stara organizacija u 01:30 ugašena — OJ održava sinhronizacija organizacije u 01:40). Dan: 10:00 i 11:00 `nalog_z`, 12:30 putni nalozi,
 svaki sat u :20 tekuća godina Finansija.
 
 Zaštita od preklapanja: Redis zaključavanje `ims_erp:task-lock:<task>`

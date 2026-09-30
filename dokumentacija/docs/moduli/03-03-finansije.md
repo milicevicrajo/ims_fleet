@@ -344,6 +344,30 @@ Nova migracija Finansija 0003 dodaje samo lokalne tabele i ograničenja. Posle p
 registrovati nove dozvole. Obračun i kontrolni primer su u odeljku 6.1.21;
 regresije su u `finansije/test_banks.py`.
 
+## 19. SEF fakture (od 30.09.2026.) [P]
+
+Ekran `/finansije/sef/` prikazuje **ulazne i izlazne fakture sa Sistema elektronskih faktura**
+(SEF, `efaktura.mfin.gov.rs`), preuzete kroz javni API SEF-a. Aplikacija **samo čita**: ne šalje
+fakture, ne prihvata ih, ne odbija i ne stornira — to ostaje u sistemu u kome se danas radi.
+
+| Tema | Pravilo |
+|---|---|
+| Ulazne | `GET purchase-invoice/overview` po periodu slanja (delovi od po 31 dan): broj, vrsta, status, dobavljač (naziv, PIB, matični broj), iznos, osnovica, PDV, valuta, datum prometa i dospeća, datum slanja |
+| Izlazne | `POST sales-invoice/ids` po statusu i periodu daje samo ID; broj, kupac i iznosi čitaju se iz UBL-a (`sales-invoice/xml`) **samo za fakture koje još nemamo**. Nacrti i obrisane se ne preuzimaju |
+| Statusi | `POST …/changes?date=` za protekle dane (SEF ih čuva mesec dana, tekući dan ne daje); svaki događaj se čuva (`finansije_sef_promena`), a novija promena menja status fakture |
+| PDF i UBL | **PDF se prikazuje na detalju**, ispod podataka o fakturi. Ako još nije preuzet, stranica ga sama preuzima sa SEF-a (`finansije:sef_pdf_preuzmi`): SEF prvi put samo pokrene izradu, pa stranica ponavlja na 5 s (najviše 12 puta). Preuzet PDF se **čuva u aplikaciji** (`media/finansije/sef/`, polje `pdf`, vreme `pdf_preuzet`) i sledeći put se ne traži sa SEF-a — ulazi u rezervne kopije direktorijuma `media/`. UBL se preuzima sa SEF-a u trenutku otvaranja |
+| Veza sa knjiženjima | **Meka, samo preko broja dokumenta**: `LedgerEntry.document_reference` jednak broju fakture (bez razmaka na krajevima; na SQL Serveru bez obzira na veličinu slova). Polje knjiženja ima 20 znakova, pa se duži broj poredi i skraćen na 20. **Izlazna** faktura na SEF-u ima ispred broja iz IF knjiženja još četiri cifre (godina + serija): SEF `2650707001-325` = knjiženje `707001-325`. Nema stranog ključa; isti broj kod drugog partnera se takođe prikazuje. Merenje 30.09.2026. (23.–30.09.): izlazne 94 od 101, ulazne 26 od 101 |
+| Filteri | Smer (dugmad sa brojem faktura), status na SEF-u, knjiženje (proknjižene / neproknjižene — `Exists` nad `LedgerEntry` po celom broju i po `broj_knjizenja`, uz indeks `fin_ledger_doc_ref`), period (datum izdavanja; za ulazne datum prometa, pa dan slanja) sa prečicama „Ovaj mesec / Prošli mesec / Ova godina“ i pretraga (broj, partner, PIB, matični broj, SEF ID). Detalj vraća na spisak sa istim filterima |
+| Obuhvat | Fakture nemaju centar ni šifru posla — vidi ih samo **obuhvat cele firme** (kao sinhronizaciju) |
+| Ograničenja SEF-a | Najviše **3 zahteva u sekundi** (inače 429): klijent čeka 0,4 s između poziva i posle 429 ponavlja. Izlazna faktura „u slanju” još nema UBL (`UBLFileNotFound`) — ostaje bez broja i UBL se traži pri sledećem preuzimanju. Sertifikat `efaktura.mfin.gov.rs` proverava se kroz skladište sertifikata Windows-a (`truststore`), jer izdavač nije u `certifi` |
+| Preuzimanje | Noću u **06:50** (`finansije.tasks.sync_sef_task`, posle noćne pauze SEF-a): fakture poslate u poslednjih 45 dana i promene statusa. Ručno — dugmetom na ekranu SEF fakture ili na strani Finansije → Sinhronizacija (sa istorijom preuzimanja) — najviše tri meseca; za duži period `manage.py sync_sef --od 2026-01-01`. `manage.py sync_sef --provera` proverava ključ i vezu (verzija SEF-a). Svako preuzimanje se beleži (`finansije_sef_sinhronizacija`) |
+| Ključ | `SEF_API_KEY` u `.env` (SEF portal → Podešavanja → API management), `SEF_API_URL` (podrazumevano produkcija; test: `https://efakturatest.mfin.gov.rs`). Bez ključa ekran prikazuje upozorenje, a noćni posao se preskače |
+
+Dozvole: `finansije:sef_list`, `finansije:sef_detail`, `finansije:sef_dokument` (PDF i UBL),
+`finansije:sef_sync` (ručno preuzimanje) — Uprava ih dobija automatski. Kod:
+`finansije/services/sef.py`, `finansije/sef_views.py`, `finansije/sef_models.py`; testovi u
+`finansije/test_sef.py` (lažni klijent, bez poziva SEF-a). Migracije Finansija 0006 i 0007 (PDF, `broj_knjizenja`, indeks knjiženja po broju dokumenta).
+
 ## Gde dalje
 
 | Poglavlje | Sadržaj |

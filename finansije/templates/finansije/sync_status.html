@@ -42,5 +42,32 @@
     <tbody></tbody>
   </table>
 </div></div>
+
+<div class="card mt-4"><div class="card-body">
+  <h2 class="h5"><i class="mdi mdi-file-document-multiple-outline me-1" aria-hidden="true"></i>SEF — ulazne i izlazne fakture</h2>
+  <p class="small text-muted">Preuzimanje sa Sistema elektronskih faktura (samo čitanje): fakture poslate u izabranom periodu i promene statusa za protekle dane. Noću u 06:50 preuzima se poslednjih 45 dana. Ručno najviše tri meseca odjednom.</p>
+  {% if not sef_podesen %}<div class="alert alert-warning mb-2">SEF nije podešen: u <code>.env</code> nedostaje <code>SEF_API_KEY</code>.</div>
+  {% elif can_sef_sync %}
+  <form method="post" action="{% url 'finansije:sef_sync' %}" class="d-flex flex-wrap align-items-end gap-2 mb-3">{% csrf_token %}
+    <input type="hidden" name="next" value="{% url 'finansije:sync_status' %}">
+    <div><label class="form-label" for="sef-od">Od</label><input id="sef-od" type="date" name="od" value="{{ sef_od|date:'Y-m-d' }}" class="form-control"></div>
+    <div><label class="form-label" for="sef-do">Do</label><input id="sef-do" type="date" name="do" value="{{ sef_do|date:'Y-m-d' }}" class="form-control"></div>
+    <button type="submit" class="btn btn-primary"><i class="mdi mdi-cloud-download me-1" aria-hidden="true"></i>Preuzmi sa SEF-a</button>
+    <a class="btn btn-outline-secondary" href="{% url 'finansije:sef_list' %}">SEF fakture</a>
+  </form>
+  {% endif %}
+  {% if sef_runs %}<div class="table-responsive"><table class="table table-sm align-middle">
+    <thead><tr><th>Početak</th><th>Period</th><th>Pokrenuo</th><th>Status</th><th class="finance-number">Ulaznih</th><th class="finance-number">Izlaznih</th><th class="finance-number">Novih</th><th class="finance-number">Ažurirano</th><th class="finance-number">Promena statusa</th><th>Napomena</th></tr></thead>
+    <tbody>{% for r in sef_runs %}<tr>
+      <td>{{ r.started_at|date:"d.m.Y. H:i" }}</td><td>{{ r.od|date:"d.m.Y." }}–{{ r.do|date:"d.m.Y." }}</td>
+      <td>{{ r.korisnik.username|default:"noćni posao" }}</td>
+      <td>{% if r.status == "success" %}<span class="badge bg-success">Uspešno</span>{% elif r.status == "error" %}<span class="badge bg-danger">Greška</span>{% else %}<span class="badge bg-secondary">U toku</span>{% endif %}</td>
+      <td class="finance-number">{{ r.counts.ulaznih|default:0 }}</td><td class="finance-number">{{ r.counts.izlaznih|default:0 }}</td>
+      <td class="finance-number">{{ r.counts.novih|default:0 }}</td><td class="finance-number">{{ r.counts.azurirano|default:0 }}</td>
+      <td class="finance-number">{{ r.counts.promena|default:0 }}</td>
+      <td class="small">{% if r.error %}<span class="text-danger">{{ r.error|truncatechars:140 }}</span>{% elif r.counts.bez_ubl %}bez UBL-a: {{ r.counts.bez_ubl }}{% endif %}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>{% else %}<p class="text-muted mb-0">SEF još nije preuziman.</p>{% endif %}
+</div></div>
 {% endblock %}
 {% block extra_js %}{{ block.super }}<script src="{% static 'finansije/sync.js' %}?v=20260918-1"></script>{% endblock %}

@@ -171,6 +171,34 @@ class EkraniTests(TestCase):
         self.assertIsNone(self.aneks.glavni_ugovor)
         self.assertTrue(self.aneks.dokument)  # dokument ostaje dok se ne ukloni
 
+    def test_datum_ugovora_se_unosi_i_prikazuje(self):
+        self.assertEqual(self.izmena(self.glavni, broj_ugovora="01-10/2024", datum_ugovora="2024-02-27").status_code, 302)
+        self.glavni.refresh_from_db()
+        self.assertEqual(self.glavni.datum_ugovora, datetime.date(2024, 2, 27))
+        podaci = self.client.get(reverse("hr:ugovor_data"), {"draw": 1, "unos": "uneto"}).json()
+        self.assertIn("od 27.02.2024.", podaci["data"][0]["broj_ugovora"])
+        self.assertContains(self.client.get(reverse("hr:ugovor_detail", args=[self.glavni.pk])), 'value="2024-02-27"')
+        self.assertEqual(self.izmena(self.glavni, broj_ugovora="01-10/2024").status_code, 302)  # datum nije obavezan
+        self.glavni.refresh_from_db()
+        self.assertIsNone(self.glavni.datum_ugovora)
+
+    def test_ugovori_u_profilu_zaposlenog(self):
+        UgovorZaposlenog.objects.filter(pk=self.glavni.pk).update(broj_ugovora="01-10/2024",
+                                                                   datum_ugovora=datetime.date(2024, 2, 27))
+        zaposleni = self.glavni.employee
+        self.uloga.permissions.add(PermissionCode.objects.get_or_create(code="employee_detail")[0])
+        odgovor = self.client.get(reverse("employee_detail", args=[zaposleni.pk]))
+        self.assertEqual(list(odgovor.context["ugovori_zaposlenog"]), [self.aneks, self.glavni])  # najnoviji prvi
+        self.assertContains(odgovor, "01-10/2024")
+        self.assertContains(odgovor, "27.02.2024.")
+        self.assertContains(odgovor, reverse("hr:ugovor_detail", args=[self.glavni.pk]))
+        # sopstveni profil: vidi svoje ugovore, bez ulaska u unos Kadrova
+        radnik = get_user_model().objects.create_user("radnik-ugovori", password="x", employee=zaposleni)
+        self.client.force_login(radnik)
+        odgovor = self.client.get(reverse("my_employee_profile"))
+        self.assertContains(odgovor, "01-10/2024")
+        self.assertNotContains(odgovor, reverse("hr:ugovor_detail", args=[self.glavni.pk]))
+
     def test_glavni_ugovor_se_bira_samo_od_ranijih_perioda(self):
         from hr.ugovori_views import UgovorForm
 

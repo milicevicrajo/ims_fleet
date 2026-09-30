@@ -165,7 +165,8 @@ class UgovorDataView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
             "oj": (f'<strong>{escape(r.oj)}</strong><div class="ugovor-small">{escape(r.naziv_oj)}</div>' if r.oj else "—"),
             "radno_mesto": (f'<strong>{escape(r.sifra_sistematizacije)}</strong>'
                             f'<div class="ugovor-small">{escape(r.naziv_radnog_mesta)}</div>' if r.sifra_sistematizacije else "—"),
-            "broj_ugovora": escape(r.broj_ugovora) or '<span class="ugovor-badge muted">Nije uneto</span>',
+            "broj_ugovora": ((escape(r.broj_ugovora) or '<span class="ugovor-badge muted">Nije uneto</span>')
+                             + (f'<div class="ugovor-small">od {r.datum_ugovora:%d.%m.%Y.}</div>' if r.datum_ugovora else "")),
             "aneks": aneks,
             "dokument": dokument,
             "akcije": f'<a class="btn btn-outline-primary btn-sm" href="{detalj}"><i class="mdi mdi-pencil"></i> Unos</a>',
@@ -175,9 +176,10 @@ class UgovorDataView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
 class UgovorForm(forms.ModelForm):
     class Meta:
         model = UgovorZaposlenog
-        fields = ["broj_ugovora", "broj_aneksa", "glavni_ugovor", "dokument", "napomena", *POLJA_OJ]
+        fields = ["broj_ugovora", "datum_ugovora", "broj_aneksa", "glavni_ugovor", "dokument", "napomena", *POLJA_OJ]
         widgets = {
             "broj_ugovora": forms.TextInput(attrs={"class": "form-control", "autocomplete": "off"}),
+            "datum_ugovora": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
             "broj_aneksa": forms.TextInput(attrs={"class": "form-control", "autocomplete": "off",
                                                   "placeholder": "Samo ako je period aneks"}),
             "glavni_ugovor": forms.Select(attrs={"class": "form-select"}),

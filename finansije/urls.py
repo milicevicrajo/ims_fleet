@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, bank_views
+from . import views, bank_views, sef_views
 
 app_name = "finansije"
 urlpatterns = [
@@ -11,6 +11,11 @@ urlpatterns = [
     path("banke/<int:bank_code>/kontakti/<int:pk>/obrisi/", bank_views.bank_contact_delete, name="bank_contact_delete"),
     path("banke/<int:bank_code>/menice/predaja/", bank_views.bank_bill_edit, name="bank_bill_edit"),
     path("banke/<int:bank_code>/menice/predaja/<int:pk>/", bank_views.bank_bill_edit, name="bank_bill_edit"),
+    path("sef/", sef_views.sef_list, name="sef_list"),
+    path("sef/sinhronizacija/", sef_views.sef_sync, name="sef_sync"),
+    path("sef/<int:pk>/", sef_views.sef_detail, name="sef_detail"),
+    path("sef/<int:pk>/pdf/preuzmi/", sef_views.sef_pdf_preuzmi, name="sef_pdf_preuzmi"),
+    path("sef/<int:pk>/<str:vrsta>/", sef_views.sef_dokument, name="sef_dokument"),
     path("", views.dashboard, name="dashboard"),
     path("izvestaji/", views.report, name="report"),
     path("izvestaji/sifre-podaci/", views.jobs_data, name="jobs_data"),

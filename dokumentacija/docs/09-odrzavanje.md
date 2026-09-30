@@ -33,7 +33,7 @@
  :20    Svakog sata — Finansije, tekuća godina
 ```
 
-**Ukupno 22 zakazana posla** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
+**Ukupno 23 zakazana posla** (ugovori zaposlenih u 01:15 i opomene za gorivo u 07:45, od 29.09.2026.; SEF fakture u 06:50, od 30.09.2026.). [P] Stara sinhronizacija šifara i OJ (01:30) ugašena je 28.09.2026. — `sync_celery_periodic_tasks` je briše iz rasporeda.
 
 ---
 
@@ -56,6 +56,7 @@
 | **04:20** | **Gorivo — NIS** | `fleet.tasks.run_nis_command` | **`selenium`** | **4 h** |
 | **05:10** | **Gorivo — OMV putnička** | `fleet.tasks.run_omv_putnicka_command` | **`selenium`** | **4 h** |
 | **06:10** | **Gorivo — OMV teretna** | `fleet.tasks.run_omv_teretna_command` | **`selenium`** | **4 h** |
+| 06:50 | Finansije — SEF fakture (preskače se bez `SEF_API_KEY`) | `finansije.tasks.sync_sef_task` | `sync` | 90 min |
 | 07:10 | Nabavka — roba | `nabavka.tasks.sync_goods_task` | `sync` | — |
 | 07:30 | Nabavka — fiskalni računi koji čekaju proveru (stranica Poreske uprave nije bila dostupna) | `nabavka.tasks.fiskalni_ponovi_task` | `sync` | 60 min |
 | 07:45 | Flota — opomene za gorivo | `fleet.tasks.opomene_goriva_task` | `sync` | 30 min |

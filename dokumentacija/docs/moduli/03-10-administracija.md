@@ -208,13 +208,15 @@ pokriva njegove jedinice i šifre; obuhvat šifre ne daje ceo centar.
 | Kartica korisnika | Sve dodele sa istorijom, stara prava koja danas odlučuju i senka samo za tog korisnika |
 | **Odobri nacrt** | Nacrt iz prevoda starih prava postaje odobren; beleži se ko i kada. Odobrenog korisnika prevod (`prava_u_senci`) više ne menja |
 | **Nova dodela** | Ručna dodela, odmah odobrena; nudi se svaka aktivna uloga i samo **aktivne** šifre. **Uloga po čvoru** (od 28.09.2026.): ako korisnik ulogu nema, dodela mu je daje. Ista uloga sa istim obuhvatom u preklopljenom periodu se odbija |
-| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; ako je dodela dala ulogu, opoziv poslednje takve dodele je i skida. Neodobren nacrt se briše |
+| **Opozovi** | Odobrena dodela prestaje da važi od danas i ostaje u istoriji sa imenom onoga ko ju je opozvao; opoziv poslednje važeće dodele neke uloge skida i ulogu — od 30.09.2026. i ulogu koju je korisnik imao pre dodela — i izvodi korisnika iz istoimene grupe (inače bi je noćni `sync_permission_codes` vratio). Uloga ostaje dok postoji nacrt te uloge. Neodobren nacrt se briše |
 
 Dozvole: `organizacija:dodele`, `organizacija:dodele_korisnika`, `organizacija:dodele_odobri`,
 `organizacija:dodela_opozovi` — dobija ih uloga Uprava. **Odobrene dodele odlučuju o pristupu u
 Finansijama, Nabavci, Potraživanjima i Floti** (od 28.09.2026., `PRAVA_PO_REGISTRU`); ostali moduli još rade po starim
 pravima (`allowed_center_codes`, `allowed_centers`). Uloga Uprava dobija celu firmu kao običnu
-dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka, Blagajna i Pravna služba.
+dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka, Blagajna, Pravna služba i
+(od 30.09.2026.) Pregled. Senka poredi obuhvat **uloge koja otvara modul** (dozvola ulaza u modul), kao
+i sami moduli; dodela druge uloge ne širi obuhvat u senci.
 
 ---
 

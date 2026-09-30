@@ -1,5 +1,5 @@
 from calendar import monthrange
-from datetime import date
+from datetime import date, timedelta
 import logging
 from urllib.parse import urlencode
 
@@ -409,8 +409,14 @@ def sync_status(request):
         return sync_response(request, runs)
     from django_celery_beat.models import PeriodicTask
     schedules = PeriodicTask.objects.filter(task=TASK_NAME, enabled=True).select_related("crontab")
+    from .sef_models import SefSinhronizacija
+
+    danas = timezone.localdate()
     return render(request, "finansije/sync_status.html", {
         "title": "Sinhronizacija finansija", "sync_form": SyncForm(), "nalog_z_schedules": schedules,
+        "sef_runs": SefSinhronizacija.objects.select_related("korisnik")[:10],
+        "sef_podesen": bool(settings.SEF_API_KEY), "sef_od": danas - timedelta(days=7), "sef_do": danas,
+        "can_sef_sync": user_has_role_permission(request.user, "finansije:sef_sync"),
     })
 
 

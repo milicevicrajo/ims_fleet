@@ -27,8 +27,9 @@ from organizacija.services import classification as klas
 
 ULOGA_CELE_FIRME = "uprava"
 # Uloge koje po prirodi posla rade za sve centre (odluke 25.09.2026.: Garaza radi sa svim centrima;
-# Nabavka i Blagajna vide sve; 28.09.2026.: Pravna sluzba vidi sva potrazivanja, kao danas `view_all`).
-ULOGE_CELE_FIRME = {ULOGA_CELE_FIRME, "garaza", "nabavka", "blagajna", "pravna"}
+# Nabavka i Blagajna vide sve; 28.09.2026.: Pravna sluzba vidi sva potrazivanja, kao danas `view_all`;
+# 30.09.2026.: Pregled je uloga samo za citanje i vidi sva vozila, kao pre registra).
+ULOGE_CELE_FIRME = {ULOGA_CELE_FIRME, "garaza", "nabavka", "blagajna", "pravna", "pregled"}
 # Dozvola bez koje korisnik ne otvara modul — senka poredi samo module koje korisnik vidi.
 ULAZ_MODULA = {"finansije": "finansije:dashboard", "potrazivanja": "potrazivanja:dashboard",
                "putni_nalozi": "putninalog_list", "vozila": "vehicle_list", "kontrolna_tabla": "dashboard"}
@@ -270,13 +271,16 @@ def senka(korisnici=None):
     redovi = []
     for korisnik in korisnici.prefetch_related("roles", "allowed_centers"):
         centri, sifre = _stari_obuhvat(korisnik)
-        novo = poslovi_obuhvata(obuhvat(korisnik, status=(DodelaUloge.STATUS_NACRT, DodelaUloge.STATUS_AKTIVNA)))
-        nove_sifre = None if novo is None else {sifra_cvora[c] for c in novo if c in sifra_cvora}
         centri_oj = {(c or "").strip() for c in korisnik.allowed_centers.values_list("center", flat=True)} - {""}
         red = {"korisnik": korisnik, "moduli": {}}
         for modul, broj in brojevi.items():
             if not user_has_role_permission(korisnik, ULAZ_MODULA[modul]):
                 continue  # modul mu nije dostupan ni danas ni po nacrtu
+            # Novi obuhvat po dozvoli ulaza u modul, kao u samom modulu: dodela uloge koja taj modul
+            # ne otvara (npr. Pregled za celu firmu) ne siri obuhvat Potrazivanja.
+            novo = poslovi_obuhvata(obuhvat(korisnik, ULAZ_MODULA[modul],
+                                            status=(DodelaUloge.STATUS_NACRT, DodelaUloge.STATUS_AKTIVNA)))
+            nove_sifre = None if novo is None else {sifra_cvora[c] for c in novo if c in sifra_cvora}
             if modul == "vozila":
                 ceo = False
                 staro = set(broj)  # spisak vozila danas nema ogranicenje po centru
