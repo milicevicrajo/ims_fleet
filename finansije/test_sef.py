@@ -235,6 +235,11 @@ class EkraniTests(TestCase):
         # drugi put se ne ide na SEF
         with mock.patch.object(sef, "Klijent", side_effect=AssertionError("SEF se ne poziva")):
             self.assertEqual(self.client.get(reverse("finansije:sef_dokument", args=[self.ulazna.pk, "pdf"])).status_code, 200)
+        # zapis postoji, a fajla nema na disku (preuzet sa drugog racunara): preuzima se ponovo
+        self.ulazna.pdf.storage.delete(self.ulazna.pdf.name)
+        with mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
+            self.assertEqual(self.client.get(reverse("finansije:sef_dokument", args=[self.ulazna.pk, "pdf"])).status_code, 200)
+        self.assertTrue(self.ulazna.pdf.storage.exists(SefFaktura.objects.get(pk=self.ulazna.pk).pdf.name))
 
     def test_detalj_prikazuje_pdf_ili_ga_preuzima(self):
         detalj = self.client.get(reverse("finansije:sef_detail", args=[self.ulazna.pk]))

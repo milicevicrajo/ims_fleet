@@ -391,8 +391,11 @@ def sinhronizuj(od=None, do=None, *, klijent=None, korisnik=None, danas=None):
 
 
 def preuzmi_pdf(faktura, klijent=None):
-    """Cuva PDF fakture sa SEF-a u aplikaciji (jednom). Vraca (True, "") ili (False, poruka) dok ga SEF priprema."""
-    if faktura.pdf:
+    """Cuva PDF fakture sa SEF-a u aplikaciji (jednom). Vraca (True, "") ili (False, poruka) dok ga SEF priprema.
+
+    Zapis bez fajla na disku (npr. PDF preuzet sa drugog racunara nad istom bazom) preuzima se ponovo.
+    """
+    if faktura.pdf and faktura.pdf.storage.exists(faktura.pdf.name):
         return True, ""
     sadrzaj, poruka_sefa = (klijent or Klijent()).pdf(faktura.smer, faktura.sef_id)
     if sadrzaj is None:
@@ -413,7 +416,7 @@ def preuzmi_pdfove(fakture, *, klijent=None, krugova=PDF_KRUGOVA, cekanje=PDF_CE
     """PDF-ovi za fakture koje ga jos nemaju. Prvi krug pokrece izradu na SEF-u, sledeci krugovi
     preuzimaju gotove. Ogranicenje od 3 zahteva u sekundi postuje klijent. Vraca brojeve."""
     klijent = klijent or Klijent()
-    cekaju = [f for f in fakture if not f.pdf]
+    cekaju = [f for f in fakture if not (f.pdf and f.pdf.storage.exists(f.pdf.name))]
     brojaci = {"bez_pdf": len(cekaju), "preuzeto": 0, "u_pripremi": 0, "gresaka": 0}
     for krug in range(krugova):
         ostali = []
