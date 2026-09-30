@@ -61,9 +61,9 @@ def table_rows(user, invoices, params):
             url += "?" + urlencode({"nazad": "?" + params})
         f.proknjizena = f.broj_kljuc in booked
         rows.append([
+            format_html('<a class="btn btn-sm btn-outline-primary sef-document" href="{}"><i class="mdi mdi-eye" aria-hidden="true"></i> {}</a>', url, f.broj or f.sef_id),
             format_html('<span class="sef-direction sef-direction-{}">{}</span>',
                         f.smer, f.get_smer_display()),
-            format_html('<a class="sef-document" href="{}">{}</a>', url, f.broj or f.sef_id),
             format_html('<span class="sef-kind">{}</span>', sef.VRSTE.get(f.vrsta, f.vrsta or "—")),
             partner,
             display_date(f.datum_dok), display_date(f.datum_slanja),
@@ -86,7 +86,7 @@ def table_response(request, queryset, params):
             query |= Q(**{field + "__in": [code for code, label in choices if term.casefold() in label.casefold()]})
         queryset = queryset.filter(query)
     filtered = queryset.count() if term else total
-    columns = ("smer", "broj", "vrsta", "partner_naziv", "datum_dok", "datum_slanja", "iznos", "status", None, None)
+    columns = ("broj", "smer", "vrsta", "partner_naziv", "datum_dok", "datum_slanja", "iznos", "status", None, None)
     ordering = []
     for index in range(len(columns)):
         col = integer(request.GET, f"order[{index}][column]", -1)

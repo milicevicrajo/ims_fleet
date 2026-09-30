@@ -302,8 +302,11 @@ class EkraniTests(TestCase):
                                      "start": "100", "length": "25", "order[0][column]": "6",
                                      "order[0][dir]": "asc"}).json()
         self.assertEqual((data["draw"], data["recordsTotal"], data["recordsFiltered"], len(data["data"])), (3, 106, 105, 5))
-        self.assertIn("TEST-100", data["data"][0][1])
-        self.assertIn("TEST-104", data["data"][-1][1])
+        self.assertIn("TEST-100", data["data"][0][0])
+        self.assertIn("TEST-104", data["data"][-1][0])
+        self.assertIn("Ulazna", data["data"][0][1])
+        by_number = self.client.get(url, {"draw": 1, "length": 1, "order[0][column]": 0, "order[0][dir]": "desc"}).json()
+        self.assertIn("TEST-104", by_number["data"][0][0])
         self.assertEqual(len(data["data"][0]), 10)
         with mock.patch("finansije.sef_views.can_view_all", return_value=False):
             self.assertEqual(self.client.get(url, {"draw": 1}).status_code, 403)

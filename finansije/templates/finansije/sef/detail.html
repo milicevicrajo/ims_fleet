@@ -5,48 +5,110 @@
 {% block hero_description %}{{ f.get_smer_display }} · SEF ID {{ f.sef_id }} · {{ nazivi_statusa|recnik:f.status|default:"bez statusa" }}{% endblock %}
 {% block hero_period %}{% endblock %}
 {% block hero_actions %}
+<div class="sef-detail-actions">
 <a class="btn btn-light" href="{% url 'finansije:sef_list' %}{{ nazad }}"><i class="mdi mdi-arrow-left"></i> Spisak</a>
 {% if can_file %}
 <a class="btn btn-light" href="{% url 'finansije:sef_dokument' f.pk 'pdf' %}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> PDF u novom prozoru</a>
 <a class="btn btn-light" href="{% url 'finansije:sef_dokument' f.pk 'ubl' %}"><i class="mdi mdi-xml"></i> UBL</a>
 {% endif %}
+</div>
 {% endblock %}
 {% block finance_content %}
 <style>
+  .sef-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sef-detail { display: grid; gap: 18px; }
+  .sef-detail > *, .sef-summary > * { min-width: 0; }
+  .sef-detail .card { margin: 0; border: 1px solid #e1e8ef; border-radius: 8px; box-shadow: 0 3px 12px rgba(28, 54, 78, .04); }
+  .sef-detail .card-body { padding: 20px; }
+  .sef-summary { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 18px; }
+  .sef-section-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+  .sef-section-head h2 { margin: 0; }
+  .sef-label { font-size: .76rem; font-weight: 600; color: #6a7a8c; margin-bottom: 5px; }
+  .sef-partner-block { padding: 16px; border-radius: 6px; background: #f3f7fb; border-left: 3px solid #4384ae; margin-bottom: 20px; }
+  .sef-partner-name { font-size: 1.05rem; font-weight: 600; line-height: 1.45; color: #203d54; overflow-wrap: anywhere; }
+  .sef-identifiers { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 8px; font-size: .82rem; color: #596d80; }
+  .sef-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 24px; margin: 0; }
+  .sef-dates dt { font-size: .76rem; font-weight: 500; color: #6a7a8c; margin-bottom: 4px; }
+  .sef-dates dd { font-size: .94rem; font-weight: 600; color: #263e52; margin: 0; }
+  .sef-total { background: #edf6f1; border-radius: 6px; padding: 18px; margin-bottom: 16px; }
+  .sef-total-value { font-size: 1.7rem; font-weight: 700; line-height: 1.25; color: #246347; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  .sef-total-value small { font-size: .85rem; font-weight: 500; }
+  .sef-money-breakdown { margin: 0; }
+  .sef-money-breakdown > div { display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid #e8edf2; }
+  .sef-money-breakdown dt { color: #6a7a8c; font-size: .85rem; font-weight: 500; }
+  .sef-money-breakdown dd { margin: 0; font-size: .94rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .sef-status-label { display: inline-block; color: #285d80; background: #e8f2fa; border: 1px solid #d1e3ef; padding: 5px 10px; border-radius: 5px; font-size: .83rem; font-weight: 600; }
+  .sef-sync-note { margin: 16px 0 0; color: #798797; font-size: .76rem; }
+  .sef-history { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .sef-history li { border-left: 2px solid #b9d4e5; padding-left: 12px; }
+  .sef-history time { display: block; font-size: .78rem; color: #6a7a8c; margin-top: 3px; }
+  .sef-history p { margin: 6px 0 0; font-size: .85rem; overflow-wrap: anywhere; }
+  .sef-detail a:hover, .sef-detail a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+  .sef-ledger { font-size: .88rem; }
+  .sef-ledger th { white-space: nowrap; color: #526679; background: #f3f6fa; }
+  .sef-ledger.table td, .sef-ledger.table th { padding: 10px 12px; vertical-align: middle; }
+  .sef-ledger tbody tr:nth-child(even) { background: #f6f9fc; }
+  .sef-ledger .finance-number { text-align: right; white-space: nowrap; }
+  .sef-link-note { font-size: .81rem; color: #61758a; background: #f5f8fb; border-radius: 5px; padding: 10px 12px; margin-bottom: 16px; }
+  .sef-link-note summary { cursor: pointer; }
+  .sef-link-note p { margin: 8px 0 0; }
   .sef-pdf { width: 100%; height: 85vh; min-height: 520px; border: 1px solid #dfe5ec; border-radius: 6px; background: #f6f8fa; }
   .sef-pdf-cekanje { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; min-height: 260px; border: 1px dashed #c9d3de; border-radius: 6px; color: #5b6b7d; text-align: center; padding: 1rem; }
+  @media (max-width: 900px) { .sef-summary { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 480px) { .sef-detail .card-body { padding: 14px; } .sef-dates { gap: 16px 12px; } .sef-total-value { font-size: 1.4rem; } .sef-pdf { min-height: 400px; } }
 </style>
-<div class="row g-3">
-  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
-    <h2 class="finance-job-heading">Faktura</h2>
-    <dl class="row mb-0">
-      <dt class="col-5">Broj dokumenta</dt><dd class="col-7">{{ f.broj|default:"—" }}</dd>
-      <dt class="col-5">Vrsta</dt><dd class="col-7">{{ vrste|recnik:f.vrsta|default:"—" }}</dd>
-      <dt class="col-5">Status</dt><dd class="col-7">{{ nazivi_statusa|recnik:f.status|default:"—" }}{% if f.izmenjeno_na_sefu %} <span class="text-muted small">· {{ f.izmenjeno_na_sefu|date:"d.m.Y. H:i" }}</span>{% endif %}</dd>
-      <dt class="col-5">{% if f.smer == "ulazna" %}Dobavljač{% else %}Kupac{% endif %}</dt><dd class="col-7">{{ f.partner_naziv|default:"—" }}</dd>
-      <dt class="col-5">PIB / matični broj</dt><dd class="col-7">{{ f.partner_pib|default:"—" }} / {{ f.partner_mb|default:"—" }}</dd>
-      <dt class="col-5">Datum izdavanja</dt><dd class="col-7">{{ f.datum_izdavanja|date:"d.m.Y."|default:"—" }}</dd>
-      <dt class="col-5">Datum prometa</dt><dd class="col-7">{{ f.datum_prometa|date:"d.m.Y."|default:"—" }}</dd>
-      <dt class="col-5">Datum dospeća</dt><dd class="col-7">{{ f.datum_dospeca|date:"d.m.Y."|default:"—" }}</dd>
-      <dt class="col-5">Poslata na SEF</dt><dd class="col-7">{{ f.datum_slanja|date:"d.m.Y. H:i"|default:"—" }}</dd>
-      <dt class="col-5">Osnovica / PDV</dt><dd class="col-7">{{ f.osnovica|floatformat:2|default:"—" }} / {{ f.pdv|floatformat:2|default:"—" }}</dd>
-      <dt class="col-5">Ukupno</dt><dd class="col-7"><strong>{{ f.iznos|floatformat:2|default:"—" }} {{ f.valuta }}</strong></dd>
-      {% if f.cir_id %}<dt class="col-5">CRF identifikator</dt><dd class="col-7">{{ f.cir_id }}</dd>{% endif %}
-      <dt class="col-5">Preuzeto</dt><dd class="col-7">{{ f.sinhronizovano|date:"d.m.Y. H:i" }}</dd>
+<div class="sef-detail">
+<div class="sef-summary">
+  <section class="card"><div class="card-body">
+    <div class="sef-section-head"><h2 class="finance-job-heading">Podaci fakture</h2><span class="sef-status-label">{{ nazivi_statusa|recnik:f.status|default:"Bez statusa" }}</span></div>
+    <div class="sef-partner-block">
+      <div class="sef-label">{% if f.smer == "ulazna" %}Dobavljač{% else %}Kupac{% endif %}</div>
+      <div class="sef-partner-name">{{ f.partner_naziv|default:"—" }}</div>
+      <div class="sef-identifiers"><span>PIB <strong>{{ f.partner_pib|default:"—" }}</strong></span><span>Matični broj <strong>{{ f.partner_mb|default:"—" }}</strong></span></div>
+    </div>
+    <dl class="sef-dates">
+      <div><dt>Datum izdavanja</dt><dd>{{ f.datum_izdavanja|date:"d.m.Y."|default:"—" }}</dd></div>
+      <div><dt>Datum prometa</dt><dd>{{ f.datum_prometa|date:"d.m.Y."|default:"—" }}</dd></div>
+      <div><dt>Datum dospeća</dt><dd>{{ f.datum_dospeca|date:"d.m.Y."|default:"—" }}</dd></div>
+      <div><dt>Poslata na SEF</dt><dd>{{ f.datum_slanja|date:"d.m.Y. H:i"|default:"—" }}</dd></div>
+      {% if f.cir_id %}<div><dt>CRF identifikator</dt><dd>{{ f.cir_id }}</dd></div>{% endif %}
     </dl>
-  </div></div></div>
-  <div class="col-lg-6"><div class="card h-100"><div class="card-body">
-    <h2 class="finance-job-heading">Istorija statusa na SEF-u</h2>
-    {% if promene %}<ul class="list-unstyled mb-0">{% for p in promene %}<li class="mb-1"><strong>{{ nazivi_statusa|recnik:p.status }}</strong> · {{ p.datum|date:"d.m.Y. H:i"|default:"—" }}{% if p.komentar %}<div class="small text-muted">{{ p.komentar }}</div>{% endif %}</li>{% endfor %}</ul>
+    <p class="sef-sync-note">Preuzeto sa SEF-a {{ f.sinhronizovano|date:"d.m.Y. H:i" }}{% if f.izmenjeno_na_sefu %} · Poslednja promena {{ f.izmenjeno_na_sefu|date:"d.m.Y. H:i" }}{% endif %}</p>
+  </div></section>
+  <section class="card"><div class="card-body">
+    <div class="sef-section-head"><h2 class="finance-job-heading">Iznosi fakture</h2></div>
+    <div class="sef-total"><div class="sef-label">Ukupno sa PDV-om</div><div class="sef-total-value">{{ f.iznos|floatformat:2|default:"—" }} <small>{{ f.valuta }}</small></div></div>
+    <dl class="sef-money-breakdown">
+      <div><dt>Osnovica</dt><dd>{{ f.osnovica|floatformat:2|default:"—" }} {{ f.valuta }}</dd></div>
+      <div><dt>PDV</dt><dd>{{ f.pdv|floatformat:2|default:"—" }} {{ f.valuta }}</dd></div>
+    </dl>
+  </div></section>
+</div>
+<section class="card"><div class="card-body">
+    <div class="sef-section-head"><h2 class="finance-job-heading">Istorija statusa na SEF-u</h2></div>
+    {% if promene %}<ol class="sef-history">{% for p in promene %}<li><strong>{{ nazivi_statusa|recnik:p.status|default:p.status }}</strong><time>{{ p.datum|date:"d.m.Y. H:i"|default:"—" }}</time>{% if p.komentar %}<p>{{ p.komentar }}</p>{% endif %}</li>{% endfor %}</ol>
     {% else %}<p class="text-muted mb-0">SEF čuva promene statusa mesec dana; starije promene nisu preuzete.</p>{% endif %}
     {% if istog_broja %}<h2 class="finance-job-heading mt-3">Drugi dokumenti sa istim brojem</h2>
       <ul class="mb-0">{% for d in istog_broja %}<li><a href="{% url 'finansije:sef_detail' d.pk %}">{{ d.get_smer_display }} · {{ d.partner_naziv|default:d.sef_id }}</a></li>{% endfor %}</ul>{% endif %}
-  </div></div></div>
-</div>
+  </div></section>
+
+<section class="card" id="SefKnjizenja"><div class="card-body">
+  <div class="sef-section-head"><h2 class="finance-job-heading">Stavke knjiženja <small class="text-muted">· {{ knjizenja|length }}</small></h2><span class="small text-muted">Po broju dokumenta</span></div>
+  <details class="sef-link-note"><summary>Knjiženja su povezana po broju fakture — proverite partnera.</summary><p>Polje broja dokumenta u knjiženju ima najviše 20 znakova. Izlazna faktura na SEF-u ima četiri cifre ispred broja iz knjiženja. Prikazuju se i knjiženja drugog partnera sa istim brojem.</p></details>
+  {% if knjizenja %}<div class="table-responsive"><table class="table table-sm sef-ledger mb-0">
+    <thead><tr><th>Datum</th><th>Nalog</th><th>Konto</th><th>Partner</th><th>Šifra posla</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th>Opis</th></tr></thead>
+    <tbody>{% for k in knjizenja %}<tr>
+      <td class="text-nowrap">{{ k.booking_date|date:"d.m.Y." }}</td><td class="text-nowrap">{{ k.journal_type }} {{ k.journal_number }}/{{ k.line_number }}</td>
+      <td>{{ k.account }}<div class="small text-muted">{{ k.account_name }}</div></td><td>{{ k.partner_name|default:"—" }}</td>
+      <td>{{ k.job_code|default:"—" }}</td><td class="finance-number">{{ k.debit|floatformat:2 }}</td><td class="finance-number">{{ k.credit|floatformat:2 }}</td><td>{{ k.description }}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="text-muted mb-0">Nema knjiženja sa ovim brojem dokumenta.</p>{% endif %}
+</div></section>
 
 {% if can_file %}
-<div class="card mt-3"><div class="card-body">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+<section class="card" id="SefPdf"><div class="card-body">
+  <div class="sef-section-head">
     <h2 class="finance-job-heading mb-0">PDF fakture</h2>
     <span class="small text-muted" id="SefPdfStatus">{% if f.pdf %}Preuzet sa SEF-a {{ f.pdf_preuzet|date:"d.m.Y. H:i" }}{% endif %}</span>
   </div>
@@ -62,22 +124,9 @@
   {% else %}
   <p class="text-muted mb-0">PDF nije preuzet, a SEF nije podešen (u <code>.env</code> nedostaje <code>SEF_API_KEY</code>).</p>
   {% endif %}
-</div></div>
+</div></section>
 {% endif %}
-
-<div class="card mt-3"><div class="card-body">
-  <h2 class="finance-job-heading">Knjiženja sa istim brojem dokumenta <small class="text-muted">· {{ knjizenja|length }}</small></h2>
-  <p class="finance-accounting-note">Veza je meka: traži se knjiženje čiji je broj dokumenta jednak broju fakture (polje u knjiženju ima najviše 20 znakova; izlazna faktura na SEF-u ima četiri cifre ispred broja iz knjiženja). Isti broj kod drugog partnera takođe se prikazuje — proverite partnera.</p>
-  {% if knjizenja %}<div class="table-responsive"><table class="table table-sm table-striped align-middle">
-    <thead><tr><th>Datum</th><th>Nalog</th><th>Konto</th><th>Partner</th><th>Šifra posla</th><th class="finance-number">Duguje</th><th class="finance-number">Potražuje</th><th>Opis</th></tr></thead>
-    <tbody>{% for k in knjizenja %}<tr>
-      <td>{{ k.booking_date|date:"d.m.Y." }}</td><td>{{ k.journal_type }} {{ k.journal_number }}/{{ k.line_number }}</td>
-      <td>{{ k.account }}<div class="small text-muted">{{ k.account_name }}</div></td><td>{{ k.partner_name|default:"—" }}</td>
-      <td>{{ k.job_code|default:"—" }}</td><td class="finance-number">{{ k.debit|floatformat:2 }}</td><td class="finance-number">{{ k.credit|floatformat:2 }}</td><td>{{ k.description }}</td>
-    </tr>{% endfor %}</tbody>
-  </table></div>
-  {% else %}<p class="text-muted mb-0">Nema knjiženja sa ovim brojem dokumenta.</p>{% endif %}
-</div></div>
+</div>
 {% endblock %}
 {% block extra_js %}{{ block.super }}<script>
 (function () {

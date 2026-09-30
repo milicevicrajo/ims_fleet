@@ -43,7 +43,7 @@
   .sef-table td:nth-child(9), .sef-table td:nth-child(10) { text-align: center; }
   .sef-partner { display: block; width: 360px; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; font-weight: 500; }
   .sef-meta { display: block; font-size: .75rem; color: #738196; margin-top: 3px; }
-  .sef-document { font-weight: 600; }
+  .sef-document { font-size: inherit; font-weight: 600; white-space: nowrap; border-radius: 4px; padding: 4px 8px; }
   .sef-table a:hover, .sef-table a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
   .sef-confirmation { display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-size: 19px; line-height: 1; vertical-align: middle; }
   .sef-confirmed { color: #25824e; }
@@ -51,10 +51,12 @@
   .sef-kind { display: block; max-width: 105px; line-height: 1.3; }
   .sef-direction, .sef-status { white-space: nowrap; }
   .sef-direction { font-weight: 600; }
-  .sef-table tbody tr:has(.sef-direction-ulazna) > td { background: #edf5fc; box-shadow: none; }
-  .sef-table tbody tr:has(.sef-direction-izlazna) > td { background: #edf7f0; box-shadow: none; }
-  .sef-table tbody tr:has(.sef-direction-ulazna):hover > td { background: #deedf9; }
-  .sef-table tbody tr:has(.sef-direction-izlazna):hover > td { background: #dfefe4; }
+  .sef-table tbody tr:has(.sef-direction-ulazna) > td { background: #f7fbfe; box-shadow: none; }
+  .sef-table tbody tr:has(.sef-direction-izlazna) > td { background: #f7fcf8; box-shadow: none; }
+  .sef-table tbody tr:nth-child(even):has(.sef-direction-ulazna) > td { background: #e7f1fa; }
+  .sef-table tbody tr:nth-child(even):has(.sef-direction-izlazna) > td { background: #e7f3eb; }
+  .sef-table tbody tr:has(.sef-direction-ulazna):hover > td { background: #d8eaf8; }
+  .sef-table tbody tr:has(.sef-direction-izlazna):hover > td { background: #d8ecdf; }
   .sef-amount { white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; }
   .sef-amount small { color: #738196; font-weight: 400; }
   #SefInvoices_wrapper { font-size: .85rem; }
@@ -131,7 +133,7 @@
   {% if poslednja %}<p class="finance-accounting-note">Poslednje preuzimanje: {{ poslednja.started_at|date:"d.m.Y. H:i" }} · {{ poslednja.get_status_display }} · period {{ poslednja.od|date:"d.m.Y." }}–{{ poslednja.do|date:"d.m.Y." }}{% if poslednja.korisnik %} · {{ poslednja.korisnik.username }}{% else %} · noćni posao{% endif %}{% if poslednja.status == "error" %} · <span class="text-danger">{{ poslednja.error|truncatechars:160 }}</span>{% endif %}</p>{% endif %}
   <div class="finance-table-error alert alert-warning d-none" role="alert"></div>
   <div class="table-responsive"><table id="SefInvoices" class="table table-sm table-hover sef-table finance-datatable" data-source="{% url 'finansije:sef_list' %}?{{ params }}" data-order-column="4" data-order-direction="desc" style="width:100%">
-    <thead><tr><th>Smer</th><th>Broj</th><th>Vrsta</th><th>Partner</th><th class="finance-date">Datum</th><th class="finance-date">Poslata</th><th class="finance-number">Iznos</th><th>Status</th><th class="no-sort text-center">Knjiženje</th><th class="no-sort text-center">PDF</th></tr></thead>
+    <thead><tr><th>Broj</th><th>Smer</th><th>Vrsta</th><th>Partner</th><th class="finance-date">Datum</th><th class="finance-date">Poslata</th><th class="finance-number">Iznos</th><th>Status</th><th class="no-sort text-center">Knjiženje</th><th class="no-sort text-center">PDF</th></tr></thead>
     <tbody>{% for row in table_rows %}<tr>{% for cell in row %}<td{% if forloop.counter == 7 %} class="text-right"{% elif forloop.counter >= 9 %} class="text-center"{% endif %}>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
   </table></div>
   <noscript>{% include "finansije/_pagination.html" %}</noscript>
