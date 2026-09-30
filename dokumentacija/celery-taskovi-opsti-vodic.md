@@ -45,7 +45,6 @@ Primeri:
 - `run_nis_command`
 - `run_omv_putnicka_command`
 - `run_omv_teretna_command`
-- `kerio_login_task`
 
 Preporuka:
 - posebna queue: `selenium`

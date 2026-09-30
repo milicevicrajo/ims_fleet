@@ -448,7 +448,7 @@ status, model, ID zapisa, izmene u JSON polju). Ekran: `/administracija/activity
 | 5c | **Kadrovska** — povezani server `SERFIN.bazaldims` | SQL preko povezanog servera | `radnik` (detalji parova prolazaka) | Pri otvaranju radne liste | [P] |
 | 6 | **RFZO** | Ručni uvoz Excel datoteke | Bolovanja | Mesečno, ručno | [P] |
 | 7 | **MTS / mobilni operater** | Ručni uvoz Excel datoteke | Paketi, korisnici, dodele, potrošnja | Mesečno, ručno | [Z] |
-| 8 | **Interni portal** — `https://control.ims.rs:4081` | Selenium | Prijava na mrežu radi pristupa internetu | Pre svakog Selenium posla | [P] |
+| 8 | ~~Interni portal `control.ims.rs`~~ | — | Uklonjeno 30.09.2026. (nije se koristilo) | — | [P] |
 | 9 | **Banka (elektronsko bankarstvo)** | Izvoz datoteke fiksne širine (180 znakova, cp1250) | Virmani za neoporeziva primanja | Na zahtev | [P] |
 
 **Napomena o pristupnim podacima [N]:** pristupni podaci za NIS i OMV portale nalaze se

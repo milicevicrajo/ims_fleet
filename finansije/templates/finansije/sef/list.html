@@ -110,6 +110,26 @@
   </div>{% endif %}
 </div></div>
 
+{% if can_izvoz or can_pdf_svi %}
+<details class="sef-preuzimanje" id="SefPdfIzvoz">
+  <summary><i class="mdi mdi-folder-zip" aria-hidden="true"></i> PDF-ovi i izvoz <span class="fw-normal text-muted">· PDF preuzet za {{ pdf_stanje.sa_pdf }} od {{ pdf_stanje.ukupno }} prikazanih faktura</span></summary>
+  <div>
+    <p class="small text-muted">Izvoz daje ZIP sa PDF-ovima po fasciklama <em>Ulazne/Izlazne → mesec</em> i spisak svih faktura perioda (<code>spisak.csv</code>, sa oznakom koje nemaju PDF). Izvoz prati izabrani smer ({% if filteri.smer == "ulazna" %}ulazne{% elif filteri.smer == "izlazna" %}izlazne{% else %}sve fakture{% endif %}). Noćni posao preuzima PDF-ove novih faktura; za stariji period pokrenite preuzimanje ovde.</p>
+    <form method="get" action="{% url 'finansije:sef_izvoz' %}" id="SefIzvoz" class="sef-sync-form">
+      {% if filteri.smer %}<input type="hidden" name="smer" value="{{ filteri.smer }}">{% endif %}
+      <div><label for="iz-godina">Godina</label>
+        <select id="iz-godina" name="godina" class="form-control">{% for g in godine %}<option value="{{ g }}" {% if g == danas.year %}selected{% endif %}>{{ g }}</option>{% endfor %}</select></div>
+      <div><label for="iz-mesec">Mesec</label>
+        <select id="iz-mesec" name="mesec" class="form-control"><option value="">Cela godina</option>
+          {% for broj, naziv in meseci %}<option value="{{ broj }}" {% if broj == danas.month %}selected{% endif %}>{{ naziv }}</option>{% endfor %}</select></div>
+      {% if can_izvoz %}<button class="btn btn-primary" type="submit"><i class="mdi mdi-folder-zip" aria-hidden="true"></i> Izvezi PDF-ove (ZIP)</button>{% endif %}
+      {% if can_pdf_svi and podesen %}<button class="btn btn-outline-primary" type="button" id="SefPdfSviDugme" title="Preuzima sa SEF-a, u pozadini, PDF-ove koji nedostaju za izabrani period"><i class="mdi mdi-cloud-download" aria-hidden="true"></i> Preuzmi PDF-ove koji nedostaju</button>{% endif %}
+    </form>
+    {% if can_pdf_svi and podesen %}<form method="post" action="{% url 'finansije:sef_pdf_svi' %}" id="SefPdfSvi" class="d-none">{% csrf_token %}
+      <input type="hidden" name="godina"><input type="hidden" name="mesec"><input type="hidden" name="smer" value="{{ filteri.smer }}"></form>{% endif %}
+  </div>
+</details>
+{% endif %}
 {% if can_sync and podesen %}
 <details class="sef-preuzimanje">
   <summary><i class="mdi mdi-cloud-download" aria-hidden="true"></i> Preuzimanje sa SEF-a</summary>
@@ -165,5 +185,11 @@
   });
   var syncOd = document.getElementById('sef-sync-od'), syncDo = document.getElementById('sef-sync-do');
   if (syncOd && syncDo) proveriDatume(syncOd, syncDo);
+  var pdfDugme = document.getElementById('SefPdfSviDugme'), pdfForma = document.getElementById('SefPdfSvi');
+  if (pdfDugme && pdfForma) pdfDugme.addEventListener('click', function () {
+    pdfForma.elements.godina.value = document.getElementById('iz-godina').value;
+    pdfForma.elements.mesec.value = document.getElementById('iz-mesec').value;
+    pdfForma.submit();
+  });
 })();
 </script>{% endblock %}

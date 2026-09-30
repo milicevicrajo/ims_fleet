@@ -81,7 +81,6 @@ Taskovi koji su obuhvaceni lock-om:
 - `run_nis_command` (TTL 4h)
 - `run_omv_putnicka_command` (TTL 4h)
 - `run_omv_teretna_command` (TTL 4h)
-- `kerio_login_task` (TTL 30m)
 
 2. Sync grupa:
 - `fetch_policy_data_task` (TTL 90m)

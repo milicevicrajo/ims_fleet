@@ -4,8 +4,10 @@ Fakture nemaju centar ni sifru posla, pa ih vidi samo obuhvat cele firme (kao si
 Finansija). PDF se preuzima sa SEF-a pri prvom otvaranju detalja i cuva u aplikaciji; UBL se
 preuzima sa SEF-a u trenutku otvaranja.
 """
+import calendar
 import datetime
 import logging
+import tempfile
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -13,8 +15,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db.models import Count, DateField, Q, Sum
-from django.db.models.functions import Cast, Coalesce
+from django.db.models import Count, Q, Sum
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -48,9 +49,7 @@ def _datum(tekst):
         return None
 
 
-def _sa_datumom(qs):
-    """Datum dokumenta: izdavanje (izlazne), inace promet, inace dan slanja na SEF (ulazne nemaju datum izdavanja)."""
-    return qs.annotate(datum_dok=Coalesce("datum_izdavanja", "datum_prometa", Cast("datum_slanja", DateField())))
+_sa_datumom = servis.sa_datumom
 
 
 def _filtriraj(g, qs, bez=()):
@@ -132,6 +131,12 @@ def sef_list(request):
         "poslednja": SefSinhronizacija.objects.select_related("korisnik").first(),
         "podesen": bool(settings.SEF_API_KEY),
         "can_sync": user_has_role_permission(request.user, "finansije:sef_sync"),
+        "can_izvoz": user_has_role_permission(request.user, "finansije:sef_izvoz"),
+        "can_pdf_svi": user_has_role_permission(request.user, "finansije:sef_pdf_svi"),
+        "godine": sorted({d.year for d in _sa_datumom(SefFaktura.objects.all()).values_list("datum_dok", flat=True)
+                          .distinct() if d} or {danas.year}, reverse=True),
+        "meseci": list(enumerate(MESECI, start=1)), "danas": danas,
+        "pdf_stanje": qs.aggregate(ukupno=Count("pk"), sa_pdf=Count("pk", filter=~Q(pdf=""))),
     })
 
 
@@ -208,6 +213,89 @@ def sef_pdf_preuzmi(request, pk):
         return JsonResponse({"status": "priprema", "poruka": poruka})
     return JsonResponse({"status": "ok", "url": reverse("finansije:sef_dokument", args=[faktura.pk, "pdf"]),
                          "preuzet": timezone.localtime(faktura.pdf_preuzet).strftime("%d.%m.%Y. %H:%M")})
+
+
+MESECI = ("januar", "februar", "mart", "april", "maj", "jun", "jul", "avgust", "septembar", "oktobar", "novembar",
+          "decembar")
+
+
+def _period_izvoza(g):
+    """(od, do, oznaka) za godinu i, ako je izabran, mesec; None ako godina nije ispravna."""
+    try:
+        godina = int(g.get("godina", ""))
+        mesec = int(g["mesec"]) if g.get("mesec") else None
+    except (TypeError, ValueError):
+        return None
+    if not 2020 <= godina <= 2100 or (mesec is not None and not 1 <= mesec <= 12):
+        return None
+    if mesec:
+        return (datetime.date(godina, mesec, 1), datetime.date(godina, mesec, calendar.monthrange(godina, mesec)[1]),
+                f"{godina}-{mesec:02d}")
+    return datetime.date(godina, 1, 1), datetime.date(godina, 12, 31), str(godina)
+
+
+def _fakture_perioda(g):
+    period = _period_izvoza(g)
+    if period is None:
+        return None, None
+    od, do, oznaka = period
+    qs = _sa_datumom(SefFaktura.objects.all()).filter(datum_dok__gte=od, datum_dok__lte=do)
+    if g.get("smer") in SefFaktura.Smer.values:
+        qs = qs.filter(smer=g["smer"])
+    return qs, (od, do, oznaka)
+
+
+@require_GET
+@login_required
+@role_permission_required("finansije:sef_izvoz")
+def sef_izvoz(request):
+    """ZIP PDF-ova za mesec ili godinu (uz spisak svih faktura perioda i oznaku koje nemaju PDF)."""
+    _pristup(request)
+    qs, period = _fakture_perioda(request.GET)
+    if qs is None:
+        messages.error(request, "Izaberite godinu (i po želji mesec) za izvoz.")
+        return redirect("finansije:sef_list")
+    od, do, oznaka = period
+    fajl = tempfile.TemporaryFile()
+    broj, sa_pdf = servis.izvoz_zip(qs.order_by("smer", "datum_dok", "broj", "sef_id"), fajl)
+    if not broj:
+        fajl.close()
+        messages.info(request, f"Za period {oznaka} nema faktura.")
+        return redirect("finansije:sef_list")
+    fajl.seek(0)
+    smer = request.GET.get("smer") if request.GET.get("smer") in SefFaktura.Smer.values else "sve"
+    odgovor = FileResponse(fajl, as_attachment=True, filename=f"SEF_{smer}_{oznaka}.zip", content_type="application/zip")
+    odgovor["X-SEF-Faktura"], odgovor["X-SEF-PDF"] = str(broj), str(sa_pdf)
+    return odgovor
+
+
+@require_POST
+@login_required
+@role_permission_required("finansije:sef_pdf_svi")
+def sef_pdf_svi(request):
+    """Pokrece u pozadini preuzimanje PDF-ova koji nedostaju za mesec ili godinu."""
+    _pristup(request)
+    qs, period = _fakture_perioda(request.POST)
+    if qs is None:
+        messages.error(request, "Izaberite godinu (i po želji mesec).")
+        return redirect("finansije:sef_list")
+    od, do, oznaka = period
+    nedostaje = qs.filter(pdf="").count()
+    if not nedostaje:
+        messages.info(request, f"Za period {oznaka} svi PDF-ovi su već preuzeti.")
+        return redirect("finansije:sef_list")
+    from .tasks import sef_pdf_task
+
+    try:
+        sef_pdf_task.delay(od.isoformat(), do.isoformat(), request.POST.get("smer", ""))
+    except Exception:  # Redis ili worker nisu dostupni
+        logger.exception("SEF PDF zadatak nije pokrenut")
+        messages.error(request, "Pozadinski posao nije pokrenut (Celery nije dostupan). "
+                                f"Na serveru: manage.py sef_pdf --od {od} --do {do}")
+        return redirect("finansije:sef_list")
+    messages.success(request, f"Pokrenuto preuzimanje {nedostaje} PDF-ova za {oznaka} u pozadini "
+                              f"(oko {max(1, nedostaje // 100)} min). Rezultat je u istoriji zadataka.")
+    return redirect("finansije:sef_list")
 
 
 @require_POST

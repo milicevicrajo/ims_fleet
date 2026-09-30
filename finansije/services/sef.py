@@ -405,6 +405,89 @@ def preuzmi_pdf(faktura, klijent=None):
     return True, ""
 
 
+PDF_KRUGOVA = 4          # SEF prvi poziv samo pokrene izradu PDF-a; ostali krugovi ga preuzimaju
+PDF_CEKANJE = 15         # sekundi izmedju krugova
+
+
+def preuzmi_pdfove(fakture, *, klijent=None, krugova=PDF_KRUGOVA, cekanje=PDF_CEKANJE, spavaj=time.sleep):
+    """PDF-ovi za fakture koje ga jos nemaju. Prvi krug pokrece izradu na SEF-u, sledeci krugovi
+    preuzimaju gotove. Ogranicenje od 3 zahteva u sekundi postuje klijent. Vraca brojeve."""
+    klijent = klijent or Klijent()
+    cekaju = [f for f in fakture if not f.pdf]
+    brojaci = {"bez_pdf": len(cekaju), "preuzeto": 0, "u_pripremi": 0, "gresaka": 0}
+    for krug in range(krugova):
+        ostali = []
+        for faktura in cekaju:
+            try:
+                spreman, _ = preuzmi_pdf(faktura, klijent)
+            except SefGreska as exc:
+                logger.warning("SEF PDF %s %s: %s", faktura.smer, faktura.sef_id, exc)
+                brojaci["gresaka"] += 1
+                continue
+            if spreman:
+                brojaci["preuzeto"] += 1
+            else:
+                ostali.append(faktura)
+        cekaju = ostali
+        if not cekaju:
+            break
+        if krug < krugova - 1:
+            spavaj(cekanje)
+    brojaci["u_pripremi"] = len(cekaju)
+    return brojaci
+
+
+def _bezbedno_ime(tekst, duzina=60):
+    ime = "".join(z if z.isalnum() or z in "-_" else "_" for z in (tekst or "").strip())
+    return re.sub(r"_+", "_", ime).strip("_")[:duzina] or "bez_naziva"
+
+
+def izvoz_zip(fakture, izlaz):
+    """ZIP u otvoren binarni fajl `izlaz`: PDF-ovi po `Ulazne|Izlazne/GGGG-MM/` i `spisak.csv` svih faktura.
+
+    `fakture` imaju `datum_dok` (datum izdavanja, za ulazne promet ili dan slanja). Fakture bez PDF-a
+    ostaju samo u spisku, sa oznakom. Vraca (broj_faktura, broj_pdf).
+    """
+    import csv
+    import io
+    import zipfile
+
+    spisak = io.StringIO()
+    upis = csv.writer(spisak, delimiter=";")
+    upis.writerow(["Smer", "Broj", "Datum", "Vrsta", "Partner", "PIB", "Osnovica", "PDV", "Iznos", "Valuta",
+                   "Status", "SEF ID", "PDF"])
+    imena, broj, sa_pdf = set(), 0, 0
+    with zipfile.ZipFile(izlaz, "w", compression=zipfile.ZIP_DEFLATED) as arhiva:
+        for f in fakture:
+            broj += 1
+            datum = f.datum_dok
+            fajl = ""
+            if f.pdf:
+                fascikla = f"{'Ulazne' if f.smer == SefFaktura.Smer.ULAZNA else 'Izlazne'}/{datum:%Y-%m}" if datum else "Bez_datuma"
+                osnova = f"{fascikla}/{datum:%Y-%m-%d}_" if datum else f"{fascikla}/"
+                ime = f"{osnova}{_bezbedno_ime(f.broj or str(f.sef_id))}_{_bezbedno_ime(f.partner_naziv, 40)}"
+                if ime in imena:
+                    ime = f"{ime}_{f.sef_id}"
+                imena.add(ime)
+                try:
+                    with f.pdf.open("rb") as pdf:
+                        arhiva.writestr(zipfile.ZipInfo(f"{ime}.pdf", date_time=timezone.localtime(
+                            f.pdf_preuzet or timezone.now()).timetuple()[:6]), pdf.read(), zipfile.ZIP_STORED)
+                    fajl, sa_pdf = f"{ime}.pdf", sa_pdf + 1
+                except FileNotFoundError:
+                    fajl = "PDF nedostaje na disku"
+            upis.writerow([f.get_smer_display(), f.broj, f"{datum:%d.%m.%Y}" if datum else "", VRSTE.get(f.vrsta, f.vrsta),
+                           f.partner_naziv, f.partner_pib, f.osnovica or "", f.pdv or "", f.iznos or "", f.valuta,
+                           STATUSI.get(f.status, f.status), f.sef_id, fajl or "nije preuzet"])
+        arhiva.writestr("spisak.csv", "\ufeff" + spisak.getvalue())
+    return broj, sa_pdf
+
+
+def poruka_pdf(brojaci):
+    return (f"SEF PDF: bez PDF-a {brojaci['bez_pdf']}, preuzeto {brojaci['preuzeto']}, "
+            f"SEF još priprema {brojaci['u_pripremi']}, grešaka {brojaci['gresaka']}")
+
+
 def poruka(run):
     c = run.counts
     return (f"SEF {run.od:%d.%m.%Y.}–{run.do:%d.%m.%Y.}: ulaznih {c.get('ulaznih', 0)}, izlaznih {c.get('izlaznih', 0)}, "
@@ -413,6 +496,14 @@ def poruka(run):
 
 
 # --------------------------------------------------------------------------- meka veza sa knjizenjima
+
+
+def sa_datumom(qs):
+    """`datum_dok`: datum izdavanja (izlazne), inace datum prometa, inace dan slanja na SEF (ulazne nemaju datum izdavanja)."""
+    from django.db.models import DateField
+    from django.db.models.functions import Cast, Coalesce
+
+    return qs.annotate(datum_dok=Coalesce("datum_izdavanja", "datum_prometa", Cast("datum_slanja", DateField())))
 
 
 def _oblici(broj):

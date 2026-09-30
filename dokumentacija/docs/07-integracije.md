@@ -212,13 +212,12 @@ Njihova pravila su **prepisana u Python**.
 ### 7.4.1. Kako radi [P]
 
 ```
- 1. Prijava na internu mrežu    https://control.ims.rs:4081
- 2. Pokretanje pregledača       Chrome (chrome-for-testing)
- 3. Prijava na portal           cards.nis.rs  /  fleet.omv.com
- 4. Preuzimanje datoteke        CSV / Excel u lokalni direktorijum
- 5. Obrada datoteke             pandas / openpyxl
- 6. Upis                        TransactionNIS / TransactionOMV + FuelConsumption
- 7. Čišćenje duplikata          cleanup_omv_fuel_data(apply=True)   ← samo OMV
+ 1. Pokretanje pregledača       Chrome (chrome-for-testing)
+ 2. Prijava na portal           cards.nis.rs  /  fleet.omv.com
+ 3. Preuzimanje datoteke        CSV / Excel u lokalni direktorijum
+ 4. Obrada datoteke             pandas / openpyxl
+ 5. Upis                        TransactionNIS / TransactionOMV + FuelConsumption
+ 6. Čišćenje duplikata          cleanup_omv_fuel_data(apply=True)   ← samo OMV
 ```
 
 | Portal | Adresa | Zadatak | Vreme | Red |
@@ -245,9 +244,11 @@ Ako automatsko preuzimanje ne uspe, datoteka se može uvesti ručno:
 |---|---|
 | **Promena izgleda stranice** | Selenium traži elemente po izgledu — promena zaustavlja preuzimanje |
 | **Isticanje lozinke** | Prijava ne uspeva; posao pada uz grešku u `TaskHistory` |
-| **Mrežni portal** | Bez prijave na `control.ims.rs` nema pristupa internetu |
+| **Portal ne odgovara** | `ERR_CONNECTION_RESET` / `ERR_SSL_UNRECOGNIZED_NAME_ALERT` na otvaranju stranice za prijavu znači da portal (npr. OMV 30.09.2026.) privremeno odbija vezu — posao se ponovo pokreće ručno |
 | **Chrome verzija** | Mora odgovarati upravljaču (`chrome-for-testing` u projektu) |
 | **Duplikati OMV** | Rešeno čišćenjem pri uvozu i filterom pri čitanju — vidi [V-06](obracuni/06-02-flota-gorivo.md) |
+
+Prijava na mrežni portal Kerio (`control.ims.rs`) uklonjena je iz koda 30.09.2026. — nije se pozivala, a sadržala je pristupne podatke.
 
 > **[N] Q7:** gde se čuvaju pristupni podaci za portale i ko ih obnavlja nije zabeleženo.
 

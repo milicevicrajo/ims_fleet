@@ -176,7 +176,7 @@ MEDIA_TEST = tempfile.mkdtemp(prefix="sef-test-")
 @override_settings(MEDIA_ROOT=MEDIA_TEST, SEF_API_KEY="test-kljuc")
 class EkraniTests(TestCase):
     KODOVI = ("finansije:sef_list", "finansije:sef_detail", "finansije:sef_dokument", "finansije:sef_sync",
-              "finansije:view_all")
+              "finansije:sef_izvoz", "finansije:sef_pdf_svi", "finansije:view_all")
 
     @classmethod
     def tearDownClass(cls):
@@ -355,6 +355,68 @@ class EkraniTests(TestCase):
         odgovor = self.client.post(reverse("finansije:sef_sync"), {"od": "2026-01-01", "do": "2026-09-30",
                                                                 "next": "https://drugi-sajt.example/"})
         self.assertRedirects(odgovor, reverse("finansije:sef_list"), fetch_redirect_response=False)
+
+    def test_preuzimanje_svih_pdf_u_krugovima(self):
+        klijent, pozivi = LazniKlijent(), []
+
+        def pdf(smer, sef_id):  # SEF prvi put samo pokrene izradu
+            pozivi.append(sef_id)
+            return (b"%PDF-1.7 " + str(sef_id).encode(), "") if pozivi.count(sef_id) > 1 else (None, "u pripremi")
+
+        klijent.pdf = pdf
+        spavanja = []
+        brojaci = sef.preuzmi_pdfove(list(SefFaktura.objects.all()), klijent=klijent, spavaj=spavanja.append)
+        self.assertEqual(brojaci, {"bez_pdf": 2, "preuzeto": 2, "u_pripremi": 0, "gresaka": 0})
+        self.assertEqual((len(pozivi), spavanja), (4, [sef.PDF_CEKANJE]))
+        self.assertEqual(SefFaktura.objects.filter(pdf="").count(), 0)
+        # ponovo: nista ne nedostaje, SEF se ne poziva
+        self.assertEqual(sef.preuzmi_pdfove(list(SefFaktura.objects.all()), klijent=klijent)["bez_pdf"], 0)
+        self.assertEqual(len(pozivi), 4)
+
+    def test_izvoz_pdf_za_mesec_i_godinu(self):
+        import csv
+        import io
+        import zipfile
+
+        with mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
+            sef.preuzmi_pdf(self.ulazna)
+        odgovor = self.client.get(reverse("finansije:sef_izvoz"), {"godina": "2026", "mesec": "9"})
+        self.assertEqual((odgovor.status_code, odgovor["Content-Type"]), (200, "application/zip"))
+        self.assertIn("SEF_sve_2026-09.zip", odgovor["Content-Disposition"])
+        arhiva = zipfile.ZipFile(io.BytesIO(b"".join(odgovor.streaming_content)))
+        imena = arhiva.namelist()
+        self.assertIn("Ulazne/2026-09/2026-09-01_MF3814_25_Dobavljač_DOO.pdf", imena)
+        self.assertEqual(arhiva.read("Ulazne/2026-09/2026-09-01_MF3814_25_Dobavljač_DOO.pdf"), b"%PDF-1.7 test")
+        redovi = list(csv.reader(io.StringIO(arhiva.read("spisak.csv").decode("utf-8-sig")), delimiter=";"))
+        self.assertEqual(len(redovi), 3)  # zaglavlje + ulazna + izlazna (bez PDF-a)
+        self.assertEqual({r[1]: r[-1] for r in redovi[1:]}["IF-120/2026"], "nije preuzet")
+        self.assertEqual(odgovor["X-SEF-PDF"], "1")
+        # cela godina, samo izlazne
+        odgovor = self.client.get(reverse("finansije:sef_izvoz"), {"godina": "2026", "smer": "izlazna"})
+        arhiva = zipfile.ZipFile(io.BytesIO(b"".join(odgovor.streaming_content)))
+        self.assertEqual(arhiva.namelist(), ["spisak.csv"])
+        self.assertIn("SEF_izlazna_2026.zip", odgovor["Content-Disposition"])
+        # prazan period i neispravna godina
+        self.assertRedirects(self.client.get(reverse("finansije:sef_izvoz"), {"godina": "2025"}),
+                             reverse("finansije:sef_list"), fetch_redirect_response=False)
+        self.assertRedirects(self.client.get(reverse("finansije:sef_izvoz"), {"godina": "x"}),
+                             reverse("finansije:sef_list"), fetch_redirect_response=False)
+
+    def test_preuzmi_pdf_ove_koji_nedostaju_u_pozadini(self):
+        from finansije import tasks
+
+        with mock.patch.object(tasks.sef_pdf_task, "delay") as delay:
+            odgovor = self.client.post(reverse("finansije:sef_pdf_svi"), {"godina": "2026", "mesec": "9"}, follow=True)
+        delay.assert_called_once_with("2026-09-01", "2026-09-30", "")
+        self.assertContains(odgovor, "Pokrenuto preuzimanje 2 PDF-ova")
+        with mock.patch.object(tasks.sef_pdf_task, "delay", side_effect=OSError("redis")):
+            odgovor = self.client.post(reverse("finansije:sef_pdf_svi"), {"godina": "2026", "mesec": "9"}, follow=True)
+        self.assertContains(odgovor, "manage.py sef_pdf")
+        # sam zadatak preuzima samo fakture izabranog perioda i smera
+        with mock.patch("core.tasks._run_with_singleton_lock", side_effect=lambda task_name, lock_ttl_seconds, fn: fn()),                 mock.patch.object(sef, "Klijent", return_value=LazniKlijent()):
+            rezultat = tasks.sef_pdf_task("2026-09-01", "2026-09-30", "ulazna")
+        self.assertIn("preuzeto 1", rezultat)
+        self.assertEqual(SefFaktura.objects.filter(pdf="").get().smer, "izlazna")
 
     def test_bez_obuhvata_cele_firme_nema_pristupa(self):
         with mock.patch("finansije.sef_views.can_view_all", return_value=False):
