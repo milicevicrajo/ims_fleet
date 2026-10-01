@@ -7,6 +7,10 @@ PUTGEO-SERVER.bazaldims), kljuc je sifra radnika + redni broj. Sinhronizacija
 OJ i radno mesto po sistematizaciji (sifre i nazivi) upisuju se kada se red prvi put pojavi,
 iz trenutnog stanja radnika u kadrovskoj bazi, i posle se sami ne menjaju — ostaju kao istorija.
 Kadrovi ih mogu rucno ispraviti.
+
+Radnik moze da radi na vise radnih mesta: ta polja na ugovoru su prvo (glavno) radno mesto i
+njega uzimaju izvestaji, a druga i dalja unose Kadrovi rucno (`DodatnoRadnoMesto`, za
+bezbednost i zdravlje na radu). Sinhronizacija ih ne dira.
 """
 import datetime
 
@@ -128,6 +132,25 @@ class UgovorZaposlenog(models.Model):
         super().save(*args, **kwargs)
         if stari and stari != (self.dokument.name if self.dokument else ""):
             _obrisi_fajl_posle(self._meta.get_field("dokument").storage, stari)
+
+
+class DodatnoRadnoMesto(models.Model):
+    """Drugo i dalje radno mesto istog perioda (za BZR). Izvestaji uzimaju prvo — polja na ugovoru."""
+    ugovor = models.ForeignKey(UgovorZaposlenog, on_delete=models.CASCADE, related_name="dodatna_radna_mesta",
+                               verbose_name="Ugovor")
+    oj = models.CharField(max_length=20, blank=True, default="", verbose_name="OJ")
+    naziv_oj = models.CharField(max_length=255, blank=True, default="", verbose_name="Naziv OJ")
+    sifra_sistematizacije = models.CharField(max_length=20, blank=True, default="", verbose_name="Šifra po sistematizaciji")
+    naziv_radnog_mesta = models.CharField(max_length=255, blank=True, default="", verbose_name="Naziv radnog mesta")
+
+    class Meta:
+        db_table = "hr_ugovor_dodatno_radno_mesto"
+        ordering = ["ugovor", "pk"]
+        verbose_name = "Dodatno radno mesto"
+        verbose_name_plural = "Dodatna radna mesta"
+
+    def __str__(self):
+        return f"{self.sifra_sistematizacije} {self.naziv_radnog_mesta}".strip()
 
 
 def _obrisi_fajl_posle(storage, ime):

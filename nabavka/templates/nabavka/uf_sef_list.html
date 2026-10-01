@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% comment %}
+UF SEF (Nabavka): samo ulazne fakture sa SEF-a. Fakture preuzimaju Finansije; ovde se samo
+pregledaju, filtriraju i otvara PDF (nista se ne prihvata ni ne odbija).
+{% endcomment %}
+{% load humanize %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .invoice-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .invoice-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .invoice-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .invoice-hero .sef-zbir { text-align: right; }
+  .invoice-hero .sef-zbir strong { display: block; font-size: 1.25rem; }
+  .invoice-filter { background: #f8fafc; border: 1px solid #e6ebf1; border-radius: 8px; padding: 14px; }
+  .invoice-filter .row { row-gap: 12px; }
+  .invoice-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 9px;
+    font-weight: 600; font-size: .82rem; white-space: nowrap; }
+  .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .sef-small { color: #6b7785; font-size: .72rem; line-height: 1.15; margin-top: 3px; }
+  #UfSefTable { table-layout: fixed; width: 100% !important; font-size: .82rem; }
+  #UfSefTable th, #UfSefTable td { white-space: normal !important; overflow-wrap: anywhere; padding: 5px 6px; }
+</style>
+
+<div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>UF SEF — ulazne fakture</h1>
+    <p>Ulazne fakture sa Sistema elektronskih faktura. Preuzimaju ih Finansije{% if poslednja %}, poslednji put {{ poslednja.finished_at|default:poslednja.started_at|date:"d.m.Y. H:i" }}{% endif %}; ovde se samo pregledaju — prihvatanje i odbijanje ostaje na SEF-u.</p>
+  </div>
+  <div class="sef-zbir">
+    <span>{{ zbir.broj|intcomma }} faktura</span>
+    <strong>{% if zbir.iznos is not None %}{{ zbir.iznos|floatformat:"2g" }} RSD{% else %}—{% endif %}</strong>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="invoice-filter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-xl-4">
+          <label class="form-label mb-1" for="id_q">Pretraga</label>
+          <input id="id_q" class="form-control" type="search" name="q" value="{{ filteri.q }}"
+                 placeholder="Broj fakture, dobavljač, PIB ili matični broj">
+        </div>
+        <div class="col-6 col-xl-2">
+          <label class="form-label mb-1" for="id_od">Datum od</label>
+          <input id="id_od" class="form-control" type="date" name="od" value="{{ filteri.od }}">
+        </div>
+        <div class="col-6 col-xl-2">
+          <label class="form-label mb-1" for="id_do">Datum do</label>
+          <input id="id_do" class="form-control" type="date" name="do" value="{{ filteri.do }}">
+        </div>
+        <div class="col-12 col-sm-4 col-xl-2">
+          <label class="form-label mb-1" for="id_status">Status</label>
+          <select id="id_status" class="form-select" name="status">
+            <option value="">Svi</option>
+            {% for kljuc, naziv in statusi %}<option value="{{ kljuc }}" {% if filteri.status == kljuc %}selected{% endif %}>{{ naziv }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-4 col-xl-2">
+          <label class="form-label mb-1" for="id_vrsta">Vrsta</label>
+          <select id="id_vrsta" class="form-select" name="vrsta">
+            <option value="">Sve</option>
+            {% for kljuc, naziv in vrste %}<option value="{{ kljuc }}" {% if filteri.vrsta == kljuc %}selected{% endif %}>{{ naziv }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-4 col-xl-2">
+          <label class="form-label mb-1" for="id_knjizenje">Knjiženje</label>
+          <select id="id_knjizenje" class="form-select" name="knjizenje">
+            <option value="">Sve</option>
+            <option value="da" {% if filteri.knjizenje == "da" %}selected{% endif %}>Proknjižene</option>
+            <option value="ne" {% if filteri.knjizenje == "ne" %}selected{% endif %}>Neproknjižene</option>
+          </select>
+        </div>
+        <div class="col-12 col-xl d-flex flex-wrap gap-2 justify-content-end">
+          <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify" aria-hidden="true"></i> Pretraži</button>
+          <a class="btn btn-outline-secondary" href="{% url 'nabavka:uf_sef_list' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table id="UfSefTable" class="display compact table table-hover table-bordered align-middle w-100">
+      <thead>
+        <tr><th>Broj fakture</th><th>Dobavljač</th><th>Datum</th><th>Primljena</th><th>Dospeće</th><th>Iznos</th><th>Status</th><th>Proknjižena</th><th class="text-center">PDF</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (!(window.jQuery && jQuery.fn.DataTable)) return;
+  jQuery('#UfSefTable').DataTable({
+    serverSide: true, processing: true, autoWidth: false, pageLength: 50,
+    lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[2, 'desc']],
+    ajax: { url: "{% url 'nabavka:uf_sef_data' %}" + window.location.search, type: 'GET' },
+    columns: [
+      { data: 'broj' }, { data: 'dobavljac' }, { data: 'datum', className: 'text-nowrap' },
+      { data: 'primljena' }, { data: 'dospece', className: 'text-nowrap' }, { data: 'iznos', className: 'text-end text-nowrap' },
+      { data: 'status' }, { data: 'knjizenje', orderable: false },
+      { data: 'pdf', orderable: false, searchable: false, className: 'text-center' }
+    ],
+    columnDefs: [{ targets: 0, width: '15%' }, { targets: 1, width: '24%' }, { targets: [2, 3, 4], width: '9%' },
+                 { targets: 5, width: '11%' }, { targets: 6, width: '9%' }, { targets: 7, width: '8%' }, { targets: 8, width: '6%' }],
+    language: { processing: 'Učitavanje...', search: 'Pretraga:', lengthMenu: 'Prikaži _MENU_ redova',
+      info: 'Prikaz _START_ do _END_ od _TOTAL_ faktura', infoEmpty: 'Nema faktura',
+      infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema rezultata',
+      paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
+  });
+});
+</script>
+{% endblock %}

@@ -1,7 +1,8 @@
 {% extends 'hr/list_base.html' %}
 {% comment %}
 Unos ugovora za jedan period rada: levo podaci iz kadrovske baze, ugovor (broj, aneks i veza sa
-glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi periodi radnika.
+glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto (prvo, za izveštaje, i dodatna,
+za BZR); desno svi periodi radnika.
 {% endcomment %}
 {% block title %}{{ title }} | IMS{% endblock %}
 {% block hr_content %}
@@ -74,6 +75,7 @@ glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi 
         <header><span>OJ i radno mesto po sistematizaciji</span>
           {% if red.podaci_zabelezeni %}<span class="ugovor-small">{{ red.get_podaci_poreklo_display }} · {{ red.podaci_zabelezeni|date:"d.m.Y." }}</span>{% endif %}</header>
         <div>
+          <div class="ugovor-rm-naslov">1. radno mesto <span class="ugovor-badge info">za izveštaje</span></div>
           <div class="row g-3">
             <div class="col-md-3"><label class="form-label" for="{{ form.oj.id_for_label }}">{{ form.oj.label }}</label>{{ form.oj }}</div>
             <div class="col-md-9"><label class="form-label" for="{{ form.naziv_oj.id_for_label }}">{{ form.naziv_oj.label }}</label>{{ form.naziv_oj }}</div>
@@ -81,13 +83,48 @@ glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi 
             <div class="col-md-9"><label class="form-label" for="{{ form.naziv_radnog_mesta.id_for_label }}">{{ form.naziv_radnog_mesta.label }}</label>{{ form.naziv_radnog_mesta }}</div>
           </div>
           <div class="form-text mt-2">Beleže se iz kadrovske baze kada se period pojavi i posle se sami ne menjaju — ostaju kao istorijski podaci. Ručna izmena se beleži kao „Uneto ručno”.</div>
+
+          {{ radna_mesta.management_form }}
+          <div class="js-radna-mesta">
+          {% for rm in radna_mesta %}
+            <div class="ugovor-rm js-rm">
+              {% for h in rm.hidden_fields %}{{ h }}{% endfor %}
+              <div class="ugovor-rm-naslov"><span><span class="js-rm-broj">{{ forloop.counter|add:1 }}</span>. radno mesto</span>
+                <div class="form-check mb-0">{{ rm.DELETE }}<label class="form-check-label" for="{{ rm.DELETE.id_for_label }}">Ukloni</label></div></div>
+              {% if rm.non_field_errors %}<div class="invalid-feedback d-block mb-2">{{ rm.non_field_errors|join:" " }}</div>{% endif %}
+              <div class="row g-3">
+                <div class="col-md-3"><label class="form-label" for="{{ rm.oj.id_for_label }}">{{ rm.oj.label }}</label>{{ rm.oj }}</div>
+                <div class="col-md-9"><label class="form-label" for="{{ rm.naziv_oj.id_for_label }}">{{ rm.naziv_oj.label }}</label>{{ rm.naziv_oj }}</div>
+                <div class="col-md-3"><label class="form-label" for="{{ rm.sifra_sistematizacije.id_for_label }}">{{ rm.sifra_sistematizacije.label }}</label>{{ rm.sifra_sistematizacije }}</div>
+                <div class="col-md-9"><label class="form-label" for="{{ rm.naziv_radnog_mesta.id_for_label }}">{{ rm.naziv_radnog_mesta.label }}</label>{{ rm.naziv_radnog_mesta }}</div>
+              </div>
+            </div>
+          {% endfor %}
+          </div>
+          <template class="js-rm-prazno">
+            <div class="ugovor-rm js-rm">
+              {% for h in radna_mesta.empty_form.hidden_fields %}{{ h }}{% endfor %}
+              <div class="ugovor-rm-naslov"><span><span class="js-rm-broj"></span>. radno mesto</span>
+                <button type="button" class="btn btn-link btn-sm text-danger p-0 js-rm-ukloni">Ukloni</button></div>
+              <div class="row g-3">
+                <div class="col-md-3"><label class="form-label" for="{{ radna_mesta.empty_form.oj.id_for_label }}">{{ radna_mesta.empty_form.oj.label }}</label>{{ radna_mesta.empty_form.oj }}</div>
+                <div class="col-md-9"><label class="form-label" for="{{ radna_mesta.empty_form.naziv_oj.id_for_label }}">{{ radna_mesta.empty_form.naziv_oj.label }}</label>{{ radna_mesta.empty_form.naziv_oj }}</div>
+                <div class="col-md-3"><label class="form-label" for="{{ radna_mesta.empty_form.sifra_sistematizacije.id_for_label }}">{{ radna_mesta.empty_form.sifra_sistematizacije.label }}</label>{{ radna_mesta.empty_form.sifra_sistematizacije }}</div>
+                <div class="col-md-9"><label class="form-label" for="{{ radna_mesta.empty_form.naziv_radnog_mesta.id_for_label }}">{{ radna_mesta.empty_form.naziv_radnog_mesta.label }}</label>{{ radna_mesta.empty_form.naziv_radnog_mesta }}</div>
+              </div>
+            </div>
+          </template>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <div class="form-text m-0">Ako radnik radi na više radnih mesta, dodajte i ostala. Izveštaji uzimaju prvo; ostala služe bezbednosti i zdravlju na radu.</div>
+            <button type="button" class="btn btn-outline-primary btn-sm js-rm-dodaj"><i class="mdi mdi-plus"></i> Dodaj radno mesto</button>
+          </div>
           <div class="ugovor-dno">
             <button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button>
           </div>
         </div>
       </section>
     </form>
-    <form method="post" action="{% url 'hr:ugovor_update' red.pk %}" class="mb-3 text-end" onsubmit="return confirm('Zameniti zabeleženu OJ i radno mesto trenutnim stanjem iz kadrovske baze?');">{% csrf_token %}
+    <form method="post" action="{% url 'hr:ugovor_update' red.pk %}" class="mb-3 text-end" onsubmit="return confirm('Zameniti zabeleženu OJ i prvo radno mesto trenutnim stanjem iz kadrovske baze? Dodatna radna mesta ostaju.');">{% csrf_token %}
       <input type="hidden" name="akcija" value="preuzmi_trenutno">
       <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="mdi mdi-download"></i> Preuzmi trenutnu OJ i radno mesto iz kadrovske baze</button>
     </form>
@@ -100,7 +137,8 @@ glavnim ugovorom, dokument, napomena) i zabeležena OJ i radno mesto; desno svi 
         <dt>Broj aneksa</dt><dd>{{ red.broj_aneksa|default:"—" }}{% if red.glavni_ugovor %} · uz {{ red.glavni_ugovor.broj_ugovora|default:"glavni ugovor" }}{% endif %}</dd>
         <dt>Dokument</dt><dd>{% if red.dokument and can_document %}<a href="{% url 'hr:ugovor_dokument' red.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-file-pdf-box"></i> {{ red.dokument_naziv|default:"Otvori" }}</a>{% elif red.dokument %}priložen{% else %}—{% endif %}</dd>
         <dt>OJ</dt><dd>{{ red.oj|default:"—" }} {{ red.naziv_oj }}</dd>
-        <dt>Radno mesto</dt><dd>{{ red.sifra_sistematizacije|default:"—" }} {{ red.naziv_radnog_mesta }}</dd>
+        <dt>Radno mesto</dt><dd>{{ red.sifra_sistematizacije|default:"—" }} {{ red.naziv_radnog_mesta }}{% if dodatna_radna_mesta %} <span class="ugovor-small">(za izveštaje)</span>{% endif %}</dd>
+        {% for rm in dodatna_radna_mesta %}<dt>{{ forloop.counter|add:1 }}. radno mesto</dt><dd>{% if rm.oj %}{{ rm.oj }} {{ rm.naziv_oj }} · {% endif %}{{ rm.sifra_sistematizacije|default:"—" }} {{ rm.naziv_radnog_mesta }}</dd>{% endfor %}
         <dt>Napomena</dt><dd>{{ red.napomena|default:"—"|linebreaksbr }}</dd>
       </dl></div>
     </section>
@@ -144,5 +182,30 @@ document.addEventListener('DOMContentLoaded', function () {
   function prikazi() { document.querySelectorAll('.js-aneks').forEach(function (el) { el.style.display = aneks.value.trim() ? '' : 'none'; }); }
   aneks.addEventListener('input', prikazi);
   prikazi();
+
+  // Dodatna radna mesta: novi red se pravi iz praznog obrasca formseta (prefiks "rm").
+  var spisak = document.querySelector('.js-radna-mesta');
+  var obrazac = document.querySelector('.js-rm-prazno');
+  var ukupno = document.getElementById('id_rm-TOTAL_FORMS');
+  function prenumerisi() {
+    spisak.querySelectorAll('.js-rm').forEach(function (el, i) { el.querySelector('.js-rm-broj').textContent = i + 2; });
+  }
+  document.querySelector('.js-rm-dodaj').addEventListener('click', function () {
+    var indeks = parseInt(ukupno.value, 10);
+    var omotac = document.createElement('div');
+    omotac.innerHTML = obrazac.innerHTML.replace(/__prefix__/g, indeks);
+    var red = omotac.firstElementChild;
+    red.querySelector('.js-rm-ukloni').addEventListener('click', function () {
+      // Nesnimljen red se prazni i skriva; prazan obrazac formset preskače.
+      red.querySelectorAll('input[type=text]').forEach(function (polje) { polje.value = ''; });
+      red.style.display = 'none';
+      red.classList.remove('js-rm');
+      prenumerisi();
+    });
+    spisak.appendChild(red);
+    ukupno.value = indeks + 1;
+    prenumerisi();
+    red.querySelector('input[type=text]').focus();
+  });
 });
 </script>{% endblock %}

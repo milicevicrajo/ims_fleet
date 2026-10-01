@@ -237,7 +237,7 @@
 </head>
 <body>
   <div class="toolbar">
-    <span>Stampa radne liste</span>
+    <span>Stampa radne liste · <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}">Prilog: evidencija prolaza (A4)</a></span>
     <button type="button" onclick="window.print()">Stampaj</button>
   </div>
 

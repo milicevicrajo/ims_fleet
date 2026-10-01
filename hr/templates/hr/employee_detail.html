@@ -302,7 +302,7 @@
               <td>{{ u.datum_ugovora|date:"d.m.Y."|default:"—" }}</td>
               <td>{% if u.broj_aneksa %}{{ u.broj_aneksa }}{% if u.glavni_ugovor %}<div class="small text-muted">uz {{ u.glavni_ugovor.broj_ugovora|default:"glavni ugovor" }}</div>{% endif %}{% else %}—{% endif %}</td>
               <td>{% if u.oj %}{{ u.oj }}<div class="small text-muted">{{ u.naziv_oj }}</div>{% else %}—{% endif %}</td>
-              <td>{% if u.sifra_sistematizacije %}{{ u.sifra_sistematizacije }}<div class="small text-muted">{{ u.naziv_radnog_mesta }}</div>{% else %}—{% endif %}</td>
+              <td>{% if u.sifra_sistematizacije %}{{ u.sifra_sistematizacije }}<div class="small text-muted">{{ u.naziv_radnog_mesta }}</div>{% else %}—{% endif %}{% for rm in u.dodatna_radna_mesta.all %}<div class="small text-muted" title="{{ forloop.counter|add:1 }}. radno mesto">{{ forloop.counter|add:1 }}. {{ rm }}</div>{% endfor %}</td>
               <td class="text-center">{% if u.dokument and can_open_ugovor_dokument %}<a href="{% url 'hr:ugovor_dokument' u.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" title="{{ u.dokument_naziv }}"><i class="mdi mdi-file-pdf-box"></i></a>{% elif u.dokument %}<i class="mdi mdi-paperclip" title="Dokument je priložen"></i>{% else %}—{% endif %}</td>
               {% if can_view_ugovor %}<td><a href="{% url 'hr:ugovor_detail' u.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-eye"></i></a></td>{% endif %}
             </tr>{% endfor %}</tbody>

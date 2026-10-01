@@ -39,6 +39,22 @@ def proveri_vrstu(form, data, *, ima_dane):
     validiraj_period(form, data)
 
 
+RAZLOG_POMOC = ('Samo razlog, bez „izdavanja rešenja“ — tekst glasi: „Молим Вас да због [razlog], издате решење…“. '
+                'Npr. „потребе за радом већим од четрдесет сати недељно“.')
+
+
+def proveri_odobrava(form, data):
+    """Bez izabrane osobe zahtev odobrava potpisnik rešenja na datum zahteva; bez njega nema ko da odobri."""
+    if data.get('odobrava'):
+        if not data.get('odobrava_funkcija'):
+            form.add_error('odobrava_funkcija', 'Unesite funkciju osobe koja odobrava.')
+        return
+    dan = data.get('datum_zahteva')
+    if dan and not Potpisnik.za_datum(dan):
+        form.add_error('odobrava', f'Za {dan:%d.%m.%Y}. nije unet potpisnik rešenja. Izaberite ko odobrava zahtev '
+                                   'ili unesite potpisnika u šifarniku rešenja.')
+
+
 class ZahtevForm(DodatnaPoljaMixin, forms.ModelForm):
     oj_kod = forms.ChoiceField(required=False, label='Organizaciona jedinica',
         help_text='Podrazumevano se preuzima OJ izabranog zaposlenog.')
@@ -70,6 +86,7 @@ class ZahtevForm(DodatnaPoljaMixin, forms.ModelForm):
         self.fields['odobrava'].empty_label = 'Potpisnik rešenja na datum zahteva'
         self.fields['odobrava'].help_text = 'Kome se zahtev upućuje i ko ga odobrava.'
         self.fields['odobrava_funkcija'].required = False
+        self.fields['razlog'].help_text = RAZLOG_POMOC
         self.fields['pol'].choices = [('', 'Preuzmi iz evidencije'), ('M', 'Muški'), ('F', 'Ženski')]
         self.fields['oj_kod'].choices = izbor_oj(actor, [self.instance.oj_kod] if self.instance.pk else [])
         for naziv in ('zaposleni_tekst', 'oj_naziv', 'radno_mesto'):
@@ -95,8 +112,7 @@ class ZahtevForm(DodatnaPoljaMixin, forms.ModelForm):
         dan = data.get('datum_zahteva')
         if self.instance.redni_broj and dan and dan.year != self.instance.godina:
             self.add_error('datum_zahteva', f'Broj zahteva je iz {self.instance.godina}. godine; godina se ne menja.')
-        if data.get('odobrava') and not data.get('odobrava_funkcija'):
-            self.add_error('odobrava_funkcija', 'Unesite funkciju osobe koja odobrava.')
+        proveri_odobrava(self, data)
         return data
 
 
@@ -159,6 +175,7 @@ class GrupniZahtevForm(DodatnaPoljaMixin, forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['podnosilac'].queryset = _osobe()
         self.fields['odobrava'].queryset = _osobe()
+        self.fields['razlog'].help_text = RAZLOG_POMOC
         self.dodaj_dodatna_polja(VrstaZahteva.objects.filter(je_aktivna=True))
         _ukrasi(self)
 
@@ -170,8 +187,7 @@ class GrupniZahtevForm(DodatnaPoljaMixin, forms.Form):
         proveri_vrstu(self, data, ima_dane=bool(data.get('dani')))
         if data.get('vrsta'):
             data['dodatni_podaci'] = self.ocisti_dodatna_polja(data['vrsta'])
-        if data.get('odobrava') and not data.get('odobrava_funkcija'):
-            self.add_error('odobrava_funkcija', 'Unesite funkciju osobe koja odobrava.')
+        proveri_odobrava(self, data)
         return data
 
 

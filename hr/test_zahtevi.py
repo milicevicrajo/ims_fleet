@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.urls import reverse
 
-from hr.models import BrojacZahteva, Employee, Pismo, Resenje, VrstaResenja, VrstaZahteva, Zahtev, ZahtevDan
+from hr.models import BrojacZahteva, Employee, Pismo, Potpisnik, Resenje, VrstaResenja, VrstaZahteva, Zahtev, ZahtevDan
 from hr.resenja_forms import VrstaResenjaForm
 from hr.services.resenja import build_document, izdaj_resenje, storniraj_resenje
 from hr.services.zahtevi import (build_zahtev_document, dodeli_broj, napravi_resenje, podnesi_zahtev,
@@ -237,6 +237,26 @@ class EkraniZahtevaTests(ZahtevTestBase):
         self.assertEqual(zahtev.broj, '43-1')
         self.assertEqual(zahtev.odobrava, self.direktor)
         self.assertEqual(zahtev.odobrava_funkcija, 'Генерални директор')
+
+    def test_bez_potpisnika_trazi_ko_odobrava(self):
+        Potpisnik.objects.all().delete()
+        odgovor = self.client.post(reverse('hr:zahtev_create'), self._podaci())
+        self.assertEqual(odgovor.status_code, 200)
+        self.assertIn('odobrava', odgovor.context['form'].errors)
+        self.assertFalse(Zahtev.objects.exists())
+        odgovor = self.client.post(reverse('hr:zahtev_create'), self._podaci(
+            odobrava=self.direktor.pk, odobrava_funkcija='Генерални директор'))
+        self.assertEqual(odgovor.status_code, 302)
+        self.assertEqual(Zahtev.objects.get().odobrava, self.direktor)
+
+    def test_grupni_zahtev_bez_potpisnika_trazi_ko_odobrava(self):
+        Potpisnik.objects.all().delete()
+        podaci = {'vrsta': self.vrsta_zahteva.pk, 'datum_zahteva': '28.07.2026', 'pismo': Pismo.CIRILICA,
+                  'datum_od': '01.08.2026', 'datum_do': '31.08.2026', 'podnosilac': self.rukovodilac.pk,
+                  'podnosilac_funkcija': 'Финансијски директор', 'zaposleni': [self.employee.pk]}
+        odgovor = self.client.post(reverse('hr:zahtev_bulk_create'), podaci)
+        self.assertEqual(odgovor.status_code, 200)
+        self.assertFalse(Zahtev.objects.exists())
 
     def test_zamena_trazi_poslove(self):
         vrsta = VrstaZahteva.objects.get(kod='zamena-odsutnog')

@@ -38,17 +38,17 @@
     <table class="resenje-podnozje zahtev-potpisi">
       <tr>
         <td class="resenje-potpis">
-          <div class="resenje-oznaka">{{ dokument.oznake.odobrava }}</div>
-          <strong>{{ dokument.odobrenje.funkcija }}</strong>
-        </td>
-        <td class="resenje-potpis">
           <div class="resenje-oznaka">{{ dokument.oznake.podnosilac }}</div>
           <strong>{{ dokument.potpis.funkcija }}</strong>
         </td>
+        <td class="resenje-potpis">
+          <div class="resenje-oznaka">{{ dokument.oznake.odobrava }}</div>
+          <strong>{{ dokument.odobrenje.funkcija }}</strong>
+        </td>
       </tr>
       <tr>
-        <td class="resenje-potpis"><div class="resenje-crta" aria-hidden="true"></div><div>{{ dokument.odobrenje.ime }}</div></td>
         <td class="resenje-potpis"><div class="resenje-crta" aria-hidden="true"></div><div>{{ dokument.potpis.ime }}</div></td>
+        <td class="resenje-potpis"><div class="resenje-crta" aria-hidden="true"></div><div>{{ dokument.odobrenje.ime }}</div></td>
       </tr>
     </table>
   </footer>

@@ -2255,7 +2255,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 |---|---|
 | **Zaposleni** | Evidencija, CV stavke, ispravka prikaza imena |
 | **Radna lista** | Mesečna evidencija sati po šiframa posla, topli obrok, terenski dodatak; predlog popunjavanja iz prolazaka, putnih naloga, bolovanja, praznika i slave (K-11) |
-| **Evidencija prolazaka** | Prikaz dnevnih sati iz sistema kontrole pristupa, uz spisak problema |
+| **Evidencija prolazaka** | Prikaz dnevnih sati iz sistema kontrole pristupa, uz spisak problema; od 01.10.2026. štampa se i kao **prilog radne liste** (A4 uspravno: svaki prolaz sa vremenom, sati po danu, praznici, bolovanja, putni nalozi, potpisi zaposlenog i rukovodioca). Ako izvor prolazaka nije dostupan, prilog to piše i ne prilaže se. |
 | **Godišnji odmori** | Dodele i rešenja preuzeti iz obračuna zarada |
 | **Bolovanja** | Uvoz RFZO Excel izvoza, povezivanje po JMBG |
 | **Ocenjivanje** | Šest merila, bodovi 0–4, lični koeficijent, saglasnost u tri nivoa |
@@ -2277,6 +2277,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 | **Moja radna lista** | `/hr/radna-lista/` | Svaki zaposleni |
 | Radna lista drugog zaposlenog | `/hr/zaposleni/<id>/radna-lista/` | **Samo superuser** |
 | Štampa radne liste | `/hr/radna-lista/<id>/stampa/` | Zaposleni |
+| Štampa evidencije prolaza (prilog radne liste) | `/hr/radna-lista/<id>/prolazi/stampa/` | Zaposleni (ista prava kao štampa radne liste) |
 | **Godišnji odmori** | `/hr/godisnji-odmori/` | Kadrovska služba |
 | Sinhronizacija odmora | `/hr/godisnji-odmori/sinhronizacija/` | Kadrovska služba |
 | **Bolovanja** | `/hr/bolovanja/` | Kadrovska služba |
@@ -2316,6 +2317,7 @@ sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa 
 | Izvor | `dbo.v_hr_RadStaz` (IMS_ERP) → `RadStaz` na `PUTGEO-SERVER.bazaldims`, samo `u_firmi = 'DA'`. Ključ je šifra radnika + redni broj (`rasif`, `rb`). Kategorija „Radni odnos“ je preduzeće 1, „Van radnog odnosa“ preduzeće 2. Datum 01.01.3000. znači na neodređeno. |
 | Sinhronizacija | Noću u **01:15** (`hr.tasks.sync_ugovori_zaposlenih_task`, posle zaposlenih) i dugmetom „Osveži iz kadrovske baze“. Menja samo polja iz izvora (period, opis, staž, aktivnost radnika); unete podatke ne dira. Svako pokretanje se beleži (`hr_ugovori_sinhronizacija`). Prazan izvor zaustavlja sinhronizaciju. |
 | OJ i radno mesto | Šifre i nazivi OJ (`radnik.oj` + `ob_jedin`, naziv za tekuću godinu) i radnog mesta po sistematizaciji (`radnik.sif_sis` + `Sistemat`, po preduzeću) **upisuju se kada se period prvi put pojavi i posle se sami ne menjaju** — ostaju kao istorija. Kadrovska baza nema istoriju OJ i radnog mesta, pa su periodi zatečeni pri prvoj sinhronizaciji (29.09.2026.) dobili današnje stanje. Ručna izmena se beleži kao „Uneto ručno“; dugme „Preuzmi trenutnu OJ i radno mesto“ ponovo upisuje stanje iz kadrovske baze. |
+| Više radnih mesta | Od 01.10.2026. Ako radnik radi na više radnih mesta, Kadrovi na unosu perioda dodaju drugo i dalja (OJ i radno mesto po sistematizaciji, tabela `hr_ugovor_dodatno_radno_mesto`). **Izveštaji uvek uzimaju prvo radno mesto** — polja na samom periodu; ostala služe bezbednosti i zdravlju na radu. Dodatna radna mesta unose se samo ručno: sinhronizacija i dugme „Preuzmi trenutnu OJ i radno mesto“ ih ne diraju. Vide se na spisku ugovora (pretraga ih nalazi po nazivu) i na kartici zaposlenog. |
 | Aneks | Kada je unet broj aneksa, može se izabrati glavni ugovor — raniji period istog radnika koji nije i sam aneks. Veza nije obavezna. |
 | Dokument | PDF ili slika (JPG, PNG, TIFF), najviše 20 MB, u `media/hr/ugovori/`. Otvara se samo kroz aplikaciju (`hr:ugovor_dokument`), uz proveru obuhvata. |
 | Nestao ili izmenjen period | Period koji nestane iz kadrovske baze se ne briše, nego dobija oznaku „Nema u kadrovskoj bazi“. Ako se posle unosa promeni datum početka, raniji datum se čuva i red je označen „Proveriti“ dok ga Kadrovi ne potvrde. |
@@ -2436,7 +2438,7 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 | Smer | Šta |
 |---|---|
 | **Ulaz** | Kadrovska baza, prolasci, godišnji odmori iz zarada, RFZO Excel, Excel šifarnici |
-| **Izlaz** | Štampa radne liste, **štampa ocene sa tri potpisa** |
+| **Izlaz** | Štampa radne liste i evidencije prolaza kao priloga, **štampa ocene sa tri potpisa** |
 
 > **[N] Q3:** nije potvrđeno kako lični koeficijent i sati sa radne liste stižu u
 > obračun zarada — prepisivanjem sa odštampanog obrasca ili nekim prenosom.
@@ -3183,6 +3185,7 @@ Primer: `ZNG-43/2026-7`. Bez centra u organizacionoj jedinici broj se **ne može
 | **EUF fakture** | `/nabavka/euf-fakture/` |
 | Detalj EUF fakture | `/nabavka/euf-fakture/<id>/` |
 | Vraćene šifre posla | `/nabavka/euf-fakture/<id>/vraceno-sifre/` |
+| **UF SEF** (ulazne fakture sa SEF-a) | `/nabavka/uf-sef/` |
 | **UF stavke** | `/nabavka/uf-stavke/` |
 | Detalj UF fakture | `/nabavka/uf-stavke/<id>/` |
 | **Roba** | `/nabavka/roba/` |
@@ -3273,6 +3276,21 @@ na šifru posla na kojoj je vozilo danas, kao EUF faktura) i napomena. Kartica *
 („Osnovna”) i **dodatne** šifre (`FiskalniRacunSifra`, svaka vezana i za registar); glavna se ne
 briše, menja se u obradi. **Vraćeno** se označava po šifri posla dugmetom u spisku, kao u Preuzetim
 EUF. Spisak ima kolone i filtere Magacin i Garaža i kolonu Vraćeno.
+
+#### UF SEF — ulazne fakture sa SEF-a (od 01.10.2026.) [P]
+
+**Nabavka → UF SEF** (`/nabavka/uf-sef/`) je pregled **samo ulaznih** faktura sa Sistema
+elektronskih faktura. Podatke ne preuzima Nabavka: to su iste fakture koje preuzimaju Finansije
+(`finansije_sef_faktura`, noću i dugmetom u Finansijama → SEF fakture), sa filterom `smer = ulazna`.
+Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
+
+| Tema | Pravilo |
+|---|---|
+| Kolone | Broj fakture (uz vrstu dokumenta), dobavljač i PIB, datum (prometa, inače dan prijema), primljena na SEF, dospeće, iznos, status na SEF-u, proknjižena (meka veza po broju, kao u Finansijama), PDF |
+| Filteri | Pretraga (broj, dobavljač, PIB, matični broj, ID na SEF-u), datum od–do, status, vrsta, proknjižene/neproknjižene; u zaglavlju broj i zbir filtriranih faktura |
+| PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom |
+| Obuhvat | Ulazna faktura nema šifru posla (broj je dobavljačev), pa je na registru vidi samo **obuhvat cele firme** (`nabavka.access.ulazne_sef`) — uloga Nabavka i Uprava vide sve, korisnik vezan za centar ne vidi nijednu. |
+| Dozvole | `nabavka:uf_sef_list`, `nabavka:uf_sef_data`, `nabavka:uf_sef_pdf` — posle isporuke `manage.py sync_permission_codes` i dodela ulogama |
 
 #### Kupovni ugovori — nabavni pogled na modul Ugovori [P]
 

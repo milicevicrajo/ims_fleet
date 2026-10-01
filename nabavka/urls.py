@@ -55,6 +55,7 @@ from .views.public_procurements import (
     PublicProcurementPlanListView,
 )
 from .views.reports import PartnerJobCodeCheckReportView, ReportsView
+from .views.sef import UfSefDataView, UfSefListView, UfSefPdfView
 from .views.source_snapshots import (
     EufItemSnapshotDataView,
     EufItemSnapshotListView,
@@ -103,6 +104,9 @@ urlpatterns = [
     path("fiskalni-racuni/<int:pk>/izmeni/", FiskalniRacunUpdateView.as_view(), name="fiskalni_update"),
     path("fiskalni-racuni/<int:pk>/obrisi/", FiskalniRacunDeleteView.as_view(), name="fiskalni_delete"),
     path("fiskalni-racuni/<int:pk>/vraceno/", FiskalniRacunReturnedView.as_view(), name="fiskalni_returned"),
+    path("uf-sef/", UfSefListView.as_view(), name="uf_sef_list"),
+    path("uf-sef/data/", UfSefDataView.as_view(), name="uf_sef_data"),
+    path("uf-sef/<int:pk>/pdf/", UfSefPdfView.as_view(), name="uf_sef_pdf"),
     path("uf-stavke/", EufItemSnapshotListView.as_view(), name="euf_item_list"),
     path("uf-stavke/data/", EufItemSnapshotDataView.as_view(), name="euf_item_data"),
     path("uf-stavke/sync/", EufItemSnapshotSyncView.as_view(), name="euf_item_sync"),

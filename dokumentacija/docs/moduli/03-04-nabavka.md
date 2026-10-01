@@ -111,6 +111,7 @@ Primer: `ZNG-43/2026-7`. Bez centra u organizacionoj jedinici broj se **ne može
 | **EUF fakture** | `/nabavka/euf-fakture/` |
 | Detalj EUF fakture | `/nabavka/euf-fakture/<id>/` |
 | Vraćene šifre posla | `/nabavka/euf-fakture/<id>/vraceno-sifre/` |
+| **UF SEF** (ulazne fakture sa SEF-a) | `/nabavka/uf-sef/` |
 | **UF stavke** | `/nabavka/uf-stavke/` |
 | Detalj UF fakture | `/nabavka/uf-stavke/<id>/` |
 | **Roba** | `/nabavka/roba/` |
@@ -201,6 +202,21 @@ na šifru posla na kojoj je vozilo danas, kao EUF faktura) i napomena. Kartica *
 („Osnovna”) i **dodatne** šifre (`FiskalniRacunSifra`, svaka vezana i za registar); glavna se ne
 briše, menja se u obradi. **Vraćeno** se označava po šifri posla dugmetom u spisku, kao u Preuzetim
 EUF. Spisak ima kolone i filtere Magacin i Garaža i kolonu Vraćeno.
+
+### UF SEF — ulazne fakture sa SEF-a (od 01.10.2026.) [P]
+
+**Nabavka → UF SEF** (`/nabavka/uf-sef/`) je pregled **samo ulaznih** faktura sa Sistema
+elektronskih faktura. Podatke ne preuzima Nabavka: to su iste fakture koje preuzimaju Finansije
+(`finansije_sef_faktura`, noću i dugmetom u Finansijama → SEF fakture), sa filterom `smer = ulazna`.
+Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
+
+| Tema | Pravilo |
+|---|---|
+| Kolone | Broj fakture (uz vrstu dokumenta), dobavljač i PIB, datum (prometa, inače dan prijema), primljena na SEF, dospeće, iznos, status na SEF-u, proknjižena (meka veza po broju, kao u Finansijama), PDF |
+| Filteri | Pretraga (broj, dobavljač, PIB, matični broj, ID na SEF-u), datum od–do, status, vrsta, proknjižene/neproknjižene; u zaglavlju broj i zbir filtriranih faktura |
+| PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom |
+| Obuhvat | Ulazna faktura nema šifru posla (broj je dobavljačev), pa je na registru vidi samo **obuhvat cele firme** (`nabavka.access.ulazne_sef`) — uloga Nabavka i Uprava vide sve, korisnik vezan za centar ne vidi nijednu. |
+| Dozvole | `nabavka:uf_sef_list`, `nabavka:uf_sef_data`, `nabavka:uf_sef_pdf` — posle isporuke `manage.py sync_permission_codes` i dodela ulogama |
 
 ### Kupovni ugovori — nabavni pogled na modul Ugovori [P]
 

@@ -578,6 +578,64 @@ class MyEmployeeProfileTests(TestCase):
         self.assertContains(response, 'class="weekend ">2</th>')
         self.assertContains(response, "Generisano u IMS-ERP aplikaciji dana 04.08.2026.")
 
+    @patch("hr.views.get_clock_events")
+    def test_attendance_print_is_a4_attachment_with_each_pass(self, clock_events_mock):
+        from hr.services.attendance import ClockEvent
+
+        employee = self.create_employee(118, first_name="Ana", last_name="Finansic")
+        user = get_user_model().objects.create_user("prilogprolazi", password="test", employee=employee)
+        sheet = WorkTimeSheet.objects.create(employee=employee, month=9, year=2026, created_by=user, updated_by=user)
+        clock_events_mock.return_value = [
+            ClockEvent(1, employee.employee_code, "Finansic", "Ana", "", 1, datetime.datetime(2026, 9, 1, 7, 31), 1),
+            ClockEvent(1, employee.employee_code, "Finansic", "Ana", "", 2, datetime.datetime(2026, 9, 1, 15, 42), 2),
+            ClockEvent(1, employee.employee_code, "Finansic", "Ana", "", 3, datetime.datetime(2026, 9, 2, 8, 0), 1),
+            ClockEvent(1, employee.employee_code, "Finansic", "Ana", "", 4, datetime.datetime(2026, 9, 2, 12, 0), 4),
+        ]
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("hr:work_time_sheet_attendance_print", args=[sheet.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "@page { size: A4 portrait")
+        self.assertContains(response, "EVIDENCIJA PROLAZA")
+        self.assertContains(response, "Prilog radne liste za septembar 2026.")
+        self.assertContains(response, "<b>07:31</b> ulaz")
+        self.assertContains(response, "<b>15:42</b> izlaz")
+        self.assertContains(response, "<b>12:00</b> službeni izlaz")
+        self.assertContains(response, "8:11")  # 07:31–15:42
+        self.assertContains(response, "16:11")  # + 08:00–16:00 (službeni izlazak do 16:00)
+        self.assertContains(response, "01.09.2026. <span class=\"muted\">uto</span>")
+        self.assertEqual(len(response.context["clock_attendance_rows"]), 30)
+        # dugmad na radnoj listi i na štampi radne liste
+        url = reverse("hr:work_time_sheet_attendance_print", args=[sheet.pk])
+        self.assertContains(self.client.get(reverse("hr:work_time_sheet"), {"month": 9, "year": 2026}), url)
+        self.assertContains(self.client.get(reverse("hr:work_time_sheet_print", args=[sheet.pk])), url)
+
+    @patch("hr.views.get_clock_events", side_effect=DatabaseError("linked server nije dostupan"))
+    def test_attendance_print_warns_when_source_is_unavailable(self, clock_events_mock):
+        employee = self.create_employee(119)
+        user = get_user_model().objects.create_user("prilognedostupan", password="test", employee=employee)
+        sheet = WorkTimeSheet.objects.create(employee=employee, month=9, year=2026, created_by=user, updated_by=user)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("hr:work_time_sheet_attendance_print", args=[sheet.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ovaj prilog nije potpun")
+
+    def test_attendance_print_of_other_employee_is_forbidden(self):
+        owner = self.create_employee(120)
+        other = self.create_employee(121)
+        owner_user = get_user_model().objects.create_user("vlasnikliste", password="test", employee=owner)
+        other_user = get_user_model().objects.create_user("tudjalista", password="test", employee=other)
+        sheet = WorkTimeSheet.objects.create(employee=owner, month=9, year=2026, created_by=owner_user,
+                                             updated_by=owner_user)
+        self.client.force_login(other_user)
+
+        response = self.client.get(reverse("hr:work_time_sheet_attendance_print", args=[sheet.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
     def test_own_profile_shows_work_time_sheets_tab(self):
         employee = self.create_employee(114)
         user = get_user_model().objects.create_user("profilradneliste", password="test", employee=employee)

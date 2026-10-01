@@ -5,6 +5,8 @@ Do 28.09.2026. Nabavka nije ogranicavala po centru — svako sa dozvolom video j
 vide ako im je sifra posla u obuhvatu, po danasnjoj pripadnosti sifre u registru. Predmet koji je
 korisnik sam napravio uvek vidi. Zapis bez sifre posla vidi samo obuhvat cele firme.
 
+Ulazne SEF fakture (UF SEF) nemaju sifru posla, pa ih vidi samo obuhvat cele firme (`ulazne_sef`).
+
 Dokumenti bez sifre posla po prirodi (UF stavke, roba, ugovori, javne nabavke, narudzbenice) nisu
 vezani za organizaciju i ne ogranicavaju se.
 """
@@ -61,3 +63,10 @@ def fakture(queryset, user):
     from organizacija.services.prava import ogranici
 
     return ogranici(queryset, _obuhvat(user, FAKTURE), "org_node")
+
+
+def ulazne_sef(queryset, user):
+    """Ulazne SEF fakture: nemaju sifru posla (broj je dobavljacev), pa ih vidi samo obuhvat cele firme."""
+    if not na_registru() or not user.is_authenticated:
+        return queryset
+    return queryset if _obuhvat(user, FAKTURE).cela_firma else queryset.none()

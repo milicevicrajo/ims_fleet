@@ -168,6 +168,7 @@
         <span class="sheet-action-status small text-muted align-self-center" id="sheet-action-status" role="status"></span>
         <button type="button" class="btn btn-outline-danger js-sheet-clear-all" title="Isprazni celu radnu listu (čuva se tek na „Sacuvaj“)"><i class="mdi mdi-eraser"></i> Poništi sve</button>
         <a href="{% url 'hr:work_time_sheet_print' sheet.pk %}" class="btn btn-outline-secondary" target="_blank" rel="noopener">Stampaj</a>
+        <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}" class="btn btn-outline-secondary" target="_blank" rel="noopener" title="Evidencija prolaza za mesec, A4 — prilog uz radnu listu">Stampaj evidenciju prolaza</a>
         <button type="submit" class="btn btn-primary" name="action" value="save">Sacuvaj</button>
         <button type="submit" class="btn btn-success" name="action" value="submit_print" formtarget="_blank">Predaj</button>
       </div>
@@ -181,6 +182,7 @@
       <div>
         <h2 class="h5 mb-1">Evidencija prolaza</h2>
         <div class="text-muted small">Obracun je pomocni prikaz iz ulaza i izlaza za izabrani mesec.</div>
+        <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}" class="btn btn-outline-secondary btn-sm mt-2" target="_blank" rel="noopener"><i class="mdi mdi-printer"></i> Stampaj kao prilog (A4)</a>
       </div>
       <div class="attendance-summary">
         <div>

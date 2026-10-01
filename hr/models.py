@@ -7,7 +7,7 @@ from .evaluation_models import (EvaluationGroup, EvaluationCriterion, Evaluation
     EvaluationUnitSetup, EvaluationEmployeeSetup, EmployeeEvaluation, EvaluationApproval)
 from .resenja_models import Pismo, VrstaResenja, Potpisnik, Resenje, ResenjeDan
 from .zahtevi_models import VrstaZahteva, BrojacZahteva, Zahtev, ZahtevDan
-from .ugovori_models import UgovoriSinhronizacija, UgovorZaposlenog
+from .ugovori_models import DodatnoRadnoMesto, UgovoriSinhronizacija, UgovorZaposlenog
 
 
 class Employee(models.Model):

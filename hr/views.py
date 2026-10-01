@@ -34,7 +34,16 @@ from .forms import (
 )
 from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision
 from .querysets import employee_list_queryset
-from .services.attendance import calculate_daily_hours_from_clock_events, get_clock_events, month_period
+from .services.attendance import (
+    DEFAULT_CLOCK_BUTTON_DEFINITIONS,
+    DEFAULT_ENTRY_BUTTONS,
+    DEFAULT_EXIT_BUTTONS,
+    DEFAULT_OFFICIAL_EXIT_BUTTONS,
+    _event_datetime,
+    calculate_daily_hours_from_clock_events,
+    get_clock_events,
+    month_period,
+)
 from .services.sick_leave import sick_leaves_by_day
 from .services.praznici import neradni_praznici
 from .services.work_time_prefill import predlog as predlog_radne_liste
@@ -207,7 +216,8 @@ def _employee_detail_context(employee, *, is_self_profile=False, user=None):
     )
 
     # Ugovori o radu i van radnog odnosa iz kadrovske baze (Kadrovi → Ugovori), vezani za zaposlenog.
-    ugovori_zaposlenog = employee.ugovori.select_related("glavni_ugovor").order_by("-datum_od", "-redni_broj")
+    ugovori_zaposlenog = (employee.ugovori.select_related("glavni_ugovor").prefetch_related("dodatna_radna_mesta")
+                          .order_by("-datum_od", "-redni_broj"))
 
     resenja = employee.resenja.select_related("vrsta").order_by("-datum_resenja", "-pk")
     zahtevi = employee.zahtevi.select_related("vrsta", "podnosilac").prefetch_related("resenja").order_by("-datum_zahteva", "-redni_broj")
@@ -454,6 +464,127 @@ class EmployeeCVItemDeleteView(OwnEmployeeCVMixin, DeleteView):
     template_name = "hr/cv_item_confirm_delete.html"
 
 
+DANI_U_NEDELJI = ("pon", "uto", "sre", "čet", "pet", "sub", "ned")
+
+
+def _naziv_prolaza(button):
+    """Kratak naziv prolaza za štampu: ulaz, izlaz, službeni izlaz ili naziv tastera."""
+    taster = str(button if button is not None else "").strip()
+    if taster in DEFAULT_ENTRY_BUTTONS:
+        return "ulaz"
+    if taster in DEFAULT_EXIT_BUTTONS:
+        return "izlaz"
+    if taster in DEFAULT_OFFICIAL_EXIT_BUTTONS:
+        return "službeni izlaz"
+    return DEFAULT_CLOCK_BUTTON_DEFINITIONS.get(taster, f"taster {taster}").lower()
+
+
+def evidencija_prolaza(employee, year, month, days_in_month):
+    """Evidencija prolaza za mesec: isti podaci za ekran radne liste, štampu priloga i predlog."""
+    attendance_error = None
+    try:
+        date_from, date_to, _last_day = month_period(year, month)
+        clock_events = get_clock_events(
+            date_from=date_from,
+            date_to=date_to,
+            employee_code=employee.employee_code,
+        )
+        daily_hours, issues = calculate_daily_hours_from_clock_events(clock_events)
+    except DatabaseError:
+        attendance_error = "Izvor prolazaka trenutno nije dostupan. Bolovanja i putni nalozi prikazani su iz aplikacije."
+        clock_events, daily_hours, issues = [], [], []
+
+    daily_by_date = {item.date: item for item in daily_hours}
+    passes_by_date = {}
+    for event in clock_events:
+        event_dt = _event_datetime(event.event_time)
+        if event_dt:
+            passes_by_date.setdefault(event_dt.date(), []).append(
+                {"time": event_dt.strftime("%H:%M"), "label": _naziv_prolaza(event.button)}
+            )
+    travel_orders_by_day = _travel_orders_by_day(employee, year, month)
+    leaves_by_day = sick_leaves_by_day(employee, year, month)
+    holidays = neradni_praznici(year)
+    notes_by_date = {}
+    for issue in issues:
+        notes_by_date.setdefault(issue.date, []).append(issue)
+
+    rows = []
+    total_minutes = 0
+    for day in range(1, days_in_month + 1):
+        work_date = date(year, month, day)
+        item = daily_by_date.get(work_date)
+        day_notes = notes_by_date.get(work_date, [])
+        day_problems = [note for note in day_notes if note.is_problem]
+        total_minutes += item.total_minutes if item else 0
+
+        if day_problems:
+            status = "Problem"
+            status_class = "problem"
+        elif item and item.pair_count:
+            status = "OK"
+            status_class = "ok"
+        else:
+            status = "Nema prolaza"
+            status_class = "empty"
+
+        issue_messages = []
+        for issue in day_notes:
+            issue_time = issue.event_time.strftime("%H:%M") if hasattr(issue.event_time, "strftime") else issue.event_time
+            issue_messages.append(f"{issue_time} - {issue.message}")
+        travel_orders = [
+            {
+                "order_number": order.order_number,
+                "location": order.travel_location,
+            }
+            for order in travel_orders_by_day.get(work_date, [])
+        ]
+        sick_leaves = leaves_by_day.get(work_date, [])
+        if sick_leaves and not day_problems and not (item and item.pair_count):
+            status, status_class = "Bolovanje", "leave"
+        elif attendance_error:
+            status, status_class = "Nije učitano", "empty"
+
+        rows.append(
+            {
+                "day": day,
+                "date": work_date,
+                "weekday": work_date.strftime("%a"),
+                "weekday_label": DANI_U_NEDELJI[work_date.weekday()],
+                "passes": passes_by_date.get(work_date, []),
+                "is_weekend": calendar.weekday(year, month, day) >= 5,
+                "hours_label": "—" if attendance_error else (f"{item.hours}:{item.minutes:02d}" if item else "0:00"),
+                "decimal_label": "—" if attendance_error else (f"{item.total_hours:.2f}" if item else "0.00"),
+                "pair_count": item.pair_count if item else 0,
+                "issue_count": len(day_problems),
+                "status": status,
+                "status_class": status_class,
+                "issue_messages": issue_messages,
+                "travel_orders": travel_orders,
+                "sick_leaves": sick_leaves,
+                "holiday": holidays.get(work_date, ""),
+            }
+        )
+
+    return {
+        "clock_attendance_error": attendance_error,
+        "clock_attendance_rows": rows,
+        "clock_attendance_summary": {
+            "event_count": len(clock_events),
+            "day_count": len([item for item in daily_hours if item.pair_count or item.issue_count]),
+            "total_label": "—" if attendance_error else f"{total_minutes // 60}:{total_minutes % 60:02d}",
+            "issue_count": len([issue for issue in issues if issue.is_problem]),
+        },
+        # Isti podaci služe i za predlog popunjavanja, da se izvor prolazaka ne čita dvaput.
+        "_prefill_sources": {
+            "prolazi_po_danu": daily_by_date,
+            "putni_nalozi_po_danu": travel_orders_by_day,
+            "bolovanja_po_danu": leaves_by_day,
+            "prolazi_ucitani": attendance_error is None,
+        },
+    }
+
+
 class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
     template_name = "hr/work_time_sheet.html"
     MONTH_LABELS = [
@@ -521,99 +652,7 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         return sheet
 
     def build_clock_attendance_context(self, employee, year, month, days_in_month):
-        attendance_error = None
-        try:
-            date_from, date_to, _last_day = month_period(year, month)
-            clock_events = get_clock_events(
-                date_from=date_from,
-                date_to=date_to,
-                employee_code=employee.employee_code,
-            )
-            daily_hours, issues = calculate_daily_hours_from_clock_events(clock_events)
-        except DatabaseError:
-            attendance_error = "Izvor prolazaka trenutno nije dostupan. Bolovanja i putni nalozi prikazani su iz aplikacije."
-            clock_events, daily_hours, issues = [], [], []
-
-        daily_by_date = {item.date: item for item in daily_hours}
-        travel_orders_by_day = _travel_orders_by_day(employee, year, month)
-        leaves_by_day = sick_leaves_by_day(employee, year, month)
-        holidays = neradni_praznici(year)
-        notes_by_date = {}
-        for issue in issues:
-            notes_by_date.setdefault(issue.date, []).append(issue)
-
-        rows = []
-        total_minutes = 0
-        for day in range(1, days_in_month + 1):
-            work_date = date(year, month, day)
-            item = daily_by_date.get(work_date)
-            day_notes = notes_by_date.get(work_date, [])
-            day_problems = [note for note in day_notes if note.is_problem]
-            total_minutes += item.total_minutes if item else 0
-
-            if day_problems:
-                status = "Problem"
-                status_class = "problem"
-            elif item and item.pair_count:
-                status = "OK"
-                status_class = "ok"
-            else:
-                status = "Nema prolaza"
-                status_class = "empty"
-
-            issue_messages = []
-            for issue in day_notes:
-                issue_time = issue.event_time.strftime("%H:%M") if hasattr(issue.event_time, "strftime") else issue.event_time
-                issue_messages.append(f"{issue_time} - {issue.message}")
-            travel_orders = [
-                {
-                    "order_number": order.order_number,
-                    "location": order.travel_location,
-                }
-                for order in travel_orders_by_day.get(work_date, [])
-            ]
-            sick_leaves = leaves_by_day.get(work_date, [])
-            if sick_leaves and not day_problems and not (item and item.pair_count):
-                status, status_class = "Bolovanje", "leave"
-            elif attendance_error:
-                status, status_class = "Nije učitano", "empty"
-
-            rows.append(
-                {
-                    "day": day,
-                    "date": work_date,
-                    "weekday": work_date.strftime("%a"),
-                    "is_weekend": calendar.weekday(year, month, day) >= 5,
-                    "hours_label": "—" if attendance_error else (f"{item.hours}:{item.minutes:02d}" if item else "0:00"),
-                    "decimal_label": "—" if attendance_error else (f"{item.total_hours:.2f}" if item else "0.00"),
-                    "pair_count": item.pair_count if item else 0,
-                    "issue_count": len(day_problems),
-                    "status": status,
-                    "status_class": status_class,
-                    "issue_messages": issue_messages,
-                    "travel_orders": travel_orders,
-                    "sick_leaves": sick_leaves,
-                    "holiday": holidays.get(work_date, ""),
-                }
-            )
-
-        return {
-            "clock_attendance_error": attendance_error,
-            "clock_attendance_rows": rows,
-            "clock_attendance_summary": {
-                "event_count": len(clock_events),
-                "day_count": len([item for item in daily_hours if item.pair_count or item.issue_count]),
-                "total_label": "—" if attendance_error else f"{total_minutes // 60}:{total_minutes % 60:02d}",
-                "issue_count": len([issue for issue in issues if issue.is_problem]),
-            },
-            # Isti podaci služe i za predlog popunjavanja, da se izvor prolazaka ne čita dvaput.
-            "_prefill_sources": {
-                "prolazi_po_danu": daily_by_date,
-                "putni_nalozi_po_danu": travel_orders_by_day,
-                "bolovanja_po_danu": leaves_by_day,
-                "prolazi_ucitani": attendance_error is None,
-            },
-        }
+        return evidencija_prolaza(employee, year, month, days_in_month)
 
     def build_context(self, *, header_form=None, line_formset=None):
         employee = self.get_employee()
@@ -773,6 +812,29 @@ class WorkTimeSheetPrintView(LoginRequiredMixin, TemplateView):
                 "days_in_month": days_in_month,
                 "working_days": working_days,
                 "generated_date": timezone.localdate(),
+            }
+        )
+        return context
+
+
+class WorkTimeSheetAttendancePrintView(WorkTimeSheetPrintView):
+    """Evidencija prolaza za mesec radne liste — prilog uz radnu listu. Ista prava kao štampa radne liste."""
+
+    template_name = "hr/work_time_sheet_attendance_print.html"
+
+    def get_context_data(self, **kwargs):
+        context = TemplateView.get_context_data(self, **kwargs)
+        sheet = self.get_sheet()
+        days_in_month = calendar.monthrange(sheet.year, sheet.month)[1]
+        attendance = evidencija_prolaza(sheet.employee, sheet.year, sheet.month, days_in_month)
+        attendance.pop("_prefill_sources")
+        context.update(attendance)
+        context.update(
+            {
+                "sheet": sheet,
+                "employee": sheet.employee,
+                "month_name": self.MONTH_LABELS[sheet.month - 1],
+                "generated_at": timezone.localtime(),
             }
         )
         return context

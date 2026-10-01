@@ -2,7 +2,7 @@
 
 Spisak dolazi iz sinhronizovane tabele (`hr/services/ugovori.py`); Kadrovi unose broj ugovora,
 broj aneksa (uz vezu na glavni ugovor), skeniran dokument i napomenu, a po potrebi ispravljaju
-zabelezenu OJ i radno mesto. Vidljivost prati obuhvat Kadrova (zaposleni u obuhvatu korisnika).
+zabelezenu OJ i radno mesto i dodaju druga radna mesta (za BZR; izvestaji uzimaju prvo). Vidljivost prati obuhvat Kadrova (zaposleni u obuhvatu korisnika).
 """
 import os
 
@@ -24,7 +24,7 @@ from django.views.generic import TemplateView
 
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from hr.access import scope_employee_records
-from hr.models import UgovoriSinhronizacija, UgovorZaposlenog
+from hr.models import DodatnoRadnoMesto, UgovoriSinhronizacija, UgovorZaposlenog
 from hr.services import ugovori as servis
 
 SIDEBAR = "sidebar_kadrovi.html"
@@ -82,7 +82,8 @@ def _filtriraj(request, qs):
         uslov = (Q(ime_prezime__icontains=pojam) | Q(employee__first_name__icontains=pojam)
                  | Q(employee__last_name__icontains=pojam) | Q(broj_ugovora__icontains=pojam)
                  | Q(broj_aneksa__icontains=pojam) | Q(naziv_oj__icontains=pojam)
-                 | Q(naziv_radnog_mesta__icontains=pojam) | Q(oj=pojam))
+                 | Q(naziv_radnog_mesta__icontains=pojam) | Q(oj=pojam)
+                 | Q(pk__in=DodatnoRadnoMesto.objects.filter(naziv_radnog_mesta__icontains=pojam).values("ugovor")))
         if pojam.isdigit():
             uslov |= Q(employee_code=int(pojam))
         qs = qs.filter(uslov)
@@ -128,7 +129,7 @@ class UgovorDataView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
         except (TypeError, ValueError):
             start, duzina, draw = 0, 50, 0
         moze_dokument = user_has_role_permission(request.user, "hr:ugovor_dokument")
-        redovi = [self._red(r, moze_dokument) for r in qs[start:start + duzina]]
+        redovi = [self._red(r, moze_dokument) for r in qs.prefetch_related("dodatna_radna_mesta")[start:start + duzina]]
         return JsonResponse({"draw": draw, "recordsTotal": sve.count(), "recordsFiltered": qs.count(), "data": redovi})
 
     @staticmethod
@@ -164,7 +165,9 @@ class UgovorDataView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
             "kategorija": kategorija,
             "oj": (f'<strong>{escape(r.oj)}</strong><div class="ugovor-small">{escape(r.naziv_oj)}</div>' if r.oj else "—"),
             "radno_mesto": (f'<strong>{escape(r.sifra_sistematizacije)}</strong>'
-                            f'<div class="ugovor-small">{escape(r.naziv_radnog_mesta)}</div>' if r.sifra_sistematizacije else "—"),
+                            f'<div class="ugovor-small">{escape(r.naziv_radnog_mesta)}</div>' if r.sifra_sistematizacije else "—")
+                           + "".join(f'<div class="ugovor-small" title="{n}. radno mesto">{n}. {escape(str(m))}</div>'
+                                     for n, m in enumerate(r.dodatna_radna_mesta.all(), start=2)),
             "broj_ugovora": ((escape(r.broj_ugovora) or '<span class="ugovor-badge muted">Nije uneto</span>')
                              + (f'<div class="ugovor-small">od {r.datum_ugovora:%d.%m.%Y.}</div>' if r.datum_ugovora else "")),
             "aneks": aneks,
@@ -221,6 +224,27 @@ class UgovorForm(forms.ModelForm):
         return data
 
 
+class DodatnoRadnoMestoForm(forms.ModelForm):
+    class Meta:
+        model = DodatnoRadnoMesto
+        fields = list(POLJA_OJ)
+        widgets = {polje: forms.TextInput(attrs={"class": "form-control"}) for polje in POLJA_OJ}
+
+    def clean(self):
+        data = super().clean()
+        if not self.cleaned_data.get("DELETE") and not (data.get("sifra_sistematizacije") or data.get("naziv_radnog_mesta")):
+            raise forms.ValidationError("Unesite šifru ili naziv radnog mesta.")
+        return data
+
+
+DodatnaRadnaMestaFormSet = forms.inlineformset_factory(UgovorZaposlenog, DodatnoRadnoMesto, form=DodatnoRadnoMestoForm,
+                                                       extra=0, can_delete=True)
+
+
+def _radna_mesta(data=None, instance=None):
+    return DodatnaRadnaMestaFormSet(data, instance=instance, prefix="rm")
+
+
 class UgovorDetailView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
     template_name = "hr/ugovori/ugovor_detail.html"
 
@@ -231,6 +255,8 @@ class UgovorDetailView(LoginRequiredMixin, RolePermissionRequiredMixin, Template
         ctx.update(
             title=f"Ugovor — {_ime(red)}", sidebar_template=SIDEBAR, red=red, ime=_ime(red), period=_period(red),
             form=kwargs.get("form") or UgovorForm(instance=red),
+            radna_mesta=kwargs.get("radna_mesta") or _radna_mesta(instance=red),
+            dodatna_radna_mesta=red.dodatna_radna_mesta.all(),
             periodi=(vidljivi(user).filter(employee_code=red.employee_code).order_by("-datum_od", "-redni_broj")),
             aneksi=red.aneksi.order_by("datum_od"),
             can_update=user_has_role_permission(user, "hr:ugovor_update"),
@@ -272,10 +298,12 @@ def ugovor_update(request, pk):
 
     pre = {polje: getattr(red, polje) for polje in POLJA_OJ}
     form = UgovorForm(request.POST, request.FILES, instance=red)
-    if not form.is_valid():
+    radna_mesta = _radna_mesta(request.POST, instance=red)
+    form_ok = form.is_valid()  # obe forme se proveravaju, da se vide sve greške odjednom
+    if not (radna_mesta.is_valid() and form_ok):
         view = UgovorDetailView()
         view.setup(request, pk=pk)
-        return view.render_to_response(view.get_context_data(red=red, form=form), status=400)
+        return view.render_to_response(view.get_context_data(red=red, form=form, radna_mesta=radna_mesta), status=400)
     red = form.save(commit=False)
     if any(getattr(red, polje) != pre[polje] for polje in POLJA_OJ):
         red.podaci_poreklo, red.podaci_zabelezeni = UgovorZaposlenog.Poreklo.RUCNO, timezone.localdate()
@@ -285,6 +313,7 @@ def ugovor_update(request, pk):
         red.dokument_naziv = ""
     red.izmenio, red.izmenjeno = request.user, timezone.now()
     red.save()
+    radna_mesta.save()
     messages.success(request, "Ugovor je sačuvan.")
     return redirect(detalj)
 

@@ -1,0 +1,134 @@
+{% load static %}
+{% comment %}
+Evidencija prolaza za mesec radne liste — štampa se kao prilog uz radnu listu (A4 uspravno).
+Podaci su isti kao u odeljku „Evidencija prolaza” na ekranu radne liste (`hr.views.evidencija_prolaza`).
+{% endcomment %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>Evidencija prolaza {{ sheet.month|stringformat:"02d" }}/{{ sheet.year }} — {{ employee.display_last_name }} {{ employee.display_first_name }}</title>
+  <style>
+    @page { size: A4 portrait; margin: 10mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f3f3; color: #000; font-family: Arial, Helvetica, sans-serif; font-size: 8pt;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px; }
+    .toolbar button { border: 1px solid #2563eb; background: #2563eb; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    .page { width: 210mm; min-height: 297mm; background: #fff; margin: 0 auto 12mm; padding: 10mm; }
+    .print-head { position: relative; padding-top: 3mm; margin-bottom: 5mm; }
+    .print-logo { position: absolute; left: 0; top: 0; width: 28mm; height: auto; }
+    .company { text-align: center; font-size: 11pt; font-weight: 700; line-height: 8mm; }
+    .print-title { text-align: center; font-size: 15pt; font-weight: 700; letter-spacing: 4px; margin-top: 5mm; }
+    .print-subtitle { text-align: center; font-size: 9pt; margin-top: 1.5mm; color: #222; }
+    .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin: 6mm 0 4mm; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #000; padding: 1mm 1.4mm; vertical-align: top; text-align: left; line-height: 1.2; }
+    th { background: #f2f2f2; font-weight: 700; text-align: center; vertical-align: middle; }
+    .header-table td { height: 6.5mm; vertical-align: middle; }
+    .header-label { width: 32mm; color: #222; }
+    .header-value { font-weight: 700; }
+    .c { text-align: center; }
+    .r { text-align: right; white-space: nowrap; }
+    .day-col { width: 8mm; }
+    .date-col { width: 22mm; }
+    .hours-col { width: 14mm; }
+    .status-col { width: 20mm; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+    .weekend td { background: #fff3cf; }
+    .problem td { background: #fde8e8; }
+    .pass { display: inline-block; white-space: nowrap; margin-right: 2.5mm; }
+    .pass b { font-weight: 700; }
+    .note { display: block; }
+    .muted { color: #666; }
+    tfoot td { background: #eaf2ff; font-weight: 700; }
+    .warning { border: 1.5px solid #b45309; background: #fff7ed; color: #7c2d12; padding: 3mm; margin-bottom: 4mm; font-size: 9pt; font-weight: 700; }
+    .legend { margin-top: 2.5mm; font-size: 7pt; color: #333; }
+    .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 30mm; margin-top: 14mm; font-size: 8pt; }
+    .signature-line { border-top: 1px solid #000; }
+    .signature-caption { text-align: center; margin-top: 1mm; }
+    .generated { margin-top: 6mm; font-size: 7pt; color: #333; display: flex; justify-content: space-between; }
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none; }
+      .page { width: auto; min-height: 0; margin: 0; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span>Evidencija prolaza — prilog radne liste · <a href="{% url 'hr:work_time_sheet_print' sheet.pk %}">Radna lista</a></span>
+    <button type="button" onclick="window.print()">Štampaj</button>
+  </div>
+  <section class="page">
+    <div class="print-head">
+      <img class="print-logo" src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+      <div class="company">Institut za ispitivanje materijala a.d. Beograd</div>
+      <div class="print-title">EVIDENCIJA PROLAZA</div>
+      <div class="print-subtitle">Prilog radne liste za {{ month_name|lower }} {{ sheet.year }}.</div>
+    </div>
+
+    <div class="header-grid">
+      <table class="header-table">
+        <tr><td class="header-label">zaposleni</td><td class="header-value">{{ employee.display_first_name }} {{ employee.display_last_name }}</td></tr>
+        <tr><td class="header-label">šifra radnika</td><td class="header-value">{{ employee.employee_code }}</td></tr>
+      </table>
+      <table class="header-table">
+        <tr><td class="header-label">mesec</td><td class="header-value">{{ month_name }} {{ sheet.year }}</td></tr>
+        <tr><td class="header-label">ukupno sati / dana</td><td class="header-value">{{ clock_attendance_summary.total_label }} · {{ clock_attendance_summary.day_count }} dana</td></tr>
+      </table>
+    </div>
+
+    {% if clock_attendance_error %}
+      <div class="warning">Evidencija prolaza nije učitana: {{ clock_attendance_error }} Ovaj prilog nije potpun — ne prilagati ga uz radnu listu, nego ga odštampati ponovo kada izvor bude dostupan.</div>
+    {% endif %}
+
+    <table>
+      <thead>
+        <tr>
+          <th class="day-col">Dan</th>
+          <th class="date-col">Datum</th>
+          <th>Prolazi</th>
+          <th class="hours-col">Sati</th>
+          <th class="status-col">Status</th>
+          <th>Napomena</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in clock_attendance_rows %}
+          <tr class="{% if row.is_weekend %}weekend{% endif %} {% if row.status_class == 'problem' %}problem{% endif %}">
+            <td class="c"><b>{{ row.day }}</b></td>
+            <td>{{ row.date|date:"d.m.Y." }} <span class="muted">{{ row.weekday_label }}</span></td>
+            <td>{% for prolaz in row.passes %}<span class="pass"><b>{{ prolaz.time }}</b> {{ prolaz.label }}</span>{% empty %}<span class="muted">—</span>{% endfor %}</td>
+            <td class="r"><b>{{ row.hours_label }}</b></td>
+            <td>{{ row.status }}</td>
+            <td>
+              {% if row.holiday %}<span class="note">Praznik · {{ row.holiday }}</span>{% endif %}
+              {% for leave in row.sick_leaves %}<span class="note">Bolovanje · RFZO {{ leave.rfzo_id }}</span>{% endfor %}
+              {% for travel_order in row.travel_orders %}<span class="note">Putni nalog {{ travel_order.order_number }}{% if travel_order.location %} — {{ travel_order.location }}{% endif %}</span>{% endfor %}
+              {% for message in row.issue_messages %}<span class="note">{{ message }}</span>{% endfor %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="r">Ukupno ({{ clock_attendance_summary.event_count }} prolaza, {{ clock_attendance_summary.day_count }} dana{% if clock_attendance_summary.issue_count %}, problema: {{ clock_attendance_summary.issue_count }}{% endif %})</td>
+          <td class="r">{{ clock_attendance_summary.total_label }}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="legend">Sati su zbir parova ulaz–izlaz po danu; službeni izlazak računa se do 16:00. Status „Problem” znači ulaz bez izlaza, izlaz bez ulaza ili taster koji se ne uključuje u obračun.</div>
+
+    <div class="signatures">
+      <div><div class="signature-line"></div><div class="signature-caption">Zaposleni</div></div>
+      <div><div class="signature-line"></div><div class="signature-caption">Rukovodilac</div></div>
+    </div>
+    <div class="generated">
+      <span>Izvor: sistem kontrole pristupa · štampano {{ generated_at|date:"d.m.Y. H:i" }}</span>
+      <span>Radna lista {{ sheet.month|stringformat:"02d" }}/{{ sheet.year }} · šifra {{ employee.employee_code }}</span>
+    </div>
+  </section>
+</body>
+</html>

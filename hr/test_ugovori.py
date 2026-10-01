@@ -10,7 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import PermissionCode, Role
-from hr.models import Employee, UgovoriSinhronizacija, UgovorZaposlenog
+from hr.models import DodatnoRadnoMesto, Employee, UgovoriSinhronizacija, UgovorZaposlenog
 from hr.services import ugovori
 from hr.test_registar import NA_REGISTRU, radnik
 from organizacija.models import DodelaUloge
@@ -133,8 +133,13 @@ class EkraniTests(TestCase):
         self.korisnik.roles.add(self.uloga)
         self.client.force_login(self.korisnik)
 
-    def izmena(self, red, **podaci):
-        return self.client.post(reverse("hr:ugovor_update", args=[red.pk]), {"akcija": "sacuvaj", **{
+    def izmena(self, red, radna_mesta=(), **podaci):
+        """`radna_mesta`: dodatna radna mesta kao recnici polja formseta (sa `id` za postojeca)."""
+        formset = {"rm-TOTAL_FORMS": str(len(radna_mesta)), "rm-INITIAL_FORMS": str(sum(1 for m in radna_mesta if m.get("id"))),
+                   "rm-MIN_NUM_FORMS": "0", "rm-MAX_NUM_FORMS": "1000"}
+        for i, mesto in enumerate(radna_mesta):
+            formset.update({f"rm-{i}-{polje}": vrednost for polje, vrednost in mesto.items()})
+        return self.client.post(reverse("hr:ugovor_update", args=[red.pk]), {"akcija": "sacuvaj", **formset, **{
             "broj_ugovora": "", "broj_aneksa": "", "glavni_ugovor": "", "napomena": "",
             "oj": red.oj, "naziv_oj": red.naziv_oj, "sifra_sistematizacije": red.sifra_sistematizacije,
             "naziv_radnog_mesta": red.naziv_radnog_mesta, **podaci}})
@@ -192,6 +197,8 @@ class EkraniTests(TestCase):
         self.assertContains(odgovor, "01-10/2024")
         self.assertContains(odgovor, "27.02.2024.")
         self.assertContains(odgovor, reverse("hr:ugovor_detail", args=[self.glavni.pk]))
+        DodatnoRadnoMesto.objects.create(ugovor=self.glavni, sifra_sistematizacije="41", naziv_radnog_mesta="VKV RADNIK")
+        self.assertContains(self.client.get(reverse("employee_detail", args=[zaposleni.pk])), "2. 41 VKV RADNIK")
         # sopstveni profil: vidi svoje ugovore, bez ulaska u unos Kadrova
         radnik = get_user_model().objects.create_user("radnik-ugovori", password="x", employee=zaposleni)
         self.client.force_login(radnik)
@@ -214,6 +221,38 @@ class EkraniTests(TestCase):
         self.assertEqual(odgovor.status_code, 400)
         self.assertContains(odgovor, "Dozvoljeni su PDF", status_code=400)
         self.assertContains(self.izmena(self.glavni), "Unesite broj ugovora.", status_code=400)  # broj ugovora
+
+    def test_vise_radnih_mesta_prvo_ostaje_za_izvestaje(self):
+        odgovor = self.izmena(self.glavni, broj_ugovora="5", radna_mesta=[
+            {"oj": "414", "naziv_oj": "Druga laboratorija", "sifra_sistematizacije": "41", "naziv_radnog_mesta": "VKV RADNIK"}])
+        self.assertEqual(odgovor.status_code, 302)
+        self.glavni.refresh_from_db()
+        self.assertEqual((self.glavni.sifra_sistematizacije, self.glavni.naziv_radnog_mesta), ("40", "KV RADNIK II"))
+        self.assertEqual(self.glavni.podaci_poreklo, UgovorZaposlenog.Poreklo.SINHRONIZACIJA)  # prvo nije menjano
+        drugo = self.glavni.dodatna_radna_mesta.get()
+        self.assertEqual((drugo.oj, drugo.naziv_radnog_mesta), ("414", "VKV RADNIK"))
+        detalj = self.client.get(reverse("hr:ugovor_detail", args=[self.glavni.pk]))
+        self.assertContains(detalj, "za izveštaje")
+        self.assertContains(detalj, 'value="VKV RADNIK"')
+        podaci = self.client.get(reverse("hr:ugovor_data"), {"draw": 1, "q": "VKV"}).json()
+        self.assertEqual(podaci["recordsFiltered"], 1)
+        self.assertIn("2. 41 VKV RADNIK", podaci["data"][0]["radno_mesto"])
+        # sinhronizacija i preuzimanje iz kadrovske baze ne diraju dodatna radna mesta
+        ugovori.sinhronizuj(izvor=izvor(periodi=[period(), period(rb=2, od=datetime.datetime(2025, 3, 1))]), danas=DANAS)
+        self.assertTrue(self.glavni.dodatna_radna_mesta.exists())
+        # brisanje
+        self.assertEqual(self.izmena(self.glavni, broj_ugovora="5", radna_mesta=[
+            {"id": drugo.pk, "ugovor": self.glavni.pk, "oj": "414", "naziv_oj": "", "sifra_sistematizacije": "41",
+             "naziv_radnog_mesta": "VKV RADNIK", "DELETE": "on"}]).status_code, 302)
+        self.assertFalse(DodatnoRadnoMesto.objects.exists())
+
+    def test_dodatno_radno_mesto_trazi_sifru_ili_naziv(self):
+        odgovor = self.izmena(self.glavni, broj_ugovora="5", radna_mesta=[{"oj": "414"}])
+        self.assertContains(odgovor, "Unesite šifru ili naziv radnog mesta.", status_code=400)
+        self.assertFalse(DodatnoRadnoMesto.objects.exists())
+        prazno = self.izmena(self.glavni, broj_ugovora="5", radna_mesta=[{"oj": ""}])  # prazan red se preskace
+        self.assertEqual(prazno.status_code, 302)
+        self.assertFalse(DodatnoRadnoMesto.objects.exists())
 
     def test_potvrda_promenjenog_perioda(self):
         UgovorZaposlenog.objects.filter(pk=self.glavni.pk).update(prethodni_datum_od=datetime.date(2024, 2, 1))
