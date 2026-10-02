@@ -18,6 +18,7 @@
 
     <!-- Custom CSS -->
     <link href="{% static 'fleet/dist/css/style.css' %}" rel="stylesheet">
+    <link href="{% static 'fleet/css/ims-header.css' %}?v=20261002-4" rel="stylesheet">
     <!-- (ispravljeno) ne linkuj JS kao CSS -->
     {# <link src="{% static 'fleet/dist/js/script.js' %}" rel="stylesheet"> #}
 
@@ -55,7 +56,7 @@
     <!-- ============================================================== -->
     <!-- Main wrapper -->
     <!-- ============================================================== -->
-    <div id="main-wrapper" data-layout="vertical" data-navbarbg="skin5" data-sidebartype="full"
+    <div id="main-wrapper" class="mini-sidebar" data-layout="vertical" data-navbarbg="skin5" data-sidebartype="mini-sidebar"
          data-sidebar-position="absolute" data-header-position="absolute" data-boxed-layout="full">
 
         {% include "header.html" %}

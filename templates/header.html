@@ -1,106 +1,18 @@
 {% load static %}
-<style>
-  .topbar .app-nav {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: thin;
-  }
-  .topbar .navbar-collapse,
-  .topbar .navbar-nav.me-auto,
-  .topbar .app-nav-wrap {
-    min-width: 0;
-  }
-  .topbar .navbar-collapse {
-    align-items: stretch;
-  }
-  .topbar .navbar-nav.me-auto {
-    height: 64px;
-    align-items: flex-end;
-  }
-  .topbar .navbar-nav.me-auto,
-  .topbar .app-nav-wrap {
-    flex: 1 1 auto;
-  }
-  .topbar .app-nav-wrap {
-    display: flex;
-    align-items: flex-end;
-    padding-bottom: 6px;
-  }
-  .topbar .top-navbar .navbar-nav > .app-nav-wrap:hover {
-    background: transparent;
-  }
-  .topbar .top-navbar .navbar-nav .app-nav .nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 36px !important;
-    min-height: 36px;
-    padding: 7px 11px !important;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    color: rgba(255, 255, 255, 0.82);
-    font-weight: 600;
-    line-height: 1 !important;
-    white-space: nowrap;
-  }
-  .topbar .top-navbar .navbar-nav .app-nav .nav-link i {
-    font-size: 18px;
-    line-height: 1;
-  }
-  .topbar .top-navbar .navbar-nav .app-nav .nav-link:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.10);
-  }
-  .topbar .top-navbar .navbar-nav .app-nav .nav-link.active {
-    color: #fff;
-    background: rgba(47, 143, 111, 0.95);
-    border-color: rgba(255, 255, 255, 0.22);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-  }
-  .topbar .top-navbar .navbar-nav .app-nav .nav-link.disabled {
-    color: rgba(255, 255, 255, 0.42);
-    cursor: not-allowed;
-  }
-  @media (max-width: 991.98px) {
-    .topbar .app-nav .app-label {
-      display: none;
-    }
-    .topbar .top-navbar .navbar-nav .app-nav .nav-link {
-      min-width: 38px;
-      justify-content: center;
-      padding-left: 9px !important;
-      padding-right: 9px !important;
-    }
-  }
-</style>
-<header class="topbar" data-navbarbg="skin5">
-  <nav class="navbar top-navbar navbar-expand-md navbar-dark">
-
-    <div class="navbar-header" data-logobg="skin5">
-      <a class="navbar-brand" href="{% url 'dashboard' %}">
-        <b class="logo-icon ps-2">
-          <img src="{% static 'fleet/assets/images/full_logo.png' %}" alt="homepage" class="light-logo" height="45" />
-        </b>
-
-      </a>
-    </div>
-
-    <div class="navbar-collapse collapse justify-content-between" id="navbarSupportedContent" data-navbarbg="skin5">
-      <!-- LEVA STRANA: App switcher + sidebar toggle -->
-        <ul class="navbar-nav me-auto">
-        <!-- Sidebar Toggle -->
-        <li class="nav-item d-none d-lg-block">
-            <a class="nav-link sidebartoggler waves-effect waves-light" href="javascript:void(0)"
-            data-sidebartype="mini-sidebar">
-            <i class="mdi mdi-menu font-24"></i>
-            </a>
-        </li>
-
-        <li class="nav-item app-nav-wrap">
-          <div class="app-nav" aria-label="Aplikacije">
+<header class="topbar ims-header">
+  <nav class="ims-toolbar" aria-label="Glavna navigacija">
+    <a class="ims-brand" href="{% url 'pocetna' %}" aria-label="IMS ERP — početna strana">
+      <img src="{% static 'fleet/assets/images/ims-erp-mark-v2.png' %}" alt="" width="40" height="40">
+      <span class="ims-brand-name">IMS<span>ERP</span><small>INSTITUT IMS</small></span>
+    </a>
+    {% if not bez_menija %}
+    <button class="ims-icon-button sidebartoggler ims-desktop-toggle" type="button" aria-label="Proširi ili skupi bočni meni" title="Bočni meni"><i class="mdi mdi-menu" aria-hidden="true"></i></button>
+    {% endif %}
+    <details class="ims-app-switcher">
+      <summary><i class="mdi mdi-view-grid-outline" aria-hidden="true"></i><span>Moduli</span><i class="mdi mdi-chevron-down ims-chevron" aria-hidden="true"></i></summary>
+      <div class="ims-app-panel">
+        <div class="ims-panel-heading">Vaš radni prostor<small>Izaberite modul</small></div>
+        <div class="app-nav" aria-label="Aplikacije">
             <a class="nav-link {% if current_app == 'pocetna' %}active{% endif %}" href="{% url 'pocetna' %}" title="Početna — izbor modula">
               <i class="mdi mdi-home-variant"></i><span class="app-label">Početna</span>
             </a>
@@ -182,44 +94,22 @@
                 <i class="mdi mdi-lock"></i><span class="app-label">Admin</span>
               </a>
             {% endif %}
-          </div>
-        </li>
-
-        </ul>
-
-      <!-- DESNA STRANA: Logout -->
-      <ul class="navbar-nav ms-auto me-0 align-items-center">
-        <li class="nav-item me-3 text-white">
-          {% if user.is_authenticated %}
-            {% if must_change_password %}
-              <a class="btn btn-warning btn-sm me-2" href="{% url 'password_change' %}">
-                Promeni lozinku
-              </a>
-            {% endif %}
-            <a class="text-white fw-semibold text-decoration-none" href="{% url 'my_employee_profile' %}" title="Otvori moj profil">
-              <i class="mdi mdi-account-circle me-1"></i>{% if user.employee %}{{ user.employee.display_first_name }} {{ user.employee.display_last_name }}{% else %}{{ user.first_name|default:user.username }} {{ user.last_name }}{% endif %}
-            </a>
-          {% else %}
-            <span class="fw-semibold">Uloguj se</span>
-          {% endif %}
-        </li>
-        <li class="nav-item">
-          {% if user.is_authenticated %}
-            <form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">
-              {% csrf_token %}
-            </form>
-            <a class="nav-link waves-effect waves-dark text-white" href="#"
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-              <i class="fa fa-power-off me-1 ms-1"></i> Izloguj se
-            </a>
-          {% else %}
-            <a class="nav-link waves-effect waves-dark text-white" href="{% url 'login' %}">
-              <i class="fa fa-sign-in me-1 ms-1"></i> Uloguj se
-            </a>
-          {% endif %}
-        </li>
-      </ul>
+        </div>
+      </div>
+    </details>
+    <div class="ims-current-module" aria-live="polite"><span class="ims-module-dot"></span><span data-current-module>Radni prostor</span></div>
+    <div class="ims-account">
+      {% if user.is_authenticated %}
+        {% if must_change_password %}<a class="ims-password" href="{% url 'password_change' %}" title="Promeni lozinku"><i class="mdi mdi-key" aria-hidden="true"></i><span>Promeni lozinku</span></a>{% endif %}
+        <a class="ims-profile" href="{% url 'my_employee_profile' %}" title="Otvori moj profil">
+          <span class="ims-avatar" aria-hidden="true">{% if user.employee %}{{ user.employee.display_first_name|first }}{{ user.employee.display_last_name|first }}{% else %}{{ user.first_name|default:user.username|first }}{{ user.last_name|first }}{% endif %}</span>
+          <span class="ims-profile-text"><strong>{% if user.employee %}{{ user.employee.display_first_name }} {{ user.employee.display_last_name }}{% else %}{{ user.first_name|default:user.username }} {{ user.last_name }}{% endif %}</strong><small>Moj profil</small></span>
+        </a>
+        <form id="logout-form" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="ims-icon-button ims-logout" type="submit" aria-label="Izloguj se" title="Izloguj se"><i class="mdi mdi-logout" aria-hidden="true"></i></button></form>
+      {% else %}
+        <a class="ims-profile" href="{% url 'login' %}"><i class="mdi mdi-login" aria-hidden="true"></i> Uloguj se</a>
+      {% endif %}
     </div>
-
   </nav>
 </header>
+<script src="{% static 'fleet/js/ims-header.js' %}" defer></script>

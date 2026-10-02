@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% comment %}
 Početna strana aplikacije (core.views.pocetna): opis, izbor modula, nalog, uloge, obuhvat i dozvole.
 Bez bočnog menija (`bez_menija`); modul se bira karticom ili u zaglavlju.
@@ -7,11 +8,29 @@ Bez bočnog menija (`bez_menija`); modul se bira karticom ili u zaglavlju.
 
 {% block content %}
 <style>
-  .home-hero { border-radius: 10px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
-    color: #fff; padding: 28px 30px; margin-bottom: 18px; box-shadow: 0 12px 30px rgba(20, 57, 91, .2); }
-  .home-hero h1 { font-size: 1.9rem; margin: 0 0 6px; letter-spacing: 0; }
-  .home-hero p { margin: 0; color: rgba(255,255,255,.88); max-width: 820px; }
-  .home-hero .home-date { color: rgba(255,255,255,.75); font-size: .86rem; margin-bottom: 6px; }
+  .home-hero { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) 270px;
+    gap: 40px; align-items: center; border: 1px solid #304b60; border-radius: 18px;
+    background: radial-gradient(ellipse at 100% 0%, #245367 0%, transparent 60%), linear-gradient(115deg, #152536, #1b3448);
+    color: #fff; padding: 34px 38px; margin-bottom: 26px; box-shadow: 0 12px 28px #142c4314; }
+  .home-hero::after { content: ""; position: absolute; width: 370px; height: 370px; right: -170px; top: -220px;
+    border: 1px solid #7cd5e526; border-radius: 50%; box-shadow: 0 0 0 48px #7cd5e507, 0 0 0 96px #7cd5e505; pointer-events: none; }
+  .home-hero h1 { font-size: 30px; font-weight: 700; margin: 12px 0 10px; letter-spacing: -.6px; overflow-wrap: anywhere; }
+  .home-hero p { margin: 0; color: #b5c9d8; max-width: 650px; font-size: 14px; line-height: 1.7; }
+  .home-eyebrow { color: #7bd6e4; font-size: 10px; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; }
+  .home-hero-actions { display: flex; align-items: center; gap: 12px; margin-top: 24px; }
+  .home-hero-actions a { display: inline-flex; align-items: center; gap: 8px; border-radius: 9px; padding: 9px 15px; font-size: 12px; text-decoration: none; font-weight: 600; }
+  .home-profile-action { background: #74d5e3; color: #123343; border: 1px solid #74d5e3; }
+  .home-profile-action:hover { background: #9ee5ee; color: #123343; }
+  .home-password-action { color: #c1d3df; border: 1px solid #496376; }
+  .home-password-action:hover { color: #fff; background: #ffffff0c; }
+  .home-hero-identity { position: relative; z-index: 1; padding: 12px 0 12px 32px; border-left: 1px solid #7492a638; }
+  .home-hero-brand { display: flex; align-items: center; gap: 16px; }
+  .home-hero-brand img { width: 64px; height: 64px; object-fit: contain; }
+  .home-hero-wordmark { font-size: 29px; font-weight: 800; letter-spacing: -1px; line-height: 1.2; }
+  .home-hero-wordmark span { font-weight: 400; color: #7bd6e4; }
+  .home-hero-wordmark small { display: block; font-size: 8px; letter-spacing: 2.8px; color: #9eb7c9; margin-top: 6px; }
+  .home-hero .home-date { color: #9eb7c9; font-size: 11px; margin-top: 22px; line-height: 1.8; }
+  .home-hero .home-date strong { display: block; color: #d1e0eb; font-weight: 500; }
   .home-section-title { color: #647181; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin: 4px 0 10px; }
   .home-grid > [class*="col-"] { margin-bottom: 16px; }
   .home-module { display: flex; flex-direction: column; height: 100%; padding: 16px; border: 1px solid #e6ebf1; border-radius: 10px;
@@ -47,16 +66,22 @@ Bez bočnog menija (`bez_menija`); modul se bira karticom ili u zaglavlju.
   .home-about li { margin-bottom: 4px; }
 </style>
 
-<div class="home-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+<div class="home-hero">
   <div>
-    <div class="home-date">{{ user.last_login|date:"d.m.Y." }}{% if user.last_login %} · prijava u {{ user.last_login|date:"H:i" }}{% endif %}</div>
+    <div class="home-eyebrow">Vaš digitalni radni prostor</div>
     <h1>Dobro došli, {% if employee %}{{ employee.display_first_name }}{% else %}{{ user.first_name|default:user.username }}{% endif %}</h1>
-    <p>IMS ERP je interni informacioni sistem Instituta IMS — jedno mesto za vozni park, kadrove, finansije, nabavku,
-      potraživanja, isplate, pravne poslove, ugovore, menice, mobilnu telefoniju i arhivu. Izaberite modul u kome želite da radite.</p>
+    <p>Poslovanje Instituta IMS na jednom mestu.<br>Izaberite modul i nastavite sa radom.</p>
+    <div class="home-hero-actions">
+      <a class="home-profile-action" href="{% url 'my_employee_profile' %}"><i class="mdi mdi-account-circle" aria-hidden="true"></i> Moj profil <i class="mdi mdi-arrow-right" aria-hidden="true"></i></a>
+      <a class="home-password-action" href="{% url 'password_change' %}"><i class="mdi mdi-lock-reset" aria-hidden="true"></i> Promena lozinke</a>
+    </div>
   </div>
-  <div class="d-flex flex-wrap gap-2">
-    <a class="btn btn-light btn-sm" href="{% url 'my_employee_profile' %}"><i class="mdi mdi-account-circle" aria-hidden="true"></i> Moj profil</a>
-    <a class="btn btn-outline-light btn-sm" href="{% url 'password_change' %}"><i class="mdi mdi-lock-reset" aria-hidden="true"></i> Promena lozinke</a>
+  <div class="home-hero-identity">
+    <div class="home-hero-brand">
+      <img src="{% static 'fleet/assets/images/ims-erp-mark-v2.png' %}" alt="" width="64" height="64">
+      <div class="home-hero-wordmark">IMS <span>ERP</span><small>INSTITUT IMS</small></div>
+    </div>
+    {% if user.last_login %}<div class="home-date">Poslednja prijava<strong>{{ user.last_login|date:"d.m.Y." }} · {{ user.last_login|date:"H:i" }}</strong></div>{% endif %}
   </div>
 </div>
 

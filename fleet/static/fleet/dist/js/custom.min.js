@@ -89,15 +89,11 @@ $(function() {
     });
 
     //****************************
-    /* This is for the mini-sidebar if width is less then 1170*/
-    //**************************** 
+    /* Start collapsed; keep the user's manual toggle on resize. */
+    //****************************
     var setsidebartype = function() {
-        var width = (window.innerWidth > 0) ? window.innerWidth : this.screen.width;
-        if (width < 1170) {
-            $("#main-wrapper").attr("data-sidebartype", "mini-sidebar");
-        } else {
-            $("#main-wrapper").attr("data-sidebartype", "full");
-        }
+        var wrapper = $("#main-wrapper");
+        wrapper.attr("data-sidebartype", wrapper.hasClass("mini-sidebar") ? "mini-sidebar" : "full");
     };
     $(window).ready(setsidebartype);
     $(window).on("resize", setsidebartype);
