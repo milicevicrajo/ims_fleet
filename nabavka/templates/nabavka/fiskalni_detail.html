@@ -152,10 +152,27 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
       </div>
     </section>
 
+    {% if racun.putni_nalog %}
+    <section class="fiskalni-kartica">
+      <header><span><i class="mdi mdi-car-arrow-right"></i> Putni nalog</span>
+        {% if racun.proknjizeno %}<span class="invoice-badge ok"><i class="mdi mdi-check-decagram"></i> Proknjiženo</span>{% else %}<span class="invoice-badge muted">Nije proknjiženo</span>{% endif %}</header>
+      <div>
+        {% if racun.putni_nalog.storniran %}<div class="alert alert-warning py-2 mb-2"><i class="mdi mdi-alert"></i> Putni nalog je storniran.</div>{% endif %}
+        <dl class="fiskalni-podaci">
+          <dt>Broj naloga</dt><dd>{% if moze_putni_nalog %}<a href="{% url 'isplate:putni_nalozi_pravdanje' %}?status=svi&amp;q={{ racun.putni_nalog.order_number|urlencode }}">{{ racun.putni_nalog.order_number }}</a>{% else %}{{ racun.putni_nalog.order_number }}{% endif %}</dd>
+          <dt>Zaposleni</dt><dd>{{ racun.putni_nalog.employee|default:racun.putni_nalog.other_employee_name|default:"—" }}</dd>
+          <dt>Putovanje</dt><dd>{{ racun.putni_nalog.travel_location }} · {{ racun.putni_nalog.travel_date|date:"d.m.Y." }}{% if racun.putni_nalog.number_of_days %} · {{ racun.putni_nalog.number_of_days }} d.{% endif %}</dd>
+          <dt>Šifra posla naloga</dt><dd>{{ racun.putni_nalog.job_code.code }} · {{ racun.putni_nalog.job_code.name }}</dd>
+          <dt>Knjiženje</dt><dd>{% if racun.proknjizeno %}{{ racun.proknjizio.get_full_name|default:racun.proknjizio.username|default:"—" }} · {{ racun.proknjizeno_at|date:"d.m.Y. H:i" }}<div class="small text-muted">Proknjižen račun se ne menja i ne briše.</div>{% else %}Čeka knjiženje (Isplate → Putni nalozi – Fiskalni računi){% endif %}</dd>
+        </dl>
+      </div>
+    </section>
+    {% endif %}
+
     <section class="fiskalni-kartica">
       <header>Obrada računa</header>
       <div>
-        {% if nabavka_permissions.fiskalni_update %}
+        {% if moze_menjati %}
           <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" class="fiskalni-obrada">{% csrf_token %}
             <input type="hidden" name="akcija" value="obrada">
             {% if obrada_form.non_field_errors %}<div class="alert alert-danger py-2">{{ obrada_form.non_field_errors|join:" " }}</div>{% endif %}
@@ -214,7 +231,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
       <div>
         <div class="table-responsive">
           <table class="table table-sm align-middle mb-2">
-            <thead><tr><th>Šifra posla</th><th>Vrsta</th><th>Vraćeno</th><th>Napomena</th>{% if nabavka_permissions.fiskalni_update %}<th></th>{% endif %}</tr></thead>
+            <thead><tr><th>Šifra posla</th><th>Vrsta</th><th>Vraćeno</th><th>Napomena</th>{% if moze_menjati %}<th></th>{% endif %}</tr></thead>
             <tbody>
               {% for s in sifre %}
                 <tr>
@@ -222,7 +239,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
                   <td>{% if s.vrsta == "osnovna" %}<span class="invoice-badge ok">Osnovna</span>{% else %}<span class="invoice-badge muted">Dodatna</span>{% endif %}</td>
                   <td>{% if s.is_returned %}<span class="invoice-badge warn"><i class="mdi mdi-clipboard-check-outline"></i> Vraćeno</span><div class="small text-muted">{{ s.returned_by.username|default:"" }} {{ s.returned_at|date:"d.m.Y." }}</div>{% else %}—{% endif %}</td>
                   <td class="small">{{ s.note|default:"" }}</td>
-                  {% if nabavka_permissions.fiskalni_update %}<td class="text-end">
+                  {% if moze_menjati %}<td class="text-end">
                     {% if s.vrsta != "osnovna" %}
                       <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" onsubmit="return confirm('Ukloniti šifru {{ s.job_code.code }} sa računa?');">{% csrf_token %}
                         <input type="hidden" name="akcija" value="obrisi_sifru"><input type="hidden" name="sifra" value="{{ s.pk }}">
@@ -236,7 +253,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
           </table>
         </div>
         <p class="small text-muted mb-2">„Vraćeno” se označava po šifri posla dugmetom <strong>Vraćeno</strong> u spisku računa.</p>
-        {% if nabavka_permissions.fiskalni_update %}
+        {% if moze_menjati %}
           <form method="post" action="{% url 'nabavka:fiskalni_update' racun.pk %}" class="row g-2 align-items-end">{% csrf_token %}
             <input type="hidden" name="akcija" value="dodaj_sifru">
             <div class="col-md-6"><label class="form-label mb-1" for="{{ sifra_form.job_code.id_for_label }}">{{ sifra_form.job_code.label }}</label>{{ sifra_form.job_code }}</div>
@@ -273,7 +290,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
       </div>
     </section>
 
-    {% if nabavka_permissions.fiskalni_delete %}
+    {% if nabavka_permissions.fiskalni_delete and not racun.proknjizeno %}
     <form method="post" action="{% url 'nabavka:fiskalni_delete' racun.pk %}" onsubmit="return confirm('Obrisati ovaj račun iz evidencije?');">{% csrf_token %}
       <button class="btn btn-outline-danger btn-sm" type="submit"><i class="mdi mdi-delete"></i> Obriši račun</button>
     </form>

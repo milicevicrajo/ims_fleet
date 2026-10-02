@@ -1,18 +1,10 @@
 from django import forms
 from django.utils import timezone
 
+from arhiva import oj
 from arhiva.models import Kategorija, Predmet, Smer
 
 DATUM = {"type": "date", "class": "form-control"}
-
-
-def izbor_oj():
-    """Centri i organizacione jedinice iz registra (važeće verzije), sortirani po šifri: „43 · Naziv”."""
-    from organizacija.models import OrgNode, OrgNodeVersion
-
-    verzije = (OrgNodeVersion.objects.filter(valid_to__isnull=True, node__level__in=[OrgNode.LEVEL_CENTER, OrgNode.LEVEL_UNIT])
-               .order_by("full_code").values_list("node_id", "full_code", "name"))
-    return [(str(pk), f"{sifra} · {naziv}" if naziv else sifra) for pk, sifra, naziv in verzije]
 
 
 def izbor_kategorija():
@@ -47,7 +39,7 @@ class PisarnicaForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["glavna_oj"].choices = [("", "— izaberite centar ili OJ —")] + izbor_oj()
+        self.fields["glavna_oj"].choices = [("", "— izaberite centar ili OJ —")] + oj.izbor()
         self.fields["kategorija"].choices = izbor_kategorija()
         self.initial.setdefault("datum_zavodjenja", timezone.localdate())
 

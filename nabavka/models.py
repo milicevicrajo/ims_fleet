@@ -1125,6 +1125,14 @@ class FiskalniRacun(models.Model):
     ], verbose_name=_("Vrsta intervencije"))
     goes_to_warehouse = models.BooleanField(default=False, verbose_name=_("Ide u magacin"))
     is_returned = models.BooleanField(default=False, verbose_name=_("Vraćeno"))
+    # Isplate → Putni nalozi – Fiskalni računi (od 02.10.2026.): račun učitan na putnom nalogu ili vezan
+    # za njega; knjigovodstvo ga označava „proknjiženo”. Proknjižen račun se ne menja i ne briše.
+    putni_nalog = models.ForeignKey("fleet.PutniNalog", on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="fiskalni_racuni", verbose_name=_("Putni nalog"))
+    proknjizeno = models.BooleanField(default=False, db_index=True, verbose_name=_("Proknjiženo"))
+    proknjizio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+", verbose_name=_("Proknjižio"))
+    proknjizeno_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Proknjiženo dana"))
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name="nabavka_fiskalni_racuni", verbose_name=_("Učitao"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Učitano"))

@@ -163,6 +163,7 @@ Spisak PIB-ova banaka se čuva u kešu sat vremena. Stanje 28.09.2026.: 3.257 fa
 | Povezani kupovni ugovori | Ugovori sa šifrom tipa koja počinje sa `KUP` |
 | Povezane dodatne šifre posla | Dodate ručno |
 | **Interna dopuna** | `is_garage`, `vehicle`, `work_type`, `goes_to_warehouse`, `internal_note` |
+| **SEF faktura** (od 02.10.2026.) | Ulazna SEF faktura **istog broja i istog PIB-a** (`nabavka/services/sef_veza.py`) — meka veza, bez kopije podataka: status na SEF-u, vrsta, partner, datumi prometa i dospeća, osnovica, PDV, iznos, upozorenje kad se iznos razlikuje od EUF; veza „SEF faktura u Finansijama” (samo uz obuhvat cele firme) i **PDF sa SEF-a na dnu strane** (`nabavka:euf_invoice_sef_pdf`, isti fajl kao u Finansijama; ako nije preuzet, preuzima se pri otvaranju). PDF vidi svako ko vidi EUF fakturu. Provereno 02.10.2026.: 126 od 145 EUF faktura iz perioda SEF-a ima par, bez sukoba PIB-a. |
 
 Naziv partnera na spiskovima skraćuje se na **50 znakova**, a pun naziv se vidi kao
 `title` atribut (na prelazak mišem). [P]
@@ -217,6 +218,12 @@ Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
 | PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom |
 | Obuhvat | Ulazna faktura nema šifru posla (broj je dobavljačev), pa je na registru vidi samo **obuhvat cele firme** (`nabavka.access.ulazne_sef`) — uloga Nabavka i Uprava vide sve, korisnik vezan za centar ne vidi nijednu. |
 | Dozvole | `nabavka:uf_sef_list`, `nabavka:uf_sef_data`, `nabavka:uf_sef_pdf` — posle isporuke `manage.py sync_permission_codes` i dodela ulogama |
+
+**Računi sa putnih naloga (od 02.10.2026.):** račun može biti dodat pri pravdanju putnog naloga u
+Isplatama ili vezan za nalog (`putni_nalog`). Na detalju se tada vidi kartica „Putni nalog" (broj, zaposleni, putovanje, šifra
+posla naloga, stanje knjiženja), a u spisku oznaka „PN". Knjigovodstvo ga označava „proknjiženo" u
+Isplatama (Putni nalozi – Fiskalni računi). **Proknjižen račun se ne briše i ne menja** (obrada i šifre
+posla). Detaljno: [3.9 Isplate](03-09-isplate.md).
 
 ### Kupovni ugovori — nabavni pogled na modul Ugovori [P]
 

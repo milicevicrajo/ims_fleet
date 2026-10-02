@@ -9,9 +9,10 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.generic import TemplateView
 
-from core.mixins import RolePermissionRequiredMixin
+from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
 from fleet.models import PutniNalog
 
+from .putni_nalozi_views import dugme_racuni, racuni_po_nalogu
 from .services.converters import convert_virman_txt_to_internal_json
 from .services.virman import build_virman_file
 
@@ -166,10 +167,19 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
             | Q(employee__account_number="")
         ).count()
 
+        orders = list(filtered_qs[:500])
+        # Fiskalni računi se učitavaju i odavde, u toku rada (isti prozor kao na pravdanju putnih naloga).
+        moze_racune = user_has_role_permission(self.request.user, "isplate:putni_nalog_racuni")
+        if moze_racune:
+            racuni = racuni_po_nalogu([order.pk for order in orders])
+            for order in orders:
+                order.dugme_racuni = dugme_racuni(order, racuni.get(order.pk))
+
         context.update(
             {
                 "title": "Isplata neoporezovanih",
-                "orders": filtered_qs[:500],
+                "orders": orders,
+                "moze_racune": moze_racune,
                 "status": self.request.GET.get("status", "pending"),
                 "allow_regenerate": self.request.GET.get("status") == "generated",
                 "selected_center": self.request.GET.get("center", "").strip(),

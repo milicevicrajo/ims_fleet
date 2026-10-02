@@ -1,0 +1,178 @@
+{% comment %}
+Moj profil → Pregled: brze akcije i podaci o sebi (hr/services/moj_profil.py).
+Linkovi `data-tab-link` otvaraju ostale kartice profila.
+{% endcomment %}
+<style>
+  .mp-action { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #e6ebf1; border-radius: 8px;
+    background: #fff; color: #17324d; text-decoration: none; height: 100%; transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+  .mp-action:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(15, 38, 64, .1); border-color: #c9d9ec; color: #17324d; }
+  .mp-action .mp-icon { width: 42px; height: 42px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.35rem; flex: 0 0 auto; }
+  .mp-action strong { display: block; font-size: .92rem; }
+  .mp-action span.mp-sub { display: block; color: #6b7785; font-size: .76rem; }
+  .mp-icon.blue { background: #e8f0fb; color: #174f83; }
+  .mp-icon.green { background: #e7f7ef; color: #147044; }
+  .mp-icon.teal { background: #e6f7fb; color: #116276; }
+  .mp-icon.amber { background: #fff4db; color: #7a4d00; }
+  .mp-icon.gray { background: #edf2f7; color: #526170; }
+  .mp-card { border: 1px solid #e6ebf1; border-radius: 8px; height: 100%; background: #fff; }
+  .mp-card .mp-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px;
+    border-bottom: 1px solid #eef1f5; }
+  .mp-card .mp-head h5 { font-size: .98rem; margin: 0; color: #17324d; }
+  .mp-card .mp-body { padding: 12px 14px; }
+  .mp-big { font-size: 2rem; font-weight: 700; color: #17324d; line-height: 1; }
+  .mp-muted { color: #6b7785; font-size: .78rem; }
+  .mp-track { height: 8px; border-radius: 999px; background: #edf2f7; overflow: hidden; margin: 8px 0 4px; }
+  .mp-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #1f6f8b, #2f8f6f); }
+  .mp-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: .86rem; }
+  .mp-dl dt { color: #6b7785; font-weight: 600; }
+  .mp-dl dd { margin: 0; color: #17324d; }
+  .mp-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 9px; font-weight: 600;
+    font-size: .76rem; white-space: nowrap; }
+  .mp-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .mp-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .mp-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .mp-badge.info { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .mp-list { list-style: none; margin: 0; padding: 0; font-size: .86rem; }
+  .mp-list li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #e6ebf1; }
+  .mp-list li:last-child { border-bottom: 0; }
+  /* Razmak između redova kartica (u Bootstrapu 5.0 beta gutter po visini ne važi pouzdano). */
+  .mp-grid > [class*="col-"] { margin-bottom: 16px; }
+</style>
+
+<h5 class="mb-2 text-muted text-uppercase small fw-bold">Brze akcije</h5>
+<div class="row g-2 mb-3 mp-grid">
+  <div class="col-sm-6 col-xl-3">
+    <a class="mp-action" href="{% url 'hr:work_time_sheet' %}">
+      <span class="mp-icon blue"><i class="mdi mdi-calendar-edit" aria-hidden="true"></i></span>
+      <div><strong>Radna lista</strong><span class="mp-sub">{{ moj.mesec|capfirst }}{% if moj.radna_lista %} · {{ moj.radna_lista.get_status_display }}{% else %} · nije započeta{% endif %}</span></div>
+    </a>
+  </div>
+  {% if moze_zahtev %}
+  <div class="col-sm-6 col-xl-3">
+    <a class="mp-action" href="{% url 'hr:zahtev_create' %}?zaposleni={{ employee.pk }}">
+      <span class="mp-icon green"><i class="mdi mdi-file-send-outline" aria-hidden="true"></i></span>
+      <div><strong>Podnesi zahtev</strong><span class="mp-sub">Prekovremeni rad, odsustvo, ostalo</span></div>
+    </a>
+  </div>
+  {% endif %}
+  <div class="col-sm-6 col-xl-3">
+    <a class="mp-action" href="#annual-leave" data-tab-link="#annual-leave">
+      <span class="mp-icon amber"><i class="mdi mdi-beach" aria-hidden="true"></i></span>
+      <div><strong>Godišnji odmor</strong><span class="mp-sub">Dodela i rešenja</span></div>
+    </a>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <a class="mp-action" href="{% url 'employee_cv_item_create' %}">
+      <span class="mp-icon gray"><i class="mdi mdi-briefcase-plus-outline" aria-hidden="true"></i></span>
+      <div><strong>Dodaj stavku u CV</strong><span class="mp-sub">Posao, projekat, obuka</span></div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mp-grid">
+  <div class="col-lg-4">
+    <div class="mp-card">
+      <div class="mp-head"><h5><i class="mdi mdi-beach me-1" aria-hidden="true"></i> Godišnji odmor</h5>
+        <a class="btn btn-outline-secondary btn-sm" href="#annual-leave" data-tab-link="#annual-leave">Detalji</a></div>
+      <div class="mp-body">
+        {% for g in moj.godisnji.godine %}
+          <div class="{% if not forloop.last %}mb-3 pb-3 border-bottom{% endif %}">
+            <div class="d-flex justify-content-between align-items-end">
+              <div><div class="mp-muted">Preostalo za {{ g.godina }}.</div><div class="mp-big">{{ g.preostalo }} <small class="fs-6 fw-normal text-muted">dana</small></div></div>
+              <div class="text-end mp-muted">dodeljeno {{ g.dodeljeno }}<br>po rešenjima {{ g.po_resenjima }}</div>
+            </div>
+            <div class="mp-track"><div class="mp-fill" style="width: {{ g.procenat }}%"></div></div>
+          </div>
+        {% empty %}
+          <div class="mp-muted">Za ovu i prethodnu godinu nema dodele dana u kadrovskoj bazi.</div>
+        {% endfor %}
+        {% if moj.godisnji.sledeci %}
+          <div class="mt-3">{% if moj.godisnji.u_toku %}<span class="mp-badge ok"><i class="mdi mdi-beach" aria-hidden="true"></i> Na godišnjem do {{ moj.godisnji.sledeci.end_date|date:"d.m.Y." }}</span>{% else %}<span class="mp-badge info">Sledeći: {{ moj.godisnji.sledeci.start_date|date:"d.m." }}–{{ moj.godisnji.sledeci.end_date|date:"d.m.Y." }} ({{ moj.godisnji.sledeci.approved_days }} d.)</span>{% endif %}</div>
+        {% endif %}
+        {% if moj.godisnji.godine %}<div class="mp-muted mt-2">Preostalo prema izdatim rešenjima iz kadrovske baze, ne potvrđeno korišćenje.</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="mp-card">
+      <div class="mp-head"><h5><i class="mdi mdi-office-building-outline me-1" aria-hidden="true"></i> Gde radim</h5>
+        <a class="btn btn-outline-secondary btn-sm" href="#contracts" data-tab-link="#contracts">Ugovori</a></div>
+      <div class="mp-body">
+        <dl class="mp-dl">
+          {% if moj.oj %}
+            {% if moj.oj.centar %}<dt>Centar</dt><dd>{{ moj.oj.centar.0 }} {{ moj.oj.centar.1 }}</dd>{% endif %}
+            <dt>{% if moj.oj.centar %}Jedinica{% else %}Centar{% endif %}</dt><dd>{{ moj.oj.sifra }} {{ moj.oj.naziv }}</dd>
+          {% elif employee.org_unit_code %}<dt>OJ</dt><dd>{{ employee.org_unit_code }}</dd>{% endif %}
+          {% if moj.ugovor %}
+            <dt>Radno mesto</dt><dd>{{ moj.ugovor.naziv_radnog_mesta|default:employee.position|default:"—" }}
+              {% for rm in moj.ugovor.dodatna_radna_mesta.all %}<div class="mp-muted">{{ forloop.counter|add:1 }}. {{ rm.naziv_radnog_mesta|default:rm }}</div>{% endfor %}</dd>
+            <dt>Ugovor</dt><dd>{{ moj.ugovor.get_kategorija_display }}{% if moj.ugovor.broj_ugovora %} · br. {{ moj.ugovor.broj_ugovora }}{% endif %}
+              <div class="mp-muted">od {{ moj.ugovor.datum_od|date:"d.m.Y." }} · {% if moj.ugovor.na_neodredjeno %}na neodređeno{% elif moj.ugovor.datum_do %}do {{ moj.ugovor.datum_do|date:"d.m.Y." }}{% else %}bez datuma kraja{% endif %}</div>
+              {% if moj.ugovor_istice is not None and moj.ugovor_istice <= 45 %}<span class="mp-badge warn mt-1">ističe za {{ moj.ugovor_istice }} d.</span>{% endif %}</dd>
+          {% else %}
+            <dt>Radno mesto</dt><dd>{{ employee.position|default:"—" }}</dd>
+          {% endif %}
+          <dt>U IMS-u od</dt><dd>{{ employee.date_of_joining|date:"d.m.Y." }}{% if moj.staz %}<div class="mp-muted">{{ moj.staz.godina }} god. {{ moj.staz.meseci }} mes.</div>{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="mp-card">
+      <div class="mp-head"><h5><i class="mdi mdi-calendar-clock me-1" aria-hidden="true"></i> Ovaj mesec</h5>
+        <a class="btn btn-outline-secondary btn-sm" href="#work-time-sheets" data-tab-link="#work-time-sheets">Radne liste</a></div>
+      <div class="mp-body">
+        <ul class="mp-list">
+          <li><span>Radna lista — {{ moj.mesec }}</span>
+            {% if not moj.radna_lista %}<span class="mp-badge warn">Nije započeta</span>
+            {% elif moj.radna_lista.status == "approved" %}<span class="mp-badge ok">{{ moj.radna_lista.get_status_display }}</span>
+            {% elif moj.radna_lista.status == "submitted" %}<span class="mp-badge info">{{ moj.radna_lista.get_status_display }}</span>
+            {% else %}<span class="mp-badge muted">{{ moj.radna_lista.get_status_display }}</span>{% endif %}</li>
+          <li><span>Putni nalozi bez pravdanja</span>
+            <a href="#travel-orders" data-tab-link="#travel-orders">{% if moj.putni_neopravdani %}<span class="mp-badge warn">{{ moj.putni_neopravdani }}</span>{% else %}<span class="mp-badge ok">nema</span>{% endif %}</a></li>
+          <li><span>Zaduženo vozilo</span>
+            {% if moj.zaduzenje_vozila %}<span class="mp-badge info">{{ moj.zaduzenje_vozila.vehicle }}</span>{% else %}<span class="mp-muted">—</span>{% endif %}</li>
+          <li><span>Telefon / mobilni</span><span class="mp-muted">{{ employee.phone_number|default:"—" }} / {{ employee.mobile_phone|default:"—" }}</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="mp-card">
+      <div class="mp-head"><h5><i class="mdi mdi-file-send-outline me-1" aria-hidden="true"></i> Moji zahtevi</h5>
+        <a class="btn btn-outline-secondary btn-sm" href="#zahtevi" data-tab-link="#zahtevi">Svi ({{ zahtevi_count }})</a></div>
+      <div class="mp-body">
+        <ul class="mp-list">
+          {% for z in moj.zahtevi %}
+            <li><span><a href="{% url 'hr:zahtev_detail' z.pk %}"><strong>{{ z.broj }}</strong></a> · {{ z.vrsta.naziv }}<div class="mp-muted">{{ z.datum_zahteva|date:"d.m.Y." }}</div></span>
+              {% if z.status == "storniran" %}<span class="mp-badge muted">Storniran</span>{% elif z.resenja.all %}<span class="mp-badge ok">Rešeno</span>{% elif z.status == "podnet" %}<span class="mp-badge info">Podnet</span>{% else %}<span class="mp-badge warn">Nacrt</span>{% endif %}</li>
+          {% empty %}
+            <li class="mp-muted">Nema zahteva.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="mp-card">
+      <div class="mp-head"><h5><i class="mdi mdi-file-document-outline me-1" aria-hidden="true"></i> Moja rešenja</h5>
+        <a class="btn btn-outline-secondary btn-sm" href="#resenja" data-tab-link="#resenja">Sva ({{ resenja_count }})</a></div>
+      <div class="mp-body">
+        <ul class="mp-list">
+          {% for r in moj.resenja %}
+            <li><span><a href="{% url 'hr:resenje_detail' r.pk %}"><strong>{{ r.broj }}</strong></a> · {{ r.vrsta.naziv }}
+              <div class="mp-muted">{{ r.datum_resenja|date:"d.m.Y." }}{% if r.datum_od %} · {{ r.datum_od|date:"d.m.Y." }}{% if r.datum_do %}–{{ r.datum_do|date:"d.m.Y." }}{% endif %}{% endif %}</div></span>
+              {% if r.status == "izdato" %}<span class="mp-badge ok">Izdato</span>{% elif r.status == "stornirano" %}<span class="mp-badge muted">Stornirano</span>{% else %}<span class="mp-badge warn">Nacrt</span>{% endif %}</li>
+          {% empty %}
+            <li class="mp-muted">Nema rešenja.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

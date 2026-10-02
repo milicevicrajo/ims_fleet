@@ -28,7 +28,11 @@ SVEZINA_IZVORA = timedelta(hours=26)
 def sinhronizuj(company=DEFAULT_COMPANY):
     """Jedan prolaz nove sinhronizacije. Vraca recnik sa svim delovima."""
     svezina = svezina_izvora(company)
-    run = run_import(company=company)
+    # Nazivi OJ iz kadrovske baze (aktivne OJ); None ako baza nije dostupna — nazivi tada ostaju.
+    from organizacija.services import kadrovi
+
+    nazivi_kadrova = kadrovi.nazivi_ili_none(company)
+    run = run_import(company=company, nazivi_kadrova=nazivi_kadrova)
     # Sifra bez prometa u poslednjih 12 meseci je neaktivna, sa prometom aktivna (odluka 21.09.2026.);
     # nove sifre iz izvora tako ne ostaju aktivne samo zato sto ih izvor tako oznacava.
     aktivnost = activity.apply_reviews(company)

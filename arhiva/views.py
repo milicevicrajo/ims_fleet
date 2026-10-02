@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
+from arhiva import oj
 from arhiva.access import predmeti
 from arhiva.forms import AktForm, FilterDelovodnikaForm, PisarnicaForm, StornoForm
 from arhiva.models import EvidencionaKnjiga, GrupaKategorija, Kategorija, Predmet, VerzijaListe
@@ -34,12 +35,8 @@ def _vidljivi(user):
 
 def _sa_oznakom_oj(predmeti_):
     """Svakom predmetu dodaje `oj_oznaka` („43 · Naziv”), jednim upitom za celu stranu."""
-    from organizacija.models import OrgNodeVersion
-
     predmeti_ = list(predmeti_)
-    oznake = {pk: f"{sifra} · {naziv}" if naziv else sifra for pk, sifra, naziv in
-              OrgNodeVersion.objects.filter(node_id__in={p.glavna_oj_id for p in predmeti_}, valid_to__isnull=True)
-              .values_list("node_id", "full_code", "name")}
+    oznake = oj.oznake_cvorova({p.glavna_oj_id for p in predmeti_})
     for p in predmeti_:
         p.oj_oznaka = oznake.get(p.glavna_oj_id, "")
     return predmeti_

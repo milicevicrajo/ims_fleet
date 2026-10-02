@@ -23,11 +23,11 @@ ALLOWED_HOSTS = ['127.0.0.1']
 
 DATABASES = {
     # Za rad nad stvarnom bazom umesto SQLite-a, zameni 'default' sa:
-    # 'default': {'ENGINE': 'mssql', **database_credentials()},
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    },
+    'default': {'ENGINE': 'mssql', **database_credentials()},
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # },
 
     'server_db': {
         'ENGINE': 'mssql',

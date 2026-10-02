@@ -344,7 +344,8 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 > `fleet_fuelconsumption`, `fleet_lease` — imaju opcionu kolonu `org_node_id` (čvor registra).
 > Ona se **izvodi** iz postojećeg polja (`organizational_unit` / `job_code`) pri svakom čuvanju
 > (`organizacija/signals.py`) i komandom `povezi_flotu`. Uporedni izveštaj:
-> `/organizacija/flota/` (dozvola `organizacija:flota`).
+> `/organizacija/flota/` (dozvola `organizacija:flota`). Od 02.10.2026. nije u meniju Organizacije —
+> kontrola prelaska na registar, otvara se samo direktnom adresom.
 >
 > **[P] Čitanje iz registra (od 25.09.2026.):** spiskovi i nazivi šifara posla u Floti dolaze iz
 > registra (`fleet/support/registar.py`) — izbor šifre u formama putnog naloga, dodele vozila,

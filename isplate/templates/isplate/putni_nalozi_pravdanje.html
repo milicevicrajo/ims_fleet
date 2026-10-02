@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% comment %}
+Isplate → Putni nalozi – pravdanje: DataTables (strana sa servera, isti URL uz `draw`).
+„Dodaj račun” otvara prozor sa računima naloga i poljem za čitač QR koda (`_racuni_naloga.html`);
+„Opravdaj” zaključava nalog. Filteri se primenjuju odmah, bez ponovnog učitavanja strane.
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "isplate/_stil.html" %}
+
+<div class="isp-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-receipt-text-plus-outline me-2" aria-hidden="true"></i>Putni nalozi – pravdanje</h1>
+    <p>Pri pravdanju putnog naloga dodajte fiskalne račune čitačem QR koda. Račun se vodi uz ostale fiskalne račune, na šifru posla naloga, i ide na knjiženje. Opravdan nalog je zaključan.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'isplate:neoporezive_isplate' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-bank-transfer" aria-hidden="true"></i> Nalozi za isplatu</a>
+    <a href="{% url 'isplate:fiskalni_putni_nalozi' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-receipt-text-check-outline" aria-hidden="true"></i> Fiskalni računi</a>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="isp-filter" id="ispFilter">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-4 col-xl-3">
+          <label class="form-label mb-1" for="id_status">Nalozi</label>
+          <select id="id_status" class="form-select" name="status">
+            <option value="neopravdani" {% if filteri.status == "neopravdani" %}selected{% endif %}>Neopravdani</option>
+            <option value="opravdani" {% if filteri.status == "opravdani" %}selected{% endif %}>Opravdani</option>
+            <option value="svi" {% if filteri.status == "svi" %}selected{% endif %}>Svi</option>
+          </select>
+        </div>
+        <div class="col-6 col-sm-4 col-xl-2">
+          <label class="form-label mb-1" for="id_od">Putovanje od</label>
+          <input id="id_od" class="form-control" type="date" name="od" value="{{ filteri.od }}">
+        </div>
+        <div class="col-6 col-sm-4 col-xl-2">
+          <label class="form-label mb-1" for="id_do">Putovanje do</label>
+          <input id="id_do" class="form-control" type="date" name="do" value="{{ filteri.do }}">
+        </div>
+        <div class="col-12 col-xl d-flex flex-wrap gap-2 justify-content-end">
+          <a class="btn btn-outline-secondary" href="{% url 'isplate:putni_nalozi_pravdanje' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table id="PutniNaloziPravdanje" class="display compact table table-hover table-bordered align-middle w-100 isp-tabela">
+      <thead>
+        <tr><th>Broj naloga</th><th>Zaposleni</th><th>Putovanje</th><th>Šifra posla</th><th class="text-end">Akontacija</th>
+            <th class="text-center">Fiskalni računi</th><th>Status</th><th class="text-center">Pravdanje</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+{% include "isplate/_racuni_naloga.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (!(window.jQuery && jQuery.fn.DataTable)) return;
+  var forma = document.getElementById('ispFilter');
+  var tabela = jQuery('#PutniNaloziPravdanje').DataTable({
+    serverSide: true, processing: true, autoWidth: false, pageLength: 50,
+    lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[2, 'desc']],
+    search: { search: "{{ filteri.q|escapejs }}" },
+    ajax: {
+      url: "{% url 'isplate:putni_nalozi_pravdanje' %}", type: 'GET',
+      data: function (d) { new FormData(forma).forEach(function (v, k) { d[k] = v; }); }
+    },
+    columns: [
+      { data: 'nalog' }, { data: 'zaposleni' }, { data: 'putovanje' }, { data: 'sifra' },
+      { data: 'akontacija', className: 'text-end text-nowrap' },
+      { data: 'racuni', orderable: false, className: 'text-center' },
+      { data: 'status' },
+      { data: 'akcije', orderable: false, className: 'text-center' }
+    ],
+    columnDefs: [{ targets: 0, width: '11%' }, { targets: 1, width: '17%' }, { targets: 2, width: '15%' },
+                 { targets: 3, width: '15%' }, { targets: 4, width: '10%' }, { targets: 5, width: '13%' },
+                 { targets: 6, width: '9%' }, { targets: 7, width: '10%' }],
+    language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: 'Broj naloga, zaposleni, mesto, šifra posla',
+      lengthMenu: 'Prikaži _MENU_ redova', info: 'Prikaz _START_ do _END_ od _TOTAL_ naloga', infoEmpty: 'Nema naloga',
+      infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema putnih naloga za izabrane filtere',
+      paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
+  });
+
+  forma.addEventListener('change', function () { tabela.ajax.reload(); });
+  forma.addEventListener('submit', function (e) { e.preventDefault(); tabela.ajax.reload(); });
+  document.addEventListener('isp:racuni-promenjeni', function () { tabela.ajax.reload(null, false); });
+
+  document.getElementById('PutniNaloziPravdanje').addEventListener('click', function (e) {
+    var b = e.target.closest('.js-opravdaj');
+    if (!b || !confirm('Opravdati putni nalog ' + b.dataset.broj + '? Posle toga se nalog i njegovi računi više ne menjaju.')) return;
+    b.disabled = true;
+    fetch(b.dataset.url, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) { if (window.toastr) toastr.success(d.poruka); tabela.ajax.reload(null, false); })
+      .catch(function () { b.disabled = false; if (window.toastr) toastr.error('Nalog nije opravdan. Pokušajte ponovo.'); });
+  });
+});
+</script>
+{% endblock %}

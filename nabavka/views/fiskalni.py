@@ -11,7 +11,7 @@ from django.utils.html import escape
 from django.views import View
 from django.views.generic import DetailView, TemplateView
 
-from core.mixins import RolePermissionRequiredMixin
+from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
 from fleet.models import JobCode, OrganizationalUnit, TrafficCard, Vehicle
 from nabavka.access import fiskalni_racuni, sifre_za_izbor
 
@@ -126,7 +126,8 @@ class DodatnaSifraForm(forms.Form):
 
 
 def _vidljivi(user):
-    return fiskalni_racuni(FiskalniRacun.objects.select_related("job_code", "created_by", "vehicle"), user)
+    return fiskalni_racuni(FiskalniRacun.objects.select_related("job_code", "created_by", "vehicle", "putni_nalog",
+                                                                "putni_nalog__employee", "proknjizio"), user)
 
 
 def _iznos(vrednost):
@@ -200,7 +201,9 @@ class FiskalniRacunDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
                 "pfr_vreme": timezone.localtime(r.pfr_vreme).strftime("%d.%m.%Y %H:%M"),
                 "prodavac": (f'<span title="PIB {escape(r.pib_prodavca)}">{escape(r.naziv_prodavca or r.pib_prodavca or "—")}</span>'
                              f'<div class="fiskalni-small">{escape(r.prodajno_mesto)}</div>'),
-                "broj_racuna": escape(r.broj_racuna),
+                "broj_racuna": escape(r.broj_racuna) + (
+                    f' <span class="invoice-badge warn" title="Putni nalog {escape(r.putni_nalog.order_number)}">PN</span>'
+                    if r.putni_nalog_id else ""),
                 "iznos": _iznos(r.iznos),
                 "sifra": escape(", ".join(sifre) or (r.job_code.code if r.job_code_id else "—")),
                 "magacin": ('<span class="invoice-badge ok"><i class="mdi mdi-warehouse"></i> Da</span>' if r.goes_to_warehouse
@@ -270,6 +273,8 @@ class FiskalniRacunDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, 
         self.object.uskladi_glavnu_sifru(self.request.user)
         obrada_form = kwargs.get("obrada_form") or ObradaRacunaForm(instance=self.object, user=self.request.user)
         ctx.update(title=f"Fiskalni račun {self.object.broj_racuna}", upozorenja=fiskalni.upozorenja(self.object),
+                   moze_menjati=user_has_role_permission(self.request.user, "nabavka:fiskalni_update") and not self.object.proknjizeno,
+                   moze_putni_nalog=user_has_role_permission(self.request.user, "isplate:putni_nalozi_pravdanje"),
                    obrada_form=obrada_form, sifre_vozila=obrada_form.sifre_vozila(),
                    sifra_form=kwargs.get("sifra_form") or DodatnaSifraForm(user=self.request.user, racun=self.object),
                    sifre=sorted(self.object.sifre.all(), key=lambda s: (s.vrsta != FiskalniRacunSifra.OSNOVNA, s.job_code.code)))
@@ -291,6 +296,9 @@ class FiskalniRacunUpdateView(NabavkaContextMixin, RolePermissionRequiredMixin, 
 
     def post(self, request, pk):
         racun = get_object_or_404(_vidljivi(request.user), pk=pk)
+        if racun.proknjizeno:
+            messages.error(request, "Račun je proknjižen; obrada i šifre posla se više ne menjaju.")
+            return redirect("nabavka:fiskalni_detail", pk=pk)
         akcija = request.POST.get("akcija", "obrada")
         if akcija == "dodaj_sifru":
             form = DodatnaSifraForm(request.POST, user=request.user, racun=racun)
@@ -352,6 +360,9 @@ class FiskalniRacunReturnedView(NabavkaContextMixin, RolePermissionRequiredMixin
 class FiskalniRacunDeleteView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
     def post(self, request, pk):
         racun = get_object_or_404(_vidljivi(request.user), pk=pk)
+        if racun.proknjizeno:
+            messages.error(request, f"Račun {racun.broj_racuna} je proknjižen i ne može se obrisati.")
+            return redirect("nabavka:fiskalni_detail", pk=pk)
         broj = racun.broj_racuna
         racun.delete()
         messages.success(request, f"Račun {broj} je obrisan.")

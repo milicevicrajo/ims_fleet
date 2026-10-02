@@ -1,0 +1,23 @@
+{% comment %}Zajednički izgled novih spiskova u Isplatama (isti kao UF SEF i ostali spiskovi aplikacije).{% endcomment %}
+<style>
+  .isp-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 10px 26px rgba(20, 57, 91, .18); }
+  .isp-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .isp-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); max-width: 860px; }
+  .isp-hero .isp-zbir { text-align: right; }
+  .isp-hero .isp-zbir strong { display: block; font-size: 1.25rem; }
+  .isp-filter { background: #f8fafc; border: 1px solid #e6ebf1; border-radius: 8px; padding: 14px; }
+  .isp-filter .row { row-gap: 12px; }
+  .isp-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 9px;
+    font-weight: 600; font-size: .78rem; white-space: nowrap; }
+  .isp-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .isp-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .isp-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
+  .isp-small { color: #6b7785; font-size: .72rem; line-height: 1.2; margin-top: 2px; }
+  .isp-skrati { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  table.isp-tabela { table-layout: fixed; width: 100% !important; font-size: .82rem; }
+  table.isp-tabela th, table.isp-tabela td { white-space: normal !important; overflow-wrap: anywhere; padding: 6px 7px; vertical-align: middle; }
+  table.isp-tabela tr.isp-proknjizen > td { background: #f5fbf7; }
+  .isp-knjizi { width: 20px; height: 20px; cursor: pointer; border: 2px solid #647181; margin: 0; }
+  .isp-knjizi:checked { background-color: #2f8f6f; border-color: #2f8f6f; }
+</style>

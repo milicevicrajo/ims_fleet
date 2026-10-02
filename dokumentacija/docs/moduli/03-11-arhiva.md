@@ -32,6 +32,7 @@ Dozvole su imena ruta (`arhiva:delovodnik`, `arhiva:pisarnica`, `arhiva:predmet_
 | Ko daje broj | Samo `arhiva/services/delovodnik.py: zavedi()`. Forma samo prikuplja podatke. |
 | Format | Iz podešavanja: `ARHIVA_FORMAT_BROJA = "{centar}-{broj}"`, `ARHIVA_FORMAT_PODBROJA = "{osnovni}/{podbroj}"` (`ims_erp/settings/base.py`). Podrazumevano `43-15238` i `43-15238/2`, kao brojevi zahteva u Kadrovima. Format je još otvorena odluka (plan, O-1); promena je samo u podešavanjima. |
 | Niz | Jedan niz za ceo Institut, za kalendarsku godinu (`EvidencionaKnjiga` + `BrojacKnjige`). Nova godina počinje od 1. |
+| Izbor OJ u pisarnici | Grupisan po centrima: „ceo centar”, pa njegove OJ. Naziv OJ je naziv iz registra, a kada ga registar nema, isti **predlog naziva kao u stablu organizacije** (`organizacija.services.tree.predlog_naziva_jedinice`), pa naziv iz kadrovske evidencije, pa „bez naziva u registru” (`arhiva/oj.py`). U registar se ništa ne upisuje. Naučni projekti (`3-…`) se ne nude. |
 | Centar u broju | Oznaka centra glavne OJ predmeta, iz registra organizacije: centar daje svoju šifru, OJ šifru nadređenog centra. Na šifru posla se ne zavodi. Oznaka se pamti na predmetu (`oznaka_centra`). |
 | Istovremeni upis | Red brojača se zaključava (`select_for_update`, na SQL Serveru UPDLOCK). Unique ograničenje na (knjiga, osnovni broj) i (knjiga, delovodni broj) je druga linija zaštite. **Ne koristi se `MAX()+1`.** |
 | Podbroj | Osnovni akt je podbroj 1 i nosi broj predmeta. Odgovori i dopisi su `/2`, `/3` … Predmet se zaključava dok se računa podbroj. |

@@ -63,11 +63,15 @@ def collect_known_units(company=DEFAULT_COMPANY):
 
 
 @transaction.atomic
-def run_import(company=DEFAULT_COMPANY, known_units=None, valid_from=None, link_fleet_units=True):
+def run_import(company=DEFAULT_COMPANY, known_units=None, valid_from=None, link_fleet_units=True, nazivi_kadrova=None):
     """Uvozi sifarnik i vraca `OrgImportRun`.
 
     `valid_from` je datum od kog vaze prve verzije. To je **migracioni snimak**, ne dokaz
     organizacije koja je vazila ranije — zato se i belezi u napomeni verzije.
+
+    `nazivi_kadrova` je {sifra OJ: naziv} aktivnih OJ iz kadrovske baze (`services.kadrovi`),
+    drugi izvor naziva jedinice posle Pravilnika. None znaci da izvor nije procitan: vec upisani
+    kadrovski nazivi tada ostaju.
     """
     if known_units is None:
         known_units = collect_known_units(company)
@@ -100,13 +104,16 @@ def run_import(company=DEFAULT_COMPANY, known_units=None, valid_from=None, link_
         report.append(f"Prvi nivo: {len(centers)} centara, novih {made['nodes']}.")
 
         units, jobs, made, unresolved = _import_jobs(
-            company, classified, centers, valid_from, run
+            company, classified, centers, valid_from, run, nazivi_kadrova
         )
         created_nodes += made["nodes"]
         created_versions += made["versions"]
         unchanged += made["unchanged"]
         report.append(f"Drugi nivo: {len(units)} jedinica, novih {made['units_created']}.")
         report.append(f"Treci nivo: {len(jobs)} poslova, novih {made['jobs_created']}.")
+        report.append("Nazivi jedinica iz kadrovske baze: " + (
+            "izvor nije procitan, upisani nazivi su zadrzani." if nazivi_kadrova is None
+            else f"{len(nazivi_kadrova)} aktivnih OJ."))
         report.append(f"Na listi za razresenje: {unresolved}.")
 
         if link_fleet_units:
@@ -186,7 +193,7 @@ def _ensure_centers(company, known_units, needed, valid_from):
     return centers, made
 
 
-def _import_jobs(company, classified, centers, valid_from, run):
+def _import_jobs(company, classified, centers, valid_from, run, nazivi_kadrova=None):
     made = {"nodes": 0, "versions": 0, "unchanged": 0, "units_created": 0, "jobs_created": 0}
     units = {}
     jobs = {}
@@ -248,7 +255,7 @@ def _import_jobs(company, classified, centers, valid_from, run):
             if created:
                 made["nodes"] += 1
                 made["units_created"] += 1
-            unit_name, unit_note = _naziv_jedinice(unit_code, result)
+            unit_name, unit_note = _naziv_jedinice(unit_code, result, nazivi_kadrova, unit_node)
             version_made = _ensure_version(
                 node=unit_node,
                 parent=center_node,
@@ -310,8 +317,15 @@ def _napomena_centra(oznaka):
     return "Naziv iz knjizenja (organizational_unit_name)."
 
 
-def _naziv_jedinice(unit_code, result):
-    """Naziv jedinice drugog nivoa i napomena o izvoru; prazno kad pouzdanog izvora nema."""
+def _naziv_jedinice(unit_code, result, nazivi_kadrova=None, unit_node=None):
+    """Naziv jedinice drugog nivoa i napomena o izvoru; prazno kad pouzdanog izvora nema.
+
+    Redosled: Pravilnik o organizaciji, pa aktivna OJ istog broja iz kadrovske baze (isto pravilo
+    po kom se zaposleni vezuju za jedinicu, `zaposleni.cvor_oj`). Naziv koji je jednom dosao iz
+    kadrovske baze ostaje i kada izvor nije dostupan ili OJ vise nije aktivna — ne brise se.
+    """
+    from organizacija.services import kadrovi
+
     if result.family == klas.FAMILY_SCIENCE:
         if unit_code.startswith(klas.PREFIKS_PROJEKTA):
             return UNIT_NAME_UNKNOWN, (f"Naucni projekat {result.segments[1]}; broj projekta je slobodan unos, "
@@ -320,6 +334,12 @@ def _naziv_jedinice(unit_code, result):
     naziv = pravilnik.naziv_jedinice(unit_code)
     if naziv:
         return naziv, f"Naziv: {pravilnik.IZVOR}, {pravilnik.JEDINICE[unit_code][0]}."
+    if nazivi_kadrova and nazivi_kadrova.get(unit_code):
+        return nazivi_kadrova[unit_code], f"{kadrovi.NAPOMENA} {unit_code}."
+    if unit_node is not None:
+        sadasnja = unit_node.current_version
+        if sadasnja and sadasnja.name and (sadasnja.note or "").startswith(kadrovi.NAPOMENA):
+            return sadasnja.name, sadasnja.note
     return UNIT_NAME_UNKNOWN, UNIT_NOTE
 
 

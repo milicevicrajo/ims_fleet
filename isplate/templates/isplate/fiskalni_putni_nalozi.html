@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% comment %}
+Isplate → Putni nalozi – Fiskalni računi: računi učitani na putnim nalozima, za knjiženje.
+DataTables (strana sa servera, isti URL uz `draw`); zbir u zaglavlju prati filtere i pretragu.
+Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko je i kada označio.
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "isplate/_stil.html" %}
+
+<div class="isp-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-receipt-text-check-outline me-2" aria-hidden="true"></i>Putni nalozi – Fiskalni računi</h1>
+    <p>Fiskalni računi učitani na putnim nalozima. Štiklirajte „Proknjiženo” kada je račun proknjižen; proknjižen račun se više ne menja.</p>
+  </div>
+  <div class="isp-zbir">
+    <span><span id="ispZbirBroj">{{ zbir.broj }}</span> računa</span>
+    <strong><span id="ispZbirIznos">{{ zbir.iznos }}</span> din</strong>
+    <span>PDV <span id="ispZbirPdv">{{ zbir.pdv }}</span></span>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="isp-filter" id="ispFilter">
+      <div class="row g-2 align-items-end">
+        <div class="col-6 col-sm-3 col-xl-2">
+          <label class="form-label mb-1" for="id_knjizenje">Knjiženje</label>
+          <select id="id_knjizenje" class="form-select" name="knjizenje">
+            <option value="ne" {% if filteri.knjizenje == "ne" %}selected{% endif %}>Neproknjiženi</option>
+            <option value="da" {% if filteri.knjizenje == "da" %}selected{% endif %}>Proknjiženi</option>
+            <option value="sve" {% if filteri.knjizenje == "sve" %}selected{% endif %}>Svi</option>
+          </select>
+        </div>
+        <div class="col-6 col-sm-3 col-xl-2">
+          <label class="form-label mb-1" for="id_kupac">Kupac</label>
+          <select id="id_kupac" class="form-select" name="kupac">
+            <option value="">Svi</option>
+            <option value="ims" {% if filteri.kupac == "ims" %}selected{% endif %}>Izdat na IMS</option>
+            <option value="drugi" {% if filteri.kupac == "drugi" %}selected{% endif %}>Nije na IMS</option>
+          </select>
+        </div>
+        <div class="col-6 col-sm-3 col-xl-2">
+          <label class="form-label mb-1" for="id_od">Račun od</label>
+          <input id="id_od" class="form-control" type="date" name="od" value="{{ filteri.od }}">
+        </div>
+        <div class="col-6 col-sm-3 col-xl-2">
+          <label class="form-label mb-1" for="id_do">Račun do</label>
+          <input id="id_do" class="form-control" type="date" name="do" value="{{ filteri.do }}">
+        </div>
+        <div class="col-12 col-xl d-flex flex-wrap gap-2 justify-content-end">
+          <a class="btn btn-outline-secondary" href="{% url 'isplate:fiskalni_putni_nalozi' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
+          {% if moze_izvoz %}<a class="btn btn-outline-success" id="ispIzvoz" href="{% url 'isplate:fiskalni_izvoz' %}" title="Izvoz u Excel (prema filterima i pretrazi)"><i class="mdi mdi-file-excel" aria-hidden="true"></i> Excel</a>{% endif %}
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table id="FiskalniPutniNalozi" class="display compact table table-hover table-bordered align-middle w-100 isp-tabela">
+      <thead>
+        <tr><th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th class="text-end">Iznos</th><th>Kupac</th>
+            <th>Putni nalog</th><th>Šifra posla</th><th>Učitao</th><th class="text-center">Proknjiženo</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (!(window.jQuery && jQuery.fn.DataTable)) return;
+  var forma = document.getElementById('ispFilter');
+  var izvoz = document.getElementById('ispIzvoz');
+  var izvozUrl = izvoz ? izvoz.getAttribute('href') : '';
+  function parametri(d) { new FormData(forma).forEach(function (v, k) { d[k] = v; }); return d; }
+
+  var tabela = jQuery('#FiskalniPutniNalozi').DataTable({
+    serverSide: true, processing: true, autoWidth: false, pageLength: 50,
+    lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[0, 'desc']],
+    search: { search: "{{ filteri.q|escapejs }}" },
+    ajax: { url: "{% url 'isplate:fiskalni_putni_nalozi' %}", type: 'GET', data: parametri },
+    columns: [
+      { data: 'vreme', className: 'text-nowrap' }, { data: 'prodavac' }, { data: 'broj' },
+      { data: 'iznos', className: 'text-end text-nowrap' }, { data: 'kupac', orderable: false },
+      { data: 'nalog' }, { data: 'sifra' }, { data: 'ucitao' },
+      { data: 'knjizenje', className: 'text-center' }
+    ],
+    columnDefs: [{ targets: 0, width: '8%' }, { targets: 1, width: '17%' }, { targets: 2, width: '13%' },
+                 { targets: 3, width: '9%' }, { targets: 4, width: '8%' }, { targets: 5, width: '19%' },
+                 { targets: 6, width: '8%' }, { targets: 7, width: '9%' }, { targets: 8, width: '9%' }],
+    language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: 'Račun, prodavac, PIB, nalog, zaposleni, šifra',
+      lengthMenu: 'Prikaži _MENU_ redova', info: 'Prikaz _START_ do _END_ od _TOTAL_ računa', infoEmpty: 'Nema računa',
+      infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema računa za izabrane filtere',
+      paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
+  });
+
+  tabela.on('xhr', function (e, settings, json) {
+    if (!json || !json.zbir) return;
+    document.getElementById('ispZbirBroj').textContent = json.zbir.broj;
+    document.getElementById('ispZbirIznos').textContent = json.zbir.iznos;
+    document.getElementById('ispZbirPdv').textContent = json.zbir.pdv;
+  });
+  tabela.on('draw', function () {
+    // Excel izvoz prati filtere i pretragu tabele.
+    if (!izvoz) return;
+    var p = new URLSearchParams(parametri({}));
+    if (tabela.search()) p.set('q', tabela.search());
+    izvoz.setAttribute('href', izvozUrl + '?' + p.toString());
+  });
+  forma.addEventListener('change', function () { tabela.ajax.reload(); });
+  forma.addEventListener('submit', function (e) { e.preventDefault(); tabela.ajax.reload(); });
+
+  document.getElementById('FiskalniPutniNalozi').addEventListener('change', function (e) {
+    var polje = e.target.closest('.isp-knjizi');
+    if (!polje) return;
+    var ukljuceno = polje.checked;
+    if (!ukljuceno && !confirm('Poništiti oznaku „proknjiženo” za račun ' + polje.dataset.racun + '? Poništavanje se beleži.')) {
+      polje.checked = true;
+      return;
+    }
+    var telo = new URLSearchParams();
+    telo.append('proknjizeno', ukljuceno ? '1' : '0');
+    polje.disabled = true;
+    fetch(polje.dataset.url, { method: 'POST', body: telo,
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) {
+        polje.checked = d.proknjizeno;
+        var red = polje.closest('tr');
+        red.classList.toggle('isp-proknjizen', d.proknjizeno);
+        var ko = red.querySelector('.isp-ko');
+        ko.textContent = '';
+        if (d.proknjizeno) ko.append(d.ko, document.createElement('br'), d.kada);
+        if (window.toastr) toastr.success(d.proknjizeno ? 'Račun ' + polje.dataset.racun + ' je označen kao proknjižen.' : 'Oznaka je poništena.');
+      })
+      .catch(function () {
+        polje.checked = !ukljuceno;
+        if (window.toastr) { toastr.error('Oznaka nije sačuvana. Pokušajte ponovo.'); } else { alert('Oznaka nije sačuvana. Pokušajte ponovo.'); }
+      })
+      .finally(function () { polje.disabled = false; });
+  });
+});
+</script>
+{% endblock %}

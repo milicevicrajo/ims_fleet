@@ -254,7 +254,8 @@ class EkranTests(FlotaTestCase):
         self.assertEqual(odgovor.status_code, 200)
         self.assertContains(odgovor, "Uporedni izveštaj prolazi")
         self.assertContains(odgovor, "Putni nalozi")
-        self.assertContains(odgovor, reverse("organizacija:flota"))
+        # Od 02.10.2026. izveštaj nije u meniju Organizacije (samo direktnom adresom).
+        self.assertNotContains(self.client.get(reverse("organizacija:stablo")), "Registar i moduli")
         self.assertEqual(self.client.get(reverse("organizacija:flota"), {"godina": "abc"}).status_code, 200)
 
     def test_bez_dozvole_nema_ni_ekrana_ni_linka(self):

@@ -61,7 +61,15 @@
         {% include "header.html" %}
 
         <!-- dbg: sidebar='{{ sidebar_template|default:"<none>" }}' -->
+        {% if bez_menija %}
+        {# Početna strana aplikacije nema bočni meni: sadržaj zauzima celu širinu. #}
+        <style>
+          #main-wrapper .page-wrapper { margin-left: 0 !important; }
+          #main-wrapper .sidebartoggler { display: none !important; }
+        </style>
+        {% else %}
         {% include sidebar_template|default:"sidebar_fleet.html" %}
+        {% endif %}
         {# (ispravljeno) izbaÄen dupli include sidebara #}
 
         <!-- ============================================================== -->

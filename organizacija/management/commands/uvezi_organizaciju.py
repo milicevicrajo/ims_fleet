@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from organizacija.services import kadrovi
 from organizacija.services.importer import run_import
 from organizacija.services.report import build_report
 
@@ -31,7 +32,8 @@ class Command(BaseCommand):
             if options["proba"]:
                 self._dry_run(company, link_fleet)
             else:
-                run = run_import(company=company, link_fleet_units=link_fleet)
+                run = run_import(company=company, link_fleet_units=link_fleet,
+                                 nazivi_kadrova=kadrovi.nazivi_ili_none(company))
                 self._print_run(run)
                 self._print_report(build_report(company, run))
         except Exception as exc:
@@ -43,7 +45,8 @@ class Command(BaseCommand):
 
         try:
             with transaction.atomic():
-                run = run_import(company=company, link_fleet_units=link_fleet)
+                run = run_import(company=company, link_fleet_units=link_fleet,
+                                 nazivi_kadrova=kadrovi.nazivi_ili_none(company))
                 self._print_run(run)
                 self._print_report(build_report(company, run))
                 raise Rollback

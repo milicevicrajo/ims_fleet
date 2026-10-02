@@ -13,8 +13,8 @@ from django.utils import timezone
 from hr.models import BrojacZahteva, Pismo, Potpisnik, Resenje, ResenjeDan, Zahtev
 
 from .resenja import (ADRESA, INSTITUT, MESTO, _neprazni, _redovi, datum_teksta, dodatne_vrednosti, ime_osobe,
-    ime_zaposlenog, naziv_jedinice, normalizuj_pol, opis_vremena, organizaciona_jedinica, pripremi_resenje,
-    razresi, to_cyrillic, u_obuhvatu, u_pismu, vrednosti_perioda)
+    ime_zaposlenog, naziv_jedinice, normalizuj_pol, ocisti_razlog, opis_vremena, organizaciona_jedinica,
+    pripremi_resenje, razresi, to_cyrillic, u_obuhvatu, u_pismu, vrednosti_perioda)
 
 
 def formatiraj_broj(centar, redni_broj):
@@ -76,7 +76,7 @@ def build_zahtev_document(zahtev, *, dani=None):
         'radno_mesto': zahtev.radno_mesto,
         'centar': zahtev.centar,
         **vrednosti_perioda(zahtev, dani, pismo),
-        'razlog': zahtev.razlog,
+        'razlog': ocisti_razlog(zahtev.razlog),
         'podnosilac': podnosilac,
         'podnosilac_funkcija': u_pismu(zahtev.podnosilac_funkcija, pismo),
         'odobrava': odobrava,

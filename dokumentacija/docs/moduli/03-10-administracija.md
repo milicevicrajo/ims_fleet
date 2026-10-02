@@ -97,6 +97,7 @@ otvara dozvole, a **Poveži zaposlenog** otvara prozor za izbor zaposlenog.
 | Podatak | Izvor | Kada |
 |---|---|---|
 | **Organizacione jedinice i centri** | Registar organizacije (od 28.09.2026.) | Dnevno 01:40 |
+| Nazivi jedinica registra | Pravilnik o organizaciji; ako ga nema, **aktivna OJ istog broja iz kadrovske baze** (`ob_jedin`, tekuća godina, `aktivan = 'D'`, od 02.10.2026., `organizacija/services/kadrovi.py`). Jednom upisan kadrovski naziv ostaje i kada kadrovska baza nije dostupna ili OJ više nije aktivna. Aktivne OJ bez svoje jedinice (4110, 423, 4331–4334) vode se pod centrom; 10, 80 i 90 nemaju čvor. | Dnevno 01:40 |
 | **Kodovi dozvola** | Automatski iz `urlpatterns` svih aplikacija | Dnevno 01:00 |
 | Evidencija rada | Sam sistem, kroz `ActivityLogMiddleware` | Pri svakom zahtevu |
 | Istorija zadataka | Celery signali | Pri svakom zadatku |

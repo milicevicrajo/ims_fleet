@@ -64,15 +64,32 @@
     line-height: 1.25;
     margin: 0;
   }
+  .invoice-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 10px 26px rgba(20, 57, 91, .18); }
+  .invoice-hero h1 { font-size: 1.55rem; margin: 0; }
+  .invoice-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .invoice-hero-iznos { font-size: 1.35rem; font-weight: 700; margin-right: 8px; }
+  .invoice-hero-iznos small { font-size: .8rem; font-weight: 400; }
+  .invoice-podaci { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 24px; }
+  .invoice-podaci dl { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; margin: 0; font-size: .92rem; }
+  .invoice-podaci dt { color: #6b7785; font-weight: 400; }
+  .invoice-podaci dd { margin: 0; }
+  .invoice-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 9px; font-weight: 600; font-size: .8rem; white-space: nowrap; }
+  .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
+  .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .invoice-sef-pdf { width: 100%; height: 85vh; min-height: 640px; border: 0; display: block; border-radius: 0 0 8px 8px; }
 </style>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
-    <h2 class="mb-0">{{ invoice.invoice_number }}</h2>
-    <div class="text-muted">{{ invoice.supplier_name|default:"/" }} / {{ invoice.amount|default:"/" }}</div>
+    <h1>{{ invoice.invoice_number }}</h1>
+    <p>{{ invoice.supplier_name|default:"—" }}{% if invoice.partner_pib %} · PIB {{ invoice.partner_pib }}{% endif %}
+      · {% if invoice.invoice_date %}{{ invoice.invoice_date|date:"d.m.Y." }}{% else %}{{ invoice.invoice_date_raw|default:"bez datuma" }}{% endif %}</p>
   </div>
-  <a class="btn btn-outline-secondary" href="{% url 'nabavka:euf_invoice_list' %}">
-    <i class="mdi mdi-arrow-left"></i> Preuzete EUF
-  </a>
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="invoice-hero-iznos">{% if invoice.amount is not None %}{{ invoice.amount|floatformat:"2g" }}<small> din</small>{% else %}—{% endif %}</div>
+    {% if sef_faktura %}<a class="btn btn-light btn-sm" href="#sef-pdf"><i class="mdi mdi-file-pdf-box"></i> PDF sa SEF-a</a>{% endif %}
+    <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:euf_invoice_list' %}"><i class="mdi mdi-arrow-left"></i> Preuzete EUF</a>
+  </div>
 </div>
 
 <div class="row g-3">
@@ -80,56 +97,77 @@
     <div class="card shadow-sm">
       <div class="card-header"><h4 class="mb-0">Detalji fakture</h4></div>
       <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-4">Datum</dt>
-          <dd class="col-sm-8">{% if invoice.invoice_date %}{{ invoice.invoice_date|date:"d.m.Y" }}{% else %}{{ invoice.invoice_date_raw|default:"/" }}{% endif %}</dd>
-          <dt class="col-sm-4">Partner</dt><dd class="col-sm-8">{{ invoice.supplier_name|default:"/" }}</dd>
-          <dt class="col-sm-4">Broj fakture</dt><dd class="col-sm-8">{{ invoice.invoice_number }}</dd>
-          <dt class="col-sm-4">Iznos</dt><dd class="col-sm-8">{{ invoice.amount|default:"/" }}</dd>
-          <dt class="col-sm-4">Osnovna sifra posla</dt>
-          <dd class="col-sm-8">
-            {% if invoice.job_code %}
-              {{ invoice.job_code.code }} - {{ invoice.job_code.name }}
-              {% if invoice.job_code_is_vehicle_snapshot %}
-                <div class="text-muted small">
-                  Sifra posla automobila - snapshot{% if invoice.vehicle_job_code_assigned_date %}, dodela od {{ invoice.vehicle_job_code_assigned_date|date:"d.m.Y" }}{% endif %}
-                </div>
-              {% endif %}
-            {% else %}/{% endif %}
-          </dd>
-          <dt class="col-sm-4">Dodatne sifre posla</dt>
-          <dd class="col-sm-8">
-            {% for link in additional_job_code_links %}
-              <span class="badge bg-light text-dark border me-1">{{ link.job_code.code }}</span>
-            {% empty %}/{% endfor %}
-          </dd>
-          <dt class="col-sm-4">Magacin iz EUF</dt><dd class="col-sm-8">{{ invoice.warehouse|default:"/" }}</dd>
-          <dt class="col-sm-4">Registracija</dt><dd class="col-sm-8">{{ invoice.registration|default:"/" }}</dd>
-          <dt class="col-sm-4">Sinhronizovano</dt><dd class="col-sm-8">{{ invoice.synced_at|date:"d.m.Y H:i"|default:"/" }}</dd>
-          <dt class="col-sm-4">Garaža</dt>
-          <dd class="col-sm-8">{% if invoice.is_garage or invoice.is_garage_related %}Da{% else %}Ne{% endif %}</dd>
-          <dt class="col-sm-4">Automobil</dt><dd class="col-sm-8">{{ invoice.vehicle|default:"/" }}</dd>
-          <dt class="col-sm-4">Vraceno</dt>
-          <dd class="col-sm-8">
-            <button
-              type="button"
-              class="btn btn-outline-warning btn-sm js-invoice-returned-modal"
-              data-url="{{ returned_job_codes_url }}"
-              data-invoice="{{ invoice.invoice_number }}"
-            >
-              <i class="mdi mdi-clipboard-check-outline"></i> Vraceno
-            </button>
-            <div class="text-muted small mt-1" id="invoiceReturnedDetailSummary">
-              {% if returned_job_code_labels %}
-                {{ returned_job_code_labels|join:", " }}
-              {% elif invoice.is_returned %}
-                Staro Vraceno
-              {% else %}
-                Nije obelezeno.
-              {% endif %}
-            </div>
-          </dd>
-        </dl>
+        <div class="invoice-podaci">
+          <dl>
+            <dt>Broj fakture</dt><dd>{{ invoice.invoice_number }}</dd>
+            <dt>Datum</dt><dd>{% if invoice.invoice_date %}{{ invoice.invoice_date|date:"d.m.Y." }}{% else %}{{ invoice.invoice_date_raw|default:"—" }}{% endif %}</dd>
+            <dt>Partner</dt><dd>{{ invoice.supplier_name|default:"—" }}</dd>
+            <dt>PIB partnera</dt><dd>{{ invoice.partner_pib|default:"—" }}</dd>
+            <dt>Vrsta dokumenta</dt><dd>{{ invoice.document_type|default:"—" }}</dd>
+            <dt>Iznos</dt><dd><strong>{% if invoice.amount is not None %}{{ invoice.amount|floatformat:"2g" }} din{% else %}—{% endif %}</strong></dd>
+          </dl>
+          <dl>
+            <dt>Osnovna šifra posla</dt>
+            <dd>
+              {% if invoice.job_code %}
+                {{ invoice.job_code.code }} · {{ invoice.job_code.name }}
+                {% if invoice.job_code_is_vehicle_snapshot %}
+                  <div class="text-muted small">Šifra posla automobila (snimak){% if invoice.vehicle_job_code_assigned_date %}, dodela od {{ invoice.vehicle_job_code_assigned_date|date:"d.m.Y." }}{% endif %}</div>
+                {% endif %}
+              {% else %}—{% endif %}
+            </dd>
+            <dt>Dodatne šifre posla</dt>
+            <dd>{% for link in additional_job_code_links %}<span class="badge bg-light text-dark border me-1">{{ link.job_code.code }}</span>{% empty %}—{% endfor %}</dd>
+            <dt>Centar</dt><dd>{{ invoice.center|default:"—" }}{% if invoice.center_name %} · {{ invoice.center_name }}{% endif %}</dd>
+            <dt>Magacin iz EUF</dt><dd>{{ invoice.warehouse|default:"—" }}</dd>
+            <dt>Garaža</dt><dd>{% if invoice.is_garage or invoice.is_garage_related %}Da{% if invoice.vehicle %} · {{ invoice.vehicle }}{% endif %}{% else %}Ne{% endif %}{% if invoice.registration %}<div class="text-muted small">Registracija iz EUF: {{ invoice.registration }}</div>{% endif %}</dd>
+            <dt>Vraćeno</dt>
+            <dd>
+              <button type="button" class="btn btn-outline-warning btn-sm js-invoice-returned-modal"
+                      data-url="{{ returned_job_codes_url }}" data-invoice="{{ invoice.invoice_number }}">
+                <i class="mdi mdi-clipboard-check-outline"></i> Vraćeno
+              </button>
+              <div class="text-muted small mt-1" id="invoiceReturnedDetailSummary">
+                {% if returned_job_code_labels %}{{ returned_job_code_labels|join:", " }}{% elif invoice.is_returned %}Staro „Vraćeno”{% else %}Nije obeleženo.{% endif %}
+              </div>
+            </dd>
+          </dl>
+        </div>
+        <div class="text-muted small mt-2">Sinhronizovano {{ invoice.synced_at|date:"d.m.Y. H:i"|default:"—" }}</div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h4 class="mb-0"><i class="mdi mdi-file-certificate-outline"></i> SEF faktura</h4>
+        {% if sef_faktura %}<span class="invoice-badge ok"><i class="mdi mdi-link-variant"></i> Povezana po broju i PIB-u</span>{% endif %}
+      </div>
+      <div class="card-body">
+        {% if sef_faktura %}
+          {% if sef_razlika %}<div class="alert alert-warning py-2"><i class="mdi mdi-alert"></i> Iznos na SEF-u se razlikuje od iznosa u EUF za {{ sef_razlika|floatformat:"2g" }} din.</div>{% endif %}
+          {% if sef_kandidata > 1 %}<div class="alert alert-info py-2">Na SEF-u ima {{ sef_kandidata }} faktura sa ovim brojem; prikazana je poslednja poslata.</div>{% endif %}
+          <div class="invoice-podaci">
+            <dl>
+              <dt>Status na SEF-u</dt><dd><span class="invoice-badge muted">{{ sef_status|default:"—" }}</span></dd>
+              <dt>Vrsta</dt><dd>{{ sef_vrsta|default:"—" }}</dd>
+              <dt>Partner</dt><dd>{{ sef_faktura.partner_naziv|default:"—" }}<div class="text-muted small">PIB {{ sef_faktura.partner_pib|default:"—" }}{% if sef_faktura.partner_mb %} · MB {{ sef_faktura.partner_mb }}{% endif %}</div></dd>
+              <dt>Primljena na SEF</dt><dd>{{ sef_faktura.datum_slanja|date:"d.m.Y. H:i"|default:"—" }}</dd>
+            </dl>
+            <dl>
+              <dt>Datum prometa</dt><dd>{{ sef_faktura.datum_prometa|date:"d.m.Y."|default:"—" }}</dd>
+              <dt>Dospeće</dt><dd>{{ sef_faktura.datum_dospeca|date:"d.m.Y."|default:"—" }}</dd>
+              <dt>Osnovica · PDV</dt><dd>{% if sef_faktura.osnovica is not None %}{{ sef_faktura.osnovica|floatformat:"2g" }}{% else %}—{% endif %} · {% if sef_faktura.pdv is not None %}{{ sef_faktura.pdv|floatformat:"2g" }}{% else %}—{% endif %}</dd>
+              <dt>Ukupno</dt><dd><strong>{% if sef_faktura.iznos is not None %}{{ sef_faktura.iznos|floatformat:"2g" }} {{ sef_faktura.valuta|default:"din" }}{% else %}—{% endif %}</strong></dd>
+            </dl>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ sef_pdf_url }}" target="_blank" rel="noopener"><i class="mdi mdi-file-pdf-box"></i> Otvori PDF</a>
+            {% if sef_u_finansijama %}<a class="btn btn-outline-primary btn-sm" href="{% url 'finansije:sef_detail' sef_faktura.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> SEF faktura u Finansijama</a>{% endif %}
+            <span class="text-muted small align-self-center">ID na SEF-u {{ sef_faktura.sef_id }}</span>
+          </div>
+        {% else %}
+          <div class="text-muted">Na SEF-u nema ulazne fakture sa brojem {{ invoice.invoice_number }}{% if invoice.partner_pib %} i PIB-om {{ invoice.partner_pib }}{% endif %}. SEF fakture preuzimaju Finansije (od 23.09.2026.); papirne i starije fakture nemaju par.</div>
+        {% endif %}
       </div>
     </div>
 
@@ -409,6 +447,16 @@
     </div>
   </div>
 </div>
+
+{% if sef_faktura %}
+<div class="card shadow-sm mt-3" id="sef-pdf">
+  <div class="card-header d-flex justify-content-between align-items-center gap-2">
+    <h4 class="mb-0"><i class="mdi mdi-file-pdf-box"></i> PDF sa SEF-a</h4>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ sef_pdf_url }}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> U novom prozoru</a>
+  </div>
+  <div class="card-body p-0"><iframe class="invoice-sef-pdf" src="{{ sef_pdf_url }}" loading="lazy" title="PDF fakture {{ invoice.invoice_number }} sa SEF-a"></iframe></div>
+</div>
+{% endif %}
 
 <div class="modal fade" id="invoice-returned-modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">

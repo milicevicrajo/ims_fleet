@@ -145,6 +145,9 @@
     <a href="{% url 'putninalog_list' %}" class="btn btn-outline-light btn-sm">
       <i class="mdi mdi-road-variant"></i> Putni nalozi
     </a>
+    {% if moze_racune %}<a href="{% url 'isplate:putni_nalozi_pravdanje' %}" class="btn btn-outline-light btn-sm">
+      <i class="mdi mdi-receipt-text-plus-outline"></i> Pravdanje
+    </a>{% endif %}
   </div>
 </div>
 
@@ -290,6 +293,7 @@
               <th class="text-end">Iznos</th>
               <th class="text-center">Virman</th>
               <th>Kontrola</th>
+              {% if moze_racune %}<th class="text-center">Fiskalni računi</th>{% endif %}
             </tr>
           </thead>
           <tbody>
@@ -336,6 +340,7 @@
                     <span class="badge bg-success text-white">Spreman</span>
                   {% endif %}
                 </td>
+                {% if moze_racune %}<td class="text-center">{{ order.dugme_racuni }}</td>{% endif %}
               </tr>
             {% empty %}
               <tr>
@@ -350,6 +355,7 @@
                 <td></td>
                 <td></td>
                 <td></td>
+                {% if moze_racune %}<td></td>{% endif %}
               </tr>
             {% endfor %}
           </tbody>
@@ -361,6 +367,8 @@
     </div>
   </div>
 </form>
+
+{% if moze_racune %}{% include "isplate/_stil.html" %}{% include "isplate/_racuni_naloga.html" %}{% endif %}
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
@@ -379,7 +387,8 @@
         pageLength: 50,
         order: [[7, 'desc']],
         columnDefs: [
-          { targets: 0, orderable: false, searchable: false }
+          { targets: 0, orderable: false, searchable: false }{% if moze_racune %},
+          { targets: -1, orderable: false, searchable: false }{% endif %}
         ],
         language: {
           search: 'Pretraga:',

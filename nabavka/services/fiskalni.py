@@ -250,7 +250,7 @@ def preuzmi(racun):
     return True
 
 
-def upisi(tekst, job_code, korisnik, napomena="", dodatne=()):
+def upisi(tekst, job_code, korisnik, napomena="", dodatne=(), putni_nalog=None):
     """Novi racun iz ocitanog linka. Vraca (racun, upozorenja). Isti racun se ne upisuje dva puta.
 
     `job_code` je glavna sifra posla, `dodatne` ostale sifre na koje se racun vezuje.
@@ -267,7 +267,7 @@ def upisi(tekst, job_code, korisnik, napomena="", dodatne=()):
         brojac_ukupno=zaglavlje.brojac_ukupno, brojac_vrste=zaglavlje.brojac_vrste, iznos=zaglavlje.iznos,
         pfr_vreme=zaglavlje.pfr_vreme, vrsta_racuna=zaglavlje.vrsta_racuna, vrsta_transakcije=zaglavlje.vrsta_transakcije,
         id_kupca=zaglavlje.id_kupca, pib_kupca=zaglavlje.pib_kupca, na_ims=zaglavlje.pib_kupca == pib_ims,
-        job_code=job_code, napomena=napomena, created_by=korisnik)
+        job_code=job_code, napomena=napomena, created_by=korisnik, putni_nalog=putni_nalog)
     racun.uskladi_glavnu_sifru(korisnik)
     for sifra in dodatne:
         if sifra.pk != job_code.pk:
@@ -294,3 +294,58 @@ def upozorenja(racun):
         if zbir != racun.iznos:
             poruke.append(f"Zbir stavki ({zbir}) nije jednak iznosu računa ({racun.iznos}).")
     return poruke
+
+
+# ---------------------------------------------------------------- putni nalozi i knjiženje (od 02.10.2026.)
+
+def ucitaj_za_putni_nalog(tekst, putni_nalog, korisnik, napomena=""):
+    """Račun sa putnog naloga. Vraća (račun, upozorenja, vezan_postojeći).
+
+    Novi račun dobija šifru posla putnog naloga. Račun koji je već učitan (npr. u Nabavci) se samo
+    veže za nalog i zadržava svoju šifru posla. Račun vezan za drugi nalog se ne prevezuje, a na
+    storniran nalog se računi ne dodaju.
+    """
+    if putni_nalog.storniran:
+        raise GreskaOcitavanja(f"Putni nalog {putni_nalog.order_number} je storniran. Računi se na njega ne dodaju.")
+    from nabavka.models import FiskalniRacun
+
+    zaglavlje = ocitaj_link(tekst)
+    postojeci = FiskalniRacun.objects.select_related("putni_nalog").filter(broj_racuna=zaglavlje.broj_racuna).first()
+    if postojeci is None:
+        racun, poruke = upisi(tekst, putni_nalog.job_code, korisnik, napomena, putni_nalog=putni_nalog)
+        return racun, poruke, False
+    if postojeci.putni_nalog_id == putni_nalog.pk:
+        raise GreskaOcitavanja(f"Račun {postojeci.broj_racuna} je već na ovom putnom nalogu.")
+    if postojeci.putni_nalog_id:
+        raise GreskaOcitavanja(f"Račun {postojeci.broj_racuna} je već vezan za putni nalog "
+                               f"{postojeci.putni_nalog.order_number}.")
+    postojeci.putni_nalog = putni_nalog
+    postojeci.save(update_fields=["putni_nalog"])
+    return postojeci, upozorenja(postojeci), True
+
+
+def odvezi_od_putnog_naloga(racun):
+    """Uklanja vezu sa putnim nalogom (pogrešno skeniran račun). Račun ostaje u Nabavci."""
+    if racun.proknjizeno:
+        raise GreskaOcitavanja(f"Račun {racun.broj_racuna} je proknjižen i ne može se skinuti sa putnog naloga.")
+    racun.putni_nalog = None
+    racun.save(update_fields=["putni_nalog"])
+    return racun
+
+
+def oznaci_proknjizeno(racun, korisnik, proknjizeno=True, request=None):
+    """Oznaka knjigovodstva. Ne upisuje ništa u knjigovodstvo — samo beleži ko je i kada označio.
+    Poništavanje oznake se posebno beleži u evidenciji rada."""
+    from django.utils import timezone
+
+    from core.activity import log_activity
+
+    if racun.proknjizeno == proknjizeno:
+        return racun
+    racun.proknjizeno = proknjizeno
+    racun.proknjizio, racun.proknjizeno_at = (korisnik, timezone.now()) if proknjizeno else (None, None)
+    racun.save(update_fields=["proknjizeno", "proknjizio", "proknjizeno_at"])
+    if not proknjizeno:
+        log_activity(request=request, user=korisnik, object_instance=racun,
+                     description=f"Poništena oznaka „proknjiženo” za fiskalni račun {racun.broj_racuna}.")
+    return racun

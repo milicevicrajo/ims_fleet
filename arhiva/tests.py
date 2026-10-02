@@ -258,6 +258,31 @@ class EkraniTests(RegistarMixin, TestCase):
         self.assertContains(self.client.get(reverse("arhiva:kategorije")), "Izveštaji o radu")
         self.assertContains(self.client.get(reverse("arhiva:pisarnica")), "26. Izveštaji o radu · Trajno")
 
+    def test_izbor_oj_po_centrima_sa_nazivom_iz_kadrova(self):
+        from arhiva import oj
+        from hr.models import UgovorZaposlenog
+
+        bez_naziva = cvor(OrgNode.LEVEL_UNIT, "449", "", self.c43)
+        nepoznata = cvor(OrgNode.LEVEL_UNIT, "410", "", self.c41)
+        nauka = cvor(OrgNode.LEVEL_CENTER, "3", "Naučni blok")
+        projekat = cvor(OrgNode.LEVEL_UNIT, "3-190170", "", nauka)
+        UgovorZaposlenog.objects.create(employee_code=1, redni_broj=1, datum_od=DAN, oj="449",
+                                        naziv_oj="Laboratorija za topl.tehniku i zas.od pozara")
+        zajednicko = OrgNode.objects.create(company=1, level=OrgNode.LEVEL_UNIT)
+        OrgNodeVersion.objects.create(node=zajednicko, parent=self.c43, segment="0", full_code="430", name="",
+                                      valid_from=datetime.date(2020, 1, 1))
+        grupe = dict(oj.izbor())
+        # isti predlog naziva kao u stablu organizacije (jedinica sa cifrom 0)
+        self.assertEqual(dict(grupe["43 · Centar za puteve i geotehniku"])[str(zajednicko.pk)], "430 · Zajednički troškovi centra")
+        opcije_43 = dict(grupe["43 · Centar za puteve i geotehniku"])
+        self.assertEqual(opcije_43[str(self.c43.pk)], "43 · Centar za puteve i geotehniku (ceo centar)")
+        self.assertEqual(opcije_43[str(bez_naziva.pk)], "449 · Laboratorija za topl.tehniku i zas.od pozara")
+        self.assertEqual(dict(grupe["41 · Centar za metale"])[str(nepoznata.pk)], "410 · bez naziva u registru")
+        self.assertNotIn(str(projekat.pk), dict(grupe["3 · Naučni blok"]))  # naučni projekat se ne nudi
+        odgovor = self.upis(glavna_oj=str(bez_naziva.pk))
+        self.assertContains(odgovor, "Zavedeno pod brojem 43-1")
+        self.assertContains(self.client.get(reverse("arhiva:delovodnik")), "449 · Laboratorija za topl.tehniku")
+
     def test_bez_dozvole(self):
         drugi = get_user_model().objects.create_user("bez-arhive", password="x")
         self.client.force_login(drugi)

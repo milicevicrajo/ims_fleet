@@ -1183,3 +1183,36 @@ class OrgSemaViewTests(TestCase):
         from core.permissions import collect_permission_codes
 
         self.assertIn("organizacija:sema", collect_permission_codes())
+
+
+class NaziviIzKadrovaTests(ImportTestCase):
+    """Naziv jedinice: Pravilnik, pa aktivna OJ iz kadrovske baze; jednom upisan kadrovski naziv ostaje."""
+
+    def naziv(self, sifra):
+        return OrgNodeVersion.objects.get(full_code=sifra, valid_to__isnull=True, node__level=OrgNode.LEVEL_UNIT).name
+
+    def test_kadrovski_naziv_posle_pravilnika(self):
+        run_import(company=1, nazivi_kadrova={"410": "Centralna laboratorija za isp.materijala",
+                                              "431": "Kadrovski naziv koji ne pobeđuje Pravilnik"})
+        self.assertEqual(self.naziv("410"), "Centralna laboratorija za isp.materijala")
+        self.assertEqual(self.naziv("431"), "Odeljenje za geotehniku i nadzor")  # Pravilnik ima prednost
+        verzija = OrgNodeVersion.objects.get(full_code="410", valid_to__isnull=True)
+        self.assertIn("kadrovska baza", verzija.note)
+
+    def test_naziv_ostaje_kad_izvor_nije_dostupan_ili_oj_nije_aktivna(self):
+        run_import(company=1, nazivi_kadrova={"410": "Centralna laboratorija za isp.materijala"})
+        verzija = OrgNodeVersion.objects.get(full_code="410", valid_to__isnull=True)
+        run_import(company=1, nazivi_kadrova=None)  # kadrovska baza nije dostupna
+        run_import(company=1, nazivi_kadrova={})  # OJ više nije aktivna
+        self.assertEqual(self.naziv("410"), "Centralna laboratorija za isp.materijala")
+        self.assertEqual(OrgNodeVersion.objects.get(full_code="410", valid_to__isnull=True).pk, verzija.pk)  # bez nove verzije
+
+    def test_nedostupna_kadrovska_baza_ne_kvari_transakciju(self):
+        from django.db import transaction
+
+        from organizacija.services import kadrovi
+
+        with transaction.atomic():
+            self.assertIsNone(kadrovi.nazivi_ili_none())  # u testovima nema povezanog servera
+            run_import(company=1, nazivi_kadrova=None)
+        self.assertTrue(OrgNodeVersion.objects.filter(full_code="410").exists())

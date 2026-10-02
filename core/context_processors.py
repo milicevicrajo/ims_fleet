@@ -65,8 +65,8 @@ def current_app(request):
             for code in ("delovodnik", "pisarnica", "kategorije")
         },
         "sidebar_template": sidebar_map.get(app, "sidebar_fleet.html"),
-        # Organizaciju vide svi prijavljeni korisnici (organizacija/views.py); uporedni
-        # izvestaj Flote samo uloge sa dozvolom `organizacija:flota`.
+        # Organizaciju vide svi prijavljeni korisnici (organizacija/views.py). Uporedni izvestaj
+        # registra i modula (`organizacija:flota`) od 02.10.2026. nije u meniju — kontrola prelaska.
         "organizacija_permissions": {
             **{code: request.user.is_authenticated for code in ("stablo", "sema")},
             "flota": user_has_role_permission(request.user, "organizacija:flota"),

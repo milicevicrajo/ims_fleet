@@ -91,6 +91,10 @@ class ZahtevFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateVi
         form = ZahtevForm(data, instance=instance, actor=self.request.user)
         if not form.fields['zaposleni'].disabled:
             form.fields['zaposleni'].queryset = _zaposleni_u_obuhvatu(self.request.user)
+            # „Podnesi zahtev” iz Mog profila: zaposleni je unapred izabran (ako je u obuhvatu).
+            izabran = self.request.GET.get('zaposleni', '')
+            if data is None and instance is None and izabran.isdigit() and                     form.fields['zaposleni'].queryset.filter(pk=int(izabran)).exists():
+                form.initial['zaposleni'] = int(izabran)
         return form
 
     def get_context_data(self, **kwargs):

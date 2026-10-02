@@ -34,6 +34,7 @@ from .forms import (
 )
 from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision
 from .querysets import employee_list_queryset
+from .services import moj_profil
 from .services.attendance import (
     DEFAULT_CLOCK_BUTTON_DEFINITIONS,
     DEFAULT_ENTRY_BUTTONS,
@@ -388,13 +389,12 @@ class MyEmployeeProfileView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.user.employee_id:
-            context.update(
-                _employee_detail_context(
-                    self.request.user.employee,
-                    is_self_profile=True,
-                    user=self.request.user,
-                )
-            )
+            employee = self.request.user.employee
+            context.update(_employee_detail_context(employee, is_self_profile=True, user=self.request.user))
+            # Kartica „Pregled”: brze akcije i podaci o sebi (hr/services/moj_profil.py).
+            context["moj"] = moj_profil.pregled(employee, context, timezone.localdate())
+            context["moze_zahtev"] = user_has_role_permission(self.request.user, "hr:zahtev_create")
+            context["title"] = "Moj profil"
         return context
 
 

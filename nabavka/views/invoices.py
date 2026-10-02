@@ -1,11 +1,14 @@
 from datetime import datetime
+from decimal import Decimal
 from io import BytesIO
 from urllib.parse import parse_qsl, urlencode
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, OuterRef, Q, Subquery, Sum
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.shortcuts import get_object_or_404, redirect
 
 from nabavka.access import fakture
@@ -16,7 +19,7 @@ from django.utils.html import escape
 from django.views import View
 from django.views.generic import DetailView, ListView
 
-from core.mixins import RolePermissionRequiredMixin
+from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
 from fleet.models import JobCode, OrganizationalUnit, Vehicle
 
 from ..forms import (
@@ -692,9 +695,70 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
                     "procurement_item__procurement_case",
                     "created_by",
                 ),
+                **self._sef_kontekst(self.object),
             }
         )
         return ctx
+
+    def _sef_kontekst(self, invoice):
+        """Ulazna SEF faktura istog broja i PIB-a (meka veza, bez kopije podataka)."""
+        from finansije.access import can_view_all
+        from finansije.services import sef as sef_servis
+        from nabavka.services.sef_veza import sef_faktura
+
+        faktura, kandidata = sef_faktura(invoice)
+        if faktura is None:
+            return {"sef_faktura": None}
+        razlika = None
+        if faktura.iznos is not None and invoice.amount is not None and abs(faktura.iznos - invoice.amount) >= Decimal("0.01"):
+            razlika = faktura.iznos - invoice.amount
+        user = self.request.user
+        return {
+            "sef_faktura": faktura, "sef_kandidata": kandidata, "sef_razlika": razlika,
+            "sef_status": sef_servis.STATUSI.get(faktura.status, faktura.status),
+            "sef_vrsta": sef_servis.VRSTE.get(faktura.vrsta, faktura.vrsta),
+            "sef_pdf_url": reverse("nabavka:euf_invoice_sef_pdf", kwargs={"pk": invoice.pk}),
+            "sef_u_finansijama": user_has_role_permission(user, "finansije:sef_detail") and can_view_all(user),
+        }
+
+
+@method_decorator(xframe_options_sameorigin, name="dispatch")
+class EufInvoiceSefPdfView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    """PDF ulazne SEF fakture povezane sa EUF fakturom — za onoga ko vidi EUF fakturu.
+
+    Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a sada. Prikazuje se i
+    u okviru strane detalja, pa poruke idu kao mala HTML strana, a ne preusmerenje.
+    """
+
+    @staticmethod
+    def _poruka(tekst, status, osvezi=False):
+        meta = '<meta http-equiv="refresh" content="5">' if osvezi else ""
+        return HttpResponse(f'<!doctype html><html lang="sr"><head><meta charset="utf-8">{meta}</head>'
+                            f'<body style="font-family:Arial,sans-serif;color:#46535c;padding:24px">{escape(tekst)}</body></html>',
+                            status=status)
+
+    def get(self, request, pk):
+        from finansije.services import sef as sef_servis
+        from nabavka.services.sef_veza import sef_faktura
+
+        invoice = get_object_or_404(fakture(ProcurementInvoice.objects.all(), request.user), pk=pk)
+        faktura, _ = sef_faktura(invoice)
+        if faktura is None:
+            raise Http404("Faktura nema povezanu SEF fakturu.")
+        try:
+            spreman, poruka = sef_servis.preuzmi_pdf(faktura)
+        except (sef_servis.SefNijePodesen, sef_servis.SefGreska) as exc:
+            return self._poruka(f"PDF nije preuzet sa SEF-a: {exc}", 502)
+        if not spreman:
+            return self._poruka(poruka or "SEF još priprema PDF. Strana se osvežava sama za nekoliko sekundi.", 202, osvezi=True)
+        try:
+            fajl = faktura.pdf.open("rb")
+        except FileNotFoundError:
+            raise Http404("PDF fakture nije pronađen.")
+        ime = "".join(z if z.isalnum() or z in "-_" else "_" for z in (faktura.broj or str(faktura.sef_id)))
+        odgovor = FileResponse(fajl, content_type="application/pdf")
+        odgovor["Content-Disposition"] = f'inline; filename="SEF_{ime}.pdf"'
+        return odgovor
 
 
 class ProcurementInvoiceLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):

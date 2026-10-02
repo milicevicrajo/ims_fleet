@@ -433,7 +433,8 @@ urlpatterns = [
     path("reports/service-monthly-costs/", ServiceMonthlyCostsView.as_view(), name="reports_service_monthly_costs"),
     path('reports/services/monthly.csv', service_monthly_costs_csv, name='reports_service_monthly_costs_csv'),
     
-    path('', dashboard, name='dashboard'),
+    # Od 02.10.2026. „/” je početna strana aplikacije (core.views.pocetna); kontrolna tabla Flote je ovde.
+    path('flota/', dashboard, name='dashboard'),
     path('ostalo/', fleet_other, name='fleet_other'),
     path('analitika/', fleet_analytics, name='fleet_analytics'),
     path('analitika/metodologija/', analysis_methodology, name='analysis_methodology'),

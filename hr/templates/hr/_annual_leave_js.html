@@ -17,7 +17,7 @@ jQuery(function ($) {
   });
   if (window.location.hash === '#annual-leave') {
     var target = document.querySelector('[data-bs-target="#annual-leave"]');
-    if (target) bootstrap.Tab.getOrCreateInstance(target).show();
+    if (target) new bootstrap.Tab(target).show();  // Bootstrap 5.0 beta: nema getOrCreateInstance
   }
 });
 </script>

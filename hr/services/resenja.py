@@ -214,11 +214,16 @@ def ime_osobe(employee, pismo):
     return latin(latinica)
 
 
+def ocisti_razlog(tekst):
+    """Razlog se umeće u rečenicu („zbog {razlog}, izdate…”), pa bez interpunkcije na kraju — inače „vikenda,, izdate”."""
+    return str(tekst or '').strip().rstrip(' ,;.:').strip()
+
+
 def vrednosti_zahteva(zahtev, pismo):
     """Podaci zahteva koje obrazac rešenja može da navede u obrazloženju."""
     if zahtev is None:
         return {'razlog_zahteva': '', 'podnosilac': '', 'podnosilac_funkcija': ''}
-    return {'razlog_zahteva': zahtev.razlog, 'podnosilac': ime_osobe(zahtev.podnosilac, pismo),
+    return {'razlog_zahteva': ocisti_razlog(zahtev.razlog), 'podnosilac': ime_osobe(zahtev.podnosilac, pismo),
             'podnosilac_funkcija': zahtev.podnosilac_funkcija}
 
 

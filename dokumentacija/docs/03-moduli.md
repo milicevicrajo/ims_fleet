@@ -200,6 +200,14 @@ Bočni meni se bira preko `switch-app`, a izbor se pamti u sesiji.
 Postoji 12 menija, među njima i **`pravna`** i **`kadrovi`**, koji nisu zasebne
 Django aplikacije.
 
+**Početna strana (od 02.10.2026.).** Adresa `/` (`pocetna`, `core/views.py`, `core/pocetna.py`,
+`templates/pocetna.html`) je strana posle prijave (`LOGIN_REDIRECT_URL`) i iza loga u zaglavlju; u
+zaglavlju je i link **Početna**. Nema bočni meni (`bez_menija` u `base.html`). Prikazuje opis
+aplikacije, kartice svih modula (otvoren je modul za čiju početnu rutu korisnik ima dozvolu, ostali
+su zaključani; vode preko `switch-app`), nalog korisnika, uloge, odobrene dodele uloga (obuhvat) i
+dozvole grupisane po modulu. Vidi je svaki prijavljeni korisnik. Kontrolna tabla Flote je prešla
+na `/flota/` i zadržala naziv rute `dashboard` (i dozvolu).
+
 ### Izvoz [P]
 
 | Vrsta | Moduli |

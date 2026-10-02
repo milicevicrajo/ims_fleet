@@ -1617,6 +1617,14 @@ Bočni meni se bira preko `switch-app`, a izbor se pamti u sesiji.
 Postoji 12 menija, među njima i **`pravna`** i **`kadrovi`**, koji nisu zasebne
 Django aplikacije.
 
+**Početna strana (od 02.10.2026.).** Adresa `/` (`pocetna`, `core/views.py`, `core/pocetna.py`,
+`templates/pocetna.html`) je strana posle prijave (`LOGIN_REDIRECT_URL`) i iza loga u zaglavlju; u
+zaglavlju je i link **Početna**. Nema bočni meni (`bez_menija` u `base.html`). Prikazuje opis
+aplikacije, kartice svih modula (otvoren je modul za čiju početnu rutu korisnik ima dozvolu, ostali
+su zaključani; vode preko `switch-app`), nalog korisnika, uloge, odobrene dodele uloga (obuhvat) i
+dozvole grupisane po modulu. Vidi je svaki prijavljeni korisnik. Kontrolna tabla Flote je prešla
+na `/flota/` i zadržala naziv rute `dashboard` (i dozvolu).
+
 #### Izvoz [P]
 
 | Vrsta | Moduli |
@@ -1988,7 +1996,8 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 > `fleet_fuelconsumption`, `fleet_lease` — imaju opcionu kolonu `org_node_id` (čvor registra).
 > Ona se **izvodi** iz postojećeg polja (`organizational_unit` / `job_code`) pri svakom čuvanju
 > (`organizacija/signals.py`) i komandom `povezi_flotu`. Uporedni izveštaj:
-> `/organizacija/flota/` (dozvola `organizacija:flota`).
+> `/organizacija/flota/` (dozvola `organizacija:flota`). Od 02.10.2026. nije u meniju Organizacije —
+> kontrola prelaska na registar, otvara se samo direktnom adresom.
 >
 > **[P] Čitanje iz registra (od 25.09.2026.):** spiskovi i nazivi šifara posla u Floti dolaze iz
 > registra (`fleet/support/registar.py`) — izbor šifre u formama putnog naloga, dodele vozila,
@@ -2278,6 +2287,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 
 | Ekran | Adresa | Ko pristupa |
 |---|---|---|
+| **Pregled** (početna strana, od 02.10.2026.) | `/hr/` | Svaki prijavljeni korisnik; delovi samo uz dozvolu spiska |
 | Spisak zaposlenih | `/zaposleni/` | Kadrovska služba |
 | Detalj zaposlenog | `/zaposleni/<id>/` | Kadrovska služba |
 | **Moj profil** | `/moj-profil/` | Svaki zaposleni |
@@ -2334,6 +2344,36 @@ sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa 
 | Obuhvat | Kao spisak zaposlenih: vide se periodi zaposlenih u obuhvatu korisnika. Periodi bivših radnika koji nemaju karticu u aplikaciji i radnika bez čvora registra (OJ `1`) vidi samo obuhvat cele firme. |
 
 ---
+
+#### Moj profil → Pregled (od 02.10.2026.)
+
+Moj profil se otvara na kartici **Pregled** (`hr/_moj_pregled.html`, `hr/services/moj_profil.py`); ostale
+kartice (osnovni podaci, CV, radne liste, godišnji odmori, zahtevi, rešenja, putni nalozi…) su iza nje.
+Tuđi profil (detalj zaposlenog) nema ovu karticu.
+
+| Deo | Sadržaj |
+|---|---|
+| Brze akcije | Radna lista tekućeg meseca (sa statusom), **Podnesi zahtev** (uz `hr:zahtev_create`; zaposleni je unapred izabran preko `?zaposleni=`), evidencija prolaza za tekući mesec, godišnji odmor, dodavanje CV stavke |
+| Godišnji odmor | Za tekuću godinu (i prethodnu, ako je ostalo dana): dodeljeno, po rešenjima i **preostalo prema rešenjima** — dani po rešenju iz kadrovske baze nisu potvrđeno korišćenje, pa ovo nije obračun salda; sledeći ili tekući godišnji odmor |
+| Gde radim | Centar i jedinica iz registra (`Employee.org_node`), radno mesto i dodatna radna mesta, ugovor koji danas važi (kategorija, broj, period, upozorenje ako ističe u 45 dana), staž u IMS-u od datuma zaposlenja |
+| Ovaj mesec | Status radne liste, putni nalozi bez pravdanja, zaduženo vozilo, telefoni |
+| Moji zahtevi / Moja rešenja | Poslednja četiri, sa statusom i vezom na detalj |
+
+#### Pregled — početna strana Kadrova (od 02.10.2026.)
+
+Link **Kadrovi** u zaglavlju otvara `hr:pregled` (`hr/pregled_views.py`, `hr/services/pregled.py`).
+Strana samo broji i izdvaja ono što korisnik već vidi na spiskovima, u istom obuhvatu; ništa ne upisuje.
+U bočnom meniju je prva stavka **Pregled**, a **Moj profil** je na dnu.
+
+| Deo | Dozvola | Sadržaj |
+|---|---|---|
+| Aktivni zaposleni, zaposleni po centrima, novi zaposleni | `employee_list` | Broj aktivnih (žene: pol `F` ili `Z` — kadrovska baza upisuje `Z`; muškarci `M`), raspodela po centru registra (`Employee.org_node`), zaposleni u poslednjih 30 dana |
+| Odsutni danas | `hr:annual_leave_list` / `hr:sick_leave_list` | Godišnji odmor po rešenju (`AnnualLeaveDecision`, prisutno u izvoru) i bolovanje (RFZO, bez kraja ili sa krajem od danas) |
+| Ugovori koji ističu | `hr:ugovor_list` | Ugovori na određeno aktivnih radnika sa krajem u narednih 45 dana, bez kasnijeg ugovora istog radnika |
+| Zahtevi koji čekaju rešenje | `hr:zahtev_list` (+ `hr:resenje_list`) | Podneti zahtevi bez nestorniranog rešenja; nacrti zahteva i rešenja; rešenja izdata ovog meseca |
+| Moje | — | Moj profil, moja radna lista, zahtevi i rešenja (ako ih korisnik vidi) |
+
+Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema nove dozvole za dodelu.
 
 ### 6. Podaci koje korisnik unosi
 
@@ -2752,8 +2792,8 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |
 
-Bočni meni ima posebnu stavku **Dodatne analize** koja direktno otvara tu
-karticu. Obe kartice šifara posla imaju dugme **Izvezi u Excel**. Izvoz pravi
+Od 02.10.2026. bočni meni nema stavku **Dodatne analize**; kartica se otvara
+uz zbirnu tabelu šifara posla. Obe kartice šifara posla imaju dugme **Izvezi u Excel**. Izvoz pravi
 nativnu Excel tabelu sa filterima i sortiranjem u zaglavlju, naizmenično
 obojenim redovima, formatiranim brojevima i zamrznutim zaglavljem i prve
 tri kolone. Preuzimaju se sve šifre koje odgovaraju periodu, centru i
@@ -3246,6 +3286,7 @@ Spisak PIB-ova banaka se čuva u kešu sat vremena. Stanje 28.09.2026.: 3.257 fa
 | Povezani kupovni ugovori | Ugovori sa šifrom tipa koja počinje sa `KUP` |
 | Povezane dodatne šifre posla | Dodate ručno |
 | **Interna dopuna** | `is_garage`, `vehicle`, `work_type`, `goes_to_warehouse`, `internal_note` |
+| **SEF faktura** (od 02.10.2026.) | Ulazna SEF faktura **istog broja i istog PIB-a** (`nabavka/services/sef_veza.py`) — meka veza, bez kopije podataka: status na SEF-u, vrsta, partner, datumi prometa i dospeća, osnovica, PDV, iznos, upozorenje kad se iznos razlikuje od EUF; veza „SEF faktura u Finansijama” (samo uz obuhvat cele firme) i **PDF sa SEF-a na dnu strane** (`nabavka:euf_invoice_sef_pdf`, isti fajl kao u Finansijama; ako nije preuzet, preuzima se pri otvaranju). PDF vidi svako ko vidi EUF fakturu. Provereno 02.10.2026.: 126 od 145 EUF faktura iz perioda SEF-a ima par, bez sukoba PIB-a. |
 
 Naziv partnera na spiskovima skraćuje se na **50 znakova**, a pun naziv se vidi kao
 `title` atribut (na prelazak mišem). [P]
@@ -3300,6 +3341,12 @@ Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
 | PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom |
 | Obuhvat | Ulazna faktura nema šifru posla (broj je dobavljačev), pa je na registru vidi samo **obuhvat cele firme** (`nabavka.access.ulazne_sef`) — uloga Nabavka i Uprava vide sve, korisnik vezan za centar ne vidi nijednu. |
 | Dozvole | `nabavka:uf_sef_list`, `nabavka:uf_sef_data`, `nabavka:uf_sef_pdf` — posle isporuke `manage.py sync_permission_codes` i dodela ulogama |
+
+**Računi sa putnih naloga (od 02.10.2026.):** račun može biti dodat pri pravdanju putnog naloga u
+Isplatama ili vezan za nalog (`putni_nalog`). Na detalju se tada vidi kartica „Putni nalog" (broj, zaposleni, putovanje, šifra
+posla naloga, stanje knjiženja), a u spisku oznaka „PN". Knjigovodstvo ga označava „proknjiženo" u
+Isplatama (Putni nalozi – Fiskalni računi). **Proknjižen račun se ne briše i ne menja** (obrada i šifre
+posla). Detaljno: [3.9 Isplate](#39-isplate).
 
 #### Kupovni ugovori — nabavni pogled na modul Ugovori [P]
 
@@ -4845,6 +4892,31 @@ blagajna ne bi ručno kucala naloge za plaćanje.
 |---|---|
 | **Isplata neoporezivih primanja** | `/isplate/` |
 | **Konverter** | `/isplate/konverter/` |
+| **Putni nalozi – pravdanje** (od 02.10.2026.) | `/isplate/putni-nalozi/` |
+| **Putni nalozi – Fiskalni računi** (od 02.10.2026.) | `/isplate/fiskalni-racuni/` |
+
+#### Putni nalozi – Fiskalni računi (od 02.10.2026.) [P]
+
+Fiskalni računi se dodaju **pri pravdanju putnog naloga** (Isplate → Putni nalozi – pravdanje: dugme
+„Dodaj račun" otvara prozor sa računima naloga i poljem za čitač QR koda; „Opravdaj" zaključava nalog)
+ili **odmah u toku isplate** — isto dugme i isti prozor postoje u svakom redu tabele Nalozi za isplatu
+(Isplata neoporezovanih), kolona „Fiskalni računi". Dugme pokazuje broj i zbir računa naloga i osvežava se
+odmah posle skeniranja, bez ponovnog učitavanja strane (izbor naloga za virman ostaje).
+Račun se čuva gde i ostali fiskalni računi (`nabavka.FiskalniRacun`), samo je vezan za putni nalog
+(`putni_nalog`). Knjigovodstvo ih vidi i označava na ekranu Putni nalozi – Fiskalni računi.
+
+| Tema | Pravilo |
+|---|---|
+| Šta se vidi | Samo računi vezani za putni nalog. Računi koji su učitani samo u Nabavci se ne prikazuju. |
+| Kolone | Vreme, prodavac i PIB, broj računa (veza na detalj u Nabavci), iznos, PDV, kupac (IMS / drugi kupac / fizičko lice), putni nalog (zaposleni, mesto, datum, oznaka storniranog naloga), šifra posla, ko je učitao, **Proknjiženo** |
+| Filteri | Knjiženje (podrazumevano neproknjiženi), kupac, period i pretraga tabele; primenjuju se odmah. Zbir i PDV u zaglavlju prate filtere i pretragu; izvoz u Excel takođe. |
+| Tabela | Oba spiska (pravdanje i knjiženje) su DataTables tabele sa stranom sa servera — isti URL uz parametar `draw` vraća JSON (`isplate/tabela.py`), pa nema posebne dozvole za podatke. |
+| Proknjiženo | Polje za štikliranje čuva se odmah i pamti ko je i kada označio (`proknjizeno`, `proknjizio`, `proknjizeno_at`). Ne upisuje ništa u knjigovodstvo. Poništavanje oznake traži potvrdu i beleži se u evidenciji rada. |
+| Zaključavanje | Proknjižen račun se u Nabavci ne briše i ne menja (obrada, šifre posla), niti se skida sa putnog naloga. |
+| Pravdanje | Spisak putnih naloga (podrazumevano neopravdani; pretraga, period putovanja) sa brojem i zbirom računa. Opravdan nalog je **zaključan**: računi se više ne dodaju ni skidaju. „Opravdaj" je isto što i u Floti. |
+| Dodavanje računa | Novi račun dobija **šifru posla putnog naloga**. Račun koji je već učitan u Nabavci se samo **veže** za nalog i zadržava svoju šifru. Račun vezan za drugi nalog se ne prevezuje; na storniran nalog se računi ne dodaju (postojeći ostaju, uz oznaku). Pogrešno skeniran račun se skida sa naloga dok nije proknjižen, a ostaje u evidenciji Nabavke. |
+| Obuhvat | Isplate rade po starim pravima: oba ekrana pokazuju sve putne naloge i sve račune sa njih, kao ekran isplate akontacija. |
+| Dozvole | Pravdanje: `isplate:putni_nalozi_pravdanje`, `isplate:putni_nalog_racuni`, `isplate:putni_nalog_racun_dodaj`, `isplate:putni_nalog_racun_ukloni`, `isplate:putni_nalog_opravdaj`. Knjiženje: `isplate:fiskalni_putni_nalozi`, `isplate:fiskalni_proknjizi`, `isplate:fiskalni_izvoz`. Uloga Blagajna ih dobija automatski. |
 
 ---
 
@@ -5121,6 +5193,7 @@ otvara dozvole, a **Poveži zaposlenog** otvara prozor za izbor zaposlenog.
 | Podatak | Izvor | Kada |
 |---|---|---|
 | **Organizacione jedinice i centri** | Registar organizacije (od 28.09.2026.) | Dnevno 01:40 |
+| Nazivi jedinica registra | Pravilnik o organizaciji; ako ga nema, **aktivna OJ istog broja iz kadrovske baze** (`ob_jedin`, tekuća godina, `aktivan = 'D'`, od 02.10.2026., `organizacija/services/kadrovi.py`). Jednom upisan kadrovski naziv ostaje i kada kadrovska baza nije dostupna ili OJ više nije aktivna. Aktivne OJ bez svoje jedinice (4110, 423, 4331–4334) vode se pod centrom; 10, 80 i 90 nemaju čvor. | Dnevno 01:40 |
 | **Kodovi dozvola** | Automatski iz `urlpatterns` svih aplikacija | Dnevno 01:00 |
 | Evidencija rada | Sam sistem, kroz `ActivityLogMiddleware` | Pri svakom zahtevu |
 | Istorija zadataka | Celery signali | Pri svakom zadatku |
@@ -5375,6 +5448,7 @@ Dozvole su imena ruta (`arhiva:delovodnik`, `arhiva:pisarnica`, `arhiva:predmet_
 | Ko daje broj | Samo `arhiva/services/delovodnik.py: zavedi()`. Forma samo prikuplja podatke. |
 | Format | Iz podešavanja: `ARHIVA_FORMAT_BROJA = "{centar}-{broj}"`, `ARHIVA_FORMAT_PODBROJA = "{osnovni}/{podbroj}"` (`ims_erp/settings/base.py`). Podrazumevano `43-15238` i `43-15238/2`, kao brojevi zahteva u Kadrovima. Format je još otvorena odluka (plan, O-1); promena je samo u podešavanjima. |
 | Niz | Jedan niz za ceo Institut, za kalendarsku godinu (`EvidencionaKnjiga` + `BrojacKnjige`). Nova godina počinje od 1. |
+| Izbor OJ u pisarnici | Grupisan po centrima: „ceo centar”, pa njegove OJ. Naziv OJ je naziv iz registra, a kada ga registar nema, isti **predlog naziva kao u stablu organizacije** (`organizacija.services.tree.predlog_naziva_jedinice`), pa naziv iz kadrovske evidencije, pa „bez naziva u registru” (`arhiva/oj.py`). U registar se ništa ne upisuje. Naučni projekti (`3-…`) se ne nude. |
 | Centar u broju | Oznaka centra glavne OJ predmeta, iz registra organizacije: centar daje svoju šifru, OJ šifru nadređenog centra. Na šifru posla se ne zavodi. Oznaka se pamti na predmetu (`oznaka_centra`). |
 | Istovremeni upis | Red brojača se zaključava (`select_for_update`, na SQL Serveru UPDLOCK). Unique ograničenje na (knjiga, osnovni broj) i (knjiga, delovodni broj) je druga linija zaštite. **Ne koristi se `MAX()+1`.** |
 | Podbroj | Osnovni akt je podbroj 1 i nosi broj predmeta. Odgovori i dopisi su `/2`, `/3` … Predmet se zaključava dok se računa podbroj. |
@@ -18361,7 +18435,7 @@ chrome-for-testing/  Chrome za Selenium
 | 01:10 | Kadrovi — sinhronizacija zaposlenih | `fleet.tasks.sync_hr_employees_task` | `sync` | 90 min |
 | 01:15 | Kadrovi — ugovori zaposlenih | `hr.tasks.sync_ugovori_zaposlenih_task` | `sync` | 30 min |
 | 01:20 | Flota — provera otpisa vozila | `fleet.tasks.proveri_otpis` | `sync` | 60 min |
-| 01:40 | Organizacija — registar, obrt šifara, veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
+| 01:40 | Organizacija — registar, obrt šifara, nazivi jedinica iz kadrovske baze (čita `ob_jedin` na PUTGEO-SERVER.bazaldims), veze modula, **centar iz registra na knjiženjima Finansija** i poređenje sa starom | `organizacija.tasks.sync_organizacija_task` | `sync` | 90 min |
 | 01:45 | Flota — trebovanja | `fleet.tasks.fetch_requisition_data_task` | `sync` | 90 min |
 | 02:00 | Flota — polise | `fleet.tasks.fetch_policy_data_task` | `sync` | 90 min |
 | 02:20 | Nabavka — EUF fakture | `nabavka.tasks.sync_euf_invoices_task` | `sync` | — |

@@ -115,7 +115,8 @@ class AdditionalOverviewTests(TestCase):
         self.assertIn('"%"',sheet['L4'].number_format)
         self.assertEqual(sheet.freeze_panes,'D4')
 
-    def test_sidebar_links_directly_to_additional_and_marks_active_section(self):
+    def test_additional_section_without_sidebar_link(self):
+        # Od 02.10.2026. „Dodatne analize” nisu u bočnom meniju; izveštaj i dalje radi preko adrese.
         from types import SimpleNamespace
         from finansije.templatetags.finance import finance_sidebar_section
         request=SimpleNamespace(resolver_match=SimpleNamespace(view_name='finansije:report'),GET=self.params)
@@ -123,8 +124,7 @@ class AdditionalOverviewTests(TestCase):
         request.GET=dict(self.params,analysis='standard')
         self.assertEqual(finance_sidebar_section(request),'jobs')
         response=self.client.get(reverse('finansije:report'),self.params)
-        self.assertContains(response,'data-finance-section="additional"')
-        self.assertContains(response,'?group=job&amp;analysis=additional')
+        self.assertNotContains(response,'data-finance-section="additional"')
         self.assertContains(response,'Izvezi u Excel',count=2)
 
     def test_restricted_finance_role_cannot_read_people_and_invalid_center_reads_nothing(self):

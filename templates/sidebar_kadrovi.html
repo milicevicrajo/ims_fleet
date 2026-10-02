@@ -8,9 +8,9 @@
       <ul id="sidebarnav" class="pt-4">
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link"
-             href="{% url 'my_employee_profile' %}" aria-expanded="false">
-            <i class="mdi mdi-account-circle"></i>
-            <span class="hide-menu">Moj profil</span>
+             href="{% url 'hr:pregled' %}" aria-expanded="false">
+            <i class="mdi mdi-view-dashboard-outline"></i>
+            <span class="hide-menu">Pregled</span>
           </a>
         </li>
         <li class="sidebar-item">
@@ -51,6 +51,13 @@
         {% if hr_permissions.work_time_catalog %}
         <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:work_time_catalog' %}"><i class="mdi mdi-format-list-bulleted"></i><span class="hide-menu">Elementi radne liste</span></a></li>
         {% endif %}
+        <li class="sidebar-item mt-3 border-top pt-2">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link"
+             href="{% url 'my_employee_profile' %}" aria-expanded="false">
+            <i class="mdi mdi-account-circle"></i>
+            <span class="hide-menu">Moj profil</span>
+          </a>
+        </li>
       </ul>
     </nav>
   </div>

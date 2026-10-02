@@ -101,6 +101,9 @@
 
         <li class="nav-item app-nav-wrap">
           <div class="app-nav" aria-label="Aplikacije">
+            <a class="nav-link {% if current_app == 'pocetna' %}active{% endif %}" href="{% url 'pocetna' %}" title="Početna — izbor modula">
+              <i class="mdi mdi-home-variant"></i><span class="app-label">Početna</span>
+            </a>
             <a class="nav-link {% if current_app == 'fleet' %}active{% endif %}"
                href="{% url 'switch_app' 'fleet' %}?next={% url 'dashboard' %}"
                title="Flota">
@@ -157,7 +160,7 @@
               <i class="mdi mdi-cellphone"></i><span class="app-label">Mobilni</span>
             </a>
             <a class="nav-link {% if current_app == 'kadrovi' %}active{% endif %}"
-               href="{% url 'switch_app' 'kadrovi' %}?next={% url 'employee_list' %}"
+               href="{% url 'switch_app' 'kadrovi' %}?next={% url 'hr:pregled' %}"
                title="Kadrovi">
               <i class="mdi mdi-account-group"></i><span class="app-label">Kadrovi</span>
             </a>

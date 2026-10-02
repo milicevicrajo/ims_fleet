@@ -53,8 +53,8 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |
 
-Bočni meni ima posebnu stavku **Dodatne analize** koja direktno otvara tu
-karticu. Obe kartice šifara posla imaju dugme **Izvezi u Excel**. Izvoz pravi
+Od 02.10.2026. bočni meni nema stavku **Dodatne analize**; kartica se otvara
+uz zbirnu tabelu šifara posla. Obe kartice šifara posla imaju dugme **Izvezi u Excel**. Izvoz pravi
 nativnu Excel tabelu sa filterima i sortiranjem u zaglavlju, naizmenično
 obojenim redovima, formatiranim brojevima i zamrznutim zaglavljem i prve
 tri kolone. Preuzimaju se sve šifre koje odgovaraju periodu, centru i

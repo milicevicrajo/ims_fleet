@@ -1,0 +1,157 @@
+{% comment %}
+Prozor „Fiskalni računi putnog naloga”: spisak računa naloga, čitač QR koda i skidanje pogrešno
+skeniranog računa. Otvara ga svako dugme `.js-racuni-naloga` (pravdanje i nalozi za isplatu);
+posle izmene dugme se odmah osvežava, bez ponovnog učitavanja strane.
+{% endcomment %}
+<style>
+  .isp-rezultat { border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: .9rem; }
+  .isp-rezultat.ok { background: #e7f7ef; border: 1px solid #b7e3cb; color: #0f5132; }
+  .isp-rezultat.greska { background: #fdecec; border: 1px solid #f3c2c2; color: #842029; }
+  .isp-rezultat.rad { background: #eef1f6; border: 1px solid #d7dde7; color: #3c4858; }
+  .isp-rezultat ul { margin: 6px 0 0; padding-left: 18px; color: #7a4d00; }
+  #ispRacuniModal .modal-header { background: linear-gradient(135deg, #14395b 0%, #1f6f8b 60%, #2f8f6f 100%); color: #fff; }
+  #ispRacuniModal .modal-header .btn-close { filter: invert(1) grayscale(1) brightness(2); }
+  #ispRacuniModal .isp-nalog-info { background: #f8fafc; border: 1px solid #e6ebf1; border-radius: 8px; padding: 10px 12px; font-size: .86rem; }
+  #ispRacuniModal table { font-size: .84rem; }
+  #ispLink { font-size: .78rem; }
+</style>
+
+<div class="modal fade" id="ispRacuniModal" tabindex="-1" aria-labelledby="ispRacuniNaslov" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <form class="modal-content" method="post" id="ispRacuniForma">{% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="ispRacuniNaslov"><i class="mdi mdi-qrcode-scan" aria-hidden="true"></i> Fiskalni računi · putni nalog <span id="ispNalog"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body">
+        <div class="isp-nalog-info mb-3" id="ispZaglavlje"></div>
+        <div class="table-responsive mb-3"><table class="table table-sm table-hover align-middle mb-0">
+          <thead class="table-light"><tr><th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th class="text-end">Iznos</th><th>Kupac</th><th></th></tr></thead>
+          <tbody id="ispRacuni"></tbody>
+          <tfoot><tr><th colspan="3" class="text-end">Ukupno</th><th class="text-end text-nowrap" id="ispZbir"></th><th colspan="2"></th></tr></tfoot>
+        </table></div>
+        <div id="ispUnos">
+          <label class="form-label fw-semibold" for="ispLink">Link sa QR koda računa</label>
+          <textarea class="form-control font-monospace" rows="3" id="ispLink" name="link" autocomplete="off" spellcheck="false" placeholder="Očitajte QR kod računa čitačem…"></textarea>
+          <div class="form-text">Kursor je već u polju — očitajte QR kod; čitač sam pritiska Enter i račun se dodaje. Prozor ostaje otvoren za sledeći račun.</div>
+          <div class="mt-2"><label class="form-label" for="ispNapomena">Napomena</label>
+            <input class="form-control" id="ispNapomena" name="napomena" maxlength="500" placeholder="npr. gorivo, putarina, parking"></div>
+        </div>
+        <div id="ispZakljucan" class="alert alert-secondary mb-0" hidden><i class="mdi mdi-lock" aria-hidden="true"></i> <span></span></div>
+        <div id="ispRezultat" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
+        <button type="submit" class="btn btn-primary" id="ispDodaj"><i class="mdi mdi-plus" aria-hidden="true"></i> Dodaj račun</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var modalEl = document.getElementById('ispRacuniModal');
+  if (!modalEl || !window.bootstrap) return;
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+  var modal = new bootstrap.Modal(modalEl);  // Bootstrap 5.0 beta: nema getOrCreateInstance
+  var forma = document.getElementById('ispRacuniForma');
+  var link = document.getElementById('ispLink');
+  var rezultat = document.getElementById('ispRezultat');
+  var dugme = document.getElementById('ispDodaj');
+  var csrf = forma.querySelector('[name=csrfmiddlewaretoken]').value;
+  var urlRacuni = '', izvor = null, promenjeno = false;
+
+  function osveziDugme(d) {
+    // Dugme u redu tabele prati stanje naloga: broj računa i zbir, ili „Dodaj račun”.
+    if (!izvor) return;
+    var ima = d.racuni.length > 0;
+    izvor.classList.toggle('btn-outline-success', ima);
+    izvor.classList.toggle('btn-outline-primary', !ima);
+    var oznaka = izvor.querySelector('.js-racuni-oznaka');
+    if (oznaka) oznaka.textContent = ima ? (d.racuni.length + ' · ' + d.zbir) : 'Dodaj račun';
+  }
+  function prikazi(d) {
+    document.getElementById('ispNalog').textContent = d.nalog;
+    document.getElementById('ispZaglavlje').innerHTML = '<strong>' + esc(d.zaposleni || '—') + '</strong> · ' + esc(d.putovanje) +
+      '<div class="isp-small">Novi računi idu na šifru posla <strong>' + esc(d.sifra) + '</strong> ' + esc(d.sifra_naziv) + '</div>';
+    document.getElementById('ispRacuni').innerHTML = d.racuni.length ? d.racuni.map(function (r) {
+      return '<tr><td class="text-nowrap">' + esc(r.vreme) + '</td><td>' + esc(r.prodavac) + '</td><td>' + esc(r.broj) +
+        (r.ceka ? ' <span class="isp-badge muted">Čeka proveru</span>' : '') +
+        (r.proknjizeno ? ' <span class="isp-badge ok">Proknjiženo</span>' : '') +
+        (r.druga_sifra ? '<div class="isp-small">šifra iz Nabavke: ' + esc(r.sifra) + '</div>' : '') + '</td>' +
+        '<td class="text-end text-nowrap">' + esc(r.iznos) + '</td><td>' +
+        (r.na_ims ? '<span class="isp-badge ok">IMS</span>' : '<span class="isp-badge warn">Nije na IMS</span>') + '</td>' +
+        '<td class="text-end">' + (r.ukloni_url ? '<button type="button" class="btn btn-outline-danger btn-sm js-ukloni" data-url="' +
+        esc(r.ukloni_url) + '" data-broj="' + esc(r.broj) + '" title="Skini sa naloga"><i class="mdi mdi-link-variant-off"></i></button>' : '') +
+        '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="text-center text-muted py-3">Nalog još nema računa.</td></tr>';
+    document.getElementById('ispZbir').textContent = d.zbir;
+    var moze = !d.zakljucan && d.moze_dodati;
+    document.getElementById('ispUnos').hidden = !moze;
+    dugme.hidden = !moze;
+    var zakljucan = document.getElementById('ispZakljucan');
+    zakljucan.hidden = moze;
+    zakljucan.querySelector('span').textContent = d.zakljucan ? 'Nalog je opravdan ili storniran; računi se više ne dodaju.'
+                                                              : 'Nemate pravo da dodajete račune.';
+    osveziDugme(d);
+  }
+  function ucitaj() {
+    return fetch(urlRacuni, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(prikazi);
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.js-racuni-naloga');
+    if (!b) return;
+    e.preventDefault();
+    izvor = b;
+    urlRacuni = b.dataset.racuni;
+    forma.action = b.dataset.dodaj;
+    rezultat.innerHTML = '';
+    link.value = '';
+    promenjeno = false;
+    ucitaj().then(function () { modal.show(); })
+      .catch(function () { if (window.toastr) toastr.error('Računi naloga nisu učitani.'); });
+  });
+  modalEl.addEventListener('shown.bs.modal', function () { if (!link.closest('[hidden]')) link.focus(); });
+  modalEl.addEventListener('hidden.bs.modal', function () {
+    if (promenjeno) document.dispatchEvent(new CustomEvent('isp:racuni-promenjeni'));
+  });
+  link.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); forma.requestSubmit ? forma.requestSubmit() : forma.dispatchEvent(new Event('submit')); }
+  });
+  forma.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!link.value.trim()) { link.focus(); return; }
+    dugme.disabled = true;
+    rezultat.innerHTML = '<div class="isp-rezultat rad">Obrada računa…</div>';
+    fetch(forma.action, { method: 'POST', body: new FormData(forma), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { rezultat.innerHTML = '<div class="isp-rezultat greska"><strong>Račun nije dodat.</strong> ' + esc(d.poruka) + '</div>'; link.select(); return; }
+        promenjeno = true;
+        var upoz = (d.upozorenja || []).map(function (u) { return '<li>' + esc(u) + '</li>'; }).join('');
+        rezultat.innerHTML = '<div class="isp-rezultat ok"><strong>' + esc(d.broj) + '</strong> · ' + esc(d.prodavac) + ' · ' + esc(d.iznos) +
+          ' din<div>' + esc(d.poruka) + '</div>' + (upoz ? '<ul>' + upoz + '</ul>' : '') + '</div>';
+        link.value = '';
+        return ucitaj().then(function () { link.focus(); });
+      })
+      .catch(function () { rezultat.innerHTML = '<div class="isp-rezultat greska">Obrada nije uspela (veza sa serverom). Pokušajte ponovo.</div>'; })
+      .finally(function () { dugme.disabled = false; });
+  });
+  document.getElementById('ispRacuni').addEventListener('click', function (e) {
+    var b = e.target.closest('.js-ukloni');
+    if (!b || !confirm('Skinuti račun ' + b.dataset.broj + ' sa putnog naloga? Račun ostaje u evidenciji fiskalnih računa.')) return;
+    fetch(b.dataset.url, { method: 'POST', headers: { 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        rezultat.innerHTML = '<div class="isp-rezultat ' + (d.ok ? 'ok' : 'greska') + '">' + esc(d.poruka) + '</div>';
+        if (d.ok) { promenjeno = true; return ucitaj(); }
+      });
+  });
+});
+</script>

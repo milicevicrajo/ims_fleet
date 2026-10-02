@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordChangeView, redirect_to_login
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.csrf import csrf_failure as django_csrf_failure
 from django.views.decorators.http import require_GET
@@ -35,3 +35,16 @@ def switch_app(request, app_slug):
         request.session["current_app"] = app_slug
     # posle promene aplikacije vodi na dashboard koji će birati pravi template
     return redirect(request.GET.get("next") or "dashboard")
+
+
+@login_required
+def pocetna(request):
+    """Početna strana aplikacije: opis, moduli, uloge i dozvole korisnika; bez bočnog menija.
+
+    Ovde vodi prijava (`LOGIN_REDIRECT_URL = "/"`) i logo u zaglavlju. Stranu vidi svaki
+    prijavljeni korisnik, pa nema sopstvenu proveru dozvole.
+    """
+    from core.pocetna import pocetna as podaci
+
+    return render(request, "pocetna.html", {**podaci(request.user), "title": "IMS ERP — početna",
+                                            "bez_menija": True, "current_app": "pocetna"})

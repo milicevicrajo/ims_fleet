@@ -88,7 +88,9 @@ class DokumentZahtevaTests(ZahtevTestBase):
     def test_tekst_prati_obrazac_kadrovske(self):
         dokument = build_zahtev_document(self.zahtev())
         tekst = ' '.join(dokument['pasusi'])
-        self.assertEqual(dokument['predmet'], 'Захтев за издавање решења за прековремени рад и рад викендом')
+        self.assertEqual(dokument['predmet'], 'за издавање решења за прековремени рад и рад викендом')  # naslov je već „ЗАХТЕВ”
+        self.assertNotIn('издате решење за прековремени рад', tekst)  # vrsta rada se ne ponavlja iz predmeta
+        self.assertIn('издате решење за запосленог: ЛАЗАР ЖИВАНОВИЋ', tekst)
         self.assertIn('због потребе за радом већим од четрдесет сати недељно', tekst)
         self.assertIn('за запосленог: ЛАЗАР ЖИВАНОВИЋ', tekst)
         self.assertIn('од 01.08.2026. до 31.08.2026. године', tekst)
@@ -103,8 +105,17 @@ class DokumentZahtevaTests(ZahtevTestBase):
 
     def test_latinica(self):
         dokument = build_zahtev_document(self.zahtev(pismo=Pismo.LATINICA, zaposleni_tekst='LAZAR ŽIVANOVIĆ'))
-        self.assertEqual(dokument['predmet'], 'Zahtev za izdavanje rešenja za prekovremeni rad i rad vikendom')
+        self.assertEqual(dokument['predmet'], 'za izdavanje rešenja za prekovremeni rad i rad vikendom')
         self.assertEqual(dokument['oznake']['broj'], 'Naš znak:')
+
+    def test_razlog_bez_duplog_zareza(self):
+        tekst = ' '.join(build_zahtev_document(self.zahtev(razlog='потребе посла, као и рада викендом,'))['pasusi'])
+        self.assertIn('због потребе посла, као и рада викендом, издате решење', tekst)
+        self.assertNotIn(',,', tekst)
+
+    def test_sifarnik_bez_reci_zahtev_u_naslovu(self):
+        for vrsta in VrstaZahteva.objects.all():
+            self.assertFalse(vrsta.predmet.startswith('Захтев'), vrsta.kod)
 
     def test_razlog_je_opcion(self):
         tekst = ' '.join(build_zahtev_document(self.zahtev(razlog=''))['pasusi'])

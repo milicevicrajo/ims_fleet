@@ -65,6 +65,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 
 | Ekran | Adresa | Ko pristupa |
 |---|---|---|
+| **Pregled** (početna strana, od 02.10.2026.) | `/hr/` | Svaki prijavljeni korisnik; delovi samo uz dozvolu spiska |
 | Spisak zaposlenih | `/zaposleni/` | Kadrovska služba |
 | Detalj zaposlenog | `/zaposleni/<id>/` | Kadrovska služba |
 | **Moj profil** | `/moj-profil/` | Svaki zaposleni |
@@ -121,6 +122,36 @@ sa zaposlenima vode se ovde, a ne u modulu Ugovori: tamo su poslovni ugovori sa 
 | Obuhvat | Kao spisak zaposlenih: vide se periodi zaposlenih u obuhvatu korisnika. Periodi bivših radnika koji nemaju karticu u aplikaciji i radnika bez čvora registra (OJ `1`) vidi samo obuhvat cele firme. |
 
 ---
+
+### Moj profil → Pregled (od 02.10.2026.)
+
+Moj profil se otvara na kartici **Pregled** (`hr/_moj_pregled.html`, `hr/services/moj_profil.py`); ostale
+kartice (osnovni podaci, CV, radne liste, godišnji odmori, zahtevi, rešenja, putni nalozi…) su iza nje.
+Tuđi profil (detalj zaposlenog) nema ovu karticu.
+
+| Deo | Sadržaj |
+|---|---|
+| Brze akcije | Radna lista tekućeg meseca (sa statusom), **Podnesi zahtev** (uz `hr:zahtev_create`; zaposleni je unapred izabran preko `?zaposleni=`), evidencija prolaza za tekući mesec, godišnji odmor, dodavanje CV stavke |
+| Godišnji odmor | Za tekuću godinu (i prethodnu, ako je ostalo dana): dodeljeno, po rešenjima i **preostalo prema rešenjima** — dani po rešenju iz kadrovske baze nisu potvrđeno korišćenje, pa ovo nije obračun salda; sledeći ili tekući godišnji odmor |
+| Gde radim | Centar i jedinica iz registra (`Employee.org_node`), radno mesto i dodatna radna mesta, ugovor koji danas važi (kategorija, broj, period, upozorenje ako ističe u 45 dana), staž u IMS-u od datuma zaposlenja |
+| Ovaj mesec | Status radne liste, putni nalozi bez pravdanja, zaduženo vozilo, telefoni |
+| Moji zahtevi / Moja rešenja | Poslednja četiri, sa statusom i vezom na detalj |
+
+### Pregled — početna strana Kadrova (od 02.10.2026.)
+
+Link **Kadrovi** u zaglavlju otvara `hr:pregled` (`hr/pregled_views.py`, `hr/services/pregled.py`).
+Strana samo broji i izdvaja ono što korisnik već vidi na spiskovima, u istom obuhvatu; ništa ne upisuje.
+U bočnom meniju je prva stavka **Pregled**, a **Moj profil** je na dnu.
+
+| Deo | Dozvola | Sadržaj |
+|---|---|---|
+| Aktivni zaposleni, zaposleni po centrima, novi zaposleni | `employee_list` | Broj aktivnih (žene: pol `F` ili `Z` — kadrovska baza upisuje `Z`; muškarci `M`), raspodela po centru registra (`Employee.org_node`), zaposleni u poslednjih 30 dana |
+| Odsutni danas | `hr:annual_leave_list` / `hr:sick_leave_list` | Godišnji odmor po rešenju (`AnnualLeaveDecision`, prisutno u izvoru) i bolovanje (RFZO, bez kraja ili sa krajem od danas) |
+| Ugovori koji ističu | `hr:ugovor_list` | Ugovori na određeno aktivnih radnika sa krajem u narednih 45 dana, bez kasnijeg ugovora istog radnika |
+| Zahtevi koji čekaju rešenje | `hr:zahtev_list` (+ `hr:resenje_list`) | Podneti zahtevi bez nestorniranog rešenja; nacrti zahteva i rešenja; rešenja izdata ovog meseca |
+| Moje | — | Moj profil, moja radna lista, zahtevi i rešenja (ako ih korisnik vidi) |
+
+Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema nove dozvole za dodelu.
 
 ## 6. Podaci koje korisnik unosi
 
