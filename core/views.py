@@ -30,7 +30,7 @@ class RequiredPasswordChangeView(PasswordChangeView):
 @require_GET
 @login_required
 def switch_app(request, app_slug):
-    allowed = {"fleet", "naplata", "potrazivanja", "isplate", "pravna", "kadrovi", "administracija", "menice", "ugovori", "nabavka", "mobilni", "finansije", "organizacija"}
+    allowed = {"fleet", "naplata", "potrazivanja", "isplate", "pravna", "kadrovi", "administracija", "menice", "ugovori", "nabavka", "mobilni", "finansije", "organizacija", "arhiva"}
     if app_slug in allowed:
         request.session["current_app"] = app_slug
     # posle promene aplikacije vodi na dashboard koji će birati pravi template

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% comment %}Predmet iz delovodnika: podaci, akti sa podbrojevima, novi akt i storno.{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "arhiva/_styles.html" %}
+<div class="arhiva-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><span class="arhiva-broj text-white">{{ predmet.delovodni_broj }}</span> · {{ predmet.naslov|truncatechars:70 }}</h1>
+    <p>{{ predmet.get_smer_display }} · zavedeno {{ predmet.datum_zavodjenja|date:"d.m.Y." }}{% if predmet.zaveo %} · {{ predmet.zaveo.get_username }}{% endif %}</p>
+  </div>
+  <a class="btn btn-outline-light btn-sm" href="{% url 'arhiva:delovodnik' %}?godina={{ predmet.knjiga.godina }}"><i class="mdi mdi-arrow-left"></i> Delovodnik</a>
+</div>
+
+{% if predmet.storniran %}
+<div class="alert alert-danger"><i class="mdi mdi-cancel"></i> <strong>Storniran</strong> {{ predmet.stornirano_at|date:"d.m.Y. H:i" }}{% if predmet.stornirao %} ({{ predmet.stornirao.get_username }}){% endif %}: {{ predmet.razlog_storna }}. Broj {{ predmet.delovodni_broj }} se ne koristi ponovo.</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <section class="arhiva-kartica">
+      <header>Podaci iz delovodnika</header>
+      <div><dl class="arhiva-podaci">
+        <dt>Delovodni broj</dt><dd class="arhiva-broj">{{ predmet.delovodni_broj }}</dd>
+        <dt>Predmet</dt><dd>{{ predmet.naslov }}</dd>
+        <dt>Smer</dt><dd><span class="arhiva-badge {{ predmet.smer }}">{{ predmet.get_smer_display }}</span></dd>
+        <dt>Pošiljalac / primalac</dt><dd>{{ predmet.korespondent|default:"—" }}{% if predmet.mesto %}, {{ predmet.mesto }}{% endif %}</dd>
+        <dt>Akt pošiljaoca</dt><dd>{{ predmet.broj_akta_posiljaoca|default:"—" }}{% if predmet.datum_akta_posiljaoca %} od {{ predmet.datum_akta_posiljaoca|date:"d.m.Y." }}{% endif %}</dd>
+        <dt>Organizaciona jedinica</dt><dd>{{ oj|default:"—" }}</dd>
+        <dt>Kategorija</dt><dd>{% if predmet.kategorija %}{{ predmet.kategorija.redni_broj }}. {{ predmet.kategorija.naziv }} <span class="arhiva-small">(oznaka {{ predmet.kategorija.klasifikaciona_oznaka }}, rok {{ predmet.kategorija.rok_tekst }})</span>{% else %}<span class="arhiva-badge warn">bez kategorije</span> <span class="arhiva-small">— obavezna pri završetku predmeta</span>{% endif %}</dd>
+        <dt>Status</dt><dd>{{ predmet.get_status_display }}</dd>
+        {% if predmet.napomena %}<dt>Napomena</dt><dd>{{ predmet.napomena|linebreaksbr }}</dd>{% endif %}
+      </dl></div>
+    </section>
+
+    <section class="arhiva-kartica">
+      <header><span>Akti u predmetu</span><span class="arhiva-small">{{ akti|length }}</span></header>
+      <div class="p-0"><table class="table table-sm mb-0 arhiva-tabela">
+        <thead><tr><th>Broj</th><th>Datum</th><th>Smer</th><th>Opis</th><th>Zaveo</th></tr></thead>
+        <tbody>{% for a in akti %}
+          <tr><td class="arhiva-broj">{{ a.delovodni_broj }}</td><td class="text-nowrap">{{ a.datum|date:"d.m.Y." }}</td>
+            <td><span class="arhiva-badge {{ a.smer }}">{{ a.get_smer_display }}</span></td><td>{{ a.opis }}</td>
+            <td class="arhiva-small">{{ a.zaveo.get_username|default:"—" }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <div class="col-lg-5">
+    {% if moze_akt %}
+    <section class="arhiva-kartica">
+      <header>Novi akt u predmetu (podbroj)</header>
+      <div><form method="post" action="{% url 'arhiva:akt_add' predmet.pk %}" class="arhiva-form">{% csrf_token %}
+        <div class="mb-2"><label class="form-label" for="{{ akt_forma.opis.id_for_label }}">{{ akt_forma.opis.label }}</label>{{ akt_forma.opis }}</div>
+        <div class="row g-2">
+          <div class="col-6"><label class="form-label" for="{{ akt_forma.datum.id_for_label }}">{{ akt_forma.datum.label }}</label>{{ akt_forma.datum }}</div>
+          <div class="col-6"><label class="form-label" for="{{ akt_forma.smer.id_for_label }}">{{ akt_forma.smer.label }}</label>{{ akt_forma.smer }}</div>
+        </div>
+        <button class="btn btn-primary btn-sm mt-3" type="submit"><i class="mdi mdi-plus"></i> Upiši akt</button>
+      </form></div>
+    </section>
+    {% endif %}
+    {% if moze_storno %}
+    <section class="arhiva-kartica">
+      <header>Storno</header>
+      <div><form method="post" action="{% url 'arhiva:predmet_storniraj' predmet.pk %}" class="arhiva-form"
+                 onsubmit="return confirm('Stornirati predmet {{ predmet.delovodni_broj }}? Broj se ne koristi ponovo.');">{% csrf_token %}
+        <div class="mb-2"><label class="form-label" for="{{ storno_forma.razlog.id_for_label }}">{{ storno_forma.razlog.label }}</label>{{ storno_forma.razlog }}</div>
+        <div class="arhiva-small mb-2">Pogrešan upis se ne briše: broj ostaje u knjizi, sa razlogom storna.</div>
+        <button class="btn btn-outline-danger btn-sm" type="submit"><i class="mdi mdi-cancel"></i> Storniraj</button>
+      </form></div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

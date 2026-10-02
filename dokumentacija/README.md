@@ -98,6 +98,7 @@ Dokumenti nastali pre objedinjene dokumentacije.
 | [`popis-sifara-posla-korak-0.md`](popis-sifara-posla-korak-0.md) | **Merenje nad produkcijom:** 415 sifara, tri porodice, sta se poklapa |
 | [`plan-registra-sifara-posla.md`](plan-registra-sifara-posla.md) | **Uradjeno:** registar, uvoz, stablo i nalaz o obrtu |
 | [`plan-povezivanja-i-dozvola.md`](plan-povezivanja-i-dozvola.md) | **Sledece:** kojim redom povezivati module i kada preci na nove dozvole |
+| [`plan-arhive-overe-i-cuvanja.md`](plan-arhive-overe-i-cuvanja.md) (Word: [`Plan implementacije modula Arhiva.docx`](<Plan implementacije modula Arhiva.docx>)) | **Predlog (01.10.2026.):** modul Arhiva — pisarnica, delovodnik, arhiva, izlučivanje, masovna elektronska overa pečatom i pouzdano čuvanje |
 | [`plan_migracije_naplata_u_ims_erp.md`](plan_migracije_naplata_u_ims_erp.md) | Rani plan prelaska Naplate |
 | [`Analiza aplikacije i procedure rada - IMS flota.md`](<Analiza aplikacije i procedure rada - IMS flota.md>) | Izvor za poglavlje Flote |
 | [`Procena prenosa trebovanja u Nabavku.md`](<Procena prenosa trebovanja u Nabavku.md>) | Procena prenosa trebovanja |

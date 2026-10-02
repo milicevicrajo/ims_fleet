@@ -15,6 +15,7 @@ U projektu postoje razrađeni planovi; prvi su nastali pre ove dokumentacije:
 | **Centralna organizacija i dozvole (V2)** | [`plan-organizacije-i-dozvola-v2.md`](../plan-organizacije-i-dozvola-v2.md) | **Aktuelan plan za realizaciju** |
 | **Prelazak na registar — čitanje, prava, gašenje stare organizacije** | [`plan-prelaska-na-registar.md`](../plan-prelaska-na-registar.md) | **Naredni korak** (od 25.09.2026.), razrađuje V2 korake 2–9 |
 | Centralizacija organizacije i šifara posla | [`plan-centralizacije-organizacije.md`](../plan-centralizacije-organizacije.md) | Prethodna verzija, poslovna pravila i dalje važe |
+| **Modul Arhiva — delovodnik, arhiva, el. overa i čuvanje** | [`plan-arhive-overe-i-cuvanja.md`](../plan-arhive-overe-i-cuvanja.md) | **Predlog za dogovor** (01.10.2026.), prelazak sa sadašnjeg delovodnika 01.01.2027. |
 | Prelazak Naplate na lokalni izvor | `naplata-lokalni-izvor-plan.md` (uklonjen, git `06f60c2`) | Delimično izvedeno |
 | Nova Naplata — Potraživanja | `naplata-nova-aplikacija-plan.md` (uklonjen, git `06f60c2`) | **Izvedeno**, u paralelnom radu |
 

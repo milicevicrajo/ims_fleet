@@ -17,6 +17,7 @@ urlpatterns = [
     path("mobilni/", include(("mobilni.urls", "mobilni"), namespace="mobilni")),
     path("finansije/", include("finansije.urls", namespace="finansije")),
     path("organizacija/", include("organizacija.urls", namespace="organizacija")),
+    path("arhiva/", include("arhiva.urls", namespace="arhiva")),
     path("", include("core.urls")),
 ]
 

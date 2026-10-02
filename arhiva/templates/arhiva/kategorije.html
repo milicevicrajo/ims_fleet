@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% comment %}Šifarnik: Lista kategorija sa rokovima čuvanja, po verziji. Duplikati se ne nude pri izboru.{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "arhiva/_styles.html" %}
+<div class="arhiva-hero">
+  <h1><i class="mdi mdi-format-list-numbered me-2"></i>Lista kategorija</h1>
+  <p>{% if verzija %}{{ verzija.naziv }}{% if verzija.datum_donosenja %} · doneta {{ verzija.datum_donosenja|date:"d.m.Y." }}{% endif %}{% if verzija.aktivna %} · aktivna{% else %} · <strong>nije aktivna</strong>{% endif %} · {{ kategorije|length }} prikazano{% else %}Lista još nije uvezena (manage.py import_lista_kategorija).{% endif %}</p>
+</div>
+
+{% if verzija %}
+<form method="get" class="card shadow-sm mb-3"><div class="card-body"><div class="row g-2 align-items-end">
+  {% if verzije|length > 1 %}<div class="col-md-3"><label class="form-label mb-1">Verzija</label>
+    <select name="verzija" class="form-select">{% for v in verzije %}<option value="{{ v.pk }}" {% if v.pk == verzija.pk %}selected{% endif %}>{{ v.naziv }}</option>{% endfor %}</select></div>{% endif %}
+  <div class="col-md-4"><label class="form-label mb-1" for="id_q">Pretraga</label>
+    <input id="id_q" class="form-control" name="q" value="{{ filteri.q }}" placeholder="Naziv kategorije"></div>
+  <div class="col-md-3"><label class="form-label mb-1" for="id_grupa">Grupa</label>
+    <select id="id_grupa" name="grupa" class="form-select"><option value="">Sve grupe</option>{% for g in grupe %}<option value="{{ g.pk }}" {% if filteri.grupa == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.klasifikaciona_oznaka }} · {{ g.naziv|truncatechars:50 }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><label class="form-label mb-1" for="id_rok">Rok</label>
+    <select id="id_rok" name="rok" class="form-select">
+      <option value="">Svi rokovi</option>
+      <option value="trajno" {% if filteri.rok == "trajno" %}selected{% endif %}>Trajno</option>
+      <option value="operativno" {% if filteri.rok == "operativno" %}selected{% endif %}>Trajno operativno</option>
+      <option value="godine" {% if filteri.rok == "godine" %}selected{% endif %}>Određen broj godina</option>
+      <option value="uslov" {% if filteri.rok == "uslov" %}selected{% endif %}>Rok teče od događaja</option>
+    </select></div>
+  <div class="col-12 d-flex gap-2 justify-content-end"><button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i> Prikaži</button>
+    <a class="btn btn-outline-secondary" href="{% url 'arhiva:kategorije' %}">Očisti</a></div>
+</div></div></form>
+
+<section class="arhiva-kartica"><div class="p-0"><div class="table-responsive">
+  <table class="table table-sm table-hover mb-0 arhiva-tabela">
+    <thead><tr><th class="text-end">R. br.</th><th>Oznaka</th><th>Kategorija</th><th>Rok čuvanja</th><th>Rok teče</th><th></th></tr></thead>
+    <tbody>{% for k in kategorije %}
+      <tr class="{% if k.duplikat_od %}text-muted{% endif %}">
+        <td class="text-end">{{ k.redni_broj }}.</td>
+        <td class="arhiva-small">{{ k.grupa.klasifikaciona_oznaka }}</td>
+        <td>{{ k.naziv }}<div class="arhiva-small">{{ k.grupa.naziv }}</div></td>
+        <td class="text-nowrap">{% if k.trajno %}<span class="arhiva-badge {% if k.operativno %}warn{% else %}ulazni{% endif %}">{{ k.rok_tekst }}</span>{% else %}{{ k.rok_tekst }}{% endif %}</td>
+        <td class="arhiva-small">{% if k.pocetak_roka != "zavrsetak_predmeta" %}{{ k.get_pocetak_roka_display }}{% endif %}{% if k.napomena_roka %}<div>{{ k.napomena_roka }}</div>{% endif %}</td>
+        <td>{% if k.duplikat_od %}<span class="arhiva-badge muted" title="Ne nudi se pri izboru">duplikat {{ k.duplikat_od.redni_broj }}.</span>{% endif %}</td>
+      </tr>
+    {% empty %}<tr><td colspan="6" class="text-center text-muted py-3">Nema kategorija za izabrane filtere.</td></tr>{% endfor %}</tbody>
+  </table>
+</div></div></section>
+{% endif %}
+{% endblock %}

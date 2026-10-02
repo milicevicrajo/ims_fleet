@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     'mobilni',
     'finansije.apps.FinansijeConfig',
     'organizacija.apps.OrganizacijaConfig',
+    'arhiva.apps.ArhivaConfig',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -277,7 +278,12 @@ IMS_PIB = "100223617"
 SEF_API_URL = os.getenv('SEF_API_URL', 'https://efaktura.mfin.gov.rs').rstrip('/')
 SEF_API_KEY = os.getenv('SEF_API_KEY', '').strip()
 SEF_TIMEOUT = int(os.getenv('SEF_TIMEOUT', '60'))
-PRAVA_PO_REGISTRU = {"finansije": True, "nabavka": True, "potrazivanja": True, "flota": True, "kadrovi": True}
+PRAVA_PO_REGISTRU = {"finansije": True, "nabavka": True, "potrazivanja": True, "flota": True, "kadrovi": True,
+                     "arhiva": True}
+
+# Arhiva: format delovodnog broja (plan arhive, O-1). {centar} je oznaka centra glavne OJ predmeta.
+ARHIVA_FORMAT_BROJA = "{centar}-{broj}"
+ARHIVA_FORMAT_PODBROJA = "{osnovni}/{podbroj}"
 
 CELERY_TASK_ROUTES = {
     'fleet.tasks.run_nis_command': {'queue': 'selenium'},

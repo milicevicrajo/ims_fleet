@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% comment %}Delovodnik za godinu: pretraga, filteri, stranice po 50 upisa. Stornirani upisi ostaju vidljivi.{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "arhiva/_styles.html" %}
+<div class="arhiva-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-book-open-page-variant me-2"></i>Delovodnik {{ godina }}</h1>
+    <p>{% if knjiga %}{{ knjiga.get_status_display }}{% if knjiga.zakljucena %} {{ knjiga.zakljucena_at|date:"d.m.Y." }} · {{ knjiga.broj_akata_pri_zakljucenju }} upisa{% endif %}{% else %}Knjiga za {{ godina }}. još nije otvorena — otvara se prvim upisom.{% endif %}</p>
+  </div>
+  {% if moze_upis %}<a class="btn btn-light" href="{% url 'arhiva:pisarnica' %}"><i class="mdi mdi-plus"></i> Novi upis</a>{% endif %}
+</div>
+
+<form method="get" class="card shadow-sm mb-3"><div class="card-body">
+  <div class="row g-2 align-items-end">
+    <div class="col-6 col-md-2"><label class="form-label mb-1" for="id_godina">Godina</label>
+      <select id="id_godina" name="godina" class="form-select">{% for g in godine %}<option value="{{ g }}" {% if g == godina %}selected{% endif %}>{{ g }}</option>{% endfor %}</select></div>
+    <div class="col-6 col-md-2"><label class="form-label mb-1" for="id_smer">Smer</label>{{ forma.smer }}</div>
+    <div class="col-6 col-md-2"><label class="form-label mb-1" for="id_status">Status</label>{{ forma.status }}</div>
+    <div class="col-12 col-md-4"><label class="form-label mb-1" for="id_q">Pretraga</label>{{ forma.q }}</div>
+    <div class="col-12 col-md-2 d-flex gap-2"><button class="btn btn-primary flex-fill" type="submit"><i class="mdi mdi-magnify"></i></button>
+      <a class="btn btn-outline-secondary" href="{% url 'arhiva:delovodnik' %}" title="Očisti"><i class="mdi mdi-close"></i></a></div>
+  </div>
+</div></form>
+
+<section class="arhiva-kartica">
+  <header><span>Upisi</span><span class="arhiva-small">{{ strana.paginator.count }} ukupno</span></header>
+  <div class="p-0"><div class="table-responsive">
+    <table class="table table-sm table-hover mb-0 arhiva-tabela">
+      <thead><tr><th>Broj</th><th>Datum</th><th>Smer</th><th>Predmet</th><th>Pošiljalac / primalac</th><th>OJ</th><th>Kategorija</th><th class="text-center">Akata</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for p in redovi %}
+        <tr class="{% if p.storniran %}arhiva-storno{% endif %}">
+          <td><a class="arhiva-broj" href="{% url 'arhiva:predmet_detail' p.pk %}">{{ p.delovodni_broj }}</a></td>
+          <td class="text-nowrap">{{ p.datum_zavodjenja|date:"d.m.Y." }}</td>
+          <td><span class="arhiva-badge {{ p.smer }}">{{ p.get_smer_display }}</span></td>
+          <td>{{ p.naslov }}{% if p.broj_akta_posiljaoca %}<div class="arhiva-small">akt {{ p.broj_akta_posiljaoca }}{% if p.datum_akta_posiljaoca %} od {{ p.datum_akta_posiljaoca|date:"d.m.Y." }}{% endif %}</div>{% endif %}</td>
+          <td>{{ p.korespondent|default:"—" }}{% if p.mesto %}<div class="arhiva-small">{{ p.mesto }}</div>{% endif %}</td>
+          <td class="arhiva-small">{{ p.oj_oznaka }}</td>
+          <td class="arhiva-small">{% if p.kategorija %}{{ p.kategorija.redni_broj }} · {{ p.kategorija.rok_tekst }}{% else %}<span class="arhiva-badge warn">bez kategorije</span>{% endif %}</td>
+          <td class="text-center">{{ p.broj_akata }}</td>
+          <td>{% if p.storniran %}<span class="arhiva-badge storniran" title="{{ p.razlog_storna }}">Storniran</span>{% else %}<span class="arhiva-badge muted">{{ p.get_status_display }}</span>{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-4">Nema upisa za izabrane filtere.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+</section>
+
+{% if strana.has_other_pages %}
+<nav><ul class="pagination justify-content-center">
+  {% if strana.has_previous %}<li class="page-item"><a class="page-link" href="?{{ parametri }}&page={{ strana.previous_page_number }}">Prethodna</a></li>{% endif %}
+  <li class="page-item disabled"><span class="page-link">Strana {{ strana.number }} od {{ strana.paginator.num_pages }}</span></li>
+  {% if strana.has_next %}<li class="page-item"><a class="page-link" href="?{{ parametri }}&page={{ strana.next_page_number }}">Sledeća</a></li>{% endif %}
+</ul></nav>
+{% endif %}
+{% endblock %}

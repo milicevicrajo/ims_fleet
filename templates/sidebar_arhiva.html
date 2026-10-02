@@ -1,0 +1,24 @@
+{% load static %}
+<aside class="left-sidebar" data-sidebarbg="skin5">
+  <div class="scroll-sidebar">
+    <nav class="sidebar-nav">
+      <ul id="sidebarnav" class="pt-4">
+        {% if arhiva_permissions.pisarnica %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'arhiva:pisarnica' %}">
+            <i class="mdi mdi-inbox-arrow-down"></i><span class="hide-menu">Pisarnica</span>
+          </a>
+        </li>{% endif %}
+        {% if arhiva_permissions.delovodnik %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'arhiva:delovodnik' %}">
+            <i class="mdi mdi-book-open-page-variant"></i><span class="hide-menu">Delovodnik</span>
+          </a>
+        </li>{% endif %}
+        {% if arhiva_permissions.kategorije %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'arhiva:kategorije' %}">
+            <i class="mdi mdi-format-list-numbered"></i><span class="hide-menu">Lista kategorija</span>
+          </a>
+        </li>{% endif %}
+      </ul>
+    </nav>
+  </div>
+</aside>

@@ -21,6 +21,7 @@
 | 8 | **Mobilna telefonija** | `/mobilni/` | [03-08-mobilni.md](moduli/03-08-mobilni.md) |
 | 9 | **Isplate** | `/isplate/` | [03-09-isplate.md](moduli/03-09-isplate.md) |
 | 10 | **Administracija** | `/administracija/` | [03-10-administracija.md](moduli/03-10-administracija.md) |
+| 11 | **Arhiva** (u izradi, od 01.10.2026.) | `/arhiva/` | [03-11-arhiva.md](moduli/03-11-arhiva.md) |
 
 > Modul **Naplata** (`/naplata/`) je nasleđen i **nije obuhvaćen dokumentacijom**.
 > Zamenjuju ga Potraživanja. Vidi [10. Poznati problemi, P-18](10-poznati-problemi.md).
@@ -41,6 +42,7 @@
 | **Mobilna telefonija** | Vodi službene brojeve i računa obustavu koja ide u zaradu |
 | **Isplate** | Pravi datoteku virmana za isplatu akontacija preko banke |
 | **Administracija** | Vodi korisnike, uloge, dozvole, evidenciju rada i istoriju pozadinskih poslova |
+| **Arhiva** | Vodi pisarnicu i delovodnik po Listi kategorija; kasnije arhivu, elektronsku overu i izlučivanje |
 
 ---
 

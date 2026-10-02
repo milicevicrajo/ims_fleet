@@ -132,6 +132,13 @@
                title="Ugovori">
               <i class="mdi mdi-file-document-multiple"></i><span class="app-label">Ugovori</span>
             </a>
+            {% if arhiva_permissions.delovodnik %}
+            <a class="nav-link {% if current_app == 'arhiva' %}active{% endif %}"
+               href="{% url 'switch_app' 'arhiva' %}?next={% url 'arhiva:delovodnik' %}"
+               title="Arhiva — pisarnica i delovodnik">
+              <i class="mdi mdi-archive"></i><span class="app-label">Arhiva</span>
+            </a>
+            {% endif %}
             <a class="nav-link {% if current_app == 'nabavka' %}active{% endif %}"
                href="{% url 'switch_app' 'nabavka' %}?next={% url 'nabavka:dashboard' %}"
                title="Nabavka">

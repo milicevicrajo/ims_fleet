@@ -18,6 +18,7 @@ def current_app(request):
         "mobilni": "sidebar_mobilni.html",
         "finansije": "sidebar_finansije.html",
         "organizacija": "sidebar_organizacija.html",
+        "arhiva": "sidebar_arhiva.html",
     }
     nabavka_codes = [
         "dashboard",
@@ -58,6 +59,10 @@ def current_app(request):
             code: user_has_role_permission(request.user, f"hr:{code}")
             for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list",
                          "evaluation_list", "resenje_list", "zahtev_list", "ugovor_list")
+        },
+        "arhiva_permissions": {
+            code: user_has_role_permission(request.user, f"arhiva:{code}")
+            for code in ("delovodnik", "pisarnica", "kategorije")
         },
         "sidebar_template": sidebar_map.get(app, "sidebar_fleet.html"),
         # Organizaciju vide svi prijavljeni korisnici (organizacija/views.py); uporedni

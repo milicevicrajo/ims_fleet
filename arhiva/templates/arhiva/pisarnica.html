@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% comment %}
+Pisarnica: brzi unos ulazne, izlazne i interne pošte u delovodnik. Posle upisa forma ostaje
+otvorena sa istim smerom i OJ; broj se prikazuje u poruci i u spisku današnjih upisa.
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "arhiva/_styles.html" %}
+<div class="arhiva-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-inbox-arrow-down me-2"></i>Pisarnica</h1>
+    <p>Zavođenje pošte u delovodnik. Broj dodeljuje sistem; pogrešan upis se ne briše nego stornira.</p>
+  </div>
+  <a class="btn btn-outline-light btn-sm" href="{% url 'arhiva:delovodnik' %}"><i class="mdi mdi-book-open-page-variant"></i> Delovodnik</a>
+</div>
+
+{% if not ima_oj %}<div class="alert alert-danger py-2"><i class="mdi mdi-alert-octagon"></i> Registar organizacije nema nijedan centar ni OJ, pa predmet nema na koga da se zavede. Registar puni noćna sinhronizacija organizacije (01:40).</div>{% endif %}
+{% if not ima_listu %}<div class="alert alert-warning py-2"><i class="mdi mdi-alert"></i> Lista kategorija još nije uvezena kao aktivna, pa se kategorija ne može izabrati. Zavođenje radi i bez nje.</div>{% endif %}
+
+<form method="post" class="arhiva-form" novalidate>{% csrf_token %}
+  <section class="arhiva-kartica">
+    <header><span>Novi upis</span><span class="arhiva-small">Enter u poslednjem polju zavodi</span></header>
+    <div>
+      {% if forma.non_field_errors %}<div class="alert alert-danger py-2">{{ forma.non_field_errors|join:" " }}</div>{% endif %}
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="arhiva-smer">{% for opcija in forma.smer %}<label>{{ opcija.tag }}{{ opcija.choice_label }}</label>{% endfor %}</div>
+        </div>
+        <div class="col-md-9"><label class="form-label" for="{{ forma.naslov.id_for_label }}">{{ forma.naslov.label }}</label>{{ forma.naslov }}
+          {% for e in forma.naslov.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+        <div class="col-md-3"><label class="form-label" for="{{ forma.datum_zavodjenja.id_for_label }}">{{ forma.datum_zavodjenja.label }}</label>{{ forma.datum_zavodjenja }}</div>
+        <div class="col-md-6"><label class="form-label" for="{{ forma.korespondent.id_for_label }}">{{ forma.korespondent.label }}</label>{{ forma.korespondent }}
+          {% for e in forma.korespondent.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+        <div class="col-md-3"><label class="form-label" for="{{ forma.mesto.id_for_label }}">{{ forma.mesto.label }}</label>{{ forma.mesto }}</div>
+        <div class="col-md-3"><label class="form-label" for="{{ forma.broj_akta_posiljaoca.id_for_label }}">{{ forma.broj_akta_posiljaoca.label }}</label>{{ forma.broj_akta_posiljaoca }}</div>
+        <div class="col-md-6"><label class="form-label" for="{{ forma.glavna_oj.id_for_label }}">{{ forma.glavna_oj.label }}</label>{{ forma.glavna_oj }}
+          {% for e in forma.glavna_oj.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+        <div class="col-md-3"><label class="form-label" for="{{ forma.datum_akta_posiljaoca.id_for_label }}">{{ forma.datum_akta_posiljaoca.label }}</label>{{ forma.datum_akta_posiljaoca }}</div>
+        <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit"><i class="mdi mdi-content-save"></i> Zavedi</button></div>
+        <div class="col-md-8"><label class="form-label" for="{{ forma.kategorija.id_for_label }}">{{ forma.kategorija.label }}</label>{{ forma.kategorija }}</div>
+        <div class="col-md-4"><label class="form-label" for="{{ forma.napomena.id_for_label }}">{{ forma.napomena.label }}</label>{{ forma.napomena }}</div>
+      </div>
+    </div>
+  </section>
+</form>
+
+<section class="arhiva-kartica">
+  <header><span>Danas zavedeno</span><span class="arhiva-small">{{ poslednji|length }} poslednjih</span></header>
+  <div class="p-0"><div class="table-responsive">
+    <table class="table table-sm table-hover mb-0 arhiva-tabela">
+      <thead><tr><th>Broj</th><th>Smer</th><th>Predmet</th><th>Pošiljalac / primalac</th><th>OJ</th><th>Vreme</th></tr></thead>
+      <tbody>
+      {% for p in poslednji %}
+        <tr class="{% if p.storniran %}arhiva-storno{% endif %}">
+          <td><a class="arhiva-broj" href="{% url 'arhiva:predmet_detail' p.pk %}">{{ p.delovodni_broj }}</a></td>
+          <td><span class="arhiva-badge {{ p.smer }}">{{ p.get_smer_display }}</span></td>
+          <td>{{ p.naslov }}</td>
+          <td>{{ p.korespondent|default:"—" }}{% if p.mesto %}<div class="arhiva-small">{{ p.mesto }}</div>{% endif %}</td>
+          <td class="arhiva-small">{{ p.oj_oznaka }}</td>
+          <td class="arhiva-small">{{ p.zavedeno_at|date:"H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-3">Danas još nema upisa.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div></div>
+</section>
+{% endblock %}
