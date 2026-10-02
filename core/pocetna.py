@@ -1,7 +1,7 @@
 """Početna strana aplikacije (od 02.10.2026.): opis, moduli i podaci o prijavljenom korisniku.
 
 Modul je „otvoren” ako korisnik ima dozvolu za njegovu početnu rutu (kod = naziv rute, kao i
-inače); moduli bez dozvole se prikazuju zaključani. Kartice vode preko `switch_app`, isto kao
+inače); bez ulazne dozvole nude se pojedinačni dozvoljeni ekrani. Kartice vode preko `switch_app`, isto kao
 linkovi u zaglavlju. Strana samo čita.
 """
 import datetime
@@ -9,6 +9,7 @@ import datetime
 from django.urls import reverse
 
 from core.models import PermissionCode
+from core.pocetna_ekrani import EKRANI
 
 
 # (slug za switch_app, naziv, ikona, ruta početne strane modula, kod dozvole ili None = svi prijavljeni, opis)
@@ -67,7 +68,21 @@ def moduli(user, kodovi):
         else:
             dostupan = user.is_superuser or kod is None or kod in kodovi
         cilj = reverse(ruta, kwargs=ARGUMENTI.get(ruta))
+        ekrani = []
+        if not dostupan:
+            for ekran, naslov, argumenti, dozvola in EKRANI.get(slug, []):
+                if dozvola in kodovi:
+                    if ekran in {"finansije:sef_list", "finansije:sync_status"}:
+                        from finansije.access import can_view_all
+
+                        if not can_view_all(user):
+                            continue
+                    ekrani.append({
+                        "naziv": naslov,
+                        "url": f"{reverse('switch_app', args=[slug])}?next={reverse(ekran, kwargs=argumenti)}",
+                    })
         redovi.append({"slug": slug, "naziv": naziv, "ikona": ikona, "opis": opis, "dostupan": dostupan,
+                       "ekrani": ekrani, "ima_pristup": dostupan or bool(ekrani),
                        "url": f"{reverse('switch_app', args=[slug])}?next={cilj}"})
     return redovi
 
@@ -103,7 +118,7 @@ def pocetna(user):
             f"{verzija.full_code} {verzija.name}".strip() if verzija else "—")
     return {
         "moduli": lista,
-        "broj_dostupnih": sum(m["dostupan"] for m in lista),
+        "broj_dostupnih": sum(m["ima_pristup"] for m in lista),
         "uloge": list(user.roles.filter(is_active=True).order_by("name")),
         "dozvole": dozvole_po_modulu(kodovi),
         "broj_dozvola": len(kodovi),

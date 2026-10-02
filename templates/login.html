@@ -1,67 +1,52 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr-Latn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prijava · IMS ERP</title>
+  <link rel="icon" type="image/png" href="{% static 'fleet/assets/images/ims-erp-mark-v2.png' %}">
+  <link rel="stylesheet" href="{% static 'fleet/css/ims-login.css' %}?v=1">
+</head>
 <body>
-    <div class="main-wrapper">
-        <div class="auth-wrapper d-flex no-block justify-content-center align-items-center bg-dark">
-            <div class="auth-box bg-dark border-top border-secondary">
-                <div id="loginform">
-
-
-                    <!-- Django Login Form -->
-                    <form class="form-horizontal mt-3" method="post">
-                        {% csrf_token %}
-                        
-                        <div class="row pb-4">
-                            <div class="col-12">
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-success text-white h-100"><i class="ti-user"></i></span>
-                                    </div>
-                                    {{ form.username }}
-                                </div>
-
-                                <div class="input-group mb-3">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-warning text-white h-100"><i class="ti-pencil"></i></span>
-                                    </div>
-                                    {{ form.password }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row border-top border-secondary">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <div class="pt-3">
-                                        <button class="btn btn-success float-end text-white" type="submit">Login</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
+  <main class="login-shell">
+    <section class="login-intro" aria-label="IMS ERP">
+      <a class="login-brand" href="{% url 'pocetna' %}" aria-label="IMS ERP — početna">
+        <img src="{% static 'fleet/assets/images/ims-erp-mark-v2.png' %}" width="48" height="48" alt="">
+        <span>IMS <b>ERP</b><small>INSTITUT IMS</small></span>
+      </a>
+      <div class="intro-content">
+        <span class="eyebrow">VAŠ DIGITALNI RADNI PROSTOR</span>
+        <h1>Povezani podaci.<br>Pregledno poslovanje.</h1>
+        <p>Jedno mesto za procese, dokumentaciju<br>i svakodnevni rad Instituta IMS.</p>
+        <div class="intro-mark" aria-hidden="true"><img src="{% static 'fleet/assets/images/ims-erp-mark-v2.png' %}" width="140" height="140" alt=""></div>
+      </div>
+      <span class="intro-footer">Interni informacioni sistem · Institut IMS</span>
+    </section>
+    <section class="login-panel" aria-labelledby="login-title">
+      <div class="login-heading">
+        <span class="eyebrow">DOBRO DOŠLI</span>
+        <h2 id="login-title">Prijava na sistem</h2>
+        <p>Unesite podatke svog IMS naloga.</p>
+      </div>
+      <form method="post" class="login-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% if form.non_field_errors %}<div class="login-error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="login-field">
+          <label for="{{ form.username.id_for_label }}">Korisničko ime</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="field-error" role="alert">{{ form.username.errors }}</div>{% endif %}
         </div>
-    </div>
-
-    <!-- Required JS -->
-    <script src="../../assets/libs/jquery/dist/jquery.min.js"></script>
-    <script src="../../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-    $(".preloader").fadeOut();
-    $('#to-recover').on("click", function() {
-        $("#loginform").slideUp();
-        $("#recoverform").fadeIn();
-    });
-    $('#to-login').click(function(){
-        $("#recoverform").hide();
-        $("#loginform").fadeIn();
-    });
-    </script>
-
+        <div class="login-field">
+          <label for="{{ form.password.id_for_label }}">Lozinka</label>
+          {{ form.password }}
+          {% if form.password.errors %}<div class="field-error" role="alert">{{ form.password.errors }}</div>{% endif %}
+        </div>
+        <button class="login-submit" type="submit">Prijavi se <span aria-hidden="true">→</span></button>
+      </form>
+      <div class="login-help"><strong>Potrebna vam je pomoć?</strong><p>Za pristup sistemu ili promenu zaboravljene lozinke obratite se administratoru.</p></div>
+    </section>
+  </main>
 </body>
 </html>
-{% endblock %}

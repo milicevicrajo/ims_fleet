@@ -45,6 +45,10 @@ Bez bočnog menija (`bez_menija`); modul se bira karticom ili u zaglavlju.
   .home-module.locked { background: #f8fafc; color: #8a96a3; box-shadow: none; cursor: not-allowed; }
   .home-module.locked .home-icon { background: #edf2f7; color: #9fb3c8; }
   .home-module.locked .home-go { color: #9fb3c8; }
+  .home-screen-links { display: grid; gap: 6px; margin-top: 12px; }
+  .home-screen-links a { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid #cce5eb; border-radius: 8px; background: #eef8fa; color: #176879; font-size: 12px; font-weight: 600; text-decoration: none; }
+  .home-screen-links a:hover { background: #ddf1f5; border-color: #7ac6d4; }
+  .home-screen-links a:focus-visible { outline: 2px solid #168fa4; outline-offset: 2px; }
   .home-card { border: 1px solid #e6ebf1; border-radius: 10px; background: #fff; box-shadow: 0 6px 16px rgba(15, 38, 64, .05); margin-bottom: 16px; }
   .home-card .home-head { padding: 13px 16px; border-bottom: 1px solid #eef1f5; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .home-card .home-head h5 { font-size: 1rem; margin: 0; color: #17324d; }
@@ -98,6 +102,15 @@ Bez bočnog menija (`bez_menija`); modul se bira karticom ili u zaglavlju.
               <p>{{ m.opis }}</p>
               <span class="home-go">Otvori <i class="mdi mdi-arrow-right" aria-hidden="true"></i></span>
             </a>
+          {% elif m.ekrani %}
+            <div class="home-module">
+              <span class="home-icon"><i class="mdi {{ m.ikona }}" aria-hidden="true"></i></span>
+              <h5>{{ m.naziv }}</h5>
+              <p>Dostupni su vam sledeći ekrani:</p>
+              <div class="home-screen-links">
+                {% for ekran in m.ekrani %}<a href="{{ ekran.url }}">{{ ekran.naziv }} <i class="mdi mdi-arrow-right" aria-hidden="true"></i></a>{% endfor %}
+              </div>
+            </div>
           {% else %}
             <div class="home-module locked" title="Nemate dozvolu za ovaj modul — obratite se administratoru">
               <span class="home-icon"><i class="mdi {{ m.ikona }}" aria-hidden="true"></i></span>

@@ -21,6 +21,8 @@
 .ims-icon-button { display: inline-flex; justify-content: center; align-items: center; width: 36px; height: 36px; padding: 0; flex-shrink: 0; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #b0c1d0; font-size: 21px; cursor: pointer; }
 .ims-icon-button:hover { background: #243b4e; color: #7ed9e8; }
 .ims-app-switcher { position: relative; flex-shrink: 0; }
+/* Keep the pointer inside the switcher across the gap above the menu. */
+.ims-app-switcher[open]::after { content: ""; position: absolute; top: 100%; left: 0; width: 100%; height: 10px; }
 .ims-app-switcher summary { display: flex; align-items: center; gap: 9px; height: 38px; padding: 0 12px; border: 1px solid #365064; border-radius: 10px; background: #203447; font-size: 13px; font-weight: 600; cursor: pointer; list-style: none; }
 .ims-app-switcher summary::-webkit-details-marker { display: none; }
 .ims-app-switcher summary > i { font-size: 18px; color: #9dc6d3; }

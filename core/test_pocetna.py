@@ -47,3 +47,59 @@ class PocetnaTests(TestCase):
 
     def test_neprijavljen_ide_na_prijavu(self):
         self.assertRedirects(self.client.get(reverse("pocetna")), f"{settings.LOGIN_URL}?next=/", fetch_redirect_response=False)
+
+    def dodeli_samo(self, *kodovi, aktivna=True):
+        self.korisnik.roles.clear()
+        uloga = Role.objects.create(name="Pojedinačni ekrani", slug="ekrani", is_active=aktivna)
+        for kod in kodovi:
+            uloga.permissions.add(PermissionCode.objects.get_or_create(code=kod)[0])
+        self.korisnik.roles.add(uloga)
+        self.client.force_login(self.korisnik)
+
+    def test_ekran_bez_pocetne_dozvole_modula(self):
+        self.dodeli_samo("arhiva:pisarnica", "nabavka:case_list", "finansije:ledger")
+        odgovor = self.client.get(reverse("pocetna"))
+        moduli = {m["slug"]: m for m in odgovor.context["moduli"]}
+        for slug, ruta in [("arhiva", "arhiva:pisarnica"), ("nabavka", "nabavka:case_list"),
+                           ("finansije", "finansije:ledger")]:
+            modul = moduli[slug]
+            self.assertFalse(modul["dostupan"])
+            self.assertTrue(modul["ima_pristup"])
+            self.assertEqual(len(modul["ekrani"]), 1)
+            link = modul["ekrani"][0]["url"]
+            self.assertContains(odgovor, f'href="{link}"')
+            self.assertRedirects(self.client.get(link), reverse(ruta), fetch_redirect_response=False)
+            self.assertEqual(self.client.session["current_app"], slug)
+        self.assertEqual(odgovor.context["broj_dostupnih"], sum(m["ima_pristup"] for m in moduli.values()))
+
+    def test_neaktivna_uloga_i_dozvola_akcije_ne_nude_ekran(self):
+        self.dodeli_samo("arhiva:pisarnica", aktivna=False)
+        odgovor = self.client.get(reverse("pocetna"))
+        self.assertFalse(next(m for m in odgovor.context["moduli"] if m["slug"] == "arhiva")["ima_pristup"])
+        self.korisnik.roles.clear()
+        uloga = Role.objects.create(name="Akcija", slug="akcija")
+        uloga.permissions.add(PermissionCode.objects.get_or_create(code="arhiva:akt_add")[0])
+        self.korisnik.roles.add(uloga)
+        odgovor = self.client.get(reverse("pocetna"))
+        self.assertFalse(next(m for m in odgovor.context["moduli"] if m["slug"] == "arhiva")["ima_pristup"])
+
+    def test_stvarni_kod_dozvole_za_uf_stavke_i_robu(self):
+        self.dodeli_samo("nabavka:euf_invoice_list")
+        odgovor = self.client.get(reverse("pocetna"))
+        modul = next(m for m in odgovor.context["moduli"] if m["slug"] == "nabavka")
+        self.assertEqual({e["naziv"] for e in modul["ekrani"]}, {"Preuzete EUF", "UF stavke", "Roba"})
+
+    def test_sef_trazi_i_obuhvat_cele_firme(self):
+        from unittest.mock import patch
+        self.dodeli_samo("finansije:sef_list")
+        for obuhvat in [False, True]:
+            with self.subTest(obuhvat=obuhvat), patch("finansije.access.can_view_all", return_value=obuhvat):
+                odgovor = self.client.get(reverse("pocetna"))
+                modul = next(m for m in odgovor.context["moduli"] if m["slug"] == "finansije")
+                self.assertEqual(modul["ima_pristup"], obuhvat)
+
+    def test_katalog_ekrana_sadrzi_ispravne_rute(self):
+        from core.pocetna_ekrani import EKRANI
+        for ekrani in EKRANI.values():
+            for ruta, _, argumenti, _ in ekrani:
+                self.assertEqual(resolve(reverse(ruta, kwargs=argumenti)).view_name, ruta)
