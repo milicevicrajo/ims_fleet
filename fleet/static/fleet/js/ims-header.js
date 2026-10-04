@@ -28,6 +28,10 @@
   if (active) {
     active.setAttribute('aria-current', 'page');
     header.querySelector('[data-current-module]').textContent = active.textContent.trim();
+    const icon = active.querySelector('i');
+    if (icon) {
+      header.querySelector('[data-current-module-icon]').className = icon.className;
+    }
   }
   document.addEventListener('click', (event) => {
     if (!switcher.contains(event.target)) switcher.open = false;

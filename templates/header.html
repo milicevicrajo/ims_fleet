@@ -13,91 +13,108 @@
       <div class="ims-app-panel">
         <div class="ims-panel-heading">Vaš radni prostor<small>Izaberite modul</small></div>
         <div class="app-nav" aria-label="Aplikacije">
+          <div class="ims-module-groups">
+            <section class="ims-module-group" aria-labelledby="ims-group-finansije">
+              <h2 id="ims-group-finansije">Finansije</h2>
+              {% if finansije_permissions.dashboard %}
+              <a class="nav-link {% if current_app == 'finansije' %}active{% endif %}"
+                 href="{% url 'switch_app' 'finansije' %}?next={% url 'finansije:dashboard' %}"
+                 title="Finansijska analitika">
+                <i class="mdi mdi-chart-bar"></i><span class="app-label">Finansije</span>
+              </a>
+              {% endif %}
+              {% if potrazivanja_permissions.dashboard %}
+              <a class="nav-link {% if current_app == 'potrazivanja' %}active{% endif %}"
+                 href="{% url 'switch_app' 'potrazivanja' %}?next={% url 'potrazivanja:dashboard' %}" title="Potraživanja">
+                <i class="mdi mdi-cash-check"></i><span class="app-label">Potraživanja</span>
+              </a>
+              {% endif %}
+              <a class="nav-link {% if current_app == 'isplate' %}active{% endif %}"
+                 href="{% url 'switch_app' 'isplate' %}?next={% url 'isplate:neoporezive_isplate' %}"
+                 title="Isplate">
+                <i class="mdi mdi-bank-transfer"></i><span class="app-label">Isplate</span>
+              </a>
+              <a class="nav-link {% if current_app == 'menice' %}active{% endif %}"
+                 href="{% url 'switch_app' 'menice' %}?next={% url 'menice:menica_list' tip='izlazna' %}"
+                 title="Menice">
+                <i class="mdi mdi-file-document"></i><span class="app-label">Menice</span>
+              </a>
+            </section>
+            <section class="ims-module-group" aria-labelledby="ims-group-ljudi">
+              <h2 id="ims-group-ljudi">Ljudi i organizacija</h2>
+              <a class="nav-link {% if current_app == 'kadrovi' %}active{% endif %}"
+                 href="{% url 'switch_app' 'kadrovi' %}?next={% url 'hr:pregled' %}"
+                 title="Kadrovi">
+                <i class="mdi mdi-account-group"></i><span class="app-label">Kadrovi</span>
+              </a>
+              {% if organizacija_permissions.stablo %}
+              <a class="nav-link {% if current_app == 'organizacija' %}active{% endif %}"
+                 href="{% url 'switch_app' 'organizacija' %}?next={% url 'organizacija:stablo' %}"
+                 title="Organizacija">
+                <i class="mdi mdi-file-tree"></i><span class="app-label">Organizacija</span>
+              </a>
+              {% endif %}
+              <div class="nav-link ims-planned-module" aria-disabled="true">
+                <i class="mdi mdi-shield-check-outline" aria-hidden="true"></i>
+                <span class="app-label">BZR<small>Bezbednost i zdravlje na radu</small></span>
+                <span class="ims-module-badge">U pripremi</span>
+              </div>
+            </section>
+            <section class="ims-module-group" aria-labelledby="ims-group-resursi">
+              <h2 id="ims-group-resursi">Resursi i nabavka</h2>
+              <a class="nav-link {% if current_app == 'fleet' %}active{% endif %}"
+                 href="{% url 'switch_app' 'fleet' %}?next={% url 'dashboard' %}"
+                 title="Flota">
+                <i class="mdi mdi-car"></i><span class="app-label">Flota</span>
+              </a>
+              <a class="nav-link {% if current_app == 'nabavka' %}active{% endif %}"
+                 href="{% url 'switch_app' 'nabavka' %}?next={% url 'nabavka:dashboard' %}"
+                 title="Nabavka">
+                <i class="mdi mdi-clipboard-check"></i><span class="app-label">Nabavka</span>
+              </a>
+              <a class="nav-link {% if current_app == 'mobilni' %}active{% endif %}"
+                 href="{% url 'switch_app' 'mobilni' %}?next={% url 'mobilni:mobile_dashboard' %}"
+                 title="Mobilni telefoni">
+                <i class="mdi mdi-cellphone"></i><span class="app-label">Mobilna telefonija</span>
+              </a>
+            </section>
+            <section class="ims-module-group" aria-labelledby="ims-group-dokumenti">
+              <h2 id="ims-group-dokumenti">Pravni poslovi i dokumentacija</h2>
+              <a class="nav-link {% if current_app == 'pravna' %}active{% endif %}"
+                 href="{% url 'switch_app' 'pravna' %}?next={% url 'pravna:cases_list' case_type='tuzeni' %}"
+                 title="Pravna služba">
+                <i class="mdi mdi-gavel"></i><span class="app-label">Pravna služba</span>
+              </a>
+              <a class="nav-link {% if current_app == 'ugovori' %}active{% endif %}"
+                 href="{% url 'switch_app' 'ugovori' %}?next={% url 'ugovori:contract_list' %}"
+                 title="Ugovori">
+                <i class="mdi mdi-file-document-multiple"></i><span class="app-label">Ugovori</span>
+              </a>
+              {% if arhiva_permissions.delovodnik %}
+              <a class="nav-link {% if current_app == 'arhiva' %}active{% endif %}"
+                 href="{% url 'switch_app' 'arhiva' %}?next={% url 'arhiva:delovodnik' %}"
+                 title="Arhiva — pisarnica i delovodnik">
+                <i class="mdi mdi-archive"></i><span class="app-label">Arhiva</span>
+              </a>
+              {% endif %}
+            </section>
+          </div>
+          <div class="ims-module-shortcuts">
             <a class="nav-link {% if current_app == 'pocetna' %}active{% endif %}" href="{% url 'pocetna' %}" title="Početna — izbor modula">
               <i class="mdi mdi-home-variant"></i><span class="app-label">Početna</span>
             </a>
-            <a class="nav-link {% if current_app == 'fleet' %}active{% endif %}"
-               href="{% url 'switch_app' 'fleet' %}?next={% url 'dashboard' %}"
-               title="Flota">
-              <i class="mdi mdi-car"></i><span class="app-label">Flota</span>
-            </a>
-            {% if potrazivanja_permissions.dashboard %}
-            <a class="nav-link {% if current_app == 'potrazivanja' %}active{% endif %}"
-               href="{% url 'switch_app' 'potrazivanja' %}?next={% url 'potrazivanja:dashboard' %}" title="Potraživanja">
-              <i class="mdi mdi-cash-check"></i><span class="app-label">Potraživanja</span>
-            </a>
-            {% endif %}
-            <a class="nav-link {% if current_app == 'isplate' %}active{% endif %}"
-               href="{% url 'switch_app' 'isplate' %}?next={% url 'isplate:neoporezive_isplate' %}"
-               title="Isplate">
-              <i class="mdi mdi-bank-transfer"></i><span class="app-label">Isplate</span>
-            </a>
-            <a class="nav-link {% if current_app == 'pravna' %}active{% endif %}"
-               href="{% url 'switch_app' 'pravna' %}?next={% url 'pravna:cases_list' case_type='tuzeni' %}"
-               title="Pravna sluzba">
-              <i class="mdi mdi-gavel"></i><span class="app-label">Pravna</span>
-            </a>
-            <a class="nav-link {% if current_app == 'menice' %}active{% endif %}"
-               href="{% url 'switch_app' 'menice' %}?next={% url 'menice:menica_list' tip='izlazna' %}"
-               title="Menice">
-              <i class="mdi mdi-file-document"></i><span class="app-label">Menice</span>
-            </a>
-            <a class="nav-link {% if current_app == 'ugovori' %}active{% endif %}"
-               href="{% url 'switch_app' 'ugovori' %}?next={% url 'ugovori:contract_list' %}"
-               title="Ugovori">
-              <i class="mdi mdi-file-document-multiple"></i><span class="app-label">Ugovori</span>
-            </a>
-            {% if arhiva_permissions.delovodnik %}
-            <a class="nav-link {% if current_app == 'arhiva' %}active{% endif %}"
-               href="{% url 'switch_app' 'arhiva' %}?next={% url 'arhiva:delovodnik' %}"
-               title="Arhiva — pisarnica i delovodnik">
-              <i class="mdi mdi-archive"></i><span class="app-label">Arhiva</span>
-            </a>
-            {% endif %}
-            <a class="nav-link {% if current_app == 'nabavka' %}active{% endif %}"
-               href="{% url 'switch_app' 'nabavka' %}?next={% url 'nabavka:dashboard' %}"
-               title="Nabavka">
-              <i class="mdi mdi-clipboard-check"></i><span class="app-label">Nabavka</span>
-            </a>
-            {% if finansije_permissions.dashboard %}
-            <a class="nav-link {% if current_app == 'finansije' %}active{% endif %}"
-               href="{% url 'switch_app' 'finansije' %}?next={% url 'finansije:dashboard' %}"
-               title="Finansijska analitika">
-              <i class="mdi mdi-chart-bar"></i><span class="app-label">Finansije</span>
-            </a>
-            {% endif %}
-            <a class="nav-link {% if current_app == 'mobilni' %}active{% endif %}"
-               href="{% url 'switch_app' 'mobilni' %}?next={% url 'mobilni:mobile_dashboard' %}"
-               title="Mobilni telefoni">
-              <i class="mdi mdi-cellphone"></i><span class="app-label">Mobilni</span>
-            </a>
-            <a class="nav-link {% if current_app == 'kadrovi' %}active{% endif %}"
-               href="{% url 'switch_app' 'kadrovi' %}?next={% url 'hr:pregled' %}"
-               title="Kadrovi">
-              <i class="mdi mdi-account-group"></i><span class="app-label">Kadrovi</span>
-            </a>
-            {% if organizacija_permissions.stablo %}
-            <a class="nav-link {% if current_app == 'organizacija' %}active{% endif %}"
-               href="{% url 'switch_app' 'organizacija' %}?next={% url 'organizacija:stablo' %}"
-               title="Organizacija">
-              <i class="mdi mdi-file-tree"></i><span class="app-label">Organizacija</span>
-            </a>
-            {% endif %}
             {% if user.is_superuser %}
-              <a class="nav-link {% if current_app == 'administracija' %}active{% endif %}"
-                 href="{% url 'switch_app' 'administracija' %}?next={% url 'dashboard' %}"
-                 title="Administracija">
-                <i class="mdi mdi-shield-account"></i><span class="app-label">Admin</span>
-              </a>
-            {% else %}
-              <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true" data-no-preloader title="Samo za administratore">
-                <i class="mdi mdi-lock"></i><span class="app-label">Admin</span>
-              </a>
+            <a class="nav-link {% if current_app == 'administracija' %}active{% endif %}"
+               href="{% url 'switch_app' 'administracija' %}?next={% url 'dashboard' %}"
+               title="Administracija">
+              <i class="mdi mdi-shield-account"></i><span class="app-label">Administracija</span>
+            </a>
             {% endif %}
+          </div>
         </div>
       </div>
     </details>
-    <div class="ims-current-module" aria-live="polite"><span class="ims-module-dot"></span><span data-current-module>Radni prostor</span></div>
+    <div class="ims-current-module" aria-live="polite"><i class="mdi mdi-view-grid-outline" data-current-module-icon aria-hidden="true"></i><span data-current-module>Radni prostor</span></div>
     <div class="ims-account">
       {% if user.is_authenticated %}
         {% if must_change_password %}<a class="ims-password" href="{% url 'password_change' %}" title="Promeni lozinku"><i class="mdi mdi-key" aria-hidden="true"></i><span>Promeni lozinku</span></a>{% endif %}
@@ -112,4 +129,4 @@
     </div>
   </nav>
 </header>
-<script src="{% static 'fleet/js/ims-header.js' %}?v=20261002-2" defer></script>
+<script src="{% static 'fleet/js/ims-header.js' %}?v=20261004-2" defer></script>

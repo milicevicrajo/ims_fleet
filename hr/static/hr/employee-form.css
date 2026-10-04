@@ -1,0 +1,29 @@
+/* Samo ekran izmene zaposlenog; polja za unos su iznad pregleda HR podataka. */
+.ef .employee-edit-notice { display:flex; gap:12px; align-items:center; padding:12px 16px; margin-bottom:18px; border:1px solid #cce2df; border-radius:10px; background:#f0f8f6; color:#27594f; }
+.ef .employee-edit-notice > i { font-size:24px; flex-shrink:0; }
+.ef .employee-edit-notice strong { font-size:13px; }
+.ef .employee-edit-notice p { font-size:12.5px; margin:3px 0 0; }
+.ef .employee-reference { margin-top:24px; padding-top:24px; border-top:1px solid #d4dde5; }
+.ef .employee-reference-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:16px; }
+.ef .employee-reference h2 { margin:0 0 5px; font-size:19px; color:var(--ef-ink); scroll-margin-top:20px; }
+.ef .employee-reference-heading p, .ef .employee-reference-note { font-size:12.5px; color:var(--ef-muted); margin:0; line-height:1.6; }
+.ef .employee-reference-badge { display:inline-flex; gap:5px; align-items:center; flex-shrink:0; border:1px solid var(--ef-line); border-radius:6px; padding:4px 8px; font-size:11px; color:#526170; background:#f6f8fa; }
+.ef .employee-reference-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; align-items:start; }
+.ef .employee-reference-card { border:1px solid var(--ef-line); border-radius:10px; overflow:hidden; background:#fff; }
+.ef .employee-reference-card-heading { display:flex; gap:10px; padding:14px 16px; background:#f6f8fa; border-bottom:1px solid var(--ef-line); }
+.ef .employee-reference-card-heading > i { font-size:21px; color:#718595; }
+.ef .employee-reference-card h3 { margin:0 0 4px; font-size:14px; font-weight:700; color:var(--ef-ink); }
+.ef .employee-reference-card p { margin:0; font-size:12px; color:var(--ef-muted); line-height:1.5; }
+.ef .employee-reference-card dl { margin:0; padding:0 16px; }
+.ef .employee-reference-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.2fr); gap:12px; padding:10px 0; font-size:12.5px; line-height:1.5; }
+.ef .employee-reference-row + .employee-reference-row { border-top:1px solid #eef1f4; }
+.ef .employee-reference-row dt { color:var(--ef-muted); font-weight:400; overflow-wrap:anywhere; }
+.ef .employee-reference-row dd { margin:0; color:var(--ef-ink); font-weight:600; overflow-wrap:anywhere; }
+.ef .employee-reference-note { margin-top:12px; }
+@media (min-width:1100px) {
+  .ef [data-employee-local-edit] #ef-identitet .ef-body { grid-template-columns:minmax(0, 2fr) minmax(0, 2fr) minmax(0, 1fr); }
+}
+@media (max-width:800px) {
+  .ef .employee-reference-grid { grid-template-columns:minmax(0, 1fr); }
+  .ef .employee-reference-heading { flex-wrap:wrap; }
+}

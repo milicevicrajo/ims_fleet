@@ -190,8 +190,8 @@ class SlavaFormaTests(PredlogTestBase):
         prikazana = [polje.name for sekcija in sekcije for polje in sekcija['fields']]
         self.assertEqual(sorted(prikazana), sorted(forma.fields))
         self.assertEqual([sekcija['key'] for sekcija in sekcije],
-                         ['identitet', 'prikaz', 'zaposlenje', 'obracun', 'kontakt', 'dodatno'])
-        self.assertTrue(forma.fields['first_name'].hr_sync)
+                         ['identitet', 'prikaz', 'dodatno'])
+        self.assertFalse(getattr(forma.fields['first_name'], 'hr_sync', False))
         self.assertFalse(getattr(forma.fields['slava_datum'], 'hr_sync', False))
 
 

@@ -3,6 +3,7 @@ import datetime
 
 from django.contrib.auth import get_user_model
 from django.test import override_settings
+from django.urls import reverse
 
 from hr.access import visible_employees
 from hr.models import Employee
@@ -55,6 +56,25 @@ class KadroviNaRegistruTests(ImportTestCase):
     def test_cela_firma_vidi_i_institut(self):
         self.dodeli(cela_firma=True)
         self.assertEqual(visible_employees(self.svez()).count(), 4)
+
+    def test_izmena_lokalnih_podataka_postuje_odobrenu_dodelu(self):
+        from core.models import PermissionCode
+
+        self.uloga.permissions.add(PermissionCode.objects.get_or_create(code="employee_update")[0])
+        self.dodeli(cvor_id=centar("43"))
+        self.client.force_login(self.korisnik)
+        url = reverse("employee_update", args=[self.u431.pk])
+        data = {"first_name": "Novo ime", "last_name": self.u431.last_name, "title": "dr",
+                "org_unit_code": "41", "department_code": "41"}
+        self.assertEqual(self.client.post(url, data).status_code, 302)
+        self.u431.refresh_from_db()
+        self.assertEqual(self.u431.first_name, "Novo ime")
+        self.assertTrue(self.u431.skip_hr_identity_update)
+        self.assertEqual(self.u431.org_unit_code, "431")
+        self.assertEqual(self.u431.org_node_id, jedinica("431"))
+        self.assertEqual(self.client.post(reverse("employee_update", args=[self.u41.pk]), data).status_code, 404)
+        DodelaUloge.objects.filter(korisnik=self.korisnik).delete()
+        self.assertEqual(self.client.post(url, data).status_code, 404)
 
     def test_novi_nalog_zaposlenog_dobija_dodelu_centra(self):
         from core.models import Role

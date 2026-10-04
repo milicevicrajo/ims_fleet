@@ -190,8 +190,10 @@ Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema 
 | Vrste primalaca | `dbo.hr_employee` | Uz šifarnik |
 
 > **[P] Zaštita identiteta:** polje `skip_hr_identity_update` sprečava da noćna
-> sinhronizacija prepiše titulu, ime, prezime i pol — jer zaposleni sam ispravlja
-> prikaz svog imena.
+> sinhronizacija prepiše titulu, ime, prezime, originalno ime i pol. Pri čuvanju promene
+> imena, prezimena ili titule na formi zaposlenog zaštita se uključuje automatski.
+> Superuser je može isključiti naknadnim čuvanjem bez promene tih polja. Ispravka
+> kvačica na sopstvenom profilu koristi posebna polja za prikaz i ne uključuje ovaj prekidač.
 
 ---
 
@@ -374,6 +376,19 @@ stilovi `hr/static/hr/forme.css`, ponašanje `hr/static/hr/forme.js`):
   rešenja ne traži) nestaje i iz kartice; forma sa jednom sekcijom nema karticu;
 - da/ne polja su **prekidači**; polja koja HR sinhronizacija prepisuje nose oznaku **„iz HR-a“**;
 - traka **Odustani / Sačuvaj** stoji na dnu ekrana.
+
+Od 04.10.2026. korisnik koji nije superuser na **izmeni zaposlenog** uređuje samo ime,
+prezime, titulu, ime i prezime za prikaz, ime ćirilicom i datum slave. Ostali podaci
+(uključujući šifru zaposlenog) prikazani su informativno ispod forme i ne prihvataju
+izmene ni iz ručno izmenjenog POST zahteva. Promena imena, prezimena ili titule
+automatski uključuje zaštitu identiteta od HR sinhronizacije. Stara korekcija za prikaz
+promenjenog imena uklanja se ako korisnik nije istovremeno izmenio i tu korekciju.
+Promene samo lokalnih podataka ne uključuju zaštitu. Superuser zadržava punu formu;
+unos novog zaposlenog i dozvole/obuhvat zaposlenih ostaju po postojećim pravilima.
+Polja za unos su na vrhu ekrana, uz kratko obaveštenje o zaštiti imena. Pregled ispod
+forme razdvaja lične podatke, zaposlenje i organizaciju, podatke za obračun, kontakt i
+adresu, obrazovanje i slavu. Svaka celina ima opis i parove naziv–vrednost; crtica
+označava podatak koji nije unet. Osnovno ime i opciono ime za prikaz imaju odvojena objašnjenja.
 
 Forma navodi sekcije u `SECTIONS` (`hr/form_layout.py: SekcijeMixin`): oznaka, naslov, opis, polja,
 uputstvo i ikonica. Polje koje nije razvrstano ide u „Ostalo“, pa novo polje modela ne nestaje iz

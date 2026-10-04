@@ -408,7 +408,7 @@ class MyEmployeeProfileTests(TestCase):
         employee.refresh_from_db()
         self.assertEqual(employee.display_last_name_override, "")
 
-    def test_employee_update_hides_display_name_override_for_regular_hr_user(self):
+    def test_employee_update_allows_local_corrections_but_hides_sync_switch(self):
         employee = self.create_employee(110, last_name="Petrovic")
         user = self.create_user_with_permissions("hruser", ["employee_update"])
         self.client.force_login(user)
@@ -416,8 +416,8 @@ class MyEmployeeProfileTests(TestCase):
         response = self.client.get(reverse("employee_update", args=[employee.pk]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "display_first_name_override")
-        self.assertNotContains(response, "display_last_name_override")
+        self.assertContains(response, "display_first_name_override")
+        self.assertContains(response, "display_last_name_override")
         self.assertNotContains(response, "skip_hr_identity_update")
 
     def test_linked_user_can_open_work_time_sheet(self):

@@ -1,8 +1,58 @@
 {% extends "hr/forms/base.html" %}
+{% load static %}
 {% comment %}Forma zaposlenog: sekcije su u EmployeeForm.SECTIONS, izgled u hr/forms/base.html.{% endcomment %}
 {% block ef_subtitle %}{% if object %}{{ object.employee_code }} · {{ object }}{% if object.org_unit_code %} · OJ {{ object.org_unit_code }}{% endif %}{% else %}Novi zaposleni u kadrovskoj evidenciji{% endif %}{% endblock %}
-{% block ef_nav_foot %}<div><span class="ef-hr">iz HR-a</span> prepisuje sinhronizacija</div>{% endblock %}
+{% block ef_nav_foot %}{% if form.local_edit_only %}<a href="#employee-hr-data" data-no-preloader><i class="mdi mdi-information-outline" aria-hidden="true"></i> Podaci iz HR-a ispod forme</a>{% else %}<div><span class="ef-hr">iz HR-a</span> prepisuje sinhronizacija</div>{% endif %}{% endblock %}
+{% block ef_form_attrs %}method="post" novalidate{% if form.local_edit_only %} data-employee-local-edit{% endif %}{% endblock %}
+{% block ef_intro %}
+<link rel="stylesheet" href="{% static 'hr/employee-form.css' %}?v=20261004-1">
+{% if form.local_edit_only %}
+<div class="employee-edit-notice">
+  <i class="mdi mdi-shield-check-outline" aria-hidden="true"></i>
+  <div>
+    <strong>{% if object.skip_hr_identity_update %}Ime je zaštićeno od HR sinhronizacije{% else %}Ispravke imena biće sačuvane trajno{% endif %}</strong>
+    <p>{% if object.skip_hr_identity_update %}HR ne prepisuje ime, prezime i titulu. Ostali HR podaci prikazani su ispod forme.{% else %}Čuvanje promene imena, prezimena ili titule automatski uključuje zaštitu od HR sinhronizacije.{% endif %}</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block ef_after_form %}
+{% if form.local_edit_only %}
+<section class="employee-reference" aria-labelledby="employee-hr-data">
+  <div class="employee-reference-heading">
+    <div><h2 id="employee-hr-data">Podaci iz kadrovske evidencije</h2>
+    <p>Samo za pregled · Ispravke se unose u izvornoj HR evidenciji. Crtica (—) znači da podatak nije unet.</p></div>
+    <span class="employee-reference-badge"><i class="mdi mdi-lock-outline" aria-hidden="true"></i> Bez izmene</span>
+  </div>
+  <div class="employee-reference-grid">
+    {% for section in form.hr_readonly_sections %}
+    <section class="employee-reference-card" aria-labelledby="employee-hr-group-{{ forloop.counter }}">
+      <div class="employee-reference-card-heading">
+        <i class="mdi {{ section.icon }}" aria-hidden="true"></i>
+        <div><h3 id="employee-hr-group-{{ forloop.counter }}">{{ section.title }}</h3><p>{{ section.description }}</p></div>
+      </div>
+      <dl>
+        {% for row in section.rows %}
+        <div class="employee-reference-row">
+          <dt>{{ row.label }}</dt>
+          <dd>{% if row.value == None or row.value == "" %}<span class="text-muted">—</span>{% else %}{{ row.value }}{% endif %}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </section>
+    {% endfor %}
+  </div>
+  <p class="employee-reference-note">Zaštita identiteta obuhvata i pol i originalni zapis imena iz HR-a. Dok je uključena, sinhronizacija ne osvežava ni ta dva podatka.</p>
+</section>
+{% endif %}
+{% endblock %}
 {% block ef_manual %}
+  {% if form.local_edit_only %}
+  <p>Možete menjati ime, prezime, titulu i lokalne podatke u formi. Ostali podaci prikazani su ispod forme radi pregleda.</p>
+  <p class="mb-0">Čuvanje promene imena, prezimena ili titule automatski uključuje zaštitu identiteta od HR sinhronizacije. Zaštitu može isključiti samo superuser. Ime za prikaz, prezime za prikaz, ime ćirilicom i datum slave HR ne prepisuje.</p>
+  {% else %}
   <p>Većina podataka o zaposlenom dolazi iz kadrovske evidencije (HR) i osvežava se noćnom sinhronizacijom. Polja označena sa <span class="ef-hr">iz HR-a</span> sinhronizacija prepisuje, pa njihova ručna izmena traje samo do sledećeg preuzimanja. Trajnu ispravku treba uneti u HR.</p>
   <p class="mb-0">Samo u aplikaciji se čuvaju: ime i prezime za prikaz, ime ćirilicom, prekidač „Ne ažuriraj ime, prezime, titulu i pol iz HR-a“ i datum slave.</p>
+  <p class="mb-0">Pri čuvanju promene imena, prezimena ili titule zaštita identiteta se uključuje automatski. Možete je isključiti naknadnim čuvanjem bez promene tih polja.</p>
+  {% endif %}
 {% endblock %}

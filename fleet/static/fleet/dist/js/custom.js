@@ -89,7 +89,7 @@ $(function() {
     });
 
     //****************************
-    /* Start collapsed; keep the user's manual toggle on resize. */
+    /* Start expanded; keep the user's manual toggle on resize. */
     //****************************
     var setsidebartype = function() {
         var wrapper = $("#main-wrapper");
