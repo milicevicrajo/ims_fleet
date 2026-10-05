@@ -346,6 +346,12 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 - Dozvole za zahteve (`hr:zahtev_*`) dobijaju Uprava, Kadrovi i Sekretarijat, isto kao
   operativne dozvole za rešenja. Zahtev je vidljiv po istom pravilu kao rešenje: po
   centru i OJ snimljenim na zahtevu.
+- Od 04.10.2026. uloga **Zaposleni** podnosi zahtev **za sebe** (Moj profil → „Podnesi
+  zahtev“): pregled, unos, izmena nacrta, štampa i podnošenje (`hr.access.DOZVOLE_ZAHTEVA_ZA_SEBE`),
+  bez grupnog unosa, storniranja i rešenja. U formi bira samo sebe, a podnosilac je unapred on sam.
+  Ove dozvole **ne daju obuhvat Kadrova** — uloga Zaposleni ima dodelu na ceo svoj centar
+  (zbog Flote), a bez izuzetka bi videla sve kolege. Svako vidi zahteve koje je uneo i
+  zahteve koji se odnose na njega.
 
 Od 24.09.2026. `hr/access.py` ograničava spisak, detalje i izmenu zaposlenih, radne liste,
 odmore, bolovanja i pristup Kadrova ocenjivanju. Kod rešenja proveravaju se i pojedinačni
@@ -430,6 +436,9 @@ Pravila [P]:
 - Zahtev koji ima rešenje koje nije stornirano ne može da se stornira.
 - **Podnošenje** zaključava tekst zahteva (JSON snimak). Zahtev se zaključava i sam, kada se
   izda prvo rešenje po njemu.
+- Od 04.10.2026. zahtev se **ne menja čim po njemu postoji rešenje**, i dok je rešenje još
+  nacrt (`Zahtev.je_zakljucan`). Ispravka ide preko rešenja; tek kad se nacrt rešenja obriše,
+  zahtev se ponovo može menjati.
 - Rešenje mora biti povezano sa postojećim zahtevom. Baza odbija praznu ili duplu vezu.
   Stari linkovi za samostalni i grupni unos vode na listu zahteva bez rešenja.
 - Zamena odsutnog zaposlenog je **rešenje** („Imenovanje lica za zamenu“ → „Rešenje o zameni

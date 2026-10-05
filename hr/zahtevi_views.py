@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -13,7 +13,7 @@ from django.views.generic import TemplateView
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from core.models import OrganizationalUnit
 from hr.access import visible_employees
-from hr.models import Pismo, Resenje, VrstaZahteva, Zahtev, ZahtevDan
+from hr.models import Employee, Pismo, Resenje, VrstaZahteva, Zahtev, ZahtevDan
 from hr.resenja_forms import predlog_teksta
 from hr.services.resenja import dodatna_polja
 from hr.services.zahtevi import (aktivna_resenja, dodeli_broj, dokument_zahteva_za_prikaz, napravi_resenje,
@@ -38,7 +38,11 @@ def _dozvole(user):
 
 
 def _zaposleni_u_obuhvatu(user):
-    return visible_employees(user, unrestricted=user_has_role_permission(user, 'hr:resenje_view_all')).filter(is_active=True)
+    """Zaposleni u obuhvatu, uz samog korisnika — svako može da podnese zahtev za sebe."""
+    qs = visible_employees(user, unrestricted=user_has_role_permission(user, 'hr:resenje_view_all'))
+    if user.employee_id:
+        qs = Employee.objects.filter(Q(pk__in=qs.values('pk')) | Q(pk=user.employee_id))
+    return qs.filter(is_active=True)
 
 
 def _broj_dana(formset):
@@ -84,17 +88,24 @@ class ZahtevFormView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateVi
             return None
         zahtev = get_object_or_404(visible_zahtevi(self.request.user), pk=self.kwargs['pk'])
         if zahtev.je_zakljucan:
-            raise Http404('Podnet zahtev se ne menja.')
+            raise Http404('Podnet zahtev i zahtev po kome postoji rešenje se ne menjaju.')
         return zahtev
 
     def _form(self, data=None, instance=None):
         form = ZahtevForm(data, instance=instance, actor=self.request.user)
-        if not form.fields['zaposleni'].disabled:
-            form.fields['zaposleni'].queryset = _zaposleni_u_obuhvatu(self.request.user)
-            # „Podnesi zahtev” iz Mog profila: zaposleni je unapred izabran (ako je u obuhvatu).
-            izabran = self.request.GET.get('zaposleni', '')
-            if data is None and instance is None and izabran.isdigit() and                     form.fields['zaposleni'].queryset.filter(pk=int(izabran)).exists():
-                form.initial['zaposleni'] = int(izabran)
+        form.fields['zaposleni'].queryset = _zaposleni_u_obuhvatu(self.request.user)
+        # „Podnesi zahtev” iz Mog profila: zaposleni je unapred izabran (ako je u obuhvatu).
+        izabran = self.request.GET.get('zaposleni', '')
+        if data is None and instance is None and izabran.isdigit() and                 form.fields['zaposleni'].queryset.filter(pk=int(izabran)).exists():
+            form.initial['zaposleni'] = int(izabran)
+        sam = self.request.user.employee
+        if data is None and instance is None and sam is not None:
+            # Ko vidi samo sebe, podnosi zahtev za sebe i sam ga potpisuje.
+            if form.initial.get('zaposleni') is None and not form.fields['zaposleni'].queryset.exclude(pk=sam.pk).exists():
+                form.initial['zaposleni'] = sam.pk
+            if form.initial.get('zaposleni') == sam.pk:
+                form.initial.setdefault('podnosilac', sam.pk)
+                form.initial.setdefault('podnosilac_funkcija', sam.position or sam.job_title or '')
         return form
 
     def get_context_data(self, **kwargs):

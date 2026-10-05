@@ -330,9 +330,10 @@ class EkraniZahtevaTests(ZahtevTestBase):
 
     def test_ekrani_se_otvaraju(self):
         zahtev = self.zahtev()
+        self.assertEqual(self.client.get(reverse('hr:zahtev_edit', args=[zahtev.pk])).status_code, 200)
         resenje = napravi_resenje(zahtev, self.user, datum_resenja=date(2026, 7, 30))
         for naziv, args in (('hr:zahtev_list', []), ('hr:zahtev_detail', [zahtev.pk]), ('hr:zahtev_print', [zahtev.pk]),
-                            ('hr:zahtev_create', []), ('hr:zahtev_bulk_create', []), ('hr:zahtev_edit', [zahtev.pk]),
+                            ('hr:zahtev_create', []), ('hr:zahtev_bulk_create', []),
                             ('hr:resenje_catalog', []), ('hr:resenje_edit', [resenje.pk])):
             self.assertEqual(self.client.get(reverse(naziv, args=args)).status_code, 200, naziv)
         odgovor = self.client.get(reverse('hr:resenje_detail', args=[resenje.pk]))
@@ -343,6 +344,20 @@ class EkraniZahtevaTests(ZahtevTestBase):
         zahtev = self.zahtev()
         podnesi_zahtev(zahtev, self.user)
         self.assertEqual(self.client.get(reverse('hr:zahtev_edit', args=[zahtev.pk])).status_code, 404)
+
+    def test_zahtev_sa_resenjem_se_ne_menja(self):
+        zahtev = self.zahtev()
+        resenje = napravi_resenje(zahtev, self.user, datum_resenja=date(2026, 7, 30))
+        zahtev.refresh_from_db()
+        self.assertEqual(zahtev.status, Zahtev.Status.NACRT)  # nacrt rešenja već zaključava zahtev
+        self.assertTrue(zahtev.je_zakljucan)
+        self.assertEqual(self.client.get(reverse('hr:zahtev_edit', args=[zahtev.pk])).status_code, 404)
+        self.assertEqual(self.client.post(reverse('hr:zahtev_edit', args=[zahtev.pk]),
+                                          self._podaci(razlog='izmenjen razlog')).status_code, 404)
+        self.assertNotContains(self.client.get(reverse('hr:zahtev_detail', args=[zahtev.pk])),
+                               reverse('hr:zahtev_edit', args=[zahtev.pk]))
+        resenje.delete()  # obrisan nacrt rešenja vraća zahtev na doradu
+        self.assertEqual(self.client.get(reverse('hr:zahtev_edit', args=[zahtev.pk])).status_code, 200)
 
     def test_resenje_po_zahtevu_ne_menja_broj_ni_zaposlenog(self):
         zahtev = self.zahtev()

@@ -125,7 +125,8 @@ class Zahtev(models.Model):
 
     @property
     def je_zakljucan(self):
-        return self.status != self.Status.NACRT
+        """Podnet ili storniran zahtev, kao i zahtev po kome je napravljeno rešenje, više se ne menja."""
+        return self.status != self.Status.NACRT or bool(self.pk and self.resenja.exists())
 
 
 class ZahtevDan(models.Model):

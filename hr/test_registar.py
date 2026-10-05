@@ -84,3 +84,58 @@ class KadroviNaRegistruTests(ImportTestCase):
         korisnik, centar_oznaka, _ = create_user_profile_for_employee(self.u431, centers=["41", "43"])
         dodela = DodelaUloge.objects.get(korisnik=korisnik)
         self.assertEqual((dodela.cvor_id, dodela.status), (centar("43"), DodelaUloge.STATUS_AKTIVNA))
+
+
+@NA_REGISTRU
+class ZahtevZaSebeTests(ImportTestCase):
+    """Uloga Zaposleni podnosi zahtev za sebe; dodela na centar (zbog Flote) ne otvara kolege."""
+
+    def setUp(self):
+        from hr.access import DOZVOLE_ZAHTEVA_ZA_SEBE
+
+        super().setUp()
+        run_import(company=1)
+        self.ja, self.kolega, self.direktor = radnik(1, "431"), radnik(2, "4331"), radnik(3, "1")
+        self.korisnik = get_user_model().objects.create_user("zaposleni-1", password="x", employee=self.ja)
+        uloga = uloga_sa_dozvolom("zaposleni-test", *DOZVOLE_ZAHTEVA_ZA_SEBE)
+        self.korisnik.roles.add(uloga)
+        DodelaUloge.objects.create(korisnik=self.korisnik, uloga=uloga, cvor_id=centar("43"), vazi_od=datetime.date(2026, 1, 1),
+                                   status=DodelaUloge.STATUS_AKTIVNA)
+        self.client.force_login(self.korisnik)
+
+    def podaci(self, zaposleni):
+        from hr.models import VrstaZahteva
+
+        return {"vrsta": VrstaZahteva.objects.get(kod="prekovremeni-rad").pk, "zaposleni": zaposleni.pk,
+                "datum_zahteva": "28.07.2026", "pismo": "latinica", "datum_od": "01.08.2026", "datum_do": "31.08.2026",
+                "razlog": "potrebe posla", "podnosilac": self.ja.pk, "podnosilac_funkcija": "Radnik",
+                "odobrava": self.direktor.pk, "odobrava_funkcija": "Generalni direktor",
+                "dani-TOTAL_FORMS": "0", "dani-INITIAL_FORMS": "0", "dani-MIN_NUM_FORMS": "0", "dani-MAX_NUM_FORMS": "1000"}
+
+    def test_zaposleni_podnosi_zahtev_samo_za_sebe(self):
+        from hr.models import Zahtev
+        from hr.services.zahtevi import visible_zahtevi
+
+        self.assertFalse(visible_employees(self.korisnik).exists())  # dozvole zahteva ne daju obuhvat
+        forma = self.client.get(reverse("hr:zahtev_create")).context["form"]
+        self.assertEqual(list(forma.fields["zaposleni"].queryset), [self.ja])
+        self.assertEqual((forma.initial["zaposleni"], forma.initial["podnosilac"]), (self.ja.pk, self.ja.pk))
+
+        odgovor = self.client.post(reverse("hr:zahtev_create"), self.podaci(self.kolega))
+        self.assertIn("zaposleni", odgovor.context["form"].errors)
+        odgovor = self.client.post(reverse("hr:zahtev_create"), self.podaci(self.ja))
+        zahtev = Zahtev.objects.get()
+        self.assertRedirects(odgovor, reverse("hr:zahtev_detail", args=[zahtev.pk]))
+        self.client.post(reverse("hr:zahtev_podnesi", args=[zahtev.pk]))
+        self.assertEqual(Zahtev.objects.get().status, Zahtev.Status.PODNET)
+
+        from hr.services.zahtevi import dodeli_broj, pripremi_zahtev
+
+        tudji = Zahtev(vrsta=zahtev.vrsta, zaposleni=self.kolega, datum_zahteva=zahtev.datum_zahteva, podnosilac=self.kolega,
+                       odobrava=self.direktor, created_by=get_user_model().objects.create_superuser("admin", password="x"))
+        pripremi_zahtev(tudji)
+        dodeli_broj(tudji)
+        tudji.save()
+        self.assertEqual(list(visible_zahtevi(self.korisnik)), [zahtev])
+        self.assertEqual(self.client.get(reverse("hr:zahtev_detail", args=[tudji.pk])).status_code, 404)
+        self.assertEqual(self.client.post(reverse("hr:zahtev_storniraj", args=[zahtev.pk])).status_code, 403)

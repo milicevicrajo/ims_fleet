@@ -218,6 +218,8 @@ class PermissionCodeSyncTests(TestCase):
         self.assertIn("vehicle_travel_order_fuel_report", codes)
         self.assertNotIn("putninalog_create", codes)
         self.assertNotIn("vehicle_travel_order_update", codes)
+        self.assertTrue({"hr:zahtev_create", "hr:zahtev_podnesi", "hr:zahtev_list"} <= codes)
+        self.assertFalse({"hr:zahtev_bulk_create", "hr:zahtev_storniraj", "hr:zahtev_resenje_create"} & codes)
 
     def test_sync_permission_codes_grants_isplate_permissions_to_blagajna(self):
         from .permissions import sync_permission_codes

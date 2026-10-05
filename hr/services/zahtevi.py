@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from hr.models import BrojacZahteva, Pismo, Potpisnik, Resenje, ResenjeDan, Zahtev
 
-from .resenja import (ADRESA, INSTITUT, MESTO, _neprazni, _redovi, datum_teksta, dodatne_vrednosti, ime_osobe,
+from .resenja import (ADRESA, INSTITUT, MESTO, _neprazni, _redovi, can_view_all, datum_teksta, dodatne_vrednosti, ime_osobe,
     ime_zaposlenog, naziv_jedinice, normalizuj_pol, ocisti_razlog, opis_vremena, organizaciona_jedinica,
     pripremi_resenje, razresi, to_cyrillic, u_obuhvatu, u_pismu, vrednosti_perioda)
 
@@ -187,4 +187,15 @@ def napravi_resenje(zahtev, user, *, vrsta=None, datum_resenja=None, potpisnik=N
 
 
 def visible_zahtevi(user):
-    return u_obuhvatu(Zahtev.objects.select_related('zaposleni', 'vrsta', 'podnosilac', 'odobrava', 'created_by'), user)
+    """Zahtevi u obuhvatu, uz sopstvene: koje je korisnik uneo i koji se odnose na njega."""
+    from django.db.models import Q
+
+    qs = Zahtev.objects.select_related('zaposleni', 'vrsta', 'podnosilac', 'odobrava', 'created_by')
+    if not user.is_authenticated:
+        return qs.none()
+    if user.is_superuser or can_view_all(user):
+        return qs
+    sopstveni = Q(created_by=user)
+    if user.employee_id:
+        sopstveni |= Q(zaposleni_id=user.employee_id)
+    return qs.filter(Q(pk__in=u_obuhvatu(Zahtev.objects.all(), user).values('pk')) | sopstveni)

@@ -80,7 +80,7 @@ class EkraniFormiTests(TestCase):
             reverse('hr:evaluation_catalog_create', args=['groups']): 'podaci',
             reverse('hr:evaluation_create'): 'zaposleni',
             reverse('hr:resenje_edit', args=[self.resenje.pk]): 'dani',
-            reverse('hr:zahtev_edit', args=[self.zahtev.pk]): 'potpisi',
+            reverse('hr:zahtev_create'): 'potpisi',
             reverse('hr:zahtev_bulk_create'): 'zaposleni',
             reverse('hr:resenje_catalog_edit', args=['vrste', VrstaResenja.objects.first().pk]): 'tekst',
             reverse('hr:resenje_catalog_edit', args=['vrste-zahteva', VrstaZahteva.objects.first().pk]): 'tekst',

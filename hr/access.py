@@ -19,13 +19,20 @@ def na_registru():
     return modul_na_registru("kadrovi")
 
 
+# Zahtev za sebe (uloga Zaposleni): ove dozvole otvaraju ekrane, ali ne daju obuhvat Kadrova.
+# Uloga Zaposleni ima dodelu na ceo svoj centar (zbog Flote); bez izuzetka bi videla sve kolege.
+DOZVOLE_ZAHTEVA_ZA_SEBE = frozenset("hr:" + kod for kod in (
+    "zahtev_list", "zahtev_detail", "zahtev_create", "zahtev_edit", "zahtev_predlog", "zahtev_print",
+    "zahtev_podnesi"))
+
+
 def dozvole_kadrova():
     from django.db.models import Q
 
     from core.models import PermissionCode
 
     return frozenset(PermissionCode.objects.filter(Q(code__startswith="hr:") | Q(code__startswith="employee_"))
-                     .values_list("code", flat=True))
+                     .exclude(code__in=DOZVOLE_ZAHTEVA_ZA_SEBE).values_list("code", flat=True))
 
 
 def obuhvat(user):

@@ -21,7 +21,7 @@
     <div class="card shadow-sm h-100">
       <div class="card-header"><h5><i class="mdi mdi-file-document-outline"></i>Pregled dokumenta</h5><span class="fleet-status info">A4 · 210 × 297 mm</span></div>
       <div>
-        {% if not zahtev.dokument %}<div class="alert alert-warning m-3">Nacrt — proverite tekst pre podnošenja. Zahtev se zaključava i kada se izda prvo rešenje po njemu.</div>{% endif %}
+        {% if not zahtev.dokument %}<div class="alert alert-warning m-3">Nacrt — proverite tekst pre podnošenja. Zahtev se zaključava i čim se po njemu napravi rešenje.</div>{% endif %}
         <div class="resenja-paper-stage" role="region" aria-label="Pregled A4 dokumenta" tabindex="0"><div class="resenja-paper">{% include 'hr/resenja/_zahtev_document.html' %}</div></div>
       </div>
     </div>

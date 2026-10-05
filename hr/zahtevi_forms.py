@@ -93,10 +93,6 @@ class ZahtevForm(DodatnaPoljaMixin, forms.ModelForm):
             self.fields[naziv].required = False
         self.initial.setdefault('datum_zahteva', timezone.localdate())
         self.dodaj_dodatna_polja(vrste, self.instance.dodatni_podaci)
-        self.ima_resenja = bool(self.instance.pk and self.instance.resenja.exists())
-        if self.ima_resenja:
-            # Rešenja nose ime zaposlenog i broj zahteva; zaposleni se posle toga ne menja.
-            self.fields['zaposleni'].disabled = True
         _ukrasi(self)
 
     def clean(self):

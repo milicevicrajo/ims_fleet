@@ -386,6 +386,9 @@ def sync_permission_codes():
         "vehicle_travel_order_print_open",
         "vehicle_travel_order_request",
     ]
+    # Zahtev za sebe u Kadrovima; obuhvat ostaje sopstveni (hr.access.DOZVOLE_ZAHTEVA_ZA_SEBE).
+    from hr.access import DOZVOLE_ZAHTEVA_ZA_SEBE
+    zaposleni_codes += sorted(DOZVOLE_ZAHTEVA_ZA_SEBE)
     zaposleni_role, _ = Role.objects.get_or_create(
         slug="zaposleni",
         defaults={
