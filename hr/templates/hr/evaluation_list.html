@@ -9,7 +9,7 @@
 </tbody></table></div></div></div>
 {% if can_approve and not history %}<div class="card shadow-sm"><div class="card-header"><h5>Zbirna saglasnost za označene obrasce</h5></div><div class="card-body"><p class="text-muted">Ocenjivač potvrđuje samo obrasce u kojima je imenovan. Bez korekcije se preuzima koeficijent prethodnog nivoa za svaki obrazac.</p><div class="row g-3">{% for field in bulk_form %}<div class="{% if field.name == 'comment' or field.name == 'confirm' %}col-12{% else %}col-4{% endif %}">{% if field.name == 'confirm' %}<div class="form-check">{{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label></div>{% else %}<label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% endif %}</div>{% endfor %}</div><button class="btn btn-primary mt-3" type="submit"><i class="mdi mdi-check-all"></i> Potvrdi označene obrasce</button></div></div>{% endif %}
 </form>
-{% include 'mobilni/mobile/_datatable.html' with table_id='EvaluationListTable' order="[[3, 'asc'],[2, 'asc']]" %}
+{% include 'mobilni/mobile/_datatable.html' with table_id='EvaluationListTable' order="[[3, 'asc'],[2, 'asc']]" fit=True %}
 {% endblock %}
 {% block extra_js %}<script>jQuery(function ($) {
   $('#evaluation-select-all').on('change', function () { $('#EvaluationListTable').DataTable().rows({search:'applied'}).nodes().to$().find('.evaluation-select').prop('checked',this.checked); });

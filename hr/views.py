@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import DatabaseError, transaction
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -261,8 +261,31 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
     template_name = "hr/employee_list.html"
     context_object_name = "employees"
 
+    def get(self, request, *args, **kwargs):
+        # Štampa (A4, „Sačuvaj kao PDF”) i Excel idu na istu rutu, pa važe ista dozvola i obuhvat.
+        izvoz = request.GET.get("izvoz")
+        if izvoz not in ("stampa", "xlsx"):
+            return super().get(request, *args, **kwargs)
+        from .models import RecipientType
+        from .services import spisak_zaposlenih
+
+        employees = list(self.get_queryset())
+        recipient = request.GET.get("recipient", "").strip()
+        filteri = spisak_zaposlenih.opis_filtera(
+            self._status(), request.GET.get("oj", "").strip(),
+            RecipientType.objects.filter(code=recipient).first() if recipient else None, request.GET.get("q", "").strip())
+        if izvoz == "xlsx":
+            return spisak_zaposlenih.excel(employees, filteri)
+        return render(request, "hr/employee_list_print.html", {
+            "redovi": spisak_zaposlenih.redovi(employees), "filteri": filteri, "institut": spisak_zaposlenih.INSTITUT,
+            "adresa": spisak_zaposlenih.ADRESA, "izradjeno": timezone.localtime(),
+        })
+
+    def _status(self):
+        return self.request.GET.get("status", "inactive" if self.request.GET.get("inactive") == "1" else "active")
+
     def get_queryset(self):
-        status = self.request.GET.get("status", "inactive" if self.request.GET.get("inactive") == "1" else "active")
+        status = self._status()
         qs = visible_employees(self.request.user).order_by("last_name", "first_name")
         if status != "all":
             qs = qs.filter(is_active=status != "inactive")
@@ -285,7 +308,10 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Lista zaposlenih"
-        context["status"] = self.request.GET.get("status", "inactive" if self.request.GET.get("inactive") == "1" else "active")
+        context["status"] = self._status()
+        upit = self.request.GET.copy()
+        upit.pop("izvoz", None)
+        context["izvoz_upit"] = upit.urlencode()
         context["show_inactive"] = context["status"] == "inactive"
         context["query"] = self.request.GET.get("q", "")
         context["selected_oj"] = self.request.GET.get("oj", "")

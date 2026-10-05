@@ -67,7 +67,7 @@
   </div></div>
 </div>
 </form>
-{% include 'mobilni/mobile/_datatable.html' with table_id='ResenjeListTable' order="[[2, 'desc']]" %}
+{% include 'mobilni/mobile/_datatable.html' with table_id='ResenjeListTable' order="[[2, 'desc']]" fit=True %}
 {% endblock %}
 {% block extra_js %}<script>jQuery(function ($) {
   $('#resenje-select-all').on('change', function () {

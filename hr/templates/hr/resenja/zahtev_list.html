@@ -88,7 +88,7 @@
   </div></div>
 </div>
 </form>
-{% include 'mobilni/mobile/_datatable.html' with table_id='ZahtevListTable' order="[[1, 'desc']]" %}
+{% include 'mobilni/mobile/_datatable.html' with table_id='ZahtevListTable' order="[[1, 'desc']]" fit=True %}
 {% endblock %}
 {% block extra_js %}<script>jQuery(function ($) {
   function oznaceni() { return $('#ZahtevListTable').DataTable().rows().nodes().to$().find('.zahtev-select:checked'); }

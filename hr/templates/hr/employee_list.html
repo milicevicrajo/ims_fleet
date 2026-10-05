@@ -2,7 +2,6 @@
 {% block hr_content %}
 <div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3">
   <div><div class="hr-kicker">Kadrovi · Evidencija zaposlenih</div><h1><i class="mdi mdi-account-group me-2"></i>Spisak zaposlenih</h1><p>Podaci zaposlenih, organizacione jedinice i pristup ličnoj evidenciji.</p></div>
-  <div class="d-flex align-items-center gap-3"><span>{{ employees|length }} u prikazu</span>{% if can_sync_employees %}<form method="post" action="{% url 'employee_sync' %}" class="m-0">{% csrf_token %}<button class="btn btn-light btn-sm" type="submit"><i class="mdi mdi-sync"></i> Sinhronizuj zaposlene</button></form>{% endif %}</div>
 </div>
 <div class="card shadow-sm mb-3"><div class="card-body">
   <form id="hr-employee-filter" method="get" class="fleet-list-filter mb-0"><div class="hr-filter-grid">
@@ -13,10 +12,19 @@
     <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary"><i class="mdi mdi-filter-remove"></i> Poništi</a>
   </div></form>
 </div></div>
-<div class="card shadow-sm"><div class="card-body"><div class="table-responsive">
-<table id="HrEmployeeTable" class="display compact table table-hover table-bordered align-middle w-100"><thead><tr><th>Šifra</th><th>Prezime</th><th>Ime</th><th>Pozicija</th><th>OJ</th><th>Pol</th><th>Datum rođenja</th><th>Datum zaposlenja</th><th>Telefon</th><th class="no-sort text-center">Detalji</th></tr></thead><tbody>
-{% for employee in employees %}<tr><td>{{ employee.employee_code }}</td><td class="fw-semibold">{{ employee.display_last_name }}</td><td>{{ employee.display_first_name }}</td><td>{{ employee.position }}</td><td><span class="fleet-status info">{{ employee.org_unit_code|default:employee.department_code }}</span></td><td>{{ employee.gender }}</td><td data-order="{{ employee.date_of_birth|date:'Y-m-d' }}">{{ employee.date_of_birth|date:'d.m.Y' }}</td><td data-order="{{ employee.date_of_joining|date:'Y-m-d' }}">{{ employee.date_of_joining|date:'d.m.Y' }}</td><td>{{ employee.phone_number|default:employee.mobile_phone|default:'—' }}</td><td class="text-center">{% if can_view_employee %}<span class="fleet-list-actions"><a href="{% url 'employee_detail' employee.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-account-details"></i> Detalji</a></span>{% endif %}</td></tr>{% endfor %}
+<div class="card shadow-sm">
+  <div class="card-header hr-card-head">
+    <h5><i class="mdi mdi-account-multiple-outline"></i>Zaposleni <span class="hr-count">{{ employees|length }}</span></h5>
+    <div class="hr-card-actions">
+      <a class="btn btn-outline-primary btn-sm" href="?{% if izvoz_upit %}{{ izvoz_upit }}&amp;{% endif %}izvoz=stampa" target="_blank" rel="noopener"><i class="mdi mdi-printer"></i> Štampaj spisak (PDF)</a>
+      <a class="btn btn-outline-success btn-sm" href="?{% if izvoz_upit %}{{ izvoz_upit }}&amp;{% endif %}izvoz=xlsx"><i class="mdi mdi-microsoft-excel"></i> Excel</a>
+      {% if can_sync_employees %}<form method="post" action="{% url 'employee_sync' %}" class="m-0">{% csrf_token %}<button class="btn btn-outline-secondary btn-sm" type="submit"><i class="mdi mdi-sync"></i> Sinhronizuj zaposlene</button></form>{% endif %}
+    </div>
+  </div>
+  <div class="card-body"><div class="table-responsive">
+<table id="HrEmployeeTable" class="display compact table table-hover table-bordered align-middle w-100"><thead><tr><th>Šifra</th><th>Prezime i ime</th><th>Pozicija</th><th>OJ</th><th>Pol</th><th>Datum rođenja</th><th>Datum zaposlenja</th><th>Telefon</th></tr></thead><tbody>
+{% for employee in employees %}{% if can_view_employee %}{% url 'employee_detail' employee.pk as detalj %}{% endif %}<tr{% if detalj %} class="hr-row-link"{% endif %}><td>{% if detalj %}<a class="hr-detail-link" href="{{ detalj }}">{{ employee.employee_code }}</a>{% else %}{{ employee.employee_code }}{% endif %}</td><td class="fw-semibold" data-sort="{{ employee.display_last_name }} {{ employee.display_first_name }}">{% if detalj %}<a class="hr-detail-link" href="{{ detalj }}">{{ employee.display_last_name }} {{ employee.display_first_name }}</a>{% else %}{{ employee.display_last_name }} {{ employee.display_first_name }}{% endif %}</td><td>{{ employee.position }}</td><td><span class="fleet-status info">{{ employee.org_unit_code|default:employee.department_code }}</span></td><td>{{ employee.gender }}</td><td data-order="{{ employee.date_of_birth|date:'Y-m-d' }}">{{ employee.date_of_birth|date:'d.m.Y' }}</td><td data-order="{{ employee.date_of_joining|date:'Y-m-d' }}">{{ employee.date_of_joining|date:'d.m.Y' }}</td><td>{{ employee.phone_number|default:employee.mobile_phone|default:'—' }}</td></tr>{% endfor %}
 </tbody></table></div></div></div>
-{% include 'mobilni/mobile/_datatable.html' with table_id='HrEmployeeTable' order="[[1, 'asc'],[2, 'asc']]" %}
+{% include 'mobilni/mobile/_datatable.html' with table_id='HrEmployeeTable' order="[[1, 'asc']]" fit=True %}
 {% include 'mobilni/mobile/_auto_filter_script.html' with form_id='hr-employee-filter' %}
 {% endblock %}

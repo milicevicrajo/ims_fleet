@@ -113,8 +113,9 @@
       pageLength: {{ page_length|default:50 }},
       lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Sve']],
       order: {{ order|default:"[[0, 'asc']]"|safe }},
-      autoWidth: true,
-      scrollX: true,
+      // fit=True: tabela se prilagodjava sirini ekrana (prelom teksta), bez horizontalnog skrola.
+      autoWidth: {% if fit %}false{% else %}true{% endif %},
+      scrollX: {% if fit %}false{% else %}true{% endif %},
       columnDefs: [
         { targets: 'no-sort', orderable: false, searchable: false }
       ],

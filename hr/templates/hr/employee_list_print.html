@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <title>Spisak zaposlenih {{ izradjeno|date:"d.m.Y" }}</title>
+  {# A4 uspravno; „Sačuvaj kao PDF” u prozoru za štampu daje PDF. Zaglavlje tabele se ponavlja na svakoj strani. #}
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 10mm 14mm;
+      @bottom-left { content: "{{ institut }} · Spisak zaposlenih"; font: 7pt Arial, sans-serif; color: #64748b; }
+      @bottom-right { content: "Strana " counter(page) " od " counter(pages); font: 7pt Arial, sans-serif; color: #64748b; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9eef4; color: #1f2937; font-family: Arial, Helvetica, sans-serif; font-size: 8pt;
+           -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .toolbar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+               padding: 10px 16px; background: #14395b; color: #fff; font-size: 10pt; }
+    .toolbar button { border: 0; background: #fff; color: #14395b; padding: 7px 14px; border-radius: 5px; font-weight: 700; cursor: pointer; }
+    .page { width: 210mm; min-height: 297mm; margin: 12px auto; padding: 12mm 10mm 14mm; background: #fff;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, .15); }
+    .head { display: flex; align-items: center; gap: 5mm; padding-bottom: 3mm; border-bottom: 1.2mm solid #14395b; }
+    .head img { width: 26mm; height: auto; }
+    .head .firma { flex: 1; }
+    .head .naziv { font-size: 12pt; font-weight: 700; color: #14395b; }
+    .head .adresa { color: #64748b; font-size: 8pt; margin-top: 1mm; }
+    .head .datum { text-align: right; color: #475569; font-size: 7.5pt; line-height: 1.5; }
+    .naslov { display: flex; justify-content: space-between; align-items: flex-end; margin: 5mm 0 3mm; }
+    .naslov h1 { margin: 0; font-size: 15pt; color: #14395b; letter-spacing: .02em; }
+    .naslov .filteri { color: #475569; font-size: 8pt; margin-top: 1mm; }
+    .naslov .ukupno { background: #e8f0fb; color: #14395b; border-radius: 3mm; padding: 1.5mm 3.5mm; font-weight: 700; white-space: nowrap; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { display: table-header-group; }
+    th { background: #14395b; color: #fff; font-weight: 700; font-size: 7.5pt; text-align: left; padding: 2mm 1.5mm;
+         border: .2mm solid #14395b; }
+    td { padding: 1.4mm 1.5mm; border-bottom: .2mm solid #d7dce5; vertical-align: top; }
+    tbody tr:nth-child(even) td { background: #f4f7fa; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    .c { text-align: center; white-space: nowrap; }
+    .rb { color: #64748b; }
+    .ime { font-weight: 700; color: #0f2a44; }
+    .tel { white-space: nowrap; }
+    .oj { display: inline-block; min-width: 9mm; padding: .4mm 1.5mm; border-radius: 1.5mm; background: #e1effa; color: #174f83; font-weight: 700; }
+    .prazno { text-align: center; color: #64748b; padding: 8mm; }
+    .potpis { display: flex; justify-content: flex-end; margin-top: 10mm; break-inside: avoid; }
+    .potpis div { width: 60mm; text-align: center; border-top: .2mm solid #475569; padding-top: 1.5mm; color: #475569; }
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none; }
+      .page { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span>Spisak zaposlenih · {{ redovi|length }} zaposlenih · A4</span>
+    <button type="button" onclick="window.print()">Štampaj / Sačuvaj kao PDF</button>
+  </div>
+  <div class="page">
+    <div class="head">
+      <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+      <div class="firma"><div class="naziv">{{ institut }}</div><div class="adresa">{{ adresa }}</div></div>
+      <div class="datum">Kadrovska evidencija<br>Izrađeno: {{ izradjeno|date:"d.m.Y. H:i" }}</div>
+    </div>
+    <div class="naslov">
+      <div><h1>Spisak zaposlenih</h1><div class="filteri">{{ filteri }}</div></div>
+      <span class="ukupno">Ukupno: {{ redovi|length }}</span>
+    </div>
+    <table>
+      <thead><tr><th class="c">R.br.</th><th class="c">Šifra</th><th>Prezime i ime</th><th>Radno mesto</th><th class="c">OJ</th>
+        <th class="c">Pol</th><th class="c">Datum rođenja</th><th class="c">Datum zaposlenja</th><th>Telefon</th></tr></thead>
+      <tbody>
+        {% for r in redovi %}
+        <tr><td class="c rb">{{ r.rb }}</td><td class="c">{{ r.sifra }}</td><td class="ime">{{ r.prezime }} {{ r.ime }}</td>
+          <td>{{ r.radno_mesto|default:"—" }}</td><td class="c">{% if r.oj %}<span class="oj">{{ r.oj }}</span>{% endif %}</td>
+          <td class="c">{{ r.pol }}</td><td class="c">{{ r.rodjen|date:"d.m.Y" }}</td><td class="c">{{ r.zaposlen|date:"d.m.Y" }}</td>
+          <td class="tel">{{ r.telefon|default:"—" }}</td></tr>
+        {% empty %}
+        <tr><td colspan="9" class="prazno">Nema zaposlenih za izabrane filtere.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="potpis"><div>Kadrovska služba</div></div>
+  </div>
+  <script>window.addEventListener('load', function () { window.setTimeout(function () { window.print(); }, 300); });</script>
+</body>
+</html>

@@ -32,6 +32,22 @@
   .hr-list-page .dt-paging .dt-paging-button.current { background:#2563eb !important; border-color:#2563eb !important; color:#fff !important; }
   .hr-list-page .nav-tabs .nav-link { padding:12px 18px; color:#526170; font-weight:600; }
   .hr-list-page .nav-tabs .nav-link.active { color:#174f83; border-top:3px solid #1f6f8b; background:#f8fafc; }
+  /* Liste Kadrova po sirini ekrana: tekst se prelama umesto horizontalnog skrola (vidi i fit=True u _datatable.html). */
+  .hr-list-page .fleet-list-hero { flex-wrap:wrap; }
+  .hr-list-page .table-responsive { overflow-x:visible; }
+  .hr-list-page table.dataTable, .hr-list-page .table-responsive > .table { width:100% !important; }
+  .hr-list-page .table thead th, .hr-list-page table.display.compact tbody td, .hr-list-page .table td { white-space:normal; overflow-wrap:anywhere; }
+  .hr-list-page .table td[data-order], .hr-list-page .table td .fleet-status { white-space:nowrap; overflow-wrap:normal; }
+  .hr-list-page .hr-detail-link { color:#174f83; font-weight:600; text-decoration:none; }
+  .hr-list-page .hr-detail-link:hover, .hr-list-page .hr-detail-link:focus { color:#0b3a66; text-decoration:underline; }
+  .hr-list-page tr.hr-row-link:hover td { background:#eef5fc; }
+  .hr-list-page .hr-card-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; }
+  .hr-list-page .hr-card-head h5 { display:flex; align-items:center; gap:8px; }
+  .hr-list-page .hr-card-head .hr-count { display:inline-block; padding:2px 9px; border-radius:999px; background:#e8f0fb; color:#174f83; font-size:.8rem; font-weight:700; vertical-align:middle; }
+  .hr-list-page .hr-card-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .hr-list-page .hr-card-actions .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 12px; font-weight:600; }
+  @media (max-width: 1199.98px) { .hr-list-page .hr-filter-grid { grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); } }
+  @media (max-width: 767.98px) { .hr-list-page .table-responsive { overflow-x:auto; } }
 </style>
 <div class="hr-list-page">{% block hr_content %}{% endblock %}</div>
 {% endblock %}
