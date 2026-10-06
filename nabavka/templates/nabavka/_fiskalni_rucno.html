@@ -1,154 +1,26 @@
 {% comment %}
-Prozor „QR kod je oštećen” (od 05.10.2026.) — zajednički za Nabavku, putne naloge i ostale fiskalne račune.
-Ručna provera Poreske uprave (suf.purs.gov.rs/verify) ima reCAPTCHA, pa je korisnik prolazi sam: prepiše
-podatke sa računa (dugmad „Kopiraj”), na stranici rezultata očita čist QR kod sa ekrana, a ovaj prozor
-pošalje očitani link kroz formu koja ga je otvorila, uz ručno unete podatke. Server upisuje račun samo ako
-se QR poklapa sa njima (`nabavka.services.fiskalni.proveri_ocekivano`).
-Otvara ga dugme `.js-fiskalni-rucno` sa `data-forma`, `data-link` i (ako je u prozoru) `data-modal`.
+„QR kod je oštećen?” (od 05.10.2026., pojednostavljeno 06.10.2026.) — zajedničko za Nabavku, putne naloge i ostale
+fiskalne račune. Dugme `.js-fiskalni-rucno` (`data-link` = polje za čitač) otvara proveru Poreske uprave
+(suf.purs.gov.rs/verify) kao poseban prozor na desnoj polovini ekrana. Korisnik tamo unese podatke sa računa i
+pošalje (provera ima reCAPTCHA, pa je aplikacija ne šalje sama), a ispravan QR kod sa stranice rezultata očita
+čitačem u isto polje kao kod skeniranja — račun se učitava uobičajeno. Pregledač ne dozvoljava prozor „uvek na vrhu”.
 {% endcomment %}
-<style>
-  #fiskalniRucnoModal .modal-header { background: linear-gradient(135deg, #14395b 0%, #1f6f8b 60%, #2f8f6f 100%); color: #fff; }
-  #fiskalniRucnoModal .modal-header .btn-close { filter: invert(1) grayscale(1) brightness(2); }
-  #fiskalniRucnoModal .rucno-koraci { counter-reset: korak; list-style: none; padding: 0; margin: 0 0 14px; font-size: .86rem; }
-  #fiskalniRucnoModal .rucno-koraci li { counter-increment: korak; position: relative; padding: 2px 0 6px 30px; color: #334155; }
-  #fiskalniRucnoModal .rucno-koraci li::before { content: counter(korak); position: absolute; left: 0; top: 1px; width: 21px; height: 21px;
-    border-radius: 50%; background: #1f6f8b; color: #fff; font-size: .75rem; font-weight: 700; text-align: center; line-height: 21px; }
-  #fiskalniRucnoModal .form-label { font-size: .74rem; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: #526170; margin-bottom: 4px; }
-  #fiskalniRucnoModal .input-group .btn { white-space: nowrap; }
-  #fiskalniRucnoModal .rucno-greska { background: #fdecec; border: 1px solid #f3c2c2; color: #842029; border-radius: 8px; padding: 8px 12px; margin-top: 10px; font-size: .88rem; }
-  #rucnoLink { font-size: .78rem; }
-</style>
-
-<div class="modal fade" id="fiskalniRucnoModal" tabindex="-1" aria-labelledby="fiskalniRucnoNaslov" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <form class="modal-content" id="fiskalniRucnoForma" method="post" novalidate>{# method: globalni skript u base.html sakriva forme bez method #}
-      <div class="modal-header">
-        <h5 class="modal-title" id="fiskalniRucnoNaslov"><i class="mdi mdi-qrcode-scan" aria-hidden="true"></i> QR kod je oštećen — provera preko Poreske uprave</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
-      </div>
-      <div class="modal-body">
-        <ol class="rucno-koraci">
-          <li>Prepišite podatke sa računa u polja ispod.</li>
-          <li>Otvorite proveru Poreske uprave, nalepite vrednosti (dugmad „Kopiraj”), potvrdite „Nisam robot” i pošaljite.</li>
-          <li>Na stranici rezultata je ispravan QR kod računa — očitajte ga čitačem sa ekrana u poslednje polje.</li>
-          <li>„Preuzmi podatke”: račun se učitava kao kod skeniranja, ako se QR poklapa sa unetim podacima.</li>
-        </ol>
-        <div class="row g-2">
-          <div class="col-12 col-md-7">
-            <label class="form-label" for="rucnoBroj">PFR broj računa</label>
-            <div class="input-group"><input class="form-control font-monospace" id="rucnoBroj" maxlength="40" autocomplete="off" placeholder="npr. TJEYRKKE-TJEYRKKE-187160">
-              <button type="button" class="btn btn-outline-secondary" data-kopiraj="#rucnoBroj" title="Kopiraj"><i class="mdi mdi-content-copy" aria-hidden="true"></i> Kopiraj</button></div>
-          </div>
-          <div class="col-12 col-md-5">
-            <label class="form-label" for="rucnoBrojac">Brojač računa</label>
-            <div class="input-group"><input class="form-control font-monospace" id="rucnoBrojac" maxlength="30" autocomplete="off" placeholder="npr. 173478/187160">
-              <select class="form-control" id="rucnoOznaka" aria-label="Oznaka brojača" style="max-width: 76px">
-                <option>ПП</option><option>ПР</option><option>КП</option><option>КР</option><option>ОП</option>
-                <option>ОР</option><option>ПД</option><option>РД</option><option>АП</option><option>АР</option>
-              </select>
-              <button type="button" class="btn btn-outline-secondary" data-kopiraj="#rucnoBrojac" title="Kopiraj"><i class="mdi mdi-content-copy" aria-hidden="true"></i></button></div>
-          </div>
-          <div class="col-6 col-md-5">
-            <label class="form-label" for="rucnoIznos">Ukupan iznos</label>
-            <div class="input-group"><input class="form-control" id="rucnoIznos" inputmode="decimal" autocomplete="off" placeholder="npr. 3.196,00">
-              <button type="button" class="btn btn-outline-secondary" data-kopiraj="#rucnoIznos" title="Kopiraj"><i class="mdi mdi-content-copy" aria-hidden="true"></i></button></div>
-          </div>
-          <div class="col-6 col-md-7">
-            <label class="form-label" for="rucnoVreme">PFR vreme (sa računa)</label>
-            <div class="input-group"><input class="form-control" id="rucnoVreme" autocomplete="off" placeholder="npr. 25.9.2026. 12:28">
-              <button type="button" class="btn btn-outline-secondary" data-kopiraj="#rucnoVreme" title="Kopiraj"><i class="mdi mdi-content-copy" aria-hidden="true"></i></button></div>
-          </div>
-          <div class="col-12 d-flex justify-content-end">
-            <a class="btn btn-outline-primary btn-sm" href="https://suf.purs.gov.rs/verify" target="_blank" rel="noopener noreferrer">
-              <i class="mdi mdi-open-in-new" aria-hidden="true"></i> Otvori proveru Poreske uprave</a>
-          </div>
-          <div class="col-12">
-            <label class="form-label" for="rucnoLink">QR kod sa stranice provere</label>
-            <textarea class="form-control font-monospace" id="rucnoLink" rows="2" autocomplete="off" spellcheck="false"
-                      placeholder="Očitajte čitačem QR kod prikazan na stranici rezultata provere…"></textarea>
-          </div>
-        </div>
-        <div id="rucnoGreska" aria-live="polite"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Nazad</button>
-        <button type="submit" class="btn btn-primary"><i class="mdi mdi-cloud-download-outline" aria-hidden="true"></i> Preuzmi podatke</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  var el = document.getElementById('fiskalniRucnoModal');
-  if (!el || !window.bootstrap || el.dataset.spreman) return;
-  el.dataset.spreman = '1';  // deo može biti uključen više puta na istoj strani
-  function prozor(e) { return bootstrap.Modal.getInstance(e) || new bootstrap.Modal(e); }  // Bootstrap 5.0 beta
-  function jednom(e, dogadjaj, fn) { e.addEventListener(dogadjaj, function h() { e.removeEventListener(dogadjaj, h); fn(); }); }
-  var forma = document.getElementById('fiskalniRucnoForma');
-  var greska = document.getElementById('rucnoGreska');
-  var polja = { broj: '#rucnoBroj', brojac: '#rucnoBrojac', iznos: '#rucnoIznos', vreme: '#rucnoVreme', link: '#rucnoLink' };
-  function vrednost(k) { return el.querySelector(polja[k]).value.trim(); }
-  var cilj = null;
-
-  function ocisti(roditelj) { roditelj.querySelectorAll('[data-rucno]').forEach(function (u) { u.remove(); }); }
-
+  if (document.body.dataset.fiskalniRucno) return;
+  document.body.dataset.fiskalniRucno = '1';  // deo može biti uključen više puta na istoj strani
   document.addEventListener('click', function (e) {
     var b = e.target.closest('.js-fiskalni-rucno');
     if (!b) return;
     e.preventDefault();
-    cilj = { forma: document.querySelector(b.dataset.forma), link: document.querySelector(b.dataset.link),
-             modal: b.dataset.modal ? document.querySelector(b.dataset.modal) : null };
-    greska.innerHTML = '';
-    if (cilj.modal) { jednom(cilj.modal, 'hidden.bs.modal', function () { prozor(el).show(); }); prozor(cilj.modal).hide(); }
-    else { prozor(el).show(); }
-  });
-  el.addEventListener('shown.bs.modal', function () { el.querySelector(vrednost('broj') ? polja.link : polja.broj).focus(); });
-
-  el.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-kopiraj]');
-    if (!b) return;
-    var polje = el.querySelector(b.dataset.kopiraj);
-    var tekst = polje.value.trim() + (b.dataset.kopiraj === '#rucnoBrojac' ? el.querySelector('#rucnoOznaka').value : '');
-    var gotovo = function () { if (window.toastr) toastr.success('Kopirano: ' + tekst); };
-    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(tekst).then(gotovo); }
-    else { polje.select(); document.execCommand('copy'); gotovo(); }
-  });
-
-  // Čitač završava Enterom: u polju za QR Enter šalje obradu.
-  el.querySelector(polja.link).addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') { e.preventDefault(); forma.requestSubmit ? forma.requestSubmit() : forma.dispatchEvent(new Event('submit')); }
-  });
-
-  forma.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var fale = ['broj', 'iznos', 'vreme', 'link'].filter(function (k) { return !vrednost(k); });
-    if (fale.length || !cilj) {
-      greska.innerHTML = '<div class="rucno-greska">Unesite PFR broj, iznos i vreme sa računa i očitajte QR kod sa stranice provere.</div>';
-      el.querySelector(polja[fale[0] || 'broj']).focus();
-      return;
-    }
-    // Podaci idu kao skrivena polja u formu koja je otvorila prozor; server ih poredi sa očitanim QR kodom.
-    ocisti(cilj.forma);
-    [['rucno_broj', 'broj'], ['rucno_brojac', 'brojac'], ['rucno_iznos', 'iznos'], ['rucno_vreme', 'vreme']].forEach(function (p) {
-      var u = document.createElement('input');
-      u.type = 'hidden'; u.name = p[0]; u.value = vrednost(p[1]); u.setAttribute('data-rucno', '');
-      cilj.forma.appendChild(u);
-    });
-    var t = cilj;
-    cilj.link.value = vrednost('link');
-    jednom(cilj.link, 'input', function () { ocisti(t.forma); });  // novo skeniranje ide bez ručnih podataka
-    // Bez ugrađene provere pregledača (tiho bi prekinula slanje): obrada stranice sama javlja šta nedostaje.
-    var posalji = function () { t.forma.dispatchEvent(new Event('submit', { cancelable: true })); };
-    jednom(el, 'hidden.bs.modal', function () {
-      if (t.modal) {
-        jednom(t.modal, 'shown.bs.modal', posalji);
-        jednom(t.modal, 'hidden.bs.modal', function () { ocisti(t.forma); });  // sledeći račun se skenira normalno
-        prozor(t.modal).show();
-      } else { posalji(); }
-    });
-    el.querySelector(polja.link).value = '';
-    prozor(el).hide();
+    var s = window.screen, sirina = Math.round((s.availWidth || 1280) / 2), visina = s.availHeight || 800;
+    var w = window.open('https://suf.purs.gov.rs/verify', 'imsProveraPurs', 'popup,width=' + sirina + ',height=' + visina
+                        + ',left=' + ((s.availLeft || 0) + sirina) + ',top=' + (s.availTop || 0));
+    if (!w) { window.open('https://suf.purs.gov.rs/verify', '_blank'); }  // iskačući prozori blokirani: nova kartica
+    else { w.opener = null; w.focus(); }
+    var polje = b.dataset.link && document.querySelector(b.dataset.link);
+    if (polje) { polje.value = ''; polje.focus(); }
+    if (window.toastr) toastr.info('Unesite podatke sa računa na stranici Poreske uprave, pošaljite, pa kliknite u polje za skeniranje ovde i čitačem očitajte QR kod sa njihove stranice.', '', { timeOut: 12000 });
   });
 });
 </script>

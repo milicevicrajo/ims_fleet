@@ -300,7 +300,7 @@ class OstecenQrKodTests(TestCase):
         for ruta in ("nabavka:fiskalni_list", "isplate:fiskalni_ostali", "isplate:putni_nalozi_pravdanje"):
             stranica = self.client.get(reverse(ruta))
             self.assertContains(stranica, "QR kod je oštećen?", msg_prefix=ruta)
-            self.assertContains(stranica, 'id="fiskalniRucnoModal"', count=1, msg_prefix=ruta)
+            self.assertContains(stranica, "js-fiskalni-rucno", msg_prefix=ruta)
             self.assertContains(stranica, "https://suf.purs.gov.rs/verify", msg_prefix=ruta)
         ostali = self.client.get(reverse("isplate:fiskalni_ostali"))
         self.assertContains(ostali, 'id="ispOstaliModal"')

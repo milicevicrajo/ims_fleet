@@ -223,15 +223,13 @@ Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
 Isplatama ili vezan za nalog (`putni_nalog`). Na detalju se tada vidi kartica „Putni nalog" (broj, zaposleni, putovanje, šifra
 posla naloga, stanje knjiženja).
 
-**Oštećen QR kod (od 05.10.2026.):** u svakom prozoru za učitavanje (Nabavka, putni nalog, ostali
-fiskalni računi) dugme „QR kod je oštećen?" otvara drugi prozor (`nabavka/_fiskalni_rucno.html`). Ručna
-provera Poreske uprave (`suf.purs.gov.rs/verify`) ima **reCAPTCHA Enterprise**, pa je aplikacija ne šalje
-sama: korisnik prepiše sa računa PFR broj, brojač (sa oznakom, npr. ПП), ukupan iznos i PFR vreme
-(dugmad „Kopiraj"), prođe proveru na sajtu i **čitačem očita čist QR kod sa stranice rezultata**.
-„Preuzmi podatke" šalje taj link kroz isti prozor za učitavanje uz ručno unete podatke; račun se upisuje
-**samo ako se QR poklapa** sa njima (`fiskalni.proveri_ocekivano`: broj, brojač, iznos, vreme do minuta),
-a stavke se preuzimaju kao i kod skeniranja. Provera na suvo nad 25 računa iz baze: svi se poklapaju,
-75/75 izmenjenih unosa odbijeno.
+**Oštećen QR kod (od 05.10.2026., pojednostavljeno 06.10.2026.):** u svakom prozoru za učitavanje (Nabavka,
+putni nalog, ostali fiskalni računi) dugme „QR kod je oštećen?" (`nabavka/_fiskalni_rucno.html`) otvara proveru
+Poreske uprave (`suf.purs.gov.rs/verify`) kao poseban prozor na desnoj polovini ekrana i stavlja kursor u polje
+za čitač. Provera ima **reCAPTCHA Enterprise**, pa je aplikacija ne šalje sama: korisnik tamo unese podatke sa
+računa i pošalje, pa **čitačem očita ispravan QR kod sa stranice rezultata** u polje za skeniranje — račun se
+učitava kao kod običnog skeniranja. Pregledač ne dozvoljava prozor „uvek na vrhu”. Serverska provera ručno
+unetih podataka (`fiskalni.ocekivano_iz_zahteva`, `proveri_ocekivano`: polja `rucno_*`) ostaje, ali je ekran više ne šalje.
 
 **Odvojeni prikazi (od 05.10.2026.):** svi fiskalni računi su u istoj tabeli, ali **spisak Nabavke
 prikazuje samo račune Nabavke** (`evidencija = nabavka`, bez putnog naloga). Računi na putnim nalozima
