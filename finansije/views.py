@@ -28,12 +28,14 @@ from .services.charts import overview_data
 from .services.datatables import ledger_response, sync_response, nalog_z_response
 from .services.nalog_z import refresh_nalog_z, TASK_NAME
 from .services.reports import apply_filters, base_querysets, grouped_report, summary
+from .services.pregled_centara import pregled_centara
 from .services.sync import SyncBusy, sync_ledger
 from .services import job_tables
 from .services.links import job_detail_url
 from .services.job_overview import LABELS, METRICS, enrich_jobs, table_data
 from .services.job_additional import EXTRA_KEYS, EXTRA_LABELS, enrich_additional, additional_table_data
 from .services.excel import prepare_job_sheet, job_excel_row, finish_job_table
+from .services import izvoz, izvoz_ekrani
 
 
 logger = logging.getLogger(__name__)
@@ -100,11 +102,26 @@ def job_report_links(rows, form):
                 row["card_url"] = reverse("finansije:job_card") + "?" + urlencode({"job": row["code"], "year": start.year, "month": ""})
 
 
-def enrich_job_report(rows, form):
+def pokrivene_godine():
     covered = set()
     for lower, upper in SyncRun.objects.filter(company=getattr(settings, "FINANSIJE_COMPANY", 1), status="success").values_list("year_from", "year_to"):
         covered.update(range(lower, upper + 1))
-    return enrich_jobs(rows, form.cleaned_data["date_from"], form.cleaned_data["date_to"], covered)
+    return covered
+
+
+def enrich_job_report(rows, form):
+    return enrich_jobs(rows, form.cleaned_data["date_from"], form.cleaned_data["date_to"], pokrivene_godine())
+
+
+def centri_sa_zt(request, context, entries):
+    """Centri po grupama sa rezultatom bez i posle ZT (Finansijski pregled, Excel, PDF)."""
+    data = context["form"].cleaned_data
+    try:
+        return pregled_centara(entries, data["date_from"], data["date_to"], pokrivene_godine(),
+                               cela_firma=can_view_all(request.user))
+    except Exception:  # izvor raspodele (posao_mes, blokraspodela) nedostupan: direktni rezultati ostaju
+        logger.exception("Pregled centara sa zajedničkim troškovima nije dostupan.")
+        return None
 
 
 def add_links(rows, form):
@@ -119,8 +136,15 @@ def add_links(rows, form):
         else:
             params[{"center": "center", "job": "job", "account": "account"}[group]] = row["code"] or "__none__"
             if group == "account":
-                params["account_exact"] = "1"
+                params.pop("nivo", None)
+                if row.get("nivo") == "5":
+                    params["account_exact"] = "1"
+                else:
+                    params.pop("account_exact", None)
         row["ledger_url"] = reverse("finansije:ledger") + "?" + params.urlencode()
+        if group == "account" and row.get("nivo") != "5":
+            # Otvaranje po dubini: isti izveštaj, jedan nivo konta niže.
+            row["drill_url"] = reverse("finansije:report") + "?" + params.urlencode()
         params["group"] = "job" if group == "center" else "account"
         row["report_url"] = reverse("finansije:report") + "?" + params.urlencode()
         if group == "job" and row["code"]:
@@ -130,19 +154,28 @@ def add_links(rows, form):
             row["card_url"] = job_detail_url(form.cleaned_data["job"], date(year, month, 1))
 
 
+def pregled_parametri(source):
+    """Finansijski pregled menja samo period (podrazumevano: tekuća godina do danas)."""
+    today = timezone.localdate()
+    data = QueryDict(mutable=True)
+    data.update(date_from=source.get("date_from", date(today.year, 1, 1).isoformat()),
+                date_to=source.get("date_to", today.isoformat()), kind="pnl", group="center")
+    return data
+
+
 @require_GET
 @login_required
 @role_permission_required("finansije:dashboard")
 def dashboard(request):
     # Only the selected period changes the landing page; authorization still scopes entries.
     today = timezone.localdate()
-    data = QueryDict(mutable=True)
-    data.update(date_from=request.GET.get("date_from", date(today.year, 1, 1).isoformat()),
-                date_to=request.GET.get("date_to", today.isoformat()), kind="pnl", group="center")
+    data = pregled_parametri(request.GET)
     context, entries, _ = report_context(request, data=data)
     totals = summary(entries)
     context.update(overview_data(entries, totals))
     context.update(totals=totals, period_from=context["form"].cleaned_data.get("date_from"), period_to=context["form"].cleaned_data.get("date_to"))
+    if context["valid"]:
+        context["centri_zt"] = centri_sa_zt(request, context, entries)
     context["period_years"] = [
         {"label": year, "date_from": date(year, 1, 1).isoformat(), "date_to": min(date(year, 12, 31), today).isoformat()}
         for year in range(2025, today.year + 1)
@@ -179,7 +212,24 @@ def report(request):
     if context["valid"]:
         add_links(rows, context["form"])
     context.update(totals=totals, rows=rows, group=context["form"].cleaned_data.get("group", "center"))
+    if context["valid"] and context["group"] == "account":
+        context.update(konto_navigacija(context["form"]))
     return render(request, "finansije/dashboard.html", context)
+
+
+def konto_navigacija(form):
+    """Putanja otvaranja konta (klasa › grupa › sintetika) i izbor nivoa, za izveštaj po kontima."""
+    from .services.kontni_plan import NIVOI, nazivi_konta, nivo_konta, putanja_konta
+
+    data, plan = form.cleaned_data, nazivi_konta()
+    params = form.data.copy()
+    for key in ("page", "account", "account_exact", "nivo"):
+        params.pop(key, None)
+    putanja = [{"code": "", "label": "Sva konta", "url": reverse("finansije:report") + "?" + params.urlencode()}]
+    for code, naziv in putanja_konta(data.get("account") or "", plan):
+        params["account"] = code
+        putanja.append({"code": code, "label": naziv, "url": reverse("finansije:report") + "?" + params.urlencode()})
+    return {"konto_putanja": putanja, "konto_nivo": nivo_konta(data), "konto_nivoi": NIVOI}
 
 
 @never_cache
@@ -217,7 +267,8 @@ def job_card(request):
     form = JobMonthForm(request.GET, choices=[(code, f"{code} — {info['name']}") for code, info in sorted(directory.items())])
     valid = form.is_valid()
     context = {"title": "Detalj šifre posla", "form": form, "valid": valid,
-               "can_ledger": user_has_role_permission(request.user, "finansije:ledger")}
+               "can_ledger": user_has_role_permission(request.user, "finansije:ledger"),
+               "can_export": user_has_role_permission(request.user, "finansije:export")}
     code = form.cleaned_data.get("job") if valid else None
     if code:
         start, end = form.cleaned_data["date_from"], form.cleaned_data["date_to"]
@@ -230,6 +281,8 @@ def job_card(request):
         context["table_urls"] = {table: reverse("finansije:job_table", args=[table]) + "?" + urlencode({
             "job": code, "year": start.year, "month": form.cleaned_data["month"] or "",
         }) for table in ("invoices", "internal_invoices", "expenses", "vehicles", "custody", "employees", "travel", "collections", "shared", "cash")}
+        context["izvoz_upit"] = urlencode({"report": "job_card", "job": code, "year": start.year,
+                                           "month": form.cleaned_data["month"] or ""})
         context["ledger_url"] = reverse("finansije:ledger") + "?" + urlencode({
             "job": code, "date_from": start.isoformat(), "date_to": end.isoformat(), "kind": "pnl",
         })
@@ -331,15 +384,46 @@ def safe_excel_row(sheet, values):
 @login_required
 @role_permission_required("finansije:export")
 def export(request):
-    is_ledger = request.GET.get("report") == "ledger"
+    """Excel svih ekrana; uz `format=pdf` ista sadržina kao A4 strana za štampu (Sačuvaj kao PDF)."""
+    vrsta = request.GET.get("report")
+    is_ledger = vrsta == "ledger"
     required = "finansije:ledger" if is_ledger else "finansije:dashboard"
     if not user_has_role_permission(request.user, required):
         raise PermissionDenied
-    is_jobs = not is_ledger and request.GET.get("group") == "job"
-    context, entries, jobs = report_context(request, ledger=is_ledger,
-                                          data=job_report_parameters(request.GET) if is_jobs else None)
+    if vrsta == "job_card":
+        return izvoz_sifre(request)
+    is_overview = vrsta == "overview"
+    is_jobs = not is_ledger and not is_overview and request.GET.get("group") == "job"
+    data = job_report_parameters(request.GET) if is_jobs else pregled_parametri(request.GET) if is_overview else None
+    context, entries, jobs = report_context(request, ledger=is_ledger, data=data)
     if not context["valid"]:
         return HttpResponse("Neispravni filteri. Ispravite ih na stranici izveštaja.", status=400, content_type="text/plain; charset=utf-8")
+    form = context["form"]
+    if is_overview:
+        totals = summary(entries)
+        dokument = izvoz_ekrani.dokument_pregleda(form, totals, centri_sa_zt(request, context, entries),
+                                                  overview_data(entries, totals)["chart_groups"])
+        return izvoz.odgovor(request, dokument, "finansijski_pregled")
+    if request.GET.get("format") == "pdf":
+        if is_ledger:
+            dokument = izvoz_ekrani.dokument_knjizenja(form, entries, polje_centra())
+        elif is_jobs:
+            _, rows = grouped_report(entries, jobs, form.cleaned_data)
+            enrich_job_report(rows, form)
+            dodatne = request.GET.get("analysis") == "additional"
+            labels, keys = LABELS, METRICS
+            if dodatne:
+                enrich_additional(rows, form.cleaned_data["date_from"], form.cleaned_data["date_to"],
+                                  can_people=user_has_role_permission(request.user, "employee_list"))
+                labels, keys = LABELS + EXTRA_LABELS, METRICS + EXTRA_KEYS
+                for row in rows:
+                    row["metrics"].update(row["additional"])
+            dokument = izvoz_ekrani.dokument_sifara(form, rows, labels, keys, dodatne=dodatne)
+        else:
+            totals, rows = grouped_report(entries, jobs, form.cleaned_data)
+            konto = konto_navigacija(form) if form.cleaned_data.get("group") == "account" else None
+            dokument = izvoz_ekrani.dokument_izvestaja(form, rows, totals, konto)
+        return izvoz.pdf_odgovor(request, dokument)
     book = Workbook(write_only=not is_jobs)
     if is_jobs:
         book.remove(book.active)
@@ -393,6 +477,30 @@ def export(request):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     book.save(response)
     return response
+
+
+def izvoz_sifre(request):
+    """Detalj šifre posla: sažetak, struktura rashoda sa nazivima konta i fakture (Excel ili PDF)."""
+    entries, jobs = base_querysets(request.user)
+    code = request.GET.get("job", "").strip()
+    if not code or len(code) > 10:
+        return HttpResponse("Izaberite šifru posla.", status=400, content_type="text/plain; charset=utf-8")
+    selected = entries.filter(job_code=code)
+    posao = jobs.filter(code=code).first()
+    if posao is None and not selected.exists():
+        return HttpResponse("Šifra nije dostupna.", status=404, content_type="text/plain; charset=utf-8")
+    form = JobMonthForm(request.GET, choices=[(code, code)])
+    if not form.is_valid():
+        return HttpResponse("Neispravan period.", status=400, content_type="text/plain; charset=utf-8")
+    start, end = form.cleaned_data["date_from"], form.cleaned_data["date_to"]
+    if posao is not None:
+        naziv, centar = posao.name, centar_sifre(posao, centri_sifara() if na_registru() else None)
+    else:
+        naziv, centar = selected.order_by().values_list("job_name", polje_centra()).first()
+    finance_available = SyncRun.objects.filter(company=getattr(settings, "FINANSIJE_COMPANY", 1), status="success",
+                                               year_from__lte=start.year, year_to__gte=start.year).exists()
+    dokument = izvoz_ekrani.dokument_sifre(code, naziv, centar, start, end, selected, finance_available)
+    return izvoz.odgovor(request, dokument, f"sifra_posla_{code}")
 
 
 @require_GET

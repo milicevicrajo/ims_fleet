@@ -56,7 +56,7 @@ prikaz istorijskog centra uzima dodelu na kraju izabranog perioda.
 | Šifra posla vozila | JobCode + OrganizationalUnit | Poslednja dodela čiji datum nije posle obračunskog dana |
 | Raspolaganje | Lease | Jedan važeći ugovor za dan; bez ugovora vlasništvo IMS |
 | Naknada lizinga/najma | Lease.current_payment_amount + payment_basis | monthly ili total, za period samog ugovora |
-| Kamata finansijskog lizinga | LeaseInterest | Godišnji iznos, samo za dane važećeg ugovora |
+| Kamata finansijskog lizinga | LeaseInterest | Stvarna kamata za kalendarsku godinu, raspoređena na dane ugovora u toj godini (unos: detalj ugovora → „Unesi kamate”) |
 | Namena | VehicleAnalysisProfile ili početna procena | Potvrđen profil ima prednost |
 | Gorivo | NIS/OMV ili izabrani FuelConsumption | Samo jedan izvor po datumu |
 | Održavanje | ServiceTransaction + Requisition | Iznosi na datum dokumenta, uključujući storna |
@@ -64,8 +64,9 @@ prikaz istorijskog centra uzima dodelu na kraju izabranog perioda.
 | Naknade osiguranja | Insurance, kola=True | Poseban priliv |
 | Kilometraža / korišćenje | Gorivo + VehicleTravelOrder | Očitavanja i administrativni dani naloga |
 
-VehicleHolding, LeaseChargePeriod i VehicleDowntime ostaju sačuvani radi
-istorije, ali ne određuju obračun 2.1. `VehicleTravelOrder.job_code` takođe
+VehicleDowntime ostaje sačuvan radi istorije, ali ne određuje obračun 2.1;
+VehicleHolding i LeaseChargePeriod su uklonjeni 05.10.2026. (migracija 0090 — raspolaganje sledi
+isključivo iz ugovora, finansiranje nabavke je na vozilu). `VehicleTravelOrder.job_code` takođe
 ne određuje pripadnost troška vozila. U analitici se ne traži popunjavanje tih
 podataka. Postojeći zapisi se ne brišu.
 
@@ -111,7 +112,8 @@ a konflikt je prikazan. Poseban unos osnova vlasništva nije potreban.
 **Mesečna naknada:** `iznos / broj dana konkretnog kalendarskog meseca` za svaki
 obuhvaćeni dan ugovora. **Ukupni iznos:** `iznos / broj dana ugovora`.
 Polisa: `premija / broj dana polise` za svaki dan preklapanja.
-Finansijska kamata: `godišnja kamata / 365 ili 366`, samo tokom ugovora.
+Finansijska kamata: `kamata upisana za godinu / broj dana ugovora u toj godini`, samo tokom ugovora
+(od 05.10.2026.; ranije `/ 365 ili 366`, pa je delimična prva i poslednja godina ulazila umanjeno).
 Nedostajući iznos ili značenje iznosa ne zamenjuje se nulom. Poznata nula ostaje nula.
 
 **Raspodela na poslove:** gorivo, servis i trebovanje pripadaju šifri posla
@@ -165,6 +167,11 @@ Ako uz to postoji mesečna naknada 31.000 RSD za ceo januar, P1 dobija još
 Naknada 31.000 RSD mesečno od 16.01. do 15.03.2024: 16.000 + 31.000 +
 15.000 = **62.000 RSD**, uključujući prestupni februar. Ukupna ugovorna
 naknada 31.000 RSD za 01–31.01.2026 daje isti dnevni iznos 1.000 RSD.
+
+Kamata finansijskog lizinga (od 05.10.2026.): ugovor 01.10.2025–31.03.2026 ima 92 dana u
+2025. i 90 dana u 2026. Upisano 9.200 RSD za 2025. i 9.000 RSD za 2026. daje 100 RSD dnevno;
+ceo ugovor nosi **18.200 RSD**, a januar 2026. **3.100 RSD**. Ugovor od 16.01.2026. sa
+upisanih 36.500 RSD za 2026. i krajem 31.01.2026. nosi u januaru svih **36.500 RSD**.
 
 Kilometraža za januar: očitavanja 31.12.2025 = 1.000 km, 15.01.2026 =
 1.500 km, 01.02.2026 = 2.000 km. Usvajaju se 31.12. i 01.02, razlika je
@@ -262,7 +269,7 @@ Preporuka ne menja `Vehicle.otpis` i ne izvršava poslovne procedure.
 5. Dopuniti šifre posla na nalozima i početi evidenciju stvarnih zastoja.
 6. Pripremiti tržišne procene i uporedive ponude za E-02.
 
-Nasleđene funkcije `vehicle_cost_per_km_rows()` i pragovi po masi ostaju radi
-kompatibilnosti postojećeg koda/testova; nova `/analitika/`, statistika centra i
+Nasleđene funkcije `vehicle_cost_per_km_rows()` i `cost_per_km_period_analysis()`
+(`fleet/support/dashboard.py`) uklonjene su 05.10.2026. — nijedan ekran ih nije pozivao; nova `/analitika/`, statistika centra i
 analitika na vozilu ih ne koriste. Statistika centra sada prikazuje isti obračun
 sa filtrom istorijske dodele na kraju izabranog perioda i dozvolom `center_statistics`.

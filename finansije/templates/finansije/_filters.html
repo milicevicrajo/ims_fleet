@@ -4,6 +4,7 @@
       {% for field in form %}
         {% if field.name == 'group' and is_ledger %}
           {{ field.as_hidden }}
+        {% elif field.name == 'nivo' and group != 'account' %}
         {% elif field.name != 'include_empty' and field.name != 'account_exact' %}
         <div class="finance-filter-field finance-filter-{{ field.name }}">
           <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>

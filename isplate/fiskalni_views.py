@@ -1,17 +1,21 @@
-"""Isplate → Putni nalozi – Fiskalni računi (od 02.10.2026.).
+"""Isplate → Putni nalozi – Fiskalni računi (od 02.10.2026.) i Ostali fiskalni računi (od 05.10.2026.).
 
 Knjigovodstvo vidi fiskalne račune koji su učitani na putnim nalozima (`nabavka.FiskalniRacun`
-sa `putni_nalog`) i označava ih „proknjiženo”. Oznaka ne upisuje ništa u knjigovodstvo; beleži
+sa `putni_nalog`) i označava ih „proknjiženo”. „Ostali fiskalni računi” su isti računi za gotovinski
+obračun koji se ne vezuju za putni nalog (`evidencija = gotovina`); učitavaju se ovde, čitačem QR koda.
+Tabela je zajednička sa Nabavkom, ali se prikazi ne mešaju: Nabavka ne vidi ove račune i obrnuto. Oznaka ne upisuje ništa u knjigovodstvo; beleži
 ko je i kada označio, a proknjižen račun se u Nabavci i na putnom nalogu više ne menja.
 Isplate još rade po starim pravima: ekran pokazuje sve račune sa putnih naloga.
 """
 from urllib.parse import quote
 
+from django import forms
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, Sum
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -22,6 +26,7 @@ from django.views.generic import TemplateView
 
 from core.exporting import rows_to_xlsx_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
+from fleet.models import OrganizationalUnit
 from nabavka.models import FiskalniRacun
 from nabavka.services import fiskalni
 from nabavka.views.fiskalni import _iznos
@@ -33,6 +38,37 @@ def racuni_putnih_naloga():
     return (FiskalniRacun.objects.filter(putni_nalog__isnull=False)
             .select_related("putni_nalog", "putni_nalog__employee", "putni_nalog__job_code", "job_code",
                             "created_by", "proknjizio"))
+
+
+def ostali_racuni():
+    """Gotovinski obračun: računi Isplata koji nisu na putnom nalogu."""
+    return (FiskalniRacun.objects.filter(putni_nalog__isnull=True, evidencija=FiskalniRacun.Evidencija.GOTOVINA)
+            .select_related("job_code", "created_by", "proknjizio"))
+
+
+def racuni_isplata():
+    """Svi računi koje Isplate knjiže: sa putnih naloga i ostali."""
+    return FiskalniRacun.objects.filter(
+        Q(putni_nalog__isnull=False) | Q(evidencija=FiskalniRacun.Evidencija.GOTOVINA)).select_related("proknjizio")
+
+
+class OstaliRacunForm(forms.Form):
+    """Učitavanje računa za gotovinski obračun: šifra posla, link sa QR koda i napomena (za šta je račun)."""
+    job_code = forms.ModelChoiceField(queryset=OrganizationalUnit.objects.none(), label="Šifra posla",
+                                      widget=forms.Select(attrs={"class": "form-select select2-method"}))
+    link = forms.CharField(label="Link sa QR koda računa", widget=forms.Textarea(attrs={
+        "class": "form-control font-monospace", "rows": 4, "autocomplete": "off", "spellcheck": "false",
+        "placeholder": "Očitajte QR kod računa čitačem…"}))
+    napomena = forms.CharField(label="Napomena", required=False, max_length=500,
+                               widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Za šta je račun"}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from fleet.support.registar import ogranici_izbor
+
+        # Isplate rade po starim pravima: nude se sve aktivne šifre posla iz registra.
+        self.fields["job_code"].queryset = OrganizationalUnit.objects.order_by("code")
+        ogranici_izbor(self.fields["job_code"], None)
 
 
 def filtriraj(qs, g):
@@ -52,6 +88,7 @@ def filtriraj(qs, g):
         qs = qs.filter(na_ims=False)
     for rec in tabela.reci(g):
         qs = qs.filter(Q(broj_racuna__icontains=rec) | Q(naziv_prodavca__icontains=rec) | Q(pib_prodavca=rec)
+                       | Q(napomena__icontains=rec)
                        | Q(putni_nalog__order_number__icontains=rec) | Q(putni_nalog__employee__last_name__icontains=rec)
                        | Q(putni_nalog__employee__first_name__icontains=rec) | Q(job_code__code__icontains=rec))
     return qs
@@ -70,6 +107,13 @@ class FiskalniPutniNaloziView(RolePermissionRequiredMixin, LoginRequiredMixin, T
     template_name = "isplate/fiskalni_putni_nalozi.html"
     KOLONE = {"0": "pfr_vreme", "1": "naziv_prodavca", "2": "broj_racuna", "3": "iznos", "5": "putni_nalog__order_number",
               "6": "job_code__code", "7": "created_at", "8": "proknjizeno"}
+    OSTALI = False
+    NASLOV = "Putni nalozi – Fiskalni računi"
+    RUTA, IZVOZ = "isplate:fiskalni_putni_nalozi", "isplate:fiskalni_izvoz"
+
+    @staticmethod
+    def racuni():
+        return racuni_putnih_naloga()
 
     def get(self, request, *args, **kwargs):
         if tabela.je_zahtev_tabele(request):
@@ -80,16 +124,19 @@ class FiskalniPutniNaloziView(RolePermissionRequiredMixin, LoginRequiredMixin, T
         ctx = super().get_context_data(**kwargs)
         g = self.request.GET
         ctx.update(
-            title="Putni nalozi – Fiskalni računi", sidebar_template="sidebar_isplate.html",
-            zbir=_zbir(filtriraj(racuni_putnih_naloga(), g)),
+            title=self.NASLOV, sidebar_template="sidebar_isplate.html", ostali=self.OSTALI,
+            tabela_url=reverse(self.RUTA), izvoz_url=reverse(self.IZVOZ),
+            zbir=_zbir(filtriraj(self.racuni(), g)),
             filteri={k: g.get(k, "") for k in ("q", "od", "do", "kupac")} | {"knjizenje": g.get("knjizenje", "ne")},
-            moze_izvoz=user_has_role_permission(self.request.user, "isplate:fiskalni_izvoz"),
+            moze_izvoz=user_has_role_permission(self.request.user, self.IZVOZ),
         )
+        if self.OSTALI and user_has_role_permission(self.request.user, "isplate:fiskalni_ostali_ucitaj"):
+            ctx["forma"] = OstaliRacunForm()
         return ctx
 
     def podaci(self, request):
         g, user = request.GET, request.user
-        sve = racuni_putnih_naloga()
+        sve = self.racuni()
         qs = filtriraj(sve, g)
         start, duzina, draw = tabela.strana(g)
         strana = list(qs.order_by(tabela.redosled(g, self.KOLONE, "pfr_vreme"), "-pk")[start:start + duzina])
@@ -99,15 +146,9 @@ class FiskalniPutniNaloziView(RolePermissionRequiredMixin, LoginRequiredMixin, T
         return tabela.odgovor(draw, sve.count(), qs.count(), [self._red(r, prava) for r in strana], zbir=_zbir(qs))
 
     @staticmethod
-    def _red(r, prava):
+    def _veza(r, prava):
+        """Kolona „Putni nalog”: broj naloga, zaposleni i putovanje."""
         pn = r.putni_nalog
-        broj = escape(r.broj_racuna)
-        if prava["detalj"]:
-            broj = format_html('<a href="{}" target="_blank" rel="noopener">{}</a>',
-                               reverse("nabavka:fiskalni_detail", args=[r.pk]), r.broj_racuna)
-        if r.status != r.Status.POTVRDJEN:
-            broj += ('<div><span class="isp-badge muted" title="Stavke još nisu preuzete sa stranice Poreske uprave">'
-                     'Čeka proveru</span></div>')
         nalog = escape(pn.order_number)
         if prava["nalog"]:
             nalog = format_html('<a href="{}?status=svi&amp;q={}">{}</a>', reverse("isplate:putni_nalozi_pravdanje"),
@@ -117,6 +158,16 @@ class FiskalniPutniNaloziView(RolePermissionRequiredMixin, LoginRequiredMixin, T
         nalog += f'<div class="isp-small">{escape(detalji)}</div>'
         if pn.storniran:
             nalog += '<span class="isp-badge warn"><i class="mdi mdi-alert" aria-hidden="true"></i> Nalog storniran</span>'
+        return nalog
+
+    def _red(self, r, prava):
+        broj = escape(r.broj_racuna)
+        if prava["detalj"]:
+            broj = format_html('<a href="{}" target="_blank" rel="noopener">{}</a>',
+                               reverse("nabavka:fiskalni_detail", args=[r.pk]), r.broj_racuna)
+        if r.status != r.Status.POTVRDJEN:
+            broj += ('<div><span class="isp-badge muted" title="Stavke još nisu preuzete sa stranice Poreske uprave">'
+                     'Čeka proveru</span></div>')
         if r.na_ims:
             kupac = '<span class="isp-badge ok">IMS</span>'
         else:
@@ -139,7 +190,7 @@ class FiskalniPutniNaloziView(RolePermissionRequiredMixin, LoginRequiredMixin, T
             "broj": broj,
             "iznos": f"<strong>{_iznos(r.iznos)}</strong>{pdv}",
             "kupac": kupac,
-            "nalog": nalog,
+            "veza": self._veza(r, prava),
             "sifra": escape(r.job_code.code),
             "ucitao": (f'{escape(r.created_by.get_username() if r.created_by_id else "—")}'
                        f'<div class="isp-small">{timezone.localtime(r.created_at):%d.%m.%Y.}</div>'),
@@ -152,7 +203,7 @@ class FiskalniPutniNaloziView(RolePermissionRequiredMixin, LoginRequiredMixin, T
 @role_permission_required()
 def fiskalni_proknjizi(request, pk):
     """Polje za štikliranje „Proknjiženo” (fetch): vraća novo stanje."""
-    racun = get_object_or_404(racuni_putnih_naloga(), pk=pk)
+    racun = get_object_or_404(racuni_isplata(), pk=pk)
     fiskalni.oznaci_proknjizeno(racun, request.user, request.POST.get("proknjizeno") == "1", request=request)
     return JsonResponse({
         "ok": True, "proknjizeno": racun.proknjizeno,
@@ -184,3 +235,67 @@ def fiskalni_izvoz(request):
         ])
     return rows_to_xlsx_response(f"Fiskalni-racuni-putnih-naloga-{timezone.localdate():%Y%m%d}.xlsx",
                                  "Fiskalni računi", zaglavlje, redovi, bold_header=True, auto_width=True)
+
+
+class FiskalniOstaliView(FiskalniPutniNaloziView):
+    """Ostali fiskalni računi: isti prikaz, bez putnog naloga; umesto naloga kolona „Napomena”."""
+    KOLONE = {**FiskalniPutniNaloziView.KOLONE, "5": "napomena"}
+    OSTALI = True
+    NASLOV = "Ostali fiskalni računi"
+    RUTA, IZVOZ = "isplate:fiskalni_ostali", "isplate:fiskalni_ostali_izvoz"
+
+    @staticmethod
+    def racuni():
+        return ostali_racuni()
+
+    @staticmethod
+    def _veza(r, prava):
+        return escape(r.napomena or "—")
+
+
+@login_required
+@require_POST
+@role_permission_required()
+def fiskalni_ostali_ucitaj(request):
+    """Novi račun za gotovinski obračun (čitač QR koda, prozor „Učitaj račun”); ne vezuje se za putni nalog i
+    ne vidi se u Nabavci. Kod oštećenog QR koda uz link stižu i ručno uneti podaci sa računa."""
+    ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+    forma = OstaliRacunForm(request.POST)
+    try:
+        if not forma.is_valid():
+            raise fiskalni.GreskaOcitavanja(" ".join(e for greske in forma.errors.values() for e in greske) or "Proverite unos.")
+        racun, upozorenja = fiskalni.upisi(forma.cleaned_data["link"], forma.cleaned_data["job_code"], request.user,
+                                           forma.cleaned_data["napomena"], evidencija=FiskalniRacun.Evidencija.GOTOVINA,
+                                           ocekivano=fiskalni.ocekivano_iz_zahteva(request.POST))
+    except fiskalni.GreskaOcitavanja as exc:
+        if ajax:
+            return JsonResponse({"ok": False, "poruka": str(exc)}, status=400)
+        messages.error(request, str(exc))
+        return redirect("isplate:fiskalni_ostali")
+    poruka = (f"Račun {racun.broj_racuna} ({racun.naziv_prodavca or racun.pib_prodavca}, "
+              f"{_iznos(racun.iznos)} din) je učitan u ostale fiskalne račune.")
+    if ajax:
+        return JsonResponse({"ok": True, "poruka": poruka, "upozorenja": list(upozorenja), "broj": racun.broj_racuna,
+                             "prodavac": racun.naziv_prodavca or racun.pib_prodavca, "iznos": _iznos(racun.iznos)})
+    messages.success(request, poruka)
+    for upozorenje in upozorenja:
+        messages.warning(request, upozorenje)
+    return redirect("isplate:fiskalni_ostali")
+
+
+@login_required
+@role_permission_required()
+def fiskalni_ostali_izvoz(request):
+    qs = filtriraj(ostali_racuni(), request.GET).order_by("pfr_vreme", "pk")
+    zaglavlje = ["Vreme računa", "Prodavac", "PIB prodavca", "Broj računa", "Iznos", "PDV", "Kupac", "Napomena",
+                 "Šifra posla", "Status", "Proknjiženo", "Proknjižio", "Proknjiženo dana", "Učitao"]
+    redovi = [[
+        timezone.localtime(r.pfr_vreme).strftime("%d.%m.%Y %H:%M"), r.naziv_prodavca, r.pib_prodavca, r.broj_racuna,
+        float(r.iznos), float(r.pdv_ukupno) if r.pdv_ukupno is not None else None,
+        "IMS" if r.na_ims else ("Drugi kupac" if r.id_kupca else "Fizičko lice"), r.napomena, r.job_code.code,
+        r.get_status_display(), "da" if r.proknjizeno else "ne", _ko(r.proknjizio),
+        timezone.localtime(r.proknjizeno_at).strftime("%d.%m.%Y %H:%M") if r.proknjizeno_at else "",
+        r.created_by.get_username() if r.created_by_id else "",
+    ] for r in qs]
+    return rows_to_xlsx_response(f"Ostali-fiskalni-racuni-{timezone.localdate():%Y%m%d}.xlsx",
+                                 "Ostali fiskalni računi", zaglavlje, redovi, bold_header=True, auto_width=True)

@@ -176,12 +176,12 @@
   </div>
 </form>
 
-<div class="card mt-3">
+<div class="card mt-3" id="evidencija-prolaza">
   <div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
       <div>
         <h2 class="h5 mb-1">Evidencija prolaza</h2>
-        <div class="text-muted small">Obracun je pomocni prikaz iz ulaza i izlaza za izabrani mesec.</div>
+        <div class="text-muted small">Obracun je pomocni prikaz iz ulaza i izlaza za izabrani mesec. Za dan sa problemom ili bez prolaza upišite komentar (dugme „Komentar”).</div>
         <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}" class="btn btn-outline-secondary btn-sm mt-2" target="_blank" rel="noopener"><i class="mdi mdi-printer"></i> Stampaj kao prilog (A4)</a>
       </div>
       <div class="attendance-summary">
@@ -200,6 +200,10 @@
         <div>
           <span class="text-muted">Problemi</span>
           <strong class="{% if clock_attendance_summary.issue_count %}text-danger{% endif %}">{{ clock_attendance_summary.issue_count }}</strong>
+        </div>
+        <div>
+          <span class="text-muted">Komentari</span>
+          <strong>{{ clock_attendance_summary.komentara }}</strong>
         </div>
       </div>
     </div>
@@ -249,8 +253,18 @@
                     {% for message in row.issue_messages %}
                       <div>{{ message }}</div>
                     {% endfor %}
-                  {% elif not row.travel_orders and not row.sick_leaves and not row.holiday %}
+                  {% elif not row.travel_orders and not row.sick_leaves and not row.holiday and not row.komentar and not row.moze_komentar %}
                     <span class="text-muted">-</span>
+                  {% endif %}
+                  {% if row.komentar %}
+                    <div class="attendance-comment"><i class="mdi mdi-comment-text-outline" aria-hidden="true"></i> {{ row.komentar.tekst }}
+                      <small class="text-muted">· {{ row.komentar.updated_by|default:"" }} {{ row.komentar.updated_at|date:"d.m.Y. H:i" }}</small></div>
+                  {% endif %}
+                  {% if sheet.status != "approved" and row.moze_komentar or sheet.status != "approved" and row.komentar %}
+                    <button type="button" class="btn btn-link btn-sm p-0 attendance-comment-btn" data-bs-toggle="modal" data-bs-target="#komentarProlazaModal"
+                            data-dan="{{ row.day }}" data-datum="{{ row.date|date:'d.m.Y.' }}" data-status="{{ row.status }}" data-tekst="{{ row.komentar.tekst|default:'' }}">
+                      <i class="mdi mdi-comment-edit-outline" aria-hidden="true"></i> {% if row.komentar %}Izmeni komentar{% else %}Komentar{% endif %}
+                    </button>
                   {% endif %}
                 </td>
               </tr>
@@ -265,7 +279,42 @@
   </div>
 </div>
 
+<div class="modal fade" id="komentarProlazaModal" tabindex="-1" aria-labelledby="komentarProlazaNaslov" aria-hidden="true">
+  <div class="modal-dialog"><form method="post" class="modal-content">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="komentar_prolaza">
+    <input type="hidden" name="month" value="{{ month }}"><input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="dan" id="komentarProlazaDan">
+    <div class="modal-header"><h5 class="modal-title" id="komentarProlazaNaslov">Komentar na prolaze</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button></div>
+    <div class="modal-body p-3">
+      <p class="small text-muted mb-2" id="komentarProlazaOpis"></p>
+      <label class="form-label" for="komentarProlazaTekst">Objašnjenje (npr. zaboravljena kartica, rad na terenu, službeni put)</label>
+      <textarea class="form-control" name="tekst" id="komentarProlazaTekst" rows="3" maxlength="500"></textarea>
+      <div class="form-text">Najviše 500 znakova. Prazan komentar briše postojeći.</div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Odustani</button>
+      <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save me-1" aria-hidden="true"></i>Sačuvaj komentar</button></div>
+  </form></div>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var modal = document.getElementById("komentarProlazaModal");
+    if (!modal) return;
+    modal.addEventListener("show.bs.modal", function (event) {
+      var dugme = event.relatedTarget;
+      if (!dugme) return;
+      document.getElementById("komentarProlazaDan").value = dugme.dataset.dan;
+      document.getElementById("komentarProlazaTekst").value = dugme.dataset.tekst || "";
+      document.getElementById("komentarProlazaOpis").textContent = dugme.dataset.datum + " · status: " + dugme.dataset.status;
+    });
+    modal.addEventListener("shown.bs.modal", function () { document.getElementById("komentarProlazaTekst").focus(); });
+  });
+</script>
+
 <style>
+  .attendance-comment { margin-top: 3px; padding: 3px 7px; border-left: 3px solid #f0ad4e; background: #fff8eb; border-radius: 3px; font-size: .84rem; }
+  .attendance-comment-btn { font-size: .8rem; text-decoration: none; }
   .prefill-card { border:1px solid #cfe0f3; background:#f5f9fe; border-radius:8px; padding:10px 14px; margin:0 0 12px; }
   .prefill-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px 16px; }
   .prefill-head strong { color:#1d4f86; margin-right:8px; }

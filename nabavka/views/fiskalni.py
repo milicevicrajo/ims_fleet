@@ -130,6 +130,12 @@ def _vidljivi(user):
                                                                 "putni_nalog__employee", "proknjizio"), user)
 
 
+def _spisak(user):
+    """Spisak Nabavke: samo njeni računi. Računi putnih naloga i ostali (gotovinski) vode se u Isplatama;
+    detalj im ostaje dostupan (do njega vode linkovi iz Isplata)."""
+    return _vidljivi(user).filter(putni_nalog__isnull=True, evidencija=FiskalniRacun.Evidencija.NABAVKA)
+
+
 def _iznos(vrednost):
     return f"{vrednost:,.2f}".replace(",", " ").replace(".", ",").replace(" ", ".")
 
@@ -181,7 +187,7 @@ class FiskalniRacunDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
               "5": "goes_to_warehouse", "6": "is_garage", "7": "is_returned", "8": "na_ims", "9": "status"}
 
     def get(self, request):
-        sve = _vidljivi(request.user)
+        sve = _spisak(request.user)
         qs = _filtriraj(request, sve).prefetch_related("sifre__job_code", "vehicle__traffic_cards")
         polje = self.KOLONE.get(request.GET.get("order[0][column]", "0"), "pfr_vreme")
         if request.GET.get("order[0][dir]", "desc") == "desc":
@@ -201,9 +207,7 @@ class FiskalniRacunDataView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
                 "pfr_vreme": timezone.localtime(r.pfr_vreme).strftime("%d.%m.%Y %H:%M"),
                 "prodavac": (f'<span title="PIB {escape(r.pib_prodavca)}">{escape(r.naziv_prodavca or r.pib_prodavca or "—")}</span>'
                              f'<div class="fiskalni-small">{escape(r.prodajno_mesto)}</div>'),
-                "broj_racuna": escape(r.broj_racuna) + (
-                    f' <span class="invoice-badge warn" title="Putni nalog {escape(r.putni_nalog.order_number)}">PN</span>'
-                    if r.putni_nalog_id else ""),
+                "broj_racuna": escape(r.broj_racuna),
                 "iznos": _iznos(r.iznos),
                 "sifra": escape(", ".join(sifre) or (r.job_code.code if r.job_code_id else "—")),
                 "magacin": ('<span class="invoice-badge ok"><i class="mdi mdi-warehouse"></i> Da</span>' if r.goes_to_warehouse
@@ -238,7 +242,8 @@ class FiskalniRacunScanView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
         sifre = form.sifre_redom()
         try:
             racun, upozorenja = fiskalni.upisi(form.cleaned_data["link"], sifre[0], request.user,
-                                               form.cleaned_data["napomena"], dodatne=sifre[1:])
+                                               form.cleaned_data["napomena"], dodatne=sifre[1:],
+                                               ocekivano=fiskalni.ocekivano_iz_zahteva(request.POST))
         except fiskalni.GreskaOcitavanja as exc:
             return self._odgovor(request, ajax, ok=False, poruka=str(exc))
         return self._odgovor(request, ajax, ok=True, racun=racun, upozorenja=upozorenja)
@@ -273,6 +278,8 @@ class FiskalniRacunDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, 
         self.object.uskladi_glavnu_sifru(self.request.user)
         obrada_form = kwargs.get("obrada_form") or ObradaRacunaForm(instance=self.object, user=self.request.user)
         ctx.update(title=f"Fiskalni račun {self.object.broj_racuna}", upozorenja=fiskalni.upozorenja(self.object),
+                   van_nabavke=(fiskalni.gde_se_vodi(self.object)
+                                if self.object.putni_nalog_id or self.object.evidencija != FiskalniRacun.Evidencija.NABAVKA else ""),
                    moze_menjati=user_has_role_permission(self.request.user, "nabavka:fiskalni_update") and not self.object.proknjizeno,
                    moze_putni_nalog=user_has_role_permission(self.request.user, "isplate:putni_nalozi_pravdanje"),
                    obrada_form=obrada_form, sifre_vozila=obrada_form.sifre_vozila(),

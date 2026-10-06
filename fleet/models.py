@@ -9,7 +9,7 @@ import datetime
 
 from core.models import ActivityLog, CustomUser, OrganizationalUnit, PermissionCode, Role, RolePermission, TaskHistory
 from hr.models import Employee
-from .economics_models import (VehicleAnalysisProfile, LeaseChargePeriod, VehicleDowntime,
+from .economics_models import (VehicleAnalysisProfile, VehicleDowntime,
     VehicleEconomicAssessment, VehicleEconomicScenario)
 from .opomene_models import OpomenaGoriva
 
@@ -50,9 +50,20 @@ class Vehicle(models.Model):
     partner_code = models.CharField(max_length=20, verbose_name=_("Šifra partnera"), null=True, blank=True)
     partner_name = models.CharField(max_length=100, verbose_name=_("Naziv partnera"), null=True, blank=True)
     invoice_number = models.CharField(max_length=50, verbose_name=_("Broj fakture"), null=True, blank=True)
+    # Finansiranje nabavke vozila u vlasništvu IMS (od 05.10.2026.; ranije na osnovu raspolaganja).
+    # Raspolaganje se ne vodi posebno: bez važećeg ugovora o lizingu / najmu vozilo je u vlasništvu IMS.
+    FINANCING_CHOICES = [('', 'Nije evidentirano'), ('own_funds', 'Sopstvena sredstva'), ('credit', 'Kredit')]
+    financing = models.CharField(max_length=20, choices=FINANCING_CHOICES, blank=True, default='', verbose_name=_("Finansiranje nabavke"))
+    financing_contract = models.ForeignKey('ugovori.Contract', on_delete=models.PROTECT, null=True, blank=True,
+                                           related_name='financed_vehicles', verbose_name=_("Ugovor o finansiranju (kredit)"))
     description = models.TextField(blank=True, null=True, verbose_name=_("Opis"))
 
     otpis = models.BooleanField(_("Otpis"), default=False, editable=False)
+
+    def clean(self):
+        super().clean()
+        if self.financing_contract_id and self.financing != 'credit':
+            raise ValidationError({'financing_contract': 'Ugovor o finansiranju povezuje se uz kredit.'})
 
 
     def __str__(self):
@@ -330,62 +341,6 @@ class Lease(models.Model):
     def total_amount(self):
         from .support.lease_costs import lease_amount_between
         return lease_amount_between(self, self.start_date, self.end_date)
-
-
-class VehicleHolding(models.Model):
-    BASIS_CHOICES = [('owned', 'Vlasništvo IMS'), ('contract', 'Korišćenje po ugovoru')]
-    FINANCING_CHOICES = [('', 'Nije evidentirano'), ('own_funds', 'Sopstvena sredstva'), ('credit', 'Kredit')]
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='holdings', verbose_name=_("Vozilo"))
-    basis = models.CharField(max_length=20, choices=BASIS_CHOICES, verbose_name=_("Osnov raspolaganja"))
-    start_date = models.DateField(verbose_name=_("Važi od"))
-    end_date = models.DateField(null=True, blank=True, verbose_name=_("Važi do (uključivo)"))
-    lease = models.ForeignKey(Lease, on_delete=models.PROTECT, null=True, blank=True, related_name='holdings', verbose_name=_("Lizing / najam"))
-    financing = models.CharField(max_length=20, choices=FINANCING_CHOICES, blank=True, verbose_name=_("Finansiranje nabavke"))
-    financing_contract = models.ForeignKey('ugovori.Contract', on_delete=models.PROTECT, null=True, blank=True, related_name='vehicle_holdings', verbose_name=_("Ugovor o finansiranju"))
-    evidence = models.CharField(max_length=255, blank=True, verbose_name=_("Dokument / osnov promene"))
-    note = models.TextField(blank=True, verbose_name=_("Napomena"))
-
-    class Meta:
-        ordering = ['-start_date', '-id']
-        verbose_name = 'Osnov raspolaganja vozilom'
-        verbose_name_plural = 'Osnovi raspolaganja vozilima'
-        constraints = [models.CheckConstraint(check=models.Q(end_date__isnull=True) | models.Q(end_date__gte=models.F('start_date')), name='holding_dates_order')]
-
-    def clean(self):
-        super().clean()
-        errors = {}
-        if self.end_date and self.start_date and self.end_date < self.start_date:
-            errors['end_date'] = 'Završetak ne može biti pre početka.'
-        if self.basis == 'contract':
-            if not self.lease_id:
-                errors['lease'] = 'Izaberite ugovor o lizingu ili najmu.'
-            elif self.lease.vehicle_id != self.vehicle_id:
-                errors['lease'] = 'Ugovor mora pripadati ovom vozilu.'
-            elif self.start_date and (self.start_date < self.lease.start_date or not self.end_date or self.end_date > self.lease.end_date):
-                errors['end_date'] = 'Period raspolaganja mora biti unutar perioda ugovora.'
-            if self.financing or self.financing_contract_id:
-                errors['financing'] = 'Finansiranje nabavke unosi se za vlasništvo IMS.'
-        elif self.lease_id:
-            errors['lease'] = 'Za vlasništvo IMS ne bira se ugovor o korišćenju.'
-        if self.financing_contract_id and self.financing != 'credit':
-            errors['financing_contract'] = 'Ugovor o finansiranju povezuje se uz kredit.'
-        if self.vehicle_id and self.start_date:
-            overlap = type(self).objects.filter(vehicle_id=self.vehicle_id).exclude(pk=self.pk).filter(models.Q(end_date__isnull=True) | models.Q(end_date__gte=self.start_date))
-            if self.end_date:
-                overlap = overlap.filter(start_date__lte=self.end_date)
-            if overlap.exists():
-                errors['start_date'] = 'Period se preklapa sa postojećim osnovom raspolaganja. Najpre završite prethodni period.'
-        if errors:
-            raise ValidationError(errors)
-
-    def save(self, *args, **kwargs):
-        with transaction.atomic(using=kwargs.get('using') or self._state.db or 'default'):
-            Vehicle.objects.using(kwargs.get('using') or self._state.db or 'default').select_for_update().get(pk=self.vehicle_id)
-            self.full_clean()
-            return super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.get_basis_display()} — {self.start_date}'
 
 
 class LeaseInterest(models.Model):

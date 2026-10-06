@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ dokument.naslov }} · {{ izradjeno|date:"d.m.Y" }}</title>
+  {# A4; „Sačuvaj kao PDF” u prozoru za štampu daje PDF. Podaci: finansije/services/izvoz.py. #}
+  <style>
+    @page {
+      size: A4 {% if polozeno %}landscape{% else %}portrait{% endif %};
+      margin: 11mm 9mm 13mm;
+      @bottom-left { content: "{{ institut }} · {{ dokument.naslov }}"; font: 7pt Arial, sans-serif; color: #64748b; }
+      @bottom-right { content: "Strana " counter(page) " od " counter(pages); font: 7pt Arial, sans-serif; color: #64748b; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e9eef4; color: #1f2937; font-family: Arial, Helvetica, sans-serif;
+           font-size: {% if sitno %}6.6pt{% else %}7.8pt{% endif %}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .toolbar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+               padding: 10px 16px; background: #14395b; color: #fff; font-size: 10pt; }
+    .toolbar button { border: 0; background: #fff; color: #14395b; padding: 7px 14px; border-radius: 5px; font-weight: 700; cursor: pointer; }
+    .page { width: {% if polozeno %}297mm{% else %}210mm{% endif %}; max-width: 100%; margin: 12px auto; padding: 11mm 9mm 13mm;
+            background: #fff; box-shadow: 0 2px 10px rgba(15, 23, 42, .15); }
+    .head { display: flex; align-items: center; gap: 5mm; padding-bottom: 3mm; border-bottom: 1.2mm solid #14395b; }
+    .head img { width: 24mm; height: auto; }
+    .head .firma { flex: 1; }
+    .head .naziv { font-size: 12pt; font-weight: 700; color: #14395b; }
+    .head .adresa { color: #64748b; font-size: 8pt; margin-top: 1mm; }
+    .head .datum { text-align: right; color: #475569; font-size: 7.5pt; line-height: 1.5; }
+    h1 { margin: 5mm 0 1mm; font-size: 15pt; color: #14395b; letter-spacing: .02em; }
+    .meta { color: #475569; font-size: 8pt; margin-bottom: 1mm; }
+    .napomena { color: #64748b; font-size: 7.2pt; margin: 1.5mm 0 3mm; }
+    .sazetak { display: flex; flex-wrap: wrap; gap: 2.5mm; margin: 3mm 0 4mm; }
+    .sazetak div { flex: 1 1 36mm; border: .3mm solid #d7dce5; border-left: 1.2mm solid #14395b; border-radius: 1.5mm; padding: 2mm 3mm; break-inside: avoid; }
+    .sazetak span { display: block; color: #64748b; font-size: 7pt; text-transform: uppercase; letter-spacing: .03em; }
+    .sazetak strong { display: block; font-size: 10.5pt; color: #0f2a44; margin-top: .8mm; white-space: nowrap; }
+    section { margin-top: 5mm; }
+    h2 { font-size: 10.5pt; color: #14395b; margin: 0 0 1mm; break-after: avoid; }
+    .opis { color: #64748b; font-size: 7pt; margin: 0 0 1.5mm; break-after: avoid; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { display: table-header-group; }
+    tfoot { display: table-row-group; }
+    th { background: #14395b; color: #fff; font-weight: 700; text-align: left; padding: 1.6mm 1.4mm; border: .2mm solid #14395b; vertical-align: bottom; }
+    td { padding: 1.1mm 1.4mm; border-bottom: .2mm solid #d7dce5; vertical-align: top; }
+    tbody tr:nth-child(even) td { background: #f4f7fa; }
+    tfoot td { font-weight: 700; background: #e8f0fb; border-top: .5mm solid #14395b; }
+    tr { break-inside: avoid; }
+    .n { text-align: right; white-space: nowrap; }
+    .neg { color: #b42318; }
+    .prazno { text-align: center; color: #64748b; padding: 5mm; }
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none; }
+      .page { width: auto; margin: 0; padding: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span>{{ dokument.naslov }} · A4 {% if polozeno %}položeno{% else %}uspravno{% endif %}</span>
+    <button type="button" onclick="window.print()">Štampaj / Sačuvaj kao PDF</button>
+  </div>
+  <div class="page">
+    <div class="head">
+      <img src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+      <div class="firma"><div class="naziv">{{ institut }}</div><div class="adresa">{{ adresa }}</div></div>
+      <div class="datum">Finansijska analitika<br>Izrađeno: {{ izradjeno|date:"d.m.Y. H:i" }}</div>
+    </div>
+    <h1>{{ dokument.naslov }}</h1>
+    {% if dokument.period %}<div class="meta">{{ dokument.period }}</div>{% endif %}
+    {% if dokument.filteri %}<div class="meta">{{ dokument.filteri }}</div>{% endif %}
+    {% if dokument.napomena %}<p class="napomena">{{ dokument.napomena }}</p>{% endif %}
+    {% if sazetak %}
+    <div class="sazetak">{% for naziv, vrednost, css in sazetak %}<div><span>{{ naziv }}</span><strong class="{{ css }}">{{ vrednost }}</strong></div>{% endfor %}</div>
+    {% endif %}
+    {% for tabela in tabele %}
+    <section>
+      <h2>{{ tabela.naslov }}</h2>
+      {% if tabela.opis %}<p class="opis">{{ tabela.opis }}</p>{% endif %}
+      <table>
+        <thead><tr>{% for kolona in tabela.kolone %}<th{% if kolona.broj %} class="n"{% endif %}>{{ kolona.naziv }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for red in tabela.redovi %}<tr>{% for tekst, css in red %}<td class="{{ css }}">{{ tekst }}</td>{% endfor %}</tr>
+          {% empty %}<tr><td colspan="{{ tabela.kolone|length }}" class="prazno">Nema podataka za izabrani period.</td></tr>{% endfor %}
+        </tbody>
+        {% if tabela.zbir %}<tfoot><tr>{% for tekst, css in tabela.zbir %}<td class="{{ css }}">{{ tekst }}</td>{% endfor %}</tr></tfoot>{% endif %}
+      </table>
+    </section>
+    {% endfor %}
+  </div>
+</body>
+</html>

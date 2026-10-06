@@ -586,7 +586,7 @@ period 01.12.2025.–31.01.2026.:
 
 > **Dopuna (19.09.2026.) [P]:** obračun se od tada izvodi u **novom modulu ekonomike**
 > ([E-01](obracuni/06-12-flota-ekonomika.md)), a ne u `vehicle_cost_per_km_rows()`.
-> Novi modul deli kamatu **dan po dan** (`amount / 365 ili 366`), i to samo dok traje ugovorno raspolaganje. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
+> Novi modul deli kamatu **dan po dan**, samo dok traje ugovor — od 05.10.2026. na dane ugovora u toj godini (`amount / dana ugovora u godini`), da delimična prva i poslednja godina ne ulaze umanjeno; ranije `amount / 365 ili 366`. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
 
 ---
 
@@ -663,7 +663,7 @@ lizing — mesečna rata ili ukupan iznos ugovora?
 
 
 **Šta je urađeno (19.09.2026.) [P]:** umesto da se pogađa šta dvosmislena kolona znači, uveden je
-**nov podatak kod kojeg se zna** — `LeaseChargePeriod`:
+**nov podatak kod kojeg se zna** — `LeaseChargePeriod` (kasnije zamenjeno poljem `Lease.payment_basis` na samom ugovoru; tabela je, prazna, uklonjena 05.10.2026.):
 
 | Polje | Značenje |
 |---|---|
@@ -1410,7 +1410,7 @@ Uz to [P]:
 | Podatak | Stanje |
 |---|---|
 | Nalozi sa upisanom šifrom posla | **0 od 241** |
-| Vozila bez ijednog osnova raspolaganja (`VehicleHolding`) | **149 od 172** |
+| Vozila bez ijednog osnova raspolaganja (`VehicleHolding`; tabela uklonjena 05.10.2026. — osnov sledi iz ugovora) | **149 od 172** |
 
 Postojeći podaci nisu problem — ima 172 vozila, 23 ugovora lizinga, 647 polisa,
 1.342 servisa, 2.980 trebovanja, 16.118 zapisa o gorivu. [P]

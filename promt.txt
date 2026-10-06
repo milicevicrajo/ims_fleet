@@ -1,0 +1,18 @@
+U Finansijski pregled nam u rashodima, trebaju i rashodi sa troskovima zajedničkih služba
+
+I oba finansijska rezultata I da odvoimo profitne I neporofitne centre, mogu da budu jedni ispod drugog
+
+ treba postaviti svuda export u excele i moze i u lepo formatiran PDF
+
+ treba svuda postaviti nazive konta i da moze da se otvaradju konta po dubini 
+
+
+Kadrovi.
+
+povezati zaposlen sa siframa posla
+postaviti da mogu da napisu kometar naprolazak kada nije ok ili kada ga nema 
+
+dodati analitika pa mi daj raspodela musko zensko pa starosna raspodela moze hsitogram neki pa onda po rasponima 20 30 30 40 itd prosk starosti pa zene muskarci 
+i sta sve moze od te statiskirk postrucnoj spremi pa starost pos strucnoj spremi  i pogodinama 
+
+kod efaktura treba i pridruzena dokumenta preuzeti ne samo fakturu.

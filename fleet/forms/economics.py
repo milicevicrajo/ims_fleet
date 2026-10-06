@@ -1,8 +1,8 @@
 from django import forms
 from django.forms import BaseInlineFormSet, inlineformset_factory
 
-from fleet.models import (VehicleAnalysisProfile, LeaseChargePeriod, VehicleDowntime,
-    VehicleEconomicAssessment, VehicleEconomicScenario, Lease, Kvar, VehicleTravelOrder)
+from fleet.models import (VehicleAnalysisProfile, VehicleDowntime,
+    VehicleEconomicAssessment, VehicleEconomicScenario, Kvar, VehicleTravelOrder)
 from fleet.support.vehicle_detail import VehiclePeriodForm
 
 
@@ -28,16 +28,6 @@ class AnalysisProfileForm(StyledModelForm):
             vehicle_id=self.instance.vehicle_id, effective_from=data['effective_from']).exclude(pk=self.instance.pk).exists():
             self.add_error('effective_from', 'Profil za ovaj datum već postoji. Izaberite datum nove promene.')
         return data
-
-
-class ChargePeriodForm(StyledModelForm):
-    class Meta:
-        model = LeaseChargePeriod
-        fields = ['lease', 'start', 'end', 'amount', 'basis', 'evidence']
-
-    def __init__(self, *args, vehicle, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['lease'].queryset = Lease.objects.filter(vehicle=vehicle).exclude(lease_type='finansijski')
 
 
 class DowntimeForm(StyledModelForm):

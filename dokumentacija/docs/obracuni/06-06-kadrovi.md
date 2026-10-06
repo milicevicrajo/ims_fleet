@@ -1425,6 +1425,86 @@ određuju jedan datum (Sv. Grigorije, Sv. Kliment, Bajram) traže ručni unos da
 
 ---
 
+## K-10. Analitika zaposlenih (od 05.10.2026.)
+
+### 1. Naziv
+
+Analitika zaposlenih — pol, starost, stručna sprema, staž u Institutu, OJ i vrsta radnog odnosa.
+Kod: `hr/services/analitika.py`, ekran `/hr/analitika/`, testovi `hr/test_analitika.py`.
+
+### 2. Ulazni podaci i poreklo
+
+| Podatak | Polje | Izvor |
+|---|---|---|
+| Pol | `Employee.gender` (`M`, `Z`/`F`) | Kadrovska baza (`pol`), normalizuje se kao u rešenjima |
+| Starost | `date_of_birth` | `dat_rodj` |
+| Staž u Institutu | `date_of_joining` | `dat_dolaska` |
+| Stručna sprema | `job_title`, pa `education` | `naz_zan`, pa `skola` |
+| OJ | `org_unit_code` / `department_code` | `oj` |
+| Radni odnos | `status_name` | `naz_stat` |
+
+Obuhvat: **aktivni** zaposleni koje korisnik vidi (`visible_employees`), opciono jedna OJ, na današnji dan.
+
+### 3. Postupak [P]
+
+```text
+Starost      = pune godine na današnji dan
+Staž         = pune godine od datuma zaposlenja u Institutu (ne ukupan radni staž)
+Prosek       = zbir / broj, zaokruženo na 0,1 (ROUND_HALF_UP); medijana bez zaokruživanja
+Udeo         = broj grupe / ukupno × 100, na 0,1
+Rasponi      = do 19, 20–29, 30–39, 40–49, 50–59, 60–64, 65 i više
+Staž rasponi = manje od 1, 1–4, 5–9, 10–19, 20–29, 30 i više
+```
+
+Datum rođenja pre 1920. ili posle današnjeg (izvor koristi `01.01.1900.` kao prazno) znači **nepoznatu
+starost**: zaposleni se broji u ukupnom broju i u spremi, ali ne i u starosnim pokazateljima.
+
+**Stručna sprema** nema posebno polje u kadrovskoj bazi, pa se **izvodi iz naziva zanimanja** (a kada
+zanimanja nema ili se ne prepozna, iz naziva škole). Pravila se proveravaju redom, prva pogođena reč odlučuje:
+
+| Stepen | Ključne reči |
+|---|---|
+| I–II | bez zanimanja / stručne spreme, pomoćni |
+| VIII | doktor |
+| VII | master, dipl., magistar, fakultet, univerzitet |
+| V | specijalista |
+| VI | strukovni, inženjer (bez „dipl.”), ekonomista, informatičar, viša / visoka škola |
+| IV | tehničar, gimnazija, laborant, srednja škola |
+| III | zanati: bravar, mehaničar, instalater, vozač, konobar, pekar… |
+
+Šta se ne prepozna je „Nije razvrstano”. Excel ima list **Razvrstavanje** (svako zanimanje i škola sa
+dodeljenim stepenom), da kadrovska služba proveri pravila.
+
+**Kontrolni primer:** četiri aktivna zaposlena — žena 30 god. (dipl. inž.), muškarac 44 (tehničar),
+muškarac 66 (doktor), žena sa datumom rođenja 01.01.1900. (vozač). Ukupno 4, žene 2, muškarci 2;
+prosečna starost (30 + 44 + 66) / 3 = **46,7**, medijana 44, žene 30,0, muškarci 55,0; bez starosti 1;
+visoka i viša sprema (VI–VIII) 2.
+
+**Provera na lokalnoj kopiji podataka (05.10.2026.):** 324 aktivna, žene 93 (28,7%), prosečna starost 46,6
+(žene 48,4, muškarci 45,9), VI–VIII 53,7%; nije razvrstano 5 (bez zanimanja i škole).
+
+### 4. Primena na ekranu
+
+Ekran **Kadrovi → Analitika zaposlenih**: pokazatelji, starosna piramida (muškarci / žene), histogram starosti,
+tabele po rasponima, stručnoj spremi, starost × sprema (toplotna tabela), staž, radni odnos i OJ. Isti sadržaj
+ide u **PDF fajl** (A4 uspravno, `hr/services/analitika_pdf.py`, biblioteka `reportlab`): zaglavlje Instituta sa
+logom i podnožje „Strana X od Y” na svakoj strani, vektorski grafikoni, onoliko strana koliko sadržaj traži; i u
+Excel (list po celini, sa grafikonima). Font je Arial iz Windowsa (zbog č, ć, đ); na drugom sistemu DejaVu Sans.
+
+### 5. Status pouzdanosti
+
+Pol, starost i staž su direktno iz kadrovske baze. **Stručna sprema je izvedena** iz teksta zanimanja i nije
+zvanični stepen — za zvanične izveštaje potrebno je polje stepena u kadrovskoj bazi (Q28).
+
+## Komentar na prolaze (od 05.10.2026.)
+
+Na radnoj listi, u evidenciji prolaza, za dan sa statusom **Problem** ili **bez prolaza na radni dan** (ne
+vikend i ne praznik) može se upisati komentar (do 500 znakova): npr. zaboravljena kartica, teren, službeni put.
+Jedan komentar po zaposlenom i danu (`hr.KomentarProlaza`); prazan tekst ga briše. Upisuje ga zaposleni na
+svojoj listi ili ko sme da otvori tuđu radnu listu (`hr:employee_work_time_sheet`). Kada je radna lista
+**odobrena**, komentar se ne menja. Komentar se vidi na ekranu i u prilogu za štampu. Izvor prolazaka i
+obračun sati se **ne menjaju** — komentar je samo objašnjenje.
+
 ## Novi problemi iz ovog poglavlja
 
 | # | Opis | Ozbiljnost |
@@ -1439,6 +1519,7 @@ određuju jedan datum (Sv. Grigorije, Sv. Kliment, Bajram) traže ručni unos da
 | **Q25** | Taster **12 (Pauza)** uvek se prijavljuje kao **problem**, pa svaki dan u kome je zaposleni koristio pauzu dobija status „Problem“. Da li pauzu treba obračunati (kao u K-02, ograničeno na 30 minuta) ili je dovoljno da ne bude označena kao problem? |
 | **Q26** | Radna lista ima status **„Odobreno“**, ali u kodu nije pronađena radnja koja ga postavlja. Da li je odobravanje radne liste predviđeno? |
 | **Q27** | Službeni izlazak se računa **do 16:00**, što je upisano u kod. Da li je to i zvanično radno vreme i treba li da bude podesivo? |
+| **Q28** | Kadrovska baza nema **stepen stručne spreme** kao polje; analitika ga izvodi iz zanimanja (K-10). Može li se stepen dodati u kadrovsku bazu, da analitika ne zavisi od pravila po tekstu? |
 
 ---
 

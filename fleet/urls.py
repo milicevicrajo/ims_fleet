@@ -66,6 +66,7 @@ from .views.lease import (
     LeaseCreateView,
     LeaseDeleteView,
     LeaseDetailView,
+    LeaseInterestUpdateView,
     LeaseListView,
     LeaseMonthlyCostsView,
     LeaseUpdateView,
@@ -140,7 +141,7 @@ from .views.vehicles import (
     vehicle_export_csv,
     vehicle_tender_documentation_zip,
 )
-from .views.vehicle_onboarding import VehicleOnboardingView, VehicleHoldingCreateView, VehicleHoldingUpdateView
+from .views.vehicle_onboarding import VehicleOnboardingView
 from .views.kilometraza import vozilo_kilometraza
 from .views.opomene import OpomenaListView, opomena_proveri
 from .views.incidenti import (IncidentCreateView, IncidentDataView, IncidentDeleteView, IncidentDetailView,
@@ -230,8 +231,6 @@ urlpatterns = [
     path('vozila/data/', vehicle_datatable_data, name='vehicle_data'),
     path('vozila/export/csv/', vehicle_export_csv, name='vehicle_export_csv'),
     path('vozila/novo/', VehicleOnboardingView.as_view(), name='vehicle_create'),
-    path('vozila/<int:vehicle_id>/osnov/novo/', VehicleHoldingCreateView.as_view(), name='vehicle_holding_create'),
-    path('vozila/<int:vehicle_id>/osnov/<int:pk>/', VehicleHoldingUpdateView.as_view(), name='vehicle_holding_update'),
     path('vozila/izmeni/<int:pk>/', VehicleUpdateView.as_view(), name='vehicle_update'),
     path('vozila/<int:pk>/tenderska-dokumentacija/', vehicle_tender_documentation_zip, name='vehicle_tender_documentation_zip'),
     path('vozila/<int:pk>/vrati-u-upotrebu/', VehicleRestoreView.as_view(), name='vehicle_restore'),
@@ -265,6 +264,7 @@ urlpatterns = [
     path('zakupi/novo/', LeaseCreateView.as_view(), name='lease_create'),
     path('zakupi/izmeni/<int:pk>/', LeaseUpdateView.as_view(), name='lease_update'),
     path('zakupi/<int:pk>/', LeaseDetailView.as_view(), name='lease_detail'),
+    path('zakupi/<int:pk>/kamate/', LeaseInterestUpdateView.as_view(), name='lease_interest_update'),
     path('zakupi/obrisi/<int:pk>/', LeaseDeleteView.as_view(), name='lease_delete'),
     path('export-leases/', export_leases_to_excel, name='export_leases'),
 

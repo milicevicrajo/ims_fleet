@@ -4,6 +4,7 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
+{% include "isplate/_stil.html" %}
 <style>
   .assignment-hero {
     border-radius: 8px;
@@ -15,12 +16,6 @@
   }
   .assignment-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
   .assignment-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
-  .assignment-filter {
-    background: #f8fafc;
-    border: 1px solid #e6ebf1;
-    border-radius: 8px;
-    padding: 14px;
-  }
   .payout-kpi {
     border: 1px solid #e6ebf1;
     border-radius: 8px;
@@ -189,9 +184,9 @@
 
 <div class="card shadow-sm mb-3">
   <div class="card-body border-bottom">
-    <form method="get" class="assignment-filter">
+    <form method="get" class="isp-filter">
       <div class="row g-2 align-items-end">
-        <div class="col-12 col-sm-6 col-lg-2">
+        <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1" for="status">Status</label>
           <select id="status" name="status" class="form-select form-control select2-method">
             <option value="pending" {% if status == "pending" %}selected{% endif %}>Nije odradjen</option>
@@ -199,7 +194,7 @@
             <option value="all" {% if status == "all" %}selected{% endif %}>Svi</option>
           </select>
         </div>
-        <div class="col-12 col-sm-6 col-lg-2">
+        <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1" for="center">Centar</label>
           <select id="center" name="center" class="form-select form-control select2-method">
             <option value="">Svi centri</option>
@@ -208,7 +203,7 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-12 col-sm-6 col-lg-1">
+        <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1" for="year">Godina</label>
           <select id="year" name="year" class="form-select form-control select2-method">
             <option value="">Sve</option>
@@ -217,7 +212,7 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-12 col-sm-6 col-lg-1">
+        <div class="col-6 col-md-3 col-lg-2">
           <label class="form-label mb-1" for="month">Mesec</label>
           <select id="month" name="month" class="form-select form-control select2-method">
             <option value="">Svi</option>
@@ -226,16 +221,12 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-12 col-lg-4">
-          <label class="form-label mb-1" for="q">Pretraga</label>
-          <input id="q" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Broj naloga, ime, racun, mesto...">
-        </div>
-        <div class="col-12 col-lg-2 d-flex gap-2">
-          <button type="submit" class="btn btn-primary w-100">
+        <div class="col-12 col-lg isp-akcije">
+          <button type="submit" class="btn btn-primary">
             <i class="mdi mdi-filter"></i> Filter
           </button>
-          <a href="{% url 'isplate:neoporezive_isplate' %}" class="btn btn-outline-secondary" title="Ocisti filtere">
-            <i class="mdi mdi-close"></i>
+          <a href="{% url 'isplate:neoporezive_isplate' %}" class="btn btn-outline-secondary" title="Očisti filtere">
+            <i class="mdi mdi-close"></i> Očisti
           </a>
         </div>
       </div>
@@ -368,7 +359,7 @@
   </div>
 </form>
 
-{% if moze_racune %}{% include "isplate/_stil.html" %}{% include "isplate/_racuni_naloga.html" %}{% endif %}
+{% if moze_racune %}{% include "isplate/_racuni_naloga.html" %}{% endif %}
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {

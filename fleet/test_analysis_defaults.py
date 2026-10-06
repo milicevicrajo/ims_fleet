@@ -8,7 +8,7 @@ from django.db import connection
 from django.test import SimpleTestCase
 
 from core.models import OrganizationalUnit
-from fleet.models import JobCode, LeaseChargePeriod, VehicleAnalysisProfile
+from fleet.models import JobCode, VehicleAnalysisProfile
 from fleet.support.analysis_defaults import estimated_purpose
 from fleet.support.lease_costs import lease_amount_between
 from fleet.test_economics import EconomicsFixture
@@ -55,7 +55,6 @@ class AssignmentCostTests(EconomicsFixture):
         self.assertEqual(sum(m['included'] for m in row['monthly']), row['total'])
 
     def test_ownership_before_and_after_contract_without_holding_rows(self):
-        self.holding.delete()
         self.lease(start=date(2026,1,10), end=date(2026,1,20), payment_basis='total')
         row = self.row()
         self.assertEqual(row['basis_codes'], {'owned', 'operativni'})
@@ -69,12 +68,6 @@ class AssignmentCostTests(EconomicsFixture):
         self.assertEqual(row['contract'], 15000)
         self.assertIn('unknown', row['basis_codes'])
         self.assertTrue(any('Preklopljeni ugovori' in w for w in row['warnings']))
-
-    def test_legacy_charge_table_is_not_an_additional_cost_source(self):
-        lease = self.lease()
-        LeaseChargePeriod.objects.create(lease=lease, start=self.start, end=self.end,
-                                        amount=99999, basis='total', evidence='Stara evidencija')
-        self.assertEqual(self.row()['contract'], 31000)
 
     def test_default_purpose_does_not_create_profile_or_require_downtime(self):
         self.profile.delete()

@@ -185,7 +185,8 @@ def putni_nalog_racun_dodaj(request, pk):
         return JsonResponse({"ok": False, "poruka": "Očitajte QR kod računa."}, status=400)
     try:
         racun, upozorenja, vezan = fiskalni.ucitaj_za_putni_nalog(link, putni_nalog, request.user,
-                                                                   (request.POST.get("napomena") or "").strip()[:500])
+                                                                   (request.POST.get("napomena") or "").strip()[:500],
+                                                                   ocekivano=fiskalni.ocekivano_iz_zahteva(request.POST))
     except fiskalni.GreskaOcitavanja as exc:
         return JsonResponse({"ok": False, "poruka": str(exc)}, status=400)
     return JsonResponse({

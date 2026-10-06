@@ -129,7 +129,9 @@ otvara se detalj računa.
         <div class="mb-2">
           <label class="form-label" for="fiskalniLink">{{ form.link.label }}</label>
           {{ form.link }}
-          <div class="form-text">Postavite kursor u polje i očitajte QR kod — čitač sam pritiska Enter i obrada kreće.</div>
+          <div class="form-text">Postavite kursor u polje i očitajte QR kod — čitač sam pritiska Enter i obrada kreće.
+            <button type="button" class="btn btn-link btn-sm p-0 align-baseline js-fiskalni-rucno" data-forma="#fiskalniForma"
+                    data-modal="#fiskalniModal" data-link="#fiskalniLink"><i class="mdi mdi-qrcode-scan"></i> QR kod je oštećen?</button></div>
         </div>
         <div class="mb-1">
           <label class="form-label" for="{{ form.napomena.id_for_label }}">{{ form.napomena.label }}</label>
@@ -144,6 +146,8 @@ otvara se detalj računa.
     </form>
   </div>
 </div>
+
+{% include "nabavka/_fiskalni_rucno.html" %}
 
 <div class="modal fade" id="fiskalniVracenoModal" tabindex="-1" aria-labelledby="fiskalniVracenoNaslov" aria-hidden="true">
   <div class="modal-dialog">

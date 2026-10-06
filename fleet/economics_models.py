@@ -63,38 +63,6 @@ class VehicleAnalysisProfile(VehicleEvidence):
             raise ValidationError({'cost_limit_km': 'Za ovu namenu kilometri nisu merodavan kriterijum opravdanosti.'})
 
 
-class LeaseChargePeriod(models.Model):
-    lease = models.ForeignKey('fleet.Lease', on_delete=models.CASCADE, related_name='analysis_charges', verbose_name='Ugovor')
-    start = models.DateField('Važi od')
-    end = models.DateField('Važi do (uključivo)')
-    amount = models.DecimalField('Iznos RSD', max_digits=14, decimal_places=2, validators=[MinValueValidator(0)])
-    basis = models.CharField('Značenje iznosa', max_length=10, choices=[('monthly', 'Mesečna naknada'), ('total', 'Ukupno za ovaj period')])
-    evidence = models.CharField('Dokument, obuhvat usluga i poreska osnova', max_length=500)
-
-    class Meta:
-        ordering = ['start', 'pk']
-
-    def clean(self):
-        super().clean()
-        if self.start and self.end and self.end < self.start:
-            raise ValidationError({'end': 'Završetak ne može biti pre početka.'})
-        if self.lease_id and self.start and self.end:
-            if self.start < self.lease.start_date or self.end > self.lease.end_date:
-                raise ValidationError('Period naknade mora biti unutar ugovora.')
-            if self.lease.lease_type == 'finansijski':
-                raise ValidationError('Glavnica finansijskog lizinga ne ulazi u trošak perioda; kamate se vode zasebno.')
-            if type(self).objects.filter(lease_id=self.lease_id, start__lte=self.end, end__gte=self.start).exclude(pk=self.pk).exists():
-                raise ValidationError('Period naknade se preklapa sa postojećim periodom.')
-
-    def save(self, *args, **kwargs):
-        from fleet.models import Lease
-        using = kwargs.get('using') or self._state.db or 'default'
-        with transaction.atomic(using=using):
-            Lease.objects.using(using).select_for_update().get(pk=self.lease_id)
-            self.full_clean()
-            return super().save(*args, **kwargs)
-
-
 class VehicleDowntime(VehicleEvidence):
     start = models.DateField('Neupotrebljivo od')
     end = models.DateField('Poslednji dan neupotrebljivosti', null=True, blank=True)

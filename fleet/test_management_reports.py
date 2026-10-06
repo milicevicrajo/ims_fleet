@@ -9,7 +9,7 @@ from django.utils import timezone
 from openpyxl import load_workbook
 
 from core.models import OrganizationalUnit
-from fleet.models import JobCode, Lease, TransactionOMV, VehicleHolding
+from fleet.models import JobCode, Lease, TransactionOMV
 from fleet.test_vehicle_onboarding import vehicle
 from fleet.support.management_reports import vehicle_insurance_rows, fuel_report_rows, group_fuel_rows, supplier_parts_rows
 from nabavka.models import EufItemSnapshot, GoodsSnapshot
@@ -40,7 +40,7 @@ class ManagementReportTests(TestCase):
 
     def test_owned_report_distinguishes_evidence_and_fallback_and_excludes_contract(self):
         owned,fallback,rented=self.car(),self.car('2'),self.car('3')
-        VehicleHolding.objects.create(vehicle=owned,basis='owned',start_date=date(2020,1,1))
+        owned.purchase_date,owned.financing=date(2020,1,1),'own_funds';owned.save()
         Lease.objects.create(vehicle=rented,partner_code='1',partner_name='Test',job_code='A',contract_number='1',current_payment_amount=1,start_date=date(2020,1,1),end_date=date(2027,1,1))
         data={'as_of':self.day,'ownership':'all'}
         rows,stats=vehicle_insurance_rows(self.user,data)

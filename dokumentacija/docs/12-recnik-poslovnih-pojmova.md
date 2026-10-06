@@ -23,7 +23,7 @@
 
 | Pojam | Značenje |
 |---|---|
-| **Osnov raspolaganja** | Po čemu IMS koristi vozilo: **vlasništvo IMS** ili **korišćenje po ugovoru**. Tabela `fleet_vehicleholding`. |
+| **Osnov raspolaganja** | Po čemu IMS koristi vozilo: **vlasništvo IMS** ili **korišćenje po ugovoru**. Sledi iz ugovora o lizingu / najmu (`fleet_lease`): bez važećeg ugovora vozilo je u vlasništvu IMS (od 05.10.2026.; ranije tabela `fleet_vehicleholding`). |
 | **Dodela šifre posla** | Istorijski zapis kojoj OJ vozilo pripada od kog datuma. Tabela `fleet_jobcode`. |
 | **Otpis** | Vozilo izuzeto iz upotrebe. Polje `otpis`, puni ga sinhronizacija — **ne unosi se ručno**. |
 | **Kvar (PK)** | Prijava kvara u garaži. Broj `PK-<id>/<godina>`. |
@@ -153,7 +153,7 @@
 | Saobraćajna dozvola | `TrafficCard` | `fleet_trafficcard` |
 | Registracioni broj | `registration_number` | isto |
 | Šifra posla (dodela) | `JobCode` | `fleet_jobcode` |
-| Osnov raspolaganja | `VehicleHolding` | `fleet_vehicleholding` |
+| Osnov raspolaganja | `Lease` + `holding_at()` | `fleet_lease` |
 | Lizing / najam | `Lease` | `fleet_lease` |
 | Polisa | `Policy` | `fleet_policy` |
 | Osiguranje (knjiženje) | `Insurance` | `fleet_insurance` |

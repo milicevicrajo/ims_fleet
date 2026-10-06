@@ -4,9 +4,8 @@ from django.utils import timezone
 from core.form_fields import localized_date_field
 from core.models import OrganizationalUnit
 from hr.models import Employee
-from ugovori.models import Contract
-from ..models import Vehicle, TrafficCard, Lease, VehicleHolding
-from .layout import FieldsetMixin
+from ..models import Vehicle, TrafficCard, Lease
+from .ugovor import UgovorField, poruka_iznosa, strana_valuta
 
 
 IDENTITY_FIELDS = ['photo', 'category', 'chassis_number', 'brand', 'model', 'year_of_manufacture', 'inventory_number']
@@ -89,12 +88,16 @@ class VehicleTechnicalForm(forms.ModelForm):
         return data
 
 
+# Raspolaganje nije posebna evidencija: „po ugovoru” pravi ugovor o lizingu / najmu, a vlasništvo se
+# beleži na vozilu (nabavka i finansiranje). Bez važećeg ugovora vozilo je u vlasništvu IMS.
+BASIS_CHOICES = [('owned', 'Vlasništvo IMS'), ('contract', 'Korišćenje po ugovoru (lizing / najam)')]
+
+
 class VehicleBasisForm(forms.Form):
-    basis = forms.ChoiceField(label='Osnov raspolaganja', choices=VehicleHolding.BASIS_CHOICES)
-    start_date = localized_date_field(label='Datum početka raspolaganja')
-    evidence = forms.CharField(label='Dokument / osnov sticanja ili preuzimanja', max_length=255, required=False)
-    financing = forms.ChoiceField(label='Finansiranje nabavke', choices=VehicleHolding.FINANCING_CHOICES, required=False)
-    financing_contract = forms.ModelChoiceField(label='Postojeći ugovor o finansiranju', queryset=Contract.objects.all(), required=False)
+    basis = forms.ChoiceField(label='Osnov raspolaganja', choices=BASIS_CHOICES)
+    start_date = localized_date_field(label='Datum početka raspolaganja', help_text='Za vlasništvo: dan nabavke, ako datum nabavke nije posebno unet. Za ugovor: početak ugovora.')
+    financing = forms.ChoiceField(label='Finansiranje nabavke', choices=Vehicle.FINANCING_CHOICES, required=False)
+    financing_contract = UgovorField(label='Postojeći ugovor o finansiranju')
     purchase_date = localized_date_field(label='Datum nabavke', required=False)
     purchase_value = forms.DecimalField(label='Nabavna vrednost (RSD)', max_digits=12, decimal_places=2, min_value=0, required=False)
     partner_code = forms.CharField(label='Šifra dobavljača / davaoca lizinga ili najma', max_length=20, required=False)
@@ -102,7 +105,8 @@ class VehicleBasisForm(forms.Form):
     invoice_number = forms.CharField(label='Broj fakture nabavke', max_length=50, required=False)
     lease_type = forms.ChoiceField(label='Vrsta lizinga / najma', choices=[('', 'Izaberite')] + Lease.LEASE_TYPE_CHOICES, required=False)
     contract_number = forms.CharField(label='Broj ugovora o lizingu / najmu', max_length=50, required=False)
-    contract = forms.ModelChoiceField(label='Postojeći ugovor iz evidencije Ugovori', queryset=Contract.objects.all(), required=False)
+    contract = UgovorField(label='Postojeći ugovor iz evidencije Ugovori', valuta_za='id_current_payment_amount',
+                           help_text='Pretraga po broju ili nazivu. Ugovor u stranoj valuti se povezuje, a iznos se unosi u dinarima.')
     end_date = localized_date_field(label='Datum završetka ugovora', required=False)
     current_payment_amount = forms.DecimalField(label='Iznos naknade / otplate (RSD)', help_text='Za dugoročni najam: mesečna naknada. Za operativni: ukupan iznos za period. Finansijski lizing: iznos rate; kamata se vodi odvojeno.', max_digits=10, decimal_places=2, min_value=0, required=False)
     payment_basis = forms.ChoiceField(label='Značenje iznosa', choices=Lease.PAYMENT_BASIS_CHOICES, required=False)
@@ -123,15 +127,15 @@ class VehicleBasisForm(forms.Form):
                     self.add_error('start_date', 'Početak raspolaganja je pre početka ugovora.')
                 if data.get('end_date') and contract.valid_to and data['end_date'] > contract.valid_to:
                     self.add_error('end_date', 'Period raspolaganja prelazi rok ugovora.')
+            valuta = strana_valuta(contract)
             for key in ['partner_code', 'partner_name', 'lease_type', 'contract_number', 'end_date', 'current_payment_amount']:
                 if data.get(key) in (None, ''):
-                    self.add_error(key, 'Obavezno za korišćenje po ugovoru.')
+                    self.add_error(key, poruka_iznosa(valuta) if valuta and key == 'current_payment_amount'
+                                   else 'Obavezno za korišćenje po ugovoru.')
             if data.get('lease_type') != 'finansijski' and not data.get('payment_basis'):
                 self.add_error('payment_basis', 'Izaberite mesečni ili ukupni iznos ugovora.')
             if data.get('start_date') and data.get('end_date') and data['end_date'] < data['start_date']:
                 self.add_error('end_date', 'Završetak ne može biti pre početka.')
-            if contract and contract.currency != 'RSD':
-                self.add_error('contract', 'Postojeći obračun flote koristi RSD. Potrebno je usaglasiti valutni obračun pre povezivanja ovog ugovora.')
             data['financing'] = ''
             data['financing_contract'] = None
             for key in ['purchase_date', 'purchase_value', 'invoice_number']:
@@ -208,36 +212,3 @@ class VehicleAssignmentForm(forms.Form):
             for key in ['employee', 'created_at', 'start_mileage']:
                 data[key] = None
         return data
-
-
-class VehicleHoldingForm(FieldsetMixin, forms.ModelForm):
-    start_date = localized_date_field(label='Važi od', help_text='Prvi dan od kog ovaj osnov važi.')
-    end_date = localized_date_field(
-        label='Važi do (uključivo)', required=False,
-        help_text='Poslednji dan važenja. Ostavite prazno dok osnov traje — otvoren period se zatvara unosom sledeće promene.',
-    )
-
-    fieldsets = (
-        ('Osnov i period', 'Šta je osnov raspolaganja i od kada važi.',
-         ('basis', 'start_date', 'end_date')),
-        ('Ugovor', 'Popunjava se kada je osnov korišćenje po ugovoru.',
-         ('lease',)),
-        ('Finansiranje nabavke', 'Popunjava se kada je vozilo u vlasništvu IMS-a.',
-         ('financing', 'financing_contract')),
-        ('Dokaz', None, ('evidence', 'note')),
-    )
-
-    class Meta:
-        model = VehicleHolding
-        fields = ['basis', 'start_date', 'end_date', 'lease', 'financing', 'financing_contract', 'evidence', 'note']
-        help_texts = {
-            'basis': 'Vlasništvo IMS-a ili korišćenje po ugovoru. Od toga zavisi da li vozilo nosi naknadu najma ili amortizaciju.',
-            'lease': 'Ugovor o lizingu ili najmu za ovo vozilo. Iznos naknade za obračun se unosi odvojeno, na ekranu analitike.',
-            'financing': 'Da li je nabavka plaćena iz sopstvenih sredstava ili kreditom. Kamate kredita ne ulaze automatski u trošak vozila.',
-            'evidence': 'Dokument kojim se promena dokazuje — ugovor, otpremnica, zapisnik.',
-        }
-
-    def __init__(self, *args, vehicle, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.instance.vehicle = vehicle
-        self.fields['lease'].queryset = Lease.objects.filter(vehicle=vehicle)

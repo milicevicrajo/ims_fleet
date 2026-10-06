@@ -3,11 +3,28 @@
   .isp-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
     color: #fff; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 10px 26px rgba(20, 57, 91, .18); }
   .isp-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .isp-hero h1 > .mdi { margin-right: 8px; }
   .isp-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); max-width: 860px; }
   .isp-hero .isp-zbir { text-align: right; }
   .isp-hero .isp-zbir strong { display: block; font-size: 1.25rem; }
   .isp-filter { background: #f8fafc; border: 1px solid #e6ebf1; border-radius: 8px; padding: 14px; }
   .isp-filter .row { row-gap: 12px; }
+  /* Filteri i forme Isplata: isti izgled polja na svim ekranima (tema nema stil za `.form-select`). */
+  .isp-filter .form-label { display: block; margin-bottom: 4px; color: #526170; font-size: .74rem; font-weight: 700;
+    letter-spacing: .03em; text-transform: uppercase; }
+  .isp-filter .form-control, .isp-filter .form-select { display: block; width: 100%; min-height: 38px; padding: .375rem .75rem;
+    font-size: .875rem; color: #1f2937; background-color: #fff; border: 1px solid #d7dce5; border-radius: 6px; }
+  .isp-filter textarea.form-control { min-height: 38px; }
+  .isp-filter .form-select { -webkit-appearance: none; appearance: none; padding-right: 2.25rem; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23526170' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat; background-position: right .75rem center; background-size: 14px 10px; }
+  .isp-filter .form-control:focus, .isp-filter .form-select:focus { border-color: #1f6f8b; outline: 0;
+    box-shadow: 0 0 0 3px rgba(31, 111, 139, .15); }
+  .isp-filter .btn { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    border-radius: 6px; white-space: nowrap; }
+  .isp-filter .select2-container--bootstrap-5 .select2-selection { min-height: 38px; border-color: #d7dce5; border-radius: 6px;
+    font-size: .875rem; }
+  .isp-filter .isp-akcije { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
   .isp-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 9px;
     font-weight: 600; font-size: .78rem; white-space: nowrap; }
   .isp-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }

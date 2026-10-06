@@ -2,7 +2,7 @@
 {% block title %}Finansijski pregled · IMS{% endblock %}
 {% block hero_title %}<i class="mdi mdi-chart-bar me-2" aria-hidden="true"></i>Finansijski pregled{% endblock %}
 {% block hero_description %}{% if valid %}Prihodi, rashodi i neto rezultat svih dostupnih centara i šifara posla.{% else %}Izaberite ispravan period za pregled prihoda, rashoda i rezultata.{% endif %}{% endblock %}
-{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:report' %}?{{ params }}"><i class="mdi mdi-table me-1" aria-hidden="true"></i>Detaljni izveštaji</a>{% endblock %}
+{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:report' %}?{{ params }}"><i class="mdi mdi-table me-1" aria-hidden="true"></i>Detaljni izveštaji</a>{% if valid %}{% include "finansije/_izvoz.html" with upit=params dodatak="&report=overview" %}{% endif %}{% endblock %}
 {% block finance_content %}
 <form method="get" class="fleet-list-filter finance-period mb-3" aria-label="Period finansijskog pregleda">
   <div class="finance-period-field"><label class="form-label" for="{{ form.date_from.id_for_label }}">Datum knjiženja od</label>{{ form.date_from }}{{ form.date_from.errors }}</div>
@@ -16,6 +16,7 @@
 {% if valid %}
 {% include "finansije/_totals.html" %}
 <p class="finance-accounting-note"><i class="mdi mdi-information-outline me-1" aria-hidden="true"></i>Prihodi i rashodi bez završnog zatvaranja i prenosa rezultata (ZAT, konta 59900/69900). Neto rezultat = prihodi − rashodi, pre poreza na dobit.</p>
+{% include "finansije/_centri_zt.html" %}
 {% include "finansije/_charts.html" %}
 <section class="finance-ranking-section" aria-labelledby="ranking-title">
   <div class="finance-section-heading">

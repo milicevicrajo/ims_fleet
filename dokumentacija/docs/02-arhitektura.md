@@ -563,8 +563,8 @@ Detaljni dijagrami Flote dopunjuju opšti pregled sistema:
   Zaduženje vozila (`VehicleTravelOrder`) i službeni put (`PutniNalog`) su odvojeni modeli.
   Polisa (`Policy`) i knjižena naknada osiguranja (`Insurance`) nemaju direktnu vezu.
 - Dijagrami 10 i 12 prikazuju tok podataka, ne strane ključeve. Gorivo za putni nalog
-  bira se po vozilu / tablici i periodu. Modeli `VehicleDowntime` i `LeaseChargePeriod`
-  postoje, ali ih aktuelni `period_analysis()` ne koristi; prikaz modela nije dokaz
+  bira se po vozilu / tablici i periodu. Model `VehicleDowntime`
+  postoji, ali ga aktuelni `period_analysis()` ne koristi (`LeaseChargePeriod` je uklonjen 05.10.2026.); prikaz modela nije dokaz
   da model učestvuje u tekućem obračunu.
 
 **Pregled i izmene u VS Code-u:**

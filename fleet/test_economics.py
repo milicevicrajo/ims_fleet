@@ -12,7 +12,7 @@ from django.utils import timezone
 
 from core.models import OrganizationalUnit, PermissionCode, Role, RolePermission
 from hr.models import Employee
-from fleet.models import (VehicleAnalysisProfile, VehicleHolding, Lease, LeaseChargePeriod,
+from fleet.models import (VehicleAnalysisProfile, Lease,
     LeaseInterest, Policy, VehicleTravelOrder, VehicleDowntime, JobCode,
     VehicleEconomicAssessment, VehicleEconomicScenario, TransactionOMV, Insurance)
 from fleet.test_vehicle_onboarding import vehicle
@@ -29,7 +29,6 @@ class EconomicsFixture(TestCase):
         self.car = vehicle()
         self.profile = VehicleAnalysisProfile.objects.create(vehicle=self.car, effective_from=self.start,
             purpose='laboratory', fuel_source='legacy')
-        self.holding = VehicleHolding.objects.create(vehicle=self.car, basis='owned', start_date=self.start)
         self.unit = OrganizationalUnit.objects.create(code='P1', name='Posao jedan', center='01')
         self.employee = Employee.objects.create(employee_code=9021, first_name='Test', last_name='Vozač',
             position='Vozač', department_code=1, gender='M', date_of_birth=date(1980,1,1), date_of_joining=date(2020,1,1))
@@ -54,7 +53,6 @@ class EconomicsFixture(TestCase):
 
 class FleetEconomicsTests(EconomicsFixture):
     def test_default_ownership_does_not_invent_costs(self):
-        self.holding.delete()
         row = self.row()
         self.assertIsNone(row['total'])
         self.assertIsNone(row['per_km'])
@@ -167,9 +165,7 @@ class FleetEconomicsTests(EconomicsFixture):
         self.assertEqual(self.row(date(2024,2,29), date(2024,2,29))['policy'], 100)
 
     def test_unknown_lease_amount_is_not_interpreted_as_monthly_or_total(self):
-        self.holding.delete()
         lease = self.lease(payment_basis='')
-        VehicleHolding.objects.create(vehicle=self.car, basis='contract', lease=lease, start_date=self.start, end_date=self.end)
         row = self.row()
         self.assertIsNone(row['contract'])
         self.assertIsNone(row['total'])
@@ -190,17 +186,21 @@ class FleetEconomicsTests(EconomicsFixture):
 
 
     def test_interest_only_during_financial_contract(self):
+        # Od 05.10.2026. kamata za godinu deli se na dane ugovora u toj godini (ovde 16), ne na 365.
         lease = self.lease(kind='finansijski', start=date(2026,1,16))
         LeaseInterest.objects.create(lease=lease, year=2026, interest_amount=D('36500'))
-        self.assertEqual(self.row()['interest'], 1600)
+        self.assertEqual(self.row()['interest'], 36500)
+        self.assertEqual(self.row(date(2026,1,16), date(2026,1,16))['interest'], D('36500') / 16)
         self.assertIsNone(self.row()['contract'])
 
+    def test_partial_years_take_whole_entered_interest(self):
+        # Ugovor 01.10.2025–31.03.2026: 92 dana u 2025, 90 u 2026 — po 100 RSD dnevno.
+        lease = self.lease(kind='finansijski', start=date(2025,10,1), end=date(2026,3,31))
+        LeaseInterest.objects.create(lease=lease, year=2025, interest_amount=D('9200'))
+        LeaseInterest.objects.create(lease=lease, year=2026, interest_amount=D('9000'))
+        self.assertEqual(self.row(date(2025,10,1), date(2026,3,31))['interest'], 18200)
+        self.assertEqual(self.row()['interest'], 3100)  # januar 2026
 
-    def test_contract_period_overlap_rejected(self):
-        lease = self.lease()
-        LeaseChargePeriod.objects.create(lease=lease, start=self.start, end=self.end, amount=100, basis='total', evidence='Test')
-        with self.assertRaises(ValidationError):
-            LeaseChargePeriod.objects.create(lease=lease, start=self.end, end=self.end, amount=100, basis='monthly', evidence='Test')
 
     def test_downtime_is_not_an_analysis_requirement(self):
         VehicleDowntime.objects.create(vehicle=self.car, start=self.start, end=date(2026,1,3), reason='Kvar')
@@ -614,11 +614,6 @@ class CostTabLayoutTests(EconomicsFixture):
 
     def test_lease_shows_monthly_rate_and_remaining(self):
         lease = self.lease(start=date(2026, 1, 1), end=date(2026, 12, 31))
-        VehicleHolding.objects.filter(vehicle=self.car).delete()
-        VehicleHolding.objects.create(vehicle=self.car, basis='contract', start_date=self.start,
-                                      end_date=lease.end_date, lease=lease)
-        LeaseChargePeriod.objects.create(lease=lease, start=date(2026, 1, 1), end=date(2026, 12, 31),
-                                         amount=D('31000'), basis='monthly', evidence='Aneks 1')
 
         row = self.open_costs().context['economics']['leases'][0]
 

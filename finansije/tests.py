@@ -317,7 +317,7 @@ class ReportTests(TestCase):
     def test_overview_only_filters_period_and_links_keep_selected_dates(self):
         response = self.client.get(reverse("finansije:dashboard"), dict(self.params, center="42", kind="expense"))
         self.assertNotContains(response, 'class="finance-filter-grid"')
-        self.assertNotContains(response, '<table')
+        self.assertNotContains(response, 'id="FinanceReportTable"')  # pregled ima samo tabelu centara sa ZT
         self.assertEqual(response.context["period_from"], date(2026, 2, 1))
         self.assertContains(response, 'name="date_from"')
         self.assertEqual(response.context["totals"]["revenue"], Decimal("200"))
@@ -501,7 +501,7 @@ class ReportTests(TestCase):
 
     def test_account_link_matches_exact_account(self):
         save_entry(number=7, account="610001", credit=Decimal("777"))
-        response = self.client.get(reverse("finansije:report"), dict(self.params, group="account"))
+        response = self.client.get(reverse("finansije:report"), dict(self.params, group="account", nivo="5"))
         row = next(r for r in response.context["rows"] if r["code"] == "61000")
         detail = self.client.get(row["ledger_url"])
         self.assertEqual(detail.context["totals"]["revenue"], Decimal("200"))

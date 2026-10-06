@@ -223,25 +223,14 @@ Važenje dodele traje **do dana pre sledeće dodele**. [P]
 Dnevno se osvežava iz `dbo.sif_pos_trenutno` (`regbr`, `sifpos`); nova dodela se upisuje
 **samo ako se razlikuje od poslednje**. [P]
 
-#### `fleet_vehicleholding` — osnov raspolaganja vozilom
+#### Osnov raspolaganja — iz ugovora (do 05.10.2026. `fleet_vehicleholding`)
 
-| Kolona | Značenje |
-|---|---|
-| `basis` | `owned` (vlasništvo IMS) ili `contract` (korišćenje po ugovoru) |
-| `start_date`, `end_date` | Period (uključivo); `end_date` prazan = još traje |
-| `lease_id` | Obavezan za `contract` |
-| `financing` | `own_funds` ili `credit` — samo za vlasništvo IMS |
-| `financing_contract_id` | Samo uz `credit` |
-| `evidence`, `note` | Osnov promene |
-
-Kontrole [P]:
-
-1. Kraj ne sme biti pre početka (i kao `CheckConstraint` u bazi).
-2. Za `contract`: ugovor mora pripadati **tom** vozilu, a period raspolaganja mora biti
-   **unutar** perioda ugovora.
-3. Za `owned`: ne sme se birati ugovor o korišćenju.
-4. Ugovor o finansiranju samo uz `credit`.
-5. **Periodi se ne smeju preklapati** — provera uz `select_for_update()` nad vozilom.
+Raspolaganje se ne vodi u posebnoj tabeli: dok važi ugovor iz `fleet_lease`, vozilo se koristi po
+ugovoru; bez važećeg ugovora vozilo je u vlasništvu IMS (`fleet/support/analysis_defaults.py: holding_at`).
+Finansiranje nabavke je na vozilu: `fleet_vehicle.financing` (`own_funds` / `credit`) i
+`financing_contract_id` (samo uz kredit). Migracija `0090_raspolaganje_iz_ugovora` prenela je
+finansiranje i dokaze sa nekadašnjeg `fleet_vehicleholding` (23 kopije ugovora + 1 vlasništvo) i obrisala
+tu tabelu i praznu `fleet_leasechargeperiod`.
 
 #### `fleet_lease` — lizing / najam
 
@@ -1030,7 +1019,6 @@ ni ručnim upisom kroz aplikaciju. [P]
 
 | Tabela | Pravilo |
 |---|---|
-| `fleet_vehicleholding` | `end_date >= start_date` ili prazno |
 | `fleet_jobcode` | Jedno vozilo ne može imati dve dodele istog datuma |
 | `hr_annualleavedecision` | `end_date >= start_date` |
 | `hr_sickleave` | `end_date >= start_date` ili prazno |

@@ -125,7 +125,7 @@ class AdditionalOverviewTests(TestCase):
         self.assertEqual(finance_sidebar_section(request),'jobs')
         response=self.client.get(reverse('finansije:report'),self.params)
         self.assertNotContains(response,'data-finance-section="additional"')
-        self.assertContains(response,'Izvezi u Excel',count=2)
+        self.assertContains(response,'title="A4 strana za štampu',count=2)  # Excel i PDF u obe kartice (od 05.10.2026.)
 
     def test_restricted_finance_role_cannot_read_people_and_invalid_center_reads_nothing(self):
         user=get_user_model().objects.create_user('additional-limited',allowed_center_codes='41')

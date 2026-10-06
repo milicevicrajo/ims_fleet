@@ -3,14 +3,17 @@
 > **Za koga je ovo poglavlje:** arhivska služba, pisarnica i programeri.
 > Status tvrdnji: **[P]** potvrđeno kodom, **[Z]** zaključeno, **[N]** nepotvrđeno.
 > Plan celog modula (overa, čuvanje, izlučivanje): [`plan-arhive-overe-i-cuvanja.md`](../../plan-arhive-overe-i-cuvanja.md).
+> Važeći interni akt: Pravilnik o načinu evidentiranja, klasifikovanja, arhiviranja i čuvanja arhivske građe i
+> dokumentarnog materijala (br. 20-16153 od 07.12.2021, izmena 24.02.2023) — poređenje sa planom u odeljku 4.5 plana.
 
 ---
 
 ## 1. Šta postoji (od 01.10.2026.) [P]
 
 Prvi deo plana, **faza 1**: šifarnik Liste kategorija i delovodnik sa pisarnicom. Modul radi
-**uporedo** sa sadašnjim programom za delovodnik, kao probni rad. Prelazak je predviđen za
-01.01.2027. (plan, odeljak 12).
+**uporedo** sa sadašnjim načinom vođenja delovodnika (programa za delovodnik nema), kao probni rad.
+Elektronski delovodnik počinje 01.01.2027. od broja 1, bez uvoza ranijih godina (plan, odeljak 12; O-2 zatvoreno
+05.10.2026.).
 
 | Ekran | Adresa | Šta radi |
 |---|---|---|
@@ -30,14 +33,14 @@ Dozvole su imena ruta (`arhiva:delovodnik`, `arhiva:pisarnica`, `arhiva:predmet_
 | Pravilo | Kako radi |
 |---|---|
 | Ko daje broj | Samo `arhiva/services/delovodnik.py: zavedi()`. Forma samo prikuplja podatke. |
-| Format | Iz podešavanja: `ARHIVA_FORMAT_BROJA = "{centar}-{broj}"`, `ARHIVA_FORMAT_PODBROJA = "{osnovni}/{podbroj}"` (`ims_erp/settings/base.py`). Podrazumevano `43-15238` i `43-15238/2`, kao brojevi zahteva u Kadrovima. Format je još otvorena odluka (plan, O-1); promena je samo u podešavanjima. |
+| Format | Iz podešavanja: `ARHIVA_FORMAT_BROJA = "{centar}-{broj}"`, `ARHIVA_FORMAT_PODBROJA = "{osnovni}/{podbroj}"` (`ims_erp/settings/base.py`). Podrazumevano `43-15238` i `43-15238/2`, kao brojevi zahteva u Kadrovima. **Odlučeno 05.10.2026. (plan, O-1): ide postojeći način brojanja** — jedan niz osnovnih brojeva za ceo Institut po godini, uz oznaku OJ; nema niza po OJ. |
 | Niz | Jedan niz za ceo Institut, za kalendarsku godinu (`EvidencionaKnjiga` + `BrojacKnjige`). Nova godina počinje od 1. |
 | Izbor OJ u pisarnici | Grupisan po centrima: „ceo centar”, pa njegove OJ. Naziv OJ je naziv iz registra, a kada ga registar nema, isti **predlog naziva kao u stablu organizacije** (`organizacija.services.tree.predlog_naziva_jedinice`), pa naziv iz kadrovske evidencije, pa „bez naziva u registru” (`arhiva/oj.py`). U registar se ništa ne upisuje. Naučni projekti (`3-…`) se ne nude. |
 | Centar u broju | Oznaka centra glavne OJ predmeta, iz registra organizacije: centar daje svoju šifru, OJ šifru nadređenog centra. Na šifru posla se ne zavodi. Oznaka se pamti na predmetu (`oznaka_centra`). |
 | Istovremeni upis | Red brojača se zaključava (`select_for_update`, na SQL Serveru UPDLOCK). Unique ograničenje na (knjiga, osnovni broj) i (knjiga, delovodni broj) je druga linija zaštite. **Ne koristi se `MAX()+1`.** |
 | Podbroj | Osnovni akt je podbroj 1 i nosi broj predmeta. Odgovori i dopisi su `/2`, `/3` … Predmet se zaključava dok se računa podbroj. |
 | Storno | Pogrešan upis se ne briše: status „Storniran", razlog, ko i kada. Broj se ne koristi ponovo. U storniran predmet se ne upisuju novi akti. |
-| Zaključenje knjige | `zakljuci_knjigu()` upisuje broj upisa i službenu zabelešku. Posle toga upis nije moguć. Knjiga uvezena iz ranijeg programa (`istorijska`) je samo za čitanje. Ekran za zaključenje još ne postoji. |
+| Zaključenje knjige | `zakljuci_knjigu()` upisuje broj upisa i službenu zabelešku. Posle toga upis nije moguć. Knjiga označena kao `istorijska` (uvezena ranija evidencija) je samo za čitanje; uvoz ranijih godina nije predviđen (O-2). Ekran za zaključenje još ne postoji. |
 
 ---
 

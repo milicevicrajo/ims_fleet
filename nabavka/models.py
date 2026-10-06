@@ -1129,6 +1129,16 @@ class FiskalniRacun(models.Model):
     # za njega; knjigovodstvo ga označava „proknjiženo”. Proknjižen račun se ne menja i ne briše.
     putni_nalog = models.ForeignKey("fleet.PutniNalog", on_delete=models.SET_NULL, null=True, blank=True,
                                     related_name="fiskalni_racuni", verbose_name=_("Putni nalog"))
+    # Ista tabela, odvojeni prikazi (od 05.10.2026.): račun na putnom nalogu vidi se samo u Isplatama
+    # (Putni nalozi – Fiskalni računi). Bez putnog naloga račun pripada evidenciji iz koje je učitan:
+    # Nabavka ili Isplate → Ostali fiskalni računi (gotovinski obračun). Skinut sa naloga vraća se u nju.
+    class Evidencija(models.TextChoices):
+        NABAVKA = "nabavka", _("Nabavka")
+        GOTOVINA = "gotovina", _("Ostali fiskalni računi (gotovinski obračun)")
+
+    # `db_default`: i kod koji još ne zna za polje (server pre isporuke) upisuje Nabavku, umesto NULL greške.
+    evidencija = models.CharField(max_length=10, choices=Evidencija.choices, default=Evidencija.NABAVKA,
+                                  db_default=Evidencija.NABAVKA, db_index=True, verbose_name=_("Evidencija"))
     proknjizeno = models.BooleanField(default=False, db_index=True, verbose_name=_("Proknjiženo"))
     proknjizio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name="+", verbose_name=_("Proknjižio"))

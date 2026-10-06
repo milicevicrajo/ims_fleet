@@ -52,7 +52,7 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 |---|---|
 | **Vozila** | Tehnički podaci, slike, čarobnjak za unos novog vozila, otpis i vraćanje u upotrebu |
 | **Dokumenta** | Saobraćajne dozvole sa istorijom tablica, tenderska dokumentacija, izvoz u ZIP |
-| **Raspolaganje** | Osnov raspolaganja (vlasništvo ili ugovor), lizing i najam, kamate |
+| **Raspolaganje** | Ugovori o lizingu i najmu (iz njih sledi osnov raspolaganja), kamate; finansiranje nabavke na vozilu |
 | **Šifre posla** | Istorijske dodele vozila organizacionoj jedinici |
 | **Osiguranje** | Polise, knjiženja osiguranja, dopuna nedovršenih zapisa, pregled isteka |
 | **Gorivo** | Transakcije NIS i OMV, fakture goriva, prosečna potrošnja, izveštaji po šifri posla |
@@ -81,7 +81,7 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 | Spisak vozila | `/vozila/` | DataTables preko AJAX-a |
 | **Unos novog vozila** | `/vozila/novo/` | **Čarobnjak u koracima** |
 | Detalj vozila | `/vozila/<id>/` | Kartice: pregled, dokumenti, raspolaganje, korišćenje, kilometraža, analitika |
-| Osnov raspolaganja | `/vozila/<id>/osnov/novo/` | Vlasništvo ili ugovor |
+| Osnov raspolaganja | Detalj vozila → Raspolaganje i polise | Od 05.10.2026. **samo kroz ugovore**: dok ugovor o lizingu / najmu važi, vozilo se koristi po ugovoru, inače je u vlasništvu IMS. Promena osnova je „Dodaj ugovor” ili „Završi” (`/zakupi/izmeni/<id>/?zavrsi=1` — poslednji dan ugovora, otkup ili vraćanje). Finansiranje nabavke (sopstvena sredstva / kredit) je na vozilu |
 | Tenderska dokumentacija | `/vozila/<id>/tenderska-dokumentacija/` | Preuzimanje ZIP datoteke |
 | Saobraćajne dozvole | `/saobracajne-dozvole/` | Istorija tablica |
 | Šifre poslova (dodele) | `/sifre-poslova/` | Istorijske dodele |
@@ -96,6 +96,7 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
 | Ekran | Adresa |
 |---|---|
 | Lizing i najam | `/zakupi/` |
+| Kamate finansijskog lizinga (od 05.10.2026.) | `/zakupi/<id>/kamate/` | Stvarna kamata po kalendarskoj godini ugovora; dozvola `lease_interest_update` izvedena iz `lease_update` |
 | Polise | `/polise/` |
 | **Polise za dopunu** | `/polise/nedovrseno/` |
 | **Polise pred istekom** | `/polise/istek/` |
@@ -327,7 +328,6 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 | `fleet_vehicle` | Vozilo | `chassis_number` (broj šasije) |
 | `fleet_trafficcard` | Saobraćajna dozvola, istorija tablica | — |
 | `fleet_jobcode` | **Istorijska dodela vozila OJ** | `(vehicle, assigned_date)` |
-| `fleet_vehicleholding` | Osnov raspolaganja, periodi bez preklapanja | — |
 | `fleet_lease`, `fleet_leaseinterest` | Lizing i kamata | `(year, lease)` |
 | `fleet_policy` | Polisa osiguranja | `invoice_id` |
 | `fleet_insurance`, `fleet_draftinsurance` | Knjiženja osiguranja | `(god, sif_vrs, br_naloga, stavka, knt)` |
@@ -407,7 +407,7 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 | Rute i dozvole | [`fleet/urls.py`](../../../fleet/urls.py) |
 | **Obračuni goriva** | [`fleet/support/fuel.py`](../../../fleet/support/fuel.py) |
 | **Nova analitika i ekonomske procene** | [`fleet/services/economics.py`](../../../fleet/services/economics.py), [`fleet/economics_models.py`](../../../fleet/economics_models.py) |
-| Nasleđeni trošak/km i pragovi — radi kompatibilnosti | [`fleet/support/dashboard.py`](../../../fleet/support/dashboard.py), [`fleet/support/analytics.py`](../../../fleet/support/analytics.py) |
+| Pragovi troška po km (nasleđeno; `dashboard.py` uklonjen 05.10.2026.) | [`fleet/support/analytics.py`](../../../fleet/support/analytics.py) |
 | Kilometraža | [`fleet/support/vehicle_mileage.py`](../../../fleet/support/vehicle_mileage.py) |
 | Održavanje | [`fleet/support/vehicle_maintenance.py`](../../../fleet/support/vehicle_maintenance.py) |
 | Presek stanja | [`fleet/support/fleet_snapshot.py`](../../../fleet/support/fleet_snapshot.py) |
@@ -453,7 +453,7 @@ ispravke i provere. [P]
 |---|---|
 | **Kadrovi** | Zaposleni na putnom nalogu i zaduženju vozila |
 | **Nabavka** | Kvar → predmet nabavke; EUF fakture → polise i dokazi o održavanju |
-| **Ugovori** | Ugovor o lizingu (`Lease.contract`) i o finansiranju (`VehicleHolding.financing_contract`) |
+| **Ugovori** | Ugovor o lizingu (`Lease.contract`) i o finansiranju (`Vehicle.financing_contract`) |
 | **Finansije** | Vozila i zaduženja na šifri posla; trošak zarada |
 | **Isplate** | Putni nalozi sa akontacijom → virman |
 | **Administracija** | Organizacione jedinice i centri |
@@ -500,10 +500,10 @@ ispravke i provere. [P]
 | **Format tablica** | `TrafficCard` | `AA999-AA` ili `AA9999-AA` |
 | **Tablica kod drugog vozila** | `TrafficCard.clean()` | *„Ove tablice su već povezane sa drugim vozilom.“* |
 | Datum izdavanja u budućnosti | `TrafficCard.clean()` | Odbija se |
-| **Preklapanje osnova raspolaganja** | `VehicleHolding.clean()` | *„Period se preklapa… Najpre završite prethodni period.“* |
-| Period raspolaganja izvan ugovora | `VehicleHolding.clean()` | Odbija se |
-| Ugovor ne pripada vozilu | `VehicleHolding.clean()` | Odbija se |
-| Finansiranje samo za vlasništvo IMS | `VehicleHolding.clean()` | Odbija se |
+| **Preklopljeni ugovori** (dva važeća istog dana) | `holding_at()` | Osnov „Preklopljeni ugovori”; ugovorni trošak za te dane se ne obračunava |
+| Ugovor se ne premešta na drugo vozilo | `LeaseForm.clean()` | Odbija se |
+| Ugovor o finansiranju samo uz kredit | `Vehicle.clean()` | Odbija se |
+| **Ugovor u stranoj valuti** (od 05.10.2026.) | `LeaseForm`, `VehicleBasisForm` (`fleet/forms/ugovor.py`) | Povezuje se; iznos naknade je obavezan **u RSD** (*„Ugovor je u EUR. Unesite iznos naknade u dinarima…“*), ispod iznosa napomena o valuti. Obračun ne preračunava kurs. Ugovor se bira pretragom (select2) |
 | **Jedna dodela po vozilu i danu** | `JobCode` | Kontrola u bazi |
 | Broj putnog naloga | `PutniNalog.generate_order_number()` | *„Nedostaje početni broj za izabrani centar/godinu.“* |
 | Tablica kod više vozila | `TrafficCard.for_plate()` | **Namerno odbija da pogađa** |

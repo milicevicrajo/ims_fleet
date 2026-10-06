@@ -1,24 +1,20 @@
 import datetime
-import importlib
 import tempfile
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
-from types import SimpleNamespace
 
-from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import OrganizationalUnit
 from hr.models import Employee
 from ugovori.models import Contract, ContractType
-from .models import Vehicle, TrafficCard, VehicleHolding, Lease, JobCode
+from .models import Vehicle, TrafficCard, Lease, JobCode
 from .forms.vehicles import TrafficCardForm
 from .forms.onboarding import VehicleTechnicalForm, VehicleBasisForm
 from .forms.onboarding import VehicleIdentityForm
@@ -83,41 +79,6 @@ class TrafficCardHistoryTests(TestCase):
             card(vehicle(), issued=datetime.date.today() + datetime.timedelta(days=2))
 
 
-class VehicleHoldingTests(TestCase):
-    def test_overlap_requires_closing_previous_period(self):
-        car = vehicle()
-        holding = VehicleHolding.objects.create(vehicle=car, basis='owned', start_date=datetime.date(2020, 1, 1))
-        with self.assertRaises(ValidationError):
-            VehicleHolding.objects.create(vehicle=car, basis='owned', start_date=datetime.date(2022, 1, 1))
-        holding.end_date = datetime.date(2021, 12, 31)
-        holding.save()
-        VehicleHolding.objects.create(vehicle=car, basis='owned', start_date=datetime.date(2022, 1, 1))
-        self.assertEqual(car.holdings.count(), 2)
-
-    def test_contract_must_belong_to_same_vehicle(self):
-        car, other = vehicle(), vehicle('2')
-        lease = Lease.objects.create(vehicle=other, partner_code='1', partner_name='Test', contract_number='1', current_payment_amount=100, start_date=datetime.date(2020, 1, 1), end_date=datetime.date(2022, 1, 1))
-        with self.assertRaises(ValidationError):
-            VehicleHolding.objects.create(vehicle=car, basis='contract', lease=lease, start_date=lease.start_date, end_date=lease.end_date)
-
-    def test_migration_copies_only_unambiguous_information(self):
-        car, conflicted, owned_unknown = vehicle(), vehicle('2'), vehicle('3')
-        first = card(car)
-        TrafficCard.objects.filter(pk=first.pk).update(homologation_number='HOM-A')
-        a, b = card(conflicted, plate='BG456-BB'), card(conflicted, '2', 'BG456-BB')
-        TrafficCard.objects.filter(pk=a.pk).update(homologation_number='HOM-B')
-        TrafficCard.objects.filter(pk=b.pk).update(homologation_number='HOM-C')
-        Lease.objects.create(vehicle=car, partner_code='1', partner_name='Test', contract_number='1', current_payment_amount=100, start_date=datetime.date(2020, 1, 1), end_date=datetime.date(2022, 1, 1))
-        migration = importlib.import_module('fleet.migrations.0074_vehicle_onboarding_data')
-        migration.copy_unambiguous_data(apps, SimpleNamespace(connection=connection))
-        car.refresh_from_db()
-        conflicted.refresh_from_db()
-        self.assertEqual(car.homologation_number, 'HOM-A')
-        self.assertEqual(conflicted.homologation_number, '')
-        self.assertEqual(car.holdings.count(), 1)
-        self.assertFalse(owned_unknown.holdings.exists())
-
-
 class VehicleWizardTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_superuser(username='wizard', password='test-password', email='wizard@example.test')
@@ -170,7 +131,9 @@ class VehicleWizardTests(TestCase):
         self.assertIsNone(car.inventory_number)
         self.assertIsNone(car.purchase_value)
         self.assertEqual(car.color, 'Bela')
-        self.assertEqual(car.holdings.get().basis, 'owned')
+        # Vlasništvo nije poseban zapis: bez ugovora, sa finansiranjem i datumom nabavke na vozilu.
+        self.assertFalse(car.leases.exists())
+        self.assertEqual((car.financing, car.purchase_date), ('own_funds', datetime.date(2020, 1, 1)))
         self.assertFalse(car.traffic_cards.exists())
         self.assertEqual(self.step(5, {}).url, result.url)
         self.assertEqual(Vehicle.objects.count(), 1)
@@ -188,10 +151,10 @@ class VehicleWizardTests(TestCase):
     def test_rental_creates_lease_and_period_without_purchase_value(self):
         self.prepare(basis={'basis': 'contract', 'start_date': '01.01.2020', 'end_date': '31.12.2026', 'partner_code': '10', 'partner_name': 'Najmodavac', 'lease_type': 'dugorocni', 'contract_number': 'UG-1', 'current_payment_amount': '10000', 'payment_basis': 'monthly'})
         self.assertEqual(self.step(5, {}).status_code, 302)
-        holding = VehicleHolding.objects.get()
-        self.assertEqual(holding.lease.contract_number, 'UG-1')
-        self.assertIsNone(holding.vehicle.purchase_value)
-        self.assertEqual(holding.financing, '')
+        lease = Lease.objects.get()
+        self.assertEqual(lease.contract_number, 'UG-1')
+        self.assertIsNone(lease.vehicle.purchase_value)
+        self.assertEqual(lease.vehicle.financing, '')
 
     def test_upload_survives_steps_and_is_cleaned_after_commit(self):
         self.prepare(document={'add_document': 'on', 'registration_number': 'BG123-AA', 'issue_date': '01.01.2020', 'traffic_card_number': '1', 'serial_number': '1', 'owner': 'IMS', 'traffic_card_pdf': SimpleUploadedFile('card.pdf', b'%PDF-1.4 test', content_type='application/pdf')})
@@ -208,7 +171,7 @@ class VehicleWizardTests(TestCase):
             response = self.step(5, {})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Vehicle.objects.count(), 0)
-        self.assertEqual(VehicleHolding.objects.count(), 0)
+        self.assertEqual(Lease.objects.count(), 0)
         self.assertEqual(TrafficCard.objects.count(), 0)
         self.assertFalse(any(p.is_file() for p in Path(self.media.name).rglob('*')))
         self.assertEqual(self.step(5, {}).status_code, 302)
@@ -288,9 +251,8 @@ class VehicleWizardTests(TestCase):
         contract = Contract.objects.create(contract_type=kind, contract_number='K-1', title='Kredit za vozilo', contract_date=datetime.date(2020, 1, 1))
         self.prepare(basis={'basis': 'owned', 'start_date': '01.01.2020', 'financing': 'credit', 'financing_contract': contract.pk, 'purchase_value': '100000'})
         self.assertEqual(self.step(5, {}).status_code, 302)
-        holding = VehicleHolding.objects.get()
-        self.assertEqual(holding.financing_contract, contract)
-        self.assertEqual(holding.basis, 'owned')
+        car = Vehicle.objects.get()
+        self.assertEqual((car.financing, car.financing_contract), ('credit', contract))
         self.assertFalse(Lease.objects.exists())
 
     def test_assignment_and_employee_are_created_with_vehicle(self):

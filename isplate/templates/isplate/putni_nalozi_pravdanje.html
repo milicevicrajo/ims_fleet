@@ -23,7 +23,7 @@ Isplate → Putni nalozi – pravdanje: DataTables (strana sa servera, isti URL 
   <div class="card-body">
     <form method="get" class="isp-filter" id="ispFilter">
       <div class="row g-2 align-items-end">
-        <div class="col-12 col-sm-4 col-xl-3">
+        <div class="col-12 col-sm-4 col-lg-3">
           <label class="form-label mb-1" for="id_status">Nalozi</label>
           <select id="id_status" class="form-select" name="status">
             <option value="neopravdani" {% if filteri.status == "neopravdani" %}selected{% endif %}>Neopravdani</option>
@@ -31,15 +31,15 @@ Isplate → Putni nalozi – pravdanje: DataTables (strana sa servera, isti URL 
             <option value="svi" {% if filteri.status == "svi" %}selected{% endif %}>Svi</option>
           </select>
         </div>
-        <div class="col-6 col-sm-4 col-xl-2">
+        <div class="col-6 col-sm-4 col-lg-2">
           <label class="form-label mb-1" for="id_od">Putovanje od</label>
           <input id="id_od" class="form-control" type="date" name="od" value="{{ filteri.od }}">
         </div>
-        <div class="col-6 col-sm-4 col-xl-2">
+        <div class="col-6 col-sm-4 col-lg-2">
           <label class="form-label mb-1" for="id_do">Putovanje do</label>
           <input id="id_do" class="form-control" type="date" name="do" value="{{ filteri.do }}">
         </div>
-        <div class="col-12 col-xl d-flex flex-wrap gap-2 justify-content-end">
+        <div class="col-12 col-lg isp-akcije">
           <a class="btn btn-outline-secondary" href="{% url 'isplate:putni_nalozi_pravdanje' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
         </div>
       </div>

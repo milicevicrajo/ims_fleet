@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% comment %}
 Isplate → Putni nalozi – Fiskalni računi: računi učitani na putnim nalozima, za knjiženje.
+Isti šablon služi i za „Ostale fiskalne račune” (`ostali`): gotovinski obračun bez putnog naloga,
+sa učitavanjem čitačem QR koda; umesto kolone „Putni nalog” je „Napomena”.
 DataTables (strana sa servera, isti URL uz `draw`); zbir u zaglavlju prati filtere i pretragu.
 Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko je i kada označio.
 {% endcomment %}
@@ -10,8 +12,8 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
 
 <div class="isp-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
-    <h1><i class="mdi mdi-receipt-text-check-outline me-2" aria-hidden="true"></i>Putni nalozi – Fiskalni računi</h1>
-    <p>Fiskalni računi učitani na putnim nalozima. Štiklirajte „Proknjiženo” kada je račun proknjižen; proknjižen račun se više ne menja.</p>
+    <h1><i class="mdi {% if ostali %}mdi-cash-register{% else %}mdi-receipt-text-check-outline{% endif %} me-2" aria-hidden="true"></i>{{ title }}</h1>
+    <p>{% if ostali %}Fiskalni računi za gotovinski obračun koji se ne vezuju za putne naloge. Ne vide se u Nabavci ni na putnim nalozima.{% else %}Fiskalni računi učitani na putnim nalozima.{% endif %} Štiklirajte „Proknjiženo” kada je račun proknjižen; proknjižen račun se više ne menja.</p>
   </div>
   <div class="isp-zbir">
     <span><span id="ispZbirBroj">{{ zbir.broj }}</span> računa</span>
@@ -20,11 +22,51 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
   </div>
 </div>
 
+{% if forma %}
+{# Učitavanje kroz prozor, kao u Nabavci i na putnom nalogu; „QR kod je oštećen?” otvara ručnu proveru. #}
+<style>
+  #ispOstaliModal .modal-header { background: linear-gradient(135deg, #14395b 0%, #1f6f8b 60%, #2f8f6f 100%); color: #fff; }
+  #ispOstaliModal .modal-header .btn-close { filter: invert(1) grayscale(1) brightness(2); }
+  #ispOstaliModal .modal-body.isp-filter { background: #fff; border: 0; border-radius: 0; padding: 1rem 1.25rem; }
+  #ispOstaliRezultat .isp-rezultat { border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: .9rem; }
+  #ispOstaliRezultat .ok { background: #e7f7ef; border: 1px solid #b7e3cb; color: #0f5132; }
+  #ispOstaliRezultat .greska { background: #fdecec; border: 1px solid #f3c2c2; color: #842029; }
+  #ispOstaliRezultat .rad { background: #eef1f6; border: 1px solid #d7dde7; color: #3c4858; }
+  #ispOstaliRezultat ul { margin: 6px 0 0; padding-left: 18px; color: #7a4d00; }
+</style>
+<div class="modal fade" id="ispOstaliModal" tabindex="-1" aria-labelledby="ispOstaliNaslov" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" method="post" action="{% url 'isplate:fiskalni_ostali_ucitaj' %}" id="ispOstaliForma">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="ispOstaliNaslov"><i class="mdi mdi-qrcode-scan" aria-hidden="true"></i> Učitaj račun · ostali fiskalni računi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+      </div>
+      <div class="modal-body isp-filter">
+        <div class="mb-3"><label class="form-label" for="{{ forma.job_code.id_for_label }}">{{ forma.job_code.label }}</label>{{ forma.job_code }}</div>
+        <div class="mb-3"><label class="form-label" for="{{ forma.link.id_for_label }}">{{ forma.link.label }}</label>{{ forma.link }}
+          <div class="form-text">Postavite kursor u polje i očitajte QR kod — čitač sam pritiska Enter i račun se učitava. Prozor ostaje otvoren za sledeći račun.
+            <button type="button" class="btn btn-link btn-sm p-0 align-baseline js-fiskalni-rucno" data-forma="#ispOstaliForma"
+                    data-modal="#ispOstaliModal" data-link="#{{ forma.link.id_for_label }}"><i class="mdi mdi-qrcode-scan" aria-hidden="true"></i> QR kod je oštećen?</button></div>
+        </div>
+        <div><label class="form-label" for="{{ forma.napomena.id_for_label }}">{{ forma.napomena.label }}</label>{{ forma.napomena }}</div>
+        <div id="ispOstaliRezultat" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
+        <button type="submit" class="btn btn-primary" id="ispOstaliUcitaj"><i class="mdi mdi-upload" aria-hidden="true"></i> Učitaj</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% include "nabavka/_fiskalni_rucno.html" %}
+{% endif %}
+
 <div class="card shadow-sm mb-3">
   <div class="card-body">
     <form method="get" class="isp-filter" id="ispFilter">
       <div class="row g-2 align-items-end">
-        <div class="col-6 col-sm-3 col-xl-2">
+        <div class="col-6 col-sm-3 col-lg-2">
           <label class="form-label mb-1" for="id_knjizenje">Knjiženje</label>
           <select id="id_knjizenje" class="form-select" name="knjizenje">
             <option value="ne" {% if filteri.knjizenje == "ne" %}selected{% endif %}>Neproknjiženi</option>
@@ -32,7 +74,7 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
             <option value="sve" {% if filteri.knjizenje == "sve" %}selected{% endif %}>Svi</option>
           </select>
         </div>
-        <div class="col-6 col-sm-3 col-xl-2">
+        <div class="col-6 col-sm-3 col-lg-2">
           <label class="form-label mb-1" for="id_kupac">Kupac</label>
           <select id="id_kupac" class="form-select" name="kupac">
             <option value="">Svi</option>
@@ -40,17 +82,18 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
             <option value="drugi" {% if filteri.kupac == "drugi" %}selected{% endif %}>Nije na IMS</option>
           </select>
         </div>
-        <div class="col-6 col-sm-3 col-xl-2">
+        <div class="col-6 col-sm-3 col-lg-2">
           <label class="form-label mb-1" for="id_od">Račun od</label>
           <input id="id_od" class="form-control" type="date" name="od" value="{{ filteri.od }}">
         </div>
-        <div class="col-6 col-sm-3 col-xl-2">
+        <div class="col-6 col-sm-3 col-lg-2">
           <label class="form-label mb-1" for="id_do">Račun do</label>
           <input id="id_do" class="form-control" type="date" name="do" value="{{ filteri.do }}">
         </div>
-        <div class="col-12 col-xl d-flex flex-wrap gap-2 justify-content-end">
-          <a class="btn btn-outline-secondary" href="{% url 'isplate:fiskalni_putni_nalozi' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
-          {% if moze_izvoz %}<a class="btn btn-outline-success" id="ispIzvoz" href="{% url 'isplate:fiskalni_izvoz' %}" title="Izvoz u Excel (prema filterima i pretrazi)"><i class="mdi mdi-file-excel" aria-hidden="true"></i> Excel</a>{% endif %}
+        <div class="col-12 col-lg isp-akcije">
+          {% if forma %}<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ispOstaliModal"><i class="mdi mdi-qrcode-scan" aria-hidden="true"></i> Učitaj račun</button>{% endif %}
+          <a class="btn btn-outline-secondary" href="{{ tabela_url }}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
+          {% if moze_izvoz %}<a class="btn btn-outline-success" id="ispIzvoz" href="{{ izvoz_url }}" title="Izvoz u Excel (prema filterima i pretrazi)"><i class="mdi mdi-file-excel" aria-hidden="true"></i> Excel</a>{% endif %}
         </div>
       </div>
     </form>
@@ -62,7 +105,7 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
     <table id="FiskalniPutniNalozi" class="display compact table table-hover table-bordered align-middle w-100 isp-tabela">
       <thead>
         <tr><th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th class="text-end">Iznos</th><th>Kupac</th>
-            <th>Putni nalog</th><th>Šifra posla</th><th>Učitao</th><th class="text-center">Proknjiženo</th></tr>
+            <th>{% if ostali %}Napomena{% else %}Putni nalog{% endif %}</th><th>Šifra posla</th><th>Učitao</th><th class="text-center">Proknjiženo</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -83,17 +126,17 @@ document.addEventListener('DOMContentLoaded', function () {
     serverSide: true, processing: true, autoWidth: false, pageLength: 50,
     lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[0, 'desc']],
     search: { search: "{{ filteri.q|escapejs }}" },
-    ajax: { url: "{% url 'isplate:fiskalni_putni_nalozi' %}", type: 'GET', data: parametri },
+    ajax: { url: "{{ tabela_url }}", type: 'GET', data: parametri },
     columns: [
       { data: 'vreme', className: 'text-nowrap' }, { data: 'prodavac' }, { data: 'broj' },
       { data: 'iznos', className: 'text-end text-nowrap' }, { data: 'kupac', orderable: false },
-      { data: 'nalog' }, { data: 'sifra' }, { data: 'ucitao' },
+      { data: 'veza' }, { data: 'sifra' }, { data: 'ucitao' },
       { data: 'knjizenje', className: 'text-center' }
     ],
     columnDefs: [{ targets: 0, width: '8%' }, { targets: 1, width: '17%' }, { targets: 2, width: '13%' },
                  { targets: 3, width: '9%' }, { targets: 4, width: '8%' }, { targets: 5, width: '19%' },
                  { targets: 6, width: '8%' }, { targets: 7, width: '9%' }, { targets: 8, width: '9%' }],
-    language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: 'Račun, prodavac, PIB, nalog, zaposleni, šifra',
+    language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: '{% if ostali %}Račun, prodavac, PIB, šifra{% else %}Račun, prodavac, PIB, nalog, zaposleni, šifra{% endif %}',
       lengthMenu: 'Prikaži _MENU_ redova', info: 'Prikaz _START_ do _END_ od _TOTAL_ računa', infoEmpty: 'Nema računa',
       infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema računa za izabrane filtere',
       paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
@@ -114,6 +157,45 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   forma.addEventListener('change', function () { tabela.ajax.reload(); });
   forma.addEventListener('submit', function (e) { e.preventDefault(); tabela.ajax.reload(); });
+{% if forma %}
+  // „Učitaj račun” (ostali fiskalni računi): obrada u prozoru, tabela i zbir se osvežavaju bez ponovnog učitavanja.
+  (function () {
+    var prozor = document.getElementById('ispOstaliModal');
+    var unos = document.getElementById('ispOstaliForma');
+    var link = document.getElementById('{{ forma.link.id_for_label }}');
+    var rezultat = document.getElementById('ispOstaliRezultat');
+    var dugme = document.getElementById('ispOstaliUcitaj');
+    function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+    prozor.addEventListener('shown.bs.modal', function () { link.focus(); });
+    link.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); unos.requestSubmit ? unos.requestSubmit() : unos.dispatchEvent(new Event('submit')); }
+    });
+    unos.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!link.value.trim()) { link.focus(); return; }
+      if (!unos.elements.job_code.value) {
+        rezultat.innerHTML = '<div class="isp-rezultat greska">Izaberite šifru posla, pa pritisnite „Učitaj”. Očitani link je sačuvan u polju.</div>';
+        return;
+      }
+      dugme.disabled = true;
+      rezultat.innerHTML = '<div class="isp-rezultat rad">Obrada računa…</div>';
+      fetch(unos.action, { method: 'POST', body: new FormData(unos), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) { rezultat.innerHTML = '<div class="isp-rezultat greska"><strong>Račun nije učitan.</strong> ' + esc(d.poruka) + '</div>'; link.select(); return; }
+          var upoz = (d.upozorenja || []).map(function (u) { return '<li>' + esc(u) + '</li>'; }).join('');
+          rezultat.innerHTML = '<div class="isp-rezultat ok"><strong>' + esc(d.broj) + '</strong> · ' + esc(d.prodavac) + ' · ' +
+            esc(d.iznos) + ' din<div>' + esc(d.poruka) + '</div>' + (upoz ? '<ul>' + upoz + '</ul>' : '') + '</div>';
+          link.value = '';
+          link.focus();
+          tabela.ajax.reload(null, false);
+        })
+        .catch(function () { rezultat.innerHTML = '<div class="isp-rezultat greska">Obrada nije uspela (veza sa serverom). Pokušajte ponovo.</div>'; })
+        .finally(function () { dugme.disabled = false; });
+    });
+  })();
+{% endif %}
 
   document.getElementById('FiskalniPutniNalozi').addEventListener('change', function (e) {
     var polje = e.target.closest('.isp-knjizi');

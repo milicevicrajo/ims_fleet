@@ -1,0 +1,137 @@
+{% load l10n %}
+{% comment %}
+Analitika zaposlenih — isti sadržaj na ekranu i na A4 strani za štampu (hr/services/analitika.py).
+Grafikoni su CSS trake, pa se štampaju bez biblioteke.
+{% endcomment %}
+<style>
+  .an-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .an-kpi > div { border: 1px solid #e2e8f0; border-left: 4px solid #14395b; border-radius: 6px; padding: 9px 12px; background: #fff; break-inside: avoid; }
+  .an-kpi .l { color: #64748b; font-size: .74rem; text-transform: uppercase; letter-spacing: .03em; }
+  .an-kpi .v { color: #0f2a44; font-size: 1.45rem; font-weight: 700; line-height: 1.2; }
+  .an-kpi .s { color: #64748b; font-size: .76rem; }
+  .an-kpi .zene { border-left-color: #c2417b; } .an-kpi .muski { border-left-color: #2563a6; }
+  .an-blok { margin: 0 0 18px; break-inside: avoid; }
+  .an-blok h3 { font-size: 1.02rem; color: #14395b; margin: 0 0 2px; }
+  .an-blok .opis { color: #64748b; font-size: .78rem; margin: 0 0 8px; }
+  .an-dva { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+  .an-piramida { display: grid; grid-template-columns: 1fr 74px 1fr; gap: 5px 8px; align-items: center; font-size: .8rem; }
+  .an-piramida .zag { font-weight: 700; color: #475569; font-size: .74rem; }
+  .an-piramida .lev { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+  .an-piramida .des { display: flex; align-items: center; gap: 6px; }
+  .an-piramida .raspon { text-align: center; font-weight: 700; color: #334155; }
+  .an-traka { height: 16px; border-radius: 3px; min-width: 2px; }
+  .an-m { background: #2563a6; } .an-z { background: #c2417b; } .an-u { background: #14395b; }
+  .an-histogram { display: flex; align-items: flex-end; gap: 8px; height: 170px; border-bottom: 1px solid #94a3b8; padding: 0 4px; }
+  .an-histogram .kol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .an-histogram .stub { width: 100%; max-width: 54px; background: linear-gradient(180deg, #2f8f6f, #14395b); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .an-histogram .broj { font-size: .76rem; font-weight: 700; color: #0f2a44; margin-bottom: 2px; }
+  .an-histogram-ose { display: flex; gap: 8px; padding: 3px 4px 0; }
+  .an-histogram-ose span { flex: 1; text-align: center; font-size: .72rem; color: #475569; }
+  .an-trake { display: grid; grid-template-columns: minmax(130px, auto) 1fr 64px; gap: 5px 10px; align-items: center; font-size: .8rem; }
+  .an-trake .vrednost { text-align: right; font-weight: 700; color: #0f2a44; white-space: nowrap; }
+  .an-tabela { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  .an-tabela th { background: #14395b; color: #fff; font-weight: 700; padding: 5px 7px; text-align: left; font-size: .74rem; }
+  .an-tabela td { padding: 4px 7px; border-bottom: 1px solid #e2e8f0; }
+  .an-tabela tbody tr:nth-child(even) td { background: #f6f8fb; }
+  .an-tabela tfoot td { font-weight: 700; background: #e8f0fb; border-top: 2px solid #14395b; }
+  .an-tabela .n { text-align: right; white-space: nowrap; }
+  .an-toplota td.n { text-align: center; }
+  .an-legenda { display: flex; gap: 14px; font-size: .76rem; color: #475569; margin-top: 6px; }
+  .an-legenda i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  .an-napomena { color: #64748b; font-size: .76rem; }
+</style>
+
+{% with s=a.sazetak %}
+<div class="an-kpi">
+  <div><div class="l">Zaposlenih</div><div class="v">{{ a.ukupno }}</div><div class="s">aktivnih na dan {{ a.na_dan|date:"d.m.Y." }}</div></div>
+  <div class="zene"><div class="l">Žene</div><div class="v">{{ s.zene }}</div><div class="s">{{ s.udeo_zena|default_if_none:"—" }}% · prosečno {{ s.prosek_zene|default_if_none:"—" }} god.</div></div>
+  <div class="muski"><div class="l">Muškarci</div><div class="v">{{ s.muski }}</div><div class="s">{{ s.udeo_muski|default_if_none:"—" }}% · prosečno {{ s.prosek_muski|default_if_none:"—" }} god.</div></div>
+  <div><div class="l">Prosečna starost</div><div class="v">{{ s.prosek|default_if_none:"—" }}</div><div class="s">medijana {% if s.medijana is None %}—{% else %}{{ s.medijana|floatformat:"-1" }}{% endif %} · raspon {{ s.najmladji|default_if_none:"—" }}–{{ s.najstariji|default_if_none:"—" }}</div></div>
+  <div><div class="l">Prosečan staž u Institutu</div><div class="v">{{ s.prosek_staz|default_if_none:"—" }}</div><div class="s">godina, od datuma zaposlenja</div></div>
+  <div><div class="l">Visoka i viša sprema</div><div class="v">{{ s.udeo_visoka|default_if_none:"—" }}%</div><div class="s">{{ s.visoka }} zaposlenih, stepen VI–VIII</div></div>
+  <div><div class="l">60 i više godina</div><div class="v">{{ s.pred_penzijom }}</div><div class="s">bliže uslovima za penziju</div></div>
+</div>
+{% if s.bez_starosti or s.bez_pola %}<p class="an-napomena">Bez ispravnog datuma rođenja: {{ s.bez_starosti }}{% if s.bez_pola %} · bez upisanog pola: {{ s.bez_pola }}{% endif %} — nisu u starosnim pokazateljima.</p>{% endif %}
+{% endwith %}
+
+<div class="an-dva">
+  <section class="an-blok">
+    <h3>Starosna piramida</h3>
+    <p class="opis">Broj zaposlenih po starosnim rasponima, muškarci levo, žene desno.</p>
+    <div class="an-piramida">
+      <div class="zag" style="text-align:right">Muškarci</div><div class="zag" style="text-align:center">Godine</div><div class="zag">Žene</div>
+      {% for r in a.starosni reversed %}
+        <div class="lev"><span>{{ r.muski }}</span><div class="an-traka an-m" style="width: {{ r.sirina_muski|unlocalize }}%"></div></div>
+        <div class="raspon">{{ r.naziv }}</div>
+        <div class="des"><div class="an-traka an-z" style="width: {{ r.sirina_zene|unlocalize }}%"></div><span>{{ r.zene }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="an-blok">
+    <h3>Histogram starosti</h3>
+    <p class="opis">Ukupan broj zaposlenih po rasponima od deset godina.</p>
+    <div class="an-histogram">
+      {% for r in a.starosni %}<div class="kol"><span class="broj">{{ r.ukupno }}</span><div class="stub" style="height: {{ r.sirina|unlocalize }}%"></div></div>{% endfor %}
+    </div>
+    <div class="an-histogram-ose">{% for r in a.starosni %}<span>{{ r.naziv }}</span>{% endfor %}</div>
+  </section>
+</div>
+
+<section class="an-blok">
+  <h3>Starosna struktura po rasponima</h3>
+  <table class="an-tabela">
+    <thead><tr><th>Godine</th><th class="n">Ukupno</th><th class="n">Udeo</th><th class="n">Žene</th><th class="n">Muškarci</th><th class="n">Udeo žena</th><th class="n">Prosečna starost</th></tr></thead>
+    <tbody>{% for r in a.starosni %}<tr><td>{{ r.naziv }}</td><td class="n">{{ r.ukupno }}</td><td class="n">{{ r.udeo|default_if_none:"—" }}%</td><td class="n">{{ r.zene }}</td><td class="n">{{ r.muski }}</td><td class="n">{% if r.udeo_zena is not None %}{{ r.udeo_zena }}%{% else %}—{% endif %}</td><td class="n">{{ r.prosek|default_if_none:"—" }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td>Ukupno</td><td class="n">{{ a.sa_starosti }}</td><td class="n">100%</td><td class="n">{{ a.sazetak.zene }}</td><td class="n">{{ a.sazetak.muski }}</td><td class="n">{{ a.sazetak.udeo_zena|default_if_none:"—" }}%</td><td class="n">{{ a.sazetak.prosek|default_if_none:"—" }}</td></tr></tfoot>
+  </table>
+</section>
+
+<section class="an-blok">
+  <h3>Stručna sprema</h3>
+  <p class="opis">Stepen je izveden iz naziva zanimanja (a kad ga nema, iz škole) iz kadrovske baze — vidi napomenu ispod.</p>
+  <div class="an-trake mb-2">
+    {% for r in a.stepeni %}<div>{{ r.prikaz }}</div><div><div class="an-traka an-u" style="width: {{ r.sirina|unlocalize }}%"></div></div><div class="vrednost">{{ r.ukupno }} · {{ r.udeo }}%</div>{% endfor %}
+  </div>
+  <table class="an-tabela">
+    <thead><tr><th>Stepen</th><th>Stručna sprema</th><th class="n">Ukupno</th><th class="n">Udeo</th><th class="n">Žene</th><th class="n">Muškarci</th><th class="n">Udeo žena</th><th class="n">Prosečna starost</th><th class="n">Žene</th><th class="n">Muškarci</th></tr></thead>
+    <tbody>{% for r in a.stepeni %}<tr><td>{{ r.oznaka }}</td><td>{{ r.naziv }}</td><td class="n">{{ r.ukupno }}</td><td class="n">{{ r.udeo }}%</td><td class="n">{{ r.zene }}</td><td class="n">{{ r.muski }}</td><td class="n">{% if r.udeo_zena is not None %}{{ r.udeo_zena }}%{% else %}—{% endif %}</td><td class="n">{{ r.prosek|default_if_none:"—" }}</td><td class="n">{{ r.prosek_zene|default_if_none:"—" }}</td><td class="n">{{ r.prosek_muski|default_if_none:"—" }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<section class="an-blok">
+  <h3>Starost po stručnoj spremi</h3>
+  <p class="opis">Broj zaposlenih u svakom starosnom rasponu za svaki stepen; tamnije polje je brojnija grupa.</p>
+  <table class="an-tabela an-toplota">
+    <thead><tr><th>Stručna sprema</th>{% for n in a.rasponi_nazivi %}<th class="n">{{ n }}</th>{% endfor %}<th class="n">Ukupno</th><th class="n">Prosečna starost</th></tr></thead>
+    <tbody>{% for r in a.ukrstanje %}<tr><td>{{ r.prikaz }}</td>{% for c in r.celije %}<td class="n"{% if c.broj %} style="background: rgba(20, 57, 91, {{ c.jacina|unlocalize }}); color: {% if c.jacina > 0.45 %}#fff{% else %}#0f2a44{% endif %}"{% endif %}>{{ c.broj|default:"·" }}</td>{% endfor %}<td class="n"><strong>{{ r.ukupno }}</strong></td><td class="n">{{ r.prosek|default_if_none:"—" }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<div class="an-dva">
+  <section class="an-blok">
+    <h3>Staž u Institutu</h3>
+    <p class="opis">Godine od datuma zaposlenja u Institutu (ne ukupan radni staž).</p>
+    <table class="an-tabela">
+      <thead><tr><th>Godine staža</th><th class="n">Ukupno</th><th class="n">Udeo</th><th class="n">Žene</th><th class="n">Muškarci</th><th class="n">Prosečna starost</th></tr></thead>
+      <tbody>{% for r in a.staz %}<tr><td>{{ r.naziv }}</td><td class="n">{{ r.ukupno }}</td><td class="n">{{ r.udeo }}%</td><td class="n">{{ r.zene }}</td><td class="n">{{ r.muski }}</td><td class="n">{{ r.prosek|default_if_none:"—" }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+  <section class="an-blok">
+    <h3>Vrsta radnog odnosa</h3>
+    <p class="opis">Iz kadrovske baze (status zaposlenog).</p>
+    <table class="an-tabela">
+      <thead><tr><th>Radni odnos</th><th class="n">Ukupno</th><th class="n">Udeo</th><th class="n">Žene</th><th class="n">Muškarci</th><th class="n">Prosečna starost</th></tr></thead>
+      <tbody>{% for r in a.odnos %}<tr><td>{{ r.naziv }}</td><td class="n">{{ r.ukupno }}</td><td class="n">{{ r.udeo }}%</td><td class="n">{{ r.zene }}</td><td class="n">{{ r.muski }}</td><td class="n">{{ r.prosek|default_if_none:"—" }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+</div>
+
+<section class="an-blok">
+  <h3>Po organizacionim jedinicama</h3>
+  <table class="an-tabela">
+    <thead><tr><th>Organizaciona jedinica</th><th class="n">Ukupno</th><th class="n">Udeo</th><th class="n">Žene</th><th class="n">Muškarci</th><th class="n">Udeo žena</th><th class="n">Prosečna starost</th></tr></thead>
+    <tbody>{% for r in a.oj %}<tr><td>{{ r.naziv }}</td><td class="n">{{ r.ukupno }}</td><td class="n">{{ r.udeo }}%</td><td class="n">{{ r.zene }}</td><td class="n">{{ r.muski }}</td><td class="n">{% if r.udeo_zena is not None %}{{ r.udeo_zena }}%{% else %}—{% endif %}</td><td class="n">{{ r.prosek|default_if_none:"—" }}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<p class="an-napomena"><strong>Napomena o stručnoj spremi:</strong> kadrovska baza nema stepen spreme kao posebno polje, pa se on izvodi iz naziva zanimanja: „doktor” → VIII; „master”, „dipl.”, fakultet → VII; „strukovni”, „inženjer”, viša škola → VI; „specijalista” → V; „tehničar”, gimnazija, srednja škola → IV; zanati (bravar, mehaničar, vozač…) → III.{% if a.nerazvrstani %} Nije razvrstano: {{ a.nerazvrstani|length }} različitih zanimanja/škola — spisak je u Excelu, list „Razvrstavanje”.{% endif %}</p>

@@ -50,11 +50,15 @@ def invoice_data(entries, start, end, *, internal=False):
 
 
 def expense_data(entries, start, end, code, can_ledger):
+    from .kontni_plan import nazivi_konta
+
+    plan = nazivi_konta()
     rows = []
     for item in monthly_expenses(entries, start, end, code):
         share = cell(item["share"], number_format(item["share"], decimal_pos=2) + "%" if item["share"] is not None else "—")
         link = format_html('<a href="{}">Knjiženja</a>', item["url"]) if can_ledger else "—"
-        rows.append([cell(item["knt3"]), money(-item["amount"]), share, cell(item["count"]), cell("", link)])
+        rows.append([cell(item["knt3"]), cell(plan.get(item["knt3"]) or "—"), money(-item["amount"]), share,
+                     cell(item["count"]), cell("", link)])
     return {"data": rows}
 
 

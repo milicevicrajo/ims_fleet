@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .fiskalni_views import FiskalniPutniNaloziView, fiskalni_izvoz, fiskalni_proknjizi
+from .fiskalni_views import (FiskalniOstaliView, FiskalniPutniNaloziView, fiskalni_izvoz, fiskalni_ostali_izvoz,
+                             fiskalni_ostali_ucitaj, fiskalni_proknjizi)
 from .putni_nalozi_views import (PutniNaloziPravdanjeView, putni_nalog_opravdaj, putni_nalog_racun_dodaj,
                                  putni_nalog_racun_ukloni, putni_nalog_racuni)
 from .views import IsplataNeoporezovanihView, IsplateConverterView
@@ -19,4 +20,7 @@ urlpatterns = [
     path("fiskalni-racuni/", FiskalniPutniNaloziView.as_view(), name="fiskalni_putni_nalozi"),
     path("fiskalni-racuni/izvoz/", fiskalni_izvoz, name="fiskalni_izvoz"),
     path("fiskalni-racuni/<int:pk>/proknjizeno/", fiskalni_proknjizi, name="fiskalni_proknjizi"),
+    path("ostali-fiskalni-racuni/", FiskalniOstaliView.as_view(), name="fiskalni_ostali"),
+    path("ostali-fiskalni-racuni/ucitaj/", fiskalni_ostali_ucitaj, name="fiskalni_ostali_ucitaj"),
+    path("ostali-fiskalni-racuni/izvoz/", fiskalni_ostali_izvoz, name="fiskalni_ostali_izvoz"),
 ]

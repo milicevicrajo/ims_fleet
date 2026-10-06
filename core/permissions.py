@@ -438,6 +438,7 @@ def sync_permission_codes():
     for source_code, target_codes in {
         'vehicle_update': ('vehicle_analysis_settings', 'vehicle_assessment_create'),
         'vehicle_detail': ('vehicle_assessment_detail', 'fleet_analytics', 'center_statistics'),
+        'lease_update': ('lease_interest_update',),
     }.items():
         role_ids = list(RolePermission.objects.filter(permission__code=source_code).values_list('role_id', flat=True))
         for target_code in target_codes:

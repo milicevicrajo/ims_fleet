@@ -45,12 +45,13 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 
 | Celina | Šta obuhvata |
 |---|---|
-| **Finansijski pregled** | Prihodi, rashodi i rezultat po centrima i poslovima, sa grafikonima i rang-listama |
-| **Detaljni izveštaji** | Po šiframa posla, kontima, mesecima i centrima |
+| **Finansijski pregled** | Prihodi, rashodi i rezultat po centrima i poslovima, sa grafikonima i rang-listama; od 05.10.2026. i **rezultat po centrima bez i posle troškova zajedničkih službi**, u tri grupe (profitni, zajedničke službe, ostali) sa usklađenjem ([6.1.22](../obracuni/06-01-finansije.md)) |
+| **Detaljni izveštaji** | Po šiframa posla, kontima, mesecima i centrima; konta sa **nazivima iz kontnog plana** i **otvaranjem po dubini** (klasa → grupa → sintetika → konto, [6.1.23](../obracuni/06-01-finansije.md)) |
 | **Zbirna tabela šifara posla** | 11 kolona: prihod, rashod, P−R, ZT, P−R−ZT, priliv, odliv, neto gotovina |
 | **Dodatne analize** | Posebna kartica uz zbirnu tabelu: isti iznosi, četiri odnosa prema prihodima, prosečan broj ljudi i osam iznosa po čoveku; poseban Excel izvoz aktivne kartice |
 | **Kartica (detalj) posla** | Osam tabova sa dokumentima i evidencijama |
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
+| **Izvoz** | Od 05.10.2026. svaki ekran (pregled, izveštaji, šifre posla, knjiženja, detalj šifre) ima **Excel** i **PDF** (A4 strana za štampu sa zaglavljem Instituta) — [6.1.24](../obracuni/06-01-finansije.md) |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |
 
 Od 02.10.2026. bočni meni nema stavku **Dodatne analize**; kartica se otvara
@@ -85,7 +86,7 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | Zbirna tabela šifara posla | `/finansije/izvestaji/?group=job` |
 | **Kartica posla** | `/finansije/posao/?job=413111&year=2026&month=8` |
 | Knjiženja | `/finansije/knjizenja/` |
-| Izvoz u Excel | `/finansije/izvoz/` |
+| Izvoz u Excel / PDF | `/finansije/izvoz/` (`report=overview`, `ledger`, `job_card`; `format=pdf`) |
 | **Sinhronizacija** | `/finansije/sinhronizacija/` |
 
 ---
@@ -164,6 +165,9 @@ Detaljno: [4.6. Finansijska analitika](../04-baza-podataka.md#46-finansijska-ana
 | Zaposleni i zarade | [`services/job_people.py`](../../../finansije/services/job_people.py) |
 | **Procedura nalog_z** | [`services/nalog_z.py`](../../../finansije/services/nalog_z.py) |
 | Grafikoni | [`services/charts.py`](../../../finansije/services/charts.py) |
+| **Rezultat po centrima sa ZT** | [`services/pregled_centara.py`](../../../finansije/services/pregled_centara.py) |
+| Nazivi konta, otvaranje po dubini | [`services/kontni_plan.py`](../../../finansije/services/kontni_plan.py) |
+| Izvoz Excel / PDF | [`services/izvoz.py`](../../../finansije/services/izvoz.py), [`izvoz_ekrani.py`](../../../finansije/services/izvoz_ekrani.py) |
 
 Testovi: **121 test** u 7 fajlova. [P]
 
@@ -209,7 +213,7 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 |---|---|
 | `finansije:dashboard` | Pregled, izveštaji, kartica posla |
 | `finansije:ledger` | Knjiženja |
-| `finansije:export` | Izvoz u Excel |
+| `finansije:export` | Izvoz u Excel i PDF (svi ekrani; uz to treba i pravo na sam ekran) |
 | `finansije:sync_status` | Ekran sinhronizacije |
 | **`finansije:view_all`** | **Ceo obuhvat firme** |
 

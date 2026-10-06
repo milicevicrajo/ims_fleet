@@ -2,10 +2,10 @@
 
 MODULES = {
  'fleet': ('Flota', 'Vozila, garaža, gorivo, putni nalozi i ekonomika', '#277b75', [
-   ('vozila','Vozila i dodele','Vehicle|TrafficCard|JobCode|Incident', ['VehicleAnalysis','VehicleEconomic','VehicleDowntime','VehicleEvidence','VehicleTravel','VehicleHolding']),
+   ('vozila','Vozila i dodele','Vehicle|TrafficCard|JobCode|Incident', ['VehicleAnalysis','VehicleEconomic','VehicleDowntime','VehicleEvidence','VehicleTravel']),
    ('gorivo','Gorivo i potrošnja','Fuel|TransactionOMV|TransactionNIS',[]),
    ('garaza','Garaža i održavanje','Service|Kvar|Requisition|Procurement',[]),
-   ('ugovori','Zakup i osiguranje','Lease|Policy|Insurance|Holding|Kasko|Konta',[]),
+   ('ugovori','Zakup i osiguranje','Lease|Policy|Insurance|Kasko|Konta',[]),
    ('nalozi','Putni nalozi','PutniNalog|VehicleTravelOrder',[]),
    ('analitika','Ekonomske analize','VehicleAnalysis|VehicleEconomic|VehicleDowntime|VehicleEvidence',[])]),
  'hr': ('Kadrovi', 'Zaposleni, radno vreme, odsustva, zahtevi i rešenja', '#3778a3', [

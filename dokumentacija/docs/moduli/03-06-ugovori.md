@@ -150,7 +150,7 @@ Detaljno: [4.9. Ugovori](../04-baza-podataka.md#49-ugovori--ugovori). **8 tabela
 | Modul | Veza |
 |---|---|
 | **Nabavka** | Partner kao dobavljač; osnovni i kupovni ugovor uz predmet |
-| **Flota** | Ugovor o lizingu (`Lease.contract`), ugovor o finansiranju (`VehicleHolding.financing_contract`) |
+| **Flota** | Ugovor o lizingu (`Lease.contract`), ugovor o finansiranju (`Vehicle.financing_contract`) |
 | **Mobilni** | Ugovor uz paket (`MobilePackage.contract`) |
 | **Menice** | Veza ugovora i menice |
 | **Potraživanja** | `FinancePartnerIdentity.partner` → partner |

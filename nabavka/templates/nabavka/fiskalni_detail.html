@@ -103,6 +103,11 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
   </div>
 </div>
 
+{% if van_nabavke %}
+  <div class="alert alert-info"><i class="mdi mdi-information-outline"></i>
+    Ovaj račun se vodi u Isplatama ({{ van_nabavke }}) i ne prikazuje se na spisku fiskalnih računa Nabavke.
+  </div>
+{% endif %}
 {% if upozorenja %}
   <div class="alert alert-warning"><i class="mdi mdi-alert"></i>
     {% for u in upozorenja %}{{ u }}{% if not forloop.last %}<br>{% endif %}{% endfor %}

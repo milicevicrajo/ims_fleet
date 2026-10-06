@@ -219,6 +219,8 @@
 
     <!-- Select2 (lokalno, offline) -->
     <script src="{% static 'fleet/assets/libs/offline/select2/select2.min.js' %}"></script>
+    <!-- Napomena o valuti ispod iznosa kad je izabran ugovor u stranoj valuti (fleet/forms/ugovor.py) -->
+    <script src="{% static 'fleet/js/ugovor_valuta.js' %}"></script>
 
         <!-- Flatpickr (lokalno, radi i bez interneta) -->
         <script src="{% static 'fleet/assets/libs/flatpickr/dist/flatpickr.min.js' %}"></script>
@@ -226,12 +228,14 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 function hideFreeTextFilterInputs() {
-                    var filterFormSelector = 'form:not([method]), form[method="get" i]';
-                    var selectors = [
-                        filterFormSelector + ' input[name="q"]',
-                        filterFormSelector + ' input[type="search"]',
-                        filterFormSelector + ' input[name="search"]'
-                    ];
+                    // Svaka kombinacija forme i polja posebno: spajanje „form:not([method]), form[method=get] input…”
+                    // pravilo bi uhvatilo i SVAKU formu bez method i sakrilo njen roditeljski div (05.10.2026.).
+                    var filterForms = ['form:not([method])', 'form[method="get" i]'];
+                    var filterInputs = ['input[name="q"]', 'input[type="search"]', 'input[name="search"]'];
+                    var selectors = [];
+                    filterForms.forEach(function(form) {
+                        filterInputs.forEach(function(field) { selectors.push(form + ' ' + field); });
+                    });
 
                     document.querySelectorAll(selectors.join(',')).forEach(function(input) {
                         if (input.hasAttribute('data-visible-filter')) {

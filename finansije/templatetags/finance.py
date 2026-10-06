@@ -24,6 +24,8 @@ def finance_sidebar_section(request):
             return 'additional'
         if group == "month":
             return "month"
+        if group == "account":
+            return "accounts"
         if group == "job" or request.GET.get("job"):
             return "jobs"
         return "overview"

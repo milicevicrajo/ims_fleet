@@ -1,9 +1,9 @@
 <div class="vd-grid vd-holding-grid">
   <section class="card"><div class="card-body">
-    <div class="vd-section-heading"><h3>Osnov raspolaganja</h3></div>
-    <p class="vd-current"><strong>{{ holding_label }}</strong>{% if holding_lease %} · {{ holding_lease.get_lease_type_display }} / {{ holding_lease.contract_number }}{% endif %}</p>
-    <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Istorija raspolaganja">
-      <p>Vlasništvo IMS se podrazumeva kada nema važećeg ugovora o lizingu ili najmu. Ugovorno raspolaganje važi tokom perioda upisanog na ugovoru.</p>
+    <div class="vd-section-heading"><h3>Osnov raspolaganja i ugovori</h3>{% if can_add_lease %}<a class="btn btn-sm btn-outline-primary" href="{% url 'lease_create' %}?vehicle={{ vehicle.id }}">Dodaj ugovor</a>{% endif %}</div>
+    <p class="vd-current"><strong>{{ holding_label }}</strong>{% if holding_lease %} · {{ holding_lease.contract_number }} · do {{ holding_lease.end_date|date:'d.m.Y' }}{% elif vehicle.financing %} · {{ vehicle.get_financing_display }}{% if vehicle.financing_contract %} ({{ vehicle.financing_contract.contract_number }}){% endif %}{% endif %}</p>
+    <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Ugovori o lizingu i najmu">
+      <p>Osnov sledi iz ugovora o lizingu / najmu: dok ugovor važi, vozilo se koristi po ugovoru; bez važećeg ugovora vozilo je u vlasništvu IMS. Promena osnova je „Dodaj ugovor” ili „Završi” (otkup ili vraćanje); pogrešan unos se ispravlja izmenom ugovora.</p>
       {% include 'fleet/_vehicle_mini_list.html' with items=leases kind='lease' %}
     </div>
   </div></section>
@@ -12,12 +12,6 @@
     <p class="vd-current"><strong>{{ current_job_code.organizational_unit|default:"Nije dodeljena" }}</strong></p>
     <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Istorija dodela organizacionih jedinica i šifara posla">
       {% include 'fleet/_vehicle_mini_list.html' with items=job_codes kind='job' %}
-    </div>
-  </div></section>
-  <section class="card"><div class="card-body">
-    <div class="vd-section-heading"><h3>Ugovori o lizingu / najmu</h3><a class="btn btn-sm btn-outline-primary" href="{% url 'lease_create' %}?vehicle={{ vehicle.id }}">Dodaj ugovor</a></div>
-    <div class="vd-holding-scroll" tabindex="0" role="region" aria-label="Ugovori o lizingu i najmu">
-      {% include 'fleet/_vehicle_mini_list.html' with items=leases kind='lease' %}
     </div>
   </div></section>
   <section class="card"><div class="card-body">

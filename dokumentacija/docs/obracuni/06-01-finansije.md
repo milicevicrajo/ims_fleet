@@ -659,7 +659,8 @@ Link **Knjiženja** prenosi posao, isti period, prefiks konta i vrstu rashoda.
 
 > **[P]** Izvor je lokalna kopija `nalog_z`; **ne pokreće se** zaseban bruto bilans po OJ.
 > Konto se grupiše **po šifri posla**, a ne automatski po `nalog_z.oj`. Zbirni izveštaj
-> „po kontima“ koristi **puno konto** — to treba razlikovati od `knt3` taba. Stavka
+> „po kontima“ od 05.10.2026. otvara konta po dubini (klasa → grupa → sintetika → konto, 6.1.23);
+> `knt3` tab odgovara nivou sintetike. Stavka
 > „Struktura rashoda“ uklonjena je iz menija, ali detalj konta ostaje dostupan.
 
 ---
@@ -1214,3 +1215,86 @@ i storno priliva 10 daju devizno stanje 70 EUR, nezavisno od USD računa.
 **Ograničenje:** saldo depozita za garanciju nije iznos garancije. Vanbilansna
 konta 88610/89610 i dugoročni depoziti 03/04 ostaju izvan traženog obuhvata 23/24.
 Broj ugovora, nominalni iznos, kamata i rok oročenja ne izmišljaju se iz knjiženja.
+
+---
+
+## 6.1.22. Rezultat po centrima bez i posle zajedničkih troškova (od 05.10.2026.)
+
+Implementacija: `finansije/services/pregled_centara.py`, prikaz `finansije/templates/finansije/_centri_zt.html`
+(Finansijski pregled), testovi: `finansije/test_pregled_centara.py`.
+
+**Odluke korisnika (pisana potvrda 05.10.2026.):**
+
+1. **ZT centra = zbir ZT njegovih šifara posla**, po istoj formuli kao ekran Šifre posla
+   (6.1.6, `shared_costs.allocate`). Brojevi se zato poklapaju između ekrana.
+2. **Podela centara po raspodeli ZT**, iz podataka svake godine perioda:
+
+| Grupa | Pravilo |
+|---|---|
+| **Profitni centri** | Centar ima koeficijent > 0 u `blokraspodela` (prima raspodelu) |
+| **Zajedničke službe (neprofitni)** | Centar čije šifre čine osnovicu (kriterijum 1–3 u `posao_mes`) |
+| **Ostali** | Sve ostalo: koeficijent 0 (npr. naučni blok), neraspoređena knjiženja |
+
+Grupe se prikazuju **jedna ispod druge**, svaka sa zbirom. Kolone:
+
+```text
+Prihodi, Rashodi, Rezultat bez ZT = P − R            (6.1.5)
+Troškovi zajedničkih službi       = −Σ ZT šifara centra (prikaz sa minusom)
+Rashodi sa ZT                     = R + Σ ZT
+Rezultat posle ZT                 = P − R − Σ ZT
+```
+
+Centar knjiženja je `polje_centra()` (registar na datum knjiženja, 6.1.3). Šifra sa knjiženjima u
+više centara u periodu ide centru sa najviše knjiženja. Šifra koja nema profitno pravilo ili čiji
+centar nema red u `blokraspodela` ne prima ZT (nula). Duplirana pravila ili nedostupan izvor daju
+**crtu**, kao na ekranu Šifre posla; nepotpuna raspodela je označena zvezdicom.
+
+**Usklađenje [P]:** raspodela ne menja rezultat Instituta.
+
+```text
+Rezultat svih centara posle ZT + Pokriće (ukupno raspoređeni ZT) = Rezultat Instituta
+```
+
+Usklađenje se prikazuje samo korisniku sa obuhvatom cele firme.
+
+**Kontrolni primer:** osnovica službi `B1 = −500` (centar 82), centar 41 dobija 40%, šifra 410001
+dobija 50% centra → `ZT = 500 × 40% × 50% = 100`. Centar 41: P = 1.000, R = 200, rezultat 800,
+ZT −100, rashodi sa ZT 300, rezultat posle ZT 700. Službe: rezultat −500, posle pokrića −400.
+Usklađenje: `300 + 100 = 400` = rezultat Instituta (800 − 500 + 100 naučni blok).
+
+**Provera na stvarnim podacima (2026, 05.10.2026.):** ZT raspoređen profitnim centrima
+(41, 42, 43, 44, 70) jednak je rezultatu zajedničkih službi (−219.358.592), a rezultat Instituta
+383.674.141 isti je bez i posle ZT.
+
+## 6.1.23. Nazivi konta i otvaranje po dubini (od 05.10.2026.)
+
+Implementacija: `finansije/services/kontni_plan.py`, testovi: `finansije/test_izvoz.py`.
+
+Nazivi se čitaju iz kontnog plana izvora (`konto`: `knt`, `naz_knt`, samo SELECT) i čuvaju u
+kešu 6 sati. Kada izvor nije dostupan, koriste se nazivi sa knjiženja (zbirni nivoi su tada bez naziva).
+
+Izveštaj **Struktura po kontima** grupiše po nivou: **klasa (1) → grupa (2) → sintetika (3) → konto (puno)**.
+Bez izabranog nivoa prikazuje se nivo za jedan dublji od unetog početka konta; klik na konto otvara
+sledeći nivo, a na punom kontu vodi na knjiženja (tačno konto). Putanja otvaranja je iznad tabele.
+Iznosi po nivou su zbir istih knjiženja (prefiks konta) — formula 6.1.5 se ne menja.
+
+Tab **Rashodi** na detalju posla (6.1.10) ima i kolonu **Naziv konta** za `knt3`.
+
+## 6.1.24. Izvoz u Excel i PDF (od 05.10.2026.)
+
+Implementacija: `finansije/services/izvoz.py` (zapis), `finansije/services/izvoz_ekrani.py` (sadržaj ekrana),
+strana za štampu `finansije/templates/finansije/izvoz_stampa.html`.
+
+Svaki ekran ima dugmad **Excel** i **PDF**. PDF je A4 strana sa zaglavljem Instituta (položeno kada tabela
+ima više od 7 kolona); u prozoru za štampu bira se „Sačuvaj kao PDF”. Izvoz **ne preračunava**: koristi iste
+funkcije kao ekran, sa istim obuhvatom prava.
+
+| Ekran | Sadržaj izvoza |
+|---|---|
+| Finansijski pregled | Sažetak, tri grupe centara bez i posle ZT, usklađenje, šifre posla |
+| Izveštaj po centrima / kontima / mesecima | Tabela ekrana sa nazivima, učešćima i zbirom; za konta i nivo i putanju |
+| Šifre posla | Svi pokazatelji; PDF dodatnih analiza ima samo dodatne kolone (osnovne su u PDF-u Šifre posla) |
+| Knjiženja | Excel sve stavke; PDF najviše **2.000** stavki, a zbir duguje/potražuje je za sve |
+| Detalj šifre posla | Sažetak (P, R, ZT, rezultat posle ZT, tokovi gotovine), struktura rashoda sa nazivima konta, IF i ON fakture |
+
+Tekst iz izvora se u Excel upisuje kao tekst (ne postaje formula). Nedostupan iznos je prazan / crta, ne nula.

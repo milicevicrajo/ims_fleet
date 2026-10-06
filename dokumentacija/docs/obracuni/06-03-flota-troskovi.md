@@ -1,5 +1,10 @@
 # 6.3. Flota — troškovi vozila
 
+> **Ukinuto 05.10.2026.:** `fleet/support/dashboard.py` (V-07 `vehicle_cost_per_km_rows()`,
+> V-12 `cost_per_km_period_analysis()` i pomoćne funkcije kilometraže) je **obrisan** — nijedan
+> ekran ga nije pozivao, a trošak lizinga računao je drugačije od analitike. Ovo poglavlje ostaje
+> kao istorijski opis; važeći obračun je [IMS-FLOTA-2.x](06-12-flota-ekonomika.md).
+
 > **Promena 19.09.2026:** nova `/analitika/` i analitika na detalju vozila koriste
 > [metodologiju IMS-FLOTA-2.0](06-12-flota-ekonomika.md). Opisi V-07–V-12 u ovom
 > poglavlju dokumentuju nasleđene funkcije; pragovi po masi više nisu kriterijum

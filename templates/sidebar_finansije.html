@@ -11,6 +11,7 @@
     {% include "finansije/_sidebar_item.html" with section="overview" label="Finansijski pregled" icon="mdi-chart-bar" href=overview_url %}
     {% include "finansije/_sidebar_item.html" with section="jobs" label="Šifre posla" icon="mdi-briefcase-outline" href=report_url|add:"?group=job" %}
     {% include "finansije/_sidebar_item.html" with section="month" label="Mesečni pregled" icon="mdi-calendar" href=report_url|add:"?group=month" %}
+    {% include "finansije/_sidebar_item.html" with section="accounts" label="Konta" icon="mdi-file-tree" href=report_url|add:"?group=account" %}
   {% endif %}
   {% if finansije_permissions.ledger %}
     {% include "finansije/_sidebar_item.html" with section="ledger" label="Knjiženja" icon="mdi-book-open-page-variant" href=ledger_url %}

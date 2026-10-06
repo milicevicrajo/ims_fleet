@@ -7,7 +7,13 @@
   <tr><th>Ukupno za ugovor</th><td>{{ lease.total_amount|floatformat:"2g"|default:"Nije određeno" }}{% if lease.payment_basis == 'monthly' %} · izvedeno iz mesečnog iznosa i perioda{% endif %}</td></tr>
   <tr><th>Uneti iznos</th><td>{{ lease.current_payment_amount|floatformat:"2g" }} RSD · {{ lease.get_payment_basis_display }}</td></tr>
 </table>
-{% if lease.lease_type == 'finansijski' %}<p>U trošak perioda ulazi kamata finansijskog lizinga; glavnica se ne dodaje.</p>{% endif %}
+{% if lease.lease_type == 'finansijski' %}
+<p>U trošak perioda ulazi kamata finansijskog lizinga; glavnica se ne dodaje. Kamata za godinu raspoređuje se na dane kada ugovor važi u toj godini.</p>
+<div class="d-flex justify-content-between align-items-center mt-3 mb-2"><h5 class="m-0">Kamata po godinama</h5>{% if can_edit_interest %}<a class="btn btn-sm btn-outline-primary" href="{% url 'lease_interest_update' lease.pk %}">Unesi kamate</a>{% endif %}</div>
+<table class="table table-sm"><thead><tr><th>Godina</th><th>Dana ugovora</th><th class="text-end">Kamata RSD</th></tr></thead><tbody>
+{% for k in kamate %}<tr><td>{{ k.godina }}.</td><td>{{ k.dana }}</td><td class="text-end">{% if k.iznos is not None %}{{ k.iznos|floatformat:"2g" }}{% else %}<span class="text-warning">nije uneta — vozilo za te dane nema trošak lizinga</span>{% endif %}</td></tr>{% endfor %}
+</tbody></table>
+{% endif %}
 {{ lease.note|default:""|linebreaks }}
 <a class="btn btn-primary" href="{% url 'lease_update' lease.pk %}">Izmeni ugovor</a>
 </div></div>

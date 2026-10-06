@@ -307,7 +307,7 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         cards = vehicle.traffic_cards.order_by('-issue_date', '-id')
         card = cards.issued().first()
         from fleet.support.analysis_defaults import holding_at
-        holding = None
+        # Raspolaganje = ugovori o lizingu / najmu; bez važećeg ugovora vozilo je u vlasništvu IMS.
         holding_code, holding_label, holding_lease = holding_at(list(vehicle.leases.all()), today)
         ao_policy = vehicle.policies.filter(insurance_type__icontains='AUTOODGOVORNOST', start_date__lte=today, end_date__isnull=False).order_by('-end_date', '-id').first()
         registration_days = (card.registration_valid_until - today).days if card and card.registration_valid_until else None
@@ -328,9 +328,11 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
             'recovery_list': recoveries,
             'current_job_code': vehicle.job_codes.filter(assigned_date__lte=today).select_related('organizational_unit').order_by('-assigned_date', '-id').first(),
             'job_codes': vehicle.job_codes.select_related('organizational_unit').order_by('-assigned_date', '-id'),
-            'holdings': vehicle.holdings.select_related('lease', 'financing_contract'), 'current_holding': holding,
             'holding_label': holding_label, 'holding_lease': holding_lease, 'ao_policy': ao_policy,
             'holding_conflict': holding_code == 'unknown',
+            'can_edit_lease': user_has_role_permission(self.request.user, 'lease_update'),
+            'can_add_lease': user_has_role_permission(self.request.user, 'lease_create'),
+            'can_edit_vehicle': user_has_role_permission(self.request.user, 'vehicle_update'),
             'leases': vehicle.leases.order_by('-start_date', '-id'),
             'policies': vehicle.policies.order_by('-end_date', '-id'),
             'active_policies': vehicle.policies.filter(start_date__lte=today, end_date__gte=today),

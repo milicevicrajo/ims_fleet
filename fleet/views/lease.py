@@ -7,9 +7,9 @@ from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
 from core.exporting import rows_to_xlsx_response
-from core.mixins import RolePermissionRequiredMixin
+from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
 
-from ..forms.lease import LeaseForm
+from ..forms.lease import LeaseForm, LeaseInterestForm
 from ..models import Lease
 from ..support.lease_queries import lease_monthly_costs_rows
 from fleet.support import obuhvat as obuhvat_flote
@@ -155,10 +155,51 @@ class LeaseUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateVie
     template_name = "fleet/generic_form.html"
     success_url = reverse_lazy("lease_list")
 
+    def zavrsava(self):
+        """„Završi ugovor” sa kartice vozila: ista izmena, uz uputstvo i povratak na vozilo."""
+        return self.request.GET.get("zavrsi") == "1"
+
+    def get_success_url(self):
+        if self.zavrsava():
+            return reverse('vehicle_detail', kwargs={'pk': self.object.vehicle_id}) + '#holding-pane'
+        return super().get_success_url()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Izmeni zakup"
         context["submit_button_label"] = "Sacuvaj izmene"
+        if self.zavrsava():
+            context.update(
+                title=f"Završi ugovor {self.object.contract_number}", submit_button_label="Završi ugovor",
+                cancel_url=reverse('vehicle_detail', kwargs={'pk': self.object.vehicle_id}),
+                form_help=("U „Datum završetka” unesite poslednji dan ugovora — dan otkupa ili vraćanja vozila. "
+                           "Od narednog dana vozilo ne nosi naknadu ugovora i vodi se kao vlasništvo IMS. "
+                           "Kod otkupa na kartici vozila dopunite nabavnu vrednost i finansiranje (Izmeni podatke); "
+                           "vraćeno vozilo otpišite (Izveštaji → Otpis), da se ne vodi kao vlasništvo."))
+        return context
+
+
+@obuhvat_flote.ogranici_po_vozilu()
+class LeaseInterestUpdateView(RolePermissionRequiredMixin, LoginRequiredMixin, UpdateView):
+    """Kamate finansijskog lizinga po godinama ugovora (dozvola izvedena iz `lease_update`)."""
+    model = Lease
+    form_class = LeaseInterestForm
+    template_name = "fleet/generic_form.html"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(lease_type='finansijski')
+
+    def get_success_url(self):
+        return reverse('lease_detail', kwargs={'pk': self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            title=f"Kamate · {self.object.contract_number}", submit_button_label="Sačuvaj kamate",
+            cancel_url=reverse('lease_detail', kwargs={'pk': self.object.pk}),
+            form_help=("Za svaku godinu upišite stvarnu kamatu iz otplatnog plana u dinarima — samo kamatu, bez glavnice, "
+                       "PDV-a i troškova obrade. Za prvu i poslednju (delimičnu) godinu upisuje se kamata za taj deo godine; "
+                       "obračun je raspoređuje na dane kada ugovor važi. Prazno polje briše upis."))
         return context
 
 
@@ -171,6 +212,14 @@ class LeaseDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = f"Detalji zakupa {self.object.partner_name}"
+        if self.object.lease_type == 'finansijski':
+            from ..support.lease_costs import lease_days_in_year
+
+            upisane = {r.year: r.interest_amount for r in self.object.lease_interests.all()}
+            context["kamate"] = [
+                {"godina": godina, "iznos": upisane.get(godina), "dana": lease_days_in_year(self.object, godina)}
+                for godina in range(self.object.start_date.year, self.object.end_date.year + 1)]
+            context["can_edit_interest"] = user_has_role_permission(self.request.user, 'lease_interest_update')
         return context
 
 

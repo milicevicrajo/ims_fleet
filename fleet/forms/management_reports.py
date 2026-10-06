@@ -15,7 +15,7 @@ class VehicleInsuranceReportForm(ReportForm):
     as_of = forms.DateField(label='Datum preseka', initial=timezone.localdate)
     center = forms.CharField(label='Centar', required=False)
     category = forms.ChoiceField(label='Kategorija', required=False)
-    ownership = forms.ChoiceField(label='Osnov vlasništva', choices=[('all', 'Sva IMS vlasnička vozila'), ('confirmed', 'Samo evidentirano vlasništvo')], initial='all')
+    ownership = forms.ChoiceField(label='Osnov vlasništva', choices=[('all', 'Sva IMS vlasnička vozila'), ('confirmed', 'Samo sa upisanom nabavkom / finansiranjem')], initial='all')
 
     def __init__(self, *args, **kwargs):
         from fleet.models import Vehicle

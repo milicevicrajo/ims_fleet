@@ -6,7 +6,7 @@
 {% block hero_actions %}
   {% if job_detail_url %}<a class="btn btn-light" href="{{ job_detail_url }}">Detalj šifre {{ form.cleaned_data.job }}</a>{% endif %}
   <a class="btn btn-light" href="{% url 'finansije:ledger' %}?{{ params }}"><i class="mdi mdi-format-list-bulleted me-1" aria-hidden="true"></i>Pregled knjiženja</a>
-  {% if valid and can_export %}<a class="btn btn-outline-light" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Excel</a>{% endif %}
+  {% if valid %}{% include "finansije/_izvoz.html" with upit=params %}{% endif %}
 {% endblock %}
 {% block finance_content %}
 {% include "finansije/_status.html" %}
@@ -17,6 +17,14 @@
 <div class="card shadow-sm">
   <div class="card-body">
     <h4>{% if group == 'center' %}Centri / organizacione jedinice{% elif group == 'job' %}Šifre posla{% elif group == 'account' %}Struktura po kontima{% else %}Mesečni pregled{% endif %}</h4>
+    {% if group == 'account' and konto_putanja %}
+    <nav aria-label="Otvaranje konta po dubini" class="mb-2">
+      <ol class="breadcrumb mb-1 small">
+        {% for korak in konto_putanja %}<li class="breadcrumb-item{% if forloop.last %} active{% endif %}">{% if forloop.last %}<strong>{{ korak.code }}{% if korak.code %} {% endif %}{{ korak.label }}</strong>{% else %}<a href="{{ korak.url }}">{{ korak.code }}{% if korak.code %} {% endif %}{{ korak.label }}</a>{% endif %}</li>{% endfor %}
+      </ol>
+      <p class="text-muted small mb-0">Prikazan nivo: {% for nivo, naziv in konto_nivoi %}{% if nivo == konto_nivo %}<strong>{{ naziv|lower }}</strong>{% endif %}{% endfor %}. Klik na konto otvara sledeći nivo (klasa → grupa → sintetika → konto); na nivou konta vodi na knjiženja.</p>
+    </nav>
+    {% endif %}
     <p class="text-muted small">Učešća se računaju u odnosu na ukupne prihode i rashode izabranog dostupnog prikaza. Crta označava da je ukupan iznos nula. Negativna knjiženja zadržavaju svoj znak.</p>
     <div class="table-responsive">
       <table id="FinanceReportTable" class="table table-hover align-middle finance-datatable" style="width:100%">
@@ -24,7 +32,7 @@
         <tbody>
         {% for row in rows %}
           <tr>
-            <td class="text-nowrap" data-order="{{ row.code }}"><a href="{{ row.card_url|default:row.ledger_url }}">{{ row.code|default:"Neraspoređeno" }}</a></td>
+            <td class="text-nowrap" data-order="{{ row.code }}">{% if row.drill_url %}<a href="{{ row.drill_url }}" title="Otvori sledeći nivo konta">{{ row.code }} <i class="mdi mdi-chevron-right" aria-hidden="true"></i></a>{% else %}<a href="{{ row.card_url|default:row.ledger_url }}">{{ row.code|default:"Neraspoređeno" }}</a>{% endif %}</td>
             <td>{{ row.label }}</td>{% if group == 'job' %}<td>{{ row.center|default:"—" }}</td>{% endif %}
             <td class="text-end text-nowrap" data-order="{{ row.revenue|unlocalize }}">{{ row.revenue|amount_badge }}</td>
             <td class="text-end text-nowrap" data-order="{{ row.expense|unlocalize }}">{{ row.expense|amount_badge }}</td>

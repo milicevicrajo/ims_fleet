@@ -107,6 +107,7 @@ Podaci su isti kao u odeljku „Evidencija prolaza” na ekranu radne liste (`hr
               {% for leave in row.sick_leaves %}<span class="note">Bolovanje · RFZO {{ leave.rfzo_id }}</span>{% endfor %}
               {% for travel_order in row.travel_orders %}<span class="note">Putni nalog {{ travel_order.order_number }}{% if travel_order.location %} — {{ travel_order.location }}{% endif %}</span>{% endfor %}
               {% for message in row.issue_messages %}<span class="note">{{ message }}</span>{% endfor %}
+              {% if row.komentar %}<span class="note"><b>Komentar:</b> {{ row.komentar.tekst }}</span>{% endif %}
             </td>
           </tr>
         {% endfor %}

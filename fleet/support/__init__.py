@@ -4,11 +4,6 @@ from fleet.support.analytics import (
     is_red_zone,
     net_maintenance_cost,
 )
-from fleet.support.dashboard import (
-    LONG_TERM_LEASE_TYPES,
-    cost_per_km_period_analysis,
-    vehicle_cost_per_km_rows,
-)
 from fleet.support.fuel import (
     calculate_average_fuel_consumption,
     calculate_average_fuel_consumption_ever,
@@ -48,7 +43,6 @@ from fleet.support.vehicle import format_license_plate
 
 __all__ = [
     "KASKO_RATE_SQL",
-    "LONG_TERM_LEASE_TYPES",
     "MAGACIN_SQL",
     "OTPIS_SQL",
     "PO_DOBAVLJACIMA_SQL",
@@ -63,7 +57,6 @@ __all__ = [
     "calculate_average_fuel_consumption_ever",
     "cost_per_km_status",
     "cost_per_km_thresholds",
-    "cost_per_km_period_analysis",
     "date_period_filtered_query",
     "date_range_for_datetime_field",
     "ensure_auto_parts",
@@ -82,5 +75,4 @@ __all__ = [
     "policies_monthly_costs_qs",
     "report_period_filtered_query",
     "service_monthly_costs_rows",
-    "vehicle_cost_per_km_rows",
 ]

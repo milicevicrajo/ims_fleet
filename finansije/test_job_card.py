@@ -54,8 +54,9 @@ class JobCardTests(TestCase):
         self.assertEqual(response.context["totals"]["expense"], Decimal("30"))
         self.assertEqual(response.context["totals"]["result"], Decimal("70"))
         expenses = self.get_table("expenses").json()["data"]
-        self.assertEqual([(r[0]["sort"], Decimal(r[1]["sort"]), Decimal(r[2]["sort"])) for r in expenses], [("512", Decimal("-30"), Decimal("100"))])
-        self.assertIn("finance-amount-negative", expenses[0][1]["display"])
+        # Od 05.10.2026. druga kolona je naziv konta iz kontnog plana.
+        self.assertEqual([(r[0]["sort"], Decimal(r[2]["sort"]), Decimal(r[3]["sort"])) for r in expenses], [("512", Decimal("-30"), Decimal("100"))])
+        self.assertIn("finance-amount-negative", expenses[0][2]["display"])
         self.assertContains(response, "28.02.2026.")
         self.assertContains(response, "Interne fakture · ON")
 

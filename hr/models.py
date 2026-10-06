@@ -215,6 +215,33 @@ class WorkTimeSheet(models.Model):
         return f"{self.employee} - {self.month:02d}/{self.year}"
 
 
+class KomentarProlaza(models.Model):
+    """Objašnjenje za dan bez prolaza ili sa problemom u prolazima (od 05.10.2026.).
+
+    Upisuje ga zaposleni na svojoj radnoj listi ili ko sme da otvori tuđu radnu listu; prikazuje se uz
+    evidenciju prolaza i u prilogu za štampu. Izvor prolazaka se ne menja — komentar je samo objašnjenje.
+    """
+    employee = models.ForeignKey("fleet.Employee", on_delete=models.CASCADE, related_name="komentari_prolaza",
+                                 verbose_name=_("Zaposleni"))
+    datum = models.DateField(verbose_name=_("Datum"))
+    tekst = models.CharField(max_length=500, verbose_name=_("Komentar"))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+", verbose_name=_("Upisao"))
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+", verbose_name=_("Izmenio"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Upisano"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Izmenjeno"))
+
+    class Meta:
+        ordering = ["datum"]
+        constraints = [models.UniqueConstraint(fields=["employee", "datum"], name="hr_komentar_prolaza_jedan_po_danu")]
+        verbose_name = _("Komentar na prolaze")
+        verbose_name_plural = _("Komentari na prolaze")
+
+    def __str__(self):
+        return f"{self.employee} · {self.datum:%d.%m.%Y}"
+
+
 class WorkTimeSheetLine(models.Model):
     sheet = models.ForeignKey(
         WorkTimeSheet,

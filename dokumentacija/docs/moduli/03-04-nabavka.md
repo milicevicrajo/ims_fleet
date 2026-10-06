@@ -221,7 +221,24 @@ Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
 
 **Računi sa putnih naloga (od 02.10.2026.):** račun može biti dodat pri pravdanju putnog naloga u
 Isplatama ili vezan za nalog (`putni_nalog`). Na detalju se tada vidi kartica „Putni nalog" (broj, zaposleni, putovanje, šifra
-posla naloga, stanje knjiženja), a u spisku oznaka „PN". Knjigovodstvo ga označava „proknjiženo" u
+posla naloga, stanje knjiženja).
+
+**Oštećen QR kod (od 05.10.2026.):** u svakom prozoru za učitavanje (Nabavka, putni nalog, ostali
+fiskalni računi) dugme „QR kod je oštećen?" otvara drugi prozor (`nabavka/_fiskalni_rucno.html`). Ručna
+provera Poreske uprave (`suf.purs.gov.rs/verify`) ima **reCAPTCHA Enterprise**, pa je aplikacija ne šalje
+sama: korisnik prepiše sa računa PFR broj, brojač (sa oznakom, npr. ПП), ukupan iznos i PFR vreme
+(dugmad „Kopiraj"), prođe proveru na sajtu i **čitačem očita čist QR kod sa stranice rezultata**.
+„Preuzmi podatke" šalje taj link kroz isti prozor za učitavanje uz ručno unete podatke; račun se upisuje
+**samo ako se QR poklapa** sa njima (`fiskalni.proveri_ocekivano`: broj, brojač, iznos, vreme do minuta),
+a stavke se preuzimaju kao i kod skeniranja. Provera na suvo nad 25 računa iz baze: svi se poklapaju,
+75/75 izmenjenih unosa odbijeno.
+
+**Odvojeni prikazi (od 05.10.2026.):** svi fiskalni računi su u istoj tabeli, ali **spisak Nabavke
+prikazuje samo račune Nabavke** (`evidencija = nabavka`, bez putnog naloga). Računi na putnim nalozima
+i „Ostali fiskalni računi" (gotovinski obračun) vode se u Isplatama i ne vide se ovde; ni Isplate ne
+vide račune Nabavke. Račun iz Nabavke koji se veže za putni nalog prelazi u Isplate, a skinut sa naloga
+se vraća u Nabavku. Detalj računa ostaje dostupan (do njega vode linkovi iz Isplata), uz napomenu gde
+se račun vodi. Pri ponovnom očitavanju istog računa poruka kaže u kom prikazu je već učitan. Knjigovodstvo ga označava „proknjiženo" u
 Isplatama (Putni nalozi – Fiskalni računi). **Proknjižen račun se ne briše i ne menja** (obrada i šifre
 posla). Detaljno: [3.9 Isplate](03-09-isplate.md).
 

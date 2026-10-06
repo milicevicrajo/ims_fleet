@@ -136,7 +136,7 @@ class FiskalniPutnogNalogaTests(TestCase):
         self.assertEqual(spisak.context["zbir"]["broj"], 1)  # samo računi sa putnih naloga
         tabela = self.client.get(reverse("isplate:fiskalni_putni_nalozi"), {"draw": 1}).json()  # DataTables
         self.assertEqual((tabela["recordsTotal"], tabela["recordsFiltered"], tabela["zbir"]["iznos"]), (1, 1, "1.804,50"))
-        self.assertIn("43/2026-7", tabela["data"][0]["nalog"])
+        self.assertIn("43/2026-7", tabela["data"][0]["veza"])
         self.assertNotIn("disabled", tabela["data"][0]["knjizenje"])
         self.assertEqual(self.client.get(reverse("isplate:fiskalni_putni_nalozi"),
                                          {"draw": 2, "search[value]": "nema-takvog"}).json()["recordsFiltered"], 0)
@@ -178,3 +178,130 @@ class FiskalniPutnogNalogaTests(TestCase):
         self.assertEqual(self.client.get(reverse("isplate:putni_nalozi_pravdanje")).status_code, 403)
         self.assertEqual(self.ocitaj().status_code, 403)
         self.assertEqual(Decimal("0"), sum((r.iznos for r in FiskalniRacun.objects.all()), Decimal("0")))
+
+
+class OdvojeniPrikaziTests(TestCase):
+    """Ista tabela, odvojeni prikazi: Nabavka, putni nalozi i ostali (gotovinski) fiskalni računi."""
+
+    OSTALI = ("isplate:fiskalni_ostali", "isplate:fiskalni_ostali_ucitaj", "isplate:fiskalni_ostali_izvoz",
+              "isplate:fiskalni_proknjizi")
+
+    def setUp(self):
+        self.nalog = create_order(employee=create_employee(), order_number="43/2026-9", center="43")
+        self.blagajna = korisnik_sa("blagajna-test", *self.OSTALI, *PRAVDANJE, *ISPLATE)
+        self.nabavka = get_user_model().objects.create_superuser("nabavka-test", password="x")
+
+    def ucitaj(self, korisnik, ruta, podaci, *args):
+        self.client.force_login(korisnik)
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            return self.client.post(reverse(ruta, args=args), podaci, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+
+    def test_svaki_prikaz_vidi_samo_svoje_racune(self):
+        sifra = self.nalog.job_code
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            fiskalni.upisi(napravi_link(brojac=1), sifra, self.nabavka, "nabavka")
+        odgovor = self.ucitaj(self.blagajna, "isplate:fiskalni_ostali_ucitaj",
+                              {"job_code": sifra.pk, "link": napravi_link(brojac=2), "napomena": "gotovina"})
+        self.assertTrue(odgovor.json()["ok"])  # prozor „Učitaj račun” dobija JSON
+        self.ucitaj(self.blagajna, "isplate:putni_nalog_racun_dodaj", {"link": napravi_link(brojac=3)}, self.nalog.pk)
+        FiskalniRacun.objects.filter(putni_nalog=self.nalog).update(napomena="nalog")
+        self.assertEqual(FiskalniRacun.objects.get(napomena="gotovina").evidencija, FiskalniRacun.Evidencija.GOTOVINA)
+
+        self.client.force_login(self.nabavka)
+        nabavka = self.client.get(reverse("nabavka:fiskalni_data"), {"draw": 1}).json()
+        self.assertEqual(nabavka["recordsTotal"], 1)
+        self.client.force_login(self.blagajna)
+        ostali = self.client.get(reverse("isplate:fiskalni_ostali"), {"draw": 1, "knjizenje": "sve"}).json()
+        self.assertEqual((ostali["recordsTotal"], ostali["data"][0]["veza"]), (1, "gotovina"))
+        putni = self.client.get(reverse("isplate:fiskalni_putni_nalozi"), {"draw": 1, "knjizenje": "sve"}).json()
+        self.assertEqual(putni["recordsTotal"], 1)
+        self.assertIn("43/2026-9", putni["data"][0]["veza"])
+        stranica = self.client.get(reverse("isplate:fiskalni_ostali"))
+        self.assertContains(stranica, "Učitaj račun")
+        self.assertContains(stranica, "<th>Napomena</th>", html=True)
+        self.assertContains(self.client.get(reverse("isplate:fiskalni_putni_nalozi")), "<th>Putni nalog</th>", html=True)
+
+    def test_skinut_sa_naloga_vraca_se_u_svoju_evidenciju(self):
+        sifra = self.nalog.job_code
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            iz_nabavke, _ = fiskalni.upisi(napravi_link(brojac=4), sifra, self.nabavka)
+        self.ucitaj(self.blagajna, "isplate:putni_nalog_racun_dodaj", {"link": napravi_link(brojac=4)}, self.nalog.pk)
+        self.ucitaj(self.blagajna, "isplate:putni_nalog_racun_dodaj", {"link": napravi_link(brojac=5)}, self.nalog.pk)
+        sa_naloga = FiskalniRacun.objects.exclude(pk=iz_nabavke.pk).get()
+        for racun in (iz_nabavke, sa_naloga):
+            racun.refresh_from_db()
+            fiskalni.odvezi_od_putnog_naloga(racun)
+        self.assertEqual(FiskalniRacun.objects.get(pk=iz_nabavke.pk).evidencija, FiskalniRacun.Evidencija.NABAVKA)
+        self.assertEqual(FiskalniRacun.objects.get(pk=sa_naloga.pk).evidencija, FiskalniRacun.Evidencija.GOTOVINA)
+        self.client.force_login(self.nabavka)
+        detalj = self.client.get(reverse("nabavka:fiskalni_detail", args=[sa_naloga.pk]))
+        self.assertContains(detalj, "Isplate → Ostali fiskalni računi")
+
+    def test_knjizenje_izvoz_i_dupli_racun(self):
+        sifra = self.nalog.job_code
+        self.ucitaj(self.blagajna, "isplate:fiskalni_ostali_ucitaj",
+                    {"job_code": sifra.pk, "link": napravi_link(brojac=6), "napomena": "kancelarijski"})
+        racun = FiskalniRacun.objects.get()
+        odgovor = self.client.post(reverse("isplate:fiskalni_proknjizi", args=[racun.pk]), {"proknjizeno": "1"}).json()
+        self.assertTrue(odgovor["proknjizeno"])
+        izvoz = self.client.get(reverse("isplate:fiskalni_ostali_izvoz"), {"knjizenje": "sve"})
+        self.assertIn("spreadsheetml", izvoz["Content-Type"])
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            with self.assertRaisesMessage(fiskalni.GreskaOcitavanja, "Isplate → Ostali fiskalni računi"):
+                fiskalni.upisi(napravi_link(brojac=6), sifra, self.nabavka)
+
+
+class OstecenQrKodTests(TestCase):
+    """QR kod je oštećen: podaci sa računa + QR očitan sa stranice provere Poreske uprave moraju da se poklope."""
+
+    def setUp(self):
+        from django.utils import timezone
+
+        self.nalog = create_order(employee=create_employee(), order_number="43/2026-11", center="43")
+        self.korisnik = get_user_model().objects.create_superuser("rucno", password="x")
+        self.client.force_login(self.korisnik)
+        self.link = napravi_link(brojac=31)
+        z = fiskalni.ocitaj_link(self.link)
+        vreme = timezone.localtime(z.pfr_vreme)
+        self.unos = {"rucno_broj": z.broj_racuna.lower(), "rucno_brojac": f"{z.brojac_vrste}/{z.brojac_ukupno}",
+                     "rucno_iznos": f"{z.iznos}".replace(".", ","), "rucno_vreme": f"{vreme.day}.{vreme.month}.{vreme.year}. {vreme:%H:%M}"}
+
+    def posalji(self, ruta, podaci, *args):
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            return self.client.post(reverse(ruta, args=args), podaci, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+
+    def test_provera_podataka(self):
+        z = fiskalni.ocitaj_link(self.link)
+        self.assertIsNone(fiskalni.ocekivano_iz_zahteva({}))
+        fiskalni.proveri_ocekivano(z, fiskalni.ocekivano_iz_zahteva(self.unos))  # poklapa se
+        for kljuc, losa in (("rucno_iznos", "9,99"), ("rucno_brojac", "1/2"), ("rucno_broj", "X-Y-1"), ("rucno_vreme", "1.1.2026. 08:00")):
+            with self.assertRaises(fiskalni.GreskaOcitavanja):
+                fiskalni.proveri_ocekivano(z, fiskalni.ocekivano_iz_zahteva({**self.unos, kljuc: losa}))
+        with self.assertRaisesMessage(fiskalni.GreskaOcitavanja, "PFR vreme"):
+            fiskalni.ocekivano_iz_zahteva({**self.unos, "rucno_vreme": "juče"})
+
+    def test_sva_tri_mesta_upisuju_samo_kad_se_poklapa(self):
+        sifra = self.nalog.job_code
+        pogresno = {**self.unos, "rucno_iznos": "1,00"}
+        odgovor = self.posalji("isplate:fiskalni_ostali_ucitaj", {"job_code": sifra.pk, "link": self.link, **pogresno})
+        self.assertEqual(odgovor.status_code, 400)
+        self.assertIn("ukupan iznos", odgovor.json()["poruka"])
+        self.assertEqual(self.posalji("nabavka:fiskalni_scan", {"job_code": sifra.pk, "link": self.link, **pogresno}).status_code, 400)
+        self.assertEqual(self.posalji("isplate:putni_nalog_racun_dodaj", {"link": self.link, **pogresno}, self.nalog.pk).status_code, 400)
+        self.assertFalse(FiskalniRacun.objects.exists())
+
+        odgovor = self.posalji("isplate:fiskalni_ostali_ucitaj", {"job_code": sifra.pk, "link": self.link, "napomena": "gotovina", **self.unos})
+        self.assertTrue(odgovor.json()["ok"], odgovor.content)
+        racun = FiskalniRacun.objects.get()
+        self.assertEqual((racun.evidencija, racun.status, racun.napomena), (FiskalniRacun.Evidencija.GOTOVINA, racun.Status.POTVRDJEN, "gotovina"))
+        self.assertTrue(racun.stavke.exists())  # stavke preuzete kao kod skeniranja
+
+    def test_prozori_imaju_dugme_za_osteceni_qr(self):
+        for ruta in ("nabavka:fiskalni_list", "isplate:fiskalni_ostali", "isplate:putni_nalozi_pravdanje"):
+            stranica = self.client.get(reverse(ruta))
+            self.assertContains(stranica, "QR kod je oštećen?", msg_prefix=ruta)
+            self.assertContains(stranica, 'id="fiskalniRucnoModal"', count=1, msg_prefix=ruta)
+            self.assertContains(stranica, "https://suf.purs.gov.rs/verify", msg_prefix=ruta)
+        ostali = self.client.get(reverse("isplate:fiskalni_ostali"))
+        self.assertContains(ostali, 'id="ispOstaliModal"')
+        self.assertContains(ostali, 'data-bs-target="#ispOstaliModal"')

@@ -3,7 +3,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 
 from core.mixins import user_has_role_permission
-from ..models import Vehicle, TrafficCard, Lease, VehicleHolding, JobCode, VehicleTravelOrder
+from ..models import Vehicle, TrafficCard, Lease, JobCode, VehicleTravelOrder
 from ..forms.onboarding import IDENTITY_FIELDS, TECHNICAL_FIELDS, PURCHASE_FIELDS, CARD_FIELDS
 
 
@@ -46,7 +46,13 @@ def create_vehicle_from_steps(forms, user):
             data = {key: identity[key] for key in IDENTITY_FIELDS}
             data.update({key: technical[key] for key in TECHNICAL_FIELDS if key in technical})
             if basis['basis'] == 'owned':
+                # Vlasništvo se beleži na vozilu: nabavka i finansiranje; bez ugovora vozilo je u vlasništvu IMS.
                 data.update({key: basis.get(key) for key in PURCHASE_FIELDS})
+                data['purchase_date'] = data.get('purchase_date') or basis['start_date']
+                data['financing'] = basis.get('financing') or ''
+                data['financing_contract'] = basis.get('financing_contract')
+                if basis.get('note'):
+                    data['description'] = '\n'.join(filter(None, [data.get('description'), basis['note']]))
             vehicle = Vehicle(**data)
             vehicle.full_clean()
             try:
@@ -66,11 +72,6 @@ def create_vehicle_from_steps(forms, user):
                 )
                 lease.full_clean(exclude=['job_code'])
                 lease.save()
-            VehicleHolding.objects.create(
-                vehicle=vehicle, basis=basis['basis'], start_date=basis['start_date'],
-                end_date=basis.get('end_date'), lease=lease, financing=basis.get('financing') or '',
-                financing_contract=basis.get('financing_contract'), evidence=basis.get('evidence') or '', note=basis.get('note') or '',
-            )
             if document.get('add_document'):
                 card = TrafficCard(vehicle=vehicle, **{key: document.get(key) for key in CARD_FIELDS})
                 card.full_clean()

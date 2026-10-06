@@ -1,5 +1,4 @@
 """Shared period analysis and reproducible prospective LCC comparisons (RSD)."""
-import calendar
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
@@ -15,7 +14,7 @@ from fleet.support.management_reports import allowed_centers
 from fleet.support.vehicle_detail import recorded_analytics, date_only
 from fleet.support.vehicle_mileage import mileage_readings, nearest_period
 from fleet.support.analysis_defaults import estimated_purpose, holding_at
-from fleet.support.lease_costs import lease_daily_amount, lease_amount_between
+from fleet.support.lease_costs import interest_daily_amount, lease_amount_between, lease_daily_amount
 
 ZERO = Decimal('0')
 VERSION = 'IMS-FLOTA-2.1'
@@ -278,7 +277,7 @@ def period_analysis(vehicles, start, end):
                 else:
                     interest_days += 1
                     known_days.add(day)
-                    part = amount / Decimal(366 if calendar.isleap(day.year) else 365)
+                    part = interest_daily_amount(lease, amount, day)
                     interest_total += part
                     daily[day] += part
             else:

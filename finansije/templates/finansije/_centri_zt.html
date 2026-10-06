@@ -1,0 +1,77 @@
+{% load finance %}
+{% comment %}
+Finansijski pregled → rezultat po centrima bez i posle zajedničkih troškova (ZT), u tri grupe.
+Podaci: `finansije/services/pregled_centara.py`. ZT centra = zbir ZT njegovih šifara posla.
+{% endcomment %}
+<style>
+  .fin-zt-tabela { font-size: .86rem; }
+  .fin-zt-tabela th { background: #f4f7fa; color: #334155; font-size: .76rem; white-space: nowrap; }
+  .fin-zt-tabela td.n, .fin-zt-tabela th.n { text-align: right; white-space: nowrap; }
+  .fin-zt-tabela tfoot td { font-weight: 700; background: #f8fafc; }
+  .fin-zt-grupa h3 { font-size: 1.02rem; color: #14395b; margin: 0; }
+  .fin-zt-grupa .fin-zt-opis { color: #64748b; font-size: .8rem; margin: 2px 0 8px; }
+  .fin-zt-uskladjenje td { padding: 6px 10px; }
+  .fin-zt-uskladjenje tr.ukupno td { font-weight: 700; border-top: 2px solid #14395b; }
+</style>
+<section class="card shadow-sm mb-3" aria-labelledby="centri-zt-title">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+      <div>
+        <h2 id="centri-zt-title" class="h5 mb-1">Rezultat po centrima — bez i posle troškova zajedničkih službi</h2>
+        <p class="text-muted small mb-0">Troškovi zajedničkih službi (ZT) centra su zbir ZT njegovih šifara posla, po istoj raspodeli kao na ekranu Šifre posla. Raspodela ne menja rezultat Instituta: ono što profitni centri dobiju kao trošak, pokriva troškove zajedničkih službi.</p>
+      </div>
+    </div>
+    {% if centri_zt is None %}
+      <div class="alert alert-warning mb-0">Raspodela zajedničkih troškova trenutno nije dostupna (izvor obračuna). Direktni rezultati su prikazani iznad.</div>
+    {% else %}
+      {% for grupa in centri_zt.groups %}
+      <div class="fin-zt-grupa{% if not forloop.first %} mt-4{% endif %}">
+        <h3>{{ grupa.title }}</h3>
+        <p class="fin-zt-opis">{{ grupa.description }}</p>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle fin-zt-tabela mb-0">
+            <thead><tr><th>Centar</th><th class="n">Prihodi</th><th class="n">Rashodi</th><th class="n">Rezultat bez ZT</th>
+              <th class="n">Troškovi zajedničkih službi</th><th class="n">Rashodi sa ZT</th><th class="n">Rezultat posle ZT</th></tr></thead>
+            <tbody>
+            {% for red in grupa.rows %}
+              <tr>
+                <td>{{ red.label }}</td>
+                <td class="n">{{ red.revenue|amount_badge }}</td>
+                <td class="n">{{ red.expense|amount_badge }}</td>
+                <td class="n">{{ red.result|amount_badge }}</td>
+                <td class="n">{% if red.zt is None %}<span class="text-muted" title="{{ red.note }}">—</span>{% else %}{{ red.zt|amount_badge }}{% if not red.complete %} <span class="text-warning" title="{{ red.note }}">*</span>{% endif %}{% endif %}</td>
+                <td class="n">{% if red.expense_zt is None %}—{% else %}{{ red.expense_zt|amount_badge }}{% endif %}</td>
+                <td class="n">{% if red.result_zt is None %}—{% else %}{{ red.result_zt|amount_badge }}{% endif %}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot><tr>
+              <td>Ukupno · {{ grupa.title|lower }}</td>
+              <td class="n">{{ grupa.total.revenue|amount_badge }}</td>
+              <td class="n">{{ grupa.total.expense|amount_badge }}</td>
+              <td class="n">{{ grupa.total.result|amount_badge }}</td>
+              <td class="n">{% if grupa.total.zt is None %}—{% else %}{{ grupa.total.zt|amount_badge }}{% if not grupa.total.complete %} <span class="text-warning">*</span>{% endif %}{% endif %}</td>
+              <td class="n">{% if grupa.total.expense_zt is None %}—{% else %}{{ grupa.total.expense_zt|amount_badge }}{% endif %}</td>
+              <td class="n">{% if grupa.total.result_zt is None %}—{% else %}{{ grupa.total.result_zt|amount_badge }}{% endif %}</td>
+            </tr></tfoot>
+          </table>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-muted mb-0">Nema knjiženja za izabrani period.</p>
+      {% endfor %}
+      {% if centri_zt.uskladjenje %}
+      <div class="mt-4">
+        <h3 class="h6 text-uppercase text-muted mb-2">Usklađenje sa rezultatom Instituta</h3>
+        <table class="table table-sm fin-zt-uskladjenje mb-1" style="max-width: 720px">
+          <tr><td>Rezultat svih centara posle ZT</td><td class="text-end">{{ centri_zt.uskladjenje.posle_zt_centri|amount_badge }}</td></tr>
+          <tr><td>+ Pokriće troškova zajedničkih službi raspodelom</td><td class="text-end">{{ centri_zt.uskladjenje.pokrice|amount_badge }}</td></tr>
+          <tr class="ukupno"><td>= Rezultat Instituta (bez i posle ZT isti)</td><td class="text-end">{{ centri_zt.uskladjenje.institut|amount_badge }}</td></tr>
+          <tr><td class="text-muted">Zajedničke službe: rezultat {{ centri_zt.uskladjenje.sluzbe_rezultat|floatformat:"2g" }}, posle pokrića</td><td class="text-end">{{ centri_zt.uskladjenje.sluzbe_posle|amount_badge }}</td></tr>
+        </table>
+      </div>
+      {% endif %}
+      {% if not centri_zt.complete %}<p class="small text-muted mb-0 mt-2"><span class="text-warning">*</span> Raspodela je nepotpuna ili nedostupna za deo šifara (pređite mišem preko oznake); crta znači da ZT nije poznat.</p>{% endif %}
+    {% endif %}
+  </div>
+</section>

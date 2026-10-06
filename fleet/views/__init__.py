@@ -5,7 +5,6 @@ from ..support.fuel import (
     calculate_average_fuel_consumption_ever,
     date_range_for_datetime_field,
 )
-from ..support.dashboard import cost_per_km_period_analysis, vehicle_cost_per_km_rows
 from .analytics import fleet_analytics
 from .center_statistics import center_statistics
 from .dashboard import dashboard
@@ -57,6 +56,7 @@ from .lease import (
     LeaseCreateView,
     LeaseDeleteView,
     LeaseDetailView,
+    LeaseInterestUpdateView,
     LeaseListView,
     LeaseMonthlyCostsView,
     LeaseUpdateView,

@@ -319,6 +319,9 @@
     - [Gde dalje](#gde-dalje)
     - [Dodatne analize po šifri posla — dopuna 21.09.2026.](#dodatne-analize-po-šifri-posla--dopuna-21092026)
     - [6.1.21. Banke po računima](#6121-banke-po-računima)
+    - [6.1.22. Rezultat po centrima bez i posle zajedničkih troškova (od 05.10.2026.)](#6122-rezultat-po-centrima-bez-i-posle-zajedničkih-troškova-od-05102026)
+    - [6.1.23. Nazivi konta i otvaranje po dubini (od 05.10.2026.)](#6123-nazivi-konta-i-otvaranje-po-dubini-od-05102026)
+    - [6.1.24. Izvoz u Excel i PDF (od 05.10.2026.)](#6124-izvoz-u-excel-i-pdf-od-05102026)
 - [6.2. Flota — obračuni goriva](#62-flota--obračuni-goriva)
     - [Zajednička osnova: šta se uopšte smatra gorivom](#zajednička-osnova-šta-se-uopšte-smatra-gorivom)
     - [V-03 — Neto iznos goriva iz bruto iznosa](#v-03--neto-iznos-goriva-iz-bruto-iznosa)
@@ -373,6 +376,8 @@
     - [K-09 — Tok saglasnosti na ocenu](#k-09--tok-saglasnosti-na-ocenu)
     - [K-10 — Rešenja zaposlenih — izrada teksta dokumenta](#k-10--rešenja-zaposlenih--izrada-teksta-dokumenta)
     - [K-11 — Predlog popunjavanja radne liste](#k-11--predlog-popunjavanja-radne-liste)
+    - [K-10. Analitika zaposlenih (od 05.10.2026.)](#k-10-analitika-zaposlenih-od-05102026)
+    - [Komentar na prolaze (od 05.10.2026.)](#komentar-na-prolaze-od-05102026)
     - [Novi problemi iz ovog poglavlja](#novi-problemi-iz-ovog-poglavlja)
     - [Nova pitanja iz ovog poglavlja](#nova-pitanja-iz-ovog-poglavlja)
     - [Gde dalje](#gde-dalje)
@@ -1322,8 +1327,8 @@ Detaljni dijagrami Flote dopunjuju opšti pregled sistema:
   Zaduženje vozila (`VehicleTravelOrder`) i službeni put (`PutniNalog`) su odvojeni modeli.
   Polisa (`Policy`) i knjižena naknada osiguranja (`Insurance`) nemaju direktnu vezu.
 - Dijagrami 10 i 12 prikazuju tok podataka, ne strane ključeve. Gorivo za putni nalog
-  bira se po vozilu / tablici i periodu. Modeli `VehicleDowntime` i `LeaseChargePeriod`
-  postoje, ali ih aktuelni `period_analysis()` ne koristi; prikaz modela nije dokaz
+  bira se po vozilu / tablici i periodu. Model `VehicleDowntime`
+  postoji, ali ga aktuelni `period_analysis()` ne koristi (`LeaseChargePeriod` je uklonjen 05.10.2026.); prikaz modela nije dokaz
   da model učestvuje u tekućem obračunu.
 
 **Pregled i izmene u VS Code-u:**
@@ -1526,7 +1531,7 @@ Ovo je **najvažniji deo poglavlja** — pokazuje šta se dešava kada se nešto
 | **Nabavka** | Ugovori | Osnovni i kupovni ugovor uz predmet | Veza `contract` |
 | **Ugovori** | Nabavka | Partner kao dobavljač | Veza `supplier` |
 | **Ugovori** | Menice | Veza ugovora i menice | Veza `ContractMenicaLink` |
-| **Ugovori** | Flota | Ugovor o lizingu i o finansiranju | Veza `Lease.contract`, `VehicleHolding.financing_contract` |
+| **Ugovori** | Flota | Ugovor o lizingu i o finansiranju | Veza `Lease.contract`, `Vehicle.financing_contract` |
 | **Ugovori** | Mobilni | Ugovor uz paket | Veza `MobilePackage.contract` |
 | **Ugovori** | Potraživanja | Partner uz finansijski identitet | Veza `FinancePartnerIdentity.partner` |
 | **Potraživanja** | Finansije | Saldo kupaca po šifri posla | `job_balances()` |
@@ -1704,7 +1709,7 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 |---|---|
 | **Vozila** | Tehnički podaci, slike, čarobnjak za unos novog vozila, otpis i vraćanje u upotrebu |
 | **Dokumenta** | Saobraćajne dozvole sa istorijom tablica, tenderska dokumentacija, izvoz u ZIP |
-| **Raspolaganje** | Osnov raspolaganja (vlasništvo ili ugovor), lizing i najam, kamate |
+| **Raspolaganje** | Ugovori o lizingu i najmu (iz njih sledi osnov raspolaganja), kamate; finansiranje nabavke na vozilu |
 | **Šifre posla** | Istorijske dodele vozila organizacionoj jedinici |
 | **Osiguranje** | Polise, knjiženja osiguranja, dopuna nedovršenih zapisa, pregled isteka |
 | **Gorivo** | Transakcije NIS i OMV, fakture goriva, prosečna potrošnja, izveštaji po šifri posla |
@@ -1733,7 +1738,7 @@ Vodi **ceo životni ciklus vozila** — od nabavke do otpisa:
 | Spisak vozila | `/vozila/` | DataTables preko AJAX-a |
 | **Unos novog vozila** | `/vozila/novo/` | **Čarobnjak u koracima** |
 | Detalj vozila | `/vozila/<id>/` | Kartice: pregled, dokumenti, raspolaganje, korišćenje, kilometraža, analitika |
-| Osnov raspolaganja | `/vozila/<id>/osnov/novo/` | Vlasništvo ili ugovor |
+| Osnov raspolaganja | Detalj vozila → Raspolaganje i polise | Od 05.10.2026. **samo kroz ugovore**: dok ugovor o lizingu / najmu važi, vozilo se koristi po ugovoru, inače je u vlasništvu IMS. Promena osnova je „Dodaj ugovor” ili „Završi” (`/zakupi/izmeni/<id>/?zavrsi=1` — poslednji dan ugovora, otkup ili vraćanje). Finansiranje nabavke (sopstvena sredstva / kredit) je na vozilu |
 | Tenderska dokumentacija | `/vozila/<id>/tenderska-dokumentacija/` | Preuzimanje ZIP datoteke |
 | Saobraćajne dozvole | `/saobracajne-dozvole/` | Istorija tablica |
 | Šifre poslova (dodele) | `/sifre-poslova/` | Istorijske dodele |
@@ -1748,6 +1753,7 @@ pomerljivom redu. Oznake statusa imaju odvojene stilove od grupa kartica.
 | Ekran | Adresa |
 |---|---|
 | Lizing i najam | `/zakupi/` |
+| Kamate finansijskog lizinga (od 05.10.2026.) | `/zakupi/<id>/kamate/` | Stvarna kamata po kalendarskoj godini ugovora; dozvola `lease_interest_update` izvedena iz `lease_update` |
 | Polise | `/polise/` |
 | **Polise za dopunu** | `/polise/nedovrseno/` |
 | **Polise pred istekom** | `/polise/istek/` |
@@ -1979,7 +1985,6 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 | `fleet_vehicle` | Vozilo | `chassis_number` (broj šasije) |
 | `fleet_trafficcard` | Saobraćajna dozvola, istorija tablica | — |
 | `fleet_jobcode` | **Istorijska dodela vozila OJ** | `(vehicle, assigned_date)` |
-| `fleet_vehicleholding` | Osnov raspolaganja, periodi bez preklapanja | — |
 | `fleet_lease`, `fleet_leaseinterest` | Lizing i kamata | `(year, lease)` |
 | `fleet_policy` | Polisa osiguranja | `invoice_id` |
 | `fleet_insurance`, `fleet_draftinsurance` | Knjiženja osiguranja | `(god, sif_vrs, br_naloga, stavka, knt)` |
@@ -2059,7 +2064,7 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 | Rute i dozvole | [`fleet/urls.py`](../fleet/urls.py) |
 | **Obračuni goriva** | [`fleet/support/fuel.py`](../fleet/support/fuel.py) |
 | **Nova analitika i ekonomske procene** | [`fleet/services/economics.py`](../fleet/services/economics.py), [`fleet/economics_models.py`](../fleet/economics_models.py) |
-| Nasleđeni trošak/km i pragovi — radi kompatibilnosti | [`fleet/support/dashboard.py`](../fleet/support/dashboard.py), [`fleet/support/analytics.py`](../fleet/support/analytics.py) |
+| Pragovi troška po km (nasleđeno; `dashboard.py` uklonjen 05.10.2026.) | [`fleet/support/analytics.py`](../fleet/support/analytics.py) |
 | Kilometraža | [`fleet/support/vehicle_mileage.py`](../fleet/support/vehicle_mileage.py) |
 | Održavanje | [`fleet/support/vehicle_maintenance.py`](../fleet/support/vehicle_maintenance.py) |
 | Presek stanja | [`fleet/support/fleet_snapshot.py`](../fleet/support/fleet_snapshot.py) |
@@ -2105,7 +2110,7 @@ ispravke i provere. [P]
 |---|---|
 | **Kadrovi** | Zaposleni na putnom nalogu i zaduženju vozila |
 | **Nabavka** | Kvar → predmet nabavke; EUF fakture → polise i dokazi o održavanju |
-| **Ugovori** | Ugovor o lizingu (`Lease.contract`) i o finansiranju (`VehicleHolding.financing_contract`) |
+| **Ugovori** | Ugovor o lizingu (`Lease.contract`) i o finansiranju (`Vehicle.financing_contract`) |
 | **Finansije** | Vozila i zaduženja na šifri posla; trošak zarada |
 | **Isplate** | Putni nalozi sa akontacijom → virman |
 | **Administracija** | Organizacione jedinice i centri |
@@ -2152,10 +2157,10 @@ ispravke i provere. [P]
 | **Format tablica** | `TrafficCard` | `AA999-AA` ili `AA9999-AA` |
 | **Tablica kod drugog vozila** | `TrafficCard.clean()` | *„Ove tablice su već povezane sa drugim vozilom.“* |
 | Datum izdavanja u budućnosti | `TrafficCard.clean()` | Odbija se |
-| **Preklapanje osnova raspolaganja** | `VehicleHolding.clean()` | *„Period se preklapa… Najpre završite prethodni period.“* |
-| Period raspolaganja izvan ugovora | `VehicleHolding.clean()` | Odbija se |
-| Ugovor ne pripada vozilu | `VehicleHolding.clean()` | Odbija se |
-| Finansiranje samo za vlasništvo IMS | `VehicleHolding.clean()` | Odbija se |
+| **Preklopljeni ugovori** (dva važeća istog dana) | `holding_at()` | Osnov „Preklopljeni ugovori”; ugovorni trošak za te dane se ne obračunava |
+| Ugovor se ne premešta na drugo vozilo | `LeaseForm.clean()` | Odbija se |
+| Ugovor o finansiranju samo uz kredit | `Vehicle.clean()` | Odbija se |
+| **Ugovor u stranoj valuti** (od 05.10.2026.) | `LeaseForm`, `VehicleBasisForm` (`fleet/forms/ugovor.py`) | Povezuje se; iznos naknade je obavezan **u RSD** (*„Ugovor je u EUR. Unesite iznos naknade u dinarima…“*), ispod iznosa napomena o valuti. Obračun ne preračunava kurs. Ugovor se bira pretragom (select2) |
 | **Jedna dodela po vozilu i danu** | `JobCode` | Kontrola u bazi |
 | Broj putnog naloga | `PutniNalog.generate_order_number()` | *„Nedostaje početni broj za izabrani centar/godinu.“* |
 | Tablica kod više vozila | `TrafficCard.for_plate()` | **Namerno odbija da pogađa** |
@@ -2273,7 +2278,8 @@ Vodi **zaposlene i njihovo radno vreme**:
 |---|---|
 | **Zaposleni** | Evidencija, CV stavke, ispravka prikaza imena |
 | **Radna lista** | Mesečna evidencija sati po šiframa posla, topli obrok, terenski dodatak; predlog popunjavanja iz prolazaka, putnih naloga, bolovanja, praznika i slave (K-11) |
-| **Evidencija prolazaka** | Prikaz dnevnih sati iz sistema kontrole pristupa, uz spisak problema; od 01.10.2026. štampa se i kao **prilog radne liste** (A4 uspravno: svaki prolaz sa vremenom, sati po danu, praznici, bolovanja, putni nalozi, potpisi zaposlenog i rukovodioca). Ako izvor prolazaka nije dostupan, prilog to piše i ne prilaže se. |
+| **Analitika zaposlenih** | Od 05.10.2026.: pol, starosna piramida i histogram, rasponi po deset godina, prosečna starost (ukupno, žene, muškarci), stručna sprema (izvedena iz zanimanja), starost po spremi, staž u Institutu, radni odnos i OJ; PDF fajl (A4, zaglavlje i broj strane na svakoj strani) i Excel ([K-10](#66-kadrovi--obračuni)) |
+| **Evidencija prolazaka** | Od 05.10.2026. za dan sa problemom ili bez prolaza na radni dan upisuje se **komentar** (vidi se i u prilogu). Prikaz dnevnih sati iz sistema kontrole pristupa, uz spisak problema; od 01.10.2026. štampa se i kao **prilog radne liste** (A4 uspravno: svaki prolaz sa vremenom, sati po danu, praznici, bolovanja, putni nalozi, potpisi zaposlenog i rukovodioca). Ako izvor prolazaka nije dostupan, prilog to piše i ne prilaže se. |
 | **Godišnji odmori** | Dodele i rešenja preuzeti iz obračuna zarada |
 | **Bolovanja** | Uvoz RFZO Excel izvoza, povezivanje po JMBG |
 | **Ocenjivanje** | Šest merila, bodovi 0–4, lični koeficijent, saglasnost u tri nivoa |
@@ -2289,6 +2295,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 |---|---|---|
 | **Pregled** (početna strana, od 02.10.2026.) | `/hr/` | Svaki prijavljeni korisnik; delovi samo uz dozvolu spiska |
 | Spisak zaposlenih | `/zaposleni/` | Kadrovska služba |
+| **Analitika zaposlenih** (od 05.10.2026.), PDF i Excel | `/hr/analitika/`, `?izvoz=pdf`, `?izvoz=xlsx` | Dozvola `hr:analitika`, u obuhvatu korisnika |
 | Štampa spiska (A4, „Sačuvaj kao PDF”) i Excel (od 05.10.2026.) | `/zaposleni/?izvoz=stampa`, `?izvoz=xlsx` | Isto kao spisak — ista dozvola `employee_list`, obuhvat i filteri |
 | Detalj zaposlenog | `/zaposleni/<id>/` | Kadrovska služba |
 | **Moj profil** | `/moj-profil/` | Svaki zaposleni |
@@ -2523,6 +2530,7 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 | K-07 | Bolovanja |
 | **K-08** | **Stimulacija i lični koeficijent** |
 | K-09 | Tok saglasnosti |
+| **K-10** | **Analitika zaposlenih** (pol, starost, stručna sprema, staž) |
 
 ---
 
@@ -2530,7 +2538,8 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 | Dozvola | Šta omogućava |
 |---|---|
-| `hr:work_time_sheet` | Svoja radna lista |
+| `hr:work_time_sheet` | Svoja radna lista (i komentar na prolaze) |
+| `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.) |
 | `hr:sick_leave_list`, `hr:sick_leave_import` | Bolovanja |
 | `hr:annual_leave_list` | Godišnji odmori |
 | `hr:work_time_catalog` | Šifarnici |
@@ -2809,12 +2818,13 @@ poslovnih procedura. Sada je dostupan na ekranu, **bez pokretanja ijedne procedu
 
 | Celina | Šta obuhvata |
 |---|---|
-| **Finansijski pregled** | Prihodi, rashodi i rezultat po centrima i poslovima, sa grafikonima i rang-listama |
-| **Detaljni izveštaji** | Po šiframa posla, kontima, mesecima i centrima |
+| **Finansijski pregled** | Prihodi, rashodi i rezultat po centrima i poslovima, sa grafikonima i rang-listama; od 05.10.2026. i **rezultat po centrima bez i posle troškova zajedničkih službi**, u tri grupe (profitni, zajedničke službe, ostali) sa usklađenjem ([6.1.22](#61-finansijska-analitika--obračuni)) |
+| **Detaljni izveštaji** | Po šiframa posla, kontima, mesecima i centrima; konta sa **nazivima iz kontnog plana** i **otvaranjem po dubini** (klasa → grupa → sintetika → konto, [6.1.23](#61-finansijska-analitika--obračuni)) |
 | **Zbirna tabela šifara posla** | 11 kolona: prihod, rashod, P−R, ZT, P−R−ZT, priliv, odliv, neto gotovina |
 | **Dodatne analize** | Posebna kartica uz zbirnu tabelu: isti iznosi, četiri odnosa prema prihodima, prosečan broj ljudi i osam iznosa po čoveku; poseban Excel izvoz aktivne kartice |
 | **Kartica (detalj) posla** | Osam tabova sa dokumentima i evidencijama |
 | **Knjiženja** | Pojedinačne stavke sa filterima i izvozom |
+| **Izvoz** | Od 05.10.2026. svaki ekran (pregled, izveštaji, šifre posla, knjiženja, detalj šifre) ima **Excel** i **PDF** (A4 strana za štampu sa zaglavljem Instituta) — [6.1.24](#61-finansijska-analitika--obračuni) |
 | **Sinhronizacija** | Ručno pokretanje, istorija, kontrolni zbirovi, osvežavanje `nalog_z` |
 
 Od 02.10.2026. bočni meni nema stavku **Dodatne analize**; kartica se otvara
@@ -2849,7 +2859,7 @@ dozvolama, a ne samo trenutno prikazana stranica tabele.
 | Zbirna tabela šifara posla | `/finansije/izvestaji/?group=job` |
 | **Kartica posla** | `/finansije/posao/?job=413111&year=2026&month=8` |
 | Knjiženja | `/finansije/knjizenja/` |
-| Izvoz u Excel | `/finansije/izvoz/` |
+| Izvoz u Excel / PDF | `/finansije/izvoz/` (`report=overview`, `ledger`, `job_card`; `format=pdf`) |
 | **Sinhronizacija** | `/finansije/sinhronizacija/` |
 
 ---
@@ -2928,6 +2938,9 @@ Detaljno: [4.6. Finansijska analitika](#46-finansijska-analitika--finansije).
 | Zaposleni i zarade | [`services/job_people.py`](../finansije/services/job_people.py) |
 | **Procedura nalog_z** | [`services/nalog_z.py`](../finansije/services/nalog_z.py) |
 | Grafikoni | [`services/charts.py`](../finansije/services/charts.py) |
+| **Rezultat po centrima sa ZT** | [`services/pregled_centara.py`](../finansije/services/pregled_centara.py) |
+| Nazivi konta, otvaranje po dubini | [`services/kontni_plan.py`](../finansije/services/kontni_plan.py) |
+| Izvoz Excel / PDF | [`services/izvoz.py`](../finansije/services/izvoz.py), [`izvoz_ekrani.py`](../finansije/services/izvoz_ekrani.py) |
 
 Testovi: **121 test** u 7 fajlova. [P]
 
@@ -2973,7 +2986,7 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 |---|---|
 | `finansije:dashboard` | Pregled, izveštaji, kartica posla |
 | `finansije:ledger` | Knjiženja |
-| `finansije:export` | Izvoz u Excel |
+| `finansije:export` | Izvoz u Excel i PDF (svi ekrani; uz to treba i pravo na sam ekran) |
 | `finansije:sync_status` | Ekran sinhronizacije |
 | **`finansije:view_all`** | **Ceo obuhvat firme** |
 
@@ -3369,7 +3382,24 @@ Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
 
 **Računi sa putnih naloga (od 02.10.2026.):** račun može biti dodat pri pravdanju putnog naloga u
 Isplatama ili vezan za nalog (`putni_nalog`). Na detalju se tada vidi kartica „Putni nalog" (broj, zaposleni, putovanje, šifra
-posla naloga, stanje knjiženja), a u spisku oznaka „PN". Knjigovodstvo ga označava „proknjiženo" u
+posla naloga, stanje knjiženja).
+
+**Oštećen QR kod (od 05.10.2026.):** u svakom prozoru za učitavanje (Nabavka, putni nalog, ostali
+fiskalni računi) dugme „QR kod je oštećen?" otvara drugi prozor (`nabavka/_fiskalni_rucno.html`). Ručna
+provera Poreske uprave (`suf.purs.gov.rs/verify`) ima **reCAPTCHA Enterprise**, pa je aplikacija ne šalje
+sama: korisnik prepiše sa računa PFR broj, brojač (sa oznakom, npr. ПП), ukupan iznos i PFR vreme
+(dugmad „Kopiraj"), prođe proveru na sajtu i **čitačem očita čist QR kod sa stranice rezultata**.
+„Preuzmi podatke" šalje taj link kroz isti prozor za učitavanje uz ručno unete podatke; račun se upisuje
+**samo ako se QR poklapa** sa njima (`fiskalni.proveri_ocekivano`: broj, brojač, iznos, vreme do minuta),
+a stavke se preuzimaju kao i kod skeniranja. Provera na suvo nad 25 računa iz baze: svi se poklapaju,
+75/75 izmenjenih unosa odbijeno.
+
+**Odvojeni prikazi (od 05.10.2026.):** svi fiskalni računi su u istoj tabeli, ali **spisak Nabavke
+prikazuje samo račune Nabavke** (`evidencija = nabavka`, bez putnog naloga). Računi na putnim nalozima
+i „Ostali fiskalni računi" (gotovinski obračun) vode se u Isplatama i ne vide se ovde; ni Isplate ne
+vide račune Nabavke. Račun iz Nabavke koji se veže za putni nalog prelazi u Isplate, a skinut sa naloga
+se vraća u Nabavku. Detalj računa ostaje dostupan (do njega vode linkovi iz Isplata), uz napomenu gde
+se račun vodi. Pri ponovnom očitavanju istog računa poruka kaže u kom prikazu je već učitan. Knjigovodstvo ga označava „proknjiženo" u
 Isplatama (Putni nalozi – Fiskalni računi). **Proknjižen račun se ne briše i ne menja** (obrada i šifre
 posla). Detaljno: [3.9 Isplate](#39-isplate).
 
@@ -4311,7 +4341,7 @@ Detaljno: [4.9. Ugovori](#49-ugovori--ugovori). **8 tabela.**
 | Modul | Veza |
 |---|---|
 | **Nabavka** | Partner kao dobavljač; osnovni i kupovni ugovor uz predmet |
-| **Flota** | Ugovor o lizingu (`Lease.contract`), ugovor o finansiranju (`VehicleHolding.financing_contract`) |
+| **Flota** | Ugovor o lizingu (`Lease.contract`), ugovor o finansiranju (`Vehicle.financing_contract`) |
 | **Mobilni** | Ugovor uz paket (`MobilePackage.contract`) |
 | **Menice** | Veza ugovora i menice |
 | **Potraživanja** | `FinancePartnerIdentity.partner` → partner |
@@ -4919,6 +4949,7 @@ blagajna ne bi ručno kucala naloge za plaćanje.
 | **Konverter** | `/isplate/konverter/` |
 | **Putni nalozi – pravdanje** (od 02.10.2026.) | `/isplate/putni-nalozi/` |
 | **Putni nalozi – Fiskalni računi** (od 02.10.2026.) | `/isplate/fiskalni-racuni/` |
+| **Ostali fiskalni računi** (od 05.10.2026.) | `/isplate/ostali-fiskalni-racuni/` |
 
 #### Putni nalozi – Fiskalni računi (od 02.10.2026.) [P]
 
@@ -4932,16 +4963,32 @@ Račun se čuva gde i ostali fiskalni računi (`nabavka.FiskalniRacun`), samo je
 
 | Tema | Pravilo |
 |---|---|
-| Šta se vidi | Samo računi vezani za putni nalog. Računi koji su učitani samo u Nabavci se ne prikazuju. |
+| Šta se vidi | Samo računi vezani za putni nalog. Računi Nabavke i ostali fiskalni računi se ne prikazuju. |
 | Kolone | Vreme, prodavac i PIB, broj računa (veza na detalj u Nabavci), iznos, PDV, kupac (IMS / drugi kupac / fizičko lice), putni nalog (zaposleni, mesto, datum, oznaka storniranog naloga), šifra posla, ko je učitao, **Proknjiženo** |
 | Filteri | Knjiženje (podrazumevano neproknjiženi), kupac, period i pretraga tabele; primenjuju se odmah. Zbir i PDV u zaglavlju prate filtere i pretragu; izvoz u Excel takođe. |
 | Tabela | Oba spiska (pravdanje i knjiženje) su DataTables tabele sa stranom sa servera — isti URL uz parametar `draw` vraća JSON (`isplate/tabela.py`), pa nema posebne dozvole za podatke. |
 | Proknjiženo | Polje za štikliranje čuva se odmah i pamti ko je i kada označio (`proknjizeno`, `proknjizio`, `proknjizeno_at`). Ne upisuje ništa u knjigovodstvo. Poništavanje oznake traži potvrdu i beleži se u evidenciji rada. |
 | Zaključavanje | Proknjižen račun se u Nabavci ne briše i ne menja (obrada, šifre posla), niti se skida sa putnog naloga. |
 | Pravdanje | Spisak putnih naloga (podrazumevano neopravdani; pretraga, period putovanja) sa brojem i zbirom računa. Opravdan nalog je **zaključan**: računi se više ne dodaju ni skidaju. „Opravdaj" je isto što i u Floti. |
-| Dodavanje računa | Novi račun dobija **šifru posla putnog naloga**. Račun koji je već učitan u Nabavci se samo **veže** za nalog i zadržava svoju šifru. Račun vezan za drugi nalog se ne prevezuje; na storniran nalog se računi ne dodaju (postojeći ostaju, uz oznaku). Pogrešno skeniran račun se skida sa naloga dok nije proknjižen, a ostaje u evidenciji Nabavke. |
+| Dodavanje računa | Novi račun dobija **šifru posla putnog naloga**. Račun koji je već učitan u Nabavci se samo **veže** za nalog i zadržava svoju šifru. Račun vezan za drugi nalog se ne prevezuje; na storniran nalog se računi ne dodaju (postojeći ostaju, uz oznaku). Pogrešno skeniran račun se skida sa naloga dok nije proknjižen i vraća se u svoju evidenciju: račun učitan na nalogu u „Ostale fiskalne račune", račun iz Nabavke u Nabavku. |
 | Obuhvat | Isplate rade po starim pravima: oba ekrana pokazuju sve putne naloge i sve račune sa njih, kao ekran isplate akontacija. |
 | Dozvole | Pravdanje: `isplate:putni_nalozi_pravdanje`, `isplate:putni_nalog_racuni`, `isplate:putni_nalog_racun_dodaj`, `isplate:putni_nalog_racun_ukloni`, `isplate:putni_nalog_opravdaj`. Knjiženje: `isplate:fiskalni_putni_nalozi`, `isplate:fiskalni_proknjizi`, `isplate:fiskalni_izvoz`. Uloga Blagajna ih dobija automatski. |
+
+#### Ostali fiskalni računi (od 05.10.2026.) [P]
+
+Fiskalni računi za **gotovinski obračun** koji se ne vezuju za putne naloge. Ekran je isti kao Putni
+nalozi – Fiskalni računi (filteri, zbir, „Proknjiženo", Excel), uz dugme **Učitaj račun** koje otvara
+prozor kao u Nabavci: šifra posla (sve aktivne iz registra — Isplate rade po starim pravima), link sa
+čitača QR koda i napomena (za šta je račun). Prozor ostaje otvoren za sledeći račun, a tabela i zbir se
+osvežavaju bez ponovnog učitavanja. „QR kod je oštećen?" vodi na ručnu proveru Poreske uprave
+(vidi [3.4 Nabavka](#34-nabavka)) — isto i u prozoru računa putnog naloga. Umesto kolone „Putni nalog" je „Napomena"; pretraga obuhvata i napomenu.
+
+| Tema | Pravilo |
+|---|---|
+| Podatak | Ista tabela `nabavka.FiskalniRacun`, `evidencija = gotovina`, bez `putni_nalog` (`isplate/fiskalni_views.py: ostali_racuni`). Preuzimanje sa stranice Poreske uprave isto je kao u Nabavci. |
+| Razdvajanje | Ne vide se u Nabavci ni na Putni nalozi – Fiskalni računi; računi Nabavke i putnih naloga ne vide se ovde. Isti račun se ne učitava dva puta — poruka kaže gde je već učitan. |
+| Detalj | Broj računa vodi na detalj (Nabavka), gde stoji napomena da se račun vodi u Isplatama. |
+| Dozvole | `isplate:fiskalni_ostali`, `isplate:fiskalni_ostali_ucitaj`, `isplate:fiskalni_ostali_izvoz` (uz `isplate:fiskalni_proknjizi`). Uloga Blagajna ih dobija automatski posle `sync_permission_codes`. |
 
 ---
 
@@ -5444,14 +5491,17 @@ Modul nema obračune. Ima dva pregleda:
 > **Za koga je ovo poglavlje:** arhivska služba, pisarnica i programeri.
 > Status tvrdnji: **[P]** potvrđeno kodom, **[Z]** zaključeno, **[N]** nepotvrđeno.
 > Plan celog modula (overa, čuvanje, izlučivanje): [`plan-arhive-overe-i-cuvanja.md`](plan-arhive-overe-i-cuvanja.md).
+> Važeći interni akt: Pravilnik o načinu evidentiranja, klasifikovanja, arhiviranja i čuvanja arhivske građe i
+> dokumentarnog materijala (br. 20-16153 od 07.12.2021, izmena 24.02.2023) — poređenje sa planom u odeljku 4.5 plana.
 
 ---
 
 ### 1. Šta postoji (od 01.10.2026.) [P]
 
 Prvi deo plana, **faza 1**: šifarnik Liste kategorija i delovodnik sa pisarnicom. Modul radi
-**uporedo** sa sadašnjim programom za delovodnik, kao probni rad. Prelazak je predviđen za
-01.01.2027. (plan, odeljak 12).
+**uporedo** sa sadašnjim načinom vođenja delovodnika (programa za delovodnik nema), kao probni rad.
+Elektronski delovodnik počinje 01.01.2027. od broja 1, bez uvoza ranijih godina (plan, odeljak 12; O-2 zatvoreno
+05.10.2026.).
 
 | Ekran | Adresa | Šta radi |
 |---|---|---|
@@ -5471,14 +5521,14 @@ Dozvole su imena ruta (`arhiva:delovodnik`, `arhiva:pisarnica`, `arhiva:predmet_
 | Pravilo | Kako radi |
 |---|---|
 | Ko daje broj | Samo `arhiva/services/delovodnik.py: zavedi()`. Forma samo prikuplja podatke. |
-| Format | Iz podešavanja: `ARHIVA_FORMAT_BROJA = "{centar}-{broj}"`, `ARHIVA_FORMAT_PODBROJA = "{osnovni}/{podbroj}"` (`ims_erp/settings/base.py`). Podrazumevano `43-15238` i `43-15238/2`, kao brojevi zahteva u Kadrovima. Format je još otvorena odluka (plan, O-1); promena je samo u podešavanjima. |
+| Format | Iz podešavanja: `ARHIVA_FORMAT_BROJA = "{centar}-{broj}"`, `ARHIVA_FORMAT_PODBROJA = "{osnovni}/{podbroj}"` (`ims_erp/settings/base.py`). Podrazumevano `43-15238` i `43-15238/2`, kao brojevi zahteva u Kadrovima. **Odlučeno 05.10.2026. (plan, O-1): ide postojeći način brojanja** — jedan niz osnovnih brojeva za ceo Institut po godini, uz oznaku OJ; nema niza po OJ. |
 | Niz | Jedan niz za ceo Institut, za kalendarsku godinu (`EvidencionaKnjiga` + `BrojacKnjige`). Nova godina počinje od 1. |
 | Izbor OJ u pisarnici | Grupisan po centrima: „ceo centar”, pa njegove OJ. Naziv OJ je naziv iz registra, a kada ga registar nema, isti **predlog naziva kao u stablu organizacije** (`organizacija.services.tree.predlog_naziva_jedinice`), pa naziv iz kadrovske evidencije, pa „bez naziva u registru” (`arhiva/oj.py`). U registar se ništa ne upisuje. Naučni projekti (`3-…`) se ne nude. |
 | Centar u broju | Oznaka centra glavne OJ predmeta, iz registra organizacije: centar daje svoju šifru, OJ šifru nadređenog centra. Na šifru posla se ne zavodi. Oznaka se pamti na predmetu (`oznaka_centra`). |
 | Istovremeni upis | Red brojača se zaključava (`select_for_update`, na SQL Serveru UPDLOCK). Unique ograničenje na (knjiga, osnovni broj) i (knjiga, delovodni broj) je druga linija zaštite. **Ne koristi se `MAX()+1`.** |
 | Podbroj | Osnovni akt je podbroj 1 i nosi broj predmeta. Odgovori i dopisi su `/2`, `/3` … Predmet se zaključava dok se računa podbroj. |
 | Storno | Pogrešan upis se ne briše: status „Storniran", razlog, ko i kada. Broj se ne koristi ponovo. U storniran predmet se ne upisuju novi akti. |
-| Zaključenje knjige | `zakljuci_knjigu()` upisuje broj upisa i službenu zabelešku. Posle toga upis nije moguć. Knjiga uvezena iz ranijeg programa (`istorijska`) je samo za čitanje. Ekran za zaključenje još ne postoji. |
+| Zaključenje knjige | `zakljuci_knjigu()` upisuje broj upisa i službenu zabelešku. Posle toga upis nije moguć. Knjiga označena kao `istorijska` (uvezena ranija evidencija) je samo za čitanje; uvoz ranijih godina nije predviđen (O-2). Ekran za zaključenje još ne postoji. |
 
 ---
 
@@ -5760,25 +5810,14 @@ Važenje dodele traje **do dana pre sledeće dodele**. [P]
 Dnevno se osvežava iz `dbo.sif_pos_trenutno` (`regbr`, `sifpos`); nova dodela se upisuje
 **samo ako se razlikuje od poslednje**. [P]
 
-##### `fleet_vehicleholding` — osnov raspolaganja vozilom
+##### Osnov raspolaganja — iz ugovora (do 05.10.2026. `fleet_vehicleholding`)
 
-| Kolona | Značenje |
-|---|---|
-| `basis` | `owned` (vlasništvo IMS) ili `contract` (korišćenje po ugovoru) |
-| `start_date`, `end_date` | Period (uključivo); `end_date` prazan = još traje |
-| `lease_id` | Obavezan za `contract` |
-| `financing` | `own_funds` ili `credit` — samo za vlasništvo IMS |
-| `financing_contract_id` | Samo uz `credit` |
-| `evidence`, `note` | Osnov promene |
-
-Kontrole [P]:
-
-1. Kraj ne sme biti pre početka (i kao `CheckConstraint` u bazi).
-2. Za `contract`: ugovor mora pripadati **tom** vozilu, a period raspolaganja mora biti
-   **unutar** perioda ugovora.
-3. Za `owned`: ne sme se birati ugovor o korišćenju.
-4. Ugovor o finansiranju samo uz `credit`.
-5. **Periodi se ne smeju preklapati** — provera uz `select_for_update()` nad vozilom.
+Raspolaganje se ne vodi u posebnoj tabeli: dok važi ugovor iz `fleet_lease`, vozilo se koristi po
+ugovoru; bez važećeg ugovora vozilo je u vlasništvu IMS (`fleet/support/analysis_defaults.py: holding_at`).
+Finansiranje nabavke je na vozilu: `fleet_vehicle.financing` (`own_funds` / `credit`) i
+`financing_contract_id` (samo uz kredit). Migracija `0090_raspolaganje_iz_ugovora` prenela je
+finansiranje i dokaze sa nekadašnjeg `fleet_vehicleholding` (23 kopije ugovora + 1 vlasništvo) i obrisala
+tu tabelu i praznu `fleet_leasechargeperiod`.
 
 ##### `fleet_lease` — lizing / najam
 
@@ -6567,7 +6606,6 @@ ni ručnim upisom kroz aplikaciju. [P]
 
 | Tabela | Pravilo |
 |---|---|
-| `fleet_vehicleholding` | `end_date >= start_date` ili prazno |
 | `fleet_jobcode` | Jedno vozilo ne može imati dve dodele istog datuma |
 | `hr_annualleavedecision` | `end_date >= start_date` |
 | `hr_sickleave` | `end_date >= start_date` ili prazno |
@@ -8150,7 +8188,8 @@ Link **Knjiženja** prenosi posao, isti period, prefiks konta i vrstu rashoda.
 
 > **[P]** Izvor je lokalna kopija `nalog_z`; **ne pokreće se** zaseban bruto bilans po OJ.
 > Konto se grupiše **po šifri posla**, a ne automatski po `nalog_z.oj`. Zbirni izveštaj
-> „po kontima“ koristi **puno konto** — to treba razlikovati od `knt3` taba. Stavka
+> „po kontima“ od 05.10.2026. otvara konta po dubini (klasa → grupa → sintetika → konto, 6.1.23);
+> `knt3` tab odgovara nivou sintetike. Stavka
 > „Struktura rashoda“ uklonjena je iz menija, ali detalj konta ostaje dostupan.
 
 ---
@@ -8705,6 +8744,89 @@ i storno priliva 10 daju devizno stanje 70 EUR, nezavisno od USD računa.
 **Ograničenje:** saldo depozita za garanciju nije iznos garancije. Vanbilansna
 konta 88610/89610 i dugoročni depoziti 03/04 ostaju izvan traženog obuhvata 23/24.
 Broj ugovora, nominalni iznos, kamata i rok oročenja ne izmišljaju se iz knjiženja.
+
+---
+
+### 6.1.22. Rezultat po centrima bez i posle zajedničkih troškova (od 05.10.2026.)
+
+Implementacija: `finansije/services/pregled_centara.py`, prikaz `finansije/templates/finansije/_centri_zt.html`
+(Finansijski pregled), testovi: `finansije/test_pregled_centara.py`.
+
+**Odluke korisnika (pisana potvrda 05.10.2026.):**
+
+1. **ZT centra = zbir ZT njegovih šifara posla**, po istoj formuli kao ekran Šifre posla
+   (6.1.6, `shared_costs.allocate`). Brojevi se zato poklapaju između ekrana.
+2. **Podela centara po raspodeli ZT**, iz podataka svake godine perioda:
+
+| Grupa | Pravilo |
+|---|---|
+| **Profitni centri** | Centar ima koeficijent > 0 u `blokraspodela` (prima raspodelu) |
+| **Zajedničke službe (neprofitni)** | Centar čije šifre čine osnovicu (kriterijum 1–3 u `posao_mes`) |
+| **Ostali** | Sve ostalo: koeficijent 0 (npr. naučni blok), neraspoređena knjiženja |
+
+Grupe se prikazuju **jedna ispod druge**, svaka sa zbirom. Kolone:
+
+```text
+Prihodi, Rashodi, Rezultat bez ZT = P − R            (6.1.5)
+Troškovi zajedničkih službi       = −Σ ZT šifara centra (prikaz sa minusom)
+Rashodi sa ZT                     = R + Σ ZT
+Rezultat posle ZT                 = P − R − Σ ZT
+```
+
+Centar knjiženja je `polje_centra()` (registar na datum knjiženja, 6.1.3). Šifra sa knjiženjima u
+više centara u periodu ide centru sa najviše knjiženja. Šifra koja nema profitno pravilo ili čiji
+centar nema red u `blokraspodela` ne prima ZT (nula). Duplirana pravila ili nedostupan izvor daju
+**crtu**, kao na ekranu Šifre posla; nepotpuna raspodela je označena zvezdicom.
+
+**Usklađenje [P]:** raspodela ne menja rezultat Instituta.
+
+```text
+Rezultat svih centara posle ZT + Pokriće (ukupno raspoređeni ZT) = Rezultat Instituta
+```
+
+Usklađenje se prikazuje samo korisniku sa obuhvatom cele firme.
+
+**Kontrolni primer:** osnovica službi `B1 = −500` (centar 82), centar 41 dobija 40%, šifra 410001
+dobija 50% centra → `ZT = 500 × 40% × 50% = 100`. Centar 41: P = 1.000, R = 200, rezultat 800,
+ZT −100, rashodi sa ZT 300, rezultat posle ZT 700. Službe: rezultat −500, posle pokrića −400.
+Usklađenje: `300 + 100 = 400` = rezultat Instituta (800 − 500 + 100 naučni blok).
+
+**Provera na stvarnim podacima (2026, 05.10.2026.):** ZT raspoređen profitnim centrima
+(41, 42, 43, 44, 70) jednak je rezultatu zajedničkih službi (−219.358.592), a rezultat Instituta
+383.674.141 isti je bez i posle ZT.
+
+### 6.1.23. Nazivi konta i otvaranje po dubini (od 05.10.2026.)
+
+Implementacija: `finansije/services/kontni_plan.py`, testovi: `finansije/test_izvoz.py`.
+
+Nazivi se čitaju iz kontnog plana izvora (`konto`: `knt`, `naz_knt`, samo SELECT) i čuvaju u
+kešu 6 sati. Kada izvor nije dostupan, koriste se nazivi sa knjiženja (zbirni nivoi su tada bez naziva).
+
+Izveštaj **Struktura po kontima** grupiše po nivou: **klasa (1) → grupa (2) → sintetika (3) → konto (puno)**.
+Bez izabranog nivoa prikazuje se nivo za jedan dublji od unetog početka konta; klik na konto otvara
+sledeći nivo, a na punom kontu vodi na knjiženja (tačno konto). Putanja otvaranja je iznad tabele.
+Iznosi po nivou su zbir istih knjiženja (prefiks konta) — formula 6.1.5 se ne menja.
+
+Tab **Rashodi** na detalju posla (6.1.10) ima i kolonu **Naziv konta** za `knt3`.
+
+### 6.1.24. Izvoz u Excel i PDF (od 05.10.2026.)
+
+Implementacija: `finansije/services/izvoz.py` (zapis), `finansije/services/izvoz_ekrani.py` (sadržaj ekrana),
+strana za štampu `finansije/templates/finansije/izvoz_stampa.html`.
+
+Svaki ekran ima dugmad **Excel** i **PDF**. PDF je A4 strana sa zaglavljem Instituta (položeno kada tabela
+ima više od 7 kolona); u prozoru za štampu bira se „Sačuvaj kao PDF”. Izvoz **ne preračunava**: koristi iste
+funkcije kao ekran, sa istim obuhvatom prava.
+
+| Ekran | Sadržaj izvoza |
+|---|---|
+| Finansijski pregled | Sažetak, tri grupe centara bez i posle ZT, usklađenje, šifre posla |
+| Izveštaj po centrima / kontima / mesecima | Tabela ekrana sa nazivima, učešćima i zbirom; za konta i nivo i putanju |
+| Šifre posla | Svi pokazatelji; PDF dodatnih analiza ima samo dodatne kolone (osnovne su u PDF-u Šifre posla) |
+| Knjiženja | Excel sve stavke; PDF najviše **2.000** stavki, a zbir duguje/potražuje je za sve |
+| Detalj šifre posla | Sažetak (P, R, ZT, rezultat posle ZT, tokovi gotovine), struktura rashoda sa nazivima konta, IF i ON fakture |
+
+Tekst iz izvora se u Excel upisuje kao tekst (ne postaje formula). Nedostupan iznos je prazan / crta, ne nula.
 
 ---
 
@@ -9989,6 +10111,11 @@ nisu promenjeni. Regresije: `fleet/test_vehicle_consumption.py`.
 ---
 
 ## 6.3. Flota — troškovi vozila
+
+> **Ukinuto 05.10.2026.:** `fleet/support/dashboard.py` (V-07 `vehicle_cost_per_km_rows()`,
+> V-12 `cost_per_km_period_analysis()` i pomoćne funkcije kilometraže) je **obrisan** — nijedan
+> ekran ga nije pozivao, a trošak lizinga računao je drugačije od analitike. Ovo poglavlje ostaje
+> kao istorijski opis; važeći obračun je [IMS-FLOTA-2.x](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa).
 
 > **Promena 19.09.2026:** nova `/analitika/` i analitika na detalju vozila koriste
 > [metodologiju IMS-FLOTA-2.0](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa). Opisi V-07–V-12 u ovom
@@ -14232,6 +14359,86 @@ određuju jedan datum (Sv. Grigorije, Sv. Kliment, Bajram) traže ručni unos da
 
 ---
 
+### K-10. Analitika zaposlenih (od 05.10.2026.)
+
+#### 1. Naziv
+
+Analitika zaposlenih — pol, starost, stručna sprema, staž u Institutu, OJ i vrsta radnog odnosa.
+Kod: `hr/services/analitika.py`, ekran `/hr/analitika/`, testovi `hr/test_analitika.py`.
+
+#### 2. Ulazni podaci i poreklo
+
+| Podatak | Polje | Izvor |
+|---|---|---|
+| Pol | `Employee.gender` (`M`, `Z`/`F`) | Kadrovska baza (`pol`), normalizuje se kao u rešenjima |
+| Starost | `date_of_birth` | `dat_rodj` |
+| Staž u Institutu | `date_of_joining` | `dat_dolaska` |
+| Stručna sprema | `job_title`, pa `education` | `naz_zan`, pa `skola` |
+| OJ | `org_unit_code` / `department_code` | `oj` |
+| Radni odnos | `status_name` | `naz_stat` |
+
+Obuhvat: **aktivni** zaposleni koje korisnik vidi (`visible_employees`), opciono jedna OJ, na današnji dan.
+
+#### 3. Postupak [P]
+
+```text
+Starost      = pune godine na današnji dan
+Staž         = pune godine od datuma zaposlenja u Institutu (ne ukupan radni staž)
+Prosek       = zbir / broj, zaokruženo na 0,1 (ROUND_HALF_UP); medijana bez zaokruživanja
+Udeo         = broj grupe / ukupno × 100, na 0,1
+Rasponi      = do 19, 20–29, 30–39, 40–49, 50–59, 60–64, 65 i više
+Staž rasponi = manje od 1, 1–4, 5–9, 10–19, 20–29, 30 i više
+```
+
+Datum rođenja pre 1920. ili posle današnjeg (izvor koristi `01.01.1900.` kao prazno) znači **nepoznatu
+starost**: zaposleni se broji u ukupnom broju i u spremi, ali ne i u starosnim pokazateljima.
+
+**Stručna sprema** nema posebno polje u kadrovskoj bazi, pa se **izvodi iz naziva zanimanja** (a kada
+zanimanja nema ili se ne prepozna, iz naziva škole). Pravila se proveravaju redom, prva pogođena reč odlučuje:
+
+| Stepen | Ključne reči |
+|---|---|
+| I–II | bez zanimanja / stručne spreme, pomoćni |
+| VIII | doktor |
+| VII | master, dipl., magistar, fakultet, univerzitet |
+| V | specijalista |
+| VI | strukovni, inženjer (bez „dipl.”), ekonomista, informatičar, viša / visoka škola |
+| IV | tehničar, gimnazija, laborant, srednja škola |
+| III | zanati: bravar, mehaničar, instalater, vozač, konobar, pekar… |
+
+Šta se ne prepozna je „Nije razvrstano”. Excel ima list **Razvrstavanje** (svako zanimanje i škola sa
+dodeljenim stepenom), da kadrovska služba proveri pravila.
+
+**Kontrolni primer:** četiri aktivna zaposlena — žena 30 god. (dipl. inž.), muškarac 44 (tehničar),
+muškarac 66 (doktor), žena sa datumom rođenja 01.01.1900. (vozač). Ukupno 4, žene 2, muškarci 2;
+prosečna starost (30 + 44 + 66) / 3 = **46,7**, medijana 44, žene 30,0, muškarci 55,0; bez starosti 1;
+visoka i viša sprema (VI–VIII) 2.
+
+**Provera na lokalnoj kopiji podataka (05.10.2026.):** 324 aktivna, žene 93 (28,7%), prosečna starost 46,6
+(žene 48,4, muškarci 45,9), VI–VIII 53,7%; nije razvrstano 5 (bez zanimanja i škole).
+
+#### 4. Primena na ekranu
+
+Ekran **Kadrovi → Analitika zaposlenih**: pokazatelji, starosna piramida (muškarci / žene), histogram starosti,
+tabele po rasponima, stručnoj spremi, starost × sprema (toplotna tabela), staž, radni odnos i OJ. Isti sadržaj
+ide u **PDF fajl** (A4 uspravno, `hr/services/analitika_pdf.py`, biblioteka `reportlab`): zaglavlje Instituta sa
+logom i podnožje „Strana X od Y” na svakoj strani, vektorski grafikoni, onoliko strana koliko sadržaj traži; i u
+Excel (list po celini, sa grafikonima). Font je Arial iz Windowsa (zbog č, ć, đ); na drugom sistemu DejaVu Sans.
+
+#### 5. Status pouzdanosti
+
+Pol, starost i staž su direktno iz kadrovske baze. **Stručna sprema je izvedena** iz teksta zanimanja i nije
+zvanični stepen — za zvanične izveštaje potrebno je polje stepena u kadrovskoj bazi (Q28).
+
+### Komentar na prolaze (od 05.10.2026.)
+
+Na radnoj listi, u evidenciji prolaza, za dan sa statusom **Problem** ili **bez prolaza na radni dan** (ne
+vikend i ne praznik) može se upisati komentar (do 500 znakova): npr. zaboravljena kartica, teren, službeni put.
+Jedan komentar po zaposlenom i danu (`hr.KomentarProlaza`); prazan tekst ga briše. Upisuje ga zaposleni na
+svojoj listi ili ko sme da otvori tuđu radnu listu (`hr:employee_work_time_sheet`). Kada je radna lista
+**odobrena**, komentar se ne menja. Komentar se vidi na ekranu i u prilogu za štampu. Izvor prolazaka i
+obračun sati se **ne menjaju** — komentar je samo objašnjenje.
+
 ### Novi problemi iz ovog poglavlja
 
 | # | Opis | Ozbiljnost |
@@ -14246,6 +14453,7 @@ određuju jedan datum (Sv. Grigorije, Sv. Kliment, Bajram) traže ručni unos da
 | **Q25** | Taster **12 (Pauza)** uvek se prijavljuje kao **problem**, pa svaki dan u kome je zaposleni koristio pauzu dobija status „Problem“. Da li pauzu treba obračunati (kao u K-02, ograničeno na 30 minuta) ili je dovoljno da ne bude označena kao problem? |
 | **Q26** | Radna lista ima status **„Odobreno“**, ali u kodu nije pronađena radnja koja ga postavlja. Da li je odobravanje radne liste predviđeno? |
 | **Q27** | Službeni izlazak se računa **do 16:00**, što je upisano u kod. Da li je to i zvanično radno vreme i treba li da bude podesivo? |
+| **Q28** | Kadrovska baza nema **stepen stručne spreme** kao polje; analitika ga izvodi iz zanimanja (K-10). Može li se stepen dodati u kadrovsku bazu, da analitika ne zavisi od pravila po tekstu? |
 
 ---
 
@@ -17547,7 +17755,7 @@ prikaz istorijskog centra uzima dodelu na kraju izabranog perioda.
 | Šifra posla vozila | JobCode + OrganizationalUnit | Poslednja dodela čiji datum nije posle obračunskog dana |
 | Raspolaganje | Lease | Jedan važeći ugovor za dan; bez ugovora vlasništvo IMS |
 | Naknada lizinga/najma | Lease.current_payment_amount + payment_basis | monthly ili total, za period samog ugovora |
-| Kamata finansijskog lizinga | LeaseInterest | Godišnji iznos, samo za dane važećeg ugovora |
+| Kamata finansijskog lizinga | LeaseInterest | Stvarna kamata za kalendarsku godinu, raspoređena na dane ugovora u toj godini (unos: detalj ugovora → „Unesi kamate”) |
 | Namena | VehicleAnalysisProfile ili početna procena | Potvrđen profil ima prednost |
 | Gorivo | NIS/OMV ili izabrani FuelConsumption | Samo jedan izvor po datumu |
 | Održavanje | ServiceTransaction + Requisition | Iznosi na datum dokumenta, uključujući storna |
@@ -17555,8 +17763,9 @@ prikaz istorijskog centra uzima dodelu na kraju izabranog perioda.
 | Naknade osiguranja | Insurance, kola=True | Poseban priliv |
 | Kilometraža / korišćenje | Gorivo + VehicleTravelOrder | Očitavanja i administrativni dani naloga |
 
-VehicleHolding, LeaseChargePeriod i VehicleDowntime ostaju sačuvani radi
-istorije, ali ne određuju obračun 2.1. `VehicleTravelOrder.job_code` takođe
+VehicleDowntime ostaje sačuvan radi istorije, ali ne određuje obračun 2.1;
+VehicleHolding i LeaseChargePeriod su uklonjeni 05.10.2026. (migracija 0090 — raspolaganje sledi
+isključivo iz ugovora, finansiranje nabavke je na vozilu). `VehicleTravelOrder.job_code` takođe
 ne određuje pripadnost troška vozila. U analitici se ne traži popunjavanje tih
 podataka. Postojeći zapisi se ne brišu.
 
@@ -17602,7 +17811,8 @@ a konflikt je prikazan. Poseban unos osnova vlasništva nije potreban.
 **Mesečna naknada:** `iznos / broj dana konkretnog kalendarskog meseca` za svaki
 obuhvaćeni dan ugovora. **Ukupni iznos:** `iznos / broj dana ugovora`.
 Polisa: `premija / broj dana polise` za svaki dan preklapanja.
-Finansijska kamata: `godišnja kamata / 365 ili 366`, samo tokom ugovora.
+Finansijska kamata: `kamata upisana za godinu / broj dana ugovora u toj godini`, samo tokom ugovora
+(od 05.10.2026.; ranije `/ 365 ili 366`, pa je delimična prva i poslednja godina ulazila umanjeno).
 Nedostajući iznos ili značenje iznosa ne zamenjuje se nulom. Poznata nula ostaje nula.
 
 **Raspodela na poslove:** gorivo, servis i trebovanje pripadaju šifri posla
@@ -17656,6 +17866,11 @@ Ako uz to postoji mesečna naknada 31.000 RSD za ceo januar, P1 dobija još
 Naknada 31.000 RSD mesečno od 16.01. do 15.03.2024: 16.000 + 31.000 +
 15.000 = **62.000 RSD**, uključujući prestupni februar. Ukupna ugovorna
 naknada 31.000 RSD za 01–31.01.2026 daje isti dnevni iznos 1.000 RSD.
+
+Kamata finansijskog lizinga (od 05.10.2026.): ugovor 01.10.2025–31.03.2026 ima 92 dana u
+2025. i 90 dana u 2026. Upisano 9.200 RSD za 2025. i 9.000 RSD za 2026. daje 100 RSD dnevno;
+ceo ugovor nosi **18.200 RSD**, a januar 2026. **3.100 RSD**. Ugovor od 16.01.2026. sa
+upisanih 36.500 RSD za 2026. i krajem 31.01.2026. nosi u januaru svih **36.500 RSD**.
 
 Kilometraža za januar: očitavanja 31.12.2025 = 1.000 km, 15.01.2026 =
 1.500 km, 01.02.2026 = 2.000 km. Usvajaju se 31.12. i 01.02, razlika je
@@ -17753,8 +17968,8 @@ Preporuka ne menja `Vehicle.otpis` i ne izvršava poslovne procedure.
 5. Dopuniti šifre posla na nalozima i početi evidenciju stvarnih zastoja.
 6. Pripremiti tržišne procene i uporedive ponude za E-02.
 
-Nasleđene funkcije `vehicle_cost_per_km_rows()` i pragovi po masi ostaju radi
-kompatibilnosti postojećeg koda/testova; nova `/analitika/`, statistika centra i
+Nasleđene funkcije `vehicle_cost_per_km_rows()` i `cost_per_km_period_analysis()`
+(`fleet/support/dashboard.py`) uklonjene su 05.10.2026. — nijedan ekran ih nije pozivao; nova `/analitika/`, statistika centra i
 analitika na vozilu ih ne koriste. Statistika centra sada prikazuje isti obračun
 sa filtrom istorijske dodele na kraju izabranog perioda i dozvolom `center_statistics`.
 
@@ -19340,7 +19555,7 @@ period 01.12.2025.–31.01.2026.:
 
 > **Dopuna (19.09.2026.) [P]:** obračun se od tada izvodi u **novom modulu ekonomike**
 > ([E-01](#612-flota--analitika-namene-raspolaganja-i-ekonomskih-alternativa)), a ne u `vehicle_cost_per_km_rows()`.
-> Novi modul deli kamatu **dan po dan** (`amount / 365 ili 366`), i to samo dok traje ugovorno raspolaganje. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
+> Novi modul deli kamatu **dan po dan**, samo dok traje ugovor — od 05.10.2026. na dane ugovora u toj godini (`amount / dana ugovora u godini`), da delimična prva i poslednja godina ne ulaze umanjeno; ranije `amount / 365 ili 366`. Nasleđena funkcija zadržava ispravku, ali je **ne koristi nijedan ekran**.
 
 ---
 
@@ -19417,7 +19632,7 @@ lizing — mesečna rata ili ukupan iznos ugovora?
 
 
 **Šta je urađeno (19.09.2026.) [P]:** umesto da se pogađa šta dvosmislena kolona znači, uveden je
-**nov podatak kod kojeg se zna** — `LeaseChargePeriod`:
+**nov podatak kod kojeg se zna** — `LeaseChargePeriod` (kasnije zamenjeno poljem `Lease.payment_basis` na samom ugovoru; tabela je, prazna, uklonjena 05.10.2026.):
 
 | Polje | Značenje |
 |---|---|
@@ -20164,7 +20379,7 @@ Uz to [P]:
 | Podatak | Stanje |
 |---|---|
 | Nalozi sa upisanom šifrom posla | **0 od 241** |
-| Vozila bez ijednog osnova raspolaganja (`VehicleHolding`) | **149 od 172** |
+| Vozila bez ijednog osnova raspolaganja (`VehicleHolding`; tabela uklonjena 05.10.2026. — osnov sledi iz ugovora) | **149 od 172** |
 
 Postojeći podaci nisu problem — ima 172 vozila, 23 ugovora lizinga, 647 polisa,
 1.342 servisa, 2.980 trebovanja, 16.118 zapisa o gorivu. [P]
@@ -21599,7 +21814,7 @@ Potpun spisak: uz svako poglavlje obračuna i u
 
 | Pojam | Značenje |
 |---|---|
-| **Osnov raspolaganja** | Po čemu IMS koristi vozilo: **vlasništvo IMS** ili **korišćenje po ugovoru**. Tabela `fleet_vehicleholding`. |
+| **Osnov raspolaganja** | Po čemu IMS koristi vozilo: **vlasništvo IMS** ili **korišćenje po ugovoru**. Sledi iz ugovora o lizingu / najmu (`fleet_lease`): bez važećeg ugovora vozilo je u vlasništvu IMS (od 05.10.2026.; ranije tabela `fleet_vehicleholding`). |
 | **Dodela šifre posla** | Istorijski zapis kojoj OJ vozilo pripada od kog datuma. Tabela `fleet_jobcode`. |
 | **Otpis** | Vozilo izuzeto iz upotrebe. Polje `otpis`, puni ga sinhronizacija — **ne unosi se ručno**. |
 | **Kvar (PK)** | Prijava kvara u garaži. Broj `PK-<id>/<godina>`. |
@@ -21729,7 +21944,7 @@ Potpun spisak: uz svako poglavlje obračuna i u
 | Saobraćajna dozvola | `TrafficCard` | `fleet_trafficcard` |
 | Registracioni broj | `registration_number` | isto |
 | Šifra posla (dodela) | `JobCode` | `fleet_jobcode` |
-| Osnov raspolaganja | `VehicleHolding` | `fleet_vehicleholding` |
+| Osnov raspolaganja | `Lease` + `holding_at()` | `fleet_lease` |
 | Lizing / najam | `Lease` | `fleet_lease` |
 | Polisa | `Policy` | `fleet_policy` |
 | Osiguranje (knjiženje) | `Insurance` | `fleet_insurance` |

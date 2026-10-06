@@ -2,11 +2,11 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
-from django.db.models import Exists, OuterRef, Q, Subquery
+from django.db.models import Exists, OuterRef, Subquery
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from fleet.models import JobCode, Lease, TrafficCard, TransactionNIS, TransactionOMV, Vehicle, VehicleHolding
+from fleet.models import JobCode, Lease, TrafficCard, TransactionNIS, TransactionOMV, Vehicle
 from fleet.support.fuel import deduplicate_omv_transactions
 
 ZERO = Decimal('0')
@@ -45,7 +45,6 @@ def vehicle_insurance_rows(user, data, *, casco=False):
     day = data['as_of']
     job = JobCode.objects.filter(vehicle_id=OuterRef('pk'), assigned_date__lte=day).order_by('-assigned_date', '-pk')
     card = TrafficCard.objects.filter(vehicle_id=OuterRef('pk'), issue_date__lte=day).order_by('-issue_date', '-pk')
-    holding = VehicleHolding.objects.filter(vehicle_id=OuterRef('pk'), start_date__lte=day).filter(Q(end_date__isnull=True) | Q(end_date__gte=day)).order_by('-start_date', '-pk')
     lease = Lease.objects.filter(vehicle_id=OuterRef('pk'), start_date__lte=day, end_date__gte=day)
     qs = Vehicle.objects.filter(otpis=False).annotate(
         report_center=Subquery(job.values('organizational_unit__center')[:1]),
@@ -53,7 +52,6 @@ def vehicle_insurance_rows(user, data, *, casco=False):
         report_unit=Subquery(job.values('organizational_unit__name')[:1]),
         report_plate=Subquery(card.values('registration_number')[:1]),
         report_registration=Subquery(card.values('registration_valid_until')[:1]),
-        report_basis=Subquery(holding.values('basis')[:1]),
         report_lease=Exists(lease),
     )
     qs = ogranici_izvestaj(qs, user)
@@ -66,11 +64,13 @@ def vehicle_insurance_rows(user, data, *, casco=False):
         # Do not claim inventory on a date before a known acquisition.
         if v.purchase_date and v.purchase_date > day:
             continue
-        owned = v.report_basis == 'owned' or (v.report_basis is None and not v.report_lease)
+        # Raspolaganje iz ugovora: bez važećeg ugovora o lizingu / najmu vozilo je u vlasništvu IMS.
+        # „Evidentirano” vlasništvo znači da su na vozilu upisani podaci o nabavci ili finansiranju.
+        owned = not v.report_lease
         if not owned and not casco:
             excluded_contract += 1
             continue
-        confirmed = v.report_basis == 'owned'
+        confirmed = owned and bool(v.purchase_date or v.purchase_value or v.invoice_number or v.financing)
         if not casco and data.get('ownership') == 'confirmed' and not confirmed:
             continue
         age = day.year - v.year_of_manufacture if v.year_of_manufacture and 1886 <= v.year_of_manufacture <= day.year else None

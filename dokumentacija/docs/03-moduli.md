@@ -109,7 +109,7 @@ Ovo je **najvažniji deo poglavlja** — pokazuje šta se dešava kada se nešto
 | **Nabavka** | Ugovori | Osnovni i kupovni ugovor uz predmet | Veza `contract` |
 | **Ugovori** | Nabavka | Partner kao dobavljač | Veza `supplier` |
 | **Ugovori** | Menice | Veza ugovora i menice | Veza `ContractMenicaLink` |
-| **Ugovori** | Flota | Ugovor o lizingu i o finansiranju | Veza `Lease.contract`, `VehicleHolding.financing_contract` |
+| **Ugovori** | Flota | Ugovor o lizingu i o finansiranju | Veza `Lease.contract`, `Vehicle.financing_contract` |
 | **Ugovori** | Mobilni | Ugovor uz paket | Veza `MobilePackage.contract` |
 | **Ugovori** | Potraživanja | Partner uz finansijski identitet | Veza `FinancePartnerIdentity.partner` |
 | **Potraživanja** | Finansije | Saldo kupaca po šifri posla | `job_balances()` |

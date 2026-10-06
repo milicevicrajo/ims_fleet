@@ -8,19 +8,17 @@ from pathlib import Path
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.storage import FileSystemStorage
 from django.db import IntegrityError
 from django.http import HttpResponseBadRequest, QueryDict
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.views import View
-from django.views.generic import CreateView, UpdateView
 
 from core.mixins import RolePermissionRequiredMixin
-from ..forms.onboarding import VehicleIdentityForm, VehicleBasisForm, VehicleTechnicalForm, OnboardingTrafficCardForm, VehicleAssignmentForm, VehicleHoldingForm
-from ..models import Vehicle, VehicleHolding
+from ..forms.onboarding import VehicleIdentityForm, VehicleBasisForm, VehicleTechnicalForm, OnboardingTrafficCardForm, VehicleAssignmentForm
+from ..models import Vehicle
 from ..services.vehicle_onboarding import create_vehicle_from_steps
 from fleet.support import obuhvat as obuhvat_flote
 
@@ -251,44 +249,3 @@ class VehicleOnboardingView(RolePermissionRequiredMixin, LoginRequiredMixin, Vie
         draft['step'] += 1
         self.save_draft(token, draft)
         return redirect(f'{reverse("vehicle_create")}?draft={token}')
-
-
-@obuhvat_flote.ogranici_po_vozilu()
-class HoldingViewMixin(RolePermissionRequiredMixin, LoginRequiredMixin):
-    required_permission_code = 'vehicle_update'
-    model = VehicleHolding
-    form_class = VehicleHoldingForm
-    template_name = 'fleet/generic_form.html'
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        vehicle = get_object_or_404(obuhvat_flote.po_vozilu(Vehicle.objects.all(), self.request.user, "pk"), pk=self.kwargs['vehicle_id'])
-        assignment = vehicle.job_codes.filter(assigned_date__lte=timezone.localdate()).select_related('organizational_unit').order_by('-assigned_date', '-id').first()
-        if not obuhvat_flote.aktivno(self.request.user) and self.request.user.allowed_centers.exists() and assignment and assignment.organizational_unit and not self.request.user.allowed_centers.filter(center=assignment.organizational_unit.center).exists():
-            raise PermissionDenied('Nemate pristup ovom vozilu.')
-        kwargs['vehicle'] = vehicle
-        return kwargs
-
-    def get_queryset(self):
-        return super().get_queryset().filter(vehicle_id=self.kwargs['vehicle_id'])
-
-    def form_valid(self, form):
-        try:
-            self.object = form.save()
-        except ValidationError as exc:
-            form.add_error(None, exc)
-            return self.form_invalid(form)
-        return redirect('vehicle_detail', pk=self.object.vehicle_id)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(title='Osnov raspolaganja vozilom', form_help='Za promenu osnova najpre završite prethodni period, zatim dodajte novi. Istek ugovora ne znači prelazak u vlasništvo IMS.')
-        return context
-
-
-class VehicleHoldingCreateView(HoldingViewMixin, CreateView):
-    pass
-
-
-class VehicleHoldingUpdateView(HoldingViewMixin, UpdateView):
-    pass

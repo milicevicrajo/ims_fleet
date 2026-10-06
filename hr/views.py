@@ -32,7 +32,7 @@ from .forms import (
     WorkTimeSheetForm,
     WorkTimeSheetLineFormSet,
 )
-from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision
+from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision, KomentarProlaza
 from .querysets import employee_list_queryset
 from .services import moj_profil
 from .services.attendance import (
@@ -534,6 +534,8 @@ def evidencija_prolaza(employee, year, month, days_in_month):
     notes_by_date = {}
     for issue in issues:
         notes_by_date.setdefault(issue.date, []).append(issue)
+    komentari = {k.datum: k for k in KomentarProlaza.objects.filter(
+        employee=employee, datum__year=year, datum__month=month).select_related("updated_by")}
 
     rows = []
     total_minutes = 0
@@ -589,6 +591,10 @@ def evidencija_prolaza(employee, year, month, days_in_month):
                 "travel_orders": travel_orders,
                 "sick_leaves": sick_leaves,
                 "holiday": holidays.get(work_date, ""),
+                "komentar": komentari.get(work_date),
+                # Komentar se nudi kada prolaz nije u redu ili ga nema na radni dan (ne za vikend i praznik).
+                "moze_komentar": status_class == "problem" or (
+                    status_class == "empty" and calendar.weekday(year, month, day) < 5 and work_date not in holidays),
             }
         )
 
@@ -600,6 +606,7 @@ def evidencija_prolaza(employee, year, month, days_in_month):
             "day_count": len([item for item in daily_hours if item.pair_count or item.issue_count]),
             "total_label": "—" if attendance_error else f"{total_minutes // 60}:{total_minutes % 60:02d}",
             "issue_count": len([issue for issue in issues if issue.is_problem]),
+            "komentara": len(komentari),
         },
         # Isti podaci služe i za predlog popunjavanja, da se izvor prolazaka ne čita dvaput.
         "_prefill_sources": {
@@ -747,12 +754,38 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         context.update(self.build_context(header_form=header_form, line_formset=line_formset))
         return context
 
+    def sacuvaj_komentar_prolaza(self, request, employee, year, month, sheet):
+        """Komentar za jedan dan evidencije prolaza; prazan tekst briše komentar. Odobrena lista je zaključana."""
+        adresa = f"{self.get_sheet_url()}?month={month}&year={year}#evidencija-prolaza"
+        if sheet.status == WorkTimeSheet.Status.APPROVED:
+            messages.error(request, "Radna lista je odobrena; komentar na prolaze više ne može da se menja.")
+            return redirect(adresa)
+        try:
+            datum = date(year, month, int(request.POST.get("dan", "")))
+        except (TypeError, ValueError):
+            messages.error(request, "Neispravan dan za komentar.")
+            return redirect(adresa)
+        tekst = " ".join((request.POST.get("tekst") or "").split())[:500]
+        if not tekst:
+            KomentarProlaza.objects.filter(employee=employee, datum=datum).delete()
+            messages.success(request, f"Komentar za {datum:%d.%m.%Y.} je obrisan.")
+            return redirect(adresa)
+        komentar, novi = KomentarProlaza.objects.get_or_create(
+            employee=employee, datum=datum, defaults={"tekst": tekst, "created_by": request.user, "updated_by": request.user})
+        if not novi:
+            komentar.tekst, komentar.updated_by = tekst, request.user
+            komentar.save(update_fields=["tekst", "updated_by", "updated_at"])
+        messages.success(request, f"Komentar za {datum:%d.%m.%Y.} je sačuvan.")
+        return redirect(adresa)
+
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         employee = self.get_employee()
         year, month = self.get_period()
         sheet = self.get_sheet(employee, year, month)
         action = request.POST.get("action") or "save"
+        if action == "komentar_prolaza":
+            return self.sacuvaj_komentar_prolaza(request, employee, year, month, sheet)
         header_form = WorkTimeSheetForm(request.POST, instance=sheet)
         line_formset = WorkTimeSheetLineFormSet(
             request.POST,

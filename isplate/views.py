@@ -178,6 +178,7 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
         context.update(
             {
                 "title": "Isplata neoporezovanih",
+                "sidebar_template": "sidebar_isplate.html",
                 "orders": orders,
                 "moze_racune": moze_racune,
                 "status": self.request.GET.get("status", "pending"),

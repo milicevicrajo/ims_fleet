@@ -51,7 +51,8 @@ Vodi **zaposlene i njihovo radno vreme**:
 |---|---|
 | **Zaposleni** | Evidencija, CV stavke, ispravka prikaza imena |
 | **Radna lista** | Mesečna evidencija sati po šiframa posla, topli obrok, terenski dodatak; predlog popunjavanja iz prolazaka, putnih naloga, bolovanja, praznika i slave (K-11) |
-| **Evidencija prolazaka** | Prikaz dnevnih sati iz sistema kontrole pristupa, uz spisak problema; od 01.10.2026. štampa se i kao **prilog radne liste** (A4 uspravno: svaki prolaz sa vremenom, sati po danu, praznici, bolovanja, putni nalozi, potpisi zaposlenog i rukovodioca). Ako izvor prolazaka nije dostupan, prilog to piše i ne prilaže se. |
+| **Analitika zaposlenih** | Od 05.10.2026.: pol, starosna piramida i histogram, rasponi po deset godina, prosečna starost (ukupno, žene, muškarci), stručna sprema (izvedena iz zanimanja), starost po spremi, staž u Institutu, radni odnos i OJ; PDF fajl (A4, zaglavlje i broj strane na svakoj strani) i Excel ([K-10](../obracuni/06-06-kadrovi.md)) |
+| **Evidencija prolazaka** | Od 05.10.2026. za dan sa problemom ili bez prolaza na radni dan upisuje se **komentar** (vidi se i u prilogu). Prikaz dnevnih sati iz sistema kontrole pristupa, uz spisak problema; od 01.10.2026. štampa se i kao **prilog radne liste** (A4 uspravno: svaki prolaz sa vremenom, sati po danu, praznici, bolovanja, putni nalozi, potpisi zaposlenog i rukovodioca). Ako izvor prolazaka nije dostupan, prilog to piše i ne prilaže se. |
 | **Godišnji odmori** | Dodele i rešenja preuzeti iz obračuna zarada |
 | **Bolovanja** | Uvoz RFZO Excel izvoza, povezivanje po JMBG |
 | **Ocenjivanje** | Šest merila, bodovi 0–4, lični koeficijent, saglasnost u tri nivoa |
@@ -67,6 +68,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 |---|---|---|
 | **Pregled** (početna strana, od 02.10.2026.) | `/hr/` | Svaki prijavljeni korisnik; delovi samo uz dozvolu spiska |
 | Spisak zaposlenih | `/zaposleni/` | Kadrovska služba |
+| **Analitika zaposlenih** (od 05.10.2026.), PDF i Excel | `/hr/analitika/`, `?izvoz=pdf`, `?izvoz=xlsx` | Dozvola `hr:analitika`, u obuhvatu korisnika |
 | Štampa spiska (A4, „Sačuvaj kao PDF”) i Excel (od 05.10.2026.) | `/zaposleni/?izvoz=stampa`, `?izvoz=xlsx` | Isto kao spisak — ista dozvola `employee_list`, obuhvat i filteri |
 | Detalj zaposlenog | `/zaposleni/<id>/` | Kadrovska služba |
 | **Moj profil** | `/moj-profil/` | Svaki zaposleni |
@@ -301,6 +303,7 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 | K-07 | Bolovanja |
 | **K-08** | **Stimulacija i lični koeficijent** |
 | K-09 | Tok saglasnosti |
+| **K-10** | **Analitika zaposlenih** (pol, starost, stručna sprema, staž) |
 
 ---
 
@@ -308,7 +311,8 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 
 | Dozvola | Šta omogućava |
 |---|---|
-| `hr:work_time_sheet` | Svoja radna lista |
+| `hr:work_time_sheet` | Svoja radna lista (i komentar na prolaze) |
+| `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.) |
 | `hr:sick_leave_list`, `hr:sick_leave_import` | Bolovanja |
 | `hr:annual_leave_list` | Godišnji odmori |
 | `hr:work_time_catalog` | Šifarnici |

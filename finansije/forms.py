@@ -87,6 +87,9 @@ class ReportFilters(forms.Form):
     unit = forms.ChoiceField(label="OJ knjiženja", required=False)
     account = forms.RegexField(label="Konto ili početak konta", regex=r"^[0-9]{1,6}$", max_length=6, required=False)
     account_exact = forms.BooleanField(label="Tačno konto", required=False)
+    nivo = forms.ChoiceField(label="Nivo konta", required=False,
+                             choices=[("", "Sledeći nivo (otvaranje po dubini)"), ("1", "Klasa"), ("2", "Grupa"),
+                                      ("3", "Sintetika"), ("5", "Konto")])
     kind = forms.ChoiceField(label="Vrsta knjiženja", choices=KINDS)
     group = forms.ChoiceField(label="Grupisanje", choices=GROUPS)
     include_empty = forms.BooleanField(label="Uključi šifre bez prometa", required=False)

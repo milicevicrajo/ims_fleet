@@ -6,7 +6,7 @@
 {% block hero_actions %}
   {% if job_detail_url %}<a class="btn btn-light" href="{{ job_detail_url }}">Detalj šifre {{ form.cleaned_data.job }}</a>{% endif %}
   <a class="btn btn-light" href="{% url 'finansije:report' %}?{{ params }}{% if form.cleaned_data.kind == 'all' %}&amp;kind=pnl{% endif %}"><i class="mdi mdi-chart-bar me-1" aria-hidden="true"></i>Zbirni izveštaj</a>
-  {% if valid and can_export %}<a class="btn btn-outline-light" data-no-preloader href="{% url 'finansije:export' %}?{{ params }}&amp;report=ledger"><i class="mdi mdi-file-excel me-1" aria-hidden="true"></i>Excel</a>{% endif %}
+  {% if valid %}{% include "finansije/_izvoz.html" with upit=params dodatak="&report=ledger" %}{% endif %}
 {% endblock %}
 {% block finance_content %}
 {% include "finansije/_status.html" %}

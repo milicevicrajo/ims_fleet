@@ -7,6 +7,7 @@ from core.models import OrganizationalUnit
 
 from ..models import JobCode, TrafficCard, Vehicle, VehicleTenderDocument
 from .layout import FieldsetMixin
+from .ugovor import UgovorField
 
 
 class VehicleForm(FieldsetMixin, forms.ModelForm):
@@ -19,15 +20,18 @@ class VehicleForm(FieldsetMixin, forms.ModelForm):
         ('Mase i nosivost', 'Najveća dozvoljena masa određuje klasu vozila u izveštajima.',
          ('weight', 'load_capacity', 'maximum_permissible_weight', 'number_of_axles', 'number_of_seats')),
         ('Nabavka i vrednost', 'Vrednosti su zasebni podaci — troškovi održavanja se od njih ne oduzimaju.',
-         ('purchase_date', 'purchase_value', 'value', 'partner_code', 'partner_name', 'invoice_number')),
+         ('purchase_date', 'purchase_value', 'value', 'partner_code', 'partner_name', 'invoice_number',
+          'financing', 'financing_contract')),
         ('Održavanje i napomena', None, ('service_interval', 'description')),
     )
     first_registration_date = localized_date_field(label="Datum prve registracije", required=False)
     purchase_date = localized_date_field(label="Datum kupovine", required=False)
+    financing_contract = UgovorField(label="Ugovor o finansiranju (kredit)",
+                                     help_text="Samo uz kredit. Pretraga po broju ili nazivu ugovora.")
 
     class Meta:
         model = Vehicle
-        fields = ['inventory_number', 'chassis_number', 'brand', 'model', 'year_of_manufacture', 'category', 'color', 'homologation_number', 'first_registration_date', 'number_of_axles', 'engine_volume', 'engine_number', 'weight', 'engine_power', 'load_capacity', 'maximum_permissible_weight', 'fuel_type', 'number_of_seats', 'service_interval', 'purchase_value', 'value', 'purchase_date', 'partner_code', 'partner_name', 'invoice_number', 'description']
+        fields = ['inventory_number', 'chassis_number', 'brand', 'model', 'year_of_manufacture', 'category', 'color', 'homologation_number', 'first_registration_date', 'number_of_axles', 'engine_volume', 'engine_number', 'weight', 'engine_power', 'load_capacity', 'maximum_permissible_weight', 'fuel_type', 'number_of_seats', 'service_interval', 'purchase_value', 'value', 'purchase_date', 'partner_code', 'partner_name', 'invoice_number', 'financing', 'financing_contract', 'description']
         help_texts = {
             'chassis_number': 'Jedinstven broj šasije (VIN). Po njemu se vozilo prepoznaje pri uvozu podataka.',
             'inventory_number': 'Inventarski broj iz osnovnih sredstava, ako postoji.',

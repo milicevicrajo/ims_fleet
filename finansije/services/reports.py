@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db.models import Case, Count, DecimalField, F, Q, Sum, Value, When
-from django.db.models.functions import ExtractMonth, ExtractYear
+from django.db.models.functions import ExtractMonth, ExtractYear, Substr
 
 from finansije.access import centar_sifre, centri_sifara, na_registru, polje_centra, uslov_centra, visible_scope
 from finansije.models import FinanceJob, LedgerEntry
@@ -80,8 +80,16 @@ def grouped_report(entries, jobs, filters):
         entries = samo_aktivne_sifre(entries)
     centar = polje_centra()
     fields = {"center": [centar], "job": ["job_code", "job_name", centar], "account": ["account", "account_name"]}
+    nivo = plan = None
+    if group == "account":
+        from .kontni_plan import nazivi_konta, nivo_konta
+
+        nivo, plan = nivo_konta(filters), nazivi_konta()
     if group == "month":
         grouped = entries.annotate(report_year=ExtractYear("booking_date"), report_month=ExtractMonth("booking_date")).values("report_year", "report_month").annotate(**expressions()).order_by("report_year", "report_month")
+    elif group == "account" and nivo != "5":
+        # Otvaranje po dubini: klasa, grupa ili sintetika (prve 1, 2 ili 3 cifre konta).
+        grouped = entries.annotate(konto=Substr("account", 1, int(nivo))).order_by().values("konto").annotate(**expressions()).order_by("konto")
     else:
         grouped = entries.order_by().values(*fields[group]).annotate(**expressions()).order_by(*fields[group])
     totals = summary(entries)
@@ -97,11 +105,14 @@ def grouped_report(entries, jobs, filters):
         elif group == "job":
             code, label = item["job_code"], item["job_name"] or "Bez naziva"
             item = dict(item, center=item[centar] or "")
+        elif group == "account" and nivo != "5":
+            code = item["konto"]
+            label = plan.get(code) or "Bez naziva u kontnom planu"
         elif group == "account":
-            code, label = item["account"], item["account_name"] or "Bez naziva konta"
+            code, label = item["account"], plan.get(item["account"]) or item["account_name"] or "Bez naziva konta"
         else:
             code = label = f"{item['report_year']}-{item['report_month']:02d}"
-        rows.append(dict(item, code=code, label=label))
+        rows.append(dict(item, code=code, label=label, nivo=nivo))
     if group == "job" and filters.get("include_empty"):
         present = {row["code"] for row in rows}
         mapa = centri_sifara() if na_registru() else None

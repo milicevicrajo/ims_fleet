@@ -3,7 +3,7 @@
 {% block title %}Detalj šifre posla · IMS{% endblock %}
 {% block hero_title %}<i class="mdi mdi-briefcase-outline me-2" aria-hidden="true"></i>{% if job_code %}{{ job_code }} · {{ job_info.name }}{% else %}Detalj šifre posla{% endif %}{% endblock %}
 {% block hero_description %}{% if job_code %}Detalj šifre posla · Centar {{ job_info.center|default:"Neraspoređeno" }} · Finansijski pokazatelji i povezane evidencije.{% else %}Izaberite posao i mesec ili celu godinu za pregled rezultata, dokumenata i angažovanih vozila.{% endif %}{% endblock %}
-{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:report' %}?group=job">Sve šifre posla</a>{% if job_code and can_ledger %}<a class="btn btn-outline-light" href="{{ ledger_url }}">Knjiženja u periodu</a>{% endif %}{% endblock %}
+{% block hero_actions %}<a class="btn btn-light" href="{% url 'finansije:report' %}?group=job">Sve šifre posla</a>{% if job_code and can_ledger %}<a class="btn btn-outline-light" href="{{ ledger_url }}">Knjiženja u periodu</a>{% endif %}{% if job_code %}{% include "finansije/_izvoz.html" with upit=izvoz_upit %}{% endif %}{% endblock %}
 {% block finance_content %}
 <link rel="stylesheet" href="{% static 'potrazivanja/amounts.css' %}?v=20260918-red">
 <form method="get" class="card fleet-list-filter finance-filter mb-3">
@@ -79,12 +79,12 @@
 </div></section>
 
 <section id="job-expenses" class="tab-pane" role="tabpanel" aria-labelledby="job-expenses-tab" tabindex="0"><div class="card-body">
-  <h2 class="finance-job-heading">Struktura rashoda · konta na tri mesta</h2>
+  <h2 class="finance-job-heading">Struktura rashoda · sintetička konta</h2>
   <p class="text-muted small">Datum knjiženja od {{ period_from|date:"d.m.Y." }} do {{ period_to|date:"d.m.Y." }} · Učešće u ukupnim rashodima ove šifre.</p>
   {% if finance_available %}{% include "finansije/_table_error.html" %}<div class="table-responsive"><table id="JobExpenses" data-ajax-source="{{ table_urls.expenses }}" data-lazy="true" class="table table-hover finance-datatable" style="width:100%">
-    <thead><tr><th>Konto · knt3</th><th class="finance-number">Rashodi · RSD</th><th class="finance-number">Učešće %</th><th class="finance-number">Broj knjiženja</th><th class="no-sort">Detalji</th></tr></thead>
+    <thead><tr><th>Sintetički konto</th><th>Naziv konta</th><th class="finance-number">Rashodi · RSD</th><th class="finance-number">Učešće %</th><th class="finance-number">Broj knjiženja</th><th class="no-sort">Detalji</th></tr></thead>
     <tbody></tbody>
-    <tfoot><tr><td>Ukupno</td><td class="text-end">{{ totals.expense|expense_badge }}</td><td colspan="3"></td></tr></tfoot>
+    <tfoot><tr><td colspan="2">Ukupno</td><td class="text-end">{{ totals.expense|expense_badge }}</td><td colspan="3"></td></tr></tfoot>
   </table></div>{% else %}<p class="text-muted">Nema podataka za ovu godinu.</p>{% endif %}
 </div></section>
 
