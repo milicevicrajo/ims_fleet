@@ -20,7 +20,6 @@ def fleet_snapshot(user, today=None):
         current_unit=Subquery(job.values('organizational_unit__name')[:1]),
         current_job_code=Subquery(job.values('organizational_unit__code')[:1]),
         plate=Subquery(card.values('registration_number')[:1]),
-        registration_until=Subquery(card.values('registration_valid_until')[:1]),
     )
     from fleet.support import obuhvat as obuhvat_flote
 
@@ -75,10 +74,8 @@ def fleet_snapshot(user, today=None):
     def vehicle_entry(v, detail):
         return dict(label=f'{v.plate or v.chassis_number} · {v.brand} {v.model}', detail=detail, url=reverse('vehicle_detail', args=[v.pk]))
 
-    add_group('Registracija je istekla', [vehicle_entry(v, v.registration_until.strftime('%d.%m.%Y')) for v in vehicles if v.registration_until and v.registration_until < today], 'Prema unetom roku registracije.', 'danger')
-    add_group('Registracija ističe u narednih 30 dana', [vehicle_entry(v, v.registration_until.strftime('%d.%m.%Y')) for v in vehicles if v.registration_until and today <= v.registration_until <= limit], 'Prema unetom roku registracije.')
-    add_group('Nedostaje rok registracije', [vehicle_entry(v, 'Rok sa registracione nalepnice nije unet.') for v in vehicles if not v.registration_until], 'Datum AO polise se ne prepisuje automatski kao rok registracije.', 'info')
-    add_group('Nema evidentirane važeće AO polise', [vehicle_entry(v, 'Proveriti polisu autoodgovornosti.') for v in vehicles if not v.has_active_ao], 'Provera koristi početak, kraj i vrstu polise; kasko nije AO.')
+    # Registracija važi dok važi polisa autoodgovornosti: istek registracije pokrivaju upozorenja o AO polisi.
+    add_group('Nema evidentirane važeće AO polise', [vehicle_entry(v, 'Proveriti polisu autoodgovornosti.') for v in vehicles if not v.has_active_ao], 'Registracija važi dok važi polisa autoodgovornosti. Provera koristi početak, kraj i vrstu polise; kasko nije AO.', 'danger')
     upcoming = []
     for p in active_policies:
         kind = (p.insurance_type or '').strip().upper()

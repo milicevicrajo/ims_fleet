@@ -183,7 +183,7 @@ Istorijska tabela: jedno vozilo ima više saobraćajnih kroz vreme, sa različit
 | `registration_number` | Registarska oznaka, format `AA999-AA` ili `AA9999-AA` (validator) |
 | `issue_date` | Datum izdavanja — **ne sme biti u budućnosti** |
 | `valid_until` | Rok dokumenta — ne sme biti pre datuma izdavanja |
-| `registration_valid_until` | Registracija važi do |
+| `registration_valid_until` | Nekadašnji ručni rok registracije — **ne koristi se od 06.10.2026.** (registracija važi dok važi polisa autoodgovornosti, `fleet/support/policy_queries.py`); kolona ostaje radi istorije |
 | `traffic_card_number`, `serial_number`, `owner` | Podaci sa dokumenta |
 | `traffic_card_pdf`, `traffic_card_front_image`, `traffic_card_back_image` | Prilozi |
 

@@ -449,7 +449,7 @@ Služba voznog parka (svakodnevno), rukovodioci centara, uprava.
 |---|---|---|
 | Vozila | `fleet_vehicle` | — |
 | Trenutni centar, OJ, šifra posla | `fleet_jobcode` | Dodela `<= danas` |
-| Registarska oznaka i rok registracije | `fleet_trafficcard` | Izdata `<= danas` |
+| Registarska oznaka | `fleet_trafficcard` | Izdata `<= danas` |
 | Polise | `fleet_policy` | Sve |
 | Otvorena zaduženja | `fleet_vehicletravelorder` | Otvoreno `<= danas`, zatvoreno prazno ili `> danas` |
 | Nedovršene evidencije | `fleet_policy`, `fleet_draftservicetransaction`, `fleet_requisition`, `fleet_draftinsurance` | — |
@@ -497,20 +497,18 @@ Služba voznog parka (svakodnevno), rukovodioci centara, uprava.
 
 #### Korak 5 — upozorenja [P]
 
-Osam grupa, po redosledu prikaza:
+Pet grupa, po redosledu prikaza. Registracija važi dok važi polisa autoodgovornosti (od 06.10.2026.),
+pa istek registracije pokrivaju grupe 1 i 2; ručni rok sa saobraćajne (`registration_valid_until`) se ne koristi.
 
 | # | Grupa | Uslov | Ton |
 |---|---|---|---|
-| 1 | **Registracija je istekla** | `registration_valid_until < danas` | Opasnost |
-| 2 | **Registracija ističe u 30 dana** | `danas <= rok <= danas + 30` | Upozorenje |
-| 3 | **Nedostaje rok registracije** | Rok nije unet | Obaveštenje |
-| 4 | **Nema važeće AO polise** | Vozilo nema aktivnu AO polisu | Upozorenje |
-| 5 | **Polise pred istekom bez nastavka pokrića** | vidi ispod | Upozorenje |
-| 6 | **Vozila bez trenutnog centra** | Nema dodele | Obaveštenje |
-| 7 | **Više istovremenih zaduženja** | Vozilo ima 2+ otvorenih zaduženja | Upozorenje |
-| 8 | **Evidencije za dopunu** | Brojači nedovršenih zapisa | Obaveštenje |
+| 1 | **Nema važeće AO polise** | Vozilo nema aktivnu AO polisu — ni registracija ne važi | Opasnost |
+| 2 | **Polise pred istekom bez nastavka pokrića** | vidi ispod | Upozorenje |
+| 3 | **Vozila bez trenutnog centra** | Nema dodele | Obaveštenje |
+| 4 | **Više istovremenih zaduženja** | Vozilo ima 2+ otvorenih zaduženja | Upozorenje |
+| 5 | **Evidencije za dopunu** | Brojači nedovršenih zapisa | Obaveštenje |
 
-**Grupa 5 — pravilo nastavka pokrića [P]:**
+**Grupa 2 — pravilo nastavka pokrića [P]:**
 
 Aktivna polisa ulazi u upozorenje ako:
 
@@ -592,7 +590,7 @@ i sortira **poslednji**.
 | Vozilo bez godine proizvodnje | **Ne ulazi** u prosečnu starost; prikazuje se broj poznatih godišta |
 | Vozilo bez knjigovodstvene vrednosti | Ne ulazi u zbir; prikazuje se broj poznatih vrednosti |
 | Polisa bez vozila | Broji se u „Polise za dopunu“ samo za korisnike bez ograničenja |
-| Rok registracije nije unet | Zasebna grupa — **datum AO polise se ne prepisuje automatski kao rok registracije** |
+| Registracija | **Važi dok važi polisa autoodgovornosti** (kraj poslednje AO polise koja je počela) — detalj vozila, izveštaj o osiguranju i kontrolna tabla |
 
 ### 13. Status pouzdanosti
 

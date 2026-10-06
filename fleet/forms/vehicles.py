@@ -78,7 +78,6 @@ class TrafficCardForm(FieldsetMixin, forms.ModelForm):
         ('Vozilo i registracija', None, ('vehicle', 'registration_number', 'owner')),
         ('Dokument', 'Brojevi sa same saobraćajne dozvole.',
          ('traffic_card_number', 'serial_number', 'issue_date', 'valid_until')),
-        ('Registracija', None, ('registration_valid_until',)),
         ('Prilozi', 'Skenirana dozvola. Nije obavezno.',
          ('traffic_card_pdf', 'traffic_card_front_image', 'traffic_card_back_image')),
     )
@@ -97,14 +96,10 @@ class TrafficCardForm(FieldsetMixin, forms.ModelForm):
         label="Rok važenja saobraćajne, ako je naveden", required=False,
         help_text="Rok važenja DOKUMENTA. Većina dozvola ga nema — tada ostaviti prazno.",
     )
-    registration_valid_until = localized_date_field(
-        label="Registracija važi do", required=False,
-        help_text="Do kada je vozilo REGISTROVANO. Po ovom datumu se javlja upozorenje o isteku registracije.",
-    )
 
     class Meta:
         model = TrafficCard
-        fields = ['vehicle', 'registration_number', 'issue_date', 'valid_until', 'registration_valid_until', 'traffic_card_number', 'serial_number', 'owner', 'traffic_card_pdf', 'traffic_card_front_image', 'traffic_card_back_image']
+        fields = ['vehicle', 'registration_number', 'issue_date', 'valid_until', 'traffic_card_number', 'serial_number', 'owner', 'traffic_card_pdf', 'traffic_card_front_image', 'traffic_card_back_image']
 
     def clean_registration_number(self):
         from ..support.vehicle import format_license_plate

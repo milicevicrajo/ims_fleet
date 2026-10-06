@@ -56,7 +56,6 @@
                 <th>Rok dokumenta*</th>
                 <th>Broj dozvole</th>
                 <th>Vlasnik</th>
-                <th>Registracija važi do</th>
                 <th>Status dokumenta</th>
                 <th class="text-center" data-filter="none">Akcije</th>
               </tr>
@@ -70,13 +69,12 @@
                 <th>Rok dokumenta*</th>
                 <th>Broj dozvole</th>
                 <th>Vlasnik</th>
-                <th>Registracija važi do</th>
                 <th>Status dokumenta</th>
                 <th>Akcije</th>
               </tr>
             </tfoot>
           </table>
-          <p class="text-muted small">* Za prethodno unete vrednosti „Važi do“ proverite da li su označavale rok dokumenta ili registracije. Novi datum registracije popunjava se odvojeno.</p>
+          <p class="text-muted small">* Za prethodno unete vrednosti „Važi do“ proverite da li su označavale rok dokumenta ili registracije. Registracija važi dok važi polisa autoodgovornosti — vidi Polise.</p>
         </div>
       </div>
     </div>
@@ -121,7 +119,6 @@
         { data: 'valid_until' },
         { data: 'traffic_card_number' },
         { data: 'owner' },
-        { data: 'registration_valid_until' },
         { data: 'document_status', orderable: false },
         { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
       ],

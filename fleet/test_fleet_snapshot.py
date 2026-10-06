@@ -60,7 +60,9 @@ class FleetSnapshotTests(TestCase):
         Policy.objects.create(vehicle=car,invoice_id=2,insurance_type='POLISA AUTOODGOVORNOSTI',start_date=dt.date(2026,10,1),end_date=dt.date(2027,10,1))
         s=fleet_snapshot(self.user,self.today)
         self.assertEqual(s['totals']['ao'],0)
-        self.assertIsNone(s['vehicles'][0].registration_until)
+        # Ručni rok sa saobraćajne se ne koristi: registracija važi dok važi AO polisa.
+        self.assertFalse(any(g['title'].startswith('Registracija') for g in s['warning_groups']))
+        self.assertIn('Nema evidentirane važeće AO polise', [g['title'] for g in s['warning_groups']])
 
     def test_continuous_policy_extension_suppresses_expiry_warning(self):
         car=vehicle()

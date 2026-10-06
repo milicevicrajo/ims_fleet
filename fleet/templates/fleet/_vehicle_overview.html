@@ -13,10 +13,9 @@
 </div>
 <div class="vehicle-kpis vd-overview-kpis" aria-label="Trenutno stanje vozila">
   <div class="vehicle-kpi"><small>Registracija / obavezno osiguranje</small>
-    {% if registration_days != None %}<strong>{% if registration_days < 0 %}Istekla{% elif registration_days <= 30 %}Ističe uskoro{% else %}Važi do{% endif %} {{ trafic_card.registration_valid_until|date:"d.m.Y" }}</strong>
-    {% elif ao_policy %}<strong>AO polisa {% if ao_policy.end_date < today %}istekla{% else %}do{% endif %} {{ ao_policy.end_date|date:"d.m.Y" }}</strong>
-    {% else %}<strong>Rok nije evidentiran</strong>{% endif %}
-    <small>{% if registration_days != None %}Prema evidentiranom roku registracije.{% elif ao_policy %}Rok iz polise autoodgovornosti; rok nalepnice nije unet.{% else %}Nema unetog roka registracije ni AO polise.{% endif %}</small>
+    {% if ao_policy %}<strong>{% if registration_days < 0 %}Istekla{% elif registration_days <= 30 %}Ističe uskoro{% else %}Važi do{% endif %} {{ ao_policy.end_date|date:"d.m.Y" }}</strong>
+    {% else %}<strong>Nema polise autoodgovornosti</strong>{% endif %}
+    <small>{% if ao_policy %}Registracija važi dok važi polisa autoodgovornosti{% if ao_policy.policy_number %} ({{ ao_policy.policy_number }}){% endif %}.{% else %}Registracija važi dok važi polisa autoodgovornosti.{% endif %}</small>
   </div>
   <div class="vehicle-kpi"><small>Trenutni osnov raspolaganja</small><strong>{{ holding_label }}</strong><small>{% if holding_conflict %}Proveriti datume ugovora koji se preklapaju.{% elif holding_lease %}{{ holding_lease.lease_type_label }} · {{ holding_lease.contract_number }}{% elif vehicle.financing %}Bez važećeg ugovora · {{ vehicle.get_financing_display|lower }}.{% else %}Bez važećeg ugovora o lizingu / najmu.{% endif %}</small></div>
   <div class="vehicle-kpi"><small>Trenutna organizaciona jedinica</small><strong>{{ current_job_code.organizational_unit|default:"Nije dodeljena" }}</strong><small>{% if current_job_code %}Od {{ current_job_code.assigned_date|date:"d.m.Y" }}{% else %}Dodela se vodi kroz istoriju šifara posla.{% endif %}</small></div>

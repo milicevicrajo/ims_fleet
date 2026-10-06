@@ -11,7 +11,7 @@ from .ugovor import UgovorField, poruka_iznosa, strana_valuta
 IDENTITY_FIELDS = ['photo', 'category', 'chassis_number', 'brand', 'model', 'year_of_manufacture', 'inventory_number']
 TECHNICAL_FIELDS = ['color', 'homologation_number', 'first_registration_date', 'fuel_type', 'engine_number', 'engine_volume', 'engine_power', 'weight', 'load_capacity', 'maximum_permissible_weight', 'number_of_axles', 'number_of_seats', 'service_interval', 'description']
 PURCHASE_FIELDS = ['purchase_date', 'purchase_value', 'partner_code', 'partner_name', 'invoice_number']
-CARD_FIELDS = ['registration_number', 'issue_date', 'valid_until', 'registration_valid_until', 'traffic_card_number', 'serial_number', 'owner', 'traffic_card_pdf', 'traffic_card_front_image', 'traffic_card_back_image']
+CARD_FIELDS = ['registration_number', 'issue_date', 'valid_until', 'traffic_card_number', 'serial_number', 'owner', 'traffic_card_pdf', 'traffic_card_front_image', 'traffic_card_back_image']
 
 
 class VehicleIdentityForm(forms.ModelForm):
@@ -154,7 +154,6 @@ class OnboardingTrafficCardForm(forms.ModelForm):
     add_document = forms.BooleanField(label='Unosim saobraćajnu sada', required=False, initial=True)
     issue_date = localized_date_field(label='Datum izdavanja', required=False)
     valid_until = localized_date_field(label='Rok važenja saobraćajne, ako je naveden', required=False)
-    registration_valid_until = localized_date_field(label='Registracija važi do', required=False)
 
     class Meta:
         model = TrafficCard

@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from fleet.models import JobCode, Lease, TrafficCard, TransactionNIS, TransactionOMV, Vehicle
 from fleet.support.fuel import deduplicate_omv_transactions
+from fleet.support.policy_queries import registracija_vazi_do
 
 ZERO = Decimal('0')
 FUEL_LABELS = {'diesel': 'Dizel', 'petrol': 'Benzin', 'lpg': 'TNG / LPG', 'cng': 'CNG', 'adblue': 'AdBlue', 'other': 'Ostalo / nerazvrstano'}
@@ -51,7 +52,7 @@ def vehicle_insurance_rows(user, data, *, casco=False):
         report_job=Subquery(job.values('organizational_unit__code')[:1]),
         report_unit=Subquery(job.values('organizational_unit__name')[:1]),
         report_plate=Subquery(card.values('registration_number')[:1]),
-        report_registration=Subquery(card.values('registration_valid_until')[:1]),
+        report_registration=registracija_vazi_do(day),  # registracija važi dok važi AO polisa
         report_lease=Exists(lease),
     )
     qs = ogranici_izvestaj(qs, user)

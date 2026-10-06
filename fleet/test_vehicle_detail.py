@@ -65,7 +65,7 @@ class VehicleDetailTests(TestCase):
     def test_empty_vehicle_renders_without_invented_values(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Rok nije evidentiran')
+        self.assertContains(response, 'Nema polise autoodgovornosti')
         self.assertEqual(response.context['holding_label'], 'Vlasništvo IMS')
         self.assertNotContains(response, 'Neisplativo')
         self.assertNotContains(response, 'Proračun isplativosti')
@@ -91,10 +91,11 @@ class VehicleDetailTests(TestCase):
     def test_document_expiry_does_not_become_registration_expiry(self):
         document = card(self.vehicle)
         document.valid_until = dt.date(2030,1,1)
+        document.registration_valid_until = dt.date(2031,1,1)  # stari ručni rok se ne koristi
         document.save()
         response = self.client.get(self.url)
         self.assertIsNone(response.context['registration_days'])
-        self.assertContains(response, 'Rok nije evidentiran')
+        self.assertContains(response, 'Nema polise autoodgovornosti')
 
     def test_ao_fallback_has_explicit_source_and_ignores_casco(self):
         today = dt.date.today()
@@ -102,8 +103,9 @@ class VehicleDetailTests(TestCase):
         Policy.objects.create(vehicle=self.vehicle, invoice_id=2, insurance_type='POLISA AUTOKASKA ', start_date=today, end_date=today+dt.timedelta(days=400))
         response = self.client.get(self.url)
         self.assertEqual(response.context['ao_policy'], ao)
-        self.assertIsNone(response.context['registration_days'])
-        self.assertContains(response, 'Rok iz polise autoodgovornosti')
+        self.assertEqual(response.context['registration_days'], 300)  # registracija važi dok važi AO polisa
+        self.assertContains(response, 'Registracija važi dok važi polisa autoodgovornosti')
+        self.assertContains(response, ao.end_date.strftime('%d.%m.%Y'))
 
     def test_legacy_active_lease_takes_precedence_over_default_ownership(self):
         today = dt.date.today()

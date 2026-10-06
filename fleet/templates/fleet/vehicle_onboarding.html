@@ -93,7 +93,7 @@
       show(['lease_type','contract_number','contract','end_date','payment_basis','current_payment_amount'], !owned);
     }
     const document = form.elements.add_document;
-    if (document) show(['registration_number','issue_date','valid_until','registration_valid_until','traffic_card_number','serial_number','owner','traffic_card_pdf','traffic_card_front_image','traffic_card_back_image'], document.checked);
+    if (document) show(['registration_number','issue_date','valid_until','traffic_card_number','serial_number','owner','traffic_card_pdf','traffic_card_front_image','traffic_card_back_image'], document.checked);
     const employee = form.elements.assign_employee;
     if (employee) show(['employee','created_at','start_mileage'], employee.checked);
     const fuel = form.elements.fuel_type;

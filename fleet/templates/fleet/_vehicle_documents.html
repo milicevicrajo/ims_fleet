@@ -8,7 +8,6 @@
       <tr><td>Datum izdavanja</td><td>{{ latest_traffic_card.issue_date|date:"d.m.Y" }}</td></tr>
       <tr><td>Vlasnik u dokumentu</td><td>{{ latest_traffic_card.owner|default:"—" }}</td></tr>
       <tr><td>Dokument važi do</td><td>{{ latest_traffic_card.valid_until|date:"d.m.Y"|default:"Nije naveden rok" }}</td></tr>
-      <tr><td>Registracija važi do</td><td>{{ latest_traffic_card.registration_valid_until|date:"d.m.Y"|default:"Nije unet rok sa nalepnice" }}</td></tr>
     </tbody></table>{% if latest_traffic_card.traffic_card_pdf %}<a class="btn btn-sm btn-outline-primary" href="{{ latest_traffic_card.traffic_card_pdf.url }}" target="_blank" rel="noopener">Otvori PDF</a>{% endif %}</div>
     <div class="vd-document-image"><h4>Prednja strana</h4>{% if latest_traffic_card.traffic_card_front_image %}<a href="{{ latest_traffic_card.traffic_card_front_image.url }}" target="_blank" rel="noopener"><img class="vehicle-document-preview" src="{{ latest_traffic_card.traffic_card_front_image.url }}" alt="Prednja strana saobraćajne"></a>{% else %}<p class="vd-empty-preview">Slika nije dodata</p>{% endif %}</div>
     <div class="vd-document-image"><h4>Zadnja strana</h4>{% if latest_traffic_card.traffic_card_back_image %}<a href="{{ latest_traffic_card.traffic_card_back_image.url }}" target="_blank" rel="noopener"><img class="vehicle-document-preview" src="{{ latest_traffic_card.traffic_card_back_image.url }}" alt="Zadnja strana saobraćajne"></a>{% else %}<p class="vd-empty-preview">Slika nije dodata</p>{% endif %}</div>

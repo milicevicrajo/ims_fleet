@@ -1,10 +1,30 @@
 from datetime import timedelta
 
-from django.db.models import Case, CharField, F, OuterRef, Subquery, Sum, Value, When
+from django.db.models import Case, CharField, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import ExtractMonth, ExtractYear
 from django.utils import timezone
 
 from ..models import JobCode, Policy
+
+
+AUTOODGOVORNOST = Q(insurance_type__icontains="autoodgovornost")
+
+
+def ao_polisa(vehicle, na_dan):
+    """Poslednja polisa autoodgovornosti vozila koja je počela do datuma `na_dan` (po kraju važenja)."""
+    return (vehicle.policies.filter(AUTOODGOVORNOST, start_date__lte=na_dan, end_date__isnull=False)
+            .order_by("-end_date", "-id").first())
+
+
+def registracija_vazi_do(na_dan, vehicle_ref="pk"):
+    """Subquery: registracija važi dok važi polisa autoodgovornosti (od 06.10.2026.; ručni rok sa
+    saobraćajne `TrafficCard.registration_valid_until` se više ne koristi). Kraj poslednje AO polise
+    koja je počela do datuma `na_dan`."""
+    return Subquery(
+        Policy.objects.filter(AUTOODGOVORNOST, vehicle_id=OuterRef(vehicle_ref), start_date__lte=na_dan,
+                              end_date__isnull=False)
+        .order_by("-end_date", "-id").values("end_date")[:1]
+    )
 
 
 _latest_jc = JobCode.objects.filter(

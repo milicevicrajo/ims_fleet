@@ -309,8 +309,10 @@ class VehicleDetailView(RolePermissionRequiredMixin, LoginRequiredMixin, DetailV
         from fleet.support.analysis_defaults import holding_at
         # Raspolaganje = ugovori o lizingu / najmu; bez važećeg ugovora vozilo je u vlasništvu IMS.
         holding_code, holding_label, holding_lease = holding_at(list(vehicle.leases.all()), today)
-        ao_policy = vehicle.policies.filter(insurance_type__icontains='AUTOODGOVORNOST', start_date__lte=today, end_date__isnull=False).order_by('-end_date', '-id').first()
-        registration_days = (card.registration_valid_until - today).days if card and card.registration_valid_until else None
+        from fleet.support.policy_queries import ao_polisa
+        # Registracija važi dok važi polisa autoodgovornosti.
+        ao_policy = ao_polisa(vehicle, today)
+        registration_days = (ao_policy.end_date - today).days if ao_policy else None
         consumption_params = params if ('mileage_from' in params or 'mileage_to' in params) else {
             'mileage_from': start.isoformat(), 'mileage_to': end.isoformat()}
         mileage = vehicle_mileage(vehicle, consumption_params, today)
