@@ -45,7 +45,7 @@ def vrsta_rashoda(konto):
 
 MESECI = ("jan", "feb", "mar", "apr", "maj", "jun", "jul", "avg", "sep", "okt", "nov", "dec")
 NAJVISE_SIFARA = 15
-BEZ_MARZE = {"2"}  # centri koji se ne prikazuju na grafikonu marže (Poslovni blok)
+BEZ_MARZE = {"2"}  # rezerva kad podela centara nije dostupna: Poslovni blok se ne prikazuje na grafikonu marže
 
 
 def _p(deo, ukupno):
@@ -150,10 +150,15 @@ def vizuelni_pregled(entries, centar=None, centri_zt=None, zt_po_jedinici=None):
             stavke.append((f"Ostalo ({len(ostalo)})", ostatak))
         return {"labels": [s[0] for s in stavke], "values": [_f(s[1]) for s in stavke]}
 
-    po_rezultatu = sorted(jedinice, key=lambda r: r["result"], reverse=True)
-    rang = po_rezultatu[:10] + [r for r in po_rezultatu[-10:] if r not in po_rezultatu[:10]] if len(jedinice) > 20 else po_rezultatu
-    # Marža bez Poslovnog bloka (centar 2): to je uprava, ne posao koji donosi prihod.
-    sa_maržom = [r for r in prikaz if r["revenue"] > 0 and not (centar is None and r["code"] in BEZ_MARZE)]
+    # Neto rezultat i marža samo za centre koji rade posao: bez neprofitnih — zajedničkih službi (grupa „sluzbe”
+    # iz podele centara na Finansijskom pregledu: Poslovni blok, službe 81–83, 60, 50); bez podele — bez Poslovnog bloka.
+    neprofitni = BEZ_MARZE
+    if centri_zt and centri_zt.get("groups"):
+        neprofitni = {r["code"] for g in centri_zt["groups"] if g["key"] == "sluzbe" for r in g["rows"]} | BEZ_MARZE
+    poslovni = [r for r in jedinice if not (centar is None and r["code"] in neprofitni)]
+    po_rezultatu = sorted(poslovni, key=lambda r: r["result"], reverse=True)
+    rang = po_rezultatu[:10] + [r for r in po_rezultatu[-10:] if r not in po_rezultatu[:10]] if len(poslovni) > 20 else po_rezultatu
+    sa_maržom = [r for r in prikaz if r["revenue"] > 0 and r in poslovni]
     # Struktura: najviše 15 jedinica po ukupnim rashodima (direktni + ZT).
     top_struktura = sorted((r for r in jedinice if r["ukupno_sa_zt"] > 0), key=lambda r: -r["ukupno_sa_zt"])[:NAJVISE_SIFARA]
     grafikoni = {

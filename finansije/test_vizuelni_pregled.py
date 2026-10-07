@@ -83,3 +83,19 @@ class VizuelniPregledTests(TestCase):
         self.assertIn("2", {r["code"] for r in v["jedinice"]})
         self.assertNotIn("2", [l.split(" ")[0] for l in v["grafikoni"]["marza"]["labels"]])
         self.assertEqual(len(v["grafikoni"]["marza"]["labels"]), 2)
+
+
+    def test_marza_bez_neprofitnih_centara(self, _plan):
+        from finansije.models import LedgerEntry
+        from finansije.services.vizuelni_pregled import vizuelni_pregled
+
+        save_entry(number=10, center="81", job_code="812004", job_name="Knjigovodstvo", credit=Decimal("10"))
+        red = lambda c: {"code": c, "result_zt": None}
+        podela = {"groups": [{"key": "profitni", "rows": [red("41"), red("42")]},
+                             {"key": "sluzbe", "rows": [red("81")]}], "available": True}
+        v = vizuelni_pregled(LedgerEntry.objects.all(), centri_zt=podela)
+        marza = [l.split(" ")[0] for l in v["grafikoni"]["marza"]["labels"]]
+        self.assertNotIn("81", marza)
+        self.assertEqual(sorted(marza), ["41", "42"])
+        self.assertNotIn("81", [l.split(" ")[0] for l in v["grafikoni"]["rezultat"]["labels"]])  # ni neto rezultat
+        self.assertIn("81", {r["code"] for r in v["jedinice"]})  # ostaje u ostalim grafikonima i tabeli

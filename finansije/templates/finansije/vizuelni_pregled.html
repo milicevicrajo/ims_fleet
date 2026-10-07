@@ -73,9 +73,9 @@
   <section class="vp-card vp-trecina"><h2>Učešće u zaradi</h2><p>Udeo u zbiru pozitivnih rezultata (gubici nisu u krugu).</p><div class="vp-platno vp-kolac"><canvas id="vpUdeoDobiti"></canvas></div></section>
 
   <section class="vp-card"><h2>Neto rezultat{% if v.ima_zt %} — bez i posle zajedničkih troškova{% endif %}</h2>
-    <p>Zeleno dobit, crveno gubitak{% if v.ima_zt %}; „posle ZT” uključuje raspodelu troškova zajedničkih službi kao na Finansijskom pregledu{% endif %}.</p>
+    <p>Zeleno dobit, crveno gubitak{% if v.ima_zt %}; „posle ZT” uključuje raspodelu troškova zajedničkih službi kao na Finansijskom pregledu{% endif %}.{% if not v.po_siframa %} Bez neprofitnih centara (zajedničke službe).{% endif %}</p>
     <div class="vp-platno vp-visoko"><canvas id="vpRezultat"></canvas></div></section>
-  <section class="vp-card"><h2>Marža (rezultat / prihodi)</h2><p>Koliko od svakog dinara prihoda ostaje posle direktnih rashoda.</p>
+  <section class="vp-card"><h2>Marža (rezultat / prihodi)</h2><p>Koliko od svakog dinara prihoda ostaje posle direktnih rashoda.{% if not v.po_siframa %} Bez neprofitnih centara (zajedničke službe).{% endif %}</p>
     <div class="vp-platno vp-visoko"><canvas id="vpMarza"></canvas></div></section>
 
   <section class="vp-card vp-siroka">
