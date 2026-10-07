@@ -26,7 +26,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from core.mixins import role_permission_required, user_has_role_permission
 from .access import can_view_all
-from .sef_models import SefFaktura, SefPromena, SefSinhronizacija
+from .sef_models import SefFaktura, SefPrilog, SefPromena, SefSinhronizacija
 from .services import sef as servis
 from .services.sef_table import table_response, table_rows
 
@@ -149,6 +149,8 @@ def sef_detail(request, pk):
     nazad = request.GET.get("nazad", "")
     if not nazad.startswith("?"):
         nazad = ""
+    can_file = user_has_role_permission(request.user, "finansije:sef_dokument")
+    prilozi, prilozi_greska = servis.prilozi_fakture(faktura) if can_file else ([], "")
     return render(request, "finansije/sef/detail.html", {
         "title": f"SEF · {faktura.broj or faktura.sef_id}", "f": faktura,
         "knjizenja": servis.knjizenja(faktura)[:200],
@@ -156,8 +158,9 @@ def sef_detail(request, pk):
         "istog_broja": SefFaktura.objects.filter(broj_kljuc=faktura.broj_kljuc).exclude(pk=faktura.pk)
         if faktura.broj_kljuc else SefFaktura.objects.none(),
         "nazivi_statusa": servis.STATUSI, "vrste": servis.VRSTE,
-        "can_file": user_has_role_permission(request.user, "finansije:sef_dokument"),
+        "can_file": can_file,
         "podesen": bool(settings.SEF_API_KEY), "nazad": nazad,
+        "prilozi": prilozi, "prilozi_greska": prilozi_greska,
     })
 
 
@@ -196,6 +199,16 @@ def sef_dokument(request, pk, vrsta):
     odgovor = HttpResponse(sadrzaj, content_type="application/xml")
     odgovor["Content-Disposition"] = f'attachment; filename="{_ime_fajla(faktura, "xml")}"'
     return odgovor
+
+
+@xframe_options_sameorigin
+@require_GET
+@login_required
+@role_permission_required("finansije:sef_dokument")
+def sef_prilog(request, pk, redni):
+    """Pridruzeni dokument fakture (sacuvan u aplikaciji pri preuzimanju ili prvom otvaranju detalja)."""
+    _pristup(request)
+    return servis.prilog_odgovor(get_object_or_404(SefPrilog, faktura_id=pk, redni=redni))
 
 
 @require_POST
@@ -249,7 +262,7 @@ def _fakture_perioda(g):
 @login_required
 @role_permission_required("finansije:sef_izvoz")
 def sef_izvoz(request):
-    """ZIP PDF-ova za mesec ili godinu (uz spisak svih faktura perioda i oznaku koje nemaju PDF)."""
+    """ZIP PDF-ova i priloga za mesec ili godinu (uz spisak svih faktura perioda i oznaku koje nemaju PDF)."""
     _pristup(request)
     qs, period = _fakture_perioda(request.GET)
     if qs is None:
@@ -257,7 +270,7 @@ def sef_izvoz(request):
         return redirect("finansije:sef_list")
     od, do, oznaka = period
     fajl = tempfile.TemporaryFile()
-    broj, sa_pdf = servis.izvoz_zip(qs.order_by("smer", "datum_dok", "broj", "sef_id"), fajl)
+    broj, sa_pdf = servis.izvoz_zip(qs.order_by("smer", "datum_dok", "broj", "sef_id").prefetch_related("prilozi"), fajl)
     if not broj:
         fajl.close()
         messages.info(request, f"Za period {oznaka} nema faktura.")

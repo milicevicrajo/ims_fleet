@@ -201,7 +201,7 @@
     <!-- HTML5 export + Print dugmad (lokalno, offline) -->
     <script src="{% static 'fleet/assets/libs/offline/datatables-buttons/buttons.html5.min.js' %}"></script>
     <script src="{% static 'fleet/assets/libs/offline/datatables-buttons/buttons.print.min.js' %}"></script>
-    <script src="{% static 'fleet/dist/js/report_datatable.js' %}?v=20260212"></script>
+    <script src="{% static 'fleet/dist/js/report_datatable.js' %}?v=20261007"></script>
     <script src="{% static 'fleet/dist/js/draft_tables.js' %}?v=20260212"></script>
 
     <!-- Moment.js (lokalno, offline) -->
@@ -602,7 +602,9 @@
                         path.endsWith(".xlsx") ||
                         path.endsWith(".xls") ||
                         path.includes("export") ||
-                        url.searchParams.get("export") === "1"
+                        // Izvoz u Excel/PDF (?export=1|xlsx|pdf, ?izvoz=…) samo preuzima fajl — stranica ostaje.
+                        url.searchParams.has("export") ||
+                        url.searchParams.has("izvoz")
                     );
                 } catch (err) {
                     const loweredHref = href.toLowerCase();
@@ -624,7 +626,7 @@
                         el.target === "_blank" ||
                         (href && href.startsWith("#")) ||         // IskljuÄi # linkove
                         (href && href.startsWith("javascript:")) || // <-- DODAJTE OVAJ USLOV: IskljuÄi javascript: linkove
-                        el.hasAttribute("data-no-preloader") || // IskljuÄi linkove sa data-no-preloader atributom
+                        el.hasAttribute("download") || el.hasAttribute("data-no-preloader") || // IskljuÄi linkove sa data-no-preloader atributom
                         isDownloadLink(href) || // IskljuÄi export/download linkove
                         (el.hostname && el.hostname !== window.location.hostname) // IskljuÄi eksterne linkove
                     ) {

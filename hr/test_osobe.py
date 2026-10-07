@@ -199,3 +199,35 @@ class StazTests(TestCase):
         ukupno, _ = obracunaj_staz(periodi, {789: 0, 571: 1, 581: 0, 562: 1, 995: 0, 164: 1})
         # 789 (3-9-20) + 581 (6-3-27) + 164 (41-1-2) + 995 (0-6-23) = 50 g 19 m 72 d = 51 g 9 m 12 d
         self.assertEqual(ukupno, (51, 9, 12))
+
+
+class NaloziOsobaTests(TestCase):
+    def test_jedna_osoba_jedan_nalog_i_deaktivacija_bivsih(self):
+        from fleet.services.employee_user_profiles import uskladi_naloge_zaposlenih
+
+        User = get_user_model()
+        # Olgica: nalog na staroj šifri, aktivna nova → nalog se prebacuje, ne pravi se drugi.
+        staro = zaposleni(226, jmbg=JMBG_B, aktivan=False, last_name="Mladenović", first_name="Olgica")
+        novo = zaposleni(1058, jmbg=JMBG_B, last_name="Mladenović", first_name="Olgica", prijem=date(2026, 10, 1))
+        # Kerkez: radni odnos + van radnog odnosa, bez naloga → jedan nalog na radnom odnosu.
+        kerkez = zaposleni(965, prijem=date(2023, 9, 19))
+        pp = zaposleni(8, prijem=date(1900, 1, 1), preduzece=2)
+        # Bivši: osoba bez aktivnog broja → nalog se deaktivira; ručni zapis van izvora dobija nalog tek kad uđe u izvor.
+        bivsi = zaposleni(893, jmbg="2202980710033", aktivan=False, last_name="Stanković", first_name="Nikola")
+        rucni = zaposleni(9601, jmbg="", u_izvoru=False)
+        samo_pp = zaposleni(3, jmbg="2410980710044", preduzece=2, last_name="Abduramani", first_name="Adnan")
+        for e in (staro, novo, kerkez, pp, bivsi, rucni, samo_pp):
+            povezi_osobu(e)
+        olgica = User.objects.create_user("olgica.mladenovic", password="x", employee=staro)
+        nikola = User.objects.create_user("nikola.stankovic", password="x", employee=bivsi)
+
+        plan = uskladi_naloge_zaposlenih(execute=True)
+
+        self.assertEqual([e.employee_code for e in plan["kreirati"]], [965])
+        olgica.refresh_from_db(); nikola.refresh_from_db()
+        self.assertEqual(olgica.employee_id, novo.pk)
+        self.assertFalse(nikola.is_active)
+        self.assertTrue(User.objects.filter(employee=kerkez, must_change_password=True).exists())
+        self.assertFalse(User.objects.filter(employee__in=[pp, rucni, samo_pp]).exists())
+        self.assertEqual(uskladi_naloge_zaposlenih(execute=True)["kreirati"], [])  # drugi put nema šta
+        self.assertEqual([e.employee_code for e in uskladi_naloge_zaposlenih(van_radnog_odnosa=True)["kreirati"]], [3])

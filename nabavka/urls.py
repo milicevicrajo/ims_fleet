@@ -38,6 +38,7 @@ from .views.invoices import (
     EufInvoiceReturnedJobCodesView,
     EufInvoiceReturnedToggleView,
     EufInvoiceSefPdfView,
+    EufInvoiceSefPrilogView,
     EufInvoiceSyncView,
     EufInvoiceUpdateView,
     ProcurementInvoiceContractLinkDeleteView,
@@ -56,7 +57,7 @@ from .views.public_procurements import (
     PublicProcurementPlanListView,
 )
 from .views.reports import PartnerJobCodeCheckReportView, ReportsView
-from .views.sef import UfSefDataView, UfSefListView, UfSefPdfView
+from .views.sef import UfSefDataView, UfSefListView, UfSefPdfView, UfSefPrilogView
 from .views.source_snapshots import (
     EufItemSnapshotDataView,
     EufItemSnapshotListView,
@@ -95,6 +96,7 @@ urlpatterns = [
     path("euf-fakture/<int:pk>/izmeni/", EufInvoiceUpdateView.as_view(), name="euf_invoice_update"),
     path("euf-fakture/<int:pk>/", EufInvoiceDetailView.as_view(), name="euf_invoice_detail"),
     path("euf-fakture/<int:pk>/sef-pdf/", EufInvoiceSefPdfView.as_view(), name="euf_invoice_sef_pdf"),
+    path("euf-fakture/<int:pk>/sef-prilog/<int:redni>/", EufInvoiceSefPrilogView.as_view(), name="euf_invoice_sef_prilog"),
     path("euf-fakture/veze/<int:pk>/obrisi/", ProcurementInvoiceLinkDeleteView.as_view(), name="invoice_link_delete"),
     path("euf-fakture/ugovori/<int:pk>/obrisi/", ProcurementInvoiceContractLinkDeleteView.as_view(), name="invoice_contract_link_delete"),
     path("euf-fakture/sifre-posla/<int:pk>/obrisi/", ProcurementInvoiceJobCodeLinkDeleteView.as_view(), name="invoice_job_code_link_delete"),
@@ -109,6 +111,7 @@ urlpatterns = [
     path("uf-sef/", UfSefListView.as_view(), name="uf_sef_list"),
     path("uf-sef/data/", UfSefDataView.as_view(), name="uf_sef_data"),
     path("uf-sef/<int:pk>/pdf/", UfSefPdfView.as_view(), name="uf_sef_pdf"),
+    path("uf-sef/<int:pk>/prilog/<int:redni>/", UfSefPrilogView.as_view(), name="uf_sef_prilog"),
     path("uf-stavke/", EufItemSnapshotListView.as_view(), name="euf_item_list"),
     path("uf-stavke/data/", EufItemSnapshotDataView.as_view(), name="euf_item_data"),
     path("uf-stavke/sync/", EufItemSnapshotSyncView.as_view(), name="euf_item_sync"),

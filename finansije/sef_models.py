@@ -58,6 +58,8 @@ class SefFaktura(models.Model):
     # PDF sa SEF-a, preuzet pri prvom otvaranju detalja (SEF ga prvi put tek pripremi).
     pdf = models.FileField(upload_to="finansije/sef/%Y/%m/", max_length=255, blank=True)
     pdf_preuzet = models.DateTimeField(null=True, blank=True)
+    # Prilozi iz UBL-a (`SefPrilog`) procitani; prazno = jos nisu trazeni (faktura bez priloga ima vreme, bez zapisa).
+    prilozi_preuzeti = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "finansije_sef_faktura"
@@ -73,6 +75,26 @@ class SefFaktura(models.Model):
         self.broj_kljuc = kljuc_broja(self.broj)
         self.broj_knjizenja = broj_u_knjizenju(self.broj) if self.broj_kljuc else ""
         super().save(*args, **kwargs)
+
+
+class SefPrilog(models.Model):
+    """Pridruzeni dokument fakture (od 07.10.2026.): SEF ga salje u UBL-u
+    (`cac:AdditionalDocumentReference/cac:Attachment/cbc:EmbeddedDocumentBinaryObject`), cuva se u aplikaciji."""
+    faktura = models.ForeignKey(SefFaktura, on_delete=models.CASCADE, related_name="prilozi")
+    redni = models.PositiveSmallIntegerField()
+    naziv = models.CharField(max_length=255)
+    opis = models.CharField(max_length=255, blank=True, default="")
+    mime = models.CharField(max_length=100, blank=True, default="")
+    fajl = models.FileField(upload_to="finansije/sef/prilozi/%Y/%m/", max_length=255)
+    velicina = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "finansije_sef_prilog"
+        ordering = ["faktura", "redni"]
+        constraints = [models.UniqueConstraint(fields=["faktura", "redni"], name="fin_sef_prilog_kljuc")]
+
+    def __str__(self):
+        return self.naziv
 
 
 class SefPromena(models.Model):

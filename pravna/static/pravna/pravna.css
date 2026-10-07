@@ -129,6 +129,10 @@ tr.legal-archived td { background: #f3f6f9 !important; color: #657282; }
 .disciplinary-detail .legal-measure-options label { display:flex; align-items:flex-start; gap:9px; padding:10px; border:1px solid #dce4eb; border-radius:6px; font-size:15px; line-height:1.5; cursor:pointer; }
 .disciplinary-detail .legal-measure-options input { flex:0 0 auto; margin-top:5px; }
 .disciplinary-detail .legal-measure-options label:has(input:checked) { background:#f2edf7; border-color:#80618c; }
+/* Trajanje novčane kazne: select2 iste visine i boje kao polje procenta (od 07.10.2026.) */
+.disciplinary-detail #NovcanaKazna .select2-container--bootstrap-5 .select2-selection { min-height:calc(1.5em + .75rem + 2px); border-color:#ced4da; border-radius:6px; }
+.disciplinary-detail #NovcanaKazna .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+.disciplinary-detail #NovcanaKazna .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color:#80618c; box-shadow:0 0 0 .2rem rgba(128, 97, 140, .2); }
 @media(max-width:767px) { .disciplinary-detail .legal-meta-value { font-size:18px; } }
 
 .change-row {

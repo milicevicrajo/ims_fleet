@@ -17,7 +17,7 @@ Potrebno: sync_od, sync_do.
       <div id="SefPoslednje" class="sef-poslednje d-none"></div>
 
       <form id="SefPreuzimanjeForma" class="d-none" novalidate>{% csrf_token %}
-        <p class="small text-muted">Preuzimaju se fakture poslate u izabranom periodu, promene statusa i PDF svake fakture koja ga još nema. Pre početka se prebroje fakture na SEF-u i proceni vreme (SEF prima 3 zahteva u sekundi). Već preuzeto se ne preuzima ponovo.</p>
+        <p class="small text-muted">Preuzimaju se fakture poslate u izabranom periodu, promene statusa, PDF i pridruženi dokumenti (prilozi) svake fakture koja ih još nema. Pre početka se prebroje fakture na SEF-u i proceni vreme (SEF prima 3 zahteva u sekundi). Već preuzeto se ne preuzima ponovo.</p>
         <div class="row g-3">
           <div class="col-sm-6"><label class="form-label" for="SefOd">Od</label><input id="SefOd" type="date" name="od" value="{{ sync_od }}" class="form-control" required></div>
           <div class="col-sm-6"><label class="form-label" for="SefDo">Do</label><input id="SefDo" type="date" name="do" value="{{ sync_do }}" max="{{ sync_do }}" class="form-control" required></div>
@@ -128,7 +128,7 @@ Potrebno: sync_od, sync_do.
     if (p.procena) {
       var pr = p.procena, blok = el('SefProcena'); blok.innerHTML = '';
       [['Ulaznih faktura', pr.ulaznih], ['Izlaznih faktura', pr.izlaznih], ['Novih izlaznih (UBL)', pr.ubl],
-       ['PDF-ova za preuzimanje', pr.bez_pdf], ['Procena ukupno', trajanje((p.proteklo_s || 0) + (p.status === 'running' ? (p.preostalo_s || 0) : 0))]]
+       ['PDF-ova za preuzimanje', pr.bez_pdf], ['Faktura za proveru priloga', pr.bez_priloga], ['Procena ukupno', trajanje((p.proteklo_s || 0) + (p.status === 'running' ? (p.preostalo_s || 0) : 0))]]
         .forEach(function (x) { var d = document.createElement('div'), b = document.createElement('b'), s = document.createElement('span');
           b.textContent = x[1]; s.textContent = x[0]; d.appendChild(b); d.appendChild(s); blok.appendChild(d); });
       blok.classList.remove('d-none');

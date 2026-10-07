@@ -40,13 +40,21 @@
     <h1>{{ title }}</h1>
     <p>Izvestaj koristi sifru posla vozila na datum transakcije goriva.</p>
   </div>
-  <a class="btn btn-outline-light btn-sm" href="{{ request.path }}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}export=1">
+  <div class="d-flex gap-2">
+  <a class="btn btn-outline-light btn-sm" href="{{ request.path }}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}export=pdf" download>
+    <i class="mdi mdi-file-pdf-box"></i> PDF</a>
+  <a class="btn btn-outline-light btn-sm" href="{{ request.path }}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}export=1" download>
     <i class="mdi mdi-file-excel"></i> Excel
   </a>
+  </div>
 </div>
 
 <div class="card shadow-sm mb-3">
   <div class="card-body">
+    {% if podrazumevani_period or period_fakture %}<div class="alert alert-info py-2 mb-2"><i class="mdi mdi-calendar-check"></i>
+      {% if podrazumevani_period %}Prikazan je poslednji fakturisani period{% else %}Izabrana je faktura{% endif %}{% if faktura %} {{ faktura }}{% endif %}:
+      <strong>{{ form.godina.value }} · {{ form.mesec.value }}. mesec · {% if form.polovina.value == "1" %}prva{% else %}druga{% endif %} polovina</strong>{% if period_fakture.od %} (točenja {{ period_fakture.od|date:"d.m." }}–{{ period_fakture.do|date:"d.m.Y." }}){% endif %}.
+      {% if podrazumevani_period %}Za drugi period izaberite filter.{% endif %}</div>{% endif %}
     <form method="get" class="fuel-filter">
       <div class="row g-2 align-items-end">
         <div class="col-12 col-md-3">
@@ -61,6 +69,16 @@
           <label for="id_polovina" class="form-label mb-1">{{ form.polovina.label }}</label>
           {{ form.polovina|add_class:'form-select form-control select2-method' }}
         </div>
+        {% if omv_fakture %}
+        <div class="col-12">
+          <label for="id_faktura" class="form-label mb-1">OMV faktura (raspodela za knjiženje)</label>
+          <select id="id_faktura" name="faktura" class="form-select form-control select2-method">
+            <option value="">— po periodu (bez fakture) —</option>
+            {% for f in omv_fakture %}<option value="{{ f.broj }}" {% if f.broj == faktura %}selected{% endif %}>{{ f.broj }} · {{ f.datum|date:"d.m.Y" }} · {{ f.kupac }} · {{ f.stavki }} stavki · {{ f.bruto|floatformat:2|intcomma }}</option>{% endfor %}
+          </select>
+          <div class="form-text">OMV fakturiše po svojim periodima (do 13. i do kraja meseca) i po kartici (putnička / teretna). Sa izabranom fakturom izveštaj obuhvata sve njene stavke — gorivo, AdBlue, putarinu i izradu kartica — a godina, mesec i polovina se popunjavaju iz fakture. Promena godine, meseca ili polovine poništava izbor fakture.</div>
+        </div>
+        {% endif %}
         {% if selected_sifpos %}
           <input type="hidden" name="sifpos" value="{{ selected_sifpos }}">
         {% endif %}
@@ -72,6 +90,16 @@
     </form>
   </div>
 </div>
+
+{% if faktura %}
+<div class="alert {% if faktura_sef and faktura_sef.iznos|floatformat:2 == ukupno.bruto|floatformat:2 %}alert-success{% else %}alert-warning{% endif %} mb-3">
+  <strong>OMV faktura {{ faktura }}</strong>
+  {% if faktura_sef %} — na SEF-u: bruto <strong>{{ faktura_sef.iznos|floatformat:2|intcomma }}</strong> (osnovica {{ faktura_sef.osnovica|floatformat:2|intcomma }}, PDV {{ faktura_sef.pdv|floatformat:2|intcomma }}),
+    zbir transakcija: <strong>{{ ukupno.bruto|floatformat:2|intcomma }}</strong>.
+    {% if faktura_sef.iznos|floatformat:2 == ukupno.bruto|floatformat:2 %}Poklapa se — raspodela ispod može da se knjiži.{% else %}<strong>Ne poklapa se</strong>: u bazi nedostaju ili su višak neke stavke fakture; proveriti pre knjiženja.{% endif %}
+  {% else %} — faktura još nije preuzeta sa SEF-a; zbir transakcija: <strong>{{ ukupno.bruto|floatformat:2|intcomma }}</strong>.{% endif %}
+</div>
+{% endif %}
 
 <div class="card shadow-sm mb-3">
   <div class="card-body">
@@ -99,14 +127,14 @@
             <tr>
               <td>
                 <a class="btn btn-sm btn-outline-primary"
-                   href="{{ request.path }}?godina={{ row.godina }}&mesec={{ row.mesec }}&polovina={{ row.polovina }}&sifpos={{ row.sifpos|urlencode }}">
+                   href="{{ request.path }}?{% if faktura %}faktura={{ faktura|urlencode }}{% else %}godina={{ row.godina }}&mesec={{ row.mesec }}&polovina={{ row.polovina }}{% endif %}&sifpos={{ row.sifpos|urlencode }}">
                   <i class="mdi mdi-eye"></i> {{ row.sifpos }}
                 </a>
               </td>
               <td>{{ row.naziv_sifre_posla|default:"-" }}</td>
               <td>{{ row.godina }}</td>
               <td>{{ row.mesec }}</td>
-              <td>{% if row.polovina == 1 %}Prva{% else %}Druga{% endif %}</td>
+              <td>{% if row.polovina is None %}cela faktura{% elif row.polovina == 1 %}Prva{% else %}Druga{% endif %}</td>
               <td>{{ row.broj_transakcija }}</td>
               <td>{{ row.kolicina|floatformat:2|intcomma }}</td>
               <td>{{ row.bruto|floatformat:2|intcomma }}</td>
@@ -116,17 +144,18 @@
             <tr><td colspan="9" class="text-center text-muted">Nema podataka za izabrane filtere.</td></tr>
           {% endfor %}
         </tbody>
+        {# Poslednji red: zbir za knjiženje (od 07.10.2026.) — računa server, ne menja se pretragom tabele. #}
         <tfoot>
-          <tr>
-            <th>Sifra posla</th>
-            <th>Naziv</th>
-            <th>Godina</th>
-            <th>Mesec</th>
-            <th>Polovina</th>
-            <th>Broj transakcija</th>
-            <th>Kolicina</th>
-            <th>Bruto</th>
-            <th>Neto</th>
+          <tr class="fw-bold table-light">
+            <th>UKUPNO</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th>{{ ukupno.broj_transakcija }}</th>
+            <th>{{ ukupno.kolicina|floatformat:2|intcomma }}</th>
+            <th>{{ ukupno.bruto|floatformat:2|intcomma }}</th>
+            <th>{{ ukupno.neto|floatformat:2|intcomma }}</th>
           </tr>
         </tfoot>
       </table>
@@ -139,7 +168,7 @@
   <div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h4 class="mb-0">Detalj potrosnje po vozilu - {{ selected_sifpos }}</h4>
-      <a class="btn btn-outline-secondary btn-sm" href="{{ request.path }}?godina={{ request.GET.godina }}&mesec={{ request.GET.mesec }}&polovina={{ request.GET.polovina }}">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ request.path }}?{% if faktura %}faktura={{ faktura|urlencode }}{% else %}godina={{ request.GET.godina }}&mesec={{ request.GET.mesec }}&polovina={{ request.GET.polovina }}{% endif %}">
         <i class="mdi mdi-arrow-left"></i> Nazad na pregled
       </a>
     </div>
@@ -179,6 +208,14 @@
             <tr><td colspan="11" class="text-center text-muted">Nema detalja za izabranu sifru posla.</td></tr>
           {% endfor %}
         </tbody>
+        {% if detalj_ukupno %}<tfoot>
+          <tr class="fw-bold table-light">
+            <th>UKUPNO</th><th></th><th></th><th></th><th></th>
+            <th>{{ detalj_ukupno.kolicina|floatformat:2|intcomma }}</th><th></th>
+            <th>{{ detalj_ukupno.bruto|floatformat:2|intcomma }}</th>
+            <th>{{ detalj_ukupno.neto|floatformat:2|intcomma }}</th><th></th><th></th>
+          </tr>
+        </tfoot>{% endif %}
       </table>
     </div>
   </div>
@@ -187,6 +224,17 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // Ručni izbor perioda poništava izbor OMV fakture (inače bi faktura odredila period).
+    var faktura = document.getElementById('id_faktura');
+    if (faktura) {
+      ['id_godina', 'id_mesec', 'id_polovina'].forEach(function (id) {
+        var polje = document.getElementById(id);
+        if (!polje) return;
+        var ponisti = function () { faktura.value = ''; if (window.jQuery) jQuery(faktura).trigger('change.select2'); };
+        polje.addEventListener('change', ponisti);
+        if (window.jQuery) jQuery(polje).on('select2:select', ponisti);
+      });
+    }
     if (window.ReportsDT) {
       ReportsDT('#FuelJobCodeSummaryTable', {
         exportTitle: '{{ title }}',

@@ -88,6 +88,7 @@
   <div class="d-flex flex-wrap align-items-center gap-2">
     <div class="invoice-hero-iznos">{% if invoice.amount is not None %}{{ invoice.amount|floatformat:"2g" }}<small> din</small>{% else %}—{% endif %}</div>
     {% if sef_faktura %}<a class="btn btn-light btn-sm" href="#sef-pdf"><i class="mdi mdi-file-pdf-box"></i> PDF sa SEF-a</a>{% endif %}
+    {% if sef_prilozi %}<a class="btn btn-light btn-sm" href="#sef-prilozi"><i class="mdi mdi-paperclip"></i> Prilozi ({{ sef_prilozi|length }})</a>{% endif %}
     <a class="btn btn-outline-light btn-sm" href="{% url 'nabavka:euf_invoice_list' %}"><i class="mdi mdi-arrow-left"></i> Preuzete EUF</a>
   </div>
 </div>
@@ -164,6 +165,16 @@
             <a class="btn btn-outline-secondary btn-sm" href="{{ sef_pdf_url }}" target="_blank" rel="noopener"><i class="mdi mdi-file-pdf-box"></i> Otvori PDF</a>
             {% if sef_u_finansijama %}<a class="btn btn-outline-primary btn-sm" href="{% url 'finansije:sef_detail' sef_faktura.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> SEF faktura u Finansijama</a>{% endif %}
             <span class="text-muted small align-self-center">ID na SEF-u {{ sef_faktura.sef_id }}</span>
+          </div>
+          <div class="mt-3" id="sef-prilozi">
+            <div class="fw-semibold small mb-1"><i class="mdi mdi-paperclip"></i> Pridruženi dokumenti{% if sef_prilozi %} ({{ sef_prilozi|length }}){% endif %}</div>
+            {% if sef_prilozi %}<ul class="list-unstyled mb-0">{% for p in sef_prilozi %}
+              <li class="mb-1"><a href="{% url 'nabavka:euf_invoice_sef_prilog' invoice.pk p.redni %}" target="_blank" rel="noopener"><i class="mdi {% if p.mime == 'application/pdf' %}mdi-file-pdf-box{% elif 'image' in p.mime %}mdi-file-image{% else %}mdi-paperclip{% endif %}"></i> {{ p.naziv }}</a>
+                <span class="text-muted small">{{ p.velicina|filesizeformat }}{% if p.opis %} · {{ p.opis }}{% endif %}</span></li>
+            {% endfor %}</ul>
+            {% elif sef_prilozi_greska %}<div class="text-danger small">Prilozi nisu preuzeti sa SEF-a: {{ sef_prilozi_greska }}</div>
+            {% elif sef_faktura.prilozi_preuzeti %}<div class="text-muted small">Faktura nema pridružene dokumente.</div>
+            {% else %}<div class="text-muted small">Prilozi još nisu preuzeti sa SEF-a.</div>{% endif %}
           </div>
         {% else %}
           <div class="text-muted">Na SEF-u nema ulazne fakture sa brojem {{ invoice.invoice_number }}{% if invoice.partner_pib %} i PIB-om {{ invoice.partner_pib }}{% endif %}. SEF fakture preuzimaju Finansije (od 23.09.2026.); papirne i starije fakture nemaju par.</div>

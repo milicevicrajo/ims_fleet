@@ -101,8 +101,10 @@ class Command(BaseCommand):
         users = User.objects.all()
         existing_usernames = {clean(username).casefold() for username in users.values_list("username", flat=True)}
 
+        # Jedna osoba, jedan nalog: osoba koja ima nalog na drugom broju radnika se preskače (od 07.10.2026.).
         employees = (
             Employee.objects.filter(is_active=True, user_account__isnull=True)
+            .exclude(osoba__zaposlenja__user_account__isnull=False)
             .order_by("employee_code")
         )
         planned = []

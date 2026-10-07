@@ -713,8 +713,10 @@ class EufInvoiceDetailView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
         if faktura.iznos is not None and invoice.amount is not None and abs(faktura.iznos - invoice.amount) >= Decimal("0.01"):
             razlika = faktura.iznos - invoice.amount
         user = self.request.user
+        prilozi, prilozi_greska = sef_servis.prilozi_fakture(faktura)
         return {
             "sef_faktura": faktura, "sef_kandidata": kandidata, "sef_razlika": razlika,
+            "sef_prilozi": prilozi, "sef_prilozi_greska": prilozi_greska,
             "sef_status": sef_servis.STATUSI.get(faktura.status, faktura.status),
             "sef_vrsta": sef_servis.VRSTE.get(faktura.vrsta, faktura.vrsta),
             "sef_pdf_url": reverse("nabavka:euf_invoice_sef_pdf", kwargs={"pk": invoice.pk}),
@@ -759,6 +761,23 @@ class EufInvoiceSefPdfView(NabavkaContextMixin, RolePermissionRequiredMixin, Log
         odgovor = FileResponse(fajl, content_type="application/pdf")
         odgovor["Content-Disposition"] = f'inline; filename="SEF_{ime}.pdf"'
         return odgovor
+
+
+@method_decorator(xframe_options_sameorigin, name="dispatch")
+class EufInvoiceSefPrilogView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    """Pridruzeni dokument SEF fakture povezane sa EUF fakturom (ista dozvola kao PDF sa SEF-a)."""
+    required_permission_code = "nabavka:euf_invoice_sef_pdf"
+
+    def get(self, request, pk, redni):
+        from finansije.sef_models import SefPrilog
+        from finansije.services import sef as sef_servis
+        from nabavka.services.sef_veza import sef_faktura
+
+        invoice = get_object_or_404(fakture(ProcurementInvoice.objects.all(), request.user), pk=pk)
+        faktura, _ = sef_faktura(invoice)
+        if faktura is None:
+            raise Http404("Faktura nema povezanu SEF fakturu.")
+        return sef_servis.prilog_odgovor(get_object_or_404(SefPrilog, faktura=faktura, redni=redni))
 
 
 class ProcurementInvoiceLinkDeleteView(RolePermissionRequiredMixin, LoginRequiredMixin, View):

@@ -2387,10 +2387,11 @@ Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema 
 
 | Podatak | Ekran | Ko unosi |
 |---|---|---|
-| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** |
+| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** — od 07.10.2026. lista se **ne može predati** dok red sa satima rada (redovan, prekovremeni, noćni, rad na praznik ili red bez vrste) nema šifru posla; odsustva (bolovanje, godišnji, plaćeno odsustvo, državni i verski praznik) je ne traže. Čuvanje je dozvoljeno; proveru radi i pregledač pre otvaranja štampe (`hr/services/radna_lista.py`). Na štampi je datum prvi radni dan meseca predaje (mesec posle meseca liste, bez vikenda i praznika) |
 | Vrsta rada / odsustva po redu | Radna lista | Zaposleni |
-| Topli obrok — broj dana i šifra posla | Radna lista | Zaposleni |
+| Topli obrok — broj dana i šifra posla | Radna lista | Zaposleni — **obavezan pri predaji** (i 0 je odgovor); predlog je broj radnih dana sa kucanjem (pon–pet, bez praznika), uz podrazumevanu šifru zaposlenog (od 07.10.2026.) |
 | Terenski dodatak — broj dana | Radna lista | Zaposleni (predlaže se iz putnih naloga) |
+| Prilozi radne liste (skenirane propusnice, finalna radna lista) | Radna lista, kartica „Prilozi radne liste” | Zaposleni ili kadrovik; PDF/JPG/PNG/TIFF do 20 MB, i posle predaje; odobrena lista ne dozvoljava brisanje |
 | **Datum slave** | Izmena zaposlenog, sekcija „Obrazovanje i slava“ | Kadrovska služba; predlaže se iz naziva slave, koriste se dan i mesec |
 | Ispravka imena za prikaz | Moj profil | Zaposleni |
 | CV stavke | Moj profil | Zaposleni |
@@ -2444,6 +2445,7 @@ putni nalozi, …) i dalje idu na zaposlenje, a osoba ih objedinjuje.
 | Nestanak iz izvora | Broj koji nestane iz kadrovske baze dobija `u_izvoru = False`; ne briše se i aktivnost mu se ne menja. |
 | Pregled pre izmena | `manage.py kadrovi_osobe_pregled` — samo čita: osobe sa više brojeva, sukobi brojeva, zapisi bez JMBG-a. |
 | Detalj zaposlenog | Sve kartice (ugovori, rešenja, zahtevi, radne liste, odmori, putni nalozi, vozila, incidenti, CV) obuhvataju **sva zaposlenja osobe**; kartica „Šifre“ prikazuje sve brojeve; kartica „Bolovanja“ samo uz pravo `hr:sick_leave_list`. Detalj ugovora prikazuje periode pod svim šiframa osobe. Spisak zaposlenih ima jedan red po osobi. |
+| Korisnički nalog | **Jedna osoba, jedan nalog** (od 07.10.2026.): `manage.py uskladi_naloge_zaposlenih [--execute] [--i-van-radnog-odnosa]` pravi nalog aktivnoj osobi bez naloga na glavnom zaposlenju (lozinka JMBG, obavezna promena, obuhvat svog centra), prebacuje nalog sa neaktivnog na aktivan broj, deaktivira duple naloge i naloge osoba bez aktivnog zaposlenja (ne briše; superuser se ne dira). Brojevi van kadrovske baze i osobe samo van radnog odnosa ne dobijaju nalog bez posebne opcije. Isto pravilo koriste dugme „napravi profile“ i `create_employee_users`. |
 | Ukupan staž | Na osobi (`staz_*`, `staz_ims_*`), računa ga HR sinhronizacija iz `RadStaz` (u IMS `DA` i kod drugih poslodavaca `NE`/`ME`) za sve šifre osobe (`hr/services/osobe.py: obracunaj_staz`). Sabiraju se izvorne vrednosti perioda (30 dana = mesec, 12 meseci = godina, kao kadrovska baza); period bez staža otpada; isti period pod dve šifre računa se jednom (vrednost novije šifre); period ceo unutar dužeg perioda druge šifre se ne računa, osim kad duži nema upisan kraj (3000). |
 
 ---
@@ -2458,6 +2460,7 @@ Detaljno: [4.5. Kadrovi](#45-kadrovi--hr). **20 tabela.**
 | **`fleet_employee`** | Zaposlenje — ključ je `preduzece` + `employee_code`; `osoba` ga veže za osobu |
 | `fleet_employeecvitem` | CV stavke |
 | `hr_worktimesheet`, `hr_worktimesheetline` | Radna lista i redovi (31 kolona sati) |
+| `hr_radnalistaprilog` | Prilozi radne liste — skenirane propusnice, finalna potpisana lista, ostalo (`media/hr/radne_liste/`, od 07.10.2026.) |
 | `fleet_employee.slava_datum` | Datum krsne slave (koriste se dan i mesec); HR sinhronizacija ga ne menja, naziv slave dolazi iz HR-a |
 | `hr_worktimecategory`, `hr_worktimeelement`, `hr_recipienttype` | Šifarnici radne liste |
 | `hr_annualleaveallowance`, `hr_annualleavedecision`, `hr_annualleavesync` | Godišnji odmori |
@@ -3156,20 +3159,22 @@ fakture, ne prihvata ih, ne odbija i ne stornira — to ostaje u sistemu u kome 
 | Izlazne | `POST sales-invoice/ids` po statusu i periodu daje samo ID; broj, kupac i iznosi čitaju se iz UBL-a (`sales-invoice/xml`) **samo za fakture koje još nemamo**. Nacrti i obrisane se ne preuzimaju |
 | Statusi | `POST …/changes?date=` za protekle dane (SEF ih čuva mesec dana, tekući dan ne daje); svaki događaj se čuva (`finansije_sef_promena`), a novija promena menja status fakture |
 | PDF i UBL | **PDF se prikazuje na detalju**, ispod podataka o fakturi. Ako još nije preuzet, stranica ga sama preuzima sa SEF-a (`finansije:sef_pdf_preuzmi`): SEF prvi put samo pokrene izradu, pa stranica ponavlja na 5 s (najviše 12 puta). Preuzet PDF se **čuva u aplikaciji** (`media/finansije/sef/`, polje `pdf`, vreme `pdf_preuzet`) i sledeći put se ne traži sa SEF-a — ulazi u rezervne kopije direktorijuma `media/`. UBL se preuzima sa SEF-a u trenutku otvaranja |
+| Pridruženi dokumenti (od 07.10.2026.) | **Prilozi fakture** (izveštaj o ispitivanju, specifikacija, otpremnica…) preuzimaju se uz fakturu. SEF za njih nema poseban poziv: stoje u UBL-u (`…-invoice/xml`) kao `cac:AdditionalDocumentReference/cac:Attachment/cbc:EmbeddedDocumentBinaryObject` (base64, `mimeCode`, `filename`). Reference bez ugrađenog fajla (npr. broj ugovora) i PDF fakture iz zaglavlja omota (`env:DocumentPdf`) nisu prilozi. Čuvaju se u aplikaciji (`finansije_sef_prilog`, `media/finansije/sef/prilozi/`); polje `prilozi_preuzeti` beleži da je UBL pročitan (i kad faktura nema priloga), pa se SEF ne pita ponovo. Fajl kog nema na disku čita se ponovo. Detalj fakture prikazuje karticu **Pridruženi dokumenti** (PDF i slike se otvaraju u pregledaču, ostalo se preuzima; `finansije:sef_prilog`, dozvola `finansije:sef_dokument`); ako prilozi još nisu pročitani, detalj ih čita pri otvaranju (jedan poziv). Provera 07.10.2026.: 25 od poslednjih 40 ulaznih faktura ima prilog |
 | Veza sa knjiženjima | **Meka, samo preko broja dokumenta**: `LedgerEntry.document_reference` jednak broju fakture (bez razmaka na krajevima; na SQL Serveru bez obzira na veličinu slova). Polje knjiženja ima 20 znakova, pa se duži broj poredi i skraćen na 20. **Izlazna** faktura na SEF-u ima ispred broja iz IF knjiženja još četiri cifre (godina + serija): SEF `2650707001-325` = knjiženje `707001-325`. Nema stranog ključa; isti broj kod drugog partnera se takođe prikazuje. Merenje 30.09.2026. (23.–30.09.): izlazne 94 od 101, ulazne 26 od 101 |
 | Filteri | Smer (dugmad sa brojem faktura), status na SEF-u, knjiženje (proknjižene / neproknjižene — `Exists` nad `LedgerEntry` po celom broju i po `broj_knjizenja`, uz indeks `fin_ledger_doc_ref`), period (datum izdavanja; za ulazne datum prometa, pa dan slanja) sa prečicama „Ovaj mesec / Prošli mesec / Ova godina“ i pretraga (broj, partner, PIB, matični broj, SEF ID). Detalj vraća na spisak sa istim filterima |
 | Obuhvat | Fakture nemaju centar ni šifru posla — vidi ih samo **obuhvat cele firme** (kao sinhronizaciju) |
 | Ograničenja SEF-a | Najviše **3 zahteva u sekundi** (inače 429): klijent čeka 0,4 s između poziva i posle 429 ponavlja. Izlazna faktura „u slanju” još nema UBL (`UBLFileNotFound`) — ostaje bez broja i UBL se traži pri sledećem preuzimanju. Sertifikat `efaktura.mfin.gov.rs` proverava se kroz skladište sertifikata Windows-a (`truststore`), jer izdavač nije u `certifi` |
 | Preuzimanje | Noću u **06:50** (`finansije.tasks.sync_sef_task`, posle noćne pauze SEF-a): fakture poslate u poslednjih 45 dana i promene statusa. Ručno — dugmetom na ekranu SEF fakture ili na strani Finansije → Sinhronizacija (sa istorijom preuzimanja) — najviše tri meseca; za duži period `manage.py sync_sef --od 2026-01-01`. `manage.py sync_sef --provera` proverava ključ i vezu (verzija SEF-a). Svako preuzimanje se beleži (`finansije_sef_sinhronizacija`) |
-| Svi PDF-ovi | **Svako preuzimanje sa SEF-a** (dugme, noćni posao, `manage.py sync_sef`) posle faktura i statusa preuzima i PDF svake fakture iz perioda koja ga nema — bez ograničenja broja; traje koliko traje. Prvi krug pokreće izradu na SEF-u, sledeći krugovi (na 15 s, najviše 4) preuzimaju gotove. Zapis čiji fajl ne postoji na disku (PDF preuzet sa drugog računara nad istom bazom) preuzima se ponovo. `sync_sef --bez-pdf` preskače PDF-ove; `manage.py sef_pdf --od … --do …` dopunjuje PDF-ove za već preuzete fakture |
-| Izvoz PDF-ova | **Izvezi PDF-ove (ZIP)** za mesec ili celu godinu, uz izabrani smer: `Ulazne|Izlazne/GGGG-MM/datum_broj_partner.pdf` i `spisak.csv` (sve fakture perioda, sa oznakom koje nemaju PDF). Period prati datum dokumenta (izdavanje; za ulazne promet ili dan slanja) |
-| Ručno preuzimanje | Dugme **Preuzimanje i status** (ekran SEF fakture i Finansije → Sinhronizacija) otvara modal. Kada preuzimanje radi, modal prikazuje njegov status; inače poslednje preuzimanje (sa dnevnikom) i izbor perioda za novo. Preuzimanje kreće **odmah**, u pozadinskoj niti web procesa (bez Celery-ja): prvo se prebroje fakture na SEF-u (ulazne, izlazne, novi UBL, PDF-ovi koji nedostaju) i proceni vreme, pa modal na 2 s prikazuje korak (1–5: spisak, ulazne, izlazne, promene statusa, PDF-ovi), napredak, preostalo vreme (iz preostalih poziva i stvarne brzine) i **dnevnik** — poslednjih 40 događaja (faktura, PDF, čekanje na SEF, greška). **Zaustavi** staje posle koraka koji upravo radi (status „Zaustavljeno“, preuzeto ostaje; novo preuzimanje nastavlja bez duplikata). Prozor se može zatvoriti — preuzimanje radi dalje. U isto vreme radi jedno preuzimanje; noćni posao se preskače dok ručno traje. Preuzimanje se javlja najmanje na 5 s; ako se ne javi 2 minuta (restart web procesa — npr. `runserver` posle izmene koda), označava se kao prekinuto. Merenje 30.09.2026.: 29.–30.09. (37 ulaznih, 35 izlaznih, 55 PDF-ova) — procena 66 s, stvarno 68 s |
+| Svi PDF-ovi | **Svako preuzimanje sa SEF-a** (dugme, noćni posao, `manage.py sync_sef`) posle faktura i statusa preuzima i PDF svake fakture iz perioda koja ga nema — bez ograničenja broja; traje koliko traje. Prvi krug pokreće izradu na SEF-u, sledeći krugovi (na 15 s, najviše 4) preuzimaju gotove. Zapis čiji fajl ne postoji na disku (PDF preuzet sa drugog računara nad istom bazom) preuzima se ponovo. `sync_sef --bez-pdf` preskače PDF-ove; `manage.py sef_pdf --od … --do …` dopunjuje PDF-ove za već preuzete fakture. Posle PDF-ova (korak 6) čitaju se **prilozi** faktura iz perioda koje ih još nemaju — jedan poziv po fakturi; `--bez-pdf` preskače i njih, a `manage.py sef_prilozi --od … --do …` dopunjuje priloge za već preuzete fakture |
+| Izvoz PDF-ova | **Izvezi PDF-ove (ZIP)** za mesec ili celu godinu, uz izabrani smer: `Ulazne|Izlazne/GGGG-MM/datum_broj_partner.pdf`, prilozi u fascikli `datum_broj_partner_prilozi/` i `spisak.csv` (sve fakture perioda, sa oznakom koje nemaju PDF i brojem priloga). Period prati datum dokumenta (izdavanje; za ulazne promet ili dan slanja) |
+| Ručno preuzimanje | Dugme **Preuzimanje i status** (ekran SEF fakture i Finansije → Sinhronizacija) otvara modal. Kada preuzimanje radi, modal prikazuje njegov status; inače poslednje preuzimanje (sa dnevnikom) i izbor perioda za novo. Preuzimanje kreće **odmah**, u pozadinskoj niti web procesa (bez Celery-ja): prvo se prebroje fakture na SEF-u (ulazne, izlazne, novi UBL, PDF-ovi koji nedostaju) i proceni vreme, pa modal na 2 s prikazuje korak (1–6: spisak, ulazne, izlazne, promene statusa, PDF-ovi, prilozi), napredak, preostalo vreme (iz preostalih poziva i stvarne brzine) i **dnevnik** — poslednjih 40 događaja (faktura, PDF, čekanje na SEF, greška). **Zaustavi** staje posle koraka koji upravo radi (status „Zaustavljeno“, preuzeto ostaje; novo preuzimanje nastavlja bez duplikata). Prozor se može zatvoriti — preuzimanje radi dalje. U isto vreme radi jedno preuzimanje; noćni posao se preskače dok ručno traje. Preuzimanje se javlja najmanje na 5 s; ako se ne javi 2 minuta (restart web procesa — npr. `runserver` posle izmene koda), označava se kao prekinuto. Merenje 30.09.2026.: 29.–30.09. (37 ulaznih, 35 izlaznih, 55 PDF-ova) — procena 66 s, stvarno 68 s |
 | Ključ | `SEF_API_KEY` u `.env` (SEF portal → Podešavanja → API management), `SEF_API_URL` (podrazumevano produkcija; test: `https://efakturatest.mfin.gov.rs`). Bez ključa ekran prikazuje upozorenje, a noćni posao se preskače |
 
-Dozvole: `finansije:sef_list`, `finansije:sef_detail`, `finansije:sef_dokument` (PDF i UBL),
+Dozvole: `finansije:sef_list`, `finansije:sef_detail`, `finansije:sef_dokument` (PDF, UBL i prilozi),
 `finansije:sef_sync` (ručno preuzimanje i praćenje napretka), `finansije:sef_izvoz` (ZIP) — Uprava ih dobija automatski. Kod:
 `finansije/services/sef.py`, `finansije/sef_views.py`, `finansije/sef_models.py`; testovi u
-`finansije/test_sef.py` (lažni klijent, bez poziva SEF-a). Migracije Finansija 0006 i 0007 (PDF, `broj_knjizenja`, indeks knjiženja po broju dokumenta).
+`finansije/test_sef.py` (lažni klijent, bez poziva SEF-a). Migracije Finansija 0006 i 0007 (PDF, `broj_knjizenja`, indeks knjiženja po broju dokumenta) i 0009 (prilozi).
+Testovi ne zovu pravi SEF: `ims_erp.settings.testing` postavlja `SEF_API_URL` na nepostojeću adresu.
 
 ### Gde dalje
 
@@ -3347,7 +3352,7 @@ Spisak PIB-ova banaka se čuva u kešu sat vremena. Stanje 28.09.2026.: 3.257 fa
 | Povezani kupovni ugovori | Ugovori sa šifrom tipa koja počinje sa `KUP` |
 | Povezane dodatne šifre posla | Dodate ručno |
 | **Interna dopuna** | `is_garage`, `vehicle`, `work_type`, `goes_to_warehouse`, `internal_note` |
-| **SEF faktura** (od 02.10.2026.) | Ulazna SEF faktura **istog broja i istog PIB-a** (`nabavka/services/sef_veza.py`) — meka veza, bez kopije podataka: status na SEF-u, vrsta, partner, datumi prometa i dospeća, osnovica, PDV, iznos, upozorenje kad se iznos razlikuje od EUF; veza „SEF faktura u Finansijama” (samo uz obuhvat cele firme) i **PDF sa SEF-a na dnu strane** (`nabavka:euf_invoice_sef_pdf`, isti fajl kao u Finansijama; ako nije preuzet, preuzima se pri otvaranju). PDF vidi svako ko vidi EUF fakturu. Provereno 02.10.2026.: 126 od 145 EUF faktura iz perioda SEF-a ima par, bez sukoba PIB-a. |
+| **SEF faktura** (od 02.10.2026.) | Ulazna SEF faktura **istog broja i istog PIB-a** (`nabavka/services/sef_veza.py`) — meka veza, bez kopije podataka: status na SEF-u, vrsta, partner, datumi prometa i dospeća, osnovica, PDV, iznos, upozorenje kad se iznos razlikuje od EUF; veza „SEF faktura u Finansijama” (samo uz obuhvat cele firme) i **PDF sa SEF-a na dnu strane** (`nabavka:euf_invoice_sef_pdf`, isti fajl kao u Finansijama; ako nije preuzet, preuzima se pri otvaranju). PDF vidi svako ko vidi EUF fakturu. Od 07.10.2026. kartica prikazuje i **pridružene dokumente** sa SEF-a (prilozi iz UBL-a, isti fajlovi kao u Finansijama; `nabavka:euf_invoice_sef_prilog`, dozvola `nabavka:euf_invoice_sef_pdf`). Provereno 02.10.2026.: 126 od 145 EUF faktura iz perioda SEF-a ima par, bez sukoba PIB-a. |
 
 Naziv partnera na spiskovima skraćuje se na **50 znakova**, a pun naziv se vidi kao
 `title` atribut (na prelazak mišem). [P]
@@ -3399,7 +3404,7 @@ Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
 |---|---|
 | Kolone | Broj fakture (uz vrstu dokumenta), dobavljač i PIB, datum (prometa, inače dan prijema), primljena na SEF, dospeće, iznos, status na SEF-u, proknjižena (meka veza po broju, kao u Finansijama), PDF |
 | Filteri | Pretraga (broj, dobavljač, PIB, matični broj, ID na SEF-u), datum od–do, status, vrsta, proknjižene/neproknjižene; u zaglavlju broj i zbir filtriranih faktura |
-| PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom |
+| PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom. Pored PDF-a dugme 📎 za svaki pridruženi dokument (od 07.10.2026.; `nabavka:uf_sef_prilog`, dozvola `nabavka:uf_sef_pdf`) — prikazuju se prilozi koje je preuzimanje već pročitalo |
 | Obuhvat | Ulazna faktura nema šifru posla (broj je dobavljačev), pa je na registru vidi samo **obuhvat cele firme** (`nabavka.access.ulazne_sef`) — uloga Nabavka i Uprava vide sve, korisnik vezan za centar ne vidi nijednu. |
 | Dozvole | `nabavka:uf_sef_list`, `nabavka:uf_sef_data`, `nabavka:uf_sef_pdf` — posle isporuke `manage.py sync_permission_codes` i dodela ulogama |
 
@@ -9710,6 +9715,46 @@ Isti izvori i korisnici kao V-01.
 
 Raspoređuje trošak goriva na **šifru posla koja je vozilu bila dodeljena na dan točenja**,
 radi kontrole i prenosa troška na nosioce posla.
+
+**Za knjiženje (od 07.10.2026.):** poslednji red tabele je **UKUPNO** (broj transakcija, količina, bruto,
+neto), i u Excel izvozu. Za OMV se bira **faktura** (`?faktura=<broj>`): izveštaj tada obuhvata sve stavke te
+fakture (gorivo, AdBlue, putarina, izrada kartica), tačno period koji je OMV fakturisao (do 13. i do kraja
+meseca, odvojeno za karticu „Putnička vozila“ — kupac 107248 i „Teretna vozila“ — 107258), bez podele na
+polovine i bez obzira na kategoriju vozila u Floti; iznad tabele je poređenje sa iznosom iste fakture na SEF-u.
+Knjiženje dosadašnjih OMV faktura: putnička — **bruto** na 51300 po šifri posla (PDV se ne odbija);
+teretna — **neto** na 51300 po šifri posla i PDV na 27000; ukupno na 43500.
+NIS fakturiše po polovinama meseca (1–15, 16–kraj), pa za NIS važi filter po polovini.
+
+**Kontrola faktura goriva** (`/izvestaji/gorivo-fakture/`, dozvola `fuel_invoice_control`, od 07.10.2026.;
+`fleet/support/fuel_invoices.py`): za mesec po datumu prometa svaka OMV faktura sa SEF-a (i NIS po polovini —
+obe fakture zajedno) poredi se sa zbirom transakcija i sa knjiženjem pronađenim po broju fakture
+(51300 po šifri posla, 27000 PDV). Statusi: transakcije se ne poklapaju; nije proknjiženo; proknjižen samo
+dobavljač; trošak i PDV se razlikuju od fakture; raspodela po šiframa posla se razlikuje (sa tabelom šifara).
+Za NIS je podela putnička/teretna po kategoriji vozila u Floti, pa razlike po šiframa treba proveriti.
+
+**OMV uvoz — stavke istog računa** (od 07.10.2026.): dve stavke sa istim vozilom, vremenom, proizvodom,
+vaučerom i količinom (dva AdBlue kanistera različite cene, dve izrade kartice za različite kartice) ranije
+su se prepisivale, pa faktura nije bila potpuna (8916409357: −2.349,00). Jedinstveni ključ tabele
+(migracija 0093) i pretraga pri uvozu sada uključuju karticu i iznos; isti red dvaput u fajlu se preskače.
+Ručni ponovni uvoz preuzetog fajla: `manage.py omv_uvoz_csv <putanja.csv> [...]`.
+
+**Podrazumevani period** (od 07.10.2026.): izveštaji „Gorivo po šifri posla“ bez izabranog filtera
+prikazuju poslednji fakturisani period — OMV poslednju fakturu kartice (putnička / teretna), NIS polovinu
+meseca poslednje NIS fakture na SEF-u; „Kontrola faktura goriva“ mesec poslednje fakture goriva
+(`fuel_reports.poslednji_fakturisani_period`).
+
+**Izvoz izveštaja u Excel i PDF** (od 07.10.2026.): ekrani sa tabelom `ReportsDT` imaju dugmad CSV, Excel i
+PDF (PDF pravi pregledač — `report_datatable.js`, lokalni pdfmake učitan na prvi klik; A4 položeno, naslov,
+izabrani filteri, datum izrade, red UKUPNO, „strana x od y“; red sa filterima kolona ne ulazi u izvoz).
+Izveštaji bez nje (Kontrola faktura goriva, upravljački izveštaji — gorivo IMS, kasko, osiguranje, delovi)
+imaju Excel i PDF sa servera (`core/izvoz_pdf.py: tabela_pdf_response`, isti font i zaglavlje kao analitika
+u Kadrovima). „Gorivo po šifri posla“ ima oba.
+
+**Vozilo koje još nije u Floti** (od 07.10.2026.): NIS i OMV uvoz upisuju točenje i kad tablica nema
+saobraćajnu (bez vozila, `vehicle = NULL`) — ranije se red odbacivao i zbir nije odgovarao fakturi.
+Posle svakog uvoza `povezi_transakcije_sa_vozilima()` vezuje takva točenja za vozilo kad se ono unese.
+Potrošnja goriva po vozilu (`FuelConsumption`) i dalje traži vozilo. Dopuna starijeg NIS perioda:
+`manage.py nis_command --od 2026-08-01` (podrazumevano od 1. dana prethodnog meseca).
 
 #### 3. Korisnici rezultata
 
@@ -18862,6 +18907,12 @@ detalju, bez nagađanja na osnovu datuma ili zaposlenog. Raniji slobodan opis se
 Centar u formi je izbor iz spiska, predložen iz OJ zaposlenog postojećim pravilom
 najdužeg prefiksa centra; izabrani drugi centar se čuva. „Arhivirano“ je uklonjeno iz
 forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju dostupne.
+
+Od 07.10.2026. (`pravna.0003_novcana_kazna_procenat_trajanje`) zatvaranje **novčanom kaznom**
+traži i **procenat osnovne zarade** (1–20%) i **trajanje** (1–3 meseca); polja se prikazuju samo
+kad je izabrana novčana kazna, a za druge mere se ne čuvaju. Detalj i izveštaj prikazuju meru kao
+„Novčana kazna 15% osnovne zarade, u trajanju od 2 meseca“. Ranije zatvorena novčana kazna bez
+procenta dobija upozorenje i formu za dopunu na detalju; „Vrati u tok“ briše i procenat i trajanje.
 
 ---
 

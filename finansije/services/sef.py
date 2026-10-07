@@ -6,14 +6,20 @@ Po „Okvirnoj specifikaciji aplikativnog interfejsa” (API dokumentacija SEF, 
 - izlazne: `POST sales-invoice/ids` (po statusu i periodu) daje samo ID-jeve, a broj, kupca i
   iznose citamo iz UBL-a (`GET sales-invoice/xml`) — samo za fakture koje jos nemamo;
 - promene statusa: `POST {purchase|sales}-invoice/changes?date=` za protekle dane (SEF ih cuva
-  mesec dana), sa istorijom u `SefPromena`.
+  mesec dana), sa istorijom u `SefPromena`;
+- pridruzeni dokumenti (prilozi, od 07.10.2026.): SEF ih nema kao poseban poziv — stoje u UBL-u
+  (`GET {purchase|sales}-invoice/xml`) kao `cac:AdditionalDocumentReference` sa ugradjenim fajlom;
+  cuvaju se u aplikaciji (`SefPrilog`) kao i PDF.
 
 Aplikacija nista ne salje na SEF: nema slanja, prihvatanja, odbijanja ni storniranja.
 API kljuc je `settings.SEF_API_KEY` (iz `.env`). SEF ima nocnu pauzu, pa se nocni posao
 pokrece ujutru.
 """
+import base64
+import binascii
 import datetime
 import logging
+import os
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -21,11 +27,12 @@ from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
 from finansije.models import LedgerEntry
-from finansije.sef_models import SefFaktura, SefPromena, SefSinhronizacija, broj_u_knjizenju, kljuc_broja
+from finansije.sef_models import SefFaktura, SefPrilog, SefPromena, SefSinhronizacija, broj_u_knjizenju, kljuc_broja
 
 logger = logging.getLogger(__name__)
 
@@ -315,7 +322,7 @@ class Napredak:
     Preostalo vreme racuna se iz broja poziva SEF-a koji jos predstoje i stvarne brzine do sada
     (SEF prima 3 zahteva u sekundi, a PDF cesto tek priprema).
     """
-    FAZE = ("Spisak faktura na SEF-u", "Ulazne fakture", "Izlazne fakture", "Promene statusa", "PDF-ovi")
+    FAZE = ("Spisak faktura na SEF-u", "Ulazne fakture", "Izlazne fakture", "Promene statusa", "PDF-ovi", "Prilozi")
     CUVANJE_NA = 2.0  # sekundi (svaki korak cuva najvise ovako cesto; pojedinacan poziv SEF-a traje < 1 s)
 
     def __init__(self, run, brojaci, klijent):
@@ -479,6 +486,11 @@ def _ima_pdf(faktura):
     return bool(faktura.pdf) and faktura.pdf.storage.exists(faktura.pdf.name)
 
 
+def _ima_priloge(faktura):
+    """Prilozi su procitani iz UBL-a i svi fajlovi su na disku (faktura bez priloga ima samo vreme)."""
+    return faktura.prilozi_preuzeti is not None and all(p.fajl.storage.exists(p.fajl.name) for p in faktura.prilozi.all())
+
+
 def zapocni(od=None, do=None, *, korisnik=None, danas=None):
     """Zapis sinhronizacije u stanju „u toku” (za pokretanje iz ekrana pre pozadinske niti)."""
     danas = danas or timezone.localdate()
@@ -493,8 +505,8 @@ def zapocni(od=None, do=None, *, korisnik=None, danas=None):
 
 
 def sinhronizuj(od=None, do=None, *, klijent=None, korisnik=None, danas=None, pdf=True, run=None):
-    """Preuzima fakture poslate u [od, do], promene statusa za protekle dane i (`pdf`) PDF svake fakture
-    iz perioda koja ga jos nema — bez ogranicenja broja; traje koliko traje. Napredak i procena vremena
+    """Preuzima fakture poslate u [od, do], promene statusa za protekle dane i (`pdf`) PDF i priloge svake
+    fakture iz perioda koja ih jos nema — bez ogranicenja broja; traje koliko traje. Napredak i procena vremena
     upisuju se u `run.counts["napredak"]` i `run.counts["procena"]`. Vraca `SefSinhronizacija`."""
     danas = danas or timezone.localdate()
     run = run or zapocni(od, do, korisnik=korisnik, danas=danas)
@@ -519,9 +531,10 @@ def sinhronizuj(od=None, do=None, *, klijent=None, korisnik=None, danas=None, pd
         kljucevi = {(SefFaktura.Smer.ULAZNA, int(r["InvoiceId"])) for r in ulazne} | {
             (SefFaktura.Smer.IZLAZNA, i) for i in izlazne} | set(poznate)
         bez_pdf = sum(1 for k in kljucevi if not (k in poznate and _ima_pdf(poznate[k]))) if pdf else 0
-        napredak.plan(len(za_ubl) + 2 * len(dani) + 2 * bez_pdf, cekanja=PDF_CEKANJE if bez_pdf else 0)
+        bez_priloga = sum(1 for k in kljucevi if not (k in poznate and poznate[k].prilozi_preuzeti)) if pdf else 0
+        napredak.plan(len(za_ubl) + 2 * len(dani) + 2 * bez_pdf + bez_priloga, cekanja=PDF_CEKANJE if bez_pdf else 0)
         brojaci["procena"] = {"ulaznih": len(ulazne), "izlaznih": len(izlazne), "ubl": len(za_ubl),
-                              "dana_promena": len(dani), "bez_pdf": bez_pdf}
+                              "dana_promena": len(dani), "bez_pdf": bez_pdf, "bez_priloga": bez_priloga}
 
         napredak.faza(2, len(ulazne))
         _ulazne(klijent, ulazne, sada, brojaci, napredak)
@@ -533,6 +546,9 @@ def sinhronizuj(od=None, do=None, *, klijent=None, korisnik=None, danas=None, pd
             fakture = list(_fakture_perioda(od, do))
             napredak.faza(5, sum(1 for f in fakture if not _ima_pdf(f)))
             brojaci.update({f"pdf_{k}": v for k, v in preuzmi_pdfove(fakture, klijent=klijent, napredak=napredak).items()})
+            fakture = list(_fakture_perioda(od, do).prefetch_related("prilozi"))
+            napredak.faza(6, sum(1 for f in fakture if not _ima_priloge(f)))
+            brojaci.update({f"prilozi_{k}": v for k, v in preuzmi_sve_priloge(fakture, klijent=klijent, napredak=napredak).items()})
     except Zaustavljeno as exc:
         run.refresh_from_db(fields=["counts"])
         run.status, run.error, run.finished_at = "stopped", str(exc), timezone.now()
@@ -612,6 +628,125 @@ def preuzmi_pdfove(fakture, *, klijent=None, krugova=PDF_KRUGOVA, cekanje=PDF_CE
     return brojaci
 
 
+# Nastavak fajla po MIME tipu kada ga naziv priloga nema (SEF dozvoljava PDF, slike, tabele i tekst).
+NASTAVCI = {"application/pdf": "pdf", "image/png": "png", "image/jpeg": "jpg", "image/jpg": "jpg", "image/gif": "gif",
+            "text/csv": "csv", "text/plain": "txt", "application/xml": "xml", "text/xml": "xml",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+            "application/vnd.oasis.opendocument.spreadsheet": "ods", "application/msword": "doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+            "application/vnd.ms-excel": "xls", "application/zip": "zip"}
+
+
+def prilozi_iz_ubl(sadrzaj):
+    """Pridruzeni dokumenti iz UBL-a: [{naziv, opis, mime, sadrzaj}] redom kao u fakturi.
+
+    Prilog je `cac:AdditionalDocumentReference/cac:Attachment/cbc:EmbeddedDocumentBinaryObject` (base64,
+    atributi `mimeCode` i `filename`); reference bez ugradjenog fajla (npr. broj ugovora) se preskacu.
+    PDF fakture koji pravi SEF (`env:DocumentPdf` u zaglavlju omota) nije prilog.
+    """
+    koren = ET.fromstring(sadrzaj)
+    dokument = next((el for el in koren.iter() if _ime(el) in ("Invoice", "CreditNote")), None)
+    if dokument is None:
+        raise SefGreska("UBL ne sadrži fakturu (Invoice ili CreditNote).")
+    prilozi = []
+    for ref in _deca(dokument, "AdditionalDocumentReference"):
+        objekat = _putanja(ref, "Attachment", "EmbeddedDocumentBinaryObject")
+        if objekat is None or not (objekat.text or "").strip():
+            continue
+        try:
+            podaci = base64.b64decode("".join(objekat.text.split()), validate=True)
+        except (binascii.Error, ValueError):
+            logger.warning("SEF prilog %r: neispravan base64, preskacem", _tekst(ref, "ID"))
+            continue
+        mime = (objekat.attrib.get("mimeCode") or "").strip()
+        oznaka = _tekst(ref, "ID")
+        naziv = (objekat.attrib.get("filename") or oznaka or f"Prilog {len(prilozi) + 1}").strip()
+        nastavak = NASTAVCI.get(mime.lower())
+        if nastavak and not naziv.lower().endswith(f".{nastavak}"):
+            naziv = f"{naziv}.{nastavak}"
+        opis = _tekst(ref, "DocumentDescription") or (oznaka if oznaka and oznaka not in naziv else "")
+        prilozi.append({"naziv": naziv[:255], "opis": opis[:255], "mime": mime[:100], "sadrzaj": podaci})
+    return prilozi
+
+
+def preuzmi_priloge(faktura, klijent=None, sadrzaj=None):
+    """Cuva priloge fakture iz UBL-a u aplikaciji (jednom). Vraca broj priloga.
+
+    `sadrzaj` je UBL ako je vec preuzet. Ako neki fajl nedostaje na disku (npr. preuzet sa drugog racunara
+    nad istom bazom), prilozi se citaju ponovo.
+    """
+    if _ima_priloge(faktura):
+        return faktura.prilozi.count()
+    sadrzaj = sadrzaj or (klijent or Klijent()).ubl(faktura.smer, faktura.sef_id)
+    try:
+        prilozi = prilozi_iz_ubl(sadrzaj)
+    except ET.ParseError as exc:
+        raise SefGreska("SEF nije vratio ispravan UBL fakture.") from exc
+    with transaction.atomic():
+        for stari in faktura.prilozi.all():
+            stari.fajl.delete(save=False)
+            stari.delete()
+        for redni, p in enumerate(prilozi, start=1):
+            osnova, nastavak = os.path.splitext(p["naziv"])
+            prilog = SefPrilog(faktura=faktura, redni=redni, naziv=p["naziv"], opis=p["opis"], mime=p["mime"],
+                               velicina=len(p["sadrzaj"]))
+            prilog.fajl.save(f"SEF_{faktura.smer}_{faktura.sef_id}_{redni}_{_bezbedno_ime(osnova, 50)}{nastavak[:10]}",
+                             ContentFile(p["sadrzaj"]), save=False)
+            prilog.save()
+        faktura.prilozi_preuzeti = timezone.now()
+        faktura.save(update_fields=["prilozi_preuzeti"])
+    return len(prilozi)
+
+
+def preuzmi_sve_priloge(fakture, *, klijent=None, napredak=None):
+    """Prilozi za fakture koje ih jos nemaju (jedan poziv SEF-a po fakturi). Vraca brojeve."""
+    klijent = klijent or Klijent()
+    cekaju = [f for f in fakture if not _ima_priloge(f)]
+    brojaci = {"bez_priloga": len(cekaju), "provereno": 0, "priloga": 0, "gresaka": 0}
+    for faktura in cekaju:
+        try:
+            broj = preuzmi_priloge(faktura, klijent)
+        except SefGreska as exc:
+            logger.warning("SEF prilozi %s %s: %s", faktura.smer, faktura.sef_id, exc)
+            brojaci["gresaka"] += 1
+            if napredak:
+                napredak.dogadjaj(f"Prilozi {faktura.broj or faktura.sef_id}: greška — {str(exc)[:120]}")
+                napredak.korak()
+            continue
+        brojaci["provereno"] += 1
+        brojaci["priloga"] += broj
+        if napredak:
+            if broj:
+                napredak.dogadjaj(f"Prilozi {faktura.broj or faktura.sef_id}: {broj} — {faktura.partner_naziv[:50]}")
+            napredak.korak()
+    return brojaci
+
+
+def prilozi_fakture(faktura):
+    """Prilozi za prikaz: ako jos nisu procitani sa SEF-a, cita ih sada (jedan poziv). Vraca (prilozi, greska)."""
+    greska = ""
+    if not _ima_priloge(faktura) and settings.SEF_API_KEY:
+        try:
+            preuzmi_priloge(faktura)
+        except (SefNijePodesen, SefGreska) as exc:
+            greska = str(exc)
+    return list(faktura.prilozi.all()), greska
+
+
+def prilog_odgovor(prilog):
+    """Fajl priloga za otvaranje u pregledacu (PDF i slike) ili preuzimanje (ostalo)."""
+    from django.http import FileResponse, Http404
+
+    try:
+        fajl = prilog.fajl.open("rb")
+    except FileNotFoundError:
+        raise Http404("Prilog nije pronađen na disku.")
+    vrsta = prilog.mime or "application/octet-stream"
+    odgovor = FileResponse(fajl, content_type=vrsta, as_attachment=not (vrsta == "application/pdf" or vrsta.startswith("image/")),
+                           filename=prilog.naziv)
+    return odgovor
+
+
 def _bezbedno_ime(tekst, duzina=60):
     ime = "".join(z if z.isalnum() or z in "-_" else "_" for z in (tekst or "").strip())
     return re.sub(r"_+", "_", ime).strip("_")[:duzina] or "bez_naziva"
@@ -619,6 +754,7 @@ def _bezbedno_ime(tekst, duzina=60):
 
 def izvoz_zip(fakture, izlaz):
     """ZIP u otvoren binarni fajl `izlaz`: PDF-ovi po `Ulazne|Izlazne/GGGG-MM/` i `spisak.csv` svih faktura.
+    Prilozi fakture idu pored njenog PDF-a, u fasciklu `<ime fakture>_prilozi/`.
 
     `fakture` imaju `datum_dok` (datum izdavanja, za ulazne promet ili dan slanja). Fakture bez PDF-a
     ostaju samo u spisku, sa oznakom. Vraca (broj_faktura, broj_pdf).
@@ -630,20 +766,32 @@ def izvoz_zip(fakture, izlaz):
     spisak = io.StringIO()
     upis = csv.writer(spisak, delimiter=";")
     upis.writerow(["Smer", "Broj", "Datum", "Vrsta", "Partner", "PIB", "Osnovica", "PDV", "Iznos", "Valuta",
-                   "Status", "SEF ID", "PDF"])
+                   "Status", "SEF ID", "PDF", "Prilozi"])
     imena, broj, sa_pdf = set(), 0, 0
     with zipfile.ZipFile(izlaz, "w", compression=zipfile.ZIP_DEFLATED) as arhiva:
         for f in fakture:
             broj += 1
             datum = f.datum_dok
             fajl = ""
-            if f.pdf:
-                fascikla = f"{'Ulazne' if f.smer == SefFaktura.Smer.ULAZNA else 'Izlazne'}/{datum:%Y-%m}" if datum else "Bez_datuma"
-                osnova = f"{fascikla}/{datum:%Y-%m-%d}_" if datum else f"{fascikla}/"
-                ime = f"{osnova}{_bezbedno_ime(f.broj or str(f.sef_id))}_{_bezbedno_ime(f.partner_naziv, 40)}"
+            prilozi = list(f.prilozi.all())
+            fascikla = f"{'Ulazne' if f.smer == SefFaktura.Smer.ULAZNA else 'Izlazne'}/{datum:%Y-%m}" if datum else "Bez_datuma"
+            osnova = f"{fascikla}/{datum:%Y-%m-%d}_" if datum else f"{fascikla}/"
+            ime = f"{osnova}{_bezbedno_ime(f.broj or str(f.sef_id))}_{_bezbedno_ime(f.partner_naziv, 40)}"
+            if f.pdf or prilozi:
                 if ime in imena:
                     ime = f"{ime}_{f.sef_id}"
                 imena.add(ime)
+            sacuvano_priloga = 0
+            for prilog in prilozi:
+                osnova_priloga, nastavak = os.path.splitext(prilog.naziv)
+                try:
+                    with prilog.fajl.open("rb") as sadrzaj:
+                        arhiva.writestr(f"{ime}_prilozi/{prilog.redni:02d}_{_bezbedno_ime(osnova_priloga)}{nastavak[:10]}",
+                                        sadrzaj.read())
+                    sacuvano_priloga += 1
+                except FileNotFoundError:
+                    pass
+            if f.pdf:
                 try:
                     with f.pdf.open("rb") as pdf:
                         arhiva.writestr(zipfile.ZipInfo(f"{ime}.pdf", date_time=timezone.localtime(
@@ -653,7 +801,8 @@ def izvoz_zip(fakture, izlaz):
                     fajl = "PDF nedostaje na disku"
             upis.writerow([f.get_smer_display(), f.broj, f"{datum:%d.%m.%Y}" if datum else "", VRSTE.get(f.vrsta, f.vrsta),
                            f.partner_naziv, f.partner_pib, f.osnovica or "", f.pdv or "", f.iznos or "", f.valuta,
-                           STATUSI.get(f.status, f.status), f.sef_id, fajl or "nije preuzet"])
+                           STATUSI.get(f.status, f.status), f.sef_id, fajl or "nije preuzet",
+                           sacuvano_priloga if f.prilozi_preuzeti else "nije provereno"])
         arhiva.writestr("spisak.csv", "\ufeff" + spisak.getvalue())
     return broj, sa_pdf
 
@@ -670,7 +819,9 @@ def poruka(run):
             + (f", bez UBL-a {c['bez_ubl']}" if c.get("bez_ubl") else "")
             + (f"; PDF preuzeto {c['pdf_preuzeto']} od {c['pdf_bez_pdf']} koji su nedostajali"
                + (f", SEF još priprema {c['pdf_u_pripremi']}" if c.get("pdf_u_pripremi") else "")
-               + (f", grešaka {c['pdf_gresaka']}" if c.get("pdf_gresaka") else "") if "pdf_bez_pdf" in c else ""))
+               + (f", grešaka {c['pdf_gresaka']}" if c.get("pdf_gresaka") else "") if "pdf_bez_pdf" in c else "")
+            + (f"; prilozi: provereno faktura {c['prilozi_provereno']}, priloga {c['prilozi_priloga']}"
+               + (f", grešaka {c['prilozi_gresaka']}" if c.get("prilozi_gresaka") else "") if "prilozi_bez_priloga" in c else ""))
 
 
 # --------------------------------------------------------------------------- meka veza sa knjizenjima

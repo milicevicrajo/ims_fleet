@@ -19,6 +19,8 @@ urlpatterns = [
     path("sef/sinhronizacija/<int:pk>/zaustavi/", sef_views.sef_sync_zaustavi, name="sef_sync_zaustavi"),
     path("sef/<int:pk>/", sef_views.sef_detail, name="sef_detail"),
     path("sef/<int:pk>/pdf/preuzmi/", sef_views.sef_pdf_preuzmi, name="sef_pdf_preuzmi"),
+    # dozvola: finansije:sef_dokument (kao PDF i UBL)
+    path("sef/<int:pk>/prilog/<int:redni>/", sef_views.sef_prilog, name="sef_prilog"),
     path("sef/<int:pk>/<str:vrsta>/", sef_views.sef_dokument, name="sef_dokument"),
     path("", views.dashboard, name="dashboard"),
     path("izvestaji/", views.report, name="report"),

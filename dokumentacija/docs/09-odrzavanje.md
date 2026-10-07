@@ -210,6 +210,12 @@ Centar u formi je izbor iz spiska, predložen iz OJ zaposlenog postojećim pravi
 najdužeg prefiksa centra; izabrani drugi centar se čuva. „Arhivirano“ je uklonjeno iz
 forme unosa/izmene, dok zasebna akcija arhiviranja i postojeća arhiva ostaju dostupne.
 
+Od 07.10.2026. (`pravna.0003_novcana_kazna_procenat_trajanje`) zatvaranje **novčanom kaznom**
+traži i **procenat osnovne zarade** (1–20%) i **trajanje** (1–3 meseca); polja se prikazuju samo
+kad je izabrana novčana kazna, a za druge mere se ne čuvaju. Detalj i izveštaj prikazuju meru kao
+„Novčana kazna 15% osnovne zarade, u trajanju od 2 meseca“. Ranije zatvorena novčana kazna bez
+procenta dobija upozorenje i formu za dopunu na detalju; „Vrati u tok“ briše i procenat i trajanje.
+
 ---
 
 ## 9.6. Česti problemi i šta uraditi

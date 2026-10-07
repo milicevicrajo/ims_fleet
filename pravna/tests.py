@@ -161,19 +161,59 @@ class DisciplinskiPostupakTests(TestCase):
             postupak.refresh_from_db()
             self.assertFalse(postupak.zatvoren)
         for mera in ['1', '2', '3', '4']:
-            self.assertEqual(self.client.post(url, {'mera_datum': '01.04.2026', 'mera_vrsta': mera}).status_code, 302)
+            kazna = {'mera_procenat': '10', 'mera_trajanje': '2'} if mera == '3' else {}
+            self.assertEqual(self.client.post(url, {'mera_datum': '01.04.2026', 'mera_vrsta': mera, **kazna}).status_code, 302)
             postupak.refresh_from_db()
             self.assertEqual(postupak.mera_vrsta, mera)
+
+    def test_novcana_kazna_trazi_procenat_i_trajanje(self):
+        self._create()
+        postupak = DisciplinskiPostupak.objects.get()
+        url = reverse('pravna:disciplinski_mera', args=[postupak.pk])
+        osnova = {'mera_datum': '01.04.2026', 'mera_vrsta': '3'}
+        for unos, polje in (({}, 'mera_procenat'), ({'mera_procenat': '10'}, 'mera_trajanje'),
+                            ({'mera_procenat': '25', 'mera_trajanje': '2'}, 'mera_procenat'),
+                            ({'mera_procenat': '0', 'mera_trajanje': '2'}, 'mera_procenat'),
+                            ({'mera_procenat': '10', 'mera_trajanje': '4'}, 'mera_trajanje')):
+            response = self.client.post(url, {**osnova, **unos})
+            self.assertIn(polje, response.context['forma_mera'].errors, unos)
+            postupak.refresh_from_db()
+            self.assertFalse(postupak.zatvoren)
+        self.assertEqual(self.client.post(url, {**osnova, 'mera_procenat': '15', 'mera_trajanje': '2'}).status_code, 302)
+        postupak.refresh_from_db()
+        self.assertEqual((postupak.mera_procenat, postupak.mera_trajanje), (15, 2))
+        detalj = self.client.get(reverse('pravna:disciplinski_detalj', args=[postupak.pk]))
+        self.assertContains(detalj, 'Novčana kazna 15% osnovne zarade, u trajanju od 2 meseca')
+        izvestaj = self.client.get(reverse('pravna:disciplinski_izvestaj'))
+        self.assertContains(izvestaj, 'Novčana kazna 15% osnovne zarade, u trajanju od 2 meseca')
+        # vracanje u tok brise i procenat i trajanje
+        self.client.post(url, {'ponisti': '1'})
+        postupak.refresh_from_db()
+        self.assertEqual((postupak.mera_vrsta, postupak.mera_procenat, postupak.mera_trajanje), ('', None, None))
+        # druga mera ne cuva procenat ni trajanje
+        self.client.post(url, {**osnova, 'mera_vrsta': '1', 'mera_procenat': '15', 'mera_trajanje': '2'})
+        postupak.refresh_from_db()
+        self.assertEqual((postupak.mera_vrsta, postupak.mera_procenat, postupak.mera_trajanje), ('1', None, None))
 
     def test_closed_legacy_case_can_get_measure_without_losing_date(self):
         self._create()
         postupak = DisciplinskiPostupak.objects.get()
         DisciplinskiPostupak.objects.filter(pk=postupak.pk).update(mera_datum=date(2026,4,1))
         self.assertContains(self.client.get(reverse('pravna:disciplinski_detalj', args=[postupak.pk])), 'Sačuvaj meru')
-        self.client.post(reverse('pravna:disciplinski_mera', args=[postupak.pk]), {'mera_vrsta':'3', 'mera_datum':'01.04.2026'})
+        self.client.post(reverse('pravna:disciplinski_mera', args=[postupak.pk]),
+                         {'mera_vrsta': '3', 'mera_datum': '01.04.2026', 'mera_procenat': '20', 'mera_trajanje': '1'})
         postupak.refresh_from_db()
         self.assertEqual(postupak.mera_datum, date(2026,4,1))
         self.assertEqual(postupak.mera_vrsta, '3')
+        self.assertEqual(postupak.mera_prikaz, 'Novčana kazna 20% osnovne zarade, u trajanju od 1 mesec')
+
+    def test_zatvorena_novcana_bez_procenta_moze_da_se_dopuni(self):
+        self._create()
+        postupak = DisciplinskiPostupak.objects.get()
+        DisciplinskiPostupak.objects.filter(pk=postupak.pk).update(mera_datum=date(2026, 4, 1), mera_vrsta='3')
+        detalj = self.client.get(reverse('pravna:disciplinski_detalj', args=[postupak.pk]))
+        self.assertContains(detalj, 'Procenat i trajanje novčane kazne nisu uneti')
+        self.assertContains(detalj, 'name="mera_procenat"')
 
     def test_short_hr_unit_maps_to_center_and_archived_is_not_editable_in_form(self):
         self.radnik.org_unit_code = '431'

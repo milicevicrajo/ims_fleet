@@ -29,6 +29,11 @@ def _cell(key, value, row):
 
 def _report(request, *, title, description, form, headers, rows, notes, metrics=(), filename='izvestaj'):
     valid = form.is_valid()
+    if request.GET.get('export') == 'pdf' and valid:
+        from core.izvoz_pdf import tabela_pdf_response
+        filteri=' · '.join(f"{field.label}: {form.cleaned_data.get(field.name)}" for field in form if form.cleaned_data.get(field.name) not in (None,'',[]))
+        return tabela_pdf_response(filename+'.pdf', title, [label for key,label in headers],
+            [[row.get(key) for key,label in headers] for row in rows], podnaslov=filteri, sekcija='Vozni park')
     if request.GET.get('export') == 'xlsx' and valid:
         book, sheet = create_xlsx_workbook('Pregled')
         sheet.append([label for key,label in headers])
@@ -59,9 +64,10 @@ def _report(request, *, title, description, form, headers, rows, notes, metrics=
     # Defaults must travel to the export too.
     for key,value in form.data.items(): export[key]=value
     export['export']='xlsx'
+    export_pdf=export.copy(); export_pdf['export']='pdf'
     return render(request,'fleet/reports/management_report.html',dict(title=title,description=description,form=form,
         headers=[label for key,label in headers],table_rows=[[_cell(key,row.get(key),row) for key,label in headers] for row in rows],
-        notes=notes,metrics=metrics,export_query=export.urlencode(),valid=valid,row_count=len(rows),
+        notes=notes,metrics=metrics,export_query=export.urlencode(),export_pdf_query=export_pdf.urlencode(),valid=valid,row_count=len(rows),
         numeric_columns=[i for i,(key,label) in enumerate(headers) if any(isinstance(r.get(key),(Decimal,int,float)) for r in rows)]),status=200 if valid else 400)
 
 

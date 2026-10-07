@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import MyWorkTimeSheetView, WorkTimeSheetAttendancePrintView, WorkTimeSheetPrintView
+from .views import MyWorkTimeSheetView, WorkTimeSheetAttendancePrintView, WorkTimeSheetPrilogView, WorkTimeSheetPrintView
 from .absence_views import SickLeaveImportView, SickLeaveListView
 from .catalog_views import WorkTimeCatalogView, WorkTimeCatalogEditView
 from .annual_leave_views import AnnualLeaveListView, annual_leave_sync_view
@@ -65,6 +65,7 @@ urlpatterns = [
     path("radna-lista/", MyWorkTimeSheetView.as_view(), name="work_time_sheet"),
     path("zaposleni/<int:employee_pk>/radna-lista/", MyWorkTimeSheetView.as_view(), name="employee_work_time_sheet"),
     path("radna-lista/<int:pk>/stampa/", WorkTimeSheetPrintView.as_view(), name="work_time_sheet_print"),
+    path("radna-lista/<int:pk>/prilog/<int:prilog_pk>/", WorkTimeSheetPrilogView.as_view(), name="work_time_sheet_prilog"),
     path("radna-lista/<int:pk>/prolazi/stampa/", WorkTimeSheetAttendancePrintView.as_view(),
          name="work_time_sheet_attendance_print"),
     path("ugovori/", UgovorListView.as_view(), name="ugovor_list"),

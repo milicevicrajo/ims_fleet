@@ -5,6 +5,7 @@ from django.db.models.functions import ExtractMonth, ExtractYear
 
 from ..models import JobCode, TransactionNIS, TransactionOMV, Vehicle
 from .fuel import (
+    deduplicate_omv_transactions,
     filter_nis_fuel_queryset,
     filter_omv_fuel_queryset,
     nis_charged_gross_net_amounts,
@@ -201,7 +202,102 @@ def _detail_from_nis(qs, sifpos):
     return rows
 
 
+OMV_KUPCI = {"107248": "Putnička vozila", "107258": "Teretna vozila"}  # kartice kod OMV-a = kupac na fakturi
+
+
+def omv_fakture(godina=None):
+    """OMV fakture za izbor u izveštaju: broj, datum, kartica (kupac), broj stavki i naš bruto zbir."""
+    from django.db.models import Count, Sum
+
+    qs = TransactionOMV.objects.exclude(invoice_no__isnull=True).exclude(invoice_no="").filter(invoiced=True)
+    if godina:
+        qs = qs.filter(invoice_date__year=int(godina))
+    return [dict(broj=r["invoice_no"], datum=r["invoice_date"], kupac=OMV_KUPCI.get(r["customer"], r["customer"]),
+                 stavki=r["n"], bruto=r["bruto"])
+            for r in qs.values("invoice_no", "invoice_date", "customer").annotate(n=Count("id"), bruto=Sum("gross_cc"))
+            .order_by("-invoice_date", "invoice_no")[:60]]
+
+
+def period_fakture(broj):
+    """Period OMV fakture za filter i tabelu: godina, mesec i polovina po datumu fakture (OMV: do 13. = prva,
+    do kraja meseca = druga) i stvarni raspon točenja na fakturi. None ako faktura nije u transakcijama."""
+    from django.db.models import Max, Min
+    from django.utils import timezone
+
+    r = TransactionOMV.objects.filter(invoice_no=broj).aggregate(dan=Max("invoice_date"), od=Min("transaction_date"),
+                                                                 do=Max("transaction_date"))
+    if not r["dan"]:
+        return None
+    return {"godina": str(r["dan"].year), "mesec": str(r["dan"].month), "polovina": "1" if r["dan"].day <= 15 else "2",
+            "od": timezone.localdate(r["od"]) if r["od"] else None, "do": timezone.localdate(r["do"]) if r["do"] else None}
+
+
+def poslednji_fakturisani_period(supplier, vehicle_type):
+    """Podrazumevani filter izveštaja: poslednji period za koji je izdata faktura (od 07.10.2026.).
+
+    OMV: poslednja faktura kartice (putnička 107248 / teretna 107258). NIS: polovina meseca poslednje NIS
+    fakture sa SEF-a (NIS fakturiše 1–15 i 16–kraj); bez nje — poslednja završena polovina pre današnjeg dana.
+    """
+    from django.utils import timezone
+
+    if supplier == SUPPLIER_OMV:
+        kupac = "107258" if vehicle_type == VEHICLE_TYPE_TRUCK else "107248"
+        broj = (TransactionOMV.objects.filter(customer=kupac, invoiced=True).exclude(invoice_no__isnull=True)
+                .exclude(invoice_no="").order_by("-invoice_date", "-invoice_no").values_list("invoice_no", flat=True).first())
+        if broj:
+            period = period_fakture(broj) or {}
+            return {"faktura": broj, **{k: period[k] for k in ("godina", "mesec", "polovina") if k in period}}
+    from finansije.sef_models import SefFaktura
+
+    dan = (SefFaktura.objects.filter(smer="ulazna", partner_pib="104052135", vrsta="Invoice")
+           .exclude(datum_prometa__isnull=True).order_by("-datum_prometa").values_list("datum_prometa", flat=True).first())
+    if dan is None:
+        danas = timezone.localdate()
+        dan = danas.replace(day=15) if danas.day > 15 else danas.replace(day=1) - timezone.timedelta(days=1)
+    return {"godina": str(dan.year), "mesec": str(dan.month), "polovina": "1" if dan.day <= 15 else "2"}
+
+
+def omv_faktura_sef(broj):
+    """Iznos iste fakture na SEF-u (ulazna, OMV), za poređenje sa zbirom transakcija; None ako je nema."""
+    from finansije.sef_models import SefFaktura
+
+    return SefFaktura.objects.filter(smer="ulazna", broj=broj, partner_naziv__icontains="OMV").first()
+
+
+def _omv_po_fakturi(faktura):
+    # Sve stavke fakture (gorivo, AdBlue, putarina, kartice), bez obzira na kategoriju vozila u Floti.
+    qs = deduplicate_omv_transactions(TransactionOMV.objects.select_related("vehicle").filter(invoice_no=faktura))
+    return qs.annotate(**_common_annotations("transaction_date")).annotate(polovina=_half_month_case("transaction_date"))
+
+
+def _po_sifri(redovi):
+    """Zbir po šifri posla, bez podele na mesece i polovine (cela faktura)."""
+    grupe = {}
+    for r in redovi:
+        g = grupe.setdefault(r["sifpos"], {**r, "godina": None, "mesec": None, "polovina": None, "broj_transakcija": 0,
+                                           "kolicina": Decimal("0.00"), "bruto": Decimal("0.00"), "neto": Decimal("0.00")})
+        for polje in ("broj_transakcija", "kolicina", "bruto", "neto"):
+            g[polje] += r[polje]
+    return sorted(grupe.values(), key=lambda r: r["sifpos"] or "")
+
+
+def ukupno(redovi):
+    """Poslednji red izveštaja: zbir za knjiženje."""
+    return {polje: sum((r[polje] for r in redovi), Decimal("0.00") if polje != "broj_transakcija" else 0)
+            for polje in ("broj_transakcija", "kolicina", "bruto", "neto")}
+
+
 def fuel_job_code_report(form, *, supplier, vehicle_type, sifpos=None):
+    faktura = (form.cleaned_data.get("faktura") or "").strip() if form.is_valid() else ""
+    if supplier == SUPPLIER_OMV and faktura:
+        all_detail = _detail_from_omv(_omv_po_fakturi(faktura), None)
+        summary = _po_sifri(_summary_from_detail_rows(all_detail, supplier, vehicle_type))
+        period = period_fakture(faktura)
+        if period:  # cela faktura u redu, ali sa mesecom i polovinom fakturisanog perioda
+            for red in summary:
+                red.update(godina=int(period["godina"]), mesec=int(period["mesec"]), polovina=int(period["polovina"]))
+        detail = [row for row in all_detail if row["sifpos"] == sifpos] if sifpos else []
+        return summary, detail
     if supplier == SUPPLIER_OMV:
         qs = _annotate_omv_queryset(form, vehicle_type)
         all_detail = _detail_from_omv(qs, None)

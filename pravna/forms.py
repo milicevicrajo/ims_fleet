@@ -189,9 +189,28 @@ class DisciplinskaMeraForm(forms.ModelForm):
     mera_vrsta = forms.ChoiceField(label='Izrečena mera', choices=DisciplinskiPostupak.Mera.choices,
         required=True, widget=forms.RadioSelect(attrs={'class': 'legal-measure-options'}))
 
+    mera_procenat = forms.IntegerField(label='Procenat osnovne zarade (%)', required=False, min_value=1, max_value=20,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 20, 'step': 1}))
+    mera_trajanje = forms.TypedChoiceField(label='Trajanje', required=False, coerce=int, empty_value=None,
+        choices=[('', 'Izaberite…'), (1, '1 mesec'), (2, '2 meseca'), (3, '3 meseca')],
+        widget=forms.Select(attrs={'class': 'form-select select2-method', 'data-minimum-results-for-search': 'Infinity'}))
+
     class Meta:
         model = DisciplinskiPostupak
-        fields = ['mera_vrsta', 'mera_datum']
+        fields = ['mera_vrsta', 'mera_procenat', 'mera_trajanje', 'mera_datum']
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('mera_vrsta') == DisciplinskiPostupak.Mera.NOVCANA:
+            # Novčana kazna: do 20% osnovne zarade, u trajanju do 3 meseca (član 77 pravilnika).
+            if not cleaned.get('mera_procenat') and 'mera_procenat' not in self.errors:
+                self.add_error('mera_procenat', 'Unesite procenat osnovne zarade (1–20%).')
+            if not cleaned.get('mera_trajanje'):
+                self.add_error('mera_trajanje', 'Izaberite trajanje novčane kazne (1–3 meseca).')
+        else:
+            cleaned['mera_procenat'] = None
+            cleaned['mera_trajanje'] = None
+        return cleaned
 
     def clean_mera_datum(self):
         datum = self.cleaned_data['mera_datum']

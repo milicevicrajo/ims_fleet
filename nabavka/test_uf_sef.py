@@ -84,6 +84,18 @@ class UfSefTests(TestCase):
         self.assertEqual(b"".join(odgovor.streaming_content), b"%PDF-1.4 UF")
         self.assertEqual(self.client.get(reverse("nabavka:uf_sef_pdf", args=[self.izlazna.pk])).status_code, 404)
 
+    def test_prilozi_u_spisku(self):
+        from finansije.test_sef import UBL_PRILOZI
+
+        with mock.patch.object(servis.Klijent, "ubl", return_value=UBL_PRILOZI):
+            servis.preuzmi_priloge(self.ulazna)
+        red = next(r for r in self.podaci()["data"] if "F-2026-0815" in r["broj"])
+        adresa = reverse("nabavka:uf_sef_prilog", args=[self.ulazna.pk, 2])
+        self.assertIn(adresa, red["pdf"])
+        self.assertIn("Prilog: specifikacija.xlsx", red["pdf"])
+        self.assertEqual(self.client.get(adresa).status_code, 200)
+        self.assertEqual(self.client.get(reverse("nabavka:uf_sef_prilog", args=[self.izlazna.pk, 1])).status_code, 404)
+
     def test_pdf_u_pripremi_vraca_na_spisak(self):
         with mock.patch.object(servis.Klijent, "pdf", return_value=(None, "SEF priprema PDF.")):
             odgovor = self.client.get(reverse("nabavka:uf_sef_pdf", args=[self.ulazna.pk]), follow=True)

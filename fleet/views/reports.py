@@ -1,5 +1,7 @@
 from django.shortcuts import render
 
+from core.mixins import role_permission_required
+
 from core.exporting import dataframe_xlsx_response, rows_to_xlsx_response
 
 from ..forms.reports import PutnickaFilterForm
@@ -10,7 +12,12 @@ from ..support.fuel_reports import (
     VEHICLE_TYPE_PASSENGER,
     VEHICLE_TYPE_TRUCK,
     fuel_job_code_report,
+    omv_faktura_sef,
+    omv_fakture,
+    period_fakture,
+    poslednji_fakturisani_period,
     supplier_label,
+    ukupno,
     vehicle_type_label,
 )
 from ..support.report_helpers import get_data_from_secondary_db
@@ -39,6 +46,7 @@ def reports_index(request):
         ],
         "Finansije": [
             {"name": "Gorivo IMS — meseci, centri i šifre posla", "url": "fleet_fuel_report", "description": "Vrsta proizvoda, period, raspored i pojedinačna točenja."},
+            {"name": "Kontrola faktura goriva — SEF, transakcije i knjiženje", "url": "fuel_invoice_control", "description": "NIS i OMV fakture prema transakcijama i proknjiženom trošku po šifri posla."},
             {"name": "Potrosnja goriva po sifri posla - OMV putnicka", "url": "fuel_job_code_omv_putnicka"},
             {"name": "Potrosnja goriva po sifri posla - OMV teretna", "url": "fuel_job_code_omv_teretna"},
             {"name": "Potrosnja goriva po sifri posla - NIS putnicka", "url": "fuel_job_code_nis_putnicka"},
@@ -70,7 +78,7 @@ def reports_index(request):
         'policy_list': 'shield-check', 'service_transaction_list': 'wrench', 'requisition_list': 'tools',
         'lease_list': 'bank', 'casco_report': 'shield-car', 'owned_insurance_report': 'car',
         'supplier_parts_report': 'cart', 'magacin': 'package-variant', 'otpis': 'car-off',
-        'tro_gorivo_mesec': 'calendar', 'troskovi_svi': 'cash-multiple', 'tro_pracenja_vozila': 'map-marker',
+        'tro_gorivo_mesec': 'calendar', 'fuel_invoice_control': 'file-compare', 'troskovi_svi': 'cash-multiple', 'tro_pracenja_vozila': 'map-marker',
         'troskovi_tahograf': 'speedometer', 'tro_parking': 'parking', 'po_dobavljacima': 'store',
     }
     for reports in sections.values():
@@ -122,6 +130,13 @@ FUEL_JOB_CODE_EXPORT_HEADERS = [
 
 
 def _fuel_job_code_export_rows(rows):
+    rows = list(rows)
+    zbir = ukupno(rows)
+    yield from _fuel_job_code_export_data(rows)
+    yield ["UKUPNO", "", "", "", "", "", "", zbir["broj_transakcija"], zbir["kolicina"], zbir["bruto"], zbir["neto"]]
+
+
+def _fuel_job_code_export_data(rows):
     for row in rows:
         yield [
             row["supplier"],
@@ -139,7 +154,16 @@ def _fuel_job_code_export_rows(rows):
 
 
 def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
-    form = PutnickaFilterForm(request.GET or None)
+    # Bez izabranih filtera: poslednji period za koji je izdata faktura (od 07.10.2026.).
+    filteri = request.GET if any(request.GET.get(k) for k in ("godina", "mesec", "polovina", "faktura")) else         {**request.GET.dict(), **poslednji_fakturisani_period(supplier, vehicle_type)}
+    period = None
+    if supplier == SUPPLIER_OMV and (filteri.get("faktura") or "").strip():
+        # Izabrana faktura: filter pokazuje njenu godinu, mesec i polovinu.
+        period = period_fakture(filteri["faktura"].strip())
+        if period:
+            filteri = {**(filteri.dict() if hasattr(filteri, "dict") else filteri),
+                       **{k: period[k] for k in ("godina", "mesec", "polovina")}}
+    form = PutnickaFilterForm(filteri)
     selected_sifpos = (request.GET.get("sifpos") or "").strip()
     data, detail_rows = fuel_job_code_report(
         form,
@@ -148,7 +172,17 @@ def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
         sifpos=selected_sifpos,
     )
     title = f"{supplier_label(supplier)} {vehicle_type_label(vehicle_type)} - potrosnja goriva po sifri posla"
+    faktura = (filteri.get("faktura") or "").strip() if supplier == SUPPLIER_OMV else ""
+    if faktura:
+        title = f"OMV faktura {faktura} - raspodela po sifri posla"
 
+    if request.GET.get("export") == "pdf":
+        from core.izvoz_pdf import tabela_pdf_response
+        redovi = list(_fuel_job_code_export_rows(data))
+        opis = f"Faktura {faktura} · " if faktura else ""
+        opis += " · ".join(f"{form.fields[k].label}: {form.data.get(k)}" for k in ("godina", "mesec", "polovina") if form.data.get(k))
+        return tabela_pdf_response(f"{supplier}_{vehicle_type}_gorivo_po_sifri_posla.pdf", title, FUEL_JOB_CODE_EXPORT_HEADERS,
+                                   redovi[:-1], ukupno=redovi[-1], podnaslov=opis, sekcija="Vozni park · Gorivo")
     if "export" in request.GET:
         return rows_to_xlsx_response(
             f"{supplier}_{vehicle_type}_gorivo_po_sifri_posla.xlsx",
@@ -168,8 +202,64 @@ def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
             "title": title,
             "supplier_label": supplier_label(supplier),
             "vehicle_type_label": vehicle_type_label(vehicle_type),
+            "ukupno": ukupno(data),
+            "detalj_ukupno": ukupno(detail_rows) if detail_rows else None,
+            # OMV: izbor fakture i poređenje sa SEF-om (od 07.10.2026.).
+            "omv_fakture": omv_fakture(request.GET.get("godina")) if supplier == SUPPLIER_OMV else [],
+            "podrazumevani_period": not any(request.GET.get(k) for k in ("godina", "mesec", "polovina", "faktura")),
+            "period_fakture": period,
+            "faktura": faktura,
+            "faktura_sef": omv_faktura_sef(faktura) if faktura else None,
         },
     )
+
+
+@role_permission_required()  # prikazuje knjiženje iz Finansija
+def fuel_invoice_control_view(request):
+    """Kontrola faktura goriva: SEF ↔ transakcije ↔ knjiženje (od 07.10.2026.)."""
+    from decimal import Decimal
+
+    from django.utils import timezone
+
+    from ..support.fuel_invoices import kontrola_faktura, sr_iznos
+
+    from finansije.sef_models import SefFaktura
+
+    # Bez izbora: mesec poslednje fakture goriva na SEF-u (od 07.10.2026.).
+    poslednja = (SefFaktura.objects.filter(smer="ulazna", partner_pib__in=["101987198", "104052135"])
+                 .exclude(datum_prometa__isnull=True).order_by("-datum_prometa").values_list("datum_prometa", flat=True).first())
+    prethodni = poslednja or (timezone.localdate().replace(day=1) - timezone.timedelta(days=1))
+    form = PutnickaFilterForm(request.GET or {"godina": str(prethodni.year), "mesec": str(prethodni.month)})
+    godina, mesec = prethodni.year, prethodni.month
+    if form.is_valid() and form.cleaned_data.get("godina") and form.cleaned_data.get("mesec"):
+        godina, mesec = int(form.cleaned_data["godina"]), int(form.cleaned_data["mesec"])
+    redovi = kontrola_faktura(godina, mesec)
+    ukupno = {k: sum((r[k] for r in redovi), Decimal("0.00"))
+              for k in ("sef_bruto", "transakcije_bruto", "razlika_transakcija", "knjizeno_trosak", "knjizeno_pdv")}
+    if request.GET.get("export") in ("xlsx", "pdf"):
+        zaglavlje = ["Dobavljač", "Faktura / period", "Fakture", "Kartica", "SEF bruto", "Transakcije bruto", "Razlika",
+                     "Proknjiženo 51300", "PDV 27000", "Status"]
+        tabela = []
+        for r in redovi:
+            tabela.append([r["dobavljac"], r["oznaka"], ", ".join(f.broj for f in r["fakture"]), r["kartica"], r["sef_bruto"],
+                           r["transakcije_bruto"], r["razlika_transakcija"], r["knjizeno_trosak"] if r["knjizeno_stavki"] else None,
+                           r["knjizeno_pdv"] if r["knjizeno_stavki"] else None, "; ".join(p for _, p in r["status"])])
+            for s in r["razlike_sifara"]:
+                tabela.append(["", f"   šifra {s['sifra']}", "", "", None, None, None, s["knjizeno"], None,
+                               f"po transakcijama {sr_iznos(s['ocekivano'])}, razlika {sr_iznos(s['razlika'], True)}"])
+        zbir = ["UKUPNO", "", "", "", ukupno["sef_bruto"], ukupno["transakcije_bruto"], ukupno["razlika_transakcija"],
+                ukupno["knjizeno_trosak"], ukupno["knjizeno_pdv"], ""]
+        naziv = f"kontrola_faktura_goriva_{godina}_{mesec:02d}"
+        if request.GET["export"] == "pdf":
+            from core.izvoz_pdf import tabela_pdf_response
+            return tabela_pdf_response(f"{naziv}.pdf", f"Kontrola faktura goriva — {mesec:02d}/{godina}", zaglavlje, tabela,
+                                       ukupno=zbir, podnaslov="SEF ↔ transakcije ↔ knjiženje (51300 / 27000) po šifri posla",
+                                       sekcija="Vozni park · Gorivo")
+        return rows_to_xlsx_response(f"{naziv}.xlsx", "Kontrola faktura", zaglavlje, tabela + [zbir])
+    return render(request, "fleet/reports/fuel_invoice_control.html", {
+        "form": form, "redovi": redovi, "ukupno": ukupno,
+        "title": f"Kontrola faktura goriva — {mesec:02d}/{godina}",
+    })
 
 
 def fuel_job_code_omv_putnicka_view(request):

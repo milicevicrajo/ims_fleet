@@ -163,7 +163,7 @@ Spisak PIB-ova banaka se čuva u kešu sat vremena. Stanje 28.09.2026.: 3.257 fa
 | Povezani kupovni ugovori | Ugovori sa šifrom tipa koja počinje sa `KUP` |
 | Povezane dodatne šifre posla | Dodate ručno |
 | **Interna dopuna** | `is_garage`, `vehicle`, `work_type`, `goes_to_warehouse`, `internal_note` |
-| **SEF faktura** (od 02.10.2026.) | Ulazna SEF faktura **istog broja i istog PIB-a** (`nabavka/services/sef_veza.py`) — meka veza, bez kopije podataka: status na SEF-u, vrsta, partner, datumi prometa i dospeća, osnovica, PDV, iznos, upozorenje kad se iznos razlikuje od EUF; veza „SEF faktura u Finansijama” (samo uz obuhvat cele firme) i **PDF sa SEF-a na dnu strane** (`nabavka:euf_invoice_sef_pdf`, isti fajl kao u Finansijama; ako nije preuzet, preuzima se pri otvaranju). PDF vidi svako ko vidi EUF fakturu. Provereno 02.10.2026.: 126 od 145 EUF faktura iz perioda SEF-a ima par, bez sukoba PIB-a. |
+| **SEF faktura** (od 02.10.2026.) | Ulazna SEF faktura **istog broja i istog PIB-a** (`nabavka/services/sef_veza.py`) — meka veza, bez kopije podataka: status na SEF-u, vrsta, partner, datumi prometa i dospeća, osnovica, PDV, iznos, upozorenje kad se iznos razlikuje od EUF; veza „SEF faktura u Finansijama” (samo uz obuhvat cele firme) i **PDF sa SEF-a na dnu strane** (`nabavka:euf_invoice_sef_pdf`, isti fajl kao u Finansijama; ako nije preuzet, preuzima se pri otvaranju). PDF vidi svako ko vidi EUF fakturu. Od 07.10.2026. kartica prikazuje i **pridružene dokumente** sa SEF-a (prilozi iz UBL-a, isti fajlovi kao u Finansijama; `nabavka:euf_invoice_sef_prilog`, dozvola `nabavka:euf_invoice_sef_pdf`). Provereno 02.10.2026.: 126 od 145 EUF faktura iz perioda SEF-a ima par, bez sukoba PIB-a. |
 
 Naziv partnera na spiskovima skraćuje se na **50 znakova**, a pun naziv se vidi kao
 `title` atribut (na prelazak mišem). [P]
@@ -215,7 +215,7 @@ Nabavka ništa ne šalje na SEF — fakture se ovde ne prihvataju i ne odbijaju.
 |---|---|
 | Kolone | Broj fakture (uz vrstu dokumenta), dobavljač i PIB, datum (prometa, inače dan prijema), primljena na SEF, dospeće, iznos, status na SEF-u, proknjižena (meka veza po broju, kao u Finansijama), PDF |
 | Filteri | Pretraga (broj, dobavljač, PIB, matični broj, ID na SEF-u), datum od–do, status, vrsta, proknjižene/neproknjižene; u zaglavlju broj i zbir filtriranih faktura |
-| PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom |
+| PDF | Isti fajl kao u Finansijama: ako još nije preuzet, preuzima se sa SEF-a pri otvaranju (`finansije.services.sef.preuzmi_pdf`); dok ga SEF priprema, vraća se na spisak sa porukom. Pored PDF-a dugme 📎 za svaki pridruženi dokument (od 07.10.2026.; `nabavka:uf_sef_prilog`, dozvola `nabavka:uf_sef_pdf`) — prikazuju se prilozi koje je preuzimanje već pročitalo |
 | Obuhvat | Ulazna faktura nema šifru posla (broj je dobavljačev), pa je na registru vidi samo **obuhvat cele firme** (`nabavka.access.ulazne_sef`) — uloga Nabavka i Uprava vide sve, korisnik vezan za centar ne vidi nijednu. |
 | Dozvole | `nabavka:uf_sef_list`, `nabavka:uf_sef_data`, `nabavka:uf_sef_pdf` — posle isporuke `manage.py sync_permission_codes` i dodela ulogama |
 

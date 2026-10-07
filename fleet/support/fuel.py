@@ -185,6 +185,10 @@ def _dedupe_omv_transaction_lines(queryset):
             ),
         )
         .filter(**_dedupe_key_pairs())
+        # Od 07.10.2026.: druga kartica ili druga fakturisana stavka iste fakture sa drugim iznosom (dva AdBlue
+        # kanistera, dve izrade kartice) nije ponovljen red — samo privremeni i konačni red iste transakcije jesu.
+        .filter(card=OuterRef("card"))
+        .exclude(Q(invoiced=True) & Q(invoice_no=OuterRef("invoice_no")) & ~Q(gross_cc=OuterRef("gross_cc")))
         .order_by("-invoiced", "-invoice_date", "-id")
         .values("id")[:1]
     )

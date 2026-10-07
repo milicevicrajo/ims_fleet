@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from core.models import PermissionCode, Role
 from finansije.models import LedgerEntry
-from finansije.sef_models import SefFaktura, SefPromena, SefSinhronizacija
+from finansije.sef_models import SefFaktura, SefPrilog, SefPromena, SefSinhronizacija
 from finansije.services import sef
 
 DANAS = datetime.date(2026, 9, 30)
@@ -35,6 +35,16 @@ UBL = b"""<?xml version="1.0" encoding="utf-8"?>
  <cac:LegalMonetaryTotal><cbc:TaxExclusiveAmount currencyID="RSD">1000.00</cbc:TaxExclusiveAmount>
   <cbc:PayableAmount currencyID="RSD">1200.00</cbc:PayableAmount></cac:LegalMonetaryTotal>
 </Invoice></env:DocumentBody></env:DocumentEnvelope>"""
+
+# Prilozi (od 07.10.2026.): SEF ih salje u UBL-u; PDF zaglavlja omota (DocumentPdf) nije prilog.
+UBL_PRILOZI = UBL.replace(b"<env:DocumentBody>", b"""<env:DocumentHeader><env:DocumentPdf mimeCode="application/pdf">JVBERi1TRUY=</env:DocumentPdf></env:DocumentHeader><env:DocumentBody>""").replace(
+    b"<cbc:DocumentCurrencyCode>RSD</cbc:DocumentCurrencyCode>", b"""<cbc:DocumentCurrencyCode>RSD</cbc:DocumentCurrencyCode>
+ <cac:AdditionalDocumentReference><cbc:ID>Ugovor 12/2026</cbc:ID></cac:AdditionalDocumentReference>
+ <cac:AdditionalDocumentReference><cbc:ID>Izvestaj o ispitivanju</cbc:ID><cac:Attachment>
+  <cbc:EmbeddedDocumentBinaryObject mimeCode="application/pdf">JVBERi0xLjcg
+  cHJpbG9n</cbc:EmbeddedDocumentBinaryObject></cac:Attachment></cac:AdditionalDocumentReference>
+ <cac:AdditionalDocumentReference><cbc:ID>2</cbc:ID><cac:Attachment>
+  <cbc:EmbeddedDocumentBinaryObject mimeCode="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" filename="specifikacija.xlsx">UEsDBA==</cbc:EmbeddedDocumentBinaryObject></cac:Attachment></cac:AdditionalDocumentReference>""")
 
 
 class LazniKlijent:
@@ -186,6 +196,7 @@ class EkraniTests(TestCase):
 
     def setUp(self):
         sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=LazniKlijent(), danas=DANAS, pdf=False)
+        SefFaktura.objects.update(prilozi_preuzeti=timezone.now())  # detalj inace cita priloge sa SEF-a
         self.ulazna = SefFaktura.objects.get(smer="ulazna")
         uloga = Role.objects.create(name="Finansije SEF", slug="finansije-sef")
         for kod in self.KODOVI:
@@ -366,7 +377,8 @@ class EkraniTests(TestCase):
         stanje = self.client.get(podaci["stanje_url"]).json()
         self.assertEqual(stanje["status"], "success")
         self.assertIn("PDF preuzeto 2 od 2", stanje["poruka"])
-        self.assertEqual(stanje["procena"], {"ulaznih": 1, "izlaznih": 1, "ubl": 0, "dana_promena": 30, "bez_pdf": 2})
+        self.assertEqual(stanje["procena"], {"ulaznih": 1, "izlaznih": 1, "ubl": 0, "dana_promena": 30, "bez_pdf": 2,
+                                             "bez_priloga": 0})
 
     def test_procena_i_napredak_tokom_preuzimanja(self):
         SefFaktura.objects.all().delete()
@@ -379,11 +391,12 @@ class EkraniTests(TestCase):
 
         with mock.patch.object(sef.Napredak, "sacuvaj", sacuvaj):
             run = sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=LazniKlijent(), danas=DANAS)
-        self.assertEqual(run.counts["procena"], {"ulaznih": 1, "izlaznih": 1, "ubl": 1, "dana_promena": 30, "bez_pdf": 2})
+        self.assertEqual(run.counts["procena"], {"ulaznih": 1, "izlaznih": 1, "ubl": 1, "dana_promena": 30, "bez_pdf": 2,
+                                                 "bez_priloga": 2})
         self.assertEqual([s["redni"] for s in snimci if s.get("obradjeno") == 0],
-                         [1, 2, 3, 4, 5])  # svaka faza pocinje od nule
+                         [1, 2, 3, 4, 5, 6])  # svaka faza pocinje od nule
         self.assertTrue(all(s["preostalo_s"] is not None for s in snimci))
-        self.assertEqual(snimci[-1]["faza"], "PDF-ovi")
+        self.assertEqual(snimci[-1]["faza"], "Prilozi")
 
     def test_zaustavljanje_dnevnik_i_poslednje_stanje(self):
         from finansije import sef_views
@@ -506,7 +519,7 @@ class EkraniTests(TestCase):
         self.assertEqual(arhiva.read("Ulazne/2026-09/2026-09-01_MF3814_25_Dobavljač_DOO.pdf"), b"%PDF-1.7 test")
         redovi = list(csv.reader(io.StringIO(arhiva.read("spisak.csv").decode("utf-8-sig")), delimiter=";"))
         self.assertEqual(len(redovi), 3)  # zaglavlje + ulazna + izlazna (bez PDF-a)
-        self.assertEqual({r[1]: r[-1] for r in redovi[1:]}["IF-120/2026"], "nije preuzet")
+        self.assertEqual({r[1]: r[-2] for r in redovi[1:]}["IF-120/2026"], "nije preuzet")
         self.assertEqual(odgovor["X-SEF-PDF"], "1")
         # cela godina, samo izlazne
         odgovor = self.client.get(reverse("finansije:sef_izvoz"), {"godina": "2026", "smer": "izlazna"})
@@ -518,6 +531,75 @@ class EkraniTests(TestCase):
                              reverse("finansije:sef_list"), fetch_redirect_response=False)
         self.assertRedirects(self.client.get(reverse("finansije:sef_izvoz"), {"godina": "x"}),
                              reverse("finansije:sef_list"), fetch_redirect_response=False)
+
+    def test_prilozi_iz_ubl(self):
+        prilozi = sef.prilozi_iz_ubl(UBL_PRILOZI)
+        self.assertEqual([(p["naziv"], p["opis"], p["mime"], p["sadrzaj"]) for p in prilozi], [
+            ("Izvestaj o ispitivanju.pdf", "", "application/pdf", b"%PDF-1.7 prilog"),
+            ("specifikacija.xlsx", "2", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", b"PK\x03\x04"),
+        ])  # referenca bez fajla (ugovor) i PDF iz zaglavlja omota nisu prilozi
+        self.assertEqual(sef.prilozi_iz_ubl(UBL), [])
+
+    def test_sinhronizacija_preuzima_priloge_jednom(self):
+        SefFaktura.objects.update(prilozi_preuzeti=None)
+        klijent = LazniKlijent()
+        klijent.ubl = lambda smer, sef_id: UBL_PRILOZI
+        run = sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=klijent, danas=DANAS)
+        self.assertEqual((run.counts["prilozi_provereno"], run.counts["prilozi_priloga"]), (2, 4))
+        self.assertIn("prilozi: provereno faktura 2, priloga 4", sef.poruka(run))
+        prilog = SefPrilog.objects.get(faktura=self.ulazna, redni=1)
+        self.assertEqual((prilog.naziv, prilog.velicina), ("Izvestaj o ispitivanju.pdf", 15))
+        with prilog.fajl.open("rb") as fajl:
+            self.assertEqual(fajl.read(), b"%PDF-1.7 prilog")
+        # ponovo: prilozi su procitani, SEF se za njih ne pita
+        klijent.ubl = mock.Mock(side_effect=AssertionError("UBL se ne trazi ponovo"))
+        self.assertEqual(sef.sinhronizuj(datetime.date(2026, 8, 20), DANAS, klijent=klijent, danas=DANAS).counts["prilozi_bez_priloga"], 0)
+        # fajl obrisan sa diska: prilozi se citaju ponovo, bez duplih zapisa
+        prilog.fajl.storage.delete(prilog.fajl.name)
+        klijent.ubl = lambda smer, sef_id: UBL_PRILOZI
+        self.assertEqual(sef.preuzmi_priloge(self.ulazna, klijent), 2)
+        self.assertEqual(self.ulazna.prilozi.count(), 2)
+
+    def test_detalj_cita_priloge_i_otvara_ih(self):
+        SefFaktura.objects.filter(pk=self.ulazna.pk).update(prilozi_preuzeti=None)
+        klijent = LazniKlijent()
+        klijent.ubl = lambda smer, sef_id: UBL_PRILOZI
+        with mock.patch.object(sef, "Klijent", return_value=klijent):
+            detalj = self.client.get(reverse("finansije:sef_detail", args=[self.ulazna.pk]))
+        self.assertContains(detalj, "Pridruženi dokumenti")
+        self.assertContains(detalj, "Izvestaj o ispitivanju.pdf")
+        self.assertContains(detalj, reverse("finansije:sef_prilog", args=[self.ulazna.pk, 2]))
+        pdf = self.client.get(reverse("finansije:sef_prilog", args=[self.ulazna.pk, 1]))
+        self.assertEqual((pdf["Content-Type"], b"".join(pdf.streaming_content)), ("application/pdf", b"%PDF-1.7 prilog"))
+        self.assertTrue(pdf["Content-Disposition"].startswith("inline"))
+        tabela = self.client.get(reverse("finansije:sef_prilog", args=[self.ulazna.pk, 2]))
+        self.assertIn('attachment; filename="specifikacija.xlsx"', tabela["Content-Disposition"])
+        self.assertEqual(self.client.get(reverse("finansije:sef_prilog", args=[self.ulazna.pk, 3])).status_code, 404)
+        # greska SEF-a: strana radi, sa porukom
+        SefPrilog.objects.all().delete()
+        SefFaktura.objects.filter(pk=self.ulazna.pk).update(prilozi_preuzeti=None)
+        pao = LazniKlijent()
+        pao.ubl = mock.Mock(side_effect=sef.SefGreska("SEF je vratio grešku 500"))
+        with mock.patch.object(sef, "Klijent", return_value=pao):
+            self.assertContains(self.client.get(reverse("finansije:sef_detail", args=[self.ulazna.pk])),
+                                "Prilozi nisu preuzeti sa SEF-a: SEF je vratio grešku 500")
+
+    def test_izvoz_sadrzi_priloge(self):
+        import io
+        import zipfile
+
+        klijent = LazniKlijent()
+        klijent.ubl = lambda smer, sef_id: UBL_PRILOZI
+        SefFaktura.objects.filter(pk=self.ulazna.pk).update(prilozi_preuzeti=None)
+        self.ulazna.refresh_from_db()
+        sef.preuzmi_priloge(self.ulazna, klijent)
+        odgovor = self.client.get(reverse("finansije:sef_izvoz"), {"godina": "2026", "mesec": "9"})
+        arhiva = zipfile.ZipFile(io.BytesIO(b"".join(odgovor.streaming_content)))
+        fascikla = "Ulazne/2026-09/2026-09-01_MF3814_25_Dobavljač_DOO_prilozi/"
+        self.assertEqual(arhiva.read(fascikla + "01_Izvestaj_o_ispitivanju.pdf"), b"%PDF-1.7 prilog")
+        self.assertIn(fascikla + "02_specifikacija.xlsx", arhiva.namelist())
+        spisak = arhiva.read("spisak.csv").decode("utf-8-sig")
+        self.assertIn(";2\r\n", spisak)  # broj priloga ulazne
 
     def test_bez_obuhvata_cele_firme_nema_pristupa(self):
         with mock.patch("finansije.sef_views.can_view_all", return_value=False):

@@ -167,7 +167,9 @@
                 }}
               }
             },
-            {extend: 'excelHtml5', exportOptions: {orthogonal: 'export'}}, 'print', 'colvis'
+            {extend: 'excelHtml5', footer: true, customizeData: window.IMSBezRedaFiltera, exportOptions: {orthogonal: 'export'}},
+            window.IMSPdfDugme('Troškovi', 'troskovi_' + new Date().toISOString().slice(0,10), {orthogonal: 'export'}),
+            'print', 'colvis'
           ]
         }
       } : undefined

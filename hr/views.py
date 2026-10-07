@@ -1,4 +1,5 @@
 import calendar
+import json
 from datetime import date, timedelta
 
 from django.contrib import messages
@@ -32,7 +33,7 @@ from .forms import (
     WorkTimeSheetForm,
     WorkTimeSheetLineFormSet,
 )
-from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision, KomentarProlaza
+from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision, KomentarProlaza, RadnaListaPrilog, WorkTimeCategory
 from .querysets import employee_list_queryset
 from .services import moj_profil
 from .services.attendance import (
@@ -47,7 +48,8 @@ from .services.attendance import (
 )
 from .services.sick_leave import sick_leaves_by_day
 from .services.praznici import neradni_praznici
-from .services.work_time_prefill import predlog as predlog_radne_liste
+from .services.work_time_prefill import podrazumevana_sifra, predlog as predlog_radne_liste
+from .services import radna_lista as pravila_radne_liste
 from .sync import sync_employees_from_hr_view
 
 
@@ -720,15 +722,25 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         year, month = self.get_period()
         sheet = self.get_sheet(employee, year, month)
         days_in_month = calendar.monthrange(year, month)[1]
+        attendance_context = self.build_clock_attendance_context(employee, year, month, days_in_month)
+        topli_obrok_predlog = (None if attendance_context["clock_attendance_error"]
+                               else pravila_radne_liste.dani_sa_kucanjem(attendance_context["clock_attendance_rows"]))
         if header_form is None:
-            header_form = WorkTimeSheetForm(instance=sheet)
+            initial = {}
+            if sheet.meal_days is None and topli_obrok_predlog is not None and sheet.status == WorkTimeSheet.Status.DRAFT:
+                # Topli obrok je obavezan; predlog je broj radnih dana sa kucanjem, zaposleni ga može promeniti.
+                initial["meal_days"] = topli_obrok_predlog
+                if topli_obrok_predlog and not sheet.meal_organizational_unit_id:
+                    sifra = podrazumevana_sifra(employee)
+                    if sifra:
+                        initial["meal_organizational_unit"] = sifra.pk
+            header_form = WorkTimeSheetForm(instance=sheet, initial=initial)
         if line_formset is None:
             line_formset = WorkTimeSheetLineFormSet(
                 instance=sheet,
                 queryset=sheet.lines.order_by("line_number"),
                 form_kwargs={"employee": employee},
             )
-        attendance_context = self.build_clock_attendance_context(employee, year, month, days_in_month)
         prefill = predlog_radne_liste(employee, year, month, days_in_month, **attendance_context.pop("_prefill_sources"))
         filled_line = Q(organizational_unit__isnull=False) | Q(work_category__isnull=False)
         for field in WORK_TIME_SHEET_DAY_FIELDS:
@@ -759,6 +771,13 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             "month_name": self.MONTH_LABELS[month - 1],
             "days_in_month": days_in_month,
             "is_other_employee_sheet": employee.pk != self.request.user.employee_id,
+            "topli_obrok_predlog": topli_obrok_predlog,
+            "prilozi": sheet.prilozi.select_related("created_by"),
+            "vrste_priloga": RadnaListaPrilog.Vrsta.choices,
+            # za proveru pre predaje u pregledaču: vrednosti izbora vrste koje su odsustvo (ne traže šifru posla)
+            "odsustva_json": json.dumps([str(pk) for pk in WorkTimeCategory.objects.filter(
+                code__in=pravila_radne_liste.ODSUSTVA).values_list("pk", flat=True)]),
+            "datum_predaje": pravila_radne_liste.prvi_radni_dan_predaje(year, month),
             "prefill": prefill,
             # Prazna lista u pripremi dobija predlog odmah; inače se predlog primenjuje dugmetom.
             "prefill_auto": prefill["ima_predlog"] and sheet_is_empty and sheet.status == WorkTimeSheet.Status.DRAFT,
@@ -806,6 +825,42 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         messages.success(request, f"Komentar za {datum:%d.%m.%Y.} je sačuvan.")
         return redirect(adresa)
 
+    PRILOG_NAJVISE_MB = 20
+    PRILOG_NASTAVCI = (".pdf", ".jpg", ".jpeg", ".png", ".tif", ".tiff")
+
+    def prilog(self, request, action, year, month, sheet):
+        """Skenirani dokumenti uz radnu listu: dodaju se i posle predaje; odobrena lista ih ne briše."""
+        adresa = f"{self.get_sheet_url()}?month={month}&year={year}#prilozi-radne-liste"
+        if action == "prilog_obrisi":
+            prilog = get_object_or_404(RadnaListaPrilog, pk=request.POST.get("prilog"), sheet=sheet)
+            if sheet.status == WorkTimeSheet.Status.APPROVED:
+                messages.error(request, "Radna lista je odobrena; prilog više ne može da se obriše.")
+                return redirect(adresa)
+            prilog.fajl.delete(save=False)
+            prilog.delete()
+            messages.success(request, f"Prilog „{prilog.naziv}” je obrisan.")
+            return redirect(adresa)
+        fajlovi = request.FILES.getlist("fajl")
+        vrsta = request.POST.get("vrsta")
+        if vrsta not in RadnaListaPrilog.Vrsta.values:
+            vrsta = RadnaListaPrilog.Vrsta.OSTALO
+        if not fajlovi:
+            messages.error(request, "Izaberite skenirani dokument.")
+            return redirect(adresa)
+        for fajl in fajlovi:
+            if not fajl.name.lower().endswith(self.PRILOG_NASTAVCI):
+                messages.error(request, f"„{fajl.name}”: dozvoljeni su PDF i slike (JPG, PNG, TIFF).")
+                return redirect(adresa)
+            if fajl.size > self.PRILOG_NAJVISE_MB * 1024 * 1024:
+                messages.error(request, f"„{fajl.name}” je veći od {self.PRILOG_NAJVISE_MB} MB.")
+                return redirect(adresa)
+        napomena = " ".join((request.POST.get("napomena") or "").split())[:255]
+        for fajl in fajlovi:
+            RadnaListaPrilog.objects.create(sheet=sheet, vrsta=vrsta, fajl=fajl, naziv=fajl.name[:255],
+                                            velicina=fajl.size, napomena=napomena, created_by=request.user)
+        messages.success(request, f"Dodato priloga: {len(fajlovi)}.")
+        return redirect(adresa)
+
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         employee = self.get_employee()
@@ -814,6 +869,8 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         action = request.POST.get("action") or "save"
         if action == "komentar_prolaza":
             return self.sacuvaj_komentar_prolaza(request, employee, year, month, sheet)
+        if action in ("prilog_dodaj", "prilog_obrisi"):
+            return self.prilog(request, action, year, month, sheet)
         header_form = WorkTimeSheetForm(request.POST, instance=sheet)
         line_formset = WorkTimeSheetLineFormSet(
             request.POST,
@@ -822,8 +879,10 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             form_kwargs={"employee": employee},
         )
 
-        if header_form.is_valid() and line_formset.is_valid():
-            days_in_month = calendar.monthrange(year, month)[1]
+        days_in_month = calendar.monthrange(year, month)[1]
+        if (header_form.is_valid() and line_formset.is_valid()
+                and (action != "submit_print"
+                     or pravila_radne_liste.provera_predaje(header_form, line_formset, days_in_month))):
             saved_sheet = header_form.save(commit=False)
             saved_sheet.employee = employee
             saved_sheet.year = year
@@ -899,9 +958,26 @@ class WorkTimeSheetPrintView(LoginRequiredMixin, TemplateView):
                 "days_in_month": days_in_month,
                 "working_days": working_days,
                 "generated_date": timezone.localdate(),
+                "datum_predaje": pravila_radne_liste.prvi_radni_dan_predaje(sheet.year, sheet.month),
             }
         )
         return context
+
+
+class WorkTimeSheetPrilogView(WorkTimeSheetPrintView):
+    """Otvaranje priloga radne liste — ista prava kao štampa radne liste."""
+
+    def get(self, request, *args, **kwargs):
+        from django.http import FileResponse, Http404
+
+        sheet = self.get_sheet()
+        prilog = get_object_or_404(RadnaListaPrilog, pk=self.kwargs["prilog_pk"], sheet=sheet)
+        try:
+            fajl = prilog.fajl.open("rb")
+        except FileNotFoundError:
+            raise Http404("Prilog nije pronađen na disku.")
+        return FileResponse(fajl, as_attachment=not prilog.naziv.lower().endswith((".pdf", ".jpg", ".jpeg", ".png")),
+                            filename=prilog.naziv)
 
 
 class WorkTimeSheetAttendancePrintView(WorkTimeSheetPrintView):

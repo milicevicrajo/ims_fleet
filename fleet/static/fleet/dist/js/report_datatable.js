@@ -251,6 +251,115 @@
     });
   }
 
+  // PDF izvoz (od 07.10.2026.): pdfmake se učitava tek na prvi klik (lokalna kopija, oko 2 MB).
+  const PDFMAKE_BASE = (function () {
+    const skripta = document.currentScript && document.currentScript.src;
+    return skripta ? skripta.replace(/dist\/js\/report_datatable\.js.*$/, 'assets/libs/offline/pdfmake/') : null;
+  })();
+  let pdfmakeUcitavanje = null;
+
+  function ucitajSkriptu(src) {
+    return new Promise(function (resolve, reject) {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error('Nije učitano: ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function ucitajPdfmake() {
+    if (window.pdfMake && window.pdfMake.vfs) return Promise.resolve();
+    if (!PDFMAKE_BASE) return Promise.reject(new Error('Putanja do pdfmake nije poznata.'));
+    pdfmakeUcitavanje = pdfmakeUcitavanje || ucitajSkriptu(PDFMAKE_BASE + 'pdfmake.min.js')
+      .then(function () { return ucitajSkriptu(PDFMAKE_BASE + 'vfs_fonts.js'); });
+    return pdfmakeUcitavanje;
+  }
+
+  function opisFiltera() {
+    // Izabrani filteri sa stranice (godina, mesec, faktura…) idu u zaglavlje PDF-a.
+    const delovi = [];
+    document.querySelectorAll('form[method="get"] select, form[method="get"] input[type="text"], form[method="get"] input[type="date"]').forEach(function (polje) {
+      let vrednost = polje.tagName === 'SELECT' ? (polje.options[polje.selectedIndex] || {}).text : polje.value;
+      vrednost = (vrednost || '').trim();
+      if (!vrednost || vrednost.charAt(0) === '—') return;
+      const oznaka = polje.id ? document.querySelector('label[for="' + polje.id + '"]') : null;
+      delovi.push((oznaka ? oznaka.textContent.trim() + ': ' : '') + vrednost);
+    });
+    return delovi.join(' · ');
+  }
+
+  function bezRedaFiltera(podaci) {
+    // Izvoz samo prvog reda zaglavlja: drugi je red sa padajućim filterima kolona.
+    if (podaci && Array.isArray(podaci.headerStructure) && podaci.headerStructure.length > 1) {
+      podaci.headerStructure = podaci.headerStructure.slice(0, 1);
+    }
+  }
+  window.IMSBezRedaFiltera = bezRedaFiltera;
+
+  function pdfPodesavanja(naslov, imeFajla, extraExportOptions) {
+    return {
+      extend: 'pdfHtml5',
+      name: 'imsPdfIzvoz',
+      className: 'd-none',
+      title: naslov,
+      filename: imeFajla,
+      orientation: 'landscape',
+      pageSize: 'A4',
+      footer: true,
+      customizeData: bezRedaFiltera,
+      messageTop: function () {
+        const filteri = opisFiltera();
+        return (filteri ? filteri + '\n' : '') + 'Izrađeno: ' + new Date().toLocaleString('sr-RS');
+      },
+      exportOptions: Object.assign({ columns: ':visible' }, extraExportOptions || {}),
+      customize: function (doc) {
+        doc.defaultStyle.fontSize = 7.5;
+        doc.styles.tableHeader.fontSize = 8;
+        doc.styles.tableHeader.fillColor = '#14395b';
+        doc.styles.tableFooter = Object.assign({}, doc.styles.tableFooter || {}, { bold: true, fillColor: '#e8f0fb', color: '#0f2a44' });
+        doc.styles.title = { fontSize: 13, bold: true, color: '#14395b', margin: [0, 0, 0, 4] };
+        doc.pageMargins = [24, 30, 24, 30];
+        doc.footer = function (strana, ukupno) {
+          return { text: 'Institut IMS · ' + naslov + ' · strana ' + strana + ' od ' + ukupno, alignment: 'center', fontSize: 7, color: '#64748b', margin: [0, 8, 0, 0] };
+        };
+        doc.content.forEach(function (deo) {  // brojevi desno poravnati
+          if (!deo.table) return;
+          // Red sa filterima kolona (padajuće liste u zaglavlju tabele) nije deo izveštaja.
+          const zaglavlja = deo.table.headerRows || 1;
+          if (zaglavlja > 1) {
+            deo.table.body.splice(1, zaglavlja - 1);
+            deo.table.headerRows = 1;
+          }
+          deo.table.body.forEach(function (red, i) {
+            if (i === 0) return;
+            red.forEach(function (celija) {
+              const tekst = String(celija.text == null ? '' : celija.text).trim();
+              if (/^-?[\d.,\s]+$/.test(tekst) && /\d/.test(tekst)) celija.alignment = 'right';
+            });
+          });
+        });
+      }
+    };
+  }
+
+  function pdfDugme(naslov, imeFajla, extraExportOptions) {
+    // Vidljivo dugme učitava pdfmake, pa okida skriveno standardno dugme `pdfHtml5` (dodaje ga prvi put).
+    return {
+      text: 'PDF',
+      className: 'buttons-pdf',
+      action: function (e, dt) {
+        ucitajPdfmake().then(function () {
+          if (!dt.buttons('imsPdfIzvoz:name').count()) {
+            dt.button().add(dt.buttons().count(), pdfPodesavanja(naslov, imeFajla, extraExportOptions));
+          }
+          dt.button('imsPdfIzvoz:name').trigger();
+        }).catch(function (greska) { window.alert('PDF izvoz nije uspeo: ' + greska.message); });
+      }
+    };
+  }
+  window.IMSPdfDugme = pdfDugme;
+
   function createButtonsConfig(options) {
     if (!window.DataTable || !DataTable.Buttons) {
       return undefined;
@@ -288,6 +397,7 @@
           {
             extend: 'csvHtml5',
             text: 'CSV',
+            customizeData: bezRedaFiltera,
             title: options.exportTitle || DEFAULT_OPTIONS.exportTitle,
             filename: exportFileName,
             exportOptions: {
@@ -302,6 +412,8 @@
             text: 'Excel',
             title: options.exportTitle || DEFAULT_OPTIONS.exportTitle,
             filename: exportFileName,
+            footer: true,  // red UKUPNO ide i u Excel
+            customizeData: bezRedaFiltera,
             exportOptions: {
               columns: ':visible',
               format: {
@@ -309,6 +421,7 @@
               }
             }
           },
+          pdfDugme(options.exportTitle || DEFAULT_OPTIONS.exportTitle, exportFileName),
           'print',
           'colvis'
         ]

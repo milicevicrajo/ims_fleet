@@ -8,7 +8,7 @@ import datetime
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, prefetch_related_objects
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -19,7 +19,7 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
-from finansije.sef_models import SefFaktura, SefSinhronizacija
+from finansije.sef_models import SefFaktura, SefPrilog, SefSinhronizacija
 from finansije.services import sef as servis
 from nabavka.access import ulazne_sef
 
@@ -104,6 +104,7 @@ class UfSefDataView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequi
         except (TypeError, ValueError):
             start, duzina, draw = 0, 50, 0
         strana = list(qs[start:start + duzina])
+        prefetch_related_objects(strana, "prilozi")
         proknjizene = servis.proknjizeni_brojevi(strana)
         moze_pdf = user_has_role_permission(request.user, "nabavka:uf_sef_pdf")
         redovi = [self._red(f, f.broj_kljuc in proknjizene, moze_pdf) for f in strana]
@@ -116,6 +117,9 @@ class UfSefDataView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequi
             pdf = (f'<a class="btn btn-outline-secondary btn-sm" href="{reverse("nabavka:uf_sef_pdf", args=[f.pk])}" '
                    f'target="_blank" rel="noopener" title="{"PDF je preuzet" if f.pdf else "PDF se preuzima sa SEF-a"}">'
                    f'<i class="mdi mdi-file-pdf-box"></i></a>')
+            for p in f.prilozi.all():  # pridruzeni dokumenti (preuzeti nocnim preuzimanjem ili sa detalja)
+                pdf += (f' <a class="btn btn-outline-secondary btn-sm" href="{reverse("nabavka:uf_sef_prilog", args=[f.pk, p.redni])}" '
+                        f'target="_blank" rel="noopener" title="Prilog: {escape(p.naziv)}"><i class="mdi mdi-paperclip"></i></a>')
         return {
             "broj": (f'<strong>{escape(f.broj or f.sef_id)}</strong>'
                      f'<div class="sef-small">{escape(servis.VRSTE.get(f.vrsta, f.vrsta or ""))}</div>'),
@@ -130,6 +134,15 @@ class UfSefDataView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequi
                           if proknjizena else '<span class="invoice-badge warn" title="Nema knjiženja sa ovim brojem">Ne</span>'),
             "pdf": pdf,
         }
+
+
+class UfSefPrilogView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):
+    """Pridruzeni dokument ulazne fakture (ista dozvola kao PDF)."""
+    required_permission_code = "nabavka:uf_sef_pdf"
+
+    def get(self, request, pk, redni):
+        faktura = get_object_or_404(_vidljive(request.user), pk=pk)
+        return servis.prilog_odgovor(get_object_or_404(SefPrilog, faktura=faktura, redni=redni))
 
 
 class UfSefPdfView(NabavkaContextMixin, RolePermissionRequiredMixin, LoginRequiredMixin, View):

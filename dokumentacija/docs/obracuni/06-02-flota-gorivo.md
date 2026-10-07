@@ -854,6 +854,46 @@ Isti izvori i korisnici kao V-01.
 Raspoređuje trošak goriva na **šifru posla koja je vozilu bila dodeljena na dan točenja**,
 radi kontrole i prenosa troška na nosioce posla.
 
+**Za knjiženje (od 07.10.2026.):** poslednji red tabele je **UKUPNO** (broj transakcija, količina, bruto,
+neto), i u Excel izvozu. Za OMV se bira **faktura** (`?faktura=<broj>`): izveštaj tada obuhvata sve stavke te
+fakture (gorivo, AdBlue, putarina, izrada kartica), tačno period koji je OMV fakturisao (do 13. i do kraja
+meseca, odvojeno za karticu „Putnička vozila“ — kupac 107248 i „Teretna vozila“ — 107258), bez podele na
+polovine i bez obzira na kategoriju vozila u Floti; iznad tabele je poređenje sa iznosom iste fakture na SEF-u.
+Knjiženje dosadašnjih OMV faktura: putnička — **bruto** na 51300 po šifri posla (PDV se ne odbija);
+teretna — **neto** na 51300 po šifri posla i PDV na 27000; ukupno na 43500.
+NIS fakturiše po polovinama meseca (1–15, 16–kraj), pa za NIS važi filter po polovini.
+
+**Kontrola faktura goriva** (`/izvestaji/gorivo-fakture/`, dozvola `fuel_invoice_control`, od 07.10.2026.;
+`fleet/support/fuel_invoices.py`): za mesec po datumu prometa svaka OMV faktura sa SEF-a (i NIS po polovini —
+obe fakture zajedno) poredi se sa zbirom transakcija i sa knjiženjem pronađenim po broju fakture
+(51300 po šifri posla, 27000 PDV). Statusi: transakcije se ne poklapaju; nije proknjiženo; proknjižen samo
+dobavljač; trošak i PDV se razlikuju od fakture; raspodela po šiframa posla se razlikuje (sa tabelom šifara).
+Za NIS je podela putnička/teretna po kategoriji vozila u Floti, pa razlike po šiframa treba proveriti.
+
+**OMV uvoz — stavke istog računa** (od 07.10.2026.): dve stavke sa istim vozilom, vremenom, proizvodom,
+vaučerom i količinom (dva AdBlue kanistera različite cene, dve izrade kartice za različite kartice) ranije
+su se prepisivale, pa faktura nije bila potpuna (8916409357: −2.349,00). Jedinstveni ključ tabele
+(migracija 0093) i pretraga pri uvozu sada uključuju karticu i iznos; isti red dvaput u fajlu se preskače.
+Ručni ponovni uvoz preuzetog fajla: `manage.py omv_uvoz_csv <putanja.csv> [...]`.
+
+**Podrazumevani period** (od 07.10.2026.): izveštaji „Gorivo po šifri posla“ bez izabranog filtera
+prikazuju poslednji fakturisani period — OMV poslednju fakturu kartice (putnička / teretna), NIS polovinu
+meseca poslednje NIS fakture na SEF-u; „Kontrola faktura goriva“ mesec poslednje fakture goriva
+(`fuel_reports.poslednji_fakturisani_period`).
+
+**Izvoz izveštaja u Excel i PDF** (od 07.10.2026.): ekrani sa tabelom `ReportsDT` imaju dugmad CSV, Excel i
+PDF (PDF pravi pregledač — `report_datatable.js`, lokalni pdfmake učitan na prvi klik; A4 položeno, naslov,
+izabrani filteri, datum izrade, red UKUPNO, „strana x od y“; red sa filterima kolona ne ulazi u izvoz).
+Izveštaji bez nje (Kontrola faktura goriva, upravljački izveštaji — gorivo IMS, kasko, osiguranje, delovi)
+imaju Excel i PDF sa servera (`core/izvoz_pdf.py: tabela_pdf_response`, isti font i zaglavlje kao analitika
+u Kadrovima). „Gorivo po šifri posla“ ima oba.
+
+**Vozilo koje još nije u Floti** (od 07.10.2026.): NIS i OMV uvoz upisuju točenje i kad tablica nema
+saobraćajnu (bez vozila, `vehicle = NULL`) — ranije se red odbacivao i zbir nije odgovarao fakturi.
+Posle svakog uvoza `povezi_transakcije_sa_vozilima()` vezuje takva točenja za vozilo kad se ono unese.
+Potrošnja goriva po vozilu (`FuelConsumption`) i dalje traži vozilo. Dopuna starijeg NIS perioda:
+`manage.py nis_command --od 2026-08-01` (podrazumevano od 1. dana prethodnog meseca).
+
 ### 3. Korisnici rezultata
 
 Služba voznog parka, računovodstvo, rukovodioci centara.

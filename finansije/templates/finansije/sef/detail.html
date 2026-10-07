@@ -10,6 +10,7 @@
 {% if can_file %}
 <a class="btn btn-light" href="{% url 'finansije:sef_dokument' f.pk 'pdf' %}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> PDF u novom prozoru</a>
 <a class="btn btn-light" href="{% url 'finansije:sef_dokument' f.pk 'ubl' %}"><i class="mdi mdi-xml"></i> UBL</a>
+{% if prilozi %}<a class="btn btn-light" href="#SefPrilozi"><i class="mdi mdi-paperclip"></i> Prilozi ({{ prilozi|length }})</a>{% endif %}
 {% endif %}
 </div>
 {% endblock %}
@@ -52,6 +53,8 @@
   .sef-link-note { font-size: .81rem; color: #61758a; background: #f5f8fb; border-radius: 5px; padding: 10px 12px; margin-bottom: 16px; }
   .sef-link-note summary { cursor: pointer; }
   .sef-link-note p { margin: 8px 0 0; }
+  .sef-prilozi { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .sef-prilozi li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; overflow-wrap: anywhere; }
   .sef-pdf { width: 100%; height: 85vh; min-height: 520px; border: 1px solid #dfe5ec; border-radius: 6px; background: #f6f8fa; }
   .sef-pdf-cekanje { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; min-height: 260px; border: 1px dashed #c9d3de; border-radius: 6px; color: #5b6b7d; text-align: center; padding: 1rem; }
   @media (max-width: 900px) { .sef-summary { grid-template-columns: minmax(0, 1fr); } }
@@ -105,6 +108,20 @@
   </table></div>
   {% else %}<p class="text-muted mb-0">Nema knjiženja sa ovim brojem dokumenta.</p>{% endif %}
 </div></section>
+
+{% if can_file %}
+<section class="card" id="SefPrilozi"><div class="card-body">
+  <div class="sef-section-head"><h2 class="finance-job-heading mb-0">Pridruženi dokumenti <small class="text-muted">· {{ prilozi|length }}</small></h2>
+    <span class="small text-muted">{% if f.prilozi_preuzeti %}Preuzeto sa SEF-a {{ f.prilozi_preuzeti|date:"d.m.Y. H:i" }}{% endif %}</span></div>
+  {% if prilozi %}<ul class="sef-prilozi">{% for p in prilozi %}
+    <li><a href="{% url 'finansije:sef_prilog' f.pk p.redni %}" target="_blank" rel="noopener"><i class="mdi {% if p.mime == 'application/pdf' %}mdi-file-pdf-box{% elif 'image' in p.mime %}mdi-file-image{% else %}mdi-paperclip{% endif %}"></i> {{ p.naziv }}</a>
+      <span class="text-muted small">{{ p.velicina|filesizeformat }}{% if p.opis %} · {{ p.opis }}{% endif %}</span></li>
+  {% endfor %}</ul>
+  {% elif prilozi_greska %}<p class="text-danger mb-0">Prilozi nisu preuzeti sa SEF-a: {{ prilozi_greska }}</p>
+  {% elif f.prilozi_preuzeti %}<p class="text-muted mb-0">Faktura nema pridružene dokumente.</p>
+  {% else %}<p class="text-muted mb-0">Prilozi još nisu preuzeti sa SEF-a{% if not podesen %} (SEF nije podešen){% endif %}.</p>{% endif %}
+</div></section>
+{% endif %}
 
 {% if can_file %}
 <section class="card" id="SefPdf"><div class="card-body">

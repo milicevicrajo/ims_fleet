@@ -177,4 +177,4 @@ class BankBillPlacement(models.Model):
         ]
 
 # SEF fakture (samo citanje, od 30.09.2026.) — modeli u posebnom fajlu.
-from .sef_models import SefFaktura, SefPromena, SefSinhronizacija  # noqa: E402,F401
+from .sef_models import SefFaktura, SefPrilog, SefPromena, SefSinhronizacija  # noqa: E402,F401

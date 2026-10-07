@@ -73,7 +73,8 @@
               <p><strong>Pol:</strong> {{ employee.gender|default:"-" }}</p>
               <p><strong>Datum rodjenja:</strong> {{ employee.date_of_birth|date:"d.m.Y" }}</p>
               <p><strong>Datum zaposljavanja:</strong> {{ employee.date_of_joining|date:"d.m.Y" }}</p>
-              <p><strong>Ukupan staž:</strong> {% if employee.osoba.ukupan_staz %}{{ employee.osoba.ukupan_staz }}<div class="small text-muted">u IMS: {{ employee.osoba.staz_u_ims }} · sve šifre, iz kadrovske baze {{ employee.osoba.staz_preuzet|date:"d.m.Y" }}</div>{% else %}<span class="text-muted">nije preuzet</span>{% endif %}</p>
+              <p><strong>Ukupan radni staž:</strong> {% if employee.osoba.ukupan_staz %}{{ employee.osoba.ukupan_staz }}{% else %}<span class="text-muted">nije preuzet</span>{% endif %}</p>
+              <p{% if employee.osoba.staz_preuzet %} title="Sve šifre, iz kadrovske baze {{ employee.osoba.staz_preuzet|date:'d.m.Y' }}"{% endif %}><strong>Radni staž u IMS:</strong> {% if employee.osoba.ukupan_staz %}{{ employee.osoba.staz_u_ims|default:"-" }}{% else %}<span class="text-muted">nije preuzet</span>{% endif %}</p>
               <p class="mb-0"><strong>Aktivan:</strong> {% if employee.is_active %}Da{% else %}Ne{% endif %}</p>
             </div></div>
           </div>

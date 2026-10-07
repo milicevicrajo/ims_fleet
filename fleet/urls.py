@@ -185,6 +185,7 @@ from .views.users import (
 from .views.reports import (
     fuel_job_code_nis_putnicka_view,
     fuel_job_code_nis_teretna_view,
+    fuel_invoice_control_view,
     fuel_job_code_omv_putnicka_view,
     fuel_job_code_omv_teretna_view,
     kasko_rate_view,
@@ -411,6 +412,7 @@ urlpatterns = [
     path('izvestaji/osiguranje/ims/', owned_insurance_report, name='owned_insurance_report'),
     path('izvestaji/gorivo-ims/', fleet_fuel_report, name='fleet_fuel_report'),
     path('izvestaji/delovi-dobavljaca/', supplier_parts_report, name='supplier_parts_report'),
+    path('izvestaji/gorivo-fakture/', fuel_invoice_control_view, name='fuel_invoice_control'),
     path('izvestaji/gorivo-sifra-posla/omv-putnicka/', fuel_job_code_omv_putnicka_view, name='fuel_job_code_omv_putnicka'),
     path('izvestaji/gorivo-sifra-posla/omv-teretna/', fuel_job_code_omv_teretna_view, name='fuel_job_code_omv_teretna'),
     path('izvestaji/gorivo-sifra-posla/nis-putnicka/', fuel_job_code_nis_putnicka_view, name='fuel_job_code_nis_putnicka'),

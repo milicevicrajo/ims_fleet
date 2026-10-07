@@ -49,8 +49,10 @@
           <div class="status-select-shell">{{ header_form.status }}</div>
         </div>
         <div class="work-sheet-control">
-          <label class="form-label small text-muted mb-1" for="{{ header_form.meal_days.id_for_label }}">Topli obrok</label>
+          <label class="form-label small text-muted mb-1" for="{{ header_form.meal_days.id_for_label }}">Topli obrok *</label>
           {{ header_form.meal_days }}
+          {% if header_form.meal_days.errors %}<div class="text-danger small">{{ header_form.meal_days.errors|striptags }}</div>{% endif %}
+          {% if topli_obrok_predlog is not None %}<div class="small text-muted meal-hint" title="Radni dani sa kucanjem u evidenciji prolaza; broj možete promeniti">Dana sa kucanjem: {{ topli_obrok_predlog }}</div>{% endif %}
         </div>
         <div class="work-sheet-control">
           <label class="form-label small text-muted mb-1" for="{{ header_form.meal_organizational_unit.id_for_label }}">Topli obrok - sifra</label>
@@ -130,7 +132,7 @@
                     <div class="text-danger small">{{ form.non_field_errors }}</div>
                   {% endif %}
                 </td>
-                <td class="sticky-col work-code-col">{{ form.organizational_unit }}</td>
+                <td class="sticky-col work-code-col">{{ form.organizational_unit }}{% if form.organizational_unit.errors %}<div class="text-danger small">{{ form.organizational_unit.errors|striptags }}</div>{% endif %}</td>
                 {% for day in day_fields %}
                   {% with field=form|field_by_name:day.field %}
                     <td class="day-cell {% if day.is_weekend %}weekend-day{% endif %} {% if not day.active %}inactive-day{% endif %}" data-day="{{ day.day }}" data-active="{% if day.active %}1{% else %}0{% endif %}">
@@ -175,6 +177,68 @@
     </div>
   </div>
 </form>
+
+<div class="card mt-3" id="prilozi-radne-liste">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        <h2 class="h5 mb-1"><i class="mdi mdi-paperclip"></i> Prilozi radne liste</h2>
+        <div class="text-muted small">Skenirane propusnice, finalna (potpisana) radna lista i ostali prilozi — PDF ili slika, najviše 20 MB po fajlu. Mogu se dodati i posle predaje.</div>
+      </div>
+      <span class="badge bg-secondary">{{ prilozi|length }}</span>
+    </div>
+    {% if prilozi %}
+    <div class="table-responsive mb-3">
+      <table class="table table-sm align-middle mb-0 prilozi-table">
+        <thead><tr><th>Vrsta</th><th>Dokument</th><th>Napomena</th><th>Dodao</th><th class="text-end"></th></tr></thead>
+        <tbody>
+        {% for p in prilozi %}
+          <tr>
+            <td class="text-nowrap">{{ p.get_vrsta_display }}</td>
+            <td><a href="{% url 'hr:work_time_sheet_prilog' sheet.pk p.pk %}" target="_blank" rel="noopener"><i class="mdi {% if p.naziv|lower|slice:'-4:' == '.pdf' %}mdi-file-pdf-box{% else %}mdi-file-image{% endif %}"></i> {{ p.naziv }}</a>
+              <span class="text-muted small">{{ p.velicina|filesizeformat }}</span></td>
+            <td>{{ p.napomena|default:"—" }}</td>
+            <td class="text-nowrap small text-muted">{{ p.created_by.get_full_name|default:p.created_by.username|default:"—" }} · {{ p.created_at|date:"d.m.Y. H:i" }}</td>
+            <td class="text-end">
+              {% if sheet.status != "approved" %}
+              <form method="post" class="d-inline" onsubmit="return confirm('Obrisati prilog „{{ p.naziv|escapejs }}”?');">
+                {% csrf_token %}
+                <input type="hidden" name="month" value="{{ month }}"><input type="hidden" name="year" value="{{ year }}">
+                <input type="hidden" name="action" value="prilog_obrisi"><input type="hidden" name="prilog" value="{{ p.pk }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obriši prilog"><i class="mdi mdi-delete"></i></button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" class="row g-2 align-items-end prilozi-form">
+      {% csrf_token %}
+      <input type="hidden" name="month" value="{{ month }}"><input type="hidden" name="year" value="{{ year }}">
+      <input type="hidden" name="action" value="prilog_dodaj">
+      <div class="col-md-3">
+        <label class="form-label small text-muted mb-1" for="prilog-vrsta">Vrsta</label>
+        <select name="vrsta" id="prilog-vrsta" class="form-select form-select-sm">
+          {% for vrednost, naziv in vrste_priloga %}<option value="{{ vrednost }}">{{ naziv }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small text-muted mb-1" for="prilog-fajl">Dokument</label>
+        <input type="file" name="fajl" id="prilog-fajl" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png,.tif,.tiff" multiple required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted mb-1" for="prilog-napomena">Napomena</label>
+        <input type="text" name="napomena" id="prilog-napomena" class="form-control form-control-sm" maxlength="255">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-sm btn-primary w-100"><i class="mdi mdi-upload"></i> Dodaj prilog</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div class="card mt-3" id="evidencija-prolaza">
   <div class="card-body">
@@ -780,6 +844,27 @@ document.addEventListener("DOMContentLoaded", function () {
     javi("Radna lista je ispražnjena. Kliknite „Sacuvaj“ da se promena upiše" +
          (applyButton ? ", ili „Popuni prazna polja“ za novi predlog." : "."));
   }); });
+  // Predaja: red sa satima rada mora imati šifru posla, a topli obrok mora biti upisan (proverava i server).
+  var ODSUSTVA = {{ odsustva_json|safe }};
+  document.getElementById("work-time-sheet-form").addEventListener("submit", function (event) {
+    var dugme = event.submitter;
+    if (!dugme || dugme.value !== "submit_print") return;
+    var greske = [];
+    rows().forEach(function (row, i) {
+      var sati = Array.prototype.some.call(row.querySelectorAll(".hours-input"), function (input) { return !input.disabled && input.value.trim() !== "" && input.value.trim() !== "0"; });
+      var vrsta = category(row);
+      var odsustvo = vrsta && vrsta.value && ODSUSTVA.indexOf(vrsta.value) !== -1;
+      if (sati && !odsustvo && !unit(row).value) greske.push("red " + (i + 1) + ": nema šifru posla");
+    });
+    var obrok = document.getElementById("id_meal_days");
+    if (obrok && obrok.value.trim() === "") greske.push("topli obrok nije upisan (0 ako ga nema)");
+    var obrokSifra = document.getElementById("id_meal_organizational_unit");
+    if (obrok && obrokSifra && parseInt(obrok.value, 10) > 0 && !obrokSifra.value) greske.push("topli obrok nema šifru posla");
+    if (greske.length) {
+      event.preventDefault();
+      alert("Lista ne može da se preda:\n– " + greske.join("\n– "));
+    }
+  });
   if (applyButton) applyButton.addEventListener("click", primeni);
   if (undoButton) undoButton.addEventListener("click", ponisti);
   {% if prefill_auto %}primeni();{% endif %}

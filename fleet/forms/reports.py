@@ -12,6 +12,8 @@ class ReportPeriodFilterForm(forms.Form):
     godina = forms.ChoiceField(choices=GODINA_CHOICES, required=False, label="Godina")
     mesec = forms.ChoiceField(choices=MESEC_CHOICES, required=False, label="Mesec")
     polovina = forms.ChoiceField(choices=POLOVINA_CHOICES, required=False, label="Polovina meseca")
+    # OMV fakturiše po svojim periodima (do 13. i do kraja meseca): raspodela fakture za knjiženje (od 07.10.2026.).
+    faktura = forms.CharField(required=False, label="OMV faktura", max_length=50)
 
 
 class OMVPutnickaFilterForm(ReportPeriodFilterForm):

@@ -121,6 +121,10 @@ def create_user_profile_for_employee(
     User = get_user_model()
     if User.objects.filter(employee=employee).exists():
         raise ValueError("Zaposleni vec ima korisnicki profil.")
+    # Jedna osoba (JMBG), jedan nalog — i kad ima više brojeva radnika (od 07.10.2026.).
+    postojeci = nalog_osobe(employee)
+    if postojeci:
+        raise ValueError(f"Osoba vec ima korisnicki profil ({postojeci.username}) na drugom broju radnika.")
 
     center, reason = infer_center(employee.org_unit_code, centers=centers)
     if not center and not include_unmapped:
@@ -176,8 +180,73 @@ def dodeli_centar(user, role, center):
                                    napomena=f"nalog zaposlenog — centar {center}", odobreno=timezone.now())
 
 
+def nalog_osobe(employee):
+    """Nalog bilo kog zaposlenja iste osobe (JMBG), ili None."""
+    if not employee.osoba_id:
+        return None
+    return get_user_model().objects.filter(employee__osoba_id=employee.osoba_id).order_by("-is_active", "-last_login").first()
+
+
+def zaposleni_bez_naloga(*, van_radnog_odnosa=False):
+    """Po jedno (glavno) aktivno zaposlenje za svaku aktivnu osobu koja nema nalog ni na jednom broju radnika.
+
+    Samo brojevi koji postoje u kadrovskoj bazi. Osobe samo van radnog odnosa (privremeni i povremeni poslovi)
+    dobijaju nalog tek uz `van_radnog_odnosa=True`."""
+    from hr.services.osobe import jedan_po_osobi
+
+    aktivni = (Employee.objects.filter(is_active=True, u_izvoru=True, user_account__isnull=True)
+               .exclude(osoba__zaposlenja__user_account__isnull=False).order_by("employee_code"))
+    return [e for e in jedan_po_osobi(aktivni)
+            if van_radnog_odnosa or e.preduzece == Employee.Preduzece.RADNI_ODNOS]
+
+
+@transaction.atomic
+def uskladi_naloge_zaposlenih(*, execute=False, van_radnog_odnosa=False):
+    """Jedan nalog po osobi (od 07.10.2026.). Vraća plan; sa `execute=True` ga i sprovodi.
+
+    - aktivna osoba bez naloga → nalog na glavnom zaposlenju (`create_user_profile_for_employee`);
+    - nalog na neaktivnom broju, a osoba ima aktivan → nalog se prebacuje na glavno zaposlenje;
+    - više naloga iste osobe → ostaje onaj sa poslednjom prijavom, ostali se deaktiviraju;
+    - osoba bez ijednog aktivnog zaposlenja → nalog se deaktivira (ne briše; superuser se ne dira).
+    """
+    from hr.models import Osoba
+    from hr.services.osobe import glavno_zaposlenje
+
+    User = get_user_model()
+    plan = {"kreirati": zaposleni_bez_naloga(van_radnog_odnosa=van_radnog_odnosa), "prebaciti": [], "dupli": [], "bivsi": [], "kreirano": [], "preskoceno": []}
+    for osoba in Osoba.objects.filter(zaposlenja__user_account__isnull=False).distinct().prefetch_related("zaposlenja"):
+        nalozi = list(User.objects.filter(employee__osoba=osoba).select_related("employee")
+                      .order_by("-is_active", "-last_login", "pk"))
+        glavno = glavno_zaposlenje(osoba)
+        aktivna = any(z.is_active for z in osoba.zaposlenja.all())
+        if not aktivna:
+            plan["bivsi"] += [u for u in nalozi if u.is_active and not u.is_superuser]
+            continue
+        zadrzan, visak = nalozi[0], nalozi[1:]
+        plan["dupli"] += [u for u in visak if u.is_active and not u.is_superuser]
+        if not zadrzan.employee.is_active and glavno and glavno.pk != zadrzan.employee_id                 and not User.objects.filter(employee=glavno).exclude(pk=zadrzan.pk).exists():
+            plan["prebaciti"].append((zadrzan, zadrzan.employee, glavno))
+    if not execute:
+        return plan
+    for user in plan["bivsi"] + plan["dupli"]:
+        user.is_active = False
+        user.save(update_fields=["is_active"])
+    for user, _staro, novo in plan["prebaciti"]:
+        user.employee = novo
+        user.save(update_fields=["employee"])
+    centers = available_centers()
+    for employee in plan["kreirati"]:
+        try:
+            user, center, reason = create_user_profile_for_employee(employee, centers=centers)
+        except ValueError as exc:
+            plan["preskoceno"].append((employee, str(exc)))
+        else:
+            plan["kreirano"].append((employee, user, center, reason))
+    return plan
+
+
 def create_user_profiles_for_missing_employees(queryset=None, **kwargs):
-    employees = queryset or Employee.objects.filter(is_active=True, user_account__isnull=True).order_by("employee_code")
+    employees = queryset or zaposleni_bez_naloga()
     centers = available_centers()
     created = []
     skipped = []

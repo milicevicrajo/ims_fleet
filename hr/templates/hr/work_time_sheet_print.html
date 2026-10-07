@@ -190,6 +190,10 @@
       height: 1px;
       width: 100%;
     }
+    .signature-value {
+      font-size: 9pt;
+      margin-bottom: 0.8mm;
+    }
     .signature-caption {
       margin-top: 0.8mm;
       line-height: 1;
@@ -364,6 +368,7 @@
 
     <div class="signatures">
       <div class="signature">
+        <div class="signature-value">{{ datum_predaje|date:"d.m.Y." }}</div>
         <div class="signature-line"></div>
         <div class="signature-caption">datum</div>
       </div>

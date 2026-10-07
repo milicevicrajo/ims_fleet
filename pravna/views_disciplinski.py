@@ -224,7 +224,8 @@ def disciplinski_mera(request, pk):
         if request.POST.get('ponisti') == '1':
             postupak.mera_datum = None
             postupak.mera_vrsta = ''
-            postupak.save(update_fields=['mera_datum', 'mera_vrsta', 'updated_at'])
+            postupak.mera_procenat = postupak.mera_trajanje = None
+            postupak.save(update_fields=['mera_datum', 'mera_vrsta', 'mera_procenat', 'mera_trajanje', 'updated_at'])
             return redirect('pravna:disciplinski_detalj', pk=pk)
 
         form = DisciplinskaMeraForm(request.POST, instance=postupak)

@@ -14,7 +14,7 @@ import pytz
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils import timezone as dj_timezone
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -109,7 +109,8 @@ def format_nis_sync_result(result):
     fuel = result.get("fuel", {}) or {}
     transactions = result.get("transactions", {}) or {}
     missing = result.get("missing_vehicles") or []
-    missing_note = f" Vozila bez poklapanja: {', '.join(missing[:10])}." if missing else ""
+    missing_note = (f" Upisano bez vozila (nema u Floti — uneti vozilo, veza se dopunjuje sama): {', '.join(missing[:10])}."
+                    if missing else "")
     return (
         "NIS sync zavrsen. "
         "Gorivo: redova {fuel_rows}, upisano {fuel_created}, preskoceno {fuel_skipped}. "
@@ -137,7 +138,8 @@ def format_omv_sync_result(result, label="OMV"):
     transactions = result.get("transactions", {}) or {}
     cleanup = result.get("cleanup", {}) or {}
     missing = result.get("missing_vehicles") or []
-    missing_note = f" Vozila bez poklapanja: {', '.join(missing[:10])}." if missing else ""
+    missing_note = (f" Upisano bez vozila (nema u Floti — uneti vozilo, veza se dopunjuje sama): {', '.join(missing[:10])}."
+                    if missing else "")
     return (
         "{label} sync zavrsen. "
         "Transakcije: redova {trx_rows}, upisano {trx_created}, azurirano {trx_updated}, "
@@ -227,6 +229,26 @@ def import_omv_csv_data(csv_file_path, *, cleanup=True):
     }
     logger.info("OMV csv import summary: %s", result)
     return result
+
+
+def vozilo_po_tablici(tablica, db_alias="default"):
+    """Vozilo po registarskoj oznaci ili None (nema saobraćajne, ili oznaka pripada većem broju vozila)."""
+    try:
+        return TrafficCard.objects.using(db_alias).select_related("vehicle").for_plate(tablica).vehicle
+    except (TrafficCard.DoesNotExist, TrafficCard.MultipleObjectsReturned):
+        return None
+
+
+def povezi_transakcije_sa_vozilima(db_alias="default"):
+    """Transakcije goriva upisane bez vozila vezuje za vozilo kad je ono u međuvremenu uneto. Vraća broj."""
+    povezano = 0
+    for model, polje in ((TransactionNIS, "registarska_oznaka_vozila"), (TransactionOMV, "license_plate_no")):
+        for tablica in (model.objects.using(db_alias).filter(vehicle__isnull=True)
+                        .values_list(polje, flat=True).distinct()):
+            vozilo = vozilo_po_tablici(format_license_plate(tablica or ""), db_alias) if tablica else None
+            if vozilo is not None:
+                povezano += model.objects.using(db_alias).filter(vehicle__isnull=True, **{polje: tablica}).update(vehicle=vozilo)
+    return povezano
 
 
 def previous_month_range(reference_date=None):
@@ -464,7 +486,8 @@ def select_nis_date_with_widget(driver, label, target_date, fixed_prev_clicks=0)
     return "ok"
 
 
-def nis_data_import():
+def nis_data_import(date_from=None):
+    """NIS sync. Podrazumevano od 1. dana prethodnog meseca; `date_from` (date) za dopunu starijeg perioda."""
     step = "start"
     driver = None
     logger = logging.getLogger(__name__)
@@ -488,7 +511,9 @@ def nis_data_import():
             "headless": False,
             "keep_browser_open": False,
         }
-        date_from, date_to = previous_month_range()
+        prethodni_od, date_to = previous_month_range()
+        date_from = date_from or prethodni_od
+        prethodni_mesec = date_from == prethodni_od
         logger.debug(
             "NIS sync: config base_url=%s download_dir=%s chrome_binary=%s headless=%s keep_browser_open=%s",
             config["base_url"],
@@ -563,7 +588,9 @@ def nis_data_import():
             )
             step = "date_from"
             logger.debug("NIS sync: postavljam Datum od: %s", date_from)
-            date_from_result = select_nis_date_with_widget(driver, "Datum od", date_from, fixed_prev_clicks=2)
+            # Noćni posao: dva klika nazad (prethodni mesec); dopuna starijeg perioda: kalendar ide do traženog meseca.
+            date_from_result = select_nis_date_with_widget(driver, "Datum od", date_from,
+                                                           fixed_prev_clicks=2 if prethodni_mesec else 0)
             if date_from_result != "ok":
                 raise RuntimeError(f"NIS sync nije uspeo da postavi polje Datum od preko widgeta: {date_from_result}.")
             time.sleep(2)
@@ -1063,6 +1090,11 @@ def import_omv_transactions_from_csv(csv_file_path):
     skipped_duplicate_receipts = 0
     skipped_invalid_invoice_dates = 0
     skipped_duplicate_transaction_identities = 0
+    # Od 07.10.2026.: dve različite stavke istog računa (npr. dva AdBlue kanistera različite cene ili dve izrade
+    # kartice za isto vozilo) imaju isti ključ pretrage; bez ovoga druga stavka prepiše prvu i faktura se ne poklapa.
+    skipped_identical_rows = 0
+    vidjeni_redovi = set()
+    iskorisceni_zapisi = set()
 
     def parse_decimal(value, default=None):
         value = str(value or "").strip()
@@ -1110,12 +1142,21 @@ def import_omv_transactions_from_csv(csv_file_path):
         reader = csv.DictReader(csvfile, delimiter=';')  # Pazi na delimiter ';'
         for index, row in enumerate(reader, start=1):
             try:
+                # Potpuno isti red dvaput u istom fajlu je ponovljen izvoz, ne nova stavka.
+                otisak = tuple(sorted((k, str(v)) for k, v in row.items()))
+                if otisak in vidjeni_redovi:
+                    skipped_identical_rows += 1
+                    continue
+                vidjeni_redovi.add(otisak)
+
                 # Formatiraj tablice
                 formatted_plate = format_license_plate(row['License plate No'])
                 
-                # PronaÄ‘i vozilo prema formatiranoj tablici u TrafficCard
-                traffic_card = TrafficCard.objects.for_plate(formatted_plate)
-                vehicle = traffic_card.vehicle
+                # Od 07.10.2026.: stavka vozila koje još nije u Floti upisuje se bez vozila (faktura mora biti
+                # potpuna); veza se dopunjava kad se vozilo unese (`povezi_transakcije_sa_vozilima`).
+                vehicle = vozilo_po_tablici(formatted_plate)
+                if vehicle is None:
+                    missing_vehicles.add(row.get('License plate No', '').strip())
 
                 quantity = parse_decimal(row.get('Quantity'))
                 gross_cc = parse_decimal(row.get('Gross CC'))
@@ -1197,11 +1238,24 @@ def import_omv_transactions_from_csv(csv_file_path):
                     "voucher": voucher,
                     "quantity": quantity,
                 }
-                transaction = (
+                # Kartica razlikuje stavke istog vozila (dve izrade kartice). Prednost ima zapis sa istim iznosom,
+                # pa zapis koji u ovom fajlu još nije iskorišćen. Kad su svi iskorišćeni, red je nova verzija iste
+                # transakcije (cenovnik → konačna cena, faktura) i ažurira je — osim kad su i red i zapis konačni na
+                # istoj fakturi: tada je to druga stavka istog računa (npr. dva AdBlue kanistera) i pravi se novi zapis.
+                kartica = str(row.get('Card') or "").strip()
+                kandidati = list(
                     TransactionOMV.objects.filter(**transaction_lookup)
+                    .filter(Q(card=kartica) | Q(card="") | Q(card__isnull=True))
                     .order_by("-invoiced", "-invoice_date", "-id")
-                    .first()
                 )
+                slobodni = [t for t in kandidati if t.pk not in iskorisceni_zapisi]
+                transaction = next((t for t in slobodni if t.gross_cc is not None and gross_cc is not None
+                                    and Decimal(str(t.gross_cc)) == Decimal(str(gross_cc))), None) or                     (slobodni[0] if slobodni else None)
+                if transaction is None:
+                    transaction = next((t for t in kandidati if (t.invoice_no or "") != invoice_no
+                                        or bool(t.invoiced) != invoiced or (t.is_list_price or 0) != is_list_price), None)
+                if transaction:
+                    iskorisceni_zapisi.add(transaction.pk)
                 if transaction:
                     if transaction.is_list_price == 1 and not is_list_price:
                         preserved_final += 1
@@ -1275,7 +1329,8 @@ def import_omv_transactions_from_csv(csv_file_path):
                                 duplicate_identity.id,
                             )
                         else:
-                            TransactionOMV.objects.create(**{**transaction_lookup, **transaction_defaults})
+                            novi = TransactionOMV.objects.create(**{**transaction_lookup, **transaction_defaults})
+                            iskorisceni_zapisi.add(novi.pk)
                             created += 1
             
             except ObjectDoesNotExist:
@@ -1306,6 +1361,7 @@ def import_omv_transactions_from_csv(csv_file_path):
             + preserved_final
             + skipped_duplicate_receipts
             + skipped_duplicate_transaction_identities
+            + skipped_identical_rows
         ),
         "created": created,
         "updated": updated,
@@ -1314,8 +1370,10 @@ def import_omv_transactions_from_csv(csv_file_path):
         "skipped_duplicate_receipts": skipped_duplicate_receipts,
         "skipped_invalid_invoice_dates": skipped_invalid_invoice_dates,
         "skipped_duplicate_transaction_identities": skipped_duplicate_transaction_identities,
+        "skipped_identical_rows": skipped_identical_rows,
         "errors": errors,
         "missing_vehicles": sorted(v for v in missing_vehicles if v),
+        "linked_later": povezi_transakcije_sa_vozilima(),
     }
     logger.info("OMV transactions import summary: %s", result)
     return result
@@ -1405,9 +1463,11 @@ def import_nis_transactions(file_path):
             # Formatiraj registarski broj pre nego što ga upotrebiš
             formatted_plate = format_license_plate(row['Registarska oznaka vozila'].strip().upper())
 
-            # Pronađi vozilo prema formatiranom registracionom broju u TrafficCard modelu
-            traffic_card = TrafficCard.objects.using(db_alias).select_related("vehicle").for_plate(formatted_plate)
-            vehicle = traffic_card.vehicle
+            # Od 07.10.2026.: točenje vozila koje još nije u Floti upisuje se bez vozila (zbir mora da odgovara
+            # fakturi); veza se dopunjava kad se vozilo unese (`povezi_transakcije_sa_vozilima`).
+            vehicle = vozilo_po_tablici(formatted_plate, db_alias)
+            if vehicle is None:
+                missing_vehicles.add(formatted_plate)
 
             # Konverzija datuma transakcije sa vremenskom zonom
             naive_transaction_date = pd.to_datetime(row['Datum transakcije'], format='%d.%m.%Y %H:%M:%S')
@@ -1475,6 +1535,8 @@ def import_nis_transactions(file_path):
         "skipped": skipped,
         "errors": errors,
         "missing_vehicles": sorted(missing_vehicles),
+        # Ranije upisana točenja bez vozila, povezana sada kad je vozilo uneto.
+        "linked_later": povezi_transakcije_sa_vozilima(db_alias),
     }
     logger.info("NIS transactions import summary: %s", result)
     return result

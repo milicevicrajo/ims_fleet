@@ -1149,8 +1149,10 @@ class TransactionOMV(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['license_plate_no', 'transaction_date', 'product_inv', 'voucher', 'quantity'],
-                name='unique_omv_transaction_line'
+                # Od 07.10.2026. i kartica i iznos: dve stavke istog računa (dva AdBlue kanistera različite cene,
+                # dve izrade kartice za isto vozilo) su različite stavke fakture.
+                fields=['license_plate_no', 'transaction_date', 'product_inv', 'voucher', 'quantity', 'card', 'gross_cc'],
+                name='unique_omv_transaction_line_card_amount'
             )
         ]
 

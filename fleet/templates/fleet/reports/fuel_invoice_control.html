@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load form_filters %}
+{% load humanize %}
+
+{% block content %}
+<style>
+  .fuel-report-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18); }
+  .fuel-report-hero h1 { font-size: 1.55rem; margin: 0; }
+  .fuel-report-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .kf-table td, .kf-table th { white-space: nowrap; }
+  .kf-table td.num, .kf-table th.num { text-align: right; }
+  .kf-detail { background: #f8fafc; }
+  /* Obaveštenja: bedževi teme, samo bela slova (tema ih inače boji tamno). */
+  .kf-table .badge { color: #fff !important; }
+</style>
+
+<div class="fuel-report-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+  <h1>{{ title }}</h1>
+  <p>Faktura sa SEF-a ↔ transakcije goriva ↔ knjiženje (51300 / 27000) po šifri posla. Samo pregled — ništa se ne menja.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-light btn-sm" href="?godina={{ form.godina.value }}&mesec={{ form.mesec.value }}&export=xlsx" download><i class="mdi mdi-file-excel"></i> Excel</a>
+    <a class="btn btn-outline-light btn-sm" href="?godina={{ form.godina.value }}&mesec={{ form.mesec.value }}&export=pdf" download><i class="mdi mdi-file-pdf-box"></i> PDF</a>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <form method="get" class="row g-2 align-items-end">
+    <div class="col-6 col-md-3"><label class="form-label mb-1" for="id_godina">Godina</label>{{ form.godina|add_class:'form-select form-control' }}</div>
+    <div class="col-6 col-md-3"><label class="form-label mb-1" for="id_mesec">Mesec (datum prometa)</label>{{ form.mesec|add_class:'form-select form-control' }}</div>
+    <div class="col-12 col-md-3"><button class="btn btn-primary w-100"><i class="mdi mdi-filter"></i> Prikaži</button></div>
+  </form>
+  <p class="text-muted small mt-2 mb-0">
+    OMV se poredi faktura po faktura (kartica putnička / teretna, period koji je OMV fakturisao). NIS se poredi po polovini meseca —
+    obe fakture zajedno, jer se transakcije ne mogu razdvojiti po vrsti kartice; podela putnička/teretna za šifre posla ide po kategoriji vozila.
+    Očekivano knjiženje: putnička — bruto na 51300 (PDV se ne odbija), teretna — neto na 51300 i PDV na 27000.
+  </p>
+</div></div>
+
+<div class="card shadow-sm"><div class="card-body">
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle kf-table">
+      <thead class="table-light"><tr>
+        <th>Dobavljač</th><th>Faktura / period</th><th>Kartica</th><th class="num">SEF bruto</th><th class="num">Transakcije bruto</th>
+        <th class="num">Razlika</th><th class="num">Proknjiženo 51300</th><th class="num">PDV 27000</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for r in redovi %}
+        <tr>
+          <td><strong>{{ r.dobavljac }}</strong></td>
+          <td>{{ r.oznaka }}{% if r.dobavljac == 'NIS' %}<div class="small text-muted">{% for f in r.fakture %}{{ f.broj }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% else %}<div class="small text-muted">{{ r.period.0|date:"d.m." }}–{{ r.period.1|date:"d.m.Y." }}</div>{% endif %}</td>
+          <td>{{ r.kartica }}</td>
+          <td class="num">{{ r.sef_bruto|floatformat:2|intcomma }}</td>
+          <td class="num">{{ r.transakcije_bruto|floatformat:2|intcomma }}</td>
+          <td class="num {% if r.razlika_transakcija > 1 or r.razlika_transakcija < -1 %}text-danger fw-bold{% endif %}">{{ r.razlika_transakcija|floatformat:2|intcomma }}</td>
+          <td class="num">{% if r.knjizeno_stavki %}{{ r.knjizeno_trosak|floatformat:2|intcomma }}{% else %}—{% endif %}</td>
+          <td class="num">{% if r.knjizeno_stavki %}{{ r.knjizeno_pdv|floatformat:2|intcomma }}{% else %}—{% endif %}</td>
+          <td>{% for ton, poruka in r.status %}<span class="badge bg-{{ ton }} d-block text-start mb-1 text-wrap">{{ poruka }}</span>{% endfor %}</td>
+          <td>{% if r.url %}<a class="btn btn-outline-primary btn-sm" href="{{ r.url }}" title="Raspodela fakture po šifri posla"><i class="mdi mdi-table-arrow-right"></i> Raspodela</a>{% endif %}</td>
+        </tr>
+        {% if r.razlike_sifara %}
+        <tr class="kf-detail"><td></td><td colspan="9">
+          <div class="small fw-semibold mb-1">Šifre posla gde se knjiženje razlikuje od transakcija:</div>
+          <table class="table table-sm mb-0"><thead><tr><th>Šifra posla</th><th class="num">Proknjiženo</th><th class="num">Po transakcijama</th><th class="num">Razlika</th></tr></thead>
+            <tbody>{% for s in r.razlike_sifara %}<tr><td>{{ s.sifra }}</td><td class="num">{{ s.knjizeno|floatformat:2|intcomma }}</td><td class="num">{{ s.ocekivano|floatformat:2|intcomma }}</td><td class="num text-danger">{{ s.razlika|floatformat:2|intcomma }}</td></tr>{% endfor %}</tbody>
+          </table>
+        </td></tr>
+        {% endif %}
+      {% empty %}
+        <tr><td colspan="10" class="text-center text-muted">Za izabrani mesec nema faktura goriva na SEF-u.</td></tr>
+      {% endfor %}
+      </tbody>
+      {% if redovi %}<tfoot><tr class="fw-bold table-light">
+        <th colspan="3">UKUPNO</th><th class="num">{{ ukupno.sef_bruto|floatformat:2|intcomma }}</th><th class="num">{{ ukupno.transakcije_bruto|floatformat:2|intcomma }}</th>
+        <th class="num">{{ ukupno.razlika_transakcija|floatformat:2|intcomma }}</th><th class="num">{{ ukupno.knjizeno_trosak|floatformat:2|intcomma }}</th>
+        <th class="num">{{ ukupno.knjizeno_pdv|floatformat:2|intcomma }}</th><th colspan="2"></th>
+      </tr></tfoot>{% endif %}
+    </table>
+  </div>
+</div></div>
+{% endblock %}

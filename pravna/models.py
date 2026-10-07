@@ -147,6 +147,9 @@ class DisciplinskiPostupak(models.Model):
     mera_datum = models.DateField(blank=True, null=True, verbose_name='Datum disciplinske mere')
     mera_opis = models.TextField(blank=True, verbose_name='Disciplinska mera')
     mera_vrsta = models.CharField(max_length=1, choices=Mera.choices, blank=True, verbose_name='Izrečena mera')
+    # Novčana kazna (od 07.10.2026.): procenat osnovne zarade (do 20%) i trajanje u mesecima (do 3).
+    mera_procenat = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name='Procenat osnovne zarade')
+    mera_trajanje = models.PositiveSmallIntegerField(blank=True, null=True, verbose_name='Trajanje (meseci)')
 
     arhivirano = models.BooleanField(default=False, verbose_name='Arhivirano')
 
@@ -175,6 +178,15 @@ class DisciplinskiPostupak(models.Model):
     @property
     def zatvoren(self):
         return self.mera_datum is not None
+
+    @property
+    def mera_prikaz(self):
+        """Izrečena mera; novčana kazna sa procentom i trajanjem."""
+        if self.mera_vrsta == self.Mera.NOVCANA and self.mera_procenat:
+            meseci = self.mera_trajanje or 0
+            return (f"Novčana kazna {self.mera_procenat}% osnovne zarade, u trajanju od {meseci} "
+                    f"{'mesec' if meseci == 1 else 'meseca'}")
+        return self.get_mera_vrsta_display()
 
     @property
     def datum_statusa(self):

@@ -14,6 +14,7 @@ from core.models import PermissionCode, Role
 from finansije.sef_models import SefFaktura
 from finansije.services import sef as sef_servis
 from nabavka.models import ProcurementInvoice
+from finansije.test_sef import UBL_PRILOZI
 from nabavka.services.sef_veza import sef_faktura
 
 
@@ -47,6 +48,10 @@ class SefVezaTests(TestCase):
         korisnik = get_user_model().objects.create_user("nabavka-sef", password="x")
         korisnik.roles.add(uloga)
         self.client.force_login(korisnik)
+        # detalj cita priloge sa SEF-a kad ih jos nema — u testovima lazni UBL
+        ubl = mock.patch.object(sef_servis.Klijent, "ubl", return_value=UBL_PRILOZI)
+        ubl.start()
+        self.addCleanup(ubl.stop)
 
     def detalj(self):
         return self.client.get(reverse("nabavka:euf_invoice_detail", args=[self.faktura.pk]))
@@ -72,6 +77,18 @@ class SefVezaTests(TestCase):
     def test_razlika_iznosa(self):
         SefFaktura.objects.filter(pk=self.sef.pk).update(iznos=Decimal("1250.00"))
         self.assertContains(self.detalj(), "se razlikuje od iznosa u EUF za 50.00")
+
+    def test_prilozi_sef_fakture(self):
+        odgovor = self.detalj()
+        self.assertContains(odgovor, "Pridruženi dokumenti (2)")
+        adresa = reverse("nabavka:euf_invoice_sef_prilog", args=[self.faktura.pk, 1])
+        self.assertContains(odgovor, adresa)
+        prilog = self.client.get(adresa)
+        self.assertEqual((prilog.status_code, b"".join(prilog.streaming_content)), (200, b"%PDF-1.7 prilog"))
+        self.assertEqual(self.client.get(reverse("nabavka:euf_invoice_sef_prilog", args=[self.faktura.pk, 9])).status_code, 404)
+        # bez dozvole za PDF sa SEF-a nema ni priloga
+        PermissionCode.objects.get(code="nabavka:euf_invoice_sef_pdf").roles.clear()
+        self.assertEqual(self.client.get(adresa).status_code, 403)
 
     def test_pdf_u_okviru_strane(self):
         with mock.patch.object(sef_servis.Klijent, "pdf", return_value=(b"%PDF-1.4 SEF", "")):

@@ -160,10 +160,11 @@ Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema 
 
 | Podatak | Ekran | Ko unosi |
 |---|---|---|
-| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** |
+| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** — od 07.10.2026. lista se **ne može predati** dok red sa satima rada (redovan, prekovremeni, noćni, rad na praznik ili red bez vrste) nema šifru posla; odsustva (bolovanje, godišnji, plaćeno odsustvo, državni i verski praznik) je ne traže. Čuvanje je dozvoljeno; proveru radi i pregledač pre otvaranja štampe (`hr/services/radna_lista.py`). Na štampi je datum prvi radni dan meseca predaje (mesec posle meseca liste, bez vikenda i praznika) |
 | Vrsta rada / odsustva po redu | Radna lista | Zaposleni |
-| Topli obrok — broj dana i šifra posla | Radna lista | Zaposleni |
+| Topli obrok — broj dana i šifra posla | Radna lista | Zaposleni — **obavezan pri predaji** (i 0 je odgovor); predlog je broj radnih dana sa kucanjem (pon–pet, bez praznika), uz podrazumevanu šifru zaposlenog (od 07.10.2026.) |
 | Terenski dodatak — broj dana | Radna lista | Zaposleni (predlaže se iz putnih naloga) |
+| Prilozi radne liste (skenirane propusnice, finalna radna lista) | Radna lista, kartica „Prilozi radne liste” | Zaposleni ili kadrovik; PDF/JPG/PNG/TIFF do 20 MB, i posle predaje; odobrena lista ne dozvoljava brisanje |
 | **Datum slave** | Izmena zaposlenog, sekcija „Obrazovanje i slava“ | Kadrovska služba; predlaže se iz naziva slave, koriste se dan i mesec |
 | Ispravka imena za prikaz | Moj profil | Zaposleni |
 | CV stavke | Moj profil | Zaposleni |
@@ -217,6 +218,7 @@ putni nalozi, …) i dalje idu na zaposlenje, a osoba ih objedinjuje.
 | Nestanak iz izvora | Broj koji nestane iz kadrovske baze dobija `u_izvoru = False`; ne briše se i aktivnost mu se ne menja. |
 | Pregled pre izmena | `manage.py kadrovi_osobe_pregled` — samo čita: osobe sa više brojeva, sukobi brojeva, zapisi bez JMBG-a. |
 | Detalj zaposlenog | Sve kartice (ugovori, rešenja, zahtevi, radne liste, odmori, putni nalozi, vozila, incidenti, CV) obuhvataju **sva zaposlenja osobe**; kartica „Šifre“ prikazuje sve brojeve; kartica „Bolovanja“ samo uz pravo `hr:sick_leave_list`. Detalj ugovora prikazuje periode pod svim šiframa osobe. Spisak zaposlenih ima jedan red po osobi. |
+| Korisnički nalog | **Jedna osoba, jedan nalog** (od 07.10.2026.): `manage.py uskladi_naloge_zaposlenih [--execute] [--i-van-radnog-odnosa]` pravi nalog aktivnoj osobi bez naloga na glavnom zaposlenju (lozinka JMBG, obavezna promena, obuhvat svog centra), prebacuje nalog sa neaktivnog na aktivan broj, deaktivira duple naloge i naloge osoba bez aktivnog zaposlenja (ne briše; superuser se ne dira). Brojevi van kadrovske baze i osobe samo van radnog odnosa ne dobijaju nalog bez posebne opcije. Isto pravilo koriste dugme „napravi profile“ i `create_employee_users`. |
 | Ukupan staž | Na osobi (`staz_*`, `staz_ims_*`), računa ga HR sinhronizacija iz `RadStaz` (u IMS `DA` i kod drugih poslodavaca `NE`/`ME`) za sve šifre osobe (`hr/services/osobe.py: obracunaj_staz`). Sabiraju se izvorne vrednosti perioda (30 dana = mesec, 12 meseci = godina, kao kadrovska baza); period bez staža otpada; isti period pod dve šifre računa se jednom (vrednost novije šifre); period ceo unutar dužeg perioda druge šifre se ne računa, osim kad duži nema upisan kraj (3000). |
 
 ---
@@ -231,6 +233,7 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 | **`fleet_employee`** | Zaposlenje — ključ je `preduzece` + `employee_code`; `osoba` ga veže za osobu |
 | `fleet_employeecvitem` | CV stavke |
 | `hr_worktimesheet`, `hr_worktimesheetline` | Radna lista i redovi (31 kolona sati) |
+| `hr_radnalistaprilog` | Prilozi radne liste — skenirane propusnice, finalna potpisana lista, ostalo (`media/hr/radne_liste/`, od 07.10.2026.) |
 | `fleet_employee.slava_datum` | Datum krsne slave (koriste se dan i mesec); HR sinhronizacija ga ne menja, naziv slave dolazi iz HR-a |
 | `hr_worktimecategory`, `hr_worktimeelement`, `hr_recipienttype` | Šifarnici radne liste |
 | `hr_annualleaveallowance`, `hr_annualleavedecision`, `hr_annualleavesync` | Godišnji odmori |

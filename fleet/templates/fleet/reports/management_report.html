@@ -21,7 +21,7 @@
   {% if form.errors %}<div class="alert alert-danger">Proverite označene filtere. {{ form.non_field_errors }}</div>{% endif %}
   <div class="report-filter-grid">{% for field in form %}<div><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}</div>
   <div class="mt-3 d-flex gap-2"><button class="btn btn-primary"><i class="mdi mdi-filter"></i> Prikaži</button><a class="btn btn-outline-secondary" href="{{ request.path }}">Početni prikaz</a>
-  {% if valid %}<a class="btn btn-outline-success ms-auto" href="?{{ export_query }}"><i class="mdi mdi-file-excel"></i> Preuzmi Excel</a>{% endif %}</div>
+  {% if valid %}<a class="btn btn-outline-success ms-auto" href="?{{ export_query }}" download><i class="mdi mdi-file-excel"></i> Preuzmi Excel</a><a class="btn btn-outline-danger ms-2" href="?{{ export_pdf_query }}" download><i class="mdi mdi-file-pdf-box"></i> Preuzmi PDF</a>{% endif %}</div>
  </form>
 </div></div>
 {% if valid %}

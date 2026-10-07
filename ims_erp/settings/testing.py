@@ -12,3 +12,6 @@ CELERY_TASK_ALWAYS_EAGER = True
 PRAVA_PO_REGISTRU = {}
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# Testovi nikad ne zovu pravi SEF (kljuc iz .env bi inace vazio i ovde); lazni klijent ili mock po testu.
+SEF_API_KEY = 'test-kljuc'
+SEF_API_URL = 'https://efaktura.test.invalid'

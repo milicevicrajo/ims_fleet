@@ -283,6 +283,33 @@ class WorkTimeSheet(models.Model):
         return f"{self.employee} - {self.month:02d}/{self.year}"
 
 
+class RadnaListaPrilog(models.Model):
+    """Skenirani dokument uz radnu listu (od 07.10.2026.): propusnice, finalna potpisana lista i drugo."""
+
+    class Vrsta(models.TextChoices):
+        PROPUSNICE = "propusnice", _("Skenirane propusnice")
+        FINALNA = "finalna", _("Finalna (potpisana) radna lista")
+        OSTALO = "ostalo", _("Ostalo")
+
+    sheet = models.ForeignKey(WorkTimeSheet, on_delete=models.CASCADE, related_name="prilozi", verbose_name=_("Radna lista"))
+    vrsta = models.CharField(max_length=20, choices=Vrsta.choices, default=Vrsta.PROPUSNICE, verbose_name=_("Vrsta"))
+    fajl = models.FileField(upload_to="hr/radne_liste/%Y/%m/", max_length=255, verbose_name=_("Dokument"))
+    naziv = models.CharField(max_length=255, verbose_name=_("Naziv fajla"))
+    velicina = models.PositiveIntegerField(default=0)
+    napomena = models.CharField(max_length=255, blank=True, verbose_name=_("Napomena"))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name="+", verbose_name=_("Dodao"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Dodato"))
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        verbose_name = _("Prilog radne liste")
+        verbose_name_plural = _("Prilozi radne liste")
+
+    def __str__(self):
+        return self.naziv
+
+
 class KomentarProlaza(models.Model):
     """Objašnjenje za dan bez prolaza ili sa problemom u prolazima (od 05.10.2026.).
 
