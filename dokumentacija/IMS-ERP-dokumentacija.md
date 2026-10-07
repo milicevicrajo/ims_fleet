@@ -2295,7 +2295,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 |---|---|---|
 | **Pregled** (početna strana, od 02.10.2026.) | `/hr/` | Svaki prijavljeni korisnik; delovi samo uz dozvolu spiska |
 | Spisak zaposlenih | `/zaposleni/` | Kadrovska služba |
-| **Analitika zaposlenih** (od 05.10.2026.), PDF i Excel | `/hr/analitika/`, `?izvoz=pdf`, `?izvoz=xlsx` | Dozvola `hr:analitika`, u obuhvatu korisnika |
+| **Analitika zaposlenih** (od 05.10.2026.), PDF i Excel | `/hr/analitika/`, `?izvoz=pdf`, `?izvoz=xlsx` | Dozvola `hr:analitika`, u obuhvatu korisnika; sa `hr:analitika_view_all` cela firma. Osoba sa više aktivnih brojeva radnika broji se jednom (od 06.10.2026.) |
 | Štampa spiska (A4, „Sačuvaj kao PDF”) i Excel (od 05.10.2026.) | `/zaposleni/?izvoz=stampa`, `?izvoz=xlsx` | Isto kao spisak — ista dozvola `employee_list`, obuhvat i filteri |
 | Detalj zaposlenog | `/zaposleni/<id>/` | Kadrovska služba |
 | **Moj profil** | `/moj-profil/` | Svaki zaposleni |
@@ -2425,6 +2425,27 @@ Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema 
 > Superuser je može isključiti naknadnim čuvanjem bez promene tih polja. Ispravka
 > kvačica na sopstvenom profilu koristi posebna polja za prikaz i ne uključuje ovaj prekidač.
 
+#### Osoba i zaposlenja (od 06.10.2026.) [P]
+
+Osobu određuje **JMBG** (`fleet_osoba`), a zaposlenje je **broj radnika u preduzeću** (`fleet_employee`,
+jedinstven par `preduzece` + `employee_code`; preduzeće 1 = radni odnos, 2 = van radnog odnosa). Ista osoba
+posle ponovnog prijema ili uz rad van radnog odnosa ima više brojeva — sve veze (radne liste, rešenja,
+putni nalozi, …) i dalje idu na zaposlenje, a osoba ih objedinjuje.
+
+| Tema | Pravilo |
+|---|---|
+| Vezivanje | Sinhronizacija veže zaposlenje za osobu po JMBG-u (`hr/services/osobe.py: povezi_osobu`). Bez JMBG-a svako zaposlenje je posebna osoba. |
+| Lični podaci osobe | Ime, prezime, titula, pol i datum rođenja iz **glavnog zaposlenja**: aktivno, radni odnos, poslednji prijem (`glavno_zaposlenje`). |
+| Ime za prikaz i ćirilica | Pripadaju **osobi**. Izmena na bilo kom zaposlenju upisuje se na osobu i prepisuje na sva njena zaposlenja; novo zaposlenje ih preuzima od osobe. |
+| Preduzeće | Pogled `dbo.hr_employee` nema preduzeće — čita se iz `radnik.sif_pred` (`hr/sync.py: preduzeca_radnika`). |
+| Neaktivni brojevi | Uvoze se **samo za osobe koje već postoje** (da se vide sve njihove šifre); davno otišli bez aktivnog broja se ne uvoze. |
+| Sukobi | Isti broj radnika u oba preduzeća ili različiti redovi istog broja u pogledu — broj se **preskače**, ništa se ne prepisuje; broj se vidi u poruci sinhronizacije. |
+| Duplirani redovi pogleda | `dbo.hr_employee` od oktobra 2026. vraća svaki red dvaput (ispravlja vlasnik pogleda); identični redovi se računaju jednom. |
+| Nestanak iz izvora | Broj koji nestane iz kadrovske baze dobija `u_izvoru = False`; ne briše se i aktivnost mu se ne menja. |
+| Pregled pre izmena | `manage.py kadrovi_osobe_pregled` — samo čita: osobe sa više brojeva, sukobi brojeva, zapisi bez JMBG-a. |
+| Detalj zaposlenog | Sve kartice (ugovori, rešenja, zahtevi, radne liste, odmori, putni nalozi, vozila, incidenti, CV) obuhvataju **sva zaposlenja osobe**; kartica „Šifre“ prikazuje sve brojeve; kartica „Bolovanja“ samo uz pravo `hr:sick_leave_list`. Detalj ugovora prikazuje periode pod svim šiframa osobe. Spisak zaposlenih ima jedan red po osobi. |
+| Ukupan staž | Na osobi (`staz_*`, `staz_ims_*`), računa ga HR sinhronizacija iz `RadStaz` (u IMS `DA` i kod drugih poslodavaca `NE`/`ME`) za sve šifre osobe (`hr/services/osobe.py: obracunaj_staz`). Sabiraju se izvorne vrednosti perioda (30 dana = mesec, 12 meseci = godina, kao kadrovska baza); period bez staža otpada; isti period pod dve šifre računa se jednom (vrednost novije šifre); period ceo unutar dužeg perioda druge šifre se ne računa, osim kad duži nema upisan kraj (3000). |
+
 ---
 
 ### 8. Tabele i kolone
@@ -2433,7 +2454,8 @@ Detaljno: [4.5. Kadrovi](#45-kadrovi--hr). **20 tabela.**
 
 | Tabela | Uloga |
 |---|---|
-| **`fleet_employee`** | Zaposleni — ključ je `employee_code` |
+| **`fleet_osoba`** | Osoba — jedinstvena po JMBG-u (od 06.10.2026.) |
+| **`fleet_employee`** | Zaposlenje — ključ je `preduzece` + `employee_code`; `osoba` ga veže za osobu |
 | `fleet_employeecvitem` | CV stavke |
 | `hr_worktimesheet`, `hr_worktimesheetline` | Radna lista i redovi (31 kolona sati) |
 | `fleet_employee.slava_datum` | Datum krsne slave (koriste se dan i mesec); HR sinhronizacija ga ne menja, naziv slave dolazi iz HR-a |
@@ -2539,7 +2561,8 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 | Dozvola | Šta omogućava |
 |---|---|
 | `hr:work_time_sheet` | Svoja radna lista (i komentar na prolaze) |
-| `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.) |
+| `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.). Dobijaju je uloge **Kadrovi** (po obuhvatu) i **Pravna služba** (od 06.10.2026., link u meniju Pravne službe) |
+| **`hr:analitika_view_all`** | Analitika za **celu firmu**, bez obzira na obuhvat — Pravna služba (`core/permissions.py: PRAVNA_KADROVI_CODES`) i Uprava |
 | `hr:sick_leave_list`, `hr:sick_leave_import` | Bolovanja |
 | `hr:annual_leave_list` | Godišnji odmori |
 | `hr:work_time_catalog` | Šifarnici |
@@ -3774,6 +3797,7 @@ ekrana** — sporo i bez istorije. Potraživanja umesto toga:
 | Oznake partnera (važan kupac, provera) | `/potrazivanja/partner/<id>/oznaki/` |
 | Unos i izmena zapisa | `/potrazivanja/unos/<vrsta>/`, `/izmena/<vrsta>/<id>/` |
 | Arhiviranje zapisa | `/potrazivanja/arhiva/<vrsta>/<id>/` |
+| **Brisanje opomene / pisma unetog greškom** (od 06.10.2026.) | `/potrazivanja/brisanje/notice/<id>/` — dugme „Obriši (uneto greškom)“ na izmeni dokumenta; isto pravo kao arhiviranje (`notice_archive`); dokument se briše sa stavkama, snimak ostaje u `CollectionAudit` (`action = delete`) |
 | **Pravni postupak** | `/potrazivanja/postupak/<id>/` |
 | Promena u postupku | `/potrazivanja/postupak/<id>/promena/` |
 | **Štampa opomene** | `/potrazivanja/dokument/<id>/stampa/` |
@@ -3790,7 +3814,7 @@ ekrana** — sporo i bez istorije. Potraživanja umesto toga:
 | Oznaka „važan kupac“ i „potrebna provera“ | Služba naplate |
 | Kontakti: ime, prezime, funkcija, telefon, e-pošta | Služba naplate |
 | Telefonski pozivi: datum, tekst, ishod, sledeća radnja | Služba naplate |
-| **Opomene i pozivna pisma**: broj, datum, primalac, iznos, tekst, rok | Služba naplate |
+| **Opomene i pozivna pisma**: broj, datum, primalac, iznos, tekst, rok | Služba naplate. **Broj je jedinstven po vrsti i godini** (od 06.10.2026.), i kod različitih partnera; „223” i „223.0” su isti broj (`kljuc_broja`). Postojeći duplikati su pri migraciji 0008 dobili sufiks `-1`, `-2` (prvi po datumu zadržava broj; promena u `CollectionAudit`, `action = renumber`) |
 | Stavke opomene (fakture) | Služba naplate |
 | **Pravni postupci**: sud, broj predmeta, vrednost spora, kamata, troškovi | Pravna služba |
 | Promene u postupku | Pravna služba |
@@ -5962,10 +5986,13 @@ Izvorni kod: [`hr/models.py`](../hr/models.py), [`hr/evaluation_models.py`](../h
 
 | Kolona | Poslovno značenje |
 |---|---|
-| `employee_code` | **Šifra zaposlenog — jedinstvena.** Ključ prema kadrovskoj bazi |
+| `employee_code` | **Broj radnika** — jedinstven **unutar preduzeća** (od 06.10.2026. ključ je `preduzece` + `employee_code`) |
+| `preduzece` | 1 = radni odnos, 2 = van radnog odnosa (`radnik.sif_pred`) |
+| `osoba_id` | Osoba (`fleet_osoba`, jedinstvena po JMBG-u); jedna osoba može imati više zaposlenja |
+| `u_izvoru` | Isključeno kad broj nestane iz kadrovske baze |
 | `original_full_name` | Ime i prezime kako stoji u izvoru |
 | `first_name`, `last_name` | Razdvojeno ime i prezime |
-| `display_first_name_override`, `display_last_name_override` | **Ispravka za prikaz** koju unosi zaposleni |
+| `display_first_name_override`, `display_last_name_override`, `full_name_cyrillic` | **Ispravka za prikaz** i ćirilica — od 06.10.2026. pripadaju osobi (`fleet_osoba`) i prepisuju se na sva njena zaposlenja |
 | `skip_hr_identity_update` | Ako je uključeno, sinhronizacija **ne menja** titulu, ime, prezime i pol |
 | `position`, `department_code`, `org_unit_code`, `system_code`, `system_name` | Organizaciona pripadnost |
 | `job_code`, `job_title` | Zanimanje |

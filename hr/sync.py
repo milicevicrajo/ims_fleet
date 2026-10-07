@@ -186,13 +186,44 @@ def sync_employees_from_hr_view(using=None):
         cursor.execute(query)
         rows = cursor.fetchall()
 
-    created = 0
-    updated = 0
-    updated_inactive = 0
-    skipped_inactive = 0
-    skipped_invalid_code = 0
+    from hr.models import Osoba
+    from hr.services.osobe import PRIKAZ_POLJA, jmbg, osvezi_osobu, osvezi_staz, povezi_osobu
 
+    counts = dict(created=0, updated=0, updated_inactive=0, skipped_inactive=0, skipped_invalid_code=0,
+                  created_inactive=0, duplicate_rows=0, conflicting_rows=0, company_conflicts=0, missing_in_source=0)
+
+    # Pogled `dbo.hr_employee` (od 06.10.2026.) vraća svaki red dvaput: identični redovi se računaju jednom.
+    # Različiti redovi za isti broj radnika su sukob — taj broj se preskače, ništa se ne prepisuje.
+    po_broju = {}
     for row in rows:
+        employee_code = _as_int(row[0])
+        if employee_code is None:
+            counts["skipped_invalid_code"] += 1
+            logger.debug("Preskacem zapis bez validne sifre zaposlenog: %s", row[0])
+            continue
+        po_broju.setdefault(employee_code, []).append(tuple(row))
+
+    # Pogled nema preduzeće; broj radnika je jedinstven samo unutar preduzeća (izvor `radnik`).
+    preduzeca = preduzeca_radnika(using)
+    za_obradu = []
+    for employee_code, grupa in po_broju.items():
+        jedinstveni = list(dict.fromkeys(grupa))
+        counts["duplicate_rows"] += len(grupa) - len(jedinstveni)
+        if len(jedinstveni) > 1:
+            counts["conflicting_rows"] += 1
+            logger.warning("HR sync: broj radnika %s ima razlicite redove u pogledu, preskacem", employee_code)
+            continue
+        preduzece = {p for p, _ in preduzeca.get(employee_code, ())}
+        if len(preduzece) > 1:
+            counts["company_conflicts"] += 1
+            logger.warning("HR sync: broj radnika %s postoji u oba preduzeca, preskacem", employee_code)
+            continue
+        za_obradu.append((employee_code, next(iter(preduzece), None), jedinstveni[0]))
+    # Aktivni prvo: neaktivan broj se uvozi samo za osobu koja već postoji (da se vide sve njene šifre).
+    za_obradu.sort(key=lambda r: str(r[2][9]).strip().upper() != "D")
+
+    osobe = set()
+    for employee_code, preduzece, row in za_obradu:
         (
             rasif,
             ranaz,
@@ -217,12 +248,6 @@ def sync_employees_from_hr_view(using=None):
             recipient_code,
             recipient_name,
         ) = row
-
-        employee_code = _as_int(rasif)
-        if employee_code is None:
-            skipped_invalid_code += 1
-            logger.debug("Preskacem zapis bez validne sifre zaposlenog: %s", rasif)
-            continue
 
         title, first_name, last_name = _normalize_full_name(ranaz)
         is_active = str(aktivan).strip().upper() == "D"
@@ -254,7 +279,10 @@ def sync_employees_from_hr_view(using=None):
             "status_code": _as_str(sif_stat),
             "status_name": _as_str(naz_stat),
             "slava": _as_str(slava),
+            "u_izvoru": True,
         }
+        if preduzece:
+            defaults["preduzece"] = preduzece
         if has_residence_municipality_source:
             defaults["residence_municipality"] = _normalize_residence_municipality(opstina_boravka)
         if has_recipient_code:
@@ -262,36 +290,68 @@ def sync_employees_from_hr_view(using=None):
         if has_recipient_name:
             defaults["recipient_name"] = _as_str(recipient_name) or ""
 
-        existing = Employee.objects.filter(employee_code=employee_code).first()
-        if existing:
+        existing = Employee.objects.filter(employee_code=employee_code).select_related("osoba").first()
+        broj_jmbg = jmbg(matbr)
+        osoba = (Osoba.objects.filter(jmbg=broj_jmbg).first() if broj_jmbg
+                 else existing.osoba if existing and existing.osoba_id else None)
+        # Ime za prikaz i ćirilica pripadaju osobi; bez osobe ostaje ono što je upisano na zaposlenju.
+        if osoba:
+            defaults.update({polje: getattr(osoba, izvor) for polje, izvor in PRIKAZ_POLJA.items()})
+        elif existing:
             defaults["display_first_name_override"] = existing.display_first_name_override or ""
             defaults["display_last_name_override"] = existing.display_last_name_override or ""
         _preserve_locked_identity_fields(existing, defaults)
 
-        if not is_active:
-            if existing:
-                for key, value in defaults.items():
-                    setattr(existing, key, value)
-                existing.save()
-                updated_inactive += 1
-            else:
-                skipped_inactive += 1
-            continue
-
-        employee, was_created = Employee.objects.update_or_create(
-            employee_code=employee_code,
-            defaults=defaults,
-        )
-        if was_created:
-            created += 1
+        if existing:
+            for key, value in defaults.items():
+                setattr(existing, key, value)
+            existing.save()
+            employee = existing
+            counts["updated" if is_active else "updated_inactive"] += 1
+        elif is_active or osoba:
+            employee = Employee.objects.create(employee_code=employee_code, **defaults)
+            counts["created" if is_active else "created_inactive"] += 1
         else:
-            updated += 1
+            counts["skipped_inactive"] += 1
+            continue
+        osobe.add(povezi_osobu(employee).pk)
 
-    return {
-        "created": created,
-        "updated": updated,
-        "updated_inactive": updated_inactive,
-        "skipped_inactive": skipped_inactive,
-        "skipped_invalid_code": skipped_invalid_code,
-        "total": len(rows),
-    }
+    for osoba in Osoba.objects.filter(pk__in=osobe):
+        osvezi_osobu(osoba)
+    # Broj koji nestane iz izvora se ne briše i aktivnost mu se ne menja — samo dobija oznaku.
+    if po_broju:
+        counts["missing_in_source"] = (Employee.objects.exclude(employee_code__in=list(po_broju))
+                                       .filter(u_izvoru=True).update(u_izvoru=False))
+    # Ukupan staž osobe (sve šifre, `RadStaz`) — posle vezivanja osoba i upisa preduzeća.
+    counts["staz_osoba"] = osvezi_staz(staz_periodi(using))
+
+    return {**counts, "total": len(rows)}
+
+
+def staz_periodi(using=None):
+    """Periodi staža iz kadrovske baze (`RadStaz`), svi poslodavci."""
+    from hr.services.osobe import periodi_staza
+
+    return periodi_staza(using)
+
+
+def opis_osoba(result):
+    """Dopuna poruke o sinhronizaciji: osobe, preduzeća i stanje pogleda (od 06.10.2026.)."""
+    return (f"Neaktivne šifre postojećih osoba: {result.get('created_inactive', 0)}, "
+            f"nema u izvoru: {result.get('missing_in_source', 0)}, "
+            f"sukob preduzeća: {result.get('company_conflicts', 0)}, "
+            f"različiti redovi istog broja: {result.get('conflicting_rows', 0)}, "
+            f"duplirani redovi pogleda: {result.get('duplicate_rows', 0)}, "
+            f"staž osoba: {result.get('staz_osoba', 0)}")
+
+
+def preduzeca_radnika(using=None):
+    """Broj radnika -> {(preduzeće, JMBG)} iz izvora `radnik` (pogled `hr_employee` nema preduzeće)."""
+    from collections import defaultdict
+
+    from hr.services.osobe import radnici_izvora
+
+    mapa = defaultdict(set)
+    for r in radnici_izvora(using):
+        mapa[r["broj"]].add((r["preduzece"], r["jmbg"]))
+    return mapa

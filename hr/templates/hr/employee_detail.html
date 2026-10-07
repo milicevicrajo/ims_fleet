@@ -20,9 +20,9 @@
 <div class="profile-hero shadow-sm p-4 mb-3">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
     <div>
-      <div class="profile-code mb-1">Sifra zaposlenog: {{ employee.employee_code }}</div>
+      <div class="profile-code mb-1">{% if vise_zaposlenja %}Šifre zaposlenog: {% for z in zaposlenja %}{% if z.pk == employee.pk %}<strong>{{ z.employee_code }}</strong>{% else %}{{ z.employee_code }}{% endif %}{% if z.preduzece == 2 %} (van r.o.){% endif %}{% if not z.is_active %} (neakt.){% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}{% else %}Sifra zaposlenog: {{ employee.employee_code }}{% endif %}</div>
       <h2 class="mb-1">{{ employee.display_last_name }} {{ employee.display_first_name }}</h2>
-      <div>{{ employee.position|default:"-" }}{% if employee.org_unit_code %} · OJ {{ employee.org_unit_code }}{% endif %}</div>
+      <div>{{ employee.position|default:"-" }}{% if employee.org_unit_code %} · OJ {{ employee.org_unit_code }}{% endif %}{% if employee.osoba.ukupan_staz %} · ukupan staž {{ employee.osoba.ukupan_staz }}{% endif %}</div>
     </div>
     <div class="d-flex flex-wrap gap-2">
       {% if is_self_profile %}
@@ -45,6 +45,7 @@
     <ul class="nav nav-tabs mb-3" id="employeeDetailTabs" role="tablist">
       {% if moj %}<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pregled" type="button"><i class="mdi mdi-view-dashboard-outline"></i> Pregled</button></li>{% endif %}
       <li class="nav-item"><button class="nav-link{% if not moj %} active{% endif %}" data-bs-toggle="tab" data-bs-target="#basic-info" type="button">Osnovni podaci</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sifre" type="button">Šifre <span class="badge bg-light text-dark">{{ zaposlenja|length }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cv" type="button">CV <span class="badge bg-light text-dark">{{ cv_items_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#work-time-sheets" type="button">Radne liste <span class="badge bg-light text-dark">{{ work_time_sheets_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#annual-leave" type="button">Godišnji odmori</button></li>
@@ -54,6 +55,7 @@
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#vehicle-orders" type="button">Zaduzenja vozila <span class="badge bg-light text-dark">{{ vehicle_travel_orders_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#incidents" type="button">Incidenti <span class="badge bg-light text-dark">{{ incidents_count }}</span></button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#contracts" type="button">Ugovori <span class="badge bg-light text-dark">{{ ugovori_zaposlenog_count|add:contracts_count }}</span></button></li>
+      {% if can_view_sick_leave %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#bolovanja" type="button">Bolovanja <span class="badge bg-light text-dark">{{ bolovanja_count }}</span></button></li>{% endif %}
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#activities" type="button">Aktivnosti <span class="badge bg-light text-dark">{{ activities_count }}</span></button></li>
     </ul>
 
@@ -71,6 +73,7 @@
               <p><strong>Pol:</strong> {{ employee.gender|default:"-" }}</p>
               <p><strong>Datum rodjenja:</strong> {{ employee.date_of_birth|date:"d.m.Y" }}</p>
               <p><strong>Datum zaposljavanja:</strong> {{ employee.date_of_joining|date:"d.m.Y" }}</p>
+              <p><strong>Ukupan staž:</strong> {% if employee.osoba.ukupan_staz %}{{ employee.osoba.ukupan_staz }}<div class="small text-muted">u IMS: {{ employee.osoba.staz_u_ims }} · sve šifre, iz kadrovske baze {{ employee.osoba.staz_preuzet|date:"d.m.Y" }}</div>{% else %}<span class="text-muted">nije preuzet</span>{% endif %}</p>
               <p class="mb-0"><strong>Aktivan:</strong> {% if employee.is_active %}Da{% else %}Ne{% endif %}</p>
             </div></div>
           </div>
@@ -109,6 +112,31 @@
           </div>
         </div>
       </div>
+
+      <div class="tab-pane fade" id="sifre">
+        <p class="text-muted small mb-2">Svi brojevi radnika iste osobe (JMBG). Pregled na ovoj strani obuhvata sva zaposlenja.</p>
+        <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
+          <thead class="table-light"><tr><th>Broj radnika</th><th>Preduzeće</th><th>Status</th><th>Vrsta primaoca</th><th>OJ</th><th>Pozicija</th><th>Prijem</th><th>Aktivan</th>{% if not is_self_profile %}<th></th>{% endif %}</tr></thead>
+          <tbody>{% for z in zaposlenja %}<tr{% if not z.is_active %} class="text-muted"{% endif %}>
+            <td class="fw-semibold">{{ z.employee_code }}{% if z.pk == employee.pk %} <span class="badge bg-light text-dark">ova strana</span>{% endif %}</td>
+            <td>{{ z.get_preduzece_display }}</td>
+            <td>{{ z.status_name|default:"—" }}</td>
+            <td>{{ z.recipient_name|default:"—" }}</td>
+            <td>{{ z.org_unit_code|default:z.department_code }}</td>
+            <td>{{ z.position|default:"—" }}</td>
+            <td data-order="{{ z.date_of_joining|date:'Y-m-d' }}">{{ z.date_of_joining|date:"d.m.Y" }}</td>
+            <td>{% if z.is_active %}Da{% else %}Ne{% endif %}{% if not z.u_izvoru %}<div class="small">nema u kadrovskoj bazi</div>{% endif %}</td>
+            {% if not is_self_profile %}<td>{% if z.pk != employee.pk %}<a href="{% url 'employee_detail' z.pk %}" class="btn btn-outline-primary btn-sm">Otvori</a>{% endif %}</td>{% endif %}
+          </tr>{% endfor %}</tbody>
+        </table></div>
+      </div>
+
+      {% if can_view_sick_leave %}<div class="tab-pane fade" id="bolovanja">
+        {% if bolovanja %}<div class="table-responsive"><table class="table table-striped table-bordered align-middle">
+          <thead class="table-light"><tr><th>Početak</th><th>Završetak</th><th>Ukupno dana (RFZO)</th><th>Status RFZO</th><th>Datum izvoza</th></tr></thead>
+          <tbody>{% for b in bolovanja %}<tr><td data-order="{{ b.start_date|date:'Y-m-d' }}">{{ b.start_date|date:"d.m.Y" }}</td><td>{{ b.end_date|date:"d.m.Y"|default:"u toku" }}</td><td>{{ b.source_total_days|default:"—" }}</td><td>{{ b.source_status }}</td><td>{{ b.source_date|date:"d.m.Y" }}</td></tr>{% endfor %}</tbody>
+        </table></div>{% else %}<div class="alert alert-info">Nema evidentiranih bolovanja.</div>{% endif %}
+      </div>{% endif %}
 
       <div class="tab-pane fade" id="cv">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -154,7 +182,7 @@
 
       <div class="tab-pane fade" id="annual-leave">
         <h4 class="mb-3">Godišnji odmori — istorija dodele i rešenja</h4>
-        {% include 'hr/_annual_leave_tables.html' with show_employee=False %}
+        {% include 'hr/_annual_leave_tables.html' with show_employee=vise_zaposlenja %}
       </div>
       <div class="tab-pane fade" id="work-time-sheets">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -172,6 +200,7 @@
           <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
             <thead class="table-light">
               <tr>
+                {% if vise_zaposlenja %}<th>Šifra</th>{% endif %}
                 <th>Mesec</th>
                 <th>Godina</th>
                 <th>Status</th>
@@ -184,6 +213,7 @@
             <tbody>
               {% for sheet in work_time_sheets %}
                 <tr>
+                  {% if vise_zaposlenja %}<td class="text-nowrap">{{ sheet.employee.employee_code }}{% if sheet.employee.preduzece == 2 %} <small class="text-muted">van r.o.</small>{% endif %}</td>{% endif %}
                   <td>{{ sheet.month_label }}</td>
                   <td>{{ sheet.year }}</td>
                   <td>{{ sheet.get_status_display }}</td>
@@ -215,9 +245,9 @@
       <div class="tab-pane fade" id="zahtevi">
         <div class="table-responsive">
           <table class="table table-bordered table-hover align-middle">
-            <thead><tr><th>Broj</th><th>Datum</th><th>Vrsta</th><th>Podnosi</th><th>Status</th><th>Rešenja</th><th></th></tr></thead>
+            <thead><tr>{% if vise_zaposlenja %}<th>Šifra</th>{% endif %}<th>Broj</th><th>Datum</th><th>Vrsta</th><th>Podnosi</th><th>Status</th><th>Rešenja</th><th></th></tr></thead>
             <tbody>
-            {% for zahtev in zahtevi %}<tr>
+            {% for zahtev in zahtevi %}<tr>{% if vise_zaposlenja %}<td class="text-nowrap">{{ zahtev.zaposleni.employee_code }}{% if zahtev.zaposleni.preduzece == 2 %} <small class="text-muted">van r.o.</small>{% endif %}</td>{% endif %}
               <td>{{ zahtev.broj }}</td>
               <td>{{ zahtev.datum_zahteva|date:'d.m.Y.' }}</td>
               <td>{{ zahtev.vrsta.naziv }}</td>
@@ -236,9 +266,9 @@
       <div class="tab-pane fade" id="resenja">
         <div class="table-responsive">
           <table class="table table-bordered table-hover align-middle">
-            <thead><tr><th>Broj</th><th>Datum</th><th>Vrsta</th><th>Period</th><th>Status</th><th></th></tr></thead>
+            <thead><tr>{% if vise_zaposlenja %}<th>Šifra</th>{% endif %}<th>Broj</th><th>Datum</th><th>Vrsta</th><th>Period</th><th>Status</th><th></th></tr></thead>
             <tbody>
-            {% for resenje in resenja %}<tr>
+            {% for resenje in resenja %}<tr>{% if vise_zaposlenja %}<td class="text-nowrap">{{ resenje.zaposleni.employee_code }}{% if resenje.zaposleni.preduzece == 2 %} <small class="text-muted">van r.o.</small>{% endif %}</td>{% endif %}
               <td>{{ resenje.broj }}</td>
               <td>{{ resenje.datum_resenja|date:'d.m.Y.' }}</td>
               <td>{{ resenje.vrsta.naziv }}</td>
@@ -256,8 +286,8 @@
       <div class="tab-pane fade" id="travel-orders">
         {% if travel_orders %}
           <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
-            <thead class="table-light"><tr><th>Broj naloga</th><th>Datum</th><th>Mesto putovanja</th><th>Vozilo</th><th>Status</th>{% if not is_self_profile %}<th>Akcija</th>{% endif %}</tr></thead>
-            <tbody>{% for order in travel_orders %}<tr>
+            <thead class="table-light"><tr>{% if vise_zaposlenja %}<th>Šifra</th>{% endif %}<th>Broj naloga</th><th>Datum</th><th>Mesto putovanja</th><th>Vozilo</th><th>Status</th>{% if not is_self_profile %}<th>Akcija</th>{% endif %}</tr></thead>
+            <tbody>{% for order in travel_orders %}<tr>{% if vise_zaposlenja %}<td class="text-nowrap">{{ order.employee.employee_code }}{% if order.employee.preduzece == 2 %} <small class="text-muted">van r.o.</small>{% endif %}</td>{% endif %}
               <td>{{ order.order_number }}</td><td>{{ order.order_date|date:"d.m.Y" }}</td><td>{{ order.travel_location }}</td>
               <td>{% if order.vehicle and not is_self_profile %}{{ order.vehicle|vozilo_link }}{% else %}{{ order.vehicle|default:order.other_vehicle|default:"-" }}{% endif %}</td>
               <td>{% if order.storniran %}<span class="badge bg-danger">Storniran</span>{% elif order.opravdan %}<span class="badge bg-success">Opravdan</span>{% else %}<span class="badge bg-warning text-dark">Nije opravdan</span>{% endif %}</td>
@@ -270,8 +300,8 @@
       <div class="tab-pane fade" id="vehicle-orders">
         {% if vehicle_travel_orders %}
           <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
-            <thead class="table-light"><tr><th>PN broj</th><th>Vozilo</th><th>Otvoren</th><th>Zatvoren</th><th>Status</th>{% if not is_self_profile %}<th>Akcija</th>{% endif %}</tr></thead>
-            <tbody>{% for order in vehicle_travel_orders %}<tr>
+            <thead class="table-light"><tr>{% if vise_zaposlenja %}<th>Šifra</th>{% endif %}<th>PN broj</th><th>Vozilo</th><th>Otvoren</th><th>Zatvoren</th><th>Status</th>{% if not is_self_profile %}<th>Akcija</th>{% endif %}</tr></thead>
+            <tbody>{% for order in vehicle_travel_orders %}<tr>{% if vise_zaposlenja %}<td class="text-nowrap">{{ order.employee.employee_code }}{% if order.employee.preduzece == 2 %} <small class="text-muted">van r.o.</small>{% endif %}</td>{% endif %}
               <td>{{ order.pn_number }}</td><td>{% if is_self_profile %}{{ order.vehicle }}{% else %}{{ order.vehicle|vozilo_link }}{% endif %}</td><td>{{ order.created_at|date:"d.m.Y" }}</td><td>{{ order.closed_at|date:"d.m.Y"|default:"-" }}</td>
               <td>{% if order.closed_at %}<span class="badge bg-secondary">Zatvoren</span>{% else %}<span class="badge bg-success">Otvoren</span>{% endif %}</td>
               {% if not is_self_profile %}<td><a href="{% url 'vehicle_travel_order_detail' order.pk %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-eye"></i></a></td>{% endif %}
@@ -283,8 +313,8 @@
       <div class="tab-pane fade" id="incidents">
         {% if incidents %}
           <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
-            <thead class="table-light"><tr><th>Datum</th><th>Vozilo</th><th>Prekrsaj</th><th>Lokacija</th><th>Iznos kazne</th><th>Napomena</th></tr></thead>
-            <tbody>{% for incident in incidents %}<tr>
+            <thead class="table-light"><tr>{% if vise_zaposlenja %}<th>Šifra</th>{% endif %}<th>Datum</th><th>Vozilo</th><th>Prekrsaj</th><th>Lokacija</th><th>Iznos kazne</th><th>Napomena</th></tr></thead>
+            <tbody>{% for incident in incidents %}<tr>{% if vise_zaposlenja %}<td class="text-nowrap">{{ incident.employee.employee_code }}{% if incident.employee.preduzece == 2 %} <small class="text-muted">van r.o.</small>{% endif %}</td>{% endif %}
               <td>{{ incident.date|date:"d.m.Y" }}</td><td>{% if is_self_profile %}{{ incident.vehicle }}{% else %}{{ incident.vehicle|vozilo_link }}{% endif %}</td><td>{{ incident.violation }}</td><td>{{ incident.location }}</td><td>{{ incident.fine_amount }}</td><td>{{ incident.note|default:"-" }}</td>
             </tr>{% endfor %}</tbody>
           </table></div>
@@ -296,8 +326,8 @@
         <p class="text-muted small mb-2">Periodi rada iz kadrovske baze sa brojem i datumom ugovora koje unose Kadrovi.</p>
         {% if ugovori_zaposlenog %}
           <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
-            <thead class="table-light"><tr><th>Period</th><th>Kategorija</th><th>Broj ugovora</th><th>Datum ugovora</th><th>Aneks</th><th>OJ</th><th>Radno mesto</th><th class="text-center">Dokument</th>{% if can_view_ugovor %}<th>Akcija</th>{% endif %}</tr></thead>
-            <tbody>{% for u in ugovori_zaposlenog %}<tr{% if not u.u_izvoru %} class="text-muted"{% endif %}>
+            <thead class="table-light"><tr>{% if vise_zaposlenja %}<th>Šifra</th>{% endif %}<th>Period</th><th>Kategorija</th><th>Broj ugovora</th><th>Datum ugovora</th><th>Aneks</th><th>OJ</th><th>Radno mesto</th><th class="text-center">Dokument</th>{% if can_view_ugovor %}<th>Akcija</th>{% endif %}</tr></thead>
+            <tbody>{% for u in ugovori_zaposlenog %}<tr{% if not u.u_izvoru %} class="text-muted"{% endif %}>{% if vise_zaposlenja %}<td class="text-nowrap">{{ u.employee.employee_code }}{% if u.employee.preduzece == 2 %} <small class="text-muted">van r.o.</small>{% endif %}</td>{% endif %}
               <td class="text-nowrap">{{ u.datum_od|date:"d.m.Y." }} – {% if u.na_neodredjeno %}na neodređeno{% else %}{{ u.datum_do|date:"d.m.Y."|default:"—" }}{% endif %}{% if not u.u_izvoru %}<div class="small">nema u kadrovskoj bazi</div>{% endif %}</td>
               <td>{{ u.get_kategorija_display }}</td>
               <td>{{ u.broj_ugovora|default:"—" }}</td>

@@ -142,6 +142,27 @@ def record_archive(request, kind, pk):
     return after_save(obj)
 
 
+@require_POST
+def record_delete(request, kind, pk):
+    """Brisanje opomene ili pozivnog pisma unetog greškom (npr. na pogrešnog partnera), od 06.10.2026.
+
+    Briše onaj ko sme da arhivira. Dokument i stavke se brišu, a snimak ostaje u evidenciji izmena."""
+    if kind != 'notice': raise PermissionDenied('Brišu se samo opomene i pozivna pisma.')
+    writable(request, kind, 'archive')
+    with transaction.atomic():
+        obj = get_object_or_404(CollectionNotice.objects.select_for_update(), pk=pk)
+        if request.POST.get('version') != obj.updated_at.isoformat():
+            return HttpResponse('Zapis je promenjen. Osvežite stranicu.', status=409)
+        opis = f'{obj.get_kind_display()} {obj.number}/{obj.year}' if obj.number else obj.get_kind_display()
+        partner = obj.identity_id
+        CollectionAudit.objects.create(actor=request.user, entity=obj._meta.label_lower, entity_id=obj.pk,
+                                       action='delete', before=record_snapshot(obj), after={})
+        obj.items.all().delete()
+        obj.delete()
+    messages.success(request, f'{opis} je obrisana.')
+    return redirect('potrazivanja:partner_detail', pk=partner) if partner else redirect('potrazivanja:dashboard')
+
+
 @never_cache
 @require_http_methods(['GET','POST'])
 def profile_edit(request, pk):

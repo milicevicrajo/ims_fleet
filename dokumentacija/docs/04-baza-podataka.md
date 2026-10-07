@@ -377,10 +377,13 @@ Izvorni kod: [`hr/models.py`](../../hr/models.py), [`hr/evaluation_models.py`](.
 
 | Kolona | Poslovno značenje |
 |---|---|
-| `employee_code` | **Šifra zaposlenog — jedinstvena.** Ključ prema kadrovskoj bazi |
+| `employee_code` | **Broj radnika** — jedinstven **unutar preduzeća** (od 06.10.2026. ključ je `preduzece` + `employee_code`) |
+| `preduzece` | 1 = radni odnos, 2 = van radnog odnosa (`radnik.sif_pred`) |
+| `osoba_id` | Osoba (`fleet_osoba`, jedinstvena po JMBG-u); jedna osoba može imati više zaposlenja |
+| `u_izvoru` | Isključeno kad broj nestane iz kadrovske baze |
 | `original_full_name` | Ime i prezime kako stoji u izvoru |
 | `first_name`, `last_name` | Razdvojeno ime i prezime |
-| `display_first_name_override`, `display_last_name_override` | **Ispravka za prikaz** koju unosi zaposleni |
+| `display_first_name_override`, `display_last_name_override`, `full_name_cyrillic` | **Ispravka za prikaz** i ćirilica — od 06.10.2026. pripadaju osobi (`fleet_osoba`) i prepisuju se na sva njena zaposlenja |
 | `skip_hr_identity_update` | Ako je uključeno, sinhronizacija **ne menja** titulu, ime, prezime i pol |
 | `position`, `department_code`, `org_unit_code`, `system_code`, `system_name` | Organizaciona pripadnost |
 | `job_code`, `job_title` | Zanimanje |

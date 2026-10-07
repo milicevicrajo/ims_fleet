@@ -68,7 +68,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 |---|---|---|
 | **Pregled** (početna strana, od 02.10.2026.) | `/hr/` | Svaki prijavljeni korisnik; delovi samo uz dozvolu spiska |
 | Spisak zaposlenih | `/zaposleni/` | Kadrovska služba |
-| **Analitika zaposlenih** (od 05.10.2026.), PDF i Excel | `/hr/analitika/`, `?izvoz=pdf`, `?izvoz=xlsx` | Dozvola `hr:analitika`, u obuhvatu korisnika |
+| **Analitika zaposlenih** (od 05.10.2026.), PDF i Excel | `/hr/analitika/`, `?izvoz=pdf`, `?izvoz=xlsx` | Dozvola `hr:analitika`, u obuhvatu korisnika; sa `hr:analitika_view_all` cela firma. Osoba sa više aktivnih brojeva radnika broji se jednom (od 06.10.2026.) |
 | Štampa spiska (A4, „Sačuvaj kao PDF”) i Excel (od 05.10.2026.) | `/zaposleni/?izvoz=stampa`, `?izvoz=xlsx` | Isto kao spisak — ista dozvola `employee_list`, obuhvat i filteri |
 | Detalj zaposlenog | `/zaposleni/<id>/` | Kadrovska služba |
 | **Moj profil** | `/moj-profil/` | Svaki zaposleni |
@@ -198,6 +198,27 @@ Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema 
 > Superuser je može isključiti naknadnim čuvanjem bez promene tih polja. Ispravka
 > kvačica na sopstvenom profilu koristi posebna polja za prikaz i ne uključuje ovaj prekidač.
 
+### Osoba i zaposlenja (od 06.10.2026.) [P]
+
+Osobu određuje **JMBG** (`fleet_osoba`), a zaposlenje je **broj radnika u preduzeću** (`fleet_employee`,
+jedinstven par `preduzece` + `employee_code`; preduzeće 1 = radni odnos, 2 = van radnog odnosa). Ista osoba
+posle ponovnog prijema ili uz rad van radnog odnosa ima više brojeva — sve veze (radne liste, rešenja,
+putni nalozi, …) i dalje idu na zaposlenje, a osoba ih objedinjuje.
+
+| Tema | Pravilo |
+|---|---|
+| Vezivanje | Sinhronizacija veže zaposlenje za osobu po JMBG-u (`hr/services/osobe.py: povezi_osobu`). Bez JMBG-a svako zaposlenje je posebna osoba. |
+| Lični podaci osobe | Ime, prezime, titula, pol i datum rođenja iz **glavnog zaposlenja**: aktivno, radni odnos, poslednji prijem (`glavno_zaposlenje`). |
+| Ime za prikaz i ćirilica | Pripadaju **osobi**. Izmena na bilo kom zaposlenju upisuje se na osobu i prepisuje na sva njena zaposlenja; novo zaposlenje ih preuzima od osobe. |
+| Preduzeće | Pogled `dbo.hr_employee` nema preduzeće — čita se iz `radnik.sif_pred` (`hr/sync.py: preduzeca_radnika`). |
+| Neaktivni brojevi | Uvoze se **samo za osobe koje već postoje** (da se vide sve njihove šifre); davno otišli bez aktivnog broja se ne uvoze. |
+| Sukobi | Isti broj radnika u oba preduzeća ili različiti redovi istog broja u pogledu — broj se **preskače**, ništa se ne prepisuje; broj se vidi u poruci sinhronizacije. |
+| Duplirani redovi pogleda | `dbo.hr_employee` od oktobra 2026. vraća svaki red dvaput (ispravlja vlasnik pogleda); identični redovi se računaju jednom. |
+| Nestanak iz izvora | Broj koji nestane iz kadrovske baze dobija `u_izvoru = False`; ne briše se i aktivnost mu se ne menja. |
+| Pregled pre izmena | `manage.py kadrovi_osobe_pregled` — samo čita: osobe sa više brojeva, sukobi brojeva, zapisi bez JMBG-a. |
+| Detalj zaposlenog | Sve kartice (ugovori, rešenja, zahtevi, radne liste, odmori, putni nalozi, vozila, incidenti, CV) obuhvataju **sva zaposlenja osobe**; kartica „Šifre“ prikazuje sve brojeve; kartica „Bolovanja“ samo uz pravo `hr:sick_leave_list`. Detalj ugovora prikazuje periode pod svim šiframa osobe. Spisak zaposlenih ima jedan red po osobi. |
+| Ukupan staž | Na osobi (`staz_*`, `staz_ims_*`), računa ga HR sinhronizacija iz `RadStaz` (u IMS `DA` i kod drugih poslodavaca `NE`/`ME`) za sve šifre osobe (`hr/services/osobe.py: obracunaj_staz`). Sabiraju se izvorne vrednosti perioda (30 dana = mesec, 12 meseci = godina, kao kadrovska baza); period bez staža otpada; isti period pod dve šifre računa se jednom (vrednost novije šifre); period ceo unutar dužeg perioda druge šifre se ne računa, osim kad duži nema upisan kraj (3000). |
+
 ---
 
 ## 8. Tabele i kolone
@@ -206,7 +227,8 @@ Detaljno: [4.5. Kadrovi](../04-baza-podataka.md#45-kadrovi--hr). **20 tabela.**
 
 | Tabela | Uloga |
 |---|---|
-| **`fleet_employee`** | Zaposleni — ključ je `employee_code` |
+| **`fleet_osoba`** | Osoba — jedinstvena po JMBG-u (od 06.10.2026.) |
+| **`fleet_employee`** | Zaposlenje — ključ je `preduzece` + `employee_code`; `osoba` ga veže za osobu |
 | `fleet_employeecvitem` | CV stavke |
 | `hr_worktimesheet`, `hr_worktimesheetline` | Radna lista i redovi (31 kolona sati) |
 | `fleet_employee.slava_datum` | Datum krsne slave (koriste se dan i mesec); HR sinhronizacija ga ne menja, naziv slave dolazi iz HR-a |
@@ -312,7 +334,8 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 | Dozvola | Šta omogućava |
 |---|---|
 | `hr:work_time_sheet` | Svoja radna lista (i komentar na prolaze) |
-| `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.) |
+| `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.). Dobijaju je uloge **Kadrovi** (po obuhvatu) i **Pravna služba** (od 06.10.2026., link u meniju Pravne službe) |
+| **`hr:analitika_view_all`** | Analitika za **celu firmu**, bez obzira na obuhvat — Pravna služba (`core/permissions.py: PRAVNA_KADROVI_CODES`) i Uprava |
 | `hr:sick_leave_list`, `hr:sick_leave_import` | Bolovanja |
 | `hr:annual_leave_list` | Godišnji odmori |
 | `hr:work_time_catalog` | Šifarnici |

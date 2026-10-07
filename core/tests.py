@@ -145,8 +145,9 @@ class PermissionCodeSyncTests(TestCase):
 
         sync_pravna_resenja_permissions()
 
+        from .permissions import PRAVNA_KADROVI_CODES
         self.assertEqual(set(Role.objects.get(slug='pravna').permissions.values_list('code', flat=True)),
-                         set(collect_pravna_permission_codes()))
+                         set(collect_pravna_permission_codes()) | PRAVNA_KADROVI_CODES)  # + analitika zaposlenih
         operational = set(collect_resenja_permission_codes()) - RESENJA_ADMIN_CODES
         self.assertEqual(set(sekretarijat.permissions.values_list('code', flat=True)), operational | {custom.code})
         self.assertEqual(set(pregled.permissions.values_list('code', flat=True)), {custom.code})

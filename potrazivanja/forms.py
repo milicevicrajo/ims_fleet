@@ -4,7 +4,8 @@ from django.core.validators import validate_email
 from django.forms import inlineformset_factory, BaseInlineFormSet
 from django.utils import timezone
 from .models import (FinancePartnerIdentity, CollectionContact, ContactPoint, CollectionActivity,
-                     CollectionNotice, CollectionNoticeItem, CollectionProfile, CollectionLegalCase, CollectionLegalEvent)
+                     CollectionNotice, CollectionNoticeItem, CollectionProfile, CollectionLegalCase, CollectionLegalEvent,
+                     kljuc_broja)
 from .services.contacts import clean_phone
 
 
@@ -142,7 +143,22 @@ class NoticeForm(CollectionForm):
             values['year'] = values['issued_on'].year
         if values.get('response_due_date') and values.get('issued_on') and values['response_due_date'] < values['issued_on']:
             self.add_error('response_due_date', 'Rok ne može biti pre datuma dokumenta.')
+        self._proveri_broj(values)
         return values
+
+    def _proveri_broj(self, values):
+        """Isti broj iste vrste u istoj godini ne sme postojati dvaput, ni kod drugog partnera."""
+        broj, godina, vrsta = (values.get('number') or '').strip(), values.get('year'), values.get('kind')
+        if not (broj and godina and vrsta):
+            return
+        values['number'] = broj
+        kljuc = kljuc_broja(broj)
+        postojeci = next((n for n in CollectionNotice.objects.filter(kind=vrsta, year=godina).exclude(pk=self.instance.pk)
+                          .exclude(number='').select_related('identity') if kljuc_broja(n.number) == kljuc), None)
+        if postojeci:
+            partner = postojeci.partner_name_snapshot or (str(postojeci.identity) if postojeci.identity_id else '')
+            self.add_error('number', f'{postojeci.get_kind_display()} broj {broj}/{godina} već postoji'
+                                     f'{f" ({partner})" if partner else ""}. Unesite drugi broj.')
 
 
 class NoticeItemForm(forms.ModelForm):

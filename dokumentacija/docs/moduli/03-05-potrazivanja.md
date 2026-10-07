@@ -69,6 +69,7 @@ ekrana** — sporo i bez istorije. Potraživanja umesto toga:
 | Oznake partnera (važan kupac, provera) | `/potrazivanja/partner/<id>/oznaki/` |
 | Unos i izmena zapisa | `/potrazivanja/unos/<vrsta>/`, `/izmena/<vrsta>/<id>/` |
 | Arhiviranje zapisa | `/potrazivanja/arhiva/<vrsta>/<id>/` |
+| **Brisanje opomene / pisma unetog greškom** (od 06.10.2026.) | `/potrazivanja/brisanje/notice/<id>/` — dugme „Obriši (uneto greškom)“ na izmeni dokumenta; isto pravo kao arhiviranje (`notice_archive`); dokument se briše sa stavkama, snimak ostaje u `CollectionAudit` (`action = delete`) |
 | **Pravni postupak** | `/potrazivanja/postupak/<id>/` |
 | Promena u postupku | `/potrazivanja/postupak/<id>/promena/` |
 | **Štampa opomene** | `/potrazivanja/dokument/<id>/stampa/` |
@@ -85,7 +86,7 @@ ekrana** — sporo i bez istorije. Potraživanja umesto toga:
 | Oznaka „važan kupac“ i „potrebna provera“ | Služba naplate |
 | Kontakti: ime, prezime, funkcija, telefon, e-pošta | Služba naplate |
 | Telefonski pozivi: datum, tekst, ishod, sledeća radnja | Služba naplate |
-| **Opomene i pozivna pisma**: broj, datum, primalac, iznos, tekst, rok | Služba naplate |
+| **Opomene i pozivna pisma**: broj, datum, primalac, iznos, tekst, rok | Služba naplate. **Broj je jedinstven po vrsti i godini** (od 06.10.2026.), i kod različitih partnera; „223” i „223.0” su isti broj (`kljuc_broja`). Postojeći duplikati su pri migraciji 0008 dobili sufiks `-1`, `-2` (prvi po datumu zadržava broj; promena u `CollectionAudit`, `action = renumber`) |
 | Stavke opomene (fakture) | Služba naplate |
 | **Pravni postupci**: sud, broj predmeta, vrednost spora, kamata, troškovi | Pravna služba |
 | Promene u postupku | Pravna služba |

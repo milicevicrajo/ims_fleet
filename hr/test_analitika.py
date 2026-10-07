@@ -155,3 +155,41 @@ class AnalitikaTests(TestCase):
         self.assertEqual(knjiga.sheetnames, ["Sažetak", "Starost", "Stručna sprema", "Starost po spremi",
                                              "Staž u Institutu", "Organizacione jedinice", "Radni odnos", "Razvrstavanje"])
         self.assertEqual(knjiga["Sažetak"]["B6"].value, 4)
+
+
+class AnalitikaDozvoleTests(TestCase):
+    """Od 06.10.2026.: Pravna služba vidi analitiku cele firme; osoba sa dva broja broji se jednom."""
+
+    def setUp(self):
+        zaposleni(1, pol="Z", rodjen=datetime.date(1996, 1, 1))
+        zaposleni(2, pol="M", rodjen=datetime.date(1981, 12, 1))
+
+    def ukupno(self, user):
+        self.client.force_login(user)
+        return self.client.get(reverse("hr:analitika")).context["a"]["ukupno"]
+
+    @override_settings(PRAVA_PO_REGISTRU={"kadrovi": True})
+    def test_cela_firma_samo_uz_analitika_view_all(self):
+        self.assertEqual(self.ukupno(korisnik("bez-obuhvata", "hr:analitika")), 0)  # registar: bez dodele ništa
+        self.assertEqual(self.ukupno(korisnik("pravnik", "hr:analitika", "hr:analitika_view_all")), 2)
+
+    def test_osoba_sa_dva_aktivna_broja_je_jedan_zapis(self):
+        from hr.services.osobe import povezi_osobu
+
+        prvi = Employee.objects.get(employee_code=1)
+        drugi = Employee.objects.get(employee_code=2)
+        for e in (prvi, drugi):
+            e.personal_number = "0101990710022"
+            e.save(update_fields=["personal_number"])
+            povezi_osobu(e)
+        self.assertEqual(self.ukupno(korisnik("kadrovska", "hr:analitika")), 1)
+
+    def test_sinhronizacija_daje_analitiku_kadrovima_i_pravnoj_sluzbi(self):
+        from core.permissions import sync_permission_codes
+
+        sync_permission_codes()
+        kadrovi, pravna = Role.objects.get(slug="kadrovi"), Role.objects.get(slug="pravna")
+        self.assertTrue(kadrovi.permissions.filter(code="hr:analitika").exists())
+        self.assertFalse(kadrovi.permissions.filter(code="hr:analitika_view_all").exists())  # Kadrovi po obuhvatu
+        self.assertEqual(set(pravna.permissions.filter(code__startswith="hr:").values_list("code", flat=True)),
+                         {"hr:analitika", "hr:analitika_view_all"})

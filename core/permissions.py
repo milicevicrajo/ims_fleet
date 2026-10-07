@@ -108,6 +108,7 @@ def collect_permission_codes():
     codes.add('hr:evaluation_view_all')
     codes.add('hr:resenje_view_all')
     codes.add('hr:kadrovi_manage')
+    codes.add('hr:analitika_view_all')
     codes.update(collect_naplata_permission_codes())
     codes.update(collect_nabavka_permission_codes())
     codes.update(collect_menice_permission_codes())
@@ -124,6 +125,10 @@ def collect_permission_codes():
     return sorted(codes)
 
 
+# Pravna služba vidi analitiku zaposlenih cele firme (od 06.10.2026.).
+PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all'}
+
+
 @transaction.atomic
 def sync_pravna_resenja_permissions():
     """Dopunjava samo Pravnu službu i rešenja, bez brisanja postojećih dozvola."""
@@ -134,12 +139,12 @@ def sync_pravna_resenja_permissions():
     operational_codes = resenja_codes - RESENJA_ADMIN_CODES
     assignments = (
         ('uprava', 'Uprava', pravna_codes | resenja_codes),
-        ('pravna', 'Pravna sluzba', pravna_codes),
+        ('pravna', 'Pravna sluzba', pravna_codes | PRAVNA_KADROVI_CODES),
         ('sekretarijat', 'Sekretarijat', operational_codes),
     )
     permissions = {}
     created = 0
-    for code in sorted(pravna_codes | resenja_codes):
+    for code in sorted(pravna_codes | resenja_codes | PRAVNA_KADROVI_CODES):
         permission, is_new = PermissionCode.objects.get_or_create(code=code)
         permissions[code] = permission
         created += is_new
@@ -248,7 +253,7 @@ def sync_permission_codes():
     if not pravna_role.is_active:
         pravna_role.is_active = True
         pravna_role.save(update_fields=["is_active"])
-    pravna_codes = list(ugovori_codes) + collect_pravna_permission_codes()
+    pravna_codes = list(ugovori_codes) + collect_pravna_permission_codes() + sorted(PRAVNA_KADROVI_CODES)
     for perm in PermissionCode.objects.filter(code__in=pravna_codes):
         RolePermission.objects.get_or_create(role=pravna_role, permission=perm)
 

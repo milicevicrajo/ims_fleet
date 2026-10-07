@@ -4,17 +4,23 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.generic import TemplateView
 
-from core.mixins import RolePermissionRequiredMixin
+from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
 from .access import visible_employees
 from .services import analitika_izvoz, analitika_pdf
 from .services.analitika import analitika
+from .services.osobe import jedan_po_osobi
 
 
 class AnalitikaView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
     template_name = "hr/analitika.html"
 
+    def vidljivi(self):
+        # Pravna služba vidi analitiku cele firme (`hr:analitika_view_all`); Kadrovi po svom obuhvatu.
+        sve = user_has_role_permission(self.request.user, "hr:analitika_view_all")
+        return visible_employees(self.request.user, unrestricted=sve)
+
     def zaposleni(self):
-        qs = visible_employees(self.request.user).filter(is_active=True)
+        qs = self.vidljivi().filter(is_active=True)
         oj = self.request.GET.get("oj", "").strip()
         if oj:
             uslov = Q(org_unit_code=oj)
@@ -25,14 +31,15 @@ class AnalitikaView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateVie
 
     def get(self, request, *args, **kwargs):
         qs, oj = self.zaposleni()
-        a = analitika(qs, timezone.localdate())
+        # Jedan čovek = jedan zapis, i kad ima više aktivnih brojeva radnika (radni odnos + van radnog odnosa).
+        a = analitika(jedan_po_osobi(qs.select_related("org_node")), timezone.localdate())
         filteri = f"Aktivni zaposleni · OJ {oj}" if oj else "Svi aktivni zaposleni u vašem obuhvatu"
         izvoz = request.GET.get("izvoz")
         if izvoz == "xlsx":
             return analitika_izvoz.excel(a, filteri)
         if izvoz in ("pdf", "stampa"):
             return analitika_pdf.pdf(a, filteri)
-        sve_oj = visible_employees(request.user).filter(is_active=True).values_list("org_unit_code", "department_code")
+        sve_oj = self.vidljivi().filter(is_active=True).values_list("org_unit_code", "department_code")
         upit = request.GET.copy()
         upit.pop("izvoz", None)
         return self.render_to_response(self.get_context_data(

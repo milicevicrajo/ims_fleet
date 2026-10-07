@@ -155,7 +155,7 @@ za BZR); desno svi periodi radnika.
           <tbody>
           {% for p in periodi %}
             <tr class="{% if p.pk == red.pk %}izabran{% endif %}">
-              <td class="text-nowrap">{{ p.datum_od|date:"d.m.Y." }} –<br>{% if p.na_neodredjeno %}na neodređeno{% else %}{{ p.datum_do|date:"d.m.Y."|default:"—" }}{% endif %}</td>
+              <td class="text-nowrap">{{ p.datum_od|date:"d.m.Y." }} –<br>{% if p.na_neodredjeno %}na neodređeno{% else %}{{ p.datum_do|date:"d.m.Y."|default:"—" }}{% endif %}{% if p.employee_code != red.employee_code %}<div class="ugovor-small">šifra {{ p.employee_code }}</div>{% endif %}</td>
               <td>{{ p.broj_ugovora|default:"—" }}{% if p.datum_ugovora %}<div class="ugovor-small">od {{ p.datum_ugovora|date:"d.m.Y." }}</div>{% endif %}{% if p.broj_aneksa %}<div class="ugovor-small">aneks {{ p.broj_aneksa }}</div>{% endif %}{% if p.dokument %} <i class="mdi mdi-paperclip" title="Dokument priložen"></i>{% endif %}</td>
               <td class="text-end">{% if p.pk != red.pk %}<a class="btn btn-outline-primary btn-sm" href="{% url 'hr:ugovor_detail' p.pk %}" title="Otvori"><i class="mdi mdi-chevron-right"></i></a>{% endif %}</td>
             </tr>

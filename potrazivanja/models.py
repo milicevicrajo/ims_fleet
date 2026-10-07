@@ -342,6 +342,15 @@ class CollectionActivity(UserTracked):
         indexes = [models.Index(fields=["identity", "occurred_at"], name="col_activity_partner")]
 
 
+def kljuc_broja(broj):
+    """Broj opomene / pisma za proveru jedinstvenosti: „223” i „223.0” (uvoz iz Naplate) su isti broj."""
+    broj = (broj or "").strip()
+    deo, tacka, decimale = broj.partition(".")
+    if tacka and deo.isdigit() and decimale and set(decimale) == {"0"}:
+        broj = deo
+    return broj.upper()
+
+
 class CollectionNotice(UserTracked):
     identity = models.ForeignKey(FinancePartnerIdentity, on_delete=models.PROTECT, null=True, blank=True, related_name="notices")
     kind = models.CharField(max_length=20, choices=[("reminder", "Opomena"), ("letter", "Pozivno pismo"), ("legacy_claim", "Nasleđena evidencija tužbe")])
@@ -360,6 +369,9 @@ class CollectionNotice(UserTracked):
 
     class Meta:
         indexes = [models.Index(fields=["identity", "issued_on"], name="col_notice_partner")]
+        # Broj je jedinstven po vrsti i godini (od 06.10.2026.); „223” i „223.0” proverava forma (`kljuc_broja`).
+        constraints = [models.UniqueConstraint(fields=["kind", "year", "number"], condition=Q(number__gt="", year__isnull=False),
+                                               name="col_notice_broj_jedinstven")]
 
 
 class CollectionNoticeItem(models.Model):

@@ -24,7 +24,7 @@ from django.views.generic import TemplateView
 
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from hr.access import scope_employee_records
-from hr.models import DodatnoRadnoMesto, UgovoriSinhronizacija, UgovorZaposlenog
+from hr.models import DodatnoRadnoMesto, Employee, UgovoriSinhronizacija, UgovorZaposlenog
 from hr.services import ugovori as servis
 
 SIDEBAR = "sidebar_kadrovi.html"
@@ -85,9 +85,19 @@ def _filtriraj(request, qs):
                  | Q(naziv_radnog_mesta__icontains=pojam) | Q(oj=pojam)
                  | Q(pk__in=DodatnoRadnoMesto.objects.filter(naziv_radnog_mesta__icontains=pojam).values("ugovor")))
         if pojam.isdigit():
-            uslov |= Q(employee_code=int(pojam))
+            # Broj radnika nalazi ugovore cele osobe (i pod njenim ostalim brojevima).
+            osobe = Employee.objects.filter(employee_code=int(pojam), osoba__isnull=False).values("osoba")
+            uslov |= Q(employee_code=int(pojam)) | Q(employee__osoba__in=osobe)
         qs = qs.filter(uslov)
     return qs
+
+
+def _periodi_osobe(qs, red):
+    """Svi periodi rada osobe — pod svim njenim brojevima radnika (ponovni prijem, van radnog odnosa)."""
+    uslov = Q(employee_code=red.employee_code)
+    if red.employee_id and red.employee.osoba_id:
+        uslov |= Q(employee__osoba_id=red.employee.osoba_id)
+    return qs.filter(uslov).select_related("employee").order_by("-datum_od", "-redni_broj")
 
 
 class UgovorListView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateView):
@@ -257,7 +267,7 @@ class UgovorDetailView(LoginRequiredMixin, RolePermissionRequiredMixin, Template
             form=kwargs.get("form") or UgovorForm(instance=red),
             radna_mesta=kwargs.get("radna_mesta") or _radna_mesta(instance=red),
             dodatna_radna_mesta=red.dodatna_radna_mesta.all(),
-            periodi=(vidljivi(user).filter(employee_code=red.employee_code).order_by("-datum_od", "-redni_broj")),
+            periodi=_periodi_osobe(vidljivi(user), red),
             aneksi=red.aneksi.order_by("datum_od"),
             can_update=user_has_role_permission(user, "hr:ugovor_update"),
             can_document=user_has_role_permission(user, "hr:ugovor_dokument"),

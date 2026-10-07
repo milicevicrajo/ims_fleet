@@ -215,6 +215,16 @@
         </div>
       </div>
     </div>
+    {# PDF sa SEF-a prati širinu leve kartice (od 06.10.2026.). #}
+    {% if sef_faktura %}
+    <div class="card shadow-sm mt-3" id="sef-pdf">
+      <div class="card-header d-flex justify-content-between align-items-center gap-2">
+        <h4 class="mb-0"><i class="mdi mdi-file-pdf-box"></i> PDF sa SEF-a</h4>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ sef_pdf_url }}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> U novom prozoru</a>
+      </div>
+      <div class="card-body p-0"><iframe class="invoice-sef-pdf" src="{{ sef_pdf_url }}" loading="lazy" title="PDF fakture {{ invoice.invoice_number }} sa SEF-a"></iframe></div>
+    </div>
+    {% endif %}
   </div>
 
   <div class="col-lg-5">
@@ -448,15 +458,6 @@
   </div>
 </div>
 
-{% if sef_faktura %}
-<div class="card shadow-sm mt-3" id="sef-pdf">
-  <div class="card-header d-flex justify-content-between align-items-center gap-2">
-    <h4 class="mb-0"><i class="mdi mdi-file-pdf-box"></i> PDF sa SEF-a</h4>
-    <a class="btn btn-outline-secondary btn-sm" href="{{ sef_pdf_url }}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> U novom prozoru</a>
-  </div>
-  <div class="card-body p-0"><iframe class="invoice-sef-pdf" src="{{ sef_pdf_url }}" loading="lazy" title="PDF fakture {{ invoice.invoice_number }} sa SEF-a"></iframe></div>
-</div>
-{% endif %}
 
 <div class="modal fade" id="invoice-returned-modal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">

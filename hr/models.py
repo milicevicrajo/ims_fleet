@@ -10,13 +10,79 @@ from .zahtevi_models import VrstaZahteva, BrojacZahteva, Zahtev, ZahtevDan
 from .ugovori_models import DodatnoRadnoMesto, UgovoriSinhronizacija, UgovorZaposlenog
 
 
+class Osoba(models.Model):
+    """Fizičko lice, jedinstveno po JMBG-u (od 06.10.2026.).
+
+    Zaposlenje (`Employee`) je broj radnika u preduzeću; ista osoba posle ponovnog prijema ili uz rad van
+    radnog odnosa ima više zaposlenja. Ime za prikaz i ćirilični oblik imena važe za osobu i prepisuju se
+    na sva njena zaposlenja (`hr.services.osobe.prenesi_prikaz`). Ime, prezime, titulu, pol i datum
+    rođenja upisuje HR sinhronizacija iz glavnog zaposlenja.
+    """
+    jmbg = models.CharField(max_length=13, blank=True, default="", verbose_name=_("JMBG"),
+                            help_text=_("Prazno ako JMBG nije upisan u kadrovskoj bazi."))
+    titula = models.CharField(max_length=20, blank=True, default="", verbose_name=_("Titula"))
+    ime = models.CharField(max_length=50, blank=True, default="", verbose_name=_("Ime"))
+    prezime = models.CharField(max_length=50, blank=True, default="", verbose_name=_("Prezime"))
+    pol = models.CharField(max_length=1, blank=True, default="", verbose_name=_("Pol"))
+    datum_rodjenja = models.DateField(null=True, blank=True, verbose_name=_("Datum rođenja"))
+    ime_za_prikaz = models.CharField(max_length=50, blank=True, default="", verbose_name=_("Ime za prikaz"))
+    prezime_za_prikaz = models.CharField(max_length=50, blank=True, default="", verbose_name=_("Prezime za prikaz"))
+    ime_cirilica = models.CharField(max_length=150, blank=True, default="", verbose_name=_("Ime i prezime (ćirilica)"))
+    # Ukupan staž osobe iz kadrovske baze (`RadStaz`, sve šifre), računa HR sinhronizacija (od 06.10.2026.).
+    staz_godina = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_("Ukupan staž — godina"))
+    staz_meseci = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_("Ukupan staž — meseci"))
+    staz_dana = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_("Ukupan staž — dana"))
+    staz_ims_godina = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_("Staž u IMS — godina"))
+    staz_ims_meseci = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_("Staž u IMS — meseci"))
+    staz_ims_dana = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=_("Staž u IMS — dana"))
+    staz_preuzet = models.DateTimeField(null=True, blank=True, verbose_name=_("Staž preuzet iz kadrovske baze"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = "fleet"
+        verbose_name = _("Osoba")
+        verbose_name_plural = _("Osobe")
+        # `jmbg > ''`, ne `NOT (jmbg = '')`: SQL Server ne prima NOT u uslovu filtriranog indeksa.
+        constraints = [models.UniqueConstraint(fields=["jmbg"], condition=models.Q(jmbg__gt=""),
+                                               name="fleet_osoba_jmbg_jedinstven")]
+
+    def __str__(self):
+        return f"{self.prezime_za_prikaz or self.prezime} {self.ime_za_prikaz or self.ime}".strip()
+
+    @staticmethod
+    def _staz_tekst(godina, meseci, dana):
+        if godina is None:
+            return ""
+        return f"{godina} god. {meseci} mes. {dana} dana"
+
+    @property
+    def ukupan_staz(self):
+        return self._staz_tekst(self.staz_godina, self.staz_meseci, self.staz_dana)
+
+    @property
+    def staz_u_ims(self):
+        return self._staz_tekst(self.staz_ims_godina, self.staz_ims_meseci, self.staz_ims_dana)
+
+
 class Employee(models.Model):
     GENDER_CHOICES = [
         ("M", "Muški"),
         ("F", "Ženski"),
     ]
 
-    employee_code = models.IntegerField(unique=True, verbose_name=_("Šifra zaposlenog"))
+    class Preduzece(models.IntegerChoices):
+        # `sif_pred` u kadrovskoj bazi; broj radnika je jedinstven samo unutar preduzeća.
+        RADNI_ODNOS = 1, _("Radni odnos")
+        VAN_RADNOG_ODNOSA = 2, _("Van radnog odnosa")
+
+    employee_code = models.IntegerField(verbose_name=_("Šifra zaposlenog"))
+    osoba = models.ForeignKey(Osoba, on_delete=models.PROTECT, null=True, blank=True, related_name="zaposlenja",
+                              verbose_name=_("Osoba"))
+    preduzece = models.PositiveSmallIntegerField(choices=Preduzece.choices, default=Preduzece.RADNI_ODNOS,
+                                                 verbose_name=_("Preduzeće"))
+    u_izvoru = models.BooleanField(default=True, verbose_name=_("Postoji u kadrovskoj bazi"),
+                                   help_text=_("Isključeno kad broj radnika nestane iz kadrovske baze."))
     title = models.CharField(max_length=20, verbose_name=_("Titula"), blank=True, null=True)
     original_full_name = models.CharField(
         max_length=150,
@@ -92,6 +158,8 @@ class Employee(models.Model):
 
     class Meta:
         app_label = "fleet"
+        constraints = [models.UniqueConstraint(fields=["preduzece", "employee_code"],
+                                               name="fleet_employee_preduzece_broj")]
 
     @property
     def display_first_name(self):

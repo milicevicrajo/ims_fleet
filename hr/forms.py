@@ -10,6 +10,7 @@ from core.models import OrganizationalUnit
 from .form_layout import SekcijeMixin
 
 from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeCategory
+from .services.osobe import PRIKAZ_POLJA, sacuvaj_prikaz_zaposlenja
 
 
 WORK_TIME_SHEET_LINE_COUNT = 12
@@ -104,7 +105,8 @@ class EmployeeForm(SekcijeMixin, forms.ModelForm):
 
     class Meta:
         model = Employee
-        fields = "__all__"
+        # Osobu, preduzeće i prisustvo u izvoru održava HR sinhronizacija.
+        exclude = ["osoba", "preduzece", "u_izvoru"]
         labels = {
             "display_first_name_override": "Ime za prikaz",
             "display_last_name_override": "Prezime za prikaz",
@@ -209,6 +211,8 @@ class EmployeeForm(SekcijeMixin, forms.ModelForm):
             else:
                 employee.save()
             self.save_m2m()
+            if PRIKAZ_POLJA.keys() & set(self.changed_data):
+                sacuvaj_prikaz_zaposlenja(employee)  # ime za prikaz i ćirilica važe za osobu
         return employee
 
 
@@ -294,6 +298,12 @@ class EmployeeNameCorrectionForm(SekcijeMixin, forms.ModelForm):
 
     def clean_display_last_name_override(self):
         return self._validate_diacritics_only("display_last_name_override", "last_name")
+
+    def save(self, commit=True):
+        employee = super().save(commit=commit)
+        if commit:
+            sacuvaj_prikaz_zaposlenja(employee)  # ispravka važi za osobu i sva njena zaposlenja
+        return employee
 
 
 class WorkTimeSheetForm(forms.ModelForm):

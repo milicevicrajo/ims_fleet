@@ -182,34 +182,42 @@ def _employee_detail_context(employee, *, is_self_profile=False, user=None):
     from fleet.models import Incident, PutniNalog, VehicleTravelOrder
     from ugovori.models import Contract
 
+    from .models import EmployeeCVItem, Resenje, SickLeave, UgovorZaposlenog, WorkTimeSheet, Zahtev
+    from .services.osobe import _redosled
+
+    # Sve kartice obuhvataju sva zaposlenja osobe (JMBG): ponovni prijem i rad van radnog odnosa
+    # imaju svoje brojeve radnika, a pregled je za čoveka (od 06.10.2026.).
+    zaposlenja = sorted(employee.osoba.zaposlenja.all(), key=_redosled) if employee.osoba_id else [employee]
+    ids = [z.pk for z in zaposlenja]
+
     travel_orders = (
-        PutniNalog.objects.filter(employee=employee)
-        .select_related("vehicle", "job_code")
+        PutniNalog.objects.filter(employee__in=ids)
+        .select_related("vehicle", "job_code", "employee")
         .order_by("-order_date", "-id")
     )
     vehicle_travel_orders = (
-        VehicleTravelOrder.objects.filter(employee=employee)
-        .select_related("vehicle")
+        VehicleTravelOrder.objects.filter(employee__in=ids)
+        .select_related("vehicle", "employee")
         .order_by("-created_at", "-id")
     )
     incidents = (
-        Incident.objects.filter(employee=employee)
-        .select_related("vehicle")
+        Incident.objects.filter(employee__in=ids)
+        .select_related("vehicle", "employee")
         .order_by("-date", "-id")
     )
     work_time_sheets = list(
-        employee.work_time_sheets.select_related("meal_organizational_unit")
+        WorkTimeSheet.objects.filter(employee__in=ids).select_related("meal_organizational_unit", "employee")
         .prefetch_related("lines")
         .order_by("-year", "-month")
     )
     month_labels = MyWorkTimeSheetView.MONTH_LABELS if "MyWorkTimeSheetView" in globals() else []
     for sheet in work_time_sheets:
         sheet.month_label = month_labels[sheet.month - 1] if month_labels and 1 <= sheet.month <= 12 else sheet.month
-    cv_items = employee.cv_items.all()
+    cv_items = EmployeeCVItem.objects.filter(employee__in=ids)
     linked_user = getattr(employee, "user_account", None)
 
     contracts = (
-        Contract.objects.filter(parties__partner__external_sif_par=employee.employee_code)
+        Contract.objects.filter(parties__partner__external_sif_par__in=[z.employee_code for z in zaposlenja])
         .select_related("contract_type")
         .prefetch_related("parties__partner")
         .distinct()
@@ -217,14 +225,30 @@ def _employee_detail_context(employee, *, is_self_profile=False, user=None):
     )
 
     # Ugovori o radu i van radnog odnosa iz kadrovske baze (Kadrovi → Ugovori), vezani za zaposlenog.
-    ugovori_zaposlenog = (employee.ugovori.select_related("glavni_ugovor").prefetch_related("dodatna_radna_mesta")
+    ugovori_zaposlenog = (UgovorZaposlenog.objects.filter(employee__in=ids)
+                          .select_related("glavni_ugovor", "employee").prefetch_related("dodatna_radna_mesta")
                           .order_by("-datum_od", "-redni_broj"))
 
-    resenja = employee.resenja.select_related("vrsta").order_by("-datum_resenja", "-pk")
-    zahtevi = employee.zahtevi.select_related("vrsta", "podnosilac").prefetch_related("resenja").order_by("-datum_zahteva", "-redni_broj")
+    resenja = Resenje.objects.filter(zaposleni__in=ids).select_related("vrsta", "zaposleni").order_by("-datum_resenja", "-pk")
+    zahtevi = (Zahtev.objects.filter(zaposleni__in=ids).select_related("vrsta", "podnosilac", "zaposleni")
+               .prefetch_related("resenja").order_by("-datum_zahteva", "-redni_broj"))
 
-    activities = _collect_user_activities(linked_user)
+    # Bolovanja su zdravstveni podaci: samo uz pravo na spisak bolovanja, nikad na sopstvenom profilu.
+    can_view_sick_leave = bool(user) and not is_self_profile and user_has_role_permission(user, "hr:sick_leave_list")
+    bolovanja = SickLeave.objects.none()
+    if can_view_sick_leave:
+        jmbg_osobe = employee.osoba.jmbg if employee.osoba_id else ""
+        bolovanja = SickLeave.objects.filter(Q(employee__in=ids) | (Q(personal_number=jmbg_osobe) if jmbg_osobe else Q(pk__in=[])))
+
+    korisnici = {z.user_account for z in zaposlenja if getattr(z, "user_account", None)}
+    activities = sorted((a for korisnik in korisnici for a in _collect_user_activities(korisnik)),
+                        key=lambda item: item["created_at"], reverse=True)
     return {
+        "zaposlenja": zaposlenja,
+        "vise_zaposlenja": len(zaposlenja) > 1,
+        "bolovanja": bolovanja,
+        "bolovanja_count": bolovanja.count(),
+        "can_view_sick_leave": can_view_sick_leave,
         "resenja": resenja,
         "resenja_count": resenja.count(),
         "zahtevi": zahtevi,
@@ -241,8 +265,8 @@ def _employee_detail_context(employee, *, is_self_profile=False, user=None):
         "vehicle_travel_orders_count": vehicle_travel_orders.count(),
         "work_time_sheets": work_time_sheets,
         "work_time_sheets_count": len(work_time_sheets),
-        "annual_allowances": AnnualLeaveAllowance.objects.filter(employee=employee),
-        "annual_decisions": AnnualLeaveDecision.objects.filter(employee=employee),
+        "annual_allowances": AnnualLeaveAllowance.objects.filter(employee__in=ids),
+        "annual_decisions": AnnualLeaveDecision.objects.filter(employee__in=ids),
         "incidents": incidents,
         "incidents_count": incidents.count(),
         "contracts": contracts,
@@ -289,6 +313,8 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
         qs = visible_employees(self.request.user).order_by("last_name", "first_name")
         if status != "all":
             qs = qs.filter(is_active=status != "inactive")
+        if status == "inactive":  # neaktivna je osoba bez ijednog aktivnog zaposlenja
+            qs = qs.exclude(osoba__zaposlenja__is_active=True)
         oj = self.request.GET.get("oj", "").strip()
         if oj:
             match = Q(org_unit_code=oj)
@@ -303,7 +329,9 @@ class EmployeeListView(RolePermissionRequiredMixin, LoginRequiredMixin, ListView
             if term.isdigit():
                 match |= Q(employee_code=int(term))
             qs = qs.filter(match)
-        return qs
+        # Jedan red po osobi (JMBG): ista osoba sa više brojeva radnika se ne ponavlja.
+        from .services.osobe import jedan_po_osobi
+        return jedan_po_osobi(qs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

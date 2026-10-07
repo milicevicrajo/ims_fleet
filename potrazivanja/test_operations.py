@@ -1,5 +1,6 @@
 from copy import deepcopy
 from unittest.mock import patch
+from datetime import date
 from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -93,6 +94,37 @@ class IndependentOperationsTests(TestCase):
         self.assertEqual(notice.total_amount,Decimal('1200.50'));self.assertEqual(notice.items.get().line_number,1)
         response=self.client.get(reverse('potrazivanja:notice_print',args=[notice.pk]))
         self.assertContains(response,'IF-15');self.assertContains(response,'Molimo odgovor')
+
+    def test_broj_jedinstven_po_vrsti_i_godini_i_brisanje_greskom_unetog(self):
+        # Od 06.10.2026.: isti broj iste vrste u istoj godini ne prolazi ni kod drugog partnera; „223” = „223.0”.
+        data=self.notice_data();data.update(kind='reminder',number='223')
+        self.assertEqual(self.client.post(self.url('notice'),data).status_code,302)
+        drugi=FinancePartnerIdentity.objects.get(partner_code=43)
+        for broj in ('223','223.0'):
+            data=self.notice_data();data.update(kind='reminder',number=broj,identity=drugi.pk)
+            odgovor=self.client.post(self.url('notice'),data)
+            self.assertEqual(odgovor.status_code,200);self.assertContains(odgovor,'već postoji')
+        data=self.notice_data();data.update(kind='letter',number='223',identity=drugi.pk)  # druga vrsta: dozvoljeno
+        self.assertEqual(self.client.post(self.url('notice'),data).status_code,302)
+        pogresna=CollectionNotice.objects.get(kind='reminder',number='223')
+        url=reverse('potrazivanja:record_delete',args=['notice',pogresna.pk])
+        self.assertEqual(self.client.post(url,{'version':'stale'}).status_code,409)
+        self.assertEqual(self.client.post(url,{'version':pogresna.updated_at.isoformat()}).status_code,302)
+        self.assertFalse(CollectionNotice.objects.filter(pk=pogresna.pk).exists())
+        self.assertTrue(CollectionAudit.objects.filter(entity_id=pogresna.pk,action='delete').exists())
+        data=self.notice_data();data.update(kind='reminder',number='223',identity=drugi.pk)  # broj je opet slobodan
+        self.assertEqual(self.client.post(self.url('notice'),data).status_code,302)
+        self.assertEqual(self.client.post(reverse('potrazivanja:record_delete',args=['contact',1]),{}).status_code,403)
+
+    def test_migracija_dodaje_sufiks_duplikatima(self):
+        import importlib
+        from django.apps import apps
+        a=CollectionNotice.objects.create(identity=self.partner,kind='letter',year=2026,number='1.0',issued_on=date(2026,2,2))
+        b=CollectionNotice.objects.create(identity=self.partner,kind='letter',year=2026,number='1.00',issued_on=date(2026,1,15))
+        c=CollectionNotice.objects.create(identity=self.partner,kind='letter',year=2026,number='1',issued_on=date(2026,7,1))
+        importlib.import_module('potrazivanja.migrations.0008_broj_opomene_jedinstven').razdvoji_duplikate(apps,None)
+        for n in (a,b,c): n.refresh_from_db()
+        self.assertEqual((b.number,a.number,c.number),('1.00','1-1','1-2'))  # najraniji zadržava broj
 
     def test_review_and_edit_conflicts(self):
         profile=CollectionProfile.objects.get(identity=self.partner)

@@ -35,6 +35,14 @@
           </a>
         </li>
 
+        {% if hr_permissions.analitika %}
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:analitika' %}">
+            <i class="mdi mdi-chart-box-outline"></i><span class="hide-menu">Analitika zaposlenih</span>
+          </a>
+        </li>
+        {% endif %}
+
       </ul>
     </nav>
   </div>

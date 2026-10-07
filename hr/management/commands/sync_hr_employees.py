@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from hr.sync import sync_employees_from_hr_view
+from hr.sync import opis_osoba, sync_employees_from_hr_view
 
 
 class Command(BaseCommand):
@@ -25,6 +25,7 @@ class Command(BaseCommand):
                 f"Kreirano: {result['created']}, "
                 f"Azurirano: {result['updated']}, "
                 f"Azurirano (neaktivni): {result['updated_inactive']}, "
-                f"Preskoceno (neaktivni): {result['skipped_inactive']}"
+                f"Preskoceno (neaktivni): {result['skipped_inactive']}. "
+                + opis_osoba(result)
             )
         )

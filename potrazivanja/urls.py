@@ -16,6 +16,7 @@ urlpatterns = [
     path('unos/<str:kind>/', ops.record_edit, name='record_create'),
     path('izmena/<str:kind>/<int:pk>/', ops.record_edit, name='record_update'),
     path('arhiva/<str:kind>/<int:pk>/', ops.record_archive, name='record_archive'),
+    path('brisanje/<str:kind>/<int:pk>/', ops.record_delete, name='record_delete'),
     path('postupak/<int:pk>/', ops.legal_detail, name='legal_detail'),
     path('postupak/<int:case_pk>/promena/', ops.legal_event_edit, name='legal_event_create'),
     path('postupak/<int:case_pk>/promena/<int:pk>/', ops.legal_event_edit, name='legal_event_update'),
