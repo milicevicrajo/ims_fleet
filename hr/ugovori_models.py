@@ -84,13 +84,6 @@ class UgovorZaposlenog(models.Model):
     dokument = models.FileField(upload_to="hr/ugovori/%Y/%m/", max_length=255, blank=True, verbose_name="Skeniran dokument")
     dokument_naziv = models.CharField(max_length=255, blank=True, default="", verbose_name="Naziv fajla")
     napomena = models.TextField(blank=True, default="", verbose_name="Napomena")
-    # --- unose Pravna služba i Kadrovi (od 07.10.2026.): delovodni broj Pravne službe, godina i broj odvojeno ---
-    delovodni_godina = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Delovodni broj — godina")
-    delovodni_broj = models.CharField(max_length=30, blank=True, default="", db_index=True,
-                                      verbose_name="Delovodni broj — broj")
-    delovodni_upisao = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
-                                         related_name="+", verbose_name="Delovodni broj upisao")
-    delovodni_upisano = models.DateTimeField(null=True, blank=True, verbose_name="Delovodni broj upisan")
     izmenio = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                                 related_name="hr_ugovori_izmenjeni", verbose_name="Izmenio")
     izmenjeno = models.DateTimeField(null=True, blank=True, verbose_name="Izmenjeno")
@@ -102,13 +95,6 @@ class UgovorZaposlenog(models.Model):
         indexes = [models.Index(fields=["employee_code", "datum_od"])]
         verbose_name = "Ugovor zaposlenog"
         verbose_name_plural = "Ugovori zaposlenih"
-
-    @property
-    def delovodni(self):
-        """Delovodni broj Pravne službe za prikaz: „broj/godina”."""
-        if not self.delovodni_broj:
-            return ""
-        return f"{self.delovodni_broj}/{self.delovodni_godina}" if self.delovodni_godina else self.delovodni_broj
 
     def __str__(self):
         broj = self.broj_ugovora or f"period {self.redni_broj}"

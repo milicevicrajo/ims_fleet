@@ -192,7 +192,5 @@ class AnalitikaDozvoleTests(TestCase):
         self.assertTrue(kadrovi.permissions.filter(code="hr:analitika").exists())
         self.assertFalse(kadrovi.permissions.filter(code="hr:analitika_view_all").exists())  # Kadrovi po obuhvatu
         self.assertEqual(set(pravna.permissions.filter(code__startswith="hr:").values_list("code", flat=True)),
-                         {"hr:analitika", "hr:analitika_view_all", "hr:rodna_ravnopravnost", "hr:ugovor_list",
-                          "hr:ugovor_data", "hr:ugovor_detail", "hr:ugovor_dokument", "hr:ugovor_delovodni",
-                          "hr:ugovor_view_all"})  # ugovori: samo pregled i delovodni broj, bez hr:ugovor_update
+                         {"hr:analitika", "hr:analitika_view_all", "hr:rodna_ravnopravnost"})
         self.assertTrue(kadrovi.permissions.filter(code="hr:rodna_ravnopravnost").exists())

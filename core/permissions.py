@@ -109,7 +109,6 @@ def collect_permission_codes():
     codes.add('hr:resenje_view_all')
     codes.add('hr:kadrovi_manage')
     codes.add('hr:analitika_view_all')
-    codes.add('hr:ugovor_view_all')
     codes.update(collect_naplata_permission_codes())
     codes.update(collect_nabavka_permission_codes())
     codes.update(collect_menice_permission_codes())
@@ -126,11 +125,8 @@ def collect_permission_codes():
     return sorted(codes)
 
 
-# Pravna služba vidi analitiku zaposlenih cele firme (od 06.10.2026.) i statistiku rodne ravnopravnosti (07.10.2026.),
-# a ugovore zaposlenih cele firme samo gleda i upisuje delovodni broj Pravne službe (07.10.2026.).
-PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all', 'hr:rodna_ravnopravnost',
-                        'hr:ugovor_list', 'hr:ugovor_data', 'hr:ugovor_detail', 'hr:ugovor_dokument',
-                        'hr:ugovor_delovodni', 'hr:ugovor_view_all'}
+# Pravna služba vidi analitiku zaposlenih cele firme (od 06.10.2026.) i statistiku rodne ravnopravnosti (07.10.2026.).
+PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all', 'hr:rodna_ravnopravnost'}
 
 
 @transaction.atomic
