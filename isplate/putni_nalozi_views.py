@@ -25,6 +25,7 @@ from django.views.generic import TemplateView
 
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from fleet.models import PutniNalog
+from knjizenje.services import zakljucan_u_isplatama
 from nabavka.models import FiskalniRacun
 from nabavka.services import fiskalni
 from nabavka.views.fiskalni import _iznos
@@ -97,8 +98,10 @@ class PutniNaloziPravdanjeView(RolePermissionRequiredMixin, LoginRequiredMixin, 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         g = self.request.GET
+        from .fiskalni_views import RacunNalogaForm
+
         ctx.update(
-            title="Putni nalozi – pravdanje", sidebar_template="sidebar_isplate.html",
+            title="Putni nalozi – pravdanje", sidebar_template="sidebar_isplate.html", racun_forma=RacunNalogaForm(),
             filteri={"q": g.get("q", ""), "od": g.get("od", ""), "do": g.get("do", ""),
                      "status": g.get("status", "neopravdani")},
         )
@@ -147,9 +150,10 @@ def _racun_json(racun, putni_nalog, moze_ukloniti):
         "vreme": timezone.localtime(racun.pfr_vreme).strftime("%d.%m.%Y. %H:%M"), "iznos": _iznos(racun.iznos),
         "na_ims": racun.na_ims, "ceka": racun.status != racun.Status.POTVRDJEN, "proknjizeno": racun.proknjizeno,
         "sifra": racun.job_code.code if racun.job_code_id else "—",
+        "detalj": reverse("isplate:fiskalni_detail", args=[racun.pk]),
         "druga_sifra": bool(racun.job_code_id) and racun.job_code_id != putni_nalog.job_code_id,
         "ukloni_url": (reverse("isplate:putni_nalog_racun_ukloni", args=[putni_nalog.pk, racun.pk])
-                       if moze_ukloniti and not racun.proknjizeno and not putni_nalog.opravdan else ""),
+                       if moze_ukloniti and not zakljucan_u_isplatama(racun) and not putni_nalog.opravdan else ""),
     }
 
 
@@ -159,9 +163,15 @@ def putni_nalog_racuni(request, pk):
     """Računi naloga za prozor „Dodaj račun” (JSON)."""
     putni_nalog = get_object_or_404(putni_nalozi(), pk=pk)
     moze_ukloniti = user_has_role_permission(request.user, "isplate:putni_nalog_racun_ukloni")
-    racuni = putni_nalog.fiskalni_racuni.select_related("job_code").order_by("pfr_vreme", "pk")
+    racuni = putni_nalog.fiskalni_racuni.select_related("job_code", "knjizenje").order_by("pfr_vreme", "pk")
     zbir = racuni.aggregate(iznos=Sum("iznos"))["iznos"]
+    predlog = fiskalni.sifra_za_putni_nalog(putni_nalog)
+    vozilo = putni_nalog.vehicle
     return JsonResponse({
+        # Predlog šifre posla za novi račun: prema vozilu naloga (dodela na dan putovanja), inače šifra naloga.
+        "predlog": {"id": predlog.pk, "tekst": f"{predlog.code} · {predlog.name}",
+                    "izvor": "vozilo" if vozilo and predlog.pk != putni_nalog.job_code_id else "nalog"} if predlog else None,
+        "vozilo": str(vozilo) if vozilo else (putni_nalog.other_vehicle or ""),
         "nalog": putni_nalog.order_number, "sifra": putni_nalog.job_code.code, "sifra_naziv": putni_nalog.job_code.name,
         "zaposleni": str(putni_nalog.employee or putni_nalog.other_employee_name or ""),
         "putovanje": f"{putni_nalog.travel_location} · {putni_nalog.travel_date:%d.%m.%Y.}",
@@ -184,17 +194,26 @@ def putni_nalog_racun_dodaj(request, pk):
     link = (request.POST.get("link") or "").strip()
     if not link:
         return JsonResponse({"ok": False, "poruka": "Očitajte QR kod računa."}, status=400)
+    from .fiskalni_views import RacunNalogaForm
+
+    forma = RacunNalogaForm(request.POST)
+    if not forma.is_valid():
+        return JsonResponse({"ok": False, "poruka": " ".join(e for greske in forma.errors.values() for e in greske)}, status=400)
     try:
-        racun, upozorenja, vezan = fiskalni.ucitaj_za_putni_nalog(link, putni_nalog, request.user,
-                                                                   (request.POST.get("napomena") or "").strip()[:500],
-                                                                   ocekivano=fiskalni.ocekivano_iz_zahteva(request.POST))
+        racun, upozorenja, vezan = fiskalni.ucitaj_za_putni_nalog(
+            link, putni_nalog, request.user, forma.cleaned_data["napomena"].strip(),
+            ocekivano=fiskalni.ocekivano_iz_zahteva(request.POST), job_code=forma.cleaned_data["job_code"],
+            interni_broj=forma.cleaned_data["interni_broj"])
     except fiskalni.GreskaOcitavanja as exc:
         return JsonResponse({"ok": False, "poruka": str(exc)}, status=400)
+    sifra = racun.job_code.code if racun.job_code_id else "—"
     return JsonResponse({
         "ok": True, "vezan_postojeci": vezan, "upozorenja": list(upozorenja), "broj": racun.broj_racuna,
         "prodavac": racun.naziv_prodavca or racun.pib_prodavca, "iznos": _iznos(racun.iznos),
         "poruka": (f"Račun {racun.broj_racuna} je već bio učitan; vezan je za ovaj putni nalog i zadržava svoju šifru posla."
-                   if vezan else f"Račun {racun.broj_racuna} je dodat na šifru posla {putni_nalog.job_code.code}."),
+                   if vezan else f"Račun {racun.broj_racuna} je dodat na šifru posla {sifra}."),
+        # Posle očitavanja odmah se otvara detalj računa (šifra posla, broj, napomena, slanje na knjiženje).
+        "detalj": reverse("isplate:fiskalni_detail", args=[racun.pk]),
     })
 
 
@@ -204,9 +223,12 @@ def putni_nalog_racun_dodaj(request, pk):
 def putni_nalog_racun_ukloni(request, pk, racun_pk):
     """Skida pogrešno skeniran račun sa naloga (dok nalog nije opravdan i račun nije proknjižen)."""
     putni_nalog = get_object_or_404(putni_nalozi(), pk=pk)
-    racun = get_object_or_404(putni_nalog.fiskalni_racuni, pk=racun_pk)
+    racun = get_object_or_404(putni_nalog.fiskalni_racuni.select_related("knjizenje"), pk=racun_pk)
     if putni_nalog.opravdan:
         return JsonResponse({"ok": False, "poruka": "Putni nalog je opravdan i zaključan."}, status=400)
+    if zakljucan_u_isplatama(racun):
+        return JsonResponse({"ok": False, "poruka": f"Račun {racun.broj_racuna} je poslat na knjiženje i ne skida se sa naloga."},
+                            status=400)
     try:
         fiskalni.odvezi_od_putnog_naloga(racun)
     except fiskalni.GreskaOcitavanja as exc:

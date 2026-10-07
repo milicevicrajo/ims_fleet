@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% comment %}
-Isplate → Putni nalozi – Fiskalni računi: računi učitani na putnim nalozima, za knjiženje.
+Isplate → Putni nalozi – Fiskalni računi: računi učitani na putnim nalozima.
 Isti šablon služi i za „Ostale fiskalne račune” (`ostali`): gotovinski obračun bez putnog naloga,
 sa učitavanjem čitačem QR koda; umesto kolone „Putni nalog” je „Napomena”.
 DataTables (strana sa servera, isti URL uz `draw`); zbir u zaglavlju prati filtere i pretragu.
-Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko je i kada označio.
+Dugme „Pošalji” šalje račun u modul Knjiženje (od 07.10.2026.); poslat račun se ne menja dok ga Knjiženje ne vrati.
 {% endcomment %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
@@ -13,7 +13,7 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
 <div class="isp-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
     <h1><i class="mdi {% if ostali %}mdi-cash-register{% else %}mdi-receipt-text-check-outline{% endif %} me-2" aria-hidden="true"></i>{{ title }}</h1>
-    <p>{% if ostali %}Fiskalni računi za gotovinski obračun koji se ne vezuju za putne naloge. Ne vide se u Nabavci ni na putnim nalozima.{% else %}Fiskalni računi učitani na putnim nalozima.{% endif %} Štiklirajte „Proknjiženo” kada je račun proknjižen; proknjižen račun se više ne menja.</p>
+    <p>{% if ostali %}Fiskalni računi za gotovinski obračun koji se ne vezuju za putne naloge. Ne vide se u Nabavci ni na putnim nalozima.{% else %}Fiskalni računi učitani na putnim nalozima.{% endif %} Klik na broj otvara detalj. Kada je račun spreman, pošaljite ga na knjiženje — posle toga se ne menja, osim ako ga Knjiženje vrati na doradu.</p>
   </div>
   <div class="isp-zbir">
     <span><span id="ispZbirBroj">{{ zbir.broj }}</span> računa</span>
@@ -43,9 +43,12 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
       </div>
       <div class="modal-body isp-filter">
-        <div class="mb-3"><label class="form-label" for="{{ forma.job_code.id_for_label }}">{{ forma.job_code.label }}</label>{{ forma.job_code }}</div>
+        <div class="row g-2 mb-3">
+          <div class="col-md-7"><label class="form-label" for="{{ forma.job_code.id_for_label }}">{{ forma.job_code.label }}</label>{{ forma.job_code }}</div>
+          <div class="col-md-5"><label class="form-label" for="{{ forma.interni_broj.id_for_label }}">{{ forma.interni_broj.label }}</label>{{ forma.interni_broj }}</div>
+        </div>
         <div class="mb-3"><label class="form-label" for="{{ forma.link.id_for_label }}">{{ forma.link.label }}</label>{{ forma.link }}
-          <div class="form-text">Postavite kursor u polje i očitajte QR kod — čitač sam pritiska Enter i račun se učitava. Prozor ostaje otvoren za sledeći račun.
+          <div class="form-text">Postavite kursor u polje i očitajte QR kod — čitač sam pritiska Enter, račun se učitava i odmah se otvara njegov detalj.
             <button type="button" class="btn btn-link btn-sm p-0 align-baseline js-fiskalni-rucno" data-forma="#ispOstaliForma"
                     data-modal="#ispOstaliModal" data-link="#{{ forma.link.id_for_label }}"><i class="mdi mdi-qrcode-scan" aria-hidden="true"></i> QR kod je oštećen?</button></div>
         </div>
@@ -70,6 +73,9 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
           <label class="form-label mb-1" for="id_knjizenje">Knjiženje</label>
           <select id="id_knjizenje" class="form-select" name="knjizenje">
             <option value="ne" {% if filteri.knjizenje == "ne" %}selected{% endif %}>Neproknjiženi</option>
+            <option value="neposlato" {% if filteri.knjizenje == "neposlato" %}selected{% endif %}>Za slanje (i vraćeni)</option>
+            <option value="vraceno" {% if filteri.knjizenje == "vraceno" %}selected{% endif %}>Vraćeni na doradu</option>
+            <option value="poslato" {% if filteri.knjizenje == "poslato" %}selected{% endif %}>Poslati, čekaju knjiženje</option>
             <option value="da" {% if filteri.knjizenje == "da" %}selected{% endif %}>Proknjiženi</option>
             <option value="sve" {% if filteri.knjizenje == "sve" %}selected{% endif %}>Svi</option>
           </select>
@@ -105,7 +111,7 @@ Polje „Proknjiženo” se čuva odmah (bez dugmeta „Sačuvaj”) i pamti ko 
     <table id="FiskalniPutniNalozi" class="display compact table table-hover table-bordered align-middle w-100 isp-tabela">
       <thead>
         <tr><th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th class="text-end">Iznos</th><th>Kupac</th>
-            <th>{% if ostali %}Napomena{% else %}Putni nalog{% endif %}</th><th>Šifra posla</th><th>Učitao</th><th class="text-center">Proknjiženo</th></tr>
+            <th>{% if ostali %}Napomena{% else %}Putni nalog{% endif %}</th><th>Šifra posla</th><th>Učitao</th><th class="text-center">Knjiženje</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -180,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(function (r) { return r.json(); })
         .then(function (d) {
           if (!d.ok) { rezultat.innerHTML = '<div class="isp-rezultat greska"><strong>Račun nije učitan.</strong> ' + esc(d.poruka) + '</div>'; link.select(); return; }
+          if (d.detalj) { window.location.href = d.detalj; return; }  // odmah detalj računa
           var upoz = (d.upozorenja || []).map(function (u) { return '<li>' + esc(u) + '</li>'; }).join('');
           rezultat.innerHTML = '<div class="isp-rezultat ok"><strong>' + esc(d.broj) + '</strong> · ' + esc(d.prodavac) + ' · ' +
             esc(d.iznos) + ' din<div>' + esc(d.poruka) + '</div>' + (upoz ? '<ul>' + upoz + '</ul>' : '') + '</div>';
@@ -193,34 +200,23 @@ document.addEventListener('DOMContentLoaded', function () {
   })();
 {% endif %}
 
-  document.getElementById('FiskalniPutniNalozi').addEventListener('change', function (e) {
-    var polje = e.target.closest('.isp-knjizi');
-    if (!polje) return;
-    var ukljuceno = polje.checked;
-    if (!ukljuceno && !confirm('Poništiti oznaku „proknjiženo” za račun ' + polje.dataset.racun + '? Poništavanje se beleži.')) {
-      polje.checked = true;
-      return;
-    }
-    var telo = new URLSearchParams();
-    telo.append('proknjizeno', ukljuceno ? '1' : '0');
-    polje.disabled = true;
-    fetch(polje.dataset.url, { method: 'POST', body: telo,
-      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' } })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+  // „Pošalji” na knjiženje: posle slanja ćelija pokazuje status; povlačenja nema.
+  document.getElementById('FiskalniPutniNalozi').addEventListener('click', function (e) {
+    var dugme = e.target.closest('.isp-posalji');
+    if (!dugme) return;
+    if (!confirm('Poslati račun ' + dugme.dataset.racun + ' na knjiženje? Posle slanja se ne menja.')) return;
+    dugme.disabled = true;
+    fetch(dugme.dataset.url, { method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.poruka || r.status); return d; }); })
       .then(function (d) {
-        polje.checked = d.proknjizeno;
-        var red = polje.closest('tr');
-        red.classList.toggle('isp-proknjizen', d.proknjizeno);
-        var ko = red.querySelector('.isp-ko');
-        ko.textContent = '';
-        if (d.proknjizeno) ko.append(d.ko, document.createElement('br'), d.kada);
-        if (window.toastr) toastr.success(d.proknjizeno ? 'Račun ' + polje.dataset.racun + ' je označen kao proknjižen.' : 'Oznaka je poništena.');
+        dugme.closest('td').innerHTML = d.kolona;
+        if (window.toastr) toastr.success('Račun ' + dugme.dataset.racun + ' je poslat na knjiženje.');
       })
-      .catch(function () {
-        polje.checked = !ukljuceno;
-        if (window.toastr) { toastr.error('Oznaka nije sačuvana. Pokušajte ponovo.'); } else { alert('Oznaka nije sačuvana. Pokušajte ponovo.'); }
-      })
-      .finally(function () { polje.disabled = false; });
+      .catch(function (err) {
+        dugme.disabled = false;
+        if (window.toastr) { toastr.error(err.message || 'Slanje nije uspelo.'); } else { alert(err.message || 'Slanje nije uspelo.'); }
+      });
   });
 });
 </script>

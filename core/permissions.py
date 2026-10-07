@@ -77,6 +77,12 @@ def collect_arhiva_permission_codes():
     return collect_url_pattern_names(arhiva_urls.urlpatterns, prefix="arhiva")
 
 
+def collect_knjizenje_permission_codes():
+    from knjizenje import urls as knjizenje_urls
+
+    return collect_url_pattern_names(knjizenje_urls.urlpatterns, prefix="knjizenje")
+
+
 def collect_mobilni_permission_codes():
     from mobilni import urls as mobilni_urls
 
@@ -118,6 +124,7 @@ def collect_permission_codes():
     codes.update(collect_mobilni_permission_codes())
     codes.update(collect_organizacija_permission_codes())
     codes.update(collect_arhiva_permission_codes())
+    codes.update(collect_knjizenje_permission_codes())
     codes.update(collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije"))
     codes.add("finansije:view_all")
     from potrazivanja.permissions import PERMISSIONS
@@ -228,6 +235,16 @@ def sync_permission_codes():
     ).delete()
     for perm in PermissionCode.objects.filter(code__in=menice_codes):
         RolePermission.objects.get_or_create(role=menice_role, permission=perm)
+
+    # Modul Knjiženje (od 07.10.2026.): uloga Knjiženje dobija samo njegove kodove. Isplate račune samo šalju.
+    knjizenje_codes = collect_knjizenje_permission_codes()
+    knjizenje_role, _ = Role.objects.get_or_create(
+        slug="knjizenje",
+        defaults={"name": "Knjiženje", "description": "Modul Knjiženje: knjiženje fiskalnih računa koje šalju Isplate."},
+    )
+    RolePermission.objects.filter(role=knjizenje_role).exclude(permission__code__in=knjizenje_codes).delete()
+    for perm in PermissionCode.objects.filter(code__in=knjizenje_codes):
+        RolePermission.objects.get_or_create(role=knjizenje_role, permission=perm)
 
     isplate_codes = collect_isplate_permission_codes()
     blagajna_role, _ = Role.objects.get_or_create(

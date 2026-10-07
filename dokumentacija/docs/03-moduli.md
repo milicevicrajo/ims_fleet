@@ -22,6 +22,7 @@
 | 9 | **Isplate** | `/isplate/` | [03-09-isplate.md](moduli/03-09-isplate.md) |
 | 10 | **Administracija** | `/administracija/` | [03-10-administracija.md](moduli/03-10-administracija.md) |
 | 11 | **Arhiva** (u izradi, od 01.10.2026.) | `/arhiva/` | [03-11-arhiva.md](moduli/03-11-arhiva.md) |
+| 12 | **Knjiženje** (od 07.10.2026.) | `/knjizenje/` | [03-12-knjizenje.md](moduli/03-12-knjizenje.md) |
 
 > Modul **Naplata** (`/naplata/`) je nasleđen i **nije obuhvaćen dokumentacijom**.
 > Zamenjuju ga Potraživanja. Vidi [10. Poznati problemi, P-18](10-poznati-problemi.md).
@@ -43,6 +44,7 @@
 | **Isplate** | Pravi datoteku virmana za isplatu akontacija preko banke |
 | **Administracija** | Vodi korisnike, uloge, dozvole, evidenciju rada i istoriju pozadinskih poslova |
 | **Arhiva** | Vodi pisarnicu i delovodnik po Listi kategorija; kasnije arhivu, elektronsku overu i izlučivanje |
+| **Knjiženje** | Knjiži fiskalne račune koje šalju Isplate, vraća ih na doradu i pamti podatke o knjiženju |
 
 ---
 

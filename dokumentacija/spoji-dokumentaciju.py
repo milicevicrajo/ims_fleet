@@ -42,6 +42,7 @@ REDOSLED = [
     "dokumentacija/docs/moduli/03-09-isplate.md",
     "dokumentacija/docs/moduli/03-10-administracija.md",
     "dokumentacija/docs/moduli/03-11-arhiva.md",
+    "dokumentacija/docs/moduli/03-12-knjizenje.md",
     "dokumentacija/docs/04-baza-podataka.md",
     "dokumentacija/docs/05-poslovni-procesi.md",
     "dokumentacija/docs/06-analize-i-obracuni.md",

@@ -6,86 +6,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<style>
-  .invoice-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
-    color: #fff; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18); }
-  .invoice-hero h1 { font-size: 1.5rem; margin: 0; }
-  .invoice-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
-  .invoice-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px;
-    font-weight: 600; font-size: .82rem; white-space: nowrap; }
-  .invoice-badge.ok { background: #e7f7ef; color: #147044; border: 1px solid #b7e3cb; }
-  .invoice-badge.muted { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
-  .invoice-badge.warn { background: #fff4db; color: #7a4d00; border: 1px solid #f1d28d; }
-
-  .fiskalni-raspored { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; }
-  @media (max-width: 1100px) { .fiskalni-raspored { grid-template-columns: minmax(0, 1fr); } }
-
-  .fiskalni-pregled { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .fiskalni-plocica { background: #fff; border: 1px solid #e3e6ec; border-radius: 8px; padding: 12px 14px; }
-  .fiskalni-plocica small { display: block; color: #6b7785; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
-  .fiskalni-plocica strong { display: block; font-size: 1.25rem; margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .fiskalni-plocica .invoice-badge { margin-top: 4px; }
-
-  .fiskalni-kartica { background: #fff; border: 1px solid #e3e6ec; border-radius: 8px; margin-bottom: 16px; }
-  .fiskalni-kartica > header { padding: 10px 16px; border-bottom: 1px solid #eef0f4; background: #fafbfd;
-    border-radius: 8px 8px 0 0; font-weight: 600; font-size: .95rem; }
-  .fiskalni-kartica > div { padding: 14px 16px; }
-  .fiskalni-kolone { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 32px; }
-  .fiskalni-podaci { display: grid; grid-template-columns: 130px 1fr; gap: 7px 12px; margin: 0; font-size: .9rem; }
-  .fiskalni-podaci dt { color: #6b7785; font-weight: 400; }
-  .fiskalni-podaci dd { margin: 0; overflow-wrap: anywhere; }
-
-  /* Obrada: prekidaci za magacin i garazu, polja garaze u zasebnom delu. */
-  .fiskalni-obrada { min-width: 0; }
-  .fiskalni-obrada .form-label { font-weight: 600; font-size: .85rem; color: #3b4652; }
-  .fiskalni-obrada .form-control,
-  .fiskalni-obrada .select2-container--bootstrap-5 .select2-selection { min-height: 38px; border-radius: 6px; font-size: .9rem; }
-  .fiskalni-obrada .select2-container { max-width: 100%; }
-  .fiskalni-obrada .row { margin-right: -6px; margin-left: -6px; row-gap: 12px; }
-  .fiskalni-obrada .row > [class*="col-"] { padding-right: 6px; padding-left: 6px; min-width: 0; }
-  .fiskalni-obrada .form-text { display: block; margin-top: 6px; font-size: .8rem; color: #6b7785; }
-  .fiskalni-prekidaci { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; margin: 16px 0; }
-  .fiskalni-prekidac { display: flex; align-items: center; gap: 12px; margin: 0; padding: 12px 14px; cursor: pointer;
-    border: 1px solid #dfe3ea; border-radius: 8px; background: #fbfcfd; transition: border-color .15s, background .15s; }
-  .fiskalni-prekidac:hover { border-color: #b9c3d0; }
-  .fiskalni-prekidac .ikona { flex: 0 0 38px; height: 38px; border-radius: 8px; display: grid; place-items: center;
-    font-size: 1.3rem; background: #edf1f5; color: #6b7785; transition: background .15s, color .15s; }
-  .fiskalni-prekidac .tekst { flex: 1; min-width: 0; line-height: 1.25; }
-  .fiskalni-prekidac .tekst strong { display: block; font-size: .92rem; }
-  .fiskalni-prekidac .tekst small { color: #6b7785; font-size: .78rem; }
-  /* Tema je Bootstrap 4: prekidac ima sopstveni izgled, a ostaje izvorni checkbox. */
-  .fiskalni-prekidac .form-switch { display: flex; flex: 0 0 auto; padding-left: 0; margin: 0; min-height: 0; }
-  .fiskalni-prekidac .form-switch .form-check-input { appearance: none; -webkit-appearance: none;
-    position: relative; display: block; width: 46px; height: 26px; margin: 0; float: none;
-    border: 2px solid #a5afbb; border-radius: 999px; background: #a5afbb; cursor: pointer;
-    transition: background-color .15s, border-color .15s; }
-  .fiskalni-prekidac .form-check-input::before { content: ""; position: absolute; top: 2px; left: 2px;
-    width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
-    transition: transform .15s; }
-  .fiskalni-prekidac .form-check-input:checked { background-color: #147044; border-color: #147044; }
-  .fiskalni-prekidac .form-check-input:checked::before { transform: translateX(20px); }
-  .fiskalni-prekidac .form-check-input:focus-visible { outline: 3px solid #2962ff; outline-offset: 3px; }
-  .fiskalni-prekidac .form-check-input:disabled { opacity: .55; cursor: not-allowed; }
-  .fiskalni-prekidac.ukljucen { border-color: #9fd3b8; background: #f2fbf6; }
-  .fiskalni-prekidac.ukljucen .ikona { background: #d9f2e5; color: #147044; }
-  .fiskalni-prekidac.garaza.ukljucen { border-color: #f1d28d; background: #fffaf0; }
-  .fiskalni-prekidac.garaza.ukljucen .ikona { background: #fff0cc; color: #7a4d00; }
-  .fiskalni-prekidac.garaza.ukljucen .form-check-input:checked { background-color: #d99a00; border-color: #d99a00; }
-  .fiskalni-garaza { border: 1px dashed #f1d28d; background: #fffcf5; border-radius: 8px; padding: 12px 14px 14px; margin-bottom: 16px; }
-  .fiskalni-garaza > header { font-weight: 600; font-size: .85rem; color: #7a4d00; margin-bottom: 10px; }
-  .fiskalni-sifra-vozila { font-size: .82rem; margin-top: 8px; color: #7a4d00; }
-  .fiskalni-obrada-dno { display: flex; justify-content: flex-end; border-top: 1px solid #eef0f4; padding-top: 12px; margin-top: 4px; }
-
-  .fiskalni-stavke { font-size: .88rem; }
-  .fiskalni-stavke td, .fiskalni-stavke th { vertical-align: top; }
-  .fiskalni-stavke .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .fiskalni-stavke tfoot td { font-weight: 600; border-top: 2px solid #dee2e6; }
-
-  /* Tekst računa u širini pravog računa (40 znakova), ceo, bez skrola. */
-  .fiskalni-racun-papir { width: max-content; }
-  .fiskalni-racun-papir pre { margin: 0; font-size: .8rem; line-height: 1.3; white-space: pre; background: #fffef8;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #1f2933; }
-</style>
+{% include "nabavka/_fiskalni_stil.html" %}
 
 <div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
@@ -135,27 +56,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
       </div>
     </div>
 
-    <section class="fiskalni-kartica">
-      <header>Podaci o računu</header>
-      <div class="fiskalni-kolone">
-        <dl class="fiskalni-podaci">
-          <dt>Prodavac</dt><dd>{{ racun.naziv_prodavca|default:"—" }}</dd>
-          <dt>PIB prodavca</dt><dd>{{ racun.pib_prodavca|default:"—" }}</dd>
-          <dt>Prodajno mesto</dt><dd>{{ racun.prodajno_mesto|default:"—" }}</dd>
-          <dt>Adresa</dt><dd>{{ racun.adresa|default:"—" }}{% if racun.grad %}<br>{{ racun.grad }}{% endif %}{% if racun.opstina %}<br><span class="text-muted">{{ racun.opstina }}</span>{% endif %}</dd>
-          <dt>Kupac</dt><dd>{{ racun.id_kupca|default:"— (fizičko lice)" }}</dd>
-        </dl>
-        <dl class="fiskalni-podaci">
-          <dt>Broj računa</dt><dd>{{ racun.broj_racuna }}</dd>
-          <dt>Vreme</dt><dd>{{ racun.pfr_vreme|date:"d.m.Y. H:i:s" }}</dd>
-          <dt>Vrsta</dt><dd>{{ racun.vrsta_racuna_naziv }} · {{ racun.vrsta_transakcije_naziv }}</dd>
-          <dt>Način plaćanja</dt><dd>{{ racun.nacin_placanja|default:"—" }}</dd>
-          <dt>Kasir · ESIR</dt><dd>{{ racun.kasir|default:"—" }} · {{ racun.esir_broj|default:"—" }}</dd>
-          <dt>Brojač</dt><dd>{{ racun.brojac_vrste|default:"—" }}/{{ racun.brojac_ukupno|default:"—" }}{{ racun.oznaka_brojaca }}</dd>
-          <dt>Učitao</dt><dd>{{ racun.created_by.get_full_name|default:racun.created_by.username|default:"—" }} · {{ racun.created_at|date:"d.m.Y. H:i" }}</dd>
-        </dl>
-      </div>
-    </section>
+{% include "nabavka/_fiskalni_podaci.html" %}
 
     {% if racun.putni_nalog %}
     <section class="fiskalni-kartica">
@@ -168,7 +69,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
           <dt>Zaposleni</dt><dd>{{ racun.putni_nalog.employee|default:racun.putni_nalog.other_employee_name|default:"—" }}</dd>
           <dt>Putovanje</dt><dd>{{ racun.putni_nalog.travel_location }} · {{ racun.putni_nalog.travel_date|date:"d.m.Y." }}{% if racun.putni_nalog.number_of_days %} · {{ racun.putni_nalog.number_of_days }} d.{% endif %}</dd>
           <dt>Šifra posla naloga</dt><dd>{{ racun.putni_nalog.job_code.code }} · {{ racun.putni_nalog.job_code.name }}</dd>
-          <dt>Knjiženje</dt><dd>{% if racun.proknjizeno %}{{ racun.proknjizio.get_full_name|default:racun.proknjizio.username|default:"—" }} · {{ racun.proknjizeno_at|date:"d.m.Y. H:i" }}<div class="small text-muted">Proknjižen račun se ne menja i ne briše.</div>{% else %}Čeka knjiženje (Isplate → Putni nalozi – Fiskalni računi){% endif %}</dd>
+          <dt>Knjiženje</dt><dd>{% if racun.proknjizeno %}{{ racun.proknjizio.get_full_name|default:racun.proknjizio.username|default:"—" }} · {{ racun.proknjizeno_at|date:"d.m.Y. H:i" }}<div class="small text-muted">Proknjižen račun se ne menja i ne briše.</div>{% else %}Nije proknjižen (modul Knjiženje){% endif %}</dd>
         </dl>
       </div>
     </section>
@@ -269,31 +170,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
       </div>
     </section>
 
-    <section class="fiskalni-kartica">
-      <header>Stavke</header>
-      <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0 fiskalni-stavke">
-          <thead><tr><th>#</th><th>Naziv</th><th class="num">Količina</th><th class="num">Jed. cena</th><th class="num">Ukupno</th>
-            <th>PDV</th><th class="num">Osnovica</th><th class="num">Iznos PDV</th></tr></thead>
-          <tbody>
-            {% for s in racun.stavke.all %}
-              <tr><td class="text-muted">{{ s.redni_broj }}</td>
-                <td>{{ s.naziv }}{% if s.gtin %}<div class="small text-muted">{{ s.gtin }}</div>{% endif %}</td>
-                <td class="num">{{ s.kolicina|floatformat:"-3" }}</td><td class="num">{{ s.jedinicna_cena|floatformat:"2g" }}</td>
-                <td class="num"><strong>{{ s.ukupno|floatformat:"2g" }}</strong></td>
-                <td class="text-nowrap">{{ s.oznaka_pdv }}{% if s.stopa_pdv is not None %} · {{ s.stopa_pdv|floatformat:"-2" }}%{% endif %}</td>
-                <td class="num">{{ s.osnovica|floatformat:"2g" }}</td><td class="num">{{ s.pdv|floatformat:"2g" }}</td></tr>
-            {% empty %}
-              <tr><td colspan="8" class="text-muted">Stavke još nisu preuzete sa stranice za proveru.</td></tr>
-            {% endfor %}
-          </tbody>
-          {% if racun.stavke.all %}
-          <tfoot><tr><td colspan="4">Ukupno</td><td class="num">{{ racun.iznos|floatformat:"2g" }}</td><td></td><td></td>
-            <td class="num">{% if racun.pdv_ukupno is not None %}{{ racun.pdv_ukupno|floatformat:"2g" }}{% endif %}</td></tr></tfoot>
-          {% endif %}
-        </table>
-      </div>
-    </section>
+{% include "nabavka/_fiskalni_stavke.html" %}
 
     {% if nabavka_permissions.fiskalni_delete and not racun.proknjizeno %}
     <form method="post" action="{% url 'nabavka:fiskalni_delete' racun.pk %}" onsubmit="return confirm('Obrisati ovaj račun iz evidencije?');">{% csrf_token %}
@@ -302,10 +179,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
     {% endif %}
   </div>
 
-  <section class="fiskalni-kartica fiskalni-racun-papir">
-    <header>Tekst računa</header>
-    <div>{% if racun.zurnal %}<pre>{{ racun.zurnal }}</pre>{% else %}<span class="text-muted small">Tekst računa još nije preuzet.</span>{% endif %}</div>
-  </section>
+{% include "nabavka/_fiskalni_tekst.html" %}
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

@@ -13,8 +13,8 @@ Inventar celog sistema: [`dokumentacija/00-inventar-i-plan-dokumentacije.md`](do
 Interni ERP sistem Instituta IMS. Django 5.0 monolit, Python 3.12, Microsoft SQL Server,
 Celery + Redis, Windows server. Bez REST API-ja — sve je server-side Django templates.
 
-**11 poslovnih modula:** Flota (vozni park), Kadrovi, Finansijska analitika, Nabavka,
-Potraživanja, Pravna služba, Ugovori, Menice, Mobilna telefonija, Isplate, Administracija.
+**12 poslovnih modula:** Flota (vozni park), Kadrovi, Finansijska analitika, Nabavka,
+Potraživanja, Pravna služba, Ugovori, Menice, Mobilna telefonija, Isplate, Knjiženje (od 07.10.2026.), Administracija.
 
 Obim: ~59.500 linija Pythona, 351 fajl, 280 šablona, 146 migracija, 550 testova.
 
@@ -48,6 +48,7 @@ Ako tražiš formulu, gledaj u `services/` ili `support/` — ne u `views/`.
 | Kadrovski obračuni (prolasci, odmori, bolovanja, ocenjivanje) | `hr/services/` |
 | Obustave za mobilne telefone | `mobilni/withholdings.py` |
 | Generisanje virmana za banku | `isplate/services/virman.py` |
+| Knjiženje fiskalnih računa iz Isplata (slanje, dorada, knjiženje) | `knjizenje/services.py` |
 | Sinhronizacija potraživanja | `potrazivanja/services/sync.py` |
 | Snimci izvora nabavke (EUF, UF, roba) | `nabavka/services/` |
 | Pravni i disciplinski postupci | `pravna/views.py`, `pravna/views_disciplinski.py` |

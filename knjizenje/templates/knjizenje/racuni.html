@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% comment %}
+Knjiženje → Fiskalni računi (od 07.10.2026.): računi koje su Isplate poslale na knjiženje.
+DataTables (strana sa servera, isti URL uz `draw`). Označeni računi se knjiže zajedno — isti datum i nalog za knjiženje.
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% include "isplate/_stil.html" %}
+<style>
+  .knj-plocice { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .knj-plocica { display: block; background: #fff; border: 1px solid #e1e8ef; border-left: 4px solid #1f6f8b; border-radius: 8px;
+    padding: 12px 16px; color: inherit; text-decoration: none; box-shadow: 0 3px 12px rgba(28, 54, 78, .04); }
+  .knj-plocica:hover { border-color: #b8c7d6; color: inherit; }
+  .knj-plocica.ceka { border-left-color: #1f4f86; } .knj-plocica.vraceno { border-left-color: #d39b1c; } .knj-plocica.mesec { border-left-color: #2f8f6f; }
+  .knj-plocica small { display: block; color: #64748b; font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .knj-plocica strong { font-size: 1.35rem; color: #14395b; font-variant-numeric: tabular-nums; }
+  .knj-plocica span { color: #526170; font-size: .85rem; margin-left: 6px; }
+  .knj-traka { display: none; background: #eef6f2; border: 1px solid #b7e3cb; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .knj-traka.aktivna { display: block; }
+  .knj-traka .form-label { color: #14532d; }
+  .knj-izbor { width: 18px; height: 18px; cursor: pointer; margin: 0; }
+</style>
+
+<div class="isp-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-book-check-outline" aria-hidden="true"></i>{{ title }}</h1>
+    <p>Fiskalni računi koje su Isplate poslale na knjiženje — sa putnih naloga i ostali. Označite račune i proknjižite ih
+      zajedno pod istim datumom i nalogom za knjiženje; račun sa greškom otvorite i vratite Isplatama na doradu.</p>
+  </div>
+  <div class="isp-zbir">
+    <span><span id="ispZbirBroj">{{ zbir.broj }}</span> računa</span>
+    <strong><span id="ispZbirIznos">{{ zbir.iznos }}</span> din</strong>
+    <span>PDV <span id="ispZbirPdv">{{ zbir.pdv }}</span></span>
+  </div>
+</div>
+
+{% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} py-2">{{ m }}</div>{% endfor %}{% endif %}
+
+<div class="knj-plocice">
+  <a class="knj-plocica ceka" href="?status=ceka"><small>Čeka knjiženje</small><strong>{{ plocice.ceka.broj }}</strong><span>{{ plocice.ceka.iznos }} din</span></a>
+  <a class="knj-plocica vraceno" href="?status=vraceno"><small>Vraćeno na doradu</small><strong>{{ plocice.vraceno.broj }}</strong><span>{{ plocice.vraceno.iznos }} din</span></a>
+  <a class="knj-plocica mesec" href="?status=proknjizeno"><small>Proknjiženo ovog meseca</small><strong>{{ plocice.mesec.broj }}</strong><span>{{ plocice.mesec.iznos }} din</span></a>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="isp-filter" id="ispFilter">
+      <div class="row g-2 align-items-end">
+        <div class="col-6 col-sm-4 col-lg-2">
+          <label class="form-label mb-1" for="id_status">Status</label>
+          <select id="id_status" class="form-select" name="status">
+            <option value="ceka" {% if filteri.status == "ceka" %}selected{% endif %}>Čeka knjiženje</option>
+            <option value="vraceno" {% if filteri.status == "vraceno" %}selected{% endif %}>Vraćeno na doradu</option>
+            <option value="proknjizeno" {% if filteri.status == "proknjizeno" %}selected{% endif %}>Proknjiženo</option>
+            <option value="sve" {% if filteri.status == "sve" %}selected{% endif %}>Svi</option>
+          </select>
+        </div>
+        <div class="col-6 col-sm-4 col-lg-2">
+          <label class="form-label mb-1" for="id_vrsta">Vrsta računa</label>
+          <select id="id_vrsta" class="form-select" name="vrsta">
+            <option value="">Svi</option>
+            <option value="nalog" {% if filteri.vrsta == "nalog" %}selected{% endif %}>Sa putnih naloga</option>
+            <option value="ostali" {% if filteri.vrsta == "ostali" %}selected{% endif %}>Ostali računi</option>
+          </select>
+        </div>
+        <div class="col-6 col-sm-4 col-lg-2">
+          <label class="form-label mb-1" for="id_od">Račun od</label>
+          <input id="id_od" class="form-control" type="date" name="od" value="{{ filteri.od }}">
+        </div>
+        <div class="col-6 col-sm-4 col-lg-2">
+          <label class="form-label mb-1" for="id_do">Račun do</label>
+          <input id="id_do" class="form-control" type="date" name="do" value="{{ filteri.do }}">
+        </div>
+        <div class="col-6 col-sm-4 col-lg-2">
+          <label class="form-label mb-1" for="id_knjizeno_od">Proknjiženo od</label>
+          <input id="id_knjizeno_od" class="form-control" type="date" name="knjizeno_od" value="{{ filteri.knjizeno_od }}">
+        </div>
+        <div class="col-6 col-sm-4 col-lg-2">
+          <label class="form-label mb-1" for="id_knjizeno_do">Proknjiženo do</label>
+          <input id="id_knjizeno_do" class="form-control" type="date" name="knjizeno_do" value="{{ filteri.knjizeno_do }}">
+        </div>
+        <div class="col-12 isp-akcije">
+          <a class="btn btn-outline-secondary" href="{% url 'knjizenje:racuni' %}" title="Očisti filtere"><i class="mdi mdi-close" aria-hidden="true"></i> Očisti</a>
+          {% if moze_izvoz %}<a class="btn btn-outline-success" id="ispIzvoz" href="{% url 'knjizenje:izvoz' %}" title="Izvoz u Excel (prema filterima i pretrazi)"><i class="mdi mdi-file-excel" aria-hidden="true"></i> Excel</a>{% endif %}
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if moze_knjiziti %}
+<form method="post" action="{% url 'knjizenje:proknjizi' %}" class="knj-traka isp-filter" id="knjTraka">{% csrf_token %}
+  <input type="hidden" name="nazad" id="knjNazad" value="">
+  <div id="knjIzabrani"></div>
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-lg-3"><strong><i class="mdi mdi-checkbox-marked-outline" aria-hidden="true"></i> Izabrano računa: <span id="knjBroj">0</span></strong>
+      <div class="isp-small">Knjiže se zajedno, pod istim datumom i nalogom.</div></div>
+    <div class="col-6 col-lg-2"><label class="form-label mb-1" for="{{ forma.datum.id_for_label }}">{{ forma.datum.label }}</label>{{ forma.datum }}</div>
+    <div class="col-6 col-lg-2"><label class="form-label mb-1" for="{{ forma.broj_naloga.id_for_label }}">{{ forma.broj_naloga.label }}</label>{{ forma.broj_naloga }}</div>
+    <div class="col-12 col-lg-3"><label class="form-label mb-1" for="{{ forma.napomena.id_for_label }}">{{ forma.napomena.label }}</label>{{ forma.napomena }}</div>
+    <div class="col-12 col-lg-2 isp-akcije"><button type="submit" class="btn btn-success w-100"><i class="mdi mdi-book-check" aria-hidden="true"></i> Proknjiži izabrane</button></div>
+  </div>
+</form>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table id="KnjizenjeRacuni" class="display compact table table-hover table-bordered align-middle w-100 isp-tabela">
+      <thead>
+        <tr><th class="text-center">{% if moze_knjiziti %}<input type="checkbox" class="form-check-input knj-izbor" id="knjSvi" aria-label="Izaberi sve na strani">{% endif %}</th>
+          <th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th class="text-end">Iznos</th><th>Vrsta</th><th>Šifra posla</th>
+          <th>Poslao</th><th>Knjiženje</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (!(window.jQuery && jQuery.fn.DataTable)) return;
+  var forma = document.getElementById('ispFilter');
+  var izvoz = document.getElementById('ispIzvoz');
+  var izvozUrl = izvoz ? izvoz.getAttribute('href') : '';
+  function parametri(d) { new FormData(forma).forEach(function (v, k) { d[k] = v; }); return d; }
+
+  var tabela = jQuery('#KnjizenjeRacuni').DataTable({
+    serverSide: true, processing: true, autoWidth: false, pageLength: 50,
+    lengthMenu: [[25, 50, 100, 200], [25, 50, 100, 200]], order: [[1, 'desc']],
+    search: { search: "{{ filteri.q|escapejs }}" },
+    ajax: { url: "{% url 'knjizenje:racuni' %}", type: 'GET', data: parametri },
+    columns: [
+      { data: 'izbor', orderable: false, className: 'text-center' },
+      { data: 'vreme', className: 'text-nowrap' }, { data: 'prodavac' }, { data: 'broj' },
+      { data: 'iznos', className: 'text-end text-nowrap' }, { data: 'veza', orderable: false },
+      { data: 'sifra' }, { data: 'poslao' }, { data: 'status' }
+    ],
+    columnDefs: [{ targets: 0, width: '4%' }, { targets: 1, width: '8%' }, { targets: 2, width: '16%' },
+                 { targets: 3, width: '13%' }, { targets: 4, width: '9%' }, { targets: 5, width: '17%' },
+                 { targets: 6, width: '8%' }, { targets: 7, width: '10%' }, { targets: 8, width: '15%' }],
+    language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: 'Račun, prodavac, PIB, nalog, šifra',
+      lengthMenu: 'Prikaži _MENU_ redova', info: 'Prikaz _START_ do _END_ od _TOTAL_ računa', infoEmpty: 'Nema računa',
+      infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema računa za izabrane filtere',
+      paginate: { first: 'Prva', last: 'Poslednja', next: 'Sledeća', previous: 'Prethodna' } }
+  });
+
+  tabela.on('xhr', function (e, settings, json) {
+    if (!json || !json.zbir) return;
+    document.getElementById('ispZbirBroj').textContent = json.zbir.broj;
+    document.getElementById('ispZbirIznos').textContent = json.zbir.iznos;
+    document.getElementById('ispZbirPdv').textContent = json.zbir.pdv;
+  });
+  tabela.on('draw', function () {
+    osveziIzbor();
+    if (!izvoz) return;
+    var p = new URLSearchParams(parametri({}));
+    if (tabela.search()) p.set('q', tabela.search());
+    izvoz.setAttribute('href', izvozUrl + '?' + p.toString());
+  });
+  forma.addEventListener('change', function () { tabela.ajax.reload(); });
+  forma.addEventListener('submit', function (e) { e.preventDefault(); tabela.ajax.reload(); });
+
+  // Izbor računa za zajedničko knjiženje: traka se pojavljuje kad je bar jedan račun izabran.
+  var traka = document.getElementById('knjTraka');
+  var svi = document.getElementById('knjSvi');
+  function izabrani() { return Array.prototype.slice.call(document.querySelectorAll('#KnjizenjeRacuni tbody .knj-izbor:checked')); }
+  function osveziIzbor() {
+    if (!traka) return;
+    var n = izabrani().length;
+    document.getElementById('knjBroj').textContent = n;
+    traka.classList.toggle('aktivna', n > 0);
+    if (svi) svi.checked = n > 0 && n === document.querySelectorAll('#KnjizenjeRacuni tbody .knj-izbor').length;
+  }
+  if (traka) {
+    document.getElementById('KnjizenjeRacuni').addEventListener('change', function (e) {
+      if (e.target === svi) {
+        document.querySelectorAll('#KnjizenjeRacuni tbody .knj-izbor').forEach(function (c) { c.checked = svi.checked; });
+      }
+      if (e.target.classList.contains('knj-izbor')) osveziIzbor();
+    });
+    traka.addEventListener('submit', function (e) {
+      var lista = izabrani();
+      if (!lista.length) { e.preventDefault(); return; }
+      if (!confirm('Proknjižiti izabrane račune (' + lista.length + ')?')) { e.preventDefault(); return; }
+      var mesto = document.getElementById('knjIzabrani');
+      mesto.innerHTML = '';
+      lista.forEach(function (c) {
+        var polje = document.createElement('input');
+        polje.type = 'hidden'; polje.name = 'racuni'; polje.value = c.value;
+        mesto.appendChild(polje);
+      });
+      document.getElementById('knjNazad').value = window.location.pathname + window.location.search;
+    });
+  }
+});
+</script>
+{% endblock %}

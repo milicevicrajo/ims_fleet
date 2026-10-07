@@ -3,13 +3,14 @@
 Svaka novost ima stalan ključ; potvrda se čuva po korisniku (`ProcitanaNovost`) i posle nje se ista novost
 više ne prikazuje. Nova izdanja dodaju se na početak spiska `NOVOSTI` sa novim ključem.
 Moduli su ključevi menija (`core.context_processors.current_app`): fleet, kadrovi, finansije, nabavka,
-pravna, potrazivanja, isplate.
+pravna, potrazivanja, isplate, knjizenje.
 """
 from django.urls import Resolver404, resolve
 
 NAZIVI_MODULA = {
     "fleet": "Flota", "kadrovi": "Kadrovi", "finansije": "Finansije", "nabavka": "Nabavka",
     "pravna": "Pravna služba", "potrazivanja": "Potraživanja", "isplate": "Isplate",
+    "knjizenje": "Knjiženje",
 }
 
 # Izdanje 07.10.2026. — poslednja četiri commita (b8f8526, 44bebb0, 6182871, aff1a08).
@@ -59,12 +60,26 @@ NOVOSTI = [
     ]},
     {"kljuc": "2026-10-07-isplate", "modul": "isplate", "datum": "07.10.2026.", "stavke": [
         ("Fiskalni računi bez šifre posla", "U Ostalim fiskalnim računima račun se može učitati i bez šifre posla."),
+        ("Dodavanje računa na putni nalog", "Prozor ima šifru posla (predlog prema vozilu sa naloga, može se promeniti), "
+                                            "interni broj i napomenu; posle očitavanja QR koda odmah se otvara detalj računa."),
+        ("Detalj računa", "Isti izgled kao u Nabavci, sa tekstom računa. Menjaju se šifra posla, interni broj i napomena; "
+                          "pogrešno skeniran račun se skida sa putnog naloga dugmetom na detalju."),
+        ("Slanje na knjiženje", "Dugme „Pošalji na knjiženje” (na spisku ili detalju). Poslat račun se više ne menja; "
+                                "knjiženje ga može vratiti na doradu — razlog piše na računu, a posle ispravke račun se šalje ponovo."),
+        ("Knjiženje", "Isplate više ne označavaju „Proknjiženo” — to radi novi modul Knjiženje."),
+    ]},
+    {"kljuc": "2026-10-07-knjizenje", "modul": "knjizenje", "datum": "07.10.2026.", "stavke": [
+        ("Novi modul Knjiženje", "Fiskalni računi koje šalju Isplate — sa putnih naloga i ostali — na jednom mestu."),
+        ("Knjiženje više računa odjednom", "Označite račune i proknjižite ih zajedno, pod istim datumom i nalogom za knjiženje."),
+        ("Vraćanje na doradu", "Račun sa greškom se vraća Isplatama uz razlog; posle ispravke ponovo stiže na knjiženje."),
+        ("Istorija", "Za svaki račun se pamti ko ga je poslao, vratio, proknjižio ili poništio knjiženje i kada."),
     ]},
 ]
 
 # Imenski prostor URL-a → modul; rute bez imenskog prostora pripadaju Floti (osim Kadrova i Administracije).
 MODUL_PO_PROSTORU = {"hr": "kadrovi", "finansije": "finansije", "nabavka": "nabavka", "pravna": "pravna",
-                     "ugovori": "pravna", "potrazivanja": "potrazivanja", "isplate": "isplate"}
+                     "ugovori": "pravna", "potrazivanja": "potrazivanja", "isplate": "isplate",
+                     "knjizenje": "knjizenje"}
 BEZ_NOVOSTI = {"pocetna", "switch_app", "login", "logout", "required_password_change", "novosti_procitano"}
 
 

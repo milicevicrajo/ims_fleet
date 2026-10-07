@@ -43,11 +43,21 @@ def oznaka_centra(blok):
 
 
 def raspodela_centara(company, year):
-    """Centri sa koeficijentima raspodele za godinu: {oznaka: (koef1, koef2, koef3)}."""
-    with connections["server_db"].cursor() as cursor:
-        cursor.execute(f"SELECT b.blok, b.koef1, b.koef2, b.koef3 FROM {SOURCE}.blokraspodela b "
-                       "WHERE b.sif_pred=%s AND b.god=%s", [company, str(year)])
-        return {oznaka_centra(r[0]): tuple(v or ZERO for v in r[1:]) for r in cursor.fetchall()}
+    """Centri sa koeficijentima raspodele za godinu: {oznaka: (koef1, koef2, koef3)}. Pamti se sat vremena,
+    kao i pravila raspodele (`shared_costs.pravila_godine`) — povezani server je spor."""
+    from django.core.cache import cache
+
+    from .shared_costs import TRAJANJE_PRAVILA
+
+    kljuc = f"finansije:zt:blokraspodela:{int(company)}:{int(year)}"
+    redovi = cache.get(kljuc)
+    if redovi is None:
+        with connections["server_db"].cursor() as cursor:
+            cursor.execute(f"SELECT b.blok, b.koef1, b.koef2, b.koef3 FROM {SOURCE}.blokraspodela b "
+                           "WHERE b.sif_pred=%s AND b.god=%s", [company, str(year)])
+            redovi = [tuple(r) for r in cursor.fetchall()]
+        cache.set(kljuc, redovi, TRAJANJE_PRAVILA)
+    return {oznaka_centra(r[0]): tuple(v or ZERO for v in r[1:]) for r in redovi}
 
 
 def zt_sifara(company, codes, start, end, covered):

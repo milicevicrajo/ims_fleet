@@ -215,7 +215,7 @@ godine**. [P]
 |---|---|---|
 | Knjiženja, prihodi, rashodi, IF, konta, grafikoni | `[PUTGEO-SERVER].[bazaims].dbo.nalog_z` i prateći šifarnici | Sinhronizovano u `LedgerEntry` |
 | Šifre posla, naziv, centar, aktivnost, tip | `bazaims.dbo.posao` | Lokalni `FinanceJob`; deo obračuna čita i izvorni šifarnik |
-| Kriterijumi i koeficijenti ZT | `bazaims.dbo.posao_mes`, `blokraspodela`, `posao` | **Direktan `SELECT` pri obračunu** |
+| Kriterijumi i koeficijenti ZT | `bazaims.dbo.posao_mes`, `blokraspodela`, `posao` | **Čitanje pri obračunu, za celu godinu jednim `OPENQUERY` upitom (spajanje radi udaljeni server), uz keš od 1 h** (`shared_costs.pravila_godine`, od 07.10.2026.; ranije 20–30 s po otvaranju Finansijskog pregleda). Izmena koeficijenata u izvoru vidi se najkasnije posle sat vremena |
 | Osnovice raspodele ZT | Lokalni `LedgerEntry` | Sinhronizovana knjiženja **cele firme** |
 | Priliv i odliv | `nalog_z`, `konto`, `vrsta_naloga`, `tipnal`, `pdv_arhiva`, `posao_mes`; `bazaldims.dbo.element` | **Direktan `SELECT`** |
 | Zaposleni na poslu | `bazaldims.dbo.Zarada`, `PomLD`, `Radnik` | **Direktan `SELECT`** |

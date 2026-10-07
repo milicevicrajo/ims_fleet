@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% comment %}
+Isplate → detalj fiskalnog računa (od 07.10.2026.): isti izgled kao u Nabavci (pregled, podaci, stavke, tekst računa),
+bez garaže, magacina i dodatnih šifara. Menjaju se samo šifra posla, interni broj i napomena; račun se šalje na
+knjiženje (modul Knjiženje) i posle toga se ne menja, osim ako ga Knjiženje vrati na doradu.
+{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+{% include "nabavka/_fiskalni_stil.html" %}
+<style>
+  .fiskalni-obrada .form-control, .fiskalni-obrada .form-select { min-height: 38px; border-radius: 6px; font-size: .9rem; }
+  .invoice-badge.info { background: #e8f1fb; color: #1f4f86; border: 1px solid #bcd3ee; }
+</style>
+
+<div class="invoice-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>{{ racun.naziv_prodavca|default:racun.pib_prodavca|default:"Fiskalni račun" }}</h1>
+    <p>{{ racun.prodajno_mesto|default:"" }}{% if racun.prodajno_mesto %} · {% endif %}{{ racun.broj_racuna }} · {{ racun.pfr_vreme|date:"d.m.Y. H:i" }}{% if racun.interni_broj %} · interni br. {{ racun.interni_broj }}{% endif %}</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-light btn-sm" href="{{ nazad }}"><i class="mdi mdi-arrow-left"></i> Nazad</a>
+    {% if racun.link %}<a class="btn btn-outline-light btn-sm" href="{{ racun.link }}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> Stranica Poreske uprave</a>{% endif %}
+  </div>
+</div>
+
+{% if upozorenja %}
+  <div class="alert alert-warning"><i class="mdi mdi-alert"></i>
+    {% for u in upozorenja %}{{ u }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+{% endif %}
+
+<div class="fiskalni-raspored">
+  <div>
+    <div class="fiskalni-pregled">
+      <div class="fiskalni-plocica"><small>Ukupan iznos</small><strong>{{ racun.iznos|floatformat:"2g" }}</strong></div>
+      <div class="fiskalni-plocica"><small>PDV</small><strong>{% if racun.pdv_ukupno is not None %}{{ racun.pdv_ukupno|floatformat:"2g" }}{% else %}—{% endif %}</strong></div>
+      <div class="fiskalni-plocica"><small>Stavki</small><strong>{{ racun.stavke.all|length }}</strong></div>
+      <div class="fiskalni-plocica"><small>Kupac</small>
+        {% if racun.na_ims %}<span class="invoice-badge ok"><i class="mdi mdi-domain"></i> IMS</span>
+        {% else %}<span class="invoice-badge warn"><i class="mdi mdi-account-alert"></i> {% if racun.id_kupca %}Drugi kupac{% else %}Fizičko lice{% endif %}</span>{% endif %}
+      </div>
+      <div class="fiskalni-plocica"><small>Status</small>
+        {% if racun.status == "potvrdjen" %}<span class="invoice-badge ok"><i class="mdi mdi-check-circle"></i> Potvrđen</span>
+        {% else %}<span class="invoice-badge muted" title="{{ racun.greska }}"><i class="mdi mdi-timer-sand"></i> Čeka proveru</span>{% endif %}
+      </div>
+      <div class="fiskalni-plocica"><small>Knjiženje</small>
+        {% if stanje == "proknjizeno" %}<span class="invoice-badge ok"><i class="mdi mdi-check-decagram"></i> Proknjiženo</span>
+        {% elif stanje == "poslato" %}<span class="invoice-badge info"><i class="mdi mdi-send-check"></i> Poslato</span>
+        {% elif stanje == "vraceno" %}<span class="invoice-badge warn"><i class="mdi mdi-undo"></i> Vraćeno na doradu</span>
+        {% else %}<span class="invoice-badge muted">Nije poslato</span>{% endif %}
+      </div>
+    </div>
+
+    {% include "nabavka/_fiskalni_podaci.html" %}
+
+    {% if racun.putni_nalog %}
+    <section class="fiskalni-kartica">
+      <header><i class="mdi mdi-car-arrow-right"></i> Putni nalog</header>
+      <div>
+        {% if racun.putni_nalog.storniran %}<div class="alert alert-warning py-2 mb-2"><i class="mdi mdi-alert"></i> Putni nalog je storniran.</div>{% endif %}
+        <dl class="fiskalni-podaci">
+          <dt>Broj naloga</dt><dd>{% if moze_nalog %}<a href="{% url 'isplate:putni_nalozi_pravdanje' %}?status=svi&amp;q={{ racun.putni_nalog.order_number|urlencode }}">{{ racun.putni_nalog.order_number }}</a>{% else %}{{ racun.putni_nalog.order_number }}{% endif %}</dd>
+          <dt>Zaposleni</dt><dd>{{ racun.putni_nalog.employee|default:racun.putni_nalog.other_employee_name|default:"—" }}</dd>
+          <dt>Putovanje</dt><dd>{{ racun.putni_nalog.travel_location }} · {{ racun.putni_nalog.travel_date|date:"d.m.Y." }}{% if racun.putni_nalog.number_of_days %} · {{ racun.putni_nalog.number_of_days }} d.{% endif %}</dd>
+          <dt>Vozilo</dt><dd>{{ racun.putni_nalog.vehicle|default:racun.putni_nalog.other_vehicle|default:"—" }}</dd>
+          <dt>Šifra posla naloga</dt><dd>{{ racun.putni_nalog.job_code.code }} · {{ racun.putni_nalog.job_code.name }}</dd>
+        </dl>
+        {% if moze_skinuti %}
+        <div class="fiskalni-obrada-dno"><button type="button" class="btn btn-outline-danger btn-sm" id="ispSkini" data-url="{{ skini_url }}" data-broj="{{ racun.broj_racuna }}">
+          <i class="mdi mdi-link-variant-off"></i> Skini sa putnog naloga</button></div>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="fiskalni-kartica">
+      <header>Šifra posla, broj i napomena</header>
+      <div>
+        {% if forma %}
+          <form method="post" action="{% url 'isplate:fiskalni_izmena' racun.pk %}?nazad={{ nazad|urlencode }}" class="fiskalni-obrada">{% csrf_token %}
+            {% if forma.non_field_errors %}<div class="alert alert-danger py-2">{{ forma.non_field_errors|join:" " }}</div>{% endif %}
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-xl-6"><label class="form-label mb-1" for="{{ forma.job_code.id_for_label }}">{{ forma.job_code.label }}</label>{{ forma.job_code }}
+                {% for e in forma.job_code.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+              <div class="col-12 col-md-6 col-xl-3"><label class="form-label mb-1" for="{{ forma.interni_broj.id_for_label }}">{{ forma.interni_broj.label }}</label>{{ forma.interni_broj }}
+                {% for e in forma.interni_broj.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+              <div class="col-12 col-md-6 col-xl-3"><label class="form-label mb-1" for="{{ forma.napomena.id_for_label }}">{{ forma.napomena.label }}</label>{{ forma.napomena }}</div>
+            </div>
+            <div class="fiskalni-obrada-dno"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button></div>
+          </form>
+        {% else %}
+          <dl class="fiskalni-podaci">
+            <dt>Šifra posla</dt><dd>{% if racun.job_code_id %}<strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}{% else %}<span class="text-muted">bez šifre posla</span>{% endif %}</dd>
+            <dt>Interni broj</dt><dd>{{ racun.interni_broj|default:"—" }}</dd>
+            <dt>Napomena</dt><dd>{{ racun.napomena|default:"—" }}</dd>
+          </dl>
+          {% if stanje == "poslato" or stanje == "proknjizeno" %}<div class="small text-muted mt-2">Račun je {% if stanje == "proknjizeno" %}proknjižen{% else %}poslat na knjiženje{% endif %} i ne menja se{% if stanje == "poslato" %} — ispravka je moguća samo ako ga Knjiženje vrati na doradu{% endif %}.</div>{% endif %}
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="fiskalni-kartica">
+      <header>Knjiženje</header>
+      <div>
+        {% if stanje == "proknjizeno" %}
+          <span class="invoice-badge ok"><i class="mdi mdi-check-decagram"></i> Proknjiženo</span>
+          <span class="small text-muted ms-2">{% if z.datum_knjizenja %}{{ z.datum_knjizenja|date:"d.m.Y." }}{% if z.broj_naloga %} · nalog {{ z.broj_naloga }}{% endif %}{% else %}{{ racun.proknjizeno_at|date:"d.m.Y." }}{% endif %}</span>
+        {% elif stanje == "poslato" %}
+          <span class="invoice-badge info"><i class="mdi mdi-send-check"></i> Poslato na knjiženje</span>
+          <span class="small text-muted ms-2">{{ z.poslao.get_full_name|default:z.poslao.username|default:"—" }} · {{ z.poslato_at|date:"d.m.Y. H:i" }}</span>
+        {% else %}
+          {% if stanje == "vraceno" %}
+          <div class="alert alert-warning py-2"><strong><i class="mdi mdi-undo"></i> Vraćeno na doradu</strong>
+            <div class="small">{{ z.razlog_vracanja }}</div>
+            <div class="small text-muted mt-1">{{ z.vratio.get_full_name|default:z.vratio.username|default:"—" }} · {{ z.vraceno_at|date:"d.m.Y. H:i" }}</div></div>
+          {% endif %}
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span class="small text-muted">{% if stanje == "vraceno" %}Ispravite račun i pošaljite ga ponovo.{% else %}Kada su šifra posla i broj upisani, pošaljite račun na knjiženje.{% endif %} Posle slanja račun se više ne menja.</span>
+            {% if moze_slati %}<form method="post" action="{% url 'isplate:fiskalni_posalji' racun.pk %}?nazad={{ nazad|urlencode }}"
+                  onsubmit="return confirm('Poslati račun na knjiženje? Posle slanja se ne menja.');">{% csrf_token %}
+              <button class="btn btn-success" type="submit"><i class="mdi mdi-send"></i> {% if stanje == "vraceno" %}Pošalji ponovo{% else %}Pošalji na knjiženje{% endif %}</button></form>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    {% include "nabavka/_fiskalni_stavke.html" %}
+  </div>
+
+  {% include "nabavka/_fiskalni_tekst.html" %}
+</div>
+{% if moze_skinuti %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var dugme = document.getElementById('ispSkini');
+  dugme.addEventListener('click', function () {
+    if (!confirm('Skinuti račun ' + dugme.dataset.broj + ' sa putnog naloga? Račun ostaje u ostalim fiskalnim računima.')) return;
+    dugme.disabled = true;
+    fetch(dugme.dataset.url, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { dugme.disabled = false; if (window.toastr) { toastr.error(d.poruka); } else { alert(d.poruka); } return; }
+        window.location.href = '{{ nazad|escapejs }}';  // račun iz Nabavke se tu vraća
+      })
+      .catch(function () { dugme.disabled = false; alert('Račun nije skinut (veza sa serverom).'); });
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

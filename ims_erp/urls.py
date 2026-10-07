@@ -18,6 +18,7 @@ urlpatterns = [
     path("finansije/", include("finansije.urls", namespace="finansije")),
     path("organizacija/", include("organizacija.urls", namespace="organizacija")),
     path("arhiva/", include("arhiva.urls", namespace="arhiva")),
+    path("knjizenje/", include("knjizenje.urls", namespace="knjizenje")),
     path("", include("core.urls")),
 ]
 

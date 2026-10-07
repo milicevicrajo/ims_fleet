@@ -12,6 +12,7 @@ from django.views.generic import TemplateView
 from core.mixins import RolePermissionRequiredMixin, user_has_role_permission
 from fleet.models import PutniNalog
 
+from .fiskalni_views import RacunNalogaForm
 from .putni_nalozi_views import dugme_racuni, racuni_po_nalogu
 from .services.converters import convert_virman_txt_to_internal_json
 from .services.virman import build_virman_file
@@ -181,6 +182,7 @@ class IsplataNeoporezovanihView(RolePermissionRequiredMixin, LoginRequiredMixin,
                 "sidebar_template": "sidebar_isplate.html",
                 "orders": orders,
                 "moze_racune": moze_racune,
+                "racun_forma": RacunNalogaForm() if moze_racune else None,
                 "status": self.request.GET.get("status", "pending"),
                 "allow_regenerate": self.request.GET.get("status") == "generated",
                 "selected_center": self.request.GET.get("center", "").strip(),

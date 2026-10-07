@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     'finansije.apps.FinansijeConfig',
     'organizacija.apps.OrganizacijaConfig',
     'arhiva.apps.ArhivaConfig',
+    'knjizenje.apps.KnjizenjeConfig',
 
     'django.contrib.admin',
     'django.contrib.auth',

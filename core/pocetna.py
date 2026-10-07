@@ -26,6 +26,8 @@ MODULI = [
      "Dugovanja kupaca po starosti, avansi, opomene i izveštaji po šiframa posla."),
     ("isplate", "Isplate", "mdi-bank-transfer", "isplate:neoporezive_isplate", "isplate:neoporezive_isplate",
      "Isplata akontacija za putne naloge (TXT virman), pravdanje i fiskalni računi putnih naloga."),
+    ("knjizenje", "Knjiženje", "mdi-book-check-outline", "knjizenje:racuni", "knjizenje:racuni",
+     "Knjiženje fiskalnih računa koje šalju Isplate: knjiženje, vraćanje na doradu i podaci o knjiženju."),
     ("pravna", "Pravna služba", "mdi-gavel", "pravna:cases_list", "pravna:cases_list",
      "Sudski postupci (tuženi i tužioci) i disciplinski postupci."),
     ("ugovori", "Ugovori", "mdi-file-document-multiple", "ugovori:contract_list", "ugovori:contract_list",

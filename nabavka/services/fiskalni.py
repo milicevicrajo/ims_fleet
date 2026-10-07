@@ -370,10 +370,26 @@ def upozorenja(racun):
 
 # ---------------------------------------------------------------- putni nalozi i knjiženje (od 02.10.2026.)
 
-def ucitaj_za_putni_nalog(tekst, putni_nalog, korisnik, napomena="", ocekivano=None):
+def sifra_za_putni_nalog(putni_nalog):
+    """Predlog šifre posla za račun sa putnog naloga (od 07.10.2026.): šifra na kojoj je vozilo naloga bilo na dan
+    putovanja (dodela vozila u Floti), a bez vozila ili dodele — šifra posla putnog naloga. Isplate je mogu promeniti."""
+    from fleet.models import JobCode
+
+    if putni_nalog.vehicle_id:
+        dodele = (JobCode.objects.select_related("organizational_unit")
+                  .filter(vehicle_id=putni_nalog.vehicle_id, organizational_unit__isnull=False)
+                  .order_by("-assigned_date", "-pk"))
+        dan = putni_nalog.travel_date or putni_nalog.order_date
+        dodela = (dodele.filter(assigned_date__lte=dan).first() if dan else None) or dodele.first()
+        if dodela:
+            return dodela.organizational_unit
+    return putni_nalog.job_code
+
+
+def ucitaj_za_putni_nalog(tekst, putni_nalog, korisnik, napomena="", ocekivano=None, job_code=None, interni_broj=""):
     """Račun sa putnog naloga. Vraća (račun, upozorenja, vezan_postojeći).
 
-    Novi račun dobija šifru posla putnog naloga i pripada Isplatama (ako se skine sa naloga, ostaje u
+    Novi račun dobija izabranu šifru posla (predlog: `sifra_za_putni_nalog` — prema vozilu) i interni broj, i pripada Isplatama (ako se skine sa naloga, ostaje u
     „Ostalim fiskalnim računima”). Račun koji je već učitan (npr. u Nabavci) se samo veže za nalog i
     zadržava svoju šifru posla; dok je na nalogu ne vidi se u Nabavci. Račun vezan za drugi nalog se ne prevezuje, a na
     storniran nalog se računi ne dodaju.
@@ -386,9 +402,13 @@ def ucitaj_za_putni_nalog(tekst, putni_nalog, korisnik, napomena="", ocekivano=N
     if ocekivano:
         proveri_ocekivano(zaglavlje, ocekivano)
     postojeci = FiskalniRacun.objects.select_related("putni_nalog").filter(broj_racuna=zaglavlje.broj_racuna).first()
+    interni_broj = (interni_broj or "").strip()[:50]
     if postojeci is None:
-        racun, poruke = upisi(tekst, putni_nalog.job_code, korisnik, napomena, putni_nalog=putni_nalog,
-                              evidencija=FiskalniRacun.Evidencija.GOTOVINA)
+        racun, poruke = upisi(tekst, job_code or sifra_za_putni_nalog(putni_nalog), korisnik, napomena,
+                              putni_nalog=putni_nalog, evidencija=FiskalniRacun.Evidencija.GOTOVINA)
+        if interni_broj:
+            racun.interni_broj = interni_broj
+            racun.save(update_fields=["interni_broj"])
         return racun, poruke, False
     if postojeci.putni_nalog_id == putni_nalog.pk:
         raise GreskaOcitavanja(f"Račun {postojeci.broj_racuna} je već na ovom putnom nalogu.")
@@ -396,7 +416,11 @@ def ucitaj_za_putni_nalog(tekst, putni_nalog, korisnik, napomena="", ocekivano=N
         raise GreskaOcitavanja(f"Račun {postojeci.broj_racuna} je već vezan za putni nalog "
                                f"{postojeci.putni_nalog.order_number}.")
     postojeci.putni_nalog = putni_nalog
-    postojeci.save(update_fields=["putni_nalog"])
+    polja = ["putni_nalog"]
+    if interni_broj and not postojeci.interni_broj:
+        postojeci.interni_broj = interni_broj
+        polja.append("interni_broj")
+    postojeci.save(update_fields=polja)
     return postojeci, upozorenja(postojeci), True
 
 

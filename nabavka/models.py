@@ -1140,6 +1140,11 @@ class FiskalniRacun(models.Model):
     # `db_default`: i kod koji još ne zna za polje (server pre isporuke) upisuje Nabavku, umesto NULL greške.
     evidencija = models.CharField(max_length=10, choices=Evidencija.choices, default=Evidencija.NABAVKA,
                                   db_default=Evidencija.NABAVKA, db_index=True, verbose_name=_("Evidencija"))
+    # Isplate (od 07.10.2026.): interni broj računa (ostali fiskalni računi) i slanje na knjiženje. Isplate šalju,
+    # a knjigovodstvo knjiži na posebnom ekranu (Isplate → Knjiženje fiskalnih računa, druge dozvole).
+    # Interni broj računa (Isplate → ostali fiskalni računi, od 07.10.2026.). Slanje na knjiženje i podaci o knjiženju
+    # su u modulu Knjiženje (`knjizenje.KnjizenjeRacuna`); `proknjizeno` ostaje oznaka koja zaključava račun.
+    interni_broj = models.CharField(max_length=50, blank=True, default="", db_default="", verbose_name=_("Interni broj računa"))
     proknjizeno = models.BooleanField(default=False, db_index=True, verbose_name=_("Proknjiženo"))
     proknjizio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name="+", verbose_name=_("Proknjižio"))

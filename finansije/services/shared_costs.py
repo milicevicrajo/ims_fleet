@@ -5,6 +5,7 @@ the P&L pools from our reconciled ledger; read only the source allocation rules.
 """
 from decimal import Decimal, ROUND_HALF_UP
 
+from django.core.cache import cache
 from django.db import connections
 from django.db.models.functions import ExtractMonth
 
@@ -13,23 +14,46 @@ from .reports import expressions
 from .source import SOURCE
 
 ZERO = Decimal("0")
+# Pravila raspodele (posao_mes, blokraspodela) menjaju se retko (mesečni koeficijenti), a povezani server je spor
+# (merenje 07.10.2026.: 25–30 s po upitu sa spajanjem). Zato se čitaju za celu godinu jednim OPENQUERY upitom —
+# spajanje radi udaljeni server — i pamte se sat vremena. Ključ uključuje firmu i godinu.
+TRAJANJE_PRAVILA = 3600
+LINKED_SERVER = "[PUTGEO-SERVER]"
+
+
+def _openquery(upit):
+    return f"SELECT * FROM OPENQUERY({LINKED_SERVER}, '{upit.replace(chr(39), chr(39) * 2)}')"
+
+
+def pravila_godine(company, year):
+    """(sva mesečna pravila godine, (sif_pos, koef1, koef2, koef3) za šifre sa centrom u raspodeli) — iz keša ili izvora."""
+    company, year = int(company), int(year)  # samo celi brojevi ulaze u tekst upita
+    kljuc = f"finansije:zt:pravila:{company}:{year}"
+    podaci = cache.get(kljuc)
+    if podaci is not None:
+        return podaci
+    with connections["server_db"].cursor() as cursor:
+        cursor.execute(_openquery(
+            "SELECT m.sif_pos, m.mesec, m.kriterijum, m.koef, m.koef2, m.koef3, m.profitni "
+            "FROM bazaims.dbo.posao_mes m INNER JOIN bazaims.dbo.posao p ON p.sif_pred = m.sif_pred AND p.sif_pos = m.sif_pos "
+            f"WHERE m.sif_pred = {company} AND m.god = '{year}' AND m.aktivan = 'D'"))
+        pravila = [{"code": str(r[0]).strip(), "month": r[1], "criterion": str(r[2] or "").strip(),
+                    "coefficients": tuple(r[i] or ZERO for i in (3, 4, 5)), "profit": str(r[6] or "").strip()}
+                   for r in cursor.fetchall()]
+        cursor.execute(_openquery(
+            "SELECT p.sif_pos, b.koef1, b.koef2, b.koef3 FROM bazaims.dbo.posao p "
+            "INNER JOIN bazaims.dbo.blokraspodela b ON b.sif_pred = p.sif_pred AND b.blok = p.blok "
+            f"WHERE p.sif_pred = {company} AND b.god = '{year}'"))
+        centri = [(str(r[0]).strip(), r[1], r[2], r[3]) for r in cursor.fetchall()]
+    podaci = (pravila, centri)
+    cache.set(kljuc, podaci, TRAJANJE_PRAVILA)
+    return podaci
 
 
 def allocation_rules(company, year, first_month, last_month, code):
-    with connections["server_db"].cursor() as cursor:
-        cursor.execute(f"""SELECT m.sif_pos,m.mesec,m.kriterijum,m.koef,m.koef2,m.koef3,m.profitni
-            FROM {SOURCE}.posao_mes m INNER JOIN {SOURCE}.posao p
-            ON p.sif_pred=m.sif_pred AND p.sif_pos=m.sif_pos
-            WHERE m.sif_pred=%s AND m.god=%s AND m.mesec BETWEEN %s AND %s AND m.aktivan='D'""",
-            [company, str(year), first_month, last_month])
-        rules = [{"code": str(r[0]).strip(), "month": r[1], "criterion": str(r[2] or "").strip(),
-                  "coefficients": tuple(r[i] or ZERO for i in (3, 4, 5)), "profit": str(r[6] or "").strip()}
-                 for r in cursor.fetchall()]
-        cursor.execute(f"""SELECT p.sif_pos,b.koef1,b.koef2,b.koef3 FROM {SOURCE}.posao p
-            INNER JOIN {SOURCE}.blokraspodela b ON b.sif_pred=p.sif_pred AND b.blok=p.blok
-            WHERE p.sif_pred=%s AND b.god=%s""" + (" AND p.sif_pos=%s" if code is not None else ""),
-            [company, str(year)] + ([code] if code is not None else []))
-        centers = cursor.fetchall()
+    pravila, centri = pravila_godine(company, year)
+    rules = [r for r in pravila if first_month <= r["month"] <= last_month]
+    centers = [r for r in centri if code is None or r[0] == str(code).strip()]
     if code is None:
         grouped = {}
         for row in centers:

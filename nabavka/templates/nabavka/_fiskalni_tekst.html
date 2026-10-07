@@ -1,0 +1,5 @@
+{% comment %}Tekst računa u širini pravog računa — Nabavka i Isplate.{% endcomment %}
+  <section class="fiskalni-kartica fiskalni-racun-papir">
+    <header>Tekst računa</header>
+    <div>{% if racun.zurnal %}<pre>{{ racun.zurnal }}</pre>{% else %}<span class="text-muted small">Tekst računa još nije preuzet.</span>{% endif %}</div>
+  </section>

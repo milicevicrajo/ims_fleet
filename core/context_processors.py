@@ -19,6 +19,7 @@ def current_app(request):
         "finansije": "sidebar_finansije.html",
         "organizacija": "sidebar_organizacija.html",
         "arhiva": "sidebar_arhiva.html",
+        "knjizenje": "sidebar_knjizenje.html",
     }
     nabavka_codes = [
         "dashboard",
@@ -63,6 +64,9 @@ def current_app(request):
             code: user_has_role_permission(request.user, f"hr:{code}")
             for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list",
                          "evaluation_list", "resenje_list", "zahtev_list", "ugovor_list", "analitika")
+        },
+        "knjizenje_permissions": {
+            code: user_has_role_permission(request.user, f"knjizenje:{code}") for code in ("racuni",)
         },
         "ugovori_permissions": {
             code: user_has_role_permission(request.user, f"ugovori:{code}") for code in ("contract_list",)

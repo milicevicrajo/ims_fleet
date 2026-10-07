@@ -34,6 +34,13 @@
                  title="Isplate">
                 <i class="mdi mdi-bank-transfer"></i><span class="app-label">Isplate</span>
               </a>
+              {% if knjizenje_permissions.racuni %}
+              <a class="nav-link {% if current_app == 'knjizenje' %}active{% endif %}"
+                 href="{% url 'switch_app' 'knjizenje' %}?next={% url 'knjizenje:racuni' %}"
+                 title="Knjiženje">
+                <i class="mdi mdi-book-check-outline"></i><span class="app-label">Knjiženje</span>
+              </a>
+              {% endif %}
               <a class="nav-link {% if current_app == 'menice' %}active{% endif %}"
                  href="{% url 'switch_app' 'menice' %}?next={% url 'menice:menica_list' tip='izlazna' %}"
                  title="Menice">

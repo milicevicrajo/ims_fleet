@@ -20,13 +20,13 @@ class NovostiTests(TestCase):
         kljucevi = [n["kljuc"] for n in NOVOSTI]
         self.assertEqual(len(kljucevi), len(set(kljucevi)))
         self.assertEqual({n["modul"] for n in NOVOSTI},
-                         {"fleet", "kadrovi", "finansije", "nabavka", "pravna", "potrazivanja", "isplate"})
+                         {"fleet", "kadrovi", "finansije", "nabavka", "pravna", "potrazivanja", "isplate", "knjizenje"})
 
     def test_modul_po_adresi(self):
         rf = RequestFactory()
         for adresa, sesija, modul in (("/hr/analitika/", "fleet", "kadrovi"), ("/finansije/", "fleet", "finansije"),
                                       ("/nabavka/fiskalni-racuni/", "fleet", "nabavka"), ("/", "fleet", None),
-                                      ("/pravna/disciplinski/", "pravna", "pravna")):
+                                      ("/pravna/disciplinski/", "pravna", "pravna"), ("/knjizenje/", "isplate", "knjizenje")):
             zahtev = rf.get(adresa)
             zahtev.session = {"current_app": sesija}
             self.assertEqual(modul_zahteva(zahtev), modul, adresa)

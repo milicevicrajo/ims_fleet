@@ -1,0 +1,22 @@
+{% comment %}Kartica „Podaci o računu” — Nabavka i Isplate.{% endcomment %}
+    <section class="fiskalni-kartica">
+      <header>Podaci o računu</header>
+      <div class="fiskalni-kolone">
+        <dl class="fiskalni-podaci">
+          <dt>Prodavac</dt><dd>{{ racun.naziv_prodavca|default:"—" }}</dd>
+          <dt>PIB prodavca</dt><dd>{{ racun.pib_prodavca|default:"—" }}</dd>
+          <dt>Prodajno mesto</dt><dd>{{ racun.prodajno_mesto|default:"—" }}</dd>
+          <dt>Adresa</dt><dd>{{ racun.adresa|default:"—" }}{% if racun.grad %}<br>{{ racun.grad }}{% endif %}{% if racun.opstina %}<br><span class="text-muted">{{ racun.opstina }}</span>{% endif %}</dd>
+          <dt>Kupac</dt><dd>{{ racun.id_kupca|default:"— (fizičko lice)" }}</dd>
+        </dl>
+        <dl class="fiskalni-podaci">
+          <dt>Broj računa</dt><dd>{{ racun.broj_racuna }}</dd>
+          <dt>Vreme</dt><dd>{{ racun.pfr_vreme|date:"d.m.Y. H:i:s" }}</dd>
+          <dt>Vrsta</dt><dd>{{ racun.vrsta_racuna_naziv }} · {{ racun.vrsta_transakcije_naziv }}</dd>
+          <dt>Način plaćanja</dt><dd>{{ racun.nacin_placanja|default:"—" }}</dd>
+          <dt>Kasir · ESIR</dt><dd>{{ racun.kasir|default:"—" }} · {{ racun.esir_broj|default:"—" }}</dd>
+          <dt>Brojač</dt><dd>{{ racun.brojac_vrste|default:"—" }}/{{ racun.brojac_ukupno|default:"—" }}{{ racun.oznaka_brojaca }}</dd>
+          <dt>Učitao</dt><dd>{{ racun.created_by.get_full_name|default:racun.created_by.username|default:"—" }} · {{ racun.created_at|date:"d.m.Y. H:i" }}</dd>
+        </dl>
+      </div>
+    </section>

@@ -57,45 +57,63 @@ blagajna ne bi ručno kucala naloge za plaćanje.
 | **Putni nalozi – pravdanje** (od 02.10.2026.) | `/isplate/putni-nalozi/` |
 | **Putni nalozi – Fiskalni računi** (od 02.10.2026.) | `/isplate/fiskalni-racuni/` |
 | **Ostali fiskalni računi** (od 05.10.2026.) | `/isplate/ostali-fiskalni-racuni/` |
+| **Detalj fiskalnog računa** (od 07.10.2026.) | `/isplate/fiskalni-racuni/<id>/` |
 
 ### Putni nalozi – Fiskalni računi (od 02.10.2026.) [P]
 
 Fiskalni računi se dodaju **pri pravdanju putnog naloga** (Isplate → Putni nalozi – pravdanje: dugme
-„Dodaj račun" otvara prozor sa računima naloga i poljem za čitač QR koda; „Opravdaj" zaključava nalog)
+„Dodaj račun" otvara prozor; „Opravdaj" zaključava nalog)
 ili **odmah u toku isplate** — isto dugme i isti prozor postoje u svakom redu tabele Nalozi za isplatu
-(Isplata neoporezovanih), kolona „Fiskalni računi". Dugme pokazuje broj i zbir računa naloga i osvežava se
-odmah posle skeniranja, bez ponovnog učitavanja strane (izbor naloga za virman ostaje).
+(Isplata neoporezovanih), kolona „Fiskalni računi". Dugme pokazuje broj i zbir računa naloga.
+Prozor (od 07.10.2026.) nema spisak računa: ima **šifru posla** (predlog **prema vozilu** naloga — dodela vozila
+na dan putovanja, `nabavka.services.fiskalni.sifra_za_putni_nalog`; bez vozila ili dodele šifra naloga; menja se),
+**interni broj računa**, napomenu i polje za čitač QR koda. Posle očitavanja **odmah se otvara detalj računa**;
+dugme „Nazad” na detalju vraća na stranu sa koje je prozor otvoren.
 Račun se čuva gde i ostali fiskalni računi (`nabavka.FiskalniRacun`), samo je vezan za putni nalog
-(`putni_nalog`). Knjigovodstvo ih vidi i označava na ekranu Putni nalozi – Fiskalni računi.
+(`putni_nalog`). Isplate ih **šalju na knjiženje**, a knjiži ih modul **Knjiženje** (od 07.10.2026.,
+[3.12 Knjiženje](03-12-knjizenje.md)).
 
 | Tema | Pravilo |
 |---|---|
 | Šta se vidi | Samo računi vezani za putni nalog. Računi Nabavke i ostali fiskalni računi se ne prikazuju. |
-| Kolone | Vreme, prodavac i PIB, broj računa (veza na detalj u Nabavci), iznos, PDV, kupac (IMS / drugi kupac / fizičko lice), putni nalog (zaposleni, mesto, datum, oznaka storniranog naloga), šifra posla, ko je učitao, **Proknjiženo** |
-| Filteri | Knjiženje (podrazumevano neproknjiženi), kupac, period i pretraga tabele; primenjuju se odmah. Zbir i PDV u zaglavlju prate filtere i pretragu; izvoz u Excel takođe. |
-| Tabela | Oba spiska (pravdanje i knjiženje) su DataTables tabele sa stranom sa servera — isti URL uz parametar `draw` vraća JSON (`isplate/tabela.py`), pa nema posebne dozvole za podatke. |
-| Proknjiženo | Polje za štikliranje čuva se odmah i pamti ko je i kada označio (`proknjizeno`, `proknjizio`, `proknjizeno_at`). Ne upisuje ništa u knjigovodstvo. Poništavanje oznake traži potvrdu i beleži se u evidenciji rada. |
-| Zaključavanje | Proknjižen račun se u Nabavci ne briše i ne menja (obrada, šifre posla), niti se skida sa putnog naloga. |
+| Kolone | Vreme, prodavac i PIB, broj računa (veza na **detalj u Isplatama**, uz interni broj), iznos, PDV, kupac (IMS / drugi kupac / fizičko lice), putni nalog (zaposleni, mesto, datum, oznaka storniranog naloga), šifra posla, ko je učitao, **Knjiženje** (dugme „Pošalji” ili status) |
+| Filteri | Knjiženje (podrazumevano neproknjiženi; još: za slanje i vraćeni, vraćeni na doradu, poslati a čekaju knjiženje, proknjiženi, svi), kupac, period i pretraga tabele (i interni broj); primenjuju se odmah. Zbir i PDV u zaglavlju prate filtere i pretragu; izvoz u Excel takođe. |
+| Tabela | Spiskovi su DataTables tabele sa stranom sa servera — isti URL uz parametar `draw` vraća JSON (`isplate/tabela.py`), pa nema posebne dozvole za podatke. |
+| Slanje na knjiženje | Dugme **„Pošalji”** (spisak, uz potvrdu) ili „Pošalji na knjiženje” (detalj) — servis `knjizenje.services.posalji`. **Povlačenja nema**: poslat račun može da vrati samo modul Knjiženje (na doradu, uz razlog). Vraćen račun ima oznaku „Vraćeno” sa razlogom i ponovo dugme „Pošalji”. **Isplate ne knjiže.** |
+| Zaključavanje | Poslat ili proknjižen račun se u Isplatama ne menja (šifra posla, interni broj, napomena) i ne skida se sa putnog naloga. Proknjižen račun se ni u Nabavci ne briše i ne menja (obrada, šifre posla). |
 | Pravdanje | Spisak putnih naloga (podrazumevano neopravdani; pretraga, period putovanja) sa brojem i zbirom računa. Opravdan nalog je **zaključan**: računi se više ne dodaju ni skidaju. „Opravdaj" je isto što i u Floti. |
-| Dodavanje računa | Novi račun dobija **šifru posla putnog naloga**. Račun koji je već učitan u Nabavci se samo **veže** za nalog i zadržava svoju šifru. Račun vezan za drugi nalog se ne prevezuje; na storniran nalog se računi ne dodaju (postojeći ostaju, uz oznaku). Pogrešno skeniran račun se skida sa naloga dok nije proknjižen i vraća se u svoju evidenciju: račun učitan na nalogu u „Ostale fiskalne račune", račun iz Nabavke u Nabavku. |
+| Dodavanje računa | Novi račun dobija izabranu šifru posla (predlog prema vozilu). Račun koji je već učitan u Nabavci se samo **veže** za nalog i zadržava svoju šifru. Račun vezan za drugi nalog se ne prevezuje; na storniran nalog se računi ne dodaju (postojeći ostaju, uz oznaku). Pogrešno skeniran račun se skida sa naloga (dugme „Skini sa putnog naloga” na detalju) dok nije poslat na knjiženje i vraća se u svoju evidenciju: račun učitan na nalogu u „Ostale fiskalne račune", račun iz Nabavke u Nabavku. |
 | Obuhvat | Isplate rade po starim pravima: oba ekrana pokazuju sve putne naloge i sve račune sa njih, kao ekran isplate akontacija. |
-| Dozvole | Pravdanje: `isplate:putni_nalozi_pravdanje`, `isplate:putni_nalog_racuni`, `isplate:putni_nalog_racun_dodaj`, `isplate:putni_nalog_racun_ukloni`, `isplate:putni_nalog_opravdaj`. Knjiženje: `isplate:fiskalni_putni_nalozi`, `isplate:fiskalni_proknjizi`, `isplate:fiskalni_izvoz`. Uloga Blagajna ih dobija automatski. |
+| Dozvole | Pravdanje: `isplate:putni_nalozi_pravdanje`, `isplate:putni_nalog_racuni`, `isplate:putni_nalog_racun_dodaj`, `isplate:putni_nalog_racun_ukloni`, `isplate:putni_nalog_opravdaj`. Spisak i detalj: `isplate:fiskalni_putni_nalozi`, `isplate:fiskalni_izvoz`, `isplate:fiskalni_detail`, `isplate:fiskalni_izmena`, `isplate:fiskalni_posalji`. Uloga Blagajna ih dobija automatski. |
+
+### Detalj fiskalnog računa (od 07.10.2026.) [P]
+
+Posle očitavanja QR koda račun se učitava i **odmah se otvara njegov detalj** (i ostali računi i računi putnog naloga).
+Detalj ima **isti izgled kao u Nabavci** — pregled, podaci o računu, stavke i tekst računa (zajednički delovi
+`nabavka/_fiskalni_*.html`) — ali bez garaže, magacina i dodatnih šifara posla.
+
+| Tema | Pravilo |
+|---|---|
+| Šta se menja | **Šifra posla**, **interni broj računa** (`interni_broj`) i **napomena** — za sve račune Isplata. Sve se može upisati već pri učitavanju; šifra posla nije obavezna. |
+| Račun putnog naloga | Uz to kartica putnog naloga (zaposleni, putovanje, vozilo, šifra naloga) i dugme „Skini sa putnog naloga”. |
+| Izmena | Dok račun nije poslat na knjiženje, ili kad ga Knjiženje vrati na doradu (`isplate:fiskalni_izmena`). |
+| Knjiženje | Status (nije poslato / poslato / vraćeno na doradu sa razlogom / proknjiženo sa datumom i nalogom) i dugme „Pošalji na knjiženje” ili „Pošalji ponovo” (`isplate:fiskalni_posalji`). |
 
 ### Ostali fiskalni računi (od 05.10.2026.) [P]
 
 Fiskalni računi za **gotovinski obračun** koji se ne vezuju za putne naloge. Ekran je isti kao Putni
-nalozi – Fiskalni računi (filteri, zbir, „Proknjiženo", Excel), uz dugme **Učitaj račun** koje otvara
+nalozi – Fiskalni računi (filteri, zbir, slanje na knjiženje, Excel), uz dugme **Učitaj račun** koje otvara
 prozor kao u Nabavci: šifra posla (sve aktivne iz registra — Isplate rade po starim pravima), link sa
-čitača QR koda i napomena (za šta je račun). Prozor ostaje otvoren za sledeći račun, a tabela i zbir se
-osvežavaju bez ponovnog učitavanja. „QR kod je oštećen?" vodi na ručnu proveru Poreske uprave
+čitača QR koda i napomena (za šta je račun). Posle učitavanja otvara se detalj računa (od 07.10.2026.);
+u prozoru se može odmah upisati i interni broj računa. „QR kod je oštećen?" vodi na ručnu proveru Poreske uprave
 (vidi [3.4 Nabavka](03-04-nabavka.md)) — isto i u prozoru računa putnog naloga. Umesto kolone „Putni nalog" je „Napomena"; pretraga obuhvata i napomenu.
 
 | Tema | Pravilo |
 |---|---|
 | Podatak | Ista tabela `nabavka.FiskalniRacun`, `evidencija = gotovina`, bez `putni_nalog` (`isplate/fiskalni_views.py: ostali_racuni`). Preuzimanje sa stranice Poreske uprave isto je kao u Nabavci. |
 | Razdvajanje | Ne vide se u Nabavci ni na Putni nalozi – Fiskalni računi; računi Nabavke i putnih naloga ne vide se ovde. Isti račun se ne učitava dva puta — poruka kaže gde je već učitan. |
-| Detalj | Broj računa vodi na detalj (Nabavka), gde stoji napomena da se račun vodi u Isplatama. |
-| Dozvole | `isplate:fiskalni_ostali`, `isplate:fiskalni_ostali_ucitaj`, `isplate:fiskalni_ostali_izvoz` (uz `isplate:fiskalni_proknjizi`). Uloga Blagajna ih dobija automatski posle `sync_permission_codes`. |
+| Detalj | Broj računa vodi na detalj u Isplatama (od 07.10.2026.); u Nabavci detalj i dalje postoji, uz napomenu da se račun vodi u Isplatama. |
+| Dozvole | `isplate:fiskalni_ostali`, `isplate:fiskalni_ostali_ucitaj`, `isplate:fiskalni_ostali_izvoz` (uz dozvole detalja i slanja na knjiženje). Uloga Blagajna ih dobija automatski posle `sync_permission_codes`. |
 
 ---
 
@@ -212,7 +230,7 @@ Testovi: **20 testova**. [P]
 
 | Uloga | Šta može |
 |---|---|
-| `blagajna` | **Sve funkcije modula** — usklađuje se automatski |
+| `blagajna` | **Sve funkcije modula** — usklađuje se automatski. Fiskalne račune samo šalje na knjiženje; knjiži uloga `knjizenje` u modulu Knjiženje |
 | `uprava` | Sve |
 
 ---

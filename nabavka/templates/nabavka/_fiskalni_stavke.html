@@ -1,0 +1,26 @@
+{% comment %}Kartica „Stavke” — Nabavka i Isplate.{% endcomment %}
+    <section class="fiskalni-kartica">
+      <header>Stavke</header>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 fiskalni-stavke">
+          <thead><tr><th>#</th><th>Naziv</th><th class="num">Količina</th><th class="num">Jed. cena</th><th class="num">Ukupno</th>
+            <th>PDV</th><th class="num">Osnovica</th><th class="num">Iznos PDV</th></tr></thead>
+          <tbody>
+            {% for s in racun.stavke.all %}
+              <tr><td class="text-muted">{{ s.redni_broj }}</td>
+                <td>{{ s.naziv }}{% if s.gtin %}<div class="small text-muted">{{ s.gtin }}</div>{% endif %}</td>
+                <td class="num">{{ s.kolicina|floatformat:"-3" }}</td><td class="num">{{ s.jedinicna_cena|floatformat:"2g" }}</td>
+                <td class="num"><strong>{{ s.ukupno|floatformat:"2g" }}</strong></td>
+                <td class="text-nowrap">{{ s.oznaka_pdv }}{% if s.stopa_pdv is not None %} · {{ s.stopa_pdv|floatformat:"-2" }}%{% endif %}</td>
+                <td class="num">{{ s.osnovica|floatformat:"2g" }}</td><td class="num">{{ s.pdv|floatformat:"2g" }}</td></tr>
+            {% empty %}
+              <tr><td colspan="8" class="text-muted">Stavke još nisu preuzete sa stranice za proveru.</td></tr>
+            {% endfor %}
+          </tbody>
+          {% if racun.stavke.all %}
+          <tfoot><tr><td colspan="4">Ukupno</td><td class="num">{{ racun.iznos|floatformat:"2g" }}</td><td></td><td></td>
+            <td class="num">{% if racun.pdv_ukupno is not None %}{{ racun.pdv_ukupno|floatformat:"2g" }}{% endif %}</td></tr></tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </section>

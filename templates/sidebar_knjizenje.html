@@ -1,0 +1,14 @@
+{% load static %}
+<aside class="left-sidebar" data-sidebarbg="skin5">
+  <div class="scroll-sidebar">
+    <nav class="sidebar-nav">
+      <ul id="sidebarnav" class="pt-4">
+        {% if knjizenje_permissions.racuni %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'knjizenje:racuni' %}">
+            <i class="mdi mdi-receipt-text-check-outline"></i><span class="hide-menu">Fiskalni računi</span>
+          </a>
+        </li>{% endif %}
+      </ul>
+    </nav>
+  </div>
+</aside>
