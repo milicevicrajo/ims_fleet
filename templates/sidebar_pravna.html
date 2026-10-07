@@ -35,6 +35,14 @@
           </a>
         </li>
 
+        {% if hr_permissions.ugovor_list %}
+        <li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:ugovor_list' %}">
+            <i class="mdi mdi-file-sign"></i><span class="hide-menu">Ugovori zaposlenih</span>
+          </a>
+        </li>
+        {% endif %}
+
         {% if hr_permissions.analitika %}
         <li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:analitika' %}">

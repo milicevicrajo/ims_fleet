@@ -34,7 +34,16 @@ POLJA_OJ = ("oj", "naziv_oj", "sifra_sistematizacije", "naziv_radnog_mesta")
 
 
 def vidljivi(user):
-    return scope_employee_records(UgovorZaposlenog.objects.select_related("employee", "glavni_ugovor"), user)
+    qs = UgovorZaposlenog.objects.select_related("employee", "glavni_ugovor")
+    # Pravna služba vidi ugovore cele firme (od 07.10.2026.); Kadrovi po svom obuhvatu.
+    if user_has_role_permission(user, "hr:ugovor_view_all"):
+        return qs
+    return scope_employee_records(qs, user)
+
+
+def _sidebar(request):
+    """Ugovore otvara i Pravna služba iz svog menija — tada ostaje njen meni."""
+    return "sidebar_pravna.html" if request.session.get("current_app") == "pravna" else SIDEBAR
 
 
 def _ime(red):
@@ -68,6 +77,8 @@ def _filtriraj(request, qs):
         qs = qs.exclude(dokument="")
     elif unos == "bez_dokumenta":
         qs = qs.filter(dokument="")
+    elif unos == "bez_delovodnog":
+        qs = qs.filter(delovodni_broj="")
     elif unos == "provera":
         qs = qs.filter(prethodni_datum_od__isnull=False)
     if g.get("tekuci") == "1":
@@ -82,6 +93,7 @@ def _filtriraj(request, qs):
         uslov = (Q(ime_prezime__icontains=pojam) | Q(employee__first_name__icontains=pojam)
                  | Q(employee__last_name__icontains=pojam) | Q(broj_ugovora__icontains=pojam)
                  | Q(broj_aneksa__icontains=pojam) | Q(naziv_oj__icontains=pojam)
+                 | Q(delovodni_broj__icontains=pojam.split("/")[0].strip())
                  | Q(naziv_radnog_mesta__icontains=pojam) | Q(oj=pojam)
                  | Q(pk__in=DodatnoRadnoMesto.objects.filter(naziv_radnog_mesta__icontains=pojam).values("ugovor")))
         if pojam.isdigit():
@@ -111,7 +123,7 @@ class UgovorListView(LoginRequiredMixin, RolePermissionRequiredMixin, TemplateVi
                                    dokument=Count("pk", filter=~Q(dokument="")))
         g = self.request.GET
         ctx.update(
-            title="Ugovori zaposlenih", sidebar_template=SIDEBAR, brojevi=brojevi,
+            title="Ugovori zaposlenih", sidebar_template=_sidebar(self.request), brojevi=brojevi,
             za_proveru=vidljivi(user).filter(prethodni_datum_od__isnull=False).count(),
             poslednja=UgovoriSinhronizacija.objects.select_related("created_by").first(),
             kategorije=UgovorZaposlenog.Kategorija.choices,
@@ -179,7 +191,9 @@ class UgovorDataView(LoginRequiredMixin, RolePermissionRequiredMixin, View):
                            + "".join(f'<div class="ugovor-small" title="{n}. radno mesto">{n}. {escape(str(m))}</div>'
                                      for n, m in enumerate(r.dodatna_radna_mesta.all(), start=2)),
             "broj_ugovora": ((escape(r.broj_ugovora) or '<span class="ugovor-badge muted">Nije uneto</span>')
-                             + (f'<div class="ugovor-small">od {r.datum_ugovora:%d.%m.%Y.}</div>' if r.datum_ugovora else "")),
+                             + (f'<div class="ugovor-small">od {r.datum_ugovora:%d.%m.%Y.}</div>' if r.datum_ugovora else "")
+                             + (f'<div class="ugovor-small" title="Delovodni broj Pravne službe">del. br. {escape(r.delovodni)}</div>'
+                                if r.delovodni else "")),
             "aneks": aneks,
             "dokument": dokument,
             "akcije": f'<a class="btn btn-outline-primary btn-sm" href="{detalj}"><i class="mdi mdi-pencil"></i> Unos</a>',
@@ -234,6 +248,44 @@ class UgovorForm(forms.ModelForm):
         return data
 
 
+class DelovodniBrojForm(forms.ModelForm):
+    """Delovodni broj Pravne službe: godina i broj odvojeno; jedino što Pravna služba menja na ugovoru."""
+
+    class Meta:
+        model = UgovorZaposlenog
+        fields = ["delovodni_godina", "delovodni_broj"]
+        labels = {"delovodni_godina": "Godina", "delovodni_broj": "Delovodni broj"}
+        widgets = {
+            "delovodni_godina": forms.NumberInput(attrs={"class": "form-control", "min": 1990, "max": 2100}),
+            "delovodni_broj": forms.TextInput(attrs={"class": "form-control", "placeholder": "npr. 1234", "autocomplete": "off"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.delovodni_godina:
+            self.initial.setdefault("delovodni_godina", timezone.localdate().year)
+
+    def clean_delovodni_broj(self):
+        return " ".join((self.cleaned_data.get("delovodni_broj") or "").split())
+
+    def clean(self):
+        data = super().clean()
+        broj, godina = data.get("delovodni_broj"), data.get("delovodni_godina")
+        if broj and not godina:
+            self.add_error("delovodni_godina", "Unesite godinu delovodnog broja.")
+        if godina and not 1990 <= godina <= 2100:
+            self.add_error("delovodni_godina", "Godina nije ispravna.")
+        if broj and godina:
+            zauzet = (UgovorZaposlenog.objects.filter(delovodni_godina=godina, delovodni_broj__iexact=broj)
+                      .exclude(pk=self.instance.pk).first())
+            if zauzet:
+                self.add_error("delovodni_broj", f"Delovodni broj {broj}/{godina} već ima ugovor "
+                                                 f"{zauzet.broj_ugovora or 'šifre ' + str(zauzet.employee_code)}.")
+        if not broj:
+            data["delovodni_godina"] = None
+        return data
+
+
 class DodatnoRadnoMestoForm(forms.ModelForm):
     class Meta:
         model = DodatnoRadnoMesto
@@ -263,7 +315,9 @@ class UgovorDetailView(LoginRequiredMixin, RolePermissionRequiredMixin, Template
         red = kwargs.get("red") or get_object_or_404(vidljivi(self.request.user), pk=self.kwargs["pk"])
         user = self.request.user
         ctx.update(
-            title=f"Ugovor — {_ime(red)}", sidebar_template=SIDEBAR, red=red, ime=_ime(red), period=_period(red),
+            title=f"Ugovor — {_ime(red)}", sidebar_template=_sidebar(self.request), red=red, ime=_ime(red), period=_period(red),
+            delovodni_form=kwargs.get("delovodni_form") or DelovodniBrojForm(instance=red),
+            can_delovodni=user_has_role_permission(user, "hr:ugovor_delovodni"),
             form=kwargs.get("form") or UgovorForm(instance=red),
             radna_mesta=kwargs.get("radna_mesta") or _radna_mesta(instance=red),
             dodatna_radna_mesta=red.dodatna_radna_mesta.all(),
@@ -274,6 +328,24 @@ class UgovorDetailView(LoginRequiredMixin, RolePermissionRequiredMixin, Template
             can_view_employee=bool(red.employee_id) and user_has_role_permission(user, "employee_detail"),
         )
         return ctx
+
+
+@login_required
+@require_POST
+@role_permission_required("hr:ugovor_delovodni")
+def ugovor_delovodni(request, pk):
+    """Delovodni broj Pravne službe — upisuju Pravna služba i Kadrovi; ostali podaci ugovora se ovde ne menjaju."""
+    red = get_object_or_404(vidljivi(request.user), pk=pk)
+    form = DelovodniBrojForm(request.POST, instance=red)
+    if not form.is_valid():
+        view = UgovorDetailView()
+        view.setup(request, pk=pk)
+        return view.render_to_response(view.get_context_data(red=red, delovodni_form=form), status=400)
+    red = form.save(commit=False)
+    red.delovodni_upisao, red.delovodni_upisano = request.user, timezone.now()
+    red.save(update_fields=["delovodni_godina", "delovodni_broj", "delovodni_upisao", "delovodni_upisano"])
+    messages.success(request, f"Delovodni broj {red.delovodni} je sačuvan." if red.delovodni else "Delovodni broj je obrisan.")
+    return redirect("hr:ugovor_detail", pk=red.pk)
 
 
 @login_required

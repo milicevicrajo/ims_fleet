@@ -40,6 +40,27 @@ za BZR); desno svi periodi radnika.
       </dl></div>
     </section>
 
+    {% if can_delovodni %}
+    <form method="post" action="{% url 'hr:ugovor_delovodni' red.pk %}" class="ugovor-form">{% csrf_token %}
+      <section class="ugovor-kartica ugovor-delovodni">
+        <header><i class="mdi mdi-book-open-variant"></i> Delovodni broj Pravne službe</header>
+        <div>
+          {% if delovodni_form.non_field_errors %}<div class="alert alert-danger py-2">{{ delovodni_form.non_field_errors|join:" " }}</div>{% endif %}
+          <div class="row g-3 align-items-end">
+            <div class="col-sm-5 col-md-4"><label class="form-label" for="{{ delovodni_form.delovodni_broj.id_for_label }}">{{ delovodni_form.delovodni_broj.label }}</label>{{ delovodni_form.delovodni_broj }}
+              {% for e in delovodni_form.delovodni_broj.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+            <div class="col-sm-3 col-md-3"><label class="form-label" for="{{ delovodni_form.delovodni_godina.id_for_label }}">{{ delovodni_form.delovodni_godina.label }}</label>{{ delovodni_form.delovodni_godina }}
+              {% for e in delovodni_form.delovodni_godina.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+            <div class="col-sm-4 col-md-5"><button class="btn btn-primary" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj delovodni broj</button></div>
+          </div>
+          <div class="form-text mt-2">{% if red.delovodni %}Upisano: <strong>{{ red.delovodni }}</strong>{% if red.delovodni_upisao %} · {{ red.delovodni_upisao.username }}, {{ red.delovodni_upisano|date:"d.m.Y. H:i" }}{% endif %}. {% endif %}Prazan broj briše delovodni broj. Ostali podaci ugovora se ovde ne menjaju.</div>
+        </div>
+      </section>
+    </form>
+    {% elif red.delovodni %}
+    <section class="ugovor-kartica"><header>Delovodni broj Pravne službe</header><div><strong>{{ red.delovodni }}</strong></div></section>
+    {% endif %}
+
     {% if can_update %}
     <form method="post" action="{% url 'hr:ugovor_update' red.pk %}" enctype="multipart/form-data" class="ugovor-form">{% csrf_token %}
       <input type="hidden" name="akcija" value="sacuvaj">
@@ -130,8 +151,10 @@ za BZR); desno svi periodi radnika.
     </form>
     {% else %}
     <section class="ugovor-kartica">
-      <header>Ugovor</header>
+      <header>Ugovor — bitni podaci</header>
       <div><dl class="ugovor-podaci">
+        <dt>Zaposleni</dt><dd>{{ ime }} · šifra {{ red.employee_code }}</dd>
+        <dt>Delovodni broj</dt><dd>{{ red.delovodni|default:"—" }}</dd>
         <dt>Broj ugovora</dt><dd>{{ red.broj_ugovora|default:"—" }}</dd>
         <dt>Datum ugovora</dt><dd>{{ red.datum_ugovora|date:"d.m.Y."|default:"—" }}</dd>
         <dt>Broj aneksa</dt><dd>{{ red.broj_aneksa|default:"—" }}{% if red.glavni_ugovor %} · uz {{ red.glavni_ugovor.broj_ugovora|default:"glavni ugovor" }}{% endif %}</dd>

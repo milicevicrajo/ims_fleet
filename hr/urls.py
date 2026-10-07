@@ -13,7 +13,7 @@ from .zahtevi_views import (ZahtevListView, ZahtevFormView, ZahtevDetailView, Za
     ZahtevBulkCreateView, zahtev_podnesi, zahtev_storniraj, zahtev_resenje_create, zahtev_bulk_resenja, zahtev_predlog)
 from .pregled_views import KadroviPregledView
 from .analitika_views import AnalitikaView, RodnaRavnopravnostView
-from .ugovori_views import UgovorListView, UgovorDataView, UgovorDetailView, ugovor_update, ugovor_dokument, ugovor_sync
+from .ugovori_views import UgovorListView, UgovorDataView, UgovorDetailView, ugovor_update, ugovor_dokument, ugovor_sync, ugovor_delovodni
 
 app_name = "hr"
 
@@ -74,5 +74,6 @@ urlpatterns = [
     path("ugovori/sinhronizacija/", ugovor_sync, name="ugovor_sync"),
     path("ugovori/<int:pk>/", UgovorDetailView.as_view(), name="ugovor_detail"),
     path("ugovori/<int:pk>/izmena/", ugovor_update, name="ugovor_update"),
+    path("ugovori/<int:pk>/delovodni-broj/", ugovor_delovodni, name="ugovor_delovodni"),
     path("ugovori/<int:pk>/dokument/", ugovor_dokument, name="ugovor_dokument"),
 ]
