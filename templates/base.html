@@ -108,60 +108,37 @@
     <!-- End Wrapper -->
     <!-- ============================================================== -->
 
-    {% if user.is_authenticated %}
-    <div class="modal fade" id="appNewsModal" tabindex="-1" aria-labelledby="appNewsModalLabel" aria-hidden="true" data-release-version="2026-05-11-01">
+    {% if novosti_modula %}
+    {# Novosti modula (core/novosti.py): prikazuju se pri ulasku u modul dok korisnik ne klikne „Razumem”. #}
+    <div class="modal fade" id="appNewsModal" tabindex="-1" aria-labelledby="appNewsModalLabel" aria-hidden="true"
+         data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
-            <div class="modal-content app-news-modal">
+            <form class="modal-content app-news-modal" method="post" action="{% url 'novosti_procitano' %}" id="appNewsForm">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
                 <div class="modal-header">
                     <div>
-                        <div class="text-muted small">IMS Fleet</div>
-                        <h5 class="modal-title mb-0" id="appNewsModalLabel">Novosti u aplikaciji</h5>
+                        <div class="text-muted small">IMS ERP · {{ novosti_modula.0.naziv_modula }}</div>
+                        <h5 class="modal-title mb-0" id="appNewsModalLabel"><i class="mdi mdi-bullhorn-outline me-1" aria-hidden="true"></i>Šta je novo u modulu {{ novosti_modula.0.naziv_modula }}</h5>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
                 </div>
                 <div class="modal-body">
+                    {% for novost in novosti_modula %}
+                    <input type="hidden" name="kljuc" value="{{ novost.kljuc }}">
+                    <div class="text-muted small mb-2">Izmene od {{ novost.datum }}</div>
+                    {% for naslov, opis in novost.stavke %}
                     <div class="app-news-section">
-                        <h6>Sta je novo</h6>
-                        <ul>
-                            <li>Dodana je posebna lista Zaduzenja vozila sa filterima za auto, zaposlenog i status naloga.</li>
-                            <li>Otvoreni i zatvoreni nalozi su sada na jednom mestu, a zatvoreni nalozi su jasno obelezeni.</li>
-                            <li>Kod otvaranja novog naloga sistem automatski zatvara prethodni otvoreni period za isto vozilo.</li>
-                            <li>Posle otvaranja novog naloga otvara se zahtev za stampu, a prethodni obracun se otvara automatski ako postoji.</li>
-                        </ul>
+                        <h6><span class="app-news-broj">{{ forloop.counter }}</span>{{ naslov }}</h6>
+                        <p class="mb-0">{{ opis }}</p>
                     </div>
-                    <div class="app-news-section">
-                        <h6>Uputstvo za sekretarijat</h6>
-                        <ul>
-                            <li>U meniju otvoriti Zaduzenja vozila.</li>
-                            <li>Za novi nalog kliknuti Otvori novi putni nalog i uneti vozilo, zaposlenog, datum i pocetnu kilometrazu.</li>
-                            <li>Ako za isto vozilo postoji prethodni otvoren nalog, sistem ga zatvara datumom novog naloga.</li>
-                            <li>Nakon cuvanja otvara se zahtev za izdavanje putnog naloga spreman za stampu.</li>
-                            <li>Ako postoji prethodni period, u novom tabu se otvara i obracun prethodnog perioda.</li>
-                        </ul>
-                    </div>
-                    <div class="app-news-section">
-                        <h6>Obracun i zakljucavanje</h6>
-                        <ul>
-                            <li>Obracun goriva ukljucuje poslednje tocenje iz prethodnog perioda.</li>
-                            <li>Poslednje tocenje u tekucem periodu se ne racuna u taj period, vec se prenosi u sledeci obracun.</li>
-                            <li>Za otvoreni nalog na listi se prikazuje dugme Prethodni obracun kada postoji prethodni zatvoren period.</li>
-                            <li>Zatvoren nalog obican korisnik vise ne moze da menja ili brise; to moze samo superuser.</li>
-                            <li>Ako obracun ne prikaze ocekivane stavke, proveriti registraciju vozila i ucitane transakcije goriva.</li>
-                        </ul>
-                    </div>
-                    <div class="app-news-section">
-                        <h6>Napomena</h6>
-                        <p class="mb-0">
-                            Novi tok je namenjen sekretarijatu: nalog se otvara pre izdavanja vozila, prethodni period se
-                            automatski zatvara kada se otvori novi nalog za isto vozilo, a dokumenta za stampu se odmah prikazuju.
-                        </p>
-                    </div>
+                    {% endfor %}
+                    {% endfor %}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zatvori</button>
-                    <button type="button" class="btn btn-primary" id="appNewsConfirmBtn">Razumem</button>
+                    <span class="small text-muted me-auto">Obaveštenje se više neće prikazivati kada potvrdite.</span>
+                    <button type="submit" class="btn btn-primary" id="appNewsConfirmBtn"><i class="mdi mdi-check me-1" aria-hidden="true"></i>Razumem</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
     {% endif %}
@@ -303,43 +280,25 @@
 
     <!-- Bootstrap i ostalo -->
     <script src="{% static 'fleet/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
-    {% if user.is_authenticated %}
+    {% if novosti_modula %}
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            var modalElement = document.getElementById("appNewsModal");
-            if (!modalElement || !window.bootstrap || !bootstrap.Modal) {
+            var modalElement = document.getElementById("appNewsModal"), forma = document.getElementById("appNewsForm");
+            if (!modalElement || !forma || !window.bootstrap || !bootstrap.Modal) {
                 return;
             }
-
-            var releaseVersion = modalElement.getAttribute("data-release-version") || "default";
-            var storageKey = "imsFleetAppNewsSeen:" + releaseVersion;
             var modal = new bootstrap.Modal(modalElement);
-            var confirmButton = document.getElementById("appNewsConfirmBtn");
-
-            function markAsSeen() {
-                try {
-                    window.localStorage.setItem(storageKey, "1");
-                } catch (error) {
-                    return;
-                }
-            }
-
-            if (confirmButton) {
-                confirmButton.addEventListener("click", function () {
-                    markAsSeen();
-                    modal.hide();
-                });
-            }
-
-            modalElement.addEventListener("hidden.bs.modal", markAsSeen);
-
-            try {
-                if (window.localStorage.getItem(storageKey) !== "1") {
-                    modal.show();
-                }
-            } catch (error) {
-                modal.show();
-            }
+            forma.addEventListener("submit", function (event) {
+                // Potvrda se čuva u bazi (važi na svakom računaru); bez JavaScript-a forma radi i obično.
+                event.preventDefault();
+                var dugme = document.getElementById("appNewsConfirmBtn");
+                dugme.disabled = true;
+                fetch(forma.action, {method: "POST", body: new FormData(forma), credentials: "same-origin",
+                                     headers: {"X-Requested-With": "XMLHttpRequest"}})
+                    .then(function (odgovor) { if (!odgovor.ok) { throw new Error(); } modal.hide(); })
+                    .catch(function () { forma.submit(); });
+            });
+            modal.show();
         });
     </script>
     {% endif %}
@@ -738,6 +697,14 @@
         }
         .app-news-section li + li {
             margin-top: 5px;
+        }
+        .app-news-broj {
+            display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px;
+            margin-right: 8px; border-radius: 50%; background: #14395b; color: #fff; font-size: .75rem;
+        }
+        /* Dugmad u zaglavljima (hero) ekrana: jasan razmak, i kad kontejner nema „gap” (od 07.10.2026.). */
+        .fleet-list-hero .btn, .finance-hero .btn, .an-hero .btn, .rr-hero .btn, .fuel-report-hero .btn, .legal-hero .btn {
+            margin: 4px 6px;
         }
         </style>
 </body>

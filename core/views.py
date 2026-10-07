@@ -2,10 +2,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordChangeView, redirect_to_login
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.csrf import csrf_failure as django_csrf_failure
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 
 def csrf_failure(request, reason="", template_name=None):
@@ -48,3 +50,20 @@ def pocetna(request):
 
     return render(request, "pocetna.html", {**podaci(request.user), "title": "IMS ERP — početna",
                                             "bez_menija": True, "current_app": "pocetna"})
+
+
+@login_required
+@require_POST
+def novosti_procitano(request):
+    """„Razumem” na obaveštenju o novostima modula: potvrda se čuva i novost se više ne prikazuje."""
+    from .models import ProcitanaNovost
+    from .novosti import NOVOSTI
+
+    poznati = {n["kljuc"] for n in NOVOSTI}
+    for kljuc in request.POST.getlist("kljuc"):
+        if kljuc in poznati:
+            ProcitanaNovost.objects.get_or_create(user=request.user, kljuc=kljuc)
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"ok": True})
+    nazad = request.POST.get("next") or "/"
+    return redirect(nazad if url_has_allowed_host_and_scheme(nazad, allowed_hosts={request.get_host()}) else "/")

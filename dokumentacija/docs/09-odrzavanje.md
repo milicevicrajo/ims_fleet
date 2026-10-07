@@ -218,6 +218,15 @@ procenta dobija upozorenje i formu za dopunu na detalju; „Vrati u tok“ briš
 
 ---
 
+### Novosti po modulu (od 07.10.2026.)
+
+Posle isporuke korisnik pri ulasku u modul (Flota, Kadrovi, Finansije, Nabavka, Pravna služba, Potraživanja,
+Isplate) vidi obaveštenje „Šta je novo u modulu …” i zatvara ga samo dugmetom **Razumem**; potvrda se čuva u bazi
+(`fleet_procitana_novost`), pa se ista novost tom korisniku više ne prikazuje ni na jednom računaru. Tekst
+novosti je u `core/novosti.py` (`NOVOSTI`): za novo izdanje dodati stavke sa **novim ključem**
+(npr. `2026-11-03-kadrovi`). Modul se određuje iz adrese (`hr/` → Kadrovi…), a stranice bez imenskog prostora
+pripadaju Floti. Ranije obaveštenje (maj 2026, pamćeno samo u pregledaču) je uklonjeno.
+
 ## 9.6. Česti problemi i šta uraditi
 
 | Simptom | Verovatan uzrok | Šta uraditi |

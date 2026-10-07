@@ -219,3 +219,21 @@ class TaskHistory(models.Model):
 
     def __str__(self):
         return f"{self.display_name or self.task_name} - {self.get_status_display()}"
+
+
+class ProcitanaNovost(models.Model):
+    """Korisnik je potvrdio („Razumem”) novost modula (`core/novosti.py`) — posle toga mu se više ne prikazuje."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="procitane_novosti")
+    kljuc = models.CharField(max_length=60, verbose_name=_("Novost"))
+    procitano = models.DateTimeField(auto_now_add=True, verbose_name=_("Potvrđeno"))
+
+    class Meta:
+        app_label = "fleet"
+        db_table = "fleet_procitana_novost"
+        constraints = [models.UniqueConstraint(fields=["user", "kljuc"], name="fleet_procitana_novost_jednom")]
+        verbose_name = _("Pročitana novost")
+        verbose_name_plural = _("Pročitane novosti")
+
+    def __str__(self):
+        return f"{self.user} · {self.kljuc}"

@@ -11,7 +11,7 @@
       <p>{% block hero_description %}{% endblock %}</p>
       {% block hero_period %}{% if valid %}<div class="finance-hero-period"><i class="mdi mdi-calendar-range me-1" aria-hidden="true"></i>Pokazatelji za period <strong>od {{ form.cleaned_data.date_from|date:"d.m.Y." }} do {{ form.cleaned_data.date_to|date:"d.m.Y." }}</strong></div>{% endif %}{% endblock %}
     </div>
-    <div class="finance-hero-actions d-flex flex-wrap gap-2">{% block hero_actions %}{% endblock %}</div>
+    <div class="finance-hero-actions d-flex flex-wrap gap-3">{% block hero_actions %}{% endblock %}</div>
     {% block hero_metrics %}{% endblock %}
   </header>
   {% block finance_content %}{% endblock %}

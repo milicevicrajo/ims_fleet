@@ -195,6 +195,91 @@ def dashboard(request):
 @require_GET
 @login_required
 @role_permission_required("finansije:dashboard")
+def vizuelni_pregled(request):
+    """Grafički prikaz poslovanja po centrima, a za izabrani centar po šiframa posla (od 07.10.2026.)."""
+    from .services.vizuelni_pregled import vizuelni_pregled as podaci
+
+    data = pregled_parametri(request.GET)
+    centar = request.GET.get("center") or None
+    if centar:
+        data["center"] = centar
+    context, entries, _ = report_context(request, data=data)
+    if context["valid"]:
+        centar = context["form"].cleaned_data.get("center") or None
+        centri_zt = centri_sa_zt(request, context, entries) if centar is None else None
+        # Zajednički troškovi koje jedinica nosi, razdvojeni na službe (zarade) i ostalo — za strukturu rashoda.
+        zt_po_jedinici = None
+        try:
+            from .services.zajednicki_troskovi import zajednicki_troskovi as zt_obracun
+
+            z = zt_obracun(context["form"].cleaned_data["date_from"], context["form"].cleaned_data["date_to"],
+                           pokrivene_godine())
+            zt_po_jedinici = {r["code"]: (r["sluzbe"], r["ostalo"]) for r in (z["sifre"] if centar else z["centri"])}
+        except Exception:  # pravila raspodele nedostupna: struktura ostaje bez ZT
+            logger.exception("Zajednički troškovi za strukturu rashoda nisu dostupni.")
+        v = podaci(entries, centar=centar, centri_zt=centri_zt, zt_po_jedinici=zt_po_jedinici)
+        osnova = QueryDict(mutable=True)
+        osnova.update(date_from=context["form"].cleaned_data["date_from"].isoformat(),
+                      date_to=context["form"].cleaned_data["date_to"].isoformat())
+        for red in v["jedinice"]:
+            if centar is None:
+                upit = osnova.copy()
+                upit["center"] = red["code"] or "__none__"
+                red["url"] = reverse("finansije:vizuelni_pregled") + "?" + upit.urlencode()
+            elif red["code"]:
+                red["url"] = job_detail_url(red["code"], context["form"].cleaned_data["date_to"])
+        context.update(v=v, centar=centar, osnova=osnova.urlencode(),
+                       centar_naziv=(Registar().oznaka_centra(centar) if centar and centar != "__none__" else
+                                     "Neraspoređeno" if centar else ""))
+    today = timezone.localdate()
+    context["period_years"] = [
+        {"label": year, "date_from": date(year, 1, 1).isoformat(), "date_to": min(date(year, 12, 31), today).isoformat()}
+        for year in range(2025, today.year + 1)]
+    return render(request, "finansije/vizuelni_pregled.html", context)
+
+
+@require_GET
+@login_required
+@role_permission_required("finansije:dashboard")
+def zajednicki_troskovi(request):
+    """Zajednički troškovi po vrsti (službe / energija, grejanje, …), po OJ gde nastaju i po centrima i OJ
+    koji ih primaju (od 07.10.2026.). Osnovica su službe cele firme, pa ekran vidi samo obuhvat cele firme."""
+    from .services.zajednicki_troskovi import zajednicki_troskovi as obracun
+
+    if not can_view_all(request.user):
+        raise PermissionDenied("Zajedničke troškove vidi samo obuhvat cele firme.")
+    data = pregled_parametri(request.GET)
+    context, _, _ = report_context(request, data=data)
+    if context["valid"]:
+        od, do = context["form"].cleaned_data["date_from"], context["form"].cleaned_data["date_to"]
+        try:
+            z = context["z"] = obracun(od, do, pokrivene_godine())
+
+            def serija(redovi, oznaka):
+                return {"labels": [oznaka(r) for r in redovi],
+                        "vrednosti": {k: [float(r["vrste"].get(k, 0)) for r in redovi] for k, _ in z["kolone"]}}
+
+            context["grafikoni"] = {
+                "vrste": [{"key": v["key"], "naziv": v["naziv"], "iznos": float(v["iznos"])} for v in z["vrste"]],
+                "kolone": [{"key": k, "naziv": n} for k, n in z["kolone"] if k != "prihodi"],
+                "izvor": serija(z["izvor_oj"], lambda r: f"{r['code']} {r['naziv']}"[:40]),
+                "centri": serija(z["centri"], lambda r: r["naziv"][:40]),
+                "oj": serija(z["oj_primaoca"], lambda r: f"{r['code']} {r['naziv']}"[:34]),
+            }
+        except DatabaseError:
+            logger.exception("Zajednički troškovi nisu dostupni.")
+            context["z_greska"] = "Pravila raspodele (posao_mes, blokraspodela) trenutno nisu dostupna."
+        context["osnova"] = urlencode({"date_from": od.isoformat(), "date_to": do.isoformat()})
+    today = timezone.localdate()
+    context["period_years"] = [
+        {"label": year, "date_from": date(year, 1, 1).isoformat(), "date_to": min(date(year, 12, 31), today).isoformat()}
+        for year in range(2025, today.year + 1)]
+    return render(request, "finansije/zajednicki_troskovi.html", context)
+
+
+@require_GET
+@login_required
+@role_permission_required("finansije:dashboard")
 def report(request):
     if request.GET.get("group") == "job":
         context, entries, jobs = report_context(request, data=job_report_parameters(request.GET))

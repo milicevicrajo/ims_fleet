@@ -24,6 +24,9 @@ urlpatterns = [
     path("sef/<int:pk>/<str:vrsta>/", sef_views.sef_dokument, name="sef_dokument"),
     path("", views.dashboard, name="dashboard"),
     path("izvestaji/", views.report, name="report"),
+    # dozvola: finansije:dashboard (isto kao Finansijski pregled, sa koga se otvara)
+    path("vizuelni-pregled/", views.vizuelni_pregled, name="vizuelni_pregled"),
+    path("zajednicki-troskovi/", views.zajednicki_troskovi, name="zajednicki_troskovi"),
     path("izvestaji/sifre-podaci/", views.jobs_data, name="jobs_data"),
     path("posao/", views.job_card, name="job_card"),
     path("posao/tabela/<str:table>/", views.job_table, name="job_table"),

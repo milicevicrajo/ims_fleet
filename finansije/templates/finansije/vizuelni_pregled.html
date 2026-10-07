@@ -1,0 +1,278 @@
+{% extends "finansije/base.html" %}
+{% load static %}
+{% block title %}Vizuelni pregled poslovanja · IMS{% endblock %}
+{% block hero_title %}<i class="mdi mdi-chart-donut me-2" aria-hidden="true"></i>Vizuelni pregled poslovanja{% if centar %} · {{ centar_naziv }}{% endif %}{% endblock %}
+{% block hero_description %}{% if centar %}Šifre posla centra: prihodi, rashodi, rezultat, učešća i struktura troškova.{% else %}Centri: prihodi, rashodi, rezultat (zarada), učešća u ukupnom i struktura troškova. Klik na centar otvara njegove šifre posla.{% endif %}{% endblock %}
+{% block hero_actions %}
+{% if centar %}<a class="btn btn-light" href="{% url 'finansije:vizuelni_pregled' %}?{{ osnova }}"><i class="mdi mdi-arrow-left me-1" aria-hidden="true"></i>Svi centri</a>{% endif %}
+<a class="btn btn-outline-light" href="{% url 'finansije:dashboard' %}?{{ osnova }}"><i class="mdi mdi-chart-bar me-1" aria-hidden="true"></i>Finansijski pregled</a>
+<a class="btn btn-outline-light" href="{% url 'finansije:report' %}?{{ params }}"><i class="mdi mdi-table me-1" aria-hidden="true"></i>Detaljni izveštaji</a>
+{% if not restricted %}<a class="btn btn-warning" href="{% url 'finansije:zajednicki_troskovi' %}?{{ osnova }}"><i class="mdi mdi-office-building-cog me-1" aria-hidden="true"></i>Zajednički troškovi</a>{% endif %}
+{% endblock %}
+{% block finance_content %}
+<style>
+  .vp-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .vp-kpi > div { background: #fff; border: 1px solid #e1e8ef; border-radius: 8px; padding: 14px 16px; box-shadow: 0 3px 12px rgba(28, 54, 78, .04); }
+  .vp-kpi span { display: block; font-size: .78rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .vp-kpi strong { display: block; font-size: 1.3rem; margin-top: 4px; font-variant-numeric: tabular-nums; color: #14395b; }
+  .vp-kpi .vp-plus { color: #2f8f6f; } .vp-kpi .vp-minus { color: #c0392b; }
+  .vp-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .vp-card { grid-column: span 6; background: #fff; border: 1px solid #e1e8ef; border-radius: 8px; padding: 16px; box-shadow: 0 3px 12px rgba(28, 54, 78, .04); min-width: 0; }
+  .vp-card.vp-siroka { grid-column: span 12; } .vp-card.vp-trecina { grid-column: span 4; }
+  .vp-card h2 { font-size: 1rem; font-weight: 700; color: #14395b; margin: 0 0 2px; }
+  .vp-card p { font-size: .78rem; color: #64748b; margin: 0 0 10px; }
+  .vp-platno { position: relative; height: 320px; } .vp-platno.vp-visoko { height: 420px; } .vp-platno.vp-kolac { height: 280px; }
+  .vp-tabela th { white-space: nowrap; font-size: .8rem; background: #f3f6fa; color: #526679; }
+  .vp-tabela td { font-size: .85rem; } .vp-tabela .vp-broj { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .vp-udeo { display: inline-block; min-width: 46px; text-align: right; color: #64748b; font-size: .78rem; }
+  .vp-struktura { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+  .vp-struktura-platno { height: 780px; }
+  .vp-legenda-naslov { font-weight: 700; color: #14395b; font-size: .85rem; margin-bottom: 6px; }
+  .vp-legenda-naslov span { display: block; font-weight: 400; color: #64748b; font-size: .72rem; }
+  .vp-legenda { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .vp-legenda li { display: grid; grid-template-columns: 26px 14px minmax(0, 1fr); gap: 6px; align-items: start; padding: 4px 6px;
+    border-radius: 5px; cursor: pointer; font-size: .78rem; line-height: 1.25; user-select: none; }
+  .vp-legenda li:hover { background: #f3f6fa; }
+  .vp-legenda li.vp-skriveno { opacity: .4; text-decoration: line-through; }
+  .vp-legenda .vp-br { font-weight: 700; color: #fff; background: #14395b; border-radius: 4px; text-align: center; font-size: .72rem; padding: 1px 0; }
+  .vp-legenda .vp-boja { width: 14px; height: 14px; border-radius: 3px; margin-top: 1px; }
+  .vp-legenda .vp-iznos { display: block; color: #64748b; font-size: .7rem; font-variant-numeric: tabular-nums; }
+  @media (max-width: 1199.98px) { .vp-card, .vp-card.vp-trecina { grid-column: span 12; }
+    .vp-struktura { grid-template-columns: minmax(0, 1fr); } .vp-struktura-platno { height: 620px; } }
+</style>
+
+<form method="get" class="fleet-list-filter finance-period mb-3" aria-label="Period">
+  {% if centar %}<input type="hidden" name="center" value="{{ centar }}">{% endif %}
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_from.id_for_label }}">Datum knjiženja od</label>{{ form.date_from }}{{ form.date_from.errors }}</div>
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_to.id_for_label }}">Datum knjiženja do</label>{{ form.date_to }}{{ form.date_to.errors }}</div>
+  <button class="btn btn-primary" type="submit"><i class="mdi mdi-calendar-check me-1" aria-hidden="true"></i>Prikaži</button>
+  <div class="finance-period-shortcuts"><span>Brzi izbor</span>{% for year in period_years %}<a class="btn btn-outline-secondary btn-sm" href="?date_from={{ year.date_from }}&amp;date_to={{ year.date_to }}{% if centar %}&amp;center={{ centar }}{% endif %}">{{ year.label|stringformat:'d' }}</a>{% endfor %}</div>
+  {% if not valid %}<div class="finance-period-errors alert alert-danger mb-0" role="alert">Proverite izabrani period. {{ form.non_field_errors }}</div>{% endif %}
+</form>
+{% include "finansije/_status.html" %}
+
+{% if valid and v %}
+<div class="vp-kpi">
+  <div><span>Prihodi</span><strong>{{ v.ukupno.revenue|floatformat:"0g" }}</strong></div>
+  <div><span>Rashodi</span><strong>{{ v.ukupno.expense|floatformat:"0g" }}</strong></div>
+  <div><span>Neto rezultat (zarada)</span><strong class="{% if v.ukupno.result < 0 %}vp-minus{% else %}vp-plus{% endif %}">{{ v.ukupno.result|floatformat:"0g" }}</strong></div>
+  <div><span>Marža</span><strong class="{% if v.ukupno.margin is not None and v.ukupno.margin < 0 %}vp-minus{% endif %}">{% if v.ukupno.margin is not None %}{{ v.ukupno.margin|floatformat:1 }}%{% else %}—{% endif %}</strong></div>
+  <div><span>{% if v.po_siframa %}Šifara posla{% else %}Centara{% endif %}</span><strong>{{ v.jedinice|length }}</strong></div>
+</div>
+
+<div class="vp-grid">
+  <section class="vp-card vp-siroka"><h2>Prihodi, rashodi i rezultat po {% if v.po_siframa %}šiframa posla{% else %}centrima{% endif %}</h2>
+    <p>Iznosi u RSD{% if v.jedinice|length > 15 %} · prikazano 15 najvećih po prihodu{% endif %}.</p>
+    <div class="vp-platno vp-visoko"><canvas id="vpJedinice"></canvas></div></section>
+
+  <section class="vp-card vp-trecina"><h2>Učešće u prihodima</h2><p>Koliko ko donosi od ukupnih prihoda.</p><div class="vp-platno vp-kolac"><canvas id="vpUdeoPrihoda"></canvas></div></section>
+  <section class="vp-card vp-trecina"><h2>Učešće u rashodima</h2><p>Koliko ko troši od ukupnih rashoda.</p><div class="vp-platno vp-kolac"><canvas id="vpUdeoRashoda"></canvas></div></section>
+  <section class="vp-card vp-trecina"><h2>Učešće u zaradi</h2><p>Udeo u zbiru pozitivnih rezultata (gubici nisu u krugu).</p><div class="vp-platno vp-kolac"><canvas id="vpUdeoDobiti"></canvas></div></section>
+
+  <section class="vp-card"><h2>Neto rezultat{% if v.ima_zt %} — bez i posle zajedničkih troškova{% endif %}</h2>
+    <p>Zeleno dobit, crveno gubitak{% if v.ima_zt %}; „posle ZT” uključuje raspodelu troškova zajedničkih službi kao na Finansijskom pregledu{% endif %}.</p>
+    <div class="vp-platno vp-visoko"><canvas id="vpRezultat"></canvas></div></section>
+  <section class="vp-card"><h2>Marža (rezultat / prihodi)</h2><p>Koliko od svakog dinara prihoda ostaje posle direktnih rashoda.</p>
+    <div class="vp-platno vp-visoko"><canvas id="vpMarza"></canvas></div></section>
+
+  <section class="vp-card vp-siroka">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+      <div><h2>Struktura rashoda po {% if v.po_siframa %}šiframa posla{% else %}centrima{% endif %}</h2>
+        <p>Direktni rashodi po vrsti troška{% if v.ima_zt_strukturu %} i zajednički troškovi koje {% if v.po_siframa %}šifra{% else %}centar{% endif %} nosi — posebno zajedničke službe (zarade), posebno ostalo (energija, održavanje…){% if not v.po_siframa %}; stubići službi pokazuju njihove sopstvene troškove, koji su izvor zajedničkih troškova{% endif %}{% endif %}{% if v.struktura_jedinice|length >= 15 %} · 15 najvećih po rashodima{% endif %}.</p></div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Prikaz strukture">
+        <button type="button" class="btn btn-outline-primary active" data-struktura="iznos">Iznos</button>
+        <button type="button" class="btn btn-outline-primary" data-struktura="udeo">Udeo %</button>
+      </div>
+    </div>
+    <div class="vp-struktura">
+      <div class="vp-platno vp-struktura-platno"><canvas id="vpStrukturaJedinica"></canvas></div>
+      <aside class="vp-legenda-okvir" aria-label="Legenda strukture rashoda">
+        <div class="vp-legenda-naslov">Legenda <span>redom kao na stubiću, odozgo nadole · klik sakriva/prikazuje</span></div>
+        <ol class="vp-legenda" id="vpLegenda"></ol>
+      </aside>
+    </div>
+    <details class="mt-3"><summary class="fw-semibold" style="cursor:pointer">Tabela strukture rashoda</summary>
+      <div class="table-responsive mt-2"><table class="table table-sm table-hover align-middle vp-tabela mb-0">
+        <thead><tr><th>Vrsta troška</th><th class="vp-broj">Iznos</th><th class="vp-broj">Udeo</th></tr></thead>
+        <tbody>{% for s in v.struktura %}{% if not s.zt %}<tr><td>{{ s.label }}</td><td class="vp-broj">{{ s.expense|floatformat:"0g" }}</td><td class="vp-broj">{{ s.share|floatformat:1 }}%</td></tr>{% endif %}{% endfor %}</tbody>
+        <tfoot><tr class="fw-bold"><td>Ukupno rashodi</td><td class="vp-broj">{{ v.ukupno.expense|floatformat:"0g" }}</td><td class="vp-broj">100%</td></tr>
+          {% if v.ima_zt_strukturu %}<tr><td colspan="3" class="small text-muted pt-3">Od toga raspoređeno na {% if v.po_siframa %}šifre posla{% else %}centre{% endif %} kao zajednički troškovi (to su troškovi službi koji su već u redovima iznad):</td></tr>
+          {% for s in v.struktura %}{% if s.zt %}<tr><td class="ps-3">{{ s.label }}</td><td class="vp-broj">{{ s.expense|floatformat:"0g" }}</td><td class="vp-broj">{{ s.share|floatformat:1 }}%</td></tr>{% endif %}{% endfor %}{% endif %}</tfoot>
+      </table></div></details>
+  </section>
+
+  <section class="vp-card vp-siroka"><h2>Kretanje po mesecima</h2><p>Prihodi i rashodi po mesecu i kumulativni rezultat od početka perioda.</p>
+    <div class="vp-platno"><canvas id="vpTok"></canvas></div></section>
+
+  <section class="vp-card vp-siroka"><h2>{% if v.po_siframa %}Šifre posla{% else %}Centri{% endif %} — iznosi i učešća</h2>
+    <p>{% if v.po_siframa %}Klik na šifru otvara karticu šifre posla.{% else %}Klik na centar otvara vizuelni pregled njegovih šifara posla.{% endif %} Učešće u zaradi je udeo u zbiru pozitivnih rezultata.</p>
+    <div class="table-responsive"><table class="table table-sm table-hover align-middle vp-tabela mb-0">
+      <thead><tr><th>{% if v.po_siframa %}Šifra posla{% else %}Centar{% endif %}</th><th class="vp-broj">Prihodi</th><th class="vp-broj">% prihoda</th><th class="vp-broj">Rashodi</th><th class="vp-broj">% rashoda</th><th class="vp-broj">Rezultat</th><th class="vp-broj">% zarade</th><th class="vp-broj">Marža</th>{% if v.ima_zt %}<th class="vp-broj">Posle ZT</th>{% endif %}</tr></thead>
+      <tbody>{% for r in v.jedinice %}<tr>
+        <td>{% if r.url %}<a href="{{ r.url }}">{{ r.label }}</a>{% else %}{{ r.label }}{% endif %}{% if r.name %}<div class="small text-muted">{{ r.name }}</div>{% endif %}</td>
+        <td class="vp-broj">{{ r.revenue|floatformat:"0g" }}</td><td class="vp-broj"><span class="vp-udeo">{% if r.revenue_share is not None %}{{ r.revenue_share|floatformat:1 }}%{% else %}—{% endif %}</span></td>
+        <td class="vp-broj">{{ r.expense|floatformat:"0g" }}</td><td class="vp-broj"><span class="vp-udeo">{% if r.expense_share is not None %}{{ r.expense_share|floatformat:1 }}%{% else %}—{% endif %}</span></td>
+        <td class="vp-broj {% if r.result < 0 %}text-danger{% else %}text-success{% endif %} fw-semibold">{{ r.result|floatformat:"0g" }}</td>
+        <td class="vp-broj"><span class="vp-udeo">{% if r.result_share is not None %}{{ r.result_share|floatformat:1 }}%{% else %}—{% endif %}</span></td>
+        <td class="vp-broj">{% if r.margin is not None %}{{ r.margin|floatformat:1 }}%{% else %}—{% endif %}</td>
+        {% if v.ima_zt %}<td class="vp-broj {% if r.result_zt is not None and r.result_zt < 0 %}text-danger{% endif %}">{% if r.result_zt is not None %}{{ r.result_zt|floatformat:"0g" }}{% else %}—{% endif %}</td>{% endif %}
+      </tr>{% endfor %}</tbody>
+      <tfoot><tr class="fw-bold"><td>Ukupno</td><td class="vp-broj">{{ v.ukupno.revenue|floatformat:"0g" }}</td><td class="vp-broj">100%</td><td class="vp-broj">{{ v.ukupno.expense|floatformat:"0g" }}</td><td class="vp-broj">100%</td>
+        <td class="vp-broj">{{ v.ukupno.result|floatformat:"0g" }}</td><td></td><td class="vp-broj">{% if v.ukupno.margin is not None %}{{ v.ukupno.margin|floatformat:1 }}%{% endif %}</td>{% if v.ima_zt %}<td></td>{% endif %}</tr></tfoot>
+    </table></div>
+  </section>
+</div>
+<p class="finance-accounting-note"><i class="mdi mdi-information-outline me-1" aria-hidden="true"></i>Prihodi (klasa 6) i rashodi (klasa 5) bez završnog zatvaranja (ZAT, konta 59900/69900); rezultat = prihodi − direktni rashodi, pre poreza na dobit. Prikazuje se samo ono što vam prava pristupa dozvoljavaju.</p>
+{{ v.grafikoni|json_script:"vp-podaci" }}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+{% if valid and v %}
+<script src="{% static 'fleet/assets/libs/offline/chartjs/chart.umd.min.js' %}"></script>
+<script>
+(function () {
+  var d = JSON.parse(document.getElementById('vp-podaci').textContent);
+  var ZELENA = '#2f8f6f', NARANDZASTA = '#d9822b', PLAVA = '#14395b', CRVENA = '#c0392b', LJUBICASTA = '#7a4f9a';
+  var PALETA = ['#14395b', '#2f8f6f', '#d9822b', '#7a4f9a', '#1f6f8b', '#c0392b', '#b8a12f', '#4c9be8', '#8e5b3a', '#5aa469',
+                '#e06c9f', '#6b7a8f', '#2bb3a3', '#a35bd1', '#f2b134', '#9aa5b1'];
+  var fmt = new Intl.NumberFormat('sr-RS', {maximumFractionDigits: 0});
+  var fmtP = new Intl.NumberFormat('sr-RS', {maximumFractionDigits: 1});
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.color = '#475569';
+  function iznos(ctx) { return ' ' + (ctx.dataset.label ? ctx.dataset.label + ': ' : '') + fmt.format(ctx.parsed.y !== undefined && ctx.chart.options.indexAxis !== 'y' ? ctx.parsed.y : ctx.parsed.x) + ' RSD'; }
+  function osaIznosa(osa) { return {beginAtZero: true, ticks: {callback: function (v) { return fmt.format(v); }}}; }
+  function kolac(id, podaci) {
+    if (!podaci.values.length) { document.getElementById(id).parentNode.innerHTML = '<p class="text-muted small">Nema podataka.</p>'; return; }
+    var zbir = podaci.values.reduce(function (a, b) { return a + b; }, 0);
+    new Chart(document.getElementById(id), {type: 'doughnut',
+      data: {labels: podaci.labels, datasets: [{data: podaci.values, backgroundColor: PALETA, borderWidth: 1}]},
+      options: {maintainAspectRatio: false, cutout: '55%', plugins: {legend: {position: 'right', labels: {boxWidth: 12, font: {size: 11}}},
+        tooltip: {callbacks: {label: function (ctx) { return ' ' + ctx.label + ': ' + fmt.format(ctx.parsed) + ' RSD (' + fmtP.format(ctx.parsed * 100 / zbir) + '%)'; }}}}}});
+  }
+  var j = d.jedinice;
+  var setovi = [{type: 'bar', label: 'Prihodi', data: j.revenue, backgroundColor: ZELENA},
+                {type: 'bar', label: 'Rashodi', data: j.expense, backgroundColor: NARANDZASTA},
+                {type: 'line', label: 'Rezultat', data: j.result, borderColor: PLAVA, backgroundColor: PLAVA, tension: .2, pointRadius: 4}];
+  new Chart(document.getElementById('vpJedinice'), {data: {labels: j.labels, datasets: setovi},
+    options: {maintainAspectRatio: false, interaction: {mode: 'index', intersect: false}, scales: {y: osaIznosa()},
+      plugins: {tooltip: {callbacks: {label: iznos}}}}});
+
+  kolac('vpUdeoPrihoda', d.udeo_prihoda);
+  kolac('vpUdeoRashoda', d.udeo_rashoda);
+  kolac('vpUdeoDobiti', d.udeo_dobiti);
+
+  var rez = [{label: 'Rezultat', data: d.rezultat.values, backgroundColor: d.rezultat.values.map(function (x) { return x < 0 ? CRVENA : ZELENA; })}];
+  if (j.result_zt) {
+    var poZt = {}; j.labels.forEach(function (l, i) { poZt[l] = j.result_zt[i]; });
+    rez.push({label: 'Posle ZT', data: d.rezultat.labels.map(function (l) { return poZt[l] === undefined ? null : poZt[l]; }), backgroundColor: LJUBICASTA});
+  }
+  new Chart(document.getElementById('vpRezultat'), {type: 'bar', data: {labels: d.rezultat.labels, datasets: rez},
+    options: {indexAxis: 'y', maintainAspectRatio: false, scales: {x: osaIznosa()},
+      plugins: {legend: {display: rez.length > 1}, tooltip: {callbacks: {label: iznos}}}}});
+
+  new Chart(document.getElementById('vpMarza'), {type: 'bar',
+    data: {labels: d.marza.labels, datasets: [{label: 'Marža', data: d.marza.values,
+      backgroundColor: d.marza.values.map(function (x) { return x < 0 ? CRVENA : PLAVA; })}]},
+    options: {indexAxis: 'y', maintainAspectRatio: false, scales: {x: {ticks: {callback: function (v) { return v + '%'; }}}},
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function (ctx) { return ' ' + fmtP.format(ctx.parsed.x) + '%'; }}}}}});
+
+  // Struktura: složeni stubići po jedinici; zone su numerisane (1 = vrh stubića) i nose procenat u stubiću.
+  var BOJE_STRUKTURE = {zarade: '#14395b', doprinosi: '#3b6a94', ugovori: '#6f9bc4', odbori: '#9cc0e0', licni: '#c9dcee',
+    energija: '#d9822b', materijal: '#e8b26b', odrzavanje: '#2f8f6f', istrazivanja: '#5aa469', usluge: '#9ccf9f',
+    amortizacija: '#7a4f9a', nematerijalni: '#b8a12f', ostalo: '#9aa5b1', zt_sluzbe: '#c0392b', zt_ostalo: '#e88b7d'};
+  var sj = d.struktura_po_jedinici, N = sj.datasets.length;
+  var zbirovi = sj.labels.map(function (_, i) { return sj.datasets.reduce(function (a, s) { return a + (s.values[i] || 0); }, 0); });
+  var sveUkupno = zbirovi.reduce(function (a, b) { return a + b; }, 0);
+  function broj(indeks) { return N - indeks; }  // skup 0 je na dnu stubića; numeracija ide odozgo
+  function svetla(hex) {
+    var c = parseInt(hex.slice(1), 16), r = c >> 16, g = (c >> 8) & 255, b = c & 255;
+    return (r * 299 + g * 587 + b * 114) / 1000 > 150;
+  }
+  var zone = {id: 'vpZone', afterDatasetsDraw: function (chart) {
+    var ctx = chart.ctx;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    chart.data.datasets.forEach(function (s, di) {
+      var meta = chart.getDatasetMeta(di);
+      if (meta.hidden) return;
+      meta.data.forEach(function (bar, i) {
+        var x = s.iznosi[i];
+        if (!x || x <= 0) return;
+        var p = bar.getProps(['x', 'y', 'base', 'width'], true), visina = Math.abs(p.base - p.y);
+        if (visina < 13 || p.width < 18) return;
+        var procenat = fmtP.format(zbirovi[i] ? x * 100 / zbirovi[i] : 0) + '%', sredina = (p.y + p.base) / 2;
+        ctx.fillStyle = svetla(s.backgroundColor) ? '#0f2537' : '#ffffff';
+        if (visina >= 30 && p.width >= 34) {
+          ctx.font = 'bold 12px ' + Chart.defaults.font.family;
+          ctx.fillText(broj(di), p.x, sredina - 7);
+          ctx.font = '11px ' + Chart.defaults.font.family;
+          ctx.fillText(procenat, p.x, sredina + 7);
+        } else {
+          ctx.font = 'bold 10.5px ' + Chart.defaults.font.family;
+          ctx.fillText(p.width >= 60 ? broj(di) + ' · ' + procenat : String(broj(di)), p.x, sredina);
+        }
+      });
+    });
+    ctx.restore();
+  }};
+  var struktura = new Chart(document.getElementById('vpStrukturaJedinica'), {type: 'bar',
+    data: {labels: sj.labels, datasets: sj.datasets.map(function (s) {
+      return {label: s.label, data: s.values.slice(), iznosi: s.values, backgroundColor: BOJE_STRUKTURE[s.key] || '#9aa5b1',
+              borderColor: '#ffffff', borderWidth: {top: 1, bottom: 0, left: 0, right: 0}, barPercentage: .92, categoryPercentage: .9}; })},
+    plugins: [zone],
+    options: {maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+      scales: {x: {stacked: true, ticks: {autoSkip: false, maxRotation: 50, minRotation: 0, font: {size: 12}}},
+               y: Object.assign(osaIznosa(), {stacked: true})},
+      plugins: {legend: {display: false},
+        tooltip: {itemSort: function (a, b) { return b.datasetIndex - a.datasetIndex; }, filter: function (ctx) { return ctx.dataset.iznosi[ctx.dataIndex]; },
+          callbacks: {label: function (ctx) {
+            var i = ctx.dataIndex, x = ctx.dataset.iznosi[i];
+            return ' ' + broj(ctx.datasetIndex) + '. ' + ctx.dataset.label + ': ' + fmt.format(x) + ' RSD (' + fmtP.format(zbirovi[i] ? x * 100 / zbirovi[i] : 0) + '%)'; },
+            footer: function (stavke) { return stavke.length ? 'Ukupno: ' + fmt.format(zbirovi[stavke[0].dataIndex]) + ' RSD' : ''; }}}}}});
+
+  // Numerisana legenda istim redom kao boje na stubiću (odozgo nadole), sa ukupnim iznosom i udelom.
+  var legenda = document.getElementById('vpLegenda');
+  for (var di = N - 1; di >= 0; di--) {
+    (function (di) {
+      var s = sj.datasets[di], ukupno = s.values.reduce(function (a, b) { return a + (b || 0); }, 0);
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="vp-br"></span><span class="vp-boja"></span><span><span class="vp-naziv"></span><span class="vp-iznos"></span></span>';
+      li.querySelector('.vp-br').textContent = broj(di);
+      li.querySelector('.vp-boja').style.background = BOJE_STRUKTURE[s.key] || '#9aa5b1';
+      li.querySelector('.vp-naziv').textContent = s.label;
+      li.querySelector('.vp-iznos').textContent = fmt.format(ukupno) + ' RSD · ' + fmtP.format(sveUkupno ? ukupno * 100 / sveUkupno : 0) + '%';
+      li.title = 'Klik sakriva ili prikazuje ovu zonu';
+      li.addEventListener('click', function () {
+        var vidljivo = struktura.isDatasetVisible(di);
+        struktura.setDatasetVisibility(di, !vidljivo);
+        li.classList.toggle('vp-skriveno', vidljivo);
+        struktura.update();
+      });
+      legenda.appendChild(li);
+    })(di);
+  }
+  document.querySelectorAll('[data-struktura]').forEach(function (dugme) {
+    dugme.addEventListener('click', function () {
+      var udeo = dugme.dataset.struktura === 'udeo';
+      document.querySelectorAll('[data-struktura]').forEach(function (b) { b.classList.toggle('active', b === dugme); });
+      struktura.data.datasets.forEach(function (s) {
+        s.data = s.iznosi.map(function (x, i) { return udeo ? (zbirovi[i] ? x * 100 / zbirovi[i] : 0) : x; }); });
+      struktura.options.scales.y = udeo ? {stacked: true, max: 100, ticks: {callback: function (v) { return v + '%'; }}}
+                                        : Object.assign(osaIznosa(), {stacked: true});
+      struktura.update();
+    });
+  });
+
+  var t = d.tok;
+  new Chart(document.getElementById('vpTok'), {data: {labels: t.labels, datasets: [
+      {type: 'bar', label: 'Prihodi', data: t.revenue, backgroundColor: ZELENA},
+      {type: 'bar', label: 'Rashodi', data: t.expense, backgroundColor: NARANDZASTA},
+      {type: 'line', label: 'Kumulativni rezultat', data: t.cumulative, borderColor: PLAVA, backgroundColor: PLAVA, tension: .25, pointRadius: 3}]},
+    options: {maintainAspectRatio: false, interaction: {mode: 'index', intersect: false}, scales: {y: osaIznosa()},
+      plugins: {tooltip: {callbacks: {label: iznos}}}}});
+})();
+</script>
+{% endif %}
+{% endblock %}

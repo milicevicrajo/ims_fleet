@@ -48,8 +48,12 @@ def current_app(request):
         "export_dugovanja_excel",
         "toggle_avans_klijent",
     ]
+    from core.novosti import neprocitane
+
     return {
         "current_app": app,
+        # Obaveštenje o novostima modula dok ga korisnik ne potvrdi („Razumem”).
+        "novosti_modula": neprocitane(request),
         "potrazivanja_permissions": {"dashboard": can_view(request.user), "view_all": can_view_all(request.user), "sync_status": can_sync(request.user)},
         "finansije_permissions": {
             code: user_has_role_permission(request.user, f"finansije:{code}")

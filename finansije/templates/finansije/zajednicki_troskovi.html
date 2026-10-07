@@ -1,0 +1,137 @@
+{% extends "finansije/base.html" %}
+{% load static finance %}
+{% block title %}Zajednički troškovi · IMS{% endblock %}
+{% block hero_title %}<i class="mdi mdi-office-building-cog me-2" aria-hidden="true"></i>Zajednički troškovi{% endblock %}
+{% block hero_description %}Koliko su zajednički troškovi, koliko od toga su zajedničke službe (zarade), a koliko energija, grejanje, održavanje i ostalo — gde nastaju i kako se raspoređuju po centrima i OJ.{% endblock %}
+{% block hero_actions %}
+<a class="btn btn-light" href="{% url 'finansije:dashboard' %}?{{ osnova }}"><i class="mdi mdi-chart-bar me-1" aria-hidden="true"></i>Finansijski pregled</a>
+<a class="btn btn-outline-light" href="{% url 'finansije:vizuelni_pregled' %}?{{ osnova }}"><i class="mdi mdi-chart-donut me-1" aria-hidden="true"></i>Vizuelni pregled</a>
+{% endblock %}
+{% block finance_content %}
+<style>
+  .zt-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .zt-kpi > div { background: #fff; border: 1px solid #e1e8ef; border-radius: 8px; padding: 14px 16px; box-shadow: 0 3px 12px rgba(28, 54, 78, .04); }
+  .zt-kpi span { display: block; font-size: .78rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .zt-kpi strong { display: block; font-size: 1.3rem; margin-top: 4px; font-variant-numeric: tabular-nums; color: #14395b; }
+  .zt-kpi small { color: #64748b; }
+  .zt-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .zt-card { grid-column: span 6; background: #fff; border: 1px solid #e1e8ef; border-radius: 8px; padding: 16px; box-shadow: 0 3px 12px rgba(28, 54, 78, .04); min-width: 0; }
+  .zt-card.zt-siroka { grid-column: span 12; }
+  .zt-card h2 { font-size: 1rem; font-weight: 700; color: #14395b; margin: 0 0 2px; }
+  .zt-card p { font-size: .78rem; color: #64748b; margin: 0 0 10px; }
+  .zt-platno { position: relative; height: 340px; }
+  .zt-tabela th { white-space: nowrap; font-size: .76rem; background: #f3f6fa; color: #526679; vertical-align: bottom; }
+  .zt-tabela td { font-size: .82rem; } .zt-broj { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .zt-tabela th.zt-broj { white-space: normal; min-width: 90px; }
+  .zt-sluzbe { background: #eef6f2 !important; } .zt-tabela tfoot td { font-weight: 700; background: #e8f0fb; }
+  @media (max-width: 1199.98px) { .zt-card { grid-column: span 12; } }
+</style>
+
+<form method="get" class="fleet-list-filter finance-period mb-3" aria-label="Period">
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_from.id_for_label }}">Datum knjiženja od</label>{{ form.date_from }}{{ form.date_from.errors }}</div>
+  <div class="finance-period-field"><label class="form-label" for="{{ form.date_to.id_for_label }}">Datum knjiženja do</label>{{ form.date_to }}{{ form.date_to.errors }}</div>
+  <button class="btn btn-primary" type="submit"><i class="mdi mdi-calendar-check me-1" aria-hidden="true"></i>Prikaži</button>
+  <div class="finance-period-shortcuts"><span>Brzi izbor</span>{% for year in period_years %}<a class="btn btn-outline-secondary btn-sm" href="?date_from={{ year.date_from }}&amp;date_to={{ year.date_to }}">{{ year.label|stringformat:'d' }}</a>{% endfor %}</div>
+  {% if not valid %}<div class="finance-period-errors alert alert-danger mb-0" role="alert">Proverite izabrani period. {{ form.non_field_errors }}</div>{% endif %}
+</form>
+{% include "finansije/_status.html" %}
+{% if z_greska %}<div class="alert alert-warning">{{ z_greska }}</div>{% endif %}
+
+{% if valid and z %}
+{% if not z.dostupno %}<div class="alert alert-info">Za izabrani period nema raspodele zajedničkih troškova.</div>{% endif %}
+{% for n in z.napomene %}<div class="alert alert-light border small py-2 mb-2"><i class="mdi mdi-information-outline me-1"></i>{{ n }}</div>{% endfor %}
+<div class="zt-kpi">
+  <div><span>Zajednički troškovi (osnovica)</span><strong>{{ z.osnovica|floatformat:"0g" }}</strong><small>rashodi službi umanjeni za njihove prihode</small></div>
+  <div><span>Zajedničke službe (zarade)</span><strong>{{ z.sluzbe|floatformat:"0g" }}</strong><small>{{ z.sluzbe_udeo|floatformat:1 }}% osnovice</small></div>
+  <div><span>Ostalo (energija, grejanje, održavanje…)</span><strong>{{ z.ostalo|floatformat:"0g" }}</strong><small>{{ z.ostalo_udeo|floatformat:1 }}% osnovice</small></div>
+  <div><span>Raspoređeno na centre</span><strong>{{ z.raspodeljeno|floatformat:"0g" }}</strong><small>{% if z.neraspodeljeno > 1 or z.neraspodeljeno < -1 %}neraspoređeno {{ z.neraspodeljeno|floatformat:"0g" }}{% else %}cela osnovica je raspoređena{% endif %}</small></div>
+</div>
+
+<div class="zt-grid">
+  <section class="zt-card"><h2>Od čega se sastoje zajednički troškovi</h2><p>Po vrsti troška (konto). Prihodi službi umanjuju osnovicu i nisu u krugu.</p>
+    <div class="zt-platno"><canvas id="ztVrste"></canvas></div></section>
+  <section class="zt-card"><h2>Gde nastaju — po OJ službi</h2><p>Zajedničke službe (zarade) i ostali troškovi po organizacionoj jedinici službe.</p>
+    <div class="zt-platno"><canvas id="ztIzvor"></canvas></div></section>
+  <section class="zt-card zt-siroka"><h2>Kome se raspoređuju — po centrima</h2><p>Deo zajedničkih troškova koji nosi svaki centar, razložen po vrsti (ista raspodela kao na Finansijskom pregledu).</p>
+    <div class="zt-platno"><canvas id="ztCentri"></canvas></div></section>
+  <section class="zt-card zt-siroka"><h2>Kome se raspoređuju — po OJ</h2><p>OJ primaoca je jedinica šifre posla u registru organizacije.</p>
+    <div class="zt-platno" style="height: 420px"><canvas id="ztOj"></canvas></div></section>
+</div>
+
+{% with kolone=z.kolone %}
+<div class="zt-grid">
+  <section class="zt-card zt-siroka"><h2>Po centrima</h2>
+    <div class="table-responsive"><table class="table table-sm table-hover align-middle zt-tabela mb-0">
+      <thead><tr><th>Centar</th><th class="zt-broj">Ukupno</th><th class="zt-broj">Udeo</th>{% for k, naziv in kolone %}<th class="zt-broj{% if k == 'sluzbe' %} zt-sluzbe{% endif %}">{{ naziv }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for r in z.centri %}<tr><td>{{ r.naziv }}</td><td class="zt-broj fw-semibold">{{ r.ukupno|floatformat:"0g" }}</td><td class="zt-broj">{{ r.udeo|floatformat:1 }}%</td>
+        {% for k, naziv in kolone %}<td class="zt-broj{% if k == 'sluzbe' %} zt-sluzbe{% endif %}">{{ r.vrste|recnik:k|floatformat:"0g" }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      <tfoot><tr><td>Ukupno</td><td class="zt-broj">{{ z.raspodeljeno|floatformat:"0g" }}</td><td class="zt-broj">100%</td>{% for v in z.vrste %}<td class="zt-broj">{{ v.iznos|floatformat:"0g" }}</td>{% endfor %}</tr></tfoot>
+    </table></div></section>
+
+  <section class="zt-card zt-siroka"><h2>Po OJ primaoca</h2>
+    <div class="table-responsive"><table class="table table-sm table-hover align-middle zt-tabela mb-0">
+      <thead><tr><th>OJ</th><th>Centar</th><th class="zt-broj">Ukupno</th><th class="zt-broj">Udeo</th><th class="zt-broj zt-sluzbe">Službe (zarade)</th><th class="zt-broj">Ostalo</th>{% for k, naziv in kolone %}{% if k != 'sluzbe' %}<th class="zt-broj">{{ naziv }}</th>{% endif %}{% endfor %}</tr></thead>
+      <tbody>{% for r in z.oj_primaoca %}<tr><td>{{ r.code }} {{ r.naziv }}</td><td>{{ r.centar }}</td><td class="zt-broj fw-semibold">{{ r.ukupno|floatformat:"0g" }}</td><td class="zt-broj">{{ r.udeo|floatformat:1 }}%</td>
+        <td class="zt-broj zt-sluzbe">{{ r.sluzbe|floatformat:"0g" }}</td><td class="zt-broj">{{ r.ostalo|floatformat:"0g" }}</td>
+        {% for k, naziv in kolone %}{% if k != 'sluzbe' %}<td class="zt-broj">{{ r.vrste|recnik:k|floatformat:"0g" }}</td>{% endif %}{% endfor %}</tr>{% endfor %}</tbody>
+    </table></div></section>
+
+  <section class="zt-card zt-siroka"><h2>Po OJ službi (gde troškovi nastaju)</h2>
+    <div class="table-responsive"><table class="table table-sm table-hover align-middle zt-tabela mb-0">
+      <thead><tr><th>OJ službe</th><th class="zt-broj">Šifara</th><th class="zt-broj">Ukupno</th><th class="zt-broj zt-sluzbe">Službe (zarade)</th><th class="zt-broj">Ostalo</th>{% for k, naziv in kolone %}{% if k != 'sluzbe' %}<th class="zt-broj">{{ naziv }}</th>{% endif %}{% endfor %}</tr></thead>
+      <tbody>{% for r in z.izvor_oj %}<tr><td>{{ r.code }} {{ r.naziv }}</td><td class="zt-broj">{{ r.broj_sifara }}</td><td class="zt-broj fw-semibold">{{ r.ukupno|floatformat:"0g" }}</td>
+        <td class="zt-broj zt-sluzbe">{{ r.sluzbe|floatformat:"0g" }}</td><td class="zt-broj">{{ r.ostalo|floatformat:"0g" }}</td>
+        {% for k, naziv in kolone %}{% if k != 'sluzbe' %}<td class="zt-broj">{{ r.vrste|recnik:k|floatformat:"0g" }}</td>{% endif %}{% endfor %}</tr>{% endfor %}</tbody>
+      <tfoot><tr><td>Ukupno</td><td></td><td class="zt-broj">{{ z.osnovica|floatformat:"0g" }}</td><td class="zt-broj">{{ z.sluzbe|floatformat:"0g" }}</td><td class="zt-broj">{{ z.ostalo|floatformat:"0g" }}</td>{% for v in z.vrste %}{% if v.key != 'sluzbe' %}<td class="zt-broj">{{ v.iznos|floatformat:"0g" }}</td>{% endif %}{% endfor %}</tr></tfoot>
+    </table></div></section>
+
+  <section class="zt-card zt-siroka"><details><summary class="fw-semibold" style="cursor:pointer">Po šiframa posla koje primaju zajedničke troškove ({{ z.sifre|length }})</summary>
+    <div class="table-responsive mt-2"><table class="table table-sm table-hover align-middle zt-tabela mb-0">
+      <thead><tr><th>Šifra posla</th><th>Centar</th><th class="zt-broj">Ukupno</th><th class="zt-broj zt-sluzbe">Službe (zarade)</th><th class="zt-broj">Ostalo</th><th class="zt-broj">Udeo službi</th></tr></thead>
+      <tbody>{% for r in z.sifre %}<tr><td>{{ r.code }}{% if r.naziv %} <span class="text-muted small">{{ r.naziv }}</span>{% endif %}</td><td>{{ r.centar }}</td><td class="zt-broj fw-semibold">{{ r.ukupno|floatformat:"0g" }}</td>
+        <td class="zt-broj zt-sluzbe">{{ r.sluzbe|floatformat:"0g" }}</td><td class="zt-broj">{{ r.ostalo|floatformat:"0g" }}</td><td class="zt-broj">{% if r.sluzbe_udeo is not None %}{{ r.sluzbe_udeo|floatformat:1 }}%{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div></details></section>
+</div>
+{% endwith %}
+<p class="finance-accounting-note"><i class="mdi mdi-information-outline me-1" aria-hidden="true"></i>Osnovica = rashodi − prihodi šifara zajedničkih službi (mesečni kriterijum 1–3 u raspodeli), bez završnog zatvaranja. Raspodela je ista kao na ekranu Šifre posla i Finansijskom pregledu (koeficijent centra × koeficijent šifre); svaka vrsta troška deli se istom formulom, pa je zbir vrsta jednak zajedničkom trošku. Vrste: 52 zarade službi; 513 energija i grejanje (struja, ugalj, gorivo); 5392 komunalne usluge; 532, 55040, 55080 održavanje, obezbeđenje i čišćenje; 54 amortizacija; 552/554/555 osiguranje, članarine i porezi.</p>
+{{ grafikoni|json_script:"zt-podaci" }}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+{% if valid and z %}
+<script src="{% static 'fleet/assets/libs/offline/chartjs/chart.umd.min.js' %}"></script>
+<script>
+(function () {
+  var d = JSON.parse(document.getElementById('zt-podaci').textContent);
+  var PALETA = {sluzbe: '#14395b', energija: '#d9822b', komunalije: '#4c9be8', odrzavanje: '#2f8f6f', amortizacija: '#7a4f9a',
+                osiguranje: '#b8a12f', materijal: '#8e5b3a', usluge: '#1f6f8b', nematerijalni: '#e06c9f', ostalo: '#9aa5b1', prihodi: '#c0392b'};
+  var fmt = new Intl.NumberFormat('sr-RS', {maximumFractionDigits: 0}), fmtP = new Intl.NumberFormat('sr-RS', {maximumFractionDigits: 1});
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.color = '#475569';
+  var iznos = function (ctx) { return ' ' + ctx.dataset.label + ': ' + fmt.format(ctx.parsed.x !== undefined && ctx.chart.options.indexAxis === 'y' ? ctx.parsed.x : ctx.parsed.y) + ' RSD'; };
+  var osa = {stacked: true, ticks: {callback: function (v) { return fmt.format(v); }}};
+
+  var pozitivne = d.vrste.filter(function (v) { return v.iznos > 0; });
+  var zbir = pozitivne.reduce(function (a, v) { return a + v.iznos; }, 0);
+  new Chart(document.getElementById('ztVrste'), {type: 'doughnut',
+    data: {labels: pozitivne.map(function (v) { return v.naziv; }), datasets: [{data: pozitivne.map(function (v) { return v.iznos; }),
+      backgroundColor: pozitivne.map(function (v) { return PALETA[v.key]; }), borderWidth: 1}]},
+    options: {maintainAspectRatio: false, cutout: '55%', plugins: {legend: {position: 'right', labels: {boxWidth: 12, font: {size: 11}}},
+      tooltip: {callbacks: {label: function (ctx) { return ' ' + ctx.label + ': ' + fmt.format(ctx.parsed) + ' RSD (' + fmtP.format(ctx.parsed * 100 / zbir) + '%)'; }}}}}});
+
+  function slozeni(id, podaci, horizontalno) {
+    new Chart(document.getElementById(id), {type: 'bar',
+      data: {labels: podaci.labels, datasets: d.kolone.map(function (k) {
+        return {label: k.naziv, data: podaci.vrednosti[k.key], backgroundColor: PALETA[k.key]}; })},
+      options: {indexAxis: horizontalno ? 'y' : 'x', maintainAspectRatio: false,
+        scales: horizontalno ? {x: osa, y: {stacked: true}} : {y: osa, x: {stacked: true}},
+        plugins: {legend: {position: 'bottom', labels: {boxWidth: 10, font: {size: 10}}}, tooltip: {callbacks: {label: iznos}}}}});
+  }
+  slozeni('ztIzvor', d.izvor, true);
+  slozeni('ztCentri', d.centri, false);
+  slozeni('ztOj', d.oj, false);
+})();
+</script>
+{% endif %}
+{% endblock %}
