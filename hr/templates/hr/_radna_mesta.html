@@ -1,0 +1,9 @@
+{# Sva radna mesta zaposlenog iz kadrovske baze (od 07.10.2026.) — ravnopravna, po rednim brojevima. Ulaz: zaposleni. #}
+<ol class="hr-radna-mesta mb-0">
+  {% for rm in zaposleni.radna_mesta %}
+  <li>
+    <span class="fw-semibold">{{ rm.naziv|default:"Radno mesto bez naziva" }}</span>
+    <div class="small text-muted">šifra {{ rm.sifra }}{% if rm.oj %} · OJ {{ rm.oj }}{% if rm.naziv_oj %} {{ rm.naziv_oj }}{% endif %}{% endif %}</div>
+  </li>
+  {% endfor %}
+</ol>

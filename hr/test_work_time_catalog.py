@@ -166,11 +166,12 @@ class WorkTimeCatalogTests(TestCase):
         self.employee.refresh_from_db()
         self.assertEqual(self.employee.recipient_code,'01')
 
+    @patch('hr.sync.radna_mesta_izvora', return_value={})
     @patch('hr.sync.staz_periodi', return_value=[])
     @patch('hr.sync.preduzeca_radnika', return_value={})
     @patch('hr.sync.connections')
     @patch('hr.sync._hr_employee_columns')
-    def test_regular_hr_sync_reads_new_columns_and_preserves_them_when_source_lacks_columns(self, columns, connections, _preduzeca, _staz):
+    def test_regular_hr_sync_reads_new_columns_and_preserves_them_when_source_lacks_columns(self, columns, connections, _preduzeca, _staz, _radna_mesta):
         cursor = connections.__getitem__.return_value.cursor.return_value.__enter__.return_value
         row = [901,'Osoba Test',None,None,'1','M',date(1990,1,1),date(2020,1,1),None,'D',None,None,None,None,None,None,None,None,None,None,'09','Vrsta iz izvora']
         columns.return_value = {'sif_prim':'sif_prim','naz_prim':'naz_prim'}

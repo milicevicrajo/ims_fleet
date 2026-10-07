@@ -1,0 +1,1 @@
+napravices mi za poslednja 4 commita sta je uradjeno za svaki modul i kada se udje da iskoci obavestenje i da mora da kaze raumem i onda mu nece izlaziti vise kao modal neki.

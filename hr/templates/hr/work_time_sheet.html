@@ -4,16 +4,19 @@
 {% block title %}Radna lista{% endblock %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+<div class="work-sheet-page">
+<div class="work-sheet-heading">
   <div>
     <h1 class="h3 mb-1">Radna lista</h1>
     <div class="text-muted">
-      {{ employee.display_first_name }} {{ employee.display_last_name }} | sifra {{ employee.employee_code }} | {{ month_name }} {{ year }}
+      {{ employee.display_first_name }} {{ employee.display_last_name }} · šifra {{ employee.employee_code }} · {{ month_name }} {{ year }}
       {% if employee.recipient_code %}<span class="ms-2">{{ employee.recipient_code }} · {{ employee.recipient_name }}</span>{% endif %}
     </div>
   </div>
-  {% if is_other_employee_sheet %}<a class="btn btn-outline-primary btn-sm" href="{% url 'employee_detail' employee.pk %}">Detalj zaposlenog</a>{% endif %}
+  <div class="work-sheet-heading-actions">
+  {% if is_other_employee_sheet %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'employee_detail' employee.pk %}"><i class="mdi mdi-account-outline" aria-hidden="true"></i> Detalj zaposlenog</a>{% endif %}
   <form method="get" class="period-picker">
+    <span class="period-label"><i class="mdi mdi-calendar-month-outline" aria-hidden="true"></i> Period</span>
     <select name="month" class="form-select form-select-sm period-select period-month-select" aria-label="Mesec">
       {% for item in available_months %}
         <option value="{{ item.value }}" {% if item.value == month %}selected{% endif %}>{{ item.label }}</option>
@@ -24,8 +27,9 @@
         <option value="{{ item }}" {% if item == year %}selected{% endif %}>{{ item }}</option>
       {% endfor %}
     </select>
-    <button type="submit" class="btn btn-outline-secondary btn-sm">Otvori</button>
+    <button type="submit" class="btn btn-outline-primary btn-sm">Otvori</button>
   </form>
+  </div>
 </div>
 
 {% if not employee.recipient_code %}<div class="alert alert-info">Zaposlenom nije evidentirana vrsta primaoca iz HR-a. Izbor vrste rada i odsustva biće dostupan nakon povezivanja.</div>{% elif not has_work_categories %}<div class="alert alert-info">Za vrstu primaoca {{ employee.recipient_code }} nisu podešene aktivne vrste rada i odsustva. Potrebno je dopuniti veze u šifrarniku „Elementi RL“.</div>{% endif %}
@@ -41,29 +45,38 @@
     </div>
   {% endif %}
 
-  <div class="card">
+  <div class="card work-sheet-card">
+    <div class="work-sheet-section-head">
+      <div class="work-sheet-section-title">
+        <span class="work-sheet-section-icon"><i class="mdi mdi-table-edit" aria-hidden="true"></i></span>
+        <div><h2>Popunjavanje radne liste</h2><p>Unesite sate po danima, šifru posla i vrstu rada ili odsustva.</p></div>
+      </div>
+      <span class="work-sheet-period">{{ month_name }} {{ year }}</span>
+    </div>
     <div class="card-body">
       <div class="work-sheet-toolbar">
         <div class="work-sheet-control">
           <label class="form-label small text-muted mb-1" for="{{ header_form.status.id_for_label }}">Status</label>
           <div class="status-select-shell">{{ header_form.status }}</div>
+          {% if header_form.status.errors %}<div class="text-danger small">{{ header_form.status.errors|striptags }}</div>{% endif %}
         </div>
         <div class="work-sheet-control">
-          <label class="form-label small text-muted mb-1" for="{{ header_form.meal_days.id_for_label }}">Topli obrok *</label>
+          <label class="form-label small text-muted mb-1" for="{{ header_form.meal_days.id_for_label }}">Topli obrok (dana) *</label>
           {{ header_form.meal_days }}
           {% if header_form.meal_days.errors %}<div class="text-danger small">{{ header_form.meal_days.errors|striptags }}</div>{% endif %}
           {% if topli_obrok_predlog is not None %}<div class="small text-muted meal-hint" title="Radni dani sa kucanjem u evidenciji prolaza; broj možete promeniti">Dana sa kucanjem: {{ topli_obrok_predlog }}</div>{% endif %}
         </div>
         <div class="work-sheet-control">
-          <label class="form-label small text-muted mb-1" for="{{ header_form.meal_organizational_unit.id_for_label }}">Topli obrok - sifra</label>
+          <label class="form-label small text-muted mb-1" for="{{ header_form.meal_organizational_unit.id_for_label }}">Topli obrok — šifra</label>
           {{ header_form.meal_organizational_unit }}
           {% if header_form.meal_organizational_unit.errors %}
             <div class="text-danger small">{{ header_form.meal_organizational_unit.errors|striptags }}</div>
           {% endif %}
         </div>
         <div class="work-sheet-control">
-          <label class="form-label small text-muted mb-1" for="{{ header_form.field_allowance_days.id_for_label }}">Terenski dodatak</label>
+          <label class="form-label small text-muted mb-1" for="{{ header_form.field_allowance_days.id_for_label }}">Terenski dodatak (dana)</label>
           {{ header_form.field_allowance_days }}
+          {% if header_form.field_allowance_days.errors %}<div class="text-danger small">{{ header_form.field_allowance_days.errors|striptags }}</div>{% endif %}
         </div>
         <div class="work-sheet-total">
           <div class="small text-muted">Ukupno sati</div>
@@ -75,15 +88,14 @@
       <div class="prefill-card" id="prefill-card">
         <div class="prefill-head">
           <div>
-            <strong><i class="mdi mdi-auto-fix"></i> Predlog popunjavanja</strong>
-            <span class="prefill-hint"><span class="prefill-swatch"></span> plava polja su predlog, iz prolazaka, putnih naloga, bolovanja, praznika i slave — upisuje se samo u prazna polja i čuva tek na „Sacuvaj“</span>
+            <strong><i class="mdi mdi-auto-fix" aria-hidden="true"></i> Predlog popunjavanja</strong>
+            <span class="prefill-hint"><span class="prefill-swatch"></span> Plava polja su predlog iz prolazaka, putnih naloga, bolovanja, praznika i slave. Popunjavaju se samo prazna polja; predlog se čuva klikom na „Sačuvaj“.</span>
           </div>
           <div class="prefill-actions">
             {% if prefill.ima_predlog %}
             <button type="button" class="btn btn-sm btn-outline-primary" id="prefill-apply"><i class="mdi mdi-table-arrow-down"></i> Popuni prazna polja</button>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="prefill-undo" hidden><i class="mdi mdi-undo"></i> Poništi predlog</button>
             {% endif %}
-            <button type="button" class="btn btn-sm btn-outline-danger js-sheet-clear-all" title="Isprazni celu radnu listu (čuva se tek na „Sacuvaj“)"><i class="mdi mdi-eraser"></i> Poništi sve</button>
           </div>
         </div>
         {% if prefill.ima_predlog %}
@@ -104,13 +116,17 @@
       {{ prefill|json_script:"prefill-data" }}
       {% endif %}
 
-      <div class="table-responsive work-sheet-table-wrap">
+      <div class="work-sheet-table-caption">
+        <h3>Raspored sati</h3>
+        <div class="work-sheet-legend"><span><span class="weekend-swatch"></span> Vikend</span><span><span class="prefill-swatch"></span> Predlog</span></div>
+      </div>
+      <div class="table-responsive work-sheet-table-wrap" role="region" aria-label="Unos sati po danima" tabindex="0">
         {{ line_formset.management_form }}
         <table class="table table-bordered table-sm align-middle work-sheet-table mb-0">
           <thead>
             <tr>
               <th class="text-center sticky-col row-number-col">R.b.</th>
-              <th class="sticky-col work-code-col">Sifra posla</th>
+              <th class="sticky-col work-code-col">Šifra posla</th>
               {% for day in day_fields %}
                 <th class="text-center day-col {% if day.is_weekend %}weekend-day{% endif %} {% if not day.active %}inactive-day{% endif %}" data-day-head="{{ day.day }}">
                   {{ day.day }}
@@ -166,27 +182,34 @@
         </table>
       </div>
 
-      <div class="d-flex justify-content-end gap-2 mt-3">
-        <span class="sheet-action-status small text-muted align-self-center" id="sheet-action-status" role="status"></span>
-        <button type="button" class="btn btn-outline-danger js-sheet-clear-all" title="Isprazni celu radnu listu (čuva se tek na „Sacuvaj“)"><i class="mdi mdi-eraser"></i> Poništi sve</button>
-        <a href="{% url 'hr:work_time_sheet_print' sheet.pk %}" class="btn btn-outline-secondary" target="_blank" rel="noopener">Stampaj</a>
-        <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}" class="btn btn-outline-secondary" target="_blank" rel="noopener" title="Evidencija prolaza za mesec, A4 — prilog uz radnu listu">Stampaj evidenciju prolaza</a>
-        <button type="submit" class="btn btn-primary" name="action" value="save">Sacuvaj</button>
-        <button type="submit" class="btn btn-success" name="action" value="submit_print" formtarget="_blank">Predaj</button>
+      <div class="work-sheet-actions">
+        <div class="sheet-action-status small text-muted" id="sheet-action-status" role="status">Izmene se čuvaju klikom na „Sačuvaj“. * Topli obrok je obavezan pri predaji (0 ako ga nema).</div>
+        <div class="work-sheet-action-row">
+          <button type="button" class="btn btn-outline-danger js-sheet-clear-all" title="Isprazni celu radnu listu (čuva se tek na „Sačuvaj“)"><i class="mdi mdi-eraser" aria-hidden="true"></i> Poništi sve</button>
+          <div class="work-sheet-action-group">
+            <a href="{% url 'hr:work_time_sheet_print' sheet.pk %}" class="btn btn-outline-secondary" target="_blank" rel="noopener"><i class="mdi mdi-printer" aria-hidden="true"></i> Štampaj listu</a>
+            <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}" class="btn btn-outline-secondary" target="_blank" rel="noopener" title="Evidencija prolaza za mesec, A4 — prilog uz radnu listu"><i class="mdi mdi-printer" aria-hidden="true"></i> Štampaj evidenciju prolaza</a>
+          </div>
+          <div class="work-sheet-action-group work-sheet-save-actions">
+            <button type="submit" class="btn btn-primary" name="action" value="save"><i class="mdi mdi-content-save-outline" aria-hidden="true"></i> Sačuvaj</button>
+            <button type="submit" class="btn btn-success" name="action" value="submit_print" formtarget="_blank"><i class="mdi mdi-check" aria-hidden="true"></i> Predaj</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </form>
 
-<div class="card mt-3" id="prilozi-radne-liste">
-  <div class="card-body">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-      <div>
-        <h2 class="h5 mb-1"><i class="mdi mdi-paperclip"></i> Prilozi radne liste</h2>
-        <div class="text-muted small">Skenirane propusnice, finalna (potpisana) radna lista i ostali prilozi — PDF ili slika, najviše 20 MB po fajlu. Mogu se dodati i posle predaje.</div>
+<div class="card work-sheet-card" id="prilozi-radne-liste">
+    <div class="work-sheet-section-head">
+      <div class="work-sheet-section-title">
+        <span class="work-sheet-section-icon"><i class="mdi mdi-paperclip" aria-hidden="true"></i></span>
+        <div><h2>Prilozi radne liste</h2>
+        <p>Skenirane propusnice, potpisana radna lista i ostali prilozi — PDF ili slika, do 20 MB po fajlu. Mogu se dodati i posle predaje.</p></div>
       </div>
-      <span class="badge bg-secondary">{{ prilozi|length }}</span>
+      <span class="work-sheet-period">Prilozi: {{ prilozi|length }}</span>
     </div>
+  <div class="card-body">
     {% if prilozi %}
     <div class="table-responsive mb-3">
       <table class="table table-sm align-middle mb-0 prilozi-table">
@@ -205,7 +228,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="month" value="{{ month }}"><input type="hidden" name="year" value="{{ year }}">
                 <input type="hidden" name="action" value="prilog_obrisi"><input type="hidden" name="prilog" value="{{ p.pk }}">
-                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obriši prilog"><i class="mdi mdi-delete"></i></button>
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obriši prilog" aria-label="Obriši prilog {{ p.naziv }}"><i class="mdi mdi-delete" aria-hidden="true"></i></button>
               </form>
               {% endif %}
             </td>
@@ -240,14 +263,16 @@
   </div>
 </div>
 
-<div class="card mt-3" id="evidencija-prolaza">
-  <div class="card-body">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-      <div>
-        <h2 class="h5 mb-1">Evidencija prolaza</h2>
-        <div class="text-muted small">Obracun je pomocni prikaz iz ulaza i izlaza za izabrani mesec. Za dan sa problemom ili bez prolaza upišite komentar (dugme „Komentar”).</div>
-        <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}" class="btn btn-outline-secondary btn-sm mt-2" target="_blank" rel="noopener"><i class="mdi mdi-printer"></i> Stampaj kao prilog (A4)</a>
+<div class="card work-sheet-card" id="evidencija-prolaza">
+    <div class="work-sheet-section-head">
+      <div class="work-sheet-section-title">
+        <span class="work-sheet-section-icon"><i class="mdi mdi-clock-outline" aria-hidden="true"></i></span>
+        <div><h2>Evidencija prolaza</h2>
+        <p>Pomoćni obračun ulaza i izlaza za izabrani mesec. Za dan sa problemom ili bez prolaza možete dodati komentar.</p></div>
       </div>
+      <a href="{% url 'hr:work_time_sheet_attendance_print' sheet.pk %}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener"><i class="mdi mdi-printer" aria-hidden="true"></i> Štampaj prilog (A4)</a>
+    </div>
+  <div class="card-body">
       <div class="attendance-summary">
         <div>
           <span class="text-muted">Prolazi</span>
@@ -270,10 +295,8 @@
           <strong>{{ clock_attendance_summary.komentara }}</strong>
         </div>
       </div>
-    </div>
-
     {% if clock_attendance_error %}
-      <div class="alert alert-warning mb-0">
+      <div class="alert alert-warning mb-3">
         Evidencija prolaza nije ucitana: {{ clock_attendance_error }}
       </div>
     {% endif %}
@@ -361,6 +384,7 @@
       <button type="submit" class="btn btn-primary"><i class="mdi mdi-content-save me-1" aria-hidden="true"></i>Sačuvaj komentar</button></div>
   </form></div>
 </div>
+</div>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     var modal = document.getElementById("komentarProlazaModal");
@@ -377,29 +401,76 @@
 </script>
 
 <style>
-  .attendance-comment { margin-top: 3px; padding: 3px 7px; border-left: 3px solid #f0ad4e; background: #fff8eb; border-radius: 3px; font-size: .84rem; }
-  .attendance-comment-btn { font-size: .8rem; text-decoration: none; }
-  .prefill-card { border:1px solid #cfe0f3; background:#f5f9fe; border-radius:8px; padding:10px 14px; margin:0 0 12px; }
-  .prefill-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px 16px; }
-  .prefill-head strong { color:#1d4f86; margin-right:8px; }
-  .prefill-hint { font-size:12px; color:#5f6f7c; }
-  .prefill-actions { display:flex; gap:6px; }
-  .prefill-swatch { display:inline-block; width:12px; height:12px; vertical-align:-2px; border-radius:2px; background:#e4efff; box-shadow:inset 0 -2px 0 #3d7fd6; }
-  .prefill-chips { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; }
-  .prefill-chip { font-size:12px; padding:2px 10px; border-radius:12px; background:#fff; border:1px solid #c9d8ea; color:#29425c; }
-  .prefill-chip-bolovanje { border-color:#e3b3b3; background:#fff6f6; }
-  .prefill-chip-drzavni_i_verski_praznik { border-color:#d9c07a; background:#fffaf0; }
-  .prefill-chip-teren { border-color:#9ccab8; background:#f3fbf8; }
-  .prefill-source { font-size:11px; color:#7a8793; margin-left:4px; }
-  .prefill-status { font-size:12.5px; color:#1d6b4a; margin-top:6px; }
-  .prefill-notes { margin-top:6px; font-size:12.5px; }
-  .prefill-notes summary { cursor:pointer; color:#8a5a00; }
-  .prefill-notes ul { margin:6px 0 0; padding-left:18px; }
-  .hours-input.is-prefill, .work-sheet-control .is-prefill, .work-sheet-table select.is-prefill, .select2.is-prefill .select2-selection {
+  .work-sheet-page { --sheet-ink:#183247; --sheet-line:#e3e8ee; --sheet-muted:#687785; --sheet-accent:#1f6fb2; }
+  .work-sheet-page .work-sheet-heading,
+  .work-sheet-page .work-sheet-heading-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 18px; }
+  .work-sheet-page .work-sheet-heading { margin-bottom:16px; }
+  .work-sheet-page .work-sheet-heading h1 { font-size:1.45rem; color:var(--sheet-ink); }
+  .work-sheet-page .work-sheet-heading .text-muted { font-size:13px; }
+  .work-sheet-page .work-sheet-card { border:1px solid var(--sheet-line); border-radius:10px; margin-bottom:16px; box-shadow:0 1px 3px rgba(24,50,71,.04); }
+  .work-sheet-page .work-sheet-card > .card-body { padding:18px; min-width:0; }
+  .work-sheet-page .work-sheet-section-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px 18px; padding:14px 18px; border-bottom:1px solid var(--sheet-line); }
+  .work-sheet-page .work-sheet-section-title { display:flex; align-items:flex-start; gap:12px; flex:1 1 300px; min-width:0; }
+  .work-sheet-page .work-sheet-section-icon { display:flex; align-items:center; justify-content:center; flex:0 0 36px; height:36px; border-radius:9px; background:#eef4fb; color:var(--sheet-accent); font-size:20px; }
+  .work-sheet-page .work-sheet-section-head h2 { margin:1px 0 3px; color:var(--sheet-ink); font-size:16px; font-weight:700; }
+  .work-sheet-page .work-sheet-section-head p { margin:0; color:var(--sheet-muted); font-size:13px; }
+  .work-sheet-page .work-sheet-period { padding:5px 10px; border:1px solid var(--sheet-line); border-radius:6px; background:#f6f8fa; font-size:12px; font-weight:600; white-space:nowrap; }
+  .work-sheet-page .btn { min-height:36px; padding:7px 12px; border-radius:6px; font-size:13px; font-weight:600; line-height:20px; }
+  .work-sheet-page .btn i { font-size:16px; vertical-align:-1px; }
+  .work-sheet-page .btn[hidden] { display:none !important; }
+  .work-sheet-page .btn:focus-visible,
+  .work-sheet-page .work-sheet-table-wrap:focus-visible { outline:2px solid var(--sheet-accent); outline-offset:2px; }
+  .work-sheet-page .form-control,
+  .work-sheet-page .form-select { border-color:#cbd5e1; border-radius:6px; }
+  .work-sheet-page .prilozi-form .form-control,
+  .work-sheet-page .prilozi-form .form-select { display:block; width:100%; min-height:36px; font-size:13px; }
+  .work-sheet-page .prilozi-form .form-select { padding:6px 10px; background-color:#fff; }
+  .work-sheet-page .prilozi-form .form-label { display:block; }
+  .work-sheet-page .form-label { color:#344554 !important; font-size:13px; font-weight:600; }
+  .work-sheet-page .meal-hint { font-size:12px; margin-top:4px; }
+  .work-sheet-page .period-label { color:var(--sheet-muted); font-size:13px; font-weight:600; white-space:nowrap; }
+  .work-sheet-page .work-sheet-table-caption { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .work-sheet-page .work-sheet-table-caption h3 { margin:0; font-size:14px; font-weight:700; color:var(--sheet-ink); }
+  .work-sheet-page .work-sheet-legend { display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--sheet-muted); }
+  .work-sheet-page .weekend-swatch { display:inline-block; width:12px; height:12px; vertical-align:-2px; border-radius:2px; background:#ffe8a3; }
+  .work-sheet-page .work-sheet-actions { margin-top:16px; padding-top:14px; border-top:1px solid var(--sheet-line); }
+  .work-sheet-page .sheet-action-status { margin-bottom:10px; }
+  .work-sheet-page .work-sheet-action-row,
+  .work-sheet-page .work-sheet-action-group { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .work-sheet-page .work-sheet-action-row { gap:12px; }
+  .work-sheet-page .work-sheet-action-row > .js-sheet-clear-all { margin-right:auto; }
+  .work-sheet-page .work-sheet-save-actions { padding-left:12px; border-left:1px solid var(--sheet-line); }
+  .work-sheet-page .prilozi-table thead th,
+  .work-sheet-page .attendance-table thead th { background:#f6f8fa; color:#526170; font-size:12px; }
+  .work-sheet-page .attendance-table td { padding:8px; font-size:13px; }
+  .work-sheet-page .attendance-comment-btn { min-height:28px; font-size:12px; }
+  .work-sheet-page .attendance-comment { margin-top: 3px; padding: 3px 7px; border-left: 3px solid #f0ad4e; background: #fff8eb; border-radius: 3px; font-size: .84rem; }
+  .work-sheet-page .attendance-comment-btn { font-size: .8rem; text-decoration: none; }
+  .work-sheet-page .prefill-card { border:1px solid #cfe0f3; background:#f5f9fe; border-radius:8px; padding:10px 14px; margin:0 0 12px; }
+  .work-sheet-page .prefill-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:12px 16px; }
+  .work-sheet-page .prefill-head > div:first-child { flex:1 1 360px; }
+  .work-sheet-page .prefill-head strong { display:block; color:#1d4f86; font-size:14px; margin-bottom:4px; }
+  .work-sheet-page .prefill-hint { display:block; font-size:12px; color:#5f6f7c; }
+  .work-sheet-page .prefill-actions { display:flex; flex-wrap:wrap; gap:8px; }
+  .work-sheet-page .prefill-swatch { display:inline-block; width:12px; height:12px; vertical-align:-2px; border-radius:2px; background:#e4efff; box-shadow:inset 0 -2px 0 #3d7fd6; }
+  .work-sheet-page .prefill-chips { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px; }
+  .work-sheet-page .prefill-chip { font-size:12px; padding:2px 10px; border-radius:12px; background:#fff; border:1px solid #c9d8ea; color:#29425c; }
+  .work-sheet-page .prefill-chip-bolovanje { border-color:#e3b3b3; background:#fff6f6; }
+  .work-sheet-page .prefill-chip-drzavni_i_verski_praznik { border-color:#d9c07a; background:#fffaf0; }
+  .work-sheet-page .prefill-chip-teren { border-color:#9ccab8; background:#f3fbf8; }
+  .work-sheet-page .prefill-source { font-size:11px; color:#7a8793; margin-left:4px; }
+  .work-sheet-page .prefill-status { font-size:12.5px; color:#1d6b4a; margin-top:6px; }
+  .work-sheet-page .prefill-notes { margin-top:6px; font-size:12.5px; }
+  .work-sheet-page .prefill-notes summary { cursor:pointer; color:#8a5a00; }
+  .work-sheet-page .prefill-notes ul { margin:6px 0 0; padding-left:18px; }
+  .work-sheet-page .hours-input.is-prefill,
+  .work-sheet-page .work-sheet-control .is-prefill,
+  .work-sheet-page .work-sheet-table select.is-prefill,
+  .work-sheet-page .select2.is-prefill .select2-selection {
     background:#e4efff !important; box-shadow:inset 0 -2px 0 #3d7fd6; color:#123e73; font-weight:600; }
-  .day-col.is-holiday { background:#ffdcb8 !important; color:#8a4300; font-weight:700; }
-  .attendance-holiday { color:#7a5300; font-weight:600; }
-  .period-picker {
+  .work-sheet-page .day-col.is-holiday { background:#ffdcb8 !important; color:#8a4300; font-weight:700; }
+  .work-sheet-page .attendance-holiday { color:#7a5300; font-weight:600; }
+  .work-sheet-page .period-picker {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -408,92 +479,102 @@
     border-radius: 6px;
     background: #fff;
   }
-  .period-select {
-    height: 34px;
+  .work-sheet-page .period-select {
+    height: 36px;
     border-color: #cbd5e1;
     font-weight: 600;
   }
-  .period-month-select {
+  .work-sheet-page .period-month-select {
     width: 132px;
   }
-  .period-year-select {
+  .work-sheet-page .period-year-select {
     width: 92px;
   }
-  .work-sheet-toolbar {
+  .work-sheet-page .work-sheet-toolbar {
     display: grid;
-    grid-template-columns: minmax(150px, 190px) minmax(130px, 150px) minmax(120px, 140px) minmax(150px, 180px) 1fr;
-    gap: 12px;
-    align-items: end;
-    margin-bottom: 14px;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(110px, .7fr);
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 18px;
   }
-  .work-sheet-control .form-control,
-  .work-sheet-control .form-select {
+  .work-sheet-page .work-sheet-control { min-width:0; }
+  .work-sheet-page .work-sheet-control .form-control,
+  .work-sheet-page .work-sheet-control .form-select {
     height: 36px;
-  }
-  .status-select-shell .work-status-select {
-    border-color: #94a3b8;
+    width: 100%;
+    border-color: #cbd5e1;
+    font-size: 0.875rem;
     font-weight: 600;
-    min-width: 150px;
   }
-  .work-sheet-total {
-    text-align: right;
+  .work-sheet-page .work-sheet-control .form-label { display: block; }
+  .work-sheet-page .status-select-shell .work-status-select {
+    font-weight: 600;
   }
-  .work-sheet-table-wrap {
+  .work-sheet-page .work-sheet-total {
+    text-align: center;
+    padding: 8px 12px;
+    border: 1px solid #cfe0f3;
+    border-radius: 8px;
+    background: #f5f9fe;
+    color: var(--sheet-accent);
+  }
+  .work-sheet-page .work-sheet-table-wrap {
     max-height: calc(100vh - 300px);
     min-height: 360px;
+    isolation: isolate;
     border: 1px solid #d9e2ec;
     border-radius: 6px;
   }
-  /* Tabela staje u širinu ekrana: kolone oko dana imaju svoju širinu, 31 dan deli ostatak.
-     Tek na uskim ekranima (manje od ~940 px za tabelu) pojavljuje se bočno pomeranje. */
-  .work-sheet-table {
+  .work-sheet-page .work-sheet-table {
     width: 100%;
     min-width: 940px;
     table-layout: fixed;
   }
-  .work-sheet-table th,
-  .work-sheet-table td {
+  .work-sheet-page .work-sheet-table th,
+  .work-sheet-page .work-sheet-table td {
     height: 38px;
     padding: 3px 2px;
     vertical-align: middle;
   }
-  .work-sheet-table thead th { font-size: 12px; padding: 6px 1px; }
-  .work-sheet-table tfoot th { font-size: 12px; padding: 4px 2px; }
-  .work-sheet-table thead th {
+  .work-sheet-page .work-sheet-table thead th { font-size: 12px; padding: 6px 1px; }
+  .work-sheet-page .work-sheet-table tfoot th { font-size: 12px; padding: 4px 2px; }
+  .work-sheet-page .work-sheet-table thead th {
     position: sticky;
     top: 0;
     z-index: 2;
     background: #f8f9fa;
   }
-  .work-sheet-table tfoot th {
+  .work-sheet-page .work-sheet-table tfoot th {
     position: sticky;
     bottom: 0;
     z-index: 2;
     background: #eaf2ff;
     font-weight: 700;
   }
-  .row-number-col {
+  .work-sheet-page .row-number-col {
+    position: sticky;
     width: 34px;
     left: 0;
     z-index: 3;
     background: #fff;
   }
-  .work-code-col {
-    width: 80px;
+  .work-sheet-page .work-code-col {
+    position: sticky;
+    width: 108px;
     left: 34px;
     z-index: 3;
     background: #fff;
   }
-  thead .row-number-col,
-  thead .work-code-col {
+  .work-sheet-page thead .row-number-col,
+  .work-sheet-page thead .work-code-col {
     background: #f8f9fa;
     z-index: 4;
   }
-  .day-col,
-  .day-cell {
+  .work-sheet-page .day-col,
+  .work-sheet-page .day-cell {
     width: auto;
   }
-  .hours-input {
+  .work-sheet-page .hours-input {
     width: 100%;
     min-width: 0;
     height: 30px;
@@ -503,19 +584,30 @@
     text-align: center;
     box-sizing: border-box;
   }
-  .work-code-select,
-  .meal-code-select,
-  .work-condition-input {
+  .work-sheet-page .work-code-select,
+  .work-sheet-page .meal-code-select,
+  .work-sheet-page .work-condition-input {
     width: 100%;
     height: 32px;
   }
-  .work-code-col .select2-container,
-  .note-col .select2-container,
-  .work-sheet-control .select2-container {
+  .work-sheet-page .work-code-col .select2-container,
+  .work-sheet-page .note-col .select2-container,
+  .work-sheet-page .work-sheet-control .select2-container {
     width: 100% !important;
   }
-  .work-code-col .select2-container--bootstrap-5 .select2-selection,
-  .work-sheet-control .select2-container--bootstrap-5 .select2-selection {
+  .work-sheet-page .work-sheet-control .select2-container--bootstrap-5 .select2-selection {
+    border-radius: 6px;
+    min-height: 36px;
+    height: 36px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    border-color: #cbd5e1;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .work-sheet-page .work-code-col .select2-container--bootstrap-5 .select2-selection,
+  .work-sheet-page .note-col .select2-container--bootstrap-5 .select2-selection {
+    border-radius: 6px;
     min-height: 32px;
     height: 32px;
     padding-top: 2px;
@@ -523,101 +615,107 @@
     border-color: #cbd5e1;
     font-size: 0.875rem;
   }
-  .work-code-col .select2-container--bootstrap-5 .select2-selection__rendered,
-  .work-sheet-control .select2-container--bootstrap-5 .select2-selection__rendered {
+  .work-sheet-page .work-code-col .select2-container--bootstrap-5 .select2-selection__rendered,
+  .work-sheet-page .work-sheet-control .select2-container--bootstrap-5 .select2-selection__rendered {
     line-height: 26px;
     padding-left: 4px;
+    padding-right: 18px;
     font-variant-numeric: tabular-nums;
+    overflow: visible;
+    text-overflow: clip;
   }
-  .work-code-col .select2-container--bootstrap-5 .select2-selection__arrow,
-  .work-sheet-control .select2-container--bootstrap-5 .select2-selection__arrow {
+  .work-sheet-page .work-code-col .select2-container--bootstrap-5 .select2-selection--single { padding-right: 18px; background-position: right 4px center; }
+  .work-sheet-page .work-code-col .select2-container--bootstrap-5 .select2-selection__arrow,
+  .work-sheet-page .work-sheet-control .select2-container--bootstrap-5 .select2-selection__arrow {
     height: 30px;
   }
-  .work-code-select {
+  .work-sheet-page .work-code-select {
     padding-left: 6px;
     padding-right: 24px;
     font-variant-numeric: tabular-nums;
   }
-  .meal-code-select {
+  .work-sheet-page .meal-code-select {
     font-weight: 600;
   }
-  .total-col {
+  .work-sheet-page .total-col {
     width: 46px;
   }
-  .conditions-col {
+  .work-sheet-page .conditions-col {
     width: 68px;
   }
-  .note-col {
+  .work-sheet-page .note-col {
     width: 150px;
   }
-  .work-condition-input { font-size: 12px; padding: 2px 4px; }
-  .note-col .select2-selection__rendered {
+  .work-sheet-page .work-condition-input { font-size: 12px; padding: 2px 4px; }
+  .work-sheet-page .note-col .select2-selection__rendered {
     text-align: left;
     font-size: 0.76rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .work-code-col .select2-container--bootstrap-5 .select2-selection { font-size: 0.8rem; }
-  .weekend-day {
+  .work-sheet-page .work-code-col .select2-container--bootstrap-5 .select2-selection { font-size: 0.85rem; font-weight: 600; }
+  .work-sheet-page .weekend-day {
     background: #fff4d6;
   }
-  thead .weekend-day {
+  .work-sheet-page thead .weekend-day {
     background: #ffe8a3;
   }
-  .weekend-day input {
+  .work-sheet-page .weekend-day input {
     background: #fffaf0;
   }
-  .inactive-day {
+  .work-sheet-page .inactive-day {
     background: #f3f4f6;
   }
-  .inactive-day input {
+  .work-sheet-page .inactive-day input {
     background: #f3f4f6;
     color: #9ca3af;
   }
-  .attendance-summary {
+  .work-sheet-page .attendance-summary {
     display: grid;
-    grid-template-columns: repeat(4, minmax(80px, 1fr));
-    gap: 8px;
-    min-width: 420px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
   }
-  .attendance-summary > div {
+  .work-sheet-page .attendance-summary > div {
     border: 1px solid #d9e2ec;
     border-radius: 6px;
-    padding: 8px 10px;
+    padding: 12px 14px;
     background: #f8fafc;
   }
-  .attendance-summary span,
-  .attendance-summary strong {
+  .work-sheet-page .attendance-summary span,
+  .work-sheet-page .attendance-summary strong {
     display: block;
     line-height: 1.2;
+    font-variant-numeric: tabular-nums;
   }
-  .attendance-summary strong {
+  .work-sheet-page .attendance-summary span { font-size:12px; }
+  .work-sheet-page .attendance-summary strong {
     margin-top: 4px;
     font-size: 1.05rem;
   }
-  .attendance-table-wrap {
+  .work-sheet-page .attendance-table-wrap {
     max-height: none;
     overflow-y: visible;
     border: 1px solid #d9e2ec;
     border-radius: 6px;
   }
-  .attendance-table {
+  .work-sheet-page .attendance-table {
     min-width: 820px;
   }
-  .attendance-table thead th {
+  .work-sheet-page .attendance-table thead th {
     position: sticky;
     top: 0;
     z-index: 1;
     background: #f8f9fa;
   }
-  .attendance-weekend td {
+  .work-sheet-page .attendance-weekend td {
     background: #fff8e6;
   }
-  .attendance-problem td {
+  .work-sheet-page .attendance-problem td {
     background: #fff1f2;
   }
-  .attendance-status {
+  .work-sheet-page .attendance-status {
     display: inline-block;
     min-width: 86px;
     padding: 3px 8px;
@@ -626,36 +724,50 @@
     font-weight: 700;
     text-align: center;
   }
-  .attendance-status-ok {
+  .work-sheet-page .attendance-status-ok {
     color: #166534;
     background: #dcfce7;
   }
-  .attendance-status-empty {
+  .work-sheet-page .attendance-status-empty {
     color: #475569;
     background: #e2e8f0;
   }
-  .attendance-status-problem {
+  .work-sheet-page .attendance-status-problem {
     color: #991b1b;
     background: #fee2e2;
   }
-  .attendance-travel-order {
+  .work-sheet-page .attendance-travel-order {
     color: #075985;
     font-weight: 700;
   }
-  .attendance-sick-leave { color: #6b21a8; font-weight: 600; }
-  .attendance-status-leave { color: #6b21a8; background: #f3e8ff; }
-  @media (max-width: 768px) {
-    .work-sheet-toolbar {
-      grid-template-columns: 1fr;
+  .work-sheet-page .attendance-sick-leave { color: #6b21a8; font-weight: 600; }
+  .work-sheet-page .attendance-status-leave { color: #6b21a8; background: #f3e8ff; }
+  @media (max-width: 1199px) {
+  .work-sheet-page .work-sheet-toolbar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .work-sheet-total {
-      text-align: left;
-    }
-    .attendance-summary {
+  .work-sheet-page .work-sheet-total { grid-column:1 / -1; display:flex; justify-content:space-between; align-items:center; }
+  }
+  @media (max-width: 767px) {
+  .work-sheet-page .work-sheet-heading-actions,
+  .work-sheet-page .period-picker { width:100%; }
+  .work-sheet-page .period-picker { flex-wrap:wrap; }
+  .work-sheet-page .period-month-select,
+  .work-sheet-page .period-year-select { width:auto; flex:1 1 80px; }
+  .work-sheet-page .period-label { width:100%; }
+  .work-sheet-page .work-sheet-card > .card-body { padding:12px; }
+  .work-sheet-page .work-sheet-section-head { padding:12px; }
+  .work-sheet-page .work-sheet-action-group { flex:1 1 100%; }
+  .work-sheet-page .work-sheet-action-group .btn { flex:1 1 auto; }
+  .work-sheet-page .work-sheet-save-actions { border-left:0; padding-left:0; }
+  .work-sheet-page .attendance-summary {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       min-width: 0;
       width: 100%;
     }
+  }
+  @media (max-width: 420px) {
+  .work-sheet-page .work-sheet-toolbar { grid-template-columns:1fr; }
   }
 </style>
 
@@ -732,7 +844,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 <script>
-/* Meko popunjavanje: predlog ide samo u prazna polja, nije sačuvan dok korisnik ne klikne „Sacuvaj". */
+/* Meko popunjavanje: predlog ide samo u prazna polja, nije sačuvan dok korisnik ne klikne „Sačuvaj". */
 document.addEventListener("DOMContentLoaded", function () {
   var dataElement = document.getElementById("prefill-data");
   var predlog = dataElement ? JSON.parse(dataElement.textContent) : {redovi: [], oznake_dana: {}};
@@ -801,7 +913,7 @@ document.addEventListener("DOMContentLoaded", function () {
       teren.value = predlog.teren_dana; mark(teren); upisano.push(teren); terenUpisan = true;
     }
     var poruka = cells || terenUpisan
-      ? "Predlog je upisan u " + cells + " praznih polja" + (terenUpisan ? " i terenski dodatak" : "") + ". Proverite ga i kliknite „Sacuvaj“."
+      ? "Predlog je upisan u " + cells + " praznih polja" + (terenUpisan ? " i terenski dodatak" : "") + ". Proverite ga i kliknite „Sačuvaj“."
       : "Sva polja iz predloga su već popunjena — ništa nije promenjeno.";
     if (missing.length) poruka += " Nema slobodnog reda za: " + missing.join(", ") + ".";
     javi(poruka);
@@ -823,7 +935,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (event.isTrusted && event.target.classList.contains("is-prefill")) unmark(event.target);
   });
   document.querySelectorAll(".js-sheet-clear-all").forEach(function (clearAll) { clearAll.addEventListener("click", function () {
-    if (!confirm("Isprazniti celu radnu listu? Brišu se svi sati, šifre, vrste rada, topli obrok i teren. Promena se čuva tek kada kliknete „Sacuvaj“.")) return;
+    if (!confirm("Isprazniti celu radnu listu? Brišu se svi sati, šifre, vrste rada, topli obrok i teren. Promena se čuva tek kada kliknete „Sačuvaj“.")) return;
     var form = document.getElementById("work-time-sheet-form");
     form.querySelectorAll(".hours-input, .work-condition-input").forEach(function (input) {
       if (input.disabled) return;
@@ -841,7 +953,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     upisano = [];
     if (undoButton) undoButton.hidden = true;
-    javi("Radna lista je ispražnjena. Kliknite „Sacuvaj“ da se promena upiše" +
+    javi("Radna lista je ispražnjena. Kliknite „Sačuvaj“ da se promena upiše" +
          (applyButton ? ", ili „Popuni prazna polja“ za novi predlog." : "."));
   }); });
   // Predaja: red sa satima rada mora imati šifru posla, a topli obrok mora biti upisan (proverava i server).

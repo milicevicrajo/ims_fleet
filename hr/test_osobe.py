@@ -34,6 +34,7 @@ class SinhronizacijaOsobaTests(TestCase):
         with patch("hr.sync._hr_employee_columns", return_value={}), \
                 patch("hr.sync.preduzeca_radnika", return_value=preduzeca), \
                 patch("hr.sync.staz_periodi", return_value=[]), \
+                patch("hr.sync.radna_mesta_izvora", return_value={}), \
                 patch("hr.sync.connections") as conn:
             conn.__getitem__.return_value.cursor.return_value.__enter__.return_value.fetchall.return_value = redovi
             return sync_employees_from_hr_view()

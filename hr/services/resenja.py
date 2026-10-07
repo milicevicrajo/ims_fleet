@@ -169,6 +169,7 @@ _OZNAKA_POLJA = re.compile(r'^[a-z][a-z_]{0,39}$')
 REZERVISANI_CUVARI = frozenset({
     'rod', 'zaposleni', 'oj', 'radno_mesto', 'centar', 'period', 'dani', 'dani_prekovremeni', 'dani_nocni',
     'dani_vikend', 'dani_drzavni', 'dani_verski', 'radni_dani', 'datum_povratka', 'zahtev_broj', 'zahtev_datum',
+    'zahtev_broj_arhiva',
     'napomena', 'broj', 'datum', 'razlog', 'razlog_zahteva', 'podnosilac', 'podnosilac_funkcija', 'odobrava',
     'odobrava_funkcija',
 })
@@ -280,6 +281,7 @@ def build_document(resenje, *, dani=None):
         'centar': resenje.centar,
         **vrednosti_perioda(resenje, dani, pismo),
         'zahtev_broj': resenje.zahtev_broj,
+        'zahtev_broj_arhiva': resenje.zahtev_broj_arhiva,
         'zahtev_datum': datum_teksta(resenje.zahtev_datum),
         'napomena': resenje.napomena,
         'broj': resenje.broj,

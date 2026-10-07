@@ -106,7 +106,7 @@ class EmployeeForm(SekcijeMixin, forms.ModelForm):
     class Meta:
         model = Employee
         # Osobu, preduzeće i prisustvo u izvoru održava HR sinhronizacija.
-        exclude = ["osoba", "preduzece", "u_izvoru"]
+        exclude = ["osoba", "preduzece", "u_izvoru", "radna_mesta"]
         labels = {
             "display_first_name_override": "Ime za prikaz",
             "display_last_name_override": "Prezime za prikaz",
@@ -337,7 +337,7 @@ class WorkTimeSheetForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["meal_organizational_unit"].queryset = OrganizationalUnit.objects.order_by("code", "name")
         self.fields["meal_organizational_unit"].empty_label = ""
-        self.fields["meal_organizational_unit"].label_from_instance = lambda obj: obj.code
+        self.fields["meal_organizational_unit"].label_from_instance = lambda obj: (obj.code or "").strip()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -382,7 +382,7 @@ class WorkTimeSheetLineForm(forms.ModelForm):
         self.fields["work_category"].empty_label = ""
         self.fields["organizational_unit"].queryset = OrganizationalUnit.objects.order_by("code", "name")
         self.fields["organizational_unit"].empty_label = ""
-        self.fields["organizational_unit"].label_from_instance = lambda obj: obj.code
+        self.fields["organizational_unit"].label_from_instance = lambda obj: (obj.code or "").strip()
         for field_name in WORK_TIME_SHEET_DAY_FIELDS:
             self.fields[field_name].widget = forms.TextInput(
                 attrs={

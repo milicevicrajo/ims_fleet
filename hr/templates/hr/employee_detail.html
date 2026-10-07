@@ -4,6 +4,9 @@
 {% block content %}
 {% include 'fleet/includes/list_styles.html' %}
 <style>
+  .hr-radna-mesta { padding-left: 1.2rem; margin-top: .35rem; }
+  .hr-radna-mesta li { margin-bottom: .45rem; }
+  .hr-radna-mesta li::marker { color: #6c757d; font-weight: 600; }
   .profile-hero {
     background: linear-gradient(135deg, #1f6f78, #244f73);
     color: #fff;
@@ -22,7 +25,7 @@
     <div>
       <div class="profile-code mb-1">{% if vise_zaposlenja %}Šifre zaposlenog: {% for z in zaposlenja %}{% if z.pk == employee.pk %}<strong>{{ z.employee_code }}</strong>{% else %}{{ z.employee_code }}{% endif %}{% if z.preduzece == 2 %} (van r.o.){% endif %}{% if not z.is_active %} (neakt.){% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}{% else %}Sifra zaposlenog: {{ employee.employee_code }}{% endif %}</div>
       <h2 class="mb-1">{{ employee.display_last_name }} {{ employee.display_first_name }}</h2>
-      <div>{{ employee.position|default:"-" }}{% if employee.org_unit_code %} · OJ {{ employee.org_unit_code }}{% endif %}{% if employee.osoba.ukupan_staz %} · ukupan staž {{ employee.osoba.ukupan_staz }}{% endif %}</div>
+      <div>{% if employee.radna_mesta|length > 1 %}{% for rm in employee.radna_mesta %}{{ forloop.counter }}. {{ rm.naziv|default:rm.sifra }}{% if not forloop.last %}; {% endif %}{% endfor %}{% else %}{{ employee.position|default:"-" }}{% endif %}{% if employee.org_unit_code %} · OJ {{ employee.org_unit_code }}{% endif %}{% if employee.osoba.ukupan_staz %} · ukupan staž {{ employee.osoba.ukupan_staz }}{% endif %}</div>
     </div>
     <div class="d-flex flex-wrap gap-2">
       {% if is_self_profile %}
@@ -81,7 +84,12 @@
           <div class="col-lg-6">
             <div class="card border h-100"><div class="card-body">
               <h5 class="card-title">Radni podaci</h5>
+              {% if employee.radna_mesta|length > 1 %}
+              <div class="mb-3"><strong>Radna mesta ({{ employee.radna_mesta|length }}):</strong>
+                {% include "hr/_radna_mesta.html" with zaposleni=employee %}</div>
+              {% else %}
               <p><strong>Pozicija:</strong> {{ employee.position|default:"-" }}</p>
+              {% endif %}
               <p><strong>Sifra odeljenja:</strong> {{ employee.department_code|default:"-" }}</p>
               <p><strong>OJ:</strong> {{ employee.org_unit_code|default:"-" }}</p>
               <p><strong>Sifra sistema:</strong> {{ employee.system_code|default:"-" }}</p>

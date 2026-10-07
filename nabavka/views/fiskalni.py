@@ -29,9 +29,9 @@ def _izbor_sifara(field, user, zadrzi=None):
 
 
 class FiskalniRacunForm(forms.Form):
-    # Jedna ili vise sifara posla; prva izabrana je glavna, ostale dodatne.
+    # Nijedna, jedna ili vise sifara posla; prva izabrana je glavna, ostale dodatne (od 07.10.2026. nije obavezno).
     job_code = forms.ModelMultipleChoiceField(queryset=OrganizationalUnit.objects.none(), label="Šifre posla",
-                                              error_messages={"required": "Izaberite bar jednu šifru posla."},
+                                              required=False,
                                               widget=forms.SelectMultiple(attrs={"class": "form-select", "id": "fiskalniSifra"}))
     link = forms.CharField(label="Link sa QR koda računa", widget=forms.Textarea(attrs={
         "class": "form-control font-monospace", "rows": 4, "id": "fiskalniLink", "autocomplete": "off",
@@ -45,7 +45,7 @@ class FiskalniRacunForm(forms.Form):
 
     def sifre_redom(self):
         """Izabrane sifre redom kojim su izabrane (prva je glavna)."""
-        izabrane = {s.pk: s for s in self.cleaned_data["job_code"]}
+        izabrane = {s.pk: s for s in self.cleaned_data.get("job_code") or []}
         redom = [izabrane[int(pk)] for pk in self.data.getlist("job_code") if str(pk).isdigit() and int(pk) in izabrane]
         return list(dict.fromkeys(redom))
 
@@ -68,7 +68,8 @@ class ObradaRacunaForm(forms.ModelForm):
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         _izbor_sifara(self.fields["job_code"], user, self.instance.job_code_id)
-        self.fields["job_code"].empty_label = "— izaberite glavnu šifru posla —"
+        self.fields["job_code"].required = False
+        self.fields["job_code"].empty_label = "— bez šifre posla —"
         vozilo = self.fields["vehicle"]
         vozilo.required = False
         vozilo.empty_label = ""  # Select2 koristi praznu opciju za placeholder i brisanje izbora.
@@ -241,7 +242,7 @@ class FiskalniRacunScanView(NabavkaContextMixin, RolePermissionRequiredMixin, Lo
             return self._odgovor(request, ajax, ok=False, poruka=greska or "Proverite unos.")
         sifre = form.sifre_redom()
         try:
-            racun, upozorenja = fiskalni.upisi(form.cleaned_data["link"], sifre[0], request.user,
+            racun, upozorenja = fiskalni.upisi(form.cleaned_data["link"], sifre[0] if sifre else None, request.user,
                                                form.cleaned_data["napomena"], dodatne=sifre[1:],
                                                ocekivano=fiskalni.ocekivano_iz_zahteva(request.POST))
         except fiskalni.GreskaOcitavanja as exc:

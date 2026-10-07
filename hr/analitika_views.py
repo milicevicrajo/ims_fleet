@@ -44,5 +44,37 @@ class AnalitikaView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateVie
         upit.pop("izvoz", None)
         return self.render_to_response(self.get_context_data(
             a=a, filteri=filteri, izabrana_oj=oj, izvoz_upit=upit.urlencode(),
+            moze_rodna=user_has_role_permission(request.user, "hr:rodna_ravnopravnost"),
             oj_izbor=sorted({str(k or d) for k, d in sve_oj}, key=lambda x: (len(x), x)),
             title="Analitika zaposlenih", sidebar_template="sidebar_kadrovi.html", current_app="kadrovi"))
+
+
+class RodnaRavnopravnostView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
+    """Statistika rodne ravnopravnosti (Obrazac 1) za celu firmu, iz kadrovske baze; Excel i PDF (od 07.10.2026.)."""
+    template_name = "hr/rodna_ravnopravnost.html"
+
+    def get(self, request, *args, **kwargs):
+        from django.contrib import messages
+        from django.db import DatabaseError
+
+        from .services import rodna_ravnopravnost as servis, rodna_ravnopravnost_izvoz as izvoz
+
+        danas = timezone.localdate()
+        try:
+            godina = int(request.GET.get("godina") or danas.year - 1)
+        except ValueError:
+            godina = danas.year - 1
+        godina = min(max(godina, 2015), danas.year)
+        try:
+            s = servis.statistika(godina, *servis.procitaj_izvor(), danas=danas)
+        except DatabaseError as exc:
+            messages.error(request, f"Kadrovska baza nije dostupna: {exc}")
+            s = None
+        if s and request.GET.get("izvoz") == "xlsx":
+            return izvoz.excel(s)
+        if s and request.GET.get("izvoz") == "pdf":
+            return izvoz.pdf(s)
+        return self.render_to_response(self.get_context_data(
+            s=s, tabele=izvoz.tabele(s) if s else [], podnaslov=izvoz.podnaslov(s) if s else "", godina=godina,
+            godine=range(danas.year, 2019, -1), title="Statistika rodne ravnopravnosti",
+            sidebar_template="sidebar_kadrovi.html", current_app="kadrovi"))

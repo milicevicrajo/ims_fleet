@@ -193,7 +193,7 @@ refundacije, kao i račun čiji zbir stavki nije jednak iznosu.
 **Kad stranica Poreske uprave ne radi**, račun se upisuje iz QR koda u statusu „Čeka proveru”;
 stavke se preuzimaju dugmetom **Ponovo preuzmi** na detalju ili noćnim zadatkom u 07:30
 (`nabavka.tasks.fiskalni_ponovi_task`). Obuhvat: račun se vezuje za šifru posla i registar
-(`org_node`), pa ga vidi ko ima tu šifru u obuhvatu dodela (i onaj ko ga je učitao). Dozvole:
+(`org_node`), pa ga vidi ko ima tu šifru u obuhvatu dodela (i onaj ko ga je učitao). Od 07.10.2026. **šifra posla nije obavezna** — u Nabavci, u Isplatama (Ostali fiskalni računi) i na putnom nalogu račun se može učitati bez nje i dopuniti u obradi; račun bez šifre vidi onaj ko ga je učitao i obuhvat cele firme. Dozvole:
 `nabavka:fiskalni_list`, `_data`, `_scan`, `_detail`, `_refresh`, `_update` (obrada i šifre posla),
 `_returned` („vraćeno”), `_delete`.
 

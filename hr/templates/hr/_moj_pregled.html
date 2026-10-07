@@ -106,13 +106,17 @@ Linkovi `data-tab-link` otvaraju ostale kartice profila.
             <dt>{% if moj.oj.centar %}Jedinica{% else %}Centar{% endif %}</dt><dd>{{ moj.oj.sifra }} {{ moj.oj.naziv }}</dd>
           {% elif employee.org_unit_code %}<dt>OJ</dt><dd>{{ employee.org_unit_code }}</dd>{% endif %}
           {% if moj.ugovor %}
+            {% if employee.radna_mesta|length > 1 %}
+            <dt>Radna mesta</dt><dd>{% for rm in employee.radna_mesta %}<div>{{ forloop.counter }}. {{ rm.naziv|default:rm.sifra }}</div>{% endfor %}</dd>
+            {% else %}
             <dt>Radno mesto</dt><dd>{{ moj.ugovor.naziv_radnog_mesta|default:employee.position|default:"—" }}
               {% for rm in moj.ugovor.dodatna_radna_mesta.all %}<div class="mp-muted">{{ forloop.counter|add:1 }}. {{ rm.naziv_radnog_mesta|default:rm }}</div>{% endfor %}</dd>
+            {% endif %}
             <dt>Ugovor</dt><dd>{{ moj.ugovor.get_kategorija_display }}{% if moj.ugovor.broj_ugovora %} · br. {{ moj.ugovor.broj_ugovora }}{% endif %}
               <div class="mp-muted">od {{ moj.ugovor.datum_od|date:"d.m.Y." }} · {% if moj.ugovor.na_neodredjeno %}na neodređeno{% elif moj.ugovor.datum_do %}do {{ moj.ugovor.datum_do|date:"d.m.Y." }}{% else %}bez datuma kraja{% endif %}</div>
               {% if moj.ugovor_istice is not None and moj.ugovor_istice <= 45 %}<span class="mp-badge warn mt-1">ističe za {{ moj.ugovor_istice }} d.</span>{% endif %}</dd>
           {% else %}
-            <dt>Radno mesto</dt><dd>{{ employee.position|default:"—" }}</dd>
+            <dt>Radno mesto</dt><dd>{% if employee.radna_mesta|length > 1 %}{% for rm in employee.radna_mesta %}<div>{{ forloop.counter }}. {{ rm.naziv|default:rm.sifra }}</div>{% endfor %}{% else %}{{ employee.position|default:"—" }}{% endif %}</dd>
           {% endif %}
           <dt>U IMS-u od</dt><dd>{{ employee.date_of_joining|date:"d.m.Y." }}{% if moj.staz %}<div class="mp-muted">{{ moj.staz.godina }} god. {{ moj.staz.meseci }} mes.</div>{% endif %}</dd>
         </dl>

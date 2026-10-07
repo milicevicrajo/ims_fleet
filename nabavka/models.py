@@ -1110,8 +1110,9 @@ class FiskalniRacun(models.Model):
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.CEKA, verbose_name=_("Status"))
     greska = models.CharField(max_length=500, blank=True, verbose_name=_("Poslednja greška preuzimanja"))
     preuzeto = models.DateTimeField(null=True, blank=True, verbose_name=_("Preuzeto sa stranice za proveru"))
+    # Od 07.10.2026. račun može da se učita i bez šifre posla (dopunjuje se kasnije u obradi).
     job_code = models.ForeignKey("fleet.OrganizationalUnit", on_delete=models.PROTECT, related_name="fiskalni_racuni",
-                                 verbose_name=_("Šifra posla"))
+                                 null=True, blank=True, verbose_name=_("Šifra posla"))
     # Registar organizacije: izvodi se iz `job_code` (organizacija/signals.py), po njemu ide obuhvat.
     org_node = models.ForeignKey("organizacija.OrgNode", on_delete=models.PROTECT, null=True, blank=True,
                                  editable=False, related_name="fiskalni_racuni")
@@ -1171,6 +1172,8 @@ class FiskalniRacun(models.Model):
         """Glavna sifra posla je uvek i medju siframa racuna (vrsta „Osnovna”), kao kod EUF faktura."""
         FiskalniRacunSifra.objects.filter(racun=self, vrsta=FiskalniRacunSifra.OSNOVNA).exclude(
             job_code_id=self.job_code_id).update(vrsta=FiskalniRacunSifra.DODATNA)
+        if not self.job_code_id:  # račun bez glavne šifre posla
+            return None
         veza, napravljena = FiskalniRacunSifra.objects.get_or_create(
             racun=self, job_code_id=self.job_code_id,
             defaults={"vrsta": FiskalniRacunSifra.OSNOVNA, "created_by": korisnik})

@@ -312,7 +312,7 @@ def preuzmi(racun):
 def upisi(tekst, job_code, korisnik, napomena="", dodatne=(), putni_nalog=None, evidencija=None, ocekivano=None):
     """Novi racun iz ocitanog linka. Vraca (racun, upozorenja). Isti racun se ne upisuje dva puta.
 
-    `job_code` je glavna sifra posla, `dodatne` ostale sifre na koje se racun vezuje. `evidencija` je
+    `job_code` je glavna sifra posla (moze i None — racun bez sifre), `dodatne` ostale sifre na koje se racun vezuje. `evidencija` je
     prikaz kome racun pripada kad nije na putnom nalogu (podrazumevano Nabavka). `ocekivano` su podaci
     uneti rucno kod ostecenog QR koda; ocitani QR mora da im odgovara.
     """
@@ -335,7 +335,7 @@ def upisi(tekst, job_code, korisnik, napomena="", dodatne=(), putni_nalog=None, 
         evidencija=evidencija or FiskalniRacun.Evidencija.NABAVKA)
     racun.uskladi_glavnu_sifru(korisnik)
     for sifra in dodatne:
-        if sifra.pk != job_code.pk:
+        if job_code is None or sifra.pk != job_code.pk:
             FiskalniRacunSifra.objects.get_or_create(racun=racun, job_code=sifra, defaults={"created_by": korisnik})
     preuzmi(racun)
     return racun, upozorenja(racun)

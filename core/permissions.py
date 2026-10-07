@@ -125,8 +125,8 @@ def collect_permission_codes():
     return sorted(codes)
 
 
-# Pravna služba vidi analitiku zaposlenih cele firme (od 06.10.2026.).
-PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all'}
+# Pravna služba vidi analitiku zaposlenih cele firme (od 06.10.2026.) i statistiku rodne ravnopravnosti (07.10.2026.).
+PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all', 'hr:rodna_ravnopravnost'}
 
 
 @transaction.atomic

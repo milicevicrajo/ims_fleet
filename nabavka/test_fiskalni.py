@@ -181,10 +181,19 @@ class EkraniTests(TestCase):
         self.assertEqual(sorted(racun.sifre.values_list("job_code__code", "vrsta")),
                          [("410001", "osnovna"), ("430111", "dodatna")])
 
-    def test_sifra_posla_je_obavezna_i_bez_dozvole_nema_pristupa(self):
-        odgovor = self.client.post(reverse("nabavka:fiskalni_scan"), {"link": LINK}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
-        self.assertEqual(odgovor.status_code, 400)
-        self.assertFalse(FiskalniRacun.objects.exists())
+    def test_racun_moze_bez_sifre_posla_i_bez_dozvole_nema_pristupa(self):
+        # od 07.10.2026. šifra posla nije obavezna: dopunjuje se u obradi
+        with mock.patch.object(fiskalni, "_otvori", side_effect=lazni_suf):
+            odgovor = self.client.post(reverse("nabavka:fiskalni_scan"), {"link": LINK}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertTrue(odgovor.json()["ok"], odgovor.content)
+        racun = FiskalniRacun.objects.get()
+        self.assertIsNone(racun.job_code)
+        self.assertFalse(racun.sifre.exists())
+        detalj = self.client.get(reverse("nabavka:fiskalni_detail", args=[racun.pk]))
+        self.assertEqual(detalj.status_code, 200)
+        self.assertContains(detalj, "bez šifre posla")
+        podaci = self.client.get(reverse("nabavka:fiskalni_data"), {"draw": 1, "start": 0, "length": 10}).json()
+        self.assertEqual(podaci["data"][0]["sifra"], "—")
         drugi = get_user_model().objects.create_user("bez-dozvole", password="x")
         self.client.force_login(drugi)
         self.assertEqual(self.client.get(reverse("nabavka:fiskalni_list")).status_code, 403)

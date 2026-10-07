@@ -101,7 +101,7 @@ class ResenjeForm(DodatnaPoljaMixin, forms.ModelForm):
         model = Resenje
         fields = ['vrsta', 'zaposleni', 'broj', 'datum_resenja', 'pismo', 'pol', 'oj_kod', 'zaposleni_tekst', 'oj_naziv', 'radno_mesto',
                   'datum_od', 'datum_do', 'vreme_od', 'vreme_do', 'do_zavrsetka_posla', 'broj_radnih_dana', 'datum_povratka',
-                  'zahtev_broj', 'zahtev_datum', 'potpisnik', 'napomena']
+                  'zahtev_broj', 'zahtev_datum', 'zahtev_broj_arhiva', 'potpisnik', 'napomena']
         widgets = {
             'datum_resenja': forms.DateInput(attrs=DATE_ATTRS),
             'datum_od': forms.DateInput(attrs=DATE_ATTRS),
@@ -136,6 +136,7 @@ class ResenjeForm(DodatnaPoljaMixin, forms.ModelForm):
         self.fields['radno_mesto'].required = False
         self.fields['zahtev_broj'].label = 'Broj zahteva'
         self.fields['zahtev_broj'].help_text = 'Preuzeto iz povezanog zahteva.'
+        self.fields['zahtev_broj_arhiva'].help_text = 'Broj pod kojim je zahtev zaveden u arhivi.'
         vrste = list(VrstaResenja.objects.filter(je_aktivna=True))
         if self.instance.pk and self.instance.vrsta_id and self.instance.vrsta not in vrste:
             vrste.append(self.instance.vrsta)

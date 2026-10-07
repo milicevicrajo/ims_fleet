@@ -37,6 +37,7 @@
           <dt>Pismo</dt><dd>{{ resenje.get_pismo_display }}</dd>
           <dt>Potpisnik</dt><dd>{{ resenje.potpisnik.zaposleni|default:"nije određen" }}</dd>
           <dt>Zahtev</dt><dd>{% if resenje.zahtev_id %}<a href="{% url 'hr:zahtev_detail' resenje.zahtev_id %}">{{ resenje.zahtev.broj }}</a>{% else %}{{ resenje.zahtev_broj|default:"-" }}{% endif %}{% if resenje.zahtev_datum %} od {{ resenje.zahtev_datum|date:'d.m.Y.' }}{% endif %}</dd>
+          <dt>Broj iz arhive</dt><dd>{{ resenje.zahtev_broj_arhiva|default:"-" }}</dd>
           <dt>Uneo</dt><dd>{{ resenje.created_by }}</dd>
         </dl>
       </div>

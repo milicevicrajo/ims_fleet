@@ -155,6 +155,10 @@ class Employee(models.Model):
         help_text=_("Npr. Sveti Nikola: 19.12. Godina nije bitna. Ako je prazno, radna lista predlaže datum iz naziva slave."))
     recipient_code = models.CharField(max_length=20, blank=True, default="", verbose_name=_("Šifra vrste primaoca"))
     recipient_name = models.CharField(max_length=255, blank=True, default="", verbose_name=_("Vrsta primaoca iz HR-a"))
+    # Sva radna mesta na koja je radnik raspoređen (do 5, `radnik.sif_sis`, `sif_sis1`–`sif_sis4`), ravnopravna,
+    # redom iz izvora;
+    # [{sifra, naziv, oj, naziv_oj}] — puni sinhronizacija Kadrova (`hr/services/radna_mesta.py`), od 07.10.2026.
+    radna_mesta = models.JSONField(default=list, blank=True, verbose_name=_("Radna mesta"))
 
     class Meta:
         app_label = "fleet"

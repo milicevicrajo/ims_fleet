@@ -2458,6 +2458,7 @@ Detaljno: [4.5. Kadrovi](#45-kadrovi--hr). **20 tabela.**
 |---|---|
 | **`fleet_osoba`** | Osoba — jedinstvena po JMBG-u (od 06.10.2026.) |
 | **`fleet_employee`** | Zaposlenje — ključ je `preduzece` + `employee_code`; `osoba` ga veže za osobu |
+| `fleet_employee.radna_mesta` | **Sva radna mesta** radnika (od 07.10.2026.): do pet **ravnopravnih**, po rednim brojevima 1–5, iz `radnik.sif_sis` i `sif_sis1`–`sif_sis4`, OJ iz `oj`/`oj1`–`oj4` (prazna `oj1`–`oj4` = `oj`), nazivi iz `Sistemat` i `ob_jedin`. Puni ih noćna sinhronizacija Kadrova (`hr/services/radna_mesta.py`); prikaz u detalju zaposlenog (Radni podaci), spisku zaposlenih i Mom pregledu. Stanje 07.10.2026.: od aktivnih 39 ima dva, 13 tri, 6 četiri i 3 pet radnih mesta. Dodatna radna mesta na ugovoru (ručni unos za BZR) ostaju odvojena |
 | `fleet_employeecvitem` | CV stavke |
 | `hr_worktimesheet`, `hr_worktimesheetline` | Radna lista i redovi (31 kolona sati) |
 | `hr_radnalistaprilog` | Prilozi radne liste — skenirane propusnice, finalna potpisana lista, ostalo (`media/hr/radne_liste/`, od 07.10.2026.) |
@@ -2565,6 +2566,7 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 |---|---|
 | `hr:work_time_sheet` | Svoja radna lista (i komentar na prolaze) |
 | `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.). Dobijaju je uloge **Kadrovi** (po obuhvatu) i **Pravna služba** (od 06.10.2026., link u meniju Pravne službe) |
+| `hr:rodna_ravnopravnost` | **Statistika rodne ravnopravnosti** (od 07.10.2026.): dugme na Analitici → `/hr/analitika/rodna-ravnopravnost/`, tačke 1–4 i 6 „Obrasca 1” (evidencija o ostvarivanju rodne ravnopravnosti) za izabranu godinu, Excel i PDF. Cela firma (oba preduzeća, osoba jednom po JMBG-u), iz kadrovske baze `radnik` (pol, rođenje, dolazak/odlazak — 01.01.1900. i 3000. znače prazno, `sif_spr` stručna sprema, `sif_ruk` rukovodeće mesto = položaj, `sif_odl` razlog odlaska). Stanje na 31.12. (tekuća godina — danas); sprema i položaj su današnji podaci. Ostale tačke se popunjavaju ručno. Provera za 2024: 312 lica prema 311 u predatom obrascu, 29 prestanaka kao u obrascu. Dobijaju je Kadrovi i Pravna služba (`hr/services/rodna_ravnopravnost.py`) |
 | **`hr:analitika_view_all`** | Analitika za **celu firmu**, bez obzira na obuhvat — Pravna služba (`core/permissions.py: PRAVNA_KADROVI_CODES`) i Uprava |
 | `hr:sick_leave_list`, `hr:sick_leave_import` | Bolovanja |
 | `hr:annual_leave_list` | Godišnji odmori |
@@ -3382,7 +3384,7 @@ refundacije, kao i račun čiji zbir stavki nije jednak iznosu.
 **Kad stranica Poreske uprave ne radi**, račun se upisuje iz QR koda u statusu „Čeka proveru”;
 stavke se preuzimaju dugmetom **Ponovo preuzmi** na detalju ili noćnim zadatkom u 07:30
 (`nabavka.tasks.fiskalni_ponovi_task`). Obuhvat: račun se vezuje za šifru posla i registar
-(`org_node`), pa ga vidi ko ima tu šifru u obuhvatu dodela (i onaj ko ga je učitao). Dozvole:
+(`org_node`), pa ga vidi ko ima tu šifru u obuhvatu dodela (i onaj ko ga je učitao). Od 07.10.2026. **šifra posla nije obavezna** — u Nabavci, u Isplatama (Ostali fiskalni računi) i na putnom nalogu račun se može učitati bez nje i dopuniti u obradi; račun bez šifre vidi onaj ko ga je učitao i obuhvat cele firme. Dozvole:
 `nabavka:fiskalni_list`, `_data`, `_scan`, `_detail`, `_refresh`, `_update` (obrada i šifre posla),
 `_returned` („vraćeno”), `_delete`.
 

@@ -172,6 +172,16 @@ class DokumentTests(ResenjeTestBase):
         self.assertIn('запослен ', dokument['tacke'][0])
         self.assertNotIn('запослен-а', dokument['tacke'][0])
 
+    def test_broj_zahteva_iz_arhive_u_tekstu_i_detalju(self):
+        self.vrsta.obrazlozenje = 'По захтеву заведеном под бр. {zahtev_broj_arhiva}[[napomena|, {napomena}]].'
+        self.vrsta.save(update_fields=['obrazlozenje'])
+        resenje = self.napravi(zahtev_broj_arhiva='01-2345/26')
+        ResenjeDan.objects.create(resenje=resenje, datum=date(2025, 1, 1), vrsta_dana='drzavni')
+        self.assertIn('бр. 01-2345/26', ' '.join(build_document(resenje)['obrazlozenje']))
+        self.client.force_login(self.user)
+        self.assertContains(self.client.get(reverse('hr:resenje_detail', args=[resenje.pk])), '01-2345/26')
+        self.assertContains(self.client.get(reverse('hr:resenje_edit', args=[resenje.pk])), 'name="zahtev_broj_arhiva"')
+
     def test_zenski_rod_daje_druge_oblike(self):
         self.employee.gender = 'F'
         self.employee.save(update_fields=['gender'])

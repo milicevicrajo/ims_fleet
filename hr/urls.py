@@ -12,7 +12,7 @@ from .resenja_views import (ResenjeListView, ResenjeFormView, ResenjeDetailView,
 from .zahtevi_views import (ZahtevListView, ZahtevFormView, ZahtevDetailView, ZahtevPrintView, ZahtevBulkPrintView,
     ZahtevBulkCreateView, zahtev_podnesi, zahtev_storniraj, zahtev_resenje_create, zahtev_bulk_resenja, zahtev_predlog)
 from .pregled_views import KadroviPregledView
-from .analitika_views import AnalitikaView
+from .analitika_views import AnalitikaView, RodnaRavnopravnostView
 from .ugovori_views import UgovorListView, UgovorDataView, UgovorDetailView, ugovor_update, ugovor_dokument, ugovor_sync
 
 app_name = "hr"
@@ -20,6 +20,7 @@ app_name = "hr"
 urlpatterns = [
     path("", KadroviPregledView.as_view(), name="pregled"),
     path("analitika/", AnalitikaView.as_view(), name="analitika"),
+    path("analitika/rodna-ravnopravnost/", RodnaRavnopravnostView.as_view(), name="rodna_ravnopravnost"),
     path("ocenjivanje/", EvaluationListView.as_view(), name="evaluation_list"),
     path("ocenjivanje/novo/", EvaluationCreateView.as_view(), name="evaluation_create"),
     path("ocenjivanje/saglasnost/", evaluation_bulk_approve_view, name="evaluation_bulk_approve"),

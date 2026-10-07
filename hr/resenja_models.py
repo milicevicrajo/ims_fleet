@@ -27,7 +27,7 @@ class VrstaResenja(models.Model):
                   '{period}, {dani}, {dani_vikend}, {dani_drzavni}, {dani_verski}, {radni_dani}, {datum_povratka}. '
                   'Oblik po polu: {rod:дужан|дужна}. Uslovni deo: [[dani_verski| и {dani_verski} на дан верског празника]].')
     obrazlozenje = models.TextField(blank=True, verbose_name='Obrazloženje (ćirilica)',
-        help_text='Čuvari mesta: {zahtev_broj}, {zahtev_datum}, {razlog_zahteva}, {podnosilac}, '
+        help_text='Čuvari mesta: {zahtev_broj}, {zahtev_broj_arhiva}, {zahtev_datum}, {razlog_zahteva}, {podnosilac}, '
                   '{podnosilac_funkcija}, {napomena} i dodatna polja.')
     pravna_pouka = models.TextField(blank=True, verbose_name='Pravna pouka (ćirilica)')
     dostavljeno = models.TextField(blank=True, verbose_name='Dostavljeno (ćirilica)',
@@ -111,6 +111,8 @@ class Resenje(models.Model):
     datum_povratka = models.DateField(null=True, blank=True, verbose_name='Datum javljanja na posao')
     zahtev_broj = models.CharField(max_length=255, blank=True, verbose_name='Zahtev (broj ili opis)')
     zahtev_datum = models.DateField(null=True, blank=True, verbose_name='Datum zahteva')
+    # Broj pod kojim je zahtev zaveden u arhivi (od 07.10.2026.); u tekstu {zahtev_broj_arhiva}.
+    zahtev_broj_arhiva = models.CharField(max_length=60, blank=True, verbose_name='Broj zahteva iz arhive')
     potpisnik = models.ForeignKey(Potpisnik, on_delete=models.PROTECT, null=True, blank=True, related_name='resenja',
         verbose_name='Potpisnik')
     napomena = models.TextField(blank=True, verbose_name='Napomena uz obrazloženje')

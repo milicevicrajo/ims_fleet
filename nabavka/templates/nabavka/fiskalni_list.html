@@ -122,9 +122,9 @@ otvara se detalj računa.
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label" for="fiskalniSifra">{{ form.job_code.label }} <span class="text-danger">*</span></label>
+          <label class="form-label" for="fiskalniSifra">{{ form.job_code.label }} <span class="text-muted small">(nije obavezno)</span></label>
           {{ form.job_code }}
-          <div class="form-text">Može više šifara posla — <strong>prva izabrana je glavna</strong>, ostale su dodatne. Nude se samo aktivne šifre; izbor ostaje zapamćen za sledeći račun.</div>
+          <div class="form-text">Može više šifara posla — <strong>prva izabrana je glavna</strong>, ostale su dodatne. Račun se može učitati i bez šifre, pa se ona dopuni u obradi. Nude se samo aktivne šifre; izbor ostaje zapamćen za sledeći račun.</div>
         </div>
         <div class="mb-2">
           <label class="form-label" for="fiskalniLink">{{ form.link.label }}</label>
@@ -281,11 +281,6 @@ document.addEventListener('DOMContentLoaded', function () {
   forma.addEventListener('submit', function (e) {
     e.preventDefault();
     uskladiRedosled();
-    if (!redosled.length) {
-      rezultat.innerHTML = '<div class="fiskalni-rezultat greska">Izaberite bar jednu šifru posla, pa pritisnite „Obradi”. Očitani link je sačuvan u polju.</div>';
-      if (window.jQuery && jQuery.fn.select2) { jQuery(sifra).select2('open'); } else { sifra.focus(); }
-      return;
-    }
     if (!link.value.trim()) { link.focus(); return; }
     try { window.localStorage.setItem(KLJUC, JSON.stringify(redosled)); } catch (e2) {}
     dugme.disabled = true;

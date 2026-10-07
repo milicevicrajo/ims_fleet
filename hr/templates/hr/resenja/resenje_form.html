@@ -45,6 +45,7 @@ vrsti rešenja (_obrazac_script.html); desna kartica ih sakriva zajedno sa njima
   {% for field in form.dodatna_polja_forme %}{% include "hr/forms/_polje.html" %}{% endfor %}
   {% include "hr/forms/_polje.html" with field=form.zahtev_broj %}
   {% include "hr/forms/_polje.html" with field=form.zahtev_datum %}
+  {% include "hr/forms/_polje.html" with field=form.zahtev_broj_arhiva %}
   {% include "hr/forms/_polje.html" with field=form.napomena %}
 {% endsekcija %}
 

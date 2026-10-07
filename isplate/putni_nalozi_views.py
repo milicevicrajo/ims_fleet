@@ -146,7 +146,8 @@ def _racun_json(racun, putni_nalog, moze_ukloniti):
         "id": racun.pk, "broj": racun.broj_racuna, "prodavac": racun.naziv_prodavca or racun.pib_prodavca or "—",
         "vreme": timezone.localtime(racun.pfr_vreme).strftime("%d.%m.%Y. %H:%M"), "iznos": _iznos(racun.iznos),
         "na_ims": racun.na_ims, "ceka": racun.status != racun.Status.POTVRDJEN, "proknjizeno": racun.proknjizeno,
-        "sifra": racun.job_code.code, "druga_sifra": racun.job_code_id != putni_nalog.job_code_id,
+        "sifra": racun.job_code.code if racun.job_code_id else "—",
+        "druga_sifra": bool(racun.job_code_id) and racun.job_code_id != putni_nalog.job_code_id,
         "ukloni_url": (reverse("isplate:putni_nalog_racun_ukloni", args=[putni_nalog.pk, racun.pk])
                        if moze_ukloniti and not racun.proknjizeno and not putni_nalog.opravdan else ""),
     }

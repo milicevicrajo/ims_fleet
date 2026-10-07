@@ -174,10 +174,6 @@ document.addEventListener('DOMContentLoaded', function () {
     unos.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!link.value.trim()) { link.focus(); return; }
-      if (!unos.elements.job_code.value) {
-        rezultat.innerHTML = '<div class="isp-rezultat greska">Izaberite šifru posla, pa pritisnite „Učitaj”. Očitani link je sačuvan u polju.</div>';
-        return;
-      }
       dugme.disabled = true;
       rezultat.innerHTML = '<div class="isp-rezultat rad">Obrada računa…</div>';
       fetch(unos.action, { method: 'POST', body: new FormData(unos), headers: { 'X-Requested-With': 'XMLHttpRequest' } })

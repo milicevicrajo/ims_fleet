@@ -54,7 +54,8 @@ def racuni_isplata():
 
 class OstaliRacunForm(forms.Form):
     """Učitavanje računa za gotovinski obračun: šifra posla, link sa QR koda i napomena (za šta je račun)."""
-    job_code = forms.ModelChoiceField(queryset=OrganizationalUnit.objects.none(), label="Šifra posla",
+    job_code = forms.ModelChoiceField(queryset=OrganizationalUnit.objects.none(), label="Šifra posla", required=False,
+                                      empty_label="— bez šifre posla —",
                                       widget=forms.Select(attrs={"class": "form-select select2-method"}))
     link = forms.CharField(label="Link sa QR koda računa", widget=forms.Textarea(attrs={
         "class": "form-control font-monospace", "rows": 4, "autocomplete": "off", "spellcheck": "false",
@@ -191,7 +192,7 @@ class FiskalniPutniNaloziView(RolePermissionRequiredMixin, LoginRequiredMixin, T
             "iznos": f"<strong>{_iznos(r.iznos)}</strong>{pdv}",
             "kupac": kupac,
             "veza": self._veza(r, prava),
-            "sifra": escape(r.job_code.code),
+            "sifra": escape(r.job_code.code if r.job_code_id else "—"),
             "ucitao": (f'{escape(r.created_by.get_username() if r.created_by_id else "—")}'
                        f'<div class="isp-small">{timezone.localtime(r.created_at):%d.%m.%Y.}</div>'),
             "knjizenje": knjizi,
@@ -227,7 +228,7 @@ def fiskalni_izvoz(request):
             float(r.iznos), float(r.pdv_ukupno) if r.pdv_ukupno is not None else None,
             "IMS" if r.na_ims else ("Drugi kupac" if r.id_kupca else "Fizičko lice"),
             pn.order_number, str(pn.employee or pn.other_employee_name or ""), pn.travel_location,
-            pn.travel_date.strftime("%d.%m.%Y") if pn.travel_date else "", r.job_code.code,
+            pn.travel_date.strftime("%d.%m.%Y") if pn.travel_date else "", r.job_code.code if r.job_code_id else "",
             r.get_status_display(), "da" if r.proknjizeno else "ne",
             (r.proknjizio.get_full_name() or r.proknjizio.get_username()) if r.proknjizio_id else "",
             timezone.localtime(r.proknjizeno_at).strftime("%d.%m.%Y %H:%M") if r.proknjizeno_at else "",
@@ -292,7 +293,7 @@ def fiskalni_ostali_izvoz(request):
     redovi = [[
         timezone.localtime(r.pfr_vreme).strftime("%d.%m.%Y %H:%M"), r.naziv_prodavca, r.pib_prodavca, r.broj_racuna,
         float(r.iznos), float(r.pdv_ukupno) if r.pdv_ukupno is not None else None,
-        "IMS" if r.na_ims else ("Drugi kupac" if r.id_kupca else "Fizičko lice"), r.napomena, r.job_code.code,
+        "IMS" if r.na_ims else ("Drugi kupac" if r.id_kupca else "Fizičko lice"), r.napomena, r.job_code.code if r.job_code_id else "",
         r.get_status_display(), "da" if r.proknjizeno else "ne", _ko(r.proknjizio),
         timezone.localtime(r.proknjizeno_at).strftime("%d.%m.%Y %H:%M") if r.proknjizeno_at else "",
         r.created_by.get_username() if r.created_by_id else "",

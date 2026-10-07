@@ -222,7 +222,7 @@ računu, obrada (glavna šifra, garaža, magacin), šifre posla i stavke; desno 
           {{ sifre_vozila|json_script:"fiskalni-sifre-vozila" }}
         {% else %}
           <dl class="fiskalni-podaci">
-            <dt>Glavna šifra</dt><dd><strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}</dd>
+            <dt>Glavna šifra</dt><dd>{% if racun.job_code_id %}<strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}{% else %}<span class="text-muted">bez šifre posla</span>{% endif %}</dd>
             <dt>Magacin</dt><dd>{{ racun.goes_to_warehouse|yesno:"Ide u magacin,Ne" }}</dd>
             <dt>Garaža</dt><dd>{% if racun.is_garage %}Da{% if racun.vehicle %} · {{ racun.vehicle }}{% endif %}{% if racun.work_type %} · {{ racun.get_work_type_display }}{% endif %}{% else %}Ne{% endif %}</dd>
             <dt>Napomena</dt><dd>{{ racun.napomena|default:"—" }}</dd>

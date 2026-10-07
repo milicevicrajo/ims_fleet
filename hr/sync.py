@@ -324,8 +324,23 @@ def sync_employees_from_hr_view(using=None):
                                        .filter(u_izvoru=True).update(u_izvoru=False))
     # Ukupan staž osobe (sve šifre, `RadStaz`) — posle vezivanja osoba i upisa preduzeća.
     counts["staz_osoba"] = osvezi_staz(staz_periodi(using))
+    # Sva radna mesta radnika (do 5) iz `radnik` (od 07.10.2026.).
+    counts["radna_mesta"] = osvezi_radna_mesta(radna_mesta_izvora(using))
 
     return {**counts, "total": len(rows)}
+
+
+def radna_mesta_izvora(using=None):
+    """(preduzeće, broj radnika) -> radna mesta iz kadrovske baze."""
+    from hr.services.radna_mesta import procitaj_radna_mesta
+
+    return procitaj_radna_mesta(using)
+
+
+def osvezi_radna_mesta(po_radniku):
+    from hr.services.radna_mesta import osvezi_radna_mesta as osvezi
+
+    return osvezi(po_radniku)
 
 
 def staz_periodi(using=None):
@@ -342,7 +357,8 @@ def opis_osoba(result):
             f"sukob preduzeća: {result.get('company_conflicts', 0)}, "
             f"različiti redovi istog broja: {result.get('conflicting_rows', 0)}, "
             f"duplirani redovi pogleda: {result.get('duplicate_rows', 0)}, "
-            f"staž osoba: {result.get('staz_osoba', 0)}")
+            f"staž osoba: {result.get('staz_osoba', 0)}, "
+            f"izmenjena radna mesta: {result.get('radna_mesta', 0)}")
 
 
 def preduzeca_radnika(using=None):
