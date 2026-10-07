@@ -34,6 +34,21 @@ class RadnaMestaTests(TestCase):
         self.assertEqual(len(mesta[(1, 206)]), 1)
         self.assertEqual(len(mesta[(1, 207)]), 1)
 
+    def test_rukovodece_mesto_je_poslednje_radno_mesto(self):
+        redovi = [  # Verica Laninović: jedno radno mesto i rukovodeće mesto 201
+            (1, Decimal("222"), 417, Decimal("22"), 0, Decimal("0.00"), 0, Decimal("0"), 0, Decimal("0"), 0, Decimal("0"), 201),
+            (1, Decimal("223"), 414, Decimal("20"), 0, Decimal("0"), 0, None, 0, None, 0, None, 20),  # isti naziv — ne ponavlja se
+            (1, Decimal("224"), 414, Decimal("22"), 0, Decimal("0"), 0, None, 0, None, 0, None, 0),
+        ]
+        sistemat = SISTEMAT + [(1, Decimal("20"), "RUKOVODILAC LABORATORIJE")]
+        rukovodeca = [(1, 201, "Rukovodilac u laboratoriji   "), (1, 20, "Rukovodilac laboratorije")]
+        mesta = radna_mesta(redovi, OJ, sistemat, danas=datetime.date(2026, 10, 7), rukovodeca=rukovodeca)
+        self.assertEqual([(m["sifra"], m["naziv"], m.get("rukovodece", False)) for m in mesta[(1, 222)]],
+                         [("22", "GLAVNI DIPLOMIRANI INZENJER", False), ("201", "Rukovodilac u laboratoriji", True)])
+        self.assertEqual(mesta[(1, 222)][1]["oj"], "417")
+        self.assertEqual(len(mesta[(1, 223)]), 1)
+        self.assertEqual(len(mesta[(1, 224)]), 1)
+
     def test_upis_i_prikaz(self):
         employee = Employee.objects.create(
             employee_code=205, first_name="Ljiljana", last_name="Milicic", position="GLAVNI DIPLOMIRANI INZENJER",

@@ -3,7 +3,7 @@
   {% for rm in zaposleni.radna_mesta %}
   <li>
     <span class="fw-semibold">{{ rm.naziv|default:"Radno mesto bez naziva" }}</span>
-    <div class="small text-muted">šifra {{ rm.sifra }}{% if rm.oj %} · OJ {{ rm.oj }}{% if rm.naziv_oj %} {{ rm.naziv_oj }}{% endif %}{% endif %}</div>
+    <div class="small text-muted">{% if rm.rukovodece %}rukovodeće mesto · {% endif %}šifra {{ rm.sifra }}{% if rm.oj %} · OJ {{ rm.oj }}{% if rm.naziv_oj %} {{ rm.naziv_oj }}{% endif %}{% endif %}</div>
   </li>
   {% endfor %}
 </ol>
