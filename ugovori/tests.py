@@ -207,7 +207,7 @@ class PregledUgovoraTests(TestCase):
 
     def test_detalj_prikazuje_delovodni_broj_i_pdf_bez_izmena(self):
         detalj = self.client.get(reverse("ugovori:contract_detail", args=[self.ugovor.pk]))
-        self.assertContains(detalj, "1234/2026")
+        self.assertContains(detalj, "2026-1234")
         self.assertNotContains(detalj, 'name="delovodni_broj"')  # na detalju nema unosa
         adresa = reverse("ugovori:contract_file_view", args=[self.ugovor.pk])
         self.assertContains(detalj, f'<iframe src="{adresa}"')
@@ -217,8 +217,9 @@ class PregledUgovoraTests(TestCase):
         self.assertEqual((pdf.status_code, pdf["X-Frame-Options"]), (200, "SAMEORIGIN"))
         self.assertTrue(pdf["Content-Disposition"].startswith("inline"))
         self.assertEqual(b"".join(pdf.streaming_content), b"%PDF-1.4 ugovor")
-        spisak = self.client.get(reverse("ugovori:contract_list"), {"search": "1234/2026"})
-        self.assertContains(spisak, "del. br. 1234/2026")
+        spisak = self.client.get(reverse("ugovori:contract_list"), {"search": "2026-1234"})
+        self.assertContains(spisak, "del. br. 2026-1234")
+        self.assertNotContains(self.client.get(reverse("ugovori:contract_list"), {"search": "2025-1234"}), "del. br. 2026-1234")
 
     def test_bez_fajla_nema_pregleda(self):
         Contract.objects.filter(pk=self.ugovor.pk).update(file="")
@@ -247,10 +248,10 @@ class DelovodniBrojUFormiTests(TestCase):
                   "status": Contract.STATUS_ACTIVE, "delovodni_broj": " 77 ", "delovodni_godina": "2026"}
         forma = ContractForm(data=podaci)
         self.assertFalse(forma.is_valid())
-        self.assertIn("Delovodni broj 77/2026 već ima ugovor 43-1/2026.", forma.errors["delovodni_broj"])
+        self.assertIn("Delovodni broj 2026-77 već ima ugovor 43-1/2026.", forma.errors["delovodni_broj"])
         forma = ContractForm(data=dict(podaci, delovodni_broj="78"))
         self.assertTrue(forma.is_valid(), forma.errors)
-        self.assertEqual(forma.save().delovodni, "78/2026")
+        self.assertEqual(forma.save().delovodni, "2026-78")
         self.assertTrue(ContractForm(data=dict(podaci, contract_number="43-3/2026", delovodni_broj="")).is_valid())
         self.assertIn("delovodni_broj", ContractForm(instance=postojeci).fields)
 

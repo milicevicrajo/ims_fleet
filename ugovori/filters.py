@@ -82,11 +82,19 @@ class ContractFilter(django_filters.FilterSet):
             return queryset
         return queryset.filter(contract_date__year=value)
 
+    @staticmethod
+    def _delovodni(value):
+        """Pretraga po delovodnom broju: „2026-1234” (godina-broj) ili samo broj."""
+        godina, _, broj = value.strip().partition("-")
+        if broj and godina.isdigit() and len(godina) == 4:
+            return Q(delovodni_godina=int(godina), delovodni_broj__iexact=broj.strip())
+        return Q(delovodni_broj__icontains=value.strip())
+
     def filter_search(self, queryset, name, value):
         if value:
             return queryset.filter(
                 Q(contract_number__icontains=value) | Q(title__icontains=value)
-                | Q(delovodni_broj__icontains=value.split("/")[0].strip())
+                | self._delovodni(value)
             )
         return queryset
 

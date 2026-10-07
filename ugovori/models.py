@@ -571,10 +571,10 @@ class Contract(models.Model):
 
     @property
     def delovodni(self):
-        """Delovodni broj Pravne službe za prikaz: „broj/godina”."""
+        """Delovodni broj Pravne službe za prikaz: „godina-broj” (npr. 2026-1234)."""
         if not self.delovodni_broj:
             return ""
-        return f"{self.delovodni_broj}/{self.delovodni_godina}" if self.delovodni_godina else self.delovodni_broj
+        return f"{self.delovodni_godina}-{self.delovodni_broj}" if self.delovodni_godina else self.delovodni_broj
 
     @staticmethod
     def _delete_file_after_commit(file_field):

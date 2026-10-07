@@ -218,7 +218,7 @@ def proveri_delovodni(form, data):
         zauzet = (Contract.objects.filter(delovodni_godina=godina, delovodni_broj__iexact=broj)
                   .exclude(pk=form.instance.pk).first())
         if zauzet:
-            form.add_error("delovodni_broj", f"Delovodni broj {broj}/{godina} već ima ugovor {zauzet.contract_number}.")
+            form.add_error("delovodni_broj", f"Delovodni broj {godina}-{broj} već ima ugovor {zauzet.contract_number}.")
     if not broj:
         data["delovodni_godina"] = None
     return data

@@ -4269,7 +4269,7 @@ koriste iste partnere.
 | **Zahtevi** | Ispitivanje, usluga, izlazak na teren, konsultacija, ostalo |
 | **Ponude** | Naša ponuda i ponuda data nama; vrednost, valuta, rok važenja |
 | **Ugovori** | Glavni ugovor i aneksi; tip, vrednost, period, status |
-| **Delovodni broj Pravne službe** | Od 07.10.2026.: godina i broj odvojeno (prikaz `broj/godina`, jedinstven u godini), kartica u formi za unos i izmenu ugovora; beleži ko je i kada upisao; na detalju se samo prikazuje; vidi se u spisku, pretrazi i Excelu |
+| **Delovodni broj Pravne službe** | Od 07.10.2026.: godina i broj odvojeno (prikaz i pretraga `godina-broj`, npr. 2026-1234, jedinstven u godini), kartica u formi za unos i izmenu ugovora; beleži ko je i kada upisao; na detalju se samo prikazuje; vidi se u spisku, pretrazi i Excelu |
 | **Detalj ugovora** | Levo osnovni podaci i **PDF ugovora** u stranici (`/ugovori/<id>/fajl/`, `ugovori:contract_file_view`, ista prava kao detalj); desno evidencija, fajl, prilozi, stranke, instrumenti obezbeđenja i aneksi. Na spisku ikonica pored broja ugovora direktno otvara fajl. Dugmad za izmene (izmena, fajl, prilog, brisanje priloga, aneks, brisanje ugovora) vidi samo ko ima tu dozvolu |
 | **Dokumenta** | Prilozi uz ugovor, sa originalnim nazivom datoteke |
 | **Stranke** | Ko je kupac, prodavac, zakupac, izvođač, garant… |
