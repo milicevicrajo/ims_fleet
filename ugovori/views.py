@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.html import escape
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView, View
 from django_filters.views import FilterView
@@ -29,7 +30,6 @@ from .forms import (
     ContractTypeForm,
     OfferForm,
     PartnerForm,
-    DelovodniBrojForm,
 )
 from .models import (
     BusinessRequest,
@@ -919,6 +919,10 @@ class _ContractFormMixin:
         self.object = form.save(commit=False)
         if not self.object.pk:
             self.object.created_by = self.request.user
+        if {"delovodni_broj", "delovodni_godina"} & set(form.changed_data):
+            from django.utils import timezone
+
+            self.object.delovodni_upisao, self.object.delovodni_upisano = self.request.user, timezone.now()
         self.object.save()
         formset.instance = self.object
         formset.save()
@@ -1037,32 +1041,32 @@ class ContractDetailView(RolePermissionRequiredMixin, DetailView):
         ctx["mobile_packages"] = self.object.mobile_packages.all()
         ctx["current_app"] = "ugovori"
         user = self.request.user
-        ctx["delovodni_form"] = kwargs.get("delovodni_form") or DelovodniBrojForm(instance=self.object)
-        ctx["can_delovodni"] = user_has_role_permission(user, "ugovori:contract_delovodni")
+        ctx["ugovor_pdf"] = bool(self.object.file) and self.object.file.name.lower().endswith(".pdf")
+        ctx["can_delete"] = user_has_role_permission(user, "ugovori:contract_delete")
+        ctx["can_document_delete"] = user_has_role_permission(user, "ugovori:contract_document_delete")
         ctx["can_update"] = user_has_role_permission(user, "ugovori:contract_update")
         ctx["can_document"] = user_has_role_permission(user, "ugovori:contract_document_create")
         ctx["can_annex"] = user_has_role_permission(user, "ugovori:annex_create")
         return ctx
 
 
-@require_POST
-@role_permission_required("ugovori:contract_delovodni")
-def contract_delovodni(request, pk):
-    """Delovodni broj Pravne službe — upisuju Pravna služba i Kadrovi; ostali podaci ugovora se ovde ne menjaju."""
-    from django.utils import timezone
+@xframe_options_sameorigin
+@role_permission_required("ugovori:contract_detail")
+def contract_file_view(request, pk):
+    """Fajl ugovora za pregled na detalju (i u novom prozoru); PDF se otvara u stranici, ostalo se preuzima."""
+    import os
+
+    from django.http import FileResponse
 
     contract = get_object_or_404(Contract, pk=pk)
-    form = DelovodniBrojForm(request.POST, instance=contract)
-    if not form.is_valid():
-        view = ContractDetailView()
-        view.setup(request, pk=pk)
-        view.object = view.get_object()
-        return view.render_to_response(view.get_context_data(object=view.object, delovodni_form=form), status=400)
-    contract = form.save(commit=False)
-    contract.delovodni_upisao, contract.delovodni_upisano = request.user, timezone.now()
-    contract.save(update_fields=["delovodni_godina", "delovodni_broj", "delovodni_upisao", "delovodni_upisano", "updated_at"])
-    messages.success(request, f"Delovodni broj {contract.delovodni} je sačuvan." if contract.delovodni else "Delovodni broj je obrisan.")
-    return redirect("ugovori:contract_detail", pk=contract.pk)
+    if not contract.file:
+        raise Http404("Fajl ugovora nije dodat.")
+    try:
+        fajl = contract.file.open("rb")
+    except FileNotFoundError:
+        raise Http404("Fajl ugovora nije pronađen na disku.")
+    ime = os.path.basename(contract.file.name)
+    return FileResponse(fajl, filename=ime, as_attachment=not ime.lower().endswith(".pdf"))
 
 
 class ContractFileUploadView(RolePermissionRequiredMixin, View):

@@ -179,18 +179,21 @@ class ContractDocumentTests(TestCase):
         self.assertFalse(os.path.exists(stored_path))
 
 
-class DelovodniBrojTests(TestCase):
-    """Delovodni broj Pravne službe na komercijalnom ugovoru (od 07.10.2026.): upisuju Pravna i Kadrovi."""
+class PregledUgovoraTests(TestCase):
+    """Detalj ugovora: delovodni broj se samo prikazuje, PDF ugovora se vidi na dnu (od 07.10.2026.)."""
 
     def setUp(self):
         from core.models import PermissionCode, Role
         from hr.permissions import KADROVI_UGOVORI_CODES
 
+        self.media = tempfile.TemporaryDirectory()
+        self.media_override = override_settings(MEDIA_ROOT=self.media.name)
+        self.media_override.enable()
         tip = ContractType.objects.create(code="USL", name="Usluge")
         self.ugovor = Contract.objects.create(kind=Contract.MAIN, contract_type=tip, contract_number="43-100/2026",
-                                              title="Ispitivanje", contract_date=date(2026, 3, 1))
-        self.drugi = Contract.objects.create(kind=Contract.MAIN, contract_type=tip, contract_number="41-7/2026",
-                                             title="Nadzor", contract_date=date(2026, 4, 1))
+                                              title="Ispitivanje", contract_date=date(2026, 3, 1),
+                                              delovodni_broj="1234", delovodni_godina=2026,
+                                              file=SimpleUploadedFile("ugovor.pdf", b"%PDF-1.4 ugovor"))
         uloga = Role.objects.create(name="Kadrovi test", slug="kadrovi-ugovori-test")
         for kod in KADROVI_UGOVORI_CODES:
             uloga.permissions.add(PermissionCode.objects.get_or_create(code=kod)[0])
@@ -198,37 +201,76 @@ class DelovodniBrojTests(TestCase):
         self.kadrovik.roles.add(uloga)
         self.client.force_login(self.kadrovik)
 
-    def upisi(self, ugovor, **podaci):
-        return self.client.post(reverse("ugovori:contract_delovodni", args=[ugovor.pk]),
-                                {"delovodni_broj": "", "delovodni_godina": "", **podaci})
+    def tearDown(self):
+        self.media_override.disable()
+        self.media.cleanup()
 
-    def test_kadrovi_vide_ugovor_i_upisuju_samo_delovodni_broj(self):
+    def test_detalj_prikazuje_delovodni_broj_i_pdf_bez_izmena(self):
         detalj = self.client.get(reverse("ugovori:contract_detail", args=[self.ugovor.pk]))
-        self.assertContains(detalj, "Delovodni broj Pravne službe")
-        self.assertNotContains(detalj, reverse("ugovori:contract_update", args=[self.ugovor.pk]))  # bez „Izmeni”
-        self.assertEqual(self.upisi(self.ugovor, delovodni_broj=" 1234 ", delovodni_godina="2026").status_code, 302)
-        self.ugovor.refresh_from_db()
-        self.assertEqual((self.ugovor.delovodni, self.ugovor.delovodni_upisao), ("1234/2026", self.kadrovik))
-        self.assertEqual(self.client.get(reverse("ugovori:contract_update", args=[self.ugovor.pk])).status_code, 403)
+        self.assertContains(detalj, "1234/2026")
+        self.assertNotContains(detalj, 'name="delovodni_broj"')  # na detalju nema unosa
+        adresa = reverse("ugovori:contract_file_view", args=[self.ugovor.pk])
+        self.assertContains(detalj, f'<iframe src="{adresa}"')
+        self.assertNotContains(detalj, reverse("ugovori:contract_update", args=[self.ugovor.pk]))
+        self.assertNotContains(detalj, reverse("ugovori:contract_delete", args=[self.ugovor.pk]))
+        pdf = self.client.get(adresa)
+        self.assertEqual((pdf.status_code, pdf["X-Frame-Options"]), (200, "SAMEORIGIN"))
+        self.assertTrue(pdf["Content-Disposition"].startswith("inline"))
+        self.assertEqual(b"".join(pdf.streaming_content), b"%PDF-1.4 ugovor")
         spisak = self.client.get(reverse("ugovori:contract_list"), {"search": "1234/2026"})
         self.assertContains(spisak, "del. br. 1234/2026")
-        self.assertNotContains(spisak, "41-7/2026")
 
-    def test_provere(self):
-        self.upisi(self.ugovor, delovodni_broj="15", delovodni_godina="2026")
-        self.assertContains(self.upisi(self.drugi, delovodni_broj="15", delovodni_godina="2026"),
-                            "Delovodni broj 15/2026 već ima ugovor 43-100/2026", status_code=400)
-        self.assertContains(self.upisi(self.drugi, delovodni_broj="16"), "Unesite godinu delovodnog broja.", status_code=400)
-        self.assertEqual(self.upisi(self.drugi, delovodni_broj="15", delovodni_godina="2025").status_code, 302)
-        self.upisi(self.ugovor)  # prazan broj briše
-        self.ugovor.refresh_from_db()
-        self.assertEqual((self.ugovor.delovodni_broj, self.ugovor.delovodni_godina), ("", None))
+    def test_bez_fajla_nema_pregleda(self):
+        Contract.objects.filter(pk=self.ugovor.pk).update(file="")
+        detalj = self.client.get(reverse("ugovori:contract_detail", args=[self.ugovor.pk]))
+        self.assertNotContains(detalj, "<iframe")
+        self.assertEqual(self.client.get(reverse("ugovori:contract_file_view", args=[self.ugovor.pk])).status_code, 404)
 
-    def test_dozvole_kadrova_i_pravne(self):
-        from core.permissions import collect_ugovori_permission_codes
+    def test_dozvole_kadrova(self):
         from hr.permissions import collect_kadrovi_permission_codes
 
-        self.assertIn("ugovori:contract_delovodni", collect_ugovori_permission_codes())  # Pravna dobija sve iz Ugovora
         kadrovi = collect_kadrovi_permission_codes()
-        self.assertIn("ugovori:contract_delovodni", kadrovi)
+        self.assertIn("ugovori:contract_file_view", kadrovi)
         self.assertNotIn("ugovori:contract_update", kadrovi)
+
+
+class DelovodniBrojUFormiTests(TestCase):
+    """Delovodni broj Pravne službe u formi za unos i izmenu ugovora (od 07.10.2026.)."""
+
+    def test_forma_ugovora_cuva_i_proverava_delovodni_broj(self):
+        tip = ContractType.objects.create(code="USL", name="Usluge")
+        postojeci = Contract.objects.create(kind=Contract.MAIN, contract_type=tip, contract_number="43-1/2026",
+                                            title="Prvi", contract_date=date(2026, 1, 10),
+                                            delovodni_broj="77", delovodni_godina=2026)
+        podaci = {"kind": Contract.MAIN, "contract_type": tip.pk, "contract_number": "43-2/2026", "title": "Drugi",
+                  "contract_date": "10.02.2026", "value_type": Contract.VALUE_TYPE_UNDEFINED, "currency": "RSD",
+                  "status": Contract.STATUS_ACTIVE, "delovodni_broj": " 77 ", "delovodni_godina": "2026"}
+        forma = ContractForm(data=podaci)
+        self.assertFalse(forma.is_valid())
+        self.assertIn("Delovodni broj 77/2026 već ima ugovor 43-1/2026.", forma.errors["delovodni_broj"])
+        forma = ContractForm(data=dict(podaci, delovodni_broj="78"))
+        self.assertTrue(forma.is_valid(), forma.errors)
+        self.assertEqual(forma.save().delovodni, "78/2026")
+        self.assertTrue(ContractForm(data=dict(podaci, contract_number="43-3/2026", delovodni_broj="")).is_valid())
+        self.assertIn("delovodni_broj", ContractForm(instance=postojeci).fields)
+
+    def test_strana_forme_ima_karticu(self):
+        admin = get_user_model().objects.create_superuser("ugovori-forma", "f@example.com", "x")
+        self.client.force_login(admin)
+        odgovor = self.client.get(reverse("ugovori:contract_create"))
+        self.assertContains(odgovor, "Delovodni broj Pravne službe")
+        self.assertContains(odgovor, 'name="delovodni_broj"')
+        self.assertContains(odgovor, 'name="delovodni_godina"')
+
+    def test_spisak_ima_link_na_pdf(self):
+        tip = ContractType.objects.create(code="PDF", name="Sa fajlom")
+        media = tempfile.TemporaryDirectory()
+        with override_settings(MEDIA_ROOT=media.name):
+            ugovor = Contract.objects.create(kind=Contract.MAIN, contract_type=tip, contract_number="41-9/2026", title="Sa PDF-om",
+                                             contract_date=date(2026, 5, 1), file=SimpleUploadedFile("u.pdf", b"%PDF-1.4"))
+            admin = get_user_model().objects.create_superuser("ugovori-spisak", "s@example.com", "x")
+            self.client.force_login(admin)
+            spisak = self.client.get(reverse("ugovori:contract_list"))
+        media.cleanup()
+        self.assertContains(spisak, reverse("ugovori:contract_file_view", args=[ugovor.pk]))
+        self.assertContains(spisak, "mdi-file-pdf-box")

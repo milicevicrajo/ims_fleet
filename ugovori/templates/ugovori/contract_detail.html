@@ -55,6 +55,12 @@
     margin-bottom: 16px;
     overflow: hidden;
   }
+  .col-lg-4 .contract-section { margin-bottom: 16px; }
+  .col-lg-4 .contract-section-header { flex-wrap: wrap; gap: 6px; }
+  .annex-row { padding: 8px 6px; border-bottom: 1px solid #eef1f5; }
+  .col-lg-4 .contract-document-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .annex-row:last-child { border-bottom: 0; }
+  #ugovor-pdf iframe { height: 110vh !important; }
   .contract-section-header {
     display: flex;
     align-items: center;
@@ -266,24 +272,6 @@
 
 <div class="row">
   <div class="col-lg-8">
-    {% if can_delovodni %}
-    <form method="post" action="{% url 'ugovori:contract_delovodni' pk=ugovor.pk %}" class="contract-section">{% csrf_token %}
-      <div class="contract-section-header">
-        <span><i class="mdi mdi-book-open-variant"></i> Delovodni broj Pravne službe</span>
-      </div>
-      <div class="contract-section-body">
-        {% if delovodni_form.non_field_errors %}<div class="alert alert-danger py-2">{{ delovodni_form.non_field_errors|join:" " }}</div>{% endif %}
-        <div class="row g-3 align-items-end">
-          <div class="col-sm-5"><label class="form-label" for="{{ delovodni_form.delovodni_broj.id_for_label }}">{{ delovodni_form.delovodni_broj.label }}</label>{{ delovodni_form.delovodni_broj }}
-            {% for e in delovodni_form.delovodni_broj.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
-          <div class="col-sm-3"><label class="form-label" for="{{ delovodni_form.delovodni_godina.id_for_label }}">{{ delovodni_form.delovodni_godina.label }}</label>{{ delovodni_form.delovodni_godina }}
-            {% for e in delovodni_form.delovodni_godina.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
-          <div class="col-sm-4"><button class="btn btn-primary w-100" type="submit"><i class="mdi mdi-content-save"></i> Sačuvaj</button></div>
-        </div>
-        <div class="form-text mt-2">{% if ugovor.delovodni %}Upisano: <strong>{{ ugovor.delovodni }}</strong>{% if ugovor.delovodni_upisao %} · {{ ugovor.delovodni_upisao }}, {{ ugovor.delovodni_upisano|date:"d.m.Y. H:i" }}{% endif %}. {% endif %}Prazan broj briše delovodni broj. Ostali podaci ugovora se ovde ne menjaju.</div>
-      </div>
-    </form>
-    {% endif %}
     <div class="contract-section">
       <div class="contract-section-header">
         <span><i class="mdi mdi-file-document-edit"></i> Osnovni podaci</span>
@@ -361,46 +349,6 @@
       </div>
     </div>
 
-    <div class="contract-section" id="contract-attachments">
-      <div class="contract-section-header">
-        <span><i class="mdi mdi-paperclip"></i> Prilozi ugovora</span>
-        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#contractAttachmentModal">
-          <i class="mdi mdi-upload"></i> Okači prilog
-        </button>
-      </div>
-      <div class="contract-section-body">
-        {% for document in documents %}
-          <div class="contract-document-row">
-            <div>
-              <div class="contract-document-title">
-                <span class="badge bg-light text-dark border me-1">{{ document.get_document_type_display }}</span>
-                {{ document.description }}
-              </div>
-              <div class="contract-document-meta">
-                {{ document.filename }}
-                &middot; {{ document.uploaded_at|date:"d.m.Y H:i" }}
-                {% if document.uploaded_by %}&middot; {{ document.uploaded_by }}{% endif %}
-              </div>
-            </div>
-            <div class="contract-document-actions">
-              <a href="{{ document.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
-                <i class="mdi mdi-open-in-new"></i> Otvori
-              </a>
-              <form method="post" action="{% url 'ugovori:contract_document_delete' pk=ugovor.pk document_pk=document.pk %}"
-                    onsubmit="return confirm('Ukloniti ovaj dokument sa ugovora?');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obrisi dokument">
-                  <i class="mdi mdi-delete"></i>
-                </button>
-              </form>
-            </div>
-          </div>
-        {% empty %}
-          <div class="text-muted text-center py-3">Nema dodatih priloga.</div>
-        {% endfor %}
-      </div>
-    </div>
-
     {% if mobile_packages %}
       <div class="contract-section">
         <div class="contract-section-header">
@@ -435,6 +383,101 @@
         </div>
       </div>
     {% endif %}
+
+{% if ugovor_pdf %}
+    <div class="contract-section" id="ugovor-pdf">
+  <div class="contract-section-header d-flex justify-content-between align-items-center">
+    <span><i class="mdi mdi-file-pdf-box"></i> Ugovor — {{ ugovor.file.name|cut:"ugovori/" }}</span>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'ugovori:contract_file_view' pk=ugovor.pk %}" target="_blank" rel="noopener"><i class="mdi mdi-open-in-new"></i> U novom prozoru</a>
+  </div>
+  <iframe src="{% url 'ugovori:contract_file_view' pk=ugovor.pk %}" title="Ugovor {{ ugovor.contract_number }}" loading="lazy"
+          style="width:100%; height:90vh; min-height:640px; border:0; display:block; border-radius:0 0 8px 8px;"></iframe>
+</div>
+{% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="side-card">
+      <div class="contract-section-header">
+        <span><i class="mdi mdi-information-outline"></i> Evidencija</span>
+      </div>
+      <div class="side-card-body">
+        <div class="contract-meta mb-2">
+          <div class="contract-meta-label">Kreirano</div>
+          <div class="contract-meta-value">{{ ugovor.created_at|date:"d.m.Y H:i" }}</div>
+        </div>
+        <div class="contract-meta">
+          <div class="contract-meta-label">Poslednja izmena</div>
+          <div class="contract-meta-value">{{ ugovor.updated_at|date:"d.m.Y H:i" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-card">
+      <div class="contract-section-header">
+        <span><i class="mdi mdi-file-document"></i> Ugovor</span>
+      </div>
+      <div class="side-card-body">
+        {% if ugovor.file %}
+          <a href="{% url 'ugovori:contract_file_view' pk=ugovor.pk %}" class="btn btn-outline-primary w-100 mb-2" target="_blank" rel="noopener">
+            <i class="mdi mdi-open-in-new"></i> Otvori ugovor
+          </a>
+          {% if ugovor_pdf %}<a href="#ugovor-pdf" class="btn btn-outline-secondary w-100 mb-2"><i class="mdi mdi-arrow-down"></i> Pregled ispod</a>{% endif %}
+          <div class="text-muted small mb-2" style="overflow-wrap:anywhere;">{{ ugovor.file.name }}</div>
+        {% else %}
+          <div class="text-muted mb-2">Fajl ugovora nije dodat.</div>
+        {% endif %}
+        {% if can_update %}
+        <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="modal" data-bs-target="#contractFileModal">
+          <i class="mdi mdi-upload"></i> {% if ugovor.file %}Zameni ugovor{% else %}Okači ugovor{% endif %}
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="contract-section" id="contract-attachments">
+      <div class="contract-section-header">
+        <span><i class="mdi mdi-paperclip"></i> Prilozi ugovora</span>
+        {% if can_document %}
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#contractAttachmentModal">
+          <i class="mdi mdi-upload"></i> Okači prilog
+        </button>
+        {% endif %}
+      </div>
+      <div class="contract-section-body">
+        {% for document in documents %}
+          <div class="contract-document-row">
+            <div>
+              <div class="contract-document-title">
+                <span class="badge bg-light text-dark border me-1">{{ document.get_document_type_display }}</span>
+                {{ document.description }}
+              </div>
+              <div class="contract-document-meta">
+                {{ document.filename }}
+                &middot; {{ document.uploaded_at|date:"d.m.Y H:i" }}
+                {% if document.uploaded_by %}&middot; {{ document.uploaded_by }}{% endif %}
+              </div>
+            </div>
+            <div class="contract-document-actions">
+              <a href="{{ document.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                <i class="mdi mdi-open-in-new"></i> Otvori
+              </a>
+              {% if can_document_delete %}
+              <form method="post" action="{% url 'ugovori:contract_document_delete' pk=ugovor.pk document_pk=document.pk %}"
+                    onsubmit="return confirm('Ukloniti ovaj dokument sa ugovora?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Obrisi dokument">
+                  <i class="mdi mdi-delete"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="text-muted text-center py-3">Nema dodatih priloga.</div>
+        {% endfor %}
+      </div>
+    </div>
 
     <div class="contract-section">
       <div class="contract-section-header">
@@ -528,44 +571,34 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="side-card">
+    {% if ugovor.kind == "MAIN" %}
+    <div class="contract-section">
       <div class="contract-section-header">
-        <span><i class="mdi mdi-information-outline"></i> Evidencija</span>
+        <span><i class="mdi mdi-file-document-multiple"></i> Aneksi ({{ annexes.count }})</span>
+        {% if can_annex %}<a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:annex_create' parent_pk=ugovor.pk %}"><i class="mdi mdi-plus"></i> Novi aneks</a>{% endif %}
       </div>
-      <div class="side-card-body">
-        <div class="contract-meta mb-2">
-          <div class="contract-meta-label">Kreirano</div>
-          <div class="contract-meta-value">{{ ugovor.created_at|date:"d.m.Y H:i" }}</div>
-        </div>
-        <div class="contract-meta">
-          <div class="contract-meta-label">Poslednja izmena</div>
-          <div class="contract-meta-value">{{ ugovor.updated_at|date:"d.m.Y H:i" }}</div>
-        </div>
+      <div class="contract-section-body p-2">
+        {% for aneks in annexes %}
+          <div class="annex-row">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <a href="{% url 'ugovori:contract_detail' pk=aneks.pk %}" class="fw-semibold"><i class="mdi mdi-eye"></i> {{ aneks.contract_number }}</a>
+              {% if aneks.status == "active" %}<span class="contract-pill active">Aktivan</span>
+              {% elif aneks.status == "draft" %}<span class="contract-pill draft">Nacrt</span>
+              {% elif aneks.status == "expired" %}<span class="contract-pill expired">Istekao</span>
+              {% elif aneks.status == "terminated" %}<span class="contract-pill terminated">Raskinut</span>
+              {% else %}<span class="contract-pill archived">{{ aneks.get_status_display }}</span>{% endif %}
+            </div>
+            <div class="small">{{ aneks.title }}</div>
+            <div class="small text-muted">{{ aneks.contract_date|date:"d.m.Y" }}{% for party in aneks.parties.all %} · {{ party.partner.name }}{% endfor %}</div>
+          </div>
+        {% empty %}
+          <div class="text-muted text-center py-2">Nema aneksa.</div>
+        {% endfor %}
       </div>
     </div>
+    {% endif %}
 
-    <div class="side-card">
-      <div class="contract-section-header">
-        <span><i class="mdi mdi-file-document"></i> Ugovor</span>
-      </div>
-      <div class="side-card-body">
-        {% if ugovor.file %}
-          <a href="{{ ugovor.file.url }}" class="btn btn-outline-primary w-100 mb-2" target="_blank">
-            <i class="mdi mdi-open-in-new"></i> Otvori ugovor
-          </a>
-          <div class="text-muted small mb-2" style="overflow-wrap:anywhere;">{{ ugovor.file.name }}</div>
-        {% else %}
-          <div class="text-muted mb-2">Fajl ugovora nije dodat.</div>
-        {% endif %}
-        <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="modal" data-bs-target="#contractFileModal">
-          <i class="mdi mdi-upload"></i> {% if ugovor.file %}Zameni ugovor{% else %}Okači ugovor{% endif %}
-        </button>
-      </div>
-    </div>
-
+    {% if can_delete %}
     <div class="side-card">
       <div class="side-card-body">
         <a class="btn btn-outline-danger w-100" href="{% url 'ugovori:contract_delete' pk=ugovor.pk %}">
@@ -573,6 +606,7 @@
         </a>
       </div>
     </div>
+    {% endif %}
   </div>
 </div>
 
@@ -634,61 +668,4 @@
   </div>
 </div>
 
-{% if ugovor.kind == "MAIN" %}
-<div class="contract-section">
-  <div class="contract-section-header">
-    <span><i class="mdi mdi-file-document"></i> Aneksi ({{ annexes.count }})</span>
-    <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:annex_create' parent_pk=ugovor.pk %}">
-      <i class="mdi mdi-plus"></i> Novi aneks
-    </a>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-sm table-hover mb-0 annex-table">
-      <thead>
-        <tr>
-          <th>Broj aneksa</th>
-          <th>Naslov</th>
-          <th>Stranke</th>
-          <th>Status</th>
-          <th>Datum</th>
-          <th class="text-end">Akcije</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for aneks in annexes %}
-          <tr>
-            <td>
-              <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:contract_detail' pk=aneks.pk %}">
-                <i class="mdi mdi-eye"></i> {{ aneks.contract_number }}
-              </a>
-            </td>
-            <td>{{ aneks.title }}</td>
-            <td>
-              {% for party in aneks.parties.all %}
-                <span class="badge bg-light text-dark border me-1">{{ party.partner.name }}</span>
-              {% empty %}-{% endfor %}
-            </td>
-            <td>
-              {% if aneks.status == "active" %}<span class="contract-pill active">Aktivan</span>
-              {% elif aneks.status == "draft" %}<span class="contract-pill draft">Nacrt</span>
-              {% elif aneks.status == "expired" %}<span class="contract-pill expired">Istekao</span>
-              {% elif aneks.status == "terminated" %}<span class="contract-pill terminated">Raskinut</span>
-              {% else %}<span class="contract-pill archived">{{ aneks.get_status_display }}</span>
-              {% endif %}
-            </td>
-            <td>{{ aneks.contract_date|date:"d.m.Y" }}</td>
-            <td class="text-end">
-              <a class="btn btn-sm btn-outline-primary" href="{% url 'ugovori:contract_update' pk=aneks.pk %}">
-                <i class="mdi mdi-pencil"></i> Izmeni
-              </a>
-            </td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="6" class="text-center text-muted py-3">Nema aneksa.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endif %}
 {% endblock %}

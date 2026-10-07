@@ -19,8 +19,8 @@ def collect_kadrovi_permission_codes():
     } | KADROVI_UGOVORI_CODES)
 
 
-# Komercijalni ugovori (od 07.10.2026.): Kadrovi ih gledaju i upisuju samo delovodni broj Pravne službe.
-KADROVI_UGOVORI_CODES = {'ugovori:contract_list', 'ugovori:contract_detail', 'ugovori:contract_delovodni'}
+# Komercijalni ugovori (od 07.10.2026.): Kadrovi ih samo gledaju (i otvaraju fajl ugovora).
+KADROVI_UGOVORI_CODES = {'ugovori:contract_list', 'ugovori:contract_detail', 'ugovori:contract_file_view'}
 
 
 def collect_resenja_permission_codes():

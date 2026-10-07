@@ -129,6 +129,7 @@
                   <a href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}" class="btn btn-sm btn-outline-primary">
                     <i class="mdi mdi-eye"></i> {{ ugovor.contract_number }}
                   </a>
+                  {% if ugovor.file %}<a href="{% url 'ugovori:contract_file_view' pk=ugovor.pk %}" class="btn btn-sm btn-outline-danger ms-1" target="_blank" rel="noopener" title="Otvori ugovor ({{ ugovor.file.name|slice:'-40:' }})"><i class="mdi {% if ugovor.file.name|lower|slice:'-4:' == '.pdf' %}mdi-file-pdf-box{% else %}mdi-file-document{% endif %}"></i></a>{% endif %}
                   {% if ugovor.delovodni %}<div class="small text-muted mt-1" title="Delovodni broj Pravne službe">del. br. {{ ugovor.delovodni }}</div>{% endif %}
                 </td>
                 <td>

@@ -244,6 +244,30 @@
 
   <div class="card shadow-sm mb-3">
     <div class="card-body">
+      <div class="form-section mb-0">
+        <div class="form-section-title"><i class="mdi mdi-book-open-variant"></i> Delovodni broj Pravne službe</div>
+        <div class="row align-items-end">
+          <div class="col-12 col-md-6 col-xl-3 mb-2">
+            <label for="{{ form.delovodni_broj.id_for_label }}" class="form-label">{{ form.delovodni_broj.label }}</label>
+            {{ form.delovodni_broj }}
+            {% if form.delovodni_broj.errors %}<div class="invalid-feedback d-block">{{ form.delovodni_broj.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-md-3 col-xl-2 mb-2">
+            <label for="{{ form.delovodni_godina.id_for_label }}" class="form-label">{{ form.delovodni_godina.label }}</label>
+            {{ form.delovodni_godina }}
+            {% if form.delovodni_godina.errors %}<div class="invalid-feedback d-block">{{ form.delovodni_godina.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="col-12 col-xl-7 mb-2 small text-muted">
+            Upisuje se kao broj i godina (prikaz „1234/2026”); isti broj ne može dva puta u istoj godini. Nije obavezno — može se dopisati i kasnije na detalju ugovora.
+            {% if form.instance.delovodni_upisao %}<div>Poslednji upis: {{ form.instance.delovodni_upisao }}, {{ form.instance.delovodni_upisano|date:"d.m.Y. H:i" }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
       <div class="form-section">
         <div class="form-section-title"><i class="mdi mdi-file-document-edit"></i> Osnovni podaci</div>
         <div class="row">

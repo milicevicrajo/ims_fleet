@@ -31,7 +31,8 @@ koriste iste partnere.
 
 | Korisnik | Šta radi | Uloga |
 |---|---|---|
-| **Pravna služba** | Vodi ugovore, anekse, garancije, veze sa menicama | `pravna` |
+| **Pravna služba** | Vodi ugovore, anekse, garancije, veze sa menicama — **sve dozvole modula** (uloga `pravna` dobija sve `ugovori:*` kodove) | `pravna` |
+| **Kadrovi** | Od 07.10.2026. samo gledaju ugovore i otvaraju fajl ugovora (`ugovori:contract_list`, `contract_detail`, `contract_file_view`; `hr/permissions.py: KADROVI_UGOVORI_CODES`); meni Kadrova „Komercijalni ugovori” | `kadrovi` |
 | **Sekretarijat** | Evidentira zahteve i ponude | `pravna` (dodeljeno) |
 | **Služba nabavke** | Bira dobavljača i ugovor uz predmet nabavke | `nabavka` |
 | **Komercijala** | Prati ponude i zahteve | **[N]** |
@@ -46,6 +47,8 @@ koriste iste partnere.
 | **Zahtevi** | Ispitivanje, usluga, izlazak na teren, konsultacija, ostalo |
 | **Ponude** | Naša ponuda i ponuda data nama; vrednost, valuta, rok važenja |
 | **Ugovori** | Glavni ugovor i aneksi; tip, vrednost, period, status |
+| **Delovodni broj Pravne službe** | Od 07.10.2026.: godina i broj odvojeno (prikaz `broj/godina`, jedinstven u godini), kartica u formi za unos i izmenu ugovora; beleži ko je i kada upisao; na detalju se samo prikazuje; vidi se u spisku, pretrazi i Excelu |
+| **Detalj ugovora** | Levo osnovni podaci i **PDF ugovora** u stranici (`/ugovori/<id>/fajl/`, `ugovori:contract_file_view`, ista prava kao detalj); desno evidencija, fajl, prilozi, stranke, instrumenti obezbeđenja i aneksi. Na spisku ikonica pored broja ugovora direktno otvara fajl. Dugmad za izmene (izmena, fajl, prilog, brisanje priloga, aneks, brisanje ugovora) vidi samo ko ima tu dozvolu |
 | **Dokumenta** | Prilozi uz ugovor, sa originalnim nazivom datoteke |
 | **Stranke** | Ko je kupac, prodavac, zakupac, izvođač, garant… |
 | **Garancije** | Bankarske garancije sa periodom i statusom |

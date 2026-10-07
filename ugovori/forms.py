@@ -205,6 +205,25 @@ class OfferForm(forms.ModelForm):
         return uploaded_file
 
 
+def proveri_delovodni(form, data):
+    """Delovodni broj Pravne službe: broj traži godinu, godina 1990–2100, broj jedinstven u godini."""
+    broj = " ".join((data.get("delovodni_broj") or "").split())
+    data["delovodni_broj"] = broj
+    godina = data.get("delovodni_godina")
+    if broj and not godina:
+        form.add_error("delovodni_godina", "Unesite godinu delovodnog broja.")
+    if godina and not 1990 <= godina <= 2100:
+        form.add_error("delovodni_godina", "Godina nije ispravna.")
+    if broj and godina:
+        zauzet = (Contract.objects.filter(delovodni_godina=godina, delovodni_broj__iexact=broj)
+                  .exclude(pk=form.instance.pk).first())
+        if zauzet:
+            form.add_error("delovodni_broj", f"Delovodni broj {broj}/{godina} već ima ugovor {zauzet.contract_number}.")
+    if not broj:
+        data["delovodni_godina"] = None
+    return data
+
+
 class ContractForm(forms.ModelForm):
     contract_date = localized_date_field(label="Datum ugovora")
     link_outgoing_menica = forms.ModelChoiceField(
@@ -229,6 +248,8 @@ class ContractForm(forms.ModelForm):
             "contract_type",
             "parent_contract",
             "contract_number",
+            "delovodni_broj",
+            "delovodni_godina",
             "title",
             "subject",
             "contract_date",
@@ -290,8 +311,19 @@ class ContractForm(forms.ModelForm):
         for name in ("subject", "note"):
             self.fields[name].widget.attrs.setdefault("class", "form-control")
 
+        # Delovodni broj Pravne službe (od 07.10.2026.): godina i broj odvojeno.
+        self.fields["delovodni_broj"].label = "Delovodni broj"
+        self.fields["delovodni_broj"].widget.attrs.update(placeholder="npr. 1234", autocomplete="off")
+        self.fields["delovodni_godina"].label = "Godina"
+        self.fields["delovodni_godina"].widget.attrs.update(min=1990, max=2100)
+        if not self.instance.delovodni_godina:
+            from django.utils import timezone
+
+            self.initial.setdefault("delovodni_godina", timezone.localdate().year)
+
     def clean(self):
         cleaned_data = super().clean()
+        proveri_delovodni(self, cleaned_data)
         value_type = cleaned_data.get("value_type")
         unit_price = cleaned_data.get("unit_price")
         unit_label = (cleaned_data.get("unit_label") or "").strip()
@@ -575,41 +607,3 @@ class ContractGuaranteeForm(forms.ModelForm):
             elif not isinstance(widget, forms.Textarea):
                 widget.attrs.setdefault("class", "form-control")
 
-
-class DelovodniBrojForm(forms.ModelForm):
-    """Delovodni broj Pravne službe na ugovoru: godina i broj odvojeno (od 07.10.2026.)."""
-
-    class Meta:
-        model = Contract
-        fields = ["delovodni_godina", "delovodni_broj"]
-        labels = {"delovodni_godina": "Godina", "delovodni_broj": "Delovodni broj"}
-        widgets = {
-            "delovodni_godina": forms.NumberInput(attrs={"class": "form-control", "min": 1990, "max": 2100}),
-            "delovodni_broj": forms.TextInput(attrs={"class": "form-control", "placeholder": "npr. 1234", "autocomplete": "off"}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        from django.utils import timezone
-
-        super().__init__(*args, **kwargs)
-        if not self.instance.delovodni_godina:
-            self.initial.setdefault("delovodni_godina", timezone.localdate().year)
-
-    def clean_delovodni_broj(self):
-        return " ".join((self.cleaned_data.get("delovodni_broj") or "").split())
-
-    def clean(self):
-        data = super().clean()
-        broj, godina = data.get("delovodni_broj"), data.get("delovodni_godina")
-        if broj and not godina:
-            self.add_error("delovodni_godina", "Unesite godinu delovodnog broja.")
-        if godina and not 1990 <= godina <= 2100:
-            self.add_error("delovodni_godina", "Godina nije ispravna.")
-        if broj and godina:
-            zauzet = (Contract.objects.filter(delovodni_godina=godina, delovodni_broj__iexact=broj)
-                      .exclude(pk=self.instance.pk).first())
-            if zauzet:
-                self.add_error("delovodni_broj", f"Delovodni broj {broj}/{godina} već ima ugovor {zauzet.contract_number}.")
-        if not broj:
-            data["delovodni_godina"] = None
-        return data

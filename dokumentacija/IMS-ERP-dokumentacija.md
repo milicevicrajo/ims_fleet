@@ -2566,7 +2566,6 @@ Testovi: `hr/tests.py`, `test_annual_leave.py`, `test_evaluations.py`,
 |---|---|
 | `hr:work_time_sheet` | Svoja radna lista (i komentar na prolaze) |
 | `hr:analitika` | Analitika zaposlenih, PDF i Excel (od 05.10.2026.). Dobijaju je uloge **Kadrovi** (po obuhvatu) i **Pravna služba** (od 06.10.2026., link u meniju Pravne službe) |
-| `hr:ugovor_delovodni` | **Delovodni broj Pravne službe** na ugovoru zaposlenog (od 07.10.2026.): godina i broj odvojeno (prikaz `broj/godina`, jedinstven u godini), poseban unos na detalju ugovora; beleži ko je i kada upisao. Imaju ga Kadrovi i Pravna služba. Pravna služba (`hr:ugovor_view_all`, meni „Ugovori zaposlenih”) vidi ugovore cele firme i bitne podatke samo za čitanje — ostalo ne menja (nema `hr:ugovor_update`). Spisak: pretraga po delovodnom broju i filter „Bez delovodnog broja” |
 | `hr:rodna_ravnopravnost` | **Statistika rodne ravnopravnosti** (od 07.10.2026.): dugme na Analitici → `/hr/analitika/rodna-ravnopravnost/`, tačke 1–4 i 6 „Obrasca 1” (evidencija o ostvarivanju rodne ravnopravnosti) za izabranu godinu, Excel i PDF. Cela firma (oba preduzeća, osoba jednom po JMBG-u), iz kadrovske baze `radnik` (pol, rođenje, dolazak/odlazak — 01.01.1900. i 3000. znače prazno, `sif_spr` stručna sprema, `sif_ruk` rukovodeće mesto = položaj, `sif_odl` razlog odlaska). Stanje na 31.12. (tekuća godina — danas); sprema i položaj su današnji podaci. Ostale tačke se popunjavaju ručno. Provera za 2024: 312 lica prema 311 u predatom obrascu, 29 prestanaka kao u obrascu. Dobijaju je Kadrovi i Pravna služba (`hr/services/rodna_ravnopravnost.py`) |
 | **`hr:analitika_view_all`** | Analitika za **celu firmu**, bez obzira na obuhvat — Pravna služba (`core/permissions.py: PRAVNA_KADROVI_CODES`) i Uprava |
 | `hr:sick_leave_list`, `hr:sick_leave_import` | Bolovanja |
@@ -4254,7 +4253,8 @@ koriste iste partnere.
 
 | Korisnik | Šta radi | Uloga |
 |---|---|---|
-| **Pravna služba** | Vodi ugovore, anekse, garancije, veze sa menicama | `pravna` |
+| **Pravna služba** | Vodi ugovore, anekse, garancije, veze sa menicama — **sve dozvole modula** (uloga `pravna` dobija sve `ugovori:*` kodove) | `pravna` |
+| **Kadrovi** | Od 07.10.2026. samo gledaju ugovore i otvaraju fajl ugovora (`ugovori:contract_list`, `contract_detail`, `contract_file_view`; `hr/permissions.py: KADROVI_UGOVORI_CODES`); meni Kadrova „Komercijalni ugovori” | `kadrovi` |
 | **Sekretarijat** | Evidentira zahteve i ponude | `pravna` (dodeljeno) |
 | **Služba nabavke** | Bira dobavljača i ugovor uz predmet nabavke | `nabavka` |
 | **Komercijala** | Prati ponude i zahteve | **[N]** |
@@ -4269,6 +4269,8 @@ koriste iste partnere.
 | **Zahtevi** | Ispitivanje, usluga, izlazak na teren, konsultacija, ostalo |
 | **Ponude** | Naša ponuda i ponuda data nama; vrednost, valuta, rok važenja |
 | **Ugovori** | Glavni ugovor i aneksi; tip, vrednost, period, status |
+| **Delovodni broj Pravne službe** | Od 07.10.2026.: godina i broj odvojeno (prikaz `broj/godina`, jedinstven u godini), kartica u formi za unos i izmenu ugovora; beleži ko je i kada upisao; na detalju se samo prikazuje; vidi se u spisku, pretrazi i Excelu |
+| **Detalj ugovora** | Levo osnovni podaci i **PDF ugovora** u stranici (`/ugovori/<id>/fajl/`, `ugovori:contract_file_view`, ista prava kao detalj); desno evidencija, fajl, prilozi, stranke, instrumenti obezbeđenja i aneksi. Na spisku ikonica pored broja ugovora direktno otvara fajl. Dugmad za izmene (izmena, fajl, prilog, brisanje priloga, aneks, brisanje ugovora) vidi samo ko ima tu dozvolu |
 | **Dokumenta** | Prilozi uz ugovor, sa originalnim nazivom datoteke |
 | **Stranke** | Ko je kupac, prodavac, zakupac, izvođač, garant… |
 | **Garancije** | Bankarske garancije sa periodom i statusom |
