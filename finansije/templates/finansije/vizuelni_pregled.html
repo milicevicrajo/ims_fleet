@@ -27,6 +27,9 @@
   .vp-udeo { display: inline-block; min-width: 46px; text-align: right; color: #64748b; font-size: .78rem; }
   .vp-struktura { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
   .vp-struktura-platno { height: 780px; }
+  .vp-struktura-podnaslov { font-size: .82rem; color: #14395b; font-weight: 600; margin: 4px 0 8px; }
+  .vp-struktura.vp-jedan { grid-template-columns: minmax(0, 1fr); }
+  .vp-struktura.vp-jedan .vp-legenda-okvir { display: none; }
   .vp-legenda-naslov { font-weight: 700; color: #14395b; font-size: .85rem; margin-bottom: 6px; }
   .vp-legenda-naslov span { display: block; font-weight: 400; color: #64748b; font-size: .72rem; }
   .vp-legenda { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
@@ -79,12 +82,16 @@
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
       <div><h2>Struktura rashoda po {% if v.po_siframa %}šiframa posla{% else %}centrima{% endif %}</h2>
         <p>Direktni rashodi po vrsti troška{% if v.ima_zt_strukturu %} i zajednički troškovi koje {% if v.po_siframa %}šifra{% else %}centar{% endif %} nosi — posebno zajedničke službe (zarade), posebno ostalo (energija, održavanje…){% if not v.po_siframa %}; stubići službi pokazuju njihove sopstvene troškove, koji su izvor zajedničkih troškova{% endif %}{% endif %}{% if v.struktura_jedinice|length >= 15 %} · 15 najvećih po rashodima{% endif %}.</p></div>
-      <div class="btn-group btn-group-sm" role="group" aria-label="Prikaz strukture">
-        <button type="button" class="btn btn-outline-primary active" data-struktura="iznos">Iznos</button>
-        <button type="button" class="btn btn-outline-primary" data-struktura="udeo">Udeo %</button>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button type="button" class="btn btn-sm btn-primary d-none" id="vpStrukturaNazad"><i class="mdi mdi-arrow-left"></i> Svi {% if v.po_siframa %}šifre{% else %}centri{% endif %}</button>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Prikaz strukture" id="vpStrukturaPrekidac">
+          <button type="button" class="btn btn-outline-primary active" data-struktura="iznos">Iznos</button>
+          <button type="button" class="btn btn-outline-primary" data-struktura="udeo">Udeo %</button>
+        </div>
       </div>
     </div>
-    <div class="vp-struktura">
+    <div class="vp-struktura-podnaslov" id="vpStrukturaPodnaslov">Klik na stubić otvara strukturu troškova {% if v.po_siframa %}te šifre{% else %}tog centra{% endif %}.</div>
+    <div class="vp-struktura" id="vpStrukturaOkvir">
       <div class="vp-platno vp-struktura-platno"><canvas id="vpStrukturaJedinica"></canvas></div>
       <aside class="vp-legenda-okvir" aria-label="Legenda strukture rashoda">
         <div class="vp-legenda-naslov">Legenda <span>redom kao na stubiću, odozgo nadole · klik sakriva/prikazuje</span></div>
@@ -217,12 +224,16 @@
     });
     ctx.restore();
   }};
-  var struktura = new Chart(document.getElementById('vpStrukturaJedinica'), {type: 'bar',
+  var platnoStrukture = document.getElementById('vpStrukturaJedinica'), struktura;
+  function slozeniGrafikon() {
+  return new Chart(platnoStrukture, {type: 'bar',
     data: {labels: sj.labels, datasets: sj.datasets.map(function (s) {
       return {label: s.label, data: s.values.slice(), iznosi: s.values, backgroundColor: BOJE_STRUKTURE[s.key] || '#9aa5b1',
               borderColor: '#ffffff', borderWidth: {top: 1, bottom: 0, left: 0, right: 0}, barPercentage: .92, categoryPercentage: .9}; })},
     plugins: [zone],
     options: {maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+      onClick: function (_, stavke) { if (stavke.length) histogram(stavke[0].index); },
+      onHover: function (e, stavke) { e.native.target.style.cursor = stavke.length ? 'pointer' : 'default'; },
       scales: {x: {stacked: true, ticks: {autoSkip: false, maxRotation: 50, minRotation: 0, font: {size: 12}}},
                y: Object.assign(osaIznosa(), {stacked: true})},
       plugins: {legend: {display: false},
@@ -231,6 +242,71 @@
             var i = ctx.dataIndex, x = ctx.dataset.iznosi[i];
             return ' ' + broj(ctx.datasetIndex) + '. ' + ctx.dataset.label + ': ' + fmt.format(x) + ' RSD (' + fmtP.format(zbirovi[i] ? x * 100 / zbirovi[i] : 0) + '%)'; },
             footer: function (stavke) { return stavke.length ? 'Ukupno: ' + fmt.format(zbirovi[stavke[0].dataIndex]) + ' RSD' : ''; }}}}}});
+  }
+  struktura = slozeniGrafikon();
+
+  // Histogram jedne jedinice (klik na stubić): vrste troška kao stubići, procenat na vrhu, naziv ispod.
+  var vrhovi = {id: 'vpVrhovi', afterDatasetsDraw: function (chart) {
+    var ctx = chart.ctx, s = chart.data.datasets[0], ukupno = s.ukupno;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = '#0f2537';
+    chart.getDatasetMeta(0).data.forEach(function (bar, i) {
+      var x = s.data[i], p = bar.getProps(['x', 'y'], true);
+      ctx.font = 'bold 13px ' + Chart.defaults.font.family;
+      ctx.fillText(fmtP.format(ukupno ? x * 100 / ukupno : 0) + '%', p.x, p.y - 16);
+      ctx.font = '11px ' + Chart.defaults.font.family;
+      ctx.fillStyle = '#475569';
+      ctx.fillText(fmt.format(x), p.x, p.y - 3);
+      ctx.fillStyle = '#0f2537';
+    });
+    ctx.restore();
+  }};
+  function prelomi(tekst, sirina) {
+    var reci = tekst.split(' '), redovi = [], red = '';
+    reci.forEach(function (rec) {
+      if ((red + ' ' + rec).trim().length > sirina && red) { redovi.push(red); red = rec; } else { red = (red + ' ' + rec).trim(); }
+    });
+    if (red) redovi.push(red);
+    return redovi;
+  }
+  var nazad = document.getElementById('vpStrukturaNazad'), prekidac = document.getElementById('vpStrukturaPrekidac'),
+      okvir = document.getElementById('vpStrukturaOkvir'), podnaslov = document.getElementById('vpStrukturaPodnaslov'),
+      podnaslovTekst = podnaslov.textContent;
+  function histogram(i) {
+    var stavke = sj.datasets.map(function (s) { return {label: s.label, key: s.key, iznos: s.values[i] || 0}; })
+      .filter(function (x) { return x.iznos > 0; })
+      .sort(function (a, b) { return b.iznos - a.iznos; });
+    var ukupno = stavke.reduce(function (a, x) { return a + x.iznos; }, 0);
+    struktura.destroy();
+    var konfiguracija = {type: 'bar',
+      data: {labels: stavke.map(function (x) { return prelomi(x.label, 16); }),
+             datasets: [{label: sj.labels[i], ukupno: ukupno, data: stavke.map(function (x) { return x.iznos; }),
+                         backgroundColor: stavke.map(function (x) { return BOJE_STRUKTURE[x.key] || '#9aa5b1'; }),
+                         borderRadius: 4, barPercentage: .82, categoryPercentage: .9}]},
+      plugins: [vrhovi],
+      options: {maintainAspectRatio: false, layout: {padding: {top: 36}},
+        scales: {x: {ticks: {autoSkip: false, maxRotation: 0, font: {size: 11}}, grid: {display: false}}, y: osaIznosa()},
+        plugins: {legend: {display: false},
+          tooltip: {callbacks: {title: function (s) { return stavke[s[0].dataIndex].label; },
+            label: function (ctx) { return ' ' + fmt.format(ctx.parsed.y) + ' RSD (' + fmtP.format(ukupno ? ctx.parsed.y * 100 / ukupno : 0) + '%)'; }}}}}};
+    struktura = new Chart(platnoStrukture, konfiguracija);
+    nazad.classList.remove('d-none');
+    prekidac.classList.add('d-none');
+    okvir.classList.add('vp-jedan');
+    podnaslov.textContent = sj.labels[i] + ' — struktura troškova · ukupno ' + fmt.format(ukupno) + ' RSD';
+  }
+  nazad.addEventListener('click', function () {
+    struktura.destroy();
+    struktura = slozeniGrafikon();
+    nazad.classList.add('d-none');
+    prekidac.classList.remove('d-none');
+    okvir.classList.remove('vp-jedan');
+    podnaslov.textContent = podnaslovTekst;
+    document.querySelectorAll('#vpLegenda li').forEach(function (li) { li.classList.remove('vp-skriveno'); });
+    document.querySelectorAll('[data-struktura]').forEach(function (b) { b.classList.toggle('active', b.dataset.struktura === 'iznos'); });
+  });
 
   // Numerisana legenda istim redom kao boje na stubiću (odozgo nadole), sa ukupnim iznosom i udelom.
   var legenda = document.getElementById('vpLegenda');
