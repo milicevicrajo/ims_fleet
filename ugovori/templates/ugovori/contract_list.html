@@ -129,6 +129,7 @@
                   <a href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}" class="btn btn-sm btn-outline-primary">
                     <i class="mdi mdi-eye"></i> {{ ugovor.contract_number }}
                   </a>
+                  {% if ugovor.delovodni %}<div class="small text-muted mt-1" title="Delovodni broj Pravne službe">del. br. {{ ugovor.delovodni }}</div>{% endif %}
                 </td>
                 <td>
                   {% if ugovor.kind == "MAIN" %}

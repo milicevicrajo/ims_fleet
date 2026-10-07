@@ -574,3 +574,42 @@ class ContractGuaranteeForm(forms.ModelForm):
                 widget.attrs.setdefault("class", "form-select")
             elif not isinstance(widget, forms.Textarea):
                 widget.attrs.setdefault("class", "form-control")
+
+
+class DelovodniBrojForm(forms.ModelForm):
+    """Delovodni broj Pravne službe na ugovoru: godina i broj odvojeno (od 07.10.2026.)."""
+
+    class Meta:
+        model = Contract
+        fields = ["delovodni_godina", "delovodni_broj"]
+        labels = {"delovodni_godina": "Godina", "delovodni_broj": "Delovodni broj"}
+        widgets = {
+            "delovodni_godina": forms.NumberInput(attrs={"class": "form-control", "min": 1990, "max": 2100}),
+            "delovodni_broj": forms.TextInput(attrs={"class": "form-control", "placeholder": "npr. 1234", "autocomplete": "off"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        from django.utils import timezone
+
+        super().__init__(*args, **kwargs)
+        if not self.instance.delovodni_godina:
+            self.initial.setdefault("delovodni_godina", timezone.localdate().year)
+
+    def clean_delovodni_broj(self):
+        return " ".join((self.cleaned_data.get("delovodni_broj") or "").split())
+
+    def clean(self):
+        data = super().clean()
+        broj, godina = data.get("delovodni_broj"), data.get("delovodni_godina")
+        if broj and not godina:
+            self.add_error("delovodni_godina", "Unesite godinu delovodnog broja.")
+        if godina and not 1990 <= godina <= 2100:
+            self.add_error("delovodni_godina", "Godina nije ispravna.")
+        if broj and godina:
+            zauzet = (Contract.objects.filter(delovodni_godina=godina, delovodni_broj__iexact=broj)
+                      .exclude(pk=self.instance.pk).first())
+            if zauzet:
+                self.add_error("delovodni_broj", f"Delovodni broj {broj}/{godina} već ima ugovor {zauzet.contract_number}.")
+        if not broj:
+            data["delovodni_godina"] = None
+        return data

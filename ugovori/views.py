@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 from core.exporting import rows_to_xlsx_response
-from core.mixins import RolePermissionRequiredMixin, role_permission_required
+from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 
 from .apr_openapi import APR_OPENAPI_SOURCE, fetch_apr_companies, get_apr_company, update_partner_from_apr, update_partners_from_apr
 from .filters import BusinessRequestFilter, ContractFilter, OfferFilter
@@ -29,6 +29,7 @@ from .forms import (
     ContractTypeForm,
     OfferForm,
     PartnerForm,
+    DelovodniBrojForm,
 )
 from .models import (
     BusinessRequest,
@@ -861,6 +862,7 @@ def contract_list_export_excel(request):
     contracts = _filtered_contracts(request)
     headers = [
         "Broj ugovora",
+        "Delovodni broj",
         "Centar",
         "Godina",
         "Vrsta",
@@ -874,6 +876,7 @@ def contract_list_export_excel(request):
         rows.append(
             [
                 contract.contract_number,
+                contract.delovodni,
                 _contract_center(contract.contract_number),
                 contract.contract_date.year if contract.contract_date else "",
                 contract.get_kind_display(),
@@ -1033,7 +1036,33 @@ class ContractDetailView(RolePermissionRequiredMixin, DetailView):
         ctx["contract_file_form"] = ContractFileForm(instance=self.object)
         ctx["mobile_packages"] = self.object.mobile_packages.all()
         ctx["current_app"] = "ugovori"
+        user = self.request.user
+        ctx["delovodni_form"] = kwargs.get("delovodni_form") or DelovodniBrojForm(instance=self.object)
+        ctx["can_delovodni"] = user_has_role_permission(user, "ugovori:contract_delovodni")
+        ctx["can_update"] = user_has_role_permission(user, "ugovori:contract_update")
+        ctx["can_document"] = user_has_role_permission(user, "ugovori:contract_document_create")
+        ctx["can_annex"] = user_has_role_permission(user, "ugovori:annex_create")
         return ctx
+
+
+@require_POST
+@role_permission_required("ugovori:contract_delovodni")
+def contract_delovodni(request, pk):
+    """Delovodni broj Pravne službe — upisuju Pravna služba i Kadrovi; ostali podaci ugovora se ovde ne menjaju."""
+    from django.utils import timezone
+
+    contract = get_object_or_404(Contract, pk=pk)
+    form = DelovodniBrojForm(request.POST, instance=contract)
+    if not form.is_valid():
+        view = ContractDetailView()
+        view.setup(request, pk=pk)
+        view.object = view.get_object()
+        return view.render_to_response(view.get_context_data(object=view.object, delovodni_form=form), status=400)
+    contract = form.save(commit=False)
+    contract.delovodni_upisao, contract.delovodni_upisano = request.user, timezone.now()
+    contract.save(update_fields=["delovodni_godina", "delovodni_broj", "delovodni_upisao", "delovodni_upisano", "updated_at"])
+    messages.success(request, f"Delovodni broj {contract.delovodni} je sačuvan." if contract.delovodni else "Delovodni broj je obrisan.")
+    return redirect("ugovori:contract_detail", pk=contract.pk)
 
 
 class ContractFileUploadView(RolePermissionRequiredMixin, View):

@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    contract_delovodni,
     AnnexCreateView,
     BusinessRequestCreateView,
     BusinessRequestDeleteView,
@@ -88,6 +89,8 @@ urlpatterns = [
     path("novi/", ContractCreateView.as_view(), name="contract_create"),
     path("<int:pk>/", ContractDetailView.as_view(), name="contract_detail"),
     path("<int:pk>/izmeni/", ContractUpdateView.as_view(), name="contract_update"),
+    # Delovodni broj Pravne službe: Pravna služba i Kadrovi (od 07.10.2026.)
+    path("<int:pk>/delovodni-broj/", contract_delovodni, name="contract_delovodni"),
     path(
         "<int:pk>/fajl/dodaj/",
         ContractFileUploadView.as_view(),

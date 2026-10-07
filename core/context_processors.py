@@ -64,6 +64,9 @@ def current_app(request):
             for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list",
                          "evaluation_list", "resenje_list", "zahtev_list", "ugovor_list", "analitika")
         },
+        "ugovori_permissions": {
+            code: user_has_role_permission(request.user, f"ugovori:{code}") for code in ("contract_list",)
+        },
         "arhiva_permissions": {
             code: user_has_role_permission(request.user, f"arhiva:{code}")
             for code in ("delovodnik", "pisarnica", "kategorije")

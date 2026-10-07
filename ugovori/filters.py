@@ -86,6 +86,7 @@ class ContractFilter(django_filters.FilterSet):
         if value:
             return queryset.filter(
                 Q(contract_number__icontains=value) | Q(title__icontains=value)
+                | Q(delovodni_broj__icontains=value.split("/")[0].strip())
             )
         return queryset
 

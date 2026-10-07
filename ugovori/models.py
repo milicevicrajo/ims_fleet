@@ -482,6 +482,14 @@ class Contract(models.Model):
         verbose_name="Glavni ugovor",
     )
     contract_number = models.CharField(max_length=100, unique=True, verbose_name="Broj ugovora")
+    # Delovodni broj Pravne službe (od 07.10.2026.): godina i broj odvojeno; upisuju Pravna služba i Kadrovi.
+    delovodni_godina = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="Delovodni broj — godina")
+    # `db_default`: i kod koji još ne zna za polje (server pre isporuke, testovi migracija) upisuje prazan broj.
+    delovodni_broj = models.CharField(max_length=30, blank=True, default="", db_default="", db_index=True,
+                                      verbose_name="Delovodni broj — broj")
+    delovodni_upisao = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                         related_name="+", verbose_name="Delovodni broj upisao")
+    delovodni_upisano = models.DateTimeField(null=True, blank=True, verbose_name="Delovodni broj upisan")
     title = models.CharField(max_length=255, verbose_name="Naslov")
     subject = models.TextField(blank=True, null=True, verbose_name="Predmet ugovora")
     contract_date = models.DateField(verbose_name="Datum ugovora")
@@ -560,6 +568,13 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"{self.contract_number} – {self.title}"
+
+    @property
+    def delovodni(self):
+        """Delovodni broj Pravne službe za prikaz: „broj/godina”."""
+        if not self.delovodni_broj:
+            return ""
+        return f"{self.delovodni_broj}/{self.delovodni_godina}" if self.delovodni_godina else self.delovodni_broj
 
     @staticmethod
     def _delete_file_after_commit(file_field):

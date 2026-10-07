@@ -16,7 +16,11 @@ def collect_kadrovi_permission_codes():
     return sorted(set(collect_url_pattern_names(urlpatterns, prefix='hr')) | {
         'employee_list', 'employee_detail', 'employee_create', 'employee_update',
         'employee_sync', 'hr:kadrovi_manage',
-    })
+    } | KADROVI_UGOVORI_CODES)
+
+
+# Komercijalni ugovori (od 07.10.2026.): Kadrovi ih gledaju i upisuju samo delovodni broj Pravne službe.
+KADROVI_UGOVORI_CODES = {'ugovori:contract_list', 'ugovori:contract_detail', 'ugovori:contract_delovodni'}
 
 
 def collect_resenja_permission_codes():

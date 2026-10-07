@@ -177,3 +177,58 @@ class ContractDocumentTests(TestCase):
         )
         self.assertFalse(ContractDocument.objects.filter(pk=document.pk).exists())
         self.assertFalse(os.path.exists(stored_path))
+
+
+class DelovodniBrojTests(TestCase):
+    """Delovodni broj Pravne službe na komercijalnom ugovoru (od 07.10.2026.): upisuju Pravna i Kadrovi."""
+
+    def setUp(self):
+        from core.models import PermissionCode, Role
+        from hr.permissions import KADROVI_UGOVORI_CODES
+
+        tip = ContractType.objects.create(code="USL", name="Usluge")
+        self.ugovor = Contract.objects.create(kind=Contract.MAIN, contract_type=tip, contract_number="43-100/2026",
+                                              title="Ispitivanje", contract_date=date(2026, 3, 1))
+        self.drugi = Contract.objects.create(kind=Contract.MAIN, contract_type=tip, contract_number="41-7/2026",
+                                             title="Nadzor", contract_date=date(2026, 4, 1))
+        uloga = Role.objects.create(name="Kadrovi test", slug="kadrovi-ugovori-test")
+        for kod in KADROVI_UGOVORI_CODES:
+            uloga.permissions.add(PermissionCode.objects.get_or_create(code=kod)[0])
+        self.kadrovik = get_user_model().objects.create_user("kadrovik-ugovori", password="x")
+        self.kadrovik.roles.add(uloga)
+        self.client.force_login(self.kadrovik)
+
+    def upisi(self, ugovor, **podaci):
+        return self.client.post(reverse("ugovori:contract_delovodni", args=[ugovor.pk]),
+                                {"delovodni_broj": "", "delovodni_godina": "", **podaci})
+
+    def test_kadrovi_vide_ugovor_i_upisuju_samo_delovodni_broj(self):
+        detalj = self.client.get(reverse("ugovori:contract_detail", args=[self.ugovor.pk]))
+        self.assertContains(detalj, "Delovodni broj Pravne službe")
+        self.assertNotContains(detalj, reverse("ugovori:contract_update", args=[self.ugovor.pk]))  # bez „Izmeni”
+        self.assertEqual(self.upisi(self.ugovor, delovodni_broj=" 1234 ", delovodni_godina="2026").status_code, 302)
+        self.ugovor.refresh_from_db()
+        self.assertEqual((self.ugovor.delovodni, self.ugovor.delovodni_upisao), ("1234/2026", self.kadrovik))
+        self.assertEqual(self.client.get(reverse("ugovori:contract_update", args=[self.ugovor.pk])).status_code, 403)
+        spisak = self.client.get(reverse("ugovori:contract_list"), {"search": "1234/2026"})
+        self.assertContains(spisak, "del. br. 1234/2026")
+        self.assertNotContains(spisak, "41-7/2026")
+
+    def test_provere(self):
+        self.upisi(self.ugovor, delovodni_broj="15", delovodni_godina="2026")
+        self.assertContains(self.upisi(self.drugi, delovodni_broj="15", delovodni_godina="2026"),
+                            "Delovodni broj 15/2026 već ima ugovor 43-100/2026", status_code=400)
+        self.assertContains(self.upisi(self.drugi, delovodni_broj="16"), "Unesite godinu delovodnog broja.", status_code=400)
+        self.assertEqual(self.upisi(self.drugi, delovodni_broj="15", delovodni_godina="2025").status_code, 302)
+        self.upisi(self.ugovor)  # prazan broj briše
+        self.ugovor.refresh_from_db()
+        self.assertEqual((self.ugovor.delovodni_broj, self.ugovor.delovodni_godina), ("", None))
+
+    def test_dozvole_kadrova_i_pravne(self):
+        from core.permissions import collect_ugovori_permission_codes
+        from hr.permissions import collect_kadrovi_permission_codes
+
+        self.assertIn("ugovori:contract_delovodni", collect_ugovori_permission_codes())  # Pravna dobija sve iz Ugovora
+        kadrovi = collect_kadrovi_permission_codes()
+        self.assertIn("ugovori:contract_delovodni", kadrovi)
+        self.assertNotIn("ugovori:contract_update", kadrovi)
