@@ -222,6 +222,14 @@ class PermissionCodeSyncTests(TestCase):
         self.assertTrue({"hr:zahtev_create", "hr:zahtev_podnesi", "hr:zahtev_list"} <= codes)
         self.assertFalse({"hr:zahtev_bulk_create", "hr:zahtev_storniraj", "hr:zahtev_resenje_create"} & codes)
 
+    def test_sync_permission_codes_creates_read_only_rukovodilac(self):
+        from .permissions import RUKOVODILAC_CODES, sync_permission_codes
+
+        sync_permission_codes()
+
+        role = Role.objects.get(slug="rukovodilac")
+        self.assertEqual(set(role.permissions.values_list("code", flat=True)), set(RUKOVODILAC_CODES))
+
     def test_sync_permission_codes_grants_isplate_permissions_to_blagajna(self):
         from .permissions import sync_permission_codes
 

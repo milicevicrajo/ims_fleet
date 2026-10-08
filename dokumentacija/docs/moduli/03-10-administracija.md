@@ -219,6 +219,15 @@ dodelu, ne kao izuzetak u proveri; celu firmu dobijaju i Garaža, Nabavka, Blaga
 (od 30.09.2026.) Pregled. Senka poredi obuhvat **uloge koja otvara modul** (dozvola ulaza u modul), kao
 i sami moduli; dodela druge uloge ne širi obuhvat u senci.
 
+**Uloga Rukovodilac** (`rukovodilac`, od 08.10.2026.) je uloga za čitanje: Finansije (pregled,
+izveštaji, vizuelni pregled, kartica posla, knjiženja, izvoz), vozila i kontrolna tabla Flote,
+putni nalozi (spisak, detalj, štampa), zaposleni (spisak, kartica, pregled i analitika Kadrova) i
+Potraživanja (pregled, partner, izvoz, štampa). Nema `view_all`, sinhronizacije, izmena, banaka,
+SEF-a ni zajedničkih troškova. Obuhvat nije u ulozi: rukovodiocu se na ovom ekranu dodeljuje
+**Nova dodela** sa ulogom Rukovodilac na njegov centar ili jedinicu, i ta jedna dodela važi u sva
+četiri modula. Bez dodele ne vidi ništa. Dozvole pravi `sync_permission_codes`
+(`RUKOVODILAC_CODES` u `core/permissions.py`) i samo ih dopunjuje.
+
 ---
 
 ## 10. Glavne klase, funkcije i fajlovi

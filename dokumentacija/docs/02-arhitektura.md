@@ -327,6 +327,7 @@ U Finansijama prazna lista dozvoljenih centara **nije** globalan pristup. [P]
 | `zahtev` | Zahtev | Kreiranje zahteva nabavke i štampa |
 | `sekretarijat` | Sekretarijat | Zaposleni i putni nalozi |
 | `zaposleni` | Zaposleni | Svoj profil i zaduženje vozila |
+| `rukovodilac` | Rukovodilac | Čitanje Finansija, vozila, putnih naloga, zaposlenih i Potraživanja za čvor iz dodele uloge (od 08.10.2026.) |
 
 ### 2.6.5. Evidencija rada [P]
 

@@ -135,6 +135,40 @@ def collect_permission_codes():
 # Pravna služba vidi analitiku zaposlenih cele firme (od 06.10.2026.) i statistiku rodne ravnopravnosti (07.10.2026.).
 PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all', 'hr:rodna_ravnopravnost'}
 
+# Rukovodilac (od 08.10.2026.): samo citanje Finansija, vozila, putnih naloga, zaposlenih i Potrazivanja.
+# Obuhvat nije u ulozi — daje ga odobrena dodela na cvor rukovodioca (Organizacija → Dodele uloga).
+# Bez `view_all`, sinhronizacija, izmena, banaka i SEF-a (cela firma) i zajednickih troskova (samo cela firma).
+RUKOVODILAC_CODES = (
+    "finansije:dashboard", "finansije:report", "finansije:vizuelni_pregled", "finansije:jobs_data",
+    "finansije:job_card", "finansije:job_table", "finansije:ledger", "finansije:export",
+    "dashboard", "vehicle_list", "vehicle_data", "vehicle_detail", "vehicle_assessment_detail",
+    "fleet_analytics", "center_statistics",
+    "putninalog_list", "putninalog_data", "putninalog_detail", "putninalog_print", "putninalog_print_list",
+    "putninalog_foreign_print",
+    "employee_list", "employee_detail", "hr:pregled", "hr:analitika",
+    "potrazivanja:dashboard", "potrazivanja:table_data", "potrazivanja:partner_detail", "potrazivanja:export",
+    "potrazivanja:print",
+)
+
+
+def sync_rukovodilac_role():
+    """Uloga Rukovodilac; dozvole se samo dopunjuju, kao kod Sekretarijata."""
+    role, _ = Role.objects.get_or_create(
+        slug="rukovodilac",
+        defaults={
+            "name": "Rukovodilac",
+            "description": "Pregled Finansija, vozila, putnih naloga, zaposlenih i Potraživanja za čvor iz dodele uloge.",
+            "is_active": True,
+        },
+    )
+    if not role.is_active:
+        role.is_active = True
+        role.save(update_fields=["is_active"])
+    for code in RUKOVODILAC_CODES:
+        permission, _ = PermissionCode.objects.get_or_create(code=code)
+        RolePermission.objects.get_or_create(role=role, permission=permission)
+    return role
+
 
 @transaction.atomic
 def sync_pravna_resenja_permissions():
@@ -429,6 +463,8 @@ def sync_permission_codes():
         role=zaposleni_role,
         permission__code="vehicle_travel_order_update",
     ).delete()
+    rukovodilac_role = sync_rukovodilac_role()
+
     sekretarijat_group_users_synced = 0
     sekretarijat_group = Group.objects.filter(name__iexact="Sekretarijat").first()
     if sekretarijat_group:
@@ -481,6 +517,7 @@ def sync_permission_codes():
         "zahtev_role": zahtev_role,
         "sekretarijat_role": sekretarijat_role,
         "zaposleni_role": zaposleni_role,
+        "rukovodilac_role": rukovodilac_role,
         "sekretarijat_group_users_synced": sekretarijat_group_users_synced,
         "zaposleni_group_users_synced": zaposleni_group_users_synced,
         "pregled_naplate_group_users_synced": pregled_naplate_group_users_synced,
