@@ -15,7 +15,7 @@ Isplate račun šalju; Knjiženje ga proknjižava ili vraća na doradu. U knjigo
 | Ekran | Adresa | Šta radi |
 |---|---|---|
 | **Fiskalni računi** | `/knjizenje/` | Pločice (čeka knjiženje, vraćeno na doradu, proknjiženo ovog meseca), filteri (status, vrsta računa, period računa, period knjiženja), pretraga (i po broju naloga za knjiženje), DataTables sa stranom sa servera. Označeni računi se knjiže **zajedno** — isti datum, nalog za knjiženje i napomena. Excel izvoz prati filtere. |
-| Detalj računa | `/knjizenje/racun/<id>/` | Stavke, podaci sa računa i iz Isplata (šifra posla, putni nalog ili interni broj i napomena), knjiženje jednog računa, vraćanje na doradu, poništavanje knjiženja i istorija. |
+| Detalj računa | `/knjizenje/racun/<id>/` | Potpuni podaci o računu, isti kao u Isplatama i Nabavci (od 08.10.2026., zajednički `nabavka/_fiskalni_*`): upozorenja (nije na IMS, refundacija, zbir stavki), prodavac, prodajno mesto i adresa, ID kupca, brojač, kasir i ESIR, stavke sa osnovicom i PDV-om, tekst računa; podaci iz Isplata (šifra posla, putni nalog sa vozilom i šifrom naloga ili interni broj i napomena), knjiženje jednog računa, vraćanje na doradu, poništavanje knjiženja i istorija. |
 
 ## 2. Tok [P]
 

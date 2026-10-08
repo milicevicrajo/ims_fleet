@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.db.models import Max
 
-from .reports import ZERO, expressions
+from .reports import ZERO, expressions, samo_aktivne_sifre
 
 
 METRICS = (("revenue", "Prihodi"), ("expense", "Rashodi"), ("result", "Neto rezultat"))
@@ -18,9 +18,12 @@ def overview_data(entries, totals):
         ("job", "job_code", "Šifre posla"),
     ):
         annotations = expressions()
+        izvor = entries
         if dimension == "job":
             annotations["name"] = Max("job_name")
-        records = entries.order_by().values(field).annotate(**annotations)
+            # Samo aktivne šifre, kao izveštaj po šiframa; udeo je i dalje u odnosu na ukupno za period.
+            izvor = samo_aktivne_sifre(entries)
+        records = izvor.order_by().values(field).annotate(**annotations)
         rows = []
         for record in records:
             revenue, expense = record["revenue"] or ZERO, record["expense"] or ZERO

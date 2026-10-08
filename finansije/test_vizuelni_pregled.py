@@ -56,6 +56,20 @@ class VizuelniPregledTests(TestCase):
         self.assertEqual([(r["code"], r["name"]) for r in v["jedinice"]], [("420001", "Posao B")])
         self.assertContains(odgovor, "Svi centri")
 
+    def test_neaktivne_sifre_se_ne_prikazuju(self, _plan):
+        from fleet.support.registar import Registar
+
+        save_entry(number=6, center="42", job_code="420002", job_name="Ugašen posao", credit=Decimal("70"))
+        with patch.object(Registar, "aktivna_sifra", lambda self, sifra: (sifra or "").strip() != "420002"), \
+                patch("finansije.views.centri_sa_zt", return_value=None):
+            centar = self.client.get(reverse("finansije:vizuelni_pregled"), dict(self.params, center="42")).context["v"]
+            pregled = self.client.get(reverse("finansije:dashboard"), self.params).context
+        self.assertEqual([r["code"] for r in centar["jedinice"]], ["420001"])
+        self.assertEqual(centar["ukupno"]["revenue"], Decimal("300"))  # zbir se slaže sa prikazanim šiframa
+        sifre = next(g for g in pregled["chart_groups"] if g["dimension"] == "job")
+        self.assertNotIn("420002", [r["code"] for r in sifre["rows"]])
+        self.assertEqual(pregled["totals"]["revenue"], Decimal("470"))  # ukupno za period ostaje celo
+
     def test_dugme_na_finansijskom_pregledu_i_dozvola(self, _plan):
         with patch("finansije.views.centri_sa_zt", return_value=None):
             pregled = self.client.get(reverse("finansije:dashboard"), self.params)

@@ -22,7 +22,7 @@ from openpyxl.cell import WriteOnlyCell
 from core.mixins import role_permission_required, user_has_role_permission
 from fleet.support.registar import Registar
 from .access import can_view_all, centar_sifre, centri_sifara, na_registru, polje_centra
-from .forms import JobMonthForm, ReportFilters, SyncForm
+from .forms import GROUPS, JobMonthForm, ReportFilters, SyncForm
 from .models import SyncRun, NalogZRefreshRun
 from .services.charts import overview_data
 from .services.datatables import ledger_response, sync_response, nalog_z_response
@@ -41,6 +41,17 @@ from .services import izvoz, izvoz_ekrani
 logger = logging.getLogger(__name__)
 
 
+# Mesečni pregled i Konta imaju sopstvene dozvole (od 08.10.2026.); centri i šifre posla idu uz `finansije:dashboard`.
+DOZVOLE_GRUPA = {"month": "finansije:mesecni_pregled", "account": "finansije:konta"}
+# Sve tabele kartice posla za šifru u obuhvatu Finansija, bez dozvola i obuhvata drugih modula (od 08.10.2026.).
+KARTICA_POSLA = "finansije:kartica_posla"
+
+
+def dozvoljena_grupa(user, group):
+    code = DOZVOLE_GRUPA.get(group)
+    return code is None or user_has_role_permission(user, code)
+
+
 def report_context(request, ledger=False, data=None):
     request.session["current_app"] = "finansije"
     company = getattr(settings, "FINANSIJE_COMPANY", 1)
@@ -53,6 +64,8 @@ def report_context(request, ledger=False, data=None):
         # Render a useful empty state instead of waiting on those locks.
         entries, jobs = entries.none(), jobs.none()
     form = ReportFilters(request.GET if data is None else data, jobs=jobs, entries=entries, ledger=ledger)
+    if not ledger:
+        form.fields["group"].choices = [(k, v) for k, v in GROUPS if dozvoljena_grupa(request.user, k)]
     valid = form.is_valid()
     selected = apply_filters(entries, form.cleaned_data) if valid else entries.none()
     params = form.data.copy()
@@ -68,6 +81,8 @@ def report_context(request, ledger=False, data=None):
         "sync_running": last_run is not None and last_run.status == "running",
         "restricted": not can_view_all(request.user),
         "can_export": user_has_role_permission(request.user, "finansije:export"),
+        "can_ledger": user_has_role_permission(request.user, "finansije:ledger"),
+        "can_konta": dozvoljena_grupa(request.user, "account"),
         "can_sync_status": can_view_all(request.user) and user_has_role_permission(request.user, "finansije:sync_status"),
     }
     if valid and latest_success:
@@ -281,6 +296,8 @@ def zajednicki_troskovi(request):
 @login_required
 @role_permission_required("finansije:dashboard")
 def report(request):
+    if not dozvoljena_grupa(request.user, request.GET.get("group", "center")):
+        raise PermissionDenied("Nemate dozvolu za ovaj izveštaj.")
     if request.GET.get("group") == "job":
         context, entries, jobs = report_context(request, data=job_report_parameters(request.GET))
         totals, rows = grouped_report(entries, jobs, context["form"].cleaned_data) if context["valid"] else (summary(entries), [])
@@ -371,12 +388,14 @@ def job_card(request):
         context["ledger_url"] = reverse("finansije:ledger") + "?" + urlencode({
             "job": code, "date_from": start.isoformat(), "date_to": end.isoformat(), "kind": "pnl",
         })
-        # Existing modules have their own access rules, in addition to the finance job scope.
-        context["can_vehicles"] = user_has_role_permission(request.user, "jobcode_list")
-        context["can_custody"] = context["can_vehicles"] and user_has_role_permission(request.user, "vehicle_travel_order_list")
-        context["can_employees"] = user_has_role_permission(request.user, "employee_list")
-        context["can_travel"] = user_has_role_permission(request.user, "putninalog_list")
-        context["can_collections"] = job_collections_access(request.user, code)
+        # Existing modules have their own access rules, in addition to the finance job scope —
+        # osim uz `finansije:kartica_posla`, gde je obuhvat sama šifra posla iz obuhvata Finansija.
+        cela_kartica = user_has_role_permission(request.user, KARTICA_POSLA)
+        context["can_vehicles"] = cela_kartica or user_has_role_permission(request.user, "jobcode_list")
+        context["can_custody"] = cela_kartica or (context["can_vehicles"] and user_has_role_permission(request.user, "vehicle_travel_order_list"))
+        context["can_employees"] = cela_kartica or user_has_role_permission(request.user, "employee_list")
+        context["can_travel"] = cela_kartica or user_has_role_permission(request.user, "putninalog_list")
+        context["can_collections"] = cela_kartica or job_collections_access(request.user, code)
     return render(request, "finansije/job_card.html", context)
 
 
@@ -406,13 +425,16 @@ def job_table(request, table):
     start, end = form.cleaned_data["date_from"], form.cleaned_data["date_to"]
     permissions = {"vehicles": "jobcode_list", "travel": "putninalog_list", "employees": "employee_list",
                    "custody": "vehicle_travel_order_list"}
-    if table in permissions and not user_has_role_permission(request.user, permissions[table]):
-        raise PermissionDenied
-    if table == "custody" and not user_has_role_permission(request.user, "jobcode_list"):
-        raise PermissionDenied
-    if table == "collections":
-        if not job_collections_access(request.user, code):
+    # Uz `finansije:kartica_posla` obuhvat je sama šifra (već proverena u obuhvatu Finansija iznad).
+    po_sifri = user_has_role_permission(request.user, KARTICA_POSLA)
+    if not po_sifri:
+        if table in permissions and not user_has_role_permission(request.user, permissions[table]):
             raise PermissionDenied
+        if table == "custody" and not user_has_role_permission(request.user, "jobcode_list"):
+            raise PermissionDenied
+        if table == "collections":
+            if not job_collections_access(request.user, code):
+                raise PermissionDenied
     if table in ("invoices", "internal_invoices", "expenses", "shared", "cash") and not SyncRun.objects.filter(
             company=getattr(settings, "FINANSIJE_COMPANY", 1), status="success",
             year_from__lte=start.year, year_to__gte=start.year).exists():
@@ -425,17 +447,17 @@ def job_table(request, table):
         elif table == "vehicles":
             data = job_tables.vehicle_data(code, start, end)
         elif table == "custody":
-            data = job_tables.custody_data(request, code, start, end)
+            data = job_tables.custody_data(request, code, start, end, po_sifri=po_sifri)
         elif table == "employees":
             data = job_tables.employee_data(code, start, end)
         elif table == "travel":
-            data = job_tables.travel_data(request, code, start, end)
+            data = job_tables.travel_data(request, code, start, end, po_sifri=po_sifri)
         elif table == "shared":
             data = job_tables.shared_data(selected, code, start, end)
         elif table == "cash":
             data = job_tables.cash_data(code, start, end)
         else:
-            data = job_tables.collection_data(request.user, code)
+            data = job_tables.collection_data(request.user, code, po_sifri=po_sifri)
     except DatabaseError:
         logger.exception("Tabela detalja šifre posla nije dostupna: %s", table)
         return JsonResponse({"error": "Podaci trenutno nisu dostupni. Pokušajte ponovo."}, status=503)

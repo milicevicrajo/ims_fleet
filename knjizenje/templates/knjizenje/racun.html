@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% comment %}
 Knjiženje → detalj fiskalnog računa (od 07.10.2026.): podaci sa računa, podaci iz Isplata, knjiženje i istorija.
+Od 08.10.2026. podaci o računu su potpuni, isti kao u Isplatama i Nabavci (zajednički `nabavka/_fiskalni_*`).
 Račun koji čeka knjiženje se proknjižava ili vraća Isplatama na doradu; proknjižen se može poništiti (uz razlog).
 {% endcomment %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
 {% include "isplate/_stil.html" %}
+{% include "nabavka/_fiskalni_stil.html" %}
 <style>
   .fd-grid { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; align-items: start; }
   .fd-kartica { background: #fff; border: 1px solid #e1e8ef; border-radius: 8px; box-shadow: 0 3px 12px rgba(28, 54, 78, .04); margin-bottom: 16px; }
@@ -17,8 +19,7 @@ Račun koji čeka knjiženje se proknjižava ili vraća Isplatama na doradu; pro
   .fd-plocice strong { font-size: 1.15rem; color: #14395b; font-variant-numeric: tabular-nums; }
   .fd-podaci { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 6px 12px; margin: 0; font-size: .9rem; }
   .fd-podaci dt { color: #64748b; font-weight: 600; } .fd-podaci dd { margin: 0; overflow-wrap: anywhere; }
-  .fd-stavke th { font-size: .78rem; color: #526679; background: #f3f6fa; white-space: nowrap; }
-  .fd-stavke td { font-size: .86rem; } .fd-broj { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  aside .fiskalni-racun-papir { width: auto; } aside .fiskalni-racun-papir pre { overflow-x: auto; }
   .knj-istorija { list-style: none; margin: 0; padding: 0; }
   .knj-istorija li { position: relative; padding: 0 0 12px 22px; font-size: .88rem; }
   .knj-istorija li::before { content: ""; position: absolute; left: 5px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: #1f6f8b; }
@@ -45,51 +46,60 @@ Račun koji čeka knjiženje se proknjižava ili vraća Isplatama na doradu; pro
 
 {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} py-2">{{ m }}</div>{% endfor %}{% endif %}
 
+{% if upozorenja %}
+  <div class="alert alert-warning"><i class="mdi mdi-alert"></i>
+    {% for u in upozorenja %}{{ u }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+  </div>
+{% endif %}
+
 <div class="fd-plocice">
   <div><small>Ukupan iznos</small><strong>{{ racun.iznos|floatformat:"2g" }}</strong></div>
   <div><small>PDV</small><strong>{% if racun.pdv_ukupno is not None %}{{ racun.pdv_ukupno|floatformat:"2g" }}{% else %}—{% endif %}</strong></div>
+  <div><small>Stavki</small><strong>{{ racun.stavke.all|length }}</strong></div>
   <div><small>Šifra posla</small><strong>{% if racun.job_code_id %}{{ racun.job_code.code }}{% else %}—{% endif %}</strong></div>
   <div><small>Kupac</small><strong>{% if racun.na_ims %}<span class="isp-badge ok">IMS</span>{% else %}<span class="isp-badge warn">{% if racun.id_kupca %}Drugi kupac{% else %}Fizičko lice{% endif %}</span>{% endif %}</strong></div>
+  <div><small>Status</small><strong>{% if racun.status == "potvrdjen" %}<span class="isp-badge ok"><i class="mdi mdi-check-circle"></i> Potvrđen</span>{% else %}<span class="isp-badge muted" title="{{ racun.greska }}"><i class="mdi mdi-timer-sand"></i> Čeka proveru</span>{% endif %}</strong></div>
   <div><small>Knjiženje</small><strong>{% if stanje == "proknjizeno" %}<span class="isp-badge ok"><i class="mdi mdi-check-decagram"></i> Proknjiženo</span>{% elif stanje == "vraceno" %}<span class="isp-badge warn"><i class="mdi mdi-undo"></i> Vraćeno na doradu</span>{% else %}<span class="isp-badge info"><i class="mdi mdi-timer-sand"></i> Čeka knjiženje</span>{% endif %}</strong></div>
 </div>
 
 <div class="fd-grid">
   <div>
-    <section class="fd-kartica">
-      <header><span><i class="mdi mdi-format-list-bulleted"></i> Stavke računa</span>
-        {% if racun.status != "potvrdjen" %}<span class="isp-badge muted" title="{{ racun.greska }}">Čeka proveru — stavke još nisu preuzete</span>{% endif %}</header>
-      <div class="p-0"><div class="table-responsive">
-        <table class="table table-sm table-hover mb-0 fd-stavke">
-          <thead><tr><th>#</th><th>Naziv</th><th class="fd-broj">Količina</th><th class="fd-broj">Jed. cena</th><th class="fd-broj">Ukupno</th><th>PDV</th></tr></thead>
-          <tbody>{% for s in stavke %}<tr><td>{{ s.redni_broj }}</td><td>{{ s.naziv }}</td><td class="fd-broj">{{ s.kolicina|floatformat:"-3" }}</td>
-            <td class="fd-broj">{{ s.jedinicna_cena|floatformat:"2g" }}</td><td class="fd-broj fw-semibold">{{ s.ukupno|floatformat:"2g" }}</td>
-            <td class="text-nowrap">{{ s.oznaka_pdv }}{% if s.stopa_pdv is not None %} · {{ s.stopa_pdv|floatformat:"-2" }}%{% endif %}</td></tr>
-          {% empty %}<tr><td colspan="6" class="text-center text-muted py-3">Nema preuzetih stavki.</td></tr>{% endfor %}</tbody>
-        </table>
-      </div></div>
+    {% include "nabavka/_fiskalni_podaci.html" %}
+
+    {% if racun.putni_nalog_id %}
+    <section class="fiskalni-kartica">
+      <header><i class="mdi mdi-car-arrow-right"></i> Putni nalog</header>
+      <div>
+        {% if racun.putni_nalog.storniran %}<div class="alert alert-warning py-2 mb-2"><i class="mdi mdi-alert"></i> Putni nalog je storniran.</div>{% endif %}
+        <dl class="fiskalni-podaci">
+          <dt>Broj naloga</dt><dd><strong>{{ racun.putni_nalog.order_number }}</strong></dd>
+          <dt>Zaposleni</dt><dd>{{ racun.putni_nalog.employee|default:racun.putni_nalog.other_employee_name|default:"—" }}</dd>
+          <dt>Putovanje</dt><dd>{{ racun.putni_nalog.travel_location }} · {{ racun.putni_nalog.travel_date|date:"d.m.Y." }}{% if racun.putni_nalog.number_of_days %} · {{ racun.putni_nalog.number_of_days }} d.{% endif %}</dd>
+          <dt>Vozilo</dt><dd>{{ racun.putni_nalog.vehicle|default:racun.putni_nalog.other_vehicle|default:"—" }}</dd>
+          <dt>Šifra posla naloga</dt><dd>{{ racun.putni_nalog.job_code.code }} · {{ racun.putni_nalog.job_code.name }}</dd>
+        </dl>
+      </div>
     </section>
-    <section class="fd-kartica">
-      <header><span><i class="mdi mdi-store-outline"></i> Podaci sa računa i iz Isplata</span></header>
-      <div><dl class="fd-podaci">
-        <dt>Prodavac</dt><dd>{{ racun.naziv_prodavca|default:"—" }} · PIB {{ racun.pib_prodavca|default:"—" }}</dd>
-        <dt>Prodajno mesto</dt><dd>{{ racun.prodajno_mesto|default:"—" }}{% if racun.adresa %} · {{ racun.adresa }}{% endif %}{% if racun.grad %}, {{ racun.grad }}{% endif %}</dd>
-        <dt>Vrsta</dt><dd>{{ racun.vrsta_racuna_naziv }} · {{ racun.vrsta_transakcije_naziv }}</dd>
-        <dt>Način plaćanja</dt><dd>{{ racun.nacin_placanja|default:"—" }}</dd>
-        <dt>Šifra posla</dt><dd>{% if racun.job_code_id %}<strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}{% else %}<span class="text-muted">bez šifre posla</span>{% endif %}</dd>
-        {% if racun.putni_nalog_id %}
-        <dt>Putni nalog</dt><dd><strong>{{ racun.putni_nalog.order_number }}</strong>{% if racun.putni_nalog.storniran %} <span class="isp-badge warn">storniran</span>{% endif %}</dd>
-        <dt>Zaposleni</dt><dd>{{ racun.putni_nalog.employee|default:racun.putni_nalog.other_employee_name|default:"—" }}</dd>
-        <dt>Putovanje</dt><dd>{{ racun.putni_nalog.travel_location }} · {{ racun.putni_nalog.travel_date|date:"d.m.Y." }}</dd>
-        {% else %}
-        <dt>Interni broj</dt><dd>{{ racun.interni_broj|default:"—" }}</dd>
-        <dt>Napomena</dt><dd>{{ racun.napomena|default:"—" }}</dd>
-        {% endif %}
-        <dt>Učitao</dt><dd>{{ racun.created_by.get_full_name|default:racun.created_by.username|default:"—" }} · {{ racun.created_at|date:"d.m.Y. H:i" }}</dd>
-      </dl></div>
+    {% endif %}
+
+    <section class="fiskalni-kartica">
+      <header>Šifra posla, broj i napomena (Isplate)</header>
+      <div>
+        <dl class="fiskalni-podaci">
+          <dt>Šifra posla</dt><dd>{% if racun.job_code_id %}<strong>{{ racun.job_code.code }}</strong> · {{ racun.job_code.name }}{% else %}<span class="text-muted">bez šifre posla</span>{% endif %}</dd>
+          <dt>Interni broj</dt><dd>{{ racun.interni_broj|default:"—" }}</dd>
+          <dt>Napomena</dt><dd>{{ racun.napomena|default:"—" }}</dd>
+        </dl>
+      </div>
     </section>
+
+    {% include "nabavka/_fiskalni_stavke.html" %}
   </div>
 
   <aside>
+    {# Račun kakav je odštampan — prvo što knjigovođa vidi, pre akcija knjiženja. #}
+    {% include "nabavka/_fiskalni_tekst.html" %}
+
     <section class="fd-kartica">
       <header><span><i class="mdi mdi-book-check-outline"></i> Knjiženje</span></header>
       <div>
@@ -146,6 +156,7 @@ Račun koji čeka knjiženje se proknjižava ili vraća Isplatama na doradu; pro
         {% else %}<p class="small text-muted mb-0">Račun je proknjižen pre modula Knjiženje — istorija nije vođena.</p>{% endif %}
       </div>
     </section>
+
   </aside>
 </div>
 {% endblock %}

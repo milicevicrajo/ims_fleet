@@ -13,15 +13,17 @@ AGING_TONES = (1, 2, 2, 3, 3, 4, 5, 4, 3)
 BUCKET_TONES = dict(zip(('0.1', '30', '45', '60', '90', '180', '181'), AGING_TONES))
 
 
-def job_balances(user, code, company=1):
-    if not can_view_job(user, code, company):
+def job_balances(user, code, company=1, po_sifri=False):
+    """`po_sifri`: šifru je već proverila kartica posla Finansija (`finansije:kartica_posla`) — bez obuhvata Potraživanja."""
+    if not po_sifri and not can_view_job(user, code, company):
         raise PermissionDenied('Šifra posla nije dostupna u Potraživanjima.')
     state = CollectionState.objects.select_related('current_snapshot').filter(company=company).first()
     snapshot = state.current_snapshot if state else None
     if not snapshot or snapshot.status != 'published':
         return {'snapshot': None, 'rows': []}
     groups = {}
-    positions = scoped(snapshot.positions.filter(job_code=code), user).values(
+    positions = snapshot.positions.filter(job_code=code)
+    positions = (positions if po_sifri else scoped(positions, user)).values(
         'identity_id', 'identity__partner_code', 'identity__source_name', 'account_family', 'due_date', 'balance')
     for row in positions:
         group = groups.setdefault((row['identity_id'], row['account_family']), {

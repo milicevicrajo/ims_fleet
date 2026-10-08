@@ -48,6 +48,17 @@ class KadroviNaRegistruTests(ImportTestCase):
         self.assertEqual(zaposleni.cvor_oj("20", zaposleni.mape_registra()), centar("2"))
         self.assertEqual(zaposleni.povezi_zaposlene(), 0)  # nocno uskladjivanje — vec uskladjeno
 
+    def test_pododeljenje_ide_u_svoju_jedinicu(self):
+        # 08.10.2026.: OJ 4331/4332 su ljudi Laboratorije za puteve (433), ne celog centra 43.
+        mape = ({"43": "c43", "41": "c41", "42": "c42"},
+                {"433": ("j433", "c43"), "411": ("j411", "c41"), "4110": ("j4110", "c41")})
+        self.assertEqual(zaposleni.cvor_oj("4331", mape), "j433")
+        self.assertEqual(zaposleni.cvor_oj("4332", mape), "j433")
+        self.assertEqual(zaposleni.cvor_oj("41101", mape), "j4110")  # najduzi prefiks jedinice
+        self.assertEqual(zaposleni.cvor_oj("423", mape), "c42")      # bez svoje jedinice — centar
+        self.assertEqual(zaposleni.cvor_oj("43", mape), "c43")
+        self.assertIsNone(zaposleni.cvor_oj("10", mape))
+
     def test_obuhvat_iz_dodele(self):
         self.assertFalse(visible_employees(self.svez()).exists())  # stari centar 41 vise ne odlucuje
         self.dodeli(cvor_id=centar("43"))

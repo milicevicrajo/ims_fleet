@@ -73,15 +73,19 @@ def assigned_vehicles(job_code, start, end):
     return result
 
 
-def vehicle_custody(request, job_code, start, end):
-    """Intersect custody dates with historical job assignments, never today's job."""
+def vehicle_custody(request, job_code, start, end, po_sifri=False):
+    """Intersect custody dates with historical job assignments, never today's job.
+
+    `po_sifri`: sva zaduženja vozila te šifre (`finansije:kartica_posla`), ne samo ona koja korisnik vidi u Floti."""
+    from fleet.models import VehicleTravelOrder
     from fleet.views.vehicle_travel_orders import _vehicle_travel_order_base_qs
 
     assignments = assigned_vehicles(job_code, start, end)
     by_vehicle = {}
     for assignment in assignments:
         by_vehicle.setdefault(assignment["vehicle_id"], []).append(assignment)
-    orders = _vehicle_travel_order_base_qs(request).filter(
+    base = VehicleTravelOrder.objects.select_related("vehicle", "employee") if po_sifri else _vehicle_travel_order_base_qs(request)
+    orders = base.filter(
         vehicle_id__in=by_vehicle, created_at__lte=end,
     ).filter(Q(closed_at__isnull=True) | Q(closed_at__gte=start)).order_by("created_at", "pk")
     rows = []

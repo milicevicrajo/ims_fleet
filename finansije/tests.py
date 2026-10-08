@@ -186,14 +186,37 @@ class FinancePermissionSetupTests(TestCase):
         other = Role.objects.create(name="Drugi modul", slug="other-module")
         other.permissions.add(PermissionCode.objects.create(code="other:view"))
         sync_finance_permissions()
-        sync_finance_permissions()
         finance = Role.objects.get(slug="finansije")
+        finance.permissions.add(PermissionCode.objects.get(code="finansije:ledger"),
+                                PermissionCode.objects.create(code="drugi:modul"))  # ranije dodeljeno
+        sync_finance_permissions()
+        # Od 08.10.2026. samo Finansijski pregled, Šifre posla i Banke; dozvole drugih modula ostaju.
         self.assertSetEqual(set(finance.permissions.values_list("code", flat=True)), {
-            "finansije:dashboard", "finansije:ledger", "finansije:export",
-            "finansije:bank_list", "finansije:bank_detail",
+            "finansije:dashboard", "finansije:kartica_posla", "finansije:bank_list", "finansije:bank_detail",
+            "drugi:modul",
         })
-        self.assertTrue(Role.objects.get(slug="uprava").permissions.filter(code="finansije:view_all").exists())
+        uprava = set(Role.objects.get(slug="uprava").permissions.values_list("code", flat=True))
+        self.assertTrue({"finansije:view_all", "finansije:mesecni_pregled", "finansije:konta"} <= uprava)
         self.assertEqual(list(other.permissions.values_list("code", flat=True)), ["other:view"])
+
+    def test_finansijska_analitika_vidi_pregled_sifre_i_banke(self):
+        from core.permissions import sync_finance_permissions
+
+        sync_finance_permissions()
+        user = get_user_model().objects.create_user("analitika", password="x", allowed_center_codes="41")
+        user.roles.add(Role.objects.get(slug="finansije"))
+        self.client.force_login(user)
+        for url in (reverse("finansije:dashboard"), reverse("finansije:report") + "?group=job",
+                    reverse("finansije:report") + "?group=center"):
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+        for url in (reverse("finansije:report") + "?group=month", reverse("finansije:report") + "?group=account",
+                    reverse("finansije:ledger"), reverse("finansije:export")):
+            self.assertEqual(self.client.get(url).status_code, 403, url)
+        sifre = self.client.get(reverse("finansije:report") + "?group=job")
+        self.assertNotContains(sifre, "Mesečni pregled")
+        self.assertNotContains(sifre, ">Konta<")
+        self.assertNotContains(sifre, 'value="account"')
+        self.assertContains(sifre, ">Banke<")
 
 
 class ManualSyncTests(TestCase):

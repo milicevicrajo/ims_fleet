@@ -393,7 +393,8 @@ unos, grupni unos, predlog teksta i snimljene šifre OJ/centra.
 > **[P] Od 28.09.2026. Kadrovi su na registru organizacije** (prekidač `PRAVA_PO_REGISTRU["kadrovi"]`).
 > Nema posebne kadrovske organizacije: zaposleni pripada **čvoru registra** (`Employee.org_node`),
 > koji se izvodi iz OJ kadrovske baze — OJ istog broja kao jedinica → ta jedinica; kao centar →
-> centar (`20` → `2`); inače centar po prefiksu (4331 i 4332 → 43, 4110 → 41, 423 → 42); `1` i `10`
+> centar (`20` → `2`); pododeljenje jedinice → jedinica po najdužem prefiksu (od 08.10.2026.: 4331 i
+> 4332 → 433, 4110 → 411 — da rukovodilac jedinice vidi svoje ljude); inače centar po prefiksu (423 → 42); `1` i `10`
 > (Institut kao celina) nemaju čvor. Veza se postavlja pri čuvanju i noću u 01:40 (361 od 371
 > zaposlenog vezano 28.09.2026.). Obuhvat daju odobrene dodele uloga sa dozvolama `hr:…` ili
 > `employee_…`: dodeljen centar daje sve svoje jedinice, šifra posla ne daje ljude. „Sva rešenja”

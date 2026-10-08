@@ -1091,7 +1091,7 @@ U Finansijama prazna lista dozvoljenih centara **nije** globalan pristup. [P]
 | `blagajna` | Blagajna | Ceo modul Isplate |
 | `pravna` | Pravna služba | Pravna služba + modul Ugovori |
 | `mobilni` | Mobilni | Ceo modul Mobilni |
-| `finansije` | Finansijska analitika | `dashboard`, `ledger`, `export` |
+| `finansije` | Finansijska analitika | Finansijski pregled, Šifre posla i Banke (`dashboard`, `bank_list`, `bank_detail`; od 08.10.2026.) |
 | `pregled-naplate` | Pregled naplate | Pregledi i izvozi Naplate, bez izmena |
 | `zahtev` | Zahtev | Kreiranje zahteva nabavke i štampa |
 | `sekretarijat` | Sekretarijat | Zaposleni i putni nalozi |
@@ -2628,7 +2628,8 @@ unos, grupni unos, predlog teksta i snimljene šifre OJ/centra.
 > **[P] Od 28.09.2026. Kadrovi su na registru organizacije** (prekidač `PRAVA_PO_REGISTRU["kadrovi"]`).
 > Nema posebne kadrovske organizacije: zaposleni pripada **čvoru registra** (`Employee.org_node`),
 > koji se izvodi iz OJ kadrovske baze — OJ istog broja kao jedinica → ta jedinica; kao centar →
-> centar (`20` → `2`); inače centar po prefiksu (4331 i 4332 → 43, 4110 → 41, 423 → 42); `1` i `10`
+> centar (`20` → `2`); pododeljenje jedinice → jedinica po najdužem prefiksu (od 08.10.2026.: 4331 i
+> 4332 → 433, 4110 → 411 — da rukovodilac jedinice vidi svoje ljude); inače centar po prefiksu (423 → 42); `1` i `10`
 > (Institut kao celina) nemaju čvor. Veza se postavlja pri čuvanju i noću u 01:40 (361 od 371
 > zaposlenog vezano 28.09.2026.). Obuhvat daju odobrene dodele uloga sa dozvolama `hr:…` ili
 > `employee_…`: dodeljen centar daje sve svoje jedinice, šifra posla ne daje ljude. „Sva rešenja”
@@ -3022,7 +3023,10 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 
 | Dozvola | Šta omogućava |
 |---|---|
-| `finansije:dashboard` | Pregled, izveštaji, kartica posla |
+| `finansije:dashboard` | Finansijski pregled, vizuelni pregled, izveštaj po centrima i po šiframa posla, kartica posla |
+| `finansije:mesecni_pregled` | Mesečni pregled (`report?group=month`) — od 08.10.2026. |
+| `finansije:konta` | Konta (`report?group=account`) i veza „Konta posla” — od 08.10.2026. |
+| `finansije:kartica_posla` | Od 08.10.2026.: **sve tabele kartice posla** — vozila, zaduženja vozila, zaposleni (iz zarada), putni nalozi i potraživanja — za šifru iz obuhvata Finansija, **bez** dozvola i obuhvata Flote, Kadrova i Potraživanja. Ne otvara ekrane tih modula: veza ka kartici partnera u Potraživanjima prikazuje se samo uz njihovu dozvolu i obuhvat |
 | `finansije:ledger` | Knjiženja |
 | `finansije:export` | Izvoz u Excel i PDF (svi ekrani; uz to treba i pravo na sam ekran) |
 | `finansije:sync_status` | Ekran sinhronizacije |
@@ -3031,7 +3035,8 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | Uloga | Obuhvat |
 |---|---|
 | `uprava` | Sve dozvole |
-| `finansije` („Finansijska analitika“) | Pregled, knjiženja, izvoz — **ograničeno dozvoljenim centrima** |
+| `finansije` („Finansijska analitika“) | Od 08.10.2026. **samo** Finansijski pregled, Šifre posla sa celom karticom posla i Banke (`dashboard`, `kartica_posla`, `bank_list`, `bank_detail`) — bez Mesečnog pregleda, Konta, Knjiženja i izvoza; `sync_permission_codes` skida ostale dozvole Finansija sa uloge. Obuhvat po dodeli uloge |
+| `rukovodilac` | Pregled Finansija za svoj čvor, uz Mesečni pregled, Konta, Knjiženja i izvoz |
 
 > **[P] Od 28.09.2026. Finansije su na registru organizacije** (plan prelaska, korak 5;
 > prekidač `PRAVA_PO_REGISTRU["finansije"]` u `ims_erp/settings/base.py`):
@@ -3091,7 +3096,7 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | Knjiženje bez šifarnika | **Ne odbacuje se** — prikazuje se kao neraspoređeno |
 | Prazna šifra posla u toku gotovine | Pripisuje se **`111111`**, po pravilu procedure |
 | Prazna šifra u prihodima i rashodima | **Ne preimenuje se** |
-| **Neaktivna šifra posla** (od 25.09.2026.) [P] | Izveštaj **po šiframa posla** i kartica posla prikazuju samo aktivne šifre iz registra organizacije; zbir ispod tabele računa se nad istim knjiženjima. Izveštaj po centrima, kontima i mesecima ostaje ceo, pa se za stariji period zbirovi dva pregleda mogu razlikovati. Šifra je neaktivna kad nema prometa u poslednjih 12 meseci |
+| **Neaktivna šifra posla** (od 25.09.2026.) [P] | Izveštaj **po šiframa posla**, kartica posla, grafik i rang šifara na Finansijskom pregledu i Vizuelni pregled izabranog centra (od 08.10.2026.) prikazuju samo aktivne šifre iz registra organizacije; zbir ispod tabele i zbir Vizuelnog pregleda centra računaju se nad istim knjiženjima, a udeo na Finansijskom pregledu ostaje u odnosu na ukupno za period. Izveštaj po centrima, kontima i mesecima ostaje ceo, pa se za stariji period zbirovi dva pregleda mogu razlikovati. Šifra je neaktivna kad nema prometa u poslednjih 12 meseci |
 
 ---
 
@@ -3150,7 +3155,7 @@ informacija prikazuje se zasebno samo kada se poklapa naziv iz izvora.
 #### Dozvole i isporuka
 
 `bank_list` i `bank_detail` dodeljuju se ulozi Finansijska analitika, uz postojeće
-ograničenje knjiženja po centrima. Ograničen prikaz jasno kaže da nije stanje cele
+ograničenje knjiženja po obuhvatu. Ograničen prikaz jasno kaže da nije stanje cele
 banke. Unos/izmena kontakata, veza i predaja traže svoju rutu i `finansije:view_all`.
 Menice dodatno traže prava postojećih evidencija; predaja traži oba prava čitanja.
 Uloga Uprava dobija nove kodove kroz postojeću sinhronizaciju dozvola.
@@ -5671,7 +5676,7 @@ Isplate račun šalju; Knjiženje ga proknjižava ili vraća na doradu. U knjigo
 | Ekran | Adresa | Šta radi |
 |---|---|---|
 | **Fiskalni računi** | `/knjizenje/` | Pločice (čeka knjiženje, vraćeno na doradu, proknjiženo ovog meseca), filteri (status, vrsta računa, period računa, period knjiženja), pretraga (i po broju naloga za knjiženje), DataTables sa stranom sa servera. Označeni računi se knjiže **zajedno** — isti datum, nalog za knjiženje i napomena. Excel izvoz prati filtere. |
-| Detalj računa | `/knjizenje/racun/<id>/` | Stavke, podaci sa računa i iz Isplata (šifra posla, putni nalog ili interni broj i napomena), knjiženje jednog računa, vraćanje na doradu, poništavanje knjiženja i istorija. |
+| Detalj računa | `/knjizenje/racun/<id>/` | Potpuni podaci o računu, isti kao u Isplatama i Nabavci (od 08.10.2026., zajednički `nabavka/_fiskalni_*`): upozorenja (nije na IMS, refundacija, zbir stavki), prodavac, prodajno mesto i adresa, ID kupca, brojač, kasir i ESIR, stavke sa osnovicom i PDV-om, tekst računa; podaci iz Isplata (šifra posla, putni nalog sa vozilom i šifrom naloga ili interni broj i napomena), knjiženje jednog računa, vraćanje na doradu, poništavanje knjiženja i istorija. |
 
 ### 2. Tok [P]
 

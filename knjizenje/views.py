@@ -20,6 +20,7 @@ from django.views.generic import TemplateView
 from core.exporting import rows_to_xlsx_response
 from core.mixins import RolePermissionRequiredMixin, role_permission_required, user_has_role_permission
 from isplate import tabela
+from nabavka.services import fiskalni
 from nabavka.views.fiskalni import _iznos
 
 from . import services
@@ -44,7 +45,7 @@ def _ko(korisnik):
 def _racuni():
     return services.racuni_knjizenja().select_related(
         "knjizenje", "knjizenje__poslao", "knjizenje__knjizio", "knjizenje__vratio", "putni_nalog",
-        "putni_nalog__employee", "job_code", "proknjizio")
+        "putni_nalog__employee", "putni_nalog__vehicle", "putni_nalog__job_code", "job_code", "proknjizio", "created_by")
 
 
 def filtriraj(qs, g):
@@ -214,7 +215,8 @@ def racun(request, pk):
     z = services.zapis(r)
     return render(request, "knjizenje/racun.html", {
         "title": f"Knjiženje · {r.broj_racuna}", "sidebar_template": SIDEBAR, "racun": r, "z": z, "stanje": st,
-        "stavke": list(r.stavke.all()),
+        # Isti podaci o računu kao u Isplatama i Nabavci (podaci, stavke, tekst računa, upozorenja).
+        "upozorenja": fiskalni.upozorenja(r),
         "dogadjaji": list(z.dogadjaji.select_related("korisnik")) if z else [],
         "moze_knjiziti": st == Status.POSLATO and user_has_role_permission(user, "knjizenje:proknjizi"),
         "moze_vratiti": st == Status.POSLATO and user_has_role_permission(user, "knjizenje:vrati"),

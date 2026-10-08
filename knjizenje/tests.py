@@ -99,6 +99,12 @@ class KnjizenjeTests(TestCase):
         self.assertContains(detalj, "43/2026-31")
         self.assertContains(detalj, "Proknjiži")
         self.assertContains(detalj, "Vrati na doradu")
+        # Potpuni podaci o računu, kao u Isplatama i Nabavci: kasir i ESIR, tekst računa, upozorenja.
+        self.assertContains(detalj, "kasir.test · 644/20.1")
+        self.assertContains(detalj, "Tekst računa")
+        self.assertContains(detalj, "Касир:")
+        self.assertContains(detalj, "Račun NIJE izdat na IMS")
+        self.assertContains(detalj, "Šifra posla naloga")
         self.client.post(reverse("knjizenje:proknjizi"), {"racuni": [racun.pk], "datum": "2026-10-07", "broj_naloga": "TN-1",
                                                           "nazad": reverse("knjizenje:racun", args=[racun.pk])})
         detalj = self.client.get(reverse("knjizenje:racun", args=[racun.pk]))

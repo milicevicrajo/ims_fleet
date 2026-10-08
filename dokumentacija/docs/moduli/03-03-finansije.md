@@ -213,7 +213,10 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 
 | Dozvola | Šta omogućava |
 |---|---|
-| `finansije:dashboard` | Pregled, izveštaji, kartica posla |
+| `finansije:dashboard` | Finansijski pregled, vizuelni pregled, izveštaj po centrima i po šiframa posla, kartica posla |
+| `finansije:mesecni_pregled` | Mesečni pregled (`report?group=month`) — od 08.10.2026. |
+| `finansije:konta` | Konta (`report?group=account`) i veza „Konta posla” — od 08.10.2026. |
+| `finansije:kartica_posla` | Od 08.10.2026.: **sve tabele kartice posla** — vozila, zaduženja vozila, zaposleni (iz zarada), putni nalozi i potraživanja — za šifru iz obuhvata Finansija, **bez** dozvola i obuhvata Flote, Kadrova i Potraživanja. Ne otvara ekrane tih modula: veza ka kartici partnera u Potraživanjima prikazuje se samo uz njihovu dozvolu i obuhvat |
 | `finansije:ledger` | Knjiženja |
 | `finansije:export` | Izvoz u Excel i PDF (svi ekrani; uz to treba i pravo na sam ekran) |
 | `finansije:sync_status` | Ekran sinhronizacije |
@@ -222,7 +225,8 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | Uloga | Obuhvat |
 |---|---|
 | `uprava` | Sve dozvole |
-| `finansije` („Finansijska analitika“) | Pregled, knjiženja, izvoz — **ograničeno dozvoljenim centrima** |
+| `finansije` („Finansijska analitika“) | Od 08.10.2026. **samo** Finansijski pregled, Šifre posla sa celom karticom posla i Banke (`dashboard`, `kartica_posla`, `bank_list`, `bank_detail`) — bez Mesečnog pregleda, Konta, Knjiženja i izvoza; `sync_permission_codes` skida ostale dozvole Finansija sa uloge. Obuhvat po dodeli uloge |
+| `rukovodilac` | Pregled Finansija za svoj čvor, uz Mesečni pregled, Konta, Knjiženja i izvoz |
 
 > **[P] Od 28.09.2026. Finansije su na registru organizacije** (plan prelaska, korak 5;
 > prekidač `PRAVA_PO_REGISTRU["finansije"]` u `ims_erp/settings/base.py`):
@@ -282,7 +286,7 @@ postojeća metodologija (`finansije-metodologija-obracuna.md`, uklonjena 18.09.2
 | Knjiženje bez šifarnika | **Ne odbacuje se** — prikazuje se kao neraspoređeno |
 | Prazna šifra posla u toku gotovine | Pripisuje se **`111111`**, po pravilu procedure |
 | Prazna šifra u prihodima i rashodima | **Ne preimenuje se** |
-| **Neaktivna šifra posla** (od 25.09.2026.) [P] | Izveštaj **po šiframa posla** i kartica posla prikazuju samo aktivne šifre iz registra organizacije; zbir ispod tabele računa se nad istim knjiženjima. Izveštaj po centrima, kontima i mesecima ostaje ceo, pa se za stariji period zbirovi dva pregleda mogu razlikovati. Šifra je neaktivna kad nema prometa u poslednjih 12 meseci |
+| **Neaktivna šifra posla** (od 25.09.2026.) [P] | Izveštaj **po šiframa posla**, kartica posla, grafik i rang šifara na Finansijskom pregledu i Vizuelni pregled izabranog centra (od 08.10.2026.) prikazuju samo aktivne šifre iz registra organizacije; zbir ispod tabele i zbir Vizuelnog pregleda centra računaju se nad istim knjiženjima, a udeo na Finansijskom pregledu ostaje u odnosu na ukupno za period. Izveštaj po centrima, kontima i mesecima ostaje ceo, pa se za stariji period zbirovi dva pregleda mogu razlikovati. Šifra je neaktivna kad nema prometa u poslednjih 12 meseci |
 
 ---
 
@@ -341,7 +345,7 @@ informacija prikazuje se zasebno samo kada se poklapa naziv iz izvora.
 ### Dozvole i isporuka
 
 `bank_list` i `bank_detail` dodeljuju se ulozi Finansijska analitika, uz postojeće
-ograničenje knjiženja po centrima. Ograničen prikaz jasno kaže da nije stanje cele
+ograničenje knjiženja po obuhvatu. Ograničen prikaz jasno kaže da nije stanje cele
 banke. Unos/izmena kontakata, veza i predaja traže svoju rutu i `finansije:view_all`.
 Menice dodatno traže prava postojećih evidencija; predaja traži oba prava čitanja.
 Uloga Uprava dobija nove kodove kroz postojeću sinhronizaciju dozvola.

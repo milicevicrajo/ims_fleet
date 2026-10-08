@@ -89,11 +89,21 @@ def collect_mobilni_permission_codes():
     return collect_url_pattern_names(mobilni_urls.urlpatterns, prefix="mobilni")
 
 
+# Mesecni pregled i Konta imaju sopstvene dozvole (od 08.10.2026.); pregled i sifre posla otvara `finansije:dashboard`.
+# `kartica_posla`: sve tabele kartice posla (vozila, zaduzenja, zaposleni, putni nalozi, potrazivanja) za sifru u
+# obuhvatu Finansija, bez dozvola i obuhvata Flote, Kadrova i Potrazivanja.
+FINANSIJE_IZVESTAJI_CODES = ("finansije:mesecni_pregled", "finansije:konta", "finansije:kartica_posla")
+# Uloga Finansijska analitika (od 08.10.2026.): samo Finansijski pregled, Sifre posla (sa celom karticom posla) i Banke.
+FINANSIJSKA_ANALITIKA_CODES = ("finansije:dashboard", "finansije:kartica_posla", "finansije:bank_list",
+                               "finansije:bank_detail")
+
+
 def sync_finance_permissions():
     """Register finance access without modifying assignments in other applications."""
     from finansije import urls as finansije_urls
 
-    codes = collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije") + ["finansije:view_all"]
+    codes = (collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije") + ["finansije:view_all"]
+             + list(FINANSIJE_IZVESTAJI_CODES))
     finance_role, _ = Role.objects.get_or_create(
         slug="finansije", defaults={"name": "Finansijska analitika", "description": "Finansijski izveštaji za dodeljene centre."},
     )
@@ -101,8 +111,11 @@ def sync_finance_permissions():
     for code in codes:
         permission, _ = PermissionCode.objects.get_or_create(code=code)
         RolePermission.objects.get_or_create(role=management, permission=permission)
-        if code in ("finansije:dashboard", "finansije:ledger", "finansije:export", "finansije:bank_list", "finansije:bank_detail"):
+        if code in FINANSIJSKA_ANALITIKA_CODES:
             RolePermission.objects.get_or_create(role=finance_role, permission=permission)
+    # Ostale dozvole Finansija se skidaju sa uloge (Knjizenja, izvoz, ...); dozvole drugih modula ostaju.
+    RolePermission.objects.filter(role=finance_role, permission__code__startswith="finansije:").exclude(
+        permission__code__in=FINANSIJSKA_ANALITIKA_CODES).delete()
     return codes
 
 
@@ -127,6 +140,7 @@ def collect_permission_codes():
     codes.update(collect_knjizenje_permission_codes())
     codes.update(collect_url_pattern_names(finansije_urls.urlpatterns, prefix="finansije"))
     codes.add("finansije:view_all")
+    codes.update(FINANSIJE_IZVESTAJI_CODES)
     from potrazivanja.permissions import PERMISSIONS
     codes.update(f"potrazivanja:{code}" for code in PERMISSIONS)
     return sorted(codes)
@@ -141,6 +155,7 @@ PRAVNA_KADROVI_CODES = {'hr:analitika', 'hr:analitika_view_all', 'hr:rodna_ravno
 RUKOVODILAC_CODES = (
     "finansije:dashboard", "finansije:report", "finansije:vizuelni_pregled", "finansije:jobs_data",
     "finansije:job_card", "finansije:job_table", "finansije:ledger", "finansije:export",
+    "finansije:mesecni_pregled", "finansije:konta",
     "dashboard", "vehicle_list", "vehicle_data", "vehicle_detail", "vehicle_assessment_detail",
     "fleet_analytics", "center_statistics",
     "putninalog_list", "putninalog_data", "putninalog_detail", "putninalog_print", "putninalog_print_list",

@@ -5,7 +5,7 @@
 {% block hero_description %}{% if group == 'job' %}Prihodi, rashodi i neto rezultat svakog posla.{% elif group == 'account' %}Iznosi i učešća po kontima za izabrani period.{% elif group == 'month' %}Prihodi, rashodi i rezultat po mesecima.{% else %}Prihodi, rashodi i rezultat po organizacionim jedinicama.{% endif %}{% endblock %}
 {% block hero_actions %}
   {% if job_detail_url %}<a class="btn btn-light" href="{{ job_detail_url }}">Detalj šifre {{ form.cleaned_data.job }}</a>{% endif %}
-  <a class="btn btn-light" href="{% url 'finansije:ledger' %}?{{ params }}"><i class="mdi mdi-format-list-bulleted me-1" aria-hidden="true"></i>Pregled knjiženja</a>
+  {% if can_ledger %}<a class="btn btn-light" href="{% url 'finansije:ledger' %}?{{ params }}"><i class="mdi mdi-format-list-bulleted me-1" aria-hidden="true"></i>Pregled knjiženja</a>{% endif %}
   {% if valid %}{% include "finansije/_izvoz.html" with upit=params %}{% endif %}
 {% endblock %}
 {% block finance_content %}
@@ -32,14 +32,14 @@
         <tbody>
         {% for row in rows %}
           <tr>
-            <td class="text-nowrap" data-order="{{ row.code }}">{% if row.drill_url %}<a href="{{ row.drill_url }}" title="Otvori sledeći nivo konta">{{ row.code }} <i class="mdi mdi-chevron-right" aria-hidden="true"></i></a>{% else %}<a href="{{ row.card_url|default:row.ledger_url }}">{{ row.code|default:"Neraspoređeno" }}</a>{% endif %}</td>
+            <td class="text-nowrap" data-order="{{ row.code }}">{% if row.drill_url %}<a href="{{ row.drill_url }}" title="Otvori sledeći nivo konta">{{ row.code }} <i class="mdi mdi-chevron-right" aria-hidden="true"></i></a>{% elif row.card_url %}<a href="{{ row.card_url }}">{{ row.code|default:"Neraspoređeno" }}</a>{% elif can_ledger %}<a href="{{ row.ledger_url }}">{{ row.code|default:"Neraspoređeno" }}</a>{% elif group == 'center' %}<a href="{{ row.report_url }}">{{ row.code|default:"Neraspoređeno" }}</a>{% else %}{{ row.code|default:"Neraspoređeno" }}{% endif %}</td>
             <td>{{ row.label }}</td>{% if group == 'job' %}<td>{{ row.center|default:"—" }}</td>{% endif %}
             <td class="text-end text-nowrap" data-order="{{ row.revenue|unlocalize }}">{{ row.revenue|amount_badge }}</td>
             <td class="text-end text-nowrap" data-order="{{ row.expense|unlocalize }}">{{ row.expense|amount_badge }}</td>
             <td class="text-end text-nowrap" data-order="{{ row.result|unlocalize }}">{{ row.result|amount_badge }}</td>
             <td class="text-end" data-order="{{ row.revenue_share|default_if_none:''|unlocalize }}">{% if row.revenue_share != None %}{{ row.revenue_share|floatformat:2 }}%{% else %}—{% endif %}</td>
             <td class="text-end" data-order="{{ row.expense_share|default_if_none:''|unlocalize }}">{% if row.expense_share != None %}{{ row.expense_share|floatformat:2 }}%{% else %}—{% endif %}</td>
-            <td class="text-nowrap"><a href="{{ row.ledger_url }}">Knjiženja ({{ row.count }})</a>{% if group == 'center' %}<br><a href="{{ row.report_url }}">Šifre posla</a>{% elif group == 'job' %}<br><a href="{{ row.report_url }}">Konta posla</a>{% endif %}</td>
+            <td class="text-nowrap">{% if can_ledger %}<a href="{{ row.ledger_url }}">Knjiženja ({{ row.count }})</a><br>{% endif %}{% if group == 'center' %}<a href="{{ row.report_url }}">Šifre posla</a>{% elif group == 'job' and can_konta %}<a href="{{ row.report_url }}">Konta posla</a>{% endif %}</td>
           </tr>
         {% endfor %}
         </tbody>

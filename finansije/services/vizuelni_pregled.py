@@ -16,7 +16,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db.models import Max
 from django.db.models.functions import ExtractMonth, ExtractYear, Substr
 
-from .reports import ZERO, expressions
+from .reports import ZERO, expressions, samo_aktivne_sifre
 
 # (ključ, naziv, početci konta) — prvo pogođeno pravilo određuje vrstu direktnog rashoda.
 STRUKTURA = (
@@ -77,6 +77,9 @@ def vizuelni_pregled(entries, centar=None, centri_zt=None, zt_po_jedinici=None):
     from fleet.support.registar import Registar
 
     registar = Registar()
+    if centar is not None:
+        # Po šiframa posla — samo aktivne šifre, kao izveštaj po šiframa; zbir se slaže sa prikazanim šiframa.
+        entries = samo_aktivne_sifre(entries)
     ukupno = entries.aggregate(**expressions())
     ukupno["revenue"] = ukupno["revenue"] or ZERO
     ukupno["expense"] = ukupno["expense"] or ZERO

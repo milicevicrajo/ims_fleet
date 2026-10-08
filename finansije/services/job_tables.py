@@ -67,9 +67,9 @@ def vehicle_data(code, start, end):
                      for r in assigned_vehicles(code, start, end)]}
 
 
-def custody_data(request, code, start, end):
+def custody_data(request, code, start, end, po_sifri=False):
     rows = []
-    for item in vehicle_custody(request, code, start, end):
+    for item in vehicle_custody(request, code, start, end, po_sifri=po_sifri):
         order = item["order"]
         status = "Zatvoreno" if order.closed_at else "Otvoreno"
         badge = format_html('<span class="badge {}">{}</span>',
@@ -103,10 +103,14 @@ def employee_data(code, start, end):
     }}
 
 
-def travel_data(request, code, start, end):
+def travel_data(request, code, start, end, po_sifri=False):
+    """`po_sifri`: obuhvat je sama šifra (`finansije:kartica_posla`), ne obuhvat Flote."""
+    from fleet.models import PutniNalog
     from fleet.views.putni_nalozi import _putninalog_base_qs
     rows = []
-    orders = _putninalog_base_qs(request).filter(job_code__code=code, travel_date__range=(start, end)).order_by("travel_date", "pk")
+    base = (PutniNalog.objects.filter(storniran=False).select_related("job_code", "employee", "vehicle") if po_sifri
+            else _putninalog_base_qs(request))
+    orders = base.filter(job_code__code=code, travel_date__range=(start, end)).order_by("travel_date", "pk")
     for item in orders:
         employee = str(item.employee) if item.employee else item.other_employee_name or "—"
         vehicle = f"{item.vehicle.brand} {item.vehicle.model} · {item.vehicle.chassis_number}" if item.vehicle else item.other_vehicle or "—"
@@ -115,8 +119,14 @@ def travel_data(request, code, start, end):
     return {"data": rows}
 
 
-def collection_data(user, code):
-    report = job_balances(user, code, company=getattr(settings, 'FINANSIJE_COMPANY', 1))
+def collection_data(user, code, po_sifri=False):
+    from core.mixins import user_has_role_permission
+    from potrazivanja.access import can_view_job
+
+    company = getattr(settings, 'FINANSIJE_COMPANY', 1)
+    report = job_balances(user, code, company=company, po_sifri=po_sifri)
+    # Kartica partnera je ekran Potraživanja: veza samo uz njihovu dozvolu i obuhvat.
+    sa_vezom = user_has_role_permission(user, 'potrazivanja:partner_detail') and can_view_job(user, code, company)
     snapshot = report['snapshot']
     if not snapshot:
         return {'data': [], 'available': False, 'footer': {
@@ -125,7 +135,7 @@ def collection_data(user, code):
     for record in report['rows']:
         label = f"{record['partner_code']} · {record['partner_name']}"
         url = reverse('potrazivanja:partner_detail', args=[record['identity_id']]) + f'?snapshot={snapshot.pk}'
-        rows.append([cell(label, format_html('<a href="{}">{}</a>', url, label)),
+        rows.append([cell(label, format_html('<a href="{}">{}</a>', url, label) if sa_vezom else label),
                      *[cell(value, format_html('<span class="receivable-amount {}">{}</span>',
                         f'receivable-tone-{tone}' if value else 'receivable-zero',
                         number_format(value, decimal_pos=2, use_l10n=True, force_grouping=True)))

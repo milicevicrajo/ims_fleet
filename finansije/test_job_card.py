@@ -166,7 +166,7 @@ class JobCardTests(TestCase):
         response = self.get_card()
         self.collections_mock.assert_not_called()
         row = self.get_table("collections").json()["data"][0]
-        self.collections_mock.assert_called_once_with(self.user, "410001", company=1)
+        self.collections_mock.assert_called_once_with(self.user, "410001", company=1, po_sifri=True)
         self.assertEqual([Decimal(c["sort"]) for c in row[1:]], list(map(Decimal, range(1, 10))))
         self.assertContains(response, "Ovaj deo se ne filtrira po izabranom mesecu")
         self.assertIn('/potrazivanja/partner/123/?snapshot=91', row[0]['display'])
@@ -223,6 +223,13 @@ class JobCardTests(TestCase):
 
     def test_custody_preserves_source_visibility(self):
         self.make_custody()
+        # Bez `finansije:kartica_posla` važi vidljivost iz Flote.
+        user = get_user_model().objects.create_user("custody-source", allowed_center_codes="41")
+        role = Role.objects.create(name="Custody source", slug="custody-source")
+        role.permissions.add(*(PermissionCode.objects.create(code=c) for c in
+                               ("finansije:dashboard", "jobcode_list", "vehicle_travel_order_list")))
+        user.roles.add(role)
+        self.client.force_login(user)
         with patch("fleet.views.vehicle_travel_orders._vehicle_travel_order_base_qs",
                    return_value=VehicleTravelOrder.objects.none()):
             self.assertEqual(self.get_table("custody").json()["data"], [])
@@ -332,6 +339,34 @@ class JobCardTests(TestCase):
         user.roles.clear()
         self.assertEqual(self.get_table("invoices").status_code, 403)
         self.assertEqual(self.get_table("internal_invoices").status_code, 403)
+
+    def test_kartica_posla_daje_sve_tabele_za_sifru_bez_dozvola_drugih_modula(self):
+        # Finansijska analitika (od 08.10.2026.): cela kartica posla za šifru iz obuhvata Finansija.
+        user = get_user_model().objects.create_user("kartica", allowed_center_codes="41")
+        role = Role.objects.create(name="Kartica posla", slug="kartica-posla")
+        role.permissions.add(PermissionCode.objects.create(code="finansije:dashboard"),
+                             PermissionCode.objects.create(code="finansije:kartica_posla"))
+        user.roles.add(role)
+        self.client.force_login(user)
+        response = self.get_card()
+        for flag in ("can_collections", "can_vehicles", "can_custody", "can_employees", "can_travel"):
+            self.assertTrue(response.context[flag], flag)
+        self.assertFalse(response.context["can_ledger"])
+        a = OrganizationalUnit.objects.create(code="410001", name="A", center="41")
+        b = OrganizationalUnit.objects.create(code="420001", name="B", center="42")
+        base = {"order_date": date(2026, 1, 31), "travel_date": date(2026, 2, 1), "travel_location": "Test",
+                "task": "Test", "number_of_days": 1, "advance_payment": Decimal("0")}
+        PutniNalog.objects.create(order_number="PN/2026-1", job_code=a, **base)
+        PutniNalog.objects.create(order_number="PN/2026-2", job_code=b, **base)
+        self.assertEqual([r[1]["sort"] for r in self.get_table("travel").json()["data"]], ["PN/2026-1"])
+        with patch("finansije.services.job_tables.payroll_employees", return_value={
+                "rows": [(2, 12, "Radnik", 1)], "closed_months": [2], "open_months": []}):
+            self.assertEqual(self.get_table("employees").json()["data"][0][2]["sort"], "Radnik")
+        for table in ("vehicles", "custody", "collections"):
+            self.assertEqual(self.get_table(table).status_code, 200, table)
+        self.collections_mock.assert_called_once_with(user, "410001", company=1, po_sifri=True)
+        for table in ("vehicles", "custody", "employees", "travel", "collections"):
+            self.assertEqual(self.get_table(table, job="420001").status_code, 404, table)  # šifra van obuhvata
 
     def test_ajax_rejects_invalid_periods_and_unknown_tables(self):
         self.assertEqual(self.get_table("bad").status_code, 404)

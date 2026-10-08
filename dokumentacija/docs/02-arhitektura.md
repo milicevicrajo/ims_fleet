@@ -322,7 +322,7 @@ U Finansijama prazna lista dozvoljenih centara **nije** globalan pristup. [P]
 | `blagajna` | Blagajna | Ceo modul Isplate |
 | `pravna` | Pravna služba | Pravna služba + modul Ugovori |
 | `mobilni` | Mobilni | Ceo modul Mobilni |
-| `finansije` | Finansijska analitika | `dashboard`, `ledger`, `export` |
+| `finansije` | Finansijska analitika | Finansijski pregled, Šifre posla i Banke (`dashboard`, `bank_list`, `bank_detail`; od 08.10.2026.) |
 | `pregled-naplate` | Pregled naplate | Pregledi i izvozi Naplate, bez izmena |
 | `zahtev` | Zahtev | Kreiranje zahteva nabavke i štampa |
 | `sekretarijat` | Sekretarijat | Zaposleni i putni nalozi |
