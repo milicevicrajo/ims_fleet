@@ -79,6 +79,11 @@ class OcitavanjeTests(TestCase):
         self.assertEqual(z.pfr_vreme, datetime(2026, 9, 18, 11, 43, 41, 0, tzinfo=dt_timezone.utc).replace(
             microsecond=z.pfr_vreme.microsecond))
 
+    def test_id_kupca_dopunjen_nul_bajtovima(self):
+        # NIS (MWVM8PN5-MWVM8PN5-28938): osam NUL bajtova ispred `10:PIB` — racun je ipak izdat na IMS.
+        z = fiskalni.ocitaj_link(napravi_link("\x00" * 8 + "10:100223617"))
+        self.assertEqual((z.id_kupca, z.pib_kupca), ("10:100223617", "100223617"))
+
     def test_popravka_srpskog_rasporeda_tastature(self):
         for pokvaren in (us_na_srpsku_latinicu(LINK), us_na_cirilicu(LINK)):
             with self.subTest(pocetak=pokvaren[:12]):

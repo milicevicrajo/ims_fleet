@@ -101,7 +101,8 @@ def _dekodiraj(vl):
     vrsta_racuna, vrsta_transakcije = b[i], b[i + 1]
     i += 2
     duzina = b[i]
-    id_kupca = b[i + 1:i + 1 + duzina].decode("utf-8", "replace")
+    # Neke kase (NIS) dopunjuju ID kupca praznim (NUL) bajtovima ispred oznake: `\x00…\x0010:100223617`.
+    id_kupca = b[i + 1:i + 1 + duzina].decode("utf-8", "replace").replace("\x00", "").strip()
     return dict(zatrazio=zatrazio, potpisao=potpisao, brojac_ukupno=brojac_ukupno, brojac_vrste=brojac_vrste,
                 iznos=(Decimal(iznos) / Decimal(10000)).quantize(Decimal("0.01")),
                 pfr_vreme=datetime.fromtimestamp(ms / 1000, tz=dt_timezone.utc),
