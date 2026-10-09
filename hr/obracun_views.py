@@ -40,7 +40,11 @@ def work_time_sheet_csv(request, pk):
 @login_required
 @role_permission_required()
 def work_time_sheets_csv(request):
-    """Sve radne liste meseca za radnike iz obuhvata korisnika."""
+    """Sve radne liste meseca za radnike iz obuhvata korisnika; uz `centar` i `status` — samo filtrirane
+    (kao na Pregledu radnih lista)."""
+    from .models import WorkTimeSheet
+    from .radne_liste_views import zaposleni_centra
+
     br_obr = _br_obr(request)
     danas = timezone.localdate()
     try:
@@ -49,5 +53,11 @@ def work_time_sheets_csv(request):
         return HttpResponseBadRequest("Neispravan period.")
     if br_obr is None or not (2000 <= godina <= 2100 and 1 <= mesec <= 12):
         return HttpResponseBadRequest("Upišite broj obračuna (1–99) i ispravan period.")
-    redovi, upozorenja = obracun_csv.stavke(obracun_csv.listovi_meseca(visible_employees(request.user), godina, mesec), br_obr)
-    return _odgovor(f"obracun_{godina}_{mesec:02d}_obr{br_obr}_svi.csv", redovi, upozorenja)
+    centar, status = (request.GET.get("centar") or "").strip(), request.GET.get("status", "")
+    liste = obracun_csv.listovi_meseca(zaposleni_centra(visible_employees(request.user), centar), godina, mesec)
+    if status in WorkTimeSheet.Status.values:
+        liste = liste.filter(status=status)
+    filtrirano = bool(centar or status in WorkTimeSheet.Status.values)
+    redovi, upozorenja = obracun_csv.stavke(liste, br_obr)
+    sufiks = "_".join(d for d in ("c" + centar if centar else "", status if status in WorkTimeSheet.Status.values else "") if d)
+    return _odgovor(f"obracun_{godina}_{mesec:02d}_obr{br_obr}_{sufiks if filtrirano else 'svi'}.csv", redovi, upozorenja)

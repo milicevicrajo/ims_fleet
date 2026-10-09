@@ -123,6 +123,34 @@ class PredlogTests(PredlogTestBase):
         self.assertIsNone(rezultat['redovi'][0]['vrsta_id'])
         self.assertIn('Bolovanje: vrsta nije dostupna', ' '.join(rezultat['napomene']))
 
+    def test_putni_nalog_u_drugom_redu_na_sifri_naloga(self):
+        # 09.10.2026.: dani putnog naloga idu u red 2, na šifru posla naloga — i kad tog dana ima prolaza.
+        from types import SimpleNamespace
+        teren = OrganizationalUnit.objects.create(code='436222', name='Strucni nadzor', center='43')
+        nalog = SimpleNamespace(job_code_id=teren.pk, job_code=teren)
+        rezultat = self.maj(putni_nalozi_po_danu={date(2026, 5, 4): [nalog], date(2026, 5, 8): [nalog]})
+        self.assertEqual([(r['naziv'], r['sifra']) for r in rezultat['redovi']][:2],
+                         [('Redovan rad', '430'), ('Putni nalog', '436222')])
+        redovan, putni = rezultat['redovi'][:2]
+        self.assertEqual(redovan['sati'], {'5': 8})
+        self.assertEqual(putni['sati'], {'4': 8, '8': 8})
+        self.assertEqual(putni['vrsta_id'], self.vrste['redovan_rad'].pk)
+        # nalog na podrazumevanoj šifri ostaje u redu redovnog rada
+        isti = SimpleNamespace(job_code_id=self.unit.pk, job_code=self.unit)
+        rezultat = self.maj(putni_nalozi_po_danu={date(2026, 5, 8): [isti]})
+        self.assertEqual([r['naziv'] for r in rezultat['redovi']].count('Putni nalog'), 0)
+        self.assertEqual(rezultat['redovi'][0]['sati'], {'4': 8, '5': 8, '8': 8})
+
+    @patch("hr.views.get_clock_events", return_value=[])
+    def test_prazna_lista_odmah_ima_podrazumevanu_sifru_u_prvom_redu(self, _prolazi):
+        self.client.force_login(get_user_model().objects.create_user("sifra-prvi-red", password="x", employee=self.employee))
+        forme = self.client.get(reverse("hr:work_time_sheet"), {"month": 6, "year": 2026}).context["line_formset"].forms
+        self.assertEqual(forme[0]["organizational_unit"].value(), self.unit.pk)
+        self.assertIsNone(forme[1]["organizational_unit"].value())
+        WorkTimeSheet.objects.filter(employee=self.employee, year=2026, month=6).update(status=WorkTimeSheet.Status.SUBMITTED)
+        forme = self.client.get(reverse("hr:work_time_sheet"), {"month": 6, "year": 2026}).context["line_formset"].forms
+        self.assertIsNone(forme[0]["organizational_unit"].value())  # samo prazna lista u pripremi
+
     def test_bez_prolazaka_ostaju_putni_nalog_bolovanje_i_praznici(self):
         rezultat = self.maj(prolazi_po_danu={}, prolazi_ucitani=False)
         redovan = next(red for red in rezultat['redovi'] if red['kljuc'] == 'redovan_rad')

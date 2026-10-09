@@ -1,5 +1,6 @@
 """Kadrovi → Pregled radnih lista (od 09.10.2026.): radne liste meseca za radnike iz obuhvata, kontrola, odobravanje
-i CSV za obračun zarada. Podrazumevano prethodni mesec (tekući se još popunjava) i obračun broj 3."""
+i CSV za obračun zarada. Podrazumevano prethodni mesec (tekući se još popunjava), status Predato i obračun broj 3.
+Filter centra ide po čvoru registra zaposlenog (`Employee.org_node`: centar i njegove jedinice)."""
 import calendar
 from datetime import date
 
@@ -42,6 +43,33 @@ def _period(g):
     return godina, mesec
 
 
+def centri_registra():
+    """Centri registra za izbor: (oznaka, naziv)."""
+    from organizacija.models import OrgNode, OrgNodeVersion
+
+    return list(OrgNodeVersion.objects.filter(valid_to__isnull=True, node__level=OrgNode.LEVEL_CENTER, node__company=1)
+                .order_by("full_code").values_list("full_code", "name"))
+
+
+def zaposleni_centra(zaposleni, oznaka):
+    """Zaposleni čiji je čvor registra centar `oznaka` ili neka njegova jedinica."""
+    from organizacija.models import OrgNode, OrgNodeVersion
+    from organizacija.services.prava import Obuhvat
+    from organizacija.services.zaposleni import cvorovi_obuhvata
+
+    if not oznaka:
+        return zaposleni
+    centar = (OrgNodeVersion.objects.filter(valid_to__isnull=True, node__level=OrgNode.LEVEL_CENTER, full_code=oznaka)
+              .values_list("node_id", flat=True).first())
+    return zaposleni.filter(org_node_id__in=cvorovi_obuhvata(Obuhvat(centri={centar}))) if centar else zaposleni.none()
+
+
+def status_filtera(g):
+    """Podrazumevano Predato; „sve" — svi statusi."""
+    status = g.get("status", WorkTimeSheet.Status.SUBMITTED)
+    return status if status in STATUSI else "sve"
+
+
 def _sati(lista):
     fond = ostalo = 0
     for red in lista.lines.all():
@@ -66,8 +94,9 @@ class RadneListePregledView(RolePermissionRequiredMixin, LoginRequiredMixin, Tem
         ctx = super().get_context_data(**kwargs)
         g, user = self.request.GET, self.request.user
         godina, mesec = _period(g)
-        status = g.get("status", "")
-        vidljivi = visible_employees(user)
+        status = status_filtera(g)
+        centar = (g.get("centar") or "").strip()
+        vidljivi = zaposleni_centra(visible_employees(user), centar)
         liste = {s.employee_id: s for s in obracun_csv.listovi_meseca(vidljivi, godina, mesec)}
         zaposleni = (vidljivi.filter(Q(is_active=True) | Q(pk__in=list(liste)))
                      .exclude(date_of_joining__gt=date(godina, mesec, calendar.monthrange(godina, mesec)[1]))
@@ -85,7 +114,7 @@ class RadneListePregledView(RolePermissionRequiredMixin, LoginRequiredMixin, Tem
             lista = liste.get(z.pk)
             st = lista.status if lista else "nema"
             brojevi[st] += 1
-            if status and st != status:
+            if status != "sve" and st != status:
                 continue
             fond = pravila.fond_sati(godina, mesec, z.date_of_joining)
             red = {"zaposleni": z, "lista": lista, "status": st, "status_naziv": STATUSI[st], "fond": fond}
@@ -101,6 +130,8 @@ class RadneListePregledView(RolePermissionRequiredMixin, LoginRequiredMixin, Tem
         ctx.update(
             title="Pregled radnih lista", sidebar_template="sidebar_kadrovi.html", current_app="kadrovi",
             godina=godina, mesec=mesec, mesec_naziv=MESECI[mesec - 1], status=status, q=q, br_obr=br_obr, redovi=redovi,
+            centar=centar, centri=centri_registra(),
+            centar_naziv=dict(centri_registra()).get(centar, ""),
             brojevi=[(k, v, brojevi[k]) for k, v in STATUSI.items()], ukupno=sum(brojevi.values()),
             meseci=list(enumerate(MESECI, start=1)), godine=range(danas.year - 2, danas.year + 1),
             fond=pravila.fond_sati(godina, mesec),

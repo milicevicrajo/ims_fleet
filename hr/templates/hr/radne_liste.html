@@ -9,7 +9,8 @@
   .rl-stats a.card.aktivna { border-color:#1f6f8b; box-shadow:0 0 0 2px rgba(31,111,139,.18); }
   .rl-stats .hr-stat-icon.nema { background:#f1f5f9; color:#475569; } .rl-stats .hr-stat-icon.draft { background:#fff4db; color:#7a4d00; }
   .rl-stats .hr-stat-icon.submitted { background:#e8f0fb; color:#174f83; } .rl-stats .hr-stat-icon.approved { background:#e7f7ef; color:#147044; }
-  .hr-list-page .rl-filter-grid { display:grid; grid-template-columns:180px 120px 200px 150px auto; justify-content:start; gap:12px; align-items:end; }
+  .hr-list-page .rl-filter-grid { display:grid; grid-template-columns:170px 110px minmax(220px, 300px) 180px 140px auto; justify-content:start; gap:12px; align-items:end; }
+  .rl-hero-akcije { display:flex; flex-wrap:wrap; gap:8px; }
   .hr-list-page .rl-filter-grid .btn { min-height:38px; }
   .hr-list-page .fleet-list-hero h1 i { margin-right:.5rem; }
   #RadneListeTable thead th { white-space:nowrap; text-align:left; }
@@ -29,17 +30,21 @@
 <div class="fleet-list-hero d-flex justify-content-between align-items-center gap-3">
   <div><div class="hr-kicker">Kadrovi · Obračun zarada</div>
     <h1><i class="mdi mdi-clipboard-text-clock-outline me-2"></i>{{ title }}</h1>
-    <p>Kontrola, odobravanje i CSV za obračun zarada. Prikaz: <strong>{{ mesec_naziv }} {{ godina }}</strong> · fond meseca <strong>{{ fond }} h</strong> (radni dani × 8) · obračun br. <strong>{{ br_obr }}</strong>.</p></div>
-  {% if can_csv_svi %}<a class="btn btn-light" data-no-preloader download href="{% url 'hr:work_time_sheets_csv' %}?year={{ godina }}&amp;month={{ mesec }}&amp;br_obr={{ br_obr }}"><i class="mdi mdi-download-multiple"></i> CSV za sve radnike</a>{% endif %}
+    <p>Kontrola, odobravanje i CSV za obračun zarada. Prikaz: <strong>{{ mesec_naziv }} {{ godina }}</strong>{% if centar %} · centar <strong>{{ centar }}{% if centar_naziv %} {{ centar_naziv }}{% endif %}</strong>{% endif %} · fond meseca <strong>{{ fond }} h</strong> (radni dani × 8) · obračun br. <strong>{{ br_obr }}</strong>.</p></div>
+  {% if can_csv_svi %}<div class="rl-hero-akcije">
+    <a class="btn btn-light" data-no-preloader download href="{% url 'hr:work_time_sheets_csv' %}?year={{ godina }}&amp;month={{ mesec }}&amp;br_obr={{ br_obr }}" title="Sve radne liste meseca, bez obzira na filtere"><i class="mdi mdi-download-multiple"></i> CSV za sve radnike</a>
+    {% if centar or status != "sve" %}<a class="btn btn-outline-light" data-no-preloader download href="{% url 'hr:work_time_sheets_csv' %}?year={{ godina }}&amp;month={{ mesec }}&amp;br_obr={{ br_obr }}&amp;centar={{ centar|urlencode }}&amp;status={% if status != 'sve' and status != 'nema' %}{{ status }}{% endif %}"
+       title="Samo radne liste po izabranom centru i statusu"><i class="mdi mdi-filter-outline"></i> CSV za filtrirane</a>{% endif %}
+  </div>{% endif %}
 </div>
 
 {% if messages %}{% for m in messages %}<div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} py-2">{{ m }}</div>{% endfor %}{% endif %}
 
 <div class="rl-stats">
-  <a class="card shadow-sm {% if not status %}aktivna{% endif %}" href="?year={{ godina }}&amp;month={{ mesec }}&amp;br_obr={{ br_obr }}">
+  <a class="card shadow-sm {% if status == 'sve' %}aktivna{% endif %}" href="?year={{ godina }}&amp;month={{ mesec }}&amp;br_obr={{ br_obr }}&amp;centar={{ centar|urlencode }}&amp;status=sve">
     <div class="hr-stat"><span class="hr-stat-icon"><i class="mdi mdi-account-group"></i></span><div><strong>{{ ukupno }}</strong><span class="hr-stat-label">Svi radnici</span></div></div></a>
   {% for kod, naziv, broj in brojevi %}
-  <a class="card shadow-sm {% if status == kod %}aktivna{% endif %}" href="?year={{ godina }}&amp;month={{ mesec }}&amp;br_obr={{ br_obr }}&amp;status={{ kod }}">
+  <a class="card shadow-sm {% if status == kod %}aktivna{% endif %}" href="?year={{ godina }}&amp;month={{ mesec }}&amp;br_obr={{ br_obr }}&amp;centar={{ centar|urlencode }}&amp;status={{ kod }}">
     <div class="hr-stat"><span class="hr-stat-icon {{ kod }}"><i class="mdi {% if kod == 'nema' %}mdi-file-hidden{% elif kod == 'draft' %}mdi-pencil-outline{% elif kod == 'submitted' %}mdi-send-check-outline{% else %}mdi-check-decagram{% endif %}"></i></span>
       <div><strong>{{ broj }}</strong><span class="hr-stat-label">{{ naziv }}</span></div></div></a>
   {% endfor %}
@@ -51,8 +56,10 @@
       <select id="rl-month" name="month" class="form-control" data-auto-filter>{% for broj, naziv in meseci %}<option value="{{ broj }}" {% if broj == mesec %}selected{% endif %}>{{ naziv }}</option>{% endfor %}</select></div>
     <div><label class="form-label" for="rl-year">Godina</label>
       <select id="rl-year" name="year" class="form-control" data-auto-filter>{% for g in godine %}<option value="{{ g }}" {% if g == godina %}selected{% endif %}>{{ g }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="rl-centar">Centar</label>
+      <select id="rl-centar" name="centar" class="form-control" data-auto-filter><option value="">Svi centri</option>{% for oznaka, naziv in centri %}<option value="{{ oznaka }}" {% if oznaka == centar %}selected{% endif %}>{{ oznaka }} · {{ naziv }}</option>{% endfor %}</select></div>
     <div><label class="form-label" for="rl-status">Status</label>
-      <select id="rl-status" name="status" class="form-control" data-auto-filter><option value="">Svi statusi</option>{% for kod, naziv, broj in brojevi %}<option value="{{ kod }}" {% if status == kod %}selected{% endif %}>{{ naziv }}</option>{% endfor %}</select></div>
+      <select id="rl-status" name="status" class="form-control" data-auto-filter><option value="sve" {% if status == 'sve' %}selected{% endif %}>Svi statusi</option>{% for kod, naziv, broj in brojevi %}<option value="{{ kod }}" {% if status == kod %}selected{% endif %}>{{ naziv }}</option>{% endfor %}</select></div>
     <div><label class="form-label" for="rl-br-obr">Broj obračuna</label>
       <input id="rl-br-obr" name="br_obr" type="number" min="1" max="99" class="form-control" value="{{ br_obr }}" data-auto-filter></div>
     <a href="{% url 'hr:radne_liste' %}" class="btn btn-outline-secondary"><i class="mdi mdi-filter-remove"></i> Poništi</a>

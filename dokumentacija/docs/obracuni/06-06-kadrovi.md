@@ -1384,11 +1384,13 @@ Za svaki **radni dan** (ponedeljak–petak) važi prvo pravilo koje se poklapa:
 | 1 | Bolovanje | 8 h, „Bolovanje“ |
 | 2 | Neradni praznik | 8 h, „Državni i verski praznik“ |
 | 3 | Krsna slava zaposlenog | 8 h, „Državni i verski praznik“ |
-| 4 | Prolazi (bar jedan par ulaz–izlaz) | **8 h, pun dan**, bez obzira na stvarno trajanje, „Redovan rad“ |
-| 5 | Putni nalog bez prolazaka | 8 h, „Redovan rad“ |
+| 4 | Putni nalog (od 09.10.2026. i kad tog dana ima prolaza) | 8 h, „Redovan rad“, na **šifri posla putnog naloga** — poseban red odmah posle redovnog rada (red 2); više naloga sa različitim šiframa — red po šifri; nalog na podrazumevanoj šifri ostaje u redu redovnog rada |
+| 5 | Prolazi (bar jedan par ulaz–izlaz) | **8 h, pun dan**, bez obzira na stvarno trajanje, „Redovan rad“ |
 
 - **Terenski dodatak** = broj dana u mesecu pokrivenih putnim nalogom, i vikendom.
-- Svi redovi dobijaju podrazumevanu šifru posla; ako je nema u šifarniku, šifra ostaje prazna.
+- Redovi osim putnih naloga dobijaju podrazumevanu šifru posla; ako je nema u šifarniku, šifra ostaje prazna.
+- **Prazna lista u pripremi** (od 09.10.2026.): prvi red odmah, i pre predloga, nudi podrazumevanu šifru posla
+  zaposlenog (upisuje se tek na „Sačuvaj“).
 - **Vikend i rad na praznik se ne predlažu** (za njih treba rešenje); navode se u napomenama.
 - Vrsta koja nije dozvoljena za vrstu primaoca zaposlenog se ne predlaže (napomena). Za redovan
   rad bez dozvoljene vrste red ostaje bez oznake vrste.

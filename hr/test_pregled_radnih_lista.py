@@ -44,6 +44,12 @@ class PregledRadnihListaTests(TestCase):
         with patch("hr.radne_liste_views.timezone.localdate", return_value=datetime.date(2026, 10, 9)):
             strana = self.client.get(reverse("hr:radne_liste"))
         self.assertEqual((strana.context["godina"], strana.context["mesec"], strana.context["br_obr"]), (2026, 9, 3))
+        # podrazumevano samo predate liste
+        self.assertEqual(strana.context["status"], "submitted")
+        self.assertEqual({r["zaposleni"].employee_code for r in strana.context["redovi"]}, {849, 850})
+        self.assertContains(strana, "CSV za filtrirane")
+        self.assertContains(strana, "status=submitted")
+        strana = self.client.get(reverse("hr:radne_liste"), {"year": 2026, "month": 9, "status": "sve"})
         redovi = {r["zaposleni"].employee_code: r for r in strana.context["redovi"]}
         self.assertEqual(redovi[849]["problemi"], [])
         self.assertEqual((redovi[849]["sati"], redovi[849]["fond"]), (176, 176))
@@ -52,6 +58,7 @@ class PregledRadnihListaTests(TestCase):
         self.assertEqual(redovi[851]["status"], "nema")
         self.assertContains(strana, reverse("hr:work_time_sheets_csv") + "?year=2026&amp;month=9&amp;br_obr=3")
         self.assertContains(strana, "<h1>", count=1)  # jedan naslov — hero
+        self.assertNotContains(strana, "CSV za filtrirane")  # bez filtera — samo „CSV za sve radnike”
         # CSV se samo preuzima — bez loadera stranice
         self.assertContains(strana, 'data-no-preloader download href="' + reverse("hr:work_time_sheets_csv"))
         self.assertContains(strana, 'data-no-preloader download href="' + reverse("hr:work_time_sheet_csv", args=[self.lista_ok.pk]))
@@ -59,6 +66,29 @@ class PregledRadnihListaTests(TestCase):
         self.assertEqual([r["zaposleni"].employee_code for r in pretraga.context["redovi"]], [850])
         self.assertContains(strana, reverse("hr:work_time_sheet_odobri", args=[self.lista_ok.pk]))
         self.assertNotContains(strana, reverse("hr:work_time_sheet_odobri", args=[self.lista_los.pk]))
+
+    def test_filter_centra_i_csv_za_filtrirane(self):
+        from organizacija.models import OrgNode, OrgNodeVersion
+
+        dan = datetime.date(2026, 1, 1)
+        centar = OrgNode.objects.create(company=1, level=OrgNode.LEVEL_CENTER)
+        OrgNodeVersion.objects.create(node=centar, segment="43", full_code="43", name="Centar za puteve", valid_from=dan)
+        jedinica = OrgNode.objects.create(company=1, level=OrgNode.LEVEL_UNIT)
+        OrgNodeVersion.objects.create(node=jedinica, parent=centar, segment="3", full_code="433", name="Lab", valid_from=dan)
+        drugi = OrgNode.objects.create(company=1, level=OrgNode.LEVEL_CENTER)
+        OrgNodeVersion.objects.create(node=drugi, segment="41", full_code="41", name="Materijali", valid_from=dan)
+        type(self.ok).objects.filter(pk=self.ok.pk).update(org_node=jedinica)
+        type(self.los).objects.filter(pk=self.los.pk).update(org_node=drugi)
+        strana = self.client.get(reverse("hr:radne_liste"), {"year": 2026, "month": 9, "centar": "43", "status": "sve"})
+        self.assertEqual([r["zaposleni"].employee_code for r in strana.context["redovi"]], [849])
+        self.assertIn(("43", "Centar za puteve"), strana.context["centri"])
+        self.assertContains(strana, "centar=43&amp;status=")
+        csv = self.client.get(reverse("hr:work_time_sheets_csv"), {"year": 2026, "month": 9, "br_obr": 3, "centar": "43"})
+        self.assertIn("obr3_c43.csv", csv["Content-Disposition"])
+        redovi_csv = csv.content.decode("utf-8-sig").split("\r\n")[1:-1]
+        self.assertTrue(redovi_csv and all(";849;" in r for r in redovi_csv))
+        csv = self.client.get(reverse("hr:work_time_sheets_csv"), {"year": 2026, "month": 9, "br_obr": 3, "status": "approved"})
+        self.assertEqual(csv.content.decode("utf-8-sig").split("\r\n")[1:-1], [])  # nijedna odobrena
 
     def test_odobravanje_vracanje_i_zakljucavanje(self):
         self.client.post(reverse("hr:work_time_sheet_odobri", args=[self.lista_los.pk]))

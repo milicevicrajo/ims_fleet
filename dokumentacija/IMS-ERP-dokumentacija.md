@@ -2315,7 +2315,7 @@ Vodi **zaposlene i njihovo radno vreme**:
 | Štampa evidencije prolaza (prilog radne liste) | `/hr/radna-lista/<id>/prolazi/stampa/` | Zaposleni (ista prava kao štampa radne liste) |
 | **CSV za obračun zarada** — jedan radnik (od 09.10.2026.) | `/hr/radna-lista/<id>/obracun-csv/?br_obr=<n>` | `hr:work_time_sheet_csv` (Kadrovi, Uprava); radnik iz obuhvata |
 | **CSV za obračun zarada** — svi radnici za mesec | `/hr/radne-liste/obracun-csv/?year=&month=&br_obr=` | `hr:work_time_sheets_csv`; sve radne liste meseca za radnike iz obuhvata |
-| **Pregled radnih lista** (od 09.10.2026.) | `/hr/radne-liste/` | `hr:radne_liste` — uloga **Radne liste** (`radne-liste`), Kadrovi, Uprava. Podrazumevano **prethodni mesec** i **obračun broj 3**; svi radnici iz obuhvata (aktivni i oni sa listom), status (nema liste, popunjava se, predato, odobreno — pločice su filteri), sati fonda prema fondu meseca, prekovremeni/noćni, topli obrok, **kontrola** (ista pravila kao predaja i upozorenja CSV-a); akcije: Otvori, CSV (radnik), **Odobri** (samo predata lista bez grešaka; beleži ko i kada), Vrati u pripremu; **CSV za sve** |
+| **Pregled radnih lista** (od 09.10.2026.) | `/hr/radne-liste/` | `hr:radne_liste` — uloga **Radne liste** (`radne-liste`), Kadrovi, Uprava. Podrazumevano **prethodni mesec**, status **Predato** i **obračun broj 3**; filteri: mesec, godina, **centar** (čvor registra zaposlenog — centar i njegove jedinice), status (i „Svi statusi”), broj obračuna; **CSV za sve radnike** i, uz izabran centar ili status, **CSV za filtrirane** (`…/obracun-csv/?…&centar=&status=`); svi radnici iz obuhvata (aktivni i oni sa listom), status (nema liste, popunjava se, predato, odobreno — pločice su filteri), sati fonda prema fondu meseca, prekovremeni/noćni, topli obrok, **kontrola** (ista pravila kao predaja i upozorenja CSV-a); akcije: Otvori, CSV (radnik), **Odobri** (samo predata lista bez grešaka; beleži ko i kada), Vrati u pripremu; **CSV za sve** |
 | Odobri / Vrati u pripremu | `POST /hr/radna-lista/<id>/odobri/`, `…/vrati/` | `hr:work_time_sheet_odobri`, `hr:work_time_sheet_vrati`; i na samoj radnoj listi |
 
 **Uloga Radne liste** (`radne-liste`, `sync_permission_codes` → `RADNE_LISTE_CODES` u `core/permissions.py`): pregled
@@ -14525,11 +14525,13 @@ Za svaki **radni dan** (ponedeljak–petak) važi prvo pravilo koje se poklapa:
 | 1 | Bolovanje | 8 h, „Bolovanje“ |
 | 2 | Neradni praznik | 8 h, „Državni i verski praznik“ |
 | 3 | Krsna slava zaposlenog | 8 h, „Državni i verski praznik“ |
-| 4 | Prolazi (bar jedan par ulaz–izlaz) | **8 h, pun dan**, bez obzira na stvarno trajanje, „Redovan rad“ |
-| 5 | Putni nalog bez prolazaka | 8 h, „Redovan rad“ |
+| 4 | Putni nalog (od 09.10.2026. i kad tog dana ima prolaza) | 8 h, „Redovan rad“, na **šifri posla putnog naloga** — poseban red odmah posle redovnog rada (red 2); više naloga sa različitim šiframa — red po šifri; nalog na podrazumevanoj šifri ostaje u redu redovnog rada |
+| 5 | Prolazi (bar jedan par ulaz–izlaz) | **8 h, pun dan**, bez obzira na stvarno trajanje, „Redovan rad“ |
 
 - **Terenski dodatak** = broj dana u mesecu pokrivenih putnim nalogom, i vikendom.
-- Svi redovi dobijaju podrazumevanu šifru posla; ako je nema u šifarniku, šifra ostaje prazna.
+- Redovi osim putnih naloga dobijaju podrazumevanu šifru posla; ako je nema u šifarniku, šifra ostaje prazna.
+- **Prazna lista u pripremi** (od 09.10.2026.): prvi red odmah, i pre predloga, nudi podrazumevanu šifru posla
+  zaposlenog (upisuje se tek na „Sačuvaj“).
 - **Vikend i rad na praznik se ne predlažu** (za njih treba rešenje); navode se u napomenama.
 - Vrsta koja nije dozvoljena za vrstu primaoca zaposlenog se ne predlaže (napomena). Za redovan
   rad bez dozvoljene vrste red ostaje bez oznake vrste.

@@ -750,6 +750,12 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             not sheet.meal_days and not sheet.field_allowance_days and not sheet.meal_organizational_unit_id
             and not sheet.lines.filter(filled_line).exists()
         )
+        if sheet_is_empty and sheet.status == WorkTimeSheet.Status.DRAFT and line_formset.forms:
+            # Prazna lista: prvi red odmah dobija podrazumevanu šifru posla zaposlenog (od 09.10.2026.).
+            sifra = podrazumevana_sifra(employee)
+            prvi = line_formset.forms[0]
+            if sifra and not prvi.instance.organizational_unit_id and not prvi.is_bound:
+                prvi.initial["organizational_unit"] = sifra.pk
 
         context = {
             "title": "Radna lista",
