@@ -14,7 +14,11 @@
     </div>
   </div>
   <div class="work-sheet-heading-actions">
-  {% if is_other_employee_sheet %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'employee_detail' employee.pk %}"><i class="mdi mdi-account-outline" aria-hidden="true"></i> Detalj zaposlenog</a>{% endif %}
+  {% if can_odobri and sheet.status == "submitted" and not kontrola %}<form method="post" action="{% url 'hr:work_time_sheet_odobri' sheet.pk %}" class="d-inline">{% csrf_token %}
+    <input type="hidden" name="nazad" value="{{ request.get_full_path }}"><button class="btn btn-success btn-sm"><i class="mdi mdi-check-decagram" aria-hidden="true"></i> Odobri</button></form>{% endif %}
+  {% if can_vrati and sheet.status != "draft" %}<form method="post" action="{% url 'hr:work_time_sheet_vrati' sheet.pk %}" class="d-inline" onsubmit="return confirm('Vratiti radnu listu u pripremu?');">{% csrf_token %}
+    <input type="hidden" name="nazad" value="{{ request.get_full_path }}"><button class="btn btn-outline-warning btn-sm"><i class="mdi mdi-undo" aria-hidden="true"></i> Vrati u pripremu</button></form>{% endif %}
+  {% if is_other_employee_sheet and can_employee_detail %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'employee_detail' employee.pk %}"><i class="mdi mdi-account-outline" aria-hidden="true"></i> Detalj zaposlenog</a>{% endif %}
   <form method="get" class="period-picker">
     <span class="period-label"><i class="mdi mdi-calendar-month-outline" aria-hidden="true"></i> Period</span>
     <select name="month" class="form-select form-select-sm period-select period-month-select" aria-label="Mesec">
@@ -29,9 +33,25 @@
     </select>
     <button type="submit" class="btn btn-outline-primary btn-sm">Otvori</button>
   </form>
+  {% if can_obracun_csv or can_obracun_csv_svi %}
+  <form method="get" class="period-picker obracun-csv" action="{% url 'hr:work_time_sheet_csv' sheet.pk %}"
+        title="CSV za učitavanje obračuna zarada: sif_pred, god, mesec, br_obr, rasif, elsif, sati, sif_pos">
+    <span class="period-label"><i class="mdi mdi-file-delimited-outline" aria-hidden="true"></i> Obračun</span>
+    <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
+    <input type="number" name="br_obr" min="1" max="99" required class="form-control form-control-sm" style="width:84px"
+           placeholder="br. obr." aria-label="Broj obračuna">
+    {% if can_obracun_csv %}<button type="submit" class="btn btn-outline-success btn-sm"><i class="mdi mdi-download" aria-hidden="true"></i> CSV radnik</button>{% endif %}
+    {% if can_obracun_csv_svi %}<button type="submit" class="btn btn-outline-success btn-sm" formaction="{% url 'hr:work_time_sheets_csv' %}"
+            title="Sve radne liste za {{ month_name }} {{ year }} (radnici iz vašeg obuhvata)"><i class="mdi mdi-download-multiple" aria-hidden="true"></i> CSV svi</button>{% endif %}
+  </form>
+  {% endif %}
   </div>
 </div>
 
+{% if sheet.status == "approved" %}<div class="alert alert-success py-2"><i class="mdi mdi-check-decagram"></i> Radna lista je odobrena{% if sheet.odobreno_at %} ({{ sheet.odobrio.get_full_name|default:sheet.odobrio.username }}, {{ sheet.odobreno_at|date:"d.m.Y. H:i" }}){% endif %} i više se ne menja.</div>{% endif %}
+{% if kontrola %}<div class="alert alert-warning py-2"><strong>Predata lista ne može da se odobri:</strong>{% for p in kontrola %}<div class="small">{{ p }}</div>{% endfor %}</div>{% endif %}
+{% if obracun_upozorenja %}<div class="alert alert-warning py-2"><strong><i class="mdi mdi-file-delimited-outline"></i> CSV za obračun:</strong>
+  {% for u in obracun_upozorenja %}<div class="small">{{ u }}</div>{% endfor %}</div>{% endif %}
 {% if not employee.recipient_code %}<div class="alert alert-info">Zaposlenom nije evidentirana vrsta primaoca iz HR-a. Izbor vrste rada i odsustva biće dostupan nakon povezivanja.</div>{% elif not has_work_categories %}<div class="alert alert-info">Za vrstu primaoca {{ employee.recipient_code }} nisu podešene aktivne vrste rada i odsustva. Potrebno je dopuniti veze u šifrarniku „Elementi RL“.</div>{% endif %}
 <form method="post" id="work-time-sheet-form">
   {% csrf_token %}
@@ -183,7 +203,7 @@
       </div>
 
       <div class="work-sheet-actions">
-        <div class="sheet-action-status small text-muted" id="sheet-action-status" role="status">Izmene se čuvaju klikom na „Sačuvaj“. * Topli obrok je obavezan pri predaji (0 ako ga nema).</div>
+        <div class="sheet-action-status small text-muted" id="sheet-action-status" role="status">Izmene se čuvaju klikom na „Sačuvaj“. * Topli obrok je obavezan pri predaji (0 ako ga nema). Fond meseca: <strong>{{ fond_sati }} h</strong> (radni dani × 8) — svaki red sa satima traži vrstu i šifru posla.</div>
         <div class="work-sheet-action-row">
           <button type="button" class="btn btn-outline-danger js-sheet-clear-all" title="Isprazni celu radnu listu (čuva se tek na „Sačuvaj“)"><i class="mdi mdi-eraser" aria-hidden="true"></i> Poništi sve</button>
           <div class="work-sheet-action-group">
@@ -956,18 +976,26 @@ document.addEventListener("DOMContentLoaded", function () {
     javi("Radna lista je ispražnjena. Kliknite „Sačuvaj“ da se promena upiše" +
          (applyButton ? ", ili „Popuni prazna polja“ za novi predlog." : "."));
   }); });
-  // Predaja: red sa satima rada mora imati šifru posla, a topli obrok mora biti upisan (proverava i server).
-  var ODSUSTVA = {{ odsustva_json|safe }};
+  // Predaja (proverava i server, hr/services/radna_lista.py): svaki red sa satima ima vrstu i šifru posla,
+  // zbir sati vrsta fonda je fond meseca (radni dani × 8), topli obrok je upisan.
+  var FOND_VRSTE = {{ fond_vrste_json|safe }}, FOND = {{ fond_sati }};
   document.getElementById("work-time-sheet-form").addEventListener("submit", function (event) {
     var dugme = event.submitter;
     if (!dugme || dugme.value !== "submit_print") return;
-    var greske = [];
+    var greske = [], zbir = 0;
     rows().forEach(function (row, i) {
-      var sati = Array.prototype.some.call(row.querySelectorAll(".hours-input"), function (input) { return !input.disabled && input.value.trim() !== "" && input.value.trim() !== "0"; });
+      var sati = 0;
+      Array.prototype.forEach.call(row.querySelectorAll(".hours-input"), function (input) {
+        if (!input.disabled) sati += parseInt(input.value, 10) || 0;
+      });
+      if (!sati) return;
       var vrsta = category(row);
-      var odsustvo = vrsta && vrsta.value && ODSUSTVA.indexOf(vrsta.value) !== -1;
-      if (sati && !odsustvo && !unit(row).value) greske.push("red " + (i + 1) + ": nema šifru posla");
+      if (!vrsta || !vrsta.value) greske.push("red " + (i + 1) + ": nema vrstu rada ili odsustva");
+      if (!unit(row).value) greske.push("red " + (i + 1) + ": nema šifru posla");
+      if (!vrsta || !vrsta.value || FOND_VRSTE.indexOf(vrsta.value) !== -1) zbir += sati;
     });
+    if (zbir !== FOND) greske.push("zbir sati rada i odsustva je " + zbir + ", a fond meseca je " + FOND +
+                                   " (" + (FOND / 8) + " radnih dana × 8); prekovremeni i noćni rad se upisuju posebno");
     var obrok = document.getElementById("id_meal_days");
     if (obrok && obrok.value.trim() === "") greske.push("topli obrok nije upisan (0 ako ga nema)");
     var obrokSifra = document.getElementById("id_meal_organizational_unit");

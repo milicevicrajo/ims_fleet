@@ -1,4 +1,5 @@
-"""Radna lista (od 07.10.2026.): šifra posla za sate rada, obavezan topli obrok, datum predaje i prilozi."""
+"""Radna lista (od 07.10.2026.): šifra posla za sate rada, obavezan topli obrok, datum predaje i prilozi.
+Od 09.10.2026.: svaki red sa satima traži vrstu i šifru posla (i odsustvo), a zbir sati fonda = radni dani × 8."""
 import datetime
 import shutil
 import tempfile
@@ -13,7 +14,10 @@ from core.models import OrganizationalUnit
 
 from .models import Employee, RadnaListaPrilog, RecipientType, WorkTimeCategory, WorkTimeElement, WorkTimeSheet
 from .services.attendance import ClockEvent
-from .services.radna_lista import prvi_radni_dan_predaje
+from .services.radna_lista import fond_sati, prvi_radni_dan_predaje
+
+# Maj 2026: 21 radni dan (1.5. petak, praznik se računa u fond) → 168 sati.
+PUN_MAJ = {d: 8 for d in range(1, 32) if datetime.date(2026, 5, d).weekday() < 5}
 
 MEDIA = tempfile.mkdtemp(prefix="radna-lista-")
 
@@ -32,30 +36,35 @@ class PredajaRadneListeTests(TestCase):
         self.user = get_user_model().objects.create_user("radnik", password="x", employee=self.employee)
         self.unit = OrganizationalUnit.objects.create(code="200", name="Centar 200", center="20")
         self.bolovanje = WorkTimeCategory.objects.create(code="bolovanje", name="Bolovanje")
+        self.redovan = WorkTimeCategory.objects.create(code="redovan_rad", name="Redovan rad")
+        self.prekovremeni = WorkTimeCategory.objects.create(code="prekovremeni_rad", name="Prekovremeni rad")
         primalac = RecipientType.objects.create(code="01", name="Zaposleni")
         WorkTimeElement.objects.create(recipient_type=primalac, category=self.bolovanje, payroll_code=40,
                                        payroll_name="Bolovanje do 30 dana")
+        WorkTimeElement.objects.create(recipient_type=primalac, category=self.redovan, payroll_code=1, payroll_name="Redovan")
+        WorkTimeElement.objects.create(recipient_type=primalac, category=self.prekovremeni, payroll_code=6, payroll_name="Prek.")
         Employee.objects.filter(pk=self.employee.pk).update(recipient_code="01")
         self.client.force_login(self.user)
         self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
         self.sheet = WorkTimeSheet.objects.get(employee=self.employee, month=5, year=2026)
 
-    def podaci(self, action="submit_print", meal_days="0", meal_unit="", red=None):
-        """Prvi red: {'sifra': unit|None, 'vrsta': kategorija|None, 'sati': {dan: sati}}."""
+    def podaci(self, action="submit_print", meal_days="0", meal_unit="", red=None, drugi=None):
+        """Prvi red: {'sifra': unit|None, 'vrsta': kategorija|None, 'sati': {dan: sati}}; `drugi` — drugi red."""
         red = red or {}
+        redovi = {0: red, 1: drugi or {}}
         data = {"month": "5", "year": "2026", "action": action, "status": WorkTimeSheet.Status.DRAFT,
                 "meal_days": meal_days, "meal_organizational_unit": str(meal_unit.pk) if meal_unit else "",
                 "field_allowance_days": "", "lines-TOTAL_FORMS": "12", "lines-INITIAL_FORMS": "12",
                 "lines-MIN_NUM_FORMS": "12", "lines-MAX_NUM_FORMS": "12"}
         for index, line in enumerate(self.sheet.lines.order_by("line_number")):
             prefix = f"lines-{index}"
-            prvi = index == 0
+            r = redovi.get(index, {})
             data[f"{prefix}-id"] = str(line.pk)
             data[f"{prefix}-line_number"] = str(line.line_number)
-            data[f"{prefix}-organizational_unit"] = str(red["sifra"].pk) if prvi and red.get("sifra") else ""
-            data[f"{prefix}-work_category"] = str(red["vrsta"].pk) if prvi and red.get("vrsta") else ""
+            data[f"{prefix}-organizational_unit"] = str(r["sifra"].pk) if r.get("sifra") else ""
+            data[f"{prefix}-work_category"] = str(r["vrsta"].pk) if r.get("vrsta") else ""
             for day in range(1, 32):
-                data[f"{prefix}-day_{day}"] = str(red.get("sati", {}).get(day, "")) if prvi else ""
+                data[f"{prefix}-day_{day}"] = str(r.get("sati", {}).get(day, ""))
             data[f"{prefix}-work_conditions"] = ""
         return data
 
@@ -63,22 +72,36 @@ class PredajaRadneListeTests(TestCase):
         return self.client.post(reverse("hr:work_time_sheet"), self.podaci(**kw))
 
     def test_sati_rada_bez_sifre_posla_ne_mogu_da_se_predaju(self):
-        odgovor = self.posalji(red={"sati": {4: 8, 5: 8}})
+        odgovor = self.posalji(red={"vrsta": self.redovan, "sati": PUN_MAJ})
         self.assertEqual(odgovor.status_code, 200)
-        self.assertContains(odgovor, "Lista nije predata: red sa satima rada mora da ima šifru posla.")
-        self.assertContains(odgovor, "Unesite šifru posla za sate rada.")
+        self.assertContains(odgovor, "Lista nije predata: svaki red sa satima mora da ima vrstu i šifru posla.")
+        self.assertContains(odgovor, "Unesite šifru posla.")
         self.sheet.refresh_from_db()
         self.assertEqual(self.sheet.status, WorkTimeSheet.Status.DRAFT)
         # čuvanje bez predaje je dozvoljeno
         self.assertEqual(self.posalji(action="save", red={"sati": {4: 8}}).status_code, 302)
         # sa šifrom posla predaja prolazi
-        odgovor = self.posalji(red={"sifra": self.unit, "sati": {4: 8}})
+        odgovor = self.posalji(red={"sifra": self.unit, "vrsta": self.redovan, "sati": PUN_MAJ})
         self.assertRedirects(odgovor, reverse("hr:work_time_sheet_print", args=[self.sheet.pk]), fetch_redirect_response=False)
         self.sheet.refresh_from_db()
         self.assertEqual(self.sheet.status, WorkTimeSheet.Status.SUBMITTED)
 
-    def test_odsustvo_ne_trazi_sifru_posla(self):
-        odgovor = self.posalji(red={"vrsta": self.bolovanje, "sati": {4: 8}})
+    def test_odsustvo_trazi_sifru_posla_i_red_trazi_vrstu(self):
+        # Od 09.10.2026. i odsustvo traži šifru posla — CSV za obračun zarada je traži za svaki element.
+        odgovor = self.posalji(red={"vrsta": self.bolovanje, "sati": PUN_MAJ})
+        self.assertContains(odgovor, "Unesite šifru posla.")
+        odgovor = self.posalji(red={"sifra": self.unit, "sati": PUN_MAJ})
+        self.assertContains(odgovor, "Izaberite vrstu rada ili odsustva.")
+        self.assertEqual(self.posalji(red={"sifra": self.unit, "vrsta": self.bolovanje, "sati": PUN_MAJ}).status_code, 302)
+
+    def test_zbir_sati_mora_biti_fond_meseca(self):
+        self.assertEqual(fond_sati(2026, 5), 168)
+        self.assertEqual(fond_sati(2026, 5, datetime.date(2026, 5, 18)), 80)  # zaposlen od 18.5.: 10 radnih dana
+        odgovor = self.posalji(red={"sifra": self.unit, "vrsta": self.redovan, "sati": {4: 8}})
+        self.assertContains(odgovor, "zbir sati rada i odsustva je 8, a fond meseca je 168 (21 radnih dana × 8)")
+        # prekovremeni rad je van fonda: 168 redovnih + 8 prekovremenih prolazi
+        odgovor = self.posalji(red={"sifra": self.unit, "vrsta": self.redovan, "sati": PUN_MAJ},
+                               drugi={"sifra": self.unit, "vrsta": self.prekovremeni, "sati": {9: 8}})
         self.assertEqual(odgovor.status_code, 302)
 
     def test_topli_obrok_je_obavezan_pri_predaji(self):
@@ -86,7 +109,8 @@ class PredajaRadneListeTests(TestCase):
         self.assertContains(odgovor, "Unesite broj dana za topli obrok (0 ako ga nema).")
         odgovor = self.posalji(meal_days="22")
         self.assertContains(odgovor, "Izaberi sifru posla za topli obrok.")
-        self.assertEqual(self.posalji(meal_days="22", meal_unit=self.unit).status_code, 302)
+        self.assertEqual(self.posalji(meal_days="22", meal_unit=self.unit,
+                                      red={"sifra": self.unit, "vrsta": self.redovan, "sati": PUN_MAJ}).status_code, 302)
 
     @patch("hr.views.get_clock_events")
     def test_topli_obrok_predlog_su_radni_dani_sa_kucanjem(self, prolazi):

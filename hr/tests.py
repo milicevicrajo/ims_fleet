@@ -520,7 +520,7 @@ class MyEmployeeProfileTests(TestCase):
         self.assertEqual(WorkTimeSheet.objects.filter(employee=employee, month=5, year=2026).count(), 1)
         sheet.refresh_from_db()
         first_line = sheet.lines.order_by("line_number").first()
-        self.assertEqual(sheet.status, WorkTimeSheet.Status.SUBMITTED)
+        self.assertEqual(sheet.status, WorkTimeSheet.Status.DRAFT)  # od 09.10.2026. status se ne bira u formi
         self.assertEqual(first_line.organizational_unit, unit)
         self.assertEqual(first_line.day_1, 8)
         self.assertEqual(first_line.day_2, 8)
@@ -530,6 +530,12 @@ class MyEmployeeProfileTests(TestCase):
         employee = self.create_employee(113)
         user = get_user_model().objects.create_user("predaja", password="test", employee=employee)
         unit = OrganizationalUnit.objects.create(code="200", name="Centar 200", center="20")
+        # Od 09.10.2026. predaja traži vrstu rada i pun fond meseca (maj 2026: 21 radni dan × 8).
+        from .models import RecipientType, WorkTimeCategory, WorkTimeElement
+        redovan = WorkTimeCategory.objects.create(code="redovan_rad", name="Redovan rad")
+        WorkTimeElement.objects.create(recipient_type=RecipientType.objects.create(code="01", name="Zaposleni"),
+                                       category=redovan, payroll_code=1, payroll_name="Redovan rad")
+        type(employee).objects.filter(pk=employee.pk).update(recipient_code="01")
         self.client.force_login(user)
         self.client.get(reverse("hr:work_time_sheet"), {"month": 5, "year": 2026})
         sheet = WorkTimeSheet.objects.get(employee=employee, month=5, year=2026)
@@ -553,8 +559,9 @@ class MyEmployeeProfileTests(TestCase):
             data[f"{prefix}-id"] = str(line.pk)
             data[f"{prefix}-line_number"] = str(line.line_number)
             data[f"{prefix}-organizational_unit"] = str(unit.pk) if index == 0 else ""
+            data[f"{prefix}-work_category"] = str(redovan.pk) if index == 0 else ""
             for day in range(1, 32):
-                data[f"{prefix}-day_{day}"] = "8" if index == 0 and day == 1 else ""
+                data[f"{prefix}-day_{day}"] = "8" if index == 0 and datetime.date(2026, 5, day).weekday() < 5 else ""
             data[f"{prefix}-work_conditions"] = ""
             data[f"{prefix}-note"] = ""
 

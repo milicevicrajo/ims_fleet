@@ -338,6 +338,8 @@ class WorkTimeSheetForm(forms.ModelForm):
         self.fields["meal_organizational_unit"].queryset = OrganizationalUnit.objects.order_by("code", "name")
         self.fields["meal_organizational_unit"].empty_label = ""
         self.fields["meal_organizational_unit"].label_from_instance = lambda obj: (obj.code or "").strip()
+        # Status menjaju samo radnje (od 09.10.2026.): Predaj, Odobri i Vrati u pripremu (Pregled radnih lista).
+        self.fields["status"].disabled = True
 
     def clean(self):
         cleaned_data = super().clean()

@@ -33,6 +33,7 @@ from .forms import (
     WorkTimeSheetForm,
     WorkTimeSheetLineFormSet,
 )
+from .services import obracun_csv
 from .models import Employee, EmployeeCVItem, WorkTimeSheet, WorkTimeSheetLine, WorkTimeElement, AnnualLeaveAllowance, AnnualLeaveDecision, KomentarProlaza, RadnaListaPrilog, WorkTimeCategory
 from .querysets import employee_list_queryset
 from .services import moj_profil
@@ -771,12 +772,23 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             "month_name": self.MONTH_LABELS[month - 1],
             "days_in_month": days_in_month,
             "is_other_employee_sheet": employee.pk != self.request.user.employee_id,
+            # CSV za učitavanje obračuna zarada (od 09.10.2026.): ovaj radnik ili svi radnici za mesec.
+            "can_obracun_csv": user_has_role_permission(self.request.user, "hr:work_time_sheet_csv"),
+            "can_odobri": user_has_role_permission(self.request.user, "hr:work_time_sheet_odobri"),
+            "can_vrati": user_has_role_permission(self.request.user, "hr:work_time_sheet_vrati"),
+            "can_employee_detail": user_has_role_permission(self.request.user, "employee_detail"),
+            "kontrola": pravila_radne_liste.kontrola_liste(sheet) if sheet.status == WorkTimeSheet.Status.SUBMITTED else [],
+            "can_obracun_csv_svi": user_has_role_permission(self.request.user, "hr:work_time_sheets_csv"),
+            # Šta CSV ove liste ne bi mogao da prenese tačno (red bez šifre posla, vrsta bez elementa zarade).
+            "obracun_upozorenja": (obracun_csv.stavke([sheet], 0)[1]
+                                   if user_has_role_permission(self.request.user, "hr:work_time_sheet_csv") else []),
             "topli_obrok_predlog": topli_obrok_predlog,
             "prilozi": sheet.prilozi.select_related("created_by"),
             "vrste_priloga": RadnaListaPrilog.Vrsta.choices,
-            # za proveru pre predaje u pregledaču: vrednosti izbora vrste koje su odsustvo (ne traže šifru posla)
-            "odsustva_json": json.dumps([str(pk) for pk in WorkTimeCategory.objects.filter(
-                code__in=pravila_radne_liste.ODSUSTVA).values_list("pk", flat=True)]),
+            # za proveru pre predaje u pregledaču (isto proverava server): vrste koje čine fond i fond meseca
+            "fond_vrste_json": json.dumps([str(pk) for pk in WorkTimeCategory.objects.filter(
+                code__in=pravila_radne_liste.FOND_VRSTE).values_list("pk", flat=True)]),
+            "fond_sati": pravila_radne_liste.fond_sati(year, month, employee.date_of_joining),
             "datum_predaje": pravila_radne_liste.prvi_radni_dan_predaje(year, month),
             "prefill": prefill,
             # Prazna lista u pripremi dobija predlog odmah; inače se predlog primenjuje dugmetom.
@@ -871,6 +883,10 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             return self.sacuvaj_komentar_prolaza(request, employee, year, month, sheet)
         if action in ("prilog_dodaj", "prilog_obrisi"):
             return self.prilog(request, action, year, month, sheet)
+        if sheet.status == WorkTimeSheet.Status.APPROVED:
+            messages.error(request, "Radna lista je odobrena i više se ne menja. Kadrovi je mogu vratiti u pripremu.")
+            return redirect(f"{self.get_sheet_url()}?month={month}&year={year}")
+        bila_predata = sheet.status == WorkTimeSheet.Status.SUBMITTED
         header_form = WorkTimeSheetForm(request.POST, instance=sheet)
         line_formset = WorkTimeSheetLineFormSet(
             request.POST,
@@ -882,13 +898,17 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
         days_in_month = calendar.monthrange(year, month)[1]
         if (header_form.is_valid() and line_formset.is_valid()
                 and (action != "submit_print"
-                     or pravila_radne_liste.provera_predaje(header_form, line_formset, days_in_month))):
+                     or pravila_radne_liste.provera_predaje(header_form, line_formset, days_in_month, year, month,
+                                                            employee.date_of_joining))):
             saved_sheet = header_form.save(commit=False)
             saved_sheet.employee = employee
             saved_sheet.year = year
             saved_sheet.month = month
             if action == "submit_print":
                 saved_sheet.status = WorkTimeSheet.Status.SUBMITTED
+            elif bila_predata:
+                # Izmena predate liste vraća je u pripremu — odobrava se samo ono što je predato.
+                saved_sheet.status = WorkTimeSheet.Status.DRAFT
             saved_sheet.updated_by = request.user
             if saved_sheet.created_by_id is None:
                 saved_sheet.created_by = request.user
@@ -904,6 +924,9 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
                 line.save()
             if action == "submit_print":
                 return redirect("hr:work_time_sheet_print", pk=saved_sheet.pk)
+            if bila_predata:
+                messages.warning(request, "Radna lista je sačuvana i vraćena u pripremu — predajte je ponovo.")
+                return redirect(f"{self.get_sheet_url()}?month={month}&year={year}")
             messages.success(request, "Radna lista je sacuvana.")
             return redirect(f"{self.get_sheet_url()}?month={month}&year={year}")
 

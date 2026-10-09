@@ -862,6 +862,11 @@ polovine i bez obzira na kategoriju vozila u Floti; iznad tabele je poređenje s
 Knjiženje dosadašnjih OMV faktura: putnička — **bruto** na 51300 po šifri posla (PDV se ne odbija);
 teretna — **neto** na 51300 po šifri posla i PDV na 27000; ukupno na 43500.
 NIS fakturiše po polovinama meseca (1–15, 16–kraj), pa za NIS važi filter po polovini.
+**Potvrda za NIS** (od 08.10.2026., kao kod OMV fakture; `fuel_invoices.nis_potvrda`): iznad tabele izveštaja NIS
+putnička i NIS teretna stoji da li se NIS fakture izabrane polovine sa SEF-a (obe — Automobili i Kamioni, po datumu
+prometa) slažu sa obračunom iz **svih** NIS transakcija goriva te polovine (tolerancija 1,00 din), uz podelu
+putnička / teretna po kategoriji vozila u Floti. Fakture se iz transakcija ne mogu razdvojiti po vrsti, pa se ne
+porede pojedinačno; knjižna odobrenja i zaduženja u periodu se samo navode. Septembar 2026: obe polovine se poklapaju.
 
 **Kontrola faktura goriva** (`/izvestaji/gorivo-fakture/`, dozvola `fuel_invoice_control`, od 07.10.2026.;
 `fleet/support/fuel_invoices.py`): za mesec po datumu prometa svaka OMV faktura sa SEF-a (i NIS po polovini —

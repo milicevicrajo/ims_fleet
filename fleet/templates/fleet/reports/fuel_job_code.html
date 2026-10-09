@@ -101,6 +101,20 @@
 </div>
 {% endif %}
 
+{% if nis_kontrola %}{% with k=nis_kontrola %}
+<div class="alert {% if k.poklapa %}alert-success{% else %}alert-warning{% endif %} mb-3">
+  <strong>NIS fakture {{ k.od|date:"d.m." }}–{{ k.do|date:"d.m.Y." }}</strong>
+  {% if k.fakture %} — na SEF-u: {% for f in k.fakture %}{{ f.broj }} ({{ f.iznos|floatformat:2|intcomma }}){% if not forloop.last %} + {% endif %}{% endfor %}
+    = bruto <strong>{{ k.sef_bruto|floatformat:2|intcomma }}</strong> (osnovica {{ k.sef_neto|floatformat:2|intcomma }}, PDV {{ k.sef_pdv|floatformat:2|intcomma }}),
+    obračun iz transakcija: <strong>{{ k.transakcije_bruto|floatformat:2|intcomma }}</strong>
+    (putnička {{ k.putnicka|floatformat:2|intcomma }} + teretna {{ k.teretna|floatformat:2|intcomma }}).
+    {% if k.poklapa %}Poklapa se — raspodela ispod može da se knjiži.{% else %}<strong>Ne poklapa se</strong> (razlika {{ k.razlika|floatformat:2|intcomma }}): u bazi nedostaju ili su višak neke transakcije polovine; proveriti pre knjiženja.{% endif %}
+    <div class="small mt-1">NIS izdaje dve fakture za polovinu (Automobili / Kamioni) koje se iz transakcija ne mogu razdvojiti, pa se porede zajedno; putnička i teretna su podela po kategoriji vozila u Floti.</div>
+  {% else %} — fakture za ovu polovinu još nisu na SEF-u; obračun iz transakcija: <strong>{{ k.transakcije_bruto|floatformat:2|intcomma }}</strong>.{% endif %}
+  {% if k.odobrenja %}<div class="small mt-1">Knjižna odobrenja / zaduženja u periodu (proveriti ručno): {% for f in k.odobrenja %}{{ f.broj }} ({{ f.iznos|floatformat:2|intcomma }}){% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+</div>
+{% endwith %}{% endif %}
+
 <div class="card shadow-sm mb-3">
   <div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">

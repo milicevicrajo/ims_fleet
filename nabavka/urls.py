@@ -57,6 +57,7 @@ from .views.public_procurements import (
     PublicProcurementPlanListView,
 )
 from .views.reports import PartnerJobCodeCheckReportView, ReportsView
+from .views.magacin import MagacinView
 from .views.sef import UfSefDataView, UfSefListView, UfSefPdfView, UfSefPrilogView
 from .views.source_snapshots import (
     EufItemSnapshotDataView,
@@ -128,6 +129,8 @@ urlpatterns = [
     path("narudzbenice/<int:pk>/", PurchaseOrderDetailView.as_view(), name="purchase_order_detail"),
     path("narudzbenice/<int:pk>/izmeni/", PurchaseOrderUpdateView.as_view(), name="purchase_order_update"),
     path("izvestaji/", ReportsView.as_view(), name="reports"),
+    # Stanje u magacinu iz knjigovodstva (dbo.nbv_magacin), od 09.10.2026.
+    path("magacin/", MagacinView.as_view(), name="magacin"),
     path("izvestaji/provera-sifre-posla-partnera/", PartnerJobCodeCheckReportView.as_view(), name="partner_job_code_check_report"),
     path("alarmi/", AlertsView.as_view(), name="alerts"),
 ]

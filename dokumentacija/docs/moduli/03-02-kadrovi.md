@@ -78,6 +78,23 @@ Vodi **zaposlene i njihovo radno vreme**:
 | Radna lista drugog zaposlenog | `/hr/zaposleni/<id>/radna-lista/` | **Samo superuser** |
 | Štampa radne liste | `/hr/radna-lista/<id>/stampa/` | Zaposleni |
 | Štampa evidencije prolaza (prilog radne liste) | `/hr/radna-lista/<id>/prolazi/stampa/` | Zaposleni (ista prava kao štampa radne liste) |
+| **CSV za obračun zarada** — jedan radnik (od 09.10.2026.) | `/hr/radna-lista/<id>/obracun-csv/?br_obr=<n>` | `hr:work_time_sheet_csv` (Kadrovi, Uprava); radnik iz obuhvata |
+| **CSV za obračun zarada** — svi radnici za mesec | `/hr/radne-liste/obracun-csv/?year=&month=&br_obr=` | `hr:work_time_sheets_csv`; sve radne liste meseca za radnike iz obuhvata |
+| **Pregled radnih lista** (od 09.10.2026.) | `/hr/radne-liste/` | `hr:radne_liste` — uloga **Radne liste** (`radne-liste`), Kadrovi, Uprava. Podrazumevano **prethodni mesec** i **obračun broj 3**; svi radnici iz obuhvata (aktivni i oni sa listom), status (nema liste, popunjava se, predato, odobreno — pločice su filteri), sati fonda prema fondu meseca, prekovremeni/noćni, topli obrok, **kontrola** (ista pravila kao predaja i upozorenja CSV-a); akcije: Otvori, CSV (radnik), **Odobri** (samo predata lista bez grešaka; beleži ko i kada), Vrati u pripremu; **CSV za sve** |
+| Odobri / Vrati u pripremu | `POST /hr/radna-lista/<id>/odobri/`, `…/vrati/` | `hr:work_time_sheet_odobri`, `hr:work_time_sheet_vrati`; i na samoj radnoj listi |
+
+**Uloga Radne liste** (`radne-liste`, `sync_permission_codes` → `RADNE_LISTE_CODES` u `core/permissions.py`): pregled
+radnih lista, tuđa radna lista, štampa i prilozi, odobravanje, vraćanje u pripremu i oba CSV-a. Obuhvat daje dodela
+uloge (09.10.2026.: Snežana Simić — cela firma).
+
+**CSV za obračun zarada** (`hr/services/obracun_csv.py`): knjigovodstvo ga učitava u bazu zarada (`bazaldims`);
+aplikacija tamo ništa ne upisuje. Kolone `sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos` (UTF-8 sa BOM, `;`,
+CRLF — kao CSV obustava za mobilne). Red radne liste daje element zarade vrste rada za **vrstu primaoca** radnika
+(šifarnik „Elementi radne liste”; red sa satima bez vrste = redovan rad); topli obrok = broj dana × 8 sati na šifri
+toplog obroka; sati istog elementa i šifre posla se sabiraju; `sif_pred` je preduzeće radnika, `br_obr` broj obračuna
+koji se upisuje pri preuzimanju. Regres, minuli rad i terenski dodatak nisu u CSV-u. Red bez šifre posla ide sa praznim
+`sif_pos`, a red bez elementa (nema vrste primaoca ili veze u šifarniku) ne ide — oba se vide kao upozorenje na
+radnoj listi, iznad dugmadi „CSV radnik” / „CSV svi” (zaglavlje odgovora `X-Upozorenja` daje njihov broj).
 | **Godišnji odmori** | `/hr/godisnji-odmori/` | Kadrovska služba |
 | Sinhronizacija odmora | `/hr/godisnji-odmori/sinhronizacija/` | Kadrovska služba |
 | **Bolovanja** | `/hr/bolovanja/` | Kadrovska služba |
@@ -160,7 +177,7 @@ Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema 
 
 | Podatak | Ekran | Ko unosi |
 |---|---|---|
-| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** — od 07.10.2026. lista se **ne može predati** dok red sa satima rada (redovan, prekovremeni, noćni, rad na praznik ili red bez vrste) nema šifru posla; odsustva (bolovanje, godišnji, plaćeno odsustvo, državni i verski praznik) je ne traže. Čuvanje je dozvoljeno; proveru radi i pregledač pre otvaranja štampe (`hr/services/radna_lista.py`). Na štampi je datum prvi radni dan meseca predaje (mesec posle meseca liste, bez vikenda i praznika) |
+| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** — lista se **ne može predati** dok: svaki red sa satima nema **vrstu rada/odsustva i šifru posla** (od 09.10.2026. i odsustva — CSV za obračun traži šifru za svaki element); **zbir sati fonda** (redovan rad, rad na praznik, godišnji, bolovanje, plaćeno odsustvo, državni i verski praznik) nije jednak **fondu meseca = radni dani (pon–pet, praznici se računaju) × 8**, od dana zaposlenja ako je počeo u toku meseca; prekovremeni i noćni rad su van fonda; topli obrok nije upisan (i šifra kad je > 0). Status se ne bira u formi: Predaj → predato; izmena predate liste je vraća u pripremu; odobrena se ne menja. Čuvanje je dozvoljeno; proveru radi i pregledač pre otvaranja štampe (`hr/services/radna_lista.py`). Na štampi je datum prvi radni dan meseca predaje (mesec posle meseca liste, bez vikenda i praznika) |
 | Vrsta rada / odsustva po redu | Radna lista | Zaposleni |
 | Topli obrok — broj dana i šifra posla | Radna lista | Zaposleni — **obavezan pri predaji** (i 0 je odgovor); predlog je broj radnih dana sa kucanjem (pon–pet, bez praznika), uz podrazumevanu šifru zaposlenog (od 07.10.2026.) |
 | Terenski dodatak — broj dana | Radna lista | Zaposleni (predlaže se iz putnih naloga) |

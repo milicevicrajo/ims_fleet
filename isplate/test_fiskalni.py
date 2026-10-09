@@ -20,9 +20,9 @@ PRAVDANJE = ("isplate:putni_nalozi_pravdanje", "isplate:putni_nalog_racuni", "is
              "isplate:putni_nalog_racun_ukloni", "isplate:putni_nalog_opravdaj")
 ISPLATE = ("isplate:fiskalni_putni_nalozi", "isplate:fiskalni_izvoz", "isplate:fiskalni_detail",
            "isplate:fiskalni_izmena", "isplate:fiskalni_posalji")
-# Modul Knjiženje (od 07.10.2026.): Isplate šalju, Knjiženje knjiži.
-KNJIZENJE = ("knjizenje:racuni", "knjizenje:racun", "knjizenje:proknjizi", "knjizenje:vrati", "knjizenje:ponisti",
-             "knjizenje:izvoz")
+# Modul Knjiženje (od 07.10.2026.): Isplate šalju, Knjiženje knjiži — od 08.10.2026. štampom (bez ručnog knjiženja).
+KNJIZENJE = ("knjizenje:racuni", "knjizenje:racun", "knjizenje:stampaj", "knjizenje:stampa", "knjizenje:vrati",
+             "knjizenje:ponisti", "knjizenje:izvoz")
 NABAVKA = ("nabavka:fiskalni_detail", "nabavka:fiskalni_update", "nabavka:fiskalni_delete")
 
 
@@ -158,9 +158,10 @@ class FiskalniPutnogNalogaTests(TestCase):
         self.assertEqual(self.client.post(reverse("isplate:putni_nalog_racun_ukloni", args=[self.nalog.pk, racun.pk])).status_code, 400)
         self.client.force_login(self.knjigovodja)
 
-        self.client.post(reverse("knjizenje:proknjizi"), {"racuni": [racun.pk], "datum": "2026-10-07", "broj_naloga": "TN-12"})
+        self.client.post(reverse("knjizenje:stampaj"), {"racuni": [racun.pk]})
         racun.refresh_from_db()
-        self.assertEqual((racun.proknjizeno, racun.proknjizio, racun.knjizenje.broj_naloga), (True, self.knjigovodja, "TN-12"))
+        self.assertEqual((racun.proknjizeno, racun.proknjizio, racun.knjizenje.datum_knjizenja),
+                         (True, self.knjigovodja, timezone.localdate()))
         self.assertEqual(self.client.get(reverse("isplate:fiskalni_putni_nalozi")).context["zbir"]["broj"], 0)  # podrazumevano neproknjiženi
         self.assertEqual(self.client.get(reverse("isplate:fiskalni_putni_nalozi"), {"knjizenje": "da"}).context["zbir"]["broj"], 1)
         self.client.post(reverse("knjizenje:ponisti", args=[racun.pk]), {"razlog": "pogrešan nalog"})
@@ -377,7 +378,7 @@ class DetaljIKnjizenjeTests(TestCase):
         # Isplate ne knjiže: modul Knjiženje im nije dostupan
         for ruta, args in (("knjizenje:racuni", []), ("knjizenje:racun", [racun.pk])):
             self.assertEqual(self.client.get(reverse(ruta, args=args)).status_code, 403)
-        self.assertEqual(self.client.post(reverse("knjizenje:proknjizi"), {"racuni": [racun.pk], "datum": "2026-10-07"}).status_code, 403)
+        self.assertEqual(self.client.post(reverse("knjizenje:stampaj"), {"racuni": [racun.pk]}).status_code, 403)
         self.assertEqual(self.client.get(reverse("isplate:fiskalni_ostali"), {"knjizenje": "neposlato"}).context["zbir"]["broj"], 0)
 
         # Knjiženje vraća na doradu — Isplate vide razlog, menjaju i šalju ponovo.
@@ -396,7 +397,7 @@ class DetaljIKnjizenjeTests(TestCase):
         self.assertEqual(KnjizenjeRacuna.objects.get(racun=racun).status, KnjizenjeRacuna.Status.POSLATO)
 
         self.client.force_login(self.knjigovodja)
-        self.client.post(reverse("knjizenje:proknjizi"), {"racuni": [racun.pk], "datum": "2026-10-07"})
+        self.client.post(reverse("knjizenje:stampaj"), {"racuni": [racun.pk]})
         racun.refresh_from_db()
         self.assertTrue(racun.proknjizeno)
         self.client.force_login(self.blagajna)

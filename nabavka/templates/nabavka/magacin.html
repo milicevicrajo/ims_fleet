@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load humanize l10n %}
+{% comment %}Nabavka → Stanje u magacinu (od 09.10.2026.): pregled pogleda dbo.nbv_magacin (nabavka/services/magacin.py).{% endcomment %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .mag-hero { border-radius: 8px; background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 10px 26px rgba(20, 57, 91, .18); }
+  .mag-hero h1 { font-size: 1.6rem; margin: 0; }
+  .mag-hero p { margin: 6px 0 0; color: rgba(255, 255, 255, .86); }
+  .mag-filter { background: #f8fafc; border: 1px solid #e6ebf1; border-radius: 8px; padding: 14px; }
+  .mag-plocice { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .mag-plocice > div { background: #fff; border: 1px solid #e1e8ef; border-left: 4px solid #1f6f8b; border-radius: 8px; padding: 12px 16px; }
+  .mag-plocice small { display: block; color: #64748b; font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .mag-plocice strong { font-size: 1.35rem; color: #14395b; font-variant-numeric: tabular-nums; }
+  #MagacinTable td.num, #MagacinTable th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #MagacinTable .negativno { color: #b42318; font-weight: 600; }
+</style>
+
+<div class="mag-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1><i class="mdi mdi-warehouse"></i> {{ title }}</h1>
+    <p>Ulaz, izlaz i stanje artikala po magacinu, iz knjigovodstva (pogled dbo.nbv_magacin). Stanje = ulaz − izlaz; vrednost je po nabavnoj ceni.</p>
+  </div>
+</div>
+
+{% if greska %}<div class="alert alert-danger">{{ greska }}</div>{% else %}
+
+<div class="card shadow-sm mb-3"><div class="card-body">
+  <form method="get" class="mag-filter">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label class="form-label mb-1" for="id_godina">Godina</label>
+        <select id="id_godina" name="godina" class="form-select">{% for g in godine %}<option value="{{ g }}" {% if g == filteri.godina %}selected{% endif %}>{{ g }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label mb-1" for="id_magacin">Magacin</label>
+        <select id="id_magacin" name="magacin" class="form-select">
+          <option value="">Svi magacini</option>
+          {% for sif, naziv, mesto in magacini %}<option value="{{ sif }}" {% if filteri.magacin == sif|stringformat:"s" %}selected{% endif %}>{{ sif }} · {{ naziv }}{% if mesto %} ({{ mesto }}){% endif %}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label mb-1" for="id_vrsta">Vrsta artikla</label>
+        <select id="id_vrsta" name="vrsta" class="form-select">
+          <option value="">Sve vrste</option>
+          {% for sif, naziv in vrste %}<option value="{{ sif }}" {% if filteri.vrsta == sif %}selected{% endif %}>{{ sif }} · {{ naziv }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label mb-1" for="id_stanje">Stanje</label>
+        <select id="id_stanje" name="stanje" class="form-select">
+          <option value="sa_stanjem" {% if filteri.stanje == "sa_stanjem" %}selected{% endif %}>Sa stanjem</option>
+          <option value="nula" {% if filteri.stanje == "nula" %}selected{% endif %}>Stanje nula</option>
+          <option value="sve" {% if filteri.stanje == "sve" %}selected{% endif %}>Svi artikli</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-1 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100" title="Prikaži"><i class="mdi mdi-filter"></i></button>
+        <a href="{% url 'nabavka:magacin' %}" class="btn btn-outline-secondary" title="Očisti filtere"><i class="mdi mdi-close"></i></a>
+      </div>
+    </div>
+  </form>
+</div></div>
+
+<div class="mag-plocice">
+  <div><small>Artikala</small><strong>{{ ukupno.artikala|intcomma }}</strong></div>
+  <div><small>Magacina</small><strong>{{ ukupno.magacina }}</strong></div>
+  <div><small>Vrednost stanja</small><strong>{{ ukupno.vrednost|floatformat:"2g" }}</strong></div>
+</div>
+
+<div class="card shadow-sm"><div class="card-body">
+  <div class="table-responsive">
+    <table id="MagacinTable" class="display compact table table-hover table-bordered align-middle w-100">
+      <thead><tr>
+        <th>Magacin</th><th>OJ</th><th>Šifra</th><th>Naziv artikla</th><th>Vrsta</th>
+        <th class="num">Ulaz</th><th class="num">Izlaz</th><th class="num">Stanje</th><th class="num">Mag. cena</th>
+        <th class="num">Vrednost ulaza</th><th class="num">Vrednost izlaza</th><th class="num">Vrednost stanja</th>
+      </tr></thead>
+      <tbody>
+      {% for r in redovi %}<tr>
+        <td>{{ r.sif_mag }} · {{ r.magacin }}{% if r.mesto %}<div class="small text-muted">{{ r.mesto }}</div>{% endif %}</td>
+        <td>{{ r.oj }}</td><td>{{ r.sifra }}</td><td>{{ r.naziv }}</td>
+        <td title="{{ r.naziv_vrste }}">{{ r.vrsta }}</td>
+        <td class="num" data-order="{{ r.ulaz|unlocalize }}">{{ r.ulaz|floatformat:"-2g" }}</td>
+        <td class="num" data-order="{{ r.izlaz|unlocalize }}">{{ r.izlaz|floatformat:"-2g" }}</td>
+        <td class="num{% if r.stanje < 0 %} negativno{% endif %}" data-order="{{ r.stanje|unlocalize }}"><strong>{{ r.stanje|floatformat:"-2g" }}</strong></td>
+        <td class="num" data-order="{{ r.cena|unlocalize }}">{{ r.cena|floatformat:"2g" }}</td>
+        <td class="num" data-order="{{ r.vrednost_ulaz|unlocalize }}">{{ r.vrednost_ulaz|floatformat:"2g" }}</td>
+        <td class="num" data-order="{{ r.vrednost_izlaz|unlocalize }}">{{ r.vrednost_izlaz|floatformat:"2g" }}</td>
+        <td class="num{% if r.vrednost < 0 %} negativno{% endif %}" data-order="{{ r.vrednost|unlocalize }}"><strong>{{ r.vrednost|floatformat:"2g" }}</strong></td>
+      </tr>{% endfor %}
+      </tbody>
+      {% if redovi %}<tfoot><tr class="fw-bold">
+        <td colspan="11">Ukupno za filtere</td><td class="num">{{ ukupno.vrednost|floatformat:"2g" }}</td>
+      </tr></tfoot>{% endif %}
+    </table>
+  </div>
+</div></div>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var forma = document.querySelector('.mag-filter');
+    if (forma) forma.querySelectorAll('select').forEach(function (s) { s.addEventListener('change', function () { forma.submit(); }); });
+    if (window.ReportsDT && document.getElementById('MagacinTable')) {
+      ReportsDT('#MagacinTable', { exportTitle: '{{ title|escapejs }} {{ filteri.godina|escapejs }}', order: [[0, 'asc'], [3, 'asc']],
+                                   pageLength: 50, scrollX: false });
+    }
+  });
+</script>
+{% endblock %}

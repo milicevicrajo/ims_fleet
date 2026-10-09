@@ -53,6 +53,11 @@
             <i class="mdi mdi-file-document-edit"></i><span class="hide-menu">Narudžbenice</span>
           </a>
         </li>{% endif %}
+        {% if nabavka_permissions.magacin %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:magacin' %}">
+            <i class="mdi mdi-warehouse"></i><span class="hide-menu">Stanje u magacinu</span>
+          </a>
+        </li>{% endif %}
         {% if nabavka_permissions.reports %}<li class="sidebar-item">
           <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'nabavka:reports' %}">
             <i class="mdi mdi-file-chart"></i><span class="hide-menu">Izveštaji</span>

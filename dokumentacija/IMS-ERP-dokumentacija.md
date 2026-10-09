@@ -2313,6 +2313,23 @@ Vodi **zaposlene i njihovo radno vreme**:
 | Radna lista drugog zaposlenog | `/hr/zaposleni/<id>/radna-lista/` | **Samo superuser** |
 | Štampa radne liste | `/hr/radna-lista/<id>/stampa/` | Zaposleni |
 | Štampa evidencije prolaza (prilog radne liste) | `/hr/radna-lista/<id>/prolazi/stampa/` | Zaposleni (ista prava kao štampa radne liste) |
+| **CSV za obračun zarada** — jedan radnik (od 09.10.2026.) | `/hr/radna-lista/<id>/obracun-csv/?br_obr=<n>` | `hr:work_time_sheet_csv` (Kadrovi, Uprava); radnik iz obuhvata |
+| **CSV za obračun zarada** — svi radnici za mesec | `/hr/radne-liste/obracun-csv/?year=&month=&br_obr=` | `hr:work_time_sheets_csv`; sve radne liste meseca za radnike iz obuhvata |
+| **Pregled radnih lista** (od 09.10.2026.) | `/hr/radne-liste/` | `hr:radne_liste` — uloga **Radne liste** (`radne-liste`), Kadrovi, Uprava. Podrazumevano **prethodni mesec** i **obračun broj 3**; svi radnici iz obuhvata (aktivni i oni sa listom), status (nema liste, popunjava se, predato, odobreno — pločice su filteri), sati fonda prema fondu meseca, prekovremeni/noćni, topli obrok, **kontrola** (ista pravila kao predaja i upozorenja CSV-a); akcije: Otvori, CSV (radnik), **Odobri** (samo predata lista bez grešaka; beleži ko i kada), Vrati u pripremu; **CSV za sve** |
+| Odobri / Vrati u pripremu | `POST /hr/radna-lista/<id>/odobri/`, `…/vrati/` | `hr:work_time_sheet_odobri`, `hr:work_time_sheet_vrati`; i na samoj radnoj listi |
+
+**Uloga Radne liste** (`radne-liste`, `sync_permission_codes` → `RADNE_LISTE_CODES` u `core/permissions.py`): pregled
+radnih lista, tuđa radna lista, štampa i prilozi, odobravanje, vraćanje u pripremu i oba CSV-a. Obuhvat daje dodela
+uloge (09.10.2026.: Snežana Simić — cela firma).
+
+**CSV za obračun zarada** (`hr/services/obracun_csv.py`): knjigovodstvo ga učitava u bazu zarada (`bazaldims`);
+aplikacija tamo ništa ne upisuje. Kolone `sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos` (UTF-8 sa BOM, `;`,
+CRLF — kao CSV obustava za mobilne). Red radne liste daje element zarade vrste rada za **vrstu primaoca** radnika
+(šifarnik „Elementi radne liste”; red sa satima bez vrste = redovan rad); topli obrok = broj dana × 8 sati na šifri
+toplog obroka; sati istog elementa i šifre posla se sabiraju; `sif_pred` je preduzeće radnika, `br_obr` broj obračuna
+koji se upisuje pri preuzimanju. Regres, minuli rad i terenski dodatak nisu u CSV-u. Red bez šifre posla ide sa praznim
+`sif_pos`, a red bez elementa (nema vrste primaoca ili veze u šifarniku) ne ide — oba se vide kao upozorenje na
+radnoj listi, iznad dugmadi „CSV radnik” / „CSV svi” (zaglavlje odgovora `X-Upozorenja` daje njihov broj).
 | **Godišnji odmori** | `/hr/godisnji-odmori/` | Kadrovska služba |
 | Sinhronizacija odmora | `/hr/godisnji-odmori/sinhronizacija/` | Kadrovska služba |
 | **Bolovanja** | `/hr/bolovanja/` | Kadrovska služba |
@@ -2395,7 +2412,7 @@ Ruta nema sopstvenu proveru dozvole, kao ni Moj profil i radna lista; zato nema 
 
 | Podatak | Ekran | Ko unosi |
 |---|---|---|
-| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** — od 07.10.2026. lista se **ne može predati** dok red sa satima rada (redovan, prekovremeni, noćni, rad na praznik ili red bez vrste) nema šifru posla; odsustva (bolovanje, godišnji, plaćeno odsustvo, državni i verski praznik) je ne traže. Čuvanje je dozvoljeno; proveru radi i pregledač pre otvaranja štampe (`hr/services/radna_lista.py`). Na štampi je datum prvi radni dan meseca predaje (mesec posle meseca liste, bez vikenda i praznika) |
+| **Sati po danima i šiframa posla** | Radna lista | **Zaposleni** — lista se **ne može predati** dok: svaki red sa satima nema **vrstu rada/odsustva i šifru posla** (od 09.10.2026. i odsustva — CSV za obračun traži šifru za svaki element); **zbir sati fonda** (redovan rad, rad na praznik, godišnji, bolovanje, plaćeno odsustvo, državni i verski praznik) nije jednak **fondu meseca = radni dani (pon–pet, praznici se računaju) × 8**, od dana zaposlenja ako je počeo u toku meseca; prekovremeni i noćni rad su van fonda; topli obrok nije upisan (i šifra kad je > 0). Status se ne bira u formi: Predaj → predato; izmena predate liste je vraća u pripremu; odobrena se ne menja. Čuvanje je dozvoljeno; proveru radi i pregledač pre otvaranja štampe (`hr/services/radna_lista.py`). Na štampi je datum prvi radni dan meseca predaje (mesec posle meseca liste, bez vikenda i praznika) |
 | Vrsta rada / odsustva po redu | Radna lista | Zaposleni |
 | Topli obrok — broj dana i šifra posla | Radna lista | Zaposleni — **obavezan pri predaji** (i 0 je odgovor); predlog je broj radnih dana sa kucanjem (pon–pet, bez praznika), uz podrazumevanu šifru zaposlenog (od 07.10.2026.) |
 | Terenski dodatak — broj dana | Radna lista | Zaposleni (predlaže se iz putnih naloga) |
@@ -3327,6 +3344,7 @@ Primer: `ZNG-43/2026-7`. Bez centra u organizacionoj jedinici broj se **ne može
 | Narudžbenice | `/nabavka/narudzbenice/` |
 | Izveštaji | `/nabavka/izvestaji/` |
 | Provera šifre posla partnera | `/nabavka/izvestaji/provera-sifre-posla-partnera/` |
+| **Stanje u magacinu** (od 09.10.2026.) | `/nabavka/magacin/` — pregled pogleda `dbo.nbv_magacin` (napravilo knjigovodstvo; samo čitanje, `nabavka/services/magacin.py`): artikal po magacinu i godini — ulaz, izlaz, **stanje = ulaz − izlaz** (količina i nabavna vrednost) i magacinska cena. Filteri: godina, magacin, vrsta artikla, stanje (sa stanjem — podrazumevano, nula, svi); zbir vrednosti stanja; CSV, Excel i PDF. Kolone pogleda `popkol`, `revalzal`, `razliz`, `kolpon`, `cenapon` su prazne, a VP vrednosti iste kao nabavne (09.10.2026.), pa se ne prikazuju. Dozvola `nabavka:magacin` (uloge Nabavka i Uprava) |
 | **Alarmi** | `/nabavka/alarmi/` |
 
 #### Kontrolna tabla — šta stvarno prikazuje [P]
@@ -5673,10 +5691,15 @@ Za sada samo **fiskalni računi iz Isplata**: računi sa putnih naloga i ostali 
 Isplate račun šalju; Knjiženje ga proknjižava ili vraća na doradu. U knjigovodstvo starog ERP-a
 (`nalog_z`, `bazaims`) **ništa se ne upisuje** — modul pamti ko je, kada i pod kojim nalogom za knjiženje proknjižio račun.
 
+> **Od 08.10.2026. nema ručnog knjiženja.** Račun se knjiži u drugom programu, pa ga ovde **štampa proknjižava**:
+> račun koji čeka knjiženje dobija datum knjiženja danas, korisnika koji štampa i napomenu „Proknjiženo štampom”.
+> Proknjižen račun se može ponovo štampati (broji se, knjiženje se ne menja); vraćen na doradu se ne štampa.
+
 | Ekran | Adresa | Šta radi |
 |---|---|---|
-| **Fiskalni računi** | `/knjizenje/` | Pločice (čeka knjiženje, vraćeno na doradu, proknjiženo ovog meseca), filteri (status, vrsta računa, period računa, period knjiženja), pretraga (i po broju naloga za knjiženje), DataTables sa stranom sa servera. Označeni računi se knjiže **zajedno** — isti datum, nalog za knjiženje i napomena. Excel izvoz prati filtere. |
-| Detalj računa | `/knjizenje/racun/<id>/` | Potpuni podaci o računu, isti kao u Isplatama i Nabavci (od 08.10.2026., zajednički `nabavka/_fiskalni_*`): upozorenja (nije na IMS, refundacija, zbir stavki), prodavac, prodajno mesto i adresa, ID kupca, brojač, kasir i ESIR, stavke sa osnovicom i PDV-om, tekst računa; podaci iz Isplata (šifra posla, putni nalog sa vozilom i šifrom naloga ili interni broj i napomena), knjiženje jednog računa, vraćanje na doradu, poništavanje knjiženja i istorija. |
+| **Fiskalni računi** | `/knjizenje/` | Pločice (čeka knjiženje, vraćeno na doradu, proknjiženo ovog meseca), filteri (status, vrsta računa, period računa, period knjiženja), pretraga (i po broju naloga za knjiženje), DataTables sa stranom sa servera. Kolona **Putni nalog / vrsta** (broj naloga, zaposleni, mesto i datum putovanja) i **Šifra posla** sa nazivom — za račun bez šifre šifra putnog naloga, označena „sa putnog naloga”. Označeni računi se **štampaju zajedno** (nova kartica, svaki na svojoj A4 strani). Excel izvoz prati filtere. |
+| Detalj računa | `/knjizenje/racun/<id>/` | Potpuni podaci o računu, isti kao u Isplatama i Nabavci (od 08.10.2026., zajednički `nabavka/_fiskalni_*`): upozorenja (nije na IMS, refundacija, zbir stavki), prodavac, prodajno mesto i adresa, ID kupca, brojač, kasir i ESIR, stavke sa osnovicom i PDV-om, tekst računa; podaci iz Isplata (šifra posla, putni nalog sa vozilom i šifrom naloga ili interni broj i napomena), **Štampaj i proknjiži** / **Štampaj ponovo**, vraćanje na doradu, poništavanje knjiženja i istorija (i štampe). |
+| **Štampa** | `/knjizenje/stampa/?racuni=…` | A4, zaglavlje kao u rešenjima (logo, Institut, adresa, broj računa, vreme štampe); **šifra posla** krupno sa ukupnim iznosom i PDV-om; upozorenja; podaci sa računa; putni nalog (broj, zaposleni, putovanje, vozilo, šifra naloga) ili napomena; stavke; tekst računa; tok — **učitao, poslao na knjiženje, proknjiženo, štampao** — i mesto za potpis. Ova stranica ništa ne menja; knjiži `POST /knjizenje/stampaj/`. |
 
 ### 2. Tok [P]
 
@@ -5690,7 +5713,7 @@ Isplate: Pošalji ──► Čeka knjiženje ──► Proknjiženo
 | Korak | Pravilo |
 |---|---|
 | Slanje | Isplate (`isplate:fiskalni_posalji`). Poslat račun se u Isplatama ne menja i ne skida sa putnog naloga. Povlačenja nema. |
-| Knjiženje | Samo račun koji čeka knjiženje. Obavezan **datum knjiženja**; broj naloga za knjiženje i napomena nisu obavezni. Postavlja i `FiskalniRacun.proknjizeno` (zaključava račun i u Nabavci). |
+| Knjiženje (štampa) | Od 08.10.2026. samo štampom (`stampaj`): račun koji čeka knjiženje dobija datum knjiženja danas; broja naloga nema (knjiži se u drugom programu). Postavlja i `FiskalniRacun.proknjizeno` (zaključava račun i u Nabavci). Ponovna štampa samo uvećava broj štampanja. |
 | Vraćanje na doradu | Samo račun koji čeka knjiženje, uz **obavezan razlog** — Isplate ga vide na spisku i detalju, ispravljaju račun i šalju ponovo. Beleži se i u evidenciji rada. |
 | Poništavanje | Samo proknjižen račun, uz obavezan razlog. Račun ponovo **čeka knjiženje** (ne vraća se Isplatama); podaci o knjiženju se brišu, a istorija ostaje. Beleži se u evidenciji rada. |
 | Raniji računi | Račun označen kao proknjižen u Isplatama pre 07.10.2026. nema zapis; vidi se kao proknjižen, bez istorije, i može se poništiti. |
@@ -5699,23 +5722,27 @@ Isplate: Pošalji ──► Čeka knjiženje ──► Proknjiženo
 
 | Tabela | Sadržaj |
 |---|---|
-| `knjizenje_knjizenjeracuna` (`KnjizenjeRacuna`) | Jedan red po računu: status (`poslato`, `vraceno`, `proknjizeno`), ko je i kada poslao, datum knjiženja, broj naloga za knjiženje, napomena, ko je i kada proknjižio, razlog vraćanja, ko je i kada vratio. |
-| `knjizenje_dogadjajknjizenja` (`DogadjajKnjizenja`) | Istorija: poslato, vraćeno na doradu, proknjiženo, poništeno knjiženje — korisnik, vreme, napomena. |
+| `knjizenje_knjizenjeracuna` (`KnjizenjeRacuna`) | Jedan red po računu: status (`poslato`, `vraceno`, `proknjizeno`), ko je i kada poslao, datum knjiženja, broj naloga za knjiženje, napomena, ko je i kada proknjižio, razlog vraćanja, ko je i kada vratio; od 08.10.2026. i ko je i kada poslednji štampao i broj štampanja. |
+| `knjizenje_dogadjajknjizenja` (`DogadjajKnjizenja`) | Istorija: poslato, vraćeno na doradu, proknjiženo, poništeno knjiženje, odštampano — korisnik, vreme, napomena. |
 | `nabavka_fiskalniracun` | `proknjizeno`, `proknjizio`, `proknjizeno_at` ostaju oznaka zaključavanja; drži ih usklađenim servis. `interni_broj` upisuju Isplate. |
 
-Logika je u `knjizenje/services.py` (`posalji`, `vrati_na_doradu`, `proknjizi`, `ponisti`, `stanje`,
-`zakljucan_u_isplatama`); `knjizenje/views.py` samo prikazuje i poziva servis.
+Logika je u `knjizenje/services.py` (`posalji`, `vrati_na_doradu`, `stampaj`, `proknjizi`, `ponisti`, `stanje`,
+`sifra_posla`, `zakljucan_u_isplatama`); `knjizenje/views.py` samo prikazuje i poziva servis.
 
 ### 4. Uloge i dozvole [P]
 
 | Uloga | Šta može |
 |---|---|
-| `knjizenje` (**Knjiženje**) | Sve u modulu: `knjizenje:racuni`, `knjizenje:racun`, `knjizenje:proknjizi`, `knjizenje:vrati`, `knjizenje:ponisti`, `knjizenje:izvoz`. `sync_permission_codes` joj daje **samo** kodove modula. |
+| `knjizenje` (**Knjiženje**) | Sve u modulu: `knjizenje:racuni`, `knjizenje:racun`, `knjizenje:stampaj`, `knjizenje:stampa`, `knjizenje:vrati`, `knjizenje:ponisti`, `knjizenje:izvoz` (od 08.10.2026. `knjizenje:proknjizi` više ne postoji) i **izveštaje o gorivu** iz Flote (`knjizenje/gorivo.py`: NIS i OMV putnička i teretna po šifri posla, kontrola faktura goriva, Gorivo IMS, knjiženi troškovi goriva, transakcije goriva). `sync_permission_codes` joj daje **samo** te kodove. |
 | `uprava` | Sve |
 | `blagajna` | Nema pristup modulu — samo šalje račune iz Isplata. |
 
 Modul se u zaglavlju i na početnoj strani vidi samo sa dozvolom `knjizenje:racuni`. Obuhvat po registru
 organizacije se ne primenjuje: Knjiženje vidi sve poslate račune.
+
+**Meni „Gorivo — izveštaji”** (od 08.10.2026.): svaka stavka se vidi uz svoju dozvolu. To su ekrani Flote, pa im
+podatke ograničava obuhvat Flote — korisniku uloge Knjiženje treba dodela uloge **cela firma** (Organizacija → Dodele
+uloga), inače izveštaji koji filtriraju po obuhvatu ostaju prazni.
 
 ---
 
@@ -9831,6 +9858,11 @@ polovine i bez obzira na kategoriju vozila u Floti; iznad tabele je poređenje s
 Knjiženje dosadašnjih OMV faktura: putnička — **bruto** na 51300 po šifri posla (PDV se ne odbija);
 teretna — **neto** na 51300 po šifri posla i PDV na 27000; ukupno na 43500.
 NIS fakturiše po polovinama meseca (1–15, 16–kraj), pa za NIS važi filter po polovini.
+**Potvrda za NIS** (od 08.10.2026., kao kod OMV fakture; `fuel_invoices.nis_potvrda`): iznad tabele izveštaja NIS
+putnička i NIS teretna stoji da li se NIS fakture izabrane polovine sa SEF-a (obe — Automobili i Kamioni, po datumu
+prometa) slažu sa obračunom iz **svih** NIS transakcija goriva te polovine (tolerancija 1,00 din), uz podelu
+putnička / teretna po kategoriji vozila u Floti. Fakture se iz transakcija ne mogu razdvojiti po vrsti, pa se ne
+porede pojedinačno; knjižna odobrenja i zaduženja u periodu se samo navode. Septembar 2026: obe polovine se poklapaju.
 
 **Kontrola faktura goriva** (`/izvestaji/gorivo-fakture/`, dozvola `fuel_invoice_control`, od 07.10.2026.;
 `fleet/support/fuel_invoices.py`): za mesec po datumu prometa svaka OMV faktura sa SEF-a (i NIS po polovini —

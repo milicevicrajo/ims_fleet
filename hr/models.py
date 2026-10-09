@@ -272,6 +272,10 @@ class WorkTimeSheet(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Kreirano"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Azurirano"))
+    # Odobravanje (od 09.10.2026., Kadrovi → Pregled radnih lista): odobrena lista se više ne menja.
+    odobrio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True,
+                                related_name="+", verbose_name=_("Odobrio"))
+    odobreno_at = models.DateTimeField(blank=True, null=True, verbose_name=_("Odobreno"))
 
     class Meta:
         ordering = ["-year", "-month", "employee__last_name", "employee__first_name"]

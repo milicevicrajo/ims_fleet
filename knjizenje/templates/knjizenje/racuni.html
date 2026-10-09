@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% comment %}
 Knjiženje → Fiskalni računi (od 07.10.2026.): računi koje su Isplate poslale na knjiženje.
-DataTables (strana sa servera, isti URL uz `draw`). Označeni računi se knjiže zajedno — isti datum i nalog za knjiženje.
+DataTables (strana sa servera, isti URL uz `draw`). Od 08.10.2026. nema ručnog knjiženja: označeni računi se štampaju
+(A4, `knjizenje:stampa`), a štampa proknjižava one koji čekaju — knjiže se u drugom programu.
 {% endcomment %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
@@ -24,8 +25,8 @@ DataTables (strana sa servera, isti URL uz `draw`). Označeni računi se knjiže
 <div class="isp-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
   <div>
     <h1><i class="mdi mdi-book-check-outline" aria-hidden="true"></i>{{ title }}</h1>
-    <p>Fiskalni računi koje su Isplate poslale na knjiženje — sa putnih naloga i ostali. Označite račune i proknjižite ih
-      zajedno pod istim datumom i nalogom za knjiženje; račun sa greškom otvorite i vratite Isplatama na doradu.</p>
+    <p>Fiskalni računi koje su Isplate poslale na knjiženje — sa putnih naloga i ostali. Označite račune i odštampajte ih:
+      štampa ih proknjižava (knjiže se u drugom programu). Račun sa greškom otvorite i vratite Isplatama na doradu.</p>
   </div>
   <div class="isp-zbir">
     <span><span id="ispZbirBroj">{{ zbir.broj }}</span> računa</span>
@@ -88,17 +89,15 @@ DataTables (strana sa servera, isti URL uz `draw`). Označeni računi se knjiže
   </div>
 </div>
 
-{% if moze_knjiziti %}
-<form method="post" action="{% url 'knjizenje:proknjizi' %}" class="knj-traka isp-filter" id="knjTraka">{% csrf_token %}
+{% if moze_stampati %}
+<form method="post" action="{% url 'knjizenje:stampaj' %}" target="_blank" class="knj-traka isp-filter" id="knjTraka">{% csrf_token %}
   <input type="hidden" name="nazad" id="knjNazad" value="">
   <div id="knjIzabrani"></div>
-  <div class="row g-2 align-items-end">
-    <div class="col-12 col-lg-3"><strong><i class="mdi mdi-checkbox-marked-outline" aria-hidden="true"></i> Izabrano računa: <span id="knjBroj">0</span></strong>
-      <div class="isp-small">Knjiže se zajedno, pod istim datumom i nalogom.</div></div>
-    <div class="col-6 col-lg-2"><label class="form-label mb-1" for="{{ forma.datum.id_for_label }}">{{ forma.datum.label }}</label>{{ forma.datum }}</div>
-    <div class="col-6 col-lg-2"><label class="form-label mb-1" for="{{ forma.broj_naloga.id_for_label }}">{{ forma.broj_naloga.label }}</label>{{ forma.broj_naloga }}</div>
-    <div class="col-12 col-lg-3"><label class="form-label mb-1" for="{{ forma.napomena.id_for_label }}">{{ forma.napomena.label }}</label>{{ forma.napomena }}</div>
-    <div class="col-12 col-lg-2 isp-akcije"><button type="submit" class="btn btn-success w-100"><i class="mdi mdi-book-check" aria-hidden="true"></i> Proknjiži izabrane</button></div>
+  <div class="row g-2 align-items-center">
+    <div class="col-12 col-lg-9"><strong><i class="mdi mdi-checkbox-marked-outline" aria-hidden="true"></i> Izabrano računa: <span id="knjBroj">0</span></strong>
+      <div class="isp-small">Štampa se otvara u novoj kartici, svaki račun na svojoj A4 strani. Računi koji čekaju se štampom
+        proknjižavaju sa današnjim datumom; proknjiženi se samo ponovo štampaju.</div></div>
+    <div class="col-12 col-lg-3 isp-akcije"><button type="submit" class="btn btn-success w-100"><i class="mdi mdi-printer-check" aria-hidden="true"></i> Štampaj izabrane</button></div>
   </div>
 </form>
 {% endif %}
@@ -107,8 +106,8 @@ DataTables (strana sa servera, isti URL uz `draw`). Označeni računi se knjiže
   <div class="card-body">
     <table id="KnjizenjeRacuni" class="display compact table table-hover table-bordered align-middle w-100 isp-tabela">
       <thead>
-        <tr><th class="text-center">{% if moze_knjiziti %}<input type="checkbox" class="form-check-input knj-izbor" id="knjSvi" aria-label="Izaberi sve na strani">{% endif %}</th>
-          <th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th class="text-end">Iznos</th><th>Vrsta</th><th>Šifra posla</th>
+        <tr><th class="text-center">{% if moze_stampati %}<input type="checkbox" class="form-check-input knj-izbor" id="knjSvi" aria-label="Izaberi sve na strani">{% endif %}</th>
+          <th>Vreme</th><th>Prodavac</th><th>Broj računa</th><th class="text-end">Iznos</th><th>Putni nalog / vrsta</th><th>Šifra posla</th>
           <th>Poslao</th><th>Knjiženje</th></tr>
       </thead>
       <tbody></tbody>
@@ -137,9 +136,9 @@ document.addEventListener('DOMContentLoaded', function () {
       { data: 'iznos', className: 'text-end text-nowrap' }, { data: 'veza', orderable: false },
       { data: 'sifra' }, { data: 'poslao' }, { data: 'status' }
     ],
-    columnDefs: [{ targets: 0, width: '4%' }, { targets: 1, width: '8%' }, { targets: 2, width: '16%' },
-                 { targets: 3, width: '13%' }, { targets: 4, width: '9%' }, { targets: 5, width: '17%' },
-                 { targets: 6, width: '8%' }, { targets: 7, width: '10%' }, { targets: 8, width: '15%' }],
+    columnDefs: [{ targets: 0, width: '4%' }, { targets: 1, width: '8%' }, { targets: 2, width: '14%' },
+                 { targets: 3, width: '12%' }, { targets: 4, width: '9%' }, { targets: 5, width: '17%' },
+                 { targets: 6, width: '12%' }, { targets: 7, width: '9%' }, { targets: 8, width: '15%' }],
     language: { processing: 'Učitavanje...', search: 'Pretraga:', searchPlaceholder: 'Račun, prodavac, PIB, nalog, šifra',
       lengthMenu: 'Prikaži _MENU_ redova', info: 'Prikaz _START_ do _END_ od _TOTAL_ računa', infoEmpty: 'Nema računa',
       infoFiltered: '(filtrirano od _MAX_ ukupno)', zeroRecords: 'Nema računa za izabrane filtere',
@@ -162,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
   forma.addEventListener('change', function () { tabela.ajax.reload(); });
   forma.addEventListener('submit', function (e) { e.preventDefault(); tabela.ajax.reload(); });
 
-  // Izbor računa za zajedničko knjiženje: traka se pojavljuje kad je bar jedan račun izabran.
+  // Izbor računa za štampu: traka se pojavljuje kad je bar jedan račun izabran.
   var traka = document.getElementById('knjTraka');
   var svi = document.getElementById('knjSvi');
   function izabrani() { return Array.prototype.slice.call(document.querySelectorAll('#KnjizenjeRacuni tbody .knj-izbor:checked')); }
@@ -183,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
     traka.addEventListener('submit', function (e) {
       var lista = izabrani();
       if (!lista.length) { e.preventDefault(); return; }
-      if (!confirm('Proknjižiti izabrane račune (' + lista.length + ')?')) { e.preventDefault(); return; }
+      if (!confirm('Odštampati izabrane račune (' + lista.length + ')? Računi koji čekaju biće proknjiženi.')) { e.preventDefault(); return; }
       var mesto = document.getElementById('knjIzabrani');
       mesto.innerHTML = '';
       lista.forEach(function (c) {
@@ -192,6 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
         mesto.appendChild(polje);
       });
       document.getElementById('knjNazad').value = window.location.pathname + window.location.search;
+      setTimeout(function () { tabela.ajax.reload(null, false); }, 1500);  // štampa je u novoj kartici
     });
   }
 });

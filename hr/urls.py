@@ -12,6 +12,7 @@ from .resenja_views import (ResenjeListView, ResenjeFormView, ResenjeDetailView,
 from .zahtevi_views import (ZahtevListView, ZahtevFormView, ZahtevDetailView, ZahtevPrintView, ZahtevBulkPrintView,
     ZahtevBulkCreateView, zahtev_podnesi, zahtev_storniraj, zahtev_resenje_create, zahtev_bulk_resenja, zahtev_predlog)
 from .pregled_views import KadroviPregledView
+from . import obracun_views, radne_liste_views
 from .analitika_views import AnalitikaView, RodnaRavnopravnostView
 from .ugovori_views import UgovorListView, UgovorDataView, UgovorDetailView, ugovor_update, ugovor_dokument, ugovor_sync
 
@@ -66,6 +67,13 @@ urlpatterns = [
     path("radna-lista/", MyWorkTimeSheetView.as_view(), name="work_time_sheet"),
     path("zaposleni/<int:employee_pk>/radna-lista/", MyWorkTimeSheetView.as_view(), name="employee_work_time_sheet"),
     path("radna-lista/<int:pk>/stampa/", WorkTimeSheetPrintView.as_view(), name="work_time_sheet_print"),
+    # CSV za učitavanje obračuna zarada (od 09.10.2026.): jedan radnik ili svi radnici za mesec.
+    path("radna-lista/<int:pk>/obracun-csv/", obracun_views.work_time_sheet_csv, name="work_time_sheet_csv"),
+    path("radne-liste/obracun-csv/", obracun_views.work_time_sheets_csv, name="work_time_sheets_csv"),
+    # Pregled radnih lista (od 09.10.2026.): spisak meseca, kontrola, odobravanje i vraćanje u pripremu.
+    path("radne-liste/", radne_liste_views.RadneListePregledView.as_view(), name="radne_liste"),
+    path("radna-lista/<int:pk>/odobri/", radne_liste_views.work_time_sheet_odobri, name="work_time_sheet_odobri"),
+    path("radna-lista/<int:pk>/vrati/", radne_liste_views.work_time_sheet_vrati, name="work_time_sheet_vrati"),
     path("radna-lista/<int:pk>/prilog/<int:prilog_pk>/", WorkTimeSheetPrilogView.as_view(), name="work_time_sheet_prilog"),
     path("radna-lista/<int:pk>/prolazi/stampa/", WorkTimeSheetAttendancePrintView.as_view(),
          name="work_time_sheet_attendance_print"),

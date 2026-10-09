@@ -173,6 +173,13 @@ def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
     )
     title = f"{supplier_label(supplier)} {vehicle_type_label(vehicle_type)} - potrosnja goriva po sifri posla"
     faktura = (filteri.get("faktura") or "").strip() if supplier == SUPPLIER_OMV else ""
+    # NIS (od 08.10.2026.): potvrda da se fakture polovine sa SEF-a i obračun iz transakcija slažu, kao kod OMV fakture.
+    nis_kontrola = None
+    if supplier == SUPPLIER_NIS and form.is_valid() and all(form.cleaned_data.get(k) for k in ("godina", "mesec", "polovina")):
+        from ..support.fuel_invoices import nis_potvrda
+
+        nis_kontrola = nis_potvrda(int(form.cleaned_data["godina"]), int(form.cleaned_data["mesec"]),
+                                   int(form.cleaned_data["polovina"]))
     if faktura:
         title = f"OMV faktura {faktura} - raspodela po sifri posla"
 
@@ -210,6 +217,7 @@ def _render_fuel_job_code_report(request, *, supplier, vehicle_type):
             "period_fakture": period,
             "faktura": faktura,
             "faktura_sef": omv_faktura_sef(faktura) if faktura else None,
+            "nis_kontrola": nis_kontrola,
         },
     )
 

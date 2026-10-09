@@ -36,6 +36,11 @@ class KnjizenjeRacuna(models.Model):
     vratio = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                related_name="+", verbose_name=_("Vratio na doradu"))
     vraceno_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Vraćeno na doradu"))
+    # Štampa (od 08.10.2026.): račun se knjiži u drugom programu, pa ga štampa i proknjižava.
+    stampao = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name="+", verbose_name=_("Poslednji štampao"))
+    stampano_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Poslednja štampa"))
+    broj_stampanja = models.PositiveSmallIntegerField(default=0, verbose_name=_("Broj štampanja"))
 
     class Meta:
         verbose_name = _("Knjiženje računa")
@@ -53,6 +58,7 @@ class DogadjajKnjizenja(models.Model):
         VRACENO = "vraceno", _("Vraćeno na doradu")
         PROKNJIZENO = "proknjizeno", _("Proknjiženo")
         PONISTENO = "ponisteno", _("Poništeno knjiženje")
+        STAMPANO = "stampano", _("Odštampano")
 
     knjizenje = models.ForeignKey(KnjizenjeRacuna, on_delete=models.CASCADE, related_name="dogadjaji",
                                   verbose_name=_("Knjiženje"))

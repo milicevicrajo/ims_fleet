@@ -1,10 +1,9 @@
 """Knjiženje → Fiskalni računi (od 07.10.2026.): računi koje su Isplate poslale na knjiženje.
 
-Spisak (DataTables, strana sa servera — isti URL uz `draw`), knjiženje označenih računa pod istim datumom i
-nalogom za knjiženje, detalj računa sa istorijom, vraćanje na doradu i poništavanje knjiženja.
-Dozvole su samo za ulogu Knjiženje (i Upravu); Isplate ih nemaju.
+Spisak (DataTables, strana sa servera — isti URL uz `draw`), detalj računa sa istorijom, vraćanje na doradu i
+poništavanje knjiženja. Od 08.10.2026. nema ručnog knjiženja: račun se knjiži u drugom programu, pa ga **štampa
+proknjižava** (`stampaj` → `stampa`, A4 sa zaglavljem kao rešenja). Dozvole su samo za ulogu Knjiženje (i Upravu).
 """
-from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -28,14 +27,9 @@ from .models import KnjizenjeRacuna
 
 Status = KnjizenjeRacuna.Status
 SIDEBAR = "sidebar_knjizenje.html"
-
-
-class ProknjiziForm(forms.Form):
-    datum = forms.DateField(label="Datum knjiženja", widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}))
-    broj_naloga = forms.CharField(label="Broj naloga za knjiženje", required=False, max_length=50,
-                                  widget=forms.TextInput(attrs={"class": "form-control", "autocomplete": "off"}))
-    napomena = forms.CharField(label="Napomena", required=False, max_length=500,
-                               widget=forms.TextInput(attrs={"class": "form-control"}))
+# Zaglavlje štampe, kao u rešenjima (hr/services/resenja.py), latinicom.
+INSTITUT = "Institut za ispitivanje materijala a.d."
+ADRESA = "Bulevar vojvode Mišića 43, 11000 Beograd"
 
 
 def _ko(korisnik):
@@ -106,10 +100,21 @@ def _status_html(r):
 def _veza(r):
     if r.putni_nalog_id:
         pn = r.putni_nalog
-        detalji = " · ".join(d for d in (str(pn.employee or pn.other_employee_name or ""), pn.travel_location or "") if d)
-        return format_html('<span class="isp-badge muted">Putni nalog</span> <strong>{}</strong><div class="isp-small">{}</div>',
-                           pn.order_number, detalji)
+        detalji = " · ".join(d for d in (str(pn.employee or pn.other_employee_name or ""), pn.travel_location or "",
+                                         f"{pn.travel_date:%d.%m.%Y.}" if pn.travel_date else "") if d)
+        return format_html('<span class="isp-badge info"><i class="mdi mdi-car-arrow-right" aria-hidden="true"></i> Putni nalog</span>'
+                           ' <strong>{}</strong><div class="isp-small">{}</div>', pn.order_number, detalji)
     return format_html('<span class="isp-badge muted">Ostali račun</span><div class="isp-small">{}</div>', r.napomena or "")
+
+
+def _sifra_html(r):
+    """Šifra posla sa nazivom; za račun bez šifre — šifra putnog naloga (označena)."""
+    sifra = services.sifra_posla(r)
+    if sifra is None:
+        return "—"
+    izvor = "" if r.job_code_id else '<div class="isp-small">sa putnog naloga</div>'
+    return (f'<strong>{escape(sifra.code)}</strong><div class="isp-small isp-skrati" title="{escape(sifra.name or "")}">'
+            f'{escape(sifra.name or "")}</div>{izvor}')
 
 
 class RacuniView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
@@ -136,9 +141,8 @@ class RacuniView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
                 "mesec": _zbir(sve.filter(proknjizeno=True, knjizenje__datum_knjizenja__year=danas.year,
                                           knjizenje__datum_knjizenja__month=danas.month)),
             },
-            moze_knjiziti=user_has_role_permission(user, "knjizenje:proknjizi"),
+            moze_stampati=user_has_role_permission(user, "knjizenje:stampaj"),
             moze_izvoz=user_has_role_permission(user, "knjizenje:izvoz"),
-            forma=ProknjiziForm(initial={"datum": danas}),
         )
         return ctx
 
@@ -148,15 +152,16 @@ class RacuniView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
         qs = filtriraj(_racuni(), g)
         start, duzina, draw = tabela.strana(g)
         strana = list(qs.order_by(tabela.redosled(g, self.KOLONE, "pfr_vreme"), "-pk")[start:start + duzina])
-        knjizi = user_has_role_permission(request.user, "knjizenje:proknjizi")
-        return tabela.odgovor(draw, sve.count(), qs.count(), [self._red(r, knjizi) for r in strana], zbir=_zbir(qs))
+        stampa = user_has_role_permission(request.user, "knjizenje:stampaj")
+        return tabela.odgovor(draw, sve.count(), qs.count(), [self._red(r, stampa) for r in strana], zbir=_zbir(qs))
 
     @staticmethod
-    def _red(r, knjizi):
+    def _red(r, stampa):
         z = services.zapis(r)
-        ceka = services.stanje(r) == Status.POSLATO
+        # Štampaju se računi koji čekaju (štampa ih proknjižava) i proknjiženi (ponovna štampa).
+        moze = services.stanje(r) in (Status.POSLATO, Status.PROKNJIZENO)
         izbor = (format_html('<input type="checkbox" class="form-check-input knj-izbor" value="{}" aria-label="Izaberi račun {}">',
-                             r.pk, r.broj_racuna) if knjizi and ceka else "")
+                             r.pk, r.broj_racuna) if stampa and moze else "")
         broj = format_html('<a href="{}">{}</a>', reverse("knjizenje:racun", args=[r.pk]), r.broj_racuna)
         if r.interni_broj:
             broj += format_html('<div class="isp-small">interni br. {}</div>', r.interni_broj)
@@ -170,7 +175,7 @@ class RacuniView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
             "broj": broj,
             "iznos": f"<strong>{_iznos(r.iznos)}</strong>{pdv}",
             "veza": _veza(r),
-            "sifra": escape(r.job_code.code if r.job_code_id else "—"),
+            "sifra": _sifra_html(r),
             "poslao": (format_html('{}<div class="isp-small">{}</div>', _ko(z.poslao),
                                    f"{timezone.localtime(z.poslato_at):%d.%m.%Y. %H:%M}" if z.poslato_at else "")
                        if z and z.poslato_at else "—"),
@@ -178,28 +183,41 @@ class RacuniView(RolePermissionRequiredMixin, LoginRequiredMixin, TemplateView):
         }
 
 
+def _ids(vrednosti):
+    return [int(i) for v in vrednosti for i in str(v).split(",") if i.strip().isdigit()]
+
+
 @login_required
 @require_POST
 @role_permission_required()
-def proknjizi(request):
-    """Knjiži označene račune (spisak) ili jedan račun (detalj) pod istim datumom i nalogom za knjiženje."""
-    forma = ProknjiziForm(request.POST)
-    ids = [i for i in request.POST.getlist("racuni") if i.isdigit()]
-    nazad = request.POST.get("nazad") or reverse("knjizenje:racuni")
-    if not nazad.startswith("/"):
-        nazad = reverse("knjizenje:racuni")
-    if not forma.is_valid():
-        messages.error(request, "Upišite ispravan datum knjiženja.")
-        return redirect(nazad)
+def stampaj(request):
+    """Štampa označenih računa (spisak) ili jednog (detalj). Račun koji čeka knjiženje se time proknjižava —
+    knjiži se u drugom programu. Posle upisa otvara se stranica za štampu (bez izmena, može da se osveži)."""
+    ids = _ids(request.POST.getlist("racuni"))
     racuni = list(_racuni().filter(pk__in=ids))
     try:
-        broj = services.proknjizi(racuni, request.user, forma.cleaned_data["datum"], forma.cleaned_data["broj_naloga"],
-                                  forma.cleaned_data["napomena"])
+        services.stampaj(racuni, request.user)
     except services.GreskaKnjizenja as exc:
         messages.error(request, str(exc))
-        return redirect(nazad)
-    messages.success(request, f"Proknjiženo računa: {broj}." if broj > 1 else f"Račun {racuni[0].broj_racuna} je proknjižen.")
-    return redirect(nazad)
+        nazad = request.POST.get("nazad") or ""
+        return redirect(nazad if nazad.startswith("/") else reverse("knjizenje:racuni"))
+    return redirect(reverse("knjizenje:stampa") + "?racuni=" + ",".join(str(pk) for pk in sorted(r.pk for r in racuni)))
+
+
+@login_required
+@role_permission_required()
+def stampa(request):
+    """A4 za štampu: zaglavlje kao rešenja, šifra posla, podaci računa i putnog naloga, stavke, tekst računa i tok."""
+    ids = _ids(request.GET.getlist("racuni"))
+    racuni = list(_racuni().prefetch_related("stavke").filter(pk__in=ids).order_by("pfr_vreme", "pk"))
+    return render(request, "knjizenje/stampa.html", {
+        "naslov": "Fiskalni račun za knjiženje" if len(racuni) == 1 else f"Fiskalni računi za knjiženje ({len(racuni)})",
+        "dokumenti": [{"racun": r, "z": services.zapis(r), "sifra": services.sifra_posla(r), "stanje": services.stanje(r),
+                       "upozorenja": fiskalni.upozorenja(r)} for r in racuni],
+        "stampao": _ko(request.user), "vreme": timezone.localtime(),
+        "institut": INSTITUT, "adresa": ADRESA,
+    })
+
 
 
 def _racun_ili_404(pk):
@@ -218,10 +236,10 @@ def racun(request, pk):
         # Isti podaci o računu kao u Isplatama i Nabavci (podaci, stavke, tekst računa, upozorenja).
         "upozorenja": fiskalni.upozorenja(r),
         "dogadjaji": list(z.dogadjaji.select_related("korisnik")) if z else [],
-        "moze_knjiziti": st == Status.POSLATO and user_has_role_permission(user, "knjizenje:proknjizi"),
+        "moze_stampati": st in (Status.POSLATO, Status.PROKNJIZENO) and user_has_role_permission(user, "knjizenje:stampaj"),
+        "sifra": services.sifra_posla(r),
         "moze_vratiti": st == Status.POSLATO and user_has_role_permission(user, "knjizenje:vrati"),
         "moze_ponistiti": st == Status.PROKNJIZENO and user_has_role_permission(user, "knjizenje:ponisti"),
-        "forma": ProknjiziForm(initial={"datum": timezone.localdate()}),
     })
 
 

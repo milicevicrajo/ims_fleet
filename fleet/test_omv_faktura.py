@@ -178,6 +178,46 @@ class PodrazumevaniPeriodTests(TestCase):
         self.assertEqual(izabrana.context["form"]["polovina"].value(), "1")  # faktura od 13.09. = prva polovina
 
 
+class NISPotvrdaTests(TestCase):
+    """08.10.2026.: izveštaji NIS putnička i teretna potvrđuju da se fakture polovine i obračun slažu (kao OMV)."""
+
+    def tocenje(self, broj, total, dan):
+        from fleet.models import TransactionNIS
+
+        return TransactionNIS.objects.create(
+            kupac="IMS", sifra_kupca="1", broj_kartice="123", kompanijski_kod_kupca="217", zemlja_sipanja="SR",
+            benzinska_stanica="LAPOVO", id_transakcije=broj, app_kod="APP",
+            datum_transakcije=timezone.make_aware(datetime.datetime(2026, 9, dan, 9, 0)), tociono_mesto="1",
+            registarska_oznaka_vozila="BG123-AA", broj_racuna=broj, kilometraza=1000, sipanje_van_rezervoara=False,
+            naziv_proizvoda="EVRO DIZEL", kolicina=Decimal("10.00"), popust=Decimal("0"), primenjen_popust="",
+            cena_sa_kase=Decimal("200"), cena=Decimal("200"), total_sa_kase=Decimal(total), total=Decimal(total),
+            valuta="RSD", aktivirano_prekoracenje=False, kolicinsko_prekoracenje=False, finansijsko_prekoracenje=False,
+            nacin_ocitavanja_kartice="manual")
+
+    def test_fakture_polovine_i_obracun(self):
+        self.tocenje("1", "6000.00", 3)
+        druga = self.tocenje("2", "4000.00", 12)
+        self.tocenje("3", "9999.00", 20)  # druga polovina — ne ulazi
+        for sef_id, broj, iznos in ((1, "9006720949", "7000.00"), (2, "9006720950", "3000.00")):
+            SefFaktura.objects.create(smer="ulazna", sef_id=sef_id, broj=broj, partner_pib="104052135", vrsta="Invoice",
+                                      iznos=Decimal(iznos), osnovica=Decimal(iznos) / Decimal("1.2"),
+                                      pdv=Decimal(iznos) - Decimal(iznos) / Decimal("1.2"),
+                                      datum_prometa=datetime.date(2026, 9, 15), sinhronizovano=timezone.now())
+        self.client.force_login(get_user_model().objects.create_superuser("nis-potvrda", password="x"))
+        filter_ = {"godina": "2026", "mesec": "9", "polovina": "1"}
+        for ruta in ("fuel_job_code_nis_putnicka", "fuel_job_code_nis_teretna"):
+            odgovor = self.client.get(reverse(ruta), filter_)
+            k = odgovor.context["nis_kontrola"]
+            self.assertEqual((k["sef_bruto"], k["transakcije_bruto"], k["poklapa"]), (Decimal("10000.00"), Decimal("10000.00"), True))
+            self.assertContains(odgovor, "Poklapa se")
+            self.assertContains(odgovor, "9006720949")
+        druga.delete()
+        odgovor = self.client.get(reverse("fuel_job_code_nis_putnicka"), filter_)
+        self.assertFalse(odgovor.context["nis_kontrola"]["poklapa"])
+        self.assertContains(odgovor, "Ne poklapa se")
+        self.assertIsNone(self.client.get(reverse("fuel_job_code_omv_putnicka"), filter_).context["nis_kontrola"])
+
+
 class UvozBezVozilaTests(TestCase):
     def test_transakcija_bez_vozila_se_upisuje_i_kasnije_povezuje(self):
         from fleet.sync.selenium import povezi_transakcije_sa_vozilima

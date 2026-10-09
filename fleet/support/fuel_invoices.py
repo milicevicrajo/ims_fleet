@@ -121,17 +121,52 @@ def _omv(faktura):
                 _knjizenje([faktura.broj]), url=f"{reverse(ruta)}?faktura={faktura.broj}")
 
 
-def _nis(polovina_fakture, godina, mesec, polovina):
+def _nis_transakcije(godina, mesec, polovina):
+    """Polovina meseca (1–15 / 16–kraj) i NIS transakcije goriva u njoj."""
     poslednji = monthrange(godina, mesec)[1]
     od, do = (date(godina, mesec, 1), date(godina, mesec, 15)) if polovina == 1 else \
         (date(godina, mesec, 16), date(godina, mesec, poslednji))
     tz = timezone.get_current_timezone()
     pocetak = timezone.make_aware(timezone.datetime(od.year, od.month, od.day), tz)
     kraj = timezone.make_aware(timezone.datetime(do.year, do.month, do.day, 23, 59, 59), tz)
-    transakcije = filter_nis_fuel_queryset(TransactionNIS.objects.select_related("vehicle")
-                                           .filter(datum_transakcije__range=(pocetak, kraj)))
+    return od, do, filter_nis_fuel_queryset(TransactionNIS.objects.select_related("vehicle")
+                                            .filter(datum_transakcije__range=(pocetak, kraj)))
+
+
+def _teretno_nis(t):
+    return t.vehicle_id is not None and t.vehicle.category == Vehicle.Category.CARGO
+
+
+def nis_potvrda(godina, mesec, polovina):
+    """Potvrda u izveštaju NIS po šifri posla (od 08.10.2026., kao kod OMV fakture): slažu li se NIS fakture polovine
+    sa SEF-a i obračun iz transakcija. Porede se obe fakture (Automobili / Kamioni) zajedno sa svim transakcijama
+    polovine — iz transakcija se ne vidi koja je za koju; putnička i teretna su podela po kategoriji vozila u Floti."""
+    from finansije.sef_models import SefFaktura
+
+    od, do, transakcije = _nis_transakcije(godina, mesec, polovina)
+    dokumenti = list(SefFaktura.objects.filter(smer="ulazna", partner_pib=NIS_PIB, datum_prometa__range=(od, do))
+                     .order_by("datum_prometa", "broj"))
+    fakture = [f for f in dokumenti if not f.vrsta or f.vrsta == "Invoice"]
+    putnicka = teretna = NULA
+    for t in transakcije:
+        bruto = nis_charged_gross_net_amounts(t.total)[0] or NULA
+        if _teretno_nis(t):
+            teretna += bruto
+        else:
+            putnicka += bruto
+    sef_bruto = sum((f.iznos or NULA for f in fakture), NULA)
+    razlika = putnicka + teretna - sef_bruto
+    return dict(od=od, do=do, fakture=fakture, odobrenja=[f for f in dokumenti if f not in fakture],
+                sef_bruto=sef_bruto, sef_neto=sum((f.osnovica or NULA for f in fakture), NULA),
+                sef_pdv=sum((f.pdv or NULA for f in fakture), NULA), putnicka=putnicka, teretna=teretna,
+                transakcije_bruto=putnicka + teretna, razlika=razlika,
+                poklapa=bool(fakture) and abs(razlika) <= TOLERANCIJA)
+
+
+def _nis(polovina_fakture, godina, mesec, polovina):
+    od, do, transakcije = _nis_transakcije(godina, mesec, polovina)
     ocek = _po_sifri(transakcije, datum_polje="datum_transakcije", iznosi=lambda t: nis_charged_gross_net_amounts(t.total),
-                     teretna=lambda t: t.vehicle_id is not None and t.vehicle.category == Vehicle.Category.CARGO)
+                     teretna=_teretno_nis)
     brojevi = [f.broj for f in polovina_fakture]
     return _red("NIS", f"{od:%d.%m.}–{do:%d.%m.%Y.}", polovina_fakture, (od, do), "Automobili + Kamioni", ocek,
                 _knjizenje(brojevi))

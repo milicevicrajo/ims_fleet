@@ -8,7 +8,9 @@ app_name = "knjizenje"
 urlpatterns = [
     path("", views.RacuniView.as_view(), name="racuni"),
     path("izvoz/", views.izvoz, name="izvoz"),
-    path("proknjizi/", views.proknjizi, name="proknjizi"),
+    # Od 08.10.2026. nema ručnog knjiženja: štampa proknjižava račun koji čeka (knjiži se u drugom programu).
+    path("stampaj/", views.stampaj, name="stampaj"),
+    path("stampa/", views.stampa, name="stampa"),
     path("racun/<int:pk>/", views.racun, name="racun"),
     path("racun/<int:pk>/vrati/", views.vrati, name="vrati"),
     path("racun/<int:pk>/ponisti/", views.ponisti, name="ponisti"),

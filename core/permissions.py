@@ -166,6 +166,31 @@ RUKOVODILAC_CODES = (
 )
 
 
+# Radne liste (od 09.10.2026.): pregled radnih lista meseca, otvaranje tuđe liste, štampa, odobravanje, vraćanje u
+# pripremu i CSV za obračun zarada. Obuhvat (koje radnike vidi) daje dodela uloge — npr. cela firma.
+RADNE_LISTE_CODES = (
+    "hr:radne_liste", "hr:employee_work_time_sheet", "hr:work_time_sheet_print", "hr:work_time_sheet_attendance_print",
+    "hr:work_time_sheet_prilog", "hr:work_time_sheet_csv", "hr:work_time_sheets_csv", "hr:work_time_sheet_odobri",
+    "hr:work_time_sheet_vrati",
+)
+
+
+def sync_radne_liste_role():
+    """Uloga Radne liste; dozvole se samo dopunjuju."""
+    role, _ = Role.objects.get_or_create(
+        slug="radne-liste",
+        defaults={"name": "Radne liste", "is_active": True,
+                  "description": "Pregled, odobravanje i CSV za obračun zarada iz radnih lista, za obuhvat iz dodele uloge."},
+    )
+    if not role.is_active:
+        role.is_active = True
+        role.save(update_fields=["is_active"])
+    for code in RADNE_LISTE_CODES:
+        permission, _ = PermissionCode.objects.get_or_create(code=code)
+        RolePermission.objects.get_or_create(role=role, permission=permission)
+    return role
+
+
 def sync_rukovodilac_role():
     """Uloga Rukovodilac; dozvole se samo dopunjuju, kao kod Sekretarijata."""
     role, _ = Role.objects.get_or_create(
@@ -285,8 +310,10 @@ def sync_permission_codes():
     for perm in PermissionCode.objects.filter(code__in=menice_codes):
         RolePermission.objects.get_or_create(role=menice_role, permission=perm)
 
-    # Modul Knjiženje (od 07.10.2026.): uloga Knjiženje dobija samo njegove kodove. Isplate račune samo šalju.
-    knjizenje_codes = collect_knjizenje_permission_codes()
+    # Modul Knjiženje (od 07.10.2026.): uloga Knjiženje dobija samo njegove kodove i (od 08.10.2026.) izveštaje
+    # o gorivu iz Flote (meni Knjiženja). Isplate račune samo šalju.
+    from knjizenje.gorivo import KODOVI as knjizenje_gorivo_codes
+    knjizenje_codes = collect_knjizenje_permission_codes() + list(knjizenje_gorivo_codes)
     knjizenje_role, _ = Role.objects.get_or_create(
         slug="knjizenje",
         defaults={"name": "Knjiženje", "description": "Modul Knjiženje: knjiženje fiskalnih računa koje šalju Isplate."},
@@ -479,6 +506,7 @@ def sync_permission_codes():
         permission__code="vehicle_travel_order_update",
     ).delete()
     rukovodilac_role = sync_rukovodilac_role()
+    radne_liste_role = sync_radne_liste_role()
 
     sekretarijat_group_users_synced = 0
     sekretarijat_group = Group.objects.filter(name__iexact="Sekretarijat").first()
@@ -533,6 +561,7 @@ def sync_permission_codes():
         "sekretarijat_role": sekretarijat_role,
         "zaposleni_role": zaposleni_role,
         "rukovodilac_role": rukovodilac_role,
+        "radne_liste_role": radne_liste_role,
         "sekretarijat_group_users_synced": sekretarijat_group_users_synced,
         "zaposleni_group_users_synced": zaposleni_group_users_synced,
         "pregled_naplate_group_users_synced": pregled_naplate_group_users_synced,

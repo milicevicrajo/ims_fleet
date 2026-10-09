@@ -121,6 +121,7 @@ Primer: `ZNG-43/2026-7`. Bez centra u organizacionoj jedinici broj se **ne može
 | Narudžbenice | `/nabavka/narudzbenice/` |
 | Izveštaji | `/nabavka/izvestaji/` |
 | Provera šifre posla partnera | `/nabavka/izvestaji/provera-sifre-posla-partnera/` |
+| **Stanje u magacinu** (od 09.10.2026.) | `/nabavka/magacin/` — pregled pogleda `dbo.nbv_magacin` (napravilo knjigovodstvo; samo čitanje, `nabavka/services/magacin.py`): artikal po magacinu i godini — ulaz, izlaz, **stanje = ulaz − izlaz** (količina i nabavna vrednost) i magacinska cena. Filteri: godina, magacin, vrsta artikla, stanje (sa stanjem — podrazumevano, nula, svi); zbir vrednosti stanja; CSV, Excel i PDF. Kolone pogleda `popkol`, `revalzal`, `razliz`, `kolpon`, `cenapon` su prazne, a VP vrednosti iste kao nabavne (09.10.2026.), pa se ne prikazuju. Dozvola `nabavka:magacin` (uloge Nabavka i Uprava) |
 | **Alarmi** | `/nabavka/alarmi/` |
 
 ### Kontrolna tabla — šta stvarno prikazuje [P]

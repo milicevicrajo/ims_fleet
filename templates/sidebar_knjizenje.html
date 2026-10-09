@@ -8,6 +8,15 @@
             <i class="mdi mdi-receipt-text-check-outline"></i><span class="hide-menu">Fiskalni računi</span>
           </a>
         </li>{% endif %}
+        {% if knjizenje_gorivo %}
+        <li class="sidebar-item"><span class="sidebar-link text-uppercase small opacity-75" style="pointer-events:none">
+          <i class="mdi mdi-gas-station"></i><span class="hide-menu">Gorivo — izveštaji</span></span></li>
+        {% for s in knjizenje_gorivo %}<li class="sidebar-item">
+          <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{{ s.url }}">
+            <i class="mdi {{ s.ikona }}"></i><span class="hide-menu">{{ s.naziv }}</span>
+          </a>
+        </li>{% endfor %}
+        {% endif %}
       </ul>
     </nav>
   </div>

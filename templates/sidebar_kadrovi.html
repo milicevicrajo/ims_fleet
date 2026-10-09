@@ -23,6 +23,9 @@
         {% if hr_permissions.analitika %}
         <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:analitika' %}"><i class="mdi mdi-chart-box-outline"></i><span class="hide-menu">Analitika zaposlenih</span></a></li>
         {% endif %}
+        {% if hr_permissions.radne_liste %}
+        <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:radne_liste' %}"><i class="mdi mdi-clipboard-text-clock-outline"></i><span class="hide-menu">Pregled radnih lista</span></a></li>
+        {% endif %}
         {% if hr_permissions.annual_leave_list %}
         <li class="sidebar-item"><a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'hr:annual_leave_list' %}"><i class="mdi mdi-calendar-check"></i><span class="hide-menu">Godišnji odmori</span></a></li>
         {% endif %}

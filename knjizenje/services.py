@@ -1,4 +1,6 @@
-"""Tok knjiženja fiskalnih računa Isplata: pošalji → (vrati na doradu → pošalji) → proknjiži (→ poništi).
+"""Tok knjiženja fiskalnih računa Isplata: pošalji → (vrati na doradu → pošalji) → štampaj = proknjiži (→ poništi).
+
+Od 08.10.2026. nema ručnog knjiženja: račun se knjiži u drugom programu, pa ga štampa proknjižava (`stampaj`).
 
 Isplate samo šalju; poslat račun se u Isplatama ne menja dok ga knjiženje ne vrati na doradu.
 Račun proknjižen pre modula Knjiženje (oznaka iz Isplata, do 07.10.2026.) nema zapis — smatra se proknjiženim.
@@ -111,6 +113,41 @@ def proknjizi(racuni, korisnik, datum, broj_naloga="", napomena=""):
                   " · ".join(d for d in (f"datum {datum:%d.%m.%Y.}", f"nalog {z.broj_naloga}" if z.broj_naloga else "", z.napomena) if d))
         fiskalni.oznaci_proknjizeno(racun, korisnik, True)
     return len(racuni)
+
+
+NAPOMENA_STAMPE = "Proknjiženo štampom — knjiži se u drugom programu"
+
+
+def sifra_posla(racun):
+    """Šifra posla za knjiženje: sa računa, a ako je nema — sa putnog naloga."""
+    if racun.job_code_id:
+        return racun.job_code
+    return racun.putni_nalog.job_code if racun.putni_nalog_id else None
+
+
+@transaction.atomic
+def stampaj(racuni, korisnik):
+    """Štampa računa za knjiženje (od 08.10.2026.). Račun se knjiži u drugom programu, pa štampa i proknjižava:
+    račun koji čeka knjiženje dobija datum knjiženja danas. Proknjižen se samo ponovo štampa; vraćen na doradu ne.
+    Vraća broj proknjiženih."""
+    racuni = list(racuni)
+    if not racuni:
+        raise GreskaKnjizenja("Izaberite račune za štampu.")
+    vraceni = [r.broj_racuna for r in racuni if stanje(r) not in (Status.POSLATO, Status.PROKNJIZENO)]
+    if vraceni:
+        raise GreskaKnjizenja("Vraćeni na doradu se ne štampaju: " + ", ".join(vraceni[:5]) + (" …" if len(vraceni) > 5 else ""))
+    cekaju = [r for r in racuni if stanje(r) == Status.POSLATO]
+    if cekaju:
+        proknjizi(cekaju, korisnik, timezone.localdate(), napomena=NAPOMENA_STAMPE)
+    sada = timezone.now()
+    for racun in racuni:
+        z = zapis(racun) or KnjizenjeRacuna(racun=racun, status=Status.PROKNJIZENO)  # proknjižen pre modula
+        z.stampao, z.stampano_at, z.broj_stampanja = korisnik, sada, z.broj_stampanja + 1
+        z.save()
+        racun.knjizenje = z
+        _dogadjaj(z, DogadjajKnjizenja.Vrsta.STAMPANO, korisnik,
+                  "" if z.broj_stampanja == 1 else f"{z.broj_stampanja}. štampa")
+    return len(cekaju)
 
 
 @transaction.atomic

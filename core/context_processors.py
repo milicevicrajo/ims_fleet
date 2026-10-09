@@ -1,6 +1,12 @@
 from core.mixins import user_has_role_permission
 
 
+def _knjizenje_gorivo(request):
+    from knjizenje.gorivo import meni
+
+    return meni(request.user) if request.user.is_authenticated else []
+
+
 def current_app(request):
     from potrazivanja.access import can_view, can_view_all, can_sync
     app = request.session.get("current_app", "fleet")
@@ -37,6 +43,7 @@ def current_app(request):
         "public_procurement_list",
         "purchase_order_list",
         "reports",
+        "magacin",
         "alerts",
     ]
     naplata_codes = [
@@ -64,11 +71,13 @@ def current_app(request):
         "hr_permissions": {
             code: user_has_role_permission(request.user, f"hr:{code}")
             for code in ("sick_leave_list", "sick_leave_import", "work_time_catalog", "annual_leave_list",
-                         "evaluation_list", "resenje_list", "zahtev_list", "ugovor_list", "analitika")
+                         "evaluation_list", "resenje_list", "zahtev_list", "ugovor_list", "analitika", "radne_liste")
         },
         "knjizenje_permissions": {
             code: user_has_role_permission(request.user, f"knjizenje:{code}") for code in ("racuni",)
         },
+        # Izveštaji o gorivu u meniju Knjiženja (od 08.10.2026.) — računaju se samo dok je otvoren taj modul.
+        "knjizenje_gorivo": _knjizenje_gorivo(request) if app == "knjizenje" else [],
         "ugovori_permissions": {
             code: user_has_role_permission(request.user, f"ugovori:{code}") for code in ("contract_list",)
         },

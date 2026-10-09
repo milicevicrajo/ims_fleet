@@ -1,0 +1,158 @@
+{% load static %}<!doctype html>
+{% comment %}
+Knjiženje → štampa fiskalnog računa (od 08.10.2026.): A4, zaglavlje kao u rešenjima, šifra posla na vrhu, podaci računa
+i putnog naloga, stavke, tekst računa i tok (učitao, poslao, proknjiženo, štampao). Štampa proknjižava račun koji čeka
+knjiženje (`knjizenje:stampaj`); ova stranica ništa ne menja i može da se osveži.
+{% endcomment %}
+<html lang="sr-Latn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ naslov }}</title>
+<style>
+  @page { size:A4 portrait; margin:14mm 14mm 12mm; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#e9eef3; color:#171c21; font:9.5pt/1.3 Arial,"Helvetica Neue",sans-serif; }
+  .print-tools { position:sticky; top:0; z-index:1; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:16px; padding:14px 20px; background:#14395b; color:#fff; font:14px/1.4 Arial,sans-serif; box-shadow:0 2px 8px #14395b26; }
+  .print-tools strong { display:block; } .print-tools small { color:#cde8e9; }
+  .print-tools button { padding:10px 18px; border:0; border-radius:6px; background:#fff; color:#14395b; font:600 14px Arial,sans-serif; cursor:pointer; }
+  .print-tools button:focus-visible { outline:3px solid #8fd3d1; outline-offset:3px; }
+  .print-paper { background:#fff; width:210mm; min-height:297mm; margin:24px auto; padding:14mm; box-shadow:0 4px 18px #14395b20; }
+  @media screen and (max-width:820px) { .print-paper { width:auto; min-height:0; margin:16px 12px; } }
+  @media print {
+    body { background:#fff; }
+    .print-tools { display:none; }
+    .print-paper { width:auto; min-height:0; margin:0; padding:0; box-shadow:none; break-after:page; }
+    .print-paper:last-child { break-after:auto; }
+  }
+
+  .knj { --ink:#203d50; display:flex; flex-direction:column; min-height:269mm; }
+  .knj-memorandum { display:flex; align-items:center; gap:6mm; padding-bottom:3mm; border-bottom:1.5pt solid var(--ink); }
+  .knj-logo { width:24mm; height:auto; flex-shrink:0; }
+  .knj-institut { display:flex; flex-direction:column; gap:.6mm; }
+  .knj-institut strong { font-size:12pt; color:var(--ink); }
+  .knj-institut span { font-size:9pt; color:#46535c; }
+  .knj-evidencija { display:flex; justify-content:space-between; gap:6mm; padding:2mm 0; border-bottom:.5pt solid #bdc8cf; font-size:9pt; }
+  .knj-evidencija span { color:#46535c; margin-right:1.5mm; }
+  .knj-naslov { text-align:center; margin:5mm 0 4mm; }
+  .knj-naslov h1 { margin:0; font-size:15pt; letter-spacing:.1em; color:var(--ink); }
+  .knj-naslov p { margin:1mm 0 0; color:#46535c; }
+
+  .knj-sifra { display:flex; align-items:stretch; border:1.5pt solid var(--ink); border-radius:2mm; margin-bottom:4mm; break-inside:avoid; }
+  .knj-sifra .oznaka { background:var(--ink); color:#fff; padding:2.5mm 4mm; font-size:8pt; letter-spacing:.06em; text-transform:uppercase; display:flex; align-items:center; }
+  .knj-sifra .vrednost { padding:2mm 4mm; display:flex; align-items:baseline; gap:4mm; flex-wrap:wrap; }
+  .knj-sifra .vrednost strong { font-size:20pt; letter-spacing:.04em; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .knj-sifra .vrednost span { font-size:10.5pt; }
+  .knj-sifra .iznos { margin-left:auto; padding:2mm 4mm; text-align:right; border-left:.5pt solid #bdc8cf; }
+  .knj-sifra .iznos small { display:block; font-size:8pt; color:#46535c; text-transform:uppercase; letter-spacing:.04em; }
+  .knj-sifra .iznos strong { font-size:14pt; font-variant-numeric:tabular-nums; }
+  .knj-bez-sifre { color:#9a3412; font-weight:bold; }
+
+  .knj-upozorenja { border:.8pt solid #d39b1c; background:#fff8e6; padding:2mm 3mm; margin-bottom:4mm; font-size:9pt; }
+  .knj-telo { display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:5mm; align-items:start; }
+  .knj-blok { margin-bottom:4mm; break-inside:avoid; }
+  .knj-blok h2 { font-size:8.5pt; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); margin:0 0 1.5mm; padding-bottom:1mm; border-bottom:.5pt solid #bdc8cf; }
+  .knj-podaci { display:grid; grid-template-columns:30mm minmax(0, 1fr); gap:1mm 3mm; margin:0; }
+  .knj-podaci dt { color:#46535c; } .knj-podaci dd { margin:0; overflow-wrap:anywhere; }
+  table.knj-stavke { width:100%; border-collapse:collapse; font-size:8.5pt; }
+  .knj-stavke th { text-align:left; color:#46535c; font-weight:normal; border-bottom:.8pt solid var(--ink); padding:1mm 1.2mm; }
+  .knj-stavke td { border-bottom:.3pt solid #d5dde3; padding:1mm 1.2mm; vertical-align:top; }
+  .knj-stavke .num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .knj-stavke tfoot td { font-weight:bold; border-top:.8pt solid var(--ink); border-bottom:0; }
+  .knj-zurnal { border:.5pt solid #bdc8cf; background:#fffef8; padding:2mm; }
+  .knj-zurnal pre { margin:0; font:7pt/1.25 "Courier New",Consolas,monospace; white-space:pre; }
+
+  .knj-tok { margin-top:auto; padding-top:4mm; break-inside:avoid; }
+  table.knj-tok-tabela { width:100%; border-collapse:collapse; font-size:8.5pt; }
+  .knj-tok-tabela th, .knj-tok-tabela td { border:.5pt solid #bdc8cf; padding:1.5mm 2mm; text-align:left; vertical-align:top; }
+  .knj-tok-tabela th { background:#f1f5f8; color:#46535c; font-weight:normal; width:25%; }
+  .knj-potpis { display:flex; justify-content:flex-end; margin-top:8mm; }
+  .knj-potpis div { width:65mm; text-align:center; font-size:9pt; }
+  .knj-potpis .crta { border-bottom:.6pt solid #171c21; height:9mm; margin-bottom:1mm; }
+</style></head>
+<body>
+<div class="print-tools">
+  <div><strong>{{ naslov }}</strong><small>A4 · uspravno · {{ dokumenti|length }} {% if dokumenti|length == 1 %}račun{% else %}računa{% endif %}</small></div>
+  <button type="button" onclick="window.print()">Štampaj / Sačuvaj PDF</button>
+  <small>U dijalogu za štampu isključite zaglavlja i podnožja pregledača.</small>
+</div>
+<main>
+{% for d in dokumenti %}{% with r=d.racun z=d.z pn=d.racun.putni_nalog %}
+<section class="print-paper"><article class="knj">
+  <header>
+    <div class="knj-memorandum">
+      <img class="knj-logo" src="{% static 'fleet/assets/images/logoims.png' %}" alt="IMS">
+      <div class="knj-institut"><strong>{{ institut }}</strong><span>{{ adresa }}</span><span>Knjigovodstvo · knjiženje fiskalnih računa</span></div>
+    </div>
+    <div class="knj-evidencija">
+      <div><span>Račun</span><strong>{{ r.broj_racuna }}</strong></div>
+      {% if r.interni_broj %}<div><span>Interni br.</span><strong>{{ r.interni_broj }}</strong></div>{% endif %}
+      <div><span>Odštampano</span><strong>{{ vreme|date:"d.m.Y. H:i" }}</strong></div>
+    </div>
+  </header>
+
+  <div class="knj-naslov">
+    <h1>FISKALNI RAČUN ZA KNJIŽENJE</h1>
+    <p>{% if pn %}Račun sa putnog naloga {{ pn.order_number }}{% else %}Ostali fiskalni račun (Isplate){% endif %}</p>
+  </div>
+
+  <div class="knj-sifra">
+    <div class="oznaka">Šifra posla</div>
+    <div class="vrednost">{% if d.sifra %}<strong>{{ d.sifra.code }}</strong><span>{{ d.sifra.name }}</span>{% if not r.job_code_id %}<span>(sa putnog naloga)</span>{% endif %}{% else %}<span class="knj-bez-sifre">BEZ ŠIFRE POSLA</span>{% endif %}</div>
+    <div class="iznos"><small>Ukupan iznos</small><strong>{{ r.iznos|floatformat:"2g" }}</strong>{% if r.pdv_ukupno is not None %}<div>PDV {{ r.pdv_ukupno|floatformat:"2g" }}</div>{% endif %}</div>
+  </div>
+
+  {% if d.upozorenja %}<div class="knj-upozorenja">{% for u in d.upozorenja %}{{ u }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+
+  <div class="knj-telo">
+    <div>
+      <section class="knj-blok"><h2>Podaci sa računa</h2>
+        <dl class="knj-podaci">
+          <dt>Prodavac</dt><dd><strong>{{ r.naziv_prodavca|default:"—" }}</strong> · PIB {{ r.pib_prodavca|default:"—" }}</dd>
+          <dt>Prodajno mesto</dt><dd>{{ r.prodajno_mesto|default:"—" }}{% if r.adresa %}, {{ r.adresa }}{% endif %}{% if r.grad %}, {{ r.grad }}{% endif %}</dd>
+          <dt>Vreme računa</dt><dd>{{ r.pfr_vreme|date:"d.m.Y. H:i:s" }}</dd>
+          <dt>Vrsta</dt><dd>{{ r.vrsta_racuna_naziv }} · {{ r.vrsta_transakcije_naziv }}</dd>
+          <dt>Kupac</dt><dd>{% if r.na_ims %}IMS{% elif r.id_kupca %}Drugi kupac{% else %}Fizičko lice{% endif %}{% if r.id_kupca %} · {{ r.id_kupca }}{% endif %}</dd>
+          <dt>Način plaćanja</dt><dd>{{ r.nacin_placanja|default:"—" }}</dd>
+          <dt>Kasir · ESIR</dt><dd>{{ r.kasir|default:"—" }} · {{ r.esir_broj|default:"—" }}</dd>
+          <dt>Brojač</dt><dd>{{ r.brojac_vrste|default:"—" }}/{{ r.brojac_ukupno|default:"—" }}{{ r.oznaka_brojaca }}</dd>
+        </dl>
+      </section>
+
+      {% if pn %}
+      <section class="knj-blok"><h2>Putni nalog</h2>
+        <dl class="knj-podaci">
+          <dt>Broj naloga</dt><dd><strong>{{ pn.order_number }}</strong>{% if pn.storniran %} · STORNIRAN{% endif %}</dd>
+          <dt>Zaposleni</dt><dd>{{ pn.employee|default:pn.other_employee_name|default:"—" }}</dd>
+          <dt>Putovanje</dt><dd>{{ pn.travel_location }} · {{ pn.travel_date|date:"d.m.Y." }}{% if pn.number_of_days %} · {{ pn.number_of_days }} d.{% endif %}</dd>
+          <dt>Vozilo</dt><dd>{{ pn.vehicle|default:pn.other_vehicle|default:"—" }}</dd>
+          <dt>Šifra naloga</dt><dd>{{ pn.job_code.code }} · {{ pn.job_code.name }}</dd>
+        </dl>
+      </section>
+      {% elif r.napomena %}
+      <section class="knj-blok"><h2>Napomena (Isplate)</h2><div>{{ r.napomena }}</div></section>
+      {% endif %}
+
+      <section class="knj-blok"><h2>Stavke</h2>
+        <table class="knj-stavke">
+          <thead><tr><th>#</th><th>Naziv</th><th class="num">Kol.</th><th class="num">Cena</th><th class="num">Ukupno</th><th>PDV</th></tr></thead>
+          <tbody>{% for s in r.stavke.all %}<tr><td>{{ s.redni_broj }}</td><td>{{ s.naziv }}</td><td class="num">{{ s.kolicina|floatformat:"-3" }}</td>
+            <td class="num">{{ s.jedinicna_cena|floatformat:"2g" }}</td><td class="num">{{ s.ukupno|floatformat:"2g" }}</td>
+            <td>{{ s.oznaka_pdv }}{% if s.stopa_pdv is not None %} {{ s.stopa_pdv|floatformat:"-2" }}%{% endif %}</td></tr>
+          {% empty %}<tr><td colspan="6">Stavke još nisu preuzete sa stranice za proveru.</td></tr>{% endfor %}</tbody>
+          {% if r.stavke.all %}<tfoot><tr><td colspan="4">Ukupno</td><td class="num">{{ r.iznos|floatformat:"2g" }}</td><td></td></tr></tfoot>{% endif %}
+        </table>
+      </section>
+    </div>
+    <aside class="knj-blok knj-zurnal">{% if r.zurnal %}<pre>{{ r.zurnal }}</pre>{% else %}Tekst računa još nije preuzet.{% endif %}</aside>
+  </div>
+
+  <footer class="knj-tok">
+    <table class="knj-tok-tabela">
+      <tr><th>Učitao</th><td>{{ r.created_by.get_full_name|default:r.created_by.username|default:"—" }} · {{ r.created_at|date:"d.m.Y. H:i" }}</td></tr>
+      <tr><th>Poslao na knjiženje</th><td>{% if z and z.poslao_id %}{{ z.poslao.get_full_name|default:z.poslao.username }} · {{ z.poslato_at|date:"d.m.Y. H:i" }}{% else %}—{% endif %}</td></tr>
+      <tr><th>Proknjiženo</th><td>{% if d.stanje == "proknjizeno" %}{% if z and z.datum_knjizenja %}{{ z.datum_knjizenja|date:"d.m.Y." }} · {{ z.knjizio.get_full_name|default:z.knjizio.username|default:"—" }}{% if z.broj_naloga %} · nalog {{ z.broj_naloga }}{% endif %}{% else %}{{ r.proknjizeno_at|date:"d.m.Y." }} · {{ r.proknjizio.get_full_name|default:r.proknjizio.username|default:"—" }}{% endif %}{% else %}nije proknjiženo{% endif %}</td></tr>
+      <tr><th>Štampao</th><td>{{ stampao }} · {{ vreme|date:"d.m.Y. H:i" }}{% if z and z.broj_stampanja > 1 %} · {{ z.broj_stampanja }}. štampa{% endif %}</td></tr>
+    </table>
+    <div class="knj-potpis"><div><div class="crta" aria-hidden="true"></div>Proknjižio (potpis)</div></div>
+  </footer>
+</article></section>
+{% endwith %}{% empty %}<section class="print-paper"><p>Nema računa za štampu.</p></section>{% endfor %}
+</main>
+</body></html>
