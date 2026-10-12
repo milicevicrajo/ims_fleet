@@ -692,6 +692,7 @@ dokumentacija/docs/
 ├── 10-poznati-problemi.md                 Ograničenja i rizici (uklj. nasleđenu Naplatu)
 ├── 11-plan-razvoja.md                     Postojeći planovi (centralizacija, V2 dozvole)
 ├── 12-recnik-poslovnih-pojmova.md         Pojmovnik + mapiranje ekran ↔ kod ↔ baza
+├── 13-vreme-i-cena-razvoja.md             Trajanje, obim, procena napora i cene razvoja
 └── uprava/
     └── pregled-ims-erp-a.md               Kratak netehnički pregled za upravu
 ```

@@ -2,11 +2,12 @@
 
 Kolone kao u bazi zarada (knjigovodstvo ih učitava u `bazaldims`; aplikacija tamo ništa ne upisuje):
 `sif_pred, god, mesec, br_obr, rasif, elsif, sati, sif_pos` — jedan red po elementu zarade i šifri posla.
+Kolona `sati` za topli obrok nosi broj dana (od 12.10.2026.).
 
 Pravila:
 - red radne liste: element = element vrste rada za vrstu primaoca radnika (`Elementi radne liste`, aktivan);
   red sa satima bez izabrane vrste računa se kao redovan rad (stare liste, pre obaveznog izbora vrste);
-- topli obrok: broj dana × 8 sati na šifri toplog obroka (bez nje — podrazumevana šifra radnika);
+- topli obrok: **broj dana** (ne sati) na šifri toplog obroka (bez nje — podrazumevana šifra radnika);
 - sati istog elementa i iste šifre posla se sabiraju; regres, minuli rad i terenski dodatak nisu u radnoj listi;
 - red bez elementa (radnik bez vrste primaoca ili vrsta bez veze u šifrarniku) ne ulazi u CSV, nego u upozorenja.
 """
@@ -16,7 +17,6 @@ from collections import defaultdict
 from hr.models import WorkTimeElement, WorkTimeSheet
 
 ZAGLAVLJE = ["sif_pred", "god", "mesec", "br_obr", "rasif", "elsif", "sati", "sif_pos"]
-SATI_TOPLOG_OBROKA = 8
 REDOVAN_RAD = "redovan_rad"
 TOPLI_OBROK = "topli_obrok"
 
@@ -41,10 +41,10 @@ def stavke(listove, br_obr, katalog=None):
         primalac = radnik.recipient_code or ""
         sati = defaultdict(int)
 
-        def dodaj(vrsta, broj, sifra_posla, opis):
+        def dodaj(vrsta, broj, sifra_posla, opis, jedinica="h"):
             element = katalog.get((primalac, vrsta))
             if element is None:
-                upozorenja.append(f"{radnik.employee_code} {radnik}: {opis} ({broj} h) — nema elementa za vrstu primaoca "
+                upozorenja.append(f"{radnik.employee_code} {radnik}: {opis} ({broj} {jedinica}) — nema elementa za vrstu primaoca "
                                   f"„{primalac or 'nije upisana'}”; nije u CSV-u.")
                 return
             sati[(element, sifra_posla)] += broj
@@ -59,7 +59,7 @@ def stavke(listove, br_obr, katalog=None):
             dodaj(vrsta, red.total_hours, sifra, f"red {red.line_number}")
         if lista.meal_days:
             jedinica = lista.meal_organizational_unit or podrazumevana_sifra(radnik)
-            dodaj(TOPLI_OBROK, lista.meal_days * SATI_TOPLOG_OBROKA, jedinica.code.strip() if jedinica else "", "topli obrok")
+            dodaj(TOPLI_OBROK, lista.meal_days, jedinica.code.strip() if jedinica else "", "topli obrok", "dana")
         for (element, sifra_posla), broj in sorted(sati.items(), key=lambda s: (s[0][0], s[0][1])):
             redovi.append([radnik.preduzece, lista.year, lista.month, br_obr, radnik.employee_code, element, broj, sifra_posla])
     return redovi, upozorenja

@@ -1,4 +1,4 @@
-"""Arhiva — kancelarijsko i arhivsko poslovanje (plan: dokumentacija/plan-arhive-overe-i-cuvanja.md).
+"""Arhiva — kancelarijsko i arhivsko poslovanje (plan: dokumentacija/docs/moduli/03-11-arhiva-plan.md).
 
 Faza 1: šifarnik kategorija (Lista kategorija sa rokovima čuvanja), evidencione knjige,
 delovodnik (predmet i akti sa podbrojem). Delovodni broj daje samo `services.delovodnik`;

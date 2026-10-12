@@ -24,6 +24,7 @@ Od 18.09.2026. postoji **objedinjena dokumentacija celog sistema** u direktoriju
 | [**10. Poznati problemi**](docs/10-poznati-problemi.md) | **Registar 50 uočenih problema — 20 rešeno (18–19.09.2026.)** |
 | [11. Plan razvoja](docs/11-plan-razvoja.md) | Uprava i programeri |
 | [12. Rečnik pojmova](docs/12-recnik-poslovnih-pojmova.md) | Svi — pojmovi i mapiranje ekran ↔ kod ↔ baza |
+| [13. Vreme i cena razvoja](docs/13-vreme-i-cena-razvoja.md) | Uprava — trajanje, obim, procena tržišne i stvarne cene |
 | [**Pregled za upravu**](docs/uprava/pregled-ims-erp-a.md) | **Uprava — netehnički sažetak** |
 
 Uz njih, u korenu projekta:
@@ -98,7 +99,8 @@ Dokumenti nastali pre objedinjene dokumentacije.
 | [`popis-sifara-posla-korak-0.md`](popis-sifara-posla-korak-0.md) | **Merenje nad produkcijom:** 415 sifara, tri porodice, sta se poklapa |
 | [`plan-registra-sifara-posla.md`](plan-registra-sifara-posla.md) | **Uradjeno:** registar, uvoz, stablo i nalaz o obrtu |
 | [`plan-povezivanja-i-dozvola.md`](plan-povezivanja-i-dozvola.md) | **Sledece:** kojim redom povezivati module i kada preci na nove dozvole |
-| [`plan-arhive-overe-i-cuvanja.md`](plan-arhive-overe-i-cuvanja.md) (Word: [`Plan implementacije modula Arhiva.docx`](<Plan implementacije modula Arhiva.docx>)) | **Predlog (01.10.2026.):** modul Arhiva — pisarnica, delovodnik, arhiva, izlučivanje, masovna elektronska overa pečatom i pouzdano čuvanje |
+| [`docs/moduli/03-11-arhiva-plan.md`](docs/moduli/03-11-arhiva-plan.md) | **Važeći plan (11.10.2026.), deo dokumentacije:** modul Arhiva — pisarnica, delovodnik, arhiva, izlučivanje, masovna elektronska overa pečatom i pouzdano čuvanje |
+| [`Arhiva - pitanja za arhivu.docx`](<Arhiva - pitanja za arhivu.docx>), [`Arhiva - pitanja i izmene za upravu.docx`](<Arhiva - pitanja i izmene za upravu.docx>) | **Pitanja od 11.10.2026.** za faze 0–2 plana Arhive: arhivskoj službi (Kancelarko, Lista, rok, delovodnik, dostava) i upravi (potvrde odluka, izmene pravilnika član po član, akti koji nedostaju) |
 | [`plan_migracije_naplata_u_ims_erp.md`](plan_migracije_naplata_u_ims_erp.md) | Rani plan prelaska Naplate |
 | [`Analiza aplikacije i procedure rada - IMS flota.md`](<Analiza aplikacije i procedure rada - IMS flota.md>) | Izvor za poglavlje Flote |
 | [`Procena prenosa trebovanja u Nabavku.md`](<Procena prenosa trebovanja u Nabavku.md>) | Procena prenosa trebovanja |

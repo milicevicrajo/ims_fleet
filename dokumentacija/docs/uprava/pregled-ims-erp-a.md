@@ -198,6 +198,18 @@ Sistem je postavljen tako da **greška bude vidljiva, a ne skrivena**.
 | **Sledljivost** | Za svaki podatak se zna odakle je i ko ga je menjao |
 | **Jedinstvena prava pristupa** | Jedna prijava, jedan sistem ovlašćenja |
 
+### Vreme i cena razvoja
+
+| | Spoljni izvođač (procena) | Razvoj u kući |
+|---|---:|---:|
+| Napor | 70–95 čovek-meseci | najviše 26 čovek-meseci |
+| Rok | 15–18 meseci, tim od 5 ljudi | 26 meseci, jedan programer |
+| Cena | **≈ 400.000–700.000 EUR** | **≈ 80.000–130.000 EUR** |
+
+Razvoj u kući koštao je **tri do pet puta manje** od narudžbine kod domaće softverske
+kuće. Cene su tržišne pretpostavke, a stvarnu cenu treba potvrditi iz obračuna zarada —
+detaljno u [Vreme i cena razvoja](../13-vreme-i-cena-razvoja.md).
+
 ---
 
 ## 10. Trenutna ograničenja
@@ -314,3 +326,4 @@ centralizacije organizacije i ovlašćenja, koji sam rešava četiri utvrđena p
 | [Registar problema](../10-poznati-problemi.md) | Programeri i uprava |
 | [Plan razvoja](../11-plan-razvoja.md) | Uprava |
 | [Rečnik pojmova](../12-recnik-poslovnih-pojmova.md) | Svi |
+| [Vreme i cena razvoja](../13-vreme-i-cena-razvoja.md) | Uprava |

@@ -2,7 +2,7 @@
 
 > **Za koga je ovo poglavlje:** arhivska služba, pisarnica i programeri.
 > Status tvrdnji: **[P]** potvrđeno kodom, **[Z]** zaključeno, **[N]** nepotvrđeno.
-> Plan celog modula (overa, čuvanje, izlučivanje): [`plan-arhive-overe-i-cuvanja.md`](../../plan-arhive-overe-i-cuvanja.md).
+> **Važeći plan** celog modula (overa, čuvanje, izlučivanje): [3.11a. Arhiva — plan implementacije](03-11-arhiva-plan.md).
 > Važeći interni akt: Pravilnik o načinu evidentiranja, klasifikovanja, arhiviranja i čuvanja arhivske građe i
 > dokumentarnog materijala (br. 20-16153 od 07.12.2021, izmena 24.02.2023) — poređenje sa planom u odeljku 4.5 plana.
 

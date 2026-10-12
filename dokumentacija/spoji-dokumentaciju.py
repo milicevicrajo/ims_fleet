@@ -42,6 +42,7 @@ REDOSLED = [
     "dokumentacija/docs/moduli/03-09-isplate.md",
     "dokumentacija/docs/moduli/03-10-administracija.md",
     "dokumentacija/docs/moduli/03-11-arhiva.md",
+    "dokumentacija/docs/moduli/03-11-arhiva-plan.md",
     "dokumentacija/docs/moduli/03-12-knjizenje.md",
     "dokumentacija/docs/04-baza-podataka.md",
     "dokumentacija/docs/05-poslovni-procesi.md",
@@ -64,6 +65,7 @@ REDOSLED = [
     "dokumentacija/docs/10-poznati-problemi.md",
     "dokumentacija/docs/11-plan-razvoja.md",
     "dokumentacija/docs/12-recnik-poslovnih-pojmova.md",
+    "dokumentacija/docs/13-vreme-i-cena-razvoja.md",
     "dokumentacija/docs/uprava/pregled-ims-erp-a.md",
     "dokumentacija/ddl-nasledjenih-pogleda/README.md",
 ]

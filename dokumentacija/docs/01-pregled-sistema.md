@@ -229,3 +229,4 @@ portala (gorivo) stiže do 07:10.
 | Kako se računa određeni iznos? | [6. Analize i obračuni](06-analize-i-obracuni.md) |
 | Odakle dolaze podaci spolja? | [7. Integracije](07-integracije.md) |
 | Šta znači neki pojam? | [12. Rečnik pojmova](12-recnik-poslovnih-pojmova.md) |
+| Koliko je trajao i koštao razvoj? | [13. Vreme i cena razvoja](13-vreme-i-cena-razvoja.md) |

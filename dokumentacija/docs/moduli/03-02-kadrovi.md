@@ -90,8 +90,8 @@ uloge (09.10.2026.: Snežana Simić — cela firma).
 **CSV za obračun zarada** (`hr/services/obracun_csv.py`): knjigovodstvo ga učitava u bazu zarada (`bazaldims`);
 aplikacija tamo ništa ne upisuje. Kolone `sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos` (UTF-8 sa BOM, `;`,
 CRLF — kao CSV obustava za mobilne). Red radne liste daje element zarade vrste rada za **vrstu primaoca** radnika
-(šifarnik „Elementi radne liste”; red sa satima bez vrste = redovan rad); topli obrok = broj dana × 8 sati na šifri
-toplog obroka; sati istog elementa i šifre posla se sabiraju; `sif_pred` je preduzeće radnika, `br_obr` broj obračuna
+(šifarnik „Elementi radne liste”; red sa satima bez vrste = redovan rad); topli obrok = **broj dana** (ne sati; od 12.10.2026.) na
+šifri toplog obroka; sati istog elementa i šifre posla se sabiraju; `sif_pred` je preduzeće radnika, `br_obr` broj obračuna
 koji se upisuje pri preuzimanju. Regres, minuli rad i terenski dodatak nisu u CSV-u. Red bez šifre posla ide sa praznim
 `sif_pos`, a red bez elementa (nema vrste primaoca ili veze u šifarniku) ne ide — oba se vide kao upozorenje na
 radnoj listi, iznad dugmadi „CSV radnik” / „CSV svi” (zaglavlje odgovora `X-Upozorenja` daje njihov broj).

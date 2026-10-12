@@ -648,7 +648,7 @@ smanjenju rizika od katastrofa i Zakon o dobrovoljnom vatrogastvu).
 **Aplikacija:** `hr/models.py` (Employee), `hr/sync.py`, `hr/services/ugovori.py` (sistematizacija),
 `hr/ugovori_models.py` (`DodatnoRadnoMesto`), `hr/services/praznici.py`, `fleet/support/fleet_snapshot.py`
 (rokovi), `fleet/opomene_models.py` (imejl sa statusom), `pravna/models.py` (disciplinski postupci),
-`templates/header.html` (pločica „BZR — U pripremi"), `dokumentacija/plan-arhive-overe-i-cuvanja.md`.
+`templates/header.html` (pločica „BZR — U pripremi"), `dokumentacija/docs/moduli/03-11-arhiva-plan.md`.
 
 **Propisi koje treba proveriti u važećoj verziji:** podzakonski akti po Zakonu o BZR 35/2023 (B-28); pravilnici
 po ZZOP (minimum sadržaja programa osnovne obuke, kontrola instalacija i uređaja i isprava o kontrolisanju,

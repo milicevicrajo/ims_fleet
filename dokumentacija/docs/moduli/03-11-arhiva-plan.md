@@ -1,8 +1,11 @@
-# Plan implementacije modula „Arhiva" — kancelarijsko i arhivsko poslovanje, elektronska overa i čuvanje
+# 3.11a. Arhiva — plan implementacije (važeći plan)
 
-Datum: 01.10.2026. Dopunjeno 05.10.2026. internim pravilnikom o arhivskom poslovanju (odeljak 4.5) i 07.10.2026.
-prezentacijama o e-arhiviranju (odeljak 4.7).
-Status: **predlog za dogovor** — faza 1 (šifarnik i delovodnik) je urađena, ostalo nije.
+Kancelarijsko i arhivsko poslovanje, elektronska overa i čuvanje.
+
+Datum: 01.10.2026. Dopunjeno 05.10.2026. internim pravilnikom o arhivskom poslovanju (odeljak 4.5), 07.10.2026.
+prezentacijama o e-arhiviranju (odeljak 4.7) i 11.10.2026. odlukama za faze 0–2 (O-1, O-4, O-5, O-6, O-11, O-20, O-21, O-22, O-23, O-26; Kancelarko).
+Status: **VAŽEĆI PLAN modula Arhiva** (od 11.10.2026.) — jedini plan po kom se radi. Faza 1 (šifarnik i
+delovodnik) je urađena; ostale faze čekaju odluke iz odeljka 1.
 Za koga: Uprava i kadrovska/arhivska služba (odluke u odeljcima 0, 1, 3, 5 i 14), programeri (odeljci 6–13).
 
 Ovaj dokument spaja i zamenjuje dva radna plana iz foldera `aRhiva-docs`:
@@ -10,12 +13,16 @@ Ovaj dokument spaja i zamenjuje dva radna plana iz foldera `aRhiva-docs`:
 - „Plan implementacije modula Arhiva" od 23.09.2026, koji pokriva pisarnicu, delovodnik, arhivu i izlučivanje;
 - „Elektronska overa i pouzdano elektronsko čuvanje" od 01.10.2026.
 
+Zamenjuje i Word verzije `Plan implementacije modula Arhiva.docx` i `… - nova verzija.docx` od 01.10.2026,
+koje su uklonjene 11.10.2026. (ostaju u git istoriji).
+
 | Izvor | Šta iz njega uzimamo |
 |---|---|
 | `IU 03 Kancelarijsko i arhivsko poslovanje i2.doc` | Postupak pisarnice i evidencione knjige (Prilozi 1–5) |
 | **Pravilnik o načinu evidentiranja, klasifikovanja, arhiviranja i čuvanja arhivske građe i dokumentarnog materijala** (br. 20-16153 od 07.12.2021, prečišćen tekst sa izmenom od 24.02.2023) | **Važeći interni akt** — pravila pisarnice, delovodnika, arhive, izlučivanja i predaje (odeljak 4.5). Zamenio je Pravilnik o kancelarijskom i arhivskom poslovanju iz decembra 2005, na koji se IU 03 još poziva. |
 | `Lista-kategorija 10.03.2023.doc` (+ overeni PDF) | 454 kategorije sa klasifikacionom oznakom i rokom čuvanja — šifarnik modula |
 | `Delovodnik 2024.xlsx` | 15.056 upisa, 27 kolona — **primer** kako se delovodnik stvarno vodi (nije izvoz iz programa; programa za delovodnik nema) |
+| Program **Kancelarko** (Paragraf), dopuna 11.10.2026. | Danas se u njemu priprema ono što se do 30. aprila potpisuje i šalje Državnom arhivu. **Aplikacija treba da ga zameni u potpunosti** (O-31). |
 | Mejl o toku (Olivera) | Ceo tok u 14 koraka i 3 segmenta — okvir plana |
 | Propisi (odeljak 3) | Zahtevi za elektronsku overu, formate, metapodatke i čuvanje |
 | `arhiva doc/e-Arhiviranje Oktobar 2026.pptx` (Olga Zorić, „Elektronsko arhiviranje”, 77 slajdova) | Obaveze stvaraoca po Zakonu o arhivskoj građi, obrazac arhivske knjige (11 rubrika), Uredba 116/23, formati, interni akti (odeljak 4.7) |
@@ -54,8 +61,9 @@ KROZ SVE — Elektronski dokument    priprema (PDF/A) → overa pečatom → vre
    Spoljna (van zgrade) rezervna kopija je **obavezna mera**; otvoreno je samo gde i kako (O-25, izmenjeno 07.10.2026.
    — vidi 4.7).
 7. **Arhivska knjiga se izdvaja u malu fazu pre aprila 2027** (faza 6a, dodato 07.10.2026.): prepis za 2026. ide
-   nadležnom arhivu do 30.04.2027, moguće preko eArhiv-a (O-17, O-26).
-5. **Elektronski delovodnik od 01.01.2027.** Program za delovodnik danas ne postoji, pa se ništa ne zamenjuje
+   Državnom arhivu Srbije do 30.04.2027, moguće preko eArhiv-a (O-17). IMS podleže obavezama javnog sektora
+   (O-26, 11.10.2026.). Danas to radi program Kancelarko, a aplikacija treba da ga zameni u potpunosti (O-31).
+5. **Elektronski delovodnik od 01.01.2027.** Delovodnik se danas ne vodi u programu, pa se ništa ne zamenjuje
    niti uvozi; dotadašnji način vođenja traje do 31.12.2026, a pre toga traje probni rad.
 6. **Kancelarijsko i arhivsko poslovanje vodi se elektronski, kroz aplikaciju, uz elektronski potpis i pečat.**
    Papir ostaje samo tamo gde ga traži zakon ili gde akt stiže na papiru. **Gde se interni pravilnik ne slaže sa
@@ -82,31 +90,60 @@ za tekuću fazu ne sme da je zaustavi. Zato su stavke grupisane po tome **pre ko
 Kod može da počne odmah, bez ijedne odluke, sa delom koji od odluka ne zavisi: kostur aplikacije, šifarnik
 kategorija sa uvozom i izveštajem o spornim stavkama, i brojač sa formatom iz podešavanja.
 
+### 1.1a Šta je ostalo za faze 0, 1 i 2 (stanje 11.10.2026.)
+
+Pitanja su poslata u dva dokumenta: **`dokumentacija/Arhiva - pitanja za arhivu.docx`** (arhivska služba, oznake A–F)
+i **`dokumentacija/Arhiva - pitanja i izmene za upravu.docx`** (pravna služba, direktor, Olivera; oznake U).
+
+**Odlučeno 05.10. i 11.10.2026.:** broj `{centar}-{redni broj}` bez klasifikacione oznake (O-1); popis akata,
+poverljivi delovodnik i faks se ne vode (O-20, O-21, O-5); u modulu rade dve osobe, pristup dodeljuje administrator
+aplikacije; elektronska potvrda prijema važi, a služba po želji vodi i papir (O-4); otprema poštom (P-3, knjiga
+ekspedovane pošte) ostaje na papiru; el. pošta se ne štampa (O-22); rok čuvanja teče od nastanka dokumenta (O-6);
+delovodnik menja samo arhivar (O-11); IMS podleže obavezama javnog sektora (O-26); Pravilnik o el. dokumentima ne
+postoji i treba ga doneti (O-23); skenovi su u fascikli unutar aplikacije (tačka 6); Kancelarko se zamenjuje (O-31).
+
+| Faza | Šta je ostalo | Ko | Pitanje | Rok |
+|---|---|---|---|---|
+| 0 | **Kancelarko**: šta tačno radi, šta se šalje Državnom arhivu, kako, ko potpisuje, licenca, izvoz arhivske knjige i poslednji redni broj (O-31, O-17) | Arhivska služba | A1–A7 | 31.10.2026. |
+| 0 | **Lista kategorija**: broj saglasnosti; koju od dve iste stavke nudimo (14 parova); rok za račune; oznaka 426; rokovi od događaja; „trajno operativno”; personalni dosije (O-7) | Arhivska služba | B1–B9 | 31.10.2026. |
+| 0 | **Rok čuvanja od nastanka dokumenta** — kako se računa za predmet sa više akata i za stavke sa događajem (O-6) | Arhivska služba; pisana potvrda direktora | C1–C3, U2 | 15.11.2026. |
+| 0 | **Izmena internog pravilnika, korak 1**, uz ispravke nedoslednosti (12a, O-24) | Pravna služba; donosi generalni direktor | U3 | nacrt 15.11, doneto 20.12.2026. |
+| 0 | Rešenje o odgovornom licu i o komisiji za popis (12b); plan mera zaštite (12c); obuka i provera (12d); izmena IU 03 (12) | Direktor, Olivera, arhivska služba | U4 | 30.11–31.12.2026. |
+| 0 | Pravilnik o el. dokumentima — **ne postoji**, mora se doneti (O-23, 17a) | Pravna služba | U4 | 31.01.2027. |
+| 0 | Ovlašćeni arhivar sa pristupom eArhiv-u (O-17, O-26) | Direktor | U5 | 30.11.2026. |
+| 0 | Kopija van zgrade: gde (predlog: oblak) i da li to dozvoljava Zakon čl. 13 (O-25) | Uprava, pravna služba, IT | U6 | pre prvog skena |
+| 1 | Uvoz Liste sa izborom preporučenih stavki (posle B1–B6) | IT | — | 15.11.2026. |
+| 1 | Uloga arhivara: samo ona ima upis, storno, podbroj i zaključenje (O-11) | IT | D1 | pre probnog rada |
+| 1 | Početak probnog rada; izlazni akti i automatski brojevi iz Kadrova | Arhivska služba | D2–D5 | 31.10.2026. |
+| 2 | Ko bira kategoriju pri završetku predmeta (čl. 25 vs O-11) | Arhivska služba | D6 | 15.11.2026. |
+| 2 | Dostavne knjige, primaoci po centru, knjiga računa, el. pošta, štambilj i nalepnica, P-3 iz aplikacije | Arhivska služba | E1–E7 | 15.11.2026. |
+| 2 | `Kategorija.pocetak_roka`: podrazumevano „od nastanka dokumenta” umesto „od završetka predmeta” (migracija) | IT | — | faza 2 |
+
 ### 1.2 Odmah — pre faze 1 (pisarnica i delovodnik)
 
 | # | Stavka | Vrsta | Ko | Rok | Zašto baš sada |
 |---|---|---|---|---|---|
 | 1 | ~~Format delovodnog broja~~ (O-1) — **odlučeno 05.10.2026.: ide postojeći način brojanja.** Jedan niz osnovnih brojeva za ceo Institut po godini, uz oznaku OJ (`43-15238`, podbroj `43-15238/2`); nema posebnog niza po OJ. To je podrazumevani format u aplikaciji. | odluka | — | ✔ | — |
 | 2 | ~~Zamena sadašnjeg programa~~ (O-2) — **zatvoreno 05.10.2026.: programa za delovodnik nema**, `Delovodnik 2024.xlsx` je bio samo primer. Ništa se ne zamenjuje i ne uvozi; elektronski delovodnik počinje 01.01.2027. od broja 1. | odluka | — | ✔ | — |
-| 3 | **Ko radi u modulu:** pisarnica, arhivista, administrator modula (imena) | odluka | Arhivska služba | 15.10.2026. | Uloge i dozvole se dodeljuju imenovanim ljudima |
+| 3 | ~~Ko radi u modulu~~ — **zatvoreno 11.10.2026.:** u pisarnici rade dve osobe; pristup im dodeljuje administrator aplikacije, ne čeka se spisak. | — | — | ✔ | — |
 | 4 | ~~Pravilnik o kancelarijskom i arhivskom poslovanju Instituta~~ (O-3) — **pribavljen 05.10.2026.** Važi pravilnik iz 2023 (odeljak 4.5); verzija iz 2005 je zamenjena. | dokument | — | ✔ | IU 03 treba uskladiti sa pravilnikom iz 2023 (tačka 12) |
-| 4a | **Odluke iz pravilnika koje utiču na fazu 1** (O-20 popis akata, O-21 poverljivi delovodnik, dopuna O-1) | odluka | Uprava, arhivska služba | 15.10.2026. | Određuju vrste knjiga i ko dobija delovodni broj |
-| 5 | **Očišćena Lista kategorija** u Excelu (O-7): duplikati, rok za račune (10 ili 5 godina), oznaka 426, događaj od kog teče rok, oznaka „trajno" | dokument | Arhivista | 31.10.2026. | Uvozi se u šifarnik u fazi 1. Aplikacija daje spisak spornih stavki, pa ne mora da se čisti ceo dokument. |
-| 5a | **Status IMS-a kao korisnika javnih sredstava** (O-26): IMS ima JBKJS 81541 (vidi se na e-fakturama NIS-a). Da li to donosi obaveze javnog sektora — predaja preko eArhiv-a, pisano odobrenje arhiva za uništenje, Uredba o klasifikaciji 14/2023? | odluka | Pravna služba | 20.10.2026. | Od odgovora zavise tačke 5b i 25, izlučivanje i oblik Liste. **Proveriti.** |
-| 5b | **Obaveze prema eArhiv-u do aprila 2027** (O-17, rok pomeren na „odmah” 07.10.2026.): zahtev za pristup eArhiv-u za ovlašćenog arhivara, Lista kategorija na odobrenje preko eArhiv-a, arhivska knjiga za 2026. u el. obliku | odluka, dokument | Pravna služba, arhivista | odluka 31.10.2026; predaja do 30.04.2027. | Rok iz prezentacije (Vojkan, sl. 8). Prepis arhivske knjige do 30.04 važi u svakom slučaju (Zakon čl. 9). |
-| 6 | **Skladište na lokalnom Windows serveru** za skenove i dokumente (posebna fascikla, van `/media/`), sa rezervnom kopijom na **drugom disku ili uređaju** u Institutu; kopija van zgrade je obavezna mera (O-25, izmenjeno 07.10.2026.) | tehničko | IT | 31.10.2026. | Pisarnica skenira od prvog dana probnog rada |
+| 4a | ~~Odluke iz pravilnika koje utiču na fazu 1~~ — **odlučeno 11.10.2026.:** popis akata se ne vodi, svaki akt se zavodi u delovodnik pod svojim brojem (O-20); poverljivi i strogo poverljivi delovodnik se ne vode (O-21); broj je samo `{centar}-{redni broj}`, bez klasifikacione oznake (dopuna O-1). | odluka | — | ✔ | — |
+| 5 | **Sporne stavke Liste kategorija** (O-7): Lista je **odobrena od Državnog arhiva** i ne menja se; arhivar samo bira koju od dve iste stavke aplikacija nudi, rok za račune, oznaka 426, događaj od kog teče rok, „trajno operativno” (izmenjeno 11.10.2026.; spisak u dokumentu za arhivu, B1–B9) | dokument | Arhivista | 31.10.2026. | Uvozi se u šifarnik u fazi 1. Ispravke same Liste idu u njenu sledeću verziju (O-30). |
+| 5a | ~~Status IMS-a kao korisnika javnih sredstava~~ (O-26) — **odlučeno 11.10.2026.: IMS podleže** obavezama javnog sektora (JBKJS 81541). Pisano odobrenje Državnog arhiva za uništenje je zakonska obaveza; predaja ide kako traži Državni arhiv (5b). | odluka | — | ✔ | — |
+| 5b | **Slanje Državnom arhivu do 30.04 i eArhiv** (O-17, O-31): danas to radi program Kancelarko — „nešto se potpiše i pošalje” (11.10.2026.). Utvrditi šta se tačno šalje, kojim putem, ko potpisuje i ko ima pristup eArhiv-u (pitanja A1–A7); ovlašćeni arhivar sa pristupom (U5) | odluka, dokument | Arhivska služba, direktor | odgovori 31.10.2026; predaja do 30.04.2027. | Faza 6a mora da proizvede isto što danas daje Kancelarko |
+| 6 | **Skladište na lokalnom Windows serveru** — **odlučeno 11.10.2026.: fascikla unutar direktorijuma aplikacije** (van `MEDIA_ROOT`, ne servira se kao `/media/`, isporuka koda je ne sme brisati), sa rezervnom kopijom na **drugom disku ili uređaju** u Institutu; kopija van zgrade je obavezna mera, a gde — još nije odlučeno, predlog je oblak (O-25, U6) | tehničko | IT | 31.10.2026. | Pisarnica skenira od prvog dana probnog rada |
 | 7 | ~~Izvozi delovodnika za 2025. i 2026.~~ — **nisu potrebni** (O-2): nema programa iz kog bi se izvozilo, a nova godina 2027. počinje novim nizom. Za probni rad pisarnica upisuje deo pošte i u aplikaciju, uporedo sa sadašnjim načinom vođenja. | — | — | ✔ | — |
 
 ### 1.3 Do kraja godine — pre faze 2 (tok predmeta) i pre prelaska
 
 | # | Stavka | Vrsta | Ko | Rok | Zašto |
 |---|---|---|---|---|---|
-| 8 | **Elektronska potvrda prijema** umesto potpisa u dostavnoj knjizi (O-4) | odluka | Uprava, arhivska služba | 31.10.2026. | Od toga zavisi da li papirna dostavna knjiga prestaje. Dostavna knjiga je i ISO 9001 zapis. |
-| 9 | **Faks** (O-5): koristi li se još | odluka | Arhivska služba | 31.10.2026. | Ako ne, knjiga faks poruka se izostavlja |
-| 10 | **Pravilo za početak roka čuvanja** (O-6), uz pisanu potvrdu | odluka | Uprava, arhivista | 15.11.2026. | To je formula. Iz nje se računa datum izlučivanja. |
-| 11 | **Brisanje zapisa zavedenih u delovodnik** u drugim modulima (O-11): samo zabeleška ili zabrana | odluka | Uprava | 30.11.2026. | Zabrana menja ponašanje drugih modula |
+| 8 | ~~Elektronska potvrda prijema~~ (O-4) — **odlučeno 11.10.2026.: može**; služba po svom izboru i dalje vodi i papirnu dostavnu knjigu. **Otprema poštom (P-3, knjiga ekspedovane pošte) ostaje na papiru.** | odluka | — | ✔ | Šta tačno aplikacija štampa: pitanja E1–E2 |
+| 9 | ~~Faks~~ (O-5) — **zatvoreno 11.10.2026.: faks se ne koristi**, knjiga faks poruka se ne vodi. | odluka | — | ✔ | — |
+| 10 | **Pravilo za početak roka čuvanja** (O-6) — **odlučeno 11.10.2026.: od nastanka dokumenta**. Ostaje pisana potvrda direktora (U2) i odgovori arhive za predmet sa više akata i stavke sa događajem (C1–C3) | odluka | Direktor, arhivista | 15.11.2026. | To je formula. Iz nje se računa datum izlučivanja. |
+| 11 | ~~Brisanje zapisa zavedenih u delovodnik~~ (O-11) — **odlučeno 11.10.2026.: delovodnik ne sme niko da dira osim arhivara.** Zapis zaveden u delovodnik ne može se obrisati u drugom modulu dok ga arhivar ne stornira. | odluka | — | ✔ | Menja druge module u fazi 4 |
 | 12 | **Obuka i izmena IU 03** (novi prilozi su ekrani i štampe iz sistema; poziv na pravilnik iz 2023 umesto 2005) | dokument | Arhivska služba | 20.12.2026. | Uslov za prelazak 01.01.2027. |
-| 12a | **Izmena internog pravilnika, korak 1 — elektronski delovodnik i tok predmeta** (odeljak 4.6, tabela A): el. evidencije, el. potvrda prijema, el. pošta bez štampe, el. štambilj, razvod i rokovnik u aplikaciji, ispravke nedoslednosti | dokument | Pravna služba, arhivska služba; donosi generalni direktor | nacrt 15.11.2026, doneto 20.12.2026. | Stupa na snagu pre prelaska 01.01.2027 (8. dan od objave na oglasnoj tabli, kao izmena iz 2023) |
+| 12a | **Izmena internog pravilnika, korak 1 — elektronski delovodnik i tok predmeta** (odeljak 4.6, tabela A): el. evidencije, el. potvrda prijema, el. pošta bez štampe, el. štambilj, razvod i rokovnik u aplikaciji, ispravke nedoslednosti; spisak član po član u dokumentu za upravu (U3) | dokument | Pravna služba, arhivska služba; donosi generalni direktor | nacrt 15.11.2026, doneto 20.12.2026. | Stupa na snagu pre prelaska 01.01.2027 (8. dan od objave na oglasnoj tabli, kao izmena iz 2023) |
 | 12b | **Rešenje o odgovornom stručnom licu** za zaštitu arhivske građe i dokumentarnog materijala i **rešenje o komisiji za popis** dokumentarnog materijala za otpis (dodato 07.10.2026.) | dokument | Generalni direktor | 30.11.2026. | Zakon čl. 9 i 14; kazne do 2.000.000 din za pravno lice. Tačka 3 daje samo imena, a traži se formalni akt. |
 | 12c | **Plan mera zaštite** arhivske građe i dokumentarnog materijala za slučaj katastrofa i vanrednih situacija (Zakon čl. 21) | dokument | Arhivska služba, IT, služba BZR | 31.12.2026. | Zakonska obaveza koje plan nije imao. Vezan za kopiju van zgrade (O-25). |
 | 12d | **Obuka i provera stručne osposobljenosti** zaposlenih koji upravljaju dokumentima (Zakon čl. 9), uz evidenciju ko je obučen | dokument | Arhivska služba | 20.12.2026. | Šire od tačke 12: traži se i provera, ne samo obuka |
@@ -123,7 +160,7 @@ Nabavka i pravila traju, pa ove stavke treba pokrenuti odmah, iako se overa razv
 | 15 | **Odluka o ovlašćenim licima** za overu istovetnosti i za korišćenje pečata | odluka | Direktor | 30.11.2026. | Zakon traži ovlašćeno lice (ZEDEIUP čl. 11) |
 | 16 | **Koji akti traže lični potpis direktora**, a gde je dovoljan pečat (O-15) | odluka | Pravna služba | 30.11.2026. | Određuje da li treba i udaljeni lični potpis |
 | 17 | **Interna pravila za pouzdano elektronsko čuvanje** (dopuna IU 03) i **procena rizika** | dokument | Arhivska služba, IT, pravna služba | 31.12.2026. | Pravilnik čl. 2 i 8. Mora postojati pre prvog overenog dokumenta. |
-| 17a | **Pravilnik o načinu evidentiranja, zaštite i korišćenja elektronskih dokumenata Instituta** (O-23) — interni pravilnik čl. 3 se poziva na njega | dokument | Arhivska služba, pravna služba | 31.10.2026. | Možda već pokriva deo tačke 17. Pre faza 3–5 treba ga pročitati i uskladiti. Obavezan opšti akt po Zakonu čl. 14. |
+| 17a | **Pravilnik o načinu evidentiranja, zaštite i korišćenja elektronskih dokumenata Instituta** (O-23) — interni pravilnik čl. 3 se poziva na njega, a **on ne postoji** (11.10.2026.). Mora se doneti; može se spojiti sa izmenom korak 2 (17b). | dokument | Pravna služba, arhivska služba | 31.01.2027. | Obavezan opšti akt po Zakonu čl. 14. Pre faza 3–5. |
 | 17c | **U interna pravila (tačka 17) upisati:** trenutak od kog počinje pouzdano el. čuvanje i obavezu da se dokument potpisan kvalifikovanim potpisom ili pečatom **pripremi za čuvanje pre isteka sertifikata potpisnika** (dodato 07.10.2026.) | dokument | Arhivska služba, pravna služba | 31.12.2026. | Mišljenje Ministarstva informisanja i telekomunikacija od 25.12.2023. (Vojkan, sl. 50–51): oba pitanja uređuje interni akt. Odnosi se na slučaj C (SEF, el. potpisani ugovori). |
 | 17d | **Akt o bezbednosti IKT sistema i odluka o licu odgovornom za informacionu bezbednost** — bez obzira na ishod O-19 | dokument | Uprava, IT | 31.12.2026. | Navedeni među internim aktima za el. arhiviranje (Olga, sl. 60); Uredba 116/23 čl. 9 traži mere zaštite za softver u kome se arhivira |
 | 17b | **Izmena internog pravilnika, korak 2 — elektronski potpis, pečat, overa i čuvanje** (odeljak 4.6, tabela B), zajedno sa tačkama 15, 17 i 17a | dokument | Pravna služba, arhivska služba, IT; donosi generalni direktor | 31.01.2027. | Pre prvog overenog dokumenta (faza 4) |
@@ -142,7 +179,7 @@ Nabavka i pravila traju, pa ove stavke treba pokrenuti odmah, iako se overa razv
 | 23 | ~~Uništenje papira posle digitalizacije~~ (O-13) — **zatvoreno 05.10.2026.:** papir se ne uništava, jer se čuva lokalno, bez kvalifikovanog pružaoca | — | — | ✔ | — |
 | 24 | ~~Kvalifikovani pružalac čuvanja~~ — **ne koristi se** (sve na lokalnom serveru) | — | — | ✔ | — |
 | 24a | **Spoljna rezervna kopija** (O-25): kopija van zgrade je **obavezna mera** (izmenjeno 07.10.2026. — vidi 4.7); odlučuje se samo gde i kako (drugi objekat, iznajmljen prostor, oblak) i koliko često. Preporuka iz prezentacije je najmanje jednom u 24 h, na geografski drugoj lokaciji — to je preporuka, ne propis. | odluka | Uprava, IT | 31.03.2027. | 7 |
-| 25 | **Komisija za izlučivanje i nadležni arhiv** (O-10); da li za uništenje treba pisano odobrenje arhiva zavisi od O-26. Rešenje o komisiji za popis donosi se ranije (tačka 12b). | odluka | Direktor | 30.06.2027. | 8 |
+| 25 | **Komisija za izlučivanje** (O-10); nadležni arhiv je Državni arhiv Srbije, a njegovo pisano odobrenje za uništenje je zakonska obaveza (O-26, 11.10.2026.). Rešenje o komisiji za popis donosi se ranije (tačka 12b). | odluka | Direktor | 30.06.2027. | 8 |
 
 ### 1.6 Nezavisno od arhive: Zakon o informacionoj bezbednosti (O-19)
 
@@ -202,13 +239,13 @@ Važe i pravila sistema (AGENTS.md): ništa se ne upisuje u nasleđene `dbo.*` o
 | Uredba o tehničko-tehnološkim zahtevima za čuvanje arhivske građe | čl. 5 | **15 obaveznih metapodataka** (odeljak 7.5). Arhivska knjiga u el. obliku. |
 | Zakon o arhivskoj građi i arhivskoj delatnosti | čl. 6 | Arhivska građa se čuva **trajno u obliku u kom je nastala**. Papirni original materijala bez trajnog roka sme se uništiti. |
 | Isti zakon | čl. 13 | **El. arhivska građa pre predaje nadležnom arhivu može se privremeno dati na čuvanje samo državnom organu ili kvalifikovanom pružaocu el. čuvanja.** |
-| Isti zakon | čl. 9, 14, 16, 17–18 | Arhivska knjiga i prepis do 30. aprila. Lista kategorija uz saglasnost. Izlučivanje samo uz pismenu saglasnost. Predaja posle 30 godina. Kazne do 2.000.000 din. **Dopuna 07.10.2026.:** po prezentaciji (Olga, sl. 54, 57) pisano odobrenje za uništenje (čl. 16) traži se samo od javnog sektora, ne od privrednih subjekata — za IMS zavisi od O-26; interni pravilnik čl. 51 ga i dalje traži. |
+| Isti zakon | čl. 9, 14, 16, 17–18 | Arhivska knjiga i prepis do 30. aprila. Lista kategorija uz saglasnost. Izlučivanje samo uz pismenu saglasnost. Predaja posle 30 godina. Kazne do 2.000.000 din. **Dopuna 07.10.2026.:** po prezentaciji (Olga, sl. 54, 57) pisano odobrenje za uništenje (čl. 16) traži se samo od javnog sektora, ne od privrednih subjekata — **IMS podleže (O-26, 11.10.2026.)**, pa odobrenje važi i po zakonu i po internom pravilniku (čl. 51). |
 | Isti zakon (iz prezentacija, 07.10.2026.) | čl. 9 | Odgovorno stručno lice; **mišljenje nadležnog arhiva pre** digitalizacije, mikrofilmovanja, preseljenja, adaptacije; izdvajanje bezvrednog materijala u roku od godinu dana od isteka roka; stručni nadzor arhiva; obaveštenje arhivu o promenama u roku od 30 dana; **obuka i provera stručne osposobljenosti**. Kazne za odgovorno lice 5.000–150.000 din. |
 | Isti zakon | čl. 14 | Tri opšta akta: o evidentiranju, klasifikovanju, arhiviranju i čuvanju; Lista kategorija; **o evidentiranju, zaštiti i korišćenju el. dokumenata** (O-23) |
 | Isti zakon | čl. 21 | **Plan mera zaštite** za slučaj katastrofa i vanrednih situacija (tačka 12c) |
 | Pravilnik o obrascu arhivske knjige (34/22) | — | Obrazac „AK” sa **11 rubrika**. Za el. materijal: u „količinu” ide **format i memorijski kapacitet**, u „prostorije/uređaje” **vrsta uređaja i lokacija**. Jedna knjiga za papir i el. materijal (faza 6a). |
 | Uredba o tehničko-tehnološkim zahtevima (116/23) | čl. 2 st. 3 | Materijal **bez trajnog roka**: kvalifikovani potpis ili pečat; prema prezentaciji vremenski žig nije obavezan (Olga, sl. 33) |
-| Ista Uredba | dužnosti stvaraoca (Olga, sl. 40–42) | Podaci o **stvaraocu** u softveru (MB, naziv, sedište, OJ, ovlašćeno lice); 15 metapodataka sa propisanim vrednostima statusa; **vernost i tačnost metapodataka potvrđuje se kvalifikovanim potpisom ili pečatom**. Lista, zahtev za uništenje i predaja trajnog materijala šalju se u eArhiv preko portala eUprava — da li i za IMS: O-17, O-26. Broj člana **proveriti**. |
+| Ista Uredba | dužnosti stvaraoca (Olga, sl. 40–42) | Podaci o **stvaraocu** u softveru (MB, naziv, sedište, OJ, ovlašćeno lice); 15 metapodataka sa propisanim vrednostima statusa; **vernost i tačnost metapodataka potvrđuje se kvalifikovanim potpisom ili pečatom**. Lista, zahtev za uništenje i predaja trajnog materijala šalju se u eArhiv preko portala eUprava — IMS podleže (O-26); kako se danas šalje: O-17, O-31. Broj člana **proveriti**. |
 | ZEDEIUP | čl. 12 | **Odštampani primerak el. dokumenta** ima snagu originala ako je štampan pod nadzorom ovlašćenog lica i potvrđen svojeručnim potpisom, uz naznaku da je reč o odštampanom primerku |
 | ZEDEIUP | čl. 14 | Svaki primljeni el. dokument je poseban dokument, osim ako je primljen istovetan dokument i primalac je to znao ili morao znati |
 | ZEDEIUP | čl. 61 | Priprema za čuvanje: dopune, zabeleške i podaci o radnjama **čuvaju se odvojeno od izvornog dokumenta**; za rok duži od 5 godina — format za dugoročno čuvanje |
@@ -242,10 +279,10 @@ Važe i pravila sistema (AGENTS.md): ništa se ne upisuje u nasleđene `dbo.*` o
 | Knjiga | Rubrike (uputstvo ili obrazac) | U sistemu |
 |---|---|---|
 | **Delovodnik** (Prilog 1) | osnovni broj / prenos, predmet, podbroj, datum prijema, pošiljalac, broj i datum akta pošiljaoca, OJ, razvod (datum, oznaka) | Osnovna tabela. „Prenos“ je veza ka predmetu iz prethodne godine. |
-| **Dostavna knjiga** (Prilog 2) | datum zavođenja, delovodni broj, pošiljalac, primalac, datum razvođenja, potpis primaoca | Elektronska potvrda prijema (korisnik i vreme). Knjige po OJ, uz dve posebne: za direktora, i za finansijskog direktora i direktora opštih poslova. |
-| **Prijemna knjiga P-3 PTT** (Prilog 3) | redni broj, prijemni broj, primalac, odredišna pošta, vrednost, masa, otkupnina, poštarina | Evidencija otpreme i štampa lista P-3 |
+| **Dostavna knjiga** (Prilog 2) | datum zavođenja, delovodni broj, pošiljalac, primalac, datum razvođenja, potpis primaoca | Elektronska potvrda prijema (korisnik i vreme); služba po izboru vodi i papir (O-4, 11.10.2026.). Knjige po OJ, uz dve posebne: za direktora, i za finansijskog direktora i direktora opštih poslova. |
+| **Prijemna knjiga P-3 PTT** (Prilog 3) | redni broj, prijemni broj, primalac, odredišna pošta, vrednost, masa, otkupnina, poštarina | **Ostaje na papiru** (11.10.2026.). Aplikacija beleži otpremu uz akt; da li štampa list P-3 — pitanje E2. |
 | **Knjiga ulaznih faktura** (Prilog 4) | od koga, datum i broj fakture, iznos, rok plaćanja, plaćeno … | **Izveštaj** nad podacima Nabavke i Finansija (EUF, SEF). Pisarnica dopisuje samo datum prijema i delovodni broj za papirne fakture. |
-| **Knjiga faks poruka** (Prilog 5) | redni broj, OJ, faks, firma, broj strana | Samo ako se faks još koristi (O-5) |
+| **Knjiga faks poruka** (Prilog 5) | redni broj, OJ, faks, firma, broj strana | **Ne vodi se** — faks se ne koristi (O-5, 11.10.2026.) |
 
 Knjige se vode za kalendarsku godinu. **Zaključenje** je akcija u sistemu: broj akata, korisnik, vreme i službena
 zabeleška. Posle nje je knjiga samo za čitanje.
@@ -255,7 +292,8 @@ dostavna knjiga iz tačke 4.1.2. Sistem ima obe evidencije, a uputstvo treba isp
 
 ### 4.2 Delovodnik danas (primer: `Delovodnik 2024.xlsx`)
 
-Delovodnik se danas ne vodi u programu; tabela za 2024. je primer kako izgleda vođenje. Iz nje:
+Delovodnik se danas ne vodi u programu; tabela za 2024. je primer kako izgleda vođenje. Program **Kancelarko** se
+koristi za ono što se do 30. aprila šalje Državnom arhivu (O-31, 11.10.2026.). Iz tabele:
 
 - **15.056 upisa** godišnje, oko 60 po radnom danu, najviše 149 u danu. **Unos mora biti brz.**
 - Stvarno se popunjavaju samo: broj, predmet, datum, OJ i jedno od polja „Prijem/Firma“ (ulazni akt) ili
@@ -306,17 +344,17 @@ za izlučivanje (čl. 47, 51).
 
 | # | Obaveza | Član | U planu |
 |---|---|---|---|
-| 1 | **Popis akata**: za masovne akte iste vrste (uverenja, potvrde, **rešenja o godišnjim odmorima**, radni nalozi, bolovanja) na početku godine se rezervišu prvi osnovni brojevi i vodi „popis akata”; na kraju godine se u delovodnik upisuje ukupan broj. Akt iz popisa sa posebnim postupkom ide u delovodnik pod osnovnim brojem. | 18 | Vrsta knjige `POPIS_AKATA` vezana za rezervisan osnovni broj. **Odluka O-20**: da li zahtevi i rešenja iz Kadrova idu u popis akata umesto da svaki dobije osnovni broj (odeljak 6.4). |
-| 2 | **Poverljivi i strogo poverljivi delovodnik**, vodi se kao običan; poverljivu poštu otvara Sekretarijat | 7, 19 | Vrste knjige `POVERLJIVI`, `STROGO_POVERLJIVI`, poseban pristup (O-21) |
+| 1 | **Popis akata**: za masovne akte iste vrste (uverenja, potvrde, **rešenja o godišnjim odmorima**, radni nalozi, bolovanja) na početku godine se rezervišu prvi osnovni brojevi i vodi „popis akata”; na kraju godine se u delovodnik upisuje ukupan broj. Akt iz popisa sa posebnim postupkom ide u delovodnik pod osnovnim brojem. | 18 | **Ne vodi se** (O-20, 11.10.2026.): svaki akt, i masovni, zavodi se u delovodnik pod svojim osnovnim brojem. Zahtevi i rešenja iz Kadrova dobijaju broj kao do sada (odeljak 6.4). |
+| 2 | **Poverljivi i strogo poverljivi delovodnik**, vodi se kao običan; poverljivu poštu otvara Sekretarijat | 7, 19 | **Ne vode se** (O-21, 11.10.2026.) |
 | 3 | **Razvod** u rubrici 9: „a/a” + rok čuvanja; „R” (u čl. 15 „P”) + datum; ustupljeno OJ; „izvorno” + organ. **Rokovnik predmeta** — predmeti sa rokom, po datumu roka | 15, 26, 28 | `Predmet.razvod_oznaka` (4 vrste), `rok_datum`, `ustupljeno_oj`, `izvorno_organ`; ekran „Rokovnik” |
 | 4 | **Prijemni štambilj**: primljeno, OJ, broj, broj priloga (i listova), vrednost (takse/novac) | 11 | `broj_priloga`, `broj_listova`, `vrednost`; štampa nalepnice |
-| 5 | Pošta primljena **elektronski se štampa** i zavodi u papiru | 6 st. 3 | **Menja se pravilnik** (4.6, A2): el. pošta se zavodi elektronski, sa izvornim fajlom. Do stupanja izmene na snagu (probni rad) pisarnica i dalje štampa primerak. |
+| 5 | Pošta primljena **elektronski se štampa** i zavodi u papiru | 6 st. 3 | **Ne štampa se** (O-22, 11.10.2026.); **menja se pravilnik** (4.6, A2): el. pošta se zavodi elektronski, sa izvornim fajlom. |
 | 6 | **Omot predmeta**: broj, godina, OJ, kratak sadržaj, popis priloga | 23 | Štampa omota sa detalja predmeta |
-| 7 | Službeni dopis nosi broj **„sa klasifikacionim znakom”** | 22 | Dopuna O-1: da li izlazni broj sadrži i klasifikacionu oznaku |
+| 7 | Službeni dopis nosi broj **„sa klasifikacionim znakom”** | 22 | **Ne** (dopuna O-1, 11.10.2026.): broj je samo `{centar}-{redni broj}`, bez klasifikacione oznake |
 | 8 | Oznake OJ su **trocifreni brojevi 100–831**, po Pravilniku o organizaciji | 12 | OJ iz registra; u rubriku OJ ide trocifrena oznaka. Prefiks centra u broju (`43-15238`) je naš izbor, ne pravilnik (O-1) |
 | 9 | Rokovi pisarnice: zavođenje istog dana, najkasnije sledećeg radnog dana **pod datumom prijema**; dostava u rad isti ili sledeći dan; otprema do 13 h isti dan | 13, 20, 29 | `datum_prijema` odvojen od `zavedeno_at`; upozorenja u `proveri_rokove` |
 | 10 | **Arhiva pisarnice najviše 2 godine od zavođenja**, zatim zapisnički u arhivski depo. **Revers** najduže do kraja naredne godine, u 3 primerka | 33, 38, 40 | Pravila u `proveri_rokove` i u reversu; štampa reversa u 3 primerka |
-| 11 | **Arhivska knjiga**: redni broj se nastavlja iz godine u godinu; rok čuvanja; broj i datum zapisnika (uništenje ili predaja); upis do aprila naredne godine. **Prepis do 30. aprila** sa količinom u **dužnim metrima** | 43, 44 | `UpisArhivskeKnjige.zapisnik_broj/datum`, `rok_cuvanja`; `ArhivskaJedinica.duzni_metri`; podsetnik za 30.04. Obrazac AK traži broj jedinica, a za el. materijal format i MB — dužni metri samo dodatno (O-29, 07.10.2026.) |
+| 11 | **Arhivska knjiga**: redni broj se nastavlja iz godine u godinu; rok čuvanja; broj i datum zapisnika (uništenje ili predaja); upis do aprila naredne godine. **Prepis do 30. aprila** sa količinom u **dužnim metrima** | 43, 44 | `UpisArhivskeKnjige.zapisnik_broj/datum`, `rok_cuvanja`; `ArhivskaJedinica.duzni_metri`; podsetnik za 30.04. Danas to radi Kancelarko (O-31). Obrazac AK traži broj jedinica, a za el. materijal format i MB — dužni metri samo dodatno (O-29, 07.10.2026.) |
 | 12 | **Izlučivanje** u roku od godinu dana od isteka roka; popis sa 6 kolona (i dužni metri); zahtev Državnom arhivu Srbije; obaveštenje o uništenju | 51 | Već u planu; dodati rok i dužne metre |
 | 13 | **Predaja posle 30 godina, svake pete godine**; zapisnik u 5 primeraka sa propisanim podacima | 52, 53 | `PredajaNadleznomArhivu`: polja zapisnika i štampa |
 | 14 | Obaveštavanje arhiva o statusnim promenama u roku od 30 dana | 54 | Van sistema |
@@ -340,20 +378,24 @@ Izmene idu u **dva koraka**, da prelazak 01.01.2027. ne čeka nabavku pečata i 
 
 | # | Član | Sada | Predlog |
 |---|---|---|---|
-| A1 | 3, 14 | Delovodnik „odnosno elektronski delovodnik” | Sve evidencije (delovodnik, popis akata, poverljivi delovodnik, dostavne i otpremne knjige, knjiga računa, rokovnik, arhivska knjiga) **vode se u aplikaciji IMS ERP**; papirne knjige se ne vode. Štampa iz aplikacije je izvod. |
+| A1 | 3, 14 | Delovodnik „odnosno elektronski delovodnik” | Sve evidencije (delovodnik, dostavne i otpremne knjige, knjiga računa, rokovnik, arhivska knjiga) **vode se u aplikaciji IMS ERP**; papirne knjige se ne vode. Štampa iz aplikacije je izvod. |
 | A2 | 6 st. 3 | El. primljeni dopis se štampa i zavodi u papiru | El. primljen akt (e-pošta, SEF, portal) zavodi se **elektronski, sa izvornim fajlom**; štampa nije obavezna. |
-| A3 | 6, 21 | Potvrda prijema potpisom u dostavnoj knjizi; lična pošta uz potpis primaoca | Prijem se potvrđuje **u aplikaciji** (korisnik i vreme). Papirni potpis samo za papirnu pošiljku predatu lično, ako primalac nema pristup aplikaciji. (O-4) |
+| A3 | 6, 21 | Potvrda prijema potpisom u dostavnoj knjizi; lična pošta uz potpis primaoca | Prijem se potvrđuje **u aplikaciji** (korisnik i vreme). Papirna dostavna knjiga je dozvoljena uporedo (O-4, odlučeno 11.10.2026.). |
 | A4 | 10, 11 | Otisak prijemnog štambilja na aktu | Podaci štambilja (datum, OJ, broj, prilozi, listovi, vrednost) upisuju se u aplikaciju; na papirni akt se lepi **nalepnica iz aplikacije**. El. otisak štambilja se **ne ugrađuje u sadržaj skena**, nego se vodi kao zaseban sloj ili samo kao metapodatak, a overava se čist sken (izmenjeno 07.10.2026. — ZEDEIUP čl. 61; vidi 4.7 i O-28). |
 | A5 | 15 | Upis „čitkim rukopisom” u rubrike 1–9 | Rubrike su polja u aplikaciji; broj dodeljuje aplikacija. |
 | A6 | 15, 26 | „P” i „R” za rok | Jedna oznaka: **„R”** + datum. |
 | A7 | 16 | Zabeleška o zaključenju overena pečatom i potpisana | Zaključenje u aplikaciji (korisnik, vreme, broj upisa); zabeleška se **overava el. pečatom** kada pečat postoji (korak 2), do tada štampa i potpis. |
-| A8 | 18 | Popis akata u obliku knjige | Popis akata u aplikaciji; vrste za koje se vodi određuje generalni direktor (O-20). |
+| A8 | 18 | Popis akata u obliku knjige | Popis akata se **ne vodi**; svaki akt se zavodi u delovodnik pod svojim brojem (O-20, 11.10.2026.). Čl. 18 se briše ili navodi da se ne primenjuje. |
 | A9 | 23, 24, 25 | Papirni omot; predmet se vraća preko interne dostavne knjige; obrađivač na dopisu upisuje „a/a”, rok i potpisuje | **Elektronski predmet** u aplikaciji; papirni omot samo za papirne priloge. Završetak predmeta u aplikaciji: izbor kategorije i rok iz Liste; prijava obrađivača zamenjuje potpis. |
 | A10 | 28 | Rokovnik od fascikala | Rokovnik u aplikaciji (spisak po datumu roka, podsetnik). |
-| A11 | 29, 32 | Pečat „ekspedovano” na kopiji; knjiga ekspedovane pošte | Otprema se beleži u aplikaciji (datum, način, preporuka, poštarina); knjiga i P-3 su izveštaji. |
+| A11 | 29, 32 | Pečat „ekspedovano” na kopiji; knjiga ekspedovane pošte | **Ostaje na papiru** (11.10.2026.): knjiga ekspedovane pošte, P-3 i kontrolnik poštarine. U aplikaciji se uz akt beleži datum otpreme. |
 | A12 | 33, 38, 40 | Zapisnička predaja u depo; revers u 3 primerka | Zapisnik i revers u aplikaciji sa potvrdom korisnika; papir samo ako ga traži druga strana. |
-| A13 | 44 | Prepis arhivske knjige | Prepis je **izvod iz aplikacije**; utvrditi kom arhivu se šalje (O-24). |
-| A14 | 37, 44, 51 | Nedoslednosti | Popuniti ili brisati tačku 5 u čl. 37; jedan nadležni arhiv. |
+| A13 | 44 | Prepis arhivske knjige „nadležnom Istorijskom arhivu” | Prepis je **izvod iz aplikacije** i šalje se **Državnom arhivu Srbije** (O-24; danas preko Kancelarka, O-31). |
+| A14 | 2, 4, 37, 44, 51, 56 | Nedoslednosti | Popuniti ili brisati tačku 5 u čl. 37; svuda Državni arhiv Srbije umesto „nadležni Istorijski arhiv”; čl. 56 se poziva na uputstva iz 1981. |
+| A15 | 12 | Oznake OJ su trocifreni brojevi 100–831 | Oznaka OJ u broju je **šifra centra iz registra organizacije** (`43-15238`), kako se stvarno radi (O-1). |
+| A16 | 15, 16, 25 | Delovodnik vodi „lice koje vodi delovodnik”; obrađivač upisuje rok | **Delovodnik unosi i menja samo arhivar** (O-11, 11.10.2026.); brojeve dokumentima iz aplikacije (npr. zahtevi u Kadrovima) dodeljuje sistem iz istog niza. |
+| A17 | 25, 43 | — | **Rok čuvanja teče od dana nastanka dokumenta**, osim kad Lista određuje drugi događaj (O-6, 11.10.2026.). |
+| A18 | 18, 19, 22 | Popis akata; poverljivi delovodnik; broj sa klasifikacionim znakom | Brisati ili navesti da se ne primenjuju (O-20, O-21, O-1, 11.10.2026.). Poverljiva pošta se zavodi u delovodnik sa ograničenim pristupom (U3). |
 
 **B — korak 2, pre prve elektronske overe: potpis, pečat, overa i čuvanje** (tačka 17b; spaja se ili usklađuje sa
 pravilnikom o el. dokumentima, O-23)
@@ -410,7 +452,7 @@ Brojevi slajdova su navedeni uz svaku stavku. Navodi koji nisu potvrđeni u teks
 | 20 | Overa po roku čuvanja: bez trajnog roka dovoljan pečat, žig nije obavezan | poželjno (ušteda, O-18) | Olga sl. 33; Vojkan sl. 30 | 5.1 |
 | 21 | Uloga ili izvoz za stručni nadzor nadležnog arhiva | poželjno | Olga sl. 20 | 6.9 |
 | 22 | Uslovi arhivskog depoa (Pravilnik 111/2021: suva prostorija, protivpožarna zaštita, nadzor, pristup samo arhivaru) | poželjno (organizaciono) | Olga sl. 48 | 7.1 (`Lokacija`) |
-| 23 | Klasifikaciona oznaka na izlaznom aktu, bez promene osnovnog broja (O-1) | poželjno | Vojkan sl. 75; interni pravilnik čl. 22 | 6.4 |
+| 23 | ~~Klasifikaciona oznaka na izlaznom aktu, bez promene osnovnog broja (O-1)~~ — **ne uvodi se** (11.10.2026.) | — | Vojkan sl. 75; interni pravilnik čl. 22 | 6.4 |
 | 24 | Kolona „vrsta nosača” u Listi; nova verzija Liste na saglasnost | poželjno / zavisi od O-26 | Olga sl. 50; Vojkan sl. 6 | 4.4, O-30 |
 
 **Protivrečnosti i šta treba odlučiti**
@@ -418,12 +460,12 @@ Brojevi slajdova su navedeni uz svaku stavku. Navodi koji nisu potvrđeni u teks
 | # | Tema | Šta kažu izvori | Stav plana | Šta odlučiti |
 |---|---|---|---|---|
 | P1 | Original posle skeniranja | Vojkan (sl. 47): digitalizovan akt po čl. 11 ima snagu originala, pa se original „može baciti”, osim kada poseban zakon traži drugačije. Olga (sl. 23): original bez trajnog roka sme se uništiti pre roka **samo uz kvalifikovanu uslugu el. čuvanja**. | Papir se ne uništava (O-13 zatvoreno; ZEDEIUP čl. 63 st. 4; interni pravilnik čl. 48 st. 3) — isto kao Olga, strože tumačenje | Ništa; stav ostaje |
-| P2 | Odobrenje arhiva za uništenje | Olga (sl. 54, 57): pisano odobrenje (čl. 16) traži se samo od javnog sektora; za el. materijal zahtev ide u eArhiv (sl. 43) | Izlučivanje uz saglasnost Državnog arhiva Srbije (princip 7, interni pravilnik čl. 51) | O-26: ako IMS nije javni sektor, saglasnost je obaveza iz internog pravilnika, koji se može izmeniti; ako jeste, ostaje zakonska |
+| P2 | Odobrenje arhiva za uništenje | Olga (sl. 54, 57): pisano odobrenje (čl. 16) traži se samo od javnog sektora; za el. materijal zahtev ide u eArhiv (sl. 43) | Izlučivanje uz saglasnost Državnog arhiva Srbije (princip 7, interni pravilnik čl. 51) | **Rešeno 11.10.2026.: IMS podleže (O-26)**, saglasnost je zakonska |
 | P3 | Pečat na već potpisanim dokumentima (slučaj C) | Olga (sl. 74): pečat ili potpis ovlašćenog lica „bez obzira” na to da li dokument već ima kvalifikovani potpis. Vojkan (sl. 29): validacija, žig, ponovni potpis pre isteka postojećeg. | Ne overava se ponovo; proverava se potpis i dodaju žig i podaci do LTA (ZEDEIUP čl. 62 st. 1) | O-27, pravna služba |
 | P4 | El. otisak štambilja na skenu | ZEDEIUP čl. 61 (Olga sl. 35): zabeleške se čuvaju odvojeno od izvornika; Vojkan (sl. 69): metapodaci ne smeju da naruše sadržaj dokumenta | Bilo je: „na sken se ugrađuje el. otisak” (4.6 A4) — **izmenjeno 07.10.2026.** | O-28: zaseban sloj ili samo metapodatak |
-| P5 | Format delovodnog broja | Vojkan (sl. 75): broj iz Liste, `KK/TT/XXXXXX` | `{centar}-{broj}` (O-1 odlučeno 05.10.2026.) | Ništa; Uredba o kancelarijskom poslovanju važi za organe uprave. Klasifikaciona oznaka se može dodati na izlazni akt (dopuna O-1, interni pravilnik čl. 22). |
+| P5 | Format delovodnog broja | Vojkan (sl. 75): broj iz Liste, `KK/TT/XXXXXX` | `{centar}-{broj}` (O-1 odlučeno 05.10.2026.) | Ništa; Uredba o kancelarijskom poslovanju važi za organe uprave. Klasifikaciona oznaka se ne dodaje ni na izlazni akt (dopuna O-1, 11.10.2026.). |
 | P6 | Količina u arhivskoj knjizi | Obrazac AK (Olga sl. 25–27): broj jedinica (fascikla, kutija, registrator), za el. materijal format i MB | Dužni metri (interni pravilnik čl. 44) | O-29: AK po obrascu, dužni metri samo dodatno za prepis i izlučivanje |
-| P7 | eArhiv za privatni sektor | Olga je nedosledna: sl. 39, 43, 44 — „stvaralac i imalac” šalje Listu i zahteve u eArhiv; sl. 71 — privatni sektor ne koristi eArhiv. Verovatno je reč o eArhiv-u kao kanalu za predaju, a ne kao skladištu — **proveriti**. | O-17, rok bio 31.03.2027 | O-17 odmah, uz O-26 |
+| P7 | eArhiv za privatni sektor | Olga je nedosledna: sl. 39, 43, 44 — „stvaralac i imalac” šalje Listu i zahteve u eArhiv; sl. 71 — privatni sektor ne koristi eArhiv. Verovatno je reč o eArhiv-u kao kanalu za predaju, a ne kao skladištu — **proveriti**. | O-17, rok bio 31.03.2027 | IMS podleže (O-26); kako se danas šalje — O-17, O-31 |
 
 ---
 
@@ -474,7 +516,7 @@ pružaoca), a čuvamo kod sebe. Kvalifikovani pružalac čuvanja se ne koristi.
 | Vrsta | Gde | Napomena |
 |---|---|---|
 | Overeni dokumenti (PAdES-B-LTA) | **Lokalni server** | Pouzdano čuvanje po Pravilniku, po internim pravilima. Papirni original ostaje. |
-| Radni skenovi bez overe | Lokalni server | Pomoćna kopija, bez pravne snage originala |
+| Radni skenovi bez overe | Lokalni server, fascikla unutar direktorijuma aplikacije (11.10.2026.) | Pomoćna kopija, bez pravne snage originala |
 | Arhivska građa (trajno) | **Papir u arhivi**; sken, ako postoji, na lokalnom serveru | Original se predaje Državnom arhivu Srbije (Zakon o arhivskoj građi čl. 6) |
 | Dnevnik radnji i metapodaci | Baza aplikacije na lokalnom serveru | Dnevnik se samo dopisuje |
 | Rezervna kopija | **Drugi disk ili uređaj u Institutu** i **kopija van zgrade** — obavezna mera; gde i kako odlučuje O-25 (izmenjeno 07.10.2026. — vidi 4.7) | Dok ne postoji kopija van zgrade, požar ili krađa servera mogu da unište i original i kopiju el. dokumenta; papir ostaje. Vezano za plan mera zaštite (tačka 12c). |
@@ -595,13 +637,13 @@ prikazuje delovodni broj, status u arhivi i status overe, uz dugmad „Zavedi“
   **Ne koristi se `MAX()+1`.** Druga linija zaštite je unique ograničenje na (knjiga, godina, osnovni broj, podbroj).
 - Format dolazi iz postavke i ostaje `{oj}-{osnovni broj}` i `/{podbroj}`, kao danas u Kadrovima (O-1 odlučeno
   05.10.2026.: postojeći način brojanja). Jedan brojač po knjizi i godini, ne po OJ. Predlog iz prezentacije da broj
-  nosi vrstu i tip iz Liste (`KK/TT/XXXXXX`) se ne prihvata (4.7, P5); klasifikaciona oznaka se može **prikazati na
-  izlaznom aktu** pored broja (interni pravilnik čl. 22) — poželjno.
+  nosi vrstu i tip iz Liste (`KK/TT/XXXXXX`) se ne prihvata (4.7, P5); klasifikaciona oznaka se **ne prikazuje** ni na
+  izlaznom aktu (dopuna O-1, 11.10.2026.).
 - **Prelazak brojača zahteva:** `hr.services.zahtevi.dodeli_broj()` počinje da poziva `arhiva.services.delovodnik.zavedi()`.
   Brojevi i format ostaju isti. `BrojacZahteva` se jednom preslika u brojač delovodnika, pa ostaje samo za čitanje.
   Rešenje i dalje dobija podbroj zahteva.
-- **Popis akata (pravilnik čl. 18, O-20):** ako se odluči da masovni akti Kadrova (npr. rešenja o godišnjem odmoru)
-  idu u popis akata, oni dobijaju redni broj u popisu pod rezervisanim osnovnim brojem, a ne sopstveni osnovni broj.
+- **Popis akata (pravilnik čl. 18, O-20):** ne vodi se (11.10.2026.). Svi akti, i masovni (npr. rešenja o godišnjem
+  odmoru), zavode se odmah, svaki pod svojim osnovnim brojem.
 
 ### 6.5 Potpisni servis
 
@@ -655,9 +697,12 @@ prikazuje delovodni broj, status u arhivi i status overe, uz dugmad „Zavedi“
 - Pri prijemu se SHA-256 poredi sa već primljenim prilozima; istovetan fajl daje **upozorenje na duplikat**
   (ZEDEIUP čl. 14) — poželjno, dodato 07.10.2026.
 - Aplikacija nema brisanje overenih fajlova. Uklanja ih samo završeno izlučivanje.
-- Skladište je na **lokalnom Windows serveru** (`ARHIVA_STORAGE_ROOT`, npr. poseban disk ili fascikla na serveru).
+- Skladište je na **lokalnom Windows serveru**, u **fascikli unutar direktorijuma aplikacije** (odluka 11.10.2026.;
+  `ARHIVA_STORAGE_ROOT`, npr. `C:\DjangoApps\ims_erp\arhiva_skladiste`). Uslovi: nije pod `MEDIA_ROOT`, ne servira
+  se direktno, u `.gitignore` je, a isporuka novog koda je ne sme brisati ni prepisati.
 - Rezervna kopija: najmanje jedna kopija na **drugom disku ili uređaju** u Institutu (ne na istom disku) i **kopija van
-  zgrade** (pravilo 3-2-1) — obavezna mera, gde i kako odlučuje O-25 (izmenjeno 07.10.2026.). Prezentacija preporučuje
+  zgrade** (pravilo 3-2-1) — obavezna mera, gde i kako odlučuje O-25 (izmenjeno 07.10.2026.; 11.10.2026. predlog je
+  oblak, uz proveru Zakona o arhivskoj građi čl. 13 — U6). Prezentacija preporučuje
   kopiju najmanje jednom u 24 h na geografski drugoj lokaciji (Vojkan, sl. 88) — preporuka, ne propis. Probno vraćanje
   svakog kvartala.
 - Procena: oko 15.000 akata godišnje × oko 1 MB ≈ **15 GB godišnje** samo za novu poštu. Digitalizacija zatečene
@@ -670,7 +715,11 @@ prikazuje delovodni broj, status u arhivi i status overe, uz dugmad „Zavedi“
   - obuhvat daju odobrene dodele uloga (`organizacija.DodelaUloge`);
   - predmet se vidi po glavnoj ili dodatnoj OJ;
   - `allowed_center_codes` i `allowed_centers` se ne čitaju (AGENTS.md §9, zamka 12).
-- Pisarnica, arhivista i komisija imaju obuhvat cele firme.
+- Pisarnica, arhivista i komisija imaju obuhvat cele firme. U modulu rade dve osobe; pristup dodeljuje administrator
+  aplikacije (11.10.2026.).
+- **Delovodnik menja samo arhivar** (O-11, 11.10.2026.): upis, podbroj, storno i zaključenje imaju samo uloge
+  arhivske službe; ostali vide predmete u svom obuhvatu. Automatsko dodeljivanje broja iz drugih modula (zahtevi u
+  Kadrovima, faza 4) ide kroz `zavedi()` i nije ručna izmena.
 - Zaduženi referent uvek vidi svoj predmet, kao što autor uvek vidi svoj predmet nabavke.
 - Kodovi dozvola su imena ruta, kao u ostatku sistema. Uloge: `arhiva-pisarnica`, `arhiva-arhivista`,
   `arhiva-komisija`, `arhiva-administrator`, a posebno pravo je `arhiva:overa_pokreni`. Uprava automatski dobija sve.
@@ -692,19 +741,24 @@ prikazuje delovodni broj, status u arhivi i status overe, uz dugmad „Zavedi“
 | `VrstaAkta` | ulazna/izlazna pošta, interna prepiska, ugovor, ulazna faktura, rešenje, odluka, zapisnik … sa podrazumevanom kategorijom i načinom overe (pečat / lični potpis) |
 | `Lokacija` | stablo prostorija → regal → polica → pozicija, kapacitet; za el. materijal i **uređaj** (lokalni server, rezervni disk, kopija van zgrade, spoljni sistem kao SEF). Uslovi depoa (Pravilnik 111/2021: suva prostorija, protivpožarna zaštita, nadzor, pristup samo arhivaru) su organizaciona obaveza, ne deo aplikacije — poželjno je samo beležiti proveru uslova. |
 
-`pocetak_roka` (događaj od kog teče rok): `ZAVRSETAK_PREDMETA` (podrazumevano), `ISTEK_UGOVORA`,
-`PRESTANAK_VAZENJA`, `OKONCANJE_POSTUPKA`, `PRESTANAK_ZAKUPA`, `PRESTANAK_RADNOG_ODNOSA`, `RUCNO`.
+`pocetak_roka` (događaj od kog teče rok): `NASTANAK_DOKUMENTA` (**podrazumevano od 11.10.2026.**, uvodi se u fazi 2;
+u kodu faze 1 je još `ZAVRSETAK_PREDMETA`), `ZAVRSETAK_PREDMETA`, `ISTEK_UGOVORA`, `PRESTANAK_VAZENJA`,
+`OKONCANJE_POSTUPKA`, `PRESTANAK_ZAKUPA`, `PRESTANAK_RADNOG_ODNOSA`, `RUCNO`.
 
-**Predlog pravila za istek (formula, traži pisanu potvrdu, O-6):**
-> Rok teče od 1. januara godine posle događaja. Istek je 31. decembra godine `godina_događaja + rok_godina`.
-> Primer: završen 14.05.2026, rok 5 godina → istek 31.12.2031 → kandidat za izlučivanje u 2032.
-> „Trajno“ nema istek, nego rok za predaju nadležnom arhivu.
+**Pravilo za istek (formula, O-6) — odlučeno 11.10.2026.: rok teče od nastanka dokumenta.** Čeka pisanu potvrdu
+direktora (U2) i odgovore arhive C1–C3:
+> Rok teče od **datuma nastanka dokumenta** (`Akt.datum`). Za predmet sa više akata — od nastanka poslednjeg akta
+> (predlog, pitanje C2). Kada Lista navodi drugi događaj (istek zakupa, okončanje postupka, prestanak važenja), rok
+> teče od tog događaja (C3). Istek = datum početka + `rok_godina`.
+> Primer: akt od 14.05.2026, rok 5 godina → istek 14.05.2031 → ulazi u popis za izlučivanje u 2031. ili najkasnije
+> u roku od godinu dana od isteka (pravilnik čl. 51).
+> „Trajno“ nema istek, nego rok za predaju Državnom arhivu Srbije (30 godina, čl. 52). „Trajno operativno“ — pitanje B7.
 
 ### 7.2 Segment A — pisarnica i delovodnik
 
 | Model | Ključna polja |
 |---|---|
-| `EvidencionaKnjiga` | vrsta (delovodnik / **poverljivi** / **strogo poverljivi** / **popis akata** / dostavna / otpremna / ulazne fakture / faks), godina, OJ, naziv, za popis akata **rezervisan osnovni broj u delovodniku**, status, zaključenje (ko, kada, broj akata, zabeleška; štampa za pečat i potpis) |
+| `EvidencionaKnjiga` | vrsta (delovodnik / dostavna / otpremna / ulazne fakture; popis akata, poverljivi delovodnik i faks se ne vode — O-20, O-21, O-5), godina, OJ, naziv, status, zaključenje (ko, kada, broj akata, zabeleška; štampa za pečat i potpis) |
 | `BrojacKnjige` | knjiga, poslednji osnovni broj |
 | `Predmet` | knjiga, osnovni broj, **delovodni broj**, **datum prijema** (pod njim se zavodi, čl. 13) i vreme zavođenja, naslov, smer, primljen elektronski (da/ne), vrsta akta, pošiljalac ili primalac (Partner / zaposleni / tekst, mesto), broj i datum akta pošiljaoca, **prijemni štambilj** (broj priloga, broj listova, vrednost), glavna i dodatne OJ (čvor registra + snimak koda), zaduženi referent, **kategorija** (+ snimak oznake i roka), **razvod** (datum; oznaka: a/a + rok / R + datum roka / ustupljeno OJ / izvorno + organ), `prenos_iz`, status, napomena, razlog storna |
 | `Akt` | predmet, podbroj, datum, opis, smer, zaveo |
@@ -835,8 +889,9 @@ Kategorije su **predlog** iz Liste i potvrđuje ih arhivista.
 - `finansije.LedgerEntry`: stavke nisu akti, glavna knjiga se čuva zbirno (kategorije 191, 192);
 - `naplata.*`: modul se gasi.
 
-**Brisanje izvora:** `pre_delete` signal **samo beleži** brisanje i označava vezu „izvor obrisan“. Snimak i overeni
-dokument ostaju. Tvrda zabrana brisanja je odluka O-11.
+**Brisanje izvora — zabrana (O-11, odlučeno 11.10.2026.):** zapis koji je zaveden u delovodnik ne može se obrisati
+u svom modulu dok arhivar ne stornira upis. Posle storna `pre_delete` beleži brisanje i označava vezu „izvor
+obrisan“; snimak i overeni dokument ostaju.
 
 ---
 
@@ -844,8 +899,8 @@ dokument ostaju. Tvrda zabrana brisanja je odluka O-11.
 
 | # | Ekran (ruta = kod dozvole) | Ko | Šta radi |
 |---|---|---|---|
-| 1 | `arhiva:pisarnica` | Pisarnica | Brzi unos ulazne, izlazne i interne pošte, tastaturom, ~30 s po upisu. Sken i razvođenje u istom koraku. Poželjno (07.10.2026.): upozorenje na duplikat priloga po SHA-256 i štampa ili e-pošta **potvrde o prijemu podneska** za stranku. |
-| 2 | `arhiva:delovodnik`, `predmet_detail`, `predmet_create`, `akt_add`, `knjiga_zakljuci` | Pisarnica, Uprava | Pretraga, podbroj, storno, štampa Priloga 1, Excel, zaključenje knjige |
+| 1 | `arhiva:pisarnica` | Arhivar (O-11) | Brzi unos ulazne, izlazne i interne pošte, tastaturom, ~30 s po upisu. Sken i razvođenje u istom koraku. Poželjno (07.10.2026.): upozorenje na duplikat priloga po SHA-256 i štampa ili e-pošta **potvrde o prijemu podneska** za stranku. |
+| 2 | `arhiva:delovodnik`, `predmet_detail`, `predmet_create`, `akt_add`, `knjiga_zakljuci` | Upis, podbroj, storno i zaključenje **samo arhivar** (O-11); pregled Uprava i obuhvat | Pretraga, podbroj, storno, štampa Priloga 1, Excel, zaključenje knjige |
 | 3 | `arhiva:moji_predmeti`, `dostava_potvrdi` | Svaki zaposleni | Potvrda prijema, rad na predmetu, odgovor (novi podbroj), predlog završetka |
 | 4 | `arhiva:predmet_zavrsi` | Referent, rukovodilac | Razvod (a/a + rok, R + datum, ustupljeno, izvorno), **obavezna kategorija** |
 | 4a | `arhiva:rokovnik` | Pisarnica, referent | **Rokovnik predmeta** (pravilnik čl. 28): predmeti sa oznakom „R” po datumu roka |
@@ -871,7 +926,7 @@ isporuke.
 | Zadatak | Kada | Red | Šta radi |
 |---|---|---|---|
 | `arhiva.tasks.proveri_rokove` | svaki dan 06:30 | default | Reversi (i rok do kraja naredne godine), predmeti bez razvoda, nepotvrđene dostave, nezavedena ili nedostavljena pošta od juče, **rokovnik** (dospeli „R”), **arhiva pisarnice starija od 2 godine** (za predaju depou), istekli rokovi čuvanja i izlučivanje u roku od godinu dana |
-| `arhiva.tasks.podsetnik_arhivske_knjige` | 01.03. i 15.04. | default | Upis materijala iz prethodne godine do aprila i **prepis arhivske knjige do 30.04** (pravilnik čl. 43–44); ako se odnosi na IMS, i predaja preko eArhiv-a (O-17) |
+| `arhiva.tasks.podsetnik_arhivske_knjige` | 01.03. i 15.04. | default | Upis materijala iz prethodne godine do aprila i **prepis arhivske knjige do 30.04** (pravilnik čl. 43–44); Državnom arhivu, preko eArhiv-a ako se tako traži (O-17, O-26) |
 | `arhiva.tasks.proveri_veze` | svaki dan 04:30 | default | Veze čiji izvor više ne postoji |
 | `arhiva.tasks.obnovi_zigove` | svaki dan | potpis | Dokumenti kojima `rok_obnove` ističe u narednih N meseci dobijaju novi žig (Pravilnik čl. 7) |
 | `arhiva.tasks.pripremi_potpisane` (dodato 07.10.2026.) | svaki dan | potpis | Primljeni potpisani dokumenti (slučaj C) kojima `rok_pripreme` — istek sertifikata potpisnika — ističe u narednih N dana, a još nisu pripremljeni za čuvanje: priprema ili upozorenje (tačka 17c) |
@@ -905,17 +960,17 @@ Svaka faza se isporučuje posebno, sa testovima (`--settings=ims_erp.settings.te
 
 | Faza | Sadržaj | Zavisi od | Rezultat |
 |---|---|---|---|
-| **0 — Dogovor, pravo, nabavka** | Stavke iz odeljka 1.2 i 1.3, i pokretanje stavki iz 1.4 (ponude, ovlašćena lica, interna pravila). Preduslovi iz odeljka 11. | — | Potvrđen format broja i pravilo roka, očišćena Lista, testni nalog za pečat i žig |
+| **0 — Dogovor, pravo, nabavka** | Stavke iz odeljka 1.2 i 1.3, i pokretanje stavki iz 1.4 (ponude, ovlašćena lica, interna pravila). Preduslovi iz odeljka 11. | — | Potvrđen format broja i pravilo roka, izabrane preporučene stavke Liste, utvrđeno šta radi Kancelarko, testni nalog za pečat i žig |
 | **1 — Osnova i delovodnik** (koraci 1–2) | Aplikacija `arhiva`, šifarnici, uvoz Liste, knjige, brojač, `zavedi()`, podbroj, storno, zaključenje, ekrani pisarnice i delovodnika, štampa, Excel, zaštićeno preuzimanje, dozvole i obuhvat po registru | 1.2 | Probni rad pisarnice uporedo sa sadašnjim načinom vođenja (programa nema) |
 | **2 — Tok predmeta** (koraci 3–4) | Dostavne knjige, potvrda prijema, Moji predmeti, završetak sa obaveznom kategorijom i rokom, otprema i P-3, interna prepiska | 1, 1.3 | Predmet prolazi ceo tok |
 | **3 — Potpisni servis** | pyHanko, red i worker `potpis`, klijent pružaoca (pečat, TSA), PAdES-B-LTA, validacija, `Overa`, `DnevnikArhive`, priprema PDF/A, veraPDF | testni nalog (1.4, tačka 13) | Overa 1 i 1.000 testnih dokumenata sa izveštajem validacije |
 | **4 — Povezivanje i overa dokumenata iz aplikacije** (slučaj B) | `VezaDokumenta`, adapteri, `{% arhiva_panel %}`, **prelazak brojača zahteva na arhivu**, overa rešenja pri izdavanju i paketno. Zatim disciplinski postupci, ugovori, nabavka, SEF (slučaj C), ostalo. | 1, 3, 1.4 (ugovor, pravila, preduslovi) | Rešenja izlaze kao overen PDF sa delovodnim brojem. Najbrža vidljiva korist. |
 | **5 — Digitalizacija i masovna overa** (slučaj A) | Prijem skenova, OCR, PDF/A, **kontrola drugog lica**, paket overe, zapisnik o overi, metapodaci, ekrani E1–E3 | 2, 3, O-8 i O-14; **mišljenje nadležnog arhiva pre digitalizacije** (1.5, tačka 21a, dodato 07.10.2026.) | Pisarnica overava ulaznu poštu paketno |
-| **6a — Arhivska knjiga** (dodato 07.10.2026.) | `UpisArhivskeKnjige` sa 11 rubrika obrasca AK i poljima `nosac`, `format`, `kapacitet_mb`, `uredjaj_lokacija`, `broj_saglasnosti`; **ručni unos** (bez veze sa jedinicama i predmetima, koja dolazi u fazi 6); izvoz u Excel i PDF po obrascu; podaci o stvaraocu (`Stvaralac`); format za eArhiv kada se sazna (O-17) | 1 (šifarnik Liste), 1.3 tačka 12e | **Arhivska knjiga za 2026. upisana i prepis poslat do 30.04.2027.** |
+| **6a — Arhivska knjiga** (dodato 07.10.2026.) | `UpisArhivskeKnjige` sa 11 rubrika obrasca AK i poljima `nosac`, `format`, `kapacitet_mb`, `uredjaj_lokacija`, `broj_saglasnosti`; **ručni unos** (bez veze sa jedinicama i predmetima, koja dolazi u fazi 6); izvoz u Excel i PDF po obrascu; podaci o stvaraocu (`Stvaralac`); format za eArhiv kada se sazna (O-17); **sve što danas daje Kancelarko** (O-31), uz preuzimanje poslednjeg rednog broja arhivske knjige iz Kancelarka (redni broj se nastavlja, čl. 43) | 1 (šifarnik Liste), 1.3 tačka 12e, odgovori A1–A7 | **Arhivska knjiga za 2026. upisana i prepis poslat do 30.04.2027.** Ako aplikacija do 31.03.2027. ne proizvede isto što Kancelarko, 2026. se još jednom šalje iz Kancelarka. |
 | **6 — Fizička arhiva** (koraci 5–9) | Primopredaja, prijem, jedinice sa QR nalepnicom, lokacije; **povezivanje arhivske knjige iz faze 6a** sa jedinicama i predmetima (izmenjeno 07.10.2026.: sama knjiga je izdvojena u fazu 6a) | 2, 6a | Arhiva u sistemu |
 | **7 — Dugoročno čuvanje** | Obnova žigova, provera integriteta, revalidacija, izveštaj „ističe u 90 dana“, provera rezervne kopije i probno vraćanje. Sve na lokalnom serveru; pružalac čuvanja se ne koristi. | 3, 5 | Ispunjen Pravilnik čl. 5–8 za čuvanje na lokalnom serveru |
 | **8 — Praćenje i izlučivanje** (koraci 10–14) | Reversi, rokovi, izlučivanje sa saglasnošću (papir se uništava samo **izlučivanjem po isteku roka**, ne posle digitalizacije), popis sa rednim brojem iz arhivske knjige i Liste, predaja nadležnom arhivu uz izvoz delovodnika, izveštaji | 6, 7, O-10, O-26 | Zatvoren ceo tok |
-| **9 — Početak elektronskog delovodnika** | Knjige za 2027. otvorene od broja 1, obuka, izmena IU 03. **Nema uvoza** ranijih godina (programa nema, O-2); ranije evidencije ostaju gde su. **Datum početka: 01.01.2027.** | 1, 2 | Jedan delovodnik, u aplikaciji |
+| **9 — Početak elektronskog delovodnika** | Knjige za 2027. otvorene od broja 1, obuka, izmena IU 03. **Nema uvoza** ranijih godina delovodnika (programa za delovodnik nema, O-2); ranije evidencije ostaju gde su. Arhivska knjiga iz Kancelarka — faza 6a. **Datum početka: 01.01.2027.** | 1, 2 | Jedan delovodnik, u aplikaciji |
 
 **Okvirni redosled:**
 - **pre 01.01.2027:** faze 0, 1, 2 i 9; uporedo 3 i prvi deo faze 4 (rešenja);
@@ -947,33 +1002,34 @@ Rokovi i nosioci su u odeljku 1.
 | # | Pitanje | Zašto je važno | Pre faze |
 |---|---|---|---|
 | O-1 | ~~Format delovodnog broja~~ — **odlučeno 05.10.2026.: ide postojeći način brojanja.** Jedan niz osnovnih brojeva za ceo Institut po godini (kao pravilnik čl. 12, 15), uz oznaku OJ (`43-15238`, podbroj `/2`), kao danas u Kadrovima; nema niza po OJ. | — | — |
-| O-2 | ~~Iz kog programa je izvezen `Delovodnik 2024.xlsx`~~ — **zatvoreno 05.10.2026.:** programa nema, tabela je bila primer. Nema zamene ni uvoza; elektronski delovodnik počinje 01.01.2027. | — | — |
+| O-2 | ~~Iz kog programa je izvezen `Delovodnik 2024.xlsx`~~ — **zatvoreno 05.10.2026.:** programa za delovodnik nema, tabela je bila primer. Nema zamene ni uvoza; elektronski delovodnik počinje 01.01.2027. (Kancelarko se koristi za slanje Državnom arhivu — O-31.) | — | — |
 | O-3 | ~~Treba nam Pravilnik o kancelarijskom i arhivskom poslovanju Instituta~~ — **zatvoreno 05.10.2026.** Važi pravilnik iz 2023 (odeljak 4.5); IU 03 se poziva na zamenjeni pravilnik iz 2005. | — | — |
-| O-4 | Da li je **elektronska potvrda prijema** prihvatljiva umesto potpisa u dostavnoj knjizi? Pravilnik traži potpis (čl. 6, 21). **Predlog: da**, uz izmenu pravilnika (4.6, A3). | Od toga zavisi da li papirna dostavna knjiga prestaje | 2 |
-| O-5 | Da li se **faks** još koristi? | Knjiga faks poruka | 2 |
-| O-6 | **Pravilo za početak roka** i događaj za „trajno operativno“ | Formula, pa traži pisanu potvrdu | 2 |
-| O-7 | Sporne stavke Liste: računi 10 ili 5 godina, duplikati, oznaka 426 | Pre uvoza šifarnika | 1 |
+| O-4 | ~~Elektronska potvrda prijema~~ — **odlučeno 11.10.2026.: može**, uz izmenu pravilnika (4.6, A3); služba po želji vodi i papir. Otprema poštom (P-3) ostaje na papiru. Šta aplikacija štampa: E1–E2. | — | 2 |
+| O-5 | ~~Da li se faks još koristi?~~ — **zatvoreno 11.10.2026.: ne koristi se**, knjiga faks poruka se ne vodi. | — | — |
+| O-6 | **Pravilo za početak roka** — **odlučeno 11.10.2026.: od nastanka dokumenta** (7.1). Otvoreno: predmet sa više akata, stavke sa događajem, „trajno operativno” (C1–C3, B7) i pisana potvrda direktora (U2) | Formula | 2 |
+| O-7 | Sporne stavke Liste: računi 10 ili 5 godina, duplikati, oznaka 426. **Dopuna 11.10.2026.:** Lista je odobrena od Državnog arhiva i ne menja se; arhivar bira preporučene stavke (B1–B9). | Pre uvoza šifarnika | 1 |
 | O-8 | Skenira li se **svaki** ulazni akt ili samo neke vrste? | Opterećenje pisarnice i skladišta | 5 |
 | O-10 | Ko je komisija za izlučivanje? Nadležni arhiv je po pravilniku **Državni arhiv Srbije** (čl. 51–53); za prepis arhivske knjige pravilnik pominje „nadležni Istorijski arhiv” (čl. 44) — potvrditi (O-24). Da li saglasnost za uništenje traži zakon ili samo interni pravilnik — zavisi od O-26 (dopuna 07.10.2026.). | Put dokumenata za saglasnost | 8 |
-| O-11 | Smeju li se u drugim modulima brisati zapisi zavedeni u delovodnik (samo zabeleška ili zabrana)? | Zabrana menja druge module | 4 |
+| O-11 | ~~Brisanje zapisa zavedenih u delovodnik~~ — **odlučeno 11.10.2026.: delovodnik ne dira niko osim arhivara**; zapis zaveden u delovodnik ne briše se u drugom modulu dok ga arhivar ne stornira (8, 6.9). | — | 4 |
 | O-12 | Da li ćemo sistem za čuvanje voditi **po pravilima ISO/IEC 27001** (interna pravila, procena rizika, pristup, kopije i probno vraćanje, incidenti, dnevnik)? **Sertifikat nije obavezan.** | Uslov za čuvanje na lokalnom serveru (Pravilnik čl. 8). **Obavezno**, jer se sve čuva lokalno (05.10.2026.). | 4 |
 | O-13 | ~~Za koje kategorije sme da se uništi papir posle digitalizacije?~~ — **zatvoreno 05.10.2026.:** sve se čuva lokalno, bez kvalifikovane usluge čuvanja, pa se papir **ne uništava** (čl. 48 st. 3, ZEDEIUP čl. 63 st. 4). | — | — |
 | O-14 | Da li se digitalizuje i **zatečena arhiva** ili samo nova pošta? | Skeneri, ljudi, troškovi žigova | 5 |
 | O-15 | Koji akti traže **lični potpis direktora** (rešenja, odluke, ugovori), a gde je dovoljan pečat Instituta? | Obim udaljenog ličnog potpisa | 4 |
 | O-16 | **SEF e-fakture**: da li ih arhiviramo sami ili se oslanjamo na čuvanje na SEF-u? | Proveriti obavezu iz Zakona o el. fakturisanju | 4 |
-| O-17 | Da li je IMS obveznik **eArhiv-a** (Uredba o tehničko-tehnološkim zahtevima važi pre svega za organe javne vlasti)? **Izmenjeno 07.10.2026.: rok „odmah”** (1.2, tačka 5b). Po prezentacijama, do aprila 2027: zahtev za pristup eArhiv-u za ovlašćenog arhivara, Lista kategorija na odobrenje preko eArhiv-a, arhivska knjiga za 2026. u el. obliku (Vojkan sl. 8; Olga sl. 39). Olga (sl. 71) kaže da privatni sektor ne koristi eArhiv kao skladište — **proveriti** da li predaja Liste i AK ipak ide preko eArhiv-a (4.7, P7). Vezano za O-26. | Ako jeste, predaja ide preko eArhiv-a, a rok je april 2027 | **odmah** (faza 6a) |
+| O-17 | Da li je IMS obveznik **eArhiv-a** (Uredba o tehničko-tehnološkim zahtevima važi pre svega za organe javne vlasti)? **Izmenjeno 07.10.2026.: rok „odmah”** (1.2, tačka 5b). Po prezentacijama, do aprila 2027: zahtev za pristup eArhiv-u za ovlašćenog arhivara, Lista kategorija na odobrenje preko eArhiv-a, arhivska knjiga za 2026. u el. obliku (Vojkan sl. 8; Olga sl. 39). Olga (sl. 71) kaže da privatni sektor ne koristi eArhiv kao skladište — **proveriti** da li predaja Liste i AK ipak ide preko eArhiv-a (4.7, P7). **Dopuna 11.10.2026.:** IMS podleže (O-26); verovatno je to ono što danas radi Kancelarko — pitanja A3, A6 (O-31). | Ako jeste, predaja ide preko eArhiv-a, a rok je april 2027 | **odmah** (faza 6a) |
 | O-18 | Budžet: pečat i žig po komadu ili paušalno | Izbor između udaljenog pečata i tokena | 3 |
 | O-19 | Da li je Institut **operator važnog IKT sistema** po Zakonu o informacionoj bezbednosti (naučnoistraživačka institucija)? | Obaveze za ceo IT Instituta (odeljak 1.6) | nezavisno |
-| O-20 | **Popis akata** (pravilnik čl. 18): za koje vrste se vodi (rešenja o godišnjim odmorima, uverenja, radni nalozi, bolovanja …) i da li zahtevi i rešenja Kadrova idu u popis umesto pod sopstveni osnovni broj? | Menja brojač zahteva (6.4) i broj upisa u delovodniku | 1 |
-| O-21 | Da li se vode **poverljivi i strogo poverljivi delovodnik** (čl. 19) i ko ima pristup? | Posebne knjige i dozvole | 1 |
-| O-22 | Da li se el. primljena pošta i dalje **štampa** pre zavođenja (čl. 6 st. 3), ili se pravilnik menja? **Predlog: menja se** (4.6, A2). | Od toga zavisi da li je el. akt original u predmetu | 2 |
-| O-23 | Treba nam **Pravilnik o načinu evidentiranja, zaštite i korišćenja elektronskih dokumenata Instituta** (pravilnik čl. 3) | Uslovi za el. dokumente, overu i čuvanje | 3 |
-| O-24 | Ispraviti nedoslednosti pravilnika: „P” ili „R” za rok (čl. 15 i 26), koji arhiv dobija prepis arhivske knjige (čl. 44), prazna tačka 5 u čl. 37 | Sistem prati jednu oznaku i jedan arhiv | 2 |
+| O-20 | ~~Popis akata~~ — **zatvoreno 11.10.2026.: ne vodi se.** Svi akti se zavode odmah, svaki pod svojim osnovnim brojem `{centar}-{redni broj}`; zahtevi i rešenja Kadrova takođe. | — | — |
+| O-21 | ~~Poverljivi i strogo poverljivi delovodnik~~ — **zatvoreno 11.10.2026.: ne vode se.** | — | — |
+| O-22 | ~~Štampa el. primljene pošte~~ — **odlučeno 11.10.2026.: ne štampa se**; pravilnik se menja (4.6, A2). | — | — |
+| O-23 | **Pravilnik o načinu evidentiranja, zaštite i korišćenja elektronskih dokumenata Instituta** (pravilnik čl. 3) — **ne postoji** (11.10.2026.); mora se doneti (Zakon čl. 14), najkasnije uz korak 2 izmene pravilnika (17b) | Uslovi za el. dokumente, overu i čuvanje | 3 |
+| O-24 | Ispraviti nedoslednosti pravilnika — **popisane 11.10.2026.** član po član u dokumentu za upravu (U3): „P” ili „R” za rok (čl. 15 i 26); „nadležni Istorijski arhiv” (čl. 2, 4, 44) umesto Državnog arhiva Srbije (čl. 51–54); prazna tačka 5 u čl. 37; trocifrene oznake OJ (čl. 12) prema oznaci centra u broju; čl. 18, 19 i 22 koji se ne primenjuju; propisi iz 1981. u čl. 56; rubrike arhivske knjige (čl. 43) prema obrascu AK | Sistem prati jednu oznaku i jedan arhiv | 2 |
 | O-25 | **Spoljna rezervna kopija** (van zgrade): ~~da li~~, gde i kako (drugi objekat, iznajmljen prostor, oblak) i koliko često. **Izmenjeno 07.10.2026.: kopija van zgrade je obavezna mera** (bilo je „videćemo”, 05.10.2026.). Prezentacija preporučuje najmanje jednom u 24 h, na geografski drugoj lokaciji (Vojkan sl. 88) — preporuka, ne propis. | Bez nje požar ili krađa servera uništava i el. dokumente i njihovu kopiju u zgradi; deo plana mera zaštite (čl. 21, tačka 12c) | 7 |
-| O-26 | **Status IMS-a kao korisnika javnih sredstava** (dodato 07.10.2026.): IMS ima JBKJS 81541 (vidi se na e-fakturama NIS-a). Da li to IMS čini subjektom javnog sektora u smislu Zakona o arhivskoj građi i Uredbe 116/23? **Proveriti** sa pravnom službom. | Određuje: predaju preko eArhiv-a (O-17), pisano odobrenje arhiva za uništenje (čl. 16; 4.7, P2), primenu Uredbe o klasifikaciji 14/2023 na Listu (O-30) | **odmah** |
+| O-26 | ~~Status IMS-a kao korisnika javnih sredstava~~ — **odlučeno 11.10.2026.: IMS podleže** obavezama javnog sektora (JBKJS 81541). Slanje Državnom arhivu do 30.04 je obaveza i danas se radi (Kancelarko, O-31). Uredba o klasifikaciji 14/2023 — ostaje uz O-30. | Određuje: predaju preko eArhiv-a (O-17), pisano odobrenje arhiva za uništenje (čl. 16; 4.7, P2), primenu Uredbe o klasifikaciji 14/2023 na Listu (O-30) | **odmah** |
 | O-27 | **Pečat Instituta na dokumentima koji su već potpisani** (slučaj C, dodato 07.10.2026.): da li se pri pripremi za čuvanje dodaje i pečat ovlašćenog lica (Olga sl. 74: „bez obzira” na izvorni potpis), ili je dovoljno proveriti izvorni potpis i dodati žig do LTA (ZEDEIUP čl. 62 st. 1, sadašnji plan)? Pravna služba. | Broj overa i trošak (SEF ~ hiljade faktura godišnje); oblik paketa za slučaj C | 4 |
 | O-28 | **El. otisak prijemnog štambilja** (dodato 07.10.2026.): zaseban sloj (anotacija van overenog sadržaja), poseban overen fajl ili samo metapodatak? U sadržaj skena se ne ugrađuje (4.6 A4 izmenjeno; ZEDEIUP čl. 61). | Istovetnost skena sa papirnim originalom i integritet overenog dokumenta | 5 |
 | O-29 | **Količina u arhivskoj knjizi** (dodato 07.10.2026.): obrazac AK traži broj jedinica (fascikla, kutija, registrator), a za el. materijal format i MB; interni pravilnik čl. 44 traži dužne metre. Predlog: AK po obrascu, dužni metri samo dodatno za prepis i izlučivanje; pravilnik uskladiti uz O-24. | Polja faze 6a i izgled prepisa | 6a |
+| O-31 | **Kancelarko** (dodato 11.10.2026.): šta tačno radi u njemu arhivska služba (arhivska knjiga, prepis, Lista, delovodnik?), šta se šalje Državnom arhivu do 30.04, kojim putem, ko i čime potpisuje, do kada važi licenca, može li se izvesti arhivska knjiga i koji je poslednji redni broj. Pitanja A1–A7. Cilj: aplikacija ga zamenjuje u potpunosti. | Faza 6a mora da proizvede isto; redni broj arhivske knjige se nastavlja | **odmah** (faza 6a) |
 | O-30 | **Nova verzija Liste kategorija** (dodato 07.10.2026.): uz rešavanje spornih stavki (O-7) doneti novu Listu i poslati je na saglasnost — preko eArhiv-a ako se odnosi na IMS (O-17). Da li je usklađivati sa Uredbom o klasifikaciji 14/2023 (grupe 0–9) i Katalogom postupaka (O-26) i dodati kolonu „vrsta nosača”? | Saglasnost arhiva je uslov važenja rokova; Vojkan (sl. 6) preporučuje novu Listu | 6a |
 
 (O-9 iz plana od 23.09. — da li je sken samo radna kopija — rešava ovaj plan: sken je radna kopija dok ne prođe
@@ -998,7 +1054,8 @@ kontrolu i overu, a posle toga je elektronski dokument sa dokaznom snagom.)
 | Izvorni zapis obrisan ili izmenjen | Snimak u `VezaDokumenta`, noćna provera, `pre_delete` beleženje |
 | Promena Liste posle nove saglasnosti | Verzionisan šifarnik. Predmet zadržava rok iz verzije važeće pri završetku. |
 | Rast skladišta | Posebna putanja, praćenje veličine, procena pre digitalizacije zatečene arhive |
-| **Propušten rok 30.04.2027** za arhivsku knjigu 2026. i eventualne obaveze prema eArhiv-u (dodato 07.10.2026.) | O-17 i O-26 odmah; faza 6a do 31.03.2027; podsetnik `podsetnik_arhivske_knjige` |
+| **Propušten rok 30.04.2027** za arhivsku knjigu 2026. i eventualne obaveze prema eArhiv-u (dodato 07.10.2026.) | O-17 i O-31 odmah; faza 6a do 31.03.2027; podsetnik `podsetnik_arhivske_knjige` |
+| Kancelarko se ugasi pre nego što aplikacija proizvede ono što se šalje Državnom arhivu (dodato 11.10.2026.) | Licenca se ne otkazuje dok aplikacija jednom uspešno ne pošalje prepis; 2026. se po potrebi šalje još iz Kancelarka |
 | **Potpisan dokument izgubi dokaznu vrednost jer je sertifikat potpisnika istekao pre pripreme** (dodato 07.10.2026.) | Rok pripreme u internim pravilima (17c), `rok_pripreme`, dnevni posao `pripremi_potpisane` |
 | Kazne za nepostupanje po Zakonu o arhivskoj građi (50.000–2.000.000 din za pravno lice, 5.000–150.000 din za odgovorno lice) | Formalni akti iz tačaka 12b, 12c, 17a, 17d pre prelaska |
 

@@ -30,6 +30,7 @@ i isplate u jednu web aplikaciju.
 | [Poznati problemi](dokumentacija/docs/10-poznati-problemi.md) | Svi |
 | [Plan razvoja](dokumentacija/docs/11-plan-razvoja.md) | Uprava, programeri |
 | [Rečnik pojmova](dokumentacija/docs/12-recnik-poslovnih-pojmova.md) | Svi |
+| [Vreme i cena razvoja](dokumentacija/docs/13-vreme-i-cena-razvoja.md) | Uprava |
 | [**Pregled za upravu**](dokumentacija/docs/uprava/pregled-ims-erp-a.md) | Uprava — netehnički sažetak |
 
 Inventar celog sistema sa statusima pouzdanosti:
