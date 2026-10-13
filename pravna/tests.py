@@ -303,3 +303,58 @@ class DisciplinskiPostupakTests(TestCase):
         user = get_user_model().objects.create_user("bez-dozvole", password="test-pass")
         self.client.force_login(user)
         self.assertEqual(self.client.get(reverse("pravna:disciplinski_lista")).status_code, 403)
+
+
+class PravnaUgovoriTests(TestCase):
+    """Ugovori u meniju Pravne službe (13.10.2026.): naš broj na početku, bez važenja i vrednosti, dva filtera."""
+
+    def setUp(self):
+        import tempfile
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.test import override_settings
+
+        from core.models import PermissionCode, Role
+        from ugovori.models import Contract, ContractType
+
+        self.media = tempfile.TemporaryDirectory()
+        self.addCleanup(self.media.cleanup)
+        media = override_settings(MEDIA_ROOT=self.media.name)
+        media.enable()
+        self.addCleanup(media.disable)
+        tip = ContractType.objects.create(code="USL", name="Usluge")
+
+        def ugovor(broj, **polja):
+            return Contract.objects.create(kind=Contract.MAIN, contract_type=tip, contract_number=broj, title="Ugovor",
+                                           contract_date=date(2026, 3, 1), **polja)
+
+        self.sa_svim = ugovor("41-2151", delovodni_godina=2026, delovodni_broj="28", value=1000,
+                              valid_to=date(2027, 3, 1), file=SimpleUploadedFile("ugovor.pdf", b"%PDF-1.4"))
+        self.bez_broja = ugovor("43-2179", file=SimpleUploadedFile("ugovor.pdf", b"%PDF-1.4"))
+        self.word = ugovor("70-1005", delovodni_godina=2026, delovodni_broj="9",
+                           file=SimpleUploadedFile("ugovor.docx", b"word"))
+        uloga = Role.objects.create(name="Pravna test", slug="pravna-ugovori-test")
+        uloga.permissions.add(PermissionCode.objects.get_or_create(code="pravna:ugovori")[0])
+        korisnik = get_user_model().objects.create_user("pravnik-ugovori", password="x")
+        korisnik.roles.add(uloga)
+        self.client.force_login(korisnik)
+
+    def brojevi(self, **filteri):
+        odgovor = self.client.get(reverse("pravna:ugovori"), filteri)
+        self.assertEqual(odgovor.status_code, 200)
+        return {u.contract_number for u in odgovor.context["ugovori"]}, odgovor
+
+    def test_nas_broj_na_pocetku_bez_vazenja_i_vrednosti(self):
+        brojevi, odgovor = self.brojevi()
+        self.assertEqual(brojevi, {"41-2151", "43-2179", "70-1005"})
+        self.assertEqual(self.client.session["current_app"], "pravna")
+        self.assertContains(odgovor, '<th>Naš broj</th>', count=2)  # zaglavlje i podnožje
+        self.assertContains(odgovor, '<span class="nas-broj">2026/28</span>')
+        self.assertContains(odgovor, 'data-order="2026000009"')  # 2026/9 pre 2026/28
+        self.assertNotContains(odgovor, "Vazi do")
+        self.assertNotContains(odgovor, "Vrednost")
+
+    def test_filteri_nema_nas_broj_i_nema_pdf(self):
+        self.assertEqual(self.brojevi(bez_naseg_broja="on")[0], {"43-2179"})
+        self.assertEqual(self.brojevi(bez_pdf="on")[0], {"70-1005"})  # Word nije PDF
+        self.assertEqual(self.brojevi(bez_naseg_broja="on", bez_pdf="on")[0], set())

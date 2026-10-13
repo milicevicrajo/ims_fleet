@@ -482,6 +482,9 @@ class PutniNalogCreateView(RolePermissionRequiredMixin, LoginRequiredMixin, Crea
                     initial["employee_type"] = "other"
         return initial
 
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "user": self.request.user}
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Dodaj putni nalog"
@@ -513,6 +516,9 @@ class PutniNalogUpdateView(CenterMixin, RolePermissionRequiredMixin, LoginRequir
     success_url = reverse_lazy("putninalog_list")
     org_unit_field = "job_code"
     allow_if_no_scope = False
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "user": self.request.user}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

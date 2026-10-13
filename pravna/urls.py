@@ -16,6 +16,8 @@ urlpatterns = [
     path('disciplinski/<int:pk>/dodaj-tok/', views_disciplinski.disciplinski_dodaj_tok, name='disciplinski_dodaj_tok'),
     path('disciplinski/tok/<int:pk>/obrisi/', views_disciplinski.disciplinski_obrisi_tok, name='disciplinski_obrisi_tok'),
 
+    path('ugovori/', views.ugovori, name='ugovori'),
+
     path('postupak/<int:pk>/', views.detalj, name='detalj'),
     path('postupak/<int:pk>/izmeni/', views.izmeni, name='izmeni'),
     path('postupak/<int:pk>/obrisi/', views.obrisi, name='obrisi'),

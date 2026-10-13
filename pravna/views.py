@@ -105,6 +105,33 @@ def _build_pravna_filtered_context(request, case_type):
     }
 
 
+# ─── Ugovori (od 13.10.2026.) ─────────────────────────────────────
+
+@never_cache
+@role_permission_required()
+def ugovori(request):
+    """Ugovori iz modula Ugovori, sa našim (delovodnim) brojem na početku; bez kolona važenja i vrednosti."""
+    from ugovori.filters import PravnaContractFilter
+    from ugovori.models import Contract
+
+    request.session['current_app'] = 'pravna'
+    qs = (Contract.objects.select_related('contract_type', 'parent_contract')
+          .prefetch_related('parties__partner').distinct())
+    filt = PravnaContractFilter(request.GET or None, queryset=qs)
+    lista = list(filt.qs)
+    for ugovor in lista:
+        broj = ugovor.delovodni_broj
+        ugovor.nas_broj = f"{ugovor.delovodni_godina}/{broj}" if broj and ugovor.delovodni_godina else broj
+        # Redosled u tabeli: godina, pa broj kao broj (2026/9 pre 2026/10); bez broja na kraju.
+        ugovor.nas_broj_red = ((ugovor.delovodni_godina or 0) * 1000000 + int(broj)) if broj.isdigit() else 0
+        ugovor.ima_pdf = bool(ugovor.file) and ugovor.file.name.lower().endswith('.pdf')
+    return render(request, 'pravna/ugovori.html', {
+        'title': 'Ugovori', 'filter': filt, 'ugovori': lista,
+        'bez_naseg_broja': sum(1 for u in lista if not u.delovodni_broj),
+        'bez_pdf': sum(1 for u in lista if not u.ima_pdf),
+    })
+
+
 # ─── Lista postupaka po tipu ──────────────────────────────────────
 
 @never_cache

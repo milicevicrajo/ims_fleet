@@ -64,6 +64,23 @@ class FlotaNaRegistruTests(ImportTestCase):
         self.dodeli(cela_firma=True)
         self.assertEqual(obuhvat_flote.po_vozilu(Vehicle.objects.all(), self.svez(), "pk").count(), 3)
 
+    def test_novi_putni_nalog_samo_na_sifri_iz_obuhvata(self):
+        # 13.10.2026: nalog sacuvan na tudjoj sifri korisnik posle nije video ni odstampao.
+        from fleet.forms.putni_nalozi import PutniNalogForm
+
+        self.dodeli(cvor_id=centar("43"))
+        from core.models import PermissionCode, RolePermission
+
+        RolePermission.objects.create(role=self.uloga, permission=PermissionCode.objects.get_or_create(code="putninalog_create")[0])
+        self.client.force_login(self.korisnik)
+        forma = self.client.get(reverse("putninalog_create")).context["form"]
+        self.assertEqual(list(forma.fields["job_code"].queryset), [self.nadzor])
+        tudja = PutniNalogForm(data={"job_code": self.materijali.pk}, user=self.svez())
+        self.assertIn("Izaberi šifru posla iz svog obuhvata.", tudja.errors["job_code"])
+        # Izmena zadrzava vec upisanu sifru naloga, i kad je van obuhvata.
+        izmena = PutniNalogForm(instance=self.nalog_41, user=self.svez())
+        self.assertEqual(set(izmena.fields["job_code"].queryset), {self.nadzor, self.materijali})
+
     def test_ekrani_postuju_obuhvat(self):
         self.dodeli(cvor_id=centar("43"))
         polisa_41 = Policy.objects.create(vehicle=self.vozilo_41, invoice_id=41, policy_number="P41", partner_name="Osiguranje",

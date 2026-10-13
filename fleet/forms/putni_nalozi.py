@@ -85,7 +85,7 @@ class PutniNalogForm(forms.ModelForm):
             "order_date": forms.HiddenInput(),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields.pop("opravdan", None)
         self.fields.pop("storniran", None)
@@ -95,6 +95,14 @@ class PutniNalogForm(forms.ModelForm):
         self.fields.pop("isplaceno", None)
         # Sifre posla iz registra organizacije (aktivne), uz vec upisanu vrednost naloga.
         ogranici_izbor(self.fields["job_code"], getattr(self.instance, "job_code_id", None))
+        if user is not None:
+            # Na registru (od 13.10.2026.): samo sifre iz obuhvata korisnika, uz vec upisanu vrednost naloga.
+            # Inace bi nalog na tudjoj sifri bio sacuvan, a korisnik ga posle ne bi video ni odstampao.
+            from fleet.support import obuhvat as obuhvat_flote
+
+            polje = self.fields["job_code"]
+            polje.queryset = obuhvat_flote.ogranici_jedinice(polje.queryset, user, getattr(self.instance, "job_code_id", None))
+            polje.error_messages["invalid_choice"] = "Izaberi šifru posla iz svog obuhvata."
         if self.instance and getattr(self.instance, "employee", None):
             inactive_employee = Employee.objects.filter(pk=self.instance.employee_id, is_active=False)
             if inactive_employee.exists():

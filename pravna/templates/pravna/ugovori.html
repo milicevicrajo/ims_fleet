@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load form_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  .assignment-hero {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #14395b 0%, #1f6f8b 48%, #2f8f6f 100%);
+    color: #fff;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 26px rgba(20, 57, 91, 0.18);
+  }
+  .assignment-hero h1 { font-size: 1.6rem; margin: 0; letter-spacing: 0; }
+  .assignment-hero p { margin: 6px 0 0; color: rgba(255,255,255,.86); }
+  .assignment-filter {
+    background: #f8fafc;
+    border: 1px solid #e6ebf1;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .assignment-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-weight: 600;
+    font-size: .82rem;
+  }
+  .assignment-status.main { background: #e8f0fb; color: #174f83; border: 1px solid #c9d9ec; }
+  .assignment-status.annex { background: #edf2f7; color: #526170; border: 1px solid #cfd8e3; }
+  .nas-broj { font-weight: 700; white-space: nowrap; }
+  tr.assignment-closed td { background: #f3f6f9 !important; color: #657282; }
+  tr.assignment-closed a.btn-outline-primary { border-color: #9aa8b6; color: #405060; }
+</style>
+
+<div class="assignment-hero d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <h1>Ugovori</h1>
+    <p>Ugovori i aneksi sa našim brojem iz delovodnika Pravne službe. Prikazano: {{ ugovori|length }} · bez našeg broja: {{ bez_naseg_broja }} · bez PDF-a: {{ bez_pdf }}.</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'ugovori:contract_create' %}" class="btn btn-light btn-sm">
+      <i class="mdi mdi-plus"></i> Novi ugovor
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body border-bottom">
+        <form method="get" class="assignment-filter">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-3">
+              <label class="form-label mb-1">{{ filter.form.partner.label }}</label>
+              {{ filter.form.partner|add_class:"form-control" }}
+            </div>
+            <div class="col-12 col-md-1">
+              <label class="form-label mb-1">{{ filter.form.center.label }}</label>
+              {{ filter.form.center|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-1">
+              <label class="form-label mb-1">{{ filter.form.year.label }}</label>
+              {{ filter.form.year|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label mb-1">{{ filter.form.contract_type.label }}</label>
+              {{ filter.form.contract_type|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-1">
+              <label class="form-label mb-1">{{ filter.form.kind.label }}</label>
+              {{ filter.form.kind|add_class:"form-select form-control select2-method" }}
+            </div>
+            <div class="col-12 col-md-1">
+              <label class="form-label mb-1">{{ filter.form.search.label }}</label>
+              {{ filter.form.search|add_class:"form-control" }}
+            </div>
+            <div class="col-12 col-md-2">
+              <div class="form-check">
+                {{ filter.form.bez_naseg_broja|add_class:"form-check-input" }}
+                <label class="form-check-label" for="{{ filter.form.bez_naseg_broja.id_for_label }}">{{ filter.form.bez_naseg_broja.label }}</label>
+              </div>
+              <div class="form-check">
+                {{ filter.form.bez_pdf|add_class:"form-check-input" }}
+                <label class="form-check-label" for="{{ filter.form.bez_pdf.id_for_label }}">{{ filter.form.bez_pdf.label }}</label>
+              </div>
+            </div>
+            <div class="col-12 col-md-1 d-flex gap-2">
+              <button type="submit" class="btn btn-primary w-100" title="Filter">
+                <i class="mdi mdi-filter"></i>
+              </button>
+              <a href="{% url 'pravna:ugovori' %}" class="btn btn-outline-secondary" title="Očisti filtere">
+                <i class="mdi mdi-close"></i>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="PravnaUgovoriTable" class="display compact table table-hover table-bordered align-middle w-100">
+            <thead>
+              <tr>
+                <th>Naš broj</th>
+                <th>Broj ugovora</th>
+                <th>Vrsta</th>
+                <th>Stranke</th>
+                <th>Datum</th>
+                <th class="text-center" data-filter="none">Akcije</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ugovor in ugovori %}
+              <tr class="{% if ugovor.status == 'expired' or ugovor.status == 'terminated' or ugovor.status == 'archived' %}assignment-closed{% endif %}">
+                <td data-order="{{ ugovor.nas_broj_red }}"><span class="nas-broj">{{ ugovor.nas_broj|default:"—" }}</span></td>
+                <td>
+                  <a href="{% url 'ugovori:contract_detail' pk=ugovor.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="mdi mdi-eye"></i> {{ ugovor.contract_number }}
+                  </a>
+                  {% if ugovor.file %}<a href="{% url 'ugovori:contract_file_view' pk=ugovor.pk %}" class="btn btn-sm btn-outline-danger ms-1" target="_blank" rel="noopener" title="Otvori ugovor ({{ ugovor.file.name|slice:'-40:' }})"><i class="mdi {% if ugovor.ima_pdf %}mdi-file-pdf-box{% else %}mdi-file-document{% endif %}"></i></a>{% endif %}
+                </td>
+                <td>
+                  {% if ugovor.kind == "MAIN" %}
+                    <span class="assignment-status main"><i class="mdi mdi-file-document"></i> Glavni</span>
+                  {% else %}
+                    <span class="assignment-status annex"><i class="mdi mdi-file-document-multiple"></i> Aneks</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% for party in ugovor.parties.all %}
+                    <span class="badge bg-light text-dark border me-1" title="{{ party.partner.name }}">
+                      {{ party.partner.name|truncatechars:50 }}
+                    </span>
+                  {% empty %}/{% endfor %}
+                </td>
+                <td data-order="{{ ugovor.contract_date|date:'Y-m-d' }}">{{ ugovor.contract_date|date:"d.m.Y" }}</td>
+                <td class="text-center">
+                  <a class="btn btn-outline-primary btn-sm" href="{% url 'ugovori:contract_update' pk=ugovor.pk %}">
+                    <i class="mdi mdi-pencil"></i> Izmeni
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th>Naš broj</th>
+                <th>Broj ugovora</th>
+                <th>Vrsta</th>
+                <th>Stranke</th>
+                <th>Datum</th>
+                <th>Akcije</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.ReportsDT) {
+      ReportsDT('#PravnaUgovoriTable', {
+        exportTitle: '{{ title }}',
+        order: [[0, 'desc']],
+        autoSelectThreshold: 25,
+        scrollX: false
+      });
+    }
+  });
+</script>
+{% endblock %}

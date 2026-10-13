@@ -2062,7 +2062,7 @@ Detaljno: [4.4. Vozni park](#44-vozni-park--fleet).
 > | Šta | Ko vidi |
 > |---|---|
 > | **Vozilo** i sve vezano za njega — saobraćajne, polise, lizing, gorivo i računi goriva, servisi, kvarovi, trebovanja, osiguranje, dokumenti za tender, dodele, kontrolna tabla | Ako je **današnja dodela vozila** u obuhvatu; vozilo bez ijedne dodele vidi svako ko ima obuhvat (da tek uneto vozilo ne nestane); zapis bez vozila (npr. nacrti za povezivanje) samo cela firma |
-> | **Putni nalog** | Ako mu je šifra posla u obuhvatu; nalog se ne može prebaciti na šifru van obuhvata |
+> | **Putni nalog** | Ako mu je šifra posla u obuhvatu; nalog se ne može prebaciti na šifru van obuhvata, a novi nalog nudi samo šifre iz obuhvata (od 13.10.2026. — ranije se mogao sačuvati na tuđoj šifri, pa ga korisnik posle nije video) |
 > | Izveštaji po istorijskoj dodeli (osiguranje, gorivo po šifri) | Po šiframa posla u obuhvatu |
 > | Analiza centra | Samo za centre koji su celi u obuhvatu |
 > | Izbor šifre posla (garaža, ekonomika, prijem vozila) | Samo šifre iz obuhvata, uz već upisanu |
@@ -4330,6 +4330,7 @@ koriste iste partnere.
 | **Ponude** | Naša ponuda i ponuda data nama; vrednost, valuta, rok važenja |
 | **Ugovori** | Glavni ugovor i aneksi; tip, vrednost, period, status |
 | **Delovodni broj Pravne službe** | Od 07.10.2026.: godina i broj odvojeno (prikaz i pretraga `godina-broj`, npr. 2026-1234, jedinstven u godini), kartica u formi za unos i izmenu ugovora; beleži ko je i kada upisao; na detalju se samo prikazuje; vidi se u spisku, pretrazi i Excelu |
+| **Ugovori u meniju Pravne službe** | Od 13.10.2026. (`/pravna/ugovori/`, `pravna:ugovori`): isti ugovori i aneksi, u prvoj koloni **naš broj** `godina/broj` (npr. 2026/28, redosled po broju), bez kolona „Važi do” i „Vrednost”; uz filtere spiska i **Nema naš broj** i **Nema PDF** (bez fajla ili fajl nije PDF). Naš broj za 672 ugovora i aneksa preuzet je 13.10.2026. iz starog programa (baza `Ugovori` na `INFORMATIKA23`, polja `BrUg` → broj ugovora, `god`/`NasBr` → naš broj) |
 | **Detalj ugovora** | Levo osnovni podaci i **PDF ugovora** u stranici (`/ugovori/<id>/fajl/`, `ugovori:contract_file_view`, ista prava kao detalj); desno evidencija, fajl, prilozi, stranke, instrumenti obezbeđenja i aneksi. Na spisku ikonica pored broja ugovora direktno otvara fajl. Dugmad za izmene (izmena, fajl, prilog, brisanje priloga, aneks, brisanje ugovora) vidi samo ko ima tu dozvolu |
 | **Dokumenta** | Prilozi uz ugovor, sa originalnim nazivom datoteke |
 | **Stranke** | Ko je kupac, prodavac, zakupac, izvođač, garant… |

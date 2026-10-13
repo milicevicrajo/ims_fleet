@@ -368,7 +368,7 @@ Detaljno: [4.4. Vozni park](../04-baza-podataka.md#44-vozni-park--fleet).
 > | Šta | Ko vidi |
 > |---|---|
 > | **Vozilo** i sve vezano za njega — saobraćajne, polise, lizing, gorivo i računi goriva, servisi, kvarovi, trebovanja, osiguranje, dokumenti za tender, dodele, kontrolna tabla | Ako je **današnja dodela vozila** u obuhvatu; vozilo bez ijedne dodele vidi svako ko ima obuhvat (da tek uneto vozilo ne nestane); zapis bez vozila (npr. nacrti za povezivanje) samo cela firma |
-> | **Putni nalog** | Ako mu je šifra posla u obuhvatu; nalog se ne može prebaciti na šifru van obuhvata |
+> | **Putni nalog** | Ako mu je šifra posla u obuhvatu; nalog se ne može prebaciti na šifru van obuhvata, a novi nalog nudi samo šifre iz obuhvata (od 13.10.2026. — ranije se mogao sačuvati na tuđoj šifri, pa ga korisnik posle nije video) |
 > | Izveštaji po istorijskoj dodeli (osiguranje, gorivo po šifri) | Po šiframa posla u obuhvatu |
 > | Analiza centra | Samo za centre koji su celi u obuhvatu |
 > | Izbor šifre posla (garaža, ekonomika, prijem vozila) | Samo šifre iz obuhvata, uz već upisanu |

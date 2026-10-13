@@ -1,4 +1,5 @@
 import django_filters
+from django import forms
 from django.db.models import Q
 from django_filters import CharFilter, ChoiceFilter, DateFilter, ModelChoiceFilter
 
@@ -128,6 +129,20 @@ class ContractFilter(django_filters.FilterSet):
                     field.widget.attrs.setdefault("class", "form-select")
                 elif isinstance(field.widget, TextInput):
                     field.widget.attrs.setdefault("class", "form-control")
+
+
+class PravnaContractFilter(ContractFilter):
+    """Ugovori u meniju Pravne službe (od 13.10.2026.): uz filtere liste i ugovori bez našeg broja ili bez PDF-a."""
+    bez_naseg_broja = django_filters.BooleanFilter(method="filter_bez_naseg_broja", label="Nema naš broj",
+                                                   widget=forms.CheckboxInput)
+    bez_pdf = django_filters.BooleanFilter(method="filter_bez_pdf", label="Nema PDF", widget=forms.CheckboxInput)
+
+    def filter_bez_naseg_broja(self, queryset, name, value):
+        return queryset.filter(delovodni_broj="") if value else queryset
+
+    def filter_bez_pdf(self, queryset, name, value):
+        # Bez fajla ili sa fajlom koji nije PDF (npr. sken u Word-u).
+        return queryset.filter(Q(file__isnull=True) | ~Q(file__iendswith=".pdf")) if value else queryset
 
 
 class BusinessRequestFilter(django_filters.FilterSet):
