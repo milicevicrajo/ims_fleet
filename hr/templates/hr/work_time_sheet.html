@@ -35,7 +35,7 @@
   </form>
   {% if can_obracun_csv or can_obracun_csv_svi %}
   <form method="get" class="period-picker obracun-csv" action="{% url 'hr:work_time_sheet_csv' sheet.pk %}"
-        title="CSV za učitavanje obračuna zarada: sif_pred, god, mesec, br_obr, rasif, elsif, sati, sif_pos">
+        title="CSV za učitavanje obračuna zarada: sif_pred, god, mesec, br_obr, rasif, elsif, sati, sif_pos, oj">
     <span class="period-label"><i class="mdi mdi-file-delimited-outline" aria-hidden="true"></i> Obračun</span>
     <input type="hidden" name="year" value="{{ year }}"><input type="hidden" name="month" value="{{ month }}">
     <input type="number" name="br_obr" min="1" max="99" required class="form-control form-control-sm" style="width:84px"
@@ -49,9 +49,10 @@
 </div>
 
 {% if sheet.status == "approved" %}<div class="alert alert-success py-2"><i class="mdi mdi-check-decagram"></i> Radna lista je odobrena{% if sheet.odobreno_at %} ({{ sheet.odobrio.get_full_name|default:sheet.odobrio.username }}, {{ sheet.odobreno_at|date:"d.m.Y. H:i" }}){% endif %} i više se ne menja.</div>{% endif %}
-{% if kontrola %}<div class="alert alert-warning py-2"><strong>Predata lista ne može da se odobri:</strong>{% for p in kontrola %}<div class="small">{{ p }}</div>{% endfor %}</div>{% endif %}
-{% if obracun_upozorenja %}<div class="alert alert-warning py-2"><strong><i class="mdi mdi-file-delimited-outline"></i> CSV za obračun:</strong>
-  {% for u in obracun_upozorenja %}<div class="small">{{ u }}</div>{% endfor %}</div>{% endif %}
+{% if kontrola %}<div class="rl-upozorenje"><strong><i class="mdi mdi-alert-circle"></i> Predata lista ne može da se odobri:</strong>{% for p in kontrola %}<div>{{ p }}</div>{% endfor %}</div>{% endif %}
+{% if godisnji.upozorenje %}<div class="rl-upozorenje"><strong><i class="mdi mdi-alert-circle"></i> Godišnji odmor:</strong> {{ godisnji.upozorenje }}.</div>{% endif %}
+{% if obracun_upozorenja %}<div class="rl-upozorenje"><strong><i class="mdi mdi-file-delimited-outline"></i> CSV za obračun:</strong>
+  {% for u in obracun_upozorenja %}<div>{{ u }}</div>{% endfor %}</div>{% endif %}
 {% if not employee.recipient_code %}<div class="alert alert-info">Zaposlenom nije evidentirana vrsta primaoca iz HR-a. Izbor vrste rada i odsustva biće dostupan nakon povezivanja.</div>{% elif not has_work_categories %}<div class="alert alert-info">Za vrstu primaoca {{ employee.recipient_code }} nisu podešene aktivne vrste rada i odsustva. Potrebno je dopuniti veze u šifrarniku „Elementi RL“.</div>{% endif %}
 <form method="post" id="work-time-sheet-form">
   {% csrf_token %}
@@ -59,7 +60,7 @@
   <input type="hidden" name="year" value="{{ year }}">
 
   {% if header_form.non_field_errors or line_formset.non_form_errors %}
-    <div class="alert alert-danger">
+    <div class="rl-upozorenje">
       {{ header_form.non_field_errors }}
       {{ line_formset.non_form_errors }}
     </div>
@@ -102,6 +103,24 @@
           <div class="small text-muted">Ukupno sati</div>
           <div class="h4 mb-0" id="grand-total">0</div>
         </div>
+      </div>
+
+      <div class="go-panel{% if godisnji.upozorenje %} is-over{% endif %}" id="go-panel"
+           data-dostupno="{{ godisnji.dostupno|default_if_none:'' }}" data-po-resenjima="{{ godisnji.po_resenjima|default_if_none:'' }}">
+        <div class="go-title"><i class="mdi mdi-beach" aria-hidden="true"></i> Godišnji odmor {{ year }}</div>
+        {% if godisnji.ima_dodelu %}
+        <div class="go-stat"><span>Ukupno dana</span><strong>{{ godisnji.ukupno }}</strong>
+          <small>{{ godisnji.dodeljeno }} za {{ godisnji.godina }}{% if godisnji.prenos %} + {{ godisnji.prenos }} iz {{ godisnji.prethodna }} (do 30.06.){% endif %}</small></div>
+        <div class="go-stat"><span>Iskorišćeno</span><strong id="go-iskorisceno">{{ godisnji.iskorisceno }}</strong>
+          <small>po rešenjima {{ godisnji.po_resenjima }} + u ovoj listi <span id="go-u-listi">{{ godisnji.u_listi }}</span></small></div>
+        <div class="go-stat go-preostalo"><span>Preostalo</span><strong id="go-preostalo">{{ godisnji.preostalo }}</strong>
+          <small>rešenja za {{ month_name|lower }} se ne broje — ti dani su u listi</small></div>
+        <div class="go-upozorenje" id="go-upozorenje"{% if not godisnji.upozorenje %} hidden{% endif %}><i class="mdi mdi-alert" aria-hidden="true"></i>
+          Upisano je više dana godišnjeg odmora nego što je preostalo.</div>
+        {% else %}
+        <div class="go-nema">U kadrovskoj bazi nema dodele godišnjeg odmora za {{ year }}.
+          {% if godisnji.upozorenje %}<strong class="text-danger">U listi je upisano {{ godisnji.u_listi }} dana godišnjeg odmora.</strong>{% endif %}</div>
+        {% endif %}
       </div>
 
       {% if prefill.ima_predlog or prefill.napomene %}
@@ -448,6 +467,26 @@
   .work-sheet-page .prilozi-form .form-label { display:block; }
   .work-sheet-page .form-label { color:#344554 !important; font-size:13px; font-weight:600; }
   .work-sheet-page .meal-hint { font-size:12px; margin-top:4px; }
+  /* Upozorenja (od 15.10.2026.): jaka crvena — nema šifre posla, nema toplog obroka, više godišnjeg nego što je preostalo. */
+  .work-sheet-page .rl-upozorenje { background:#fef3f2; border:1px solid #fda29b; border-left:5px solid #d92d20; color:#912018;
+    border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:.9rem; }
+  .work-sheet-page .rl-upozorenje strong { color:#b42318; }
+  .work-sheet-page .rl-upozorenje ul { margin-bottom:0; }
+  .work-sheet-page .is-upozorenje,
+  .work-sheet-page .is-upozorenje .select2-selection,
+  .work-sheet-page .work-sheet-control .form-control.is-upozorenje { background-color:#fee4e2 !important; border-color:#d92d20 !important;
+    box-shadow:0 0 0 1px #d92d20; }
+  .work-sheet-page .go-panel { display:grid; grid-template-columns:minmax(150px, .8fr) repeat(3, minmax(0, 1fr)); gap:12px 16px;
+    align-items:center; border:1px solid #cfe0f3; border-radius:8px; background:#f5f9fe; padding:10px 14px; margin-bottom:18px; }
+  .work-sheet-page .go-title { font-weight:700; color:var(--sheet-accent); }
+  .work-sheet-page .go-stat span { display:block; font-size:12px; color:#64748b; }
+  .work-sheet-page .go-stat strong { font-size:1.35rem; line-height:1.2; }
+  .work-sheet-page .go-stat small { display:block; font-size:11px; color:#64748b; }
+  .work-sheet-page .go-nema { grid-column:2 / -1; color:#64748b; }
+  .work-sheet-page .go-upozorenje { grid-column:1 / -1; color:#b42318; font-weight:700; }
+  .work-sheet-page .go-panel.is-over { background:#fef3f2; border-color:#fda29b; border-left:5px solid #d92d20; }
+  .work-sheet-page .go-panel.is-over .go-preostalo strong { color:#b42318; }
+  @media (max-width: 767.98px) { .work-sheet-page .go-panel { grid-template-columns:repeat(2, minmax(0, 1fr)); } .work-sheet-page .go-title { grid-column:1 / -1; } }
   .work-sheet-page .period-label { color:var(--sheet-muted); font-size:13px; font-weight:600; white-space:nowrap; }
   .work-sheet-page .work-sheet-table-caption { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
   .work-sheet-page .work-sheet-table-caption h3 { margin:0; font-size:14px; font-weight:700; color:var(--sheet-ink); }
@@ -1003,11 +1042,65 @@ document.addEventListener("DOMContentLoaded", function () {
     if (greske.length) {
       event.preventDefault();
       alert("Lista ne može da se preda:\n– " + greske.join("\n– "));
+    } else if (proveriUpozorenja() && !confirm("Upisano je više dana godišnjeg odmora nego što je preostalo. Predati listu ipak?")) {
+      event.preventDefault();
     }
   });
+
+  // Upozorenja dok se upisuje (od 15.10.2026.): red sa satima bez šifre posla ili vrste, topli obrok bez broja dana
+  // ili šifre, i godišnji odmor preko preostalih dana (stanje sa servera, dani iz liste se preračunavaju).
+  var GODISNJI = {{ godisnji_vrste_json|safe }};
+  var goPanel = document.getElementById("go-panel");
+  function satiReda(row) {
+    var sati = 0;
+    Array.prototype.forEach.call(row.querySelectorAll(".hours-input"), function (input) {
+      if (!input.disabled) sati += parseInt(input.value, 10) || 0;
+    });
+    return sati;
+  }
+  function oznaci(element, upozorenje, poruka) {
+    if (!element) return;
+    var shell = element.nextElementSibling;
+    var cilj = shell && shell.classList.contains("select2") ? shell : element;
+    cilj.classList.toggle("is-upozorenje", upozorenje);
+    if (upozorenje) cilj.title = poruka;
+    else if (cilj.title === poruka) cilj.removeAttribute("title");
+  }
+  function jednaDecimala(broj) { return Math.round(broj * 10) / 10; }
+  function postavi(id, vrednost) { var el = document.getElementById(id); if (el) el.textContent = String(vrednost); }
+  function proveriUpozorenja() {
+    var goSati = 0;
+    rows().forEach(function (row) {
+      var sati = satiReda(row), vrsta = category(row);
+      oznaci(unit(row), sati > 0 && !unit(row).value, "Nema šifre posla");
+      if (vrsta) oznaci(vrsta, sati > 0 && !vrsta.value, "Nema vrste rada ili odsustva");
+      if (vrsta && GODISNJI.indexOf(vrsta.value) !== -1) goSati += sati;
+    });
+    var obrok = document.getElementById("id_meal_days"), obrokSifra = document.getElementById("id_meal_organizational_unit");
+    if (obrok) {
+      oznaci(obrok, obrok.value.trim() === "", "Unesite broj dana za topli obrok (0 ako ga nema)");
+      oznaci(obrokSifra, parseInt(obrok.value, 10) > 0 && !!obrokSifra && !obrokSifra.value, "Topli obrok nema šifru posla");
+    }
+    if (!goPanel || goPanel.dataset.dostupno === "") return false;
+    var dana = jednaDecimala(goSati / 8), dostupno = Number(goPanel.dataset.dostupno);
+    var preko = dana > 0 && dostupno - dana < 0;
+    postavi("go-u-listi", dana);
+    postavi("go-iskorisceno", jednaDecimala(Number(goPanel.dataset.poResenjima) + dana));
+    postavi("go-preostalo", jednaDecimala(dostupno - dana));
+    goPanel.classList.toggle("is-over", preko);
+    var poruka = document.getElementById("go-upozorenje");
+    if (poruka) poruka.hidden = !preko;
+    return preko;
+  }
+  var forma = document.getElementById("work-time-sheet-form");
+  forma.addEventListener("input", proveriUpozorenja);
+  forma.addEventListener("change", proveriUpozorenja);
+  if (window.jQuery) jQuery(forma).on("change", "select", proveriUpozorenja);  // select2 javlja promenu kroz jQuery
+
   if (applyButton) applyButton.addEventListener("click", primeni);
   if (undoButton) undoButton.addEventListener("click", ponisti);
   {% if prefill_auto %}primeni();{% endif %}
+  proveriUpozorenja();
 });
 </script>
 {% endblock %}

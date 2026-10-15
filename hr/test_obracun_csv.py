@@ -39,8 +39,8 @@ class ObracunCsvTests(TestCase):
         lista = self.lista(radnik(849), [(self.nadzor, None, range(1, 20)), (self.drugi, None, [20]),
                                          (self.nadzor, self.go, [21])], topli_obrok=20)
         redovi, upozorenja = obracun_csv.stavke(obracun_csv.listovi_meseca(Employee.objects.all(), 2026, 8), 3)
-        self.assertEqual(redovi, [[1, 2026, 8, 3, 849, 1, 152, "436222"], [1, 2026, 8, 3, 849, 1, 8, "437111"],
-                                  [1, 2026, 8, 3, 849, 14, 20, "436222"], [1, 2026, 8, 3, 849, 181, 8, "436222"]])
+        self.assertEqual(redovi, [[1, 2026, 8, 3, 849, 1, 152, "436222", "436"], [1, 2026, 8, 3, 849, 1, 8, "437111", "436"],
+                                  [1, 2026, 8, 3, 849, 14, 20, "436222", "436"], [1, 2026, 8, 3, 849, 181, 8, "436222", "436"]])
         self.assertEqual(upozorenja, [])
 
         korisnik = get_user_model().objects.create_user("kadrovi-csv", password="x")
@@ -62,8 +62,8 @@ class ObracunCsvTests(TestCase):
         self.assertEqual(odgovor["Content-Type"], "text/csv; charset=utf-8")
         self.assertIn("obracun_2026_08_obr3_849.csv", odgovor["Content-Disposition"])
         self.assertEqual(odgovor.content.decode("utf-8-sig").split("\r\n"), [
-            "sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos", "1;2026;8;3;849;1;152;436222", "1;2026;8;3;849;1;8;437111",
-            "1;2026;8;3;849;14;20;436222", "1;2026;8;3;849;181;8;436222", ""])
+            "sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos;oj", "1;2026;8;3;849;1;152;436222;436", "1;2026;8;3;849;1;8;437111;436",
+            "1;2026;8;3;849;14;20;436222;436", "1;2026;8;3;849;181;8;436222;436", ""])
 
     def test_svi_radnici_za_mesec_i_upozorenja(self):
         self.lista(radnik(849), [(self.nadzor, None, [1, 2])])
@@ -76,7 +76,7 @@ class ObracunCsvTests(TestCase):
         self.client.force_login(korisnik)
         odgovor = self.client.get(reverse("hr:work_time_sheets_csv"), {"year": 2026, "month": 8, "br_obr": 1})
         self.assertEqual(odgovor.content.decode("utf-8-sig").split("\r\n")[1:-1], [
-            "1;2026;8;1;849;1;16;436222", "1;2026;8;1;850;1;8;437111", "1;2026;8;1;850;14;1;436222"])
+            "1;2026;8;1;849;1;16;436222;436", "1;2026;8;1;850;1;8;437111;436", "1;2026;8;1;850;14;1;436222;436"])
         self.assertEqual(odgovor["X-Upozorenja"], "1")  # radnik 900 nema vrstu primaoca — nije u CSV-u
         self.assertEqual(self.client.get(reverse("hr:work_time_sheets_csv"), {"year": 2026, "month": 9, "br_obr": 1})
-                         .content.decode("utf-8-sig").split("\r\n"), ["sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos", ""])
+                         .content.decode("utf-8-sig").split("\r\n"), ["sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos;oj", ""])

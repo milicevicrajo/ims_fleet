@@ -1,6 +1,7 @@
 """Kadrovi → Pregled radnih lista (od 09.10.2026.): radne liste meseca za radnike iz obuhvata, kontrola, odobravanje
 i CSV za obračun zarada. Podrazumevano prethodni mesec (tekući se još popunjava), status Predato i obračun broj 3.
-Filter centra ide po čvoru registra zaposlenog (`Employee.org_node`: centar i njegove jedinice)."""
+Upozorenje za godišnji odmor (više dana nego što je preostalo, od 15.10.2026.) se prikazuje uz kontrolu, ali ne
+sprečava odobravanje. Filter centra ide po čvoru registra zaposlenog (`Employee.org_node`: centar i njegove jedinice)."""
 import calendar
 from datetime import date
 
@@ -109,6 +110,7 @@ class RadneListePregledView(RolePermissionRequiredMixin, LoginRequiredMixin, Tem
                 uslov |= Q(employee_code=int(rec))
             zaposleni = zaposleni.filter(uslov)
         katalog = obracun_csv.elementi()
+        godisnji = pravila.stanja_godisnjeg(list(liste), godina, mesec)
         redovi, brojevi = [], {k: 0 for k in STATUSI}
         for z in zaposleni:
             lista = liste.get(z.pk)
@@ -121,6 +123,7 @@ class RadneListePregledView(RolePermissionRequiredMixin, LoginRequiredMixin, Tem
             if lista:
                 red["sati"], red["dodatno"] = _sati(lista)
                 red["problemi"] = pravila.kontrola_liste(lista) + _csv_upozorenja(lista, katalog)
+                red["godisnji"] = pravila.godisnji_odmor_liste(lista, godisnji)
             redovi.append(red)
         try:
             br_obr = int(g.get("br_obr") or PODRAZUMEVANI_BR_OBR)

@@ -22,7 +22,11 @@
   .rl-badge.submitted { background:#e8f0fb; color:#174f83; border-color:#c9d9ec; } .rl-badge.approved { background:#e7f7ef; color:#147044; border-color:#b7e3cb; }
   #RadneListeTable td.num { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
   #RadneListeTable .greska { color:#b42318; font-weight:700; }
-  .rl-problemi { margin:4px 0 0; padding-left:16px; font-size:.8rem; color:#9a3412; }
+  /* Upozorenja (od 15.10.2026.): jaka crvena — nema šifre posla, nema toplog obroka, više godišnjeg nego što je preostalo. */
+  .rl-badge.upozorenje { background:#d92d20; color:#fff; border-color:#b42318; }
+  .rl-problemi { margin:4px 0 0; padding-left:16px; font-size:.82rem; color:#b42318; font-weight:600; }
+  #RadneListeTable tr.rl-red-upozorenje > td { background:#fef3f2; }
+  #RadneListeTable tr.rl-red-upozorenje > td:first-child { box-shadow:inset 4px 0 0 #d92d20; }
   .rl-akcije { display:flex; flex-wrap:wrap; gap:4px; } .rl-akcije form { margin:0; }
   .rl-akcije .btn { display:inline-flex; align-items:center; gap:4px; padding:4px 9px; font-size:.8rem; }
 </style>
@@ -75,7 +79,7 @@
     <thead><tr><th>Šifra</th><th>Zaposleni</th><th>OJ</th><th>Status</th><th title="Sati rada i odsustva koji čine fond">Sati</th><th>Fond</th>
       <th title="Prekovremeni i noćni rad (van fonda)">Dodatno</th><th title="Topli obrok — broj dana">Obrok</th><th>Kontrola</th><th>Akcije</th></tr></thead>
     <tbody>
-    {% for r in redovi %}{% with l=r.lista z=r.zaposleni %}<tr>
+    {% for r in redovi %}{% with l=r.lista z=r.zaposleni %}<tr{% if r.problemi or r.godisnji.upozorenje %} class="rl-red-upozorenje"{% endif %}>
       <td data-order="{{ z.employee_code }}">{{ z.employee_code }}</td>
       <td class="fw-semibold rl-ime" data-sort="{{ z.display_last_name }} {{ z.display_first_name }}">{{ z.display_last_name }} {{ z.display_first_name }}{% if not z.is_active %} <span class="text-muted small fw-normal">(neaktivan)</span>{% endif %}</td>
       <td><span class="fleet-status info">{{ z.org_unit_code|default:z.department_code }}</span></td>
@@ -85,9 +89,12 @@
       <td class="num">{{ r.fond }}</td>
       <td class="num">{% if l and r.dodatno %}{{ r.dodatno }}{% else %}—{% endif %}</td>
       <td class="num">{% if l %}{{ l.meal_days|default_if_none:"—" }}{% else %}—{% endif %}</td>
-      <td class="rl-kontrola" data-order="{{ r.problemi|length }}">{% if l %}{% if r.problemi %}<span class="rl-badge draft">{{ r.problemi|length }} problema</span>
-          <ul class="rl-problemi">{% for p in r.problemi %}<li>{{ p }}</li>{% endfor %}</ul>
-        {% else %}<span class="rl-badge approved">U redu</span>{% endif %}{% endif %}</td>
+      <td class="rl-kontrola" data-order="{{ r.problemi|length }}">{% if l %}{% if r.problemi or r.godisnji.upozorenje %}
+          {% if r.problemi %}<span class="rl-badge upozorenje"><i class="mdi mdi-alert-circle"></i> {{ r.problemi|length }} problema</span>{% endif %}
+          {% if r.godisnji.upozorenje %}<span class="rl-badge upozorenje" title="Upozorenje — ne sprečava odobravanje"><i class="mdi mdi-beach"></i> Godišnji odmor</span>{% endif %}
+          <ul class="rl-problemi">{% for p in r.problemi %}<li>{{ p }}</li>{% endfor %}{% if r.godisnji.upozorenje %}<li>{{ r.godisnji.upozorenje }}</li>{% endif %}</ul>
+        {% else %}<span class="rl-badge approved">U redu</span>{% endif %}
+        {% if r.godisnji.ima_dodelu %}<div class="small text-muted mt-1" title="Godišnji odmor {{ godina }}: ukupno / iskorišćeno / preostalo">GO: {{ r.godisnji.ukupno }} / {{ r.godisnji.iskorisceno }} / {{ r.godisnji.preostalo }}</div>{% endif %}{% endif %}</td>
       <td><div class="rl-akcije">
         {% if can_otvori %}<a class="btn btn-outline-primary" href="{% url 'hr:employee_work_time_sheet' z.pk %}?month={{ mesec }}&amp;year={{ godina }}" title="Pregled radne liste"><i class="mdi mdi-eye"></i> Otvori</a>{% endif %}
         {% if l %}

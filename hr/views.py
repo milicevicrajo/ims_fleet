@@ -795,6 +795,10 @@ class MyWorkTimeSheetView(LoginRequiredMixin, TemplateView):
             "fond_vrste_json": json.dumps([str(pk) for pk in WorkTimeCategory.objects.filter(
                 code__in=pravila_radne_liste.FOND_VRSTE).values_list("pk", flat=True)]),
             "fond_sati": pravila_radne_liste.fond_sati(year, month, employee.date_of_joining),
+            # Godišnji odmor (od 15.10.2026.): ukupno / iskorišćeno / preostalo; pregledač preračunava dok se upisuje.
+            "godisnji": pravila_radne_liste.godisnji_odmor_liste(sheet),
+            "godisnji_vrste_json": json.dumps([str(pk) for pk in WorkTimeCategory.objects.filter(
+                code=pravila_radne_liste.GODISNJI_ODMOR).values_list("pk", flat=True)]),
             "datum_predaje": pravila_radne_liste.prvi_radni_dan_predaje(year, month),
             "prefill": prefill,
             # Prazna lista u pripremi dobija predlog odmah; inače se predlog primenjuje dugmetom.

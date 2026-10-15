@@ -2352,13 +2352,27 @@ radnih lista, tuđa radna lista, štampa i prilozi, odobravanje, vraćanje u pri
 uloge (09.10.2026.: Snežana Simić — cela firma).
 
 **CSV za obračun zarada** (`hr/services/obracun_csv.py`): knjigovodstvo ga učitava u bazu zarada (`bazaldims`);
-aplikacija tamo ništa ne upisuje. Kolone `sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos` (UTF-8 sa BOM, `;`,
+aplikacija tamo ništa ne upisuje. Kolone `sif_pred;god;mesec;br_obr;rasif;elsif;sati;sif_pos;oj` (UTF-8 sa BOM, `;`,
 CRLF — kao CSV obustava za mobilne). Red radne liste daje element zarade vrste rada za **vrstu primaoca** radnika
 (šifarnik „Elementi radne liste”; red sa satima bez vrste = redovan rad); topli obrok = **broj dana** (ne sati; od 12.10.2026.) na
 šifri toplog obroka; sati istog elementa i šifre posla se sabiraju; `sif_pred` je preduzeće radnika, `br_obr` broj obračuna
 koji se upisuje pri preuzimanju. Regres, minuli rad i terenski dodatak nisu u CSV-u. Red bez šifre posla ide sa praznim
 `sif_pos`, a red bez elementa (nema vrste primaoca ili veze u šifarniku) ne ide — oba se vide kao upozorenje na
 radnoj listi, iznad dugmadi „CSV radnik” / „CSV svi” (zaglavlje odgovora `X-Upozorenja` daje njihov broj).
+Kolona `oj` (od 15.10.2026., poslednja, da se postojeće kolone ne pomere) je organizaciona jedinica radnika iz kadrovske
+baze (`radnik.oj` → `Employee.org_unit_code`) — ista vrednost koju baza zarada upisuje u svoju kolonu `oj`.
+
+**Godišnji odmor na radnoj listi** (od 15.10.2026., `stanja_godisnjeg` / `godisnji_odmor_liste` u
+`hr/services/radna_lista.py`): iznad rasporeda sati — **ukupno** (dodela za godinu liste, a do 30.06. i ostatak iz
+prethodne godine), **iskorišćeno** (dani po rešenjima iz kadrovske baze + dani godišnjeg odmora upisani u ovu listu) i
+**preostalo**. Rešenja koja padaju u mesec liste se ne broje — ti dani su u listi, da se ne saberu dvaput. Pregledač
+preračunava dok se upisuje. Više upisanih dana od preostalih je **upozorenje** (crvena kartica, potvrda pri predaji,
+crveni red na Pregledu radnih lista) — ne sprečava predaju ni odobravanje. Izvor su lokalne kopije `Godmor`/`GodmorKor`;
+osvežavaju se samo ručno (ekran Godišnji odmori ili `manage.py sync_annual_leave`), zakazanog posla nema.
+
+**Upozorenja na radnoj listi** (od 15.10.2026.) su jarko crvena: red sa satima bez šifre posla ili vrste, topli obrok bez
+broja dana ili šifre i godišnji odmor preko preostalih dana označavaju se na samom polju dok se upisuje; kontrola
+predate liste, upozorenja CSV-a i greške predaje su crveni okviri; na Pregledu radnih lista red sa problemom je crven.
 | **Godišnji odmori** | `/hr/godisnji-odmori/` | Kadrovska služba |
 | Sinhronizacija odmora | `/hr/godisnji-odmori/sinhronizacija/` | Kadrovska služba |
 | **Bolovanja** | `/hr/bolovanja/` | Kadrovska služba |

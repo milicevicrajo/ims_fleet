@@ -1,8 +1,9 @@
 """CSV za učitavanje obračuna zarada iz radne liste (od 09.10.2026.).
 
 Kolone kao u bazi zarada (knjigovodstvo ih učitava u `bazaldims`; aplikacija tamo ništa ne upisuje):
-`sif_pred, god, mesec, br_obr, rasif, elsif, sati, sif_pos` — jedan red po elementu zarade i šifri posla.
-Kolona `sati` za topli obrok nosi broj dana (od 12.10.2026.).
+`sif_pred, god, mesec, br_obr, rasif, elsif, sati, sif_pos, oj` — jedan red po elementu zarade i šifri posla.
+Kolona `sati` za topli obrok nosi broj dana (od 12.10.2026.). Kolona `oj` (od 15.10.2026., na kraju da se postojeće
+kolone ne pomere) je organizaciona jedinica radnika iz kadrovske baze (`radnik.oj`, isto što baza zarada upisuje u `oj`).
 
 Pravila:
 - red radne liste: element = element vrste rada za vrstu primaoca radnika (`Elementi radne liste`, aktivan);
@@ -16,7 +17,7 @@ from collections import defaultdict
 
 from hr.models import WorkTimeElement, WorkTimeSheet
 
-ZAGLAVLJE = ["sif_pred", "god", "mesec", "br_obr", "rasif", "elsif", "sati", "sif_pos"]
+ZAGLAVLJE = ["sif_pred", "god", "mesec", "br_obr", "rasif", "elsif", "sati", "sif_pos", "oj"]
 REDOVAN_RAD = "redovan_rad"
 TOPLI_OBROK = "topli_obrok"
 
@@ -60,8 +61,9 @@ def stavke(listove, br_obr, katalog=None):
         if lista.meal_days:
             jedinica = lista.meal_organizational_unit or podrazumevana_sifra(radnik)
             dodaj(TOPLI_OBROK, lista.meal_days, jedinica.code.strip() if jedinica else "", "topli obrok", "dana")
+        oj = (radnik.org_unit_code or "").strip()
         for (element, sifra_posla), broj in sorted(sati.items(), key=lambda s: (s[0][0], s[0][1])):
-            redovi.append([radnik.preduzece, lista.year, lista.month, br_obr, radnik.employee_code, element, broj, sifra_posla])
+            redovi.append([radnik.preduzece, lista.year, lista.month, br_obr, radnik.employee_code, element, broj, sifra_posla, oj])
     return redovi, upozorenja
 
 

@@ -9,8 +9,11 @@
 - Isto pravilo proverava i sačuvanu listu (`kontrola_liste`) — pregled radnih lista i odobravanje.
   Predlog je broj radnih dana sa kucanjem iz evidencije prolaza; zaposleni ga može promeniti.
 - Datum na odštampanoj listi je prvi radni dan meseca u kome se lista predaje (mesec posle meseca liste).
+- Godišnji odmor (od 15.10.2026.): uz listu se prikazuje pravo (ukupno), iskorišćeno i preostalo (`stanja_godisnjeg`).
+  Upis više dana nego što je preostalo je **upozorenje**, ne sprečava predaju ni odobravanje.
 """
 import calendar
+from collections import defaultdict
 from datetime import date, timedelta
 
 from .praznici import neradni_praznici
@@ -20,6 +23,9 @@ ODSUSTVA = {"bolovanje", "godisnji_odmor", "placeno_odsustvo", "drzavni_i_verski
 # Vrste čiji sati čine mesečni fond (radni dani × 8); prekovremeni i noćni rad su dodaci.
 FOND_VRSTE = {"redovan_rad", "redovan_rad_na_drzavne_praznike"} | ODSUSTVA
 SATI_DNEVNO = 8
+GODISNJI_ODMOR = "godisnji_odmor"
+# Neiskorišćeni deo odmora iz prethodne godine koristi se najkasnije do 30. juna (Zakon o radu).
+PRENOS_DO_MESECA = 6
 
 
 def fond_sati(godina, mesec, od=None):
@@ -62,6 +68,69 @@ def kontrola_liste(lista):
     po_redu, opste, _ = _greske(redovi, lista.meal_days, lista.meal_organizational_unit_id,
                                 fond_sati(lista.year, lista.month, lista.employee.date_of_joining))
     return [f"red {broj}: {', '.join(poruke)}" for broj, poruke in sorted(po_redu.items())] + opste
+
+
+def _dani(sati):
+    """Sati godišnjeg odmora u danima (8 h = 1 dan); nepun dan na jednu decimalu."""
+    return sati // SATI_DNEVNO if sati % SATI_DNEVNO == 0 else round(sati / SATI_DNEVNO, 1)
+
+
+def dani_godisnjeg_u_listi(lista):
+    """Dani godišnjeg odmora upisani u sačuvanu radnu listu."""
+    return _dani(sum(red.total_hours for red in lista.lines.all()
+                     if red.work_category_id and red.work_category.code == GODISNJI_ODMOR))
+
+
+def stanja_godisnjeg(zaposleni_ids, godina, mesec):
+    """Stanje godišnjeg odmora za mesec radne liste, po zaposlenom (bez dodele u kadrovskoj bazi — nema ga u rečniku).
+
+    Izvor su dodele (`Godmor`) i rešenja (`GodmorKor`) iz kadrovske baze. Pravo je dodela za godinu liste i, do 30. juna,
+    ostatak iz prethodne godine. Iskorišćeno su dani po rešenjima **bez rešenja koja padaju u mesec liste** — te dane
+    zaposleni upisuje u listu, pa se broje iz liste (`dani_godisnjeg_u_listi`), da se ne saberu dvaput.
+    """
+    from hr.models import AnnualLeaveAllowance, AnnualLeaveDecision
+
+    prethodna = godina - 1 if mesec <= PRENOS_DO_MESECA else None
+    godine = [g for g in (prethodna, godina) if g]
+    prvi, poslednji = date(godina, mesec, 1), date(godina, mesec, calendar.monthrange(godina, mesec)[1])
+    dodele = defaultdict(dict)
+    for zaposleni, god, dana in (AnnualLeaveAllowance.objects.filter(employee_id__in=zaposleni_ids, source_present=True,
+                                                                     year__in=godine)
+                                 .values_list("employee_id", "year", "allocated_days")):
+        dodele[zaposleni][god] = dana
+    resenja = defaultdict(int)
+    for zaposleni, god, dana in (AnnualLeaveDecision.objects.filter(employee_id__in=list(dodele), source_present=True,
+                                                                    year__in=godine)
+                                 .exclude(start_date__lte=poslednji, end_date__gte=prvi)
+                                 .values_list("employee_id", "year", "approved_days")):
+        resenja[(zaposleni, god)] += dana
+    stanja = {}
+    for zaposleni, po_godini in dodele.items():
+        if godina not in po_godini:
+            continue
+        prenos = max(po_godini.get(prethodna, 0) - resenja[(zaposleni, prethodna)], 0) if prethodna else 0
+        stanja[zaposleni] = {"godina": godina, "dodeljeno": po_godini[godina], "prenos": prenos, "prethodna": prethodna,
+                             "ukupno": po_godini[godina] + prenos, "po_resenjima": resenja[(zaposleni, godina)],
+                             "dostupno": po_godini[godina] + prenos - resenja[(zaposleni, godina)]}
+    return stanja
+
+
+def godisnji_odmor_liste(lista, stanja=None):
+    """Stanje godišnjeg odmora sa danima iz ove liste (`u_listi`, `iskorisceno`, `preostalo`) i upozorenjem (ili None).
+    `stanja` — već učitana `stanja_godisnjeg` (pregled svih lista); bez njih se čita za ovog zaposlenog."""
+    if stanja is None:
+        stanja = stanja_godisnjeg([lista.employee_id], lista.year, lista.month)
+    stanje = stanja.get(lista.employee_id)
+    u_listi = dani_godisnjeg_u_listi(lista)
+    if stanje is None:
+        upozorenje = (f"upisano {u_listi} dana godišnjeg odmora, a u kadrovskoj bazi nema dodele odmora za {lista.year}"
+                      if u_listi else None)
+        return {"ima_dodelu": False, "upozorenje": upozorenje, "u_listi": u_listi}
+    preostalo = stanje["dostupno"] - u_listi
+    upozorenje = (f"upisano {u_listi} dana godišnjeg odmora, a preostalo je {max(stanje['dostupno'], 0)}"
+                  if u_listi and preostalo < 0 else None)
+    return {**stanje, "ima_dodelu": True, "u_listi": u_listi, "iskorisceno": stanje["po_resenjima"] + u_listi,
+            "preostalo": preostalo, "upozorenje": upozorenje}
 
 
 def ima_sate(cleaned_data, dana_u_mesecu):
