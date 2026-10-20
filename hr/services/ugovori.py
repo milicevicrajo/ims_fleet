@@ -1,7 +1,9 @@
 """Sinhronizacija ugovora zaposlenih iz kadrovske baze (samo citanje izvora).
 
 Izvor perioda je `dbo.v_hr_RadStaz` (IMS_ERP, cita `RadStaz` na PUTGEO-SERVER.bazaldims, samo
-`u_firmi = 'DA'`). Trenutna OJ i radno mesto radnika citaju se iz `radnik`, nazivi iz `ob_jedin`
+`u_firmi = 'DA'`), i uz njega periodi iz `RadStaz` sa opisom „ims stari” (od 16.10.2026.): to je rad u IMS-u pre
+ponovnog zaposlenja koji kadrovska sluzba namerno vodi kao `u_firmi = 'NE'` — da radnik ne dobije novu sifru, a staz
+za jubilarnu nagradu se racuna od poslednjeg dolaska. Kadrovska baza se ne menja, samo se ti periodi i ovde citaju. Trenutna OJ i radno mesto radnika citaju se iz `radnik`, nazivi iz `ob_jedin`
 (po godini — uzima se tekuca, inace poslednja pre nje) i `Sistemat` (po preduzecu).
 
 Pravila:
@@ -23,6 +25,10 @@ from hr.sync import _resolve_hr_db_alias
 IZVOR = "[putgeo-server].[BazaLDIMS].[dbo]"
 PERIODI_SQL = ("SELECT Kategorija, rasif, rb, datum1, datum2, opis, staz_gg, staz_mm, staz_dd "
                "FROM dbo.v_hr_RadStaz")
+# Isti oblik kao pogled (kategorija po preduzecu, kao u `v_hr_RadStaz`).
+STARI_IMS_SQL = ("SELECT CASE WHEN sif_pred = 1 THEN 'Radni odnos' ELSE 'Van radnog odnosa' END, rasif, rb, datum1, datum2, "
+                 f"opis, staz_gg, staz_mm, staz_dd FROM {IZVOR}.[RadStaz] "
+                 "WHERE u_firmi = 'NE' AND LOWER(LTRIM(RTRIM(opis))) = 'ims stari'")
 RADNICI_SQL = f"SELECT rasif, sif_pred, ranaz, aktivan, oj, sif_sis FROM {IZVOR}.[radnik]"
 OJ_SQL = f"SELECT sif_pred, god, oj, naz_oj FROM {IZVOR}.[ob_jedin]"
 SISTEMATIZACIJA_SQL = f"SELECT sif_pred, sif_sis, naz_sis FROM {IZVOR}.[Sistemat]"
@@ -66,12 +72,14 @@ def _datum(vrednost):
 
 
 def procitaj_izvor(using=None):
-    """(periodi, radnici, oj, sistematizacija) kao liste torki, kako ih vraca izvor."""
+    """(periodi, radnici, oj, sistematizacija) kao liste torki, kako ih vraca izvor; periodi „ims stari” su uz periode."""
     with connections[_resolve_hr_db_alias(using)].cursor() as cursor:
         rezultat = []
         for sql in (PERIODI_SQL, RADNICI_SQL, OJ_SQL, SISTEMATIZACIJA_SQL):
             cursor.execute(sql)
-            rezultat.append(cursor.fetchall())
+            rezultat.append(list(cursor.fetchall()))
+        cursor.execute(STARI_IMS_SQL)
+        rezultat[0] += cursor.fetchall()
     return tuple(rezultat)
 
 

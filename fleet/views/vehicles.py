@@ -82,7 +82,6 @@ def _write_storage_file(zip_file, file_field, archive_name):
     return True
 
 
-@obuhvat_flote.ogranici_po_vozilu("pk")
 class VehicleListView(LoginRequiredMixin, FilterView):
     model = Vehicle
     template_name = "fleet/vehicle_list.html"
@@ -118,7 +117,7 @@ class VehicleListView(LoginRequiredMixin, FilterView):
         if "status" not in get and "show_archived" not in get:
             qs = qs.filter(otpis=False)
 
-        return qs
+        return obuhvat_flote.spisak_vozila(qs, self.request.user)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -155,7 +154,7 @@ def _vehicle_list_base_queryset(request):
     get = request.GET
     if "status" not in get and "show_archived" not in get:
         qs = qs.filter(otpis=False)
-    return obuhvat_flote.po_vozilu(qs, request.user, "pk")
+    return obuhvat_flote.spisak_vozila(qs, request.user)
 
 
 @role_permission_required()

@@ -10,6 +10,8 @@ Pravila (odluke 25.09.2026.):
 - **vozilo** i sve sto se na njega vezuje (saobracajne, polise, lizing, gorivo, servisi, kvarovi,
   trebovanja, osiguranje, dokumenti) vidi se ako je **danasnja dodela vozila** u obuhvatu; vozilo bez
   ijedne dodele vidi svako ko ima neki obuhvat, da tek uneto vozilo ne nestane;
+- **spisak vozila** je ceo vozni park za svakoga ko ima neki obuhvat (odluka 20.10.2026. — sekretarice
+  treba da vide sva vozila); karton vozila i dalje ide po obuhvatu;
 - **putni nalog** se vidi ako mu je sifra posla u obuhvatu;
 - izvestaji po centru i sifri posla filtriraju po siframa posla u obuhvatu (istorijska dodela na
   dan zapisa ostaje kao i do sada);
@@ -121,6 +123,13 @@ def po_vozilu(queryset, user, polje="vehicle"):
     if ids is None:
         return queryset
     return queryset.filter(**{"pk__in" if polje == "pk" else f"{polje}_id__in": ids})
+
+
+def spisak_vozila(queryset, user):
+    """Spisak vozila: ceo vozni park za svakoga ko ima neki obuhvat Flote; prazan obuhvat — nista."""
+    if not aktivno(user) or not obuhvat(user).prazan:
+        return queryset
+    return queryset.none()
 
 
 def putni_nalozi(queryset, user):

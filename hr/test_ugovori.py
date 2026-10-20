@@ -3,6 +3,7 @@ import datetime
 import shutil
 import tempfile
 from decimal import Decimal
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -46,6 +47,23 @@ class SinhronizacijaTests(TestCase):
 
     def sync(self, **kwargs):
         return ugovori.sinhronizuj(izvor=izvor(**kwargs), danas=DANAS)
+
+    def test_periodi_ims_stari_se_citaju_uz_pogled(self):
+        # 16.10.2026.: rad u IMS-u pre ponovnog zaposlenja kadrovska vodi kao u_firmi = 'NE', opis „ims stari”.
+        stari = period(rb=1, od=datetime.datetime(2006, 8, 2), do=datetime.datetime(2024, 5, 10), opis="ims stari     ")
+        rezultati = {ugovori.PERIODI_SQL: [period(rb=6, od=datetime.datetime(2025, 2, 3))], ugovori.STARI_IMS_SQL: [stari]}
+        cursor = mock.MagicMock()
+        cursor.execute.side_effect = lambda sql: setattr(cursor, "poslednji", sql)
+        cursor.fetchall.side_effect = lambda: rezultati.get(cursor.poslednji, [])
+        with mock.patch.object(ugovori, "connections") as veze:
+            veze.__getitem__.return_value.cursor.return_value.__enter__.return_value = cursor
+            periodi = ugovori.procitaj_izvor(using="default")[0]
+        self.assertEqual([p[2] for p in periodi], [6, 1])
+        self.assertIn("u_firmi = 'NE'", ugovori.STARI_IMS_SQL)
+        self.sync(periodi=periodi)
+        red = UgovorZaposlenog.objects.get(employee_code=701, redni_broj=1)
+        self.assertEqual((red.datum_od, red.datum_do, red.opis, red.u_izvoru),
+                         (datetime.date(2006, 8, 2), datetime.date(2024, 5, 10), "ims stari", True))
 
     def test_novi_period_belezi_trenutnu_oj_i_radno_mesto(self):
         rezultat = self.sync()

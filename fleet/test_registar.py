@@ -52,6 +52,12 @@ class FlotaNaRegistruTests(ImportTestCase):
         self.assertEqual(set(obuhvat_flote.po_vozilu(Vehicle.objects.all(), self.svez(), "pk")), set())
         self.assertFalse(obuhvat_flote.putni_nalozi(PutniNalog.objects.all(), self.svez()).exists())
 
+    def test_spisak_vozila_bez_obuhvata_je_prazan(self):
+        self.client.force_login(self.korisnik)
+        podaci = self.client.get(reverse("vehicle_data"), {"draw": 1, "start": 0, "length": 10}).json()
+        self.assertEqual(podaci["recordsTotal"], 0)
+        self.assertEqual(len(self.client.get(reverse("vehicle_list")).context["vehicles"]), 0)
+
     def test_vozila_i_putni_nalozi_po_obuhvatu(self):
         self.dodeli(cvor_id=centar("43"))
         korisnik = self.svez()
@@ -91,8 +97,10 @@ class FlotaNaRegistruTests(ImportTestCase):
         self.assertEqual(self.client.get(reverse("policy_detail", args=[polisa_41.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse("putninalog_detail", args=[self.nalog_41.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse("putninalog_detail", args=[self.nalog_43.pk])).status_code, 302)  # detalj vodi na stampu
+        # Spisak vozila je ceo vozni park (odluka 20.10.2026.), karton vozila 41 ostaje van obuhvata.
         podaci = self.client.get(reverse("vehicle_data"), {"draw": 1, "start": 0, "length": 10}).json()
-        self.assertEqual(podaci["recordsTotal"], 2)
+        self.assertEqual(podaci["recordsTotal"], 3)
+        self.assertEqual(len(self.client.get(reverse("vehicle_list")).context["vehicles"]), 3)
         from fleet.support.fleet_snapshot import fleet_snapshot
 
         self.assertEqual(fleet_snapshot(self.svez())["totals"]["count"], 2)  # kontrolna tabla: 43 i vozilo bez dodele
