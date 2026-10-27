@@ -33,8 +33,8 @@
     <div class="col-12 col-md-3"><button class="btn btn-primary w-100"><i class="mdi mdi-filter"></i> Prikaži</button></div>
   </form>
   <p class="text-muted small mt-2 mb-0">
-    OMV se poredi faktura po faktura (kartica putnička / teretna, period koji je OMV fakturisao). NIS se poredi po polovini meseca —
-    obe fakture zajedno, jer se transakcije ne mogu razdvojiti po vrsti kartice; podela putnička/teretna za šifre posla ide po kategoriji vozila.
+    OMV se poredi faktura po faktura (kartica putnička / teretna, period koji je OMV fakturisao). NIS takođe faktura po faktura:
+    za svaku polovinu meseca „Putničko“ i „Teretno“, sa transakcijama kartica iz specifikacije uz fakturu.
     Očekivano knjiženje: putnička — bruto na 51300 (PDV se ne odbija), teretna — neto na 51300 i PDV na 27000.
   </p>
 </div></div>
@@ -50,7 +50,7 @@
       {% for r in redovi %}
         <tr>
           <td><strong>{{ r.dobavljac }}</strong></td>
-          <td>{{ r.oznaka }}{% if r.dobavljac == 'NIS' %}<div class="small text-muted">{% for f in r.fakture %}{{ f.broj }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% else %}<div class="small text-muted">{{ r.period.0|date:"d.m." }}–{{ r.period.1|date:"d.m.Y." }}</div>{% endif %}</td>
+          <td>{{ r.oznaka }}{% if r.fakture|length > 1 %}<div class="small text-muted">{% for f in r.fakture %}{{ f.broj }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% else %}<div class="small text-muted">{{ r.period.0|date:"d.m." }}–{{ r.period.1|date:"d.m.Y." }}</div>{% endif %}</td>
           <td>{{ r.kartica }}</td>
           <td class="num">{{ r.sef_bruto|floatformat:2|intcomma }}</td>
           <td class="num">{{ r.transakcije_bruto|floatformat:2|intcomma }}</td>

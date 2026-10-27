@@ -2,8 +2,9 @@
 
 OMV fakturiše po kartici (kupac 107248 = putnička, 107258 = teretna) i svojim periodima (do 13. i do kraja
 meseca); svaka transakcija nosi broj fakture, pa se poredi faktura po faktura. NIS fakturiše po polovinama
-meseca (1–15, 16–kraj) sa dve fakture (Automobili / Kamioni) koje se iz transakcija ne mogu razdvojiti, pa se
-porede obe zajedno sa transakcijama polovine; podela putnička/teretna ide po kategoriji vozila u Floti.
+meseca (1–15, 16–kraj) sa dve fakture, „Putničko“ i „Teretno“, po vrsti kartice; od 27.10.2026. se i one
+porede svaka posebno — kartice svake fakture su u specifikaciji uz nju (`nis_kartice.py`). Ako specifikacija
+neke fakture nije učitana, fakture te polovine se porede zajedno kao ranije.
 
 Knjiženje (kako su knjižene fakture do sada): putnička vozila — bruto na 51300 po šifri posla, bez PDV-a
 (PDV na gorivo za putnička vozila se ne odbija); teretna — neto na 51300 po šifri posla i PDV na 27000.
@@ -17,9 +18,10 @@ from decimal import Decimal
 from django.db.models import Q
 from django.utils import timezone
 
-from ..models import TransactionNIS, TransactionOMV, Vehicle
+from ..models import TransactionNIS, TransactionOMV
 from .fuel import deduplicate_omv_transactions, filter_nis_fuel_queryset, nis_charged_gross_net_amounts, omv_charged_gross_net_amounts
 from .fuel_reports import OMV_KUPCI, _historical_job_code_subqueries
+from .nis_kartice import PUTNICKA, TERETNA, VrstaKartice
 
 OMV_PIB = "101987198"
 NIS_PIB = "104052135"
@@ -133,43 +135,88 @@ def _nis_transakcije(godina, mesec, polovina):
                                             .filter(datum_transakcije__range=(pocetak, kraj)))
 
 
-def _teretno_nis(t):
-    return t.vehicle_id is not None and t.vehicle.category == Vehicle.Category.CARGO
+NIS_VRSTE = {PUTNICKA: "Putnička vozila", TERETNA: "Teretna vozila"}
 
 
-def nis_potvrda(godina, mesec, polovina):
-    """Potvrda u izveštaju NIS po šifri posla (od 08.10.2026., kao kod OMV fakture): slažu li se NIS fakture polovine
-    sa SEF-a i obračun iz transakcija. Porede se obe fakture (Automobili / Kamioni) zajedno sa svim transakcijama
-    polovine — iz transakcija se ne vidi koja je za koju; putnička i teretna su podela po kategoriji vozila u Floti."""
+def _nis_fakture(od, do):
+    """(fakture, knjižna odobrenja i zaduženja) NIS-a sa datumom prometa u polovini."""
     from finansije.sef_models import SefFaktura
 
-    od, do, transakcije = _nis_transakcije(godina, mesec, polovina)
     dokumenti = list(SefFaktura.objects.filter(smer="ulazna", partner_pib=NIS_PIB, datum_prometa__range=(od, do))
                      .order_by("datum_prometa", "broj"))
     fakture = [f for f in dokumenti if not f.vrsta or f.vrsta == "Invoice"]
-    putnicka = teretna = NULA
+    return fakture, [f for f in dokumenti if f not in fakture]
+
+
+def _vrste_faktura(fakture):
+    """{broj fakture: vrsta kartica} iz specifikacija; fakture bez učitane specifikacije nisu u rečniku."""
+    from ..models import NisKarticaFakture
+
+    return dict(NisKarticaFakture.objects.filter(faktura__in=[f.broj for f in fakture]).values_list("faktura", "tip")
+                .distinct())
+
+
+def nis_potvrda(godina, mesec, polovina):
+    """Potvrda u izveštaju NIS po šifri posla: slaže li se **svaka** NIS faktura polovine sa SEF-a sa transakcijama
+    kartica sa te fakture (od 27.10.2026.; ranije zbir obe fakture). Putnička i teretna su podela po vrsti kartice."""
+    od, do, transakcije = _nis_transakcije(godina, mesec, polovina)
+    fakture, odobrenja = _nis_fakture(od, do)
+    vrste = VrstaKartice()
+    po_vrsti = {PUTNICKA: NULA, TERETNA: NULA}
+    van_specifikacije = NULA
     for t in transakcije:
+        tip, izvor = vrste.izvor(t)
         bruto = nis_charged_gross_net_amounts(t.total)[0] or NULA
-        if _teretno_nis(t):
-            teretna += bruto
-        else:
-            putnicka += bruto
+        po_vrsti[tip] += bruto
+        if izvor != "faktura":
+            van_specifikacije += bruto
+    vrste_faktura = _vrste_faktura(fakture)
+    redovi = []
+    if fakture and all(f.broj in vrste_faktura for f in fakture):
+        for f in fakture:
+            tip = vrste_faktura[f.broj]
+            sef_vrste = sum((g.iznos or NULA for g in fakture if vrste_faktura[g.broj] == tip), NULA)
+            razlika = po_vrsti[tip] - sef_vrste
+            redovi.append(dict(faktura=f, tip=tip, vrsta=NIS_VRSTE[tip], transakcije=po_vrsti[tip], razlika=razlika,
+                               poklapa=abs(razlika) <= TOLERANCIJA))
     sef_bruto = sum((f.iznos or NULA for f in fakture), NULA)
-    razlika = putnicka + teretna - sef_bruto
-    return dict(od=od, do=do, fakture=fakture, odobrenja=[f for f in dokumenti if f not in fakture],
+    ukupno = po_vrsti[PUTNICKA] + po_vrsti[TERETNA]
+    razlika = ukupno - sef_bruto
+    # Bez specifikacija (redovi prazni) fakture polovine se porede zajedno, kao pre 27.10.2026.
+    poklapa = all(r["poklapa"] for r in redovi) if redovi else bool(fakture) and abs(razlika) <= TOLERANCIJA
+    return dict(od=od, do=do, fakture=fakture, redovi=redovi, odobrenja=odobrenja,
                 sef_bruto=sef_bruto, sef_neto=sum((f.osnovica or NULA for f in fakture), NULA),
-                sef_pdv=sum((f.pdv or NULA for f in fakture), NULA), putnicka=putnicka, teretna=teretna,
-                transakcije_bruto=putnicka + teretna, razlika=razlika,
-                poklapa=bool(fakture) and abs(razlika) <= TOLERANCIJA)
+                sef_pdv=sum((f.pdv or NULA for f in fakture), NULA), putnicka=po_vrsti[PUTNICKA],
+                teretna=po_vrsti[TERETNA], transakcije_bruto=ukupno, razlika=razlika,
+                van_specifikacije=van_specifikacije if redovi else NULA, poklapa=poklapa)
 
 
 def _nis(polovina_fakture, godina, mesec, polovina):
+    """Redovi kontrole za NIS polovinu: faktura po faktura, sa transakcijama kartica sa te fakture."""
+    from django.urls import reverse
+
     od, do, transakcije = _nis_transakcije(godina, mesec, polovina)
-    ocek = _po_sifri(transakcije, datum_polje="datum_transakcije", iznosi=lambda t: nis_charged_gross_net_amounts(t.total),
-                     teretna=_teretno_nis)
-    brojevi = [f.broj for f in polovina_fakture]
-    return _red("NIS", f"{od:%d.%m.}–{do:%d.%m.%Y.}", polovina_fakture, (od, do), "Automobili + Kamioni", ocek,
-                _knjizenje(brojevi))
+    vrste = VrstaKartice()
+    vrste_faktura = _vrste_faktura(polovina_fakture)
+    if not polovina_fakture or any(f.broj not in vrste_faktura for f in polovina_fakture):
+        # Specifikacija bar jedne fakture nije učitana: obe fakture zajedno, kao pre 27.10.2026.
+        ocek = _po_sifri(transakcije, datum_polje="datum_transakcije",
+                         iznosi=lambda t: nis_charged_gross_net_amounts(t.total), teretna=lambda t: vrste.tip(t) == TERETNA)
+        red = _red("NIS", f"{od:%d.%m.}–{do:%d.%m.%Y.}", polovina_fakture, (od, do), "Putničko + Teretno", ocek,
+                   _knjizenje([f.broj for f in polovina_fakture]))
+        red["status"].insert(0, ("warning", "Specifikacija uz fakturu nije učitana — fakture polovine se porede zajedno"))
+        return [red]
+    redovi = []
+    tipovi = {t.pk: vrste.tip(t) for t in transakcije}
+    for f in polovina_fakture:
+        tip = vrste_faktura[f.broj]
+        svoje = transakcije.filter(pk__in=[pk for pk, v in tipovi.items() if v == tip])
+        ocek = _po_sifri(svoje, datum_polje="datum_transakcije", iznosi=lambda t: nis_charged_gross_net_amounts(t.total),
+                         teretna=lambda t, tip=tip: tip == TERETNA)
+        ruta = "fuel_job_code_nis_teretna" if tip == TERETNA else "fuel_job_code_nis_putnicka"
+        redovi.append(_red("NIS", f.broj, [f], (od, do), NIS_VRSTE[tip], ocek, _knjizenje([f.broj]),
+                           url=f"{reverse(ruta)}?godina={godina}&mesec={mesec}&polovina={polovina}"))
+    return redovi
 
 
 def kontrola_faktura(godina, mesec):
@@ -194,5 +241,5 @@ def kontrola_faktura(godina, mesec):
         else:
             nis[1 if f.datum_prometa.day <= 15 else 2].append(f)
     for polovina, grupa in sorted(nis.items()):
-        redovi.append(_nis(grupa, godina, mesec, polovina))
+        redovi.extend(_nis(grupa, godina, mesec, polovina))
     return redovi

@@ -258,3 +258,152 @@ class IzvozIzvestajaTests(TestCase):
         pdf = self.client.get(reverse("casco_report") + "?" + strana.context["export_pdf_query"])
         self.assertEqual(pdf["Content-Type"], "application/pdf")
         self.assertTrue(pdf.content.startswith(b"%PDF"))
+
+
+class NISFakturaPoKarticiTests(TestCase):
+    """27.10.2026.: NIS deli fakture polovine („Putničko“ / „Teretno“) po kartici, ne po kategoriji vozila u Floti;
+    svaka faktura mora da se složi u dinar sa transakcijama svojih kartica."""
+
+    SPECIFIKACIJA = (
+        "NIS a.d. Novi Sad\nIzvestaj o obavljenoj kupovini putem kompanijske Kreditne kartice\n"
+        "Komitent : Faktura : Tip vozila :2205247 - INSTITUT IMS AD BEOGRAD\n \n{broj} {tip}\n"
+        "11028 EVRO PREMIJUM BMB-95 205.010.09.2026 14:16 DRX BS Surcin - selo 48.54 9,950.70 3030076BG 826 VJ\n"
+        "Ukupno za karticu : 7824723061569717 48.54 9,950.70\n"
+        "11003 EVRO DIZEL 234.011.09.2026 06:39 SKT BS Dzona Kenedija 5.04 1,179.36 5673401BG 1461 EB\n"
+        "Ukupno za karticu : 7824723063178053 5.04 1,179.36\n")
+
+    def setUp(self):
+        from fleet.models import Vehicle
+
+        self.putnicko = Vehicle.objects.create(
+            inventory_number="P1", chassis_number="VINP1", brand="Dacia", model="Sandero", year_of_manufacture=2020,
+            color="Bela", number_of_axles=2, engine_volume=Decimal("999"), engine_number="EP1", weight=Decimal("1000"),
+            engine_power=Decimal("50"), load_capacity=Decimal("400"), category=Vehicle.Category.PASSENGER,
+            maximum_permissible_weight=Decimal("1500"), fuel_type="BMB", number_of_seats=5, purchase_value=Decimal("1"),
+            value=Decimal("1"))
+
+    def tocenje(self, broj, kartica, total, dan, vozilo=None):
+        from fleet.models import TransactionNIS
+
+        return TransactionNIS.objects.create(
+            vehicle=vozilo, kupac="IMS", sifra_kupca="1", broj_kartice=kartica, kompanijski_kod_kupca="217",
+            zemlja_sipanja="SR", benzinska_stanica="LAPOVO", id_transakcije=broj, app_kod="APP",
+            datum_transakcije=timezone.make_aware(datetime.datetime(2026, 9, dan, 9, 0)), tociono_mesto="1",
+            registarska_oznaka_vozila=f"BG{broj}-AA", broj_racuna=broj, kilometraza=1000, sipanje_van_rezervoara=False,
+            naziv_proizvoda="EVRO DIZEL", kolicina=Decimal("10.00"), popust=Decimal("0"), primenjen_popust="",
+            cena_sa_kase=Decimal("200"), cena=Decimal("200"), total_sa_kase=Decimal(total), total=Decimal(total),
+            valuta="RSD", aktivirano_prekoracenje=False, kolicinsko_prekoracenje=False, finansijsko_prekoracenje=False,
+            nacin_ocitavanja_kartice="manual")
+
+    def faktura(self, sef_id, broj, iznos):
+        return SefFaktura.objects.create(smer="ulazna", sef_id=sef_id, broj=broj, partner_pib="104052135", vrsta="Invoice",
+                                         iznos=Decimal(iznos), osnovica=Decimal(iznos) / Decimal("1.2"),
+                                         pdv=Decimal(iznos) - Decimal(iznos) / Decimal("1.2"),
+                                         datum_prometa=datetime.date(2026, 9, 15), sinhronizovano=timezone.now())
+
+    def kartice(self, faktura, tip, *kartice):
+        from fleet.models import NisKarticaFakture
+
+        for k in kartice:
+            NisKarticaFakture.objects.create(faktura=faktura, datum_prometa=datetime.date(2026, 9, 15), tip=tip, kartica=k,
+                                             iznos=Decimal("0"))
+
+    def test_specifikacija_se_cita_iz_teksta(self):
+        from fleet.support.nis_kartice import TERETNA, iz_teksta, kartica
+
+        broj, tip, kartice = iz_teksta(self.SPECIFIKACIJA.format(broj="9006720950", tip="Teretno"))
+        self.assertEqual((broj, tip), ("9006720950", TERETNA))
+        self.assertEqual(kartice, {"7824723061569717": Decimal("9950.70"), "7824723063178053": Decimal("1179.36")})
+        self.assertEqual(kartica("7824723061569717.0"), "7824723061569717")
+
+    def test_specifikacija_se_ucitava_iz_priloga_fakture(self):
+        import io
+        import tempfile
+
+        from django.core.files.base import ContentFile
+        from django.test import override_settings
+        from reportlab.pdfgen import canvas
+
+        from finansije.sef_models import SefPrilog
+        from fleet.models import NisKarticaFakture
+        from fleet.support.nis_kartice import ucitaj_specifikacije
+
+        pdf = io.BytesIO()
+        platno = canvas.Canvas(pdf)
+        for i, red in enumerate(self.SPECIFIKACIJA.format(broj="9006720950", tip="Teretno").splitlines()):
+            platno.drawString(20, 800 - 14 * i, red)
+        platno.save()
+        with override_settings(MEDIA_ROOT=tempfile.mkdtemp()):
+            f = self.faktura(2, "9006720950", "11130.06")
+            SefPrilog.objects.create(faktura=f, redni=1, naziv="/mft_sef/0002205247-9006720950-specifikacija_uz_fakturu.pdf",
+                                     fajl=ContentFile(pdf.getvalue(), name="spec.pdf"))
+            self.assertEqual(ucitaj_specifikacije([f]), 1)
+            self.assertEqual(ucitaj_specifikacije([f]), 0)  # već učitana
+        self.assertEqual(set(NisKarticaFakture.objects.values_list("kartica", "tip")),
+                         {("7824723061569717", "teretna"), ("7824723063178053", "teretna")})
+
+    def test_bez_fajla_priloga_specifikacija_se_cita_sa_sef_a(self):
+        from unittest.mock import patch
+
+        from finansije.sef_models import SefPrilog
+        from fleet.models import NisKarticaFakture
+        from fleet.support.nis_kartice import ucitaj_specifikacije
+
+        f = self.faktura(2, "9006720950", "11130.06")
+        # Prilog je upisan, ali fajl je samo na serveru.
+        SefPrilog.objects.create(faktura=f, redni=1, naziv="/mft_sef/0002205247-9006720950-specifikacija_uz_fakturu.pdf",
+                                 fajl="finansije/sef/prilozi/nema.pdf")
+        tekst = self.SPECIFIKACIJA.format(broj="9006720950", tip="Teretno")
+        with patch("finansije.services.sef.Klijent") as klijent, \
+                patch("finansije.services.sef.prilozi_iz_ubl",
+                      return_value=[{"naziv": "0002205247-9006720950-specifikacija_uz_fakturu.pdf", "sadrzaj": b"%PDF"}]), \
+                patch("fleet.support.nis_kartice.tekst_pdf", return_value=tekst):
+            self.assertEqual(ucitaj_specifikacije([f]), 1)
+        klijent.return_value.ubl.assert_called_once_with("ulazna", 2)
+        self.assertEqual(NisKarticaFakture.objects.filter(faktura="9006720950", tip="teretna").count(), 2)
+
+    def test_svaka_faktura_se_poredi_sa_svojim_karticama(self):
+        from fleet.support.fuel_invoices import kontrola_faktura, nis_potvrda
+        from fleet.support.fuel_reports import SUPPLIER_NIS, VEHICLE_TYPE_TRUCK
+
+        # Vozilo je u Floti putničko, ali je njegova kartica na teretnoj fakturi — ide na teretnu.
+        self.tocenje("1", "7824723061569717.0", "9950.70", 3, vozilo=self.putnicko)
+        self.tocenje("2", "1111.0", "6000.00", 5, vozilo=self.putnicko)
+        self.tocenje("3", "2222.0", "1000.00", 7)  # vozilo još nije u Floti — ipak je na fakturi
+        self.faktura(1, "9006720949", "6000.00")
+        self.faktura(2, "9006720950", "10950.70")
+        self.kartice("9006720949", "putnicka", "1111")
+        self.kartice("9006720950", "teretna", "7824723061569717", "2222")
+
+        k = nis_potvrda(2026, 9, 1)
+        self.assertTrue(k["poklapa"])
+        self.assertEqual([(r["faktura"].broj, r["transakcije"], r["poklapa"]) for r in k["redovi"]],
+                         [("9006720949", Decimal("6000.00"), True), ("9006720950", Decimal("10950.70"), True)])
+
+        nis = [r for r in kontrola_faktura(2026, 9) if r["dobavljac"] == "NIS"]
+        self.assertEqual([(r["oznaka"], r["kartica"], r["razlika_transakcija"]) for r in nis],
+                         [("9006720949", "Putnička vozila", Decimal("0.00")), ("9006720950", "Teretna vozila", Decimal("0.00"))])
+
+        form = PutnickaFilterForm({"godina": "2026", "mesec": "9", "polovina": "1"})
+        self.assertTrue(form.is_valid(), form.errors)
+        summary, _ = fuel_job_code_report(form, supplier=SUPPLIER_NIS, vehicle_type=VEHICLE_TYPE_TRUCK)
+        self.assertEqual(ukupno(summary)["bruto"], Decimal("10950.70"))
+
+    def test_faktura_koja_se_ne_slaze_se_vidi_pojedinacno(self):
+        from fleet.support.fuel_invoices import nis_potvrda
+
+        self.tocenje("1", "1111.0", "6000.00", 5, vozilo=self.putnicko)
+        self.tocenje("2", "2222.0", "1000.00", 7, vozilo=self.putnicko)
+        # Zbir obe fakture se slaže (7000), ali je 1000 na pogrešnoj fakturi.
+        self.faktura(1, "9006720949", "5000.00")
+        self.faktura(2, "9006720950", "2000.00")
+        self.kartice("9006720949", "putnicka", "1111")
+        self.kartice("9006720950", "teretna", "2222")
+
+        k = nis_potvrda(2026, 9, 1)
+        self.assertEqual(k["razlika"], Decimal("0.00"))
+        self.assertFalse(k["poklapa"])
+        self.assertEqual([r["razlika"] for r in k["redovi"]], [Decimal("1000.00"), Decimal("-1000.00")])
+        self.client.force_login(get_user_model().objects.create_superuser("nis-kartice", password="x"))
+        odgovor = self.client.get(reverse("fuel_job_code_nis_putnicka"), {"godina": "2026", "mesec": "9", "polovina": "1"})
+        self.assertContains(odgovor, "ne poklapa se")

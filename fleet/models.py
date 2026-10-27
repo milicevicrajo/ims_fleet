@@ -1213,6 +1213,31 @@ class TransactionNIS(models.Model):
         return f"Transakcija za {self.registarska_oznaka_vozila} na dan {self.datum_transakcije}"
 
 
+class NisKarticaFakture(models.Model):
+    """Kartica na NIS fakturi, iz specifikacije uz fakturu sa SEF-a (od 27.10.2026.).
+
+    NIS za svaku polovinu meseca izdaje dve fakture, „Putničko“ i „Teretno“, po vrsti kartice — ne po
+    kategoriji vozila u Floti. Popunjava `fleet/support/nis_kartice.py: ucitaj_specifikacije`."""
+
+    TIP_PUTNICKA = "putnicka"
+    TIP_TERETNA = "teretna"
+    TIP_CHOICES = [(TIP_PUTNICKA, _("Putnička")), (TIP_TERETNA, _("Teretna"))]
+
+    faktura = models.CharField(max_length=40, db_index=True, verbose_name=_("Faktura"))
+    datum_prometa = models.DateField(verbose_name=_("Datum prometa"))
+    tip = models.CharField(max_length=10, choices=TIP_CHOICES, verbose_name=_("Vrsta kartice"))
+    kartica = models.CharField(max_length=32, db_index=True, verbose_name=_("Kartica"))
+    iznos = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Iznos na specifikaciji"))
+
+    class Meta:
+        verbose_name = _("Kartica na NIS fakturi")
+        verbose_name_plural = _("Kartice na NIS fakturama")
+        constraints = [models.UniqueConstraint(fields=["faktura", "kartica"], name="fleet_nis_kartica_fakture")]
+
+    def __str__(self):
+        return f"{self.faktura} · {self.kartica} ({self.get_tip_display()})"
+
+
 class KaskoRate(models.Model):
     contract_number = models.CharField(max_length=255)
     year = models.IntegerField()

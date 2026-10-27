@@ -105,8 +105,9 @@ def _annotate_omv_queryset(form, vehicle_type):
 
 
 def _annotate_nis_queryset(form, vehicle_type):
+    # NIS: putnička/teretna se bira po kartici u `fuel_job_code_report` (od 27.10.2026.), ne po kategoriji
+    # vozila, i obuhvata i točenja vozila koje još nije u Floti — kao na NIS fakturi.
     qs = filter_nis_fuel_queryset(TransactionNIS.objects.select_related("vehicle"))
-    qs = qs.filter(vehicle__isnull=False).filter(_vehicle_type_filter(vehicle_type))
     qs = _period_filter(qs, "datum_transakcije", form)
     return qs.annotate(**_common_annotations("datum_transakcije")).annotate(polovina=_half_month_case("datum_transakcije"))
 
@@ -170,11 +171,13 @@ def _detail_from_omv(qs, sifpos):
     return rows
 
 
-def _detail_from_nis(qs, sifpos):
+def _detail_from_nis(qs, sifpos, uslov=None):
     if sifpos:
         qs = qs.filter(sifpos=sifpos if sifpos != "Bez sifre" else None)
     rows = []
     for trx in qs.order_by("datum_transakcije", "vehicle__id", "id"):
+        if uslov and not uslov(trx):
+            continue
         bruto, neto = nis_charged_gross_net_amounts(trx.total)
         rows.append(
             {
@@ -304,8 +307,11 @@ def fuel_job_code_report(form, *, supplier, vehicle_type, sifpos=None):
         summary = _summary_from_detail_rows(all_detail, supplier, vehicle_type)
         detail = [row for row in all_detail if row["sifpos"] == sifpos] if sifpos else []
     else:
+        from .nis_kartice import VrstaKartice
+
+        vrste = VrstaKartice()
         qs = _annotate_nis_queryset(form, vehicle_type)
-        all_detail = _detail_from_nis(qs, None)
+        all_detail = _detail_from_nis(qs, None, uslov=lambda t: vrste.tip(t) == vehicle_type)
         summary = _summary_from_detail_rows(all_detail, supplier, vehicle_type)
         detail = [row for row in all_detail if row["sifpos"] == sifpos] if sifpos else []
 
